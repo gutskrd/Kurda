@@ -24,6 +24,8 @@
  *      unchanged. A preview is a nicety; the page is not.
  */
 
+import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
+
 /*
  * The two pieces of the Workers runtime this file uses, declared here rather
  * than pulled in from @cloudflare/workers-types.
@@ -173,6 +175,7 @@ const REPLACED = [
   'meta[property="og:image"]',
   'meta[property="og:image:width"]',
   'meta[property="og:image:height"]',
+  'meta[property="og:image:alt"]',
   'meta[name="twitter:card"]',
   'meta[name="twitter:title"]',
   'meta[name="twitter:description"]',
@@ -230,12 +233,12 @@ function previewHead(preview: Preview, url: string): Array<string | ''> {
  * `/app/` is not a page, and a canonical of its own would invite a crawler to
  * collect them.
  */
-function staticHead(page: { title: string; description: string }, url: string): Array<string | ''> {
+function staticHead(page: StaticPage, url: string): Array<string | ''> {
   return [
     `<title>${attr(page.title)}</title>`,
     `<meta name="description" content="${attr(page.description)}" />`,
     `<link rel="canonical" href="${attr(url)}" />`,
-    `<meta property="og:type" content="website" />`,
+    `<meta property="og:type" content="${page.structuredData ? 'article' : 'website'}" />`,
     `<meta property="og:site_name" content="Hevalo" />`,
     `<meta property="og:url" content="${attr(url)}" />`,
     `<meta property="og:title" content="${attr(page.title)}" />`,
@@ -243,11 +246,89 @@ function staticHead(page: { title: string; description: string }, url: string): 
     `<meta property="og:image" content="${attr(new URL('/og.png', url).toString())}" />`,
     `<meta property="og:image:width" content="1200" />`,
     `<meta property="og:image:height" content="630" />`,
+    `<meta property="og:image:alt" content="Hevalo — Learn Kurdish. Play together." />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${attr(page.title)}" />`,
     `<meta name="twitter:description" content="${attr(page.description)}" />`,
     `<meta name="twitter:image" content="${attr(new URL('/og.png', url).toString())}" />`,
+    page.structuredData ? jsonLd(page.structuredData(page, url)) : '',
   ];
+}
+
+/**
+ * A schema.org data block for the head.
+ *
+ * A data block, not a script: it is never executed, so the CSP's `script-src
+ * 'self'` does not apply to it — the same reasoning as the one in index.html.
+ * JSON is not HTML, though, and a `</script>` inside a string would end the
+ * element early, so every character that could open or close markup is
+ * written as a JSON escape. What goes in here is our own text today; the
+ * escaping is so that it stays safe when it is not.
+ */
+function jsonLd(data: Record<string, unknown>): string {
+  const json = JSON.stringify(data)
+    .replace(/</g, '\\u003c')
+    .replace(/>/g, '\\u003e')
+    .replace(/&/g, '\\u0026')
+    .replace(/\u2028/g, '\\u2028')
+    .replace(/\u2029/g, '\\u2029');
+  return `<script type="application/ld+json">${json}</script>`;
+}
+
+/**
+ * A study as schema.org has it: a ScholarlyArticle inside its issue, inside its
+ * volume, inside its journal — as far down as the reference goes. A paper in a
+ * conference's proceedings is part of those proceedings, which are no
+ * Periodical, so they are named and nothing more.
+ */
+function scholarlyArticle(s: Source): Record<string, unknown> {
+  let container: Record<string, unknown> =
+    s.kind === 'journal' ? { '@type': 'Periodical', name: s.venue } : { '@type': 'CreativeWork', name: s.venue };
+  if (s.kind === 'journal' && s.volume) {
+    container = { '@type': 'PublicationVolume', volumeNumber: s.volume, isPartOf: container };
+    if (s.issue) container = { '@type': 'PublicationIssue', issueNumber: s.issue, isPartOf: container };
+  }
+  return {
+    '@type': 'ScholarlyArticle',
+    headline: s.title,
+    name: s.title,
+    // "et al." has no schema.org form: the authors the reference names are listed
+    author: s.authors.map(([family, initials]) => ({ '@type': 'Person', familyName: family, name: `${initials} ${family}` })),
+    datePublished: String(s.year),
+    ...(s.pages ? { pagination: s.pages } : {}),
+    isPartOf: container,
+    url: s.url,
+  };
+}
+
+/**
+ * "How Hevalo teaches" as what it is: an article by Hevalo's maker that cites
+ * its sources. The citations are the page's own reference list
+ * (teaching/sources.ts), in the order it prints them, so the head and the page
+ * cannot cite different papers.
+ *
+ * The site, the app and the organisation are the shell's own graph in
+ * index.html; this points at them by `@id` rather than describing them twice.
+ * No date: the page has no publication date worth asserting, and an invented
+ * one is worse than none.
+ */
+function teachingArticle(page: StaticPage, url: string): Record<string, unknown> {
+  const site = new URL('/', url).toString();
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    '@id': `${url}#article`,
+    headline: 'How Hevalo teaches',
+    name: page.title,
+    description: page.description,
+    url,
+    mainEntityOfPage: url,
+    inLanguage: 'en',
+    isPartOf: { '@id': `${site}#website` },
+    author: { '@id': 'https://zagrosian.com/#organization' },
+    publisher: { '@id': 'https://zagrosian.com/#organization' },
+    citation: SOURCE_ORDER.map((id) => scholarlyArticle(SOURCES[id])),
+  };
 }
 
 /** How long the edge may reuse the sitemap. It only changes when somebody publishes. */
@@ -269,17 +350,36 @@ const SITEMAP_PAGE_SIZE = 100;
  * crawler has no account and no locale to read one from. The app itself is
  * translated the moment it starts.
  */
-const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: string }> = [
+interface StaticPage {
+  path: string;
+  title: string;
+  description: string;
+  /** schema.org for the head, for a page that is more than a page of the site */
+  structuredData?: (page: StaticPage, url: string) => Record<string, unknown>;
+}
+
+const STATIC_PAGES: ReadonlyArray<StaticPage> = [
+  /*
+   * The front door is the one page whose title is more than the name. It is the
+   * result somebody looking for a way to learn Kurdish is shown, and "Hevalo" on
+   * its own tells them nothing; see `usePageMeta`, which gives the rendered page
+   * the same title in the reader's own language.
+   */
   {
     path: '/',
-    title: 'Hevalo',
-    description: 'Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community.',
+    title: 'Hevalo — Learn Kurdish and Kurmanji with friends',
+    description:
+      'Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser.',
   },
+  /*
+   * The wall, described as what it is. It used to promise "short lessons" here
+   * too, which the browser does not have — the lessons are in the phone app.
+   */
   {
     path: '/app',
-    title: 'Kurdish lessons, stories and poems · Hevalo',
+    title: 'Kurdish stories, poems and pictures · Hevalo',
     description:
-      'Learn Kurdish with short lessons, then read stories and poems written in Kurmancî and Soranî by the people using Hevalo.',
+      'Stories, poems and pictures in Kurmancî and Soranî, posted by the people learning and speaking Kurdish on Hevalo. Open to read, no account needed.',
   },
   {
     path: '/app/games',
@@ -291,6 +391,55 @@ const STATIC_PAGES: ReadonlyArray<{ path: string; title: string; description: st
     path: '/app/rankings',
     title: 'Rankings · Hevalo',
     description: 'Who is furthest along on Hevalo this week — by XP, by streak and by game.',
+  },
+  {
+    path: '/about',
+    title: 'About Hevalo — Kurdish, learned together',
+    description:
+      'Why Hevalo exists, what it does today and what comes next: a place to learn Kurdish, Kurmanji first, through games, friends and a community.',
+  },
+  {
+    path: '/faq',
+    title: 'Questions about Hevalo · FAQ',
+    description:
+      'Is Hevalo free? Which Kurdish does it teach? How do you play with friends, and where are the lessons? Straight answers about learning Kurdish on Hevalo.',
+  },
+  /*
+   * The page a careful reader checks Hevalo against, so a crawler gets what it
+   * cites as well as what it says: an Article whose citations are the studies
+   * on the page (see `teachingArticle`).
+   */
+  {
+    path: '/how-hevalo-teaches',
+    title: 'How Hevalo teaches — and the research behind it',
+    description:
+      'What research on memory and language learning has found, what Hevalo does about each finding, what it does not claim, and the studies to read.',
+    structuredData: teachingArticle,
+  },
+  {
+    path: '/app/alphabet',
+    title: 'The Kurdish alphabet: Kurmanji and Sorani letters · Hevalo',
+    description:
+      'Every Kurmanji and Sorani letter, what it sounds like next to sounds you already know, and a word to remember it by. Free, no account.',
+  },
+  {
+    path: '/privacy',
+    title: 'Privacy · Hevalo',
+    description:
+      'What Hevalo keeps, why, and what you control. No ads, no tracking across other apps and websites, and your data is never sold.',
+  },
+  {
+    path: '/terms',
+    title: 'Terms · Hevalo',
+    description:
+      'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
+  },
+  /* where a rights holder with no account sends a copyright notice (contract-3 §C) */
+  {
+    path: '/copyright',
+    title: 'Copyright · Hevalo',
+    description:
+      'Tell Hevalo about a post that copies your work — no account needed — and what to do if your own post was taken down.',
   },
 ];
 
@@ -469,6 +618,8 @@ export const __test = {
   sitemap,
   staticHead,
   previewHead,
+  jsonLd,
+  teachingArticle,
   STATIC_PAGES,
   REPLACED,
   ferheng,

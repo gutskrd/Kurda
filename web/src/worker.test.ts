@@ -8,6 +8,7 @@
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { __test } from './worker';
+import { SOURCES, SOURCE_ORDER } from './teaching/sources';
 
 const { routeFor, attr, trim, previewOf, sitemap } = __test;
 
@@ -149,6 +150,15 @@ describe('the sitemap', () => {
     vi.restoreAllMocks();
   });
 
+  /** The pages about Hevalo itself are pages a search engine should find. */
+  it('lists About, the FAQ, the alphabet, Privacy, Terms and Copyright', async () => {
+    vi.stubGlobal('fetch', serving([[]]));
+    const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
+    for (const path of ['/about', '/faq', '/app/alphabet', '/privacy', '/terms', '/copyright']) {
+      expect(xml, path).toContain(`<loc>https://hevalo.app${path}</loc>`);
+    }
+  });
+
   it('lists the static paths and every published post', async () => {
     vi.stubGlobal('fetch', serving([[{ id: ID, updatedAt: '2026-09-28T10:00:00.000Z' }]]));
     const xml = await xmlOf(await sitemap('https://api.test', ORIGIN));
@@ -185,8 +195,8 @@ describe('the sitemap', () => {
 
     expect(xml).not.toContain('passwd');
     expect(xml).toContain(`/app/library/${ID}`);
-    // four static paths plus the one good post
-    expect(xml.match(/<url>/g)).toHaveLength(5);
+    // the static paths plus the one good post
+    expect(xml.match(/<url>/g)).toHaveLength(__test.STATIC_PAGES.length + 1);
   });
 
   it('stops at a short page rather than asking for another', async () => {
@@ -215,7 +225,7 @@ describe('the sitemap', () => {
     expect(res.status).toBe(200);
     const xml = await xmlOf(res);
     expect(xml).toContain('<loc>https://hevalo.app/</loc>');
-    expect(xml.match(/<url>/g)).toHaveLength(4);
+    expect(xml.match(/<url>/g)).toHaveLength(__test.STATIC_PAGES.length);
   });
 
   it('omits lastmod rather than inventing one', async () => {
@@ -278,6 +288,115 @@ describe('what a page tells a search engine it is', () => {
     const written = head(previewHead(preview, 'https://hevalo.app/app/library/abc'));
     expect(written).not.toContain('<tag>');
     expect(written).toContain('&quot;quote&quot;');
+  });
+});
+
+/**
+ * How Hevalo teaches, as a crawler and a link preview read it: its own head,
+ * and an Article whose citations are the studies the page itself cites.
+ */
+describe('the teaching page, for a search engine', () => {
+  const { staticHead, jsonLd, STATIC_PAGES } = __test;
+  const URL_ = 'https://hevalo.app/how-hevalo-teaches';
+  const page = STATIC_PAGES.find((p) => p.path === '/how-hevalo-teaches')!;
+  const head = () => staticHead(page, URL_).filter(Boolean).join('');
+  interface Citation {
+    '@type': string;
+    url: string;
+    author: unknown[];
+    datePublished: string;
+    pagination?: string;
+    isPartOf: unknown;
+  }
+  interface ArticleLd {
+    '@context': string;
+    '@type': string;
+    url: string;
+    isPartOf: unknown;
+    publisher: unknown;
+    citation: Citation[];
+  }
+  const article = (): ArticleLd => {
+    const m = /<script type="application\/ld\+json">(.*?)<\/script>/s.exec(head());
+    expect(m, 'no JSON-LD in the head').not.toBeNull();
+    return JSON.parse(m![1]!) as ArticleLd;
+  };
+  const cited = (url: string): Citation => article().citation.find((c) => c.url === url)!;
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('is a listed page with a head of its own', () => {
+    expect(page).toBeDefined();
+    const written = head();
+    expect(written).toContain('<title>How Hevalo teaches — and the research behind it</title>');
+    expect(written).toContain(`<link rel="canonical" href="${URL_}" />`);
+    expect(written).toContain('<meta property="og:type" content="article" />');
+    expect(written).toContain('what it does not claim, and the studies to read');
+  });
+
+  it('is in the sitemap', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({ posts: [] }))));
+    const xml = await (await __test.sitemap('https://api.test', 'https://hevalo.app')).text();
+    expect(xml).toContain(`<loc>${URL_}</loc>`);
+  });
+
+  it('describes itself as an article that cites every study on the page, in the page’s order', () => {
+    const a = article();
+    expect(a['@context']).toBe('https://schema.org');
+    expect(a['@type']).toBe('Article');
+    expect(a.url).toBe(URL_);
+    expect(a.isPartOf).toEqual({ '@id': 'https://hevalo.app/#website' });
+    expect(a.publisher).toEqual({ '@id': 'https://zagrosian.com/#organization' });
+    expect(a.citation.map((c) => c.url)).toEqual(SOURCE_ORDER.map((id) => SOURCES[id].url));
+    for (const c of a.citation) {
+      expect(c['@type']).toBe('ScholarlyArticle');
+      expect(c.author.length).toBeGreaterThan(0);
+      expect(c.datePublished).toMatch(/^\d{4}$/);
+    }
+  });
+
+  it('nests a journal paper in its issue, volume and journal', () => {
+    const roediger = cited(SOURCES.roediger2006.url);
+    expect(roediger.pagination).toBe('249–255');
+    expect(roediger.isPartOf).toEqual({
+      '@type': 'PublicationIssue',
+      issueNumber: '3',
+      isPartOf: {
+        '@type': 'PublicationVolume',
+        volumeNumber: '17',
+        isPartOf: { '@type': 'Periodical', name: 'Psychological Science' },
+      },
+    });
+    expect(roediger.author[0]).toEqual({ '@type': 'Person', familyName: 'Roediger', name: 'H. L. Roediger' });
+  });
+
+  it('does not call conference proceedings a journal', () => {
+    const settles = cited(SOURCES.settlesMeeder2016.url);
+    expect(settles.isPartOf).toEqual({ '@type': 'CreativeWork', name: 'Proceedings of ACL 2016' });
+  });
+
+  it('claims no date it does not have', () => {
+    expect(article()).not.toHaveProperty('datePublished');
+  });
+
+  /** JSON is not HTML: a string holding </script> must not end the block early. */
+  it('cannot be closed from inside a string', () => {
+    const hostile = { name: '</script><script>alert(1)</script> & <!--' };
+    const block = jsonLd(hostile);
+    expect(block.indexOf('</script>')).toBe(block.length - '</script>'.length);
+    expect(block).not.toContain('<!--');
+    const body = block.slice('<script type="application/ld+json">'.length, -'</script>'.length);
+    expect(JSON.parse(body)).toEqual(hostile);
+  });
+
+  it('leaves every other page a website with no data block of its own', () => {
+    for (const p of STATIC_PAGES.filter((x) => x !== page)) {
+      const written = staticHead(p, `https://hevalo.app${p.path}`).filter(Boolean).join('');
+      expect(written, p.path).toContain('<meta property="og:type" content="website" />');
+      expect(written, p.path).not.toContain('application/ld+json');
+    }
   });
 });
 

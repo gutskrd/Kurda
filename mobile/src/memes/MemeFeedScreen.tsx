@@ -25,6 +25,8 @@ import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { useSendErrorAlert } from '../reports/SendError';
+import { restrictionOf } from '../reports/sendErrors';
 
 const PAGE = 20;
 
@@ -38,7 +40,8 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const showSendError = useSendErrorAlert();
 
   const [category, setCategory] = useState<Category>('meme');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -109,20 +112,24 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
-    const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
+    const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     if (!up.ok) {
       setUploading(false);
-      Alert.alert(t('memes.uploadFailed'), up.error);
+      // a limit on pictures says what and until when, with the way to Account standing
+      showSendError(t('memes.uploadFailed'), { message: up.error, limited: up.limited });
       return;
     }
     const created = await createPost(client, { imageMediaId: up.imageMediaId, category });
     setUploading(false);
     if (!created.ok) {
-      Alert.alert(t('memes.postFailed'), t('memes.postFailedHelp'));
+      // a limit on posting (a mute, a suspension) says so; anything else is
+      // worth another try, and the picture is already up
+      if (restrictionOf(created.error)) showSendError(t('memes.postFailed'), created.error);
+      else Alert.alert(t('memes.postFailed'), t('memes.postFailedHelp'));
       return;
     }
     setPosts((prev) => (prev ? [created.data, ...prev] : [created.data]));
-  }, [client, category, uploading]);
+  }, [client, category, uploading, t, locale, showSendError]);
 
   const renderItem = useCallback(
     ({ item }: { item: ImagePost }) => (
@@ -187,7 +194,11 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             ListEmptyComponent={
               <EmptyState
                 title={t('memes.empty')}
-                action={{ label: t('picture.choosePicture'), onPress: () => navigation.navigate('PostPicture') }}
+                action={{
+                  label: t('picture.choosePicture'),
+                  // what it says: the photos open, and what is picked is a meme
+                  onPress: () => navigation.navigate('Compose', { pickPictures: true, meme: true }),
+                }}
               />
             }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}

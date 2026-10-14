@@ -78,6 +78,13 @@ const MAP = {
   bookmark: { glyph: 'BookmarkSimple', note: 'web BookmarkIcon — Saved, and a word you keep' },
   'bookmark-fill': { glyph: 'BookmarkSimple', weight: 'fill', note: 'the same bookmark, already kept' },
 
+  // --- gifts in the chat, and keeping people safe (reports, account standing) ---
+  gift: { glyph: 'Gift', note: 'web GiftIcon — a present, in the chat and in the shop; the gem stood in for it' },
+  more: { glyph: 'DotsThree', weight: 'bold', note: 'more things you can do with this — report, block — behind one quiet button' },
+  shield: { glyph: 'ShieldCheck', note: 'your account standing: what is limited, why, and asking for a review' },
+  lifebuoy: { glyph: 'Lifebuoy', note: 'help, shown first when someone may hurt themselves' },
+  block: { glyph: 'Prohibit', note: 'block someone — ends it for you, tells nobody' },
+
   // --- named here, because the browser has no counterpart yet ---
   'chevron-left': { glyph: 'CaretLeft', note: 'back, the mirror of ChevronIcon' },
   'chevron-down': { glyph: 'CaretDown', note: 'a section that opens' },
@@ -97,6 +104,15 @@ const MAP = {
   grid: { glyph: 'GridFour', note: 'Wordle — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
+  // --- typing, rating Hevalo, and writing a post ---
+  keyboard: { glyph: 'Keyboard', note: 'keyboard settings and the guide to adding a Kurdish keyboard' },
+  backspace: { glyph: 'Backspace', note: 'delete a letter — the Wordle key drew an ✕, which reads as "close"' },
+  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Wordle keyboard: send this guess' },
+  'star-fill': { glyph: 'Star', weight: 'fill', note: 'a star chosen in the rating box' },
+  pencil: { glyph: 'PencilSimple', note: 'edit your own post' },
+  'text-t': { glyph: 'TextT', note: 'give a post a title' },
+  quotes: { glyph: 'Quotes', note: 'source / credit — where a quote or a picture came from' },
+
   // --- the way in to everywhere the tab bar has no room for ---
   menu: { glyph: 'List', note: 'the side panel; three lines, which is what every app uses and what the recording used' },
 
@@ -106,6 +122,30 @@ const MAP = {
   flag: { glyph: 'Flag', note: 'report this to a moderator; the screens used U+2690, a flag outline most fonts do not have' },
   microphone: { glyph: 'Microphone', note: 'record a voice note — the emoji renders as a whole illustration beside monochrome icons' },
   google: { glyph: 'GoogleLogo', note: 'sign in with Google' },
+
+  // --- Stories, and playing with friends ---
+  story: { glyph: 'BookOpenText', note: 'Stories — a page with lines on it, so it is not Learn’s open book' },
+  headphones: { glyph: 'Headphones', note: 'a story someone has read aloud, every sentence of it' },
+  'audio-play': { glyph: 'Play', weight: 'fill', note: 'play a recording — `play` is the games’ puzzle piece' },
+  'audio-pause': { glyph: 'Pause', weight: 'fill', note: 'pause a recording' },
+  'skip-back': { glyph: 'SkipBack', note: 'the sentence before' },
+  'skip-forward': { glyph: 'SkipForward', note: 'the sentence after' },
+  timer: { glyph: 'Timer', note: 'a question with a clock, and extra time' },
+  'user-plus': { glyph: 'UserPlus', note: 'invite a friend to play' },
+  crown: { glyph: 'Crown', note: 'the host of a game' },
+
+  // --- Game Ranks, leagues and badges (contract 4) ---
+  mountains: { glyph: 'Mountains', note: 'Game Ranks: the climb from Deşt to Lûtke' },
+  medal: { glyph: 'Medal', note: 'badges' },
+  handshake: { glyph: 'Handshake', note: 'a Friendly game: played for fun, ranks stay as they are' },
+  'move-up': { glyph: 'CaretDoubleUp', weight: 'bold', note: 'the league’s promotion zone, said in words beside it too' },
+  'move-down': { glyph: 'CaretDoubleDown', weight: 'bold', note: 'the league’s demotion zone, said in words beside it too' },
+  'seal-check': { glyph: 'SealCheck', weight: 'fill', note: 'safe this week: the weekly goal is met' },
+  lock: { glyph: 'LockSimple', note: 'a badge tier not reached yet' },
+  question: { glyph: 'Question', note: 'a rank still settling (the "?" beside the points)' },
+  sparkle: { glyph: 'Sparkle', weight: 'fill', note: 'a celebration: a new division, tier or badge' },
+  calendar: { glyph: 'CalendarBlank', note: 'when a week or a season ends, in local time' },
+  'shield-fill': { glyph: 'ShieldCheck', weight: 'fill', note: 'a rank shield still covering a game' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */
@@ -164,6 +204,17 @@ export function buildIconPaths() {
 
   const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/package.json'), 'utf8'));
 
+  // The glyphs are Phosphor's work under the MIT licence, which asks that its
+  // notice travel with every copy — and this file is a copy. Read from the
+  // package rather than typed out, so it is the notice that came with them.
+  const licence = fs
+    .readFileSync(path.join(ROOT, 'node_modules/@phosphor-icons/react/LICENSE'), 'utf8')
+    .replace(/\r\n/g, '\n')
+    .trim()
+    .split('\n')
+    .map((line) => (line ? ` * ${line}` : ' *'))
+    .join('\n');
+
   const file = `/**
  * GENERATED — do not edit by hand.
  *
@@ -173,6 +224,10 @@ export function buildIconPaths() {
  * script and run it again.
  *
  * The viewBox is Phosphor's own 256×256, not 24×24.
+ *
+ * Phosphor Icons are used under the MIT licence:
+ *
+${licence}
  */
 
 /** The size of the box every path below is drawn in. */

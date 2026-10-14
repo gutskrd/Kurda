@@ -10,7 +10,10 @@ import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 
-import { CARD_LABEL_KEY } from './postKinds';
+import { CARD_LABEL_KEY, cardKind } from './postKinds';
+import { ReportAction } from '../reports/ReportAction';
+import { PostPictures } from '../composer/PostPictures';
+import type { FeedImage } from '@kurda/shared';
 
 /**
  * One post on the wall.
@@ -53,6 +56,7 @@ export function FeedCard({
   }
 
   const { engagement: e } = item;
+  const badge = cardKind(item);
   // only the person who wrote it; the server checks again, this only decides
   // whether to offer the button
   const mine = user?.id === item.author.id;
@@ -95,18 +99,28 @@ export function FeedCard({
             </span>
           </span>
         </button>
-        <span className={`fcard-kind fcard-kind-${item.kind}`}>{CARD_LABEL_KEY[item.kind] ? t(CARD_LABEL_KEY[item.kind]!) : item.kind}</span>
+        <span className={`fcard-kind fcard-kind-${badge}`}>{CARD_LABEL_KEY[badge] ? t(CARD_LABEL_KEY[badge]!) : badge}</span>
       </header>
 
-      <Link to={item.href} className="fcard-body">
-        {item.title && <h2 className="fcard-title">{item.title}</h2>}
-        {item.imageUrl && (
-          <span className="fcard-shot">
-            <img src={item.imageUrl} alt={item.excerpt ?? t('feed.picture')} loading="lazy" />
-          </span>
-        )}
-        {item.excerpt && <p className="fcard-text">{item.excerpt}</p>}
-      </Link>
+      {(item.title || item.excerpt) && (
+        <Link to={item.href} className="fcard-body">
+          {/* dir=auto: a post is in the language it was written in, not the
+              interface's — Kurmancî under a Soranî menu must still read left to right */}
+          {item.title && (
+            <h2 className="fcard-title" dir="auto">
+              {item.title}
+            </h2>
+          )}
+          {item.excerpt && (
+            <p className="fcard-text" dir="auto">
+              {item.excerpt}
+            </p>
+          )}
+        </Link>
+      )}
+      {/* up to four, under the words like X — and each opens full size, so they
+          sit outside the link to the post (web/src/composer/PostPictures) */}
+      <PostPictures className="fcard-pics" images={cardImages(item)} />
 
       <footer className="fcard-actions">
         <Link to={item.href} className="fcard-act" aria-label={t('feed.comments', { count: item.commentCount })}>
@@ -126,6 +140,15 @@ export function FeedCard({
           <HeartIcon size={18} weight={e.liked ? 'fill' : 'regular'} />
           {e.likes > 0 && <span>{e.likes.toLocaleString()}</span>}
         </button>
+
+        {/* someone else's post can be reported from its card (ReportAction draws nothing for your own) */}
+        <ReportAction
+          className="fcard-report"
+          target={{ targetType: item.targetType === 'image' ? 'image_post' : 'library_post', targetId: item.id }}
+          authorId={item.author.id}
+          label={t('report.aboutPost')}
+          block={{ userId: item.author.id, name: item.author.username }}
+        />
 
         {mine && (
           <ConfirmButton
@@ -176,6 +199,17 @@ export function FeedCard({
       </footer>
     </article>
   );
+}
+
+/**
+ * A card's pictures: every one the API sent, or — from an API older than
+ * pictures on written posts — the single picture it had. Never the caption as
+ * a picture's description: that read the words out twice and the picture not
+ * at all.
+ */
+function cardImages(item: FeedItem): FeedImage[] {
+  if (item.images && item.images.length > 0) return item.images;
+  return item.imageUrl ? [{ url: item.imageUrl, alt: item.imageAlt ?? null, width: null, height: null }] : [];
 }
 
 /** "Today", "Yesterday", a weekday, then a date — the wording chat uses. */

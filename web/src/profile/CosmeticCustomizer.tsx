@@ -108,7 +108,7 @@ export function CosmeticCustomizer({ me, onChanged }: { me: MeProfile; onChanged
     if (res.ok) {
       setZer(res.data.balance);
       await load(); // the item is now owned → becomes equippable
-      setMsg({ kind: 'ok', text: t('edit.purchased', { name: tile.name }) });
+      setMsg({ kind: 'ok', text: tile.price > 0 ? t('edit.purchased', { name: tile.name }) : t('edit.gotFree', { name: tile.name }) });
       onChanged();
     } else {
       setMsg({ kind: 'err', text: describeError(res.error, t) });
@@ -220,8 +220,11 @@ function CosmeticSection({
           {tiles.map((tile) => {
             const equipped = equippedSku === tile.sku;
             const equippable = tile.owned || (tile.premiumOnly && premium);
-            const buyable = !tile.owned && tile.price != null && tile.price > 0;
-            const canAfford = zer != null && tile.price != null && zer >= tile.price;
+            // a free item is taken the way one is bought — the server grants it
+            // without touching the wallet — so it needs no balance to take
+            const buyable = !tile.owned && tile.price != null && tile.price >= 0;
+            const free = tile.price === 0;
+            const canAfford = free || (zer != null && tile.price != null && zer >= tile.price);
             const disabled = busy !== null;
             return (
               <figure className={`cosmetic-tile${equipped ? ' is-equipped' : ''}`} key={tile.sku}>
@@ -238,7 +241,11 @@ function CosmeticSection({
                   </button>
                 ) : buyable ? (
                   <button type="button" className="btn btn-sm" disabled={disabled || !canAfford} onClick={() => onBuy(tile)}>
-                    {canAfford ? t('edit.buyFor', { price: tile.price!.toLocaleString() }) : t('edit.notEnoughZer')}
+                    {free
+                      ? t('edit.getFree')
+                      : canAfford
+                        ? t('edit.buyFor', { price: tile.price!.toLocaleString() })
+                        : t('edit.notEnoughZer')}
                   </button>
                 ) : (
                   <span className="cosmetic-locked">{t('profile.premium')}</span>

@@ -37,6 +37,8 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
         username: `iap_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.72.0.1',
     });
@@ -104,6 +106,8 @@ describe.skipIf(!DATABASE_URL)('iap (integration)', () => {
         username: `iap2_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.72.0.2',
     });

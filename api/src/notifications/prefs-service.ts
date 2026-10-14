@@ -7,24 +7,30 @@ import {
   type NotificationCategory,
   type NotificationPrefs,
 } from './prefs.js';
+import { notKnownAdultSql } from '../users/age.js';
 
 interface PrefsRow {
-  streak: boolean;
+  /** null: never chosen, so the default for their age (`defaultPrefs`) */
+  streak: boolean | null;
   friends: boolean;
   games: boolean;
   events: boolean;
   marketing: boolean;
+  /** null: never chosen, so the default for their age, like `streak` */
+  progress: boolean | null;
   quiet_start_min: number | null;
   quiet_end_min: number | null;
 }
 
-function toPrefs(row: PrefsRow): NotificationPrefs {
+/** A stored row as the settings it means, for someone of the given age. */
+function toPrefs(row: PrefsRow, minor: boolean): NotificationPrefs {
   return {
-    streak: row.streak,
+    streak: row.streak ?? defaultPrefs({ minor }).streak,
     friends: row.friends,
     games: row.games,
     events: row.events,
     marketing: row.marketing,
+    progress: row.progress ?? defaultPrefs({ minor }).progress,
     quietStartMin: row.quiet_start_min,
     quietEndMin: row.quiet_end_min,
   };
@@ -36,6 +42,7 @@ export interface PrefsPatch {
   games?: boolean;
   events?: boolean;
   marketing?: boolean;
+  progress?: boolean;
   quietStartMin?: number | null;
   quietEndMin?: number | null;
 }
@@ -45,38 +52,63 @@ export interface PrefsPatch {
  * off), so a user who never touched settings still gets a sane policy. `allows`
  * is the delivery-time gate: it loads the current prefs + the user's timezone
  * and evaluates category + quiet hours against the moment of delivery.
+ *
+ * Streak reminders are the one setting whose default depends on age (off for
+ * a minor, and for an account whose age is not on record yet), so it is
+ * stored only once somebody chooses it: NULL means "the default for my age",
+ * read when it is asked. Saving another setting leaves it NULL rather than
+ * writing today's default in as a choice, which would keep a minor's
+ * reminders off for good, past 18. League and badge news (`progress`) is
+ * stored the same way, for the same reason.
  */
 export class NotificationPrefsService {
   constructor(private readonly pool: pg.Pool) {}
 
-  async get(userId: string): Promise<NotificationPrefs> {
-    const res = await this.pool.query<PrefsRow>(
-      `SELECT streak, friends, games, events, marketing, quiet_start_min, quiet_end_min
-       FROM notification_prefs WHERE user_id = $1`,
+  /** The stored row, if any, and whether the defaults are a minor's. */
+  private async stored(userId: string): Promise<{ row: PrefsRow | null; minor: boolean }> {
+    const res = await this.pool.query<PrefsRow & { minor: boolean; has_row: boolean }>(
+      `SELECT ${notKnownAdultSql('u')} AS minor, p.user_id IS NOT NULL AS has_row,
+              p.streak, p.friends, p.games, p.events, p.marketing, p.progress, p.quiet_start_min, p.quiet_end_min
+         FROM users u LEFT JOIN notification_prefs p ON p.user_id = u.id
+        WHERE u.id = $1`,
       [userId],
     );
-    return res.rows[0] ? toPrefs(res.rows[0]) : defaultPrefs();
+    const r = res.rows[0];
+    // an unknown account gets a minor's defaults: the safe way to be wrong
+    if (!r) return { row: null, minor: true };
+    return { row: r.has_row ? r : null, minor: r.minor };
   }
 
-  /** Upsert the caller's preferences; unspecified fields keep their value. */
+  async get(userId: string): Promise<NotificationPrefs> {
+    const { row, minor } = await this.stored(userId);
+    return row ? toPrefs(row, minor) : defaultPrefs({ minor });
+  }
+
+  /**
+   * Upsert the caller's preferences; unspecified fields keep their value —
+   * the streak setting included, which stays "the default for my age" until
+   * it is chosen.
+   */
   async update(userId: string, patch: PrefsPatch): Promise<NotificationPrefs> {
-    const current = await this.get(userId);
-    const next: NotificationPrefs = {
-      streak: patch.streak ?? current.streak,
-      friends: patch.friends ?? current.friends,
-      games: patch.games ?? current.games,
-      events: patch.events ?? current.events,
-      marketing: patch.marketing ?? current.marketing,
-      quietStartMin: patch.quietStartMin === undefined ? current.quietStartMin : patch.quietStartMin,
-      quietEndMin: patch.quietEndMin === undefined ? current.quietEndMin : patch.quietEndMin,
+    const { row, minor } = await this.stored(userId);
+    const base = defaultPrefs({ minor });
+    const next: PrefsRow = {
+      streak: patch.streak ?? row?.streak ?? null,
+      friends: patch.friends ?? row?.friends ?? base.friends,
+      games: patch.games ?? row?.games ?? base.games,
+      events: patch.events ?? row?.events ?? base.events,
+      marketing: patch.marketing ?? row?.marketing ?? base.marketing,
+      progress: patch.progress ?? row?.progress ?? null,
+      quiet_start_min: patch.quietStartMin === undefined ? (row?.quiet_start_min ?? null) : patch.quietStartMin,
+      quiet_end_min: patch.quietEndMin === undefined ? (row?.quiet_end_min ?? null) : patch.quietEndMin,
     };
     await this.pool.query(
       `INSERT INTO notification_prefs
-         (user_id, streak, friends, games, events, marketing, quiet_start_min, quiet_end_min, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+         (user_id, streak, friends, games, events, marketing, progress, quiet_start_min, quiet_end_min, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
        ON CONFLICT (user_id) DO UPDATE SET
          streak = EXCLUDED.streak, friends = EXCLUDED.friends, games = EXCLUDED.games,
-         events = EXCLUDED.events, marketing = EXCLUDED.marketing,
+         events = EXCLUDED.events, marketing = EXCLUDED.marketing, progress = EXCLUDED.progress,
          quiet_start_min = EXCLUDED.quiet_start_min, quiet_end_min = EXCLUDED.quiet_end_min,
          updated_at = now()`,
       [
@@ -86,11 +118,12 @@ export class NotificationPrefsService {
         next.games,
         next.events,
         next.marketing,
-        next.quietStartMin,
-        next.quietEndMin,
+        next.progress,
+        next.quiet_start_min,
+        next.quiet_end_min,
       ],
     );
-    return next;
+    return toPrefs(next, minor);
   }
 
   /** Delivery-time gate: category enabled and not in the user's quiet hours. */

@@ -4,6 +4,7 @@
  * hour so a global spread of timezones each gets its reminder at the right local
  * time. The job runs hourly and only users whose local hour matches fire.
  */
+import { isAppLocale, type AppLocale } from '@kurda/shared';
 
 /** Default send hour when we have no practice history for a user. */
 export const FALLBACK_HOUR = 19; // 7pm local
@@ -29,8 +30,9 @@ export function preferredHour(historicalHour: number | null): number {
 
 /**
  * The reminder to send right now, or null. Never fires if the user already
- * practiced today or has no live streak. A "last chance" nudge at 22:00 (for
- * streaks ≥ 7) takes precedence over the primary reminder if they coincide.
+ * practiced today or has no live streak. A later nudge at 22:00 (for streaks
+ * ≥ 7, still called `last_chance` in the send log) takes precedence over the
+ * primary reminder if they coincide.
  */
 export function dueReminder(ctx: ReminderContext): ReminderKind | null {
   if (ctx.practicedToday) return null;
@@ -47,16 +49,128 @@ export interface ReminderMessage {
   body: string;
 }
 
-/** Copy for each reminder kind. */
-export function reminderMessage(kind: ReminderKind, streak: number): ReminderMessage {
-  if (kind === 'last_chance') {
-    return {
-      title: 'Last chance! ⏰',
-      body: `Your ${streak}-day streak ends at midnight — practice now to save it.`,
-    };
-  }
-  return {
-    title: "Don't lose your streak! 🔥",
-    body: `You're on a ${streak}-day streak. A quick practice keeps it alive.`,
-  };
+interface ReminderCopy {
+  primary: (days: number) => ReminderMessage;
+  lastChance: ReminderMessage;
+}
+
+/**
+ * The copy, in every language the app speaks.
+ *
+ * An invitation, not a warning. This used to read "Don't lose your streak!"
+ * and "Last chance!", in English to everyone, which frames a day off as a loss
+ * and leans on guilt — the pattern the roadmap in docs/research asks us to
+ * drop, for learners of every age. So it says how long the streak is and how
+ * little today needs, and nothing about what could be lost.
+ *
+ * It says "your streak is N days", not "you have learned N days in a row": the
+ * streak is kept by a daily Wordle and by a freeze as well as by a lesson, so
+ * the second sentence would not always be true.
+ *
+ * Where a language changes the noun with the number, the sentence either picks
+ * the form (English, German, French, Spanish, Dutch) or is built so the number
+ * stands alone (Arabic); Kurmancî, Soranî and Turkish keep the singular after a
+ * number anyway.
+ */
+const REMINDER_COPY: Record<AppLocale, ReminderCopy> = {
+  en: {
+    primary: (n) => ({
+      title: 'A few minutes of Kurdish?',
+      body: `Your streak is ${n} ${n === 1 ? 'day' : 'days'}. One short lesson or practice counts for today.`,
+    }),
+    lastChance: {
+      title: 'There is still time today',
+      body: 'A short practice before midnight counts for today.',
+    },
+  },
+  ku: {
+    primary: (n) => ({
+      title: 'Çend deqîqe bi kurdî?',
+      body: `Rêzeya te ${n} roj e. Dersek an temrînek kurt ji bo îro bes e.`,
+    }),
+    lastChance: {
+      title: 'Îro hê dem heye',
+      body: 'Temrînek kurt berî nîvê şevê ji bo îro tê hesibandin.',
+    },
+  },
+  ckb: {
+    primary: (n) => ({
+      title: 'چەند خولەکێک بە کوردی؟',
+      body: `زنجیرەکەت ${n} ڕۆژە. وانەیەک یان ڕاهێنانێکی کورت بۆ ئەمڕۆ بەسە.`,
+    }),
+    lastChance: {
+      title: 'ئەمڕۆ هێشتا کات هەیە',
+      body: 'ڕاهێنانێکی کورت پێش نیوەشەو بۆ ئەمڕۆ هەژمار دەکرێت.',
+    },
+  },
+  ar: {
+    primary: (n) => ({
+      title: 'بضع دقائق من الكردية؟',
+      body: `أيام سلسلتك: ${n}. درس قصير أو تمرين واحد يكفي لليوم.`,
+    }),
+    lastChance: {
+      title: 'ما زال هناك وقت اليوم',
+      body: 'تمرين قصير قبل منتصف الليل يُحتسب لليوم.',
+    },
+  },
+  tr: {
+    primary: (n) => ({
+      title: 'Birkaç dakika Kürtçe?',
+      body: `Serin ${n} gün. Kısa bir ders ya da alıştırma bugün için yeterli.`,
+    }),
+    lastChance: {
+      title: 'Bugün için hâlâ vakit var',
+      body: 'Gece yarısından önce kısa bir alıştırma bugüne sayılır.',
+    },
+  },
+  de: {
+    primary: (n) => ({
+      title: 'Ein paar Minuten Kurdisch?',
+      body: `Deine Serie steht bei ${n} ${n === 1 ? 'Tag' : 'Tagen'}. Eine kurze Lektion oder Übung zählt für heute.`,
+    }),
+    lastChance: {
+      title: 'Heute ist noch Zeit',
+      body: 'Eine kurze Übung vor Mitternacht zählt für heute.',
+    },
+  },
+  fr: {
+    primary: (n) => ({
+      title: 'Quelques minutes de kurde ?',
+      body: `Ta série est de ${n} ${n === 1 ? 'jour' : 'jours'}. Une courte leçon ou un exercice compte pour aujourd’hui.`,
+    }),
+    lastChance: {
+      title: 'Il reste du temps aujourd’hui',
+      body: 'Un court exercice avant minuit compte pour aujourd’hui.',
+    },
+  },
+  es: {
+    primary: (n) => ({
+      title: '¿Unos minutos de kurdo?',
+      body: `Tu racha es de ${n} ${n === 1 ? 'día' : 'días'}. Una lección corta o una práctica cuenta para hoy.`,
+    }),
+    lastChance: {
+      title: 'Todavía hay tiempo hoy',
+      body: 'Una práctica corta antes de medianoche cuenta para hoy.',
+    },
+  },
+  nl: {
+    primary: (n) => ({
+      title: 'Een paar minuten Koerdisch?',
+      body: `Je reeks staat op ${n} ${n === 1 ? 'dag' : 'dagen'}. Een korte les of oefening telt voor vandaag.`,
+    }),
+    lastChance: {
+      title: 'Er is vandaag nog tijd',
+      body: 'Een korte oefening voor middernacht telt voor vandaag.',
+    },
+  },
+};
+
+/**
+ * Copy for each reminder kind, in the account's own language — the one it
+ * chose in the app. Anything the app does not speak gets English rather than
+ * nothing.
+ */
+export function reminderMessage(kind: ReminderKind, streak: number, locale?: string | null): ReminderMessage {
+  const copy = REMINDER_COPY[isAppLocale(locale) ? locale : 'en'];
+  return kind === 'last_chance' ? { ...copy.lastChance } : copy.primary(streak);
 }

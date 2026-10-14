@@ -4,6 +4,7 @@ import { requireAuth } from '../plugins/auth.js';
 import { WordleService } from './wordle-service.js';
 import type { XpService } from '../xp/service.js';
 import type { StreakService } from '../streaks/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 const difficultyBody = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
@@ -20,7 +21,7 @@ const guessBody = z.object({
  */
 export function registerWordleRoutes(
   app: FastifyInstance,
-  deps: { xp?: XpService; streaks?: StreakService } = {},
+  deps: { xp?: XpService; streaks?: StreakService; milestones?: MilestoneRecorder } = {},
 ): void {
   const wordle = new WordleService(app.db, deps);
 

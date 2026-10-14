@@ -35,10 +35,30 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().optional(),
   S3_SECRET_ACCESS_KEY: z.string().optional(),
   /**
+   * A second bucket on the same endpoint and credentials that is NOT public,
+   * where moderation keeps evidence it takes off the public CDN (CSAM, and a
+   * closed child's files a report still holds). Optional: without it evidence
+   * goes to unguessable private keys in the main bucket.
+   */
+  S3_EVIDENCE_BUCKET: z.string().optional(),
+  /**
+   * Cloudflare zone and API token (Cache Purge permission only) for the zone
+   * that serves CDN_BASE_URL, so media taken down by moderation stops being
+   * served from the edge at once. Optional: without them the CSAM filing task
+   * lists the URLs to purge by hand.
+   */
+  CDN_PURGE_ZONE_ID: z.string().optional(),
+  CDN_PURGE_API_TOKEN: z.string().optional(),
+  /**
    * Public origin of the web app. Email links (password reset, email
    * verification) are built from this, so a wrong value sends users nowhere.
    */
   APP_BASE_URL: z.string().url().default('https://hevalo.app'),
+  /**
+   * Public origin of the admin panel, for the link in the urgent-report email
+   * to moderators. Optional: without it the email names the page instead.
+   */
+  ADMIN_BASE_URL: z.string().url().optional(),
   /**
    * Process background jobs inside the API instead of a separate worker service.
    * The API only ENQUEUES jobs; without something consuming the queue, emails
@@ -47,6 +67,12 @@ const envSchema = z.object({
    * 'false' when a dedicated worker process is running.
    */
   RUN_WORKER_IN_API: z.enum(['true', 'false']).optional(),
+
+  /**
+   * Learning Leagues' weekly goal, in XP that counts for the league: met it and
+   * a promotion can count and no demotion can (contract 4 §L3).
+   */
+  LEAGUE_WEEKLY_GOAL_XP: z.coerce.number().int().min(10).max(5000).default(150),
 
   /**
    * Comma-separated addresses granted admin on boot. Kept in configuration

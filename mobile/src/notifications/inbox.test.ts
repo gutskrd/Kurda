@@ -4,15 +4,40 @@ import { relativeTime, resolveDeepLink, unreadBadge } from './inbox.js';
 describe('resolveDeepLink', () => {
   it('resolves known targets with required params', () => {
     expect(resolveDeepLink({ screen: 'EventQuests' })).toEqual({ screen: 'EventQuests' });
-    expect(resolveDeepLink({ screen: 'Game', roomId: 'r1' })).toEqual({ screen: 'Game', params: { roomId: 'r1' } });
     expect(resolveDeepLink({ screen: 'Chat', userId: 'u1', username: 'ada' })).toEqual({
       screen: 'Chat',
       params: { userId: 'u1', username: 'ada' },
     });
   });
 
+  it('opens an invite to play, and a gift in the chat it came in, from what the server writes', () => {
+    expect(resolveDeepLink({ kind: 'play_invite', inviteId: 'i1', game: 'stories', lobbyId: 'g1' })).toEqual({
+      screen: 'PlayInvite',
+      params: { inviteId: 'i1', game: 'stories', lobbyId: 'g1' },
+    });
+    // a gift opens its chat with the gift to unwrap (reports/deepLinks.ts, ahead of everything else)
+    const dm = '2b7c4a10-0000-4000-8000-000000000001';
+    const group = '3c8d5b20-0000-4000-8000-000000000007';
+    expect(resolveDeepLink({ kind: 'gift', giftId: 'x', batchId: 'b', chat: `dm:${dm}` })).toEqual({
+      screen: 'Chat',
+      params: { userId: dm, username: '', openGift: 'x' },
+    });
+    expect(resolveDeepLink({ kind: 'gift', chat: `group:${group}` })).toEqual({
+      screen: 'GroupThread',
+      params: { groupId: group, name: '', openGift: undefined },
+    });
+  });
+
+  it('opens nothing for an invite or a gift it cannot place', () => {
+    expect(resolveDeepLink({ kind: 'play_invite', inviteId: 'i1', game: 'chess', lobbyId: 'g1' })).toBeNull();
+    expect(resolveDeepLink({ kind: 'play_invite', game: 'stories' })).toBeNull();
+    expect(resolveDeepLink({ kind: 'gift', chat: 'somewhere' })).toBeNull();
+    expect(resolveDeepLink({ kind: 'gift' })).toBeNull();
+  });
+
   it('returns null for missing params or unknown screens (friendly fallback)', () => {
-    expect(resolveDeepLink({ screen: 'Game' })).toBeNull();
+    // the quiz's game rooms are gone, and with them the screen they opened
+    expect(resolveDeepLink({ screen: 'Game', roomId: 'r1' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Profile' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Nope' })).toBeNull();
     expect(resolveDeepLink({})).toBeNull();
@@ -34,5 +59,18 @@ describe('unreadBadge', () => {
     expect(unreadBadge(0)).toBeNull();
     expect(unreadBadge(3)).toBe('3');
     expect(unreadBadge(12)).toBe('9+');
+  });
+});
+
+describe('progress notifications (contract 4)', () => {
+  it('opens the badges for a badge, one or the day’s bundle', () => {
+    expect(resolveDeepLink({ kind: 'badge', key: 'agir', tier: '2' })).toEqual({ screen: 'Badges' });
+    expect(resolveDeepLink({ kind: 'badge', day: '2026-10-14' })).toEqual({ screen: 'Badges' });
+  });
+
+  it('opens the league for safe, a promotion and a Pêla week', () => {
+    for (const kind of ['league_safe', 'league_promotion', 'league_trophy']) {
+      expect(resolveDeepLink({ kind, weekKey: '2026-10-05', tier: 'cem' })).toEqual({ screen: 'League' });
+    }
   });
 });

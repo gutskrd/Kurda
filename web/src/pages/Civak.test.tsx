@@ -70,8 +70,10 @@ describe('Civak', () => {
 
     expect(await screen.findByText('Çîroka min')).toBeInTheDocument();
     expect(screen.getByText('Dara Hinarê')).toBeInTheDocument();
-    // the merge is the point: a picture sits between the words, not on its own page
-    expect(screen.getByRole('img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
+    // the merge is the point: a picture sits between the words, not on its own
+    // page — and it opens full size, so it is a button named for what it does
+    const picture = screen.getByRole('button', { name: 'Open picture 1 of 1' });
+    expect(picture.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
     expect(screen.getAllByText('dilan')).toHaveLength(3);
   });
 
@@ -232,7 +234,12 @@ describe('Civak', () => {
       expect(screen.getByTitle('Speichern')).toBeInTheDocument();
     });
 
-    it('offers to post in your language, without renaming what you can post', async () => {
+    /*
+     * This asked "what are you posting?" — words or pictures — in Turkish.
+     * There is no such question any more (one box for both, web/src/composer),
+     * so what is pinned now is that the one box speaks the reader's language.
+     */
+    it('offers to post in your language, in one box for words and pictures', async () => {
       localStorage.setItem('hevalo_locale', 'tr');
       await preloadCatalogue();
       signIn();
@@ -240,12 +247,67 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
 
       await userEvent.click(await screen.findByRole('button', { name: 'Bir şey paylaş' }));
-      expect(screen.getByText('Ne paylaşıyorsun?')).toBeInTheDocument();
-      // scoped to the dialog: the same two words also name the filters behind it
-      const dialog = screen.getByRole('dialog');
-      expect(within(dialog).getByText('Yazılar')).toBeInTheDocument();
-      expect(within(dialog).getByText('Görseller')).toBeInTheDocument();
-      expect(within(dialog).getByText('Bir söz, bir hikâye ya da bir şiir')).toBeInTheDocument();
+      const dialog = await screen.findByRole('dialog', { name: 'Yeni gönderi' });
+      expect(within(dialog).getByPlaceholderText('Aklında ne var?')).toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'Fotoğraf ekle (0/4)' })).toBeInTheDocument();
+      expect(within(dialog).queryByText('Ne paylaşıyorsun?')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('pictures on written posts', () => {
+    const pic = (n: number, alt: string | null = null) => ({ url: `https://cdn.test/${n}.webp`, alt, width: 1200, height: 900 });
+
+    it('lays out up to four pictures under the words, each named by its description', async () => {
+      feedFetch([
+        item('library:g1', {
+          kind: 'gotin',
+          title: null,
+          excerpt: 'Newroz li Amedê',
+          images: [pic(1, 'Agirê Newrozê'), pic(2), pic(3)],
+          imageUrl: 'https://cdn.test/1.webp',
+        }),
+      ]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      const group = await screen.findByRole('group', { name: '3 pictures' });
+      expect(within(group).getAllByRole('button')).toHaveLength(3);
+      // the author's description, never the post's words, is what a reader hears
+      expect(within(group).getByRole('button', { name: 'Open picture 1 of 3: Agirê Newrozê' })).toBeInTheDocument();
+      expect(within(group).getByRole('button', { name: 'Open picture 2 of 3' })).toBeInTheDocument();
+      expect(group).toHaveClass('pp-n3');
+    });
+
+    it('badges a post marked as a meme as a meme, and one that is only pictures as a photo', async () => {
+      feedFetch([
+        item('library:m1', { kind: 'gotin', title: null, excerpt: 'Dema mamoste dibêje…', meme: true, images: [pic(1)] }),
+        item('library:p2', { kind: 'gotin', title: null, excerpt: null, images: [pic(2)] }),
+      ]);
+      renderApp(<Civak />, ['/app/civak']);
+
+      await screen.findByText('Dema mamoste dibêje…');
+      expect(screen.getByText('Meme')).toBeInTheDocument();
+      expect(screen.getByText('Photo')).toBeInTheDocument();
+      expect(screen.queryByText('Saying')).not.toBeInTheDocument();
+    });
+
+    it('asks the server for photos or memes inside Pictures', async () => {
+      const { queries } = feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Show Pictures' }));
+      await userEvent.click(await screen.findByRole('button', { name: 'Only Meme' }));
+      await waitFor(() => expect(queries.some((q) => q.includes('section=dimen') && q.includes('kind=mim'))).toBe(true));
+
+      await userEvent.click(screen.getByRole('button', { name: 'Only Photo' }));
+      await waitFor(() => expect(queries.some((q) => q.includes('section=dimen') && q.includes('kind=wene'))).toBe(true));
+    });
+
+    it('still shows the one picture an older server sends', async () => {
+      feedFetch([item('image:i1', { targetType: 'image', kind: 'image', title: null, excerpt: null, imageUrl: 'https://cdn.test/old.webp' })]);
+      renderApp(<Civak />, ['/app/civak']);
+      const open = await screen.findByRole('button', { name: 'Open picture 1 of 1' });
+      expect(open.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/old.webp');
     });
   });
 

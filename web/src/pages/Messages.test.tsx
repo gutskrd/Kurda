@@ -383,7 +383,7 @@ describe('Messages', () => {
     );
     renderApp(<Messages />, ['/app/messages?to=u2&name=zana']);
 
-    expect(await screen.findByText('Wordle Battle')).toBeInTheDocument();
+    expect(await screen.findByText('Join a Wordle Battle game')).toBeInTheDocument();
     expect(screen.getByText('Play me!')).toBeInTheDocument();
     const join = screen.getByRole('link', { name: /join/i });
     expect(join).toHaveAttribute('href', '/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555');

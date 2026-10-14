@@ -6,19 +6,15 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
+import { cellState, dailyAction, type DailyStatus } from './daily';
 
-interface DailyStatus {
-  canClaim: boolean;
-  claimableDay: number;
-  reward: number;
-  schedule: number[];
-  alreadyClaimedToday: boolean;
-  cycleDay: number;
-}
-
-type CellState = 'claimed' | 'today' | 'upcoming';
-
-/** Login calendar + daily Zêr claim (KUR-067). */
+/**
+ * The daily Zêr calendar and claim (KUR-067).
+ *
+ * The reward is paid for learning: until a lesson or practice session has been
+ * finished today, the card says so instead of offering a claim the server would
+ * refuse. It sits on the Learn screen, above the lessons it is asking for.
+ */
 export function DailyRewardCard() {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -39,22 +35,14 @@ export function DailyRewardCard() {
     setClaiming(true);
     const res = await client.post<{ reward: number }>('/rewards/daily/claim');
     setClaiming(false);
-    if (res.ok) {
-      setJustEarned(res.data.reward);
-      load();
-    }
+    if (res.ok) setJustEarned(res.data.reward);
+    // refused (say, the status was stale and nothing was learned today yet):
+    // read it again, so the card says what is needed instead
+    load();
   }, [client, load]);
 
   if (!status) return null;
-
-  const cellState = (day: number): CellState => {
-    if (status.canClaim) {
-      if (day < status.claimableDay) return 'claimed';
-      if (day === status.claimableDay) return 'today';
-      return 'upcoming';
-    }
-    return day <= status.cycleDay ? 'claimed' : 'upcoming';
-  };
+  const action = dailyAction(status);
 
   return (
     <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
@@ -62,7 +50,7 @@ export function DailyRewardCard() {
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
           const day = i + 1;
-          const state = cellState(day);
+          const state = cellState(status, day);
           const bonus = day === status.schedule.length;
           const active = state !== 'upcoming';
           const borderColor =
@@ -84,13 +72,15 @@ export function DailyRewardCard() {
         })}
       </View>
 
-      {status.canClaim ? (
+      {action === 'claim' ? (
         <ClayButton
           label={t('rewards.claimZer', { amount: status.reward })}
           tone="primary"
           busy={claiming}
           onPress={claim}
         />
+      ) : action === 'learnFirst' ? (
+        <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
       ) : (
         <Text style={[styles.done, { color: colors.textSecondary }]}>
           {justEarned != null ? t('rewards.claimedZer', { amount: justEarned }) : t('rewards.comeBackTomorrow')}

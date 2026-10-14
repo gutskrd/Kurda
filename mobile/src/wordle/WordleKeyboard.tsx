@@ -1,89 +1,117 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { radii, spacing, typography } from '../theme/tokens';
+import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { radii, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { Icon } from '../theme/Icon';
-import { DEL, ENTER, KEYBOARD_ROWS, keyFeedback, type Feedback } from './board';
+import { useKeyboardPrefs } from '../keyboard/prefs';
+import { DEL, ENTER, keyboardRows, keyFeedback, type Feedback } from './board';
 import { feedbackColor, feedbackWord } from './WordleBoard';
+
+/** The gap between keys; half of it on either side is still the key's to tap. */
+const GAP = 6;
+/** Taller than the 44pt minimum: a key is tapped fast and often. */
+const KEY_HEIGHT = 52;
 
 /**
  * The Kurmancî keyboard, coloured by what each letter has scored so far.
  *
- * Pulled out of the solo screen alongside the board: a battle needs the same
- * three rows, the same ê/û/î/ş/ç keys, and the same rule that a key only ever
- * upgrades — grey to yellow to green, never back.
+ * QWERTY with ç ê î ş û as full keys on a row of their own, or the alphabet
+ * in order (Settings → Keyboard and accents) — the same layout the browser
+ * draws. Every row stretches across the whole width, so a letter key is as
+ * wide as the phone allows (about 33pt on a 390pt phone, the five Kurdish
+ * letters twice that), and each key's touch area takes in half the gap beside
+ * it, so there is nowhere between two keys that is neither.
+ *
+ * A key only ever upgrades — grey to yellow to green, never back — and a screen
+ * reader hears the letter with how it scored: "ê, in the word, wrong place".
  */
 export function WordleKeyboard({
   keyboard,
   onKey,
   disabled = false,
+  style,
 }: {
   keyboard: Record<string, Feedback>;
   onKey: (key: string) => void;
   disabled?: boolean;
+  style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const [prefs] = useKeyboardPrefs();
+  const rows = keyboardRows(prefs.wordleLayout);
 
   return (
-    <View style={styles.keyboard} accessibilityLabel={t('games.wordle.keyboard')}>
-      {KEYBOARD_ROWS.map((row, ri) => (
-        <View key={ri} style={styles.keyRow}>
-          {row.map((key) => {
-            const fb = keyFeedback(keyboard, key);
-            const control = key === ENTER || key === DEL;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => onKey(key)}
-                accessibilityRole="button"
-                accessibilityLabel={
-                  control
-                    ? key === ENTER
-                      ? t('games.wordle.enter')
-                      : t('games.wordle.backspace')
-                    : fb
-                      ? `${key}, ${feedbackWord(fb, t)}`
-                      : key
-                }
-                disabled={disabled}
-                style={[
-                  styles.key,
-                  control && styles.keyWide,
-                  { backgroundColor: fb ? feedbackColor(fb, colors) : colors.controlTrack },
-                ]}
-              >
-                {key === DEL ? (
-                  <Icon name="close" size={16} color={colors.textPrimary} />
-                ) : (
-                  <Text style={[styles.keyText, { color: fb ? colors.textOnPrimary : colors.textPrimary }]}>
-                    {control ? '↵' : key.toUpperCase()}
-                  </Text>
-                )}
-              </Pressable>
-            );
-          })}
-        </View>
-      ))}
+    <View style={[styles.keyboard, style]} accessibilityLabel={t('games.wordle.keyboard')}>
+      {rows.map((row, ri) => {
+        // QWERTY's middle row sits half a key in, as on every phone; every
+        // other row, the Kurdish letters' included, fills the width
+        const inset = prefs.wordleLayout === 'qwerty' && ri === 1 ? 0.5 : 0;
+        return (
+          <View key={ri} style={styles.keyRow}>
+            {inset > 0 ? <View style={{ flex: inset }} /> : null}
+            {row.map((key) => {
+              const fb = keyFeedback(keyboard, key);
+              const control = key === ENTER || key === DEL;
+              const label = control
+                ? key === ENTER
+                  ? t('games.wordle.enter')
+                  : t('games.wordle.backspace')
+                : fb
+                  ? `${key}, ${feedbackWord(fb, t)}`
+                  : key;
+              return (
+                <Pressable
+                  key={key}
+                  onPress={() => onKey(key)}
+                  accessibilityRole="button"
+                  accessibilityLabel={label}
+                  accessibilityState={{ disabled }}
+                  disabled={disabled}
+                  hitSlop={GAP / 2}
+                  style={({ pressed }) => [
+                    styles.key,
+                    { flex: weight(key) },
+                    {
+                      backgroundColor: fb ? feedbackColor(fb, colors) : control ? colors.glassBorder : colors.controlTrack,
+                      opacity: disabled ? 0.55 : pressed ? 0.7 : 1,
+                    },
+                  ]}
+                >
+                  {key === DEL ? (
+                    <Icon name="backspace" size={22} color={colors.textPrimary} />
+                  ) : key === ENTER ? (
+                    <Icon name="key-return" size={22} color={colors.textPrimary} />
+                  ) : (
+                    <Text style={[styles.keyText, { color: fb ? colors.textOnPrimary : colors.textPrimary }]}>
+                      {key.toUpperCase()}
+                    </Text>
+                  )}
+                </Pressable>
+              );
+            })}
+            {inset > 0 ? <View style={{ flex: inset }} /> : null}
+          </View>
+        );
+      })}
     </View>
   );
 }
 
+/** How many letter widths a key takes: Enter and Delete one and a half. */
+function weight(key: string): number {
+  return key === ENTER || key === DEL ? 1.5 : 1;
+}
+
 const styles = StyleSheet.create({
-  keyboard: { gap: spacing.xs, marginTop: spacing.lg },
-  keyRow: { flexDirection: 'row', justifyContent: 'center', gap: 4 },
+  keyboard: { gap: GAP, alignSelf: 'stretch', width: '100%', maxWidth: 560 },
+  keyRow: { flexDirection: 'row', gap: GAP },
   key: {
-    // no minWidth: the Kurmancî top row is thirteen keys wide, and a floor of
-    // 26px made it 342px of content in a 298px row — Q and P were cut off the
-    // sides of anything narrower than a 390px phone. Letting the keys shrink
-    // costs a couple of points of width and keeps the whole alphabet reachable.
-    flex: 1,
-    maxWidth: 34,
-    height: 46,
+    height: KEY_HEIGHT,
+    minWidth: 0,
     borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  keyWide: { maxWidth: 48, flex: 1.4 },
-  keyText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  keyText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
 });

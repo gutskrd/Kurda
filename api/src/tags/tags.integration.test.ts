@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
   async function register(tag: string, ip: string): Promise<{ token: string; id: string }> {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `tag_${tag}_${suffix}@it.kurda.app`, username: `tag_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `tag_${tag}_${suffix}@it.kurda.app`, username: `tag_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);

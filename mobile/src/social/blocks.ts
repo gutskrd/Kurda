@@ -37,28 +37,3 @@ export function blockUser(client: ApiClient, userId: string): Promise<ApiResult<
 export function unblockUser(client: ApiClient, userId: string): Promise<ApiResult<unknown>> {
   return client.delete(`/friends/${userId}/block`);
 }
-
-/** What a reporter says the problem is. Matches the server's enum exactly. */
-export const REPORT_CATEGORIES = [
-  'harassment',
-  'spam',
-  'impersonation',
-  'hate',
-  'self_harm',
-  'other',
-] as const;
-
-export type ReportCategory = (typeof REPORT_CATEGORIES)[number];
-
-/** The server refuses anything shorter; saying so up front beats a rejection. */
-export const MIN_REASON = 10;
-export const MAX_REASON = 1000;
-
-export function reportUser(
-  client: ApiClient,
-  userId: string,
-  category: ReportCategory,
-  reason: string,
-): Promise<ApiResult<unknown>> {
-  return client.post(`/users/${userId}/report`, { category, reason });
-}

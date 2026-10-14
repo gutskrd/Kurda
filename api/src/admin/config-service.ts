@@ -137,20 +137,42 @@ export class ConfigService {
     return !!rewards && Object.keys(rewards).length > 0;
   }
 
+  /**
+   * Apply a change. A shop proposal names what it changes — a price, say — and
+   * the shop's upsert writes the whole row, so whatever the proposal leaves out
+   * is taken from the item as it stands. Applying a price change used to wipe
+   * the item's picture, its premium flag, its place in the catalogue and its
+   * sale window, and turn a `tag` item into `misc`.
+   */
   private async apply(target: ConfigTarget, p: Record<string, unknown>): Promise<void> {
     if (target === 'shop_item') {
+      const { rows } = await this.pool.query<{
+        description: string | null; category: string; is_unique: boolean; active: boolean; in_stock: boolean;
+        available_from: Date | null; available_to: Date | null; asset_key: string | null; premium_only: boolean; display_order: number;
+      }>(
+        `SELECT description, category, is_unique, active, in_stock, available_from, available_to, asset_key, premium_only, display_order
+           FROM shop_items WHERE sku = $1`,
+        [p.sku],
+      );
+      const was = rows[0];
+      const pick = <T>(key: string, stored: T | undefined): T | undefined => (key in p ? (p[key] as T) : stored);
+      const date = (key: string, stored: Date | null | undefined): Date | null =>
+        key in p ? (p[key] ? new Date(p[key] as string) : null) : (stored ?? null);
       await this.shop.createItem({
         sku: p.sku as string,
         name: p.name as string,
-        description: p.description as string | undefined,
-        category: p.category as string | undefined,
+        description: pick('description', was?.description ?? undefined),
+        category: pick('category', was?.category),
         currency: p.currency as 'zer' | 'gems',
         price: p.price as number,
-        isUnique: p.isUnique as boolean | undefined,
-        active: p.active as boolean | undefined,
-        inStock: p.inStock as boolean | undefined,
-        availableFrom: p.availableFrom ? new Date(p.availableFrom as string) : null,
-        availableTo: p.availableTo ? new Date(p.availableTo as string) : null,
+        isUnique: pick('isUnique', was?.is_unique),
+        active: pick('active', was?.active),
+        inStock: pick('inStock', was?.in_stock),
+        availableFrom: date('availableFrom', was?.available_from),
+        availableTo: date('availableTo', was?.available_to),
+        assetKey: pick('assetKey', was?.asset_key ?? undefined),
+        premiumOnly: pick('premiumOnly', was?.premium_only),
+        displayOrder: pick('displayOrder', was?.display_order),
       });
       return;
     }

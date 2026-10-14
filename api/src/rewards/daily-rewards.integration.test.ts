@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { DailyRewardService } from './service.js';
 import { WalletService } from '../wallet/service.js';
+import { StreakService } from '../streaks/service.js';
 import { rewardForDay } from './daily-cycle.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -18,8 +19,16 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
   let pool: pg.Pool;
   let rewards: DailyRewardService;
   let wallet: WalletService;
+  let streaks: StreakService;
   const suffix = Date.now().toString(36);
   let userId = '';
+
+  /** A finished lesson or practice session on `day` — what a claim needs. */
+  const learn = (day: string) => streaks.recordActivity(userId, 'UTC', at(day));
+  const learnAndClaim = async (day: string) => {
+    await learn(day);
+    return rewards.claim(userId, at(day));
+  };
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -27,6 +36,7 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     wallet = new WalletService(pool);
     rewards = new DailyRewardService(pool, wallet);
+    streaks = new StreakService(pool);
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -35,6 +45,8 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
         username: `daily_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.67.0.1',
     });
@@ -56,40 +68,56 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     await app.close();
   });
 
+  it('pays only on a day with a finished lesson or practice session', async () => {
+    const before = await rewards.status(userId, at('2026-02-27'));
+    expect(before).toMatchObject({ canClaim: false, learnedToday: false, alreadyClaimedToday: false });
+    await expect(rewards.claim(userId, at('2026-02-27'))).rejects.toMatchObject({ code: 'LEARN_FIRST' });
+    expect((await wallet.balances(userId)).zer).toBe(0);
+  });
+
+  it('does not count a daily Wordle win as learning', async () => {
+    await streaks.recordPlayDay(userId, 'UTC', at('2026-02-28'));
+    await expect(rewards.claim(userId, at('2026-02-28'))).rejects.toMatchObject({ code: 'LEARN_FIRST' });
+  });
+
   it('escalates across consecutive days and blocks a second same-day claim', async () => {
-    const d1 = await rewards.claim(userId, at('2026-03-01'));
+    const d1 = await learnAndClaim('2026-03-01');
     expect(d1).toMatchObject({ cycleDay: 1, reward: rewardForDay(1) });
     expect((await wallet.balances(userId)).zer).toBe(rewardForDay(1));
 
     // same day again → rejected
     await expect(rewards.claim(userId, at('2026-03-01'))).rejects.toThrow(/already claimed/i);
 
-    const d2 = await rewards.claim(userId, at('2026-03-02'));
+    const d2 = await learnAndClaim('2026-03-02');
     expect(d2.cycleDay).toBe(2);
     expect(d2.reward).toBe(rewardForDay(2));
   });
 
-  it('resets to day 1 after a missed day', async () => {
+  // deliberately changed: this used to reset to day 1
+  it('continues where it left off after a missed day', async () => {
     // last claim was 2026-03-02 (day 2); skip 03-03 and claim 03-04
-    const reset = await rewards.claim(userId, at('2026-03-04'));
-    expect(reset.cycleDay).toBe(1);
-    expect(reset.reward).toBe(rewardForDay(1));
+    const next = await learnAndClaim('2026-03-04');
+    expect(next.cycleDay).toBe(3);
+    expect(next.reward).toBe(rewardForDay(3));
   });
 
   it('pays the day-7 bonus then wraps to day 1', async () => {
-    // continue consecutively from 2026-03-04 (day 1) → day 7 is 2026-03-10
-    for (let i = 5; i <= 9; i++) await rewards.claim(userId, at(`2026-03-0${i}`));
-    const day7 = await rewards.claim(userId, at('2026-03-10'));
+    // continue from 2026-03-04 (day 3) → day 7 is 2026-03-08
+    for (let i = 5; i <= 7; i++) await learnAndClaim(`2026-03-0${i}`);
+    const day7 = await learnAndClaim('2026-03-08');
     expect(day7).toMatchObject({ cycleDay: 7, reward: 100 });
 
-    const wrap = await rewards.claim(userId, at('2026-03-11'));
+    const wrap = await learnAndClaim('2026-03-09');
     expect(wrap.cycleDay).toBe(1);
   });
 
-  it('GET /rewards/daily reports claimable status for a new day', async () => {
-    const status = await rewards.status(userId, at('2026-03-12'));
-    expect(status.canClaim).toBe(true);
-    expect(status.claimableDay).toBe(2); // day after the wrap (day 1)
-    expect(status.schedule).toHaveLength(7);
+  it('GET /rewards/daily says what a new day needs, then that it can be claimed', async () => {
+    const waiting = await rewards.status(userId, at('2026-03-12'));
+    expect(waiting).toMatchObject({ canClaim: false, learnedToday: false, claimableDay: 2 });
+    expect(waiting.schedule).toHaveLength(7);
+
+    await learn('2026-03-12');
+    const ready = await rewards.status(userId, at('2026-03-12'));
+    expect(ready).toMatchObject({ canClaim: true, learnedToday: true, claimableDay: 2 });
   });
 });

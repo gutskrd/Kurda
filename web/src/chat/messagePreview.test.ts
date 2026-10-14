@@ -60,6 +60,20 @@ describe('messagePreview', () => {
   });
 });
 
+describe('messagePreview — a message that is a card', () => {
+  it('names a game card by its game, with no text to show', () => {
+    expect(messagePreview({ body: null, kind: 'game', game: { game: 'stories', lobbyId: 's1' } }, t)).toBe('Stories invite');
+  });
+
+  it('says a game invite when a conversation row knows only the kind', () => {
+    expect(messagePreview({ body: '', kind: 'game' }, t)).toBe('🎮 Game invite');
+  });
+
+  it('reads a text message the same whether given the message or its text', () => {
+    expect(messagePreview({ body: `join! ${rhyme}`, kind: 'text' }, t)).toBe(messagePreview(`join! ${rhyme}`, t));
+  });
+});
+
 describe('truncate', () => {
   it('leaves a short string alone', () => {
     expect(truncate('short', 10)).toBe('short');
@@ -72,5 +86,28 @@ describe('truncate', () => {
   it('counts characters, not code units, so an emoji is never split in half', () => {
     // '🟩' is a surrogate pair: slicing by index could leave half of it behind
     expect(truncate('🟩🟩🟩', 2)).toBe('🟩…');
+  });
+});
+
+/**
+ * A gift or a game card has no body: a list that printed the body showed an
+ * empty line, and the server's English stand-in in every language.
+ */
+describe('messagePreview for every kind of message', () => {
+  it('names a gift — by its item only once the reader has unwrapped it, so a banner never spoils it', () => {
+    const gift = { batchId: 'b', sku: 's', name: 'Newroz fire', category: 'background', assetUrl: null, tier: 'legendary' as const, recipients: [], myGiftId: 'g1', myOpened: false, equippable: null };
+    expect(messagePreview({ body: null, kind: 'gift' }, t)).toBe('🎁 Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift }, t)).toBe('🎁 Gift');
+    expect(messagePreview({ body: null, kind: 'gift', gift: { ...gift, myOpened: true } }, t)).toBe('🎁 Newroz fire');
+    expect(messagePreview({ body: '🎁 Gift', kind: 'gift' }, translator(ku))).toBe('🎁 Diyarî');
+  });
+
+  it('names a game card by its game, or as an invite when it does not say', () => {
+    expect(messagePreview({ body: null, kind: 'game', game: { game: 'rhyme-match', lobbyId: 'l1' } }, t)).toBe('Rhyme Match invite');
+    expect(messagePreview({ body: null, kind: 'game' }, t)).toBe('🎮 Game invite');
+  });
+
+  it('treats a message with no kind as text, as before', () => {
+    expect(messagePreview({ body: 'Silav' }, t)).toBe('Silav');
   });
 });

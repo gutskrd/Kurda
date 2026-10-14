@@ -15,6 +15,7 @@ const stored = (over: Partial<NotificationPrefs> = {}): NotificationPrefs => ({
   streak: true,
   friends: true,
   games: true,
+  progress: true,
   events: true,
   marketing: false,
   quietStartMin: null,
@@ -53,6 +54,8 @@ describe('NotificationPrefsCard', () => {
     expect(screen.getByRole('checkbox', { name: 'Friend activity' })).toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Game invites & results' })).not.toBeChecked();
     expect(screen.getByRole('checkbox', { name: 'Events & quests' })).toBeChecked();
+    // league and badge news (contract 4), its own switch
+    expect(screen.getByRole('checkbox', { name: 'Leagues and badges' })).toBeChecked();
     // the opt-in one, off until somebody says otherwise
     expect(screen.getByRole('checkbox', { name: 'News & offers' })).not.toBeChecked();
   });

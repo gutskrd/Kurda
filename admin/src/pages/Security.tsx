@@ -1,167 +1,79 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useAuth } from '../auth';
+import { NAV_GROUPS, ROLE_NAME, visibleNav } from '../navigation';
+import { useSession } from '../session';
+import { Badge, Banner, PageHeader, Section } from '../ui';
 
-interface AdminMe {
-  userId: string;
-  roles: string[];
-  capabilities: string[];
-}
-interface Enrollment {
-  secret: string;
-  otpauthUri: string;
-}
-
-type Status = 'loading' | 'active' | 'needs_2fa';
+const CAPABILITY: Record<string, string> = {
+  'content.edit': 'Write and edit lessons',
+  'content.publish': 'Publish lessons',
+  'users.view': 'Look people up',
+  'users.moderate': 'Warn, mute and ban people',
+  'economy.view': 'See the economy',
+  'economy.adjust': 'Change wallets and items',
+  'fraud.review': 'Decide held purchases',
+  'events.manage': 'Run live events',
+  'admins.manage': 'Manage admins',
+  'moderation.act': 'Work the moderation queue',
+};
 
 /**
- * Admin security / 2FA (KUR-099). Probes `/admin/me` (role + confirmed-2FA gated):
- * a 403 `TOTP_REQUIRED` means the admin still has to enrol. Enrolment shows the
- * secret for manual entry into an authenticator app, then confirms with a live code.
+ * My security: this login's 2FA, roles and what they open — read from the
+ * session the panel was let in with (GET /admin/session).
+ *
+ * It used to ask /admin/me, which refuses an account with only the legacy
+ * `admin` or `founder` role; the page then said "2FA not set up" to an admin
+ * who had it, and its "Set up 2FA" button re-generated their secret and
+ * un-confirmed it. Setting up 2FA happens once, before the panel opens (the
+ * gate), and nowhere else.
  */
-export function Security({ onConfirmed }: { onConfirmed?: () => void }): React.JSX.Element {
-  const [status, setStatus] = useState<Status>('loading');
-  const [me, setMe] = useState<AdminMe | null>(null);
-  const [enrollment, setEnrollment] = useState<Enrollment | null>(null);
-  const [code, setCode] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const probe = useCallback(async () => {
-    setStatus('loading');
-    try {
-      const res = await api<AdminMe>('/admin/me');
-      setMe(res);
-      setStatus('active');
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 403) {
-        setStatus('needs_2fa');
-        return;
-      }
-      throw err;
-    }
-  }, []);
-  useEffect(() => {
-    void probe();
-  }, [probe]);
-
-  async function startEnroll(): Promise<void> {
-    setBusy(true);
-    setMsg(null);
-    try {
-      setEnrollment(await api<Enrollment>('/admin/2fa/enroll', { method: 'POST' }));
-    } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Failed to start enrolment');
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  async function confirm(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    setBusy(true);
-    setMsg(null);
-    try {
-      await api('/admin/2fa/confirm', { method: 'POST', body: { code: code.trim() } });
-      setEnrollment(null);
-      setCode('');
-      onConfirmed?.();
-      await probe();
-    } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Could not confirm code');
-    } finally {
-      setBusy(false);
-    }
-  }
+export function Security(): React.JSX.Element {
+  const { me } = useAuth();
+  const session = useSession();
+  const roles = session.staffRoles.length ? session.staffRoles : session.roles;
+  const pages = visibleNav(session);
 
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Security</h1>
-          <div className="subtle">Two-factor authentication for privileged admin actions</div>
+      <PageHeader title="My security" subtitle={me ? `Signed in as @${me.username}.` : undefined} />
+
+      <Banner tone="ok" title="Two-factor authentication is on">
+        This login entered a code from your authenticator app. You are asked again 12 hours later, and every time you sign in.
+      </Banner>
+
+      <Section title="If you lose your authenticator">
+        <p className="section-text">
+          Your password alone cannot open the admin, by design. Without the app (or the key you saved when you set it up), your 2FA has
+          to be reset on the server by someone who runs it. The panel has no reset button.
+        </p>
+      </Section>
+
+      <Section title="Your roles">
+        <div className="badges">
+          {roles.length ? roles.map((r) => <Badge key={r}>{ROLE_NAME[r] ?? r}</Badge>) : <span className="subtle">None</span>}
         </div>
-      </div>
-
-      {status === 'loading' && <div className="card empty">Loading…</div>}
-
-      {status === 'active' && me && (
-        <div className="card" style={{ maxWidth: 520 }}>
-          <div className="row" style={{ gap: 8, marginBottom: 12 }}>
-            <span className="badge ok">2FA active ✓</span>
-          </div>
-          <div className="subtle" style={{ marginBottom: 6 }}>
-            Roles: {me.roles.length ? me.roles.join(', ') : '—'}
-          </div>
-          <div className="section-title" style={{ marginTop: 8 }}>
-            Capabilities
-          </div>
-          <div className="row" style={{ flexWrap: 'wrap', gap: 6 }}>
-            {me.capabilities.length === 0 ? (
-              <span className="subtle">None.</span>
-            ) : (
-              me.capabilities.map((c) => (
-                <span key={c} className="badge">
-                  {c}
-                </span>
-              ))
-            )}
-          </div>
-        </div>
-      )}
-
-      {status === 'needs_2fa' && (
-        <div className="card" style={{ maxWidth: 520, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          <div>
-            <div className="row" style={{ gap: 8, marginBottom: 6 }}>
-              <span className="badge mid">2FA not set up</span>
-            </div>
-            <div className="subtle">
-              User management and economy actions require a confirmed authenticator. Set it up once below.
-            </div>
-          </div>
-
-          {!enrollment ? (
-            <button className="primary" onClick={() => void startEnroll()} disabled={busy} style={{ alignSelf: 'flex-start' }}>
-              {busy ? 'Starting…' : 'Set up 2FA'}
-            </button>
-          ) : (
-            <>
-              <div>
-                <div className="section-title" style={{ marginTop: 0 }}>
-                  1. Add this key to your authenticator
-                </div>
-                <div className="subtle" style={{ marginBottom: 6 }}>
-                  Enter it manually (type TOTP), or open the provisioning URI on the device.
-                </div>
-                <code className="secret">{enrollment.secret}</code>
-                <div className="subtle" style={{ wordBreak: 'break-all', marginTop: 8, fontSize: 12 }}>
-                  {enrollment.otpauthUri}
-                </div>
-              </div>
-              <form onSubmit={confirm} style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <div className="section-title" style={{ marginTop: 0 }}>
-                  2. Enter the 6-digit code
-                </div>
-                <input
-                  value={code}
-                  onChange={(e) => setCode(e.target.value)}
-                  placeholder="123456"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={6}
-                  required
-                />
-                <button className="primary" type="submit" disabled={busy || code.trim().length < 6} style={{ alignSelf: 'flex-start' }}>
-                  {busy ? 'Confirming…' : 'Confirm & activate'}
-                </button>
-              </form>
-            </>
-          )}
-          {msg && <div className={msg.startsWith('❌') ? 'error' : 'subtle'}>{msg}</div>}
-        </div>
-      )}
-
-      {status === 'needs_2fa' && msg && !enrollment && <div className="error" style={{ marginTop: 10 }}>{msg}</div>}
+        {session.capabilities.length > 0 && (
+          <>
+            <h3 className="drawer-sub">What they let you do</h3>
+            <ul className="plain-list">
+              {session.capabilities.map((c) => (
+                <li key={c}>{CAPABILITY[c] ?? c}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        <h3 className="drawer-sub">The pages you can open</h3>
+        <ul className="plain-list">
+          {NAV_GROUPS.map((g) => {
+            const here = pages.filter((p) => p.group === g.key);
+            return here.length ? (
+              <li key={g.key}>
+                <strong>{g.label}:</strong> {here.map((p) => p.label).join(', ')}
+              </li>
+            ) : null;
+          })}
+        </ul>
+        <p className="note">Roles are given on the server, by whoever runs Hevalo; the panel cannot change them.</p>
+      </Section>
     </div>
   );
 }

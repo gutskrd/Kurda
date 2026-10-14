@@ -53,6 +53,8 @@ describe('registerBodySchema', () => {
     username: 'rojda',
     password: 'longenough1',
     acceptTerms: true,
+    birthYear: 1990,
+    birthMonth: 6,
   };
 
   it('accepts a valid payload', () => {
@@ -63,5 +65,13 @@ describe('registerBodySchema', () => {
     expect(registerBodySchema.safeParse({ ...valid, password: 'short' }).success).toBe(false);
     expect(registerBodySchema.safeParse({ ...valid, email: 'nope' }).success).toBe(false);
     expect(registerBodySchema.safeParse({ ...valid, locale: 'xx' }).success).toBe(false);
+  });
+
+  it('requires a birth month and year: every protection for minors rests on them', () => {
+    const noBirth = { email: valid.email, username: valid.username, password: valid.password, acceptTerms: true };
+    expect(registerBodySchema.safeParse(noBirth).success).toBe(false);
+    expect(registerBodySchema.safeParse({ ...noBirth, birthYear: 1990 }).success).toBe(false);
+    expect(registerBodySchema.safeParse({ ...noBirth, birthMonth: 6 }).success).toBe(false);
+    expect(registerBodySchema.safeParse({ ...valid, birthMonth: 13 }).success).toBe(false);
   });
 });

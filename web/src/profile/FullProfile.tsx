@@ -1,8 +1,8 @@
 import { Link } from 'react-router-dom';
-import type { FavoriteRef, ProfileBackground, ProfileIcon } from '../lib/types';
+import type { FavoriteRef, LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { flagUrl } from '../lib/countries';
-import { CosmeticBackground, GiftedNote, IconOverlay } from './cosmetic-parts';
-import { PersonGlyph } from '../components/icons';
+import { GiftedNote } from './cosmetic-parts';
+import { ProfileCard } from '../ui/ProfileCard';
 import { useT } from '../i18n/I18nProvider';
 
 /** Normalized data a Hevalo profile renders (self or another user). */
@@ -14,13 +14,22 @@ export interface FullProfileView {
   background?: ProfileBackground | null;
   premium?: boolean;
   level: number;
+  /** the whole level, for the bar toward the next one; absent on older responses */
+  levelInfo?: LevelInfo;
   xp: number;
   streakDays: number;
+  /**
+   * Your own profile only: the two numbers a missed day never takes away,
+   * shown beside the streak that it does, and the freezes learning has earned.
+   */
+  learning?: { longest: number; daysLearned: number; freezes: number; sessionsPerFreeze: number };
   bio?: string | null;
   favPoem?: FavoriteRef | null;
   favStory?: FavoriteRef | null;
   online?: boolean;
   country?: { code: string; name: string } | null;
+  /** the season frame worn round the avatar */
+  frameSku?: string | null;
 }
 
 /**
@@ -28,73 +37,59 @@ export interface FullProfileView {
  * and other users' pages. Renders the background, header (avatar + identity +
  * level/featured), showcases (About / favorites) and the info sidebar with the
  * base Level / XP / Streak rows. Callers pass the right-column action(s) and any
- * extra sidebar content (self: Zêr + stacks; other: tier/rating).
+ * extra sidebar content (self: Zêr + stacks; other: achievements). Badges,
+ * ranks and the league come in as `progress`, under About.
  */
 export function FullProfile({
   view,
   headerAction,
   sidebarExtra,
   activity,
+  progress,
 }: {
   view: FullProfileView;
   headerAction?: React.ReactNode;
   sidebarExtra?: React.ReactNode;
+  /** the showcased badges, ranks and league (profile/ProfileProgress) */
+  progress?: React.ReactNode;
   /** what they have posted and played — below the showcases, above the fold on mobile */
   activity?: React.ReactNode;
 }): React.JSX.Element {
   const t = useT();
   const online = view.online ?? false;
   return (
-    <div className={`mkp-page${view.background ? ' mkp-has-bg' : ''}`}>
-      {view.background && (
-        <>
-          <CosmeticBackground background={view.background} className="mkp-bg" />
-          {/* its own element, not ::after: the scrim has to be pinned to the
-              viewport alongside the picture, not to the page box */}
-          <div className="mkp-scrim" aria-hidden />
-        </>
-      )}
-
+    <div className="mkp-page">
       <div className="mkp-wrap">
-        <header className="mkp-head">
-          <span className="mkp-avatar hero-avatar-wrap">
-            {view.avatarUrl ? (
-              <img src={view.avatarUrl} alt="" className="mkp-avatar-img" />
-            ) : (
-              <span className="mkp-avatar-img avatar-fallback" aria-hidden="true"><PersonGlyph size={72} /></span>
-            )}
-            {view.icon && <IconOverlay icon={view.icon} />}
-          </span>
-
-          <div className="mkp-id-text">
-            <div className="mkp-name">
-              {view.name}
-              {view.premium && <span className="mkp-premium">{t('profile.premium')}</span>}
-            </div>
-            <div className="mkp-sub">@{view.username}</div>
-            {view.country && (
-              <div className="mkp-country">
-                <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
-                <span>{view.country.name}</span>
-              </div>
-            )}
-            <GiftedNote background={view.background} icon={view.icon} />
-          </div>
-
-          <div className="mkp-level-col">
-            <div className="mkp-level-line">{t('profile.stat.level')} <span className="mkp-hex">{view.level}</span></div>
-            <div className="mkp-featured">
-              <span className="mkp-featured-badge">
-                {view.icon ? <img src={view.icon.url} alt="" /> : <PersonGlyph size={26} />}
-              </span>
-              <span className="mkp-featured-text">
-                <span className="mkp-featured-title">{t('profile.levelN', { level: view.level })}</span>
-                <span className="mkp-featured-sub">{view.xp.toLocaleString()} XP</span>
-              </span>
-            </div>
-            {headerAction}
-          </div>
-        </header>
+        {/*
+          The same card as the profile popup and the front page's picture of
+          one, only wider. The background used to fill the whole page behind
+          a header of its own; it is the banner now, where it reads as theirs
+          and the text below it stays on the app's own black.
+        */}
+        <ProfileCard
+          wide
+          name={view.name}
+          username={view.username}
+          avatarUrl={view.avatarUrl}
+          background={view.background}
+          icon={view.icon}
+          premium={view.premium}
+          online={online}
+          level={view.levelInfo}
+          frameSku={view.frameSku}
+          aside={headerAction}
+          meta={
+            <>
+              {view.country && (
+                <div className="mkp-country">
+                  <img className="flag" src={flagUrl(view.country.code)} alt="" width={22} height={16} loading="lazy" />
+                  <span>{view.country.name}</span>
+                </div>
+              )}
+              <GiftedNote background={view.background} icon={view.icon} />
+            </>
+          }
+        />
 
         <div className="mkp-body">
           <main className="mkp-main">
@@ -104,6 +99,8 @@ export function FullProfile({
                 {view.bio ? <p className="mkp-bio">{view.bio}</p> : <p className="mkp-bio muted">{t('profile.noBio')}</p>}
               </div>
             </div>
+
+            {progress}
 
             {view.favPoem && (
               <div className="mkp-showcase-block">
@@ -139,6 +136,14 @@ export function FullProfile({
               <div className="mkp-info-row"><span className="l">{t('profile.stat.level')}</span><span className="n">{view.level}</span></div>
               <div className="mkp-info-row"><span className="l">XP</span><span className="n">{view.xp.toLocaleString()}</span></div>
               <div className="mkp-info-row"><span className="l">{t('profile.stat.streak')}</span><span className="n">{view.streakDays}</span></div>
+              {view.learning && (
+                <>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.longestStreak')}</span><span className="n">{view.learning.longest}</span></div>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.daysLearned')}</span><span className="n">{view.learning.daysLearned}</span></div>
+                  <div className="mkp-info-row"><span className="l">{t('profile.stat.freezes')}</span><span className="n">{view.learning.freezes}</span></div>
+                  <p className="field-hint" style={{ margin: '4px 0 0' }}>{t('profile.freezeHint', { count: view.learning.sessionsPerFreeze })}</p>
+                </>
+              )}
 
               {sidebarExtra}
             </div>

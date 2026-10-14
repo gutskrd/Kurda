@@ -14,10 +14,12 @@ import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
-import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
+import { chatRouteId, groupThreadRouteId, type RootNavigation, type RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
+import { BirthDatePromptScreen } from './src/screens/auth/BirthDatePromptScreen';
+import { AgeStopScreen } from './src/screens/auth/AgeStopScreen';
 import { CivakScreen } from './src/feed/CivakScreen';
 import { SavedScreen } from './src/feed/SavedScreen';
 import { EditProfileScreen } from './src/profile/EditProfileScreen';
@@ -26,12 +28,17 @@ import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { PlayScreen } from './src/screens/PlayScreen';
-import { GameScreen } from './src/screens/GameScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
+import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
+import { RefreshedNotice } from './src/shop/RefreshedItems';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
+import { RanksScreen } from './src/ranks/RanksScreen';
+import { SeasonScreen } from './src/ranks/SeasonScreen';
+import { BadgesScreen } from './src/badges/BadgesScreen';
+import { BadgeCelebrationHost } from './src/badges/BadgeCelebrationHost';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { InboxScreen } from './src/inbox/InboxScreen';
@@ -55,6 +62,10 @@ import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
+import { MyReportsScreen } from './src/reports/MyReportsScreen';
+import { AccountStandingScreen } from './src/reports/AccountStandingScreen';
+import { SuspensionScreen } from './src/reports/SuspensionScreen';
+import { SocialOverlays } from './src/reports/SocialOverlays';
 import { WordleScreen } from './src/wordle/WordleScreen';
 import { WordleBattleScreen } from './src/wordle/WordleBattleScreen';
 import { RhymeTrainingScreen } from './src/rhyme/RhymeTrainingScreen';
@@ -62,15 +73,18 @@ import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
-import { PostPictureScreen } from './src/memes/PostPictureScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
-import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
+import { ComposeScreen } from './src/composer/ComposeScreen';
+import { StoriesHubScreen } from './src/stories/StoriesHubScreen';
+import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
+import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
-import { UserEventListener } from './src/realtime/UserEventListener';
+import { RealtimeProvider } from './src/realtime/RealtimeProvider';
+import { InviteBanner } from './src/play/InviteBanner';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -92,10 +106,12 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
  * hand it over until the two association files exist — apple-app-site-association
  * (needs the Apple team id) and assetlinks.json (needs the signing certificate's
  * SHA-256), both served from the site's /.well-known/. Until then a tapped link
- * opens the website and `kurda://` still works.
+ * opens the website and `hevalo://` still works.
  */
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/'), 'kurda://', 'https://hevalo.app'],
+  // `hevalo://` is the scheme app.json registers; this said `kurda://`, which
+  // no phone hands to the app
+  prefixes: [Linking.createURL('/'), 'hevalo://', 'https://hevalo.app'],
   config: {
     screens: {
       Tabs: { screens: linkingScreens() },
@@ -103,6 +119,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       Practice: 'practice',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
+      // `/app/games/stories?id=…` is a game to join; without an id it is the hub
+      Stories: inviteRoutePath('stories'),
+      StoryReader: 'app/games/stories/:slug',
     },
   },
 };
@@ -141,13 +160,15 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
         { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
-        { key: 'league', labelKey: 'rankings.title', icon: 'trophy', onPress: () => navigation.navigate('League') },
+        { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => navigation.navigate('League') },
+        { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => navigation.navigate('Ranks') },
       ],
     },
     {
       titleKey: 'nav.menu.yours',
       links: [
         { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => navigation.navigate('Saved') },
+        { key: 'badges', labelKey: 'badges.title', icon: 'medal', onPress: () => navigation.navigate('Badges') },
         { key: 'tags', labelKey: 'tags.title', icon: 'star', onPress: () => navigation.navigate('Tags') },
         { key: 'shop', labelKey: 'profile.shop', icon: 'cart', badge: giftBadge, onPress: () => navigation.navigate('Shop') },
         { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
@@ -215,36 +236,14 @@ function SignedInTabs() {
   );
 }
 
-function GameRoute({
-  roomId,
-  onExit,
-  onRematch,
-  onPractice,
-}: {
-  roomId: string;
-  onExit: () => void;
-  onRematch: (roomId: string) => void;
-  onPractice: () => void;
-}) {
-  const { user } = useAuth();
-  return (
-    <GameScreen
-      roomId={roomId}
-      selfId={user?.id ?? ''}
-      onExit={onExit}
-      onRematch={onRematch}
-      onPractice={onPractice}
-    />
-  );
-}
-
 function SignedInRoot() {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
   return (
-    <>
+    <RealtimeProvider>
       <PushRegistration />
-      <UserEventListener />
+      {/* a badge just earned has its moment over whatever screen is up, once a game's own result has had its turn */}
+      <BadgeCelebrationHost>
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -263,16 +262,6 @@ function SignedInRoot() {
       <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="Game" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ route, navigation }) => (
-          <GameRoute
-            roomId={route.params.roomId}
-            onExit={() => navigation.goBack()}
-            onRematch={(roomId) => navigation.replace('Game', { roomId })}
-            onPractice={() => navigation.replace('Practice')}
-          />
-        )}
-      </RootStack.Screen>
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
           <ShopScreen onExit={() => navigation.goBack()} onEarnMore={() => navigation.navigate('Tabs')} />
@@ -281,18 +270,39 @@ function SignedInRoot() {
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <LeagueScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
+      <RootStack.Screen name="Ranks" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RanksScreen game={route.params?.game} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Season" options={{ presentation: 'card' }}>
+        {({ navigation }) => <SeasonScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Badges" options={{ presentation: 'card' }}>
+        {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       <RootStack.Screen name="UserProfile" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
+      {/* one route per person and per group (rootStack.chatRouteId) */}
+      <RootStack.Screen name="Chat" options={{ presentation: 'card' }} getId={chatRouteId}>
         {({ route, navigation }) => (
-          <ChatScreen userId={route.params.userId} username={route.params.username} onExit={() => navigation.goBack()} />
+          <ChatScreen
+            userId={route.params.userId}
+            username={route.params.username}
+            openGift={route.params.openGift}
+            onExit={() => navigation.goBack()}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="BlockedUsers" options={{ presentation: 'card' }}>
         {({ navigation }) => <BlockedUsersScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="MyReports" options={{ presentation: 'card' }}>
+        {({ navigation }) => <MyReportsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="AccountStanding" options={{ presentation: 'card' }}>
+        {({ navigation }) => <AccountStandingScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       {/* leaving unwinds past the thread: the club is gone from under it */}
       <RootStack.Screen name="GroupMembers" options={{ presentation: 'card' }}>
@@ -307,11 +317,13 @@ function SignedInRoot() {
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GroupThreadScreen
             groupId={route.params.groupId}
             name={route.params.name}
+            openGift={route.params.openGift}
+            onLeft={() => navigation.navigate('Chats')}
             onExit={() => navigation.goBack()}
             onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />
@@ -354,12 +366,37 @@ function SignedInRoot() {
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => <RaceScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
+      <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoriesHubScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* a game is not left by a swipe that was meant to scroll the story */}
+      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+        {({ route, navigation }) => <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      {/* a modal, because it is a thing you finish and dismiss, not a place */}
-      <RootStack.Screen name="PostPicture" options={{ presentation: 'modal' }}>
-        {({ navigation }) => <PostPictureScreen onExit={() => navigation.goBack()} />}
+      {/*
+        Writing a post — words, pictures or both — and editing one. Full screen
+        and without the swipe-down: the composer asks before it lets go of
+        something written. PostPicture and LibraryCompose are the two old ways
+        in, kept as names so anything still pointing at them lands here.
+      */}
+      <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ route, navigation }) => (
+          <ComposeScreen
+            postId={route.params?.postId}
+            startWithPictures={route.params?.pickPictures}
+            asMeme={route.params?.meme}
+            onExit={() => navigation.goBack()}
+          />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="PostPicture" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
@@ -391,20 +428,46 @@ function SignedInRoot() {
       <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal' }}>
-        {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
+      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
-    </>
+      {/* over every screen: an invite to play waits here until it is answered */}
+      <InviteBanner />
+      {/* over every screen: a gift that arrives, a warning to read once */}
+      <SocialOverlays />
+      </BadgeCelebrationHost>
+    </RealtimeProvider>
   );
 }
 
 function Root() {
-  const { status, user } = useAuth();
+  const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
+  }
+
+  // Refused at sign-in or refresh because the account is suspended: the reasons
+  // and a way to ask for a review, instead of a sign-in form that cannot work.
+  if (status === 'signedOut' && suspension) {
+    return (
+      <Entrance>
+        <SuspensionScreen details={suspension} baseUrl={baseUrl} onBack={clearSuspension} />
+      </Entrance>
+    );
+  }
+
+  // An answer that stopped at age — no account made, or one just closed —
+  // leaves only the explanation for as long as the app is open: no sign-up
+  // form to try a different year on.
+  if (status === 'signedOut' && ageStop) {
+    return (
+      <Entrance>
+        <AgeStopScreen kind={ageStop} />
+      </Entrance>
+    );
   }
 
   if (status === 'signedOut') {
@@ -441,9 +504,24 @@ function Root() {
     );
   }
 
+  // Then the birth month, asked once of an account that has none (a Google or
+  // Apple sign-up, or one from before it was asked): what the app lets the
+  // account do depends on the answer.
+  if (user?.birthDateRequired === true) {
+    return (
+      <Entrance>
+        <BirthDatePromptScreen />
+      </Entrance>
+    );
+  }
+
   return (
     <Entrance>
       <SignedInRoot />
+      {/* the one-time rating box (and, rarely, the store's own prompt) after a finished game */}
+      <GameFeedbackHost />
+      {/* once: the shop's items you own have new art, and can be returned */}
+      <RefreshedNotice />
     </Entrance>
   );
 }

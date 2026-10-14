@@ -4,8 +4,10 @@ import type { MessageKey } from '../i18n/en';
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { FeatherIcon, BookIcon, KeyboardIcon, TrophyIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
+import { RaceMini, RhymeMini, StoriesMini, WordleMini } from '../landing/mocks';
+import { useStoriesAvailable } from '../stories/catalogue';
+import { RanksSection } from '../ranks/RanksSection';
 
 /**
  * A game, before it has words.
@@ -18,42 +20,51 @@ interface GameMode {
   labelKey: MessageKey;
   blurbKey: MessageKey;
   href: string;
-  /** played against other people, so it needs an account */
-  online?: boolean;
+  /** open without an account (reading a story) */
+  open?: boolean;
 }
 
 interface GameCard {
-  icon: React.JSX.Element;
+  /** the tile's shape in the grid, shared with the front page */
+  id: 'wordle' | 'rhyme' | 'race' | 'stories';
+  /** a small picture of the game being played — the front page's, decorative */
+  visual: React.JSX.Element;
   nameKey: MessageKey;
   bodyKey: MessageKey;
   /** how this game can be played; one box per game, the mode is chosen on click */
   modes: GameMode[];
+  /**
+   * The game's own page is where its modes are chosen (Stories: read one, then
+   * quiz yourself or play with friends), so the tile opens it rather than asking.
+   */
+  hub?: string;
 }
 
 /** One box per game — the mode (solo / online / …) is chosen after clicking. */
 const GAMES: GameCard[] = [
   {
-    icon: <BookIcon />,
+    id: 'wordle',
+    visual: <WordleMini />,
     nameKey: 'games.wordle.name',
     bodyKey: 'games.wordle.body',
     modes: [
       { labelKey: 'games.mode.solo', blurbKey: 'games.wordle.solo', href: '/app/games/wordle' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/wordle-battle', online: true },
+      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/wordle-battle' },
     ],
   },
   {
-    icon: <FeatherIcon />,
+    id: 'rhyme',
+    visual: <RhymeMini />,
     nameKey: 'games.rhyme.name',
     bodyKey: 'games.rhyme.body',
     modes: [
       { labelKey: 'games.mode.solo', blurbKey: 'games.rhyme.solo', href: '/app/games/rhyme' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.rhyme.online', href: '/app/games/rhyme-match', online: true },
+      { labelKey: 'games.mode.online', blurbKey: 'games.rhyme.online', href: '/app/games/rhyme-match' },
     ],
   },
   {
-    // a keyboard, not a quill: this one is about keys, and a second quill made
-    // it look like another version of Rhyming Words
-    icon: <KeyboardIcon />,
+    id: 'race',
+    visual: <RaceMini />,
     nameKey: 'games.race.name',
     bodyKey: 'games.race.body',
     modes: [
@@ -65,11 +76,15 @@ const GAMES: GameCard[] = [
     ],
   },
   {
-    icon: <TrophyIcon />,
-    nameKey: 'games.quiz.name',
-    bodyKey: 'games.quiz.body',
+    id: 'stories',
+    visual: <StoriesMini />,
+    nameKey: 'games.stories.name',
+    bodyKey: 'games.stories.body',
+    hub: '/app/games/stories',
     modes: [
-      { labelKey: 'games.mode.online', blurbKey: 'games.quiz.online', href: '/app/games/quiz', online: true },
+      { labelKey: 'games.stories.read', blurbKey: 'games.stories.body', href: '/app/games/stories', open: true },
+      { labelKey: 'stories.quizYourself', blurbKey: 'games.stories.body', href: '/app/games/stories' },
+      { labelKey: 'games.stories.withFriends', blurbKey: 'games.stories.body', href: '/app/games/stories' },
     ],
   },
 ];
@@ -78,12 +93,24 @@ const GAMES: GameCard[] = [
  * Games overview. Every game is one box; clicking it asks how you want to play
  * (solo vs online) instead of scattering each mode across its own card. All
  * games are server-authoritative — the client never scores itself.
+ *
+ * Which is also why every game needs an account, the solo rounds included:
+ * the server keeps the score against the player (every route in api/src/game
+ * asks who is playing). This page used to offer guests the solo modes, and a
+ * guest who took the offer got an error instead of a game. Now a guest sees
+ * every game, every mode marked as needing an account, and the way to make one.
+ * The one exception is reading a story, which is open to everyone; its quiz
+ * is not.
+ *
+ * Stories replaced the ranked quiz. Until a story is published there is
+ * nothing behind its card, so the card says "Coming soon" and opens nothing.
  */
 export function Games(): React.JSX.Element {
   const { status } = useAuth();
   const signedIn = status === 'signedIn';
   const [chooser, setChooser] = useState<GameCard | null>(null);
   const t = useT();
+  const stories = useStoriesAvailable();
 
   return (
     <div className="container game-page">
@@ -93,41 +120,60 @@ export function Games(): React.JSX.Element {
         <p className="page-sub">{t('games.subtitle')}</p>
       </div>
 
-      <div className="grid grid-2">
+      {/* your rank in each game played against people, and the season (signed in only) */}
+      <RanksSection />
+
+      {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
+      <div className="game-grid">
         {GAMES.map((g) => {
-          // a guest can play anything they play alone; only the modes against
-          // other people need an account, so a game is only closed to them when
-          // every way of playing it is
-          const playable = g.modes.filter((m) => signedIn || !m.online);
+          const comingSoon = g.id === 'stories' && stories === 'none';
+          // nothing is playable without an account (see the note above), and
+          // nothing at all before there is something to play
+          const playable = comingSoon ? [] : signedIn ? g.modes : g.modes.filter((m) => m.open);
           const single = playable.length === 1 ? playable[0] : undefined;
           return (
-            <article className="feature game-card" key={g.nameKey}>
-              <div className="feature-icon">{g.icon}</div>
-              <div className="game-card-head">
-                <h3>{t(g.nameKey)}</h3>
-                <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
-                  {playable.length > 0 ? t('games.playable') : t('games.signInToPlay')}
-                </span>
+            <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
+              <div className="game-tile-visual">{g.visual}</div>
+              <div className="game-tile-text">
+                <div className="game-tile-head">
+                  <h3>{t(g.nameKey)}</h3>
+                  <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
+                    {comingSoon
+                      ? t('stories.comingSoon')
+                      : signedIn
+                        ? t('games.playable')
+                        : playable.length > 0
+                          ? t('games.stories.readFree')
+                          : t('games.signInToPlay')}
+                  </span>
+                </div>
+                <p>{t(g.bodyKey)}</p>
+                <ul className="game-tags">
+                  {g.modes.map((m) => {
+                    const locked = !signedIn && !m.open;
+                    return (
+                      <li key={m.labelKey} className={locked ? 'is-locked' : undefined}>
+                        {t(m.labelKey)}
+                        {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {playable.length > 0 &&
+                  (g.hub ? (
+                    <Link to={g.hub} className="btn btn-primary btn-sm">
+                      {signedIn ? t('games.play') : t('games.stories.read')}
+                    </Link>
+                  ) : single ? (
+                    <Link to={single.href} className="btn btn-primary btn-sm">
+                      {t('games.play')}
+                    </Link>
+                  ) : (
+                    <button type="button" className="btn btn-primary btn-sm" onClick={() => setChooser(g)}>
+                      {t('games.play')}
+                    </button>
+                  ))}
               </div>
-              <p>{t(g.bodyKey)}</p>
-              <ul className="game-modes-hint">
-                {g.modes.map((m) => (
-                  <li key={m.href}>
-                    {t(m.labelKey)}
-                    {!signedIn && m.online && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
-                  </li>
-                ))}
-              </ul>
-              {playable.length > 0 &&
-                (single ? (
-                  <Link to={single.href} className="btn btn-primary btn-sm">
-                    {t('games.play')}
-                  </Link>
-                ) : (
-                  <button type="button" className="btn btn-primary btn-sm" onClick={() => setChooser(g)}>
-                    {t('games.play')}
-                  </button>
-                ))}
             </article>
           );
         })}

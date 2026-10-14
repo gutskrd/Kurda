@@ -7,6 +7,7 @@ import {
   isUndo,
   undoAction,
   VISIBILITY_LABEL,
+  visibilityOffered,
 } from './format';
 import { TRANSLATIONS, LOCALES } from '../i18n/translations';
 
@@ -138,5 +139,18 @@ describe('profile visibility', () => {
       expect(VISIBILITY_LABEL[v]).toBeTruthy();
       expect(VISIBILITY_HINT[v]).toBeTruthy();
     }
+  });
+});
+
+describe('visibilityOffered', () => {
+  it('offers every rung to an adult', () => {
+    for (const v of VISIBILITIES) expect(visibilityOffered(v, false)).toBe(true);
+  });
+
+  it('never offers a minor the open web, and every other rung', () => {
+    expect(visibilityOffered('everyone', true)).toBe(false);
+    expect(visibilityOffered('members', true)).toBe(true);
+    expect(visibilityOffered('friends', true)).toBe(true);
+    expect(visibilityOffered('nobody', true)).toBe(true);
   });
 });

@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -13,16 +12,21 @@ import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
-import { tierMeta } from '../leagues/format';
+import { knownTier, leagueName } from '../leagues/format';
+import { ProgressShowcase } from '../profile/ProgressShowcase';
+import { SeasonFramed, frameTierOf } from '../ranks/art';
+import { TIER_NAME_KEY } from '../ranks/format';
+import { SEASON_FRAME_INNER, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { FavoriteRow } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
-import { ReportUserSheet } from './ReportUserSheet';
+import { ReportSheet } from '../reports/ReportSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
+import { PlayWithButton } from '../play/PlayWithButton';
 
 interface Profile {
   userId: string;
@@ -34,9 +38,17 @@ interface Profile {
   private: boolean;
   xp?: number;
   streak?: number;
-  tier?: string;
-  rating?: number;
+  /** their league tier, or null for someone not in the leagues (never a made-up "bronze") */
+  tier?: string | null;
+  league?: ProfileLeague | null;
+  /** Game Ranks per game played; "Resting" ones carry no tier for others */
+  ranks?: ProfileRank[];
+  /** the season frame they wear round their avatar */
+  frameSku?: string | null;
+  /** badges earned (and the legacy tournament win) */
   achievements?: number;
+  /** the three badges they chose to show */
+  badges?: ShowcaseBadge[];
   /** which activity sections they let people see; null when private */
   sections?: ProfileSections | null;
   /*
@@ -147,7 +159,17 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
             const labelKey = friendActionLabel(profile.friendStatus);
             return (
         <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-          <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+          {frameTierOf(profile.frameSku) ? (
+            <SeasonFramed
+              tier={frameTierOf(profile.frameSku)!}
+              size={Math.round(96 / SEASON_FRAME_INNER)}
+              label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTierOf(profile.frameSku)!]) })}
+            >
+              <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+            </SeasonFramed>
+          ) : (
+            <InitialsAvatar name={profile.displayName ?? profile.username} id={profile.userId} size={96} photoUrl={profile.avatarUrl} />
+          )}
           <Text style={[styles.username, { color: colors.textPrimary }]}>{profile.username}</Text>
           {profile.displayName ? <Text style={[styles.display, { color: colors.textSecondary }]}>{profile.displayName}</Text> : null}
 
@@ -158,9 +180,19 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
               <View style={styles.stats}>
                 <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
                 <Stat label="XP" value={`${profile.xp ?? 0}`} />
-                <Stat label={t('profile.league')} value={tierMeta(profile.tier ?? 'bronze').label} />
+                {/* a league only while they take part, translated; nothing for somebody never in one */}
+                {knownTier(profile.league?.tier ?? profile.tier) ? (
+                  <Stat label={t('profile.league')} value={leagueName(t, knownTier(profile.league?.tier ?? profile.tier)!)} />
+                ) : null}
                 <Stat label={t('profile.badges')} value={`${profile.achievements ?? 0}`} />
               </View>
+
+              <ProgressShowcase
+                own={false}
+                ranks={profile.ranks ?? []}
+                league={profile.league ?? (knownTier(profile.tier) ? { tier: knownTier(profile.tier)! } : null)}
+                badges={profile.badges ?? []}
+              />
 
               {/* behind the same privacy check as the stats: pinning a poem is
                   something you did for people who can see your profile */}
@@ -183,19 +215,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     size="large"
                     onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
                   />
-                  <ClayButton
-                    label={t('profile.challenge1v1')}
-                    icon="play"
-                    tone="accent"
-                    variant="outline"
-                    size="large"
-                    onPress={() =>
-                      void client.post('/challenges', { userId: profile.userId }).then((res) => {
-                        if (res.ok) Alert.alert(t('profile.challengeSent'), t('profile.challengeWaiting'));
-                        else Alert.alert(t('profile.challengeFailed'), describeError(res.error, t));
-                      })
-                    }
-                  />
+                  {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
+                  <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
                 </>
               ) : null}
               {labelKey ? (
@@ -224,13 +245,18 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                   <Text style={[styles.blockText, { color: colors.danger }]}>{t('moderation.block')}</Text>
                 </Pressable>
               </View>
-              {reporting ? (
-                <ReportUserSheet
-                  userId={profile.userId}
-                  name={profile.displayName ?? profile.username}
-                  onClose={() => setReporting(false)}
-                />
-              ) : null}
+              <ReportSheet
+                visible={reporting}
+                target={{ type: 'user', userId: profile.userId }}
+                name={profile.displayName ?? profile.username}
+                blockable={{ userId: profile.userId, name: profile.displayName ?? profile.username }}
+                onClose={() => setReporting(false)}
+                // blocked from the report: the profile is gone to you now
+                onBlocked={() => {
+                  setReporting(false);
+                  onExit();
+                }}
+              />
             </View>
           ) : null}
         </View>

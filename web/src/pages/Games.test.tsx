@@ -4,19 +4,22 @@ import userEvent from '@testing-library/user-event';
 import { Games } from './Games';
 import { TopNav } from '../components/TopNav';
 import { renderApp, jsonResponse } from '../test/utils';
+import { resetStoriesAvailable } from '../stories/catalogue';
 
 afterEach(() => {
   vi.restoreAllMocks();
   localStorage.clear();
+  resetStoriesAvailable();
 });
 
-function signIn(): void {
+function signIn(stories: unknown[] = [{ id: 's1' }]): void {
   localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string) => {
       if (url.includes('/me'))
         return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+      if (url.endsWith('/stories')) return jsonResponse(200, { stories });
       return jsonResponse(200, {});
     }),
   );
@@ -28,7 +31,9 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
     expect(await screen.findByText('Kurdish Wordle')).toBeInTheDocument();
     expect(screen.getByText('Rhyming Words')).toBeInTheDocument();
-    expect(screen.getByText('Ranked Quiz')).toBeInTheDocument();
+    // Stories took the ranked quiz's place
+    expect(screen.getByText('Stories')).toBeInTheDocument();
+    expect(screen.queryByText('Ranked Quiz')).not.toBeInTheDocument();
     // the separate per-mode cards are gone
     expect(screen.queryByText('Wordle Battle')).not.toBeInTheDocument();
     expect(screen.queryByText('Rhyme Match')).not.toBeInTheDocument();
@@ -50,37 +55,54 @@ describe('Games hub', () => {
   it('links a single-mode game straight to its page', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    // wait for the session to land: a signed-out visitor also sees Play links
-    // now, so querying too early answers about the wrong reader
+    // wait for the session to land: until it does, the page is drawn for a
+    // signed-out visitor, who has no Play links at all
     await screen.findAllByRole('button', { name: /^play$/i });
 
     const hrefs = screen.getAllByRole('link', { name: /^play/i }).map((a) => a.getAttribute('href'));
-    expect(hrefs).toContain('/app/games/quiz');
+    expect(hrefs).toContain('/app/games/stories');
     expect(hrefs).toContain('/app/games/race');
   });
 
-  it('lets a signed-out visitor play the games you play alone', async () => {
+  it('says "Coming soon" on Stories, and opens nothing, while no story is published', async () => {
+    signIn([]);
+    renderApp(<Games />, ['/app/games']);
+    const tile = (await screen.findByRole('heading', { name: 'Stories' })).closest('article')!;
+    expect(await within(tile).findByText('Coming soon')).toBeInTheDocument();
+    expect(within(tile).queryByRole('link')).toBeNull();
+    expect(within(tile).queryByRole('button')).toBeNull();
+  });
+
+  /**
+   * Deliberately changed. This page used to offer a signed-out visitor the solo
+   * modes, but every game route on the server needs an account — the solo
+   * rounds are scored against the player too — so the offer led to an error.
+   * A guest is now told what is true: every game needs an account.
+   */
+  it('offers a signed-out visitor no game it cannot start', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    const hrefs = (await screen.findAllByRole('link', { name: /^play/i })).map((a) => a.getAttribute('href'));
-    // solo is solo whether or not anyone knows who you are
-    expect(hrefs).toContain('/app/games/wordle');
-    expect(hrefs).toContain('/app/games/race');
-    // but nothing that puts you in front of another person
-    expect(hrefs).not.toContain('/app/games/wordle-battle');
-    expect(hrefs).not.toContain('/app/games/rhyme-match');
-    expect(hrefs).not.toContain('/app/games/quiz');
+    expect(await screen.findAllByText('Sign in to play')).toHaveLength(3);
+    expect(screen.queryAllByRole('link', { name: /^play/i })).toHaveLength(0);
+    expect(screen.queryAllByRole('button', { name: /^play$/i })).toHaveLength(0);
+    // reading a story is the one thing open without an account; its quiz is not
+    const stories = screen.getByRole('heading', { name: 'Stories' }).closest('article')!;
+    expect(within(stories).getByText('Free to read')).toBeInTheDocument();
+    expect(within(stories).getByRole('link', { name: 'Read a story' })).toHaveAttribute('href', '/app/games/stories');
+    // and the way to make one
+    expect(screen.getByRole('link', { name: 'Create your account' })).toHaveAttribute('href', '/register');
   });
 
-  it('says which modes need an account rather than hiding them', async () => {
+  it('still says what each game has, and that it needs an account', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
     // knowing there is more here once you sign up is the reason to sign up
-    expect((await screen.findAllByText(/needs an account/)).length).toBeGreaterThan(0);
-    // a game with no solo mode at all is the only one marked closed
-    expect(screen.getAllByText('Sign in to play')).toHaveLength(1);
+    // two modes each for Wordle and Rhyme, one for the race, two of the three for Stories
+    expect(await screen.findAllByText(/needs an account/)).toHaveLength(7);
+    expect(screen.getAllByText('Play solo').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Play online').length).toBeGreaterThan(0);
   });
 
   /**
@@ -99,7 +121,7 @@ describe('Games hub', () => {
     expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();
     // the mode hints under each box, and the badge
     expect(screen.getAllByText('Allein spielen').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('Spielbar').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Zum Spielen anmelden').length).toBeGreaterThan(0);
   });
 
   it('translates the mode chooser too', async () => {

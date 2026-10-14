@@ -67,6 +67,8 @@ describe.skipIf(!ready)('POST /media/uploads (integration)', () => {
         username: `upload_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.77.0.1',
     });

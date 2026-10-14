@@ -3,6 +3,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';
 import { RhymeMatchService } from './rhyme-match-service.js';
+import { befriend } from '../test/social.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -67,6 +68,8 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     clock.t = new Date('2026-08-18T12:00:00Z');
     const host = await makeUser();
     const p2 = await makeUser();
+    // a match is for the host's friends (play/access.ts)
+    await befriend(pool, host, p2);
     const created = await svc().create(host, { dialect: 'kurmanci', windowMs: 60_000 });
     expect(created.ok).toBe(true);
     if (!created.ok) return;
@@ -86,6 +89,7 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
 
     // can't join once active
     const late = await makeUser();
+    await befriend(pool, host, late);
     const lateJoin = await svc().join(matchId, late);
     expect(lateJoin.ok).toBe(false);
     if (!lateJoin.ok) expect(lateJoin.reason).toBe('not-open');
@@ -111,10 +115,10 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     expect(dup.ok).toBe(true);
     if (dup.ok) expect(dup.result.reason).toBe('already-used');
 
-    // live scoreboard is shared (both scores visible)
+    // live scoreboard is shared (both scores visible), each player by seat
     const view = await svc().state(matchId, p2);
     expect(view.status).toBe('active');
-    const hostScore = view.scoreboard.find((s) => s.userId === host)!;
+    const hostScore = view.scoreboard.find((s) => s.userId === 'seat:1')!;
     expect(hostScore.accepted).toBe(2);
 
     // window elapses → results finalize: host rank 1, more XP than p2
@@ -125,7 +129,7 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     const results = await svc().results(matchId, host);
     expect(results).toBeTruthy();
     const hostRow = results!.ranking.find((r) => r.userId === host)!;
-    const p2Row = results!.ranking.find((r) => r.userId === p2)!;
+    const p2Row = results!.ranking.find((r) => r.userId === 'seat:2')!;
     expect(hostRow.rank).toBe(1);
     expect(hostRow.score).toBeGreaterThan(p2Row.score);
     expect(hostRow.xpAwarded!).toBeGreaterThan(p2Row.xpAwarded!);
@@ -145,9 +149,10 @@ describe.skipIf(!DATABASE_URL)('rhyme match (integration)', () => {
     expect(solo.ok).toBe(false);
     if (!solo.ok) expect(solo.reason).toBe('need-two');
 
+    // to someone not in it, the match does not exist at all
     const stranger = await makeUser();
     const g = await svc().submit(created.match.id, stranger, RHYMES[0]!);
     expect(g.ok).toBe(false);
-    if (!g.ok) expect(g.reason).toBe('not-active');
+    if (!g.ok) expect(g.reason).toBe('not-found');
   });
 });

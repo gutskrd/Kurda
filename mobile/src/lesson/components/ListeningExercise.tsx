@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -7,6 +7,7 @@ import { ClayButton } from '../../theme/glass';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
 import { useI18n } from '../../i18n/I18nContext';
+import { KurdishAnswerInput } from './KurdishAnswerInput';
 
 interface Props {
   exercise: Exercise;
@@ -15,9 +16,11 @@ interface Props {
   /** defer the exercise (can't listen now / audio failed): not counted wrong */
   onSkip: () => void;
   disabled: boolean;
+  /** the course's variety of Kurdish, for the key bar */
+  dialect?: string | null;
 }
 
-export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled }: Props) {
+export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled, dialect }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const audio = useAudio(exercise.audioUrl);
@@ -56,14 +59,13 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
 
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textSecondary }]}>{exercise.prompt}</Text> : null}
 
-      <TextInput
-        value={text}
+      <KurdishAnswerInput
+        text={text}
         onChangeText={onChangeText}
-        editable={!disabled}
+        dialect={dialect}
+        disabled={disabled}
         placeholder={t('lesson.listen.placeholder')}
         placeholderTextColor={colors.textSecondary}
-        autoCapitalize="none"
-        autoCorrect={false}
         style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.listen.answerLabel')}
       />

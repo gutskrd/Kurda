@@ -53,6 +53,17 @@ export function registerCosmeticsRoutes(app: FastifyInstance, cosmetics: Cosmeti
     },
   );
 
+  /** Wear a season frame you were given (or none). */
+  app.put(
+    '/me/cosmetics/frame',
+    { schema: { body: skuBody }, config: { rateLimit }, preHandler: requireAuth },
+    async (req) => {
+      const { sku } = req.body as { sku: string | null };
+      await cosmetics.equipFrame(req.user!.id, sku);
+      return { frameSku: sku };
+    },
+  );
+
   /** Show/hide the equipped premium icon (keeps the selection). */
   app.put(
     '/me/cosmetics/icon/visibility',

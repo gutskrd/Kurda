@@ -9,6 +9,7 @@ import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
 import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
 import { DailyReward } from '../components/DailyReward';
+import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
 
 const PAGE = 20;
@@ -91,6 +92,9 @@ export function Civak(): React.JSX.Element {
         for a visitor without an account, and nothing once today is claimed.
       */}
       <DailyReward />
+
+      {/* the week's league in one line, with the goal ring: a door to it, not a copy */}
+      <HomeLeagueLine />
 
       {/* the + belongs with the wall it adds to, not adrift under the heading */}
       <div className="feed-filters">

@@ -1,34 +1,57 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import { LanguagePicker } from '../i18n/LanguagePicker';
+import { BirthMonthFields, EMPTY_BIRTH_MONTH, birthMonthOf } from '../auth/BirthMonthFields';
+import { AgeStop, ageStopRemembered, rememberAgeStop, type AgeStopKind } from '../auth/AgeStop';
+import { rememberAfterSignup } from '../auth/afterSignup';
 
 export function Register(): React.JSX.Element {
   const { register } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const { locale, setLocale } = useI18n();
   const t = useT();
 
   const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // read once: an earlier refusal in this browser session keeps the form away
+  const [stopped, setStopped] = useState<AgeStopKind | null>(ageStopRemembered);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
+    const chosen = birthMonthOf(birth);
+    if (!chosen) {
+      setError(t('age.required'));
+      return;
+    }
     setBusy(true);
     setError(null);
     // the language they chose here is the account's from the first moment,
     // so the confirmation email and the next sign-in already speak it
-    const err = await register({ email, username, password, locale });
+    const err = await register({ email, username, password, locale, ...chosen });
     setBusy(false);
-    if (err) setError(err);
-    else navigate('/app', { replace: true });
+    if (err?.code === 'UNDER_MINIMUM_AGE') {
+      // no account was made; the explanation replaces the form, and stays
+      rememberAgeStop('refused');
+      setStopped('refused');
+    } else if (err) setError(err.message);
+    else {
+      // a friend's invite or a story's quiz that sent them here: opened once
+      // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
+      rememberAfterSignup((location.state as { from?: unknown } | null)?.from);
+      navigate('/app', { replace: true });
+    }
   }
+
+  if (stopped) return <AgeStop accountClosed={stopped === 'closed'} />;
 
   return (
     <div className="auth-wrap">
@@ -86,6 +109,8 @@ export function Register(): React.JSX.Element {
             <span className="field-hint">{t('auth.passwordHint')}</span>
           </div>
 
+          <BirthMonthFields value={birth} onChange={setBirth} disabled={busy} />
+
           {/*
             Asked here rather than after signing up, and it takes effect while
             you are still on this page — so the first thing a new account sees
@@ -99,13 +124,20 @@ export function Register(): React.JSX.Element {
             {busy ? t('auth.register.submitting') : t('auth.register.submit')}
           </Button>
 
+          {/* the sentence names two documents, so it links to both of them */}
           <p className="oauth-note">
-            {t('auth.register.terms')}
+            {t('auth.register.terms')}{' '}
+            <Link to="/terms" className="doc-link">{t('footer.terms')}</Link>
+            {' · '}
+            <Link to="/privacy" className="doc-link">{t('footer.privacy')}</Link>
           </p>
         </form>
 
         <p className="auth-alt">
-          {t('auth.register.haveAccount')} <Link to="/login">{t('auth.register.signIn')}</Link>
+          {t('auth.register.haveAccount')}{' '}
+          <Link to="/login" state={location.state}>
+            {t('auth.register.signIn')}
+          </Link>
         </p>
       </div>
     </div>

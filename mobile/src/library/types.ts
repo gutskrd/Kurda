@@ -1,8 +1,10 @@
 /** Community library (stories & poems, KUR-281/284) — types + native-free helpers. */
 
+import type { PostMediaView } from '@kurda/shared';
 import type { Translate } from '../api/errors';
 
-export type PostType = 'story' | 'poem';
+/** A gotin is a saying, with no title; a çîrok (story) and a helbest (poem) have one. */
+export type PostType = 'gotin' | 'story' | 'poem';
 export type AuthorRole = 'user' | 'admin';
 
 export interface LibraryPost {
@@ -10,7 +12,9 @@ export interface LibraryPost {
   authorId: string;
   authorRole: AuthorRole;
   type: PostType;
-  title: string;
+  /** null on a gotin */
+  title: string | null;
+  /** '' on a post that is only its pictures */
   body: string;
   audioMediaId: string | null;
   audioUrl: string | null;
@@ -21,6 +25,11 @@ export interface LibraryPost {
   createdAt: string;
   updatedAt: string;
   publishedAt: string | null;
+  /** up to four pictures, in order; an older API leaves it out */
+  media?: PostMediaView[];
+  meme?: boolean;
+  /** "Source / credit", shown under the post */
+  sourceCredit?: string | null;
 }
 
 /** Threaded comment (text or audio), mirroring the API's library_comments. */
@@ -50,6 +59,14 @@ export function clock(seconds: number): string {
 export function bodyPreview(body: string, max = 140): string {
   const flat = body.replace(/\s+/g, ' ').trim();
   return flat.length > max ? `${flat.slice(0, max - 1).trimEnd()}…` : flat;
+}
+
+/**
+ * What to call a post in a list: its title, or for a gotin (which has none)
+ * the start of what it says.
+ */
+export function postName(post: Pick<LibraryPost, 'title' | 'body'>): string {
+  return post.title?.trim() || bodyPreview(post.body, 60);
 }
 
 /**

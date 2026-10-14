@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
-  STARTING_HEARTS,
   currentExercise,
+  feedbackTitle,
   initPlayer,
-  outOfHearts,
+  isReask,
   progress,
   reduce,
   type PlayerState,
@@ -34,15 +34,14 @@ const answer = (over: Partial<AnswerResult> = {}): AnswerResult => ({
 });
 
 describe('initPlayer', () => {
-  it('starts fresh at the first exercise with full hearts', () => {
+  it('starts fresh at the first exercise', () => {
     const s = initPlayer(view());
     expect(s.index).toBe(0);
-    expect(s.hearts).toBe(STARTING_HEARTS);
     expect(s.status).toBe('answering');
     expect(progress(s)).toBe(0);
   });
 
-  it('resumes at the first unanswered exercise, keeping lost hearts', () => {
+  it('resumes at the first unanswered exercise, with the earlier miss still to come back', () => {
     const s = initPlayer(
       view({
         answered: {
@@ -51,9 +50,10 @@ describe('initPlayer', () => {
         },
       }),
     );
-    expect(s.index).toBe(2); // c is next
+    expect(currentExercise(s)?.id).toBe('c'); // c is next
     expect(s.answeredCount).toBe(2);
-    expect(s.hearts).toBe(STARTING_HEARTS - 1); // one wrong earlier
+    // b was missed before the learner left; its second try is still ahead
+    expect(s.steps.slice(s.index).map((st) => (st.reask ? `${st.exerciseId}*` : st.exerciseId))).toEqual(['c', 'b*']);
   });
 
   it('is finished when the session is already complete', () => {
@@ -83,7 +83,6 @@ describe('reduce', () => {
     s = reduce(s, { type: 'ANSWERED', result: answer() });
     expect(s.status).toBe('feedback');
     expect(s.feedback).toMatchObject({ verdict: 'correct', accepted: true });
-    expect(s.hearts).toBe(STARTING_HEARTS);
     expect(s.answeredCount).toBe(1);
 
     s = reduce(s, { type: 'CONTINUE' });
@@ -92,26 +91,26 @@ describe('reduce', () => {
     expect(currentExercise(s)?.id).toBe('b');
   });
 
-  it('accepts a typo without costing a heart, shows the correction', () => {
+  it('accepts a typo, shows the correction, and does not ask it again', () => {
     let s = start();
     s = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'typo', correction: 'sêv' }) });
-    expect(s.hearts).toBe(STARTING_HEARTS);
     expect(s.feedback?.correction).toBe('sêv');
+    expect(s.feedback?.comesBack).toBeUndefined();
   });
 
-  it('loses a heart on a wrong answer', () => {
+  it('a wrong answer costs nothing but comes back for a second try', () => {
     let s = start();
     s = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
-    expect(s.hearts).toBe(STARTING_HEARTS - 1);
+    expect(s.feedback?.comesBack).toBe(true);
+    expect('hearts' in s).toBe(false);
   });
 
-  it('does not charge a heart for a duplicate replay', () => {
+  it('counts a duplicate replay once', () => {
     let s = start();
     s = reduce(s, {
       type: 'ANSWERED',
       result: answer({ verdict: 'wrong', accepted: false, duplicate: true }),
     });
-    expect(s.hearts).toBe(STARTING_HEARTS);
     expect(s.answeredCount).toBe(0);
   });
 
@@ -125,20 +124,30 @@ describe('reduce', () => {
     expect(progress(s)).toBe(1);
   });
 
-  it('ends the lesson when hearts run out', () => {
-    let s = initPlayer(view(), 1); // a single heart
-    s = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
-    expect(outOfHearts(s)).toBe(true);
-    s = reduce(s, { type: 'CONTINUE' });
-    expect(s.status).toBe('finished'); // failed out before the end
-    expect(s.index).toBe(0); // did not advance
+  it('never ends the lesson early: every answer wrong still runs to the end', () => {
+    let s = start();
+    while (s.status !== 'finished') {
+      s = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
+      s = reduce(s, { type: 'CONTINUE' });
+    }
+    // three first asks and three second tries, and nothing cut short
+    expect(s.answeredCount).toBe(exercises.length);
+    expect(s.reasked).toEqual(['a', 'b', 'c']);
   });
 
-  it('SKIP defers the exercise: advances with no heart lost and no mistake', () => {
+  it('asks a missed exercise once more, after the others', () => {
+    let s = start();
+    s = reduce(reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) }), { type: 'CONTINUE' });
+    s = reduce(reduce(s, { type: 'ANSWERED', result: answer() }), { type: 'CONTINUE' });
+    s = reduce(reduce(s, { type: 'ANSWERED', result: answer() }), { type: 'CONTINUE' });
+    expect(currentExercise(s)?.id).toBe('a');
+    expect(isReask(s)).toBe(true);
+  });
+
+  it('SKIP defers the exercise: advances with no mistake', () => {
     let s = start();
     s = reduce(s, { type: 'SKIP' });
     expect(s.index).toBe(1);
-    expect(s.hearts).toBe(STARTING_HEARTS);
     expect(s.answeredCount).toBe(0); // not counted
     expect(s.status).toBe('answering');
   });
@@ -162,5 +171,34 @@ describe('reduce', () => {
     s = reduce(s, { type: 'ANSWERED', result: answer() });
     const again = reduce(s, { type: 'ANSWERED', result: answer({ verdict: 'wrong', accepted: false }) });
     expect(again).toBe(s); // no change
+  });
+});
+
+describe('feedbackTitle', () => {
+  it('says a typo was accepted only when it was', () => {
+    expect(feedbackTitle({ verdict: 'typo', accepted: true, exerciseType: 'translate' })).toBe('lesson.almostTypo');
+    // a strict spelling item: the same slip, not accepted
+    expect(feedbackTitle({ verdict: 'typo', accepted: false, exerciseType: 'writing' })).toBe('lesson.almostStrict');
+  });
+
+  it('calls a recording that counted saved, never a typo or correct', () => {
+    expect(feedbackTitle({ verdict: 'typo', accepted: true, exerciseType: 'speaking' })).toBe('lesson.speak.saved');
+    expect(feedbackTitle({ verdict: 'correct', accepted: true, exerciseType: 'speaking' })).toBe('lesson.speak.saved');
+    expect(feedbackTitle({ verdict: 'wrong', accepted: false, exerciseType: 'speaking' })).toBe('lesson.notQuite');
+  });
+
+  it('reads right and wrong as before', () => {
+    expect(feedbackTitle({ verdict: 'correct', accepted: true, exerciseType: 'multiple_choice' })).toBe('lesson.correct');
+    expect(feedbackTitle({ verdict: 'wrong', accepted: false, exerciseType: 'translate' })).toBe('lesson.notQuite');
+  });
+
+  it('is told what kind of exercise was answered', () => {
+    const speaking: Exercise = { id: 's', position: 1, type: 'speaking', prompt: 'Say it' };
+    const s = reduce(initPlayer(view({ exercises: [speaking] })), {
+      type: 'ANSWERED',
+      result: answer({ verdict: 'typo', accepted: true, correction: 'Ez baş im' }),
+    });
+    expect(s.feedback).toEqual({ verdict: 'typo', accepted: true, correction: 'Ez baş im', exerciseType: 'speaking' });
+    expect(feedbackTitle(s.feedback!)).toBe('lesson.speak.saved');
   });
 });

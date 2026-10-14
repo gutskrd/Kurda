@@ -1,0 +1,537 @@
+/*
+ * Playing with friends, the same way in every online game (play/): the
+ * invite sheet and its friend picker, the invite banner, a lobby's "Invited"
+ * list, playing again, a game's card in a chat, and the game button in the
+ * composer. Built on the lobby and setup styles a story game already has
+ * (stories.css), so the three games read as one family.
+ */
+
+/* ---- the invite sheet ----------------------------------------------------------- */
+.invite-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+/* on a game's own page the form sits in the page, not in a dialog */
+.match-create {
+  align-items: stretch;
+  text-align: start;
+  max-width: 520px;
+  margin-inline: auto;
+  width: 100%;
+}
+.match-create .page-sub {
+  text-align: center;
+  margin-inline: auto;
+}
+.match-create .story-setup-submit {
+  position: static;
+  background: none;
+}
+
+/* ---- choosing friends ----------------------------------------------------------- */
+.invite-friends {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+.invite-search {
+  min-height: 44px;
+}
+.invite-list {
+  list-style: none;
+  margin: 0;
+  padding: 2px;
+  display: grid;
+  gap: 4px;
+  max-height: 264px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.invite-group {
+  display: block;
+  padding: 8px 4px 4px;
+  font-size: 0.7rem;
+  font-weight: 650;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+[dir='rtl'] .invite-group {
+  letter-spacing: normal;
+}
+.invite-friend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 12px;
+  border-radius: var(--r-md);
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.invite-friend:hover {
+  background: var(--surface);
+}
+.invite-friend input {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin: 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+}
+.invite-friend.is-on {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.invite-friend:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+.invite-friend.is-full {
+  opacity: 0.5;
+  cursor: default;
+}
+.invite-friend-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.invite-friend-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.invite-friend-handle {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  /* a handle is Latin letters in every interface */
+  direction: ltr;
+  unicode-bidi: isolate;
+  text-align: start;
+}
+.invite-empty,
+.invite-max,
+.invite-friends-loading {
+  margin: 0;
+  font-size: 0.88rem;
+  color: var(--ink-2);
+}
+
+/* ---- the invite banner ------------------------------------------------------------ */
+/*
+ * Under the navigation, in the middle: where an invite is seen without taking
+ * over the page. It stays until it is answered or runs out (contract §B1), so
+ * it is sized to sit there — a strip, not a dialog — and the page moves down
+ * by the room it takes (`--invite-banner-h`, measured by the banner), so it
+ * is above the page's first line rather than over it.
+ */
+.invite-banners {
+  position: fixed;
+  top: calc(var(--nav-h) + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  width: min(560px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.invite-banner {
+  /* each banner's blur is its own layer: the open "Not now" menu lifts its
+     banner above the next one, or the menu would open underneath it */
+  position: relative;
+  z-index: 0;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 12px;
+  padding: 10px 12px 10px 14px;
+  border: 1px solid var(--border-strong);
+  border-inline-start: 3px solid var(--gold);
+  border-radius: var(--r-md);
+  background: rgba(20, 24, 31, 0.97);
+  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-lg);
+  animation: invite-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes invite-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+.invite-banner-text {
+  flex: 1 1 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+}
+.invite-banner-title {
+  font-size: 0.92rem;
+  font-weight: 650;
+  color: var(--ink);
+}
+.invite-banner-summary {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+.invite-banner-error {
+  font-size: 0.82rem;
+  color: var(--danger);
+}
+.invite-banner-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-inline-start: auto;
+}
+.invite-banner-actions .btn,
+.invite-notnow > .btn {
+  min-height: 44px;
+}
+.invite-banner-x {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.invite-banner-x:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+.invite-banner:has(.invite-notnow-menu),
+.invite-banner:focus-within {
+  z-index: 1;
+}
+/* a phone, or a game in play: one line — who, Join, and a tap for the rest */
+.invite-banner.is-chip {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+}
+.invite-banner.is-chip .friend-avatar {
+  width: 28px;
+  height: 28px;
+}
+.invite-banner.is-chip .invite-banner-text {
+  flex: 1 1 auto;
+}
+.invite-banner.is-chip .invite-banner-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+.invite-banner.is-chip .invite-banner-more {
+  flex: none;
+}
+.invite-banner.is-chip .invite-banner-actions {
+  flex: none;
+  gap: 2px;
+}
+.invite-banner-toggle.is-open svg {
+  transform: rotate(180deg);
+}
+/* the count of the rest, inside the last banner rather than over the page */
+.invite-banner-more {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gold-ink);
+}
+.invite-notnow {
+  position: relative;
+}
+.invite-notnow > .btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.invite-notnow-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 190px;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: rgba(20, 24, 31, 0.99);
+  box-shadow: var(--shadow);
+}
+.invite-notnow-menu button {
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  text-align: start;
+  cursor: pointer;
+}
+.invite-notnow-menu button:hover,
+.invite-notnow-menu button:focus-visible {
+  background: var(--surface-2);
+  outline: none;
+}
+
+/* ---- a lobby: who is in, who was asked ---------------------------------------- */
+.match-room {
+  align-items: stretch;
+  max-width: 560px;
+  margin-inline: auto;
+  width: 100%;
+  text-align: start;
+}
+.match-room > .btn-lg,
+.match-room > .muted {
+  align-self: center;
+}
+.match-room > .btn-lg {
+  min-width: min(100%, 280px);
+}
+.match-room .battle-invite {
+  align-self: center;
+}
+.lobby-invited {
+  padding: 14px 18px;
+  border-radius: var(--r-lg);
+  border: 1px solid var(--border);
+  background: var(--surface);
+}
+.lobby-invited .sg-panel-title {
+  margin-bottom: 6px;
+}
+.lobby-invited-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.lobby-invited-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+}
+.lobby-invited-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.lobby-invited-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.lobby-invited-state {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+.lobby-invited-row.is-accepted .lobby-invited-state {
+  color: var(--success);
+}
+.lobby-invited-row .btn {
+  min-height: 44px;
+}
+
+/* ---- playing again ---------------------------------------------------------------- */
+.rematch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+.sg-results-actions .rematch {
+  /* in a story's results, the row of other ways out follows it, and it
+     lines up with that row rather than standing in the middle */
+  flex-basis: 100%;
+  align-items: flex-start;
+}
+.sg-results-actions .rematch-line {
+  text-align: start;
+}
+.sg-results-actions .rematch-actions {
+  justify-content: flex-start;
+}
+@media (max-width: 520px) {
+  /* a phone's results buttons are full width; the rematch's are the same */
+  .sg-results-actions .rematch {
+    align-items: stretch;
+  }
+}
+.rematch-line {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--ink);
+  text-align: center;
+}
+.rematch-line.muted {
+  color: var(--ink-3);
+}
+.rematch-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.rematch-actions .btn {
+  min-height: 44px;
+}
+.rematch-series {
+  margin: 0;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+  font-size: 0.85rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- a game's card in a chat ---------------------------------------------------- */
+/* the card is the whole message: no bubble around it (social.css's .bubble.is-card) */
+/* two cards in a row are two things, not one block — also when each sits in
+   the line that carries its ⋯ (reports/MessageMenu.tsx) */
+.bubble.is-card + .bubble.is-card,
+.bubble-line:has(> .bubble.is-card) + .bubble-line:has(> .bubble.is-card) {
+  margin-top: 6px;
+}
+.chat-game-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  color: var(--ink-2);
+}
+.chat-game-status::before {
+  content: '';
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-4);
+}
+.chat-game-card.is-open .chat-game-status::before {
+  background: var(--success);
+}
+.chat-game-card.is-started .chat-game-status::before,
+.chat-game-card.is-full .chat-game-status::before {
+  background: var(--gold);
+}
+.chat-game-error {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+.chat-game-action {
+  margin-top: 6px;
+  min-height: 44px;
+  height: auto;
+  border: 0;
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+}
+.chat-game-action:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+/* ---- the game button in the composer, and Play beside a friend ---------------- */
+.chat-compose-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.chat-compose-tool {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.chat-compose-tool:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.chat-compose-tool:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.friend-play {
+  min-width: 44px;
+  min-height: 44px;
+  justify-content: center;
+}
+/* a phone: Play, Remove and Block do not fit beside a name, so they take the
+   line under it, at its end, instead of running off the screen */
+@media (max-width: 560px) {
+  .friend-row:has(.friend-play) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .friend-row:has(.friend-play) .friend-id {
+    flex: 1 0 100%;
+  }
+  .friend-row .friend-play {
+    margin-inline-start: auto;
+  }
+}
+
+@media (max-width: 560px) {
+  .invite-banners {
+    top: calc(var(--nav-h) + 6px);
+  }
+  .invite-banner:not(.is-chip) .invite-banner-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+}
+
+/* a finger needs 44px: the small buttons of lobbies, cards, rematches and Play grow on touch screens */
+@media (pointer: coarse) {
+  .lobby-roster .btn-sm,
+  .lobby-invited .btn-sm,
+  .rematch-actions .btn-sm,
+  .chat-game-card .btn-sm,
+  .play-btn.btn-sm {
+    height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .invite-banner {
+    animation: none;
+  }
+}

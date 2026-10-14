@@ -8,25 +8,21 @@ Runs on demand against **staging** (never production).
 |------|----------|----------|
 | `login-storm.js` | Concurrent login spike | auth + token issuance |
 | `lesson-completion.js` | Sustained lesson traffic | read/write mix, XP writes, review queue |
-| `matchmaking-surge.js` | "Play" wave | atomic queue + pairing sweep |
-| `ws-games.js` | 10k concurrent WS games | gateway fan-out, event latency |
+| `story-quiz-surge.js` | Wave of solo story quizzes | game creation, the answer path, the rewards transaction |
 
 ## Run
 ```bash
 # install k6 (https://k6.io/docs/get-started/installation/)
 BASE_URL=https://staging.kurda.app k6 run load/login-storm.js
 BASE_URL=https://staging.kurda.app k6 run load/lesson-completion.js
-BASE_URL=https://staging.kurda.app k6 run load/matchmaking-surge.js
-BASE_URL=https://staging.kurda.app WS_URL=wss://staging.kurda.app k6 run load/ws-games.js
+BASE_URL=https://staging.kurda.app k6 run load/story-quiz-surge.js
 ```
-The 10k-WS target needs a distributed run (k6 Cloud or ~5 load generators at
-2k VUs each) — one node won't hold 10k sockets.
+The story quiz surge needs published Kurmancî short stories on staging.
 
 ## Pass/fail thresholds (release gate)
 Defined in `lib/config.js` and enforced by k6's exit code, so these double as a
 **pre-release regression gate** in CI:
 - API: `http_req_duration p95 < 300ms`, `http_req_failed rate < 1%`.
-- WS: `ws_event_latency p95 < 100ms` (fan-out), `ws_connecting p95 < 1s`.
 
 A run that breaches any threshold exits non-zero → the release is blocked until
 the regression is understood.

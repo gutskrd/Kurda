@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useMessages } from '../chat/MessagesProvider';
@@ -66,8 +66,26 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
 
   const close = (): void => setOpen(false);
 
+  // Escape closes the open menu, as it closes every other thing that opens
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [open]);
+
   return (
-    <header className="nav">
+    /*
+     * Left to right in every language. In Arabic or Soranî the page mirrors —
+     * reading order is right to left — but the bar does not: brand on the
+     * left, places in the middle, what you have on the right, the same in all
+     * nine languages, as on any product's bar. Only its words change, and each
+     * label is `dir="auto"` so an Arabic word still reads right to left inside
+     * its own button.
+     */
+    <header className="nav" dir="ltr">
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
@@ -82,7 +100,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                   {/* wrapped so the middle widths can hide the word and keep the
                       glyph — hidden by clipping, never display:none, or the link
                       would lose its accessible name along with its label */}
-                  <span className="nav-link-label">{l.label}</span>
+                  <span className="nav-link-label" dir="auto">{l.label}</span>
                   {/* a link carries its own waiting count, so something arriving is
                       visible from anywhere without opening the page to check */}
                   {l.to === '/app/messages' && unreadTotal > 0 && (
@@ -122,7 +140,7 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               ) : (
                 <>
                   <NavLink to="/login" className="nav-link" onClick={close}>{t('nav.login')}</NavLink>
-                  <NavLink to="/register" className="nav-link" onClick={close}>{t('nav.register')}</NavLink>
+                  <NavLink to="/register" className="nav-link nav-cta" onClick={close}>{t('nav.register')}</NavLink>
                 </>
               )}
             </li>

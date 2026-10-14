@@ -1,17 +1,28 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
-import { requireAdmin } from './routes.js';
+import { hasCapability } from './roles.js';
+import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
-import { USERS_PAGE_MAX } from './user-admin-service.js';
+import { USER_FILTERS, USERS_PAGE_MAX, type UserFilter } from './user-admin-service.js';
 import type { UserAdminService } from './user-admin-service.js';
 
 const idParam = z.object({ id: z.uuid() });
 const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
-const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional() });
-const walletBody = z.object({ reason: z.string(), currency: z.enum(['zer', 'gems']), amount: z.number().int() });
+// confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
+const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
+/**
+ * The most one admin change may add or take away. A grant mints currency: a
+ * slip of the keyboard (1000000 for 1000) should be refused, not credited.
+ */
+export const WALLET_ADJUST_MAX = 1_000_000;
+const walletBody = z.object({
+  reason: z.string(),
+  currency: z.enum(['zer', 'gems']),
+  amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
+});
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 
@@ -30,7 +41,8 @@ function sendResult(reply: FastifyReply, res: ActionResult) {
 /** Admin user management: search, detail, moderation actions (KUR-101). */
 export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminService, totp: AdminTotpService): void {
   const canView = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator', 'support')];
-  const canModerate = [requireAuth, requireAdmin(totp, 'superadmin', 'moderator')];
+  // moderators, superadmins and the legacy admin role, like every moderation route
+  const canModerate = [requireAuth, requireCapability('moderation.act')];
   const canAdjustEconomy = [requireAuth, requireAdmin(totp, 'superadmin')];
 
   app.get(
@@ -43,18 +55,23 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
           q: z.string().min(1).max(200).optional(),
           limit: z.coerce.number().int().min(1).max(USERS_PAGE_MAX).optional(),
           offset: z.coerce.number().int().min(0).max(1_000_000).optional(),
+          filter: z.enum(USER_FILTERS).optional(),
         }),
       },
       preHandler: canView,
     },
     async (req) => {
-      const { q, limit, offset } = req.query as { q?: string; limit?: number; offset?: number };
-      return users.search(q, limit, offset);
+      const { q, limit, offset, filter } = req.query as { q?: string; limit?: number; offset?: number; filter?: UserFilter };
+      return users.search(q, limit, offset, filter);
     },
   );
 
   app.get('/admin/users/:id', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: canView }, async (req, reply) => {
-    const detail = await users.detail((req.params as z.infer<typeof idParam>).id);
+    // support staff can open a person's page, but what moderation knows about
+    // them — appeal texts, reports, linked accounts — is for moderators
+    const detail = await users.detail((req.params as z.infer<typeof idParam>).id, {
+      moderation: hasCapability(req.user!.roles, 'moderation.act'),
+    });
     if (!detail) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such user' });
     return detail;
   });
@@ -78,7 +95,9 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
     const reason = normalizeReason(b.reason);
     if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
     const id = (req.params as z.infer<typeof idParam>).id;
-    const res = b.hours ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!) : await users.permBan(req.user!.id, id, reason);
+    const res = b.hours
+      ? await users.tempBan(req.user!.id, id, reason, expiryFrom(new Date(), b.hours)!)
+      : await users.permBan(req.user!.id, id, reason, b.confirmUsername);
     return sendResult(reply, res);
   });
 

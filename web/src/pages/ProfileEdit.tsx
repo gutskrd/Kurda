@@ -3,10 +3,11 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
-import type { AvatarOption, MeProfile } from '../lib/types';
+import type { ApiError, AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { countriesIn } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
+import { RefreshedNoticeLoader } from '../shop/RefreshedItems';
 import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
@@ -16,6 +17,7 @@ import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { SendError } from '../reports/SendError';
 
 /**
  * Dedicated Edit Profile page (/app/profile/edit). ALL profile customization
@@ -71,6 +73,8 @@ export function ProfileEdit(): React.JSX.Element {
         <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
       </div>
 
+      {/* refreshed backgrounds and icons: the one-time notice (contract-3 §S) */}
+      <RefreshedNoticeLoader />
       <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
       <AvatarPicker me={me} onChanged={changed} />
@@ -96,6 +100,9 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
   const [country, setCountry] = useState(me.country ?? '');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  // a refusal of the save itself, which may be a limit on the account (a post
+  // mute covers a name and a bio, which others read) — said with SendError
+  const [saveErr, setSaveErr] = useState<ApiError | null>(null);
 
   const dirty = displayName.trim() !== (me.displayName ?? '') || bio !== (me.bio ?? '') || country !== (me.country ?? '');
 
@@ -103,6 +110,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
     e.preventDefault();
     setBusy(true);
     setMsg(null);
+    setSaveErr(null);
     const body: { displayName?: string; bio?: string; country?: string } = {};
     if (displayName.trim() !== (me.displayName ?? '')) body.displayName = displayName.trim();
     if (bio !== (me.bio ?? '')) body.bio = bio;
@@ -113,7 +121,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
       setMsg({ kind: 'ok', text: t('edit.profileUpdated') });
       onSaved();
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
+      setSaveErr(res.error);
     }
   }
 
@@ -121,6 +129,7 @@ function ProfileDetailsForm({ me, onSaved }: { me: MeProfile; onSaved: () => voi
     <form className="card" onSubmit={save} style={{ marginTop: 24 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('edit.details')}</h2>
       {msg && <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`}>{msg.text}</div>}
+      <SendError error={saveErr} />
       <div className="field">
         <label className="field-label" htmlFor="displayName">{t('edit.displayName')}</label>
         <input id="displayName" className="input" value={displayName} maxLength={60} onChange={(e) => setDisplayName(e.target.value)} placeholder={me.username} />

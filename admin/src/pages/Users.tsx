@@ -1,396 +1,212 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
-import { ItemActions, WalletActions } from './UserEconomy';
+import { useEffect, useMemo, useState } from 'react';
+import { api } from '../api';
+import { useRoute } from '../nav';
+import { ROLE_NAME } from '../navigation';
+import { Badge, Icon, PageHeader, Section, Table, Time, useDebounced, useLoad, type Column } from '../ui';
+import { UserPage } from './UserPage';
 
-type BanState = 'active' | 'temp_banned' | 'perm_banned';
+export type BanState = 'active' | 'temp_banned' | 'perm_banned';
 
-interface SearchResult {
+interface UserRow {
   id: string;
   username: string;
   email: string;
   ban: BanState;
+  /** a chat mute in force now */
+  muted: boolean;
+  /** a posting mute or a feature limit in force now (absent from an older API: then not known, not shown) */
+  limited?: boolean;
+  roles: string[];
   createdAt: string;
 }
 
 /** How many rows a page of the list holds. Matches the API default. */
-const PAGE = 25;
-interface UserDetail {
-  id: string;
-  username: string;
-  email: string;
-  displayName: string | null;
-  roles: string[];
-  createdAt: string;
-  ban: BanState;
-  bannedUntil: string | null;
-  mutedUntil: string | null;
-  balances: { zer: number; gems: number };
-  ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
-  sessions: Array<{ deviceName: string | null; createdAt: string; expiresAt: string }>;
-  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; createdAt: string }>;
+export const USERS_PAGE = 25;
+
+const FILTERS = [
+  { value: '', label: 'Everyone' },
+  { value: 'restricted', label: 'Suspended or banned now' },
+  { value: 'muted', label: 'Muted now' },
+  { value: 'staff', label: 'Staff' },
+] as const;
+
+/** the longest search the API takes; a longer paste would be refused, not searched */
+export const USERS_Q_MAX = 200;
+const clampQ = (q: string): string => q.trim().slice(0, USERS_Q_MAX).trim();
+
+/** The API path for a page of the list. */
+export function usersPath(q: string, filter: string, page: number): string {
+  const p = new URLSearchParams({ limit: String(USERS_PAGE), offset: String(page * USERS_PAGE) });
+  if (clampQ(q)) p.set('q', clampQ(q));
+  if (filter) p.set('filter', filter);
+  return `/admin/users?${p}`;
 }
 
-const BAN_LABEL: Record<BanState, { text: string; cls: string }> = {
-  active: { text: 'active', cls: '' },
-  temp_banned: { text: 'temp banned', cls: 'mid' },
-  perm_banned: { text: 'banned', cls: 'hi' },
-};
+/** The list's state as the address's query, the defaults left out. */
+function listQuery(q: string, filter: string, page: number): string {
+  const p = new URLSearchParams();
+  if (clampQ(q)) p.set('q', clampQ(q));
+  if (filter) p.set('filter', filter);
+  if (page > 0) p.set('page', String(page + 1));
+  return p.toString();
+}
+
+function goList(q: string, filter: string, page: number): void {
+  const query = listQuery(q, filter, page);
+  location.replace(`#/users${query ? `?${query}` : ''}`);
+}
 
 /**
- * Admin user management (KUR-101) — list, search, inspect, moderate. 2FA-gated.
+ * People: the list (#/users), and one person (#/users/<id>, with a tab
+ * after it: #/users/<id>/standing).
  *
- * The list loads itself. It used to answer nothing at all until somebody typed
- * a name, so the only way to find an account was to already know which one you
- * wanted — no way to see how many people there are, or who signed up this
- * morning. Now the first page arrives on its own, newest first, with the real
- * total in the heading and a button for the next page. The search box narrows
- * that list rather than being the only door to it.
+ * The list loads itself, newest first — the account you need is usually the
+ * one that just signed up — with the real total, a search (a username, an
+ * email, or an id) and a filter for who is suspended, muted or staff right
+ * now. Search, filter and page live in the address, so Back from a person
+ * returns to the same page of the same search.
  */
 export function Users(): React.JSX.Element {
-  const [q, setQ] = useState('');
-  /** the query the rows on screen belong to, so paging keeps the right filter */
-  const [applied, setApplied] = useState('');
-  const [results, setResults] = useState<SearchResult[] | null>(null);
-  const [total, setTotal] = useState(0);
-  const [selected, setSelected] = useState<UserDetail | null>(null);
-  const [needs2fa, setNeeds2fa] = useState(false);
-  const [searching, setSearching] = useState(false);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const route = useRoute();
+  const id = route.page === 'users' ? route.rest[0] : undefined;
+  return id ? <UserPage key={id} id={id} tab={route.rest[1]} /> : <UserList />;
+}
 
-  function handleErr(err: unknown): void {
-    if (err instanceof ApiError && err.status === 403) {
-      setNeeds2fa(true);
-      return;
-    }
-    setError(err instanceof ApiError ? err.message : 'Something went wrong');
-  }
+/** The address of the list as it was last left, for the person page's "back". */
+let lastList = '#/users';
+export function usersListHref(): string {
+  return lastList;
+}
 
-  /** One page. `offset` 0 replaces what is on screen; anything else appends. */
-  const load = useCallback(async (query: string, offset: number): Promise<void> => {
-    const params = new URLSearchParams({ limit: String(PAGE), offset: String(offset) });
-    if (query) params.set('q', query);
-    if (offset === 0) setSearching(true);
-    else setLoadingMore(true);
-    setError(null);
-    try {
-      const res = await api<{ users: SearchResult[]; total: number }>(`/admin/users?${params}`);
-      setResults((prev) => (offset === 0 || !prev ? res.users : [...prev, ...res.users]));
-      setTotal(res.total);
-      setApplied(query);
-    } catch (err) {
-      handleErr(err);
-    } finally {
-      setSearching(false);
-      setLoadingMore(false);
-    }
-  }, []);
+function UserList(): React.JSX.Element {
+  const route = useRoute();
+  const applied = route.query.get('q') ?? '';
+  const raw = route.query.get('filter') ?? '';
+  const filter = FILTERS.some((f) => f.value === raw) ? raw : '';
+  const page = Math.max(0, (Number(route.query.get('page')) || 1) - 1);
+  const list = useLoad(() => api<{ users: UserRow[]; total: number }>(usersPath(applied, filter, page)), [applied, filter, page]);
 
-  // the first page, without being asked
   useEffect(() => {
-    void load('', 0);
-  }, [load]);
+    const query = listQuery(applied, filter, page);
+    lastList = `#/users${query ? `?${query}` : ''}`;
+  }, [applied, filter, page]);
 
-  function search(e: React.FormEvent): void {
-    e.preventDefault();
-    setSelected(null);
-    void load(q.trim(), 0);
-  }
+  // the search box types freely; the list follows once typing pauses, from its first page
+  const [q, setQ] = useState(applied);
+  const settled = useDebounced(q, 400);
+  useEffect(() => {
+    if (settled.trim() !== applied) goList(settled, filter, 0);
+    // only the typed text moves the address; the rest is already there
+  }, [settled]);
 
-  function clearSearch(): void {
-    setQ('');
-    setSelected(null);
-    void load('', 0);
-  }
-
-  async function open(id: string): Promise<void> {
-    setError(null);
-    try {
-      setSelected(await api<UserDetail>(`/admin/users/${id}`));
-    } catch (err) {
-      handleErr(err);
-    }
-  }
-
-  if (needs2fa) {
-    return (
-      <div>
-        <div className="toolbar">
-          <h1>Users</h1>
-        </div>
-        <div className="card" style={{ maxWidth: 520 }}>
-          <div className="row" style={{ gap: 8, marginBottom: 8 }}>
-            <span className="badge mid">2FA required</span>
-          </div>
-          <div className="subtle">
-            User management needs a confirmed authenticator. Open <a href="#/security">Security</a> to set up 2FA, then come back.
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const total = list.data?.total ?? 0;
+  const columns = useMemo(() => COLUMNS, []);
+  const subtitle = !list.data
+    ? 'Everyone with an account, newest first.'
+    : `${total.toLocaleString()} ${total === 1 ? 'account' : 'accounts'}${applied ? ` matching “${applied}”` : ''}${filter ? ` · ${FILTERS.find((f) => f.value === filter)!.label.toLowerCase()}` : ''}, newest first.`;
 
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Users</h1>
-          <div className="subtle">
-            {results === null
-              ? 'Loading…'
-              : applied
-                ? `${total.toLocaleString()} matching “${applied}”`
-                : `${total.toLocaleString()} ${total === 1 ? 'account' : 'accounts'}, newest first`}
+      <PageHeader title="Users" subtitle={subtitle} />
+      <Section flush>
+        <div className="table-tools" role="search">
+          <div className="search-box">
+            <Icon name="search" size={16} />
+            <input type="search" aria-label="Search people" placeholder="A username, an email, or an id" maxLength={USERS_Q_MAX} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
-        </div>
-        <div className="spacer" />
-        <form onSubmit={search} className="row" style={{ gap: 8, width: 'auto' }}>
-          <input
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="username, email or uuid"
-            style={{ width: 260 }}
-          />
-          <button className="primary" type="submit" disabled={searching}>
-            {searching ? 'Searching…' : 'Search'}
-          </button>
-          {applied && (
-            <button type="button" onClick={clearSearch} disabled={searching}>
-              Show all
+          <label className="sr-only" htmlFor="users-filter">
+            Show
+          </label>
+          <select id="users-filter" value={filter} onChange={(e) => goList(applied, e.target.value, 0)}>
+            {FILTERS.map((f) => (
+              <option key={f.value} value={f.value}>
+                {f.label}
+              </option>
+            ))}
+          </select>
+          {(applied || filter) && (
+            <button
+              type="button"
+              className="ghost"
+              onClick={() => {
+                setQ('');
+                goList('', '', 0);
+              }}
+            >
+              Show everyone
             </button>
           )}
-        </form>
-      </div>
-
-      {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
-
-      {results && (
-        <div className="card" style={{ padding: 0, marginBottom: 16 }}>
-          {results.length === 0 ? (
-            <div className="empty">
-              {applied ? `No users match “${applied}”.` : 'No accounts yet.'}
-            </div>
-          ) : (
-            <div className="tablewrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Username</th>
-                    <th>Email</th>
-                    <th>Joined</th>
-                    <th>Status</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {results.map((u) => {
-                    const b = BAN_LABEL[u.ban];
-                    return (
-                      <tr key={u.id}>
-                        <td>{u.username}</td>
-                        <td className="subtle">{u.email}</td>
-                        <td className="subtle">{new Date(u.createdAt).toLocaleDateString()}</td>
-                        <td>
-                          <span className={`badge ${b.cls}`}>{b.text}</span>
-                        </td>
-                        <td>
-                          <button onClick={() => void open(u.id)}>Open</button>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          )}
-          {results.length > 0 && results.length < total && (
-            <div style={{ padding: 12, borderTop: '1px solid var(--separator)' }}>
-              <button
-                type="button"
-                onClick={() => void load(applied, results.length)}
-                disabled={loadingMore}
-              >
-                {loadingMore ? 'Loading…' : `Show more (${(total - results.length).toLocaleString()} left)`}
-              </button>
-            </div>
-          )}
         </div>
-      )}
-
-      {selected && <UserPanel user={selected} onChanged={() => void open(selected.id)} onError={handleErr} />}
-    </div>
-  );
-}
-
-function fmt(d: string | null): string {
-  if (!d) return '—';
-  return new Date(d).toLocaleString();
-}
-
-function UserPanel({
-  user,
-  onChanged,
-  onError,
-}: {
-  user: UserDetail;
-  onChanged: () => void;
-  onError: (err: unknown) => void;
-}): React.JSX.Element {
-  const b = BAN_LABEL[user.ban];
-  return (
-    <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-      <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-        <h1 style={{ margin: 0 }}>{user.username}</h1>
-        <span className={`badge ${b.cls}`}>{b.text}</span>
-        {user.roles.map((r) => (
-          <span key={r} className="badge">
-            {r}
-          </span>
-        ))}
-      </div>
-      <div className="grid2">
-        <Field label="Email" value={user.email} />
-        <Field label="Display name" value={user.displayName ?? '—'} />
-        <Field label="User id" value={<code>{user.id}</code>} />
-        <Field label="Joined" value={fmt(user.createdAt)} />
-        <Field label="Banned until" value={fmt(user.bannedUntil)} />
-        <Field label="Muted until" value={fmt(user.mutedUntil)} />
-        <Field label="Balance (zêr)" value={String(user.balances.zer)} />
-        <Field label="Balance (gems)" value={String(user.balances.gems)} />
-      </div>
-
-      <ModerationActions user={user} onChanged={onChanged} onError={onError} />
-
-      <WalletActions user={user} onChanged={onChanged} onError={onError} />
-
-      <ItemActions user={user} onChanged={onChanged} onError={onError} />
-
-      {user.actions.length > 0 && (
-        <div>
-          <div className="section-title">Recent moderation actions</div>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Action</th>
-                  <th>Reason</th>
-                  <th>When</th>
-                </tr>
-              </thead>
-              <tbody>
-                {user.actions.map((a, i) => (
-                  <tr key={i}>
-                    <td>
-                      <span className="badge">{a.action}</span>
-                    </td>
-                    <td className="subtle">{a.reason}</td>
-                    <td className="subtle">{fmt(a.createdAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function Field({ label, value }: { label: string; value: React.ReactNode }): React.JSX.Element {
-  return (
-    <div>
-      <div className="k">{label}</div>
-      <div>{value}</div>
-    </div>
-  );
-}
-
-type ActionKind = 'warn' | 'mute' | 'ban' | 'unban';
-
-function ModerationActions({
-  user,
-  onChanged,
-  onError,
-}: {
-  user: UserDetail;
-  onChanged: () => void;
-  onError: (err: unknown) => void;
-}): React.JSX.Element {
-  const [kind, setKind] = useState<ActionKind>('warn');
-  const [reason, setReason] = useState('');
-  const [hours, setHours] = useState('24');
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const banned = user.ban !== 'active';
-
-  async function submit(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    setBusy(true);
-    setMsg(null);
-    try {
-      const body: Record<string, unknown> = { reason: reason.trim() };
-      if (kind === 'mute') body.hours = Number(hours);
-      if (kind === 'ban' && hours.trim()) body.hours = Number(hours);
-      await api(`/admin/users/${user.id}/${kind}`, { method: 'POST', body });
-      setMsg(`✅ ${kind} applied.`);
-      setReason('');
-      onChanged();
-    } catch (err) {
-      if (err instanceof ApiError && err.status !== 403) {
-        setMsg(`❌ ${err.message}`);
-      } else {
-        onError(err);
-      }
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div className="section-title" style={{ margin: 0 }}>
-        Take action
-      </div>
-      <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-        <label style={{ width: 'auto' }}>
-          <select value={kind} onChange={(e) => setKind(e.target.value as ActionKind)} style={{ width: 'auto' }}>
-            <option value="warn">Warn</option>
-            <option value="mute">Mute</option>
-            <option value="ban">Ban</option>
-            <option value="unban" disabled={!banned}>
-              Unban
-            </option>
-          </select>
-        </label>
-        {(kind === 'mute' || kind === 'ban') && (
-          <label className="row" style={{ gap: 6, width: 'auto' }}>
-            <span className="subtle">Hours</span>
-            <input
-              value={hours}
-              onChange={(e) => setHours(e.target.value)}
-              inputMode="numeric"
-              placeholder={kind === 'ban' ? 'blank = permanent' : '24'}
-              style={{ width: 120 }}
-            />
-          </label>
-        )}
-        <input
-          value={reason}
-          onChange={(e) => setReason(e.target.value)}
-          placeholder="Reason (required)"
-          style={{ flex: 1, minWidth: 200 }}
-          required
+        <Table
+          caption="People"
+          columns={columns}
+          rows={list.data?.users ?? null}
+          rowKey={(u) => u.id}
+          loading={list.loading}
+          error={list.error}
+          onRetry={() => void list.reload()}
+          what="people"
+          empty={applied || filter ? 'Nobody matches. Try part of a username, or an email.' : 'No accounts yet.'}
+          paging={{ page, pageCount: Math.max(1, Math.ceil(total / USERS_PAGE)), total, pageSize: USERS_PAGE, onPage: (p) => goList(applied, filter, p) }}
+          actions={(u) => (
+            <a className="button-link" href={`#/users/${encodeURIComponent(u.id)}`} aria-label={`Open @${u.username}`}>
+              Open
+              <Icon name="chevronRight" size={16} />
+            </a>
+          )}
         />
-        <button
-          className={kind === 'unban' ? 'primary' : 'danger'}
-          type="submit"
-          disabled={busy || !reason.trim() || (kind === 'mute' && !hours.trim())}
-        >
-          {busy ? 'Applying…' : `Apply ${kind}`}
-        </button>
-      </div>
-      {msg && <div className={msg.startsWith('❌') ? 'error' : 'subtle'}>{msg}</div>}
-    </form>
+      </Section>
+    </div>
   );
 }
+
+/**
+ * "Banned", "Suspended", "Muted", "Limited" (a posting mute or a feature
+ * limit) and staff roles: what someone opening the row should know first.
+ * "Active" only when nothing at all limits the account.
+ */
+export function StatusBadges({
+  ban,
+  muted,
+  limited = false,
+  roles,
+}: {
+  ban: BanState;
+  muted: boolean;
+  limited?: boolean;
+  roles: readonly string[];
+}): React.JSX.Element {
+  const staff = roles.filter((r) => Object.hasOwn(ROLE_NAME, r));
+  return (
+    <span className="badges">
+      {ban === 'perm_banned' && <Badge tone="bad">Banned</Badge>}
+      {ban === 'temp_banned' && <Badge tone="bad">Suspended</Badge>}
+      {muted && <Badge tone="warn">Muted</Badge>}
+      {limited && <Badge tone="warn">Limited</Badge>}
+      {ban === 'active' && !muted && !limited && <Badge tone="ok">Active</Badge>}
+      {staff.map((r) => (
+        <Badge key={r} tone="info">
+          {ROLE_NAME[r]}
+        </Badge>
+      ))}
+    </span>
+  );
+}
+
+const COLUMNS: ReadonlyArray<Column<UserRow>> = [
+  {
+    key: 'person',
+    header: 'Person',
+    card: 'title',
+    cell: (u) => (
+      <span>
+        <a className="table-link" href={`#/users/${encodeURIComponent(u.id)}`}>
+          <strong>@{u.username}</strong>
+        </a>
+        <span className="cell-sub">{u.email}</span>
+      </span>
+    ),
+  },
+  { key: 'joined', header: 'Joined', cell: (u) => <Time value={u.createdAt} mode="date" /> },
+  { key: 'status', header: 'Status', cell: (u) => <StatusBadges ban={u.ban} muted={u.muted} limited={u.limited} roles={u.roles} /> },
+];

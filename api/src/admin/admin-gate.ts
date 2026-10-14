@@ -54,6 +54,18 @@ const EXEMPT = new Set([
   '/admin/session/end', // signing out must work even once the window has expired
 ]);
 
+/**
+ * The staff route patterns each app found at boot, so the audit log can record
+ * a staff write that does not live under /admin (the shop's catalogue). Keyed
+ * by the app, because a test suite builds several.
+ */
+const staffRoutes = new WeakMap<FastifyInstance, Set<string>>();
+
+/** Whether a route pattern's guard asks for a staff role (see `installAdminGate`). */
+export function isStaffRoute(app: FastifyInstance, pattern: string): boolean {
+  return staffRoutes.get(app)?.has(pattern) ?? false;
+}
+
 async function refuse(reply: FastifyReply, req: FastifyRequest, code: string, message: string): Promise<void> {
   await reply.code(403).send({ code, message, requestId: req.id });
 }
@@ -65,6 +77,7 @@ export function installAdminGate(app: FastifyInstance, totp: AdminTotpService): 
    * so nothing here depends on how a URL is spelled or normalised.
    */
   const privileged = new Set<string>();
+  staffRoutes.set(app, privileged);
 
   app.addHook('onRoute', (route) => {
     if (routeIsPrivileged(route.preHandler)) privileged.add(route.url);

@@ -1,35 +1,70 @@
-import { Suspense } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Suspense, useEffect } from 'react';
+import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
 import { Footer } from '../components/Footer';
+import { useAuth } from '../auth/AuthProvider';
+import { RailProvider } from '../social/RailProvider';
+import { SocialRail } from '../social/SocialRail';
 import { useNavLinks } from './navLinks';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * The landing page's shell: nav + page + footer.
+ * The public pages' shell: nav + page + footer.
  *
- * This used to list Stories, Poems and Games as separate public pages. They are
- * not separate any more — Civak is one wall — and the app itself is now open to
- * read, so the landing page points at it rather than keeping a second, thinner
- * copy of the same content behind its own nav.
- *
- * It then kept its own one-entry list for a while, which meant a first-time
- * visitor saw a single link labelled Civak and no sign that there was a
- * dictionary of 378,000 words behind it. The bar is the same bar as the app's
- * now — see `useNavLinks` — so what is open to read is visible from the door.
+ * The front page, About, the FAQ, Privacy and Terms, and the not-found page.
+ * The bar is the app's own — the same links in the same places, and for
+ * somebody signed in the same purse, face and social column — so moving from
+ * here into the app and back does not rearrange the buttons under the cursor.
+ * See `useNavLinks`.
  */
 export function MarketingLayout(): React.JSX.Element {
   const t = useT();
   const links = useNavLinks();
+  const { status } = useAuth();
+  const { pathname, hash } = useLocation();
+  const navigation = useNavigationType();
+
+  /*
+   * A router does not scroll. Going to /about from halfway down the front page
+   * left you halfway down About; following /#learn from About left you at the
+   * top of the front page with the lessons nowhere in sight. A section link
+   * lands on its section, and a new page starts at the top.
+   *
+   * Only a new page, though: Back and Forward (`POP`) are the browser's to
+   * restore, and it puts you back where you were. The jump to the top is
+   * instant because the site scrolls smoothly, and a page that glides up from
+   * where the last one left off reads as the old page moving, not a new one.
+   *
+   * The anchor is decoded so an id written in Kurdish letters still matches,
+   * but an address somebody typed or cut short (`#%E0%A4%A`) does not decode,
+   * and `decodeURIComponent` throws. Nothing above the layout would catch
+   * that, so the whole page went blank; such an anchor is looked up as it was
+   * written, finds nothing, and the page stays.
+   */
+  useEffect(() => {
+    if (hash) {
+      let id = hash.slice(1);
+      try {
+        id = decodeURIComponent(id);
+      } catch {
+        /* not percent-encoding after all: look it up as written */
+      }
+      document.getElementById(id)?.scrollIntoView();
+      return;
+    }
+    if (navigation !== 'POP') window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [pathname, hash, navigation]);
+
   return (
-    <>
+    <RailProvider>
       <a href="#main" className="skip-link">
         {t('nav.skipToContent')}
       </a>
       <TopNav links={links} />
-      <main id="main">
+      {/* signed in, the social strip is on the right here as it is in the app, and the page makes the same room for it */}
+      <main id="main" className={`site-main${status === 'signedIn' ? ' has-rail' : ''}`}>
         <ErrorBoundary>
           <Suspense fallback={<RouteFallback />}>
             <Outlet />
@@ -37,6 +72,7 @@ export function MarketingLayout(): React.JSX.Element {
         </ErrorBoundary>
       </main>
       <Footer />
-    </>
+      <SocialRail />
+    </RailProvider>
   );
 }

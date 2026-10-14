@@ -26,7 +26,7 @@ describe.skipIf(!DATABASE_URL)('experiments (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `exp_${suffix}@it.kurda.app`, username: `exp_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `exp_${suffix}@it.kurda.app`, username: `exp_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.107.0.1',
     });
     userId = res.json().user.id;
@@ -50,15 +50,29 @@ describe.skipIf(!DATABASE_URL)('experiments (integration)', () => {
     for (let i = 0; i < 3; i++) expect(await experiments.variant(userId, 'daily_goal_default')).toBe(first);
   });
 
-  it('logs an idempotent exposure event', async () => {
-    await experiments.variant(userId, 'daily_goal_default');
-    await experiments.variant(userId, 'daily_goal_default'); // repeat
+  const exposures = async (): Promise<number> => {
     const res = await pool.query<{ n: string }>(
       `SELECT COUNT(*)::int AS n FROM analytics_events
        WHERE user_id = $1 AND type = 'experiment_exposure' AND payload->>'experiment' = 'daily_goal_default'`,
       [userId],
     );
-    expect(Number(res.rows[0]!.n)).toBe(1); // deduped despite repeated exposure
+    return Number(res.rows[0]!.n);
+  };
+
+  it('logs no exposure for an account that has not agreed to analytics, and still assigns', async () => {
+    // analytics_consent is off until the person turns it on
+    const first = await experiments.variant(userId, 'daily_goal_default');
+    expect(['control', 'variant_b']).toContain(first);
+    expect(Object.keys(await experiments.assignmentsFor(userId))).toContain('daily_goal_default');
+    expect(await exposures()).toBe(0);
+  });
+
+  it('logs an idempotent exposure event', async () => {
+    await pool.query(`UPDATE users SET analytics_consent = true WHERE id = $1`, [userId]);
+    await experiments.variant(userId, 'daily_goal_default');
+    await experiments.variant(userId, 'daily_goal_default'); // repeat
+    await experiments.assignmentsFor(userId); // and the bulk fetch
+    expect(await exposures()).toBe(1); // deduped despite repeated exposure
   });
 
   it('kill switch resolves everyone to control', async () => {

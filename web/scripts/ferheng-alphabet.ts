@@ -23,6 +23,8 @@
  * places (Ç after C, Ş after S) rather than being pushed to the end.
  */
 
+import { foldLetter } from '@kurda/shared';
+
 /**
  * Hawar, the Latin alphabet Celadet Alî Bedirxan set out in 1932: 26 basic
  * letters plus Ç Ê Î Ş Û, 31 in all, each in its own position.
@@ -41,37 +43,13 @@ export const SORANI = [
   'غ', 'ف', 'ڤ', 'ق', 'ک', 'گ', 'ل', 'ڵ', 'م', 'ن', 'ھ', 'ە', 'و', 'ۆ', 'ی', 'ێ',
 ];
 
-/**
- * Arabic letters that are one letter in Kurdish written two ways.
- *
- * Every one of these is evidenced by the corpus rather than assumed: it holds
- * `هات` beside `ھاتن` (the same verb), `كابانی` beside `کا`, `ياقووت` beside
- * `یا`. Left alone they split a letter in two down the whole index.
- *
- * `ه` folds to `ھ` and not to `ە`: at the start of a word it is the consonant
- * h, and `ە` is the vowel, which does not begin words.
+/*
+ * Arabic letters that are one letter in Kurdish written two ways (`ك`/`ک`,
+ * `ي`/`ی`, `ه`/`ھ`, …) are folded by `foldLetter`, which lives in @kurda/shared
+ * now: answer grading needs the same table, and two copies of it would be two
+ * chances to disagree about what counts as the same letter. Left unfolded they
+ * split a letter in two down the whole index.
  */
-const VARIANTS: Record<string, string> = {
-  'ك': 'ک', // U+0643 arabic kaf  → U+06A9 keheh
-  'ي': 'ی', // U+064A arabic yeh  → U+06CC farsi yeh
-  'ى': 'ی', // U+0649 alef maksura → farsi yeh
-  'ه': 'ھ', // U+0647 heh         → U+06BE heh doachashmee
-  'ۀ': 'ە', // U+06C0 heh with yeh above → U+06D5 ae
-  /*
-   * The Turkish dotless i. Hawar has i and î and no ı, so in Kurmancî it is
-   * always a slip of a Turkish keyboard — three words in 377,942.
-   *
-   * Folding it also removes something a reader would have had no way to make
-   * sense of: `ı`.toUpperCase() is `I`, so the leftover block was showing a
-   * letter indistinguishable from Hawar's own I.
-   */
-  'ı': 'i',
-};
-
-/** Which letter a character is filed as, once the variants are folded. */
-export function foldLetter(ch: string): string {
-  return VARIANTS[ch] ?? ch;
-}
 
 /**
  * Where a letter sorts.

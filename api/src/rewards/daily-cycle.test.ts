@@ -31,8 +31,13 @@ describe('nextCycleDay', () => {
   it('wraps day 7 back to day 1', () => {
     expect(nextCycleDay(state(7, '2026-07-09'), '2026-07-10')).toBe(1);
   });
-  it('resets to day 1 after a missed day', () => {
-    expect(nextCycleDay(state(4, '2026-07-08'), '2026-07-10')).toBe(1);
+  // deliberately changed: a missed day used to send the cycle back to day 1
+  it('continues where it left off after missed days', () => {
+    expect(nextCycleDay(state(4, '2026-07-08'), '2026-07-10')).toBe(5);
+    expect(nextCycleDay(state(4, '2026-06-01'), '2026-07-10')).toBe(5);
+  });
+  it('still wraps after a gap', () => {
+    expect(nextCycleDay(state(7, '2026-07-01'), '2026-07-10')).toBe(1);
   });
   it('holds when already claimed today', () => {
     expect(nextCycleDay(state(4, '2026-07-10'), '2026-07-10')).toBe(4);
@@ -40,13 +45,23 @@ describe('nextCycleDay', () => {
 });
 
 describe('statusFor', () => {
-  it('is claimable on a new day and reports the escalated reward', () => {
-    const s = statusFor(state(2, '2026-07-09'), '2026-07-10');
-    expect(s).toMatchObject({ canClaim: true, claimableDay: 3, reward: rewardForDay(3), alreadyClaimedToday: false });
+  it('is claimable on a new day once something was learned, and reports the escalated reward', () => {
+    const s = statusFor(state(2, '2026-07-09'), '2026-07-10', true);
+    expect(s).toMatchObject({
+      canClaim: true,
+      claimableDay: 3,
+      reward: rewardForDay(3),
+      alreadyClaimedToday: false,
+      learnedToday: true,
+    });
     expect(s.schedule).toEqual(CYCLE_REWARDS);
   });
+  it('is not claimable before a lesson or practice session today', () => {
+    const s = statusFor(state(2, '2026-07-09'), '2026-07-10', false);
+    expect(s).toMatchObject({ canClaim: false, alreadyClaimedToday: false, learnedToday: false, claimableDay: 3 });
+  });
   it('blocks a second claim on the same day', () => {
-    const s = statusFor(state(3, '2026-07-10'), '2026-07-10');
+    const s = statusFor(state(3, '2026-07-10'), '2026-07-10', true);
     expect(s.canClaim).toBe(false);
     expect(s.alreadyClaimedToday).toBe(true);
   });

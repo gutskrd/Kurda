@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { escapeHtml } from './escape';
 import { HAWAR, SORANI, alphabetOf, compareKeys } from './ferheng-alphabet';
+import { BAR_KEYS } from './ferheng-chrome';
 import { COPY, ferhengLocaleFor } from './ferheng-copy';
 import { definitionsOf, isInflected, toEntries } from './ferheng-entries';
 import {
@@ -19,6 +20,8 @@ import {
   wordsPage,
   type Word,
 } from './ferheng-pages';
+import { en } from '../src/i18n/en';
+import { ku } from '../src/i18n/ku';
 
 const word = (headword: string, key = headword, definition = 'wate'): Word => ({
   headword,
@@ -94,10 +97,15 @@ describe('a page carries no markup it was not given', () => {
     expect(html).toContain('&lt;b&gt;');
   });
 
-  /** Nothing executable, by construction — the policy is the second line, not the first. */
-  it('contains no script and no inline style', () => {
+  /**
+   * Nothing executable but our own file, by construction — the policy is the
+   * second line, not the first. The one script is chrome.js, which relabels
+   * the bar; it is empty-bodied and named by path, and nothing else may be.
+   */
+  it('runs no script but its own two files, and no inline style', () => {
     const html = wordsPage({ prefix: 'a', words: [word('av')] }, null, null);
-    expect(html).not.toMatch(/<script/i);
+    // the relabelling and the search box, both files on this origin
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
     expect(html).not.toMatch(/<style/i);
     expect(html).not.toMatch(/\son\w+=/i); // onclick, onerror, onload…
     expect(html).not.toMatch(/javascript:/i);
@@ -227,9 +235,12 @@ describe('what a page tells a search engine', () => {
     expect(html).toContain('href="/ferheng/b/"');
     expect(html).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
     // what this guards is the INDEX, not the chrome: listing every range put
-    // this page at 145 KB once. The app's nav and footer are a fixed ~4 KB that
-    // every page carries so that none of them looks like a different site.
-    expect(html.length, 'the landing page should not list every range').toBeLessThan(10_000);
+    // this page at 145 KB once. The app's nav and footer are a fixed ~5 KB
+    // that every page carries so that none of them looks like a different site
+    // — with the menu's cross beside its bars, and every label marked for
+    // chrome.js — and now the search box. Fourteen thousand characters is
+    // still a long way under 145 KB.
+    expect(html.length, 'the landing page should not list every range').toBeLessThan(14_000);
   });
 
   /**
@@ -240,9 +251,10 @@ describe('what a page tells a search engine', () => {
   it('opens the dictionary with words, not only with letters', () => {
     const sev: Word = { ...word('sêv', 'sev', 'Fêkiyeke sor an kesk e, ji dara sêvê.'), sorani: ['سێو'] };
     const html = indexPage([{ letter: 's', words: 1 }], 1, 1, featured([sev], 4), new Map());
-    expect(html).toContain('>sêv</a>');
+    // as a card: the word and its meaning, linking to the full entry
+    expect(html).toContain('>sêv</span>');
     expect(html).toContain('Fêkiyeke sor an kesk e, ji dara sêvê.');
-    expect(html).toContain('سێو');
+    expect(html).toContain('class="word-card"');
   });
 
   /** A spread across the alphabet, and the same spread on every build. */
@@ -424,9 +436,32 @@ describe('how an entry reads', () => {
       ...word('sabatan'),
       senses: [{ pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya pirjimar a binavkirî ya sabat.' }],
     };
-    const html = wordsPage({ prefix: 'sa', words: [form, word('sabat')] }, null, null);
-    expect(html).toContain('class="row sense form"');
+    const html = wordsPage({ prefix: 'sa', words: [form, word('sabat')] }, null, null, new Map([['sabat', 'sa'], ['sabatan', 'sa']]));
+    // one compact line: the kind of form, an arrow, the word it is a form of
+    expect(html).toContain('class="entry form-entry" id="sabatan"');
+    expect(html).toMatch(/→<\/span> <a href="#sabat"[^>]*>sabat<\/a>/);
+    // the grammar is still there, a tap away
+    expect(html).toContain('Rewşa çemandî ya pirjimar a binavkirî ya sabat.');
     expect(html.match(/class="row sense"/g)).toHaveLength(1);
+  });
+
+  it('keeps a form with more to say as a full entry', () => {
+    const form: Word = {
+      ...word('sabatan'),
+      senses: [{ pos: 'Formeke navdêrê', definition: 'Rewşa çemandî ya pirjimar a binavkirî ya sabat.' }],
+      sorani: ['سابات'],
+    };
+    const html = wordsPage({ prefix: 'sa', words: [form] }, null, null);
+    expect(html).toContain('class="row sense form"');
+    expect(html).not.toContain('form-entry');
+  });
+
+  it('folds a long list of synonyms behind +N', () => {
+    const w: Word = { ...word('bab'), synonyms: Array.from({ length: 12 }, (_, i) => `syn${i}`) };
+    const html = wordsPage({ prefix: 'b', words: [w] }, null, null);
+    expect(html).toContain('<details class="more"><summary>+4</summary>');
+    expect(html.indexOf('syn7')).toBeLessThan(html.indexOf('<details class="more">'));
+    expect(html.indexOf('syn8')).toBeGreaterThan(html.indexOf('<details class="more">'));
   });
 
   it('says a thing once, however many times the source said it', () => {
@@ -548,13 +583,22 @@ describe('an address with no page behind it', () => {
     const html = notFoundPage();
     expect(html).toContain('nehat dîtin');
     expect(html).toContain('href="/ferheng/"');
-    expect(html).not.toContain('<script');
+    // only the bar's relabelling, which every page carries; nothing of the app's
+    expect(html.match(/<script[^>]*>/gi)).toEqual(['<script src="/ferheng/chrome.js">', '<script src="/ferheng/search.js" defer>']);
   });
 
   /** The letters are the one thing a re-import never moves. */
   it('sends a reader somewhere that still exists', () => {
     expect(notFoundPage()).toContain('Here ferhengê');
-    expect(notFoundPage()).toContain('<link rel="canonical" href="https://hevalo.app/ferheng/">');
+    expect(notFoundPage()).toContain('href="/ferheng/"');
+  });
+
+  /** A dead address is not a page to index, and it is nobody's twin. */
+  it('asks not to be indexed, and claims no address', () => {
+    const html = notFoundPage();
+    expect(html).toContain('<meta name="robots" content="noindex">');
+    expect(html).not.toContain('rel="canonical"');
+    expect(html).not.toContain('hreflang');
   });
 });
 
@@ -619,10 +663,98 @@ describe('what the dictionary copies from the app', () => {
     expect(STYLE).toMatch(/min-width:\s*1180px[\s\S]{0,120}max-width:\s*1440px/);
   });
 
+  /** The value one declaration has in the first rule for `selector` — the base rule, ahead of any media query. */
+  const declOf = (css: string, selector: string, prop: string): string | undefined => {
+    const esc = selector.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const block = new RegExp(`(?:^|\\n)\\s*${esc}\\s*\\{([^}]*)\\}`).exec(css)?.[1];
+    return block ? new RegExp(`(?:^|[;\\s])${prop}\\s*:\\s*([^;]+);`).exec(block)?.[1]?.trim() : undefined;
+  };
+
+  /**
+   * Clicking Dictionary used to move the bar: the dictionary had a copy of the
+   * app's nav from before the app's changed, so the links were dimmer, the
+   * page you were on lost its highlight, and Log in and Get started sat 28px
+   * apart instead of 14 on slightly smaller buttons. The copy has to keep up.
+   */
+  it('draws the bar with the app’s own measurements', () => {
+    const layout = read('layout.css');
+    const ui = read('ui.css');
+    const pairs: Array<[string, string, string]> = [
+      [layout, '.nav-inner', 'gap'],
+      [layout, '.nav-links', 'gap'],
+      [layout, '.nav-link', 'height'],
+      [layout, '.nav-link', 'padding'],
+      [layout, '.nav-link', 'font-size'],
+      [layout, '.nav-link', 'color'],
+      [layout, '.nav-link.active', 'background'],
+      [layout, '.nav-link', 'font-weight'],
+      [layout, '.nav-link-icon', 'color'],
+      [layout, '.nav-actions', 'gap'],
+      [ui, '.btn-sm', 'height'],
+      [ui, '.btn-sm', 'padding'],
+      [ui, '.btn-sm', 'font-size'],
+    ];
+    const wrong = pairs
+      .map(([css, sel, prop]) => [sel, prop, declOf(css, sel, prop), declOf(STYLE, sel, prop)] as const)
+      .filter(([, , app, mine]) => app === undefined || app !== mine)
+      .map(([sel, prop, app, mine]) => `${sel} ${prop}: ${mine} ≠ ${app}`);
+    expect(wrong).toEqual([]);
+    // the page you are on is not bolder: a wider link moves every link after it
+    for (const css of [layout, STYLE]) expect(declOf(css, '.nav-link.active', 'font-weight')).toBeUndefined();
+  });
+
+  /**
+   * The menu runs on a checkbox, and every style for its label reaches it from
+   * the checkbox with `~`. Moving the label into the right-hand group without
+   * moving those selectors silently took away its keyboard focus ring.
+   */
+  it('reaches the menu toggle from its checkbox, focus ring and cross included', () => {
+    const doc = new DOMParser().parseFromString(wordsPage({ prefix: 'a', words: [word('av')] }, null, null), 'text/html');
+    const box = doc.querySelector('.nav-toggle-state')!;
+    const label = doc.querySelector('label.nav-toggle')!;
+    const group = label.closest('.nav-actions')!;
+    expect(group.parentElement).toBe(box.parentElement);
+    expect(box.compareDocumentPosition(group) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(STYLE).toContain('.nav-toggle-state:focus-visible ~ .nav-actions .nav-toggle');
+    expect(STYLE).toContain('.nav-toggle-state:checked ~ .nav-actions .nav-toggle-close');
+    expect(STYLE).not.toMatch(/\.nav-toggle-state:[\w-]+ ~ \.nav-toggle\b/);
+  });
+
   /** Headings in the display serif is most of why a page looks like Hevalo. */
   it('sets headings in the same family the app sets them in', () => {
     expect(read('base.css')).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
     expect(STYLE).toMatch(/h1,\s*h2,\s*h3,\s*h4\s*\{[^}]*--font-display/);
+  });
+});
+
+/**
+ * The footer under the words is the app's footer, so a page the app's footer
+ * links to is linked from here too, in the words the app uses for it — read
+ * from the same catalogue key, so chrome.js can put it in the reader's
+ * language like the rest of the footer.
+ */
+describe('the dictionary’s footer, beside the app’s', () => {
+  const sev = word('sêv', 'sev');
+  const footerOf = (html: string): string => html.slice(html.indexOf('<footer class="footer">'), html.indexOf('</footer>'));
+
+  it('links to How Hevalo teaches in both published languages', () => {
+    for (const [copy, catalogue] of [
+      [COPY.ku, ku],
+      [COPY.en, en],
+    ] as const) {
+      const label = catalogue['footer.teach'];
+      expect(label, copy.base).toBeTruthy();
+      const footer = footerOf(wordsPage(paginate([sev])[0]!, null, null, new Map(), copy));
+      expect(footer, copy.base).toContain(
+        `<a href="/how-hevalo-teaches"><span data-copy="footer.teach">${escapeHtml(label ?? '')}</span></a>`,
+      );
+      // the words are the app's own, not a second translation of them
+      expect(copy.footer.teach, copy.base).toBe(label);
+    }
+  });
+
+  it('is relabelled with the rest of the footer', () => {
+    expect(BAR_KEYS).toContain('footer.teach');
   });
 });
 
@@ -672,6 +804,17 @@ describe('the language around the words', () => {
       const html = indexPage([{ letter: 's', words: 1 }], 1, 1, [], new Map(), c);
       expect(html).toContain('<link rel="alternate" hreflang="ku" href="https://hevalo.app/ferheng/">');
       expect(html).toContain('<link rel="alternate" hreflang="en" href="https://hevalo.app/dictionary/">');
+    }
+  });
+
+  /** Page for page: a page of words names its own twin, not the other front page. */
+  it('names the same page in the other language', () => {
+    for (const c of [COPY.ku, COPY.en]) {
+      const p = pages[0]!.prefix;
+      const html = wordsPage(pages[0]!, null, null, new Map(), c);
+      expect(html).toContain(`<link rel="alternate" hreflang="ku" href="https://hevalo.app/ferheng/${p}/">`);
+      expect(html).toContain(`<link rel="alternate" hreflang="en" href="https://hevalo.app/dictionary/${p}/">`);
+      expect(html).toContain(`<link rel="alternate" hreflang="x-default" href="https://hevalo.app/dictionary/${p}/">`);
     }
   });
 

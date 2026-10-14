@@ -88,7 +88,9 @@ export class TagService {
       this.pool.query<{ key: string; label: string; category: string; value: string | null; sensitive: boolean }>(
         `SELECT t.key, t.label, t.category, ut.value, t.sensitive
          FROM user_tags ut JOIN tags t ON t.id = ut.tag_id
-         WHERE ut.user_id = $1 AND ut.displayed = true AND t.active = true AND t.acquisition = 'self_claim'
+         WHERE ut.user_id = $1 AND ut.displayed = true AND t.active = true
+           -- what they claimed, and the season title Game Ranks gave them ("Stêrkê Payîz 2026")
+           AND (t.acquisition = 'self_claim' OR t.key = 'season_title')
          ORDER BY t.category`,
         [userId],
       ),

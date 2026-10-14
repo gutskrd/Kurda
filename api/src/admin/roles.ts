@@ -18,6 +18,15 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 export const LEGACY_ADMIN_ROLE = 'admin';
 
 /**
+ * Who may use the Game Ranks, Seasons, Leagues and Badges tools under /admin
+ * (contract 4 §U, Admin): the legacy catch-all role they were first guarded
+ * by, and `superadmin`, which is granted everything. Like the shop, the config
+ * approvals and the tags, these are guarded by a role list rather than a
+ * capability; the admin app's nav reads the same list (RANK_TOOLS).
+ */
+export const RANK_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
+
+/**
  * Every role that can reach anything under /admin, and so must clear 2FA.
  *
  * 'founder' is here because it curates the tag catalog through /admin/tags. The
@@ -42,6 +51,8 @@ export const CAPABILITIES = [
   'fraud.review',
   'events.manage',
   'admins.manage',
+  // the moderation queue, cases, sanctions and appeals
+  'moderation.act',
 ] as const;
 export type Capability = (typeof CAPABILITIES)[number];
 
@@ -49,7 +60,7 @@ const ROLE_CAPABILITIES: Record<AdminRole, readonly Capability[]> = {
   // superadmin is granted everything (kept in sync via `capabilitiesFor`)
   superadmin: CAPABILITIES,
   content_editor: ['content.edit', 'content.publish', 'events.manage'],
-  moderator: ['users.view', 'users.moderate'],
+  moderator: ['users.view', 'users.moderate', 'moderation.act'],
   support: ['users.view', 'economy.view'],
 };
 
@@ -62,16 +73,27 @@ export function isAdmin(roles: readonly string[]): boolean {
   return roles.some(isAdminRole);
 }
 
+/**
+ * What the legacy catch-all role can do through capability guards. Moderation
+ * only: every moderation route used to be guarded by `requireRoles('admin')`,
+ * and moving them to the capability must not lock out an account that holds
+ * just that role. Everything else it reaches is still guarded by the role itself.
+ */
+const LEGACY_ADMIN_CAPABILITIES: readonly Capability[] = ['moderation.act'];
+
+function capabilitiesOfRole(role: string): readonly Capability[] {
+  if (isAdminRole(role)) return ROLE_CAPABILITIES[role];
+  return role === LEGACY_ADMIN_ROLE ? LEGACY_ADMIN_CAPABILITIES : [];
+}
+
 /** The union of capabilities across the user's admin roles. */
 export function capabilitiesFor(roles: readonly string[]): Capability[] {
   const set = new Set<Capability>();
-  for (const role of roles) {
-    if (isAdminRole(role)) for (const cap of ROLE_CAPABILITIES[role]) set.add(cap);
-  }
+  for (const role of roles) for (const cap of capabilitiesOfRole(role)) set.add(cap);
   return CAPABILITIES.filter((c) => set.has(c));
 }
 
 /** Whether the user's roles grant a specific capability. */
 export function hasCapability(roles: readonly string[], capability: Capability): boolean {
-  return roles.some((role) => isAdminRole(role) && ROLE_CAPABILITIES[role].includes(capability));
+  return roles.some((role) => capabilitiesOfRole(role).includes(capability));
 }

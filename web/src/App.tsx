@@ -34,7 +34,9 @@ const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
-const Quiz = lazy(() => import('./pages/Quiz').then((m) => ({ default: m.Quiz })));
+const StoriesHub = lazy(() => import('./stories/StoriesHub').then((m) => ({ default: m.StoriesHub })));
+const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
+const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -43,8 +45,17 @@ const ForgotPassword = lazy(() => import('./pages/ForgotPassword').then((m) => (
 const VerifyEmail = lazy(() => import('./pages/VerifyEmail').then((m) => ({ default: m.VerifyEmail })));
 const ResetPassword = lazy(() => import('./pages/ResetPassword').then((m) => ({ default: m.ResetPassword })));
 const Learn = lazy(() => import('./pages/Learn').then((m) => ({ default: m.Learn })));
+const CourseMap = lazy(() => import('./pages/CourseMap').then((m) => ({ default: m.CourseMap })));
+const Lesson = lazy(() => import('./pages/Lesson').then((m) => ({ default: m.Lesson })));
+const Review = lazy(() => import('./pages/Review').then((m) => ({ default: m.Review })));
+const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ default: m.NextLesson })));
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
+const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
+// Game Ranks, leagues and badges (contract 4): the badge collection and the season
+const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
+const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
+const RanksPage = lazy(() => import('./ranks/RanksPage').then((m) => ({ default: m.RanksPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit').then((m) => ({ default: m.ProfileEdit })));
@@ -52,6 +63,22 @@ const UserProfile = lazy(() => import('./pages/UserProfile').then((m) => ({ defa
 const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m.Settings })));
 const Messages = lazy(() => import('./pages/Messages').then((m) => ({ default: m.Messages })));
 const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
+const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About })));
+const CopyrightPage = lazy(() => import('./copyright/CopyrightPage').then((m) => ({ default: m.CopyrightPage })));
+const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
+const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
+const Faq = lazy(() => import('./pages/Faq').then((m) => ({ default: m.Faq })));
+const HowHevaloTeaches = lazy(() =>
+  import('./pages/HowHevaloTeaches').then((m) => ({ default: m.HowHevaloTeaches })),
+);
+// reports and account standing (reports/): the two Settings pages, the
+// suspension screen, and a warning shown once
+const MyReports = lazy(() => import('./reports/MyReports').then((m) => ({ default: m.MyReports })));
+const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) => ({ default: m.AccountStanding })));
+import { SuspensionGate } from './reports/SuspensionGate';
+import { StandingWarnings } from './reports/StandingWarnings';
+import { GiftArrivals } from './gifts/GiftArrivals';
+import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -103,10 +130,25 @@ export function App(): React.JSX.Element {
         <ProfileModalProvider>
         {/* inside the router: it reads the URL to know which chat is open */}
         <MessagesProvider>
+        <StandingWarnings />
+        {/* "Rojda sent you a gift — Open", anywhere in the app */}
+        <GiftArrivals />
+        {/* a badge earned, celebrated wherever you are — after a game's own result */}
+        <BadgeCelebrations />
+        <SuspensionGate>
         <Routes>
-          {/* the landing page, and old public addresses that now live in the app */}
+          {/* the landing page, the pages about Hevalo itself, and old public
+              addresses that now live in the app */}
           <Route element={<MarketingLayout />}>
             <Route path="/" element={<Landing />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/privacy" element={<Privacy />} />
+            <Route path="/terms" element={<Terms />} />
+            {/* copyright notices from anyone, and counter-notices (contract-3 §C) */}
+            <Route path="/copyright" element={<CopyrightPage />} />
+            <Route path="/faq" element={<Faq />} />
+            {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
+            <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
             <Route path="*" element={<NotFound />} />
           </Route>
           <Route path="/stories" element={<Navigate to="/app/civak?section=gotin&kind=cirok" replace />} />
@@ -160,7 +202,16 @@ export function App(): React.JSX.Element {
           >
             <Route index element={<Civak />} />
             <Route path="learn" element={<RequireAccount what="gate.what.course"><Learn /></RequireAccount>} />
+            {/* the learning loop: a course's map, a lesson, a review, and the
+                lesson a new account starts with (see pages/NextLesson.tsx) */}
+            <Route path="learn/course/:courseId" element={<RequireAccount what="gate.what.course"><CourseMap /></RequireAccount>} />
+            <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
+            <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+            <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+            <Route path="learn/next" element={<RequireAccount what="gate.what.course"><NextLesson /></RequireAccount>} />
             <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
+            {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}
+            <Route path="alphabet" element={<Alphabet />} />
             {/* one route for both kinds: a post knows which it is */}
             <Route path="library/:id" element={<LibraryPostPage />} />
             <Route path="civak" element={<CivakMoved />} />
@@ -172,12 +223,20 @@ export function App(): React.JSX.Element {
             <Route path="dimen" element={<Navigate to="/app/civak?section=dimen" replace />} />
             <Route path="dimen/:id" element={<DimenPost />} />
             <Route path="games" element={<Games />} />
-            <Route path="games/wordle" element={<Wordle />} />
-            <Route path="games/rhyme" element={<Rhyme />} />
-            <Route path="games/race" element={<Race />} />
+            {/* the games played alone need an account too: every round is
+                scored on the server against the player (api/src/game), so a
+                guest is asked here rather than shown a game that cannot start */}
+            <Route path="games/wordle" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
+            <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
+            <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
+            {/* Stories replaced the ranked quiz: its old address leads there. The
+                list and a story are open to read; a quiz on one needs an account */}
+            <Route path="games/quiz" element={<Navigate to="/app/games/stories" replace />} />
+            <Route path="games/stories" element={<StoriesHub />} />
+            <Route path="games/stories/:slug" element={<StoryReader />} />
             <Route
-              path="games/quiz"
-              element={<RequireAccount what="gate.what.playOthers"><Quiz /></RequireAccount>}
+              path="games/stories/play/:gameId"
+              element={<RequireAccount what="gate.what.play"><StoryGame /></RequireAccount>}
             />
             {/* the two games played against other people */}
             <Route
@@ -189,6 +248,11 @@ export function App(): React.JSX.Element {
               element={<RequireAccount what="gate.what.playOthers"><RhymeMatch /></RequireAccount>}
             />
             <Route path="rankings" element={<Rankings />} />
+            <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
+            <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
+            <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
+            <Route path="ranks" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
+            <Route path="ranks/:game" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
             <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />
             <Route path="messages" element={<RequireAccount what="gate.what.sendMessages"><Messages /></RequireAccount>} />
             <Route path="shop" element={<RequireAccount what="gate.what.buy"><Shop /></RequireAccount>} />
@@ -199,8 +263,11 @@ export function App(): React.JSX.Element {
             />
             <Route path="users/:id" element={<UserProfile />} />
             <Route path="settings" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
+            <Route path="settings/reports" element={<RequireAccount what="gate.what.settings"><MyReports /></RequireAccount>} />
+            <Route path="settings/standing" element={<RequireAccount what="gate.what.settings"><AccountStanding /></RequireAccount>} />
           </Route>
         </Routes>
+        </SuspensionGate>
         </MessagesProvider>
         </ProfileModalProvider>
       </BrowserRouter>

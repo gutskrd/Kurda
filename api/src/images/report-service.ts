@@ -1,40 +1,33 @@
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { AppError } from '../plugins/errors.js';
+import { ReportsService } from '../moderation/reports-service.js';
 
 export type ImageTargetType = 'image_post' | 'image_comment';
 export type ReportResult = { ok: true; deduped: boolean } | { ok: false; reason: 'not-found' };
 
-const MAX_REASON_LEN = 500;
-
 /**
- * Image/meme moderation reports (KUR-292). Users report an image post or comment
- * with a reason; the report is deduped per user per item. Open reports are
- * ingested into the unified moderation queue (#102) by `ModerationQueueService.sync`,
- * and resolving the case there removes the content (soft-delete) and/or actions the
- * author.
+ * Image/meme reports (KUR-292), now written through the one report service
+ * every surface uses (moderation/reports-service.ts): the caption, the image
+ * key and the author are snapshotted at report time (and the image kept from
+ * cleanup), and the report joins its case at once. `image_reports` keeps its
+ * history and takes no new rows. The old route has no category: "something
+ * else", with the reason as the note.
  */
 export class ImageReportService {
-  constructor(private readonly pool: pg.Pool) {}
+  private readonly reports: ReportsService;
 
-  /** File a report against an image post or comment. Idempotent per (item, reporter). */
-  async report(targetType: ImageTargetType, targetId: string, reporterId: string, reason?: string): Promise<ReportResult> {
-    if (!(await this.targetExists(targetType, targetId))) return { ok: false, reason: 'not-found' };
-    const cleanReason = reason ? stripControlChars(reason).trim().slice(0, MAX_REASON_LEN) : null;
-    const res = await this.pool.query(
-      `INSERT INTO image_reports (target_type, target_id, reporter_id, reason)
-       VALUES ($1, $2, $3, $4)
-       ON CONFLICT (target_type, target_id, reporter_id) DO NOTHING`,
-      [targetType, targetId, reporterId, cleanReason],
-    );
-    return { ok: true, deduped: (res.rowCount ?? 0) === 0 };
+  constructor(pool: pg.Pool, reports?: ReportsService) {
+    this.reports = reports ?? new ReportsService(pool);
   }
 
-  private async targetExists(targetType: ImageTargetType, targetId: string): Promise<boolean> {
-    if (targetType === 'image_post') {
-      const res = await this.pool.query(`SELECT 1 FROM image_posts WHERE id = $1 AND status <> 'removed'`, [targetId]);
-      return (res.rowCount ?? 0) > 0;
+  /** File a report against an image post or comment. One open report per person per item. */
+  async report(targetType: ImageTargetType, targetId: string, reporterId: string, reason?: string): Promise<ReportResult> {
+    try {
+      const { created } = await this.reports.file(reporterId, { targetType, targetId, category: 'other', note: reason });
+      return { ok: true, deduped: !created };
+    } catch (err) {
+      if (err instanceof AppError && err.code === 'TARGET_NOT_FOUND') return { ok: false, reason: 'not-found' };
+      throw err;
     }
-    const res = await this.pool.query(`SELECT 1 FROM image_comments WHERE id = $1 AND status <> 'removed'`, [targetId]);
-    return (res.rowCount ?? 0) > 0;
   }
 }

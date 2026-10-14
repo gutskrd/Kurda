@@ -9,6 +9,15 @@ export interface CourseSummary {
   dialect: string;
 }
 
+/** One lesson in a skill, as the map lists it. */
+export interface LessonNode {
+  lessonId: string;
+  position: number;
+  title: string;
+  /** this learner has finished this lesson — this version or an earlier one */
+  completed: boolean;
+}
+
 export interface SkillNode {
   skillId: string;
   level: number;
@@ -18,6 +27,8 @@ export interface SkillNode {
   hasGrammar: boolean;
   /** first incomplete published lesson to launch (or null if none published) */
   firstLessonId: string | null;
+  /** the skill's published lessons in order, so a map can show each one */
+  lessons: LessonNode[];
 }
 
 export interface CourseMap {
@@ -67,15 +78,22 @@ export class CourseMapService {
         [courseId],
       ),
       // the learner-visible published lesson per (skill, position)
-      this.pool.query<{ id: string; skill_id: string; position: number }>(
-        `SELECT DISTINCT ON (l.skill_id, l.position) l.id, l.skill_id, l.position
+      this.pool.query<{ id: string; skill_id: string; position: number; title_en: string }>(
+        `SELECT DISTINCT ON (l.skill_id, l.position) l.id, l.skill_id, l.position, l.title_en
          FROM lessons l JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id
          WHERE u.course_id = $1 AND l.status = 'published'
          ORDER BY l.skill_id, l.position, l.version DESC`,
         [courseId],
       ),
-      this.pool.query<{ lesson_id: string }>(
-        `SELECT DISTINCT lesson_id FROM lesson_sessions WHERE user_id = $1 AND completed_at IS NOT NULL`,
+      // finished lessons by place, not by row: a corrected version of a lesson
+      // is a new row at the same place, and to the learner who finished the
+      // old one it is still the lesson they finished (as `LessonSlot` in
+      // content/sessions.ts) — keyed by row, a content fix re-locked the rest
+      // of the course behind a lesson they had already done
+      this.pool.query<{ skill_id: string; position: number }>(
+        `SELECT DISTINCT l.skill_id, l.position
+         FROM lesson_sessions ls JOIN lessons l ON l.id = ls.lesson_id
+         WHERE ls.user_id = $1 AND ls.completed_at IS NOT NULL`,
         [userId],
       ),
       this.pool.query<{ skill_id: string; easiness: number; repetitions: number }>(
@@ -93,11 +111,16 @@ export class CourseMapService {
       ),
     ]);
 
-    const doneLessons = new Set(completed.rows.map((r) => r.lesson_id));
-    const lessonsBySkill = new Map<string, Array<{ id: string; position: number }>>();
+    const doneSlots = new Set(completed.rows.map((r) => `${r.skill_id}:${r.position}`));
+    const lessonsBySkill = new Map<string, LessonNode[]>();
     for (const l of lessons.rows) {
       const list = lessonsBySkill.get(l.skill_id) ?? [];
-      list.push({ id: l.id, position: l.position });
+      list.push({
+        lessonId: l.id,
+        position: l.position,
+        title: l.title_en,
+        completed: doneSlots.has(`${l.skill_id}:${l.position}`),
+      });
       lessonsBySkill.set(l.skill_id, list);
     }
     const reviewsBySkill = new Map<string, Array<{ easiness: number; repetitions: number }>>();
@@ -113,8 +136,8 @@ export class CourseMapService {
     skills.rows.forEach((s, i) => {
       const level = i + 1;
       const skillLessons = (lessonsBySkill.get(s.skill_id) ?? []).sort((a, b) => a.position - b.position);
-      const completedSkill = skillLessons.length > 0 && skillLessons.every((l) => doneLessons.has(l.id));
-      const firstIncomplete = skillLessons.find((l) => !doneLessons.has(l.id));
+      const completedSkill = skillLessons.length > 0 && skillLessons.every((l) => l.completed);
+      const firstIncomplete = skillLessons.find((l) => !l.completed);
       const strength = skillStrength(reviewsBySkill.get(s.skill_id) ?? []);
       const unlocked = isUnlocked(level, previousCompleted, unlockedThrough);
 
@@ -125,7 +148,8 @@ export class CourseMapService {
         state: skillState({ unlocked, completed: completedSkill, strength }),
         strength,
         hasGrammar: s.has_grammar,
-        firstLessonId: firstIncomplete?.id ?? skillLessons[0]?.id ?? null,
+        firstLessonId: firstIncomplete?.lessonId ?? skillLessons[0]?.lessonId ?? null,
+        lessons: skillLessons,
       };
 
       let unit = units.find((u) => u.unitId === s.unit_id);

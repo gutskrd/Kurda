@@ -5,12 +5,16 @@ import { AppError } from '../plugins/errors.js';
 import { verifyCaptcha } from './captcha.js';
 import { isDisposableEmail } from './disposable-domains.js';
 import { OAuthService } from './oauth.js';
+import { signupRejected } from './rejections.js';
+import { isBannedEmail } from '../moderation/ban-registry.js';
 import { AuthService } from './service.js';
 import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
+import { safeTimeZone } from '../streaks/streak-logic.js';
+import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -35,20 +39,27 @@ export const registerBodySchema = z.object({
   /* every language the interface is offered in — one list, so the picker
        cannot offer something the server would refuse */
     locale: z.enum(APP_LOCALE_CODES).optional(),
-  timezone: z.string().max(50).optional(),
+  // an unknown zone is dropped (the account gets UTC) rather than stored:
+  // see safeTimeZone in streaks/streak-logic.ts for what one used to break
+  timezone: z
+    .string()
+    .max(50)
+    .optional()
+    .transform((tz) => (tz && safeTimeZone(tz) === tz ? tz : undefined)),
   deviceName: z.string().max(80).optional(),
   captchaToken: z.string().max(3_000).optional(),
   /** Explicit, versioned consent to ToS + privacy policy (KUR-109). */
   acceptTerms: z.literal(true),
-  /** Optional; under-threshold users get restricted_mode (KUR-109). */
-  birthDate: z.iso.date().optional(),
+  /**
+   * Birth month and year, always. The forms ask with no default, and every
+   * protection for minors rests on the answer: an account made without one
+   * would be nobody's age at all, so none is made. (Google and Apple sign-up,
+   * which tell us nothing about age, are asked once after signing in, and
+   * until then are treated as not known to be adults — users/age.ts.)
+   */
+  birthYear: birthYearSchema,
+  birthMonth: birthMonthSchema,
 });
-
-/** One generic rejection for every anti-bot check — never reveals
- *  whether CAPTCHA, blocklist or anything else fired (KUR-025). */
-function signupRejected(): AppError {
-  return new AppError('SIGNUP_REJECTED', 400, 'registration could not be completed');
-}
 
 export const loginBodySchema = z.object({
   email: z.email().max(254),
@@ -106,6 +117,9 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof registerBodySchema>;
+      // first, so nothing about a child is checked, scored or stored: under 13,
+      // no account is made at all (COPPA)
+      assertOldEnough({ year: body.birthYear, month: body.birthMonth });
       // full username policy (reserved names, structure, length) with a specific
       // reason; the DB citext unique index remains the case-insensitive authority.
       const uname = validateUsername(body.username);
@@ -123,6 +137,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         deviceId: deviceIdOf(req.headers),
       });
       if (assessment.hardBlock) throw signupRejected();
+      // a permanently banned person's address (or a +tag/dot variant of it)
+      if (await isBannedEmail(app.db, body.email)) throw signupRejected();
 
       const result = await service.register(body);
       await risk.attachUser(decisionId, result.user.id).catch((err) => {

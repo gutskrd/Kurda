@@ -207,6 +207,16 @@ Notes: the app uploads **through the API** (bytes are validated, resized to
 is never trusted); only the **public GET** at `CDN_BASE_URL` must be reachable.
 The media-orphan job cleans up replaced/unconfirmed objects automatically.
 
+**Evidence moderation takes down (recommended).** The CSAM action, and closing a
+child's account whose picture a report still holds, move the file off the public
+bucket: copied to private storage, the public object deleted. Two optional
+settings make that complete:
+
+| Variable | Value |
+|---|---|
+| `S3_EVIDENCE_BUCKET` | a second R2 bucket with **no** public access, e.g. `hevalo-evidence` (same token and endpoint; give the token access to it). Without it, evidence goes to unguessable `quarantine/…` keys in the main bucket, written `private, no-store`. |
+| `CDN_PURGE_ZONE_ID` / `CDN_PURGE_API_TOKEN` | the Cloudflare zone serving `CDN_BASE_URL` (a custom domain) and an API token with only **Zone → Cache Purge**. Media is cached for a year at the edge; with these set the CDN is told to forget a taken-down URL at once. Without them, the CSAM filing task in the admin lists the URLs to purge by hand (Caching → Configuration → Custom Purge). |
+
 ### Cost-safety (stay inside R2's free tier)
 
 All limits are env-driven (sensible defaults; raise them to scale). They're
@@ -232,10 +242,18 @@ so only Cloudflare can see them.**
 | `MEDIA_AUDIO_ALLOWED_TYPES` | mpeg,mp4,webm | accepted audio types (sniffed, not declared; webm is what a browser records) |
 | `MEDIA_AUDIO_UPLOAD_RATE_MAX` / `_WINDOW_MIN` | 20 / 60 | per-user voice-note upload rate limit |
 
-Image/meme posts (KUR-291) upload the same way as avatars — `POST /images/upload`
-takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then
-`POST /images` creates a post that can only reference a media key that cleared that
-pipeline. They share the storage/op ceilings above (one R2 budget).
+Pictures on posts (KUR-291) upload the same way as avatars — `POST /images/upload`
+takes raw bytes, the server sniffs/resizes/WebP-compresses/moderates them, then a
+post (`POST /library/posts`, or `POST /images` from older apps) can only reference
+a media key that cleared that pipeline and that its author uploaded. They share
+the storage/op ceilings above (one R2 budget). A picture upload is confirmed by
+the post that uses it, so one that is uploaded and never posted is deleted by the
+orphan sweep after a day; uploads waiting for their post count against the storage
+ceiling. The migration that introduced this (1751000163000) hands the picture
+uploads no post uses to the sweep the same way. A picture's key has its uploader
+in it, so moderation knows a picture by the hash of its bytes as well
+(1751000166000): bytes it blocked or took off the bucket are refused under any
+key, and a takedown reaches every copy.
 
 At the storage limit the API returns `MEDIA_STORAGE_LIMIT_REACHED` and stores
 nothing new; **existing photos keep working and are never auto-deleted**. If

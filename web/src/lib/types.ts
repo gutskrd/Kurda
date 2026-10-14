@@ -4,6 +4,9 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
+import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
+
+import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
 
 /** Every API call returns a result — callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -16,6 +19,13 @@ export interface ApiError {
   retryAfterSec?: number;
   requestId?: string;
   status?: number;
+  /**
+   * The envelope's `details`, as the server sent them: what a refusal knows
+   * beyond its code — until when a mute lasts (shared `MutedErrorDetails`),
+   * why an account is suspended (`SuspendedErrorDetails`). Unknown on purpose:
+   * a reader checks the shape before trusting it.
+   */
+  details?: unknown;
 }
 
 export interface TokenPair {
@@ -34,6 +44,16 @@ export interface SessionUser {
   avatarUrl?: string | null;
   /** the interface language this account chose; absent on older responses */
   locale?: string | null;
+  /**
+   * No birth month on record (a Google/Apple sign-up, or an account from before
+   * it was asked): the app asks once before anything else. Absent on older
+   * responses, which reads as "nothing to ask".
+   */
+  birthDateRequired?: boolean;
+  /** 13–17 today, as the server works it out (/me only) */
+  minor?: boolean;
+  /** takes part in the weekly leagues (/me only) */
+  leaguesEnabled?: boolean;
 }
 
 export interface AuthPayload {
@@ -50,6 +70,11 @@ export interface StreakSummary {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
+  /** days with a finished lesson or practice session, ever; absent on older responses */
+  daysLearned?: number;
+  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  freezeProgress?: number;
+  sessionsPerFreeze?: number;
 }
 
 /**
@@ -163,10 +188,19 @@ export interface PublicProfile extends ProfileCosmetics {
   profilePhotoUrl?: string | null;
   xp?: number;
   streak?: number;
-  tier?: string;
-  rating?: number;
-  /** global rating place, or null when they have not played ranked */
-  rank?: number | null;
+  /**
+   * Their Learning League tier, or null for someone not taking part (and for
+   * someone who never joined — not Bronze, as it once read). A key: translate
+   * it (ranks/names), never print it.
+   */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
+  /** Game Ranks per game they play this season (contract 4); "Resting" ones carry no tier for others */
+  ranks?: ProfileRank[];
+  /** the season frame worn round the avatar, or null */
+  frameSku?: string | null;
+  /** the three badges they show (a minor's only to friends) */
+  badges?: ShowcaseBadge[];
   achievements?: number;
   /** which activity sections this profile shows; null when it is private */
   sections?: ProfileSections | null;
@@ -223,6 +257,12 @@ export interface FeedItem {
   title: string | null;
   excerpt: string | null;
   imageUrl: string | null;
+  /** the first picture's description; null when nobody wrote one */
+  imageAlt?: string | null;
+  /** every picture, in order (at most four); absent from an API older than pictures on posts */
+  images?: FeedImage[];
+  /** marked as a meme, for the Memes filter */
+  meme?: boolean;
   href: string;
   viewCount: number;
   commentCount: number;
@@ -268,15 +308,27 @@ export interface AvatarOption {
   requiresPremium: boolean;
 }
 
+/**
+ * What a chat message carries besides text (shared `ChatMessageExtras`): a
+ * gift to unwrap or a game card. Optional here because a message from an
+ * older server, or a fixture, has none — it is then a plain text message.
+ */
+export interface ChatExtras {
+  kind?: ChatMessageKind;
+  gift?: GiftCard | null;
+  game?: ChatGameRef | null;
+}
+
 /** A 1:1 direct message (chat). */
-export interface DmMessage {
+export interface DmMessage extends ChatExtras {
   id: string;
   senderId: string;
   /** who wrote it — the thread shows a name per burst, not per message */
   username: string;
   /** resolved server-side (uploaded photo -> chosen avatar) */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card */
+  body: string | null;
   createdAt: string;
   deliveredAt: string | null;
   readAt: string | null;
@@ -289,6 +341,8 @@ export interface Conversation {
   avatarUrl?: string | null;
   online?: boolean;
   lastMessage: string;
+  /** what the last message was, so a gift or a game card reads as one in the list */
+  lastKind?: ChatMessageKind;
   lastAt: string;
   lastFromMe: boolean;
   unread: number;
@@ -381,13 +435,14 @@ export interface GroupDetail extends Group {
   myRole: GroupRole | null;
 }
 /** A group chat message (GET/POST /groups/:id/chat). */
-export interface GroupMessage {
+export interface GroupMessage extends ChatExtras {
   id: string;
   senderId: string;
   username: string;
   /** resolved server-side (uploaded photo -> chosen avatar) */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card; '' once deleted */
+  body: string | null;
   createdAt: string;
   deleted: boolean;
 }
@@ -438,6 +493,11 @@ export interface DailyRewardStatus {
   schedule: number[];
   alreadyClaimedToday: boolean;
   cycleDay: number;
+  /**
+   * A lesson or practice session was finished today — what a claim needs.
+   * Absent on older responses, where canClaim alone decides.
+   */
+  learnedToday?: boolean;
 }
 
 /** Result of POST /rewards/daily/claim. */

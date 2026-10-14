@@ -27,8 +27,9 @@ interface ExperimentRow {
 /**
  * A/B experiment assignment + config (KUR-107). `variant` resolves a user's
  * bucket deterministically and logs an idempotent exposure event (one per
- * user per experiment) into the analytics store. A disabled experiment (kill
- * switch) always resolves to `control`.
+ * user per experiment) into the analytics store — for accounts that agreed to
+ * analytics only. A disabled experiment (kill switch) always resolves to
+ * `control`.
  */
 export class ExperimentService {
   constructor(
@@ -40,20 +41,32 @@ export class ExperimentService {
   async variant(userId: string, key: string): Promise<string> {
     const exp = await this.byKey(key);
     const assigned = exp && exp.enabled ? assignVariant(userId, key, exp.variants) : 'control';
-    if (exp && exp.enabled) await this.logExposure(userId, key, assigned);
+    if (exp && exp.enabled && (await this.mayLogExposure(userId))) await this.logExposure(userId, key, assigned);
     return assigned;
   }
 
   /** All enabled experiments' assignments for a user (SDK bulk fetch). */
   async assignmentsFor(userId: string): Promise<Record<string, string>> {
     const res = await this.pool.query<ExperimentRow>(`SELECT * FROM experiments WHERE enabled = true`);
+    const log = res.rows.length > 0 && (await this.mayLogExposure(userId));
     const out: Record<string, string> = {};
     for (const row of res.rows) {
       const assigned = assignVariant(userId, row.key, row.variants);
       out[row.key] = assigned;
-      await this.logExposure(userId, row.key, assigned);
+      if (log) await this.logExposure(userId, row.key, assigned);
     }
     return out;
+  }
+
+  /**
+   * An exposure is an analytics event like any other, so it is stored only
+   * with `analytics_consent`, as /events/track stores nothing without it
+   * (analytics/routes.ts). Writing exposures for everyone was the same leak by
+   * a side door. The assignment itself does not depend on consent: the bucket
+   * is a hash of the id, worked out again on every call and stored nowhere.
+   */
+  private async mayLogExposure(userId: string): Promise<boolean> {
+    return this.analytics !== undefined && (await this.analytics.hasConsent(userId));
   }
 
   async byKey(key: string): Promise<ExperimentDef | null> {

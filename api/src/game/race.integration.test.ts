@@ -2,6 +2,7 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
+import { scriptDialect, typingLanguage } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
@@ -28,6 +29,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });
@@ -200,8 +203,8 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   it('lists a racer best runs', async () => {
     const res = await call('GET', '/race/best', playerToken);
     expect(res.statusCode).toBe(200);
-    expect(res.json().races.length).toBeGreaterThan(0);
-    expect(res.json().races[0]).toHaveProperty('wpm');
+    expect(res.json().racesByMode.forgiving.length).toBeGreaterThan(0);
+    expect(res.json().racesByMode.forgiving[0]).toHaveProperty('wpm');
   });
 
   it('refuses a text too short to be a race', async () => {
@@ -216,5 +219,335 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
   it('keeps race curation to admins', async () => {
     const res = await call('GET', '/admin/race/texts', playerToken);
     expect(res.statusCode).toBe(403);
+  });
+
+  // ---- varieties, accent modes, and what a keyboard actually sends ---------
+
+  const SORANI = 'ڕۆژێکی خۆش بوو، چووینە باخچەکە و گوڵمان چنی.';
+  /** TEXT as somebody without the accented keys types it */
+  const PLAIN = TEXT.replace(/ê/g, 'e').replace(/î/g, 'i').replace(/û/g, 'u');
+
+  async function race(payload: Record<string, unknown>): Promise<{ id: string; body: string; json: Record<string, unknown> }> {
+    const res = await call('POST', '/race', playerToken, payload);
+    expect(res.statusCode, res.body).toBe(200);
+    return { id: res.json().id, body: res.json().text.body, json: res.json() };
+  }
+
+  it('hands a racer a text in the variety they asked for, and never the other', async () => {
+    const created = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} soranî`,
+      body: SORANI,
+      language: 'ckb',
+      difficulty: 3,
+    });
+    expect(created.statusCode, created.body).toBe(201);
+
+    const sorani = await race({ length: 3, dialect: 'sorani' });
+    expect(sorani.body).toBe(SORANI);
+    expect(sorani.json).toMatchObject({ dialect: 'sorani', text: { language: 'ckb' } });
+
+    // a Kurmancî racer (and an older app that does not say) is handed Kurmancî
+    for (let i = 0; i < 6; i++) {
+      const kurmanci = await race(i % 2 ? { length: 3 } : { difficulty: 3, dialect: 'kurmanci' });
+      expect(kurmanci.json).toMatchObject({ dialect: 'kurmanci', text: { language: 'kmr' } });
+    }
+  });
+
+  it('says the pool is empty for a variety with no texts at that length', async () => {
+    await pool.query(`UPDATE race_texts SET active = false WHERE language = 'ckb' AND difficulty = 1`);
+    const res = await call('POST', '/race', playerToken, { length: 1, dialect: 'sorani' });
+    expect(res.statusCode).toBe(503);
+    expect(res.json().code).toBe('EMPTY_RACE_POOL');
+  });
+
+  it('stores the accent mode and scores the race in it', async () => {
+    const strict = await race({ length: 3, accentMode: 'strict' });
+    expect(strict.json.accentMode).toBe('strict');
+    await typedFor(strict.id, 25);
+    const strictDone = (await call('POST', `/race/${strict.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(strictDone.accentMode).toBe('strict');
+    expect(strictDone.accuracy).toBeLessThan(1);
+    expect(strictDone.accentMisses).toBe(6);
+
+    const forgiving = await race({ length: 3, accentMode: 'forgiving' });
+    await typedFor(forgiving.id, 25);
+    const forgivingDone = (await call('POST', `/race/${forgiving.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(forgivingDone.accuracy).toBe(1);
+    expect(forgivingDone.accentMisses).toBe(6);
+    // seven accented letters reached: the ş was typed with its accent
+    expect(forgivingDone.accented).toBe(7);
+    expect(forgivingDone.perfect).toBe(false);
+
+    const row = await pool.query(`SELECT accent_mode, accent_misses, errors FROM race_games WHERE id = $1`, [strict.id]);
+    expect(row.rows[0]).toEqual({ accent_mode: 'strict', accent_misses: 6, errors: 6 });
+  });
+
+  /*
+   * Migrations run while the previous release is still serving, and it starts
+   * a race without saying a mode or a variety. It must still be able to, and
+   * the race is then scored as that release scored it: exactly as typed.
+   */
+  it('takes a race started the way the previous release starts one, and scores it strictly', async () => {
+    const text = await pool.query<{ id: string }>(`SELECT id FROM race_texts WHERE title = $1`, [`it_${suffix} welat`]);
+    const started = await pool.query<{ id: string; accent_mode: string; dialect: string }>(
+      `INSERT INTO race_games (user_id, text_id) VALUES ($1, $2) RETURNING id, accent_mode, dialect`,
+      [playerId, text.rows[0]!.id],
+    );
+    expect(started.rows[0]).toMatchObject({ accent_mode: 'strict', dialect: 'kurmanci' });
+    await typedFor(started.rows[0]!.id, 25);
+    const done = (await call('POST', `/race/${started.rows[0]!.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(done).toMatchObject({ accentMode: 'strict', accentMisses: 6 });
+    expect(done.accuracy).toBeLessThan(1);
+  });
+
+  it('refuses an accent mode or a variety it does not know', async () => {
+    expect((await call('POST', '/race', playerToken, { accentMode: 'lazy' })).statusCode).toBe(400);
+    expect((await call('POST', '/race', playerToken, { dialect: 'zazaki' })).statusCode).toBe(400);
+  });
+
+  it('keeps a personal best per accent mode, and the first race is not one', async () => {
+    const first = await race({ length: 3, accentMode: 'hidden' });
+    await typedFor(first.id, 30);
+    const one = (await call('POST', `/race/${first.id}/finish`, playerToken, { typed: TEXT })).json();
+    expect(one.personalBest).toBe(false);
+
+    const faster = await race({ length: 3, accentMode: 'hidden' });
+    await typedFor(faster.id, 15);
+    expect((await call('POST', `/race/${faster.id}/finish`, playerToken, { typed: TEXT })).json().personalBest).toBe(true);
+
+    const slower = await race({ length: 3, accentMode: 'hidden' });
+    await typedFor(slower.id, 40);
+    expect((await call('POST', `/race/${slower.id}/finish`, playerToken, { typed: TEXT })).json().personalBest).toBe(false);
+
+    const best = (await call('GET', '/race/best?accentMode=hidden', playerToken)).json();
+    expect(best.racesByMode.hidden).toHaveLength(3);
+    expect(best.racesByMode.hidden.every((r: { accentMode: string }) => r.accentMode === 'hidden')).toBe(true);
+    expect(best.personalBests.hidden).toEqual(best.racesByMode.hidden[0]);
+    // filtered to one mode
+    expect(best.personalBests.strict).toBeNull();
+    expect(best.racesByMode.strict).toEqual([]);
+
+    const all = (await call('GET', '/race/best', playerToken)).json();
+    expect(Object.keys(all.personalBests).sort()).toEqual(['forgiving', 'hidden', 'strict']);
+    expect(Object.keys(all.racesByMode).sort()).toEqual(['forgiving', 'hidden', 'strict']);
+    expect(all.personalBests.hidden).not.toBeNull();
+    expect(all.personalBests.forgiving).not.toBeNull();
+  });
+
+  /*
+   * The best-runs list without a mode used to rank every mode together, so a
+   * forgiving run (e counts for ê) outranked a strict one at the same speed —
+   * the comparison the personal best was already kept apart from.
+   */
+  it('ranks best runs only against runs in the same accent mode', async () => {
+    const strict = await race({ length: 3, accentMode: 'strict' });
+    await typedFor(strict.id, 60);
+    const slow = (await call('POST', `/race/${strict.id}/finish`, playerToken, { typed: TEXT })).json();
+    const forgiving = await race({ length: 3, accentMode: 'forgiving' });
+    await typedFor(forgiving.id, 6);
+    const fast = (await call('POST', `/race/${forgiving.id}/finish`, playerToken, { typed: PLAIN })).json();
+    expect(fast.score).toBeGreaterThan(slow.score);
+
+    const { racesByMode, personalBests } = (await call('GET', '/race/best', playerToken)).json();
+    for (const mode of ['strict', 'forgiving', 'hidden'] as const) {
+      const runs = racesByMode[mode] as Array<{ accentMode: string; score: number }>;
+      expect(runs.every((r) => r.accentMode === mode), mode).toBe(true);
+      expect(runs.map((r) => r.score), mode).toEqual(runs.map((r) => r.score).sort((x, y) => y - x));
+      expect(personalBests[mode], mode).toEqual(runs[0]?.score ? runs[0] : null);
+    }
+    // the fast forgiving run tops its own list, and the strict list is topped
+    // by a strict run that scored less
+    expect(racesByMode.forgiving[0].score).toBe(fast.score);
+    expect(personalBests.strict.score).toBeLessThan(fast.score);
+  });
+
+  it('scores one missed letter as one letter, not the rest of the text', async () => {
+    const r = await race({ length: 3, accentMode: 'strict' });
+    await typedFor(r.id, 25);
+    const done = (await call('POST', `/race/${r.id}/finish`, playerToken, { typed: TEXT.slice(1) })).json();
+    expect(done.correctChars).toBe([...TEXT].length - 1);
+    expect(done.accuracy).toBeGreaterThan(0.95);
+    expect(done.score).toBeGreaterThan(0);
+  });
+
+  it('does not count a dead key’s accent as the last letter', async () => {
+    const r = await race({ length: 3, accentMode: 'strict' });
+    await typedFor(r.id, 25);
+    // the racer pressed ^ for the final letter and the app sent what the field held
+    const typed = TEXT.replace(/m\.$/, 'ˆ');
+    const done = (await call('POST', `/race/${r.id}/finish`, playerToken, { typed })).json();
+    expect(done.perfect).toBe(false);
+    expect(done.errors).toBe(0);
+    expect(done.correctChars).toBe([...TEXT].length - 2);
+  });
+
+  it('saves a pasted text the way a keyboard types it, and warns about what nobody can type', async () => {
+    const pasted = 'Ew\u00a0dibêje: “Kafe\u0301 û çay”— ji bo te…';
+    const res = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix}  pasted `,
+      body: pasted,
+      difficulty: 2,
+    });
+    expect(res.statusCode, res.body).toBe(201);
+    const text = res.json();
+    expect(text.body).toBe('Ew dibêje: "Kafé û çay"- ji bo te...');
+    expect(text.title).toBe(`it_${suffix} pasted`);
+    expect(text.untypeable).toEqual([{ char: 'é', codePoint: 'U+00E9', count: 1 }]);
+    const stored = await pool.query(`SELECT body FROM race_texts WHERE id = $1`, [text.id]);
+    expect(stored.rows[0].body).toBe(text.body);
+
+    // and the list shows the warning for texts already saved
+    const list = (await call('GET', '/admin/race/texts', adminToken)).json();
+    const listed = list.texts.find((t: { id: string }) => t.id === text.id);
+    expect(listed.untypeable).toHaveLength(1);
+  });
+
+  it('saves a Soranî text copied out of a PDF as its letters, with nothing to warn about', async () => {
+    // a PDF hands over every letter as its shaped presentation form
+    const shaped = SORANI.replace(/ک/g, 'ﻛ').replace(/ی/g, 'ﯼ').replace(/و/g, 'ﻮ');
+    expect(shaped).not.toBe(SORANI);
+    const res = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} pdf`,
+      body: shaped,
+      language: 'ckb',
+      difficulty: 2,
+      active: false,
+    });
+    expect(res.statusCode, res.body).toBe(201);
+    expect(res.json().body).toBe(SORANI);
+    expect(res.json().untypeable).toEqual([]);
+  });
+
+  it('refuses a text that is too short once its spaces are tidied, and an unknown language', async () => {
+    const spaced = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} spaced`,
+      body: 'ez        ji       welat',
+      difficulty: 1,
+    });
+    expect(spaced.statusCode).toBe(400);
+    expect(spaced.json().code).toBe('TEXT_TOO_SHORT');
+
+    const unknown = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} unknown`,
+      body: TEXT,
+      language: 'xx',
+      difficulty: 1,
+    });
+    expect(unknown.statusCode).toBe(400);
+  });
+
+  /*
+   * The language decides who is handed a text, and the admin screen offers
+   * Kurmancî first: a Soranî text saved without changing that went to
+   * Kurmancî racers, every letter of it untypeable for them.
+   */
+  it('refuses a text whose script says it is in the other variety, and says which', async () => {
+    const sorani = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} mislabelled`,
+      body: SORANI,
+      difficulty: 1,
+    });
+    expect(sorani.statusCode).toBe(400);
+    expect(sorani.json()).toMatchObject({ code: 'TEXT_LANGUAGE_MISMATCH', details: { language: 'ckb' } });
+
+    const kurmanci = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} mislabelled`,
+      body: TEXT,
+      language: 'ckb',
+      difficulty: 1,
+    });
+    expect(kurmanci.statusCode).toBe(400);
+    expect(kurmanci.json()).toMatchObject({ code: 'TEXT_LANGUAGE_MISMATCH', details: { language: 'kmr' } });
+
+    // nor can a saved text be edited into the other variety's script
+    const saved = await call('POST', '/admin/race/texts', adminToken, {
+      title: `it_${suffix} relabel`,
+      body: TEXT,
+      difficulty: 1,
+      active: false,
+    });
+    expect(saved.statusCode, saved.body).toBe(201);
+    const edited = await call('PUT', `/admin/race/texts/${saved.json().id}`, adminToken, {
+      title: `it_${suffix} relabel`,
+      body: SORANI,
+      language: 'kmr',
+      difficulty: 1,
+      active: false,
+    });
+    expect(edited.statusCode).toBe(400);
+    expect(edited.json().code).toBe('TEXT_LANGUAGE_MISMATCH');
+    const stored = await pool.query(`SELECT body, language FROM race_texts WHERE id = $1`, [saved.json().id]);
+    expect(stored.rows[0]).toEqual({ body: TEXT, language: 'kmr' });
+  });
+
+  /*
+   * Migration 157 made the language the rule, so the texts saved before it
+   * are labelled by their script there — by the count the save now checks
+   * with (@kurda/shared `scriptDialect`). Its statement is run here against
+   * a table of this transaction's own, under the same name, so no real text
+   * is touched.
+   */
+  it('labels the texts saved before by their script, as the save reads it (migration 157)', async () => {
+    const file = '../../migrations/1751000157000_race-accent-modes.js';
+    const migration = (await import(file)) as { up: (pgm: unknown) => void };
+    const statements: string[] = [];
+    migration.up(
+      new Proxy({}, { get: (_t, op) => (op === 'sql' ? (sql: string) => statements.push(sql) : () => undefined) }),
+    );
+    const relabel = statements.find((sql) => /UPDATE race_texts/.test(sql));
+    expect(relabel).toBeTruthy();
+
+    const texts: Array<[body: string, label: string, expected: string]> = [
+      [SORANI, 'kmr', 'ckb'], // saved without changing the screen's first choice
+      [SORANI.replace(/ک/g, 'ﻛ').replace(/و/g, 'ﻮ'), 'kmr', 'ckb'], // and copied out of a PDF
+      [TEXT, 'ckb', 'kmr'],
+      [TEXT, 'Kurmanji', 'kmr'],
+      [SORANI, 'sorani', 'ckb'],
+      [`${TEXT} کوردی`, 'kmr', 'kmr'], // a word of the other script is not the text
+      ['12 34 56 78 90 - 12 34 56 !', 'sor', 'ckb'], // no letters: the label is all there is
+      ['12 34 56 78 90 - 12 34 56 !', 'en', 'kmr'],
+    ];
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(
+        `CREATE TEMP TABLE race_texts (n int PRIMARY KEY, id uuid NOT NULL DEFAULT gen_random_uuid(),
+                                       body text NOT NULL, language text NOT NULL) ON COMMIT DROP`,
+      );
+      for (const [n, [body, label]] of texts.entries()) {
+        await client.query(`INSERT INTO race_texts (n, body, language) VALUES ($1, $2, $3)`, [n, body, label]);
+      }
+      await client.query(relabel!);
+      const rows = await client.query<{ language: string }>(`SELECT language FROM race_texts ORDER BY n`);
+      expect(rows.rows.map((r) => r.language)).toEqual(texts.map(([, , expected]) => expected));
+      // and the save agrees with every one it could tell
+      for (const [body, , expected] of texts) {
+        const script = scriptDialect(body);
+        if (script) expect(typingLanguage(script)).toBe(expected);
+      }
+    } finally {
+      await client.query('ROLLBACK');
+      client.release();
+    }
+  });
+
+  /*
+   * Texts saved before saving normalised them are still in the table as they
+   * were pasted. One stored decomposed could not be typed at all.
+   */
+  it('hands out and scores an old text stored decomposed as the text a keyboard types', async () => {
+    await pool.query(`UPDATE race_texts SET active = false WHERE difficulty = 2`);
+    const decomposed = TEXT.normalize('NFD');
+    expect(decomposed).not.toBe(TEXT);
+    await pool.query(
+      `INSERT INTO race_texts (title, body, language, difficulty, active) VALUES ($1, $2, 'kmr', 2, true)`,
+      [`it_${suffix} decomposed`, decomposed],
+    );
+    const r = await race({ length: 2, accentMode: 'strict' });
+    expect(r.body).toBe(TEXT);
+    await typedFor(r.id, 25);
+    const done = (await call('POST', `/race/${r.id}/finish`, playerToken, { typed: TEXT })).json();
+    expect(done.perfect).toBe(true);
+    expect(done.accuracy).toBe(1);
   });
 });

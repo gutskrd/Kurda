@@ -3,8 +3,9 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { ContentRepository } from './repository.js';
-import { LessonSessionService } from './sessions.js';
+import { LessonSessionService, type GemGranter } from './sessions.js';
 import type { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 const answerBodySchema = z.object({
   exerciseId: z.uuid(),
@@ -12,13 +13,14 @@ const answerBodySchema = z.object({
   answer: z.unknown(),
 });
 
-/** Grants Gems for a rule/refId; injected so content stays decoupled (KUR-068). */
-interface GemGranter {
-  grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
-}
-
-export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter, xp?: XpService): void {
-  const sessions = new LessonSessionService(app.db, xp);
+export function registerLessonRoutes(
+  app: FastifyInstance,
+  gems?: GemGranter,
+  xp?: XpService,
+  milestones?: MilestoneRecorder,
+): void {
+  // perfect first completions pay Gems (KUR-068) inside `complete`
+  const sessions = new LessonSessionService(app.db, { xp, gems, milestones });
   const content = new ContentRepository(app.db);
 
   /** A skill's markdown grammar note for the "Tips" tab (KUR-038). */
@@ -61,7 +63,28 @@ export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter, xp
     },
   );
 
-  /** Finish the session and get the results summary. */
+  /**
+   * A second try at an item already answered in this session — the re-ask a
+   * client makes a few exercises after a miss. Graded like an answer; records
+   * nothing, so it moves no score, XP, review or Gems (see `retry`).
+   */
+  app.post(
+    '/sessions/:id/retry',
+    {
+      schema: { params: z.object({ id: z.uuid() }), body: answerBodySchema },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const body = req.body as z.infer<typeof answerBodySchema>;
+      return sessions.retry(id, req.user!.id, body.exerciseId, body.answer);
+    },
+  );
+
+  /**
+   * Finish the session and get the results summary. A perfect first
+   * completion pays Gems; a replay never does (see `complete`).
+   */
   app.post(
     '/sessions/:id/complete',
     {
@@ -69,15 +92,6 @@ export function registerLessonRoutes(app: FastifyInstance, gems?: GemGranter, xp
       config: { skipValidation: true },
       preHandler: requireAuth,
     },
-    async (req) => {
-      const sessionId = (req.params as { id: string }).id;
-      const results = await sessions.complete(sessionId, req.user!.id);
-      // perfect lesson → Gems (KUR-068); first completion only (xpAwarded > 0),
-      // idempotent per session. Best-effort: never fails the completion.
-      if (gems && results.accuracy === 1 && results.xpAwarded > 0) {
-        await gems.grant(req.user!.id, 'perfect_lesson', sessionId).catch(() => undefined);
-      }
-      return results;
-    },
+    async (req) => sessions.complete((req.params as { id: string }).id, req.user!.id),
   );
 }

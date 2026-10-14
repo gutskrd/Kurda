@@ -24,9 +24,9 @@
               "titleEn": "The Story of Kawa",
               "exercises": [
                 { "position": 1, "type": "multiple_choice", "payload": { "prompt": "On which date is Newroz celebrated?", "options": ["21 March", "1 January", "21 December"], "correctIndex": 0 } },
-                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "Who is the hero of the Newroz legend?", "options": ["Kawayê Hesinkar", "Zuhak", "Rustem"], "correctIndex": 0 } },
-                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "What did Kawa light to announce freedom?", "options": ["Agir (fire)", "Av (water)", "Berf (snow)"], "correctIndex": 0 } },
-                { "position": 4, "type": "multiple_choice", "payload": { "prompt": "\"Newroz\" tê çi wateyê?", "options": ["Roja nû (the new day)", "Şeva dirêj (long night)", "Havîn (summer)"], "correctIndex": 0 } }
+                { "position": 2, "type": "multiple_choice", "payload": { "prompt": "Who is the hero of the Newroz legend?", "options": ["Kawayê Hesinkar", "Zuhak", "Rustem"], "correctIndex": 0, "say": "Kawayê Hesinkar" } },
+                { "position": 3, "type": "multiple_choice", "payload": { "prompt": "What did Kawa light to announce freedom?", "options": ["Agir (fire)", "Av (water)", "Berf (snow)"], "correctIndex": 0, "say": "Agir" } },
+                { "position": 4, "type": "multiple_choice", "payload": { "prompt": "\"Newroz\" tê çi wateyê?", "options": ["Roja nû (the new day)", "Şeva dirêj (long night)", "Havîn (summer)"], "correctIndex": 0, "say": "Newroz" } }
               ]
             }
           ]
@@ -52,7 +52,7 @@
               "titleKu": "Peyv 2",
               "titleEn": "Words 2",
               "exercises": [
-                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Govend\" tê çi wateyê?", "options": ["Circle dance", "Bonfire", "New year"], "correctIndex": 0 } },
+                { "position": 1, "type": "multiple_choice", "payload": { "prompt": "\"Govend\" tê çi wateyê?", "options": ["Circle dance", "Bonfire", "New year"], "correctIndex": 0, "say": "Govend" } },
                 { "position": 2, "type": "translate", "payload": { "prompt": "Festival", "accepted": ["Cejn"] } }
               ]
             }

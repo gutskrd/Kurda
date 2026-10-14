@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Image, Pressable, Share, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -11,7 +11,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { relativeTime } from '../memes/types';
 import { postUrl, toggleEngagement } from './api';
-import { CARD_LABEL_KEY, type EngagementKind, type FeedItem } from './types';
+import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
+import { PostPictures } from '../composer/PostPictures';
 
 /**
  * One card on the wall, whichever half it came from.
@@ -118,16 +119,15 @@ export function FeedCard({
           </Text>
         ) : null}
 
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
-        ) : null}
-
         {item.excerpt ? (
           <Text style={[styles.excerpt, { color: colors.textSecondary }]} numberOfLines={3}>
             {item.excerpt}
           </Text>
         ) : null}
       </Pressable>
+
+      {/* after the words, as X has them; each picture is named by its own description */}
+      <PostPictures images={feedImages(item)} onPress={open} />
 
       <View style={styles.actions}>
         <Action
@@ -226,7 +226,6 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   title: { ...display(typography.sizes.lg) },
-  image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },
   excerpt: { fontSize: typography.sizes.md },
   actions: {
     flexDirection: 'row',

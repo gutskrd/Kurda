@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { Link } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
 import { EmptyState, ErrorState } from '../components/states';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
@@ -105,6 +106,12 @@ export function Dictionary(): React.JSX.Element {
         autoComplete="off"
         spellCheck={false}
       />
+
+      {idle && (
+        <Link to="/app/alphabet" className="doc-link dict-alphabet">
+          {t('alphabet.link')}
+        </Link>
+      )}
 
       {result?.fuzzy ? <p className="muted dict-fuzzy">{t('dictionary.noExactMatch')}</p> : null}
       {failed ? <ErrorState message={failed} onRetry={() => setQuery((q) => q)} /> : null}

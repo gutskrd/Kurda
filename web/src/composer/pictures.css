@@ -1,0 +1,222 @@
+/*
+ * A post's pictures on the wall and on its page, and the lightbox.
+ *
+ * The grid is X's: one picture at its own shape, two side by side, three as
+ * one tall and two stacked, four in a square — with a 2px seam and rounded
+ * outer corners, so several pictures read as one block rather than a gallery.
+ */
+.pp-grid {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  max-height: 560px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.pp-n2 {
+  grid-template-columns: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+.pp-n3 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+.pp-n3 .pp-cell:first-child {
+  grid-row: span 2;
+}
+.pp-n4 {
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  aspect-ratio: 16 / 9;
+}
+.pp-cell {
+  position: relative;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: zoom-in;
+}
+.pp-cell img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.pp-cell:focus-visible {
+  outline: none;
+  box-shadow: inset 0 0 0 3px var(--focus);
+}
+/* "this one is described" — the badge X shows, for sighted readers who want to read it */
+.pp-alt {
+  position: absolute;
+  bottom: 8px;
+  inset-inline-start: 8px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  color: #fff;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+/* on the wall the block sits inside the card's padding */
+.fcard-pics {
+  padding: 0 18px 14px;
+}
+.post-pictures {
+  margin: 18px 0 6px;
+}
+
+/* ---- the lightbox --------------------------------------------------------- */
+.pp-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 140;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 64px 24px;
+  background: rgba(2, 3, 6, 0.94);
+  animation: fade 0.15s ease;
+}
+.pp-figure {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+}
+.pp-figure img {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 160px);
+  object-fit: contain;
+  border-radius: var(--r-sm);
+}
+.pp-caption {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  max-width: 62ch;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  text-align: center;
+}
+.pp-count {
+  color: var(--ink-4);
+  font-size: 0.78rem;
+  font-variant-numeric: tabular-nums;
+}
+.pp-close,
+.pp-nav {
+  position: absolute;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  background: rgba(20, 22, 28, 0.8);
+  color: #fff;
+  cursor: pointer;
+}
+.pp-close:hover,
+.pp-nav:hover {
+  background: rgba(40, 44, 54, 0.9);
+}
+.pp-close:focus-visible,
+.pp-nav:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+.pp-close {
+  top: 12px;
+  inset-inline-end: 12px;
+}
+.pp-nav {
+  top: 50%;
+  transform: translateY(-50%);
+}
+.pp-prev {
+  inset-inline-start: 10px;
+}
+.pp-next {
+  inset-inline-end: 10px;
+}
+/* the chevron points the way it goes: back is the reading direction's start */
+.pp-prev svg {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .pp-prev svg {
+  transform: none;
+}
+[dir='rtl'] .pp-next svg {
+  transform: scaleX(-1);
+}
+@media (max-width: 640px) {
+  .pp-lightbox {
+    padding: 64px 8px 16px;
+  }
+  .pp-nav {
+    top: auto;
+    bottom: 16px;
+    transform: none;
+  }
+  .pp-figure img {
+    max-height: calc(100dvh - 200px);
+  }
+  .fcard-pics {
+    padding: 0 14px 12px;
+  }
+}
+/* ---- the post page around them ------------------------------------------ */
+/* a saying has no title: its words are the headline */
+.post-body-saying {
+  font-size: 1.22rem;
+  line-height: 1.6;
+}
+.post-source {
+  margin: 14px 0 0;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
+.post-edit {
+  min-height: 44px;
+  margin-inline-start: auto;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+.post-edit:hover {
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+.post-edit:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pp-lightbox {
+    animation: none;
+  }
+}

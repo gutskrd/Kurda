@@ -3,8 +3,20 @@ import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
 import type { AuthPayload, SessionUser } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
+import type { SuspendedErrorDetails } from '@kurda/shared';
+import { suspensionOf } from '../reports/restriction';
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
+
+export interface RegisterInput {
+  email: string;
+  username: string;
+  password: string;
+  locale?: string;
+  /** asked on the form with no default; the server refuses under 13 */
+  birthYear: number;
+  birthMonth: number;
+}
 
 interface AuthContextValue {
   status: AuthStatus;
@@ -12,11 +24,23 @@ interface AuthContextValue {
   client: ApiClient;
   /** Resolve to an error message, or null on success. */
   login(email: string, password: string, remember: boolean): Promise<string | null>;
-  register(input: { email: string; username: string; password: string; locale?: string }): Promise<string | null>;
+  /**
+   * Resolve to the error, or null on success. The code rides along because one
+   * refusal is not a message to show under a form: UNDER_MINIMUM_AGE replaces
+   * the form with an explanation.
+   */
+  register(input: RegisterInput): Promise<{ message: string; code?: string } | null>;
   requestPasswordReset(email: string): Promise<void>;
   logout(): Promise<void>;
   /** Re-fetch the profile (e.g. after editing it elsewhere). */
   refreshUser(): Promise<void>;
+  /**
+   * Set when the account is suspended — at sign-in, or found out mid-session —
+   * with the reasons and the appeal token; the suspension screen shows it
+   * (reports/SuspensionGate.tsx) in place of the app until it is dismissed.
+   */
+  suspension: SuspendedErrorDetails | null;
+  dismissSuspension(): void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -25,14 +49,23 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   const t = useT();
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
+  const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
 
-  // Build the client once. onLogout fires when a refresh fails mid-session.
+  // Build the client once. onLogout fires when a refresh fails mid-session;
+  // onSuspended when that failure is a suspension, with its reasons.
   const { client, storage } = useMemo(
     () =>
-      createApiClient(() => {
-        setUser(null);
-        setStatus('signedOut');
-      }),
+      createApiClient(
+        () => {
+          setUser(null);
+          setStatus('signedOut');
+        },
+        (details) => {
+          setUser(null);
+          setStatus('signedOut');
+          setSuspension(details);
+        },
+      ),
     [],
   );
 
@@ -83,13 +116,19 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     client,
     login: async (email, password, remember) => {
       const res = await client.post<AuthPayload>('/auth/login', { email, password });
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) {
+        // a suspended account gets the suspension screen, not a line under the form
+        const suspended = suspensionOf(res.error);
+        if (suspended) setSuspension(suspended);
+        return describeError(res.error, t);
+      }
+      setSuspension(null);
       applyAuth(res.data, remember);
       return null;
     },
     register: async (input) => {
       const res = await client.post<AuthPayload>('/auth/register', { ...input, acceptTerms: true });
-      if (!res.ok) return describeError(res.error, t);
+      if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       applyAuth(res.data, true);
       return null;
     },
@@ -105,6 +144,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       const me = await client.get<{ user: SessionUser }>('/me');
       if (me.ok) setUser(me.data.user);
     },
+    suspension,
+    dismissSuspension: () => setSuspension(null),
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

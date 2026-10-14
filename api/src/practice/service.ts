@@ -1,13 +1,16 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, sanitizeExercise, type Verdict } from '../content/exercises.js';
+import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
-import { ReviewService } from '../review/service.js';
+import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
+import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -17,6 +20,8 @@ interface ExerciseRow {
   id: string;
   type: ExerciseType;
   payload: unknown;
+  /** the variety of Kurdish of the course the exercise is in */
+  dialect?: string;
 }
 
 export interface PracticeExercise {
@@ -26,11 +31,30 @@ export interface PracticeExercise {
   options?: string[];
   lefts?: string[];
   rights?: string[];
+  /** native recordings from the audio studio, where there are any */
+  audioUrl?: string;
+  modelAudioUrl?: string;
+  audio?: Record<string, string>;
+  /**
+   * The variety of Kurdish of the item's course. A review mixes courses, so
+   * each item says its own, and a client offers the letters it is typed in.
+   */
+  dialect?: string;
 }
 
 export interface PracticeSession {
   sessionId: string;
   exercises: PracticeExercise[];
+}
+
+/**
+ * A practice session as it stands, for a client coming back to it: its items
+ * in the order they were chosen, and what has been answered so far — the
+ * lesson's `SessionView`, for practice.
+ */
+export interface PracticeSessionView extends PracticeSession {
+  completed: boolean;
+  answered: Record<string, { verdict: Verdict; accepted: boolean }>;
 }
 
 export interface EmptyPractice {
@@ -43,13 +67,38 @@ export interface PracticeAnswerResult {
   verdict: Verdict;
   accepted: boolean;
   correction?: string;
+  /** the native recording of the item's Kurdish, now that it is answered (as AnswerResult) */
+  modelAudioUrl?: string;
   duplicate: boolean;
 }
+
+/** A second try at a practice item: graded, never recorded (as the lesson's RetryResult). */
+export type PracticeRetryResult = Omit<PracticeAnswerResult, 'duplicate'>;
+
+/** What practice has to offer right now, for a "Review" entry to show before starting one. */
+export interface PracticeDue {
+  /** items due for review now — what a session takes first */
+  due: number;
+  /** every item practice could draw on, due or not; 0 means a session would come back empty */
+  available: number;
+  /** a review this learner started recently and has not finished, to go back to; null when there is none */
+  open: string | null;
+}
+
+/**
+ * How long a review left unfinished is offered to go back to — a lesson's
+ * session lasts as long (SESSION_TTL_HOURS in content/sessions.ts). After
+ * that the items it chose may no longer be the ones due, and a new review
+ * chooses afresh.
+ */
+const OPEN_REVIEW_HOURS = 24;
 
 export interface PracticeResults {
   correct: number;
   total: number;
   accuracy: number;
+  /** what was missed, with the question and its right answer (as a lesson's results) */
+  mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: StreakSummary;
 }
@@ -64,6 +113,7 @@ export class PracticeService {
   private readonly streaks: StreakService;
   private readonly goals: DailyGoalService;
   private readonly reviews: ReviewService;
+  private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
@@ -72,29 +122,34 @@ export class PracticeService {
       streaks?: StreakService;
       goals?: DailyGoalService;
       reviews?: ReviewService;
+      milestones?: MilestoneRecorder;
     } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.goals = deps.goals ?? new DailyGoalService(pool);
     this.reviews = deps.reviews ?? new ReviewService(pool);
+    this.milestones = deps.milestones;
   }
 
-  /** Build a practice session, or an empty-state suggestion when there's nothing to review. */
-  async start(userId: string): Promise<PracticeSession | EmptyPractice> {
-    const dueQueue = await this.reviews.queue(userId, new Date(), PRACTICE_TARGET);
-    const dueIds = dueQueue.items.map((i) => i.itemId);
+  /**
+   * Build a practice session, or an empty-state suggestion when there's nothing to review.
+   *
+   * Candidates are review items that are exercises — joined to `exercises`, so
+   * only ids that resolve to one are ever cast to a uuid. A saved dictionary
+   * word (`dict:<entryId>`) has no exercise to practise it with: it keeps its
+   * schedule and stays in the review queue, and practice leaves it out rather
+   * than failing the whole session on the cast. Speaking items are left out
+   * too, since their answers cannot move the schedule (`feedsReview`).
+   *
+   * `only` narrows the session to those exercises — "practise these now" after
+   * a lesson, with the items just missed. They are taken only from the
+   * learner's own review items, under the same rules, so it cannot reach an
+   * exercise the learner has never answered (or one from an unpublished lesson).
+   */
+  async start(userId: string, only?: string[]): Promise<PracticeSession | EmptyPractice> {
+    const chosen = only ? await this.ownItems(userId, only) : await this.selectItems(userId);
 
-    // weakest known words (lowest easiness), not necessarily due — used to pad
-    const weak = await this.pool.query<{ item_id: string }>(
-      `SELECT item_id FROM review_items
-       WHERE user_id = $1 AND item_id <> ALL($2::text[])
-       ORDER BY easiness ASC, due_at ASC LIMIT $3`,
-      [userId, dueIds, PRACTICE_TARGET],
-    );
-    const chosen = selectPracticeItems(dueIds, weak.rows.map((r) => r.item_id));
-
-    // only item_ids that still resolve to a real exercise
     const exercises = chosen.length > 0 ? await this.loadExercises(chosen) : [];
     if (exercises.length === 0) {
       return { empty: true, suggestion: await this.nextLesson(userId) };
@@ -106,20 +161,123 @@ export class PracticeService {
       [userId, exercises.map((e) => e.id), exercises.length],
     );
     const sessionId = created.rows[0]!.id;
+    return { sessionId, exercises: await this.deliver(sessionId, exercises) };
+  }
 
+  /** Exercises as a client sees them: answers stripped, options shuffled for this session, recordings attached. */
+  private async deliver(sessionId: string, exercises: ExerciseRow[]): Promise<PracticeExercise[]> {
+    const audio = await lessonAudioFor(this.pool, exercises);
+    return exercises.map((ex, i) => ({
+      id: ex.id,
+      type: ex.type,
+      ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
+      ...audio[i],
+      ...(ex.dialect ? { dialect: ex.dialect } : {}),
+    }));
+  }
+
+  /**
+   * The learner's practice session as it stands, so leaving and coming back
+   * picks up where they were: the same items in the same order, options
+   * shuffled with the same seed, and the answers already given. Without it a
+   * reload started a new session and left the old one unfinished, its answers
+   * counted for the schedule and never for the day.
+   */
+  async view(sessionId: string, userId: string): Promise<PracticeSessionView> {
+    const session = await this.loadSession(sessionId, userId);
+    const [exercises, answers] = await Promise.all([
+      this.loadExercises(session.item_ids),
+      this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
+        `SELECT exercise_id, verdict, accepted FROM practice_answers WHERE session_id = $1`,
+        [session.id],
+      ),
+    ]);
+    const answered: PracticeSessionView['answered'] = {};
+    for (const a of answers.rows) answered[a.exercise_id] = { verdict: a.verdict, accepted: a.accepted };
     return {
-      sessionId,
-      exercises: exercises.map((ex) => ({
-        id: ex.id,
-        type: ex.type,
-        ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
-      })),
+      sessionId: session.id,
+      completed: session.completed_at !== null,
+      exercises: await this.deliver(session.id, exercises),
+      answered,
     };
+  }
+
+  /** Due items first, padded with the weakest known ones (`selectPracticeItems`). */
+  private async selectItems(userId: string): Promise<string[]> {
+    const due = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.due_at <= $2 AND e.type <> 'speaking'
+       ORDER BY r.due_at ASC LIMIT $3`,
+      [userId, new Date(), PRACTICE_TARGET],
+    );
+    const dueIds = due.rows.map((r) => r.item_id);
+
+    // weakest known words (lowest easiness), not necessarily due — used to pad
+    const weak = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.item_id <> ALL($2::text[]) AND e.type <> 'speaking'
+       ORDER BY r.easiness ASC, r.due_at ASC LIMIT $3`,
+      [userId, dueIds, PRACTICE_TARGET],
+    );
+    return selectPracticeItems(dueIds, weak.rows.map((r) => r.item_id));
+  }
+
+  /** Those of `ids` that are this learner's practisable review items, in the order asked. */
+  private async ownItems(userId: string, ids: string[]): Promise<string[]> {
+    const own = await this.pool.query<{ item_id: string }>(
+      `SELECT r.item_id FROM review_items r
+       JOIN exercises e ON e.id::text = r.item_id
+       WHERE r.user_id = $1 AND r.item_id = ANY($2::text[]) AND e.type <> 'speaking'`,
+      [userId, ids],
+    );
+    const found = new Set(own.rows.map((r) => r.item_id));
+    return [...new Set(ids)].filter((id) => found.has(id)).slice(0, PRACTICE_TARGET);
+  }
+
+  /**
+   * How many items are due, and how many practice could draw on at all —
+   * counted as `start` chooses them, so the number a "Review" entry shows is
+   * the number a session will find: saved dictionary words and speaking items,
+   * which practice cannot serve, are not in it.
+   *
+   * And the review the learner left unfinished, if they started one in the
+   * last day. A lesson is picked up where it stopped because opening it
+   * resumes its session; a review is not opened by anything but its own
+   * address, so without this a learner who left one and came back through
+   * "Review" started another, and the first stayed unfinished — its answers
+   * moved the schedule and never counted for the day.
+   */
+  async due(userId: string): Promise<PracticeDue> {
+    const [counts, open] = await Promise.all([
+      this.pool.query<{ due: string; available: string }>(
+        `SELECT count(*) FILTER (WHERE r.due_at <= $2)::text due, count(*)::text available
+         FROM review_items r
+         JOIN exercises e ON e.id::text = r.item_id
+         WHERE r.user_id = $1 AND e.type <> 'speaking'`,
+        [userId, new Date()],
+      ),
+      this.pool.query<{ id: string }>(
+        `SELECT id FROM practice_sessions
+         WHERE user_id = $1 AND completed_at IS NULL AND created_at > now() - make_interval(hours => $2)
+         ORDER BY created_at DESC LIMIT 1`,
+        [userId, OPEN_REVIEW_HOURS],
+      ),
+    ]);
+    const row = counts.rows[0];
+    return { due: Number(row?.due ?? 0), available: Number(row?.available ?? 0), open: open.rows[0]?.id ?? null };
   }
 
   private async loadExercises(ids: string[]): Promise<ExerciseRow[]> {
     const rows = await this.pool.query<ExerciseRow>(
-      `SELECT id, type, payload FROM exercises WHERE id = ANY($1::uuid[])`,
+      `SELECT e.id, e.type, e.payload, c.dialect
+       FROM exercises e
+       JOIN lessons l ON l.id = e.lesson_id
+       JOIN skills s ON s.id = l.skill_id
+       JOIN units u ON u.id = s.unit_id
+       JOIN courses c ON c.id = u.course_id
+       WHERE e.id = ANY($1::uuid[])`,
       [ids],
     );
     // preserve the selected order
@@ -160,7 +318,14 @@ export class PracticeService {
     return session;
   }
 
-  /** Grade one answer, update SM-2, and record it (idempotent per exercise). */
+  /**
+   * Grade one answer, update SM-2, and record it (idempotent per exercise).
+   *
+   * Everything here keys on the stored session's id, never on the one in the
+   * URL: Postgres finds a session by its id in capitals too, but the shuffle
+   * seed is text, and a multiple-choice answer graded under a seed the options
+   * were not shown with is mapped back to the wrong option.
+   */
   async submitAnswer(
     sessionId: string,
     userId: string,
@@ -180,7 +345,9 @@ export class PracticeService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer);
+    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    const heard = modelAudioUrl ? { modelAudioUrl } : {};
 
     const client = await this.pool.connect();
     try {
@@ -188,22 +355,27 @@ export class PracticeService {
       const inserted = await client.query(
         `INSERT INTO practice_answers (session_id, exercise_id, verdict, accepted)
          VALUES ($1, $2, $3, $4) ON CONFLICT (session_id, exercise_id) DO NOTHING`,
-        [sessionId, exerciseId, result.verdict, result.accepted],
+        [session.id, exerciseId, result.verdict, result.accepted],
       );
       if ((inserted.rowCount ?? 0) === 0) {
         const existing = await client.query<{ verdict: Verdict; accepted: boolean }>(
           `SELECT verdict, accepted FROM practice_answers WHERE session_id = $1 AND exercise_id = $2`,
-          [sessionId, exerciseId],
+          [session.id, exerciseId],
         );
         await client.query('COMMIT');
         const row = existing.rows[0]!;
-        return { verdict: row.verdict, accepted: row.accepted, correction: result.correction, duplicate: true };
+        return { verdict: row.verdict, accepted: row.accepted, correction: result.correction, ...heard, duplicate: true };
       }
       if (result.accepted) {
-        await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [sessionId]);
+        await client.query(`UPDATE practice_sessions SET correct_count = correct_count + 1 WHERE id = $1`, [session.id]);
       }
-      // feed SM-2 so practice actually strengthens the item (KUR-033)
-      await this.reviews.record(userId, exerciseId, qualityFromVerdict(result.verdict), new Date(), client);
+      // feed SM-2 so practice actually strengthens the item (KUR-033); an
+      // item padded in before it was due cannot stretch its own interval
+      // (`ReviewService.record`)
+      if (feedsReview(ex.type)) {
+        const quality = qualityFromVerdict(result.verdict, result.accepted);
+        await this.reviews.record(userId, exerciseId, quality, new Date(), client);
+      }
       await client.query('COMMIT');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
@@ -212,21 +384,82 @@ export class PracticeService {
       client.release();
     }
 
-    return { verdict: result.verdict, accepted: result.accepted, correction: result.correction, duplicate: false };
+    return { verdict: result.verdict, accepted: result.accepted, correction: result.correction, ...heard, duplicate: false };
   }
 
-  /** Finalize: award reduced XP once, credit streak + daily goal. Idempotent. */
+  /**
+   * Grade a second try at an item already answered in this session and record
+   * nothing — the re-ask after a miss, as `LessonSessionService.retry`: no
+   * answer row, no score, no XP, no review. Only an answered item, so the
+   * correction a retry returns is never read before the answer that counts.
+   */
+  async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<PracticeRetryResult> {
+    const session = await this.loadSession(sessionId, userId);
+    if (session.completed_at) throw new AppError('PRACTICE_SESSION_COMPLETED', 409, 'session already completed');
+    if (!session.item_ids.includes(exerciseId)) {
+      throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise is not in this practice session');
+    }
+    const answered = await this.pool.query(
+      `SELECT 1 FROM practice_answers WHERE session_id = $1 AND exercise_id = $2`,
+      [session.id, exerciseId],
+    );
+    if ((answered.rowCount ?? 0) === 0) {
+      throw new AppError('EXERCISE_NOT_ANSWERED', 409, 'answer this exercise before trying it again');
+    }
+    const exRes = await this.pool.query<ExerciseRow>(`SELECT id, type, payload FROM exercises WHERE id = $1`, [exerciseId]);
+    const ex = exRes.rows[0];
+    if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
+
+    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
+    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    return {
+      verdict: result.verdict,
+      accepted: result.accepted,
+      correction: result.correction,
+      ...(modelAudioUrl ? { modelAudioUrl } : {}),
+    };
+  }
+
+  /**
+   * Finalize: award reduced XP once, credit the daily goal, and — when enough
+   * was answered to be learning — the streak. Idempotent.
+   *
+   * A listening item put off and never answered ("Can't listen now") is left
+   * out of the score, as in a lesson (`SKIPPABLE_TYPES`): the accuracy and the
+   * XP are out of the items answered or that could have been.
+   */
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
     const correct = session.correct_count;
-    const total = session.total_count;
+    const putOff = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int n FROM exercises e
+       WHERE e.id = ANY($1::uuid[]) AND e.type = ANY($3::text[])
+         AND NOT EXISTS (SELECT 1 FROM practice_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)`,
+      [session.item_ids, session.id, SKIPPABLE_TYPES],
+    );
+    const total = Math.max(0, session.total_count - putOff.rows[0]!.n);
     const accuracy = total > 0 ? correct / total : 0;
+    // the misses with their right answers, in the order they were asked, so a
+    // review ends the way a lesson does: with what to fix, not just a score
+    const missed = await this.pool.query<{ exercise_id: string; verdict: Verdict; type: ExerciseType; payload: unknown }>(
+      `SELECT a.exercise_id, a.verdict, e.type, e.payload
+       FROM practice_answers a JOIN exercises e ON e.id = a.exercise_id
+       WHERE a.session_id = $1 AND NOT a.accepted
+       ORDER BY array_position($2::uuid[], a.exercise_id)`,
+      [session.id, session.item_ids],
+    );
+    const mistakes = missed.rows.map((m) => ({
+      exerciseId: m.exercise_id,
+      verdict: m.verdict,
+      ...revealExercise(m.type, m.payload),
+    }));
 
     const tzRes = await this.pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);
     const timeZone = tzRes.rows[0]?.timezone ?? 'UTC';
 
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
+    let claimedNow = false;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -234,13 +467,27 @@ export class PracticeService {
         const claimed = await client.query(
           `UPDATE practice_sessions SET completed_at = now()
            WHERE id = $1 AND completed_at IS NULL RETURNING id`,
-          [sessionId],
+          [session.id],
         );
         if ((claimed.rowCount ?? 0) > 0) {
-          const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
-          xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: sessionId }, client);
-          await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [sessionId, xpAwarded]);
-          streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          claimedNow = true;
+          // Learning only when the items were actually worked through today
+          // (see countsAsLearning and answeredTodaySql), out of every item, put
+          // off or not. Practice pays its XP only then: a review can be started
+          // on a single item at will, so XP for an empty one was XP on demand.
+          const tz = safeTimeZone(timeZone);
+          const answered = await client.query<{ n: number }>(answeredTodaySql('practice_answers'), [
+            session.id,
+            tz,
+            localDate(new Date(), tz),
+          ]);
+          const learning = countsAsLearning(answered.rows[0]!.n, session.total_count);
+          if (learning) {
+            const amount = Math.max(1, Math.round(lessonCompletionXp(accuracy, false) * PRACTICE_XP_FACTOR));
+            xpAwarded = await this.xp.award({ userId, source: PRACTICE_XP_SOURCE, amount, refId: session.id }, client);
+            await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
+            streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
+          }
           await this.goals.evaluate(client, userId, timeZone);
         }
         await client.query('COMMIT');
@@ -252,8 +499,12 @@ export class PracticeService {
       }
     }
     if (streak === null) streak = await this.streaks.get(userId, timeZone);
+    // best-effort, after the commit, idempotent (streak-30)
+    if (this.milestones && claimedNow) {
+      await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+    }
 
-    return { correct, total, accuracy, xpAwarded, streak };
+    return { correct, total, accuracy, mistakes, xpAwarded, streak };
   }
 }
 

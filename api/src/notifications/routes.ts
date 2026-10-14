@@ -12,6 +12,7 @@ const patchBody = z
     games: z.boolean().optional(),
     events: z.boolean().optional(),
     marketing: z.boolean().optional(),
+    progress: z.boolean().optional(),
     quietStartMin: minute.nullable().optional(),
     quietEndMin: minute.nullable().optional(),
   })

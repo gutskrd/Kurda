@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ModerationQueueService } from '../moderation/queue-service.js';
 import { activate } from '../test/activate.js';
+import { seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -21,7 +22,7 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
   const register = async (tag: string, ip: string): Promise<{ token: string; id: string }> => {
     const res = await app.inject({
       method: 'POST', url: '/auth/register',
-      payload: { email: `im_${tag}_${suffix}@it.kurda.app`, username: `im_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `im_${tag}_${suffix}@it.kurda.app`, username: `im_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);
@@ -30,19 +31,18 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
   };
   const call = (method: 'POST' | 'GET' | 'DELETE', url: string, token?: string, payload?: Record<string, unknown>) =>
     app.inject({ method, url, payload, headers: token ? { authorization: `Bearer ${token}` } : {}, remoteAddress: '10.63.0.9' });
-  const seedMedia = (key: string) =>
-    pool.query(
-      `INSERT INTO media_uploads (key, content_type, content_length, confirmed_at, scan_status)
-       VALUES ($1, 'image/webp', 1024, now(), 'cleared') ON CONFLICT (key) DO UPDATE SET confirmed_at = now()`,
-      [key],
-    );
+  // the upload a post may use: its author's own, cleared, unused
+  let authorId = '';
+  const seedMedia = (key: string) => seedPictureUpload(pool, key, authorId);
 
   beforeAll(async () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     queue = new ModerationQueueService(pool);
-    authorTok = (await register('author', '10.63.0.1')).token;
+    const author = await register('author', '10.63.0.1');
+    authorTok = author.token;
+    authorId = author.id;
     reporterTok = (await register('reporter', '10.63.0.2')).token;
     otherTok = (await register('other', '10.63.0.3')).token;
     modId = (await register('mod', '10.63.0.4')).id;
@@ -51,7 +51,7 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM moderation_cases WHERE source = 'image_report'`);
+    await pool.query(`DELETE FROM moderation_cases WHERE source = 'report' AND target_type IN ('image_post','image_comment') AND subject_user_id = ANY($1)`, [userIds]);
     if (userIds.length) await pool.query(`DELETE FROM users WHERE id = ANY($1)`, [userIds]);
     await pool.end();
     await app.close();
@@ -66,24 +66,26 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
     expect((await call('POST', `/images/${postId}/report`, reporterTok, { reason: 'again' })).json().deduped).toBe(true);
     await call('POST', `/images/${postId}/report`, otherTok, { reason: 'me too' });
 
-    const added = await queue.sync();
-    expect(added).toBeGreaterThanOrEqual(1);
-    const mine = (await queue.queue()).filter((c) => c.source === 'image_report' && c.sourceRef === `image_post:${postId}`);
+    // Changed on purpose: the old route writes through the one report service
+    // now, so the report is a case at once (no sync), from the 'report' source.
+    const mine = (await queue.queue({ q: postId })).cases.filter((c) => c.source === 'report');
     expect(mine).toHaveLength(1); // mass-report deduped to a single case
-    expect(mine[0]!.subjectUserId).toBeTruthy();
+    expect(mine[0]!.subject).toBeTruthy();
+    expect(mine[0]!.reportCount).toBe(2);
+    expect(mine[0]!.reporterCount).toBe(2);
   });
 
   it('resolving with `remove` soft-deletes the post + closes the reports', async () => {
-    await queue.sync();
-    const target = (await queue.queue()).find((c) => c.sourceRef === `image_post:${postId}`)!;
+    const target = (await queue.queue({ q: postId })).cases.find((c) => c.source === 'report')!;
     expect(await queue.resolve(target.id, modId, 'remove')).toBe(true);
 
     expect((await call('GET', `/images/${postId}`)).statusCode).toBe(404); // hidden
     const row = await pool.query<{ status: string }>(`SELECT status FROM image_posts WHERE id = $1`, [postId]);
     expect(row.rows[0]!.status).toBe('removed'); // retained for audit
 
-    const reports = await pool.query<{ status: string }>(`SELECT status FROM image_reports WHERE target_id = $1`, [postId]);
-    expect(reports.rows.every((r) => r.status === 'resolved')).toBe(true);
+    const reports = await pool.query<{ status: string }>(`SELECT status FROM reports WHERE target_id = $1`, [postId]);
+    expect(reports.rows).toHaveLength(2);
+    expect(reports.rows.every((r) => r.status === 'actioned')).toBe(true);
   });
 
   it('reports a comment into the queue and removes it (tombstone + count drop)', async () => {
@@ -93,8 +95,7 @@ describe.skipIf(!DATABASE_URL)('image moderation (integration)', () => {
     expect((await pool.query(`SELECT comment_count FROM image_posts WHERE id = $1`, [fresh.id])).rows[0].comment_count).toBe(1);
 
     expect((await call('POST', `/images/comments/${comment.id}/report`, reporterTok, { reason: 'abuse' })).statusCode).toBe(200);
-    await queue.sync();
-    const c = (await queue.queue()).find((x) => x.sourceRef === `image_comment:${comment.id}`)!;
+    const c = (await queue.queue({ q: comment.id })).cases.find((x) => x.source === 'report')!;
     expect(c).toBeTruthy();
 
     expect(await queue.resolve(c.id, modId, 'remove')).toBe(true);

@@ -9,10 +9,13 @@
       version disappears into one of them.
     -->
     <link rel="icon" href="/favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
+    <!-- the page's own black, so a phone's browser chrome runs into it rather than framing it -->
+    <meta name="theme-color" content="#0b0d10" />
     <title>Hevalo</title>
     <meta
       name="description"
-      content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
+      content="Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser."
     />
     <!--
       What a crawler and a link preview see.
@@ -34,7 +37,7 @@
     <meta property="og:title" content="Hevalo" />
     <meta
       property="og:description"
-      content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
+      content="Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser."
     />
     <!--
       A card, not the bare mark. Whatever unfurls this flattens a transparent
@@ -48,9 +51,51 @@
     <meta name="twitter:title" content="Hevalo" />
     <meta
       name="twitter:description"
-      content="Hevalo is a way to learn Kurdish — lessons, stories, poems, games and a community."
+      content="Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser."
     />
     <meta name="twitter:image" content="https://hevalo.app/og.png" />
+    <meta property="og:image:alt" content="Hevalo — Learn Kurdish. Play together." />
+    <!--
+      What the site is, for a search engine that reads structured data: a web
+      app for learning Kurdish, published by Zagrosian. Only what is true of the
+      product today — no ratings, no prices, no user counts.
+
+      A data block, not a script: it is never executed, so the CSP's
+      `script-src 'self'` does not apply to it and it needs no exception.
+    -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "WebSite",
+            "@id": "https://hevalo.app/#website",
+            "url": "https://hevalo.app/",
+            "name": "Hevalo",
+            "publisher": { "@id": "https://zagrosian.com/#organization" }
+          },
+          {
+            "@type": "WebApplication",
+            "@id": "https://hevalo.app/#app",
+            "name": "Hevalo",
+            "url": "https://hevalo.app/",
+            "description": "Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community.",
+            "applicationCategory": "EducationalApplication",
+            "operatingSystem": "Web browser",
+            "isAccessibleForFree": true,
+            "inLanguage": ["en", "ku", "ckb", "nl", "de", "es", "fr", "tr", "ar"],
+            "about": { "@type": "Language", "name": "Kurdish", "alternateName": ["Kurmanji", "Kurmancî"] },
+            "publisher": { "@id": "https://zagrosian.com/#organization" }
+          },
+          {
+            "@type": "Organization",
+            "@id": "https://zagrosian.com/#organization",
+            "name": "Zagrosian",
+            "url": "https://zagrosian.com"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

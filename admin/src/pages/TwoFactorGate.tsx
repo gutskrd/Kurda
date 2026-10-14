@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import qrcode from 'qrcode-generator';
 import { api, ApiError } from '../api';
+import { SessionProvider, sessionFrom, type AdminSession } from '../session';
+import { Button, Icon } from '../ui';
 
 /**
  * Nothing in the admin panel renders until 2FA is done.
@@ -8,14 +10,9 @@ import { api, ApiError } from '../api';
  * The API refuses every /admin route without it, so showing the workspace first
  * would only produce a screen of failed requests. This asks the API what this
  * session still needs and shows exactly that: set up an authenticator, or enter
- * a code.
+ * a code. Once through, it shares what the session may do (its capabilities
+ * and staff roles) with everything under it.
  */
-
-interface SessionState {
-  roles: string[];
-  needsEnrollment: boolean;
-  needsVerification: boolean;
-}
 
 /** Render an otpauth:// URI as an inline SVG QR, no network involved. */
 function QrSvg({ text, size = 190 }: { text: string; size?: number }): React.JSX.Element {
@@ -33,12 +30,12 @@ function QrSvg({ text, size = 190 }: { text: string; size?: number }): React.JSX
   }
   return (
     <svg
+      className="qr"
       width={size}
       height={size}
       viewBox={`-1 -1 ${count + 2} ${count + 2}`}
       role="img"
       aria-label="Scan this with your authenticator app"
-      style={{ background: '#fff', borderRadius: 8, padding: 4 }}
     >
       <path d={cells.join('')} fill="#000" shapeRendering="crispEdges" />
     </svg>
@@ -46,19 +43,19 @@ function QrSvg({ text, size = 190 }: { text: string; size?: number }): React.JSX
 }
 
 export function TwoFactorGate({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const [state, setState] = useState<SessionState | null>(null);
+  const [state, setState] = useState<AdminSession | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [denied, setDenied] = useState(false);
 
   const load = useCallback(async () => {
     setError(null);
     try {
-      setState(await api<SessionState>('/admin/session'));
+      setState(sessionFrom(await api<AdminSession>('/admin/session')));
     } catch (err) {
       // 403 here means the account is not staff at all — a different problem
       // from "needs 2FA", and worth saying plainly
       if (err instanceof ApiError && err.status === 403) setDenied(true);
-      else setError(err instanceof ApiError ? err.message : 'Could not check this session');
+      else setError(err instanceof ApiError ? err.message : 'The server could not be reached.');
     }
   }, []);
 
@@ -69,8 +66,8 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }): Reac
   if (denied) {
     return (
       <Screen title="Not an admin account">
-        <p className="subtle">
-          This account does not have admin access. Sign in with one that does, or ask a superadmin to grant it.
+        <p className="gate-text">
+          This account does not have admin access. Sign in with one that does; roles are given on the server, by whoever runs Hevalo.
         </p>
       </Screen>
     );
@@ -79,18 +76,18 @@ export function TwoFactorGate({ children }: { children: React.ReactNode }): Reac
   if (error) {
     return (
       <Screen title="Could not check this session">
-        <p className="subtle">{error}</p>
-        <button className="primary" onClick={() => void load()}>
+        <p className="gate-text">{error}</p>
+        <Button variant="primary" icon="refresh" onClick={() => void load()}>
           Try again
-        </button>
+        </Button>
       </Screen>
     );
   }
 
-  if (!state) return <Screen title="Checking your session…" />;
+  if (!state) return <Screen title="Checking your session…" busy />;
   if (state.needsEnrollment) return <Enroll onDone={load} />;
   if (state.needsVerification) return <Verify onDone={load} />;
-  return <>{children}</>;
+  return <SessionProvider value={state}>{children}</SessionProvider>;
 }
 
 /** First-time setup: show the secret as a QR, confirm with a live code. */
@@ -99,8 +96,13 @@ function Enroll({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  // React's development mode runs an effect twice; two enrollments made two
+  // secrets, and the QR on screen could be the one the server had replaced
+  const asked = useRef(false);
 
   useEffect(() => {
+    if (asked.current) return;
+    asked.current = true;
     void (async () => {
       try {
         setSecret(await api<{ secret: string; otpauthUri: string }>('/admin/2fa/enroll', { method: 'POST' }));
@@ -118,7 +120,7 @@ function Enroll({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
       await api('/admin/2fa/confirm', { method: 'POST', body: { code } });
       await onDone();
     } catch (err) {
-      setMsg(err instanceof ApiError ? err.message : 'Could not confirm');
+      setMsg(err instanceof ApiError && err.code === 'INVALID_CODE' ? 'That code did not match. Enter the one showing now.' : err instanceof ApiError ? err.message : 'Could not confirm');
       setCode('');
     } finally {
       setBusy(false);
@@ -127,38 +129,38 @@ function Enroll({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
 
   return (
     <Screen title="Set up two-factor authentication">
-      <p className="subtle">
+      <p className="gate-text">
         The admin panel requires it. Scan this with an authenticator app — Google Authenticator, 1Password, Aegis,
         anything that does TOTP — then enter the six-digit code it shows.
       </p>
 
       {secret ? (
         <>
-          <div style={{ display: 'flex', justifyContent: 'center', margin: '18px 0 14px' }}>
+          <div className="gate-qr">
             <QrSvg text={secret.otpauthUri} />
           </div>
-          <div className="subtle" style={{ marginBottom: 6 }}>
-            Can’t scan? Enter this key by hand:
-          </div>
+          <div className="gate-text">Can’t scan? Enter this key by hand:</div>
           <code className="secret">{secret.secret}</code>
-          <p className="subtle" style={{ marginTop: 10 }}>
-            Keep a copy somewhere safe. Losing it means another admin has to reset your 2FA — a password alone
-            cannot, by design.
+          <p className="gate-text">
+            Keep a copy somewhere safe. Without it, your 2FA has to be reset on the server by whoever runs Hevalo — a
+            password alone cannot open the admin, by design.
           </p>
         </>
       ) : (
-        <p className="subtle">Preparing…</p>
+        !msg && <p className="gate-text">Preparing…</p>
       )}
 
-      <form onSubmit={(e) => void confirm(e)} style={{ marginTop: 16 }}>
-        <label style={{ display: 'block' }}>
-          Six-digit code
-          <CodeInput value={code} onChange={setCode} />
-        </label>
-        {msg && <div className="error" style={{ marginTop: 8 }}>{msg}</div>}
-        <button className="primary" type="submit" disabled={busy || code.length !== 6 || !secret} style={{ marginTop: 12 }}>
+      <form onSubmit={(e) => void confirm(e)} className="gate-form">
+        <label htmlFor="gate-code">Six-digit code</label>
+        <CodeInput id="gate-code" value={code} onChange={setCode} />
+        {msg && (
+          <div className="field-error" role="alert">
+            {msg}
+          </div>
+        )}
+        <Button variant="primary" type="submit" busy={busy} disabled={code.length !== 6 || !secret}>
           {busy ? 'Confirming…' : 'Confirm and continue'}
-        </button>
+        </Button>
       </form>
     </Screen>
   );
@@ -178,7 +180,7 @@ function Verify({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
       await api('/admin/auth/verify', { method: 'POST', body: { code } });
       await onDone();
     } catch (err) {
-      setMsg(err instanceof ApiError ? err.message : 'Could not verify');
+      setMsg(err instanceof ApiError && err.code === 'INVALID_CODE' ? 'That code did not match. Enter the one showing now.' : err instanceof ApiError ? err.message : 'Could not verify');
       setCode('');
     } finally {
       setBusy(false);
@@ -187,15 +189,20 @@ function Verify({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
 
   return (
     <Screen title="Enter your 2FA code">
-      <p className="subtle">
-        Open your authenticator app and enter the current six-digit code for Hevalo Admin.
-      </p>
-      <form onSubmit={(e) => void submit(e)} style={{ marginTop: 14 }}>
-        <CodeInput value={code} onChange={setCode} autoFocus />
-        {msg && <div className="error" style={{ marginTop: 8 }}>{msg}</div>}
-        <button className="primary" type="submit" disabled={busy || code.length !== 6} style={{ marginTop: 12 }}>
+      <p className="gate-text">Open your authenticator app and enter the current six-digit code for Hevalo Admin.</p>
+      <form onSubmit={(e) => void submit(e)} className="gate-form">
+        <label htmlFor="gate-code" className="sr-only">
+          Six-digit code
+        </label>
+        <CodeInput id="gate-code" value={code} onChange={setCode} autoFocus />
+        {msg && (
+          <div className="field-error" role="alert">
+            {msg}
+          </div>
+        )}
+        <Button variant="primary" type="submit" busy={busy} disabled={code.length !== 6}>
           {busy ? 'Checking…' : 'Continue'}
-        </button>
+        </Button>
       </form>
     </Screen>
   );
@@ -203,37 +210,45 @@ function Verify({ onDone }: { onDone: () => Promise<void> }): React.JSX.Element 
 
 /** Six digits, and nothing else — pasting a code with spaces still works. */
 function CodeInput({
+  id,
   value,
   onChange,
   autoFocus,
 }: {
+  id: string;
   value: string;
   onChange: (next: string) => void;
   autoFocus?: boolean;
 }): React.JSX.Element {
   return (
     <input
+      id={id}
+      className="code-input"
       value={value}
       onChange={(e) => onChange(e.target.value.replace(/\D/g, '').slice(0, 6))}
       inputMode="numeric"
       autoComplete="one-time-code"
       placeholder="000000"
-      aria-label="Six-digit code"
       autoFocus={autoFocus}
-      style={{ letterSpacing: '0.35em', fontSize: 20, textAlign: 'center', fontVariantNumeric: 'tabular-nums' }}
     />
   );
 }
 
-/** The centred card these steps share with the login screen. */
-function Screen({ title, children }: { title: string; children?: React.ReactNode }): React.JSX.Element {
+/** The centred card these steps share. */
+function Screen({ title, children, busy = false }: { title: string; children?: React.ReactNode; busy?: boolean }): React.JSX.Element {
   return (
-    <div className="login">
-      <div className="card login-card">
-        <div className="brand" style={{ padding: '0 0 10px' }}>
+    <div className="gate">
+      <div className="card gate-card" aria-busy={busy || undefined}>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">
+            H
+          </span>
           Hevalo Admin
         </div>
-        <h1 style={{ marginBottom: 10 }}>{title}</h1>
+        <h1 className="gate-title">
+          {busy && <Icon name="refresh" className="gate-busy" />}
+          {title}
+        </h1>
         {children}
       </div>
     </div>

@@ -1,5 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useState } from 'react';
+import { api } from '../api';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  Drawer,
+  FieldRow,
+  FormActions,
+  PageHeader,
+  Section,
+  Select,
+  Table,
+  Tabs,
+  TextInput,
+  errorLine,
+  useDialogs,
+  useLoad,
+  useToast,
+  type Column,
+} from '../ui';
 
 type Kind = 'main' | 'claimable';
 type Acquisition = 'default' | 'role' | 'purchase' | 'self_claim' | 'auto_grant';
@@ -14,193 +33,213 @@ interface Tag {
   sensitive: boolean;
 }
 
-/** User tags & badges catalog management (KUR-286). */
+const HOW: Record<Acquisition, string> = {
+  self_claim: 'Chosen by the person',
+  auto_grant: 'Given automatically',
+  purchase: 'Bought in the shop',
+  role: 'Comes with a role',
+  default: 'Everyone has it',
+};
+
+/**
+ * Profile tags (KUR-286): the identity tags a profile can show — the one
+ * main tag, chosen by precedence, and the claimable ones a person picks.
+ * Deactivating hides a tag everywhere and keeps its history.
+ */
 export function Tags(): React.JSX.Element {
-  const [tags, setTags] = useState<Tag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const dialogs = useDialogs();
+  const tags = useLoad(() => api<{ tags: Tag[] }>('/tags').then((r) => r.tags), []);
+  const [kind, setKind] = useState<Kind>('claimable');
+  const [creating, setCreating] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  async function deactivate(t: Tag): Promise<void> {
+    const yes = await dialogs.confirm({
+      title: `Deactivate “${t.label}”?`,
+      body: 'It disappears from every profile and from the list people choose from. Who had it is kept; the panel cannot switch it back on.',
+      confirmLabel: 'Deactivate',
+      tone: 'danger',
+      typed: { phrase: t.key, label: `Type the key, ${t.key}, to confirm` },
+    });
+    if (!yes) return;
+    setBusy(t.key);
     try {
-      const res = await api<{ tags: Tag[] }>('/tags');
-      setTags(res.tags);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function deactivate(key: string): Promise<void> {
-    if (!confirm(`Deactivate the "${key}" tag? It disappears everywhere but history is kept.`)) return;
-    setBusy(key);
-    try {
-      await api(`/admin/tags/${key}`, { method: 'DELETE' });
-      await load();
+      await api(`/admin/tags/${encodeURIComponent(t.key)}`, { method: 'DELETE' });
+      toast.success(`Deactivated “${t.label}”.`);
+      await tags.reload();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
+      toast.error(errorLine(err, 'tags'));
     } finally {
       setBusy(null);
     }
   }
 
-  const main = tags.filter((t) => t.kind === 'main');
-  const claimable = tags.filter((t) => t.kind === 'claimable');
+  const rows = tags.data ? tags.data.filter((t) => t.kind === kind) : null;
+  const columns: Column<Tag>[] = [
+    {
+      key: 'label',
+      header: 'Tag',
+      card: 'title',
+      sort: (a, b) => a.label.localeCompare(b.label),
+      cell: (t) => (
+        <>
+          <strong>{t.label}</strong>
+          <span className="cell-sub">
+            <code>{t.key}</code>
+          </span>
+        </>
+      ),
+    },
+    { key: 'category', header: 'Category', sort: (a, b) => a.category.localeCompare(b.category), cell: (t) => <Badge>{t.category}</Badge> },
+    { key: 'how', header: 'How people get it', cell: (t) => HOW[t.acquisition] ?? t.acquisition },
+    {
+      key: 'sensitive',
+      header: 'Personal',
+      cell: (t) => (t.sensitive ? <Badge tone="warn" title="Personal data: claiming it asks for consent">Personal data</Badge> : <span className="subtle">No</span>),
+    },
+  ];
 
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Tags & Badges</h1>
-          <div className="subtle">The identity-tag catalog (main + claimable)</div>
-        </div>
-        <div className="spacer" />
-        <button onClick={() => void load()} disabled={loading}>
-          Refresh
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="card empty">Loading…</div>
-      ) : (
-        <>
-          <TagTable title="Main tags (by precedence)" tags={main} busy={busy} onDeactivate={deactivate} />
-          <TagTable title="Claimable tags" tags={claimable} busy={busy} onDeactivate={deactivate} />
-          <CreateTagForm onCreated={load} />
-        </>
-      )}
+      <PageHeader
+        title="Profile tags"
+        subtitle="The identity tags a profile can show: one main tag, chosen by precedence, and the claimable ones people pick for themselves."
+        actions={
+          <Button variant="primary" icon="plus" onClick={() => setCreating(true)}>
+            New tag
+          </Button>
+        }
+      />
+      <Tabs
+        label="Kind"
+        value={kind}
+        onChange={setKind}
+        items={[
+          { key: 'claimable', label: 'Claimable', count: tags.data?.filter((t) => t.kind === 'claimable').length },
+          { key: 'main', label: 'Main (by precedence)', count: tags.data?.filter((t) => t.kind === 'main').length },
+        ]}
+      />
+      <Section flush>
+        <Table
+          caption={kind === 'main' ? 'Main tags' : 'Claimable tags'}
+          columns={columns}
+          rows={rows}
+          rowKey={(t) => t.id}
+          loading={tags.loading}
+          error={tags.error}
+          onRetry={() => void tags.reload()}
+          what="tags"
+          empty={kind === 'main' ? 'No main tags.' : 'No claimable tags yet.'}
+          actions={(t) => (
+            <Button variant="danger" onClick={() => void deactivate(t)} disabled={busy === t.key}>
+              Deactivate
+            </Button>
+          )}
+        />
+      </Section>
+      <NewTag
+        open={creating}
+        onClose={() => setCreating(false)}
+        onCreated={async (t) => {
+          setCreating(false);
+          setKind(t.kind);
+          toast.success(`Created “${t.label}”.`);
+          await tags.reload();
+        }}
+      />
     </div>
   );
 }
 
-function TagTable({
-  title,
-  tags,
-  busy,
-  onDeactivate,
-}: {
-  title: string;
-  tags: Tag[];
-  busy: string | null;
-  onDeactivate: (key: string) => void;
-}): React.JSX.Element {
-  return (
-    <div className="card" style={{ padding: 0, marginBottom: 16 }}>
-      <div className="section-title" style={{ margin: '14px 16px 8px' }}>
-        {title}
-      </div>
-      {tags.length === 0 ? (
-        <div className="empty">None.</div>
-      ) : (
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Key</th>
-                <th>Label</th>
-                <th>Category</th>
-                <th>Acquisition</th>
-                <th>Flags</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {tags.map((t) => (
-                <tr key={t.id}>
-                  <td>
-                    <code>{t.key}</code>
-                  </td>
-                  <td>{t.label}</td>
-                  <td>
-                    <span className="badge">{t.category}</span>
-                  </td>
-                  <td className="subtle">{t.acquisition}</td>
-                  <td>{t.sensitive && <span className="badge mid">sensitive</span>}</td>
-                  <td>
-                    <button className="danger" onClick={() => onDeactivate(t.key)} disabled={busy === t.key}>
-                      Deactivate
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </div>
-  );
-}
-
-function CreateTagForm({ onCreated }: { onCreated: () => Promise<void> }): React.JSX.Element {
+function NewTag({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated: (t: Tag) => Promise<void> }): React.JSX.Element {
   const [key, setKey] = useState('');
   const [label, setLabel] = useState('');
   const [kind, setKind] = useState<Kind>('claimable');
   const [category, setCategory] = useState('custom');
   const [acquisition, setAcquisition] = useState<Acquisition>('self_claim');
   const [sensitive, setSensitive] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
-    setMsg(null);
+    setProblem(null);
     try {
-      await api('/admin/tags', { method: 'POST', body: { key, label, kind, category, acquisition, sensitive } });
-      setMsg(`✅ Created "${key}".`);
+      const t = await api<Tag>('/admin/tags', {
+        method: 'POST',
+        body: { key: key.trim(), label: label.trim(), kind, category: category.trim(), acquisition, sensitive },
+      });
       setKey('');
       setLabel('');
-      await onCreated();
+      await onCreated({ ...t, kind });
     } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Failed');
+      setProblem(errorLine(err, 'tags'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="card" onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 10, maxWidth: 480 }}>
-      <h1 style={{ fontSize: 16 }}>Create a tag</h1>
-      <div className="row" style={{ gap: 10 }}>
-        <label style={{ flex: 1 }}>
-          Key<input value={key} onChange={(e) => setKey(e.target.value)} placeholder="poet" required />
-        </label>
-        <label style={{ flex: 1 }}>
-          Label<input value={label} onChange={(e) => setLabel(e.target.value)} placeholder="Poet" required />
-        </label>
-      </div>
-      <div className="row" style={{ gap: 10 }}>
-        <label style={{ flex: 1 }}>
-          Kind
-          <select value={kind} onChange={(e) => setKind(e.target.value as Kind)}>
-            <option value="claimable">Claimable</option>
-            <option value="main">Main</option>
-          </select>
-        </label>
-        <label style={{ flex: 1 }}>
-          Category<input value={category} onChange={(e) => setCategory(e.target.value)} required />
-        </label>
-      </div>
-      <label>
-        Acquisition
-        <select value={acquisition} onChange={(e) => setAcquisition(e.target.value as Acquisition)}>
-          <option value="self_claim">Self-claim</option>
-          <option value="auto_grant">Auto-grant</option>
-          <option value="purchase">Purchase</option>
-          <option value="role">Role</option>
-          <option value="default">Default</option>
-        </select>
-      </label>
-      <label className="row" style={{ gap: 8, width: 'auto' }}>
-        <input type="checkbox" checked={sensitive} onChange={(e) => setSensitive(e.target.checked)} style={{ width: 'auto' }} />
-        Sensitive (personal data — requires consent to claim)
-      </label>
-      {msg && <div className={msg.startsWith('❌') ? 'error' : 'subtle'}>{msg}</div>}
-      <button className="primary" type="submit" disabled={busy}>
-        {busy ? 'Creating…' : 'Create tag'}
-      </button>
-    </form>
+    <Drawer
+      open={open}
+      onClose={onClose}
+      title="New tag"
+      footer={
+        <FormActions>
+          <Button onClick={onClose}>Cancel</Button>
+          <Button variant="primary" type="submit" form="new-tag" busy={busy}>
+            {busy ? 'Creating…' : 'Create tag'}
+          </Button>
+        </FormActions>
+      }
+    >
+      <form id="new-tag" className="form" onSubmit={(e) => void submit(e)}>
+        <FieldRow>
+          <TextInput label="Label" hint="What profiles show." value={label} onChange={(e) => setLabel(e.target.value)} required maxLength={80} placeholder="Poet" data-autofocus />
+          <TextInput
+            label="Key"
+            hint="Lower case, for the code. Cannot be changed."
+            value={key}
+            onChange={(e) => setKey(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+            required
+            maxLength={40}
+            placeholder="poet"
+            autoCapitalize="off"
+            spellCheck={false}
+          />
+        </FieldRow>
+        <FieldRow>
+          <Select
+            label="Kind"
+            value={kind}
+            onChange={(e) => setKind(e.target.value as Kind)}
+            options={[
+              { value: 'claimable', label: 'Claimable — people pick it' },
+              { value: 'main', label: 'Main — one per profile' },
+            ]}
+          />
+          <TextInput label="Category" value={category} onChange={(e) => setCategory(e.target.value)} required maxLength={40} />
+        </FieldRow>
+        <Select
+          label="How people get it"
+          value={acquisition}
+          onChange={(e) => setAcquisition(e.target.value as Acquisition)}
+          options={(Object.keys(HOW) as Acquisition[]).map((a) => ({ value: a, label: HOW[a] }))}
+        />
+        <Checkbox
+          label="Personal data"
+          hint="Something like religion or health: claiming it asks for the person’s consent first."
+          checked={sensitive}
+          onChange={setSensitive}
+        />
+        {problem && (
+          <p className="field-error" role="alert">
+            {problem}
+          </p>
+        )}
+      </form>
+    </Drawer>
   );
 }

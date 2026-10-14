@@ -12,11 +12,15 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { Icon } from '../theme/Icon';
 import { useI18n } from '../i18n/I18nContext';
 import { myGroups, type Group } from '../groups/api';
+import type { ChatMessageKind } from '@kurda/shared';
+import { messagePreview } from './preview';
 
 interface Conversation {
   userId: string;
   username: string;
   lastMessage: string;
+  /** a gift or a game card says so here, and the line is written from it */
+  lastKind?: ChatMessageKind;
   lastFromMe: boolean;
   unread: number;
 }
@@ -100,7 +104,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
               <View style={styles.main}>
                 <Text style={[styles.name, { color: colors.textPrimary }]}>{item.username}</Text>
                 <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {item.lastFromMe ? t('chat.lastFromYou', { preview: item.lastMessage }) : item.lastMessage}
+                  {item.lastFromMe ? t('chat.lastFromYou', { preview: messagePreview(item, t) }) : messagePreview(item, t)}
                 </Text>
               </View>
               {item.unread > 0 ? (

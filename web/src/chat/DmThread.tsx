@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, DmMessage } from '../lib/types';
@@ -18,6 +18,11 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
+import { ChatGameButton } from '../play/PlayButtons';
+import { gameCardBody } from '../play/ChatGameCard';
+import { SendError } from '../reports/SendError';
+import { ReportSheet } from '../reports/ReportSheet';
+import { useChatGifts } from '../gifts/useChatGifts';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -37,15 +42,17 @@ function byTime<T extends { createdAt: string }>(msgs: readonly T[] | undefined 
   return [...msgs].sort((a, b) => (a.createdAt < b.createdAt ? -1 : a.createdAt > b.createdAt ? 1 : 0));
 }
 
-/** Map moderation/anti-bot server codes to human copy (server stays authoritative). */
+/**
+ * Map moderation/anti-bot server codes to human copy (server stays authoritative).
+ * A limit on the account (a mute, the automatic chat pause) is not here: it is
+ * said the same way on every send path, by reports/SendError.
+ */
 export function sendError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'TRUST_VELOCITY':
       return t('chat.error.tooFast');
     case 'AUTO_MODERATED':
       return t('chat.error.restricted');
-    case 'CHAT_MUTED':
-      return t('chat.error.muted');
     case 'CONTENT_BLOCKED':
       return t('chat.error.blocked');
     case 'NOT_FRIENDS':
@@ -89,12 +96,40 @@ export function DmThread({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const [sendErr, setSendErr] = useState<ApiError | null>(null);
+  /** the message being reported, while the report sheet is open */
+  const [reporting, setReporting] = useState<DmMessage | null>(null);
+  /** blocked from the report's done screen: the thread closes with the sheet */
+  const [blockedHere, setBlockedHere] = useState(false);
+  const navigate = useNavigate();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
     useCallback(() => void client.post(`/chat/${otherId}/typing`).catch(() => undefined), [client, otherId]),
   );
+
+  // gifts: the composer's button, the bubbles, and the moments around them
+  const gifts = useChatGifts<DmMessage>({
+    chat: useMemo(() => ({ kind: 'dm' as const, userId: otherId }), [otherId]),
+    loadPeople: useCallback(
+      async () => [{ userId: otherId, name: otherName ?? t('chat.thisPerson'), avatarUrl: null }],
+      [otherId, otherName, t],
+    ),
+    setMessages,
+    sendText: useCallback(
+      async (body: string) => {
+        const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
+        // the reveal that asked says why it did not go, where the reader is looking
+        if (!res.ok) return res.error;
+        setMessages((m) => [...(m ?? []), res.data]);
+        onSent();
+        return null;
+      },
+      [client, otherId, onSent],
+    ),
+    threadRef: scrollRef,
+    onSentScroll: () => scrollToBottom('smooth'),
+  });
 
   const load = useCallback(async () => {
     const res = await client.get<{ messages?: DmMessage[] }>(`/chat/${otherId}/messages`);
@@ -181,7 +216,7 @@ export function DmThread({
     const body = text.trim();
     if (!body) return;
     setSending(true);
-    setSendMsg(null);
+    setSendErr(null);
     const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
     setSending(false);
     if (res.ok) {
@@ -190,7 +225,7 @@ export function DmThread({
       scrollToBottom('smooth'); // your own message always brings you back down
       onSent();
     } else {
-      setSendMsg(sendError(res.error, t));
+      setSendErr(res.error);
     }
   }
 
@@ -229,6 +264,8 @@ export function DmThread({
             myId={user?.id}
             renderStatus={(m) => <ReadReceipt message={m} />}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            onReport={setReporting}
+            renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
           />
         )}
       </div>
@@ -250,7 +287,24 @@ export function DmThread({
         </button>
       )}
 
-      {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
+      {gifts.notice}
+      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
+      <ReportSheet
+        open={reporting !== null}
+        onClose={() => {
+          setReporting(null);
+          // a conversation with someone you have just blocked has nothing left
+          // to send to; it goes once the done screen has been read and closed
+          if (blockedHere) {
+            onSent(); // the conversation list drops them
+            if (onClose) onClose();
+            else navigate('/app/messages');
+          }
+        }}
+        target={{ targetType: 'dm_message', targetId: reporting?.id ?? '' }}
+        block={{ userId: otherId, name: otherName ?? t('chat.thisPerson') }}
+        onBlocked={() => setBlockedHere(true)}
+      />
       <Composer
         value={text}
         onChange={(next) => {
@@ -260,7 +314,14 @@ export function DmThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.writeAMessage')}
+        tools={
+          <>
+            {gifts.button}
+            <ChatGameButton target={{ kind: 'new', friend: { userId: otherId, name: otherName ?? t('chat.thisPerson') } }} />
+          </>
+        }
       />
+      {gifts.overlays}
     </div>
   );
 }

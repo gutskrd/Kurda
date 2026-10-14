@@ -5,6 +5,14 @@
 # update connect-src to match; if the app renders R2/CDN media, img-src/media-src
 # already allow https:.
 #
+# connect-src names the API twice, once per scheme, and both are needed. The
+# realtime gateway (live quiz matches, chat, presence) is a WebSocket on the
+# same host, and an `https://` source does not cover `wss://` — CSP3 lets `ws:`
+# and `wss:` sources match `https:`, never the other way round. With only the
+# https entry Chrome refused the socket outright ("Refused to connect to
+# 'wss://kurda-api.onrender.com/realtime…' … violates connect-src"), so every
+# realtime feature fell back to nothing.
+#
 # style-src carries 'unsafe-inline' because React writes every inline style as
 # a style attribute, and this app has 128 of them across 44 files. Without it
 # the browser blocks the attribute — not only <style> blocks — and drops the
@@ -23,13 +31,19 @@
 # style-src-attr 'unsafe-inline' would be tighter, but a browser without
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
+#
+# microphone=(self) and media-src blob: are for the lesson player's speaking
+# exercise: a learner records a sentence (the microphone, on this origin only,
+# and only after the browser asks them) and plays their own take back from a
+# blob: URL beside the native recording. With microphone=() the browser never
+# asked and recording always failed; without blob: the take would not play.
 /*
-  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com wss://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=()
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
 
 # The public dictionary (/ferheng/*), which is a different kind of page.
@@ -43,10 +57,9 @@
 # So this block names only what differs, and the shared headers are left to
 # `/*`. The second CSP is deliberate and is the exception: a browser given two
 # policies enforces BOTH, so the result is their intersection and can only be
-# stricter than either. `/*` allows scripts from self; this names no
-# script-src at all and falls back to `default-src 'none'`, so the intersection
-# forbids them outright. Same for inline style, which `/*` permits and this
-# does not.
+# stricter than either. Both allow scripts from self and nothing else — no
+# inline script, no other host (see below for why self). Inline style, which
+# `/*` permits, this does not.
 #
 # That is the second of the two things between a stranger's Wiktionary text
 # and code running here. The first is the escaping in web/scripts/escape.ts,
@@ -60,8 +73,22 @@
 # origin. A font from a CDN would need a host named here, which would be the
 # first third party these pages talk to; a file on the edge costs nothing and
 # tells nobody that somebody read a word.
+#
+# `script-src 'self'` is for chrome.js, which puts the page into the reader's
+# own language — the pages exist in two, the app in nine; see
+# web/scripts/ferheng-chrome.ts. It does not reopen what the paragraph above
+# closes: an injected inline script or handler is still refused, and a
+# <script src> can only name a file on this origin, every one of which is ours
+# (user uploads live on another host, the Worker's pages are HTML, and
+# `X-Content-Type-Options: nosniff` above stops anything not served as
+# JavaScript from running). connect-src is still 'none', so even one of the
+# app's own bundles pulled in by an injection could reach nothing.
+#
+# 'self' rather than chrome.js's full URL, because a URL names a host: pinned
+# to https://hevalo.app/ the file was refused on every preview deployment,
+# which is where the fix gets checked, and the page stayed English there.
 /ferheng/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400
 
@@ -71,6 +98,6 @@
 # names — see web/scripts/ferheng-copy.ts. Every header has to be repeated:
 # `_headers` matches a path, and /dictionary/ does not match /ferheng/*.
 /dictionary/*
-  Content-Security-Policy: default-src 'none'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self'; font-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=3600, s-maxage=86400

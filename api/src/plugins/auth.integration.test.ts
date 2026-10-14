@@ -35,6 +35,8 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
         username: `guard_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.5.0.1',
     });

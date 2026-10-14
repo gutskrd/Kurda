@@ -20,14 +20,19 @@ import {
   UserReportService,
   type ReportCategory,
 } from './report-service.js';
+import type { ReportsService } from '../moderation/reports-service.js';
 
 /** User search + public profiles + privacy (KUR-082). */
-export function registerSocialRoutes(app: FastifyInstance, social: SocialService): void {
+export function registerSocialRoutes(
+  app: FastifyInstance,
+  social: SocialService,
+  deps: { reports?: ReportsService } = {},
+): void {
   const activity = new ProfileActivityService(app.db);
   const feed = new FeedService(app.db);
   const engagement = new EngagementService(app.db);
   const friends = new FriendService(app.db);
-  const reports = new UserReportService(app.db);
+  const reports = new UserReportService(app.db, deps.reports);
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /** Username prefix search (rate-limited against scraping). */
@@ -43,7 +48,7 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
     }),
   );
 
-  /** Set who can see your profile. */
+  /** Set who can see your profile ('everyone' is refused under 18). */
   app.put(
     '/me/privacy',
     {
@@ -76,7 +81,9 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
    * The privacy rules are the profile's own: the profile call already resolves
    * blocks and the everyone/members/friends setting, so it is reused rather
    * than reimplemented where the two could drift apart. A profile you may not
-   * see the detail of has no friend list either.
+   * see the detail of has no friend list either. And the list never names a
+   * minor to somebody who is not their friend (FriendService.list), so it
+   * cannot be used to find one.
    */
   app.get(
     '/users/:id/friends',
@@ -94,7 +101,7 @@ export function registerSocialRoutes(app: FastifyInstance, social: SocialService
       const { limit, offset } = req.query as { limit?: number; offset?: number };
       const profile = await social.profile(req.user?.id ?? null, id);
       if (profile.private) return { friends: [], total: 0 };
-      return friends.list(id, publicUrl, limit, offset);
+      return friends.list(id, publicUrl, limit, offset, req.user?.id ?? null);
     },
   );
 

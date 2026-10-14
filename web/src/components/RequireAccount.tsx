@@ -9,9 +9,10 @@ import type { MessageKey } from '../i18n/en';
  * A page that needs an account.
  *
  * Most of the app is open to read — the community's wall, its posts, its
- * rankings, the games you play alone. This wraps the parts that are about *you*
- * or about reaching other people: your messages, your saved posts, your
- * settings, and playing against someone.
+ * rankings, the alphabet. This wraps the parts that are about *you* or about
+ * reaching other people: your messages, your saved posts, your settings, your
+ * lessons, and the games, which the server scores against an account whether
+ * you play alone or against someone.
  *
  * A signed-out visitor is asked rather than bounced. Being redirected to a login
  * form, with no explanation and no way back, is how you lose someone who was
@@ -38,16 +39,20 @@ export function RequireAccount({
 
   if (status === 'signedIn') return <>{children}</>;
 
+  // the whole address: a game invite is `/app/games/wordle-battle?id=…`, and
+  // without its query the way back after signing in leads to an empty page
+  const from = location.pathname + location.search;
+
   return (
     <div className="container container-narrow">
       <div className="gate">
         <h1 className="page-title" style={{ marginTop: 0 }}>{t('gate.title')}</h1>
         <p className="page-sub">{t('gate.body', { what: t(what) })}</p>
         <div className="gate-actions">
-          <Link to="/register" className="btn btn-primary" state={{ from: location.pathname }}>
+          <Link to="/register" className="btn btn-primary" state={{ from }}>
             {t('auth.login.createAccount')}
           </Link>
-          <Link to="/login" className="btn btn-secondary" state={{ from: location.pathname }}>
+          <Link to="/login" className="btn btn-secondary" state={{ from }}>
             {t('nav.login')}
           </Link>
         </div>

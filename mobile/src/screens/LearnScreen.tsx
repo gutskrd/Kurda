@@ -15,7 +15,8 @@ import { SkillNodeView } from '../coursemap/SkillNodeView';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { EventBanner } from '../events/EventBanner';
-import { flattenMap, isLaunchable, stateHint, type MapRow } from '../coursemap/node';
+import { LeagueLine } from '../leagues/LeagueLine';
+import { courseRows, isLaunchable, stateHint, type CourseEntry, type MapRow } from '../coursemap/node';
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { spacing, typography } from '../theme/tokens';
@@ -24,7 +25,7 @@ import { EmptyState } from '../theme/EmptyState';
 
 /**
  * Learn tab (KUR-040): the daily-goal ring + a scrollable skill-tree map of
- * the course, virtualized for large courses. Tapping an unlocked skill opens
+ * every course, virtualized for large courses. Tapping an unlocked skill opens
  * its next lesson; a locked skill explains its unlock condition.
  */
 /** `onBack` is how you leave: this is a pushed screen, not a tab, since #809. */
@@ -36,7 +37,7 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
-  const [map, setMap] = useState<CourseMap | null>(null);
+  const [courses, setCourses] = useState<CourseEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
@@ -57,14 +58,17 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           setLoading(false);
           return;
         }
-        const first = list.data.courses[0];
-        if (first) {
-          const m = await client.get<CourseMap>(`/courses/${first.id}/map`);
-          if (!active) return;
-          if (m.ok) setMap(m.data);
-          else setFailed(true);
-        }
-        if (active) setLoading(false);
+        // every course, in the order the server lists them — not only the
+        // first; one whose map did not load stays listed, saying so (`courseRows`)
+        const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
+        if (!active) return;
+        setCourses(
+          list.data.courses.map((c, i) => {
+            const map = loaded[i]!;
+            return { course: { id: c.id, title: c.title }, map: map.ok ? map.data : null };
+          }),
+        );
+        setLoading(false);
       })();
       return () => {
         active = false;
@@ -102,24 +106,32 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           <GoalPicker value={goal.goal} onChange={changeGoal} />
         </View>
       ) : null}
+      {/* the week: the league and your place in it (or your own week), and the weekly goal */}
+      <LeagueLine />
       <ClayButton label={t('practice.title')} icon="bolt" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
       <EventBanner />
       <DailyRewardCard />
       <WordOfDayCard />
-      {map ? <Text style={[styles.courseTitle, { color: colors.textPrimary }]}>{map.course.title}</Text> : null}
     </View>
   );
 
   const renderRow = ({ item }: { item: MapRow }) =>
-    item.kind === 'header' ? (
+    item.kind === 'course' ? (
+      <Text accessibilityRole="header" style={[styles.courseTitle, { color: colors.textPrimary }]}>{item.title}</Text>
+    ) : item.kind === 'failed' ? (
+      <View style={styles.failed}>
+        <Text style={[styles.failedText, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
+        <ClayButton label={t('common.retry')} variant="outline" onPress={() => setReloadKey((k) => k + 1)} />
+      </View>
+    ) : item.kind === 'header' ? (
       <Text style={[styles.unitHeader, { color: colors.textSecondary }]}>{item.title}</Text>
     ) : (
       <SkillNodeView node={item.node} onPress={() => onNode(item.node)} />
     );
 
-  const rows = map ? flattenMap(map) : [];
+  const rows = courses ? courseRows(courses) : [];
 
-  if (failed && !map) {
+  if (failed && rows.length === 0) {
     return (
       <GradientBackground>
         <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />
@@ -160,6 +172,8 @@ const styles = StyleSheet.create({
   goalCard: { alignItems: 'center', gap: spacing.md, alignSelf: 'stretch' },
   practice: { alignSelf: 'stretch' },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  failed: { gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.xs },
+  failedText: { fontSize: typography.sizes.sm },
   unitHeader: {
     fontSize: typography.sizes.sm,
     fontWeight: typography.weights.bold,

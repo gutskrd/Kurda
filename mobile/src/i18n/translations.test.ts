@@ -48,4 +48,49 @@ describe('translation catalogs', () => {
     expect(LOCALES).toContain('es');
     for (const { code, nativeName } of APP_LOCALES) expect(LOCALE_LABEL[code]).toBe(nativeName);
   });
+
+  /**
+   * Onboarding promised "a Kurdish story every day … one a day" and no job
+   * sends a story. What the server does send is a streak reminder, in the
+   * account's language, on a day the streak is still waiting
+   * (api/src/notifications/streak-reminder-service.ts) — so that is all the
+   * slide may say, in any language.
+   *
+   * And it says where the reminder lands: in the notifications inside the
+   * app. Push to the phone is not wired yet (the API's push provider is a
+   * stub and `getPushToken` returns null), so "Hevalo can remind you" under a
+   * bell read as a phone notification that never comes. Reminders are on by
+   * default for adults and off for minors, so the slide says they can be
+   * turned on or off, not only on.
+   */
+  it('promises no daily story in the notifications slide', () => {
+    expect(TRANSLATIONS.en['onboarding.notify.title']).not.toMatch(/story/i);
+    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/streak/i);
+    for (const locale of LOCALES) {
+      const slide = `${TRANSLATIONS[locale]['onboarding.notify.title']} ${TRANSLATIONS[locale]['onboarding.notify.body']}`;
+      expect(slide, locale).not.toMatch(/story|çîrok|Geschichte|relato|öykü|قصة|récit|verhaal|چیرۆک/i);
+    }
+  });
+
+  it('says the streak reminder is left in the app’s notifications, and can be turned on or off', () => {
+    expect(TRANSLATIONS.en['onboarding.notify.body']).toMatch(/leaves you a reminder in your notifications/i);
+    expect(TRANSLATIONS.en['onboarding.notify.body']).not.toMatch(/can remind you/i);
+    expect(TRANSLATIONS.en['onboarding.notify.later']).toMatch(/on or off/i);
+    // every language names the place, in the word its Notifications screen uses
+    const place: Record<(typeof LOCALES)[number], string> = {
+      en: 'notifications',
+      ku: 'agahdari',
+      ckb: 'ئاگادارکردنەوە',
+      ar: 'إشعارات',
+      tr: 'bildirim',
+      de: 'Mitteilungen',
+      fr: 'notifications',
+      es: 'notificaciones',
+      nl: 'meldingen',
+    };
+    for (const locale of LOCALES) {
+      expect(TRANSLATIONS[locale]['notifications.title'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
+      expect(TRANSLATIONS[locale]['onboarding.notify.body'], locale).toContain(place[locale]);
+    }
+  });
 });

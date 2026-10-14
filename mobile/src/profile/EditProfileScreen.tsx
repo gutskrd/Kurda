@@ -4,6 +4,8 @@ import { countriesIn } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { describeError } from '../api/errors';
+import { restrictionOf } from '../reports/sendErrors';
+import { SendErrorNotice } from '../reports/SendError';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -62,6 +64,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   const [country, setCountry] = useState('');
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<{ ok: boolean; text: string } | null>(null);
+  // a limit on the account (a name and a bio are shown to others) — said with a way to Account standing
+  const [limit, setLimit] = useState<ApiError | null>(null);
   const [avatars, setAvatars] = useState<AvatarOption[]>([]);
   const [selected, setSelected] = useState<string | null>(null);
 
@@ -97,6 +101,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     if (!me || busy || !dirty) return;
     setBusy(true);
     setNotice(null);
+    setLimit(null);
     // empty means "unset", which the API takes as null rather than as ''
     const res = await client.patch<{ user: Me }>('/me', {
       displayName: displayName.trim() || null,
@@ -107,6 +112,8 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
     if (res.ok) {
       setMe(res.data.user);
       setNotice({ ok: true, text: t('edit.profileUpdated') });
+    } else if (restrictionOf(res.error)) {
+      setLimit(res.error);
     } else {
       setNotice({ ok: false, text: describeError(res.error, t) });
     }
@@ -158,6 +165,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
             {notice ? (
               <Text style={[styles.notice, { color: notice.ok ? colors.success : colors.danger }]}>{notice.text}</Text>
             ) : null}
+            <SendErrorNotice error={limit} onDismiss={() => setLimit(null)} />
 
             <Text style={[styles.section, { color: colors.textPrimary }]}>{t('edit.details')}</Text>
 

@@ -13,11 +13,14 @@ import {
 import { sendEmailJob } from '../jobs/email.js';
 import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
-import { CURRENT_POLICY_VERSION, isRestrictedAge } from '../gdpr/consent.js';
+import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
+import { isMinorRow } from '../users/age.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
 import { LockoutService } from './lockout.js';
 import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
+import { currentBan } from '../moderation/sanctions-service.js';
+import { suspendedError, suspensionError } from '../moderation/suspension.js';
 
 /** Verified against when the user doesn't exist, so login latency doesn't
  *  reveal account existence. */
@@ -52,7 +55,12 @@ export interface RegisterInput {
   locale?: string;
   timezone?: string;
   deviceName?: string;
-  birthDate?: string;
+  /**
+   * Birth month and year. The route has already refused an impossible month
+   * and anyone under 13.
+   */
+  birthYear: number;
+  birthMonth: number;
 }
 
 export interface PublicUser {
@@ -63,6 +71,11 @@ export interface PublicUser {
   locale: string;
   timezone: string;
   emailVerified: boolean;
+  /**
+   * No birth month on record yet: every client asks once, before anything
+   * else, and nothing is offered until it is answered (POST /me/birth-date).
+   */
+  birthDateRequired: boolean;
   createdAt: string;
 }
 
@@ -75,6 +88,7 @@ export function toPublicUser(row: UserRow): PublicUser {
     locale: row.locale,
     timezone: row.timezone,
     emailVerified: row.email_verified_at !== null,
+    birthDateRequired: row.birth_year == null,
     createdAt: new Date(row.created_at).toISOString(),
   };
 }
@@ -352,15 +366,20 @@ export class AuthService {
       throw err;
     }
 
-    // versioned consent + minor protection (KUR-109). The route schema
-    // guarantees acceptTerms was true.
-    const birthDate = input.birthDate ? new Date(input.birthDate) : null;
-    await this.pool.query(
+    // versioned consent (KUR-109); the route schema guarantees acceptTerms was
+    // true. The birth month is kept, never a verdict drawn from it: minor
+    // status is worked out from it whenever it is needed (users/age.ts).
+    const birth = { birth_year: input.birthYear, birth_month: input.birthMonth };
+    const updated = await this.pool.query<UserRow>(
       `UPDATE users SET consent_version = $2, consented_at = now(),
-              birth_date = $3, restricted_mode = $4
-       WHERE id = $1`,
-      [user.id, CURRENT_POLICY_VERSION, birthDate, birthDate ? isRestrictedAge(birthDate) : false],
+              birth_year = $3, birth_month = $4,
+              -- a minor's profile starts private: friends only, chosen or not
+              profile_visibility = CASE WHEN $5 THEN 'friends' ELSE profile_visibility END
+       WHERE id = $1
+       RETURNING *`,
+      [user.id, CURRENT_POLICY_VERSION, birth.birth_year, birth.birth_month, isMinorRow(birth)],
     );
+    user = updated.rows[0] ?? user;
 
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
@@ -414,6 +433,12 @@ export class AuthService {
 
     await this.lockouts.clear('account', user.id);
 
+    // A banned account is told so — with why, until when, and a token that can
+    // only ask for a review — instead of being handed a session the next request
+    // refuses. After the password, so the answer reveals nothing to a guesser.
+    const suspended = await suspensionError(this.config, this.pool, user);
+    if (suspended) throw suspended;
+
     // a returning user keeps their account: logging in during the
     // deletion grace period cancels the deletion (KUR-024)
     const cancelled = await this.pool.query(
@@ -458,6 +483,31 @@ export class AuthService {
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');
       }
 
+      // A ban ends refreshing: the account is told why (403 ACCOUNT_SUSPENDED,
+      // with the appeal token) rather than "your session was stolen". Checked
+      // before the reuse rule because a ban revokes every refresh token — the
+      // phone's next refresh presents one of those, and it must land on the
+      // suspension screen, not the sign-in form. Every token the account still
+      // holds is revoked (a ban written straight to the account left them live).
+      //
+      // But only for a token the account could still have used: unexpired, and
+      // either live or ended by the ban itself (revoked when the ban began, not
+      // rotated). Any other — rotated long ago, revoked as stolen, expired —
+      // gets the answer it always got: the appeal token reads the person's
+      // standing and files their one appeal per decision, which is not for
+      // whoever kept an old token.
+      const owner = await this.users.findById(row.user_id);
+      const ban = owner ? await currentBan(client, owner.id) : null;
+      if (owner && ban) {
+        const unexpired = new Date(row.expires_at).getTime() >= Date.now();
+        const endedByBan = row.revoked_at !== null && row.replaced_by === null && new Date(row.revoked_at).getTime() >= ban.since.getTime();
+        if (unexpired && (row.revoked_at === null || endedByBan)) {
+          await client.query(`UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`, [row.user_id]);
+          await client.query('COMMIT');
+          throw await suspendedError(this.config, owner, ban);
+        }
+      }
+
       if (row.revoked_at || row.replaced_by) {
         // reuse of a rotated token — assume the family is compromised
         await client.query(
@@ -474,7 +524,7 @@ export class AuthService {
         throw new AppError('REFRESH_EXPIRED', 401, 'refresh token expired');
       }
 
-      const user = await this.users.findById(row.user_id);
+      const user = owner;
       if (!user) {
         await client.query('ROLLBACK');
         throw new AppError('INVALID_REFRESH', 401, 'invalid refresh token');

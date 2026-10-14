@@ -20,6 +20,13 @@ export function Modal({
   const t = useT();
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreRef = useRef<HTMLElement | null>(null);
+  // The latest onClose, read when it is needed. Most callers pass a fresh
+  // arrow on every render, and with it in the effect below, any re-render of
+  // the page underneath — a game's state arriving every few seconds — ran the
+  // effect again: focus went back to the panel, out of whatever field the
+  // reader was typing in.
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
 
   useEffect(() => {
     if (!open) return;
@@ -29,7 +36,7 @@ export function Modal({
     panelRef.current?.focus();
 
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') closeRef.current();
     };
     document.addEventListener('keydown', onKey);
     return () => {
@@ -37,7 +44,7 @@ export function Modal({
       document.body.style.overflow = prevOverflow;
       restoreRef.current?.focus?.();
     };
-  }, [open, onClose]);
+  }, [open]);
 
   if (!open) return null;
 

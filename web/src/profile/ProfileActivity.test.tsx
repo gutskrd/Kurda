@@ -179,7 +179,7 @@ describe('ProfileActivity', () => {
     // the picture belongs to the card now — the 40px .mkp-activity-shot square
     // is what this replaced
     await screen.findByText('Çiya');
-    expect(document.querySelector('.fcard-shot img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
+    expect(document.querySelector('.fcard-pics img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
     expect(document.querySelector('.mkp-activity-shot')).toBeNull();
   });
 

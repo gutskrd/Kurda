@@ -20,7 +20,7 @@
  * two apps key their catalogues differently, so each keeps its own map.
  */
 
-export type GameInviteType = 'wordle-battle' | 'rhyme-match';
+export type GameInviteType = 'wordle-battle' | 'rhyme-match' | 'stories';
 
 export interface GameInvite {
   type: GameInviteType;
@@ -49,7 +49,7 @@ export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https
 }
 
 // matches "/app/games/<type>?id=<id>" anywhere in a string, any origin (or none)
-const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match)\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})/;
+const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match|stories)\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})/;
 
 /**
  * The link itself, for removing it from displayed text. Global so a body with
@@ -59,7 +59,7 @@ const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match)\?id=([A-Za-z0-9][A-
 export function inviteLinkPattern(): RegExp {
   // built from a raw source string rather than a literal: the escaping stays
   // readable, and `/` needs none inside the constructor
-  return new RegExp(String.raw`\S*/app/games/(?:wordle-battle|rhyme-match)\?id=[A-Za-z0-9-]+\S*`, 'g');
+  return new RegExp(String.raw`\S*/app/games/(?:wordle-battle|rhyme-match|stories)\?id=[A-Za-z0-9-]+\S*`, 'g');
 }
 
 /** Extract the first game invite from arbitrary text, or null. */

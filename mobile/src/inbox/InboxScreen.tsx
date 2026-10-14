@@ -10,6 +10,7 @@ import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { followDeepLink, notificationText } from '../notifications/followLink';
 import type { TranslationKey } from '../i18n/translations';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
@@ -18,6 +19,9 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { relativeTime, resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { FILTERS, FILTER_LABEL, SECTION_LABEL, newestFirst, sectionsFor, type InboxFilter } from './sections';
 import { EmptyState } from '../theme/EmptyState';
+import type { ChatMessageKind } from '@kurda/shared';
+import { messagePreview } from '../chat/preview';
+import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 
 interface RequestRow {
   userId: string;
@@ -29,6 +33,8 @@ interface ConversationRow {
   userId: string;
   username: string;
   lastMessage: string;
+  /** a gift or a game card says so here, and the line is written from it */
+  lastKind?: ChatMessageKind;
   lastAt?: string | null;
   lastFromMe: boolean;
   unread: number;
@@ -54,7 +60,7 @@ export function InboxScreen(): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const openMenu = useOpenMenu();
   const topInset = useScreenTopInset();
   const bottomInset = useTabBarInset();
@@ -63,6 +69,8 @@ export function InboxScreen(): React.JSX.Element {
   const [requests, setRequests] = useState<RequestRow[]>([]);
   const [chats, setChats] = useState<ConversationRow[]>([]);
   const [alerts, setAlerts] = useState<InboxItem[]>([]);
+  // the moderators' caring message, opened in full (reports/CaringMessage.tsx)
+  const [caring, setCaring] = useState<CaringMessage | null>(null);
 
   const load = useCallback(() => {
     void client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
@@ -96,11 +104,10 @@ export function InboxScreen(): React.JSX.Element {
       }
       const link = resolveDeepLink(item.data);
       if (!link) return;
-      if (link.screen === 'Chat') navigation.navigate('Chat', link.params);
-      else if (link.screen === 'Game') navigation.navigate('Game', link.params);
-      else if (link.screen === 'Profile') navigation.navigate('UserProfile', { userId: link.params.userId });
-      else if (link.screen === 'EventQuests') navigation.navigate('EventQuests');
-      else navigation.navigate('Notifications');
+      // a caring message is read here, with its helpline; it has no screen
+      if (link.screen === 'CaringMessage') return setCaring({ title: item.title, body: item.body, helplineUrl: link.helplineUrl });
+      // the rest go where the notification centre sends them, invites and gifts included
+      void followDeepLink(link, navigation, client);
     },
     [client, navigation],
   );
@@ -202,7 +209,7 @@ export function InboxScreen(): React.JSX.Element {
                     {c.username}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={1}>
-                    {c.lastMessage}
+                    {messagePreview(c, t)}
                   </Text>
                 </View>
                 {c.unread > 0 ? (
@@ -224,7 +231,7 @@ export function InboxScreen(): React.JSX.Element {
                 key={a.id}
                 onPress={() => openAlert(a)}
                 accessibilityRole="button"
-                accessibilityLabel={a.title}
+                accessibilityLabel={notificationText(a, t, locale).title}
                 style={({ pressed }) => [
                   styles.row,
                   { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 },
@@ -234,10 +241,10 @@ export function InboxScreen(): React.JSX.Element {
                 <View style={[styles.dot, { backgroundColor: a.readAt ? 'transparent' : colors.primary }]} />
                 <View style={styles.rowMain}>
                   <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {a.title}
+                    {notificationText(a, t, locale).title}
                   </Text>
                   <Text style={[styles.rowSub, { color: colors.textSecondary }]} numberOfLines={2}>
-                    {a.body}
+                    {notificationText(a, t, locale).body}
                   </Text>
                 </View>
                 <Text style={[styles.when, { color: colors.textSecondary }]}>{relativeTime(a.createdAt)}</Text>
@@ -249,6 +256,7 @@ export function InboxScreen(): React.JSX.Element {
 
         {empty ? <EmptyState title={t('inbox.empty')} body={t('inbox.empty.body')} /> : null}
       </ScrollView>
+      <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />
     </GradientBackground>
   );
 }

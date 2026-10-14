@@ -36,6 +36,8 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
         username: uname[tag]!,
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });
@@ -151,6 +153,8 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
           username: `${tag}${suffix}`.slice(0, 30),
           password: 'a-strong-password1',
           acceptTerms: true,
+          birthYear: 1990,
+          birthMonth: 6,
         },
         remoteAddress: ip,
       });
@@ -208,12 +212,13 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       });
       expect(res.statusCode).toBe(200);
 
-      const row = await pool.query<{ category: string; reason: string; status: string }>(
-        `SELECT category, reason, status FROM user_reports WHERE reporter_id = $1 AND reported_user_id = $2`,
+      // the old route writes through the one report service now (reports, not user_reports)
+      const row = await pool.query<{ category: string; note: string; status: string }>(
+        `SELECT category, note, status FROM reports WHERE reporter_id = $1 AND target_type = 'user' AND target_id = $2`,
         [aId, id.diacritic],
       );
       expect(row.rows[0]).toMatchObject({ category: 'harassment', status: 'open' });
-      expect(row.rows[0]!.reason).toContain('asked to stop');
+      expect(row.rows[0]!.note).toContain('asked to stop');
     });
 
     it('refuses one with nothing in it, because the words are the whole case', async () => {
@@ -246,27 +251,29 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
       });
       expect(nobody.statusCode).toBe(200);
 
-      // and the second one changed nothing: one row, still the first reason
-      const rows = await pool.query<{ reason: string }>(
-        `SELECT reason FROM user_reports WHERE reporter_id = $1 AND reported_user_id = $2`,
+      // and the second one changed nothing while the first is open: one row, still the first reason
+      const rows = await pool.query<{ note: string }>(
+        `SELECT note FROM reports WHERE reporter_id = $1 AND target_type = 'user' AND target_id = $2`,
         [aId, id.diacritic],
       );
       expect(rows.rowCount).toBe(1);
-      expect(rows.rows[0]!.reason).toContain('asked to stop');
+      expect(rows.rows[0]!.note).toContain('asked to stop');
     });
 
+    /*
+     * Changed on purpose: the report is a case the moment it is filed (no sync),
+     * from the one 'report' source, and the reporter's words are on the report
+     * the case is made of rather than copied into the case.
+     */
     it('reaches the moderation queue as one case for the person', async () => {
       const queue = new ModerationQueueService(pool);
-      await queue.sync();
-      const row = await pool.query<{ source: string; summary: string; evidence: { reports: number } }>(
-        `SELECT source, summary, evidence FROM moderation_cases
-          WHERE source = 'user_report' AND source_ref = $1`,
-        [`user:${id.diacritic}`],
-      );
-      expect(row.rowCount).toBe(1);
-      expect(row.rows[0]!.summary).toMatch(/Reported by 1/);
+      const page = await queue.queue({ q: id.diacritic! });
+      const mine = page.cases.filter((c) => c.source === 'report' && c.targetType === 'user');
+      expect(mine).toHaveLength(1);
+      expect(mine[0]!.summary).toMatch(/^1 report · Bullying or harassment · Profile/);
+      const detail = await queue.cases.detail(mine[0]!.id);
       // with no post attached, what the reporter wrote IS the case
-      expect(JSON.stringify(row.rows[0]!.evidence)).toContain('asked to stop');
+      expect(detail!.reports.map((r) => r.note).join(' ')).toContain('asked to stop');
     });
   });
 

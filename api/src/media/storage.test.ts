@@ -1,21 +1,26 @@
 import { describe, expect, it } from 'vitest';
+import type { S3Client } from '@aws-sdk/client-s3';
 import { loadConfig } from '../config/env.js';
 import {
   IMMUTABLE_CACHE_CONTROL,
   MAX_UPLOAD_BYTES,
+  MediaStorage,
+  PRIVATE_CACHE_CONTROL,
+  cloudflarePurge,
   createStorage,
   mediaKey,
 } from './storage.js';
 
 const HASH = 'a'.repeat(64);
 
-const offlineConfig = loadConfig({
+const offlineEnv = {
   NODE_ENV: 'test',
   S3_ENDPOINT: 'http://localhost:9000',
   S3_BUCKET: 'kurda-test',
   S3_ACCESS_KEY_ID: 'test',
   S3_SECRET_ACCESS_KEY: 'test',
-});
+};
+const offlineConfig = loadConfig(offlineEnv);
 
 describe('publicUrl', () => {
   it('derives a public URL as CDN_BASE_URL + "/" + key, with no double slash', () => {
@@ -112,5 +117,84 @@ describe('createStorage', () => {
         sha256Hex: HASH,
       }),
     ).rejects.toThrow(/contentLength/);
+  });
+});
+
+describe('evidence storage', () => {
+  /** An S3 client that records what it was asked to do. */
+  function recording() {
+    const sent: Array<{ name: string; input: Record<string, unknown> }> = [];
+    const send = async (cmd: { constructor: { name: string }; input: Record<string, unknown> }) =>
+      void sent.push({ name: cmd.constructor.name, input: cmd.input });
+    return { sent, s3: { send } as unknown as S3Client };
+  }
+
+  it('copies into the private evidence bucket, uncached, and deletes from there', async () => {
+    const { sent, s3 } = recording();
+    const storage = new MediaStorage(s3, 'hevalo-media', 'https://media.hevalo.app', { evidenceBucket: 'hevalo-evidence' });
+    await storage.copyToEvidence('image-post/x.webp', 'quarantine/abc/image-post/x.webp', 'image/webp');
+    await storage.deleteEvidence('quarantine/abc/image-post/x.webp');
+    expect(sent[0]).toEqual({
+      name: 'CopyObjectCommand',
+      input: {
+        Bucket: 'hevalo-evidence',
+        Key: 'quarantine/abc/image-post/x.webp',
+        CopySource: 'hevalo-media/image-post/x.webp',
+        MetadataDirective: 'REPLACE',
+        CacheControl: PRIVATE_CACHE_CONTROL,
+        ContentType: 'image/webp',
+      },
+    });
+    expect(sent[1]).toEqual({ name: 'DeleteObjectCommand', input: { Bucket: 'hevalo-evidence', Key: 'quarantine/abc/image-post/x.webp' } });
+  });
+
+  it('without an evidence bucket, keeps evidence privately in the main one', async () => {
+    const { sent, s3 } = recording();
+    const storage = new MediaStorage(s3, 'hevalo-media', 'https://media.hevalo.app');
+    await storage.copyToEvidence('image-post/x.webp', 'quarantine/abc/image-post/x.webp');
+    expect(sent[0]!.input).toMatchObject({ Bucket: 'hevalo-media', CacheControl: PRIVATE_CACHE_CONTROL });
+    expect(sent[0]!.input).not.toHaveProperty('ContentType');
+  });
+
+  it('asks the CDN to forget the public URLs, and says when it cannot', async () => {
+    const { s3 } = recording();
+    const asked: string[][] = [];
+    const storage = new MediaStorage(s3, 'b', 'https://media.hevalo.app', {
+      purge: async (urls) => {
+        asked.push(urls);
+        return true;
+      },
+    });
+    expect(await storage.purgePublic(['image-post/x.webp'])).toBe(true);
+    expect(asked).toEqual([['https://media.hevalo.app/image-post/x.webp']]);
+    expect(await new MediaStorage(s3, 'b', 'https://m').purgePublic(['k'])).toBeNull();
+    const failing = new MediaStorage(s3, 'b', 'https://m', {
+      purge: async () => {
+        throw new Error('down');
+      },
+    });
+    expect(await failing.purgePublic(['k'])).toBe(false);
+  });
+
+  it('purges through Cloudflare by URL with the zone token', async () => {
+    const calls: Array<{ url: string; init: RequestInit }> = [];
+    const fetchFn = (async (url: string, init: RequestInit) => {
+      calls.push({ url, init });
+      return new Response('{}', { status: 200 });
+    }) as unknown as typeof fetch;
+    expect(await cloudflarePurge('zone1', 'tok', fetchFn)(['https://media.hevalo.app/a.webp'])).toBe(true);
+    expect(calls[0]!.url).toBe('https://api.cloudflare.com/client/v4/zones/zone1/purge_cache');
+    expect(calls[0]!.init.headers).toMatchObject({ authorization: 'Bearer tok' });
+    expect(JSON.parse(calls[0]!.init.body as string)).toEqual({ files: ['https://media.hevalo.app/a.webp'] });
+  });
+
+  it('is configured from the environment', () => {
+    const storage = createStorage(
+      loadConfig({ ...offlineEnv, S3_EVIDENCE_BUCKET: 'kurda-evidence', CDN_PURGE_ZONE_ID: 'z', CDN_PURGE_API_TOKEN: 't' }),
+    )!;
+    expect((storage as unknown as { options: { evidenceBucket?: string; purge?: unknown } }).options).toMatchObject({
+      evidenceBucket: 'kurda-evidence',
+      purge: expect.any(Function),
+    });
   });
 });

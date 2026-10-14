@@ -32,6 +32,8 @@ describe.skipIf(!DATABASE_URL)('account activation (integration)', () => {
         username: `act_${tag}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });

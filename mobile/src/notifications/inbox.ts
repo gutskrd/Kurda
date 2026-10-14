@@ -1,4 +1,6 @@
 /** Pure notification-inbox helpers (KUR-097) — no React Native. */
+import { isPlayGame, type PlayGame } from '@kurda/shared';
+import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
 
 export interface InboxItem {
   id: string;
@@ -14,9 +16,16 @@ export interface InboxItem {
 export type DeepLink =
   | { screen: 'EventQuests' }
   | { screen: 'Notifications' }
-  | { screen: 'Game'; params: { roomId: string } }
   | { screen: 'Profile'; params: { userId: string } }
-  | { screen: 'Chat'; params: { userId: string; username: string } };
+  | { screen: 'Chat'; params: { userId: string; username: string } }
+  /** an invite to play: accepted on the way, into the game's lobby */
+  | { screen: 'PlayInvite'; params: { inviteId: string; game: PlayGame; lobbyId: string } }
+  /** a badge earned (one, or the day's bundle): the badges page */
+  | { screen: 'Badges' }
+  /** safe this week, moved up a league, a Pêla week: the league */
+  | { screen: 'League' }
+  // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
+  | SocialDeepLink;
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null;
@@ -28,13 +37,24 @@ function str(v: unknown): string | null {
  * for an expired/removed deep-link, rather than navigating into a dead screen).
  */
 export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null {
+  // gifts, report outcomes and decisions on your account first (reports/deepLinks.ts)
+  const social = socialDeepLink(data);
+  if (social) return social;
+  /*
+   * What the server writes today is a `kind` with the ids it needs, rather
+   * than a screen name: the app decides where each kind of thing lives.
+   */
+  if (data.kind === 'play_invite') {
+    const inviteId = str(data.inviteId);
+    const lobbyId = str(data.lobbyId);
+    return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
+  }
+  // progress (contract 4): badges and the weekly league
+  if (data.kind === 'badge') return { screen: 'Badges' };
+  if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };
   switch (data.screen) {
     case 'EventQuests':
       return { screen: 'EventQuests' };
-    case 'Game': {
-      const roomId = str(data.roomId);
-      return roomId ? { screen: 'Game', params: { roomId } } : null;
-    }
     case 'Profile': {
       const userId = str(data.userId);
       return userId ? { screen: 'Profile', params: { userId } } : null;

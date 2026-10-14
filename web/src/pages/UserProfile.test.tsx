@@ -53,13 +53,25 @@ describe('UserProfile (other user, full page)', () => {
     // country: real flag image + name under the username
     expect(screen.getByText('Germany')).toBeInTheDocument();
     expect((document.querySelector('.mkp-country .flag') as HTMLImageElement | null)?.src).toContain('flagcdn.com/w40/de.png');
-    expect(document.querySelector('.mkp-hex')?.textContent).toBe('5');
-    expect((document.querySelector('.mkp-bg') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
+    expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 5');
+    expect((document.querySelector('.pc-banner .pcard-bg-media') as HTMLImageElement | null)?.src).toContain('/cosmetics/backgrounds/a.webp');
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // no self-only Edit Profile button; a friend action instead
     expect(screen.queryByRole('link', { name: /edit profile/i })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /add friend/i }));
     expect(calls.some((c) => c.url.includes('/friends/requests'))).toBe(true);
+  });
+
+  it('offers a friend a game, and only a friend', async () => {
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false });
+    await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
+    expect(await screen.findByRole('dialog', { name: 'Play with zana' })).toBeInTheDocument();
+  });
+
+  it('has no Play for someone who is not a friend', async () => {
+    render({ userId: 'u4', username: 'baran', displayName: 'Baran', friendStatus: 'none', private: false });
+    expect(await screen.findByRole('button', { name: /add friend/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play' })).not.toBeInTheDocument();
   });
 
   it('shows a private notice for a private profile', async () => {

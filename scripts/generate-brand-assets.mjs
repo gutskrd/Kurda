@@ -7,7 +7,7 @@
  *
  *   node scripts/generate-brand-assets.mjs
  *
- * The sources are gitignored, the way sticker and empty-state originals are.
+ * The sources are gitignored, the way the empty-state originals are.
  * What ships is what this writes, and it is committed.
  *
  * ── one drawing, two things to take from it ──────────────────────────────
@@ -318,11 +318,9 @@ await write('web/public/og.png', await sharp({ create: { width: 1200, height: 63
   .png(PNG)
   .toBuffer());
 
-// ───────────────────────────────────────────────────────── the sticker sheet
-console.log('stickers');
-// one again: a brown deer reads on any photograph, which is what the two
-// one-colour versions before it could not do
-await write('web/public/stickers/logo.webp', await sharp(await onGlass(deer, 512, 0.92)).webp({ quality: 90 }).toBuffer());
+// The photo editor's Hevalo sticker is not cut from this drawing any more: the
+// sticker sheet is drawn whole by scripts/generate-cosmetic-art.mjs, deer
+// badge included, and that script owns web/public/stickers.
 
 // ──────────────────────────────────────────────────────── what the phone ships
 console.log('phone');

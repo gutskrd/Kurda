@@ -1,7 +1,7 @@
 /** Admin content CMS (KUR-100) against real Postgres: workflow + optimistic lock. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
-import { ContentAdminService } from './admin-service.js';
+import { ContentAdminService, type ExerciseInput } from './admin-service.js';
 import { ContentRepository } from './repository.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -29,6 +29,7 @@ describe.skipIf(!DATABASE_URL)('content admin CMS (integration)', () => {
   });
 
   afterAll(async () => {
+    await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [[`ez baş im ${suffix}`, `sêv ${suffix}`]]);
     // published lessons are immutable and cannot be deleted; archive them first
     // (the one allowed transition) so the course cascade delete is permitted.
     await pool.query(
@@ -103,5 +104,54 @@ describe.skipIf(!DATABASE_URL)('content admin CMS (integration)', () => {
       expect(draft.status).toBe('draft');
       expect(draft.version).toBeGreaterThan(1);
     }
+  });
+
+  /**
+   * A listening item with no clip of its own plays the audio studio's
+   * recording of its transcription; with neither it would reach learners
+   * with nothing to play.
+   */
+  describe('a listening item with nothing to play', () => {
+    const silentText = `Ez baş im ${suffix}.`;
+    const listening = (payload: Record<string, unknown>) => ({ position: 2, type: 'listening' as const, payload });
+
+    async function inReview(position: number, exercises: ExerciseInput[]): Promise<string> {
+      const { lessonId } = await content.createDraft(skillId, position, 'Bihîstin', 'Listening');
+      expect((await content.updateDraft(lessonId, { titleKu: 'B', titleEn: 'Listening', exercises }, 0)).ok).toBe(true);
+      expect(await content.submit(lessonId)).toEqual({ ok: true });
+      return lessonId;
+    }
+
+    it('keeps the lesson from being approved until its transcription is recorded', async () => {
+      const lessonId = await inReview(5, [mc('q'), listening({ prompt: 'Type what you hear', accepted: [silentText, 'ez bash im'] })]);
+
+      expect(await content.approve(lessonId)).toEqual({
+        ok: false,
+        code: 'LISTENING_AUDIO_MISSING',
+        silent: [{ index: 1, text: silentText }],
+      });
+      // still waiting for review, not half-published
+      expect((await content.getLesson(lessonId))!.status).toBe('in_review');
+
+      // recorded — however it was punctuated when it was — and it can go out
+      await pool.query(
+        `INSERT INTO lesson_audio (key, text, media_key, url, content_type, duration_ms)
+         VALUES ($1, $2, 'test', 'https://cdn.test/lesson-audio/x.wav', 'audio/wav', 1200)`,
+        [`ez baş im ${suffix}`, `ez baş im ${suffix}`],
+      );
+      expect(await content.approve(lessonId)).toEqual({ ok: true });
+      expect((await content.getLesson(lessonId))!.status).toBe('published');
+    });
+
+    it('approves a listening item that brings its own clip', async () => {
+      const lessonId = await inReview(6, [listening({ audioUrl: 'https://cdn.test/own.mp3', accepted: [`Sêv ${suffix}`] })]);
+      expect(await content.approve(lessonId)).toEqual({ ok: true });
+    });
+
+    it('still answers for a missing lesson and a lesson in the wrong state', async () => {
+      expect(await content.approve('00000000-0000-0000-0000-000000000000')).toEqual({ ok: false, code: 'NOT_FOUND' });
+      const { lessonId } = await content.createDraft(skillId, 7, 'Ders', 'Lesson');
+      expect(await content.approve(lessonId)).toEqual({ ok: false, code: 'BAD_STATE' });
+    });
   });
 });

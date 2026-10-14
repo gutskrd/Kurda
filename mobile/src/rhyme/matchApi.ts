@@ -1,4 +1,4 @@
-import { buildInviteUrl } from '@kurda/shared';
+import { buildInviteUrl, type RatedState } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 
@@ -7,7 +7,11 @@ export type RhymeQuality = 'perfect' | 'near' | 'none';
 export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'window-closed';
 
 export interface ScoreEntry {
+  /** the viewer's own id on their own entry, `seat:N` on everyone else's */
   userId: string;
+  seat?: number;
+  /** a friend's name (or anyone's in an open match); null shows "Opponent" */
+  name?: string | null;
   score: number;
   accepted: number;
 }
@@ -21,9 +25,17 @@ export interface MatchState {
   windowMs: number;
   remainingMs: number;
   maxPlayers: number;
+  /** the viewer's own id when they host, else the host's `seat:N` */
   createdBy: string;
+  isHost?: boolean;
+  /** the rematch or next round, once there is one */
+  nextLobbyId?: string | null;
+  /** everyone in it, by seat, named as this viewer may see them */
+  players?: Array<{ seat: number; userId: string; name: string | null; avatarUrl: string | null; isMe: boolean; isHost: boolean; gone: boolean }>;
   me: { score: number; accepted: number; usedWords: string[] } | null;
   scoreboard: ScoreEntry[];
+  /** Rated or Friendly (Game Ranks): the host's choice, and once started whether it counts */
+  rated?: RatedState;
 }
 
 export interface SubmitOutcome {
@@ -41,6 +53,11 @@ export interface MatchResults {
   dialect: Dialect;
   ranking: Array<{
     userId: string;
+    /** the player's seat (`seat:N` is everyone else's userId): what a report names them by */
+    seat?: number;
+    /** null unless you may see it (a friend, or anyone in an open match) */
+    name?: string | null;
+    isMe?: boolean;
     rank: number;
     score: number;
     accepted: number;
@@ -61,8 +78,9 @@ export interface MatchResults {
  * it counted and for how much. It never decides what rhymes, which is what
  * keeps a modified client from inventing points.
  */
-export const createMatch = (client: ApiClient, dialect: Dialect): Promise<ApiResult<MatchState>> =>
-  client.post('/rhyme/matches', { dialect });
+/** `rated`: the host's Rated/Friendly choice (the server remembers it for their next match). */
+export const createMatch = (client: ApiClient, dialect: Dialect, rated?: boolean): Promise<ApiResult<MatchState>> =>
+  client.post('/rhyme/matches', rated === undefined ? { dialect } : { dialect, rated });
 
 export const joinMatch = (client: ApiClient, id: string): Promise<ApiResult<MatchState>> =>
   client.post(`/rhyme/matches/${id}/join`);

@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
-import { describeError, requestId } from '../lib/api';
-import type { InventoryItem, PurchaseResult, ShopItem } from '../lib/types';
+import { requestId } from '../lib/api';
+import type { ApiError, PurchaseResult, ShopItem } from '../lib/types';
 import { ErrorState } from '../components/states';
 import { FriendListSkeleton, TileGridSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
@@ -10,8 +11,37 @@ import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { CoinIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
+import { RefreshedNotice, ReturnableItems, type InventoryWithRefunds } from '../shop/RefreshedItems';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { SendError } from '../reports/SendError';
+
+/**
+ * Why `POST /shop/gift` did not give it, in the words the chat's gift picker
+ * uses. The route answers a skipped friend with its own codes; the app's
+ * generic copy read the daily limit's 429 as "too many requests" and the rest
+ * as "something went wrong". Anything else (a limit on the account, funds) is
+ * said by SendError.
+ */
+function shopGiftRefusal(error: ApiError, name: string, t: (key: MessageKey, vars?: Record<string, string>) => string): string | null {
+  switch (error.code) {
+    case 'ALREADY_OWNED':
+      return t('gift.skipped.owned', { name });
+    case 'GIFT_DAILY_LIMIT':
+      return t('gift.skipped.limit', { name });
+    case 'GIFT_NOT_ALLOWED':
+      return t('gift.skipped.notYet', { name });
+    case 'NOT_FRIENDS':
+      return t('gift.error.friendsOnly');
+    case 'NOT_GIFTABLE':
+    case 'ITEM_UNAVAILABLE':
+      return t('gift.error.unavailable');
+    case 'INSUFFICIENT_FUNDS':
+      return t('gift.error.funds');
+    default:
+      return null;
+  }
+}
 
 /** A catalog tile: the item plus whether the viewer already owns it. */
 interface Tile {
@@ -23,8 +53,13 @@ interface Tile {
   owned: boolean;
 }
 
+/**
+ * A friend as `GET /friends` sends one (`FriendSummary`). It was declared with
+ * `id`, which the API has never sent: every gift posted `toUserId: undefined`
+ * and was refused with a validation error, so a gift from the web never went.
+ */
 interface Friend {
-  id: string;
+  userId: string;
   username: string;
   avatarUrl: string | null;
 }
@@ -94,12 +129,14 @@ export function Shop(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const shop = useApiGet<{ items: ShopItem[] }>('/shop');
-  const inventory = useApiGet<{ items: InventoryItem[] }>('/me/inventory');
+  const inventory = useApiGet<InventoryWithRefunds>('/me/inventory');
   const wallet = useApiGet<{ balances: { zer: number } }>('/me/wallet');
 
   const [zer, setZer] = useState<number | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ kind: 'ok'; text: string } | { kind: 'err'; error: ApiError | string } | null>(null);
+  /** the chat a gift just went to, where it now waits wrapped */
+  const [giftChat, setGiftChat] = useState<Friend | null>(null);
   const [bought, setBought] = useState<Set<string>>(new Set());
   /** the tile that just succeeded — drives the one-shot celebration */
   const [celebrating, setCelebrating] = useState<string | null>(null);
@@ -144,27 +181,32 @@ export function Shop(): React.JSX.Element {
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.isYours', { name: tile.name }) });
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
+      setMsg({ kind: 'err', error: res.error });
     }
   }
 
   async function gift(tile: Tile, to: Friend): Promise<void> {
     setBusy(tile.sku);
     setMsg(null);
+    setGiftChat(null);
     const res = await client.post<{ balance: number }>('/shop/gift', {
       sku: tile.sku,
-      toUserId: to.id,
+      toUserId: to.userId,
       idempotencyKey: requestId(),
       expectedPrice: tile.price,
     });
     setBusy(null);
     setGifting(null);
     if (res.ok) {
-      setZer(res.data.balance);
+      // the answer is the balance of the item's own currency: a gift bought
+      // with gems must not overwrite the Zêr shown at the top
+      if (tile.currency === 'zer') setZer(res.data.balance);
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
+      // every gift arrives in the chat between the two of you, wrapped
+      setGiftChat(to);
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
+      setMsg({ kind: 'err', error: shopGiftRefusal(res.error, to.username, t) ?? res.error });
     }
   }
 
@@ -187,13 +229,39 @@ export function Shop(): React.JSX.Element {
         </p>
       </div>
 
-      {msg && (
-        <div className={`msg ${msg.kind === 'ok' ? 'msg-success' : 'msg-error'}`} role="status" style={{ marginBottom: 16 }}>
+      {/* a refusal says what stopped it — a limit on the account with when it
+          ends and where the reasons are (SendError) — rather than "try again" */}
+      {msg?.kind === 'err' && <SendError error={msg.error} role="status" className="shop-msg" />}
+      {msg?.kind === 'ok' && (
+        <div className="msg msg-success" role="status" style={{ marginBottom: 16 }}>
           {msg.text}
+          {giftChat && (
+            <>
+              {' '}
+              <Link
+                className="send-error-link"
+                to={`/app/messages?to=${giftChat.userId}&name=${encodeURIComponent(giftChat.username)}`}
+              >
+                {t('shop.giftInChat')}
+              </Link>
+            </>
+          )}
         </div>
       )}
 
+      {/* refreshed items: the one-time notice (contract-3 §S) */}
+      <RefreshedNotice inventory={inventory.data} />
+
       <GiftsReceived onEquipHint={() => setMsg(null)} />
+
+      {/* refreshed items the owner can hand back, above the catalogue, where the notice sends them (contract-3 §S) */}
+      <ReturnableItems
+        inventory={inventory.data}
+        onReturned={(r) => {
+          if (r.refund.currency === 'zer') setZer(r.balance);
+          inventory.reload();
+        }}
+      />
 
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}
@@ -374,7 +442,7 @@ function GiftPicker({
           )}
           <ul className="gift-friends">
             {shown.map((f) => (
-              <li key={f.id}>
+              <li key={f.userId}>
                 <button type="button" className="gift-friend" disabled={busy} onClick={() => onPick(f)}>
                   <Avatar url={f.avatarUrl} glyphSize={18} />
                   <span className="gift-friend-name">{f.username}</span>
@@ -451,16 +519,20 @@ function ShopSection({
                     <Button size="sm" disabled={busy !== null || !canAfford} onClick={() => onBuy(tile)}>
                       {t('shop.buy')}
                     </Button>
-                    <button
-                      type="button"
-                      className="shop-gift-btn"
-                      disabled={busy !== null || !canAfford}
-                      onClick={() => onGift(tile)}
-                      title={t('shop.giftTo', { name: tile.name })}
-                      aria-label={t('shop.giftTo', { name: tile.name })}
-                    >
-                      <GiftIcon size={17} />
-                    </button>
+                    {/* a free item is not a gift (the API refuses it: it would be a
+                        notification in someone's face at no cost) */}
+                    {tile.price > 0 && (
+                      <button
+                        type="button"
+                        className="shop-gift-btn"
+                        disabled={busy !== null || !canAfford}
+                        onClick={() => onGift(tile)}
+                        title={t('shop.giftTo', { name: tile.name })}
+                        aria-label={t('shop.giftTo', { name: tile.name })}
+                      >
+                        <GiftIcon size={17} />
+                      </button>
+                    )}
                   </div>
                 )}
               </figure>

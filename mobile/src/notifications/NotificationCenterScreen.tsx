@@ -10,17 +10,21 @@ import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { relativeTime, resolveDeepLink, type InboxItem } from './inbox.js';
+import { followDeepLink, notificationText } from './followLink';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
 
 /** In-app notification center: list, mark-read, deep links (KUR-097). */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [items, setItems] = useState<InboxItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
+  // the moderators' caring message, opened with its helpline (reports/CaringMessage.tsx)
+  const [caring, setCaring] = useState<CaringMessage | null>(null);
 
   const load = useCallback(() => {
     void client.get<{ notifications: InboxItem[] }>('/me/notifications').then((res) => {
@@ -47,13 +51,16 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
         void client.post(`/me/notifications/${item.id}/read`);
       }
       const link = resolveDeepLink(item.data);
-      // link targets may live on routes added by other feature branches; the
-      // merged app has them all. A null link stays in the inbox (friendly
-      // fallback for an expired/removed target).
-      if (link) {
-        const navigate = navigation.navigate as (screen: string, params?: object) => void;
-        navigate(link.screen, 'params' in link ? link.params : undefined);
+      // a caring message is read here, with its helpline; it has no screen
+      if (link?.screen === 'CaringMessage') {
+        setCaring({ title: item.title, body: item.body, helplineUrl: link.helplineUrl });
+        return;
       }
+      // a null link stays in the list (the friendly fallback for an expired or
+      // removed target); the rest go where the inbox tab sends them — this
+      // used to pass the link's own screen name straight to the navigator, and
+      // "Profile" is the tab of that name: your own profile, not theirs
+      if (link) void followDeepLink(link, navigation, client);
     },
     [client, navigation],
   );
@@ -99,8 +106,8 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
               >
                 {!item.readAt ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : <View style={styles.dotSpacer} />}
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.title, { color: colors.textPrimary }]}>{item.title}</Text>
-                  <Text style={[styles.body, { color: colors.textSecondary }]}>{item.body}</Text>
+                  <Text style={[styles.title, { color: colors.textPrimary }]}>{notificationText(item, t, locale).title}</Text>
+                  <Text style={[styles.body, { color: colors.textSecondary }]}>{notificationText(item, t, locale).body}</Text>
                 </View>
                 <Text style={[styles.time, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
               </Pressable>
@@ -108,6 +115,7 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
           />
         </AsyncBoundary>
       </View>
+      <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />
     </GradientBackground>
   );
 }

@@ -16,12 +16,13 @@ import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
 import { ErrorState } from '../components/states';
 import { ProfileCardSkeleton } from '../components/skeletons';
-import { PersonGlyph } from '../components/icons';
-import { CosmeticBackground, GiftedNote, LevelBar, PremiumPill, IconOverlay } from './cosmetic-parts';
+import { GiftedNote } from './cosmetic-parts';
+import { ProfileCard } from '../ui/ProfileCard';
 import { UserActions } from './UserActions';
 import { useT } from '../i18n/I18nProvider';
+import { toLeagueTier } from '@kurda/shared';
+import { leagueName } from '../ranks/names';
 import type { MessageKey } from '../i18n/en';
-import { seasonalLogo } from '../brand/season';
 
 /** What the modal is showing: your own profile, or another user by id. */
 type Target = { kind: 'me' } | { kind: 'user'; userId: string; username?: string };
@@ -131,7 +132,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   let online: boolean | undefined;
   let favPoem: FavoriteRef | null = null;
   let favStory: FavoriteRef | null = null;
-  const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
+  const stats: Array<{ label: string; value: string }> = [];
   let actions: React.JSX.Element | null = null;
   const unavailable = <ErrorState title={t('profile.loadFailed')} message={t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
@@ -152,6 +153,11 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
     stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: me.streak.current }) });
+    // beside the streak, the two numbers a missed day never takes away
+    stats.push({ label: t('profile.stat.longestStreak'), value: t('profile.stat.streakDays', { count: me.streak.longest }) });
+    if (me.streak.daysLearned !== undefined) {
+      stats.push({ label: t('profile.stat.daysLearned'), value: `${me.streak.daysLearned}` });
+    }
   } else {
     if (!other) return unavailable;
     name = other.displayName || other.username;
@@ -167,8 +173,9 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
     if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: other.streak }) });
-    if (other.tier) stats.push({ label: t('profile.stat.league'), value: other.tier, cap: true });
-    if (other.rating !== undefined) stats.push({ label: t('profile.stat.rating'), value: `${other.rating}` });
+    // a league tier key, translated; none for someone not taking part (never a default tier)
+    const leagueTier = toLeagueTier(other.league?.tier ?? other.tier ?? null);
+    if (leagueTier) stats.push({ label: t('profile.stat.league'), value: leagueName(t, leagueTier) });
     if (other.achievements !== undefined) stats.push({ label: t('profile.stat.achievements'), value: `${other.achievements}` });
     actions = blocked ? (
       <div className="pcard-blocked" role="status">
@@ -197,60 +204,43 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   }
 
   return (
-    <article className={`pcard pcard-modal${background ? ' pcard-has-bg' : ''}`}>
-      {/* equipped background sits behind everything (owned/premium-gated server-side) */}
-      {background && <CosmeticBackground background={background} />}
-
-      {/* full photo (or silhouette), like the reference — not a small circle.
-          The premium icon overlays the avatar boundary (never baked in); the
-          wrapper is not clipped so the icon can straddle the edge. */}
-      <div className="pcard-photo-wrap">
-        <div className="pcard-photo">
-          {photo ? (
-            <img className="pcard-photo-img" src={photo} alt="" />
-          ) : (
-            <PersonGlyph className="pcard-photo-glyph" size={92} />
-          )}
-        </div>
-        {icon && <IconOverlay icon={icon} />}
-      </div>
-
-      <div className="pcard-plate">
-        <div className="pcard-name-row">
-          <div className="pcard-name">{name}</div>
-          {premium && <PremiumPill />}
-        </div>
-        <div className="pcard-handle">@{username}</div>
+    <article className="pc-modal">
+      <ProfileCard
+        name={name}
+        username={username}
+        avatarUrl={photo}
+        background={background}
+        icon={icon}
+        premium={premium}
+        online={online}
+        level={level}
+        frameSku={target.kind === 'me' ? null : (other?.frameSku ?? null)}
+      >
         <GiftedNote background={background} icon={icon} />
-        {online && (
-          <div className="pcard-online"><span className="presence-dot presence-dot-inline" /> {t('profile.online')}</div>
-        )}
 
-        {level && <LevelBar level={level} />}
-
-        {bio && <p className="pcard-bio">{bio}</p>}
+        {bio && <p className="pc-bio">{bio}</p>}
 
         {stats.length > 0 && (
-          <dl className="pcard-rows">
+          <dl className="pc-stats">
             {stats.map((s) => (
-              <div className="pcard-row" key={s.label}>
+              <div className="pc-stat" key={s.label}>
                 <dt>{s.label}</dt>
-                <dd style={s.cap ? { textTransform: 'capitalize' } : undefined}>{s.value}</dd>
+                <dd>{s.value}</dd>
               </div>
             ))}
           </dl>
         )}
 
         {(favPoem || favStory) && (
-          <dl className="pcard-rows pcard-favorites">
+          <dl className="pc-favs">
             {favPoem && (
-              <div className="pcard-row" key="fav-poem">
+              <div className="pc-fav">
                 <dt>{t('profile.favoritePoem')}</dt>
                 <dd>{favPoem.title}</dd>
               </div>
             )}
             {favStory && (
-              <div className="pcard-row" key="fav-story">
+              <div className="pc-fav">
                 <dt>{t('profile.favoriteStory')}</dt>
                 <dd>{favStory.title}</dd>
               </div>
@@ -258,18 +248,10 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
           </dl>
         )}
 
-        {actions && <div style={{ marginTop: 14 }}>{actions}</div>}
-      </div>
+        {actions && <div className="pc-actions">{actions}</div>}
+      </ProfileCard>
 
-      <div className="pcard-foot">
-        <span className="pcard-label">{target.kind === 'me' ? t('profile.title') : name}</span>
-        <span className="pcard-logo">
-          <img src={seasonalLogo()} alt="" aria-hidden="true" />
-          Hevalo
-        </span>
-      </div>
-
-      <div className="profile-actions" style={{ marginTop: 16 }}>
+      <div className="profile-actions">
         <Button
           variant="secondary"
           size="sm"

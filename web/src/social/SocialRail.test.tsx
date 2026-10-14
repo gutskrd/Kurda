@@ -112,32 +112,30 @@ describe('SocialRail', () => {
     signIn();
     const { posts } = railFetch([
       rail({
-        challenges: [person('9', 'zana')],
         requests: [person('8', 'berfin')],
-        unread: { notifications: 0, groups: 0, requests: 1, challenges: 1 },
+        unread: { notifications: 0, groups: 0, requests: 1, challenges: 0 },
       }),
     ]);
     show();
 
-    expect(await screen.findByText('Invited you to play')).toBeInTheDocument();
-    expect(screen.getByText('Wants to be friends')).toBeInTheDocument();
-
-    // decline the friend request; the invite is a separate card with its own buttons
-    const request = screen.getByText('Wants to be friends').closest<HTMLElement>('.rail-card')!;
+    const request = (await screen.findByText('Wants to be friends')).closest<HTMLElement>('.rail-card')!;
     await userEvent.click(within(request).getByRole('button', { name: 'Decline' }));
 
     await waitFor(() => expect(posts).toContain('POST /friends/requests/8/decline'));
   });
 
-  it('accepting an invite asks the challenge endpoint, not the friend one', async () => {
+  /**
+   * Deliberately changed: quiz challenges are gone with the quiz (the API
+   * always sends an empty list), and game invites have their own banner — so
+   * the rail no longer draws a challenge, even if an old answer carries one.
+   */
+  it('draws no quiz challenge any more', async () => {
     signIn();
-    const { posts } = railFetch([rail({ challenges: [person('9', 'zana')] })]);
+    railFetch([rail({ challenges: [person('9', 'zana')], requests: [person('8', 'berfin')] })]);
     show();
 
-    const invite = (await screen.findByText('Invited you to play')).closest<HTMLElement>('.rail-card')!;
-    await userEvent.click(within(invite).getByRole('button', { name: 'Accept' }));
-
-    await waitFor(() => expect(posts).toContain('POST /challenges/9/accept'));
+    await screen.findByText('Wants to be friends');
+    expect(screen.queryByText('Invited you to play')).not.toBeInTheDocument();
   });
 
   it('counts everything waiting on the toggle, capped', async () => {
@@ -153,12 +151,60 @@ describe('SocialRail', () => {
 
   it('says nothing about a backlog you already had', async () => {
     signIn();
-    // the first answer already contains an invite — it is not news to this tab
-    railFetch([rail({ challenges: [person('9', 'zana')] })]);
+    // the first answer already contains a request — it is not news to this tab
+    railFetch([rail({ requests: [person('8', 'berfin')] })]);
     show();
 
-    await screen.findByText('Invited you to play');
+    await screen.findByText('Wants to be friends');
     // a burst of toasts for things that were already there is noise
+    expect(screen.queryByText('Friend request')).not.toBeInTheDocument();
+  });
+
+  it('opens the game a game invite in the notifications is for, said in the reader’s words', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          {
+            id: 'n1',
+            category: 'games',
+            title: 'Game invite',
+            body: 'Rojda invited you to play Wordle Battle.',
+            createdAt: new Date().toISOString(),
+            readAt: null,
+            data: { kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' },
+          },
+        ],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/i }));
+    expect(screen.getByRole('link', { name: 'Wordle Battle invite' })).toHaveAttribute('href', '/app/games/wordle-battle?id=b1');
+    // not the server's English fallback
+    expect(screen.queryByText('Rojda invited you to play Wordle Battle.')).not.toBeInTheDocument();
+  });
+
+  it('leaves a new game invite to its own banner rather than a second toast', async () => {
+    signIn();
+    const now = new Date().toISOString();
+    railFetch([
+      rail(),
+      rail({
+        notifications: [
+          { id: 'n1', category: 'games', title: 'Game invite', body: 'x', createdAt: now, readAt: null, data: { kind: 'play_invite', inviteId: 'i1', game: 'rhyme-match', lobbyId: 'r1' } },
+          { id: 'n2', category: 'streak', title: 'Keep your streak going', body: null, createdAt: now, readAt: null },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+
+    await screen.findByText('Online');
+    // the tab comes back: the rail reads again, and two notifications are new
+    document.dispatchEvent(new Event('visibilitychange'));
+    expect(await screen.findByText('Keep your streak going')).toBeInTheDocument();
     expect(screen.queryByText('Game invite')).not.toBeInTheDocument();
   });
 
@@ -322,5 +368,69 @@ describe('SocialRail', () => {
     // you to find the group you had just named
     const row = await screen.findByRole('link', { name: /Amedspor/ });
     expect(row).toHaveAttribute('href', '/app/messages?group=g7');
+  });
+
+  /**
+   * A notification about a report or a decision used to be English text that
+   * went nowhere. Its data says what it is: it is said in the reader's words
+   * and opens the page that has the rest.
+   */
+  it('opens My reports or Account standing from their notifications', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n1', category: 'system', title: 'About your report', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'report_outcome', reportIds: ['r1'], outcome: 'no_violation' } },
+          { id: 'n2', category: 'system', title: 'Decision', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'sanction', sanctionId: 's1', sanction: 'warning', policy: 'spam', until: null } },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    expect(screen.getByRole('link', { name: 'About your report' })).toHaveAttribute('href', '/app/settings/reports');
+    expect(screen.getByRole('link', { name: 'A decision about your account' })).toHaveAttribute('href', '/app/settings/standing');
+  });
+
+  it('opens the badges or the league from league and badge news, said in the reader’s words', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n1', category: 'progress', title: 'A new badge', body: 'You earned Agir.', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'badge', key: 'agir', tier: '1' } },
+          { id: 'n2', category: 'progress', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'league_promotion', weekKey: '2026-10-12', tier: 'cem' } },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    expect(screen.getByRole('link', { name: 'A new badge' })).toHaveAttribute('href', '/app/badges');
+    expect(screen.getByRole('link', { name: 'You moved up' })).toHaveAttribute('href', '/app/rankings');
+    expect(screen.getByText('Welcome to Çem League.')).toBeInTheDocument();
+  });
+
+  it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n9', category: 'system', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'caring_message', helplineUrl: 'https://findahelpline.com' } },
+        ],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    const link = screen.getByRole('link', { name: 'A message from Hevalo' });
+    expect(link).toHaveAttribute('href', 'https://findahelpline.com');
+    expect(link).toHaveAttribute('target', '_blank');
+    link.addEventListener('click', (e) => e.preventDefault()); // no navigation in a test
+    await userEvent.click(link);
+    await waitFor(() =>
+      expect(
+        vi.mocked(fetch).mock.calls.some(([u, init]) => String(u).includes('/me/notifications/n9/read') && init?.method === 'POST'),
+      ).toBe(true),
+    );
   });
 });

@@ -30,6 +30,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
         username: `${name}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });
@@ -220,44 +222,20 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(report.total.perfect).toBe(0);
   });
 
-  it('creates, edits and deletes a quiz question', async () => {
-    const body = {
+  // The ranked quiz and its question bank went when Stories replaced it; the
+  // table stays in the database untouched, but nothing serves or edits it.
+  it('no longer serves the quiz question bank', async () => {
+    expect((await authed('GET', '/admin/quiz/questions', editorToken)).statusCode).toBe(404);
+    const made = await authed('POST', '/admin/quiz/questions', editorToken, {
       prompt: `test-${suffix}?`,
       options: ['a', 'b', 'c', 'd'],
       correctIndex: 1,
       category: 'vocabulary',
       level: 2,
-    };
-    const made = await authed('POST', '/admin/quiz/questions', editorToken, body);
-    expect(made.statusCode).toBe(201);
-    const id = made.json().id;
-
-    const edited = await authed('PUT', `/admin/quiz/questions/${id}`, editorToken, {
-      ...body,
-      prompt: `edited-${suffix}?`,
-      correctIndex: 3,
-      active: false,
     });
-    expect(edited.statusCode).toBe(200);
-    expect(edited.json()).toMatchObject({ prompt: `edited-${suffix}?`, correctIndex: 3, active: false });
-
-    const listed = await authed('GET', '/admin/quiz/questions', editorToken);
-    expect(listed.json().questions.some((q: { id: string }) => q.id === id)).toBe(true);
-
-    expect((await authed('DELETE', `/admin/quiz/questions/${id}`, editorToken)).statusCode).toBe(200);
-    expect((await authed('DELETE', `/admin/quiz/questions/${id}`, editorToken)).statusCode).toBe(404);
+    expect(made.statusCode).toBe(404);
   });
 
-  it('rejects a question that does not have exactly four options', async () => {
-    const res = await authed('POST', '/admin/quiz/questions', editorToken, {
-      prompt: 'too few?',
-      options: ['a', 'b'],
-      correctIndex: 0,
-      category: 'vocabulary',
-      level: 1,
-    });
-    expect(res.statusCode).toBe(400);
-  });
   it('reports pool coverage per Wordle difficulty band', async () => {
     const res = await authed('GET', '/admin/dictionary/stats', editorToken);
     expect(res.statusCode).toBe(200);

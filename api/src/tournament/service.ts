@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import type { WalletService } from '../wallet/service.js';
+import { shownToSql } from '../users/age.js';
 import {
   firstRoundMatches,
   nextPowerOfTwo,
@@ -9,8 +10,6 @@ import {
   seedByRating,
 } from './bracket.js';
 
-/** A player who doesn't show within this window forfeits (KUR-060). */
-export const NO_SHOW_MS = 2 * 60 * 1000;
 /** Registration capacity bounds (mirrors the DB check). */
 export const MIN_CAPACITY = 8;
 export const MAX_CAPACITY = 64;
@@ -49,14 +48,25 @@ type Executor = Pick<pg.PoolClient, 'query'>;
 
 /**
  * Single-elimination tournaments (KUR-060). Admins schedule; players register;
- * on start the field is rating-seeded, the bracket auto-generates (top seeds
- * get byes for non-power-of-two fields), and winners propagate up the tree by
- * slot. No-shows forfeit after two minutes; the champion is paid the configured
- * reward once, idempotently.
+ * on start the field is seeded by Game Ranks points, the bracket auto-generates
+ * (top seeds get byes for non-power-of-two fields), and winners propagate up
+ * the tree by slot; the champion is paid the configured reward once,
+ * idempotently.
+ *
+ * There is no game to play a match in yet, so results are an admin's entry
+ * and tournaments stay out of the apps until there is. The no-show sweeper is
+ * gone (contract-4): with nothing to play, nobody could ever "show", and it
+ * advanced the higher seed of every empty match on a timer — a bracket nobody
+ * played still crowned, and paid, a champion.
  */
 /** Grants Gems for a rule/refId; injected so tournaments stay decoupled (KUR-068). */
 export interface GemGranter {
   grant(userId: string, ruleKey: string, refId: string): Promise<unknown>;
+}
+
+/** Awards an achievement; injected so tournaments stay decoupled. */
+export interface AchievementAwarder {
+  award(userId: string, achievementId: string): Promise<unknown>;
 }
 
 export class TournamentService {
@@ -64,6 +74,7 @@ export class TournamentService {
     private readonly pool: pg.Pool,
     private readonly wallet: WalletService,
     private readonly gems?: GemGranter,
+    private readonly achievements?: AchievementAwarder,
   ) {}
 
   async create(adminId: string, input: CreateTournamentInput): Promise<{ id: string }> {
@@ -105,15 +116,15 @@ export class TournamentService {
       if (Number(count.rows[0]!.n) >= tourn.capacity) {
         throw new AppError('TOURNAMENT_FULL', 409, 'tournament is full');
       }
-      // rating snapshot for seeding (unrated players read the default)
-      const rating = await client.query<{ rating: number }>(
-        `SELECT rating FROM player_ratings WHERE user_id = $1`,
+      // seeding snapshot: the best Game Ranks points in any game (0 unranked)
+      const rating = await client.query<{ points: number }>(
+        `SELECT COALESCE(max(points), 0)::int AS points FROM game_ratings WHERE user_id = $1`,
         [userId],
       );
       await client.query(
         `INSERT INTO tournament_participants (tournament_id, user_id, rating)
          VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-        [tournamentId, userId, rating.rows[0]?.rating ?? 1000],
+        [tournamentId, userId, rating.rows[0]?.points ?? 0],
       );
       await client.query('COMMIT');
     } catch (err) {
@@ -354,6 +365,8 @@ export class TournamentService {
     }
     // config-driven tournament-win Gem grant (KUR-068), idempotent per tournament
     if (this.gems) await this.gems.grant(userId, 'tournament_win', tournamentId).catch(() => undefined);
+    // the champion's achievement; idempotent, best-effort like the grant above
+    if (this.achievements) await this.achievements.award(userId, 'tournament-win').catch(() => undefined);
   }
 
   /** A player confirms presence for their ready match (guards no-show sweep). */
@@ -382,62 +395,25 @@ export class TournamentService {
   }
 
   /**
-   * Forfeit no-shows: any ready match past the window where a player hasn't
-   * checked in loses by default. If neither showed, the higher seed advances so
-   * the bracket never stalls. Returns the number of matches auto-decided.
+   * Full bracket view for the live UI (KUR-060).
+   *
+   * Any signed-in player can read any bracket, so it names a minor (or an
+   * account whose age is not on record yet) only to themselves and their
+   * friends (users/age.ts `shownToSql`). To anyone else that entrant is a
+   * place in the draw with no name or id — `userId` and `username` null, and
+   * null wherever a match or the result would have carried their id — which
+   * keeps the bracket's shape without making it a list of children to look
+   * up. `viewerId` undefined is the staff view (the admin routes), with
+   * every name.
    */
-  async sweepNoShows(now: Date = new Date()): Promise<number> {
-    const cutoff = new Date(now.getTime() - NO_SHOW_MS);
-    const due = await this.pool.query<{ id: string; tournament_id: string }>(
-      `SELECT id, tournament_id FROM tournament_matches
-         WHERE status = 'ready' AND ready_at IS NOT NULL AND ready_at < $1`,
-      [cutoff],
-    );
-
-    let decided = 0;
-    for (const row of due.rows) {
-      const winner = await this.resolveNoShow(row.tournament_id, row.id);
-      if (winner) {
-        await this.reportResult(row.tournament_id, row.id, winner);
-        decided += 1;
-      }
-    }
-    return decided;
-  }
-
-  /** Decide who advances from a timed-out ready match, or null if both present. */
-  private async resolveNoShow(tournamentId: string, matchId: string): Promise<string | null> {
-    const res = await this.pool.query<MatchRow>(
-      `SELECT id, round, slot, player_a, player_b, winner, status, ready_at, checked_in
-         FROM tournament_matches WHERE id = $1`,
-      [matchId],
-    );
-    const m = res.rows[0];
-    if (!m || m.status !== 'ready' || !m.player_a || !m.player_b) return null;
-    const aIn = m.checked_in.includes(m.player_a);
-    const bIn = m.checked_in.includes(m.player_b);
-    if (aIn && bIn) return null; // both present → a real game is (or should be) underway
-    if (aIn) return m.player_a;
-    if (bIn) return m.player_b;
-    // neither showed → the higher seed (lower seed number) gets the bye
-    const seeds = await this.pool.query<{ user_id: string; seed: number }>(
-      `SELECT user_id, seed FROM tournament_participants
-         WHERE tournament_id = $1 AND user_id = ANY($2)`,
-      [tournamentId, [m.player_a, m.player_b]],
-    );
-    const ranked = seeds.rows.sort((x, y) => (x.seed ?? 999) - (y.seed ?? 999));
-    return ranked[0]?.user_id ?? m.player_a;
-  }
-
-  /** Full bracket view for the live UI (KUR-060). */
-  async bracket(tournamentId: string): Promise<{
+  async bracket(tournamentId: string, viewerId?: string): Promise<{
     id: string;
     name: string;
     status: string;
     startsAt: Date;
     rounds: number | null;
     winnerId: string | null;
-    participants: Array<{ userId: string; username: string; seed: number | null; eliminated: boolean }>;
+    participants: Array<{ userId: string | null; username: string | null; seed: number | null; eliminated: boolean }>;
     matches: BracketMatchView[];
   }> {
     const t = await this.pool.query<{
@@ -459,12 +435,16 @@ export class TournamentService {
       username: string;
       seed: number | null;
       eliminated: boolean;
+      shown: boolean;
     }>(
-      `SELECT p.user_id, u.username, p.seed, p.eliminated
+      `SELECT p.user_id, u.username, p.seed, p.eliminated,
+              ($2::boolean OR ${shownToSql('u', '$3::uuid')}) AS shown
          FROM tournament_participants p JOIN users u ON u.id = p.user_id
         WHERE p.tournament_id = $1 ORDER BY p.seed NULLS LAST`,
-      [tournamentId],
+      [tournamentId, viewerId === undefined, viewerId ?? null],
     );
+    const hidden = new Set(parts.rows.filter((p) => !p.shown).map((p) => p.user_id));
+    const named = (id: string | null): string | null => (id !== null && hidden.has(id) ? null : id);
     const matches = await this.pool.query<MatchRow>(
       `SELECT id, round, slot, player_a, player_b, winner, status
          FROM tournament_matches WHERE tournament_id = $1 ORDER BY round, slot`,
@@ -477,10 +457,10 @@ export class TournamentService {
       status: tourn.status,
       startsAt: tourn.starts_at,
       rounds: tourn.rounds,
-      winnerId: tourn.winner_id,
+      winnerId: named(tourn.winner_id),
       participants: parts.rows.map((p) => ({
-        userId: p.user_id,
-        username: p.username,
+        userId: p.shown ? p.user_id : null,
+        username: p.shown ? p.username : null,
         seed: p.seed,
         eliminated: p.eliminated,
       })),
@@ -488,9 +468,9 @@ export class TournamentService {
         id: m.id,
         round: m.round,
         slot: m.slot,
-        playerA: m.player_a,
-        playerB: m.player_b,
-        winner: m.winner,
+        playerA: named(m.player_a),
+        playerB: named(m.player_b),
+        winner: named(m.winner),
         status: m.status,
       })),
     };

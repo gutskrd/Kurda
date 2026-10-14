@@ -8,11 +8,15 @@ import { ErrorState } from '../components/states';
 import { CardStackSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
+import { SafetyCard } from '../reports/SafetyCard';
+import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { LanguagePicker } from '../i18n/LanguagePicker';
+import { KeyboardCard } from '../keyboard/KeyboardCard';
+import { SendFeedbackCard } from '../feedback/SendFeedbackCard';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -64,7 +68,7 @@ export function Settings(): React.JSX.Element {
           this page reads */}
       <Language current={data.user.locale} />
 
-      <Privacy current={data.user.profileVisibility} />
+      <Privacy current={data.user.profileVisibility} minor={data.user.minor === true} />
 
       {/*
         Directly under privacy, because it is the same question asked the other
@@ -74,9 +78,21 @@ export function Settings(): React.JSX.Element {
       */}
       <BlockedUsers />
 
+      {/* what became of your reports, and the decisions about your account */}
+      <SafetyCard />
+
       {/* the other half of "who reaches me": privacy above says who may see
           you, this says what the app is allowed to interrupt you about */}
       <NotificationPrefsCard />
+
+      {/* what the app may make a sound for: opening a gift */}
+      <GiftSoundSetting />
+
+      <Leagues enabled={data.user.leaguesEnabled !== false} minor={data.user.minor === true} />
+
+      {/* web-race-rating: how this device types Kurdish, and a word to the team */}
+      <KeyboardCard />
+      <SendFeedbackCard />
 
       <section className="card" style={{ marginTop: 20 }}>
         <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.sessions.title')}</h2>
@@ -185,7 +201,54 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
   );
 }
 
-function Privacy({ current }: { current: Visibility }): React.JSX.Element {
+/**
+ * In or out of the weekly leagues, in one tap.
+ *
+ * A league ranks you against strangers by XP every week. That suits some
+ * people and puts others off learning, and a leaderboard that cannot be left is
+ * the kind of pressure the rest of the app tries not to apply. Leaving takes
+ * effect at once — you drop out of this week's table — and nothing else you
+ * have earned changes. A minor starts out of them and is told why.
+ */
+function Leagues({ enabled, minor }: { enabled: boolean; minor: boolean }): React.JSX.Element {
+  const { client, refreshUser } = useAuth();
+  const t = useT();
+  const [on, setOn] = useState(enabled);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  async function change(next: boolean): Promise<void> {
+    setOn(next);
+    setBusy(true);
+    setMsg(null);
+    const res = await client.request('PATCH', '/me', { body: { leaguesEnabled: next } });
+    setBusy(false);
+    if (res.ok) {
+      setMsg(t('common.saved'));
+      await refreshUser();
+    } else {
+      setOn(!next);
+      setMsg(describeError(res.error, t));
+    }
+  }
+
+  return (
+    <section className="card" style={{ marginTop: 20 }}>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.leagues.title')}</h2>
+      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>{t('settings.leagues.help')}</p>
+      <label className="section-toggle" style={{ paddingTop: 0 }}>
+        <input type="checkbox" checked={on} disabled={busy} onChange={(e) => void change(e.target.checked)} />
+        <span className="section-toggle-text">
+          <span className="section-toggle-label">{t('settings.leagues.toggle')}</span>
+        </span>
+      </label>
+      {minor && <p className="field-hint" style={{ marginBottom: 0 }}>{t('settings.leagues.minorHint')}</p>}
+      {msg && <span className="field-hint">{msg}</span>}
+    </section>
+  );
+}
+
+function Privacy({ current, minor }: { current: Visibility; minor: boolean }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [vis, setVis] = useState<Visibility>(current);
@@ -215,7 +278,9 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
             key={v}
             type="button"
             className={`chip${vis === v ? ' active' : ''}`}
-            disabled={busy}
+            // under 18 a profile is never on the open web; the server refuses
+            // it too, this just does not offer it
+            disabled={busy || (minor && v === 'everyone')}
             aria-pressed={vis === v}
             onClick={() => change(v)}
           >
@@ -224,6 +289,7 @@ function Privacy({ current }: { current: Visibility }): React.JSX.Element {
         ))}
       </div>
       <p className="field-hint" style={{ marginBottom: 0 }}>{t(VIS_HINT_KEY[vis])}</p>
+      {minor && <p className="field-hint" style={{ marginBottom: 0 }}>{t('settings.visibility.minorHint')}</p>}
       {msg && <span className="field-hint">{msg}</span>}
     </section>
   );

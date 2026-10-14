@@ -71,7 +71,7 @@ describe('tab registry', () => {
     expect(TABS.map((t) => t.path)).toEqual(['home', 'search', 'play', 'inbox', 'profile']);
   });
 
-  it('maps every tab to a deep-link path (kurda://<path>)', () => {
+  it('maps every tab to a deep-link path (hevalo://<path>)', () => {
     const screens = linkingScreens();
     expect(screens['Home']).toBe('home');
     expect(screens['Search']).toBe('search');

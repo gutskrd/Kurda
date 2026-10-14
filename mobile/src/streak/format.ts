@@ -5,6 +5,36 @@ export interface Streak {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
+  /** days with a finished lesson or practice session, ever; absent on older responses */
+  daysLearned?: number;
+  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  freezeProgress?: number;
+  sessionsPerFreeze?: number;
+}
+
+/** What the server pays a freeze for, when it does not say (older responses). */
+const SESSIONS_PER_FREEZE = 5;
+
+/**
+ * The numbers shown beside the streak.
+ *
+ * The streak is the one a missed day takes to zero, which is the number most
+ * likely to make somebody stop just after a lapse. Beside it go the two that
+ * never go down — the longest run and the days learned in all — and the
+ * freezes learning has earned, with what one costs.
+ */
+export function learningStats(streak: Streak): {
+  longest: number;
+  daysLearned: number;
+  freezes: number;
+  sessionsPerFreeze: number;
+} {
+  return {
+    longest: streak.longest,
+    daysLearned: streak.daysLearned ?? 0,
+    freezes: streak.freezes,
+    sessionsPerFreeze: streak.sessionsPerFreeze ?? SESSIONS_PER_FREEZE,
+  };
 }
 
 /**

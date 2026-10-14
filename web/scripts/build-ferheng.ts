@@ -20,9 +20,10 @@
  *
  * The definitions are Wiktionary text: written by strangers, and the one thing
  * on these pages that an attacker controls. It is escaped on the way in (see
- * `escape`), and then the page is served under a policy that forbids scripts
- * outright (`script-src 'none'`, in web/public/_headers). Two independent
- * failures would have to line up for anything to execute, and the second one
+ * `escape`), and then the page is served under a policy that forbids inline
+ * script outright and allows only this origin's own files (`script-src 'self'`,
+ * in web/public/_headers, for chrome.js). Two independent failures would have
+ * to line up for anything an attacker wrote to execute, and the second one
  * does not depend on this file being right.
  *
  * It also means the pages work with JavaScript off, which is how a crawler
@@ -48,8 +49,10 @@ import process from 'node:process';
 import { fileURLToPath } from 'node:url';
 import { publishedFerheng } from '@kurda/shared';
 import { compareKeys } from './ferheng-alphabet.js';
+import { CHROME_FILE, chromeScript } from './ferheng-chrome.js';
 import { COPY, FERHENG_LOCALES } from './ferheng-copy.js';
 import { toEntries } from './ferheng-entries.js';
+import { SEARCH_DIR, SEARCH_FILE, fileName, searchScript, shard, shardFile } from './ferheng-search.js';
 import {
   FONTS,
   ORIGIN,
@@ -173,7 +176,7 @@ async function main(): Promise<void> {
     for (const [i, page] of pages.entries()) {
       write(
         path.join(page.prefix, 'index.html'),
-        wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf, copy),
+        wordsPage(page, pages[i - 1]?.prefix ?? null, pages[i + 1]?.prefix ?? null, pageOf, copy, words.length),
       );
     }
     for (const { letter } of letters) {
@@ -181,6 +184,8 @@ async function main(): Promise<void> {
     }
     write('index.html', indexPage(letters, words.length, pages.length, samples, pageOf, copy));
     write('ferheng.css', STYLE);
+    // the bar and footer in the reader's own language; see ferheng-chrome.ts
+    write(CHROME_FILE, chromeScript());
     // what the Worker serves for an address with no page behind it; see
     // notFoundPage() for why the app's own 404 screen cannot do this job
     write('404.html', notFoundPage(copy));
@@ -212,6 +217,26 @@ async function main(): Promise<void> {
     );
     console.log(`  /${copy.base}/ — ${pages.length} word pages, ${letters.length} letters`);
   }
+
+  /*
+   * The search box's files, once for both languages: a word's page has the
+   * same name in each, so /dictionary/ pages read them from /ferheng/s/ too.
+   * Written after the loop because each language's folder is cleared first.
+   */
+  const shards = shard(pages);
+  const dir = path.join(ROOT, 'dist', SEARCH_DIR);
+  fs.mkdirSync(dir, { recursive: true });
+  for (const [id, rows] of shards) {
+    const body = shardFile(id, rows);
+    fs.writeFileSync(path.join(dir, fileName(id)), body);
+    bytes += Buffer.byteLength(body);
+    files += 1;
+  }
+  const script = searchScript([...shards.keys()]);
+  fs.writeFileSync(path.join(ROOT, 'dist', 'ferheng', SEARCH_FILE), script);
+  bytes += Buffer.byteLength(script);
+  files += 1;
+  console.log(`  search: ${shards.size} files, largest ${Math.max(...[...shards.values()].map((r) => r.length))} words`);
 
   console.log(
     `ferheng: ${FERHENG_LOCALES.length} languages, ` +

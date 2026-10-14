@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
@@ -6,10 +6,18 @@ import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { takeAfterSignup } from '../auth/afterSignup';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const CODE_LENGTH = 6;
+/**
+ * Where a newly confirmed account goes: its first lesson (pages/NextLesson.tsx
+ * finds it). It went to /app, the community wall, which is not what most
+ * people sign up to a language app for, and nothing there led to a lesson.
+ */
+const AFTER_VERIFY = '/app/learn/next';
+
 /** Matches the server's per-IP resend limit (4/hour) — don't invite a 429. */
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -40,6 +48,15 @@ export function VerifyEmail(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
+  /**
+   * Where to go once confirmed: where the account was being made for — a
+   * friend's game, a story's quiz (auth/afterSignup) — else the first lesson.
+   * A birth month still missing is asked there, by the app's own gate. Taken
+   * once and kept: confirming both answers the code and flips
+   * `emailVerified`, and each of those leaves this screen.
+   */
+  const destination = useRef<string | null>(null);
+  const afterVerify = useCallback((): string => (destination.current ??= takeAfterSignup() ?? AFTER_VERIFY), []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -59,7 +76,7 @@ export function VerifyEmail(): React.JSX.Element {
       if (cancelled) return;
       if (res.ok) {
         await refreshUser();
-        navigate('/app', { replace: true });
+        navigate(afterVerify(), { replace: true });
       } else {
         setError(t('auth.verify.badLink'));
       }
@@ -67,12 +84,12 @@ export function VerifyEmail(): React.JSX.Element {
     return () => {
       cancelled = true;
     };
-  }, [linkToken, client, refreshUser, navigate, t]);
+  }, [linkToken, client, refreshUser, navigate, t, afterVerify]);
 
-  // already verified (e.g. confirmed elsewhere) → don't strand them here
+  // already verified (e.g. confirmed in another tab) → don't strand them here
   useEffect(() => {
-    if (user?.emailVerified) navigate('/app', { replace: true });
-  }, [user?.emailVerified, navigate]);
+    if (user?.emailVerified) navigate(afterVerify(), { replace: true });
+  }, [user?.emailVerified, navigate, afterVerify]);
 
   const submit = useCallback(
     async (e: React.FormEvent) => {
@@ -90,13 +107,13 @@ export function VerifyEmail(): React.JSX.Element {
         // pull the fresh profile so emailVerified flips before we route onward
         await refreshUser();
         setBusy(false);
-        navigate('/app', { replace: true });
+        navigate(afterVerify(), { replace: true });
         return;
       }
       setBusy(false);
       setError(verifyError(res.error, t));
     },
-    [client, code, refreshUser, navigate],
+    [client, code, refreshUser, navigate, afterVerify],
   );
 
   async function resend(): Promise<void> {

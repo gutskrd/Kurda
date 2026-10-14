@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { InventoryItem, MeProfile, ProfileSections, UserSummary, WalletBalances } from '../lib/types';
+import type { InventoryItem, MeProfile, ProfileSections, PublicProfile, UserSummary, WalletBalances } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileProgress } from '../profile/ProfileProgress';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
@@ -35,8 +36,9 @@ export function Profile(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const [rank, setRank] = useState<number | null>(null);
   const [sections, setSections] = useState<ProfileSections | null>(null);
+  // badges, ranks, league and frame: /me does not carry them, your public profile does
+  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -63,15 +65,15 @@ export function Profile(): React.JSX.Element {
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
 
-      // your own ranked place and activity sections: /me carries neither, and
-      // the public profile endpoint already computes both the same way it does
-      // for everyone else
+      // your own activity sections: /me does not carry them, and the public
+      // profile endpoint already works them out the same way it does for
+      // everyone else
       const id = m.ok ? m.data?.user?.id : undefined;
       if (id) {
-        const p = await client.get<{ rank?: number | null; sections?: ProfileSections | null }>(`/users/${id}`);
+        const p = await client.get<PublicProfile>(`/users/${id}`);
         if (!cancelled && p.ok) {
-          setRank(p.data.rank ?? null);
           setSections(p.data.sections ?? null);
+          setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku });
         }
       }
     })();
@@ -91,30 +93,32 @@ export function Profile(): React.JSX.Element {
     background: me.background ?? null,
     premium: me.premium,
     level: me.level?.level ?? 1,
+    levelInfo: me.level,
     xp: me.level?.xp ?? me.xp,
     streakDays: me.streak.current,
+    learning: {
+      longest: me.streak.longest,
+      daysLearned: me.streak.daysLearned ?? 0,
+      freezes: me.streak.freezes,
+      sessionsPerFreeze: me.streak.sessionsPerFreeze ?? 5,
+    },
     bio: me.bio,
     favPoem: me.favoritePoem ?? null,
     favStory: me.favoriteStory ?? null,
     online: true, // viewing your own profile → you're online
     country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
+    frameSku: shown?.frameSku ?? null,
   };
 
   return (
     <FullProfile
       view={view}
-      headerAction={<Link to="/app/profile/edit" className="mkp-edit">{t('profile.edit')}</Link>}
+      headerAction={<Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>}
       activity={<ProfileActivity userId={me.id} sections={sections} own />}
+      progress={shown ? <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own /> : null}
       sidebarExtra={
         <>
           <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
-          {/* only once ranked games have been played */}
-          {rank != null && (
-            <div className="mkp-info-row">
-              <span className="l">{t('profile.stat.rank')}</span>
-              <span className="n">#{rank.toLocaleString()}</span>
-            </div>
-          )}
 
           {icons.length > 0 && (
             <div className="mkp-collection">

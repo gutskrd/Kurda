@@ -20,7 +20,7 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `lib_${tag}_${suffix}@it.kurda.app`, username: `lib_${tag}_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: ip,
     });
     await activate(app, pool, res);
@@ -90,6 +90,15 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
     const read = await post('GET', `/library/posts/${poem.id}`);
     expect(read.statusCode).toBe(200);
     expect(read.json().viewCount).toBe(before + 1);
+  });
+
+  it('does not count an author reading their own post as a view', async () => {
+    const created = (await post('POST', '/library/posts', authorTok, { type: 'story', title: 'Seen', body: 'body here' })).json();
+    const own = await post('GET', `/library/posts/${created.id}`, authorTok);
+    expect(own.statusCode).toBe(200);
+    expect(own.json().viewCount).toBe(created.viewCount);
+    const other = await post('GET', `/library/posts/${created.id}`, otherTok);
+    expect(other.json().viewCount).toBe(created.viewCount + 1);
   });
 
   it('only the author or an admin can edit / remove', async () => {

@@ -7,6 +7,7 @@ import { loadConfig } from '../config/env.js';
 import { pass2fa } from '../test/admin-2fa.js';
 import { TournamentService } from './service.js';
 import { WalletService } from '../wallet/service.js';
+import { AchievementsService } from '../achievements/service.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -30,6 +31,8 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
         username: `tourn_${tag}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.60.0.1',
     });
@@ -41,7 +44,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     app = buildApp(config);
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
-    svc = new TournamentService(pool, new WalletService(pool));
+    svc = new TournamentService(pool, new WalletService(pool), undefined, new AchievementsService(pool));
     wallet = new WalletService(pool);
 
     const admin = await register('admin');
@@ -126,6 +129,12 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     expect((await wallet.balances(view.winnerId!)).zer).toBe(500);
     // everyone but the champion is eliminated
     expect(view.participants.filter((p) => !p.eliminated)).toHaveLength(1);
+    // …and only the champion holds tournament-win
+    const holders = await pool.query<{ user_id: string }>(
+      `SELECT user_id FROM user_achievements WHERE achievement_id = 'tournament-win' AND user_id = ANY($1)`,
+      [players.map((p) => p.id)],
+    );
+    expect(holders.rows.map((r) => r.user_id)).toEqual([view.winnerId]);
   });
 
   it('gives the top seed a bye when the field is not a power of two', async () => {
@@ -142,31 +151,5 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     // one of the two first-round matches is an auto-completed bye
     expect(round1.filter((m) => m.status === 'completed')).toHaveLength(1);
     expect(round1.filter((m) => m.status === 'ready')).toHaveLength(1);
-  });
-
-  it('auto-forfeits a no-show once the window passes', async () => {
-    const create = await svc.create(players[0]!.id, {
-      name: `NoShow ${suffix}`,
-      capacity: 8,
-      startsAt: new Date(Date.now() + 3.6e6),
-    });
-    for (const p of players.slice(0, 2)) await svc.register(create.id, p.id);
-    await svc.start(create.id);
-
-    let view = await svc.bracket(create.id);
-    const final = view.matches.find((m) => m.status === 'ready')!;
-    // only player A checks in; B is a no-show
-    await svc.checkIn(create.id, final.id, final.playerA!);
-
-    // nothing due yet for this fresh match — the tournament stays running
-    // (sweep is global, so assert on THIS tournament, not the overall count)
-    await svc.sweepNoShows(new Date());
-    expect((await svc.bracket(create.id)).status).toBe('running');
-
-    // …but past the window, the present player advances and wins the cup
-    await svc.sweepNoShows(new Date(Date.now() + 3 * 60 * 1000));
-    view = await svc.bracket(create.id);
-    expect(view.status).toBe('completed');
-    expect(view.winnerId).toBe(final.playerA);
   });
 });

@@ -7,6 +7,8 @@ import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileProgress } from '../profile/ProfileProgress';
+import { PlayWithButton } from '../play/PlayButtons';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
@@ -66,6 +68,7 @@ export function UserProfile(): React.JSX.Element {
     background: profile.background ?? null,
     premium: profile.premium,
     level: profile.level?.level ?? 1,
+    levelInfo: profile.level,
     xp: profile.level?.xp ?? profile.xp ?? 0,
     streakDays: profile.streak ?? 0,
     bio: profile.bio,
@@ -75,6 +78,7 @@ export function UserProfile(): React.JSX.Element {
     country: profile.country
       ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country }
       : null,
+    frameSku: profile.frameSku ?? null,
   };
 
   return (
@@ -87,18 +91,9 @@ export function UserProfile(): React.JSX.Element {
           <ProfileActivity userId={profile.userId} sections={profile.sections} />
         </>
       }
+      progress={<ProfileProgress ranks={profile.ranks} badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />}
       sidebarExtra={
         <>
-          {profile.tier && <div className="mkp-info-row"><span className="l">{t('profile.stat.league')}</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
-          {profile.rating !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.rating')}</span><span className="n">{profile.rating}</span></div>}
-          {/* only once they have actually played ranked — a place beside a
-              default rating would read as a standing they have not earned */}
-          {profile.rank != null && (
-            <div className="mkp-info-row">
-              <span className="l">{t('profile.stat.rank')}</span>
-              <span className="n">#{profile.rank.toLocaleString()}</span>
-            </div>
-          )}
           {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
         </>
       }
@@ -135,8 +130,10 @@ function FriendActions({ userId, username, status }: { userId: string; username:
 
   return (
     <div className="mkp-actions">
-      {state === 'self' && <Link to="/app/profile" className="mkp-edit">{t('profile.yours')}</Link>}
+      {state === 'self' && <Link to="/app/profile" className="btn btn-secondary btn-sm">{t('profile.yours')}</Link>}
       {state === 'friends' && message}
+      {/* a game with this friend: the invite sheet, with them already chosen */}
+      {state === 'friends' && <PlayWithButton userId={userId} name={username} />}
       {state === 'none' && <Button size="sm" onClick={() => void add()} disabled={busy}>{busy ? t('profile.sending') : t('profile.addFriend')}</Button>}
       {state === 'pending_out' && <Button size="sm" disabled>{t('profile.requestSent')}</Button>}
       {state === 'pending_in' && (

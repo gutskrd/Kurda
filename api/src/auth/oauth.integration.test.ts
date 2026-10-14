@@ -79,6 +79,9 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(result.created).toBe(true);
     expect(result.tokens.accessToken).toBeDefined();
     expect(result.user.username.length).toBeGreaterThanOrEqual(3);
+    // Google tells us nothing about age, so the account is asked once after
+    // signing in, before anything else (POST /me/birth-date)
+    expect(result.user.birthDateRequired).toBe(true);
 
     const identity = await pool.query(
       `SELECT user_id FROM oauth_identities WHERE provider = 'google' AND provider_user_id = $1`,
@@ -146,6 +149,10 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     expect(result.user.email).toContain('privaterelay.appleid.com');
   });
 
+  /*
+   * Changed on purpose: a banned account is answered ACCOUNT_SUSPENDED with the
+   * statement of reasons and an appeal token, like password sign-in (M1/M3).
+   */
   it('disabled linked accounts cannot sign in', async () => {
     const token = await makeToken('google', {
       sub: `g-banned-${suffix}`,
@@ -155,7 +162,9 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     const first = await service.signIn('google', token);
     await pool.query(`UPDATE users SET banned_at = now() WHERE id = $1`, [first.user.id]);
     await expect(service.signIn('google', token)).rejects.toMatchObject({
-      code: 'ACCOUNT_DISABLED',
+      code: 'ACCOUNT_SUSPENDED',
+      statusCode: 403,
+      details: { until: null, appealable: false, appealToken: expect.any(String) },
     });
   });
 

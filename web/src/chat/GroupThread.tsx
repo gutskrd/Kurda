@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { canManage as canManageRole, canSetRole as canSetRoleShared, roleRank } from '@kurda/shared';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
@@ -9,6 +9,8 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
 import { MessageList } from './MessageList';
 import { Composer } from './Composer';
+import { ChatGameButton } from '../play/PlayButtons';
+import { gameCardBody } from '../play/ChatGameCard';
 import { useStickyScroll } from './useStickyScroll';
 import { useTypingSignal, useTypingWatch, typingLabel } from './useTyping';
 import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/RealtimeProvider';
@@ -18,7 +20,10 @@ import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 import { ThreadSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { ArrowIcon, CloseIcon } from '../components/icons';
+import { ArrowIcon, CloseIcon, FlagIcon } from '../components/icons';
+import { SendError } from '../reports/SendError';
+import { ReportSheet } from '../reports/ReportSheet';
+import { useChatGifts } from '../gifts/useChatGifts';
 import { useT } from '../i18n/I18nProvider';
 import { Avatar } from '../components/Avatar';
 
@@ -52,7 +57,9 @@ export function GroupThread({
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
   const [sending, setSending] = useState(false);
-  const [sendMsg, setSendMsg] = useState<string | null>(null);
+  const [sendErr, setSendErr] = useState<ApiError | null>(null);
+  /** the message being reported, while the report sheet is open */
+  const [reporting, setReporting] = useState<GroupMessage | null>(null);
   const { refreshUnread } = useMessages();
   const { openProfile } = useProfileModal();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
@@ -63,6 +70,40 @@ export function GroupThread({
 
   // join the live room for as long as this channel is open (ref-counted, cross-tab)
   useRealtimeRoom(`group:${groupId}`);
+
+  // gifts: only ever between friends, so the picker offers your friends among
+  // the members (the roster you can see, met with your friends list)
+  const gifts = useChatGifts<GroupMessage>({
+    chat: useMemo(() => ({ kind: 'group' as const, groupId }), [groupId]),
+    loadPeople: useCallback(async () => {
+      const [res, roster] = await Promise.all([
+        client.get<{ friends: Array<{ userId: string; username: string; avatarUrl: string | null }> }>('/friends?limit=500'),
+        // the roster as it is now: someone may have joined or left since the
+        // thread opened, and the button can be pressed before it has loaded
+        client.get<GroupDetail>(`/groups/${groupId}`).then((r) => (r.ok ? r.data.members : [])),
+      ]);
+      const friends = new Set((res.ok ? (res.data.friends ?? []) : []).map((f) => f.userId));
+      return (roster ?? [])
+        .filter((m) => m.userId !== user?.id && friends.has(m.userId))
+        .map((m) => ({ userId: m.userId, name: m.username, avatarUrl: m.avatarUrl }));
+    }, [client, groupId, user?.id]),
+    setMessages,
+    sendText: useCallback(
+      async (body: string) => {
+        const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
+        // the reveal that asked says why it did not go, where the reader is looking
+        if (!res.ok) return res.error;
+        setMessages((m) => {
+          const list = m ?? [];
+          return list.some((x) => x.id === res.data.id) ? list : [...list, res.data];
+        });
+        return null;
+      },
+      [client, groupId],
+    ),
+    threadRef: scrollRef,
+    onSentScroll: () => scrollToBottom('smooth'),
+  });
 
   /** Clear this group's unread badge; on open and on each arrival while open. */
   const markRead = useCallback(async () => {
@@ -102,14 +143,16 @@ export function GroupThread({
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as { groupId?: unknown; message?: GroupMessage };
       if (ev.groupId !== groupId || !ev.message?.id) return;
+      // a gift's card in the room is nobody's; yours may already have come
+      const message = gifts.adopt(ev.message);
       setMessages((m) => {
         const list = m ?? [];
-        if (list.some((x) => x.id === ev.message!.id)) return list;
-        return [...list, ev.message!];
+        if (list.some((x) => x.id === message.id)) return list;
+        return [...list, message];
       });
       void markRead(); // it is on screen, so it counts as read
     },
-    [groupId, markRead],
+    [gifts.adopt, groupId, markRead],
   );
   useRealtimeEvent('group_msg', onGroupMsg);
 
@@ -138,7 +181,7 @@ export function GroupThread({
     const body = text.trim();
     if (!body) return;
     setSending(true);
-    setSendMsg(null);
+    setSendErr(null);
     const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
     setSending(false);
     if (res.ok) {
@@ -150,7 +193,7 @@ export function GroupThread({
       });
       scrollToBottom('smooth');
     } else {
-      setSendMsg(sendError(res.error, t));
+      setSendErr(res.error);
     }
   }
 
@@ -198,6 +241,8 @@ export function GroupThread({
             messages={messages}
             myId={user?.id}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            onReport={setReporting}
+            renderBody={(m) => gifts.renderBody(m) ?? gameCardBody(m)}
           />
         )}
       </div>
@@ -219,7 +264,17 @@ export function GroupThread({
         </button>
       )}
 
-      {sendMsg && <div className="msg msg-error chat-senderr">{sendMsg}</div>}
+      {gifts.notice}
+      <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
+      <ReportSheet
+        open={reporting !== null}
+        onClose={() => setReporting(null)}
+        target={{ targetType: 'group_message', targetId: reporting?.id ?? '' }}
+        block={reporting ? { userId: reporting.senderId, name: reporting.username } : null}
+        // an owner cannot leave (the server refuses), so is not offered it
+        leaveGroup={detail && detail.myRole !== 'owner' ? { groupId, name } : null}
+        onLeftGroup={() => (onClose ? onClose() : navigateAway('/app/messages?group='))}
+      />
       <Composer
         value={text}
         onChange={(next) => {
@@ -229,7 +284,14 @@ export function GroupThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.messageTheGroup')}
+        tools={
+          <>
+            {gifts.button}
+            <ChatGameButton target={{ kind: 'group', groupId, groupName: name }} />
+          </>
+        }
       />
+      {gifts.overlays}
     </div>
   );
 }
@@ -257,6 +319,7 @@ function GroupMembers({
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [reportingGroup, setReportingGroup] = useState(false);
 
   const myRole = detail.myRole;
   // the rules live in shared, so what this offers and what the API allows
@@ -397,6 +460,23 @@ function GroupMembers({
           </div>
         )
       )}
+
+      {/* the group itself — its name, its purpose — can be reported from here */}
+      {myRole !== 'owner' && (
+        <div className="group-leave">
+          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportingGroup(true)}>
+            <FlagIcon size={15} /> {t('report.group')}
+          </button>
+        </div>
+      )}
+      <ReportSheet
+        open={reportingGroup}
+        onClose={() => setReportingGroup(false)}
+        target={{ targetType: 'group', targetId: detail.id }}
+        name={detail.name}
+        leaveGroup={myRole !== null && myRole !== 'owner' ? { groupId: detail.id, name: detail.name } : null}
+        onLeftGroup={onLeft}
+      />
     </div>
   );
 }

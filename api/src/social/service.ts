@@ -1,10 +1,14 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
+import { RankService } from '../ranks/service.js';
+import { inLeaguesSql } from '../leagues/service.js';
+import { profileShowcase } from '../badges/service.js';
+import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -55,15 +59,25 @@ export interface PublicProfile {
   favoriteStory?: FavoriteRef | null;
   xp?: number;
   streak?: number;
-  tier?: string;
-  rating?: number;
   /**
-   * Where they place on the global rating board, or null when they have never
-   * played a ranked game. A default rating with a rank beside it would read as
-   * a real standing rather than "has not played".
+   * Their league tier key (translated by the apps), or null for someone who
+   * has never been in a league or does not take part — never a made-up
+   * "bronze". Same as `league?.tier`, kept for the apps that read it.
    */
-  rank?: number | null;
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
+  /**
+   * Their Game Ranks, per game played (contract-4 §U): the tier now — or
+   * "Resting" after 28 days without a rated game, to anyone but them — and the
+   * best this season and ever. Replaces the frozen all-time `rating`/`rank`.
+   */
+  ranks?: ProfileRank[];
+  /** the season frame they wear around their avatar (a SKU they own), or null */
+  frameSku?: string | null;
+  /** badges earned (and the legacy tournament win) */
   achievements?: number;
+  /** the three badges they chose to show; a minor's only to themselves and friends */
+  badges?: ShowcaseBadge[];
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
 }
@@ -81,12 +95,23 @@ function foldForm(input: string): string {
  * in either direction or those hidden from search. A profile's detail respects
  * its owner's visibility (everyone / members / friends / nobody), while identity
  * + the friend-relationship are always enough to send a request.
+ *
+ * Minors are never found by search, and their profile is never on the public
+ * web: 'everyone' is refused when they set it and read as 'members' if an
+ * older setting says so. Both are worked out from age at the moment of asking,
+ * and both treat an account whose age is not on record yet the same way (see
+ * users/age.ts): nobody is taken for an adult before they have said so.
  */
 export class SocialService {
+  private readonly ranks: Pick<RankService, 'profileRanks'>;
+
   constructor(
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
-  ) {}
+    ranks?: Pick<RankService, 'profileRanks'>,
+  ) {
+    this.ranks = ranks ?? new RankService(pool);
+  }
 
   /** Prefix search by username, excluding self, blocks, and non-searchable users. */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
@@ -96,6 +121,9 @@ export class SocialService {
       `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM users u
         WHERE u.deleted_at IS NULL AND u.id <> $1
           AND u.profile_visibility <> 'nobody'
+          -- strangers cannot look a minor up (they reach friends another way),
+          -- nor anyone whose age is not on record yet
+          AND NOT ${notKnownAdultSql('u')}
           AND translate(lower(u.username::text), 'êîûçş', 'eiucs') LIKE $2 || '%'
           AND NOT EXISTS (
             SELECT 1 FROM blocks b
@@ -112,8 +140,23 @@ export class SocialService {
     }));
   }
 
-  /** Update the caller's profile visibility. */
+  /**
+   * Update the caller's profile visibility. A minor's profile cannot be put on
+   * the public web, nor can one whose age is not on record yet (that is asked
+   * first); every other rung is theirs to choose.
+   */
   async setVisibility(userId: string, visibility: Visibility): Promise<void> {
+    if (visibility === 'everyone') {
+      const age = await this.pool.query<{ birth_year: number | null; birth_month: number | null }>(
+        `SELECT birth_year, birth_month FROM users WHERE id = $1`,
+        [userId],
+      );
+      const row = age.rows[0];
+      if (row && isMinorRow(row)) {
+        throw new AppError('VISIBILITY_NOT_ALLOWED', 403, 'a profile under 18 cannot be public to everyone');
+      }
+      if (row && !isKnownAdultRow(row)) throw birthDateRequired();
+    }
     await this.pool.query(`UPDATE users SET profile_visibility = $2 WHERE id = $1`, [userId, visibility]);
   }
 
@@ -137,11 +180,11 @@ export class SocialService {
       premium_until: Date | null;
       xp: number;
       profile_visibility: Visibility;
+      birth_year: number | null;
+      birth_month: number | null;
       streak: number;
-      tier: string;
-      rating: number;
-      has_rating: boolean;
-      rating_rank: number;
+      tier: string | null;
+      frame_sku: string | null;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -172,37 +215,39 @@ export class SocialService {
     }>(
       // Single query: profile + stats + equipped cosmetics (with the owner's
       // ownership of each) + favorites. No N+1; the route resolves keys → URLs.
+      // Who sent a gift being worn, and whose post is a favourite, are other
+      // people showing up on this profile: a minor among them is named to the
+      // viewer only as a friend ($2, users/age.ts), or an adult's profile on
+      // the public web would be a way to find them.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
+              u.birth_year, u.birth_month,
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
-              COALESCE(ul.tier, 'bronze') AS tier,
-              COALESCE(r.rating, 1000) AS rating,
-              (r.user_id IS NOT NULL) AS has_rating,
-              -- competition ranking, matching the leaderboard: strictly higher
-              -- ratings place above, and shadow-flagged cheats are not counted
-              (SELECT count(*)::int + 1
-                 FROM player_ratings r2 JOIN users u2 ON u2.id = r2.user_id
-                WHERE r2.rating > COALESCE(r.rating, 1000)
-                  AND u2.deleted_at IS NULL
-                  AND NOT EXISTS (
-                    SELECT 1 FROM cheat_reviews cr
-                     WHERE cr.user_id = u2.id AND cr.shadow_flagged = true
-                  )) AS rating_rank,
-              (SELECT count(*)::int FROM user_achievements ua WHERE ua.user_id = u.id) AS achievements,
+              -- the league tier only while they take part, and only once they have one
+              CASE WHEN ${inLeaguesSql('u')} THEN ul.tier END AS tier,
+              -- a frame is worn only while owned (a grant taken back takes it off)
+              CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
+                                 WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
+                   THEN u.equipped_frame_sku END AS frame_sku,
+              -- badges earned, and the one old award no badge replaced (the tournament win)
+              ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
+               + (SELECT count(*)::int FROM user_achievements ua
+                   WHERE ua.user_id = u.id AND ua.achievement_id = 'tournament-win')) AS achievements,
               bg.asset_key AS bg_asset, bg.category AS bg_cat, bg.active AS bg_active,
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
               ic.asset_key AS ic_asset, ic.category AS ic_cat, ic.active AS ic_active,
               ic.premium_only AS ic_premium, (eic.user_id IS NOT NULL) AS ic_owned,
-              bgg.id AS bg_gifter_id, bgg.username AS bg_gifter_name,
-              icg.id AS ic_gifter_id, icg.username AS ic_gifter_name,
+              CASE WHEN bgg.shown THEN bgg.id END AS bg_gifter_id,
+              CASE WHEN bgg.shown THEN bgg.username END AS bg_gifter_name,
+              CASE WHEN icg.shown THEN icg.id END AS ic_gifter_id,
+              CASE WHEN icg.shown THEN icg.username END AS ic_gifter_name,
               fp.title AS fp_title, fp.type AS fp_type, fp.status AS fp_status,
               fs.title AS fs_title, fs.type AS fs_type, fs.status AS fs_status
          FROM users u
          LEFT JOIN user_streaks s ON s.user_id = u.id
          LEFT JOIN user_league ul ON ul.user_id = u.id
-         LEFT JOIN player_ratings r ON r.user_id = u.id
          LEFT JOIN shop_items bg ON bg.sku = u.equipped_background_sku
          LEFT JOIN user_entitlements ebg ON ebg.user_id = u.id AND ebg.sku = u.equipped_background_sku
          LEFT JOIN shop_items ic ON ic.sku = u.equipped_icon_sku
@@ -211,7 +256,7 @@ export class SocialService {
          -- LIMIT 1 because the same SKU can have been gifted more than once over
          -- time; the latest sender is the one who gave the one being worn.
          LEFT JOIN LATERAL (
-           SELECT gu.id, gu.username
+           SELECT gu.id, gu.username, ${shownToSql('gu', '$2::uuid')} AS shown
              FROM gifts g
              JOIN users gu ON gu.id = g.from_user_id
             WHERE g.to_user_id = u.id AND g.sku = u.equipped_background_sku
@@ -219,17 +264,17 @@ export class SocialService {
             LIMIT 1
          ) bgg ON true
          LEFT JOIN LATERAL (
-           SELECT gu.id, gu.username
+           SELECT gu.id, gu.username, ${shownToSql('gu', '$2::uuid')} AS shown
              FROM gifts g
              JOIN users gu ON gu.id = g.from_user_id
             WHERE g.to_user_id = u.id AND g.sku = u.equipped_icon_sku
             ORDER BY g.created_at DESC
             LIMIT 1
          ) icg ON true
-         LEFT JOIN library_posts fp ON fp.id = u.favorite_poem_id
-         LEFT JOIN library_posts fs ON fs.id = u.favorite_story_id
+         LEFT JOIN library_posts fp ON fp.id = u.favorite_poem_id AND ${writtenForSql('fp.author_id', '$2::uuid')}
+         LEFT JOIN library_posts fs ON fs.id = u.favorite_story_id AND ${writtenForSql('fs.author_id', '$2::uuid')}
         WHERE u.id = $1 AND u.deleted_at IS NULL`,
-      [targetId],
+      [targetId, viewerId],
     );
     const u = row.rows[0];
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
@@ -242,11 +287,15 @@ export class SocialService {
 
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
+    // an 'everyone' stored before we knew their age is read as 'members' for a
+    // minor, or for anyone whose age is not on record yet: never the open web
+    const visibility: Visibility =
+      u.profile_visibility === 'everyone' && !isKnownAdultRow(u) ? 'members' : u.profile_visibility;
     const canSeeDetail =
       isSelf ||
-      u.profile_visibility === 'everyone' ||
-      (u.profile_visibility === 'members' && viewerId !== null) ||
-      (u.profile_visibility === 'friends' && friendStatus === 'friends');
+      visibility === 'everyone' ||
+      (visibility === 'members' && viewerId !== null) ||
+      (visibility === 'friends' && friendStatus === 'friends');
 
     const base: PublicProfile = {
       userId: targetId,
@@ -302,11 +351,13 @@ export class SocialService {
       favoriteStory,
       xp: u.xp,
       streak: u.streak,
-      tier: u.tier,
-      rating: u.rating,
-      // no ranked games played means no standing to report
-      rank: u.has_rating ? u.rating_rank : null,
+      tier: toLeagueTier(u.tier),
+      league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
+      ranks: await this.ranks.profileRanks(targetId, isSelf),
+      frameSku: u.frame_sku,
       achievements: u.achievements,
+      // a minor's showcase only to themselves and their friends
+      badges: await profileShowcase(this.pool, targetId, viewerId),
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };

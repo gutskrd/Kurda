@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from './service.js';
+import { writtenForSql } from '../users/age.js';
 
 export type AuthorRole = 'user' | 'admin';
 export const MAX_COMMENT_LEN = 10_000;
@@ -56,6 +57,11 @@ interface Row {
  * per-branch load-more. Soft-delete tombstones the node so a removed parent
  * keeps its subtree. Post `comment_count` and parent `reply_count` are kept in
  * step inside each mutation's transaction.
+ *
+ * A minor's comments, like their posts, are read by them and their friends
+ * only (users/age.ts `writtenForSql`); for anyone else they — and the replies
+ * under them — are not in the thread, and cannot be replied to. Nobody can
+ * comment on a post they cannot see.
  */
 export class LibraryCommentService {
   constructor(private readonly pool: pg.Pool) {}
@@ -68,17 +74,22 @@ export class LibraryCommentService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      // a post the commenter may not read answers as missing, as on reading
       const post = await client.query<{ id: string }>(
-        `SELECT id FROM library_posts WHERE id = $1 AND status = 'published' FOR UPDATE`,
-        [postId],
+        `SELECT id FROM library_posts
+          WHERE id = $1 AND status = 'published' AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
+          FOR UPDATE`,
+        [postId, authorId],
       );
       if (post.rowCount === 0) { await client.query('ROLLBACK'); return { ok: false, reason: 'post-not-found' }; }
 
       let depth = 0;
       if (input.parentId) {
         const parent = await client.query<{ depth: number }>(
-          `SELECT depth FROM library_comments WHERE id = $1 AND post_id = $2 FOR UPDATE`,
-          [input.parentId, postId],
+          `SELECT depth FROM library_comments
+            WHERE id = $1 AND post_id = $2 AND ${writtenForSql('library_comments.author_id', '$3::uuid')}
+            FOR UPDATE`,
+          [input.parentId, postId, authorId],
         );
         if (parent.rowCount === 0) { await client.query('ROLLBACK'); return { ok: false, reason: 'parent-not-found' }; }
         depth = parent.rows[0]!.depth + 1;
@@ -101,9 +112,9 @@ export class LibraryCommentService {
     }
   }
 
-  /** Top-level comments of a post (paginated). */
-  async topLevel(postId: string, page: Page = {}): Promise<Comment[]> {
-    return this.fetchChildren(postId, null, page);
+  /** Top-level comments of a post (paginated), as `viewerId` may read them. */
+  async topLevel(postId: string, page: Page = {}, viewerId: string | null = null): Promise<Comment[]> {
+    return this.fetchChildren(postId, null, page, viewerId);
   }
 
   /** Direct replies to a comment (paginated, oldest-first by default). */
@@ -113,21 +124,34 @@ export class LibraryCommentService {
     return comments.map((c) => ({ ...c, author: authors.get(c.authorId) ?? unknownAuthor(c.authorId) }));
   }
 
-  async replies(parentId: string, page: Page = {}): Promise<Comment[]> {
-    const parent = await this.pool.query<{ post_id: string }>(`SELECT post_id FROM library_comments WHERE id = $1`, [parentId]);
+  async replies(parentId: string, page: Page = {}, viewerId: string | null = null): Promise<Comment[]> {
+    // the replies under a comment the viewer may not read are not theirs either
+    const parent = await this.pool.query<{ post_id: string }>(
+      `SELECT post_id FROM library_comments WHERE id = $1 AND ${writtenForSql('library_comments.author_id', '$2::uuid')}`,
+      [parentId, viewerId],
+    );
     if (parent.rowCount === 0) return [];
-    return this.fetchChildren(parent.rows[0]!.post_id, parentId, { sort: 'oldest', ...page });
+    return this.fetchChildren(parent.rows[0]!.post_id, parentId, { sort: 'oldest', ...page }, viewerId);
   }
 
-  private async fetchChildren(postId: string, parentId: string | null, page: Page): Promise<Comment[]> {
+  private async fetchChildren(
+    postId: string,
+    parentId: string | null,
+    page: Page,
+    viewerId: string | null,
+  ): Promise<Comment[]> {
     const limit = Math.min(100, Math.max(1, page.limit ?? 20));
     const offset = Math.max(0, page.offset ?? 0);
     const order = page.sort === 'oldest' ? 'created_at ASC' : 'created_at DESC';
     const res = await this.pool.query<Row>(
       `SELECT * FROM library_comments
-       WHERE post_id = $1 AND parent_comment_id ${parentId === null ? 'IS NULL' : '= $4'}
+       WHERE post_id = $1 AND parent_comment_id ${parentId === null ? 'IS NULL' : '= $5'}
+         AND ${writtenForSql('library_comments.author_id', '$4::uuid')}
+         AND EXISTS (
+           SELECT 1 FROM library_posts lp
+            WHERE lp.id = library_comments.post_id AND ${writtenForSql('lp.author_id', '$4::uuid')})
        ORDER BY ${order} LIMIT $2 OFFSET $3`,
-      parentId === null ? [postId, limit, offset] : [postId, limit, offset, parentId],
+      parentId === null ? [postId, limit, offset, viewerId] : [postId, limit, offset, viewerId, parentId],
     );
     return res.rows.map(toComment);
   }

@@ -3,6 +3,8 @@ import type pino from 'pino';
 import type { AppConfig } from '../config/env.js';
 import { createPool } from '../db/pool.js';
 import { GdprService } from '../gdpr/service.js';
+import { createRedis } from '../cache/redis.js';
+import { standaloneStoryGames } from '../story-games/standalone.js';
 import { MediaService } from '../media/service.js';
 import { createStorage } from '../media/storage.js';
 import { makeCleanupOrphansJob } from './cleanup-orphans.js';
@@ -19,10 +21,19 @@ import { createEmailProvider } from '../email/provider.js';
 import { DashboardService } from '../analytics/dashboard-service.js';
 import { EconomyService } from '../economy/service.js';
 import { makeAnalyticsRollupJob, makeEconomyRollupJob } from './rollup-jobs.js';
-import { QUEUE_NAME, createQueueConnection } from './queue.js';
+import { JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
+import { makeLeagueMergeJob, makeLeagueSettleJob } from './league-jobs.js';
+import { createProgression } from '../badges/progression.js';
+import { badgeNotices, makeBadgePushJob, makeBadgeRarityJob } from './badge-jobs.js';
+import { RedisRoomPublisher } from '../realtime/bus.js';
+import { GemService } from '../gems/service.js';
+import { WalletService } from '../wallet/service.js';
+import { ActivityService } from '../activity/service.js';
+import { FriendService } from '../friends/service.js';
+import { progressNotices } from '../notifications/progress-notices.js';
 import { JobRegistry } from './registry.js';
 
-export function buildRegistry(config?: AppConfig): JobRegistry {
+export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistry {
   const registry = new JobRegistry();
   if (config?.DATABASE_URL) {
     const pool = createPool(config);
@@ -32,7 +43,11 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
     if (storage) {
       registry.register(makeCleanupOrphansJob(new MediaService(pool, storage)));
     }
-    const gdpr = new GdprService(pool, { storage });
+    // A closing account leaves its story games, which can finish one for the
+    // others: paid as the API pays them, and the API instances told over
+    // Redis, so their players' screens move on at once.
+    const storyGames = standaloneStoryGames(pool, { redis: config.REDIS_URL ? createRedis(config) : null, log });
+    const gdpr = new GdprService(pool, { storage, storyGames, log });
     registry.register(makeAnonymizeJob(gdpr));
     if (storage) {
       registry.register(makeExportJob(gdpr));
@@ -44,6 +59,35 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));
+    // the league week (Monday's settle, Wednesday's merge) and the badges'
+    // nightly rarity and daily push. Promotion news goes back through the
+    // queue as ordinary pushes; a badge a settle unlocks is celebrated on the
+    // API instances, told over the room bus
+    const redis = config.REDIS_URL ? createRedis(config) : undefined;
+    const queue = config.REDIS_URL ? JobQueue.create(config) : null;
+    const inbox = new InboxService(pool);
+    const bus = redis ? new RedisRoomPublisher(redis) : null;
+    const { leagues, badges } = createProgression(pool, {
+      gems: new GemService(pool, new WalletService(pool)),
+      activity: new ActivityService(pool, new FriendService(pool), redis),
+      notices: progressNotices({ inbox, push, jobs: queue }),
+      badgeNotices: (badgeService) =>
+        badgeNotices({
+          inbox,
+          realtime: async (userId, event) => {
+            await bus?.publish(`user:${userId}`, event);
+          },
+          badges: badgeService,
+          push,
+          jobs: queue,
+        }),
+      weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
+      log,
+    });
+    registry.register(makeLeagueSettleJob(leagues));
+    registry.register(makeLeagueMergeJob(leagues));
+    registry.register(makeBadgeRarityJob(badges));
+    registry.register(makeBadgePushJob(badges, push));
     // the dashboards read pre-aggregated tables; without these they stay empty
     registry.register(makeAnalyticsRollupJob(new DashboardService(pool)));
     registry.register(makeEconomyRollupJob(new EconomyService(pool)));
@@ -56,7 +100,7 @@ export function buildRegistry(config?: AppConfig): JobRegistry {
 export function createWorker(
   config: AppConfig,
   log: pino.Logger,
-  registry: JobRegistry = buildRegistry(config),
+  registry: JobRegistry = buildRegistry(config, log),
 ): Worker {
   const worker = new Worker(
     QUEUE_NAME,

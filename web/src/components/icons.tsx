@@ -33,7 +33,6 @@ import { Coin } from '@phosphor-icons/react/dist/icons/Coin';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
 import { EyeSlash } from '@phosphor-icons/react/dist/icons/EyeSlash';
 import { PuzzlePiece } from '@phosphor-icons/react/dist/icons/PuzzlePiece';
-import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
 import { House } from '@phosphor-icons/react/dist/icons/House';
 import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
@@ -64,6 +63,33 @@ import { User } from '@phosphor-icons/react/dist/icons/User';
 import { Users } from '@phosphor-icons/react/dist/icons/Users';
 import { Waveform } from '@phosphor-icons/react/dist/icons/Waveform';
 import { X } from '@phosphor-icons/react/dist/icons/X';
+import { Play } from '@phosphor-icons/react/dist/icons/Play';
+import { Microphone } from '@phosphor-icons/react/dist/icons/Microphone';
+import { SpeakerHigh } from '@phosphor-icons/react/dist/icons/SpeakerHigh';
+import { Check } from '@phosphor-icons/react/dist/icons/Check';
+import { Lock } from '@phosphor-icons/react/dist/icons/Lock';
+// Stories and playing with friends
+import { CaretDown } from '@phosphor-icons/react/dist/icons/CaretDown';
+import { Copy } from '@phosphor-icons/react/dist/icons/Copy';
+import { Crown } from '@phosphor-icons/react/dist/icons/Crown';
+import { Headphones } from '@phosphor-icons/react/dist/icons/Headphones';
+import { Pause } from '@phosphor-icons/react/dist/icons/Pause';
+import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
+import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
+import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
+import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
+// web-race-rating: Wordle's delete key, the rating box's stars
+import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
+import { Star } from '@phosphor-icons/react/dist/icons/Star';
+// Game Ranks, leagues and badges: rated and friendly games, a zone moving up
+// or down, a tier's shield, a badge's medal
+import { ArrowDown } from '@phosphor-icons/react/dist/icons/ArrowDown';
+import { ArrowUp } from '@phosphor-icons/react/dist/icons/ArrowUp';
+import { Handshake } from '@phosphor-icons/react/dist/icons/Handshake';
+import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
+import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
+import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
+import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -96,7 +122,6 @@ export const FeatherIcon = named(PenNib, 22);
    rhyming, a race to answer — and a gamepad promised the wrong thing. */
 export const GameIcon = named(PuzzlePiece, 22);
 /** Typing, specifically — the race is about keys, not about writing. */
-export const KeyboardIcon = named(Keyboard, 22);
 export const PhotoIcon = named(ImageGlyph, 22);
 export const HeartIcon = named(Heart, 22);
 export const CommentIcon = named(ChatCircle, 22);
@@ -110,6 +135,13 @@ export const FlameIcon = named(Flame, 22);
 export const CoinIcon = named(Coin, 22);
 export const TilesIcon = named(SquaresFour, 22);
 export const WaveformIcon = named(Waveform, 22);
+/* the landing page's pictures of a lesson: a clip to play, a word to say */
+export const PlayIcon = named(Play, 22, 'fill');
+export const MicIcon = named(Microphone, 22);
+export const SpeakerIcon = named(SpeakerHigh, 22);
+export const CheckIcon = named(Check, 22, 'bold');
+/** Not open yet: a lesson or a skill the course has not reached. */
+export const LockIcon = named(Lock, 22);
 export const ChevronIcon = named(CaretRight, 18);
 export const GiftIcon = named(Gift, 22);
 /** Passing a post on — the network glyph, not the iOS box-and-arrow, which
@@ -169,6 +201,32 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
+/* web-race-rating: Wordle's delete key; a star you can choose, filled once it is */
+export const BackspaceIcon = named(Backspace, 22);
+export const StarIcon = named(Star, 36);
+
+/* Stories and playing with friends: a story read aloud, its player's keys,
+   a question's clock, the host of a game, asking a friend in */
+export const HeadphonesIcon = named(Headphones, 22);
+export const PauseIcon = named(Pause, 22, 'fill');
+export const PreviousIcon = named(SkipBack, 20, 'fill');
+export const NextIcon = named(SkipForward, 20, 'fill');
+export const TimerIcon = named(Timer, 20);
+export const HostIcon = named(Crown, 16, 'fill');
+export const InviteIcon = named(UserPlus, 22);
+export const CopyIcon = named(Copy, 20);
+export const CaretDownIcon = named(CaretDown, 16);
+
+/* Game Ranks, leagues and badges (contract 4): a rated game climbs, a friendly
+   one is a handshake; a league row moving up or down says so with an arrow as
+   well as a word; a tier's shield; a badge */
+export const RatedIcon = named(Mountains, 16, 'fill');
+export const FriendlyIcon = named(Handshake, 16, 'fill');
+export const UpIcon = named(ArrowUp, 14, 'bold');
+export const DownIcon = named(ArrowDown, 14, 'bold');
+export const ShieldIcon = named(ShieldCheck, 14, 'fill');
+export const MedalIcon = named(Medal, 22);
+export const SparkleIcon = named(Sparkle, 16, 'fill');
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

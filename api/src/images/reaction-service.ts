@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { writtenForSql } from '../users/age.js';
 
 /** The emoji reactions a user can leave on an image/meme post (KUR-291). */
 /*
@@ -37,7 +38,13 @@ export class ImageReactionService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      const post = await client.query(`SELECT 1 FROM image_posts WHERE id = $1 AND status = 'published' FOR UPDATE`, [postId]);
+      // a picture the reacting user may not see answers as missing
+      const post = await client.query(
+        `SELECT 1 FROM image_posts
+          WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+          FOR UPDATE`,
+        [postId, userId],
+      );
       if (post.rowCount === 0) { await client.query('ROLLBACK'); return { ok: false, reason: 'post-not-found' }; }
 
       const existing = await client.query(`SELECT reaction FROM image_reactions WHERE post_id = $1 AND user_id = $2`, [postId, userId]);

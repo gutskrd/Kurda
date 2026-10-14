@@ -1,6 +1,8 @@
 import type pg from 'pg';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
+import { writtenForSql } from '../users/age.js';
+import { claimPostPictures, type PictureClaimFailure } from '../media/postMedia.js';
 import { stripControlChars } from '@kurda/shared';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
@@ -50,9 +52,12 @@ export interface ListFilters {
   sort?: 'newest' | 'popular';
   limit?: number;
   offset?: number;
+  /** who is looking: a minor's pictures are listed only for them and their friends */
+  viewerId?: string | null;
 }
 
-export type CreateResult = { ok: true; post: ImagePost } | { ok: false; reason: 'invalid' };
+/** `invalid`: no image named; otherwise why the picture named cannot be used (media/postMedia.ts). */
+export type CreateResult = { ok: true; post: ImagePost } | { ok: false; reason: 'invalid' | PictureClaimFailure };
 export type MutateResult = { ok: true; post: ImagePost } | { ok: false; reason: 'not-found' | 'forbidden' };
 
 interface Row {
@@ -67,26 +72,49 @@ interface Row {
  * view. Caption is control-char-stripped on input (#108); web/mobile escape on
  * render. Removal is soft (retained for moderation #292). Auto image-scan (#294)
  * and reports (#292) are wired separately.
+ *
+ * A minor's pictures, like their library posts, are for them and their friends
+ * only; to anyone else they are not there (users/age.ts `writtenForSql`).
  */
 export class ImagePostService {
   constructor(private readonly pool: pg.Pool) {}
 
+  /**
+   * A picture post, claiming its picture: the author's own upload, cleared by
+   * the scan and on no other post (media/postMedia.ts), confirmed in the same
+   * transaction as the post that uses it.
+   */
   async create(authorId: string, authorRole: AuthorRole, input: CreateInput): Promise<CreateResult> {
     const imageMediaId = input.imageMediaId?.trim();
     if (!imageMediaId) return { ok: false, reason: 'invalid' };
     const caption = input.caption != null ? clean(input.caption) : null;
     const category: Category = input.category === 'image' ? 'image' : 'meme';
-    const res = await this.pool.query<Row>(
-      `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, category, language)
-       VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
-      [authorId, authorRole, imageMediaId, caption, category, input.language ?? null],
-    );
-    return { ok: true, post: toPost(res.rows[0]!) };
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const claim = await claimPostPictures(client, authorId, [imageMediaId]);
+      if (!claim.ok) {
+        await client.query('ROLLBACK');
+        return { ok: false, reason: claim.code };
+      }
+      const res = await client.query<Row>(
+        `INSERT INTO image_posts (author_id, author_role, image_media_id, caption, category, language)
+         VALUES ($1,$2,$3,$4,$5,$6) RETURNING *`,
+        [authorId, authorRole, imageMediaId, caption, category, input.language ?? null],
+      );
+      await client.query('COMMIT');
+      return { ok: true, post: toPost(res.rows[0]!) };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   async list(filters: ListFilters = {}): Promise<ImagePost[]> {
-    const conds = [`status = 'published'`];
-    const params: unknown[] = [];
+    const params: unknown[] = [filters.viewerId ?? null];
+    const conds = [`status = 'published'`, writtenForSql('image_posts.author_id', '$1::uuid')];
     if (filters.category) { params.push(filters.category); conds.push(`category = $${params.length}`); }
     if (filters.language) { params.push(filters.language); conds.push(`language = $${params.length}`); }
     if (filters.authorId) { params.push(filters.authorId); conds.push(`author_id = $${params.length}`); }
@@ -107,11 +135,22 @@ export class ImagePostService {
     return posts.map((p) => ({ ...p, author: authors.get(p.authorId) ?? unknownAuthor(p.authorId) }));
   }
 
-  async get(id: string): Promise<ImagePost | null> {
+  async get(id: string, viewerId: string | null = null): Promise<ImagePost | null> {
     const res = await this.pool.query<Row>(
-      `UPDATE image_posts SET view_count = view_count + 1 WHERE id = $1 AND status = 'published' RETURNING *`,
-      [id],
+      `UPDATE image_posts SET view_count = view_count + 1
+        WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+        RETURNING *`,
+      [id, viewerId],
     );
+    return res.rows[0] ? toPost(res.rows[0]) : null;
+  }
+
+  /**
+   * A post as it stands, for deciding what an edit needs before it is made —
+   * no view counted, no reader rules; the edit checks who may make it.
+   */
+  async current(id: string): Promise<ImagePost | null> {
+    const res = await this.pool.query<Row>(`SELECT * FROM image_posts WHERE id = $1 AND status <> 'removed'`, [id]);
     return res.rows[0] ? toPost(res.rows[0]) : null;
   }
 

@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { render, type RenderResult } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, type InitialEntry } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
 import { ProfileModalProvider } from '../profile/ProfileModal';
 import { I18nProvider } from '../i18n/I18nProvider';
@@ -15,7 +15,7 @@ import { I18nProvider } from '../i18n/I18nProvider';
  * Tests get English, since jsdom's navigator reports `en-US` and nothing has
  * been stored.
  */
-export function renderApp(ui: ReactNode, initialEntries: string[] = ['/']): RenderResult {
+export function renderApp(ui: ReactNode, initialEntries: InitialEntry[] = ['/']): RenderResult {
   return render(
     <AuthProvider>
       <I18nProvider>

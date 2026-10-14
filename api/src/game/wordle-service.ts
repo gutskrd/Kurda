@@ -1,7 +1,8 @@
 import type pg from 'pg';
 import { dictionaryKey } from '@kurda/shared';
 import { XpService } from '../xp/service.js';
-import { StreakService } from '../streaks/service.js';
+import { StreakService, type StreakSummary } from '../streaks/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 import {
   applyGuess,
   initGame,
@@ -25,6 +26,7 @@ import {
   type Difficulty,
   type WordleStats,
 } from './wordle-daily.js';
+import { loadWordlePool } from './word-pool.js';
 
 export type WordleMode = 'daily' | 'practice';
 
@@ -85,14 +87,16 @@ export class WordleService {
   private readonly xp: XpService;
   private readonly streaks: StreakService;
   private readonly now: () => Date;
+  private readonly milestones?: MilestoneRecorder;
 
   constructor(
     private readonly pool: pg.Pool,
-    deps: { xp?: XpService; streaks?: StreakService; now?: () => Date } = {},
+    deps: { xp?: XpService; streaks?: StreakService; now?: () => Date; milestones?: MilestoneRecorder } = {},
   ) {
     this.xp = deps.xp ?? new XpService(pool);
     this.streaks = deps.streaks ?? new StreakService(pool);
     this.now = deps.now ?? (() => new Date());
+    this.milestones = deps.milestones;
   }
 
   /**
@@ -184,11 +188,18 @@ export class WordleService {
       );
 
       let xpAwarded: number | null = null;
+      let streak: StreakSummary | null = null;
       if (finished) {
-        xpAwarded = await this.finish(client, row, next, timeMs ?? 0);
+        ({ xpAwarded, streak } = await this.finish(client, row, next, timeMs ?? 0));
       }
 
       await client.query('COMMIT');
+      // a daily win that extended the streak may have reached streak-30;
+      // best-effort and idempotent, after the commit
+      if (streak && this.milestones) {
+        await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+      }
+      if (finished) await this.milestones?.recordSoloGame?.(userId).catch(() => undefined);
       const view = this.toView(updated.rows[0]!);
       view.xpAwarded = xpAwarded;
       return { ok: true, game: view };
@@ -220,7 +231,7 @@ export class WordleService {
     row: GameRow,
     game: WordleGame,
     timeMs: number,
-  ): Promise<number> {
+  ): Promise<{ xpAwarded: number; streak: StreakSummary | null }> {
     const won = game.status === 'won';
     const guesses = game.guesses.length;
     const daily = row.mode === 'daily';
@@ -241,20 +252,26 @@ export class WordleService {
 
     await this.saveStats(client, row.user_id, nextStats);
 
-    // idempotent award: one per daily day, one per practice game
-    const refId = daily ? `daily:${row.day_index}` : `game:${row.id}`;
+    // idempotent award: one per player per daily day, one per practice game.
+    // (source, ref_id) is unique across ALL users, so the daily key has to
+    // name the player — keyed on the day alone, only the first finisher each
+    // day was credited while everyone was told they had been.
+    const refId = daily ? `daily:${row.day_index}:${row.user_id}` : `game:${row.id}`;
     await this.xp.award(
       { userId: row.user_id, source: 'wordle', amount: xpAwarded, refId },
       client,
     );
 
-    // a daily win also counts toward the global daily streak (#031)
+    // a daily win also counts toward the global daily streak (#031) — but not
+    // as a day learned, nor towards a freeze or the daily Zêr: those are paid
+    // for lessons and practice. The streak it returns still feeds streak-30.
+    let streak: StreakSummary | null = null;
     if (daily && won) {
       const tz = await this.userTimeZone(client, row.user_id);
-      await this.streaks.recordActivity(row.user_id, tz, this.now(), client);
+      streak = await this.streaks.recordPlayDay(row.user_id, tz, this.now(), client);
     }
 
-    return xpAwarded;
+    return { xpAwarded, streak };
   }
 
   private async saveStats(client: pg.PoolClient, userId: string, s: WordleStats): Promise<void> {
@@ -324,15 +341,13 @@ export class WordleService {
     return null;
   }
 
-  /** Difficulty pool = dictionary headwords of the right letter-length, stable order. */
+  /**
+   * Difficulty pool = the Kurmancî game words of the right letter-length,
+   * stable order (word-pool.ts: never a Soranî word, nor one with a letter the
+   * keyboard does not have).
+   */
   private async loadPool(difficulty: Difficulty): Promise<string[]> {
-    const res = await this.pool.query<{ headword: string }>(
-      // in_games only: a target has to be a word somebody recognises (see
-      // migration 1751000112000). Guess validation below stays over the whole
-      // dictionary, where a bigger lexicon only helps.
-      `SELECT headword FROM dict_entries WHERE in_games ORDER BY id`,
-    );
-    return filterByDifficulty(res.rows.map((r) => r.headword), difficulty);
+    return filterByDifficulty(await loadWordlePool(this.pool), difficulty);
   }
 
   private rehydrate(row: GameRow): WordleGame {

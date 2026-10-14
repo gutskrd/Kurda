@@ -30,6 +30,15 @@ describe('describeError', () => {
     expect(describeError(err({ kind: 'network' }), translator('ku'))).toBe(TRANSLATIONS.ku['error.offline']);
   });
 
+  it('says plainly when the server does not have something yet, instead of "route not found"', () => {
+    // an API older than the app, e.g. a game invite before the play routes are deployed
+    const missing = err({ kind: 'client', status: 404, code: 'NOT_FOUND', message: 'route not found' });
+    expect(describeError(missing, t)).toBe(TRANSLATIONS.en['error.notOnServer']);
+    expect(describeError(missing, translator('ku'))).toBe(TRANSLATIONS.ku['error.notOnServer']);
+    // any other NOT_FOUND keeps the server's own words
+    expect(describeError({ ...missing, message: 'no such image' }, t)).toBe('no such image');
+  });
+
   it('rewrites a 5xx as an "our end" message rather than the raw one', () => {
     const message = describeError(err({ kind: 'server', status: 500 }), t);
     expect(message).toBe(TRANSLATIONS.en['error.server']);

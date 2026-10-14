@@ -27,6 +27,13 @@ describe('avatar registry', () => {
     expect(reg.filter((a) => a.requiresPremium)).toEqual([]);
   });
 
+  // The old default (the deer in the hat) became an avatar of its own when the
+  // default changed; a migration moves everyone who had chosen it there.
+  it('keeps the old default picture selectable as default-17', () => {
+    expect(isValidAvatarKey('default-17')).toBe(true);
+    expect(avatarRequiresPremium('default-17')).toBe(false);
+  });
+
   it('rejects unknown keys', () => {
     expect(isValidAvatarKey('not-a-real-avatar')).toBe(false);
     expect(isValidAvatarKey('')).toBe(false);

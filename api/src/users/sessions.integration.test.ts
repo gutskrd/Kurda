@@ -46,6 +46,8 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
         password,
         deviceName: 'Kurda Phone',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: '10.11.0.2',
     });

@@ -10,6 +10,18 @@ import './styles/pages.css';
 import './styles/feed.css';
 import './styles/rail.css';
 import './styles/editor.css';
+import './styles/product.css';
+import './styles/alphabet.css';
+import './styles/learn.css';
+import './styles/marketing.css';
+import './styles/stories.css';
+// playing with friends: invites, the banner, game cards, playing again
+import './styles/play.css';
+// gifts in chat, reporting, account standing
+import './styles/social.css';
+import './styles/keyboard.css';
+import './styles/feedback.css';
+import './styles/ranks.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

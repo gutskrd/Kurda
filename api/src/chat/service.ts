@@ -1,7 +1,10 @@
 import { randomUUID } from 'node:crypto';
 import type pg from 'pg';
-import { stripControlChars } from '@kurda/shared';
+import { stripControlChars, type ChatGameRef, type ChatMessageExtras, type ChatMessageKind } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { assertUnrestricted } from '../moderation/restrictions.js';
+import { giftCards } from '../gifts/cards.js';
+import { gameRef, previewText, type KindColumns } from './kinds.js';
 import { canonicalPair } from '../friends/pair.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
@@ -22,14 +25,19 @@ export interface ChatModeration {
   recordOffense(userId: string): Promise<unknown>;
 }
 
-export interface DmMessage {
+/**
+ * A direct message. Most are text; a gift or a game card is a message with a
+ * kind and the reference it needs (shared `ChatMessageExtras`), and no body.
+ */
+export interface DmMessage extends ChatMessageExtras {
   id: string;
   senderId: string;
   /** who wrote it, so a thread can show a name without a second lookup */
   username: string;
   /** already resolved (uploaded photo -> chosen avatar); null when unknown */
   avatarUrl: string | null;
-  body: string;
+  /** null for a gift or a game card */
+  body: string | null;
   createdAt: string;
   deliveredAt: string | null;
   readAt: string | null;
@@ -40,7 +48,10 @@ export interface Conversation {
   username: string;
   avatarUrl: string | null;
   online: boolean;
+  /** the text of the last message; for a gift or a game card, an English stand-in (chat/kinds.ts) */
   lastMessage: string;
+  /** what the last message is, so the apps can write their own line for a gift or a game */
+  lastKind: ChatMessageKind;
   lastAt: string;
   lastFromMe: boolean;
   unread: number;
@@ -82,6 +93,9 @@ export class ChatService {
         createdAt: new Date().toISOString(),
         deliveredAt: null,
         readAt: null,
+        kind: 'text',
+        gift: null,
+        game: null,
       };
     }
     if ((await this.friends.statusBetween(from, to)) !== 'friends') {
@@ -122,6 +136,9 @@ export class ChatService {
       createdAt: row.rows[0]!.created_at.toISOString(),
       deliveredAt: null,
       readAt: null,
+      kind: 'text',
+      gift: null,
+      game: null,
     };
     await this.notifier
       .notifyUser(to, {
@@ -130,6 +147,77 @@ export class ChatService {
         fromUsername: row.rows[0]!.username,
         message,
       })
+      .catch(() => undefined);
+    return message;
+  }
+
+  /**
+   * A game card from `from` to `to` (contract §B3): a message that points at
+   * a lobby instead of holding text, so it can show the lobby's live state.
+   * The text pipeline — length, the profanity mask, trust and AI screening —
+   * has nothing to read and is skipped. Who may message whom is not: friends
+   * only, a block drops it silently (the sender sees it as sent, as with any
+   * message), and a chat mute applies as it does to text — the moderation
+   * mute with the same answer a message gets (403 MUTED, until when; the
+   * message route asks it in a preHandler, a card has no route of its own),
+   * then the escalation mute. Delivered live like any DM.
+   */
+  async sendCard(from: string, to: string, card: ChatGameRef, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
+    if (from === to) throw new AppError('SELF_DM', 400, 'you cannot message yourself');
+    await assertUnrestricted(this.pool, from, 'chat');
+    if (this.moderation && (await this.moderation.isChatMuted(from))) {
+      throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
+    }
+    if (await this.friends.areBlocked(from, to)) {
+      return {
+        id: randomUUID(),
+        senderId: from,
+        username: '',
+        avatarUrl: null,
+        body: null,
+        createdAt: new Date().toISOString(),
+        deliveredAt: null,
+        readAt: null,
+        kind: 'game',
+        gift: null,
+        game: card,
+      };
+    }
+    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+      throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
+    }
+    const { lo, hi } = canonicalPair(from, to);
+    const row = await this.pool.query<{
+      id: string;
+      created_at: Date;
+      username: string;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+    }>(
+      `WITH ins AS (
+         INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, game, game_lobby_id)
+         VALUES ($1, $2, $3, 'game', $4, $5)
+         RETURNING id, created_at, sender_id
+       )
+       SELECT ins.id, ins.created_at, u.username, u.profile_photo_key, u.selected_avatar_key
+         FROM ins JOIN users u ON u.id = ins.sender_id`,
+      [lo, hi, from, card.game, card.lobbyId],
+    );
+    const message: DmMessage = {
+      id: row.rows[0]!.id,
+      senderId: from,
+      username: row.rows[0]!.username,
+      avatarUrl: resolveAvatarUrl(row.rows[0]!.profile_photo_key, row.rows[0]!.selected_avatar_key, publicUrl),
+      body: null,
+      createdAt: row.rows[0]!.created_at.toISOString(),
+      deliveredAt: null,
+      readAt: null,
+      kind: 'game',
+      gift: null,
+      game: card,
+    };
+    await this.notifier
+      .notifyUser(to, { type: 'dm', from, fromUsername: row.rows[0]!.username, message })
       .catch(() => undefined);
     return message;
   }
@@ -144,25 +232,35 @@ export class ChatService {
   ): Promise<DmMessage[]> {
     if (await this.friends.areBlocked(user, other)) return [];
     const { lo, hi } = canonicalPair(user, other);
-    const rows = await this.pool.query<{
-      id: string;
-      sender_id: string;
-      username: string;
-      profile_photo_key: string | null;
-      selected_avatar_key: string | null;
-      body: string;
-      created_at: Date;
-      delivered_at: Date | null;
-      read_at: Date | null;
-    }>(
+    const rows = await this.pool.query<
+      KindColumns & {
+        id: string;
+        sender_id: string;
+        username: string;
+        profile_photo_key: string | null;
+        selected_avatar_key: string | null;
+        body: string | null;
+        created_at: Date;
+        delivered_at: Date | null;
+        read_at: Date | null;
+      }
+    >(
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.delivered_at, m.read_at
+              m.body, m.created_at, m.delivered_at, m.read_at,
+              m.kind, m.gift_batch_id, m.game, m.game_lobby_id
          FROM dm_messages m JOIN users u ON u.id = m.sender_id
         WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $3`,
       before ? [lo, hi, limit, before] : [lo, hi, limit],
     );
     await this.markDelivered(lo, hi, user, other);
+    // the gifts on this page, as this reader sees them (theirs to open, or not)
+    const cards = await giftCards(
+      this.pool,
+      rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
+      { id: user, seesEveryone: true },
+      publicUrl,
+    );
     return rows.rows
       .map((r) => ({
         id: r.id,
@@ -173,6 +271,9 @@ export class ChatService {
         createdAt: r.created_at.toISOString(),
         deliveredAt: r.delivered_at ? r.delivered_at.toISOString() : null,
         readAt: r.read_at ? r.read_at.toISOString() : null,
+        kind: r.kind,
+        gift: r.kind === 'gift' && r.gift_batch_id ? cards.get(r.gift_batch_id) ?? null : null,
+        game: gameRef(r),
       }))
       .reverse(); // ascending for display
   }
@@ -216,7 +317,8 @@ export class ChatService {
       profile_photo_key: string | null;
       selected_avatar_key: string | null;
       last_seen_at: Date | null;
-      body: string;
+      body: string | null;
+      kind: ChatMessageKind;
       created_at: Date;
       sender_id: string;
       unread: number;
@@ -226,7 +328,7 @@ export class ChatService {
            FROM dm_messages WHERE user_lo = $1 OR user_hi = $1
        )
        SELECT CASE WHEN c.user_lo = $1 THEN c.user_hi ELSE c.user_lo END AS other,
-              u.username, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at, c.body, c.created_at, c.sender_id,
+              u.username, u.profile_photo_key, u.selected_avatar_key, u.last_seen_at, c.body, c.kind, c.created_at, c.sender_id,
               (SELECT count(*)::int FROM dm_messages m
                 WHERE m.user_lo = c.user_lo AND m.user_hi = c.user_hi
                   AND m.sender_id <> $1 AND m.read_at IS NULL) AS unread
@@ -246,7 +348,8 @@ export class ChatService {
       username: r.username,
       avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
       online: isOnline(r.last_seen_at, now),
-      lastMessage: r.body,
+      lastMessage: previewText(r.kind, r.body),
+      lastKind: r.kind,
       lastAt: r.created_at.toISOString(),
       lastFromMe: r.sender_id === user,
       unread: r.unread,

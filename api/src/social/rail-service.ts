@@ -73,14 +73,14 @@ const LIVE_GAMES_SQL = `
     SELECT p.user_id, 'Wordle Battle', COALESCE(b.started_at, b.created_at)
       FROM wordle_battle_players p
       JOIN wordle_battles b ON b.id = p.battle_id
-     WHERE p.user_id = ANY($1) AND p.status = 'playing' AND p.finished_at IS NULL
+     WHERE p.user_id = ANY($1) AND p.status = 'playing' AND p.finished_at IS NULL AND NOT p.removed
        AND b.finished_at IS NULL
        AND COALESCE(b.started_at, b.created_at) > now() - ($2 || ' minutes')::interval
     UNION ALL
     SELECT p.user_id, 'Rhyme Match', COALESCE(m.started_at, m.created_at)
       FROM rhyme_match_players p
       JOIN rhyme_matches m ON m.id = p.match_id
-     WHERE p.user_id = ANY($1) AND m.finished_at IS NULL
+     WHERE p.user_id = ANY($1) AND m.finished_at IS NULL AND NOT p.removed AND p.left_at IS NULL
        AND COALESCE(m.started_at, m.created_at) > now() - ($2 || ' minutes')::interval
   ) AS live
   ORDER BY user_id, started_at DESC`;

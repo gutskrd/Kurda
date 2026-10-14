@@ -1,5 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useState } from 'react';
+import { api } from '../api';
+import {
+  ActionMenu,
+  Badge,
+  Banner,
+  Button,
+  Drawer,
+  ErrorState,
+  Icon,
+  Loading,
+  Section,
+  Table,
+  Tabs,
+  errorLine,
+  useDebounced,
+  useDialogs,
+  useLoad,
+  useToast,
+  type Column,
+} from '../ui';
 
 type Verdict = 'perfect' | 'near' | 'none' | 'auto';
 type Quality = 'perfect' | 'near' | 'none';
@@ -67,8 +86,8 @@ const STRENGTH: Record<Quality, string> = {
 /**
  * The rhyme game's content, end to end.
  *
- * Left: every word a round can open with — the base words. Right: for the one
- * you pick, everything that rhymes with it and how strongly, where each verdict
+ * The base words — every word a round can open with — and, for the one you
+ * open, everything that rhymes with it and how strongly, where each verdict
  * came from, and the words you ruled out.
  *
  * The game derives rhymes from word endings; a decision here overrides that in
@@ -76,44 +95,45 @@ const STRENGTH: Record<Quality, string> = {
  * opinion, use whatever the endings say.
  */
 export function RhymeEditor(): React.JSX.Element {
-  const [dialect, setDialect] = useState('kurmanci');
-  const [list, setList] = useState<PromptList | null>(null);
+  const toast = useToast();
+  const dialogs = useDialogs();
+  const [dialect, setDialect] = useState<'kurmanci' | 'sorani'>('kurmanci');
   const [q, setQ] = useState('');
+  const query = useDebounced(q.trim(), 300);
   const [page, setPage] = useState(0);
   const [open, setOpen] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
+  const [adding, setAdding] = useState('');
 
-  const loadList = useCallback(async () => {
-    setError(null);
+  const list = useLoad(() => {
+    const params = new URLSearchParams({ dialect, limit: String(PAGE), offset: String(page * PAGE) });
+    if (query) params.set('q', query);
+    return api<PromptList>(`/admin/rhyme/prompts?${params}`);
+  }, [dialect, page, query]);
+
+  async function run(key: string, task: () => Promise<string | null>): Promise<void> {
+    setBusy(key);
     try {
-      const params = new URLSearchParams({
-        dialect,
-        limit: String(PAGE),
-        offset: String(page * PAGE),
-      });
-      if (q.trim()) params.set('q', q.trim());
-      setList(await api<PromptList>(`/admin/rhyme/prompts?${params}`));
+      const said = await task();
+      if (said) toast.success(said);
+      await list.reload();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load base words');
-    }
-  }, [dialect, page, q]);
-
-  useEffect(() => {
-    void loadList();
-  }, [loadList]);
-
-  async function addBaseWord(word: string): Promise<void> {
-    setBusy('add');
-    try {
-      await api('/admin/dictionary', { method: 'POST', body: { words: [word], isRhymePrompt: true } });
-      await loadList();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
+      toast.error(errorLine(err, 'rhyme words'));
     } finally {
       setBusy(null);
     }
   }
+
+  const addBaseWord = (e: React.FormEvent): void => {
+    e.preventDefault();
+    const word = adding.trim();
+    if (!word) return;
+    void run('add', async () => {
+      await api('/admin/dictionary', { method: 'POST', body: { words: [word], isRhymePrompt: true, dialect: dialect === 'sorani' ? 'sorani' : 'kurmanji' } });
+      setAdding('');
+      return `“${word}” opens rounds now.`;
+    });
+  };
 
   /**
    * Put every playable word back in the game.
@@ -121,124 +141,134 @@ export function RhymeEditor(): React.JSX.Element {
    * The one action that undoes the cliff below: it marks every pool word that
    * has something to rhyme against, so the base words become the whole playable
    * pool again and marking one more word afterwards adds to it rather than
-   * replacing it.
-   *
-   * Asks first, and says exactly what it will do, because it is a bulk write —
-   * the dry run is what produces those numbers, so the confirmation is the real
-   * outcome rather than an estimate.
+   * replacing it. The dry run produces the numbers the question shows, so they
+   * are the real outcome rather than an estimate.
    */
-  async function useEveryPlayableWord(): Promise<void> {
-    setBusy('rebuild');
-    try {
-      const preview = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', {
-        method: 'POST',
-        body: { dialect, dryRun: true },
-      });
+  const useEveryPlayableWord = (): void =>
+    void run('rebuild', async () => {
+      const preview = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', { method: 'POST', body: { dialect, dryRun: true } });
       const left = preview.withoutRhymes.length;
-      const ok = confirm(
-        `Use every word that has a rhyme as a base word?\n\n` +
-          `Base words: ${preview.alreadyMarked} → ${preview.baseWords} of ${preview.poolSize} in the pool.\n` +
-          (left > 0
-            ? `${left} word${left === 1 ? '' : 's'} left out because nothing rhymes with ${left === 1 ? 'it' : 'them'}: ` +
-              `${preview.withoutRhymes.slice(0, 8).join(', ')}${left > 8 ? '…' : ''}\n\n`
-            : '\n') +
-          'Nothing is deleted, and you can stop using any of them afterwards.',
-      );
-      if (!ok) return;
-      const done = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', {
-        method: 'POST',
-        body: { dialect },
+      const yes = await dialogs.confirm({
+        title: 'Open rounds with every word that has a rhyme?',
+        body: `Base words: ${preview.alreadyMarked} → ${preview.baseWords} of the ${preview.poolSize} in the games.${
+          left > 0
+            ? `\n\n${left} ${left === 1 ? 'word is' : 'words are'} left out because nothing rhymes with ${left === 1 ? 'it' : 'them'}: ${preview.withoutRhymes.slice(0, 8).join(', ')}${left > 8 ? '…' : ''}`
+            : ''
+        }\n\nNothing is deleted, and any of them can be taken out again.`,
+        confirmLabel: 'Use them all',
       });
-      await loadList();
-      alert(`${done.baseWords} base words — rounds can now open with any of them.`);
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
+      if (!yes) return null;
+      const done = await api<RebuildResult>('/admin/rhyme/prompts/rebuild', { method: 'POST', body: { dialect } });
+      return `${done.baseWords} base words: rounds can open with any of them.`;
+    });
 
-  async function rename(w: PromptWord): Promise<void> {
-    const next = prompt(`Rename “${w.headword}” to:`, w.headword);
-    if (!next || next.trim() === w.headword) return;
-    setBusy(w.id);
-    try {
-      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { headword: next.trim() } });
-      if (open === w.headword) setOpen(next.trim());
-      await loadList();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
+  const rename = (w: PromptWord): void =>
+    void (async () => {
+      const next = await dialogs.prompt({ title: `Rename “${w.headword}”`, label: 'The word, spelled right', initial: w.headword, confirmLabel: 'Rename' });
+      if (!next || next === w.headword) return;
+      await run(w.id, async () => {
+        await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { headword: next } });
+        if (open === w.headword) setOpen(next);
+        return `Renamed to “${next}”.`;
+      });
+    })();
 
-  async function stopUsing(w: PromptWord): Promise<void> {
-    setBusy(w.id);
-    try {
+  const stopUsing = (w: PromptWord): void =>
+    void run(w.id, async () => {
       await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { isRhymePrompt: false } });
       if (open === w.headword) setOpen(null);
-      await loadList();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
+      return `Rounds no longer open with “${w.headword}”. It stays in the games.`;
+    });
 
-  async function removeFromPool(w: PromptWord): Promise<void> {
-    const ok = confirm(
-      `Delete “${w.headword}” from the word pool?\n\n` +
-        'It stops appearing in Wordle and Rhyme, guesses of it are no longer accepted, ' +
-        'and every rhyme decision involving it is discarded.\n\n' +
-        'To stop it opening rounds while keeping the word, use “Stop using” instead.',
-    );
-    if (!ok) return;
-    setBusy(w.id);
-    try {
-      await api(`/admin/dictionary/${w.id}`, { method: 'DELETE' });
-      if (open === w.headword) setOpen(null);
-      await loadList();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
+  const removeFromPool = (w: PromptWord): void =>
+    void (async () => {
+      const yes = await dialogs.confirm({
+        title: `Delete “${w.headword}” from the games?`,
+        body: 'It stops appearing in Wordle and Rhyme, guesses of it are no longer accepted, and every rhyme decision about it is dropped.\n\nTo stop it opening rounds but keep the word, use “Stop using” instead.',
+        confirmLabel: 'Delete',
+        tone: 'danger',
+      });
+      if (!yes) return;
+      await run(w.id, async () => {
+        await api(`/admin/dictionary/${w.id}`, { method: 'DELETE' });
+        if (open === w.headword) setOpen(null);
+        return `Deleted “${w.headword}”.`;
+      });
+    })();
 
-  const pages = Math.max(1, Math.ceil((list?.total ?? 0) / PAGE));
+  const l = list.data;
+  const columns: Column<PromptWord>[] = [
+    {
+      key: 'word',
+      header: 'Word',
+      card: 'title',
+      cell: (w) => (
+        <span className="with-badge">
+          <button type="button" className="link" onClick={() => setOpen(w.headword)} dir="auto">
+            <strong>{w.headword}</strong>
+          </button>
+          {!w.isRhymePrompt && (
+            <Badge tone="warn" title="Rounds open with it only while no word is marked">
+              Not marked
+            </Badge>
+          )}
+        </span>
+      ),
+    },
+    {
+      key: 'rhymes',
+      header: 'Rhymes',
+      cell: (w) =>
+        w.perfect + w.near === 0 ? (
+          <Badge tone="bad" title="A round on this word cannot be played">
+            None
+          </Badge>
+        ) : (
+          <span className="badges">
+            <Badge tone="ok">{w.perfect} perfect</Badge>
+            <Badge>{w.near} near</Badge>
+          </span>
+        ),
+    },
+    { key: 'decided', header: 'Your decisions', cell: (w) => (w.decided === 0 ? <span className="subtle">None</span> : `${w.decided} decided${w.ruledOut > 0 ? `, ${w.ruledOut} ruled out` : ''}`) },
+  ];
 
   return (
-    <div>
-      <AddBaseWord onAdd={addBaseWord} busy={busy === 'add'} />
+    <>
+      <Tabs
+        label="Variety"
+        value={dialect}
+        onChange={(d) => {
+          setDialect(d);
+          setOpen(null);
+          setPage(0);
+        }}
+        items={[
+          { key: 'kurmanci', label: 'Kurmancî' },
+          { key: 'sorani', label: 'Soranî' },
+        ]}
+      />
 
-      {error && <div className="card empty">{error}</div>}
-
-      {list?.usingFallback && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="section-title" style={{ marginTop: 0 }}>
-            No base words chosen yet
-          </div>
-          <div className="subtle">
-            While nothing is marked, a round can open with <strong>any</strong> of the {list.poolSize} words in
-            the pool — including ones with nothing to rhyme against, which makes the round unplayable. The list
-            below is therefore the whole pool.
-            {/*
-              Marking one word does not narrow this a little: it narrows it to
-              that word. Saying so here is the whole warning — the banner
-              disappears the instant it stops being true, which is exactly when
-              it becomes worth reading.
-            */}{' '}
-            <strong>
-              The moment you mark one word, rounds will open with that word only, until you mark more.
-            </strong>
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button disabled={busy === 'rebuild'} onClick={() => void useEveryPlayableWord()}>
-              {busy === 'rebuild' ? 'Working…' : 'Use every word that has a rhyme'}
-            </button>
-          </div>
-        </div>
+      {l?.usingFallback && (
+        <Banner
+          tone="warn"
+          title="No base words chosen yet"
+          actions={
+            <Button onClick={useEveryPlayableWord} busy={busy === 'rebuild'}>
+              Use every word that has a rhyme
+            </Button>
+          }
+        >
+          While nothing is marked, a round can open with any of the {l.poolSize} words in the games — including ones with nothing to rhyme
+          against, which makes the round unplayable. The list below is therefore the whole pool.{' '}
+          {/*
+            Marking one word does not narrow this a little: it narrows it to
+            that word. Saying so here is the whole warning — the banner
+            disappears the instant it stops being true, which is exactly when it
+            becomes worth reading.
+          */}
+          <strong>The moment you mark one word, rounds open with that word only, until you mark more.</strong>
+        </Banner>
       )}
 
       {/*
@@ -247,333 +277,175 @@ export function RhymeEditor(): React.JSX.Element {
         like a limit. This says what the game will actually do, and stays until
         it is no longer surprising.
       */}
-      {list && !list.usingFallback && list.total < list.poolSize && (
-        <div className="card" style={{ marginBottom: 16 }}>
-          <div className="section-title" style={{ marginTop: 0 }}>
-            Rounds open with {list.total} of {list.poolSize} words
-          </div>
-          <div className="subtle">
-            The other {list.poolSize - list.total} are still in the pool — guesses of them count and Wordle
-            still uses them — but no round will start on one.
-          </div>
-          <div style={{ marginTop: 12 }}>
-            <button disabled={busy === 'rebuild'} onClick={() => void useEveryPlayableWord()}>
-              {busy === 'rebuild' ? 'Working…' : 'Use every word that has a rhyme'}
-            </button>
-          </div>
-        </div>
+      {l && !l.usingFallback && l.total < l.poolSize && (
+        <Banner
+          tone="info"
+          title={`Rounds open with ${l.total} of ${l.poolSize} words`}
+          actions={
+            <Button onClick={useEveryPlayableWord} busy={busy === 'rebuild'}>
+              Use every word that has a rhyme
+            </Button>
+          }
+        >
+          The other {l.poolSize - l.total} are still in the games — guesses of them count and Wordle still asks them — but no round starts on one.
+        </Banner>
       )}
 
-      <div className="card" style={{ padding: 0, marginBottom: 16 }}>
-        <div className="toolbar" style={{ margin: '14px 16px 8px' }}>
-          <div className="section-title" style={{ margin: 0 }}>
-            Base words{' '}
-            {list && <span className="subtle">({list.total} of {list.poolSize} pool words)</span>}
+      <Section title="Add a base word" description="The word joins the games and starts opening rhyme rounds. A word already in the games is promoted, not added twice.">
+        <form className="inline-form" onSubmit={addBaseWord}>
+          <input aria-label="Base word" dir="auto" placeholder="berxwedan" value={adding} onChange={(e) => setAdding(e.target.value)} />
+          <Button variant="primary" type="submit" icon="plus" busy={busy === 'add'} disabled={!adding.trim()}>
+            Add
+          </Button>
+        </form>
+      </Section>
+
+      <Section
+        flush
+        title={l ? `Base words (${l.total} of ${l.poolSize} in the games)` : 'Base words'}
+        actions={
+          <div className="search-box">
+            <Icon name="search" size={16} />
+            <input
+              type="search"
+              aria-label="Search base words"
+              placeholder="Search base words"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                setPage(0);
+              }}
+            />
           </div>
-          <div className="spacer" />
-          <input
-            placeholder="Search base words…"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(0);
-            }}
-          />
-          <select
-            value={dialect}
-            onChange={(e) => {
-              setDialect(e.target.value);
-              setOpen(null);
-            }}
-            style={{ width: 'auto' }}
-          >
-            <option value="kurmanci">Kurmancî</option>
-            <option value="sorani">Soranî</option>
-          </select>
-        </div>
+        }
+      >
+        <Table
+          caption="Base words"
+          columns={columns}
+          rows={l?.words ?? null}
+          rowKey={(w) => w.id}
+          loading={list.loading}
+          error={list.error}
+          onRetry={() => void list.reload()}
+          what="rhyme words"
+          empty={query ? 'No base word matches.' : 'No base words.'}
+          paging={{ page, pageCount: Math.max(1, Math.ceil((l?.total ?? 0) / PAGE)), onPage: setPage, total: l?.total, pageSize: PAGE }}
+          actions={(w) => (
+            <>
+              <Button onClick={() => setOpen(w.headword)}>Rhymes</Button>
+              <ActionMenu
+                label={`More for “${w.headword}”`}
+                items={[
+                  { label: 'Rename', onSelect: () => rename(w), disabled: busy === w.id },
+                  ...(w.isRhymePrompt ? [{ label: 'Stop using', onSelect: () => stopUsing(w), disabled: busy === w.id }] : []),
+                  { label: 'Delete from the games', onSelect: () => removeFromPool(w), tone: 'danger' as const, disabled: busy === w.id },
+                ]}
+              />
+            </>
+          )}
+        />
+      </Section>
 
-        {list === null ? (
-          <div className="empty">Loading…</div>
-        ) : list.words.length === 0 ? (
-          <div className="empty">No base words match.</div>
-        ) : (
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Word</th>
-                  <th>Rhymes available</th>
-                  <th>Your decisions</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {list.words.map((w) => (
-                  <tr key={w.id}>
-                    <td>
-                      <button
-                        type="button"
-                        className="ghost"
-                        style={{ padding: 0, fontWeight: 600 }}
-                        onClick={() => setOpen(open === w.headword ? null : w.headword)}
-                      >
-                        {w.headword}
-                      </button>
-                      {!w.isRhymePrompt && (
-                        <span className="badge mid" style={{ marginLeft: 8 }}>
-                          not marked
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      {w.perfect + w.near === 0 ? (
-                        <span className="badge danger" title="a round on this word would be unplayable">
-                          none
-                        </span>
-                      ) : (
-                        <>
-                          <span className="badge ok">{w.perfect} perfect</span>{' '}
-                          <span className="badge">{w.near} near</span>
-                        </>
-                      )}
-                    </td>
-                    <td className="subtle">
-                      {w.decided === 0 ? '—' : `${w.decided} decided`}
-                      {w.ruledOut > 0 && `, ${w.ruledOut} ruled out`}
-                    </td>
-                    <td>
-                      <button onClick={() => setOpen(open === w.headword ? null : w.headword)}>
-                        {open === w.headword ? 'Close' : 'Rhymes'}
-                      </button>
-                      <button disabled={busy === w.id} onClick={() => void rename(w)}>
-                        Rename
-                      </button>
-                      {w.isRhymePrompt && (
-                        <button disabled={busy === w.id} onClick={() => void stopUsing(w)} title="keep the word, stop opening rounds with it">
-                          Stop using
-                        </button>
-                      )}
-                      <button className="danger" disabled={busy === w.id} onClick={() => void removeFromPool(w)}>
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {pages > 1 && (
-          <div className="toolbar" style={{ margin: '8px 16px 14px' }}>
-            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
-              ← Previous
-            </button>
-            <div className="subtle">
-              Page {page + 1} of {pages}
-            </div>
-            <button onClick={() => setPage((p) => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1}>
-              Next →
-            </button>
-          </div>
-        )}
-      </div>
-
-      {open && <RhymePanel word={open} dialect={dialect} onChanged={loadList} />}
-    </div>
-  );
-}
-
-/** Add a word and start using it as a base word, in one step. */
-function AddBaseWord({ onAdd, busy }: { onAdd: (word: string) => Promise<void>; busy: boolean }): React.JSX.Element {
-  const [word, setWord] = useState('');
-  return (
-    <form
-      className="card"
-      style={{ marginBottom: 16 }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const w = word.trim();
-        if (!w) return;
-        setWord('');
-        void onAdd(w);
-      }}
-    >
-      <div className="section-title" style={{ marginTop: 0 }}>
-        Add a base word
-      </div>
-      <div className="subtle" style={{ marginBottom: 10 }}>
-        The word joins the shared pool and starts opening rhyme rounds. A word already in the pool is promoted
-        rather than duplicated.
-      </div>
-      <div className="row" style={{ gap: 10 }}>
-        <input placeholder="e.g. berxwedan" value={word} onChange={(e) => setWord(e.target.value)} />
-        <button className="primary" type="submit" disabled={busy || !word.trim()}>
-          {busy ? 'Adding…' : 'Add'}
-        </button>
-      </div>
-    </form>
+      {open && (
+        <Drawer open onClose={() => setOpen(null)} title={`Rhymes for “${open}”`} className="drawer-wide">
+          <RhymePanel word={open} dialect={dialect} onChanged={() => void list.reload()} />
+        </Drawer>
+      )}
+    </>
   );
 }
 
 /** Everything that rhymes with one base word, and how strongly. */
-function RhymePanel({
-  word,
-  dialect,
-  onChanged,
-}: {
-  word: string;
-  dialect: string;
-  onChanged: () => Promise<void>;
-}): React.JSX.Element {
-  const [view, setView] = useState<RhymeView | null>(null);
-  const [error, setError] = useState<string | null>(null);
+function RhymePanel({ word, dialect, onChanged }: { word: string; dialect: string; onChanged: () => void }): React.JSX.Element {
+  const toast = useToast();
+  const view = useLoad(() => api<RhymeView>(`/admin/dictionary/rhymes?${new URLSearchParams({ word, dialect })}`), [word, dialect]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [adding, setAdding] = useState('');
+  const [quality, setQuality] = useState<Verdict>('perfect');
 
-  const load = useCallback(async () => {
-    setError(null);
-    try {
-      const params = new URLSearchParams({ word, dialect });
-      setView(await api<RhymeView>(`/admin/dictionary/rhymes?${params}`));
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load rhymes');
-    }
-  }, [word, dialect]);
-
-  useEffect(() => {
-    setView(null);
-    void load();
-  }, [load]);
-
-  async function decide(rhyme: string, quality: Verdict, addToPool = false): Promise<void> {
+  async function decide(rhyme: string, q: Verdict, addToPool = false): Promise<void> {
     setBusy(rhyme);
     try {
       await api('/admin/dictionary/rhymes', {
         method: 'PUT',
-        body: { word, rhyme, quality, addToPool, dialect: dialect === 'sorani' ? 'sorani' : 'kurmanji' },
+        body: { word, rhyme, quality: q, addToPool, dialect: dialect === 'sorani' ? 'sorani' : 'kurmanji' },
       });
-      await load();
-      await onChanged(); // the base-word list shows counts, so it moves too
+      await view.reload();
+      onChanged(); // the base-word list shows counts, so it moves too
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
+      toast.error(errorLine(err, 'rhyme words'));
     } finally {
       setBusy(null);
     }
   }
 
+  if (view.error != null) return <ErrorState error={view.error} onRetry={() => void view.reload()} what="rhyme words" />;
+  const v = view.data;
+  const known = new Set((v?.rhymes ?? []).map((r) => r.word.toLowerCase()));
+  const already = known.has(adding.trim().toLowerCase());
+
   return (
-    <div className="card" style={{ padding: 0 }}>
-      <div className="toolbar" style={{ margin: '14px 16px 8px' }}>
-        <div className="section-title" style={{ margin: 0 }}>
-          Rhymes for “{word}”
-          {view && !view.inDictionary && (
-            <span className="badge mid" style={{ marginLeft: 8 }}>
-              not in the pool
-            </span>
-          )}
-        </div>
-        <div className="spacer" />
-        {view && (
-          <span className="subtle">
-            {view.total.perfect + view.total.near} accepted
-            {view.truncated && ` (showing ${view.rhymes.length})`}
-            {view.ruledOut.length > 0 && ` · ${view.ruledOut.length} ruled out`}
-          </span>
-        )}
-      </div>
+    <div className="rhyme-panel">
+      {v && (
+        <p className="note">
+          {v.total.perfect + v.total.near} accepted{v.truncated && ` (showing ${v.rhymes.length})`}
+          {v.ruledOut.length > 0 && ` · ${v.ruledOut.length} ruled out`}
+          {!v.inDictionary && ' · not in the games'}
+        </p>
+      )}
+      <form
+        className="inline-form"
+        onSubmit={(e) => {
+          e.preventDefault();
+          const w = adding.trim();
+          if (!w || already) return;
+          void decide(w, quality, true).then(() => setAdding(''));
+        }}
+      >
+        <input aria-label="A word that rhymes" dir="auto" placeholder="Add a rhyme" value={adding} onChange={(e) => setAdding(e.target.value)} />
+        <select aria-label="How strongly" value={quality} onChange={(e) => setQuality(e.target.value as Verdict)}>
+          <option value="perfect">Perfect</option>
+          <option value="near">Near</option>
+        </select>
+        <Button variant="primary" type="submit" disabled={!adding.trim() || already} icon="plus">
+          Add
+        </Button>
+      </form>
+      {already && <p className="note">Already a rhyme for this word.</p>}
 
-      {error && <div className="empty">{error}</div>}
-
-      <div style={{ padding: '0 16px 14px' }}>
-        <AddRhyme
-          onAdd={(w, quality) => decide(w, quality, true)}
-          known={new Set((view?.rhymes ?? []).map((r) => r.word.toLowerCase()))}
-        />
-      </div>
-
-      {view === null ? (
-        <div className="empty">Loading…</div>
-      ) : view.rhymes.length === 0 ? (
-        <div className="empty">
-          Nothing rhymes with this word yet — a round on it would be unplayable. Add a rhyme above.
-        </div>
+      {!v ? (
+        <Loading rows={4} />
+      ) : v.rhymes.length === 0 ? (
+        <Banner tone="warn">Nothing rhymes with this word yet — a round on it could not be played. Add a rhyme above.</Banner>
       ) : (
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Rhyme</th>
-                <th>Strength</th>
-                <th>Where it came from</th>
-                <th>Change</th>
-              </tr>
-            </thead>
-            <tbody>
-              {view.rhymes.map((r) => (
-                <tr key={r.word}>
-                  <td>
-                    <strong>{r.word}</strong>
-                  </td>
-                  <td>
-                    <span className={`badge${r.quality === 'perfect' ? ' ok' : ''}`}>{STRENGTH[r.quality]}</span>
-                  </td>
-                  <td className="subtle">
-                    {r.source === 'decided'
-                      ? `Your decision (endings say ${STRENGTH[r.derived].toLowerCase()})`
-                      : 'Word endings'}
-                  </td>
-                  <td>
-                    <QualitySelect
-                      value={r.source === 'decided' ? r.quality : 'auto'}
-                      derived={r.derived}
-                      disabled={busy === r.word}
-                      onChange={(v) => void decide(r.word, v)}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+        <ul className="rhyme-list">
+          {v.rhymes.map((r) => (
+            <li key={r.word}>
+              <div>
+                <strong dir="auto">{r.word}</strong>
+                <span className="cell-sub">{r.source === 'decided' ? `Your decision (the endings say ${STRENGTH[r.derived].toLowerCase()})` : 'From the word endings'}</span>
+              </div>
+              <QualitySelect word={r.word} value={r.source === 'decided' ? r.quality : 'auto'} derived={r.derived} disabled={busy === r.word} onChange={(q) => void decide(r.word, q)} />
+            </li>
+          ))}
+        </ul>
       )}
 
-      {view && view.ruledOut.length > 0 && (
+      {v && v.ruledOut.length > 0 && (
         <>
-          <div className="section-title" style={{ margin: '18px 16px 8px' }}>
-            Ruled out
-          </div>
-          <div className="subtle" style={{ margin: '0 16px 8px' }}>
-            The endings accept these; you decided they do not rhyme. The game rejects them.
-          </div>
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Word</th>
-                  <th>Endings say</th>
-                  <th>Change</th>
-                </tr>
-              </thead>
-              <tbody>
-                {view.ruledOut.map((r) => (
-                  <tr key={r.word}>
-                    <td>
-                      <strong>{r.word}</strong>
-                    </td>
-                    <td className="subtle">{STRENGTH[r.derived]}</td>
-                    <td>
-                      <QualitySelect
-                        value="none"
-                        derived={r.derived}
-                        disabled={busy === r.word}
-                        onChange={(v) => void decide(r.word, v)}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <h3 className="drawer-sub">Ruled out</h3>
+          <p className="note">The endings accept these; you decided they do not rhyme, so the game refuses them.</p>
+          <ul className="rhyme-list">
+            {v.ruledOut.map((r) => (
+              <li key={r.word}>
+                <div>
+                  <strong dir="auto">{r.word}</strong>
+                  <span className="cell-sub">The endings say {STRENGTH[r.derived].toLowerCase()}</span>
+                </div>
+                <QualitySelect word={r.word} value="none" derived={r.derived} disabled={busy === r.word} onChange={(q) => void decide(r.word, q)} />
+              </li>
+            ))}
+          </ul>
         </>
       )}
     </div>
@@ -582,68 +454,24 @@ function RhymePanel({
 
 /** Auto / perfect / near / not a rhyme, with what "auto" currently resolves to. */
 function QualitySelect({
+  word,
   value,
   derived,
   disabled,
   onChange,
 }: {
+  word: string;
   value: Verdict;
   derived: Quality;
   disabled: boolean;
   onChange: (next: Verdict) => void;
 }): React.JSX.Element {
   return (
-    <select
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange(e.target.value as Verdict)}
-      style={{ width: 'auto' }}
-    >
+    <select aria-label={`How “${word}” rhymes`} value={value} disabled={disabled} onChange={(e) => onChange(e.target.value as Verdict)}>
       <option value="auto">Auto — {STRENGTH[derived].toLowerCase()}</option>
       <option value="perfect">Perfect</option>
       <option value="near">Near</option>
       <option value="none">Not a rhyme</option>
     </select>
-  );
-}
-
-/** Type any word to accept it as a rhyme; it joins the pool if it is new. */
-function AddRhyme({
-  onAdd,
-  known,
-}: {
-  onAdd: (word: string, quality: Verdict) => Promise<void>;
-  known: Set<string>;
-}): React.JSX.Element {
-  const [word, setWord] = useState('');
-  const [quality, setQuality] = useState<Verdict>('perfect');
-  const [busy, setBusy] = useState(false);
-  const already = known.has(word.trim().toLowerCase());
-
-  return (
-    <form
-      className="row"
-      style={{ gap: 10, flexWrap: 'wrap' }}
-      onSubmit={(e) => {
-        e.preventDefault();
-        const w = word.trim();
-        if (!w || already) return;
-        setBusy(true);
-        void onAdd(w, quality).finally(() => {
-          setBusy(false);
-          setWord('');
-        });
-      }}
-    >
-      <input placeholder="Add a rhyme…" value={word} onChange={(e) => setWord(e.target.value)} />
-      <select value={quality} onChange={(e) => setQuality(e.target.value as Verdict)} style={{ width: 'auto' }}>
-        <option value="perfect">Perfect</option>
-        <option value="near">Near</option>
-      </select>
-      <button className="primary" type="submit" disabled={busy || !word.trim() || already}>
-        {busy ? 'Adding…' : 'Add rhyme'}
-      </button>
-      {already && <span className="subtle">Already a rhyme for this word.</span>}
-    </form>
   );
 }

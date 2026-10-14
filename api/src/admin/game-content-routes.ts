@@ -15,7 +15,6 @@ import { applyRulings, rhymeGroupSizes } from '../game/rhyme-groups.js';
  */
 const RHYME_LIST_LIMIT = 200;
 import { DIFFICULTY_LENGTHS, type Difficulty } from '../game/wordle-daily.js';
-import { QuizQuestionService } from './quiz-questions.js';
 import { dictionaryKey, letterCount } from '@kurda/shared';
 
 /**
@@ -95,7 +94,6 @@ interface WordRow {
 }
 
 export function registerGameContentRoutes(app: FastifyInstance): void {
-  const quiz = new QuizQuestionService(app.db);
   // content_editor curates game content; admin/superadmin keep full access
   const canEdit = [requireAuth, requireRoles('admin', 'superadmin', 'content_editor')];
 
@@ -774,60 +772,5 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
       byLength: [...byLength.entries()].sort((a, b) => a[0] - b[0]).map(([length, words]) => ({ length, words })),
       difficulties,
     };
-  });
-
-  // ---- quiz questions ----------------------------------------------------
-
-  const questionBody = z.object({
-    prompt: z.string().min(1).max(300),
-    /** exactly four, in display order */
-    options: z.array(z.string().min(1).max(120)).length(4),
-    correctIndex: z.number().int().min(0).max(3),
-    category: z.enum(['vocabulary', 'phrases']),
-    level: z.number().int().min(1).max(3),
-    active: z.boolean().optional(),
-  });
-
-  /** Every question, retired ones included. */
-  app.get('/admin/quiz/questions', { config: { skipValidation: true }, preHandler: canEdit }, async () => ({
-    questions: await quiz.list(),
-  }));
-
-  app.post('/admin/quiz/questions', { schema: { body: questionBody }, preHandler: canEdit }, async (req, reply) => {
-    const b = req.body as z.infer<typeof questionBody>;
-    return reply.code(201).send(await quiz.create(b));
-  });
-
-  app.put(
-    '/admin/quiz/questions/:id',
-    { schema: { params: z.object({ id: z.uuid() }), body: questionBody.extend({ active: z.boolean() }) }, preHandler: canEdit },
-    async (req) => {
-      const { id } = req.params as { id: string };
-      const updated = await quiz.update(id, req.body as z.infer<typeof questionBody> & { active: boolean });
-      if (!updated) throw new AppError('NOT_FOUND', 404, 'no such question');
-      return updated;
-    },
-  );
-
-  app.delete(
-    '/admin/quiz/questions/:id',
-    { schema: { params: z.object({ id: z.uuid() }) }, config: { skipValidation: true }, preHandler: canEdit },
-    async (req) => {
-      const { id } = req.params as { id: string };
-      if (!(await quiz.remove(id))) throw new AppError('NOT_FOUND', 404, 'no such question');
-      return { ok: true };
-    },
-  );
-
-  // Copy the built-in questions into the table once, then keep the engine's bank
-  // in step — the engine picks questions synchronously and cannot query per game.
-  app.addHook('onReady', async () => {
-    try {
-      const seeded = await quiz.seedIfEmpty();
-      const loaded = await quiz.refresh();
-      app.log.info({ seeded, loaded }, 'quiz question bank ready');
-    } catch (err) {
-      app.log.warn({ err }, 'failed to load quiz questions — using the built-in bank');
-    }
   });
 }

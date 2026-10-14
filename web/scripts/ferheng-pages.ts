@@ -31,12 +31,13 @@
  * as a grid of controls, and a letter's ranges are named by the words they
  * start and end at instead of by the folded prefix the build happens to use.
  */
-import { letterKey } from '@kurda/shared';
+import { foldLetter, letterKey } from '@kurda/shared';
 import { escapeHtml as escape } from './escape.js';
 import { ZAGROSIAN_MARK, ZAGROSIAN_URL, ZAGROSIAN_VIEWBOX } from '../src/brand/zagrosian.js';
-import { alphabetOf, compareKeys, foldLetter } from './ferheng-alphabet.js';
+import { alphabetOf, compareKeys } from './ferheng-alphabet.js';
 import { COPY, type Copy } from './ferheng-copy.js';
-import { isInflected, type Entry } from './ferheng-entries.js';
+import { CHROME_FILE, copyHook, type ChromeKey, type PageKey } from './ferheng-chrome.js';
+import { formOf, isInflected, type Entry } from './ferheng-entries.js';
 
 export const ORIGIN = 'https://hevalo.app';
 
@@ -223,15 +224,23 @@ function scriptAttrs(value: string, lang: string): string {
  * `BreadcrumbList` is what turns a bare URL in a search result into
  * "hevalo.app › Ferheng › S". It is attributes rather than a JSON-LD script,
  * for the same reason everything else here is: these pages are served under a
- * policy that forbids scripts, and markup that needs an exception is markup
- * that will eventually get one.
+ * policy that allows no inline script at all (only chrome.js, a file of ours),
+ * and markup that needs an exception is markup that will eventually get one.
  */
-function breadcrumb(trail: Array<{ name: string; url: string }>, here: string): string {
-  const items = [...trail, { name: here, url: '' }]
+/** One step of the trail; `copy` when its name is a word chrome.js may relabel. */
+interface Crumb {
+  name: string;
+  url: string;
+  copy?: PageKey;
+}
+
+function breadcrumb(trail: Crumb[], here: string, hereCopy?: PageKey): string {
+  const items = [...trail, { name: here, url: '', copy: hereCopy }]
     .map((step, i) => {
+      const hook = step.copy ? copyHook(step.copy) : '';
       const inner = step.url
-        ? `<a itemprop="item" href="${escape(step.url)}"><span itemprop="name">${escape(step.name)}</span></a>`
-        : `<span itemprop="name">${escape(step.name)}</span>`;
+        ? `<a itemprop="item" href="${escape(step.url)}"><span itemprop="name"${hook}>${escape(step.name)}</span></a>`
+        : `<span itemprop="name"${hook}>${escape(step.name)}</span>`;
       return (
         `<li itemprop="itemListElement" itemscope itemtype="https://schema.org/ListItem">` +
         `${inner}<meta itemprop="position" content="${i + 1}"></li>`
@@ -283,74 +292,120 @@ const NAV_ICONS: Record<string, string> = {
  * line one year stale is a smaller wrong than a line that says nothing.
  */
 function footer(c: Copy): string {
-  const licence = escape(c.footer.licence)
-    .replace('{wiki}', '<a href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>')
+  const licence = `<span${copyHook('page.licence')} data-copy-slots>${escape(c.footer.licence)
+    .replace('{wiki}', '<a data-slot="wiki" href="https://ku.wiktionary.org/" rel="noopener">Wîkîferheng</a>')
     .replace(
       '{licence}',
-      '<a href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>',
-    );
+      '<a data-slot="licence" href="https://creativecommons.org/licenses/by-sa/4.0/" rel="noopener">CC BY-SA 4.0</a>',
+    )}</span>`;
   return `<footer class="footer">
 <div class="container">
 <div class="footer-grid">
 <div class="footer-brand">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<p class="muted">${escape(c.footer.tagline)}</p>
+<p class="muted">${labelled('footer.tagline', c.footer.tagline)}</p>
 ${/* not translated anywhere in the app: it is the app's own line, the way a
       masthead keeps its motto */ ''}
 <p class="kurdish" lang="ku">Jiyan bi kurdî xweştire.</p>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.learn)}</h4>
-<a href="/learn">${escape(c.footer.lessons)}</a>
-<a href="/app">${escape(c.nav.home)}</a>
-<a href="/games">${escape(c.nav.games)}</a>
-<a href="/${c.base}/">${escape(c.nav.dictionary)}</a>
+<h4>${labelled('nav.learn', c.footer.learn)}</h4>
+<a href="/app/learn">${labelled('learn.title', c.footer.lessons)}</a>
+${/* the app's footer has it under Company, beside About and the FAQ */ ''}
+<a href="/how-hevalo-teaches">${labelled('footer.teach', c.footer.teach)}</a>
+<a href="/app">${labelled('nav.home', c.nav.home)}</a>
+<a href="/app/games">${labelled('nav.games', c.nav.games)}</a>
+<a href="/${c.base}/">${labelled('nav.dictionary', c.nav.dictionary)}</a>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.community)}</h4>
-<a href="/rankings">${escape(c.nav.rankings)}</a>
-<a href="/register">${escape(c.footer.join)}</a>
-<a href="/login">${escape(c.nav.login)}</a>
+<h4>${labelled('nav.community', c.footer.community)}</h4>
+<a href="/app/rankings">${labelled('nav.rankings', c.nav.rankings)}</a>
+<a href="/register">${labelled('footer.join', c.footer.join)}</a>
+<a href="/login">${labelled('nav.login', c.nav.login)}</a>
 </div>
 <div class="footer-col">
-<h4>${escape(c.footer.app)}</h4>
-<a href="https://apps.apple.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.ios)}</a>
-<a href="https://play.google.com/" target="_blank" rel="noreferrer noopener">${escape(c.footer.android)}</a>
+<h4>${labelled('footer.app', c.footer.app)}</h4>
+${/* plain text until there is a listing, as in the app's Footer.tsx */ ''}
+<span class="footer-soon">${labelled('footer.iosSoon', c.footer.ios)}</span>
+<span class="footer-soon">${labelled('footer.androidSoon', c.footer.android)}</span>
 </div>
 </div>
 <div class="footer-bottom">
 <span class="footer-bottom-left"><span>© ${new Date().getFullYear()} Hevalo</span><span class="muted">${licence}</span></span>
 ${/* the imprint, drawn exactly as the app draws it — see ZagrosianCredit.tsx */ ''}
-<a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener"><span>${escape(
-    c.footer.byZagrosian,
-  )}</span><svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
+<a class="by-zagrosian" href="${ZAGROSIAN_URL}" target="_blank" rel="noreferrer noopener">${labelled('footer.byZagrosian', c.footer.byZagrosian)}<svg class="by-zagrosian-mark" viewBox="${ZAGROSIAN_VIEWBOX}" fill="currentColor" focusable="false" aria-hidden="true"><path fill-rule="evenodd" d="${ZAGROSIAN_MARK}"></path></svg></a>
 </div>
 </div>
 </footer>`;
 }
 
-/** One nav entry, drawn the way the app draws one: glyph, then word. */
-function navLink(key: string, href: string, label: string, current = false): string {
+/**
+ * A word in the bar or footer that chrome.js may put into the reader's language.
+ *
+ * Always an inline span of its own, never the link or heading around it: the
+ * script sets `dir` on what it relabels, and on a block that would also flip
+ * the block's alignment — Arabic links hard right in an otherwise left-hand
+ * column. On a span it orders the letters and leaves the layout alone.
+ */
+function labelled(key: ChromeKey, text: string, vars?: Record<string, string | number>): string {
+  return `<span${copyHook(key, undefined, vars)}>${escape(text)}</span>`;
+}
+
+/**
+ * One nav entry, drawn the way the app draws one: glyph, then word.
+ *
+ * The word is in a span of its own (see `labelled`) so chrome.js can relabel it
+ * without taking the glyph with it.
+ */
+function navLink(key: string, href: string, label: string, copy: ChromeKey, current = false): string {
   return (
     `<a class="nav-link${current ? ' active' : ''}" href="${escape(href)}"${current ? ' aria-current="page"' : ''}>` +
     `<svg class="nav-link-icon" viewBox="0 0 256 256" width="18" height="18" fill="currentColor" aria-hidden="true">` +
     `<path d="${NAV_ICONS[key]!}"></path></svg>` +
-    `<span>${escape(label)}</span></a>`
+    `${labelled(copy, label)}</a>`
   );
 }
 
-/** The shell every page shares: no scripts, nothing fetched off this origin. */
+/**
+ * This page in each language it is published in, for a search engine.
+ *
+ * Page for page, not set for set: the words and the paging are the same in
+ * both, so `/ferheng/ab/` and `/dictionary/ab/` are one page in two languages.
+ * Naming the two front pages from every page contradicted each page's own
+ * canonical, and a search engine discards annotations like that. `x-default`
+ * is English, the rule `ferhengLocaleFor` applies to a reader.
+ */
+function alternates(canonical: string, c: Copy): string {
+  const rest = canonical.slice(`${ORIGIN}/${c.base}/`.length);
+  const at = (base: string): string => escape(`${ORIGIN}/${base}/${rest}`);
+  return (
+    `<link rel="alternate" hreflang="ku" href="${at(COPY.ku.base)}">\n` +
+    `<link rel="alternate" hreflang="en" href="${at(COPY.en.base)}">\n` +
+    `<link rel="alternate" hreflang="x-default" href="${at(COPY.en.base)}">`
+  );
+}
+
+/**
+ * The shell every page shares: nothing fetched off this origin, and one script
+ * — chrome.js, which only relabels the bar and footer. See ferheng-chrome.ts.
+ */
 export function document_(opts: {
   title: string;
   description: string;
   canonical: string;
   body: string;
+  /** which of chrome.js's title templates this title is, and what fills it */
+  titleCopy?: { key: PageKey; vars?: Record<string, string | number> };
   /** the steps above this page; the page itself is added as the last one */
-  breadcrumb?: Array<{ name: string; url: string }>;
+  breadcrumb?: Crumb[];
   /** what the trail calls this page, when it is not the title */
   here?: string;
+  /** the template for `here`, when it is a word of ours rather than the corpus's */
+  hereCopy?: PageKey;
   /** which of the published languages this page is one of */
   copy: Copy;
+  /** the 404: `noindex`, and no claim to an address or a twin */
+  missing?: boolean;
 }): string {
   const c = opts.copy;
   return `<!doctype html>
@@ -358,9 +413,9 @@ export function document_(opts: {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>${escape(opts.title)}</title>
+<title${opts.titleCopy ? copyHook(opts.titleCopy.key, undefined, opts.titleCopy.vars) : ''}>${escape(opts.title)}</title>
 <meta name="description" content="${escape(opts.description)}">
-<link rel="canonical" href="${escape(opts.canonical)}">
+${opts.missing ? '<meta name="robots" content="noindex">' : `<link rel="canonical" href="${escape(opts.canonical)}">`}
 <link rel="icon" href="/favicon.png" type="image/png">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Hevalo">
@@ -368,37 +423,41 @@ export function document_(opts: {
 <meta property="og:title" content="${escape(opts.title)}">
 <meta property="og:description" content="${escape(opts.description)}">
 <link rel="stylesheet" href="/${c.base}/ferheng.css">
-${/* each language points at the other, so a search engine indexes them as one
-      page in two languages rather than as two competing pages */ ''}
-<link rel="alternate" hreflang="ku" href="${ORIGIN}/ferheng/">
-<link rel="alternate" hreflang="en" href="${ORIGIN}/dictionary/">
+${opts.missing ? '' : alternates(opts.canonical, c)}
 </head>
 <body>
 <header class="nav">
 <div class="container nav-inner">
 <a class="brand" href="/"><img class="brand-mark" src="/logo.png" alt="" aria-hidden="true"><span>Hevalo</span></a>
-<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="${escape(c.nav.menu)}">
+<input class="nav-toggle-state" type="checkbox" id="nav-open" aria-label="${escape(c.nav.menu)}"${copyHook('nav.menu', 'aria-label')}>
 <nav class="nav-links">
-${navLink('mal', '/app', c.nav.home)}
-${navLink('ferheng', `/${c.base}/`, c.nav.dictionary, true)}
-${navLink('listik', '/app/games', c.nav.games)}
-${navLink('rezbendi', '/app/rankings', c.nav.rankings)}
+${navLink('mal', '/app', c.nav.home, 'nav.home')}
+${navLink('ferheng', `/${c.base}/`, c.nav.dictionary, 'nav.dictionary', true)}
+${navLink('listik', '/app/games', c.nav.games, 'nav.games')}
+${navLink('rezbendi', '/app/rankings', c.nav.rankings, 'nav.rankings')}
 <span class="nav-mobile-actions">
-<a class="nav-link" href="/login">${escape(c.nav.login)}</a>
-<a class="nav-link" href="/register">${escape(c.nav.register)}</a>
+<a class="nav-link" href="/login">${labelled('nav.login', c.nav.login)}</a>
+<a class="nav-link nav-cta" href="/register">${labelled('nav.register', c.nav.register)}</a>
 </span>
 </nav>
 <span class="nav-spacer"></span>
-<a class="btn-sm btn-ghost nav-desktop-only" href="/login">${escape(c.nav.login)}</a>
-<a class="btn-sm nav-desktop-only" href="/register">${escape(c.nav.register)}</a>
-<label class="nav-toggle" for="nav-open"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg></label>
+${/* the app's right-hand group: the two buttons and the menu, 14px apart, not the bar's 28px */ ''}
+<div class="nav-actions">
+<a class="btn-sm btn-ghost nav-desktop-only" href="/login">${labelled('nav.login', c.nav.login)}</a>
+<a class="btn-sm nav-desktop-only" href="/register">${labelled('nav.register', c.nav.register)}</a>
+<label class="nav-toggle" for="nav-open"><svg class="nav-toggle-open" viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M224,128a8,8,0,0,1-8,8H40a8,8,0,0,1,0-16H216A8,8,0,0,1,224,128ZM40,72H216a8,8,0,0,0,0-16H40a8,8,0,0,0,0,16ZM216,184H40a8,8,0,0,0,0,16H216a8,8,0,0,0,0-16Z"></path></svg><svg class="nav-toggle-close" viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M205.66,194.34a8,8,0,0,1-11.32,11.32L128,139.31,61.66,205.66a8,8,0,0,1-11.32-11.32L116.69,128,50.34,61.66A8,8,0,0,1,61.66,50.34L128,116.69l66.34-66.35a8,8,0,0,1,11.32,11.32L139.31,128Z"></path></svg></label>
+</div>
 </div>
 </header>
+${/* straight after the bar, so the bar is in the reader's language before it is first painted */ ''}
+<script src="/${c.base}/${CHROME_FILE}"></script>
 <main class="container">
-${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!) : ''}
+${opts.breadcrumb ? breadcrumb(opts.breadcrumb, opts.here ?? opts.title.split(' · ')[0]!, opts.hereCopy) : ''}
 ${opts.body}
 </main>
 ${footer(c)}
+${/* the search box; hidden in the markup, so without this nothing pretends to search */ ''}
+<script src="/ferheng/search.js" defer></script>
 </body>
 </html>
 `;
@@ -434,7 +493,7 @@ function senseList(senses: Word['senses'], copy: Copy): string {
       const items = definitions.map((d) => `<li itemprop="description" dir="auto">${escape(d)}</li>`).join('');
       const kind = isInflected(pos) ? 'row sense form' : 'row sense';
       const label = copy.pos[pos] ?? pos;
-      return `<div class="${kind}"><span class="label">${escape(label)}</span><ol>${items}</ol></div>`;
+      return `<div class="${kind}"><span class="label" data-copy-pos="${escape(pos)}">${escape(label)}</span><ol>${items}</ol></div>`;
     })
     .join('');
 }
@@ -453,14 +512,17 @@ function senseList(senses: Word['senses'], copy: Copy): string {
  * costs nothing to avoid.
  */
 function equivalents(word: Word, copy: Copy): string {
-  const row = (label: string, values: string[], lang: string, prop: string | null): string => {
+  const row = (key: PageKey, label: string, values: string[], lang: string, prop: string | null): string => {
     if (values.length === 0) return '';
     const items = values
       .map((v) => `<span${scriptAttrs(v, lang)}${prop ? ` itemprop="${prop}"` : ''}>${escape(v)}</span>`)
       .join('<span class="sep">·</span>');
-    return `<p class="row"><span class="label">${escape(label)}</span><span class="vals">${items}</span></p>`;
+    return `<p class="row"><span class="label"${copyHook(key)}>${escape(label)}</span><span class="vals">${items}</span></p>`;
   };
-  return row(copy.rows.sorani, word.sorani, 'ckb', 'alternateName') + row(copy.rows.arabic, word.arabic, 'ar', null);
+  return (
+    row('page.rows.sorani', copy.rows.sorani, word.sorani, 'ckb', 'alternateName') +
+    row('page.rows.arabic', copy.rows.arabic, word.arabic, 'ar', null)
+  );
 }
 
 /**
@@ -474,17 +536,104 @@ function equivalents(word: Word, copy: Copy): string {
  */
 function synonymList(words: string[], pageOf: Map<string, string>, copy: Copy): string {
   if (words.length === 0) return '';
-  const links = words
-    .map((w) => {
-      const key = pageKey(w);
-      const page = pageOf.get(key);
-      const attrs = isArabic(w) ? ' dir="rtl"' : '';
-      return page
-        ? `<a href="/ferheng/${escape(page)}/#${escape(key)}"${attrs}>${escape(w)}</a>`
-        : `<span${attrs}>${escape(w)}</span>`;
-    })
-    .join('<span class="sep">·</span>');
-  return `<p class="row"><span class="label">${escape(copy.rows.synonyms)}</span><span class="vals">${links}</span></p>`;
+  const link = (w: string): string => {
+    const key = pageKey(w);
+    const page = pageOf.get(key);
+    const attrs = isArabic(w) ? ' dir="rtl"' : '';
+    return page
+      ? `<a href="/${copy.base}/${escape(page)}/#${escape(key)}"${attrs}>${escape(w)}</a>`
+      : `<span${attrs}>${escape(w)}</span>`;
+  };
+  const sep = '<span class="sep">·</span>';
+  // some words list forty; eight are enough to read, the rest wait behind a tap
+  const shown = words.slice(0, SYNONYMS_SHOWN).map(link).join(sep);
+  const rest = words.slice(SYNONYMS_SHOWN);
+  const more = rest.length
+    ? `<details class="more"><summary>+${rest.length}</summary>${sep}${rest.map(link).join(sep)}</details>`
+    : '';
+  return `<p class="row"><span class="label"${copyHook('page.rows.synonyms')}>${escape(copy.rows.synonyms)}</span><span class="vals">${shown}${more}</span></p>`;
+}
+
+/** How many synonyms an entry shows before "+N". */
+export const SYNONYMS_SHOWN = 8;
+
+/**
+ * A word that is only a grammatical form of another, with nothing else to say.
+ *
+ * Over half the corpus: `dadana`, `dadanan`, `dadane`… each printed as a full
+ * entry whose one line is "Rewşa îzafeyî ya yekjimar a binavkirî ya dadan." A
+ * page of those reads as a wall, and the thing a reader wants from one is the
+ * word it is a form of. So it is one line — the kind of form, an arrow, the
+ * base word as a link — and the grammar is a tap away rather than gone.
+ */
+export function isFormOnly(w: Word): boolean {
+  return (
+    w.senses.length > 0 &&
+    w.senses.every((s) => isInflected(s.pos)) &&
+    w.synonyms.length + w.sorani.length + w.arabic.length === 0
+  );
+}
+
+function formEntry(w: Word, pageOf: Map<string, string>, here: string, copy: Copy): string {
+  const first = w.senses[0]!;
+  const base = formOf(first.definition);
+  const label = copy.pos[first.pos] ?? first.pos;
+  let target = '';
+  if (base) {
+    const key = pageKey(base);
+    const page = pageOf.get(key);
+    const href = page === here ? `#${key}` : page ? `/${copy.base}/${page}/#${key}` : null;
+    target = href
+      ? ` <span class="arrow" aria-hidden="true">→</span> <a href="${escape(href)}" lang="ku" dir="auto">${escape(base)}</a>`
+      : ` <span class="arrow" aria-hidden="true">→</span> <span lang="ku" dir="auto">${escape(base)}</span>`;
+  }
+  const grammar = [...new Set(w.senses.map((s) => s.definition))]
+    .map((d) => `<li itemprop="description" dir="auto">${escape(d)}</li>`)
+    .join('');
+  return (
+    `<article class="entry form-entry" id="${escape(w.key)}" itemscope itemtype="https://schema.org/DefinedTerm">` +
+    `<h2 class="hw" itemprop="name" dir="auto"><a href="#${escape(w.key)}">${escape(w.headword)}</a></h2>` +
+    `<details class="form-of"><summary><span class="label" data-copy-pos="${escape(first.pos)}">${escape(label)}</span>${target}</summary>` +
+    `<ol>${grammar}</ol></details></article>`
+  );
+}
+
+/** Entries in page order, with each run of bare forms gathered into one compact block. */
+function entriesOf(words: Word[], pageOf: Map<string, string>, here: string, copy: Copy): string {
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = (): void => {
+    if (run.length) out.push(`<div class="forms">${run.join('')}</div>`);
+    run = [];
+  };
+  for (const w of words) {
+    if (isFormOnly(w)) run.push(formEntry(w, pageOf, here, copy));
+    else {
+      flush();
+      out.push(entry(w, pageOf, copy));
+    }
+  }
+  flush();
+  return out.join('\n');
+}
+
+/**
+ * The search box. Hidden until search.js shows it, so a browser that runs no
+ * script never sees a box that does nothing. Its words are hooked like the
+ * rest of the page, so chrome.js puts them in the reader's language.
+ */
+export function searchBox(copy: Copy, total: number, id: string, big = false): string {
+  const n = total.toLocaleString('en');
+  const placeholder = total
+    ? ` placeholder="${escape(copy.search.placeholder(n))}"${copyHook('page.search.placeholder', 'placeholder', { n })}`
+    : ` placeholder="${escape(copy.search.label)}"`;
+  return `<form class="search${big ? ' search--big' : ''}" id="${id}" data-base="${copy.base}" role="search" hidden>
+<label class="search-field"><svg viewBox="0 0 256 256" width="20" height="20" fill="currentColor" aria-hidden="true"><path d="M229.66,218.34l-50.07-50.06a88.11,88.11,0,1,0-11.31,11.31l50.06,50.07a8,8,0,0,0,11.32-11.32ZM40,112a72,72,0,1,1,72,72A72.08,72.08,0,0,1,40,112Z"></path></svg><span class="sr-only">${labelled('page.search.label', copy.search.label)}</span><input type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="go" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="${id}-list"${placeholder}></label>
+<ul class="search-list" id="${id}-list" role="listbox" hidden></ul>
+<p class="search-msg" data-msg="more" hidden>${labelled('page.search.more', copy.search.more)}</p>
+<p class="search-msg" data-msg="none" hidden>${labelled('page.search.none', copy.search.none)}</p>
+<p class="search-msg" data-msg="letter" hidden><a href="/${copy.base}/">${labelled('page.search.letter', copy.search.letter)} <b data-letter></b> →</a></p>
+</form>`;
 }
 
 /** One entry, headword and all. */
@@ -517,14 +666,16 @@ export function wordsPage(
   next: string | null,
   pageOf: Map<string, string> = new Map(),
   copy: Copy = COPY.ku,
+  /** every word in the dictionary, for the search box's placeholder */
+  total = 0,
 ): string {
-  const entries = page.words.map((w) => entry(w, pageOf, copy)).join('\n');
+  const entries = entriesOf(page.words, pageOf, page.prefix, copy);
   const letter = letterOf(page.prefix);
   const base = copy.base;
 
   const nav = [
     prev ? `<a class="pill" rel="prev" href="/${base}/${escape(prev)}/">←</a>` : '',
-    `<a class="pill" href="/${base}/${escape(letter)}/">${escape(copy.words.all(letter.toUpperCase()))}</a>`,
+    `<a class="pill" href="/${base}/${escape(letter)}/">${labelled('page.words.all', copy.words.all(letter.toUpperCase()), { letter: letter.toUpperCase() })}</a>`,
     next ? `<a class="pill" rel="next" href="/${base}/${escape(next)}/">→</a>` : '',
   ]
     .filter(Boolean)
@@ -536,18 +687,20 @@ export function wordsPage(
   return document_({
     copy,
     title: `${here} · ${copy.titleSuffix}`,
+    titleCopy: { key: 'page.title.words', vars: { here } },
     description: copy.words.description(page.words.length, first, last),
     canonical: `${ORIGIN}/${base}/${page.prefix}/`,
     breadcrumb: [
-      { name: copy.root, url: `${ORIGIN}/${base}/` },
+      { name: copy.root, url: `${ORIGIN}/${base}/`, copy: 'page.root' },
       { name: letter.toUpperCase(), url: `${ORIGIN}/${base}/${letter}/` },
     ],
     here,
     body: `<header class="head">
 <p class="eyebrow">${escape(letter.toUpperCase())}</p>
 <h1 class="running" dir="auto" lang="ku">${escape(here)}</h1>
-<p class="eyebrow">${escape(copy.words.count(page.words.length))}</p>
+<p class="eyebrow">${labelled('page.words.count', copy.words.count(page.words.length), { n: page.words.length })}</p>
 </header>
+${searchBox(copy, total, 'search-top')}
 <div class="entries" itemscope itemtype="https://schema.org/DefinedTermSet">
 <meta itemprop="name" content="${escape(copy.titleSuffix)}">
 <meta itemprop="inLanguage" content="ku">
@@ -585,15 +738,20 @@ export function letterPage(letter: string, pages: Page[], total: number, copy: C
   return document_({
     copy,
     title: `${copy.letter.title(up)} · ${copy.titleSuffix}`,
+    titleCopy: { key: 'page.title.letter', vars: { letter: up } },
     description: copy.letter.description(words.toLocaleString('en'), up),
     canonical: `${ORIGIN}/${copy.base}/${letter}/`,
-    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/` }],
+    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/`, copy: 'page.root' }],
     here: up,
     body: `<header class="head">
-<p class="eyebrow">${escape(alphabetName(letter, copy))}</p>
+<p class="eyebrow">${labelled(`page.alphabets.${alphabetOf(letter)}`, alphabetName(letter, copy))}</p>
 <h1 class="letter" dir="auto" lang="ku">${escape(up)}</h1>
-<p class="eyebrow">${escape(copy.letter.count(words.toLocaleString('en'), total.toLocaleString('en')))}</p>
+<p class="eyebrow">${labelled('page.letter.count', copy.letter.count(words.toLocaleString('en'), total.toLocaleString('en')), {
+  words: words.toLocaleString('en'),
+  total: total.toLocaleString('en'),
+})}</p>
 </header>
+${searchBox(copy, total, 'search-top')}
 <div class="ranges">${rows}</div>`,
   });
 }
@@ -669,16 +827,19 @@ export function notFoundPage(copy: Copy = COPY.ku): string {
   return document_({
     copy,
     title: `${copy.notFound.title} · ${copy.titleSuffix}`,
+    titleCopy: { key: 'page.title.notFound' },
     description: copy.notFound.description,
     canonical: `${ORIGIN}/${copy.base}/`,
-    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/` }],
+    breadcrumb: [{ name: copy.root, url: `${ORIGIN}/${copy.base}/`, copy: 'page.root' }],
     here: copy.notFound.here,
+    hereCopy: 'page.notFound.here',
+    missing: true,
     body: `<header class="head">
 <p class="eyebrow">404</p>
-<h1 class="running">${escape(copy.notFound.heading)}</h1>
+<h1 class="running">${labelled('page.notFound.heading', copy.notFound.heading)}</h1>
 </header>
-<p class="prose">${escape(copy.notFound.body)}</p>
-<nav class="pager"><a class="pill" href="/${copy.base}/">${escape(copy.notFound.action)}</a></nav>`,
+<p class="prose">${labelled('page.notFound.body', copy.notFound.body)}</p>
+<nav class="pager"><a class="pill" href="/${copy.base}/">${labelled('page.notFound.action', copy.notFound.action)}</a></nav>`,
   });
 }
 
@@ -734,7 +895,11 @@ export function indexPage(
   const index = ALPHABETS.map((id) => {
     const group = letters.filter((l) => alphabetOf(l.letter) === id);
     if (group.length === 0) return '';
-    return `<p class="eyebrow">${escape(copy.alphabets[id])}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
+    // the letters in neither alphabet are a handful of words each; findable, but not a third block to read past
+    if (id === 'other') {
+      return `<details class="other-letters"><summary class="eyebrow">${labelled('page.alphabets.other', copy.alphabets.other)} · ${group.length}</summary>\n<div class="thumbs">${thumbs(group)}</div></details>`;
+    }
+    return `<p class="eyebrow">${labelled(`page.alphabets.${id}`, copy.alphabets[id])}</p>\n<div class="thumbs">${thumbs(group)}</div>`;
   })
     .filter(Boolean)
     .join('\n');
@@ -742,42 +907,61 @@ export function indexPage(
   return document_({
     copy,
     title: `${copy.titleSuffix} — Hevalo`,
+    titleCopy: { key: 'page.title.index' },
     description: copy.index.description(total.toLocaleString('en')),
     canonical: `${ORIGIN}/${copy.base}/`,
     body: `<section class="hero">
 <div class="hero-grid">
 <div class="hero-inner">
-<p class="eyebrow">${escape(copy.index.eyebrow)}</p>
-<h1 class="display">${copy.index.headline}</h1>
-<p class="lead">${escape(copy.index.lead)}</p>
+<p class="eyebrow">${labelled('page.index.eyebrow', copy.index.eyebrow)}</p>
+${/* the headline is the one piece of copy with markup in it — a line break — and it is our own string, not the corpus's */ ''}
+<h1 class="display"><span${copyHook('page.index.headline')}>${copy.index.headline}</span></h1>
+<p class="lead">${labelled('page.index.lead', copy.index.lead)}</p>
 </div>
 <div class="hero-art"><img src="/logo.png" alt="" width="512" height="512"></div>
 </div>
-<div class="stat-row">
-<div class="stat"><span class="stat-n">${total.toLocaleString('en')}</span><span class="stat-l">${escape(copy.index.statWords)}</span></div>
-<div class="stat"><span class="stat-n">${letters.length}</span><span class="stat-l">${escape(copy.index.statLetters)}</span></div>
-<div class="stat"><span class="stat-n">${pages.toLocaleString('en')}</span><span class="stat-l">${escape(copy.index.statPages)}</span></div>
-</div>
+${/* the first thing to do on a dictionary is to look a word up, so the box comes before everything else */ ''}
+${searchBox(copy, total, 'search-hero', true)}
+</section>
+
+<section class="section">
+<p class="eyebrow">${labelled('page.index.selected', copy.index.selected)}</p>
+<div class="cards">${samples.map((w) => card(w, pageOf, copy)).join('\n')}</div>
 </section>
 
 <section class="section">
 ${index}
+${/* how each of these letters sounds lives in the app, which explains it against the reader's own language */ ''}
+<p class="pager alphabet-link"><a class="pill" href="/app/alphabet">${labelled('page.index.alphabet', copy.index.alphabet)}</a></p>
 </section>
 
 <section class="section">
-<p class="eyebrow">${escape(copy.index.selected)}</p>
-<div class="entries">${samples.map((w) => entry(w, pageOf, copy)).join('\n')}</div>
-</section>
-
-<section class="section">
-<p class="eyebrow">${escape(copy.index.about)}</p>
-<p class="prose">${escape(copy.index.aboutBody)}</p>
+<p class="eyebrow">${labelled('page.index.about', copy.index.about)}</p>
+<p class="prose">${labelled('page.index.aboutBody', copy.index.aboutBody)}</p>
 </section>`,
   });
 }
 
 /**
- * The stylesheet, which is the whole design: there is no script to lean on.
+ * A word on the front page, as a card: the word, what kind, and its first
+ * meaning. The full entry is one tap away; the front page is for wanting to.
+ */
+function card(w: Word, pageOf: Map<string, string>, copy: Copy): string {
+  const main = w.senses.find((s) => !isInflected(s.pos)) ?? w.senses[0]!;
+  const page = pageOf.get(w.key);
+  const href = page ? `/${copy.base}/${escape(page)}/#${escape(w.key)}` : `/${copy.base}/`;
+  return (
+    `<a class="word-card" href="${href}">` +
+    `<span class="word-card-hw" lang="ku" dir="auto">${escape(w.headword)}</span>` +
+    `<span class="label" data-copy-pos="${escape(main.pos)}">${escape(copy.pos[main.pos] ?? main.pos)}</span>` +
+    `<span class="word-card-def" dir="auto">${escape(main.definition)}</span>` +
+    `</a>`
+  );
+}
+
+/**
+ * The stylesheet, which is the whole design: the one script, chrome.js, only
+ * relabels, so there is nothing else to lean on.
  *
  * The custom properties are zagrosian.com's, read off the running site rather
  * than matched by eye — the neutrals, the type scale, the easing curves and
@@ -785,7 +969,8 @@ ${index}
  * differs.
  */
 /**
- * The stylesheet, which is the whole design: there is no script to lean on.
+ * The stylesheet, which is the whole design: the one script, chrome.js, only
+ * relabels, so there is nothing else to lean on.
  *
  * These are the app's own tokens and its own nav, footer and surfaces, copied
  * from web/src/styles/. They were a separate monochrome design for a while, and
@@ -838,6 +1023,7 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --primary-hover: rgba(255, 255, 255, 0.88);
   --primary-ink: #141414;
   --gold: #f0c24a;
+  --gold-ink: #f6d68b;
   --focus: rgba(255, 255, 255, 0.55);
   --glass-blur: 20px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
@@ -936,25 +1122,31 @@ img { max-width: 100%; display: block; }
 .nav-link {
   display: inline-flex; align-items: center; height: 36px; padding: 0 12px;
   border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 500;
-  color: var(--ink-3); transition: color 0.15s ease, background 0.15s ease;
+  color: var(--ink-2); transition: color 0.15s ease, background 0.15s ease;
 }
 .nav-link:hover { color: var(--ink); background: var(--surface-2); }
-.nav-link.active { color: var(--ink); font-weight: 600; }
-.nav-link-icon { flex: none; margin-right: 7px; }
+.nav-link.active { color: var(--ink); background: var(--surface-2); }
+.nav-link-icon { flex: none; margin-inline-end: 7px; color: var(--ink-4); }
+.nav-link:hover .nav-link-icon, .nav-link.active .nav-link-icon { color: var(--gold-ink); }
 .nav-spacer { flex: 1; }
+.nav-actions { display: flex; align-items: center; gap: 14px; }
+/* ui.css's .btn + .btn-sm, folded together: the bar's two buttons are the app's two buttons */
 .btn-sm {
-  display: inline-flex; align-items: center; height: 36px; padding: 0 14px;
-  border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 600;
+  display: inline-flex; align-items: center; justify-content: center; height: 38px; padding: 0 14px;
+  border: 1px solid transparent; border-radius: var(--r-sm);
+  font-size: 0.9rem; font-weight: 550; line-height: 1; white-space: nowrap;
   background: var(--primary); color: var(--primary-ink);
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
 .btn-sm:hover { background: var(--primary-hover); }
 .btn-ghost { background: transparent; color: var(--ink-2); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--ink); }
 /*
- * The toggle is a checkbox and a label, because these pages run no script.
+ * The toggle is a checkbox and a label, because these pages run no app code.
  *
- * The app opens its mobile menu with React state; "default-src 'none'" forbids
- * script here, so the open/closed state is a checkbox the label flips and the
+ * The app opens its mobile menu with React state; here the only script is
+ * chrome.js, which relabels and nothing else, so the menu must work without
+ * any — the open/closed state is a checkbox the label flips and the
  * panel reads with ":checked ~". Same breakpoint, same panel, same behaviour —
  * the bar was keeping its glyphs on a phone while the app showed a hamburger,
  * which is a difference a reader meets on the device most of them are on.
@@ -970,13 +1162,17 @@ img { max-width: 100%; display: block; }
   background: var(--bg); color: var(--ink);
   align-items: center; justify-content: center; cursor: pointer;
 }
-.nav-toggle-state:focus-visible ~ .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
+.nav-toggle-state:focus-visible ~ .nav-actions .nav-toggle { outline: 2px solid var(--focus); outline-offset: 2px; }
+/* the app's toggle turns into a cross while the menu is open; so does this one */
+.nav-toggle-close { display: none; }
+.nav-toggle-state:checked ~ .nav-actions .nav-toggle-open { display: none; }
+.nav-toggle-state:checked ~ .nav-actions .nav-toggle-close { display: block; }
 .nav-mobile-actions { display: none; }
 
 /* between 861 and 1179 the app drops the words and keeps the glyphs */
 @media (min-width: 861px) and (max-width: 1179px) {
   .nav-link span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
-  .nav-link-icon { margin-right: 0; }
+  .nav-link-icon { margin-inline-end: 0; }
   .nav-inner { gap: 14px; }
   .nav-link { padding: 0 9px; }
 }
@@ -996,11 +1192,19 @@ img { max-width: 100%; display: block; }
   }
   .nav-toggle-state:checked ~ .nav-links { transform: translateY(0); opacity: 1; pointer-events: auto; }
   .nav-link { height: 44px; font-size: 1rem; }
+  /* the app's links sit in list items and are as wide as their words; these are the panel's own children, so say so */
+  .nav-links > .nav-link { align-self: flex-start; }
   .nav-desktop-only { display: none; }
   .nav-mobile-actions {
     display: flex; flex-direction: column; gap: 2px;
     margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--border);
   }
+  /* in the menu, Get started is the button it is on the bar, not one more link */
+  .nav-mobile-actions .nav-cta {
+    justify-content: center; margin-top: 8px;
+    background: var(--primary); color: var(--primary-ink); font-weight: 600;
+  }
+  .nav-mobile-actions .nav-cta:hover { background: var(--primary-hover); color: var(--primary-ink); }
 }
 
 /* ---- layout.css: the footer -------------------------------------------- */
@@ -1019,6 +1223,7 @@ img { max-width: 100%; display: block; }
 .footer-col h4 { font-family: var(--font-sans); font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 12px; font-weight: 600; }
 .footer-col a { display: block; color: var(--ink-2); font-size: 0.95rem; padding: 4px 0; }
 .footer-col a:hover { color: var(--ink); }
+.footer-soon { display: block; color: var(--ink-3); font-size: 0.95rem; padding: 4px 0; }
 .footer-bottom {
   margin-top: 36px; padding-top: 20px; border-top: 1px solid var(--border);
   display: flex; flex-wrap: wrap; gap: 10px 20px; align-items: center;
@@ -1072,16 +1277,6 @@ main { padding-bottom: 8px; }
   filter: blur(26px);
 }
 
-/* three numbers the dictionary can state plainly, as tiles rather than as a
-   run of small grey text — they are the reason to trust the page and were set
-   at 0.9rem in --ink-4, which is where a caption goes to be ignored */
-.stat-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-top: 40px; }
-.stat {
-  padding: 16px 18px; border: 1px solid var(--border); border-radius: var(--r-lg);
-  background: var(--surface); display: flex; flex-direction: column; gap: 2px;
-}
-.stat-n { font-family: var(--font-display); font-size: clamp(1.3rem, 1rem + 1.4vw, 2rem); line-height: 1.1; color: var(--ink); }
-.stat-l { font-size: 0.78rem; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); }
 .section { padding: 52px 0 0; }
 .section > .eyebrow { margin-bottom: 16px; }
 .prose { max-width: 36rem; color: var(--ink-3); margin: 0; }
@@ -1101,7 +1296,7 @@ main { padding-bottom: 8px; }
 .thumbs + .eyebrow { margin-top: 32px; }
 
 /* ---- a letter's pages -------------------------------------------------- */
-.ranges { display: grid; gap: 6px; margin-top: 4px; }
+.ranges { display: grid; gap: 6px; margin-top: 20px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 1fr)); }
 .range {
   display: flex; align-items: baseline; gap: 14px;
   padding: 12px 14px; border: 1px solid var(--border); border-radius: var(--r-sm);
@@ -1145,7 +1340,8 @@ main { padding-bottom: 8px; }
 .vals { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5em; color: var(--ink-2); }
 .vals a { border-bottom: 1px solid var(--border); }
 .vals a:hover { color: var(--ink); border-color: var(--ink); }
-[lang="ar"], [dir="rtl"] { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
+/* the corpus's Soranî and Arabic forms — not the bar, the footer or chrome.js's words, which keep the app's own type */
+:is([lang="ar"], [dir="rtl"]):not(.nav, .footer, [data-copy], [data-copy-pos]) { font-family: 'Vazirmatn', var(--font-sans); font-size: 1.06em; }
 
 .pager { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 40px 0 0; }
 .pager .pill {
@@ -1154,10 +1350,109 @@ main { padding-bottom: 8px; }
   background: var(--surface); color: var(--ink-2); font-size: 0.92rem;
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }
+.pager.alphabet-link { justify-content: flex-start; margin: 22px 0 0; }
 .pager .pill:hover { background: var(--surface-2); border-color: var(--ink-4); color: var(--ink); }
 
 @media (max-width: 40rem) {
   .row { grid-template-columns: 1fr; gap: 2px; }
   .row .label { text-align: left; line-height: 1.6; }
+}
+
+/* ======================================================================== *
+ * Calmer pages: a search box first, one line per grammatical form, and the
+ * long lists folded behind a tap.
+ * ======================================================================== */
+[hidden] { display: none !important; }
+/* on a phone the search box is the first thing, not the deer above it */
+@media (max-width: 899px) { .hero-art { display: none; } .hero { padding-top: 28px; } }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+/* ---- the search box ---------------------------------------------------- */
+.search { position: relative; max-width: 40rem; margin: 22px 0 0; }
+.search--big { margin-top: 36px; }
+.search-field {
+  display: flex; align-items: center; gap: 10px;
+  height: 48px; padding: 0 16px;
+  border: 1px solid var(--border); border-radius: var(--r-pill);
+  background: var(--surface); color: var(--ink-3);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+.search--big .search-field { height: 58px; padding: 0 20px; font-size: 1.08rem; }
+.search-field:focus-within { border-color: var(--ink-3); background: var(--surface-2); box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.06); }
+.search-field input {
+  flex: 1; min-width: 0; height: 100%; border: 0; outline: 0; background: transparent;
+  color: var(--ink); font: inherit; font-size: 1em;
+}
+.search-field input::placeholder { color: var(--ink-4); }
+.search-field input::-webkit-search-cancel-button { filter: invert(1) opacity(0.5); }
+.search-list {
+  position: absolute; z-index: 20; top: calc(100% + 6px); left: 0; right: 0;
+  margin: 0; padding: 6px; list-style: none;
+  border: 1px solid var(--border); border-radius: var(--r-lg);
+  background: #15161b; box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5);
+  max-height: min(70vh, 26rem); overflow-y: auto;
+}
+.search-list a {
+  display: flex; align-items: baseline; gap: 12px; padding: 10px 12px; border-radius: var(--r-sm);
+  color: var(--ink-2);
+}
+.search-list [aria-selected="true"] a, .search-list a:hover { background: var(--surface-2); color: var(--ink); }
+.search-word { flex: none; font-family: var(--font-display); font-size: 1.15rem; color: var(--ink); }
+.search-gloss { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.88rem; color: var(--ink-3); }
+.search-msg { margin: 10px 4px 0; font-size: 0.88rem; color: var(--ink-3); }
+.search-msg a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
+
+/* ---- the front page's words, as cards ---------------------------------- */
+.cards { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr)); }
+.word-card {
+  display: flex; flex-direction: column; gap: 4px; padding: 16px 18px;
+  border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--surface);
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+.word-card:hover { background: var(--surface-2); border-color: var(--ink-4); transform: translateY(-1px); }
+.word-card-hw { font-family: var(--font-display); font-size: 1.45rem; color: var(--ink); }
+.word-card .label { font-size: 0.78rem; font-style: italic; color: var(--ink-3); }
+.word-card-def {
+  color: var(--ink-2); font-size: 0.93rem; line-height: 1.5;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.other-letters { margin-top: 28px; }
+.other-letters summary { cursor: pointer; list-style: none; margin-bottom: 12px; }
+.other-letters summary::-webkit-details-marker { display: none; }
+.other-letters summary::after { content: " +"; }
+.other-letters[open] summary::after { content: " −"; }
+
+/* ---- grammatical forms, one line each ---------------------------------- */
+.forms { border-top: 1px solid var(--border); padding: 6px 0; }
+.forms .entry.form-entry {
+  display: grid; grid-template-columns: minmax(7rem, 14rem) 1fr; gap: 2px 18px; align-items: baseline;
+  padding: 7px 0; border-top: 0;
+}
+.form-entry .hw { font-size: 1.12rem; margin: 0; overflow-wrap: anywhere; }
+.form-of { color: var(--ink-3); font-size: 0.92rem; }
+.form-of summary { cursor: pointer; list-style: none; }
+.form-of summary::-webkit-details-marker { display: none; }
+.form-of summary .label { font-style: italic; font-size: 0.82rem; }
+.form-of summary a { color: var(--ink-2); border-bottom: 1px solid var(--border); }
+.form-of summary a:hover { color: var(--ink); border-color: var(--ink); }
+.form-of .arrow { color: var(--ink-4); }
+.form-of ol { margin: 6px 0 2px; padding-left: 1.1rem; font-size: 0.88rem; color: var(--ink-3); }
+.form-of ol:not(:has(li + li)) { list-style: none; padding-left: 0; }
+.forms .entry.form-entry:target { padding-left: 12px; }
+@media (max-width: 560px) {
+  .forms .entry.form-entry { grid-template-columns: 1fr; }
+}
+
+/* ---- "+N" more synonyms ------------------------------------------------ */
+.more { display: contents; }
+.more summary {
+  cursor: pointer; list-style: none; padding: 0 8px; border-radius: var(--r-pill);
+  border: 1px solid var(--border); font-size: 0.8rem; color: var(--ink-3); line-height: 1.6;
+}
+.more summary::-webkit-details-marker { display: none; }
+.more[open] summary { display: none; }
+@media (prefers-reduced-motion: reduce) {
+  .word-card, .search-field { transition: none; }
+  .word-card:hover { transform: none; }
 }
 `;

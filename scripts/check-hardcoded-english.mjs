@@ -89,13 +89,16 @@ const NOT_COPY = new Set([
   'Slab',
   'Mono',
   'Premium',
-  // a football club, on a sticker, beside Kurdistan and Zilan
-  'Amed Spor',
   // The line under the wordmark, on the intro slides and above the sign-in
   // card. It is Kurmancî — "life is sweeter in Kurdish" — and it is the app's
   // own line, not a sentence to be turned into nine. It only becomes visible
   // to this gate now that a glyph no longer hides the strings around it.
   'Jiyan bi kurdî xweştire',
+  // Kurmancî again — "it is raining" — the first line of the poem on the front
+  // page's picture of the community wall. It is the Kurdish the picture shows,
+  // like the words in its game tiles, and it reads as English to this gate only
+  // because it happens to need no letter outside a–z. See web/src/landing/samples.ts.
+  'Baran dibare.',
   // the header on a shared Wordle grid. A share text is pasted into somebody
   // else's chat, where the sharer's language is not the reader's, so it stays
   // one recognisable name — the grid underneath is the content.
@@ -180,6 +183,17 @@ const NOT_LITERAL = [
  * it would mean guessing, so it says one thing in English on purpose.
  */
 const NOT_READER_FACING = [/[\\/]worker\.ts$/];
+
+/**
+ * Files whose English is a citation, not copy.
+ *
+ * The reference list "How Hevalo teaches" cites: each study's title, authors
+ * and journal, as they were printed. A reference names a paper, and a German
+ * title for an English paper would cite something nobody wrote, so these are
+ * the one place where English text is meant to reach every reader as it is.
+ * The sentences around them are in the catalogues like every other word.
+ */
+const CITATIONS = [/[\\/]teaching[\\/]sources\.ts$/];
 
 /**
  * Where a capitalised phrase is code rather than copy.
@@ -445,6 +459,7 @@ const problems = [];
 
 for (const file of sources(SRC)) {
   if (NOT_READER_FACING.some((re) => re.test(file))) continue;
+  if (CITATIONS.some((re) => re.test(file))) continue;
   const src = withoutComments(readFileSync(file, 'utf8'));
   const lines = src.split(/\r?\n/);
   const asProp = new Set();

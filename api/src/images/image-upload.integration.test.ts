@@ -124,7 +124,7 @@ describe.skipIf(!ready)('image/meme upload cost-safety (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `imgup_${suffix}@it.kurda.app`, username: `imgup_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `imgup_${suffix}@it.kurda.app`, username: `imgup_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.61.0.9',
     });
     await activate(app, pool, reg);
@@ -157,7 +157,7 @@ describe.skipIf(!ready)('image/meme upload cost-safety (integration)', () => {
     const reg = await app.inject({
       method: 'POST',
       url: '/auth/register',
-      payload: { email: `imgrl_${suffix}@it.kurda.app`, username: `imgrl_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true },
+      payload: { email: `imgrl_${suffix}@it.kurda.app`, username: `imgrl_${suffix}`.slice(0, 30), password: 'a-strong-password1', acceptTerms: true, birthYear: 1990, birthMonth: 6 },
       remoteAddress: '10.61.0.7',
     });
     await activate(app, pool, reg);

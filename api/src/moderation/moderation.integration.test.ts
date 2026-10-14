@@ -31,6 +31,8 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
         username: `mod_${tag}_${suffix}`.slice(0, 30),
         password: 'a-strong-password1',
         acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
       },
       remoteAddress: ip,
     });
@@ -69,18 +71,32 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
     expect(stored.rows[0]!.body).not.toContain('fuck');
   });
 
+  /*
+   * Changed on purpose: a chat report is written through the one report
+   * service, so it lands in `reports` with an evidence snapshot (usernames
+   * included) rather than in `chat_reports`.
+   */
   it('report captures the message + surrounding context', async () => {
     await chat.send(id.a!, id.b!, 'first message');
     const target = await chat.send(id.a!, id.b!, 'reported message');
     await chat.send(id.a!, id.b!, 'after message');
 
     const { id: reportId } = await mod.report(id.b!, 'dm', target.id, 'rude');
-    const row = await pool.query<{ context: unknown[]; reported_user_id: string }>(
-      `SELECT context, reported_user_id FROM chat_reports WHERE id = $1`,
+    const row = await pool.query<{ evidence: { context: Array<{ id: string; reported: boolean; username: string }> }; subject_user_id: string; note: string }>(
+      `SELECT evidence, subject_user_id, note FROM reports WHERE id = $1`,
       [reportId],
     );
-    expect(row.rows[0]!.reported_user_id).toBe(id.a);
-    expect((row.rows[0]!.context as unknown[]).length).toBeGreaterThanOrEqual(2);
+    expect(row.rows[0]!.subject_user_id).toBe(id.a);
+    expect(row.rows[0]!.note).toBe('rude');
+    const context = row.rows[0]!.evidence.context;
+    expect(context.length).toBeGreaterThanOrEqual(3);
+    expect(context.find((m) => m.reported)!.id).toBe(target.id);
+    expect(context.every((m) => typeof m.username === 'string')).toBe(true);
+  });
+
+  it('only someone in the conversation can report a message', async () => {
+    const target = await chat.send(id.a!, id.b!, 'between a and b');
+    await expect(mod.report(id.c!, 'dm', target.id, 'nosy')).rejects.toMatchObject({ code: 'MESSAGE_NOT_FOUND' });
   });
 
   it('escalates a repeat offender to an auto-mute', async () => {
@@ -92,12 +108,27 @@ describe.skipIf(!DATABASE_URL)('chat moderation (integration)', () => {
     await expect(chat.send(id.c!, id.a!, 'let me talk')).rejects.toThrow(/muted from chat/i);
   });
 
+  /*
+   * The old admin feed still resolves the old table's rows (its history);
+   * new reports are cases, so the row is put there directly here.
+   */
   it('resolving a report as actioned records an offense against the author', async () => {
     const target = await chat.send(id.a!, id.b!, 'another one');
-    const { id: reportId } = await mod.report(id.b!, 'dm', target.id);
+    const legacy = await pool.query<{ id: string }>(
+      `INSERT INTO chat_reports (reporter_id, reported_user_id, message_type, message_id, context)
+       VALUES ($1, $2, 'dm', $3, '[]'::jsonb) RETURNING id`,
+      [id.b, id.a, target.id],
+    );
+    const reportId = legacy.rows[0]!.id;
+
+    // neither the reporter nor the reported person decides it
+    await expect(mod.resolveReport(reportId, 'dismissed', id.b!)).rejects.toMatchObject({ code: 'CONFLICT_OF_INTEREST' });
+    await expect(mod.resolveReport(reportId, 'dismissed', id.a!)).rejects.toMatchObject({ code: 'CONFLICT_OF_INTEREST' });
+    expect((await mod.pendingReports(id.a!)).some((r) => r.id === reportId)).toBe(false);
+    expect((await mod.pendingReports(id.c!)).some((r) => r.id === reportId)).toBe(true);
 
     const before = await pool.query<{ offense_count: number }>(`SELECT offense_count FROM chat_offenses WHERE user_id = $1`, [id.a!]);
-    await mod.resolveReport(reportId, 'actioned', id.b!);
+    await mod.resolveReport(reportId, 'actioned', id.c!);
     const after = await pool.query<{ offense_count: number }>(`SELECT offense_count FROM chat_offenses WHERE user_id = $1`, [id.a!]);
     expect(after.rows[0]!.offense_count).toBe((before.rows[0]?.offense_count ?? 0) + 1);
   });

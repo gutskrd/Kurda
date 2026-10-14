@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import type { ReportsService } from '../moderation/reports-service.js';
 import { LibraryModerationService, type LibraryTargetType } from './moderation-service.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -11,7 +12,8 @@ const reportBody = z.object({ reason: z.string().max(500).optional() });
  * comment (text or audio) with a reason; the report feeds the unified
  * moderation queue (#102). Rate-limited (#010); one report per user per item.
  */
-export function registerLibraryReportRoutes(app: FastifyInstance, mod = new LibraryModerationService(app.db)): void {
+export function registerLibraryReportRoutes(app: FastifyInstance, reports?: ReportsService): void {
+  const mod = new LibraryModerationService(app.db, reports);
   const report = (type: LibraryTargetType) =>
     async (req: import('fastify').FastifyRequest, reply: FastifyReply) => {
       const { id } = req.params as { id: string };

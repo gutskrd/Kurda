@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import { registerAuthRoutes } from './auth/routes.js';
+import { setShuffleKey } from './content/exercises.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
 import { createStorage, type MediaStorage } from './media/storage.js';
@@ -23,22 +24,15 @@ import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
 import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js';
 import { registerAchievementRoutes } from './achievements/routes.js';
+import { AchievementsService } from './achievements/service.js';
 import fastifyWebsocket from '@fastify/websocket';
-import { GameEngine, type EngineOptions } from './game/engine.js';
-import { MemoryMatchQueue, RedisMatchQueue } from './game/match-queue.js';
-import { MatchmakingService, type MatchmakingOptions } from './game/matchmaking.js';
-import { registerGameRoutes, registerMatchmakingRoutes, registerPrivateRoomRoutes } from './game/routes.js';
-import { PrivateRoomService } from './game/private-room-service.js';
-import { AntiCheatService } from './game/anti-cheat-service.js';
-import { RematchService } from './game/rematch-service.js';
-import { ChallengeService } from './game/challenge-service.js';
-import { registerChallengeRoutes } from './game/challenge-routes.js';
-import { RatingService } from './ranking/rating-service.js';
-import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { ItemReturns } from './shop/returns.js';
+import { GiftService } from './gifts/service.js';
+import { registerGiftRoutes } from './gifts/routes.js';
 import { CosmeticsService } from './cosmetics/service.js';
 import { registerCosmeticsRoutes } from './cosmetics/routes.js';
 import { IapService } from './iap/service.js';
@@ -49,7 +43,6 @@ import { registerFraudRoutes } from './fraud/routes.js';
 import { EconomyService } from './economy/service.js';
 import { registerEconomyRoutes } from './economy/routes.js';
 import { WalletService } from './wallet/service.js';
-import { XpService } from './xp/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
@@ -63,12 +56,18 @@ import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
-import { LeagueService } from './leagues/service.js';
+import { createProgression } from './badges/progression.js';
+import { registerBadgeRoutes } from './badges/routes.js';
+import { badgeNotices, scheduleBadgeJobs } from './jobs/badge-jobs.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
+import { scheduleLeagueJobs } from './jobs/league-jobs.js';
+import { progressNotices } from './notifications/progress-notices.js';
 import { LeaderboardService } from './leaderboards/service.js';
 import { registerLeaderboardRoutes } from './leaderboards/routes.js';
-import { SeasonService } from './seasons/service.js';
-import { registerSeasonRoutes } from './seasons/routes.js';
+import { RankService } from './ranks/service.js';
+import { RankSeasons } from './ranks/seasons.js';
+import { RankAdmin } from './ranks/admin.js';
+import { registerRankRoutes } from './ranks/routes.js';
 import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
@@ -92,12 +91,16 @@ import { registerWordleBattleRoutes } from './game/wordle-battle-routes.js';
 import { registerRhymeRoutes } from './game/rhyme-routes.js';
 import { registerRaceRoutes } from './game/race-routes.js';
 import { registerRhymeMatchRoutes } from './game/rhyme-match-routes.js';
+import { registerStoryGameRoutes } from './story-games/routes.js';
+import { PlayEvents } from './play/events.js';
+import { registerPlayRoutes } from './play/routes.js';
 import { TrustService } from './trust/service.js';
 import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
 import { registerAiModerationRoutes, registerImageModerationRoutes } from './moderation/ai-routes.js';
-import { ModerationQueueService } from './moderation/queue-service.js';
-import { registerModerationQueueRoutes } from './moderation/queue-routes.js';
+import { registerModeration, type ModerationOptions } from './moderation/wire.js';
+import { registerCopyright, type CopyrightWireOptions } from './copyright/wire.js';
+import { setModerationKey } from './moderation/pseudonym.js';
 import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
 import { registerLibraryRoutes } from './library/routes.js';
@@ -122,6 +125,13 @@ import { registerAdminRoutes } from './admin/routes.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
+import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
+import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { StoriesService } from './stories/service.js';
+import { StoryAdminService } from './stories/admin-service.js';
+import { registerStoryRoutes } from './stories/routes.js';
+import { registerStoryAdminRoutes } from './stories/admin-routes.js';
+import { seedStarterStories } from './stories/import.js';
 import type { FerhengSource } from '@kurda/shared';
 import { DeviceTokenService } from './push/tokens-service.js';
 import { PushService } from './push/service.js';
@@ -146,6 +156,8 @@ import { registerAuditLog } from './admin/audit-routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
+import { FeedbackService } from './feedback/service.js';
+import { registerFeedbackRoutes } from './feedback/routes.js';
 import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
@@ -172,10 +184,6 @@ const pkg = JSON.parse(
 export interface BuildAppOptions {
   /** Test seam: shrink heartbeat windows etc. */
   gateway?: GatewayOptions;
-  /** Test seam: shrink bands/timeouts. */
-  matchmaking?: MatchmakingOptions;
-  /** Test seam: shrink phase timers. */
-  engine?: EngineOptions;
   /**
    * Test seam: where a dictionary import reads its words from.
    *
@@ -184,9 +192,17 @@ export interface BuildAppOptions {
    * 202 does start it, because returning before the work finishes is the point.
    */
   ferheng?: FerhengSource;
+  /** Test seams for moderation: the moderator count and the urgent-report mailer. */
+  moderation?: ModerationOptions;
+  /** Test seam for copyright notices: where their emails go. */
+  copyright?: CopyrightWireOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
+  // the lesson shuffle is keyed with a server secret, never with what the client sees
+  setShuffleKey(config.JWT_SECRET);
+  // and moderation's pseudonyms and banned-address hashes, with the same secret
+  setModerationKey(config.JWT_SECRET);
   const app = Fastify({
     logger: {
       level: config.LOG_LEVEL,
@@ -348,16 +364,82 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const friends = new FriendService(app.db);
     const activity = new ActivityService(app.db, friends, app.redis);
 
-    // weekly leagues (KUR-062): lazy cohort join on XP, Sunday-night settle
-    const leagues = new LeagueService(app.db, gemService, activity);
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
+    // gated by per-category preferences + quiet hours at delivery time (KUR-095);
+    // set up here because league and badge news below goes through it
+    const deviceTokens = new DeviceTokenService(app.db);
+    const notificationPrefs = new NotificationPrefsService(app.db);
+    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const inbox = new InboxService(app.db);
+    const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
+
+    // Game Ranks (contract-4 §R): one OpenSkill rating per online game, Rated
+    // or Friendly per game. One service, shared by every game's routes and the
+    // play layer, so its events (`app.ranks.events`: a rated game finished, a
+    // season closed — what the badges listen to) come from one place.
+    const ranks = new RankService(app.db, { log: app.log });
+    app.decorate('ranks', ranks);
+
+    // Learning Leagues (KUR-062, contract 4 §L): learning XP joins the week's
+    // group; the week is settled on Monday and small groups merged on
+    // Wednesday from the job queue (jobs/league-jobs.ts)
+    // — and badges (contract 4 §B), counted from what happened, told through
+    // the list, a realtime `badge_unlocked` (the gateway is set up further
+    // down, so it is looked up when there is something to say) and one push a day.
+    // The ranked badges listen to `ranks.events` (badges/rank-hooks.ts)
+    const { xp: xpService, leagues, badges } = createProgression(app.db, {
+      ranks: ranks.events,
+      gems: gemService,
+      activity,
+      notices,
+      badgeNotices: (badgeService) =>
+        badgeNotices({
+          inbox,
+          realtime: (uid, ev) => app.realtime.notifyUser(uid, ev),
+          badges: badgeService,
+          push: pushService,
+          jobs: app.jobs,
+        }),
+      weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
+      log: app.log,
+    });
     registerLeagueRoutes(app, leagues);
-    // every XP gain lazily joins this week's cohort
-    const xpService = new XpService(app.db, (uid) => void leagues.onXp(uid).catch((err) => app.log.warn({ err }, 'league join failed')));
-    const leagueSettle = setInterval(
-      () => void leagues.settleDueWeeks().catch((err) => app.log.warn({ err }, 'league settle failed')),
-      60 * 60 * 1000,
-    );
-    app.addHook('onClose', async () => clearInterval(leagueSettle));
+    registerBadgeRoutes(app, badges);
+    if (config.NODE_ENV !== 'test') {
+      if (app.jobs) {
+        void scheduleLeagueJobs(app.jobs, leagues).catch((err) => app.log.warn({ err }, 'failed to schedule the league week'));
+        void scheduleBadgeJobs(app.jobs, badges).catch((err) => app.log.warn({ err }, 'failed to schedule badge rarity'));
+      } else {
+        // no queue (one process, no Redis): the same idempotent runs, checked hourly and at startup
+        const runLeagueWeek = () =>
+          void leagues
+            .settleDue()
+            .then(() => leagues.mergeSmallGroups())
+            .catch((err) => app.log.warn({ err }, 'league settle failed'));
+        runLeagueWeek();
+        const leagueWeek = setInterval(runLeagueWeek, 60 * 60 * 1000);
+        const rarity = setInterval(
+          () => void badges.computeRarity().catch((err) => app.log.warn({ err }, 'badge rarity failed')),
+          24 * 60 * 60 * 1000,
+        );
+        app.addHook('onClose', async () => {
+          clearInterval(leagueWeek);
+          clearInterval(rarity);
+        });
+      }
+    }
+
+    // Game Ranks' seasons, routes and admin. Seasons close on the calendar
+    // quarter; the job runs every six hours and once after start-up, so a
+    // deploy at the turn of a quarter catches up. Its close is told on the same
+    // `ranks.events`, so the season emblems reach the badges
+    const rankSeasons = new RankSeasons(app.db, { wallet: new WalletService(app.db), events: ranks.events, log: app.log });
+    registerRankRoutes(app, { ranks, seasons: rankSeasons, admin: new RankAdmin(app.db) });
+    const closeSeasons = () =>
+      void rankSeasons.closeDue().catch((err) => app.log.warn({ err }, 'rank season close failed'));
+    const seasonSweep = setInterval(closeSeasons, 6 * 60 * 60 * 1000);
+    if (config.NODE_ENV !== 'test') app.addHook('onReady', async () => closeSeasons());
+    app.addHook('onClose', async () => clearInterval(seasonSweep));
 
     // Hot-table partition maintenance (KUR-115): create upcoming monthly partitions
     // ahead of time so inserts always have a home. Runs in the API process (works
@@ -382,11 +464,19 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerImageUploadParser(app, mediaLimits(config).maxUploadBytes);
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
+    // the old achievements: only the (retired, unreachable) tournament win still
+    // awards one; lessons, practice, Wordle and Stories report to the badges above
+    const achievements = new AchievementsService(app.db, gemService, activity);
     registerWalletRoutes(app);
 
     // friend + social + activity-feed routes
     registerFriendRoutes(app, friends);
-    registerSocialRoutes(app, new SocialService(app.db, friends));
+    // reports, cases, sanctions and appeals: one report service behind every
+    // report button, old and new
+    const moderationKit = registerModeration(app, config, options.moderation);
+    // copyright notices from the public /copyright page land in the same queue (contract-3 §C)
+    registerCopyright(app, config, options.copyright);
+    registerSocialRoutes(app, new SocialService(app.db, friends, ranks), { reports: moderationKit.reports });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -403,8 +493,6 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // provider-pluggable; image consumers call ImageModerationService.scan at
     // finalize to gate visibility before serving
     registerImageModerationRoutes(app, new ImageModerationService(app.db));
-    // unified moderation queue (KUR-102): reports + anti-cheat + auto-flags
-    registerModerationQueueRoutes(app, new ModerationQueueService(app.db));
     // behavioral bot detection (KUR-110): scoring + CAPTCHA gating + ledger reversal
     registerAntibotRoutes(app, new BotDetectionService(app.db));
     // community library (KUR-281): stories & poems authoring + browsing;
@@ -413,15 +501,15 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // threaded comments on library posts (KUR-283)
     registerLibraryCommentRoutes(app, undefined, aiMod, trust);
     // community library reporting → unified moderation queue (KUR-285)
-    registerLibraryReportRoutes(app);
+    registerLibraryReportRoutes(app, moderationKit.reports);
     // community image & meme sharing (KUR-290): content model + cost-safe
     // through-server upload (KUR-291)
-    registerImagePostRoutes(app, config);
+    registerImagePostRoutes(app, config, undefined, aiMod, trust);
     // reactions + threaded comments on image/meme posts (KUR-291), trust-gated
     // and auto-screened like library comments (#293/#295)
     registerImageInteractionRoutes(app, undefined, undefined, aiMod, trust);
     // image/meme reporting → unified moderation queue (KUR-292)
-    registerImageReportRoutes(app);
+    registerImageReportRoutes(app, moderationKit.reports);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
     registerGroupRoutes(app, groups, trust);
@@ -435,11 +523,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       6 * 60 * 60 * 1000,
     );
     app.addHook('onClose', async () => clearInterval(requestExpiry));
-    registerShopRoutes(app, new ShopService(app.db, new WalletService(app.db), app.cache), {
-      // gifting is friends-only, and tells the recipient it arrived
-      friends,
-      inbox: new InboxService(app.db),
-    });
+    // the shop is registered with gifts, below the chats a gift is posted in
     // Profile cosmetics: equip (server-verified access) + favorites (KUR profile)
     registerCosmeticsRoutes(app, new CosmeticsService(app.db));
     // payment fraud (KUR-073): holds suspicious purchases for admin review
@@ -469,37 +553,43 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     };
     const economyRollup = setInterval(rollupDay, 6 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(economyRollup));
-    registerLessonRoutes(app, gemService, xpService);
+    registerLessonRoutes(app, gemService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
-    registerPracticeRoutes(app, xpService);
-    registerWordleRoutes(app, { xp: xpService });
+    registerPracticeRoutes(app, xpService, badges);
+    registerWordleRoutes(app, { xp: xpService, milestones: badges });
+    // `play_changed` after every change to a lobby (play/events.ts), so clients
+    // stop polling. The gateway it speaks through is set up further down, so it
+    // is looked up when there is something to say.
+    const playEvents = new PlayEvents(
+      app.db,
+      {
+        notifyUser: (uid, ev) => app.realtime.notifyUser(uid, ev as never),
+        publish: (room, ev) => app.realtime.publish(room, ev as never),
+      },
+      { log: app.log },
+    );
+    // a finished Wordle Battle, Rhyme Match or story game moves its players' badges
+    playEvents.onFinished(
+      (game, lobbyId) => void badges.onGameFinished(game, lobbyId).catch((err) => app.log.warn({ err }, 'game badges failed')),
+    );
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
-    registerWordleBattleRoutes(app, { xp: xpService });
-    registerRhymeRoutes(app, { xp: xpService });
+    registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
+    registerRhymeRoutes(app, { xp: xpService, milestones: badges });
     // typing race (solo time trial) over admin-curated texts
-    registerRaceRoutes(app, { xp: xpService });
+    registerRaceRoutes(app, { xp: xpService, milestones: badges });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
-    registerRhymeMatchRoutes(app, { xp: xpService });
+    registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
     registerLeaderboardRoutes(app, leaderboards);
     const boardRebuild = setInterval(() => {
-      void leaderboards.rebuild('rating').catch((err) => app.log.warn({ err }, 'rating board rebuild failed'));
       void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
     }, 5 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(boardRebuild));
 
-    // quarterly season reset + rewards (KUR-065)
-    const seasons = new SeasonService(app.db, new WalletService(app.db));
-    registerSeasonRoutes(app, seasons);
-    const seasonSweep = setInterval(
-      () => void seasons.endDueSeasons().catch((err) => app.log.warn({ err }, 'season settle failed')),
-      6 * 60 * 60 * 1000,
-    );
-    app.addHook('onClose', async () => clearInterval(seasonSweep));
     registerMediaRoutes(app, config);
     // cost-safe through-server voice-note upload (KUR-282)
     registerVoiceRoutes(app, config);
@@ -513,14 +603,24 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerGameContentRoutes(app);
     // starting a dictionary import from the panel, so it needs no shell on the host
     registerDictionaryImportRoutes(app, options.ferheng);
+    // recordings for the alphabet page, made in the admin panel
+    registerAlphabetAudioRoutes(app, config);
+    // and of the Kurdish the lessons use, which lessons deliver with their exercises
+    registerLessonAudioRoutes(app, config);
+    // Stories, which replaced the ranked quiz: reading for everyone, writing in
+    // the admin panel, and the starter stories seeded once each as drafts for a
+    // native speaker to publish. Not under test, where they would be stories no
+    // test asked for (the seeding has its own tests).
+    registerStoryRoutes(app, new StoriesService(app.db, app.cache));
+    registerStoryAdminRoutes(app, new StoryAdminService(app.db, app.cache));
+    if (config.NODE_ENV !== 'test') {
+      app.addHook('onReady', async () => {
+        await seedStarterStories(app.db, app.log);
+      });
+    }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
-    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
-    // gated by per-category preferences + quiet hours at delivery time (KUR-095)
-    const deviceTokens = new DeviceTokenService(app.db);
-    const notificationPrefs = new NotificationPrefsService(app.db);
-    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
-    const inbox = new InboxService(app.db);
+    // the push and notification services set up with the leagues, above
     registerNotificationRoutes(app, notificationPrefs);
     registerInboxRoutes(app, inbox);
     registerPushRoutes(app, deviceTokens, pushService, inbox);
@@ -559,7 +659,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(reminderSweep));
     // admin user management: search, detail, moderation + ledger adjustments (KUR-101)
-    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db)), adminTotp!);
+    // (sharing the moderation services, so the second-approval count is the same here)
+    registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
@@ -571,6 +672,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     const analytics = new AnalyticsService(app.db, { onDropped: (reason) => droppedEvents.inc({ reason }) });
     registerAnalyticsRoutes(app, analytics);
+    // the one-time rating box, Send feedback, the store prompt's limits, and
+    // the admin's feedback inbox (contract-2 §F)
+    registerFeedbackRoutes(app, new FeedbackService(app.db, { secret: config.JWT_SECRET }));
     // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
     // sends themselves run in the worker's send-email job
     registerEmailWebhookRoutes(
@@ -604,7 +708,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
 
     // chat moderation (KUR-086): profanity filter + reports + escalation mutes
-    const moderation = new ModerationService(app.db);
+    const moderation = new ModerationService(app.db, { reports: moderationKit.reports });
     registerModerationRoutes(app, moderation);
 
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
@@ -624,84 +728,61 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     registerGroupChatRoutes(app, groupChat);
 
-    // matchmaking (KUR-050): atomic queue + widening sweeper
-    const matchQueue = app.redis
-      ? new RedisMatchQueue(app.redis, options.matchmaking?.queueKeyPrefix)
-      : new MemoryMatchQueue();
-    const matchmaking = new MatchmakingService(app.db, matchQueue, kv, realtime, options.matchmaking);
-    app.decorate('matchmaking', matchmaking);
-    registerMatchmakingRoutes(app, matchmaking);
+    // story games (Stories, which replaced the ranked quiz): Postgres is the
+    // game; long-polls are woken across instances over the room bus
+    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: badges, friends, ranks });
 
-    // challenge a friend (KUR-088): direct unranked 1v1 invites over the KV + gateway
-    const challenges = new ChallengeService(
-      kv,
-      matchmaking,
-      { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) },
-      friends,
+    // shop + gifts: a gift is bought in the shop or from a chat's gift button,
+    // and arrives as a message in the chat either way, so it needs both chats
+    const shopWallet = new WalletService(app.db);
+    const shop = new ShopService(app.db, shopWallet, app.cache);
+    const gifts = new GiftService(
+      app.db,
+      {
+        wallet: shopWallet,
+        shop,
+        friends,
+        groupChat,
+        realtime: {
+          notifyUser: (uid, ev) => realtime.notifyUser(uid, ev),
+          publish: (r, ev) => realtime.publish(r, ev),
+        },
+        inbox,
+        moderation,
+        badges,
+        log: app.log,
+      },
+      (k) => (app.storage ? app.storage.publicUrl(k) : null),
     );
-    registerChallengeRoutes(app, challenges);
+    registerShopRoutes(app, shop, {
+      gifts,
+      // owners of items whose art was replaced: the notice, and returns
+      returns: new ItemReturns(app.db, new WalletService(app.db)),
+    });
+    registerGiftRoutes(app, gifts);
+
+    // inviting friends to any online game, game cards in chats, and playing
+    // again (contract §B): one join rule and one invite flow for every game
+    registerPlayRoutes(app, {
+      events: playEvents,
+      xp: xpService,
+      friends,
+      groups,
+      inbox,
+      chat: new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
+      groupChat,
+      stories: storyGames,
+      ranks,
+    });
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, challenges });
-    const sweeper = setInterval(
-      () => void matchmaking.sweep().catch((err) => app.log.warn({ err }, 'matchmaking sweep failed')),
-      matchmaking.sweepIntervalMs,
-    );
-    app.addHook('onClose', async () => clearInterval(sweeper));
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
 
-    // anti-cheat pipeline (KUR-058): accumulate + flag server-measured behaviour
-    const antiCheat = new AntiCheatService(app.db);
-    const gameXpService = xpService; // shared: game XP also joins the weekly league
-    // skill rating (KUR-061): applied atomically on ranked game finish
-    const ratingService = new RatingService(app.db);
-
-    // game sessions (KUR-051): the match-making node owns the session
-    const engine = new GameEngine(realtime, bus, {
-      // per-game RTT metrics for tuning + anomaly flags (KUR-057/058)
-      onGameMetrics: (m) => app.log.info({ event: 'game_rtt', ...m }, 'game rtt metrics'),
-      onGameEnd: (evidence) => {
-        for (const player of evidence.players) {
-          void antiCheat.recordGame(evidence.roomId, player).then((verdict) => {
-            if (verdict.shadow) app.log.warn({ event: 'cheat_shadow_flag', roomId: evidence.roomId, userId: player.userId, flags: verdict.flags }, 'shadow-flagged for review');
-          }).catch((err) => app.log.warn({ err }, 'anti-cheat record failed'));
-        }
-      },
-      // post-game XP, idempotent per (game, player) (KUR-059)
-      onReward: (roomId, rewards) => {
-        for (const r of rewards) {
-          void gameXpService
-            .award({ userId: r.userId, source: 'game', amount: r.xp, refId: `${roomId}:${r.userId}` })
-            .catch((err) => app.log.warn({ err }, 'game xp award failed'));
-        }
-      },
-      // ranked ELO applied atomically before results publish (KUR-061)
-      onRating: (input) => ratingService.apply(input),
-      ...options.engine,
-    });
-    app.decorate('gameEngine', engine);
-    matchmaking.onMatch((record) => engine.startSession(record));
-
-    // rematch coordination (KUR-059): same roster, new room on unanimous accept
-    const rematch = new RematchService(kv, matchmaking);
-    registerGameRoutes(app, engine, rematch);
-    app.addHook('onClose', async () => engine.stopAll());
-
-    // private host-controlled rooms (KUR-056)
-    const privateRooms = new PrivateRoomService(kv, app.db, matchmaking);
-    registerPrivateRoomRoutes(app, privateRooms);
-
-    // skill-rating reads (KUR-061)
-    registerRatingRoutes(app, ratingService);
-
-    // tournaments (KUR-060): admin brackets + no-show forfeits
-    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService);
+    // tournaments (KUR-060): admin brackets with admin-entered results; no
+    // client shows them until they have a game to play (contract-4)
+    const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
     registerTournamentRoutes(app, tournaments);
-    const noShowSweeper = setInterval(
-      () => void tournaments.sweepNoShows().catch((err) => app.log.warn({ err }, 'tournament sweep failed')),
-      30_000,
-    );
-    app.addHook('onClose', async () => clearInterval(noShowSweeper));
   }
 
   app.get('/health', async (_req, reply) => {
@@ -732,10 +813,12 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
-    /** Present when DATABASE_URL is configured. */
-    matchmaking: MatchmakingService;
-    /** Present when DATABASE_URL is configured. */
-    gameEngine: GameEngine;
+    /**
+     * Game Ranks, when DATABASE_URL is configured. `ranks.events` is how other
+     * modules hear of a rated game finishing or a season closing (ranks/events.ts);
+     * the badges listen there (badges/rank-hooks.ts).
+     */
+    ranks: RankService;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */

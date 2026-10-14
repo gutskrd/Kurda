@@ -21,16 +21,33 @@ Override the proxy target with `VITE_API_TARGET`.
 - **Vite 6 + React 19** (rollup dev server — Vite 7/rolldown + react-refresh is
   currently incompatible).
 - **No router dependency** — react-router 7.x carries high-severity advisories
-  across its line, so navigation is a tiny hash-based switch (`src/nav.ts`).
-- `src/api.ts` — bearer-token fetch client (`ApiError` envelope).
+  across its line, so navigation is a small hash router: `src/navigation.ts`
+  (every page, its group and the API guard it needs) and `src/nav.ts`.
+  Addresses are real links: `#/users/<id>`, `#/stories/<id>`,
+  `#/audio/lessons?show=missing`; old names (`#/config`, `#/ops`, …) still land.
+- `src/api.ts` — bearer-token fetch client (`ApiError` keeps the server's code,
+  details and request id).
+- `src/ui/` — the component kit every page is built from: PageHeader, Section,
+  Table (sortable, loading/empty/error rows, paging, cards on a phone), Drawer,
+  Dialog/ConfirmDialog (with typed confirmation) and `useDialogs()` in place of
+  the browser's alert/confirm/prompt, Toast, EmptyState/ErrorState, Badge,
+  Tabs, Field/Select/Textarea/Checkbox, UserLink, Time, ActionMenu, `useLoad`.
 
 ## Pages
 
-- **Moderation** — the unified queue (KUR-102): claim + one-click resolve
-  (dismiss / warn / mute / ban / remove) with the SLA metric.
+The nav shows a page only to roles the API lets in (`GET /admin/session`), and
+everyone starts on the first page their role opens.
 
-### Next
+- **Overview** — Dashboard (what waits, by role), Analytics
+- **Record audio** — the alphabet, lesson sentences, story sentences
+- **People** — Users
+- **Moderation** — Queue, Automated flags, Bot flags
+- **Content** — Lessons, Stories, Tags & badges, Live events
+- **Games** — Words & dictionary, Wordle, Rhyme, Race texts
+- **Economy** — Overview, Shop, Gem rules, Fraud, Approvals
+- **Settings** — Feature flags, Audit log, My security, System
 
-Config approval (#103), tags (#286), user management (#101), analytics
-dashboards (#106) — each is a page over an existing admin API. Fetch `/me` on
-load to restore the username after a refresh.
+## Tests
+
+`npm test -w admin` — Testing Library (dom + user-event) on jsdom, with a fake
+`fetch` (`src/test/fetch.ts`): the kit, the navigation's gating, and each page.

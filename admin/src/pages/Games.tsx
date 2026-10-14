@@ -1,9 +1,29 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
-import { RhymeEditor } from './RhymeEditor';
-import { QuizQuestions } from './QuizQuestions';
-import { RaceTexts } from './RaceTexts';
+import { useState } from 'react';
+import { api } from '../api';
+import {
+  Badge,
+  Button,
+  ErrorState,
+  FormActions,
+  Icon,
+  Loading,
+  PageHeader,
+  Section,
+  Select,
+  Stat,
+  Table,
+  Tabs,
+  Textarea,
+  errorLine,
+  useDebounced,
+  useDialogs,
+  useLoad,
+  useToast,
+  type Column,
+} from '../ui';
 import { DictionaryImport } from './DictionaryImport';
+import { RaceTexts } from './RaceTexts';
+import { RhymeEditor } from './RhymeEditor';
 
 interface Word {
   id: string;
@@ -29,191 +49,202 @@ interface Stats {
 
 const PAGE = 50;
 
+export type GamesSection = 'words' | 'wordle' | 'rhyme' | 'race';
+
+const TITLES: Record<GamesSection, { title: string; subtitle: string }> = {
+  words: {
+    title: 'Words & dictionary',
+    subtitle: 'The word pool Wordle and Rhyme choose from, and the dictionary behind it that every guess is checked against.',
+  },
+  wordle: { title: 'Wordle', subtitle: 'How many words each difficulty can choose from. A difficulty with none falls back to an easier one.' },
+  rhyme: { title: 'Rhyme', subtitle: 'The words a rhyme round can open with, and what rhymes with each — how strongly, and where that came from.' },
+  race: { title: 'Race texts', subtitle: 'The texts a typing race draws from. An edit changes the next race.' },
+};
+
 /**
- * Game content management (the word pool).
+ * Game content, a page per game (#/words, #/wordle, #/rhyme, #/race) where it
+ * used to be one page with tabs that had no addresses of their own.
  *
- * Two sets, not one. The **pool** is what a game chooses from — Wordle's targets,
- * Rhyme's prompts — and it is what this screen curates. The **dictionary** behind
- * it is what a guess is checked against, and after a lexicon import it is orders
- * of magnitude larger: hundreds of thousands of headwords, mostly inflected forms
- * nobody would recognise as an answer.
- *
- * They are separated because they want opposite things. A bad target is an
- * unplayable round, so the pool stays small and hand-picked; a missing word is a
- * correct answer rejected, so the dictionary should be as large as it can be.
- * Promoting a word out of the dictionary and into the pool is the one editing
- * action the second view offers.
- *
- * Rhymes are computed from each word's ending, never stored — so an admin curates
- * WORDS and the rhyme sets follow. The rhyme checker surfaces that computation so
- * a prompt with no partners can be spotted before players hit it.
+ * Two sets of words, not one. The **pool** is what a game chooses from —
+ * Wordle's targets, Rhyme's prompts — and it is small and hand-picked, because
+ * a bad target is an unplayable round. The **dictionary** behind it is what a
+ * guess is checked against, and should be as large as it can be, because a
+ * missing word is a right answer refused. Promoting a word from the dictionary
+ * into the pool is the one edit the dictionary view offers.
  */
-export function Games(): React.JSX.Element {
-  const [words, setWords] = useState<Word[]>([]);
-  const [total, setTotal] = useState(0);
-  const [stats, setStats] = useState<Stats | null>(null);
-  const [q, setQ] = useState('');
-  const [length, setLength] = useState<number | ''>('');
-  /** the pool, or the dictionary behind it */
+export function Games({ section }: { section: GamesSection }): React.JSX.Element {
+  const t = TITLES[section];
+  return (
+    <div>
+      <PageHeader title={t.title} subtitle={t.subtitle} />
+      {section === 'words' && <WordsPage />}
+      {section === 'wordle' && <Coverage />}
+      {section === 'rhyme' && <RhymeEditor />}
+      {section === 'race' && <RaceTexts />}
+    </div>
+  );
+}
+
+function WordsPage(): React.JSX.Element {
+  const toast = useToast();
+  const dialogs = useDialogs();
   const [inPool, setInPool] = useState(true);
-  const [page, setPage] = useState(0);
-  // categories: the pool is shared, but Wordle and Rhyme care about different
-  // things, so each gets its own view rather than one long undifferentiated page
-  const [section, setSection] = useState<'pool' | 'wordle' | 'rhyme' | 'quiz' | 'race'>('pool');
+  const [q, setQ] = useState('');
+  const query = useDebounced(q.trim(), 300);
+  const [length, setLength] = useState('');
   const [promptsOnly, setPromptsOnly] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  // a newer search wins: an answer to "hev" arriving after "heval" is dropped
+  const words = useLoad(() => {
+    const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE), inGames: String(inPool) });
+    if (query) params.set('q', query);
+    if (length) params.set('length', length);
+    if (promptsOnly) params.set('prompts', 'true');
+    return api<{ total: number; words: Word[] }>(`/admin/dictionary?${params}`);
+  }, [query, length, page, promptsOnly, inPool]);
+  const stats = useLoad(() => api<Stats>('/admin/dictionary/stats'), []);
+
+  const refresh = async (): Promise<void> => {
+    await Promise.all([words.reload(), stats.reload()]);
+  };
+
+  async function patch(w: Word, body: Partial<Pick<Word, 'inGames' | 'isRhymePrompt'>>, said: string): Promise<void> {
+    setBusy(w.id);
     try {
-      const params = new URLSearchParams({ limit: String(PAGE), offset: String(page * PAGE) });
-      if (q.trim()) params.set('q', q.trim());
-      if (length !== '') params.set('length', String(length));
-      params.set('inGames', String(inPool));
-      if (promptsOnly) params.set('prompts', 'true');
-      const res = await api<{ total: number; words: Word[] }>(`/admin/dictionary?${params}`);
-      setWords(res.words);
-      setTotal(res.total);
-      setStats(await api<Stats>('/admin/dictionary/stats'));
+      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body });
+      toast.success(said);
+      await refresh();
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load the word pool');
+      toast.error(errorLine(err, 'game words'));
     } finally {
-      setLoading(false);
+      setBusy(null);
     }
-  }, [q, length, page, promptsOnly, inPool]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
+  }
 
   async function remove(w: Word): Promise<void> {
-    const ok = confirm(
-      `Remove "${w.headword}" from the word pool?\n\nIt stops appearing in Wordle and Rhyme, and guesses of it are no longer accepted.`,
-    );
-    if (!ok) return;
+    const yes = await dialogs.confirm({
+      title: `Delete “${w.headword}”?`,
+      body: 'It stops appearing in Wordle and Rhyme, guesses of it are no longer accepted, and its rhyme decisions are dropped. To keep it as a guess but stop asking it, take it out of the games instead.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (!yes) return;
     setBusy(w.id);
     try {
       await api(`/admin/dictionary/${w.id}`, { method: 'DELETE' });
-      await load();
+      toast.success(`Deleted “${w.headword}”.`);
+      await refresh();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
+      toast.error(errorLine(err, 'game words'));
     } finally {
       setBusy(null);
     }
   }
 
-  /**
-   * Move a word between the dictionary and the pool a game draws from.
-   *
-   * Dropping one out clears its rhyme-prompt flag server-side, because a prompt
-   * outside the pool is a round the game will never open.
-   */
-  async function setInGames(w: Word, inGames: boolean): Promise<void> {
-    setBusy(w.id);
-    try {
-      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { inGames } });
-      await load();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  async function setPrompt(w: Word, isRhymePrompt: boolean): Promise<void> {
-    setBusy(w.id);
-    try {
-      await api(`/admin/dictionary/${w.id}`, { method: 'PATCH', body: { isRhymePrompt } });
-      await load();
-    } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
-    } finally {
-      setBusy(null);
-    }
-  }
-
-  const pages = Math.max(1, Math.ceil(total / PAGE));
+  const reset = (): void => setPage(0);
+  const total = words.data?.total ?? 0;
+  const columns: Column<Word>[] = [
+    {
+      key: 'word',
+      header: 'Word',
+      card: 'title',
+      cell: (w) => (
+        <>
+          <strong dir="auto">{w.headword}</strong>
+          <span className="cell-sub">
+            {w.length} letters · {w.dialect === 'sorani' ? 'Soranî' : 'Kurmancî'}
+          </span>
+        </>
+      ),
+    },
+    {
+      key: 'games',
+      header: 'In the games',
+      cell: (w) => (
+        <label className="inline-check">
+          <input
+            type="checkbox"
+            checked={w.inGames}
+            disabled={busy === w.id}
+            onChange={(e) =>
+              void patch(w, { inGames: e.target.checked }, e.target.checked ? `“${w.headword}” is in the games now.` : `“${w.headword}” is out of the games; guesses of it still count.`)
+            }
+          />
+          <span>{w.inGames ? 'Yes' : 'No'}</span>
+        </label>
+      ),
+    },
+    {
+      key: 'prompt',
+      header: 'Opens rhyme rounds',
+      cell: (w) => (
+        <label className="inline-check" title={w.inGames ? undefined : 'Only a word in the games can open a round'}>
+          <input
+            type="checkbox"
+            checked={w.isRhymePrompt}
+            // a word outside the pool cannot be a prompt, so the control says
+            // so rather than accepting a click the server would undo
+            disabled={busy === w.id || !w.inGames}
+            onChange={(e) => void patch(w, { isRhymePrompt: e.target.checked }, e.target.checked ? `Rounds can open with “${w.headword}”.` : `Rounds no longer open with “${w.headword}”.`)}
+          />
+          <span>{w.isRhymePrompt ? 'Yes' : 'No'}</span>
+        </label>
+      ),
+    },
+  ];
 
   return (
-    <div>
-      <div className="toolbar">
-        <div>
-          <h1>Games</h1>
-          <div className="subtle">The shared word pool behind Wordle and Rhyme</div>
-        </div>
-        <div className="spacer" />
-        <button onClick={() => void load()} disabled={loading}>
-          Refresh
-        </button>
+    <>
+      <div className="stats">
+        <Stat icon="grid" label="In the games" value={stats.data ? stats.data.total.toLocaleString() : '…'} hint="What Wordle and Rhyme choose from" />
+        <Stat icon="book" label="In the dictionary" value={stats.data ? stats.data.dictionary.toLocaleString() : '…'} hint="What a guess is checked against" />
+        <Stat icon="rhyme" label="Rhyme base words" value={stats.data ? stats.data.rhymePrompts.toLocaleString() : '…'} href="#/rhyme" />
       </div>
 
-      <div className="tabs">
-        {([
-          ['pool', 'Word pool'],
-          ['wordle', 'Wordle'],
-          ['rhyme', 'Rhyme'],
-          ['quiz', 'Quiz'],
-          ['race', 'Race'],
-        ] as const).map(([key, label]) => (
-          <button
-            key={key}
-            className={`tab${section === key ? ' active' : ''}`}
-            onClick={() => setSection(key)}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
+      <AddWords onAdded={refresh} />
 
-      {error && <div className="card empty">{error}</div>}
-
-      {section === 'wordle' && stats && <Coverage stats={stats} />}
-      {/* the editor lists the base words itself, and says when none are chosen */}
-      {section === 'rhyme' && <RhymeEditor />}
-      {section === 'quiz' && <QuizQuestions />}
-      {section === 'race' && <RaceTexts />}
-      {section === 'pool' && <AddWords onAdded={load} />}
-      {section === 'pool' && <DictionaryImport />}
-
-      {section === 'pool' && (
-      <div className="card" style={{ padding: 0 }}>
-        <div className="toolbar" style={{ margin: '14px 16px 8px' }}>
-          <div className="section-title">{inPool ? 'Word pool' : 'Dictionary'} ({total})</div>
-          <div className="spacer" />
-          {/*
-            Two different sets, not a filter on one.
-
-            The pool is what a game chooses from and what these screens curate.
-            The dictionary behind it is everything a guess is checked against,
-            which after an import is far larger and is nobody's editing surface —
-            you come here to promote a word out of it, and that is all.
-          */}
+      <Section
+        flush
+        title={inPool ? `Words in the games (${total.toLocaleString()})` : `Dictionary only (${total.toLocaleString()})`}
+        actions={
+          <>
+            <Tabs
+              label="Which words"
+              value={inPool ? 'pool' : 'dictionary'}
+              onChange={(v) => {
+                setInPool(v === 'pool');
+                reset();
+              }}
+              items={[
+                { key: 'pool', label: 'In the games' },
+                { key: 'dictionary', label: 'Dictionary only' },
+              ]}
+            />
+          </>
+        }
+      >
+        <div className="table-tools">
+          <div className="search-box">
+            <Icon name="search" size={16} />
+            <input
+              type="search"
+              aria-label="Search words"
+              placeholder="Search words"
+              value={q}
+              onChange={(e) => {
+                setQ(e.target.value);
+                reset();
+              }}
+            />
+          </div>
           <select
-            value={inPool ? 'pool' : 'dictionary'}
-            onChange={(e) => {
-              setInPool(e.target.value === 'pool');
-              setPage(0);
-            }}
-          >
-            <option value="pool">In the games</option>
-            <option value="dictionary">Dictionary only</option>
-          </select>
-          <input
-            placeholder="Search words…"
-            value={q}
-            onChange={(e) => {
-              setQ(e.target.value);
-              setPage(0);
-            }}
-          />
-          <select
+            aria-label="Length"
             value={length}
             onChange={(e) => {
-              setLength(e.target.value === '' ? '' : Number(e.target.value));
-              setPage(0);
+              setLength(e.target.value);
+              reset();
             }}
           >
             <option value="">Any length</option>
@@ -223,151 +254,79 @@ export function Games(): React.JSX.Element {
               </option>
             ))}
           </select>
-          <label className="row" style={{ gap: 6, width: 'auto' }}>
+          <label className="inline-check">
             <input
               type="checkbox"
               checked={promptsOnly}
               onChange={(e) => {
                 setPromptsOnly(e.target.checked);
-                setPage(0);
+                reset();
               }}
             />
-            <span className="subtle">Prompts only</span>
+            <span>Only rhyme base words</span>
           </label>
         </div>
+        <Table
+          caption="Words"
+          columns={columns}
+          rows={words.data?.words ?? null}
+          rowKey={(w) => w.id}
+          loading={words.loading}
+          error={words.error}
+          onRetry={() => void words.reload()}
+          what="game words"
+          empty={query ? 'No word matches that search.' : 'No words here yet.'}
+          paging={{ page, pageCount: Math.max(1, Math.ceil(total / PAGE)), onPage: setPage, total, pageSize: PAGE }}
+          actions={(w) => (
+            <Button variant="danger" onClick={() => void remove(w)} disabled={busy === w.id} aria-label={`Delete “${w.headword}”`}>
+              Delete
+            </Button>
+          )}
+        />
+      </Section>
 
-        {loading ? (
-          <div className="empty">Loading…</div>
-        ) : words.length === 0 ? (
-          <div className="empty">No words match.</div>
-        ) : (
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Word</th>
-                  <th>Letters</th>
-                  <th>Dialect</th>
-                  <th>In the games</th>
-                  <th>Rhyme prompt</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {words.map((w) => (
-                  <tr key={w.id}>
-                    <td>
-                      <strong>{w.headword}</strong>
-                    </td>
-                    <td>
-                      <span className="badge">{w.length}</span>
-                    </td>
-                    <td className="subtle">{w.dialect}</td>
-                    <td>
-                      <label className="row" style={{ gap: 6, width: 'auto' }}>
-                        <input
-                          type="checkbox"
-                          checked={w.inGames}
-                          disabled={busy === w.id}
-                          onChange={(e) => void setInGames(w, e.target.checked)}
-                        />
-                        <span className="subtle">play</span>
-                      </label>
-                    </td>
-                    <td>
-                      <label className="row" style={{ gap: 6, width: 'auto' }}>
-                        <input
-                          type="checkbox"
-                          checked={w.isRhymePrompt}
-                          // a word outside the pool cannot be a prompt, so the
-                          // control says so rather than accepting a click that
-                          // the server would undo
-                          disabled={busy === w.id || !w.inGames}
-                          onChange={(e) => void setPrompt(w, e.target.checked)}
-                        />
-                        <span className="subtle">use</span>
-                      </label>
-                    </td>
-                    <td>
-                      <button className="danger" onClick={() => void remove(w)} disabled={busy === w.id}>
-                        Remove
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-
-        {pages > 1 && (
-          <div className="toolbar" style={{ margin: '8px 16px 14px' }}>
-            <button onClick={() => setPage((p) => Math.max(0, p - 1))} disabled={page === 0}>
-              ← Previous
-            </button>
-            <div className="subtle">
-              Page {page + 1} of {pages}
-            </div>
-            <button onClick={() => setPage((p) => Math.min(pages - 1, p + 1))} disabled={page >= pages - 1}>
-              Next →
-            </button>
-          </div>
-        )}
-      </div>
-      )}
-    </div>
+      <DictionaryImport />
+    </>
   );
 }
 
-/** Wordle picks its target by letter length, so a thin band is worth surfacing. */
-function Coverage({ stats }: { stats: Stats }): React.JSX.Element {
+/** Wordle picks its target by letter length, so a thin difficulty is worth seeing. */
+function Coverage(): React.JSX.Element {
+  const stats = useLoad(() => api<Stats>('/admin/dictionary/stats'), []);
+  if (stats.error != null) return <ErrorState error={stats.error} onRetry={() => void stats.reload()} what="game words" />;
+  if (!stats.data) return <Loading rows={4} />;
+  const s = stats.data;
+  const columns: Column<Stats['difficulties'][number]>[] = [
+    { key: 'difficulty', header: 'Difficulty', card: 'title', cell: (d) => <strong>{d.difficulty.charAt(0).toUpperCase() + d.difficulty.slice(1)}</strong> },
+    { key: 'lengths', header: 'Word length', cell: (d) => `${d.lengths.join(', ')} letters` },
+    {
+      key: 'words',
+      header: 'Words to choose from',
+      cell: (d) => <Badge tone={d.words === 0 ? 'bad' : d.words < 10 ? 'warn' : 'ok'}>{d.words === 0 ? 'None — falls back' : d.words.toLocaleString()}</Badge>,
+    },
+  ];
   return (
-    <div className="card" style={{ marginBottom: 16 }}>
-      <div className="section-title">Wordle coverage</div>
-      <div className="subtle" style={{ marginBottom: 10 }}>
-        Each difficulty uses a fixed word length. A band with no words falls back to an easier one; if
-        every band is empty the game reports “no words available”.
-      </div>
+    <>
       {/*
         Both numbers, because they answer different questions and only one of
         them is about whether the game is playable. Counting the dictionary here
         is how you end up believing there are hundreds of thousands of words to
         play with when the pool is a few dozen.
       */}
-      <div className="subtle" style={{ marginBottom: 10 }}>
-        <strong>{stats.total.toLocaleString()}</strong> in the games ·{' '}
-        <strong>{stats.dictionary.toLocaleString()}</strong> in the dictionary, which is what a guess is
-        checked against · <strong>{stats.rhymePrompts.toLocaleString()}</strong> rhyme prompts
+      <div className="stats">
+        <Stat label="Words Wordle can ask" value={s.total.toLocaleString()} href="#/words" />
+        <Stat label="Words a guess is checked against" value={s.dictionary.toLocaleString()} />
       </div>
-      <div className="tablewrap">
-        <table>
-          <thead>
-            <tr>
-              <th>Difficulty</th>
-              <th>Word length</th>
-              <th>Words available</th>
-            </tr>
-          </thead>
-          <tbody>
-            {stats.difficulties.map((d) => (
-              <tr key={d.difficulty}>
-                <td style={{ textTransform: 'capitalize' }}>{d.difficulty}</td>
-                <td className="subtle">{d.lengths.join(', ')}</td>
-                <td>
-                  <span className={`badge${d.words === 0 ? ' danger' : d.words < 10 ? ' mid' : ''}`}>{d.words}</span>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="subtle" style={{ marginTop: 10 }}>{stats.total} words in the pool.</div>
-    </div>
+      <Section flush title="By difficulty" description="If every difficulty is empty, the game says no words are available.">
+        <Table caption="Wordle coverage by difficulty" columns={columns} rows={s.difficulties} rowKey={(d) => d.difficulty} />
+      </Section>
+    </>
   );
 }
 
 /** Bulk word entry — one per line or comma separated. */
 function AddWords({ onAdded }: { onAdded: () => Promise<void> }): React.JSX.Element {
+  const toast = useToast();
   const [text, setText] = useState('');
   const [dialect, setDialect] = useState('kurmanji');
   const [busy, setBusy] = useState(false);
@@ -383,52 +342,47 @@ function AddWords({ onAdded }: { onAdded: () => Promise<void> }): React.JSX.Elem
     setBusy(true);
     setResult(null);
     try {
-      const res = await api<{ added: string[]; skipped: string[]; invalid: string[] }>('/admin/dictionary', {
-        method: 'POST',
-        body: { words, dialect },
-      });
+      const res = await api<{ added: string[]; skipped: string[]; invalid: string[] }>('/admin/dictionary', { method: 'POST', body: { words, dialect } });
       setResult(res);
       setText('');
+      toast.success(`Added ${res.added.length} ${res.added.length === 1 ? 'word' : 'words'}.`);
       await onAdded();
     } catch (err) {
-      alert(err instanceof ApiError ? err.message : 'Failed');
+      toast.error(errorLine(err, 'game words'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form className="card" style={{ marginBottom: 16 }} onSubmit={(e) => void submit(e)}>
-      <div className="section-title">Add words</div>
-      <div className="subtle" style={{ marginBottom: 10 }}>
-        One per line (or comma separated). A word added here becomes a possible Wordle target, a valid
-        Wordle guess, a Rhyme prompt and an accepted rhyme. Words already in the pool are skipped, so
-        pasting the same list twice is safe.
-      </div>
-      <textarea
-        rows={5}
-        style={{ width: '100%' }}
-        placeholder={'heval\nwelat\nziman'}
-        value={text}
-        onChange={(e) => setText(e.target.value)}
-      />
-      <div className="toolbar" style={{ marginTop: 10 }}>
-        <select value={dialect} onChange={(e) => setDialect(e.target.value)}>
-          <option value="kurmanji">Kurmancî</option>
-          <option value="sorani">Soranî</option>
-        </select>
-        <div className="spacer" />
-        <button className="primary" type="submit" disabled={busy || text.trim() === ''}>
-          {busy ? 'Adding…' : 'Add words'}
-        </button>
-      </div>
-      {result && (
-        <div className="subtle" style={{ marginTop: 10 }}>
-          Added {result.added.length}.{' '}
-          {result.skipped.length > 0 && `Already present: ${result.skipped.length}. `}
-          {result.invalid.length > 0 && `Rejected (not words): ${result.invalid.join(', ')}.`}
-        </div>
-      )}
-    </form>
+    <Section
+      title="Add words to the games"
+      description="One per line, or separated by commas. A word added here can be a Wordle answer and guess, open a rhyme round, and count as a rhyme. Words already in the games are skipped, so pasting a list twice is safe."
+    >
+      <form className="form" onSubmit={(e) => void submit(e)}>
+        <Textarea label="Words" rows={4} dir="auto" placeholder={'heval\nwelat\nziman'} value={text} onChange={(e) => setText(e.target.value)} />
+        <FormActions>
+          <Select
+            label="Variety"
+            fieldClassName="is-inline"
+            value={dialect}
+            onChange={(e) => setDialect(e.target.value)}
+            options={[
+              { value: 'kurmanji', label: 'Kurmancî' },
+              { value: 'sorani', label: 'Soranî' },
+            ]}
+          />
+          <Button variant="primary" type="submit" busy={busy} disabled={text.trim() === ''} icon="plus">
+            {busy ? 'Adding…' : 'Add words'}
+          </Button>
+        </FormActions>
+        {result && (
+          <p className="note" role="status">
+            Added {result.added.length}.{result.skipped.length > 0 && ` Already there: ${result.skipped.length}.`}
+            {result.invalid.length > 0 && ` Not words, so left out: ${result.invalid.join(', ')}.`}
+          </p>
+        )}
+      </form>
+    </Section>
   );
 }

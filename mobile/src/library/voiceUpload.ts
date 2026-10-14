@@ -1,9 +1,10 @@
 import type { Translate } from '../api/errors';
 import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
-import { describeUploadFailure } from '../profile/photoUploadResult';
+import { describeUploadFailure, uploadWasLimited } from '../profile/photoUploadResult';
 
-export type VoiceUploadResult = { ok: true; audioMediaId: string; url: string } | { ok: false; error: string };
+/** `limited`: refused by a limit on the account (see `UploadResult`). */
+export type VoiceUploadResult = { ok: true; audioMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
 
 /**
  * Upload a recorded voice note through the server (KUR-282): POST the raw audio
@@ -20,6 +21,8 @@ export async function uploadVoiceNote(
   client: ApiClient,
   audio: { uri: string; contentType?: string },
   t: Translate,
+  /** the app's language, so a limit's end is said as the reader would say it */
+  locale?: string,
 ): Promise<VoiceUploadResult> {
   try {
     const token = await client.getAccessToken();
@@ -39,7 +42,7 @@ export async function uploadVoiceNote(
       }
       return { ok: false, error: t('upload.noAudioReturned') };
     }
-    return { ok: false, error: describeUploadFailure(res.status, res.body, t) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t, locale), limited: uploadWasLimited(res.status, res.body) };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? t('upload.audioFailed') };
   }

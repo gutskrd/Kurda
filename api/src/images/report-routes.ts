@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
+import type { ReportsService } from '../moderation/reports-service.js';
 import { ImageReportService, type ImageTargetType } from './report-service.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -11,7 +12,8 @@ const reportBody = z.object({ reason: z.string().max(500).optional() });
  * a reason; the report feeds the unified moderation queue (#102). Rate-limited
  * (#010); one report per user per item.
  */
-export function registerImageReportRoutes(app: FastifyInstance, mod = new ImageReportService(app.db)): void {
+export function registerImageReportRoutes(app: FastifyInstance, reports?: ReportsService): void {
+  const mod = new ImageReportService(app.db, reports);
   const report = (type: ImageTargetType) => async (req: FastifyRequest, reply: FastifyReply) => {
     const { id } = req.params as { id: string };
     const { reason } = req.body as z.infer<typeof reportBody>;
