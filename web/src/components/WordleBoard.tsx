@@ -123,6 +123,13 @@ export function WordleKeyboard({
   const t = useT();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const rows = wordleRows(prefs.wordleLayout);
+  /*
+   * A click or tap does not move the focus onto the key. Left there, the next
+   * Space on the physical keyboard pressed that key again — a second "e" after
+   * a clicked one. Tab still reaches every key, and Space and Enter still press
+   * the one it is on.
+   */
+  const keepFocus = (e: React.MouseEvent): void => e.preventDefault();
   return (
     <div className="wordle-keys">
       <div className={`wordle-keyboard wordle-keyboard-${prefs.wordleLayout}`} role="group" aria-label={t('games.wordle.keyboard')}>
@@ -131,7 +138,7 @@ export function WordleKeyboard({
             {row.map((k) => {
               if (k === ENTER) {
                 return (
-                  <button key={k} type="button" className="wordle-key wordle-key-wide" onClick={() => onPress(ENTER)} disabled={disabled}>
+                  <button key={k} type="button" className="wordle-key wordle-key-wide" onMouseDown={keepFocus} onClick={() => onPress(ENTER)} disabled={disabled}>
                     {t('games.wordle.enter')}
                   </button>
                 );
@@ -142,6 +149,7 @@ export function WordleKeyboard({
                     key={k}
                     type="button"
                     className="wordle-key wordle-key-wide"
+                    onMouseDown={keepFocus}
                     onClick={() => onPress(BACKSPACE)}
                     disabled={disabled}
                     aria-label={t('games.wordle.backspace')}
@@ -156,6 +164,7 @@ export function WordleKeyboard({
                   key={k}
                   type="button"
                   className={`wordle-key wordle-${fb ?? 'key'}`}
+                  onMouseDown={keepFocus}
                   onClick={() => onPress(k)}
                   disabled={disabled}
                   aria-label={fb ? t('games.wordle.letterState', { letter: k, state: t(STATE_KEY[fb]) }) : k}

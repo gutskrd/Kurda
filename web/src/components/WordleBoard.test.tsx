@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { fireEvent, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { KURMANCI_ALPHABET } from '@kurda/shared';
 import { WordleBoard, WordleKeyboard } from './WordleBoard';
@@ -79,6 +79,14 @@ describe('WordleKeyboard', () => {
     expect(screen.getByRole('button', { name: 's, in the word, in another place' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'ê, not in the word' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'q' })).toBeInTheDocument();
+  });
+
+  it('does not take the focus on a click, so a Space typed next does not press the key again', () => {
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
+    for (const name of ['e', 'ç', 'Enter', 'Backspace']) {
+      // fireEvent returns false when the default (focusing the button) was prevented
+      expect(fireEvent.mouseDown(screen.getByRole('button', { name }))).toBe(false);
+    }
   });
 
   it('disables its keys rather than hiding them from a screen reader', () => {
