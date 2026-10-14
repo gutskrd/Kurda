@@ -26,7 +26,9 @@ export function useReducedMotion(): boolean {
     );
     return () => {
       mounted = false;
-      subscription.remove();
+      // react-native-web hands back nothing where the browser has no matchMedia
+      // (jsdom, an old WebView): there is then nothing to remove
+      subscription?.remove();
     };
   }, []);
 

@@ -95,7 +95,7 @@ export function Results({
       </Text>
 
       {/* duo and group: what this game did to your rank, with its one plain reason */}
-      {view.mode !== 'solo' && view.rated?.rated ? <RankResultPanel game="stories" gameRef={view.id} /> : null}
+      {view.mode !== 'solo' && view.rated?.rated ? <RankResultPanel game="stories" gameRef={view.id} damped={view.rated.damped} /> : null}
 
       {me ? (
         <Card style={styles.meCard}>

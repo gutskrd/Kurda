@@ -51,7 +51,16 @@ type Counted = Extract<RankResult, { counted: true }>;
  * says where you still are. A game that played as friendly says so, once,
  * with its reason when it was not the host's choice.
  */
-export function RankResultPanel({ game, gameRef }: { game: RankedGame; gameRef: string }): React.JSX.Element | null {
+export function RankResultPanel({
+  game,
+  gameRef,
+  damped = false,
+}: {
+  game: RankedGame;
+  gameRef: string;
+  /** the game counted with less weight because the same players have played rated a lot today (its RatedState) */
+  damped?: boolean;
+}): React.JSX.Element | null {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -101,7 +110,7 @@ export function RankResultPanel({ game, gameRef }: { game: RankedGame; gameRef: 
       />
     );
   }
-  return <CountedResult result={result} onShown={() => setShown(true)} />;
+  return <CountedResult result={result} damped={damped} onShown={() => setShown(true)} />;
 }
 
 function Line({ icon, text, colour }: { icon: 'mountains' | 'handshake'; text: string; colour?: string }): React.JSX.Element {
@@ -114,7 +123,7 @@ function Line({ icon, text, colour }: { icon: 'mountains' | 'handshake'; text: s
   );
 }
 
-function CountedResult({ result, onShown }: { result: Counted; onShown: () => void }): React.JSX.Element {
+function CountedResult({ result, damped, onShown }: { result: Counted; damped: boolean; onShown: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const reduce = useReducedMotion();
@@ -155,12 +164,14 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
   const name = placing ? t('ranks.placing', { played: result.placement?.played ?? 0, of: result.placement?.of ?? 5 }) : rankName(t, emblem.tier, emblem.division);
   const reason = t(REASON_KEY[result.reason]);
   const deltaColour = tone === 'up' ? colors.textPrimary : colors.textSecondary;
-  const kind =
-    tone === 'down' && !placing
+  // a loss says where you still are; a placement game that did not move you says what placement is for
+  const kind = placing
+    ? tone === 'up'
+      ? null
+      : t('ranks.result.placingLoss')
+    : tone === 'down'
       ? t('ranks.result.stillAt', { rank: rankName(t, emblem.tier, emblem.division) })
-      : tone === 'down'
-        ? t('ranks.result.placingLoss')
-        : null;
+      : null;
 
   return (
     <View style={[styles.panel, { backgroundColor: colors.controlTrack }]}>
@@ -190,7 +201,8 @@ function CountedResult({ result, onShown }: { result: Counted; onShown: () => vo
           <ShieldPips count={result.shieldGames} />
         </View>
       ) : null}
-      {result.weight < 1 ? <Text style={[styles.kind, { color: colors.textSecondary }]}>{t('ranks.result.damped')}</Text> : null}
+      {/* only the repeat-opponent damping is said; the weight also carries a new account's lighter touch, which is nobody's news */}
+      {damped && result.weight < 1 ? <Text style={[styles.kind, { color: colors.textSecondary }]}>{t('ranks.result.damped')}</Text> : null}
       {celebrating && !placing ? (
         <RankMoment
           kind={celebrating}

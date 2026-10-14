@@ -246,7 +246,7 @@ const styles = StyleSheet.create({
   tileTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   tileHint: { fontSize: typography.sizes.xs, lineHeight: 16 },
 
-  panel: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
+  panel: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm, marginTop: spacing.sm },
   panelHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   panelHint: { flex: 1, fontSize: typography.sizes.sm },
   switchRow: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.md },
