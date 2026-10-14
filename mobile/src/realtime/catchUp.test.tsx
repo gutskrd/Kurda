@@ -37,11 +37,12 @@ vi.mock('@react-navigation/native', async () => {
   };
 });
 
-const msg = (id: string, at: number, over: Record<string, unknown> = {}) => ({
+const msg = (id: string, at: number, over: { senderId?: string; body?: string; readAt?: string | null } = {}) => ({
   id,
   senderId: 'u2',
   body: `message ${id}`,
   createdAt: new Date(Date.UTC(2026, 9, 1, 12, 0, at)).toISOString(),
+  readAt: null as string | null,
   ...over,
 });
 
