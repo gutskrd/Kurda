@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useNavigation, type NavigationProp, type ParamListBase } from '@react-navigation/native';
 import type { GiftChatRef, GiftUserEvent } from '@kurda/shared';
 
 /**
@@ -40,15 +41,32 @@ export function chatKey(ref: GiftChatRef): string {
   return ref.kind === 'dm' ? `dm:${ref.userId}` : `group:${ref.groupId}`;
 }
 
-/** Mark a chat as the one on screen while the caller is mounted. */
+/**
+ * Mark a chat as the one on screen while the caller's screen is in front.
+ *
+ * Focus, not mount: a chat with a profile pushed over it is still mounted but
+ * not on screen, and a gift from that friend must still get its banner. A
+ * screen drawn outside a navigator (a test) counts as in front while mounted.
+ */
 export function useOpenChat(ref: GiftChatRef): void {
   const key = chatKey(ref);
+  const navigation = useNavigation() as Partial<Pick<NavigationProp<ParamListBase>, 'addListener' | 'isFocused'>> | undefined;
   useEffect(() => {
-    openChat = key;
-    return () => {
+    const show = (): void => {
+      openChat = key;
+    };
+    const hide = (): void => {
       if (openChat === key) openChat = null;
     };
-  }, [key]);
+    if (navigation?.isFocused?.() ?? true) show();
+    const offFocus = navigation?.addListener?.('focus', show);
+    const offBlur = navigation?.addListener?.('blur', hide);
+    return () => {
+      offFocus?.();
+      offBlur?.();
+      hide();
+    };
+  }, [key, navigation]);
 }
 
 export function isChatOpen(ref: GiftChatRef): boolean {

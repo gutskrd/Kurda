@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { GiftUserEvent } from '@kurda/shared';
 import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
@@ -68,6 +68,10 @@ export function GiftBanner({
   const dir = useDirection();
   const top = useScreenTopInset();
   const text = t('gift.banner.body', { name: event.from.name });
+  // a live region speaks on Android only; VoiceOver is told in words, once
+  useEffect(() => {
+    if (Platform.OS !== 'android') AccessibilityInfo.announceForAccessibility?.(text);
+  }, [text, event.giftId]);
   return (
     <View style={[styles.wrap, { top: top + spacing.xs }]} pointerEvents="box-none">
       <View

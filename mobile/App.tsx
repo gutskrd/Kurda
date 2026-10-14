@@ -14,7 +14,7 @@ import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
-import type { RootNavigation, RootStackParamList } from './src/navigation/rootStack';
+import { chatRouteId, groupThreadRouteId, type RootNavigation, type RootStackParamList } from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
@@ -292,7 +292,8 @@ function SignedInRoot() {
           <PublicProfileScreen userId={route.params.userId} onExit={() => navigation.goBack()} />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Chat" options={{ presentation: 'card' }}>
+      {/* one route per person and per group (rootStack.chatRouteId) */}
+      <RootStack.Screen name="Chat" options={{ presentation: 'card' }} getId={chatRouteId}>
         {({ route, navigation }) => (
           <ChatScreen
             userId={route.params.userId}
@@ -324,7 +325,7 @@ function SignedInRoot() {
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }}>
+      <RootStack.Screen name="GroupThread" options={{ presentation: 'card' }} getId={groupThreadRouteId}>
         {({ route, navigation }) => (
           <GroupThreadScreen
             groupId={route.params.groupId}

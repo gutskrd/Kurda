@@ -103,7 +103,8 @@ export function GroupThreadScreen({
   const { typing, note } = useTypingWatch();
   // a recipient's own card can arrive before the room's message does
   const pendingCards = useRef(new Map<string, GiftCard>());
-  const autoOpened = useRef(false);
+  // by id, as in the DM thread: a second gift here from a banner unwraps too
+  const autoOpened = useRef<string | null>(null);
   useOpenChat({ kind: 'group', groupId });
 
   useEffect(() => {
@@ -239,8 +240,8 @@ export function GroupThreadScreen({
   );
 
   useEffect(() => {
-    if (!openGift || loading || autoOpened.current) return;
-    autoOpened.current = true;
+    if (!openGift || loading || autoOpened.current === openGift) return;
+    autoOpened.current = openGift;
     startUnwrap(openGift);
   }, [openGift, loading, startUnwrap]);
 

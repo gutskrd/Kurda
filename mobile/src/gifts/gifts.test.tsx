@@ -8,7 +8,15 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 const navigate = vi.fn();
-vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
+// a screen's focus, as a stack tells it: 'focus' and 'blur' listeners, and whether it is in front now
+const focus = vi.hoisted(() => ({ listeners: new Map<string, Set<() => void>>(), focused: true }));
+const nav = { navigate, goBack: vi.fn(), isFocused: () => focus.focused, addListener: (type: string, cb: () => void) => {
+  const set = focus.listeners.get(type) ?? new Set();
+  set.add(cb);
+  focus.listeners.set(type, set);
+  return () => set.delete(cb);
+} };
+vi.mock('@react-navigation/native', () => ({ useNavigation: () => nav }));
 // the gift banner listens on the user's channel; here the test is the channel
 const userEvents: { handler: ((e: unknown) => void) | null } = { handler: null };
 vi.mock('../realtime/useUserEvents', () => ({
@@ -17,7 +25,7 @@ vi.mock('../realtime/useUserEvents', () => ({
   },
 }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
-import { Animated, Vibration } from 'react-native';
+import { AccessibilityInfo, Animated, Vibration } from 'react-native';
 import type { GiftCard, GiftCatalogItem, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -30,7 +38,11 @@ import { useOpenChat } from './events';
 
 patchReactNativeWeb();
 
-beforeEach(() => navigate.mockReset());
+beforeEach(() => {
+  navigate.mockReset();
+  focus.listeners.clear();
+  focus.focused = true;
+});
 afterEach(cleanup);
 
 const card = (over: Partial<GiftCard> = {}): GiftCard => ({
@@ -322,5 +334,38 @@ describe('GiftArrivals', () => {
     );
     act(() => userEvents.handler?.(received({ kind: 'group', groupId: 'g1' })));
     expect(screen.queryByText('Rojda sent you a gift')).toBeNull();
+  });
+
+  it('shows the banner for a chat that is open but behind another screen', () => {
+    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    function OpenChat() {
+      useOpenChat({ kind: 'dm', userId: 'u2' });
+      return null;
+    }
+    renderWithProviders(
+      <>
+        <OpenChat />
+        <GiftArrivals />
+      </>,
+    );
+    // their profile is pushed over the chat: the chat is still mounted, but not in front
+    act(() => focus.listeners.get('blur')?.forEach((cb) => cb()));
+    act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
+    expect(screen.getByText('Rojda sent you a gift')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Later' }));
+
+    // back in the chat: the gift appearing in the thread is the announcement
+    act(() => focus.listeners.get('focus')?.forEach((cb) => cb()));
+    act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
+    expect(screen.queryByText('Rojda sent you a gift')).toBeNull();
+  });
+
+  it('tells VoiceOver in words, where a live region says nothing', () => {
+    const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    testAuth.client = fakeClient({ 'GET /me/social': ok({ unread: { gifts: 1 } }) });
+    renderWithProviders(<GiftArrivals />);
+    act(() => userEvents.handler?.(received({ kind: 'dm', userId: 'u2' })));
+    expect(announce).toHaveBeenCalledWith('Rojda sent you a gift');
+    announce.mockRestore();
   });
 });

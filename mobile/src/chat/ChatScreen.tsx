@@ -69,7 +69,9 @@ export function ChatScreen({
   const [reporting, setReporting] = useState<string | null>(null);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
-  const autoOpened = useRef(false);
+  // the gift the way in asked for, once unwrapped — by id, so a second banner
+  // for this same chat (brought forward with a new gift) unwraps that one too
+  const autoOpened = useRef<string | null>(null);
   useOpenChat({ kind: 'dm', userId });
 
   // their name from the conversation when the way in did not bring it
@@ -133,8 +135,8 @@ export function ChatScreen({
 
   // arrived from the gift banner or its notification: unwrap it once the thread is here
   useEffect(() => {
-    if (!openGift || loading || autoOpened.current) return;
-    autoOpened.current = true;
+    if (!openGift || loading || autoOpened.current === openGift) return;
+    autoOpened.current = openGift;
     startUnwrap(openGift);
   }, [openGift, loading, startUnwrap]);
 

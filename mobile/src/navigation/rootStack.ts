@@ -73,3 +73,16 @@ export type RootStackParamList = {
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
+
+/**
+ * Each conversation is its own route.
+ *
+ * Without an id, navigating to Chat while a chat is on top only swaps that
+ * screen's params: the gift banner's Open, pressed in Rojda's chat for a gift
+ * from Azad, turned the same screen into Azad's — with the half-typed message
+ * meant for Rojda still in the composer, ready to go to the wrong person. With
+ * one, another person's chat (or another group's) is pushed as a screen of its
+ * own, and the same person's is brought forward rather than stacked twice.
+ */
+export const chatRouteId = ({ params }: { params: RootStackParamList['Chat'] }): string => params.userId;
+export const groupThreadRouteId = ({ params }: { params: RootStackParamList['GroupThread'] }): string => params.groupId;
