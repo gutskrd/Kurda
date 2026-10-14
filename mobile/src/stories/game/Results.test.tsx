@@ -88,6 +88,30 @@ describe('Results', () => {
     expect(screen.getByText('“Nan germ e.”')).toBeTruthy();
   });
 
+  it('shows the English under a reviewed question and its explanation where the questions showed it', () => {
+    testAuth.client = fakeClient();
+    const withEnglish: StoryGameResults['review'] = [
+      { ...review[1]!, promptEn: 'How was the bread?', explanation: 'Nan germ bû.', explanationEn: 'The bread was warm.' },
+    ];
+    const view = renderResults(finished({ review: withEnglish }, { mode: 'solo' }));
+    // level 1: shown, in English's own voice
+    expect(screen.getByText('How was the bread?').getAttribute('lang')).toBe('en');
+    expect(screen.getByText('The bread was warm.')).toBeTruthy();
+    view.unmount();
+    renderWithProviders(
+      <Results
+        view={gameView({ status: 'finished', mode: 'solo', results: { standings: [], me: null, review: withEnglish } }, { questionCount: 5, level: 3 })}
+        story={NANE_GERM}
+        onOpenGame={() => undefined}
+        onRead={() => undefined}
+        onBack={() => undefined}
+      />,
+    );
+    expect(screen.getByText('Nan çawa bû?')).toBeTruthy();
+    expect(screen.queryByText('How was the bread?')).toBeNull();
+    expect(screen.queryByText('The bread was warm.')).toBeNull();
+  });
+
   it('alone, plays the same story again with the same settings, straight to the questions', async () => {
     const client = fakeClient({ 'POST /story-games': ok(gameView({ id: 'g2', mode: 'solo', status: 'question' })) });
     testAuth.client = client;

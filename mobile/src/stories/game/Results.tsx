@@ -13,8 +13,10 @@ import { RematchPanel } from '../../play/RematchPanel';
 import { createGame } from '../api';
 import { createErrorMessage } from '../SetupSheet';
 import { evidenceText } from '../segments';
-import { quoted, storyTextProps, storyTextStyle } from '../storyText';
+import { useStoryPrefs } from '../prefs';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, quoted, storyTextProps, storyTextStyle } from '../storyText';
 import { Card, Note, SectionLabel, useFocusOn } from '../ui';
+import { showEnglish } from './Question';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 
 /** A standing's name as this viewer may see it. */
@@ -46,6 +48,7 @@ export function Results({
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  const { prefs } = useStoryPrefs();
   const headRef = useRef<Text>(null);
   const [again, setAgain] = useState(false);
   const [againError, setAgainError] = useState<string | null>(null);
@@ -59,6 +62,8 @@ export function Results({
   const dialect = view.settings.dialect;
   const dir = storyTextStyle(dialect);
   const props = storyTextProps(dialect);
+  // the same remembered choice as under the questions and the answers
+  const english = showEnglish(prefs.englishUnder, view.settings.level);
   const other = results.standings.find((s) => !s.isMe);
 
   /** Alone: the same story and settings again, straight to the questions. */
@@ -192,6 +197,11 @@ export function Results({
                 <Text {...props} style={[styles.reviewPrompt, { color: colors.textPrimary }, dir]}>
                   {item.prompt}
                 </Text>
+                {english && item.promptEn ? (
+                  <Text {...ENGLISH_TEXT_PROPS} style={[styles.reviewText, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
+                    {item.promptEn}
+                  </Text>
+                ) : null}
                 <Text style={[styles.reviewLabel, { color: colors.success }]}>{t('stories.reveal.rightAnswer')}</Text>
                 <Text {...props} style={[styles.reviewText, { color: colors.textPrimary }, dir]}>
                   {item.options[item.correctIndex]}
@@ -207,6 +217,11 @@ export function Results({
                 {item.explanation ? (
                   <Text {...props} style={[styles.reviewText, { color: colors.textSecondary }, dir]}>
                     {item.explanation}
+                  </Text>
+                ) : null}
+                {english && item.explanationEn ? (
+                  <Text {...ENGLISH_TEXT_PROPS} style={[styles.reviewText, { color: colors.textSecondary }, ENGLISH_TEXT_STYLE]}>
+                    {item.explanationEn}
                   </Text>
                 ) : null}
                 {quote ? (
