@@ -19,6 +19,7 @@
  * not involved), and how Discord, Instagram and Twitch tell people what happened.
  */
 import { stripControlChars } from './sanitize.js';
+import type { CopyrightCaseInfo } from './copyright.js';
 import type { PlayGame } from './play.js';
 
 // ---------------------------------------------------------------------------
@@ -50,6 +51,7 @@ export const REPORT_CATEGORY_KEYS = [
   'hate',
   'private_info',
   'harassment',
+  'copyright',
   'spam',
   'impersonation',
   'other',
@@ -95,6 +97,12 @@ export const REPORT_CATEGORIES: readonly ReportCategoryInfo[] = [
   },
   { key: 'private_info', priority: 1, labelKey: 'report.category.privateInfo', label: 'Sharing private information', showsHelp: false },
   { key: 'harassment', priority: 2, labelKey: 'report.category.harassment', label: 'Bullying or harassment', showsHelp: false },
+  /*
+   * Someone else's work posted as if it were theirs. A member's report waits
+   * like harassment; a formal notice from the rights holder (/copyright) is
+   * queued at P1, since hosts give a provider about two working days.
+   */
+  { key: 'copyright', priority: 2, labelKey: 'report.category.copyright', label: 'Copies someone else’s work', showsHelp: false },
   { key: 'spam', priority: 3, labelKey: 'report.category.spam', label: 'Scam or spam', showsHelp: false },
   { key: 'impersonation', priority: 3, labelKey: 'report.category.impersonation', label: 'Pretending to be someone', showsHelp: false },
   { key: 'other', priority: 3, labelKey: 'report.category.other', label: 'Something else', showsHelp: false },
@@ -424,7 +432,11 @@ export type CaseStatus = (typeof CASE_STATUSES)[number];
 /** The statuses of a case still on somebody's desk. */
 export const OPEN_CASE_STATUSES: readonly CaseStatus[] = ['open', 'in_review', 'needs_second_approval', 'escalated'];
 
-/** Where a case came from. `report` is every user report; the rest are older or automated feeds. */
+/**
+ * Where a case came from. `report` is every user report; `copyright` a notice
+ * from the public /copyright form (copyright.ts); the rest are older or
+ * automated feeds.
+ */
 export const CASE_SOURCES = [
   'report',
   'text_flag',
@@ -435,6 +447,7 @@ export const CASE_SOURCES = [
   'library_report',
   'image_report',
   'user_report',
+  'copyright',
 ] as const;
 export type CaseSource = (typeof CASE_SOURCES)[number];
 
@@ -447,6 +460,7 @@ export const CASE_SOURCE_GROUP: Readonly<Record<CaseSource, CaseSourceGroup>> = 
   library_report: 'reports',
   image_report: 'reports',
   user_report: 'reports',
+  copyright: 'reports',
   text_flag: 'automated',
   image_flag: 'automated',
   bot_flag: 'bots',
@@ -715,6 +729,12 @@ export interface CaseDetail {
   audit: CaseAuditEntry[];
   sanctions: CaseSanctionView[];
   escalations: CaseEscalation[];
+  /**
+   * The copyright notices behind the case and the reported person's strikes,
+   * for a case about copyright; null for every other case (copyright.ts).
+   * The API always sends it; optional so a panel built before it still reads.
+   */
+  copyright?: CopyrightCaseInfo | null;
 }
 
 /** Who an action is for: the reported person, or one of the reporters (a false report). */

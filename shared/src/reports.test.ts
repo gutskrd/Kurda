@@ -34,6 +34,7 @@ describe('report categories', () => {
     expect(categoryPriority('hate')).toBe(1);
     expect(categoryPriority('private_info')).toBe(1);
     expect(categoryPriority('harassment')).toBe(2);
+    expect(categoryPriority('copyright')).toBe(2);
     expect(categoryPriority('spam')).toBe(3);
     expect(categoryPriority('impersonation')).toBe(3);
     expect(categoryPriority('other')).toBe(3);
@@ -111,6 +112,7 @@ describe('targets, sanctions and cases', () => {
   it('groups every case source for the queue filter', () => {
     for (const s of CASE_SOURCES) expect(CASE_SOURCE_GROUP[s]).toBeTruthy();
     expect(CASE_SOURCE_GROUP.report).toBe('reports');
+    expect(CASE_SOURCE_GROUP.copyright).toBe('reports');
     expect(CASE_SOURCE_GROUP.text_flag).toBe('automated');
     expect(OPEN_CASE_STATUSES).not.toContain('actioned');
     expect(OPEN_CASE_STATUSES).not.toContain('no_violation');
