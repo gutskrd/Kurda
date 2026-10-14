@@ -87,7 +87,8 @@ describe('ChatGameCard', () => {
     navigation.navigate.mockClear();
     renderWithProviders(<ChatGameCard game="stories" lobbyId={LOBBY} onReport={onReport} />);
     fireEvent.mouseDown(await screen.findByRole('button', { name: 'Join: Stories' }), { button: 0, buttons: 1 });
-    await waitFor(() => expect(onReport).toHaveBeenCalledTimes(1));
+    // a hold is a real long press, so wait longer than findBy's default second
+    await waitFor(() => expect(onReport).toHaveBeenCalledTimes(1), { timeout: 3000 });
     expect(navigation.navigate).not.toHaveBeenCalled();
   });
 

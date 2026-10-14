@@ -116,6 +116,10 @@ describe('ChatScreen', () => {
 });
 
 describe('ChatScreen reports', () => {
+  // A hold is a real 350 ms long press, then the report sheet slides up in a
+  // Modal: findBy's default one second leaves too little room on a busy CI
+  // runner, so these waits allow for the hold itself.
+  const HOLD = { timeout: 3000 };
   const thread = () =>
     fakeClient({
       'GET /chat/u2/messages': ok({
@@ -132,7 +136,7 @@ describe('ChatScreen reports', () => {
     testAuth.client = thread();
     renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
     fireEvent.mouseDown(await screen.findByRole('button', { name: 'A gift from rojda. Tap to open.' }), { button: 0, buttons: 1 });
-    expect(await screen.findByText('Report this message')).toBeTruthy();
+    expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
     // a hold is not a tap: nothing was unwrapped
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
   });
@@ -141,7 +145,7 @@ describe('ChatScreen reports', () => {
     testAuth.client = thread();
     renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
     fireEvent.mouseDown(await screen.findByRole('button', { name: 'Join: Wordle Battle' }), { button: 0, buttons: 1 });
-    expect(await screen.findByText('Report this message')).toBeTruthy();
+    expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
     // and the game did not open
     expect(navigate).not.toHaveBeenCalled();
   });

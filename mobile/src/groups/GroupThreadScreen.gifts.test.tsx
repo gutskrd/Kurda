@@ -115,7 +115,8 @@ describe('GroupThreadScreen reports', () => {
 
   const reportTheMessage = async (): Promise<void> => {
     fireEvent.mouseDown(await screen.findByText('silav'), { button: 0, buttons: 1 });
-    fireEvent.click(await screen.findByRole('button', { name: 'Scam or spam' }));
+    // a hold is a real long press, so wait longer than findBy's default second
+    fireEvent.click(await screen.findByRole('button', { name: 'Scam or spam' }, { timeout: 3000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
     await screen.findByText('Thanks for telling us');
   };
