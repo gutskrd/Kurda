@@ -175,6 +175,30 @@ export const nl: Catalogue = {
   'pictures.next': 'Volgende afbeelding',
   'post.edit': 'Bewerken',
   'post.source': 'Bron: {source}',
+  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  'refresh.title': 'Je achtergronden en iconen hebben nieuwe afbeeldingen',
+  'refresh.body':
+    'We hebben een aantal achtergronden en iconen vernieuwd — die van jou hebben nieuwe afbeeldingen. Heb je liever je Zêr terug, dan kun je ze in de Winkel terugbrengen.',
+  'refresh.bodyKeep':
+    'We hebben een aantal achtergronden en iconen vernieuwd — die van jou hebben nieuwe afbeeldingen. Ze blijven van jou.',
+  'refresh.gotIt': 'Begrepen',
+  'refresh.goToShop': 'Naar de Winkel',
+  'refresh.sectionTitle': 'Items met nieuwe afbeeldingen',
+  'refresh.sectionLead': 'Houd ze, of breng wat je kocht terug voor wat je betaalde.',
+  'refresh.returnFor': 'Terugbrengen voor {amount}',
+  'refresh.returnItem': '{name} terugbrengen voor {amount}',
+  'refresh.confirmTitle': '{name} terugbrengen?',
+  'refresh.confirmAmount': 'Je krijgt {amount} terug.',
+  'refresh.confirmBody':
+    'Het verdwijnt uit je items en van je profiel als je het gebruikt. Je kunt het daarna niet terugkrijgen.',
+  'refresh.keep': 'Houden',
+  'refresh.confirm': 'Terugbrengen',
+  'refresh.returning': 'Bezig met terugbrengen…',
+  'refresh.returned': '{name} is teruggebracht. {amount} staat weer in je portemonnee.',
+  'refresh.error.notReturnable': 'Dit item kan niet worden teruggebracht.',
+  'refresh.error.nothingToRefund':
+    'Je hebt hier niet voor betaald, dus er valt niets terug te geven. Het blijft van jou.',
+  'refresh.error.conflict': 'Het terugbrengen is niet gelukt en er is niets veranderd. Probeer het opnieuw.',
   'civak.title': 'Gemeenschap',
   'civak.section.writing': 'Teksten',
   'civak.section.pictures': 'Beelden',

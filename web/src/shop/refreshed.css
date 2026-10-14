@@ -1,0 +1,78 @@
+/*
+ * Refreshed shop items: the one-time notice and the Return section
+ * (web/src/shop/RefreshedItems.tsx). The notice is a calm card in the gold of
+ * Zêr — it is about the owner's things and their money, so it should be seen,
+ * but it is news, not a warning.
+ */
+.refresh-notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 20px;
+  margin: 0 0 24px;
+  padding: 16px 18px;
+  border: 1px solid rgba(240, 194, 74, 0.32);
+  border-radius: var(--r-lg);
+  background: var(--gold-soft);
+}
+.refresh-notice-text {
+  flex: 1 1 320px;
+  min-width: 0;
+}
+.refresh-notice-title {
+  margin: 0 0 4px;
+  color: var(--gold-ink);
+  font-size: 1rem;
+  font-weight: 650;
+}
+.refresh-notice-body {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+  line-height: 1.5;
+}
+.refresh-notice-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.refresh-lead {
+  margin: -6px 0 14px;
+}
+.refresh-done {
+  margin-bottom: 14px;
+}
+.refresh-return {
+  width: 100%;
+}
+
+.refresh-confirm-title {
+  margin: 0 40px 10px 0;
+}
+[dir='rtl'] .refresh-confirm-title {
+  margin: 0 0 10px 40px;
+}
+.refresh-confirm-amount {
+  margin: 0 0 8px;
+  color: var(--gold-ink);
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+.refresh-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+}
+@media (max-width: 480px) {
+  .refresh-notice-actions,
+  .refresh-confirm-actions {
+    width: 100%;
+  }
+  .refresh-notice-actions > *,
+  .refresh-confirm-actions > * {
+    flex: 1 1 auto;
+  }
+}

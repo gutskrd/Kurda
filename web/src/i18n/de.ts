@@ -175,6 +175,30 @@ export const de: Catalogue = {
   'pictures.next': 'Nächstes Bild',
   'post.edit': 'Bearbeiten',
   'post.source': 'Quelle: {source}',
+  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  'refresh.title': 'Deine Hintergründe und Symbole haben neue Bilder',
+  'refresh.body':
+    'Wir haben einige Hintergründe und Symbole erneuert — deine haben neue Bilder bekommen. Wenn du lieber dein Zêr zurückhättest, kannst du sie im Shop zurückgeben.',
+  'refresh.bodyKeep':
+    'Wir haben einige Hintergründe und Symbole erneuert — deine haben neue Bilder bekommen. Sie gehören weiter dir.',
+  'refresh.gotIt': 'Verstanden',
+  'refresh.goToShop': 'Zum Shop',
+  'refresh.sectionTitle': 'Artikel mit neuen Bildern',
+  'refresh.sectionLead': 'Behalte sie, oder gib gekaufte für den bezahlten Preis zurück.',
+  'refresh.returnFor': 'Für {amount} zurückgeben',
+  'refresh.returnItem': '{name} für {amount} zurückgeben',
+  'refresh.confirmTitle': '{name} zurückgeben?',
+  'refresh.confirmAmount': 'Du bekommst {amount} zurück.',
+  'refresh.confirmBody':
+    'Der Artikel verlässt deine Sammlung und wird von deinem Profil genommen, falls du ihn nutzt. Danach kannst du ihn nicht zurückbekommen.',
+  'refresh.keep': 'Behalten',
+  'refresh.confirm': 'Zurückgeben',
+  'refresh.returning': 'Wird zurückgegeben …',
+  'refresh.returned': '{name} ist zurückgegeben. {amount} ist wieder in deiner Geldbörse.',
+  'refresh.error.notReturnable': 'Dieser Artikel kann nicht zurückgegeben werden.',
+  'refresh.error.nothingToRefund':
+    'Du hast hierfür nichts bezahlt, also gibt es nichts zurückzugeben. Er bleibt deiner.',
+  'refresh.error.conflict': 'Die Rückgabe hat nicht geklappt, und nichts hat sich geändert. Versuch es noch einmal.',
   'civak.title': 'Gemeinschaft',
   'civak.section.writing': 'Texte',
   'civak.section.pictures': 'Bilder',

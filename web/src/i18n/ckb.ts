@@ -192,6 +192,28 @@ export const ckb: Catalogue = {
   'pictures.next': 'وێنەی دواتر',
   'post.edit': 'دەستکاری',
   'post.source': 'سەرچاوە: {source}',
+  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  'refresh.title': 'پاشبنەما و ئایکۆنەکانت وێنەی نوێیان هەیە',
+  'refresh.body':
+    'هەندێک پاشبنەما و ئایکۆنمان نوێ کردەوە — ئەوانەی تۆش وێنەی نوێیان هەیە. ئەگەر دەتەوێت Zêr بۆت بگەڕێتەوە، دەتوانیت لە فرۆشگا بیانگەڕێنیتەوە.',
+  'refresh.bodyKeep': 'هەندێک پاشبنەما و ئایکۆنمان نوێ کردەوە — ئەوانەی تۆش وێنەی نوێیان هەیە. هێشتا هی خۆتن.',
+  'refresh.gotIt': 'تێگەیشتم',
+  'refresh.goToShop': 'بڕۆ بۆ فرۆشگا',
+  'refresh.sectionTitle': 'شتەکان بە وێنەی نوێ',
+  'refresh.sectionLead': 'بیانهێڵەوە، یان ئەوانەی کڕیوتن بە هەمان نرخ بیانگەڕێنەوە.',
+  'refresh.returnFor': 'گەڕاندنەوە بە {amount}',
+  'refresh.returnItem': '{name} بگەڕێنەوە بە {amount}',
+  'refresh.confirmTitle': '{name} بگەڕێنیتەوە؟',
+  'refresh.confirmAmount': '{amount} وەردەگریتەوە.',
+  'refresh.confirmBody':
+    'لە شتەکانت دەردەچێت، و ئەگەر بەکاری دەهێنیت لە پرۆفایلەکەت لادەبرێت. دواتر ناتوانیت بیگەڕێنیتەوە.',
+  'refresh.keep': 'بیهێڵەوە',
+  'refresh.confirm': 'بیگەڕێنەوە',
+  'refresh.returning': 'دەگەڕێنرێتەوە…',
+  'refresh.returned': '{name} گەڕێنرایەوە. {amount} گەڕایەوە بۆ جزدانەکەت.',
+  'refresh.error.notReturnable': 'ئەم شتە ناگەڕێنرێتەوە.',
+  'refresh.error.nothingToRefund': 'پارەت بۆ ئەمە نەداوە، بۆیە هیچ شتێک نییە بگەڕێتەوە. هی خۆتە.',
+  'refresh.error.conflict': 'گەڕاندنەوەکە سەری نەگرت، و هیچ نەگۆڕا. دووبارە هەوڵ بدەوە.',
 
   'games.title': 'یاری',
   'games.eyebrow': 'بە یاریکردن فێربە',

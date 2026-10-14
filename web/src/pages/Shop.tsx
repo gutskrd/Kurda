@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { describeError, requestId } from '../lib/api';
-import type { InventoryItem, PurchaseResult, ShopItem } from '../lib/types';
+import type { PurchaseResult, ShopItem } from '../lib/types';
 import { ErrorState } from '../components/states';
 import { FriendListSkeleton, TileGridSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
@@ -10,6 +10,7 @@ import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { CoinIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
+import { RefreshedNotice, ReturnableItems, type InventoryWithRefunds } from '../shop/RefreshedItems';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -94,7 +95,7 @@ export function Shop(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const shop = useApiGet<{ items: ShopItem[] }>('/shop');
-  const inventory = useApiGet<{ items: InventoryItem[] }>('/me/inventory');
+  const inventory = useApiGet<InventoryWithRefunds>('/me/inventory');
   const wallet = useApiGet<{ balances: { zer: number } }>('/me/wallet');
 
   const [zer, setZer] = useState<number | null>(null);
@@ -193,6 +194,9 @@ export function Shop(): React.JSX.Element {
         </div>
       )}
 
+      {/* refreshed items: the one-time notice (contract-3 §S) */}
+      <RefreshedNotice inventory={inventory.data} />
+
       <GiftsReceived onEquipHint={() => setMsg(null)} />
 
       {/* the catalogue only grows, and scrolling all of it to find one thing is
@@ -255,6 +259,15 @@ export function Shop(): React.JSX.Element {
           onGift={setGifting}
         />
       )}
+
+      {/* refreshed items the owner can hand back, under the catalogue (contract-3 §S) */}
+      <ReturnableItems
+        inventory={inventory.data}
+        onReturned={(r) => {
+          if (r.refund.currency === 'zer') setZer(r.balance);
+          inventory.reload();
+        }}
+      />
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}

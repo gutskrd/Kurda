@@ -217,6 +217,28 @@ export const en = {
   'pictures.next': 'Next picture',
   'post.edit': 'Edit',
   'post.source': 'Source: {source}',
+  // ---- refreshed shop items: the one-time notice and returns (contract-3 §S) ----
+  'refresh.title': 'Your backgrounds and icons have new art',
+  'refresh.body':
+    'We refreshed some backgrounds and icons — yours have new art. If you’d rather have your Zêr back, you can return them in the Shop.',
+  'refresh.bodyKeep': 'We refreshed some backgrounds and icons — yours have new art. They’re still yours.',
+  'refresh.gotIt': 'Got it',
+  'refresh.goToShop': 'Go to the Shop',
+  'refresh.sectionTitle': 'Items with new art',
+  'refresh.sectionLead': 'Keep them, or return any you bought for what you paid.',
+  'refresh.returnFor': 'Return for {amount}',
+  'refresh.returnItem': 'Return {name} for {amount}',
+  'refresh.confirmTitle': 'Return {name}?',
+  'refresh.confirmAmount': 'You get {amount} back.',
+  'refresh.confirmBody':
+    'It leaves your items and comes off your profile if you’re using it. You can’t get it back afterwards.',
+  'refresh.keep': 'Keep it',
+  'refresh.confirm': 'Return it',
+  'refresh.returning': 'Returning…',
+  'refresh.returned': '{name} is returned. {amount} is back in your wallet.',
+  'refresh.error.notReturnable': 'This item can’t be returned.',
+  'refresh.error.nothingToRefund': 'You didn’t pay for this one, so there’s nothing to give back. It’s yours to keep.',
+  'refresh.error.conflict': 'The return didn’t go through, and nothing changed. Try again.',
 
   // ---- games ---------------------------------------------------------------
   'games.title': 'Games',
