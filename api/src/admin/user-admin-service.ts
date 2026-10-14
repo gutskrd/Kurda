@@ -6,7 +6,7 @@ import { PRIVILEGED_ROLES } from './roles.js';
 import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
-import { SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
+import { IN_FORCE_SQL, SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -17,6 +17,8 @@ export interface UserSearchResult {
   ban: BanState;
   /** a chat mute in force now (with or without an end) */
   muted: boolean;
+  /** a posting mute or a feature limit in force now: the account works, but not all of it */
+  limited: boolean;
   /** staff roles show on the list, so a moderator sees who is staff before opening them */
   roles: string[];
   createdAt: Date;
@@ -59,7 +61,8 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   balances: { zer: number; gems: number };
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: Date }>;
   sessions: Array<{ deviceName: string | null; createdAt: Date; expiresAt: Date }>;
-  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; createdAt: Date }>;
+  /** the admin's username too, so the page names who did it (null when the account is gone) */
+  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername: string | null; createdAt: Date }>;
 }
 
 /** What the person is told for each of the old page's actions. */
@@ -154,11 +157,14 @@ export class UserAdminService {
       banned_at: Date | null;
       banned_until: Date | null;
       muted: boolean;
+      limited: boolean;
       roles: string[];
       created_at: Date;
       total: number;
     }>(
       `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at,
+              EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = users.id AND s.kind IN ('post_mute', 'feature_limit')
+                         AND ${IN_FORCE_SQL}) AS limited,
               count(*) OVER ()::int AS total
          FROM users WHERE ${where}
         ORDER BY created_at DESC, id
@@ -178,6 +184,7 @@ export class UserAdminService {
         email: r.email,
         ban: banState(now, r.banned_at, r.banned_until),
         muted: r.muted,
+        limited: r.limited,
         roles: r.roles,
         createdAt: r.created_at,
       })),
@@ -210,8 +217,10 @@ export class UserAdminService {
          WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() ORDER BY created_at DESC`,
         [userId],
       ),
-      this.pool.query<{ action: string; reason: string; meta: unknown; admin_id: string | null; created_at: Date }>(
-        `SELECT action, reason, meta, admin_id, created_at FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      this.pool.query<{ action: string; reason: string; meta: unknown; admin_id: string | null; admin_username: string | null; created_at: Date }>(
+        `SELECT a.action, a.reason, a.meta, a.admin_id, u.username AS admin_username, a.created_at
+           FROM admin_actions a LEFT JOIN users u ON u.id = a.admin_id AND u.deleted_at IS NULL
+          WHERE a.target_user_id = $1 ORDER BY a.created_at DESC LIMIT 20`,
         [userId],
       ),
       opts.moderation === false ? Promise.resolve({}) : this.moderationOf(userId),
@@ -231,7 +240,14 @@ export class UserAdminService {
       balances,
       ledger: ledger.rows.map((r) => ({ currency: r.currency, amount: r.amount, reason: r.reason, createdAt: r.created_at })),
       sessions: sessions.rows.map((r) => ({ deviceName: r.device_name, createdAt: r.created_at, expiresAt: r.expires_at })),
-      actions: actions.rows.map((r) => ({ action: r.action, reason: r.reason, meta: r.meta, adminId: r.admin_id, createdAt: r.created_at })),
+      actions: actions.rows.map((r) => ({
+        action: r.action,
+        reason: r.reason,
+        meta: r.meta,
+        adminId: r.admin_id,
+        adminUsername: r.admin_username,
+        createdAt: r.created_at,
+      })),
       ...moderation,
     };
   }

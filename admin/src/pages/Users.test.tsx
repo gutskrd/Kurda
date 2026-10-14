@@ -44,7 +44,7 @@ function person(over: Partial<UserDetail> = {}): UserDetail {
       { currency: 'zer', amount: 500, reason: 'admin_adjustment', createdAt: ago(48) },
     ],
     sessions: [{ deviceName: 'Pixel 8', createdAt: ago(2), expiresAt: ahead(24 * 30) }],
-    actions: [{ action: 'mute', reason: 'insults in the beginners group', meta: null, adminId: 'a-1', createdAt: ago(24 * 40) }],
+    actions: [{ action: 'mute', reason: 'insults in the beginners group', meta: null, adminId: 'a-1', adminUsername: 'rojda', createdAt: ago(24 * 40) }],
     reportsAgainst: [{ id: 'r-1', targetType: 'group_message', category: 'harassment', status: 'actioned', caseId: 'case-1', createdAt: ago(24 * 41) }],
     reportsFiled: [
       { id: 'r-2', targetType: 'user', category: 'spam', status: 'actioned', caseId: 'case-2', createdAt: ago(24 * 10) },
@@ -91,6 +91,7 @@ describe('the list', () => {
     users: [
       { id: 'u-1', username: 'rojin', email: 'rojin@example.org', ban: 'temp_banned', muted: false, roles: ['user'], createdAt: ago(3) },
       { id: 'u-2', username: 'dilan', email: 'dilan@example.org', ban: 'active', muted: true, roles: ['user', 'moderator'], createdAt: ago(30) },
+      { id: 'u-3', username: 'azad', email: 'azad@example.org', ban: 'active', muted: false, limited: true, roles: ['user'], createdAt: ago(40) },
     ],
     total: 60,
   };
@@ -99,10 +100,13 @@ describe('the list', () => {
     const { calls } = show('#/users', MODERATOR, on('GET', /^\/admin\/users\?/, json(rows)));
     expect(await screen.findByText('@rojin')).toBeInTheDocument();
     expect(screen.getByText('60 accounts, newest first.')).toBeInTheDocument();
-    const [, first, second] = screen.getAllByRole('row');
+    const [, first, second, third] = screen.getAllByRole('row');
     expect(within(first!).getByText('Suspended')).toBeInTheDocument();
     expect(within(second!).getByText('Muted')).toBeInTheDocument();
     expect(within(second!).getByText('Moderator')).toBeInTheDocument();
+    // a posting mute is not "Active"
+    expect(within(third!).getByText('Limited')).toBeInTheDocument();
+    expect(within(third!).queryByText('Active')).not.toBeInTheDocument();
     expect(within(first!).getByRole('link', { name: 'Open @rojin' })).toHaveAttribute('href', '#/users/u-1');
     expect(calls.some((c) => c.path === usersPath('', '', 0))).toBe(true);
   });
@@ -146,6 +150,15 @@ describe('a person', () => {
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Standing/ })).toHaveAttribute('href', `${at}/standing`);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '#/users');
+    // a posting mute in force: the header does not call the account "Active"
+    expect(screen.getByText('Limited')).toBeInTheDocument();
+    expect(screen.queryByText('Active')).not.toBeInTheDocument();
+  });
+
+  it('calls an account with nothing in force "Active"', async () => {
+    show(at, MODERATOR, detailRoute(person({ sanctions: [] })));
+    expect(await screen.findByText('Active')).toBeInTheDocument();
+    expect(screen.queryByText('Limited')).not.toBeInTheDocument();
   });
 
   it('marks a minor where nobody can miss it', async () => {
@@ -338,6 +351,8 @@ describe('a person', () => {
     show(`${at}/audit`, MODERATOR, detailRoute(person()));
     expect(await screen.findByText('Chat mute')).toBeInTheDocument();
     expect(screen.getByText('insults in the beginners group')).toBeInTheDocument();
+    // the admin by name, not by eight characters of an id
+    expect(screen.getByRole('link', { name: '@rojda' })).toHaveAttribute('href', '#/users/a-1');
   });
 
   it('gives support the page without what moderation knows', async () => {

@@ -14,6 +14,8 @@ interface UserRow {
   ban: BanState;
   /** a chat mute in force now */
   muted: boolean;
+  /** a posting mute or a feature limit in force now (absent from an older API: then not known, not shown) */
+  limited?: boolean;
   roles: string[];
   createdAt: string;
 }
@@ -154,15 +156,30 @@ function UserList(): React.JSX.Element {
   );
 }
 
-/** "Banned", "Suspended", "Muted" and staff roles: what someone opening the row should know first. */
-export function StatusBadges({ ban, muted, roles }: { ban: BanState; muted: boolean; roles: readonly string[] }): React.JSX.Element {
+/**
+ * "Banned", "Suspended", "Muted", "Limited" (a posting mute or a feature
+ * limit) and staff roles: what someone opening the row should know first.
+ * "Active" only when nothing at all limits the account.
+ */
+export function StatusBadges({
+  ban,
+  muted,
+  limited = false,
+  roles,
+}: {
+  ban: BanState;
+  muted: boolean;
+  limited?: boolean;
+  roles: readonly string[];
+}): React.JSX.Element {
   const staff = roles.filter((r) => Object.hasOwn(ROLE_NAME, r));
   return (
     <span className="badges">
       {ban === 'perm_banned' && <Badge tone="bad">Banned</Badge>}
       {ban === 'temp_banned' && <Badge tone="bad">Suspended</Badge>}
       {muted && <Badge tone="warn">Muted</Badge>}
-      {ban === 'active' && !muted && <Badge tone="ok">Active</Badge>}
+      {limited && <Badge tone="warn">Limited</Badge>}
+      {ban === 'active' && !muted && !limited && <Badge tone="ok">Active</Badge>}
       {staff.map((r) => (
         <Badge key={r} tone="info">
           {ROLE_NAME[r]}
@@ -187,5 +204,5 @@ const COLUMNS: ReadonlyArray<Column<UserRow>> = [
     ),
   },
   { key: 'joined', header: 'Joined', cell: (u) => <Time value={u.createdAt} mode="date" /> },
-  { key: 'status', header: 'Status', cell: (u) => <StatusBadges ban={u.ban} muted={u.muted} roles={u.roles} /> },
+  { key: 'status', header: 'Status', cell: (u) => <StatusBadges ban={u.ban} muted={u.muted} limited={u.limited} roles={u.roles} /> },
 ];

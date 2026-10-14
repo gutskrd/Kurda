@@ -59,7 +59,8 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   balances: { zer: number; gems: number };
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
   sessions: Array<{ deviceName: string | null; createdAt: string; expiresAt: string }>;
-  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; createdAt: string }>;
+  /** adminUsername: who did it, by name (absent from an older API; null when their account is gone) */
+  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername?: string | null; createdAt: string }>;
 }
 
 type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'sessions' | 'audit';
@@ -159,11 +160,18 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
   );
 }
 
-/** The one badge that says where the account stands, beside the name. */
+/**
+ * The one badge that says where the account stands, beside the name. "Active"
+ * only when nothing limits it: a posting mute or a feature limit is "Limited",
+ * so a moderator scanning the header is never told an account is free when it
+ * is not. (Support staff get no sanctions with the page; for them a limit
+ * cannot show, and the header says only what the account record says.)
+ */
 function standingBadge(u: UserDetail): React.JSX.Element {
   if (u.ban === 'perm_banned') return <Badge tone="bad">Banned</Badge>;
   if (u.ban === 'temp_banned') return <Badge tone="bad">Suspended</Badge>;
   if (u.mutedPermanently || (u.mutedUntil && new Date(u.mutedUntil).getTime() > Date.now())) return <Badge tone="warn">Muted</Badge>;
+  if (limitsInForce(u).length > 0) return <Badge tone="warn">Limited</Badge>;
   return <Badge tone="ok">Active</Badge>;
 }
 
@@ -224,6 +232,11 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
   );
 }
 
+/** A posting mute or a feature limit in force now: the account works, but not all of it. */
+function limitsInForce(u: UserDetail): NonNullable<UserDetail['sanctions']> {
+  return (u.sanctions ?? []).filter((s) => s.active && !s.pendingApproval && (s.kind === 'post_mute' || s.kind === 'feature_limit'));
+}
+
 /** Where they stand, in a line: what stops them now, and until when. */
 export function standingLine(u: UserDetail, now = new Date()): string {
   const parts: string[] = [];
@@ -231,8 +244,7 @@ export function standingLine(u: UserDetail, now = new Date()): string {
   else if (u.ban === 'temp_banned') parts.push(`Suspended until ${u.bannedUntil ? absoluteTime(new Date(u.bannedUntil)) : 'further notice'}`);
   if (u.mutedPermanently) parts.push('Can’t send messages, with no end');
   else if (u.mutedUntil && new Date(u.mutedUntil).getTime() > now.getTime()) parts.push(`Can’t send messages until ${absoluteTime(new Date(u.mutedUntil))}`);
-  const limits = (u.sanctions ?? []).filter((s) => s.active && !s.pendingApproval && (s.kind === 'post_mute' || s.kind === 'feature_limit'));
-  for (const s of limits) parts.push(`${sanctionName(s.kind)}${s.endsAt ? ` until ${absoluteTime(new Date(s.endsAt))}` : ''}`);
+  for (const s of limitsInForce(u)) parts.push(`${sanctionName(s.kind)}${s.endsAt ? ` until ${absoluteTime(new Date(s.endsAt))}` : ''}`);
   return parts.length ? parts.join(' · ') : 'In good standing: nothing limits this account.';
 }
 
@@ -662,7 +674,7 @@ function AuditTab({ user: u }: { user: UserDetail }): React.JSX.Element {
             <li key={`${a.createdAt}-${i}`}>
               <Time value={a.createdAt} mode="absolute" />
               <span>
-                <strong>{historyLine(a.action)}</strong> · {a.adminId ? <UserLink user={{ id: a.adminId }} /> : 'automatic'}
+                <strong>{historyLine(a.action)}</strong> · {a.adminId ? <UserLink user={{ id: a.adminId, username: a.adminUsername }} /> : 'automatic'}
               </span>
               {a.reason && (
                 <span className="cell-sub" dir="auto">

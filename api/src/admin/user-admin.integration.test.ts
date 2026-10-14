@@ -113,7 +113,8 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     const detail = (await svc.detail(targetId))!;
     expect(detail.balances.zer).toBe(500);
     expect(detail.ledger[0]).toMatchObject({ currency: 'zer', amount: 500, reason: 'admin_adjustment' });
-    expect(detail.actions.some((a) => a.action === 'wallet_adjust')).toBe(true);
+    // the action names the admin who took it, by username as well as id
+    expect(detail.actions.find((a) => a.action === 'wallet_adjust')).toMatchObject({ adminId, adminUsername: `adminc_${suffix}`.slice(0, 30) });
 
     // over-debit is refused, balance untouched
     const over = await svc.adjustWallet(adminId, targetId, 'zer', -1000, 'clawback');
@@ -171,6 +172,20 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(rows.find((u) => u.id === muted)).toMatchObject({ muted: true, ban: 'active' });
     expect(rows.find((u) => u.id === staff)!.roles).toContain('moderator');
     expect(rows.find((u) => u.id === ended)).toMatchObject({ muted: false, ban: 'active' });
+    expect(rows.every((u) => u.limited === false)).toBe(true);
+
+    // a posting mute leaves the account working, but not all of it: the row says so
+    await new SanctionsService(pool, { moderatorCount: async () => 1 }).apply(pool, {
+      userId: staff,
+      kind: 'post_mute',
+      policy: 'spam',
+      statement: 'Posting the same link again and again.',
+      durationHours: 24,
+      createdBy: adminId,
+      origin: 'moderator',
+      notify: false,
+    });
+    expect((await svc.search(prefix)).users.find((u) => u.id === staff)).toMatchObject({ limited: true, muted: false, ban: 'active' });
 
     // and the route refuses a filter it does not know, before anything else
     const token = (
