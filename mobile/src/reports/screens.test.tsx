@@ -9,7 +9,8 @@ vi.mock('@react-native-community/netinfo', () => import('./testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('./testing/auth'));
 const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }) }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { AppState } from 'react-native';
 import type { AccountStanding, MyReport, StandingSanction } from '@kurda/shared';
 import { renderWithProviders } from './testing/harness';
 import { patchReactNativeWeb } from './testing/rnWebPatches';
@@ -175,6 +176,26 @@ describe('WarningDialog', () => {
     renderWithProviders(<WarningDialog />);
     await waitFor(() => expect(client.calls.length).toBe(1));
     expect(screen.queryByText('A note from Hevalo')).toBeNull();
+  });
+
+  it('asks again when the app comes back to the front, and shows a warning given meanwhile', async () => {
+    const listeners: Array<(state: string) => void> = [];
+    const spy = vi.spyOn(AppState, 'addEventListener').mockImplementation(((_type: string, cb: (state: string) => void) => {
+      listeners.push(cb);
+      return { remove: () => undefined };
+    }) as unknown as typeof AppState.addEventListener);
+    const answers = [
+      standing({}),
+      standing({ unacknowledgedWarnings: [sanction({ id: 'w2', kind: 'warning', policy: 'spam' })] }),
+    ];
+    const client = fakeClient({ 'GET /me/standing': () => ok(answers.shift() ?? standing({})) });
+    testAuth.client = client;
+    renderWithProviders(<WarningDialog />);
+    await waitFor(() => expect(client.calls.length).toBe(1));
+    expect(screen.queryByText('A note from Hevalo')).toBeNull();
+    act(() => listeners.forEach((cb) => cb('active')));
+    expect(await screen.findByText('A note from Hevalo')).toBeTruthy();
+    spy.mockRestore();
   });
 });
 

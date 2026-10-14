@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { AppState, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { StandingSanction } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -24,7 +24,8 @@ import { CATEGORY_LABEL } from './labels';
  * marks it seen (`POST /me/standing/ack`) so it is not shown again, and
  * Account standing is one tap away for the rest.
  *
- * Mounted once, signed in. Renders nothing until there is a warning to show.
+ * Mounted once, signed in, and asks again whenever the app comes back to the
+ * front. Renders nothing until there is a warning to show.
  */
 export function WarningDialog(): React.JSX.Element | null {
   const { client } = useAuth();
@@ -34,13 +35,24 @@ export function WarningDialog(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const [warnings, setWarnings] = useState<StandingSanction[]>([]);
 
+  // on sign-in, and each time the app comes back to the front: a phone is
+  // resumed far more often than it is started, so "the next time the app is
+  // opened" means that too, not only a cold start
   useEffect(() => {
     let alive = true;
-    void accountStanding(client).then((res) => {
-      if (alive && res.ok) setWarnings(res.data.unacknowledgedWarnings);
+    const check = (): void => {
+      void accountStanding(client).then((res) => {
+        // one already on screen stays as it is until it is answered
+        if (alive && res.ok) setWarnings((shown) => (shown.length > 0 ? shown : res.data.unacknowledgedWarnings));
+      });
+    };
+    check();
+    const foreground = AppState.addEventListener('change', (state) => {
+      if (state === 'active') check();
     });
     return () => {
       alive = false;
+      foreground.remove();
     };
   }, [client]);
 
