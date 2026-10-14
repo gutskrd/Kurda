@@ -14,6 +14,7 @@ import {
   historyLine,
   humanize,
   initialDraft,
+  liftEffect,
   mediaKind,
   neighbourCase,
   newAction,
@@ -186,6 +187,15 @@ describe('sanctions and history', () => {
     expect(historyLine('perm_ban')).toBe('Permanent ban');
     expect(historyLine('POST /admin/moderation/cases/:id/claim')).toBe('Claimed it');
     expect(historyLine('session_revoke')).toBe('Signed out everywhere');
+  });
+
+  it('says truthfully what lifting a sanction does', () => {
+    // a limit is lifted and the person told (the API sends the notice)
+    expect(liftEffect('chat_mute', '@baran')).toBe('@baran is told it was lifted. What it stopped works again at once.');
+    expect(liftEffect('permanent_ban', '@baran')).toMatch(/^@baran is told/);
+    // a warning or a removal only comes off the record: no notice, and removed content stays hidden
+    expect(liftEffect('warning', '@baran')).toBe('It comes off @baran’s record; they are not told.');
+    expect(liftEffect('content_removal', '@baran')).toMatch(/content stays hidden/);
   });
 
   it('tells pictures from voice', () => {

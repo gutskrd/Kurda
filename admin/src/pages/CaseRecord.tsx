@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { CaseAuditEntry, CaseEscalation, CaseNote, CaseSanctionView } from '@kurda/shared';
 import { api } from '../api';
-import { categoryName, historyLine, sanctionName } from '../moderation';
+import { categoryName, historyLine, liftEffect, sanctionName } from '../moderation';
 import { ActionMenu, Badge, Button, Icon, Section, Textarea, Time, errorLine, useDialogs, useToast } from '../ui';
 import { SanctionLine } from './CasePeople';
 
@@ -23,7 +23,7 @@ export function CaseSanctions({
     const reason = await dialogs.prompt({
       title: `Lift this ${s.kind === 'permanent_ban' ? 'ban' : 'sanction'}?`,
       label: 'Why (for the record)',
-      body: `${nameOf(s.userId)} is told it was lifted. What it stopped works again at once.`,
+      body: liftEffect(s.kind, nameOf(s.userId)),
       multiline: true,
       maxLength: 2000,
       confirmLabel: 'Lift it',

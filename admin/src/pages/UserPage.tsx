@@ -7,6 +7,7 @@ import {
   PRIORITY_TONE,
   categoryName,
   historyLine,
+  liftEffect,
   sanctionName,
   statusName,
   statusTone,
@@ -264,7 +265,7 @@ function StandingTab({ user: u, canModerate, onChanged }: { user: UserDetail; ca
   const lift = (s: CaseSanctionView): Promise<void> =>
     withReason({
       title: `Lift this ${s.kind === 'permanent_ban' ? 'ban' : sanctionName(s.kind).toLowerCase()}?`,
-      body: `@${u.username} is told it was lifted. What it stopped works again at once.`,
+      body: liftEffect(s.kind, `@${u.username}`),
       confirmLabel: 'Lift it',
       run: async (reason) => {
         await api(`/admin/sanctions/${s.id}/revoke`, { method: 'POST', body: { reason } });
@@ -311,7 +312,8 @@ function StandingTab({ user: u, canModerate, onChanged }: { user: UserDetail; ca
                 onClick={() =>
                   void withReason({
                     title: `Lift the mute on @${u.username}?`,
-                    body: 'Every chat mute in force is lifted. They can send messages again at once.',
+                    // the API lifts every limit with it, not only the chat mute: say so
+                    body: 'Every mute and limit in force is lifted with it — on chat, on posting and on features. They can send messages and post again at once.',
                     confirmLabel: 'Lift it',
                     run: async (reason) => {
                       const r = await api<{ lifted: number }>(`/admin/users/${u.id}/unmute`, { method: 'POST', body: { reason } });

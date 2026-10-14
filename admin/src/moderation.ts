@@ -15,6 +15,7 @@ import {
   PRIORITY_SLA_HOURS,
   REPORT_CATEGORIES,
   SANCTION_DURATION_PRESETS,
+  SANCTION_SCOPE,
   isSanctionKind,
   sanctionHasDuration,
   type CaseMediaItem,
@@ -205,6 +206,18 @@ const SANCTION_NAME: Readonly<Record<SanctionKind, string>> = {
 export function sanctionName(kind: string): string {
   if (kind === 'caring_message') return 'Caring message';
   return named(SANCTION_NAME, kind, 'Sanction');
+}
+
+/**
+ * What lifting a sanction does, for the dialog that asks why. The API tells
+ * the person only when it lifts something that limited them; a warning or a
+ * removal is struck from their record and nothing more — removed content
+ * comes back only when an appeal overturns the decision.
+ */
+export function liftEffect(kind: SanctionKind, who: string): string {
+  if (SANCTION_SCOPE[kind] !== null) return `${who} is told it was lifted. What it stopped works again at once.`;
+  const record = `It comes off ${who}’s record; they are not told.`;
+  return kind === 'content_removal' ? `${record} The content stays hidden: only an overturned appeal brings it back.` : record;
 }
 
 /** What each sanction stops, in a line. */
