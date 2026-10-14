@@ -3,7 +3,15 @@
  * what a game is called, where its lobby is, and how an invite's settings
  * read in a line. The shapes are @kurda/shared's `play` ones.
  */
-import { invitePath, storyTextDirection, isStoryDialect, type InviteSummary, type PlayGame, type StoryLength } from '@kurda/shared';
+import {
+  invitePath,
+  isMissingRoute,
+  storyTextDirection,
+  isStoryDialect,
+  type InviteSummary,
+  type PlayGame,
+  type StoryLength,
+} from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import type { ApiClient } from '../lib/api';
 import type { ApiError, ApiResult } from '../lib/types';
@@ -77,6 +85,11 @@ const PLAY_ERROR_KEY: Record<string, MessageKey> = {
 };
 
 export function playError(error: ApiError, t: Translate): string {
+  // No such route is not "no such game": the API this app talks to is older
+  // than playing with friends (a build whose API has not been deployed yet).
+  // Read like any NOT_FOUND it told the host making a game "This game isn't
+  // available", which was true of nothing they could act on.
+  if (isMissingRoute(error)) return t('play.error.notOnServer');
   const key = error.code ? PLAY_ERROR_KEY[error.code] : undefined;
   // a story game's own refusals (no story of that length, too many games) next
   return key ? t(key) : storyError(error, t);

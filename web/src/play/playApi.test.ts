@@ -52,6 +52,17 @@ describe('playError', () => {
     }
   });
 
+  it('tells a route the API does not have from a game that is gone', () => {
+    // the API's not-found handler: this build is newer than the server
+    expect(playError({ kind: 'client', code: 'NOT_FOUND', message: 'route not found', status: 404 }, t)).toBe(
+      t('play.error.notOnServer'),
+    );
+    // a battle or match the game's own route could not find is still "not available"
+    expect(playError({ kind: 'client', code: 'NOT_FOUND', message: 'no such battle', status: 404 }, t)).toBe(
+      t('stories.error.notFound'),
+    );
+  });
+
   it('says full, started and closed plainly', () => {
     expect(playError(err('BATTLE_FULL'), t)).toBe('This game is full.');
     expect(playError(err('GAME_STARTED'), t)).toBe('This game has already started.');

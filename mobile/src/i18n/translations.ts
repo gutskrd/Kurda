@@ -1043,6 +1043,7 @@ export type TranslationKey =
   | 'error.sessionExpired'
   | 'error.server'
   | 'error.generic'
+  | 'error.notOnServer'
   | 'error.notActivated'
   | 'upload.sessionExpired'
   | 'upload.noPhotoReturned'
@@ -2445,6 +2446,7 @@ const en: Catalog = {
   'error.sessionExpired': 'Your session has expired. Please sign in again.',
   'error.server': 'Something went wrong on our end. Please try again shortly.',
   'error.generic': 'Something went wrong.',
+  'error.notOnServer': 'This isn’t on the server yet. It will work once the server is updated.',
   'error.notActivated': 'Your account isn’t activated yet. Confirm your email address to continue.',
   'upload.sessionExpired': 'Your session expired. Please sign in again.',
   'upload.noPhotoReturned': 'The upload finished but no photo was returned. Please try again.',
@@ -4288,6 +4290,7 @@ const ku: Catalog = {
   'error.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
   'error.server': 'Li aliyê me tiştek xelet çû. Ji kerema xwe piştî demekê dîsa biceribîne.',
   'error.generic': 'Tiştek xelet çû.',
+  'error.notOnServer': 'Ev hê li ser serverê nîne. Dema server were nûkirin, ew ê bixebite.',
   'error.notActivated': 'Hesabê te hê nehatiye çalakkirin. Ji bo berdewamiyê e-nameya xwe piştrast bike.',
   'upload.sessionExpired': 'Danişîna te qediya. Ji kerema xwe dîsa têkeve.',
   'upload.noPhotoReturned': 'Barkirin qediya lê tu wêne venegeriya. Ji kerema xwe dîsa biceribîne.',
@@ -6131,6 +6134,7 @@ const de: Catalog = {
   'error.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
   'error.server': 'Auf unserer Seite ist etwas schiefgegangen. Bitte versuch es gleich noch einmal.',
   'error.generic': 'Etwas ist schiefgegangen.',
+  'error.notOnServer': 'Das gibt es auf dem Server noch nicht. Es klappt, sobald der Server aktualisiert ist.',
   'error.notActivated': 'Dein Konto ist noch nicht aktiviert. Bestätige deine E-Mail-Adresse, um fortzufahren.',
   'upload.sessionExpired': 'Deine Sitzung ist abgelaufen. Bitte melde dich erneut an.',
   'upload.noPhotoReturned': 'Der Upload ist fertig, aber es kam kein Foto zurück. Bitte versuche es erneut.',
@@ -7974,6 +7978,7 @@ const es: Catalog = {
   'error.sessionExpired': 'Tu sesión ha caducado. Vuelve a iniciar sesión.',
   'error.server': 'Algo ha fallado por nuestra parte. Inténtalo de nuevo en un momento.',
   'error.generic': 'Algo ha salido mal.',
+  'error.notOnServer': 'Esto aún no está en el servidor. Funcionará cuando se actualice el servidor.',
   'error.notActivated': 'Tu cuenta aún no está activada. Confirma tu correo electrónico para continuar.',
   'upload.sessionExpired': 'Tu sesión ha caducado. Inicia sesión de nuevo.',
   'upload.noPhotoReturned': 'La subida terminó pero no se devolvió ninguna foto. Inténtalo de nuevo.',
@@ -9817,6 +9822,7 @@ const tr: Catalog = {
   'error.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
   'error.server': 'Bizim tarafımızda bir şeyler ters gitti. Lütfen az sonra tekrar dene.',
   'error.generic': 'Bir şeyler ters gitti.',
+  'error.notOnServer': 'Bu henüz sunucuda yok. Sunucu güncellenince çalışacak.',
   'error.notActivated': 'Hesabın henüz etkinleştirilmedi. Devam etmek için e-posta adresini onayla.',
   'upload.sessionExpired': 'Oturumun sona erdi. Lütfen tekrar giriş yap.',
   'upload.noPhotoReturned': 'Yükleme bitti ama hiçbir fotoğraf dönmedi. Lütfen tekrar deneyin.',
@@ -11660,6 +11666,7 @@ const ar: Catalog = {
   'error.sessionExpired': 'انتهت جلستك. من فضلك سجّل الدخول مرة أخرى.',
   'error.server': 'حدث خطأ من جهتنا. من فضلك حاول مرة أخرى بعد قليل.',
   'error.generic': 'حدث خطأ ما.',
+  'error.notOnServer': 'هذا غير متوفر على الخادم بعد. سيعمل بعد تحديث الخادم.',
   'error.notActivated': 'لم يُفعَّل حسابك بعد. أكّد بريدك الإلكتروني للمتابعة.',
   'upload.sessionExpired': 'انتهت جلستك. يُرجى تسجيل الدخول مرة أخرى.',
   'upload.noPhotoReturned': 'اكتمل الرفع لكن لم تُرجَع أي صورة. يُرجى المحاولة مرة أخرى.',
@@ -13503,6 +13510,7 @@ const fr: Catalog = {
   'error.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
   'error.server': 'Quelque chose s’est mal passé de notre côté. Réessaie dans un instant.',
   'error.generic': 'Quelque chose s’est mal passé.',
+  'error.notOnServer': 'Ce n’est pas encore sur le serveur. Ça marchera dès que le serveur sera mis à jour.',
   'error.notActivated': 'Ton compte n’est pas encore activé. Confirme ton adresse e-mail pour continuer.',
   'upload.sessionExpired': 'Ta session a expiré. Reconnecte-toi.',
   'upload.noPhotoReturned': 'L’envoi est terminé mais aucune photo n’est revenue. Réessaie.',
@@ -15346,6 +15354,7 @@ const nl: Catalog = {
   'error.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
   'error.server': 'Er is iets misgegaan aan onze kant. Probeer het zo meteen opnieuw.',
   'error.generic': 'Er is iets misgegaan.',
+  'error.notOnServer': 'Dit staat nog niet op de server. Het werkt zodra de server is bijgewerkt.',
   'error.notActivated': 'Je account is nog niet geactiveerd. Bevestig je e-mailadres om verder te gaan.',
   'upload.sessionExpired': 'Je sessie is verlopen. Log opnieuw in.',
   'upload.noPhotoReturned': 'Het uploaden is klaar maar er kwam geen foto terug. Probeer het opnieuw.',
@@ -17190,6 +17199,7 @@ const ckb: Catalog = {
   'error.sessionExpired': 'دانیشتنەکەت بەسەرچوو. تکایە دووبارە بچۆ ژوورەوە.',
   'error.server': 'لەلای ئێمە شتێک هەڵە بوو. تکایە دوای کەمێک دووبارە هەوڵ بدە.',
   'error.generic': 'شتێک هەڵە بوو.',
+  'error.notOnServer': 'ئەمە هێشتا لەسەر سێرڤەر نییە. کاتێک سێرڤەر نوێ دەکرێتەوە کار دەکات.',
   'error.notActivated': 'هێsتا هەژمارەکەت چالاک نەکراوە. بۆ بەردەوامبوون ئیمەیڵەکەت پشتڕاست بکەرەوە.',
   'upload.sessionExpired': 'دانیشتنەکەت کۆتایی هات. تکایە دووبارە بچۆ ژوورەوە.',
   'upload.noPhotoReturned': 'بارکردنەکە تەواو بوو بەڵام هیچ وێنەیەک نەگەڕایەوە. تکایە دووبارە هەوڵ بدەوە.',

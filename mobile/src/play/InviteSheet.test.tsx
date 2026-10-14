@@ -133,6 +133,20 @@ describe('InviteSheet', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('AccountStanding');
   });
 
+  it('says the server is not ready yet, rather than "route not found", when the API has no play routes', async () => {
+    // an API older than playing with friends answers with its not-found handler
+    testAuth.client = fakeClient(
+      routes({ 'POST /play/lobbies': fail({ status: 404, code: 'NOT_FOUND', message: 'route not found' }) }),
+    );
+    renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={() => undefined} />);
+    await screen.findByRole('radio', { name: 'Rojda' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
+    fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
+    expect(await screen.findByText('This isn’t on the server yet. It will work once the server is updated.')).toBeTruthy();
+    expect(screen.queryByText('route not found')).toBeNull();
+    expect(navigation.navigate).not.toHaveBeenCalled();
+  });
+
   it('from a DM, a group game may ask more friends, with the DM’s friend still in it', async () => {
     const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'stories', lobbyId: 'g9', invited: 2 }) }));
     testAuth.client = client;

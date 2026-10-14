@@ -1,4 +1,5 @@
 import type { FastifyError, FastifyInstance } from 'fastify';
+import { ROUTE_NOT_FOUND_MESSAGE } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { captureError } from '../observability/sentry.js';
 import { RequestValidationError } from './validation.js';
@@ -48,7 +49,9 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
   app.setNotFoundHandler((req, reply) => {
     void reply.code(404).send({
       code: 'NOT_FOUND',
-      message: 'route not found',
+      // the apps tell "no such route" (an API older than the app) from a game
+      // that is gone by these words (@kurda/shared isMissingRoute)
+      message: ROUTE_NOT_FOUND_MESSAGE,
       requestId: req.id,
     });
   });

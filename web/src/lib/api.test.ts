@@ -43,6 +43,18 @@ describe('describeError', () => {
    * it arrived. That it arrives in English is a gap in the API, not one this
    * function can close by discarding what it knows.
    */
+  /**
+   * A route the API does not have is a build newer than its server, not
+   * anything the reader did: "route not found" is no sentence to show them.
+   */
+  it('says plainly when the server does not have something yet', () => {
+    const missing = { kind: 'client' as const, code: 'NOT_FOUND', message: 'route not found', status: 404 };
+    expect(describeError(missing, t)).toBe(t('error.notOnServer'));
+    expect(describeError(missing, translator(fr))).toBe(fr['error.notOnServer']);
+    // any other NOT_FOUND keeps the server's own words
+    expect(describeError({ ...missing, message: 'no such image' }, t)).toBe('no such image');
+  });
+
   it('still prefers the server’s own message over a generic translated one', () => {
     expect(describeError({ kind: 'client', message: 'Email already taken' }, translator(fr))).toBe(
       'Email already taken',

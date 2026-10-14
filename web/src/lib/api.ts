@@ -2,7 +2,7 @@ import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
-import type { SuspendedErrorDetails } from '@kurda/shared';
+import { isMissingRoute, type SuspendedErrorDetails } from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
@@ -356,6 +356,9 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  // a route the API does not have: this build is newer than the server, and
+  // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute)
+  if (isMissingRoute(error)) return t('error.notOnServer');
   switch (error.kind) {
     case 'network':
       return t('error.offline');

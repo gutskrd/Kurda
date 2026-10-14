@@ -15,6 +15,7 @@
  * module with no React in it — the same shape the browser's `describeError`
  * has, so the two apps answer the same failure with the same sentence.
  */
+import { isMissingRoute } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 
@@ -67,6 +68,10 @@ export function describeError(error: ApiError, t: Translate): string {
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  // A route the API does not have: this build is newer than the server it
+  // talks to (a game invite from a build whose API is not deployed yet), and
+  // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute).
+  if (isMissingRoute(error)) return t('error.notOnServer');
   switch (error.kind) {
     case 'network':
       return t('error.offline');

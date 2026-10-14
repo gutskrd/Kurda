@@ -60,6 +60,24 @@ export const DECLINE_COOLDOWN_MINUTES = 10;
 export const REMATCH_OFFER_SECONDS = 60;
 
 /**
+ * What the API answers, with code NOT_FOUND, for a path it has no route for
+ * (api/src/plugins/errors.ts). The games' own "no such game" is NOT_FOUND
+ * too, but never with these words.
+ */
+export const ROUTE_NOT_FOUND_MESSAGE = 'route not found';
+
+/**
+ * The server has no such route: an app newer than the API it talks to — a
+ * build of a branch whose API has not been deployed yet, say, where
+ * `/play/lobbies` does not exist. The apps say that plainly rather than read
+ * it as a game that has ended ("This game isn't available"), which is what an
+ * invite to a friend used to show against such a server.
+ */
+export function isMissingRoute(error: { code?: string; message?: string }): boolean {
+  return error.code === 'NOT_FOUND' && error.message === ROUTE_NOT_FOUND_MESSAGE;
+}
+
+/**
  * Who may join a lobby, the same rule for every game:
  * - 'friends' (default): the host's accepted friends, and — when the host
  *   shared the game into a group chat — members of that group;

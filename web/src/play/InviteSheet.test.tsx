@@ -204,6 +204,17 @@ describe('InviteSheet', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent(/no words/i);
   });
 
+  it('says the server is not ready yet, not that the game is gone, when the API has no play routes', async () => {
+    // an API older than playing with friends answers with its not-found handler
+    api({ 'POST /play/lobbies': new Response(JSON.stringify({ code: 'NOT_FOUND', message: 'route not found' }), { status: 404 }) });
+    open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
+    const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
+    await userEvent.click(await within(sheet).findByRole('button', { name: 'Create and invite (1)' }));
+    const alert = await within(sheet).findByRole('alert');
+    expect(alert).toHaveTextContent('Playing with friends isn’t on the server yet.');
+    expect(alert).not.toHaveTextContent(/isn’t available/);
+  });
+
   it('keeps its submit to itself when it sits inside another form (the chat composer)', async () => {
     api();
     const outer = vi.fn((e: React.FormEvent) => e.preventDefault());
