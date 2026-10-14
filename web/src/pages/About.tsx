@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { DocPage, MadeBy } from '../components/DocPage';
+import { ContactPoints, ProviderIdentityBlock } from '../copyright/ProviderDetails';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -91,6 +92,23 @@ export function About(): React.JSX.Element {
           ),
         },
         { title: 'about.makerTitle', body: <MadeBy inline /> },
+        // who provides Hevalo and how to reach them, from shared/src/provider.ts (contract-3 §C)
+        {
+          id: 'provider',
+          title: 'about.providerTitle',
+          body: (
+            <>
+              <ProviderIdentityBlock />
+              <ContactPoints />
+              <p>
+                {t('about.copyrightNote')}{' '}
+                <Link className="doc-link" to="/copyright">
+                  {t('footer.copyright')}
+                </Link>
+              </p>
+            </>
+          ),
+        },
       ]}
     >
       <div className="lp-actions doc-foot">

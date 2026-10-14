@@ -58,6 +58,7 @@ const Settings = lazy(() => import('./pages/Settings').then((m) => ({ default: m
 const Messages = lazy(() => import('./pages/Messages').then((m) => ({ default: m.Messages })));
 const Shop = lazy(() => import('./pages/Shop').then((m) => ({ default: m.Shop })));
 const About = lazy(() => import('./pages/About').then((m) => ({ default: m.About })));
+const CopyrightPage = lazy(() => import('./copyright/CopyrightPage').then((m) => ({ default: m.CopyrightPage })));
 const Privacy = lazy(() => import('./pages/Privacy').then((m) => ({ default: m.Privacy })));
 const Terms = lazy(() => import('./pages/Terms').then((m) => ({ default: m.Terms })));
 const Faq = lazy(() => import('./pages/Faq').then((m) => ({ default: m.Faq })));
@@ -123,6 +124,8 @@ export function App(): React.JSX.Element {
             <Route path="/about" element={<About />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/terms" element={<Terms />} />
+            {/* copyright notices from anyone, and counter-notices (contract-3 §C) */}
+            <Route path="/copyright" element={<CopyrightPage />} />
             <Route path="/faq" element={<Faq />} />
             {/* what the lessons are built on, with the studies; see teaching/principles.ts */}
             <Route path="/how-hevalo-teaches" element={<HowHevaloTeaches />} />
