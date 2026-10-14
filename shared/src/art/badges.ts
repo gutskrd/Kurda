@@ -24,7 +24,7 @@ import { offset, place } from './geometry.js';
 import { ICONS, QUESTION } from './icons.js';
 import { paintIcon } from './iconpaint.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
-import { BADGE_TIER_NAMES, BADGES, RANK_BADGE, RANK_TIERS, isBadgeKey } from './keys.js';
+import { BADGE_TIER_NAMES, RANK_BADGE, RANK_TIERS, badgeArt, isBadgeKey } from './keys.js';
 import type { Field, Metal } from './palette.js';
 import { FIELD, RANK_METAL, SHADOW, STONE, TIER_METAL } from './palette.js';
 import { capsule, chevrons, edge, facetBand, halo, kilimGem, rays, sparkle } from './paint.js';
@@ -86,7 +86,7 @@ interface Look {
 }
 
 function lookFor(key: BadgeKey, tier: BadgeTier, tiers: number, state: BadgeState): Look {
-  const family = BADGES[key].family;
+  const family = badgeArt(key).family;
   if (state === 'secret') return { look: 2, metal: SHADOW, glyph: SHADOW, field: FIELD.secret };
   const look: BadgeTier = tiers > 1 ? tier : SINGLE_LOOK[family];
   const metal = tiers > 1 ? TIER_METAL[tier] : TIER_METAL[look];
@@ -154,7 +154,7 @@ function tierCapsule(dr: Drawing, tier: number, count: number, m: Metal, small: 
 }
 
 function titleOf(key: BadgeKey, tier: BadgeTier, tiers: number, state: BadgeState): string {
-  const name = BADGES[key].name;
+  const name = badgeArt(key).name;
   if (state === 'secret') return 'Secret badge';
   if (state === 'locked') return `${name} · not earned yet`;
   return tiers > 1 ? `${name} · ${BADGE_TIER_NAMES[tier]}` : name;
@@ -168,11 +168,11 @@ export function badgeSvg(opts: BadgeOptions): string {
   if (![1, 2, 3, 4].includes(tier)) throw new RangeError(`art: badge tier must be 1–4, got ${String(tier)}`);
   const state = opts.state ?? 'earned';
   if (!['earned', 'locked', 'secret'].includes(state)) throw new RangeError(`art: unknown badge state ${String(state)}`);
-  const tiers = opts.tiers ?? BADGES[key].tiers;
+  const tiers = opts.tiers ?? badgeArt(key).tiers;
   if (!Number.isInteger(tiers) || tiers < 1 || tiers > 4) throw new RangeError(`art: tiers must be 1–4, got ${String(tiers)}`);
   const size = checkSize(opts.size, 96);
   const small = size < SMALL_BADGE;
-  const family = BADGES[key].family;
+  const family = badgeArt(key).family;
   const shownTier = (tiers > 1 ? Math.min(tier, tiers) : 1) as BadgeTier;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'badge', key, shownTier, state, tiers, small));
   const title = opts.title ?? titleOf(key, shownTier, tiers, state);
@@ -289,7 +289,7 @@ function glyphGroup(
  */
 export function badgeShines(key: BadgeKey, tier: BadgeTier = 1, tiers?: number): boolean {
   if (!isBadgeKey(key)) return false;
-  const count = tiers ?? BADGES[key].tiers;
+  const count = tiers ?? badgeArt(key).tiers;
   const shownTier = (count > 1 ? Math.min(tier, count) : 1) as BadgeTier;
   return lookFor(key, shownTier, count, 'earned').look >= 3;
 }
@@ -318,9 +318,9 @@ export function badgeShineSvg(opts: BadgeShineOptions): string {
   if (!Number.isFinite(phase) || phase < 0 || phase > 1) throw new RangeError(`art: phase must be 0–1, got ${String(phase)}`);
   const size = checkSize(opts.size, 96);
   const small = size < SMALL_BADGE;
-  const family = BADGES[key].family;
+  const family = badgeArt(key).family;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'glint', family, n2(phase), small));
-  const clip = dr.clip(polyPath(offset(bodyOutline(family, layoutOf(small, BADGES[key].tiers > 1)), -0.6)));
+  const clip = dr.clip(polyPath(offset(bodyOutline(family, layoutOf(small, badgeArt(key).tiers > 1)), -0.6)));
   const band = dr.id('g');
   dr.def(
     linearAt(
