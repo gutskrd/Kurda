@@ -561,9 +561,23 @@
   border-color: var(--border-strong);
   background: var(--surface-2);
 }
+/* a finger needs 44px (contract §A1): the reader's and the game's small controls grow on touch screens */
 @media (pointer: coarse) {
-  .story-listen {
+  .story-listen,
+  .sg-english {
     min-height: 44px;
+  }
+  .story-player-rate {
+    height: 44px;
+  }
+  .story-gloss-close {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  .story-game .btn-sm,
+  .story-page .btn-sm,
+  .story-hub .btn-sm {
+    height: 44px;
   }
 }
 
@@ -1198,9 +1212,6 @@
   align-self: flex-start;
   min-height: 36px;
   font-size: 0.85rem;
-}
-.sg-english[aria-pressed='true'] {
-  color: var(--ink);
 }
 .sg-options {
   list-style: none;

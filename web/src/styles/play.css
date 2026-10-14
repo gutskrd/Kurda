@@ -489,6 +489,17 @@
   }
 }
 
+/* a finger needs 44px: the small buttons of lobbies, cards, rematches and Play grow on touch screens */
+@media (pointer: coarse) {
+  .lobby-roster .btn-sm,
+  .lobby-invited .btn-sm,
+  .rematch-actions .btn-sm,
+  .chat-game-card .btn-sm,
+  .play-btn.btn-sm {
+    height: 44px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .invite-banner {
     animation: none;

@@ -25,7 +25,7 @@ export function PlayWithButton({
     <>
       <button
         type="button"
-        className={className}
+        className={`play-btn ${className}`}
         onClick={() => setOpen(true)}
         aria-label={iconOnly ? t('play.withWho', { name }) : undefined}
         title={iconOnly ? t('play.withWho', { name }) : undefined}
