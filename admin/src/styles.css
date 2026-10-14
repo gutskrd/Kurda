@@ -29,6 +29,8 @@
   --glass-border: rgba(255, 255, 255, 0.75);
   --surface: rgba(255, 255, 255, 0.74);
   --surface-strong: rgba(255, 255, 255, 0.94);
+  /* drawers and dialogs: opaque, so nothing behind ghosts through what is read in them */
+  --surface-solid: #ffffff;
   --hairline: rgba(24, 24, 27, 0.1);
   --separator: rgba(24, 24, 27, 0.08);
   --control: rgba(24, 24, 27, 0.045);
@@ -80,6 +82,7 @@
     --glass-border: rgba(255, 255, 255, 0.08);
     --surface: rgba(26, 26, 31, 0.76);
     --surface-strong: rgba(30, 30, 35, 0.97);
+    --surface-solid: #1e1e23;
     --hairline: rgba(255, 255, 255, 0.1);
     --separator: rgba(255, 255, 255, 0.075);
     --control: rgba(255, 255, 255, 0.055);

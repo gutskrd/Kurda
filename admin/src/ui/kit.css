@@ -288,7 +288,7 @@
 .dialog {
   position: fixed; z-index: 81; left: 50%; top: 50%; transform: translate(-50%, -50%);
   width: min(92vw, 460px); max-height: min(86vh, 720px); display: flex; flex-direction: column;
-  background: var(--surface-strong); color: var(--text);
+  background: var(--surface-solid); color: var(--text);
   border: 1px solid var(--hairline); border-radius: 16px; box-shadow: var(--shadow-lg);
   animation: rise-in 0.18s ease;
 }
@@ -314,7 +314,7 @@
 .drawer {
   position: fixed; z-index: 81; top: 0; bottom: 0; display: flex; flex-direction: column;
   width: min(92vw, 520px);
-  background: var(--surface-strong); color: var(--text);
+  background: var(--surface-solid); color: var(--text);
   border: 1px solid var(--hairline); box-shadow: var(--shadow-lg);
 }
 .drawer:focus { outline: none; }
@@ -365,8 +365,9 @@
 }
 
 /* ---- people and times ------------------------------------------------------ */
-.user-link { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.user-link a { font-weight: 600; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 3px; }
+/* a long username wraps rather than being cut at a card's edge: the full name is what a moderator acts on */
+.user-link { display: inline-flex; align-items: center; gap: 6px; flex-wrap: wrap; min-width: 0; max-width: 100%; }
+.user-link a { min-width: 0; overflow-wrap: anywhere; font-weight: 600; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 3px; }
 .user-link a:hover { text-decoration-color: currentColor; }
 .time { white-space: nowrap; font-variant-numeric: tabular-nums; }
 
