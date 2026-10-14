@@ -5,7 +5,7 @@ import type { LobbyCard } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from './testing/navigation';
-import { ChatGameCard, gameCardOf } from './ChatGameCard';
+import { cardAction, ChatGameCard, gameCardOf } from './ChatGameCard';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -24,6 +24,20 @@ const card = (over: Partial<LobbyCard>): LobbyCard => ({
   canJoin: true,
   isMember: false,
   ...over,
+});
+
+describe('cardAction', () => {
+  it('gives the strong button only to a game still gathering players', () => {
+    expect(cardAction(card({}))).toEqual({ kind: 'join', prominent: true });
+    expect(cardAction(card({ isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: true });
+    expect(cardAction(card({ status: 'full', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: true });
+    // a game under way or over keeps a quiet way in, so past games do not shout
+    expect(cardAction(card({ status: 'started', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: false });
+    expect(cardAction(card({ status: 'finished', isMember: true, canJoin: false }))).toEqual({ kind: 'enter', prominent: false });
+    expect(cardAction(card({ status: 'cancelled', isMember: true, canJoin: false }))).toBeNull();
+    expect(cardAction(card({ status: 'finished', canJoin: false }))).toBeNull();
+    expect(cardAction(null)).toBeNull();
+  });
 });
 
 describe('gameCardOf', () => {

@@ -34,6 +34,22 @@ export function cardStateText(card: LobbyCard, t: Translate): string {
 }
 
 /**
+ * What a card offers. Join while it can be joined; Open for a player who is
+ * in it. Only a game that is still gathering (one that can be joined, or the
+ * viewer's own lobby waiting to start) gets the strong button: a chat with a
+ * few past games in it would otherwise be a column of loud buttons, and the
+ * one game that can be played would not stand out. A game under way or over
+ * keeps a quiet Open.
+ */
+export function cardAction(card: LobbyCard | null): { kind: 'join' | 'enter'; prominent: boolean } | null {
+  if (!card) return null;
+  const gathering = card.status === 'open' || card.status === 'full';
+  if (card.isMember && card.status !== 'unavailable' && card.status !== 'cancelled') return { kind: 'enter', prominent: gathering };
+  if (card.canJoin) return { kind: 'join', prominent: true };
+  return null;
+}
+
+/**
  * A message's text with an old invite link taken out, and the game it
  * pointed at (before game cards were messages of their own, an invite was a
  * link pasted into the text; those still turn into cards).
@@ -102,7 +118,8 @@ export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: strin
   const name = t(GAME_NAME_KEY[game]);
   const details = card ? summaryParts(card.summary, t).join(' · ') : '';
   const state = card ? cardStateText(card, t) : '';
-  const action = card?.isMember && card.status !== 'unavailable' && card.status !== 'cancelled' ? t('play.card.enter') : card?.canJoin ? t('play.card.join') : null;
+  const offer = cardAction(card);
+  const action = offer ? (offer.kind === 'enter' ? t('play.card.enter') : t('play.card.join')) : null;
 
   return (
     <View
@@ -135,9 +152,13 @@ export function ChatGameCard({ game, lobbyId }: { game: PlayGame; lobbyId: strin
           onPress={open}
           accessibilityRole="button"
           accessibilityLabel={`${action}: ${name}`}
-          style={({ pressed }) => [styles.button, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+          style={({ pressed }) => [
+            styles.button,
+            offer?.prominent ? { backgroundColor: colors.primary } : [styles.quiet, { borderColor: colors.separator }],
+            { opacity: pressed ? 0.85 : 1 },
+          ]}
         >
-          <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{action}</Text>
+          <Text style={[styles.buttonText, { color: offer?.prominent ? colors.textOnPrimary : colors.primary }]}>{action}</Text>
         </Pressable>
       ) : null}
     </View>
@@ -153,5 +174,6 @@ const styles = StyleSheet.create({
   details: { fontSize: typography.sizes.xs },
   state: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   button: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
+  quiet: { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth },
   buttonText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 });
