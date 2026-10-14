@@ -17,6 +17,7 @@ const rank = (over: Partial<ProfileRank>): ProfileRank => ({
   points: 1160,
   resting: false,
   placing: false,
+  placement: null,
   seasonPeakTier: 'ciya',
   bestTier: 'lutke',
   ...over,
@@ -48,12 +49,14 @@ describe('ProfileProgress', () => {
     renderApp(
       <ProfileProgress
         ranks={[
-          rank({ game: 'rhyme-match', tier: null, division: null, points: null, placing: true, seasonPeakTier: null, bestTier: null }),
+          rank({ game: 'rhyme-match', tier: null, division: null, points: null, placing: true, placement: { played: 2, of: 5 }, seasonPeakTier: null, bestTier: null }),
           rank({ game: 'stories', tier: null, division: null, points: null, resting: true, seasonPeakTier: null, bestTier: 'gir' }),
         ]}
       />,
     );
-    expect(screen.getByText(en['ranks.placingShort'], { selector: '.profile-rank-tier' })).toBeInTheDocument();
+    // how far through placement, not a bare "Placing" over an empty 0/5 emblem
+    expect(screen.getByText('Placing 2/5', { selector: '.profile-rank-tier' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Placing 2/5' })).toBeInTheDocument();
     expect(screen.getByText(en['ranks.resting'])).toBeInTheDocument();
     expect(screen.getByText('Best ever: Gir')).toBeInTheDocument();
   });

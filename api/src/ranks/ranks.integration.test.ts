@@ -412,7 +412,7 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
         [a, seasonOf(clock).id, new Date(clock.getTime() - 30 * 24 * 60 * MINUTE)],
       );
       expect((await ranks.profileRanks(a, false))[0]).toMatchObject({ resting: true, tier: null, points: null });
-      expect((await ranks.profileRanks(a, true))[0]).toMatchObject({ resting: false, tier: 'ciya', points: 960 });
+      expect((await ranks.profileRanks(a, true))[0]).toMatchObject({ resting: false, tier: 'ciya', points: 960, placing: false, placement: null });
     });
   });
 

@@ -546,6 +546,8 @@ export interface ProfileRank {
   points: number | null;
   resting: boolean;
   placing: boolean;
+  /** "Placing 2/5" while placing, else null (as on `RankCard`) */
+  placement: { played: number; of: number } | null;
   /** the best tier this season and ever */
   seasonPeakTier: PointsTier | null;
   bestTier: PointsTier | null;

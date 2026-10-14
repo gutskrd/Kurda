@@ -854,6 +854,7 @@ export class RankService {
         points: hidden ? null : points,
         resting,
         placing,
+        placement: placing ? { played: Math.min(state.ratedGames, PLACEMENT_GAMES), of: PLACEMENT_GAMES } : null,
         seasonPeakTier: placing || state.seasonGames === 0 ? null : tierOf(state.peakPoints),
         bestTier: placing ? null : tierOf(state.bestPoints),
       });

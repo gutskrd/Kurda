@@ -117,7 +117,8 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
 
     // the profile shows the rank now
     const profile = await call('stranger', 'GET', `/users/${users.host!.id}`);
-    expect(profile.json().ranks).toEqual([expect.objectContaining({ game: 'wordle-battle', placing: true })]);
+    // placing, with how far: "Placing 1/5" rather than a bare "Placing"
+    expect(profile.json().ranks).toEqual([expect.objectContaining({ game: 'wordle-battle', placing: true, placement: { played: 1, of: 5 }, tier: null })]);
     expect(profile.json()).not.toHaveProperty('rating');
   });
 

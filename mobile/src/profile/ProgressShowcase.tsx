@@ -100,11 +100,9 @@ export function ProgressShowcase({
             ) : null}
             {shown.map((r) => {
               const game = t(GAME_NAME_KEY[r.game]);
-              const now = r.resting
-                ? t('ranks.resting')
-                : r.placing || !r.tier
-                  ? t('ranks.placingShort')
-                  : rankName(t, r.tier, r.division);
+              // how far through placement, where the API says ("Placing 2/5")
+              const placing = r.placement ? t('ranks.placing', { played: r.placement.played, of: r.placement.of }) : t('ranks.placingShort');
+              const now = r.resting ? t('ranks.resting') : r.placing || !r.tier ? placing : rankName(t, r.tier, r.division);
               const best = r.bestTier ? t('profile.rankBest', { rank: t(TIER_NAME_KEY[r.bestTier]) }) : null;
               const label = [game, r.tier && !r.resting ? rankLabel(t, r.tier, r.division) : now, best].filter(Boolean).join('. ');
               return (
@@ -119,7 +117,7 @@ export function ProgressShowcase({
                       // resting: the best tier it reached, quietly
                       <RankEmblem tier={r.bestTier} size={44} label={now} style={styles.resting} />
                     ) : (
-                      <PlacementEmblem done={0} size={44} label={now} />
+                      <PlacementEmblem done={r.placement?.played ?? 0} size={44} label={now} />
                     )
                   }
                   kicker={game}

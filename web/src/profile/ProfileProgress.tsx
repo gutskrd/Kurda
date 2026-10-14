@@ -95,15 +95,17 @@ function ProfileRankItem({ rank }: { rank: ProfileRank }): React.JSX.Element {
   // the emblem is the best this season, where there is one; the line says where they are now
   const emblemTier = rank.seasonPeakTier ?? rank.tier ?? rank.bestTier;
   let now: string;
+  // how far through placement, where the API says ("Placing 2/5"); a bare "Placing" otherwise
+  const placing = rank.placement ? t('ranks.placing', { played: rank.placement.played, of: rank.placement.of }) : t('ranks.placingShort');
   if (rank.resting) now = t('ranks.resting');
-  else if (rank.placing || !rank.tier) now = t('ranks.placingShort');
+  else if (rank.placing || !rank.tier) now = placing;
   else now = rankLabel(t, rank.tier, rank.division);
   return (
     <li className={`profile-rank${emblemTier ? ` tier-${emblemTier}` : ''}${rank.resting ? ' is-resting' : ''}`}>
       {emblemTier && !rank.placing ? (
         <RankEmblem tier={emblemTier} size={56} title={t('profile.seasonBest', { tier: withMeaning(t, rankTierNamed(t, emblemTier)) })} />
       ) : (
-        <PlacementEmblem done={0} size={56} title={t('ranks.placingShort')} />
+        <PlacementEmblem done={rank.placement?.played ?? 0} size={56} title={placing} />
       )}
       <span className="profile-rank-text">
         <span className="profile-rank-game">{gameName(t, rank.game)}</span>
