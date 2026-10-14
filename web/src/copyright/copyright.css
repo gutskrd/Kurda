@@ -195,6 +195,21 @@
   margin: 12px 0 0;
   font-size: 0.86rem;
 }
+/* a minor's notices: how a parent or guardian answers instead of the form */
+.cr-guardian-why {
+  color: var(--ink-2);
+}
+.cr-guardian-why:focus {
+  outline: none;
+}
+.cr-guardian-why:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--r-sm);
+}
+.doc-section .cr-guardian p {
+  margin: 0 0 4px;
+}
 .cr-form-inline {
   margin-top: 14px;
   padding-top: 14px;

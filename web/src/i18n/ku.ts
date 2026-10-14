@@ -283,6 +283,10 @@ export const ku: Catalogue = {
   'copyright.counter.start': 'Bersiveke dijber bişîne',
   'copyright.counter.until': 'Tu dikarî heta {date} bişînî.',
   'copyright.counter.closed': 'Dema şandina bersiveke dijber derbas bû.',
+  'copyright.counter.guardianWhy':
+    'Bersiveke dijber nav, navnîşana mal û telefona te dide kesê ku agahdarî şandiye. Li ser hesabekî di bin 18 salî de, dê û bav an jî serperişt wê ji bo te bi e-nameyê dişînin. Tu dikarî ji Rewşa hesabê jî nirxandinê bixwazî; ew tiştekî ji van bi wan re parve nake.',
+  'copyright.counter.guardianHow':
+    'Dê û bav an jî serperişt dikarin ji bo vê bersiveke dijber bi referansa {reference} bişînin. Navnîşana e-nameyê:',
   'copyright.counter.sentOn': 'Te di {date} de bersiveke dijber şand.',
   'copyright.counter.formTitle': 'Bersiva dijber ji bo {reference}',
   'copyright.counter.shared':

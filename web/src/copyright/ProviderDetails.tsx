@@ -26,7 +26,7 @@ function Value({ value, ltr = false }: { value: string; ltr?: boolean }): React.
 }
 
 /** An email address, as a link once it is a real one. */
-function Email({ address }: { address: string }): React.JSX.Element {
+export function Email({ address }: { address: string }): React.JSX.Element {
   if (isProviderPlaceholder(address)) return <Value value={address} ltr />;
   return (
     <a className="doc-link" href={`mailto:${address}`} dir="ltr">

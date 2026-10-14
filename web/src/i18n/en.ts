@@ -318,6 +318,10 @@ export const en = {
   'copyright.counter.start': 'Send a counter-notice',
   'copyright.counter.until': 'You can send one until {date}.',
   'copyright.counter.closed': 'The time to send a counter-notice has passed.',
+  'copyright.counter.guardianWhy':
+    'A counter-notice gives the person who sent the notice your name, home address and phone. On an account under 18, a parent or guardian sends it for you, by email. You can also ask for a review from Account standing, which shares none of this with them.',
+  'copyright.counter.guardianHow':
+    'A parent or guardian can send a counter-notice for this one, quoting {reference}, by email to',
   'copyright.counter.sentOn': 'You sent a counter-notice on {date}.',
   'copyright.counter.formTitle': 'Counter-notice for {reference}',
   'copyright.counter.shared':

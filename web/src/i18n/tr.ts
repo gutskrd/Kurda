@@ -276,6 +276,10 @@ export const tr: Catalogue = {
   'copyright.counter.start': 'Karşı bildirim gönder',
   'copyright.counter.until': '{date} tarihine kadar gönderebilirsin.',
   'copyright.counter.closed': 'Karşı bildirim gönderme süresi doldu.',
+  'copyright.counter.guardianWhy':
+    'Karşı bildirim, bildirimi gönderen kişiye adını, ev adresini ve telefonunu verir. 18 yaşından küçük birinin hesabında bunu senin için bir ebeveyn ya da vasi e-postayla gönderir. Hesap durumu sayfasından inceleme de isteyebilirsin; bu, bunların hiçbirini onlarla paylaşmaz.',
+  'copyright.counter.guardianHow':
+    'Bir ebeveyn ya da vasi bunun için {reference} numarasını belirterek karşı bildirimi şu adrese e-postayla gönderebilir:',
   'copyright.counter.sentOn': '{date} tarihinde karşı bildirim gönderdin.',
   'copyright.counter.formTitle': '{reference} için karşı bildirim',
   'copyright.counter.shared':

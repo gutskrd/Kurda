@@ -277,6 +277,10 @@ export const ar: Catalogue = {
   'copyright.counter.start': 'أرسل إشعارًا مضادًا',
   'copyright.counter.until': 'يمكنك إرساله حتى {date}.',
   'copyright.counter.closed': 'انتهت مدة إرسال إشعار مضاد.',
+  'copyright.counter.guardianWhy':
+    'يعطي الإشعار المضاد مَن أرسل الإشعار اسمك وعنوان منزلك وهاتفك. في حساب لمن هم دون 18 عامًا، يرسله أحد الوالدين أو الوصي نيابةً عنك بالبريد الإلكتروني. ويمكنك أيضًا طلب مراجعة من صفحة وضع الحساب، ولا يُشارَك معهم شيء من ذلك.',
+  'copyright.counter.guardianHow':
+    'يمكن لأحد الوالدين أو الوصي إرسال إشعار مضاد لهذا الإشعار، مع ذكر {reference}، بالبريد الإلكتروني إلى',
   'copyright.counter.sentOn': 'أرسلت إشعارًا مضادًا في {date}.',
   'copyright.counter.formTitle': 'إشعار مضاد لـ {reference}',
   'copyright.counter.shared': 'يذهب اسمك وعنوانك وهاتفك وبريدك وإفادتك إلى من أرسل الإشعار، كما يطلب القانون.',

@@ -292,6 +292,34 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     expect(warned.rows[0]!.body).not.toContain('counter-notice');
   });
 
+  it('refuses a counter-notice from a minor and forwards nothing', async () => {
+    const teen = await kit.person('teen', { birthYear: new Date().getUTCFullYear() - 15, birthMonth: 1 });
+    userIds.push(teen.id);
+    await pool.query(`UPDATE users SET created_at = now() - interval '3 days' WHERE id = $1`, [teen.id]);
+    const id = await post(teen, 'My own drawing.');
+    const n = notice(`/app/library/${id}`);
+    await send(n);
+    await takeDown(await caseOfNotice(n.email as string));
+    const listed = ((await call('GET', '/me/copyright/notices', teen.token)).json() as { notices: MyCopyrightNotice[] }).notices[0]!;
+    expect(listed).toMatchObject({ status: 'actioned' });
+
+    const res = await call('POST', `/me/copyright/notices/${listed.id}/counter`, teen.token, {
+      name: 'Teen Author',
+      address: 'Home Street 1, Rotterdam',
+      phone: '+31 6 0000 0000',
+      email: 'teen@example.com',
+      statement: 'I drew it.',
+      goodFaith: true,
+      consent: true,
+      signature: 'Teen Author',
+    });
+    expect(res.statusCode).toBe(403);
+    expect((res.json() as { code: string }).code).toBe('COUNTER_NOTICE_ADULT_REQUIRED');
+    expect(mails.some((m) => m.template === 'copyright-counter-notice' && m.vars.address === 'Home Street 1, Rotterdam')).toBe(false);
+    expect((await pool.query(`SELECT 1 FROM copyright_counter_notices WHERE notice_id = $1`, [listed.id])).rowCount).toBe(0);
+    expect((await detail(await caseOfNotice(n.email as string))).copyright!.notices[0]).toMatchObject({ status: 'actioned', counterNotice: null });
+  });
+
   it('lets the uploader answer with a counter-notice that reaches the admin and the notifier', async () => {
     const id = await post(author, 'Mine after all.');
     const n = notice(`/app/library/${id}`);

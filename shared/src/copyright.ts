@@ -419,7 +419,10 @@ export function restoreNotBefore(receivedAt: Date, businessDays = COUNTER_NOTICE
  * Signed in:
  *   GET  /me/copyright/notices         → MyCopyrightNoticesPage
  *   POST /me/copyright/notices/:id/counter  CounterNoticeRequest → 201 CounterNoticeReceipt
- *        (404 NOT_FOUND for a notice not about your post or that took nothing down;
+ *        (403 COUNTER_NOTICE_ADULT_REQUIRED for an account not known to be 18 or
+ *         over: a parent or guardian sends it by email instead, since its copy
+ *         with the sender's address goes to the notifier;
+ *         404 NOT_FOUND for a notice not about your post or that took nothing down;
  *         409 ALREADY_COUNTERED, COUNTER_WINDOW_CLOSED; 422 INVALID_COUNTER_NOTICE)
  *
  * Admins: the case view (`GET /admin/moderation/cases/:id`) carries `copyright`.

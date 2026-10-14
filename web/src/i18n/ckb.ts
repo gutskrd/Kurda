@@ -293,6 +293,10 @@ export const ckb: Catalogue = {
   'copyright.counter.start': 'وەڵامی دژ بنێرە',
   'copyright.counter.until': 'دەتوانیت تا {date} بینێریت.',
   'copyright.counter.closed': 'کاتی ناردنی وەڵامی دژ تێپەڕی.',
+  'copyright.counter.guardianWhy':
+    'وەڵامی دژ ناو، ناونیشانی ماڵ و تەلەفۆنەکەت دەدات بەو کەسەی ئاگادارکردنەوەکەی ناردووە. لە هەژمارێکی خوار ١٨ ساڵدا، دایک و باوک یان سەرپەرشتیار بە ئیمەیڵ بۆت دەینێرن. دەتوانیت لە دۆخی هەژمارەوە داوای پێداچوونەوەش بکەیت، کە هیچ لەمانە لەگەڵیان هاوبەش ناکات.',
+  'copyright.counter.guardianHow':
+    'دایک و باوک یان سەرپەرشتیار دەتوانن وەڵامی دژ بۆ ئەمە بنێرن، بە ئاماژەدان بە {reference}، بە ئیمەیڵ بۆ',
   'copyright.counter.sentOn': 'لە {date} وەڵامی دژت نارد.',
   'copyright.counter.formTitle': 'وەڵامی دژ بۆ {reference}',
   'copyright.counter.shared':

@@ -5,6 +5,7 @@ import {
   COPYRIGHT_EXPLANATION_MAX,
   COPYRIGHT_NAME_MAX,
   COPYRIGHT_PHONE_MAX,
+  PROVIDER,
   cleanCopyrightText,
   counterNoticeProblems,
   type CounterNoticeReceipt,
@@ -19,6 +20,7 @@ import { Button } from '../components/Button';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { Confirm, TextField, useFormProblems, useProblemText } from './fields';
+import { Email } from './ProviderDetails';
 
 /**
  * The other side of a notice: somebody whose post was taken down after a
@@ -28,6 +30,13 @@ import { Confirm, TextField, useFormProblems, useProblemText } from './fields';
  *
  * Only the notices that took something of theirs down are listed, and only
  * while the six months to answer last can one be answered.
+ *
+ * Not from an account under 18: the counter-notice's copy, with the sender's
+ * name, home address and phone, goes to whoever filed the notice — anyone,
+ * unverified. A minor sees how a parent or guardian sends it by email instead,
+ * and that the review request from Account standing shares nothing with them.
+ * The API refuses it too (COUNTER_NOTICE_ADULT_REQUIRED), which also covers an
+ * account with no birth month on record; that answer switches to the same copy.
  */
 export function CounterNotices(): React.JSX.Element {
   const { status } = useAuth();
@@ -54,8 +63,16 @@ const STATUS_COPY: Record<MyCopyrightNotice['status'], MessageKey> = {
 function MyNotices(): React.JSX.Element {
   const t = useT();
   const { locale } = useI18n();
+  const { user } = useAuth();
   const { data, error, loading, reload } = useApiGet<MyCopyrightNoticesPage>('/me/copyright/notices');
   const [open, setOpen] = useState<string | null>(null);
+  const [adultRefused, setAdultRefused] = useState(false);
+  const guardianOnly = user?.minor === true || adultRefused;
+  const whyRef = useRef<HTMLParagraphElement>(null);
+  // the form the reader was in is gone: take them to why, and to what to do instead
+  useEffect(() => {
+    if (adultRefused) whyRef.current?.focus();
+  }, [adultRefused]);
 
   if (loading && !data) return <p className="muted">{t('copyright.counter.loading')}</p>;
   if (error) {
@@ -74,65 +91,83 @@ function MyNotices(): React.JSX.Element {
   const day = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString(locale, { dateStyle: 'medium' }) : '');
 
   return (
-    <ul className="cr-notices">
-      {notices.map((n) => (
-        <li className="cr-card cr-notice" key={n.id}>
-          <div className="cr-notice-head">
-            <span className="cr-reference" dir="ltr">
-              {n.reference}
-            </span>
-            <span className={`cr-status cr-status-${n.status}`}>{t(STATUS_COPY[n.status])}</span>
-          </div>
-          <dl className="cr-notice-facts">
-            <dt>{t('copyright.counter.claimant')}</dt>
-            <dd>{n.claimant}</dd>
-            <dt>{t('copyright.counter.work')}</dt>
-            <dd>{n.work}</dd>
-            {n.target?.type === 'library_post' && (
-              <>
-                <dt>{t('copyright.counter.post')}</dt>
-                <dd>
-                  <Link className="doc-link" to={`/app/library/${n.target.id}`}>
-                    {t('copyright.counter.openPost')}
-                  </Link>
-                </dd>
-              </>
-            )}
-            {n.decidedAt && (
-              <>
-                <dt>{t('copyright.counter.decided')}</dt>
-                <dd>{day(n.decidedAt)}</dd>
-              </>
-            )}
-          </dl>
-          {n.counterNotice ? (
-            <p className="muted cr-notice-note">{t('copyright.counter.sentOn', { date: day(n.counterNotice.createdAt) })}</p>
-          ) : n.canCounter ? (
-            open === n.id ? (
-              <CounterForm
-                notice={n}
-                onCancel={() => setOpen(null)}
-                onSent={() => {
-                  setOpen(null);
-                  reload();
-                }}
-              />
-            ) : (
-              <div className="cr-notice-actions">
-                <Button variant="secondary" onClick={() => setOpen(n.id)}>
-                  {t('copyright.counter.start')}
-                </Button>
-                {n.counterDeadline && (
-                  <span className="muted cr-notice-note">{t('copyright.counter.until', { date: day(n.counterDeadline) })}</span>
-                )}
+    <>
+      {guardianOnly && notices.some((n) => n.canCounter) && (
+        <p className="cr-fineprint cr-guardian-why" ref={whyRef} tabIndex={-1}>
+          {t('copyright.counter.guardianWhy')}
+        </p>
+      )}
+      <ul className="cr-notices">
+        {notices.map((n) => (
+          <li className="cr-card cr-notice" key={n.id}>
+            <div className="cr-notice-head">
+              <span className="cr-reference" dir="ltr">
+                {n.reference}
+              </span>
+              <span className={`cr-status cr-status-${n.status}`}>{t(STATUS_COPY[n.status])}</span>
+            </div>
+            <dl className="cr-notice-facts">
+              <dt>{t('copyright.counter.claimant')}</dt>
+              <dd>{n.claimant}</dd>
+              <dt>{t('copyright.counter.work')}</dt>
+              <dd>{n.work}</dd>
+              {n.target?.type === 'library_post' && (
+                <>
+                  <dt>{t('copyright.counter.post')}</dt>
+                  <dd>
+                    <Link className="doc-link" to={`/app/library/${n.target.id}`}>
+                      {t('copyright.counter.openPost')}
+                    </Link>
+                  </dd>
+                </>
+              )}
+              {n.decidedAt && (
+                <>
+                  <dt>{t('copyright.counter.decided')}</dt>
+                  <dd>{day(n.decidedAt)}</dd>
+                </>
+              )}
+            </dl>
+            {n.counterNotice ? (
+              <p className="muted cr-notice-note">{t('copyright.counter.sentOn', { date: day(n.counterNotice.createdAt) })}</p>
+            ) : n.canCounter && guardianOnly ? (
+              <div className="cr-notice-note cr-guardian">
+                <p>
+                  {t('copyright.counter.guardianHow', { reference: n.reference })} <Email address={PROVIDER.copyrightEmail} />
+                </p>
+                {n.counterDeadline && <p className="muted">{t('copyright.counter.until', { date: day(n.counterDeadline) })}</p>}
               </div>
-            )
-          ) : (
-            <p className="muted cr-notice-note">{t('copyright.counter.closed')}</p>
-          )}
-        </li>
-      ))}
-    </ul>
+            ) : n.canCounter ? (
+              open === n.id ? (
+                <CounterForm
+                  notice={n}
+                  onCancel={() => setOpen(null)}
+                  onAdultRequired={() => {
+                    setOpen(null);
+                    setAdultRefused(true);
+                  }}
+                  onSent={() => {
+                    setOpen(null);
+                    reload();
+                  }}
+                />
+              ) : (
+                <div className="cr-notice-actions">
+                  <Button variant="secondary" onClick={() => setOpen(n.id)}>
+                    {t('copyright.counter.start')}
+                  </Button>
+                  {n.counterDeadline && (
+                    <span className="muted cr-notice-note">{t('copyright.counter.until', { date: day(n.counterDeadline) })}</span>
+                  )}
+                </div>
+              )
+            ) : (
+              <p className="muted cr-notice-note">{t('copyright.counter.closed')}</p>
+            )}
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }
 
@@ -152,10 +187,13 @@ const slack = (max: number) => max + 200;
 function CounterForm({
   notice,
   onCancel,
+  onAdultRequired,
   onSent,
 }: {
   notice: MyCopyrightNotice;
   onCancel: () => void;
+  /** the API answered that this account may not send one (not known to be 18 or over) */
+  onAdultRequired: () => void;
   onSent: (receipt: CounterNoticeReceipt) => void;
 }): React.JSX.Element {
   const { client, user } = useAuth();
@@ -208,6 +246,7 @@ function CounterForm({
     const res = await client.post<CounterNoticeReceipt>(`/me/copyright/notices/${notice.id}/counter`, body);
     setBusy(false);
     if (res.ok) setReceipt(res.data);
+    else if (res.error.code === 'COUNTER_NOTICE_ADULT_REQUIRED') onAdultRequired();
     else setError(counterError(res.error.code) ?? describeError(res.error, t));
   }
 

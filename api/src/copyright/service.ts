@@ -28,7 +28,7 @@ import {
 } from '@kurda/shared';
 import { emailLocaleFor, type EmailLocale } from '../email/templates.js';
 import { AppError } from '../plugins/errors.js';
-import { minorSql } from '../users/age.js';
+import { isNotKnownAdultUser, minorSql } from '../users/age.js';
 import { resolveTarget } from '../moderation/evidence.js';
 import { networkHash, userHash } from '../moderation/pseudonym.js';
 import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
@@ -418,6 +418,15 @@ export class CopyrightService {
    * as the DMCA asks, with the earliest day the post may come back.
    */
   async counter(userId: string, noticeId: string, input: Partial<Record<keyof CounterNoticeRequest, unknown>>): Promise<CounterNoticeReceipt> {
+    // The copy the DMCA asks us to forward carries the sender's name, home address
+    // and phone to the notifier — anyone who filled in the public form, unverified.
+    // A child's are never sent there: a parent or guardian answers by email instead,
+    // and the removal's review request (Account standing) needs no address at all.
+    // Checked first, so nothing a minor typed is stored; an account with no birth
+    // month on record is held back the same way.
+    if (await isNotKnownAdultUser(this.pool, userId)) {
+      throw new AppError('COUNTER_NOTICE_ADULT_REQUIRED', 403, 'a counter-notice from an account under 18 is sent by a parent or guardian, by email');
+    }
     const problems = counterNoticeProblems(input);
     if (problems.length > 0) {
       throw new AppError('INVALID_COUNTER_NOTICE', 422, 'some of the counter-notice is missing or not valid', { problems });

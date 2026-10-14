@@ -14,7 +14,9 @@ interface Call {
   body: unknown;
 }
 
-function serve(opts: { signedIn?: boolean; notices?: unknown[]; noticeAnswer?: () => Response; counterAnswer?: () => Response } = {}) {
+function serve(
+  opts: { signedIn?: boolean; minor?: boolean; notices?: unknown[]; noticeAnswer?: () => Response; counterAnswer?: () => Response } = {},
+) {
   const calls: Call[] = [];
   if (opts.signedIn) localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'b' }));
   vi.stubGlobal(
@@ -25,7 +27,7 @@ function serve(opts: { signedIn?: boolean; notices?: unknown[]; noticeAnswer?: (
       calls.push({ method, path, body: init?.body ? JSON.parse(String(init.body)) : undefined });
       if (path === '/me') {
         return opts.signedIn
-          ? jsonResponse(200, { user: { id: 'u1', username: 'rojda', email: 'rojda@example.com' } })
+          ? jsonResponse(200, { user: { id: 'u1', username: 'rojda', email: 'rojda@example.com', minor: opts.minor === true } })
           : jsonResponse(401, {});
       }
       if (path === '/copyright/notices' && method === 'POST') {
@@ -253,6 +255,38 @@ describe('counter-notices', () => {
     await userEvent.type(within(f).getByLabelText('Signature'), 'Rojda Amed');
     await userEvent.click(within(f).getByRole('button', { name: 'Send counter-notice' }));
     expect(await within(f).findByRole('alert')).toHaveTextContent('The time to send a counter-notice for this one has passed.');
+  });
+
+  it('tells a minor that a parent or guardian sends it by email, and offers no form', async () => {
+    const calls = serve({ signedIn: true, minor: true, notices: [notice()] });
+    show();
+    expect(await screen.findByText(/On an account under 18, a parent or guardian sends it for you/)).toBeInTheDocument();
+    expect(screen.getByText(/A parent or guardian can send a counter-notice for this one, quoting CN-9F8E7D6C/)).toBeInTheDocument();
+    expect(screen.getAllByText(PROVIDER.copyrightEmail).length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'Send a counter-notice' })).toBeNull();
+    expect(calls.some((c) => c.path.endsWith('/counter'))).toBe(false);
+  });
+
+  it('switches to the guardian route when the server says the account may not send one', async () => {
+    serve({
+      signedIn: true,
+      notices: [notice()],
+      counterAnswer: () => jsonResponse(403, { code: 'COUNTER_NOTICE_ADULT_REQUIRED', message: 'adult required' }),
+    });
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Send a counter-notice' }));
+    const f = screen.getByRole('form', { name: 'Counter-notice for CN-9F8E7D6C' });
+    await userEvent.type(within(f).getByLabelText('Your full name'), 'Rojda Amed');
+    await userEvent.type(within(f).getByLabelText('Postal address'), 'Kerkstraat 1');
+    await userEvent.type(within(f).getByLabelText('Why it was a mistake'), 'Mine.');
+    await userEvent.click(within(f).getByRole('checkbox', { name: /removed by mistake/ }));
+    await userEvent.click(within(f).getByRole('checkbox', { name: /I consent to the jurisdiction/ }));
+    await userEvent.type(within(f).getByLabelText('Signature'), 'Rojda Amed');
+    await userEvent.click(within(f).getByRole('button', { name: 'Send counter-notice' }));
+    const why = await screen.findByText(/On an account under 18, a parent or guardian sends it for you/);
+    expect(why).toHaveFocus();
+    expect(screen.queryByRole('form', { name: 'Counter-notice for CN-9F8E7D6C' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Send a counter-notice' })).toBeNull();
   });
 
   it('shows a counter-notice already sent, and a closed window, without a button', async () => {

@@ -281,6 +281,10 @@ export const nl: Catalogue = {
   'copyright.counter.start': 'Tegenmelding sturen',
   'copyright.counter.until': 'Je kunt die tot {date} sturen.',
   'copyright.counter.closed': 'De termijn voor een tegenmelding is verlopen.',
+  'copyright.counter.guardianWhy':
+    'Een tegenmelding geeft wie de melding stuurde je naam, huisadres en telefoonnummer. Bij een account onder de 18 stuurt een ouder of voogd die voor je, per e-mail. Je kunt ook een herbeoordeling vragen via Accountstatus; daarbij gaat niets hiervan naar hen.',
+  'copyright.counter.guardianHow':
+    'Een ouder of voogd kan hiervoor een tegenmelding sturen, met vermelding van {reference}, per e-mail naar',
   'copyright.counter.sentOn': 'Je stuurde op {date} een tegenmelding.',
   'copyright.counter.formTitle': 'Tegenmelding voor {reference}',
   'copyright.counter.shared':
