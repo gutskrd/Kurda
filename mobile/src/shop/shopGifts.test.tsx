@@ -30,7 +30,8 @@ describe('GiftSheet (the Shop)', () => {
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': ok({ balance: 4100 }) });
     const onSent = vi.fn();
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={onSent} />);
-    fireEvent.click(await screen.findByText('Şîlan'));
+    // each row is named for its friend, not only for the item
+    fireEvent.click(await screen.findByRole('button', { name: 'A gift for Şîlan' }));
     await waitFor(() => expect(onSent).toHaveBeenCalledWith(4100, { userId: 'u2', username: 'shilan', name: 'Şîlan' }));
   });
 

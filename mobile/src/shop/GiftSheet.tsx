@@ -133,7 +133,8 @@ export function GiftSheet({
                     key={f.userId}
                     onPress={() => send(f)}
                     accessibilityRole="button"
-                    accessibilityLabel={t('shop.sendItem', { name: item.name, to: f.username })}
+                    // each row names its friend: a screen reader heard "Send <item>" on every one
+                    accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
                     style={styles.row}
                   >
                     <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
