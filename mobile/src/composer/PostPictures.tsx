@@ -55,7 +55,14 @@ export function PostPictures({
     return (
       <View key={`${i}-${image.url}`} style={[style, { backgroundColor: colors.controlTrack }]}>
         {onPress ? (
-          <Pressable onPress={onPress} style={styles.fill} accessibilityRole="image" accessibilityLabel={label}>
+          // a picture that opens the post: named by what it shows, and said to open the post
+          <Pressable
+            onPress={onPress}
+            style={styles.fill}
+            accessibilityRole="button"
+            accessibilityLabel={label}
+            accessibilityHint={t('memes.openPost')}
+          >
             {picture}
           </Pressable>
         ) : (

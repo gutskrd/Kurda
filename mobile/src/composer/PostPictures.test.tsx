@@ -81,9 +81,11 @@ describe('pictures on the wall and on a post', () => {
 
   it('puts every picture on the card, each one a way into the post', () => {
     renderWithProviders(<FeedCard item={item({ images: [img(1, 'Mal'), img(2)] })} />);
-    fireEvent.click(screen.getByRole('img', { name: 'Mal' }));
+    // a button named by what it shows, not an image: tapping it opens the post
+    fireEvent.click(screen.getByRole('button', { name: 'Mal' }));
     expect(navigation.navigate).toHaveBeenCalledWith('LibraryPost', { postId: '1' });
-    expect(screen.getByRole('img', { name: 'Picture 2 of 2' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Picture 2 of 2' })).toBeTruthy();
+    expect(screen.queryByRole('img', { name: 'Mal' })).toBeNull();
   });
 
   it('reads a post’s pictures, leaving out one with no address', () => {
