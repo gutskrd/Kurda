@@ -164,6 +164,7 @@ export function Results({
           <RematchPanel
             game="stories"
             lobbyId={view.id}
+            isHost={view.isHost}
             other={other ? nameOf(other, t) : t('stories.player', { seat: 2 })}
             onOpen={onOpenGame}
             onInviteOthers={() => setInviting(true)}

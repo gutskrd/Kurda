@@ -338,6 +338,7 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
           <RematchPanel
             game="rhyme-match"
             lobbyId={id}
+            isHost={isHost}
             other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
             onOpen={onOpen}
             onInviteOthers={() => setInviting(true)}

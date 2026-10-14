@@ -325,6 +325,7 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
           <RematchPanel
             game="wordle-battle"
             lobbyId={id}
+            isHost={isHost}
             other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
             onOpen={onOpen}
             onInviteOthers={() => setInviting(true)}

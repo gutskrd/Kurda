@@ -39,6 +39,11 @@ describe('rematchView', () => {
     expect(rematchView({ ...pair(), kind: 'round' }).kind).toBe('round-wait');
     expect(rematchView({ ...pair(), kind: 'round', nextLobbyId: 'r2' })).toEqual({ kind: 'round-join', lobbyId: 'r2' });
   });
+
+  it('sends the host who opened the round to it, not asks them to join it', () => {
+    expect(rematchView({ ...pair(), kind: 'round', nextLobbyId: 'r2' }, true)).toEqual({ kind: 'next', lobbyId: 'r2' });
+    expect(rematchView({ ...pair(), kind: 'round' }, true).kind).toBe('round-wait');
+  });
 });
 
 describe('inviteStateKey', () => {
@@ -76,6 +81,34 @@ describe('RematchPanel', () => {
     renderWithProviders(<RematchPanel game="stories" lobbyId="g1" other="Rojda" onOpen={onOpen} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Go to the next game' }));
     expect(onOpen).toHaveBeenCalledTimes(1);
+  });
+
+  it('takes the host who taps Play again in a round game straight to the new round', async () => {
+    const round = (over: Partial<RematchState> = {}): RematchState => ({ ...pair(), kind: 'round', ...over });
+    let state = round({ canOpenRound: true });
+    testAuth.client = fakeClient({
+      'GET /play/wordle-battle/g1/rematch': () => ok(state),
+      'POST /play/wordle-battle/g1/rematch': () => {
+        // the server stops offering the host to open a round once it is open
+        state = round({ nextLobbyId: 'g2' });
+        return ok(state);
+      },
+    });
+    const onOpen = vi.fn();
+    renderWithProviders(<RematchPanel game="wordle-battle" lobbyId="g1" other="Rojda" onOpen={onOpen} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Play again' }));
+    await waitFor(() => expect(onOpen).toHaveBeenCalledWith('g2'));
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('button', { name: 'Join the next round' })).toBeNull();
+  });
+
+  it('shows a returning host the way to their open round, not the guests\' join button', async () => {
+    testAuth.client = fakeClient({ 'GET /play/stories/g1/rematch': ok({ ...pair(), kind: 'round', nextLobbyId: 'g2' }) });
+    const onOpen = vi.fn();
+    renderWithProviders(<RematchPanel game="stories" lobbyId="g1" other="Rojda" isHost onOpen={onOpen} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Go to the next game' }));
+    expect(onOpen).toHaveBeenCalledWith('g2');
+    expect(screen.queryByText('The host started a new round.')).toBeNull();
   });
 
   it('takes a standing offer back when the results are left', async () => {

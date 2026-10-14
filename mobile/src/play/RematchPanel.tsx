@@ -28,7 +28,13 @@ export type RematchView =
   | { kind: 'round-wait' }
   | { kind: 'next'; lobbyId: string };
 
-export function rematchView(state: RematchState): RematchView {
+/**
+ * `isHost` matters only for a round: once the host has opened the next round
+ * the server no longer offers them `canOpenRound`, and the open round looks to
+ * them exactly as it does to a guest. The host goes to it ("Go to the next
+ * game"); a guest is asked whether to join.
+ */
+export function rematchView(state: RematchState, isHost = false): RematchView {
   if (state.kind === 'pair') {
     if (state.nextLobbyId) return { kind: 'next', lobbyId: state.nextLobbyId };
     if (state.otherDeclined) return { kind: 'pair-declined' };
@@ -37,7 +43,8 @@ export function rematchView(state: RematchState): RematchView {
     return { kind: 'pair-offer' };
   }
   if (state.canOpenRound) return state.nextLobbyId ? { kind: 'next', lobbyId: state.nextLobbyId } : { kind: 'round-open' };
-  return state.nextLobbyId ? { kind: 'round-join', lobbyId: state.nextLobbyId } : { kind: 'round-wait' };
+  if (!state.nextLobbyId) return { kind: 'round-wait' };
+  return isHost ? { kind: 'next', lobbyId: state.nextLobbyId } : { kind: 'round-join', lobbyId: state.nextLobbyId };
 }
 
 /**
@@ -51,12 +58,15 @@ export function RematchPanel({
   game,
   lobbyId,
   other,
+  isHost = false,
   onOpen,
   onInviteOthers,
 }: {
   game: PlayGame;
   lobbyId: string;
   other: string;
+  /** this viewer hosts the finished game (decides who opens and who joins a round) */
+  isHost?: boolean;
   /** go to the next game (it exists and this player is in it, or may join it) */
   onOpen: (nextLobbyId: string) => void;
   /** "Invite someone else": the invite sheet for this game */
@@ -88,7 +98,9 @@ export function RematchPanel({
     ),
   );
 
-  const view = state ? rematchView(state) : null;
+  // this viewer opened the round themselves (the screen may not know it hosts)
+  const [openedRound, setOpenedRound] = useState(false);
+  const view = state ? rematchView(state, isHost || openedRound) : null;
 
   // Both asked (or the host opened the round): the next game exists, and
   // they go to it. Only when that happens while this screen is up — coming
@@ -121,6 +133,26 @@ export function RematchPanel({
     setBusy(false);
     if (res.ok) setState(res.data);
     else setError(describeError(res.error, t));
+  };
+
+  // The host's "Play again" in a round game: the new lobby is theirs, so they
+  // go straight to it (the guests are told and choose).
+  const openRound = async (): Promise<void> => {
+    setBusy(true);
+    setError(null);
+    const res = await offerRematch(client, game, lobbyId);
+    setBusy(false);
+    if (!res.ok) {
+      setError(describeError(res.error, t));
+      return;
+    }
+    setOpenedRound(true);
+    setState(res.data);
+    const next = res.data.nextLobbyId;
+    if (next && opened.current !== next) {
+      opened.current = next;
+      onOpen(next);
+    }
   };
 
   if (!view) return null;
@@ -161,7 +193,7 @@ export function RematchPanel({
       ) : null}
       {view.kind === 'pair-declined' ? line(t('play.rematch.declined', { name: other })) : null}
       {view.kind === 'round-open' ? (
-        <ClayButton label={t('play.rematch.newRound')} icon="repost" tone="primary" size="large" busy={busy} onPress={() => void run(() => offerRematch(client, game, lobbyId))} />
+        <ClayButton label={t('play.rematch.newRound')} icon="repost" tone="primary" size="large" busy={busy} onPress={() => void openRound()} />
       ) : null}
       {view.kind === 'round-join' ? (
         <>
