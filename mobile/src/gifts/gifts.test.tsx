@@ -283,7 +283,7 @@ describe('GiftUnwrap', () => {
     });
     testAuth.client = client;
     const onOpened = vi.fn();
-    const onThanks = vi.fn(async () => true);
+    const onThanks = vi.fn(async () => null);
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={onOpened} onThanks={onThanks} />,
     );
@@ -308,7 +308,7 @@ describe('GiftUnwrap', () => {
     const vibrate = vi.spyOn(Vibration, 'vibrate').mockImplementation(() => undefined);
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     const first = renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     act(() => {
       vi.advanceTimersByTime(400);
@@ -318,7 +318,7 @@ describe('GiftUnwrap', () => {
 
     vibrate.mockClear();
     renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     act(() => {
@@ -332,7 +332,7 @@ describe('GiftUnwrap', () => {
   it('reveals the item by itself when the moment has played out', async () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     expect(screen.getByRole('button', { name: 'Skip' })).toBeTruthy();
     act(() => finish[0]?.({ finished: true }));
@@ -343,17 +343,49 @@ describe('GiftUnwrap', () => {
   it('shows no Wear it for something that is not worn, and says when opening failed', async () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': fail({ code: 'GIFT_NOT_FOUND', status: 404, message: 'no such gift' }) });
     renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1', equippable: null }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1', equippable: null }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByText('no such gift')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Wear it' })).toBeNull();
   });
 
+  it('says in the unwrap why a thank-you was refused, and closes itself for Account standing', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+    const onClose = vi.fn();
+    const onThanks = vi.fn(async () => ({ kind: 'client' as const, status: 403, code: 'MUTED', message: 'muted', details: { scope: 'chat', until: null } }));
+    renderWithProviders(
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={onClose} onOpened={() => undefined} onThanks={onThanks} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Say thanks' }));
+    // the chat's own notice is behind this sheet, so the reason is said here
+    expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Say thanks' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith('AccountStanding');
+  });
+
+  it('keeps the unseen buttons from a screen reader until the reveal, and drops the nameless stage after', async () => {
+    testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
+    renderWithProviders(
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
+    );
+    // while it plays, only Skip is there to reach
+    expect(screen.queryByRole('button', { name: 'Say thanks' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(await screen.findByRole('button', { name: 'Say thanks' })).toBeTruthy();
+    // afterwards no button without a name is left
+    for (const button of screen.getAllByRole('button')) {
+      expect(button.getAttribute('aria-label') ?? button.textContent).toBeTruthy();
+    }
+  });
+
   it('leaves out "From" when the sender is not known here, rather than "From " and nothing', async () => {
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     renderWithProviders(
-      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: '' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => true} />,
+      <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: '' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByText('Newroz fire')).toBeTruthy();

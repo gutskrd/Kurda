@@ -9,6 +9,7 @@ import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GiftBubble } from '../gifts/GiftBubble';
+import { useReportAction } from '../reports/reportAction';
 import type { ChatMessage } from '../gifts/api';
 
 /**
@@ -23,30 +24,38 @@ import type { ChatMessage } from '../gifts/api';
  *
  * Returns the content alone: the screen draws the bubble around a text
  * message, and nothing around a card, which is its own surface.
+ *
+ * `onReport` (someone else's message): a control inside the message — a gift
+ * to open, an invite link — takes the touch, so the row's press-and-hold never
+ * fires there; each one reports on a long press too, and carries Report among
+ * its screen-reader actions, so a lure link or an unwanted gift can be reported.
  */
 export function MessageContent({
   message,
   mine,
   senderName,
   onOpenGift,
+  onReport,
 }: {
   message: ChatMessage;
   mine: boolean;
   senderName: string;
   onOpenGift: (giftId: string) => void;
+  /** report this message; undefined for your own */
+  onReport?: () => void;
 }): React.JSX.Element {
   switch (message.kind) {
     case 'gift':
       return message.gift ? (
-        <GiftBubble card={message.gift} mine={mine} senderName={senderName} onOpen={onOpenGift} />
+        <GiftBubble card={message.gift} mine={mine} senderName={senderName} onOpen={onOpenGift} onReport={onReport} />
       ) : (
-        <GoneCard />
+        <GoneCard onReport={onReport} />
       );
     case 'game':
       // mobile-games: the live game card (ChatGameCard with message.game) goes here
-      return <GameFallback />;
+      return <GameFallback onReport={onReport} />;
     default:
-      return <TextBody body={message.body ?? ''} mine={mine} />;
+      return <TextBody body={message.body ?? ''} mine={mine} onReport={onReport} />;
   }
 }
 
@@ -67,7 +76,7 @@ export function hasControls(message: ChatMessage): boolean {
 }
 
 /** The text of a message, with an invite link in it turned into a card. */
-function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.Element {
+function TextBody({ body, mine, onReport }: { body: string; mine: boolean; onReport?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const invite = parseInvite(body);
   const route = invite ? INVITE_ROUTE[invite.type] : undefined;
@@ -76,7 +85,7 @@ function TextBody({ body, mine }: { body: string; mine: boolean }): React.JSX.El
   return (
     <View style={styles.text}>
       {words ? <Text style={[styles.body, { color }]}>{words}</Text> : null}
-      {invite && route ? <InviteLinkCard invite={invite} route={route} mine={mine} /> : null}
+      {invite && route ? <InviteLinkCard invite={invite} route={route} mine={mine} onReport={onReport} /> : null}
     </View>
   );
 }
@@ -94,18 +103,24 @@ function InviteLinkCard({
   invite,
   route,
   mine,
+  onReport,
 }: {
   invite: GameInvite;
   route: { screen: 'WordleBattle' | 'RhymeMatch'; name: TranslationKey };
   mine: boolean;
+  onReport?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const navigation = useNavigation<RootNavigation>();
+  const report = useReportAction(onReport);
   const tint = mine ? colors.textOnPrimary : colors.primary;
   return (
     <Pressable
       onPress={() => navigation.navigate(route.screen, { id: invite.id })}
+      onLongPress={onReport}
+      delayLongPress={350}
+      {...report}
       accessibilityRole="button"
       accessibilityLabel={`${t(route.name)}: ${t('chat.inviteCard.open')}`}
       style={({ pressed }) => [styles.invite, { borderColor: tint, opacity: pressed ? 0.75 : 1 }]}
@@ -120,11 +135,12 @@ function InviteLinkCard({
   );
 }
 
-function GameFallback(): React.JSX.Element {
+function GameFallback({ onReport }: { onReport?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const report = useReportAction(onReport);
   return (
-    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
+    <View style={[styles.card, { backgroundColor: colors.glassFill }]} accessible {...report}>
       <Icon name="play" size={18} color={colors.textSecondary} />
       <Text style={[styles.cardText, { color: colors.textSecondary }]}>{t('chat.gameCard')}</Text>
     </View>
@@ -132,11 +148,12 @@ function GameFallback(): React.JSX.Element {
 }
 
 /** A gift whose card is gone (its recipient's account closed): it was a gift, and that is all. */
-function GoneCard(): React.JSX.Element {
+function GoneCard({ onReport }: { onReport?: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const report = useReportAction(onReport);
   return (
-    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
+    <View style={[styles.card, { backgroundColor: colors.glassFill }]} accessible {...report}>
       <Icon name="gift" size={18} color={colors.textSecondary} />
       <Text style={[styles.cardText, { color: colors.textSecondary }]}>{t('chat.preview.gift')}</Text>
     </View>

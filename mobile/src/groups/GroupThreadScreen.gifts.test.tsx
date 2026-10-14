@@ -95,3 +95,50 @@ describe('GroupThreadScreen header', () => {
     await waitFor(() => expect(screen.queryByRole('button', { name: 'Report this group' })).toBeNull());
   });
 });
+
+describe('GroupThreadScreen reports', () => {
+  const thread = (myRole: string) =>
+    fakeClient({
+      'GET /groups/g1/chat': ok({
+        messages: [
+          { id: 'm1', senderId: 'u3', username: 'azad', avatarUrl: null, body: 'silav', createdAt: '2026-10-13T10:00:00.000Z', deleted: false, kind: 'text', gift: null, game: null },
+        ],
+      }),
+      'POST /groups/g1/chat/read': ok({ ok: true }),
+      'GET /groups/g1': ok({ id: 'g1', name: 'Newroz club', members: [], myRole }),
+      'POST /reports': ok({
+        report: { id: 'r1', targetType: 'group_message', category: 'spam', status: 'open', targetLabel: null, createdAt: '2026-10-13T10:00:00.000Z', closedAt: null, canAppeal: false, caseId: 'c1' },
+        deduped: false,
+      }),
+    });
+
+  const reportTheMessage = async (): Promise<void> => {
+    fireEvent.mouseDown(await screen.findByText('silav'), { button: 0, buttons: 1 });
+    fireEvent.click(await screen.findByRole('button', { name: 'Scam or spam' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    await screen.findByText('Thanks for telling us');
+  };
+
+  it('offers a member to leave the club after reporting a message in it', async () => {
+    const client = thread('member');
+    testAuth.client = client;
+    renderWithProviders(
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+    );
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
+    await reportTheMessage();
+    expect(screen.getByRole('button', { name: 'Leave Newroz club' })).toBeTruthy();
+  });
+
+  it('does not offer its owner to leave, which the server would refuse', async () => {
+    const client = thread('owner');
+    testAuth.client = client;
+    renderWithProviders(
+      <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
+    );
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
+    await reportTheMessage();
+    expect(screen.getByRole('button', { name: 'Block azad' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Leave Newroz club' })).toBeNull();
+  });
+});

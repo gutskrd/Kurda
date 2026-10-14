@@ -9,6 +9,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
+import { useReportAction } from '../reports/reportAction';
 import { GiftBox } from './art';
 
 /**
@@ -25,6 +26,7 @@ export function GiftBubble({
   mine,
   senderName,
   onOpen,
+  onReport,
 }: {
   card: GiftCard;
   /** the viewer sent it */
@@ -32,10 +34,13 @@ export function GiftBubble({
   senderName: string;
   /** unwrap (or look again at) the viewer's own gift */
   onOpen: (giftId: string) => void;
+  /** report the message it came in (someone else's): a long press, or a screen-reader action */
+  onReport?: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const report = useReportAction(onReport);
   const forMe = card.myGiftId !== null;
   const wrapped = forMe ? !card.myOpened : !mine;
   const opened = card.recipients.filter((r) => r.opened).length;
@@ -93,14 +98,22 @@ export function GiftBubble({
 
   if (!forMe || !card.myGiftId) {
     return (
-      <View accessible accessibilityLabel={label}>
+      <View accessible accessibilityLabel={label} {...report}>
         {body}
       </View>
     );
   }
   const giftId = card.myGiftId;
   return (
-    <Pressable onPress={() => onOpen(giftId)} accessibilityRole="button" accessibilityLabel={label}>
+    <Pressable
+      onPress={() => onOpen(giftId)}
+      // the bubble takes the touch, so the row's press-and-hold would never see it
+      onLongPress={onReport}
+      delayLongPress={350}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      {...report}
+    >
       {({ pressed }) => <View style={{ opacity: pressed ? 0.85 : 1 }}>{body}</View>}
     </Pressable>
   );

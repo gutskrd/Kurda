@@ -152,15 +152,13 @@ export function ChatScreen({
     }
   };
 
+  /** Send words into the thread: null when they went, else the refusal, for whoever asked to say. */
   const post = useCallback(
-    async (body: string): Promise<boolean> => {
+    async (body: string): Promise<ApiError | null> => {
       const res = await client.post<ChatMessage>(`/chat/${userId}/messages`, { body });
-      if (res.ok) {
-        setMessages((prev) => [...prev, res.data]);
-        return true;
-      }
-      setSendError(res.error);
-      return false;
+      if (!res.ok) return res.error;
+      setMessages((prev) => [...prev, res.data]);
+      return null;
     },
     [client, userId],
   );
@@ -170,8 +168,11 @@ export function ChatScreen({
     if (!body) return;
     setDraft('');
     setSendError(null);
+    const refused = await post(body);
+    if (!refused) return;
     // a refused message is put back, so nothing typed is lost
-    if (!(await post(body))) setDraft(body);
+    setSendError(refused);
+    setDraft(body);
   }, [draft, post]);
 
   return (
@@ -191,9 +192,11 @@ export function ChatScreen({
               const card = isCardMessage(item);
               // one element for a screen reader, with Report among its actions, unless it holds a control of its own
               const whole = !hasControls(item);
+              // the controls inside a message (a gift, an invite link) report it too
+              const report = mine ? undefined : () => setReporting(item.id);
               return (
                 <Pressable
-                  onLongPress={mine ? undefined : () => setReporting(item.id)}
+                  onLongPress={report}
                   delayLongPress={350}
                   accessible={whole}
                   accessibilityActions={mine || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
@@ -201,7 +204,7 @@ export function ChatScreen({
                   style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}
                 >
                   {card ? (
-                    <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} />
+                    <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
                   ) : (
                     <View
                       style={[
@@ -211,7 +214,7 @@ export function ChatScreen({
                           : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth },
                       ]}
                     >
-                      <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} />
+                      <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
                     </View>
                   )}
                   {mine && item.readAt ? <Text style={[styles.receipt, { color: colors.textSecondary }]}>{t('chat.receipt.read')}</Text> : null}

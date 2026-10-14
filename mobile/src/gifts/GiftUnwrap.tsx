@@ -15,6 +15,7 @@ import type { EquippableCategory, GiftCard } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import { DarkScheme, useTheme } from '../theme/ThemeProvider';
@@ -25,6 +26,7 @@ import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
+import { SendErrorNotice } from '../reports/SendError';
 import { openGift, wearGift } from './api';
 import { GiftBox, NewrozFlame, Seed, Spark } from './art';
 import { unwrapPlan, type Particle } from './motion';
@@ -67,8 +69,11 @@ export function GiftUnwrap({
   target: UnwrapTarget;
   onClose: () => void;
   onOpened: (card: GiftCard) => void;
-  /** send the thank-you into the chat; resolves to whether it went */
-  onThanks: () => Promise<boolean>;
+  /**
+   * send the thank-you into the chat; resolves to null when it went, or the
+   * server's refusal — said here, since the chat's own notice is behind this
+   */
+  onThanks: () => Promise<ApiError | null>;
 }): React.JSX.Element {
   const { client } = useAuth();
   const theme = useTheme();
@@ -88,6 +93,7 @@ export function GiftUnwrap({
   const [worn, setWorn] = useState<'idle' | 'busy' | 'done'>('idle');
   const [thanked, setThanked] = useState<'idle' | 'busy' | 'done'>('idle');
   const [actionError, setActionError] = useState<string | null>(null);
+  const [thanksError, setThanksError] = useState<ApiError | null>(null);
   const tick = useRef<ReturnType<typeof setTimeout> | null>(null);
   // held in a ref: a parent passing a fresh one on every render must not reopen the gift
   const opened = useRef(onOpened);
@@ -158,7 +164,11 @@ export function GiftUnwrap({
   const thank = (): void => {
     if (thanked !== 'idle') return;
     setThanked('busy');
-    void onThanks().then((ok) => setThanked(ok ? 'done' : 'idle'));
+    setThanksError(null);
+    void onThanks().then((error) => {
+      setThanked(error ? 'idle' : 'done');
+      setThanksError(error);
+    });
   };
 
   const art = full ? 220 : plan.stage === 'sheet' ? 180 : 140;
@@ -181,7 +191,9 @@ export function GiftUnwrap({
         <Pressable
           onPress={revealed ? undefined : reveal}
           disabled={revealed}
-          accessibilityRole="button"
+          // Skip while it plays; afterwards only a picture, not a nameless button
+          accessible={!revealed}
+          accessibilityRole={revealed ? undefined : 'button'}
           accessibilityLabel={revealed ? undefined : t('common.skip')}
           style={[styles.stage, { height: art + spacing.xl }]}
         >
@@ -193,7 +205,13 @@ export function GiftUnwrap({
           <ItemArt card={card} size={art * 0.62} progress={progress} reduce={reduce} gold={colors.gold} />
         </Pressable>
 
-        <Animated.View style={[styles.details, { opacity: details }]} pointerEvents={revealed ? 'auto' : 'none'}>
+        {/* unseen until the reveal, so out of a screen reader's reach until then too */}
+        <Animated.View
+          style={[styles.details, { opacity: details }]}
+          pointerEvents={revealed ? 'auto' : 'none'}
+          // both platforms: VoiceOver's elements-hidden and TalkBack's no-hide-descendants
+          aria-hidden={!revealed}
+        >
           <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
             {card.name}
           </Text>
@@ -237,6 +255,8 @@ export function GiftUnwrap({
               {actionError}
             </Text>
           ) : null}
+          {/* a refused thank-you (a chat mute, the automatic pause) says why here, and the way to Account standing closes this first */}
+          <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} />
           <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
             <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
           </Pressable>

@@ -99,6 +99,37 @@ describe('ChatScreen', () => {
   });
 });
 
+describe('ChatScreen reports', () => {
+  const thread = () =>
+    fakeClient({
+      'GET /chat/u2/messages': ok({
+        messages: [
+          msg({ id: 'm2', body: 'Werin! https://hevalo.app/app/games/wordle-battle?id=abc12345' }),
+          msg({ id: 'm3', kind: 'gift', body: null, gift }),
+        ],
+      }),
+      'POST /chat/u2/read': ok({ ok: true }),
+    });
+
+  it('reports a gift you were sent by pressing and holding it, though the gift takes the touch', async () => {
+    testAuth.client = thread();
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    fireEvent.mouseDown(await screen.findByRole('button', { name: 'A gift from rojda. Tap to open.' }), { button: 0, buttons: 1 });
+    expect(await screen.findByText('Report this message')).toBeTruthy();
+    // a hold is not a tap: nothing was unwrapped
+    expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
+  });
+
+  it('reports a message with an invite link by holding the link', async () => {
+    testAuth.client = thread();
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    fireEvent.mouseDown(await screen.findByRole('button', { name: 'Wordle Battle: Open the game' }), { button: 0, buttons: 1 });
+    expect(await screen.findByText('Report this message')).toBeTruthy();
+    // and the game did not open
+    expect(navigate).not.toHaveBeenCalled();
+  });
+});
+
 describe('hasControls', () => {
   it('marks the messages a screen reader must reach part by part', () => {
     // plain words are one element, with Report among its actions

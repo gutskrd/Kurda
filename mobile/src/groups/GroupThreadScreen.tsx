@@ -249,20 +249,15 @@ export function GroupThreadScreen({
     useCallback(() => void sendGroupTyping(client, groupId), [client, groupId]),
   );
 
+  /** Send words into the room: null when they went, else the refusal, for whoever asked to say. */
   const post = useCallback(
-    async (body: string): Promise<boolean> => {
+    async (body: string): Promise<ApiError | null> => {
       const res = await sendToGroup(client, groupId, body);
-      if (res.ok) {
-        setMessages((prev) => [...prev, res.data as Message]);
-        return true;
-      }
-      // a limit on the account says what and until when, with the way to
-      // Account standing; anything else as it always did
-      if (restrictionOf(res.error)) setSendError(res.error);
-      else setError(describeError(res.error, t));
-      return false;
+      if (!res.ok) return res.error;
+      setMessages((prev) => [...prev, res.data as Message]);
+      return null;
     },
-    [client, groupId, t],
+    [client, groupId],
   );
 
   const send = useCallback(async () => {
@@ -271,9 +266,15 @@ export function GroupThreadScreen({
     setDraft('');
     setError(null);
     setSendError(null);
-    // the draft comes back when the message did not go, so nothing is lost
-    if (!(await post(body))) setDraft(body);
-  }, [draft, post]);
+    const refused = await post(body);
+    if (!refused) return;
+    // the draft comes back when the message did not go, so nothing is lost; a
+    // limit on the account says what and until when, with the way to Account
+    // standing, and anything else as it always did
+    setDraft(body);
+    if (restrictionOf(refused)) setSendError(refused);
+    else setError(describeError(refused, t));
+  }, [draft, post, t]);
 
   const openPicker = (): void => {
     setPicking(true);
@@ -430,7 +431,8 @@ export function GroupThreadScreen({
         target={reporting?.target ?? { type: 'group', groupId }}
         name={reporting?.target.type === 'group' ? name : null}
         blockable={reporting?.senderId && reporting.senderId !== me ? { userId: reporting.senderId, name: reporting.sender ?? null } : null}
-        leavable={{ groupId, name }}
+        // its owner cannot leave a club (the server says so in English): not offered
+        leavable={owner === false ? { groupId, name } : null}
         onClose={() => setReporting(null)}
         onLeftGroup={() => {
           setReporting(null);
@@ -463,9 +465,11 @@ function Bubble({
   // one element for a screen reader (sender and words), with Report among its
   // actions, unless it holds a control of its own
   const whole = message.deleted || !hasControls(message);
+  // the controls inside a message (a gift, an invite link) report it too
+  const report = mine || message.deleted ? undefined : onReport;
   return (
     <Pressable
-      onLongPress={mine || message.deleted ? undefined : onReport}
+      onLongPress={report}
       delayLongPress={350}
       accessible={whole}
       accessibilityActions={mine || message.deleted || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
@@ -478,7 +482,7 @@ function Bubble({
       <View style={styles.bubbleMain}>
         {!mine ? <Text style={[styles.sender, { color: colors.textSecondary }]}>{message.username}</Text> : null}
         {card ? (
-          <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} />
+          <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} onReport={report} />
         ) : (
           <View
             style={[
@@ -496,7 +500,7 @@ function Bubble({
                 </Text>
               </View>
             ) : (
-              <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} />
+              <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} onReport={report} />
             )}
           </View>
         )}
