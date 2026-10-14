@@ -54,10 +54,10 @@ export interface Field {
 
 export const FIELD: Record<BadgeFamily, Field> = {
   learning: { glow: '#7e48f0', mid: '#4a1fb8', deep: '#1d0a52' },
-  habit: { glow: '#e2521f', mid: '#a82a0f', deep: '#470c05' },
-  games: { glow: '#2f7cf0', mid: '#1647b8', deep: '#081a52' },
+  habit: { glow: '#c8401a', mid: '#8f220c', deep: '#420b05' },
+  games: { glow: '#2462d4', mid: '#143fa6', deep: '#081a52' },
   ranked: { glow: '#5148e0', mid: '#28239a', deep: '#0d0b3e' },
-  friends: { glow: '#13b06a', mid: '#077a4a', deep: '#02331f' },
+  friends: { glow: '#0c8a52', mid: '#06603c', deep: '#022b1a' },
   events: { glow: '#e8264f', mid: '#a80e35', deep: '#480416' },
   secret: { glow: '#5a3ad8', mid: '#2a1580', deep: '#0b0530' },
 };
@@ -95,18 +95,22 @@ export const RANK_METAL: Record<RankTier, Metal> = {
   gir: { hi: '#ecffd9', light: '#9ff58f', mid: '#36d46e', dark: '#0f9450', deep: '#043f27' },
   zozan: { hi: '#dcfffb', light: '#7df5e6', mid: '#17c9c0', dark: '#0a8494', deep: '#043a4d' },
   ciya: { hi: '#eaf4ff', light: '#9ccaff', mid: '#4f86ff', dark: '#2f3fd0', deep: '#14196a' },
-  lutke: { hi: '#fdeaff', light: '#f0a8ff', mid: '#c056ff', dark: '#8a22d8', deep: '#33095e' },
+  lutke: { hi: '#fdeaff', light: '#f2a6ff', mid: '#c552ff', dark: '#b4249e', deep: '#3a0850' },
   sterk: { hi: '#ffffff', light: '#fff2a8', mid: '#ffcf3a', dark: '#f08c0a', deep: '#6e3300' },
 };
 
-/** A second hue a tier leans toward at its far edge: amber's orange, Lûtke's magenta. */
-export const RANK_ACCENT: Record<RankTier, string> = {
-  dest: '#ff8a3d',
-  gir: '#18c2a0',
-  zozan: '#2fa8ff',
-  ciya: '#6a4dff',
-  lutke: '#ff4fc8',
-  sterk: '#ffffff',
+/**
+ * The ground inside each rank crest: the tier's hue gone deep and saturated,
+ * never toward brown. Deşt's sand glows on a sunset running from ember to
+ * plum; Stêrk's gold burns on a night sky, the star's own.
+ */
+export const RANK_FIELD: Record<RankTier, Field> = {
+  dest: { glow: '#b8400e', mid: '#7a1a2a', deep: '#36081f' },
+  gir: { glow: '#0d8048', mid: '#06552f', deep: '#022817' },
+  zozan: { glow: '#0a7385', mid: '#064a5c', deep: '#032432' },
+  ciya: { glow: '#2a44cc', mid: '#18248a', deep: '#0a0e42' },
+  lutke: { glow: '#7a1fc4', mid: '#4f0d7e', deep: '#21063f' },
+  sterk: { glow: '#3a2ab0', mid: '#1d166e', deep: '#090732' },
 };
 
 // ──────────────────────────────────────────────────────── learning leagues
@@ -117,10 +121,10 @@ export const RANK_ACCENT: Record<RankTier, string> = {
  * glows with living light (`glint` is that bioluminescent edge).
  */
 export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
-  dilop: { hi: '#ffffff', light: '#d7f3ff', mid: '#93d6f5', dark: '#4f97c4', deep: '#1c4466', glint: '#ffffff' },
+  dilop: { hi: '#ffffff', light: '#d4f1ff', mid: '#8fd2f7', dark: '#3a8ed6', deep: '#0f3570', glint: '#ffffff' },
   kani: { hi: '#e6fffa', light: '#94f5e3', mid: '#2fd6c0', dark: '#0d93a0', deep: '#053e52', glint: '#d6fff6' },
   cem: { hi: '#e3f6ff', light: '#86d3ff', mid: '#2a9df5', dark: '#1460c4', deep: '#082a66', glint: '#bdf0ff' },
   gol: { hi: '#e2edff', light: '#8fb8ff', mid: '#3f72f5', dark: '#2440bf', deep: '#0b145e', glint: '#a8f0ff' },
-  derya: { hi: '#e6e6ff', light: '#9ea0ff', mid: '#4d4cf0', dark: '#2a22b0', deep: '#0f0850', glint: '#6ff7ff' },
+  derya: { hi: '#e3edff', light: '#94adff', mid: '#3d5ae6', dark: '#2130a8', deep: '#0a0e4a', glint: '#6ff7ff' },
   okyanus: { hi: '#d6fff8', light: '#5ff5df', mid: '#16b8d0', dark: '#123f9e', deep: '#070a3a', glint: '#4dffd8' },
 };

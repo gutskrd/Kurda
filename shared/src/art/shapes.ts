@@ -25,24 +25,23 @@ export interface Shape {
 const CX = 60;
 const CY = 56;
 
+/** A crest shield: its top rising to a peak in the middle, like the ridge it is won on. */
 function shield(): Pt[] {
-  const top = 11;
-  const left = 15;
-  const right = 105;
-  const shoulder = 58;
-  const tip: Pt = [CX, 110];
-  const out: Pt[] = [];
-  // top edge, dipping a little in the middle the way a heater shield's does
-  out.push([left + 10, top]);
-  out.push(...cubic([left + 10, top], [40, top], [50, top + 3.5], [CX, top + 3.5], 8));
-  out.push(...cubic([CX, top + 3.5], [70, top + 3.5], [80, top], [right - 10, top], 8));
-  out.push(...cubic([right - 10, top], [right - 3, top], [right, top + 3], [right, top + 10], 5));
-  out.push([right, shoulder]);
-  out.push(...cubic([right, shoulder], [right, 84], [80, 98], tip, 18));
-  out.push(...cubic(tip, [40, 98], [left, 84], [left, shoulder], 18));
-  out.push([left, top + 10]);
-  out.push(...cubic([left, top + 10], [left, top + 3], [left + 3, top], [left + 10, top], 5).slice(0, -1));
-  return out;
+  const tl: Pt = [16, 19];
+  const peak: Pt = [CX, 8];
+  const tr: Pt = [104, 19];
+  const tip: Pt = [CX, 111];
+  return [
+    tl,
+    ...cubic(tl, [32, 15], [48, 11], peak, 8),
+    ...cubic(peak, [72, 11], [88, 15], tr, 8),
+    ...cubic(tr, [105.5, 19.5], [106, 21], [106, 24], 3),
+    ...cubic([106, 24], [106, 40], [106, 50], [106, 62], 6),
+    ...cubic([106, 62], [106, 86], [84, 101], tip, 18),
+    ...cubic(tip, [36, 101], [14, 86], [14, 62], 18),
+    ...cubic([14, 62], [14, 50], [14, 40], [14, 24], 6),
+    ...cubic([14, 24], [14, 21], [14.5, 19.5], tl, 3).slice(0, -1),
+  ];
 }
 
 /** A leaf: two arcs meeting in a point at each end, laid on the diagonal — fuller than a willow leaf, so it holds a glyph. */

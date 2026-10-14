@@ -240,9 +240,9 @@ export function badgeSvg(opts: BadgeOptions): string {
   );
   dr.add(glyphGroup(dr, key, at, small, { metal: lk.glyph, field: f, locked: false, secret: state === 'secret' }));
 
-  // Firûze's crown: a kilim jewel set at the top of the rim; Zêr and Firûze a spark
+  // Firûze's crown: a kilim jewel set at the top of the rim, and a spark
   if (lk.look === 4) dr.add(kilimGem(dr, 60, top + rim / 2, small ? 13 : 10, small ? 15 : 12, m));
-  if (lk.look >= 3 && !small) dr.add(`<path d="${sparkle(92, top + 8, lk.look === 4 ? 7.5 : 5.5)}" fill="#ffffff"/>`);
+  if (lk.look === 4 && !small) dr.add(`<path d="${sparkle(92, top + 8, 7)}" fill="#ffffff"/>`);
   if (tiers > 1) dr.add(tierCapsule(dr, shownTier, tiers, m, small, false));
   return dr.svg(size, title);
 }

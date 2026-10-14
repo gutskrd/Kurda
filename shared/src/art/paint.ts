@@ -141,9 +141,9 @@ export function halo(dr: Drawing, cx: number, cy: number, r: number, colour: str
 }
 
 /**
- * Rays bursting from cx,cy between radii r0 and r1, fading as they go: thin
- * spikes, every other one longer. `from`/`to` limit them to an arc (degrees,
- * 0 = right, clockwise); by default all the way round.
+ * Light bursting from cx,cy between radii r0 and r1, fading as it goes: broad
+ * soft beams with a bright needle down every other gap. `arc` limits them to
+ * an arc (degrees, 0 = right, clockwise); by default all the way round.
  */
 export function rays(
   dr: Drawing,
@@ -156,34 +156,39 @@ export function rays(
   opacity = 0.9,
   arc: readonly [number, number] = [-90, 270],
 ): string {
-  const id = dr.id('r');
-  dr.def(
-    radialAt(
-      id,
-      [
-        [0, colour, opacity],
-        [r0 / r1, colour, opacity],
-        [1, colour, 0],
-      ],
-      cx,
-      cy,
-      r1,
-    ),
-  );
-  const out: string[] = [];
+  const fade = (o: number): string => {
+    const id = dr.id('r');
+    dr.def(
+      radialAt(
+        id,
+        [
+          [0, colour, o],
+          [r0 / r1, colour, o],
+          [1, colour, 0],
+        ],
+        cx,
+        cy,
+        r1,
+      ),
+    );
+    return id;
+  };
+  const soft = fade(opacity * 0.42);
+  const bright = fade(opacity);
+  const beams: string[] = [];
+  const needles: string[] = [];
   const full = Math.abs(arc[1] - arc[0]) >= 360;
   const stepDeg = (arc[1] - arc[0]) / (full ? count : Math.max(1, count - 1));
+  const wedge = (deg: number, len: number, half: number): string => {
+    const a = (deg * Math.PI) / 180;
+    return `M${n(cx + Math.cos(a - half) * r0)},${n(cy + Math.sin(a - half) * r0)}L${n(cx + Math.cos(a) * len)},${n(cy + Math.sin(a) * len)}L${n(cx + Math.cos(a + half) * r0)},${n(cy + Math.sin(a + half) * r0)}Z`;
+  };
   for (let i = 0; i < count; i++) {
     const deg = arc[0] + i * stepDeg;
-    const a = (deg * Math.PI) / 180;
-    const long = i % 2 === 0;
-    const len = long ? r1 : r0 + (r1 - r0) * 0.62;
-    const half = (long ? 2.6 : 1.8) / r0;
-    out.push(
-      `M${n(cx + Math.cos(a - half) * r0)},${n(cy + Math.sin(a - half) * r0)}L${n(cx + Math.cos(a) * len)},${n(cy + Math.sin(a) * len)}L${n(cx + Math.cos(a + half) * r0)},${n(cy + Math.sin(a + half) * r0)}Z`,
-    );
+    if (i % 2 === 0) beams.push(wedge(deg, r1, ((stepDeg * 0.42) * Math.PI) / 180));
+    else needles.push(wedge(deg, r0 + (r1 - r0) * 0.92, 1.3 / r0));
   }
-  return `<path d="${out.join('')}" fill="url(#${id})"/>`;
+  return `<path d="${beams.join('')}" fill="url(#${soft})"/><path d="${needles.join('')}" fill="url(#${bright})"/>`;
 }
 
 /** A four-point sparkle, the long points up/down and left/right. */

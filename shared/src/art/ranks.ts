@@ -19,21 +19,20 @@
  * figures, so last spring's Çiya is not this spring's.
  */
 import { offset, roundedPolygon } from './geometry.js';
-import { ICONS } from './icons.js';
+import { ICONS, circ } from './icons.js';
 import type { Part } from './icons.js';
 import { paintIcon } from './iconpaint.js';
 import type { RankDivision, RankTier, Season } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
 import type { Field, Metal } from './palette.js';
-import { RANK_METAL, SILVER } from './palette.js';
+import { RANK_FIELD, RANK_METAL, SILVER } from './palette.js';
 import { blade, capsule, chevrons, cutStar, diamondAt, edge, facetBand, halo, rays, sparkle, spike } from './paint.js';
 import type { Pt } from './svg.js';
 import { Drawing, checkSize, linearAt, mix, n, n2, polyPath, prefixFor, radialAt } from './svg.js';
 
-/** A rank tier's colours as a field: its deep tones, so its bright glyph stands out. */
+/** A rank tier's field: the deep, saturated ground its bright glyph glows on. */
 export function rankField(t: RankTier): Field {
-  const m = RANK_METAL[t];
-  return { glow: mix(m.dark, m.mid, 0.2), mid: mix(m.dark, m.deep, 0.5), deep: m.deep };
+  return RANK_FIELD[t];
 }
 
 /** The neutral the placement emblem is cut from: blue silver over slate. */
@@ -41,6 +40,16 @@ const MIST: Metal = SILVER;
 const MIST_FIELD: Field = { glow: '#55607e', mid: '#343c58', deep: '#171b30' };
 
 // ─────────────────────────────────────────────────────────────── glyphs
+
+/** Short rays all round cx,cy from r0 to r1, as one path of lines. */
+function rayRing(cx: number, cy: number, r0: number, r1: number, count: number): string {
+  const out: string[] = [];
+  for (let i = 0; i < count; i++) {
+    const a = ((i * 360) / count - 90) * (Math.PI / 180);
+    out.push(`M${n(cx + Math.cos(a) * r0)},${n(cy + Math.sin(a) * r0)}L${n(cx + Math.cos(a) * r1)},${n(cy + Math.sin(a) * r1)}`);
+  }
+  return out.join('');
+}
 
 /** The rising sun with its rays, over a horizon at y. */
 function sunrise(y: number, r: number): Part[] {
@@ -59,17 +68,17 @@ function sunrise(y: number, r: number): Part[] {
 const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
   // Deşt, the plain: the sun rising over a flat horizon, furrows running to it
   dest: () => [
-    ...sunrise(3, 10),
-    { k: 'a', d: 'M-20,6.5H20L15,18H-15Z' },
-    { k: 'd', d: 'M-2,7L-6,18M2,7L6,18M-7,7L-14,18M7,7L14,18', w: 1.3, fine: true },
-    { k: 'l', d: 'M-21,4.5H21', w: 2.8 },
+    ...sunrise(4, 11),
+    { k: 'l', d: 'M-21,7H21', w: 3.4 },
+    { k: 'l', d: 'M-14,12.5H14', w: 2.8 },
+    { k: 'l', d: 'M-7,17.5H7', w: 2.4 },
   ],
-  // Gir, the hill: two rounded hills, the near one lit, and the sun
+  // Gir, the hill: two rounded hills, the near one lit, and the sun over them
   gir: () => [
-    { k: 'f', d: 'M9,-11.5A5.5,5.5 0 1 1 9,-11.4Z', tf: 'translate(-0.1 0)' },
-    { k: 'a', d: 'M-3,17C-1,4 6,-4 12,-4C17,-4 21,4 21,17Z' },
-    { k: 'f', d: 'M-21,17C-19,3 -12,-3 -5,-3C3,-3 10,6 11,17Z' },
-    { k: 'h', d: 'M-15.5,6C-14,1.5 -10.5,-1 -7,-1.2C-10,0.8 -12.5,3.5 -13.5,7Z', o: 0.6, fine: true },
+    { k: 'f', d: circ(6, -14.5, 4.6) },
+    { k: 'a', d: 'M-4,18C-3,6 3,-1 10,-1C17,-1 21,6 21,18Z' },
+    { k: 'f', d: 'M-21,18C-21,5 -14,-3 -5,-3C4,-3 11,5 11,18Z' },
+    { k: 'h', d: 'M-16,6C-14.5,1 -10.5,-1.6 -6.6,-1.8C-10,0.4 -12.6,3.6 -13.6,7.6Z', o: 0.6, fine: true },
   ],
   // Zozan, the high pasture: peaks behind, a meadow and its stream in front
   zozan: () => [
@@ -94,12 +103,13 @@ const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
     { k: 'w', d: 'M-21,18C-21,13 -16,11 -12,13C-10,9 -3,8.5 0,12C3,9 9,9 11,12.5C15,10.5 21,12.5 21,18Z' },
     { k: 'h', d: sparkle(13, -14, 3.8), o: 0.95 },
   ],
-  // Stêrk, the star: a four-point star burning over the peak
+  // Stêrk, the star: the peak, and behind it the sun disc with its rays — the star of the day
   sterk: () => [
-    { k: 'a', d: 'M-20,20L-4,-1L1.5,6L7,0L20,20Z' },
-    { k: 'w', d: 'M-4,-1L-8,4.4L-5.6,3.6L-3.6,5.4L-1.6,3.4Z' },
-    { k: 'f', d: sparkle(0, -9, 13, 0.22) },
-    { k: 'h', d: sparkle(0, -9, 4.5, 0.3), o: 0.95 },
+    { k: 'l', d: rayRing(0, -2, 13, 19, 12), w: 2.6 },
+    { k: 'f', d: circ(0, -2, 10.5) },
+    { k: 'a', d: 'M-21,19L-6,0L0,7L7,-1L21,19Z' },
+    { k: 'w', d: 'M-6,0L-10.2,5.4L-7.6,4.6L-5.6,6.6L-3.4,4.4Z' },
+    { k: 'w', d: 'M7,-1L3.6,3.6L5.8,3L7.4,4.6L9.4,3.2Z' },
   ],
   // before a first tier: ridges fading into mist
   placing: () => [
@@ -137,13 +147,13 @@ interface Grandeur {
 }
 
 const GRANDEUR: Record<RankTier | 'placing', Grandeur> = {
-  placing: { w: 26, h: 34, blades: 0, crown: 'none', glow: 0, rays: 0 },
-  dest: { w: 26, h: 34, blades: 0, crown: 'none', glow: 0.18, rays: 0 },
-  gir: { w: 27, h: 35, blades: 1, crown: 'none', glow: 0.24, rays: 0 },
-  zozan: { w: 27.5, h: 36, blades: 2, crown: 'none', glow: 0.3, rays: 0 },
-  ciya: { w: 28, h: 37, blades: 2, crown: 'spike', glow: 0.38, rays: 0 },
-  lutke: { w: 28.5, h: 38, blades: 3, crown: 'three', glow: 0.5, rays: 10 },
-  sterk: { w: 29, h: 38, blades: 3, crown: 'star', glow: 0.7, rays: 20 },
+  placing: { w: 29, h: 38, blades: 0, crown: 'none', glow: 0, rays: 0 },
+  dest: { w: 30, h: 39, blades: 0, crown: 'none', glow: 0.2, rays: 0 },
+  gir: { w: 30, h: 39, blades: 1, crown: 'none', glow: 0.26, rays: 0 },
+  zozan: { w: 30.5, h: 40, blades: 2, crown: 'none', glow: 0.32, rays: 0 },
+  ciya: { w: 31, h: 40, blades: 2, crown: 'spike', glow: 0.4, rays: 0 },
+  lutke: { w: 31, h: 40, blades: 3, crown: 'three', glow: 0.52, rays: 10 },
+  sterk: { w: 31, h: 40, blades: 3, crown: 'star', glow: 0.72, rays: 20 },
 };
 
 /** The crest's outline: a gem pointed at top and bottom with straight shoulders. */
@@ -190,7 +200,7 @@ function crest(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, 
   if (g.crown === 'three') {
     out.push(spike(cx - 11, top + 14, small ? 16 : 15, 10, -5, m));
     out.push(spike(cx + 11, top + 14, small ? 16 : 15, 10, 5, m));
-    out.push(spike(cx, top + 8, small ? 22 : 21, 13, 0, m));
+    out.push(spike(cx, top + 8, small ? 19 : 18, 13, 0, m));
   }
 
   // the gem: a cut rim, and the field glowing inside it
@@ -217,12 +227,12 @@ function crest(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, 
       `<path d="M${n(cx + 70)},${n(cy - 70)}L${n(cx - 70)},${n(cy + 70)}L${n(cx - 70)},${n(cy - 70)}Z" fill="#ffffff" fill-opacity="0.07"/>` +
       `<path d="${fieldPath}" fill="none" stroke="url(#${rimLight})" stroke-width="${small ? 2.4 : 1.8}"/></g>`,
   );
-  out.push(rankGlyph(dr, tier, cx, cy + (tier === 'sterk' ? 1 : 0), small ? 1.3 : 1.04, small, field));
+  out.push(rankGlyph(dr, tier, cx, cy + (tier === 'sterk' ? 1 : 0), small ? 1.3 : 1.1, small, field));
 
   if (g.crown === 'star') {
-    const sy = top - (small ? 4 : 6);
+    const sy = top + 2;
     out.push(halo(dr, cx, sy, small ? 22 : 26, '#ffffff', 0.7, 0.15));
-    out.push(cutStar(cx, sy, small ? 15 : 17, m));
+    out.push(cutStar(cx, sy, small ? 15 : 15.5, m));
   }
   if (tier === 'lutke' || tier === 'sterk') {
     if (!small) out.push(`<path d="${sparkle(cx + g.w + 6, cy - g.h * 0.75, 5)}${sparkle(cx - g.w - 4, cy + g.h * 0.55, 3.4)}" fill="#ffffff"/>`);
@@ -343,7 +353,7 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   if (small) {
     dr.add(`<g transform="translate(60 60) scale(1.32) translate(-60 -60)">${crest(dr, 'placing', 60, 60, true)}</g>`);
   } else {
-    dr.add(crest(dr, 'placing', 60, 50, false));
+    dr.add(crest(dr, 'placing', 60, 52, false));
     const segs: string[] = [];
     const lit: string[] = [];
     for (let i = 0; i < PLACEMENT_GAMES; i++) (i < done ? lit : segs).push(capsule(60 + (i - 2) * 11, 103, 8.5, 5));
@@ -368,17 +378,17 @@ export function rankEmblemSvg(opts: RankEmblemOptions): string {
   const shown = tier === 'sterk' || season ? undefined : division;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'rank', tier, shown, small, season?.name, season?.year));
   const nm = RANK_TIER_NAMES[tier];
-  const starred = tier === 'sterk' ? 6 : 0;
+  const starred = tier === 'sterk' ? 4 : 0;
   if (small) {
     // the crest alone, closer in; the division is in the title and beside it in the app
-    const cy = 60 + starred;
-    dr.add(`<g transform="translate(60 60) scale(1.2) translate(-60 ${-cy})">${crest(dr, tier, 60, cy, true)}</g>`);
+    const cy = 60 + (tier === 'ciya' || tier === 'lutke' ? 3 : 0) + starred / 2;
+    dr.add(`<g transform="translate(60 60) scale(1.1) translate(-60 ${-cy})">${crest(dr, tier, 60, cy, true)}</g>`);
   } else {
     const marked = shown !== undefined || season !== undefined;
-    const cy = (marked ? 52 : 58) + starred;
+    const cy = (marked ? 54 : 58) + starred;
     dr.add(crest(dr, tier, 60, cy, false));
-    if (season) dr.add(seasonMark(dr, tier, season.name, season.year, 60, 105));
-    else if (shown !== undefined) dr.add(divisionMark(dr, RANK_METAL[tier], shown, 60, 104));
+    if (season) dr.add(seasonMark(dr, tier, season.name, season.year, 60, 107));
+    else if (shown !== undefined) dr.add(divisionMark(dr, RANK_METAL[tier], shown, 60, 106));
   }
   const when = season ? ` · ${SEASON_NAMES[season.name].ku} ${season.year}` : '';
   const title = opts.title ?? `${nm.ku}${shown === undefined ? '' : ` ${ROMAN[shown]}`} (${nm.en})${when}`;

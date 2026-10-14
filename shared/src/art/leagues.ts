@@ -60,14 +60,24 @@ function leagueField(t: LeagueTier): Field {
   return { glow: mix(m.dark, m.deep, 0.15), mid: mix(m.dark, m.deep, 0.55), deep: m.deep };
 }
 
-/** A wave band across the glyph box at y, filled down to `bottom`. */
-function wave(y: number, amp: number, len: number, bottom: number, x0 = -21, x1 = 21): string {
-  let d = `M${n(x0)},${n(bottom)}L${n(x0)},${n(y)}`;
-  for (let x = x0; x < x1 - 0.01; x += len) {
-    const e = Math.min(x1, x + len);
-    d += `Q${n(x + len * 0.25)},${n(y - amp)} ${n(x + len * 0.5)},${n(y)}Q${n(x + len * 0.75)},${n(y + amp)} ${n(e)},${n(y)}`;
+/** The glyphs are drawn in a round window of this radius. */
+const R = 19.5;
+
+/**
+ * Water from a wavy line at y down to the round window's lower edge: a crest
+ * every `len`, `amp` high.
+ */
+function wave(y: number, amp: number, len: number): string {
+  const x1 = Math.sqrt(R * R - y * y);
+  const x0 = -x1;
+  const count = Math.max(1, Math.round((x1 - x0) / len));
+  const step = (x1 - x0) / count;
+  let d = `M${n(x0)},${n(y)}`;
+  for (let i = 0; i < count; i++) {
+    const x = x0 + i * step;
+    d += `Q${n(x + step * 0.25)},${n(y - amp)} ${n(x + step * 0.5)},${n(y)}Q${n(x + step * 0.75)},${n(y + amp)} ${n(x + step)},${n(y)}`;
   }
-  return `${d}L${n(x1)},${n(bottom)}Z`;
+  return `${d}A${n(R)},${n(R)} 0 ${y < 0 ? 1 : 0} 1 ${n(x0)},${n(y)}Z`;
 }
 
 /** Each tier's glyph, in the 40-unit icon box. */
@@ -88,12 +98,11 @@ const LEAGUE_GLYPHS: Record<LeagueTier, () => Part[]> = {
     { k: 'w', d: drop(9, -4.5, 0.48) },
     { k: 'h', d: 'M-7,13C-6,8.5 -3.5,5.4 -0.6,4.6C-3,6.8 -4.6,9.8 -5,13.5Z', o: 0.7, fine: true },
   ],
-  // Çem, the river: narrow in the distance and wide at the viewer, between hills
+  // Çem, the river: running water, the sign every map draws a river with
   cem: () => [
-    { k: 'a', d: 'M-21,-2C-14,-9 -6,-9 0,-5C6,-10 15,-10 21,-3V18H-21Z' },
-    { k: 'f', d: 'M-1.5,-6C1,-6 3,-5 2,-3C0,0 -6,0 -6,4C-6,8 6,8 9,12C11,15 9,18 8,18H-10C-10,15 -14,12 -12,8C-9,3 -3,3 -2,0C-1.4,-2 -3,-4 -1.5,-6Z' },
-    { k: 'd', d: 'M-2,9C0,10 3,11 4,13', w: 1.2, fine: true },
-    { k: 'w', d: 'M-14.5,-11.5A4,4 0 1 1 -14.5,-11.4Z' },
+    { k: 'l', d: 'M-15,-9Q-11.2,-13.5 -7.5,-9T0,-9T7.5,-9T15,-9', w: 4.2 },
+    { k: 'l', d: 'M-17,0Q-12.75,-4.5 -8.5,0T0,0T8.5,0T17,0', w: 4.6 },
+    { k: 'l', d: 'M-15,9Q-11.2,4.5 -7.5,9T0,9T7.5,9T15,9', w: 4.2 },
   ],
   // Gol, the lake: a mountain and, upside down in the still water, its reflection
   gol: () => [
@@ -106,8 +115,8 @@ const LEAGUE_GLYPHS: Record<LeagueTier, () => Part[]> = {
   // Derya, the sea: the sun on the horizon and rollers coming in
   derya: () => [
     { k: 'c', d: 'M-9,-3A9,9 0 0 1 9,-3Z', c: 'glow' },
-    { k: 'f', d: wave(-1, 2.2, 10.5, 9) },
-    { k: 'a', d: wave(7, 3, 14, 19) },
+    { k: 'f', d: wave(-1, 2.2, 10) },
+    { k: 'a', d: wave(7, 3, 12) },
     { k: 'l', d: 'M-15,12C-12,9.5 -9,9.5 -6,12M5,12C8,9.5 11,9.5 14,12', w: 1.6, c: 'snow' },
   ],
   // Okyanûs, the ocean: the great wave rising and curling over, spray flying
