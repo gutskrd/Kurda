@@ -201,6 +201,23 @@ describe('a case', () => {
     expect(screen.queryByRole('button', { name: 'Sanction this person' })).not.toBeInTheDocument();
   });
 
+  it('renews its own claim before it runs out while the moderator is at work', async () => {
+    const mineSoon = caseDetail({ case: { status: 'in_review', claimedBy: { id: ME_ID, username: 'rojda' }, leaseUntil: new Date(Date.now() + 60_000).toISOString() } });
+    const { calls } = show(at, detailRoute(mineSoon), on('POST', /\/claim$/, json({ leaseUntil: new Date(Date.now() + 900_000).toISOString() })));
+    // a minute left: renewed at once (opening the case counts as being at work), then read again
+    await waitFor(() => expect(posts(calls, `/admin/moderation/cases/${CASE_ID}/claim`)).toHaveLength(1));
+    await waitFor(() => expect(calls.filter((c) => c.method === 'GET' && c.path === `/admin/moderation/cases/${CASE_ID}`)).toHaveLength(2));
+    expect(screen.getByText(/^Yours until/)).toBeInTheDocument();
+  });
+
+  it('leaves a claim that already ran out to the queue', async () => {
+    const lapsed = caseDetail({ case: { status: 'in_review', claimedBy: { id: ME_ID, username: 'rojda' }, leaseUntil: new Date(Date.now() - 1_000).toISOString() } });
+    const { calls } = show(at, detailRoute(lapsed), on('POST', /\/claim$/, json({ leaseUntil: new Date(Date.now() + 900_000).toISOString() })));
+    expect(await screen.findByRole('heading', { level: 1 })).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(posts(calls, `/admin/moderation/cases/${CASE_ID}/claim`)).toHaveLength(0);
+  });
+
   it('puts a decision together, shows the exact messages, and sends exactly that', async () => {
     const user = userEvent.setup();
     const { calls } = show(at, detailRoute(caseDetail()), previewRoute(), on('POST', /\/claim$/, json({ claimed: true })));

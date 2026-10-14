@@ -28,6 +28,10 @@ import { DecisionPanel } from './DecisionPanel';
 
 /** Beside the case from this width; below it, a bar at the bottom that opens the panel as a sheet. */
 const SIDE_BY_SIDE = '(min-width: 1200px)';
+/** A held claim is renewed this long before it runs out… */
+const RENEW_BEFORE_MS = 2 * 60_000;
+/** …when its holder clicked or typed within this long. */
+const ACTIVE_WITHIN_MS = 10 * 60_000;
 
 /**
  * One case (#/moderation/<caseId>): what was reported, who it is about and
@@ -95,6 +99,38 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
       setClaiming(false);
     }
   }
+
+  // A claim lasts 15 minutes. While the moderator who holds it is still at
+  // work on the case (they clicked or typed in the last few minutes), it is
+  // renewed shortly before it runs out, so a long read or a careful statement
+  // never loses the case to someone else. A tab left open and untouched lets
+  // it lapse, so nobody holds a case they walked away from.
+  const lastActive = useRef(Date.now());
+  useEffect(() => {
+    const touch = (): void => {
+      lastActive.current = Date.now();
+    };
+    window.addEventListener('pointerdown', touch);
+    window.addEventListener('keydown', touch);
+    return () => {
+      window.removeEventListener('pointerdown', touch);
+      window.removeEventListener('keydown', touch);
+    };
+  }, []);
+  const leaseUntil = detail?.case.leaseUntil ?? null;
+  const reload = loaded.reload;
+  useEffect(() => {
+    // a claim that already ran out is the queue's again: claiming it is a choice, not a renewal
+    if (!mine || !open || !leaseUntil || Date.parse(leaseUntil) <= Date.now()) return;
+    const renewIn = Math.max(0, Date.parse(leaseUntil) - Date.now() - RENEW_BEFORE_MS);
+    const timer = window.setTimeout(() => {
+      if (Date.now() - lastActive.current > ACTIVE_WITHIN_MS) return;
+      api(`/admin/moderation/cases/${caseId}/claim`, { method: 'POST' })
+        .catch(() => undefined) // the reload below shows who holds it now
+        .finally(() => void reload());
+    }, renewIn);
+    return () => window.clearTimeout(timer);
+  }, [mine, open, leaseUntil, caseId, reload]);
 
   // j / k / c, never while typing or with a dialog open
   useEffect(() => {
