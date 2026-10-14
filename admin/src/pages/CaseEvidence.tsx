@@ -20,12 +20,14 @@ export function Evidence({ detail, sensitive }: { detail: CaseDetail; sensitive:
   // the same thing captured again later, changed in between: say so
   const changed = snapshots.some((s) => first && (s.text !== first.text || s.caption !== first.caption || s.title !== first.title));
   const automated = detail.case.evidence as Record<string, unknown>;
-  const autoSnapshot = isSnapshot(automated.snapshot) ? automated.snapshot : null;
+  // an automatic flag keeps its capture under `snapshot`; a report's case is the capture itself
+  const ownSnapshot = isSnapshot(automated);
+  const autoSnapshot = isSnapshot(automated.snapshot) ? automated.snapshot : ownSnapshot ? automated : null;
   const legacy = !first && detail.reports.some((r) => (r.evidence as { legacy?: unknown }).legacy === true);
   const shown = first ?? autoSnapshot;
   const keysShown = new Set(shown ? [...shown.mediaKeys, ...(shown.pictures ?? []).map((p) => p.mediaKey)] : []);
   const otherMedia = detail.media.filter((m) => !keysShown.has(m.key));
-  const autoFacts = automatedFacts(automated);
+  const autoFacts = ownSnapshot ? [] : automatedFacts(automated);
 
   return (
     <Section title="What was reported" className="case-evidence">
@@ -82,7 +84,8 @@ function automatedFacts(evidence: Record<string, unknown>): Array<{ label: strin
 export function Snapshot({ snapshot: s, media, sensitive }: { snapshot: EvidenceSnapshot; media: CaseMediaItem[]; sensitive: boolean }): React.JSX.Element {
   const byKey = new Map(media.map((m) => [m.key, m]));
   const pictures = s.pictures ?? s.mediaKeys.map((k) => ({ mediaKey: k, altText: null }));
-  const extra = s.extra ? noticeFields(s.extra) : [];
+  // a plain text message says nothing by being one
+  const extra = s.extra ? noticeFields(s.extra).filter((f) => !(f.label === 'Kind' && f.value === 'text')) : [];
   return (
     <div className="snapshot">
       <div className="snapshot-head">

@@ -190,7 +190,7 @@ function Queue(): React.JSX.Element {
         <div ref={table}>
           <Table
             caption="Moderation cases"
-            wide
+            wide="medium"
             columns={COLUMNS}
             rows={cases}
             rowKey={(c) => c.id}

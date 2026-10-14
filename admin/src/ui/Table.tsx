@@ -75,8 +75,11 @@ export function Table<T>({
   rowClassName?: (row: T) => string | undefined;
   /** for the error's "your role doesn't include …" */
   what?: string;
-  /** many columns: cards below 960 px rather than 640, so a tablet never cuts the row off */
-  wide?: boolean;
+  /**
+   * many columns: cards below 960 px rather than 640, so a tablet never cuts
+   * the row off; 'medium' for a few wide ones, cards below 860 px
+   */
+  wide?: boolean | 'medium';
 }): React.JSX.Element {
   const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
   const span = columns.length + (actions ? 1 : 0);
@@ -147,7 +150,7 @@ export function Table<T>({
   }
 
   return (
-    <div className={`table-wrap${wide ? ' is-wide' : ''}`}>
+    <div className={`table-wrap${wide === 'medium' ? ' is-medium' : wide ? ' is-wide' : ''}`}>
       {error != null && rows && rows.length > 0 && (
         <div className="table-refresh-error">
           <ErrorState error={error} onRetry={onRetry} what={what} compact />

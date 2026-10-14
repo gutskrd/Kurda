@@ -161,6 +161,15 @@ describe('a case', () => {
     expect(screen.getByText('Claimed it')).toBeInTheDocument();
   });
 
+  it('shows a report’s own capture once, not again as automatic-check facts', async () => {
+    const full = caseDetail();
+    const capture = full.reports[0]!.evidence as Record<string, unknown>;
+    show(at, detailRoute({ ...full, case: { ...full.case, evidence: { ...capture, extra: { kind: 'text' } } } }));
+    expect(await screen.findByRole('heading', { name: 'Bullying or harassment' })).toBeInTheDocument();
+    expect(screen.queryByText('What the automatic check recorded')).not.toBeInTheDocument();
+    expect(screen.queryByText('Context 1 › Id')).not.toBeInTheDocument();
+  });
+
   it('blurs pictures until asked, and asks first when a child may be at risk', async () => {
     const user = userEvent.setup();
     const d = caseDetail({

@@ -184,6 +184,26 @@
   .is-wide .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
   .is-wide .row-actions > button, .is-wide .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
 }
+/* a table of a few wide columns (the moderation queue): a table from 860 px, so it stays one on a laptop with the sidebar */
+@container (max-width: 860px) {
+  .is-medium > .kit-table, .is-medium > .kit-table tbody, .is-medium > .kit-table tr, .is-medium > .kit-table td { display: block; }
+  .is-medium > .kit-table thead { display: none; }
+  .is-medium > .kit-table tbody tr {
+    margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
+    border: 1px solid var(--hairline); background: var(--surface-strong);
+  }
+  .is-medium > .kit-table tbody tr.table-state, .is-medium > .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
+  .is-medium > .kit-table tbody tr:hover td { background: none; }
+  .is-medium > .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
+  .is-medium > .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
+  .is-medium > .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
+  .is-medium > .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
+  .is-medium > .kit-table td.is-card-hidden { display: none; }
+  .is-medium > .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
+  .is-medium > .kit-table td.is-end { text-align: start; }
+  .is-medium .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
+  .is-medium .row-actions > button, .is-medium .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
+}
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--separator); }
 .pagination-at { color: var(--text-dim); font-variant-numeric: tabular-nums; }
 

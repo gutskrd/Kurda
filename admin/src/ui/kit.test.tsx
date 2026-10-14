@@ -85,6 +85,10 @@ describe('Table', () => {
     expect(container.querySelector('.table-wrap')).toHaveClass('is-wide');
     renderUi(<Table caption="Tags" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
     expect(screen.getByRole('table', { name: 'Tags' }).parentElement).not.toHaveClass('is-wide');
+    // a few wide columns: cards a little later, so a laptop with the sidebar keeps the table
+    renderUi(<Table caption="Cases" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide="medium" />);
+    expect(screen.getByRole('table', { name: 'Cases' }).parentElement).toHaveClass('is-medium');
+    expect(screen.getByRole('table', { name: 'Cases' }).parentElement).not.toHaveClass('is-wide');
   });
 
   it('says it is loading, rather than drawing an empty table', () => {
