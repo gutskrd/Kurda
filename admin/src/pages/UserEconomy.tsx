@@ -87,7 +87,16 @@ export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser;
   );
 }
 
-/** Add or take away Zêr or Gems, with a reason kept in the audit log. */
+/** The most one change may add or take away, as the API allows. */
+export const WALLET_ADJUST_MAX = 1_000_000;
+/** From here a credit is asked about in red, like a debit: the same line where a shop price needs a second admin. */
+const LARGE_ADJUSTMENT = 1_000;
+
+/**
+ * Add or take away Zêr or Gems, with a reason kept in the audit log. A change
+ * mints or burns currency, so it is said back — amount, currency and the
+ * balance it leaves — and confirmed before anything is sent.
+ */
 function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => void }): React.JSX.Element {
   const [currency, setCurrency] = useState<'zer' | 'gems'>('zer');
   const [amount, setAmount] = useState('');
@@ -95,14 +104,34 @@ function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => v
   const [busy, setBusy] = useState(false);
   const [touched, setTouched] = useState(false);
   const toast = useToast();
+  const dialogs = useDialogs();
   const value = Number(amount);
-  const amountError = !amount.trim() ? 'Enter an amount.' : !Number.isInteger(value) || value === 0 ? 'A whole number, not 0. A negative one takes away.' : null;
+  const amountError = !amount.trim()
+    ? 'Enter an amount.'
+    : !Number.isInteger(value) || value === 0
+      ? 'A whole number, not 0. A negative one takes away.'
+      : Math.abs(value) > WALLET_ADJUST_MAX
+        ? `At most ${WALLET_ADJUST_MAX.toLocaleString()} at a time.`
+        : null;
   const reasonError = reason.trim() ? null : 'Say why, for the audit log.';
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setTouched(true);
     if (amountError || reasonError) return;
+    const name = CURRENCY[currency]!;
+    const now = user.balances[currency];
+    const after = now + value;
+    const yes = await dialogs.confirm({
+      title: value > 0 ? `Add ${value.toLocaleString()} ${name} to @${user.username}?` : `Take ${Math.abs(value).toLocaleString()} ${name} from @${user.username}?`,
+      body:
+        `Their balance goes from ${now.toLocaleString()} to ${after.toLocaleString()} ${name}.` +
+        (after < 0 ? ' That is less than they have, so it will be refused.' : '') +
+        `\nReason: ${reason.trim()}`,
+      confirmLabel: value > 0 ? `Add ${value.toLocaleString()} ${name}` : `Take ${Math.abs(value).toLocaleString()} ${name}`,
+      tone: value < 0 || value >= LARGE_ADJUSTMENT ? 'danger' : 'default',
+    });
+    if (!yes) return;
     setBusy(true);
     try {
       const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, { method: 'POST', body: { currency, amount: value, reason: reason.trim() } });

@@ -179,6 +179,17 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(token).toBeTruthy();
     const bad = await app.inject({ method: 'GET', url: '/admin/users?filter=everyone', headers: { authorization: `Bearer ${token}` } });
     expect(bad.statusCode).toBe(400);
+
+    // a wallet change past a million either way is a slip of the keyboard, refused before anything moves
+    for (const amount of [1_000_001, -1_000_001]) {
+      const slip = await app.inject({
+        method: 'POST',
+        url: `/admin/users/${targetId}/wallet`,
+        headers: { authorization: `Bearer ${token}` },
+        payload: { currency: 'zer', amount, reason: 'typo' },
+      });
+      expect(slip.statusCode).toBe(400);
+    }
   });
 
   it('says whether the person is a minor, an adult, or has no age on the account', async () => {

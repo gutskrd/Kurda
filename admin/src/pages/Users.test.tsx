@@ -286,9 +286,23 @@ describe('a person', () => {
     expect(screen.getByText('Changed by an admin')).toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Apply' }));
     expect(screen.getByText('Enter an amount.')).toBeInTheDocument();
-    await user.type(screen.getByLabelText(/^Amount/), '-500');
+    // more than the API takes at once: refused before anything is asked
+    await user.type(screen.getByLabelText(/^Amount/), '2000000');
     await user.type(screen.getByLabelText(/^Reason/), 'Refunded twice by mistake');
     await user.click(screen.getByRole('button', { name: 'Apply' }));
+    expect(screen.getByText('At most 1,000,000 at a time.')).toBeInTheDocument();
+    expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
+    await user.clear(screen.getByLabelText(/^Amount/));
+    await user.type(screen.getByLabelText(/^Amount/), '-500');
+    // said back, with the balance it leaves, before anything moves; Cancel sends nothing
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    const ask = await screen.findByRole('alertdialog', { name: 'Take 500 Zêr from @baran?' });
+    expect(ask).toHaveTextContent('Their balance goes from 1,200 to 700 Zêr.');
+    expect(ask).toHaveTextContent('Reason: Refunded twice by mistake');
+    await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)).toHaveLength(0);
+    await user.click(screen.getByRole('button', { name: 'Apply' }));
+    await user.click(within(await screen.findByRole('alertdialog')).getByRole('button', { name: 'Take 500 Zêr' }));
     await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)).toHaveLength(1));
     expect(posts(calls, `/admin/users/${SUBJECT_ID}/wallet`)[0]!.body).toEqual({ currency: 'zer', amount: -500, reason: 'Refunded twice by mistake' });
     expect(await screen.findByText('Took away 500 Zêr. New balance: 700.')).toBeInTheDocument();

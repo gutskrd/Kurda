@@ -13,7 +13,16 @@ const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
 // confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
 const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
-const walletBody = z.object({ reason: z.string(), currency: z.enum(['zer', 'gems']), amount: z.number().int() });
+/**
+ * The most one admin change may add or take away. A grant mints currency: a
+ * slip of the keyboard (1000000 for 1000) should be refused, not credited.
+ */
+export const WALLET_ADJUST_MAX = 1_000_000;
+const walletBody = z.object({
+  reason: z.string(),
+  currency: z.enum(['zer', 'gems']),
+  amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
+});
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 
