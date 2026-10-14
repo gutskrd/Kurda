@@ -3,6 +3,9 @@ import {
   BADGE_FAMILIES,
   BADGE_KEYS,
   BADGES,
+  badgeArt,
+  isBadgeKey,
+  RANK_BADGE,
   LEAGUE_TIERS,
   PLACEMENT_GAMES,
   RANK_TIERS,
@@ -22,6 +25,9 @@ import {
   type BadgeTier,
 } from './index.js';
 import { ICONS } from './icons.js';
+import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
+import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS } from '../leagues.js';
+import { RANK_TIER_KEYS, SEASON_NAMES as SEASON_LABEL_KEYS } from '../ranks.js';
 
 /**
  * A strict little XML reader: enough to say a drawing is well-formed (every
@@ -161,17 +167,29 @@ describe('the checks themselves', () => {
 describe('the badge catalogue the art draws', () => {
   it('has the 44 badge types of the catalogue, in their seven families', () => {
     expect(BADGE_KEYS).toHaveLength(44);
-    const count = (family: string): number => BADGE_KEYS.filter((k) => BADGES[k].family === family).length;
+    const count = (family: string): number => BADGE_KEYS.filter((k) => badgeArt(k).family === family).length;
     expect(BADGE_FAMILIES.map(count)).toEqual([7, 5, 7, 8, 3, 8, 6]);
     expect(new Set(BADGE_KEYS).size).toBe(44);
     for (const key of BADGE_KEYS) expect(key).toMatch(/^[a-z][a-z-]*$/);
   });
 
-  it('has a picture for every badge', () => {
-    for (const key of BADGE_KEYS) {
-      const drawn = key.startsWith('rank-') || ICONS[key] !== undefined;
-      expect(drawn, key).toBe(true);
-    }
+  it('is the catalogue itself, not a copy of it', () => {
+    expect(BADGE_KEYS).toEqual(CATALOGUE.map((b) => b.key));
+    expect(BADGE_FAMILIES).toEqual(CATALOGUE_FAMILIES);
+    for (const b of CATALOGUE) expect(BADGES[b.key], b.key).toEqual({ family: b.family, name: b.nameKu, tiers: b.tiers.length });
+    expect(RANK_TIERS).toEqual(RANK_TIER_KEYS);
+    expect(LEAGUE_TIERS).toEqual(CATALOGUE_LEAGUE_TIERS);
+    expect(SEASONS).toEqual(SEASON_LABEL_KEYS);
+    // the art counts tiers 1–4 and has four metals: the catalogue's tiers are those four
+    expect(CATALOGUE_TIERS).toHaveLength(4);
+    for (const b of CATALOGUE) expect([1, 4], b.key).toContain(b.tiers.length);
+  });
+
+  it('has a drawing for every badge of the catalogue, and none for a badge it does not have', () => {
+    const undrawn = CATALOGUE.filter((b) => !(b.family === 'ranked' && Object.values(RANK_BADGE).includes(b.key)) && ICONS[b.key] === undefined).map((b) => b.key);
+    expect(undrawn, 'catalogue badges with no drawing in icons.ts').toEqual([]);
+    for (const tier of RANK_TIERS) expect(isBadgeKey(RANK_BADGE[tier]), `${tier} has a ranked badge`).toBe(true);
+    expect(Object.keys(ICONS).filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
   });
 });
 
@@ -229,7 +247,7 @@ describe('badgeSvg', () => {
       expect(badgeSvg({ key, state: 'secret' })).not.toBe(earned);
     }
     // a secret not yet found gives nothing away: every secret looks the same
-    const secrets = BADGE_KEYS.filter((k) => BADGES[k].family === 'secret').map((key) =>
+    const secrets = BADGE_KEYS.filter((k) => badgeArt(k).family === 'secret').map((key) =>
       badgeSvg({ key, state: 'secret', idPrefix: 'x' }).replace(/<title[^<]*<\/title>/, ''),
     );
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
@@ -258,7 +276,7 @@ describe('badgeSvg', () => {
     expect(badgeShines('newroz', 4)).toBe(true);
     expect(badgeShines('vegera')).toBe(false);
     for (const family of BADGE_FAMILIES) {
-      const key = BADGE_KEYS.find((k) => BADGES[k].family === family) as BadgeKey;
+      const key = BADGE_KEYS.find((k) => badgeArt(k).family === family) as BadgeKey;
       const frames = [0, 0.25, 0.5, 0.75, 1].map((phase) => badgeShineSvg({ key, phase, size: 96 }));
       for (const svg of frames) checkSvg(svg, 96);
       expect(new Set(frames).size).toBe(5);
@@ -287,7 +305,7 @@ describe('ids across drawings', () => {
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier })),
       ...RANK_TIERS.flatMap((tier) => [seasonFrameSvg({ tier }), seasonFrameSvg({ tier, shine: true }), seasonFrameShineSvg({ tier })]),
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, season: { name: 'payiz', year: 2026 } })),
-      ...BADGE_FAMILIES.map((family) => badgeShineSvg({ key: BADGE_KEYS.find((k) => BADGES[k].family === family) as BadgeKey })),
+      ...BADGE_FAMILIES.map((family) => badgeShineSvg({ key: BADGE_KEYS.find((k) => badgeArt(k).family === family) as BadgeKey })),
     ];
     for (const svg of new Set(drawings)) {
       walk(parse(svg), (e) => {

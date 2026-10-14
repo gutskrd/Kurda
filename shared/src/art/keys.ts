@@ -3,145 +3,90 @@
  * tiers, the game-rank tiers and the league tiers (contract 4, B1/B3, R4, L1;
  * research §7.4).
  *
- * The badge catalogue proper — thresholds, what counts, the translated names —
- * belongs to `shared/src/badges.ts`, written by the badges track at the same
- * time as this and not yet on this branch. The art cannot wait for it, so this
- * is the art's own copy of the list, with the catalogue's keys and tier
- * counts. Once both are merged this list should be read from `badges.ts`
- * rather than kept beside it, and the art test that every badge has a drawing
- * then covers the catalogue itself.
+ * None of it is the art's own list. The badges, their families and how many
+ * tiers each has are read from the catalogue (`shared/src/badges.ts`), the
+ * rank tiers and seasons from `shared/src/ranks.ts`, the league tiers from
+ * `shared/src/leagues.ts` — so a badge added to the catalogue is a badge the
+ * art is asked to draw, and the art test fails until it has a picture.
  *
  * Names here are labels for the drawings' default `<title>` only. Every app
  * passes its own translated title; these are the fallback.
  */
+import { BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGES as CATALOGUE, BADGE_TIERS as CATALOGUE_TIERS, BADGE_TIER_META } from '../badges.js';
+import type { BadgeFamily as CatalogueFamily } from '../badges.js';
+import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS, LEAGUE_TIER_META } from '../leagues.js';
+import type { LeagueTier as CatalogueLeagueTier } from '../leagues.js';
+import { APEX_TIER, RANK_TIERS as POINTS_TIERS, RANK_TIER_KEYS, SEASON_LABELS, SEASON_NAMES as CATALOGUE_SEASONS } from '../ranks.js';
+import type { Division, RankTier as CatalogueRankTier, SeasonName } from '../ranks.js';
 
-export const BADGE_FAMILIES = ['learning', 'habit', 'games', 'ranked', 'friends', 'events', 'secret'] as const;
-export type BadgeFamily = (typeof BADGE_FAMILIES)[number];
+export const BADGE_FAMILIES = CATALOGUE_FAMILIES;
+export type BadgeFamily = CatalogueFamily;
 
-/** Badge tiers 1–4: Sifir (copper), Zîv (silver), Zêr (gold), Firûze (turquoise). */
+/**
+ * Badge tiers 1–4: Sifir (copper), Zîv (silver), Zêr (gold), Firûze
+ * (turquoise). The art numbers them; the catalogue keys them by name, in the
+ * same order. The metals (palette.ts) are four, so the catalogue's tiers must
+ * be four too — the line below stops the build if they are not.
+ */
 export const BADGE_TIERS = [1, 2, 3, 4] as const;
 export type BadgeTier = (typeof BADGE_TIERS)[number];
-export const BADGE_TIER_NAMES: Record<BadgeTier, string> = { 1: 'Sifir', 2: 'Zîv', 3: 'Zêr', 4: 'Firûze' };
+const FOUR_TIERS: (typeof CATALOGUE_TIERS)['length'] extends (typeof BADGE_TIERS)['length'] ? true : never = true;
+void FOUR_TIERS;
+export const BADGE_TIER_NAMES = Object.fromEntries(
+  BADGE_TIERS.map((tier, i) => [tier, BADGE_TIER_META[CATALOGUE_TIERS[i] ?? 'sifir'].nameKu]),
+) as Readonly<Record<BadgeTier, string>>;
 
-/** Game-rank tiers, lowest first (R4). */
-export const RANK_TIERS = ['dest', 'gir', 'zozan', 'ciya', 'lutke', 'sterk'] as const;
-export type RankTier = (typeof RANK_TIERS)[number];
-export const RANK_TIER_NAMES: Record<RankTier, { ku: string; en: string }> = {
-  dest: { ku: 'Deşt', en: 'Plain' },
-  gir: { ku: 'Gir', en: 'Hill' },
-  zozan: { ku: 'Zozan', en: 'High pasture' },
-  ciya: { ku: 'Çiya', en: 'Mountain' },
-  lutke: { ku: 'Lûtke', en: 'Summit' },
-  sterk: { ku: 'Stêrk', en: 'Star' },
-};
+/** Game-rank tiers, lowest first, Stêrk last (R4). */
+export const RANK_TIERS: readonly RankTier[] = RANK_TIER_KEYS;
+export type RankTier = CatalogueRankTier;
+export const RANK_TIER_NAMES = Object.fromEntries(
+  [...POINTS_TIERS, APEX_TIER].map((t) => [t.key, { ku: t.name, en: t.meaning }]),
+) as Readonly<Record<RankTier, { ku: string; en: string }>>;
 /** Divisions within a tier: 3 is III (the lowest), 1 is I (the top). Stêrk has none. */
-export const RANK_DIVISIONS = [3, 2, 1] as const;
-export type RankDivision = (typeof RANK_DIVISIONS)[number];
+export const RANK_DIVISIONS = [3, 2, 1] as const satisfies readonly Division[];
+export type RankDivision = Division;
 
 /** The seasons, in calendar order: Q1 Zivistan, Q2 Bihar, Q3 Havîn, Q4 Payîz (R5). */
-export const SEASONS = ['zivistan', 'bihar', 'havin', 'payiz'] as const;
-export type Season = (typeof SEASONS)[number];
-export const SEASON_NAMES: Record<Season, { ku: string; en: string }> = {
-  zivistan: { ku: 'Zivistan', en: 'Winter' },
-  bihar: { ku: 'Bihar', en: 'Spring' },
-  havin: { ku: 'Havîn', en: 'Summer' },
-  payiz: { ku: 'Payîz', en: 'Autumn' },
-};
+export const SEASONS = CATALOGUE_SEASONS;
+export type Season = SeasonName;
+export const SEASON_NAMES: Readonly<Record<Season, { ku: string; en: string }>> = SEASON_LABELS;
 
 /** Learning-league tiers, lowest first (L1). */
-export const LEAGUE_TIERS = ['dilop', 'kani', 'cem', 'gol', 'derya', 'okyanus'] as const;
-export type LeagueTier = (typeof LEAGUE_TIERS)[number];
-export const LEAGUE_TIER_NAMES: Record<LeagueTier, { ku: string; en: string }> = {
-  dilop: { ku: 'Dilop', en: 'Drop' },
-  kani: { ku: 'Kanî', en: 'Spring' },
-  cem: { ku: 'Çem', en: 'River' },
-  gol: { ku: 'Gol', en: 'Lake' },
-  derya: { ku: 'Derya', en: 'Sea' },
-  okyanus: { ku: 'Okyanûs', en: 'Ocean' },
-};
+export const LEAGUE_TIERS = CATALOGUE_LEAGUE_TIERS;
+export type LeagueTier = CatalogueLeagueTier;
+export const LEAGUE_TIER_NAMES = Object.fromEntries(
+  LEAGUE_TIERS.map((t) => [t, { ku: LEAGUE_TIER_META[t].nameKu, en: LEAGUE_TIER_META[t].meaningEn }]),
+) as Readonly<Record<LeagueTier, { ku: string; en: string }>>;
 
-interface BadgeDef {
+/** What the art needs to know of a badge. */
+export interface BadgeArt {
   family: BadgeFamily;
   /** Kurmancî name, for the default title */
   name: string;
   /** how many tiers it has; 1 = a single badge with no tier chevrons */
-  tiers: 1 | 4;
+  tiers: number;
 }
 
-/**
- * The 44 badge types, as the badge catalogue (shared/src/badges.ts, the badges
- * track) keys them: research §7.4's 43 with its replacements for what Hevalo
- * cannot measure (Ferheng for the alphabet, Mêvandar for helpful answers), the
- * Okyanûs trophy Pêla (L3) added, and its tier counts — ranked emblems,
- * Hilkişer and the events count seasons or years in four tiers.
- */
-export const BADGES = {
-  // A. Learning — circle
-  ders: { family: 'learning', name: 'Ders', tiers: 4 },
-  'peyven-min': { family: 'learning', name: 'Peyvên min', tiers: 4 },
-  bekemasi: { family: 'learning', name: 'Bêkêmasî', tiers: 4 },
-  dubare: { family: 'learning', name: 'Dubare', tiers: 4 },
-  cirokbej: { family: 'learning', name: 'Çîrokbêj', tiers: 4 },
-  rewi: { family: 'learning', name: 'Rêwî', tiers: 4 },
-  ferheng: { family: 'learning', name: 'Ferheng', tiers: 4 },
-  // B. Habit — rounded square
-  agir: { family: 'habit', name: 'Agir', tiers: 4 },
-  hefte: { family: 'habit', name: 'Hefte', tiers: 4 },
-  roj: { family: 'habit', name: 'Roj', tiers: 4 },
-  vegera: { family: 'habit', name: 'Vegera', tiers: 1 },
-  pela: { family: 'habit', name: 'Pêla', tiers: 4 },
-  // C. Games — hexagon
-  peyvzan: { family: 'games', name: 'Peyvzan', tiers: 4 },
-  helbestvan: { family: 'games', name: 'Helbestvan', tiers: 4 },
-  bilez: { family: 'games', name: 'Bilez', tiers: 4 },
-  rastnivis: { family: 'games', name: 'Rastnivîs', tiers: 4 },
-  guhdar: { family: 'games', name: 'Guhdar', tiers: 4 },
-  hemereng: { family: 'games', name: 'Hemereng', tiers: 1 },
-  dilpak: { family: 'games', name: 'Dilpak', tiers: 4 },
-  // D. Ranked — shield; one emblem per tier reached, plus two
-  'rank-dest': { family: 'ranked', name: 'Deşt', tiers: 4 },
-  'rank-gir': { family: 'ranked', name: 'Gir', tiers: 4 },
-  'rank-zozan': { family: 'ranked', name: 'Zozan', tiers: 4 },
-  'rank-ciya': { family: 'ranked', name: 'Çiya', tiers: 4 },
-  'rank-lutke': { family: 'ranked', name: 'Lûtke', tiers: 4 },
-  'rank-sterk': { family: 'ranked', name: 'Stêrk', tiers: 4 },
-  hilkiser: { family: 'ranked', name: 'Hilkişer', tiers: 4 },
-  cihgirti: { family: 'ranked', name: 'Cihgirtî', tiers: 1 },
-  // E. Friends — leaf
-  heval: { family: 'friends', name: 'Heval', tiers: 4 },
-  diyari: { family: 'friends', name: 'Diyarî', tiers: 4 },
-  mevandar: { family: 'friends', name: 'Mêvandar', tiers: 4 },
-  // F. Events — eight-point star
-  newroz: { family: 'events', name: 'Agirê Newrozê', tiers: 4 },
-  'roja-ziman': { family: 'events', name: 'Roja Zimanê Kurdî', tiers: 4 },
-  'zimane-dayike': { family: 'events', name: 'Zimanê Dayikê', tiers: 4 },
-  zivistan: { family: 'events', name: 'Zivistan', tiers: 4 },
-  bihar: { family: 'events', name: 'Bihar', tiers: 4 },
-  havin: { family: 'events', name: 'Havîn', tiers: 4 },
-  payiz: { family: 'events', name: 'Payîz', tiers: 4 },
-  mehane: { family: 'events', name: 'Mehane', tiers: 4 },
-  // G. Secret — diamond
-  'tire-rast': { family: 'secret', name: 'Tîrê rast', tiers: 1 },
-  'ji-nu-ve': { family: 'secret', name: 'Ji nû ve', tiers: 1 },
-  'kewe-ciye': { family: 'secret', name: 'Kewê çiyê', tiers: 1 },
-  'deste-zerin': { family: 'secret', name: 'Destê zêrîn', tiers: 1 },
-  'mevane-agir': { family: 'secret', name: 'Mêvanê agir', tiers: 1 },
-  'kaniya-zanine': { family: 'secret', name: 'Kanîya zanînê', tiers: 1 },
-} as const satisfies Record<string, BadgeDef>;
+/** A badge key of the catalogue, such as `agir` or `rank-ciya`. */
+export type BadgeKey = string;
 
-export type BadgeKey = keyof typeof BADGES;
-export const BADGE_KEYS = Object.keys(BADGES) as BadgeKey[];
+/** Every badge of the catalogue, by key, as the art sees it. */
+export const BADGES: Readonly<Record<BadgeKey, BadgeArt>> = Object.fromEntries(
+  CATALOGUE.map((b) => [b.key, { family: b.family, name: b.nameKu, tiers: b.tiers.length }]),
+);
+/** The catalogue's badge keys, in its order (family by family). */
+export const BADGE_KEYS: readonly BadgeKey[] = CATALOGUE.map((b) => b.key);
 
-export function isBadgeKey(key: string): key is BadgeKey {
-  return Object.prototype.hasOwnProperty.call(BADGES, key);
+export function isBadgeKey(key: unknown): key is BadgeKey {
+  return typeof key === 'string' && Object.prototype.hasOwnProperty.call(BADGES, key);
 }
 
-/** The ranked family's six tier badges, by the rank tier they show. */
-export const RANK_BADGE: Record<RankTier, BadgeKey> = {
-  dest: 'rank-dest',
-  gir: 'rank-gir',
-  zozan: 'rank-zozan',
-  ciya: 'rank-ciya',
-  lutke: 'rank-lutke',
-  sterk: 'rank-sterk',
-};
+/** The art's view of one badge; throws for a key the catalogue does not have. */
+export function badgeArt(key: BadgeKey): BadgeArt {
+  const def = isBadgeKey(key) ? BADGES[key] : undefined;
+  if (!def) throw new RangeError(`art: no badge art for key ${String(key)}`);
+  return def;
+}
+
+/** The ranked family's tier badges, by the rank tier they show: `rank-<tier>` in the catalogue. */
+export const RANK_BADGE = Object.fromEntries(RANK_TIERS.map((t) => [t, `rank-${t}`])) as Readonly<Record<RankTier, BadgeKey>>;
