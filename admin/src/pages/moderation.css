@@ -195,6 +195,13 @@
 .appeal-text { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--control); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 14.5px; line-height: 1.6; }
 .appeal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 560px) { .appeal-actions > * { flex: 1 1 100%; min-height: var(--target); } }
+.form fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
+.choice-row.is-stacked { grid-template-columns: 1fr; }
+.choice-row > legend { margin-bottom: 6px; padding: 0; }
+.sanction-fields { display: grid; gap: 14px; }
+.sanction-fields .link { justify-self: start; }
+/* a finger needs the full target; a mouse is fine with the smaller chip */
+@media (pointer: coarse) { .chip { min-height: var(--target); } }
 .playbook h2 { margin-top: 0; }
 .playbook .section-text + .section-text { margin-top: 8px; }
 

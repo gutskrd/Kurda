@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   CSAM_REPORTING_LINKS,
   HELPLINE_URL,
@@ -11,7 +11,6 @@ import {
 import { api } from '../api';
 import {
   ACTION_KINDS,
-  DURATION_PRESETS,
   SANCTION_EFFECT,
   banModeText,
   categoryName,
@@ -20,7 +19,6 @@ import {
   defaultStatement,
   draftProblems,
   durationName,
-  durationShort,
   hasDuration,
   isOpenStatus,
   newAction,
@@ -34,6 +32,7 @@ import {
   type DecisionDraft,
 } from '../moderation';
 import { Badge, Banner, Button, Checkbox, Dialog, Icon, Select, Textarea, Time, errorLine, useDebounced, useDialogs, useToast } from '../ui';
+import { DurationChips } from './SanctionParts';
 
 export type SetDraft = (change: (d: DecisionDraft) => DecisionDraft) => void;
 
@@ -382,7 +381,6 @@ function ActionRow({
 }): React.JSX.Element {
   const forSubject = a.target === 'subject';
   const kinds: DecisionActionKind[] = forSubject ? [...ACTION_KINDS, 'caring_message'] : [...ACTION_KINDS];
-  const id = useId();
   const caring = a.kind === 'caring_message';
   return (
     <li className={`action-row${a.kind === 'permanent_ban' ? ' is-ban' : ''}`}>
@@ -405,36 +403,18 @@ function ActionRow({
         hint={SANCTION_EFFECT[a.kind]}
       />
       {hasDuration(a.kind) && (
-        <div className="field">
-          <span className="field-label" id={`${id}-len`}>
-            How long
-          </span>
-          <div className="chips" role="radiogroup" aria-labelledby={`${id}-len`}>
-            {DURATION_PRESETS.map((h) => {
-              const on = a.kind === 'permanent_ban' ? h === null : a.durationHours === h;
-              return (
-                <button
-                  key={String(h)}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  className={`chip${on ? ' is-on' : ''}${h === null ? ' is-permanent' : ''}`}
-                  title={durationName(h)}
-                  onClick={() =>
-                    onChange((x) => {
-                      // "Permanent" on a suspension makes it a ban: its words follow, unless typed
-                      const next = withDuration(x.kind, h);
-                      const reword = !x.statementEdited && next.kind !== x.kind;
-                      return { ...x, ...next, statement: reword ? defaultStatement(next.kind, policy, !forSubject) : x.statement };
-                    })
-                  }
-                >
-                  {durationShort(h)}
-                </button>
-              );
-            })}
-          </div>
-        </div>
+        <DurationChips
+          kind={a.kind}
+          hours={a.durationHours}
+          onPick={(h) =>
+            onChange((x) => {
+              // "Permanent" on a suspension makes it a ban: its words follow, unless typed
+              const next = withDuration(x.kind, h);
+              const reword = !x.statementEdited && next.kind !== x.kind;
+              return { ...x, ...next, statement: reword ? defaultStatement(next.kind, policy, !forSubject) : x.statement };
+            })
+          }
+        />
       )}
       <Textarea
         label={caring ? 'A few words of your own (optional)' : `What ${who} is told`}

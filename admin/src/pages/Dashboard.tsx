@@ -185,12 +185,12 @@ function ModerationPanel(): React.JSX.Element {
             <span className={s.slaBreaches > 0 ? 'is-bad' : undefined}>
               Overdue: <strong>{s.slaBreaches}</strong>
             </span>
-            <span>
+            <a href="#/appeals">
               Appeals waiting: <strong>{s.appealsWaiting}</strong>
-            </span>
-            <span className={s.pendingApprovals > 0 ? 'is-warn' : undefined}>
+            </a>
+            <a href="#/ban-approvals" className={s.pendingApprovals > 0 ? 'is-warn' : undefined}>
               Bans waiting for a second admin: <strong>{s.pendingApprovals}</strong>
-            </span>
+            </a>
             {s.openEscalations > 0 && (
               <span className="is-bad">
                 Escalations to file: <strong>{s.openEscalations}</strong>

@@ -9,6 +9,8 @@ import { TwoFactorGate } from './pages/TwoFactorGate';
 import { Login } from './pages/Login';
 import { Shell } from './pages/Shell';
 import { Moderation } from './pages/Moderation';
+import { Appeals } from './pages/Appeals';
+import { BanApprovals } from './pages/BanApprovals';
 import { Approvals } from './pages/Approvals';
 import { Analytics } from './pages/Analytics';
 import { Tags } from './pages/Tags';
@@ -41,6 +43,8 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   audio: () => <AudioStudio />,
   users: () => <Users />,
   moderation: () => <Moderation />,
+  appeals: () => <Appeals />,
+  'ban-approvals': () => <BanApprovals />,
   aimod: () => <AiModeration />,
   antibot: () => <Antibot />,
   lessons: () => <Lessons />,

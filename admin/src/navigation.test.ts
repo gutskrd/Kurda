@@ -12,7 +12,7 @@ const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 
 describe('who sees which page — what the API allows, not a guess', () => {
   it('a moderator sees the queue and the people, and not what refuses them', () => {
-    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'aimod', 'security']);
+    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'appeals', 'ban-approvals', 'aimod', 'security']);
     // the old nav showed these to everyone; the API answers a moderator 403
     for (const page of ['analytics', 'shop', 'economy', 'antibot', 'lessons', 'audit']) expect(mayOpenPage(page, MODERATOR)).toBe(false);
   });
@@ -96,7 +96,7 @@ describe('finding a page', () => {
     const all = visibleNav(OWNER);
     expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories']);
     expect(searchNav(all, 'microphone').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories']);
-    expect(searchNav(all, 'ban').map((n) => n.id)).toEqual(['users']);
+    expect(searchNav(all, 'ban').map((n) => n.id)).toEqual(['users', 'ban-approvals']);
     expect(searchNav(all, 'audit log').map((n) => n.id)).toEqual(['audit']);
     expect(searchNav(all, '')).toHaveLength(all.length);
   });

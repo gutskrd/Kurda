@@ -97,6 +97,8 @@ export const NAV: readonly NavEntry[] = [
   { id: 'users', label: 'Users', group: 'people', icon: 'users', page: 'users', access: USER_VIEWERS, keywords: 'accounts people ban mute wallet' },
 
   { id: 'moderation', label: 'Queue', group: 'moderation', icon: 'flag', page: 'moderation', access: MODERATORS, keywords: 'reports cases moderation' },
+  { id: 'appeals', label: 'Appeals', group: 'moderation', icon: 'scale', page: 'appeals', access: MODERATORS, keywords: 'review standing sanctions' },
+  { id: 'ban-approvals', label: 'Ban approvals', group: 'moderation', icon: 'approve', page: 'ban-approvals', access: MODERATORS, keywords: 'permanent ban second admin' },
   { id: 'aimod', label: 'Automated flags', group: 'moderation', icon: 'shield', page: 'aimod', access: MODERATORS, keywords: 'ai text image flags' },
   { id: 'antibot', label: 'Bot flags', group: 'moderation', icon: 'bot', page: 'antibot', access: LEGACY_ADMIN, keywords: 'antibot spam bots' },
 
