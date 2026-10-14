@@ -22,7 +22,7 @@ import { useSendErrorAlert } from '../reports/SendError';
 export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const showSendError = useSendErrorAlert();
 
@@ -42,7 +42,7 @@ export function LibraryComposeScreen({ onExit }: { onExit: () => void }): React.
     // upload the optional narration first so the post references a confirmed key
     let audioMediaId: string | undefined;
     if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
+      const up = await uploadVoiceNote(client, { uri: voiceUri }, t, locale);
       if (!up.ok) {
         setSaving(false);
         showSendError(t('library.narrationFailed'), { message: up.error, limited: up.limited });

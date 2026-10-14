@@ -21,6 +21,8 @@ export async function uploadVoiceNote(
   client: ApiClient,
   audio: { uri: string; contentType?: string },
   t: Translate,
+  /** the app's language, so a limit's end is said as the reader would say it */
+  locale?: string,
 ): Promise<VoiceUploadResult> {
   try {
     const token = await client.getAccessToken();
@@ -40,7 +42,7 @@ export async function uploadVoiceNote(
       }
       return { ok: false, error: t('upload.noAudioReturned') };
     }
-    return { ok: false, error: describeUploadFailure(res.status, res.body, t), limited: uploadWasLimited(res.status, res.body) };
+    return { ok: false, error: describeUploadFailure(res.status, res.body, t, locale), limited: uploadWasLimited(res.status, res.body) };
   } catch (e) {
     return { ok: false, error: (e as Error)?.message ?? t('upload.audioFailed') };
   }

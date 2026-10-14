@@ -146,11 +146,11 @@ export function ProfileScreen() {
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;
     setUploading(true);
-    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t);
+    const res = await uploadProfilePhoto(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
     setUploading(false);
     if (res.ok) setPhotoUrl(res.url);
     else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
-  }, [client, uploading, showSendError, t]);
+  }, [client, uploading, showSendError, t, locale]);
 
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
 

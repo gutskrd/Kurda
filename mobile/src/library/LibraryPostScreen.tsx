@@ -37,7 +37,7 @@ import { EmptyState } from '../theme/EmptyState';
 export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: () => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const showSendError = useSendErrorAlert();
   // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
@@ -71,7 +71,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     setPosting(true);
     let audioMediaId: string | undefined;
     if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri }, t);
+      const up = await uploadVoiceNote(client, { uri: voiceUri }, t, locale);
       if (!up.ok) {
         setPosting(false);
         showSendError(t('library.voiceCommentFailed'), { message: up.error, limited: up.limited });
@@ -89,7 +89,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     setVoiceUri(null);
     setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
     setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, voiceUri, posting, showSendError, t]);
+  }, [client, postId, draft, voiceUri, posting, showSendError, t, locale]);
 
   const header = (
     <ScreenHeader

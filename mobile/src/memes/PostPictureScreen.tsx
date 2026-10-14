@@ -51,7 +51,7 @@ export function PostPictureScreen({
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const topInset = useScreenTopInset();
   const showSendError = useSendErrorAlert();
 
@@ -83,7 +83,7 @@ export function PostPictureScreen({
     if (busy || !asset) return;
     setBusy(true);
 
-    const up = await uploadPostImage(client, asset, t);
+    const up = await uploadPostImage(client, asset, t, locale);
     if (!up.ok) {
       setBusy(false);
       showSendError(t('picture.uploadFailed'), { message: up.error, limited: up.limited });
