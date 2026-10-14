@@ -2,7 +2,7 @@
  * Putting an exercise off ("Can't listen now", "Can't speak now") against real
  * Postgres: a listening or speaking item left unanswered is out of the score,
  * so it costs no accuracy and no XP — and earns no perfect-lesson Gems or
- * first-perfect either. Anything else left unanswered still counts as missed.
+ * a perfect lesson for the Bêkêmasî badge either. Anything else left unanswered still counts as missed.
  * The same for a review's listening items.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -94,10 +94,12 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
       ).rows[0]!.n,
     );
 
-  const firstPerfect = async (player: Player) =>
-    ((await authed(player, 'GET', '/me/achievements')).json().achievements as Array<{ id: string; earnedAt: string | null }>).find(
-      (a) => a.id === 'first-perfect',
-    )!.earnedAt;
+  // deliberately changed (contract 4 §B): the first-perfect achievement became
+  // the Bêkêmasî badge's count of perfect lessons, so this reads that count
+  const perfectLessons = async (player: Player) =>
+    ((await authed(player, 'GET', '/me/badges')).json().badges as Array<{ key: string; progress: number }>).find(
+      (b) => b.key === 'bekemasi',
+    )!.progress;
 
   beforeAll(async () => {
     app = buildApp(config);
@@ -153,7 +155,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     });
     // …and earns nothing a perfect lesson does
     expect(await gemsEarned(learner.id)).toBe(0);
-    expect(await firstPerfect(learner)).toBeNull();
+    expect(await perfectLessons(learner)).toBe(0);
   });
 
   it('a speaking item put off is left out of the score the same way', async () => {
@@ -168,7 +170,7 @@ describe.skipIf(!DATABASE_URL)('putting an exercise off (integration)', () => {
     const results = await play(learner, [ex.mc, ex.tr, ex.li, ex.sp]);
     expect(results).toMatchObject({ correct: 4, total: 4, accuracy: 1, xpAwarded: lessonCompletionXp(1, false) });
     expect(await gemsEarned(learner.id)).toBe(5);
-    expect(await firstPerfect(learner)).not.toBeNull();
+    expect(await perfectLessons(learner)).toBe(1);
   });
 
   it('an exercise that cannot be put off still counts when left unanswered', async () => {

@@ -151,16 +151,18 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   let learner: Player;
   let firstTr: Awaited<ReturnType<typeof reviewState>>;
 
-  it('a perfect first completion is a first completion, pays Gems and earns first-perfect', async () => {
+  // deliberately changed (contract 4 §B): first-perfect became a count on the
+  // Bêkêmasî badge, read from /me/badges
+  it('a perfect first completion is a first completion, pays Gems and counts as a perfect lesson', async () => {
     learner = await register('eng1');
     const { graded, results } = await play(learner, true);
     expect(graded.map((g) => g.verdict)).toEqual(['correct', 'correct', 'correct']);
     expect(results).toMatchObject({ correct: 3, total: 3, accuracy: 1, firstCompletion: true, mistakes: [] });
 
     expect(await gemsEarned(learner.id, 'perfect_lesson')).toBe(5);
-    const achievements = await authed(learner, 'GET', '/me/achievements');
-    const firstPerfect = achievements.json().achievements.find((a: { id: string }) => a.id === 'first-perfect');
-    expect(firstPerfect.earnedAt).not.toBeNull();
+    const page = await authed(learner, 'GET', '/me/badges');
+    const perfect = page.json().badges.find((b: { key: string }) => b.key === 'bekemasi');
+    expect(perfect.progress).toBe(1);
   });
 
   it('a self-rated recording never enters the review schedule; the written answers do', async () => {
@@ -310,16 +312,24 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
-   * The Gem idempotency key is global, and the achievement grant used to key
-   * on the achievement alone — so only the first person ever to earn one
-   * would have been paid for it.
+   * The Gem idempotency key is global, so a grant keyed on less than the
+   * learner pays only the first person ever to earn it. Deliberately changed
+   * (contract 4 §B): lessons now report to the badges, which pay no Gems, so
+   * this asks the same of the perfect-lesson Gems and of the badge count —
+   * every learner gets their own.
    */
-  it('every learner who earns an achievement is paid its Gems', async () => {
+  it('every learner who finishes a perfect lesson is paid, and counted, on their own', async () => {
     const second = await register('eng2');
     const { results } = await play(second, true);
     expect(results).toMatchObject({ accuracy: 1, firstCompletion: true });
     expect(await gemsEarned(second.id, 'perfect_lesson')).toBe(5);
-    expect(await gemsEarned(learner.id, 'achievement_milestone')).toBe(15);
-    expect(await gemsEarned(second.id, 'achievement_milestone')).toBe(15);
+    expect(await gemsEarned(second.id, 'achievement_milestone')).toBe(0);
+    for (const who of [learner.id, second.id]) {
+      const perfect = await pool.query<{ progress: number }>(
+        `SELECT progress FROM user_badges WHERE user_id = $1 AND badge_key = 'bekemasi'`,
+        [who],
+      );
+      expect(perfect.rows[0]!.progress).toBeGreaterThanOrEqual(1);
+    }
   });
 });
