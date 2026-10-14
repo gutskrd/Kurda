@@ -27,7 +27,12 @@ describe('joinLobby', () => {
   it('joins through each game’s own route, a story game by its id', async () => {
     const c = client({ ok: true, data: {} });
     await joinLobby(c, 'stories', 's1');
-    expect(c.post).toHaveBeenCalledWith('/story-games/join', { id: 's1' });
+    expect(c.post).toHaveBeenCalledWith('/story-games/join', { id: 's1', extraTime: false });
+    // a remembered Extra time comes along to a card's or a next round's join
+    localStorage.setItem('hevalo.stories.extraTime', 'on');
+    await joinLobby(c, 'stories', 's2');
+    expect(c.post).toHaveBeenCalledWith('/story-games/join', { id: 's2', extraTime: true });
+    localStorage.clear();
     await joinLobby(c, 'rhyme-match', 'r1');
     expect(c.post).toHaveBeenCalledWith('/rhyme/matches/r1/join', undefined);
   });

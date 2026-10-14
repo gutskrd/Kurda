@@ -28,7 +28,7 @@ import { dialectName } from '../learn/map';
 import { ChipRadio } from '../play/ChipRadio';
 import { gamePath, readerPath, storyError } from './api';
 import { useStoryCount, useStoryList } from './catalogue';
-import { defaultVariety, rememberLength, rememberVariety, rememberedLength, type LengthFilter } from './prefs';
+import { defaultVariety, rememberLength, rememberVariety, rememberedExtraTime, rememberedLength, type LengthFilter } from './prefs';
 import { LENGTH_KEY, MODE_KEY, SetupSheet, minutesLabel } from './SetupSheet';
 
 /** A level filter is worth its space only once a variety has this many stories (contract §A1). */
@@ -77,7 +77,8 @@ function OpenGame({ target }: { target: { id: string } | { code: string } }): Re
 
   useEffect(() => {
     let live = true;
-    void client.post<StoryGameView>('/story-games/join', target).then((res) => {
+    // your remembered Extra time comes with you, however you got in (contract §A1)
+    void client.post<StoryGameView>('/story-games/join', { ...target, extraTime: rememberedExtraTime() }).then((res) => {
       if (!live) return;
       if (res.ok) navigate(gamePath(res.data.id), { replace: true });
       else setError(storyError(res.error, t));
@@ -369,7 +370,10 @@ function PlayRow({
       return;
     }
     setBusy(true);
-    const res = await client.post<StoryGameView>('/story-games/join', invite ? { id: invite.id } : { code: normalized });
+    const res = await client.post<StoryGameView>('/story-games/join', {
+      ...(invite ? { id: invite.id } : { code: normalized }),
+      extraTime: rememberedExtraTime(),
+    });
     setBusy(false);
     if (res.ok) navigate(gamePath(res.data.id));
     else setError(storyError(res.error, t));

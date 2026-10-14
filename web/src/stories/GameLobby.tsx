@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MIN_PLAYERS_TO_START, MAX_PLAYERS, formatJoinCode, type StoryGameView } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
@@ -9,6 +9,7 @@ import { useT } from '../i18n/I18nProvider';
 import { SetupSheet } from './SetupSheet';
 import { storyError } from './api';
 import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act, type Announce } from './GameParts';
+import { rememberedExtraTime } from './prefs';
 
 /**
  * The lobby of a duo or group game: the code and the ways to share it,
@@ -41,6 +42,17 @@ export function GameLobby({
   const present = view.players.filter((p) => !p.gone);
   const need = MIN_PLAYERS_TO_START[view.mode];
   const canStart = view.activeCount >= need;
+
+  // An invite's Join gets you in without your settings (it is the play layer's
+  // accept, not this game's join), so a remembered Extra time is put on here,
+  // once, before the first timed question. Turning it off in the lobby
+  // forgets it, so this never undoes a choice made here.
+  const extraBrought = useRef(false);
+  useEffect(() => {
+    if (extraBrought.current) return;
+    extraBrought.current = true;
+    if (rememberedExtraTime() && !view.extraTime) void act('/extra-time', { on: true });
+  }, []);
 
   async function copy(): Promise<void> {
     try {

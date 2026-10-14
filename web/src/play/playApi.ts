@@ -10,6 +10,7 @@ import type { ApiError, ApiResult } from '../lib/types';
 import { INVITE_NAME_KEY } from '../lib/gameInvites';
 import { dialectName } from '../learn/map';
 import { gamePath, storyError } from '../stories/api';
+import { rememberedExtraTime } from '../stories/prefs';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -37,7 +38,8 @@ export function joinPath(game: PlayGame, lobbyId: string): string {
 const JOIN: Record<PlayGame, (lobbyId: string) => { path: string; body?: unknown }> = {
   'wordle-battle': (id) => ({ path: `/wordle/battles/${encodeURIComponent(id)}/join` }),
   'rhyme-match': (id) => ({ path: `/rhyme/matches/${encodeURIComponent(id)}/join` }),
-  stories: (id) => ({ path: '/story-games/join', body: { id } }),
+  // a story game takes your remembered Extra time with you
+  stories: (id) => ({ path: '/story-games/join', body: { id, extraTime: rememberedExtraTime() } }),
 };
 
 /**

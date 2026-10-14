@@ -129,7 +129,7 @@ describe('Stories hub', () => {
     await userEvent.type(field, 'abc-23٤');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));
     expect(await screen.findByText('the game page')).toBeInTheDocument();
-    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ code: 'ABC234' });
+    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ code: 'ABC234', extraTime: false });
   });
 
   it('takes a pasted invite link before a code', async () => {
@@ -138,7 +138,7 @@ describe('Stories hub', () => {
     await userEvent.type(await screen.findByLabelText('Join with a code'), 'https://hevalo.app/app/games/stories?id=6f1b2a3c-4d5e');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));
     await screen.findByText('the game page');
-    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: '6f1b2a3c-4d5e' });
+    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: '6f1b2a3c-4d5e', extraTime: false });
   });
 
   it('sends a link to another game to that game', async () => {
@@ -162,7 +162,15 @@ describe('Stories hub', () => {
     const { calls } = fakeApi({ 'POST /story-games/join': gameView({ id: 'g5' }) });
     hub('/app/games/stories?id=g5');
     expect(await screen.findByText('the game page')).toBeInTheDocument();
-    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 'g5' });
+    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 'g5', extraTime: false });
+  });
+
+  it('brings your remembered Extra time to a game joined by link or code', async () => {
+    localStorage.setItem('hevalo.stories.extraTime', 'on');
+    const { calls } = fakeApi({ 'POST /story-games/join': gameView({ id: 'g5' }) });
+    hub('/app/games/stories?id=g5');
+    await screen.findByText('the game page');
+    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 'g5', extraTime: true });
   });
 
   it('says why an invite link could not be followed', async () => {

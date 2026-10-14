@@ -132,6 +132,6 @@ describe('RematchPanel — more players', () => {
     renderPlay(<RematchPanel game="stories" lobbyId="s1" otherName="Rojda" isHost={false} />);
     await userEvent.click(await screen.findByRole('button', { name: 'Join next round' }));
     await waitFor(() => expect(where()).toBe('/app/games/stories/play/s2'));
-    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 's2' });
+    expect(calls.find((c) => c.path === '/story-games/join')?.body).toEqual({ id: 's2', extraTime: false });
   });
 });

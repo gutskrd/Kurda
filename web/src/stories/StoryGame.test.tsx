@@ -116,6 +116,28 @@ describe('the lobby', () => {
     await waitFor(() => expect(calls.some((c) => c.path === '/story-games/g-1?v=5')).toBe(true));
   });
 
+  it('puts a remembered Extra time on once, for a lobby reached through an invite', async () => {
+    localStorage.setItem('hevalo.stories.extraTime', 'on');
+    const poll = heldPoll();
+    const { calls } = fakeApi({
+      'GET /story-games/g-1': (c: Call) => (c.path.includes('?v=') ? poll.answer(c) : gameView({ extraTime: false })),
+      'POST /story-games/g-1/extra-time': gameView({ extraTime: true, version: 2 }),
+    });
+    game();
+    await screen.findByRole('img', { name: /Join code/ });
+    await waitFor(() => expect(calls.filter((c) => c.path.endsWith('/extra-time')).map((c) => c.body)).toEqual([{ on: true }]));
+  });
+
+  it('leaves Extra time alone when it is not remembered', async () => {
+    const poll = heldPoll();
+    const { calls } = fakeApi({
+      'GET /story-games/g-1': (c: Call) => (c.path.includes('?v=') ? poll.answer(c) : gameView({ extraTime: false })),
+    });
+    game();
+    await screen.findByRole('img', { name: /Join code/ });
+    expect(calls.some((c) => c.path.endsWith('/extra-time'))).toBe(false);
+  });
+
   it('says a game it may not see is not available', async () => {
     fakeApi({ 'GET /story-games/g-1': jsonResponse(404, { code: 'GAME_NOT_FOUND' }) });
     game();
@@ -282,6 +304,16 @@ describe('the results', () => {
     expect(screen.queryByText(/Your place/)).toBeNull();
     expect(screen.getByText('+15 XP')).toBeInTheDocument();
     expect(screen.getByText('This counted as a day of learning.')).toBeInTheDocument();
+  });
+
+  it('keeps "+15 XP" in its own order on a right-to-left page', async () => {
+    localStorage.setItem('hevalo_locale', 'ckb');
+    fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': results() });
+    game();
+    const xp = await screen.findByText('+15 XP');
+    await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
+    // dir="ltr" isolates the badge from the page's direction (HTML gives [dir] unicode-bidi: isolate)
+    expect(xp).toHaveAttribute('dir', 'ltr');
   });
 
   it('puts the missed questions first in the review', async () => {
