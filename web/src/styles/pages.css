@@ -2456,6 +2456,11 @@ a.mkp-activity-row:hover {
     height: 48px;
     font-size: 1rem;
   }
+  /* "Enter" in the space of a key and a half, with room either side of it */
+  .wordle-key-wide {
+    font-size: 0.8rem;
+    padding: 0 2px;
+  }
   .wordle-layout-option {
     min-height: 44px;
   }
