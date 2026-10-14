@@ -159,7 +159,13 @@ function InviteCard({
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
-  const { t } = useI18n();
+  const { t, rtl } = useI18n();
+  /*
+   * The interface's direction, set rather than guessed: "Azad invited you to …"
+   * in Soranî starts with a Latin name, and a guess from its first letter
+   * would set the headline left-to-right under a right-to-left line of details.
+   */
+  const dir = rtl ? styles.rtl : styles.ltr;
   const [reasons, setReasons] = useState(false);
   const [busy, setBusy] = useState(false);
   /** why Join did not work: the game is gone (the invite goes too), or a passing failure to try again */
@@ -221,7 +227,7 @@ function InviteCard({
           >
             <View style={[styles.pillInner, lifted]}>
               <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
-              <Text style={[styles.pillText, { color: colors.textPrimary }]} numberOfLines={1}>
+              <Text style={[styles.pillText, { color: colors.textPrimary }, dir]} numberOfLines={1}>
                 {count > 1 ? t('play.banner.pillMany', { count }) : t('play.banner.pill')}
               </Text>
               <Icon name="chevron-down" size={14} color={colors.textSecondary} style={styles.up} />
@@ -243,9 +249,9 @@ function InviteCard({
           <View style={styles.head}>
             <InitialsAvatar name={invite.from.name} id={invite.from.name} size={40} photoUrl={invite.from.avatarUrl} />
             <View style={styles.text}>
-              <Text style={[styles.headline, { color: colors.textPrimary }]}>{headline}</Text>
+              <Text style={[styles.headline, { color: colors.textPrimary }, dir]}>{headline}</Text>
               {details ? (
-                <Text style={[styles.details, { color: colors.textSecondary }]} numberOfLines={2}>
+                <Text style={[styles.details, { color: colors.textSecondary }, dir]} numberOfLines={2}>
                   {details}
                 </Text>
               ) : null}
@@ -256,7 +262,7 @@ function InviteCard({
             </Pressable>
           </View>
           {failure?.dead ? (
-            <Text style={[styles.details, { color: colors.danger }]}>{failure.message}</Text>
+            <Text style={[styles.details, { color: colors.danger }, dir]}>{failure.message}</Text>
           ) : (
             <>
               <View style={styles.actions}>
@@ -301,7 +307,7 @@ function InviteCard({
                 </View>
               ) : null}
               {failure ? (
-                <Text style={[styles.details, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                <Text style={[styles.details, { color: colors.danger }, dir]} accessibilityLiveRegion="polite">
                   {failure.message}
                 </Text>
               ) : null}
@@ -371,4 +377,6 @@ const styles = StyleSheet.create({
   reason: { backgroundColor: 'transparent', borderWidth: StyleSheet.hairlineWidth },
   buttonText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   more: { fontSize: typography.sizes.xs, textAlign: 'center' },
+  ltr: { writingDirection: 'ltr', textAlign: 'left' },
+  rtl: { writingDirection: 'rtl', textAlign: 'right' },
 });

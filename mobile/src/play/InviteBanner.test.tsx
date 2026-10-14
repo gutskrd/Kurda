@@ -172,6 +172,19 @@ describe('InviteBanner', () => {
     expect(screen.queryByText(/invited you/)).toBeNull();
   });
 
+  it('sets the headline right to left in Soranî, though it starts with a Latin name', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    try {
+      testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [invite], outgoing: [] }) });
+      renderWithProviders(<InviteBanner />);
+      const headline = await screen.findByText(/^Rojda بانگهێشتی کردیت/);
+      expect(headline.className).toMatch(/textAlign/);
+      expect(getComputedStyle(headline).textAlign).toBe('right');
+    } finally {
+      localStorage.removeItem('kurda_locale_v1');
+    }
+  });
+
   it('tells a rematch apart from a first invite', async () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [{ ...invite, rematch: true }], outgoing: [] }) });
     renderWithProviders(<InviteBanner />);
