@@ -36,8 +36,8 @@ describe('softReset', () => {
 
 describe('seasonRewardGems', () => {
   it('scales with peak tier', () => {
-    expect(seasonRewardGems('bronze')).toBe(25);
-    expect(seasonRewardGems('diamond')).toBe(250);
-    expect(seasonRewardGems('gold')).toBeGreaterThan(seasonRewardGems('silver'));
+    expect(seasonRewardGems('dilop')).toBe(25);
+    expect(seasonRewardGems('okyanus')).toBe(150);
+    expect(seasonRewardGems('kani')).toBeGreaterThan(seasonRewardGems('dilop'));
   });
 });

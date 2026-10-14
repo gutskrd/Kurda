@@ -7,7 +7,9 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { LeagueService } from './service.js';
+import { weekSeason } from '@kurda/shared';
 import { weekStart } from './league-logic.js';
+import { learningAward } from '../test/progress.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -88,8 +90,8 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
   it('one tap out: no table, no placement, and out of the table they were in', async () => {
     const leaver = await signUp('leaver');
     const stays = await signUp('stays');
-    await leagues.onXp(leaver.id);
-    await leagues.onXp(stays.id);
+    await leagues.onXp(learningAward(leaver.id));
+    await leagues.onXp(learningAward(stays.id));
     expect(await inWeek(leaver.id)).toBe(true);
 
     const res = await call(leaver, 'PATCH', '/me', { leaguesEnabled: false });
@@ -100,7 +102,7 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     const view = (await call(leaver, 'GET', '/me/league')).json();
     expect(view).toMatchObject({ optedOut: true, standings: [] });
     // reading the page, or earning XP, does not put them back
-    await leagues.onXp(leaver.id);
+    await leagues.onXp(learningAward(leaver.id));
     expect(await inWeek(leaver.id)).toBe(false);
 
     const others = await leagues.standings(stays.id);
@@ -108,18 +110,23 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     expect(others.standings.some((s) => s.userId === leaver.id)).toBe(false);
   });
 
+  // deliberately changed (contract 4 §L2): reading the page used to join the
+  // week, so this expected a place straight after opting back in; now the
+  // next learning XP joins, and reading never does
   it('one tap back in', async () => {
     const returner = await signUp('returner');
     await call(returner, 'PATCH', '/me', { leaguesEnabled: false });
     await call(returner, 'PATCH', '/me', { leaguesEnabled: true });
     const view = (await call(returner, 'GET', '/me/league')).json();
-    expect(view.optedOut).toBe(false);
+    expect(view).toMatchObject({ optedOut: false, mode: 'league', joined: false });
+    expect(await inWeek(returner.id)).toBe(false);
+    await leagues.onXp(learningAward(returner.id));
     expect(await inWeek(returner.id)).toBe(true);
   });
 
   it('coming back the same week is a return to the same table, not a new draw', async () => {
     const hopper = await signUp('hopper');
-    await leagues.onXp(hopper.id);
+    await leagues.onXp(learningAward(hopper.id));
     const first = await cohortOf(hopper.id);
     expect(first).toBeDefined();
 
@@ -147,15 +154,17 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
   it('a minor is out by default, and can choose to join', async () => {
     const minor = await signUp('minor', 15);
     expect((await call(minor, 'GET', '/me')).json().user.leaguesEnabled).toBe(false);
-    await leagues.onXp(minor.id);
+    await leagues.onXp(learningAward(minor.id));
     expect(await inWeek(minor.id)).toBe(false);
     expect((await call(minor, 'GET', '/me/league')).json().optedOut).toBe(true);
 
     await call(minor, 'PATCH', '/me', { leaguesEnabled: true });
-    await leagues.onXp(minor.id);
+    await leagues.onXp(learningAward(minor.id));
     expect(await inWeek(minor.id)).toBe(true);
   });
 
+  // the ten tiers became six, and the old "top ten promote" rule the top-quarter
+  // one (contract 4 §L3), so the tiers and the expectation changed with them
   it('nobody who has left is promoted or demoted when the week closes', async () => {
     // a closed week, far enough back to be nobody else's
     const week = weekStart(new Date(Date.now() - 35 * 86_400_000));
@@ -164,9 +173,11 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     for (let i = 0; i < 12; i++) members.push(await signUp(`w${i}`));
     for (let i = 0; i < members.length; i++) {
       const id = members[i]!.id;
+      // their tier as of that week's season, so no season reset is involved
       await pool.query(
-        `INSERT INTO user_league (user_id, tier) VALUES ($1, 'gold') ON CONFLICT (user_id) DO UPDATE SET tier = 'gold'`,
-        [id],
+        `INSERT INTO user_league (user_id, tier, season_key) VALUES ($1, 'gol', $2)
+         ON CONFLICT (user_id) DO UPDATE SET tier = 'gol', season_key = $2`,
+        [id, weekSeason(week)],
       );
       await leagues.ensureMembership(id, at);
       await pool.query(
@@ -181,12 +192,20 @@ describe.skipIf(!DATABASE_URL)('league opt-out (integration)', () => {
     await call(winner!, 'PATCH', '/me', { leaguesEnabled: false });
     await call(last, 'PATCH', '/me', { leaguesEnabled: false });
 
-    await leagues.settleDueWeeks(new Date());
+    const cohort = (
+      await pool.query<{ cohort_id: string }>(`SELECT cohort_id FROM league_members WHERE user_id = $1 AND week_key = $2`, [
+        rest[0]!.id,
+        week,
+      ])
+    ).rows[0]!.cohort_id;
+    await leagues.settleCohort(cohort);
     const tierOf = async (userId: string) =>
       (await pool.query<{ tier: string }>(`SELECT tier FROM user_league WHERE user_id = $1`, [userId])).rows[0]!.tier;
-    expect(await tierOf(winner!.id)).toBe('gold');
-    expect(await tierOf(last.id)).toBe('gold');
-    // the ten who stayed: the top of them promotes as before
-    expect(await tierOf(rest[0]!.id)).toBe('sapphire');
+    expect(await tierOf(winner!.id)).toBe('gol');
+    expect(await tierOf(last.id)).toBe('gol');
+    // the ten who stayed: the top quarter of them (two) move up as before
+    expect(await tierOf(rest[0]!.id)).toBe('derya');
+    expect(await tierOf(rest[1]!.id)).toBe('derya');
+    expect(await tierOf(rest[2]!.id)).toBe('gol');
   });
 });

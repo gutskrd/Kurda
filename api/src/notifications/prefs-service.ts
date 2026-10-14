@@ -16,6 +16,8 @@ interface PrefsRow {
   games: boolean;
   events: boolean;
   marketing: boolean;
+  /** null: never chosen, so the default for their age, like `streak` */
+  progress: boolean | null;
   quiet_start_min: number | null;
   quiet_end_min: number | null;
 }
@@ -28,6 +30,7 @@ function toPrefs(row: PrefsRow, minor: boolean): NotificationPrefs {
     games: row.games,
     events: row.events,
     marketing: row.marketing,
+    progress: row.progress ?? defaultPrefs({ minor }).progress,
     quietStartMin: row.quiet_start_min,
     quietEndMin: row.quiet_end_min,
   };
@@ -39,6 +42,7 @@ export interface PrefsPatch {
   games?: boolean;
   events?: boolean;
   marketing?: boolean;
+  progress?: boolean;
   quietStartMin?: number | null;
   quietEndMin?: number | null;
 }
@@ -54,7 +58,8 @@ export interface PrefsPatch {
  * stored only once somebody chooses it: NULL means "the default for my age",
  * read when it is asked. Saving another setting leaves it NULL rather than
  * writing today's default in as a choice, which would keep a minor's
- * reminders off for good, past 18.
+ * reminders off for good, past 18. League and badge news (`progress`) is
+ * stored the same way, for the same reason.
  */
 export class NotificationPrefsService {
   constructor(private readonly pool: pg.Pool) {}
@@ -63,7 +68,7 @@ export class NotificationPrefsService {
   private async stored(userId: string): Promise<{ row: PrefsRow | null; minor: boolean }> {
     const res = await this.pool.query<PrefsRow & { minor: boolean; has_row: boolean }>(
       `SELECT ${notKnownAdultSql('u')} AS minor, p.user_id IS NOT NULL AS has_row,
-              p.streak, p.friends, p.games, p.events, p.marketing, p.quiet_start_min, p.quiet_end_min
+              p.streak, p.friends, p.games, p.events, p.marketing, p.progress, p.quiet_start_min, p.quiet_end_min
          FROM users u LEFT JOIN notification_prefs p ON p.user_id = u.id
         WHERE u.id = $1`,
       [userId],
@@ -93,16 +98,17 @@ export class NotificationPrefsService {
       games: patch.games ?? row?.games ?? base.games,
       events: patch.events ?? row?.events ?? base.events,
       marketing: patch.marketing ?? row?.marketing ?? base.marketing,
+      progress: patch.progress ?? row?.progress ?? null,
       quiet_start_min: patch.quietStartMin === undefined ? (row?.quiet_start_min ?? null) : patch.quietStartMin,
       quiet_end_min: patch.quietEndMin === undefined ? (row?.quiet_end_min ?? null) : patch.quietEndMin,
     };
     await this.pool.query(
       `INSERT INTO notification_prefs
-         (user_id, streak, friends, games, events, marketing, quiet_start_min, quiet_end_min, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+         (user_id, streak, friends, games, events, marketing, progress, quiet_start_min, quiet_end_min, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
        ON CONFLICT (user_id) DO UPDATE SET
          streak = EXCLUDED.streak, friends = EXCLUDED.friends, games = EXCLUDED.games,
-         events = EXCLUDED.events, marketing = EXCLUDED.marketing,
+         events = EXCLUDED.events, marketing = EXCLUDED.marketing, progress = EXCLUDED.progress,
          quiet_start_min = EXCLUDED.quiet_start_min, quiet_end_min = EXCLUDED.quiet_end_min,
          updated_at = now()`,
       [
@@ -112,6 +118,7 @@ export class NotificationPrefsService {
         next.games,
         next.events,
         next.marketing,
+        next.progress,
         next.quiet_start_min,
         next.quiet_end_min,
       ],

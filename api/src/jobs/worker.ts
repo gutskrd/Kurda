@@ -21,7 +21,14 @@ import { createEmailProvider } from '../email/provider.js';
 import { DashboardService } from '../analytics/dashboard-service.js';
 import { EconomyService } from '../economy/service.js';
 import { makeAnalyticsRollupJob, makeEconomyRollupJob } from './rollup-jobs.js';
-import { QUEUE_NAME, createQueueConnection } from './queue.js';
+import { JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
+import { makeLeagueMergeJob, makeLeagueSettleJob } from './league-jobs.js';
+import { LeagueService } from '../leagues/service.js';
+import { GemService } from '../gems/service.js';
+import { WalletService } from '../wallet/service.js';
+import { ActivityService } from '../activity/service.js';
+import { FriendService } from '../friends/service.js';
+import { progressNotices } from '../notifications/progress-notices.js';
 import { JobRegistry } from './registry.js';
 
 export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistry {
@@ -50,6 +57,17 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));
+    // the league week (Monday's settle, Wednesday's merge); its promotion news
+    // goes back through the queue as ordinary pushes
+    const leagues = new LeagueService(pool, {
+      gems: new GemService(pool, new WalletService(pool)),
+      activity: new ActivityService(pool, new FriendService(pool), config.REDIS_URL ? createRedis(config) : undefined),
+      notices: progressNotices({ inbox: new InboxService(pool), push, jobs: config.REDIS_URL ? JobQueue.create(config) : null }),
+      weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
+      log,
+    });
+    registry.register(makeLeagueSettleJob(leagues));
+    registry.register(makeLeagueMergeJob(leagues));
     // the dashboards read pre-aggregated tables; without these they stay empty
     registry.register(makeAnalyticsRollupJob(new DashboardService(pool)));
     registry.register(makeEconomyRollupJob(new EconomyService(pool)));

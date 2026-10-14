@@ -35,9 +35,9 @@ export function standaloneStoryGames(pool: pg.Pool, opts: { redis?: Redis | null
   const redis = opts.redis ?? undefined;
   const gems = new GemService(pool, new WalletService(pool));
   const activity = new ActivityService(pool, new FriendService(pool), redis);
-  const leagues = new LeagueService(pool, gems, activity);
+  const leagues = new LeagueService(pool, { gems, activity, log });
   return new StoryGamesService(pool, {
-    xp: new XpService(pool, (uid) => void leagues.onXp(uid).catch((err) => log.warn({ err }, 'league join failed'))),
+    xp: new XpService(pool, (award) => void leagues.onXp(award).catch((err) => log.warn({ err }, 'league join failed'))),
     milestones: new AchievementsService(pool, gems, activity),
     notifier: redis ? new StoryGameNotifier(new RedisRoomPublisher(redis), log) : null,
     log,

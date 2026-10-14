@@ -43,8 +43,8 @@ describe.skipIf(!DATABASE_URL)('seasons (integration)', () => {
     userId = res.json().user.id;
     // peaked at Gold this season, currently Silver; rating 1400
     await pool.query(
-      `INSERT INTO user_league (user_id, tier, peak_tier) VALUES ($1, 'silver', 'gold')
-       ON CONFLICT (user_id) DO UPDATE SET tier = 'silver', peak_tier = 'gold'`,
+      `INSERT INTO user_league (user_id, tier, peak_tier) VALUES ($1, 'dilop', 'kani')
+       ON CONFLICT (user_id) DO UPDATE SET tier = 'dilop', peak_tier = 'kani'`,
       [userId],
     );
     await pool.query(
@@ -74,23 +74,23 @@ describe.skipIf(!DATABASE_URL)('seasons (integration)', () => {
 
     const hist = await seasons.history(userId);
     const entry = hist.find((h) => h.seasonKey === season)!;
-    expect(entry).toMatchObject({ peakTier: 'gold', finalRating: 1400, rewardGems: seasonRewardGems('gold') });
+    expect(entry).toMatchObject({ peakTier: 'kani', finalRating: 1400, rewardGems: seasonRewardGems('kani') });
 
     // rating compressed toward the mean (1400 → 1200)
     const rating = await pool.query<{ rating: number }>(`SELECT rating FROM player_ratings WHERE user_id = $1`, [userId]);
     expect(rating.rows[0]!.rating).toBe(softReset(1400));
     // peak reset to the current tier for the new season
     const league = await pool.query<{ peak_tier: string }>(`SELECT peak_tier FROM user_league WHERE user_id = $1`, [userId]);
-    expect(league.rows[0]!.peak_tier).toBe('silver');
+    expect(league.rows[0]!.peak_tier).toBe('dilop');
     // reward paid
-    expect((await wallet.balances(userId)).gems).toBe(seasonRewardGems('gold'));
+    expect((await wallet.balances(userId)).gems).toBe(seasonRewardGems('kani'));
   });
 
   it('is idempotent: a re-run neither re-compresses the rating nor double-pays', async () => {
     await seasons.endSeason(season, [userId]);
     const rating = await pool.query<{ rating: number }>(`SELECT rating FROM player_ratings WHERE user_id = $1`, [userId]);
     expect(rating.rows[0]!.rating).toBe(softReset(1400)); // still 1200, not 1100
-    expect((await wallet.balances(userId)).gems).toBe(seasonRewardGems('gold')); // paid once
+    expect((await wallet.balances(userId)).gems).toBe(seasonRewardGems('kani')); // paid once
   });
 
   it('GET /me/seasons exposes the archived history', async () => {

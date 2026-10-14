@@ -59,6 +59,11 @@ describe.skipIf(!DATABASE_URL)('notification preferences (integration)', () => {
     const p = await prefs.get(userId);
     expect(p.games).toBe(false);
     expect(p.streak).toBe(true); // untouched
+    // league and badge news: an adult's default, kept as "not chosen"
+    expect(p.progress).toBe(true);
+    const stored = await pool.query<{ progress: boolean | null }>(`SELECT progress FROM notification_prefs WHERE user_id = $1`, [userId]);
+    expect(stored.rows[0]!.progress).toBeNull();
+    expect((await prefs.update(userId, { progress: false })).progress).toBe(false);
     expect(p.quietStartMin).toBe(22 * 60);
   });
 

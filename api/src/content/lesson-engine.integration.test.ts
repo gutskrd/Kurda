@@ -290,6 +290,26 @@ describe.skipIf(!DATABASE_URL)('lesson engine (integration)', () => {
   });
 
   /**
+   * Repeating a finished lesson pays a quarter twice a day, then nothing
+   * (contract 4 §L4) — and the ledger says what of it counts for the league.
+   */
+  it('a lesson finished a third time in a day pays nothing', async () => {
+    const repeater = await register('eng_rep');
+    const paid: number[] = [];
+    for (let i = 0; i < 4; i++) paid.push(((await play(repeater, true)).results as { xpAwarded: number }).xpAwarded);
+    expect(paid).toEqual([lessonCompletionXp(1, false), lessonCompletionXp(1, true), lessonCompletionXp(1, true), 0]);
+    const ledger = await pool.query<{ amount: number; counted: number }>(
+      `SELECT amount, counted FROM xp_ledger WHERE user_id = $1 AND source = 'lesson_complete' ORDER BY created_at`,
+      [repeater.id],
+    );
+    expect(ledger.rows.map((r) => [r.amount, r.counted])).toEqual([
+      [20, 20],
+      [5, 5],
+      [5, 5],
+    ]);
+  });
+
+  /**
    * The Gem idempotency key is global, and the achievement grant used to key
    * on the achievement alone — so only the first person ever to earn one
    * would have been paid for it.

@@ -19,7 +19,7 @@ import { setProfilePhoto } from '../media/profilePhoto.js';
 import { assertUnrestricted, requireUnrestricted } from '../moderation/restrictions.js';
 import { birthDateRequired, isBelowConsentAgeRow, isKnownAdultRow, isMinorRow } from './age.js';
 import { BirthMonthService, birthDateBodySchema } from './birth-month.js';
-import { leaveThisWeek } from '../leagues/service.js';
+import { leaveThisWeek, returnThisWeek } from '../leagues/service.js';
 
 export const USERNAME_CHANGE_COOLDOWN_DAYS = 30;
 /** Profile photos are small; cap tighter than the global media limit (KUR-177). */
@@ -525,6 +525,10 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         // leaving takes effect now, not at the end of the week: the point is
         // not to be in this week's table
         if (body.leaguesEnabled === false) await leaveThisWeek(app.db, userId);
+        // and coming back puts them back in the group they left this week, if
+        // they had one; someone with no group yet joins with their next
+        // learning XP, as everyone does
+        if (body.leaguesEnabled === true) await returnThisWeek(app.db, userId);
         return { user: toMe(updated.rows[0] as MeRow) };
       } catch (err) {
         if ((err as { constraint?: string }).constraint === 'users_username_active_uniq') {

@@ -69,8 +69,8 @@ export class SeasonService {
     peakTier: string,
     rating: number | null,
   ): Promise<void> {
-    const peak: Tier = isTier(peakTier) ? peakTier : 'bronze';
-    const currentTier: Tier = isTier(tier) ? tier : 'bronze';
+    const peak: Tier = isTier(peakTier) ? peakTier : 'dilop';
+    const currentTier: Tier = isTier(tier) ? tier : 'dilop';
     const rewardGems = seasonRewardGems(peak);
 
     const client = await this.pool.connect();
@@ -131,7 +131,7 @@ export class SeasonService {
     );
     return rows.rows.map((r) => ({
       seasonKey: r.season_key,
-      peakTier: isTier(r.peak_tier) ? r.peak_tier : 'bronze',
+      peakTier: isTier(r.peak_tier) ? r.peak_tier : 'dilop',
       finalRating: r.final_rating,
       rewardGems: r.reward_gems,
       createdAt: r.created_at,

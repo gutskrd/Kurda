@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { makePushSendJob } from '../jobs/push-jobs.js';
+import { NOTIFICATION_CATEGORIES } from '../notifications/prefs.js';
 import type { PushService } from './service.js';
 import type { DeviceTokenService } from './tokens-service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
@@ -14,7 +15,7 @@ const tokenBody = z.object({ token: z.string().min(1).max(4096) });
 
 const testBody = z.object({
   userId: z.uuid().optional(),
-  category: z.enum(['streak', 'friends', 'games', 'events', 'marketing']).default('events'),
+  category: z.enum(NOTIFICATION_CATEGORIES).default('events'),
   title: z.string().min(1).max(120),
   body: z.string().min(1).max(500),
 });

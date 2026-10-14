@@ -61,6 +61,8 @@ import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
 import { LeagueService } from './leagues/service.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
+import { scheduleLeagueJobs } from './jobs/league-jobs.js';
+import { progressNotices } from './notifications/progress-notices.js';
 import { LeaderboardService } from './leaderboards/service.js';
 import { registerLeaderboardRoutes } from './leaderboards/routes.js';
 import { SeasonService } from './seasons/service.js';
@@ -361,16 +363,42 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const friends = new FriendService(app.db);
     const activity = new ActivityService(app.db, friends, app.redis);
 
-    // weekly leagues (KUR-062): lazy cohort join on XP, Sunday-night settle
-    const leagues = new LeagueService(app.db, gemService, activity);
+    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
+    // gated by per-category preferences + quiet hours at delivery time (KUR-095);
+    // set up here because league and badge news below goes through it
+    const deviceTokens = new DeviceTokenService(app.db);
+    const notificationPrefs = new NotificationPrefsService(app.db);
+    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const inbox = new InboxService(app.db);
+    const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
+
+    // Learning Leagues (KUR-062, contract 4 §L): learning XP joins the week's
+    // group; the week is settled on Monday and small groups merged on
+    // Wednesday from the job queue (jobs/league-jobs.ts)
+    const leagues = new LeagueService(app.db, {
+      gems: gemService,
+      activity,
+      notices,
+      weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
+      log: app.log,
+    });
     registerLeagueRoutes(app, leagues);
-    // every XP gain lazily joins this week's cohort
-    const xpService = new XpService(app.db, (uid) => void leagues.onXp(uid).catch((err) => app.log.warn({ err }, 'league join failed')));
-    const leagueSettle = setInterval(
-      () => void leagues.settleDueWeeks().catch((err) => app.log.warn({ err }, 'league settle failed')),
-      60 * 60 * 1000,
-    );
-    app.addHook('onClose', async () => clearInterval(leagueSettle));
+    const xpService = new XpService(app.db, (award) => void leagues.onXp(award).catch((err) => app.log.warn({ err }, 'league join failed')));
+    if (config.NODE_ENV !== 'test') {
+      if (app.jobs) {
+        void scheduleLeagueJobs(app.jobs, leagues).catch((err) => app.log.warn({ err }, 'failed to schedule the league week'));
+      } else {
+        // no queue (one process, no Redis): the same idempotent runs, checked hourly and at startup
+        const runLeagueWeek = () =>
+          void leagues
+            .settleDue()
+            .then(() => leagues.mergeSmallGroups())
+            .catch((err) => app.log.warn({ err }, 'league settle failed'));
+        runLeagueWeek();
+        const leagueWeek = setInterval(runLeagueWeek, 60 * 60 * 1000);
+        app.addHook('onClose', async () => clearInterval(leagueWeek));
+      }
+    }
 
     // Hot-table partition maintenance (KUR-115): create upcoming monthly partitions
     // ahead of time so inserts always have a home. Runs in the API process (works
@@ -556,12 +584,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
-    // push infrastructure (KUR-094): device token lifecycle + queued delivery,
-    // gated by per-category preferences + quiet hours at delivery time (KUR-095)
-    const deviceTokens = new DeviceTokenService(app.db);
-    const notificationPrefs = new NotificationPrefsService(app.db);
-    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
-    const inbox = new InboxService(app.db);
+    // the push and notification services set up with the leagues, above
     registerNotificationRoutes(app, notificationPrefs);
     registerInboxRoutes(app, inbox);
     registerPushRoutes(app, deviceTokens, pushService, inbox);
