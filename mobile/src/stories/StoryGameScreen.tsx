@@ -95,7 +95,8 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
 
   return (
     <GradientBackground>
-      <ScreenHeader title={view?.settings.storyTitle ?? t('stories.title')} onBack={onExit} />
+      {/* the story's own title is in the body, in the story's voice and script; the bar says only where you are, as the reader's does */}
+      <ScreenHeader title={t('stories.title')} onBack={onExit} />
       {game.trouble ? (
         <Text style={[styles.trouble, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
           {t('stories.game.reconnecting')}
