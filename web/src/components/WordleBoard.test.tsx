@@ -1,68 +1,90 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { KURMANCI_KEYS, KURMANCI_KEYS_NARROW, WordleBoard, WordleKeyboard } from './WordleBoard';
+import { KURMANCI_ALPHABET } from '@kurda/shared';
+import { WordleBoard, WordleKeyboard } from './WordleBoard';
+import { ALPHABET_ROWS, BACKSPACE, ENTER, QWERTY_ROWS } from '../keyboard/wordleKeys';
+import { KEYBOARD_PREFS_KEY, getKeyboardPrefs, resetKeyboardPrefsForTests } from '../keyboard/prefs';
+import { renderApp } from '../test/utils';
 
+beforeEach(() => resetKeyboardPrefsForTests());
 afterEach(() => {
   vi.restoreAllMocks();
+  localStorage.clear();
 });
 
-/** Pretend the viewport does (or does not) match the narrow-keyboard query. */
-function stubMatchMedia(matches: boolean): void {
-  vi.stubGlobal('matchMedia', (query: string) => ({
-    matches,
-    media: query,
-    addEventListener: () => undefined,
-    removeEventListener: () => undefined,
-  }));
-}
+const letters = (rows: readonly (readonly string[])[]): string[] => rows.flat().filter((k) => k !== ENTER && k !== BACKSPACE);
 
-describe('the Kurmancî keyboard layouts', () => {
-  it('the narrow layout has exactly the same letters as the wide one', () => {
-    // the phone layout only re-splits the rows; losing or duplicating a letter
-    // would make a word unplayable on mobile and be easy to miss by eye
-    const wide = KURMANCI_KEYS.flat();
-    const narrow = KURMANCI_KEYS_NARROW.flat();
-    expect([...narrow].sort()).toEqual([...wide].sort());
-    expect(new Set(narrow).size).toBe(narrow.length); // no duplicates
+/*
+ * The old layout put ê û î beside e u i: a 13-key top row that could not fit a
+ * phone, wrapped differently below 560px, with the most easily confused pairs
+ * side by side. Its tests pinned that layout; these pin the one that replaced
+ * it (contract §K3): QWERTY, and ç ê î ş û as a row of their own.
+ */
+describe('the on-screen layouts', () => {
+  it('both have all 31 letters, each once', () => {
+    for (const rows of [QWERTY_ROWS, ALPHABET_ROWS]) {
+      expect([...letters(rows)].sort()).toEqual([...KURMANCI_ALPHABET].sort());
+    }
   });
 
-  it('keeps the letters in the same order, only wrapped differently', () => {
-    expect(KURMANCI_KEYS_NARROW.flat()).toEqual(KURMANCI_KEYS.flat());
+  it('QWERTY keeps its rows, and puts ç ê î ş û on a fourth', () => {
+    expect(QWERTY_ROWS[0]!.join('')).toBe('qwertyuiop');
+    expect(QWERTY_ROWS[1]!.join('')).toBe('asdfghjkl');
+    expect(QWERTY_ROWS[2]).toEqual([ENTER, 'z', 'x', 'c', 'v', 'b', 'n', 'm', BACKSPACE]);
+    expect(QWERTY_ROWS[3]).toEqual(['ç', 'ê', 'î', 'ş', 'û']);
   });
 
-  it('no narrow row is wide enough to overflow a phone', () => {
-    // 10 keys is what a standard phone keyboard fits; the wide layout's 13-key
-    // row is what pushed its last key off the screen
-    for (const row of KURMANCI_KEYS_NARROW) expect(row.length).toBeLessThanOrEqual(10);
-    expect(Math.max(...KURMANCI_KEYS.map((r) => r.length))).toBeGreaterThan(10);
+  it('alphabet order is the alphabet, and no row is wider than a phone fits', () => {
+    expect(letters(ALPHABET_ROWS)).toEqual([...KURMANCI_ALPHABET]);
+    for (const rows of [QWERTY_ROWS, ALPHABET_ROWS]) {
+      for (const row of rows) expect(row.length).toBeLessThanOrEqual(10);
+    }
   });
 });
 
 describe('WordleKeyboard', () => {
-  it('uses the wrapped layout on a narrow screen', () => {
-    stubMatchMedia(true);
-    render(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
-    // Enter and Delete sit on the last row, so the row count is the tell
-    expect(document.querySelectorAll('.wordle-krow')).toHaveLength(KURMANCI_KEYS_NARROW.length);
-  });
-
-  it('uses the full-width layout otherwise', () => {
-    stubMatchMedia(false);
-    render(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
-    expect(document.querySelectorAll('.wordle-krow')).toHaveLength(KURMANCI_KEYS.length);
-  });
-
-  it('every letter is still pressable in the wrapped layout', async () => {
-    stubMatchMedia(true);
+  it('lays out QWERTY by default, with Delete as an icon that says what it does', async () => {
     const onPress = vi.fn();
-    render(<WordleKeyboard keyboard={{}} onPress={onPress} disabled={false} />);
+    renderApp(<WordleKeyboard keyboard={{}} onPress={onPress} disabled={false} />);
 
-    // û is on the wide layout's overflowing top row — the key that fell off
+    expect(document.querySelectorAll('.wordle-krow')).toHaveLength(4);
     await userEvent.click(screen.getByRole('button', { name: 'û' }));
     await userEvent.click(screen.getByRole('button', { name: 'p' }));
     await userEvent.click(screen.getByRole('button', { name: 'Backspace' }));
-    expect(onPress.mock.calls.map(([k]) => k)).toEqual(['û', 'p', 'Backspace']);
+    await userEvent.click(screen.getByRole('button', { name: 'Enter' }));
+    expect(onPress.mock.calls.map(([k]) => k)).toEqual(['û', 'p', 'Backspace', 'Enter']);
+    expect(screen.getByRole('button', { name: 'Backspace' }).querySelector('svg')).not.toBeNull();
+  });
+
+  it('switches to alphabet order, and remembers it on this device', async () => {
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
+
+    await userEvent.click(screen.getByRole('radio', { name: 'Alphabet order' }));
+
+    const firstRow = document.querySelector('.wordle-krow')!;
+    expect(firstRow.textContent).toBe('abcçdeêfg');
+    expect(getKeyboardPrefs().wordleLayout).toBe('alphabet');
+  });
+
+  it('starts in the layout this device chose', () => {
+    localStorage.setItem(KEYBOARD_PREFS_KEY, JSON.stringify({ wordleLayout: 'alphabet' }));
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled={false} />);
+    expect(screen.getByRole('radio', { name: 'Alphabet order' })).toHaveAttribute('aria-checked', 'true');
+  });
+
+  it('says each key’s colour in words', () => {
+    renderApp(<WordleKeyboard keyboard={{ a: 'green', s: 'yellow', ê: 'gray' }} onPress={() => undefined} disabled={false} />);
+    expect(screen.getByRole('button', { name: 'a, in the right place' })).toHaveClass('wordle-green');
+    expect(screen.getByRole('button', { name: 's, in the word, in another place' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'ê, not in the word' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'q' })).toBeInTheDocument();
+  });
+
+  it('disables its keys rather than hiding them from a screen reader', () => {
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => undefined} disabled />);
+    expect(document.querySelector('[aria-hidden="true"] button')).toBeNull();
+    expect(screen.getByRole('button', { name: 'q' })).toBeDisabled();
   });
 });
 
@@ -75,7 +97,7 @@ describe('WordleBoard', () => {
    * what lets the cell size shrink on a small screen.
    */
   it('publishes its column count so the stylesheet can size the cells', () => {
-    render(<WordleBoard targetLength={8} guesses={[]} current="" totalRows={6} showCurrent />);
+    renderApp(<WordleBoard targetLength={8} guesses={[]} current="" totalRows={6} showCurrent />);
     const row = document.querySelector('.wordle-row') as HTMLElement;
     expect(row.style.getPropertyValue('--wordle-cols')).toBe('8');
     expect(row.style.gridTemplateColumns).toBe('repeat(8, 1fr)');
@@ -84,7 +106,24 @@ describe('WordleBoard', () => {
   });
 
   it('renders one cell per letter for every row', () => {
-    render(<WordleBoard targetLength={5} guesses={[]} current="" totalRows={6} showCurrent />);
+    renderApp(<WordleBoard targetLength={5} guesses={[]} current="" totalRows={6} showCurrent />);
     expect(document.querySelectorAll('.wordle-cell')).toHaveLength(30);
+  });
+
+  it('says how each scored letter scored, not only which letter it is', () => {
+    renderApp(
+      <WordleBoard
+        targetLength={3}
+        guesses={[{ letters: ['k', 'a', 'r'], feedback: ['green', 'yellow', 'gray'] }]}
+        current="se"
+        totalRows={3}
+        showCurrent
+      />,
+    );
+    expect(screen.getByRole('group', { name: 'Guess 1' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'k, in the right place' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'a, in the word, in another place' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'r, not in the word' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 's' })).toBeInTheDocument();
   });
 });

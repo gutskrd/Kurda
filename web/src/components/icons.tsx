@@ -68,6 +68,9 @@ import { Microphone } from '@phosphor-icons/react/dist/icons/Microphone';
 import { SpeakerHigh } from '@phosphor-icons/react/dist/icons/SpeakerHigh';
 import { Check } from '@phosphor-icons/react/dist/icons/Check';
 import { Lock } from '@phosphor-icons/react/dist/icons/Lock';
+// web-race-rating: Wordle's delete key, the rating box's stars
+import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
+import { Star } from '@phosphor-icons/react/dist/icons/Star';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -179,6 +182,9 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
+/* web-race-rating: Wordle's delete key; a star you can choose, filled once it is */
+export const BackspaceIcon = named(Backspace, 22);
+export const StarIcon = named(Star, 36);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

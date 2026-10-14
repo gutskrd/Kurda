@@ -6,7 +6,8 @@ import type { ApiError, WordleGame } from '../lib/types';
 import { Loading, ErrorState } from '../components/states';
 import { Button } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
-import { WordleBoard, WordleKeyboard, KURMANCI_LETTER_RE } from '../components/WordleBoard';
+import { WordleBoard, WordleKeyboard } from '../components/WordleBoard';
+import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 
@@ -95,19 +96,9 @@ export function Wordle(): React.JSX.Element {
     [game, playing, submit],
   );
 
-  // physical keyboard: letters a–z + the special keys, Backspace, Enter
-  useEffect(() => {
-    if (!playing) return;
-    const onKey = (e: KeyboardEvent): void => {
-      if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (e.key === 'Enter') return press('Enter');
-      if (e.key === 'Backspace') return press('Backspace');
-      const k = e.key.toLowerCase();
-      if (KURMANCI_LETTER_RE.test(k)) press(k);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [playing, press]);
+  // the physical keyboard: any key that types a letter of the alphabet
+  // (AltGr, Option and dead keys included), Backspace and Enter
+  useWordleKeys(playing, press);
 
   return (
     <div className="container game-page">
