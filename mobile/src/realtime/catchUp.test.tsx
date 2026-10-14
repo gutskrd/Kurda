@@ -6,7 +6,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { ChatScreen } from '../chat/ChatScreen';
 import { GroupThreadScreen } from '../groups/GroupThreadScreen';
 import { RealtimeProvider } from './RealtimeProvider';
-import { mergeLatest } from './catchUp';
+import { appendOnce, mergeLatest } from './catchUp';
 import { FakeSocket } from './testing/fakeSocket';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -70,6 +70,14 @@ describe('mergeLatest', () => {
   });
 });
 
+describe('appendOnce', () => {
+  it('adds a message the thread does not have, and leaves the thread as it is when it does', () => {
+    const held = [msg('a', 1)];
+    expect(appendOnce(held, msg('b', 2)).map((m) => m.id)).toEqual(['a', 'b']);
+    expect(appendOnce(held, msg('a', 1))).toBe(held);
+  });
+});
+
 describe('a thread on the shared connection', () => {
   const realWebSocket = globalThis.WebSocket;
   beforeEach(() => {
@@ -110,6 +118,30 @@ describe('a thread on the shared connection', () => {
     act(() => FakeSocket.all[1]!.hello());
     expect(await screen.findByText('message m2')).toBeTruthy();
     expect(screen.getAllByText('message m1')).toHaveLength(1);
+  });
+
+  it('shows a message once when the catch-up read it before it was pushed live', async () => {
+    let page = [msg('m1', 1)];
+    testAuth.client = fakeClient({
+      'POST /realtime/ticket': ok({ ticket: 'tk' }),
+      'GET /chat/u2/messages': () => ok({ messages: page }),
+      'POST /chat/u2/read': ok({ ok: true }),
+    });
+    renderWithProviders(
+      <RealtimeProvider>
+        <ChatScreen userId="u2" username="Azad" onExit={() => undefined} />
+      </RealtimeProvider>,
+    );
+    expect(await screen.findByText('message m1')).toBeTruthy();
+    await flush();
+    // the connection comes back: the catch-up reads m2, which was saved a moment ago
+    page = [msg('m1', 1), msg('m2', 2)];
+    act(() => FakeSocket.all[0]!.hello());
+    expect(await screen.findByText('message m2')).toBeTruthy();
+    // and only then is m2 pushed live
+    act(() => FakeSocket.all[0]!.push('user:me', { type: 'dm', from: 'u2', message: msg('m2', 2) }));
+    await flush();
+    expect(screen.getAllByText('message m2')).toHaveLength(1);
   });
 
   it('shows the card of a game started from this chat when the thread is shown again', async () => {

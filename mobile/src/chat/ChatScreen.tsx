@@ -21,7 +21,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { ChatMessageExtras } from '@kurda/shared';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
-import { mergeLatest, useCatchUp } from '../realtime/catchUp';
+import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 interface Message extends Partial<ChatMessageExtras> {
   id: string;
@@ -76,7 +76,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
     useCallback(
       (ev) => {
         if (ev.type === 'dm' && ev.from === userId && ev.message) {
-          setMessages((prev) => [...prev, ev.message as Message]);
+          setMessages((prev) => appendOnce(prev, ev.message as Message));
           markRead();
         } else if (ev.type === 'dm_read' && ev.by === userId) {
           setMessages((prev) => prev.map((m) => (m.senderId === me ? { ...m, readAt: new Date().toISOString() } : m)));
@@ -104,7 +104,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
     if (!body) return;
     setDraft('');
     const res = await client.post<Message>(`/chat/${userId}/messages`, { body });
-    if (res.ok) setMessages((prev) => [...prev, res.data]);
+    if (res.ok) setMessages((prev) => appendOnce(prev, res.data));
   }, [client, draft, userId]);
 
   return (

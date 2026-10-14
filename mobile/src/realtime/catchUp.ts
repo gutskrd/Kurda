@@ -22,6 +22,15 @@ export function mergeLatest<T extends { id: string; createdAt: string }>(held: r
 }
 
 /**
+ * A message added to a thread once. The same message can reach the screen
+ * twice — read by a catch-up refetch and then pushed live, or both pushed and
+ * returned by the send — and a second copy would show twice under one key.
+ */
+export function appendOnce<T extends { id: string }>(held: T[], message: T): T[] {
+  return held.some((m) => m.id === message.id) ? held : [...held, message];
+}
+
+/**
  * Refetch a live thread whenever it may have missed something: each time the
  * shared connection comes back (the app was in the background, or the network
  * dropped — the gateway does not replay what it could not deliver), and each
