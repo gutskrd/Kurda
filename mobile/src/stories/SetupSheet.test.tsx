@@ -63,6 +63,17 @@ describe('SetupSheet', () => {
     expect(checked('Text during questions')).toBe('Text visible');
   });
 
+  it('lets choices named in words wrap to a second row rather than cut them short', async () => {
+    testAuth.client = fakeClient({ 'GET /story-games/options': ok({ canHostOpen: false }) });
+    renderWithProviders(
+      <SetupSheet dialect="kurmanci" stories={STORIES} initialMode="duo" onClose={() => undefined} onCreated={() => undefined} />,
+    );
+    await act(async () => undefined);
+    for (const group of ['Who’s playing', 'Time per question', 'Text during questions']) {
+      expect(screen.getByRole('radiogroup', { name: group }).className).toMatch(/flexWrap/);
+    }
+  });
+
   it('moves the question count to what a new length allows, and lists only stories of that length', async () => {
     testAuth.client = fakeClient({ 'GET /story-games/options': ok({ canHostOpen: false }) });
     renderWithProviders(

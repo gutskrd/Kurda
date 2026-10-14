@@ -27,7 +27,7 @@ import { ACCESS_KEY, LENGTH_KEY, MODE_KEY, TEXT_DURING_KEY, lengthWithMinutes, t
 import { useStoryPrefs } from './prefs';
 import { availableLengths, changeSetup, createInput, initialSetup, questionCountsFor, type SetupState } from './setup';
 import { storyTextProps, storyTextStyle } from './storyText';
-import { Note, SectionLabel, Sheet } from './ui';
+import { ChoiceChips, Note, SectionLabel, Sheet } from './ui';
 
 /** What a refusal to create a game means, in the player's language. */
 export function createErrorMessage(error: ApiError, t: Translate): string {
@@ -171,8 +171,8 @@ export function StoryPresetFields({
 
       <View style={styles.field}>
         <SectionLabel>{t('stories.setup.timer')}</SectionLabel>
-        <Segmented<string>
-          groupLabel={t('stories.setup.timer')}
+        <ChoiceChips<string>
+          label={t('stories.setup.timer')}
           options={TIMER_PRESETS.map(String)}
           value={String(state.timerSeconds)}
           onChange={(v) => set({ timerSeconds: Number(v) as SetupState['timerSeconds'] })}
@@ -182,8 +182,8 @@ export function StoryPresetFields({
 
       <View style={styles.field}>
         <SectionLabel>{t('stories.setup.text')}</SectionLabel>
-        <Segmented<TextDuring>
-          groupLabel={t('stories.setup.text')}
+        <ChoiceChips<TextDuring>
+          label={t('stories.setup.text')}
           options={TEXT_DURING_OPTIONS}
           value={state.textDuring}
           onChange={(textDuring) => set({ textDuring })}
@@ -293,10 +293,16 @@ export function SetupSheet({
         </>
       }
     >
+      {/*
+        Choices named in words are chips, which wrap to a second row; a
+        segmented control cuts "Mit einem Freund" or larger text to an
+        ellipsis, and the words are the only way to tell the modes apart.
+        Short ones (lengths, counts, access) stay segmented.
+      */}
       <View style={styles.field}>
         <SectionLabel>{t('stories.setup.mode')}</SectionLabel>
-        <Segmented<StoryGameMode>
-          groupLabel={t('stories.setup.mode')}
+        <ChoiceChips<StoryGameMode>
+          label={t('stories.setup.mode')}
           options={STORY_GAME_MODES}
           value={state.mode}
           onChange={(mode) => setState((s) => changeSetup(s, { mode }))}
