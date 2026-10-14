@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -23,6 +22,7 @@ import type { ProfileSections } from '../profile/sections';
 import { ReportUserSheet } from './ReportUserSheet';
 import { blockUser } from './blocks';
 import { useI18n } from '../i18n/I18nContext';
+import { PlayWithButton } from '../play/PlayWithButton';
 
 interface Profile {
   userId: string;
@@ -183,19 +183,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
                     size="large"
                     onPress={() => navigation.navigate('Chat', { userId: profile.userId, username: profile.username })}
                   />
-                  <ClayButton
-                    label={t('profile.challenge1v1')}
-                    icon="play"
-                    tone="accent"
-                    variant="outline"
-                    size="large"
-                    onPress={() =>
-                      void client.post('/challenges', { userId: profile.userId }).then((res) => {
-                        if (res.ok) Alert.alert(t('profile.challengeSent'), t('profile.challengeWaiting'));
-                        else Alert.alert(t('profile.challengeFailed'), describeError(res.error, t));
-                      })
-                    }
-                  />
+                  {/* the quiz's 1v1 challenge went with the quiz: any game, through the invite sheet */}
+                  <PlayWithButton friendId={profile.userId} name={profile.displayName ?? profile.username} />
                 </>
               ) : null}
               {labelKey ? (

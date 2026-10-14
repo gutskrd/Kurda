@@ -1,0 +1,174 @@
+// @vitest-environment jsdom
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { InviteLists, StoryListItem } from '@kurda/shared';
+import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { renderWithProviders } from '../reports/testing/harness';
+import { resetPrefsCache } from '../stories/prefs';
+import { navigation } from './testing/navigation';
+import { InviteSheet, orderFriends, recentPlayers } from './InviteSheet';
+import type { FriendSummary } from './api';
+
+vi.mock('react-native', () => import('./testing/native'));
+vi.mock('react-native-svg', () => import('../reports/testing/svg'));
+vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
+vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('@react-navigation/native', () => import('./testing/navigation'));
+
+const friend = (userId: string, displayName: string, online = false): FriendSummary => ({
+  userId,
+  username: displayName.toLowerCase(),
+  displayName,
+  avatarUrl: null,
+  online,
+  lastSeenAt: null,
+});
+
+const ROJDA = friend('u-rojda', 'Rojda');
+const AZAD = friend('u-azad', 'Azad', true);
+const SIPAN = friend('u-sipan', 'Sipan');
+
+const story: StoryListItem = {
+  id: 's1',
+  slug: 'nane-germ',
+  title: 'Nanê Germ',
+  summary: null,
+  dialect: 'kurmanci',
+  level: 1,
+  length: 'short',
+  wordCount: 180,
+  readingMinutes: 2,
+  fullyNarrated: false,
+};
+
+const noInvites: InviteLists = { incoming: [], outgoing: [] };
+
+function routes(extra: Record<string, unknown> = {}) {
+  return {
+    'GET /friends?limit=500': ok({ total: 3, friends: [ROJDA, AZAD, SIPAN] }),
+    'GET /play/invites': ok(noInvites),
+    'GET /stories?dialect=kurmanci': ok({ stories: [story] }),
+    'GET /story-games/options': ok({ canHostOpen: false }),
+    ...extra,
+  } as Parameters<typeof fakeClient>[0];
+}
+
+describe('recentPlayers and orderFriends', () => {
+  it('puts first only the friends who came into one of your games, not the ones who said no', () => {
+    const lists: InviteLists = {
+      incoming: [],
+      outgoing: [
+        {
+          game: 'stories',
+          lobbyId: 'g1',
+          invitees: [
+            { inviteId: 'i1', userId: 'u-sipan', name: 'Sipan', avatarUrl: null, status: 'accepted', declineReason: null },
+            { inviteId: 'i2', userId: 'u-azad', name: 'Azad', avatarUrl: null, status: 'declined', declineReason: 'later' },
+          ],
+        },
+      ],
+    };
+    expect(recentPlayers(lists)).toEqual(['u-sipan']);
+    const { recent, rest } = orderFriends([ROJDA, AZAD, SIPAN], recentPlayers(lists), '');
+    expect(recent.map((f) => f.userId)).toEqual(['u-sipan']);
+    // the rest: online first, then by name
+    expect(rest.map((f) => f.userId)).toEqual(['u-azad', 'u-rojda']);
+  });
+
+  it('searches by name and by username', () => {
+    expect(orderFriends([ROJDA, AZAD], [], 'roj').rest.map((f) => f.userId)).toEqual(['u-rojda']);
+    expect(orderFriends([ROJDA, AZAD], [], 'AZ').rest.map((f) => f.userId)).toEqual(['u-azad']);
+  });
+});
+
+describe('InviteSheet', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    resetPrefsCache();
+    navigation.navigate.mockClear();
+  });
+  afterEach(cleanup);
+
+  it('from a DM keeps that friend in the game, and a game for two offers nobody else', async () => {
+    const client = fakeClient(
+      routes({ 'POST /play/lobbies': ok({ game: 'stories', lobbyId: 'g9', invited: 1 }) }),
+    );
+    testAuth.client = client;
+    renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={() => undefined} />);
+    const rojda = await screen.findByRole('radio', { name: 'Rojda' });
+    expect(rojda.getAttribute('aria-checked')).toBe('true');
+    expect(rojda.getAttribute('aria-disabled')).toBe('true');
+    // tapping the DM's friend does not take them out
+    fireEvent.click(rojda);
+    expect(screen.getByRole('radio', { name: 'Rojda' }).getAttribute('aria-checked')).toBe('true');
+    // a duo from a DM is with that friend: no search, no other friends
+    expect(screen.queryByLabelText('Search friends')).toBeNull();
+    expect(screen.queryByRole('radio', { name: 'Azad, online now' })).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
+    await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' }));
+    const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { chat: unknown; invite?: string[]; game: string };
+    expect(sent.game).toBe('stories');
+    // the DM's friend is invited by `chat`, which also puts the card in the DM
+    expect(sent.chat).toEqual({ userId: 'u-rojda' });
+    expect(sent.invite).toBeUndefined();
+  });
+
+  it('from a DM, a group game may ask more friends, with the DM’s friend still in it', async () => {
+    const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'stories', lobbyId: 'g9', invited: 2 }) }));
+    testAuth.client = client;
+    renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={() => undefined} />);
+    await screen.findByRole('radio', { name: 'Rojda' });
+    fireEvent.click(screen.getByRole('radio', { name: 'With a group' }));
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad, online now' }));
+    expect(screen.getByRole('checkbox', { name: 'Rojda' }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/play/lobbies')).toBe(true));
+    const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { chat: unknown; invite?: string[]; settings: { mode: string } };
+    expect(sent.settings.mode).toBe('group');
+    expect(sent.chat).toEqual({ userId: 'u-rojda' });
+    expect(sent.invite).toEqual(['u-azad']);
+  });
+
+  it('from a group posts the game there, and asking friends as well is optional', async () => {
+    const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'wordle-battle', lobbyId: 'b1', invited: 0 }) }));
+    testAuth.client = client;
+    const onClose = vi.fn();
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Wordle Battle' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(onClose).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toEqual({
+      game: 'wordle-battle',
+      settings: { difficulty: 'hard' },
+      invite: undefined,
+      chat: { groupId: 'grp-1' },
+    });
+    expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b1' });
+  });
+
+  it('asks more friends into a lobby that exists and says how many were asked', async () => {
+    const client = fakeClient(routes({ 'POST /play/invites': ok({ ok: true, invited: 2 }) }));
+    testAuth.client = client;
+    renderWithProviders(<InviteSheet target={{ kind: 'lobby', game: 'rhyme-match', lobbyId: 'm1', mode: 'group' }} onClose={() => undefined} />);
+    // no game and no presets: the lobby has them already
+    expect(screen.queryByRole('radiogroup', { name: 'Game' })).toBeNull();
+    fireEvent.click(await screen.findByRole('checkbox', { name: 'Azad, online now' }));
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Sipan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send invites (2)' }));
+    expect(await screen.findByText('Invites sent: 2')).toBeTruthy();
+    expect(client.calls.find((c) => c.method === 'POST' && c.path === '/play/invites')?.body).toEqual({ game: 'rhyme-match', lobbyId: 'm1', userIds: ['u-azad', 'u-sipan'] });
+  });
+
+  it('needs a friend picked before a new game can be made from a profile', async () => {
+    testAuth.client = fakeClient(routes());
+    renderWithProviders(<InviteSheet target={{ kind: 'new' }} onClose={() => undefined} />);
+    await act(async () => undefined);
+    const create = screen.getByRole('button', { name: 'Create the game' });
+    expect(create.getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(await screen.findByRole('radio', { name: 'Sipan' }));
+    expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true');
+  });
+});

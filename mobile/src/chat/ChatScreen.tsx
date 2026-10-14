@@ -18,11 +18,16 @@ import { SkeletonList } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
+import type { ChatMessageExtras } from '@kurda/shared';
+import { ChatGameButton } from '../play/ChatGameButton';
+import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
+import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 
-interface Message {
+interface Message extends Partial<ChatMessageExtras> {
   id: string;
   senderId: string;
-  body: string;
+  /** null for a gift or a game card */
+  body: string | null;
   createdAt: string;
   readAt?: string | null;
 }
@@ -56,11 +61,22 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
     };
   }, [client, userId, markRead]);
 
+  // what arrived while the connection was away, and the card of a game started from here
+  useCatchUp(
+    useCallback(() => {
+      void client.get<{ messages: Message[] }>(`/chat/${userId}/messages`).then((res) => {
+        if (!res.ok) return;
+        setMessages((prev) => mergeLatest(prev, res.data.messages));
+        markRead();
+      });
+    }, [client, userId, markRead]),
+  );
+
   useChatSocket(
     useCallback(
       (ev) => {
         if (ev.type === 'dm' && ev.from === userId && ev.message) {
-          setMessages((prev) => [...prev, ev.message as Message]);
+          setMessages((prev) => appendOnce(prev, ev.message as Message));
           markRead();
         } else if (ev.type === 'dm_read' && ev.by === userId) {
           setMessages((prev) => prev.map((m) => (m.senderId === me ? { ...m, readAt: new Date().toISOString() } : m)));
@@ -88,7 +104,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
     if (!body) return;
     setDraft('');
     const res = await client.post<Message>(`/chat/${userId}/messages`, { body });
-    if (res.ok) setMessages((prev) => [...prev, res.data]);
+    if (res.ok) setMessages((prev) => appendOnce(prev, res.data));
   }, [client, draft, userId]);
 
   return (
@@ -105,6 +121,20 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
             contentContainerStyle={styles.list}
             renderItem={({ item }) => {
               const mine = item.senderId === me;
+              // a game card (or an old invite link) is the game's live state, not a bubble of text
+              const game = gameCardOf(item);
+              if (game) {
+                return (
+                  <View style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs, styles.gameRow]}>
+                    {game.rest ? (
+                      <View style={[styles.bubble, mine ? { backgroundColor: colors.primary } : { backgroundColor: colors.glassFill }]}>
+                        <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{game.rest}</Text>
+                      </View>
+                    ) : null}
+                    <ChatGameCard game={game.game} lobbyId={game.lobbyId} />
+                  </View>
+                );
+              }
               return (
                 <View style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}>
                   <View
@@ -128,6 +158,7 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
         {peerTyping ? <Text style={[styles.typing, { color: colors.textSecondary }]}>{t('chat.typing.one', { name: username })}</Text> : null}
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
+          <ChatGameButton target={{ kind: 'dm', friendId: userId }} />
           <TextInput
             style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
@@ -154,6 +185,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { padding: spacing.lg, gap: spacing.xs },
   bubbleRow: { maxWidth: '80%' },
+  gameRow: { gap: spacing.xs },
   rowMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
   rowTheirs: { alignSelf: 'flex-start' },
   bubble: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },

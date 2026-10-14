@@ -106,6 +106,17 @@ const MAP = {
   flag: { glyph: 'Flag', note: 'report this to a moderator; the screens used U+2690, a flag outline most fonts do not have' },
   microphone: { glyph: 'Microphone', note: 'record a voice note — the emoji renders as a whole illustration beside monochrome icons' },
   google: { glyph: 'GoogleLogo', note: 'sign in with Google' },
+
+  // --- Stories, and playing with friends ---
+  story: { glyph: 'BookOpenText', note: 'Stories — a page with lines on it, so it is not Learn’s open book' },
+  headphones: { glyph: 'Headphones', note: 'a story someone has read aloud, every sentence of it' },
+  'audio-play': { glyph: 'Play', weight: 'fill', note: 'play a recording — `play` is the games’ puzzle piece' },
+  'audio-pause': { glyph: 'Pause', weight: 'fill', note: 'pause a recording' },
+  'skip-back': { glyph: 'SkipBack', note: 'the sentence before' },
+  'skip-forward': { glyph: 'SkipForward', note: 'the sentence after' },
+  timer: { glyph: 'Timer', note: 'a question with a clock, and extra time' },
+  'user-plus': { glyph: 'UserPlus', note: 'invite a friend to play' },
+  crown: { glyph: 'Crown', note: 'the host of a game' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

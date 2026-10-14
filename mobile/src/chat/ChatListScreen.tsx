@@ -11,12 +11,15 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { Icon } from '../theme/Icon';
 import { useI18n } from '../i18n/I18nContext';
+import { chatPreview } from '../play/chatPreview';
 import { myGroups, type Group } from '../groups/api';
 
 interface Conversation {
   userId: string;
   username: string;
   lastMessage: string;
+  /** what the last message is ('text', 'gift', 'game') */
+  lastKind?: string;
   lastFromMe: boolean;
   unread: number;
 }
@@ -100,7 +103,7 @@ export function ChatListScreen({ onExit }: { onExit: () => void }) {
               <View style={styles.main}>
                 <Text style={[styles.name, { color: colors.textPrimary }]}>{item.username}</Text>
                 <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={1}>
-                  {item.lastFromMe ? t('chat.lastFromYou', { preview: item.lastMessage }) : item.lastMessage}
+                  {item.lastFromMe ? t('chat.lastFromYou', { preview: chatPreview(item, t) }) : chatPreview(item, t)}
                 </Text>
               </View>
               {item.unread > 0 ? (

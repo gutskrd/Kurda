@@ -10,6 +10,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
@@ -289,7 +290,8 @@ export function SocialScreen() {
                 {section('friends.title')}
               </View>
             }
-            renderItem={({ item }) => row(item)}
+            // a friend's row has a Play button: any game, that friend picked (play/InviteSheet)
+            renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
             ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text>}
             ListFooterComponent={
               suggestions.length > 0 ? (

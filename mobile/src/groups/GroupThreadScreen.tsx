@@ -24,6 +24,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
 import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
+import { ChatGameButton } from '../play/ChatGameButton';
+import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
+import { mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 const MAX_LEN = 2000;
 
@@ -78,6 +81,17 @@ export function GroupThreadScreen({
       active = false;
     };
   }, [client, groupId, t]);
+
+  // what was said while the connection was away, and the card of a game started from here
+  useCatchUp(
+    useCallback(() => {
+      void groupHistory(client, groupId).then((res) => {
+        if (!res.ok) return;
+        setMessages((prev) => mergeLatest(prev, res.data.messages));
+        void markGroupRead(client, groupId);
+      });
+    }, [client, groupId]),
+  );
 
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
   const loadOlder = useCallback(async () => {
@@ -192,6 +206,7 @@ export function GroupThreadScreen({
         {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
         <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
+          <ChatGameButton target={{ kind: 'group', groupId }} />
           <TextInput
             style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
@@ -231,6 +246,10 @@ function Bubble({ message, mine }: { message: GroupMessage; mine: boolean }): Re
       ) : null}
       <View style={styles.bubbleMain}>
         {!mine ? <Text style={[styles.sender, { color: colors.textSecondary }]}>{message.username}</Text> : null}
+        {/* a game card is the game's live state, drawn on its own rather than inside a bubble */}
+        {!message.deleted && gameCardOf(message) ? (
+          <GroupGame message={message} mine={mine} />
+        ) : (
         <View
           style={[
             styles.bubble,
@@ -250,13 +269,32 @@ function Bubble({ message, mine }: { message: GroupMessage; mine: boolean }): Re
             <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{message.body}</Text>
           )}
         </View>
+        )}
       </View>
+    </View>
+  );
+}
+
+/** A game card in a group (or an old invite link turned into one), with any words that came with the link. */
+function GroupGame({ message, mine }: { message: GroupMessage; mine: boolean }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const game = gameCardOf(message);
+  if (!game) return null;
+  return (
+    <View style={styles.gameStack}>
+      {game.rest ? (
+        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.glassFill }]}>
+          <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{game.rest}</Text>
+        </View>
+      ) : null}
+      <ChatGameCard game={game.game} lobbyId={game.lobbyId} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  gameStack: { gap: spacing.xs },
   list: { padding: spacing.lg, gap: spacing.sm },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },
   rowMine: { alignSelf: 'flex-end' },

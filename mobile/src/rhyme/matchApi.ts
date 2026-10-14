@@ -7,7 +7,11 @@ export type RhymeQuality = 'perfect' | 'near' | 'none';
 export type RhymeReject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane' | 'window-closed';
 
 export interface ScoreEntry {
+  /** the viewer's own id on their own entry, `seat:N` on everyone else's */
   userId: string;
+  seat?: number;
+  /** a friend's name (or anyone's in an open match); null shows "Opponent" */
+  name?: string | null;
   score: number;
   accepted: number;
 }
@@ -21,7 +25,13 @@ export interface MatchState {
   windowMs: number;
   remainingMs: number;
   maxPlayers: number;
+  /** the viewer's own id when they host, else the host's `seat:N` */
   createdBy: string;
+  isHost?: boolean;
+  /** the rematch or next round, once there is one */
+  nextLobbyId?: string | null;
+  /** everyone in it, by seat, named as this viewer may see them */
+  players?: Array<{ seat: number; userId: string; name: string | null; avatarUrl: string | null; isMe: boolean; isHost: boolean; gone: boolean }>;
   me: { score: number; accepted: number; usedWords: string[] } | null;
   scoreboard: ScoreEntry[];
 }
@@ -41,6 +51,9 @@ export interface MatchResults {
   dialect: Dialect;
   ranking: Array<{
     userId: string;
+    seat?: number;
+    name?: string | null;
+    isMe?: boolean;
     rank: number;
     score: number;
     accepted: number;

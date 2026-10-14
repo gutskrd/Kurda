@@ -28,7 +28,6 @@ import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/screens/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { PlayScreen } from './src/screens/PlayScreen';
-import { GameScreen } from './src/screens/GameScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
@@ -70,9 +69,13 @@ import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
+import { StoriesHubScreen } from './src/stories/StoriesHubScreen';
+import { StoryReaderScreen } from './src/stories/StoryReaderScreen';
+import { StoryGameScreen } from './src/stories/StoryGameScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
-import { UserEventListener } from './src/realtime/UserEventListener';
+import { RealtimeProvider } from './src/realtime/RealtimeProvider';
+import { InviteBanner } from './src/play/InviteBanner';
 
 const Tab = createBottomTabNavigator();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -94,10 +97,12 @@ const RootStack = createNativeStackNavigator<RootStackParamList>();
  * hand it over until the two association files exist — apple-app-site-association
  * (needs the Apple team id) and assetlinks.json (needs the signing certificate's
  * SHA-256), both served from the site's /.well-known/. Until then a tapped link
- * opens the website and `kurda://` still works.
+ * opens the website and `hevalo://` still works.
  */
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: [Linking.createURL('/'), 'kurda://', 'https://hevalo.app'],
+  // `hevalo://` is the scheme app.json registers; this said `kurda://`, which
+  // no phone hands to the app
+  prefixes: [Linking.createURL('/'), 'hevalo://', 'https://hevalo.app'],
   config: {
     screens: {
       Tabs: { screens: linkingScreens() },
@@ -105,6 +110,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       Practice: 'practice',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
+      // `/app/games/stories?id=…` is a game to join; without an id it is the hub
+      Stories: inviteRoutePath('stories'),
+      StoryReader: 'app/games/stories/:slug',
     },
   },
 };
@@ -217,36 +225,12 @@ function SignedInTabs() {
   );
 }
 
-function GameRoute({
-  roomId,
-  onExit,
-  onRematch,
-  onPractice,
-}: {
-  roomId: string;
-  onExit: () => void;
-  onRematch: (roomId: string) => void;
-  onPractice: () => void;
-}) {
-  const { user } = useAuth();
-  return (
-    <GameScreen
-      roomId={roomId}
-      selfId={user?.id ?? ''}
-      onExit={onExit}
-      onRematch={onRematch}
-      onPractice={onPractice}
-    />
-  );
-}
-
 function SignedInRoot() {
   const { colors } = useTheme();
   const reduceMotion = useReducedMotion();
   return (
-    <>
+    <RealtimeProvider>
       <PushRegistration />
-      <UserEventListener />
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -264,16 +248,6 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Game" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
-        {({ route, navigation }) => (
-          <GameRoute
-            roomId={route.params.roomId}
-            onExit={() => navigation.goBack()}
-            onRematch={(roomId) => navigation.replace('Game', { roomId })}
-            onPractice={() => navigation.replace('Practice')}
-          />
-        )}
       </RootStack.Screen>
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
@@ -356,6 +330,16 @@ function SignedInRoot() {
       <RootStack.Screen name="Race" options={{ presentation: 'card' }}>
         {({ navigation }) => <RaceScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
+      <RootStack.Screen name="Stories" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoriesHubScreen id={route.params?.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="StoryReader" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <StoryReaderScreen slug={route.params.slug} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* a game is not left by a swipe that was meant to scroll the story */}
+      <RootStack.Screen name="StoryGame" options={{ presentation: 'card', gestureEnabled: false }}>
+        {({ route, navigation }) => <StoryGameScreen key={route.params.id} id={route.params.id} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
@@ -397,7 +381,9 @@ function SignedInRoot() {
         {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
-    </>
+      {/* over every screen: an invite to play waits here until it is answered */}
+      <InviteBanner />
+    </RealtimeProvider>
   );
 }
 

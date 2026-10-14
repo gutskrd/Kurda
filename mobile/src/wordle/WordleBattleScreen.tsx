@@ -12,6 +12,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { useQuietInvites } from '../play/quietInvites';
+import { InviteSheet } from '../play/InviteSheet';
+import { RematchPanel } from '../play/RematchPanel';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
@@ -36,14 +40,6 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
   hard: 'games.difficulty.hard',
 };
 
-/**
- * How often a room asks the server what changed.
- *
- * The same 1.8s the browser uses, and for the same two reasons: in the lobby it
- * is how the host sees somebody join, and in play it is how you see the other
- * player closing in. A finished match is asked nothing further.
- */
-const POLL_MS = 1_800;
 
 /**
  * Wordle Battle on the phone (KUR-306): race a friend to the same word.
@@ -60,10 +56,19 @@ const POLL_MS = 1_800;
 export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onExit: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const [id, setId] = useState<string | null>(initialId ?? null);
+  /*
+   * Another battle opened while this screen is up — an invite's Join, a game
+   * card, "Invite someone else" — arrives as new params on this same screen
+   * (navigating to the screen you are on updates it rather than pushing a
+   * second one), so the room follows them.
+   */
+  useEffect(() => {
+    if (initialId) setId(initialId);
+  }, [initialId]);
 
   return (
     <Shell title={t('games.battle.name')} onExit={onExit}>
-      {id ? <BattleRoom key={id} id={id} onLeave={() => setId(null)} /> : <CreateBattle onEnter={setId} />}
+      {id ? <BattleRoom key={id} id={id} onLeave={() => setId(null)} onOpen={setId} /> : <CreateBattle onEnter={setId} />}
     </Shell>
   );
 }
@@ -138,7 +143,7 @@ function CreateBattle({ onEnter }: { onEnter: (id: string) => void }): React.JSX
 }
 
 /** One room: lobby, play, scoreboard. Polls until the match is over. */
-function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.JSX.Element {
+function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; onOpen: (id: string) => void }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -150,6 +155,8 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
   const [draft, setDraft] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
   const loadedOnce = useRef(false);
+  // results: "Invite someone else" opens the invite sheet for this game
+  const [inviting, setInviting] = useState(false);
 
   const load = useCallback(async () => {
     const res = await getBattle(client, id);
@@ -158,17 +165,20 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
       loadedOnce.current = true;
     } else if (!loadedOnce.current) {
       // a later poll failing is a blip; the first one failing is the whole screen
-      setError(describeError(res.error, t));
+      setError(res.error.code === 'GAME_STARTED' ? t('stories.join.started') : describeError(res.error, t));
     }
-  }, [client, id]);
+  }, [client, id, t]);
 
+  /*
+   * What changed is pushed as `play_changed` — somebody joined, the battle
+   * started, an opponent guessed, it ended — and the screen asks then, with a
+   * slow poll underneath in case an event was missed. It used to ask every
+   * 1.8 s from the moment the lobby opened.
+   */
   useEffect(() => {
     void load();
-    const timer = setInterval(() => {
-      if (battle?.status !== 'finished') void load();
-    }, POLL_MS);
-    return () => clearInterval(timer);
-  }, [load, battle?.status]);
+  }, [load]);
+  useLobbyRefresh('wordle-battle', id, () => void load(), battle?.status !== 'finished');
 
   useEffect(() => {
     if (battle?.status !== 'finished' || results) return;
@@ -179,6 +189,8 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
 
   const me = battle?.me ?? null;
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
+  // an invite waits while a battle is on (the banner would sit over the board)
+  useQuietInvites(battle?.status === 'active');
 
   const submit = useCallback(async () => {
     if (!battle || !me || !active || busy) return;
@@ -236,7 +248,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
   if (!battle) return <ActivityIndicator color={colors.primary} style={styles.loading} />;
 
   const playerCount = (battle.me ? 1 : 0) + battle.opponents.length;
-  const isHost = battle.createdBy === user?.id;
+  const isHost = battle.isHost ?? battle.createdBy === user?.id;
 
   // ---- lobby -----------------------------------------------------------------
   if (battle.status === 'lobby') {
@@ -250,6 +262,9 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
           {inviteUrl(id)}
         </Text>
         <ClayButton label={t('share.title')} icon="chat" tone="neutral" onPress={share} style={styles.stretch} />
+        {battle.me != null ? (
+          <LobbyPeople game="wordle-battle" lobbyId={id} players={battle.players ?? []} isHost={isHost} maxPlayers={battle.maxPlayers} />
+        ) : null}
         {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
         {battle.me == null ? (
           <ClayButton
@@ -293,7 +308,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
                 <View key={r.userId} style={styles.scoreLine}>
                   <Text style={[styles.rank, { color: colors.textSecondary }]}>{r.rank}</Text>
                   <Text style={[styles.scoreName, { color: colors.textPrimary }]}>
-                    {r.userId === user?.id ? t('games.you') : t('games.opponent')}
+                    {r.isMe ?? r.userId === user?.id ? t('games.you') : (r.name ?? t('games.opponent'))}
                   </Text>
                   <Text style={[styles.scoreValue, { color: colors.textSecondary }]}>
                     {r.solved
@@ -308,7 +323,19 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
         ) : (
           <ActivityIndicator color={colors.primary} />
         )}
-        <ClayButton label={t('games.battle.new')} tone="primary" onPress={onLeave} style={styles.stretch} />
+        {/* play again with the same people: a rematch for two, the host's next round for more */}
+        <View style={styles.stretch}>
+          <RematchPanel
+            game="wordle-battle"
+            lobbyId={id}
+            isHost={isHost}
+            other={results?.ranking.find((r) => !(r.isMe ?? r.userId === user?.id))?.name ?? t('games.opponent')}
+            onOpen={onOpen}
+            onInviteOthers={() => setInviting(true)}
+          />
+        </View>
+        <ClayButton label={t('games.battle.new')} tone="neutral" onPress={onLeave} style={styles.stretch} />
+        {inviting ? <InviteSheet target={{ kind: 'new', game: 'wordle-battle' }} onClose={() => setInviting(false)} /> : null}
       </GlassCard>
     );
   }
@@ -321,7 +348,7 @@ function BattleRoom({ id, onLeave }: { id: string; onLeave: () => void }): React
           {battle.opponents.map((o, i) => (
             <View key={o.userId} style={styles.opponent}>
               <Text style={[styles.opponentName, { color: colors.textSecondary }]}>
-                {battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent')}
+                {o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'))}
               </Text>
               <View
                 accessibilityLabel={t('games.battle.opponentProgress')}

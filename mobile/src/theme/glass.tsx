@@ -270,6 +270,9 @@ const LENS_SPLIT = 1.2;
 /** Inset of the travelling lens from the edge of its track. */
 const SEG_PAD = 3;
 
+/** A labelled (radio) segment's vertical padding: 3 + 11 + a 17pt line + 11 + 3 clears 44. */
+const SEG_PAD_V_TALL = 11;
+
 /**
  * A segmented control, and the one piece of real glass in the app.
  *
@@ -294,11 +297,19 @@ export function Segmented<T extends string>({
   value,
   onChange,
   labelOf,
+  groupLabel,
 }: {
   options: readonly T[];
   value: T;
   onChange: (v: T) => void;
   labelOf: (v: T) => string;
+  /**
+   * What the choice is ("Questions", "Timer"). Given, the control is read out
+   * as a radio group under that name and each segment as a radio — one of a
+   * set, with the chosen one checked — which is what a preset picker is.
+   * Without it the segments stay buttons, as every older caller has them.
+   */
+  groupLabel?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const [box, setBox] = useState({ w: 0, h: 0 });
@@ -307,6 +318,9 @@ export function Segmented<T extends string>({
   // its real radius, not `radii.pill` — a capsule is round by half its height
   const lensRadius = Math.max(2, (box.h - SEG_PAD * 2) / 2);
   const x = useRef(new Animated.Value(0)).current;
+  // a preset picker is a row of things to tap, so it is a fingertip tall (44
+  // with the track's padding); the older, denser uses keep their height
+  const padV = groupLabel ? SEG_PAD_V_TALL : 6;
 
   useEffect(() => {
     if (seg <= 0) return;
@@ -322,6 +336,8 @@ export function Segmented<T extends string>({
     <View
       style={[styles.segTrack, { backgroundColor: colors.glassFill }]}
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
+      accessibilityRole={groupLabel ? 'radiogroup' : undefined}
+      accessibilityLabel={groupLabel}
     >
       {/*
         The glass. It sits under the labels rather than over them, because a
@@ -347,9 +363,10 @@ export function Segmented<T extends string>({
           <Pressable
             key={opt}
             onPress={() => onChange(opt)}
-            accessibilityRole="button"
-            accessibilityState={{ selected: active }}
-            style={styles.segItem}
+            accessibilityRole={groupLabel ? 'radio' : 'button'}
+            accessibilityState={groupLabel ? { checked: active } : { selected: active }}
+            accessibilityLabel={label}
+            style={[styles.segItem, { paddingVertical: padV }]}
           >
             {active ? (
               <>
@@ -357,7 +374,7 @@ export function Segmented<T extends string>({
                   style={[
                     styles.segText,
                     styles.segGhost,
-                    { color: colors.lensFringe[0], transform: [{ translateX: LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
+                    { top: padV, color: colors.lensFringe[0], transform: [{ translateX: LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
                   ]}
                   numberOfLines={1}
                 >
@@ -367,7 +384,7 @@ export function Segmented<T extends string>({
                   style={[
                     styles.segText,
                     styles.segGhost,
-                    { color: colors.lensFringe[1], transform: [{ translateX: -LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
+                    { top: padV, color: colors.lensFringe[1], transform: [{ translateX: -LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
                   ]}
                   numberOfLines={1}
                 >
