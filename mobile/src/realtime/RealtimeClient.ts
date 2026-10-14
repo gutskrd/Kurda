@@ -139,6 +139,8 @@ export class RealtimeClient {
   private wanted = false;
   private paused = false;
   private takenOver = false;
+  /** when a takeover cooldown ends; only meaningful while `takenOver` */
+  private cooldownUntil = 0;
   /** NOT_INVITED answers per room on this connection, so a refused join is retried a few times and then left */
   private readonly refusals = new Map<string, number>();
 
@@ -189,18 +191,31 @@ export class RealtimeClient {
     this.setState('paused');
   }
 
-  /** The app is in front again: connect now, without waiting out a backoff. */
+  /**
+   * The app is in front again: connect now, without waiting out a backoff —
+   * unless a takeover cooldown still stands, because the other connection is
+   * still there. Then the cooldown timer is kept (or, coming back from the
+   * background, set again for what is left of it). iOS calls this after every
+   * Control Centre swipe or Face ID prompt, so it must never leave the client
+   * waiting with nothing scheduled.
+   */
   resume(): void {
     if (!this.wanted) return;
     const wasPaused = this.paused;
     this.paused = false;
-    if (wasPaused || this._state === 'waiting') {
-      this.clearRetry();
+    if (!wasPaused && this._state !== 'waiting') return;
+    const cooldownLeft = this.takenOver ? this.cooldownUntil - this.now() : 0;
+    if (cooldownLeft > 0) {
+      if (this.retryTimer !== null) return;
       this.attempt = 0;
-      // a takeover cooldown still stands: the other connection is still there
-      if (this.takenOver && this._state === 'waiting') return;
-      void this.connect();
+      this.setState('waiting');
+      this.retryTimer = this.setTimer(() => this.retryNow(), cooldownLeft);
+      return;
     }
+    this.clearRetry();
+    this.attempt = 0;
+    this.takenOver = false;
+    void this.connect();
   }
 
   /** Every event, from every room this connection is in. */
@@ -335,13 +350,18 @@ export class RealtimeClient {
     this.clearRetry();
     this.attempt += 1;
     let delay = backoffDelay(this.attempt, this.initialBackoffMs, this.maxBackoffMs, this.random);
-    if (this.takenOver) delay = Math.max(delay, this.takeoverCooldownMs);
+    if (this.takenOver) {
+      delay = Math.max(delay, this.takeoverCooldownMs);
+      this.cooldownUntil = this.now() + delay;
+    }
     this.setState('waiting');
-    this.retryTimer = this.setTimer(() => {
-      this.retryTimer = null;
-      this.takenOver = false;
-      void this.connect();
-    }, delay);
+    this.retryTimer = this.setTimer(() => this.retryNow(), delay);
+  }
+
+  private retryNow(): void {
+    this.retryTimer = null;
+    this.takenOver = false;
+    void this.connect();
   }
 
   private onFrame(data: unknown): void {

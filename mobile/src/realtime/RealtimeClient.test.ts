@@ -250,6 +250,54 @@ describe('RealtimeClient', () => {
     expect(FakeSocket.all).toHaveLength(2);
   });
 
+  it('keeps the takeover cooldown when the app comes to the front during it (iOS inactive → active)', async () => {
+    const { client, socket, pending, fire } = setup();
+    client.start();
+    await flush();
+    socket().hello('r');
+    socket().drop(CLOSE_CONNECTED_ELSEWHERE);
+    client.resume();
+    await flush();
+    expect(client.state).toBe('waiting');
+    expect(pending()).toHaveLength(1);
+    expect(pending()[0]!.ms).toBe(30_000);
+    expect(FakeSocket.all).toHaveLength(1);
+    await fire();
+    expect(FakeSocket.all).toHaveLength(2);
+  });
+
+  it('back from the background inside a takeover cooldown, waits only what is left of it', async () => {
+    const { client, socket, pending, fire, advance } = setup();
+    client.start();
+    await flush();
+    socket().hello('r');
+    socket().drop(CLOSE_CONNECTED_ELSEWHERE);
+    advance(10_000);
+    client.pause();
+    expect(pending()).toHaveLength(0);
+    client.resume();
+    await flush();
+    expect(client.state).toBe('waiting');
+    expect(pending()).toHaveLength(1);
+    expect(pending()[0]!.ms).toBe(20_000);
+    await fire();
+    expect(FakeSocket.all).toHaveLength(2);
+  });
+
+  it('back from the background after a takeover cooldown has passed, connects at once', async () => {
+    const { client, socket, pending, advance } = setup();
+    client.start();
+    await flush();
+    socket().hello('r');
+    socket().drop(CLOSE_CONNECTED_ELSEWHERE);
+    client.pause();
+    advance(60_000);
+    client.resume();
+    await flush();
+    expect(pending()).toHaveLength(0);
+    expect(FakeSocket.all).toHaveLength(2);
+  });
+
   it('tells open listeners each time a connection is ready, and stops for good', async () => {
     const { client, socket, fire, pending } = setup();
     let opens = 0;
