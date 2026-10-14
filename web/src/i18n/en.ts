@@ -112,7 +112,6 @@ export const en = {
   'civak.kind.photo': 'Photo',
   'civak.kind.meme': 'Meme',
 
-  'feed.picture': 'A picture',
   'feed.comments': '{count} comments',
   'feed.like': 'Like',
   'feed.unlike': 'Unlike',
@@ -1320,8 +1319,6 @@ export const en = {
   'library.notFound': 'That post could not be found.',
   'library.allPoems': 'All poems',
   'library.allStories': 'All stories',
-  'library.poem': 'Poem',
-  'library.story': 'Story',
   'library.audio': 'Audio',
   'settings.blocked.loading': 'Loading your blocklist…',
   'settings.blocked.unblock': 'Unblock',

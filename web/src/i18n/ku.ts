@@ -77,7 +77,6 @@ export const ku: Catalogue = {
   'civak.filter.onlyKind': 'Tenê {kind}',
   'civak.filter.onlyEverything': 'Hemû tiştên vê beşê',
 
-  'feed.picture': 'Wêneyek',
   'feed.comments': '{count} şîrove',
   'feed.like': 'Biecibîne',
   'feed.unlike': 'Ecibandinê rake',
@@ -1234,8 +1233,6 @@ export const ku: Catalogue = {
   'library.notFound': 'Ew şandî nehat dîtin.',
   'library.allPoems': 'Hemû helbest',
   'library.allStories': 'Hemû çîrok',
-  'library.poem': 'Helbest',
-  'library.story': 'Çîrok',
   'library.audio': 'Deng',
   'settings.blocked.loading': 'Lîsteya astengkiriyan tê barkirin…',
   'settings.blocked.unblock': 'Astengiyê rake',

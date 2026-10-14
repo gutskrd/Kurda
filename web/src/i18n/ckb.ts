@@ -88,7 +88,6 @@ export const ckb: Catalogue = {
   'civak.kind.photo': 'وێنە',
   'civak.kind.meme': 'میم',
 
-  'feed.picture': 'وێنەیەک',
   'feed.comments': '{count} لێدوان',
   'feed.like': 'بەدڵمە',
   'feed.unlike': 'بەدڵم نییە',
@@ -1239,8 +1238,6 @@ export const ckb: Catalogue = {
   'library.notFound': 'ئەو بڵاوکراوەیە نەدۆزرایەوە.',
   'library.allPoems': 'هەموو شیعرەکان',
   'library.allStories': 'هەموو چیرۆکەکان',
-  'library.poem': 'شیعر',
-  'library.story': 'چیرۆک',
   'library.audio': 'دەنگ',
   'settings.blocked.loading': 'لیستی بلۆککراوەکانت بار دەکرێت…',
   'settings.blocked.unblock': 'بلۆک لابە',

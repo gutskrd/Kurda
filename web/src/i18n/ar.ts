@@ -76,7 +76,6 @@ export const ar: Catalogue = {
   'civak.filter.onlyKind': '{kind} فقط',
   'civak.filter.onlyEverything': 'كل ما في هذا القسم',
 
-  'feed.picture': 'صورة',
   'feed.comments': '{count} تعليقات',
   'feed.like': 'إعجاب',
   'feed.unlike': 'إلغاء الإعجاب',
@@ -1225,8 +1224,6 @@ export const ar: Catalogue = {
   'library.notFound': 'تعذّر العثور على هذا المنشور.',
   'library.allPoems': 'كل القصائد',
   'library.allStories': 'كل القصص',
-  'library.poem': 'قصيدة',
-  'library.story': 'قصة',
   'library.audio': 'صوت',
   'settings.blocked.loading': 'جارٍ تحميل قائمة الحظر…',
   'settings.blocked.unblock': 'رفع الحظر',

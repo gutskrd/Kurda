@@ -71,7 +71,6 @@ export const nl: Catalogue = {
   'civak.filter.onlyKind': 'Alleen {kind}',
   'civak.filter.onlyEverything': 'Alles in dit onderdeel',
 
-  'feed.picture': 'Een foto',
   'feed.comments': '{count} reacties',
   'feed.like': 'Leuk',
   'feed.unlike': 'Niet meer leuk',
@@ -1233,8 +1232,6 @@ export const nl: Catalogue = {
   'library.notFound': 'Dat bericht is niet gevonden.',
   'library.allPoems': 'Alle gedichten',
   'library.allStories': 'Alle verhalen',
-  'library.poem': 'Gedicht',
-  'library.story': 'Verhaal',
   'library.audio': 'Audio',
   'settings.blocked.loading': 'Je blokkeerlijst laden…',
   'settings.blocked.unblock': 'Deblokkeren',

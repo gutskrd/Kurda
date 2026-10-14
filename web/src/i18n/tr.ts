@@ -71,7 +71,6 @@ export const tr: Catalogue = {
   'civak.filter.onlyKind': 'Yalnızca {kind}',
   'civak.filter.onlyEverything': 'Bu bölümdeki her şey',
 
-  'feed.picture': 'Bir resim',
   'feed.comments': '{count} yorum',
   'feed.like': 'Beğen',
   'feed.unlike': 'Beğenmekten vazgeç',
@@ -1227,8 +1226,6 @@ export const tr: Catalogue = {
   'library.notFound': 'Bu gönderi bulunamadı.',
   'library.allPoems': 'Tüm şiirler',
   'library.allStories': 'Tüm hikâyeler',
-  'library.poem': 'Şiir',
-  'library.story': 'Hikâye',
   'library.audio': 'Ses',
   'settings.blocked.loading': 'Engel listen yükleniyor…',
   'settings.blocked.unblock': 'Engeli kaldır',

@@ -71,7 +71,6 @@ export const es: Catalogue = {
   'civak.filter.onlyKind': 'Solo {kind}',
   'civak.filter.onlyEverything': 'Todo en esta sección',
 
-  'feed.picture': 'Una imagen',
   'feed.comments': '{count} comentarios',
   'feed.like': 'Me gusta',
   'feed.unlike': 'Ya no me gusta',
@@ -1230,8 +1229,6 @@ export const es: Catalogue = {
   'library.notFound': 'No se ha encontrado esa publicación.',
   'library.allPoems': 'Todos los poemas',
   'library.allStories': 'Todos los relatos',
-  'library.poem': 'Poema',
-  'library.story': 'Relato',
   'library.audio': 'Audio',
   'settings.blocked.loading': 'Cargando tu lista de bloqueados…',
   'settings.blocked.unblock': 'Desbloquear',
