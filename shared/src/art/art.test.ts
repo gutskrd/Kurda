@@ -4,6 +4,7 @@ import {
   BADGE_KEYS,
   BADGES,
   LEAGUE_TIERS,
+  PLACEMENT_GAMES,
   RANK_TIERS,
   SEASON_FRAME_INNER,
   SEASON_FRAME_SHINE,
@@ -13,6 +14,7 @@ import {
   badgeShines,
   badgeSvg,
   leagueEmblemSvg,
+  placementEmblemSvg,
   rankEmblemSvg,
   seasonFrameShineSvg,
   seasonFrameSvg,
@@ -324,6 +326,18 @@ describe('rankEmblemSvg', () => {
   it('refuses an unknown tier or division', () => {
     expect(() => rankEmblemSvg({ tier: 'bronze' as never })).toThrow(RangeError);
     expect(() => rankEmblemSvg({ tier: 'gir', division: 4 as never })).toThrow(RangeError);
+  });
+
+  it('draws the placement emblem, counting the games played', () => {
+    const all = [0, 1, 2, 3, 4, 5].map((done) => placementEmblemSvg({ done }));
+    expect(new Set(all).size).toBe(6);
+    all.forEach((svg) => checkSvg(svg, 128));
+    checkSvg(placementEmblemSvg({ done: 2, size: 32 }), 32);
+    expect(placementEmblemSvg({ done: 2 })).toMatch(/>Placing 2\/5<\/title>/);
+    expect(placementEmblemSvg({ done: 2 })).toBe(all[2]);
+    expect(PLACEMENT_GAMES).toBe(5);
+    expect(() => placementEmblemSvg({ done: 6 })).toThrow(RangeError);
+    expect(() => placementEmblemSvg({ done: 1.5 })).toThrow(RangeError);
   });
 
   it('draws a season’s emblem with the season’s mark in place of the division', () => {

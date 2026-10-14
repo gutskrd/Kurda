@@ -20,7 +20,7 @@ import { ICONS, circ } from './icons.js';
 import type { RankDivision, RankTier, Season } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
 import type { Metal } from './palette.js';
-import { INK, RANK_METAL, RANK_SKY } from './palette.js';
+import { INK, RANK_METAL, RANK_SKY, SILVER } from './palette.js';
 import { OUTLINE, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox, numeral, ring } from './paint.js';
 import { Drawing, checkSize, linearAt, n, n2, prefixFor, seeded } from './svg.js';
 
@@ -162,12 +162,24 @@ function scene(dr: Drawing, tier: RankTier): string {
   return out.join('');
 }
 
+/** Before a first tier: ridges fading into mist, the climb not yet begun. */
+function placingScene(dr: Drawing): string {
+  return [
+    sky(dr, '#8fa3bf', '#e4ebf3'),
+    `<path d="M-30,2L-18,-12L-9,-3L2,-17L12,-5L20,-11L30,-1V30H-30Z" fill="#a9b6c8"/>`,
+    `<path d="M-30,6H30V11H-30Z" fill="#ffffff" fill-opacity="0.55"/>`,
+    `<path d="M-30,12L-14,1L-4,9L8,-1L22,10L30,6V30H-30Z" fill="#8494ab"/>`,
+    `<path d="M-30,16H30V21H-30Z" fill="#ffffff" fill-opacity="0.5"/>`,
+    `<path d="M-30,22C-14,17 6,19 30,24V30H-30Z" fill="#66758c"/>`,
+  ].join('');
+}
+
 /**
  * The tier's scene, clipped to a round window of radius `r` at cx,cy, with the
  * window's inner shadow and ink edge. Used by the emblem and by the ranked
  * family's tier badges, so both show the same place.
  */
-export function rankWindow(dr: Drawing, tier: RankTier, cx: number, cy: number, r: number): string {
+export function rankWindow(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, r: number): string {
   const s = r / W;
   const clip = dr.id('w');
   dr.def(`<clipPath id="${clip}"><circle cx="0" cy="0" r="${W}"/></clipPath>`);
@@ -176,7 +188,7 @@ export function rankWindow(dr: Drawing, tier: RankTier, cx: number, cy: number, 
     `<radialGradient id="${shade}" gradientUnits="userSpaceOnUse" cx="0" cy="-4" r="${W + 4}"><stop offset="0.72" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.38"/></radialGradient>`,
   );
   return (
-    `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(s)})"><g clip-path="url(#${clip})">${scene(dr, tier)}` +
+    `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(s)})"><g clip-path="url(#${clip})">${tier === 'placing' ? placingScene(dr) : scene(dr, tier)}` +
     `<circle cx="0" cy="0" r="${W}" fill="url(#${shade})"/></g>` +
     `<circle cx="0" cy="0" r="${W}" fill="none" stroke="${INK}" stroke-width="${n2(1.6 / s)}"/></g>`
   );
@@ -444,6 +456,57 @@ function seasonPlaque(dr: Drawing, m: Metal, season: Season, year: number, cx: n
 }
 
 const ROMAN: Record<RankDivision, string> = { 3: 'III', 2: 'II', 1: 'I' };
+
+/** How many rated games place a player (R4). */
+export const PLACEMENT_GAMES = 5;
+
+export interface PlacementEmblemOptions {
+  /** placement games played so far, 0–5 */
+  done: number;
+  /** pixels; default 128 */
+  size?: number;
+  /** the accessible label; defaults to "Placing 2/5" */
+  title?: string;
+  idPrefix?: string;
+}
+
+/**
+ * The emblem before a first tier ("Placing 3/5"): a plain silver ring round
+ * ridges in mist, and five pips under it, as many filled as games played.
+ */
+export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
+  const { done } = opts;
+  if (!Number.isInteger(done) || done < 0 || done > PLACEMENT_GAMES) throw new RangeError(`art: done must be 0–${PLACEMENT_GAMES}, got ${String(done)}`);
+  const size = checkSize(opts.size, 128);
+  const small = size < SMALL_EMBLEM;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'placing', done, small));
+  const m = SILVER;
+  const cx = 60;
+  const cy = small ? 60 : 52;
+  const R = small ? 44 : 33;
+  const r = small ? 35 : 26;
+  const out: string[] = [dropShadow(circ(cx, cy, R + 1), 3, 0.24)];
+  const rim = metalAcross(dr, m, cx - R, cy - R, cx + R, cy + R);
+  out.push(inked(ring(cx, cy, R, r), `url(#${rim})`, small ? 3 : OUTLINE, ' fill-rule="evenodd"'));
+  out.push(bevel(dr, circ(cx, cy, R - 1.2), cy - R, cy + R * 0.3, 1.3, 0.8));
+  out.push(rankWindow(dr, 'placing', cx, cy, r));
+  if (!small) {
+    const w = 52;
+    const h = 14;
+    const py = 96;
+    const pill = `M${n(cx - w / 2 + h / 2)},${n(py - h / 2)}H${n(cx + w / 2 - h / 2)}A${n(h / 2)},${n(h / 2)} 0 0 1 ${n(cx + w / 2 - h / 2)},${n(py + h / 2)}H${n(cx - w / 2 + h / 2)}A${n(h / 2)},${n(h / 2)} 0 0 1 ${n(cx - w / 2 + h / 2)},${n(py - h / 2)}Z`;
+    const ground = dr.id('p');
+    dr.def(linearAt(ground, [[0, m.dark], [1, m.deep]], 0, py - h / 2, 0, py + h / 2));
+    out.push(inked(pill, `url(#${ground})`, OUTLINE));
+    const on: string[] = [];
+    const off: string[] = [];
+    for (let i = 0; i < PLACEMENT_GAMES; i++) (i < done ? on : off).push(diamondAt(cx - 18 + i * 9, py, 7, 7));
+    if (on.length) out.push(`<path d="${on.join('')}" fill="url(#${metalBox(dr, m)})" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>`);
+    if (off.length) out.push(`<path d="${off.join('')}" fill="none" stroke="${m.light}" stroke-width="1.1" stroke-opacity="0.8" stroke-linejoin="round"/>`);
+  }
+  dr.add(out.join(''));
+  return dr.svg(size, opts.title ?? `Placing ${done}/${PLACEMENT_GAMES}`);
+}
 
 /** A rank tier's emblem, with its division if given. */
 export function rankEmblemSvg(opts: RankEmblemOptions): string {

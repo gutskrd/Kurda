@@ -162,6 +162,15 @@ async function sheet(name, width, height, draw) {
     });
     return out.join('');
   });
+  // before a first tier: placing 0–5
+  await sheet('ranks-placing', 6 * 150 + 40, 260, () => {
+    const out = [];
+    for (let done = 0; done <= 5; done++) {
+      out.push(at(art.placementEmblemSvg({ done, size: 136 }), 20 + done * 150, 20));
+      out.push(at(art.placementEmblemSvg({ done, size: 40 }), 20 + done * 150 + 48, 180));
+    }
+    return out.join('');
+  });
   // and small
   await sheet('ranks-small', art.RANK_TIERS.length * 120 + 40, 3 * 80 + 40, () => {
     const out = [];

@@ -58,7 +58,7 @@ export function metalBoxDark(dr: Drawing, m: Metal): string {
   return id;
 }
 
-/** A shape with an ink edge: the ink drawn under at twice the width, so the fill keeps its full size. */
+/** A shape with an ink edge: one stroke of `width` on its outline, half outside and half over the fill. */
 export function inked(d: string, fill: string, width = OUTLINE, extra = ''): string {
   return `<path d="${d}" fill="${fill}" stroke="${INK}" stroke-width="${n2(width)}" stroke-linejoin="round"${extra}/>`;
 }
