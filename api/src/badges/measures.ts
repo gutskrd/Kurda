@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { areFriendsSql } from '../users/age.js';
 import { LEARNING_XP_SOURCES } from '../xp/rules.js';
+import { rankTierIndexSql } from './rank-hooks.js';
 
 /**
  * What each badge counts (contract 4 §B2), read from the tables where it
@@ -175,9 +176,20 @@ const count =
   (sql: string): Measure =>
   async (ctx) => ({ progress: await ctx.count(sql) });
 
-/** A rank tier (0 Deşt … 5 Stêrk) reached at a season's peak, counted in seasons. */
+/**
+ * A rank tier (0 Deşt … 5 Stêrk) reached at a season's peak, counted in seasons:
+ * from the peaks the rated games and season closes told the badges, and from
+ * the ranks module's own season results — so a close whose news was lost (a
+ * restart between the close and the count) is still counted the next time.
+ */
 const seasonsReached = (tierIndex: number): Measure =>
-  count(`SELECT count(DISTINCT season_id) AS n FROM badge_rank_seasons WHERE user_id = $1 AND peak_tier >= ${tierIndex}`);
+  count(
+    `SELECT count(DISTINCT season_id) AS n FROM (
+       SELECT season_id FROM badge_rank_seasons WHERE user_id = $1 AND peak_tier >= ${tierIndex}
+       UNION
+       SELECT season_id FROM rank_season_results WHERE user_id = $1 AND ${rankTierIndexSql('peak_tier')} >= ${tierIndex}
+     ) s`,
+  );
 
 export const MEASURES: Readonly<Record<string, Measure>> = {
   // ---- learning
@@ -282,6 +294,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        SELECT season_id FROM badge_rated_games WHERE user_id = $1 GROUP BY season_id HAVING count(*) >= 10
        UNION
        SELECT season_id FROM badge_rank_seasons WHERE user_id = $1 GROUP BY season_id HAVING sum(rated_games) >= 10
+       UNION
+       SELECT season_id FROM rank_season_results WHERE user_id = $1 GROUP BY season_id HAVING sum(rated_games) >= 10
      ) s`,
   ),
   placements_finished: count(

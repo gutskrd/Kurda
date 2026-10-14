@@ -339,5 +339,23 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
       await settle();
       expect(await progressOf(star, 'rank-sterk')).toBe(1);
     }, 60_000);
+
+    it('counts a closed season the badges never heard of at the next count', async () => {
+      // a restart between a close and the badges' count loses the news; the results stay
+      const lost = await user();
+      const old = previousSeasonId(previousSeasonId(last));
+      await badges.evaluate(lost);
+      await pool.query(
+        `INSERT INTO rank_season_results (user_id, season_id, game, rated_games, wins, peak_points, final_points, peak_tier, total_games)
+         VALUES ($1, $2, 'stories', 12, 6, 650, 640, 'zozan', 12)`,
+        [lost, old],
+      );
+      expect(await tierOfBadge(lost, 'rank-zozan')).toBe(0);
+      await badges.evaluate(lost, ['rank-gir', 'rank-zozan', 'rank-ciya', 'hilkiser']);
+      expect(await tierOfBadge(lost, 'rank-gir')).toBe(1);
+      expect(await tierOfBadge(lost, 'rank-zozan')).toBe(1);
+      expect(await tierOfBadge(lost, 'rank-ciya')).toBe(0);
+      expect(await tierOfBadge(lost, 'hilkiser')).toBe(1);
+    });
   });
 });

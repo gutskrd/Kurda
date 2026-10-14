@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { isRankTier, tierIndex, type RankedGame } from '@kurda/shared';
+import { RANK_TIER_KEYS, isRankTier, tierIndex, type RankedGame } from '@kurda/shared';
 import type { RankEvents, RatedGameFinished as RanksGameFinished, SeasonClosed as RanksSeasonClosed } from '../ranks/events.js';
 
 /**
@@ -13,8 +13,10 @@ import type { RankEvents, RatedGameFinished as RanksGameFinished, SeasonClosed a
  * The badges count tiers as indices — 0 Deşt, 1 Gir, 2 Zozan, 3 Çiya,
  * 4 Lûtke, 5 Stêrk, null while placing — so their measures can compare them
  * in SQL. The ranks module speaks in tier keys. This file is the one place
- * one becomes the other (`rankTierIndex`, the shared tier order), so the two
- * modules cannot disagree about a spelling or an order.
+ * one becomes the other (`rankTierIndex`, and `rankTierIndexSql` for the
+ * measures that read the ranks module's season results directly; both from
+ * the shared tier order), so the two modules cannot disagree about a spelling
+ * or an order.
  *
  * Both listeners are idempotent (one row per player and game; peaks only go
  * up), so a retry is safe; neither throws for a badge that could not be counted.
@@ -72,6 +74,11 @@ type Executor = Pick<pg.Pool, 'query'>;
 /** A rank tier key as the badges count it: its place in the climb (0 Deşt … 5 Stêrk), null for none. */
 export function rankTierIndex(tier: string | null | undefined): number | null {
   return tier != null && isRankTier(tier) ? tierIndex(tier) : null;
+}
+
+/** SQL: the index of the tier key in `expr` (a column of the ranks module's tables), NULL for none. */
+export function rankTierIndexSql(expr: string): string {
+  return `CASE ${expr} ${RANK_TIER_KEYS.map((k) => `WHEN '${k}' THEN ${tierIndex(k)}`).join(' ')} END`;
 }
 
 /** A rated game as the ranks module tells it, as the badges record it. */
