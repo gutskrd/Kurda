@@ -67,6 +67,17 @@ describe('Lobby', () => {
     expect(screen.queryByRole('button', { name: 'Remove Rojda (You)' })).toBeNull();
   });
 
+  it('puts a flag beside everyone else, which reports them by seat', async () => {
+    testAuth.client = fakeClient(routes());
+    renderWithProviders(<Lobby view={lobby({ players: [ME_HOST, FRIEND, STRANGER], activeCount: 3, mode: 'group' })} apply={() => null} onLeft={() => undefined} />);
+    await act(async () => undefined);
+    expect(screen.getByRole('button', { name: 'Report Azad' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Report Player 3' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /^Report Rojda/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Report Player 3' }));
+    expect(screen.getByText('Report Player 3')).toBeTruthy();
+  });
+
   it('shares a message with both the link and the code', async () => {
     testAuth.client = fakeClient(routes());
     const share = vi.spyOn(Share, 'share').mockResolvedValue({ action: 'sharedAction' } as never);

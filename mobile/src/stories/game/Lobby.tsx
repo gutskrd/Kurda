@@ -22,6 +22,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useI18n } from '../../i18n/I18nContext';
 import { InviteSheet } from '../../play/InviteSheet';
 import { LobbyInvites } from '../../play/LobbyInvites';
+import { PlayerReportButton } from '../../reports/PlayerReportButton';
 import { leaveGame, listStories, removePlayer, startGame, updateSettings } from '../api';
 import { ACCESS_KEY, LENGTH_KEY, TEXT_DURING_KEY, timerLabel } from '../labels';
 import { StoryPresetFields, useCanHostOpen } from '../SetupSheet';
@@ -180,6 +181,8 @@ export function Lobby({
                     {p.away ? <Text style={[styles.factText, { color: colors.textSecondary }]}>{t('stories.lobby.away')}</Text> : null}
                   </View>
                 </View>
+                {/* anyone else in the lobby can be reported, by seat */}
+                {!p.isMe ? <PlayerReportButton game="stories" gameId={view.id} seat={p.seat} name={p.name} /> : null}
                 {view.isHost && !p.isMe && !p.isHost ? (
                   <Pressable
                     onPress={() => remove(p)}

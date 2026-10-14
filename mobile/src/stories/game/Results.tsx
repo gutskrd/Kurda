@@ -18,6 +18,7 @@ import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, quoted, storyTextProps, storyTe
 import { Card, Note, SectionLabel, useFocusOn } from '../ui';
 import { showEnglish } from './Question';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
+import { PlayerReportButton } from '../../reports/PlayerReportButton';
 
 /** A standing's name as this viewer may see it. */
 function nameOf(s: StoryGameStanding, t: (k: 'stories.player' | 'games.you', v?: Record<string, string | number>) => string): string {
@@ -157,6 +158,21 @@ export function Results({
               <Text style={[styles.standingScore, { color: colors.textSecondary }]}>
                 {s.correct}/{total}
               </Text>
+            </View>
+          ))}
+        </Card>
+      ) : null}
+
+      {/* everyone else who sat in it, by seat and without scores, each with the flag to report them */}
+      {view.mode !== 'solo' && view.players.some((p) => !p.isMe) ? (
+        <Card style={styles.card}>
+          <SectionLabel>{t('stories.results.players')}</SectionLabel>
+          {bySeat(view.players.filter((p) => !p.isMe)).map((p) => (
+            <View key={p.seat} style={styles.standing}>
+              <Text style={[styles.standingName, { color: colors.textPrimary }]} numberOfLines={1}>
+                {p.name ?? t('stories.player', { seat: p.seat })}
+              </Text>
+              <PlayerReportButton game="stories" gameId={view.id} seat={p.seat} name={p.name} />
             </View>
           ))}
         </Card>

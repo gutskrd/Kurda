@@ -21,7 +21,7 @@ export function duoTotals(standings: readonly StoryGameStanding[], total: number
 }
 
 /** Seat order, for three players. */
-export function bySeat(standings: readonly StoryGameStanding[]): StoryGameStanding[] {
+export function bySeat<T extends Pick<StoryGameStanding, 'seat'>>(standings: readonly T[]): T[] {
   return [...standings].sort((a, b) => a.seat - b.seat);
 }
 

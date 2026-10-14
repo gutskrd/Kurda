@@ -4,7 +4,7 @@ import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -77,6 +77,9 @@ export function RhymeMatchScreen({ id: initialId, onExit }: { id?: string; onExi
   useEffect(() => {
     if (initialId) setId(initialId);
   }, [initialId]);
+  // a game's results are left when another game opens here, or the screen closes:
+  // a rating box that came with them goes too (feedback/gameFinished)
+  useEffect(() => () => leftResults(), [id]);
 
   return (
     <Shell title={t('games.rhymeMatch.name')} onExit={onExit}>

@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -18,6 +18,9 @@ import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, typ
 import { CREDIT_LINES } from './credits';
 import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
+
+/** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
+export const COPYRIGHT_URL = 'https://hevalo.app/copyright';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -301,6 +304,16 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.about')}</Text>
         {/* tell us what you think, and (once the app is in the stores) rate it there */}
         <FeedbackSettingsRows />
+        {/* the copyright page on the website: a notice from a rights holder, and how one is handled */}
+        <GlassCard padding="tight">
+          <GlassRow
+            icon="link"
+            iconColor={colors.textSecondary}
+            title={t('settings.copyright.title')}
+            subtitle={t('settings.copyright.hint')}
+            onPress={() => void Linking.openURL(COPYRIGHT_URL).catch(() => undefined)}
+          />
+        </GlassCard>
         <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.credits.title')}</Text>
           <Text style={[styles.credit, { color: colors.textSecondary }]}>{t('settings.credits.lead')}</Text>

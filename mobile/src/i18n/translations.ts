@@ -188,6 +188,7 @@ export type TranslationKey =
   | 'stories.results.counted'
   | 'stories.results.notCounted'
   | 'stories.results.together'
+  | 'stories.results.players'
   | 'stories.results.place'
   | 'stories.results.again'
   | 'stories.results.readAgain'
@@ -851,6 +852,8 @@ export type TranslationKey =
   | 'settings.group.privacy'
   | 'settings.group.account'
   | 'settings.group.about'
+  | 'settings.copyright.title'
+  | 'settings.copyright.hint'
   | 'settings.credits.title'
   | 'settings.credits.lead'
   | 'settings.credits.fonts'
@@ -1668,6 +1671,7 @@ const en: Catalog = {
   'stories.results.counted': 'This counted as a day of learning.',
   'stories.results.notCounted': 'Answer at least half the questions in one day to count a day of learning.',
   'stories.results.together': 'Together {together} of {outOf}',
+  'stories.results.players': 'In this game',
   'stories.results.place': 'place {place}',
   'stories.results.again': 'Quiz yourself again',
   'stories.results.readAgain': 'Read the story again',
@@ -2306,6 +2310,8 @@ const en: Catalog = {
   'settings.group.privacy': 'Privacy',
   'settings.group.account': 'Account',
   'settings.group.about': 'About Hevalo',
+  'settings.copyright.title': 'Copyright',
+  'settings.copyright.hint': 'Something here copies your work?',
   'settings.credits.title': 'Credits & licences',
   'settings.credits.lead': 'Hevalo also uses other people’s work, under these licences:',
   'settings.credits.fonts': 'The Vazirmatn typeface, on hevalo.app — SIL Open Font License 1.1',
@@ -3134,6 +3140,7 @@ const ku: Catalog = {
   'stories.results.counted': 'Ev wek rojeke fêrbûnê hate hesibandin.',
   'stories.results.notCounted': 'Ji bo ku rojeke fêrbûnê were hesibandin, di rojekê de bersiva herî kêm nîvê pirsan bide.',
   'stories.results.together': 'Bi hev re {together} ji {outOf}',
+  'stories.results.players': 'Di vê lîstikê de',
   'stories.results.place': 'cihê {place}',
   'stories.results.again': 'Dîsa xwe biceribîne',
   'stories.results.readAgain': 'Çîrokê dîsa bixwîne',
@@ -3772,6 +3779,8 @@ const ku: Catalog = {
   'settings.group.privacy': 'Nihêniyet',
   'settings.group.account': 'Hesab',
   'settings.group.about': 'Derbarê Hevalo',
+  'settings.copyright.title': 'Mafê nivîskariyê',
+  'settings.copyright.hint': 'Tiştek li vir karê te kopî dike?',
   'settings.credits.title': 'Spas û lîsans',
   'settings.credits.lead': 'Hevalo karê kesên din jî bi kar tîne, bi van lîsansan:',
   'settings.credits.fonts': 'Tîpa Vazirmatn, li ser hevalo.app — SIL Open Font License 1.1',
@@ -4600,6 +4609,7 @@ const de: Catalog = {
   'stories.results.counted': 'Das zählt als Lerntag.',
   'stories.results.notCounted': 'Beantworte an einem Tag mindestens die Hälfte der Fragen, damit es als Lerntag zählt.',
   'stories.results.together': 'Zusammen {together} von {outOf}',
+  'stories.results.players': 'In diesem Spiel',
   'stories.results.place': 'Platz {place}',
   'stories.results.again': 'Noch einmal üben',
   'stories.results.readAgain': 'Geschichte nochmal lesen',
@@ -5238,6 +5248,8 @@ const de: Catalog = {
   'settings.group.privacy': 'Privatsphäre',
   'settings.group.account': 'Konto',
   'settings.group.about': 'Über Hevalo',
+  'settings.copyright.title': 'Urheberrecht',
+  'settings.copyright.hint': 'Kopiert etwas hier dein Werk?',
   'settings.credits.title': 'Danksagungen und Lizenzen',
   'settings.credits.lead': 'Hevalo nutzt auch die Arbeit anderer, unter diesen Lizenzen:',
   'settings.credits.fonts': 'Die Schrift Vazirmatn, auf hevalo.app — SIL Open Font License 1.1',
@@ -6066,6 +6078,7 @@ const es: Catalog = {
   'stories.results.counted': 'Esto cuenta como un día de aprendizaje.',
   'stories.results.notCounted': 'Responde al menos la mitad de las preguntas en un día para que cuente como día de aprendizaje.',
   'stories.results.together': 'Juntos {together} de {outOf}',
+  'stories.results.players': 'En esta partida',
   'stories.results.place': 'puesto {place}',
   'stories.results.again': 'Ponte a prueba otra vez',
   'stories.results.readAgain': 'Volver a leer la historia',
@@ -6704,6 +6717,8 @@ const es: Catalog = {
   'settings.group.privacy': 'Privacidad',
   'settings.group.account': 'Cuenta',
   'settings.group.about': 'Acerca de Hevalo',
+  'settings.copyright.title': 'Derechos de autor',
+  'settings.copyright.hint': '¿Algo aquí copia tu obra?',
   'settings.credits.title': 'Créditos y licencias',
   'settings.credits.lead': 'Hevalo también usa el trabajo de otras personas, con estas licencias:',
   'settings.credits.fonts': 'La tipografía Vazirmatn, en hevalo.app — SIL Open Font License 1.1',
@@ -7532,6 +7547,7 @@ const tr: Catalog = {
   'stories.results.counted': 'Bu bir öğrenme günü olarak sayıldı.',
   'stories.results.notCounted': 'Bir öğrenme günü sayılması için bir günde soruların en az yarısını yanıtla.',
   'stories.results.together': 'Birlikte {outOf} sorudan {together}',
+  'stories.results.players': 'Bu oyunda',
   'stories.results.place': '{place}. sıra',
   'stories.results.again': 'Kendini yeniden sına',
   'stories.results.readAgain': 'Hikâyeyi yeniden oku',
@@ -8170,6 +8186,8 @@ const tr: Catalog = {
   'settings.group.privacy': 'Gizlilik',
   'settings.group.account': 'Hesap',
   'settings.group.about': 'Hevalo hakkında',
+  'settings.copyright.title': 'Telif hakkı',
+  'settings.copyright.hint': 'Buradaki bir şey eserini mi kopyalıyor?',
   'settings.credits.title': 'Teşekkürler ve lisanslar',
   'settings.credits.lead': 'Hevalo başkalarının emeğini de bu lisanslarla kullanıyor:',
   'settings.credits.fonts': 'Vazirmatn yazı tipi, hevalo.app’te — SIL Open Font License 1.1',
@@ -8998,6 +9016,7 @@ const ar: Catalog = {
   'stories.results.counted': 'احتُسب هذا يومَ تعلّم.',
   'stories.results.notCounted': 'أجب عن نصف الأسئلة على الأقل في يوم واحد ليُحتسب يومَ تعلّم.',
   'stories.results.together': 'معًا {together} من {outOf}',
+  'stories.results.players': 'في هذه اللعبة',
   'stories.results.place': 'المركز {place}',
   'stories.results.again': 'اختبر نفسك مجددًا',
   'stories.results.readAgain': 'اقرأ القصة مجددًا',
@@ -9636,6 +9655,8 @@ const ar: Catalog = {
   'settings.group.privacy': 'الخصوصية',
   'settings.group.account': 'الحساب',
   'settings.group.about': 'حول Hevalo',
+  'settings.copyright.title': 'حقوق النشر',
+  'settings.copyright.hint': 'هل هناك شيء هنا ينسخ عملك؟',
   'settings.credits.title': 'الشكر والتراخيص',
   'settings.credits.lead': 'يستخدم Hevalo أيضًا أعمال آخرين، بموجب هذه التراخيص:',
   'settings.credits.fonts': 'خط Vazirmatn، على hevalo.app — SIL Open Font License 1.1',
@@ -10464,6 +10485,7 @@ const fr: Catalog = {
   'stories.results.counted': 'Cela compte comme une journée d’apprentissage.',
   'stories.results.notCounted': 'Réponds à au moins la moitié des questions le même jour pour compter une journée d’apprentissage.',
   'stories.results.together': 'Ensemble {together} sur {outOf}',
+  'stories.results.players': 'Dans cette partie',
   'stories.results.place': '{place}e place',
   'stories.results.again': 'Te tester à nouveau',
   'stories.results.readAgain': 'Relire l’histoire',
@@ -11102,6 +11124,8 @@ const fr: Catalog = {
   'settings.group.privacy': 'Confidentialité',
   'settings.group.account': 'Compte',
   'settings.group.about': 'À propos de Hevalo',
+  'settings.copyright.title': 'Droit d’auteur',
+  'settings.copyright.hint': 'Quelque chose ici copie votre œuvre ?',
   'settings.credits.title': 'Crédits et licences',
   'settings.credits.lead': 'Hevalo utilise aussi le travail d’autres personnes, sous ces licences :',
   'settings.credits.fonts': 'La police Vazirmatn, sur hevalo.app — SIL Open Font License 1.1',
@@ -11930,6 +11954,7 @@ const nl: Catalog = {
   'stories.results.counted': 'Dit telt als een leerdag.',
   'stories.results.notCounted': 'Beantwoord op één dag minstens de helft van de vragen om een leerdag te tellen.',
   'stories.results.together': 'Samen {together} van {outOf}',
+  'stories.results.players': 'In dit spel',
   'stories.results.place': 'plaats {place}',
   'stories.results.again': 'Test jezelf opnieuw',
   'stories.results.readAgain': 'Lees het verhaal opnieuw',
@@ -12568,6 +12593,8 @@ const nl: Catalog = {
   'settings.group.privacy': 'Privacy',
   'settings.group.account': 'Account',
   'settings.group.about': 'Over Hevalo',
+  'settings.copyright.title': 'Auteursrecht',
+  'settings.copyright.hint': 'Kopieert iets hier jouw werk?',
   'settings.credits.title': 'Met dank aan, en licenties',
   'settings.credits.lead': 'Hevalo gebruikt ook werk van anderen, onder deze licenties:',
   'settings.credits.fonts': 'Het lettertype Vazirmatn, op hevalo.app — SIL Open Font License 1.1',
@@ -13397,6 +13424,7 @@ const ckb: Catalog = {
   'stories.results.counted': 'ئەمە وەک ڕۆژێکی فێربوون حیساب کرا.',
   'stories.results.notCounted': 'بۆ ئەوەی ڕۆژێکی فێربوون حیساب بکرێت، لە یەک ڕۆژدا وەڵامی لانیکەم نیوەی پرسیارەکان بدەوە.',
   'stories.results.together': 'پێکەوە {together} لە {outOf}',
+  'stories.results.players': 'لەم یارییەدا',
   'stories.results.place': 'پلەی {place}',
   'stories.results.again': 'دووبارە خۆت تاقی بکەرەوە',
   'stories.results.readAgain': 'چیرۆکەکە دووبارە بخوێنەوە',
@@ -14035,6 +14063,8 @@ const ckb: Catalog = {
   'settings.group.privacy': 'تایبەتێتی',
   'settings.group.account': 'هەژمار',
   'settings.group.about': 'دەربارەی Hevalo',
+  'settings.copyright.title': 'مافی بڵاوکردنەوە',
+  'settings.copyright.hint': 'شتێک لێرە کارەکەت کۆپی دەکات؟',
   'settings.credits.title': 'سوپاس و مۆڵەتەکان',
   'settings.credits.lead': 'Hevalo کاری کەسانی تریش بەکاردەهێنێت، بەم مۆڵەتانە:',
   'settings.credits.fonts': 'فۆنتی Vazirmatn، لە hevalo.app — SIL Open Font License 1.1',

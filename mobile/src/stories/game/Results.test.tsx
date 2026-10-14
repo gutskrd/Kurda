@@ -5,7 +5,7 @@ import type { StoryGameResults, StoryGameView } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { resetPrefsCache } from '../prefs';
-import { NANE_GERM, gameView, standing } from '../testing/views';
+import { NANE_GERM, gameView, player, standing } from '../testing/views';
 import { Results } from './Results';
 
 vi.mock('react-native', () => import('../../play/testing/native'));
@@ -147,5 +147,42 @@ describe('Results', () => {
     expect(names).toEqual(['You', 'Player 2', 'Azad']);
     expect(screen.getByText('4/5 · place 2')).toBeTruthy();
     expect(within(screen.getByText('Azad').parentElement!).queryByText(/place/)).toBeNull();
+  });
+
+  it('lists everyone else in the game by seat, without scores, and reports one by seat', async () => {
+    const client = fakeClient({
+      'POST /reports': ok({
+        report: { id: 'r1', targetType: 'game_player', category: 'harassment', status: 'open', targetLabel: null, createdAt: '2026-10-13T10:00:00.000Z', closedAt: null, canAppeal: false, caseId: 'c1' },
+        deduped: false,
+      }),
+    });
+    testAuth.client = client;
+    renderResults(
+      finished(
+        { standings: [standing({ seat: 1, isMe: true, correct: 4 }), standing({ seat: 3, name: 'Rojda', correct: 3, place: 2 })] },
+        {
+          players: [
+            player({ seat: 1, isMe: true }),
+            player({ seat: 3, name: 'Rojda' }),
+            player({ seat: 2, gone: true }),
+          ],
+        },
+      ),
+    );
+    expect(screen.getByText('In this game')).toBeTruthy();
+    // by seat: Player 2 before Rojda in seat 3; never a flag for yourself
+    const flags = screen.getAllByRole('button', { name: /^Report / }).map((b) => b.getAttribute('aria-label'));
+    expect(flags).toEqual(['Report Player 2', 'Report Rojda']);
+    fireEvent.click(screen.getByRole('button', { name: 'Report Rojda' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Bullying or harassment' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/reports')).toBe(true));
+    expect(client.calls.find((c) => c.path === '/reports')?.body).toEqual({
+      targetType: 'game_player',
+      targetId: 'g1',
+      game: 'stories',
+      seat: 3,
+      category: 'harassment',
+    });
   });
 });

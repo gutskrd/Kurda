@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { glossFor, type StoryGlossEntry } from '@kurda/shared';
+import { glossFor, type StoryGameView, type StoryGlossEntry } from '@kurda/shared';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useQuietInvites } from '../play/quietInvites';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -39,6 +40,7 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
   const story = useGameStory(id, !!view && view.status !== 'lobby');
   // an invite waits while the story is being read and answered (the banner would sit over the timer)
   useQuietInvites(!!view && !game.gone && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
+  useStoryFinish(id, game.gone ? null : view);
   const { announce, region } = useAnnouncer();
   const [gloss, setGloss] = useState<StoryGlossEntry | null>(null);
 
@@ -109,6 +111,33 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
       {gloss && view ? <GlossMeaning entry={gloss} dialect={view.settings.dialect} onClose={() => setGloss(null)} /> : null}
     </GradientBackground>
   );
+}
+
+/**
+ * The rating box hears of a game that ended while it was played on this
+ * screen (feedback/gameFinished): not of one opened already finished, and as
+ * given up when this player left it. A win is a group game's first place —
+ * a duo names no winner. Leaving the results, back or on to the next game,
+ * closes a box that came with them.
+ */
+function useStoryFinish(id: string, view: StoryGameView | null): void {
+  const seen = useRef({ id, playing: false, reported: false });
+  if (seen.current.id !== id) seen.current = { id, playing: false, reported: false };
+  useEffect(() => {
+    if (!view) return;
+    const s = seen.current;
+    if (view.status !== 'finished') {
+      if (view.status !== 'cancelled') s.playing = true;
+      return;
+    }
+    if (!s.playing || s.reported) return;
+    s.reported = true;
+    const mine = view.results?.me;
+    const won = view.mode === 'group' && mine?.place === 1 && (view.results?.standings.length ?? 0) > 2;
+    reportGameFinished({ moment: won ? 'won' : 'other', gaveUp: view.players.find((p) => p.isMe)?.gone ?? false });
+  }, [view]);
+  const onResults = view?.status === 'finished';
+  useEffect(() => (onResults ? () => leftResults() : undefined), [onResults]);
 }
 
 function GlossMeaning({ entry, dialect, onClose }: { entry: StoryGlossEntry; dialect: 'kurmanci' | 'sorani'; onClose: () => void }): React.JSX.Element {

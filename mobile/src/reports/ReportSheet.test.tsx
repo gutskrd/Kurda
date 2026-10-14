@@ -56,6 +56,8 @@ describe('ReportSheet', () => {
     expect(options.indexOf('A child is in danger (including sexual messages or pictures)')).toBeLessThan(
       options.indexOf('Bullying or harassment'),
     );
+    // shared REPORT_CATEGORIES' copyright, in the app's words, after harassment
+    expect(options.indexOf('Copies someone else’s work')).toBeGreaterThan(options.indexOf('Bullying or harassment'));
 
     fireEvent.click(screen.getByRole('button', { name: 'Bullying or harassment' }));
     expect(screen.getByText('You chose: Bullying or harassment')).toBeTruthy();

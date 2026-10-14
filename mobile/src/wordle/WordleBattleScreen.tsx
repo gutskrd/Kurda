@@ -20,7 +20,7 @@ import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import {
   createBattle,
   getBattle,
@@ -67,6 +67,9 @@ export function WordleBattleScreen({ id: initialId, onExit }: { id?: string; onE
   useEffect(() => {
     if (initialId) setId(initialId);
   }, [initialId]);
+  // a game's results are left when another game opens here, or the screen closes:
+  // a rating box that came with them goes too (feedback/gameFinished)
+  useEffect(() => () => leftResults(), [id]);
 
   return (
     <Shell title={t('games.battle.name')} onExit={onExit}>
