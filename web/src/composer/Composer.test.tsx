@@ -274,6 +274,14 @@ describe('the composer', () => {
     expect(localStorage.getItem(postDraftStorageKey(ME.id))).toContain('Hevalo bijî');
   });
 
+  it('writes in the words’ own direction, and in the interface’s while the box is empty', async () => {
+    await open();
+    // empty: no dir of its own, so the placeholder follows the page (right to left in Soranî)
+    expect(box()).not.toHaveAttribute('dir');
+    await userEvent.type(box(), 'Silav');
+    expect(box()).toHaveAttribute('dir', 'auto');
+  });
+
   it('closes at once when there is nothing to lose', async () => {
     await open();
     await userEvent.keyboard('{Escape}');

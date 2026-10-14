@@ -26,6 +26,7 @@ import { OldDrafts } from './OldDrafts';
 import { PictureDetails, PictureTiles, type ComposerPicture } from './PictureTiles';
 import { clearDraft, loadDraft, saveDraft } from './draftStore';
 import { composerErrorText, problemText } from './errors';
+import { textDir } from './textDir';
 import type { ComposedPost, UploadedPicture } from './types';
 import './composer.css';
 
@@ -518,6 +519,7 @@ export function Composer({
               </label>
               <input
                 id={titleFieldId}
+                dir={textDir(title)}
                 className="input cmp-input cmp-title-input"
                 value={title}
                 placeholder={t('post.titlePlaceholder')}
@@ -547,6 +549,7 @@ export function Composer({
             <Avatar url={user?.avatarUrl} glyphSize={20} />
             <textarea
               ref={bodyRef}
+              dir={textDir(body)}
               className="cmp-body"
               value={body}
               rows={3}
@@ -604,6 +607,7 @@ export function Composer({
               </label>
               <input
                 id={sourceFieldId}
+                dir={textDir(source)}
                 className="input cmp-input"
                 value={source}
                 placeholder={t('composer.sourcePlaceholder')}

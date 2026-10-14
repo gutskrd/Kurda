@@ -2,6 +2,7 @@ import { useId } from 'react';
 import { POST_ALT_MAX, postTextLength } from '@kurda/shared';
 import { CloseIcon, DrawIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { textDir } from './textDir';
 
 /** A picture in the composer: what the draft keeps, and what only this page knows. */
 export interface ComposerPicture {
@@ -136,6 +137,7 @@ export function PictureDetails({
       </label>
       <textarea
         id={altId}
+        dir={textDir(picture.altText)}
         className="input cmp-input cmp-alt"
         rows={2}
         value={picture.altText}
