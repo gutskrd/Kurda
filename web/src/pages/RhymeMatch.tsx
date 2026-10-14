@@ -13,12 +13,15 @@ import { useTypeOnly } from '../components/typeOnly';
 import { buildInviteUrl } from '../lib/gameInvites';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { ReportAction } from '../reports/ReportAction';
+import { PlayerReport } from '../reports/PlayerReport';
 
 type Dialect = 'kurmanci' | 'sorani';
 
 interface ScoreEntry {
   userId: string;
+  /** the player's seat: how one is reported without anyone's account id */
+  seat?: number;
+  name?: string | null;
   score: number;
   accepted: number;
 }
@@ -259,7 +262,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                   <RankRow
                     key={r.userId}
                     rank={r.rank}
-                    name={me ? t('games.you') : t('games.opponent')}
+                    name={me ? t('games.you') : (r.name ?? t('games.opponent'))}
                     avatarUrl={me ? myAvatar : null}
                     me={me}
                     score={t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
@@ -267,13 +270,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                       <>
                         {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
                         {/* another player, reported by seat — the page never has their account */}
-                        {!me && r.seat !== undefined && id && (
-                          <ReportAction
-                            target={{ targetType: 'game_player', targetId: id, game: 'rhyme-match', seat: r.seat }}
-                            label={t('report.aboutPlayer', { name: r.name ?? t('games.opponent') })}
-                            name={r.name ?? t('games.opponent')}
-                          />
-                        )}
+                        {!me && r.seat !== undefined && <PlayerReport game="rhyme-match" gameId={id} seat={r.seat} name={r.name} />}
                       </>
                     }
                   />
@@ -306,9 +303,10 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           return (
             <PlayerChip
               key={s.userId}
-              name={me ? t('games.you') : t('games.opponent')}
+              name={me ? t('games.you') : (s.name ?? t('games.opponent'))}
               avatarUrl={me ? myAvatar : null}
               status={t('games.rhymeMatch.playerScore', { score: s.score, count: s.accepted })}
+              action={!me && s.seat !== undefined && <PlayerReport game="rhyme-match" gameId={id} seat={s.seat} name={s.name} />}
             />
           );
         })}

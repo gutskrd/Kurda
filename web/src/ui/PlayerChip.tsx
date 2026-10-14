@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { PersonGlyph } from '../components/icons';
 
 /**
@@ -14,6 +15,7 @@ export function PlayerChip({
   progress,
   done = false,
   lazy = false,
+  action,
 }: {
   name: string;
   status: string;
@@ -24,6 +26,8 @@ export function PlayerChip({
   /** solved: the chip takes the success colour */
   done?: boolean;
   lazy?: boolean;
+  /** something to do about this player, at the chip's end (the ⋯ that reports them) */
+  action?: ReactNode;
 }): React.JSX.Element {
   return (
     <div className={`player${done ? ' is-done' : ''}`}>
@@ -38,6 +42,7 @@ export function PlayerChip({
         <span className="player-name">{name}</span>
         <span className="player-status">{status}</span>
       </span>
+      {action}
       {progress !== undefined && (
         <span className="player-meter" aria-hidden="true">
           <span style={{ width: `${Math.round(Math.max(0, Math.min(1, progress)) * 100)}%` }} />

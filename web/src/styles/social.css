@@ -707,6 +707,11 @@
 .fcard-report {
   margin-inline-start: auto;
 }
+/* another player's chip in a game: the ⋯ sits at its end, clear of the meter */
+.player .player-report {
+  margin-inline-start: auto;
+  margin-inline-end: -4px;
+}
 .fcard-report .msg-menu-list,
 .rank-row .msg-menu-list {
   top: auto;

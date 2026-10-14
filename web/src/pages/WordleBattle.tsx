@@ -13,7 +13,7 @@ import { PlayerChip } from '../ui/PlayerChip';
 import { RankList, RankRow } from '../ui/RankRow';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { ReportAction } from '../reports/ReportAction';
+import { PlayerReport } from '../reports/PlayerReport';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 
@@ -26,6 +26,9 @@ type GameStatus = 'playing' | 'won' | 'lost';
 
 interface OpponentView {
   userId: string;
+  /** the player's seat: how one is reported without anyone's account id */
+  seat?: number;
+  name?: string | null;
   guessCount: number;
   solved: boolean;
   status: GameStatus;
@@ -296,7 +299,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
                   <RankRow
                     key={r.userId}
                     rank={r.rank}
-                    name={me ? t('games.you') : t('games.opponent')}
+                    name={me ? t('games.you') : (r.name ?? t('games.opponent'))}
                     avatarUrl={me ? myAvatar : null}
                     me={me}
                     score={
@@ -308,13 +311,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
                       <>
                         {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
                         {/* another player, reported by seat — the page never has their account */}
-                        {!me && r.seat !== undefined && battle && (
-                          <ReportAction
-                            target={{ targetType: 'game_player', targetId: battle.id, game: 'wordle-battle', seat: r.seat }}
-                            label={t('report.aboutPlayer', { name: r.name ?? t('games.opponent') })}
-                            name={r.name ?? t('games.opponent')}
-                          />
-                        )}
+                        {!me && r.seat !== undefined && <PlayerReport game="wordle-battle" gameId={battle.id} seat={r.seat} name={r.name} />}
                       </>
                     }
                   />
@@ -347,22 +344,27 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
               }
             />
           )}
-          {battle.opponents.map((o, i) => (
-            <PlayerChip
-              key={o.userId}
-              name={battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent')}
-              avatarUrl={null}
-              done={o.solved}
-              progress={o.progress / battle.targetLength}
-              status={
-                o.solved
-                  ? t('games.battle.opponentSolved')
-                  : o.finished
-                    ? t('games.battle.opponentDone')
-                    : `${t('games.battle.opponentGuesses', { count: o.guessCount })} · ${t('games.battle.lettersProgress', { done: o.progress, total: battle.targetLength })}`
-              }
-            />
-          ))}
+          {battle.opponents.map((o, i) => {
+            // the name the server lets this viewer see, else "Opponent (N)"; the ⋯ says the same
+            const name = o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'));
+            return (
+              <PlayerChip
+                key={o.userId}
+                name={name}
+                avatarUrl={null}
+                done={o.solved}
+                progress={o.progress / battle.targetLength}
+                action={o.seat !== undefined && <PlayerReport game="wordle-battle" gameId={battle.id} seat={o.seat} name={name} />}
+                status={
+                  o.solved
+                    ? t('games.battle.opponentSolved')
+                    : o.finished
+                      ? t('games.battle.opponentDone')
+                      : `${t('games.battle.opponentGuesses', { count: o.guessCount })} · ${t('games.battle.lettersProgress', { done: o.progress, total: battle.targetLength })}`
+                }
+              />
+            );
+          })}
         </div>
       )}
 
