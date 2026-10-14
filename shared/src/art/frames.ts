@@ -21,7 +21,7 @@ import type { RankTier } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS } from './keys.js';
 import type { Metal } from './palette.js';
 import { INK, RANK_METAL } from './palette.js';
-import { OUTLINE, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox, ring } from './paint.js';
+import { OUTLINE, bevel, diamondAt, inked, metalAcross, metalBox, ring } from './paint.js';
 import { Drawing, checkSize, linearAt, n, prefixFor } from './svg.js';
 
 const C = 60;
