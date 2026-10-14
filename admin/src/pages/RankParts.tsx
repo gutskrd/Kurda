@@ -5,7 +5,7 @@
  * change a rating — voiding a game's effect and resetting a player — asked
  * the same way wherever they are offered.
  */
-import { useId } from 'react';
+import { useId, useMemo } from 'react';
 import {
   badgeSvg,
   hasBadgeArt,
@@ -93,21 +93,27 @@ export function RankEmblem({
   label?: string;
 }): React.JSX.Element {
   const id = useArtId();
-  const svg =
-    tier === null
-      ? placementEmblemSvg({ done: Math.min(Math.max(placing ?? 0, 0), 5), size, idPrefix: id })
-      : rankEmblemSvg({ tier, division: tier === 'sterk' ? undefined : (division ?? undefined), size, idPrefix: id });
+  // drawn once per look: a list re-renders on every menu opened, and fifty emblems redrawn each time add up
+  const svg = useMemo(
+    () =>
+      tier === null
+        ? placementEmblemSvg({ done: Math.min(Math.max(placing ?? 0, 0), 5), size, idPrefix: id })
+        : rankEmblemSvg({ tier, division: tier === 'sterk' ? undefined : (division ?? undefined), size, idPrefix: id }),
+    [tier, division, placing, size, id],
+  );
   return <Art svg={svg} label={label} className="art-emblem" />;
 }
 
 export function LeagueEmblem({ tier, size = 36, label }: { tier: LeagueTier; size?: number; label?: string }): React.JSX.Element {
   const id = useArtId();
-  return <Art svg={leagueEmblemSvg({ tier, size, idPrefix: id, title: leagueTierName(tier) })} label={label} className="art-emblem" />;
+  const svg = useMemo(() => leagueEmblemSvg({ tier, size, idPrefix: id, title: leagueTierName(tier) }), [tier, size, id]);
+  return <Art svg={svg} label={label} className="art-emblem" />;
 }
 
 export function SeasonFrame({ tier, size = 40 }: { tier: RankTier; size?: number }): React.JSX.Element {
   const id = useArtId();
-  return <Art svg={seasonFrameSvg({ tier, size, shine: tier === 'lutke' || tier === 'sterk', idPrefix: id })} className="art-emblem" />;
+  const svg = useMemo(() => seasonFrameSvg({ tier, size, shine: tier === 'lutke' || tier === 'sterk', idPrefix: id }), [tier, size, id]);
+  return <Art svg={svg} className="art-emblem" />;
 }
 
 /**
@@ -117,15 +123,18 @@ export function SeasonFrame({ tier, size = 40 }: { tier: RankTier; size?: number
  */
 export function BadgeArt({ badgeKey, tier, tiers, size = 56, label }: { badgeKey: string; tier: number; tiers: number; size?: number; label?: string }): React.JSX.Element {
   const id = useArtId();
-  if (!hasBadgeArt(badgeKey)) {
+  const svg = useMemo(() => {
+    if (!hasBadgeArt(badgeKey)) return null;
+    const shown = Math.min(Math.max(tier, 1), tiers) as ArtBadgeTier;
+    return badgeSvg({ key: badgeKey as ArtBadgeKey, tier: shown, tiers, size, state: tier > 0 ? 'earned' : 'locked', idPrefix: id });
+  }, [badgeKey, tier, tiers, size, id]);
+  if (svg === null) {
     return (
       <span className="art art-missing" style={{ width: size, height: size }} role={label ? 'img' : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
         ?
       </span>
     );
   }
-  const shown = Math.min(Math.max(tier, 1), tiers) as ArtBadgeTier;
-  const svg = badgeSvg({ key: badgeKey as ArtBadgeKey, tier: shown, tiers, size, state: tier > 0 ? 'earned' : 'locked', idPrefix: id });
   return <Art svg={svg} label={label} className="art-badge" />;
 }
 

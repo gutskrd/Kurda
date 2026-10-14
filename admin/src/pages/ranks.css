@@ -59,7 +59,7 @@
 .run-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
 .run-meta { font-size: 13px; }
 .run-detail { font-size: 13.5px; color: var(--text-2); }
-.league-tiers { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 170px), 1fr)); }
+.league-tiers { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 140px), 1fr)); }
 .league-tiers li { display: flex; align-items: center; gap: 10px; }
 .league-tiers li > span { display: grid; }
 .league-tier-name { font-size: 13px; color: var(--text-dim); }
