@@ -5,7 +5,9 @@ import type { IncomingInvite } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from './testing/navigation';
-import { InviteBanner } from './InviteBanner';
+import { RealtimeProvider } from '../realtime/RealtimeProvider';
+import { FakeSocket } from '../realtime/testing/fakeSocket';
+import { InviteBanner, rootIsTabs } from './InviteBanner';
 import { useQuietInvites } from './quietInvites';
 
 vi.mock('react-native', () => import('./testing/native'));
@@ -133,6 +135,8 @@ describe('InviteBanner', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Join Rojda’s game' }));
     expect(await screen.findByText(/Can’t reach Hevalo right now/)).toBeTruthy();
     expect(screen.queryByText('That game can’t be joined any more.')).toBeNull();
+    // react-native-web hands a Pressable its new `disabled` in an effect: let it learn Join is free again
+    await act(async () => undefined);
     fireEvent.click(screen.getByRole('button', { name: 'Join Rojda’s game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'lobby-1' }));
   });
@@ -148,8 +152,10 @@ describe('InviteBanner', () => {
       fireEvent.click(await screen.findByRole('button', { name: 'Join Rojda’s game' }));
       expect(await screen.findByText('That game can’t be joined any more.')).toBeTruthy();
       expect(screen.queryByRole('button', { name: 'Join Rojda’s game' })).toBeNull();
+      // let the effect that sets the removal timer run before the clock moves past it
+      await act(async () => undefined);
       await act(async () => {
-        vi.advanceTimersByTime(4_100);
+        await vi.advanceTimersByTimeAsync(4_100);
       });
       expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
     } finally {
@@ -170,5 +176,80 @@ describe('InviteBanner', () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [{ ...invite, rematch: true }], outgoing: [] }) });
     renderWithProviders(<InviteBanner />);
     expect(await screen.findByText('Rojda wants to play again: Wordle Battle')).toBeTruthy();
+  });
+
+  describe('on the shared connection', () => {
+    const realWebSocket = globalThis.WebSocket;
+    beforeEach(() => {
+      FakeSocket.all = [];
+      (globalThis as { WebSocket?: unknown }).WebSocket = FakeSocket;
+    });
+    afterEach(() => {
+      (globalThis as { WebSocket?: unknown }).WebSocket = realWebSocket;
+    });
+    const flush = () =>
+      act(async () => {
+        await new Promise((r) => setTimeout(r, 0));
+      });
+
+    it('does not bring back an invite answered while a reload was on its way', async () => {
+      let gets = 0;
+      let answerLate: () => void = () => undefined;
+      testAuth.client = fakeClient({
+        'POST /realtime/ticket': ok({ ticket: 'tk' }),
+        'GET /play/invites': () => {
+          gets += 1;
+          if (gets === 1) return ok({ incoming: [invite], outgoing: [] });
+          // the list a reconnect asked for, read before the answer below reached the server
+          return new Promise((resolve) => {
+            answerLate = () => resolve(ok({ incoming: [invite], outgoing: [] }));
+          });
+        },
+        'POST /play/invites/inv-1/decline': ok({ ok: true }),
+      });
+      renderWithProviders(
+        <RealtimeProvider>
+          <InviteBanner />
+        </RealtimeProvider>,
+      );
+      expect(await screen.findByText('Rojda invited you to Wordle Battle')).toBeTruthy();
+      await flush();
+      act(() => FakeSocket.all[0]!.hello());
+      await waitFor(() => expect(gets).toBe(2));
+      fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Later' }));
+      expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+      await act(async () => answerLate());
+      await flush();
+      expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+    });
+
+    it('shows a new invite open, even when the one before it was folded away', async () => {
+      testAuth.client = fakeClient({
+        'POST /realtime/ticket': ok({ ticket: 'tk' }),
+        'GET /play/invites': ok({ incoming: [invite], outgoing: [] }),
+      });
+      renderWithProviders(
+        <RealtimeProvider>
+          <InviteBanner />
+        </RealtimeProvider>,
+      );
+      fireEvent.click(await screen.findByRole('button', { name: 'Hide for now' }));
+      expect(screen.queryByRole('button', { name: 'Join Rojda’s game' })).toBeNull();
+      await flush();
+      act(() => FakeSocket.all[0]!.hello());
+      await flush();
+      const next: IncomingInvite = { ...invite, id: 'inv-2', from: { name: 'Azad', avatarUrl: null }, createdAt: new Date(Date.now() + 1000).toISOString() };
+      act(() => FakeSocket.all[0]!.push('user:me', { type: 'play_invite', invite: next }));
+      expect(await screen.findByRole('button', { name: 'Join Azad’s game' })).toBeTruthy();
+    });
+  });
+
+  it('sits above the tab bar only where there is one', () => {
+    expect(rootIsTabs({ getRootState: () => ({ index: 0, routes: [{ name: 'Tabs' }] }) })).toBe(true);
+    expect(rootIsTabs({ getRootState: () => ({ index: 1, routes: [{ name: 'Tabs' }, { name: 'StoriesHub' }] }) })).toBe(false);
+    // before the navigator has a state, the first screen is the tabs
+    expect(rootIsTabs({ getRootState: () => undefined })).toBe(true);
+    expect(rootIsTabs({})).toBe(true);
   });
 });

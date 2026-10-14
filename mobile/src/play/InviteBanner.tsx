@@ -33,8 +33,9 @@ import { lobbyRoute } from './routes';
  * to it. On Android it is a polite live region; iOS is told once when an
  * invite arrives.
  *
- * Standing that long, it must never be in the way. It sits low, just above
- * the tab bar, so the header's Back, title and buttons stay free; "Hide"
+ * Standing that long, it must never be in the way. It sits low (above the
+ * tab bar where there is one), no wider than a phone, so the header's Back,
+ * title and buttons stay free; "Hide"
  * folds it into a small pill that opens it again (hiding is not an answer,
  * the host hears nothing); and while a game is being played it keeps out of
  * sight altogether and comes back when the game is over.
@@ -44,24 +45,24 @@ import { lobbyRoute } from './routes';
  */
 export function InviteBanner(): React.JSX.Element | null {
   const { client } = useAuth();
-  const navigation = useNavigation<RootNavigation>();
-  const { colors, scheme } = useTheme();
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const onTabs = useOnTabs();
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
-  const [reasons, setReasons] = useState(false);
-  const [busy, setBusy] = useState(false);
-  /** why Join did not work: the game is gone (the invite goes too), or a passing failure to try again */
-  const [failure, setFailure] = useState<{ dead: boolean; message: string } | null>(null);
-  const [hidden, setHidden] = useState(false);
   const quiet = useInvitesQuieted();
   const [, setTick] = useState(0);
   const announced = useRef<string | null>(null);
-  const laterRef = useRef<View>(null);
+  /*
+   * Invites answered (or found dead) on this phone. A list fetched before the
+   * answer reached the server can still carry them — load runs again on every
+   * reconnect, which is just when somebody taps Join or Not now — and must
+   * not put them back.
+   */
+  const answered = useRef(new Set<string>());
 
   const load = useCallback(() => {
     void listInvites(client).then((res) => {
-      if (res.ok) setInvites(res.data.incoming);
+      if (res.ok) setInvites(res.data.incoming.filter((i) => !answered.current.has(i.id)));
     });
   }, [client]);
   useEffect(load, [load]);
@@ -72,6 +73,11 @@ export function InviteBanner(): React.JSX.Element | null {
       if (ev.type === 'play_invite' || ev.type === 'play_invite_update') setInvites((list) => applyInviteEvent(list, ev));
     }, []),
   );
+
+  const remove = useCallback((id: string) => {
+    answered.current.add(id);
+    setInvites((list) => list.filter((i) => i.id !== id));
+  }, []);
 
   const now = Date.now();
   const shown = liveInvites(invites, now);
@@ -84,31 +90,6 @@ export function InviteBanner(): React.JSX.Element | null {
     const id = setTimeout(() => setTick((n) => n + 1), wait + 50);
     return () => clearTimeout(id);
   }, [wait]);
-
-  // a new invite at the front is shown open, whatever was done with the last one
-  useEffect(() => {
-    setReasons(false);
-    setFailure(null);
-    setHidden(false);
-  }, [invite?.id]);
-
-  // an invite whose game is gone stays long enough to be read, then goes
-  const deadId = failure?.dead ? invite?.id : undefined;
-  useEffect(() => {
-    if (!deadId) return;
-    const id = setTimeout(() => setInvites((list) => list.filter((i) => i.id !== deadId)), 4_000);
-    return () => clearTimeout(id);
-  }, [deadId]);
-
-  // "Not now" opened the reasons: the screen reader goes to the first of them
-  useEffect(() => {
-    if (!reasons || Platform.OS === 'web') return;
-    const id = setTimeout(() => {
-      const handle = laterRef.current ? findNodeHandle(laterRef.current) : null;
-      if (handle) AccessibilityInfo.setAccessibilityFocus(handle);
-    }, 150);
-    return () => clearTimeout(id);
-  }, [reasons]);
 
   const game = invite ? t(GAME_NAME_KEY[invite.game]) : '';
   const headline = invite
@@ -125,6 +106,85 @@ export function InviteBanner(): React.JSX.Element | null {
   }, [invite, headline, quiet]);
 
   if (!invite || quiet) return null;
+  /*
+   * Low on the screen, so the header stays free: just above the tab bar on a
+   * tab, and just above the bottom edge on a pushed screen, which has none.
+   */
+  const bottom = onTabs ? Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + spacing.sm : insets.bottom + spacing.md;
+  // keyed by the invite: a new invite at the front starts open, whatever was done with the last one
+  return <InviteCard key={invite.id} invite={invite} headline={headline} count={shown.length} bottom={bottom} onGone={remove} />;
+}
+
+interface RootStateSource {
+  getRootState?: () => { index?: number; routes?: Array<{ name: string }> } | undefined;
+  addListener?: (event: 'state', listener: () => void) => () => void;
+}
+
+/**
+ * Whether the screen in front is one of the tabs, where the tab bar sits
+ * under the banner. The banner is outside every navigator, so it reads the
+ * root state from the navigation container rather than from a screen.
+ */
+function useOnTabs(): boolean {
+  const navigation = useNavigation() as unknown as RootStateSource;
+  const [onTabs, setOnTabs] = useState(() => rootIsTabs(navigation));
+  useEffect(() => {
+    setOnTabs(rootIsTabs(navigation));
+    if (typeof navigation.addListener !== 'function') return;
+    return navigation.addListener('state', () => setOnTabs(rootIsTabs(navigation)));
+  }, [navigation]);
+  return onTabs;
+}
+
+export function rootIsTabs(navigation: RootStateSource): boolean {
+  const state = navigation.getRootState?.();
+  // before the first screen is up, the first screen is the tabs
+  if (!state?.routes?.length) return true;
+  return state.routes[state.index ?? 0]?.name === 'Tabs';
+}
+
+function InviteCard({
+  invite,
+  headline,
+  count,
+  bottom,
+  onGone,
+}: {
+  invite: IncomingInvite;
+  headline: string;
+  count: number;
+  bottom: number;
+  onGone: (id: string) => void;
+}): React.JSX.Element {
+  const { client } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
+  const { colors, scheme } = useTheme();
+  const { t } = useI18n();
+  const [reasons, setReasons] = useState(false);
+  const [busy, setBusy] = useState(false);
+  /** why Join did not work: the game is gone (the invite goes too), or a passing failure to try again */
+  const [failure, setFailure] = useState<{ dead: boolean; message: string } | null>(null);
+  const [hidden, setHidden] = useState(false);
+  const laterRef = useRef<View>(null);
+
+  // an invite whose game is gone stays long enough to be read, then goes
+  const dead = failure?.dead ?? false;
+  useEffect(() => {
+    if (!dead) return;
+    const id = setTimeout(() => onGone(invite.id), 4_000);
+    return () => clearTimeout(id);
+  }, [dead, invite.id, onGone]);
+
+  // "Not now" opened the reasons: the screen reader goes to the first of them
+  useEffect(() => {
+    if (!reasons || Platform.OS === 'web') return;
+    const id = setTimeout(() => {
+      const handle = laterRef.current ? findNodeHandle(laterRef.current) : null;
+      if (handle) AccessibilityInfo.setAccessibilityFocus(handle);
+    }, 150);
+    return () => clearTimeout(id);
+  }, [reasons]);
+
   const details = summaryParts(invite.summary, t).join(' · ');
 
   const join = async (): Promise<void> => {
@@ -136,44 +196,48 @@ export function InviteBanner(): React.JSX.Element | null {
       setFailure(joinFailure(res.error, t));
       return;
     }
-    setInvites((list) => list.filter((i) => i.id !== invite.id));
+    onGone(invite.id);
     const route = lobbyRoute(res.data.game, res.data.lobbyId);
     navigation.navigate(route.name, route.params as never);
   };
 
   const decline = (reason: DeclineReason): void => {
-    setInvites((list) => list.filter((i) => i.id !== invite.id));
+    onGone(invite.id);
     void declineInvite(client, invite.id, reason);
   };
 
-  const bottom = Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + spacing.sm;
   const lifted = scheme === 'dark' ? { backgroundColor: colors.controlTrack } : null;
 
   if (hidden) {
     return (
-      <View pointerEvents="box-none" style={[styles.wrap, styles.pillWrap, { bottom }]}>
-        <Pressable
-          onPress={() => setHidden(false)}
-          accessibilityRole="button"
-          accessibilityLabel={headline}
-          accessibilityHint={t('play.banner.show')}
-          style={[styles.pill, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
-        >
-          <View style={[styles.pillInner, lifted]}>
-            <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
-            <Text style={[styles.pillText, { color: colors.textPrimary }]} numberOfLines={1}>
-              {shown.length > 1 ? t('play.banner.pillMany', { count: shown.length }) : t('play.banner.pill')}
-            </Text>
-            <Icon name="chevron-down" size={14} color={colors.textSecondary} style={styles.up} />
-          </View>
-        </Pressable>
+      <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
+        <View pointerEvents="box-none" style={[styles.column, styles.pillColumn]}>
+          <Pressable
+            onPress={() => setHidden(false)}
+            accessibilityRole="button"
+            accessibilityLabel={headline}
+            accessibilityHint={t('play.banner.show')}
+            style={[styles.pill, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
+          >
+            <View style={[styles.pillInner, lifted]}>
+              <InitialsAvatar name={invite.from.name} id={invite.from.name} size={28} photoUrl={invite.from.avatarUrl} />
+              <Text style={[styles.pillText, { color: colors.textPrimary }]} numberOfLines={1}>
+                {count > 1 ? t('play.banner.pillMany', { count }) : t('play.banner.pill')}
+              </Text>
+              <Icon name="chevron-down" size={14} color={colors.textSecondary} style={styles.up} />
+            </View>
+          </Pressable>
+        </View>
       </View>
     );
   }
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
-      <View style={[styles.banner, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]} accessibilityLiveRegion="polite">
+      <View
+        style={[styles.column, styles.banner, styles.lift, { backgroundColor: colors.background, shadowColor: colors.softShadow }]}
+        accessibilityLiveRegion="polite"
+      >
         {/* a shadow does not show on a near-black screen: there the banner is lifted by a lighter fill */}
         <View style={[styles.inner, lifted]}>
           <View style={styles.head}>
@@ -243,9 +307,7 @@ export function InviteBanner(): React.JSX.Element | null {
               ) : null}
             </>
           )}
-          {shown.length > 1 ? (
-            <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: shown.length - 1 })}</Text>
-          ) : null}
+          {count > 1 ? <Text style={[styles.more, { color: colors.textSecondary }]}>{t('play.banner.more', { count: count - 1 })}</Text> : null}
         </View>
       </View>
     </View>
@@ -265,9 +327,11 @@ export function joinFailure(error: ApiError, t: Translate): { dead: boolean; mes
 }
 
 const styles = StyleSheet.create({
-  wrap: { position: 'absolute', left: spacing.md, right: spacing.md, zIndex: 50 },
-  // the pill keeps to the end of the screen, clear of whatever is in the middle
-  pillWrap: { alignItems: 'flex-end' },
+  wrap: { position: 'absolute', left: spacing.md, right: spacing.md, zIndex: 50, alignItems: 'center' },
+  // a phone's width at most: on a tablet or the web a full-width banner reads as broken
+  column: { width: '100%', maxWidth: 520 },
+  // the pill keeps to the end of that column, clear of whatever is in the middle
+  pillColumn: { alignItems: 'flex-end' },
   lift: {
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.22,
