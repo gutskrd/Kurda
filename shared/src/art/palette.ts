@@ -1,18 +1,18 @@
 /**
  * The colours the badges, emblems and frames are made of.
  *
- * Everything is outlined in one ink, the deep plum the shop's icons are
- * outlined in, so a badge, an emblem and a sticker sit together. That outline
- * is also what keeps a pale silver badge from vanishing on the light theme;
- * the metals' bright tops are what keep it from vanishing on the dark one.
+ * One hero hue per thing, lit from within. A hue is five steps — a near-white
+ * highlight, a light, the hue itself, a deep shade and the darkest tone — and
+ * a piece is painted from those alone: its lit facets from the top two, its
+ * shaded facets from the bottom two, its edge from the darkest. There is no
+ * outline in a foreign ink: what separates a piece from the page is its own
+ * darkest tone, which is what keeps a pale tier from vanishing on the light
+ * theme, and its glow and highlight are what lift it off the dark one.
  *
- * A metal is five steps from its highlight to its shadow. The badge tiers'
- * middle steps are the research's colours exactly (Sifir #B87333, Zîv #C0C7CF,
- * Zêr #E2B33C, Firûze #2BB3A8); the rest are lit and shaded from them.
+ * Shadows lean cool and violet, highlights lean warm or toward white, so the
+ * tones stay clean instead of going grey or brown as they darken.
  */
 import type { BadgeFamily, BadgeTier, LeagueTier, RankTier } from './keys.js';
-
-export const INK = '#22122f';
 
 export interface Metal {
   hi: string;
@@ -22,101 +22,105 @@ export interface Metal {
   deep: string;
 }
 
-export const COPPER: Metal = { hi: '#ffe0c4', light: '#e9a46e', mid: '#b87333', dark: '#7a4519', deep: '#3f200b' };
-export const SILVER: Metal = { hi: '#ffffff', light: '#e7ebf0', mid: '#c0c7cf', dark: '#7d8794', deep: '#353c47' };
-export const GOLD: Metal = { hi: '#fff6cf', light: '#f7d774', mid: '#e2b33c', dark: '#a5741a', deep: '#4f3308' };
-export const TURQUOISE: Metal = { hi: '#dcfffa', light: '#82e8dc', mid: '#2bb3a8', dark: '#167a72', deep: '#063b37' };
-/** What a badge not yet earned is drawn in. */
-export const STONE: Metal = { hi: '#c9ccd2', light: '#a7abb3', mid: '#8a8f99', dark: '#5f636b', deep: '#2e3036' };
-/** The secret slot's dim violet-silver. */
-export const SHADOW: Metal = { hi: '#e6dcff', light: '#b3a3d9', mid: '#7f6fae', dark: '#4e4276', deep: '#1c1530' };
+/**
+ * Badge tiers. Sifir is a rose copper, Zîv a cool blue silver, Zêr a rich warm
+ * gold and Firûze an electric turquoise — the research's four (#B87333,
+ * #C0C7CF, #E2B33C, #2BB3A8) brightened into light rather than polished metal.
+ */
+export const COPPER: Metal = { hi: '#ffe6d6', light: '#ffb48e', mid: '#ee7b52', dark: '#b2472d', deep: '#5a1d16' };
+export const SILVER: Metal = { hi: '#ffffff', light: '#e4edf8', mid: '#b3c4dc', dark: '#6c80a6', deep: '#2a3456' };
+export const GOLD: Metal = { hi: '#fff8d1', light: '#ffe16a', mid: '#ffbd1f', dark: '#d9800b', deep: '#6b3500' };
+export const TURQUOISE: Metal = { hi: '#e2fffb', light: '#72f6e6', mid: '#19d2c4', dark: '#0b8f9a', deep: '#063f52' };
+/** What a badge not yet earned is drawn in: a neutral that reads on both themes. */
+export const STONE: Metal = { hi: '#d5d9e2', light: '#b1b7c4', mid: '#8a91a1', dark: '#5f6676', deep: '#30343e' };
+/** The secret slot's midnight violet. */
+export const SHADOW: Metal = { hi: '#f1eaff', light: '#c9b5ff', mid: '#8f70f0', dark: '#4f34b0', deep: '#1a0e45' };
 
 export const TIER_METAL: Record<BadgeTier, Metal> = { 1: COPPER, 2: SILVER, 3: GOLD, 4: TURQUOISE };
 
 /**
- * The woven border's dyes, for the tiers that have one: a ground, the motif,
- * and a dot of madder red at the heart of each motif the way kilims are dotted.
- * Firûze is turquoise inlaid with gold wire.
+ * Each family's field, the ground its glyph glows on: `glow` at the heart,
+ * `mid` around it, `deep` at the rim. Learning is Hevalo's own violet; habit
+ * is ember, for the streak's fire; games are azure; ranked a night indigo;
+ * friends emerald; events the red of Newroz; secrets midnight. Red, gold and
+ * green turn up across the set the way they do in a Newroz crowd — never side
+ * by side as stripes.
  */
-export const KILIM: Partial<Record<BadgeTier, { ground: string; motif: Metal; dot: string }>> = {
-  3: { ground: '#6b4510', motif: GOLD, dot: '#c2263f' },
-  4: { ground: '#0b4d47', motif: GOLD, dot: '#c2263f' },
+export interface Field {
+  glow: string;
+  mid: string;
+  deep: string;
+}
+
+export const FIELD: Record<BadgeFamily, Field> = {
+  learning: { glow: '#7e48f0', mid: '#4a1fb8', deep: '#1d0a52' },
+  habit: { glow: '#e2521f', mid: '#a82a0f', deep: '#470c05' },
+  games: { glow: '#2f7cf0', mid: '#1647b8', deep: '#081a52' },
+  ranked: { glow: '#5148e0', mid: '#28239a', deep: '#0d0b3e' },
+  friends: { glow: '#13b06a', mid: '#077a4a', deep: '#02331f' },
+  events: { glow: '#e8264f', mid: '#a80e35', deep: '#480416' },
+  secret: { glow: '#5a3ad8', mid: '#2a1580', deep: '#0b0530' },
 };
 
-/** Each family's enamel: the field the icon sits on. */
-export const ENAMEL: Record<BadgeFamily, { light: string; deep: string }> = {
-  learning: { light: '#6e44a8', deep: '#211036' },
-  habit: { light: '#b4502c', deep: '#3a130b' },
-  games: { light: '#3466b4', deep: '#0e1b3a' },
-  ranked: { light: '#46536e', deep: '#121826' },
-  friends: { light: '#2f9160', deep: '#0b2a1a' },
-  events: { light: '#b8344f', deep: '#360a18' },
-  secret: { light: '#45337a', deep: '#0c0720' },
-};
-
-/** Named colours an icon may use besides its metal. Each is [light, dark] for a top-lit fill. */
+/** Named colours an icon may use besides its metal. Each is [top, bottom] of a lit fill. */
 export const ACCENT = {
-  fire: ['#ffd25a', '#e8542b'],
-  flame: ['#fff3b0', '#ffb43a'],
-  red: ['#ff6b6b', '#c21f3a'],
-  green: ['#8fe07a', '#2e9a4a'],
-  leaf: ['#b8e986', '#4c9a2a'],
-  gold: ['#ffe58a', '#e0a526'],
-  blue: ['#8cc8ff', '#2f6fd0'],
-  water: ['#bff3ff', '#2aa5d6'],
-  pink: ['#ffd1dc', '#f07a9a'],
-  autumn: ['#ffc15a', '#d2462b'],
-  tea: ['#f39a5a', '#9a2d12'],
-  glow: ['#fffbe0', '#ffd45c'],
-  snow: ['#ffffff', '#dfe8f2'],
-  brown: ['#c98b5a', '#7a4a26'],
+  fire: ['#fff07a', '#ff7a1a'],
+  flame: ['#ffffff', '#ffe36b'],
+  red: ['#ff8a9a', '#ff2d55'],
+  green: ['#b6ff8a', '#2fd16b'],
+  leaf: ['#e4ff9a', '#7ed957'],
+  gold: ['#fff3a0', '#ffc21f'],
+  blue: ['#c6ecff', '#4fb6ff'],
+  violet: ['#f0d9ff', '#b57bff'],
+  water: ['#d4fbff', '#3fc8f5'],
+  pink: ['#ffe3ee', '#ff8fbd'],
+  autumn: ['#ffd36b', '#ff6a2a'],
+  tea: ['#ffb27a', '#e0441f'],
+  glow: ['#ffffff', '#ffe27a'],
+  snow: ['#ffffff', '#e2ecff'],
+  brown: ['#ffcf9a', '#d27a3c'],
 } as const;
 export type AccentName = keyof typeof ACCENT;
 
 // ───────────────────────────────────────────────────────────── game ranks
 
 /**
- * Rank tiers climb in colour as they climb in height: the ochre of a harvested
- * plain, the green of a hill, the teal of a high pasture, a mountain's slate
- * blue, the violet of a summit at dusk, and gold for the star above it.
+ * Rank tiers climb in light as they climb in height: the warm sand and amber
+ * of the plain, a fresh hill green, the aqua of a high pasture's streams, a
+ * mountain's ice blue going to indigo, a summit's violet going to magenta at
+ * dusk, and Stêrk's gold burning to white.
  */
 export const RANK_METAL: Record<RankTier, Metal> = {
-  dest: { hi: '#fbe6b8', light: '#dcb46e', mid: '#b38a48', dark: '#755a2a', deep: '#3a2c13' },
-  gir: { hi: '#dff7cc', light: '#9fd884', mid: '#5aa04e', dark: '#336e2e', deep: '#163a17' },
-  zozan: { hi: '#d2f7ee', light: '#74d6c2', mid: '#2a9d8f', dark: '#186b61', deep: '#0a3833' },
-  ciya: { hi: '#dce8ff', light: '#95b4f2', mid: '#4f74bd', dark: '#2c4785', deep: '#121f45' },
-  lutke: { hi: '#f3e3ff', light: '#cfa6f7', mid: '#8f5fdb', dark: '#5a3399', deep: '#26123f' },
-  sterk: { hi: '#fff6cf', light: '#fbd96a', mid: '#f2b632', dark: '#b07a12', deep: '#4f3308' },
+  dest: { hi: '#fff4d6', light: '#ffd58a', mid: '#f4a63a', dark: '#bd6a12', deep: '#5c2c04' },
+  gir: { hi: '#ecffd9', light: '#9ff58f', mid: '#36d46e', dark: '#0f9450', deep: '#043f27' },
+  zozan: { hi: '#dcfffb', light: '#7df5e6', mid: '#17c9c0', dark: '#0a8494', deep: '#043a4d' },
+  ciya: { hi: '#eaf4ff', light: '#9ccaff', mid: '#4f86ff', dark: '#2f3fd0', deep: '#14196a' },
+  lutke: { hi: '#fdeaff', light: '#f0a8ff', mid: '#c056ff', dark: '#8a22d8', deep: '#33095e' },
+  sterk: { hi: '#ffffff', light: '#fff2a8', mid: '#ffcf3a', dark: '#f08c0a', deep: '#6e3300' },
 };
 
-/** Each rank tier's sky: [top, horizon]. */
-export const RANK_SKY: Record<RankTier, readonly [string, string]> = {
-  dest: ['#f7c97a', '#ffe9c2'],
-  gir: ['#7cc6f0', '#d9f1ff'],
-  zozan: ['#5aa9e6', '#c8ecf5'],
-  ciya: ['#3c63b8', '#a9c6f2'],
-  lutke: ['#3a2370', '#d58ab8'],
-  sterk: ['#0d0b2e', '#3b2a78'],
+/** A second hue a tier leans toward at its far edge: amber's orange, Lûtke's magenta. */
+export const RANK_ACCENT: Record<RankTier, string> = {
+  dest: '#ff8a3d',
+  gir: '#18c2a0',
+  zozan: '#2fa8ff',
+  ciya: '#6a4dff',
+  lutke: '#ff4fc8',
+  sterk: '#ffffff',
 };
 
 // ──────────────────────────────────────────────────────── learning leagues
 
-/** Water deepens tier by tier: a pale drop to the ocean's indigo. */
-export const LEAGUE_METAL: Record<LeagueTier, Metal> = {
-  dilop: { hi: '#f2fbff', light: '#c6e3f2', mid: '#8fb6cc', dark: '#57788c', deep: '#243440' },
-  kani: { hi: '#dbfff4', light: '#86e3c9', mid: '#38b393', dark: '#1d7660', deep: '#0b392e' },
-  cem: { hi: '#dff1ff', light: '#8ccaf5', mid: '#3d8fd6', dark: '#215e99', deep: '#0d2a4a' },
-  gol: { hi: '#d9fbff', light: '#7fd6e6', mid: '#2496ad', dark: '#14627a', deep: '#072e3b' },
-  derya: { hi: '#fff6cf', light: '#f7d774', mid: '#e2b33c', dark: '#a5741a', deep: '#4f3308' },
-  okyanus: { hi: '#dcfffa', light: '#82e8dc', mid: '#2bb3a8', dark: '#167a72', deep: '#063b37' },
-};
-
-/** The water inside each league emblem: [surface, depth]. */
-export const LEAGUE_WATER: Record<LeagueTier, readonly [string, string]> = {
-  dilop: ['#cdeefc', '#5fb2dc'],
-  kani: ['#bff5e6', '#2f9f8e'],
-  cem: ['#a9dcff', '#2a6fc0'],
-  gol: ['#9ee3ee', '#176f8f'],
-  derya: ['#6fb4ef', '#16357e'],
-  okyanus: ['#4fd4d0', '#1a1f6e'],
+/**
+ * Water deepens tier by tier: a pale dew-blue drop, a mint spring, an azure
+ * river, a cobalt lake, an ultramarine sea and the ocean's midnight, which
+ * glows with living light (`glint` is that bioluminescent edge).
+ */
+export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
+  dilop: { hi: '#ffffff', light: '#d7f3ff', mid: '#93d6f5', dark: '#4f97c4', deep: '#1c4466', glint: '#ffffff' },
+  kani: { hi: '#e6fffa', light: '#94f5e3', mid: '#2fd6c0', dark: '#0d93a0', deep: '#053e52', glint: '#d6fff6' },
+  cem: { hi: '#e3f6ff', light: '#86d3ff', mid: '#2a9df5', dark: '#1460c4', deep: '#082a66', glint: '#bdf0ff' },
+  gol: { hi: '#e2edff', light: '#8fb8ff', mid: '#3f72f5', dark: '#2440bf', deep: '#0b145e', glint: '#a8f0ff' },
+  derya: { hi: '#e6e6ff', light: '#9ea0ff', mid: '#4d4cf0', dark: '#2a22b0', deep: '#0f0850', glint: '#6ff7ff' },
+  okyanus: { hi: '#d6fff8', light: '#5ff5df', mid: '#16b8d0', dark: '#123f9e', deep: '#070a3a', glint: '#4dffd8' },
 };

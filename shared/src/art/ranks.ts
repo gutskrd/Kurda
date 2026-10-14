@@ -1,279 +1,236 @@
 /**
- * Game-rank emblems (contract 4, R4/B3): six tiers, each a window onto the
- * climb — a harvested plain, green hills, a high pasture with a nomad's tent,
- * a snow-capped mountain, a summit above the clouds that breaks out of its own
- * frame, and the star over the peak.
+ * Game-rank emblems (contract 4, R4/B3): six tiers, each a cut crystal crest
+ * in one hero hue with a glyph of the climb glowing inside it — the sun rising
+ * over the plain, rolling hills, a high pasture under peaks, a snow-capped
+ * mountain, the summit above the clouds, and the star over the peak.
  *
- * The frame grows with the tier as the landscape does: a plain ring for Deşt;
- * a gem, then a woven chain of diamonds, wings of feathers, a spike, a summit
- * through the frame; a halo behind Stêrk. The division (III, II, I) is a plaque
- * of drawn numerals under the window — numerals, not colour, so it reads for
- * everyone.
+ * The crest grows with the tier the way the land does: Deşt is the bare gem;
+ * Gir grows a pair of blades; Zozan two; Çiya two and a spike; Lûtke three
+ * and a crown of three spikes; Stêrk three, a four-point star and a burst of
+ * light. A higher tier is told by its silhouette before its colour.
+ *
+ * The division is a row of chevrons under the crest, lit as the player climbs:
+ * one for III, two for II, three for I — counted, not coloured, so it reads
+ * for everyone; the title carries the numeral.
  *
  * A season's emblem — the peak tier a player reached, kept for good (R5) —
- * swaps the division plaque for the season's own mark: its glyph (blossom,
- * sun, leaf, snowflake, the same as the season event badges) and the year's
- * last two figures, so last spring's Çiya is not this spring's.
+ * swaps the chevrons for the season's own mark: its glyph (blossom, sun, leaf,
+ * snowflake, the same as the season event badges) and the year's last two
+ * figures, so last spring's Çiya is not this spring's.
  */
+import { offset, roundedPolygon } from './geometry.js';
+import { ICONS } from './icons.js';
+import type { Part } from './icons.js';
 import { paintIcon } from './iconpaint.js';
-import { ICONS, circ } from './icons.js';
 import type { RankDivision, RankTier, Season } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
-import type { Metal } from './palette.js';
-import { INK, RANK_METAL, RANK_SKY, SILVER } from './palette.js';
-import { OUTLINE, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox, numeral, ring } from './paint.js';
-import { Drawing, checkSize, linearAt, n, n2, prefixFor, seeded } from './svg.js';
+import type { Field, Metal } from './palette.js';
+import { RANK_METAL, SILVER } from './palette.js';
+import { blade, capsule, chevrons, cutStar, diamondAt, edge, facetBand, halo, rays, sparkle, spike } from './paint.js';
+import type { Pt } from './svg.js';
+import { Drawing, checkSize, linearAt, mix, n, n2, polyPath, prefixFor, radialAt } from './svg.js';
 
-/** The window's radius in its own units; scenes are drawn in −27…27. */
-const W = 27;
-
-const sky = (dr: Drawing, top: string, bottom: string, y1 = -W, y2 = 8): string => {
-  const id = dr.id('s');
-  dr.def(
-    linearAt(
-      id,
-      [
-        [0, top],
-        [1, bottom],
-      ],
-      0,
-      y1,
-      0,
-      y2,
-    ),
-  );
-  return `<rect x="-30" y="-30" width="60" height="60" fill="url(#${id})"/>`;
-};
-
-const vertical = (dr: Drawing, top: string, bottom: string, y1: number, y2: number): string => {
-  const id = dr.id('g');
-  dr.def(
-    linearAt(
-      id,
-      [
-        [0, top],
-        [1, bottom],
-      ],
-      0,
-      y1,
-      0,
-      y2,
-    ),
-  );
-  return `url(#${id})`;
-};
-
-function stars(name: string, count: number, top: number, bottom: number): string {
-  const rnd = seeded(name);
-  const out: string[] = [];
-  for (let i = 0; i < count; i++) {
-    const x = -W + rnd() * W * 2;
-    const y = top + rnd() * (bottom - top);
-    const r = 0.35 + rnd() * 0.65;
-    out.push(`<circle cx="${n(x)}" cy="${n(y)}" r="${n2(r)}" fill="#ffffff" fill-opacity="${n2(0.55 + rnd() * 0.45)}"/>`);
-  }
-  return out.join('');
+/** A rank tier's colours as a field: its deep tones, so its bright glyph stands out. */
+export function rankField(t: RankTier): Field {
+  const m = RANK_METAL[t];
+  return { glow: mix(m.dark, m.mid, 0.2), mid: mix(m.dark, m.deep, 0.5), deep: m.deep };
 }
 
-/** Where a tier's peak is, for the tiers whose summit breaks out of the window. */
-const APEX: Partial<Record<RankTier, number>> = { lutke: -37 };
+/** The neutral the placement emblem is cut from: blue silver over slate. */
+const MIST: Metal = SILVER;
+const MIST_FIELD: Field = { glow: '#55607e', mid: '#343c58', deep: '#171b30' };
 
-/**
- * The scene inside the window, in window units (−27…27). The caller places,
- * scales and clips it.
- */
-function scene(dr: Drawing, tier: RankTier): string {
-  const [top, bottom] = RANK_SKY[tier];
-  const out: string[] = [sky(dr, top, bottom)];
-  switch (tier) {
-    case 'dest': {
-      out.push(`<circle cx="8" cy="3" r="14" fill="#ffffff" fill-opacity="0.22"/>`);
-      out.push(`<circle cx="8" cy="3" r="8.5" fill="#fff4cc"/>`);
-      out.push(`<path d="M-30,4H30V30H-30Z" fill="${vertical(dr, '#e3b45a', '#9a6a28', 4, 27)}"/>`);
-      const furrows: string[] = [];
-      for (const x of [-60, -36, -18, -6, 6, 18, 36, 60]) furrows.push(`M${n(x * 0.06)},4.6L${n(x)},28`);
-      out.push(`<path d="${furrows.join('')}" stroke="#7c4f1c" stroke-width="1.1" stroke-opacity="0.55" fill="none"/>`);
-      out.push(`<path d="M-30,4H30" stroke="#8a5a22" stroke-width="0.9"/>`);
-      // a lone tree on the horizon
-      out.push(`<path d="M-15,4V0.5" stroke="#5a3a1a" stroke-width="0.9"/><circle cx="-15" cy="-0.6" r="2.4" fill="#6f7a2a"/>`);
-      break;
-    }
-    case 'gir': {
-      out.push(`<circle cx="-11" cy="-11" r="5" fill="#fff6cf"/>`);
-      out.push(`<path d="M6,-12a3.5,3.5 0 0 1 6.5,-1.5a3,3 0 0 1 5,2.5H6Z" fill="#ffffff" fill-opacity="0.9"/>`);
-      out.push(`<path d="M-30,6C-16,-6 -2,-4 8,2C16,-4 24,-2 30,2V30H-30Z" fill="#9ad47a"/>`);
-      out.push(`<path d="M-30,14C-14,2 6,4 30,17V30H-30Z" fill="${vertical(dr, '#5fae4c', '#2f6e2c', 4, 27)}"/>`);
-      out.push(`<path d="M-4,27C-2,20 4,16 1,11C-1,8 3,6 6,5" stroke="#e8f2c8" stroke-width="1.3" fill="none" stroke-linecap="round" stroke-opacity="0.8"/>`);
-      break;
-    }
-    case 'zozan': {
-      out.push(`<path d="M-30,3L-20,-10L-13,-3L-3,-15L6,-4L14,-11L24,-1L30,-5V30H-30Z" fill="#87a4c8"/>`);
-      out.push(`<path d="M-3,-15L-6.5,-10.5L-3.5,-11.5L-1,-9.5L0.4,-11.8Z M-20,-10L-22.5,-6.7L-20,-7.5L-18,-6.2Z M14,-11L11.8,-8L14,-8.8L16,-7.6Z" fill="#ffffff"/>`);
-      out.push(`<path d="M-30,8C-14,0 4,2 30,8V30H-30Z" fill="#62bf98"/>`);
-      out.push(`<path d="M-30,17C-8,9 10,13 30,21V30H-30Z" fill="${vertical(dr, '#3a9a76', '#1f6650', 10, 27)}"/>`);
-      // a black goat-hair tent, the zozan's summer house
-      out.push(`<path d="M3,12.5L6,8L13,8L16,12.5Z" fill="#2b2230"/><path d="M9.5,8V12.5" stroke="#5c4a60" stroke-width="0.8"/>`);
-      const rnd = seeded('zozan-flowers');
-      const flowers: string[] = [];
-      const hues = ['#ffffff', '#ffd1dc', '#ffe58a'];
-      for (let i = 0; i < 14; i++) {
-        const x = -24 + rnd() * 48;
-        const y = 15 + rnd() * 11;
-        flowers.push(`<circle cx="${n(x)}" cy="${n(y)}" r="0.8" fill="${hues[i % 3]}"/>`);
-      }
-      out.push(flowers.join(''));
-      break;
-    }
-    case 'ciya': {
-      out.push(`<path d="M-30,10L-16,-7L-5,4Z" fill="#7d95c6"/>`);
-      out.push(`<path d="M-24,30L2,-17L4,30Z" fill="#9aaed6"/>`);
-      out.push(`<path d="M2,-17L28,30L4,30Z" fill="#4c5f90"/>`);
-      out.push(`<path d="M2,-17L-6.5,-1.6L-2.6,-4.4L0.6,-0.6L4,-5.2L9.6,-3.4Z" fill="#ffffff"/>`);
-      out.push(`<path d="M2,-17L9.6,-3.4L4,-5.2Z" fill="#c9d6ee"/>`);
-      out.push(`<path d="M-30,18C-14,12 0,16 30,13V30H-30Z" fill="${vertical(dr, '#36507e', '#1d2f52', 12, 27)}"/>`);
-      break;
-    }
-    case 'lutke': {
-      const apex = APEX.lutke ?? -37;
-      out.push(`<path d="M-21,30L0,${apex}L1.5,30Z" fill="#c4aee8"/>`);
-      out.push(`<path d="M0,${apex}L21,30L1.5,30Z" fill="#6a4ea6"/>`);
-      out.push(`<path d="M0,${apex}L-8.2,-10.8L-4.2,-13.2L-1,-9.4L2.6,-14.2L7.4,-11.2Z" fill="#ffffff"/>`);
-      out.push(`<path d="M0,${apex}L7.4,-11.2L2.6,-14.2Z" fill="#dccdf2"/>`);
-      // a sea of cloud below the summit
-      out.push(
-        `<path d="M-30,14C-26,9 -20,9 -17,12C-14,7 -7,7 -4,11C-1,7 6,7 9,11C12,7 19,8 21,12C24,9 29,10 30,12V30H-30Z" fill="#f6e9f6" fill-opacity="0.95"/>`,
-      );
-      out.push(`<path d="M-30,21C-22,17 -14,18 -9,21C-3,17 6,17 11,21C17,18 25,18 30,21V30H-30Z" fill="#e6d2ec"/>`);
-      break;
-    }
-    case 'sterk': {
-      out.push(stars('sterk-night', 26, -26, 6));
-      const glow = dr.id('o');
-      dr.def(`<radialGradient id="${glow}" gradientUnits="userSpaceOnUse" cx="0" cy="-27" r="22"><stop offset="0" stop-color="#ffe9a0" stop-opacity="0.55"/><stop offset="1" stop-color="#ffe9a0" stop-opacity="0"/></radialGradient>`);
-      out.push(`<circle cx="0" cy="-27" r="22" fill="url(#${glow})"/>`);
-      out.push(`<path d="M-26,30L0,-11L2,30Z" fill="#5b4c9a"/>`);
-      out.push(`<path d="M0,-11L26,30L2,30Z" fill="#2d2462"/>`);
-      out.push(`<path d="M0,-11L-6.6,0.6L-3.2,-1.2L-0.4,1.8L2.6,-1.6L6.4,0.2Z" fill="#ffffff"/>`);
-      out.push(`<path d="M0,-11L6.4,0.2L2.6,-1.6Z" fill="#cfc8ee"/>`);
-      out.push(`<path d="M-30,19C-16,14 -4,17 6,15C16,13 24,15 30,17V30H-30Z" fill="#1b1645"/>`);
-      break;
-    }
+// ─────────────────────────────────────────────────────────────── glyphs
+
+/** The rising sun with its rays, over a horizon at y. */
+function sunrise(y: number, r: number): Part[] {
+  const rayLines: string[] = [];
+  for (let i = 0; i < 7; i++) {
+    const a = ((180 + 22.5 + i * 22.5) * Math.PI) / 180;
+    rayLines.push(`M${n(Math.cos(a) * (r + 3.5))},${n(y + Math.sin(a) * (r + 3.5))}L${n(Math.cos(a) * (r + 8))},${n(y + Math.sin(a) * (r + 8))}`);
   }
-  return out.join('');
-}
-
-/** Before a first tier: ridges fading into mist, the climb not yet begun. */
-function placingScene(dr: Drawing): string {
   return [
-    sky(dr, '#8fa3bf', '#e4ebf3'),
-    `<path d="M-30,2L-18,-12L-9,-3L2,-17L12,-5L20,-11L30,-1V30H-30Z" fill="#a9b6c8"/>`,
-    `<path d="M-30,6H30V11H-30Z" fill="#ffffff" fill-opacity="0.55"/>`,
-    `<path d="M-30,12L-14,1L-4,9L8,-1L22,10L30,6V30H-30Z" fill="#8494ab"/>`,
-    `<path d="M-30,16H30V21H-30Z" fill="#ffffff" fill-opacity="0.5"/>`,
-    `<path d="M-30,22C-14,17 6,19 30,24V30H-30Z" fill="#66758c"/>`,
-  ].join('');
+    { k: 'l', d: rayLines.join(''), w: 2.6 },
+    { k: 'f', d: `M${n(-r)},${n(y)}A${n(r)},${n(r)} 0 0 1 ${n(r)},${n(y)}Z` },
+  ];
 }
+
+/** Each tier's glyph, in the 40-unit icon box. */
+const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
+  // Deşt, the plain: the sun rising over a flat horizon, furrows running to it
+  dest: () => [
+    ...sunrise(3, 10),
+    { k: 'a', d: 'M-20,6.5H20L15,18H-15Z' },
+    { k: 'd', d: 'M-2,7L-6,18M2,7L6,18M-7,7L-14,18M7,7L14,18', w: 1.3, fine: true },
+    { k: 'l', d: 'M-21,4.5H21', w: 2.8 },
+  ],
+  // Gir, the hill: two rounded hills, the near one lit, and the sun
+  gir: () => [
+    { k: 'f', d: 'M9,-11.5A5.5,5.5 0 1 1 9,-11.4Z', tf: 'translate(-0.1 0)' },
+    { k: 'a', d: 'M-3,17C-1,4 6,-4 12,-4C17,-4 21,4 21,17Z' },
+    { k: 'f', d: 'M-21,17C-19,3 -12,-3 -5,-3C3,-3 10,6 11,17Z' },
+    { k: 'h', d: 'M-15.5,6C-14,1.5 -10.5,-1 -7,-1.2C-10,0.8 -12.5,3.5 -13.5,7Z', o: 0.6, fine: true },
+  ],
+  // Zozan, the high pasture: peaks behind, a meadow and its stream in front
+  zozan: () => [
+    { k: 'a', d: 'M-21,8L-10,-10L-3,-2L6,-16L21,8Z' },
+    { k: 'w', d: 'M6,-16L2.2,-10L4.6,-10.8L6.4,-9L8.4,-11L10,-10.2Z' },
+    { k: 'w', d: 'M-10,-10L-12.8,-5.6L-10.6,-6.2L-9,-5L-7.4,-6.4Z' },
+    { k: 'f', d: 'M-22,18C-15,6 -4,3 6,4.5C13,5.5 18,8 22,11V18Z' },
+    { k: 'l', d: 'M4,17.5C1,13 9,11 5,7.5', w: 2, c: 'water' },
+  ],
+  // Çiya, the mountain: one great peak, its lit face and its shaded face, and snow
+  ciya: () => [
+    { k: 'a', d: 'M6,18L14,3L22,18Z' },
+    { k: 'f', d: 'M-21,18L-1,-19L-1,18Z' },
+    { k: 'a', d: 'M-1,-19L18,18H-1Z' },
+    { k: 'w', d: 'M-1,-19L-8.6,-5L-4.6,-7.4L-1,-3.4L2.8,-7.8L6.4,-5.6Z' },
+  ],
+  // Lûtke, the summit: a needle of rock above a sea of cloud
+  lutke: () => [
+    { k: 'f', d: 'M-15,14L0,-21L0,14Z' },
+    { k: 'a', d: 'M0,-21L15,14H0Z' },
+    { k: 'w', d: 'M0,-21L-5.4,-8.4L-2.6,-10L0,-6.6L2.6,-10.6L5.2,-9Z' },
+    { k: 'w', d: 'M-21,18C-21,13 -16,11 -12,13C-10,9 -3,8.5 0,12C3,9 9,9 11,12.5C15,10.5 21,12.5 21,18Z' },
+    { k: 'h', d: sparkle(13, -14, 3.8), o: 0.95 },
+  ],
+  // Stêrk, the star: a four-point star burning over the peak
+  sterk: () => [
+    { k: 'a', d: 'M-20,20L-4,-1L1.5,6L7,0L20,20Z' },
+    { k: 'w', d: 'M-4,-1L-8,4.4L-5.6,3.6L-3.6,5.4L-1.6,3.4Z' },
+    { k: 'f', d: sparkle(0, -9, 13, 0.22) },
+    { k: 'h', d: sparkle(0, -9, 4.5, 0.3), o: 0.95 },
+  ],
+  // before a first tier: ridges fading into mist
+  placing: () => [
+    { k: 'a', d: 'M-21,4L-10,-9L-3,-2L6,-14L21,4Z', },
+    { k: 'w', d: 'M-21,3H21V7H-21Z' },
+    { k: 'f', d: 'M-21,13L-9,3L0,10L10,1L21,12V18H-21Z' },
+    { k: 'h', d: 'M-21,13H21V15.5H-21Z', o: 0.5 },
+  ],
+};
 
 /**
- * The tier's scene, clipped to a round window of radius `r` at cx,cy, with the
- * window's inner shadow and ink edge. Used by the emblem and by the ranked
- * family's tier badges, so both show the same place.
+ * A rank tier's glyph, glowing, at cx,cy and `scale` × the 40-unit icon box.
+ * The emblems draw it inside their crest; the ranked family's tier badges draw
+ * it inside their shield, so a badge and an emblem show the same place.
  */
-export function rankWindow(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, r: number): string {
-  const s = r / W;
-  const clip = dr.id('w');
-  dr.def(`<clipPath id="${clip}"><circle cx="0" cy="0" r="${W}"/></clipPath>`);
-  const shade = dr.id('i');
-  dr.def(
-    `<radialGradient id="${shade}" gradientUnits="userSpaceOnUse" cx="0" cy="-4" r="${W + 4}"><stop offset="0.72" stop-color="#000000" stop-opacity="0"/><stop offset="1" stop-color="#000000" stop-opacity="0.38"/></radialGradient>`,
-  );
-  return (
-    `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(s)})"><g clip-path="url(#${clip})">${tier === 'placing' ? placingScene(dr) : scene(dr, tier)}` +
-    `<circle cx="0" cy="0" r="${W}" fill="url(#${shade})"/></g>` +
-    `<circle cx="0" cy="0" r="${W}" fill="none" stroke="${INK}" stroke-width="${n2(1.6 / s)}"/></g>`
-  );
+export function rankGlyph(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, scale: number, small: boolean, field?: Field): string {
+  const m = tier === 'placing' ? MIST : RANK_METAL[tier];
+  const f = field ?? (tier === 'placing' ? MIST_FIELD : rankField(tier));
+  const glow = halo(dr, cx, cy, 24 * scale, mix(f.glow, '#ffffff', 0.3), 0.5);
+  return glow + `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${paintIcon(RANK_GLYPHS[tier](), { dr, metal: m, field: f, small, locked: false })}</g>`;
 }
 
-/** The part of a summit that stands above the window, drawn over the frame. */
-function summitBreakout(tier: RankTier, cx: number, cy: number, r: number): string {
-  const apex = APEX[tier];
-  if (apex === undefined) return '';
-  const s = r / W;
-  // where the peak's two faces cross the window's top edge, a little inside it
-  const cut = -W + 3;
-  const t = (cut - apex) / (30 - apex);
-  const xl = -21 * t;
-  const xr = 21 * t;
-  const P = (x: number, y: number): string => `${n(cx + x * s)},${n(cy + y * s)}`;
-  const snowL = -8.2 * ((cut - apex) / (-10.8 - apex));
-  const snowR = 7.4 * ((cut - apex) / (-11.2 - apex));
-  return (
-    inked(`M${P(xl, cut)}L${P(0, apex)} ${P(xr, cut)}Z`, '#ffffff', OUTLINE) +
-    `<path d="M${P(0, apex)}L${P(snowR, cut)} ${P(1, cut)}Z" fill="#dccdf2"/>` +
-    `<path d="M${P(snowL + 1, cut)}L${P(0, apex + 1)}" stroke="#ffffff" stroke-width="0.8"/>`
-  );
-}
-
-/** A feather: a leaf-shaped blade from `x,y` in direction `deg`. */
-function feather(x: number, y: number, deg: number, len: number, w: number): string {
-  const a = (deg * Math.PI) / 180;
-  const ux = Math.cos(a);
-  const uy = Math.sin(a);
-  const px = -uy;
-  const py = ux;
-  const tx = x + ux * len;
-  const ty = y + uy * len;
-  const P = (px1: number, py1: number): string => `${n(px1)},${n(py1)}`;
-  const bl = [x + px * (w / 2), y + py * (w / 2)] as const;
-  const br = [x - px * (w / 2), y - py * (w / 2)] as const;
-  return (
-    `M${P(bl[0], bl[1])}C${P(bl[0] + ux * len * 0.5 + px * w * 0.25, bl[1] + uy * len * 0.5 + py * w * 0.25)} ` +
-    `${P(tx - ux * len * 0.22 + px * w * 0.22, ty - uy * len * 0.22 + py * w * 0.22)} ${P(tx, ty)}` +
-    `C${P(tx - ux * len * 0.22 - px * w * 0.22, ty - uy * len * 0.22 - py * w * 0.22)} ` +
-    `${P(br[0] + ux * len * 0.5 - px * w * 0.25, br[1] + uy * len * 0.5 - py * w * 0.25)} ${P(br[0], br[1])}Z`
-  );
-}
-
-/** A feather's spine, for a little engraving down its middle. */
-function spine(x: number, y: number, deg: number, len: number): string {
-  const a = (deg * Math.PI) / 180;
-  return `M${n(x + Math.cos(a) * len * 0.3)},${n(y + Math.sin(a) * len * 0.3)}L${n(x + Math.cos(a) * len * 0.82)},${n(y + Math.sin(a) * len * 0.82)}`;
-}
+// ─────────────────────────────────────────────────────────────── the crest
 
 interface Grandeur {
-  /** feathers per wing */
-  wings: number;
-  /** a woven chain of diamonds round the ring */
-  chain: boolean;
-  /** a gem at the top of the ring */
-  gem: boolean;
-  /** a peak-shaped spike over the ring */
-  spike: boolean;
-  /** a sunburst behind */
-  rays: boolean;
+  /** the crest's half width and half height */
+  w: number;
+  h: number;
+  /** blades per side */
+  blades: number;
+  crown: 'none' | 'spike' | 'three' | 'star';
+  /** the halo's strength, and rays behind */
+  glow: number;
+  rays: number;
 }
 
-const GRANDEUR: Record<RankTier, Grandeur> = {
-  dest: { wings: 0, chain: false, gem: false, spike: false, rays: false },
-  gir: { wings: 0, chain: false, gem: true, spike: false, rays: false },
-  zozan: { wings: 2, chain: true, gem: true, spike: false, rays: false },
-  ciya: { wings: 3, chain: true, gem: false, spike: true, rays: false },
-  lutke: { wings: 4, chain: true, gem: false, spike: false, rays: false },
-  sterk: { wings: 5, chain: true, gem: false, spike: false, rays: true },
+const GRANDEUR: Record<RankTier | 'placing', Grandeur> = {
+  placing: { w: 26, h: 34, blades: 0, crown: 'none', glow: 0, rays: 0 },
+  dest: { w: 26, h: 34, blades: 0, crown: 'none', glow: 0.18, rays: 0 },
+  gir: { w: 27, h: 35, blades: 1, crown: 'none', glow: 0.24, rays: 0 },
+  zozan: { w: 27.5, h: 36, blades: 2, crown: 'none', glow: 0.3, rays: 0 },
+  ciya: { w: 28, h: 37, blades: 2, crown: 'spike', glow: 0.38, rays: 0 },
+  lutke: { w: 28.5, h: 38, blades: 3, crown: 'three', glow: 0.5, rays: 10 },
+  sterk: { w: 29, h: 38, blades: 3, crown: 'star', glow: 0.7, rays: 20 },
 };
 
-/** A four-point star with long rays: Stêrk's star. */
-function bigStar(cx: number, cy: number, r: number): string {
-  const pts: string[] = [];
-  for (let i = 0; i < 8; i++) {
-    const a = ((i * 45 - 90) * Math.PI) / 180;
-    const rr = i % 2 === 0 ? (i % 4 === 0 ? r : r * 0.78) : r * 0.24;
-    pts.push(`${n(cx + Math.cos(a) * rr)},${n(cy + Math.sin(a) * rr)}`);
-  }
-  return `M${pts.join('L')}Z`;
+/** The crest's outline: a gem pointed at top and bottom with straight shoulders. */
+function crestOutline(cx: number, cy: number, w: number, h: number): Pt[] {
+  return roundedPolygon(
+    [
+      [cx, cy - h],
+      [cx + w, cy - h * 0.48],
+      [cx + w, cy + h * 0.3],
+      [cx, cy + h],
+      [cx - w, cy + h * 0.3],
+      [cx - w, cy - h * 0.48],
+    ],
+    [3, 3, 3, 4, 3, 3],
+    4,
+  );
 }
 
-/** Under this many pixels an emblem is drawn in its small version: closer in, no plaque, no rays. */
+/**
+ * The crest at cx,cy: light behind, blades, the cut gem, its glowing field and
+ * glyph, and its crown. `small` thickens it for 32–48 pixels.
+ */
+function crest(dr: Drawing, tier: RankTier | 'placing', cx: number, cy: number, small: boolean): string {
+  const g = GRANDEUR[tier];
+  const m = tier === 'placing' ? MIST : RANK_METAL[tier];
+  const field = tier === 'placing' ? MIST_FIELD : rankField(tier);
+  const out: string[] = [];
+
+  if (g.glow > 0) out.push(halo(dr, cx, cy - 2, small ? 52 : 58, m.mid, small ? g.glow * 0.8 : g.glow, 0.4));
+  if (g.rays > 0 && !small) out.push(rays(dr, cx, cy - 4, 36, tier === 'sterk' ? 60 : 52, g.rays, m.light, tier === 'sterk' ? 0.95 : 0.6, tier === 'sterk' ? [-90, 270] : [-170, -10]));
+
+  // blades, the lowest first so the higher lie over them
+  const bladeCount = small ? Math.min(g.blades, 2) : g.blades;
+  for (let i = bladeCount - 1; i >= 0; i--) {
+    const len = (small ? 22 : 27) - i * (small ? 4 : 4.5);
+    const deg = 34 - i * 19;
+    const y = cy - g.h * 0.28 + i * (small ? 11 : 10);
+    for (const side of [1, -1] as const) out.push(blade(cx + side * (g.w - 7), y, side, len + 7, small ? 11 : 9.5, deg, m));
+  }
+
+  // the crown, behind the gem's top
+  const top = cy - g.h;
+  if (g.crown === 'spike') out.push(spike(cx, top + 8, small ? 20 : 19, small ? 15 : 13, 0, m));
+  if (g.crown === 'three') {
+    out.push(spike(cx - 11, top + 14, small ? 16 : 15, 10, -5, m));
+    out.push(spike(cx + 11, top + 14, small ? 16 : 15, 10, 5, m));
+    out.push(spike(cx, top + 8, small ? 22 : 21, 13, 0, m));
+  }
+
+  // the gem: a cut rim, and the field glowing inside it
+  const outline = crestOutline(cx, cy, g.w, g.h);
+  const rim = small ? 7 : 5.5;
+  const inner = offset(outline, -rim);
+  out.push(facetBand(outline, inner, m, tier === 'placing' ? 4 : 6));
+  out.push(edge(polyPath(outline), m.deep, small ? 1.8 : 1.2, 0.95));
+  const fieldPath = polyPath(offset(outline, -rim - 0.2));
+  out.push(`<path d="${polyPath(inner)}" fill="${m.deep}"/>`);
+  const ground = dr.id('e');
+  dr.def(radialAt(ground, [[0, field.glow], [0.55, field.mid], [1, field.deep]], cx, cy - 6, g.h + 4));
+  out.push(`<path d="${fieldPath}" fill="url(#${ground})"/>`);
+  const clip = dr.clip(fieldPath);
+  const rimLight = dr.id('l');
+  dr.def(linearAt(rimLight, [[0, m.hi, 0], [0.55, m.hi, 0], [1, m.hi, 0.8]], cx - g.w, cy - g.h, cx + g.w, cy + g.h));
+  // a kilim eye in the field, faint, behind the glyph — and the field's cut
+  const kilim = small
+    ? ''
+    : `<path d="${diamondAt(cx, cy - 1, g.w * 1.5, g.h * 1.5)}${diamondAt(cx, cy - 1, g.w * 1.2, g.h * 1.2)}" fill="${m.light}" fill-opacity="0.09" fill-rule="evenodd"/>` +
+      `<path d="${diamondAt(cx, cy - g.h - 1, 9, 11)}${diamondAt(cx, cy + g.h - 1, 9, 11)}${diamondAt(cx - g.w, cy - 1, 9, 11)}${diamondAt(cx + g.w, cy - 1, 9, 11)}" fill="${m.light}" fill-opacity="0.12"/>`;
+  out.push(
+    `<g clip-path="url(#${clip})">${kilim}` +
+      `<path d="M${n(cx + 70)},${n(cy - 70)}L${n(cx - 70)},${n(cy + 70)}L${n(cx - 70)},${n(cy - 70)}Z" fill="#ffffff" fill-opacity="0.07"/>` +
+      `<path d="${fieldPath}" fill="none" stroke="url(#${rimLight})" stroke-width="${small ? 2.4 : 1.8}"/></g>`,
+  );
+  out.push(rankGlyph(dr, tier, cx, cy + (tier === 'sterk' ? 1 : 0), small ? 1.3 : 1.04, small, field));
+
+  if (g.crown === 'star') {
+    const sy = top - (small ? 4 : 6);
+    out.push(halo(dr, cx, sy, small ? 22 : 26, '#ffffff', 0.7, 0.15));
+    out.push(cutStar(cx, sy, small ? 15 : 17, m));
+  }
+  if (tier === 'lutke' || tier === 'sterk') {
+    if (!small) out.push(`<path d="${sparkle(cx + g.w + 6, cy - g.h * 0.75, 5)}${sparkle(cx - g.w - 4, cy + g.h * 0.55, 3.4)}" fill="#ffffff"/>`);
+  }
+  return out.join('');
+}
+
+/** Under this many pixels an emblem is drawn in its small version: bolder, no rays, no chevrons. */
 export const SMALL_EMBLEM = 56;
 
 /** Figures 0–9 as strokes on a unit box, for the season's year. */
@@ -296,12 +253,14 @@ function figures(text: string, x: number, y: number, w: number, h: number, gap: 
   for (const ch of text) {
     const f = FIGURES[Number(ch)];
     if (f === undefined) continue;
-    out.push(f.replace(/([MLHV])([\d.]+)(?:,([\d.]+))?/g, (_m, cmd: string, a: string, b?: string) => {
-      const ax = Number(a);
-      if (cmd === 'H') return `H${n(at + ax * w)}`;
-      if (cmd === 'V') return `V${n(y + ax * h)}`;
-      return `${cmd}${n(at + ax * w)},${n(y + Number(b) * h)}`;
-    }));
+    out.push(
+      f.replace(/([MLHV])([\d.]+)(?:,([\d.]+))?/g, (_m, cmd: string, a: string, b?: string) => {
+        const ax = Number(a);
+        if (cmd === 'H') return `H${n(at + ax * w)}`;
+        if (cmd === 'V') return `V${n(y + ax * h)}`;
+        return `${cmd}${n(at + ax * w)},${n(y + Number(b) * h)}`;
+      }),
+    );
     at += w + gap;
   }
   return out.join('');
@@ -312,7 +271,7 @@ export interface RankEmblemOptions {
   /** 3 = III (lowest) … 1 = I; leave out for the tier alone (and always for Stêrk) */
   division?: RankDivision;
   /**
-   * For a season's emblem: the season and its year, shown on the plaque in
+   * For a season's emblem: the season and its year, shown under the crest in
    * place of a division.
    */
   season?: { name: Season; year: number };
@@ -323,135 +282,36 @@ export interface RankEmblemOptions {
   idPrefix?: string;
 }
 
-/** The emblem's frame and window, without a plaque — shared with the season emblem. */
-function emblemBody(dr: Drawing, tier: RankTier, cx: number, cy: number, compact = false): string {
-  const m: Metal = RANK_METAL[tier];
-  const g = GRANDEUR[tier];
-  const R = 33;
-  const r = 26;
-  const out: string[] = [];
-
-  out.push(dropShadow(circ(cx, cy, R + 1), 3, 0.24));
-
-  if (g.rays && !compact) {
-    const rays: string[] = [];
-    for (let i = 0; i <= 10; i++) {
-      const a = ((-165 + i * 15) * Math.PI) / 180;
-      const long = i % 2 === 1;
-      const len = long ? 53 : 45;
-      const half = long ? 0.1 : 0.08;
-      rays.push(
-        `M${n(cx + Math.cos(a - half) * 30)},${n(cy + Math.sin(a - half) * 30)}L${n(cx + Math.cos(a) * len)},${n(cy + Math.sin(a) * len)}L${n(cx + Math.cos(a + half) * 30)},${n(cy + Math.sin(a + half) * 30)}Z`,
-      );
-    }
-    const glow = dr.id('r');
-    dr.def(
-      `<radialGradient id="${glow}" gradientUnits="userSpaceOnUse" cx="${n(cx)}" cy="${n(cy)}" r="56"><stop offset="0.5" stop-color="${m.light}"/><stop offset="1" stop-color="${m.mid}" stop-opacity="0.15"/></radialGradient>`,
-    );
-    out.push(`<path d="${rays.join('')}" fill="url(#${glow})" stroke="${INK}" stroke-width="1" stroke-opacity="0.5" stroke-linejoin="round"/>`);
-  }
-
-  // wings: a fan of feathers from a root low on each side, the upper ones
-  // drawn first so the lower ones lie over them
-  if (g.wings > 0) {
-    const fill = metalBox(dr, m);
-    const dark = dr.id('d');
-    dr.def(linearAt(dark, [[0, m.light], [1, m.dark]], 0, cy - 40, 0, cy + 20));
-    const parts: string[] = [];
-    const k = g.wings;
-    for (let i = k - 1; i >= 0; i--) {
-      const deg = 184 + i * (72 / k);
-      const len = compact ? 17 + k * 0.6 - i * 0.8 : 33 + k * 1.6 - i * 1.2;
-      const w = 9.5 - i * 0.4;
-      const lines: string[] = [];
-      for (const side of [1, -1]) {
-        const rootDeg = side === 1 ? 158 : 22;
-        const x = cx + Math.cos((rootDeg * Math.PI) / 180) * (R - 9);
-        const y = cy + Math.sin((rootDeg * Math.PI) / 180) * (R - 9);
-        const d = side === 1 ? deg : 180 - deg;
-        parts.push(inked(feather(x, y, d, len, w), i % 2 === 0 ? `url(#${fill})` : `url(#${dark})`, OUTLINE));
-        lines.push(spine(x, y, d, len));
-      }
-      parts.push(`<path d="${lines.join('')}" stroke="${m.dark}" stroke-width="0.9" stroke-opacity="0.7" stroke-linecap="round" fill="none"/>`);
-    }
-    out.push(parts.join(''));
-  }
-
-  if (g.spike) out.push(inked(feather(cx, cy - R + 6, -90, compact ? 15 : 22, 13), `url(#${metalBox(dr, m)})`, OUTLINE));
-
-  // the ring
-  const rim = metalAcross(dr, m, cx - R, cy - R, cx + R, cy + R);
-  out.push(inked(ring(cx, cy, R, r), `url(#${rim})`, OUTLINE, ' fill-rule="evenodd"'));
-  out.push(bevel(dr, circ(cx, cy, R - 1.2), cy - R, cy + R * 0.3, 1.3, 0.8));
-  if (g.chain) {
-    // diamonds tip to tip round the ring, every other one dotted with madder
-    out.push(`<path d="${ring(cx, cy, R - 2.2, r + 1.4)}" fill="${m.dark}" fill-rule="evenodd"/>`);
-    const mid = (R + r) / 2 - 0.4;
-    const count = Math.round((2 * Math.PI * mid) / 5.4);
-    const ds: string[] = [];
-    const dots: string[] = [];
-    for (let i = 0; i < count; i++) {
-      const deg = (360 / count) * i - 90;
-      const a = (deg * Math.PI) / 180;
-      const x = cx + Math.cos(a) * mid;
-      const y = cy + Math.sin(a) * mid;
-      ds.push(diamondAt(x, y, (2 * Math.PI * mid) / count, R - r - 3.4, deg + 90));
-      if (i % 2 === 0) dots.push(diamondAt(x, y, 1.5, 1.5, deg + 90));
-    }
-    out.push(`<path d="${ds.join('')}" fill="${m.hi}"/>`);
-    out.push(`<path d="${dots.join('')}" fill="#c2263f"/>`);
-  }
-  out.push(rankWindow(dr, tier, cx, cy, r));
-
-  if (g.gem) {
-    out.push(inked(diamondAt(cx, cy - R + 0.5, 9, 11), `url(#${metalBox(dr, m)})`, OUTLINE));
-    out.push(`<path d="${diamondAt(cx, cy - R + 0.5, 3.4, 4.2)}" fill="#c2263f"/>`);
-  }
-  out.push(summitBreakout(tier, cx, cy, r));
-  if (tier === 'sterk') {
-    const gold = dr.id('k');
-    dr.def(linearAt(gold, [[0, '#fffbe6'], [0.5, m.light], [1, m.mid]], 0, cy - 52, 0, cy - 24));
-    const sy = compact ? cy - 35 : cy - 37;
-    out.push(inked(bigStar(cx, sy, compact ? 11.5 : 15), `url(#${gold})`, OUTLINE));
-    out.push(`<path d="${bigStar(cx, sy, compact ? 4 : 5)}" fill="#ffffff"/>`);
-  }
-  return out.join('');
-}
-
-function plaque(dr: Drawing, m: Metal, count: number, cx: number, cy: number): string {
-  const w = 40;
-  const h = 15;
-  const d =
-    `M${n(cx - w / 2 - 5)},${n(cy)}L${n(cx - w / 2)},${n(cy - h / 2)}H${n(cx + w / 2)}L${n(cx + w / 2 + 5)},${n(cy)}` +
-    `L${n(cx + w / 2)},${n(cy + h / 2)}H${n(cx - w / 2)}Z`;
-  const ground = dr.id('p');
-  dr.def(linearAt(ground, [[0, m.dark], [1, m.deep]], 0, cy - h / 2, 0, cy + h / 2));
+/** The division's chevrons: one lit for III, two for II, three for I. */
+function divisionMark(dr: Drawing, m: Metal, division: RankDivision, cx: number, cy: number): string {
+  const [on, off] = chevrons(3, 4 - division, cx, cy, 11, 8.5, 3, 3.2);
+  const lit = dr.id('q');
+  dr.def(linearAt(lit, [[0, m.hi], [1, m.light]], 0, cy - 4, 0, cy + 4));
+  const all = on + off;
   return (
-    inked(d, `url(#${ground})`, OUTLINE) +
-    `<path d="${d}" fill="none" stroke="${m.light}" stroke-width="0.9" stroke-opacity="0.7" transform="translate(${n(cx)} ${n(cy)}) scale(0.86) translate(${n(-cx)} ${n(-cy)})"/>` +
-    inked(numeral(count, cx, cy, 8.6), `url(#${metalBox(dr, m)})`, 1.2)
+    `<path d="${all}" fill="${m.deep}" stroke="${m.deep}" stroke-width="2.4" stroke-linejoin="round"/>` +
+    (on ? `<path d="${on}" fill="url(#${lit})"/>` : '') +
+    (off ? `<path d="${off}" fill="${m.dark}" fill-opacity="0.55"/>` : '')
   );
 }
 
-/** The season's plaque: its glyph and the year's last two figures. */
-function seasonPlaque(dr: Drawing, m: Metal, season: Season, year: number, cx: number, cy: number): string {
+/** The season's mark: a capsule with its glyph and the year's last two figures. */
+function seasonMark(dr: Drawing, tier: RankTier, season: Season, year: number, cx: number, cy: number): string {
+  const m = RANK_METAL[tier];
+  const field = rankField(tier);
   const w = 50;
   const h = 17;
-  const d =
-    `M${n(cx - w / 2 - 5)},${n(cy)}L${n(cx - w / 2)},${n(cy - h / 2)}H${n(cx + w / 2)}L${n(cx + w / 2 + 5)},${n(cy)}` +
-    `L${n(cx + w / 2)},${n(cy + h / 2)}H${n(cx - w / 2)}Z`;
+  const pill = capsule(cx, cy, w, h);
   const ground = dr.id('p');
-  dr.def(linearAt(ground, [[0, m.dark], [1, m.deep]], 0, cy - h / 2, 0, cy + h / 2));
+  dr.def(linearAt(ground, [[0, field.mid], [1, field.deep]], 0, cy - h / 2, 0, cy + h / 2));
   const draw = ICONS[season];
-  const glyph = draw ? `<g transform="translate(${n(cx - 12)} ${n(cy)}) scale(0.36)">${paintIcon(draw(), { dr, metal: m, small: true, locked: false })}</g>` : '';
+  const glyph = draw ? `<g transform="translate(${n(cx - 12)} ${n(cy)}) scale(0.34)">${paintIcon(draw(), { dr, metal: m, field, small: true, locked: false })}</g>` : '';
   const yy = String(((year % 100) + 100) % 100).padStart(2, '0');
   const fig = `M${n(cx + 1.5)},${n(cy - 4.6)}L${n(cx + 0.6)},${n(cy - 2.2)}` + figures(yy, cx + 4, cy - 4.2, 4.6, 8.4, 3);
   return (
-    inked(d, `url(#${ground})`, OUTLINE) +
-    `<path d="${d}" fill="none" stroke="${m.light}" stroke-width="0.9" stroke-opacity="0.7" transform="translate(${n(cx)} ${n(cy)}) scale(0.88) translate(${n(-cx)} ${n(-cy)})"/>` +
+    `<path d="${pill}" fill="url(#${ground})" stroke="${m.mid}" stroke-width="1.4"/>` +
     glyph +
-    `<path d="${fig}" fill="none" stroke="${INK}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>` +
-    `<path d="${fig}" fill="none" stroke="${m.hi}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`
+    `<path d="${fig}" fill="none" stroke="${m.hi}" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/>`
   );
 }
 
@@ -471,8 +331,8 @@ export interface PlacementEmblemOptions {
 }
 
 /**
- * The emblem before a first tier ("Placing 3/5"): a plain silver ring round
- * ridges in mist, and five pips under it, as many filled as games played.
+ * The emblem before a first tier ("Placing 3/5"): an uncut silver crest round
+ * ridges in mist, and five segments under it, as many lit as games played.
  */
 export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const { done } = opts;
@@ -480,31 +340,18 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const size = checkSize(opts.size, 128);
   const small = size < SMALL_EMBLEM;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'placing', done, small));
-  const m = SILVER;
-  const cx = 60;
-  const cy = small ? 60 : 52;
-  const R = small ? 44 : 33;
-  const r = small ? 35 : 26;
-  const out: string[] = [dropShadow(circ(cx, cy, R + 1), 3, 0.24)];
-  const rim = metalAcross(dr, m, cx - R, cy - R, cx + R, cy + R);
-  out.push(inked(ring(cx, cy, R, r), `url(#${rim})`, small ? 3 : OUTLINE, ' fill-rule="evenodd"'));
-  out.push(bevel(dr, circ(cx, cy, R - 1.2), cy - R, cy + R * 0.3, 1.3, 0.8));
-  out.push(rankWindow(dr, 'placing', cx, cy, r));
-  if (!small) {
-    const w = 52;
-    const h = 14;
-    const py = 96;
-    const pill = `M${n(cx - w / 2 + h / 2)},${n(py - h / 2)}H${n(cx + w / 2 - h / 2)}A${n(h / 2)},${n(h / 2)} 0 0 1 ${n(cx + w / 2 - h / 2)},${n(py + h / 2)}H${n(cx - w / 2 + h / 2)}A${n(h / 2)},${n(h / 2)} 0 0 1 ${n(cx - w / 2 + h / 2)},${n(py - h / 2)}Z`;
-    const ground = dr.id('p');
-    dr.def(linearAt(ground, [[0, m.dark], [1, m.deep]], 0, py - h / 2, 0, py + h / 2));
-    out.push(inked(pill, `url(#${ground})`, OUTLINE));
-    const on: string[] = [];
-    const off: string[] = [];
-    for (let i = 0; i < PLACEMENT_GAMES; i++) (i < done ? on : off).push(diamondAt(cx - 18 + i * 9, py, 7, 7));
-    if (on.length) out.push(`<path d="${on.join('')}" fill="url(#${metalBox(dr, m)})" stroke="${INK}" stroke-width="1" stroke-linejoin="round"/>`);
-    if (off.length) out.push(`<path d="${off.join('')}" fill="none" stroke="${m.light}" stroke-width="1.1" stroke-opacity="0.8" stroke-linejoin="round"/>`);
+  if (small) {
+    dr.add(`<g transform="translate(60 60) scale(1.32) translate(-60 -60)">${crest(dr, 'placing', 60, 60, true)}</g>`);
+  } else {
+    dr.add(crest(dr, 'placing', 60, 50, false));
+    const segs: string[] = [];
+    const lit: string[] = [];
+    for (let i = 0; i < PLACEMENT_GAMES; i++) (i < done ? lit : segs).push(capsule(60 + (i - 2) * 11, 103, 8.5, 5));
+    const glow = dr.id('q');
+    dr.def(linearAt(glow, [[0, MIST.hi], [1, MIST.light]], 0, 100, 0, 106));
+    if (segs.length) dr.add(`<path d="${segs.join('')}" fill="${MIST.dark}" fill-opacity="0.45" stroke="${MIST.dark}" stroke-width="1"/>`);
+    if (lit.length) dr.add(`<path d="${lit.join('')}" fill="url(#${glow})" stroke="${MIST.dark}" stroke-width="1"/>`);
   }
-  dr.add(out.join(''));
   return dr.svg(size, opts.title ?? `Placing ${done}/${PLACEMENT_GAMES}`);
 }
 
@@ -521,16 +368,17 @@ export function rankEmblemSvg(opts: RankEmblemOptions): string {
   const shown = tier === 'sterk' || season ? undefined : division;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'rank', tier, shown, small, season?.name, season?.year));
   const nm = RANK_TIER_NAMES[tier];
+  const starred = tier === 'sterk' ? 6 : 0;
   if (small) {
-    // the window and its frame, closer in; the division is in the title and beside it in the app
-    const cy = tier === 'sterk' ? 65 : tier === 'lutke' || tier === 'ciya' ? 63 : 60;
-    dr.add(`<g transform="translate(60 60) scale(1.38) translate(-60 ${-cy})">${emblemBody(dr, tier, 60, cy, true)}</g>`);
+    // the crest alone, closer in; the division is in the title and beside it in the app
+    const cy = 60 + starred;
+    dr.add(`<g transform="translate(60 60) scale(1.2) translate(-60 ${-cy})">${crest(dr, tier, 60, cy, true)}</g>`);
   } else {
-    const plaqued = shown !== undefined || season !== undefined;
-    const cy = plaqued ? 52 : 58;
-    dr.add(emblemBody(dr, tier, 60, tier === 'sterk' ? (plaqued ? 58 : 64) : cy));
-    if (season) dr.add(seasonPlaque(dr, RANK_METAL[tier], season.name, season.year, 60, tier === 'sterk' ? 102 : 96));
-    else if (shown !== undefined) dr.add(plaque(dr, RANK_METAL[tier], shown, 60, 96));
+    const marked = shown !== undefined || season !== undefined;
+    const cy = (marked ? 52 : 58) + starred;
+    dr.add(crest(dr, tier, 60, cy, false));
+    if (season) dr.add(seasonMark(dr, tier, season.name, season.year, 60, 105));
+    else if (shown !== undefined) dr.add(divisionMark(dr, RANK_METAL[tier], shown, 60, 104));
   }
   const when = season ? ` · ${SEASON_NAMES[season.name].ku} ${season.year}` : '';
   const title = opts.title ?? `${nm.ku}${shown === undefined ? '' : ` ${ROMAN[shown]}`} (${nm.en})${when}`;

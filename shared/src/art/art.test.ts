@@ -194,22 +194,27 @@ describe('badgeSvg', () => {
     for (const key of BADGE_KEYS) expect(badgeSvg({ key, tier: 4 })).toBe(badgeSvg({ key, tier: 4 }));
   });
 
-  it('draws each tier differently, and tells them apart without colour: the pips count the tier', () => {
-    const tiers = TIERS.map((tier) => badgeSvg({ key: 'ders', tier }));
-    expect(new Set(tiers).size).toBe(4);
-    // four pips on every tiered badge, as many filled as the tier: the filled ones are one path
-    // of `tier` diamonds, the empty ones another
-    tiers.forEach((svg, i) => {
-      const root = parse(svg);
-      const pipPaths: string[] = [];
-      walk(root, (e) => {
-        if (e.name === 'path' && /^(M[\d.,-]+L[\d.,-]+ [\d.,-]+ [\d.,-]+Z)+$/.test(e.attrs.d ?? '') && (e.attrs.d?.match(/M/g)?.length ?? 0) <= 4) {
-          pipPaths.push(e.attrs.d ?? '');
+  it('draws each tier differently, and tells them apart without colour: the chevrons count the tier', () => {
+    const chevronPaths = (svg: string): number[] => {
+      const out: number[] = [];
+      walk(parse(svg), (e) => {
+        // a chevron is a closed six-point outline; the lit ones are one path, the unlit another
+        if (e.name === 'path' && /^(M[\d.,-]+l(?:[\d.,-]+ ){4}[\d.,-]+z)+$/.test(e.attrs.d ?? '') && (e.attrs.d?.match(/M/g)?.length ?? 0) <= 4) {
+          out.push(e.attrs.d?.match(/M/g)?.length ?? 0);
         }
       });
-      const counts = pipPaths.map((d) => d.match(/M/g)?.length ?? 0);
-      expect(counts, `tier ${i + 1}`).toEqual(i === 3 ? [4] : [i + 1, 3 - i]);
-    });
+      return out;
+    };
+    for (const key of ['ders', 'agir', 'peyvzan', 'rank-ciya', 'heval', 'newroz'] as BadgeKey[]) {
+      const tiers = TIERS.map((tier) => badgeSvg({ key, tier }));
+      expect(new Set(tiers).size).toBe(4);
+      // four chevrons on every tiered badge, as many lit as the tier
+      tiers.forEach((svg, i) => expect(chevronPaths(svg), `${key} tier ${i + 1}`).toEqual(i === 3 ? [4] : [i + 1, 3 - i]));
+      // and the same count small
+      TIERS.forEach((tier, i) => expect(chevronPaths(badgeSvg({ key, tier, size: 40 })), `${key} tier ${tier} small`).toEqual(i === 3 ? [4] : [i + 1, 3 - i]));
+    }
+    // a single badge has none
+    expect(chevronPaths(badgeSvg({ key: 'hemereng' }))).toEqual([]);
   });
 
   it('gives single badges no pips and the same look whatever tier is asked for', () => {

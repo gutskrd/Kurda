@@ -20,8 +20,6 @@ export interface Shape {
   scale: number;
   /** where the tier plaque's centre sits */
   plaque: number;
-  /** extra pieces drawn behind the medallion (a leaf's stalk), already outlined */
-  stalk?: Pt[];
 }
 
 const CX = 60;
@@ -47,30 +45,13 @@ function shield(): Pt[] {
   return out;
 }
 
-/** A leaf: two arcs meeting in a point at each end, laid on the diagonal. */
+/** A leaf: two arcs meeting in a point at each end, laid on the diagonal — fuller than a willow leaf, so it holds a glyph. */
 function leaf(): Pt[] {
-  const L = 59;
-  const H = 35;
-  const upper = cubic([-L, 0], [-L * 0.45, -H * 1.36], [L * 0.45, -H * 1.36], [L, 0], 28);
-  const lower = cubic([L, 0], [L * 0.45, H * 1.36], [-L * 0.45, H * 1.36], [-L, 0], 28);
+  const L = 58;
+  const H = 40;
+  const upper = cubic([-L, 0], [-L * 0.42, -H * 1.38], [L * 0.42, -H * 1.38], [L, 0], 30);
+  const lower = cubic([L, 0], [L * 0.42, H * 1.38], [-L * 0.42, H * 1.38], [-L, 0], 30);
   return place([...upper, ...lower], { x: CX, y: CY, deg: -45 });
-}
-
-function leafStalk(): Pt[] {
-  // a short curved stalk off the lower-left point, as a closed outline
-  const base = place(
-    [
-      [-55, -3],
-      [-62, -4.2],
-      [-68.5, -2],
-      [-72.5, 2.6],
-      [-70, 4.6],
-      [-65.5, 1.8],
-      [-55, 3],
-    ],
-    { x: CX, y: CY, deg: -45 },
-  );
-  return base;
 }
 
 export const SHAPES: Record<BadgeFamily, Shape> = {
@@ -83,8 +64,8 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
         [104, 100],
         [16, 100],
       ],
-      17,
-      8,
+      26,
+      10,
     ),
     icon: [CX, CY],
     scale: 1.24,
@@ -92,7 +73,7 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
   },
   games: { outline: roundedPolygon(regular(CX, CY, 51, 6, -90), 7, 6), icon: [CX, CY], scale: 1.16, plaque: 104 },
   ranked: { outline: shield(), icon: [CX, 52], scale: 1.12, plaque: 104 },
-  friends: { outline: leaf(), icon: [CX, CY], scale: 1.06, plaque: 104, stalk: leafStalk() },
+  friends: { outline: leaf(), icon: [CX, CY], scale: 1.06, plaque: 104 },
   events: {
     outline: roundedPolygon(star(CX, CY, 53, 53 * 0.78, 8, -90), [4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2], 5),
     icon: [CX, CY],
