@@ -1776,6 +1776,7 @@ export const nl: Catalogue = {
   'stories.results.review': 'De vragen nalopen',
   'stories.results.score': 'Je had er {correct} van {total} goed',
   'stories.results.standings': 'Scores',
+  'stories.results.players': 'In dit spel',
   'stories.results.title': 'Uitslag',
   'stories.results.together': 'Samen {correct} van {total}',
   'stories.results.tryAgain': 'Opnieuw proberen',

@@ -18,6 +18,7 @@ import { RematchPanel } from '../play/RematchPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { MODE_KEY } from './SetupSheet';
 import { useGameStory, useStoryGame } from './useStoryGame';
+import { useGameFinished } from '../feedback/gameFinished';
 
 /**
  * A story game (/app/games/stories/play/:gameId): the lobby, the reading,
@@ -43,6 +44,10 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
 
   const view = game.load.state === 'ready' ? game.load.view : null;
   const story = useGameStory(id, view !== null && view.status !== 'lobby');
+  // the rating box hears of a game that ended while it was played here (not
+  // one opened finished), and not of one this player left
+  const me = view?.players.find((p) => p.isMe);
+  useGameFinished('stories', view ? id : null, view?.status === 'finished', me?.gone ?? false);
   // while reading and answering, an invite to something else waits as a chip
   useQuietInvites(view !== null && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
 

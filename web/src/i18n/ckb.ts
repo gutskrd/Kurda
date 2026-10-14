@@ -1782,6 +1782,7 @@ export const ckb: Catalogue = {
   'stories.results.review': 'پرسیارەکان ببینەوە',
   'stories.results.score': '{correct} لە {total} ڕاستت وەڵام دایەوە',
   'stories.results.standings': 'خاڵەکان',
+  'stories.results.players': 'لەم یارییەدا',
   'stories.results.title': 'ئەنجامەکان',
   'stories.results.together': 'پێکەوە {correct} لە {total}',
   'stories.results.tryAgain': 'دووبارە هەوڵ بدەرەوە',

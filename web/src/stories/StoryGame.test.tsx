@@ -572,3 +572,89 @@ describe('the results', () => {
     expect(screen.getByRole('link', { name: 'Read the story again' })).toHaveAttribute('href', '/app/games/stories/qelema-sin');
   });
 });
+
+describe('after merging with the social and rating tracks', () => {
+  const two = [
+    { seat: 1, name: 'Ada', avatarUrl: null, isHost: true, isMe: true, away: false, gone: false, score: 0, correct: 0 },
+    { seat: 2, name: null, avatarUrl: null, isHost: false, isMe: false, away: false, gone: false, score: 0, correct: 0 },
+  ];
+  const finished = (players = two): StoryGameView =>
+    gameView({
+      version: 9,
+      status: 'finished',
+      code: null,
+      players,
+      results: {
+        standings: [
+          { seat: 1, name: 'Ada', avatarUrl: null, isMe: true, score: 300, correct: 3, place: 1 },
+          { seat: 2, name: null, avatarUrl: null, isMe: false, score: 200, correct: 2, place: 2 },
+        ],
+        me: { place: 1, score: 300, correct: 3, answered: 3, total: 3, xp: 10, learningCounted: true },
+        review: [],
+      },
+    });
+
+  /** Report the player behind the ⋯ named `menu`, for bullying. */
+  async function report(menu: string): Promise<void> {
+    await userEvent.click(await screen.findByRole('button', { name: menu }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Report' }));
+    await userEvent.click(screen.getByRole('button', { name: /Bullying or harassment/ }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send report' }));
+  }
+
+  it('reports another player in the lobby by seat, never offering it for yourself', async () => {
+    const poll = heldPoll();
+    const { calls } = fakeApi({
+      'GET /story-games/g-1': (c: Call) => (c.path.includes('?v=') ? poll.answer(c) : gameView({ players: two, activeCount: 2 })),
+      'POST /reports': { id: 'r1', deduped: false },
+    });
+    game();
+    await report('More about Player 2');
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/reports')).toBe(true));
+    expect(calls.find((c) => c.path === '/reports')!.body).toMatchObject({ targetType: 'game_player', targetId: 'g-1', game: 'stories', seat: 2 });
+    expect(screen.queryByRole('button', { name: 'More about You' })).toBeNull();
+  });
+
+  it('reports another player from the results by seat', async () => {
+    const { calls } = fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': finished(),
+      'POST /reports': { id: 'r1', deduped: false },
+    });
+    game();
+    expect(await screen.findByRole('heading', { name: 'In this game' })).toBeInTheDocument();
+    await report('More about Player 2');
+    await waitFor(() => expect(calls.some((c) => c.method === 'POST' && c.path === '/reports')).toBe(true));
+    expect(calls.find((c) => c.path === '/reports')!.body).toMatchObject({ targetType: 'game_player', targetId: 'g-1', game: 'stories', seat: 2 });
+  });
+
+  it('tells the rating box when a game played here finishes, and not for a finished game opened later', async () => {
+    const { onGameFinished } = await import('../feedback/gameFinished');
+    const heard: unknown[] = [];
+    const stop = onGameFinished((e) => heard.push(e));
+    try {
+      const poll = heldPoll();
+      const { calls } = fakeApi({
+        'GET /story-games/g-1/story': story,
+        'GET /story-games/g-1': (c: Call) =>
+          c.path.includes('?v=') ? poll.answer(c) : gameView({ version: 8, status: 'reading', code: 'ABC234', players: two, activeCount: 2 }),
+      });
+      const first = game();
+      expect(await screen.findByRole('button', { name: 'I’ve finished reading' })).toBeInTheDocument();
+      await waitFor(() => expect(calls.some((c) => c.path === '/story-games/g-1?v=8')).toBe(true));
+      act(() => poll.release(finished()));
+      expect(await screen.findByRole('heading', { name: 'You got 3 of 3 right' })).toBeInTheDocument();
+      await waitFor(() => expect(heard).toEqual([{ game: 'stories', gaveUp: false }]));
+      first.unmount();
+
+      // the same results opened again later: nothing new finished here
+      fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': finished() });
+      game();
+      expect(await screen.findByRole('heading', { name: 'You got 3 of 3 right' })).toBeInTheDocument();
+      await new Promise((r) => setTimeout(r, 50));
+      expect(heard).toHaveLength(1);
+    } finally {
+      stop();
+    }
+  });
+});

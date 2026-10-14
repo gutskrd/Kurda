@@ -1868,6 +1868,7 @@ export const en = {
   'stories.results.review': 'Go over the questions',
   'stories.results.score': 'You got {correct} of {total} right',
   'stories.results.standings': 'Scores',
+  'stories.results.players': 'In this game',
   'stories.results.title': 'Results',
   'stories.results.together': 'Together {correct} of {total}',
   'stories.results.tryAgain': 'Try again',

@@ -1774,6 +1774,7 @@ export const fr: Catalogue = {
   'stories.results.review': 'Revoir les questions',
   'stories.results.score': 'Tu as {correct} bonnes réponses sur {total}',
   'stories.results.standings': 'Scores',
+  'stories.results.players': 'Dans cette partie',
   'stories.results.title': 'Résultats',
   'stories.results.together': 'Ensemble {correct} sur {total}',
   'stories.results.tryAgain': 'Réessayer',

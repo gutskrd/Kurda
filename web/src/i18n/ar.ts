@@ -1768,6 +1768,7 @@ export const ar: Catalogue = {
   'stories.results.review': 'راجع الأسئلة',
   'stories.results.score': 'أصبت في {correct} من {total}',
   'stories.results.standings': 'النتائج',
+  'stories.results.players': 'في هذه اللعبة',
   'stories.results.title': 'النتائج',
   'stories.results.together': 'معًا {correct} من {total}',
   'stories.results.tryAgain': 'حاول مرة أخرى',

@@ -1770,6 +1770,7 @@ export const tr: Catalogue = {
   'stories.results.review': 'Sorulara yeniden bak',
   'stories.results.score': '{total} sorudan {correct} tanesini doğru bildin',
   'stories.results.standings': 'Puanlar',
+  'stories.results.players': 'Bu oyunda',
   'stories.results.title': 'Sonuçlar',
   'stories.results.together': 'Birlikte {total} sorudan {correct}',
   'stories.results.tryAgain': 'Tekrar dene',

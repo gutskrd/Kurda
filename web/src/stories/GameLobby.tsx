@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MIN_PLAYERS_TO_START, MAX_PLAYERS, formatJoinCode, type StoryGameView } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
+import { PlayerReport } from '../reports/PlayerReport';
 import { Button } from '../components/Button';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { CopyIcon, HostIcon, ShareIcon } from '../components/icons';
@@ -161,6 +162,8 @@ export function GameLobby({
                 )}
                 {p.away && <span className="sg-away">{t('stories.game.away')}</span>}
               </span>
+              {/* anyone else in the lobby can be reported, by seat (reports/PlayerReport) */}
+              {!p.isMe && <PlayerReport game="stories" gameId={view.id} seat={p.seat} name={playerName(p, t)} />}
               {view.isHost && !p.isMe && (
                 <ConfirmButton
                   className="btn btn-ghost btn-sm sg-remove"

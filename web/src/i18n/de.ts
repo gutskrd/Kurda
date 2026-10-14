@@ -1776,6 +1776,7 @@ export const de: Catalogue = {
   'stories.results.review': 'Die Fragen durchgehen',
   'stories.results.score': 'Du hast {correct} von {total} richtig',
   'stories.results.standings': 'Punkte',
+  'stories.results.players': 'In diesem Spiel',
   'stories.results.title': 'Ergebnis',
   'stories.results.together': 'Zusammen {correct} von {total}',
   'stories.results.tryAgain': 'Noch einmal',

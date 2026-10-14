@@ -1777,6 +1777,7 @@ export const ku: Catalogue = {
   'stories.results.review': 'Li pirsan binêre',
   'stories.results.score': 'Te {correct} ji {total} rast bersiv dan',
   'stories.results.standings': 'Xal',
+  'stories.results.players': 'Di vê lîstikê de',
   'stories.results.title': 'Encam',
   'stories.results.together': 'Bi hev re {correct} ji {total}',
   'stories.results.tryAgain': 'Dîsa biceribîne',

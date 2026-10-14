@@ -1773,6 +1773,7 @@ export const es: Catalogue = {
   'stories.results.review': 'Repasar las preguntas',
   'stories.results.score': 'Acertaste {correct} de {total}',
   'stories.results.standings': 'Puntuaciones',
+  'stories.results.players': 'En esta partida',
   'stories.results.title': 'Resultados',
   'stories.results.together': 'Juntos {correct} de {total}',
   'stories.results.tryAgain': 'Intentarlo otra vez',

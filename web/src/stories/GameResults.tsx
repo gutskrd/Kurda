@@ -15,6 +15,7 @@ import { useT } from '../i18n/I18nProvider';
 import { STORIES_HUB, createGame, gamePath, readerPath, storyError } from './api';
 import { Evidence, playerName, type Announce } from './GameParts';
 import { rememberedExtraTime, rememberedEnglish, showEnglishFor } from './prefs';
+import { PlayerReport } from '../reports/PlayerReport';
 
 /**
  * The end of a game (contract §A1): how it went, whether it counted, and
@@ -78,6 +79,7 @@ export function GameResults({
       )}
 
       {results && view.mode !== 'solo' && <Standings view={view} standings={results.standings} />}
+      {view.mode !== 'solo' && <OtherPlayers view={view} />}
 
       <div className="sg-results-actions">
         {view.mode === 'solo' ? <TryAgain view={view} /> : again}
@@ -153,6 +155,33 @@ function Standings({ view, standings }: { view: StoryGameView; standings: StoryG
         ))}
       </ol>
       {mine && <p className="sg-place">{t('stories.results.yourPlace', { place: mine.place })}</p>}
+    </div>
+  );
+}
+
+/**
+ * Everyone else who sat in the game, by seat and without scores, each with
+ * the ⋯ to report them (reports/PlayerReport): the standings name only the
+ * podium once there are four or more, and nobody's place is said twice.
+ */
+function OtherPlayers({ view }: { view: StoryGameView }): React.JSX.Element | null {
+  const t = useT();
+  const others = view.players.filter((p) => !p.isMe).sort((a, b) => a.seat - b.seat);
+  if (others.length === 0) return null;
+  return (
+    <div className="sg-panel sg-others">
+      <h3 className="sg-panel-title" id="sg-others-title">
+        {t('stories.results.players')}
+      </h3>
+      <ul className="sg-players" aria-labelledby="sg-others-title">
+        {others.map((p) => (
+          <li key={p.seat} className="sg-player">
+            <Avatar url={p.avatarUrl} glyphSize={18} />
+            <span className="sg-player-name">{playerName(p, t)}</span>
+            <PlayerReport game="stories" gameId={view.id} seat={p.seat} name={playerName(p, t)} />
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
