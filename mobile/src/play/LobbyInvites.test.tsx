@@ -5,12 +5,14 @@ import type { InviteLists, OutgoingInviteState } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { LobbyInvites } from './LobbyInvites';
+import { LobbyPeople } from './lobby';
 
-vi.mock('react-native', () => import('react-native-web'));
+vi.mock('react-native', () => import('./testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('@react-navigation/native', () => import('./testing/navigation'));
 
 const invitee = (over: Partial<OutgoingInviteState>): OutgoingInviteState => ({
   inviteId: 'i',
@@ -72,5 +74,24 @@ describe('LobbyInvites', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Invite again: Sipan' }));
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST' && c.path === '/play/invites')?.body).toEqual({ game: 'stories', lobbyId: 'g1', userIds: ['u3'] }));
     expect(client.calls.some((c) => c.method === 'DELETE' && c.path === '/play/invites/i1')).toBe(true);
+  });
+});
+
+describe('LobbyPeople', () => {
+  afterEach(cleanup);
+
+  const host = { seat: 1, name: 'Rojda', avatarUrl: null, isMe: false, isHost: true };
+  const me = { seat: 2, name: 'Azad', avatarUrl: null, isMe: true, isHost: false };
+
+  it('offers Invite friends to the host only, since the server takes invites from no one else', async () => {
+    testAuth.client = fakeClient({ 'GET /play/invites': ok(lists([])) });
+    renderWithProviders(<LobbyPeople game="wordle-battle" lobbyId="g1" players={[host, me]} isHost={false} maxPlayers={4} />);
+    expect(screen.getByText('You')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Invite friends' })).toBeNull();
+    cleanup();
+    renderWithProviders(
+      <LobbyPeople game="wordle-battle" lobbyId="g1" players={[{ ...host, isMe: true }, { ...me, isMe: false }]} isHost maxPlayers={4} />,
+    );
+    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
   });
 });

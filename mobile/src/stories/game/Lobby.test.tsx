@@ -119,6 +119,21 @@ describe('Lobby', () => {
     await waitFor(() => expect(onLeft).toHaveBeenCalled());
   });
 
+  it('offers a guest the link to share, but not the host-only Invite friends', () => {
+    testAuth.client = fakeClient(routes());
+    const guest = lobby({
+      mode: 'group',
+      isHost: false,
+      players: [player({ seat: 1, isHost: true, name: 'Azad' }), player({ seat: 2, isMe: true })],
+    });
+    renderWithProviders(<Lobby view={guest} apply={() => null} onLeft={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Share' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Invite friends' })).toBeNull();
+    cleanup();
+    renderWithProviders(<Lobby view={lobby({ mode: 'group' })} apply={() => null} onLeft={() => undefined} />);
+    expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
+  });
+
   it('warns before a game played from memory', () => {
     testAuth.client = fakeClient(routes());
     renderWithProviders(<Lobby view={gameView({ status: 'lobby', code: 'ABC234' }, { textDuring: 'hidden' })} apply={() => null} onLeft={() => undefined} />);

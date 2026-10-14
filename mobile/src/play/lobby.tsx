@@ -102,7 +102,8 @@ export function LobbyPeople({
             })}
         </View>
       ) : null}
-      {players.length < maxPlayers ? (
+      {/* only the host may invite into a lobby (the server refuses anyone else); the others share the link */}
+      {isHost && players.length < maxPlayers ? (
         <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" variant="outline" onPress={() => setInviting(true)} />
       ) : null}
       {isHost ? <LobbyInvites game={game} lobbyId={lobbyId} /> : null}

@@ -146,7 +146,8 @@ export function Lobby({
           <Text style={[styles.codeHint, { color: colors.textSecondary }]}>
             {s.access === 'open' ? t('stories.lobby.codeOpen') : t('stories.lobby.codeFriends')}
           </Text>
-          {active < MAX_PLAYERS[view.mode] ? (
+          {/* only the host may invite friends in (the server refuses anyone else); everyone may share */}
+          {view.isHost && active < MAX_PLAYERS[view.mode] ? (
             <ClayButton label={t('stories.lobby.invite')} icon="user-plus" tone="primary" onPress={() => setInviting(true)} />
           ) : null}
           <ClayButton label={t('share.title')} icon="share" onPress={share} />
