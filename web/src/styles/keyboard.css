@@ -33,6 +33,22 @@
   gap: 8px;
   min-height: 44px;
 }
+/* on a phone the gear alone, so the title keeps its line; the words stay its name */
+@media (max-width: 560px) {
+  .race-settings-toggle {
+    min-width: 44px;
+    justify-content: center;
+    padding-inline: 10px;
+  }
+  .race-settings-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+}
 .race-settings {
   margin-bottom: 18px;
 }
@@ -406,7 +422,7 @@
   align-items: center;
   min-height: 44px;
 }
-.kb-chip:focus-within {
+.kb-chip:has(.kb-chip-input:focus-visible) {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -635,6 +651,16 @@
   align-self: flex-end;
 }
 @media (max-width: 480px) {
+  .race-nudge {
+    padding: 14px 12px;
+  }
+  .kb-try {
+    padding: 12px;
+  }
+  .kb-try-letter {
+    width: 40px;
+    height: 40px;
+  }
   .kb-guide-head {
     flex-direction: column;
     text-align: center;

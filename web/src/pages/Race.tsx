@@ -281,7 +281,7 @@ export function Race(): React.JSX.Element {
             onClick={() => setSettingsOpen((o) => !o)}
           >
             <GearIcon size={18} />
-            <span>{t('keyboard.settings.title')}</span>
+            <span className="race-settings-label">{t('keyboard.settings.title')}</span>
           </button>
         )}
       </div>
@@ -477,20 +477,6 @@ export function Race(): React.JSX.Element {
                 </p>
               )}
 
-              {showNudge && (
-                <div className="race-nudge">
-                  <KeyboardGuide
-                    dialect={game.dialect}
-                    headingLevel={3}
-                    closeLabel={t('games.race.nudgeLater')}
-                    onClose={() => {
-                      setNudgeHidden(true);
-                      setPrefs({ guideNudgeDismissedAt: Date.now() });
-                    }}
-                  />
-                </div>
-              )}
-
               <div className="race-result-actions">
                 <Button onClick={() => void begin()} disabled={starting} aria-busy={starting}>
                   {starting ? t('games.starting') : t('games.race.again')}
@@ -501,14 +487,35 @@ export function Race(): React.JSX.Element {
                   </button>
                 )}
               </div>
+
+              {/* after the result and "Race again", so neither waits behind it */}
+              {showNudge && (
+                <div className="race-nudge">
+                  <KeyboardGuide
+                    dialect={game.dialect}
+                    headingLevel={3}
+                    quietClose
+                    closeLabel={t('games.race.nudgeLater')}
+                    onClose={() => {
+                      setNudgeHidden(true);
+                      setPrefs({ guideNudgeDismissedAt: Date.now() });
+                    }}
+                  />
+                </div>
+              )}
             </div>
           )}
         </>
       )}
 
+      {/*
+        Escape, the backdrop and the X only close it: somebody backing out of
+        the guide has not asked for the clock to start. Its own buttons
+        ("Start race", the two ways out) are what go on into the race.
+      */}
       <Modal
         open={guide !== null}
-        onClose={closeGuide}
+        onClose={() => setGuide(null)}
         label={sorani ? t('keyboard.guide.titleSorani') : t('keyboard.guide.title')}
       >
         <KeyboardGuide

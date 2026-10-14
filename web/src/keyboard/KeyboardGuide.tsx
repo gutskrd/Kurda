@@ -25,7 +25,10 @@ export function KeyboardGuide({
   onClose,
   closeLabel,
   headingLevel = 2,
+  quietClose = false,
 }: {
+  /** the closing button as a quiet one, where another action on the page is the main one */
+  quietClose?: boolean;
   dialect: TypingDialect;
   onClose: () => void;
   /** what the button that closes it says: "Start the race" when it stands before one */
@@ -166,7 +169,7 @@ export function KeyboardGuide({
         </div>
       </div>
 
-      <button type="button" className="btn btn-primary kb-guide-close" onClick={onClose}>
+      <button type="button" className={`btn ${quietClose ? 'btn-ghost' : 'btn-primary'} kb-guide-close`} onClick={onClose}>
         {closeLabel ?? t('keyboard.guide.done')}
       </button>
     </section>

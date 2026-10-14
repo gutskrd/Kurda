@@ -501,6 +501,24 @@ describe('Typing Race', () => {
     expect(JSON.parse(localStorage.getItem(KEYBOARD_PREFS_KEY)!).guideOffered).toBe(true);
   });
 
+  it('closes the guide without starting when it is escaped, and Start then starts', async () => {
+    const fetchMock = stub();
+    const user = userEvent.setup();
+    renderApp(<Race />, ['/app/games/race']);
+
+    await user.click(screen.getByRole('button', { name: /start race/i }));
+    await screen.findByRole('dialog');
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(posted(fetchMock, '/race')).toHaveLength(0);
+
+    // offered once on this device: the next Start goes straight in
+    await user.click(screen.getByRole('button', { name: /start race/i }));
+    expect(await screen.findByLabelText('Type the text')).toBeInTheDocument();
+    expect(posted(fetchMock, '/race')).toHaveLength(1);
+  });
+
   it('starts the race forgiving when “Make accents forgiving” is chosen in the guide', async () => {
     const fetchMock = stub();
     localStorage.setItem(KEYBOARD_PREFS_KEY, JSON.stringify({ accentMode: 'strict' }));

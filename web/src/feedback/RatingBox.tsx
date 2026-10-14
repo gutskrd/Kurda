@@ -134,11 +134,15 @@ export function RatingBox({
         void send();
       }}
     >
-      <HevaloDeer size={settings ? 112 : 128} board={{ kind: 'stars', stars: shown }} />
-      <h2 className="rb-title" id={headingId}>
-        {settings ? t('appFeedback.settingsTitle') : t('appFeedback.question')}
-      </h2>
-      {settings && <p className="rb-lead" id={`${ids}-lead`}>{t('appFeedback.question')}</p>}
+      <div className="rb-head">
+        <HevaloDeer size={settings ? 112 : 128} board={{ kind: 'stars', stars: shown }} />
+        <div className="rb-head-text">
+          <h2 className="rb-title" id={headingId}>
+            {settings ? t('appFeedback.settingsTitle') : t('appFeedback.question')}
+          </h2>
+          {settings && <p className="rb-lead" id={`${ids}-lead`}>{t('appFeedback.question')}</p>}
+        </div>
+      </div>
 
       <div
         className="rb-stars"
