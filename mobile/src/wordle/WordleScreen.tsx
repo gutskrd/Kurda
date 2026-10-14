@@ -34,7 +34,7 @@ import { WordleKeyboard } from './WordleKeyboard';
 import type { SearchResult } from '../dictionary/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -122,6 +122,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
 
   const start = async (mode: 'daily' | 'practice') => {
+    // the rating box, if it came, belonged to the board this replaces
+    leftResults();
     setStarting(true);
     setNote(null);
     setDraft([]);

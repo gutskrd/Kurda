@@ -12,7 +12,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -88,21 +88,26 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     ]).start();
   };
 
-  const end = useCallback(async () => {
-    if (!game) return;
-    const res = await client.post<{ game: RhymeGameView }>(`/rhyme/training/${game.id}/end`);
-    if (res.ok) {
-      setGame(res.data.game);
-      // the round ended on the server, with this call: a game finished
-      if (res.data.game.status === 'ended') reportGameFinished({ moment: 'other' });
-    }
-  }, [client, game]);
+  /** `early`: "End round" with time still on the clock — the player stopped, which is giving up. */
+  const end = useCallback(
+    async (early: boolean) => {
+      if (!game) return;
+      const res = await client.post<{ game: RhymeGameView }>(`/rhyme/training/${game.id}/end`);
+      if (res.ok) {
+        setGame(res.data.game);
+        // the round ended on the server, with this call: a game finished — and
+        // one cut short is never a moment for the rating box
+        if (res.data.game.status === 'ended') reportGameFinished({ moment: 'other', gaveUp: early });
+      }
+    },
+    [client, game],
+  );
 
   // countdown; when it hits zero, end the round (awards XP)
   useEffect(() => {
     if (!game || game.status === 'ended') return;
     if (remaining <= 0) {
-      void end();
+      void end(false);
       return;
     }
     const id = setInterval(() => setRemaining((r) => Math.max(0, r - 1000)), 1000);
@@ -110,6 +115,8 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   }, [game, remaining, end]);
 
   const start = async () => {
+    // the rating box, if it came, belonged to the round this replaces
+    leftResults();
     setStarting(true);
     setNote(null);
     setFound([]);
@@ -227,7 +234,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               ))}
             </View>
 
-            <Pressable onPress={() => void end()} accessibilityRole="button" style={styles.finish}>
+            <Pressable onPress={() => void end(remaining > 0)} accessibilityRole="button" style={styles.finish}>
               <Text style={[styles.finishText, { color: colors.textSecondary }]}>{t('games.rhyme.endRound')}</Text>
             </Pressable>
           </>
