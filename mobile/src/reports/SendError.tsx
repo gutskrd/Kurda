@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { ApiError } from '../api/types';
 import type { Translate } from '../api/errors';
@@ -10,6 +10,10 @@ import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sendErrorOf, standingExplains } from './sendErrors';
+import { useDirection } from './direction';
+
+/** The icon's width and the gap after it: the link lines up with the words. */
+const LINK_INSET = 26;
 
 /**
  * A failed send, said in place — above a chat composer, under a form.
@@ -29,27 +33,31 @@ export function SendErrorNotice({
   error,
   onDismiss,
   onNavigate,
+  style,
 }: {
   error: ApiError | null;
   onDismiss?: () => void;
   /** called just before Account standing opens — the sheet this sits in closes itself */
   onNavigate?: () => void;
+  /** where it sits: by default inset above a composer; a card's column passes its own */
+  style?: StyleProp<ViewStyle>;
 }): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
   const navigation = useNavigation<RootNavigation>();
+  const dir = useDirection();
   if (!error) return null;
   const { message, restriction } = sendErrorOf(error, t, locale);
   const tone = restriction ? colors.textPrimary : colors.danger;
   return (
     <View
-      style={[styles.notice, { backgroundColor: restriction ? colors.controlTrack : colors.dangerFill }]}
+      style={[styles.notice, { backgroundColor: restriction ? colors.controlTrack : colors.dangerFill }, style]}
       accessibilityLiveRegion="polite"
       accessibilityRole="alert"
     >
-      <View style={styles.row}>
+      <View style={[styles.row, { flexDirection: dir.row }]}>
         <Icon name={restriction ? 'shield' : 'alert'} size={18} color={restriction ? colors.textSecondary : colors.danger} />
-        <Text style={[styles.text, { color: tone }]}>{message}</Text>
+        <Text style={[styles.text, dir.text, { color: tone }]}>{message}</Text>
         {onDismiss ? (
           <Pressable
             onPress={onDismiss}
@@ -69,7 +77,8 @@ export function SendErrorNotice({
             navigation.navigate('AccountStanding');
           }}
           accessibilityRole="link"
-          style={styles.link}
+          // under the words, past the icon, on the side they start from
+          style={[styles.link, dir.rtl ? { alignSelf: 'flex-end', paddingRight: LINK_INSET } : { paddingLeft: LINK_INSET }]}
         >
           <Text style={[styles.linkText, { color: colors.primary }]}>{t('restriction.seeStanding')}</Text>
         </Pressable>
@@ -129,6 +138,6 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm },
   text: { flex: 1, fontSize: typography.sizes.sm, lineHeight: 20 },
   dismiss: { padding: 2 },
-  link: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', alignSelf: 'flex-start', paddingStart: 26 },
+  link: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', alignSelf: 'flex-start' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

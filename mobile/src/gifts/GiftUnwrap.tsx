@@ -256,7 +256,7 @@ export function GiftUnwrap({
             </Text>
           ) : null}
           {/* a refused thank-you (a chat mute, the automatic pause) says why here, and the way to Account standing closes this first */}
-          <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} />
+          <SendErrorNotice error={thanksError} onDismiss={() => setThanksError(null)} onNavigate={onClose} style={styles.notice} />
           <Pressable onPress={onClose} accessibilityRole="button" style={styles.close}>
             <Text style={[styles.closeText, { color: colors.textSecondary }]}>{t('social.close')}</Text>
           </Pressable>
@@ -438,6 +438,8 @@ const styles = StyleSheet.create({
   name: { ...display(typography.sizes.xl), textAlign: 'center' },
   from: { fontSize: typography.sizes.md, textAlign: 'center' },
   actions: { width: '100%', gap: spacing.sm, marginTop: spacing.sm },
+  // as wide as the buttons above it, in their column
+  notice: { alignSelf: 'stretch', marginHorizontal: 0, marginBottom: 0 },
   stretch: { alignSelf: 'stretch' },
   error: { fontSize: typography.sizes.sm, textAlign: 'center' },
   close: { minHeight: 44, justifyContent: 'center', paddingHorizontal: spacing.lg },

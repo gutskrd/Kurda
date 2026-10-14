@@ -91,7 +91,9 @@ describe('ChatScreen', () => {
     renderWithProviders(<ChatScreen userId="u2" username="rojda" openGift="g1" onExit={() => undefined} />);
     // from the banner: the unwrap starts as soon as the thread is here
     expect(await screen.findByText('From rojda')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    // its buttons are out of reach until the gift is shown, so skip to it first
+    fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Close' }));
 
     fireEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
     expect(await screen.findByText('A gift for rojda')).toBeTruthy();
