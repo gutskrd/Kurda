@@ -265,6 +265,9 @@ describe('the audit log', () => {
     expect(describeAction('DELETE /admin/tags/:key')).toEqual({ verb: 'Delete', where: 'tags' });
     expect(describeAction('POST /admin/events/:key/enabled')).toEqual({ verb: 'Switch on/off', where: 'events' });
     expect(describeAction('POST /admin/gem-rules (dry run)').verb).toBe('Create (dry run)');
+    expect(describeAction('POST /admin/ranks/games/:game/:ref/void')).toEqual({ verb: 'Void', where: 'ranks › games' });
+    expect(describeAction('POST /admin/ranks/players/:userId/:game/reset')).toEqual({ verb: 'Reset', where: 'ranks › players' });
+    expect(describeAction('POST /admin/seasons/end')).toEqual({ verb: 'End', where: 'seasons' });
   });
 });
 

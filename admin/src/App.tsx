@@ -33,6 +33,10 @@ import { AudioStudio } from './pages/AudioStudio';
 import { Shop } from './pages/Shop';
 import { Stories } from './pages/Stories';
 import { Dashboard } from './pages/Dashboard';
+import { Ranks } from './pages/Ranks';
+import { Seasons } from './pages/Seasons';
+import { Leagues } from './pages/Leagues';
+import { Badges } from './pages/Badges';
 
 /**
  * Each page by its key (navigation.ts has who may open it and where it sits
@@ -59,6 +63,10 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   wordle: () => <Games section="wordle" />,
   rhyme: () => <Games section="rhyme" />,
   race: () => <Games section="race" />,
+  ranks: () => <Ranks />,
+  seasons: () => <Seasons />,
+  leagues: () => <Leagues />,
+  badges: () => <Badges />,
   economy: () => <Economy />,
   shop: () => <Shop />,
   'gem-rules': () => <GemRules />,

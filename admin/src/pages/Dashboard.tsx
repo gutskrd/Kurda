@@ -1,4 +1,4 @@
-import { ALPHABET_CLIPS, PRIORITY_SLA_HOURS, type AdminFeedbackSummary, type ModerationSummary, type ReportPriority } from '@kurda/shared';
+import { ALPHABET_CLIPS, PRIORITY_SLA_HOURS, type AdminFeedbackSummary, type ModerationSummary, type ReportPriority, type SuspiciousPair } from '@kurda/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { canOpen, NAV, type SessionAccess } from '../navigation';
@@ -6,7 +6,8 @@ import { useSession } from '../session';
 import { describeAction } from './Audit';
 import { isStoryUsage, type Listing } from '../lessonAudio';
 import type { AdminStorySummary } from '../stories';
-import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, useLoad } from '../ui';
+import { Badge, Button, ErrorState, Icon, Loading, PageHeader, Section, Stat, Time, UserLink, duration, relativeTime, useLoad } from '../ui';
+import { runState, type LeagueOverview } from '../progress';
 
 /** The guard of the page a tile is about, so a tile only shows to someone who can act on it. */
 function allowed(page: string, session: SessionAccess): boolean {
@@ -60,6 +61,7 @@ export function Dashboard(): React.JSX.Element {
         bots={can('antibot')}
         approvals={can('approvals')}
       />
+      {(can('leagues') || can('ranks')) && <RanksPanel leagues={can('leagues')} ranks={can('ranks')} />}
       {can('audit') && <RecentAudit />}
     </div>
   );
@@ -289,6 +291,55 @@ function Waiting({
             value={count(changes, (d) => d!.pending.length)}
             href="#/approvals"
             hint="Shop and event changes a second admin signs off"
+          />
+        )}
+      </div>
+    </Section>
+  );
+}
+
+/**
+ * Whether the weekly league runs went through, and how many rating pairs are
+ * worth a look: a settle that failed means nobody was promoted, which nobody
+ * else would notice until learners asked.
+ */
+function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): React.JSX.Element {
+  const week = useLoad(() => (leagues ? api<LeagueOverview>('/admin/leagues') : Promise.resolve(null)), [leagues]);
+  const pairs = useLoad(() => (ranks ? api<{ pairs: SuspiciousPair[] }>('/admin/ranks/suspicious-pairs') : Promise.resolve(null)), [ranks]);
+  const settle = week.data ? runState(week.data.settle) : null;
+  const merge = week.data ? runState(week.data.merge) : null;
+  const strong = pairs.data ? pairs.data.pairs.filter((p) => p.score >= 5).length : 0;
+  return (
+    <Section title="Ranks and leagues">
+      <div className="stats is-flat">
+        {leagues && (
+          <>
+            <Stat
+              icon="waves"
+              label="This week’s settle"
+              value={week.error ? '—' : settle ? settle.label : '…'}
+              tone={settle?.tone === 'bad' || settle?.tone === 'warn' ? settle.tone : 'neutral'}
+              hint={week.data?.settle?.finishedAt ? `Finished ${relativeTime(new Date(week.data.settle.finishedAt))}` : 'Runs Monday 00:00 UTC'}
+              href="#/leagues"
+            />
+            <Stat
+              icon="waves"
+              label="Wednesday merge"
+              value={week.error ? '—' : merge ? merge.label : '…'}
+              tone={merge?.tone === 'bad' || merge?.tone === 'warn' ? merge.tone : 'neutral'}
+              hint={week.data ? `${week.data.groups.filter((g) => !g.mergedInto).length} groups this week` : undefined}
+              href="#/leagues"
+            />
+          </>
+        )}
+        {ranks && (
+          <Stat
+            icon="mountain"
+            label="Rating pairs to check"
+            value={count(pairs, (d) => d!.pairs.length)}
+            tone={strong > 0 ? 'warn' : 'neutral'}
+            hint={pairs.data ? (strong > 0 ? `${strong} with strong signals` : 'Signals only: nothing acts by itself') : undefined}
+            href="#/ranks/pairs"
           />
         )}
       </div>

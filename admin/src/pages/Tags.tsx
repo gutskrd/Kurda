@@ -42,7 +42,7 @@ const HOW: Record<Acquisition, string> = {
 };
 
 /**
- * Tags & badges (KUR-286): the identity tags a profile can show — the one
+ * Profile tags (KUR-286): the identity tags a profile can show — the one
  * main tag, chosen by precedence, and the claimable ones a person picks.
  * Deactivating hides a tag everywhere and keeps its history.
  */
@@ -103,7 +103,7 @@ export function Tags(): React.JSX.Element {
   return (
     <div>
       <PageHeader
-        title="Tags & badges"
+        title="Profile tags"
         subtitle="The identity tags a profile can show: one main tag, chosen by precedence, and the claimable ones people pick for themselves."
         actions={
           <Button variant="primary" icon="plus" onClick={() => setCreating(true)}>

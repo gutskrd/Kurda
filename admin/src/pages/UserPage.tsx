@@ -41,6 +41,8 @@ import {
 import { AgeTag, SanctionLine } from './CasePeople';
 import { PERSON_KINDS, SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
+import { BadgesTab, RanksTab } from './UserProgress';
+import { holdsRankTools } from '../progress';
 import { usersListHref, type BanState } from './Users';
 
 /** `GET /admin/users/:id`: the moderation fields only for a reader who can moderate. */
@@ -63,7 +65,7 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername?: string | null; createdAt: string }>;
 }
 
-type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'sessions' | 'audit';
+type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'ranks' | 'badges' | 'sessions' | 'audit';
 
 /**
  * One person (#/users/<id>/<tab>): who they are, where they stand — the
@@ -74,7 +76,9 @@ type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'session
  *
  * Support staff open the page too, without what moderation knows (the API
  * leaves it out for them), so the Standing and Reports tabs are for
- * moderators only; balances and items change only for a superadmin.
+ * moderators only; balances and items change only for a superadmin. Their
+ * game ranks and badges are for the legacy admin role, which every rank and
+ * badge route is guarded by.
  */
 export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.Element {
   const loaded = useLoad(() => api<UserDetail>(`/admin/users/${encodeURIComponent(id)}`), [id]);
@@ -82,6 +86,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
   const u = loaded.data;
   const canModerate = session.capabilities.includes('moderation.act');
   const canAdjust = session.staffRoles.includes('superadmin');
+  const rankTools = holdsRankTools(session.staffRoles);
   const moderation = !!u && u.sanctions !== undefined;
 
   const tabs: Array<{ key: TabKey; label: string; count?: number }> = [
@@ -94,6 +99,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       : []),
     { key: 'wallet', label: 'Wallet & ledger' },
     { key: 'items', label: 'Items' },
+    ...(rankTools ? [{ key: 'ranks' as const, label: 'Ranks' }, { key: 'badges' as const, label: 'Badges' }] : []),
     { key: 'sessions', label: 'Sessions', count: u?.sessions.length || undefined },
     { key: 'audit', label: 'Audit' },
   ];
@@ -153,6 +159,8 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
         {current === 'reports' && moderation && <ReportsTab user={u} />}
         {current === 'wallet' && <WalletPanel user={u} canAdjust={canAdjust} onChanged={reload} />}
         {current === 'items' && <ItemsPanel user={u} canAdjust={canAdjust} />}
+        {current === 'ranks' && rankTools && <RanksTab user={u} />}
+        {current === 'badges' && rankTools && <BadgesTab user={u} />}
         {current === 'sessions' && <SessionsTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'audit' && <AuditTab user={u} />}
       </div>
