@@ -564,6 +564,25 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(unfiltered.json().total).toBeGreaterThanOrEqual(4);
     });
 
+    it('pages on after the last answer shown, so marking answers read skips none', async () => {
+      const first = await list('&status=new&limit=2');
+      expect(first.items.map((i) => i.id)).toEqual([ids[3], ids[2]]);
+      // both read: with an offset of 2 the next page would now skip the two still new
+      for (const i of first.items) {
+        expect((await call('PATCH', `/admin/feedback/${i.id as string}`, admin, { status: 'read' })).statusCode).toBe(200);
+      }
+      const next = await list(`&status=new&limit=2&beforeId=${first.items[1]!.id as string}`);
+      expect(next.items.map((i) => i.id)).toEqual([ids[1], ids[0]]);
+      // the count is still the whole filter, not what is after the cursor
+      expect(next.total).toBe(2);
+      // past the oldest, or after an id that is not there: nothing
+      expect((await list(`&limit=2&beforeId=${ids[0]}`)).items).toEqual([]);
+      expect((await list(`&beforeId=00000000-0000-4000-8000-000000000000`)).items).toEqual([]);
+      expect((await call('GET', '/admin/feedback?beforeId=nope', admin)).statusCode).toBe(400);
+      // back as they were, for the tests below
+      for (const i of first.items) await call('PATCH', `/admin/feedback/${i.id as string}`, admin, { status: 'new' });
+    });
+
     it('marks an answer read or archived, and keeps a note', async () => {
       const res = await call('PATCH', `/admin/feedback/${ids[0]}`, admin, { status: 'read', adminNote: 'Bug #12' });
       expect(res.statusCode, res.body).toBe(200);

@@ -90,18 +90,31 @@ export function feedbackQuery(f: FeedbackFilters): string {
 }
 
 export const FEEDBACK_PAGE = 50;
+/** the longest search the API takes; a longer paste would be refused, not searched */
+export const FEEDBACK_Q_MAX = 80;
 
-/** The API path for a page of answers ("all" is no status filter). */
-export function feedbackPath(f: FeedbackFilters, offset = 0): string {
+/**
+ * The API path for a page of answers ("all" is no status filter). A next page
+ * starts after the last answer shown (`beforeId`), not at an offset: marking
+ * answers read or archived takes them out of the filter while they stay on
+ * screen, and an offset would then skip as many answers as were marked.
+ */
+export function feedbackPath(f: FeedbackFilters, beforeId?: string): string {
   const p = new URLSearchParams();
   if (f.status !== 'all') p.set('status', f.status);
   if (f.stars.length) p.set('stars', f.stars.join(','));
   if (f.category) p.set('category', f.category);
   if (f.platform) p.set('platform', f.platform);
-  if (f.q.trim()) p.set('q', f.q.trim());
+  const q = f.q.trim().slice(0, FEEDBACK_Q_MAX).trim();
+  if (q) p.set('q', q);
   p.set('limit', String(FEEDBACK_PAGE));
-  if (offset) p.set('offset', String(offset));
+  if (beforeId) p.set('beforeId', beforeId);
   return `/admin/feedback?${p}`;
+}
+
+/** Whether an answer belongs on the tab it is shown on, as it is now. */
+function inStatus(f: FeedbackFilters, item: AdminFeedbackItem): boolean {
+  return f.status === 'all' || item.status === f.status;
 }
 
 function setFilters(f: FeedbackFilters): void {
@@ -122,10 +135,17 @@ export function Feedback(): React.JSX.Element {
   const key = feedbackQuery(filters);
   const summary = useLoad(() => api<AdminFeedbackSummary>('/admin/feedback/summary'), []);
   const first = useLoad(() => api<AdminFeedbackList>(feedbackPath(filters)), [key]);
-  const [more, setMore] = useState<AdminFeedbackItem[]>([]);
+  /*
+   * What is on screen: the first page and every page shown after it, with the
+   * answers marked since, and how many answers match the filter now (the
+   * latest page's count, moved by each answer marked out of or back into the
+   * tab). It belongs to one load of the first page; a reload starts it again.
+   */
+  const [shown, setShown] = useState<{ from: AdminFeedbackList; items: AdminFeedbackItem[]; total: number } | null>(null);
+  const fresh = (d: AdminFeedbackList) => ({ from: d, items: d.items, total: d.total });
+  const list = first.data ? (shown?.from === first.data ? shown : fresh(first.data)) : null;
   const [loadingMore, setLoadingMore] = useState(false);
   const toast = useToast();
-  useEffect(() => setMore([]), [first.data]);
 
   // the search box types freely; the list follows once typing pauses
   const [q, setQ] = useState(filters.q);
@@ -135,15 +155,22 @@ export function Feedback(): React.JSX.Element {
     // only the typed text moves the address; the rest is already there
   }, [settledQ]);
 
-  const items = first.data ? [...first.data.items, ...more] : null;
-  const total = first.data?.total ?? 0;
+  const items = list?.items ?? null;
+  const total = list?.total ?? 0;
+  // still to load: the answers that match now, less those on screen that still match
+  const left = items ? Math.max(0, total - items.filter((i) => inStatus(filters, i)).length) : 0;
 
   async function loadMore(): Promise<void> {
-    if (!items) return;
+    const last = items?.[items.length - 1];
+    const from = first.data;
+    if (!last || !from) return;
     setLoadingMore(true);
     try {
-      const page = await api<AdminFeedbackList>(feedbackPath(filters, items.length));
-      setMore((m) => [...m, ...page.items]);
+      const page = await api<AdminFeedbackList>(feedbackPath(filters, last.id));
+      setShown((s) => {
+        const base = s?.from === from ? s : fresh(from);
+        return { from, items: [...base.items, ...page.items.filter((p) => !base.items.some((i) => i.id === p.id))], total: page.total };
+      });
     } catch (err) {
       toast.error(errorLine(err, 'feedback'));
     } finally {
@@ -153,8 +180,15 @@ export function Feedback(): React.JSX.Element {
 
   /** One answer changed: replace it where it is (it stays put until the list is loaded again). */
   const replace = (next: AdminFeedbackItem): void => {
-    first.setData((d) => (d ? { ...d, items: d.items.map((i) => (i.id === next.id ? next : i)) } : d!));
-    setMore((m) => m.map((i) => (i.id === next.id ? next : i)));
+    const from = first.data;
+    if (!from) return;
+    setShown((s) => {
+      const base = s?.from === from ? s : fresh(from);
+      const before = base.items.find((i) => i.id === next.id);
+      // marked out of this tab (or back into it): the filter's count moves with it
+      const moved = before && inStatus(filters, before) !== inStatus(filters, next) ? (inStatus(filters, next) ? 1 : -1) : 0;
+      return { from, items: base.items.map((i) => (i.id === next.id ? next : i)), total: base.total + moved };
+    });
     void summary.reload();
   };
 
@@ -198,7 +232,14 @@ export function Feedback(): React.JSX.Element {
         <div className="table-tools" role="search">
           <div className="search-box">
             <Icon name="search" size={16} />
-            <input type="search" aria-label="Search feedback" placeholder="Words or a username" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input
+              type="search"
+              aria-label="Search feedback"
+              placeholder="Words or a username"
+              maxLength={FEEDBACK_Q_MAX}
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+            />
           </div>
           <div className="star-filter" role="group" aria-label="Stars">
             {[1, 2, 3, 4, 5].map((n) => (
@@ -261,10 +302,10 @@ export function Feedback(): React.JSX.Element {
                 <FeedbackRow key={item.id} item={item} onChanged={replace} />
               ))}
             </ul>
-            {items.length < total && (
+            {left > 0 && (
               <div className="load-more">
                 <Button onClick={() => void loadMore()} busy={loadingMore}>
-                  {loadingMore ? 'Loading…' : `Show more (${(total - items.length).toLocaleString()} left)`}
+                  {loadingMore ? 'Loading…' : `Show more (${left.toLocaleString()} left)`}
                 </Button>
               </div>
             )}

@@ -69,7 +69,7 @@ describe('the filters', () => {
   it('ask the API for a page, with no status for "all"', () => {
     const f = feedbackFilters(new URLSearchParams('status=all&stars=1'));
     expect(feedbackPath(f)).toBe('/admin/feedback?stars=1&limit=50');
-    expect(feedbackPath(feedbackFilters(new URLSearchParams('')), 50)).toBe('/admin/feedback?status=new&limit=50&offset=50');
+    expect(feedbackPath(feedbackFilters(new URLSearchParams('')), 'fb-50')).toBe('/admin/feedback?status=new&limit=50&beforeId=fb-50');
   });
 });
 
@@ -145,16 +145,39 @@ describe('the inbox', () => {
     expect(patches(calls)[1]!.body).toEqual({ adminNote: null });
   });
 
-  it('pages on with the offset', async () => {
+  it('pages on after the last answer shown, so answers marked read on the way skip none', async () => {
     const user = userEvent.setup();
+    const marked = (c: Call) => json({ ...item({ id: c.path.split('/').pop()! }), ...(c.body as object) });
     const { calls } = show(
-      '#/feedback?status=all',
-      on('GET', /offset=1$/, json({ items: [item({ id: 'fb-51', comment: 'Answer fifty-one' })], total: 51 })),
-      on('GET', '/admin/feedback?limit=50', json({ items: [item()], total: 51 })),
+      '#/feedback',
+      // by now one of the first page has been read: the server counts two new answers
+      on('GET', /beforeId=fb-2$/, json({ items: [item({ id: 'fb-3', comment: 'Answer three' })], total: 2 })),
+      on('GET', '/admin/feedback?status=new&limit=50', json({ items: [item(), item({ id: 'fb-2', comment: 'Answer two' })], total: 3 })),
+      on('PATCH', /^\/admin\/feedback\/fb-\d$/, marked),
     );
-    await user.click(await screen.findByRole('button', { name: 'Show more (50 left)' }));
-    expect(await screen.findByText('Answer fifty-one')).toBeInTheDocument();
-    expect(calls.some((c) => c.path === '/admin/feedback?limit=50&offset=1')).toBe(true);
+    expect(await screen.findByRole('button', { name: 'Show more (1 left)' })).toBeInTheDocument();
+    await user.click(screen.getAllByRole('button', { name: 'Mark read' })[0]!);
+    await waitFor(() => expect(patches(calls)).toHaveLength(1));
+    // still one to come: the answer marked stays on screen, and is not counted twice
+    expect(await screen.findByRole('button', { name: 'Show more (1 left)' })).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Show more (1 left)' }));
+    expect(await screen.findByText('Answer three')).toBeInTheDocument();
+    // asked for what comes after the last one shown, not for an offset that would now skip "Answer three"
+    expect(calls.some((c) => c.path === '/admin/feedback?status=new&limit=50&beforeId=fb-2')).toBe(true);
+    expect(calls.some((c) => c.path.includes('offset='))).toBe(false);
+    expect(screen.queryByRole('button', { name: /Show more/ })).not.toBeInTheDocument();
+    // marking one of the first page keeps the pages shown after it
+    await user.click(screen.getAllByRole('button', { name: 'Mark read' })[0]!);
+    await waitFor(() => expect(patches(calls)).toHaveLength(2));
+    expect(screen.getByText('Answer three')).toBeInTheDocument();
+    expect(within(screen.getByRole('list', { name: 'Feedback' })).getAllByRole('listitem')).toHaveLength(3);
+  });
+
+  it('keeps a search within what the API takes', async () => {
+    show('#/feedback', on('GET', /^\/admin\/feedback\?/, json({ items: [], total: 0 })));
+    expect(await screen.findByRole('searchbox', { name: 'Search feedback' })).toHaveAttribute('maxlength', '80');
+    const long = feedbackPath({ ...feedbackFilters(new URLSearchParams('')), q: 'x'.repeat(200) });
+    expect(new URLSearchParams(long.split('?')[1]).get('q')).toHaveLength(80);
   });
 
   it('says a failed load failed', async () => {

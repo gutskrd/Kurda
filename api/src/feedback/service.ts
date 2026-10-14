@@ -34,6 +34,13 @@ export interface FeedbackFilter {
   q?: string;
   limit: number;
   offset: number;
+  /**
+   * Only answers older than this one (the last of the page before), newest
+   * first. The inbox pages with it rather than the offset: marking answers
+   * read or archived takes them out of the filter, and an offset then skips
+   * as many answers as were marked. `total` still counts the whole filter.
+   */
+  beforeId?: string;
 }
 
 interface FeedbackRow {
@@ -217,14 +224,20 @@ export class FeedbackService {
     if (filter.source) add((p) => `f.source = ${p}`, filter.source);
     if (filter.q) add((p) => `(f.comment ILIKE ${p} OR u.username ILIKE ${p})`, containsPattern(filter.q));
     const where = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
+    const countParams = [...params];
+    // the cursor narrows the page, not the count; an id that is not there compares as null: nothing after it
+    if (filter.beforeId) {
+      add((p) => `(f.created_at, f.id) < (SELECT created_at, id FROM app_feedback WHERE id = ${p})`, filter.beforeId);
+    }
+    const pageWhere = conds.length ? `WHERE ${conds.join(' AND ')}` : '';
 
     const [counted, rows] = await Promise.all([
       this.pool.query<{ n: number }>(
         `SELECT count(*)::int AS n FROM app_feedback f LEFT JOIN users u ON u.id = f.user_id ${where}`,
-        params,
+        countParams,
       ),
       this.pool.query<FeedbackRow>(
-        `${ITEM_SELECT} ${where}
+        `${ITEM_SELECT} ${pageWhere}
           ORDER BY f.created_at DESC, f.id DESC
           LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
         [...params, filter.limit, filter.offset],
