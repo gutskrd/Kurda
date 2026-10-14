@@ -89,3 +89,34 @@ describe('the dashboard', () => {
     expect(screen.getByRole('link', { name: /lessons in review/i })).toHaveTextContent('0');
   });
 });
+
+describe('the dashboard’s ranks and leagues', () => {
+  const ADMIN: AdminSession = { roles: [], staffRoles: ['admin'], capabilities: ['moderation.act'], needsEnrollment: false, needsVerification: false };
+  const run = (over: object) => ({ kind: 'settle', weekKey: '2026-10-12', startedAt: new Date().toISOString(), finishedAt: new Date().toISOString(), attempts: 1, lastError: null, result: {}, ...over });
+  const pair = (score: number) => ({ game: 'wordle-battle', a: { userId: 'a', username: 'a' }, b: { userId: 'b', username: 'b' }, games: 6, aWins: 6, bWins: 0, draws: 0, peak24h: 6, sharedDevice: true, sharedIp: false, lastGameAt: new Date().toISOString(), score });
+
+  it('says whether this week’s settle and merge went through, and how many rating pairs are worth a look', async () => {
+    fakeApi(
+      on('GET', '/admin/leagues', json({ weekKey: '2026-10-12', goalXp: 150, settle: run({}), closedBy: null, merge: run({ kind: 'merge', finishedAt: null, lastError: 'boom' }), groups: [{ id: 'g', tier: 'cem', members: 9, active: 9, xpBand: 0, tzOffsetMin: 0, settled: false, mergedInto: null }], tiers: {} })),
+      on('GET', '/admin/ranks/suspicious-pairs', json({ pairs: [pair(7), pair(2)] })),
+    );
+    show(ADMIN);
+    const settle = await screen.findByRole('link', { name: /this week’s settle/i });
+    await waitFor(() => expect(settle).toHaveTextContent('Done'));
+    expect(settle).toHaveAttribute('href', '#/leagues');
+    const merge = screen.getByRole('link', { name: /wednesday merge/i });
+    expect(merge).toHaveTextContent('Failed');
+    expect(merge).toHaveTextContent('1 group this week');
+    const pairs = screen.getByRole('link', { name: /rating pairs to check/i });
+    await waitFor(() => expect(pairs).toHaveTextContent('2'));
+    expect(pairs).toHaveTextContent('1 with strong signals');
+    expect(pairs).toHaveAttribute('href', '#/ranks/pairs');
+  });
+
+  it('leaves them out for a role that cannot open those pages', async () => {
+    fakeApi(on('GET', '/admin/lesson-audio', json(LISTING)), on('GET', '/admin/alphabet/audio', json({ recordings: [] })));
+    show(EDITOR);
+    await screen.findByRole('heading', { name: 'What still needs a recording' });
+    expect(screen.queryByRole('heading', { name: 'Ranks and leagues' })).not.toBeInTheDocument();
+  });
+});

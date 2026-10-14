@@ -303,6 +303,8 @@ function Waiting({
  * worth a look: a settle that failed means nobody was promoted, which nobody
  * else would notice until learners asked.
  */
+const groupsThisWeek = (n: number): string => `${n.toLocaleString()} ${n === 1 ? 'group' : 'groups'} this week`;
+
 function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): React.JSX.Element {
   const week = useLoad(() => (leagues ? api<LeagueOverview>('/admin/leagues') : Promise.resolve(null)), [leagues]);
   const pairs = useLoad(() => (ranks ? api<{ pairs: SuspiciousPair[] }>('/admin/ranks/suspicious-pairs') : Promise.resolve(null)), [ranks]);
@@ -327,7 +329,7 @@ function RanksPanel({ leagues, ranks }: { leagues: boolean; ranks: boolean }): R
               label="Wednesday merge"
               value={week.error ? '—' : merge ? merge.label : '…'}
               tone={merge?.tone === 'bad' || merge?.tone === 'warn' ? merge.tone : 'neutral'}
-              hint={week.data ? `${week.data.groups.filter((g) => !g.mergedInto).length} groups this week` : undefined}
+              hint={week.data ? groupsThisWeek(week.data.groups.filter((g) => !g.mergedInto).length) : undefined}
               href="#/leagues"
             />
           </>

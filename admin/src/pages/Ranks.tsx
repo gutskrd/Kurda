@@ -266,7 +266,7 @@ function PlayerGamesDrawer({ player, onClose, onChanged }: { player: TopPlayer; 
   const loaded = useLoad(() => api<AdminPlayerRanks>(`/admin/ranks/players/${encodeURIComponent(player.userId)}`), [player.userId]);
   return (
     <Drawer open onClose={onClose} title={`@${player.username}’s rated games`} className="drawer-wide">
-      <p className="drawer-sub">
+      <p className="section-text">
         The latest 30, every game. <UserLink user={{ id: player.userId, username: player.username }} /> has a Ranks tab with the same and their rank in each game.
       </p>
       {loaded.error != null && !loaded.data ? (

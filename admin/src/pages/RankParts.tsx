@@ -324,7 +324,7 @@ export function PairGamesDrawer({
   ];
   return (
     <Drawer open onClose={onClose} title={`${GAME_NAME[pair.game]}: @${pair.a.username} and @${pair.b.username}`} className="drawer-wide">
-      <p className="drawer-sub">
+      <p className="section-text">
         <UserLink user={{ id: pair.a.userId, username: pair.a.username }} /> and <UserLink user={{ id: pair.b.userId, username: pair.b.username }} /> — their
         rated games together, newest first. Voiding one works out everything after it again.
       </p>

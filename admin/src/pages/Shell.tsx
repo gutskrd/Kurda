@@ -12,7 +12,7 @@ import { Drawer, Icon } from '../ui';
  * On a wide screen the nav is a sidebar; on a phone or a tablet it is a menu
  * button in a slim top bar that opens the same nav as a drawer. Either way the
  * nav is grouped (Overview · Record audio · People · Moderation · Content ·
- * Games · Economy · Settings), shows only what this login can open, and has a
+ * Games · Ranks & rewards · Economy · Settings), shows only what this login can open, and has a
  * box to find a page by name — there are two dozen of them.
  */
 export function Shell({ route, children, onSignOut }: { route: Route; children: ReactNode; onSignOut: () => void }): React.JSX.Element {
