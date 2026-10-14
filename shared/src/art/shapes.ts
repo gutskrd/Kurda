@@ -74,7 +74,7 @@ function leafStalk(): Pt[] {
 }
 
 export const SHAPES: Record<BadgeFamily, Shape> = {
-  learning: { outline: circle(CX, CY, 48, 96), icon: [CX, CY], scale: 1.24, plaque: 103 },
+  learning: { outline: circle(CX, CY, 48, 72), icon: [CX, CY], scale: 1.24, plaque: 103 },
   habit: {
     outline: roundedPolygon(
       [

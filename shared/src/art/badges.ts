@@ -20,17 +20,17 @@
  * dim, with a "?" where the icon will be.
  */
 import { offset, perimeter, stations } from './geometry.js';
-import type { Part } from './icons.js';
 import { ICONS, QUESTION } from './icons.js';
+import { paintIcon } from './iconpaint.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
 import { BADGE_TIER_NAMES, BADGES, RANK_BADGE, RANK_TIERS, isBadgeKey } from './keys.js';
 import type { Metal } from './palette.js';
-import { ACCENT, ENAMEL, GOLD, INK, RANK_METAL, SHADOW, STONE, TIER_METAL } from './palette.js';
-import { OUTLINE, band, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox, metalBoxDark } from './paint.js';
+import { ENAMEL, GOLD, INK, RANK_METAL, SHADOW, STONE, TIER_METAL } from './palette.js';
+import { OUTLINE, band, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox } from './paint.js';
 import { rankWindow } from './ranks.js';
 import type { Pt } from './svg.js';
 import { SHAPES } from './shapes.js';
-import { Drawing, checkSize, linePath, linearAt, linearBox, n, n2, polyPath, prefixFor, radialAt, seeded } from './svg.js';
+import { Drawing, checkSize, linePath, linearAt, n, n2, polyPath, prefixFor, radialAt, seeded } from './svg.js';
 
 export type BadgeState = 'earned' | 'locked' | 'secret';
 
@@ -170,107 +170,6 @@ function beads(outline: readonly Pt[], rim: number, m: Metal): string {
   return `<path d="${out.join('')}" fill="${m.hi}" stroke="${m.dark}" stroke-width="0.5"/>`;
 }
 
-interface IconPaint {
-  dr: Drawing;
-  metal: Metal;
-  small: boolean;
-  locked: boolean;
-}
-
-/** The icon's parts, painted for this badge's metal and size. */
-function paintIcon(parts: readonly Part[], p: IconPaint): string {
-  const { dr, metal, small, locked } = p;
-  const line = small ? 2.9 : 2.2;
-  const shown = parts.filter((part) => !(small && 'fine' in part && part.fine));
-  const tf = (part: Part): string => (part.tf ? ` transform="${part.tf}"` : '');
-
-  if (locked) {
-    const g = STONE.mid;
-    return shown
-      .filter((part) => part.k !== 'h')
-      .map((part) => {
-        switch (part.k) {
-          case 'k':
-            return `<path d="${part.d}" fill="${g}"${tf(part)}/>`;
-          case 'd':
-            return `<path d="${part.d}" fill="none" stroke="${g}" stroke-width="${n2((part.w ?? 1.6) * (small ? 1.3 : 1))}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`;
-          case 'l':
-            return `<path d="${part.d}" fill="none" stroke="${g}" stroke-width="${n2((part.w ?? 3) + (small ? 1 : 0.4))}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`;
-          default:
-            return `<path d="${part.d}" fill="${g}" fill-opacity="0.16" stroke="${g}" stroke-width="${n2(line * 0.85)}" stroke-linejoin="round"${tf(part)}/>`;
-        }
-      })
-      .join('');
-  }
-
-  const light = metalBox(dr, metal);
-  const dark = metalBoxDark(dr, metal);
-  const snow = dr.id('n');
-  dr.def(
-    linearBox(snow, [
-      [0, '#ffffff'],
-      [1, '#d9e3ee'],
-    ]),
-  );
-  const accents = new Map<string, string>();
-  const accent = (name: keyof typeof ACCENT): string => {
-    let id = accents.get(name);
-    if (!id) {
-      id = dr.id('a');
-      const [a, b] = ACCENT[name];
-      dr.def(
-        linearBox(id, [
-          [0, a],
-          [1, b],
-        ]),
-      );
-      accents.set(name, id);
-    }
-    return `url(#${id})`;
-  };
-
-  // the shadow every raised part casts on the enamel
-  const shadow = shown
-    .filter((part) => part.k === 'f' || part.k === 'a' || part.k === 'w' || part.k === 'c' || part.k === 'l')
-    .map((part) =>
-      part.k === 'l'
-        ? `<path d="${part.d}" fill="none" stroke="#000000" stroke-width="${n2((part.w ?? 3) + line + 0.4)}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`
-        : `<path d="${part.d}" fill="#000000" stroke="#000000" stroke-width="${n2(line)}" stroke-linejoin="round"${tf(part)}/>`,
-    )
-    .join('');
-
-  const body = shown
-    .map((part) => {
-      switch (part.k) {
-        case 'f':
-          return `<path d="${part.d}" fill="url(#${light})" stroke="${INK}" stroke-width="${n2(line)}" stroke-linejoin="round"${tf(part)}/>`;
-        case 'a':
-          return `<path d="${part.d}" fill="url(#${dark})" stroke="${INK}" stroke-width="${n2(line)}" stroke-linejoin="round"${tf(part)}/>`;
-        case 'w':
-          return `<path d="${part.d}" fill="url(#${snow})" stroke="${INK}" stroke-width="${n2(line)}" stroke-linejoin="round"${tf(part)}/>`;
-        case 'c':
-          return `<path d="${part.d}" fill="${accent(part.c)}" stroke="${INK}" stroke-width="${n2(line)}" stroke-linejoin="round"${tf(part)}/>`;
-        case 'k':
-          return `<path d="${part.d}" fill="${INK}"${tf(part)}/>`;
-        case 'd':
-          return `<path d="${part.d}" fill="none" stroke="${INK}" stroke-width="${n2((part.w ?? 1.6) * (small ? 1.3 : 1))}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`;
-        case 'l': {
-          const w = part.w ?? 3;
-          const colour = part.c ? ACCENT[part.c][0] : metal.light;
-          return (
-            `<path d="${part.d}" fill="none" stroke="${INK}" stroke-width="${n2(w + line)}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>` +
-            `<path d="${part.d}" fill="none" stroke="${colour}" stroke-width="${n2(w)}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`
-          );
-        }
-        case 'h':
-          return `<path d="${part.d}" fill="#ffffff" fill-opacity="${n2(part.o ?? 0.5)}"${tf(part)}/>`;
-      }
-      return '';
-    })
-    .join('');
-  return `<g opacity="0.38" transform="translate(0 1.9)">${shadow}</g>${body}`;
-}
-
 /** The plaque of tier pips under a tiered badge. */
 function pips(dr: Drawing, tier: number, count: number, cy: number, m: Metal, small: boolean, locked: boolean): string {
   const gap = small ? 13 : 10;
@@ -408,4 +307,66 @@ function iconGroup(
   const parts = p.secret || !draw ? QUESTION : draw();
   const scale = shape.scale * (small ? 1.2 : 1);
   return `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${paintIcon(parts, { dr, metal: p.metal, small, locked: p.locked })}</g>`;
+}
+
+/**
+ * Whether a badge has the glint (research §5.2): Zêr and Firûze, and the single
+ * badges that wear their borders. The apps play it once when the badge is
+ * earned and again on hover or tap — never under reduced motion.
+ */
+export function badgeShines(key: BadgeKey, tier: BadgeTier = 1, tiers?: number): boolean {
+  if (!isBadgeKey(key)) return false;
+  const count = tiers ?? BADGES[key].tiers;
+  const shownTier = (count > 1 ? Math.min(tier, count) : 1) as BadgeTier;
+  return lookFor(key, shownTier, count, 'earned').look >= 3;
+}
+
+export interface BadgeShineOptions {
+  key: BadgeKey;
+  /** pixels; the same as the badge it lies on. Default 96. */
+  size?: number;
+  /**
+   * Where the glint is on its way across, 0 (off the upper left) to 1 (off
+   * the lower right). An app steps it over about a second to play the glint.
+   */
+  phase?: number;
+  idPrefix?: string;
+}
+
+/**
+ * The glint on its own: a soft diagonal band of light, clipped to the badge's
+ * shape, to lay over the badge at the same size. Decorative — its title says
+ * so, and the apps hide it from screen readers.
+ */
+export function badgeShineSvg(opts: BadgeShineOptions): string {
+  const { key } = opts;
+  if (!isBadgeKey(key)) throw new RangeError(`art: no badge art for key ${String(key)}`);
+  const phase = opts.phase ?? 0.5;
+  if (!Number.isFinite(phase) || phase < 0 || phase > 1) throw new RangeError(`art: phase must be 0–1, got ${String(phase)}`);
+  const size = checkSize(opts.size, 96);
+  const shape = SHAPES[BADGES[key].family];
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'glint', BADGES[key].family, n2(phase)));
+  const clip = dr.clip(polyPath(offset(shape.outline, -0.6)));
+  const band = dr.id('g');
+  dr.def(
+    linearAt(
+      band,
+      [
+        [0, '#ffffff', 0],
+        [0.5, '#ffffff', 0.62],
+        [1, '#ffffff', 0],
+      ],
+      -11,
+      0,
+      11,
+      0,
+    ),
+  );
+  const x = -34 + phase * 188;
+  dr.add(
+    `<g clip-path="url(#${clip})"><g transform="translate(${n(x)} 60) rotate(28)">` +
+      `<rect x="-11" y="-90" width="22" height="180" fill="url(#${band})"/>` +
+      `<rect x="13" y="-90" width="3.5" height="180" fill="#ffffff" fill-opacity="0.35"/></g></g>`,
+  );
+  return dr.svg(size, 'Shine');
 }

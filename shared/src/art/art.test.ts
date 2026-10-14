@@ -7,7 +7,10 @@ import {
   RANK_TIERS,
   SEASON_FRAME_INNER,
   SEASON_FRAME_SHINE,
+  SEASONS,
   SMALL_BADGE,
+  badgeShineSvg,
+  badgeShines,
   badgeSvg,
   leagueEmblemSvg,
   rankEmblemSvg,
@@ -242,6 +245,21 @@ describe('badgeSvg', () => {
     expect(svg).toContain('Fire &amp; &lt;b&gt;&quot;streak&quot;&lt;/b&gt;');
   });
 
+  it('has a glint for Zêr and Firûze (and the single badges that wear their borders), drawn as its own layer', () => {
+    expect(TIERS.map((tier) => badgeShines('ders', tier))).toEqual([false, false, true, true]);
+    expect(badgeShines('agire-newroze')).toBe(true);
+    expect(badgeShines('vegera')).toBe(false);
+    for (const family of BADGE_FAMILIES) {
+      const key = BADGE_KEYS.find((k) => BADGES[k].family === family) as BadgeKey;
+      const frames = [0, 0.25, 0.5, 0.75, 1].map((phase) => badgeShineSvg({ key, phase, size: 96 }));
+      for (const svg of frames) checkSvg(svg, 96);
+      expect(new Set(frames).size).toBe(5);
+      expect(badgeShineSvg({ key, phase: 0.25 })).toBe(frames[1]);
+    }
+    expect(() => badgeShineSvg({ key: 'agir', phase: 1.5 })).toThrow(RangeError);
+    expect(() => badgeShineSvg({ key: 'agir', phase: Number.NaN })).toThrow(RangeError);
+  });
+
   it('refuses what it cannot draw', () => {
     expect(() => badgeSvg({ key: 'night-owl' as BadgeKey })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', tier: 5 as BadgeTier })).toThrow(RangeError);
@@ -260,6 +278,8 @@ describe('ids across drawings', () => {
       ...RANK_TIERS.flatMap((tier) => [rankEmblemSvg({ tier }), rankEmblemSvg({ tier, division: 1 }), rankEmblemSvg({ tier, size: 40 })]),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier })),
       ...RANK_TIERS.flatMap((tier) => [seasonFrameSvg({ tier }), seasonFrameSvg({ tier, shine: true }), seasonFrameShineSvg({ tier })]),
+      ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, season: { name: 'payiz', year: 2026 } })),
+      ...BADGE_FAMILIES.map((family) => badgeShineSvg({ key: BADGE_KEYS.find((k) => BADGES[k].family === family) as BadgeKey })),
     ];
     for (const svg of new Set(drawings)) {
       walk(parse(svg), (e) => {
@@ -304,6 +324,24 @@ describe('rankEmblemSvg', () => {
   it('refuses an unknown tier or division', () => {
     expect(() => rankEmblemSvg({ tier: 'bronze' as never })).toThrow(RangeError);
     expect(() => rankEmblemSvg({ tier: 'gir', division: 4 as never })).toThrow(RangeError);
+  });
+
+  it('draws a season’s emblem with the season’s mark in place of the division', () => {
+    for (const tier of RANK_TIERS) {
+      for (const name of SEASONS) {
+        const svg = rankEmblemSvg({ tier, season: { name, year: 2027 } });
+        checkSvg(svg, 128);
+        expect(svg).not.toBe(rankEmblemSvg({ tier }));
+      }
+    }
+    // a season is told apart by its glyph and its year, and the division gives way to it
+    const spring27 = rankEmblemSvg({ tier: 'ciya', season: { name: 'bihar', year: 2027 } });
+    expect(rankEmblemSvg({ tier: 'ciya', season: { name: 'bihar', year: 2028 } })).not.toBe(spring27);
+    expect(rankEmblemSvg({ tier: 'ciya', season: { name: 'havin', year: 2027 } })).not.toBe(spring27);
+    expect(rankEmblemSvg({ tier: 'ciya', division: 1, season: { name: 'bihar', year: 2027 } })).toBe(spring27);
+    expect(spring27).toMatch(/>Çiya \(Mountain\) · Bihar 2027<\/title>/);
+    expect(() => rankEmblemSvg({ tier: 'ciya', season: { name: 'monsoon' as never, year: 2027 } })).toThrow(RangeError);
+    expect(() => rankEmblemSvg({ tier: 'ciya', season: { name: 'bihar', year: 27 } })).toThrow(RangeError);
   });
 });
 

@@ -5,13 +5,20 @@
  * frame, and the star over the peak.
  *
  * The frame grows with the tier as the landscape does: a plain ring for Deşt;
- * a gem, then woven diamonds, then wings of blades, a spike, a crown; rays
- * behind Stêrk. The division (III, II, I) is a plaque of drawn numerals under
- * the window — numerals, not colour, so it reads for everyone.
+ * a gem, then a woven chain of diamonds, wings of feathers, a spike, a summit
+ * through the frame; a halo behind Stêrk. The division (III, II, I) is a plaque
+ * of drawn numerals under the window — numerals, not colour, so it reads for
+ * everyone.
+ *
+ * A season's emblem — the peak tier a player reached, kept for good (R5) —
+ * swaps the division plaque for the season's own mark: its glyph (blossom,
+ * sun, leaf, snowflake, the same as the season event badges) and the year's
+ * last two figures, so last spring's Çiya is not this spring's.
  */
-import { circ } from './icons.js';
-import type { RankDivision, RankTier } from './keys.js';
-import { RANK_TIER_NAMES, RANK_TIERS } from './keys.js';
+import { paintIcon } from './iconpaint.js';
+import { ICONS, circ } from './icons.js';
+import type { RankDivision, RankTier, Season } from './keys.js';
+import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
 import type { Metal } from './palette.js';
 import { INK, RANK_METAL, RANK_SKY } from './palette.js';
 import { OUTLINE, bevel, diamondAt, dropShadow, inked, metalAcross, metalBox, numeral, ring } from './paint.js';
@@ -257,10 +264,46 @@ function bigStar(cx: number, cy: number, r: number): string {
 /** Under this many pixels an emblem is drawn in its small version: closer in, no plaque, no rays. */
 export const SMALL_EMBLEM = 56;
 
+/** Figures 0–9 as strokes on a unit box, for the season's year. */
+const FIGURES: readonly string[] = [
+  'M0,0H1V1H0Z',
+  'M0.15,0.25L0.55,0V1',
+  'M0,0H1V0.5H0V1H1',
+  'M0,0H1V1H0M0.2,0.5H1',
+  'M0,0V0.55H1M0.8,0V1',
+  'M1,0H0V0.5H1V1H0',
+  'M1,0H0V1H1V0.5H0',
+  'M0,0H1L0.45,1',
+  'M0,0H1V1H0ZM0,0.5H1',
+  'M1,0.5H0V0H1V1H0',
+];
+
+function figures(text: string, x: number, y: number, w: number, h: number, gap: number): string {
+  const out: string[] = [];
+  let at = x;
+  for (const ch of text) {
+    const f = FIGURES[Number(ch)];
+    if (f === undefined) continue;
+    out.push(f.replace(/([MLHV])([\d.]+)(?:,([\d.]+))?/g, (_m, cmd: string, a: string, b?: string) => {
+      const ax = Number(a);
+      if (cmd === 'H') return `H${n(at + ax * w)}`;
+      if (cmd === 'V') return `V${n(y + ax * h)}`;
+      return `${cmd}${n(at + ax * w)},${n(y + Number(b) * h)}`;
+    }));
+    at += w + gap;
+  }
+  return out.join('');
+}
+
 export interface RankEmblemOptions {
   tier: RankTier;
   /** 3 = III (lowest) … 1 = I; leave out for the tier alone (and always for Stêrk) */
   division?: RankDivision;
+  /**
+   * For a season's emblem: the season and its year, shown on the plaque in
+   * place of a division.
+   */
+  season?: { name: Season; year: number };
   /** pixels; default 128 */
   size?: number;
   /** the accessible label; defaults to "Çiya II (Mountain)" */
@@ -378,27 +421,55 @@ function plaque(dr: Drawing, m: Metal, count: number, cx: number, cy: number): s
   );
 }
 
+/** The season's plaque: its glyph and the year's last two figures. */
+function seasonPlaque(dr: Drawing, m: Metal, season: Season, year: number, cx: number, cy: number): string {
+  const w = 50;
+  const h = 17;
+  const d =
+    `M${n(cx - w / 2 - 5)},${n(cy)}L${n(cx - w / 2)},${n(cy - h / 2)}H${n(cx + w / 2)}L${n(cx + w / 2 + 5)},${n(cy)}` +
+    `L${n(cx + w / 2)},${n(cy + h / 2)}H${n(cx - w / 2)}Z`;
+  const ground = dr.id('p');
+  dr.def(linearAt(ground, [[0, m.dark], [1, m.deep]], 0, cy - h / 2, 0, cy + h / 2));
+  const draw = ICONS[season];
+  const glyph = draw ? `<g transform="translate(${n(cx - 12)} ${n(cy)}) scale(0.36)">${paintIcon(draw(), { dr, metal: m, small: true, locked: false })}</g>` : '';
+  const yy = String(((year % 100) + 100) % 100).padStart(2, '0');
+  const fig = `M${n(cx + 1.5)},${n(cy - 4.6)}L${n(cx + 0.6)},${n(cy - 2.2)}` + figures(yy, cx + 4, cy - 4.2, 4.6, 8.4, 3);
+  return (
+    inked(d, `url(#${ground})`, OUTLINE) +
+    `<path d="${d}" fill="none" stroke="${m.light}" stroke-width="0.9" stroke-opacity="0.7" transform="translate(${n(cx)} ${n(cy)}) scale(0.88) translate(${n(-cx)} ${n(-cy)})"/>` +
+    glyph +
+    `<path d="${fig}" fill="none" stroke="${INK}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/>` +
+    `<path d="${fig}" fill="none" stroke="${m.hi}" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>`
+  );
+}
+
 const ROMAN: Record<RankDivision, string> = { 3: 'III', 2: 'II', 1: 'I' };
 
 /** A rank tier's emblem, with its division if given. */
 export function rankEmblemSvg(opts: RankEmblemOptions): string {
-  const { tier, division } = opts;
+  const { tier, division, season } = opts;
   if (!RANK_TIERS.includes(tier)) throw new RangeError(`art: unknown rank tier ${String(tier)}`);
   if (division !== undefined && ![1, 2, 3].includes(division)) throw new RangeError(`art: division must be 1, 2 or 3, got ${String(division)}`);
+  if (season !== undefined && (!SEASONS.includes(season.name) || !Number.isInteger(season.year) || season.year < 2000 || season.year > 2999)) {
+    throw new RangeError(`art: season must be one of ${SEASONS.join(', ')} with a four-figure year`);
+  }
   const size = checkSize(opts.size, 128);
   const small = size < SMALL_EMBLEM;
-  const shown = tier === 'sterk' ? undefined : division;
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'rank', tier, shown, small));
+  const shown = tier === 'sterk' || season ? undefined : division;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'rank', tier, shown, small, season?.name, season?.year));
   const nm = RANK_TIER_NAMES[tier];
   if (small) {
     // the window and its frame, closer in; the division is in the title and beside it in the app
     const cy = tier === 'sterk' ? 65 : tier === 'lutke' || tier === 'ciya' ? 63 : 60;
     dr.add(`<g transform="translate(60 60) scale(1.38) translate(-60 ${-cy})">${emblemBody(dr, tier, 60, cy, true)}</g>`);
   } else {
-    const cy = shown === undefined ? 58 : 52;
-    dr.add(emblemBody(dr, tier, 60, tier === 'sterk' ? 64 : cy));
-    if (shown !== undefined) dr.add(plaque(dr, RANK_METAL[tier], shown, 60, 96));
+    const plaqued = shown !== undefined || season !== undefined;
+    const cy = plaqued ? 52 : 58;
+    dr.add(emblemBody(dr, tier, 60, tier === 'sterk' ? (plaqued ? 58 : 64) : cy));
+    if (season) dr.add(seasonPlaque(dr, RANK_METAL[tier], season.name, season.year, 60, tier === 'sterk' ? 102 : 96));
+    else if (shown !== undefined) dr.add(plaque(dr, RANK_METAL[tier], shown, 60, 96));
   }
-  const title = opts.title ?? `${nm.ku}${shown === undefined ? '' : ` ${ROMAN[shown]}`} (${nm.en})`;
+  const when = season ? ` · ${SEASON_NAMES[season.name].ku} ${season.year}` : '';
+  const title = opts.title ?? `${nm.ku}${shown === undefined ? '' : ` ${ROMAN[shown]}`} (${nm.en})${when}`;
   return dr.svg(size, title);
 }

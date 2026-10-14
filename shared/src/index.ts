@@ -234,6 +234,8 @@ export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provid
  */
 export {
   badgeSvg,
+  badgeShineSvg,
+  badgeShines,
   rankEmblemSvg,
   leagueEmblemSvg,
   seasonFrameSvg,
@@ -249,7 +251,9 @@ export {
   BADGE_FAMILIES as ART_BADGE_FAMILIES,
   RANK_BADGE as ART_RANK_BADGE,
   isBadgeKey as hasBadgeArt,
+  SEASONS as ART_SEASONS,
   type BadgeOptions,
+  type BadgeShineOptions,
   type BadgeState,
   type RankEmblemOptions,
   type LeagueEmblemOptions,
@@ -261,4 +265,5 @@ export {
   type RankTier as ArtRankTier,
   type RankDivision as ArtRankDivision,
   type LeagueTier as ArtLeagueTier,
+  type Season as ArtSeason,
 } from './art/index.js';

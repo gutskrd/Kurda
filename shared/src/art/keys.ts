@@ -38,6 +38,16 @@ export const RANK_TIER_NAMES: Record<RankTier, { ku: string; en: string }> = {
 export const RANK_DIVISIONS = [3, 2, 1] as const;
 export type RankDivision = (typeof RANK_DIVISIONS)[number];
 
+/** The seasons, in calendar order: Q1 Zivistan, Q2 Bihar, Q3 Havîn, Q4 Payîz (R5). */
+export const SEASONS = ['zivistan', 'bihar', 'havin', 'payiz'] as const;
+export type Season = (typeof SEASONS)[number];
+export const SEASON_NAMES: Record<Season, { ku: string; en: string }> = {
+  zivistan: { ku: 'Zivistan', en: 'Winter' },
+  bihar: { ku: 'Bihar', en: 'Spring' },
+  havin: { ku: 'Havîn', en: 'Summer' },
+  payiz: { ku: 'Payîz', en: 'Autumn' },
+};
+
 /** Learning-league tiers, lowest first (L1). */
 export const LEAGUE_TIERS = ['dilop', 'kani', 'cem', 'gol', 'derya', 'okyanus'] as const;
 export type LeagueTier = (typeof LEAGUE_TIERS)[number];

@@ -79,6 +79,40 @@ async function sheet(name, width, height, draw) {
   });
 }
 
+// ── a gallery: every badge at 128, at its own top look
+{
+  const keys = art.BADGE_KEYS;
+  const perRow = 8;
+  const cell = 150;
+  await sheet('badges-gallery', perRow * cell + 20, Math.ceil(keys.length / perRow) * (cell + 10) + 20, (theme) =>
+    keys
+      .map((key, i) => {
+        const x = 20 + (i % perRow) * cell;
+        const y = 20 + Math.floor(i / perRow) * (cell + 10);
+        const tier = art.BADGES[key].tiers > 1 ? 3 : 1;
+        return at(art.badgeSvg({ key, tier, size: 128 }), x, y) + label(key, x + 64, y + 146, theme, 11, theme.sub);
+      })
+      .join(''),
+  );
+}
+
+// ── the glint stepping across a Zêr and a Firûze badge
+{
+  const steps = [0, 0.2, 0.35, 0.5, 0.65, 0.8, 1];
+  await sheet('badge-glint', steps.length * 120 + 40, 2 * 120 + 40, () => {
+    const out = [];
+    [['agir', 3], ['tire-rast', 1]].forEach(([key, tier], r) => {
+      steps.forEach((phase, i) => {
+        const x = 20 + i * 120;
+        const y = 20 + r * 120;
+        out.push(at(art.badgeSvg({ key, tier, size: 104 }), x, y));
+        out.push(at(art.badgeShineSvg({ key, size: 104, phase }), x, y));
+      });
+    });
+    return out.join('');
+  });
+}
+
 // ── badges at the sizes the apps use them
 {
   const sample = ['agir', 'ders', 'peyvzan', 'rank-ciya', 'heval', 'agire-newroze', 'kewe-ciye', 'bilez', 'zivistan', 'hemereng'];
@@ -115,6 +149,16 @@ async function sheet(name, width, height, draw) {
         out.push(at(art.rankEmblemSvg({ tier, division, size: 136 }), x, y));
         out.push(label(`${tier} ${division ?? '—'}`, x + 68, y + 150, theme, 12, theme.sub));
       });
+    });
+    return out.join('');
+  });
+  // season emblems: a season's peak tier, kept for good
+  await sheet('ranks-seasons', art.RANK_TIERS.length * 150 + 40, 200, (theme) => {
+    const out = [];
+    art.RANK_TIERS.forEach((tier, i) => {
+      const season = art.SEASONS[i % 4];
+      out.push(at(art.rankEmblemSvg({ tier, season: { name: season, year: 2027 + Math.floor(i / 4) }, size: 136 }), 20 + i * 150, 20));
+      out.push(label(`${tier} · ${season}`, 20 + i * 150 + 68, 176, theme, 12, theme.sub));
     });
     return out.join('');
   });

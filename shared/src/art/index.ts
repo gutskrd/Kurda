@@ -7,7 +7,7 @@
  * no images, fonts or links, nothing fetched.
  */
 export * from './keys.js';
-export { badgeSvg, SMALL_BADGE, type BadgeOptions, type BadgeState } from './badges.js';
+export { badgeSvg, badgeShineSvg, badgeShines, SMALL_BADGE, type BadgeOptions, type BadgeShineOptions, type BadgeState } from './badges.js';
 export { rankEmblemSvg, SMALL_EMBLEM, type RankEmblemOptions } from './ranks.js';
 export { leagueEmblemSvg, SMALL_LEAGUE, type LeagueEmblemOptions } from './leagues.js';
 export {
