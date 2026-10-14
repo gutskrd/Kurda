@@ -1,0 +1,134 @@
+/* ---- Hevalo the deer ------------------------------------------------------ */
+/*
+ * Alive but calm: a slow bob, a blink every few seconds, an ear now and then.
+ * The board tips with the stars, springing a little as it goes. Every part
+ * turns about a point in the drawing's own coordinates (`view-box`), so the
+ * motion is the same at any size. Reduced motion stops all of it; the board's
+ * angle and the smile still change, only without moving to get there.
+ */
+.deer {
+  display: block;
+  overflow: visible;
+}
+.deer-body {
+  transform-box: view-box;
+  animation: deer-bob 2.8s ease-in-out infinite;
+}
+@keyframes deer-bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+.deer-eyes {
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: deer-blink 5.2s infinite;
+}
+@keyframes deer-blink {
+  0%,
+  60%,
+  64%,
+  80%,
+  84%,
+  100% {
+    transform: scaleY(1);
+  }
+  62%,
+  82% {
+    transform: scaleY(0.1);
+  }
+}
+.deer-ear {
+  transform-box: view-box;
+}
+.deer-ear-l {
+  transform-origin: 68px 72px;
+  animation: deer-ear-l 7.4s ease-in-out infinite;
+}
+.deer-ear-r {
+  transform-origin: 132px 72px;
+  animation: deer-ear-r 6.2s ease-in-out infinite;
+}
+@keyframes deer-ear-l {
+  0%,
+  70%,
+  76%,
+  100% {
+    transform: rotate(0);
+  }
+  72% {
+    transform: rotate(-14deg);
+  }
+}
+@keyframes deer-ear-r {
+  0%,
+  38%,
+  44%,
+  100% {
+    transform: rotate(0);
+  }
+  40% {
+    transform: rotate(14deg);
+  }
+}
+.deer-board {
+  transform-box: view-box;
+  transform-origin: 100px 150px;
+  transform: rotate(var(--deer-tilt, 0deg));
+  transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.deer-star {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.deer-star.is-on {
+  animation: deer-star 0.35s ease-out;
+}
+@keyframes deer-star {
+  0% {
+    transform: scale(0.6);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+.deer-letters {
+  font-family: var(--font-sans);
+}
+.deer-letters[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+/* a hop of joy: twice up, then back to the bob */
+.deer-cheer .deer-body {
+  animation:
+    deer-hop 0.42s ease-out 2,
+    deer-bob 2.8s ease-in-out 0.84s infinite;
+}
+@keyframes deer-hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-12px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .deer-body,
+  .deer-eyes,
+  .deer-ear,
+  .deer-star.is-on,
+  .deer-cheer .deer-body {
+    animation: none;
+  }
+  .deer-board {
+    transition: none;
+  }
+}
