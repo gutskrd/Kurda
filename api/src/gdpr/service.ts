@@ -213,7 +213,12 @@ export class GdprService {
     // off this week's league table at once (their earlier weeks stay, tied to
     // no name), their showcase gone from the profile nobody can open now, and
     // no badge push queued for an account that is closed
-    await executor.query(`UPDATE league_members SET left_at = now() WHERE user_id = $1 AND left_at IS NULL`, [userId]);
+    await executor.query(
+      `UPDATE league_members SET left_at = now()
+        WHERE user_id = $1 AND left_at IS NULL
+          AND cohort_id IN (SELECT id FROM league_cohorts WHERE NOT settled)`,
+      [userId],
+    );
     await executor.query(`DELETE FROM badge_showcase WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM badge_push_days WHERE user_id = $1`, [userId]);
     // what they wrote in the rating box or Send feedback is their words; the

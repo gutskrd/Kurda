@@ -366,7 +366,9 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
        JOIN users u ON u.id = p.user_id
        LEFT JOIN stories s ON s.id = g.story_id
       WHERE p.user_id = $1 AND NOT p.removed AND p.answered > 0 AND g.status = 'finished' AND ${NEWROZ_TITLE}
-        AND to_char(g.finished_at AT TIME ZONE COALESCE(u.timezone, 'UTC'), 'MM-DD') = '03-21'`,
+        -- a zone Postgres does not know reads as UTC rather than failing the count
+        AND to_char(g.finished_at AT TIME ZONE (CASE WHEN EXISTS (SELECT 1 FROM pg_timezone_names z WHERE z.name = u.timezone)
+                                                  THEN u.timezone ELSE 'UTC' END), 'MM-DD') = '03-21'`,
   ),
   seven_review_days: async (ctx) => ({ progress: longestRun(await ctx.practiceDays()) >= 7 ? 1 : 0 }),
 };
