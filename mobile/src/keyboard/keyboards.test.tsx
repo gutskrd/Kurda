@@ -109,7 +109,7 @@ describe('KeyboardGuide', () => {
     expect(screen.getByRole('radio', { name: 'Android' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByText('Kurdish (Latin)')).toBeTruthy();
     fireEvent.click(screen.getByRole('radio', { name: 'iPhone' }));
-    expect(screen.getByText(/iPhone has no Kurdish \(Kurmancî\) keyboard yet/)).toBeTruthy();
+    expect(screen.getByText(/No Kurdish \(Latin\) in the list\? Update your iPhone/)).toBeTruthy();
 
     const box = screen.getByLabelText('Type the letters here to try your keyboard');
     expect(screen.getByLabelText('ç, not yet')).toBeTruthy();

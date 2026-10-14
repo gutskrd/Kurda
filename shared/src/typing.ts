@@ -1020,12 +1020,13 @@ export interface KeyboardGuide {
 
 /**
  * How to add a Kurdish keyboard, per platform — two to four steps, from
- * research3-keyboards-review §1b. What there is to add differs: Android has
- * Kurdish (Latin) in Gboard; iPhone has a Soranî keyboard and no Kurmancî one;
- * Windows has Central Kurdish and no Latin Kurdish; a Mac's ABC – Extended
- * types all five; Linux has a Kurdish Latin Q layout. Where there is no
- * Kurdish keyboard to add, the guide says so and points at Hevalo's own
- * on-screen keys — it never sends anybody to another language's keyboard.
+ * research3-keyboards-review §1b. Kurmancî is "Kurdish (Latin)" where a device
+ * has it — Gboard on Android, and on newer iPhones and Macs — so each guide
+ * says to search for "Kurdish" and choose that, and says what to do when it
+ * is not in the list: update the iPhone, add ABC – Extended on a Mac (it types
+ * all five letters), or, on Windows, which offers only Central Kurdish
+ * (Soranî), use Hevalo's own on-screen keys. Linux has a Kurdish Latin Q
+ * layout. It never sends anybody to another language's keyboard.
  */
 export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   android: {
@@ -1076,12 +1077,23 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   ios: {
     kurmanci: [
       {
-        key: 'keyboardGuide.ios.noKurmanci',
-        en: 'iPhone has no Kurdish (Kurmancî) keyboard yet, so Hevalo has its own: with the on-screen keys on, tap ç ê î ş û above the text box.',
+        key: 'keyboardGuide.ios.openKeyboards',
+        en: 'Open {0} → {1} → {2} → {3}.',
+        ui: ['Settings', 'General', 'Keyboard', 'Keyboards'],
       },
       {
-        key: 'keyboardGuide.ios.holdKeys',
-        en: 'On the iPhone’s keyboard you can also touch and hold e, i, u or c to choose ê, î, û or ç.',
+        key: 'keyboardGuide.ios.addKurmanci',
+        en: 'Tap {0}, search for "Kurdish" and choose {1}.',
+        ui: ['Add New Keyboard', 'Kurdish (Latin)'],
+      },
+      {
+        key: 'keyboardGuide.ios.switch',
+        en: 'Tap the 🌐 key to switch between keyboards.',
+      },
+      {
+        key: 'keyboardGuide.ios.noLatin',
+        en: 'No Kurdish (Latin) in the list? Update your iPhone in {0} → {1} → {2}. Until then, Hevalo’s on-screen keys type ç ê î ş û.',
+        ui: ['Settings', 'General', 'Software Update'],
       },
     ],
     sorani: [
@@ -1104,12 +1116,22 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   windows: {
     kurmanci: [
       {
-        key: 'keyboardGuide.windows.noKurmanci',
-        en: 'Windows has no Kurdish (Kurmancî) keyboard yet, so Hevalo has its own: with the on-screen keys on, click ç ê î ş û above the text box.',
+        key: 'keyboardGuide.windows.open',
+        en: 'Open {0} → {1} → {2}.',
+        ui: ['Settings', 'Time & language', 'Language & region'],
       },
       {
-        key: 'keyboardGuide.windows.typeRest',
-        en: 'Type everything else on your own keyboard — each letter you click goes in where your cursor is.',
+        key: 'keyboardGuide.windows.addKurmanci',
+        en: 'Choose {0}, search for "Kurdish" and add {1}. ({2} is Soranî, not Kurmancî.)',
+        ui: ['Add a language', 'Kurdish (Latin)', 'Central Kurdish'],
+      },
+      {
+        key: 'keyboardGuide.windows.switchSorani',
+        en: 'Switch keyboards with Windows key + Space.',
+      },
+      {
+        key: 'keyboardGuide.windows.noLatin',
+        en: 'Not in the list? Windows doesn’t offer it yet, so use Hevalo’s on-screen keys for ç ê î ş û.',
       },
     ],
     sorani: [
@@ -1138,12 +1160,12 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.mac.kurmanci',
-        en: 'Click {0} and add {1}.',
-        ui: ['+', 'ABC – Extended'],
+        en: 'Click {0}, search for "Kurdish" and add {1}. Not there? Add {2} instead.',
+        ui: ['+', 'Kurdish (Latin)', 'ABC – Extended'],
       },
       {
         key: 'keyboardGuide.mac.typeKurmanci',
-        en: 'Then Option+6 followed by e, i or u types ê, î, û, and Option+c followed by c or s types ç or ş. (Holding down e, i or u also offers ê, î, û.)',
+        en: 'On ABC – Extended, Option+6 then e, i or u types ê, î, û, and Option+c then c or s types ç or ş.',
       },
       {
         key: 'keyboardGuide.mac.switch',

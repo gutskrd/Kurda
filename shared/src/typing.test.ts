@@ -733,16 +733,19 @@ describe('keyboard guides', () => {
     expect(names('linux', 'sorani')).toContain('Kurdish (Iraq, Arabic-Latin)');
   });
 
-  it('points a Kurmancî reader at a Kurdish keyboard or Hevalo’s own keys, never another language’s keyboard', () => {
+  it('points a Kurmancî reader at Kurdish (Latin), never another language’s keyboard', () => {
     for (const platform of KEYBOARD_PLATFORMS) {
       for (const step of KEYBOARD_GUIDES[platform].kurmanci) {
         expect(keyboardStepText(step), `${platform} ${step.key}`).not.toMatch(/Turkish|English/);
       }
     }
-    // where there is no Kurdish keyboard to add, the guide says so and offers the on-screen keys
-    for (const platform of ['ios', 'windows'] as const) {
-      expect(keyboardStepText(KEYBOARD_GUIDES[platform].kurmanci[0]!)).toMatch(/no Kurdish \(Kurmancî\) keyboard yet.*on-screen keys/);
+    for (const platform of ['android', 'ios', 'windows', 'mac'] as const) {
+      const names = KEYBOARD_GUIDES[platform].kurmanci.flatMap((s) => s.ui ?? []);
+      expect(names, platform).toContain('Kurdish (Latin)');
     }
+    // and says what to do when it is not in the list
+    expect(KEYBOARD_GUIDES.ios.kurmanci.at(-1)!.key).toBe('keyboardGuide.ios.noLatin');
+    expect(KEYBOARD_GUIDES.windows.kurmanci.at(-1)!.key).toBe('keyboardGuide.windows.noLatin');
   });
 
   it('puts a translated sentence’s placeholders back the same way', () => {
