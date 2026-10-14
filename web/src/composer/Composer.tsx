@@ -434,7 +434,16 @@ export function Composer({
           {mode === 'create' && <p className="cmp-hint">{t('composer.close.keepHint')}</p>}
           <div className="cmp-confirm-actions">
             {mode === 'create' && (
-              <button type="button" className="cmp-chip cmp-chip-strong" onClick={onClose} autoFocus>
+              <button
+                type="button"
+                className="cmp-chip cmp-chip-strong"
+                onClick={() => {
+                  // the last few keystrokes may still be waiting for the save timer
+                  if (userId) saveDraft(userId, draft);
+                  onClose();
+                }}
+                autoFocus
+              >
                 {t('composer.close.keep')}
               </button>
             )}

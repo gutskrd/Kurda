@@ -263,6 +263,17 @@ describe('the composer', () => {
     expect(localStorage.getItem(postDraftStorageKey(ME.id))).toBeNull();
   });
 
+  it('keeps the last words typed when Keep draft is pressed before the save timer runs', async () => {
+    await open();
+    await userEvent.type(box(), 'Hevalo');
+    await waitFor(() => expect(localStorage.getItem(postDraftStorageKey(ME.id))).toContain('Hevalo'));
+    // typed and closed straight away: the timer has not written this yet
+    await userEvent.type(box(), ' bijî');
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getByRole('button', { name: 'Keep draft' }));
+    expect(localStorage.getItem(postDraftStorageKey(ME.id))).toContain('Hevalo bijî');
+  });
+
   it('closes at once when there is nothing to lose', async () => {
     await open();
     await userEvent.keyboard('{Escape}');
