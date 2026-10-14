@@ -212,8 +212,8 @@ export * from './typing.js';
 export * from './feedback.js';
 
 /**
- * Hevalo the deer holding up a board, in layers that move on their own: one
- * drawing for the rating box and the keyboard guide on both apps.
+ * Hevalo the deer holding up a board: the board, its forelegs and where the
+ * mascot's picture goes, for the rating box and the keyboard guide on both apps.
  */
 export * from './deer.js';
 

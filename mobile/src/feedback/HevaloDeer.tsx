@@ -1,40 +1,25 @@
 import { useEffect, useId, useRef } from 'react';
-import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Image, Platform, StyleSheet, Text, View } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import {
-  DEER_BOARD_TEXT,
-  DEER_INK,
-  DEER_PIVOTS,
-  DEER_VIEW,
-  deerAntlers,
-  deerBoard,
-  deerCard,
-  deerEarLeft,
-  deerEarRight,
-  deerEyes,
-  deerFace,
-  deerSmileFor,
-  deerTiltFor,
-} from '@kurda/shared';
+import { DEER_BOARD_PIVOT, DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, deerBoard, deerCard, deerTiltFor } from '@kurda/shared';
+import MASCOT from '../../assets/mascot-deer.png';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 
 /**
- * Hevalo the deer — the logo's deer — holding up a wooden board.
+ * Hevalo the deer — the mascot from the app icon — holding up a wooden board.
  *
- * The drawing is shared with the browser (`@kurda/shared` deer.ts), so it is
- * one character on both: the logo's chunky antlers, leaf ears, big white eyes
- * and soft nose. It holds the rating board with its five stars, or a sign with
- * the letters it wants you to be able to type.
+ * The deer is the icon's own picture, so it is exactly the mascot; the board
+ * and the forelegs that hold it are drawn over it (`@kurda/shared` deer.ts),
+ * the same as in the browser. It holds the rating board with its five stars,
+ * or a sign with the letters it wants you to be able to type.
  *
- * Alive but calm: it bobs a little, blinks, and now and then twitches an ear.
- * As stars are chosen the board tips up and the smile grows — it never frowns,
- * because a low rating is somebody being kind enough to tell us, and a sad
- * mascot would make them feel bad for it (house guidance: no guilt-tripping
- * mascot). With Reduce Motion on, it simply stands still.
+ * Alive but calm: it bobs a little, and as stars are chosen the board tips up
+ * with a small hop — down a little with few, held up high with five, never a
+ * frown. With Reduce Motion on, it simply stands still.
  *
- * The parts that move are separate drawings stacked on top of each other, each
- * in its own Animated.View, because React Native animates views, not the
- * shapes inside an SVG. Every layer shares one frame, so they line up.
+ * The board is its own drawing over the picture, in its own Animated.View,
+ * because React Native animates views, not the shapes inside an SVG. Both use
+ * one frame, so they line up.
  */
 
 /** The drawing's own coordinates; the layers all use these. */
@@ -63,20 +48,14 @@ export function HevaloDeer({
   const stars = board.kind === 'stars' ? Math.max(0, Math.min(5, Math.round(board.stars))) : 4;
 
   const bob = useRef(new Animated.Value(0)).current;
-  const blink = useRef(new Animated.Value(1)).current;
-  const earL = useRef(new Animated.Value(0)).current;
-  const earR = useRef(new Animated.Value(0)).current;
   const tilt = useRef(new Animated.Value(tiltFor(stars))).current;
   const hop = useRef(new Animated.Value(0)).current;
   const native = Platform.OS !== 'web';
 
-  // the idle loop: a slow bob, a blink every few seconds, an ear now and then
+  // the idle loop: a slow bob
   useEffect(() => {
     if (reduce) {
       bob.setValue(0);
-      blink.setValue(1);
-      earL.setValue(0);
-      earR.setValue(0);
       return;
     }
     const bobLoop = Animated.loop(
@@ -85,39 +64,9 @@ export function HevaloDeer({
         Animated.timing(bob, { toValue: 0, duration: 1300, easing: Easing.inOut(Easing.sin), useNativeDriver: native }),
       ]),
     );
-    const blinkLoop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(3200),
-        Animated.timing(blink, { toValue: 0.1, duration: 70, useNativeDriver: native }),
-        Animated.timing(blink, { toValue: 1, duration: 90, useNativeDriver: native }),
-        Animated.delay(1700),
-        Animated.timing(blink, { toValue: 0.1, duration: 70, useNativeDriver: native }),
-        Animated.timing(blink, { toValue: 1, duration: 90, useNativeDriver: native }),
-      ]),
-    );
-    const twitch = (ear: Animated.Value, dir: number) =>
-      Animated.sequence([
-        Animated.timing(ear, { toValue: dir, duration: 90, useNativeDriver: native }),
-        Animated.timing(ear, { toValue: 0, duration: 160, easing: Easing.out(Easing.quad), useNativeDriver: native }),
-      ]);
-    const earLoop = Animated.loop(
-      Animated.sequence([
-        Animated.delay(2600),
-        twitch(earR, 1),
-        Animated.delay(3900),
-        twitch(earL, -1),
-        Animated.delay(800),
-      ]),
-    );
     bobLoop.start();
-    blinkLoop.start();
-    earLoop.start();
-    return () => {
-      bobLoop.stop();
-      blinkLoop.stop();
-      earLoop.stop();
-    };
-  }, [reduce, bob, blink, earL, earR, native]);
+    return () => bobLoop.stop();
+  }, [reduce, bob, native]);
 
   // more stars, the board tips up a little further, with a small hop each time
   useEffect(() => {
@@ -163,43 +112,22 @@ export function HevaloDeer({
       <View style={StyleSheet.absoluteFill}>{layer(deerCard())}</View>
 
       <Animated.View style={[StyleSheet.absoluteFill, { transform: [{ translateY: lift }] }]}>
-        <View style={StyleSheet.absoluteFill}>{layer(deerAntlers(id))}</View>
+        <Image
+          source={MASCOT}
+          resizeMode="contain"
+          style={{
+            position: 'absolute',
+            left: (DEER_PICTURE.x / VB_W) * size,
+            top: (DEER_PICTURE.y / VB_H) * height,
+            width: (DEER_PICTURE.w / VB_W) * size,
+            height: (DEER_PICTURE.h / VB_H) * height,
+          }}
+        />
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
             {
-              transformOrigin: originOf(DEER_PIVOTS.earLeft),
-              transform: [{ rotate: earL.interpolate({ inputRange: [-1, 0], outputRange: ['-14deg', '0deg'] }) }],
-            },
-          ]}
-        >
-          {layer(deerEarLeft(id))}
-        </Animated.View>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              transformOrigin: originOf(DEER_PIVOTS.earRight),
-              transform: [{ rotate: earR.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '14deg'] }) }],
-            },
-          ]}
-        >
-          {layer(deerEarRight(id))}
-        </Animated.View>
-        <View style={StyleSheet.absoluteFill}>{layer(deerFace(id, stars))}</View>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { transformOrigin: originOf(DEER_PIVOTS.eyes), transform: [{ scaleY: blink }] },
-          ]}
-        >
-          {layer(deerEyes(id))}
-        </Animated.View>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              transformOrigin: originOf(DEER_PIVOTS.board),
+              transformOrigin: originOf(DEER_BOARD_PIVOT),
               transform: [{ rotate: tilt.interpolate({ inputRange: [-10, 10], outputRange: ['-10deg', '10deg'] }) }],
             },
           ]}
@@ -238,9 +166,3 @@ export function HevaloDeer({
  * none chosen, level at three, held up at a jaunty angle at five.
  */
 export const tiltFor = deerTiltFor;
-
-/**
- * How far the corners of the mouth lift, by stars: a small kind smile with
- * none, a big open one at five. Never below zero — the deer does not frown.
- */
-export const smileFor = deerSmileFor;

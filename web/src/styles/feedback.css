@@ -1,10 +1,10 @@
 /* ---- Hevalo the deer ------------------------------------------------------ */
 /*
- * Alive but calm: a slow bob, a blink every few seconds, an ear now and then.
- * The board tips with the stars, springing a little as it goes. Every part
- * turns about a point in the drawing's own coordinates (`view-box`), so the
- * motion is the same at any size. Reduced motion stops all of it; the board's
- * angle and the smile still change, only without moving to get there.
+ * Alive but calm: a slow bob, and the board tips with the stars, springing a
+ * little as it goes. The board turns about a point in the drawing's own
+ * coordinates (`view-box`), so the motion is the same at any size. Reduced
+ * motion stops all of it; the board's angle still changes, only without
+ * moving to get there.
  */
 .deer {
   display: block;
@@ -21,58 +21,6 @@
   }
   50% {
     transform: translateY(-4px);
-  }
-}
-.deer-eyes {
-  transform-box: fill-box;
-  transform-origin: center;
-  animation: deer-blink 5.2s infinite;
-}
-@keyframes deer-blink {
-  0%,
-  60%,
-  64%,
-  80%,
-  84%,
-  100% {
-    transform: scaleY(1);
-  }
-  62%,
-  82% {
-    transform: scaleY(0.1);
-  }
-}
-.deer-ear {
-  transform-box: view-box;
-}
-.deer-ear-l {
-  transform-origin: 64px 70px;
-  animation: deer-ear-l 7.4s ease-in-out infinite;
-}
-.deer-ear-r {
-  transform-origin: 136px 70px;
-  animation: deer-ear-r 6.2s ease-in-out infinite;
-}
-@keyframes deer-ear-l {
-  0%,
-  70%,
-  76%,
-  100% {
-    transform: rotate(0);
-  }
-  72% {
-    transform: rotate(-14deg);
-  }
-}
-@keyframes deer-ear-r {
-  0%,
-  38%,
-  44%,
-  100% {
-    transform: rotate(0);
-  }
-  40% {
-    transform: rotate(14deg);
   }
 }
 .deer-board {
@@ -341,8 +289,6 @@
     transform: none;
   }
   .deer-body,
-  .deer-eyes,
-  .deer-ear,
   .deer-star.is-on,
   .deer-cheer .deer-body {
     animation: none;

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { render } from '@testing-library/react';
-import { HevaloDeer, smileFor, tiltFor } from './HevaloDeer';
+import { HevaloDeer, tiltFor } from './HevaloDeer';
 
 describe('Hevalo the deer', () => {
   it('is decoration: hidden from screen readers, never in the tab order', () => {
@@ -16,14 +16,15 @@ describe('Hevalo the deer', () => {
     expect(container.querySelectorAll('.deer-star.is-on')).toHaveLength(3);
   });
 
-  it('tips the board up and smiles more with every star — and never frowns', () => {
-    for (let s = 0; s < 5; s++) {
-      expect(tiltFor(s + 1)).toBeGreaterThan(tiltFor(s));
-      expect(smileFor(s + 1)).toBeGreaterThan(smileFor(s));
-    }
-    expect(smileFor(0)).toBeGreaterThan(0);
-    expect(smileFor(-3)).toBe(smileFor(0));
+  it('tips the board up with every star', () => {
+    for (let s = 0; s < 5; s++) expect(tiltFor(s + 1)).toBeGreaterThan(tiltFor(s));
+    expect(tiltFor(-3)).toBe(tiltFor(0));
     expect(tiltFor(9)).toBe(tiltFor(5));
+  });
+
+  it('is the mascot itself, holding the board', () => {
+    const { container } = render(<HevaloDeer board={{ kind: 'stars', stars: 2 }} />);
+    expect(container.querySelector('image')).toHaveAttribute('href', '/mascot-deer.png');
   });
 
   it('holds a sign with letters, in their language and direction', () => {

@@ -1,33 +1,21 @@
 import { useId } from 'react';
-import {
-  DEER_BOARD_TEXT,
-  DEER_INK,
-  DEER_VIEW,
-  deerAntlers,
-  deerBoard,
-  deerCard,
-  deerEarLeft,
-  deerEarRight,
-  deerEyes,
-  deerFace,
-  deerSmileFor,
-  deerTiltFor,
-} from '@kurda/shared';
+import { DEER_BOARD_TEXT, DEER_INK, DEER_PICTURE, DEER_VIEW, deerBoard, deerCard, deerTiltFor } from '@kurda/shared';
+
+/** The mascot itself, cut free of the icon's card (see `@kurda/shared` deer.ts). */
+const MASCOT = '/mascot-deer.png';
 
 /**
- * Hevalo the deer — the logo's deer — holding up a wooden board.
+ * Hevalo the deer — the mascot from the app icon — holding up a wooden board.
  *
- * The drawing is shared with the phone (`@kurda/shared` deer.ts), so it is one
- * character on both: the logo's chunky antlers, leaf ears, big white eyes and
- * soft nose. It holds the rating board with its five stars, or a sign with the
- * letters it wants you to be able to type.
+ * The deer is the icon's own picture, so it is exactly the mascot; the board
+ * and the forelegs that hold it are drawn over it (`@kurda/shared` deer.ts),
+ * the same as on the phone. It holds the rating board with its five stars, or
+ * a sign with the letters it wants you to be able to type.
  *
- * Alive but calm: it bobs a little, blinks, and now and then twitches an ear
- * (CSS keyframes in feedback.css). As stars are chosen the board tips up and
- * the smile grows — it never frowns, because a low rating is somebody being
- * kind enough to tell us, and a sad mascot would make them feel bad for it
- * (house guidance: no guilt-tripping mascot). With reduced motion it stands
- * still, and the board and smile simply change.
+ * Alive but calm: it bobs a little (CSS keyframes in feedback.css), and as
+ * stars are chosen the board tips up — down a little with few, held up high
+ * with five, never a frown. With reduced motion it stands still, and the
+ * board simply changes.
  *
  * Decorative: the words around it say everything it does, so it is hidden from
  * assistive technology.
@@ -40,12 +28,6 @@ export type DeerBoard = { kind: 'stars'; stars: number } | { kind: 'letters'; le
  * none chosen, level at three, held up at a jaunty angle at five.
  */
 export const tiltFor = deerTiltFor;
-
-/**
- * How far the corners of the mouth lift, by stars: a small kind smile with
- * none, a big open one at five. Never below zero — the deer does not frown.
- */
-export const smileFor = deerSmileFor;
 
 /** A group drawn from the shared deer's markup. */
 function Layer({ markup, className, style }: { markup: string; className?: string; style?: React.CSSProperties }): React.JSX.Element {
@@ -80,11 +62,7 @@ export function HevaloDeer({
       {/* the lilac card the logo's deer sits on, as a soft disc that stays put */}
       <Layer markup={deerCard()} />
       <g className="deer-body">
-        <Layer markup={deerAntlers(id)} />
-        <Layer className="deer-ear deer-ear-l" markup={deerEarLeft(id)} />
-        <Layer className="deer-ear deer-ear-r" markup={deerEarRight(id)} />
-        <Layer markup={deerFace(id, stars)} />
-        <Layer className="deer-eyes" markup={deerEyes(id)} />
+        <image className="deer-mascot" href={MASCOT} x={DEER_PICTURE.x} y={DEER_PICTURE.y} width={DEER_PICTURE.w} height={DEER_PICTURE.h} />
         {/* the board, held up by both forelegs; it tips with the stars */}
         <g className="deer-board" style={{ ['--deer-tilt' as string]: `${tiltFor(stars)}deg` }}>
           <Layer markup={deerBoard(id, board.kind === 'stars' ? { kind: 'stars', stars } : { kind: 'letters' })} />
