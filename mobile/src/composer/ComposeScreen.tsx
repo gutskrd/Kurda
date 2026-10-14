@@ -289,12 +289,29 @@ export function ComposeScreen({
     setReady(true);
   };
 
-  // the draft is saved a moment after each change, only for a new post
+  // The draft is saved a moment after each change, only for a new post. Once
+  // the post has gone up or the draft was deleted, a save still waiting would
+  // write the words straight back — and the published post would return as a
+  // draft next time, its pictures' keys already used — so both stop it first.
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const discarded = useRef(false);
   useEffect(() => {
-    if (!ready || mode !== 'new' || !user) return;
-    const timer = setTimeout(() => void saveDraft(user.id, toStoredDraft(state), store), 500);
+    if (!ready || mode !== 'new' || !user || discarded.current) return;
+    const timer = setTimeout(() => {
+      saveTimer.current = null;
+      if (!discarded.current) void saveDraft(user.id, toStoredDraft(state), store);
+    }, 500);
+    saveTimer.current = timer;
     return () => clearTimeout(timer);
   }, [ready, mode, state, user, store]);
+
+  /** No more saving: the draft is done with. */
+  const forgetDraft = async () => {
+    discarded.current = true;
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    saveTimer.current = null;
+    if (user) await clearDraft(user.id, store);
+  };
 
   // ---- what can be posted ---------------------------------------------------
 
@@ -368,7 +385,7 @@ export function ComposeScreen({
       return;
     }
     if (mode === 'new') {
-      if (user) await clearDraft(user.id, store);
+      await forgetDraft();
       for (const p of state.pictures) void dropPicture(p.localUri);
     }
     onPosted?.(res.data);
@@ -391,7 +408,7 @@ export function ComposeScreen({
 
   const deleteDraft = async () => {
     setClosing(false);
-    if (user) await clearDraft(user.id, store);
+    await forgetDraft();
     for (const p of state.pictures) void dropPicture(p.localUri);
     onExit();
   };

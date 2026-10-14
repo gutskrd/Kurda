@@ -53,6 +53,9 @@ function pictures(...uris: string[]) {
   return { pick, upload, pending, done };
 }
 
+/** Longer than the draft's save delay, so a save still waiting would have happened. */
+const pastSaveDelay = () => new Promise((resolve) => setTimeout(resolve, 600));
+
 const postButton = () => screen.getByRole('button', { name: 'Post' });
 const disabled = (el: HTMLElement) => el.getAttribute('aria-disabled') === 'true';
 
@@ -82,6 +85,20 @@ describe('writing a post', () => {
       path: '/library/posts',
       body: { type: 'gotin', body: 'Silav li we!' },
     });
+    expect(store.data.has(KEY)).toBe(false);
+  });
+
+  it('does not save a post that went up straight after the last letter back as a draft', async () => {
+    const client = fakeClient({ [DRAFTS]: ok({ posts: [] }), 'POST /library/posts': ok(created({ body: 'Zû' })) });
+    testAuth.client = client;
+    const store = memoryStore();
+    const onExit = vi.fn();
+    renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
+    fireEvent.change(await screen.findByLabelText('Your post'), { target: { value: 'Zû' } });
+    // Post at once, while the save for that last letter is still waiting
+    fireEvent.click(postButton());
+    await waitFor(() => expect(onExit).toHaveBeenCalled());
+    await pastSaveDelay();
     expect(store.data.has(KEY)).toBe(false);
   });
 
@@ -250,6 +267,8 @@ describe('drafts', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Delete draft' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
+    // the save that was waiting when Delete was tapped does not bring it back
+    await pastSaveDelay();
     expect(store.data.has(KEY)).toBe(false);
   });
 
