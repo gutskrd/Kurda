@@ -256,6 +256,15 @@ describe('the composer', () => {
     expect(box()).toHaveValue('Silav');
   });
 
+  it('keeps its own words for a bare MUTED, which is a group’s mute and never a post’s', async () => {
+    answers['POST /library/posts'] = () => jsonResponse(403, { code: 'MUTED', message: 'muted' });
+    await open();
+    await userEvent.type(box(), 'Silav');
+    await userEvent.click(postButton());
+    expect(await screen.findByRole('alert')).toHaveTextContent('You can’t post right now.');
+    expect(screen.queryByRole('link', { name: 'See your account standing' })).toBeNull();
+  });
+
   it('keeps what you wrote on this device, brings it back, and asks before closing', async () => {
     await open();
     await userEvent.type(box(), 'Half a thought');

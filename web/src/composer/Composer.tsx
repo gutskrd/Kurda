@@ -25,9 +25,8 @@ import { ComposerDialog } from './ComposerDialog';
 import { OldDrafts } from './OldDrafts';
 import { PictureDetails, PictureTiles, type ComposerPicture } from './PictureTiles';
 import { clearDraft, loadDraft, saveDraft } from './draftStore';
-import { composerErrorText, problemText } from './errors';
+import { accountLimitOf, composerErrorText, problemText } from './errors';
 import { SendError } from '../reports/SendError';
-import { restrictionOf } from '../reports/restriction';
 import { textDir } from './textDir';
 import type { ComposedPost, UploadedPicture } from './types';
 import type { ApiError } from '../lib/types';
@@ -681,7 +680,7 @@ export function Composer({
               {blocker ?? ''}
             </p>
             {error &&
-              (restrictionOf(error) ? (
+              (accountLimitOf(error) ? (
                 <SendError error={error} className="cmp-why" />
               ) : (
                 <p className="cmp-why cmp-why-error" role="alert">

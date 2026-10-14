@@ -1,7 +1,7 @@
 import type { PostProblem } from '@kurda/shared';
 import type { MessageKey } from '../i18n/en';
 import { describeError } from '../lib/api';
-import { restrictionOf } from '../reports/restriction';
+import { restrictionOf, type Restriction } from '../reports/restriction';
 import type { ApiError } from '../lib/types';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -40,9 +40,19 @@ const CODE_KEY: Record<string, MessageKey> = {
   MEDIA_UPLOAD_FAILED: 'composer.upload.failed',
 };
 
+/**
+ * A limit on the account behind a refused post or picture (reports/restriction.ts).
+ * A bare MUTED is a group's own mute there, which a post or a picture never
+ * meets; it keeps the composer's own words.
+ */
+export function accountLimitOf(error: ApiError): Restriction | null {
+  const restriction = restrictionOf(error);
+  return restriction && restriction.kind !== 'groupMuted' ? restriction : null;
+}
+
 export function composerErrorText(error: ApiError, t: Translate): string {
-  // a limit on the account says what it stops and until when (reports/restriction.ts)
-  if (restrictionOf(error)) return describeError(error, t);
+  // a limit on the account says what it stops and until when
+  if (accountLimitOf(error)) return describeError(error, t);
   const key = error.code ? CODE_KEY[error.code] : undefined;
   // a rate limit with a countdown says the countdown, which describeError does
   if (key && !(error.kind === 'rate_limited' && error.retryAfterSec)) return t(key);

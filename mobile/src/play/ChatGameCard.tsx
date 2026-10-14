@@ -137,16 +137,9 @@ export function ChatGameCard({
   const offer = cardAction(card);
   const action = offer ? (offer.kind === 'enter' ? t('play.card.enter') : t('play.card.join')) : null;
 
-  return (
-    <Pressable
-      onLongPress={onReport}
-      delayLongPress={350}
-      disabled={!onReport}
-      style={[styles.card, { backgroundColor: colors.glassFill }]}
-      accessible={!action}
-      accessibilityLabel={t('play.card.label', { game: name, state })}
-      {...(action ? {} : report)}
-    >
+  // the card's own words and its Join: drawn the same whether or not it can be reported
+  const content = (
+    <>
       <View style={styles.head}>
         <View style={[styles.icon, { backgroundColor: colors.controlTrack }]}>
           <Icon name={GAME_ICON[game]} size={20} color={colors.primary} />
@@ -184,7 +177,26 @@ export function ChatGameCard({
           <Text style={[styles.buttonText, { color: offer?.prominent ? colors.textOnPrimary : colors.primary }]}>{action}</Text>
         </Pressable>
       ) : null}
+    </>
+  );
+  const cardStyle = [styles.card, { backgroundColor: colors.glassFill }];
+  const label = t('play.card.label', { game: name, state });
+  // someone else's card reports its message on a long press; your own is a plain surface, not a control
+  return onReport ? (
+    <Pressable
+      onLongPress={onReport}
+      delayLongPress={350}
+      style={cardStyle}
+      accessible={!action}
+      accessibilityLabel={label}
+      {...(action ? {} : report)}
+    >
+      {content}
     </Pressable>
+  ) : (
+    <View style={cardStyle} accessible={!action} accessibilityLabel={label}>
+      {content}
+    </View>
   );
 }
 
