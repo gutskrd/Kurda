@@ -80,13 +80,15 @@ const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
     { k: 'f', d: 'M-21,12C-21,2 -13,-4 -5,-4C3,-4 10,3 11,12C3,17 -13,17 -21,12Z' },
     { k: 'h', d: 'M-16,4C-14.5,-0.5 -10.5,-2.6 -6.6,-2.8C-10,-0.8 -12.6,2.2 -13.6,5.6Z', o: 0.6, fine: true },
   ],
-  // Zozan, the high pasture: peaks behind, a meadow and its stream in front
+  // Zozan, the high pasture: snow peaks behind, the summer meadow under them and a herder's tent on it
   zozan: () => [
-    { k: 'a', d: 'M-20,12L-10,-10L-3,-2L6,-16L20,10Z' },
-    { k: 'w', d: 'M6,-16L2.2,-10L4.6,-10.8L6.4,-9L8.4,-11L10,-10.2Z' },
-    { k: 'w', d: 'M-10,-10L-12.8,-5.6L-10.6,-6.2L-9,-5L-7.4,-6.4Z' },
-    { k: 'f', d: 'M-21,13C-15,4 -4,2 6,3.5C13,4.5 18,7 21,10C14,18 -12,19 -21,13Z' },
-    { k: 'l', d: 'M2,14C-1,11 7,9 4,6', w: 2, c: 'water' },
+    { k: 'a', d: 'M-21,10L-9,-13L-3,-5L7,-18L21,10Z' },
+    { k: 'w', d: 'M7,-18L3.2,-13L5.4,-13.8L7.2,-11.8L9,-13.8L10.6,-12.8Z' },
+    { k: 'w', d: 'M-9,-13L-11.6,-8.6L-9.8,-9.4L-8.4,-8L-6.2,-9Z' },
+    { k: 'f', d: 'M-21,12C-10,6.5 10,6.5 21,12C21,15.6 18,18 13,18H-13C-18,18 -21,15.6 -21,12Z' },
+    { k: 'f', d: 'M-14,13L-12,5L-7,2.4L-3.5,4.2L0,2.4L5,5L7,13Z' },
+    { k: 'k', d: 'M-5.2,13L-3.5,7.4L-1.8,13Z' },
+    { k: 'h', d: 'M-12,5L-7,2.4L-3.5,4.2L0,2.4L5,5L4.4,6.4L0,4.2L-3.5,6L-7,4.2L-11.4,6.4Z', o: 0.5, fine: true },
   ],
   // Çiya, the mountain: one great peak, its lit face and its shaded face, and snow
   ciya: () => [
