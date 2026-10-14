@@ -181,6 +181,15 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect(bad.statusCode).toBe(400);
   });
 
+  it('says whether the person is a minor, an adult, or has no age on the account', async () => {
+    const id = await reg(`age${suffix}`.slice(0, 20), '10.101.0.7');
+    expect((await svc.detail(id))!.age).toBe('adult');
+    await pool.query(`UPDATE users SET birth_year = extract(year FROM now())::int - 15, birth_month = 1 WHERE id = $1`, [id]);
+    expect((await svc.detail(id))!.age).toBe('minor');
+    await pool.query(`UPDATE users SET birth_year = NULL, birth_month = NULL WHERE id = $1`, [id]);
+    expect((await svc.detail(id))!.age).toBe('unknown');
+  });
+
   it('refuses actions on an unknown user', async () => {
     expect(await svc.warn(adminId, '00000000-0000-0000-0000-000000000000', 'x')).toEqual({ ok: false, code: 'NOT_FOUND' });
     expect(await svc.detail('00000000-0000-0000-0000-000000000000')).toBeNull();

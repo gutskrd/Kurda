@@ -1,8 +1,9 @@
 import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
-import type { AdminUserModeration, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
+import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES } from './roles.js';
+import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
 import { SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
@@ -50,6 +51,8 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   displayName: string | null;
   roles: string[];
   createdAt: Date;
+  /** minor, adult, or no birth year on the account — what may be done to and shown about them depends on it */
+  age: AgeBadge;
   ban: BanState;
   bannedUntil: Date | null;
   mutedUntil: Date | null;
@@ -185,8 +188,10 @@ export class UserAdminService {
     const u = await this.pool.query<{
       id: string; username: string; email: string; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
+      age_known: boolean; minor: boolean;
     }>(
       `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until,
+              birth_year IS NOT NULL AS age_known, ${minorSql('users')} AS minor,
               CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
       [userId],
@@ -219,6 +224,7 @@ export class UserAdminService {
       displayName: user.display_name,
       roles: user.roles,
       createdAt: user.created_at,
+      age: !user.age_known ? 'unknown' : user.minor ? 'minor' : 'adult',
       ban: banState(new Date(), user.banned_at, user.banned_until),
       bannedUntil: user.banned_until,
       mutedUntil: user.muted_until,
