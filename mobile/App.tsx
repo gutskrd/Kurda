@@ -33,6 +33,7 @@ import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
+import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
@@ -468,6 +469,8 @@ function Root() {
   return (
     <Entrance>
       <SignedInRoot />
+      {/* the one-time rating box (and, rarely, the store's own prompt) after a finished game */}
+      <GameFeedbackHost />
     </Entrance>
   );
 }

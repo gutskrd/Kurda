@@ -1036,6 +1036,31 @@ export type TranslationKey =
   | 'games.race.accents'
   | 'games.race.accentNudge'
   | 'games.race.accentNudgeAction'
+  | 'appFeedback.question'
+  | 'appFeedback.settingsTitle'
+  | 'appFeedback.sendRow'
+  | 'appFeedback.rateRow'
+  | 'appFeedback.stars.1'
+  | 'appFeedback.stars.2'
+  | 'appFeedback.stars.3'
+  | 'appFeedback.stars.4'
+  | 'appFeedback.stars.5'
+  | 'appFeedback.improve'
+  | 'appFeedback.thanksLove'
+  | 'appFeedback.lovePlaceholder'
+  | 'appFeedback.loveLabel'
+  | 'appFeedback.improvePlaceholder'
+  | 'appFeedback.improveLabel'
+  | 'appFeedback.send'
+  | 'appFeedback.notNow'
+  | 'appFeedback.thanksRead'
+  | 'appFeedback.category.lessons'
+  | 'appFeedback.category.games'
+  | 'appFeedback.category.stories'
+  | 'appFeedback.category.bugs'
+  | 'appFeedback.category.tooHard'
+  | 'appFeedback.category.tooEasy'
+  | 'appFeedback.category.other'
   // ---- end mobile-race-rating-posting ----
   | 'lesson.speak.rateRetry';
 
@@ -2037,6 +2062,31 @@ const en: Catalog = {
   'games.race.accents': 'Accents: {right} of {total} typed with their accent',
   'games.race.accentNudge': 'Accents giving you trouble? I can show you how to get them on your keyboard.',
   'games.race.accentNudgeAction': 'Show me',
+  'appFeedback.question': 'How are you enjoying Hevalo?',
+  'appFeedback.settingsTitle': 'Send feedback',
+  'appFeedback.sendRow': 'Send feedback',
+  'appFeedback.rateRow': 'Rate Hevalo',
+  'appFeedback.stars.1': '1 star',
+  'appFeedback.stars.2': '2 stars',
+  'appFeedback.stars.3': '3 stars',
+  'appFeedback.stars.4': '4 stars',
+  'appFeedback.stars.5': '5 stars',
+  'appFeedback.improve': 'Thanks for telling us — what could be better?',
+  'appFeedback.thanksLove': 'Thank you! 💛',
+  'appFeedback.lovePlaceholder': 'What do you love? (optional)',
+  'appFeedback.loveLabel': 'What do you love?',
+  'appFeedback.improvePlaceholder': 'Tell us more (optional)',
+  'appFeedback.improveLabel': 'What could be better?',
+  'appFeedback.send': 'Send',
+  'appFeedback.notNow': 'Not now',
+  'appFeedback.thanksRead': 'Thank you — we read every message.',
+  'appFeedback.category.lessons': 'Lessons',
+  'appFeedback.category.games': 'Games',
+  'appFeedback.category.stories': 'Stories',
+  'appFeedback.category.bugs': 'Bugs',
+  'appFeedback.category.tooHard': 'Too hard',
+  'appFeedback.category.tooEasy': 'Too easy',
+  'appFeedback.category.other': 'Something else',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -3036,6 +3086,31 @@ const ku: Catalog = {
   'games.race.accents': 'Nîşan: {right} ji {total} bi nîşana xwe hatin nivîsîn',
   'games.race.accentNudge': 'Nîşan zehmet in? Ez dikarim nîşanî te bidim ka çawa wan bixî klavyeya xwe.',
   'games.race.accentNudgeAction': 'Nîşanî min bide',
+  'appFeedback.question': 'Tu Hevalo çawa dibînî?',
+  'appFeedback.settingsTitle': 'Nêrîna xwe bişîne',
+  'appFeedback.sendRow': 'Nêrîna xwe bişîne',
+  'appFeedback.rateRow': 'Hevalo binirxîne',
+  'appFeedback.stars.1': '1 stêrk',
+  'appFeedback.stars.2': '2 stêrk',
+  'appFeedback.stars.3': '3 stêrk',
+  'appFeedback.stars.4': '4 stêrk',
+  'appFeedback.stars.5': '5 stêrk',
+  'appFeedback.improve': 'Spas ku te ji me re got — çi dikare baştir be?',
+  'appFeedback.thanksLove': 'Spas! 💛',
+  'appFeedback.lovePlaceholder': 'Tu ji çi hez dikî? (ne mecbûrî ye)',
+  'appFeedback.loveLabel': 'Tu ji çi hez dikî?',
+  'appFeedback.improvePlaceholder': 'Zêdetir ji me re bêje (ne mecbûrî ye)',
+  'appFeedback.improveLabel': 'Çi dikare baştir be?',
+  'appFeedback.send': 'Bişîne',
+  'appFeedback.notNow': 'Ne niha',
+  'appFeedback.thanksRead': 'Spas — em her peyamê dixwînin.',
+  'appFeedback.category.lessons': 'Ders',
+  'appFeedback.category.games': 'Lîstik',
+  'appFeedback.category.stories': 'Çîrok',
+  'appFeedback.category.bugs': 'Çewtî',
+  'appFeedback.category.tooHard': 'Pir dijwar',
+  'appFeedback.category.tooEasy': 'Pir hêsan',
+  'appFeedback.category.other': 'Tiştekî din',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -4035,6 +4110,31 @@ const de: Catalog = {
   'games.race.accents': 'Akzente: {right} von {total} mit Akzent getippt',
   'games.race.accentNudge': 'Ärger mit den Akzenten? Ich zeig dir, wie du sie auf deine Tastatur bekommst.',
   'games.race.accentNudgeAction': 'Zeig’s mir',
+  'appFeedback.question': 'Wie gefällt dir Hevalo?',
+  'appFeedback.settingsTitle': 'Feedback senden',
+  'appFeedback.sendRow': 'Feedback senden',
+  'appFeedback.rateRow': 'Hevalo bewerten',
+  'appFeedback.stars.1': '1 Stern',
+  'appFeedback.stars.2': '2 Sterne',
+  'appFeedback.stars.3': '3 Sterne',
+  'appFeedback.stars.4': '4 Sterne',
+  'appFeedback.stars.5': '5 Sterne',
+  'appFeedback.improve': 'Danke, dass du es uns sagst – was könnte besser sein?',
+  'appFeedback.thanksLove': 'Danke! 💛',
+  'appFeedback.lovePlaceholder': 'Was magst du daran? (optional)',
+  'appFeedback.loveLabel': 'Was magst du daran?',
+  'appFeedback.improvePlaceholder': 'Erzähl uns mehr (optional)',
+  'appFeedback.improveLabel': 'Was könnte besser sein?',
+  'appFeedback.send': 'Senden',
+  'appFeedback.notNow': 'Nicht jetzt',
+  'appFeedback.thanksRead': 'Danke – wir lesen jede Nachricht.',
+  'appFeedback.category.lessons': 'Lektionen',
+  'appFeedback.category.games': 'Spiele',
+  'appFeedback.category.stories': 'Geschichten',
+  'appFeedback.category.bugs': 'Fehler',
+  'appFeedback.category.tooHard': 'Zu schwer',
+  'appFeedback.category.tooEasy': 'Zu leicht',
+  'appFeedback.category.other': 'Etwas anderes',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -5034,6 +5134,31 @@ const es: Catalog = {
   'games.race.accents': 'Acentos: {right} de {total} escritos con su acento',
   'games.race.accentNudge': '¿Te cuestan los acentos? Te enseño a tenerlos en tu teclado.',
   'games.race.accentNudgeAction': 'Muéstrame',
+  'appFeedback.question': '¿Qué te parece Hevalo?',
+  'appFeedback.settingsTitle': 'Enviar comentarios',
+  'appFeedback.sendRow': 'Enviar comentarios',
+  'appFeedback.rateRow': 'Valorar Hevalo',
+  'appFeedback.stars.1': '1 estrella',
+  'appFeedback.stars.2': '2 estrellas',
+  'appFeedback.stars.3': '3 estrellas',
+  'appFeedback.stars.4': '4 estrellas',
+  'appFeedback.stars.5': '5 estrellas',
+  'appFeedback.improve': 'Gracias por decírnoslo: ¿qué podría mejorar?',
+  'appFeedback.thanksLove': '¡Gracias! 💛',
+  'appFeedback.lovePlaceholder': '¿Qué es lo que más te gusta? (opcional)',
+  'appFeedback.loveLabel': '¿Qué es lo que más te gusta?',
+  'appFeedback.improvePlaceholder': 'Cuéntanos más (opcional)',
+  'appFeedback.improveLabel': '¿Qué podría mejorar?',
+  'appFeedback.send': 'Enviar',
+  'appFeedback.notNow': 'Ahora no',
+  'appFeedback.thanksRead': 'Gracias: leemos todos los mensajes.',
+  'appFeedback.category.lessons': 'Lecciones',
+  'appFeedback.category.games': 'Juegos',
+  'appFeedback.category.stories': 'Historias',
+  'appFeedback.category.bugs': 'Errores',
+  'appFeedback.category.tooHard': 'Demasiado difícil',
+  'appFeedback.category.tooEasy': 'Demasiado fácil',
+  'appFeedback.category.other': 'Otra cosa',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -6033,6 +6158,31 @@ const tr: Catalog = {
   'games.race.accents': 'Aksanlar: {total} harften {right} tanesi aksanıyla yazıldı',
   'games.race.accentNudge': 'Aksanlar zorluyor mu? Klavyene nasıl ekleyeceğini gösterebilirim.',
   'games.race.accentNudgeAction': 'Göster',
+  'appFeedback.question': 'Hevalo’yu nasıl buluyorsun?',
+  'appFeedback.settingsTitle': 'Geri bildirim gönder',
+  'appFeedback.sendRow': 'Geri bildirim gönder',
+  'appFeedback.rateRow': 'Hevalo’yu değerlendir',
+  'appFeedback.stars.1': '1 yıldız',
+  'appFeedback.stars.2': '2 yıldız',
+  'appFeedback.stars.3': '3 yıldız',
+  'appFeedback.stars.4': '4 yıldız',
+  'appFeedback.stars.5': '5 yıldız',
+  'appFeedback.improve': 'Bize söylediğin için teşekkürler — ne daha iyi olabilir?',
+  'appFeedback.thanksLove': 'Teşekkürler! 💛',
+  'appFeedback.lovePlaceholder': 'En çok neyi seviyorsun? (isteğe bağlı)',
+  'appFeedback.loveLabel': 'En çok neyi seviyorsun?',
+  'appFeedback.improvePlaceholder': 'Biraz daha anlat (isteğe bağlı)',
+  'appFeedback.improveLabel': 'Ne daha iyi olabilir?',
+  'appFeedback.send': 'Gönder',
+  'appFeedback.notNow': 'Şimdi değil',
+  'appFeedback.thanksRead': 'Teşekkürler — her mesajı okuyoruz.',
+  'appFeedback.category.lessons': 'Dersler',
+  'appFeedback.category.games': 'Oyunlar',
+  'appFeedback.category.stories': 'Hikâyeler',
+  'appFeedback.category.bugs': 'Hatalar',
+  'appFeedback.category.tooHard': 'Çok zor',
+  'appFeedback.category.tooEasy': 'Çok kolay',
+  'appFeedback.category.other': 'Başka bir şey',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -7032,6 +7182,31 @@ const ar: Catalog = {
   'games.race.accents': 'العلامات: {right} من {total} كُتبت بعلامتها',
   'games.race.accentNudge': 'هل تتعبك العلامات؟ يمكنني أن أريك كيف تضيفها إلى لوحة مفاتيحك.',
   'games.race.accentNudgeAction': 'أرني',
+  'appFeedback.question': 'ما رأيك في Hevalo حتى الآن؟',
+  'appFeedback.settingsTitle': 'أرسل ملاحظاتك',
+  'appFeedback.sendRow': 'أرسل ملاحظاتك',
+  'appFeedback.rateRow': 'قيّم Hevalo',
+  'appFeedback.stars.1': 'نجمة واحدة',
+  'appFeedback.stars.2': 'نجمتان',
+  'appFeedback.stars.3': '3 نجوم',
+  'appFeedback.stars.4': '4 نجوم',
+  'appFeedback.stars.5': '5 نجوم',
+  'appFeedback.improve': 'شكرًا لإخبارنا — ما الذي يمكن أن يكون أفضل؟',
+  'appFeedback.thanksLove': 'شكرًا! 💛',
+  'appFeedback.lovePlaceholder': 'ما الذي تحبه؟ (اختياري)',
+  'appFeedback.loveLabel': 'ما الذي تحبه؟',
+  'appFeedback.improvePlaceholder': 'أخبرنا بالمزيد (اختياري)',
+  'appFeedback.improveLabel': 'ما الذي يمكن أن يكون أفضل؟',
+  'appFeedback.send': 'إرسال',
+  'appFeedback.notNow': 'ليس الآن',
+  'appFeedback.thanksRead': 'شكرًا — نقرأ كل رسالة.',
+  'appFeedback.category.lessons': 'الدروس',
+  'appFeedback.category.games': 'الألعاب',
+  'appFeedback.category.stories': 'القصص',
+  'appFeedback.category.bugs': 'أعطال',
+  'appFeedback.category.tooHard': 'صعب جدًا',
+  'appFeedback.category.tooEasy': 'سهل جدًا',
+  'appFeedback.category.other': 'شيء آخر',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -8031,6 +8206,31 @@ const fr: Catalog = {
   'games.race.accents': 'Accents : {right} sur {total} tapés avec leur accent',
   'games.race.accentNudge': 'Les accents te posent problème ? Je peux te montrer comment les avoir sur ton clavier.',
   'games.race.accentNudgeAction': 'Montre-moi',
+  'appFeedback.question': 'Comment trouves-tu Hevalo ?',
+  'appFeedback.settingsTitle': 'Donner ton avis',
+  'appFeedback.sendRow': 'Donner ton avis',
+  'appFeedback.rateRow': 'Noter Hevalo',
+  'appFeedback.stars.1': '1 étoile',
+  'appFeedback.stars.2': '2 étoiles',
+  'appFeedback.stars.3': '3 étoiles',
+  'appFeedback.stars.4': '4 étoiles',
+  'appFeedback.stars.5': '5 étoiles',
+  'appFeedback.improve': 'Merci de nous le dire — qu’est-ce qui pourrait être mieux ?',
+  'appFeedback.thanksLove': 'Merci ! 💛',
+  'appFeedback.lovePlaceholder': 'Qu’est-ce que tu aimes ? (facultatif)',
+  'appFeedback.loveLabel': 'Qu’est-ce que tu aimes ?',
+  'appFeedback.improvePlaceholder': 'Dis-nous en plus (facultatif)',
+  'appFeedback.improveLabel': 'Qu’est-ce qui pourrait être mieux ?',
+  'appFeedback.send': 'Envoyer',
+  'appFeedback.notNow': 'Pas maintenant',
+  'appFeedback.thanksRead': 'Merci — nous lisons chaque message.',
+  'appFeedback.category.lessons': 'Leçons',
+  'appFeedback.category.games': 'Jeux',
+  'appFeedback.category.stories': 'Histoires',
+  'appFeedback.category.bugs': 'Bugs',
+  'appFeedback.category.tooHard': 'Trop difficile',
+  'appFeedback.category.tooEasy': 'Trop facile',
+  'appFeedback.category.other': 'Autre chose',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -9030,6 +9230,31 @@ const nl: Catalog = {
   'games.race.accents': 'Accenten: {right} van {total} met accent getypt',
   'games.race.accentNudge': 'Moeite met de accenten? Ik laat je zien hoe je ze op je toetsenbord krijgt.',
   'games.race.accentNudgeAction': 'Laat zien',
+  'appFeedback.question': 'Hoe bevalt Hevalo je?',
+  'appFeedback.settingsTitle': 'Feedback sturen',
+  'appFeedback.sendRow': 'Feedback sturen',
+  'appFeedback.rateRow': 'Hevalo beoordelen',
+  'appFeedback.stars.1': '1 ster',
+  'appFeedback.stars.2': '2 sterren',
+  'appFeedback.stars.3': '3 sterren',
+  'appFeedback.stars.4': '4 sterren',
+  'appFeedback.stars.5': '5 sterren',
+  'appFeedback.improve': 'Bedankt dat je het zegt — wat kan er beter?',
+  'appFeedback.thanksLove': 'Dankjewel! 💛',
+  'appFeedback.lovePlaceholder': 'Wat vind je er leuk aan? (optioneel)',
+  'appFeedback.loveLabel': 'Wat vind je er leuk aan?',
+  'appFeedback.improvePlaceholder': 'Vertel ons meer (optioneel)',
+  'appFeedback.improveLabel': 'Wat kan er beter?',
+  'appFeedback.send': 'Versturen',
+  'appFeedback.notNow': 'Niet nu',
+  'appFeedback.thanksRead': 'Dankjewel — we lezen elk bericht.',
+  'appFeedback.category.lessons': 'Lessen',
+  'appFeedback.category.games': 'Spellen',
+  'appFeedback.category.stories': 'Verhalen',
+  'appFeedback.category.bugs': 'Fouten',
+  'appFeedback.category.tooHard': 'Te moeilijk',
+  'appFeedback.category.tooEasy': 'Te makkelijk',
+  'appFeedback.category.other': 'Iets anders',
   // ---- end mobile-race-rating-posting ----
 };
 
@@ -10030,6 +10255,31 @@ const ckb: Catalog = {
   'games.race.accents': 'نیشانەکان: {right} لە {total} بە نیشانەکەیانەوە نووسران',
   'games.race.accentNudge': 'نیشانەکان قورسن؟ دەتوانم پیشانت بدەم چۆن بیانخەیتە سەر کیبۆردەکەت.',
   'games.race.accentNudgeAction': 'پیشانم بدە',
+  'appFeedback.question': 'Hevalo چۆن دەبینیت؟',
+  'appFeedback.settingsTitle': 'ڕاوبۆچوونت بنێرە',
+  'appFeedback.sendRow': 'ڕاوبۆچوونت بنێرە',
+  'appFeedback.rateRow': 'هەڵسەنگاندنی Hevalo',
+  'appFeedback.stars.1': '1 ئەستێرە',
+  'appFeedback.stars.2': '2 ئەستێرە',
+  'appFeedback.stars.3': '3 ئەستێرە',
+  'appFeedback.stars.4': '4 ئەستێرە',
+  'appFeedback.stars.5': '5 ئەستێرە',
+  'appFeedback.improve': 'سوپاس کە پێت گوتین — چی دەکرێت باشتر بێت؟',
+  'appFeedback.thanksLove': 'سوپاس! 💛',
+  'appFeedback.lovePlaceholder': 'حەزت لە چییە؟ (ئارەزوومەندانە)',
+  'appFeedback.loveLabel': 'حەزت لە چییە؟',
+  'appFeedback.improvePlaceholder': 'زیاتر پێمان بڵێ (ئارەزوومەندانە)',
+  'appFeedback.improveLabel': 'چی دەکرێت باشتر بێت؟',
+  'appFeedback.send': 'بینێرە',
+  'appFeedback.notNow': 'ئێستا نا',
+  'appFeedback.thanksRead': 'سوپاس — هەموو نامەیەک دەخوێنینەوە.',
+  'appFeedback.category.lessons': 'وانەکان',
+  'appFeedback.category.games': 'یارییەکان',
+  'appFeedback.category.stories': 'چیرۆکەکان',
+  'appFeedback.category.bugs': 'هەڵەکان',
+  'appFeedback.category.tooHard': 'زۆر قورس',
+  'appFeedback.category.tooEasy': 'زۆر ئاسان',
+  'appFeedback.category.other': 'شتێکی تر',
   // ---- end mobile-race-rating-posting ----
 };
 

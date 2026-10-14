@@ -17,6 +17,7 @@ import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
 import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
 import { CREDIT_LINES } from './credits';
 import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
+import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -295,6 +296,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
         {/* whose work the app uses, and under which licence (see ./credits) */}
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.about')}</Text>
+        {/* tell us what you think, and (once the app is in the stores) rate it there */}
+        <FeedbackSettingsRows />
         <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.credits.title')}</Text>
           <Text style={[styles.credit, { color: colors.textSecondary }]}>{t('settings.credits.lead')}</Text>

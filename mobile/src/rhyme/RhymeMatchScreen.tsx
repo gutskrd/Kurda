@@ -4,6 +4,7 @@ import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
+import { reportGameFinished } from '../feedback/gameFinished';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -184,6 +185,19 @@ function MatchRoom({ id, onLeave }: { id: string; onLeave: () => void }): React.
       if (r.ok) setResults(r.data);
     });
   }, [match?.status, results, client, id]);
+
+  // A match played here to its end is a finished game for the rating box; one
+  // opened already finished, from an old link, is not.
+  const played = useRef(false);
+  useEffect(() => {
+    if (match?.status === 'active' && match.me) played.current = true;
+  }, [match?.status, match?.me]);
+  useEffect(() => {
+    if (!results || !played.current) return;
+    played.current = false;
+    const mine = results.ranking.find((r) => r.userId === user?.id);
+    if (mine) reportGameFinished({ moment: mine.rank === 1 ? 'won' : 'other' });
+  }, [results, user?.id]);
 
   /*
    * The clock runs locally between polls and is resynced by every one of them.

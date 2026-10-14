@@ -12,6 +12,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
+import { reportGameFinished } from '../feedback/gameFinished';
 
 type Quality = 'perfect' | 'near' | 'none';
 type Reject = 'not-a-word' | 'is-prompt' | 'already-used' | 'no-rhyme' | 'profane';
@@ -90,7 +91,11 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const end = useCallback(async () => {
     if (!game) return;
     const res = await client.post<{ game: RhymeGameView }>(`/rhyme/training/${game.id}/end`);
-    if (res.ok) setGame(res.data.game);
+    if (res.ok) {
+      setGame(res.data.game);
+      // the round ended on the server, with this call: a game finished
+      if (res.data.game.status === 'ended') reportGameFinished({ moment: 'other' });
+    }
   }, [client, game]);
 
   // countdown; when it hits zero, end the round (awards XP)
