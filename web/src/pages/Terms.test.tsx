@@ -31,7 +31,7 @@ describe('Terms', () => {
     for (const value of [PROVIDER.legalName, PROVIDER.address, PROVIDER.kvk, PROVIDER.vat]) {
       expect(within(provider).getByText(value)).toBeInTheDocument();
     }
-    expect(within(provider).getByText(`· trading as ${PROVIDER.tradingName}`, { exact: false })).toBeInTheDocument();
+    expect(within(provider).getByText(`trading as ${PROVIDER.tradingName}`)).toBeInTheDocument();
   });
 
   it('has the promise, the narrow licence, notices, repeat infringers, shop art, contacts and the law', () => {

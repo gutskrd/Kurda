@@ -199,6 +199,15 @@ export function Shop(): React.JSX.Element {
 
       <GiftsReceived onEquipHint={() => setMsg(null)} />
 
+      {/* refreshed items the owner can hand back, above the catalogue, where the notice sends them (contract-3 §S) */}
+      <ReturnableItems
+        inventory={inventory.data}
+        onReturned={(r) => {
+          if (r.refund.currency === 'zer') setZer(r.balance);
+          inventory.reload();
+        }}
+      />
+
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}
       <div className="shop-filters">
@@ -259,15 +268,6 @@ export function Shop(): React.JSX.Element {
           onGift={setGifting}
         />
       )}
-
-      {/* refreshed items the owner can hand back, under the catalogue (contract-3 §S) */}
-      <ReturnableItems
-        inventory={inventory.data}
-        onReturned={(r) => {
-          if (r.refund.currency === 'zer') setZer(r.balance);
-          inventory.reload();
-        }}
-      />
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}

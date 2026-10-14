@@ -70,7 +70,11 @@ export function LibraryPostPage(): React.JSX.Element {
           )}
         </div>
 
-        {post.title && <h1 className="page-title">{post.title}</h1>}
+        {post.title && (
+          <h1 className="page-title" dir="auto">
+            {post.title}
+          </h1>
+        )}
         <PostAuthor author={post.author} at={post.publishedAt ?? post.createdAt} />
 
         {post.audioUrl && (
@@ -80,11 +84,21 @@ export function LibraryPostPage(): React.JSX.Element {
         )}
 
         {/* pre-wrap: a poem's line breaks are the poem */}
-        {post.body && <div className={`post-body${post.title ? '' : ' post-body-saying'}`}>{post.body}</div>}
+        {/* dir=auto: the post's own language decides its direction, not the interface's */}
+        {post.body && (
+          <div className={`post-body${post.title ? '' : ' post-body-saying'}`} dir="auto">
+            {post.body}
+          </div>
+        )}
 
         <PostPictures className="post-pictures" images={pictures} />
 
-        {post.sourceCredit && <p className="post-source">{t('post.source', { source: post.sourceCredit })}</p>}
+        {post.sourceCredit && (
+          <p className="post-source">
+            {/* isolated (FSI…PDI), so a Latin credit under a Soranî label keeps its own order */}
+            {t('post.source', { source: `\u2068${post.sourceCredit}\u2069` })}
+          </p>
+        )}
       </article>
 
       <Comments postId={post.id} commentCount={post.commentCount} />

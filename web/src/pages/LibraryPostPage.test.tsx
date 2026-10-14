@@ -78,7 +78,7 @@ describe('LibraryPostPage', () => {
     show();
     const group = await screen.findByRole('group', { name: '2 pictures' });
     expect(within(group).getByRole('button', { name: 'Open picture 1 of 2: A tulip in snow' })).toBeInTheDocument();
-    expect(screen.getByText('Source: Photo by Rojda')).toBeInTheDocument();
+    expect(screen.getByText('Source: \u2068Photo by Rojda\u2069')).toBeInTheDocument();
   });
 
   it('badges a post marked as a meme as a meme only', async () => {

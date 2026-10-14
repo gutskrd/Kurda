@@ -131,7 +131,11 @@ export function Lightbox({ images, start, onClose }: { images: FeedImage[]; star
         {(img.alt || many) && (
           <figcaption className="pp-caption">
             {many && <span className="pp-count">{t('pictures.position', { n: index + 1, total: images.length })}</span>}
-            {img.alt && <span className="pp-caption-text">{img.alt}</span>}
+            {img.alt && (
+              <span className="pp-caption-text" dir="auto">
+                {img.alt}
+              </span>
+            )}
           </figcaption>
         )}
       </figure>

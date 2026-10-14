@@ -11,11 +11,15 @@ import './copyright.css';
  * missing KvK number should be obvious on the page, not quietly left out.
  */
 
-/** One detail; a placeholder keeps its brackets and is marked as one. */
+/**
+ * One detail; a placeholder keeps its brackets and is marked as one. Its
+ * direction is its own (a Dutch address under a Soranî label still reads left
+ * to right), and numbers are always left to right.
+ */
 function Value({ value, ltr = false }: { value: string; ltr?: boolean }): React.JSX.Element {
   const placeholder = isProviderPlaceholder(value);
   return (
-    <span className={placeholder ? 'cr-placeholder' : undefined} dir={ltr ? 'ltr' : undefined} data-placeholder={placeholder || undefined}>
+    <span className={placeholder ? 'cr-placeholder' : undefined} dir={ltr ? 'ltr' : 'auto'} data-placeholder={placeholder || undefined}>
       {value}
     </span>
   );
@@ -39,7 +43,7 @@ export function ProviderIdentityBlock(): React.JSX.Element {
       <dt>{t('provider.name')}</dt>
       <dd>
         <Value value={PROVIDER.legalName} />
-        <span className="muted"> · {t('provider.tradingAs', { name: PROVIDER.tradingName })}</span>
+        <span className="cr-langs">{t('provider.tradingAs', { name: PROVIDER.tradingName })}</span>
       </dd>
       <dt>{t('provider.address')}</dt>
       <dd>

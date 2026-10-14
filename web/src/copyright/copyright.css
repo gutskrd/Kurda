@@ -239,6 +239,7 @@
 }
 /* a detail the owner has not filled in yet: visible, and plainly not real */
 .cr-placeholder {
+  display: inline-block;
   padding: 1px 6px;
   border: 1px dashed rgba(240, 194, 74, 0.45);
   border-radius: var(--r-xs);
@@ -249,6 +250,10 @@
   margin-top: 14px;
 }
 
+/* the details under a sentence that introduces them */
+.doc-section p + .cr-facts {
+  margin-top: 12px;
+}
 /* two blocks of details in one section (About) */
 .cr-facts + .cr-facts {
   margin-top: 16px;

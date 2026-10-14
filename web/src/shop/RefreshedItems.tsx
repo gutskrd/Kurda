@@ -24,7 +24,7 @@ import './refreshed.css';
  * back any they bought, for what they paid. The notice stays until it is
  * dismissed — "once" means once read, not once rendered on a page scrolled
  * past — and dismissing it is what tells the server. Returning lives in the
- * Shop, under the catalogue's own tiles, because the notice says it does.
+ * Shop, above the catalogue, because the notice says it does.
  */
 
 /** `GET /me/inventory` as this needs it: items say what returning them gives back. */
@@ -194,7 +194,7 @@ export function ReturnableItems({
       <Modal open={asking !== null} onClose={close} label={asking ? t('refresh.confirmTitle', { name: asking.name }) : ''}>
         {asking && (
           <div className="refresh-confirm">
-            <h2 className="friend-heading refresh-confirm-title">{t('refresh.confirmTitle', { name: asking.name })}</h2>
+            <h2 className="refresh-confirm-title">{t('refresh.confirmTitle', { name: asking.name })}</h2>
             <p className="refresh-confirm-amount">
               {t('refresh.confirmAmount', { amount: amountLabel(asking.refund, t) })}
             </p>

@@ -103,8 +103,18 @@ export function FeedCard({
 
       {(item.title || item.excerpt) && (
         <Link to={item.href} className="fcard-body">
-          {item.title && <h2 className="fcard-title">{item.title}</h2>}
-          {item.excerpt && <p className="fcard-text">{item.excerpt}</p>}
+          {/* dir=auto: a post is in the language it was written in, not the
+              interface's — Kurmancî under a Soranî menu must still read left to right */}
+          {item.title && (
+            <h2 className="fcard-title" dir="auto">
+              {item.title}
+            </h2>
+          )}
+          {item.excerpt && (
+            <p className="fcard-text" dir="auto">
+              {item.excerpt}
+            </p>
+          )}
         </Link>
       )}
       {/* up to four, under the words like X — and each opens full size, so they

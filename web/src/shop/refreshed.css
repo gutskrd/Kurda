@@ -48,10 +48,13 @@
 }
 
 .refresh-confirm-title {
+  /* clear of the modal's ×, which sits top right in either direction */
   margin: 0 40px 10px 0;
-}
-[dir='rtl'] .refresh-confirm-title {
-  margin: 0 0 10px 40px;
+  font-family: var(--font-sans);
+  font-size: 1.1rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--ink);
 }
 .refresh-confirm-amount {
   margin: 0 0 8px;
