@@ -1165,6 +1165,7 @@ export const ku: Catalogue = {
   'stories.game.settings': 'Mîheng',
   'stories.game.share': 'Parve bike',
   'stories.game.shareText': 'Li ser Hevalo bi min re çîrokeke kurdî bixwîne. Bi koda {code} beşdar bibe:',
+  'stories.game.hideEnglish': 'Îngilîzî veşêre',
   'stories.game.showEnglish': 'Bi îngilîzî nîşan bide',
   'stories.game.start': 'Dest pê bike',
   'stories.game.startQuestions': 'Pirsan dest pê bike',

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
-import type { StoryGameView } from '@kurda/shared';
+import { ANSWER_GRACE_MS, lessonAudioKey, type StoryGameView } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
+import { optionNumber } from './GameParts';
 import { StoryGame } from './StoryGame';
 import { detail, fakeApi, gameView, heldPoll, refused, type Call } from './testing';
 
@@ -138,6 +139,26 @@ describe('the lobby', () => {
     expect(calls.some((c) => c.path.endsWith('/extra-time'))).toBe(false);
   });
 
+  it('spaces out long-polls that come straight back with nothing new', async () => {
+    const asked: number[] = [];
+    const { calls } = fakeApi({
+      'GET /story-games/g-1': (c: Call) => {
+        if (!c.path.includes('?v=')) return gameView({ version: 4 });
+        asked.push(Date.now());
+        // something overdue that settling did not move: the same version, at once
+        return gameView({ version: 4 });
+      },
+    });
+    game();
+    await screen.findByRole('img', { name: /Join code/ });
+    await new Promise((r) => setTimeout(r, 1_300));
+    // without a floor this would be hundreds of requests
+    expect(asked.length).toBeGreaterThanOrEqual(2);
+    expect(asked.length).toBeLessThanOrEqual(3);
+    for (let i = 1; i < asked.length; i++) expect(asked[i]! - asked[i - 1]!).toBeGreaterThanOrEqual(900);
+    expect(calls.every((c) => !c.path.includes('?v=') || c.path.endsWith('?v=4'))).toBe(true);
+  });
+
   it('says a game it may not see is not available', async () => {
     fakeApi({ 'GET /story-games/g-1': jsonResponse(404, { code: 'GAME_NOT_FOUND' }) });
     game();
@@ -176,6 +197,62 @@ describe('reading', () => {
   });
 });
 
+describe('reading, near the end', () => {
+  it('says the questions start in about a minute, a minute before the hard cap', async () => {
+    const poll = heldPoll();
+    const now = Date.now();
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': (c: Call) =>
+        c.path.includes('?v=')
+          ? poll.answer(c)
+          : gameView({
+              mode: 'group',
+              status: 'reading',
+              activeCount: 3,
+              readingSoftCapAt: new Date(now - 60_000).toISOString(),
+              readingHardCapAt: new Date(now + 30_000).toISOString(),
+            }),
+    });
+    game();
+    expect(await screen.findByText('The questions start in about a minute.')).toBeInTheDocument();
+  });
+
+  it('stops a story being read aloud when the questions start', async () => {
+    const pauses: string[] = [];
+    class FakeAudio extends EventTarget {
+      src = '';
+      playbackRate = 1;
+      defaultPlaybackRate = 1;
+      play(): Promise<void> {
+        this.dispatchEvent(new Event('playing'));
+        return Promise.resolve();
+      }
+      pause(): void {
+        pauses.push(this.src);
+        this.dispatchEvent(new Event('pause'));
+      }
+    }
+    vi.stubGlobal('Audio', FakeAudio);
+    const s1 = 'Îro Rojîn diçe dibistanê.';
+    const poll = heldPoll();
+    fakeApi({
+      'GET /story-games/g-1/story': detail({ paragraphs: [`${s1} Ew deh salî ye.`], audio: { [lessonAudioKey(s1)]: 'https://cdn.test/1.m4a' } }),
+      'GET /story-games/g-1': (c: Call) =>
+        c.path.includes('?v=') ? poll.answer(c) : gameView({ mode: 'duo', status: 'reading', activeCount: 2, version: 2 }),
+    });
+    game();
+    await userEvent.click(await screen.findByRole('button', { name: 'Listen' }));
+    const before = pauses.length;
+    act(() => poll.release(question({ mode: 'duo', activeCount: 2, version: 3 })));
+    await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    // the player was paused when the reading went, with this story's sentence in it
+    expect(pauses.length).toBeGreaterThan(before);
+    expect(pauses.at(-1)).toBe('https://cdn.test/1.m4a');
+    vi.unstubAllGlobals();
+  });
+});
+
 describe('a question', () => {
   it('moves the focus to the question, answers with the number keys, and locks the answer', async () => {
     const answered = question({ mode: 'duo', question: { ...question().question!, myChoice: 1 }, answeredCount: 1, activeCount: 2, version: 2 });
@@ -195,6 +272,76 @@ describe('a question', () => {
     await waitFor(() => expect(calls.find((c) => c.path.endsWith('/answers'))?.body).toEqual({ index: 0, choice: 1 }));
     expect(await screen.findByText('Answer locked — 1 of 2 answered')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Deh/ })).toBeDisabled();
+  });
+
+  it('answers with the digit row on a Soranî or Arabic layout too', async () => {
+    const { calls } = fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': question(),
+      'POST /story-games/g-1/answers': question({ question: { ...question().question!, myChoice: 1 }, version: 2 }),
+    });
+    game();
+    await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    // the focused heading has the key, as on a page
+    fireEvent.keyDown(document.activeElement ?? document.body, { key: '٢', code: 'Digit2' });
+    await waitFor(() => expect(calls.find((c) => c.path.endsWith('/answers'))?.body).toEqual({ index: 0, choice: 1 }));
+  });
+
+  it('reads the option keys by place, then by the digit typed', () => {
+    expect(optionNumber({ key: '٢', code: 'Digit2' })).toBe(2);
+    expect(optionNumber({ key: '&', code: 'Digit1' })).toBe(1);
+    expect(optionNumber({ key: '3', code: 'Numpad3' })).toBe(3);
+    expect(optionNumber({ key: '٤', code: '' })).toBe(4);
+    expect(optionNumber({ key: '۳', code: '' })).toBe(3);
+    expect(optionNumber({ key: '٠', code: '' })).toBeNull();
+    expect(optionNumber({ key: 'a', code: 'KeyA' })).toBeNull();
+  });
+
+  it('says what the English button will do, and remembers it', async () => {
+    fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': question() });
+    game();
+    await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    // level 1: English is shown, and the button hides it
+    expect(screen.getByText('How old is Rojîn?')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Hide English' }));
+    expect(screen.queryByText('How old is Rojîn?')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Show in English' })).toBeInTheDocument();
+    expect(localStorage.getItem('hevalo.stories.english')).toBe('off');
+  });
+
+  it('reads the game again quietly when the answer is for a question that has moved on', async () => {
+    const { calls } = fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': question(),
+      'POST /story-games/g-1/answers': refused(409, 'NOT_CURRENT'),
+    });
+    game();
+    await userEvent.click(await screen.findByRole('button', { name: /Heşt/ }));
+    const reads = () => calls.filter((c) => c.method === 'GET' && c.path === '/story-games/g-1').length;
+    await waitFor(() => expect(reads()).toBe(2));
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('stops retrying once the question’s deadline and grace have passed, and says it was late', async () => {
+    let tries = 0;
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': question({
+        mode: 'duo',
+        activeCount: 2,
+        settings: { ...gameView().settings, timerSeconds: 30 },
+        phaseEndsAt: new Date(Date.now() - ANSWER_GRACE_MS - 1_000).toISOString(),
+      }),
+      'GET /story-games/g-1?v=*': () => new Promise(() => undefined),
+      'POST /story-games/g-1/answers': () => {
+        tries += 1;
+        throw new TypeError('offline');
+      },
+    });
+    game();
+    await userEvent.click(await screen.findByRole('button', { name: /Heşt/ }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('Time ran out before your answer arrived, so it didn’t count.');
+    expect(tries).toBe(1);
   });
 
   it('sends the same answer again after a network failure, and takes ALREADY_ANSWERED as arrived', async () => {
@@ -276,6 +423,38 @@ describe('the answer', () => {
   });
 });
 
+describe('the answer, in English', () => {
+  it('offers the remembered English choice on the answer too, for its explanation', async () => {
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': question({
+        status: 'reveal',
+        settings: { ...gameView().settings, timerSeconds: 0, level: 2 },
+        reveal: {
+          index: 0,
+          correctIndex: 1,
+          explanation: 'Çîrok dibêje: “Ew deh salî ye.”',
+          explanationEn: 'The story says she is ten.',
+          evidenceParagraph: null,
+          evidenceSentence: null,
+          answeredCount: 1,
+          correctCount: 1,
+          myChoice: 1,
+          myCorrect: true,
+        },
+      }),
+    });
+    game();
+    await screen.findByText('Çîrok dibêje: “Ew deh salî ye.”');
+    // level 2: no English until asked for
+    expect(screen.queryByText('The story says she is ten.')).toBeNull();
+    await userEvent.click(screen.getByRole('button', { name: 'Show in English' }));
+    expect(screen.getByText('The story says she is ten.')).toHaveAttribute('lang', 'en');
+    expect(screen.getByText('How old is Rojîn?')).toBeInTheDocument();
+    expect(localStorage.getItem('hevalo.stories.english')).toBe('on');
+  });
+});
+
 describe('the results', () => {
   const results = (over: Partial<StoryGameView> = {}) =>
     gameView({
@@ -314,6 +493,60 @@ describe('the results', () => {
     await waitFor(() => expect(document.documentElement).toHaveAttribute('dir', 'rtl'));
     // dir="ltr" isolates the badge from the page's direction (HTML gives [dir] unicode-bidi: isolate)
     expect(xp).toHaveAttribute('dir', 'ltr');
+  });
+
+  const player = (seat: number, name: string, correct: number, place: number, isMe = false) => ({
+    seat,
+    name,
+    avatarUrl: null,
+    isMe,
+    score: correct * 100,
+    correct,
+    place,
+  });
+
+  it('lists three players by seat, with your own place under them', async () => {
+    const base = results();
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': {
+        ...base,
+        mode: 'group',
+        results: {
+          ...base.results!,
+          standings: [player(3, 'Berfin', 5, 1), player(1, 'Ada', 4, 2, true), player(2, 'Rojda', 3, 3)],
+          me: { ...base.results!.me!, place: 2 },
+        },
+      },
+    });
+    game();
+    await screen.findByRole('heading', { name: 'You got 4 of 5 right' });
+    const rows = [...document.querySelectorAll('.sg-board-row')].map((r) => r.textContent);
+    expect(rows).toEqual(['You4/5', 'Rojda3/5', 'Berfin5/5']);
+    expect(screen.getByText('Your place: 2')).toBeInTheDocument();
+    expect(document.querySelector('.sg-podium')).toBeNull();
+  });
+
+  it('shows four or more players as a podium of the first three, and your place when you are not on it', async () => {
+    const base = results();
+    fakeApi({
+      'GET /story-games/g-1/story': story,
+      'GET /story-games/g-1': {
+        ...base,
+        mode: 'group',
+        results: {
+          ...base.results!,
+          standings: [player(2, 'Rojda', 5, 1), player(3, 'Berfin', 4, 2), player(4, 'Dilan', 4, 2), player(5, 'Zana', 3, 4), player(1, 'Ada', 2, 5, true)],
+          me: { ...base.results!.me!, place: 5, correct: 2 },
+        },
+      },
+    });
+    game();
+    await screen.findByRole('heading', { name: 'You got 2 of 5 right' });
+    const steps = [...document.querySelectorAll('.sg-podium-step')];
+    expect(steps.map((r) => r.querySelector('.sg-podium-name')?.textContent)).toEqual(['Rojda', 'Berfin', 'Dilan']);
+    expect(screen.queryByText('Zana')).toBeNull();
+    expect(screen.getByText('Your place: 5')).toBeInTheDocument();
   });
 
   it('puts the missed questions first in the review', async () => {

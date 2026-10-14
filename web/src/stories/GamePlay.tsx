@@ -10,8 +10,8 @@ import { BookIcon, CheckIcon, CloseIcon, TimerIcon } from '../components/icons';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { useT } from '../i18n/I18nProvider';
 import { storyError } from './api';
-import { Evidence, ExtraTimeToggle, FromMemoryNote, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
-import { rememberEnglish, rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
+import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
+import { rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
 import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
 import type { AnswerOutcome } from './useStoryGame';
@@ -246,8 +246,8 @@ export function GameQuestion({
     if (!q || locked) return;
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey || e.repeat || typingElsewhere(e)) return;
-      const n = Number(e.key);
-      if (Number.isInteger(n) && n >= 1 && n <= q.options.length) {
+      const n = optionNumber(e);
+      if (n !== null && n <= q.options.length) {
         e.preventDefault();
         void choose(n - 1);
       }
@@ -290,19 +290,7 @@ export function GameQuestion({
             {q.promptEn}
           </p>
         )}
-        {q.promptEn && (
-          <button
-            type="button"
-            className="link-btn sg-english"
-            aria-pressed={english}
-            onClick={() => {
-              setEnglish(!english);
-              rememberEnglish(!english);
-            }}
-          >
-            {t('stories.game.showEnglish')}
-          </button>
-        )}
+        {q.promptEn && <EnglishToggle on={english} onChange={setEnglish} />}
 
         <div className="sg-options" role="group" aria-labelledby="sg-q-title">
           {q.options.map((option, i) => (
@@ -389,7 +377,7 @@ export function GameReveal({
   const t = useT();
   const q = view.question;
   const r = view.reveal;
-  const [english] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
+  const [english, setEnglish] = useState(() => showEnglishFor(view.settings.level, rememberedEnglish()));
   const [busy, setBusy] = useState(false);
   const next = useRef<HTMLButtonElement>(null);
   const { lang, dir } = storyTextDirection(view.settings.dialect);
@@ -426,6 +414,11 @@ export function GameReveal({
       <p className="sg-prompt" lang={lang} dir={dir}>
         {q.prompt}
       </p>
+      {q.promptEn && english && (
+        <p className="sg-prompt-en" lang="en" dir="ltr">
+          {q.promptEn}
+        </p>
+      )}
       <ul className="sg-options is-revealed">
         {q.options.map((option, i) => {
           const right = i === r.correctIndex;
@@ -458,6 +451,8 @@ export function GameReveal({
           {r.explanationEn}
         </p>
       )}
+      {/* the question's own choice, so English can be asked for here too */}
+      {(q.promptEn || r.explanationEn) && <EnglishToggle on={english} onChange={setEnglish} />}
       <Evidence story={story} paragraph={r.evidenceParagraph} sentence={r.evidenceSentence} />
 
       {!solo && (

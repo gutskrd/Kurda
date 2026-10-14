@@ -1164,6 +1164,7 @@ export const ar: Catalogue = {
   'stories.game.settings': 'الإعدادات',
   'stories.game.share': 'مشاركة',
   'stories.game.shareText': 'اقرأ معي قصة كردية على Hevalo. انضم بالرمز {code}:',
+  'stories.game.hideEnglish': 'إخفاء الإنجليزية',
   'stories.game.showEnglish': 'اعرض بالإنجليزية',
   'stories.game.start': 'ابدأ',
   'stories.game.startQuestions': 'ابدأ الأسئلة',

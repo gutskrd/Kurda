@@ -6,6 +6,15 @@ import type { ApiResult } from '../lib/types';
 /** Waits between failed long-polls: quick at first, never hammering. */
 export const POLL_BACKOFF_MS = [1_000, 2_000, 5_000] as const;
 
+/**
+ * The least time between two long-polls that brought nothing new. The server
+ * answers at once when something is overdue, and if settling it did not move
+ * the game (another request got there first, an expiry changed nothing) the
+ * answer is the version just sent: asking straight back would spin into the
+ * route's limit, and the 429s would then delay the real next phase.
+ */
+export const POLL_FLOOR_MS = 1_000;
+
 /** How an answer went, once the network has had its say. */
 export type AnswerOutcome = 'ok' | 'late' | 'moved' | { error: string | undefined; status?: number };
 
@@ -32,7 +41,8 @@ const live = (s: StoryGameStatus): boolean => s !== 'finished' && s !== 'cancell
  *
  * A duo or group game is followed with the long-poll: ask with the version
  * last seen, the server answers when it moves on (or after 20 s, or at its
- * next deadline), ask again at once. A failed request waits 1, 2, then 5
+ * next deadline), ask again at once — or, when the answer brought nothing new
+ * and came back quickly, after a second. A failed request waits 1, 2, then 5
  * seconds before the next. Nothing waits while the game is over.
  *
  * A solo game is never polled: every action answers with the new view, and a
@@ -104,12 +114,17 @@ export function useStoryGame(id: string): {
       while (!signal.aborted) {
         const current = viewRef.current;
         if (!current || !live(current.status)) return;
+        const asked = Date.now();
         const res = await client.get<StoryGameView>(`/story-games/${encodeURIComponent(id)}?v=${current.version}`, { signal });
         if (signal.aborted) return;
         if (res.ok) {
           failures = 0;
           // an empty answer means the server let the wait go; just ask again
-          if (res.data && 'id' in res.data) apply(res.data);
+          const fresh = res.data && 'id' in res.data ? res.data : null;
+          if (fresh) apply(fresh);
+          // a new version is asked after at once; the same one, back quickly, waits out the floor
+          const gap = POLL_FLOOR_MS - (Date.now() - asked);
+          if ((!fresh || fresh.version <= current.version) && gap > 0) await sleep(gap, signal);
           continue;
         }
         if (res.error.status === 404) return fail(404, res.error.code);

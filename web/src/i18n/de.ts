@@ -1159,6 +1159,7 @@ export const de: Catalogue = {
   'stories.game.settings': 'Einstellungen',
   'stories.game.share': 'Teilen',
   'stories.game.shareText': 'Lies mit mir eine kurdische Geschichte auf Hevalo. Tritt mit dem Code {code} bei:',
+  'stories.game.hideEnglish': 'Englisch ausblenden',
   'stories.game.showEnglish': 'Auf Englisch zeigen',
   'stories.game.start': 'Starten',
   'stories.game.startQuestions': 'Fragen starten',

@@ -1170,6 +1170,7 @@ export const ckb: Catalogue = {
   'stories.game.settings': 'ڕێکخستنەکان',
   'stories.game.share': 'هاوبەشی پێبکە',
   'stories.game.shareText': 'لەسەر Hevalo لەگەڵم چیرۆکێکی کوردی بخوێنەوە. بە کۆدی {code} بەشداربە:',
+  'stories.game.hideEnglish': 'ئینگلیزی بشارەوە',
   'stories.game.showEnglish': 'بە ئینگلیزی پیشان بدە',
   'stories.game.start': 'دەست پێبکە',
   'stories.game.startQuestions': 'پرسیارەکان دەست پێبکە',

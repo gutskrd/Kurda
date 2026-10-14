@@ -9,7 +9,7 @@ import {
 import type { ApiResult } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { rememberExtraTime } from './prefs';
+import { rememberEnglish, rememberExtraTime } from './prefs';
 
 export type Act = (path: string, body?: unknown) => Promise<ApiResult<StoryGameView>>;
 export type Announce = (text: string) => void;
@@ -108,10 +108,48 @@ export function Evidence({ story, paragraph, sentence }: { story: StoryDetail | 
 
 /** Whether a keypress belongs to a field or a dialog rather than to the game's shortcuts. */
 export function typingElsewhere(e: KeyboardEvent): boolean {
-  const el = e.target as HTMLElement | null;
-  if (!el) return false;
-  if (el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return true;
+  const el = e.target;
+  // a key sent to the window itself has no element to be in
+  if (el instanceof Element && el.closest('input, textarea, select, [contenteditable="true"], [role="dialog"]')) return true;
   return document.querySelector('[role="dialog"][aria-modal="true"]') !== null;
+}
+
+/**
+ * The option number a key gives (1–9), or null. The digit row and keypad are
+ * read by their place (`code`), so a Soranî or Arabic layout — whose digit row
+ * types ١ ٢ ٣ ٤ — and an AZERTY one answer with the same keys; Eastern Arabic
+ * and Persian digits typed some other way count too.
+ */
+export function optionNumber(e: Pick<KeyboardEvent, 'key' | 'code'>): number | null {
+  const place = /^(?:Digit|Numpad)([1-9])$/.exec(e.code ?? '');
+  if (place) return Number(place[1]);
+  if (/^[1-9]$/.test(e.key)) return Number(e.key);
+  for (const digits of ['٠١٢٣٤٥٦٧٨٩', '۰۱۲۳۴۵۶۷۸۹']) {
+    const at = digits.indexOf(e.key);
+    if (e.key.length === 1 && at > 0) return at;
+  }
+  return null;
+}
+
+/**
+ * "Show in English" / "Hide English": the words say what a press does, so the
+ * state is plain without a pressed style (and a screen reader hears the same
+ * words). One remembered choice for the questions and their answers.
+ */
+export function EnglishToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }): React.JSX.Element {
+  const t = useT();
+  return (
+    <button
+      type="button"
+      className="link-btn sg-english"
+      onClick={() => {
+        onChange(!on);
+        rememberEnglish(!on);
+      }}
+    >
+      {on ? t('stories.game.hideEnglish') : t('stories.game.showEnglish')}
+    </button>
+  );
 }
 
 /** Re-render on a schedule only while something is waiting to change. */

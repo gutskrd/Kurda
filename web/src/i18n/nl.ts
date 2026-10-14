@@ -1159,6 +1159,7 @@ export const nl: Catalogue = {
   'stories.game.settings': 'Instellingen',
   'stories.game.share': 'Delen',
   'stories.game.shareText': 'Lees met mij een Koerdisch verhaal op Hevalo. Doe mee met de code {code}:',
+  'stories.game.hideEnglish': 'Engels verbergen',
   'stories.game.showEnglish': 'In het Engels tonen',
   'stories.game.start': 'Beginnen',
   'stories.game.startQuestions': 'Vragen starten',

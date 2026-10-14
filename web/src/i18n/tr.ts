@@ -1159,6 +1159,7 @@ export const tr: Catalogue = {
   'stories.game.settings': 'Ayarlar',
   'stories.game.share': 'Paylaş',
   'stories.game.shareText': 'Hevalo’da benimle bir Kürtçe hikâye oku. {code} koduyla katıl:',
+  'stories.game.hideEnglish': 'İngilizcesini gizle',
   'stories.game.showEnglish': 'İngilizcesini göster',
   'stories.game.start': 'Başla',
   'stories.game.startQuestions': 'Soruları başlat',

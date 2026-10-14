@@ -1253,6 +1253,7 @@ export const en = {
   'stories.game.settings': 'Settings',
   'stories.game.share': 'Share',
   'stories.game.shareText': 'Read a Kurdish story with me on Hevalo. Join with the code {code}:',
+  'stories.game.hideEnglish': 'Hide English',
   'stories.game.showEnglish': 'Show in English',
   'stories.game.start': 'Start',
   'stories.game.startQuestions': 'Start the questions',

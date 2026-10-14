@@ -1159,6 +1159,7 @@ export const es: Catalogue = {
   'stories.game.settings': 'Ajustes',
   'stories.game.share': 'Compartir',
   'stories.game.shareText': 'Lee conmigo una historia kurda en Hevalo. Únete con el código {code}:',
+  'stories.game.hideEnglish': 'Ocultar el inglés',
   'stories.game.showEnglish': 'Mostrar en inglés',
   'stories.game.start': 'Empezar',
   'stories.game.startQuestions': 'Empezar las preguntas',
