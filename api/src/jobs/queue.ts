@@ -90,6 +90,19 @@ export class JobQueue {
     );
   }
 
+  /**
+   * Upserts a calendar schedule for a job (a cron pattern, read in UTC) — for
+   * work that belongs to a moment, like the league week closing on Monday at
+   * 00:00, rather than to an interval since the process started.
+   */
+  async scheduleCron<T>(def: JobDefinition<T>, pattern: string, payload: T): Promise<void> {
+    await this.queue.upsertJobScheduler(
+      `cron:${def.name}`,
+      { pattern, tz: 'UTC' },
+      { name: def.name, data: payload },
+    );
+  }
+
   async close(): Promise<void> {
     await this.queue.close();
   }

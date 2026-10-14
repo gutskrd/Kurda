@@ -2,7 +2,8 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
-import { XpService, lessonCompletionXp } from '../xp/service.js';
+import { XpService } from '../xp/service.js';
+import { lessonXp } from '../xp/rules.js';
 import { StreakService, type StreakSummary } from '../streaks/service.js';
 import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
@@ -476,17 +477,23 @@ export class LessonSessionService {
             `lesson-complete:${userId}:${slot.skillId}:${slot.position}`,
           ]);
           // Repeat = this learner already completed this lesson before, in
-          // this version or any other.
-          const prior = await client.query<{ n: string }>(
-            `SELECT count(*)::text n FROM lesson_sessions ls
-             JOIN lessons l ON l.id = ls.lesson_id
-             WHERE ls.user_id = $1 AND l.skill_id = $2 AND l.position = $3
-               AND ls.completed_at IS NOT NULL AND ls.id <> $4`,
+          // this version or any other. Today's completions (UTC, the league's
+          // day) decide whether a repeat still pays (xp/rules.ts `lessonXp`).
+          const prior = await client.query<{ n: string; today: string }>(
+            `SELECT count(*)::text n,
+                    count(*) FILTER (
+                      WHERE ls.completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
+                    )::text today
+               FROM lesson_sessions ls
+               JOIN lessons l ON l.id = ls.lesson_id
+              WHERE ls.user_id = $1 AND l.skill_id = $2 AND l.position = $3
+                AND ls.completed_at IS NOT NULL AND ls.id <> $4`,
             [userId, slot.skillId, slot.position, session.id],
           );
-          const isRepeat = Number(prior.rows[0]!.n) > 0;
+          const history = { priorCompletions: Number(prior.rows[0]!.n), priorCompletionsToday: Number(prior.rows[0]!.today) };
+          const isRepeat = history.priorCompletions > 0;
           firstCompletion = !isRepeat;
-          const amount = lessonCompletionXp(accuracy, isRepeat);
+          const amount = lessonXp(accuracy, history);
           xpAwarded = await this.xp.award(
             { userId, source: LESSON_XP_SOURCE, amount, refId: session.id },
             client,

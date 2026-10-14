@@ -21,7 +21,16 @@ import { createEmailProvider } from '../email/provider.js';
 import { DashboardService } from '../analytics/dashboard-service.js';
 import { EconomyService } from '../economy/service.js';
 import { makeAnalyticsRollupJob, makeEconomyRollupJob } from './rollup-jobs.js';
-import { QUEUE_NAME, createQueueConnection } from './queue.js';
+import { JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
+import { makeLeagueMergeJob, makeLeagueSettleJob } from './league-jobs.js';
+import { createProgression } from '../badges/progression.js';
+import { badgeNotices, makeBadgePushJob, makeBadgeRarityJob } from './badge-jobs.js';
+import { RedisRoomPublisher } from '../realtime/bus.js';
+import { GemService } from '../gems/service.js';
+import { WalletService } from '../wallet/service.js';
+import { ActivityService } from '../activity/service.js';
+import { FriendService } from '../friends/service.js';
+import { progressNotices } from '../notifications/progress-notices.js';
 import { JobRegistry } from './registry.js';
 
 export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistry {
@@ -50,6 +59,35 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));
+    // the league week (Monday's settle, Wednesday's merge) and the badges'
+    // nightly rarity and daily push. Promotion news goes back through the
+    // queue as ordinary pushes; a badge a settle unlocks is celebrated on the
+    // API instances, told over the room bus
+    const redis = config.REDIS_URL ? createRedis(config) : undefined;
+    const queue = config.REDIS_URL ? JobQueue.create(config) : null;
+    const inbox = new InboxService(pool);
+    const bus = redis ? new RedisRoomPublisher(redis) : null;
+    const { leagues, badges } = createProgression(pool, {
+      gems: new GemService(pool, new WalletService(pool)),
+      activity: new ActivityService(pool, new FriendService(pool), redis),
+      notices: progressNotices({ inbox, push, jobs: queue }),
+      badgeNotices: (badgeService) =>
+        badgeNotices({
+          inbox,
+          realtime: async (userId, event) => {
+            await bus?.publish(`user:${userId}`, event);
+          },
+          badges: badgeService,
+          push,
+          jobs: queue,
+        }),
+      weeklyGoalXp: config.LEAGUE_WEEKLY_GOAL_XP,
+      log,
+    });
+    registry.register(makeLeagueSettleJob(leagues));
+    registry.register(makeLeagueMergeJob(leagues));
+    registry.register(makeBadgeRarityJob(badges));
+    registry.register(makeBadgePushJob(badges, push));
     // the dashboards read pre-aggregated tables; without these they stay empty
     registry.register(makeAnalyticsRollupJob(new DashboardService(pool)));
     registry.register(makeEconomyRollupJob(new EconomyService(pool)));

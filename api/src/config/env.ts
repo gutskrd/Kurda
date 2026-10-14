@@ -69,6 +69,12 @@ const envSchema = z.object({
   RUN_WORKER_IN_API: z.enum(['true', 'false']).optional(),
 
   /**
+   * Learning Leagues' weekly goal, in XP that counts for the league: met it and
+   * a promotion can count and no demotion can (contract 4 §L3).
+   */
+  LEAGUE_WEEKLY_GOAL_XP: z.coerce.number().int().min(10).max(5000).default(150),
+
+  /**
    * Comma-separated addresses granted admin on boot. Kept in configuration
    * rather than the repository (which is public) so the admin accounts are not
    * advertised. A grant requires the address to be CONFIRMED on its account —

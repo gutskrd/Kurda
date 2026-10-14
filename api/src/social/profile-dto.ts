@@ -1,6 +1,6 @@
+import type { LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
-import type { ProfileRank } from '@kurda/shared';
 import type { PublicProfile } from './service.js';
 
 /** A safe public favorite (only id + title are exposed). */
@@ -34,12 +34,15 @@ export interface PublicProfileDto {
   online?: boolean;
   level?: LevelInfo;
   streak?: number;
-  tier?: string;
+  /** league tier key, or null for someone not in the leagues (see `PublicProfile.tier`) */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
   /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
   ranks?: ProfileRank[];
   /** the season frame worn around the avatar (a SKU from the shared SEASON_FRAME_SKUS), or null */
   frameSku?: string | null;
   achievements?: number;
+  badges?: ShowcaseBadge[];
   favoritePoem?: FavoriteDto | null;
   favoriteStory?: FavoriteDto | null;
 }
@@ -85,9 +88,11 @@ export function toPublicProfileDto(
     level: profile.xp != null ? levelInfo(profile.xp) : undefined,
     streak: profile.streak,
     tier: profile.tier,
+    league: profile.league,
     ranks: profile.ranks,
     frameSku: profile.frameSku ?? null,
     achievements: profile.achievements,
+    badges: profile.badges,
     favoritePoem: fav(profile.favoritePoem),
     favoriteStory: fav(profile.favoriteStory),
   };

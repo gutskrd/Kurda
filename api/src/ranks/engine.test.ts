@@ -184,6 +184,15 @@ describe('rateGame (OpenSkill Plackett-Luce)', () => {
     // Deşt (280) over Çiya (1080): three tiers up
     expect(w!.beatTierGap).toBe(3);
   });
+
+  it('counts no tier gap over an opponent who walked out', () => {
+    const [w] = rateGame({
+      entries: [entry('a', settled(16, 3), 1), entry('b', settled(30, 1), 2, { left: true })],
+      weight: 1,
+      at: AT,
+    });
+    expect(w!.beatTierGap).toBe(0);
+  });
 });
 
 describe('idle σ and the season reset', () => {

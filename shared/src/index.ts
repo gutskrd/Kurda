@@ -231,3 +231,11 @@ export * from './copyright.js';
 export * from './ranks.js';
 /** Who provides Hevalo and how to reach them: the one file the owner fills in. */
 export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provider.js';
+
+/**
+ * Learning Leagues (the weekly table that rewards effort) and badges: the tier
+ * keys, the week, the goal and the zones; the badge catalogue and its progress
+ * sums — one copy for the API, both apps and the admin.
+ */
+export * from './leagues.js';
+export * from './badges.js';

@@ -6,7 +6,7 @@
  * for GDPR — opt-in, never opt-out.
  */
 
-export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing'] as const;
+export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing', 'progress'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 export interface NotificationPrefs {
@@ -15,6 +15,8 @@ export interface NotificationPrefs {
   games: boolean;
   events: boolean;
   marketing: boolean;
+  /** leagues and badges: a promotion, a badge earned (contract 4) */
+  progress: boolean;
   /** Minutes-of-day [0,1440). null/null = no quiet hours. May wrap midnight. */
   quietStartMin: number | null;
   quietEndMin: number | null;
@@ -24,6 +26,8 @@ export interface NotificationPrefs {
  * The preferences of someone who has never changed them. For a minor, streak
  * reminders start off: a daily nudge to keep a run going is the kind of
  * engagement prompt that should be a young person's choice, not a default.
+ * League and badge news ("progress") starts off for a minor too, for the same
+ * reason — the in-app list still has it, only the push waits for their choice.
  */
 export function defaultPrefs(opts: { minor?: boolean } = {}): NotificationPrefs {
   return {
@@ -32,6 +36,7 @@ export function defaultPrefs(opts: { minor?: boolean } = {}): NotificationPrefs 
     games: true,
     events: true,
     marketing: false, // GDPR: explicit opt-in
+    progress: !opts.minor,
     quietStartMin: null,
     quietEndMin: null,
   };

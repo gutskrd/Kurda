@@ -136,7 +136,10 @@ export interface RateOutcome {
   shieldHeld: boolean;
   /** the weight this player's change was applied with (damping × new-account limit) */
   weight: number;
-  /** how many tiers above them the strongest opponent they finished ahead of was (0 when none) */
+  /**
+   * how many tiers above them the strongest opponent they finished ahead of was
+   * (0 when none, while placing, or when that opponent left the game)
+   */
   beatTierGap: number;
 }
 
@@ -237,9 +240,11 @@ export function rateGame(input: RateInput): RateOutcome[] {
       else ties++;
     });
     const score = (beaten.length + ties / 2) / opponents;
+    // finishing ahead of someone who walked out beats nobody, and a leaver beats nobody
     let beatTierGap = 0;
-    if (tierBefore) {
+    if (tierBefore && !e.left) {
       for (const j of beaten) {
+        if (entries[j]!.left) continue;
         const theirs = shownTier(entries[j]!.state, pointsBefore[j]!);
         if (theirs) beatTierGap = Math.max(beatTierGap, tierIndex(theirs) - tierIndex(tierBefore));
       }

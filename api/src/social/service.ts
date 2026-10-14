@@ -1,12 +1,13 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { RankService } from '../ranks/service.js';
-import type { ProfileRank } from '@kurda/shared';
+import { inLeaguesSql } from '../leagues/service.js';
+import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
@@ -58,7 +59,13 @@ export interface PublicProfile {
   favoriteStory?: FavoriteRef | null;
   xp?: number;
   streak?: number;
-  tier?: string;
+  /**
+   * Their league tier key (translated by the apps), or null for someone who
+   * has never been in a league or does not take part — never a made-up
+   * "bronze". Same as `league?.tier`, kept for the apps that read it.
+   */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
   /**
    * Their Game Ranks, per game played (contract-4 §U): the tier now — or
    * "Resting" after 28 days without a rated game, to anyone but them — and the
@@ -67,7 +74,10 @@ export interface PublicProfile {
   ranks?: ProfileRank[];
   /** the season frame they wear around their avatar (a SKU they own), or null */
   frameSku?: string | null;
+  /** badges earned (and the legacy tournament win) */
   achievements?: number;
+  /** the three badges they chose to show; a minor's only to themselves and friends */
+  badges?: ShowcaseBadge[];
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
 }
@@ -173,7 +183,7 @@ export class SocialService {
       birth_year: number | null;
       birth_month: number | null;
       streak: number;
-      tier: string;
+      tier: string | null;
       frame_sku: string | null;
       achievements: number;
       equipped_background_sku: string | null;
@@ -215,12 +225,16 @@ export class SocialService {
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
-              COALESCE(ul.tier, 'bronze') AS tier,
+              -- the league tier only while they take part, and only once they have one
+              CASE WHEN ${inLeaguesSql('u')} THEN ul.tier END AS tier,
               -- a frame is worn only while owned (a grant taken back takes it off)
               CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
                                  WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
                    THEN u.equipped_frame_sku END AS frame_sku,
-              (SELECT count(*)::int FROM user_achievements ua WHERE ua.user_id = u.id) AS achievements,
+              -- badges earned, and the one old award no badge replaced (the tournament win)
+              ((SELECT count(*)::int FROM user_badges ub WHERE ub.user_id = u.id AND ub.tier > 0)
+               + (SELECT count(*)::int FROM user_achievements ua
+                   WHERE ua.user_id = u.id AND ua.achievement_id = 'tournament-win')) AS achievements,
               bg.asset_key AS bg_asset, bg.category AS bg_cat, bg.active AS bg_active,
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
               ic.asset_key AS ic_asset, ic.category AS ic_cat, ic.active AS ic_active,
@@ -337,10 +351,13 @@ export class SocialService {
       favoriteStory,
       xp: u.xp,
       streak: u.streak,
-      tier: u.tier,
+      tier: toLeagueTier(u.tier),
+      league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
       ranks: await this.ranks.profileRanks(targetId, isSelf),
       frameSku: u.frame_sku,
       achievements: u.achievements,
+      // a minor's showcase only to themselves and their friends
+      badges: await profileShowcase(this.pool, targetId, viewerId),
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
     };

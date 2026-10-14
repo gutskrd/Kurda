@@ -11,6 +11,7 @@ import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
 import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
+import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 
 export const DELETION_GRACE_DAYS = 14;
@@ -210,6 +211,17 @@ export class GdprService {
     await executor.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
+    // off this week's league table at once (their earlier weeks stay, tied to
+    // no name), their showcase gone from the profile nobody can open now, and
+    // no badge push queued for an account that is closed
+    await executor.query(
+      `UPDATE league_members SET left_at = now()
+        WHERE user_id = $1 AND left_at IS NULL
+          AND cohort_id IN (SELECT id FROM league_cohorts WHERE NOT settled)`,
+      [userId],
+    );
+    await executor.query(`DELETE FROM badge_showcase WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM badge_push_days WHERE user_id = $1`, [userId]);
     // what they wrote in the rating box or Send feedback is their words; the
     // stars and chips stay in the counts, tied to an anonymised account. An
     // answer that was only words has nothing left once they go — and the
@@ -302,6 +314,8 @@ export class GdprService {
       storyGames: storyGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
+      // XP, leagues, streaks and badges (gdpr/progress-export.ts)
+      progress: await exportProgress(this.pool, userId),
     };
   }
 
@@ -516,6 +530,11 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   await q(`DELETE FROM app_feedback WHERE user_id = $1`);
   await q(`DELETE FROM user_tags WHERE user_id = $1`);
   await q(`DELETE FROM saved_words WHERE user_id = $1`);
+  // the badges a child showed on their profile, as the rest of what was shown there
+  await q(`DELETE FROM user_badges WHERE user_id = $1`);
+  await q(`DELETE FROM badge_users WHERE user_id = $1`);
+  await q(`DELETE FROM badge_rated_games WHERE user_id = $1`);
+  await q(`DELETE FROM badge_rank_seasons WHERE user_id = $1`);
   await q(`DELETE FROM user_exports WHERE user_id = $1`);
 
   // every way back in, and the consent they gave

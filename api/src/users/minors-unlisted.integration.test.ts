@@ -366,13 +366,13 @@ describe.skipIf(!DATABASE_URL)('minors are on no list a stranger can read (integ
       const week = weekStart(new Date());
       // a cohort of their own, so nobody else's test lands in it
       const cohort = (
-        await pool.query<{ id: string }>(`INSERT INTO league_cohorts (week_key, tier) VALUES ($1, 'diamond') RETURNING id`, [
+        await pool.query<{ id: string }>(`INSERT INTO league_cohorts (week_key, tier) VALUES ($1, 'okyanus') RETURNING id`, [
           week,
         ])
       ).rows[0]!.id;
       for (const who of [minor, stranger, pal]) {
         await pool.query(`DELETE FROM league_members WHERE user_id = $1 AND week_key = $2`, [who.id, week]);
-        await pool.query(`INSERT INTO league_members (cohort_id, user_id, week_key, tier) VALUES ($1, $2, $3, 'diamond')`, [
+        await pool.query(`INSERT INTO league_members (cohort_id, user_id, week_key, tier) VALUES ($1, $2, $3, 'okyanus')`, [
           cohort,
           who.id,
           week,

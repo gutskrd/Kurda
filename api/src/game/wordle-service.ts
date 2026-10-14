@@ -199,6 +199,7 @@ export class WordleService {
       if (streak && this.milestones) {
         await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
       }
+      if (finished) await this.milestones?.recordSoloGame?.(userId).catch(() => undefined);
       const view = this.toView(updated.rows[0]!);
       view.xpAwarded = xpAwarded;
       return { ok: true, game: view };

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { RhymeService } from './rhyme-service.js';
 import type { XpService } from '../xp/service.js';
+import type { MilestoneRecorder } from '../achievements/service.js';
 
 const startBody = z.object({
   dialect: z.enum(['kurmanci', 'sorani']).default('kurmanci'),
@@ -17,7 +18,10 @@ const guessBody = z.object({
  * is server-authoritative (#298 engine); the guess endpoint is rate-limited as
  * an anti-abuse guard.
  */
-export function registerRhymeRoutes(app: FastifyInstance, deps: { xp?: XpService } = {}): void {
+export function registerRhymeRoutes(
+  app: FastifyInstance,
+  deps: { xp?: XpService; milestones?: Pick<MilestoneRecorder, 'recordSoloGame'> } = {},
+): void {
   const rhyme = new RhymeService(app.db, deps);
 
   /** Start a solo training round with a random dictionary prompt. */

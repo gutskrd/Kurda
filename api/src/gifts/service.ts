@@ -67,6 +67,8 @@ export interface GiftDeps {
   inbox?: { record(userId: string, notification: Notification): Promise<void> };
   /** the escalation mute (KUR-086), which a gift answers to as a message does */
   moderation?: { isChatMuted(userId: string): Promise<boolean> };
+  /** the badges, told a gift was given (Diyarî) */
+  badges?: { onGiftSent(fromUserId: string): Promise<void> };
   log?: { warn: (obj: unknown, msg: string) => void };
 }
 
@@ -184,6 +186,8 @@ export class GiftService {
       await this.deliver(settled, input, groupPrivacy).catch((err) =>
         this.deps.log?.warn({ err, batchId: settled.batchId }, 'a gift was given but telling people failed'),
       );
+      // the giving badge counts it from the gifts table; best-effort
+      await this.deps.badges?.onGiftSent(fromId).catch(() => undefined);
     }
 
     const balance = await this.deps.wallet.balances(fromId);
