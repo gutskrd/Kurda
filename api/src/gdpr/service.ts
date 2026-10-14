@@ -1,5 +1,4 @@
 import { createHash } from 'node:crypto';
-import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
 import { emailLocaleFor } from '../email/templates.js';
@@ -10,6 +9,7 @@ import { isMinorRow } from '../users/age.js';
 import { handOnGroup } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
+import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 

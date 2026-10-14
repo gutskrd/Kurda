@@ -723,7 +723,7 @@ export class RankService {
     const rows = await this.pool.query<RatingRow & { name: string }>(
       `SELECT r.*, COALESCE(u.display_name, u.username::text) AS name
          FROM game_ratings r JOIN users u ON u.id = r.user_id
-        WHERE r.game = $1 AND r.rated_games > 0 AND u.deleted_at IS NULL
+        WHERE r.game = $1 AND (r.rated_games > 0 OR r.placement_done) AND u.deleted_at IS NULL
           AND (r.user_id = $2 OR (${areFriendsSql('r.user_id', '$2::uuid')} AND u.profile_visibility <> 'nobody'))
         ORDER BY r.points DESC, r.user_id
         LIMIT 200`,
@@ -821,14 +821,14 @@ export class RankService {
 
   /**
    * The ranks someone's profile shows (the profile's own visibility rules
-   * decide whether it is shown at all): per game played, the tier now — or
-   * "Resting" after 28 days without a rated game, to anyone but its owner —
-   * and the best this season and ever.
+   * decide whether it is shown at all): per game played, or carried over from
+   * the old Elo, the tier now — or "Resting" after 28 days without a rated
+   * game, to anyone but its owner — and the best this season and ever.
    */
   async profileRanks(userId: string, viewerIsOwner: boolean): Promise<ProfileRank[]> {
     const at = this.now();
     const rows = await this.pool.query<RatingRow>(
-      `SELECT * FROM game_ratings WHERE user_id = $1 AND rated_games > 0 ORDER BY game`,
+      `SELECT * FROM game_ratings WHERE user_id = $1 AND (rated_games > 0 OR placement_done) ORDER BY game`,
       [userId],
     );
     const out: ProfileRank[] = [];
