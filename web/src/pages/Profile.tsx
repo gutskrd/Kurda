@@ -2,9 +2,10 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { InventoryItem, MeProfile, ProfileSections, UserSummary, WalletBalances } from '../lib/types';
+import type { InventoryItem, MeProfile, ProfileSections, PublicProfile, UserSummary, WalletBalances } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileProgress } from '../profile/ProfileProgress';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
@@ -36,6 +37,8 @@ export function Profile(): React.JSX.Element {
   const [reloadKey, setReloadKey] = useState(0);
 
   const [sections, setSections] = useState<ProfileSections | null>(null);
+  // badges, ranks, league and frame: /me does not carry them, your public profile does
+  const [shown, setShown] = useState<Pick<PublicProfile, 'ranks' | 'badges' | 'league' | 'frameSku'> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,8 +70,11 @@ export function Profile(): React.JSX.Element {
       // everyone else
       const id = m.ok ? m.data?.user?.id : undefined;
       if (id) {
-        const p = await client.get<{ sections?: ProfileSections | null }>(`/users/${id}`);
-        if (!cancelled && p.ok) setSections(p.data.sections ?? null);
+        const p = await client.get<PublicProfile>(`/users/${id}`);
+        if (!cancelled && p.ok) {
+          setSections(p.data.sections ?? null);
+          setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku });
+        }
       }
     })();
     return () => {
@@ -101,6 +107,7 @@ export function Profile(): React.JSX.Element {
     favStory: me.favoriteStory ?? null,
     online: true, // viewing your own profile → you're online
     country: me.country ? { code: me.country, name: countryName(me.country, locale) ?? me.country } : null,
+    frameSku: shown?.frameSku ?? null,
   };
 
   return (
@@ -108,6 +115,7 @@ export function Profile(): React.JSX.Element {
       view={view}
       headerAction={<Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>}
       activity={<ProfileActivity userId={me.id} sections={sections} own />}
+      progress={shown ? <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own /> : null}
       sidebarExtra={
         <>
           <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>

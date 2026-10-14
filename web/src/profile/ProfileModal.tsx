@@ -20,6 +20,8 @@ import { GiftedNote } from './cosmetic-parts';
 import { ProfileCard } from '../ui/ProfileCard';
 import { UserActions } from './UserActions';
 import { useT } from '../i18n/I18nProvider';
+import { toLeagueTier } from '@kurda/shared';
+import { leagueName } from '../ranks/names';
 import type { MessageKey } from '../i18n/en';
 
 /** What the modal is showing: your own profile, or another user by id. */
@@ -130,7 +132,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
   let online: boolean | undefined;
   let favPoem: FavoriteRef | null = null;
   let favStory: FavoriteRef | null = null;
-  const stats: Array<{ label: string; value: string; cap?: boolean }> = [];
+  const stats: Array<{ label: string; value: string }> = [];
   let actions: React.JSX.Element | null = null;
   const unavailable = <ErrorState title={t('profile.loadFailed')} message={t('profile.unavailable')} onRetry={() => setAttempt((n) => n + 1)} />;
 
@@ -171,7 +173,9 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
     if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: other.streak }) });
-    if (other.tier) stats.push({ label: t('profile.stat.league'), value: other.tier, cap: true });
+    // a league tier key, translated; none for someone not taking part (never a default tier)
+    const leagueTier = toLeagueTier(other.league?.tier ?? other.tier ?? null);
+    if (leagueTier) stats.push({ label: t('profile.stat.league'), value: leagueName(t, leagueTier) });
     if (other.achievements !== undefined) stats.push({ label: t('profile.stat.achievements'), value: `${other.achievements}` });
     actions = blocked ? (
       <div className="pcard-blocked" role="status">
@@ -210,6 +214,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
         premium={premium}
         online={online}
         level={level}
+        frameSku={target.kind === 'me' ? null : (other?.frameSku ?? null)}
       >
         <GiftedNote background={background} icon={icon} />
 
@@ -220,7 +225,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
             {stats.map((s) => (
               <div className="pc-stat" key={s.label}>
                 <dt>{s.label}</dt>
-                <dd style={s.cap ? { textTransform: 'capitalize' } : undefined}>{s.value}</dd>
+                <dd>{s.value}</dd>
               </div>
             ))}
           </dl>

@@ -28,6 +28,7 @@ import { ChipRadio } from './ChipRadio';
 import { FriendPicker } from './FriendPicker';
 import { GAME_NAME_KEY, lobbyPath, playError, rememberFriends } from './playApi';
 import { usePlayInvites } from './PlayProvider';
+import { RatedChoice, useRatedChoice } from '../ranks/rated';
 
 /** What the sheet is opened for. */
 export type InviteTarget =
@@ -137,6 +138,9 @@ export function InviteForm({
   const [friends, setFriends] = useState<string[]>(target.kind === 'new' && target.friend ? [target.friend.userId] : []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Rated or Friendly (Game Ranks): the host's last choice for this game, else
+  // Friendly — every game made here is among friends or in a chat
+  const [rated, setRated] = useRatedChoice(game, false);
 
   // the lengths a story game can be made with: those with a published story
   const { stories } = useStoryList(fixedStory?.dialect ?? dialect, game === 'stories' && !fixedStory);
@@ -171,9 +175,9 @@ export function InviteForm({
   function settings(): Record<string, unknown> {
     switch (game) {
       case 'wordle-battle':
-        return { difficulty };
+        return { difficulty, rated };
       case 'rhyme-match':
-        return { dialect };
+        return { dialect, rated };
       case 'stories':
         return {
           mode,
@@ -182,6 +186,7 @@ export function InviteForm({
           timerSeconds: timer,
           textDuring: text,
           access: 'friends',
+          rated,
         };
     }
   }
@@ -341,6 +346,8 @@ export function InviteForm({
           {text === 'hidden' && <p className="story-setup-note">{t('stories.setup.textHiddenHint')}</p>}
         </>
       )}
+
+      {target.kind !== 'lobby' && <RatedChoice value={rated} onChange={setRated} />}
 
       {target.kind === 'group' ? (
         <p className="story-setup-note">{t('play.invite.groupNote')}</p>

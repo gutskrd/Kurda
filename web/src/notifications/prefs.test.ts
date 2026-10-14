@@ -16,6 +16,7 @@ const prefs = (over: Partial<NotificationPrefs> = {}): NotificationPrefs => ({
   streak: true,
   friends: true,
   games: true,
+  progress: true,
   events: true,
   marketing: false,
   quietStartMin: null,

@@ -52,6 +52,9 @@ const NextLesson = lazy(() => import('./pages/NextLesson').then((m) => ({ defaul
 const Dictionary = lazy(() => import('./pages/Dictionary').then((m) => ({ default: m.Dictionary })));
 const Alphabet = lazy(() => import('./pages/Alphabet').then((m) => ({ default: m.Alphabet })));
 const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m.Rankings })));
+// Game Ranks, leagues and badges (contract 4): the badge collection and the season
+const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
+const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit').then((m) => ({ default: m.ProfileEdit })));
@@ -74,6 +77,7 @@ const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) 
 import { SuspensionGate } from './reports/SuspensionGate';
 import { StandingWarnings } from './reports/StandingWarnings';
 import { GiftArrivals } from './gifts/GiftArrivals';
+import { BadgeCelebrations } from './badges/BadgeCelebrations';
 import { ProfileModalProvider } from './profile/ProfileModal';
 import { RealtimeProvider } from './realtime/RealtimeProvider';
 import { MessagesProvider } from './chat/MessagesProvider';
@@ -128,6 +132,8 @@ export function App(): React.JSX.Element {
         <StandingWarnings />
         {/* "Rojda sent you a gift — Open", anywhere in the app */}
         <GiftArrivals />
+        {/* a badge earned, celebrated wherever you are — after a game's own result */}
+        <BadgeCelebrations />
         <SuspensionGate>
         <Routes>
           {/* the landing page, the pages about Hevalo itself, and old public
@@ -241,6 +247,9 @@ export function App(): React.JSX.Element {
               element={<RequireAccount what="gate.what.playOthers"><RhymeMatch /></RequireAccount>}
             />
             <Route path="rankings" element={<Rankings />} />
+            <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
+            <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
+            <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
             <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />
             <Route path="messages" element={<RequireAccount what="gate.what.sendMessages"><Messages /></RequireAccount>} />
             <Route path="shop" element={<RequireAccount what="gate.what.buy"><Shop /></RequireAccount>} />

@@ -7,6 +7,7 @@ import { FullProfile, type FullProfileView } from '../profile/FullProfile';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileProgress } from '../profile/ProfileProgress';
 import { PlayWithButton } from '../play/PlayButtons';
 import { countryName } from '../lib/countries';
 import { ErrorState } from '../components/states';
@@ -77,6 +78,7 @@ export function UserProfile(): React.JSX.Element {
     country: profile.country
       ? { code: profile.country, name: countryName(profile.country, locale) ?? profile.country }
       : null,
+    frameSku: profile.frameSku ?? null,
   };
 
   return (
@@ -89,9 +91,9 @@ export function UserProfile(): React.JSX.Element {
           <ProfileActivity userId={profile.userId} sections={profile.sections} />
         </>
       }
+      progress={<ProfileProgress ranks={profile.ranks} badges={profile.badges} league={profile.league ?? (profile.tier ? { tier: profile.tier } : null)} />}
       sidebarExtra={
         <>
-          {profile.tier && <div className="mkp-info-row"><span className="l">{t('profile.stat.league')}</span><span className="n" style={{ textTransform: 'capitalize', fontSize: '1rem' }}>{profile.tier}</span></div>}
           {profile.achievements !== undefined && <div className="mkp-info-row"><span className="l">{t('profile.stat.achievements')}</span><span className="n">{profile.achievements}</span></div>}
         </>
       }

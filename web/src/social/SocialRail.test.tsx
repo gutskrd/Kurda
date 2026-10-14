@@ -392,6 +392,24 @@ describe('SocialRail', () => {
     expect(screen.getByRole('link', { name: 'A decision about your account' })).toHaveAttribute('href', '/app/settings/standing');
   });
 
+  it('opens the badges or the league from league and badge news, said in the reader’s words', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n1', category: 'progress', title: 'A new badge', body: 'You earned Agir.', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'badge', key: 'agir', tier: '1' } },
+          { id: 'n2', category: 'progress', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'league_promotion', weekKey: '2026-10-12', tier: 'cem' } },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    expect(screen.getByRole('link', { name: 'A new badge' })).toHaveAttribute('href', '/app/badges');
+    expect(screen.getByRole('link', { name: 'You moved up' })).toHaveAttribute('href', '/app/rankings');
+    expect(screen.getByText('Welcome to Çem League.')).toBeInTheDocument();
+  });
+
   it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
     signIn();
     railFetch([

@@ -21,6 +21,7 @@ import './styles/play.css';
 import './styles/social.css';
 import './styles/keyboard.css';
 import './styles/feedback.css';
+import './styles/ranks.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

@@ -8,6 +8,7 @@ import type { ChatExtras } from '../lib/types';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { GAME_NAME_KEY, joinLobby, lobbyPath, playError, summaryParts } from './playApi';
+import { RatedBadge } from '../ranks/rated';
 
 const STATUS_KEY: Record<Exclude<LobbyCard['status'], 'open'>, MessageKey> = {
   full: 'play.card.full',
@@ -85,6 +86,8 @@ export function ChatGameCard({ game, lobbyId }: ChatGameRef): React.JSX.Element 
     <div className={`invite-card chat-game-card is-${card?.status ?? 'loading'}`} role="group" aria-label={t('games.invite.preview', { game: name })}>
       <span className="invite-eyebrow">{t('games.invite.eyebrow')}</span>
       <span className="invite-title">{name}</span>
+      {/* Rated or Friendly, before anyone joins (Game Ranks) */}
+      {card && typeof card.summary.rated === 'boolean' && <RatedBadge rated={card.summary.rated} size="sm" className="invite-rated" />}
       {parts.length > 0 && (
         <span className="invite-blurb">
           {parts.map((p, i) => (

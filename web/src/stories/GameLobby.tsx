@@ -11,6 +11,7 @@ import { SetupSheet } from './SetupSheet';
 import { storyError } from './api';
 import { ExtraTimeToggle, FromMemoryNote, SettingsLine, playerName, type Act, type Announce } from './GameParts';
 import { rememberedExtraTime } from './prefs';
+import { LobbyRated } from '../ranks/rated';
 
 /**
  * The lobby of a duo or group game: the code and the ways to share it,
@@ -129,6 +130,22 @@ export function GameLobby({
       )}
 
       <FromMemoryNote view={view} />
+
+      {/* Rated or Friendly (Game Ranks): seen before joining, changed by the host here */}
+      {view.mode !== 'solo' && view.rated && (
+        <LobbyRated
+          game="stories"
+          lobbyId={view.id}
+          state={view.rated}
+          isHost={view.isHost}
+          member={view.players.some((p) => p.isMe)}
+          playerCount={present.length}
+          seatName={(seat) => {
+            const p = view.players.find((x) => x.seat === seat);
+            return p ? playerName(p, t) : t('stories.game.playerN', { seat });
+          }}
+        />
+      )}
 
       <div className="sg-panel">
         <div className="sg-panel-head">

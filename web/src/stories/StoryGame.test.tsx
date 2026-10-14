@@ -63,6 +63,18 @@ describe('the lobby', () => {
     expect(screen.getByText('Waiting for everyone to come back to the game.')).toBeInTheDocument();
   });
 
+  it('shows a game with others as Rated or Friendly before it starts, and lets the host change it', async () => {
+    const { calls } = fakeApi({
+      'GET /story-games/g-1': (c: Call) =>
+        c.path.includes('?v=') ? new Promise(() => undefined) : gameView({ rated: { rated: false, counts: null, friendlyReason: null, damped: false } }),
+      'PUT /play/stories/g-1/rated': { ok: true, rated: true },
+    });
+    game();
+    expect(await screen.findByText('Friendly', { selector: '.rated-badge' })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole('radio', { name: /Rated/ }));
+    await waitFor(() => expect(calls.some((c) => c.method === 'PUT' && c.path === '/play/stories/g-1/rated')).toBe(true));
+  });
+
   it('starts the game, and removes a player by seat after asking twice', async () => {
     const poll = heldPoll();
     const players = [

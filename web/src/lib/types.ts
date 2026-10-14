@@ -4,7 +4,7 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
-import type { FeedImage } from '@kurda/shared';
+import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
 
@@ -188,10 +188,19 @@ export interface PublicProfile extends ProfileCosmetics {
   profilePhotoUrl?: string | null;
   xp?: number;
   streak?: number;
-  tier?: string;
-  rating?: number;
-  /** global rating place, or null when they have not played ranked */
-  rank?: number | null;
+  /**
+   * Their Learning League tier, or null for someone not taking part (and for
+   * someone who never joined — not Bronze, as it once read). A key: translate
+   * it (ranks/names), never print it.
+   */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
+  /** Game Ranks per game they play this season (contract 4); "Resting" ones carry no tier for others */
+  ranks?: ProfileRank[];
+  /** the season frame worn round the avatar, or null */
+  frameSku?: string | null;
+  /** the three badges they show (a minor's only to friends) */
+  badges?: ShowcaseBadge[];
   achievements?: number;
   /** which activity sections this profile shows; null when it is private */
   sections?: ProfileSections | null;

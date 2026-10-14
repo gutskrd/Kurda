@@ -22,6 +22,9 @@ import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
 import { PlayerReport } from '../reports/PlayerReport';
+import type { RatedState } from '@kurda/shared';
+import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
+import { RankResult } from '../ranks/RankResult';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -46,6 +49,8 @@ interface MatchState {
   maxPlayers: number;
   createdBy: string;
   isHost: boolean;
+  /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
+  rated?: RatedState;
   /** everyone in it, by seat, as this viewer may see them */
   players: SeatPlayer[];
   me: { seat: number; score: number; accepted: number; usedWords: string[] } | null;
@@ -263,6 +268,19 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
         </div>
         <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} game="rhyme-match" gameId={id} />
+        {/* Rated or Friendly: everyone sees it before joining, the host changes it here */}
+        <LobbyRated
+          game="rhyme-match"
+          lobbyId={id}
+          state={match.rated}
+          isHost={match.isHost}
+          member={match.me != null}
+          playerCount={playerCount}
+          seatName={(seat) => {
+            const p = match.players.find((x) => x.seat === seat);
+            return p ? seatName(p, t) : t('stories.game.playerN', { seat });
+          }}
+        />
         {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
@@ -287,6 +305,9 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
     return (
       <div className="match-results">
         <h2 className="match-verdict">{mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}</h2>
+        {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
+        {/* what the game did to your rank, then the badges it earned */}
+        {match.me != null && <RankResult game="rhyme-match" gameRef={id} />}
         {results && (
           <>
             <p className="muted">{t('games.rhymeMatch.promptWas', { word: results.prompt })}</p>
@@ -330,6 +351,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
   // active
   return (
     <div className="match-play">
+      {match.rated && <RatedBadge rated={shownRated(match.rated)} size="sm" className="match-rated" />}
       <div className="rhyme-stage">
         <div className="rhyme-prompt-box">
           <span className="rhyme-label">{t('games.rhyme.rhymeWith')}</span>

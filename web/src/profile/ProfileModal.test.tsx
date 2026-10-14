@@ -108,6 +108,22 @@ describe('ProfileModal', () => {
     expect(bg?.getAttribute('src')).toBe('https://cdn.test/backgrounds/a.mp4');
   });
 
+  it('names another user’s league in words, and shows nothing for one not in a league', async () => {
+    const base = { userId: 'u2', username: 'zana', displayName: null, friendStatus: 'friends', private: false, xp: 10, streak: 1 };
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { ...base, tier: 'cem', league: { tier: 'cem' } })));
+    const { unmount } = renderApp(<OpenUser />);
+    await userEvent.click(screen.getByText('open-user'));
+    expect(await screen.findByText('Çem League')).toBeInTheDocument();
+    expect(screen.queryByText('cem')).not.toBeInTheDocument();
+    unmount();
+
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, { ...base, tier: null, league: null })));
+    renderApp(<OpenUser />);
+    await userEvent.click(screen.getByText('open-user'));
+    await screen.findByText('@zana');
+    expect(screen.queryByText('League')).not.toBeInTheDocument();
+  });
+
   it('shows the loading state while /me is in flight', async () => {
     // a fetch that never resolves keeps the request pending
     vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>(() => {})));

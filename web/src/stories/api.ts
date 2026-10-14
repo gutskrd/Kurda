@@ -31,6 +31,8 @@ export interface CreateStoryGame {
   access: GameAccess;
   skipReading?: boolean;
   extraTime?: boolean;
+  /** duo and group: Rated or Friendly (Game Ranks); solo has nobody to rank against */
+  rated?: boolean;
 }
 
 export function createGame(client: ApiClient, body: CreateStoryGame): Promise<ApiResult<StoryGameView>> {
