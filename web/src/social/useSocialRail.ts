@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { useT } from '../i18n/I18nProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { socialNotification } from '../reports/notifications';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -56,7 +57,8 @@ export interface SocialRailData {
   challenges: RailFriend[];
   groups: RailGroup[];
   notifications: RailNotification[];
-  unread: { notifications: number; groups: number; requests: number; challenges: number };
+  /** `gifts`: unopened gifts — the Shop badge (folded in here so nothing polls for it alone) */
+  unread: { notifications: number; groups: number; requests: number; challenges: number; gifts?: number };
 }
 
 /** Something that just showed up, worth a toast. */
@@ -107,6 +109,7 @@ export function useSocialRail(): {
 } {
   const { client, status } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const signedIn = status === 'signedIn';
   const [data, setData] = useState<SocialRailData>(EMPTY);
   const [loading, setLoading] = useState(true);
@@ -126,7 +129,7 @@ export function useSocialRail(): {
       setData(next);
       setLoading(false);
 
-      const keys = arrivalKeys(next, t);
+      const keys = arrivalKeys(next, t, locale);
       if (seen.current === null) {
         // first answer: adopt it silently
         seen.current = new Set(keys.map((a) => a.key));
@@ -136,7 +139,7 @@ export function useSocialRail(): {
       seen.current = new Set(keys.map((a) => a.key));
       if (fresh.length > 0) setArrivals((prev) => [...prev, ...fresh].slice(-3));
     })();
-  }, [client, signedIn, t]);
+  }, [client, signedIn, t, locale]);
 
   useEffect(() => {
     if (!signedIn) {
@@ -167,7 +170,7 @@ export function useSocialRail(): {
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */
-function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
+function arrivalKeys(data: SocialRailData, t: Translate, locale: string): Arrival[] {
   const name = (f: RailFriend): string => f.displayName || f.username;
   return [
     ...data.requests.map((r) => ({
@@ -178,14 +181,19 @@ function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
       who: r,
     })),
     ...data.notifications
-      // a game invite arrives with its own banner, which can be answered (play/InviteBanner)
-      .filter((n) => n.readAt === null && n.data?.kind !== 'play_invite')
-      .map((n) => ({
-        key: `note:${n.id}`,
-        kind: 'notification' as const,
-        title: n.title,
-        body: n.body ?? '',
-        who: null,
-      })),
+      // a gift arrives with its own banner, which opens it (gifts/GiftArrivals),
+      // and so does a game invite, which can be answered there (play/InviteBanner)
+      .filter((n) => n.readAt === null && n.data?.kind !== 'gift' && n.data?.kind !== 'play_invite')
+      .map((n) => {
+        // in the reader's words where the notification's data says what it is
+        const view = socialNotification(n, t, locale);
+        return {
+          key: `note:${n.id}`,
+          kind: 'notification' as const,
+          title: view?.title ?? n.title,
+          body: (view ? view.body : n.body) ?? '',
+          who: null,
+        };
+      }),
   ];
 }

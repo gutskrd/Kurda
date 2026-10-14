@@ -2,6 +2,8 @@ import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
+import type { SuspendedErrorDetails } from '@kurda/shared';
+import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -51,6 +53,12 @@ export class ApiClient {
     private readonly baseUrl: string,
     private readonly storage: TokenStorage,
     private readonly onLogout: () => void,
+    /**
+     * The account was suspended while signed in. Every request then answers
+     * a bare ACCOUNT_DISABLED; the refresh answers ACCOUNT_SUSPENDED with the
+     * reasons and an appeal token, which is what the suspension screen needs.
+     */
+    private readonly onSuspended: (details: SuspendedErrorDetails) => void = () => undefined,
   ) {}
 
   get isAuthenticated(): boolean {
@@ -117,7 +125,9 @@ export class ApiClient {
 
     const attempt = async (): Promise<ApiResult<T>> => {
       const tokens = this.storage.get();
-      const withAuth = tokens ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
+      // a credential the caller passed is the one meant (the suspension
+      // screen's appeal token): a session left in storage never replaces it
+      const withAuth = tokens && !headers.authorization ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
         res = await this.timedFetch(
@@ -136,6 +146,13 @@ export class ApiClient {
     };
 
     const first = await attempt();
+    if (!first.ok && first.error.code === 'ACCOUNT_DISABLED' && this.storage.get()) {
+      // Suspended mid-session: the refresh is where the reasons are. It
+      // answers ACCOUNT_SUSPENDED (onSuspended takes it from there) — or, if
+      // the suspension has just ended, a fresh token worth one more try.
+      if (await this.refreshOnce()) return attempt();
+      return first;
+    }
     if (first.ok || first.error.status !== 401 || options.signal?.aborted) return first;
 
     // A 401 with no stored session is a normal auth failure (e.g. a bad login) —
@@ -170,7 +187,18 @@ export class ApiClient {
     } catch {
       return false;
     }
-    if (!res.ok) return false;
+    if (!res.ok) {
+      if (res.status === 403) {
+        const body = (await res.json().catch(() => ({}))) as { code?: string; message?: string; details?: unknown };
+        const suspended = suspensionOf({ kind: 'client', status: 403, code: body.code, message: body.message ?? '', details: body.details });
+        if (suspended) {
+          // the API has already ended every session this account had
+          this.storage.clear();
+          this.onSuspended(suspended);
+        }
+      }
+      return false;
+    }
     const next = (await res.json()) as TokenPair;
     // preserve the persistence choice: rewrite wherever the tokens currently live
     const remembered = localStorage.getItem('hevalo_tokens') !== null;
@@ -189,7 +217,7 @@ export class ApiClient {
       const data = res.status === 204 ? (undefined as T) : ((await res.json()) as T);
       return { ok: true, data };
     }
-    let envelope: { code?: string; message?: string; requestId?: string } = {};
+    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown } = {};
     try {
       envelope = (await res.json()) as typeof envelope;
     } catch {
@@ -218,6 +246,7 @@ export class ApiClient {
         message: envelope.message ?? `request failed (${res.status})`,
         requestId: envelope.requestId,
         status: res.status,
+        ...(envelope.details !== undefined ? { details: envelope.details } : {}),
       },
     };
   }
@@ -262,7 +291,17 @@ export const CODE_COPY: Record<string, MessageKey> = {
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
 };
-export function describeError(error: ApiError, t: Translate): string {
+export function describeError(error: ApiError, t: Translate, locale?: string): string {
+  // A limit on the account says what is limited and until when, in the
+  // reader's words and time zone (reports/restriction.ts). The language is
+  // the page's when a caller does not pass one: I18nProvider keeps <html
+  // lang> in step with the reader's choice.
+  const restriction = restrictionOf(error);
+  if (restriction) {
+    const lang = locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : '') ?? '';
+    return restrictionText(restriction, t, lang || 'en');
+  }
+
   // A live countdown beats any sentence, so it wins when the server sent one.
   // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
   // locked you out and puts the number in details, which nothing turns into a
@@ -300,7 +339,10 @@ export function describeError(error: ApiError, t: Translate): string {
 }
 
 /** Build a client bound to browser storage. `onLogout` re-renders the app. */
-export function createApiClient(onLogout: () => void): { client: ApiClient; storage: TokenStorage } {
+export function createApiClient(
+  onLogout: () => void,
+  onSuspended?: (details: SuspendedErrorDetails) => void,
+): { client: ApiClient; storage: TokenStorage } {
   const storage = createTokenStorage();
-  return { client: new ApiClient(API_URL, storage, onLogout), storage };
+  return { client: new ApiClient(API_URL, storage, onLogout, onSuspended), storage };
 }

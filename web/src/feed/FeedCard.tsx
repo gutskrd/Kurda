@@ -11,6 +11,7 @@ import { useI18n, useT } from '../i18n/I18nProvider';
 import type { FeedItem } from '../lib/types';
 
 import { CARD_LABEL_KEY } from './postKinds';
+import { ReportAction } from '../reports/ReportAction';
 
 /**
  * One post on the wall.
@@ -126,6 +127,15 @@ export function FeedCard({
           <HeartIcon size={18} weight={e.liked ? 'fill' : 'regular'} />
           {e.likes > 0 && <span>{e.likes.toLocaleString()}</span>}
         </button>
+
+        {/* someone else's post can be reported from its card (ReportAction draws nothing for your own) */}
+        <ReportAction
+          className="fcard-report"
+          target={{ targetType: item.targetType === 'image' ? 'image_post' : 'library_post', targetId: item.id }}
+          authorId={item.author.id}
+          label={t('report.aboutPost')}
+          block={{ userId: item.author.id, name: item.author.username }}
+        />
 
         {mine && (
           <ConfirmButton

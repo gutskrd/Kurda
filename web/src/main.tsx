@@ -17,6 +17,8 @@ import './styles/marketing.css';
 import './styles/stories.css';
 // playing with friends: invites, the banner, game cards, playing again
 import './styles/play.css';
+// gifts in chat, reporting, account standing
+import './styles/social.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

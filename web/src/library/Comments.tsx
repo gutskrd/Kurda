@@ -7,6 +7,9 @@ import { ErrorState } from '../components/states';
 import { CommentsSkeleton } from '../components/skeletons';
 import { PostAuthor, type Author } from './PostAuthor';
 import { useT } from '../i18n/I18nProvider';
+import { SendError } from '../reports/SendError';
+import type { ApiError } from '../lib/types';
+import { ReportAction } from '../reports/ReportAction';
 
 /**
  * Threaded comments on a post.
@@ -169,7 +172,21 @@ function CommentNode({
 
   return (
     <li className="comment" style={{ marginLeft: indent > 0 ? 0 : undefined }}>
-      <PostAuthor author={comment.author} at={comment.createdAt} size="sm" />
+      <PostAuthor
+        author={comment.author}
+        at={comment.createdAt}
+        size="sm"
+        trailing={
+          !removed && (
+            <ReportAction
+              target={{ targetType: surface === 'images' ? 'image_comment' : 'library_comment', targetId: comment.id }}
+              authorId={comment.author?.id}
+              label={t('report.aboutComment')}
+              block={comment.author ? { userId: comment.author.id, name: comment.author.username } : null}
+            />
+          )
+        }
+      />
 
       <div className="comment-body">
         {removed ? <em className="muted">{t('comments.removed')}</em> : comment.body}
@@ -261,7 +278,7 @@ function CommentForm({
   const { client } = useAuth();
   const [body, setBody] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ApiError | null>(null);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -279,7 +296,7 @@ function CommentForm({
       onAdded();
       await onDone();
     } else {
-      setError(describeError(res.error, t));
+      setError(res.error);
     }
   }
 
@@ -294,7 +311,7 @@ function CommentForm({
         onChange={(e) => setBody(e.target.value)}
         aria-label={placeholder}
       />
-      {error && <div className="msg msg-error">{error}</div>}
+      <SendError error={error} />
       <div className="comment-form-actions">
         <Button type="submit" size="sm" disabled={busy || body.trim().length === 0}>
           {busy ? t('comments.posting') : parentId ? t('comments.reply') : t('comments.submit')}

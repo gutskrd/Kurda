@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
-import { describeError } from '../lib/api';
-import type { ImagePost } from '../lib/types';
+import type { ApiError, ImagePost } from '../lib/types';
 import { Button } from '../components/Button';
 import { PhotoIcon } from '../components/icons';
 import { canvasToFile } from './photoText';
@@ -13,6 +12,7 @@ import { ensureStickersFor } from './stickers';
 import { overlaySources } from './filters';
 import { useT } from '../i18n/I18nProvider';
 import { DIMEN_KINDS } from '../feed/postKinds';
+import { SendError } from '../reports/SendError';
 
 const MAX_CAPTION = 2_000;
 
@@ -54,7 +54,7 @@ export function PictureComposer({
   const [caption, setCaption] = useState('');
   const [postAs, setPostAs] = useState('image');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<string | ApiError | null>(null);
   /** The browser could not decode it, so it goes up as-is with nothing added. */
   const [rawOnly, setRawOnly] = useState(false);
   /** what the bytes turned out to be, so a failure can be worded honestly */
@@ -158,7 +158,7 @@ export function PictureComposer({
       setError(
         up.error.code === 'MEDIA_UNAVAILABLE'
           ? t('picture.storageOff')
-          : describeError(up.error, t),
+          : up.error,
       );
       return;
     }
@@ -172,7 +172,7 @@ export function PictureComposer({
     if (made.ok) onDone(made.data);
     // the bytes are stored either way; only the post failed, so saying so beats
     // silently dropping them
-    else setError(describeError(made.error, t));
+    else setError(made.error);
   }
 
   const editable = file !== null && source !== null && imageRef.current !== null;
@@ -197,7 +197,7 @@ export function PictureComposer({
               <span>{t('picture.choose')}</span>
             </span>
           </button>
-          {error && <div className="msg msg-error" role="status">{error}</div>}
+          <SendError error={error} role="status" />
         </>
       ) : (
         <>
@@ -276,7 +276,7 @@ export function PictureComposer({
             style={{ marginTop: 12 }}
           />
 
-          {error && <div className="msg msg-error" role="status">{error}</div>}
+          <SendError error={error} role="status" />
 
           <div className="comment-form-actions">
             <Button size="sm" onClick={() => void submit()} disabled={busy}>

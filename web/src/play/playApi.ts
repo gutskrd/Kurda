@@ -72,7 +72,7 @@ const PLAY_ERROR_KEY: Record<string, MessageKey> = {
   OPEN_GAMES_ADULTS_ONLY: 'stories.error.openNotAllowed',
   NOT_HOST: 'play.error.notHost',
   NOT_A_MEMBER: 'play.error.notMember',
-  CHAT_MUTED: 'chat.error.muted',
+  // CHAT_MUTED and MUTED are said by describeError (reports/restriction.ts), with the time
   NOT_FRIENDS: 'chat.error.notFriends',
 };
 

@@ -1,0 +1,1820 @@
+/*
+ * Gifts in the chat, reporting, and account standing.
+ *
+ * One file for the three because they meet in the same places — a chat
+ * bubble can be a present, and the menu beside it reports it — and because
+ * they arrived together: kept apart from pages.css, the merge with the work
+ * on games in the same chat stays a matter of two files side by side.
+ *
+ * Colours are the app's tokens. Gold is meaning, and a gift is the one place
+ * in the chat where it is meant: it is what the Zêr it was bought with looks
+ * like.
+ */
+
+/* ---- a limit on the account, said calmly -------------------------------- */
+.send-error.is-limit {
+  color: var(--ink);
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  border-inline-start: 3px solid var(--gold);
+}
+.send-error-link {
+  color: var(--gold-ink);
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+.send-error-link:hover {
+  color: var(--ink);
+}
+
+/* ---- the sheet (components/Sheet.tsx) ------------------------------------ */
+/*
+ * Above a modal (100): a report can be opened from a profile that is itself
+ * a modal, and the sheet must be the thing on top.
+ */
+.sheet-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(4, 6, 10, 0.6);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fade 0.15s ease;
+}
+.sheet-panel {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: calc(100dvh - 48px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 30px 26px 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 16, 22, 0.86);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  backdrop-filter: blur(30px) saturate(1.3);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+  outline: none;
+  animation: sheet-rise 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes sheet-rise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+}
+.sheet-grip {
+  display: none;
+}
+.sheet-close {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  z-index: 3;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.sheet-close:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+/* a phone: up from the bottom edge, where the thumb already is */
+@media (max-width: 640px) {
+  .sheet-overlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .sheet-panel {
+    max-width: none;
+    max-height: 92dvh;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    border-bottom: 0;
+    padding: 22px 16px calc(20px + env(safe-area-inset-bottom));
+    animation-name: sheet-up;
+  }
+  .sheet-grip {
+    display: block;
+    width: 40px;
+    height: 4px;
+    margin: -8px auto 12px;
+    border-radius: var(--r-pill);
+    background: var(--border-strong);
+  }
+}
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+
+/* ---- the report sheet (reports/ReportSheet.tsx) -------------------------- */
+.report-eyebrow {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  padding-inline-end: 48px;
+  overflow-wrap: anywhere;
+}
+[dir='rtl'] .report-eyebrow {
+  letter-spacing: 0;
+  text-transform: none;
+}
+.report-heading {
+  font-size: 1.4rem;
+  margin: 6px 0 4px;
+  outline: none;
+}
+.report-heading:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--r-xs);
+}
+.report-intro {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  margin-top: 8px;
+}
+.report-cats {
+  list-style: none;
+  padding: 0;
+  margin: 16px 0 12px;
+  display: grid;
+  gap: 8px;
+}
+.report-cat {
+  width: 100%;
+  min-height: 58px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 14px;
+  text-align: start;
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+.report-cat:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+/* the most urgent come first, and are marked so the eye finds them first too */
+.report-cat.is-urgent {
+  border-inline-start: 3px solid var(--danger);
+}
+.report-cat-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.report-cat-label {
+  font-weight: 600;
+  line-height: 1.3;
+}
+.report-cat-hint {
+  font-size: 0.84rem;
+  line-height: 1.35;
+  color: var(--ink-3);
+}
+.report-cat-go {
+  flex: none;
+  color: var(--ink-4);
+}
+[dir='rtl'] .report-cat-go {
+  transform: scaleX(-1);
+}
+.report-privacy {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.report-help p {
+  color: var(--ink-2);
+  margin-top: 10px;
+}
+.report-help-link {
+  margin-top: 16px;
+}
+.report-chosen {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 16px;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+/* the chip is a pill, but the label below it starts its own line */
+.report-chosen + .field-label {
+  display: block;
+  margin-bottom: 7px;
+}
+.report-note {
+  min-height: 110px;
+  resize: vertical;
+}
+.report-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+}
+.report-actions .btn {
+  min-height: 44px;
+}
+.report-done-mark {
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 8px;
+  border-radius: 50%;
+  color: var(--success);
+  background: var(--success-soft);
+}
+.report-subheading {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin: 20px 0 6px;
+}
+.report-next {
+  margin: 0;
+  padding-inline-start: 20px;
+  color: var(--ink-2);
+  font-size: 0.93rem;
+}
+.report-next li + li {
+  margin-top: 4px;
+}
+.report-help-again {
+  margin-top: 12px;
+  color: var(--ink-2);
+}
+.report-help-again a {
+  color: var(--gold-ink);
+  text-decoration: underline;
+}
+.report-also-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  margin-top: 8px;
+}
+.report-also-btn {
+  min-height: 44px;
+}
+.report-also-note {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+
+/* ---- Settings → Safety, My reports, Account standing (reports/) ---------- */
+.safety-links {
+  display: grid;
+  gap: 8px;
+}
+.safety-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+}
+.safety-link:hover {
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+}
+.safety-link span {
+  flex: 1;
+}
+.safety-link-go {
+  color: var(--ink-4);
+}
+[dir='rtl'] .safety-link-go {
+  transform: scaleX(-1);
+}
+
+/* back to Settings: a page reached from a page, on every width */
+.standing-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  margin-bottom: 6px;
+  color: var(--ink-3);
+  font-size: 0.92rem;
+  font-weight: 600;
+}
+.standing-back:hover {
+  color: var(--ink);
+}
+.standing-back-icon {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .standing-back-icon {
+  transform: none;
+}
+
+.myreports {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 14px;
+}
+.myreport-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.myreport-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.myreport-title {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.myreport-what {
+  color: var(--ink-3);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+.myreport-pill,
+.sanction-tag {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: var(--surface-2);
+  color: var(--ink-2);
+  white-space: nowrap;
+}
+.myreport-pill.is-actioned {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.myreport-pill.is-open,
+.sanction-tag.is-active {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.myreport-status {
+  margin-top: 10px;
+  color: var(--ink-2);
+}
+.myreport-dates {
+  margin: 6px 0 12px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.appeal-form {
+  margin-top: 12px;
+}
+.appeal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+.appeal-actions .btn,
+.appeal-offer .btn {
+  min-height: 44px;
+}
+.appeal-offer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
+  margin-top: 14px;
+}
+.appeal-deadline {
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+.appeal-state {
+  margin-top: 14px;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.appeal-state.is-overturned,
+.appeal-state.is-modified {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.appeal-answer {
+  margin-top: 6px;
+  color: var(--ink);
+}
+
+.standing-status {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+.standing-status-icon {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.standing-status.is-good .standing-status-icon {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.standing-status-title {
+  font-size: 1.25rem;
+  margin-bottom: 6px;
+}
+.standing-limits {
+  margin: 4px 0 0;
+  padding-inline-start: 18px;
+  color: var(--ink-2);
+}
+.standing-group {
+  margin-top: 28px;
+  display: grid;
+  gap: 14px;
+}
+.standing-group .friend-heading {
+  margin: 0;
+}
+.standing-none {
+  margin-top: 20px;
+}
+.sanction {
+  border-inline-start: 3px solid var(--border-strong);
+}
+.sanction.is-active {
+  border-inline-start-color: var(--gold);
+}
+.sanction-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.sanction-kind {
+  font-family: var(--font-sans);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.sanction-rule {
+  margin-top: 6px;
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.sanction-when {
+  margin-top: 2px;
+  color: var(--ink-3);
+  font-size: 0.88rem;
+}
+.sanction-statement {
+  margin: 12px 0 0;
+}
+.sanction-statement figcaption {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.sanction-statement blockquote,
+.sanction-statement-text {
+  margin: 4px 0 0;
+  padding: 10px 12px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.sanction-origin {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--ink-3);
+}
+
+.standing-warning-item {
+  margin-top: 14px;
+}
+/* the dialog's ✕ sits at the top right in either direction, so the heading
+   keeps clear of it on that side — in Soranî and Arabic too */
+.standing-warning .report-heading {
+  padding-right: 40px;
+}
+/* "I understand" first and full width, the way to the reasons under it: the
+   two side by side wrapped unevenly in every language longer than English */
+.standing-warning .report-actions {
+  flex-direction: column-reverse;
+  align-items: stretch;
+}
+.standing-warning .report-actions .btn {
+  width: 100%;
+  justify-content: center;
+}
+
+/* the suspension screen, in place of the app */
+.suspension {
+  padding-top: 40px;
+  padding-bottom: 60px;
+}
+.suspension-card {
+  text-align: center;
+}
+.suspension-card .sanction-statement {
+  text-align: start;
+}
+.suspension-icon {
+  width: 56px;
+  height: 56px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.suspension-title {
+  margin-top: 12px;
+  font-size: clamp(1.6rem, 4vw, 2.1rem);
+}
+.suspension-until {
+  margin-top: 8px;
+  color: var(--ink-2);
+  font-size: 1.05rem;
+}
+.suspension-note {
+  font-size: 0.9rem;
+}
+.suspension-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 28px;
+}
+.suspension-actions .btn {
+  min-height: 44px;
+}
+
+/* a notification that opens the page with the rest of it */
+.rail-note-link {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+.rail-note-link:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---- the ⋯ beside something reportable (reports/MessageMenu.tsx) --------- */
+.msg-menu {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+.msg-menu-btn {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+/* the visible dot stays small; the place to tap is a full 44px */
+.msg-menu-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.msg-menu-btn:hover,
+.msg-menu.is-open .msg-menu-btn {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+.msg-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-end: 0;
+  z-index: 20;
+  min-width: 176px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: rgba(18, 21, 27, 0.98);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: var(--shadow-lg);
+}
+.msg-menu-list .user-menu-item {
+  min-height: 44px;
+  text-align: start;
+}
+
+/* a chat message with its ⋯: the dots wait for a pointer, a phone shows them faintly */
+.bubble-line {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  max-width: 100%;
+  min-width: 0;
+}
+.bubble-line > .bubble {
+  min-width: 0;
+}
+.bubble-line .msg-menu-list {
+  inset-inline-end: auto;
+  inset-inline-start: 0;
+}
+@media (hover: hover) {
+  .bubble-line .msg-menu {
+    opacity: 0;
+    transition: opacity 0.12s ease;
+  }
+  .bubble-line:hover .msg-menu,
+  .bubble-line:focus-within .msg-menu,
+  .bubble-line .msg-menu.is-open {
+    opacity: 1;
+  }
+}
+@media (hover: none) {
+  .bubble-line .msg-menu-btn {
+    color: var(--ink-4);
+  }
+}
+.byline .report-action {
+  margin-inline-start: auto;
+}
+.fcard-report {
+  margin-inline-start: auto;
+}
+/* another player's chip in a game: the ⋯ sits at its end, clear of the meter,
+   drawn small so a name keeps its room on a phone — the place to tap stays 44px */
+.player .player-report {
+  margin-inline-start: auto;
+  margin-inline-end: -6px;
+}
+.player .player-report .msg-menu-btn {
+  width: 28px;
+  height: 28px;
+}
+.player .player-report .msg-menu-btn::after {
+  inset: -8px;
+}
+.fcard-report .msg-menu-list,
+.rank-row .msg-menu-list {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+/* ===========================================================================
+ * Gifts in the chat (gifts/)
+ *
+ * Every moment is CSS keyframes over the hand-drawn SVG in GiftArt.tsx. The
+ * global reduced-motion rule (base.css) stops all of it; the few fades that
+ * must still happen under it say so at the bottom of this section.
+ * ======================================================================== */
+
+/* ---- the composer's gift button ------------------------------------------ */
+.chat-compose-tools {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+.chat-gift-btn {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  color: var(--gold-ink);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+.chat-gift-btn:hover {
+  background: var(--gold-soft);
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.chat-gift-btn:active {
+  transform: scale(0.94);
+}
+
+/* ---- the bubble ----------------------------------------------------------- */
+/* a card in a bubble brings its own surface; the bubble's padding and fill step aside */
+.bubble.is-card {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  white-space: normal;
+}
+/*
+ * A gift is a card, not a sentence: like an invite card it gets a real width
+ * rather than shrink-wrapping (and the phone rule that caps a text bubble at
+ * 85% would cut its edge off).
+ */
+.chat-run:has(.gift-bubble) {
+  width: 100%;
+  max-width: min(100%, 340px);
+}
+.chat-run:has(.gift-bubble) .chat-run-body,
+.bubble.is-card {
+  width: 100%;
+  max-width: 100%;
+}
+.bubble-line:has(.is-card) {
+  width: 100%;
+}
+.bubble-line > .bubble.is-card {
+  flex: 1;
+}
+.gift-bubble {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-width: 220px;
+  padding: 10px 14px 10px 10px;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--gold) 38%, transparent);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(240, 194, 74, 0.2), transparent 60%),
+    var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+}
+button.gift-bubble {
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    box-shadow 0.2s ease;
+}
+button.gift-bubble:hover {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px var(--gold-soft);
+}
+button.gift-bubble:active {
+  transform: scale(0.98);
+}
+.gift-bubble-rare {
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(110, 140, 255, 0.22), transparent 60%),
+    var(--surface-2);
+}
+.gift-bubble-legendary {
+  border-color: var(--gold);
+  background:
+    radial-gradient(120% 160% at 0% 100%, rgba(217, 56, 30, 0.28), transparent 60%),
+    radial-gradient(120% 140% at 100% 0%, rgba(240, 194, 74, 0.28), transparent 60%),
+    var(--surface-2);
+}
+.gift-bubble.is-sent {
+  border-color: var(--border-strong);
+}
+.gift-bubble.is-opened {
+  border-color: var(--border-strong);
+}
+.gift-bubble-art {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+}
+.gift-bubble-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.gift-bubble-title {
+  font-weight: 700;
+  font-size: 0.95rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.gift-bubble-sub {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+.gift-bubble.is-opened .gift-bubble-sub,
+.gift-recipient.is-opened {
+  color: var(--success);
+}
+.gift-bubble-error {
+  display: block;
+  margin-top: 4px;
+  font-size: 0.8rem;
+  color: var(--danger);
+}
+.gift-recipients {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: 2px;
+}
+.gift-recipient {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px 2px 2px;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  font-size: 0.76rem;
+  color: var(--ink-2);
+}
+.gift-recipient .friend-avatar {
+  width: 18px;
+  height: 18px;
+}
+
+/* the wrapped present waits: a slow breath, and the bow catches the light */
+.gift-waiting {
+  animation: gift-breathe 2.8s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+@keyframes gift-breathe {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+  45% {
+    transform: scale(1.04) rotate(-2deg);
+  }
+  55% {
+    transform: scale(1.04) rotate(2deg);
+  }
+}
+
+/* ---- the unwrap: an everyday gift, in the bubble (700 ms) ----------------- */
+.gift-bubble.is-bursting {
+  flex-direction: column;
+  justify-content: center;
+  min-height: 150px;
+  overflow: visible;
+  cursor: pointer;
+}
+.gift-burst {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+}
+.gift-opening .gift-lid {
+  transform-box: fill-box;
+  transform-origin: 30% 100%;
+  animation: gift-lid-off 0.55s cubic-bezier(0.3, 0.7, 0.2, 1) forwards;
+}
+.gift-opening .gift-bow {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: gift-bow-pop 0.3s ease-out;
+}
+.gift-opening .gift-body {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: gift-body-squash 0.6s ease-out;
+}
+@keyframes gift-lid-off {
+  0% {
+    transform: none;
+  }
+  25% {
+    transform: translateY(4px) scaleY(0.9);
+  }
+  100% {
+    transform: translate(-26px, -46px) rotate(-24deg);
+    opacity: 0;
+  }
+}
+@keyframes gift-bow-pop {
+  50% {
+    transform: scale(1.25);
+  }
+}
+@keyframes gift-body-squash {
+  0%,
+  100% {
+    transform: none;
+  }
+  20% {
+    transform: scale(1.06, 0.92);
+  }
+  45% {
+    transform: scale(0.97, 1.04);
+  }
+}
+
+/* pomegranate seeds and gold sparks */
+.gift-confetti {
+  position: absolute;
+  left: 50%;
+  top: 45%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.gift-confetti i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: 0;
+  animation: gift-fly 0.9s cubic-bezier(0.15, 0.7, 0.3, 1) var(--delay) forwards;
+}
+.gift-confetti .seed {
+  width: 8px;
+  height: 11px;
+  margin: -5px 0 0 -4px;
+  border-radius: 50% 50% 46% 46% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 35% 30%, #ff8a9a 0 18%, #c0182f 45%, #7d0f1f 100%);
+}
+.gift-confetti .spark {
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  background: linear-gradient(135deg, #fff1b8, #f0c24a 55%, #c99212);
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+@keyframes gift-fly {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.3) rotate(0deg);
+  }
+  70% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), calc(var(--dy) + 40px)) scale(1) rotate(var(--rot));
+  }
+}
+
+/* ---- the reveal ------------------------------------------------------------ */
+.gift-reveal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 4px;
+  animation: gift-reveal-in 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.gift-reveal.is-compact {
+  width: 100%;
+  padding: 4px 2px 2px;
+}
+@keyframes gift-reveal-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+}
+.gift-item-art {
+  display: inline-grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--gold-ink);
+}
+.gift-item-art img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.gift-item-icon img {
+  object-fit: contain;
+  padding: 10%;
+}
+.gift-reveal-art {
+  margin-bottom: 8px;
+  box-shadow:
+    0 0 0 6px var(--gold-soft),
+    0 14px 40px rgba(0, 0, 0, 0.45);
+  animation: gift-halo 2.4s ease-in-out infinite;
+}
+@keyframes gift-halo {
+  50% {
+    box-shadow:
+      0 0 0 10px var(--gold-soft),
+      0 14px 40px rgba(0, 0, 0, 0.45);
+  }
+}
+.gift-reveal-name {
+  font-size: 1.35rem;
+  outline: none;
+  overflow-wrap: anywhere;
+}
+.gift-reveal.is-compact .gift-reveal-name {
+  font-family: var(--font-sans);
+  font-size: 1.02rem;
+  font-weight: 700;
+}
+.gift-reveal-from {
+  color: var(--ink-2);
+  font-size: 0.92rem;
+}
+.gift-reveal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.gift-reveal-actions .btn {
+  min-height: 44px;
+}
+.gift-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 44px;
+  padding: 0 10px;
+  color: var(--success);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+.gift-reveal-error {
+  margin: 10px 0 0;
+}
+
+/* ---- the stage: a rare gift's sheet, a legendary gift's whole screen ------- */
+.gift-stage {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(4, 6, 10, 0.66);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  animation: fade 0.18s ease;
+  cursor: pointer;
+}
+.gift-stage.is-revealed {
+  cursor: default;
+}
+.gift-stage-panel {
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  padding: 32px 22px 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 16, 22, 0.92);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+  overflow: hidden;
+}
+.gift-stage-rare .gift-stage-panel {
+  background:
+    radial-gradient(90% 70% at 50% 30%, rgba(80, 110, 230, 0.32), transparent 70%),
+    rgba(14, 16, 22, 0.94);
+}
+.gift-stage-play {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.gift-stage-label {
+  color: var(--ink-2);
+  font-weight: 600;
+}
+.gift-skip {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  font-size: 0.88rem;
+  cursor: pointer;
+}
+.gift-skip:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+/* a rare gift wiggles before it opens: something is in there */
+.gift-stage-rare .gift-opening {
+  animation: gift-wiggle 0.4s ease-in-out 2;
+}
+.gift-stage-rare .gift-opening .gift-lid {
+  animation-delay: 0.45s;
+}
+.gift-stage-rare .gift-confetti i {
+  animation-delay: calc(var(--delay) + 0.5s);
+}
+@keyframes gift-wiggle {
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+/* a phone: the rare sheet rises from the bottom like every sheet */
+@media (max-width: 640px) {
+  .gift-stage-rare {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .gift-stage-rare .gift-stage-panel {
+    max-width: none;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    animation: sheet-up 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+}
+
+/* legendary: the whole screen, night falling, then Newroz fire */
+.gift-stage-legendary {
+  padding: 0;
+  background:
+    radial-gradient(60% 50% at 50% 62%, rgba(217, 56, 30, 0.35), transparent 70%),
+    radial-gradient(80% 60% at 50% 100%, rgba(240, 194, 74, 0.22), transparent 70%),
+    rgba(3, 4, 8, 0.94);
+}
+.gift-stage-legendary .gift-stage-panel {
+  max-width: none;
+  min-height: 100dvh;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.gift-stage-legendary .gift-stage-play {
+  gap: 22px;
+}
+/* the fire rises from behind the box, out of its open top */
+.gift-stage-play > .gift-box,
+.gift-stage-play > .gift-stage-label,
+.gift-stage-play > .gift-skip {
+  position: relative;
+  z-index: 1;
+}
+.gift-stage-play > .newroz-flame {
+  z-index: 0;
+}
+.gift-stage-legendary .gift-opening .gift-lid {
+  animation-delay: 0.7s;
+  animation-duration: 0.7s;
+}
+.gift-stage-legendary .gift-confetti i {
+  animation-duration: 1.5s;
+  animation-delay: calc(var(--delay) + 0.9s);
+}
+.gift-stage-legendary .gift-opening {
+  animation: gift-rise 2.5s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
+}
+@keyframes gift-rise {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  18% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  30%,
+  40% {
+    transform: scale(1) rotate(-3deg);
+  }
+  35% {
+    transform: scale(1) rotate(3deg);
+  }
+  100% {
+    transform: scale(0.82) translateY(30px);
+    opacity: 0.25;
+  }
+}
+.newroz-flame {
+  position: absolute;
+  left: 50%;
+  bottom: 38%;
+  width: 260px;
+  height: 340px;
+  margin-left: -130px;
+  pointer-events: none;
+  transform-origin: 50% 100%;
+  animation: flame-grow 2.5s cubic-bezier(0.3, 0.6, 0.2, 1) forwards;
+}
+.newroz-flame.is-settled {
+  position: absolute;
+  bottom: auto;
+  top: 6%;
+  width: 180px;
+  height: 230px;
+  margin-left: -90px;
+  opacity: 0.55;
+  animation: none;
+}
+@keyframes flame-grow {
+  0%,
+  28% {
+    transform: scale(0.05);
+    opacity: 0;
+  }
+  45% {
+    transform: scale(0.7);
+    opacity: 1;
+  }
+  75% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.9;
+  }
+}
+.newroz-flame .flame-outer,
+.newroz-flame .flame-mid,
+.newroz-flame .flame-core {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: flame-flicker 0.9s ease-in-out infinite alternate;
+}
+.newroz-flame .flame-mid {
+  animation-duration: 0.7s;
+  animation-delay: -0.2s;
+}
+.newroz-flame .flame-core {
+  animation-duration: 0.55s;
+  animation-delay: -0.35s;
+}
+@keyframes flame-flicker {
+  from {
+    transform: scale(1, 1) skewX(0deg);
+  }
+  to {
+    transform: scale(0.94, 1.06) skewX(-3deg);
+  }
+}
+.gift-stage-legendary .gift-reveal {
+  position: relative;
+  z-index: 1;
+  max-width: 420px;
+  padding: 28px 22px 24px;
+  border-radius: var(--r-xl);
+  border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
+  background: rgba(14, 12, 10, 0.86);
+  box-shadow:
+    0 0 60px rgba(240, 160, 60, 0.25),
+    var(--shadow-lg);
+}
+
+/* ---- the send: a box closes over the item and flies into the chat --------- */
+.gift-flight {
+  position: fixed;
+  inset: 0;
+  z-index: 115;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 6, 10, 0.25);
+  animation: gift-flight-dim 1.15s ease forwards;
+}
+@keyframes gift-flight-dim {
+  0% {
+    background: rgba(4, 6, 10, 0);
+  }
+  20%,
+  60% {
+    background: rgba(4, 6, 10, 0.35);
+  }
+  100% {
+    background: rgba(4, 6, 10, 0);
+  }
+}
+.gift-flight-item {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  display: grid;
+  place-items: center;
+  animation: gift-flight-path 1.15s cubic-bezier(0.55, 0, 0.35, 1) forwards;
+}
+.gift-flight-art {
+  position: absolute;
+  inset: 12px;
+  display: grid;
+  place-items: center;
+  animation: gift-flight-item 1.15s ease forwards;
+}
+.gift-flight-box {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: gift-flight-box 1.15s ease forwards;
+}
+.gift-flight-box .gift-lid {
+  transform-box: fill-box;
+  animation: gift-flight-lid 1.15s ease forwards;
+}
+@keyframes gift-flight-item {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  15%,
+  32% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  44%,
+  100% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+}
+@keyframes gift-flight-box {
+  0%,
+  30% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  44% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+  52%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@keyframes gift-flight-lid {
+  0%,
+  38% {
+    transform: translateY(-40px);
+  }
+  50%,
+  100% {
+    transform: none;
+  }
+}
+@keyframes gift-flight-path {
+  0%,
+  55% {
+    transform: translate(0, 0) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.32) rotate(-12deg);
+    opacity: 0;
+  }
+}
+
+/* ---- the picker ------------------------------------------------------------ */
+.gift-picker-title {
+  font-size: 1.35rem;
+  padding-inline-end: 48px;
+  margin-bottom: 10px;
+}
+.gift-picker-intro {
+  color: var(--ink-2);
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+}
+.gift-picker-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.gift-balance {
+  display: inline-flex;
+  gap: 12px;
+  padding: 4px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  font-size: 0.86rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.gift-balance span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.gift-balance span:first-child {
+  color: var(--gold-ink);
+}
+.gift-shelf {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(118px, 1fr));
+  gap: 10px;
+}
+.gift-tile {
+  position: relative;
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+.gift-tile:hover:not(:disabled) {
+  border-color: var(--border-strong);
+  background: var(--surface-2);
+}
+.gift-tile.is-picked {
+  border-color: var(--gold);
+  background: var(--gold-soft);
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+.gift-tile:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.gift-tile.is-skeleton {
+  cursor: default;
+}
+.gift-tile-name {
+  font-size: 0.86rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+.gift-tile-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--gold-ink);
+  font-variant-numeric: tabular-nums;
+}
+.gift-tile-price.is-short {
+  color: var(--ink-3);
+}
+.gift-tier {
+  position: absolute;
+  top: 6px;
+  inset-inline-start: 6px;
+  padding: 1px 7px;
+  border-radius: var(--r-pill);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+.gift-tier-rare {
+  background: rgba(110, 140, 255, 0.22);
+  color: #c7d3ff;
+}
+.gift-tier-legendary {
+  background: rgba(217, 56, 30, 0.25);
+  color: #ffc9a8;
+}
+.gift-tile-owned {
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  text-align: center;
+}
+.gift-tile-check {
+  position: absolute;
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+  color: #2a1a00;
+}
+.gift-confirm {
+  position: sticky;
+  bottom: -24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin: 4px -26px -24px;
+  padding: 14px 26px calc(14px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border);
+  background: rgba(14, 16, 22, 0.96);
+}
+.gift-confirm-text {
+  flex: 1 1 180px;
+  display: flex;
+  flex-direction: column;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.gift-confirm-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--gold-ink);
+  font-variant-numeric: tabular-nums;
+}
+.gift-confirm-short {
+  font-size: 0.82rem;
+  color: var(--ink-3);
+}
+.gift-confirm .btn {
+  min-height: 44px;
+}
+.gift-confirm-note {
+  flex-basis: 100%;
+  margin: 0;
+}
+@media (max-width: 640px) {
+  .gift-confirm {
+    bottom: calc(-20px - env(safe-area-inset-bottom));
+    margin: 4px -16px -20px;
+    padding-inline: 16px;
+  }
+}
+.gift-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+}
+.gift-person {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  padding: 6px 10px;
+  border-radius: var(--r-sm);
+  cursor: pointer;
+}
+.gift-person:hover {
+  background: var(--surface);
+}
+.gift-person input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--gold);
+}
+.gift-person .friend-avatar {
+  width: 32px;
+  height: 32px;
+}
+.gift-person-all {
+  font-weight: 700;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  margin-bottom: 4px;
+}
+
+/* ---- the arrival banner ------------------------------------------------------ */
+.gift-arrivals {
+  position: fixed;
+  top: calc(var(--nav-h) + 10px);
+  left: 50%;
+  z-index: 85;
+  width: min(440px, calc(100vw - 32px));
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+}
+.gift-arrival {
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 8px 8px 10px;
+  border: 1px solid color-mix(in srgb, var(--gold) 45%, transparent);
+  border-radius: var(--r-lg);
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgba(240, 194, 74, 0.22), transparent 60%),
+    rgba(18, 21, 27, 0.96);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  box-shadow: var(--shadow);
+  animation: gift-arrive 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+@keyframes gift-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-14px) scale(0.96);
+  }
+}
+.gift-arrival-art {
+  flex: none;
+  display: inline-grid;
+  animation: gift-breathe 2.8s ease-in-out infinite;
+}
+.gift-arrival-who {
+  flex: none;
+  margin-inline-start: -18px;
+  margin-top: 22px;
+}
+.gift-arrival-who .friend-avatar {
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(18, 21, 27, 0.96);
+}
+.gift-arrival-text {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+.gift-arrival-open {
+  min-height: 40px;
+  min-width: 64px;
+}
+.gift-arrival-close {
+  flex: none;
+  width: 40px;
+  height: 40px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.gift-arrival-close:hover {
+  color: var(--ink);
+  background: var(--surface-2);
+}
+
+/* ---- a group gift some friends could not be given: who got it, and why not -- */
+.gift-partial {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-block: 4px;
+}
+.gift-partial > span {
+  flex: 1;
+  min-width: 0;
+}
+.gift-partial-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  margin-inline-end: -8px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+.gift-partial-close:hover {
+  color: var(--ink);
+  background: var(--surface);
+}
+
+/* ---- less motion: no flight, no burst, no fire — a short fade instead ------- */
+@media (prefers-reduced-motion: reduce) {
+  .gift-waiting,
+  .gift-arrival-art,
+  .gift-reveal-art {
+    animation: none !important;
+  }
+  .gift-confetti,
+  .newroz-flame:not(.is-settled) {
+    display: none;
+  }
+  .gift-opening,
+  .gift-opening * {
+    animation: none !important;
+  }
+  /* the fire that stays behind a legendary gift's reveal stands still */
+  .newroz-flame .flame-outer,
+  .newroz-flame .flame-mid,
+  .newroz-flame .flame-core {
+    animation: none !important;
+  }
+  /* the one movement left is a fade, which is what the device asked for */
+  .sheet-panel,
+  .gift-stage-rare .gift-stage-panel,
+  .gift-reveal,
+  .gift-stage,
+  .gift-arrival {
+    animation: gift-fade 0.2s ease !important;
+  }
+  .gift-flight {
+    background: rgba(4, 6, 10, 0.25);
+    animation: gift-fade-out 0.2s ease forwards !important;
+  }
+  .gift-flight-item,
+  .gift-flight-art,
+  .gift-flight-box,
+  .gift-flight-box .gift-lid {
+    animation: none !important;
+  }
+  .gift-flight-art {
+    opacity: 0;
+  }
+  .gift-flight-box {
+    opacity: 1;
+  }
+}
+@keyframes gift-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes gift-fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+/* the Shop's answer when a purchase or a gift is refused (pages/Shop.tsx) */
+.shop-msg {
+  margin-bottom: 16px;
+}

@@ -20,6 +20,7 @@ import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
+import { PlayerReport } from '../reports/PlayerReport';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -280,7 +281,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
           <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
           {battle.isHost && <InviteFriendsButton game="wordle-battle" lobbyId={id} room={room} />}
         </div>
-        <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} />
+        <LobbyRoster players={battle.players} max={battle.maxPlayers} canRemove={battle.isHost} onRemove={remove} game="wordle-battle" gameId={battle.id} />
         {battle.isHost && <InvitedList game="wordle-battle" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {battle.me == null ? (
@@ -326,7 +327,13 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
                         ? t('games.battle.solvedIn', { count: r.guessCount })
                         : t('games.battle.lettersProgress', { done: r.progress, total: results.target.length })
                     }
-                    trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
+                    trailing={
+                      <>
+                        {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
+                        {/* another player, reported by seat — the page never has their account */}
+                        {!me && <PlayerReport game="wordle-battle" gameId={battle.id} seat={r.seat} name={seatName(r, t)} />}
+                      </>
+                    }
                   />
                 );
               })}
@@ -365,22 +372,27 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
               }
             />
           )}
-          {battle.opponents.map((o, i) => (
-            <PlayerChip
-              key={o.seat}
-              name={o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'))}
-              avatarUrl={o.avatarUrl}
-              done={o.solved}
-              progress={o.progress / battle.targetLength}
-              status={
-                o.solved
-                  ? t('games.battle.opponentSolved')
-                  : o.finished || o.gone
-                    ? t('games.battle.opponentDone')
-                    : `${t('games.battle.opponentGuesses', { count: o.guessCount })} · ${t('games.battle.lettersProgress', { done: o.progress, total: battle.targetLength })}`
-              }
-            />
-          ))}
+          {battle.opponents.map((o, i) => {
+            // the name the server lets this viewer see, else "Opponent (N)"; the ⋯ says the same
+            const name = o.name ?? (battle.opponents.length > 1 ? t('games.battle.opponentNumbered', { n: i + 1 }) : t('games.opponent'));
+            return (
+              <PlayerChip
+                key={o.seat}
+                name={name}
+                avatarUrl={o.avatarUrl}
+                done={o.solved}
+                progress={o.progress / battle.targetLength}
+                action={<PlayerReport game="wordle-battle" gameId={battle.id} seat={o.seat} name={name} />}
+                status={
+                  o.solved
+                    ? t('games.battle.opponentSolved')
+                    : o.finished || o.gone
+                      ? t('games.battle.opponentDone')
+                      : `${t('games.battle.opponentGuesses', { count: o.guessCount })} · ${t('games.battle.lettersProgress', { done: o.progress, total: battle.targetLength })}`
+                }
+              />
+            );
+          })}
         </div>
       )}
 

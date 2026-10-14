@@ -1,24 +1,11 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { BlockIcon, CloseIcon, FlagIcon, MoreIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import type { MessageKey } from '../i18n/en';
-
-/** What a reporter says the problem is. Matches the server's enum exactly. */
-const CATEGORIES: Array<{ key: string; labelKey: MessageKey }> = [
-  { key: 'harassment', labelKey: 'moderation.category.harassment' },
-  { key: 'spam', labelKey: 'moderation.category.spam' },
-  { key: 'impersonation', labelKey: 'moderation.category.impersonation' },
-  { key: 'hate', labelKey: 'moderation.category.hate' },
-  { key: 'self_harm', labelKey: 'moderation.category.selfHarm' },
-  { key: 'other', labelKey: 'moderation.category.other' },
-];
-
-/** The server refuses anything shorter; saying so up front beats a rejection. */
-const MIN_REASON = 10;
-const MAX_REASON = 1000;
+import { ReportSheet } from '../reports/ReportSheet';
+import { keepInView } from '../reports/keepInView';
 
 type Panel = null | 'menu' | 'report' | 'block';
 
@@ -33,7 +20,8 @@ type Panel = null | 'menu' | 'report' | 'block';
  * Reporting lives here too, because the two are what you reach for at the same
  * moment and they do different halves of the job: a block ends it for you and
  * tells nobody; a report tells a moderator and changes nothing you can see.
- * Most people want both, so neither is offered as a substitute for the other.
+ * Most people want both, so neither is offered as a substitute for the other —
+ * and the report sheet, once sent, offers the block in one tap.
  */
 export function UserActions({
   userId,
@@ -53,11 +41,15 @@ export function UserActions({
   const [panel, setPanel] = useState<Panel>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [done, setDone] = useState<string | null>(null);
-  const [category, setCategory] = useState<string>('harassment');
-  const [reason, setReason] = useState('');
   const wrapRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLButtonElement>(null);
+  const popRef = useRef<HTMLDivElement>(null);
+
+  // on a phone the ⋯ sits at the left of the profile card and the menu,
+  // anchored to its right, ran under the card's edge: keep all of it in view
+  useLayoutEffect(() => {
+    if ((panel === 'menu' || panel === 'block') && popRef.current) keepInView(popRef.current);
+  }, [panel]);
 
   /**
    * Escape closes, and so does a click anywhere else.
@@ -66,7 +58,8 @@ export function UserActions({
    * you find its own button again is a menu that stays open.
    */
   useEffect(() => {
-    if (!panel) return;
+    // the report sheet is its own dialog, with its own Escape and backdrop
+    if (!panel || panel === 'report') return;
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         setPanel(null);
@@ -102,26 +95,6 @@ export function UserActions({
     onBlocked?.();
   }
 
-  async function report(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (reason.trim().length < MIN_REASON) return;
-    setBusy(true);
-    setError(null);
-    const res = await client.post(`/users/${userId}/report`, { category, reason: reason.trim() });
-    setBusy(false);
-    if (!res.ok) {
-      setError(describeError(res.error, t));
-      return;
-    }
-    setPanel(null);
-    setReason('');
-    // the server tells nobody anything either way, so this note is the only
-    // acknowledgement there is — and it must not promise an outcome
-    setDone(t('moderation.reportThanks'));
-  }
-
-  const short = reason.trim().length < MIN_REASON;
-
   return (
     <div className={`user-actions${className ? ` ${className}` : ''}`} ref={wrapRef}>
       <button
@@ -138,7 +111,7 @@ export function UserActions({
       </button>
 
       {panel === 'menu' && (
-        <div className="user-menu" role="menu">
+        <div className="user-menu" role="menu" ref={popRef}>
           <button type="button" role="menuitem" className="user-menu-item" onClick={() => open('report')}>
             <FlagIcon size={16} /> {t('moderation.report')}
           </button>
@@ -149,7 +122,7 @@ export function UserActions({
       )}
 
       {panel === 'block' && (
-        <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })}>
+        <div className="user-menu user-menu-wide" role="dialog" aria-label={t('friends.blockWho', { name })} ref={popRef}>
           <div className="user-menu-head">
             <strong>{t('moderation.blockWhoTitle', { name })}</strong>
             <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
@@ -169,72 +142,15 @@ export function UserActions({
         </div>
       )}
 
-      {panel === 'report' && (
-        <form className="user-menu user-menu-wide" onSubmit={report} aria-label={t('moderation.reportWho', { name })}>
-          <div className="user-menu-head">
-            <strong>{t('moderation.reportWho', { name })}</strong>
-            <button type="button" className="user-menu-x" onClick={() => setPanel(null)} aria-label={t('common.close')}>
-              <CloseIcon size={15} />
-            </button>
-          </div>
-
-          <label className="user-menu-label" htmlFor="report-category">
-            {t('moderation.whatIsHappening')}
-          </label>
-          <select
-            id="report-category"
-            className="input"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c.key} value={c.key}>
-                {t(c.labelKey)}
-              </option>
-            ))}
-          </select>
-
-          <label className="user-menu-label" htmlFor="report-reason">
-            {t('moderation.whatShouldModKnow')}
-          </label>
-          {/*
-            Required, unlike reporting a post. There is no post attached to a
-            report about a person, so what is written here is the entire case —
-            without it there is nothing for a moderator to act on.
-          */}
-          <textarea
-            id="report-reason"
-            className="input"
-            rows={3}
-            value={reason}
-            maxLength={MAX_REASON}
-            required
-            placeholder={t('moderation.reasonPlaceholder')}
-            onChange={(e) => setReason(e.target.value)}
-          />
-          <p className="user-menu-note">
-            {short
-              ? t('moderation.reasonTooShort', { min: MIN_REASON })
-              : t('moderation.charactersLeft', { count: MAX_REASON - reason.trim().length })}
-          </p>
-
-          {error && <div className="msg msg-error">{error}</div>}
-          <div className="user-menu-actions">
-            <Button variant="secondary" size="sm" onClick={() => setPanel(null)} disabled={busy}>
-              {t('common.cancel')}
-            </Button>
-            <Button size="sm" type="submit" disabled={busy || short}>
-              {busy ? t('profile.sending') : t('moderation.sendReport')}
-            </Button>
-          </div>
-        </form>
-      )}
-
-      {done && (
-        <p className="user-actions-done" role="status">
-          {done}
-        </p>
-      )}
+      {/* the same sheet as everywhere else something can be reported */}
+      <ReportSheet
+        open={panel === 'report'}
+        onClose={() => setPanel(null)}
+        target={{ targetType: 'user', targetId: userId }}
+        name={name}
+        block={{ userId, name }}
+        onBlocked={onBlocked}
+      />
     </div>
   );
 }

@@ -415,15 +415,11 @@
 }
 
 /* ---- a game's card in a chat ---------------------------------------------------- */
-/* the card is the whole message: no bubble around it */
-.bubble.is-card {
-  padding: 0;
-  background: transparent;
-  border: 0;
-  white-space: normal;
-}
-/* two cards in a row are two things, not one block */
-.bubble.is-card + .bubble.is-card {
+/* the card is the whole message: no bubble around it (social.css's .bubble.is-card) */
+/* two cards in a row are two things, not one block — also when each sits in
+   the line that carries its ⋯ (reports/MessageMenu.tsx) */
+.bubble.is-card + .bubble.is-card,
+.bubble-line:has(> .bubble.is-card) + .bubble-line:has(> .bubble.is-card) {
   margin-top: 6px;
 }
 .chat-game-status {
@@ -511,17 +507,6 @@
   .friend-row .friend-play {
     margin-inline-start: auto;
   }
-}
-
-/* ---- a notification that goes somewhere ------------------------------------------ */
-.rail-note-link {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 3px;
-}
-.rail-note-link:hover {
-  text-decoration-color: currentColor;
 }
 
 @media (max-width: 560px) {

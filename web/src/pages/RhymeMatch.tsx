@@ -20,6 +20,7 @@ import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
+import { PlayerReport } from '../reports/PlayerReport';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -258,7 +259,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
           <Button size="sm" onClick={() => void copyLink()}>{copied ? t('games.copied') : t('games.copyLink')}</Button>
           {match.isHost && <InviteFriendsButton game="rhyme-match" lobbyId={id} room={room} />}
         </div>
-        <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} />
+        <LobbyRoster players={match.players} max={match.maxPlayers} canRemove={match.isHost} onRemove={remove} game="rhyme-match" gameId={id} />
         {match.isHost && <InvitedList game="rhyme-match" lobbyId={id} room={room} headingLevel={2} />}
         {notice && <div className="wordle-notice" role="status">{notice}</div>}
         {match.me == null ? (
@@ -297,7 +298,13 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
                     avatarUrl={me ? myAvatar : r.avatarUrl}
                     me={me}
                     score={t('games.rhymeMatch.playerScore', { score: r.score, count: r.accepted })}
-                    trailing={r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : undefined}
+                    trailing={
+                      <>
+                        {r.xpAwarded ? <span className="rank-xp">+{r.xpAwarded} XP</span> : null}
+                        {/* another player, reported by seat — the page never has their account */}
+                        {!me && <PlayerReport game="rhyme-match" gameId={id} seat={r.seat} name={seatName(r, t)} />}
+                      </>
+                    }
                   />
                 );
               })}
@@ -339,6 +346,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
               name={me ? t('games.you') : (s.name ?? t('games.opponent'))}
               avatarUrl={me ? myAvatar : s.avatarUrl}
               status={t('games.rhymeMatch.playerScore', { score: s.score, count: s.accepted })}
+              action={!me && <PlayerReport game="rhyme-match" gameId={id} seat={s.seat} name={s.name} />}
             />
           );
         })}

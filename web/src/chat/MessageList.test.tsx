@@ -196,4 +196,38 @@ describe('MessageList', () => {
     expect(container.querySelectorAll('.chat-run')).toHaveLength(0);
     expect(container.querySelectorAll('.chat-day')).toHaveLength(0);
   });
+
+  /**
+   * A message can be reported where it is read. The ⋯ is beside other
+   * people's messages only — your own are not yours to report.
+   */
+  it('offers Report beside other people’s messages, and only theirs', async () => {
+    const onReport = vi.fn();
+    show(
+      <MessageList
+        messages={[
+          msg('1', 'u2', 'mean thing', at(10, 0), { username: 'zana' }),
+          msg('2', 'me', 'my reply', at(10, 1), { username: 'me' }),
+        ]}
+        myId="me"
+        onReport={onReport}
+      />,
+    );
+    const menus = screen.getAllByRole('button', { name: /More about zana’s message/ });
+    expect(menus).toHaveLength(1);
+    await userEvent.click(menus[0]!);
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Report' }));
+    expect(onReport).toHaveBeenCalledWith(expect.objectContaining({ id: '1' }));
+  });
+
+  it('lets the thread draw a message that is more than text', () => {
+    show(
+      <MessageList
+        messages={[{ id: '1', senderId: 'u2', body: null, createdAt: at(10, 0), username: 'zana', kind: 'gift' as const }]}
+        myId="me"
+        renderBody={(m) => (m.kind === 'gift' ? <span>a wrapped present</span> : undefined)}
+      />,
+    );
+    expect(screen.getByText('a wrapped present').closest('.bubble')).toHaveClass('is-card');
+  });
 });

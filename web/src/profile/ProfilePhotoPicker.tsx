@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { MeProfile } from '../lib/types';
+import type { ApiError, MeProfile } from '../lib/types';
 import { Button } from '../components/Button';
 import { PersonGlyph } from '../components/icons';
 import { canvasToFile } from '../images/photoText';
@@ -10,6 +10,7 @@ import { ImageFramer } from '../images/ImageFramer';
 import { WHOLE_PICTURE, type Frame } from '../images/frame';
 import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
 import { useT } from '../i18n/I18nProvider';
+import { SendError } from '../reports/SendError';
 
 /**
  * An avatar is never shown larger than a hero portrait, and usually at 32px in
@@ -48,6 +49,7 @@ export function ProfilePhotoPicker({
   const [frame, setFrame] = useState<Frame>(WHOLE_PICTURE);
   const [busy, setBusy] = useState<null | 'upload' | 'remove'>(null);
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
+  const [uploadErr, setUploadErr] = useState<ApiError | null>(null);
   /** the browser could not read it, so it goes up untouched */
   const [rawOnly, setRawOnly] = useState(false);
 
@@ -96,6 +98,7 @@ export function ProfilePhotoPicker({
     e.target.value = '';
     if (!picked) return;
     setMsg(null);
+    setUploadErr(null);
     setFrame(WHOLE_PICTURE);
     forgetGraded();
     setFile(picked);
@@ -104,12 +107,14 @@ export function ProfilePhotoPicker({
   function cancel(): void {
     setFile(null);
     setMsg(null);
+    setUploadErr(null);
   }
 
   async function save(): Promise<void> {
     if (!file || busy) return;
     setBusy('upload');
     setMsg(null);
+    setUploadErr(null);
 
     let out: File | null = file;
     if (!rawOnly && imageRef.current && source) {
@@ -132,13 +137,15 @@ export function ProfilePhotoPicker({
     } else if (res.error.code === 'MEDIA_UNAVAILABLE') {
       setMsg({ kind: 'err', text: t('edit.photo.storageOff') });
     } else {
-      setMsg({ kind: 'err', text: describeError(res.error, t) });
+      // a feature limit on pictures covers this one too: SendError says until when
+      setUploadErr(res.error);
     }
   }
 
   async function removePhoto(): Promise<void> {
     setBusy('remove');
     setMsg(null);
+    setUploadErr(null);
     const res = await client.delete('/me/profile-picture');
     setBusy(null);
     if (res.ok) onChanged();
@@ -218,6 +225,7 @@ export function ProfilePhotoPicker({
           {msg.text}
         </div>
       )}
+      <SendError error={uploadErr} />
       <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label={t('edit.photo.upload')} />
     </section>
   );

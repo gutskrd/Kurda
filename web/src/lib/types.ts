@@ -5,7 +5,7 @@
  * no new/duplicated backend logic.
  */
 
-import type { ChatGameRef, ChatMessageKind } from '@kurda/shared';
+import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
 
 /** Every API call returns a result — callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -18,6 +18,13 @@ export interface ApiError {
   retryAfterSec?: number;
   requestId?: string;
   status?: number;
+  /**
+   * The envelope's `details`, as the server sent them: what a refusal knows
+   * beyond its code — until when a mute lasts (shared `MutedErrorDetails`),
+   * why an account is suspended (`SuspendedErrorDetails`). Unknown on purpose:
+   * a reader checks the shape before trusting it.
+   */
+  details?: unknown;
 }
 
 export interface TokenPair {
@@ -287,11 +294,12 @@ export interface AvatarOption {
 
 /**
  * What a chat message carries besides text (shared `ChatMessageExtras`): a
- * game card here. Optional because a message from an older server, or a
- * fixture, has none — it is then a plain text message.
+ * gift to unwrap or a game card. Optional here because a message from an
+ * older server, or a fixture, has none — it is then a plain text message.
  */
 export interface ChatExtras {
   kind?: ChatMessageKind;
+  gift?: GiftCard | null;
   game?: ChatGameRef | null;
 }
 

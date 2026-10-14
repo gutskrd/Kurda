@@ -369,4 +369,50 @@ describe('SocialRail', () => {
     const row = await screen.findByRole('link', { name: /Amedspor/ });
     expect(row).toHaveAttribute('href', '/app/messages?group=g7');
   });
+
+  /**
+   * A notification about a report or a decision used to be English text that
+   * went nowhere. Its data says what it is: it is said in the reader's words
+   * and opens the page that has the rest.
+   */
+  it('opens My reports or Account standing from their notifications', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n1', category: 'system', title: 'About your report', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'report_outcome', reportIds: ['r1'], outcome: 'no_violation' } },
+          { id: 'n2', category: 'system', title: 'Decision', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'sanction', sanctionId: 's1', sanction: 'warning', policy: 'spam', until: null } },
+        ],
+        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    expect(screen.getByRole('link', { name: 'About your report' })).toHaveAttribute('href', '/app/settings/reports');
+    expect(screen.getByRole('link', { name: 'A decision about your account' })).toHaveAttribute('href', '/app/settings/standing');
+  });
+
+  it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [
+          { id: 'n9', category: 'system', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'caring_message', helplineUrl: 'https://findahelpline.com' } },
+        ],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
+    const link = screen.getByRole('link', { name: 'A message from Hevalo' });
+    expect(link).toHaveAttribute('href', 'https://findahelpline.com');
+    expect(link).toHaveAttribute('target', '_blank');
+    link.addEventListener('click', (e) => e.preventDefault()); // no navigation in a test
+    await userEvent.click(link);
+    await waitFor(() =>
+      expect(
+        vi.mocked(fetch).mock.calls.some(([u, init]) => String(u).includes('/me/notifications/n9/read') && init?.method === 'POST'),
+      ).toBe(true),
+    );
+  });
 });

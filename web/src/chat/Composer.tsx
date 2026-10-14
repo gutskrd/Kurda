@@ -30,9 +30,9 @@ export function Composer({
   placeholder: string;
   maxLength?: number;
   /**
-   * Buttons before the box — the game button (play/PlayButtons), and
-   * whatever else a thread offers. Kept outside the form's own controls so
-   * pressing one never submits the message.
+   * Buttons before the box — the gift button (gifts/useChatGifts), the game
+   * button (play/PlayButtons), and whatever else a thread offers. Kept
+   * outside the form's own controls so pressing one never submits the message.
    */
   tools?: ReactNode;
 }): React.JSX.Element {

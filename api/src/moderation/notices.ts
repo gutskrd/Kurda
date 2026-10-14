@@ -143,7 +143,13 @@ export function caringMessage(extra?: string | null): Notice {
     `You can find a free, confidential helpline in your country at ${HELPLINE_URL}.`,
     'If you are in danger right now, please call your local emergency number.',
   ].join('\n\n');
-  return { title: "We're thinking of you", body, data: { kind: 'caring_message', helplineUrl: HELPLINE_URL } };
+  // the admin's words travel in data too: a client that says the rest in the
+  // reader's own language would otherwise have no way to keep them
+  return {
+    title: "We're thinking of you",
+    body,
+    data: { kind: 'caring_message', helplineUrl: HELPLINE_URL, ...(personal ? { message: personal } : {}) },
+  };
 }
 
 /** A restriction ended early (revoked, unbanned, overturned). */

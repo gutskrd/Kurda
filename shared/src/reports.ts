@@ -220,6 +220,11 @@ export interface MyReport {
   closedAt: string | null;
   /** you may ask for a second look at a "doesn't break our rules" answer */
   canAppeal: boolean;
+  /**
+   * The case the report was decided in — what `POST /me/appeals {caseId}`
+   * asks a second look at. Null while no case holds it.
+   */
+  caseId: string | null;
 }
 
 /** What `POST /reports` answers (201 new, 200 when the same open report already exists). */
@@ -410,7 +415,15 @@ export type ModerationNotificationData =
     }
   | { kind: 'sanction_lifted'; sanctionId: string }
   | { kind: 'appeal_decided'; appealId: string; outcome: AppealOutcome }
-  | { kind: 'caring_message'; helplineUrl: string };
+  | {
+      kind: 'caring_message';
+      helplineUrl: string;
+      /**
+       * The moderator's own words, when they wrote some — the one part of the
+       * message a client cannot say for itself in the reader's language.
+       */
+      message?: string;
+    };
 
 /** What a removed chat message reads as, for both people in the conversation. */
 export const MODERATED_MESSAGE_BODY = 'Removed by Hevalo';

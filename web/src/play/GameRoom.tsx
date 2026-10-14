@@ -1,10 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
+import type { PlayGame } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { HostIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
+import { PlayerReport } from '../reports/PlayerReport';
 import type { MessageKey } from '../i18n/en';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -42,11 +44,16 @@ export function LobbyRoster({
   max,
   canRemove,
   onRemove,
+  game,
+  gameId,
 }: {
   players: readonly SeatPlayer[];
   max: number;
   canRemove: boolean;
   onRemove: (seat: number) => Promise<void>;
+  /** the game and lobby the players sit in: a ⋯ beside each other player reports them by seat */
+  game: PlayGame;
+  gameId: string;
 }): React.JSX.Element {
   const t = useT();
   // the server leaves your own face to the client, which has it already
@@ -72,6 +79,7 @@ export function LobbyRoster({
                 </span>
               )}
             </span>
+            {!p.isMe && <PlayerReport game={game} gameId={gameId} seat={p.seat} name={seatName(p, t)} />}
             {canRemove && !p.isMe && (
               <ConfirmButton
                 className="btn btn-ghost btn-sm sg-remove"

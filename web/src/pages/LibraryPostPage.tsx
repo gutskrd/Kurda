@@ -6,6 +6,7 @@ import { PostAuthor, type Author } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
 import { ArrowIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { ReportAction } from '../reports/ReportAction';
 
 interface Post {
   id: string;
@@ -58,7 +59,18 @@ export function LibraryPostPage(): React.JSX.Element {
         </div>
 
         <h1 className="page-title">{post.title}</h1>
-        <PostAuthor author={post.author} at={post.publishedAt ?? post.createdAt} />
+        <PostAuthor
+          author={post.author}
+          at={post.publishedAt ?? post.createdAt}
+          trailing={
+            <ReportAction
+              target={{ targetType: 'library_post', targetId: post.id }}
+              authorId={post.author?.id}
+              label={t('report.aboutPost')}
+              block={post.author ? { userId: post.author.id, name: post.author.username } : null}
+            />
+          }
+        />
 
         {post.audioUrl && (
           <audio className="post-audio" controls src={post.audioUrl}>
