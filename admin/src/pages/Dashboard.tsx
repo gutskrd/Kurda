@@ -144,6 +144,8 @@ function Recordings(): React.JSX.Element {
 
 function ModerationPanel(): React.JSX.Element {
   const summary = useLoad(() => api<ModerationSummary>('/admin/moderation/summary'), []);
+  // how long a case takes to decide, typically; a quiet extra, left out when it can't be read
+  const sla = useLoad(() => api<{ medianSeconds: number | null; resolved: number }>('/admin/moderation/sla'), []);
   const s = summary.data;
   return (
     <Section
@@ -190,6 +192,11 @@ function ModerationPanel(): React.JSX.Element {
             <a href="#/ban-approvals" className={s.pendingApprovals > 0 ? 'is-warn' : undefined}>
               Bans waiting for a second admin: <strong>{s.pendingApprovals}</strong>
             </a>
+            {sla.data && sla.data.medianSeconds !== null && (
+              <span>
+                Median time to a decision: <strong>{duration(sla.data.medianSeconds)}</strong> (of {sla.data.resolved.toLocaleString()} decided)
+              </span>
+            )}
             {s.openEscalations > 0 && (
               <span className="is-bad">
                 Escalations to file: <strong>{s.openEscalations}</strong>

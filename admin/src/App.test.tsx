@@ -56,6 +56,7 @@ describe('the admin’s navigation', () => {
       session(['moderator'], ['users.view', 'users.moderate', 'moderation.act']),
       me('rojda'),
       on('GET', '/admin/moderation/summary', json(SUMMARY)),
+      on('GET', '/admin/moderation/sla', json({ medianSeconds: 5400, resolved: 12 })),
       on('GET', '/admin/feedback/summary', json({ total: { count: 0, averageStars: null, distribution: [0, 0, 0, 0, 0] }, last30Days: { count: 3, averageStars: 4.3, distribution: [0, 0, 1, 0, 2] }, daily: [], byStatus: { new: 3, read: 0, archived: 0 }, byCategory: {} })),
     );
     await openAt('');
@@ -74,7 +75,10 @@ describe('the admin’s navigation', () => {
     const urgent = await screen.findByRole('link', { name: /^urgent/i });
     expect(urgent).toHaveAttribute('href', '#/moderation?priority=0');
     expect(urgent).toHaveTextContent('Decide within 1 h · 1 overdue');
-    expect(screen.getByText('Appeals waiting:')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /^Appeals waiting:/ })).toHaveAttribute('href', '#/appeals');
+    expect(screen.getByRole('link', { name: /^Bans waiting for a second admin:/ })).toHaveAttribute('href', '#/ban-approvals');
+    // how long a decision typically takes
+    expect(await screen.findByText(/Median time to a decision:/)).toHaveTextContent('Median time to a decision: 1 h 30 min (of 12 decided)');
   });
 
   it('tells a role it cannot open a page it reached by its address', async () => {
