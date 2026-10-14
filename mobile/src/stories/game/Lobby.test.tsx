@@ -134,6 +134,30 @@ describe('Lobby', () => {
     expect(screen.getByRole('button', { name: 'Invite friends' })).toBeTruthy();
   });
 
+  it('offers the host the stories of this length to change to, but no Surprise me for a game that has its story', async () => {
+    const item = (id: string, title: string) => ({
+      id,
+      slug: id,
+      title,
+      summary: null,
+      dialect: 'kurmanci' as const,
+      level: 1 as const,
+      length: 'short' as const,
+      wordCount: 180,
+      readingMinutes: 2,
+      fullyNarrated: false,
+    });
+    testAuth.client = fakeClient({
+      ...routes(),
+      'GET /stories?dialect=kurmanci': ok({ stories: [item('s1', 'Nanê Germ'), item('s9', 'Bajar')] }),
+    });
+    renderWithProviders(<Lobby view={lobby()} apply={() => null} onLeft={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Change settings' }));
+    expect(await screen.findByRole('radio', { name: 'Bajar' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'Nanê Germ' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.queryByRole('radio', { name: 'Surprise me' })).toBeNull();
+  });
+
   it('warns before a game played from memory', () => {
     testAuth.client = fakeClient(routes());
     renderWithProviders(<Lobby view={gameView({ status: 'lobby', code: 'ABC234' }, { textDuring: 'hidden' })} apply={() => null} onLeft={() => undefined} />);

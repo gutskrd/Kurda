@@ -306,6 +306,7 @@ function SettingsSheet({
         onChange={(next) => setState(next.storyId === null ? { ...next, storyId: s.storyId, length: s.length } : next)}
         stories={stories.filter((x) => x.length === s.length || x.id === state.storyId)}
         canHostOpen={canHostOpen}
+        noSurprise
       />
     </Sheet>
   );

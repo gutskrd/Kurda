@@ -75,6 +75,7 @@ export function StoryPresetFields({
   stories,
   fixedStory,
   canHostOpen,
+  noSurprise = false,
 }: {
   state: SetupState;
   onChange: (next: SetupState) => void;
@@ -82,6 +83,8 @@ export function StoryPresetFields({
   stories: readonly StoryListItem[];
   fixedStory?: StoryListItem | null;
   canHostOpen: boolean;
+  /** a game that exists already has its story: no "Surprise me" to pick (the lobby's settings) */
+  noSurprise?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -122,7 +125,7 @@ export function StoryPresetFields({
           <View style={styles.field}>
             <SectionLabel>{t('stories.setup.story')}</SectionLabel>
             <View accessibilityRole="radiogroup" accessibilityLabel={t('stories.setup.story')} style={styles.pickList}>
-              {[null, ...ofLength].map((s) => {
+              {[...(noSurprise ? [] : [null]), ...ofLength].map((s) => {
                 const on = (s?.id ?? null) === state.storyId;
                 return (
                   <Pressable
