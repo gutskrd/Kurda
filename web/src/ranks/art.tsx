@@ -1,6 +1,5 @@
 import { useId, useMemo } from 'react';
 import {
-  ART_BADGES,
   badgeShineSvg,
   badgeShines,
   badgeSvg,
@@ -122,7 +121,7 @@ export function BadgeMedal({
   );
   const glint = useMemo(
     () =>
-      known && shine && shown === 'earned' && badgeShines(badgeKey as never, artTier, ART_BADGES[badgeKey as keyof typeof ART_BADGES].tiers)
+      known && shine && shown === 'earned' && badgeShines(badgeKey, artTier)
         ? badgeShineSvg({ key: badgeKey as never, size, phase: 0, idPrefix: `${id}g` })
         : null,
     [known, shine, shown, badgeKey, artTier, size, id],
