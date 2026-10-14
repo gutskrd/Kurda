@@ -232,7 +232,12 @@ describe('Civak', () => {
       expect(screen.getByTitle('Speichern')).toBeInTheDocument();
     });
 
-    it('offers to post in your language, without renaming what you can post', async () => {
+    /*
+     * This asked "what are you posting?" — words or pictures — in Turkish.
+     * There is no such question any more (one box for both, web/src/composer),
+     * so what is pinned now is that the one box speaks the reader's language.
+     */
+    it('offers to post in your language, in one box for words and pictures', async () => {
       localStorage.setItem('hevalo_locale', 'tr');
       await preloadCatalogue();
       signIn();
@@ -240,12 +245,10 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
 
       await userEvent.click(await screen.findByRole('button', { name: 'Bir şey paylaş' }));
-      expect(screen.getByText('Ne paylaşıyorsun?')).toBeInTheDocument();
-      // scoped to the dialog: the same two words also name the filters behind it
-      const dialog = screen.getByRole('dialog');
-      expect(within(dialog).getByText('Yazılar')).toBeInTheDocument();
-      expect(within(dialog).getByText('Görseller')).toBeInTheDocument();
-      expect(within(dialog).getByText('Bir söz, bir hikâye ya da bir şiir')).toBeInTheDocument();
+      const dialog = await screen.findByRole('dialog', { name: 'Yeni gönderi' });
+      expect(within(dialog).getByPlaceholderText('Aklında ne var?')).toBeInTheDocument();
+      expect(within(dialog).getByRole('button', { name: 'Fotoğraf ekle (0/4)' })).toBeInTheDocument();
+      expect(within(dialog).queryByText('Ne paylaşıyorsun?')).not.toBeInTheDocument();
     });
   });
 

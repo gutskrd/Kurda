@@ -2,10 +2,18 @@ import { StrictMode } from 'react';
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { PictureComposer } from './PostPicture';
-import { renderApp, jsonResponse } from '../test/utils';
-import type { ImagePost } from '../lib/types';
+import { PictureEditor } from './PostPicture';
+import { renderApp } from '../test/utils';
 import { stubCanvas, stubImage } from './canvasStubs';
+
+/*
+ * The photo editor, as the composer opens it for one picture (web/src/composer).
+ * It used to be the whole picture composer — choose, edit, caption, post — and
+ * these tests posted through it; posting is the composer's now and is tested
+ * there (composer/Composer.test.tsx). What stays here is the editor: it takes
+ * a picture and gives back the edited one, or the original when the browser
+ * cannot draw it.
+ */
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -17,111 +25,77 @@ const signIn = () =>
 
 const aPicture = () => new File([new Uint8Array([1, 2, 3])], 'welat.png', { type: 'image/png' });
 
-/**
- * Answer the two upload steps and record them in order.
- *
- * jsdom has neither a canvas nor an Image that loads, and the composer draws
- * the picture before it can upload it — hence the stubs.
- */
-function uploadFetch(opts: { uploadStatus?: number; createStatus?: number } = {}) {
-  const steps: string[] = [];
+/** jsdom has neither a canvas nor an Image that loads, and the editor draws the picture. */
+function uploadFetch(): void {
   stubImage();
   stubCanvas();
-  const fetch = vi.fn(async (url: string, init?: RequestInit) => {
-    if (url.includes('/me') && !url.includes('images')) {
-      return jsonResponse(200, { user: { id: 'me', username: 'me' } });
-    }
-    if (url.includes('/images/upload')) {
-      steps.push(`upload ${String((init?.headers as Record<string, string>)?.['content-type'])}`);
-      return opts.uploadStatus && opts.uploadStatus >= 400
-        ? jsonResponse(opts.uploadStatus, { code: 'MEDIA_UNAVAILABLE', message: 'off' })
-        : jsonResponse(201, { imageMediaId: 'image-post/abc.webp', url: 'https://cdn.test/abc.webp' });
-    }
-    if (url.endsWith('/images')) {
-      steps.push(`create ${String(init?.body)}`);
-      return opts.createStatus && opts.createStatus >= 400
-        ? jsonResponse(opts.createStatus, { code: 'INVALID_POST', message: 'no' })
-        : jsonResponse(201, { id: 'new', caption: 'Çiya', imageUrl: 'https://cdn.test/abc.webp' });
-    }
-    return jsonResponse(200, {});
-  });
-  vi.stubGlobal('fetch', fetch);
-  return { steps };
 }
 
-const show = (onDone: (post: ImagePost) => void = () => undefined) =>
-  renderApp(<PictureComposer handle="hamude" onDone={onDone} />);
+let done = vi.fn();
+let cancel = vi.fn();
 
-/** Choose a picture and wait for the editor to appear. */
-async function pick(file = aPicture(), applyAccept = true): Promise<void> {
-  await userEvent.upload(screen.getByLabelText('Picture file'), file, { applyAccept });
-  await screen.findByLabelText('Choose a different picture');
+const show = (file: File = aPicture()) => {
+  done = vi.fn();
+  cancel = vi.fn();
+  return renderApp(<PictureEditor file={file} handle="hamude" onDone={done} onCancel={cancel} />);
+};
+
+/** Wait for the editor to appear (the picture is decoded first). */
+async function pick(): Promise<void> {
+  await screen.findByText('Edit your picture');
 }
 
-describe('PictureComposer', () => {
-  it('uploads the bytes first, then creates the post that references them', async () => {
+describe('PictureEditor', () => {
+  it('gives back the edited picture as a file of its own', async () => {
     signIn();
-    const { steps } = uploadFetch();
-    show();
-
+    uploadFetch();
+    const original = aPicture();
+    show(original);
     await pick();
-    await userEvent.type(screen.getByLabelText('Caption'), 'Çiya');
-    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
 
-    await waitFor(() => expect(steps).toHaveLength(2));
-    // order matters: the server only accepts a media id that already cleared
-    // the upload pipeline, so these cannot be collapsed or swapped
-    expect(steps[0]).toContain('upload');
-    const body = JSON.parse(steps[1]!.replace('create ', ''));
-    expect(body).toMatchObject({ imageMediaId: 'image-post/abc.webp', caption: 'Çiya', category: 'image' });
-  });
-
-  it('sends the kind you picked', async () => {
-    signIn();
-    const { steps } = uploadFetch();
-    show();
-
-    await pick();
-    await userEvent.click(screen.getByRole('button', { name: 'Meme' }));
-    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
-
-    await waitFor(() => expect(steps).toHaveLength(2));
-    expect(JSON.parse(steps[1]!.replace('create ', '')).category).toBe('meme');
+    await waitFor(() => expect(done).toHaveBeenCalledTimes(1));
+    const edited = done.mock.calls[0]![0] as File;
+    expect(edited).toBeInstanceOf(File);
+    // the canvas export, not the bytes that came in
+    expect(edited).not.toBe(original);
   });
 
   it('takes a photo the operating system did not label', async () => {
     signIn();
-    const { steps } = uploadFetch();
-    show();
-
+    uploadFetch();
     // plenty of real photos arrive with an empty `type`; judging by that string
     // turned them away before anything had tried to read them
-    await pick(new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' }), false);
-
+    show(new File([new Uint8Array([1, 2, 3])], 'IMG_4021.JPG', { type: '' }));
+    expect(await screen.findByText('Edit your picture')).toBeInTheDocument();
     expect(screen.queryByRole('status')).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
-    await waitFor(() => expect(steps.some((x) => x.startsWith('upload'))).toBe(true));
   });
 
-  it('still posts a picture this browser cannot draw', async () => {
+  it('gives back the original for a picture this browser cannot draw', async () => {
     signIn();
-    const { steps } = uploadFetch();
+    uploadFetch();
     stubImage({ fail: true });
-    show();
-
     // a phone photo: the browser has no HEIC decoder, but the server does
     const heic = new File([new Uint8Array([1, 2, 3])], 'IMG_4021.HEIC', { type: 'image/heic' });
-    await userEvent.upload(screen.getByLabelText('Picture file'), heic, { applyAccept: false });
+    show(heic);
 
-    // no editor — there is nothing on screen to put a sticker on — but it says
-    // so plainly and still offers to post
+    // no editor — there is nothing on screen to put a sticker on — but it says so plainly
     expect(await screen.findByText(/can’t show this kind of picture/i)).toBeInTheDocument();
     expect(screen.getByText('IMG_4021.HEIC')).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
-    await waitFor(() => expect(steps).toHaveLength(2));
+    await userEvent.click(screen.getByRole('button', { name: 'Use this picture' }));
     // the original bytes, not a canvas export of a picture that never rendered
-    expect(steps[0]).toBe('upload image/heic');
+    expect(done).toHaveBeenCalledWith(heic);
+  });
+
+  it('gives nothing back when cancelled', async () => {
+    signIn();
+    uploadFetch();
+    show();
+    await pick();
+    await userEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(cancel).toHaveBeenCalledTimes(1);
+    expect(done).not.toHaveBeenCalled();
   });
 
   it('survives the double render the app actually runs under', async () => {
@@ -129,7 +103,7 @@ describe('PictureComposer', () => {
     uploadFetch();
     renderApp(
       <StrictMode>
-        <PictureComposer handle="hamude" onDone={() => undefined} />
+        <PictureEditor file={aPicture()} handle="hamude" onDone={() => undefined} onCancel={() => undefined} />
       </StrictMode>,
     );
 
@@ -139,9 +113,7 @@ describe('PictureComposer', () => {
      * while its image is still reading from it. A picture must not be judged
      * unreadable on the strength of that.
      */
-    await userEvent.upload(screen.getByLabelText('Picture file'), aPicture());
-
-    expect(await screen.findByLabelText('Choose a different picture')).toBeInTheDocument();
+    expect(await screen.findByText('Edit your picture')).toBeInTheDocument();
     expect(screen.queryByText(/can’t show this kind of picture/i)).not.toBeInTheDocument();
   });
 
@@ -345,27 +317,5 @@ describe('PictureComposer', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send back' }));
     expect(screen.getByRole('button', { name: 'Bring forward' })).toBeEnabled();
     expect(screen.getByRole('button', { name: 'Send back' })).toBeDisabled();
-  });
-
-  it('offers nothing to post until there is a picture', async () => {
-    signIn();
-    uploadFetch();
-    show();
-    expect(screen.queryByRole('button', { name: 'Post' })).not.toBeInTheDocument();
-  });
-
-  it('says why an upload was refused, and does not pretend it posted', async () => {
-    signIn();
-    const { steps } = uploadFetch({ uploadStatus: 503 });
-    const onDone = vi.fn();
-    show(onDone);
-
-    await pick();
-    await userEvent.click(screen.getByRole('button', { name: 'Post' }));
-
-    expect(await screen.findByRole('status')).toHaveTextContent(/storage isn’t switched on/i);
-    expect(onDone).not.toHaveBeenCalled();
-    // it never got as far as creating the post
-    expect(steps.filter((s) => s.startsWith('create'))).toHaveLength(0);
   });
 });

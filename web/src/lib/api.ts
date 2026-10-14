@@ -90,6 +90,42 @@ export class ApiClient {
     }
   }
 
+  /**
+   * `uploadBytes`, telling `onProgress` how far the bytes have gone (0–1).
+   *
+   * fetch cannot report an upload's progress, so this one is an
+   * XMLHttpRequest. A picture on a slow connection takes long enough that a
+   * bar that moves is the difference between waiting and giving up (the
+   * composer, web/src/composer). Same result shape, same no-refresh rule.
+   */
+  uploadWithProgress<T>(path: string, blob: Blob, onProgress: (fraction: number) => void): Promise<ApiResult<T>> {
+    if (typeof XMLHttpRequest === 'undefined') return this.uploadBytes<T>(path, blob);
+    const tokens = this.storage.get();
+    return new Promise((resolve) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `${this.baseUrl}${path}`);
+      xhr.timeout = TIMEOUT_MS * 4;
+      xhr.setRequestHeader('content-type', blob.type || 'application/octet-stream');
+      xhr.setRequestHeader('idempotency-key', requestId());
+      if (tokens) xhr.setRequestHeader('authorization', `Bearer ${tokens.accessToken}`);
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && e.total > 0) onProgress(Math.min(1, e.loaded / e.total));
+      };
+      const failed = () => resolve({ ok: false, error: { kind: 'network', message: 'network request failed' } });
+      xhr.onerror = failed;
+      xhr.ontimeout = failed;
+      xhr.onload = () => {
+        const headers = new Headers();
+        const retryAfter = xhr.getResponseHeader('retry-after');
+        if (retryAfter) headers.set('retry-after', retryAfter);
+        headers.set('content-type', 'application/json');
+        const body = xhr.status === 204 ? null : xhr.responseText || null;
+        void this.toResult<T>(new Response(body, { status: xhr.status, headers })).then(resolve);
+      };
+      xhr.send(blob);
+    });
+  }
+
   private async timedFetch(url: string, init: RequestInit): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
