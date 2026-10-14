@@ -82,6 +82,15 @@ describe('the lesson list', () => {
     expect(screen.getByRole('link', { name: 'Open “Family 1”' })).toHaveAttribute('href', '#/lessons/l-3');
   });
 
+  it('says when the server sent only the first part of the list, and leaves out counts it cannot know', async () => {
+    fakeApi(on('GET', '/admin/content/lessons?status=all', json({ ...LIST, total: 640 })));
+    location.hash = '#/lessons';
+    renderUi(<Lessons />);
+    expect(await screen.findByText('Showing the first 3 of 640 lessons. Search by title, skill or unit to find the rest.')).toBeInTheDocument();
+    const tabs = screen.getByRole('tablist', { name: 'Status' });
+    expect(within(tabs).getByRole('tab', { name: /in review/i })).not.toHaveTextContent('1');
+  });
+
   it('opens on the lessons in review from the dashboard’s link', async () => {
     fakeApi(on('GET', '/admin/content/lessons?status=all', json(LIST)));
     location.hash = '#/lessons?status=in_review';

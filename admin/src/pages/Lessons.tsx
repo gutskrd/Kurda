@@ -59,6 +59,9 @@ function LessonListPage({ initialStatus }: { initialStatus: string | null }): Re
   const list = useLoad(() => api<LessonList>(`/admin/content/lessons?status=all${query ? `&q=${encodeURIComponent(query)}` : ''}`), [query]);
 
   const all = list.data?.lessons ?? null;
+  // the server sends at most 500 rows (LESSON_LIST_MAX); past that, the list and its counts
+  // are the first part only, and the page says so rather than letting the rest vanish
+  const cut = list.data && list.data.total > list.data.lessons.length ? list.data.total : null;
   const counts = useMemo(() => {
     const c: Record<StatusFilter, number> = { current: 0, draft: 0, in_review: 0, published: 0, archived: 0 };
     for (const l of all ?? []) {
@@ -130,11 +133,16 @@ function LessonListPage({ initialStatus }: { initialStatus: string | null }): Re
         }
       />
 
-      <Tabs label="Status" value={status} onChange={setStatus} items={FILTERS.map((f) => ({ key: f.key, label: f.label, count: all ? counts[f.key] : undefined }))} />
+      <Tabs label="Status" value={status} onChange={setStatus} items={FILTERS.map((f) => ({ key: f.key, label: f.label, count: all && !cut ? counts[f.key] : undefined }))} />
 
       <Section
         flush
         title={shown ? `${shown.length} ${shown.length === 1 ? 'lesson' : 'lessons'}` : 'Lessons'}
+        description={
+          cut && all
+            ? `Showing the first ${all.length.toLocaleString()} of ${cut.toLocaleString()} lessons. Search by title, skill or unit to find the rest.`
+            : undefined
+        }
         actions={
           <div className="search-box">
             <Icon name="search" size={16} />
