@@ -121,6 +121,8 @@ export const de: Catalogue = {
   'composer.ownWork': 'Ich habe das gemacht',
   'composer.ownWorkHint': 'Fügt ein kleines Hevalo-Zeichen mit deinem Namen hinzu. Schalte es aus, wenn jemand anderes das Bild gemacht hat.',
   'composer.ownWorkFixed': 'Das wurde beim Hinzufügen des Bildes festgelegt. Um es zu ändern, entferne das Bild und füge es neu hinzu.',
+  'composer.ownWorkPosted':
+    'Ob dieses Bild dein Hevalo-Zeichen trägt, wurde beim Veröffentlichen festgelegt. Um es zu ändern, entferne das Bild und füge es neu hinzu.',
   'composer.editPicture': 'Bild bearbeiten',
   'composer.detailsDone': 'Fertig',
   'composer.charsLeft': 'Noch {n} Zeichen',

@@ -138,6 +138,8 @@ export const ckb: Catalogue = {
   'composer.ownWork': 'خۆم دروستم کردووە',
   'composer.ownWorkHint': 'نیشانەیەکی بچووکی Hevalo بە ناوی تۆ زیاد دەکات. بۆ وێنەیەک کە کەسێکی تر دروستی کردووە، بیکوژێنەوە.',
   'composer.ownWorkFixed': 'ئەمە کاتی زیادکردنی وێنەکە بڕیاری لێدرا. بۆ گۆڕین، وێنەکە لاببە و دووبارە زیادی بکە.',
+  'composer.ownWorkPosted':
+    'ئەوەی ئایا ئەم وێنەیە نیشانەی Hevalo ـی تۆی لەسەرە، کاتی بڵاوکردنەوەی بڕیاری لێدرا. بۆ گۆڕین، وێنەکە لاببە و دووبارە زیادی بکە.',
   'composer.editPicture': 'دەستکاریی وێنە',
   'composer.detailsDone': 'تەواو',
   'composer.charsLeft': '{n} پیت ماوە',

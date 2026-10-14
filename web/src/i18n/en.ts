@@ -163,6 +163,8 @@ export const en = {
   'composer.ownWork': 'I made this',
   'composer.ownWorkHint': 'Adds a small Hevalo mark with your name. Switch it off for a picture someone else made.',
   'composer.ownWorkFixed': 'This was decided when the picture was added. To change it, remove the picture and add it again.',
+  'composer.ownWorkPosted':
+    'Whether this picture has your Hevalo mark was decided when it was posted. To change it, remove the picture and add it again.',
   'composer.editPicture': 'Edit picture',
   'composer.detailsDone': 'Done',
   'composer.charsLeft': '{n} characters left',

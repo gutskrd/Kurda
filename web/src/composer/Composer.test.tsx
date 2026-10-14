@@ -240,6 +240,8 @@ describe('the composer', () => {
     await userEvent.type(box(), 'Quickly');
     await userEvent.keyboard('{Control>}{Enter}{/Control}');
     expect(await screen.findByRole('alert')).toHaveTextContent('You’re posting quickly for a new account.');
+    // said once: the polite status line does not repeat it
+    expect(screen.getAllByText(/You’re posting quickly for a new account\./)).toHaveLength(1);
     // still open, with the words still there
     expect(box()).toHaveValue('Quickly');
   });
@@ -328,8 +330,10 @@ describe('editing a post', () => {
     await userEvent.type(box(), 'After');
     await userEvent.click(screen.getByRole('button', { name: 'Remove picture 1' }));
     await userEvent.click(screen.getByRole('button', { name: 'Edit the description of picture 1' }));
-    // a picture already on the post keeps its signature as it was
-    expect(screen.getByRole('switch', { name: 'I made this' })).toBeDisabled();
+    // a picture already on the post keeps its signature as it was; the page does not
+    // know which way that went, so no switch claims either, only how to change it
+    expect(screen.queryByRole('switch', { name: 'I made this' })).toBeNull();
+    expect(screen.getByText(/Whether this picture has your Hevalo mark was decided when it was posted/)).toBeInTheDocument();
     await userEvent.clear(screen.getByLabelText('Describe this picture'));
     await userEvent.type(screen.getByLabelText('Describe this picture'), 'New words');
     await userEvent.click(screen.getByRole('button', { name: 'Save' }));

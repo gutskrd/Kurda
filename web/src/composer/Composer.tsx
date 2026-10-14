@@ -670,9 +670,18 @@ export function Composer({
             </button>
           </div>
 
-          <p className="cmp-why" id={`${titleId}-why`} role="status">
-            {error ?? blocker ?? ''}
-          </p>
+          {/* one live region each, so nothing is read twice: why Post is not ready
+              (polite, as it changes while typing), and a refused post (at once) */}
+          <div className="cmp-why-wrap">
+            <p className="cmp-why" id={`${titleId}-why`} role="status">
+              {blocker ?? ''}
+            </p>
+            {error && (
+              <p className="cmp-why cmp-why-error" role="alert">
+                {error}
+              </p>
+            )}
+          </div>
 
           {bodyLeft <= POST_BODY_MAX * 0.1 && (
             <span className={`cmp-count${bodyLeft < 0 ? ' cmp-over' : ''}`} aria-label={t('composer.charsLeft', { n: bodyLeft.toLocaleString() })}>
@@ -695,11 +704,6 @@ export function Composer({
           />
         </footer>
       )}
-      {error && (
-        <div className="sr-only" role="alert">
-          {error}
-        </div>
-      )}
     </ComposerDialog>
   );
 }
@@ -718,6 +722,7 @@ function initialPictures(post: ComposedPost | null | undefined, draft: PostDraft
       mediaKey: m.mediaKey,
       serverUrl: m.url,
       altText: m.altText ?? '',
+      // not known for a posted picture (PostMediaView does not say); never shown for one
       ownWork: true,
       status: 'ready',
       progress: 1,

@@ -126,6 +126,8 @@ export const ar: Catalogue = {
   'composer.ownWork': 'أنا صنعت هذا',
   'composer.ownWorkHint': 'يضيف علامة Hevalo صغيرة باسمك. أطفئه لصورة صنعها شخص آخر.',
   'composer.ownWorkFixed': 'تقرر هذا عند إضافة الصورة. لتغييره، أزل الصورة وأضفها من جديد.',
+  'composer.ownWorkPosted':
+    'تقرر عند نشر هذه الصورة ما إذا كانت تحمل علامة Hevalo باسمك. لتغيير ذلك، أزل الصورة وأضفها من جديد.',
   'composer.editPicture': 'عدّل الصورة',
   'composer.detailsDone': 'تم',
   'composer.charsLeft': 'بقي {n} حرفاً',

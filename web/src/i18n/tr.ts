@@ -121,6 +121,8 @@ export const tr: Catalogue = {
   'composer.ownWork': 'Bunu ben yaptım',
   'composer.ownWorkHint': 'Adınla küçük bir Hevalo işareti ekler. Başkasının yaptığı bir fotoğraf için kapat.',
   'composer.ownWorkFixed': 'Bu, fotoğraf eklendiğinde belirlendi. Değiştirmek için fotoğrafı kaldırıp yeniden ekle.',
+  'composer.ownWorkPosted':
+    'Bu fotoğrafta Hevalo işaretinin olup olmadığı paylaşıldığında belirlendi. Değiştirmek için fotoğrafı kaldırıp yeniden ekle.',
   'composer.editPicture': 'Fotoğrafı düzenle',
   'composer.detailsDone': 'Tamam',
   'composer.charsLeft': '{n} karakter kaldı',

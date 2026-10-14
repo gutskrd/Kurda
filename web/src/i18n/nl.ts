@@ -121,6 +121,8 @@ export const nl: Catalogue = {
   'composer.ownWork': 'Ik heb dit gemaakt',
   'composer.ownWorkHint': 'Voegt een klein Hevalo-merkje met je naam toe. Zet het uit voor een afbeelding die iemand anders heeft gemaakt.',
   'composer.ownWorkFixed': 'Dit is bepaald toen de afbeelding werd toegevoegd. Wil je het wijzigen, verwijder de afbeelding dan en voeg haar opnieuw toe.',
+  'composer.ownWorkPosted':
+    'Of deze afbeelding je Hevalo-merkje heeft, is bepaald toen ze werd geplaatst. Wil je het wijzigen, verwijder de afbeelding dan en voeg haar opnieuw toe.',
   'composer.editPicture': 'Afbeelding bewerken',
   'composer.detailsDone': 'Klaar',
   'composer.charsLeft': 'Nog {n} tekens',

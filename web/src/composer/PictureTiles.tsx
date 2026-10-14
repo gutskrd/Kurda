@@ -152,24 +152,32 @@ export function PictureDetails({
         )}
       </p>
 
-      <div className="cmp-switch-row">
-        <input
-          id={ownId}
-          type="checkbox"
-          role="switch"
-          className="cmp-switch"
-          checked={picture.ownWork}
-          disabled={!canChangeOwn}
-          aria-describedby={`${ownId}-hint`}
-          onChange={(e) => onOwnWorkChange(e.target.checked)}
-        />
-        <label htmlFor={ownId} className="cmp-switch-label">
-          {t('composer.ownWork')}
-        </label>
-      </div>
-      <p className="cmp-hint" id={`${ownId}-hint`}>
-        {canChangeOwn ? t('composer.ownWorkHint') : t('composer.ownWorkFixed')}
-      </p>
+      {picture.existing ? (
+        // a picture already on the post: the server does not say whether it was
+        // stamped, so no switch claims either way — only how to change it
+        <p className="cmp-hint cmp-own-posted">{t('composer.ownWorkPosted')}</p>
+      ) : (
+        <>
+          <div className="cmp-switch-row">
+            <input
+              id={ownId}
+              type="checkbox"
+              role="switch"
+              className="cmp-switch"
+              checked={picture.ownWork}
+              disabled={!canChangeOwn}
+              aria-describedby={`${ownId}-hint`}
+              onChange={(e) => onOwnWorkChange(e.target.checked)}
+            />
+            <label htmlFor={ownId} className="cmp-switch-label">
+              {t('composer.ownWork')}
+            </label>
+          </div>
+          <p className="cmp-hint" id={`${ownId}-hint`}>
+            {canChangeOwn ? t('composer.ownWorkHint') : t('composer.ownWorkFixed')}
+          </p>
+        </>
+      )}
 
       <div className="cmp-details-actions">
         {onEdit && (

@@ -121,6 +121,8 @@ export const es: Catalogue = {
   'composer.ownWork': 'Lo hice yo',
   'composer.ownWorkHint': 'Añade una pequeña marca de Hevalo con tu nombre. Desactívala para una imagen que hizo otra persona.',
   'composer.ownWorkFixed': 'Esto se decidió al añadir la imagen. Para cambiarlo, quita la imagen y vuelve a añadirla.',
+  'composer.ownWorkPosted':
+    'Si esta imagen lleva tu marca de Hevalo se decidió al publicarla. Para cambiarlo, quita la imagen y vuelve a añadirla.',
   'composer.editPicture': 'Editar imagen',
   'composer.detailsDone': 'Listo',
   'composer.charsLeft': 'Quedan {n} caracteres',

@@ -127,6 +127,8 @@ export const ku: Catalogue = {
   'composer.ownWork': 'Min ev çêkir',
   'composer.ownWorkHint': 'Nîşaneke biçûk a Hevalo bi navê te zêde dike. Ji bo wêneyekî ku kesekî din çêkiriye, vê bigire.',
   'composer.ownWorkFixed': 'Ev dema ku wêne hat zêdekirin hat biryardan. Ji bo guhertinê, wêneyê rake û dîsa zêde bike.',
+  'composer.ownWorkPosted':
+    'Ka nîşana te ya Hevalo li ser vî wêneyî heye an na, dema ku hat weşandin hat biryardan. Ji bo guhertinê, wêneyê rake û dîsa zêde bike.',
   'composer.editPicture': 'Wêneyê biguherîne',
   'composer.detailsDone': 'Temam',
   'composer.charsLeft': '{n} tîp mane',
