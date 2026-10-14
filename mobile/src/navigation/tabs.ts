@@ -30,7 +30,7 @@ export interface TabDef {
    * navs read as two products.
    */
   icon: IconName;
-  /** Path segment for kurda:// deep links. */
+  /** Path segment for hevalo:// deep links. */
   path: string;
 }
 
@@ -69,7 +69,7 @@ export const TABS: readonly TabDef[] = [
   { name: 'Profile', labelKey: 'nav.profile', icon: 'person', path: 'profile' },
 ] as const;
 
-/** react-navigation linking config: kurda://learn opens the Learn tab, etc. */
+/** react-navigation linking config: hevalo://play opens the Play tab, etc. */
 export function linkingScreens(): Record<string, string> {
   return Object.fromEntries(TABS.map((t) => [t.name, t.path]));
 }
