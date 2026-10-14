@@ -96,6 +96,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const [notice, setNotice] = useState<string | null>(null);
   const [starting, setStarting] = useState(false);
   const [finishing, setFinishing] = useState(false);
+  // the server says this race is already over: it cannot be finished again, only raced anew
+  const [over, setOver] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
@@ -148,6 +150,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     // next text loads lands in it, and its clock does not carry on (R7)
     setGame(null);
     setResult(null);
+    setOver(false);
     setTyped('');
     setElapsed(0);
     startedAt.current = null;
@@ -217,6 +220,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         // shown in the race itself, where the racer is looking, and the race
         // can be finished again (R2)
         finishingRef.current = false;
+        if (res.error.code === 'ALREADY_FINISHED') setOver(true);
         setError(
           res.error.code === 'ALREADY_FINISHED' ? t('games.race.alreadyOver') : describeError(res.error, t),
         );
@@ -420,7 +424,15 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 </Text>
               ) : null}
 
-              {!result && comparison?.done ? (
+              {!result && over ? (
+                <ClayButton
+                  label={t('games.race.again')}
+                  tone="primary"
+                  busy={starting}
+                  onPress={() => void start()}
+                  style={styles.stretch}
+                />
+              ) : !result && comparison?.done ? (
                 // The text is all typed: scoring it, or — when that failed —
                 // trying again. Never "Give up" for a race that was finished.
                 <ClayButton
@@ -495,44 +507,44 @@ function Result({
       <GlassCard>
         {/* the card's style dresses its outside; what is in it is laid out here */}
         <View style={styles.card}>
-        <Text
-          style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}
-          accessibilityRole="header"
-          accessibilityLiveRegion="polite"
-        >
-          {result.implausible
-            ? t('games.race.notScored')
-            : result.perfect
-              ? t('games.race.perfect')
-              : t('games.race.finished')}
-        </Text>
-        {/*
-          Said out loud rather than shown as a silent zero. Somebody who hits
-          this has almost certainly found a way around the typing box, and a
-          result that just reads 0 looks like a broken game.
-        */}
-        {result.implausible ? (
-          <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.refused')}</Text>
-        ) : null}
-        {result.personalBest && !result.implausible ? (
-          <View style={[styles.best, { backgroundColor: colors.gold }]}>
-            <Icon name="trophy" size={16} color={colors.textOnPrimary} />
-            <Text style={[styles.bestText, { color: colors.textOnPrimary }]}>{t('games.race.personalBest')}</Text>
-          </View>
-        ) : null}
-        <View style={styles.figures}>
-          <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
-          <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
-          <Figure value={`${(result.elapsedMs / 1000).toFixed(1)}s`} label={t('games.race.time')} />
-          {/* XP is the app's own unit and reads the same in every language */}
-          <Figure value={`+${result.xpAwarded}`} label="XP" />
-        </View>
-        {result.accented > 0 && result.accentMode !== 'hidden' ? (
-          <Text style={[styles.accents, { color: colors.textSecondary }]}>
-            {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}
+          <Text
+            style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}
+            accessibilityRole="header"
+            accessibilityLiveRegion="polite"
+          >
+            {result.implausible
+              ? t('games.race.notScored')
+              : result.perfect
+                ? t('games.race.perfect')
+                : t('games.race.finished')}
           </Text>
-        ) : null}
-        <ClayButton label={t('games.race.again')} tone="primary" size="large" busy={starting} onPress={onAgain} style={styles.stretch} />
+          {/*
+            Said out loud rather than shown as a silent zero. Somebody who hits
+            this has almost certainly found a way around the typing box, and a
+            result that just reads 0 looks like a broken game.
+          */}
+          {result.implausible ? (
+            <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.refused')}</Text>
+          ) : null}
+          {result.personalBest && !result.implausible ? (
+            <View style={[styles.best, { backgroundColor: colors.gold }]}>
+              <Icon name="trophy" size={16} color={colors.textOnPrimary} />
+              <Text style={[styles.bestText, { color: colors.textOnPrimary }]}>{t('games.race.personalBest')}</Text>
+            </View>
+          ) : null}
+          <View style={styles.figures}>
+            <Figure value={result.wpm.toFixed(1)} label={t('games.race.wpm')} />
+            <Figure value={`${Math.round(result.accuracy * 100)}%`} label={t('games.race.accuracy')} />
+            <Figure value={`${(result.elapsedMs / 1000).toFixed(1)}s`} label={t('games.race.time')} />
+            {/* XP is the app's own unit and reads the same in every language */}
+            <Figure value={`+${result.xpAwarded}`} label="XP" />
+          </View>
+          {result.accented > 0 && result.accentMode !== 'hidden' ? (
+            <Text style={[styles.accents, { color: colors.textSecondary }]}>
+              {t('games.race.accents', { right: result.accented - result.accentMisses, total: result.accented })}
+            </Text>
+          ) : null}
+          <ClayButton label={t('games.race.again')} tone="primary" size="large" busy={starting} onPress={onAgain} style={styles.stretch} />
         </View>
       </GlassCard>
 

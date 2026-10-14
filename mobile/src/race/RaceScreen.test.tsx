@@ -164,6 +164,17 @@ describe('RaceScreen', () => {
     expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'other', gaveUp: false });
   });
 
+  it('offers a new race, not another finish, when the server says the race is already over', async () => {
+    await startRaceWith({
+      'POST /race': ok(game()),
+      [FINISH]: fail({ code: 'ALREADY_FINISHED', status: 409 }),
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
+    expect(await screen.findByText('This race was already over. Start a new one.')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Give up and score' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Race again' })).toBeTruthy();
+  });
+
   it('starts in the accent mode chosen in the guide that opened before it', async () => {
     keyboardPrefs.update({ guideShown: false, accentMode: 'strict' });
     const client = fakeClient({ 'POST /race': ok(game()) });
