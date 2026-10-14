@@ -35,7 +35,7 @@ import { ACCENT_LABEL, KeyboardSettingsSheet } from '../keyboard/KeyboardSetting
 import { GUIDE_AFTER_MISSES, tryLetters } from '../keyboard/guide';
 import { keyboardPrefs, useKeyboardPrefs } from '../keyboard/prefs';
 import { HevaloDeer } from '../feedback/HevaloDeer';
-import { leftResults, reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished, useRatingBoxInset } from '../feedback/gameFinished';
 import { applyTypingChange, typeKey } from './input';
 import { RaceText } from './RaceText';
 import { finishRace, startRace, type RaceGame, type RaceResult } from './raceApi';
@@ -85,6 +85,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
   const { t, locale } = useI18n();
   const reduceMotion = useReducedMotion();
   const [prefs, setPrefs, prefsReady] = useKeyboardPrefs();
+  // room under the results for the rating box, so Race again and the keyboard nudge scroll clear of it
+  const boxInset = useRatingBoxInset();
 
   const [game, setGame] = useState<RaceGame | null>(null);
   const [length, setLength] = useState<RaceLength>(1);
@@ -354,7 +356,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
             <ScrollView
               ref={scrollRef}
-              contentContainerStyle={styles.raceContent}
+              contentContainerStyle={[styles.raceContent, result && boxInset > 0 ? { paddingBottom: spacing.xl + boxInset } : null]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >

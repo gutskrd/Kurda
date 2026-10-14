@@ -9,7 +9,7 @@ import { radii, spacing } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { getFeedbackState, storeReviewPrompted } from './api';
 import { APP_VERSION, appPlatform } from './appInfo';
-import { onGameFinished, onResultsLeft, type GameFinish } from './gameFinished';
+import { onGameFinished, onResultsLeft, setRatingBoxInset, type GameFinish } from './gameFinished';
 import { RatingBox } from './RatingBox';
 import { feedbackSession, type FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
@@ -135,6 +135,12 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
     }).start();
   }, [open, reduceMotion, enter]);
 
+  // nothing covers the results once it has gone
+  useEffect(() => {
+    if (!open) setRatingBoxInset(0);
+  }, [open]);
+  useEffect(() => () => setRatingBoxInset(0), []);
+
   if (!open) return null;
 
   return (
@@ -145,6 +151,7 @@ export function GameFeedbackHost({ session = feedbackSession }: { session?: Feed
     >
       <View style={styles.dock} pointerEvents="box-none">
         <Animated.View
+          onLayout={(e) => setRatingBoxInset(e.nativeEvent.layout.height + Math.max(insets.bottom, spacing.md))}
           style={[
             styles.card,
             {

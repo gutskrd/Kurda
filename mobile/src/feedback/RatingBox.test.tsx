@@ -21,7 +21,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { RatingBox } from './RatingBox';
 import { GameFeedbackHost } from './GameFeedbackHost';
 import { FeedbackSettingsRows } from './FeedbackSettings';
-import { leftResults, reportGameFinished } from './gameFinished';
+import { leftResults, reportGameFinished, setRatingBoxInset, useRatingBoxInset } from './gameFinished';
 import { FeedbackSession } from './session';
 import { requestStoreReview } from './storeReview';
 import { APP_VERSION } from './appInfo';
@@ -238,13 +238,25 @@ describe('GameFeedbackHost', () => {
     expect(later.boxShown).toBe(false);
   });
 
-  it('closes when a new game starts on the same screen', async () => {
+  it('closes when a new game starts on the same screen, and leaves no room under the results', async () => {
     testAuth.client = fakeClient({ [STATE]: ok({ shouldPrompt: true, storeReviewEligible: false }) });
-    renderWithProviders(<GameFeedbackHost session={new FeedbackSession()} />);
+    function Results() {
+      return <span data-testid="room">{useRatingBoxInset()}</span>;
+    }
+    renderWithProviders(
+      <>
+        <Results />
+        <GameFeedbackHost session={new FeedbackSession()} />
+      </>,
+    );
     act(() => reportGameFinished({ moment: 'other' }));
     expect(await screen.findByText('How are you enjoying Hevalo?', undefined, { timeout: 3000 })).toBeTruthy();
+    // the results make room for the box while it is there (its height comes from its layout)
+    act(() => setRatingBoxInset(240));
+    expect(screen.getByTestId('room').textContent).toBe('240');
     act(() => leftResults());
     expect(screen.queryByText('How are you enjoying Hevalo?')).toBeNull();
+    expect(screen.getByTestId('room').textContent).toBe('0');
   });
 
   it('never opens it after a game given up', async () => {

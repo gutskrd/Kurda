@@ -1,3 +1,5 @@
+import { useSyncExternalStore } from 'react';
+
 /**
  * "A game just finished" — the one call every game's results make.
  *
@@ -16,6 +18,10 @@
  * A game that starts again on the same screen (Race again, a new word) calls
  * `leftResults()` as it does, so the box does not sit over the next game.
  * Going to another screen needs nothing: the host sees that itself.
+ *
+ * The box sits over the bottom of the results. A results screen that scrolls
+ * adds `useRatingBoxInset()` to the space under its last card, so all of it
+ * can be scrolled clear of the box (0 while there is no box).
  */
 export interface GameFinish {
   /** 'won' or 'personal_best' make a natural moment for the store prompt; anything else is 'other' */
@@ -52,4 +58,26 @@ export function onResultsLeft(l: () => void): () => void {
   return () => {
     if (leaveListener === l) leaveListener = null;
   };
+}
+
+let boxInset = 0;
+const insetListeners = new Set<() => void>();
+
+/** For the host: how much of the bottom of the screen the box covers now. */
+export function setRatingBoxInset(height: number): void {
+  if (height === boxInset) return;
+  boxInset = height;
+  for (const l of insetListeners) l();
+}
+
+/** How much room to leave under the results so they scroll clear of the box. */
+export function useRatingBoxInset(): number {
+  return useSyncExternalStore(
+    (l) => {
+      insetListeners.add(l);
+      return () => insetListeners.delete(l);
+    },
+    () => boxInset,
+    () => 0,
+  );
 }

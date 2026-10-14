@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
+vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn(), useRatingBoxInset: () => 0 }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { RaceGameView, RaceResultView } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
