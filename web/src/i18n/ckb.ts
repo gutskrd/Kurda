@@ -1205,6 +1205,8 @@ export const ckb: Catalogue = {
   'play.banner.later': 'دواتر',
   'play.banner.notThisGame': 'ئەم یارییە نا',
   'play.banner.more': '+{count}ی تر',
+  'play.banner.expand': 'زیاتر پیشان بدە',
+  'play.banner.collapse': 'کەمتر پیشان بدە',
   'play.button': 'یاری بکە',
   'play.withWho': 'لەگەڵ {name} یاری بکە',
   'play.chat.button': 'یارییەک دەست پێبکە',

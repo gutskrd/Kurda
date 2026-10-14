@@ -19,6 +19,7 @@ import { LeaveLobby, LobbyRoster, RoomUnavailable, seatName, type RoomGone, type
 import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
+import { useQuietInvites } from '../play/quietInvites';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -161,6 +162,8 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
 
   // local countdown between reads (resynced on each load/submit)
   const active = match?.status === 'active' && match.me != null && remaining > 0;
+  // while matching, an invite to something else waits as a chip
+  useQuietInvites(active);
   useEffect(() => {
     if (match?.status !== 'active') return;
     if (remaining <= 0) return;

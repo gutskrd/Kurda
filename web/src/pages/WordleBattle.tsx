@@ -19,6 +19,7 @@ import { LeaveLobby, LobbyRoster, RoomUnavailable, seatName, type RoomGone, type
 import { RematchPanel } from '../play/RematchPanel';
 import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
+import { useQuietInvites } from '../play/quietInvites';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -174,6 +175,8 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
   }, [battle?.status, results, client, id]);
 
   const active = battle?.status === 'active' && battle.me != null && battle.me.status === 'playing' && !battle.me.solved;
+  // while guessing, an invite to something else waits as a chip
+  useQuietInvites(active);
 
   const submit = useCallback(async () => {
     if (!battle?.me || !active || busy) return;

@@ -1199,6 +1199,8 @@ export const ar: Catalogue = {
   'play.banner.later': 'لاحقًا',
   'play.banner.notThisGame': 'ليست هذه اللعبة',
   'play.banner.more': '+{count} أخرى',
+  'play.banner.expand': 'عرض المزيد',
+  'play.banner.collapse': 'عرض أقل',
   'play.button': 'العب',
   'play.withWho': 'العب مع {name}',
   'play.chat.button': 'ابدأ لعبة',

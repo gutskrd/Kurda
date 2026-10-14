@@ -1194,6 +1194,8 @@ export const fr: Catalogue = {
   'play.banner.later': 'Plus tard',
   'play.banner.notThisGame': 'Pas ce jeu',
   'play.banner.more': '+{count} autres',
+  'play.banner.expand': 'Afficher plus',
+  'play.banner.collapse': 'Afficher moins',
   'play.button': 'Jouer',
   'play.withWho': 'Jouer avec {name}',
   'play.chat.button': 'Lancer une partie',

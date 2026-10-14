@@ -356,7 +356,7 @@
 .story-tools {
   /* stays in reach while reading: the size and, for a narrated story, its player */
   position: sticky;
-  top: calc(var(--nav-h) + 8px);
+  top: calc(var(--nav-h) + var(--invite-banner-h, 0px) + 8px);
   z-index: 5;
   width: fit-content;
   max-width: 100%;
@@ -1128,8 +1128,8 @@
 }
 .sg-pane {
   position: sticky;
-  top: calc(var(--nav-h) + 12px);
-  max-height: calc(100vh - var(--nav-h) - 40px);
+  top: calc(var(--nav-h) + var(--invite-banner-h, 0px) + 12px);
+  max-height: calc(100vh - var(--nav-h) - var(--invite-banner-h, 0px) - 40px);
   overflow-y: auto;
   padding: 18px 20px 6px;
   border-radius: var(--r-lg);

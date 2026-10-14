@@ -1288,6 +1288,8 @@ export const en = {
   'play.banner.later': 'Later',
   'play.banner.notThisGame': 'Not this game',
   'play.banner.more': '+{count} more',
+  'play.banner.expand': 'Show more',
+  'play.banner.collapse': 'Show less',
   'play.button': 'Play',
   'play.withWho': 'Play with {name}',
   'play.chat.button': 'Start a game',

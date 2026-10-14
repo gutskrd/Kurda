@@ -128,7 +128,9 @@
 /*
  * Under the navigation, in the middle: where an invite is seen without taking
  * over the page. It stays until it is answered or runs out (contract §B1), so
- * it is sized to sit there — a strip, not a dialog.
+ * it is sized to sit there — a strip, not a dialog — and the page moves down
+ * by the room it takes (`--invite-banner-h`, measured by the banner), so it
+ * is above the page's first line rather than over it.
  */
 .invite-banners {
   position: fixed;
@@ -218,6 +220,35 @@
 .invite-banner:has(.invite-notnow-menu),
 .invite-banner:focus-within {
   z-index: 1;
+}
+/* a phone, or a game in play: one line — who, Join, and a tap for the rest */
+.invite-banner.is-chip {
+  flex-wrap: nowrap;
+  gap: 8px;
+  padding: 4px 4px 4px 10px;
+}
+.invite-banner.is-chip .friend-avatar {
+  width: 28px;
+  height: 28px;
+}
+.invite-banner.is-chip .invite-banner-text {
+  flex: 1 1 auto;
+}
+.invite-banner.is-chip .invite-banner-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+}
+.invite-banner.is-chip .invite-banner-more {
+  flex: none;
+}
+.invite-banner.is-chip .invite-banner-actions {
+  flex: none;
+  gap: 2px;
+}
+.invite-banner-toggle.is-open svg {
+  transform: rotate(180deg);
 }
 /* the count of the rest, inside the last banner rather than over the page */
 .invite-banner-more {
@@ -483,7 +514,7 @@
   .invite-banners {
     top: calc(var(--nav-h) + 6px);
   }
-  .invite-banner-actions {
+  .invite-banner:not(.is-chip) .invite-banner-actions {
     width: 100%;
     justify-content: flex-end;
   }

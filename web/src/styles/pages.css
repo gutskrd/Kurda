@@ -1492,10 +1492,11 @@ button.feature {
   }
   .chat-layout.has-active {
     position: fixed;
-    top: var(--nav-h);
+    /* under a waiting game invite, not beneath it (play.css) */
+    top: calc(var(--nav-h) + var(--invite-banner-h, 0px));
     left: 0;
     right: 0;
-    height: calc(100dvh - var(--nav-h));
+    height: calc(100dvh - var(--nav-h) - var(--invite-banner-h, 0px));
     z-index: 20;
     gap: 0;
     background: var(--app-bg);

@@ -3,10 +3,12 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { fakeApi, refused } from '../stories/testing';
 import { InviteBanner } from './InviteBanner';
+import { useQuietInvites } from './quietInvites';
 import { incoming, renderPlay, signedInAndListening, where } from './testing';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
 });
 
@@ -122,6 +124,79 @@ describe('InviteBanner', () => {
     const shown = await screen.findAllByRole('status');
     expect(shown).toHaveLength(1);
     expect(within(shown[0]!).getByText('+2 more')).toBeInTheDocument();
+  });
+
+  it('is a one-line chip on a phone — who, to what, Join — that opens for the rest', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({
+      matches: query.includes('max-width'),
+      media: query,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    fakeApi({ 'GET /play/invites': lists() });
+    renderPlay(<InviteBanner />);
+    const chip = await screen.findByRole('status');
+    expect(within(chip).getByText('Rojda invited you to Wordle Battle')).toBeInTheDocument();
+    expect(within(chip).getByRole('button', { name: 'Join' })).toBeInTheDocument();
+    // the settings and "Not now" wait behind "Show more", which is not "Not now"
+    expect(within(chip).queryByText('Hard')).toBeNull();
+    expect(within(chip).queryByRole('button', { name: 'Not now' })).toBeNull();
+    const more = within(chip).getByRole('button', { name: 'Show more' });
+    expect(more).toHaveAttribute('aria-expanded', 'false');
+
+    await userEvent.click(more);
+    const banner = screen.getByRole('status');
+    expect(within(banner).getByText('Hard')).toBeInTheDocument();
+    expect(within(banner).getByRole('button', { name: 'Not now' })).toBeInTheDocument();
+    await userEvent.click(within(banner).getByRole('button', { name: 'Show less' }));
+    expect(screen.queryByText('Hard')).toBeNull();
+  });
+
+  it('is a chip while a game is being played, on any screen', async () => {
+    fakeApi({ 'GET /play/invites': lists() });
+    function Playing(): null {
+      useQuietInvites(true);
+      return null;
+    }
+    renderPlay(
+      <>
+        <Playing />
+        <InviteBanner />
+      </>,
+    );
+    const chip = await screen.findByRole('status');
+    expect(chip).toHaveClass('is-chip');
+    expect(within(chip).getByRole('button', { name: 'Show more' })).toBeInTheDocument();
+  });
+
+  it('opens a chip whose Join failed, so the reason can be read', async () => {
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/accept': refused(409, 'GAME_FULL') });
+    function Playing(): null {
+      useQuietInvites(true);
+      return null;
+    }
+    renderPlay(
+      <>
+        <Playing />
+        <InviteBanner />
+      </>,
+    );
+    await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
+    expect(await screen.findByText('This game is full.')).toBeInTheDocument();
+    expect(screen.getByRole('status')).not.toHaveClass('is-chip');
+  });
+
+  it('takes its own room above the page while it waits, and gives it back when answered', async () => {
+    fakeApi({ 'GET /play/invites': lists(), 'POST /play/invites/i1/decline': { ok: true } });
+    renderPlay(<InviteBanner />);
+    await screen.findByRole('status');
+    const room = () => document.documentElement.style.getPropertyValue('--invite-banner-h');
+    expect(room()).toMatch(/^\d+px$/);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Later' }));
+    await waitFor(() => expect(screen.queryByRole('status')).not.toBeInTheDocument());
+    expect(room()).toBe('');
   });
 
   it('appears when an invite arrives, without a reload', async () => {

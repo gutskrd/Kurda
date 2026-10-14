@@ -15,6 +15,7 @@ import { GameResults } from './GameResults';
 import { playerName } from './GameParts';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
 import { RematchPanel } from '../play/RematchPanel';
+import { useQuietInvites } from '../play/quietInvites';
 import { MODE_KEY } from './SetupSheet';
 import { useGameStory, useStoryGame } from './useStoryGame';
 
@@ -42,6 +43,8 @@ function GamePage({ id }: { id: string }): React.JSX.Element {
 
   const view = game.load.state === 'ready' ? game.load.view : null;
   const story = useGameStory(id, view !== null && view.status !== 'lobby');
+  // while reading and answering, an invite to something else waits as a chip
+  useQuietInvites(view !== null && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
 
   async function leave(): Promise<void> {
     await game.act('/leave');

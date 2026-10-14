@@ -1200,6 +1200,8 @@ export const ku: Catalogue = {
   'play.banner.later': 'Paşê',
   'play.banner.notThisGame': 'Ne ev lîstik',
   'play.banner.more': '+{count} yên din',
+  'play.banner.expand': 'Zêdetir nîşan bide',
+  'play.banner.collapse': 'Kêmtir nîşan bide',
   'play.button': 'Bilîze',
   'play.withWho': 'Bi {name} re bilîze',
   'play.chat.button': 'Lîstikekê dest pê bike',

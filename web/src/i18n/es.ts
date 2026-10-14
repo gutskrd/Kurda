@@ -1194,6 +1194,8 @@ export const es: Catalogue = {
   'play.banner.later': 'Más tarde',
   'play.banner.notThisGame': 'Este juego no',
   'play.banner.more': '+{count} más',
+  'play.banner.expand': 'Mostrar más',
+  'play.banner.collapse': 'Mostrar menos',
   'play.button': 'Jugar',
   'play.withWho': 'Jugar con {name}',
   'play.chat.button': 'Empezar una partida',

@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -8,6 +8,7 @@ import { useT } from '../i18n/I18nProvider';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
 import { usePlayInvites } from './PlayProvider';
+import { useInvitesQuiet } from './quietInvites';
 
 /**
  * Banners shown at once; the rest wait behind them, counted. One on a phone,
@@ -15,6 +16,15 @@ import { usePlayInvites } from './PlayProvider';
  */
 const MAX_BANNERS = 2;
 const MAX_BANNERS_NARROW = 1;
+
+/**
+ * The room the banners take under the navigation, kept on the root as a CSS
+ * variable: the page's top padding, a full-screen chat and the games' sticky
+ * panes add it, so a banner sits above the page instead of over it.
+ */
+const SPACE_VAR = '--invite-banner-h';
+/** between the banners and what comes under them */
+const SPACE_BELOW = 8;
 
 /**
  * The invites waiting for you (contract §B1): "Rojda invited you to Wordle
@@ -25,13 +35,23 @@ const MAX_BANNERS_NARROW = 1;
  * you were — an invite never takes over what you are doing. It stays until you
  * answer it or it runs out; it does not slip away after a few seconds, so an
  * invite is never missed because you looked away.
+ *
+ * It never covers the page either: the room it takes is reserved above the
+ * page (`--invite-banner-h`). On a phone, and while a game is being played,
+ * it is a one-line chip — who asked, to what, and Join — that opens on a tap,
+ * so waiting for an answer costs one line rather than a third of the screen.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const t = useT();
   const { lists } = usePlayInvites();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const now = useNow(lists?.incoming ?? []);
-  const max = useMediaQuery('(max-width: 560px)') ? MAX_BANNERS_NARROW : MAX_BANNERS;
+  // a phone, or a game being played: one invite, as a one-line chip until opened
+  const narrow = useMediaQuery('(max-width: 560px)');
+  const playing = useInvitesQuiet();
+  const compact = narrow || playing;
+  const max = compact ? MAX_BANNERS_NARROW : MAX_BANNERS;
+  const reserve = useReservedSpace();
   const waiting = (lists?.incoming ?? []).filter(
     (i) => i.status === 'pending' && !answered.has(i.id) && Date.parse(i.expiresAt) > now,
   );
@@ -39,11 +59,12 @@ export function InviteBanner(): React.JSX.Element | null {
   const done = (id: string): void => setAnswered((prev) => new Set(prev).add(id));
   const more = Math.max(0, waiting.length - max);
   return (
-    <div className="invite-banners" role="region" aria-label={t('play.banner.region')}>
+    <div className="invite-banners" ref={reserve} role="region" aria-label={t('play.banner.region')}>
       {waiting.slice(0, max).map((invite, i, shown) => (
         <Banner
           key={invite.id}
           invite={invite}
+          compact={compact}
           onDone={() => done(invite.id)}
           // the rest are counted inside the last banner, not over the page
           more={i === shown.length - 1 ? more : 0}
@@ -51,6 +72,43 @@ export function InviteBanner(): React.JSX.Element | null {
       ))}
     </div>
   );
+}
+
+/**
+ * Measures the banners and writes the room they take to `--invite-banner-h`
+ * on the root, again whenever they change size (one opened, one answered),
+ * and takes it away when the last one goes. The layout's own position is read
+ * (offsetTop, offsetHeight), not the drawn one, so a banner sliding in is
+ * measured where it will rest.
+ */
+function useReservedSpace(): (el: HTMLDivElement | null) => void {
+  const observer = useRef<ResizeObserver | null>(null);
+  useEffect(
+    () => () => {
+      observer.current?.disconnect();
+      document.documentElement.style.removeProperty(SPACE_VAR);
+    },
+    [],
+  );
+  return useCallback((el: HTMLDivElement | null) => {
+    observer.current?.disconnect();
+    observer.current = null;
+    const root = document.documentElement;
+    if (!el) {
+      root.style.removeProperty(SPACE_VAR);
+      return;
+    }
+    const measure = (): void => {
+      const nav = parseFloat(getComputedStyle(root).getPropertyValue('--nav-h')) || 0;
+      const below = el.offsetTop + el.offsetHeight - nav + SPACE_BELOW;
+      root.style.setProperty(SPACE_VAR, `${Math.max(0, Math.ceil(below))}px`);
+    };
+    measure();
+    if (typeof ResizeObserver !== 'undefined') {
+      observer.current = new ResizeObserver(measure);
+      observer.current.observe(el);
+    }
+  }, []);
 }
 
 /** The time, ticking over when the soonest invite runs out, so an expired one goes on its own. */
@@ -65,8 +123,22 @@ function useNow(invites: readonly IncomingInvite[]): number {
   return now;
 }
 
-function Banner({ invite, onDone, more }: { invite: IncomingInvite; onDone: () => void; more: number }): React.JSX.Element {
+function Banner({
+  invite,
+  compact,
+  onDone,
+  more,
+}: {
+  invite: IncomingInvite;
+  /** a phone or a game in play: a one-line chip, opened on request */
+  compact: boolean;
+  onDone: () => void;
+  more: number;
+}): React.JSX.Element {
   const t = useT();
+  // null: as the screen has it (a chip when compact); then as the reader chose
+  const [opened, setOpened] = useState<boolean | null>(null);
+  const full = opened ?? !compact;
   const { client } = useAuth();
   const { refresh } = usePlayInvites();
   const navigate = useNavigate();
@@ -82,6 +154,8 @@ function Banner({ invite, onDone, more }: { invite: IncomingInvite; onDone: () =
     setBusy(false);
     if (!res.ok) {
       setError(playError(res.error, t));
+      // the reason needs the whole banner to be read
+      setOpened(true);
       return;
     }
     onDone();
@@ -98,15 +172,46 @@ function Banner({ invite, onDone, more }: { invite: IncomingInvite; onDone: () =
     refresh();
   }
 
+  const title = invite.rematch
+    ? t('play.banner.again', { name: invite.from.name, game })
+    : t('play.banner.invited', { name: invite.from.name, game });
+  const joinButton = (
+    <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void join()}>
+      {busy ? t('games.joining') : t('play.banner.join')}
+    </button>
+  );
+
+  if (!full) {
+    // the chip: who asked and to what, Join, and the rest one tap away
+    return (
+      <div className="invite-banner is-chip" role="status">
+        <Avatar url={invite.from.avatarUrl} glyphSize={14} />
+        <p className="invite-banner-text">
+          <span className="invite-banner-title">{title}</span>
+        </p>
+        {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
+        <span className="invite-banner-actions">
+          {joinButton}
+          <button
+            type="button"
+            className="invite-banner-x invite-banner-toggle"
+            aria-expanded={false}
+            aria-label={t('play.banner.expand')}
+            title={t('play.banner.expand')}
+            onClick={() => setOpened(true)}
+          >
+            <CaretDownIcon size={16} />
+          </button>
+        </span>
+      </div>
+    );
+  }
+
   return (
     <div className="invite-banner" role="status">
       <Avatar url={invite.from.avatarUrl} glyphSize={18} />
       <p className="invite-banner-text">
-        <span className="invite-banner-title">
-          {invite.rematch
-            ? t('play.banner.again', { name: invite.from.name, game })
-            : t('play.banner.invited', { name: invite.from.name, game })}
-        </span>
+        <span className="invite-banner-title">{title}</span>
         {parts.length > 0 && (
           <span className="invite-banner-summary">
             {parts.map((p, i) => (
@@ -128,10 +233,20 @@ function Banner({ invite, onDone, more }: { invite: IncomingInvite; onDone: () =
         </button>
       ) : (
         <span className="invite-banner-actions">
-          <button type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => void join()}>
-            {busy ? t('games.joining') : t('play.banner.join')}
-          </button>
+          {joinButton}
           <NotNow disabled={busy} onPick={(reason) => void decline(reason)} />
+          {compact && (
+            <button
+              type="button"
+              className="invite-banner-x invite-banner-toggle is-open"
+              aria-expanded
+              aria-label={t('play.banner.collapse')}
+              title={t('play.banner.collapse')}
+              onClick={() => setOpened(false)}
+            >
+              <CaretDownIcon size={16} />
+            </button>
+          )}
         </span>
       )}
     </div>

@@ -1194,6 +1194,8 @@ export const nl: Catalogue = {
   'play.banner.later': 'Later',
   'play.banner.notThisGame': 'Niet dit spel',
   'play.banner.more': '+{count} meer',
+  'play.banner.expand': 'Meer tonen',
+  'play.banner.collapse': 'Minder tonen',
   'play.button': 'Spelen',
   'play.withWho': 'Spelen met {name}',
   'play.chat.button': 'Een spel starten',

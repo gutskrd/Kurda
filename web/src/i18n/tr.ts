@@ -1194,6 +1194,8 @@ export const tr: Catalogue = {
   'play.banner.later': 'Sonra',
   'play.banner.notThisGame': 'Bu oyun değil',
   'play.banner.more': '+{count} daha',
+  'play.banner.expand': 'Daha fazla göster',
+  'play.banner.collapse': 'Daha az göster',
   'play.button': 'Oyna',
   'play.withWho': '{name} ile oyna',
   'play.chat.button': 'Oyun başlat',
