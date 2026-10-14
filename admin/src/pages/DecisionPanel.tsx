@@ -626,6 +626,9 @@ function CsamDialog({
         </li>
         <li>If a child is in danger right now, call the emergency services or the police where they live.</li>
       </ol>
+      <p className="subtle">
+        <a href="#/playbook">The whole playbook</a>
+      </p>
       <ul className="link-list">
         {CSAM_REPORTING_LINKS.map((l) => (
           <li key={l.url}>

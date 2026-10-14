@@ -12,6 +12,7 @@ import { Moderation } from './pages/Moderation';
 import { Appeals } from './pages/Appeals';
 import { BanApprovals } from './pages/BanApprovals';
 import { Feedback } from './pages/Feedback';
+import { Playbook } from './pages/Playbook';
 import { Approvals } from './pages/Approvals';
 import { Analytics } from './pages/Analytics';
 import { Tags } from './pages/Tags';
@@ -47,6 +48,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   appeals: () => <Appeals />,
   'ban-approvals': () => <BanApprovals />,
   feedback: () => <Feedback />,
+  playbook: () => <Playbook />,
   aimod: () => <AiModeration />,
   antibot: () => <Antibot />,
   lessons: () => <Lessons />,

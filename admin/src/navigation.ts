@@ -103,6 +103,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'aimod', label: 'Automated flags', group: 'moderation', icon: 'shield', page: 'aimod', access: MODERATORS, keywords: 'ai text image flags' },
   { id: 'antibot', label: 'Bot flags', group: 'moderation', icon: 'bot', page: 'antibot', access: LEGACY_ADMIN, keywords: 'antibot spam bots' },
   { id: 'feedback', label: 'Feedback', group: 'moderation', icon: 'star', page: 'feedback', access: FEEDBACK_READERS, keywords: 'ratings stars reviews inbox' },
+  { id: 'playbook', label: 'Playbook', group: 'moderation', icon: 'book', page: 'playbook', access: MODERATORS, keywords: 'csam self-harm child safety how to help' },
 
   { id: 'lessons', label: 'Lessons', group: 'content', icon: 'book', page: 'lessons', access: LESSON_EDITORS, keywords: 'content exercises courses' },
   { id: 'stories', label: 'Stories', group: 'content', icon: 'story', page: 'stories', access: STORY_EDITORS, keywords: 'reading quiz' },

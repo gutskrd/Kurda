@@ -60,7 +60,7 @@ describe('the admin’s navigation', () => {
     );
     await openAt('');
     await waitFor(() => expect(location.hash).toBe('#/dashboard'));
-    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'My security']);
+    expect(sidebarLinks()).toEqual(['Dashboard', 'Users', 'Queue', 'Appeals', 'Ban approvals', 'Automated flags', 'Feedback', 'Playbook', 'My security']);
     const nav = screen.getAllByRole('navigation', { name: 'Admin pages' })[0]!;
     expect(within(nav).getByRole('heading', { name: 'Moderation' })).toBeInTheDocument();
     expect(within(nav).queryByRole('heading', { name: 'Economy' })).not.toBeInTheDocument();
