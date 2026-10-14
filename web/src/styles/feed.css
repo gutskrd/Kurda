@@ -121,18 +121,6 @@
   /* a poem's line breaks are the poem, and an excerpt keeps them */
   white-space: pre-wrap;
 }
-.fcard-shot {
-  display: block;
-  margin: 4px -18px 10px;
-  background: var(--surface-2);
-}
-.fcard-shot img {
-  display: block;
-  width: 100%;
-  /* tall pictures are common and a card should not become a page */
-  max-height: 560px;
-  object-fit: cover;
-}
 /* a picture's caption sits under it and reads as a caption, not a body */
 .fcard-image .fcard-text,
 .fcard-meme .fcard-text {

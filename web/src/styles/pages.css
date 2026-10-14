@@ -2019,7 +2019,7 @@ button.feature {
   transform: none;
 }
 /* a picture in a profile tab is a preview, not the page's centrepiece */
-.mkp-activity-feed .fcard-shot img {
+.mkp-activity-feed .pp-grid {
   max-height: 340px;
 }
 @media (max-width: 560px) {
