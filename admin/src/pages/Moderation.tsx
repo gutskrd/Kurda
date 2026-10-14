@@ -12,6 +12,7 @@ import {
   EMPTY_FILTERS,
   PRIORITY_NAME,
   PRIORITY_TONE,
+  QUEUE_Q_MAX,
   SOURCE_GROUP_NAME,
   categoryName,
   filtersFrom,
@@ -133,6 +134,7 @@ function Queue(): React.JSX.Element {
               type="search"
               aria-label="Search cases"
               placeholder="Words, a username, or an id"
+              maxLength={QUEUE_Q_MAX}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />

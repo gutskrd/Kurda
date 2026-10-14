@@ -30,10 +30,14 @@ const FILTERS = [
   { value: 'staff', label: 'Staff' },
 ] as const;
 
+/** the longest search the API takes; a longer paste would be refused, not searched */
+export const USERS_Q_MAX = 200;
+const clampQ = (q: string): string => q.trim().slice(0, USERS_Q_MAX).trim();
+
 /** The API path for a page of the list. */
 export function usersPath(q: string, filter: string, page: number): string {
   const p = new URLSearchParams({ limit: String(USERS_PAGE), offset: String(page * USERS_PAGE) });
-  if (q.trim()) p.set('q', q.trim());
+  if (clampQ(q)) p.set('q', clampQ(q));
   if (filter) p.set('filter', filter);
   return `/admin/users?${p}`;
 }
@@ -41,7 +45,7 @@ export function usersPath(q: string, filter: string, page: number): string {
 /** The list's state as the address's query, the defaults left out. */
 function listQuery(q: string, filter: string, page: number): string {
   const p = new URLSearchParams();
-  if (q.trim()) p.set('q', q.trim());
+  if (clampQ(q)) p.set('q', clampQ(q));
   if (filter) p.set('filter', filter);
   if (page > 0) p.set('page', String(page + 1));
   return p.toString();
@@ -108,7 +112,7 @@ function UserList(): React.JSX.Element {
         <div className="table-tools" role="search">
           <div className="search-box">
             <Icon name="search" size={16} />
-            <input type="search" aria-label="Search people" placeholder="A username, an email, or an id" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input type="search" aria-label="Search people" placeholder="A username, an email, or an id" maxLength={USERS_Q_MAX} value={q} onChange={(e) => setQ(e.target.value)} />
           </div>
           <label className="sr-only" htmlFor="users-filter">
             Show

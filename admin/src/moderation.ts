@@ -371,6 +371,9 @@ export function filtersFrom(query: URLSearchParams): QueueFilters {
   };
 }
 
+/** the longest search the queue API takes; a longer paste would be refused, not searched */
+export const QUEUE_Q_MAX = 200;
+
 /** The filters as a query string, the defaults left out: "priority=0&source=bots". */
 export function filtersQuery(f: QueueFilters): string {
   const p = new URLSearchParams();
@@ -378,7 +381,8 @@ export function filtersQuery(f: QueueFilters): string {
   if (f.priority !== '') p.set('priority', f.priority);
   if (f.category) p.set('category', f.category);
   if (f.source) p.set('source', f.source);
-  if (f.q.trim()) p.set('q', f.q.trim());
+  const q = f.q.trim().slice(0, QUEUE_Q_MAX).trim();
+  if (q) p.set('q', q);
   return p.toString();
 }
 

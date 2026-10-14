@@ -14,7 +14,7 @@ import { failure, fakeApi, json, on, type Call, type Route } from '../test/fetch
 import { ME_ID, SUBJECT_ID, sanction } from '../test/moderation';
 import { renderUi } from '../test/render';
 import type { UserDetail } from './UserPage';
-import { Users, usersPath } from './Users';
+import { USERS_Q_MAX, Users, usersPath } from './Users';
 
 const HOUR = 3_600_000;
 const ago = (h: number): string => new Date(Date.now() - h * HOUR).toISOString();
@@ -124,6 +124,14 @@ describe('the list', () => {
     await user.type(screen.getByLabelText('Search people'), 'roj');
     await waitFor(() => expect(location.hash).toBe('#/users?q=roj&filter=restricted'));
     await waitFor(() => expect(calls.some((c) => c.path === '/admin/users?limit=25&offset=0&q=roj&filter=restricted')).toBe(true));
+  });
+
+  it('cuts a pasted search to what the API takes, in the box and in the request', async () => {
+    const long = 'x'.repeat(USERS_Q_MAX + 50);
+    show(`#/users?q=${long}`, MODERATOR, on('GET', /^\/admin\/users\?/, json(rows)));
+    expect(await screen.findByText('@rojin')).toBeInTheDocument();
+    expect(screen.getByLabelText('Search people')).toHaveAttribute('maxLength', String(USERS_Q_MAX));
+    expect(new URLSearchParams(usersPath(long, '', 0).split('?')[1]).get('q')).toHaveLength(USERS_Q_MAX);
   });
 
   it('says when nobody matches', async () => {

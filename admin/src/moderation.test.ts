@@ -21,6 +21,7 @@ import {
   noticeFields,
   policyOptions,
   queueOrder,
+  QUEUE_Q_MAX,
   queuePath,
   rememberQueueOrder,
   sanctionPeriod,
@@ -92,6 +93,8 @@ describe('the queue in the address', () => {
     const f = filtersFrom(new URLSearchParams(''));
     expect(queuePath(f)).toBe('/admin/moderation/queue?status=open&limit=50');
     expect(queuePath({ ...f, category: 'hate' }, 'abc')).toBe('/admin/moderation/queue?category=hate&status=open&limit=50&cursor=abc');
+    // a pasted search longer than the API takes is cut to fit, not refused with an error
+    expect(new URLSearchParams(queuePath({ ...f, q: 'x'.repeat(500) }).split('?')[1]).get('q')).toHaveLength(QUEUE_Q_MAX);
   });
 
   it('remembers the order for j and k, and stops at either end', () => {
