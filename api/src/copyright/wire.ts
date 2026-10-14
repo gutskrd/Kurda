@@ -4,6 +4,7 @@ import { createEmailProvider } from '../email/provider.js';
 import { EmailService } from '../email/service.js';
 import { sendEmailJob } from '../jobs/email.js';
 import { MODERATION_SWEEP_MS } from '../moderation/wire.js';
+import { providerPlaceholderWarnings } from './provider-check.js';
 import { registerCopyrightRoutes } from './routes.js';
 import { CopyrightService, type CopyrightMailer } from './service.js';
 
@@ -25,6 +26,8 @@ export function registerCopyright(app: FastifyInstance, config: AppConfig, optio
       else await new EmailService(app.db, createEmailProvider(config, app.log)).send(to, template, vars, locale);
     },
   };
+  // said on every boot until it is fixed: these addresses go to real rights holders
+  for (const warning of providerPlaceholderWarnings(config.NODE_ENV)) app.log.error(warning);
   const copyright = new CopyrightService(app.db, { mailer, webBaseUrl: config.APP_BASE_URL, log: app.log });
   registerCopyrightRoutes(app, copyright);
 
