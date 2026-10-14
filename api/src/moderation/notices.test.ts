@@ -37,6 +37,12 @@ describe('sanction notices (the statement of reasons)', () => {
     expect(n.body).not.toContain('another member');
   });
 
+  it('offers no counter-notice for a copyright decision that took nothing down', () => {
+    const n = sanctionNotice({ ...base, policy: 'copyright', kind: 'warning', endsAt: null });
+    expect(n.body).not.toContain('counter-notice');
+    expect(n.body).toContain('ask for a review from Account standing');
+  });
+
   it('has a title and plain words for every kind', () => {
     for (const kind of ['warning', 'content_removal', 'feature_limit', 'suspension', 'permanent_ban'] as const) {
       const n = sanctionNotice({ ...base, kind, endsAt: kind === 'suspension' ? new Date('2026-10-20T00:00:00Z') : null });

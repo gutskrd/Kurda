@@ -75,7 +75,8 @@ export const up = (pgm) => {
       type: 'text',
       notNull: true,
       default: 'received',
-      check: "status IN ('received','actioned','rejected','countered')",
+      // upheld: decided against the uploader with nothing taken down (a profile, or a link that matched nothing)
+      check: "status IN ('received','actioned','upheld','rejected','countered')",
     },
     // what the link was read as; null when it matched nothing on Hevalo
     target_type: { type: 'text', check: "target_type IS NULL OR target_type IN ('library_post','image_post','user')" },

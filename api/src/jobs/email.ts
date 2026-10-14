@@ -17,6 +17,7 @@ const payloadSchema = z.object({
     'moderation-urgent',
     'copyright-received',
     'copyright-removed',
+    'copyright-upheld',
     'copyright-kept',
     'copyright-counter-notice',
   ]),

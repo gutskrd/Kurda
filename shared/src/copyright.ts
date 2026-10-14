@@ -267,10 +267,16 @@ export function counterNoticeProblems(input: Partial<Record<keyof CounterNoticeR
   return problems;
 }
 
-export const COPYRIGHT_NOTICE_STATUSES = ['received', 'actioned', 'rejected', 'countered'] as const;
+export const COPYRIGHT_NOTICE_STATUSES = ['received', 'actioned', 'upheld', 'rejected', 'countered'] as const;
 /**
  * - received: waiting for a decision;
- * - actioned: the post was taken down;
+ * - actioned: the decision took the post down;
+ * - upheld: the decision went against the uploader, but there was nothing it
+ *   could take down — the notice was about a profile, or its link matched
+ *   nothing. (A notice about a post is only upheld by taking the post down:
+ *   the decision refuses anything else, CONTENT_REMOVAL_REQUIRED.) The
+ *   notifier is told what was done and that nothing was removed, and there
+ *   is no takedown for the uploader to answer with a counter-notice;
  * - rejected: it was found not to infringe;
  * - countered: taken down, and its author has sent a counter-notice.
  */
@@ -290,7 +296,8 @@ export interface MyCopyrightNotice {
   work: string;
   target: CopyrightTargetRef | null;
   decidedAt: string | null;
-  status: CopyrightNoticeStatus;
+  /** only these two: a notice that took nothing down has nothing to answer */
+  status: Extract<CopyrightNoticeStatus, 'actioned' | 'countered'>;
   counterNotice: { createdAt: string } | null;
   /** you can still send a counter-notice for this one */
   canCounter: boolean;
@@ -412,7 +419,7 @@ export function restoreNotBefore(receivedAt: Date, businessDays = COUNTER_NOTICE
  * Signed in:
  *   GET  /me/copyright/notices         → MyCopyrightNoticesPage
  *   POST /me/copyright/notices/:id/counter  CounterNoticeRequest → 201 CounterNoticeReceipt
- *        (404 NOT_FOUND for a notice not about your post or not acted on;
+ *        (404 NOT_FOUND for a notice not about your post or that took nothing down;
  *         409 ALREADY_COUNTERED, COUNTER_WINDOW_CLOSED; 422 INVALID_COUNTER_NOTICE)
  *
  * Admins: the case view (`GET /admin/moderation/cases/:id`) carries `copyright`.

@@ -14,6 +14,7 @@ export const EMAIL_TEMPLATES = [
   'moderation-urgent',
   'copyright-received',
   'copyright-removed',
+  'copyright-upheld',
   'copyright-kept',
   'copyright-counter-notice',
 ] as const;
@@ -139,6 +140,24 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       subject: 'Agahdariya te ya mafê nivîskariyê: me ew rakir ({reference})',
       text:
         'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî û naveroka ku te ragihandibû rakir, an jî gihîştina wê girt.\n\nKesê ku ew şandibû sedem hat agahdarkirin. Heke ew bersiveke dijber bişîne, em ê kopiyekê ji te re bişînin.\n\n— Hevalo',
+    },
+  },
+  /*
+   * Upheld with nothing to take down: the notice was about a profile, or its
+   * link matched nothing we could find, and the decision acted on the account.
+   * Saying "removed" here would be untrue, so this says what happened and asks
+   * for the exact link if the material is still up.
+   */
+  'copyright-upheld': {
+    en: {
+      subject: 'Your copyright notice: our decision ({reference})',
+      text:
+        'We reviewed your copyright notice {reference}, agreed with it, and took action against the account involved.\n\nYour notice did not point to a single post we could take down, so nothing was removed because of it. If the material is still on Hevalo, write to {contact} with the exact link to it and quote your reference.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Agahdariya te ya mafê nivîskariyê: biryara me ({reference})',
+      text:
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî, me ew pejirand û me li dijî hesabê têkildar tedbîr girt.\n\nAgahdariya te ne li ser postekê bû ku em karibin rakin, ji ber vê yekê tiştek ji ber wê nehat rakirin. Heke materyal hîn li Hevalo be, lînka wê ya rast ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
     },
   },
   'copyright-kept': {

@@ -101,8 +101,9 @@ export function sanctionNotice(input: SanctionNoticeInput): Notice {
     whatHappens(input.kind, input.endsAt),
     `The rule: ${rule}.`,
     howItCame(input.origin, input.reviewedByPerson, input.policy),
-    input.policy === 'copyright'
-      ? // the DMCA's and the DSA's answer to a takedown: the counter-notice, besides the review
+    input.policy === 'copyright' && input.kind === 'content_removal'
+      ? // the DMCA's and the DSA's answer to a takedown: the counter-notice, besides the review.
+        // Only a takedown has one; a warning or a limit under the same rule is reviewed like any other
         'Made it yourself, or allowed to use it? You can send a counter-notice from hevalo.app/copyright, or ask for a review from Account standing, within six months.'
       : 'Think we got it wrong? You can ask for a review from Account standing within six months.',
   ].join('\n\n');

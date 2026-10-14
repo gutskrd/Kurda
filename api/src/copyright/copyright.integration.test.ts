@@ -246,6 +246,52 @@ describe.skipIf(!DATABASE_URL)('copyright notices (integration)', () => {
     expect((await call('GET', '/me/copyright/notices', other.token)).json()).toEqual({ notices: [] });
   });
 
+  it('upholds a notice about a post only by taking the post down', async () => {
+    const id = await post(author, 'Warned, not removed.');
+    const n = notice(`/app/library/${id}`);
+    await send(n);
+    const caseId = await caseOfNotice(n.email as string);
+    const warnOnly = await decide(caseId, {
+      outcome: 'actioned',
+      policy: 'copyright',
+      actions: [{ target: 'subject', kind: 'warning', statement: 'That photo is not yours.' }],
+    });
+    expect(warnOnly.statusCode).toBe(422);
+    expect((warnOnly.json() as { code: string }).code).toBe('CONTENT_REMOVAL_REQUIRED');
+    // refused before anything was applied
+    expect((await pool.query<{ status: string }>(`SELECT status FROM library_posts WHERE id = $1`, [id])).rows[0]!.status).toBe('published');
+    expect((await pool.query(`SELECT 1 FROM sanctions WHERE case_id = $1`, [caseId])).rowCount).toBe(0);
+    expect((await detail(caseId)).copyright!.notices[0]).toMatchObject({ status: 'received' });
+  });
+
+  it('never tells a notifier "removed" when the decision took nothing down', async () => {
+    const profileOwner = await kit.person('profile');
+    userIds.push(profileOwner.id);
+    await pool.query(`UPDATE users SET created_at = now() - interval '3 days' WHERE id = $1`, [profileOwner.id]);
+    const n = notice(`https://hevalo.app/app/users/${profileOwner.id}`);
+    await send(n);
+    const caseId = await caseOfNotice(n.email as string);
+    const res = await decide(caseId, {
+      outcome: 'actioned',
+      policy: 'copyright',
+      actions: [{ target: 'subject', kind: 'warning', statement: 'Your profile photo belongs to someone else.' }],
+    });
+    expect(res.statusCode).toBe(200);
+    expect((await detail(caseId)).copyright!.notices[0]).toMatchObject({ status: 'upheld' });
+
+    await sweep();
+    const told = mails.filter((m) => m.to === n.email).map((m) => m.template);
+    expect(told).toContain('copyright-upheld');
+    expect(told).not.toContain('copyright-removed');
+    // nothing was taken down, so the uploader has nothing to counter, and is not invited to
+    expect(((await call('GET', '/me/copyright/notices', profileOwner.token)).json() as { notices: unknown[] }).notices).toEqual([]);
+    const warned = await pool.query<{ body: string }>(
+      `SELECT body FROM notifications WHERE user_id = $1 AND data->>'kind' = 'sanction' ORDER BY created_at DESC LIMIT 1`,
+      [profileOwner.id],
+    );
+    expect(warned.rows[0]!.body).not.toContain('counter-notice');
+  });
+
   it('lets the uploader answer with a counter-notice that reaches the admin and the notifier', async () => {
     const id = await post(author, 'Mine after all.');
     const n = notice(`/app/library/${id}`);

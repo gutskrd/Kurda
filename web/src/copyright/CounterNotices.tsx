@@ -47,9 +47,7 @@ export function CounterNotices(): React.JSX.Element {
 }
 
 const STATUS_COPY: Record<MyCopyrightNotice['status'], MessageKey> = {
-  received: 'copyright.counter.status.received',
   actioned: 'copyright.counter.status.actioned',
-  rejected: 'copyright.counter.status.rejected',
   countered: 'copyright.counter.status.countered',
 };
 

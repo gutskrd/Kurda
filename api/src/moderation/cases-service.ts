@@ -302,8 +302,14 @@ export class CasesService {
         throw new AppError('CONTRADICTORY_DECISION', 422, 'content that breaks no rule is not removed');
       }
       // checked before anything, so a preview never promises a removal the decision cannot make
-      if (removeContent && !(await removableTarget(client, c))) {
+      const removable = await removableTarget(client, c);
+      if (removeContent && !removable) {
         throw new AppError('NOTHING_TO_REMOVE', 422, 'this case is not about a piece of content');
+      }
+      // a copyright notice about a post is upheld by taking the post down (notice and
+      // takedown); a warning alone would leave the work up while its owner is told otherwise
+      if (c.source === 'copyright' && outcome === 'actioned' && removable && !removeContent) {
+        throw new AppError('CONTENT_REMOVAL_REQUIRED', 422, 'a copyright notice about a post is upheld by removing the post');
       }
       await assertDismissible(client, c, outcome);
 
@@ -379,7 +385,7 @@ export class CasesService {
       if (removeContent) removed = await removeContentOf(client, c, adminId);
 
       const status: CaseStatus = needsApproval ? 'needs_second_approval' : outcome;
-      if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters);
+      if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters, removed !== null);
       await client.query(
         `UPDATE moderation_cases SET
             status = $2, resolution = CASE WHEN $3 THEN NULL ELSE $4 END,
@@ -557,8 +563,15 @@ export class CasesService {
     return out;
   }
 
-  /** Close the case's reports and source, and tell the reporters if asked. */
-  private async finalize(db: Executor, c: CaseRow, outcome: Outcome, adminId: string | null, notifyReporters: boolean): Promise<void> {
+  /** Close the case's reports and source, and tell the reporters if asked. `removed`: the decision took the content down. */
+  private async finalize(
+    db: Executor,
+    c: CaseRow,
+    outcome: Outcome,
+    adminId: string | null,
+    notifyReporters: boolean,
+    removed: boolean,
+  ): Promise<void> {
     if (c.source === 'report') {
       const closed = await db.query<{ id: string; reporter_id: string | null }>(
         `UPDATE reports SET status = $2, closed_at = now() WHERE case_id = $1 RETURNING id, reporter_id`,
@@ -575,7 +588,7 @@ export class CasesService {
     } else if (notifyReporters) {
       for (const reporterId of await reporterIdsOf(db, c)) await deliverNotice(db, reporterId, reportOutcomeNotice(outcome, []));
     }
-    await closeSource(db, c, outcome, adminId);
+    await closeSource(db, c, outcome, adminId, removed);
   }
 
   /** Lock an open case for a decision, enforcing the lease and the conflict-of-interest rule. */
@@ -756,7 +769,7 @@ export class CasesService {
           adminId,
         ],
       );
-      await this.finalize(client, c, 'actioned', adminId, true);
+      await this.finalize(client, c, 'actioned', adminId, true, removed !== null);
       await client.query(
         `UPDATE moderation_cases SET status = 'escalated', resolution = 'csam', policy = 'child_safety', resolved_by = $2,
                 removed_content = COALESCE($3::jsonb, removed_content),
@@ -992,7 +1005,8 @@ export class CasesService {
       if (row.case_id) {
         const c = await this.find(client, row.case_id, true);
         if (c && c.status === 'needs_second_approval') {
-          await this.finalize(client, c, 'actioned', row.created_by, c.notify_reporters);
+          // the decision removed what it removed when it was made; the approval only confirms the ban
+          await this.finalize(client, c, 'actioned', row.created_by, c.notify_reporters, c.removed_content !== null);
           await client.query(
             `UPDATE moderation_cases SET status = 'actioned', resolution = 'actioned', resolved_by = $2, resolved_at = now(), updated_at = now()
               WHERE id = $1`,

@@ -54,7 +54,21 @@ import { inTransaction, type Executor } from '../moderation/tx.js';
  * (at most once each; a failed send is released for the next round).
  */
 
-export type CopyrightTemplate = 'copyright-received' | 'copyright-removed' | 'copyright-kept' | 'copyright-counter-notice';
+export type CopyrightTemplate =
+  | 'copyright-received'
+  | 'copyright-removed'
+  | 'copyright-upheld'
+  | 'copyright-kept'
+  | 'copyright-counter-notice';
+
+/** The email that tells a notifier the decision, by what the decision did. */
+const OUTCOME_TEMPLATE: Readonly<Record<Exclude<CopyrightNoticeStatus, 'received'>, CopyrightTemplate>> = {
+  actioned: 'copyright-removed',
+  // answered by a counter-notice, but taken down all the same
+  countered: 'copyright-removed',
+  upheld: 'copyright-upheld',
+  rejected: 'copyright-kept',
+};
 
 export interface CopyrightMailer {
   send(to: string, template: CopyrightTemplate, vars: Record<string, string>, locale: EmailLocale): Promise<void>;
@@ -386,7 +400,8 @@ export class CopyrightService {
         work: n.work,
         target: n.target_found && n.target_type && n.target_id ? { type: n.target_type, id: n.target_id } : null,
         decidedAt: n.resolved_at?.toISOString() ?? null,
-        status: n.status,
+        // the query lists only these two
+        status: n.status === 'countered' ? 'countered' : 'actioned',
         counterNotice: n.countered_at ? { createdAt: n.countered_at.toISOString() } : null,
         canCounter: n.status === 'actioned' && !n.countered_at && deadline !== null && deadline.getTime() > now,
         counterDeadline: deadline?.toISOString() ?? null,
@@ -518,11 +533,11 @@ export class CopyrightService {
     );
     let sent = 0;
     for (const n of due.rows) {
-      const removed = n.status !== 'rejected';
+      if (n.status === 'received') continue;
       try {
         await this.opts.mailer.send(
           n.notifier_email,
-          removed ? 'copyright-removed' : 'copyright-kept',
+          OUTCOME_TEMPLATE[n.status],
           { reference: copyrightReference(n.id), contact: PROVIDER.copyrightEmail },
           emailLocaleFor(n.locale),
         );
