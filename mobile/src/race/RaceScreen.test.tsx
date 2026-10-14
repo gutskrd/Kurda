@@ -6,14 +6,14 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn() }));
+vi.mock('../feedback/gameFinished', () => ({ reportGameFinished: vi.fn(), leftResults: vi.fn() }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { RaceGameView, RaceResultView } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { keyboardPrefs } from '../keyboard/prefs';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { RaceScreen } from './RaceScreen';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -147,6 +147,41 @@ describe('RaceScreen', () => {
     expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'other', gaveUp: true });
   });
 
+  it('scores a finished race again when scoring it failed, never as given up', async () => {
+    let calls = 0;
+    const client = await startRaceWith({
+      'POST /race': ok(game()),
+      [FINISH]: () => (++calls === 1 ? fail({ kind: 'server', status: 500, message: 'down' }) : ok(result())),
+    });
+    typeKeys('ez ji welat');
+    const retry = await screen.findByRole('button', { name: 'Try again' });
+    expect(screen.queryByRole('button', { name: 'Give up and score' })).toBeNull();
+    // the field is back, with the keyboard
+    await waitFor(() => expect(document.activeElement).toBe(field()));
+    fireEvent.click(retry);
+    await screen.findByText('Race again');
+    expect(client.calls.filter((c) => c.path.endsWith('/finish'))).toHaveLength(2);
+    expect(reportGameFinished).toHaveBeenCalledWith({ moment: 'other', gaveUp: false });
+  });
+
+  it('starts in the accent mode chosen in the guide that opened before it', async () => {
+    keyboardPrefs.update({ guideShown: false, accentMode: 'strict' });
+    const client = fakeClient({ 'POST /race': ok(game()) });
+    testAuth.client = client;
+    renderWithProviders(<RaceScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Start race' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Make accents forgiving' }));
+    await screen.findByLabelText('Type the text');
+    expect(client.calls.find((c) => c.path === '/race')?.body).toMatchObject({ accentMode: 'forgiving' });
+  });
+
+  it('gives a screen reader a way back to typing', async () => {
+    await startRaceWith({ 'POST /race': ok(game()) });
+    field().blur();
+    fireEvent.click(screen.getByRole('button', { name: 'Tap here to type' }));
+    expect(document.activeElement).toBe(field());
+  });
+
   it('starts again from nothing: the old text and typing are gone before the new race arrives', async () => {
     let starts = 0;
     let release: (v: unknown) => void = () => undefined;
@@ -161,6 +196,8 @@ describe('RaceScreen', () => {
     typeKeys('ez ji welat');
     await screen.findByText('Race again');
     fireEvent.click(screen.getByRole('button', { name: 'Race again' }));
+    // the rating box, if it came, went with the results
+    expect(leftResults).toHaveBeenCalled();
     // while the next text loads there is no field to type into the old race
     await waitFor(() => expect(screen.queryByLabelText('Type the text')).toBeNull());
     await act(async () => release(undefined));
@@ -197,6 +234,8 @@ describe('RaceScreen', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
     expect(await screen.findByText('Accents: 2 of 5 typed with their accent')).toBeTruthy();
+    // the deer holds up the letters of the race's own variety
+    expect(screen.getByText('ç ê î')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Accents giving you trouble/ }));
     expect(await screen.findByText('Get the Kurmancî keyboard')).toBeTruthy();
   });

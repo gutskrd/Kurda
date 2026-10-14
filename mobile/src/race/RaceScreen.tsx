@@ -32,10 +32,10 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { KeyBar } from '../keyboard/KeyBar';
 import { KeyboardGuide } from '../keyboard/KeyboardGuide';
 import { ACCENT_LABEL, KeyboardSettingsSheet } from '../keyboard/KeyboardSettings';
-import { GUIDE_AFTER_MISSES } from '../keyboard/guide';
-import { useKeyboardPrefs } from '../keyboard/prefs';
+import { GUIDE_AFTER_MISSES, tryLetters } from '../keyboard/guide';
+import { keyboardPrefs, useKeyboardPrefs } from '../keyboard/prefs';
 import { HevaloDeer } from '../feedback/HevaloDeer';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { leftResults, reportGameFinished } from '../feedback/gameFinished';
 import { applyTypingChange, typeKey } from './input';
 import { RaceText } from './RaceText';
 import { finishRace, startRace, type RaceGame, type RaceResult } from './raceApi';
@@ -140,6 +140,8 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     setStarting(true);
     setError(null);
     setNotice(null);
+    // the rating box belonged to the results this replaces
+    leftResults();
     // everything from the race before goes first, so nothing typed while the
     // next text loads lands in it, and its clock does not carry on (R7)
     setGame(null);
@@ -148,7 +150,9 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     setElapsed(0);
     startedAt.current = null;
     finishingRef.current = false;
-    const res = await startRace(client, { length, dialect, accentMode: prefs.accentMode });
+    // The mode as it is now, not as this render saw it: "Make accents
+    // forgiving" in the guide changes it and starts the race in one tap.
+    const res = await startRace(client, { length, dialect, accentMode: keyboardPrefs.current.accentMode });
     setStarting(false);
     if (res.ok) {
       setGame(res.data);
@@ -156,24 +160,32 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
     } else {
       setError(res.error.code === 'EMPTY_RACE_POOL' ? t('games.race.emptyPool') : describeError(res.error, t));
     }
-  }, [starting, dialect, prefsReady, prefs.guideShown, prefs.accentMode, setPrefs, client, length, t]);
+  }, [starting, dialect, prefsReady, prefs.guideShown, setPrefs, client, length, t]);
+
+  /*
+   * Typing begins the moment the text appears, and the clock is already
+   * running — so the field takes focus as soon as it exists. On a phone this
+   * is also what opens the keyboard. It takes it back when a finish that
+   * failed lets the racer type again (the field was closed while it was sent).
+   */
+  useEffect(() => {
+    if (game && !result && !finishing) inputRef.current?.focus();
+  }, [game, result, finishing]);
+
+  // A sheet over the race took the keyboard away while the clock runs: give it
+  // back as the sheet goes, once it has finished leaving.
+  const racing = !!game && !result;
+  const refocus = () => {
+    if (racing) setTimeout(() => inputRef.current?.focus(), 350);
+  };
 
   const closeGuide = () => {
     setGuideOpen(false);
     if (startAfterGuide.current) {
       startAfterGuide.current = false;
       void start();
-    }
+    } else refocus();
   };
-
-  /*
-   * Typing begins the moment the text appears, and the clock is already
-   * running — so the field takes focus as soon as it exists. On a phone this
-   * is also what opens the keyboard.
-   */
-  useEffect(() => {
-    if (game && !result) inputRef.current?.focus();
-  }, [game, result]);
 
   // a running clock, for the racer; the score is timed server-side
   useEffect(() => {
@@ -346,12 +358,16 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
+              {/* the way back to typing when the keyboard went away — by touch and by a screen reader */}
               <Pressable
                 onPress={() => inputRef.current?.focus()}
                 onLayout={(e) => {
                   typeAreaY.current = e.nativeEvent.layout.y;
                 }}
-                accessible={false}
+                accessible={!result}
+                accessibilityRole="button"
+                accessibilityLabel={t('games.race.tapToType')}
+                focusable={false}
                 style={[styles.typeArea, { backgroundColor: colors.controlTrack }]}
               >
                 <RaceText
@@ -402,7 +418,17 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                 </Text>
               ) : null}
 
-              {!result ? (
+              {!result && comparison?.done ? (
+                // The text is all typed: scoring it, or — when that failed —
+                // trying again. Never "Give up" for a race that was finished.
+                <ClayButton
+                  label={error ? t('common.retry') : t('games.race.scoring')}
+                  tone="primary"
+                  busy={finishing}
+                  onPress={() => void finish(false)}
+                  style={styles.stretch}
+                />
+              ) : !result ? (
                 <ClayButton
                   label={t('games.race.giveUp')}
                   tone="neutral"
@@ -413,6 +439,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
               ) : (
                 <Result
                   result={result}
+                  dialect={raceDialect}
                   starting={starting}
                   accentTrouble={accentTrouble}
                   onAgain={() => void start()}
@@ -434,7 +461,10 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
         visible={settingsOpen}
         dialect={raceDialect}
         midRace={!!game && !result}
-        onClose={() => setSettingsOpen(false)}
+        onClose={() => {
+          setSettingsOpen(false);
+          refocus();
+        }}
       />
       <KeyboardGuide visible={guideOpen} dialect={raceDialect} onClose={closeGuide} />
     </GradientBackground>
@@ -443,12 +473,14 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
 function Result({
   result,
+  dialect,
   starting,
   accentTrouble,
   onAgain,
   onGuide,
 }: {
   result: RaceResult;
+  dialect: TypingDialect;
   starting: boolean;
   accentTrouble: boolean;
   onAgain: () => void;
@@ -458,7 +490,9 @@ function Result({
   const { t } = useI18n();
   return (
     <>
-      <GlassCard style={styles.card}>
+      <GlassCard>
+        {/* the card's style dresses its outside; what is in it is laid out here */}
+        <View style={styles.card}>
         <Text
           style={[styles.verdict, { color: result.implausible ? colors.danger : colors.primary }]}
           accessibilityRole="header"
@@ -497,6 +531,7 @@ function Result({
           </Text>
         ) : null}
         <ClayButton label={t('games.race.again')} tone="primary" size="large" busy={starting} onPress={onAgain} style={styles.stretch} />
+        </View>
       </GlassCard>
 
       {accentTrouble ? (
@@ -506,7 +541,8 @@ function Result({
           accessibilityLabel={`${t('games.race.accentNudge')} ${t('games.race.accentNudgeAction')}`}
           style={[styles.nudge, { backgroundColor: colors.glassFill }]}
         >
-          <HevaloDeer size={84} board={{ kind: 'letters', letters: 'ç ê ş' }} />
+          {/* the letters this race's variety is missed on: Kurmancî's ç ê î, Soranî's own letters */}
+          <HevaloDeer size={84} board={{ kind: 'letters', letters: tryLetters(dialect).slice(0, 3).join(' ') }} />
           <View style={styles.nudgeText}>
             <Text style={[styles.nudgeTitle, { color: colors.textPrimary }]}>{t('games.race.accentNudge')}</Text>
             <Text style={[styles.nudgeAction, { color: colors.primary }]}>{t('games.race.accentNudgeAction')}</Text>
@@ -565,7 +601,7 @@ const styles = StyleSheet.create({
   figure: { width: '50%', alignItems: 'center' },
   figureValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   figureLabel: { fontSize: typography.sizes.xs, textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 2 },
-  accents: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  accents: { fontSize: typography.sizes.sm, textAlign: 'center', marginTop: spacing.sm },
   nudge: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, padding: spacing.md },
   nudgeText: { flex: 1, gap: spacing.xs },
   nudgeTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, lineHeight: 21 },
