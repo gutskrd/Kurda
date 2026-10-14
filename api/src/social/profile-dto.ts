@@ -1,3 +1,4 @@
+import type { LeagueTier, ProfileLeague } from '@kurda/shared';
 import type { MediaStorage } from '../media/storage.js';
 import { resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
 import type { PublicProfile } from './service.js';
@@ -33,7 +34,9 @@ export interface PublicProfileDto {
   online?: boolean;
   level?: LevelInfo;
   streak?: number;
-  tier?: string;
+  /** league tier key, or null for someone not in the leagues (see `PublicProfile.tier`) */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
   rating?: number;
   /** global rating place, or null when they have not played ranked */
   rank?: number | null;
@@ -83,6 +86,7 @@ export function toPublicProfileDto(
     level: profile.xp != null ? levelInfo(profile.xp) : undefined,
     streak: profile.streak,
     tier: profile.tier,
+    league: profile.league,
     rating: profile.rating,
     rank: profile.rank,
     achievements: profile.achievements,

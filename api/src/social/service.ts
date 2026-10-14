@@ -1,10 +1,11 @@
 import type pg from 'pg';
-import { foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import { foldDiacritics, normalizeKurdish, toLeagueTier, type LeagueTier, type ProfileLeague } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
+import { inLeaguesSql } from '../leagues/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
@@ -56,7 +57,13 @@ export interface PublicProfile {
   favoriteStory?: FavoriteRef | null;
   xp?: number;
   streak?: number;
-  tier?: string;
+  /**
+   * Their league tier key (translated by the apps), or null for someone who
+   * has never been in a league or does not take part — never a made-up
+   * "bronze". Same as `league?.tier`, kept for the apps that read it.
+   */
+  tier?: LeagueTier | null;
+  league?: ProfileLeague | null;
   rating?: number;
   /**
    * Where they place on the global rating board, or null when they have never
@@ -165,7 +172,7 @@ export class SocialService {
       birth_year: number | null;
       birth_month: number | null;
       streak: number;
-      tier: string;
+      tier: string | null;
       rating: number;
       has_rating: boolean;
       rating_rank: number;
@@ -209,7 +216,8 @@ export class SocialService {
               u.equipped_background_sku, u.equipped_icon_sku, u.premium_icon_enabled,
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
-              COALESCE(ul.tier, 'bronze') AS tier,
+              -- the league tier only while they take part, and only once they have one
+              CASE WHEN ${inLeaguesSql('u')} THEN ul.tier END AS tier,
               COALESCE(r.rating, 1000) AS rating,
               (r.user_id IS NOT NULL) AS has_rating,
               -- competition ranking, matching the leaderboard: strictly higher
@@ -342,7 +350,8 @@ export class SocialService {
       favoriteStory,
       xp: u.xp,
       streak: u.streak,
-      tier: u.tier,
+      tier: toLeagueTier(u.tier),
+      league: toLeagueTier(u.tier) ? { tier: toLeagueTier(u.tier)! } : null,
       rating: u.rating,
       // no ranked games played means no standing to report
       rank: u.has_rating ? u.rating_rank : null,
