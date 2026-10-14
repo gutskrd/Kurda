@@ -116,15 +116,17 @@ export const RANK_FIELD: Record<RankTier, Field> = {
 // ──────────────────────────────────────────────────────── learning leagues
 
 /**
- * Water deepens tier by tier: a pale dew-blue drop, a mint spring, an azure
- * river, a cobalt lake, an ultramarine sea and the ocean's midnight, which
- * glows with living light (`glint` is that bioluminescent edge).
+ * Water deepens tier by tier, and no two neighbours share a hue: a pale
+ * dew-blue drop, a fresh mint-green spring, an azure river, a still lake gone
+ * cobalt-lilac at dusk, a deep sea-teal under a sunrise (its pearl and glint
+ * are the rising sun's peach), and the ocean's midnight, which glows with
+ * living light (`glint` is that bioluminescent edge).
  */
 export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
   dilop: { hi: '#ffffff', light: '#d4f1ff', mid: '#8fd2f7', dark: '#3a8ed6', deep: '#0f3570', glint: '#ffffff' },
-  kani: { hi: '#e6fffa', light: '#94f5e3', mid: '#2fd6c0', dark: '#0d93a0', deep: '#053e52', glint: '#d6fff6' },
+  kani: { hi: '#eafff4', light: '#9cf5cf', mid: '#2fd3a2', dark: '#0d917a', deep: '#043f3a', glint: '#d6ffea' },
   cem: { hi: '#e3f6ff', light: '#86d3ff', mid: '#2a9df5', dark: '#1460c4', deep: '#082a66', glint: '#bdf0ff' },
-  gol: { hi: '#e2edff', light: '#8fb8ff', mid: '#3f72f5', dark: '#2440bf', deep: '#0b145e', glint: '#a8f0ff' },
-  derya: { hi: '#e3edff', light: '#94adff', mid: '#3d5ae6', dark: '#2130a8', deep: '#0a0e4a', glint: '#6ff7ff' },
+  gol: { hi: '#f1eeff', light: '#bdb6ff', mid: '#7a6ff2', dark: '#4639c4', deep: '#16105e', glint: '#e0d8ff' },
+  derya: { hi: '#fff1db', light: '#7fe3e6', mid: '#119fae', dark: '#0a5f86', deep: '#042a4a', glint: '#ffc98a' },
   okyanus: { hi: '#d6fff8', light: '#5ff5df', mid: '#16b8d0', dark: '#123f9e', deep: '#070a3a', glint: '#4dffd8' },
 };
