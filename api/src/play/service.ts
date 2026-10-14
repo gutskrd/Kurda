@@ -148,7 +148,7 @@ export class PlayService {
     if (groupId && !(await this.deps.groups.memberRole(groupId, hostId))) {
       throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
     }
-    const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId });
+    const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId, fromChat: input.chat !== undefined });
     if (groupId) {
       try {
         await this.deps.groupChat.sendCard(hostId, groupId, { game: input.game, lobbyId }, this.publicUrl);
@@ -435,6 +435,17 @@ export class PlayService {
       });
     }
     return { incoming, outgoing: [...groups.values()] };
+  }
+
+  // ---- Rated or Friendly -----------------------------------------------------------
+
+  /**
+   * `PUT /play/:game/:lobbyId/rated`: the host changes the badge, in the lobby
+   * only (contract-4 §R2). The game tells everyone in it (`play_changed`), and
+   * anyone who joined for the other kind may leave; a lobby costs nothing to leave.
+   */
+  async setRated(hostId: string, game: PlayGame, lobbyId: string, rated: boolean): Promise<void> {
+    await this.adapter(game).setRated(hostId, lobbyId, rated);
   }
 
   // ---- chat cards -------------------------------------------------------------------

@@ -62,8 +62,8 @@ export class CosmeticsService {
    *  Rejects everything else. */
   private async equipCosmetic(
     userId: string,
-    column: 'equipped_background_sku' | 'equipped_icon_sku',
-    expectedCategory: 'background' | 'icon',
+    column: 'equipped_background_sku' | 'equipped_icon_sku' | 'equipped_frame_sku',
+    expectedCategory: 'background' | 'icon' | 'frame',
     sku: string | null,
     now: Date,
   ): Promise<void> {
@@ -87,6 +87,13 @@ export class CosmeticsService {
   }
   equipIcon(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {
     return this.equipCosmetic(userId, 'equipped_icon_sku', 'icon', sku, now);
+  }
+  /**
+   * A season frame around the avatar (contract-4 §R5). Frames are never on
+   * sale: the season job grants them, and only a frame you own can be worn.
+   */
+  equipFrame(userId: string, sku: string | null, now: Date = new Date()): Promise<void> {
+    return this.equipCosmetic(userId, 'equipped_frame_sku', 'frame', sku, now);
   }
 
   /** Show/hide the equipped premium icon without changing the selection. The icon

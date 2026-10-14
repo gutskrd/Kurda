@@ -134,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
   });
 
   it('reads the global leaderboard, with no place of its own on it', async () => {
-    const res = await guest('/leaderboards/rating');
+    const res = await guest('/leaderboards/weekly_xp'); // the rating board went with the frozen Elo
     expect(res.statusCode).toBe(200);
     expect(Array.isArray(res.json().top)).toBe(true);
     // "me" is a question about a person, and there is no person here
@@ -143,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('reading without an account (integration)', () =>
 
   it('gets an empty board for the scopes that are about a person', async () => {
     for (const scope of ['friends', 'country']) {
-      const res = await guest(`/leaderboards/rating?scope=${scope}`);
+      const res = await guest(`/leaderboards/weekly_xp?scope=${scope}`);
       // an empty board rather than a wrong one, and never someone else's
       expect(res.statusCode, scope).toBe(200);
       expect(res.json().top, scope).toEqual([]);

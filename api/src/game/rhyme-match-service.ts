@@ -1,7 +1,10 @@
 import type pg from 'pg';
-import { dictionaryKey, type GameAccess, type InviteSummary, type LobbyCard } from '@kurda/shared';
+import { dictionaryKey, type GameAccess, type InviteSummary, type LobbyCard, type RatedState } from '@kurda/shared';
 import { pickRhymePrompt } from './rhyme-prompt.js';
 import { XpService } from '../xp/service.js';
+import { RankService } from '../ranks/service.js';
+import { ratedStateOf } from '../ranks/games.js';
+import { dropAfterCommit, runAfterCommit } from '../db/after-commit.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, mayHostOpen } from '../play/access.js';
 import {
@@ -56,6 +59,9 @@ export type RemoveResult =
 export type NextResult =
   | { ok: true; id: string }
   | { ok: false; reason: 'not-found' | 'not-finished' | 'not-pair' | 'forbidden' | 'empty-lexicon' };
+export type SetRatedResult =
+  | { ok: true; match: RhymeMatchState }
+  | { ok: false; reason: 'not-found' | 'forbidden' | 'not-lobby' };
 
 type Scored = Extract<SubmitResult, { ok: true }>['result'];
 
@@ -85,6 +91,8 @@ export interface RhymeMatchState {
   createdBy: string;
   isHost: boolean;
   access: GameAccess;
+  /** Rated or Friendly (Game Ranks), shown before anyone joins; decided at the start */
+  rated: RatedState;
   /** the rematch or next round, once there is one */
   nextLobbyId: string | null;
   /** everyone in it, by seat, as this viewer may see them */
@@ -112,6 +120,8 @@ export interface RhymeMatchResults {
 }
 
 interface MatchRow extends LobbyRow {
+  rated: boolean;
+  rated_state: string | null;
   dialect: Dialect;
   prompt: string;
   window_ms: number;
@@ -135,6 +145,8 @@ export interface RhymeMatchDeps {
    */
   onChange?: (matchId: string, opts?: LobbyChange) => void;
   publicUrl?: PublicUrl;
+  /** Game Ranks: Rated/Friendly, decided at the start and applied at the finish */
+  ranks?: RankService;
 }
 
 /**
@@ -154,17 +166,29 @@ export class RhymeMatchService {
   private readonly now: () => Date;
   private readonly onChange: (matchId: string, opts?: LobbyChange) => void;
   private readonly publicUrl: PublicUrl;
+  private readonly ranks: RankService;
 
   constructor(private readonly pool: pg.Pool, deps: RhymeMatchDeps = {}) {
     this.xp = deps.xp ?? new XpService(pool);
+    this.ranks = deps.ranks ?? new RankService(pool);
     this.now = deps.now ?? (() => new Date());
     this.onChange = deps.onChange ?? (() => undefined);
     this.publicUrl = deps.publicUrl ?? (() => null);
   }
 
+  /** A new lobby with its host in it; Rated or Friendly as for Wordle Battle (`WordleBattleService.create`). */
   async create(
     userId: string,
-    opts: { dialect?: Dialect; maxPlayers?: number; windowMs?: number; access?: GameAccess; chatGroupId?: string | null },
+    opts: {
+      dialect?: Dialect;
+      maxPlayers?: number;
+      windowMs?: number;
+      access?: GameAccess;
+      chatGroupId?: string | null;
+      rated?: boolean;
+      /** started from a direct or group chat */
+      fromChat?: boolean;
+    },
   ): Promise<CreateResult> {
     const access = opts.access ?? 'friends';
     if (access === 'open' && !(await mayHostOpen(this.pool, userId))) return { ok: false, reason: 'open-needs-adult' };
@@ -173,12 +197,16 @@ export class RhymeMatchService {
     if (!prompt) return { ok: false, reason: 'empty-lexicon' };
     const windowMs = Math.min(MAX_WINDOW_MS, Math.max(MIN_WINDOW_MS, opts.windowMs ?? DEFAULT_WINDOW_MS));
     const maxPlayers = Math.min(8, Math.max(2, opts.maxPlayers ?? 8));
+    const rated =
+      opts.rated ??
+      (await this.ranks.defaultRated(this.pool, userId, 'rhyme-match', { fromChat: opts.fromChat ?? !!opts.chatGroupId, access }));
     const id = await this.tx(async (client) => {
       const m = await client.query<MatchRow>(
-        `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`,
-        [userId, dialect, prompt, windowMs, maxPlayers, access, opts.chatGroupId ?? null, this.now()],
+        `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id, updated_at, rated)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
+        [userId, dialect, prompt, windowMs, maxPlayers, access, opts.chatGroupId ?? null, this.now(), rated],
       );
+      if (opts.rated !== undefined) await this.ranks.rememberChoice(client, userId, 'rhyme-match', opts.rated);
       await client.query(`INSERT INTO rhyme_match_players (match_id, user_id, seat) VALUES ($1,$2,1)`, [m.rows[0]!.id, userId]);
       return m.rows[0]!.id;
     });
@@ -226,9 +254,21 @@ export class RhymeMatchService {
       if (match.created_by !== userId) return { ok: false, reason: 'forbidden' };
       if (match.status !== 'lobby' || lobbyIdle(match, now)) return { ok: false, reason: 'not-lobby' };
       if (present(seats).length < 2) return { ok: false, reason: 'need-two' };
+      // Rated or not is decided now, on who is actually starting (R2)
+      const decision = await this.ranks.decideAtStart(
+        client,
+        'rhyme-match',
+        matchId,
+        present(seats).map((s) => ({ userId: s.user_id, seat: s.seat })),
+        match.rated,
+      );
       // started_at comes from the service clock (injectable) so the timed window is
       // deterministic in tests and correct (real Date) in production.
-      await client.query(`UPDATE rhyme_matches SET status = 'active', started_at = $2, updated_at = $2 WHERE id = $1`, [matchId, now]);
+      await client.query(`UPDATE rhyme_matches SET status = 'active', started_at = $2, updated_at = $2, rated_state = $3 WHERE id = $1`, [
+        matchId,
+        now,
+        decision,
+      ]);
       return null;
     });
     if (res) return res;
@@ -334,6 +374,8 @@ export class RhymeMatchService {
           await client.query(`UPDATE rhyme_matches SET updated_at = $2 WHERE id = $1`, [matchId, now]);
         }
       } else if (match.status === 'active' && mine.left_at === null) {
+        // the window is still open: a leave (last place, and the cooldown ladder)
+        if (!this.elapsed(match, now)) await this.ranks.recordLeave(client, 'rhyme-match', matchId, userId);
         await client.query(`UPDATE rhyme_match_players SET left_at = $3 WHERE match_id = $1 AND user_id = $2`, [matchId, userId, now]);
       }
       return { ok: true };
@@ -396,6 +438,7 @@ export class RhymeMatchService {
       createdBy: hostRef(match, rows.rows, userId),
       isHost: match.created_by === userId,
       access: match.access,
+      rated: ratedStateOf(match),
       nextLobbyId: match.next_lobby_id,
       players,
       me: mine ? { seat: mine.seat, score: mine.score, accepted: mine.accepted, usedWords: mine.used_words } : null,
@@ -498,15 +541,27 @@ export class RhymeMatchService {
       if (!allowed) return { ok: false, reason: 'not-found' };
       const m = await client.query<{ id: string }>(
         `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id,
-                                    rematch_of, status, started_at, updated_at, seats_issued)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$9,2) RETURNING id`,
-        [host.user_id, match.dialect, prompt, match.window_ms, match.max_players, access, match.chat_group_id, matchId, now],
+                                    rematch_of, status, started_at, updated_at, seats_issued, rated)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,'active',$9,$9,2,$10) RETURNING id`,
+        [host.user_id, match.dialect, prompt, match.window_ms, match.max_players, access, match.chat_group_id, matchId, now, match.rated],
       );
       created = m.rows[0]!.id;
       await client.query(
         `INSERT INTO rhyme_match_players (match_id, user_id, seat) VALUES ($1,$2,1), ($1,$3,2)`,
         [created, host.user_id, other.user_id],
       );
+      // the rematch keeps the badge, and starts at once — so it is decided now
+      const decision = await this.ranks.decideAtStart(
+        client,
+        'rhyme-match',
+        created,
+        [
+          { userId: host.user_id, seat: 1 },
+          { userId: other.user_id, seat: 2 },
+        ],
+        match.rated,
+      );
+      await client.query(`UPDATE rhyme_matches SET rated_state = $2 WHERE id = $1`, [created, decision]);
       await client.query(`UPDATE rhyme_matches SET next_lobby_id = $2, updated_at = $3 WHERE id = $1`, [matchId, created, now]);
       return { ok: true, id: created };
     });
@@ -535,9 +590,9 @@ export class RhymeMatchService {
       if (!prompt) return { ok: false, reason: 'empty-lexicon' };
       const access: GameAccess = match.access === 'open' && (await mayHostOpen(client, hostId)) ? 'open' : 'friends';
       const m = await client.query<{ id: string }>(
-        `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id, rematch_of, updated_at)
-         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
-        [hostId, match.dialect, prompt, match.window_ms, match.max_players, access, match.chat_group_id, matchId, now],
+        `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id, rematch_of, updated_at, rated)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING id`,
+        [hostId, match.dialect, prompt, match.window_ms, match.max_players, access, match.chat_group_id, matchId, now, match.rated],
       );
       created = m.rows[0]!.id;
       await client.query(`INSERT INTO rhyme_match_players (match_id, user_id, seat) VALUES ($1,$2,1)`, [created, hostId]);
@@ -580,8 +635,29 @@ export class RhymeMatchService {
   }
 
   async summary(matchId: string): Promise<InviteSummary | null> {
-    const m = await this.pool.query<{ dialect: Dialect }>(`SELECT dialect FROM rhyme_matches WHERE id = $1`, [matchId]);
-    return m.rows[0] ? { dialect: m.rows[0].dialect } : null;
+    const m = await this.pool.query<{ dialect: Dialect; rated: boolean }>(`SELECT dialect, rated FROM rhyme_matches WHERE id = $1`, [
+      matchId,
+    ]);
+    return m.rows[0] ? { dialect: m.rows[0].dialect, rated: m.rows[0].rated } : null;
+  }
+
+  /** The host changes Rated/Friendly, in the lobby only (see `WordleBattleService.setRated`). */
+  async setRated(matchId: string, hostId: string, rated: boolean): Promise<SetRatedResult> {
+    const now = this.now();
+    const res = await this.tx<SetRatedResult | null>(async (client) => {
+      const match = await this.lock(client, matchId);
+      if (!match) return { ok: false, reason: 'not-found' };
+      const seats = await seatsOf(client, T, matchId);
+      if (!present(seats).some((s) => s.user_id === hostId)) return { ok: false, reason: 'not-found' };
+      if (match.created_by !== hostId) return { ok: false, reason: 'forbidden' };
+      if (match.status !== 'lobby' || lobbyIdle(match, now)) return { ok: false, reason: 'not-lobby' };
+      await client.query(`UPDATE rhyme_matches SET rated = $2, updated_at = $3 WHERE id = $1`, [matchId, rated, now]);
+      await this.ranks.rememberChoice(client, hostId, 'rhyme-match', rated);
+      return null;
+    });
+    if (res) return res;
+    this.changed(matchId);
+    return { ok: true, match: await this.state(matchId, hostId) };
   }
 
   async card(viewerId: string, matchId: string): Promise<LobbyCard> {
@@ -652,6 +728,9 @@ export class RhymeMatchService {
       await this.xp.award({ userId: r.userId, source: 'rhyme_match', amount: xp, refId: `match:${matchId}:${r.userId}` }, client);
       await client.query(`UPDATE rhyme_match_players SET xp_awarded = $3 WHERE match_id = $1 AND user_id = $2`, [matchId, r.userId, xp]);
     }
+    // a match that counted moves the ratings, here in the same transaction
+    // (anyone who left while the window was open is last)
+    await this.ranks.finish(client, 'rhyme-match', matchId, ranked.map((r) => ({ userId: r.userId, place: r.rank })));
     await client.query(`UPDATE rhyme_matches SET status = 'finished', finished_at = $2, updated_at = $2 WHERE id = $1`, [matchId, now]);
   }
 
@@ -671,11 +750,15 @@ export class RhymeMatchService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      dropAfterCommit(client);
       const result = await fn(client);
       await client.query('COMMIT');
+      // what waited for the commit (Game Ranks telling the badges)
+      runAfterCommit(client);
       return result;
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
+      dropAfterCommit(client);
       throw err;
     } finally {
       client.release();

@@ -40,6 +40,8 @@ export interface StoryInviteSettings {
   textDuring: TextDuring;
   access: GameAccess;
   chatGroupId?: string | null;
+  rated?: boolean;
+  fromChat?: boolean;
 }
 
 /**
@@ -58,6 +60,8 @@ export interface StoryGamesPort {
   startPairRematch(gameId: string): Promise<{ gameId: string }>;
   /** leaving; the host leaving a lobby calls it off */
   leave(gameId: string, userId: string): Promise<void>;
+  /** the host's Rated/Friendly toggle, in the lobby; refusals are AppErrors (GAME_NOT_FOUND, NOT_HOST, GAME_STARTED) */
+  setRated(hostId: string, gameId: string, rated: boolean): Promise<void>;
   /** called after every change the service commits — the play layer's `play_changed` */
   onChange(listener: (gameId: string, version: number) => void): void;
 }
@@ -76,6 +80,7 @@ const settingsSchema = z
     timerSeconds: oneOf<TimerSeconds>(TIMER_PRESETS).optional(),
     textDuring: oneOf<TextDuring>(TEXT_DURING_OPTIONS).default('visible'),
     access: oneOf<GameAccess>(GAME_ACCESS).default('friends'),
+    rated: z.boolean().optional(),
   })
   .transform((s) => ({ ...s, timerSeconds: s.timerSeconds ?? DEFAULT_TIMER[s.mode] }));
 
@@ -105,10 +110,14 @@ export class StoriesAdapter implements PlayAdapter {
     private readonly stories: StoryGamesPort,
   ) {}
 
-  async create(hostId: string, settings: unknown, opts: { chatGroupId: string | null }): Promise<string> {
+  async create(hostId: string, settings: unknown, opts: { chatGroupId: string | null; fromChat: boolean }): Promise<string> {
     const s = parseSettings(settingsSchema, settings);
-    const { gameId } = await this.stories.createFromInvite(hostId, { ...s, chatGroupId: opts.chatGroupId });
+    const { gameId } = await this.stories.createFromInvite(hostId, { ...s, chatGroupId: opts.chatGroupId, fromChat: opts.fromChat });
     return gameId;
+  }
+
+  setRated(hostId: string, lobbyId: string, rated: boolean): Promise<void> {
+    return this.stories.setRated(hostId, lobbyId, rated);
   }
 
   async join(userId: string, lobbyId: string): Promise<JoinOutcome> {

@@ -205,6 +205,20 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     }
   });
 
+  it('the export carries their Game Ranks: ratings, every change with its reason, seasons', async () => {
+    const user = await makeUser('exportranks');
+    await pool.query(
+      `INSERT INTO game_ratings (user_id, game, mu, sigma, points, rated_games, season_id) VALUES ($1, 'stories', 27, 5, 480, 3, '2026-Q4')`,
+      [user.id],
+    );
+    const doc = await new GdprService(pool).buildExport(user.id);
+    expect(doc.gameRanks).toMatchObject({
+      ratings: [expect.objectContaining({ game: 'stories', points: 480, rated_games: 3 })],
+      history: [],
+      seasons: [],
+    });
+  });
+
   it.skipIf(!S3_READY)('export request → fulfillment → signed download', async () => {
     const user = await makeUser('export');
     // loadConfig() from process.env so the CI job's S3_* vars are seen

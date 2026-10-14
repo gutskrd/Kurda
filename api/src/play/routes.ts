@@ -13,6 +13,7 @@ import { WordleBattleAdapter } from './adapters/wordle-battle.js';
 import { RhymeMatchAdapter } from './adapters/rhyme-match.js';
 import { StoriesAdapter, type StoryGamesPort } from './adapters/stories.js';
 import type { PlayAdapter } from './types.js';
+import type { RankService } from '../ranks/service.js';
 
 /** How often the games close idle lobbies, end games that are over, and invites expire. */
 export const PLAY_SWEEP_MS = 30_000;
@@ -21,6 +22,7 @@ const game = z.enum(PLAY_GAMES);
 const userIds = z.array(z.uuid()).min(1).max(MAX_INVITEES_PER_REQUEST);
 const lobbyParams = z.object({ game, lobbyId: z.uuid() });
 const inviteParam = z.object({ id: z.uuid() });
+const ratedBody = z.object({ rated: z.boolean() });
 
 const createBody = z.object({
   game,
@@ -46,6 +48,8 @@ export interface PlayRouteDeps {
    * in; until then Stories cannot be played through invites.
    */
   stories?: StoryGamesPort;
+  /** Game Ranks, shared with the games' own routes (one set of rank events) */
+  ranks?: RankService;
 }
 
 /**
@@ -57,10 +61,20 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
   const adapters: PlayAdapter[] = [
     new WordleBattleAdapter(
-      new WordleBattleService(app.db, { xp: deps.xp, publicUrl, onChange: (id, o) => deps.events.changed('wordle-battle', id, o) }),
+      new WordleBattleService(app.db, {
+        xp: deps.xp,
+        publicUrl,
+        ranks: deps.ranks,
+        onChange: (id, o) => deps.events.changed('wordle-battle', id, o),
+      }),
     ),
     new RhymeMatchAdapter(
-      new RhymeMatchService(app.db, { xp: deps.xp, publicUrl, onChange: (id, o) => deps.events.changed('rhyme-match', id, o) }),
+      new RhymeMatchService(app.db, {
+        xp: deps.xp,
+        publicUrl,
+        ranks: deps.ranks,
+        onChange: (id, o) => deps.events.changed('rhyme-match', id, o),
+      }),
     ),
   ];
   if (deps.stories) {
@@ -132,6 +146,18 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     await play.cancel(req.user!.id, (req.params as { id: string }).id);
     return { ok: true };
   });
+
+  /** The host's Rated/Friendly toggle, in the lobby only (Game Ranks). */
+  app.put(
+    '/play/:game/:lobbyId/rated',
+    { schema: { params: lobbyParams, body: ratedBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth },
+    async (req) => {
+      const p = req.params as { game: PlayGame; lobbyId: string };
+      const { rated } = req.body as z.infer<typeof ratedBody>;
+      await play.setRated(req.user!.id, p.game, p.lobbyId, rated);
+      return { ok: true, rated };
+    },
+  );
 
   /** A game card's live state, as the viewer may see it ('unavailable' otherwise). */
   app.get('/play/cards/:game/:lobbyId', { schema: { params: lobbyParams }, preHandler: requireAuth }, async (req) => {

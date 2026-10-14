@@ -1,4 +1,11 @@
-/** Leaderboards (KUR-063) against real Postgres (+ Redis when present). */
+/**
+ * Leaderboards (KUR-063) against real Postgres (+ Redis when present).
+ *
+ * These ran on the all-time rating board until it was removed with the
+ * frozen Elo (contract-4); the same cases now run on the weekly-XP board,
+ * which is the only one left, and the board's new rule — nobody who left the
+ * leagues or hid their profile is listed — has its own.
+ */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
@@ -14,7 +21,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   let pool: pg.Pool;
   let boards: LeaderboardService;
   const suffix = Date.now().toString(36);
-  // A (flagged, highest), B, C, D — high ratings so they lead the shared board
+  // A (flagged, highest), B, C, D — big weekly XP so they lead the shared board
   const ids: Record<string, string> = {};
   let bToken = '';
 
@@ -47,13 +54,18 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
     ids.c = await register('c', '10.63.3.1');
     ids.d = await register('d', '10.63.4.1');
 
-    const ratings: Array<[string, number]> = [[ids.a!, 9999], [ids.b!, 9998], [ids.c!, 9997], [ids.d!, 9996]];
-    for (const [id, rating] of ratings) {
-      await pool.query(
-        `INSERT INTO player_ratings (user_id, rating, games_played) VALUES ($1, $2, 5)
-         ON CONFLICT (user_id) DO UPDATE SET rating = EXCLUDED.rating`,
-        [id, rating],
-      );
+    const weekly: Array<[string, string, number]> = [
+      ['a', ids.a!, 199_999_999],
+      ['b', ids.b!, 199_999_998],
+      ['c', ids.c!, 199_999_997],
+      ['d', ids.d!, 199_999_996],
+    ];
+    for (const [tag, id, xp] of weekly) {
+      await pool.query(`INSERT INTO xp_ledger (user_id, source, amount, ref_id) VALUES ($1,'test_lb',$2,$3)`, [
+        id,
+        xp,
+        `lb-${tag}-${suffix}`,
+      ]);
     }
     // shadow-flag A (the would-be #1)
     await pool.query(
@@ -61,9 +73,6 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
        VALUES ($1, 'test', '[]'::jsonb, '{}'::jsonb, 1.0, true)`,
       [ids.a!],
     );
-    // weekly XP for B and C (large so they lead the shared weekly board)
-    await pool.query(`INSERT INTO xp_ledger (user_id, source, amount, ref_id) VALUES ($1,'test_lb',100000,$2)`, [ids.b!, `lb-b-${suffix}`]);
-    await pool.query(`INSERT INTO xp_ledger (user_id, source, amount, ref_id) VALUES ($1,'test_lb',50000,$2)`, [ids.c!, `lb-c-${suffix}`]);
 
     // B and C share a country; D is elsewhere. B and D are friends.
     await pool.query(`UPDATE users SET country = 'DE' WHERE id = ANY($1)`, [[ids.b!, ids.c!]]);
@@ -75,7 +84,6 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
       [lo, hi],
     );
 
-    await boards.rebuild('rating');
     await boards.rebuild('weekly_xp');
   });
 
@@ -93,33 +101,27 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
     await app.close();
   });
 
-  it('rating board ranks high scores first and returns the caller own rank', async () => {
-    const board = await boards.board('rating', ids.b!);
-    // A is shadow-flagged → excluded; B (9998) leads, then C, then D
+  it('ranks this week’s XP first and returns the caller’s own rank', async () => {
+    const board = await boards.board('weekly_xp', ids.b!);
+    // A is shadow-flagged → excluded; B leads, then C, then D
     expect(board.top[0]!.userId).toBe(ids.b);
     expect(board.top[1]!.userId).toBe(ids.c);
     expect(board.top[2]!.userId).toBe(ids.d);
     expect(board.top.some((e) => e.userId === ids.a)).toBe(false);
-    expect(board.me).toMatchObject({ rank: 1, score: 9998 });
+    expect(board.me).toMatchObject({ rank: 1, score: 199_999_998 });
   });
 
   it('excludes a shadow-flagged cheater silently (they still see a plausible rank)', async () => {
-    const board = await boards.board('rating', ids.a!);
+    const board = await boards.board('weekly_xp', ids.a!);
     // A never appears on the public board…
     expect(board.top.some((e) => e.userId === ids.a)).toBe(false);
     // …but is not told: their own rank looks normal (top score → #1)
-    expect(board.me).toMatchObject({ rank: 1, score: 9999 });
-  });
-
-  it('weekly XP board reflects this week ledger + own rank', async () => {
-    const board = await boards.board('weekly_xp', ids.b!);
-    expect(board.top[0]!.userId).toBe(ids.b);
-    expect(board.me).toMatchObject({ rank: 1, score: 100000 });
+    expect(board.me).toMatchObject({ rank: 1, score: 199_999_999 });
   });
 
   it('pages the board, continuing the ranks rather than restarting at 1', async () => {
-    const first = await boards.board('rating', ids.b!, { limit: 2, offset: 0 });
-    const second = await boards.board('rating', ids.b!, { limit: 2, offset: 2 });
+    const first = await boards.board('weekly_xp', ids.b!, { limit: 2, offset: 0 });
+    const second = await boards.board('weekly_xp', ids.b!, { limit: 2, offset: 2 });
 
     expect(first.top.map((e) => e.rank)).toEqual([1, 2]);
     // a second page continues from 3 — a client that restarted numbering would
@@ -132,7 +134,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   });
 
   it('a friends board holds your friends and you, and nobody else', async () => {
-    const board = await boards.board('rating', ids.b!, { scope: 'friends' });
+    const board = await boards.board('weekly_xp', ids.b!, { scope: 'friends' });
     const listed = board.top.map((e) => e.userId);
     expect(listed).toContain(ids.b); // you belong on your own board
     expect(listed).toContain(ids.d); // your friend
@@ -143,14 +145,14 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   it('ranks you within the friends board, not against the world', async () => {
     // D is 3rd globally but 2nd among friends — a global rank beside a friends
     // list would be telling you about a different board than the one shown
-    const board = await boards.board('rating', ids.d!, { scope: 'friends' });
-    expect(board.me).toMatchObject({ rank: 2, score: 9996 });
-    const global = await boards.board('rating', ids.d!, { scope: 'global' });
+    const board = await boards.board('weekly_xp', ids.d!, { scope: 'friends' });
+    expect(board.me).toMatchObject({ rank: 2, score: 199_999_996 });
+    const global = await boards.board('weekly_xp', ids.d!, { scope: 'global' });
     expect(global.me!.rank).toBe(3);
   });
 
   it('a country board covers that country only', async () => {
-    const board = await boards.board('rating', ids.b!, { scope: 'country' });
+    const board = await boards.board('weekly_xp', ids.b!, { scope: 'country' });
     expect(board.country).toBe('DE');
     const listed = board.top.map((e) => e.userId);
     expect(listed).toContain(ids.b);
@@ -160,7 +162,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
 
   it('says the country is unset rather than pretending the board is empty', async () => {
     const noCountry = await register('nc', '10.63.5.1');
-    const board = await boards.board('rating', noCountry, { scope: 'country' });
+    const board = await boards.board('weekly_xp', noCountry, { scope: 'country' });
     // null country is a different thing from an empty list, and the UI needs to
     // tell the user to set one rather than "nobody here yet"
     expect(board.country).toBeNull();
@@ -175,7 +177,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
        VALUES ($1, $2, 'accepted', now()) ON CONFLICT DO NOTHING`,
       [lo2, hi2],
     );
-    const friends = await boards.board('rating', ids.b!, { scope: 'friends' });
+    const friends = await boards.board('weekly_xp', ids.b!, { scope: 'friends' });
     expect(friends.top.some((e) => e.userId === ids.a)).toBe(false);
   });
 
@@ -183,7 +185,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
     const get = (qs: string) =>
       app.inject({
         method: 'GET',
-        url: `/leaderboards/rating${qs}`,
+        url: `/leaderboards/weekly_xp${qs}`,
         headers: { authorization: `Bearer ${bToken}` },
         remoteAddress: '10.63.9.2',
       });
@@ -199,7 +201,7 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   });
 
   it('rebuild returns a count and GET /leaderboards/:type validates the type', async () => {
-    expect(await boards.rebuild('rating')).toBeGreaterThanOrEqual(3);
+    expect(await boards.rebuild('weekly_xp')).toBeGreaterThanOrEqual(3);
     const bad = await app.inject({
       method: 'GET',
       url: '/leaderboards/nonsense',
@@ -207,5 +209,48 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
       remoteAddress: '10.63.9.1',
     });
     expect(bad.statusCode).toBe(400);
+    // the frozen all-time rating board is gone with the Elo it showed
+    const rating = await app.inject({ method: 'GET', url: '/leaderboards/rating', remoteAddress: '10.63.9.1' });
+    expect(rating.statusCode).toBe(400);
+  });
+
+  it('stops listing people who left the leagues or hid their profile, and still tells them their own place', async () => {
+    const out = await register('out', '10.63.6.1');
+    const hidden = await register('hid', '10.63.7.1');
+    const friendsOnly = await register('fo', '10.63.8.1');
+    for (const [id, xp, tag] of [
+      [out, 299_999_999, 'out'],
+      [hidden, 299_999_998, 'hid'],
+      [friendsOnly, 299_999_997, 'fo'],
+    ] as const) {
+      await pool.query(`INSERT INTO xp_ledger (user_id, source, amount, ref_id) VALUES ($1,'test_lb',$2,$3)`, [id, xp, `lb-${tag}-${suffix}`]);
+    }
+    await pool.query(`UPDATE users SET leagues_enabled = false WHERE id = $1`, [out]);
+    await pool.query(`UPDATE users SET profile_visibility = 'nobody' WHERE id = $1`, [hidden]);
+    await pool.query(`UPDATE users SET profile_visibility = 'friends', country = 'DE' WHERE id = $1`, [friendsOnly]);
+    // friends with B, so the friends board is where a friends-only profile still shows
+    for (const other of [friendsOnly, hidden]) {
+      const [lo, hi] = [ids.b!, other].sort();
+      await pool.query(
+        `INSERT INTO friendships (user_lo, user_hi, status, responded_at) VALUES ($1, $2, 'accepted', now()) ON CONFLICT DO NOTHING`,
+        [lo, hi],
+      );
+    }
+    await boards.rebuild('weekly_xp');
+
+    const global = await boards.board('weekly_xp', ids.b!, { limit: 100 });
+    const listed = global.top.map((e) => e.userId);
+    expect(listed).not.toContain(out);
+    expect(listed).not.toContain(hidden);
+    expect(listed).not.toContain(friendsOnly);
+    const country = await boards.board('weekly_xp', ids.b!, { scope: 'country', limit: 100 });
+    expect(country.top.map((e) => e.userId)).not.toContain(friendsOnly);
+    const friends = await boards.board('weekly_xp', ids.b!, { scope: 'friends' });
+    expect(friends.top.map((e) => e.userId)).toContain(friendsOnly);
+    expect(friends.top.map((e) => e.userId)).not.toContain(hidden);
+
+    // the one who left is not told anything has changed for them
+    const mine = await boards.board('weekly_xp', out);
+    expect(mine.me).toMatchObject({ rank: 1, score: 299_999_999 });
   });
 });

@@ -231,6 +231,12 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
       ]);
     const soloGame = await game('solo', child.id, 'finished');
     await seat(soloGame, child.id, 1);
+    // their Game Ranks, and a Rated choice they remembered
+    await pool.query(
+      `INSERT INTO game_ratings (user_id, game, mu, sigma, points, rated_games, season_id) VALUES ($1, 'stories', 26, 6, 320, 4, '2026-Q4')`,
+      [child.id],
+    );
+    await pool.query(`INSERT INTO rank_preferences (user_id, game, rated) VALUES ($1, 'stories', true)`, [child.id]);
     await pool.query(
       `INSERT INTO story_game_answers (game_id, user_id, question_index, choice, correct, elapsed_ms) VALUES ($1, $2, 0, 1, true, 900)`,
       [soloGame, child.id],
@@ -357,6 +363,8 @@ describe.skipIf(!DATABASE_URL)('closing a child’s account (integration)', () =
     expect(await count(`SELECT 1 FROM story_game_answers WHERE user_id = $1`, id)).toBe(0);
     expect(await count(`SELECT 1 FROM story_game_players WHERE user_id = $1`, id)).toBe(0);
     expect(await count(`SELECT 1 FROM story_games WHERE host_id = $1`, id)).toBe(0);
+    expect(await count(`SELECT 1 FROM game_ratings WHERE user_id = $1`, id)).toBe(0);
+    expect(await count(`SELECT 1 FROM rank_preferences WHERE user_id = $1`, id)).toBe(0);
     const lobby = (await pool.query(`SELECT status, host_id FROM story_games WHERE id = $1`, [s.games.childLobby])).rows[0];
     expect(lobby).toEqual({ status: 'cancelled', host_id: null });
     const running = await pool.query(

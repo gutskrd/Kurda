@@ -39,13 +39,24 @@ export const PAGE_SIZE = 25;
 const MAX_PAGE = 100;
 
 /** Weekly board keys carry the week so a new week starts fresh. */
-function keyFor(type: BoardType, now: Date): string {
-  return type === 'rating' ? 'lb:rating' : `lb:weekly:${weekStart(now)}`;
+function keyFor(_type: BoardType, now: Date): string {
+  return `lb:weekly:${weekStart(now)}`;
+}
+
+/**
+ * Who may be listed at all (contract-4 §R6): nobody who said "don't rank me" —
+ * left the leagues (`leagues_enabled = false`) — or hid their profile from
+ * everyone. On the public scopes (global, country), also nobody whose profile
+ * is for friends only. They still see their own score and place.
+ */
+function listableSql(alias: string, publicScope: boolean): string {
+  const hidden = publicScope ? `('nobody','friends')` : `('nobody')`;
+  return `(${alias}.leagues_enabled IS DISTINCT FROM false AND ${alias}.profile_visibility NOT IN ${hidden})`;
 }
 
 /**
  * Leaderboards (KUR-063). Redis sorted sets give O(log n) rank lookups for the
- * global rating and weekly-XP boards; Postgres is the source of truth and there's
+ * global weekly-XP board; Postgres is the source of truth and there's
  * a rebuild path (and a pure fallback when Redis is absent). Shadow-flagged
  * cheaters (KUR-058) are excluded from every board — silently, so they still see
  * a plausible own-rank and are never told.
@@ -81,13 +92,13 @@ export class LeaderboardService {
     // the public boards (everything but a friends list) name adults only
     const notFlagged = `NOT EXISTS (SELECT 1 FROM cheat_reviews cr WHERE cr.user_id = u.id AND cr.shadow_flagged = true)${
       filter?.ids ? '' : ` AND NOT ${notKnownAdultSql('u')}`
-    }`;
+    } AND ${listableSql('u', !filter?.ids)}`;
     // an empty allow-list means "no such people", not "everyone"
     if (filter?.ids && filter.ids.length === 0) return [];
 
-    // weekly_xp needs the week start first, so the scope parameter is appended
-    // after it and numbered from whatever the array already holds
-    const params: unknown[] = type === 'rating' ? [] : [weekStart(now)];
+    // the week start first, so the scope parameter is appended after it and
+    // numbered from whatever the array already holds
+    const params: unknown[] = [weekStart(now)];
     let scoped = '';
     if (filter?.ids) {
       params.push(filter.ids);
@@ -95,17 +106,6 @@ export class LeaderboardService {
     } else if (filter?.country) {
       params.push(filter.country);
       scoped = `AND u.country = $${params.length}`;
-    }
-
-    if (type === 'rating') {
-      const rows = await this.pool.query<{ user_id: string; username: string; score: number }>(
-        `SELECT r.user_id, u.username, r.rating AS score
-           FROM player_ratings r JOIN users u ON u.id = r.user_id
-          WHERE ${notFlagged} AND u.deleted_at IS NULL ${scoped}
-          ORDER BY r.rating DESC`,
-        params,
-      );
-      return rows.rows.map((r) => ({ userId: r.user_id, username: r.username, score: Number(r.score) }));
     }
 
     const rows = await this.pool.query<{ user_id: string; username: string; score: string }>(
@@ -132,7 +132,7 @@ export class LeaderboardService {
         for (const r of rows) args.push(r.score, r.userId);
         pipeline.zadd(key, ...(args as [number, string]));
       }
-      if (type !== 'rating') pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
+      pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
       await pipeline.exec();
     }
     return rows.length;
@@ -202,9 +202,9 @@ export class LeaderboardService {
     const key = keyFor(type, now);
     if ((await this.redis!.zcard(key)) === 0) await this.rebuild(type, now);
 
-    // The sorted set was built at some moment and is read for a long time
-    // after (the rating board until the next rebuild). Somebody on it then may
-    // not be listable now — an account found since to be a minor's, or gone —
+    // The sorted set was built at some moment and is read for up to five
+    // minutes after. Somebody on it then may not be listable now — an account
+    // found since to be a minor's, gone, out of the leagues or hidden —
     // so each page is checked as it is read, and anyone who may not be shown
     // is taken off the set for good, which keeps the ranks without gaps.
     let ids: string[] = [];
@@ -260,14 +260,7 @@ export class LeaderboardService {
   }
 
   /** The caller's raw score (independent of flag status, so they aren't tipped off). */
-  private async myScore(type: BoardType, userId: string, now: Date): Promise<number | null> {
-    if (type === 'rating') {
-      const row = await this.pool.query<{ rating: number }>(
-        `SELECT rating FROM player_ratings WHERE user_id = $1`,
-        [userId],
-      );
-      return row.rows[0] ? Number(row.rows[0].rating) : null;
-    }
+  private async myScore(_type: BoardType, userId: string, now: Date): Promise<number | null> {
     const row = await this.pool.query<{ sum: string | null }>(
       `SELECT COALESCE(SUM(amount), 0)::text sum FROM xp_ledger
         WHERE user_id = $1 AND amount > 0 AND created_at >= $2::date`,
@@ -279,13 +272,14 @@ export class LeaderboardService {
 
   /**
    * Usernames of those among `ids` who may be on a public board right now: a
-   * live account known to be an adult. Anyone missing from the map may not be.
+   * live account known to be an adult, in the leagues, with a profile not
+   * hidden. Anyone missing from the map may not be.
    */
   private async listable(ids: string[]): Promise<Map<string, string>> {
     if (ids.length === 0) return new Map();
     const rows = await this.pool.query<{ id: string; username: string }>(
       `SELECT u.id, u.username FROM users u
-        WHERE u.id = ANY($1) AND u.deleted_at IS NULL AND NOT ${notKnownAdultSql('u')}`,
+        WHERE u.id = ANY($1) AND u.deleted_at IS NULL AND NOT ${notKnownAdultSql('u')} AND ${listableSql('u', true)}`,
       [ids],
     );
     return new Map(rows.rows.map((r) => [r.id, r.username]));

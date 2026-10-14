@@ -67,14 +67,12 @@ describe.skipIf(!DATABASE_URL)('the ranked quiz is gone (integration)', () => {
     ['GET', '/challenges/00000000-0000-4000-8000-000000000000', undefined],
     ['POST', '/games/match:1/rematch', {}],
     ['GET', '/games/match:1/state', undefined],
+    // the frozen Elo it wrote is gone too: ratings are per game now (/ranks/me)
+    ['GET', '/me/rating', undefined],
+    ['GET', '/me/rating/history', undefined],
   ] as const)('%s %s answers 404', async (method, url, payload) => {
     const res = await call(method, url, payload);
     expect(res.statusCode).toBe(404);
     expect(res.json().code).toBe('NOT_FOUND');
-  });
-
-  it('still reads the ratings people earned', async () => {
-    const res = await call('GET', '/me/rating');
-    expect(res.statusCode).toBe(200);
   });
 });

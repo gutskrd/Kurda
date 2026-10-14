@@ -92,6 +92,12 @@ export interface InviteSummary {
   questionCount?: number;
   /** Stories: solo | duo | group */
   mode?: string;
+  /**
+   * Every game: Rated or Friendly (Game Ranks), so the banner and the card
+   * show it before anyone joins. Whether a Rated game then counts is decided
+   * when it starts (the game's `rated` state).
+   */
+  rated?: boolean;
 }
 
 /** An invite as the person invited sees it (incoming). */

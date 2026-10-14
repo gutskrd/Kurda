@@ -9,6 +9,8 @@ const createBody = z.object({
   maxPlayers: z.number().int().min(2).max(8).optional(),
   // who may join: the host's friends (default), or any adult with the link
   access: z.enum(['friends', 'open']).optional(),
+  // Rated or Friendly (Game Ranks); left out, the host's last choice
+  rated: z.boolean().optional(),
 });
 const guessBody = z.object({ word: z.string().min(1).max(64) });
 const removeBody = z.object({ seat: z.number().int().min(1).max(64) });

@@ -223,5 +223,11 @@ export * from './reports.js';
  * the case view returns.
  */
 export * from './copyright.js';
+/**
+ * Game Ranks: the games with a rank, the tier table and its helpers, the
+ * season calendar and rewards, Rated/Friendly and the shapes the API sends —
+ * one copy for the API, both apps and the admin panel.
+ */
+export * from './ranks.js';
 /** Who provides Hevalo and how to reach them: the one file the owner fills in. */
 export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provider.js';

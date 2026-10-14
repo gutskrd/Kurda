@@ -14,6 +14,7 @@
  * timers, and accuracy rather than speed deciding the score.
  */
 import { foldVariantChar, isInvisibleChar, lessonAudioKey } from './lesson-audio.js';
+import type { RatedState } from './ranks.js';
 import { isSoraniDialect } from './lesson-answers.js';
 
 /** The two varieties Hevalo teaches, spelled as the rhyme games store them. */
@@ -654,4 +655,10 @@ export interface StoryGameView {
   results: StoryGameResults | null;
   /** set when the host started another round from this one; join it like any game */
   nextGameId: string | null;
+  /**
+   * Rated or Friendly (Game Ranks), shown before anyone joins; a duo or group
+   * game is decided when its questions start. Always sent by the API (optional
+   * only so views recorded before it still type-check).
+   */
+  rated?: RatedState;
 }

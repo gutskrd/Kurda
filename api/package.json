@@ -35,6 +35,7 @@
     "jose": "^6.2.7",
     "node-pg-migrate": "^9.0.0",
     "nodemailer": "^10.0.13",
+    "openskill": "^5.0.1",
     "pg": "^8.22.0",
     "pino": "^10.3.1",
     "prom-client": "^15.1.3",

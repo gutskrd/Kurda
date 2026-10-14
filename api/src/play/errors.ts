@@ -32,6 +32,18 @@ export function nextGameError(reason: 'not-found' | 'not-finished' | 'not-pair' 
   }
 }
 
+/** What changing a lobby's Rated/Friendly badge answers when it cannot. */
+export function setRatedError(reason: 'not-found' | 'forbidden' | 'not-lobby'): AppError {
+  switch (reason) {
+    case 'not-found':
+      return gameNotFound();
+    case 'forbidden':
+      return new AppError('NOT_HOST', 403, 'only the host can change this');
+    case 'not-lobby':
+      return new AppError('GAME_STARTED', 409, 'Rated or Friendly can only change before the start');
+  }
+}
+
 /** A game's settings, checked against its own presets (400 like any bad request body). */
 export function parseSettings<S extends z.ZodType>(schema: S, settings: unknown): z.infer<S> {
   const parsed = schema.safeParse(settings ?? {});

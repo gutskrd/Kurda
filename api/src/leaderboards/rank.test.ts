@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { isBoardType, rankForScore, withRanks } from './rank.js';
 
 describe('isBoardType', () => {
-  it('accepts the known board types', () => {
-    expect(isBoardType('rating')).toBe(true);
+  it('accepts the known board types, and the frozen rating board is gone', () => {
+    expect(isBoardType('rating')).toBe(false);
     expect(isBoardType('weekly_xp')).toBe(true);
     expect(isBoardType('nope')).toBe(false);
   });
