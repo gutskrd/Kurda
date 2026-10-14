@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { describeError } from '../api/errors';
+import { assetUrl } from '../api/env';
 import type { RootNavigation } from '../navigation/rootStack';
 import type { InventoryItem } from '../profile/cosmetics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -77,7 +78,7 @@ export function RefreshedNotice(): React.JSX.Element | null {
 
   return (
     <Modal visible transparent animationType="fade" onRequestClose={() => close(false)}>
-      <View style={styles.scrim}>
+      <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
         <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <View style={[styles.badge, { backgroundColor: colors.controlTrack }]}>
             <Icon name="palette" size={28} tone="primary" />
@@ -162,8 +163,9 @@ export function RefreshedItems({
         const refund = { amount: item.refund.amount, currency: currencyLabel(item.refund.currency) };
         return (
           <View key={item.sku} style={styles.row}>
-            {item.assetUrl ? (
-              <Image source={{ uri: item.assetUrl }} style={styles.thumb} accessibilityIgnoresInvertColors />
+            {assetUrl(item.assetUrl) ? (
+              // the art lives on the website, by a path; the phone needs the whole address
+              <Image source={{ uri: assetUrl(item.assetUrl)! }} style={styles.thumb} accessibilityIgnoresInvertColors />
             ) : (
               <View style={[styles.thumb, { backgroundColor: colors.controlTrack }]} />
             )}
@@ -197,7 +199,7 @@ export function RefreshedItems({
       ) : null}
 
       <Modal visible={asking !== null} transparent animationType="fade" onRequestClose={() => setAsking(null)}>
-        <View style={styles.scrim}>
+        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
           {asking ? (
             <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
               <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
@@ -217,7 +219,7 @@ export function RefreshedItems({
 }
 
 const styles = StyleSheet.create({
-  scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  scrim: { flex: 1, justifyContent: 'flex-end' },
   sheet: {
     margin: spacing.md,
     padding: spacing.lg,

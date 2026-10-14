@@ -409,7 +409,7 @@ export function ComposeScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.top, { paddingTop: topInset }]}>
+        <View style={[styles.top, styles.column, { paddingTop: topInset }]}>
           <Pressable
             onPress={requestClose}
             accessibilityRole="button"
@@ -426,7 +426,7 @@ export function ComposeScreen({
         </View>
 
         {error ? (
-          <View style={[styles.banner, { backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
+          <View style={[styles.banner, styles.column, { backgroundColor: colors.dangerFill }]} accessibilityLiveRegion="assertive" accessibilityRole="alert">
             <Icon name="alert" size={18} color={colors.danger} />
             <Text style={[styles.bannerText, { color: colors.textPrimary }]}>{error}</Text>
           </View>
@@ -442,7 +442,7 @@ export function ComposeScreen({
             <SkeletonLines count={3} />
           </View>
         ) : (
-          <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+          <ScrollView contentContainerStyle={[styles.body, styles.column]} keyboardShouldPersistTaps="handled">
             {mode === 'new' && serverDrafts.length > 0 && !hasContent ? (
               <Pressable
                 onPress={() => setDraftsOpen(true)}
@@ -474,7 +474,8 @@ export function ComposeScreen({
                       onSubmitEditing={() => bodyRef.current?.focus()}
                     />
                     {titleMissing ? (
-                      <Text style={[styles.fieldNote, { color: colors.danger }]}>{t('composer.error.titleRequired')}</Text>
+                      // a hint while the title is still to come, not an error: nothing has gone wrong yet
+                      <Text style={[styles.fieldNote, { color: colors.textSecondary }]}>{t('composer.error.titleRequired')}</Text>
                     ) : null}
                     {titleCounter.show ? <Counter counter={titleCounter} /> : null}
                   </View>
@@ -512,7 +513,7 @@ export function ComposeScreen({
 
             {hasContent ? (
               <View style={styles.kinds}>
-                <Text style={[styles.groupLabel, { color: colors.textSecondary }]} nativeID="composer-kind">
+                <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>
                   {t('composer.kind')}
                 </Text>
                 <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel={t('composer.kind')}>
@@ -572,8 +573,8 @@ export function ComposeScreen({
 
         {ready ? (
           <View style={[styles.toolbarWrap, { borderTopColor: colors.separator }]}>
-            <Text style={[styles.copyHint, { color: colors.textSecondary }]}>{t('composer.copyHint')}</Text>
-            <View style={styles.toolbar}>
+            <Text style={[styles.copyHint, styles.column, { color: colors.textSecondary }]}>{t('composer.copyHint')}</Text>
+            <View style={[styles.toolbar, styles.column]}>
               <Tool
                 icon="image"
                 label={t('composer.addPicture')}
@@ -596,7 +597,7 @@ export function ComposeScreen({
 
       {/* leaving with something written: keep it, throw it away, or stay */}
       <Modal visible={closing} transparent animationType="fade" onRequestClose={() => setClosing(false)}>
-        <View style={styles.scrim}>
+        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
           <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
               {mode === 'new' ? t('composer.close.title') : t('composer.close.editTitle')}
@@ -630,7 +631,7 @@ export function ComposeScreen({
       ) : null}
 
       <Modal visible={draftsOpen} transparent animationType="fade" onRequestClose={() => setDraftsOpen(false)}>
-        <View style={styles.scrim}>
+        <View style={[styles.scrim, { backgroundColor: colors.scrim }]}>
           <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
               {t('composer.oldDraftsTitle')}
@@ -744,7 +745,7 @@ function PictureTile({
         />
       ) : null}
       {picture.status === 'uploading' ? (
-        <View style={styles.tileShade} pointerEvents="none">
+        <View style={[styles.tileShade, { backgroundColor: colors.scrim }]} pointerEvents="none">
           <View style={[styles.progressTrack, { backgroundColor: colors.glassFill }]}>
             <View style={[styles.progressFill, { width: `${Math.max(4, picture.progress * 100)}%`, backgroundColor: colors.primary }]} />
           </View>
@@ -800,7 +801,7 @@ function AltSheet({
   const counter = counterFor(picture.altText, POST_ALT_MAX);
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.scrim} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+      <KeyboardAvoidingView style={[styles.scrim, { backgroundColor: colors.scrim }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
             {t('composer.alt.title')}
@@ -847,6 +848,8 @@ function AltSheet({
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
+  // on a tablet or a wide window the composer keeps a reading width, as X's does
+  column: { width: '100%', maxWidth: 640, alignSelf: 'center' },
   top: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -893,7 +896,8 @@ const styles = StyleSheet.create({
   tile: { width: '48.5%', aspectRatio: 1, borderRadius: radii.md, overflow: 'hidden' },
   tileWide: { width: '100%', aspectRatio: 4 / 3 },
   tileImage: { width: '100%', height: '100%' },
-  tileShade: { position: 'absolute', left: 0, right: 0, bottom: 0, padding: spacing.sm },
+  // the picture dims while it goes up, with the bar across its middle, clear of the buttons on its corners
+  tileShade: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: spacing.lg },
   progressTrack: { height: 6, borderRadius: radii.pill, overflow: 'hidden' },
   progressFill: { height: 6, borderRadius: radii.pill },
   tileFailed: {
@@ -938,7 +942,7 @@ const styles = StyleSheet.create({
   tool: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   disabled: { opacity: 0.4 },
   count: { fontSize: typography.sizes.sm, fontVariant: ['tabular-nums'] },
-  scrim: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  scrim: { flex: 1, justifyContent: 'flex-end' },
   sheet: { margin: spacing.md, padding: spacing.lg, borderRadius: radii.lg, gap: spacing.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
   sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   draftRow: { minHeight: MIN_TOUCH_TARGET, padding: spacing.md, borderRadius: radii.md, gap: 2 },

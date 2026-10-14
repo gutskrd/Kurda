@@ -185,6 +185,12 @@ export function RatingBox({
       ) : null}
 
       {settings || followUp ? (
+        // a field says what it is for in words that stay, not only in a placeholder that goes
+        <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
+          {t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
+        </Text>
+      ) : null}
+      {settings || followUp ? (
         <TextInput
           value={comment}
           onChangeText={setComment}
@@ -238,6 +244,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  fieldLabel: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   input: {
     alignSelf: 'stretch',
     minHeight: 84,

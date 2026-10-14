@@ -271,7 +271,7 @@ describe('drafts', () => {
     testAuth.client = client;
     const onExit = vi.fn();
     renderWithProviders(<ComposeScreen onExit={onExit} store={memoryStore()} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Drafts saved by an earlier version of the app: 1' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Saved drafts to finish: 1' }));
     fireEvent.click(screen.getByRole('button', { name: /Bajarê kevn/ }));
     expect(screen.getByText('Finish your draft')).toBeTruthy();
     expect((screen.getByLabelText('Your post') as HTMLTextAreaElement).value).toBe('Rojek ji rojan');
