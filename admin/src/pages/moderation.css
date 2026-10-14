@@ -191,8 +191,9 @@
 /* ---- appeals, approvals and the playbook ------------------------------------------- */
 .appeal-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
 .appeal { display: grid; gap: 10px; }
+.appeal-list > .card { margin: 0; }
 .appeal-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; }
-.appeal-text { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--control); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 14.5px; line-height: 1.6; }
+.appeal-text { margin: 0; padding: 12px 14px; border-radius: var(--radius-sm); background: var(--control); border-inline-start: 3px solid var(--info); white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); font-size: 14.5px; line-height: 1.6; }
 .appeal-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 @media (max-width: 560px) { .appeal-actions > * { flex: 1 1 100%; min-height: var(--target); } }
 .form fieldset { border: none; margin: 0; padding: 0; min-width: 0; }
@@ -243,6 +244,7 @@
 .fb-item.is-new { box-shadow: inset 3px 0 0 var(--info); }
 .fb-item-head { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; }
 .fb-comment { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--text); line-height: 1.55; }
+.fb-comment.subtle { color: var(--text-dim); }
 .fb-meta { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 12.5px; color: var(--text-dim); }
 .fb-note { margin: 0; padding: 8px 12px; border-radius: var(--radius-sm); background: var(--control); font-size: 13px; color: var(--text-2); white-space: pre-wrap; }
 .fb-actions { display: flex; flex-wrap: wrap; gap: 8px; }

@@ -316,8 +316,10 @@ function SummaryPanel({ loaded }: { loaded: Loaded<AdminFeedbackSummary> }): Rea
           <span className="fb-average-n">{recent.averageStars === null ? '—' : recent.averageStars.toFixed(1)}</span>
           {recent.averageStars !== null && <Stars n={Math.round(recent.averageStars)} />}
           <span className="subtle">
-            {statLine(recent)} · {statLine(s.total)} in all
-            {s.total.averageStars !== null ? `, ${s.total.averageStars.toFixed(1)} ★ average` : ''}
+            {statLine(recent)}
+            {/* all time only when it says something more */}
+            {s.total.count !== recent.count &&
+              ` · ${s.total.count.toLocaleString()} in all${s.total.averageStars !== null ? `, ${s.total.averageStars.toFixed(1)} ★ average` : ''}`}
           </span>
         </div>
         <ul className="fb-dist" aria-label="Answers by stars, last 30 days">
@@ -415,12 +417,14 @@ function FeedbackRow({ item, onChanged }: { item: AdminFeedbackItem; onChanged: 
           {item.comment}
         </p>
       ) : (
-        <p className="subtle">No comment.</p>
+        <p className="fb-comment subtle">No comment.</p>
       )}
       <div className="fb-meta">
         <UserLink user={item.user} />
         <span>
-          {PLATFORM_NAME[item.platform] ?? item.platform} {item.appVersion}
+          {PLATFORM_NAME[item.platform] ?? item.platform}
+          {/* the web has no version of its own (it sends "web") */}
+          {item.platform !== 'web' && item.appVersion && item.appVersion !== 'web' ? ` ${item.appVersion}` : ''}
         </span>
         <span>{SOURCE_NAME[item.source] ?? item.source}</span>
         {item.locale && <span>Language: {item.locale}</span>}

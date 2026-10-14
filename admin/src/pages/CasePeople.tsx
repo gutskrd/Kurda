@@ -16,7 +16,18 @@ export function AccountAge({ createdAt }: { createdAt: string }): React.JSX.Elem
   return <span className="subtle">Account {seconds < 86_400 * 2 ? `${duration(seconds)} old` : `${Math.round(seconds / 86_400)} days old`}</span>;
 }
 
-export function SanctionLine({ s, who, actions }: { s: CaseSanctionView; who?: React.ReactNode; actions?: React.ReactNode }): React.JSX.Element {
+export function SanctionLine({
+  s,
+  who,
+  actions,
+  link,
+}: {
+  s: CaseSanctionView;
+  who?: React.ReactNode;
+  actions?: React.ReactNode;
+  /** after the dates: where it came from ("Open the case") */
+  link?: React.ReactNode;
+}): React.JSX.Element {
   return (
     <li className="sanction-line">
       {actions && <div className="sanction-line-actions">{actions}</div>}
@@ -30,8 +41,18 @@ export function SanctionLine({ s, who, actions }: { s: CaseSanctionView; who?: R
         {s.active && !s.pendingApproval && <Badge tone="bad">In force</Badge>}
       </div>
       <div className="cell-sub">
-        {sanctionPeriod(s)} · given <Time value={s.createdAt} />
+        {/* a warning or a removal happens once: its day is the whole story */}
+        {(s.kind === 'warning' || s.kind === 'content_removal') && !s.revokedAt ? (
+          <>
+            Given <Time value={s.createdAt} />
+          </>
+        ) : (
+          <>
+            {sanctionPeriod(s)} · given <Time value={s.createdAt} />
+          </>
+        )}
         {s.revokeReason ? ` · lifted: ${s.revokeReason}` : ''}
+        {link && <> · {link}</>}
       </div>
       {s.statement && (
         <details className="sanction-statement">
@@ -52,10 +73,13 @@ export function SubjectPanel({
   subject,
   onSanction,
   canAct,
+  selfHarm = false,
 }: {
   subject: NonNullable<CaseDetail['subject']>;
   onSanction: () => void;
   canAct: boolean;
+  /** someone who may hurt themselves gets a caring message, never a sanction */
+  selfHarm?: boolean;
 }): React.JSX.Element {
   return (
     <Section
@@ -64,7 +88,7 @@ export function SubjectPanel({
       actions={
         canAct ? (
           <Button icon="plus" onClick={onSanction}>
-            Sanction this person
+            {selfHarm ? 'Send a caring message' : 'Sanction this person'}
           </Button>
         ) : undefined
       }

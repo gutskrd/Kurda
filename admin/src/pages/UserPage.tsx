@@ -360,7 +360,7 @@ function StandingTab({ user: u, canModerate, onChanged }: { user: UserDetail; ca
               <SanctionLine
                 key={s.id}
                 s={s}
-                who={<CaseLink id={s.caseId} />}
+                link={s.caseId ? <CaseLink id={s.caseId} /> : undefined}
                 actions={
                   canModerate && !self ? (
                     <ActionMenu label={`More for the ${sanctionName(s.kind).toLowerCase()}`} items={[{ label: 'Lift it…', onSelect: () => void lift(s), tone: 'danger' }]} />
@@ -376,7 +376,7 @@ function StandingTab({ user: u, canModerate, onChanged }: { user: UserDetail; ca
         <Section title="Before">
           <ul className="sanction-list">
             {past.map((s) => (
-              <SanctionLine key={s.id} s={s} who={<CaseLink id={s.caseId} />} />
+              <SanctionLine key={s.id} s={s} link={s.caseId ? <CaseLink id={s.caseId} /> : undefined} />
             ))}
           </ul>
         </Section>

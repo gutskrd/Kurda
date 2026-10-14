@@ -292,6 +292,9 @@ describe('a case', () => {
   it('helps someone who may hurt themselves instead of sanctioning them', async () => {
     const user = userEvent.setup();
     const { calls } = show(at, detailRoute(caseDetail({ case: { category: 'self_harm', priority: 0 } })), previewRoute(preview({ messages: [] })));
+    // the person's panel offers help, not a sanction
+    expect(await screen.findByRole('button', { name: 'Send a caring message' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Sanction this person' })).not.toBeInTheDocument();
     await user.click(await screen.findByRole('button', { name: 'Add a caring message' }));
     expect(screen.getByLabelText('Action')).toHaveValue('caring_message');
     await user.selectOptions(screen.getByLabelText('Action'), 'chat_mute');

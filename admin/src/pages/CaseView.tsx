@@ -266,7 +266,7 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
         <div className="case-main">
           <Evidence detail={detail} sensitive={sensitive} />
           {notice && <NoticePanel notice={notice} />}
-          {subject && <SubjectPanel subject={subject} canAct={canAct} onSanction={() => addAction('subject')} />}
+          {subject && <SubjectPanel subject={subject} canAct={canAct} selfHarm={draft.policy === 'self_harm'} onSanction={() => addAction('subject')} />}
           <ReportersPanel
             reports={detail.reports}
             media={detail.media}
