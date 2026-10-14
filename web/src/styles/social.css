@@ -707,10 +707,18 @@
 .fcard-report {
   margin-inline-start: auto;
 }
-/* another player's chip in a game: the ⋯ sits at its end, clear of the meter */
+/* another player's chip in a game: the ⋯ sits at its end, clear of the meter,
+   drawn small so a name keeps its room on a phone — the place to tap stays 44px */
 .player .player-report {
   margin-inline-start: auto;
-  margin-inline-end: -4px;
+  margin-inline-end: -6px;
+}
+.player .player-report .msg-menu-btn {
+  width: 28px;
+  height: 28px;
+}
+.player .player-report .msg-menu-btn::after {
+  inset: -8px;
 }
 .fcard-report .msg-menu-list,
 .rank-row .msg-menu-list {
