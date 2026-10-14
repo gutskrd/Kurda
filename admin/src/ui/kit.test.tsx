@@ -288,6 +288,32 @@ describe('useDialogs', () => {
     await user.keyboard('{Enter}');
     expect(await screen.findByText('hevalê')).toBeInTheDocument();
   });
+
+  it('lets a page’s own check replace the "can’t be empty" one, so a note can be emptied', async () => {
+    const user = userEvent.setup();
+    function NotePage(): React.JSX.Element {
+      const dialogs = useDialogs();
+      const [said, setSaid] = useState('');
+      return (
+        <>
+          <button
+            onClick={async () => {
+              const note = await dialogs.prompt({ title: 'Edit the note', label: 'Note', initial: 'old', validate: () => null });
+              setSaid(note === null ? 'cancelled' : `saved “${note}”`);
+            }}
+          >
+            Edit
+          </button>
+          <output>{said}</output>
+        </>
+      );
+    }
+    renderUi(<NotePage />);
+    await user.click(screen.getByRole('button', { name: 'Edit' }));
+    await user.clear(screen.getByLabelText('Note'));
+    await user.click(screen.getByRole('button', { name: 'Save' }));
+    expect(await screen.findByText('saved “”')).toBeInTheDocument();
+  });
 });
 
 describe('Toast', () => {

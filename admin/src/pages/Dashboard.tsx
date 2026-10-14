@@ -1,7 +1,7 @@
 import { ALPHABET_CLIPS, PRIORITY_SLA_HOURS, type AdminFeedbackSummary, type ModerationSummary, type ReportPriority } from '@kurda/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
-import { canOpen, isKnownPage, NAV, type SessionAccess } from '../navigation';
+import { canOpen, NAV, type SessionAccess } from '../navigation';
 import { useSession } from '../session';
 import { describeAction } from './Audit';
 import { isStoryUsage, type Listing } from '../lessonAudio';
@@ -37,7 +37,6 @@ export function Dashboard(): React.JSX.Element {
   const { me } = useAuth();
   const can = (page: string): boolean => allowed(page, session);
   const moderator = session.capabilities.includes('moderation.act');
-  const feedbackReader = ['moderator', 'superadmin', 'admin', 'support'].some((r) => session.staffRoles.includes(r));
 
   return (
     <div>
@@ -56,7 +55,7 @@ export function Dashboard(): React.JSX.Element {
       <Waiting
         stories={can('stories')}
         lessons={can('lessons')}
-        feedback={feedbackReader}
+        feedback={can('feedback')}
         fraud={can('fraud')}
         bots={can('antibot')}
         approvals={can('approvals')}
@@ -209,11 +208,6 @@ function count<T>(loaded: { data: T | undefined; error: unknown }, pick: (d: T) 
   return loaded.data === undefined ? '…' : pick(loaded.data);
 }
 
-/** A page's address when it exists in this build (Appeals and Feedback arrive with the moderation pages). */
-function linkIfKnown(page: string, query = ''): string | undefined {
-  return isKnownPage(page) ? `#/${page}${query}` : undefined;
-}
-
 function Waiting({
   stories,
   lessons,
@@ -258,7 +252,7 @@ function Waiting({
             icon="star"
             label="New feedback"
             value={count(feedbackSummary, (d) => d!.byStatus.new)}
-            href={linkIfKnown('feedback', '?status=new')}
+            href="#/feedback"
             hint={
               fb
                 ? fb.last30Days.averageStars === null

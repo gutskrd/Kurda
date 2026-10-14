@@ -12,7 +12,7 @@ const ids = (s: SessionAccess): string[] => visibleNav(s).map((n) => n.id);
 
 describe('who sees which page — what the API allows, not a guess', () => {
   it('a moderator sees the queue and the people, and not what refuses them', () => {
-    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'appeals', 'ban-approvals', 'aimod', 'security']);
+    expect(ids(MODERATOR)).toEqual(['dashboard', 'users', 'moderation', 'appeals', 'ban-approvals', 'aimod', 'feedback', 'security']);
     // the old nav showed these to everyone; the API answers a moderator 403
     for (const page of ['analytics', 'shop', 'economy', 'antibot', 'lessons', 'audit']) expect(mayOpenPage(page, MODERATOR)).toBe(false);
   });
@@ -41,8 +41,8 @@ describe('who sees which page — what the API allows, not a guess', () => {
     for (const id of ['users', 'lessons', 'audit']) expect(seen).not.toContain(id);
   });
 
-  it('support sees the people, a founder the tags', () => {
-    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'security']);
+  it('support sees the people and the feedback, a founder the tags', () => {
+    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'feedback', 'security']);
     expect(ids(FOUNDER)).toEqual(['dashboard', 'tags', 'security']);
   });
 

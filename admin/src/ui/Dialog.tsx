@@ -169,7 +169,8 @@ function PromptDialog({
   const [value, setValue] = useState(options.initial ?? '');
   const [touched, setTouched] = useState(false);
   const id = useId();
-  const problem = options.validate?.(value) ?? (value.trim() ? null : 'This can’t be empty.');
+  // a page's own check replaces the default one (a note may be emptied to clear it)
+  const problem = options.validate ? options.validate(value) : value.trim() ? null : 'This can’t be empty.';
   const send = (): void => {
     setTouched(true);
     if (!problem) onAnswer(value.trim());

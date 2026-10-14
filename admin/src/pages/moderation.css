@@ -235,6 +235,7 @@
 .fb-cats { display: flex; flex-wrap: wrap; gap: 6px; }
 .stars { display: inline-flex; gap: 1px; color: var(--warn); vertical-align: middle; }
 .stars .icon { width: 15px; height: 15px; }
+.stars .is-full { fill: currentColor; }
 .stars .is-empty { color: var(--hairline); }
 .fb-list { list-style: none; margin: 0; padding: 0; }
 .fb-item { display: grid; gap: 8px; padding: 14px 18px; border-bottom: 1px solid var(--separator); }
