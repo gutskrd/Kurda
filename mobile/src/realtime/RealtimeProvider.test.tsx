@@ -6,37 +6,10 @@ import { RealtimeProvider } from './RealtimeProvider';
 import { useUserEvents, type UserEvent } from './useUserEvents';
 import { useRoomEvents, type RoomEvent } from './useRoomEvents';
 import { useChatSocket, type ChatEvent } from '../chat/useChatSocket';
+import { FakeSocket } from './testing/fakeSocket';
 
 vi.mock('react-native', () => import('react-native-web'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
-
-class FakeSocket {
-  static all: FakeSocket[] = [];
-  readyState = 0;
-  sent: Array<Record<string, unknown>> = [];
-  closed = false;
-  onopen: (() => void) | null = null;
-  onmessage: ((ev: { data: unknown }) => void) | null = null;
-  onclose: ((ev: { code?: number }) => void) | null = null;
-  onerror: (() => void) | null = null;
-  constructor(readonly url: string) {
-    FakeSocket.all.push(this);
-  }
-  send(data: string): void {
-    this.sent.push(JSON.parse(data) as Record<string, unknown>);
-  }
-  close(): void {
-    this.closed = true;
-    this.readyState = 3;
-  }
-  hello(resumedRooms: string[] = []): void {
-    this.readyState = 1;
-    this.onmessage?.({ data: JSON.stringify({ type: 'hello', resumeToken: 'r', resumedRooms }) });
-  }
-  push(room: string, event: Record<string, unknown>): void {
-    this.onmessage?.({ data: JSON.stringify({ type: 'event', room, event }) });
-  }
-}
 
 const flush = () => act(async () => {
   await new Promise((r) => setTimeout(r, 0));

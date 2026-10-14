@@ -26,6 +26,7 @@ import { useRoomEvents } from '../realtime/useRoomEvents';
 import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
+import { mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 const MAX_LEN = 2000;
 
@@ -80,6 +81,17 @@ export function GroupThreadScreen({
       active = false;
     };
   }, [client, groupId, t]);
+
+  // what was said while the connection was away, and the card of a game started from here
+  useCatchUp(
+    useCallback(() => {
+      void groupHistory(client, groupId).then((res) => {
+        if (!res.ok) return;
+        setMessages((prev) => mergeLatest(prev, res.data.messages));
+        void markGroupRead(client, groupId);
+      });
+    }, [client, groupId]),
+  );
 
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
   const loadOlder = useCallback(async () => {

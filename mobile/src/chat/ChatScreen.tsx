@@ -21,6 +21,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { ChatMessageExtras } from '@kurda/shared';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { ChatGameCard, gameCardOf } from '../play/ChatGameCard';
+import { mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 interface Message extends Partial<ChatMessageExtras> {
   id: string;
@@ -59,6 +60,17 @@ export function ChatScreen({ userId, username, onExit }: { userId: string; usern
       active = false;
     };
   }, [client, userId, markRead]);
+
+  // what arrived while the connection was away, and the card of a game started from here
+  useCatchUp(
+    useCallback(() => {
+      void client.get<{ messages: Message[] }>(`/chat/${userId}/messages`).then((res) => {
+        if (!res.ok) return;
+        setMessages((prev) => mergeLatest(prev, res.data.messages));
+        markRead();
+      });
+    }, [client, userId, markRead]),
+  );
 
   useChatSocket(
     useCallback(
