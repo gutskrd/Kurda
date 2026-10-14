@@ -29,6 +29,9 @@ import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { EditPostButton, SourceCredit, postImages } from '../composer/PostExtras';
+import { PostPictures } from '../composer/PostPictures';
+import { onPostSaved } from '../composer/postSaved';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -65,6 +68,16 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     void loadAll();
   }, [loadAll]);
 
+  // an edit made in the composer shows as soon as it is saved — and only
+  // then, since each read of the post counts a view
+  useEffect(
+    () =>
+      onPostSaved((saved) => {
+        if (saved.id === postId) void loadAll();
+      }),
+    [postId, loadAll],
+  );
+
   const submit = useCallback(async () => {
     const body = draft.trim();
     if ((!body && !voiceUri) || posting) return;
@@ -93,8 +106,9 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const header = (
     <ScreenHeader
-      title={t(post?.type === 'poem' ? 'library.kind.poem' : 'library.kind.story')}
+      title={t(post?.type === 'poem' ? 'library.kind.poem' : post?.type === 'gotin' ? 'civak.kind.saying' : 'library.kind.story')}
       onBack={onExit}
+      right={post ? <EditPostButton post={post} /> : undefined}
     />
   );
 
@@ -121,9 +135,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text>
+              {/* a gotin has no title; its pictures come first on its own page, words under them */}
+              {post.title ? <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text> : null}
+              <PostPictures images={postImages(post)} />
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
-              <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text>
+              {post.body ? <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text> : null}
+              {post.sourceCredit ? <SourceCredit text={post.sourceCredit} /> : null}
               {post.authorId !== user?.id ? (
                 <Pressable
                   onPress={() =>
@@ -142,7 +159,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               ) : null}
 
               <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
-                {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}
+                {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
               </Text>
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />

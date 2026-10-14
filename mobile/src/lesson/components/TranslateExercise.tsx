@@ -1,32 +1,34 @@
-import { StyleSheet, Text, TextInput, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { KurdishAnswerInput } from './KurdishAnswerInput';
 
 interface Props {
   exercise: Exercise;
   text: string;
   onChangeText: (text: string) => void;
   disabled: boolean;
+  /** the course's variety of Kurdish, for the key bar */
+  dialect?: string | null;
 }
 
-export function TranslateExercise({ exercise, text, onChangeText, disabled }: Props) {
+export function TranslateExercise({ exercise, text, onChangeText, disabled, dialect }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.translate.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
-      <TextInput
-        value={text}
+      <KurdishAnswerInput
+        text={text}
         onChangeText={onChangeText}
-        editable={!disabled}
+        dialect={dialect}
+        disabled={disabled}
         placeholder={t('lesson.translate.placeholder')}
         placeholderTextColor={colors.textSecondary}
-        autoCapitalize="none"
-        autoCorrect={false}
         style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.translate.answerLabel')}
       />

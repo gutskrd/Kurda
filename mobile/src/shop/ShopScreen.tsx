@@ -31,6 +31,7 @@ import {
 import { useI18n } from '../i18n/I18nContext';
 import { GiftSheet } from './GiftSheet';
 import { ReceivedGifts } from './ReceivedGifts';
+import { RefreshedItems } from './RefreshedItems';
 import { EmptyState } from '../theme/EmptyState';
 import { giftTierFor } from '@kurda/shared';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -143,7 +144,13 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             sections={sections}
             keyExtractor={(i) => i.sku}
             contentContainerStyle={styles.list}
-            ListHeaderComponent={<ReceivedGifts />}
+            ListHeaderComponent={
+              <>
+                {/* items you own whose art was redrawn, and a way to hand them back */}
+                <RefreshedItems onReturned={(currency, balance) => setBalances((b) => ({ ...b, [currency]: balance }))} />
+                <ReceivedGifts />
+              </>
+            }
             /*
              * The title is a translation KEY, not a word.
              *

@@ -20,6 +20,7 @@ import { PlayerReportButton } from '../reports/PlayerReportButton';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
 import { WordleBoard, cellSizeFor } from './WordleBoard';
 import { WordleKeyboard } from './WordleKeyboard';
+import { reportGameFinished } from '../feedback/gameFinished';
 import {
   createBattle,
   getBattle,
@@ -206,6 +207,9 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
     if (res.ok) {
       setBattle(res.data);
       setDraft([]);
+      // this guess finished your board (solved, or out of tries): a game played to its end
+      const after = res.data.me;
+      if (after && (after.solved || after.status !== 'playing')) reportGameFinished({ moment: after.solved ? 'won' : 'other' });
     } else {
       // a rejected guess costs no attempt — the draft stays put, with a reason
       setNotice(guessMessage(res.error, t));
@@ -396,7 +400,7 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
               {me.solved ? t('games.battle.youSolvedWaiting') : t('games.battle.noTriesWaiting')}
             </Text>
           ) : null}
-          <WordleKeyboard keyboard={me.keyboard} onKey={press} disabled={!active || busy} />
+          <WordleKeyboard keyboard={me.keyboard} onKey={press} disabled={!active || busy} style={styles.keyboardBleed} />
         </>
       ) : null}
     </>
@@ -441,6 +445,8 @@ function Shell({
 
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
+  // the keyboard reaches nearer the edges than the rest of the screen: wide keys
+  keyboardBleed: { marginHorizontal: -spacing.md, width: 'auto' },
   // flex + centre so a long translated name shares the row with the back
   // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
   // kurdî" is three

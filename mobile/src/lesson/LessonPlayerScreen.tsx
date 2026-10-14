@@ -303,6 +303,7 @@ export function SessionPlayer({
             exercise={ex}
             text={text}
             onChangeText={setText}
+            dialect={view.dialect}
             disabled={state.status !== 'answering'}
           />
         ) : null}
@@ -311,6 +312,7 @@ export function SessionPlayer({
             exercise={ex}
             text={text}
             onChangeText={setText}
+            dialect={view.dialect}
             onSkip={() => dispatch({ type: 'SKIP' })}
             disabled={state.status !== 'answering'}
           />
@@ -320,6 +322,7 @@ export function SessionPlayer({
             exercise={ex}
             text={text}
             onChangeText={setText}
+            dialect={view.dialect}
             disabled={state.status !== 'answering'}
           />
         ) : null}

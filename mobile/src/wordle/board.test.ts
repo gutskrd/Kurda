@@ -1,10 +1,13 @@
 import { describe, expect, it } from 'vitest';
+import { KURMANCI_ALPHABET } from '@kurda/shared';
 import {
   backspace,
   buildBoard,
   ENTER,
   DEL,
+  ALPHABET_ROWS,
   KEYBOARD_ROWS,
+  keyboardRows,
   keyFeedback,
   MAX_ATTEMPTS,
   typeLetter,
@@ -64,6 +67,20 @@ describe('Kurdish keyboard', () => {
     }
     // no duplicates
     expect(new Set(letters).size).toBe(31);
+  });
+
+  it('has every letter once in the alphabet layout too, in alphabet order', () => {
+    const letters = ALPHABET_ROWS.flat().filter((k) => k !== ENTER && k !== DEL);
+    expect(letters).toEqual([...KURMANCI_ALPHABET]);
+    expect(keyboardRows('alphabet')).toBe(ALPHABET_ROWS);
+    expect(keyboardRows('qwerty')).toBe(KEYBOARD_ROWS);
+  });
+
+  it('keeps QWERTY where a thumb expects it and gives ç ê î ş û a row of their own', () => {
+    expect(KEYBOARD_ROWS[0]).toEqual(['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p']);
+    expect(KEYBOARD_ROWS[2]![0]).toBe(ENTER);
+    expect(KEYBOARD_ROWS[2]![KEYBOARD_ROWS[2]!.length - 1]).toBe(DEL);
+    expect(KEYBOARD_ROWS[3]).toEqual(['ç', 'ê', 'î', 'ş', 'û']);
   });
 
   it('reads colour memory for a letter, ignoring control keys', () => {
