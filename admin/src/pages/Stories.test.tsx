@@ -1,20 +1,46 @@
 // @vitest-environment jsdom
+import { isValidElement, type ReactNode } from 'react';
+import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { AdminStory } from '../stories';
 import { failure, fakeApi, json, on } from '../test/fetch';
 import { button, choose, click, render, settle, text, type } from '../test/dom';
+import { withKit } from '../test/render';
 import { STORY_ID, storyFixture, summaryOf } from '../test/stories';
+import type { ConfirmOptions } from '../ui';
 import { Stories } from './Stories';
+
+/**
+ * The editor asks in the admin's own dialog (the kit's, tested on its own in
+ * kit.test.tsx). Here it is answered by `confirm`, which hears what the dialog
+ * says — its title and its text, as one line — and answers yes unless told no.
+ */
+const answers = vi.hoisted(() => ({ confirm: vi.fn((_said: string): boolean => true) }));
+vi.mock('../ui/Dialog', async (importOriginal) => {
+  const real = await importOriginal<typeof import('../ui/Dialog')>();
+  const plain = (node: ReactNode): string =>
+    typeof node === 'string' || typeof node === 'number'
+      ? String(node)
+      : isValidElement(node)
+        ? renderToStaticMarkup(node).replace(/<\/li><li>/g, ' ').replace(/<[^>]+>/g, '')
+        : '';
+  // one object for every render, as the real hook gives
+  const dialogs = {
+    confirm: async (o: ConfirmOptions) => answers.confirm([plain(o.title), plain(o.body)].filter(Boolean).join(' ')),
+    prompt: async () => null,
+  };
+  return { ...real, useDialogs: () => dialogs };
+});
+const confirm = answers.confirm;
 
 const AT = `/admin/stories/${STORY_ID}`;
 
 let unmount: (() => void) | null = null;
-let confirm: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
   location.hash = '#/stories';
-  confirm = vi.fn(() => true);
-  vi.stubGlobal('confirm', confirm);
+  confirm.mockReset();
+  confirm.mockImplementation(() => true);
   sessionStorage.clear();
 });
 
@@ -26,7 +52,7 @@ afterEach(() => {
 
 async function open(hash: string): Promise<HTMLElement> {
   location.hash = hash;
-  const page = await render(<Stories />);
+  const page = await render(withKit(<Stories />));
   unmount = page.unmount;
   return page.container;
 }
@@ -94,13 +120,14 @@ describe('the list', () => {
   it('filters by status, variety and search, counting every story on the tabs', async () => {
     listApi();
     const c = await open('#/stories');
-    expect(text(button(c, /^Draft/))).toBe('Draft (2)');
+    const count = (name: RegExp): string => text(button(c, name)?.querySelector('.tab-count'));
+    expect(count(/^Draft/)).toBe('2');
     await click(button(c, /^In review/));
     expect(rows(c)).toEqual(['کلیلی ماڵەوە']);
     await click(button(c, /^All/));
     await choose(c.querySelector('select[aria-label="Variety"]'), 'kurmanci');
     expect(rows(c)).toEqual(['Rêya Dibistanê', 'Şorbeya Nîskê', 'Qelema Şîn']);
-    expect(text(button(c, /^All/))).toBe('All (3)');
+    expect(count(/^All/)).toBe('3');
     await type(c.querySelector('input[type="search"]'), 'sorbeya');
     expect(rows(c)).toEqual(['Şorbeya Nîskê']);
     await type(c.querySelector('input[type="search"]'), 'nothing like it');
@@ -117,10 +144,23 @@ describe('the list', () => {
     expect(text(c)).toContain('Starter (needs native review)');
   });
 
-  it('says when the role does not allow writing stories', async () => {
+  it('says when the role does not allow writing stories, rather than that there are none', async () => {
     fakeApi(on('GET', '/admin/stories', failure(403, 'FORBIDDEN', 'forbidden')));
     const c = await open('#/stories');
-    expect(text(c)).toContain('Writing stories needs the content_editor, admin or superadmin role.');
+    expect(text(c)).toContain('Your role can’t open this');
+    expect(text(c)).toContain('its role doesn’t include writing stories');
+    expect(text(c)).not.toContain('No stories yet');
+  });
+
+  it('records a story’s sentences from its row, and not an archived one’s', async () => {
+    const archived = storyFixture({ id: '0b5c1a52-6c1e-4f43-9a37-2a1f6b6a9d05', slug: 'kevn', title: 'Kevn', status: 'archived' });
+    listApi([storyFixture(), archived]);
+    const c = await open('#/stories');
+    expect(button(c, 'Record the sentences of “Rêya Dibistanê”')!.getAttribute('href')).toBe(`#/audio/stories?story=${STORY_ID}`);
+    expect(button(c, 'Record the sentences of “Kevn”')).toBeNull();
+    // and from the story itself
+    await click(button(c, 'Rêya Dibistanê'));
+    expect(button(c, 'Record its sentences')!.getAttribute('href')).toBe(`#/audio/stories?story=${STORY_ID}`);
   });
 });
 
@@ -365,7 +405,8 @@ describe('the editor', () => {
     api.use(on('DELETE', `${AT}?lockVersion=4`, json({ id: STORY_ID, deleted: true })));
     await click(button(c, 'Delete'));
     expect(location.hash).toBe('#/stories');
-    expect(text(c.querySelector('.st-flash'))).toBe('Deleted “Rêya Dibistanê”.');
+    // said in a toast, which sits outside the page (it stays while a dialog makes the page inert)
+    expect(text(document.body.querySelector('.toasts'))).toContain('Deleted “Rêya Dibistanê”.');
   });
 
   it('creates a new story at its own address with its first save, without loading it again', async () => {
@@ -398,7 +439,7 @@ describe('the editor', () => {
     await type(c.querySelector('#story-slug'), 'nu-nu');
     await click(saveButton(c));
     await settle();
-    await click(button(c, '← All stories'));
+    await click(button(c, 'All stories'));
     expect(location.hash).toBe('#/stories');
     location.hash = `#/stories/${created.id}`;
     await settle();
@@ -409,11 +450,26 @@ describe('the editor', () => {
     expect((api.calls.find((call) => call.method === 'PUT')!.body as { lockVersion: number }).lockVersion).toBe(3);
   });
 
+  it('asks before removing a question with words in it, and keeps it on a no', async () => {
+    listApi();
+    const c = await open(`#/stories/${STORY_ID}`);
+    const count = (): number => c.querySelectorAll('details.st-q').length;
+    const before = count();
+    const remove = (): Element => c.querySelector('details.st-q')!.querySelector('button.danger')!;
+    confirm.mockReturnValueOnce(false);
+    await click(remove());
+    expect(confirm.mock.calls[0]![0]).toBe('Remove question 1? Its answers and explanation go with it.');
+    expect(count()).toBe(before);
+    await click(remove());
+    expect(count()).toBe(before - 1);
+    expect(text(c.querySelector('.st-badges'))).toContain('Unsaved changes');
+  });
+
   it('says there is no such story for an address that is not one', async () => {
     fakeApi(on('GET', '/admin/stories/not-a-story', failure(400, 'VALIDATION_ERROR', 'request validation failed', [{ path: 'id', message: 'Invalid UUID' }])));
     const c = await open('#/stories/not-a-story');
-    expect(text(c.querySelector('.card.empty'))).toBe('There is no such story. It may have been deleted.');
-    expect(button(c, '← All stories')).not.toBeNull();
+    expect(text(c.querySelector('.banner'))).toBe('There is no such story. It may have been deleted.');
+    expect(button(c, 'All stories')).not.toBeNull();
   });
 
   it('puts a Soranî story’s text right to left', async () => {
@@ -484,7 +540,7 @@ describe('leaving the editor', () => {
     const api = listApi();
     const c = await open(`#/stories/${STORY_ID}`);
     await type(summary(c), 'Mine.');
-    await click(button(c, '← All stories'));
+    await click(button(c, 'All stories'));
     expect(confirm.mock.calls).toEqual([[LEAVE]]);
     expect(location.hash).toBe('#/stories');
 
@@ -497,7 +553,8 @@ describe('leaving the editor', () => {
     expect(confirm).toHaveBeenCalledTimes(1);
     expect(confirm.mock.calls[0]![0]).toContain('Your unsaved changes here are not kept.');
     expect(location.hash).toBe('#/stories');
-    expect(text(c.querySelector('.st-flash'))).toBe('Deleted “Rêya Dibistanê”.');
+    // said in a toast, which sits outside the page (it stays while a dialog makes the page inert)
+    expect(text(document.body.querySelector('.toasts'))).toContain('Deleted “Rêya Dibistanê”.');
   });
 
   it('leaves the next story alone when a save comes back after its editor was left', async () => {
@@ -517,7 +574,7 @@ describe('leaving the editor', () => {
     await type(c.querySelector('#story-slug'), 'nu-nu');
     await click(button(c, /^Save draft/));
     // gone while it saves, and on to another story
-    await click(button(c, '← All stories'));
+    await click(button(c, 'All stories'));
     await click(button(c, 'Rêya Dibistanê'));
     await type(summary(c), 'Mine.');
     release();

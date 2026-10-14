@@ -6,7 +6,8 @@
 # admin/src/api.ts). If it starts rendering media from R2, add that host to img-src.
 #
 # style-src carries 'unsafe-inline' because React writes every inline style as
-# a style attribute, and the admin has 287 of them. Without it the browser
+# a style attribute, and the admin sets a few (the width of a progress bar, the
+# height of a chart's bar), which change with the data. Without it the browser
 # blocks the attribute — not only <style> blocks — and drops the declaration
 # silently: no console error unless something is listening for
 # securitypolicyviolation. The same policy on the public site reported

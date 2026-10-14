@@ -58,7 +58,8 @@ import {
 } from '../stories';
 import { setLeaveGuard } from '../nav';
 import { getStory, runStoryAction, storyFailure, type StoryFailure } from '../storiesApi';
-import { STATUS_TONE } from './StoryList';
+import { Badge, Banner, Icon, Loading, PageHeader, Time, useDialogs, type ConfirmOptions } from '../ui';
+import { STATUS_TONE, storyRecordHref } from './StoryList';
 
 const LEVEL_NAME: Record<number, string> = { 1: '1 · first steps (A1)', 2: '2 · elementary (A2)', 3: '3 · intermediate (B1)' };
 
@@ -88,7 +89,15 @@ interface FieldProblems {
 
 const TAG: Record<Tone, string> = { error: 'Must fix', publish: 'Before publishing', warning: 'Check' };
 
-const LEAVE = 'Leave without saving? Your changes here will be lost.';
+const LEAVE: ConfirmOptions = {
+  title: 'Leave without saving?',
+  body: 'Your changes here will be lost.',
+  confirmLabel: 'Leave',
+  cancelLabel: 'Stay',
+  tone: 'danger',
+};
+
+const BACK = { href: '#/stories', label: 'All stories' };
 
 /**
  * Whether the story's fields can be changed: not while it is published or
@@ -131,7 +140,6 @@ function dedupe(list: readonly StoryProblem[]): StoryProblem[] {
 export function StoryEditor({
   id,
   initial,
-  onBack,
   onCreated,
   onDeleted,
 }: {
@@ -139,10 +147,10 @@ export function StoryEditor({
   id: string | null;
   /** the story as just saved, when the page was opened by creating it */
   initial: AdminStory | null;
-  onBack: () => void;
   onCreated: (story: AdminStory) => void;
   onDeleted: (title: string) => void;
 }): React.JSX.Element {
+  const dialogs = useDialogs();
   const [start] = useState(() => (initial ? formFromStory(initial) : blankForm()));
   const [story, setStory] = useState<AdminStory | null>(initial);
   const [loaded, setLoaded] = useState<StoryForm>(start);
@@ -221,7 +229,8 @@ export function StoryEditor({
   });
 
   // leaving with unsaved work asks first: closing or reloading the tab, and
-  // any change of address — the back button, the nav, a typed #/… address
+  // any change of address — the back button, the nav, "All stories", a typed
+  // #/… address — in the admin's own dialog (nav.ts waits for its answer)
   useEffect(() => {
     if (!dirty) return;
     const onUnload = (e: BeforeUnloadEvent): void => {
@@ -229,12 +238,12 @@ export function StoryEditor({
       e.returnValue = '';
     };
     window.addEventListener('beforeunload', onUnload);
-    setLeaveGuard(() => confirm(LEAVE));
+    setLeaveGuard(() => dialogs.confirm(LEAVE));
     return () => {
       window.removeEventListener('beforeunload', onUnload);
       setLeaveGuard(null);
     };
-  }, [dirty]);
+  }, [dirty, dialogs]);
 
   /** The editor moves on by its own doing: it has asked already, or nothing is lost, so the guard must not ask. */
   const leaving = (): void => setLeaveGuard(null);
@@ -291,7 +300,17 @@ export function StoryEditor({
 
   async function reload(): Promise<void> {
     if (!story) return;
-    if (dirty && !confirm('Reload the story as it is saved now? Your changes here will be lost.')) return;
+    if (
+      dirty &&
+      !(await dialogs.confirm({
+        title: 'Reload the story as it is saved now?',
+        body: 'Your changes here will be lost.',
+        confirmLabel: 'Reload',
+        tone: 'danger',
+      }))
+    ) {
+      return;
+    }
     setBusy('reload');
     try {
       const fresh = await getStory(story.id);
@@ -307,21 +326,30 @@ export function StoryEditor({
     }
   }
 
-  function confirmed(action: StoryAction, title: string): boolean {
-    const lost = dirty ? '\n\nYour unsaved changes here are not kept.' : '';
+  /** What an action asks first, in the admin's dialog; true goes ahead. */
+  async function confirmed(action: StoryAction, title: string): Promise<boolean> {
+    const lost = dirty ? ' Your unsaved changes here are not kept.' : '';
     switch (action) {
       case 'unpublish':
-        return confirm(
-          `Unpublish “${title}”?\n\nLearners stop seeing it at once; games already under way keep their own copy. It becomes a draft you can edit, and comes back when it is published again.`,
-        );
+        return dialogs.confirm({
+          title: `Unpublish “${title}”?`,
+          body: 'Learners stop seeing it at once; games already under way keep their own copy. It becomes a draft you can edit, and comes back when it is published again.',
+          confirmLabel: 'Unpublish',
+        });
       case 'archive':
-        return confirm(
-          `Archive “${title}”?\n\nIt leaves the app${status === 'published' ? ' at once' : ''} and can no longer be edited or published; games already under way keep their own copy. The panel cannot bring it back.${lost}`,
-        );
+        return dialogs.confirm({
+          title: `Archive “${title}”?`,
+          body: `It leaves the app${status === 'published' ? ' at once' : ''} and can no longer be edited or published; games already under way keep their own copy. The panel cannot bring it back.${lost}`,
+          confirmLabel: 'Archive',
+          tone: 'danger',
+        });
       case 'delete':
-        return confirm(
-          `Delete “${title}”?\n\nThis cannot be undone here. A story a game has used cannot be deleted: archive it instead.${lost}`,
-        );
+        return dialogs.confirm({
+          title: `Delete “${title}”?`,
+          body: `This cannot be undone. A story a game has used cannot be deleted: archive it instead.${lost}`,
+          confirmLabel: 'Delete',
+          tone: 'danger',
+        });
       case 'publish': {
         const slug = form.slug.trim();
         const reasons = [
@@ -333,7 +361,18 @@ export function StoryEditor({
             ? `Its address ends in random letters (${slug}). Once it is published, changing it breaks the links learners have to it.`
             : null,
         ].filter((r) => r !== null);
-        return reasons.length === 0 || confirm(`Publish “${title}”?\n\n${reasons.join('\n\n')}`);
+        if (reasons.length === 0) return true;
+        return dialogs.confirm({
+          title: `Publish “${title}”?`,
+          body: (
+            <ul className="plain-list dialog-text">
+              {reasons.map((r) => (
+                <li key={r}>{r}</li>
+              ))}
+            </ul>
+          ),
+          confirmLabel: 'Publish',
+        });
       }
       default:
         return true;
@@ -342,7 +381,8 @@ export function StoryEditor({
 
   async function act(action: StoryAction): Promise<void> {
     const title = form.title.trim() || story?.title || 'this story';
-    if (!confirmed(action, title)) return;
+    if (!(await confirmed(action, title))) return;
+    if (!mounted.current) return;
     setBusy(action);
     setNotice(null);
     setServer(null);
@@ -403,25 +443,19 @@ export function StoryEditor({
     }
   }
 
-  const back = (): void => {
-    if (dirty && !confirm(LEAVE)) return;
-    leaving();
-    onBack();
-  };
-
   if (phase === 'loading') {
     return (
       <div>
-        <BackLink onBack={onBack} />
-        <div className="card empty">Loading…</div>
+        <PageHeader back={BACK} title="Story" />
+        <Loading label="Loading the story…" rows={4} />
       </div>
     );
   }
   if (phase === 'failed') {
     return (
       <div>
-        <BackLink onBack={onBack} />
-        <div className="card empty">{loadProblem}</div>
+        <PageHeader back={BACK} title="Story" />
+        <Banner tone="bad" title={loadProblem} />
       </div>
     );
   }
@@ -431,25 +465,43 @@ export function StoryEditor({
 
   return (
     <div>
-      <BackLink onBack={back} />
-      <div className="toolbar st-head">
-        <div style={{ minWidth: 0 }}>
-          <h1 lang={title ? script.lang : undefined} dir={title ? script.dir : undefined}>
+      <PageHeader
+        back={BACK}
+        title={
+          <span lang={title ? script.lang : undefined} dir={title ? script.dir : undefined}>
             {title || (story ? 'Untitled story' : 'New story')}
-          </h1>
-          <div className="row st-badges">
-            {status && <span className={`badge ${STATUS_TONE[status]}`}>{STATUS_NAME[status]}</span>}
-            {story && needsNativeReview(story) && <span className="badge mid">Starter (needs native review)</span>}
-            {dirty && <span className="badge">Unsaved changes</span>}
-            {story && (
-              <span className="subtle">
-                Saved {new Date(story.updatedAt).toLocaleString()}
-                {story.publishedAt && ` · first published ${new Date(story.publishedAt).toLocaleDateString()}`}
-              </span>
-            )}
-          </div>
-        </div>
-      </div>
+          </span>
+        }
+        meta={
+          <span className="badges st-badges">
+            {status && <Badge tone={STATUS_TONE[status]}>{STATUS_NAME[status]}</Badge>}
+            {story && needsNativeReview(story) && <Badge tone="warn">Starter (needs native review)</Badge>}
+            {dirty && <Badge>Unsaved changes</Badge>}
+          </span>
+        }
+        subtitle={
+          story ? (
+            <>
+              Saved <Time value={story.updatedAt} />
+              {story.publishedAt && (
+                <>
+                  {' · first published '}
+                  <Time value={story.publishedAt} mode="date" />
+                </>
+              )}
+            </>
+          ) : undefined
+        }
+        actions={
+          // its sentences are in the audio studio while it is not archived
+          story && status !== 'archived' ? (
+            <a className="button-link" href={storyRecordHref(story.id)}>
+              <Icon name="mic" />
+              Record its sentences
+            </a>
+          ) : undefined
+        }
+      />
 
       {conflict && (
         <div className="card st-conflict" role="alert">
@@ -644,7 +696,7 @@ export function StoryEditor({
               <h2 className="st-h2" id="st-gloss">
                 Glossary <span className="subtle">({form.glossary.length} of {GLOSSARY_MAX})</span>
               </h2>
-              <div className="spacer" style={{ flex: 1 }} />
+              <div className="spacer" />
               <button
                 type="button"
                 disabled={ro || form.glossary.length >= GLOSSARY_MAX}
@@ -680,7 +732,7 @@ export function StoryEditor({
               <h2 className="st-h2" id="st-questions">
                 Questions <span className="subtle">({form.questions.length})</span>
               </h2>
-              <div className="spacer" style={{ flex: 1 }} />
+              <div className="spacer" />
               <button type="button" className="ghost" onClick={() => setOpen(new Set(form.questions.map((q) => q.key)))}>
                 Open all
               </button>
@@ -756,21 +808,6 @@ export function StoryEditor({
         </aside>
       </div>
     </div>
-  );
-}
-
-function BackLink({ onBack }: { onBack: () => void }): React.JSX.Element {
-  return (
-    <a
-      href="#/stories"
-      className="st-back"
-      onClick={(e) => {
-        e.preventDefault();
-        onBack();
-      }}
-    >
-      ← All stories
-    </a>
   );
 }
 
@@ -1014,6 +1051,7 @@ function QuestionCard({
   dispatch: (a: EditorAction) => void;
 }): React.JSX.Element {
   const ro = useContext(ReadOnly);
+  const dialogs = useDialogs();
   const script = storyTextDirection(dialect);
   const base = `questions[${index}]`;
   const inside = at(base, false);
@@ -1069,7 +1107,7 @@ function QuestionCard({
               ))}
             </select>
           </Field>
-          <div className="spacer" style={{ flex: 1 }} />
+          <div className="spacer" />
           <button
             type="button"
             className="ghost"
@@ -1092,8 +1130,18 @@ function QuestionCard({
             type="button"
             className="danger"
             disabled={ro}
-            onClick={() => {
-              if (hasContent && !confirm(`Remove question ${index + 1}?`)) return;
+            onClick={async () => {
+              if (
+                hasContent &&
+                !(await dialogs.confirm({
+                  title: `Remove question ${index + 1}?`,
+                  body: 'Its answers and explanation go with it.',
+                  confirmLabel: 'Remove',
+                  tone: 'danger',
+                }))
+              ) {
+                return;
+              }
               dispatch({ type: 'q/remove', index });
             }}
           >

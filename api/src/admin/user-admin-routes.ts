@@ -5,7 +5,7 @@ import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
-import { USERS_PAGE_MAX } from './user-admin-service.js';
+import { USER_FILTERS, USERS_PAGE_MAX, type UserFilter } from './user-admin-service.js';
 import type { UserAdminService } from './user-admin-service.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -13,7 +13,16 @@ const reasonBody = z.object({ reason: z.string() });
 const muteBody = z.object({ reason: z.string(), hours: z.number().int().min(1) });
 // confirmUsername: the person's username, which the only moderator types to confirm a permanent ban
 const banBody = z.object({ reason: z.string(), hours: z.number().int().min(1).optional(), confirmUsername: z.string().max(60).optional() });
-const walletBody = z.object({ reason: z.string(), currency: z.enum(['zer', 'gems']), amount: z.number().int() });
+/**
+ * The most one admin change may add or take away. A grant mints currency: a
+ * slip of the keyboard (1000000 for 1000) should be refused, not credited.
+ */
+export const WALLET_ADJUST_MAX = 1_000_000;
+const walletBody = z.object({
+  reason: z.string(),
+  currency: z.enum(['zer', 'gems']),
+  amount: z.number().int().min(-WALLET_ADJUST_MAX).max(WALLET_ADJUST_MAX),
+});
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
 
@@ -46,13 +55,14 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
           q: z.string().min(1).max(200).optional(),
           limit: z.coerce.number().int().min(1).max(USERS_PAGE_MAX).optional(),
           offset: z.coerce.number().int().min(0).max(1_000_000).optional(),
+          filter: z.enum(USER_FILTERS).optional(),
         }),
       },
       preHandler: canView,
     },
     async (req) => {
-      const { q, limit, offset } = req.query as { q?: string; limit?: number; offset?: number };
-      return users.search(q, limit, offset);
+      const { q, limit, offset, filter } = req.query as { q?: string; limit?: number; offset?: number; filter?: UserFilter };
+      return users.search(q, limit, offset, filter);
     },
   );
 

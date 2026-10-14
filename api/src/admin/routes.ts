@@ -81,11 +81,20 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
    */
   app.get('/admin/session', { config: { skipValidation: true }, preHandler: adminOnly }, async (req) => {
     const state = await totp.state(req.user!.id, req.user!.familyId);
+    const cleared = state.enrolled && state.verified;
     return {
       roles: req.user!.roles.filter(isAdminRole),
       needsEnrollment: !state.enrolled,
       needsVerification: state.enrolled && !state.verified,
-      capabilities: state.enrolled && state.verified ? capabilitiesFor(req.user!.roles) : [],
+      capabilities: cleared ? capabilitiesFor(req.user!.roles) : [],
+      /**
+       * Every staff role the account holds, the legacy `admin` and `founder`
+       * included, which `roles` leaves out. Many routes are still guarded by a
+       * role list rather than a capability (analytics, the economy, the shop,
+       * tags…), so the panel needs these to show only the pages it can open.
+       * Empty until 2FA is done, like the capabilities.
+       */
+      staffRoles: cleared ? req.user!.roles.filter((r) => PRIVILEGED_ROLES.includes(r)) : [],
     };
   });
 

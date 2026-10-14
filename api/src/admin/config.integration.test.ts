@@ -107,6 +107,78 @@ describe.skipIf(!DATABASE_URL)('admin config approval (integration)', () => {
     expect((await pool.query(`SELECT 1 FROM events WHERE key = $1`, [`cfg_${suffix}_newroz`])).rowCount).toBe(1);
   });
 
+  it('changes only what a shop proposal names, keeping the rest of the item', async () => {
+    const sku = `cfg_keep_${suffix}`; skus.push(sku);
+    await pool.query(
+      `INSERT INTO shop_items (sku, name, description, category, currency, price, asset_key, premium_only, display_order,
+                               available_from, available_to)
+       VALUES ($1, 'Kept', 'A picture', 'background', 'zer', 300, 'cosmetics/bg/keep.webp', true, 7,
+               '2030-01-01T00:00:00Z', '2030-02-01T00:00:00Z')`,
+      [sku],
+    );
+    const res = await call('POST', '/admin/config/changes', adminTok, {
+      target: 'shop_item',
+      payload: { sku, name: 'Kept', currency: 'zer', price: 250 },
+    });
+    expect(res.json().status).toBe('applied');
+    const row = (await pool.query(`SELECT * FROM shop_items WHERE sku = $1`, [sku])).rows[0]!;
+    expect(row).toMatchObject({
+      price: 250,
+      description: 'A picture',
+      category: 'background',
+      asset_key: 'cosmetics/bg/keep.webp',
+      premium_only: true,
+      display_order: 7,
+    });
+    expect((row.available_from as Date).toISOString()).toBe('2030-01-01T00:00:00.000Z');
+    expect((row.available_to as Date).toISOString()).toBe('2030-02-01T00:00:00.000Z');
+
+    // a field the proposal does name is changed, cleared windows included
+    await call('POST', '/admin/config/changes', adminTok, {
+      target: 'shop_item',
+      payload: { sku, name: 'Kept', currency: 'zer', price: 250, premiumOnly: false, availableTo: null },
+    });
+    const after = (await pool.query(`SELECT premium_only, available_to, asset_key FROM shop_items WHERE sku = $1`, [sku])).rows[0]!;
+    expect(after).toMatchObject({ premium_only: false, available_to: null, asset_key: 'cosmetics/bg/keep.webp' });
+  });
+
+  it('saves the Kurdish tag, a shop item of the tag category, through the catalogue route', async () => {
+    const sku = `cfg_tag_${suffix}`; skus.push(sku);
+    const res = await app.inject({
+      method: 'POST',
+      url: '/shop/items',
+      headers: { authorization: `Bearer ${adminTok}` },
+      payload: { sku, name: 'A tag', category: 'tag', currency: 'zer', price: 500 },
+      remoteAddress: '10.80.0.9',
+    });
+    expect(res.statusCode).toBe(200);
+    expect((await pool.query(`SELECT category FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.category).toBe('tag');
+  });
+
+  it('will not set a price that needs a second admin through the catalogue route', async () => {
+    const sku = `cfg_door_${suffix}`; skus.push(sku);
+    const post = (payload: Record<string, unknown>) =>
+      app.inject({ method: 'POST', url: '/shop/items', headers: { authorization: `Bearer ${adminTok}` }, payload, remoteAddress: '10.80.0.9' });
+
+    // a new item at 1,000 or more, and a cheap item raised to it, are both refused
+    const fresh = await post({ sku, name: 'Dear', currency: 'gems', price: 1000 });
+    expect(fresh.statusCode).toBe(409);
+    expect(fresh.json().code).toBe('PRICE_NEEDS_APPROVAL');
+    expect((await pool.query(`SELECT 1 FROM shop_items WHERE sku = $1`, [sku])).rowCount).toBe(0);
+    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 999 })).statusCode).toBe(200);
+    expect((await post({ sku, name: 'Dear', currency: 'gems', price: 1500 })).statusCode).toBe(409);
+    expect((await pool.query(`SELECT price FROM shop_items WHERE sku = $1`, [sku])).rows[0]!.price).toBe(999);
+
+    // once a second admin has approved the price, the rest of the item is still edited here
+    const proposed = await call('POST', '/admin/config/changes', adminTok, { target: 'shop_item', payload: { sku, name: 'Dear', currency: 'gems', price: 1500 } });
+    expect((await call('POST', `/admin/config/changes/${proposed.json().id}/approve`, admin2Tok)).statusCode).toBe(200);
+    const renamed = await post({ sku, name: 'Dearer', currency: 'gems', price: 1500 });
+    expect(renamed.statusCode).toBe(200);
+    // the same number in the other currency is a new price
+    expect((await post({ sku, name: 'Dearer', currency: 'zer', price: 1500 })).statusCode).toBe(409);
+    expect((await pool.query(`SELECT name, price, currency FROM shop_items WHERE sku = $1`, [sku])).rows[0]).toEqual({ name: 'Dearer', price: 1500, currency: 'gems' });
+  });
+
   it('lists pending changes and can reject one', async () => {
     const sku = `cfg_reject_${suffix}`; skus.push(sku);
     const p = await call('POST', '/admin/config/changes', adminTok, {

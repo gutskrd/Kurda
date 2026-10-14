@@ -21,12 +21,21 @@ export interface AuditFilters {
   adminId?: string;
   action?: string;
   targetId?: string;
+  /**
+   * Only the entries after this one, newest first: the last row of the page
+   * before, for paging. An id rather than a time, because rows share a time
+   * (pg answers to the millisecond, the table holds microseconds) and a time
+   * cursor skipped the rest of a millisecond's rows.
+   */
+  beforeId?: string;
   limit?: number;
 }
 
 export interface AuditRow {
   id: string;
   adminId: string;
+  /** who the admin is, so the trail reads as names; null once the account is gone */
+  adminUsername: string | null;
   action: string;
   targetType: string | null;
   targetId: string | null;
@@ -70,30 +79,38 @@ export class AuditService {
     const params: unknown[] = [];
     if (filters.adminId) {
       params.push(filters.adminId);
-      clauses.push(`admin_id = $${params.length}`);
+      clauses.push(`a.admin_id = $${params.length}`);
     }
     if (filters.action) {
       params.push(`${filters.action}%`);
-      clauses.push(`action LIKE $${params.length}`);
+      clauses.push(`a.action LIKE $${params.length}`);
     }
     if (filters.targetId) {
       params.push(filters.targetId);
-      clauses.push(`target_id = $${params.length}`);
+      clauses.push(`a.target_id = $${params.length}`);
+    }
+    if (filters.beforeId) {
+      params.push(filters.beforeId);
+      // an id that is not in the trail compares as null: nothing older to show
+      clauses.push(`(a.created_at, a.id) < (SELECT created_at, id FROM admin_audit_log WHERE id = $${params.length})`);
     }
     const limit = Math.min(Math.max(filters.limit ?? 50, 1), 200);
     params.push(limit);
     const where = clauses.length > 0 ? `WHERE ${clauses.join(' AND ')}` : '';
     const res = await this.pool.query<{
-      id: string; admin_id: string; action: string; target_type: string | null; target_id: string | null;
+      id: string; admin_id: string; admin_username: string | null; action: string; target_type: string | null; target_id: string | null;
       before: unknown; after: unknown; reason: string | null; request_id: string | null; created_at: Date;
     }>(
-      `SELECT id, admin_id, action, target_type, target_id, before, after, reason, request_id, created_at
-       FROM admin_audit_log ${where} ORDER BY created_at DESC LIMIT $${params.length}`,
+      `SELECT a.id, a.admin_id, u.username AS admin_username, a.action, a.target_type, a.target_id, a.before, a.after,
+              a.reason, a.request_id, a.created_at
+       FROM admin_audit_log a LEFT JOIN users u ON u.id = a.admin_id
+       ${where} ORDER BY a.created_at DESC, a.id DESC LIMIT $${params.length}`,
       params,
     );
     return res.rows.map((r) => ({
       id: r.id,
       adminId: r.admin_id,
+      adminUsername: r.admin_username,
       action: r.action,
       targetType: r.target_type,
       targetId: r.target_id,

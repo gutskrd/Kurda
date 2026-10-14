@@ -86,6 +86,8 @@ const listQuery = z.object({
   q: filter(z.string().trim().max(80)),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).max(100_000).default(0),
+  // the last answer already shown: the next page starts after it, wherever marking has moved the rest
+  beforeId: filter(z.uuid()),
 });
 
 const patchBody = z

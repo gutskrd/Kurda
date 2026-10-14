@@ -5,8 +5,9 @@ import {
   ALPHABET_CLIP_MAX_SECONDS,
   type AlphabetClip,
 } from '@kurda/shared';
-import { api, apiUpload, ApiError } from '../api';
+import { api, apiUpload } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
+import { EmptyState, ErrorState, Tabs } from '../ui';
 
 interface Recording {
   key: string;
@@ -15,7 +16,7 @@ interface Recording {
   updatedAt: string;
 }
 
-type Filter = 'missing' | 'recorded' | 'all';
+export type Filter = 'missing' | 'recorded' | 'all';
 
 /**
  * Recording the alphabet page's sounds: the Letters side of the audio studio.
@@ -29,12 +30,21 @@ type Filter = 'missing' | 'recorded' | 'all';
  * Removing a recording brings the synthesised clip back, so nothing here can
  * leave a letter silent.
  */
-export function AlphabetAudio(): React.JSX.Element {
+export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}): React.JSX.Element {
   const [recordings, setRecordings] = useState<Record<string, Recording>>({});
   const [loaded, setLoaded] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>('missing');
-  const [selected, setSelected] = useState<string>(ALPHABET_CLIPS[0]!.key);
+  const [error, setError] = useState<unknown>(null);
+  const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
+  const [selected, setSelectedKey] = useState<string>(ALPHABET_CLIPS[0]!.key);
+  const studio = useRef<HTMLElement>(null);
+
+  // on a phone the studio sits above the list: a tap on a letter far down brings it back into view
+  const setSelected = (key: string, reveal = false): void => {
+    setSelectedKey(key);
+    if (!reveal || typeof matchMedia !== 'function' || !matchMedia('(max-width: 899px)').matches) return;
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() => studio.current?.scrollIntoView({ block: 'start', behavior: reduce ? 'auto' : 'smooth' }));
+  };
 
   const load = useCallback(async () => {
     try {
@@ -42,7 +52,7 @@ export function AlphabetAudio(): React.JSX.Element {
       setRecordings(Object.fromEntries(res.recordings.map((r) => [r.key, r])));
       setError(null);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not load the recordings');
+      setError(err);
     } finally {
       setLoaded(true);
     }
@@ -58,8 +68,8 @@ export function AlphabetAudio(): React.JSX.Element {
     if (!loaded || started.current) return;
     started.current = true;
     const first = ALPHABET_CLIPS.find((c) => !recordings[c.key]);
-    if (first) setSelected(first.key);
-    else setFilter('all');
+    if (first) setSelectedKey(first.key);
+    else if (!initialFilter) setFilter('all');
   }, [loaded, recordings]);
 
   const done = ALPHABET_CLIPS.filter((c) => recordings[c.key]).length;
@@ -89,36 +99,39 @@ export function AlphabetAudio(): React.JSX.Element {
   return (
     <div>
       <div className="card aa-summary">
-        <div className="row" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
-          <strong>
-            {done} of {ALPHABET_CLIPS.length} recorded
-          </strong>
-          <span className="subtle">The sounds on the alphabet page. The rest use the synthesised voice until they are recorded.</span>
+        <div className="aa-summary-head">
+          <div>
+            <strong className="aa-count">
+              {done} of {ALPHABET_CLIPS.length} recorded
+            </strong>
+            <div className="subtle">The sounds on the alphabet page. The rest use the synthesised voice until they are recorded.</div>
+          </div>
         </div>
-        <div className="progress" style={{ marginTop: 10 }} aria-label="Recorded so far">
+        <div className="progress" role="progressbar" aria-label="Recorded so far" aria-valuemin={0} aria-valuemax={ALPHABET_CLIPS.length} aria-valuenow={done}>
           <div className="progress-bar" style={{ width: `${(done / ALPHABET_CLIPS.length) * 100}%` }} />
         </div>
       </div>
 
-      {error && <div className="error" style={{ margin: '12px 0' }}>{error}</div>}
+      {error != null && <ErrorState error={error} onRetry={() => void load()} what="the alphabet’s recordings" compact />}
 
       <div className="aa-layout">
         <div>
-          <div className="tabs" role="tablist" aria-label="Show">
-            {(
-              [
-                ['missing', `Still to record (${ALPHABET_CLIPS.length - done})`],
-                ['recorded', `Recorded (${done})`],
-                ['all', 'All'],
-              ] as const
-            ).map(([f, label]) => (
-              <button key={f} type="button" role="tab" aria-selected={filter === f} className={`tab${filter === f ? ' active' : ''}`} onClick={() => setFilter(f)}>
-                {label}
-              </button>
-            ))}
-          </div>
+          <Tabs
+            label="Show"
+            value={filter}
+            onChange={setFilter}
+            items={[
+              { key: 'missing', label: 'Still to record', count: ALPHABET_CLIPS.length - done },
+              { key: 'recorded', label: 'Recorded', count: done },
+              { key: 'all', label: 'All' },
+            ]}
+          />
 
-          {shown.length === 0 && <div className="empty">{filter === 'missing' ? 'Every sound has a recording.' : 'Nothing recorded yet.'}</div>}
+          {shown.length === 0 && (
+            <div className="card">
+              <EmptyState title={filter === 'missing' ? 'Every sound has a recording.' : 'Nothing recorded yet.'} icon={filter === 'missing' ? 'check' : 'mic'} compact />
+            </div>
+          )}
 
           {ALPHABET_CLIP_GROUPS.map(({ group, title }) => {
             const items = shown.filter((c) => c.group === group);
@@ -132,7 +145,7 @@ export function AlphabetAudio(): React.JSX.Element {
                       key={c.key}
                       type="button"
                       className={`aa-item${c.key === selected ? ' is-on' : ''}`}
-                      onClick={() => setSelected(c.key)}
+                      onClick={() => setSelected(c.key, true)}
                       aria-current={c.key === selected}
                     >
                       <span className="aa-item-say" dir={c.script === 'ckb' ? 'rtl' : 'ltr'} lang={c.script === 'ckb' ? 'ckb' : 'ku'}>
@@ -149,6 +162,7 @@ export function AlphabetAudio(): React.JSX.Element {
 
         <Studio
           key={clip.key}
+          ref={studio}
           clip={clip}
           recording={recordings[clip.key] ?? null}
           onPrev={() => move(-1)}
@@ -171,6 +185,7 @@ export function AlphabetAudio(): React.JSX.Element {
 }
 
 function Studio({
+  ref,
   clip,
   recording,
   onPrev,
@@ -178,6 +193,7 @@ function Studio({
   onSaved,
   onRemoved,
 }: {
+  ref: React.Ref<HTMLElement>;
   clip: AlphabetClip;
   recording: Recording | null;
   onPrev: () => void;
@@ -188,7 +204,7 @@ function Studio({
   const group = ALPHABET_CLIP_GROUPS.find((g) => g.group === clip.group)!.title;
 
   return (
-    <aside className="card aa-studio" aria-label="Record this sound">
+    <aside ref={ref} className="card aa-studio" aria-label="Record this sound">
       <div className="aa-studio-head">
         <span className="subtle">{group}</span>
         <span className={`badge${recording ? ' ok' : ''}`}>{recording ? 'Recorded' : 'Synthesised voice'}</span>

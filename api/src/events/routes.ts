@@ -1,7 +1,19 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { AppError } from '../plugins/errors.js';
 import type { EventService } from './service.js';
+
+/** The same JSON whatever order its keys were written in. */
+function sameJson(a: unknown, b: unknown): boolean {
+  const canon = (v: unknown): unknown =>
+    Array.isArray(v)
+      ? v.map(canon)
+      : v && typeof v === 'object'
+        ? Object.fromEntries(Object.keys(v).sort().map((k) => [k, canon((v as Record<string, unknown>)[k])]))
+        : v;
+  return JSON.stringify(canon(a)) === JSON.stringify(canon(b));
+}
 
 const keyParam = z.object({ key: z.string().min(1).max(64) });
 
@@ -41,12 +53,33 @@ export function registerEventRoutes(app: FastifyInstance, events: EventService):
     async () => ({ events: await events.list() }),
   );
 
-  /** Admin: create or replace a definition by key (no deploy needed). */
+  /**
+   * Admin: create or replace a definition by key (no deploy needed).
+   *
+   * Quests and rewards left out keep what is stored. The panel's form never
+   * sent them, and an upsert that wrote the whole row turned every edit of a
+   * name or a date into "this event has no quests and gives nothing".
+   *
+   * Rewards are not changed here at all. An event that grants currency is the
+   * one kind of event change that needs a second admin's sign-off
+   * (POST /admin/config/changes); accepting rewards on this route as well let one
+   * admin skip that by choosing the other door.
+   */
   app.post(
     '/admin/events',
     { schema: { body: upsertBody }, preHandler: requireRoles('admin') },
     async (req, reply) => {
-      const event = await events.upsert(req.body as z.infer<typeof upsertBody>);
+      const body = req.body as z.infer<typeof upsertBody>;
+      const current = await events.byKey(body.key);
+      const rewards = body.rewards ?? current?.rewards ?? {};
+      if (!sameJson(rewards, current?.rewards ?? {})) {
+        throw new AppError(
+          'REWARDS_NEED_APPROVAL',
+          409,
+          'rewards change through Approvals, where a second admin signs off on anything that grants currency',
+        );
+      }
+      const event = await events.upsert({ ...body, rewards, quests: body.quests ?? current?.quests ?? [] });
       return reply.code(201).send({ event });
     },
   );
@@ -58,7 +91,8 @@ export function registerEventRoutes(app: FastifyInstance, events: EventService):
     async (req, reply) => {
       const { key } = req.params as z.infer<typeof keyParam>;
       const found = await events.setEnabled(key, (req.body as { enabled: boolean }).enabled);
-      if (!found) return reply.code(404).send({ error: { code: 'NOT_FOUND', message: 'no such event' } });
+      // the envelope every other route answers with, so the panel can read it
+      if (!found) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such event', requestId: req.id });
       return { ok: true };
     },
   );

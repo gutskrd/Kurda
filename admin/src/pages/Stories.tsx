@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
-import { useHashRoute } from '../nav';
+import { useEffect, useRef } from 'react';
+import { go, useRoute } from '../nav';
 import type { AdminStory } from '../stories';
+import { useToast } from '../ui';
 import { StoryEditor } from './StoryEditor';
 import { StoryList } from './StoryList';
 
@@ -11,9 +12,9 @@ import { StoryList } from './StoryList';
  * for the list and a story can be bookmarked or sent to a reviewer.
  */
 export function Stories(): React.JSX.Element {
-  const [route, navigate] = useHashRoute('stories');
-  const sub = route.split('/')[1] ?? '';
-  const [flash, setFlash] = useState<string | null>(null);
+  const route = useRoute();
+  const toast = useToast();
+  const sub = route.rest[0] ?? '';
   // a story just created is handed to its own page, so it is not loaded again —
   // once: opened again later, it is loaded like any other, or it would be stale
   const created = useRef<AdminStory | null>(null);
@@ -21,21 +22,7 @@ export function Stories(): React.JSX.Element {
     if (created.current && sub !== created.current.id) created.current = null;
   }, [sub]);
 
-  if (!sub) {
-    return (
-      <StoryList
-        flash={flash}
-        onOpen={(id) => {
-          setFlash(null);
-          navigate(`stories/${id}`);
-        }}
-        onNew={() => {
-          setFlash(null);
-          navigate('stories/new');
-        }}
-      />
-    );
-  }
+  if (!sub) return <StoryList onNew={() => go('stories/new')} />;
 
   const id = sub === 'new' ? null : sub;
   const initial = id && created.current?.id === id ? created.current : null;
@@ -44,15 +31,14 @@ export function Stories(): React.JSX.Element {
       key={sub}
       id={id}
       initial={initial}
-      onBack={() => navigate('stories')}
       onCreated={(story) => {
         created.current = story;
         // replace, so Back from the new story goes to the list, not to an empty form
         location.replace(`#/stories/${story.id}`);
       }}
       onDeleted={(title) => {
-        setFlash(`Deleted “${title}”.`);
-        navigate('stories');
+        toast.success(`Deleted “${title}”.`);
+        go('stories');
       }}
     />
   );

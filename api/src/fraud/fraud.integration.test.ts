@@ -88,6 +88,8 @@ describe.skipIf(!DATABASE_URL)('payment fraud (integration)', () => {
     const review = queue.find((r) => r.userId === user)!;
     expect(review.flags).toContain('VELOCITY');
     expect(review.receiptId).toBeTruthy();
+    // named, so the admin's list says who it is rather than an id
+    expect(review.username).toBe(`fraud_v_${suffix}`.slice(0, 30));
 
     // admin clears → the held Gems are granted and the hold is released
     const admin = ids[1]!;

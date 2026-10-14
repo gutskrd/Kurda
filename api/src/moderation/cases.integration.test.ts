@@ -482,6 +482,32 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
     }
   });
 
+  it('with only one moderator, two permanent bans in one decision are each confirmed by their own name', async () => {
+    moderators = 1;
+    try {
+      const t = await target('solopair');
+      const liar = await kit.person('sololiar');
+      created.push(liar.id);
+      const caseId = await reportCase(liar, { targetType: 'user', targetId: t.id, category: 'violence' });
+      const actions = [
+        { target: 'subject', kind: 'permanent_ban', statement: 'A credible threat of violence.' },
+        { target: `reporter:${liar.id}`, kind: 'permanent_ban', statement: 'Reports made to harass.' },
+      ];
+      const preview = await decide(modA, caseId, { outcome: 'actioned', policy: 'violence', actions, preview: true });
+      expect((preview.json() as DecideResult).permanentBans.map((b) => b.usernameRequired)).toEqual([true, true]);
+      // one name typed confirms one ban, not both
+      const one = await decide(modA, caseId, { outcome: 'actioned', policy: 'violence', actions, confirmUsername: t.username });
+      expect(one.json().code).toBe('CONFIRM_USERNAME_REQUIRED');
+      const half = await decide(modA, caseId, { outcome: 'actioned', policy: 'violence', actions, confirmUsernames: [liar.username] });
+      expect(half.json().code).toBe('CONFIRM_USERNAME_REQUIRED');
+      const both = await decide(modA, caseId, { outcome: 'actioned', policy: 'violence', actions, confirmUsernames: [t.username, liar.username] });
+      expect(both.statusCode, both.body).toBe(200);
+      expect((both.json() as DecideResult).sanctions.filter((s) => s.kind === 'permanent_ban' && s.active)).toHaveLength(2);
+    } finally {
+      moderators = 2;
+    }
+  });
+
   it('a child-safety ban applies at once, and is confirmed afterwards', async () => {
     const t = await target('zerotol');
     const caseId = await reportCase(reporter, { targetType: 'user', targetId: t.id, category: 'child_safety' });

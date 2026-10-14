@@ -1,10 +1,12 @@
 import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
-import type { AdminUserModeration, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
+import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
+import { PRIVILEGED_ROLES } from './roles.js';
+import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
-import { SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
+import { IN_FORCE_SQL, SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -13,8 +15,21 @@ export interface UserSearchResult {
   username: string;
   email: string;
   ban: BanState;
+  /** a chat mute in force now (with or without an end) */
+  muted: boolean;
+  /** a posting mute or a feature limit in force now: the account works, but not all of it */
+  limited: boolean;
+  /** staff roles show on the list, so a moderator sees who is staff before opening them */
+  roles: string[];
   createdAt: Date;
 }
+
+/**
+ * The list's filters: accounts that cannot sign in now (suspended or banned),
+ * accounts that cannot send messages now, and staff.
+ */
+export const USER_FILTERS = ['restricted', 'muted', 'staff'] as const;
+export type UserFilter = (typeof USER_FILTERS)[number];
 
 /** One page of users, and how many there are in total. */
 export interface UserPage {
@@ -38,13 +53,16 @@ export interface UserDetail extends Partial<AdminUserModeration> {
   displayName: string | null;
   roles: string[];
   createdAt: Date;
+  /** minor, adult, or no birth year on the account — what may be done to and shown about them depends on it */
+  age: AgeBadge;
   ban: BanState;
   bannedUntil: Date | null;
   mutedUntil: Date | null;
   balances: { zer: number; gems: number };
   ledger: Array<{ currency: string; amount: number; reason: string; createdAt: Date }>;
   sessions: Array<{ deviceName: string | null; createdAt: Date; expiresAt: Date }>;
-  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; createdAt: Date }>;
+  /** the admin's username too, so the page names who did it (null when the account is gone) */
+  actions: Array<{ action: string; reason: string; meta: unknown; adminId: string | null; adminUsername: string | null; createdAt: Date }>;
 }
 
 /** What the person is told for each of the old page's actions. */
@@ -105,10 +123,17 @@ export class UserAdminService {
    * `total` counts the whole match, not the page, and rides along via
    * `count(*) OVER ()` so the heading costs no second query.
    */
-  async search(query = "", limit = USERS_PAGE_SIZE, offset = 0): Promise<UserPage> {
+  async search(query = "", limit = USERS_PAGE_SIZE, offset = 0, filter?: UserFilter): Promise<UserPage> {
     const q = query.trim();
     const params: unknown[] = [];
     let where = 'deleted_at IS NULL';
+
+    if (filter === 'restricted') where += ' AND banned_at IS NOT NULL AND (banned_until IS NULL OR banned_until > now())';
+    else if (filter === 'muted') where += ' AND muted_until > now()';
+    else if (filter === 'staff') {
+      params.push(PRIVILEGED_ROLES);
+      where += ` AND roles && $${params.length}::text[]`;
+    }
 
     // every fragment appended here is a literal; only values go in `params`
     if (q.length > 0) {
@@ -131,10 +156,16 @@ export class UserAdminService {
       email: string;
       banned_at: Date | null;
       banned_until: Date | null;
+      muted: boolean;
+      limited: boolean;
+      roles: string[];
       created_at: Date;
       total: number;
     }>(
-      `SELECT id, username, email, banned_at, banned_until, created_at, count(*) OVER ()::int AS total
+      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at,
+              EXISTS (SELECT 1 FROM sanctions s WHERE s.user_id = users.id AND s.kind IN ('post_mute', 'feature_limit')
+                         AND ${IN_FORCE_SQL}) AS limited,
+              count(*) OVER ()::int AS total
          FROM users WHERE ${where}
         ORDER BY created_at DESC, id
         LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -152,6 +183,9 @@ export class UserAdminService {
         username: r.username,
         email: r.email,
         ban: banState(now, r.banned_at, r.banned_until),
+        muted: r.muted,
+        limited: r.limited,
+        roles: r.roles,
         createdAt: r.created_at,
       })),
     };
@@ -161,8 +195,10 @@ export class UserAdminService {
     const u = await this.pool.query<{
       id: string; username: string; email: string; display_name: string | null; roles: string[];
       created_at: Date; banned_at: Date | null; banned_until: Date | null; muted_until: Date | null;
+      age_known: boolean; minor: boolean;
     }>(
       `SELECT id, username, email, display_name, roles, created_at, banned_at, banned_until,
+              birth_year IS NOT NULL AS age_known, ${minorSql('users')} AS minor,
               CASE WHEN muted_until = 'infinity' THEN NULL ELSE muted_until END AS muted_until
        FROM users WHERE id = $1`,
       [userId],
@@ -181,8 +217,10 @@ export class UserAdminService {
          WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now() ORDER BY created_at DESC`,
         [userId],
       ),
-      this.pool.query<{ action: string; reason: string; meta: unknown; admin_id: string | null; created_at: Date }>(
-        `SELECT action, reason, meta, admin_id, created_at FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at DESC LIMIT 20`,
+      this.pool.query<{ action: string; reason: string; meta: unknown; admin_id: string | null; admin_username: string | null; created_at: Date }>(
+        `SELECT a.action, a.reason, a.meta, a.admin_id, u.username AS admin_username, a.created_at
+           FROM admin_actions a LEFT JOIN users u ON u.id = a.admin_id AND u.deleted_at IS NULL
+          WHERE a.target_user_id = $1 ORDER BY a.created_at DESC LIMIT 20`,
         [userId],
       ),
       opts.moderation === false ? Promise.resolve({}) : this.moderationOf(userId),
@@ -195,13 +233,21 @@ export class UserAdminService {
       displayName: user.display_name,
       roles: user.roles,
       createdAt: user.created_at,
+      age: !user.age_known ? 'unknown' : user.minor ? 'minor' : 'adult',
       ban: banState(new Date(), user.banned_at, user.banned_until),
       bannedUntil: user.banned_until,
       mutedUntil: user.muted_until,
       balances,
       ledger: ledger.rows.map((r) => ({ currency: r.currency, amount: r.amount, reason: r.reason, createdAt: r.created_at })),
       sessions: sessions.rows.map((r) => ({ deviceName: r.device_name, createdAt: r.created_at, expiresAt: r.expires_at })),
-      actions: actions.rows.map((r) => ({ action: r.action, reason: r.reason, meta: r.meta, adminId: r.admin_id, createdAt: r.created_at })),
+      actions: actions.rows.map((r) => ({
+        action: r.action,
+        reason: r.reason,
+        meta: r.meta,
+        adminId: r.admin_id,
+        adminUsername: r.admin_username,
+        createdAt: r.created_at,
+      })),
       ...moderation,
     };
   }

@@ -4,6 +4,7 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
 import { cosmeticAssetUrl } from '../cosmetics/access.js';
 import { AppError } from '../plugins/errors.js';
+import { SENSITIVE_PRICE } from '../admin/config-service.js';
 import type { ShopService } from './service.js';
 import type { ItemReturns } from './returns.js';
 import type { GiftService, SkipReason } from '../gifts/service.js';
@@ -12,7 +13,9 @@ const itemBody = z.object({
   sku: z.string().min(1).max(80),
   name: z.string().min(1).max(120),
   description: z.string().max(500).optional(),
-  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'misc']).optional(),
+  // 'tag' is the Kurdish identity tag the tags migration sells (tag_kurdish):
+  // without it here the item could be listed but never saved again
+  category: z.enum(['cosmetic', 'background', 'icon', 'powerup', 'freeze', 'tag', 'misc']).optional(),
   currency: z.enum(['zer', 'gems']),
   price: z.number().int().min(0).max(10_000_000),
   isUnique: z.boolean().optional(),
@@ -60,11 +63,37 @@ export function registerShopRoutes(
   shop: ShopService,
   deps: { gifts: GiftService; returns?: ItemReturns },
 ): void {
-  /** Admin: create/update a catalog item. */
+  /**
+   * Admin: create/update a catalog item.
+   *
+   * A new price of 1,000 or more is not set here. Such a price is the change
+   * that needs a second admin's sign-off (POST /admin/config/changes), and
+   * accepting it on this route as well let one admin skip that by choosing the
+   * other door — as live events' rewards did. Sending an item back with the
+   * price it already has is not a change, so the rest of a dear item can still
+   * be edited here.
+   */
   app.post(
     '/shop/items',
     { schema: { body: itemBody }, preHandler: requireRoles('admin', 'superadmin') },
-    async (req) => shop.createItem(req.body as z.infer<typeof itemBody>),
+    async (req) => {
+      const body = req.body as z.infer<typeof itemBody>;
+      if (body.price >= SENSITIVE_PRICE) {
+        const { rows } = await app.db.query<{ price: number; currency: string }>(
+          `SELECT price, currency FROM shop_items WHERE sku = $1`,
+          [body.sku],
+        );
+        const was = rows[0];
+        if (!was || was.price !== body.price || was.currency !== body.currency) {
+          throw new AppError(
+            'PRICE_NEEDS_APPROVAL',
+            409,
+            `a price of ${SENSITIVE_PRICE.toLocaleString('en')} or more goes through Approvals, where a second admin signs off`,
+          );
+        }
+      }
+      return shop.createItem(body);
+    },
   );
 
   /** Admin: pull an item in/out of stock. */
