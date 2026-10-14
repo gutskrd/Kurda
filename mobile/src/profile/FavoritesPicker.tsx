@@ -3,7 +3,7 @@ import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-nati
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
-import type { LibraryPost } from '../library/types';
+import { postName, type LibraryPost } from '../library/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
@@ -171,7 +171,7 @@ function Slot({
                   disabled={busy}
                   accessibilityRole="button"
                   accessibilityState={{ selected: on }}
-                  accessibilityLabel={p.title}
+                  accessibilityLabel={postName(p)}
                   style={[
                     styles.option,
                     {
@@ -182,7 +182,7 @@ function Slot({
                   ]}
                 >
                   <Text style={[styles.optionText, { color: colors.textPrimary }]} numberOfLines={1}>
-                    {p.title}
+                    {postName(p)}
                   </Text>
                 </Pressable>
               );

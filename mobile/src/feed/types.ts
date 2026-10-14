@@ -1,3 +1,4 @@
+import type { FeedImage } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
@@ -116,10 +117,26 @@ export interface FeedItem {
   author: FeedAuthor;
   title: string | null;
   excerpt: string | null;
+  /** the first picture, for apps from before posts had several */
   imageUrl: string | null;
+  /** the first picture's alt text; older APIs leave it out */
+  imageAlt?: string | null;
+  /** every picture, in order (at most four); older APIs leave it out and `imageUrl` stands in */
+  images?: FeedImage[];
+  /** marked as a meme */
+  meme?: boolean;
   href: string;
   viewCount: number;
   commentCount: number;
   engagement: PostEngagement;
   at: string;
+}
+
+/**
+ * A card's pictures. A wall from an API before posts had several sends only
+ * `imageUrl`; that one picture stands in, with no description or size.
+ */
+export function feedImages(item: Pick<FeedItem, 'images' | 'imageUrl' | 'imageAlt'>): FeedImage[] {
+  if (item.images && item.images.length > 0) return item.images.slice(0, 4);
+  return item.imageUrl ? [{ url: item.imageUrl, alt: item.imageAlt ?? null, width: null, height: null }] : [];
 }

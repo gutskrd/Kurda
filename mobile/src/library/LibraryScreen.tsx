@@ -11,7 +11,7 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
-import { bodyPreview, type LibraryPost, type PostType } from './types';
+import { bodyPreview, postName, type LibraryPost, type PostType } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -89,11 +89,11 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
         style={[styles.card, { backgroundColor: colors.glassFill }]}
         accessibilityRole="button"
-        accessibilityLabel={t('library.readLabel', { title: item.title })}
+        accessibilityLabel={t('library.readLabel', { title: postName(item) })}
       >
         <View style={styles.cardHead}>
           <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {item.title}
+            {postName(item)}
           </Text>
           {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
         </View>
@@ -141,7 +141,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             ListEmptyComponent={
               <EmptyState
                 title={t('library.empty')}
-                action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('LibraryCompose') }}
+                action={{ label: t('library.emptyAction'), onPress: () => navigation.navigate('Compose') }}
               />
             }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
@@ -149,7 +149,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         </AsyncBoundary>
 
         <View style={styles.fab}>
-          <ClayButton label={t('library.emptyAction')} tone="primary" onPress={() => navigation.navigate('LibraryCompose')} />
+          <ClayButton label={t('library.emptyAction')} tone="primary" onPress={() => navigation.navigate('Compose')} />
         </View>
       </View>
     </GradientBackground>

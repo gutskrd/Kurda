@@ -60,6 +60,8 @@ export type RootStackParamList = {
   EditProfile: undefined;
   LibraryPost: { postId: string };
   LibraryCompose: undefined;
+  /** The post composer (composer/ComposeScreen): a new post, or `postId` to edit one of yours. */
+  Compose: { postId?: string } | undefined;
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;

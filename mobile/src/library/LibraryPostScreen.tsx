@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -30,6 +31,8 @@ import { VoiceRecorder } from './VoiceRecorder';
 import { commentText, type LibraryComment, type LibraryPost } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { EditPostButton, SourceCredit, postImages } from '../composer/PostExtras';
+import { PostPictures } from '../composer/PostPictures';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -59,9 +62,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
     if (c.ok) setComments(c.data.comments);
   }, [client, postId]);
 
-  useEffect(() => {
-    void loadAll();
-  }, [loadAll]);
+  // on coming back too: an edit made in the composer shows at once
+  useFocusEffect(
+    useCallback(() => {
+      void loadAll();
+    }, [loadAll]),
+  );
 
   const submit = useCallback(async () => {
     const body = draft.trim();
@@ -91,8 +97,9 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const header = (
     <ScreenHeader
-      title={t(post?.type === 'poem' ? 'library.kind.poem' : 'library.kind.story')}
+      title={t(post?.type === 'poem' ? 'library.kind.poem' : post?.type === 'gotin' ? 'civak.kind.saying' : 'library.kind.story')}
       onBack={onExit}
+      right={post ? <EditPostButton post={post} /> : undefined}
     />
   );
 
@@ -119,9 +126,12 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
             </View>
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-              <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text>
+              {/* a gotin has no title; its pictures come first on its own page, words under them */}
+              {post.title ? <Text style={[styles.title, { color: colors.textPrimary }]}>{post.title}</Text> : null}
+              <PostPictures images={postImages(post)} />
               {post.audioUrl ? <AudioPlayer url={post.audioUrl} /> : null}
-              <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text>
+              {post.body ? <Text style={[styles.postBody, { color: colors.textPrimary }]}>{post.body}</Text> : null}
+              {post.sourceCredit ? <SourceCredit text={post.sourceCredit} /> : null}
               <Pressable
                 onPress={() => confirmReport(t, 'post', () => reportPost(client, post.id))}
                 hitSlop={6}
@@ -133,7 +143,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               </Pressable>
 
               <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
-                {post.commentCount} {post.commentCount === 1 ? 'comment' : 'comments'}
+                {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
               </Text>
               {comments === null ? (
                 <SkeletonList count={3} style={{ marginTop: spacing.xs }} />

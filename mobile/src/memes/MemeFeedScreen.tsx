@@ -187,7 +187,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             ListEmptyComponent={
               <EmptyState
                 title={t('memes.empty')}
-                action={{ label: t('picture.choosePicture'), onPress: () => navigation.navigate('PostPicture') }}
+                action={{ label: t('picture.choosePicture'), onPress: () => navigation.navigate('Compose') }}
               />
             }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}

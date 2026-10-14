@@ -65,12 +65,11 @@ import { RhymeMatchScreen } from './src/rhyme/RhymeMatchScreen';
 import { RaceScreen } from './src/race/RaceScreen';
 import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
-import { PostPictureScreen } from './src/memes/PostPictureScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
-import { LibraryComposeScreen } from './src/library/LibraryComposeScreen';
+import { ComposeScreen } from './src/composer/ComposeScreen';
 import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { UserEventListener } from './src/realtime/UserEventListener';
@@ -360,9 +359,17 @@ function SignedInRoot() {
       <RootStack.Screen name="Memes" options={{ presentation: 'card' }}>
         {({ navigation }) => <MemeFeedScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      {/* a modal, because it is a thing you finish and dismiss, not a place */}
-      <RootStack.Screen name="PostPicture" options={{ presentation: 'modal' }}>
-        {({ navigation }) => <PostPictureScreen onExit={() => navigation.goBack()} />}
+      {/*
+        Writing a post — words, pictures or both — and editing one. Full screen
+        and without the swipe-down: the composer asks before it lets go of
+        something written. PostPicture and LibraryCompose are the two old ways
+        in, kept as names so anything still pointing at them lands here.
+      */}
+      <RootStack.Screen name="Compose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ route, navigation }) => <ComposeScreen postId={route.params?.postId} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="PostPicture" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="MemeDetail" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <MemeDetailScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
@@ -394,8 +401,8 @@ function SignedInRoot() {
       <RootStack.Screen name="LibraryPost" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <LibraryPostScreen postId={route.params.postId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
-      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal' }}>
-        {({ navigation }) => <LibraryComposeScreen onExit={() => navigation.goBack()} />}
+      <RootStack.Screen name="LibraryCompose" options={{ presentation: 'fullScreenModal', gestureEnabled: false }}>
+        {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
     </>
