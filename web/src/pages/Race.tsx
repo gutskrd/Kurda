@@ -23,12 +23,12 @@ import type { MessageKey } from '../i18n/en';
 import { KeyBar } from '../keyboard/KeyBar';
 import { KeyboardGuide } from '../keyboard/KeyboardGuide';
 import { KeyboardSettings } from '../keyboard/KeyboardSettings';
-import { GUIDE_AFTER_MISSES, GUIDE_SNOOZE_MS } from '../keyboard/guide';
+import { guideNudgeDue } from '../keyboard/guide';
 import { getKeyboardPrefs, useKeyboardPrefs } from '../keyboard/prefs';
 import { RaceText } from '../race/RaceText';
 import { capTyping } from '../race/input';
 import { useRaceCapture } from '../race/useRaceCapture';
-import { reportGameFinished } from '../feedback/gameFinished';
+import { reportGameFinished, reportGameStarted } from '../feedback/gameFinished';
 
 /**
  * Typing race: reproduce a Kurdish text as fast and as accurately as you can.
@@ -99,10 +99,13 @@ export function Race(): React.JSX.Element {
   // the keyboard guide as a dialog; `thenStart` when it stands before a first race
   const [guide, setGuide] = useState<{ thenStart: boolean } | null>(null);
   const [nudgeHidden, setNudgeHidden] = useState(false);
+  // the guide stood before this very race: its result does not offer it again
+  const [guided, setGuided] = useState(false);
   // the text to copy is on this very screen, so the box takes keystrokes only
   const { handlers: typeOnly, notice, refuse: refusePaste } = useTypeOnly(t('games.race.noPasting'));
   const startedAt = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const resultHeadingRef = useRef<HTMLHeadingElement>(null);
   // one finish at a time, whichever of the ways to finish gets there first
   const finishingRef = useRef(false);
   const startingRef = useRef(false);
@@ -124,9 +127,10 @@ export function Race(): React.JSX.Element {
     [game, target, typed, prefs.backtick],
   );
 
-  const begin = useCallback(async () => {
+  const begin = useCallback(async (afterGuide = false) => {
     if (startingRef.current) return;
     startingRef.current = true;
+    reportGameStarted();
     // a new race starts from nothing: the old text is gone before the new one
     // is asked for, so nothing typed in between lands in either
     setStarting(true);
@@ -136,6 +140,7 @@ export function Race(): React.JSX.Element {
     setStartError(null);
     setFinishError(null);
     setNudgeHidden(false);
+    setGuided(afterGuide);
     setElapsed(0);
     startedAt.current = null;
     finishingRef.current = false;
@@ -168,7 +173,7 @@ export function Race(): React.JSX.Element {
   const closeGuide = useCallback(() => {
     const thenStart = guide?.thenStart ?? false;
     setGuide(null);
-    if (thenStart) void begin();
+    if (thenStart) void begin(true);
   }, [guide, begin]);
 
   const finish = useCallback(
@@ -181,8 +186,16 @@ export function Race(): React.JSX.Element {
       setFinishing(false);
       if (res.ok) {
         setResult(res.data);
-        // a run the server would not score is no happy ending either
-        reportGameFinished({ game: 'race', gaveUp: gaveUp || res.data.implausible });
+        // a run the server would not score is no happy ending either; and a
+        // result that offers the keyboard guide asks enough for one race
+        reportGameFinished({
+          game: 'race',
+          gaveUp: gaveUp || res.data.implausible,
+          deferred: guideNudgeDue(res.data, {
+            guidedThisRace: guided,
+            dismissedAt: getKeyboardPrefs().guideNudgeDismissedAt,
+          }),
+        });
         return;
       }
       // a race the server has already closed cannot be finished again; any
@@ -191,7 +204,7 @@ export function Race(): React.JSX.Element {
       setFinishError({ message: raceError(res.error, t), closed });
       finishingRef.current = closed;
     },
-    [client, game, typed, t],
+    [client, game, typed, t, guided],
   );
 
   const { composing } = useRaceCapture({
@@ -212,6 +225,17 @@ export function Race(): React.JSX.Element {
   useEffect(() => {
     if (game && !result) inputRef.current?.focus();
   }, [game, result]);
+
+  /*
+   * The result takes the focus from the field, which is read-only now: a
+   * screen reader hears the heading (and, reading on, the figures) instead of
+   * silence, and on a phone the soft keyboard goes down off the results.
+   */
+  useEffect(() => {
+    if (!result) return;
+    inputRef.current?.blur();
+    resultHeadingRef.current?.focus();
+  }, [result]);
 
   // a running clock, for the racer — the score is timed server-side
   useEffect(() => {
@@ -257,10 +281,10 @@ export function Race(): React.JSX.Element {
   const showKeyBar = prefs.keyBar && !(game?.accentMode === 'hidden' && !sorani);
   const running = game !== null && result === null;
 
-  const nudgeSnoozed =
-    prefs.guideNudgeDismissedAt !== null && Date.now() - prefs.guideNudgeDismissedAt < GUIDE_SNOOZE_MS;
   const showNudge =
-    result !== null && !result.implausible && result.accentMisses >= GUIDE_AFTER_MISSES && !nudgeHidden && !nudgeSnoozed;
+    result !== null &&
+    !nudgeHidden &&
+    guideNudgeDue(result, { guidedThisRace: guided, dismissedAt: prefs.guideNudgeDismissedAt });
 
   return (
     <div className="container container-narrow">
@@ -447,7 +471,7 @@ export function Race(): React.JSX.Element {
           {result && (
             <div className="race-result">
               <div className="race-result-head">
-                <h2 className="section-heading">
+                <h2 className="section-heading race-result-title" tabIndex={-1} ref={resultHeadingRef}>
                   {result.implausible
                     ? t('games.race.notScored')
                     : result.perfect

@@ -251,6 +251,10 @@
 .race-result-head .section-heading {
   margin: 0;
 }
+/* it takes the focus when the race ends, to be read out — not to be clicked */
+.race-result-title:focus {
+  outline: none;
+}
 .race-badge {
   display: inline-flex;
   align-items: center;

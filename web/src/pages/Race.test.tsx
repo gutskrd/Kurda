@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Race } from './Race';
 import { renderApp, jsonResponse } from '../test/utils';
 import { KEYBOARD_PREFS_KEY, resetKeyboardPrefsForTests } from '../keyboard/prefs';
-import { onGameFinished, type GameFinished } from '../feedback/gameFinished';
+import { onGameFinished, onGameStarted, type GameFinished } from '../feedback/gameFinished';
 
 const TARGET = 'ez ji welatê xwe hez dikim';
 
@@ -532,6 +532,59 @@ describe('Typing Race', () => {
     expect(posted(fetchMock, '/race')).toEqual([{ length: 1, dialect: 'kurmanci', accentMode: 'forgiving' }]);
   });
 
+  it('does not offer the guide again on the result of the race it stood before', async () => {
+    stub({ finish: [{ status: 200, body: result({ accentMisses: 5, accented: 6, perfect: false }) }] });
+    const heard: GameFinished[] = [];
+    const stop = onGameFinished((e) => heard.push(e));
+    const user = userEvent.setup();
+    renderApp(<Race />, ['/app/games/race']);
+
+    await user.click(screen.getByRole('button', { name: /start race/i }));
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Start race' }));
+    await screen.findByLabelText('Type the text');
+    await user.click(screen.getByRole('button', { name: /give up/i }));
+    await screen.findByText('Race finished');
+    stop();
+
+    expect(screen.queryByRole('heading', { name: 'Get the Kurmancî keyboard' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keyboard help' })).toBeInTheDocument();
+    expect(heard).toEqual([{ game: 'race', gaveUp: true, deferred: false }]);
+  });
+
+  it('keeps the rating box off a result that offers the keyboard guide', async () => {
+    stub({ finish: [{ status: 200, body: result({ accentMisses: 3, accented: 4, perfect: false }) }] });
+    seenGuide();
+    const heard: GameFinished[] = [];
+    const stop = onGameFinished((e) => heard.push(e));
+    const user = userEvent.setup();
+    const input = await begin(user);
+
+    await user.type(input, TARGET.replace('ê', 'e'));
+    await screen.findByRole('heading', { name: 'Get the Kurmancî keyboard' });
+    stop();
+
+    expect(heard).toEqual([{ game: 'race', gaveUp: false, deferred: true }]);
+  });
+
+  it('hands the focus to the result when the race ends on its own, and says a new race has begun', async () => {
+    stub();
+    seenGuide();
+    let starts = 0;
+    const stopStarts = onGameStarted(() => starts++);
+    const user = userEvent.setup();
+    const input = await begin(user);
+    expect(starts).toBe(1);
+
+    await user.keyboard(TARGET);
+    const heading = await screen.findByRole('heading', { name: 'Perfect run!' });
+    await waitFor(() => expect(heading).toHaveFocus());
+    expect(input).not.toHaveFocus();
+
+    await user.click(screen.getByRole('button', { name: 'Race again' }));
+    expect(starts).toBe(2);
+    stopStarts();
+  });
+
   it('offers the keyboard guide on the result after three accents went missing', async () => {
     stub({ finish: [{ status: 200, body: result({ accentMisses: 3, accented: 4, perfect: false }) }] });
     seenGuide();
@@ -572,7 +625,7 @@ describe('Typing Race', () => {
       await screen.findByText('Perfect run!');
       stop();
 
-      expect(heard).toEqual([{ game: 'race', gaveUp: false }]);
+      expect(heard).toEqual([{ game: 'race', gaveUp: false, deferred: false }]);
     });
 
     it('reports a race given up as given up', async () => {
@@ -587,7 +640,7 @@ describe('Typing Race', () => {
       await screen.findByText('Race finished');
       stop();
 
-      expect(heard).toEqual([{ game: 'race', gaveUp: true }]);
+      expect(heard).toEqual([{ game: 'race', gaveUp: true, deferred: false }]);
     });
   });
 });

@@ -23,6 +23,24 @@ export const GUIDE_AFTER_MISSES = 3;
 export const GUIDE_SNOOZE_MS = 14 * 24 * 3_600_000;
 
 /**
+ * Whether a race's result offers the keyboard guide: three or more accented
+ * letters went in without their accent — unless the guide was shown just
+ * before this very race (the same guide twice in a minute is nagging, not
+ * help), "Later" was said to it lately, or the run was not scored.
+ */
+export function guideNudgeDue(
+  result: { implausible: boolean; accentMisses: number },
+  {
+    guidedThisRace,
+    dismissedAt,
+    now = Date.now(),
+  }: { guidedThisRace: boolean; dismissedAt: number | null; now?: number },
+): boolean {
+  if (result.implausible || result.accentMisses < GUIDE_AFTER_MISSES || guidedThisRace) return false;
+  return dismissedAt === null || now - dismissedAt >= GUIDE_SNOOZE_MS;
+}
+
+/**
  * Every step sentence of every guide, as a message key.
  *
  * The guides live in @kurda/shared with their English; the words a reader
