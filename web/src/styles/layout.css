@@ -347,8 +347,10 @@ button.nav-link {
 
 /* ---- app content shell ------------------------------------------------- */
 .app-main {
-  /* an invite banner waiting under the navigation takes its own room (play.css) */
-  padding: calc(40px + var(--invite-banner-h, 0px)) 0 80px;
+  padding: 40px 0 80px;
+  /* an invite banner waiting under the navigation takes its own room (play.css),
+     and the page starts a little under it rather than a whole top margin under */
+  padding-top: max(40px, calc(var(--invite-banner-h, 0px) + 28px));
   min-height: calc(100vh - var(--nav-h));
 }
 .page-header {

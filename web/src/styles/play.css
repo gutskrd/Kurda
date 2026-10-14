@@ -498,6 +498,20 @@
   min-height: 44px;
   justify-content: center;
 }
+/* a phone: Play, Remove and Block do not fit beside a name, so they take the
+   line under it, at its end, instead of running off the screen */
+@media (max-width: 560px) {
+  .friend-row:has(.friend-play) {
+    flex-wrap: wrap;
+    row-gap: 8px;
+  }
+  .friend-row:has(.friend-play) .friend-id {
+    flex: 1 0 100%;
+  }
+  .friend-row .friend-play {
+    margin-inline-start: auto;
+  }
+}
 
 /* ---- a notification that goes somewhere ------------------------------------------ */
 .rail-note-link {
