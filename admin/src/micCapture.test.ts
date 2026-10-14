@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { allowMicHowTo, micPlatform, micProblem, pickMimeType } from './micCapture';
+import { describe, expect, it, vi } from 'vitest';
+import { allowMicHowTo, micPlatform, micProblem, pickMimeType, startCapture } from './micCapture';
 
 const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
 const IPAD_DESKTOP = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15';
@@ -43,5 +43,51 @@ describe('the microphone, on the phones an editor holds', () => {
     const busy = micProblem(Object.assign(new Error('x'), { name: 'NotReadableError' }), 'other', true);
     expect(busy).toContain('busy');
     for (const m of [insecure, missing]) expect(m.toLowerCase()).toContain('upload');
+  });
+
+  it('resumes the audio context inside the tap, before the permission prompt, and again after it', async () => {
+    // iOS Safari lets a suspended context run only from inside the tap; after the first await it is too late
+    const order: string[] = [];
+    const node = { connect: vi.fn(), disconnect: vi.fn(), onaudioprocess: null };
+    class FakeContext {
+      sampleRate = 48_000;
+      destination = {};
+      resume(): Promise<void> {
+        order.push('resume');
+        return Promise.resolve();
+      }
+      close(): Promise<void> {
+        return Promise.resolve();
+      }
+      createMediaStreamSource(): { connect: () => void } {
+        return { connect: () => undefined };
+      }
+      createAnalyser(): { fftSize: number; getFloatTimeDomainData: () => void } {
+        return { fftSize: 0, getFloatTimeDomainData: () => undefined };
+      }
+      createScriptProcessor(): typeof node {
+        return node;
+      }
+    }
+    vi.stubGlobal('AudioContext', FakeContext);
+    // the older-Safari path, where a context that never runs would mean an empty take
+    vi.stubGlobal('MediaRecorder', undefined);
+    const track = { stop: vi.fn() };
+    const getUserMedia = vi.fn(() => {
+      order.push('ask');
+      return Promise.resolve({ getTracks: () => [track] });
+    });
+    Object.defineProperty(navigator, 'mediaDevices', { value: { getUserMedia }, configurable: true });
+    try {
+      const capture = startCapture();
+      // before anything is awaited, the context has already been asked to run
+      expect(order).toEqual(['resume', 'ask']);
+      (await capture).cancel();
+      expect(order).toEqual(['resume', 'ask', 'resume']);
+      expect(track.stop).toHaveBeenCalled();
+    } finally {
+      vi.unstubAllGlobals();
+      Reflect.deleteProperty(navigator, 'mediaDevices');
+    }
   });
 });

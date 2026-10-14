@@ -76,12 +76,17 @@ export interface Capture {
 
 /**
  * Start recording. Call it straight from the tap or the key press: the audio
- * context is made before the permission prompt, while the browser still
- * counts this as the person's own action.
+ * context is made and resumed before the permission prompt, while the browser
+ * still counts this as the person's own action. iOS Safari creates a context
+ * suspended and only lets it run from inside the tap; after the first `await`
+ * it no longer counts, so a resume there alone would leave the level meter
+ * flat and, on the path without MediaRecorder, the take empty.
  */
 export async function startCapture(): Promise<Capture> {
   const Ctx = audioContextClass();
   const ctx = Ctx ? new Ctx() : null;
+  // synchronously, still inside the tap (see above)
+  void ctx?.resume?.();
   const media = typeof navigator !== 'undefined' ? navigator.mediaDevices : undefined;
   if (!media?.getUserMedia) {
     void ctx?.close();
@@ -95,6 +100,7 @@ export async function startCapture(): Promise<Capture> {
     void ctx?.close();
     throw err;
   }
+  // and again once permission is granted, for browsers that suspend it while the prompt is open
   void ctx?.resume?.();
 
   const release = (): void => {
