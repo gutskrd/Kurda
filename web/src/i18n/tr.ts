@@ -2304,7 +2304,6 @@ export const tr: Catalogue = {
   'settings.leagues.toggle': 'Haftalık liglere katıl',
   'settings.leagues.minorHint': '18 yaşından küçük olduğun için sen açmadıkça kapalıdır.',
   'settings.visibility.minorHint': '18 yaşın altında profilin internetteki herkese açık olamaz.',
-  'leagues.optedOut.title': 'Bir ligde değilsin',
   'leagues.optedOut.body': 'Ligler isteğe bağlıdır. XP’n, serin ve ilerlemen her iki durumda da aynı sayılır.',
   'leagues.optedOut.join': 'Liglere katıl',
   'leagues.unnamed': 'Bir öğrenci',

@@ -2400,7 +2400,6 @@ export const en = {
   'settings.leagues.toggle': 'Take part in weekly leagues',
   'settings.leagues.minorHint': 'Off unless you turn it on, because you are under 18.',
   'settings.visibility.minorHint': 'Under 18, your profile can’t be open to everyone on the web.',
-  'leagues.optedOut.title': 'You’re not in a league',
   'leagues.optedOut.body': 'Leagues are optional. Your XP, streak and progress count the same either way.',
   'leagues.optedOut.join': 'Join the leagues',
   'leagues.unnamed': 'A learner',

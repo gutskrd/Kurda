@@ -174,7 +174,7 @@ function Standings({ league }: { league: LeagueView }): React.JSX.Element {
             me={row.isSelf}
             zone={row.zone === 'stay' ? undefined : row.zone}
             marker={merged && row.tier !== tier ? <span className="league-row-tier">{leagueName(t, row.tier)}</span> : undefined}
-            trailing={<ZoneTag row={row} top={top} t={t} />}
+            trailing={<ZoneTag row={row} top={top} goal={league.goalXp} t={t} />}
           />
           {i === lastUp && i < rows.length - 1 && (
             <li className="league-divider is-up" aria-hidden="true">
@@ -193,9 +193,12 @@ function findLastIndex<T>(list: readonly T[], test: (v: T) => boolean): number {
   return -1;
 }
 
-/** Where a row is heading, in a word and an arrow; Okyanûs's top three hold the Pêla trophy instead. */
-function ZoneTag({ row, top, t }: { row: LeagueStandingRow; top: boolean; t: Translate }): React.JSX.Element | null {
-  if (top && row.rank <= TROPHY_PLACES) {
+/**
+ * Where a row is heading, in a word and an arrow. In Okyanûs nobody moves up:
+ * the top three who met the goal are on course for the Pêla trophy instead.
+ */
+function ZoneTag({ row, top, goal, t }: { row: LeagueStandingRow; top: boolean; goal: number; t: Translate }): React.JSX.Element | null {
+  if (top && row.rank <= TROPHY_PLACES && row.weeklyXp >= goal) {
     return (
       <span className="zone-tag is-trophy">
         <SparkleIcon size={12} />

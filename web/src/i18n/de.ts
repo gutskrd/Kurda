@@ -2310,7 +2310,6 @@ export const de: Catalogue = {
   'settings.leagues.toggle': 'An wöchentlichen Ligen teilnehmen',
   'settings.leagues.minorHint': 'Aus, solange du es nicht einschaltest, weil du unter 18 bist.',
   'settings.visibility.minorHint': 'Unter 18 kann dein Profil nicht für alle im Netz sichtbar sein.',
-  'leagues.optedOut.title': 'Du bist in keiner Liga',
   'leagues.optedOut.body': 'Ligen sind freiwillig. Deine XP, deine Serie und dein Fortschritt zählen in beiden Fällen gleich.',
   'leagues.optedOut.join': 'Bei den Ligen mitmachen',
   'leagues.unnamed': 'Jemand, der lernt',

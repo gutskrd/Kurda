@@ -196,6 +196,47 @@ describe('WordleBattle', () => {
     expect(await screen.findByText('Rematch asked — waiting for Rojda.')).toBeInTheDocument();
   });
 
+  it('shows everyone in the lobby that it is Rated, and what a win or a loss would do', async () => {
+    const rated = { rated: true, counts: null, friendlyReason: null, damped: false };
+    const guestLobby = { ...lobby, isHost: false, rated, players: [seat(1, { name: 'Rojda', isHost: true }), seat(2, { userId: 'me', isMe: true })] };
+    signedIn((url) => {
+      if (url.includes('/ranks/expected/wordle-battle/b1'))
+        return jsonResponse(200, {
+          game: 'wordle-battle', lobbyId: 'b1', rated: true, wouldCount: true, friendlyReason: null, self: false,
+          me: { points: 450, tier: 'gir', division: 2, placing: false },
+          opponents: [{ seat: 1, tier: 'ciya', division: 3, placing: false, win: 24, lose: -8 }],
+          first: null, last: null,
+        });
+      if (url.includes('/wordle/battles/b1')) return jsonResponse(200, guestLobby);
+      return undefined;
+    });
+    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+
+    expect(await screen.findByText('Rated')).toBeInTheDocument();
+    expect(await screen.findByText('Win ≈ +24 · Lose ≈ −8')).toBeInTheDocument();
+    expect(screen.getByText('Çiya III')).toBeInTheDocument();
+    // only the host changes it
+    expect(screen.queryByRole('radio', { name: /Friendly/ })).not.toBeInTheDocument();
+  });
+
+  it('shows what the battle did to your rank after the results', async () => {
+    const finished = { ...activeBattle, status: 'finished', target: 'kar', rated: { rated: true, counts: true, friendlyReason: null, damped: false } };
+    signedIn((url) => {
+      if (url.includes('/ranks/results/wordle-battle/b1'))
+        return jsonResponse(200, {
+          game: 'wordle-battle', gameRef: 'b1', counted: true, pointsBefore: 448, pointsAfter: 472, delta: 24, reason: 'beat-stronger',
+          tierBefore: 'gir', tierAfter: 'gir', divisionBefore: 2, divisionAfter: 2, tierUp: false, divisionUp: false,
+          placement: null, shieldGames: 0, weight: 1, progress: { next: { tier: 'gir', division: 1 }, from: 400, to: 500, fraction: 0.72, pointsToGo: 28 },
+        });
+      if (url.includes('/wordle/battles/b1/results')) return jsonResponse(200, { id: 'b1', target: 'kar', difficulty: 'medium', ranking: [] });
+      if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
+      return undefined;
+    });
+    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+
+    expect(await screen.findByText('you beat a higher-ranked player')).toBeInTheDocument();
+  });
+
   it('makes a new battle through the play layer, with its difficulty, and goes to its lobby', async () => {
     let created: unknown = null;
     signedIn((url, init) => {

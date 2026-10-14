@@ -2308,7 +2308,6 @@ export const ckb: Catalogue = {
   'settings.leagues.toggle': 'بەشداری لیگە هەفتانەکان بکە',
   'settings.leagues.minorHint': 'لەبەر ئەوەی تەمەنت لە خوار 18 ساڵە، داخراوە تا خۆت هەڵیبکەیت.',
   'settings.visibility.minorHint': 'لە خوار تەمەنی 18 ساڵ، پرۆفایلەکەت ناتوانێت بۆ هەموو کەس لە ئینتەرنێتدا کراوە بێت.',
-  'leagues.optedOut.title': 'لە هیچ لیگێکدا نیت',
   'leagues.optedOut.body': 'لیگەکان ناچاری نین. XP و زنجیرە و پێشکەوتنت هەر وەک خۆیان دەژمێردرێن.',
   'leagues.optedOut.join': 'بەشداری لیگەکان بکە',
   'leagues.unnamed': 'فێرخوازێک',

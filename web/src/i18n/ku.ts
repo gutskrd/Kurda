@@ -2314,7 +2314,6 @@ export const ku: Catalogue = {
   'settings.leagues.toggle': 'Beşdarî lîgên heftane bibe',
   'settings.leagues.minorHint': 'Ji ber ku tu di bin 18 salî de yî, ev girtî ye heta ku tu wê vekî.',
   'settings.visibility.minorHint': 'Di bin 18 salî de, profîla te nikare ji her kesî re li ser înternetê vekirî be.',
-  'leagues.optedOut.title': 'Tu ne di lîgekê de yî',
   'leagues.optedOut.body': 'Lîg ne mecbûrî ne. XP, rêze û pêşketina te her wekî xwe tên hesibandin.',
   'leagues.optedOut.join': 'Beşdarî lîgan bibe',
   'leagues.unnamed': 'Fêrxwazek',

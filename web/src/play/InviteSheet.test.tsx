@@ -67,6 +67,20 @@ describe('InviteSheet', () => {
     await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=new-1'));
   });
 
+  it('makes a Rated game when the host chooses Rated, and remembers it for next time', async () => {
+    const { calls } = api();
+    open({ kind: 'new', friend: { userId: 'u2', name: 'Rojda' } });
+    const sheet = await screen.findByRole('dialog', { name: 'Play with Rojda' });
+    // Friendly first, among friends
+    expect(within(sheet).getByRole('radio', { name: /Friendly/ })).toBeChecked();
+    await userEvent.click(within(sheet).getByRole('radio', { name: /Rated/ }));
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
+
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toMatchObject({ settings: { rated: true } }));
+    expect(localStorage.getItem('hevalo.rated.wordle-battle')).toBe('1');
+    expect(calls.some((c) => c.method === 'PUT' && c.path === '/ranks/preferences/wordle-battle')).toBe(true);
+  });
+
   it('offers each game’s own presets, and Stories once a story is published', async () => {
     const { calls } = api();
     open({ kind: 'new' });

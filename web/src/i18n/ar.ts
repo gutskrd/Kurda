@@ -2302,7 +2302,6 @@ export const ar: Catalogue = {
   'settings.leagues.toggle': 'المشاركة في الدوريات الأسبوعية',
   'settings.leagues.minorHint': 'متوقّف ما لم تشغّله بنفسك، لأن عمرك أقل من 18 عامًا.',
   'settings.visibility.minorHint': 'لأنك دون 18 عامًا، لا يمكن أن يكون ملفك الشخصي مفتوحًا لأي شخص على الويب.',
-  'leagues.optedOut.title': 'أنت لست في دوري',
   'leagues.optedOut.body': 'الدوريات اختيارية. تُحتسب نقاط XP والتتابع وتقدّمك بالطريقة نفسها في الحالتين.',
   'leagues.optedOut.join': 'انضم إلى الدوريات',
   'leagues.unnamed': 'متعلّم',

@@ -54,7 +54,8 @@ export function SeasonPage(): React.JSX.Element {
 
   const season = overview.season;
   const named = seasonNamed(t, season);
-  const ends = new Date(season.endsAt).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
+  // the season's last day: it ends as the next one begins, at midnight UTC
+  const ends = new Date(new Date(season.endsAt).getTime() - 1).toLocaleDateString(locale, { day: 'numeric', month: 'long' });
   const past = groupBySeason(emblems.filter((e) => e.seasonId !== season.id));
 
   return (

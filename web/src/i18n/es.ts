@@ -2307,7 +2307,6 @@ export const es: Catalogue = {
   'settings.leagues.toggle': 'Participar en las ligas semanales',
   'settings.leagues.minorHint': 'Desactivado salvo que lo actives, porque tienes menos de 18 años.',
   'settings.visibility.minorHint': 'Con menos de 18 años, tu perfil no puede estar abierto a cualquiera en la web.',
-  'leagues.optedOut.title': 'No estás en ninguna liga',
   'leagues.optedOut.body': 'Las ligas son opcionales. Tus XP, tu racha y tu progreso cuentan igual en ambos casos.',
   'leagues.optedOut.join': 'Unirse a las ligas',
   'leagues.unnamed': 'Un estudiante',
