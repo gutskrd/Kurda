@@ -48,9 +48,12 @@ export function Rhyme(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   const { handlers: typeOnly, notice: pasteNotice } = useTypeOnly(t('games.rhyme.noPasting'));
   const inputRef = useRef<HTMLInputElement>(null);
+  // "End round" before the clock runs out is giving the round up
+  const [endedEarly, setEndedEarly] = useState(false);
 
   const start = useCallback(async () => {
     setGame(null);
+    setEndedEarly(false);
     setLoadError(null);
     setEmptyLexicon(false);
     setFound([]);
@@ -72,8 +75,8 @@ export function Rhyme(): React.JSX.Element {
   }, [start]);
 
   const active = game?.status === 'active' && remaining > 0;
-  // the rating box hears of a round the server has ended
-  useGameFinished('rhyme', game?.id ?? null, game?.status === 'ended');
+  // the rating box hears of a round the server has ended — not of one given up
+  useGameFinished('rhyme', game?.id ?? null, game?.status === 'ended', endedEarly);
 
   const end = useCallback(async () => {
     if (!game) return;
@@ -209,7 +212,14 @@ export function Rhyme(): React.JSX.Element {
 
           {active && (
             <div className="rhyme-actions">
-              <Button variant="ghost" size="sm" onClick={() => void end()}>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setEndedEarly(true);
+                  void end();
+                }}
+              >
                 {t('games.rhyme.endRound')}
               </Button>
             </div>
