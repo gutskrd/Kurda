@@ -151,7 +151,7 @@ export function GiftSheet({
           {error && restrictionOf(error.error) ? (
             // a limit on the account (a gift is a chat message): calm, what and
             // until when, and Account standing after this sheet has closed
-            <SendErrorNotice error={error.error} onNavigate={onClose} />
+            <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
           ) : error ? (
             <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
               {shopGiftErrorText(error.error, error.name, t)}
@@ -200,6 +200,8 @@ const styles = StyleSheet.create({
   },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm },
+  // lined up with the search field and the list, inside the sheet's own padding
+  notice: { marginHorizontal: 0, marginBottom: 0 },
   search: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.md,
