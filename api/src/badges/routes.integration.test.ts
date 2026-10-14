@@ -2,7 +2,7 @@
  * Badges, leagues and progress over HTTP and on the profile, and in the data
  * export and a child's erase, against real Postgres.
  */
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
@@ -178,5 +178,39 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     } finally {
       client.release();
     }
+  });
+
+  it('the app’s Game Ranks events reach the badges, tier keys counted as their place in the climb', async () => {
+    const low = await signUp('rklow');
+    const high = await signUp('rkhigh');
+    await call(low, 'GET', '/me/badges');
+    await call(high, 'GET', '/me/badges');
+    const gameRef = (await pool.query<{ id: string }>(`SELECT gen_random_uuid() AS id`)).rows[0]!.id;
+    const player = { won: false, left: false, pointsBefore: 0, pointsAfter: 0, ratedGames: 6, seasonGames: 6, placedNow: false };
+    app.ranks.events.emitRatedGameFinished({
+      game: 'wordle-battle',
+      gameRef,
+      seasonId: '2026-Q4',
+      at: new Date(),
+      players: [
+        { ...player, userId: low.id, place: 1, won: true, tierBefore: 'dest', tierAfter: 'gir', beatTierGap: 2 },
+        { ...player, userId: high.id, place: 2, tierBefore: 'zozan', tierAfter: 'zozan', beatTierGap: 0 },
+      ],
+    });
+    await vi.waitFor(
+      async () => {
+        const rows = await pool.query<{ user_id: string; tier_after: number; beat_higher_by: number; placement_done: boolean }>(
+          `SELECT user_id, tier_after, beat_higher_by, placement_done FROM badge_rated_games WHERE game_ref = $1 ORDER BY place`,
+          [gameRef],
+        );
+        expect(rows.rows).toEqual([
+          { user_id: low.id, tier_after: 1, beat_higher_by: 2, placement_done: true },
+          { user_id: high.id, tier_after: 2, beat_higher_by: 0, placement_done: true },
+        ]);
+        const found = (await call(low, 'GET', '/me/badges')).json() as { badges: Array<{ key: string; tier: number }> };
+        expect(found.badges.find((b) => b.key === 'kewe-ciye')).toMatchObject({ tier: 1 });
+      },
+      { timeout: 10_000, interval: 50 },
+    );
   });
 });
