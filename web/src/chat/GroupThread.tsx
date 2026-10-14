@@ -89,15 +89,13 @@ export function GroupThread({
     sendText: useCallback(
       async (body: string) => {
         const res = await client.post<GroupMessage>(`/groups/${groupId}/chat`, { body });
-        if (!res.ok) {
-          setSendErr(res.error);
-          return false;
-        }
+        // the reveal that asked says why it did not go, where the reader is looking
+        if (!res.ok) return res.error;
         setMessages((m) => {
           const list = m ?? [];
           return list.some((x) => x.id === res.data.id) ? list : [...list, res.data];
         });
-        return true;
+        return null;
       },
       [client, groupId],
     ),

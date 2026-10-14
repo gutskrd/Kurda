@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type 
 import { useSearchParams } from 'react-router-dom';
 import type { GiftCard, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import type { DmMessage, GroupMessage } from '../lib/types';
+import type { ApiError, DmMessage, GroupMessage } from '../lib/types';
 import { GiftIcon } from '../components/icons';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
@@ -48,8 +48,8 @@ export function useChatGifts<M extends ChatMessage>({
   /** who may be given a gift here: the friend in a DM, your friends among a group's members */
   loadPeople: () => Promise<GiftPerson[]>;
   setMessages: Dispatch<SetStateAction<M[] | null>>;
-  /** send a text message in this thread (the thanks) */
-  sendText: (body: string) => Promise<boolean>;
+  /** send a text message in this thread (the thanks); null when it went, else the refusal */
+  sendText: (body: string) => Promise<ApiError | null>;
   /** the scrolling list of messages, which the sent gift flies into */
   threadRef: RefObject<HTMLElement | null>;
   /** bring the thread to its end once your gift is in it */
@@ -162,9 +162,9 @@ export function useChatGifts<M extends ChatMessage>({
       },
       thank: () => sendText(t('gift.thanksMessage')),
       wear: async (card) => {
-        if (!card.equippable) return false;
+        if (!card.equippable) return { kind: 'client', message: 'not something to wear' };
         const res = await client.put(`/me/cosmetics/${card.equippable}`, { sku: card.sku });
-        return res.ok;
+        return res.ok ? null : res.error;
       },
     }),
     [client, sendText, setCard, t],

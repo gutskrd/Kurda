@@ -114,13 +114,11 @@ export function DmThread({
     sendText: useCallback(
       async (body: string) => {
         const res = await client.post<DmMessage>(`/chat/${otherId}/messages`, { body });
-        if (!res.ok) {
-          setSendErr(res.error);
-          return false;
-        }
+        // the reveal that asked says why it did not go, where the reader is looking
+        if (!res.ok) return res.error;
         setMessages((m) => [...(m ?? []), res.data]);
         onSent();
-        return true;
+        return null;
       },
       [client, otherId, onSent],
     ),

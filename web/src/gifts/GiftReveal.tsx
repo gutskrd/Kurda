@@ -5,16 +5,21 @@ import { Button } from '../components/Button';
 import { wrapTab } from '../components/Sheet';
 import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import type { ApiError } from '../lib/types';
+import { SendError } from '../reports/SendError';
 import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
 
 /** What a thread lets a gift do: open it, say thanks in the chat, put it on. */
 export interface GiftActions {
   /** unwrap your gift on the server; the opened card, or null when it failed */
   open(giftId: string): Promise<GiftCard | null>;
-  /** send the thanks message into this chat */
-  thank(): Promise<boolean>;
-  /** put on what was given (a background or an icon) */
-  wear(card: GiftCard): Promise<boolean>;
+  /**
+   * send the thanks message into this chat; null when it went, else the
+   * refusal (a chat mute says why and until when, here where you pressed)
+   */
+  thank(): Promise<ApiError | null>;
+  /** put on what was given (a background or an icon); null when it is on */
+  wear(card: GiftCard): Promise<ApiError | null>;
 }
 
 /**
@@ -43,7 +48,7 @@ export function GiftReveal({
   const [busy, setBusy] = useState<'wear' | 'thank' | null>(null);
   const [worn, setWorn] = useState(false);
   const [thanked, setThanked] = useState(false);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState<ApiError | null>(null);
 
   // the moment is over and the item is here: say so, and put the reader on it
   useEffect(() => {
@@ -52,10 +57,10 @@ export function GiftReveal({
 
   async function run(kind: 'wear' | 'thank'): Promise<void> {
     setBusy(kind);
-    setFailed(false);
-    const ok = kind === 'wear' ? await actions.wear(card) : await actions.thank();
+    setFailed(null);
+    const refused = kind === 'wear' ? await actions.wear(card) : await actions.thank();
     setBusy(null);
-    if (!ok) setFailed(true);
+    if (refused) setFailed(refused);
     else if (kind === 'wear') setWorn(true);
     else setThanked(true);
   }
@@ -95,11 +100,8 @@ export function GiftReveal({
           {t('gift.close')}
         </Button>
       </div>
-      {failed && (
-        <p className="msg msg-error gift-reveal-error" role="alert">
-          {t('gift.actionFailed')}
-        </p>
-      )}
+      {/* a limit on the account says what and until when; anything else is a plain "try again" */}
+      <SendError error={failed} describe={() => t('gift.actionFailed')} className="gift-reveal-error" />
     </div>
   );
 }

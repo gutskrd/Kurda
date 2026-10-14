@@ -32,11 +32,11 @@ function actions(opened: GiftCard | null = card({ myOpened: true })): GiftAction
     }),
     thank: vi.fn(async () => {
       calls.push('thank');
-      return true;
+      return null;
     }),
     wear: vi.fn(async (c: GiftCard) => {
       calls.push(`wear:${c.sku}`);
-      return true;
+      return null;
     }),
   };
 }
@@ -121,6 +121,25 @@ describe('GiftBubble, to its recipient', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
     expect(await screen.findByRole('alert')).toHaveTextContent('That gift didn’t open. Try again.');
     expect(screen.getByRole('button', { name: 'Open the gift from rojda' })).toBeInTheDocument();
+  });
+
+  it('says why a thanks did not go, beside the button that sent it', async () => {
+    const a = actions();
+    a.thank = vi.fn(async () => ({
+      kind: 'client' as const,
+      status: 403,
+      code: 'MUTED',
+      message: 'muted',
+      details: { scope: 'chat', until: '2030-01-02T10:00:00.000Z' },
+    }));
+    renderApp(<GiftBubble card={card()} mine={false} senderName="rojda" actions={a} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    await userEvent.click(await screen.findByRole('button', { name: 'Say thanks' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent(/You can’t send messages until .*2030/);
+    expect(screen.getByRole('link', { name: 'See your account standing' })).toBeInTheDocument();
+    // and Say thanks is still there to try once the limit ends
+    expect(screen.getByRole('button', { name: 'Say thanks' })).toBeInTheDocument();
   });
 
   it('opens at once when the banner or a notification sent you to it', async () => {
