@@ -3,7 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 're
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
-import { GlassCard, GlassRow, GlassSelect } from '../theme/glass';
+import { GlassCard, GlassRow, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -113,7 +113,7 @@ export function KeyboardSettingsSheet({
   const [guide, setGuide] = useState(false);
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.backdrop}>
+      <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} accessibilityRole="button" />
         <View style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={styles.sheetHead}>
@@ -151,11 +151,11 @@ export function KeyboardSettingsSection(): React.JSX.Element {
       <Text style={[styles.section, { color: colors.textSecondary }]}>{t('keyboard.settings.title')}</Text>
       <GlassCard>
         <TypingOptions />
-        <GlassSelect<WordleLayout>
-          label={t('keyboard.wordle.title')}
-          icon="grid"
-          value={prefs.wordleLayout}
+        {/* two choices side by side, both always readable: a picker row cut them short on a phone */}
+        <Text style={[styles.label, styles.spaced, { color: colors.textSecondary }]}>{t('keyboard.wordle.title')}</Text>
+        <Segmented<WordleLayout>
           options={LAYOUTS}
+          value={prefs.wordleLayout}
           labelOf={(l) => t(LAYOUT_LABEL[l])}
           onChange={(l) => setPrefs({ wordleLayout: l })}
         />
@@ -175,7 +175,8 @@ const styles = StyleSheet.create({
   modeName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  spaced: { marginTop: spacing.md },
+  backdrop: { flex: 1, justifyContent: 'flex-end' },
   sheet: { borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, maxHeight: '88%', paddingBottom: spacing.lg },
   sheetHead: {
     flexDirection: 'row',

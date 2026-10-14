@@ -184,8 +184,9 @@ export function RatingBox({
         </View>
       ) : null}
 
-      {settings || followUp ? (
-        // a field says what it is for in words that stay, not only in a placeholder that goes
+      {/* a field says what it is for in words that stay, not only in a placeholder that goes —
+          unless the line just above already asks it (the under-3 thank-you does) */}
+      {settings || followUp === 'love' ? (
         <Text style={[styles.fieldLabel, { color: colors.textSecondary }]}>
           {t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
         </Text>
@@ -196,7 +197,7 @@ export function RatingBox({
           onChangeText={setComment}
           multiline
           maxLength={APP_FEEDBACK_COMMENT_MAX}
-          placeholder={t(followUp === 'love' && !settings ? 'appFeedback.lovePlaceholder' : 'appFeedback.improvePlaceholder')}
+          placeholder={t('appFeedback.improvePlaceholder')}
           placeholderTextColor={colors.textSecondary}
           accessibilityLabel={t(followUp === 'love' && !settings ? 'appFeedback.loveLabel' : 'appFeedback.improveLabel')}
           style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}

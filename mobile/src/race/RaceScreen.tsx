@@ -275,47 +275,51 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
 
         {!game ? (
           <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-            <GlassCard style={styles.card}>
-              <Icon name="bolt" size={44} tone="primary" />
-              <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.intro')}</Text>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.textIn')}</Text>
-              <View style={styles.stretch}>
-                <Segmented<TypingDialect>
-                  options={DIALECTS}
-                  value={dialect}
-                  onChange={(d) => setPrefs({ raceDialect: d })}
-                  labelOf={(d) => t(DIALECT_KEY[d])}
+            <GlassCard>
+              {/* the card's style dresses its outside; what is in it is laid out here */}
+              <View style={styles.card}>
+                <Icon name="bolt" size={44} tone="primary" />
+                <Text style={[styles.blurb, { color: colors.textSecondary }]}>{t('games.race.intro')}</Text>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.textIn')}</Text>
+                <View style={styles.full}>
+                  <Segmented<TypingDialect>
+                    options={DIALECTS}
+                    value={dialect}
+                    onChange={(d) => setPrefs({ raceDialect: d })}
+                    labelOf={(d) => t(DIALECT_KEY[d])}
+                  />
+                </View>
+                <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>
+                <View style={styles.full}>
+                  <Segmented<string>
+                    options={LENGTHS.map(String)}
+                    value={String(length)}
+                    onChange={(v) => setLength(Number(v) as RaceLength)}
+                    labelOf={(v) => t(LENGTH_KEY[Number(v) as RaceLength])}
+                  />
+                </View>
+                <ClayButton
+                  label={t('games.race.start')}
+                  icon="play"
+                  tone="primary"
+                  size="large"
+                  busy={starting}
+                  onPress={() => void start()}
+                  style={styles.stretch}
                 />
+                {error ? (
+                  <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                    {error}
+                  </Text>
+                ) : null}
               </View>
-              <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.race.length')}</Text>
-              <View style={styles.stretch}>
-                <Segmented<string>
-                  options={LENGTHS.map(String)}
-                  value={String(length)}
-                  onChange={(v) => setLength(Number(v) as RaceLength)}
-                  labelOf={(v) => t(LENGTH_KEY[Number(v) as RaceLength])}
-                />
-              </View>
-              <ClayButton
-                label={t('games.race.start')}
-                icon="play"
-                tone="primary"
-                size="large"
-                busy={starting}
-                onPress={() => void start()}
-                style={styles.stretch}
-              />
-              {error ? (
-                <Text style={[styles.error, { color: colors.danger }]} accessibilityLiveRegion="polite">
-                  {error}
-                </Text>
-              ) : null}
             </GlassCard>
             <GlassCard padding="tight">
+              {/* the accent mode under the name, not beside it: side by side, a phone cut both short */}
               <GlassRow
                 icon="keyboard"
                 title={t('keyboard.settings.title')}
-                value={t(ACCENT_LABEL[prefs.accentMode])}
+                subtitle={t(ACCENT_LABEL[prefs.accentMode])}
                 onPress={() => setSettingsOpen(true)}
               />
             </GlassCard>
@@ -529,8 +533,9 @@ const styles = StyleSheet.create({
   raceContent: { paddingHorizontal: spacing.lg, paddingBottom: spacing.xl, gap: spacing.md },
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
+  full: { alignSelf: 'stretch' },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },
-  label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
+  label: { alignSelf: 'stretch', fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.sm },
   error: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textAlign: 'center' },
   notice: { fontSize: typography.sizes.sm, textAlign: 'center' },
   headerButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', alignSelf: 'flex-end' },

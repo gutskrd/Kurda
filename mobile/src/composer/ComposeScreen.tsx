@@ -490,7 +490,7 @@ export function ComposeScreen({
                   multiline
                   autoFocus={mode === 'new'}
                   textAlignVertical="top"
-                  style={[styles.bodyInput, { color: colors.textPrimary }]}
+                  style={[styles.bodyInput, state.pictures.length > 0 && styles.bodyInputShort, { color: colors.textPrimary }]}
                 />
               </View>
             </View>
@@ -891,6 +891,8 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   bodyInput: { minHeight: 140, fontSize: typography.sizes.md + 1, lineHeight: 24, paddingTop: spacing.sm },
+  // with pictures under it the box no longer needs room to invite writing; it still grows as you type
+  bodyInputShort: { minHeight: 72 },
   fieldNote: { fontSize: typography.sizes.sm },
   pictures: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   tile: { width: '48.5%', aspectRatio: 1, borderRadius: radii.md, overflow: 'hidden' },
@@ -936,9 +938,10 @@ const styles = StyleSheet.create({
   switchTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   hint: { fontSize: typography.sizes.sm },
   sourceInput: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.md, marginTop: spacing.xs },
-  toolbarWrap: { borderTopWidth: StyleSheet.hairlineWidth, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: 2 },
-  copyHint: { fontSize: typography.sizes.xs },
-  toolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  // the rule runs edge to edge; what sits on it keeps the column's edges, as the top bar does
+  toolbarWrap: { borderTopWidth: StyleSheet.hairlineWidth, paddingTop: spacing.xs, paddingBottom: spacing.sm, gap: 2 },
+  copyHint: { fontSize: typography.sizes.xs, paddingHorizontal: spacing.md },
+  toolbar: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.md },
   tool: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   disabled: { opacity: 0.4 },
   count: { fontSize: typography.sizes.sm, fontVariant: ['tabular-nums'] },

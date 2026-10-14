@@ -1047,7 +1047,6 @@ export type TranslationKey =
   | 'appFeedback.stars.5'
   | 'appFeedback.improve'
   | 'appFeedback.thanksLove'
-  | 'appFeedback.lovePlaceholder'
   | 'appFeedback.loveLabel'
   | 'appFeedback.improvePlaceholder'
   | 'appFeedback.improveLabel'
@@ -2153,7 +2152,6 @@ const en: Catalog = {
   'appFeedback.stars.5': '5 stars',
   'appFeedback.improve': 'Thanks for telling us — what could be better?',
   'appFeedback.thanksLove': 'Thank you! 💛',
-  'appFeedback.lovePlaceholder': 'What do you love? (optional)',
   'appFeedback.loveLabel': 'What do you love?',
   'appFeedback.improvePlaceholder': 'Tell us more (optional)',
   'appFeedback.improveLabel': 'What could be better?',
@@ -3257,7 +3255,6 @@ const ku: Catalog = {
   'appFeedback.stars.5': '5 stêrk',
   'appFeedback.improve': 'Spas ku te ji me re got — çi dikare baştir be?',
   'appFeedback.thanksLove': 'Spas! 💛',
-  'appFeedback.lovePlaceholder': 'Tu ji çi hez dikî? (ne mecbûrî ye)',
   'appFeedback.loveLabel': 'Tu ji çi hez dikî?',
   'appFeedback.improvePlaceholder': 'Zêdetir ji me re bêje (ne mecbûrî ye)',
   'appFeedback.improveLabel': 'Çi dikare baştir be?',
@@ -4361,7 +4358,6 @@ const de: Catalog = {
   'appFeedback.stars.5': '5 Sterne',
   'appFeedback.improve': 'Danke, dass du es uns sagst – was könnte besser sein?',
   'appFeedback.thanksLove': 'Danke! 💛',
-  'appFeedback.lovePlaceholder': 'Was magst du daran? (optional)',
   'appFeedback.loveLabel': 'Was magst du daran?',
   'appFeedback.improvePlaceholder': 'Erzähl uns mehr (optional)',
   'appFeedback.improveLabel': 'Was könnte besser sein?',
@@ -5465,7 +5461,6 @@ const es: Catalog = {
   'appFeedback.stars.5': '5 estrellas',
   'appFeedback.improve': 'Gracias por decírnoslo: ¿qué podría mejorar?',
   'appFeedback.thanksLove': '¡Gracias! 💛',
-  'appFeedback.lovePlaceholder': '¿Qué es lo que más te gusta? (opcional)',
   'appFeedback.loveLabel': '¿Qué es lo que más te gusta?',
   'appFeedback.improvePlaceholder': 'Cuéntanos más (opcional)',
   'appFeedback.improveLabel': '¿Qué podría mejorar?',
@@ -6569,7 +6564,6 @@ const tr: Catalog = {
   'appFeedback.stars.5': '5 yıldız',
   'appFeedback.improve': 'Bize söylediğin için teşekkürler — ne daha iyi olabilir?',
   'appFeedback.thanksLove': 'Teşekkürler! 💛',
-  'appFeedback.lovePlaceholder': 'En çok neyi seviyorsun? (isteğe bağlı)',
   'appFeedback.loveLabel': 'En çok neyi seviyorsun?',
   'appFeedback.improvePlaceholder': 'Biraz daha anlat (isteğe bağlı)',
   'appFeedback.improveLabel': 'Ne daha iyi olabilir?',
@@ -7673,7 +7667,6 @@ const ar: Catalog = {
   'appFeedback.stars.5': '5 نجوم',
   'appFeedback.improve': 'شكرًا لإخبارنا — ما الذي يمكن أن يكون أفضل؟',
   'appFeedback.thanksLove': 'شكرًا! 💛',
-  'appFeedback.lovePlaceholder': 'ما الذي تحبه؟ (اختياري)',
   'appFeedback.loveLabel': 'ما الذي تحبه؟',
   'appFeedback.improvePlaceholder': 'أخبرنا بالمزيد (اختياري)',
   'appFeedback.improveLabel': 'ما الذي يمكن أن يكون أفضل؟',
@@ -8777,7 +8770,6 @@ const fr: Catalog = {
   'appFeedback.stars.5': '5 étoiles',
   'appFeedback.improve': 'Merci de nous le dire — qu’est-ce qui pourrait être mieux ?',
   'appFeedback.thanksLove': 'Merci ! 💛',
-  'appFeedback.lovePlaceholder': 'Qu’est-ce que tu aimes ? (facultatif)',
   'appFeedback.loveLabel': 'Qu’est-ce que tu aimes ?',
   'appFeedback.improvePlaceholder': 'Dis-nous en plus (facultatif)',
   'appFeedback.improveLabel': 'Qu’est-ce qui pourrait être mieux ?',
@@ -9881,7 +9873,6 @@ const nl: Catalog = {
   'appFeedback.stars.5': '5 sterren',
   'appFeedback.improve': 'Bedankt dat je het zegt — wat kan er beter?',
   'appFeedback.thanksLove': 'Dankjewel! 💛',
-  'appFeedback.lovePlaceholder': 'Wat vind je er leuk aan? (optioneel)',
   'appFeedback.loveLabel': 'Wat vind je er leuk aan?',
   'appFeedback.improvePlaceholder': 'Vertel ons meer (optioneel)',
   'appFeedback.improveLabel': 'Wat kan er beter?',
@@ -10986,7 +10977,6 @@ const ckb: Catalog = {
   'appFeedback.stars.5': '5 ئەستێرە',
   'appFeedback.improve': 'سوپاس کە پێت گوتین — چی دەکرێت باشتر بێت؟',
   'appFeedback.thanksLove': 'سوپاس! 💛',
-  'appFeedback.lovePlaceholder': 'حەزت لە چییە؟ (ئارەزوومەندانە)',
   'appFeedback.loveLabel': 'حەزت لە چییە؟',
   'appFeedback.improvePlaceholder': 'زیاتر پێمان بڵێ (ئارەزوومەندانە)',
   'appFeedback.improveLabel': 'چی دەکرێت باشتر بێت؟',

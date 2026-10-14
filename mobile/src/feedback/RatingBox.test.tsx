@@ -78,6 +78,18 @@ describe('RatingBox after a first game', () => {
     expect(client.calls[0]?.body).toEqual({ stars: 4, source: 'first_game', platform: 'web', appVersion: APP_VERSION, locale: 'en' });
   });
 
+  it('asks each question once: a label that stays, never repeated by the line above it or the placeholder', () => {
+    testAuth.client = fakeClient({});
+    renderWithProviders(<RatingBox source="first_game" onClose={() => undefined} />);
+    fireEvent.click(screen.getByRole('radio', { name: '2 stars' }));
+    // the thank-you line already asks; the box keeps its name for a screen reader only
+    expect(screen.queryByText('What could be better?')).toBeNull();
+    expect(screen.getByLabelText('What could be better?').getAttribute('placeholder')).toBe('Tell us more (optional)');
+    fireEvent.click(screen.getByRole('radio', { name: '4 stars' }));
+    expect(screen.getAllByText('What do you love?')).toHaveLength(1);
+    expect(screen.getByLabelText('What do you love?').getAttribute('placeholder')).toBe('Tell us more (optional)');
+  });
+
   it('keeps chips picked under three out of a happy answer changed to five', async () => {
     const client = fakeClient({ 'POST /me/app-feedback': ok({ id: 'f3' }) });
     testAuth.client = client;
