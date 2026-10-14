@@ -1,17 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useState } from 'react';
+import { api } from '../api';
+import { humanize } from '../moderation';
+import { Badge, Button, FieldRow, FormActions, Section, Select, Table, TextInput, Time, errorLine, useDialogs, useLoad, useToast, type Column } from '../ui';
 
 /**
- * Economy actions on a single user: balance adjustments and item grants.
+ * A person's money and things: balances, the ledger, what they own — and,
+ * for a superadmin, a change to either.
  *
- * Both go through the API, which routes balance changes through the double-entry
- * ledger (never a direct balance edit) and records every call in the admin audit
- * log. Each action requires a reason, which is stored with it.
+ * Both changes go through the API, which moves money through the
+ * double-entry ledger (a balance is never edited directly) and keeps every
+ * call in the audit log with the reason given.
  */
 
 interface EconomyUser {
   id: string;
   username: string;
+  balances: { zer: number; gems: number };
+  ledger: Array<{ currency: string; amount: number; reason: string; createdAt: string }>;
 }
 
 export interface OwnedItem {
@@ -23,211 +28,241 @@ export interface OwnedItem {
   equipped: boolean;
 }
 
-interface Props {
-  user: EconomyUser;
-  onChanged: () => void;
-  onError: (err: unknown) => void;
+const CURRENCY: Readonly<Record<string, string>> = { zer: 'Zêr', gems: 'Gems' };
+
+/** The ledger's reasons as people say them; one this build doesn't know is shown by its key. */
+const LEDGER_REASON: Readonly<Record<string, string>> = {
+  admin_adjustment: 'Changed by an admin',
+  shop_purchase: 'Shop purchase',
+  shop_return: 'Shop return',
+  iap_purchase: 'Bought in the app store',
+  gift: 'Gift',
+  daily_reward: 'Daily reward',
+  quest_reward: 'Quest reward',
+  tournament_reward: 'Tournament prize',
+  season_reward: 'Season reward',
+};
+
+export function ledgerReason(reason: string): string {
+  return Object.hasOwn(LEDGER_REASON, reason) ? LEDGER_REASON[reason]! : humanize(reason);
 }
 
-/** Add or take away Zêr / Gems. */
-export function WalletActions({ user, onChanged, onError }: Props): React.JSX.Element {
+type LedgerRow = EconomyUser['ledger'][number];
+const LEDGER_COLUMNS: ReadonlyArray<Column<LedgerRow>> = [
+  { key: 'what', header: 'What', card: 'title', cell: (r) => <strong>{ledgerReason(r.reason)}</strong> },
+  {
+    key: 'amount',
+    header: 'Amount',
+    align: 'end',
+    cell: (r) => (
+      <span className={r.amount < 0 ? 'is-negative' : undefined}>
+        {r.amount > 0 ? '+' : ''}
+        {r.amount.toLocaleString()} {CURRENCY[r.currency] ?? r.currency}
+      </span>
+    ),
+  },
+  { key: 'when', header: 'When', cell: (r) => <Time value={r.createdAt} /> },
+];
+
+export function WalletPanel({ user, canAdjust, onChanged }: { user: EconomyUser; canAdjust: boolean; onChanged: () => void }): React.JSX.Element {
+  return (
+    <>
+      <Section title="Balances">
+        <div className="balances">
+          <div className="balance">
+            <div className="balance-n">{user.balances.zer.toLocaleString()}</div>
+            <div className="balance-k">Zêr</div>
+          </div>
+          <div className="balance">
+            <div className="balance-n">{user.balances.gems.toLocaleString()}</div>
+            <div className="balance-k">Gems</div>
+          </div>
+        </div>
+      </Section>
+      {canAdjust && <AdjustForm user={user} onChanged={onChanged} />}
+      <Section title="Ledger" description="The latest 20 movements, newest first." flush>
+        <Table caption="Ledger" columns={LEDGER_COLUMNS} rows={user.ledger} rowKey={(r) => `${r.createdAt}-${r.currency}-${r.amount}-${r.reason}`} empty="No movements yet." />
+      </Section>
+    </>
+  );
+}
+
+/** Add or take away Zêr or Gems, with a reason kept in the audit log. */
+function AdjustForm({ user, onChanged }: { user: EconomyUser; onChanged: () => void }): React.JSX.Element {
   const [currency, setCurrency] = useState<'zer' | 'gems'>('zer');
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const [touched, setTouched] = useState(false);
+  const toast = useToast();
+  const value = Number(amount);
+  const amountError = !amount.trim() ? 'Enter an amount.' : !Number.isInteger(value) || value === 0 ? 'A whole number, not 0. A negative one takes away.' : null;
+  const reasonError = reason.trim() ? null : 'Say why, for the audit log.';
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    const value = Number(amount);
-    if (!Number.isInteger(value) || value === 0) {
-      setMsg('Enter a whole, non-zero amount — a negative one takes it away.');
-      return;
-    }
+    setTouched(true);
+    if (amountError || reasonError) return;
     setBusy(true);
-    setMsg(null);
     try {
-      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, {
-        method: 'POST',
-        body: { currency, amount: value, reason: reason.trim() },
-      });
-      const unit = currency === 'zer' ? 'Zêr' : 'Gems';
-      setMsg(
-        `${value > 0 ? 'Added' : 'Removed'} ${Math.abs(value)} ${unit}` +
-          (res.balance !== undefined ? ` — new balance ${res.balance}.` : '.'),
+      const res = await api<{ balance?: number }>(`/admin/users/${user.id}/wallet`, { method: 'POST', body: { currency, amount: value, reason: reason.trim() } });
+      toast.success(
+        `${value > 0 ? 'Added' : 'Took away'} ${Math.abs(value).toLocaleString()} ${CURRENCY[currency]}${res.balance !== undefined ? `. New balance: ${res.balance.toLocaleString()}.` : '.'}`,
       );
       setAmount('');
       setReason('');
+      setTouched(false);
       onChanged();
     } catch (err) {
-      if (err instanceof ApiError && err.status !== 403) setMsg(err.message);
-      else onError(err);
+      toast.error(errorLine(err, 'the economy'));
     } finally {
       setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={(e) => void submit(e)} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div className="section-title" style={{ margin: 0 }}>
-        Adjust balance
-      </div>
-      <div className="subtle">
-        A positive amount adds, a negative one takes away. Each change is written to the ledger with its
-        reason, so it stays traceable — balances are never edited directly.
-      </div>
-      <div className="row" style={{ gap: 10, flexWrap: 'wrap' }}>
-        <select
-          value={currency}
-          onChange={(e) => setCurrency(e.target.value as 'zer' | 'gems')}
-          style={{ width: 'auto' }}
-        >
-          <option value="zer">Zêr</option>
-          <option value="gems">Gems</option>
-        </select>
-        <input
-          type="number"
-          step={1}
-          placeholder="500 or -500"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          style={{ width: 150 }}
-        />
-        <input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} />
-        <button className="primary" type="submit" disabled={busy || !amount.trim() || !reason.trim()}>
-          {busy ? 'Applying…' : 'Apply'}
-        </button>
-      </div>
-      {msg && <div className="subtle">{msg}</div>}
-    </form>
+    <Section title="Change a balance" description="It goes through the ledger with your reason, so it can always be traced.">
+      <form className="form" noValidate onSubmit={(e) => void submit(e)}>
+        <FieldRow>
+          <Select
+            label="Currency"
+            value={currency}
+            onChange={(e) => setCurrency(e.target.value as 'zer' | 'gems')}
+            options={[
+              { value: 'zer', label: 'Zêr' },
+              { value: 'gems', label: 'Gems' },
+            ]}
+          />
+          <TextInput
+            label="Amount"
+            hint="500 adds, -500 takes away."
+            inputMode="numeric"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            error={touched ? amountError : undefined}
+            required
+          />
+        </FieldRow>
+        <TextInput label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} error={touched ? reasonError : undefined} required maxLength={500} />
+        <FormActions>
+          <Button type="submit" variant="primary" busy={busy}>
+            Apply
+          </Button>
+        </FormActions>
+      </form>
+    </Section>
   );
 }
 
-/** Grant or take back shop items. Revoking also un-equips the item. */
-export function ItemActions({ user, onChanged, onError }: Props): React.JSX.Element {
-  const [items, setItems] = useState<OwnedItem[] | null>(null);
-  const [catalog, setCatalog] = useState<{ sku: string; name: string; category: string }[]>([]);
+/** What they own, and — for a superadmin — giving an item or taking one back (which also un-equips it). */
+export function ItemsPanel({ user, canAdjust }: { user: { id: string; username: string }; canAdjust: boolean }): React.JSX.Element {
+  const items = useLoad(() => api<{ items: OwnedItem[] }>(`/admin/users/${user.id}/items`).then((r) => r.items), [user.id]);
+  const catalog = useLoad(
+    () => (canAdjust ? api<{ items: Array<{ sku: string; name: string; category: string }> }>('/admin/shop/items').then((r) => r.items) : Promise.resolve([])),
+    [canAdjust],
+  );
   const [sku, setSku] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
+  const toast = useToast();
+  const dialogs = useDialogs();
 
-  const load = useCallback(async () => {
-    try {
-      const res = await api<{ items: OwnedItem[] }>(`/admin/users/${user.id}/items`);
-      setItems(res.items);
-    } catch {
-      setItems([]);
-    }
-  }, [user.id]);
-
-  useEffect(() => {
-    void load();
-    void api<{ items: { sku: string; name: string; category: string }[] }>('/admin/shop/items')
-      .then((r) => setCatalog(r.items))
-      .catch(() => setCatalog([]));
-  }, [load]);
-
-  async function act(run: () => Promise<unknown>, done: string): Promise<void> {
+  async function grant(e: React.FormEvent): Promise<void> {
+    e.preventDefault();
+    if (!sku || !reason.trim()) return;
     setBusy(true);
-    setMsg(null);
     try {
-      await run();
-      setMsg(done);
+      await api(`/admin/users/${user.id}/items`, { method: 'POST', body: { sku, reason: reason.trim() } });
+      toast.success('Given.');
+      setSku('');
       setReason('');
-      await load();
-      onChanged();
+      await items.reload();
     } catch (err) {
-      if (err instanceof ApiError && err.status !== 403) setMsg(err.message);
-      else onError(err);
+      toast.error(errorLine(err, 'the economy'));
     } finally {
       setBusy(false);
     }
   }
 
-  function grant(e: React.FormEvent): void {
-    e.preventDefault();
-    if (!sku || !reason.trim()) return;
-    void act(
-      () => api(`/admin/users/${user.id}/items`, { method: 'POST', body: { sku, reason: reason.trim() } }),
-      `Granted ${sku}.`,
-    );
+  async function takeBack(item: OwnedItem): Promise<void> {
+    const why = await dialogs.prompt({
+      title: `Take “${item.name}” back from @${user.username}?`,
+      label: 'Why (for the audit log)',
+      body: item.equipped ? 'They are using it now; it comes off too.' : undefined,
+      maxLength: 500,
+      confirmLabel: 'Take it back',
+    });
+    if (!why) return;
+    try {
+      await api(`/admin/users/${user.id}/items/${encodeURIComponent(item.sku)}`, { method: 'DELETE', body: { reason: why } });
+      toast.success('Taken back.');
+      await items.reload();
+    } catch (err) {
+      toast.error(errorLine(err, 'the economy'));
+    }
   }
 
-  function revoke(item: OwnedItem): void {
-    const why = prompt(`Reason for removing "${item.name}" from ${user.username}?`);
-    if (!why?.trim()) return;
-    void act(
-      () =>
-        api(`/admin/users/${user.id}/items/${encodeURIComponent(item.sku)}`, {
-          method: 'DELETE',
-          body: { reason: why.trim() },
-        }),
-      `Removed ${item.sku}.`,
-    );
-  }
+  const columns: ReadonlyArray<Column<OwnedItem>> = [
+    {
+      key: 'item',
+      header: 'Item',
+      card: 'title',
+      cell: (i) => (
+        <span>
+          <strong>{i.name}</strong> {i.equipped && <Badge tone="info">In use</Badge>}
+          <span className="cell-sub mono">{i.sku}</span>
+        </span>
+      ),
+    },
+    { key: 'category', header: 'Kind', cell: (i) => humanize(i.category) },
+    { key: 'qty', header: 'How many', align: 'end', cell: (i) => i.quantity },
+    { key: 'source', header: 'From', cell: (i) => humanize(i.source) },
+  ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-      <div className="section-title" style={{ margin: 0 }}>
-        Items
-      </div>
-
-      <form className="row" style={{ gap: 10, flexWrap: 'wrap' }} onSubmit={grant}>
-        <select value={sku} onChange={(e) => setSku(e.target.value)} style={{ width: 'auto' }}>
-          <option value="">Choose an item…</option>
-          {catalog.map((c) => (
-            <option key={c.sku} value={c.sku}>
-              {c.category} · {c.name}
-            </option>
-          ))}
-        </select>
-        <input placeholder="Reason (required)" value={reason} onChange={(e) => setReason(e.target.value)} />
-        <button className="primary" type="submit" disabled={busy || !sku || !reason.trim()}>
-          {busy ? 'Granting…' : 'Give item'}
-        </button>
-      </form>
-
-      {items === null ? (
-        <div className="subtle">Loading items…</div>
-      ) : items.length === 0 ? (
-        <div className="subtle">Owns nothing yet.</div>
-      ) : (
-        <div className="tablewrap">
-          <table>
-            <thead>
-              <tr>
-                <th>Item</th>
-                <th>Category</th>
-                <th>Qty</th>
-                <th>Source</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((i) => (
-                <tr key={i.sku}>
-                  <td>
-                    {i.name} {i.equipped && <span className="badge">equipped</span>}
-                    <div className="subtle">
-                      <code>{i.sku}</code>
-                    </div>
-                  </td>
-                  <td className="subtle">{i.category}</td>
-                  <td>{i.quantity}</td>
-                  <td className="subtle">{i.source}</td>
-                  <td>
-                    <button className="danger" onClick={() => revoke(i)} disabled={busy}>
-                      Remove
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+    <>
+      {canAdjust && (
+        <Section title="Give an item" description="Free, with your reason in the audit log.">
+          <form className="form" onSubmit={(e) => void grant(e)}>
+            <FieldRow>
+              <Select
+                label="Item"
+                value={sku}
+                onChange={(e) => setSku(e.target.value)}
+                options={[{ value: '', label: catalog.data ? 'Choose an item…' : 'Loading the shop…', disabled: true }, ...(catalog.data ?? []).map((c) => ({ value: c.sku, label: `${c.name} · ${humanize(c.category)}` }))]}
+              />
+              <TextInput label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+            </FieldRow>
+            <FormActions>
+              <Button type="submit" variant="primary" busy={busy} disabled={!sku || !reason.trim()}>
+                Give the item
+              </Button>
+            </FormActions>
+          </form>
+        </Section>
       )}
-      {msg && <div className="subtle">{msg}</div>}
-    </div>
+      <Section title="What they own" flush>
+        <Table
+          caption="Items"
+          columns={columns}
+          rows={items.data ?? null}
+          rowKey={(i) => i.sku}
+          loading={items.loading}
+          error={items.error}
+          onRetry={() => void items.reload()}
+          what="the economy"
+          empty="They own nothing yet."
+          actions={
+            canAdjust
+              ? (i) => (
+                  <Button variant="danger" onClick={() => void takeBack(i)}>
+                    Take back
+                  </Button>
+                )
+              : undefined
+          }
+        />
+      </Section>
+    </>
   );
 }

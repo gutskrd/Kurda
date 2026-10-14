@@ -4,7 +4,7 @@
  * written out by hand on every page with its own inline styles, so a page
  * looked a little different from the next for no reason.
  */
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { useId, type ButtonHTMLAttributes, type ReactNode } from 'react';
 import { Icon, type IconName } from './icons';
 
 export function PageHeader({
@@ -64,12 +64,22 @@ export function Section({
   flush?: boolean;
   id?: string;
 }): React.JSX.Element {
+  // named by its heading, so a screen reader's list of regions reads "Standing", "Notes"…
+  const headingId = useId();
   return (
-    <section className={`card section${flush ? ' is-flush' : ''}${className ? ` ${className}` : ''}`} id={id}>
+    <section
+      className={`card section${flush ? ' is-flush' : ''}${className ? ` ${className}` : ''}`}
+      id={id}
+      aria-labelledby={title ? headingId : undefined}
+    >
       {(title || actions) && (
         <div className="section-head">
           <div className="section-head-text">
-            {title && <h2 className="section-heading">{title}</h2>}
+            {title && (
+              <h2 className="section-heading" id={headingId}>
+                {title}
+              </h2>
+            )}
             {description && <p className="section-description">{description}</p>}
           </div>
           {actions && <div className="section-actions">{actions}</div>}
