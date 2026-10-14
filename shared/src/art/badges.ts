@@ -95,25 +95,32 @@ function lookFor(key: BadgeKey, tier: BadgeTier, tiers: number, state: BadgeStat
   return { look, metal, glyph: metal, field: FIELD[family] };
 }
 
-/** How much of its canvas a badge's body fills, leaving room for its light. */
-const BODY = { large: 0.84, small: 0.97 };
-/** Where the body's centre sits: a little high, leaving the bottom for the tier capsule. */
-const BODY_Y = { large: 54, small: 55 };
+/**
+ * Where a badge's body sits and how much of its canvas it fills: large badges
+ * leave room round the body for their light; small ones fill the canvas, and
+ * a small tiered one leaves the bottom for a capsule big enough to count.
+ */
+interface Layout {
+  s: number;
+  y: number;
+}
+function layoutOf(small: boolean, tiered: boolean): Layout {
+  if (!small) return { s: 0.84, y: 54 };
+  return tiered ? { s: 0.86, y: 49 } : { s: 0.97, y: 59 };
+}
 
-/** The family's silhouette, placed and sized for a large or small badge. */
-function bodyOutline(family: BadgeFamily, small: boolean): Pt[] {
+/** The family's silhouette, placed and sized. */
+function bodyOutline(family: BadgeFamily, lay: Layout): Pt[] {
   return place(
     SHAPES[family].outline.map(([x, y]) => [x - 60, y - 56] as Pt),
-    { x: 60, y: small ? BODY_Y.small : BODY_Y.large, s: small ? BODY.small : BODY.large },
+    { x: 60, y: lay.y, s: lay.s },
   );
 }
 
-/** Where the glyph sits and how big, for this family and size. */
-function glyphPlace(family: BadgeFamily, small: boolean): { cx: number; cy: number; scale: number } {
+/** Where the glyph sits and how big, for this family and layout. */
+function glyphPlace(family: BadgeFamily, lay: Layout, small: boolean): { cx: number; cy: number; scale: number } {
   const shape = SHAPES[family];
-  const s = small ? BODY.small : BODY.large;
-  const y = small ? BODY_Y.small : BODY_Y.large;
-  return { cx: 60 + (shape.icon[0] - 60) * s, cy: y + (shape.icon[1] - 56) * s, scale: shape.scale * s * (small ? 1.12 : 1) };
+  return { cx: 60 + (shape.icon[0] - 60) * lay.s, cy: lay.y + (shape.icon[1] - 56) * lay.s, scale: shape.scale * lay.s * (small ? 1.12 : 1) };
 }
 
 /** The rim's width and how finely it is cut, by look. */
@@ -124,11 +131,11 @@ const GLOW: Record<BadgeTier, number> = { 1: 0, 2: 0.22, 3: 0.4, 4: 0.6 };
 
 /** The tier capsule: four chevrons, as many lit as the tier. */
 function tierCapsule(dr: Drawing, tier: number, count: number, m: Metal, small: boolean, locked: boolean): string {
-  const cy = small ? 106 : 104;
-  const w = small ? 62 : 46;
-  const h = small ? 19 : 14;
+  const cy = small ? 102 : 104;
+  const w = small ? 80 : 46;
+  const h = small ? 28 : 14;
   const pill = capsule(60, cy, w, h);
-  const [on, off] = chevrons(count, locked ? 0 : tier, 60, cy + 0.2, small ? 10 : 7.4, small ? 9.5 : 6.6, small ? 2.6 : 2.2, small ? 3.6 : 2.5);
+  const [on, off] = chevrons(count, locked ? 0 : tier, 60, cy + 0.2, small ? 14 : 7.4, small ? 13.5 : 6.6, small ? 3.2 : 2.2, small ? 5 : 2.5);
   if (locked) {
     return (
       `<path d="${pill}" fill="${STONE.mid}" fill-opacity="0.12" stroke="${STONE.mid}" stroke-width="${small ? 2.2 : 1.4}"/>` +
@@ -169,9 +176,10 @@ export function badgeSvg(opts: BadgeOptions): string {
   const shownTier = (tiers > 1 ? Math.min(tier, tiers) : 1) as BadgeTier;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'badge', key, shownTier, state, tiers, small));
   const title = opts.title ?? titleOf(key, shownTier, tiers, state);
-  const outline = bodyOutline(family, small);
+  const lay = layoutOf(small, tiers > 1);
+  const outline = bodyOutline(family, lay);
   const outlinePath = polyPath(outline);
-  const at = glyphPlace(family, small);
+  const at = glyphPlace(family, lay, small);
 
   if (state === 'locked') {
     const g = STONE.mid;
@@ -184,7 +192,7 @@ export function badgeSvg(opts: BadgeOptions): string {
   const lk = lookFor(key, shownTier, tiers, state);
   const m = lk.metal;
   const top = Math.min(...outline.map((p) => p[1]));
-  const bodyY = small ? BODY_Y.small : BODY_Y.large;
+  const bodyY = lay.y;
 
   // light behind: a halo, and for Zêr and Firûze a burst of rays
   if (!small && GLOW[lk.look] > 0) dr.add(halo(dr, 60, bodyY, 60, m.mid, GLOW[lk.look], 0.45));
@@ -210,7 +218,7 @@ export function badgeSvg(opts: BadgeOptions): string {
       ],
       at.cx,
       at.cy - 4,
-      48 * (small ? BODY.small : BODY.large),
+      48 * lay.s,
     ),
   );
   dr.add(`<path d="${polyPath(inner)}" fill="${m.deep}"/>`);
@@ -312,7 +320,7 @@ export function badgeShineSvg(opts: BadgeShineOptions): string {
   const small = size < SMALL_BADGE;
   const family = BADGES[key].family;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'glint', family, n2(phase), small));
-  const clip = dr.clip(polyPath(offset(bodyOutline(family, small), -0.6)));
+  const clip = dr.clip(polyPath(offset(bodyOutline(family, layoutOf(small, BADGES[key].tiers > 1)), -0.6)));
   const band = dr.id('g');
   dr.def(
     linearAt(

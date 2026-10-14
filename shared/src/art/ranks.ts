@@ -296,12 +296,11 @@ export interface RankEmblemOptions {
 function divisionMark(dr: Drawing, m: Metal, division: RankDivision, cx: number, cy: number): string {
   const [on, off] = chevrons(3, 4 - division, cx, cy, 11, 8.5, 3, 3.2);
   const lit = dr.id('q');
-  dr.def(linearAt(lit, [[0, m.hi], [1, m.light]], 0, cy - 4, 0, cy + 4));
-  const all = on + off;
+  dr.def(linearAt(lit, [[0, m.hi], [0.45, m.light], [1, m.mid]], 0, cy - 4, 0, cy + 4));
+  // lit chevrons are solid and edged, unlit ones a faint tint: the count reads the same on a dark page and a light one
   return (
-    `<path d="${all}" fill="${m.deep}" stroke="${m.deep}" stroke-width="2.4" stroke-linejoin="round"/>` +
-    (on ? `<path d="${on}" fill="url(#${lit})"/>` : '') +
-    (off ? `<path d="${off}" fill="${m.dark}" fill-opacity="0.55"/>` : '')
+    (off ? `<path d="${off}" fill="${m.mid}" fill-opacity="0.3"/>` : '') +
+    (on ? `<path d="${on}" fill="${m.deep}" stroke="${m.deep}" stroke-width="2.4" stroke-linejoin="round"/><path d="${on}" fill="url(#${lit})"/>` : '')
   );
 }
 
@@ -382,7 +381,7 @@ export function rankEmblemSvg(opts: RankEmblemOptions): string {
   if (small) {
     // the crest alone, closer in; the division is in the title and beside it in the app
     const cy = 60 + (tier === 'ciya' || tier === 'lutke' ? 3 : 0) + starred / 2;
-    dr.add(`<g transform="translate(60 60) scale(1.1) translate(-60 ${-cy})">${crest(dr, tier, 60, cy, true)}</g>`);
+    dr.add(`<g transform="translate(60 60) scale(${tier === 'dest' ? 1.3 : 1.1}) translate(-60 ${-cy})">${crest(dr, tier, 60, cy, true)}</g>`);
   } else {
     const marked = shown !== undefined || season !== undefined;
     const cy = (marked ? 54 : 58) + starred;

@@ -167,7 +167,7 @@ export function seasonFrameSvg(opts: SeasonFrameOptions): string {
 
   // the crown, behind the ring's top
   const top = C - OUTER;
-  if (g.crown === 'spike') out.push(spike(C, top + 6, small ? 16 : 14, small ? 14 : 12, 0, m));
+  if (g.crown === 'spike') out.push(spike(C, top + 6, small ? 17 : 17, small ? 14 : 13, 0, m));
   if (g.crown === 'three') {
     out.push(spike(C - 10, top + 8, small ? 12 : 11, 9, -4, m));
     out.push(spike(C + 10, top + 8, small ? 12 : 11, 9, 4, m));
