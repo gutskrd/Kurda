@@ -75,18 +75,18 @@ const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
   ],
   // Gir, the hill: two rounded hills, the near one lit, and the sun over them
   gir: () => [
-    { k: 'f', d: circ(6, -14.5, 4.6) },
-    { k: 'a', d: 'M-4,18C-3,6 3,-1 10,-1C17,-1 21,6 21,18Z' },
-    { k: 'f', d: 'M-21,18C-21,5 -14,-3 -5,-3C4,-3 11,5 11,18Z' },
-    { k: 'h', d: 'M-16,6C-14.5,1 -10.5,-1.6 -6.6,-1.8C-10,0.4 -12.6,3.6 -13.6,7.6Z', o: 0.6, fine: true },
+    { k: 'f', d: circ(6, -14, 4.6) },
+    { k: 'a', d: 'M-2,14C0,2 6,-4 12,-4C18,-4 21,4 21,10C14,14 6,15 -2,14Z' },
+    { k: 'f', d: 'M-21,12C-21,2 -13,-4 -5,-4C3,-4 10,3 11,12C3,17 -13,17 -21,12Z' },
+    { k: 'h', d: 'M-16,4C-14.5,-0.5 -10.5,-2.6 -6.6,-2.8C-10,-0.8 -12.6,2.2 -13.6,5.6Z', o: 0.6, fine: true },
   ],
   // Zozan, the high pasture: peaks behind, a meadow and its stream in front
   zozan: () => [
-    { k: 'a', d: 'M-21,8L-10,-10L-3,-2L6,-16L21,8Z' },
+    { k: 'a', d: 'M-20,12L-10,-10L-3,-2L6,-16L20,10Z' },
     { k: 'w', d: 'M6,-16L2.2,-10L4.6,-10.8L6.4,-9L8.4,-11L10,-10.2Z' },
     { k: 'w', d: 'M-10,-10L-12.8,-5.6L-10.6,-6.2L-9,-5L-7.4,-6.4Z' },
-    { k: 'f', d: 'M-22,18C-15,6 -4,3 6,4.5C13,5.5 18,8 22,11V18Z' },
-    { k: 'l', d: 'M4,17.5C1,13 9,11 5,7.5', w: 2, c: 'water' },
+    { k: 'f', d: 'M-21,13C-15,4 -4,2 6,3.5C13,4.5 18,7 21,10C14,18 -12,19 -21,13Z' },
+    { k: 'l', d: 'M2,14C-1,11 7,9 4,6', w: 2, c: 'water' },
   ],
   // Çiya, the mountain: one great peak, its lit face and its shaded face, and snow
   ciya: () => [
@@ -113,10 +113,8 @@ const RANK_GLYPHS: Record<RankTier | 'placing', () => Part[]> = {
   ],
   // before a first tier: ridges fading into mist
   placing: () => [
-    { k: 'a', d: 'M-21,4L-10,-9L-3,-2L6,-14L21,4Z', },
-    { k: 'w', d: 'M-21,3H21V7H-21Z' },
-    { k: 'f', d: 'M-21,13L-9,3L0,10L10,1L21,12V18H-21Z' },
-    { k: 'h', d: 'M-21,13H21V15.5H-21Z', o: 0.5 },
+    { k: 'a', d: 'M-20,4L-9,-10L-2,-2L7,-15L20,4C10,8 -10,8 -20,4Z' },
+    { k: 'f', d: 'M-21,14L-8,1L1,9L10,0L21,14C10,19 -10,19 -21,14Z' },
   ],
 };
 
@@ -356,10 +354,11 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
     const segs: string[] = [];
     const lit: string[] = [];
     for (let i = 0; i < PLACEMENT_GAMES; i++) (i < done ? lit : segs).push(capsule(60 + (i - 2) * 11, 103, 8.5, 5));
+    // games played light up in Hevalo's violet; games to come are an outline, on either theme
     const glow = dr.id('q');
-    dr.def(linearAt(glow, [[0, MIST.hi], [1, MIST.light]], 0, 100, 0, 106));
-    if (segs.length) dr.add(`<path d="${segs.join('')}" fill="${MIST.dark}" fill-opacity="0.45" stroke="${MIST.dark}" stroke-width="1"/>`);
-    if (lit.length) dr.add(`<path d="${lit.join('')}" fill="url(#${glow})" stroke="${MIST.dark}" stroke-width="1"/>`);
+    dr.def(linearAt(glow, [[0, '#e3c4ff'], [1, '#b874f0']], 0, 100, 0, 106));
+    if (segs.length) dr.add(`<path d="${segs.join('')}" fill="none" stroke="${MIST.dark}" stroke-width="1.2"/>`);
+    if (lit.length) dr.add(`<path d="${lit.join('')}" fill="url(#${glow})" stroke="#6b3fa0" stroke-width="1.2"/>`);
   }
   return dr.svg(size, opts.title ?? `Placing ${done}/${PLACEMENT_GAMES}`);
 }
