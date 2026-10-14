@@ -233,9 +233,18 @@ export const ICONS: Record<string, () => Part[]> = {
       { k: 'f', d: heel, tf: 'translate(7.5 -5) rotate(14)' },
     ];
   },
-  alfabe: () => [
-    { k: 'f', d: 'M-10,-6H11V0H-3V3.5H8V9H-3V13H11V19H-10Z' },
-    { k: 'l', d: 'M-6,-11L0.5,-18L7,-11', w: 3.6 },
+  ferheng: () => [
+    // a dictionary: a thick closed book, Ê on its cover, index tabs down its edge
+    { k: 'c', d: 'M14,-13H18.5V-7.5H14Z', c: 'red' },
+    { k: 'c', d: 'M14,-4H18.5V1.5H14Z', c: 'gold' },
+    { k: 'c', d: 'M14,5H18.5V10.5H14Z', c: 'green' },
+    { k: 'w', d: 'M-12,-17H13C14.5,-17 15.5,-16 15.5,-14.5V17.5C15.5,19 14.5,20 13,20H-12Z' },
+    { k: 'd', d: 'M13,-13V16', w: 0.9, fine: true },
+    { k: 'a', d: 'M-14,-20H11C12.5,-20 13.5,-19 13.5,-17.5V15C13.5,16.5 12.5,17.5 11,17.5H-14C-16.5,17.5 -18,16 -18,13.5V-16C-18,-18.5 -16.5,-20 -14,-20Z' },
+    { k: 'd', d: 'M-13,-19.5V17', w: 1.4 },
+    { k: 'f', d: 'M-8,-11H9V12H-8Z' },
+    { k: 'd', d: 'M5,-2.5H-2.5V9.5H5M-2.5,3.5H3.5', w: 2.4 },
+    { k: 'd', d: 'M-1.2,-5L0.8,-7.6L2.8,-5', w: 1.8 },
   ],
 
   // ── habit
@@ -263,6 +272,13 @@ export const ICONS: Record<string, () => Part[]> = {
       { k: 'l', d: 'M-12,15H12M-6,19.5H6', w: 2.4 },
     ];
   },
+  pela: () => [
+    // a wave: the Okyanûs trophy
+    { k: 'c', d: 'M-20,18C-15,12 -11,4 -9,-4C-7,-12 0,-18 8,-18C15,-18 19.5,-12.5 18.5,-6.5C17.5,-1.5 12.5,0.5 8.5,-1C5.5,-2.2 5.2,-6.8 8.4,-7.8C4.2,-9 0.8,-4.8 1.8,0.6C3,7 9.5,10.5 20,11.5V18Z', c: 'water' },
+    { k: 'w', d: 'M-9,-4C-7,-12 0,-18 8,-18C15,-18 19.5,-12.5 18.5,-6.5C18,-3.6 16.3,-1.7 14,-1C16,-4.2 15.6,-10 10.5,-12.2C5,-14.6 -2.5,-11.5 -9,-4Z' },
+    { k: 'l', d: 'M-12,12C-9,6 -6,1 -4,-4M-2,14C0,9 1,5 1,1', w: 1.6, c: 'snow' },
+    { k: 'w', d: sparkle(-12.5, -12, 4.5) },
+  ],
   vegera: () => [
     // a swallow coming home, seen from below: crescent wings, a forked tail, the red throat
     { k: 'a', d: 'M3,-9C9,-13.5 16.5,-11.5 20.5,-2.5C14.5,-4 8.5,-2.5 3,0Z' },
@@ -340,7 +356,7 @@ export const ICONS: Record<string, () => Part[]> = {
     ...mountainGlyph(true, true),
     { k: 'd', d: 'M-12,16L-3,12L-9,7.5L-3,3L-6,-1', w: 1.6 },
   ],
-  placed: () => [
+  cihgirti: () => [
     { k: 'f', d: 'M0,20C-5,12 -14,4 -14,-5C-14,-13 -8,-19 0,-19C8,-19 14,-13 14,-5C14,4 5,12 0,20Z' },
     { k: 'a', d: circ(0, -5, 8) },
     { k: 'l', d: 'M-4,-5L-1,-2L4.5,-8.5', w: 2.8, c: 'snow' },
@@ -361,7 +377,8 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'c', d: 'M-3.2,-8H3.2V18.5H-3.2Z', c: 'red' },
     { k: 'c', d: circ(0, -8.5, 3), c: 'red' },
   ],
-  alikar: () => [
+  // a lantern lit for the guests: the host
+  mevandar: () => [
     { k: 'l', d: 'M-4,-15.5C-4,-21.5 4,-21.5 4,-15.5', w: 2.6 },
     { k: 'c', d: 'M-9,-11H9L8,11H-8Z', c: 'glow' },
     { k: 'c', d: flame(0, 3, 0.36), c: 'fire' },
@@ -372,7 +389,7 @@ export const ICONS: Record<string, () => Part[]> = {
   ],
 
   // ── events
-  'agire-newroze': () => [
+  newroz: () => [
     { k: 'c', d: 'M-18,13L14,6C16,5.6 17.5,7 17.4,8.8C17.3,10 16.6,10.8 15.6,11L-16.6,18C-18.4,18.4 -19.8,17 -19.6,15.4C-19.5,14.2 -18.9,13.3 -18,13Z', c: 'brown' },
     { k: 'c', d: 'M18,13L-14,6C-16,5.6 -17.5,7 -17.4,8.8C-17.3,10 -16.6,10.8 -15.6,11L16.6,18C18.4,18.4 19.8,17 19.6,15.4C19.5,14.2 18.9,13.3 18,13Z', c: 'brown' },
     { k: 'c', d: flame(0, -4, 0.82), c: 'fire' },
@@ -381,7 +398,7 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'c', d: sparkle(14.5, -15, 2.8), c: 'gold' },
     { k: 'c', d: sparkle(16.5, -5, 2.2), c: 'gold' },
   ],
-  'roja-zimane-kurdi': () => [
+  'roja-ziman': () => [
     { k: 'f', d: 'M0,20C-6,14 -11,6 -11,-3L-5.5,-10H5.5L11,-3C11,6 6,14 0,20Z' },
     { k: 'a', d: 'M-6,-9.5V-18.5C-6,-20 -5,-21 -3.5,-21H3.5C5,-21 6,-20 6,-18.5V-9.5Z' },
     { k: 'd', d: 'M0,18V3', w: 1.6 },

@@ -159,11 +159,11 @@ describe('the checks themselves', () => {
 });
 
 describe('the badge catalogue the art draws', () => {
-  it('has the 43 badge types of the research, in their seven families', () => {
-    expect(BADGE_KEYS).toHaveLength(43);
+  it('has the 44 badge types of the catalogue, in their seven families', () => {
+    expect(BADGE_KEYS).toHaveLength(44);
     const count = (family: string): number => BADGE_KEYS.filter((k) => BADGES[k].family === family).length;
-    expect(BADGE_FAMILIES.map(count)).toEqual([7, 4, 7, 8, 3, 8, 6]);
-    expect(new Set(BADGE_KEYS).size).toBe(43);
+    expect(BADGE_FAMILIES.map(count)).toEqual([7, 5, 7, 8, 3, 8, 6]);
+    expect(new Set(BADGE_KEYS).size).toBe(44);
     for (const key of BADGE_KEYS) expect(key).toMatch(/^[a-z][a-z-]*$/);
   });
 
@@ -213,8 +213,8 @@ describe('badgeSvg', () => {
   });
 
   it('gives single badges no pips and the same look whatever tier is asked for', () => {
-    expect(badgeSvg({ key: 'alfabe', tier: 1 })).toBe(badgeSvg({ key: 'alfabe', tier: 4 }));
-    expect(badgeSvg({ key: 'hilkiser' })).not.toBe(badgeSvg({ key: 'hilkiser', tiers: 4, tier: 2 }));
+    expect(badgeSvg({ key: 'hemereng', tier: 1 })).toBe(badgeSvg({ key: 'hemereng', tier: 4 }));
+    expect(badgeSvg({ key: 'cihgirti' })).not.toBe(badgeSvg({ key: 'cihgirti', tiers: 4, tier: 2 }));
   });
 
   it('draws not-yet-earned and secret badges differently from earned ones', () => {
@@ -249,7 +249,8 @@ describe('badgeSvg', () => {
 
   it('has a glint for Zêr and Firûze (and the single badges that wear their borders), drawn as its own layer', () => {
     expect(TIERS.map((tier) => badgeShines('ders', tier))).toEqual([false, false, true, true]);
-    expect(badgeShines('agire-newroze')).toBe(true);
+    expect(badgeShines('hemereng')).toBe(true);
+    expect(badgeShines('newroz', 4)).toBe(true);
     expect(badgeShines('vegera')).toBe(false);
     for (const family of BADGE_FAMILIES) {
       const key = BADGE_KEYS.find((k) => BADGES[k].family === family) as BadgeKey;

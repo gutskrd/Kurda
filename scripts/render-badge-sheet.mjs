@@ -115,7 +115,7 @@ async function sheet(name, width, height, draw) {
 
 // ── badges at the sizes the apps use them
 {
-  const sample = ['agir', 'ders', 'peyvzan', 'rank-ciya', 'heval', 'agire-newroze', 'kewe-ciye', 'bilez', 'zivistan', 'hemereng'];
+  const sample = ['agir', 'ders', 'peyvzan', 'rank-ciya', 'heval', 'newroz', 'kewe-ciye', 'bilez', 'zivistan', 'hemereng'];
   const sizes = [32, 40, 48, 64, 128];
   const colW = 150;
   await sheet('badge-sizes', sizes.length * colW * 1 + 20, sample.length * 4 * 140 + 40, (theme) => {

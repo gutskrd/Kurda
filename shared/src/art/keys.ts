@@ -5,11 +5,11 @@
  *
  * The badge catalogue proper — thresholds, what counts, the translated names —
  * belongs to `shared/src/badges.ts`, written by the badges track at the same
- * time as this. The art cannot wait for it, so this is the art's own copy of
- * the list: the 43 badge types under the names the research gives them,
- * folded to ASCII for a key. When both exist, `badges.ts` should take its keys
- * from here (or this should import them from there), and the art test that
- * every catalogue key has a drawing then covers both.
+ * time as this and not yet on this branch. The art cannot wait for it, so this
+ * is the art's own copy of the list, with the catalogue's keys and tier
+ * counts. Once both are merged this list should be read from `badges.ts`
+ * rather than kept beside it, and the art test that every badge has a drawing
+ * then covers the catalogue itself.
  *
  * Names here are labels for the drawings' default `<title>` only. Every app
  * passes its own translated title; these are the fallback.
@@ -64,13 +64,16 @@ interface BadgeDef {
   family: BadgeFamily;
   /** Kurmancî name, for the default title */
   name: string;
-  /** how many tiers the research gives it; 1 = a single badge with no tier pips */
+  /** how many tiers it has; 1 = a single badge with no tier pips */
   tiers: 1 | 4;
 }
 
 /**
- * The 43 badge types (research §7.4): 7 learning, 4 habit, 7 games, 8 ranked,
- * 3 friends, 8 events, 6 secret.
+ * The 44 badge types, as the badge catalogue (shared/src/badges.ts, the badges
+ * track) keys them: research §7.4's 43 with its replacements for what Hevalo
+ * cannot measure (Ferheng for the alphabet, Mêvandar for helpful answers), the
+ * Okyanûs trophy Pêla (L3) added, and its tier counts — ranked emblems,
+ * Hilkişer and the events count seasons or years in four tiers.
  */
 export const BADGES = {
   // A. Learning — circle
@@ -80,12 +83,13 @@ export const BADGES = {
   dubare: { family: 'learning', name: 'Dubare', tiers: 4 },
   cirokbej: { family: 'learning', name: 'Çîrokbêj', tiers: 4 },
   rewi: { family: 'learning', name: 'Rêwî', tiers: 4 },
-  alfabe: { family: 'learning', name: 'Alfabe', tiers: 1 },
+  ferheng: { family: 'learning', name: 'Ferheng', tiers: 4 },
   // B. Habit — rounded square
   agir: { family: 'habit', name: 'Agir', tiers: 4 },
   hefte: { family: 'habit', name: 'Hefte', tiers: 4 },
   roj: { family: 'habit', name: 'Roj', tiers: 4 },
   vegera: { family: 'habit', name: 'Vegera', tiers: 1 },
+  pela: { family: 'habit', name: 'Pêla', tiers: 4 },
   // C. Games — hexagon
   peyvzan: { family: 'games', name: 'Peyvzan', tiers: 4 },
   helbestvan: { family: 'games', name: 'Helbestvan', tiers: 4 },
@@ -95,27 +99,27 @@ export const BADGES = {
   hemereng: { family: 'games', name: 'Hemereng', tiers: 1 },
   dilpak: { family: 'games', name: 'Dilpak', tiers: 4 },
   // D. Ranked — shield; one emblem per tier reached, plus two
-  'rank-dest': { family: 'ranked', name: 'Deşt', tiers: 1 },
-  'rank-gir': { family: 'ranked', name: 'Gir', tiers: 1 },
-  'rank-zozan': { family: 'ranked', name: 'Zozan', tiers: 1 },
-  'rank-ciya': { family: 'ranked', name: 'Çiya', tiers: 1 },
-  'rank-lutke': { family: 'ranked', name: 'Lûtke', tiers: 1 },
-  'rank-sterk': { family: 'ranked', name: 'Stêrk', tiers: 1 },
-  hilkiser: { family: 'ranked', name: 'Hilkişer', tiers: 1 },
-  placed: { family: 'ranked', name: 'Placed', tiers: 1 },
+  'rank-dest': { family: 'ranked', name: 'Deşt', tiers: 4 },
+  'rank-gir': { family: 'ranked', name: 'Gir', tiers: 4 },
+  'rank-zozan': { family: 'ranked', name: 'Zozan', tiers: 4 },
+  'rank-ciya': { family: 'ranked', name: 'Çiya', tiers: 4 },
+  'rank-lutke': { family: 'ranked', name: 'Lûtke', tiers: 4 },
+  'rank-sterk': { family: 'ranked', name: 'Stêrk', tiers: 4 },
+  hilkiser: { family: 'ranked', name: 'Hilkişer', tiers: 4 },
+  cihgirti: { family: 'ranked', name: 'Cihgirtî', tiers: 1 },
   // E. Friends — leaf
   heval: { family: 'friends', name: 'Heval', tiers: 4 },
   diyari: { family: 'friends', name: 'Diyarî', tiers: 4 },
-  alikar: { family: 'friends', name: 'Alîkar', tiers: 4 },
+  mevandar: { family: 'friends', name: 'Mêvandar', tiers: 4 },
   // F. Events — eight-point star
-  'agire-newroze': { family: 'events', name: 'Agirê Newrozê', tiers: 1 },
-  'roja-zimane-kurdi': { family: 'events', name: 'Roja Zimanê Kurdî', tiers: 1 },
-  'zimane-dayike': { family: 'events', name: 'Zimanê Dayikê', tiers: 1 },
-  bihar: { family: 'events', name: 'Bihar', tiers: 1 },
-  havin: { family: 'events', name: 'Havîn', tiers: 1 },
-  payiz: { family: 'events', name: 'Payîz', tiers: 1 },
-  zivistan: { family: 'events', name: 'Zivistan', tiers: 1 },
-  mehane: { family: 'events', name: 'Mehane', tiers: 1 },
+  newroz: { family: 'events', name: 'Agirê Newrozê', tiers: 4 },
+  'roja-ziman': { family: 'events', name: 'Roja Zimanê Kurdî', tiers: 4 },
+  'zimane-dayike': { family: 'events', name: 'Zimanê Dayikê', tiers: 4 },
+  zivistan: { family: 'events', name: 'Zivistan', tiers: 4 },
+  bihar: { family: 'events', name: 'Bihar', tiers: 4 },
+  havin: { family: 'events', name: 'Havîn', tiers: 4 },
+  payiz: { family: 'events', name: 'Payîz', tiers: 4 },
+  mehane: { family: 'events', name: 'Mehane', tiers: 4 },
   // G. Secret — diamond
   'tire-rast': { family: 'secret', name: 'Tîrê rast', tiers: 1 },
   'ji-nu-ve': { family: 'secret', name: 'Ji nû ve', tiers: 1 },
