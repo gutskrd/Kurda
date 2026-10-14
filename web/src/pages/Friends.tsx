@@ -8,6 +8,7 @@ import { FriendListSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { useT } from '../i18n/I18nProvider';
+import { PlayWithButton } from '../play/PlayButtons';
 import type { SuggestedFriend, UserSummary } from '../lib/types';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
@@ -224,6 +225,8 @@ export function Friends(): React.JSX.Element {
                 user={u}
                 actions={
                   <>
+                    {/* a game with them: the invite sheet, with them already chosen */}
+                    <PlayWithButton userId={u.userId} name={u.displayName || u.username} className="btn btn-secondary btn-sm friend-play" iconOnly />
                     <ConfirmButton
                       className="btn btn-secondary btn-sm"
                       title={t('friends.removeWho', { name: u.username })}

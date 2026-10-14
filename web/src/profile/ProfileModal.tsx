@@ -172,7 +172,6 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
     if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: other.streak }) });
     if (other.tier) stats.push({ label: t('profile.stat.league'), value: other.tier, cap: true });
-    if (other.rating !== undefined) stats.push({ label: t('profile.stat.rating'), value: `${other.rating}` });
     if (other.achievements !== undefined) stats.push({ label: t('profile.stat.achievements'), value: `${other.achievements}` });
     actions = blocked ? (
       <div className="pcard-blocked" role="status">

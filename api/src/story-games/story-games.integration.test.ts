@@ -773,7 +773,16 @@ describe.skipIf(!DATABASE_URL)('story games (integration)', () => {
       ).json() as StoryGameView;
       const active = (await call(me, 'GET', '/story-games/active')).json();
       expect(active.games).toEqual([
-        { id: v.id, mode: 'solo', status: 'question', storyTitle: s.title, dialect: 'kurmanci', currentIndex: 0, total: 3 },
+        {
+          id: v.id,
+          mode: 'solo',
+          status: 'question',
+          storyId: s.id,
+          storyTitle: s.title,
+          dialect: 'kurmanci',
+          currentIndex: 0,
+          total: 3,
+        },
       ]);
     });
   });

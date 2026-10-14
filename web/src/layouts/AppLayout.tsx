@@ -5,6 +5,8 @@ import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
+import { PlayProvider } from '../play/PlayProvider';
+import { InviteBanner } from '../play/InviteBanner';
 import { useNavLinks } from './navLinks';
 import { useT } from '../i18n/I18nProvider';
 
@@ -25,6 +27,8 @@ export function AppLayout(): React.JSX.Element {
 
   return (
     <RailProvider>
+      {/* game invites to you, and your friends' answers to yours: read once for every screen */}
+      <PlayProvider>
       <a href="#main" className="skip-link">
         {t('nav.skipToContent')}
       </a>
@@ -48,6 +52,9 @@ export function AppLayout(): React.JSX.Element {
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
+      {/* "Rojda invited you to Wordle Battle" — Join or Not now, wherever you are */}
+      <InviteBanner />
+      </PlayProvider>
     </RailProvider>
   );
 }

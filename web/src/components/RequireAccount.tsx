@@ -39,16 +39,20 @@ export function RequireAccount({
 
   if (status === 'signedIn') return <>{children}</>;
 
+  // the whole address: a game invite is `/app/games/wordle-battle?id=…`, and
+  // without its query the way back after signing in leads to an empty page
+  const from = location.pathname + location.search;
+
   return (
     <div className="container container-narrow">
       <div className="gate">
         <h1 className="page-title" style={{ marginTop: 0 }}>{t('gate.title')}</h1>
         <p className="page-sub">{t('gate.body', { what: t(what) })}</p>
         <div className="gate-actions">
-          <Link to="/register" className="btn btn-primary" state={{ from: location.pathname }}>
+          <Link to="/register" className="btn btn-primary" state={{ from }}>
             {t('auth.login.createAccount')}
           </Link>
-          <Link to="/login" className="btn btn-secondary" state={{ from: location.pathname }}>
+          <Link to="/login" className="btn btn-secondary" state={{ from }}>
             {t('nav.login')}
           </Link>
         </div>

@@ -174,6 +174,23 @@ describe('MessageList', () => {
     expect(screen.getAllByTestId('receipt')).toHaveLength(1);
   });
 
+  it('lets the thread draw a card, with no bubble of its own around it', () => {
+    const { container } = show(
+      <MessageList
+        messages={[
+          msg('1', 'u2', null as unknown as string, at(10, 0), { username: 'zana', kind: 'game', game: { game: 'wordle-battle', lobbyId: 'b1' } }),
+          msg('2', 'u2', 'see you there', at(10, 1), { username: 'zana' }),
+        ]}
+        myId="me"
+        renderBody={(m) => ((m as { kind?: string }).kind === 'game' ? <span>the game card</span> : undefined)}
+      />,
+    );
+    expect(screen.getByText('the game card').closest('.bubble')).toHaveClass('is-card');
+    // anything the thread does not draw is still text
+    expect(screen.getByText('see you there').closest('.bubble')).not.toHaveClass('is-card');
+    expect(container.querySelectorAll('.bubble')).toHaveLength(2);
+  });
+
   it('renders nothing for an empty thread', () => {
     const { container } = show(<MessageList messages={[]} myId="me" />);
     expect(container.querySelectorAll('.chat-run')).toHaveLength(0);

@@ -34,7 +34,9 @@ const Games = lazy(() => import('./pages/Games').then((m) => ({ default: m.Games
 const Wordle = lazy(() => import('./pages/Wordle').then((m) => ({ default: m.Wordle })));
 const Rhyme = lazy(() => import('./pages/Rhyme').then((m) => ({ default: m.Rhyme })));
 const Race = lazy(() => import('./pages/Race').then((m) => ({ default: m.Race })));
-const Quiz = lazy(() => import('./pages/Quiz').then((m) => ({ default: m.Quiz })));
+const StoriesHub = lazy(() => import('./stories/StoriesHub').then((m) => ({ default: m.StoriesHub })));
+const StoryReader = lazy(() => import('./stories/StoryReader').then((m) => ({ default: m.StoryReader })));
+const StoryGame = lazy(() => import('./stories/StoryGame').then((m) => ({ default: m.StoryGame })));
 const WordleBattle = lazy(() => import('./pages/WordleBattle').then((m) => ({ default: m.WordleBattle })));
 const RhymeMatch = lazy(() => import('./pages/RhymeMatch').then((m) => ({ default: m.RhymeMatch })));
 const Login = lazy(() => import('./pages/Login').then((m) => ({ default: m.Login })));
@@ -206,9 +208,14 @@ export function App(): React.JSX.Element {
             <Route path="games/wordle" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
             <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
             <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
+            {/* Stories replaced the ranked quiz: its old address leads there. The
+                list and a story are open to read; a quiz on one needs an account */}
+            <Route path="games/quiz" element={<Navigate to="/app/games/stories" replace />} />
+            <Route path="games/stories" element={<StoriesHub />} />
+            <Route path="games/stories/:slug" element={<StoryReader />} />
             <Route
-              path="games/quiz"
-              element={<RequireAccount what="gate.what.playOthers"><Quiz /></RequireAccount>}
+              path="games/stories/play/:gameId"
+              element={<RequireAccount what="gate.what.play"><StoryGame /></RequireAccount>}
             />
             {/* the two games played against other people */}
             <Route

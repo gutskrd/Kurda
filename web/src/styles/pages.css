@@ -376,7 +376,8 @@
 .modal-close {
   position: absolute;
   top: 12px;
-  right: 12px;
+  /* the end of the line, so a right-to-left title's room for it is where it is */
+  inset-inline-end: 12px;
   z-index: 3;
   width: 34px;
   height: 34px;
@@ -1236,6 +1237,10 @@ button.feature {
   color: var(--ink-2);
   transform: rotate(180deg);
 }
+/* "back" points the way a right-to-left page reads back: to the right */
+[dir='rtl'] .chat-back {
+  transform: none;
+}
 .chat-thread-title {
   background: none;
   border: 0;
@@ -1487,10 +1492,11 @@ button.feature {
   }
   .chat-layout.has-active {
     position: fixed;
-    top: var(--nav-h);
+    /* under a waiting game invite, not beneath it (play.css) */
+    top: calc(var(--nav-h) + var(--invite-banner-h, 0px));
     left: 0;
     right: 0;
-    height: calc(100dvh - var(--nav-h));
+    height: calc(100dvh - var(--nav-h) - var(--invite-banner-h, 0px));
     z-index: 20;
     gap: 0;
     background: var(--app-bg);
@@ -2500,8 +2506,10 @@ a.mkp-activity-row:hover {
   border-color: var(--border-strong);
 }
 
-/* ---- Ranked quiz (1v1) ------------------------------------------------- */
-.quiz-lobby {
+/* ---- the online games' screens: lobby, play and results ---------------- */
+/* Wordle Battle and Rhyme Match share these; they were the ranked quiz's,
+   named after it, and outlived it. */
+.match-lobby {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2509,110 +2517,17 @@ a.mkp-activity-row:hover {
   text-align: center;
   padding: 32px 0;
 }
-.quiz-lobby .page-sub {
+.match-lobby .page-sub {
   max-width: 52ch;
 }
-.quiz-searching {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  color: var(--ink-2);
-}
-.quiz-spinner {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 3px solid var(--border);
-  border-top-color: var(--primary, #b8922e);
-  animation: quiz-spin 0.9s linear infinite;
-}
-@keyframes quiz-spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-.quiz-match {
+.match-play {
   display: flex;
   flex-direction: column;
   gap: 20px;
   max-width: 640px;
   margin: 0 auto;
 }
-.quiz-countdown {
-  text-align: center;
-  padding: 48px 0;
-}
-.quiz-count {
-  font-family: var(--font-display);
-  font-size: 4rem;
-  font-weight: 700;
-}
-.quiz-question {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-.quiz-qmeta {
-  display: flex;
-  justify-content: space-between;
-  color: var(--ink-3);
-  font-size: 0.9rem;
-}
-.quiz-timer {
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  color: var(--ink);
-}
-.quiz-prompt {
-  text-align: center;
-  font-size: clamp(1.3rem, 3.5vw, 1.8rem);
-  margin: 0;
-}
-.quiz-options {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-}
-.quiz-option {
-  padding: 18px 16px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--ink);
-  font-size: 1.05rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: border-color 0.12s ease, background 0.12s ease, transform 0.06s ease;
-}
-.quiz-option:hover:not(:disabled) {
-  background: var(--surface-2);
-}
-.quiz-option:active:not(:disabled) {
-  transform: scale(0.98);
-}
-.quiz-option:disabled {
-  cursor: default;
-}
-.quiz-option.picked {
-  border-color: var(--primary, #b8922e);
-  background: var(--surface-2);
-}
-.quiz-option.correct {
-  background: #2e7d5b;
-  border-color: #2e7d5b;
-  color: #fff;
-}
-.quiz-option.wrong {
-  background: #c0392b;
-  border-color: #c0392b;
-  color: #fff;
-}
-.quiz-locked {
-  text-align: center;
-  font-size: 0.9rem;
-}
-.quiz-results {
+.match-results {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2621,13 +2536,8 @@ a.mkp-activity-row:hover {
   margin: 0 auto;
   text-align: center;
 }
-.quiz-verdict {
+.match-verdict {
   font-size: 1.6rem;
-}
-@media (max-width: 520px) {
-  .quiz-options {
-    grid-template-columns: 1fr;
-  }
 }
 
 /* ---- Wordle Battle (invite + opponents) -------------------------------- */
@@ -3026,6 +2936,9 @@ a.mkp-activity-row:hover {
 }
 .back-link svg {
   transform: rotate(180deg);
+}
+[dir='rtl'] .back-link svg {
+  transform: none;
 }
 .post-full {
   border: 1px solid var(--border);

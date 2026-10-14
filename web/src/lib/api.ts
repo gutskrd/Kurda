@@ -36,6 +36,12 @@ export function requestId(): string {
 interface RequestOptions {
   body?: unknown;
   headers?: Record<string, string>;
+  /**
+   * Gives up on the request from outside — a long-poll whose screen has
+   * closed. An aborted request answers as a network failure, like a timeout,
+   * and is never retried after a refresh.
+   */
+  signal?: AbortSignal;
 }
 
 export class ApiClient {
@@ -90,13 +96,17 @@ export class ApiClient {
     }
   }
 
-  private async timedFetch(url: string, init: RequestInit): Promise<Response> {
+  private async timedFetch(url: string, init: RequestInit, outside?: AbortSignal): Promise<Response> {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+    const abort = (): void => controller.abort();
+    if (outside?.aborted) controller.abort();
+    else outside?.addEventListener('abort', abort, { once: true });
     try {
       return await fetch(url, { ...init, signal: controller.signal });
     } finally {
       clearTimeout(timer);
+      outside?.removeEventListener('abort', abort);
     }
   }
 
@@ -110,11 +120,15 @@ export class ApiClient {
       const withAuth = tokens ? { ...headers, authorization: `Bearer ${tokens.accessToken}` } : headers;
       let res: Response;
       try {
-        res = await this.timedFetch(`${this.baseUrl}${path}`, {
-          method,
-          headers: withAuth,
-          body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
-        });
+        res = await this.timedFetch(
+          `${this.baseUrl}${path}`,
+          {
+            method,
+            headers: withAuth,
+            body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+          },
+          options.signal,
+        );
       } catch {
         return { ok: false, error: { kind: 'network', message: 'network request failed' } satisfies ApiError };
       }
@@ -122,7 +136,7 @@ export class ApiClient {
     };
 
     const first = await attempt();
-    if (first.ok || first.error.status !== 401) return first;
+    if (first.ok || first.error.status !== 401 || options.signal?.aborted) return first;
 
     // A 401 with no stored session is a normal auth failure (e.g. a bad login) —
     // surface the server's message rather than trying to refresh/logging out.

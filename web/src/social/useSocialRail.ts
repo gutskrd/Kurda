@@ -34,6 +34,8 @@ export interface RailNotification {
   body: string | null;
   createdAt: string;
   readAt: string | null;
+  /** what it is about (`kind` and its fields): the words and the link are made from it */
+  data?: Record<string, unknown> | null;
 }
 
 /** You, as the rail shows you: a face, a level ring, and what you can spend. */
@@ -168,13 +170,6 @@ export function useSocialRail(): {
 function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
   const name = (f: RailFriend): string => f.displayName || f.username;
   return [
-    ...data.challenges.map((c) => ({
-      key: `challenge:${c.userId}`,
-      kind: 'challenge' as const,
-      title: t('rail.gameInvite'),
-      body: t('rail.wantsToPlay', { name: name(c) }),
-      who: c,
-    })),
     ...data.requests.map((r) => ({
       key: `request:${r.userId}`,
       kind: 'request' as const,
@@ -183,7 +178,8 @@ function arrivalKeys(data: SocialRailData, t: Translate): Arrival[] {
       who: r,
     })),
     ...data.notifications
-      .filter((n) => n.readAt === null)
+      // a game invite arrives with its own banner, which can be answered (play/InviteBanner)
+      .filter((n) => n.readAt === null && n.data?.kind !== 'play_invite')
       .map((n) => ({
         key: `note:${n.id}`,
         kind: 'notification' as const,

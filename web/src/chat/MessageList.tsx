@@ -1,4 +1,5 @@
 import { Fragment, type ReactNode } from 'react';
+import type { ChatMessageKind } from '@kurda/shared';
 import { Avatar } from '../components/Avatar';
 import { MessageBody } from '../components/GameInviteCard';
 import { groupMessages, timeLabel, type Groupable } from './messageGroups';
@@ -18,7 +19,9 @@ import { useLocale, useT } from '../i18n/I18nProvider';
  */
 
 export interface ChatMessage extends Groupable {
-  body: string;
+  /** null for a gift or a game card, which `renderBody` draws */
+  body: string | null;
+  kind?: ChatMessageKind;
   /** who wrote it */
   username?: string;
   /** resolved server-side; falls back to a silhouette */
@@ -32,6 +35,7 @@ export function MessageList<T extends ChatMessage>({
   myId,
   renderStatus,
   onOpenProfile,
+  renderBody,
 }: {
   /** oldest first */
   messages: readonly T[];
@@ -40,6 +44,12 @@ export function MessageList<T extends ChatMessage>({
   renderStatus?: (last: T) => ReactNode;
   /** open a sender's profile — makes the avatar and name the way in */
   onOpenProfile?: (userId: string, username: string) => void;
+  /**
+   * Draw a message that is more than text — a gift, a game card. Return
+   * undefined to let it render as text. The thread supplies it, since what a
+   * card can do (unwrap, join) belongs to the thread.
+   */
+  renderBody?: (m: T) => ReactNode | undefined;
 }): React.JSX.Element {
   const locale = useLocale();
   const t = useT();
@@ -94,9 +104,13 @@ export function MessageList<T extends ChatMessage>({
                       key={m.id}
                       className={`bubble${mine ? ' mine' : ''}${
                         i === run.messages.length - 1 ? ' bubble-tail' : ''
-                      }`}
+                      }${m.kind && m.kind !== 'text' ? ' is-card' : ''}`}
                     >
-                      {m.deleted ? <em className="muted">{t('chat.messageDeleted')}</em> : <MessageBody body={m.body} />}
+                      {m.deleted ? (
+                        <em className="muted">{t('chat.messageDeleted')}</em>
+                      ) : (
+                        (renderBody?.(m) ?? <MessageBody body={m.body ?? ''} />)
+                      )}
                     </div>
                   ))}
 

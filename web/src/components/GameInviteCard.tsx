@@ -34,6 +34,7 @@ export function MessageBody({ body }: { body: string }): React.JSX.Element {
 const ACTION_KEY: Record<GameInviteType, MessageKey> = {
   'wordle-battle': 'games.battle.join',
   'rhyme-match': 'games.rhymeMatch.join',
+  stories: 'games.stories.join',
 };
 
 /**

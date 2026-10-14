@@ -35,7 +35,6 @@ export function Profile(): React.JSX.Element {
   const [loading, setLoading] = useState(true);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const [rank, setRank] = useState<number | null>(null);
   const [sections, setSections] = useState<ProfileSections | null>(null);
 
   useEffect(() => {
@@ -63,16 +62,13 @@ export function Profile(): React.JSX.Element {
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
       setLoading(false);
 
-      // your own ranked place and activity sections: /me carries neither, and
-      // the public profile endpoint already computes both the same way it does
-      // for everyone else
+      // your own activity sections: /me does not carry them, and the public
+      // profile endpoint already works them out the same way it does for
+      // everyone else
       const id = m.ok ? m.data?.user?.id : undefined;
       if (id) {
-        const p = await client.get<{ rank?: number | null; sections?: ProfileSections | null }>(`/users/${id}`);
-        if (!cancelled && p.ok) {
-          setRank(p.data.rank ?? null);
-          setSections(p.data.sections ?? null);
-        }
+        const p = await client.get<{ sections?: ProfileSections | null }>(`/users/${id}`);
+        if (!cancelled && p.ok) setSections(p.data.sections ?? null);
       }
     })();
     return () => {
@@ -115,13 +111,6 @@ export function Profile(): React.JSX.Element {
       sidebarExtra={
         <>
           <div className="mkp-info-row"><span className="l">Zêr</span><span className="n">{zer === null ? '—' : zer.toLocaleString()}</span></div>
-          {/* only once ranked games have been played */}
-          {rank != null && (
-            <div className="mkp-info-row">
-              <span className="l">{t('profile.stat.rank')}</span>
-              <span className="n">#{rank.toLocaleString()}</span>
-            </div>
-          )}
 
           {icons.length > 0 && (
             <div className="mkp-collection">

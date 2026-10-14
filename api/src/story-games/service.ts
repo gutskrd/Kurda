@@ -670,12 +670,13 @@ export class StoryGamesService {
       id: string;
       mode: StoryGameMode;
       status: StoryGameStatus;
+      story_id: string;
       title: string | null;
       dialect: StoryDialect;
       current_index: number;
       question_count: number;
     }>(
-      `SELECT g.id, g.mode, g.status, COALESCE(g.story_snapshot->>'title', s.title) AS title, g.dialect,
+      `SELECT g.id, g.mode, g.status, g.story_id, COALESCE(g.story_snapshot->>'title', s.title) AS title, g.dialect,
               g.current_index, g.question_count
          FROM story_game_players p JOIN story_games g ON g.id = p.game_id
          LEFT JOIN stories s ON s.id = g.story_id
@@ -687,6 +688,7 @@ export class StoryGamesService {
       id: r.id,
       mode: r.mode,
       status: r.status,
+      storyId: r.story_id,
       storyTitle: r.title ?? '',
       dialect: r.dialect,
       currentIndex: r.status === 'question' || r.status === 'reveal' ? r.current_index : 0,

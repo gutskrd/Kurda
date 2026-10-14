@@ -135,7 +135,7 @@ function DirectList({ activeId, refreshKey }: { activeId: string | null; refresh
             </span>
             <span className="chat-convo-last">
               {c.lastFromMe ? t('chat.youPrefix') : ''}
-              {messagePreview(c.lastMessage, t)}
+              {messagePreview({ body: c.lastMessage, kind: c.lastKind }, t)}
             </span>
           </span>
         </Link>

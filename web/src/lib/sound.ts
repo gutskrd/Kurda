@@ -13,6 +13,7 @@ let player: HTMLAudioElement | null = null;
 let current: string | null = null;
 let currentRate = 1;
 const listeners = new Set<(src: string | null, rate: number) => void>();
+const endings = new Set<(src: string) => void>();
 
 export function play(src: string, rate = 1): void {
   if (!player) {
@@ -21,6 +22,11 @@ export function play(src: string, rate = 1): void {
     const now = (s: string | null) => () => listeners.forEach((l) => l(s, currentRate));
     player.addEventListener('playing', () => listeners.forEach((l) => l(current, currentRate)));
     player.addEventListener('ended', now(null));
+    // after the "nothing is playing" above, so a listener that starts the next clip is the last word
+    player.addEventListener('ended', () => {
+      const done = current;
+      if (done) endings.forEach((l) => l(done));
+    });
     player.addEventListener('pause', now(null));
     player.addEventListener('error', now(null));
   }
@@ -44,4 +50,21 @@ export function stop(): void {
 export function onPlaying(listener: (src: string | null, rate: number) => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/**
+ * Hear when a clip plays to its end — not when it is stopped or replaced —
+ * which is what a story read aloud sentence by sentence moves on with.
+ */
+export function onEnded(listener: (src: string) => void): () => void {
+  endings.add(listener);
+  return () => endings.delete(listener);
+}
+
+/** Change the speed of what is sounding now, and of what plays next at that speed. */
+export function setRate(rate: number): void {
+  currentRate = rate;
+  if (!player) return;
+  player.defaultPlaybackRate = rate;
+  player.playbackRate = rate;
 }

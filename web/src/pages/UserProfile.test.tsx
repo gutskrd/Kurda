@@ -62,6 +62,18 @@ describe('UserProfile (other user, full page)', () => {
     expect(calls.some((c) => c.url.includes('/friends/requests'))).toBe(true);
   });
 
+  it('offers a friend a game, and only a friend', async () => {
+    render({ userId: 'u2', username: 'zana', displayName: 'Zana K', friendStatus: 'friends', private: false });
+    await userEvent.click(await screen.findByRole('button', { name: 'Play' }));
+    expect(await screen.findByRole('dialog', { name: 'Play with zana' })).toBeInTheDocument();
+  });
+
+  it('has no Play for someone who is not a friend', async () => {
+    render({ userId: 'u4', username: 'baran', displayName: 'Baran', friendStatus: 'none', private: false });
+    expect(await screen.findByRole('button', { name: /add friend/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Play' })).not.toBeInTheDocument();
+  });
+
   it('shows a private notice for a private profile', async () => {
     render({ userId: 'u3', username: 'ghost', displayName: 'Ghost', friendStatus: 'none', private: true });
     expect(await screen.findByText('Ghost')).toBeInTheDocument();

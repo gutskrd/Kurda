@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Friends } from './Friends';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -194,6 +194,25 @@ describe('Friends', () => {
     const add = screen.getByRole('button', { name: /^add$/i });
     await userEvent.click(add);
     expect(await screen.findByRole('button', { name: /requested/i })).toBeInTheDocument();
+  });
+
+  it('offers a game with each friend: the invite sheet, with them already chosen', async () => {
+    vi.stubGlobal(
+      'fetch',
+      routedFetch({
+        '/friends/requests/outgoing': { requests: [] },
+        '/friends/requests': { requests: [] },
+        '/friends': { friends: [{ userId: 'u2', username: 'zana', displayName: 'Zana' }] },
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Play with Zana' }));
+    const sheet = await screen.findByRole('dialog', { name: 'Play with Zana' });
+    // the game is the reader's to choose; the friend is already ticked
+    expect(within(sheet).getByRole('radiogroup', { name: 'Game' })).toBeInTheDocument();
+    expect(await within(sheet).findByRole('checkbox', { name: /Zana/ })).toBeChecked();
+    expect(within(sheet).getByRole('button', { name: 'Create and invite (1)' })).toBeInTheDocument();
   });
 
   it('searches for users and renders results', async () => {

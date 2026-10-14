@@ -28,7 +28,12 @@ interface Board {
   country?: string | null;
 }
 
-type BoardType = 'weekly_xp' | 'rating';
+/*
+ * The all-time rating board went with the ranked quiz that fed it: nothing
+ * earns rating any more, so a board of it would only ever show who played a
+ * game that is gone. Weekly XP is the one board.
+ */
+type BoardType = 'weekly_xp';
 type Scope = 'global' | 'friends' | 'country';
 
 const PAGE = 25;
@@ -39,12 +44,6 @@ const BOARDS: { key: BoardType; labelKey: MessageKey; unitKey: MessageKey; blurb
     labelKey: 'rankings.board.weeklyXp',
     unitKey: 'rankings.unit.xp',
     blurbKey: 'rankings.board.weeklyXpBlurb',
-  },
-  {
-    key: 'rating',
-    labelKey: 'rankings.board.rating',
-    unitKey: 'rankings.board.rating',
-    blurbKey: 'rankings.board.ratingBlurb',
   },
 ];
 
@@ -58,7 +57,7 @@ export function Rankings(): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
   const locale = useLocale();
-  const [type, setType] = useState<BoardType>('weekly_xp');
+  const type: BoardType = 'weekly_xp';
   const [scope, setScope] = useState<Scope>('global');
   const [board, setBoard] = useState<Board | null>(null);
   /** every page loaded so far, so "Show more" appends instead of replacing */
@@ -111,20 +110,6 @@ export function Rankings(): React.JSX.Element {
       {/* this week's cohort of thirty — a different question from the boards
           below, and the one with a deadline, so it goes first */}
       <LeaguePanel />
-
-      <div className="toolbar" role="tablist" aria-label={t('rankings.leaderboard')}>
-        {BOARDS.map((b) => (
-          <button
-            key={b.key}
-            role="tab"
-            aria-selected={type === b.key}
-            className={`chip${type === b.key ? ' active' : ''}`}
-            onClick={() => setType(b.key)}
-          >
-            {t(b.labelKey)}
-          </button>
-        ))}
-      </div>
 
       <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
         {SCOPES.map((s) => (

@@ -40,9 +40,6 @@ export const LESSON = {
   hint: 2,
 } as const;
 
-/** The quiz question, as the course itself asks it: what does "çay" mean? */
-export const QUIZ_PROMPT = '“çay” tê çi wateyê?';
-
 /** A rhyme round: the prompt, and three real words that rhyme with it. */
 export const RHYME = { prompt: 'dar', found: ['kar', 'bar', 'yar'] } as const;
 

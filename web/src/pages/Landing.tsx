@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { LinkButton } from '../components/Button';
 import { ArrowIcon } from '../components/icons';
@@ -14,16 +14,17 @@ import {
   LessonMock,
   PostMock,
   ProgressMock,
-  QuizMini,
   RaceMini,
   RhymeMini,
   SpeakVisual,
+  StoriesMini,
   WordCardMock,
   WordleMini,
 } from '../landing/mocks';
 import { HEVAL, HOW_ARE_YOU, KURDISH_LETTERS } from '../landing/samples';
 import { HOME_FAQ } from '../landing/faq';
 import { FaqList } from '../components/FaqList';
+import { useStoriesAvailable } from '../stories/catalogue';
 
 /*
  * The front door.
@@ -161,14 +162,40 @@ const GAMES: ReadonlyArray<{
     visual: <RaceMini />,
   },
   {
-    id: 'quiz',
-    name: 'games.quiz.name',
-    body: 'landing.play.quiz',
-    href: '/app/games/quiz',
-    tags: ['landing.play.tag.ranked'],
-    visual: <QuizMini />,
+    id: 'stories',
+    name: 'games.stories.name',
+    body: 'landing.play.stories',
+    href: '/app/games/stories',
+    tags: ['landing.play.tag.read', 'landing.play.tag.solo', 'landing.play.tag.friend'],
+    visual: <StoriesMini />,
   },
 ];
+
+/**
+ * Whether there are stories to show yet, asked only once the games come near
+ * the screen — most visitors to the front page never scroll that far, and the
+ * question costs a request. Without an IntersectionObserver it is not asked,
+ * and the card reads as it always does.
+ */
+function useNearScreen(ref: React.RefObject<HTMLElement | null>): boolean {
+  const [near, setNear] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setNear(true);
+          io.disconnect();
+        }
+      },
+      { rootMargin: '400px 0px' },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [ref]);
+  return near;
+}
 
 const LEARN_POINTS: MessageKey[] = [
   'landing.learn.point1',
@@ -216,6 +243,8 @@ export function Landing(): React.JSX.Element {
   const t = useT();
   usePageMeta(t('meta.home.title'), t('app.description'));
   const revealRoot = useReveal();
+  const gamesRef = useRef<HTMLElement>(null);
+  const stories = useStoriesAvailable(useNearScreen(gamesRef));
   // warm the API early so sign-in later doesn't pay the cold-start penalty
   useEffect(() => {
     warmApi();
@@ -282,7 +311,7 @@ export function Landing(): React.JSX.Element {
       </section>
 
       {/* ---- play ----------------------------------------------------------- */}
-      <section id="games" className="lp-section" aria-labelledby="lp-play">
+      <section id="games" className="lp-section" aria-labelledby="lp-play" ref={gamesRef}>
         <div className="container">
           <SectionHead id="lp-play" kicker="landing.play.kicker" title="landing.play.title" lead="landing.play.lead" />
           <div className="game-grid">
@@ -298,9 +327,11 @@ export function Landing(): React.JSX.Element {
                   </h3>
                   <p>{t(g.body)}</p>
                   <ul className="game-tags">
-                    {g.tags.map((tag) => (
-                      <li key={tag}>{t(tag)}</li>
-                    ))}
+                    {g.id === 'stories' && stories === 'none' ? (
+                      <li>{t('stories.comingSoon')}</li>
+                    ) : (
+                      g.tags.map((tag) => <li key={tag}>{t(tag)}</li>)
+                    )}
                   </ul>
                 </div>
               </article>

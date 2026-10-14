@@ -18,6 +18,8 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { ThreadSkeleton } from '../components/skeletons';
 import { ArrowIcon, CloseIcon } from '../components/icons';
+import { ChatGameButton } from '../play/PlayButtons';
+import { gameCardBody } from '../play/ChatGameCard';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -229,6 +231,7 @@ export function DmThread({
             myId={user?.id}
             renderStatus={(m) => <ReadReceipt message={m} />}
             onOpenProfile={(userId, username) => openProfile({ kind: 'user', userId, username })}
+            renderBody={gameCardBody}
           />
         )}
       </div>
@@ -260,6 +263,7 @@ export function DmThread({
         onSubmit={() => void send()}
         sending={sending}
         placeholder={t('chat.writeAMessage')}
+        tools={<ChatGameButton target={{ kind: 'new', friend: { userId: otherId, name: otherName ?? t('chat.thisPerson') } }} />}
       />
     </div>
   );

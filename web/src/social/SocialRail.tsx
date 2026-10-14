@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { ChatsIcon, CloseIcon, GameIcon, ChevronIcon } from '../components/icons';
@@ -11,6 +11,8 @@ import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 import { useT } from '../i18n/I18nProvider';
+import { playNotification } from '../play/notifications';
+import { usePlayInvites } from '../play/PlayProvider';
 
 /**
  * What the dock beside the rail is showing.
@@ -141,15 +143,14 @@ export function SocialRail(): React.JSX.Element | null {
 function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed: () => void; onChat?: (target: DockTarget) => void }): React.JSX.Element {
   const t = useT();
   const buckets = useMemo(() => bucket(data.friends), [data.friends]);
-  const hasWaiting = data.challenges.length > 0 || data.requests.length > 0;
+  // Game invites used to wait here as quiz challenges; they arrive as their
+  // own banner now (play/InviteBanner.tsx), and `challenges` is always empty
+  const hasWaiting = data.requests.length > 0;
 
   return (
     <>
       {hasWaiting && (
-        <Section title={t('rail.waitingOnYou')} count={data.challenges.length + data.requests.length}>
-          {data.challenges.map((c) => (
-            <ChallengeCard key={c.userId} who={c} onActed={onActed} />
-          ))}
+        <Section title={t('rail.waitingOnYou')} count={data.requests.length}>
           {data.requests.map((r) => (
             <RequestCard key={r.userId} who={r} onActed={onActed} />
           ))}
@@ -323,44 +324,6 @@ function FriendRow({ friend, onChat }: { friend: RailFriend; onChat?: (target: D
   );
 }
 
-/** A game invite, which expires — so it leads with Accept. */
-function ChallengeCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
-  const { client } = useAuth();
-  const t = useT();
-  const navigate = useNavigate();
-  const [busy, setBusy] = useState(false);
-
-  async function respond(accept: boolean): Promise<void> {
-    setBusy(true);
-    const res = accept
-      ? await client.post<{ roomId: string }>(`/challenges/${who.userId}/accept`)
-      : await client.post(`/challenges/${who.userId}/decline`);
-    setBusy(false);
-    onActed();
-    if (accept && res.ok) navigate('/app/games');
-  }
-
-  return (
-    <div className="rail-card rail-card-in">
-      <span className="rail-avatar">
-        <Avatar url={who.avatarUrl} glyphSize={16} />
-      </span>
-      <span className="rail-row-text">
-        <span className="rail-row-name">{who.displayName || who.username}</span>
-        <span className="rail-row-sub">{t('rail.invitedYouToPlay')}</span>
-      </span>
-      <span className="rail-card-actions">
-        <button type="button" className="rail-act is-yes" disabled={busy} onClick={() => void respond(true)}>
-          {t('friends.accept')}
-        </button>
-        <button type="button" className="rail-act" disabled={busy} onClick={() => void respond(false)}>
-          {t('rail.decline')}
-        </button>
-      </span>
-    </div>
-  );
-}
-
 function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -413,6 +376,8 @@ function Notifications({
   const t = useT();
   const [going, setGoing] = useState<Set<string>>(new Set());
   const unread = items.filter((n) => n.readAt === null).length;
+  // who sent a game invite, in the reader's words, while the app still has it
+  const incoming = usePlayInvites().lists?.incoming;
 
   async function dismiss(id: string): Promise<void> {
     setGoing((prev) => new Set(prev).add(id));
@@ -427,28 +392,42 @@ function Notifications({
 
   return (
     <>
-      {items.map((n) => (
-        <div
-          key={n.id}
-          className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
-        >
-          <span className="rail-note-title">{n.title}</span>
-          {n.body && <span className="rail-note-body">{n.body}</span>}
-          <span className="rail-note-foot">
-            <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
-            {n.readAt === null && !going.has(n.id) && (
-              <button
-                type="button"
-                className="rail-note-dismiss"
-                aria-label={t('rail.dismissWhat', { what: n.title })}
-                onClick={() => void dismiss(n.id)}
-              >
-                <CloseIcon size={13} />
-              </button>
-            )}
-          </span>
-        </div>
-      ))}
+      {items.map((n) => {
+        // the reader's words and a way in, for the kinds that have them (play/notifications.ts)
+        const view = playNotification(n, t, incoming);
+        const title = view?.title ?? n.title;
+        const body = view ? view.body : n.body;
+        return (
+          <div
+            key={n.id}
+            className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
+          >
+            <span className="rail-note-title">
+              {view?.to ? (
+                <Link to={view.to} className="rail-note-link" onClick={() => n.readAt === null && void dismiss(n.id)}>
+                  {title}
+                </Link>
+              ) : (
+                title
+              )}
+            </span>
+            {body && <span className="rail-note-body">{body}</span>}
+            <span className="rail-note-foot">
+              <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
+              {n.readAt === null && !going.has(n.id) && (
+                <button
+                  type="button"
+                  className="rail-note-dismiss"
+                  aria-label={t('rail.dismissWhat', { what: title })}
+                  onClick={() => void dismiss(n.id)}
+                >
+                  <CloseIcon size={13} />
+                </button>
+              )}
+            </span>
+          </div>
+        );
+      })}
 
       {unread > 1 && (
         <button type="button" className="rail-note-clear" onClick={() => void dismissAll()}>
