@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import type pg from 'pg';
 import { sendEmailJob } from '../jobs/email.js';
 import { emailLocaleFor } from '../email/templates.js';
@@ -289,6 +290,8 @@ export class GdprService {
          FROM app_feedback WHERE user_id = $1 ORDER BY created_at`,
       [userId],
     );
+    // their Game Ranks, every change with its reason (ranks/gdpr.ts)
+    const ranks = await exportRanks(this.pool, userId);
     return {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
@@ -298,6 +301,7 @@ export class GdprService {
       oauthIdentities: identities.rows,
       storyGames: storyGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
+      gameRanks: ranks,
     };
   }
 
@@ -449,6 +453,8 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   await q(`UPDATE story_games SET host_id = NULL WHERE host_id = $1`);
   await q(`DELETE FROM story_game_answers WHERE user_id = $1`);
   await q(`DELETE FROM story_game_players WHERE user_id = $1`);
+  // their Game Ranks: ratings, history, leaves, choices, seasons (ranks/gdpr.ts)
+  await eraseRanks(executor, userId);
 
   // messages, both sides of every conversation they were in — the gifts in
   // them with the rest

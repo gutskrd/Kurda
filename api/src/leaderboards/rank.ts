@@ -4,10 +4,15 @@
  * from scores. Kept pure so ranking is unit-testable without Redis.
  */
 
-export type BoardType = 'rating' | 'weekly_xp';
+/**
+ * The weekly-XP board is the only one. The all-time rating board was fed by
+ * the ranked quiz and frozen since it went; a game's skill boards are Game
+ * Ranks' own (ranks/service.ts), per game.
+ */
+export type BoardType = 'weekly_xp';
 
 export function isBoardType(value: string): value is BoardType {
-  return value === 'rating' || value === 'weekly_xp';
+  return value === 'weekly_xp';
 }
 
 /** Who a board covers: everyone, your friends, or people in your country. */

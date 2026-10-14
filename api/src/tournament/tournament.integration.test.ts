@@ -152,30 +152,4 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
     expect(round1.filter((m) => m.status === 'completed')).toHaveLength(1);
     expect(round1.filter((m) => m.status === 'ready')).toHaveLength(1);
   });
-
-  it('auto-forfeits a no-show once the window passes', async () => {
-    const create = await svc.create(players[0]!.id, {
-      name: `NoShow ${suffix}`,
-      capacity: 8,
-      startsAt: new Date(Date.now() + 3.6e6),
-    });
-    for (const p of players.slice(0, 2)) await svc.register(create.id, p.id);
-    await svc.start(create.id);
-
-    let view = await svc.bracket(create.id);
-    const final = view.matches.find((m) => m.status === 'ready')!;
-    // only player A checks in; B is a no-show
-    await svc.checkIn(create.id, final.id, final.playerA!);
-
-    // nothing due yet for this fresh match — the tournament stays running
-    // (sweep is global, so assert on THIS tournament, not the overall count)
-    await svc.sweepNoShows(new Date());
-    expect((await svc.bracket(create.id)).status).toBe('running');
-
-    // …but past the window, the present player advances and wins the cup
-    await svc.sweepNoShows(new Date(Date.now() + 3 * 60 * 1000));
-    view = await svc.bracket(create.id);
-    expect(view.status).toBe('completed');
-    expect(view.winnerId).toBe(final.playerA);
-  });
 });

@@ -18,6 +18,7 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 import type { FriendService } from '../friends/service.js';
 import { StoryGameNotifier } from './notifier.js';
 import { StoryGamesService } from './service.js';
+import type { RankService } from '../ranks/service.js';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -41,6 +42,8 @@ const createBody = z.object({
   access: z.enum(GAME_ACCESS).default('friends'),
   skipReading: z.boolean().optional(),
   extraTime: z.boolean().optional(),
+  // duo and group: Rated or Friendly (Game Ranks); left out, the host's last choice
+  rated: z.boolean().optional(),
 });
 
 const joinBody = z.union([
@@ -54,6 +57,7 @@ const settingsBody = z.object({
   timerSeconds: z.literal(TIMER_PRESETS).optional(),
   textDuring: z.enum(TEXT_DURING_OPTIONS).optional(),
   access: z.enum(GAME_ACCESS).optional(),
+  rated: z.boolean().optional(),
 });
 
 const pollQuery = z.object({ v: z.coerce.number().int().min(0).max(2_147_483_647).optional() });
@@ -75,6 +79,8 @@ export interface StoryGameRouteDeps {
   milestones?: Pick<MilestoneRecorder, 'recordStreak'>;
   /** blocks part a blocked pair in the lobbies they share */
   friends?: FriendService;
+  /** Game Ranks, shared with the other games (one set of rank events) */
+  ranks?: RankService;
 }
 
 /**
@@ -99,6 +105,7 @@ export function registerStoryGameRoutes(app: FastifyInstance, deps: StoryGameRou
     milestones: deps.milestones,
     log: app.log,
     publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
+    ranks: deps.ranks,
   });
 
   // a block parts the pair in the lobbies they share — after it commits

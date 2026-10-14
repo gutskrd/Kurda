@@ -42,9 +42,6 @@ export function registerLeaderboardRoutes(app: FastifyInstance, boards: Leaderbo
   app.post(
     '/admin/leaderboards/rebuild',
     { config: { skipValidation: true }, preHandler: requireRoles('admin') },
-    async () => ({
-      rating: await boards.rebuild('rating'),
-      weekly_xp: await boards.rebuild('weekly_xp'),
-    }),
+    async () => ({ weekly_xp: await boards.rebuild('weekly_xp') }),
   );
 }

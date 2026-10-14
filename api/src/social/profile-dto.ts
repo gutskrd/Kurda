@@ -1,5 +1,6 @@
 import type { MediaStorage } from '../media/storage.js';
 import { resolveCosmetics, levelInfo, type LevelInfo, type ResolvedBackground, type ResolvedIcon } from '../cosmetics/access.js';
+import type { ProfileRank } from '@kurda/shared';
 import type { PublicProfile } from './service.js';
 
 /** A safe public favorite (only id + title are exposed). */
@@ -34,9 +35,10 @@ export interface PublicProfileDto {
   level?: LevelInfo;
   streak?: number;
   tier?: string;
-  rating?: number;
-  /** global rating place, or null when they have not played ranked */
-  rank?: number | null;
+  /** Game Ranks per game played (shared `ProfileRank`); "Resting" ones carry no tier for others */
+  ranks?: ProfileRank[];
+  /** the season frame worn around the avatar (a SKU from the shared SEASON_FRAME_SKUS), or null */
+  frameSku?: string | null;
   achievements?: number;
   favoritePoem?: FavoriteDto | null;
   favoriteStory?: FavoriteDto | null;
@@ -83,8 +85,8 @@ export function toPublicProfileDto(
     level: profile.xp != null ? levelInfo(profile.xp) : undefined,
     streak: profile.streak,
     tier: profile.tier,
-    rating: profile.rating,
-    rank: profile.rank,
+    ranks: profile.ranks,
+    frameSku: profile.frameSku ?? null,
     achievements: profile.achievements,
     favoritePoem: fav(profile.favoritePoem),
     favoriteStory: fav(profile.favoriteStory),

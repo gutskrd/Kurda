@@ -26,8 +26,6 @@ import { MemoryRateLimitStore, RedisRateLimitStore } from './ratelimit/store.js'
 import { registerAchievementRoutes } from './achievements/routes.js';
 import { AchievementsService } from './achievements/service.js';
 import fastifyWebsocket from '@fastify/websocket';
-import { RatingService } from './ranking/rating-service.js';
-import { registerRatingRoutes } from './ranking/routes.js';
 import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
@@ -63,8 +61,10 @@ import { LeagueService } from './leagues/service.js';
 import { registerLeagueRoutes } from './leagues/routes.js';
 import { LeaderboardService } from './leaderboards/service.js';
 import { registerLeaderboardRoutes } from './leaderboards/routes.js';
-import { SeasonService } from './seasons/service.js';
-import { registerSeasonRoutes } from './seasons/routes.js';
+import { RankService } from './ranks/service.js';
+import { RankSeasons } from './ranks/seasons.js';
+import { RankAdmin } from './ranks/admin.js';
+import { registerRankRoutes } from './ranks/routes.js';
 import { FriendService } from './friends/service.js';
 import { registerFriendRoutes } from './friends/routes.js';
 import { SocialService } from './social/service.js';
@@ -372,6 +372,22 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     );
     app.addHook('onClose', async () => clearInterval(leagueSettle));
 
+    // Game Ranks (contract-4 §R): one OpenSkill rating per online game, Rated
+    // or Friendly per game. One service, shared by every game's routes and the
+    // play layer, so its events (`app.ranks.events`: a rated game finished, a
+    // season closed — what the badges listen to) come from one place.
+    const ranks = new RankService(app.db, { log: app.log });
+    app.decorate('ranks', ranks);
+    const rankSeasons = new RankSeasons(app.db, { wallet: new WalletService(app.db), events: ranks.events, log: app.log });
+    registerRankRoutes(app, { ranks, seasons: rankSeasons, admin: new RankAdmin(app.db) });
+    // seasons close on the calendar quarter; the job runs every six hours and
+    // once after start-up, so a deploy at the turn of a quarter catches up
+    const closeSeasons = () =>
+      void rankSeasons.closeDue().catch((err) => app.log.warn({ err }, 'rank season close failed'));
+    const seasonSweep = setInterval(closeSeasons, 6 * 60 * 60 * 1000);
+    if (config.NODE_ENV !== 'test') app.addHook('onReady', async () => closeSeasons());
+    app.addHook('onClose', async () => clearInterval(seasonSweep));
+
     // Hot-table partition maintenance (KUR-115): create upcoming monthly partitions
     // ahead of time so inserts always have a home. Runs in the API process (works
     // without the worker on free tier) and is idempotent, so multiple replicas
@@ -406,7 +422,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const moderationKit = registerModeration(app, config, options.moderation);
     // copyright notices from the public /copyright page land in the same queue (contract-3 §C)
     registerCopyright(app, config, options.copyright);
-    registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports });
+    registerSocialRoutes(app, new SocialService(app.db, friends, ranks), { reports: moderationKit.reports });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
@@ -501,31 +517,21 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       { log: app.log },
     );
     // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
-    registerWordleBattleRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
+    registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
     registerRhymeRoutes(app, { xp: xpService });
     // typing race (solo time trial) over admin-curated texts
     registerRaceRoutes(app, { xp: xpService });
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
-    registerRhymeMatchRoutes(app, { xp: xpService, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
+    registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
     // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
     const leaderboards = new LeaderboardService(app.db, app.redis);
     registerLeaderboardRoutes(app, leaderboards);
-    // only the weekly board: the rating board was fed by the ranked quiz, which
-    // is gone, so rebuilding it every five minutes would redo the same sort forever
     const boardRebuild = setInterval(() => {
       void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
     }, 5 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(boardRebuild));
 
-    // quarterly season reset + rewards (KUR-065)
-    const seasons = new SeasonService(app.db, new WalletService(app.db));
-    registerSeasonRoutes(app, seasons);
-    const seasonSweep = setInterval(
-      () => void seasons.endDueSeasons().catch((err) => app.log.warn({ err }, 'season settle failed')),
-      6 * 60 * 60 * 1000,
-    );
-    app.addHook('onClose', async () => clearInterval(seasonSweep));
     registerMediaRoutes(app, config);
     // cost-safe through-server voice-note upload (KUR-282)
     registerVoiceRoutes(app, config);
@@ -671,7 +677,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // story games (Stories, which replaced the ranked quiz): Postgres is the
     // game; long-polls are woken across instances over the room bus
-    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends });
+    const storyGames = registerStoryGameRoutes(app, { bus, xp: xpService, milestones: achievements, friends, ranks });
 
     // shop + gifts: a gift is bought in the shop or from a chat's gift button,
     // and arrives as a message in the chat either way, so it needs both chats
@@ -712,25 +718,17 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       chat: new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
       groupChat,
       stories: storyGames,
+      ranks,
     });
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
     registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
 
-    // skill-rating reads (KUR-061). Nothing writes a rating since the ranked
-    // quiz went (Stories replaced it), but the ratings people earned stay
-    // readable on /me/rating.
-    registerRatingRoutes(app, new RatingService(app.db));
-
-    // tournaments (KUR-060): admin brackets + no-show forfeits
+    // tournaments (KUR-060): admin brackets with admin-entered results; no
+    // client shows them until they have a game to play (contract-4)
     const tournaments = new TournamentService(app.db, new WalletService(app.db), gemService, achievements);
     registerTournamentRoutes(app, tournaments);
-    const noShowSweeper = setInterval(
-      () => void tournaments.sweepNoShows().catch((err) => app.log.warn({ err }, 'tournament sweep failed')),
-      30_000,
-    );
-    app.addHook('onClose', async () => clearInterval(noShowSweeper));
   }
 
   app.get('/health', async (_req, reply) => {
@@ -761,6 +759,11 @@ declare module 'fastify' {
     storage?: MediaStorage;
     /** Present when DATABASE_URL is configured. */
     realtime: RealtimeGateway;
+    /**
+     * Game Ranks, when DATABASE_URL is configured. `ranks.events` is how other
+     * modules hear of a rated game finishing or a season closing (ranks/events.ts).
+     */
+    ranks: RankService;
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */

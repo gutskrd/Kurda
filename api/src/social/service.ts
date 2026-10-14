@@ -5,6 +5,8 @@ import type { FriendService } from '../friends/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
+import { RankService } from '../ranks/service.js';
+import type { ProfileRank } from '@kurda/shared';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
@@ -57,13 +59,14 @@ export interface PublicProfile {
   xp?: number;
   streak?: number;
   tier?: string;
-  rating?: number;
   /**
-   * Where they place on the global rating board, or null when they have never
-   * played a ranked game. A default rating with a rank beside it would read as
-   * a real standing rather than "has not played".
+   * Their Game Ranks, per game played (contract-4 §U): the tier now — or
+   * "Resting" after 28 days without a rated game, to anyone but them — and the
+   * best this season and ever. Replaces the frozen all-time `rating`/`rank`.
    */
-  rank?: number | null;
+  ranks?: ProfileRank[];
+  /** the season frame they wear around their avatar (a SKU they own), or null */
+  frameSku?: string | null;
   achievements?: number;
   /** presence — only populated for the user themselves or their friends */
   online?: boolean;
@@ -90,10 +93,15 @@ function foldForm(input: string): string {
  * users/age.ts): nobody is taken for an adult before they have said so.
  */
 export class SocialService {
+  private readonly ranks: Pick<RankService, 'profileRanks'>;
+
   constructor(
     private readonly pool: pg.Pool,
     private readonly friends: FriendService,
-  ) {}
+    ranks?: Pick<RankService, 'profileRanks'>,
+  ) {
+    this.ranks = ranks ?? new RankService(pool);
+  }
 
   /** Prefix search by username, excluding self, blocks, and non-searchable users. */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
@@ -166,9 +174,7 @@ export class SocialService {
       birth_month: number | null;
       streak: number;
       tier: string;
-      rating: number;
-      has_rating: boolean;
-      rating_rank: number;
+      frame_sku: string | null;
       achievements: number;
       equipped_background_sku: string | null;
       bg_asset: string | null;
@@ -210,20 +216,10 @@ export class SocialService {
               u.favorite_poem_id, u.favorite_story_id,
               COALESCE(s.current_streak, 0) AS streak,
               COALESCE(ul.tier, 'bronze') AS tier,
-              COALESCE(r.rating, 1000) AS rating,
-              (r.user_id IS NOT NULL) AS has_rating,
-              -- competition ranking, matching the leaderboard: strictly higher
-              -- ratings place above, and shadow-flagged cheats are not counted,
-              -- nor minors, who are not on the public board either
-              (SELECT count(*)::int + 1
-                 FROM player_ratings r2 JOIN users u2 ON u2.id = r2.user_id
-                WHERE r2.rating > COALESCE(r.rating, 1000)
-                  AND u2.deleted_at IS NULL
-                  AND NOT ${notKnownAdultSql('u2')}
-                  AND NOT EXISTS (
-                    SELECT 1 FROM cheat_reviews cr
-                     WHERE cr.user_id = u2.id AND cr.shadow_flagged = true
-                  )) AS rating_rank,
+              -- a frame is worn only while owned (a grant taken back takes it off)
+              CASE WHEN EXISTS (SELECT 1 FROM user_entitlements ef
+                                 WHERE ef.user_id = u.id AND ef.sku = u.equipped_frame_sku)
+                   THEN u.equipped_frame_sku END AS frame_sku,
               (SELECT count(*)::int FROM user_achievements ua WHERE ua.user_id = u.id) AS achievements,
               bg.asset_key AS bg_asset, bg.category AS bg_cat, bg.active AS bg_active,
               bg.premium_only AS bg_premium, (ebg.user_id IS NOT NULL) AS bg_owned,
@@ -238,7 +234,6 @@ export class SocialService {
          FROM users u
          LEFT JOIN user_streaks s ON s.user_id = u.id
          LEFT JOIN user_league ul ON ul.user_id = u.id
-         LEFT JOIN player_ratings r ON r.user_id = u.id
          LEFT JOIN shop_items bg ON bg.sku = u.equipped_background_sku
          LEFT JOIN user_entitlements ebg ON ebg.user_id = u.id AND ebg.sku = u.equipped_background_sku
          LEFT JOIN shop_items ic ON ic.sku = u.equipped_icon_sku
@@ -343,9 +338,8 @@ export class SocialService {
       xp: u.xp,
       streak: u.streak,
       tier: u.tier,
-      rating: u.rating,
-      // no ranked games played means no standing to report
-      rank: u.has_rating ? u.rating_rank : null,
+      ranks: await this.ranks.profileRanks(targetId, isSelf),
+      frameSku: u.frame_sku,
       achievements: u.achievements,
       // presence is private: only the user themselves and their friends see it
       online: isSelf || friendStatus === 'friends' ? isOnline(u.last_seen_at) : undefined,
