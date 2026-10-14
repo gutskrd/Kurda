@@ -3,6 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { glossFor, type StoryGlossEntry } from '@kurda/shared';
 import type { RootNavigation } from '../navigation/rootStack';
+import { useQuietInvites } from '../play/quietInvites';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -36,6 +37,8 @@ export function StoryGameScreen({ id, onExit }: { id: string; onExit: () => void
   const game = useStoryGame(id);
   const view = game.view;
   const story = useGameStory(id, !!view && view.status !== 'lobby');
+  // an invite waits while the story is being read and answered (the banner would sit over the timer)
+  useQuietInvites(!!view && !game.gone && (view.status === 'reading' || view.status === 'question' || view.status === 'reveal'));
   const { announce, region } = useAnnouncer();
   const [gloss, setGloss] = useState<StoryGlossEntry | null>(null);
 

@@ -13,6 +13,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
 import { backspace, buildBoard, DEL, ENTER, typeLetter } from './board';
@@ -188,6 +189,8 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
 
   const me = battle?.me ?? null;
   const active = battle?.status === 'active' && me != null && me.status === 'playing' && !me.solved;
+  // an invite waits while a battle is on (the banner would sit over the board)
+  useQuietInvites(battle?.status === 'active');
 
   const submit = useCallback(async () => {
     if (!battle || !me || !active || busy) return;

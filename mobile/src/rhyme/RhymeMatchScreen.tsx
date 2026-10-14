@@ -13,6 +13,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
 import {
@@ -211,6 +212,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   }, [remaining, match?.status]);
 
   const active = match?.status === 'active' && match.me != null && remaining > 0;
+  // an invite waits while a match is on (the banner would sit over the clock)
+  useQuietInvites(match?.status === 'active');
 
   const submit = useCallback(async () => {
     const typed = word.trim();
