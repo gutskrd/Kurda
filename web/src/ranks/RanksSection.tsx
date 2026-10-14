@@ -67,7 +67,7 @@ export function RanksSection(): React.JSX.Element | null {
       )}
       <div className="ranks-grid">
         {ranks.ranks.map((r) => (
-          <RankCard key={r.game} rank={r} />
+          <RankCard key={r.game} rank={r} href={`/app/ranks/${r.game}`} />
         ))}
       </div>
     </section>

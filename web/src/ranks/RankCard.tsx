@@ -1,5 +1,6 @@
+import { Link } from 'react-router-dom';
 import { SHIELD_GAMES, type RankCard as RankCardData } from '@kurda/shared';
-import { ShieldIcon } from '../components/icons';
+import { ChevronIcon, ShieldIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { PlacementEmblem, RankEmblem } from './art';
 import { gameName, rankLabel, rankTierNamed, withMeaning, type Translate } from './names';
@@ -13,8 +14,10 @@ import { gameName, rankLabel, rankTierNamed, withMeaning, type Translate } from 
  *
  * Nothing here counts down or warns. The bar shows how far you have come in
  * this division, not how far you could fall.
+ *
+ * `href` adds the way to the game's Ranks page (its boards and the climb).
  */
-export function RankCard({ rank, compact = false }: { rank: RankCardData; compact?: boolean }): React.JSX.Element {
+export function RankCard({ rank, compact = false, href }: { rank: RankCardData; compact?: boolean; href?: string }): React.JSX.Element {
   const t = useT();
   const placing = rank.placement !== null || rank.tier === null;
   const tierClass = placing ? 'is-placing' : `tier-${rank.tier}`;
@@ -31,6 +34,12 @@ export function RankCard({ rank, compact = false }: { rank: RankCardData; compac
       <div className="rank-card-body">
         <span className="rank-card-game">{gameName(t, rank.game)}</span>
         {placing || !rank.tier ? <PlacingBody rank={rank} /> : <RankedBody rank={rank} />}
+        {href && (
+          <Link to={href} className="rank-card-more">
+            {t('ranks.openBoards')}
+            <ChevronIcon size={14} />
+          </Link>
+        )}
       </div>
     </article>
   );

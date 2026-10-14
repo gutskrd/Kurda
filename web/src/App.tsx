@@ -55,6 +55,7 @@ const Rankings = lazy(() => import('./pages/Rankings').then((m) => ({ default: m
 // Game Ranks, leagues and badges (contract 4): the badge collection and the season
 const BadgesPage = lazy(() => import('./badges/BadgesPage').then((m) => ({ default: m.BadgesPage })));
 const SeasonPage = lazy(() => import('./ranks/SeasonPage').then((m) => ({ default: m.SeasonPage })));
+const RanksPage = lazy(() => import('./ranks/RanksPage').then((m) => ({ default: m.RanksPage })));
 const Friends = lazy(() => import('./pages/Friends').then((m) => ({ default: m.Friends })));
 const Profile = lazy(() => import('./pages/Profile').then((m) => ({ default: m.Profile })));
 const ProfileEdit = lazy(() => import('./pages/ProfileEdit').then((m) => ({ default: m.ProfileEdit })));
@@ -250,6 +251,8 @@ export function App(): React.JSX.Element {
             <Route path="leagues" element={<Navigate to="/app/rankings" replace />} />
             <Route path="badges" element={<RequireAccount what="gate.what.profile"><BadgesPage /></RequireAccount>} />
             <Route path="season" element={<RequireAccount what="gate.what.play"><SeasonPage /></RequireAccount>} />
+            <Route path="ranks" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
+            <Route path="ranks/:game" element={<RequireAccount what="gate.what.play"><RanksPage /></RequireAccount>} />
             <Route path="friends" element={<RequireAccount what="gate.what.addFriends"><Friends /></RequireAccount>} />
             <Route path="messages" element={<RequireAccount what="gate.what.sendMessages"><Messages /></RequireAccount>} />
             <Route path="shop" element={<RequireAccount what="gate.what.buy"><Shop /></RequireAccount>} />
