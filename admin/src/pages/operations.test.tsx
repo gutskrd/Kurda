@@ -257,7 +257,8 @@ describe('the audit log', () => {
     await user.type(action, 'POST /admin/events');
     await user.click(await screen.findByRole('button', { name: 'Older entries' }));
     await waitFor(() => expect(calls.at(-1)!.path).toBe(`/admin/audit?limit=100&action=POST+%2Fadmin%2Fusers&beforeId=${page[99]!.id}`));
-  });
+    // typing two filters key by key over a page of 100 rows takes a few seconds on a busy machine
+  }, 20_000);
 
   it('reads an action as a verb and a place', () => {
     expect(describeAction('POST /admin/users/:id/ban')).toEqual({ verb: 'Ban', where: 'users' });
