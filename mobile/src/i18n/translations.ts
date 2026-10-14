@@ -928,6 +928,8 @@ export type TranslationKey =
   | 'gift.picker.cantAfford'
   | 'gift.picker.limits'
   | 'gift.picker.empty'
+  | 'gift.picker.unavailable'
+  | 'gift.picker.failed'
   | 'gift.tier.rare'
   | 'gift.tier.legendary'
   | 'gift.skipped.alreadyOwned'
@@ -2034,6 +2036,8 @@ const en: Catalog = {
   'gift.picker.cantAfford': 'Not enough to give this',
   'gift.picker.limits': 'Up to {perDay} gifts a day, and {perFriend} to the same friend.',
   'gift.picker.empty': 'There’s nothing to give right now.',
+  'gift.picker.unavailable': 'That gift isn’t available any more. Pick another one.',
+  'gift.picker.failed': 'The gift didn’t go. Please try again.',
   'gift.tier.rare': 'Rare',
   'gift.tier.legendary': 'Limited',
   'gift.skipped.alreadyOwned': '{name} already has it.',
@@ -3128,6 +3132,8 @@ const ku: Catalog = {
   'gift.picker.cantAfford': 'Ji bo dayîna vê têr nake',
   'gift.picker.limits': 'Rojê heta {perDay} diyarî, û heta {perFriend} ji heman hevalî re.',
   'gift.picker.empty': 'Niha tiştek ji bo dayînê tune ye.',
+  'gift.picker.unavailable': 'Ev diyarî êdî tune ye. Yekî din hilbijêre.',
+  'gift.picker.failed': 'Diyarî nehat şandin. Ji kerema xwe dîsa biceribîne.',
   'gift.tier.rare': 'Kêm',
   'gift.tier.legendary': 'Demkî',
   'gift.skipped.alreadyOwned': '{name} jixwe xwedî ye.',
@@ -4222,6 +4228,8 @@ const de: Catalog = {
   'gift.picker.cantAfford': 'Reicht dafür nicht',
   'gift.picker.limits': 'Bis zu {perDay} Geschenke am Tag, {perFriend} an dieselbe Person.',
   'gift.picker.empty': 'Gerade gibt es nichts zu verschenken.',
+  'gift.picker.unavailable': 'Dieses Geschenk gibt es nicht mehr. Wähl ein anderes.',
+  'gift.picker.failed': 'Das Geschenk wurde nicht gesendet. Versuch es noch einmal.',
   'gift.tier.rare': 'Selten',
   'gift.tier.legendary': 'Limitiert',
   'gift.skipped.alreadyOwned': '{name} hat es schon.',
@@ -5316,6 +5324,8 @@ const es: Catalog = {
   'gift.picker.cantAfford': 'No te alcanza para regalarlo',
   'gift.picker.limits': 'Hasta {perDay} regalos al día y {perFriend} al mismo amigo.',
   'gift.picker.empty': 'Ahora no hay nada que regalar.',
+  'gift.picker.unavailable': 'Ese regalo ya no está disponible. Elige otro.',
+  'gift.picker.failed': 'El regalo no se envió. Inténtalo de nuevo.',
   'gift.tier.rare': 'Raro',
   'gift.tier.legendary': 'Limitado',
   'gift.skipped.alreadyOwned': '{name} ya lo tiene.',
@@ -6410,6 +6420,8 @@ const tr: Catalog = {
   'gift.picker.cantAfford': 'Bunu vermeye yetmiyor',
   'gift.picker.limits': 'Günde en fazla {perDay} hediye, aynı arkadaşa {perFriend}.',
   'gift.picker.empty': 'Şu anda verilecek bir şey yok.',
+  'gift.picker.unavailable': 'Bu hediye artık yok. Başka birini seç.',
+  'gift.picker.failed': 'Hediye gönderilemedi. Lütfen tekrar dene.',
   'gift.tier.rare': 'Nadir',
   'gift.tier.legendary': 'Sınırlı',
   'gift.skipped.alreadyOwned': '{name} kişisinde zaten var.',
@@ -7504,6 +7516,8 @@ const ar: Catalog = {
   'gift.picker.cantAfford': 'رصيدك لا يكفي لهذه الهدية',
   'gift.picker.limits': 'حتى {perDay} هدايا في اليوم، و{perFriend} للصديق نفسه.',
   'gift.picker.empty': 'لا يوجد شيء لإهدائه الآن.',
+  'gift.picker.unavailable': 'هذه الهدية لم تعد متاحة. اختر هدية أخرى.',
+  'gift.picker.failed': 'لم تُرسَل الهدية. حاول مرة أخرى.',
   'gift.tier.rare': 'نادر',
   'gift.tier.legendary': 'محدود',
   'gift.skipped.alreadyOwned': '{name} يملكها بالفعل.',
@@ -8598,6 +8612,8 @@ const fr: Catalog = {
   'gift.picker.cantAfford': 'Pas assez pour l’offrir',
   'gift.picker.limits': 'Jusqu’à {perDay} cadeaux par jour, dont {perFriend} au même ami.',
   'gift.picker.empty': 'Rien à offrir pour le moment.',
+  'gift.picker.unavailable': 'Ce cadeau n’est plus disponible. Choisis-en un autre.',
+  'gift.picker.failed': 'Le cadeau n’est pas parti. Réessaie.',
   'gift.tier.rare': 'Rare',
   'gift.tier.legendary': 'Limité',
   'gift.skipped.alreadyOwned': '{name} l’a déjà.',
@@ -9692,6 +9708,8 @@ const nl: Catalog = {
   'gift.picker.cantAfford': 'Niet genoeg om dit te geven',
   'gift.picker.limits': 'Tot {perDay} cadeaus per dag, en {perFriend} aan dezelfde vriend.',
   'gift.picker.empty': 'Er is nu niets om te geven.',
+  'gift.picker.unavailable': 'Dit cadeau is er niet meer. Kies een ander.',
+  'gift.picker.failed': 'Het cadeau is niet verstuurd. Probeer het opnieuw.',
   'gift.tier.rare': 'Zeldzaam',
   'gift.tier.legendary': 'Beperkt',
   'gift.skipped.alreadyOwned': '{name} heeft het al.',
@@ -10787,6 +10805,8 @@ const ckb: Catalog = {
   'gift.picker.cantAfford': 'بەس نییە بۆ بەخشینی ئەمە',
   'gift.picker.limits': 'ڕۆژانە تا {perDay} دیاری، و تا {perFriend} بۆ هەمان هاوڕێ.',
   'gift.picker.empty': 'ئێستا هیچ شتێک نییە بۆ بەخشین.',
+  'gift.picker.unavailable': 'ئەم دیارییە ئیتر بەردەست نییە. دانەیەکی تر هەڵبژێرە.',
+  'gift.picker.failed': 'دیارییەکە نەنێردرا. تکایە دووبارە هەوڵ بدەرەوە.',
   'gift.tier.rare': 'دەگمەن',
   'gift.tier.legendary': 'کاتی',
   'gift.skipped.alreadyOwned': '{name} پێشتر هەیەتی.',

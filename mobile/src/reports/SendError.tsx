@@ -21,13 +21,19 @@ import { sendErrorOf, standingExplains } from './sendErrors';
  * read, so there is no link.
  *
  * Announced once when it appears (a live region), and dismissable.
+ *
+ * Inside a sheet or a dialog, pass `onNavigate` to close it first: Account
+ * standing opens under a Modal, so without it the link seems to do nothing.
  */
 export function SendErrorNotice({
   error,
   onDismiss,
+  onNavigate,
 }: {
   error: ApiError | null;
   onDismiss?: () => void;
+  /** called just before Account standing opens — the sheet this sits in closes itself */
+  onNavigate?: () => void;
 }): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const { colors } = useTheme();
@@ -58,7 +64,10 @@ export function SendErrorNotice({
       </View>
       {restriction && standingExplains(restriction) ? (
         <Pressable
-          onPress={() => navigation.navigate('AccountStanding')}
+          onPress={() => {
+            onNavigate?.();
+            navigation.navigate('AccountStanding');
+          }}
           accessibilityRole="link"
           style={styles.link}
         >

@@ -179,18 +179,79 @@ describe('GiftPickerSheet', () => {
     expect(screen.getByText('None of your friends are in this group yet.')).toBeTruthy();
   });
 
-  it('says what a chat mute stops, with the way to Account standing', async () => {
+  it('says what a chat mute stops, with the way to Account standing — closing itself first', async () => {
     testAuth.client = fakeClient({
       'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }),
       'POST /gifts': fail({ code: 'MUTED', details: { scope: 'chat', until: null } }),
     });
+    const onClose = vi.fn();
+    renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={onClose} onSent={() => undefined} />,
+    );
+    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
+    // Account standing would open under the sheet: the sheet goes first
+    fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
+    expect(onClose).toHaveBeenCalled();
+    expect(navigate).toHaveBeenCalledWith('AccountStanding');
+  });
+
+  it('asks for the catalog once, however often the chat behind it redraws', async () => {
+    const client = fakeClient({ 'GET /gifts/catalog?to=u2': ok({ items: [item()], balance: { zer: 1000, gems: 0 } }) });
+    testAuth.client = client;
+    const sheet = () => (
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />
+    );
+    const { rerender } = renderWithProviders(sheet());
+    await screen.findByRole('radio', { name: /^Mountain dawn/ });
+    // a friend typing redraws the chat, with a fresh friends array each time
+    rerender(sheet());
+    rerender(sheet());
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Mountain dawn/ })).toBeTruthy());
+    expect(client.calls.filter((c) => c.path.startsWith('/gifts/catalog'))).toHaveLength(1);
+  });
+
+  it('says in the reader’s words why the catalog or a gift was refused, never the server’s English', async () => {
+    testAuth.client = fakeClient({
+      'GET /gifts/catalog?to=u2': fail({ code: 'NOT_FRIENDS', message: 'you can only send gifts to friends' }),
+    });
+    const first = renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
+    );
+    expect(await screen.findByText('Gifts go to friends only.')).toBeTruthy();
+    expect(screen.queryByText('you can only send gifts to friends')).toBeNull();
+    first.unmount();
+
+    // a Newroz item that ended while the sheet was open: said so, and the catalog asked for again
+    let catalogs = 0;
+    let sends = 0;
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': () => {
+        catalogs += 1;
+        return ok({ items: [item()], balance: { zer: 1000, gems: 0 } });
+      },
+      'POST /gifts': () => {
+        sends += 1;
+        return sends === 1
+          ? fail({ code: 'ITEM_UNAVAILABLE', status: 409, message: 'item is not available' })
+          : fail({ code: 'BAD_RECIPIENTS', status: 400, message: 'a gift goes to 1–20 friends' });
+      },
+    });
+    testAuth.client = client;
     renderWithProviders(
       <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={() => undefined} />,
     );
     fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
-    expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'See your account standing' })).toBeTruthy();
+    expect(await screen.findByText('That gift isn’t available any more. Pick another one.')).toBeTruthy();
+    await waitFor(() => expect(catalogs).toBe(2));
+    expect(screen.queryByText('item is not available')).toBeNull();
+
+    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    expect(await screen.findByText('The gift didn’t go. Please try again.')).toBeTruthy();
+    expect(screen.queryByText('a gift goes to 1–20 friends')).toBeNull();
   });
 });
 

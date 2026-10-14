@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   FlatList,
   KeyboardAvoidingView,
@@ -76,6 +76,8 @@ export function ChatScreen({
 
   // their name from the conversation when the way in did not bring it
   const name = username || messages.find((m) => m.senderId === userId)?.username || '';
+  // the gift picker's one friend, the same array until the friend changes
+  const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
 
   const markRead = useCallback(() => void client.post(`/chat/${userId}/read`), [client, userId]);
 
@@ -259,7 +261,7 @@ export function ChatScreen({
       <GiftPickerSheet
         visible={picking}
         chat={{ kind: 'dm', userId }}
-        friends={[{ userId, name }]}
+        friends={giftFriends}
         onClose={() => setPicking(false)}
         onSent={(result, item) => {
           setPicking(false);
