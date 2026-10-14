@@ -1,7 +1,8 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { LeaguePanel } from './LeaguePanel';
+import { resolveGroup, type LeagueTier, type LeagueView } from '@kurda/shared';
+import { LeaguePanel, weekEnds } from './LeaguePanel';
 import { renderApp, jsonResponse } from '../test/utils';
 import { en } from '../i18n/en';
 
@@ -11,143 +12,247 @@ afterEach(() => {
   sessionStorage.clear();
 });
 
-/** A cohort of `size`, ranked 1..size, with `selfRank` marked as the reader. */
-function cohort(tier: string, size: number, selfRank: number) {
+const GOAL = 150;
+
+/**
+ * A group of `size` in `tier`, XP falling down the table, the reader at
+ * `selfRank` with `selfXp`; zones worked out by the shared rules, exactly as
+ * the server does.
+ */
+function league(tier: LeagueTier, size: number, selfRank: number, over: Partial<LeagueView> = {}): LeagueView {
+  const members = Array.from({ length: size }, (_, i) => ({ userId: `u${i + 1}`, tier, weeklyXp: (size - i) * 20 }));
+  const standings = resolveGroup(members, GOAL);
+  const me = standings[selfRank - 1] ?? { weeklyXp: 0, goalMet: false };
   return {
+    mode: 'league',
+    optedOut: false,
+    joined: true,
     tier,
-    // far enough ahead that the countdown never reads as ended mid-test
-    weekKey: new Date(Date.now() + 3 * 86_400_000).toISOString().slice(0, 10),
+    weekKey: '2026-10-12',
+    endsAt: '2026-10-19T00:00:00.000Z',
+    weeklyXp: me.weeklyXp,
+    goalXp: GOAL,
+    goalMet: me.goalMet,
+    safe: me.goalMet,
     rank: selfRank,
-    promoteCount: 10,
-    demoteCount: 5,
-    standings: Array.from({ length: size }, (_, i) => ({
-      userId: `u${i + 1}`,
-      username: `player${i + 1}`,
-      weeklyXp: (size - i) * 10,
-      rank: i + 1,
-      isSelf: i + 1 === selfRank,
+    groupSize: size,
+    promoteCount: standings.filter((s) => s.zone === 'promotion').length,
+    demoteCount: Math.floor(size * 0.15),
+    standings: standings.map((s) => ({
+      userId: s.userId,
+      username: `player${s.rank}`,
+      weeklyXp: s.weeklyXp,
+      rank: s.rank,
+      isSelf: s.rank === selfRank,
+      tier: s.tier,
+      zone: s.zone,
     })),
+    lastWeek: null,
+    recentWeeks: [],
+    ...over,
   };
 }
 
 const answer = (body: unknown) => vi.fn(async () => jsonResponse(200, body));
 
 describe('LeaguePanel', () => {
-  it('names the league it is showing, and when the week ends', async () => {
-    vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
+  it('names the league and its meaning, and says when the week closes in local time, without a countdown', async () => {
+    vi.stubGlobal('fetch', answer(league('cem', 18, 12)));
     renderApp(<LeaguePanel />);
 
-    expect(await screen.findByRole('heading', { name: 'Silver League' })).toBeInTheDocument();
-    expect(screen.getByText(/Ends in/)).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
+    expect(screen.getByText('River')).toBeInTheDocument();
+    expect(screen.getByText(`This week closes ${weekEnds('2026-10-19T00:00:00.000Z', 'en')}`)).toBeInTheDocument();
+    expect(screen.queryByText(/Ends in/)).not.toBeInTheDocument();
+    expect(screen.getByText('18 learners in your group')).toBeInTheDocument();
+    // the emblem is labelled, not decoration
+    expect(screen.getByRole('img', { name: 'Çem (River)' })).toBeInTheDocument();
   });
 
   /**
-   * The zones, which are the whole reason this panel exists and are the thing
-   * the phone shows as a coloured edge and nothing else. A row has to say where
-   * it is going in words, or it says nothing to a screen reader.
+   * The zones are said in words and arrows, never by a colour alone: every row
+   * moving says "Up" or "Down", and a line across the table names where.
    */
-  it('names the tier above for the promotion zone and below for the demotion zone', async () => {
-    vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
+  it('marks the zones in words, with lines naming the league each leads to', async () => {
+    vi.stubGlobal('fetch', answer(league('cem', 20, 12)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Silver League' });
+    await screen.findByRole('heading', { name: 'Çem League' });
 
-    // top ten promote to Gold, bottom five drop to Bronze
-    expect(screen.getAllByText('Gold League')).toHaveLength(10);
-    expect(screen.getAllByText('Bronze League')).toHaveLength(5);
-    // the fifteen in between are going nowhere and say so by saying nothing
-    expect(screen.getAllByText(/League$/)).toHaveLength(1 + 10 + 5);
+    // the top quarter of twenty move up, the bottom 15% (who missed the goal) move down
+    expect(screen.getAllByText(en['leagues.zone.up'])).toHaveLength(5);
+    expect(screen.getAllByText(en['leagues.zone.down'])).toHaveLength(3);
+    expect(screen.getByText('The top 5 move up to Gol League, with the weekly goal met')).toBeInTheDocument();
+    expect(screen.getByText('From here, anyone short of the goal moves to Kanî League')).toBeInTheDocument();
   });
 
-  /**
-   * The case the clamp exists for. Bronze is the bottom of the ladder, so its
-   * bottom five are not going anywhere — a row promising a drop to Bronze from
-   * Bronze is a promise about a move the server will never make.
-   */
-  it('promises no demotion out of the bottom tier', async () => {
-    vi.stubGlobal('fetch', answer(cohort('bronze', 30, 28)));
+  it('never shows a way down from Dilop or Kanî, and says so', async () => {
+    vi.stubGlobal('fetch', answer(league('kani', 20, 18)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Bronze League' });
+    await screen.findByRole('heading', { name: 'Kanî League' });
 
-    expect(screen.getAllByText('Silver League')).toHaveLength(10);
-    // the heading is the only other thing naming a league
-    expect(screen.getAllByText(/League$/)).toHaveLength(1 + 10);
+    expect(screen.queryByText(en['leagues.zone.down'])).not.toBeInTheDocument();
+    expect(screen.getByText('Nobody moves down from Kanî League.')).toBeInTheDocument();
   });
 
-  it('promises no promotion out of the top tier', async () => {
-    vi.stubGlobal('fetch', answer(cohort('diamond', 30, 3)));
+  it('gives Okyanûs’s top three the Pêla trophy instead of a way up', async () => {
+    vi.stubGlobal('fetch', answer(league('okyanus', 20, 10)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Diamond League' });
+    await screen.findByRole('heading', { name: 'Okyanûs League' });
 
-    expect(screen.getAllByText('Obsidian League')).toHaveLength(5);
-    expect(screen.getAllByText(/League$/)).toHaveLength(1 + 5);
+    expect(screen.queryByText(en['leagues.zone.up'])).not.toBeInTheDocument();
+    expect(screen.getAllByText(en['leagues.zone.trophy'])).toHaveLength(3);
   });
 
-  it('marks the reader rather than repeating their name', async () => {
-    vi.stubGlobal('fetch', answer(cohort('gold', 30, 4)));
+  it('says “Safe this week ✓” once the goal is met, and fills the ring', async () => {
+    vi.stubGlobal('fetch', answer(league('cem', 20, 4)));
     renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Gold League' });
+    await screen.findByRole('heading', { name: 'Çem League' });
+
+    expect(screen.getByText(en['leagues.safe'])).toBeInTheDocument();
+    const ring = screen.getByRole('img', { name: /Weekly goal: 340 of 150 XP/ });
+    expect(ring.className).toContain('is-met');
+  });
+
+  it('tells someone short of the goal how far it is, kindly', async () => {
+    vi.stubGlobal('fetch', answer(league('cem', 20, 15)));
+    renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Çem League' });
+
+    expect(screen.getByText('30 XP to your weekly goal of 150.')).toBeInTheDocument();
+    expect(screen.queryByText(en['leagues.safe'])).not.toBeInTheDocument();
+  });
+
+  it('marks the reader rather than repeating their name, and links the others to their profiles', async () => {
+    vi.stubGlobal('fetch', answer(league('cem', 8, 4)));
+    renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Çem League' });
 
     expect(screen.getByText('You')).toBeInTheDocument();
     expect(screen.queryByText('player4')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'player1' })).toHaveAttribute('href', '/app/users/u1');
   });
 
   /**
    * A minor who chose to take part is a place in the table with no name for
-   * anyone but their friends: the server sends no id or username for them,
-   * and the row says "A learner" — two of them as two rows, not one.
+   * anyone but their friends: the server sends no id or username, the row
+   * says "A learner", and it is not a link.
    */
   it('shows a member the server does not name as a learner, keeping their place', async () => {
-    const view = cohort('gold', 6, 1);
+    const view = league('cem', 8, 1);
     for (const i of [2, 4]) Object.assign(view.standings[i]!, { userId: null, username: null });
     vi.stubGlobal('fetch', answer(view));
     const { container } = renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Gold League' });
+    await screen.findByRole('heading', { name: 'Çem League' });
 
     expect(screen.getAllByText(en['leagues.unnamed'])).toHaveLength(2);
-    expect(container.querySelectorAll('.rank-row')).toHaveLength(6);
-    expect(screen.getByText('player2')).toBeInTheDocument();
+    expect(container.querySelectorAll('.rank-row')).toHaveLength(8);
+    expect(screen.queryByRole('link', { name: en['leagues.unnamed'] })).not.toBeInTheDocument();
+  });
+
+  it('asks someone not in a group yet to learn something, rather than showing an empty table', async () => {
+    vi.stubGlobal('fetch', answer({ ...league('dilop', 0, 1), joined: false, standings: [], weeklyXp: 0, goalMet: false, safe: false }));
+    const { container } = renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Dilop League' });
+
+    expect(screen.getByText(en['leagues.joinHint'])).toBeInTheDocument();
+    expect(container.querySelector('.rank-list')).toBeNull();
+  });
+
+  it('shows last week as its own card, a move down said as where you are now', async () => {
+    vi.stubGlobal(
+      'fetch',
+      answer(
+        league('gol', 20, 12, {
+          lastWeek: {
+            weekKey: '2026-10-05',
+            mode: 'league',
+            tier: 'derya',
+            tierAfter: 'gol',
+            outcome: 'demoted',
+            rank: 18,
+            groupSize: 20,
+            weeklyXp: 40,
+            goalXp: 150,
+            goalMet: false,
+            trophy: false,
+            gems: 0,
+          },
+        }),
+      ),
+    );
+    renderApp(<LeaguePanel />);
+    const card = (await screen.findByRole('heading', { name: en['leagues.lastWeek'] })).closest('section')!;
+    expect(within(card).getByText('This week you’re in Gol League.')).toBeInTheDocument();
+    expect(within(card).getByText(/Place 18 of 20/)).toBeInTheDocument();
+  });
+
+  it('pays its respects to a promotion, with the Gems it brought', async () => {
+    vi.stubGlobal(
+      'fetch',
+      answer(
+        league('cem', 20, 12, {
+          lastWeek: {
+            weekKey: '2026-10-05',
+            mode: 'league',
+            tier: 'kani',
+            tierAfter: 'cem',
+            outcome: 'promoted',
+            rank: 2,
+            groupSize: 16,
+            weeklyXp: 240,
+            goalXp: 150,
+            goalMet: true,
+            trophy: false,
+            gems: 10,
+          },
+        }),
+      ),
+    );
+    renderApp(<LeaguePanel />);
+    expect(await screen.findByText('You moved up to Çem League.')).toBeInTheDocument();
+    expect(screen.getByText('+10 Gems')).toBeInTheDocument();
+    expect(screen.getByText(en['leagues.result.goalMet'])).toBeInTheDocument();
   });
 
   /**
-   * Kurmancî puts the tier after the word for league — "Lîga Zîv", not "Zîv
-   * League" — which is why the whole phrase is one key and not two joined at
-   * the call site.
-   *
-   * Gold is `Zêrîn`, golden, and not `Zêr`, which is the currency. Asserting
-   * the exact word is the point: this test caught that guess.
+   * Kurmancî puts the tier after the word for league — "Lîga Çem" — which is
+   * why the whole phrase is one key, and the meaning is not repeated to a
+   * reader who already reads the name.
    */
   it('reads in the chosen language, in that language’s word order', async () => {
     localStorage.setItem('hevalo_locale', 'ku');
-    vi.stubGlobal('fetch', answer(cohort('silver', 30, 12)));
+    vi.stubGlobal('fetch', answer(league('cem', 20, 12)));
     renderApp(<LeaguePanel />);
 
-    expect(await screen.findByRole('heading', { name: 'Lîga Zîv' })).toBeInTheDocument();
-    expect(screen.getAllByText('Lîga Zêrîn')).toHaveLength(10);
+    expect(await screen.findByRole('heading', { name: 'Lîga Çem' })).toBeInTheDocument();
+    expect(screen.queryByText('River')).not.toBeInTheDocument();
   });
 
   /**
-   * A cohort too small to demote anybody. The server's rule, mirrored: nobody
-   * should be told they are dropping out of a league of six.
+   * Personal mode — out of the leagues by choice, or a teen who has not
+   * chosen: no group and no table, the same ring, this week against the last
+   * ones, and the way in once, without anything that reads as missing out.
    */
-  it('promises no demotion in a cohort too small for it', async () => {
-    vi.stubGlobal('fetch', answer(cohort('silver', 6, 6)));
-    renderApp(<LeaguePanel />);
-    await screen.findByRole('heading', { name: 'Silver League' });
-
-    expect(screen.queryByText('Bronze League')).not.toBeInTheDocument();
-  });
-
-  /**
-   * Out of the leagues — by choice, or a minor who has not chosen to join. No
-   * ladder and no table, nothing that reads as missing out: one sentence, and
-   * the way in.
-   */
-  it('shows no table to someone out of the leagues, and lets them join in one tap', async () => {
+  it('shows personal mode with the goal ring and recent weeks, and lets them join in one tap', async () => {
     let joined = false;
+    const personal: LeagueView = {
+      ...league('cem', 0, 1),
+      mode: 'personal',
+      optedOut: true,
+      joined: false,
+      tier: null,
+      standings: [],
+      weeklyXp: 85,
+      goalMet: false,
+      safe: false,
+      recentWeeks: [
+        { weekKey: '2026-09-28', xp: 170, goalMet: true },
+        { weekKey: '2026-10-05', xp: 90, goalMet: false },
+        { weekKey: '2026-10-12', xp: 85, goalMet: false },
+      ],
+    };
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
-      if (url.includes('/me/league')) {
-        return jsonResponse(200, joined ? cohort('bronze', 30, 30) : { ...cohort('bronze', 0, 0), optedOut: true });
-      }
+      if (url.includes('/me/league')) return jsonResponse(200, joined ? league('dilop', 10, 5) : personal);
       if (url.endsWith('/me') && init?.method === 'PATCH') {
         joined = true;
         return jsonResponse(200, { user: { id: 'me', leaguesEnabled: true } });
@@ -155,27 +260,27 @@ describe('LeaguePanel', () => {
       return jsonResponse(200, { user: { id: 'me' } });
     });
     vi.stubGlobal('fetch', fetchMock);
-    renderApp(<LeaguePanel />);
+    const { container } = renderApp(<LeaguePanel />);
 
-    expect(await screen.findByRole('heading', { name: en['leagues.optedOut.title'] })).toBeInTheDocument();
-    expect(screen.getByText(en['leagues.optedOut.body'])).toBeInTheDocument();
-    expect(screen.queryByText(/Ends in/)).not.toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: en['leagues.personal.title'] })).toBeInTheDocument();
+    expect(screen.getByText('Last week: 90 XP')).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: /Weekly goal: 85 of 150 XP/ })).toBeInTheDocument();
+    expect(container.querySelectorAll('.league-week')).toHaveLength(3);
+    expect(container.querySelector('.rank-list')).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: en['leagues.optedOut.join'] }));
-    expect(await screen.findByRole('heading', { name: 'Bronze League' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Dilop League' })).toBeInTheDocument();
     const patch = fetchMock.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH');
     expect(JSON.parse(String((patch![1] as RequestInit).body))).toEqual({ leaguesEnabled: true });
   });
 
   /*
    * It is an extra panel above a page that works without it, so a failure is
-   * not the reader's problem to see — an error box here would push the
-   * leaderboards down to report something they did not ask for.
+   * not the reader's problem to see.
    */
   it('shows nothing at all rather than an error over the leaderboards', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, { code: 'OOPS', message: 'no' })));
     const { container } = renderApp(<LeaguePanel />);
-    // nothing to await: there is no success state coming
     await new Promise((r) => setTimeout(r, 0));
     expect(container).toBeEmptyDOMElement();
   });

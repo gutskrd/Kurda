@@ -13,6 +13,7 @@ import { RailToasts } from './RailToasts';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { socialNotification, type NoteView } from '../reports/notifications';
 import { playNotification } from '../play/notifications';
+import { progressNotification } from '../ranks/notifications';
 import { usePlayInvites } from '../play/PlayProvider';
 
 /**
@@ -396,8 +397,9 @@ function Notifications({
     <>
       {items.map((n) => {
         // the reader's words and a way in, for the kinds that have them
-        // (reports/notifications.ts, play/notifications.ts)
-        const view: NoteView | null = socialNotification(n, t, locale) ?? playNotification(n, t, incoming);
+        // (reports/notifications.ts, play/notifications.ts, ranks/notifications.ts)
+        const view: NoteView | null =
+          socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t);
         const title = view?.title ?? n.title;
         const body = view ? view.body : n.body;
         return (

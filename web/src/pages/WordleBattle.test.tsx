@@ -211,7 +211,7 @@ describe('WordleBattle', () => {
 
     await userEvent.click(await screen.findByRole('radio', { name: 'Hard' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
-    await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard' } }));
+    await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false } }));
     expect(await screen.findByText(/\/app\/games\/wordle-battle\?id=b9/)).toBeInTheDocument();
   });
 });

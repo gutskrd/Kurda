@@ -290,33 +290,16 @@
 .ladder-rung + .ladder-rung::before {
   content: '';
   position: absolute;
-  top: 5px;
+  /* through the middle of the rungs' 30px emblems */
+  top: 15px;
   inset-inline-end: 50%;
   width: 100%;
   height: 1px;
   background: var(--border-strong);
 }
-.ladder-dot {
-  position: relative;
-  z-index: 1;
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  background: var(--app-bg);
-}
-.ladder-rung.is-past .ladder-dot {
-  background: var(--ink-3);
-  border-color: var(--ink-3);
-}
 .ladder-rung.is-current {
   color: var(--gold-ink);
   font-weight: 650;
-}
-.ladder-rung.is-current .ladder-dot {
-  background: var(--gold);
-  border-color: var(--gold);
-  box-shadow: 0 0 0 4px var(--gold-soft);
 }
 
 /* ---- leaderboards ---------------------------------------------------------- */
@@ -401,30 +384,31 @@ a.rank-name:hover {
   color: var(--ink-3);
   vertical-align: middle;
 }
-/* a league row about to move gets a thin edge; the chip after it says where */
+/* a league row about to move gets a thin edge — green up, a calm amber down,
+   never alarm red — and the tag after it says where in words */
 .rank-row.is-promotion {
   box-shadow: inset 2px 0 0 var(--success);
 }
 .rank-row.is-demotion {
-  box-shadow: inset 2px 0 0 var(--danger);
+  box-shadow: inset 2px 0 0 #e9c391;
 }
 .rank-row.rank-me.is-promotion {
   box-shadow: inset 2px 0 0 var(--success), inset 0 0 0 1px var(--border);
 }
 .rank-row.rank-me.is-demotion {
-  box-shadow: inset 2px 0 0 var(--danger), inset 0 0 0 1px var(--border);
+  box-shadow: inset 2px 0 0 #e9c391, inset 0 0 0 1px var(--border);
 }
 [dir='rtl'] .rank-row.is-promotion {
   box-shadow: inset -2px 0 0 var(--success);
 }
 [dir='rtl'] .rank-row.is-demotion {
-  box-shadow: inset -2px 0 0 var(--danger);
+  box-shadow: inset -2px 0 0 #e9c391;
 }
 [dir='rtl'] .rank-row.rank-me.is-promotion {
   box-shadow: inset -2px 0 0 var(--success), inset 0 0 0 1px var(--border);
 }
 [dir='rtl'] .rank-row.rank-me.is-demotion {
-  box-shadow: inset -2px 0 0 var(--danger), inset 0 0 0 1px var(--border);
+  box-shadow: inset -2px 0 0 #e9c391, inset 0 0 0 1px var(--border);
 }
 /* after the score at the end of a game: what it earned, what it cost */
 .rank-xp {
@@ -436,18 +420,6 @@ a.rank-name:hover {
   font-size: 0.82rem;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-.rank-delta {
-  flex: none;
-  font-size: 0.82rem;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-}
-.rank-delta.up {
-  color: var(--success);
-}
-.rank-delta.down {
-  color: var(--danger);
 }
 .match-results .rank-list,
 .match-play .players,
@@ -462,14 +434,6 @@ a.rank-name:hover {
 /* your place on a board whose page of rows does not reach you */
 .rank-standing {
   margin-bottom: 12px;
-}
-.rank-dest {
-  flex: none;
-}
-@media (max-width: 480px) {
-  .rank-dest {
-    display: none;
-  }
 }
 
 /* the league card: when it ends, the tier, the ladder, the table */

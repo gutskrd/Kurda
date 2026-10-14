@@ -28,6 +28,8 @@ export interface FullProfileView {
   favStory?: FavoriteRef | null;
   online?: boolean;
   country?: { code: string; name: string } | null;
+  /** the season frame worn round the avatar */
+  frameSku?: string | null;
 }
 
 /**
@@ -35,17 +37,21 @@ export interface FullProfileView {
  * and other users' pages. Renders the background, header (avatar + identity +
  * level/featured), showcases (About / favorites) and the info sidebar with the
  * base Level / XP / Streak rows. Callers pass the right-column action(s) and any
- * extra sidebar content (self: Zêr + stacks; other: tier/rating).
+ * extra sidebar content (self: Zêr + stacks; other: achievements). Badges,
+ * ranks and the league come in as `progress`, under About.
  */
 export function FullProfile({
   view,
   headerAction,
   sidebarExtra,
   activity,
+  progress,
 }: {
   view: FullProfileView;
   headerAction?: React.ReactNode;
   sidebarExtra?: React.ReactNode;
+  /** the showcased badges, ranks and league (profile/ProfileProgress) */
+  progress?: React.ReactNode;
   /** what they have posted and played — below the showcases, above the fold on mobile */
   activity?: React.ReactNode;
 }): React.JSX.Element {
@@ -70,6 +76,7 @@ export function FullProfile({
           premium={view.premium}
           online={online}
           level={view.levelInfo}
+          frameSku={view.frameSku}
           aside={headerAction}
           meta={
             <>
@@ -92,6 +99,8 @@ export function FullProfile({
                 {view.bio ? <p className="mkp-bio">{view.bio}</p> : <p className="mkp-bio muted">{t('profile.noBio')}</p>}
               </div>
             </div>
+
+            {progress}
 
             {view.favPoem && (
               <div className="mkp-showcase-block">

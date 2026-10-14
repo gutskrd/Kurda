@@ -62,7 +62,7 @@ describe('InviteSheet', () => {
     await userEvent.click(within(sheet).getByRole('button', { name: 'Create and invite (1)' }));
 
     await waitFor(() =>
-      expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard' }, invite: ['u2'] }),
+      expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false }, invite: ['u2'] }),
     );
     await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=new-1'));
   });
@@ -162,7 +162,7 @@ describe('InviteSheet', () => {
     expect(await screen.findByRole('dialog', { name: 'Play in Hevalên Kurmancî' })).toBeInTheDocument();
     expect(screen.queryByRole('group', { name: 'Who to invite' })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Post to the group' }));
-    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'medium' }, chat: { groupId: 'g1' } }));
+    await waitFor(() => expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'medium', rated: false }, chat: { groupId: 'g1' } }));
   });
 
   it('asks friends into an open lobby, leaving out the ones already in or asked', async () => {

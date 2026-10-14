@@ -23,6 +23,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
+import { RatedChoice, useRatedChoice } from '../ranks/rated';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -153,6 +154,9 @@ export function SetupSheet({
   const choices = inLength.filter((s) => level === 'any' || s.level === level);
   const { lang, dir } = storyTextDirection(fixed?.dialect ?? dialect);
   const shared = mode !== 'solo';
+  // Rated or Friendly for a game with others: the last choice, else Friendly
+  // among friends and Rated when opened to everyone (the server's default)
+  const [rated, setRated] = useRatedChoice('stories', access === 'open');
 
   async function submit(): Promise<void> {
     setBusy(true);
@@ -181,6 +185,7 @@ export function SetupSheet({
       // a story just read is not read again before its questions
       skipReading: mode === 'solo' && skipReading && Boolean(fixed),
       extraTime: rememberedExtraTime(),
+      ...(shared ? { rated } : {}),
     });
     setBusy(false);
     if (!res.ok) return setError(storyError(res.error, t));
@@ -304,6 +309,9 @@ export function SetupSheet({
             ]}
           />
         )}
+
+        {/* a new game with others is Rated or Friendly; a lobby's own is changed in the lobby */}
+        {shared && !lobby && <RatedChoice value={rated} onChange={setRated} />}
 
         {error && (
           <p className="msg msg-error" role="alert">

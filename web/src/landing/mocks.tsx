@@ -3,7 +3,8 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { CheckIcon, CloseIcon, CoinIcon, CommentIcon, HeadphonesIcon, HeartIcon, MicIcon, PlayIcon, WaveformIcon } from '../components/icons';
 import { ProfileCard } from '../ui/ProfileCard';
-import { LeagueLadder, leagueName } from '../ui/LeagueLadder';
+import { LeagueLadder } from '../ui/LeagueLadder';
+import { leagueName } from '../ranks/names';
 import { RankList, RankRow } from '../ui/RankRow';
 import { PlayerChip } from '../ui/PlayerChip';
 import { InviteCardBody } from '../ui/InviteCardBody';
@@ -153,7 +154,7 @@ export function LeagueChipMock(): React.JSX.Element {
   const t = useT();
   return (
     <Mock label={t('landing.mock.leagueLabel')} className="lp-float lp-float--league">
-      <span className="lp-float-kicker">{leagueName(t, 'gold')}</span>
+      <span className="lp-float-kicker">{leagueName(t, 'cem')}</span>
       <span className="lp-float-row">
         <span className="lp-rank">#2</span>
         <span className="lp-float-value">298 {t('rankings.unit.xp')}</span>
@@ -438,8 +439,8 @@ export function ProgressMock(): React.JSX.Element {
       />
 
       <div className="lp-card lp-laddercard">
-        <span className="lp-float-kicker">{t('leagues.endsIn', { time: '2d 4h' })}</span>
-        <LeagueLadder tier="gold" />
+        <span className="lp-float-kicker">{leagueName(t, 'cem')}</span>
+        <LeagueLadder tier="cem" />
       </div>
 
       <div className="zer-card lp-rewardmock">

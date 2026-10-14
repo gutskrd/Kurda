@@ -12,6 +12,7 @@ import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { RankResult } from '../ranks/RankResult';
 import { STORIES_HUB, createGame, gamePath, readerPath, storyError } from './api';
 import { Evidence, playerName, type Announce } from './GameParts';
 import { rememberedExtraTime, rememberedEnglish, showEnglishFor } from './prefs';
@@ -77,6 +78,9 @@ export function GameResults({
           </p>
         </div>
       )}
+
+      {/* a game with others: what it did to your Stories rank (Game Ranks) */}
+      {me && view.mode !== 'solo' && <RankResult game="stories" gameRef={view.id} />}
 
       {results && view.mode !== 'solo' && <Standings view={view} standings={results.standings} />}
       {view.mode !== 'solo' && <OtherPlayers view={view} />}

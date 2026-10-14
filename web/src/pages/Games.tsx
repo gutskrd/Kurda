@@ -7,6 +7,7 @@ import { Modal } from '../components/Modal';
 import { useAuth } from '../auth/AuthProvider';
 import { RaceMini, RhymeMini, StoriesMini, WordleMini } from '../landing/mocks';
 import { useStoriesAvailable } from '../stories/catalogue';
+import { RanksSection } from '../ranks/RanksSection';
 
 /**
  * A game, before it has words.
@@ -118,6 +119,9 @@ export function Games(): React.JSX.Element {
         <h1 className="page-title">{t('games.title')}</h1>
         <p className="page-sub">{t('games.subtitle')}</p>
       </div>
+
+      {/* your rank in each game played against people, and the season (signed in only) */}
+      <RanksSection />
 
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
       <div className="game-grid">

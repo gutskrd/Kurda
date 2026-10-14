@@ -12,7 +12,7 @@
  */
 import type { MessageKey } from '../i18n/en';
 
-export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing'] as const;
+export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'progress', 'events', 'marketing'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 /**
@@ -30,6 +30,8 @@ export const CATEGORY_LABEL: Record<NotificationCategory, MessageKey> = {
   streak: 'notifications.pref.streak',
   friends: 'notifications.pref.friends',
   games: 'notifications.pref.games',
+  // league and badge news (contract 4): off by default for a teen, on the server's side
+  progress: 'notifications.pref.progress',
   events: 'notifications.pref.events',
   marketing: 'notifications.pref.news',
 };
@@ -38,6 +40,8 @@ export interface NotificationPrefs {
   streak: boolean;
   friends: boolean;
   games: boolean;
+  /** league and badge news (contract 4) */
+  progress: boolean;
   events: boolean;
   marketing: boolean;
   /** minutes-of-day [0,1440); null/null means no quiet hours. May wrap midnight. */

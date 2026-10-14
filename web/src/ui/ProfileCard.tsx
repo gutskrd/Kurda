@@ -3,6 +3,8 @@ import type { LevelInfo, ProfileBackground, ProfileIcon } from '../lib/types';
 import { PersonGlyph } from '../components/icons';
 import { CosmeticBackground, IconOverlay, LevelBar, PremiumPill } from '../profile/cosmetic-parts';
 import { useT } from '../i18n/I18nProvider';
+import { FrameOverlay } from '../ranks/art';
+import { rankTierNamed } from '../ranks/names';
 
 /**
  * A person, as Hevalo shows one: their background as a banner, their face
@@ -31,6 +33,8 @@ export interface ProfileCardProps {
   premium?: boolean;
   online?: boolean;
   level?: Pick<LevelInfo, 'level' | 'xp' | 'nextLevelXp' | 'progress'>;
+  /** the season frame worn round the face (contract 4 §R5), or none */
+  frameSku?: string | null;
   /** under the handle: where they are from, what they were given */
   meta?: ReactNode;
   /** beside the name on a wide card: the edit button, the friend actions */
@@ -51,6 +55,7 @@ export function ProfileCard({
   premium,
   online,
   level,
+  frameSku,
   meta,
   aside,
   wide = false,
@@ -81,6 +86,7 @@ export function ProfileCard({
                 <PersonGlyph size={48} />
               </span>
             )}
+            <FrameOverlay sku={frameSku} face={wide ? 120 : 84} title={(tier) => t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })} />
             {icon && <IconOverlay icon={icon} />}
           </span>
           <div className="pc-names">

@@ -81,6 +81,15 @@ import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
 // web-race-rating: Wordle's delete key, the rating box's stars
 import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
 import { Star } from '@phosphor-icons/react/dist/icons/Star';
+// Game Ranks, leagues and badges: rated and friendly games, a zone moving up
+// or down, a tier's shield, a badge's medal
+import { ArrowDown } from '@phosphor-icons/react/dist/icons/ArrowDown';
+import { ArrowUp } from '@phosphor-icons/react/dist/icons/ArrowUp';
+import { Handshake } from '@phosphor-icons/react/dist/icons/Handshake';
+import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
+import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
+import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
+import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -207,6 +216,17 @@ export const HostIcon = named(Crown, 16, 'fill');
 export const InviteIcon = named(UserPlus, 22);
 export const CopyIcon = named(Copy, 20);
 export const CaretDownIcon = named(CaretDown, 16);
+
+/* Game Ranks, leagues and badges (contract 4): a rated game climbs, a friendly
+   one is a handshake; a league row moving up or down says so with an arrow as
+   well as a word; a tier's shield; a badge */
+export const RatedIcon = named(Mountains, 16, 'fill');
+export const FriendlyIcon = named(Handshake, 16, 'fill');
+export const UpIcon = named(ArrowUp, 14, 'bold');
+export const DownIcon = named(ArrowDown, 14, 'bold');
+export const ShieldIcon = named(ShieldCheck, 14, 'fill');
+export const MedalIcon = named(Medal, 22);
+export const SparkleIcon = named(Sparkle, 16, 'fill');
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

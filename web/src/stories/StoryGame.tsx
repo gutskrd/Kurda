@@ -12,6 +12,7 @@ import { STORIES_HUB } from './api';
 import { GameLobby } from './GameLobby';
 import { GameQuestion, GameReading, GameReveal } from './GamePlay';
 import { GameResults } from './GameResults';
+import { RatedBadge, shownRated } from '../ranks/rated';
 import { playerName } from './GameParts';
 import { InviteFriendsButton, InvitedList } from '../play/LobbyInvites';
 import { RematchPanel } from '../play/RematchPanel';
@@ -158,7 +159,11 @@ function GameHead({ view, onLeave }: { view: StoryGameView; onLeave: () => Promi
             {view.settings.storyTitle}
           </span>
         </h1>
-        <p className="sg-sub">{t(MODE_KEY[view.mode])}</p>
+        <p className="sg-sub">
+          {t(MODE_KEY[view.mode])}
+          {/* everyone sees whether a game with others is Rated or Friendly */}
+          {view.mode !== 'solo' && view.rated && <RatedBadge rated={shownRated(view.rated)} size="sm" className="sg-rated" />}
+        </p>
       </div>
       {!over && (
         <ConfirmButton
