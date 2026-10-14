@@ -23,6 +23,9 @@ import {
   type CaseSource,
   type CaseSourceGroup,
   type CaseStatus,
+  type CopyrightNoticeStatus,
+  type CopyrightNotifierRole,
+  type CopyrightTargetType,
   type DecideRequest,
   type DecisionActionKind,
   type DecisionTarget,
@@ -68,7 +71,7 @@ export function slaTarget(p: ReportPriority): string {
  * The rules, as short names for a list. The report sheet's own labels
  * (REPORT_CATEGORIES) are written for a child picking one and run to a line
  * each; a moderator scanning a queue needs two words. A rule this build does
- * not know yet (another part of Hevalo may add one, like copyright) is shown
+ * not know yet (another part of Hevalo may add one) is shown
  * by its key rather than breaking the page.
  */
 const CATEGORY_NAME: Readonly<Record<ReportCategory, string>> = {
@@ -79,6 +82,7 @@ const CATEGORY_NAME: Readonly<Record<ReportCategory, string>> = {
   hate: 'Hate',
   private_info: 'Private information',
   harassment: 'Bullying or harassment',
+  copyright: 'Copyright',
   spam: 'Scam or spam',
   impersonation: 'Impersonation',
   other: 'Something else',
@@ -97,6 +101,7 @@ const RULE_PHRASE: Readonly<Record<ReportCategory, string>> = {
   hate: 'hate',
   private_info: 'sharing private information',
   harassment: 'bullying and harassment',
+  copyright: 'respecting other people’s work',
   spam: 'spam and scams',
   impersonation: 'pretending to be someone else',
   other: 'how we treat each other',
@@ -161,6 +166,7 @@ const SOURCE_NAME: Readonly<Record<CaseSource, string>> = {
   library_report: 'Post report (older app)',
   image_report: 'Picture report (older app)',
   user_report: 'Profile report (older app)',
+  copyright: 'Copyright notice',
 };
 
 export function sourceName(source: string): string {
@@ -530,10 +536,17 @@ export function decisionRequest(d: DecisionDraft, extra: { preview?: boolean; co
  * What is plainly missing, said the way to fix it — before the panel asks for
  * a preview. The server's own checks come back through the preview.
  */
-export function draftProblems(d: DecisionDraft, names: (target: DecisionTarget) => string = () => 'them'): string[] {
+export function draftProblems(
+  d: DecisionDraft,
+  names: (target: DecisionTarget) => string = () => 'them',
+  { takedown = false }: { takedown?: boolean } = {},
+): string[] {
   const out: string[] = [];
   const actioned = d.outcome === 'actioned';
   if (actioned && !d.policy) out.push('Choose the rule that was broken.');
+  if (actioned && takedown && !d.removeContent) {
+    out.push('A copyright notice about a post is upheld by taking the post down: remove the content, or decide that no rule was broken.');
+  }
   if (actioned && d.actions.length === 0 && !d.removeContent) out.push('Add an action, or remove the content.');
   for (const a of d.actions) {
     if (a.target === 'subject' && a.kind !== 'caring_message') {
@@ -569,19 +582,8 @@ export function mediaKind(m: Pick<CaseMediaItem, 'key' | 'contentType'>): 'image
 }
 
 // ---------------------------------------------------------------------------
-// A notice that came with a case (a copyright notice, say)
+// Fields of a record whose shape this build does not fix (an automatic check's)
 // ---------------------------------------------------------------------------
-
-/**
- * A formal notice filed with a case, wherever the detail carries it. Another
- * part of Hevalo adds copyright notices; the case view shows whatever fields
- * the notice has rather than depending on its exact shape.
- */
-export function caseNotice(detail: unknown): Record<string, unknown> | null {
-  const d = detail as { notice?: unknown; case?: { notice?: unknown } } | null;
-  const n = d?.notice ?? d?.case?.notice;
-  return typeof n === 'object' && n !== null && !Array.isArray(n) ? (n as Record<string, unknown>) : null;
-}
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/;
 
@@ -620,6 +622,62 @@ export function noticeFields(notice: Record<string, unknown>, prefix = ''): Arra
     if (t !== null) out.push({ label, value: t });
   }
   return out;
+}
+
+// ---------------------------------------------------------------------------
+// Copyright notices (CaseDetail.copyright, shared copyright.ts)
+// ---------------------------------------------------------------------------
+
+const NOTICE_STATUS_NAME: Readonly<Record<CopyrightNoticeStatus, string>> = {
+  received: 'Waiting for a decision',
+  actioned: 'Taken down',
+  upheld: 'Upheld, nothing to take down',
+  rejected: 'Not infringing',
+  countered: 'Taken down, counter-notice sent',
+};
+const NOTICE_STATUS_TONE: Readonly<Record<CopyrightNoticeStatus, Tone>> = {
+  received: 'info',
+  actioned: 'ok',
+  upheld: 'ok',
+  rejected: 'neutral',
+  countered: 'warn',
+};
+
+/** Where a notice stands, as the case view's badge says it. */
+export function noticeStatusName(status: string): string {
+  return named(NOTICE_STATUS_NAME, status, 'Unknown');
+}
+export function noticeStatusTone(status: string): Tone {
+  return Object.hasOwn(NOTICE_STATUS_TONE, status) ? NOTICE_STATUS_TONE[status as CopyrightNoticeStatus] : 'neutral';
+}
+
+const NOTIFIER_ROLE_NAME: Readonly<Record<CopyrightNotifierRole, string>> = {
+  owner: 'The rights holder',
+  authorised: 'Acting for the rights holder',
+};
+export function notifierRoleName(role: string): string {
+  return named(NOTIFIER_ROLE_NAME, role, 'Unknown');
+}
+
+const COPYRIGHT_TARGET_NAME: Readonly<Record<CopyrightTargetType, string>> = {
+  library_post: 'Written post',
+  image_post: 'Picture post',
+  user: 'Profile',
+};
+/** What the notice's link was read as: "Picture post 1a2b3c4d", or that it matched nothing. */
+export function noticeTargetText(target: { type: string; id: string } | null, found: boolean): string {
+  if (!target) return 'The link matched nothing on Hevalo: look into it by hand.';
+  const what = named(COPYRIGHT_TARGET_NAME, target.type, 'Unknown');
+  return `${what} ${target.id.slice(0, 8)}${found ? '' : ' (not found when the notice arrived)'}`;
+}
+
+/**
+ * A copyright case that a decision can only uphold by taking the post down
+ * (the API answers CONTENT_REMOVAL_REQUIRED otherwise): one that came from a
+ * notice and is about content still up.
+ */
+export function needsTakedown(c: { source: string; contentRemoved: boolean }, canRemove: boolean): boolean {
+  return c.source === 'copyright' && canRemove && !c.contentRemoved;
 }
 
 // ---------------------------------------------------------------------------

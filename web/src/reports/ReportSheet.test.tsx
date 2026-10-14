@@ -52,10 +52,13 @@ describe('ReportSheet', () => {
     show();
     const dialog = screen.getByRole('dialog', { name: 'Report Rojda' });
     const buttons = within(dialog).getAllByRole('button').filter((b) => b.classList.contains('report-cat'));
-    expect(buttons).toHaveLength(10);
+    expect(buttons).toHaveLength(11);
     expect(buttons[0]).toHaveTextContent('A child is being put at risk');
     expect(buttons[1]).toHaveTextContent('Someone may hurt themselves');
-    expect(buttons[9]).toHaveTextContent('Something else');
+    // the copyright category from shared REPORT_CATEGORIES, with its own words
+    expect(buttons[7]).toHaveTextContent('Copies someone else’s work');
+    expect(buttons[7]).toHaveTextContent('Posting a picture or words someone else made as if they were their own.');
+    expect(buttons[10]).toHaveTextContent('Something else');
     expect(screen.getByText('They won’t be told who reported them.')).toBeInTheDocument();
   });
 

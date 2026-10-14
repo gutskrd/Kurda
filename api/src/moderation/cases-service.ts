@@ -56,6 +56,7 @@ import {
   type Outcome,
 } from './sources.js';
 import { inTransaction, type Executor } from './tx.js';
+import { copyrightCaseInfo } from '../copyright/service.js';
 
 /**
  * A moderation case from claim to decision.
@@ -174,7 +175,8 @@ export const DEFAULT_STATEMENTS = {
   csam: 'Your account was closed because content shared from it puts children at risk. This is never allowed on Hevalo.',
 } as const;
 
-const REPORT_SOURCES: ReadonlySet<CaseSource> = new Set(['report', 'chat_report', 'library_report', 'image_report', 'user_report']);
+// a copyright notice is a report from outside: the uploader is told it came from a complaint
+const REPORT_SOURCES: ReadonlySet<CaseSource> = new Set(['report', 'chat_report', 'library_report', 'image_report', 'user_report', 'copyright']);
 
 function originFor(source: CaseSource): SanctionOrigin {
   return REPORT_SOURCES.has(source) ? 'report' : 'automatic';
@@ -300,8 +302,14 @@ export class CasesService {
         throw new AppError('CONTRADICTORY_DECISION', 422, 'content that breaks no rule is not removed');
       }
       // checked before anything, so a preview never promises a removal the decision cannot make
-      if (removeContent && !(await removableTarget(client, c))) {
+      const removable = await removableTarget(client, c);
+      if (removeContent && !removable) {
         throw new AppError('NOTHING_TO_REMOVE', 422, 'this case is not about a piece of content');
+      }
+      // a copyright notice about a post is upheld by taking the post down (notice and
+      // takedown); a warning alone would leave the work up while its owner is told otherwise
+      if (c.source === 'copyright' && outcome === 'actioned' && removable && !removeContent) {
+        throw new AppError('CONTENT_REMOVAL_REQUIRED', 422, 'a copyright notice about a post is upheld by removing the post');
       }
       await assertDismissible(client, c, outcome);
 
@@ -377,7 +385,7 @@ export class CasesService {
       if (removeContent) removed = await removeContentOf(client, c, adminId);
 
       const status: CaseStatus = needsApproval ? 'needs_second_approval' : outcome;
-      if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters);
+      if (!needsApproval) await this.finalize(client, c, outcome, adminId, req.notifyReporters, removed !== null);
       await client.query(
         `UPDATE moderation_cases SET
             status = $2, resolution = CASE WHEN $3 THEN NULL ELSE $4 END,
@@ -556,8 +564,15 @@ export class CasesService {
     return out;
   }
 
-  /** Close the case's reports and source, and tell the reporters if asked. */
-  private async finalize(db: Executor, c: CaseRow, outcome: Outcome, adminId: string | null, notifyReporters: boolean): Promise<void> {
+  /** Close the case's reports and source, and tell the reporters if asked. `removed`: the decision took the content down. */
+  private async finalize(
+    db: Executor,
+    c: CaseRow,
+    outcome: Outcome,
+    adminId: string | null,
+    notifyReporters: boolean,
+    removed: boolean,
+  ): Promise<void> {
     if (c.source === 'report') {
       const closed = await db.query<{ id: string; reporter_id: string | null }>(
         `UPDATE reports SET status = $2, closed_at = now() WHERE case_id = $1 RETURNING id, reporter_id`,
@@ -574,7 +589,7 @@ export class CasesService {
     } else if (notifyReporters) {
       for (const reporterId of await reporterIdsOf(db, c)) await deliverNotice(db, reporterId, reportOutcomeNotice(outcome, []));
     }
-    await closeSource(db, c, outcome, adminId);
+    await closeSource(db, c, outcome, adminId, removed);
   }
 
   /** Lock an open case for a decision, enforcing the lease and the conflict-of-interest rule. */
@@ -755,7 +770,7 @@ export class CasesService {
           adminId,
         ],
       );
-      await this.finalize(client, c, 'actioned', adminId, true);
+      await this.finalize(client, c, 'actioned', adminId, true, removed !== null);
       await client.query(
         `UPDATE moderation_cases SET status = 'escalated', resolution = 'csam', policy = 'child_safety', resolved_by = $2,
                 removed_content = COALESCE($3::jsonb, removed_content),
@@ -991,7 +1006,8 @@ export class CasesService {
       if (row.case_id) {
         const c = await this.find(client, row.case_id, true);
         if (c && c.status === 'needs_second_approval') {
-          await this.finalize(client, c, 'actioned', row.created_by, c.notify_reporters);
+          // the decision removed what it removed when it was made; the approval only confirms the ban
+          await this.finalize(client, c, 'actioned', row.created_by, c.notify_reporters, c.removed_content !== null);
           await client.query(
             `UPDATE moderation_cases SET status = 'actioned', resolution = 'actioned', resolved_by = $2, resolved_at = now(), updated_at = now()
               WHERE id = $1`,
@@ -1117,19 +1133,22 @@ export class CasesService {
     if (viewerId) await this.assertNotParty(this.pool, row, viewerId);
     const now = new Date();
 
-    const [reports, subject, notes, audit, sanctions, escalations] = await Promise.all([
+    const [reports, subject, notes, audit, sanctions, escalations, copyright] = await Promise.all([
       this.reportsFor(row),
       row.subject_user_id ? this.subjectView(row.subject_user_id, row.id) : Promise.resolve(null),
       this.notesFor(row.id),
       this.auditFor(row.id),
       this.pool.query<SanctionRow>(`SELECT * FROM sanctions WHERE case_id = $1 ORDER BY created_at`, [row.id]),
       this.pool.query<EscalationRow>(`SELECT * FROM moderation_escalations WHERE case_id = $1 ORDER BY created_at`, [row.id]),
+      copyrightCaseInfo(this.pool, row),
     ]);
 
     const keys = new Set<string>();
     for (const rep of reports) for (const k of (rep.evidence as Partial<EvidenceSnapshot>).mediaKeys ?? []) keys.add(k);
-    const caseMedia = (row.evidence as { mediaKey?: unknown; audio?: unknown }) ?? {};
+    const caseMedia = (row.evidence as { mediaKey?: unknown; audio?: unknown; mediaKeys?: unknown }) ?? {};
     for (const k of [caseMedia.mediaKey, caseMedia.audio]) if (typeof k === 'string' && k) keys.add(k);
+    // a copyright case keeps the snapshot of its target on the case itself
+    if (Array.isArray(caseMedia.mediaKeys)) for (const k of caseMedia.mediaKeys) if (typeof k === 'string' && k) keys.add(k);
 
     return {
       case: {
@@ -1150,6 +1169,7 @@ export class CasesService {
       audit,
       sanctions: sanctions.rows.map((s) => toSanctionView(s, now)),
       escalations: await this.escalationViews(this.pool, escalations.rows),
+      copyright,
     };
   }
 
@@ -1323,8 +1343,9 @@ export class CasesService {
       );
       for (const row of r.rows) keys.add(row.k);
     }
-    const ev = c.evidence as { mediaKey?: unknown; audio?: unknown };
+    const ev = c.evidence as { mediaKey?: unknown; audio?: unknown; mediaKeys?: unknown };
     for (const k of [ev?.mediaKey, ev?.audio]) if (typeof k === 'string' && k) keys.add(k);
+    if (Array.isArray(ev?.mediaKeys)) for (const k of ev.mediaKeys) if (typeof k === 'string' && k) keys.add(k);
     return [...keys];
   }
 }

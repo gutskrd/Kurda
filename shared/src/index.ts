@@ -217,3 +217,11 @@ export * from './feedback.js';
  * appeal shapes the apps show, and the case shapes the admin panel reads.
  */
 export * from './reports.js';
+/**
+ * Copyright notices from the public form, counter-notices and strikes: the
+ * fields both laws ask for, the checks the form and the API share, and what
+ * the case view returns.
+ */
+export * from './copyright.js';
+/** Who provides Hevalo and how to reach them: the one file the owner fills in. */
+export { PROVIDER, isProviderPlaceholder, type ProviderIdentity } from './provider.js';

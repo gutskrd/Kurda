@@ -7,6 +7,7 @@ import type { ApiError, AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
 import { countriesIn } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
+import { RefreshedNoticeLoader } from '../shop/RefreshedItems';
 import { ProfilePhotoPicker } from '../profile/ProfilePhotoPicker';
 import { FavoritesPicker } from '../profile/FavoritesPicker';
 import { SectionToggles } from '../profile/SectionToggles';
@@ -72,6 +73,8 @@ export function ProfileEdit(): React.JSX.Element {
         <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
       </div>
 
+      {/* refreshed backgrounds and icons: the one-time notice (contract-3 §S) */}
+      <RefreshedNoticeLoader />
       <ProfilePhotoPicker me={me} onChanged={changed} />
       <ProfileDetailsForm me={me} onSaved={changed} />
       <AvatarPicker me={me} onChanged={changed} />

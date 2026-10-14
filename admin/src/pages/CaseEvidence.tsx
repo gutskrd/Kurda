@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import type { CaseDetail, CaseMediaItem, EvidenceMessage, EvidenceSnapshot } from '@kurda/shared';
-import { isSnapshot, mediaKind, noticeFields, targetName } from '../moderation';
-import { Badge, Icon, Section, Time, UserLink, useDialogs } from '../ui';
+import type { CaseDetail, CaseMediaItem, CopyrightCaseInfo, CopyrightNoticeView, EvidenceMessage, EvidenceSnapshot } from '@kurda/shared';
+import { isSnapshot, mediaKind, noticeFields, noticeStatusName, noticeStatusTone, noticeTargetText, notifierRoleName, targetName } from '../moderation';
+import { Badge, Banner, Icon, Section, Time, UserLink, useDialogs } from '../ui';
 
 /**
  * What was reported, as the server froze it when the report came in: the post
@@ -283,26 +283,121 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
 }
 
 /**
- * A formal notice filed with the case — a copyright notice, from the public
- * form another part of Hevalo adds. Shown field by field, whatever fields it
- * has, so the case view does not need to change when the notice does.
+ * The copyright notices behind the case (`CaseDetail.copyright`, shared
+ * copyright.ts), every field the notifier sent and any counter-notice from
+ * the uploader, with the reported person's confirmed strikes. Three in a
+ * year and the repeat-infringer policy suggests closing the account; the
+ * admin decides.
  */
-export function NoticePanel({ notice }: { notice: Record<string, unknown> }): React.JSX.Element {
-  const fields = noticeFields(notice);
+export function CopyrightPanel({ info }: { info: CopyrightCaseInfo }): React.JSX.Element {
+  const strikes = info.strikes;
   return (
-    <Section title="Copyright notice" description="What the person claiming the rights sent us, field by field.">
-      {fields.length === 0 ? (
-        <p className="section-text">The notice has no details.</p>
+    <Section
+      title={info.notices.length > 1 ? 'Copyright notices' : 'Copyright notice'}
+      description="What the person claiming the rights sent us, field by field, and any answer from the uploader."
+      className="case-copyright"
+    >
+      {strikes?.terminationSuggested && (
+        <Banner tone="bad" title="Repeat infringer">
+          {strikes.count} confirmed copyright decisions in {strikes.windowDays} days. The Terms say an account with {strikes.threshold} is closed; that is your call.
+        </Banner>
+      )}
+      {info.notices.length === 0 ? (
+        <p className="section-text">No formal notice: this case is about copyright from a member’s report.</p>
       ) : (
-        <dl className="facts">
-          {fields.map((f) => (
-            <div key={f.label}>
-              <dt>{f.label}</dt>
-              <dd dir="auto">{f.value}</dd>
-            </div>
-          ))}
-        </dl>
+        info.notices.map((n) => <CopyrightNotice key={n.id} notice={n} />)
+      )}
+      {strikes && (
+        <p className="section-text">
+          Strikes: {strikes.count} of {strikes.threshold} in {strikes.windowDays} days
+          {strikes.caseIds.length > 0 && (
+            <>
+              {' '}
+              (
+              {strikes.caseIds.map((id, i) => (
+                <span key={id}>
+                  {i > 0 && ', '}
+                  <a href={`#/moderation/${encodeURIComponent(id)}`}>{id.slice(0, 8)}</a>
+                </span>
+              ))}
+              )
+            </>
+          )}
+          .
+        </p>
       )}
     </Section>
+  );
+}
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }): React.JSX.Element {
+  return (
+    <div>
+      <dt>{label}</dt>
+      <dd dir="auto">{children}</dd>
+    </div>
+  );
+}
+
+const yesNo = (v: boolean): string => (v ? 'Yes' : 'No');
+
+function CopyrightNotice({ notice: n }: { notice: CopyrightNoticeView }): React.JSX.Element {
+  const c = n.counterNotice;
+  return (
+    <div className="copyright-notice">
+      <h3 className="drawer-sub">
+        {n.reference} <Badge tone={noticeStatusTone(n.status)}>{noticeStatusName(n.status)}</Badge>
+      </h3>
+      <dl className="facts">
+        <Fact label="Received">
+          <Time value={n.receivedAt} mode="absolute" />
+        </Fact>
+        <Fact label="Name">{n.notifier.name}</Fact>
+        <Fact label="Sent by">{notifierRoleName(n.notifier.role)}</Fact>
+        {n.notifier.rightsHolder && <Fact label="Rights holder">{n.notifier.rightsHolder}</Fact>}
+        <Fact label="Email">{n.notifier.email}</Fact>
+        <Fact label="Address">{n.notifier.address}</Fact>
+        {n.notifier.phone && <Fact label="Phone">{n.notifier.phone}</Fact>}
+        <Fact label="The work">{n.work}</Fact>
+        {n.workUrl && <Fact label="Where the original is">{n.workUrl}</Fact>}
+        <Fact label="Link to the post">{n.contentUrl}</Fact>
+        <Fact label="Read as">{noticeTargetText(n.target, n.targetFound)}</Fact>
+        <Fact label="Why it infringes">{n.explanation}</Fact>
+        <Fact label="Good faith statement">{yesNo(n.goodFaith)}</Fact>
+        <Fact label="Accurate, under penalty of perjury">{yesNo(n.accurate)}</Fact>
+        <Fact label="Signature">{n.notifier.signature}</Fact>
+        <Fact label="Language">{n.notifier.locale}</Fact>
+        <Fact label="Receipt emailed">
+          <Time value={n.receiptSentAt} mode="absolute" />
+        </Fact>
+        <Fact label="Outcome emailed">
+          <Time value={n.outcomeSentAt} mode="absolute" />
+        </Fact>
+      </dl>
+      {c && (
+        <>
+          <h4 className="drawer-sub">Counter-notice from the uploader</h4>
+          <dl className="facts">
+            <Fact label="Received">
+              <Time value={c.createdAt} mode="absolute" />
+            </Fact>
+            <Fact label="Name">{c.name}</Fact>
+            <Fact label="Email">{c.email}</Fact>
+            <Fact label="Address">{c.address}</Fact>
+            {c.phone && <Fact label="Phone">{c.phone}</Fact>}
+            <Fact label="Why the removal was a mistake">{c.statement}</Fact>
+            <Fact label="Good faith, under penalty of perjury">{yesNo(c.goodFaith)}</Fact>
+            <Fact label="Consents to the court and to service">{yesNo(c.consent)}</Fact>
+            <Fact label="Signature">{c.signature}</Fact>
+            <Fact label="Copy sent to the notifier">
+              <Time value={c.forwardedAt} mode="absolute" />
+            </Fact>
+            <Fact label="Can be put back from">
+              <Time value={c.restoreNotBefore} mode="date" />
+            </Fact>
+          </dl>
+        </>
+      )}
+    </div>
   );
 }

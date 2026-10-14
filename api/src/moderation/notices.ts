@@ -70,9 +70,12 @@ function whatHappens(kind: SanctionKind, endsAt: Date | null): string {
   }
 }
 
-function howItCame(origin: SanctionOrigin, reviewedByPerson: boolean): string {
+function howItCame(origin: SanctionOrigin, reviewedByPerson: boolean, policy?: ReportCategory): string {
   const source =
-    origin === 'report'
+    origin === 'report' && policy === 'copyright'
+      ? // a rights holder's notice comes from someone who is usually not a member
+        'This came from a copyright complaint'
+      : origin === 'report'
       ? 'This came from a report by another member'
       : origin === 'automatic'
         ? 'This came from our automatic checks'
@@ -97,8 +100,12 @@ export function sanctionNotice(input: SanctionNoticeInput): Notice {
     input.statement.trim(),
     whatHappens(input.kind, input.endsAt),
     `The rule: ${rule}.`,
-    howItCame(input.origin, input.reviewedByPerson),
-    'Think we got it wrong? You can ask for a review from Account standing within six months.',
+    howItCame(input.origin, input.reviewedByPerson, input.policy),
+    input.policy === 'copyright' && input.kind === 'content_removal'
+      ? // the DMCA's and the DSA's answer to a takedown: the counter-notice, besides the review.
+        // Only a takedown has one; a warning or a limit under the same rule is reviewed like any other
+        'Made it yourself, or allowed to use it? You can send a counter-notice from hevalo.app/copyright, or ask for a review from Account standing, within six months.'
+      : 'Think we got it wrong? You can ask for a review from Account standing within six months.',
   ].join('\n\n');
   return {
     title: TITLES[input.kind],

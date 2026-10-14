@@ -121,18 +121,6 @@
   /* a poem's line breaks are the poem, and an excerpt keeps them */
   white-space: pre-wrap;
 }
-.fcard-shot {
-  display: block;
-  margin: 4px -18px 10px;
-  background: var(--surface-2);
-}
-.fcard-shot img {
-  display: block;
-  width: 100%;
-  /* tall pictures are common and a card should not become a page */
-  max-height: 560px;
-  object-fit: cover;
-}
 /* a picture's caption sits under it and reads as a caption, not a body */
 .fcard-image .fcard-text,
 .fcard-meme .fcard-text {
@@ -281,48 +269,6 @@
   }
   .post-plus-word {
     display: none;
-  }
-}
-
-.post-choice-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-top: 4px;
-}
-.post-choice-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  padding: 22px 14px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  color: var(--ink-2);
-  font: inherit;
-  cursor: pointer;
-  text-align: center;
-}
-.post-choice-card:hover {
-  border-color: var(--border-strong);
-  color: var(--ink);
-}
-.post-choice-name {
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-.post-choice-sub {
-  color: var(--ink-4);
-  font-size: 0.78rem;
-}
-.post-words .input {
-  width: 100%;
-}
-@media (max-width: 520px) {
-  .post-choice-row {
-    grid-template-columns: 1fr;
   }
 }
 

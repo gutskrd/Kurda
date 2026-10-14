@@ -68,6 +68,7 @@ export async function removableTarget(
 ): Promise<{ type: ReportTargetType | 'media'; id: string } | null> {
   switch (c.source) {
     case 'report':
+    case 'copyright':
       if (!c.target_type || !c.target_id) return null;
       return ['user', 'group', 'game_player'].includes(c.target_type) ? null : { type: c.target_type, id: c.target_id };
     case 'library_report':

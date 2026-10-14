@@ -1,7 +1,6 @@
 // @vitest-environment jsdom
 import { afterEach, describe, expect, it } from 'vitest';
 import {
-  caseNotice,
   categoryName,
   contentTarget,
   decisionRequest,
@@ -16,9 +15,14 @@ import {
   initialDraft,
   liftEffect,
   mediaKind,
+  needsTakedown,
   neighbourCase,
   newAction,
   noticeFields,
+  noticeStatusName,
+  noticeStatusTone,
+  noticeTargetText,
+  notifierRoleName,
   policyOptions,
   queueOrder,
   QUEUE_Q_MAX,
@@ -26,6 +30,7 @@ import {
   rememberQueueOrder,
   sanctionPeriod,
   slaState,
+  sourceName,
   statusName,
   withDuration,
   withKind,
@@ -47,9 +52,22 @@ describe('names', () => {
 
   it('offers every rule as a policy, and the case’s own when it is new to this build', () => {
     const plain = policyOptions('harassment');
-    expect(plain.map((o) => o.value)).toEqual(['child_safety', 'self_harm', 'violence', 'sexual', 'hate', 'private_info', 'harassment', 'spam', 'impersonation', 'other']);
+    expect(plain.map((o) => o.value)).toEqual([
+      'child_safety',
+      'self_harm',
+      'violence',
+      'sexual',
+      'hate',
+      'private_info',
+      'harassment',
+      'copyright',
+      'spam',
+      'impersonation',
+      'other',
+    ]);
     expect(plain[0]!.label).toBe('Child safety · urgent');
-    expect(policyOptions('copyright').at(-1)).toEqual({ value: 'copyright', label: 'Copyright' });
+    expect(policyOptions('copyright').find((o) => o.value === 'copyright')!.label).toMatch(/^Copyright · /);
+    expect(policyOptions('a_new_rule').at(-1)).toEqual({ value: 'a_new_rule', label: 'A new rule' });
   });
 
   it('knows which cases are about a piece of content that can come down', () => {
@@ -213,14 +231,40 @@ describe('sanctions and history', () => {
   });
 });
 
-describe('a notice that came with a case', () => {
-  it('is found on the detail or on its case, whatever its shape', () => {
-    expect(caseNotice({ notice: { work: 'My song' } })).toEqual({ work: 'My song' });
-    expect(caseNotice({ case: { notice: { work: 'My song' } } })).toEqual({ work: 'My song' });
-    expect(caseNotice({ case: {} })).toBeNull();
-    expect(caseNotice({ notice: ['x'] })).toBeNull();
+describe('copyright', () => {
+  it('names the rule, the source and where a notice stands, upheld included', () => {
+    expect(categoryName('copyright')).toBe('Copyright');
+    expect(sourceName('copyright')).toBe('Copyright notice');
+    expect(noticeStatusName('upheld')).toBe('Upheld, nothing to take down');
+    expect(noticeStatusName('countered')).toBe('Taken down, counter-notice sent');
+    expect(noticeStatusTone('countered')).toBe('warn');
+    expect(noticeStatusName('something_new')).toBe('Something new');
+    expect(notifierRoleName('authorised')).toBe('Acting for the rights holder');
   });
 
+  it('says what a notice’s link was read as, or that it matched nothing', () => {
+    expect(noticeTargetText({ type: 'image_post', id: '1a2b3c4d-0000-4000-8000-000000000000' }, true)).toBe('Picture post 1a2b3c4d');
+    expect(noticeTargetText({ type: 'library_post', id: '1a2b3c4d-0000-4000-8000-000000000000' }, false)).toBe(
+      'Written post 1a2b3c4d (not found when the notice arrived)',
+    );
+    expect(noticeTargetText(null, false)).toMatch(/matched nothing/);
+  });
+
+  it('asks for the takedown before a notice about a post is upheld', () => {
+    expect(needsTakedown({ source: 'copyright', contentRemoved: false }, true)).toBe(true);
+    expect(needsTakedown({ source: 'copyright', contentRemoved: true }, true)).toBe(false);
+    expect(needsTakedown({ source: 'copyright', contentRemoved: false }, false)).toBe(false);
+    expect(needsTakedown({ source: 'report', contentRemoved: false }, true)).toBe(false);
+    const warned = { ...initialDraft('copyright'), actions: [newAction('subject', 'warning', 'copyright')] };
+    expect(draftProblems(warned, undefined, { takedown: true })).toContain(
+      'A copyright notice about a post is upheld by taking the post down: remove the content, or decide that no rule was broken.',
+    );
+    expect(draftProblems({ ...warned, removeContent: true }, undefined, { takedown: true })).toEqual([]);
+    expect(draftProblems({ ...warned, outcome: 'no_violation', actions: [] }, undefined, { takedown: true })).toEqual([]);
+  });
+});
+
+describe('fields of a record whose shape is not fixed', () => {
   it('lists every field with a readable label, nested ones by their path, empty ones left out', () => {
     const fields = noticeFields({
       claimantName: 'Rojda Ahmed',

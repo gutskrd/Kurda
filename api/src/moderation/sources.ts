@@ -45,11 +45,30 @@ export async function assertDismissible(db: Executor, c: CaseSourceRow, outcome:
   }
 }
 
-/** Mark the source row decided, with the deciding admin (the old queue dropped who). */
-export async function closeSource(db: Executor, c: CaseSourceRow, outcome: Outcome, adminId: string | null): Promise<void> {
+/**
+ * Mark the source row decided, with the deciding admin (the old queue dropped who).
+ * `removed` says whether the decision took the content down: a copyright
+ * notice's sender is told "removed" only when something was.
+ */
+export async function closeSource(
+  db: Executor,
+  c: CaseSourceRow,
+  outcome: Outcome,
+  adminId: string | null,
+  removed: boolean,
+): Promise<void> {
   const actioned = outcome === 'actioned';
   switch (c.source) {
     case 'report':
+      return;
+    case 'copyright':
+      // the notices behind it are decided with it; the outcome sweep emails their senders.
+      // Upheld without a removal (a profile, a link that matched nothing) is not "removed":
+      // the sender must not be told so, and the uploader has no takedown to counter.
+      await db.query(
+        `UPDATE copyright_notices SET status = $2 WHERE case_id = $1 AND status = 'received'`,
+        [c.id, !actioned ? 'rejected' : removed ? 'actioned' : 'upheld'],
+      );
       return;
     case 'chat_report':
       await db.query(
@@ -148,6 +167,15 @@ export async function reopenSource(db: Executor, c: CaseSourceRow): Promise<void
       if (c.subject_user_id) {
         await db.query(`UPDATE bot_scores SET status = 'active', flagged = true, resolved_at = NULL WHERE user_id = $1`, [c.subject_user_id]);
       }
+      return;
+    case 'copyright':
+      // a second look decides the notices again, and their senders hear the new decision;
+      // one already answered by a counter-notice stays answered
+      await db.query(
+        `UPDATE copyright_notices SET status = 'received', outcome_sent_at = NULL
+          WHERE case_id = $1 AND status IN ('actioned','upheld','rejected')`,
+        [c.id],
+      );
       return;
     default:
       // reports and the old report tables stay closed: a reopened case is a second

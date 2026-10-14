@@ -73,6 +73,21 @@ export const CARD_LABEL_KEY: Record<string, MessageKey> = {
   meme: 'civak.kind.meme',
 };
 
+/**
+ * Which badge a wall card wears.
+ *
+ * The API's `kind` is what the database calls the row, and a written post with
+ * pictures is still a `gotin` there — so a meme would be badged "Saying", and
+ * a post that is only a photo would claim to be words. A post marked as a meme
+ * is a Meme, a saying that is nothing but pictures is a Photo, and everything
+ * else is what the database says.
+ */
+export function cardKind(item: { kind: string; meme?: boolean; excerpt: string | null; images?: readonly unknown[] }): string {
+  if (item.meme) return 'meme';
+  if (item.kind === 'gotin' && !item.excerpt && (item.images?.length ?? 0) > 0) return 'image';
+  return item.kind;
+}
+
 export function asSection(value: string | null): FeedSection {
   return SECTIONS.some((s) => s.key === value) ? (value as FeedSection) : 'all';
 }

@@ -6,7 +6,6 @@ import { go } from '../nav';
 import {
   PRIORITY_NAME,
   PRIORITY_TONE,
-  caseNotice,
   categoryName,
   initialDraft,
   isOpenStatus,
@@ -21,7 +20,7 @@ import {
   type DecisionDraft,
 } from '../moderation';
 import { Badge, Banner, Button, Drawer, ErrorState, Icon, Loading, PageHeader, Time, errorLine, useLoad, useMediaQuery, useToast } from '../ui';
-import { Evidence, NoticePanel } from './CaseEvidence';
+import { CopyrightPanel, Evidence } from './CaseEvidence';
 import { ReportersPanel, SubjectPanel } from './CasePeople';
 import { CaseSanctions, Escalations, History, Notes } from './CaseRecord';
 import { DecisionPanel } from './DecisionPanel';
@@ -192,7 +191,6 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
   const nameOfAdmin = (id: string | null): string => (id ? (adminNames.get(id) ?? 'a moderator') : 'automatic');
 
   const sla = slaState(c);
-  const notice = caseNotice(detail);
   const sensitive =
     c.category === 'child_safety' || c.policy === 'child_safety' || detail.escalations.some((e) => e.kind === 'csam') || detail.media.some((m) => m.quarantine !== null);
   const locked =
@@ -301,7 +299,7 @@ export function CaseView({ caseId }: { caseId: string }): React.JSX.Element {
       <div className={`case-layout${wide ? ' is-wide' : ''}`}>
         <div className="case-main">
           <Evidence detail={detail} sensitive={sensitive} />
-          {notice && <NoticePanel notice={notice} />}
+          {detail.copyright && <CopyrightPanel info={detail.copyright} />}
           {subject && <SubjectPanel subject={subject} canAct={canAct} selfHarm={draft.policy === 'self_harm'} onSanction={() => addAction('subject')} />}
           <ReportersPanel
             reports={detail.reports}

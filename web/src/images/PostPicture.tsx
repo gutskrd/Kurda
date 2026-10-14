@@ -1,6 +1,4 @@
 import { useEffect, useRef, useState } from 'react';
-import { useAuth } from '../auth/AuthProvider';
-import type { ApiError, ImagePost } from '../lib/types';
 import { Button } from '../components/Button';
 import { PhotoIcon } from '../components/icons';
 import { canvasToFile } from './photoText';
@@ -11,67 +9,68 @@ import { useHistory } from './useHistory';
 import { ensureStickersFor } from './stickers';
 import { overlaySources } from './filters';
 import { useT } from '../i18n/I18nProvider';
-import { DIMEN_KINDS } from '../feed/postKinds';
-import { SendError } from '../reports/SendError';
-
-const MAX_CAPTION = 2_000;
 
 /**
- * Post a picture to Dîmen.
+ * Edit one picture before it is posted: frame it, add words, stickers, a
+ * filter, a drawing.
  *
- * Two steps, because the server insists on it: the bytes go to
- * `POST /images/upload`, which validates, resizes, compresses, signs and scans
- * them before handing back a media id, and only then does `POST /images` accept
- * a post referencing it. A client cannot attach an arbitrary key.
+ * This was the whole of "post a picture" — choose a file, edit it, pick photo
+ * or meme, write a caption, post. Posting is the composer's now
+ * (web/src/composer), where a picture is one of up to four on a post with
+ * words, and this is what its "Edit" opens: it takes the picture, and gives
+ * back the edited one as a file, or nothing if you cancel.
  *
  * The framing and everything added is burned into a canvas here and the canvas
- * is what is uploaded, so the preview and the stored file are the same pixels.
- * The Hevalo mark is the exception: the server adds that afterwards, because a
+ * is what comes back, so the preview and the stored file are the same pixels.
+ * The Hevalo mark is the exception: the server adds that on upload, because a
  * mark the client applies is a mark the client can leave off — which is also
  * why nothing here can end up over the top of it.
  *
- * The export canvas is made at the moment of posting rather than being the one
- * on screen. The editor's canvas is not mounted while you are framing, and a
- * post that failed because you happened to be on the wrong tab would be a
+ * The export canvas is made when you are done rather than being the one on
+ * screen. The editor's canvas is not mounted while you are framing, and an
+ * export that failed because you happened to be on the wrong tab would be a
  * baffling thing to debug.
  */
-export function PictureComposer({
+export function PictureEditor({
+  file,
   handle,
   onDone,
+  onCancel,
 }: {
+  file: File;
   handle: string;
-  onDone: (post: ImagePost) => void;
+  /** the edited picture; the original when the browser could not draw it */
+  onDone: (edited: File) => void;
+  onCancel: () => void;
 }): React.JSX.Element {
-  const { client } = useAuth();
   const t = useT();
-  const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<CanvasImageSource | null>(null);
 
-  const [file, setFile] = useState<File | null>(null);
   /** the source picture's own pixels, before any framing */
   const [source, setSource] = useState<{ w: number; h: number } | null>(null);
   const history = useHistory<Composition>(UNTOUCHED);
-  const [caption, setCaption] = useState('');
-  const [postAs, setPostAs] = useState('image');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | ApiError | null>(null);
-  /** The browser could not decode it, so it goes up as-is with nothing added. */
+  const [error, setError] = useState<string | null>(null);
+  /** The browser could not decode it, so there is nothing to draw on. */
   const [rawOnly, setRawOnly] = useState(false);
   /** what the bytes turned out to be, so a failure can be worded honestly */
   const [format, setFormat] = useState<string | null>(null);
   /** bumped to decode the same file again, for a failure that may not repeat */
   const [attempt, setAttempt] = useState(0);
 
-  /** Decode the chosen file into something the canvas can draw from. */
+  // a new picture is a new document: undo must not walk back into the last
+  // one, and the graded copy of the last one is now worth nothing
+  const { reset } = history;
   useEffect(() => {
-    if (!file) {
-      imageRef.current = null;
-      setSource(null);
-      setRawOnly(false);
-      return;
-    }
+    forgetGraded();
+    reset(UNTOUCHED);
+  }, [file, reset]);
+
+  /** Decode the picture into something the canvas can draw from. */
+  useEffect(() => {
     let cancelled = false;
     let decoded: DecodedPicture | null = null;
+    setRawOnly(false);
 
     void decodePicture(file).then((result) => {
       decoded = result;
@@ -82,11 +81,10 @@ export function PictureComposer({
         return;
       }
       if (!result) {
-        // Not a dead end, and not a broken file. Usually this browser has no
-        // decoder for these bytes — a HEIC from a phone. But read the bytes
-        // before saying so: a PNG that will not decode is not a format problem,
-        // and telling someone their screenshot is an unsupported kind of picture
-        // when it plainly is not sends them looking in the wrong place.
+        // Usually this browser has no decoder for these bytes — a HEIC from a
+        // phone. But read the bytes before saying so: a PNG that will not decode
+        // is not a format problem, and saying it is sends someone converting a
+        // file that is already fine.
         void sniffPictureFormat(file).then((f) => {
           if (!cancelled) setFormat(f);
         });
@@ -94,8 +92,6 @@ export function PictureComposer({
         return;
       }
       imageRef.current = result.source;
-      // the source picture's real size: the framing is expressed against this,
-      // and the export size is worked out from the shape it is framed to
       setSource({ w: result.width, h: result.height });
     });
 
@@ -105,188 +101,72 @@ export function PictureComposer({
     };
   }, [file, attempt]);
 
-  /**
-   * Take whatever was chosen and let the browser decide if it is a picture.
-   *
-   * Judging by `file.type` is judging by whatever the operating system said when
-   * it handed the file over, and for plenty of real photos that is an empty
-   * string. If it decodes, it is a picture.
-   */
-  function choose(e: React.ChangeEvent<HTMLInputElement>): void {
-    const picked = e.target.files?.[0];
-    e.target.value = '';
-    if (!picked) return;
-    setError(null);
-    // a new picture is a new document: undo must not walk back into the last
-    // one, and the graded copy of the last one is now worth nothing
-    forgetGraded();
-    history.reset(UNTOUCHED);
-    setFile(picked);
-  }
-
-  async function submit(): Promise<void> {
-    if (!file || busy) return;
+  async function done(): Promise<void> {
+    if (busy) return;
+    if (rawOnly || !imageRef.current || !source) {
+      onDone(file);
+      return;
+    }
     setBusy(true);
     setError(null);
-
-    // nothing was composed onto an unpreviewable file, so its own bytes are
-    // exactly what should be sent
-    let composed: File | null = file;
-    if (!rawOnly && imageRef.current && source) {
-      // the export draws synchronously, so every picture sticker has to be
-      // decoded first — otherwise one added a moment ago exports as nothing
-      // every picture the draw will need, decoded first: the export draws
-      // synchronously, so anything still loading would export as nothing
-      await ensureStickersFor([
-        ...history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)),
-        ...overlaySources(),
-      ]);
-      const canvas = document.createElement('canvas');
-      // full size this time, not the preview's ceiling — this is the file
-      compose(canvas, imageRef.current, source.w, source.h, history.present);
-      composed = await canvasToFile(canvas, 'dimen');
-    }
-    if (!composed) {
-      setBusy(false);
-      setError(t('picture.couldNotPrepare'));
-      return;
-    }
-
-    const up = await client.uploadBytes<{ imageMediaId: string }>('/images/upload', composed);
-    if (!up.ok) {
-      setBusy(false);
-      setError(
-        up.error.code === 'MEDIA_UNAVAILABLE'
-          ? t('picture.storageOff')
-          : up.error,
-      );
-      return;
-    }
-
-    const made = await client.post<ImagePost>('/images', {
-      imageMediaId: up.data.imageMediaId,
-      caption: caption.trim() || undefined,
-      category: postAs,
-    });
+    // every picture the draw will need, decoded first: the export draws
+    // synchronously, so anything still loading would export as nothing
+    await ensureStickersFor([
+      ...history.present.layers.map((l) => (l.kind === 'sticker' ? l.src : undefined)),
+      ...overlaySources(),
+    ]);
+    const canvas = document.createElement('canvas');
+    // full size this time, not the preview's ceiling — this is the file
+    compose(canvas, imageRef.current, source.w, source.h, history.present);
+    const edited = await canvasToFile(canvas, 'dimen');
     setBusy(false);
-    if (made.ok) onDone(made.data);
-    // the bytes are stored either way; only the post failed, so saying so beats
-    // silently dropping them
-    else setError(made.error);
+    if (edited) onDone(edited);
+    else setError(t('picture.couldNotPrepare'));
   }
 
-  const editable = file !== null && source !== null && imageRef.current !== null;
-  // a picture to post, whether or not this browser can show it
-  const ready = editable || rawOnly;
+  const editable = source !== null && imageRef.current !== null;
 
   return (
     <div className="post-picture">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('post.picture.open')}</h2>
-
-      {!ready ? (
-        <>
-          <button
-            type="button"
-            className="picture-drop"
-            onClick={() => fileRef.current?.click()}
-            disabled={busy}
-            aria-label={t('picture.choose')}
-          >
-            <span className="picture-drop-empty">
-              <PhotoIcon size={30} />
-              <span>{t('picture.choose')}</span>
-            </span>
-          </button>
-          <SendError error={error} role="status" />
-        </>
-      ) : (
-        <>
-          {editable ? (
-            <PhotoEditor
-              image={imageRef.current!}
-              iw={source!.w}
-              ih={source!.h}
-              handle={handle}
-              history={history}
-            />
+      {editable ? (
+        <PhotoEditor image={imageRef.current!} iw={source.w} ih={source.h} handle={handle} history={history} />
+      ) : rawOnly ? (
+        <div className="picture-raw" role="status">
+          <PhotoIcon size={26} />
+          <p className="picture-raw-name">{file.name}</p>
+          {shouldHaveDecoded(format) ? (
+            <>
+              <p className="muted">{t('picture.decodeFailed', { format: format!.toUpperCase() })}</p>
+              <Button size="sm" variant="secondary" onClick={() => setAttempt((n) => n + 1)}>
+                {t('common.retry')}
+              </Button>
+            </>
           ) : (
-            <div className="picture-raw" role="status">
-              <PhotoIcon size={26} />
-              <p className="picture-raw-name">{file!.name}</p>
-              {shouldHaveDecoded(format) ? (
-                <>
-                  {/* a PNG or JPEG that will not open is not a format problem, and
-                      saying it is would send someone converting a file that is
-                      already fine */}
-                  <p className="muted">
-                    {t('picture.decodeFailed', { format: format!.toUpperCase() })}
-                  </p>
-                  <Button size="sm" variant="secondary" onClick={() => { setRawOnly(false); setAttempt((n) => n + 1); }}>
-                    {t('common.retry')}
-                  </Button>
-                </>
-              ) : (
-                /* no promise that it will convert: HEIC needs a codec the server
-                   may not carry, and it says so plainly if it cannot */
-                <p className="muted">
-                  {t('picture.browserCannotShow', {
-                    what: format
-                      ? t('picture.formatPictures', { format: format.toUpperCase() })
-                      : t('picture.thisKind'),
-                  })}
-                </p>
-              )}
-            </div>
+            /* no promise that it will convert: HEIC needs a codec the server
+               may not carry, and it says so plainly if it cannot */
+            <p className="muted">
+              {t('picture.browserCannotShow', {
+                what: format ? t('picture.formatPictures', { format: format.toUpperCase() }) : t('picture.thisKind'),
+              })}
+            </p>
           )}
-
-          <button
-            type="button"
-            className="link-button"
-            onClick={() => fileRef.current?.click()}
-            disabled={busy}
-            aria-label={t('picture.chooseDifferent')}
-          >
-            {t('picture.chooseDifferent')}
-          </button>
-
-          <div className="seg" role="group" aria-label={t('post.kind')} style={{ marginTop: 14 }}>
-            {DIMEN_KINDS.map((k) => (
-              <button
-                key={k.key}
-                type="button"
-                className={`seg-btn${postAs === k.postAs ? ' is-active' : ''}`}
-                aria-pressed={postAs === k.postAs}
-                disabled={busy}
-                onClick={() => setPostAs(k.postAs)}
-              >
-                {t(k.labelKey)}
-              </button>
-            ))}
-          </div>
-
-          <textarea
-            className="input comment-input"
-            rows={2}
-            value={caption}
-            maxLength={MAX_CAPTION}
-            placeholder={t('post.captionPlaceholder')}
-            aria-label={t('post.caption')}
-            disabled={busy}
-            onChange={(e) => setCaption(e.target.value)}
-            style={{ marginTop: 12 }}
-          />
-
-          <SendError error={error} role="status" />
-
-          <div className="comment-form-actions">
-            <Button size="sm" onClick={() => void submit()} disabled={busy}>
-              {busy ? t('post.submitting') : t('post.submit')}
-            </Button>
-          </div>
-        </>
+        </div>
+      ) : (
+        <div className="picture-raw" aria-busy="true">
+          <PhotoIcon size={26} />
+        </div>
       )}
 
-      <input ref={fileRef} type="file" accept="image/*" hidden onChange={choose} aria-label={t('picture.file')} />
+      {error && <div className="msg msg-error" role="alert">{error}</div>}
+
+      <div className="comment-form-actions">
+        <Button size="sm" variant="secondary" onClick={onCancel} disabled={busy}>
+          {t('common.cancel')}
+        </Button>
+        <Button size="sm" onClick={() => void done()} disabled={busy || (!editable && !rawOnly)}>
+          {t('picture.useEdited')}
+        </Button>
+      </div>
     </div>
   );
 }

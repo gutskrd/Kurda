@@ -12,6 +12,11 @@ export const EMAIL_TEMPLATES = [
   'oauth-no-password',
   'deletion-notice',
   'moderation-urgent',
+  'copyright-received',
+  'copyright-removed',
+  'copyright-upheld',
+  'copyright-kept',
+  'copyright-counter-notice',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -104,6 +109,79 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Raporeke lezgîn a nû li benda nirxandinê ye',
       text: 'Raporeke lezgîn a nû li Hevalo li benda nirxandinê ye. Ji kerema xwe zû lê binêre.\n\nLi vir veke: {link}\n\n— Moderasyona Hevalo',
+    },
+  },
+  /*
+   * To someone who sent a copyright notice from /copyright — usually not a
+   * member, so email is the only way to reach them. The receipt (DSA Art.
+   * 16(4)) and the decision (Art. 16(5)); the counter-notice's copy is the one
+   * the DMCA (§512(g)(2)(B)) asks the provider to forward. Plain text only:
+   * these are records, and are kept the way they were sent.
+   */
+  'copyright-received': {
+    en: {
+      subject: 'We received your copyright notice ({reference})',
+      text:
+        'Thank you. We received your copyright notice about {link}.\n\nYour reference is {reference}. A person at Hevalo will review it and email you what we decided.\n\nIf you need to add anything, write to {contact} and quote your reference.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Me agahdariya te ya mafê nivîskariyê wergirt ({reference})',
+      text:
+        'Spas. Me agahdariya te ya mafê nivîskariyê li ser {link} wergirt.\n\nReferansa te {reference} e. Kesek ji Hevalo dê lê binêre û biryara me bi e-nameyê ji te re bişîne.\n\nHeke tu dixwazî tiştekî zêde bikî, ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
+    },
+  },
+  'copyright-removed': {
+    en: {
+      subject: 'Your copyright notice: we removed it ({reference})',
+      text:
+        'We reviewed your copyright notice {reference} and removed the content you reported, or disabled access to it.\n\nThe person who posted it was told why. If they send a counter-notice, we will forward you a copy.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Agahdariya te ya mafê nivîskariyê: me ew rakir ({reference})',
+      text:
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî û naveroka ku te ragihandibû rakir, an jî gihîştina wê girt.\n\nKesê ku ew şandibû sedem hat agahdarkirin. Heke ew bersiveke dijber bişîne, em ê kopiyekê ji te re bişînin.\n\n— Hevalo',
+    },
+  },
+  /*
+   * Upheld with nothing to take down: the notice was about a profile, or its
+   * link matched nothing we could find, and the decision acted on the account.
+   * Saying "removed" here would be untrue, so this says what happened and asks
+   * for the exact link if the material is still up.
+   */
+  'copyright-upheld': {
+    en: {
+      subject: 'Your copyright notice: our decision ({reference})',
+      text:
+        'We reviewed your copyright notice {reference}, agreed with it, and took action against the account involved.\n\nYour notice did not point to a single post we could take down, so nothing was removed because of it. If the material is still on Hevalo, write to {contact} with the exact link to it and quote your reference.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Agahdariya te ya mafê nivîskariyê: biryara me ({reference})',
+      text:
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî, me ew pejirand û me li dijî hesabê têkildar tedbîr girt.\n\nAgahdariya te ne li ser postekê bû ku em karibin rakin, ji ber vê yekê tiştek ji ber wê nehat rakirin. Heke materyal hîn li Hevalo be, lînka wê ya rast ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
+    },
+  },
+  'copyright-kept': {
+    en: {
+      subject: 'Your copyright notice: our decision ({reference})',
+      text:
+        'We reviewed your copyright notice {reference} and did not remove the content. We could not confirm from the notice that it infringes your rights.\n\nIf you can tell us more, write to {contact} and quote your reference.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Agahdariya te ya mafê nivîskariyê: biryara me ({reference})',
+      text:
+        'Me li agahdariya te ya mafê nivîskariyê {reference} nêrî û naverok ranekir. Me ji agahdariyê nekarî piştrast bikin ku ew mafên te binpê dike.\n\nHeke tu dikarî bêtir bibêjî, ji {contact} re binivîse û referansa xwe binivîse.\n\n— Hevalo',
+    },
+  },
+  'copyright-counter-notice': {
+    en: {
+      subject: 'A counter-notice to your copyright notice ({reference})',
+      text:
+        'The person who posted the content you reported in {reference} has sent a counter-notice. They say it was removed by mistake or misidentified. Their counter-notice, as they sent it:\n\nName: {name}\nAddress: {address}\nPhone: {phone}\nEmail: {email}\n\nStatement:\n{statement}\n\nThey state under penalty of perjury that they believe in good faith the content was removed by mistake or misidentification, they consent to the jurisdiction of the courts named by 17 U.S.C. §512(g)(3)(D), and they will accept service of process from you. Signed: {signature}\n\nIf you do not tell us at {contact}, before {restoreDate}, that you have filed a court action to stop the infringement, we may put the content back.\n\n— Hevalo',
+    },
+    ku: {
+      subject: 'Bersiveke dijber ji agahdariya te ya mafê nivîskariyê re ({reference})',
+      text:
+        'Kesê ku naveroka di {reference} de şandibû bersiveke dijber şand. Ew dibêje ku ew bi şaşî hat rakirin an jî şaş hat naskirin. Bersiva wî/wê, wek ku hatiye şandin:\n\nNav: {name}\nNavnîşan: {address}\nTelefon: {phone}\nE-name: {email}\n\nDaxuyanî:\n{statement}\n\nEw di bin cezaya derewê de dibêje ku bi baweriya baş naverok bi şaşî hat rakirin, ku ew dadgehên ku 17 U.S.C. §512(g)(3)(D) bi nav dike qebûl dike, û ku ew ê belgeyên dadgehê ji te qebûl bike. Îmze: {signature}\n\nHeke tu berî {restoreDate} li {contact} ji me re nebêjî ku te dozek vekiriye, dibe ku em naverokê vegerînin.\n\n— Hevalo',
     },
   },
   'deletion-notice': {

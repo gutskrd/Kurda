@@ -434,6 +434,13 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     description:
       'The rules for using Hevalo, in plain words: your account, how to treat other people, what you post, and how Zêr and gems work.',
   },
+  /* where a rights holder with no account sends a copyright notice (contract-3 §C) */
+  {
+    path: '/copyright',
+    title: 'Copyright · Hevalo',
+    description:
+      'Tell Hevalo about a post that copies your work — no account needed — and what to do if your own post was taken down.',
+  },
 ];
 
 const STATIC_PATHS = STATIC_PAGES.map((p) => p.path);

@@ -4,6 +4,7 @@
  * mobile/src/auth/AuthContext.tsx) so the web app speaks the same protocol —
  * no new/duplicated backend logic.
  */
+import type { FeedImage } from '@kurda/shared';
 
 import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
 
@@ -247,6 +248,12 @@ export interface FeedItem {
   title: string | null;
   excerpt: string | null;
   imageUrl: string | null;
+  /** the first picture's description; null when nobody wrote one */
+  imageAlt?: string | null;
+  /** every picture, in order (at most four); absent from an API older than pictures on posts */
+  images?: FeedImage[];
+  /** marked as a meme, for the Memes filter */
+  meme?: boolean;
   href: string;
   viewCount: number;
   commentCount: number;

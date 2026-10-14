@@ -96,6 +96,7 @@ import { AiModerationService } from './moderation/ai-service.js';
 import { ImageModerationService } from './moderation/image-moderation-service.js';
 import { registerAiModerationRoutes, registerImageModerationRoutes } from './moderation/ai-routes.js';
 import { registerModeration, type ModerationOptions } from './moderation/wire.js';
+import { registerCopyright, type CopyrightWireOptions } from './copyright/wire.js';
 import { setModerationKey } from './moderation/pseudonym.js';
 import { BotDetectionService } from './antibot/service.js';
 import { registerAntibotRoutes } from './antibot/routes.js';
@@ -190,6 +191,8 @@ export interface BuildAppOptions {
   ferheng?: FerhengSource;
   /** Test seams for moderation: the moderator count and the urgent-report mailer. */
   moderation?: ModerationOptions;
+  /** Test seam for copyright notices: where their emails go. */
+  copyright?: CopyrightWireOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -401,6 +404,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // reports, cases, sanctions and appeals: one report service behind every
     // report button, old and new
     const moderationKit = registerModeration(app, config, options.moderation);
+    // copyright notices from the public /copyright page land in the same queue (contract-3 §C)
+    registerCopyright(app, config, options.copyright);
     registerSocialRoutes(app, new SocialService(app.db, friends), { reports: moderationKit.reports });
     registerActivityRoutes(app, activity);
     // one wall for stories, poems and pictures — public, like the pages it replaces

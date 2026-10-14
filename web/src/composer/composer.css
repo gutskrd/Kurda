@@ -1,0 +1,603 @@
+/*
+ * The composer: one box for words and pictures.
+ *
+ * A centred glass panel on a wide screen, the same panel the rest of the app's
+ * dialogs use; on a phone it is the whole screen, with Cancel and Post in a
+ * header at the top so the keyboard never covers them. Every control is at
+ * least 44px to the touch, and every field is 16px or larger so iOS Safari
+ * does not zoom the page when one is focused.
+ */
+.cmp-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 110;
+  display: grid;
+  place-items: start center;
+  padding: 8vh 24px 24px;
+  background: rgba(4, 6, 10, 0.6);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  animation: fade 0.15s ease;
+}
+.cmp-panel {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 600px;
+  max-height: calc(100dvh - 8vh - 24px);
+  border-radius: var(--r-xl);
+  border: 1px solid var(--border-strong);
+  background: rgba(14, 16, 22, 0.86);
+  -webkit-backdrop-filter: blur(30px) saturate(1.3);
+  backdrop-filter: blur(30px) saturate(1.3);
+  box-shadow: var(--glass-rim), var(--shadow-lg);
+  outline: none;
+  overflow: hidden;
+}
+@media (max-width: 640px) {
+  .cmp-overlay {
+    padding: 0;
+    place-items: stretch;
+  }
+  .cmp-panel {
+    max-width: none;
+    max-height: none;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+    background: #0e1016;
+  }
+}
+
+/* ---- Cancel · title · Post ---------------------------------------------- */
+.cmp-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+.cmp-title {
+  flex: 1;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 600;
+  text-align: center;
+}
+.cmp-cancel {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
+  color: var(--ink-2);
+  font: inherit;
+  cursor: pointer;
+}
+.cmp-cancel:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+}
+.cmp-post {
+  min-height: 40px;
+  min-width: 76px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cmp-post:hover:not(:disabled) {
+  background: var(--primary-hover);
+}
+.cmp-post:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+.cmp-cancel:focus-visible,
+.cmp-post:focus-visible,
+.cmp-tool:focus-visible,
+.cmp-chip:focus-visible,
+.cmp-tile button:focus-visible,
+.cmp-draft:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* ---- the writing ---------------------------------------------------------- */
+.cmp-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 14px 16px 6px;
+}
+.cmp-write {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.cmp-write > :first-child {
+  flex: none;
+  margin-top: 4px;
+}
+.cmp-body {
+  flex: 1;
+  min-width: 0;
+  min-height: 96px;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1.15rem;
+  line-height: 1.5;
+  resize: none;
+  overflow: hidden;
+}
+.cmp-body::placeholder {
+  color: var(--ink-4);
+}
+.cmp-body:focus {
+  outline: none;
+}
+.cmp-field {
+  position: relative;
+  margin-bottom: 12px;
+}
+.cmp-label {
+  display: block;
+  margin-bottom: 6px;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+/* 16px at least: iOS Safari zooms into anything smaller */
+.cmp-input {
+  font-size: 1rem;
+}
+.cmp-title-input {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+}
+.cmp-alt {
+  height: auto;
+  min-height: 64px;
+  padding: 10px 14px;
+  line-height: 1.45;
+  resize: vertical;
+}
+.cmp-hint {
+  margin: 6px 0 0;
+  color: var(--ink-4);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+/* its own thought, not the end of the description's hint */
+.cmp-hint.cmp-own-posted {
+  margin-top: 14px;
+}
+.cmp-own {
+  margin: 14px 0 6px;
+}
+.cmp-note,
+.cmp-banner {
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-3);
+  font-size: 0.86rem;
+}
+.cmp-banner {
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.cmp-count {
+  color: var(--ink-4);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+}
+.cmp-field .cmp-count {
+  position: absolute;
+  top: 0;
+  inset-inline-end: 0;
+}
+.cmp-over {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+/* a çîrok or a helbest: two chips that are radios */
+.cmp-kind {
+  display: flex;
+  gap: 6px;
+  margin: 8px 0 0;
+  padding: 0;
+  border: 0;
+}
+.cmp-kind-option {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  color: var(--ink-3);
+  font-size: 0.86rem;
+  cursor: pointer;
+}
+.cmp-kind-option input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.cmp-kind-option.is-on {
+  border-color: rgba(240, 194, 74, 0.45);
+  background: var(--gold-soft);
+  color: var(--gold-ink);
+}
+.cmp-kind-option:has(input:focus-visible) {
+  box-shadow: 0 0 0 3px var(--focus);
+}
+
+/* ---- the pictures --------------------------------------------------------- */
+.cmp-tiles {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 10px 0 0;
+  margin-inline-start: 52px;
+  padding: 0;
+  list-style: none;
+}
+.cmp-tiles-1 {
+  grid-template-columns: 1fr;
+}
+.cmp-tile {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+}
+.cmp-tiles-1 .cmp-tile {
+  aspect-ratio: 16 / 10;
+}
+.cmp-tile.is-open {
+  border-color: var(--primary);
+}
+.cmp-tile img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.cmp-tile-empty {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+.cmp-tile-remove,
+.cmp-tile-alt {
+  position: absolute;
+  min-height: 36px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--r-pill);
+  background: rgba(8, 10, 14, 0.72);
+  color: #fff;
+  font: inherit;
+  cursor: pointer;
+}
+/* 36px drawn, 44px to the touch: the hit area reaches past the chip */
+.cmp-tile-remove::after,
+.cmp-tile-alt::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.cmp-tile-remove {
+  top: 6px;
+  inset-inline-end: 6px;
+  width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.cmp-tile-alt {
+  bottom: 6px;
+  inset-inline-start: 6px;
+  padding: 0 12px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+.cmp-tile-alt.is-done {
+  background: rgba(31, 66, 40, 0.85);
+  border-color: rgba(134, 226, 164, 0.5);
+}
+.cmp-tile-progress {
+  position: absolute;
+  inset-inline: 10px;
+  bottom: 50px;
+  height: 4px;
+  border-radius: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  overflow: hidden;
+}
+.cmp-tile-progress > span {
+  display: block;
+  height: 100%;
+  background: #fff;
+  transition: width 0.2s linear;
+}
+.cmp-tile.is-failed img {
+  opacity: 0.35;
+}
+.cmp-tile-failed {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 8px;
+  color: var(--danger);
+  font-size: 0.82rem;
+  text-align: center;
+}
+
+.cmp-details {
+  margin: 10px 0 0;
+  margin-inline-start: 52px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.04);
+}
+.cmp-details-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* a switch is a checkbox that looks like one */
+.cmp-switch-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  margin-top: 8px;
+}
+.cmp-meme {
+  margin-inline-start: 52px;
+}
+.cmp-switch {
+  appearance: none;
+  position: relative;
+  flex: none;
+  width: 42px;
+  height: 24px;
+  margin: 0;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.cmp-switch::before {
+  content: '';
+  position: absolute;
+  top: 3px;
+  inset-inline-start: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  transition: transform 0.15s ease;
+}
+.cmp-switch:checked {
+  background: var(--success);
+}
+.cmp-switch:checked::before {
+  transform: translateX(18px);
+}
+[dir='rtl'] .cmp-switch:checked::before {
+  transform: translateX(-18px);
+}
+.cmp-switch:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--focus);
+}
+.cmp-switch:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+.cmp-switch-label {
+  color: var(--ink-2);
+  font-size: 0.95rem;
+  cursor: pointer;
+}
+
+.cmp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-pill);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.9rem;
+  cursor: pointer;
+}
+.cmp-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+.cmp-chip-strong {
+  border-color: transparent;
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-weight: 600;
+}
+.cmp-chip-strong:hover {
+  background: var(--primary-hover);
+}
+.cmp-chip-danger {
+  border-color: rgba(255, 156, 144, 0.5);
+  color: var(--danger);
+}
+.cmp-tile-failed .cmp-chip {
+  min-height: 36px;
+  padding: 0 12px;
+  color: var(--ink);
+  /* "Try again" on one line, even where the words are long (Soranî) */
+  white-space: nowrap;
+}
+/* a long reason would push Try again out of a small tile: three lines show,
+   screen readers get all of it, and the toolbar says what to do */
+.cmp-tile-why {
+  /* clear of the remove button in the top corner at the inline end (the left in
+     RTL); Try again, below it, has the tile's whole width */
+  padding-inline-end: 38px;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  overflow: hidden;
+  line-height: 1.3;
+}
+
+/* ---- the toolbar ---------------------------------------------------------- */
+.cmp-foot {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 10px;
+  padding-bottom: max(6px, env(safe-area-inset-bottom));
+  border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+.cmp-tools {
+  display: flex;
+  gap: 2px;
+}
+.cmp-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--gold-ink);
+  cursor: pointer;
+}
+.cmp-tool:hover:not(:disabled) {
+  background: var(--gold-soft);
+}
+.cmp-tool.is-on {
+  background: var(--gold-soft);
+}
+.cmp-tool:disabled {
+  color: var(--ink-4);
+  cursor: default;
+}
+.cmp-why-wrap {
+  flex: 1;
+  min-width: 0;
+}
+.cmp-why {
+  margin: 0;
+  color: var(--ink-4);
+  font-size: 0.8rem;
+  line-height: 1.3;
+}
+.cmp-why-error {
+  color: var(--danger);
+}
+
+/* ---- leaving, and old drafts -------------------------------------------- */
+.cmp-confirm {
+  padding: 28px 20px 24px;
+  text-align: center;
+}
+.cmp-confirm-q {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+.cmp-confirm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 18px;
+}
+.cmp-draft-list {
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.cmp-draft {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.cmp-draft:hover {
+  border-color: var(--border-strong);
+}
+.cmp-draft-name {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.cmp-draft-meta {
+  color: var(--ink-4);
+  font-size: 0.8rem;
+}
+
+@media (max-width: 640px) {
+  .cmp-tiles,
+  .cmp-details,
+  .cmp-meme {
+    margin-inline-start: 0;
+  }
+  .cmp-write > :first-child {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cmp-overlay {
+    animation: none;
+  }
+  .cmp-switch,
+  .cmp-switch::before,
+  .cmp-tile-progress > span {
+    transition: none;
+  }
+}

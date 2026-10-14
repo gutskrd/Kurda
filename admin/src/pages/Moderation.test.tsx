@@ -377,14 +377,87 @@ describe('a case', () => {
     expect(await screen.findByText(/Hidden, preserved and banned/)).toBeInTheDocument();
   });
 
-  it('shows a copyright notice that came with the case, whatever its fields', async () => {
-    const d = { ...caseDetail({ case: { category: 'copyright' as never } }), notice: { claimantName: 'Rojda Ahmed', work: 'Stranên min', goodFaith: true } };
-    show(at, detailRoute(d as CaseDetail));
-    expect(await screen.findByRole('heading', { name: 'Copyright notice' })).toBeInTheDocument();
-    expect(screen.getByText('Claimant name')).toBeInTheDocument();
-    expect(screen.getByText('Stranên min')).toBeInTheDocument();
-    expect(screen.getByText('Good faith').nextElementSibling).toHaveTextContent('Yes');
+  const copyrightCase = (): CaseDetail =>
+    caseDetail({
+      case: { category: 'copyright', source: 'copyright', targetType: 'library_post', sourceRef: 'library_post:p-1' },
+      copyright: {
+        notices: [
+          {
+            id: 'n-1',
+            reference: 'CN-1A2B3C4D',
+            status: 'countered',
+            receivedAt: '2026-10-01T09:00:00.000Z',
+            notifier: {
+              name: 'Rojda Ahmed',
+              email: 'rojda@example.test',
+              address: 'Hoofdstraat 1, Utrecht',
+              phone: null,
+              role: 'authorised',
+              rightsHolder: 'Weşanên Avesta',
+              signature: 'Rojda Ahmed',
+              locale: 'en',
+            },
+            work: 'Stranên min',
+            workUrl: 'https://example.test/stranen',
+            contentUrl: 'https://hevalo.app/app/library/1a2b3c4d-0000-4000-8000-000000000000',
+            target: { type: 'library_post', id: '1a2b3c4d-0000-4000-8000-000000000000' },
+            targetFound: true,
+            explanation: 'The poem is copied word for word.',
+            goodFaith: true,
+            accurate: true,
+            receiptSentAt: '2026-10-01T09:00:05.000Z',
+            outcomeSentAt: null,
+            counterNotice: {
+              id: 'cn-1',
+              userId: SUBJECT_ID,
+              name: 'Baran Kaya',
+              address: 'Kerkstraat 2, Gent',
+              phone: null,
+              email: 'baran@example.test',
+              statement: 'I wrote this poem myself in 2019.',
+              goodFaith: true,
+              consent: true,
+              signature: 'Baran Kaya',
+              createdAt: '2026-10-03T10:00:00.000Z',
+              restoreNotBefore: '2026-10-17T10:00:00.000Z',
+              forwardedAt: '2026-10-03T10:00:02.000Z',
+            },
+          },
+        ],
+        strikes: { count: 3, windowDays: 365, threshold: 3, terminationSuggested: true, caseIds: [CASE_ID, 'c-old'] },
+      },
+    });
+
+  it('shows the copyright notice behind the case, every field, the counter-notice and the strikes', async () => {
+    show(at, detailRoute(copyrightCase()));
+    const section = (await screen.findByRole('heading', { name: 'Copyright notice' })).closest('section')!;
     expect(screen.getByRole('heading', { name: 'Copyright' })).toBeInTheDocument();
+    expect(screen.getByText('Copyright notice', { selector: '.case-facts span' })).toBeInTheDocument();
+    const facts = within(section);
+    expect(facts.getByText('CN-1A2B3C4D')).toBeInTheDocument();
+    expect(facts.getByText('Taken down, counter-notice sent')).toBeInTheDocument();
+    expect(facts.getByText('Acting for the rights holder')).toBeInTheDocument();
+    expect(facts.getByText('Weşanên Avesta')).toBeInTheDocument();
+    expect(facts.getByText('Stranên min')).toBeInTheDocument();
+    expect(facts.getByText('Written post 1a2b3c4d')).toBeInTheDocument();
+    expect(facts.getByText('Accurate, under penalty of perjury').nextElementSibling).toHaveTextContent('Yes');
+    expect(facts.getByRole('heading', { name: 'Counter-notice from the uploader' })).toBeInTheDocument();
+    expect(facts.getByText('I wrote this poem myself in 2019.')).toBeInTheDocument();
+    expect(facts.getByText('Repeat infringer')).toBeInTheDocument();
+    expect(facts.getByText(/Strikes: 3 of 3 in 365 days/)).toBeInTheDocument();
+  });
+
+  it('asks for the takedown before a copyright notice about a post is upheld', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(at, detailRoute(copyrightCase()), previewRoute(), on('POST', /\/claim$/, json({ claimed: true })));
+    await user.click(await screen.findByRole('button', { name: 'Sanction this person' }));
+    const why = 'A copyright notice about a post is upheld by taking the post down: remove the content, or decide that no rule was broken.';
+    expect(await screen.findByText(why)).toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 50));
+    expect(decisions(calls)).toHaveLength(0);
+    await user.click(screen.getByLabelText('Remove the content'));
+    await waitFor(() => expect(screen.queryByText(why)).not.toBeInTheDocument());
+    await waitFor(() => expect(decisions(calls).at(-1)!.body).toMatchObject({ preview: true, removeContent: true }), { timeout: 2000 });
   });
 
   it('keeps notes, and goes to the next case with j', async () => {

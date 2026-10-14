@@ -167,6 +167,9 @@
 .facts dt { color: var(--text-dim); font-size: 13px; }
 .facts dd { margin: 0; min-width: 0; overflow-wrap: anywhere; }
 @media (max-width: 420px) { .facts > div, .facts-row { grid-template-columns: 1fr; } }
+/* a copyright notice on a case: its reference and where it stands, then every field (CaseEvidence.tsx) */
+.copyright-notice > .drawer-sub:first-child { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 4px; }
+.copyright-notice + .copyright-notice { margin-top: 20px; padding-top: 4px; border-top: 1px solid var(--separator); }
 .code-block {
   margin: 0; padding: 10px 12px; border-radius: var(--radius-sm); background: var(--control);
   font-size: 12.5px; line-height: 1.5; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 50vh; overflow-y: auto;

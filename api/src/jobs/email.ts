@@ -15,6 +15,11 @@ const payloadSchema = z.object({
     'oauth-no-password',
     'deletion-notice',
     'moderation-urgent',
+    'copyright-received',
+    'copyright-removed',
+    'copyright-upheld',
+    'copyright-kept',
+    'copyright-counter-notice',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; omitted → English (KUR-098). */

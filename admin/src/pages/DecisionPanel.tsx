@@ -18,6 +18,7 @@ import {
   decisionRequest,
   defaultStatement,
   draftProblems,
+  needsTakedown,
   durationName,
   hasDuration,
   isOpenStatus,
@@ -76,14 +77,15 @@ export function DecisionPanel({
   const open = isOpenStatus(c.status);
   const decidable = open && c.status !== 'needs_second_approval';
   const actioned = draft.outcome === 'actioned';
-  const problems = draftProblems(draft, names);
+  const canRemove = contentTarget(c.targetType, c.source);
+  // a copyright notice about a post still up is upheld only by taking it down (CONTENT_REMOVAL_REQUIRED)
+  const problems = draftProblems(draft, names, { takedown: needsTakedown(c, canRemove) });
   const preview = usePreview(c.id, draft, decidable && !locked && problems.length === 0);
   const reporters = useMemo(() => {
     const seen = new Map<string, string>();
     for (const r of detail.reports) if (r.reporter && !seen.has(r.reporter.id)) seen.set(r.reporter.id, r.reporter.username);
     return [...seen];
   }, [detail.reports]);
-  const canRemove = contentTarget(c.targetType, c.source);
 
   async function act(label: string, run: () => Promise<void>): Promise<void> {
     setBusy(label);
