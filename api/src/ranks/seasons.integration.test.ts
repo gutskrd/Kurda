@@ -27,6 +27,7 @@ describe.skipIf(!DATABASE_URL)('rank seasons (integration)', () => {
   const current = seasonOf(new Date()).id;
   const last = previousSeasonId(current);
   const before = previousSeasonId(last);
+  const oldSeasons: string[] = [];
 
   const user = async (opts: Parameters<typeof rankedUser>[2] = {}) => {
     const id = await rankedUser(pool, `rs_${++n}_${suffix}`, opts);
@@ -63,7 +64,7 @@ describe.skipIf(!DATABASE_URL)('rank seasons (integration)', () => {
 
   afterAll(async () => {
     await deleteUsers(pool, userIds);
-    await pool.query(`DELETE FROM rank_seasons WHERE id = ANY($1)`, [[last, before]]);
+    await pool.query(`DELETE FROM rank_seasons WHERE id = ANY($1)`, [[last, before, ...oldSeasons]]);
     await pool.end();
   });
 
@@ -185,5 +186,28 @@ describe.skipIf(!DATABASE_URL)('rank seasons (integration)', () => {
     const preview = await seasons.pendingRewards(s);
     expect(preview.find((p) => p.userId === a)).toMatchObject({ tier: 'zozan', gems: 35, frameSku: 'frame_rank_zozan' });
     await pool.query(`DELETE FROM rank_season_results WHERE season_id = $1`, [s]);
+  });
+
+  it('previews an open season as if it closed now, and lists what a closed one handed out', async () => {
+    const climber = await user(); // eleven games this season, Çiya at the peak
+    const fewGames = await user(); // nine: not yet
+    await standing(climber, current, { games: 11, peak: 950 });
+    await standing(fewGames, current, { games: 9, peak: 950 });
+    const open = await seasons.previewRewards(current);
+    // Stêrk is judged only at the close, so a live rating previews by its points tier, with no title
+    expect(open.find((p) => p.userId === climber)).toMatchObject({ tier: 'ciya', gems: 50, frameSku: 'frame_rank_ciya', title: null });
+    expect(open.find((p) => p.userId === fewGames)).toBeUndefined();
+
+    // an older season, closed here: what it handed out, with when
+    const old = previousSeasonId(previousSeasonId(before));
+    oldSeasons.push(old);
+    const winner = await user();
+    await standing(winner, old, { games: 10, peak: 320 });
+    expect((await seasons.previewRewards(old)).find((p) => p.userId === winner)).toMatchObject({ tier: 'gir', gems: 20 });
+    await seasons.closeSeason(old, current);
+    expect((await seasons.previewRewards(old)).find((p) => p.userId === winner)).toBeUndefined();
+    const given = await seasons.givenRewards(old);
+    expect(given.find((g) => g.userId === winner)).toMatchObject({ tier: 'gir', gems: 20, frameSku: 'frame_rank_gir', game: 'wordle-battle' });
+    expect(given.find((g) => g.userId === winner)!.grantedAt).toEqual(expect.any(String));
   });
 });

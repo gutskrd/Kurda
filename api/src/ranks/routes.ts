@@ -106,6 +106,28 @@ export function registerRankRoutes(
     pairs: await admin.suspiciousPairs(),
   }));
 
+  /** The rated games a pair played together in a game: what a suspicious pair opens, to void from. */
+  app.get(
+    '/admin/ranks/pairs/:game/:a/:b',
+    { schema: { params: z.object({ game, a: z.uuid(), b: z.uuid() }) }, preHandler: requireRoles('admin') },
+    async (req) => {
+      const p = req.params as { game: RankedGame; a: string; b: string };
+      return { games: await admin.pairGames(p.game, p.a, p.b) };
+    },
+  );
+
+  /** One player's rank in every game and their latest rated games (`AdminPlayerRanks`): the person page's Ranks tab. */
+  app.get(
+    '/admin/ranks/players/:userId',
+    { schema: { params: z.object({ userId: z.uuid() }) }, preHandler: requireRoles('admin') },
+    async (req) => {
+      const { userId } = req.params as { userId: string };
+      const games = await admin.playerGames(userId);
+      if (!games) throw notFound();
+      return { ranks: (await ranks.myRanks(userId)).ranks, games };
+    },
+  );
+
   /** Void one game's rating effect: the game stops counting and everyone it touched is replayed from history. */
   app.post(
     '/admin/ranks/games/:game/:ref/void',
@@ -131,11 +153,15 @@ export function registerRankRoutes(
   /** The seasons: the current one, and each closed one with what it handed out. */
   app.get('/admin/seasons', { preHandler: requireRoles('admin') }, async () => seasons.adminList());
 
-  /** Who a season's close would reward, and with what — before it is handed out. */
+  /**
+   * A season's rewards (`AdminSeasonRewards`): who its close would reward now,
+   * and with what — an open season's players included, as if it closed now —
+   * and what it has handed out already.
+   */
   app.get('/admin/seasons/:id/rewards', { schema: { params: seasonParam }, preHandler: requireRoles('admin') }, async (req) => {
     const { id } = req.params as { id: string };
     if (!isSeasonId(id)) throw new AppError('BAD_SEASON', 400, 'not a season id');
-    return { rewards: await seasons.pendingRewards(id) };
+    return { rewards: await seasons.previewRewards(id), given: await seasons.givenRewards(id) };
   });
 
   /** Close the seasons that have ended now, rather than at the next run (idempotent). */

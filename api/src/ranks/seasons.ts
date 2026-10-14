@@ -14,6 +14,7 @@ import {
   seasonOf,
   sterkTitle,
   tierIndex,
+  tierOf,
   type RankTier,
   type RankedGame,
   type SeasonEmblem,
@@ -39,6 +40,11 @@ export interface PendingReward {
   gems: number;
   frameSku: string;
   title: string | null;
+}
+
+/** Best tier first, then by name: how the admin reads a season's rewards. */
+function byTierThenName(a: { tier: RankTier; username: string }, b: { tier: RankTier; username: string }): number {
+  return tierIndex(b.tier) - tierIndex(a.tier) || a.username.localeCompare(b.username);
 }
 
 /**
@@ -219,6 +225,73 @@ export class RankSeasons {
       });
     }
     return [...best.values()];
+  }
+
+  /**
+   * The admin's preview of a season's rewards: everyone `pendingRewards` would
+   * reward, plus the ratings still playing in it (an open season, or one not
+   * closed yet) — "if it closed now". A live rating's peak tier is its points
+   * tier; Stêrk is judged only at the close, so a preview never shows it for them.
+   */
+  async previewRewards(seasonId: string): Promise<PendingReward[]> {
+    const recorded = await this.pendingRewards(seasonId);
+    const live = await this.pool.query<{ user_id: string; username: string; game: RankedGame; peak_points: number }>(
+      `SELECT r.user_id, u.username, r.game, r.peak_points
+         FROM game_ratings r JOIN users u ON u.id = r.user_id
+        WHERE r.season_id = $1 AND r.season_games >= $2 AND r.placement_done
+          AND u.deleted_at IS NULL
+          AND NOT (u.banned_at IS NOT NULL AND (u.banned_until IS NULL OR u.banned_until > now()))
+          AND NOT EXISTS (SELECT 1 FROM rank_season_rewards w WHERE w.user_id = r.user_id AND w.season_id = r.season_id)
+        ORDER BY r.user_id, r.game`,
+      [seasonId, SEASON_REWARD_MIN_GAMES],
+    );
+    const best = new Map(recorded.map((p) => [p.userId, p]));
+    for (const r of live.rows) {
+      const tier: RankTier = tierOf(r.peak_points);
+      const had = best.get(r.user_id);
+      if (had && tierIndex(had.tier) >= tierIndex(tier)) continue;
+      best.set(r.user_id, {
+        userId: r.user_id,
+        username: r.username,
+        game: r.game,
+        tier,
+        gems: SEASON_REWARD_GEMS[tier],
+        frameSku: seasonFrameSku(tier),
+        title: null,
+      });
+    }
+    return [...best.values()].sort(byTierThenName);
+  }
+
+  /** What a season handed out, best tier first. */
+  async givenRewards(seasonId: string, limit = 500): Promise<Array<Omit<PendingReward, 'frameSku'> & { frameSku: string | null; grantedAt: string }>> {
+    const rows = await this.pool.query<{
+      user_id: string;
+      username: string;
+      best_game: RankedGame;
+      best_tier: RankTier;
+      gems: number;
+      frame_sku: string | null;
+      title: string | null;
+      granted_at: Date;
+    }>(
+      `SELECT w.user_id, u.username, w.best_game, w.best_tier, w.gems, w.frame_sku, w.title, w.granted_at
+         FROM rank_season_rewards w JOIN users u ON u.id = w.user_id
+        WHERE w.season_id = $1 ORDER BY w.granted_at, w.user_id LIMIT $2`,
+      [seasonId, Math.min(Math.max(limit, 1), 2000)],
+    );
+    return rows.rows
+      .map((r) => ({
+        userId: r.user_id,
+        username: r.username,
+        game: r.best_game,
+        tier: r.best_tier,
+        gems: r.gems,
+        frameSku: r.frame_sku,
+        title: r.title,
+        grantedAt: r.granted_at.toISOString(),
+      }))
+      .sort(byTierThenName);
   }
 
   private async reward(seasonId: string): Promise<number> {

@@ -463,6 +463,31 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       expect(other).toBeTruthy();
     });
 
+    it('lists a player’s rated games and a pair’s games together, newest first, voided ones marked', async () => {
+      const a = await user();
+      const b = await user();
+      const c = await user();
+      const g1 = await play([a, b], { winner: a });
+      const g2 = await play([a, c], { winner: c });
+      const g3 = await play([b, a], { winner: b });
+      await admin.voidGame('wordle-battle', g1, a, 'win trading');
+
+      const games = (await admin.playerGames(a))!;
+      expect(games.map((g) => g.gameRef)).toEqual([g3, g2, g1]);
+      expect(games[0]).toMatchObject({ game: 'wordle-battle', players: 2, weight: 1, voided: false, place: 2, left: false });
+      expect(games[2]).toMatchObject({ voided: true, voidReason: 'win trading', place: 1 });
+      expect(games[1]!.pointsAfter).toEqual(expect.any(Number));
+      expect(typeof games[1]!.reason).toBe('string');
+      expect(await admin.playerGames('00000000-0000-4000-8000-000000000000')).toBeNull();
+
+      const pair = await admin.pairGames('wordle-battle', a, b);
+      expect(pair.map((g) => [g.gameRef, g.aPlace, g.bPlace, g.voided])).toEqual([
+        [g3, 2, 1, false],
+        [g1, 1, 2, true],
+      ]);
+      expect(await admin.pairGames('rhyme-match', a, b)).toEqual([]);
+    });
+
     it('resets one player’s rating to the start', async () => {
       const a = await user();
       const b = await user();
