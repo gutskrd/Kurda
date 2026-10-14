@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type RefObject, type SetStateAction } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import type { GiftCard, GiftChatRef } from '@kurda/shared';
+import type { GiftCard, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import type { DmMessage, GroupMessage } from '../lib/types';
 import { GiftIcon } from '../components/icons';
@@ -29,6 +29,12 @@ type ChatMessage = DmMessage | GroupMessage;
  * card is fetched again (`GET /gifts/batches/:id`), since a card is drawn per
  * viewer. A `?gift=<id>` in the address (from the banner or a notification)
  * opens that gift as soon as its bubble is on screen.
+ *
+ * In a group the card the room hears with `group_msg` is nobody's in
+ * particular (no one is "me" on it); a recipient's own card, theirs to open,
+ * comes on their own channel with `gift_received`. The two can arrive in
+ * either order, so the own card is kept by batch and `adopt` puts it on the
+ * room's message when that arrives later.
  */
 export function useChatGifts<M extends ChatMessage>({
   chat,
@@ -48,7 +54,13 @@ export function useChatGifts<M extends ChatMessage>({
   threadRef: RefObject<HTMLElement | null>;
   /** bring the thread to its end once your gift is in it */
   onSentScroll: () => void;
-}): { button: ReactNode; overlays: ReactNode; renderBody: (m: M) => ReactNode | undefined } {
+}): {
+  button: ReactNode;
+  overlays: ReactNode;
+  renderBody: (m: M) => ReactNode | undefined;
+  /** a message arriving live: given your own card for its gift, if one came first */
+  adopt: (m: M) => M;
+} {
   const t = useT();
   const { client, user } = useAuth();
   const [picking, setPicking] = useState(false);
@@ -76,12 +88,39 @@ export function useChatGifts<M extends ChatMessage>({
     );
   }, [setParams]);
 
+  /** your own cards for gifts in this chat, by batch, as `gift_received` brought them */
+  const ownCards = useRef(new Map<string, GiftCard>());
+
   /** Put a fresh card on every message of its batch. */
   const setCard = useCallback(
-    (batchId: string, card: GiftCard) =>
-      setMessages((list) => (list ?? []).map((m) => (m.gift?.batchId === batchId ? { ...m, gift: card } : m)) as M[]),
+    (batchId: string, card: GiftCard) => {
+      if (ownCards.current.has(batchId)) ownCards.current.set(batchId, card);
+      setMessages((list) => (list ?? []).map((m) => (m.gift?.batchId === batchId ? { ...m, gift: card } : m)) as M[]);
+    },
     [setMessages],
   );
+
+  const adopt = useCallback((m: M): M => {
+    const own = m.gift ? ownCards.current.get(m.gift.batchId) : undefined;
+    return own ? { ...m, gift: own } : m;
+  }, []);
+
+  // your own channel: a gift for you, with the card that is yours to open
+  const onReceived = useCallback(
+    (env: RealtimeEventEnvelope) => {
+      const ev = env.event as Partial<Extract<GiftUserEvent, { type: 'gift_received' }>>;
+      if (typeof ev.batchId !== 'string' || !ev.card || !ev.chat) return;
+      const here =
+        ev.chat.kind === 'group'
+          ? chat.kind === 'group' && ev.chat.groupId === chat.groupId
+          : chat.kind === 'dm' && ev.chat.userId === chat.userId;
+      if (!here) return;
+      ownCards.current.set(ev.batchId, ev.card);
+      setCard(ev.batchId, ev.card);
+    },
+    [chat, setCard],
+  );
+  useRealtimeEvent('gift_received', onReceived);
 
   const refetch = useCallback(
     async (batchId: string) => {
@@ -145,9 +184,10 @@ export function useChatGifts<M extends ChatMessage>({
       setPicking(false);
       if (sent.message) {
         const message = sent.message as M;
+        // the room's copy may have come first; the sender's own card is the one to keep
         setMessages((list) => {
           const now = list ?? [];
-          return now.some((m) => m.id === message.id) ? now : [...now, message];
+          return now.some((m) => m.id === message.id) ? now.map((m) => (m.id === message.id ? message : m)) : [...now, message];
         });
       }
       setFlight({ sent, target: threadRef.current?.getBoundingClientRect() ?? null });
@@ -205,5 +245,5 @@ export function useChatGifts<M extends ChatMessage>({
     </>
   );
 
-  return { button, overlays, renderBody };
+  return { button, overlays, renderBody, adopt };
 }

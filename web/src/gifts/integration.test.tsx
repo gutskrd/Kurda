@@ -204,4 +204,63 @@ describe('gifts in a group thread', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Send a gift' }));
     expect(await screen.findByLabelText('dilan')).toBeInTheDocument();
   });
+
+  const roomMessage = {
+    id: 'm7',
+    senderId: 'u-rojda',
+    username: 'rojda',
+    avatarUrl: null,
+    body: null,
+    kind: 'gift',
+    // the room's copy: nobody is "me" on it
+    gift: card({ recipients: [{ name: 'baran', avatarUrl: null, isMe: false, opened: false }] }),
+    createdAt: new Date().toISOString(),
+  };
+  const received = {
+    room: 'user:me',
+    event: {
+      type: 'gift_received',
+      giftId: 'g7',
+      batchId: 'b1',
+      from: { name: 'rojda', avatarUrl: null },
+      card: card({ myGiftId: 'g7', recipients: [{ name: 'baran', avatarUrl: null, isMe: true, opened: false }] }),
+      chat: { kind: 'group', groupId: 'g1' },
+    },
+  };
+  const opens: string[] = [];
+  const groupFetch = async (url: string): Promise<Response> => {
+    const who = await me(url);
+    if (who) return who;
+    if (url.includes('/gifts/g7/open')) {
+      opens.push(url);
+      return jsonResponse(200, { card: card({ myGiftId: 'g7', myOpened: true }) });
+    }
+    if (url.endsWith('/groups/g1')) return jsonResponse(200, { id: 'g1', name: 'Hevalên Amedê', myRole: 'member', members: [] });
+    if (url.includes('/groups/g1/chat')) return jsonResponse(200, { messages: [] });
+    return jsonResponse(200, {});
+  };
+
+  it('gives a recipient reading the group their own gift to open, when the room hears it first', async () => {
+    const rt = mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', groupFetch);
+    await waitFor(() => {
+      rt.emit({ room: 'group:g1', event: { type: 'group_msg', groupId: 'g1', message: roomMessage } });
+      expect(screen.getByText(/rojda sent a gift/)).toBeInTheDocument();
+    });
+    expect(screen.queryByText('A gift for you')).not.toBeInTheDocument();
+
+    rt.emit(received);
+    expect(await screen.findByText('A gift for you')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Open the gift from rojda' }));
+    await waitFor(() => expect(opens).toHaveLength(1));
+  });
+
+  it('keeps the recipient\'s own card when it comes before the room\'s', async () => {
+    const rt = mount(<GroupThread groupId="g1" />, '/app/messages?group=g1', groupFetch);
+    // wait until the thread is listening (its history has loaded)
+    await waitFor(() => {
+      rt.emit(received);
+      rt.emit({ room: 'group:g1', event: { type: 'group_msg', groupId: 'g1', message: roomMessage } });
+      expect(screen.getByText('A gift for you')).toBeInTheDocument();
+    });
+  });
 });

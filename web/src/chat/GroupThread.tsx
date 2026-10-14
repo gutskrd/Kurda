@@ -143,14 +143,16 @@ export function GroupThread({
     (env: RealtimeEventEnvelope) => {
       const ev = env.event as { groupId?: unknown; message?: GroupMessage };
       if (ev.groupId !== groupId || !ev.message?.id) return;
+      // a gift's card in the room is nobody's; yours may already have come
+      const message = gifts.adopt(ev.message);
       setMessages((m) => {
         const list = m ?? [];
-        if (list.some((x) => x.id === ev.message!.id)) return list;
-        return [...list, ev.message!];
+        if (list.some((x) => x.id === message.id)) return list;
+        return [...list, message];
       });
       void markRead(); // it is on screen, so it counts as read
     },
-    [groupId, markRead],
+    [gifts.adopt, groupId, markRead],
   );
   useRealtimeEvent('group_msg', onGroupMsg);
 
