@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { InsufficientFundsError, WalletService, type Currency } from '../wallet/service.js';
 import type { AdminUserModeration, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
+import { PRIVILEGED_ROLES } from './roles.js';
 import { AppError } from '../plugins/errors.js';
 import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
 import { SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
@@ -13,8 +14,19 @@ export interface UserSearchResult {
   username: string;
   email: string;
   ban: BanState;
+  /** a chat mute in force now (with or without an end) */
+  muted: boolean;
+  /** staff roles show on the list, so a moderator sees who is staff before opening them */
+  roles: string[];
   createdAt: Date;
 }
+
+/**
+ * The list's filters: accounts that cannot sign in now (suspended or banned),
+ * accounts that cannot send messages now, and staff.
+ */
+export const USER_FILTERS = ['restricted', 'muted', 'staff'] as const;
+export type UserFilter = (typeof USER_FILTERS)[number];
 
 /** One page of users, and how many there are in total. */
 export interface UserPage {
@@ -105,10 +117,17 @@ export class UserAdminService {
    * `total` counts the whole match, not the page, and rides along via
    * `count(*) OVER ()` so the heading costs no second query.
    */
-  async search(query = "", limit = USERS_PAGE_SIZE, offset = 0): Promise<UserPage> {
+  async search(query = "", limit = USERS_PAGE_SIZE, offset = 0, filter?: UserFilter): Promise<UserPage> {
     const q = query.trim();
     const params: unknown[] = [];
     let where = 'deleted_at IS NULL';
+
+    if (filter === 'restricted') where += ' AND banned_at IS NOT NULL AND (banned_until IS NULL OR banned_until > now())';
+    else if (filter === 'muted') where += ' AND muted_until > now()';
+    else if (filter === 'staff') {
+      params.push(PRIVILEGED_ROLES);
+      where += ` AND roles && $${params.length}::text[]`;
+    }
 
     // every fragment appended here is a literal; only values go in `params`
     if (q.length > 0) {
@@ -131,10 +150,13 @@ export class UserAdminService {
       email: string;
       banned_at: Date | null;
       banned_until: Date | null;
+      muted: boolean;
+      roles: string[];
       created_at: Date;
       total: number;
     }>(
-      `SELECT id, username, email, banned_at, banned_until, created_at, count(*) OVER ()::int AS total
+      `SELECT id, username, email, banned_at, banned_until, COALESCE(muted_until > now(), false) AS muted, roles, created_at,
+              count(*) OVER ()::int AS total
          FROM users WHERE ${where}
         ORDER BY created_at DESC, id
         LIMIT $${params.length - 1} OFFSET $${params.length}`,
@@ -152,6 +174,8 @@ export class UserAdminService {
         username: r.username,
         email: r.email,
         ban: banState(now, r.banned_at, r.banned_until),
+        muted: r.muted,
+        roles: r.roles,
         createdAt: r.created_at,
       })),
     };

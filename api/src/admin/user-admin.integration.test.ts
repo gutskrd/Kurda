@@ -144,6 +144,43 @@ describe.skipIf(!DATABASE_URL)('user admin (integration)', () => {
     expect((await svc.detail(targetId))!.ban).toBe('active');
   });
 
+  /**
+   * A moderator looking for "who is suspended right now", or which accounts
+   * are staff, used to page through everyone. Each filter narrows the list
+   * (and its count) to what is true now: an ended suspension is not one.
+   */
+  it('filters to who is restricted, muted or staff right now, and says so on each row', async () => {
+    const prefix = `flt${suffix}`.slice(0, 12);
+    const banned = await reg(`${prefix}_ban`, '10.101.0.3');
+    const muted = await reg(`${prefix}_mute`, '10.101.0.4');
+    const staff = await reg(`${prefix}_staff`, '10.101.0.5');
+    const ended = await reg(`${prefix}_ended`, '10.101.0.6');
+    expect(await svc.tempBan(adminId, banned, 'spam', new Date(Date.now() + 24 * 3_600_000))).toEqual({ ok: true });
+    expect(await svc.mute(adminId, muted, 'insults', new Date(Date.now() + 24 * 3_600_000))).toEqual({ ok: true });
+    await pool.query(`UPDATE users SET roles = array_append(roles, 'moderator') WHERE id = $1`, [staff]);
+    await pool.query(`UPDATE users SET banned_at = now() - interval '2 days', banned_until = now() - interval '1 day' WHERE id = $1`, [ended]);
+
+    const ids = async (filter?: 'restricted' | 'muted' | 'staff'): Promise<string[]> => (await svc.search(prefix, 100, 0, filter)).users.map((u) => u.id);
+    expect(await ids('restricted')).toEqual([banned]);
+    expect(await ids('muted')).toEqual([muted]);
+    expect(await ids('staff')).toEqual([staff]);
+    expect((await svc.search(prefix, 100, 0, 'restricted')).total).toBe(1);
+    expect((await ids()).sort()).toEqual([banned, muted, staff, ended].sort());
+
+    const rows = (await svc.search(prefix)).users;
+    expect(rows.find((u) => u.id === muted)).toMatchObject({ muted: true, ban: 'active' });
+    expect(rows.find((u) => u.id === staff)!.roles).toContain('moderator');
+    expect(rows.find((u) => u.id === ended)).toMatchObject({ muted: false, ban: 'active' });
+
+    // and the route refuses a filter it does not know, before anything else
+    const token = (
+      await app.inject({ method: 'POST', url: '/auth/login', payload: { email: `adminc_${suffix}_${suffix}@it.kurda.app`, password: 'a-strong-password1' } })
+    ).json().tokens?.accessToken as string | undefined;
+    expect(token).toBeTruthy();
+    const bad = await app.inject({ method: 'GET', url: '/admin/users?filter=everyone', headers: { authorization: `Bearer ${token}` } });
+    expect(bad.statusCode).toBe(400);
+  });
+
   it('refuses actions on an unknown user', async () => {
     expect(await svc.warn(adminId, '00000000-0000-0000-0000-000000000000', 'x')).toEqual({ ok: false, code: 'NOT_FOUND' });
     expect(await svc.detail('00000000-0000-0000-0000-000000000000')).toBeNull();
