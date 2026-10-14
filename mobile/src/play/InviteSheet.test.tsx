@@ -108,6 +108,8 @@ describe('InviteSheet', () => {
     expect(screen.queryByLabelText('Search friends')).toBeNull();
     expect(screen.queryByRole('radio', { name: 'Azad, online now' })).toBeNull();
 
+    // the button waits for the stories to arrive (a Stories game needs one); under a loaded run they can come last
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' }));
     const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { chat: unknown; invite?: string[]; game: string };

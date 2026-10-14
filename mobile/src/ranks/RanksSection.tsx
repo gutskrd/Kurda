@@ -56,6 +56,8 @@ export function RanksSection(): React.JSX.Element | null {
           onPress={() => navigation.navigate('Season')}
           accessibilityRole="button"
           accessibilityLabel={`${t('season.title')}: ${season}`}
+          // a slim pill, a fingertip tall to touch
+          hitSlop={{ top: 6, bottom: 6 }}
           style={({ pressed }) => [styles.season, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
         >
           <Icon name="calendar" size={14} color={colors.textSecondary} />

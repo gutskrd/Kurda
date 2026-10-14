@@ -69,30 +69,32 @@ export function Celebration({
   const words = useRef(new Animated.Value(0)).current;
   const turn = useRef(new Animated.Value(0)).current;
 
+  // played as it opens — and again if the system's Reduce Motion answer comes in late (it is asked
+  // asynchronously): then everything is simply at rest, with no flecks, no rays and no tick
   useEffect(() => {
+    if (reduce) {
+      rise.setValue(1);
+      words.setValue(1);
+      return;
+    }
     const run = Animated.parallel([
-      Animated.timing(rise, {
-        toValue: 1,
-        duration: plan.emblemMs,
-        easing: reduce ? Easing.linear : Easing.out(Easing.back(1.4)),
-        useNativeDriver: true,
-      }),
-      Animated.timing(words, { toValue: 1, duration: reduce ? 200 : 420, delay: plan.textDelayMs, useNativeDriver: true }),
+      Animated.timing(rise, { toValue: 1, duration: plan.emblemMs, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
+      Animated.timing(words, { toValue: 1, duration: 420, delay: plan.textDelayMs, useNativeDriver: true }),
     ]);
     run.start();
     const tick = plan.hapticAtMs === null ? null : setTimeout(() => Vibration.vibrate(HAPTIC_MS), plan.hapticAtMs);
-    AccessibilityInfo.announceForAccessibility?.(announce);
-    let spin: Animated.CompositeAnimation | null = null;
-    if (plan.rays) {
-      spin = Animated.loop(Animated.timing(turn, { toValue: 1, duration: 24000, easing: Easing.linear, useNativeDriver: true }));
-      spin.start();
-    }
+    const spin = plan.rays ? Animated.loop(Animated.timing(turn, { toValue: 1, duration: 24000, easing: Easing.linear, useNativeDriver: true })) : null;
+    spin?.start();
     return () => {
       run.stop();
       spin?.stop();
       if (tick) clearTimeout(tick);
     };
-    // the moment plays once, as it opens
+  }, [reduce, plan.emblemMs, plan.textDelayMs, plan.hapticAtMs, plan.rays, rise, words, turn]);
+
+  useEffect(() => {
+    AccessibilityInfo.announceForAccessibility?.(announce);
+    // said once, as it opens
   }, []);
 
   const scale = reduce ? 1 : rise.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
@@ -102,7 +104,8 @@ export function Celebration({
   const fall = useMemo(() => (plan.confetti && flecks > 0 ? confettiPlan(flecks, seed, fleckColours.length) : []), [plan.confetti, flecks, seed, fleckColours.length]);
 
   return (
-    <Modal visible transparent animationType={reduce ? 'none' : 'fade'} onRequestClose={onClose} statusBarTranslucent>
+    // a fade either way: under Reduce Motion the moment is that fade and nothing else
+    <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <DarkScheme>
         <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
           <View style={styles.flecks} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
