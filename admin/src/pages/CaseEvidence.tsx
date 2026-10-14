@@ -281,7 +281,7 @@ export function MediaItem({ item, alt, sensitive }: { item: CaseMediaItem; alt: 
 export function NoticePanel({ notice }: { notice: Record<string, unknown> }): React.JSX.Element {
   const fields = noticeFields(notice);
   return (
-    <Section title="Copyright notice" description="Filed through the public notice form. The person who sent it is told the outcome; the uploader gets the statement of reasons.">
+    <Section title="Copyright notice" description="What the person claiming the rights sent us, field by field.">
       {fields.length === 0 ? (
         <p className="section-text">The notice has no details.</p>
       ) : (

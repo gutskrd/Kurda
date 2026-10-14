@@ -251,8 +251,9 @@
 .check-text { display: grid; gap: 2px; }
 .check-text label { font-weight: 500; color: var(--text); cursor: pointer; }
 @media (pointer: coarse), (max-width: 760px) {
-  .check { min-height: var(--target); align-items: center; }
-  .check input { width: 22px; height: 22px; }
+  /* the box stays beside its label's first line, even when a long hint follows it */
+  .check { min-height: var(--target); }
+  .check input { width: 22px; height: 22px; margin-top: 0; flex: none; }
 }
 
 /* ---- icon buttons and the "More" menu -------------------------------------- */

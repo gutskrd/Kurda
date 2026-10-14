@@ -34,7 +34,7 @@ export function SanctionLine({
       <div className="sanction-line-head">
         <strong>{sanctionName(s.kind)}</strong>
         {who}
-        <span className="subtle">· {categoryName(s.policy)}</span>
+        <span className="subtle">{categoryName(s.policy)}</span>
         {s.zeroTolerance && <Badge tone="bad">Zero tolerance</Badge>}
         {s.pendingApproval && <Badge tone="warn">Waiting for a second admin</Badge>}
         {s.singleApproved && <Badge title="Only one moderator could act; nobody else confirmed it">Single-approved</Badge>}

@@ -37,7 +37,8 @@
 
 /* ---- one case --------------------------------------------------------------------- */
 .case-facts { display: flex; flex-wrap: wrap; gap: 4px 0; margin: -8px 0 18px; color: var(--text-dim); font-size: 13px; }
-.case-facts > span + span::before { content: '·'; margin: 0 8px; }
+/* the dot ends a fact rather than starting the next, so a wrapped line never opens with one */
+.case-facts > span:not(:last-child)::after { content: '·'; margin: 0 8px; }
 .case-nav { display: inline-flex; gap: 6px; }
 .case-layout { display: grid; gap: 18px; }
 .case-layout.is-wide { grid-template-columns: minmax(0, 1fr) minmax(320px, 380px); align-items: start; }
