@@ -5,7 +5,7 @@
  * star, secret a diamond.
  *
  * Each is an outline on the 120-unit canvas centred a little above the middle,
- * leaving the bottom for the tier plaque, plus where its icon sits and how big:
+ * leaving the bottom for the tier capsule, plus where its icon sits and how big:
  * a diamond's field is narrower than a circle's, so its icon is smaller.
  */
 import { circle, cubic, place, regular, roundedPolygon, star } from './geometry.js';
@@ -18,8 +18,6 @@ export interface Shape {
   icon: Pt;
   /** the icon's scale (1 = the 40-unit icon box at 1:1) */
   scale: number;
-  /** where the tier plaque's centre sits */
-  plaque: number;
 }
 
 const CX = 60;
@@ -54,7 +52,7 @@ function leaf(): Pt[] {
 }
 
 export const SHAPES: Record<BadgeFamily, Shape> = {
-  learning: { outline: circle(CX, CY, 48, 72), icon: [CX, CY], scale: 1.24, plaque: 103 },
+  learning: { outline: circle(CX, CY, 48, 72), icon: [CX, CY], scale: 1.24 },
   habit: {
     outline: roundedPolygon(
       [
@@ -68,16 +66,14 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
     ),
     icon: [CX, CY],
     scale: 1.24,
-    plaque: 101,
   },
-  games: { outline: roundedPolygon(regular(CX, CY, 51, 6, -90), 7, 6), icon: [CX, CY], scale: 1.16, plaque: 104 },
-  ranked: { outline: shield(), icon: [CX, 52], scale: 1.12, plaque: 104 },
-  friends: { outline: leaf(), icon: [CX, CY], scale: 1.06, plaque: 104 },
+  games: { outline: roundedPolygon(regular(CX, CY, 51, 6, -90), 7, 6), icon: [CX, CY], scale: 1.16 },
+  ranked: { outline: shield(), icon: [CX, 52], scale: 1.12 },
+  friends: { outline: leaf(), icon: [CX, CY], scale: 1.06 },
   events: {
     outline: roundedPolygon(star(CX, CY, 53, 53 * 0.78, 8, -90), [4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2, 4, 2], 5),
     icon: [CX, CY],
     scale: 1.08,
-    plaque: 105,
   },
   secret: {
     outline: roundedPolygon(
@@ -92,6 +88,5 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
     ),
     icon: [CX, CY],
     scale: 1.02,
-    plaque: 105,
   },
 };

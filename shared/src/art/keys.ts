@@ -64,7 +64,7 @@ interface BadgeDef {
   family: BadgeFamily;
   /** Kurmancî name, for the default title */
   name: string;
-  /** how many tiers it has; 1 = a single badge with no tier pips */
+  /** how many tiers it has; 1 = a single badge with no tier chevrons */
   tiers: 1 | 4;
 }
 

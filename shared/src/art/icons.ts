@@ -3,12 +3,12 @@
  * centred on 0,0.
  *
  * An icon is a list of parts, and a part says what it is rather than what
- * colour it is: the main metal, the darker metal, a named accent (a flame is
- * a flame on every tier), snow, an ink detail line, a stroked line, a
- * highlight. The badge decides the colours, so the same icon is copper on a
+ * colour it is: the main metal, its shaded face, a named accent (a flame is a
+ * flame on every tier), snow, a cut line, a stroked line, a highlight. The
+ * badge decides the colours (iconpaint.ts), so the same icon is copper on a
  * Sifir badge, turquoise on a Firûze one and grey on one not yet earned — and
- * every icon gets the same outline weight and the same light from above,
- * which is what makes forty-three drawings read as one set.
+ * every icon gets the same cut between its parts and the same light from
+ * within, which is what makes forty-four drawings read as one set.
  *
  * Parts marked `fine` are the details that turn to noise at 32 pixels (the
  * lines on a book's pages, a feather's barbs); the small drawing leaves them
@@ -18,15 +18,15 @@ import type { AccentName } from './palette.js';
 import { n } from './svg.js';
 
 export type Part =
-  /** f: the metal, lit from above · a: the darker metal · w: snow-white — all outlined in ink */
+  /** f: the metal, lit from above · a: its shaded face · w: snow-white */
   | { k: 'f' | 'a' | 'w'; d: string; tf?: string }
-  /** an accent colour, outlined in ink */
+  /** an accent colour */
   | { k: 'c'; d: string; c: AccentName; tf?: string }
-  /** solid ink */
+  /** a hole: the field's colour showing through */
   | { k: 'k'; d: string; tf?: string; fine?: boolean }
-  /** an ink line drawn over what is beneath */
+  /** a line cut into what is beneath, in the field's colour */
   | { k: 'd'; d: string; w?: number; tf?: string; fine?: boolean }
-  /** a line with an ink edge: metal, or an accent */
+  /** a stroked line, cut out of what is beneath: metal, or an accent */
   | { k: 'l'; d: string; w?: number; c?: AccentName; tf?: string }
   /** a white highlight, no outline */
   | { k: 'h'; d: string; o?: number; tf?: string; fine?: boolean };
