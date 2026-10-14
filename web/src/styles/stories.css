@@ -1394,6 +1394,9 @@ button.sg-option:focus-visible {
   gap: 8px 16px;
 }
 .sg-xp {
+  /* "+15 XP" in every page direction (the element also carries dir="ltr") */
+  direction: ltr;
+  unicode-bidi: isolate;
   padding: 4px 12px;
   border-radius: var(--r-pill);
   background: var(--gold-soft);

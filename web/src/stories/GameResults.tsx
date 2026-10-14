@@ -58,7 +58,12 @@ export function GameResults({
 
       {me && (
         <div className="sg-reward">
-          {me.xp > 0 && <span className="sg-xp">+{me.xp} XP</span>}
+          {/* dir: "+15 XP" reads the same in a right-to-left page, not "XP 15+" */}
+          {me.xp > 0 && (
+            <span className="sg-xp" dir="ltr">
+              +{me.xp} XP
+            </span>
+          )}
           <p className={me.learningCounted ? 'sg-counted' : 'sg-not-counted'}>
             {me.learningCounted ? (
               <>
