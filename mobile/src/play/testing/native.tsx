@@ -7,7 +7,8 @@
  * checked radio and an unchecked one look the same in the DOM. This is
  * react-native-web with View, Pressable and Text turning `accessibilityState`
  * into the aria attributes it stands for, so a test can ask for
- * `aria-checked` the way it would on the web. Wired with
+ * `aria-checked` the way it would on the web (and `accessibilityLanguage`,
+ * the voice VoiceOver reads an element in, into `lang`). Wired with
  * `vi.mock('react-native', () => import('…/play/testing/native'))`.
  */
 import { createElement, forwardRef, type ComponentType } from 'react';
@@ -23,10 +24,10 @@ interface State {
   expanded?: boolean;
 }
 
-type Props = { accessibilityState?: State; [prop: string]: unknown };
+type Props = { accessibilityState?: State; accessibilityLanguage?: string; [prop: string]: unknown };
 
 function withState(Component: ComponentType<Props>): ComponentType<Props> {
-  return forwardRef<unknown, Props>(function Wrapped({ accessibilityState, ...rest }, ref) {
+  return forwardRef<unknown, Props>(function Wrapped({ accessibilityState, accessibilityLanguage, ...rest }, ref) {
     const state = accessibilityState as State | undefined;
     const aria: Record<string, unknown> = {};
     if (state?.checked !== undefined) aria['aria-checked'] = state.checked;
@@ -34,6 +35,8 @@ function withState(Component: ComponentType<Props>): ComponentType<Props> {
     if (state?.disabled !== undefined) aria['aria-disabled'] = state.disabled;
     if (state?.busy !== undefined) aria['aria-busy'] = state.busy;
     if (state?.expanded !== undefined) aria['aria-expanded'] = state.expanded;
+    // the language VoiceOver reads an element in, as the web's `lang`
+    if (accessibilityLanguage) aria.lang = accessibilityLanguage;
     return createElement(Component, { ...rest, ...aria, ref });
   }) as unknown as ComponentType<Props>;
 }

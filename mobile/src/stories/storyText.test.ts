@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, quoted, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, quoted, storyRowDirection, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 
 vi.mock('react-native', () => ({}));
 
@@ -22,6 +22,11 @@ describe('story text direction', () => {
   it('puts a story’s row of facts on the side its title starts from', () => {
     expect(storyRowStyle('sorani')).toEqual({ justifyContent: 'flex-end' });
     expect(storyRowStyle('kurmanci')).toEqual({ justifyContent: 'flex-start' });
+  });
+
+  it('puts an option’s number or tick where a Soranî line starts, beside its first word', () => {
+    expect(storyRowDirection('sorani')).toBe('row-reverse');
+    expect(storyRowDirection('kurmanci')).toBe('row');
   });
 
   it('quotes a story’s words in the marks its own language uses', () => {

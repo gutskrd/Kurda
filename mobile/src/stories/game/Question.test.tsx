@@ -5,6 +5,7 @@ import type { StoryGameQuestion, StoryGameView } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../../reports/testing/auth';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { resetPrefsCache } from '../prefs';
+import { NANE_GERM } from '../testing/views';
 import { Question, showEnglish } from './Question';
 
 vi.mock('react-native', () => import('../../play/testing/native'));
@@ -105,6 +106,8 @@ describe('Question', () => {
       '3. Şor',
       '4. Şirîn',
     ]);
+    // an option is read in the story's language, not the app's
+    expect(screen.getByRole('button', { name: '2. Germ' }).getAttribute('lang')).toBe('ku');
   });
 
   it('sends the choice, says it is locked, and then says only how many have answered', async () => {
@@ -193,6 +196,25 @@ describe('Question', () => {
     await act(async () => undefined);
     again();
     expect(announce.mock.calls.filter(([m]) => m === '10 seconds left')).toHaveLength(1);
+  });
+
+  it('keeps the time left in sight while the story is open over a timed question', () => {
+    testAuth.client = fakeClient();
+    renderWithProviders(
+      <Question
+        view={gameView({ phaseEndsAt: new Date(Date.now() + 45_000).toISOString() }, { timerSeconds: 60, textDuring: 'visible' })}
+        story={NANE_GERM}
+        apply={() => null}
+        refresh={() => undefined}
+        serverNow={() => Date.now()}
+        announce={() => undefined}
+        onGloss={() => undefined}
+      />,
+    );
+    expect(screen.queryByText('45 seconds left')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Story' }));
+    expect(screen.getByText('45 seconds left')).toBeTruthy();
+    expect(screen.getAllByRole('progressbar', { name: '45 seconds left' })).toHaveLength(2);
   });
 
   it('shows no clock on an untimed question, only that it closes soon at the very end', () => {

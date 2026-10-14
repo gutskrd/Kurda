@@ -52,11 +52,23 @@ describe('Reveal', () => {
     const view = renderWithProviders(<Reveal view={revealView()} story={NANE_GERM} apply={() => null} announce={announce} />);
     expect(announce).toHaveBeenCalledTimes(1);
     expect(announce).toHaveBeenCalledWith('Not quite. The answer is: Germ');
-    expect(screen.getByLabelText('2. Germ, Right answer')).toBeTruthy();
-    expect(screen.getByLabelText('1. Sar, Your answer')).toBeTruthy();
+    // the options in the story's language, their tags in the app's, each read by its own voice
+    expect(screen.getByText('Germ').getAttribute('lang')).toBe('ku');
+    expect(screen.getByText('Right answer')).toBeTruthy();
+    expect(screen.getByText('Sar').getAttribute('lang')).toBe('ku');
+    expect(screen.getByText('Your answer')).toBeTruthy();
     // a new view of the same reveal (somebody continued) says nothing again
     view.rerender(<Reveal view={revealView({ continuedCount: 2, version: 9 })} story={NANE_GERM} apply={() => null} announce={announce} />);
     expect(announce).toHaveBeenCalledTimes(1);
+  });
+
+  it('leaves the screen reader where it is, so the right answer is heard to the end', async () => {
+    testAuth.client = fakeClient();
+    const focus = vi.spyOn(HTMLElement.prototype, 'focus');
+    renderWithProviders(<Reveal view={revealView()} story={NANE_GERM} apply={() => null} announce={() => undefined} />);
+    await new Promise((r) => setTimeout(r, 250));
+    expect(focus).not.toHaveBeenCalled();
+    focus.mockRestore();
   });
 
   it('quotes the sentence of the story that answers it, and counts who got it without naming anyone', () => {

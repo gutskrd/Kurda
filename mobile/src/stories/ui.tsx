@@ -20,6 +20,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { GlassCard } from '../theme/glass';
+import type { StoryDialect } from '@kurda/shared';
+import { storyTextProps, storyTextStyle } from './storyText';
 
 /**
  * Small pieces the Stories and play screens share: a bottom sheet, a section
@@ -49,8 +51,11 @@ export function Sheet({
   onClose,
   children,
   footer,
+  dialect,
 }: {
   title: string;
+  /** the title is a story's (read and set in the story's language) */
+  dialect?: StoryDialect;
   onClose: () => void;
   children: ReactNode;
   /** stays at the bottom while the content scrolls (the sheet's main action) */
@@ -77,7 +82,12 @@ export function Sheet({
           accessibilityViewIsModal
         >
           <View style={styles.sheetHead}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={2}>
+            <Text
+              {...(dialect ? storyTextProps(dialect) : null)}
+              style={[styles.sheetTitle, { color: colors.textPrimary }, dialect ? storyTextStyle(dialect) : null]}
+              accessibilityRole="header"
+              numberOfLines={2}
+            >
               {title}
             </Text>
             <Pressable

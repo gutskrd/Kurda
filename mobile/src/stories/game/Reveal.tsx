@@ -15,8 +15,8 @@ import type { Translate } from '../../api/errors';
 import { continueAfter } from '../api';
 import { useStoryPrefs } from '../prefs';
 import { evidenceText } from '../segments';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from '../storyText';
-import { Note, useFocusOn } from '../ui';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
+import { Note } from '../ui';
 import { showEnglish } from './Question';
 
 /** The one thing said aloud on a reveal: the verdict, and the right answer. */
@@ -52,9 +52,7 @@ export function Reveal({
   const [error, setError] = useState<string | null>(null);
   const r = view.reveal;
   const q = view.question;
-  const headRef = useRef<Text>(null);
   const said = useRef<number | null>(null);
-  useFocusOn(headRef, r ? r.index : null);
 
   // the review item carries the prompt and options once the game is over; before that, the question does
   const item = view.results?.review.find((x) => x.index === r?.index);
@@ -62,6 +60,9 @@ export function Reveal({
   const options = item?.options ?? q?.options ?? [];
   const right = r ? (options[r.correctIndex] ?? '') : '';
 
+  // Said, and the screen reader's place left alone: moving it to the verdict
+  // would cut the announcement off after its first words, and the right
+  // answer is the part that matters (only a new question moves focus).
   useEffect(() => {
     if (!r || said.current === r.index) return;
     said.current = r.index;
@@ -95,7 +96,7 @@ export function Reveal({
       </Text>
       <View style={[styles.verdict, { backgroundColor: r.myCorrect === true ? colors.successFill : r.myCorrect === false ? colors.dangerFill : colors.controlTrack }]}>
         <Icon name={verdictIcon} size={24} color={verdictColor} />
-        <Text ref={headRef} style={[styles.verdictText, { color: verdictColor }]} accessibilityRole="header">
+        <Text style={[styles.verdictText, { color: verdictColor }]} accessibilityRole="header">
           {r.myCorrect === true ? t('stories.reveal.right') : r.myCorrect === false ? t('stories.reveal.wrong') : t('stories.reveal.noAnswer')}
         </Text>
       </View>
@@ -110,13 +111,16 @@ export function Reveal({
           const mine = i === r.myChoice;
           const tag = correct ? t('stories.reveal.rightAnswer') : mine ? t('stories.reveal.yourAnswer') : null;
           return (
+            // not one label for the row: the option is read in the story's
+            // language and its tag ("Right answer") in the app's, each by its own voice
             <View
               key={i}
-              accessible
-              accessibilityLabel={[`${i + 1}. ${option}`, tag, correct && mine ? t('stories.reveal.yourAnswer') : null].filter(Boolean).join(', ')}
               style={[
                 styles.option,
-                { backgroundColor: correct ? colors.successFill : mine ? colors.dangerFill : colors.glassFill },
+                {
+                  flexDirection: storyRowDirection(dialect),
+                  backgroundColor: correct ? colors.successFill : mine ? colors.dangerFill : colors.glassFill,
+                },
               ]}
             >
               {correct || mine ? (
@@ -129,7 +133,7 @@ export function Reveal({
                   {option}
                 </Text>
                 {tag ? (
-                  <Text style={[styles.tag, { color: correct ? colors.success : colors.danger }]}>
+                  <Text style={[styles.tag, { color: correct ? colors.success : colors.danger }, { textAlign: dir.textAlign }]}>
                     {correct && mine ? `${tag} · ${t('stories.reveal.yourAnswer')}` : tag}
                   </Text>
                 ) : null}
@@ -201,7 +205,6 @@ const styles = StyleSheet.create({
   prompt: { ...display(typography.sizes.lg), lineHeight: 30 },
   options: { gap: spacing.sm },
   option: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.sm,
     minHeight: MIN_TOUCH_TARGET,

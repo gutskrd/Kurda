@@ -319,7 +319,11 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
     <Pressable
       onPress={onOpen}
       accessibilityRole="button"
-      accessibilityLabel={`${t('stories.continue')}: ${game.storyTitle}, ${t(MODE_KEY[game.mode])}, ${where}`}
+      // the story's title is read in the story's language; the app's words about it go in the value
+      accessibilityLabel={game.storyTitle}
+      {...storyTextProps(game.dialect)}
+      accessibilityValue={{ text: `${t(MODE_KEY[game.mode])}, ${where}` }}
+      accessibilityHint={t('stories.continue')}
       style={({ pressed }) => [styles.continue, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
     >
       <View style={styles.rowMain}>
@@ -356,7 +360,10 @@ function StoryRow({
     <Pressable
       onPress={onOpen}
       accessibilityRole="button"
-      accessibilityLabel={`${story.title}. ${facts.join(', ')}`}
+      // the title in the story's language; its facts, in the app's words, as the value
+      accessibilityLabel={story.title}
+      {...storyTextProps(story.dialect)}
+      accessibilityValue={{ text: facts.join(', ') }}
       style={({ pressed }) => [styles.story, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
     >
       <Text {...storyTextProps(story.dialect)} style={[styles.storyTitle, { color: colors.textPrimary }, storyTextStyle(story.dialect)]}>

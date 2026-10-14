@@ -103,7 +103,10 @@ describe('StoriesHubScreen', () => {
     await screen.findByText('Nanê Germ');
     fireEvent.click(screen.getByRole('radio', { name: /^Long/ }));
     await waitFor(() => expect(screen.queryByText('Nanê Germ')).toBeNull());
-    fireEvent.click(screen.getByRole('button', { name: /^Bajar\./ }));
+    const row = screen.getByRole('button', { name: 'Bajar' });
+    // the title is read in the story's language, its facts in the app's
+    expect(row.getAttribute('lang')).toBe('ku');
+    fireEvent.click(row);
     expect(navigation.navigate).toHaveBeenCalledWith('StoryReader', { slug: 'bajar' });
   });
 

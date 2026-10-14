@@ -131,6 +131,7 @@ export function StoryPresetFields({
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
                     accessibilityLabel={s ? s.title : t('stories.setup.surprise')}
+                    {...(s ? storyTextProps(s.dialect) : null)}
                     style={({ pressed }) => [
                       styles.pickRow,
                       { backgroundColor: on ? colors.successFill : colors.controlTrack, opacity: pressed ? 0.8 : 1 },

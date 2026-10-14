@@ -34,6 +34,15 @@ export function storyRowStyle(dialect: StoryDialect): ViewStyle {
   return { justifyContent: storyTextDirection(dialect).dir === 'rtl' ? 'flex-end' : 'flex-start' };
 }
 
+/**
+ * A row that leads with a marker (an option's number, a tick or a cross) and
+ * then a story's words: the marker goes where the text starts, so in Soranî
+ * it sits at the right, beside the first word, not a row's width away.
+ */
+export function storyRowDirection(dialect: StoryDialect): 'row' | 'row-reverse' {
+  return storyTextDirection(dialect).dir === 'rtl' ? 'row-reverse' : 'row';
+}
+
 export function storyTextProps(dialect: StoryDialect): StoryTextProps {
   return { accessibilityLanguage: storyTextDirection(dialect).lang };
 }

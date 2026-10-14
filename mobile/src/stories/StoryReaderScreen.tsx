@@ -242,7 +242,10 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                     key={entry.term}
                     onPress={() => setGloss(entry)}
                     accessibilityRole="button"
-                    accessibilityLabel={`${entry.term}: ${meaning.text}`}
+                    // the word in the story's language; its meaning, in the app's (or English), as the value
+                    accessibilityLabel={entry.term}
+                    {...props}
+                    accessibilityValue={{ text: meaning.text }}
                     // the meaning sits under its word, on the side the story is written from
                     style={[styles.wordRow, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }]}
                   >

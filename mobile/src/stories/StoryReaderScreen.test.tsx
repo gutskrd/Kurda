@@ -59,7 +59,9 @@ describe('StoryReaderScreen', () => {
   it('lists the story’s words again, the way a screen reader reaches their meanings', async () => {
     testAuth.client = routes();
     renderWithProviders(<StoryReaderScreen slug="nane-germ" onExit={() => undefined} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'germ: warm' }));
+    const word = await screen.findByRole('button', { name: 'germ' });
+    expect(word.getAttribute('lang')).toBe('ku');
+    fireEvent.click(word);
     expect(screen.getByText('Meaning')).toBeTruthy();
     expect(screen.getAllByText('warm').length).toBeGreaterThan(1);
   });

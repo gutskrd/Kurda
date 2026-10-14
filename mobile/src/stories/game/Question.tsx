@@ -15,7 +15,7 @@ import { advanceGame, answerQuestion } from '../api';
 import { sendAnswer } from '../answer';
 import { useStoryPrefs } from '../prefs';
 import { STORY_BODY_SIZE, StoryText } from '../StoryText';
-import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyTextProps, storyTextStyle } from '../storyText';
+import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowDirection, storyTextProps, storyTextStyle } from '../storyText';
 import { Note, Sheet, useFocusOn } from '../ui';
 import { closesSoon, isTimed, secondsLeft, useTicker } from './clock';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
@@ -148,21 +148,7 @@ export function Question({
         ) : null}
       </View>
 
-      {timed && left !== null ? (
-        <View
-          style={[styles.track, { backgroundColor: colors.controlTrack }]}
-          accessibilityRole="progressbar"
-          accessibilityLabel={t('stories.question.timeLeft', { seconds: left })}
-          accessibilityValue={{ min: 0, max: total, now: left }}
-        >
-          <View
-            style={[
-              styles.fill,
-              { width: `${total > 0 ? Math.min(100, (left / total) * 100) : 0}%`, backgroundColor: left <= 10 ? colors.danger : colors.primary },
-            ]}
-          />
-        </View>
-      ) : null}
+      {timed && left !== null ? <TimerBar left={left} total={total} /> : null}
 
       <Text {...storyTextProps(dialect)} style={[styles.prompt, { color: colors.textPrimary }, storyTextStyle(dialect)]}>
         {q.prompt}
@@ -190,10 +176,12 @@ export function Question({
               disabled={locked || sending?.state === 'sending'}
               accessibilityRole="button"
               accessibilityLabel={`${i + 1}. ${option}`}
+              {...storyTextProps(dialect)}
               accessibilityState={{ selected: on, disabled: locked && !on }}
               style={({ pressed }) => [
                 styles.option,
                 {
+                  flexDirection: storyRowDirection(dialect),
                   backgroundColor: on ? colors.primary : colors.glassFill,
                   opacity: locked && !on ? 0.55 : pressed ? 0.85 : 1,
                 },
@@ -248,7 +236,13 @@ export function Question({
       <ExtraTimeSwitch view={view} apply={apply} />
 
       {storyOpen && story ? (
-        <Sheet title={story.title} onClose={() => setStoryOpen(false)}>
+        <Sheet
+          title={story.title}
+          dialect={dialect}
+          onClose={() => setStoryOpen(false)}
+          // looking the answer up must not hide how long is left to give it
+          footer={timed && left !== null ? <TimerBar left={left} total={total} withText /> : undefined}
+        >
           <StoryText story={story} fontSize={Math.round(STORY_BODY_SIZE * prefs.textScale)} onGloss={onGloss} />
         </Sheet>
       ) : null}
@@ -256,7 +250,42 @@ export function Question({
   );
 }
 
+/**
+ * How long is left on a timed question: a bar that turns red in the last ten
+ * seconds, read as "12 seconds left". `withText` shows the seconds too, where
+ * the bar stands alone (the Story sheet, over the question).
+ */
+function TimerBar({ left, total, withText }: { left: number; total: number; withText?: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const urgent = left <= 10;
+  return (
+    <View style={styles.timer}>
+      {withText ? (
+        <Text style={[styles.timerText, { color: urgent ? colors.danger : colors.textSecondary }]} importantForAccessibility="no" accessibilityElementsHidden>
+          {t('stories.question.timeLeft', { seconds: left })}
+        </Text>
+      ) : null}
+      <View
+        style={[styles.track, { backgroundColor: colors.controlTrack }]}
+        accessibilityRole="progressbar"
+        accessibilityLabel={t('stories.question.timeLeft', { seconds: left })}
+        accessibilityValue={{ min: 0, max: total, now: left }}
+      >
+        <View
+          style={[
+            styles.fill,
+            { width: `${total > 0 ? Math.min(100, (left / total) * 100) : 0}%`, backgroundColor: urgent ? colors.danger : colors.primary },
+          ]}
+        />
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  timer: { gap: spacing.xs },
+  timerText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   head: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   index: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.5 },
   storyButton: {
@@ -276,7 +305,6 @@ const styles = StyleSheet.create({
   toggleText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   options: { gap: spacing.sm },
   option: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.md,
     minHeight: OPTION_MIN_HEIGHT,
