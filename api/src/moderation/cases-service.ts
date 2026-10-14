@@ -56,6 +56,7 @@ import {
   type Outcome,
 } from './sources.js';
 import { inTransaction, type Executor } from './tx.js';
+import { copyrightCaseInfo } from '../copyright/service.js';
 
 /**
  * A moderation case from claim to decision.
@@ -174,7 +175,8 @@ export const DEFAULT_STATEMENTS = {
   csam: 'Your account was closed because content shared from it puts children at risk. This is never allowed on Hevalo.',
 } as const;
 
-const REPORT_SOURCES: ReadonlySet<CaseSource> = new Set(['report', 'chat_report', 'library_report', 'image_report', 'user_report']);
+// a copyright notice is a report from outside: the uploader is told it came from a complaint
+const REPORT_SOURCES: ReadonlySet<CaseSource> = new Set(['report', 'chat_report', 'library_report', 'image_report', 'user_report', 'copyright']);
 
 function originFor(source: CaseSource): SanctionOrigin {
   return REPORT_SOURCES.has(source) ? 'report' : 'automatic';
@@ -1116,19 +1118,22 @@ export class CasesService {
     if (viewerId) await this.assertNotParty(this.pool, row, viewerId);
     const now = new Date();
 
-    const [reports, subject, notes, audit, sanctions, escalations] = await Promise.all([
+    const [reports, subject, notes, audit, sanctions, escalations, copyright] = await Promise.all([
       this.reportsFor(row),
       row.subject_user_id ? this.subjectView(row.subject_user_id, row.id) : Promise.resolve(null),
       this.notesFor(row.id),
       this.auditFor(row.id),
       this.pool.query<SanctionRow>(`SELECT * FROM sanctions WHERE case_id = $1 ORDER BY created_at`, [row.id]),
       this.pool.query<EscalationRow>(`SELECT * FROM moderation_escalations WHERE case_id = $1 ORDER BY created_at`, [row.id]),
+      copyrightCaseInfo(this.pool, row),
     ]);
 
     const keys = new Set<string>();
     for (const rep of reports) for (const k of (rep.evidence as Partial<EvidenceSnapshot>).mediaKeys ?? []) keys.add(k);
-    const caseMedia = (row.evidence as { mediaKey?: unknown; audio?: unknown }) ?? {};
+    const caseMedia = (row.evidence as { mediaKey?: unknown; audio?: unknown; mediaKeys?: unknown }) ?? {};
     for (const k of [caseMedia.mediaKey, caseMedia.audio]) if (typeof k === 'string' && k) keys.add(k);
+    // a copyright case keeps the snapshot of its target on the case itself
+    if (Array.isArray(caseMedia.mediaKeys)) for (const k of caseMedia.mediaKeys) if (typeof k === 'string' && k) keys.add(k);
 
     return {
       case: {
@@ -1149,6 +1154,7 @@ export class CasesService {
       audit,
       sanctions: sanctions.rows.map((s) => toSanctionView(s, now)),
       escalations: await this.escalationViews(this.pool, escalations.rows),
+      copyright,
     };
   }
 
@@ -1322,8 +1328,9 @@ export class CasesService {
       );
       for (const row of r.rows) keys.add(row.k);
     }
-    const ev = c.evidence as { mediaKey?: unknown; audio?: unknown };
+    const ev = c.evidence as { mediaKey?: unknown; audio?: unknown; mediaKeys?: unknown };
     for (const k of [ev?.mediaKey, ev?.audio]) if (typeof k === 'string' && k) keys.add(k);
+    if (Array.isArray(ev?.mediaKeys)) for (const k of ev.mediaKeys) if (typeof k === 'string' && k) keys.add(k);
     return [...keys];
   }
 }

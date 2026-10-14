@@ -33,6 +33,14 @@ export function userHash(userId: string): string {
 }
 
 /**
+ * A network address as the public copyright form's per-address limit counts
+ * it: the notice keeps this, never the address.
+ */
+export function networkHash(ip: string): string {
+  return keyed('ip', ip);
+}
+
+/**
  * An email as the ban registry compares it: lower-cased and trimmed, without a
  * `+tag`, and for Gmail without the dots Gmail ignores — the cheap tricks for
  * making "a new address" that delivers to the same inbox.

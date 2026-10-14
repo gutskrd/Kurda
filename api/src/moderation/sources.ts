@@ -51,6 +51,13 @@ export async function closeSource(db: Executor, c: CaseSourceRow, outcome: Outco
   switch (c.source) {
     case 'report':
       return;
+    case 'copyright':
+      // the notices behind it are decided with it; the outcome sweep emails their senders
+      await db.query(
+        `UPDATE copyright_notices SET status = $2 WHERE case_id = $1 AND status = 'received'`,
+        [c.id, actioned ? 'actioned' : 'rejected'],
+      );
+      return;
     case 'chat_report':
       await db.query(
         `UPDATE chat_reports SET status = $2, reviewed_at = now(), reviewed_by = $3 WHERE id = $1::uuid AND status = 'open'`,
@@ -148,6 +155,15 @@ export async function reopenSource(db: Executor, c: CaseSourceRow): Promise<void
       if (c.subject_user_id) {
         await db.query(`UPDATE bot_scores SET status = 'active', flagged = true, resolved_at = NULL WHERE user_id = $1`, [c.subject_user_id]);
       }
+      return;
+    case 'copyright':
+      // a second look decides the notices again, and their senders hear the new decision;
+      // one already answered by a counter-notice stays answered
+      await db.query(
+        `UPDATE copyright_notices SET status = 'received', outcome_sent_at = NULL
+          WHERE case_id = $1 AND status IN ('actioned','rejected')`,
+        [c.id],
+      );
       return;
     default:
       // reports and the old report tables stay closed: a reopened case is a second

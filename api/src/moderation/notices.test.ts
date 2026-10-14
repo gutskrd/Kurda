@@ -29,6 +29,14 @@ describe('sanction notices (the statement of reasons)', () => {
     expect(n.data).toMatchObject({ until: null });
   });
 
+  it('tells someone whose post was taken down for copyright about the counter-notice', () => {
+    const n = sanctionNotice({ ...base, policy: 'copyright', kind: 'content_removal', endsAt: null });
+    expect(n.body).toContain('The rule: Copies someone else’s work.');
+    expect(n.body).toContain('This came from a copyright complaint, and a person reviewed it.');
+    expect(n.body).toContain('counter-notice from hevalo.app/copyright');
+    expect(n.body).not.toContain('another member');
+  });
+
   it('has a title and plain words for every kind', () => {
     for (const kind of ['warning', 'content_removal', 'feature_limit', 'suspension', 'permanent_ban'] as const) {
       const n = sanctionNotice({ ...base, kind, endsAt: kind === 'suspension' ? new Date('2026-10-20T00:00:00Z') : null });

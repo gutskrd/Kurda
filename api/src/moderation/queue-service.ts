@@ -81,6 +81,7 @@ const PRIORITY_OF: Readonly<Record<ReportCategory, ReportPriority>> = {
   hate: 1,
   private_info: 1,
   harassment: 2,
+  copyright: 2,
   spam: 3,
   impersonation: 3,
   other: 3,
@@ -713,6 +714,9 @@ export class ModerationQueueService {
        )
        SELECT due.id,
               array_remove(ARRAY[due.evidence->>'mediaKey', due.evidence->>'audio'], NULL)
+                -- a copyright case's own snapshot of its target
+                || COALESCE((SELECT array_agg(k) FROM jsonb_array_elements_text(
+                     CASE WHEN jsonb_typeof(due.evidence->'mediaKeys') = 'array' THEN due.evidence->'mediaKeys' ELSE '[]'::jsonb END) k), '{}')
                 || COALESCE((SELECT array_agg(k) FROM moderation_escalations e, unnest(e.media_keys) k WHERE e.case_id = due.id), '{}') AS keys
          FROM due`,
       [EVIDENCE_RETENTION_DAYS],
@@ -734,7 +738,8 @@ async function releaseEvidenceMedia(db: Executor, keys: string[]): Promise<void>
       WHERE m.key = ANY($1::text[]) AND m.preserve_evidence
         AND NOT EXISTS (SELECT 1 FROM reports r WHERE r.evidence_pruned_at IS NULL AND r.evidence -> 'mediaKeys' ? m.key)
         AND NOT EXISTS (SELECT 1 FROM moderation_cases c
-                         WHERE NOT (c.evidence ? 'pruned') AND (c.evidence->>'mediaKey' = m.key OR c.evidence->>'audio' = m.key))
+                         WHERE NOT (c.evidence ? 'pruned')
+                           AND (c.evidence->>'mediaKey' = m.key OR c.evidence->>'audio' = m.key OR c.evidence -> 'mediaKeys' ? m.key))
         AND NOT EXISTS (SELECT 1 FROM moderation_escalations e JOIN moderation_cases c ON c.id = e.case_id
                          WHERE m.key = ANY(e.media_keys) AND NOT (c.evidence ? 'pruned'))
       RETURNING m.key`,
