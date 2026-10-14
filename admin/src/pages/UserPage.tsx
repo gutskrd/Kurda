@@ -77,8 +77,8 @@ type TabKey = 'profile' | 'standing' | 'reports' | 'wallet' | 'items' | 'ranks' 
  * Support staff open the page too, without what moderation knows (the API
  * leaves it out for them), so the Standing and Reports tabs are for
  * moderators only; balances and items change only for a superadmin. Their
- * game ranks and badges are for the legacy admin role, which every rank and
- * badge route is guarded by.
+ * game ranks and badges are for the legacy admin role and superadmin, the
+ * roles every rank and badge route is guarded by.
  */
 export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.Element {
   const loaded = useLoad(() => api<UserDetail>(`/admin/users/${encodeURIComponent(id)}`), [id]);

@@ -57,7 +57,9 @@ const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
-const RANK_TOOLS = { roles: ['admin'] } as const; // requireRoles('admin'): ranks/routes.ts, leagues/routes.ts, badges/routes.ts
+/** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
+export const RANK_TOOL_ROLES = ['admin', 'superadmin'] as const;
+const RANK_TOOLS = { roles: RANK_TOOL_ROLES } as const;
 
 export const NAV_GROUPS = [
   { key: 'overview', label: 'Overview' },

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { capabilitiesFor, CAPABILITIES, hasCapability, isAdmin, isAdminRole } from './roles.js';
+import { capabilitiesFor, CAPABILITIES, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, RANK_TOOL_ROLES } from './roles.js';
 
 describe('admin roles', () => {
   it('recognizes admin roles', () => {
@@ -40,5 +40,10 @@ describe('admin roles', () => {
   it('non-admin roles grant nothing', () => {
     expect(capabilitiesFor(['user'])).toEqual([]);
     expect(hasCapability(['user'], 'users.view')).toBe(false);
+  });
+  it('opens the rank, league, season and badge tools to the legacy admin role and superadmin', () => {
+    expect([...RANK_TOOL_ROLES].sort()).toEqual(['admin', 'superadmin']);
+    // every one of them is staff, so the 2FA gate covers the routes
+    for (const role of RANK_TOOL_ROLES) expect(PRIVILEGED_ROLES).toContain(role);
   });
 });

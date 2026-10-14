@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { RANKED_GAMES, isSeasonId, type RankedGame } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import { AppError } from '../plugins/errors.js';
 import type { RankService } from './service.js';
 import type { RankSeasons } from './seasons.js';
@@ -94,22 +95,22 @@ export function registerRankRoutes(
   // ---- admin -----------------------------------------------------------------
 
   /** How the active players spread over the tiers, per game (to tune the one tier table). */
-  app.get('/admin/ranks/spread', { preHandler: requireRoles('admin') }, async () => ({ games: await admin.spread() }));
+  app.get('/admin/ranks/spread', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => ({ games: await admin.spread() }));
 
   /** The top players of a game, by name. */
-  app.get('/admin/ranks/top/:game', { schema: { params: gameParam }, preHandler: requireRoles('admin') }, async (req) => ({
+  app.get('/admin/ranks/top/:game', { schema: { params: gameParam }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async (req) => ({
     players: await admin.top((req.params as { game: RankedGame }).game),
   }));
 
   /** Pairs whose rated games together look unusual: signals only. */
-  app.get('/admin/ranks/suspicious-pairs', { preHandler: requireRoles('admin') }, async () => ({
+  app.get('/admin/ranks/suspicious-pairs', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => ({
     pairs: await admin.suspiciousPairs(),
   }));
 
   /** The rated games a pair played together in a game: what a suspicious pair opens, to void from. */
   app.get(
     '/admin/ranks/pairs/:game/:a/:b',
-    { schema: { params: z.object({ game, a: z.uuid(), b: z.uuid() }) }, preHandler: requireRoles('admin') },
+    { schema: { params: z.object({ game, a: z.uuid(), b: z.uuid() }) }, preHandler: requireRoles(...RANK_TOOL_ROLES) },
     async (req) => {
       const p = req.params as { game: RankedGame; a: string; b: string };
       return { games: await admin.pairGames(p.game, p.a, p.b) };
@@ -119,7 +120,7 @@ export function registerRankRoutes(
   /** One player's rank in every game and their latest rated games (`AdminPlayerRanks`): the person page's Ranks tab. */
   app.get(
     '/admin/ranks/players/:userId',
-    { schema: { params: z.object({ userId: z.uuid() }) }, preHandler: requireRoles('admin') },
+    { schema: { params: z.object({ userId: z.uuid() }) }, preHandler: requireRoles(...RANK_TOOL_ROLES) },
     async (req) => {
       const { userId } = req.params as { userId: string };
       const games = await admin.playerGames(userId);
@@ -131,7 +132,7 @@ export function registerRankRoutes(
   /** Void one game's rating effect: the game stops counting and everyone it touched is replayed from history. */
   app.post(
     '/admin/ranks/games/:game/:ref/void',
-    { schema: { params: refParams, body: reasonBody }, preHandler: requireRoles('admin') },
+    { schema: { params: refParams, body: reasonBody }, preHandler: requireRoles(...RANK_TOOL_ROLES) },
     async (req) => {
       const p = req.params as { game: RankedGame; ref: string };
       const { reason } = req.body as z.infer<typeof reasonBody>;
@@ -142,7 +143,7 @@ export function registerRankRoutes(
   /** Reset one player's rating in one game to the start (placement again). */
   app.post(
     '/admin/ranks/players/:userId/:game/reset',
-    { schema: { params: z.object({ userId: z.uuid(), game }), body: reasonBody }, preHandler: requireRoles('admin') },
+    { schema: { params: z.object({ userId: z.uuid(), game }), body: reasonBody }, preHandler: requireRoles(...RANK_TOOL_ROLES) },
     async (req) => {
       const p = req.params as { userId: string; game: RankedGame };
       await admin.reset(p.userId, p.game);
@@ -151,21 +152,21 @@ export function registerRankRoutes(
   );
 
   /** The seasons: the current one, and each closed one with what it handed out. */
-  app.get('/admin/seasons', { preHandler: requireRoles('admin') }, async () => seasons.adminList());
+  app.get('/admin/seasons', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => seasons.adminList());
 
   /**
    * A season's rewards (`AdminSeasonRewards`): who its close would reward now,
    * and with what — an open season's players included, as if it closed now —
    * and what it has handed out already.
    */
-  app.get('/admin/seasons/:id/rewards', { schema: { params: seasonParam }, preHandler: requireRoles('admin') }, async (req) => {
+  app.get('/admin/seasons/:id/rewards', { schema: { params: seasonParam }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async (req) => {
     const { id } = req.params as { id: string };
     if (!isSeasonId(id)) throw new AppError('BAD_SEASON', 400, 'not a season id');
     return { rewards: await seasons.previewRewards(id), given: await seasons.givenRewards(id) };
   });
 
   /** Close the seasons that have ended now, rather than at the next run (idempotent). */
-  app.post('/admin/seasons/end', { config: { skipValidation: true }, preHandler: requireRoles('admin') }, async () => ({
+  app.post('/admin/seasons/end', { config: { skipValidation: true }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => ({
     processed: await seasons.closeDue(),
   }));
 }

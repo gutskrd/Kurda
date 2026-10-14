@@ -41,10 +41,12 @@ describe('who sees which page — what the API allows, not a guess', () => {
     for (const id of ['users', 'lessons', 'audit']) expect(seen).not.toContain(id);
   });
 
-  it('opens the ranks, seasons, leagues and badges to the legacy admin role their routes are guarded by, and to nobody else', () => {
+  it('opens the ranks, seasons, leagues and badges to the legacy admin role and superadmin their routes are guarded by, and to nobody else', () => {
     const tools = ['ranks', 'seasons', 'leagues', 'badges'];
+    const superadminOnly: SessionAccess = { staffRoles: ['superadmin'], capabilities: ['moderation.act', 'users.view'] };
     for (const id of tools) expect(ids(LEGACY)).toContain(id);
-    for (const s of [MODERATOR, EDITOR, SUPPORT, FOUNDER, { staffRoles: ['superadmin'], capabilities: ['moderation.act', 'users.view'] }]) {
+    for (const id of tools) expect(ids(superadminOnly)).toContain(id);
+    for (const s of [MODERATOR, EDITOR, SUPPORT, FOUNDER]) {
       for (const page of tools) expect(mayOpenPage(page, s)).toBe(false);
     }
     expect(NAV.filter((n) => tools.includes(n.id)).every((n) => n.group === 'ranks')).toBe(true);

@@ -18,6 +18,15 @@ export type AdminRole = (typeof ADMIN_ROLES)[number];
 export const LEGACY_ADMIN_ROLE = 'admin';
 
 /**
+ * Who may use the Game Ranks, Seasons, Leagues and Badges tools under /admin
+ * (contract 4 §U, Admin): the legacy catch-all role they were first guarded
+ * by, and `superadmin`, which is granted everything. Like the shop, the config
+ * approvals and the tags, these are guarded by a role list rather than a
+ * capability; the admin app's nav reads the same list (RANK_TOOLS).
+ */
+export const RANK_TOOL_ROLES = [LEGACY_ADMIN_ROLE, 'superadmin'] as const;
+
+/**
  * Every role that can reach anything under /admin, and so must clear 2FA.
  *
  * 'founder' is here because it curates the tag catalog through /admin/tags. The

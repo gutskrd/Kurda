@@ -2,6 +2,7 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { SHOWCASE_SIZE } from '@kurda/shared';
 import { requireAuth, requireRoles } from '../plugins/auth.js';
+import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import type { BadgeService } from './service.js';
 
 const showcaseBody = z.object({ keys: z.array(z.string().min(1).max(40)).max(SHOWCASE_SIZE) });
@@ -37,17 +38,17 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
   }));
 
   /** Admin: the catalogue, holders per tier, and the rarity last computed. */
-  app.get('/admin/badges', { preHandler: requireRoles('admin') }, async () => badges.adminCatalogue());
+  app.get('/admin/badges', { preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () => badges.adminCatalogue());
 
   /** Admin: compute rarity now (it also runs nightly). */
-  app.post('/admin/badges/rarity', { config: { skipValidation: true }, preHandler: requireRoles('admin') }, async () =>
+  app.post('/admin/badges/rarity', { config: { skipValidation: true }, preHandler: requireRoles(...RANK_TOOL_ROLES) }, async () =>
     badges.computeRarity(),
   );
 
   /** Admin: one learner's badges and every award and revoke on them. */
   app.get(
     '/admin/users/:id/badges',
-    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireRoles('admin') },
+    { schema: { params: z.object({ id: z.uuid() }) }, preHandler: requireRoles(...RANK_TOOL_ROLES) },
     async (req) => badges.adminUser((req.params as { id: string }).id),
   );
 
@@ -59,7 +60,7 @@ export function registerBadgeRoutes(app: FastifyInstance, badges: BadgeService):
     '/admin/users/:id/badges/:key',
     {
       schema: { params: z.object({ id: z.uuid(), key: z.string().min(1).max(40) }), body: adminBody },
-      preHandler: requireRoles('admin'),
+      preHandler: requireRoles(...RANK_TOOL_ROLES),
     },
     async (req) => {
       const { id, key } = req.params as { id: string; key: string };

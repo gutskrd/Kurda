@@ -94,8 +94,9 @@ describe('reasons and roles', () => {
     expect(reasonProblem('x'.repeat(501))).toMatch(/under 500/);
   });
 
-  it('opens the rank tools to the legacy admin role only, as the routes are guarded', () => {
+  it('opens the rank tools to the legacy admin role and superadmin, as the routes are guarded', () => {
     expect(holdsRankTools(['admin'])).toBe(true);
-    expect(holdsRankTools(['superadmin', 'moderator'])).toBe(false);
+    expect(holdsRankTools(['superadmin', 'moderator'])).toBe(true);
+    expect(holdsRankTools(['moderator', 'support', 'content_editor', 'founder'])).toBe(false);
   });
 });

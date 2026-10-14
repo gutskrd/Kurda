@@ -58,7 +58,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
       );
       entryIds.push(r.rows[0]!.id);
     }
-    for (const tag of ['host', 'mate', 'stranger', 'admin']) await register(tag);
+    for (const tag of ['host', 'mate', 'stranger', 'admin', 'super']) await register(tag);
     await befriend(pool, users.host!.id, users.mate!.id);
   });
 
@@ -173,5 +173,29 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
     });
     expect(ended.statusCode).toBe(200);
     expect(ended.json()).toHaveProperty('processed');
+  });
+  it('opens the rank, season, league and badge tools to a superadmin without the legacy admin role', async () => {
+    await pool.query(`UPDATE users SET roles = '{superadmin}' WHERE id = $1`, [users.super!.id]);
+    await pass2fa(app, users.super!.token, '10.71.251.1');
+    const as = (method: 'GET' | 'POST', url: string) =>
+      app.inject({ method, url, headers: { authorization: `Bearer ${users.super!.token}` }, remoteAddress: '10.71.251.1' });
+    for (const url of [
+      '/admin/ranks/spread',
+      '/admin/ranks/suspicious-pairs',
+      '/admin/ranks/top/stories',
+      `/admin/ranks/players/${users.host!.id}`,
+      '/admin/seasons',
+      '/admin/leagues',
+      '/admin/badges',
+      `/admin/users/${users.host!.id}/badges`,
+    ]) {
+      expect({ url, status: (await as('GET', url)).statusCode }).toEqual({ url, status: 200 });
+    }
+    expect((await as('POST', '/admin/badges/rarity')).statusCode).toBe(200);
+    // and still nobody else: a moderator is refused
+    await pool.query(`UPDATE users SET roles = '{moderator}' WHERE id = $1`, [users.super!.id]);
+    expect((await as('GET', '/admin/ranks/spread')).statusCode).toBe(403);
+    expect((await as('GET', '/admin/leagues')).statusCode).toBe(403);
+    expect((await as('GET', '/admin/badges')).statusCode).toBe(403);
   });
 });

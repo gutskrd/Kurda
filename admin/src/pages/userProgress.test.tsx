@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 /**
  * A person's Ranks and Badges tabs, against a fake API: who sees them (the
- * legacy admin role their routes are guarded by), each game's card and its
+ * legacy admin role and superadmin their routes are guarded by), each game's card and its
  * reset, a rated game voided from the list, and a badge awarded or revoked
  * with exactly the body the API takes.
  */
@@ -127,6 +127,12 @@ describe('who sees the tabs', () => {
     show(`#/users/${SUBJECT_ID}`, ADMIN);
     expect(await screen.findByRole('tab', { name: 'Ranks' })).toHaveAttribute('href', `#/users/${SUBJECT_ID}/ranks`);
     expect(screen.getByRole('tab', { name: 'Badges' })).toHaveAttribute('href', `#/users/${SUBJECT_ID}/badges`);
+  });
+
+  it('shows them to a superadmin who does not hold the legacy admin role', async () => {
+    show(`#/users/${SUBJECT_ID}`, { ...ADMIN, staffRoles: ['superadmin'] });
+    expect(await screen.findByRole('tab', { name: 'Ranks' })).toHaveAttribute('href', `#/users/${SUBJECT_ID}/ranks`);
+    expect(screen.getByRole('tab', { name: 'Badges' })).toBeInTheDocument();
   });
 
   it('keeps them from a moderator, even by address', async () => {

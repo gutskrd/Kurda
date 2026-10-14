@@ -27,6 +27,7 @@ import {
   type RankTier,
   type RankedGame,
 } from '@kurda/shared';
+import { RANK_TOOL_ROLES } from './navigation';
 import type { Tone } from './ui';
 
 // ---- names -----------------------------------------------------------------------
@@ -285,7 +286,11 @@ export function reasonProblem(value: string): string | null {
   return null;
 }
 
-/** The legacy `admin` role: every rank, league, season and badge route is guarded by it. */
+/**
+ * Whether these staff roles may use the rank, league, season and badge tools:
+ * the legacy `admin` role or `superadmin`, as every one of their routes is
+ * guarded (RANK_TOOL_ROLES).
+ */
 export function holdsRankTools(staffRoles: readonly string[]): boolean {
-  return staffRoles.includes('admin');
+  return RANK_TOOL_ROLES.some((r) => staffRoles.includes(r));
 }
