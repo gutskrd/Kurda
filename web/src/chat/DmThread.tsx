@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError, DmMessage } from '../lib/types';
@@ -97,6 +97,9 @@ export function DmThread({
   const [sendErr, setSendErr] = useState<ApiError | null>(null);
   /** the message being reported, while the report sheet is open */
   const [reporting, setReporting] = useState<DmMessage | null>(null);
+  /** blocked from the report's done screen: the thread closes with the sheet */
+  const [blockedHere, setBlockedHere] = useState(false);
+  const navigate = useNavigate();
   const { ref: scrollRef, atBottom, scrollToBottom } = useStickyScroll(messages);
   const { typing, note } = useTypingWatch();
   const signalTyping = useTypingSignal(
@@ -286,9 +289,19 @@ export function DmThread({
       <SendError error={sendErr} describe={(e) => sendError(e, t)} className="chat-senderr" />
       <ReportSheet
         open={reporting !== null}
-        onClose={() => setReporting(null)}
+        onClose={() => {
+          setReporting(null);
+          // a conversation with someone you have just blocked has nothing left
+          // to send to; it goes once the done screen has been read and closed
+          if (blockedHere) {
+            onSent(); // the conversation list drops them
+            if (onClose) onClose();
+            else navigate('/app/messages');
+          }
+        }}
         target={{ targetType: 'dm_message', targetId: reporting?.id ?? '' }}
         block={{ userId: otherId, name: otherName ?? t('chat.thisPerson') }}
+        onBlocked={() => setBlockedHere(true)}
       />
       <Composer
         value={text}
