@@ -306,10 +306,15 @@ export class LibraryService {
     return res.rows[0]!.n;
   }
 
-  /** Read a single published post and increment its view count. */
+  /**
+   * Read a single published post and count the view — someone else's. An
+   * author opening their own post (to read it again, or to edit it) is not a
+   * reader, and counting it let them raise their own count.
+   */
   async get(id: string, viewerId: string | null = null): Promise<LibraryPost | null> {
     const res = await this.pool.query<Row>(
-      `UPDATE library_posts SET view_count = view_count + 1
+      `UPDATE library_posts
+          SET view_count = view_count + CASE WHEN author_id IS NOT DISTINCT FROM $2::uuid THEN 0 ELSE 1 END
        WHERE id = $1 AND status = 'published' AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
        RETURNING *`,
       [id, viewerId],
