@@ -176,9 +176,12 @@
   width: max-content;
 }
 .invite-banner-text .invite-rated {
-  display: inline-flex;
-  margin-inline-start: 8px;
-  vertical-align: middle;
+  align-self: flex-start;
+  margin: 2px 0;
+}
+.rated-badge.is-icon {
+  flex: none;
+  padding: 4px;
 }
 .sg-rated {
   margin-inline-start: 10px;

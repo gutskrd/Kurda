@@ -190,6 +190,7 @@ function Banner({
         <p className="invite-banner-text">
           <span className="invite-banner-title">{title}</span>
         </p>
+        {typeof invite.summary.rated === 'boolean' && <RatedBadge rated={invite.summary.rated} size="sm" iconOnly className="invite-rated" />}
         {more ? <span className="invite-banner-more">{t('play.banner.more', { count: more })}</span> : null}
         <span className="invite-banner-actions">
           {joinButton}

@@ -21,17 +21,24 @@ export function RatedBadge({
   rated,
   size = 'md',
   className,
+  iconOnly = false,
 }: {
   /** what it would be or is: a game that was Rated but plays as friendly shows Friendly */
   rated: boolean;
   size?: 'sm' | 'md';
   className?: string;
+  /** a one-line chip with no room for the word: the icon, with the word for a screen reader and on hover */
+  iconOnly?: boolean;
 }): React.JSX.Element {
   const t = useT();
+  const word = rated ? t('rated.rated') : t('rated.friendly');
   return (
-    <span className={`rated-badge ${rated ? 'is-rated' : 'is-friendly'} is-${size}${className ? ` ${className}` : ''}`}>
+    <span
+      className={`rated-badge ${rated ? 'is-rated' : 'is-friendly'} is-${size}${iconOnly ? ' is-icon' : ''}${className ? ` ${className}` : ''}`}
+      title={iconOnly ? word : undefined}
+    >
       {rated ? <RatedIcon size={size === 'sm' ? 12 : 14} /> : <FriendlyIcon size={size === 'sm' ? 12 : 14} />}
-      {rated ? t('rated.rated') : t('rated.friendly')}
+      {iconOnly ? <span className="sr-only">{word}</span> : word}
     </span>
   );
 }

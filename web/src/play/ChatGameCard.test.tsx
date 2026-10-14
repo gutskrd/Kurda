@@ -37,6 +37,12 @@ describe('ChatGameCard', () => {
     expect(calls.some((c: Call) => c.method === 'POST' && c.path === '/wordle/battles/b1/join')).toBe(true);
   });
 
+  it('says on the card whether the game is Rated or Friendly, before anyone joins', async () => {
+    fakeApi({ [CARD]: card({ summary: { difficulty: 'easy', rated: true } }) });
+    renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
+    expect(await screen.findByText('Rated')).toBeInTheDocument();
+  });
+
   it('opens the game for someone already in it', async () => {
     fakeApi({ [CARD]: card({ isMember: true, canJoin: false, status: 'started' }) });
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
