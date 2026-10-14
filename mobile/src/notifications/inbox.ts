@@ -20,6 +20,10 @@ export type DeepLink =
   | { screen: 'Chat'; params: { userId: string; username: string } }
   /** an invite to play: accepted on the way, into the game's lobby */
   | { screen: 'PlayInvite'; params: { inviteId: string; game: PlayGame; lobbyId: string } }
+  /** a badge earned (one, or the day's bundle): the badges page */
+  | { screen: 'Badges' }
+  /** safe this week, moved up a league, a Pêla week: the league */
+  | { screen: 'League' }
   // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
   | SocialDeepLink;
 
@@ -45,6 +49,9 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     const lobbyId = str(data.lobbyId);
     return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
   }
+  // progress (contract 4): badges and the weekly league
+  if (data.kind === 'badge') return { screen: 'Badges' };
+  if (data.kind === 'league_safe' || data.kind === 'league_promotion' || data.kind === 'league_trophy') return { screen: 'League' };
   switch (data.screen) {
     case 'EventQuests':
       return { screen: 'EventQuests' };

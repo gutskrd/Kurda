@@ -2,7 +2,7 @@
 
 import type { TranslationKey } from '../i18n/translations.js';
 
-export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'marketing'] as const;
+export const NOTIFICATION_CATEGORIES = ['streak', 'friends', 'games', 'events', 'progress', 'marketing'] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 
 /**
@@ -17,6 +17,7 @@ export const CATEGORY_LABEL: Record<NotificationCategory, TranslationKey> = {
   friends: 'notifications.pref.friends',
   games: 'notifications.pref.games',
   events: 'notifications.pref.events',
+  progress: 'notifications.pref.progress',
   marketing: 'notifications.pref.news',
 };
 
@@ -25,6 +26,8 @@ export interface NotificationPrefs {
   friends: boolean;
   games: boolean;
   events: boolean;
+  /** leagues and badges: a promotion, safe this week, a badge earned (off by default for a minor) */
+  progress: boolean;
   marketing: boolean;
   quietStartMin: number | null;
   quietEndMin: number | null;

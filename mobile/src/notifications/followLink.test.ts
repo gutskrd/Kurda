@@ -69,3 +69,40 @@ describe('notificationText', () => {
     expect(notificationText({ title: 'Streak', body: 'Keep going', data: {} }, t as never, 'de')).toEqual({ title: 'Streak', body: 'Keep going' });
   });
 });
+
+describe('progress notifications (contract 4)', () => {
+  const t = (key: string, vars?: Record<string, string | number>) =>
+    vars ? `${key}(${Object.entries(vars).map(([k, v]) => `${k}=${v}`).join(',')})` : key;
+
+  it('goes to the badges page and to the league', async () => {
+    const f = fakes();
+    await followDeepLink({ screen: 'Badges' }, f.navigation, f.client);
+    await followDeepLink({ screen: 'League' }, f.navigation, f.client);
+    expect(f.went).toEqual([
+      ['Badges', undefined],
+      ['League', undefined],
+    ]);
+  });
+
+  it('writes its own words for a badge, in the reader’s language, naming the badge from the catalogue', () => {
+    const item = { title: 'A new badge', body: 'You earned Agir.', data: { kind: 'badge', key: 'agir', tier: '2' } };
+    expect(notificationText(item, t as never, 'en')).toEqual({ title: 'A new badge', body: 'You earned Agir.' });
+    expect(notificationText(item, t as never, 'de')).toEqual({ title: 'notifications.badge.title', body: 'notifications.badge.body(name=badges.agir.name)' });
+  });
+
+  it('does not name a secret, and bundles a day without one', () => {
+    expect(notificationText({ title: '', body: '', data: { kind: 'badge', key: 'tire-rast' } }, t as never, 'tr').body).toBe('notifications.badge.secretBody');
+    expect(notificationText({ title: '', body: '', data: { kind: 'badge', day: '2026-10-14' } }, t as never, 'tr').body).toBe('notifications.badge.dayBody');
+  });
+
+  it('says the league news calmly, naming the new league when it knows it', () => {
+    expect(notificationText({ title: '', body: '', data: { kind: 'league_promotion', tier: 'cem' } }, t as never, 'ar').body).toBe(
+      'notifications.leagueUp.body(tier=leagues.tier.cem)',
+    );
+    expect(notificationText({ title: '', body: '', data: { kind: 'league_promotion', tier: 'bronze' } }, t as never, 'ar').body).toBe(
+      'notifications.leagueUp.bodyPlain',
+    );
+    expect(notificationText({ title: '', body: '', data: { kind: 'league_safe' } }, t as never, 'ckb').title).toBe('notifications.leagueSafe.title');
+    expect(notificationText({ title: '', body: '', data: { kind: 'league_trophy' } }, t as never, 'ckb').title).toBe('notifications.leagueTrophy.title');
+  });
+});

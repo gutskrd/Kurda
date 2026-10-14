@@ -35,6 +35,10 @@ import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
 import { LeagueScreen } from './src/leagues/LeagueScreen';
+import { RanksScreen } from './src/ranks/RanksScreen';
+import { SeasonScreen } from './src/ranks/SeasonScreen';
+import { BadgesScreen } from './src/badges/BadgesScreen';
+import { BadgeCelebrationHost } from './src/badges/BadgeCelebrationHost';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
 import { InboxScreen } from './src/inbox/InboxScreen';
@@ -156,13 +160,15 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
         { key: 'library', labelKey: 'library.title', icon: 'book', onPress: () => navigation.navigate('Library') },
         { key: 'memes', labelKey: 'memes.title', icon: 'image', onPress: () => navigation.navigate('Memes') },
         { key: 'events', labelKey: 'events.title', icon: 'star', onPress: () => navigation.navigate('EventQuests') },
-        { key: 'league', labelKey: 'rankings.title', icon: 'trophy', onPress: () => navigation.navigate('League') },
+        { key: 'league', labelKey: 'leagues.screenTitle', icon: 'trophy', onPress: () => navigation.navigate('League') },
+        { key: 'ranks', labelKey: 'ranks.title', icon: 'mountains', onPress: () => navigation.navigate('Ranks') },
       ],
     },
     {
       titleKey: 'nav.menu.yours',
       links: [
         { key: 'saved', labelKey: 'saved.title', icon: 'bookmark', onPress: () => navigation.navigate('Saved') },
+        { key: 'badges', labelKey: 'badges.title', icon: 'medal', onPress: () => navigation.navigate('Badges') },
         { key: 'tags', labelKey: 'tags.title', icon: 'star', onPress: () => navigation.navigate('Tags') },
         { key: 'shop', labelKey: 'profile.shop', icon: 'cart', badge: giftBadge, onPress: () => navigation.navigate('Shop') },
         { key: 'settings', labelKey: 'settings.title', icon: 'gear', onPress: () => navigation.navigate('Settings') },
@@ -236,6 +242,8 @@ function SignedInRoot() {
   return (
     <RealtimeProvider>
       <PushRegistration />
+      {/* a badge just earned has its moment over whatever screen is up, once a game's own result has had its turn */}
+      <BadgeCelebrationHost>
       <RootStack.Navigator
         screenOptions={{
           headerShown: false,
@@ -261,6 +269,15 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => <LeagueScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Ranks" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <RanksScreen game={route.params?.game} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Season" options={{ presentation: 'card' }}>
+        {({ navigation }) => <SeasonScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Badges" options={{ presentation: 'card' }}>
+        {({ navigation }) => <BadgesScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="UserProfile" options={{ presentation: 'card' }}>
         {({ route, navigation }) => (
@@ -419,6 +436,7 @@ function SignedInRoot() {
       <InviteBanner />
       {/* over every screen: a gift that arrives, a warning to read once */}
       <SocialOverlays />
+      </BadgeCelebrationHost>
     </RealtimeProvider>
   );
 }

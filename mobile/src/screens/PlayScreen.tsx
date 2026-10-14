@@ -17,6 +17,7 @@ import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
 import { useAuth } from '../auth/AuthContext';
 import { listStories } from '../stories/api';
+import { RanksSection } from '../ranks/RanksSection';
 
 /**
  * The middle of the bar: everything you open in order to do something.
@@ -92,6 +93,9 @@ export function PlayScreen() {
             </Pressable>
           ))}
         </View>
+
+        {/* your rank in each game with opponents, and the season they belong to */}
+        <RanksSection />
 
         <GlassCard style={styles.card}>
           <Icon name="story" size={56} tone="primary" />

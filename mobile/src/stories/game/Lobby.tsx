@@ -30,6 +30,8 @@ import { initialSetup, type SetupState } from '../setup';
 import { storyTextProps, storyTextStyle } from '../storyText';
 import { Card, Note, SectionLabel, Sheet } from '../ui';
 import { ExtraTimeSwitch } from './ExtraTimeSwitch';
+import { LobbyRated } from '../../ranks/Rated';
+import { seatNamer } from '../../play/lobby';
 
 /** A player's name as this viewer may see it: their own, a friend's, or "Player 3". */
 export function playerName(p: Pick<StoryGamePlayer, 'name' | 'seat' | 'isMe'>, t: (k: 'stories.player' | 'games.you', v?: Record<string, string | number>) => string): string {
@@ -52,10 +54,13 @@ export function spelledCode(code: string): string {
 export function Lobby({
   view,
   apply,
+  refresh,
   onLeft,
 }: {
   view: StoryGameView;
   apply: (res: ApiResult<StoryGameView>) => ApiError | null;
+  /** ask for the game again (after the host changes Rated/Friendly) */
+  refresh?: () => void;
   onLeft: () => void;
 }): React.JSX.Element {
   const { client } = useAuth();
@@ -133,6 +138,17 @@ export function Lobby({
           <ClayButton label={t('stories.lobby.changeSettings')} icon="gear" variant="outline" onPress={() => setEditing(true)} />
         ) : null}
       </Card>
+
+      {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+      <LobbyRated
+        game="stories"
+        lobbyId={view.id}
+        rated={view.rated}
+        isHost={view.isHost}
+        players={active}
+        seatName={seatNamer(view.players, t)}
+        onChanged={() => refresh?.()}
+      />
 
       {view.code ? (
         <Card style={styles.card}>

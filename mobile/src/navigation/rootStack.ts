@@ -1,4 +1,5 @@
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RankedGame } from '@kurda/shared';
 
 /**
  * Root stack sitting above the tab navigator so a lesson can be pushed as a
@@ -10,6 +11,12 @@ export type RootStackParamList = {
   Practice: undefined;
   Shop: undefined;
   League: undefined;
+  /** Game Ranks up close: a game's rank, the climb, its boards (the Play tab's rank cards open it) */
+  Ranks: { game?: RankedGame } | undefined;
+  /** The season: days left, its rewards, last season, the frames you own */
+  Season: undefined;
+  /** Every badge by family, and the three for the profile */
+  Badges: undefined;
   /**
    * Somebody else's profile.
    *

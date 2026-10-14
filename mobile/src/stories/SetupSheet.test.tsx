@@ -5,6 +5,7 @@ import type { StoryGameView, StoryListItem } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { resetPrefsCache } from './prefs';
+import { resetRatedChoices } from '../ranks/ratedPrefs';
 import { SetupSheet } from './SetupSheet';
 
 vi.mock('react-native', () => import('../play/testing/native'));
@@ -45,6 +46,7 @@ describe('SetupSheet', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
+    resetRatedChoices();
   });
   afterEach(cleanup);
 
@@ -121,7 +123,29 @@ describe('SetupSheet', () => {
       timerSeconds: 30,
       textDuring: 'hidden',
       access: 'friends',
+      // with a friend: the host's Rated/Friendly choice, Friendly when nothing was ever chosen
+      rated: false,
     });
+  });
+
+  it('asks Rated or Friendly of a game with others, and never of a game alone', async () => {
+    const client = fakeClient({
+      'GET /story-games/options': ok({ canHostOpen: false }),
+      'GET /ranks/preferences': ok({ preferences: { stories: true } }),
+      'POST /story-games': ok(created),
+    });
+    testAuth.client = client;
+    renderWithProviders(
+      <SetupSheet dialect="kurmanci" stories={STORIES} initialMode="duo" onClose={() => undefined} onCreated={() => undefined} />,
+    );
+    // starts where the host left it last time (the server remembers)
+    await waitFor(() => expect(screen.getByRole('radio', { name: /^Rated\./ }).getAttribute('aria-checked')).toBe('true'));
+    fireEvent.click(screen.getByRole('radio', { name: /^Friendly\./ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Create game' }));
+    await waitFor(() => expect(client.calls.some((c) => c.method === 'POST')).toBe(true));
+    expect((client.calls.find((c) => c.method === 'POST')?.body as { rated?: boolean }).rated).toBe(false);
+    fireEvent.click(screen.getByRole('radio', { name: 'Just me' }));
+    expect(screen.queryByRole('radiogroup', { name: 'Game type' })).toBeNull();
   });
 
   it('says why a game could not be made, in words, and stays open', async () => {

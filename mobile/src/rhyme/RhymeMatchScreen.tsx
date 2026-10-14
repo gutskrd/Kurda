@@ -13,7 +13,10 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { LobbyPeople, useLobbyRefresh } from '../play/lobby';
+import { LobbyPeople, seatNamer, useLobbyRefresh } from '../play/lobby';
+import { LobbyRated, RatedChoice, RatedPill } from '../ranks/Rated';
+import { useRatedChoice } from '../ranks/ratedPrefs';
+import { RankResultPanel } from '../ranks/RankResultPanel';
 import { useQuietInvites } from '../play/quietInvites';
 import { InviteSheet } from '../play/InviteSheet';
 import { RematchPanel } from '../play/RematchPanel';
@@ -94,6 +97,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const { colors } = useTheme();
   const { t } = useI18n();
   const [dialect, setDialect] = useState<Dialect>('kurmanci');
+  const [rated, setRated] = useRatedChoice('rhyme-match');
   const [link, setLink] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -101,7 +105,7 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
   const create = async (): Promise<void> => {
     setBusy(true);
     setError(null);
-    const res = await createMatch(client, dialect);
+    const res = await createMatch(client, dialect, rated);
     setBusy(false);
     if (res.ok) onEnter(res.data.id);
     else setError(res.error.code === 'EMPTY_LEXICON' ? t('games.emptyPool') : describeError(res.error, t));
@@ -128,6 +132,10 @@ function CreateMatch({ onEnter }: { onEnter: (id: string) => void }): React.JSX.
             onChange={setDialect}
             labelOf={(d) => DIALECT_NAME[d]}
           />
+        </View>
+        {/* Rated or Friendly, before the room exists: the host can still change it in the lobby */}
+        <View style={styles.stretch}>
+          <RatedChoice value={rated} onChange={setRated} />
         </View>
         <ClayButton
           label={busy ? t('games.creating') : t('games.rhymeMatch.create')}
@@ -299,6 +307,20 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
         {match.me != null ? (
           <LobbyPeople game="rhyme-match" lobbyId={id} players={match.players ?? []} isHost={isHost} maxPlayers={match.maxPlayers} />
         ) : null}
+        {/* Rated or Friendly, said before anyone joins; the host may change it here and only here */}
+        {match.me != null ? (
+          <LobbyRated
+            game="rhyme-match"
+            lobbyId={id}
+            rated={match.rated}
+            isHost={isHost}
+            players={playerCount}
+            seatName={seatNamer(match.players ?? [], t)}
+            onChanged={() => void load()}
+          />
+        ) : match.rated ? (
+          <RatedPill rated={match.rated.rated} />
+        ) : null}
         {notice ? <Text style={[styles.error, { color: colors.danger }]}>{notice}</Text> : null}
         {match.me == null ? (
           <ClayButton
@@ -331,6 +353,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
         <Text style={[styles.verdict, { color: colors.primary }]}>
           {mine?.rank === 1 ? t('games.youWon') : t('games.rhymeMatch.over')}
         </Text>
+        {/* what this game did to your rank, with its one plain reason — before the table */}
+        {match.rated?.rated ? <RankResultPanel game="rhyme-match" gameRef={id} damped={match.rated.damped} /> : null}
         {results ? (
           <>
             <Text style={[styles.blurb, { color: colors.textSecondary }]}>
@@ -378,6 +402,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
   // ---- the timed round -------------------------------------------------------
   return (
     <>
+      {/* the game's header says what it is playing for, decided at the start */}
+      {match.rated ? <RatedPill rated={match.rated.counts ?? match.rated.rated} small /> : null}
       <View style={styles.stage}>
         <View>
           <Text style={[styles.label, { color: colors.textSecondary }]}>{t('games.rhyme.rhymeWith')}</Text>

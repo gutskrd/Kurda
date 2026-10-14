@@ -15,6 +15,7 @@ import { SkillNodeView } from '../coursemap/SkillNodeView';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { EventBanner } from '../events/EventBanner';
+import { LeagueLine } from '../leagues/LeagueLine';
 import { courseRows, isLaunchable, stateHint, type CourseEntry, type MapRow } from '../coursemap/node';
 import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -105,6 +106,8 @@ export function LearnScreen({ onBack }: { onBack: () => void }) {
           <GoalPicker value={goal.goal} onChange={changeGoal} />
         </View>
       ) : null}
+      {/* the week: the league and your place in it (or your own week), and the weekly goal */}
+      <LeagueLine />
       <ClayButton label={t('practice.title')} icon="bolt" tone="primary" onPress={() => navigation.navigate('Practice')} style={styles.practice} />
       <EventBanner />
       <DailyRewardCard />

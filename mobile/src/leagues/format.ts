@@ -1,75 +1,118 @@
-/** Pure league/leaderboard view helpers (KUR-064) — no React Native. */
+/**
+ * Pure Learning League view helpers (contract 4 §L, §U) — no React Native.
+ *
+ * The ten gem-named tiers this file used to carry are gone, and with them
+ * their colours, emoji and the countdown: the six water tiers live in the
+ * shared catalogue, their names in the catalogue of each language, and the
+ * week's end is said as a calm local time ("Mon 01:00"), never as a clock
+ * running down. A tier the app does not know is shown as no tier at all —
+ * never the made-up "bronze" an empty profile used to wear.
+ */
+import { isLeagueTier, type LeagueStandingRow, type LeagueTier, type LeagueWeekResult, type LeagueZone } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
-export type Zone = 'promotion' | 'demotion' | 'safe';
+type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
-/** Server mirror: only demote when the cohort is big enough (KUR-062). */
-export const MIN_FOR_DEMOTION = 10;
-
-/**
- * What a tier is called, and what it looks like.
- *
- * `labelKey` rather than a word: the ten names were written here in English and
- * rendered straight onto the rankings screen, so nine languages read "Bronze
- * League". The colour and the emoji are the same everywhere; only the name is
- * anybody's language.
- *
- * A tier the server invents that this map does not know still has to draw
- * something, so the fallback keeps the raw key as its own label and says so
- * with a null `labelKey` — there is nothing to look up.
- */
-export interface TierMeta {
-  /** the catalogue entry for this tier's name, or null for an unknown tier */
-  labelKey: TranslationKey | null;
-  /** what to show when there is no catalogue entry: the tier as the server named it */
-  label: string;
-  color: string;
-  emoji: string;
-}
-
-export const TIER_META: Record<string, TierMeta> = {
-  bronze: { labelKey: 'leagues.tier.bronze', label: 'bronze', color: '#CD7F32', emoji: '🥉' },
-  silver: { labelKey: 'leagues.tier.silver', label: 'silver', color: '#9AA5B1', emoji: '🥈' },
-  gold: { labelKey: 'leagues.tier.gold', label: 'gold', color: '#E8B923', emoji: '🥇' },
-  sapphire: { labelKey: 'leagues.tier.sapphire', label: 'sapphire', color: '#2D6CDF', emoji: '🔷' },
-  ruby: { labelKey: 'leagues.tier.ruby', label: 'ruby', color: '#C81E4A', emoji: '🔺' },
-  emerald: { labelKey: 'leagues.tier.emerald', label: 'emerald', color: '#2E9E6B', emoji: '💚' },
-  amethyst: { labelKey: 'leagues.tier.amethyst', label: 'amethyst', color: '#9B59B6', emoji: '🟣' },
-  pearl: { labelKey: 'leagues.tier.pearl', label: 'pearl', color: '#8FA0B3', emoji: '🤍' },
-  obsidian: { labelKey: 'leagues.tier.obsidian', label: 'obsidian', color: '#3A3F44', emoji: '⬛' },
-  diamond: { labelKey: 'leagues.tier.diamond', label: 'diamond', color: '#4FC3E8', emoji: '💎' },
+export const LEAGUE_NAME_KEY: Record<LeagueTier, TranslationKey> = {
+  dilop: 'leagues.tier.dilop',
+  kani: 'leagues.tier.kani',
+  cem: 'leagues.tier.cem',
+  gol: 'leagues.tier.gol',
+  derya: 'leagues.tier.derya',
+  okyanus: 'leagues.tier.okyanus',
 };
 
-export function tierMeta(tier: string): TierMeta {
-  return TIER_META[tier] ?? { labelKey: null, label: tier, color: '#9AA5B1', emoji: '🏅' };
+export const LEAGUE_MEANING_KEY: Record<LeagueTier, TranslationKey> = {
+  dilop: 'leagues.meaning.dilop',
+  kani: 'leagues.meaning.kani',
+  cem: 'leagues.meaning.cem',
+  gol: 'leagues.meaning.gol',
+  derya: 'leagues.meaning.derya',
+  okyanus: 'leagues.meaning.okyanus',
+};
+
+/** A stored tier as one the app knows, or null (nothing shown rather than a guess). */
+export function knownTier(tier: unknown): LeagueTier | null {
+  return isLeagueTier(tier) ? tier : null;
+}
+
+/** "Kanî" — Kurmancî everywhere, Soranî script in ckb. */
+export function leagueName(t: Translate, tier: LeagueTier): string {
+  return t(LEAGUE_NAME_KEY[tier]);
+}
+
+/** What the name means, or null where it would only repeat it. */
+export function leagueMeaning(t: Translate, tier: LeagueTier): string | null {
+  const meaning = t(LEAGUE_MEANING_KEY[tier]);
+  return meaning.trim().toLocaleLowerCase() === leagueName(t, tier).trim().toLocaleLowerCase() ? null : meaning;
+}
+
+/** "Kanî League", "Kanî League (Spring)" for a screen reader. */
+export function leagueLabel(t: Translate, tier: LeagueTier): string {
+  const title = t('leagues.leagueName', { tier: leagueName(t, tier) });
+  const meaning = leagueMeaning(t, tier);
+  return meaning ? `${title} (${meaning})` : title;
 }
 
 /**
- * Which zone a rank sits in for a cohort of `total`: the top `promoteCount`
- * promote, the bottom `demoteCount` demote (only when the cohort is big enough
- * to demote), everyone else is safe.
+ * When the week closes, in the reader's own time: the weekday and the hour
+ * ("Mon 01:00"), without a countdown. The close is Monday 00:00 UTC, which is
+ * Sunday evening in the Americas and Monday morning further east.
  */
-export function zoneFor(rank: number, total: number, promoteCount: number, demoteCount: number): Zone {
-  if (rank <= promoteCount) return 'promotion';
-  if (total >= MIN_FOR_DEMOTION && rank > total - demoteCount) return 'demotion';
-  return 'safe';
+export function weekEndText(endsAt: string, locale: string, timeZone?: string): string {
+  const at = new Date(endsAt);
+  if (Number.isNaN(at.getTime())) return '';
+  try {
+    return new Intl.DateTimeFormat(locale, { weekday: 'short', hour: '2-digit', minute: '2-digit', ...(timeZone ? { timeZone } : {}) }).format(at);
+  } catch {
+    return at.toISOString().slice(0, 16).replace('T', ' ');
+  }
 }
 
-/** Next Monday 00:00 UTC after the week's Monday (`weekKey` = 'YYYY-MM-DD'). */
-export function weekEnd(weekKey: string): number {
-  return Date.parse(`${weekKey}T00:00:00Z`) + 7 * 24 * 60 * 60 * 1000;
+/** 0…1 of the weekly goal. */
+export function goalFraction(xp: number, goal: number): number {
+  if (goal <= 0) return 1;
+  return Math.max(0, Math.min(1, xp / goal));
 }
 
-/** Human countdown to the week end, e.g. "2d 4h" or "3h 12m" or "Ended". */
-export function countdown(weekKey: string, now: number = Date.now()): string {
-  let ms = weekEnd(weekKey) - now;
-  if (ms <= 0) return 'Ended';
-  const d = Math.floor(ms / 86_400_000);
-  ms -= d * 86_400_000;
-  const h = Math.floor(ms / 3_600_000);
-  ms -= h * 3_600_000;
-  const m = Math.floor(ms / 60_000);
-  if (d > 0) return `${d}d ${h}h`;
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
+/** The table, with a heading where each zone begins, so the zones are read in words and not only seen. */
+export type TableItem = { kind: 'zone'; zone: Exclude<LeagueZone, 'stay'> } | { kind: 'row'; row: LeagueStandingRow } | { kind: 'gap' };
+
+export function tableItems(rows: readonly LeagueStandingRow[]): TableItem[] {
+  const items: TableItem[] = [];
+  let last: LeagueZone | null = null;
+  for (const row of rows) {
+    if (row.zone !== last) {
+      if (row.zone === 'promotion' || row.zone === 'demotion') items.push({ kind: 'zone', zone: row.zone });
+      else if (last !== null) items.push({ kind: 'gap' });
+      last = row.zone;
+    }
+    items.push({ kind: 'row', row });
+  }
+  return items;
+}
+
+/** What the zones mean in this group, for the line under the table's title. */
+export function zoneRules(
+  t: Translate,
+  view: { tier: LeagueTier | null; promoteCount: number; demoteCount: number; goalXp: number },
+): string[] {
+  const lines: string[] = [];
+  if (view.tier === 'okyanus') lines.push(t('leagues.rules.trophy'));
+  else if (view.promoteCount > 0) lines.push(t('leagues.rules.promote', { count: view.promoteCount, goal: view.goalXp }));
+  if (view.demoteCount > 0) lines.push(t('leagues.rules.demote', { count: view.demoteCount }));
+  else if (view.tier) lines.push(t('leagues.rules.noDemotion'));
+  return lines;
+}
+
+/** Last week, in one kind sentence: up, the same, a fresh start — or the trophy. */
+export function lastWeekLine(t: Translate, result: LeagueWeekResult): string {
+  if (result.mode === 'personal' || !result.tier) {
+    return result.goalMet ? t('leagues.lastWeek.goalMet', { xp: result.weeklyXp }) : t('leagues.lastWeek.personal', { xp: result.weeklyXp });
+  }
+  if (result.trophy) return t('leagues.lastWeek.trophy');
+  const after = result.tierAfter ?? result.tier;
+  if (result.outcome === 'promoted') return t('leagues.lastWeek.promoted', { tier: leagueName(t, after) });
+  if (result.outcome === 'demoted') return t('leagues.lastWeek.demoted', { tier: leagueName(t, after) });
+  return t('leagues.lastWeek.stayed', { tier: leagueName(t, after) });
 }

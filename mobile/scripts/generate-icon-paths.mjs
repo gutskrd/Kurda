@@ -133,6 +133,19 @@ const MAP = {
   timer: { glyph: 'Timer', note: 'a question with a clock, and extra time' },
   'user-plus': { glyph: 'UserPlus', note: 'invite a friend to play' },
   crown: { glyph: 'Crown', note: 'the host of a game' },
+
+  // --- Game Ranks, leagues and badges (contract 4) ---
+  mountains: { glyph: 'Mountains', note: 'Game Ranks: the climb from Deşt to Lûtke' },
+  medal: { glyph: 'Medal', note: 'badges' },
+  handshake: { glyph: 'Handshake', note: 'a Friendly game: played for fun, ranks stay as they are' },
+  'move-up': { glyph: 'CaretDoubleUp', weight: 'bold', note: 'the league’s promotion zone, said in words beside it too' },
+  'move-down': { glyph: 'CaretDoubleDown', weight: 'bold', note: 'the league’s demotion zone, said in words beside it too' },
+  'seal-check': { glyph: 'SealCheck', weight: 'fill', note: 'safe this week: the weekly goal is met' },
+  lock: { glyph: 'LockSimple', note: 'a badge tier not reached yet' },
+  question: { glyph: 'Question', note: 'a rank still settling (the "?" beside the points)' },
+  sparkle: { glyph: 'Sparkle', weight: 'fill', note: 'a celebration: a new division, tier or badge' },
+  calendar: { glyph: 'CalendarBlank', note: 'when a week or a season ends, in local time' },
+  'shield-fill': { glyph: 'ShieldCheck', weight: 'fill', note: 'a rank shield still covering a game' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

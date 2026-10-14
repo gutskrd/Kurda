@@ -5,6 +5,7 @@ import type { InviteLists, StoryListItem } from '@kurda/shared';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { resetPrefsCache } from '../stories/prefs';
+import { resetRatedChoices } from '../ranks/ratedPrefs';
 import { navigation } from './testing/navigation';
 import { InviteSheet, orderFriends, recentPlayers } from './InviteSheet';
 import type { FriendSummary } from './api';
@@ -86,6 +87,7 @@ describe('InviteSheet', () => {
   beforeEach(() => {
     localStorage.clear();
     resetPrefsCache();
+    resetRatedChoices();
     navigation.navigate.mockClear();
   });
   afterEach(cleanup);
@@ -106,6 +108,8 @@ describe('InviteSheet', () => {
     expect(screen.queryByLabelText('Search friends')).toBeNull();
     expect(screen.queryByRole('radio', { name: 'Azad, online now' })).toBeNull();
 
+    // the button waits for the stories to arrive (a Stories game needs one); under a loaded run they can come last
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('StoryGame', { id: 'g9' }));
     const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { chat: unknown; invite?: string[]; game: string };
@@ -154,13 +158,28 @@ describe('InviteSheet', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());
+    // the host's Rated/Friendly choice goes with the presets (Friendly when nothing was ever chosen)
     expect(client.calls.find((c) => c.path === '/play/lobbies')?.body).toEqual({
       game: 'wordle-battle',
-      settings: { difficulty: 'hard' },
+      settings: { difficulty: 'hard', rated: false },
       invite: undefined,
       chat: { groupId: 'grp-1' },
     });
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'b1' });
+  });
+
+  it('asks Rated or Friendly for a new game, says what each means, and sends the host’s choice', async () => {
+    const client = fakeClient(routes({ 'POST /play/lobbies': ok({ game: 'rhyme-match', lobbyId: 'm1', invited: 0 }) }));
+    testAuth.client = client;
+    renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={() => undefined} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'Rhyme Match' }));
+    expect(screen.getByRole('radiogroup', { name: 'Game type' })).toBeTruthy();
+    expect(screen.getByRole('radio', { name: /^Friendly\. Just for fun/ }).getAttribute('aria-checked')).toBe('true');
+    fireEvent.click(screen.getByRole('radio', { name: /^Rated\. Counts for your rank/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/play/lobbies')).toBe(true));
+    const sent = client.calls.find((c) => c.path === '/play/lobbies')?.body as { settings: Record<string, unknown> };
+    expect(sent.settings.rated).toBe(true);
   });
 
   it('asks more friends into a lobby that exists and says how many were asked', async () => {

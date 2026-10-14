@@ -19,6 +19,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { acceptInvite, declineInvite, listInvites } from './api';
 import { applyInviteEvent, liveInvites, nextExpiry } from './invites';
 import { GAME_NAME_KEY, summaryParts } from './labels';
+import { RatedPill } from '../ranks/Rated';
 import { useInvitesQuieted } from './quietInvites';
 import { lobbyRoute } from './routes';
 
@@ -255,6 +256,8 @@ function InviteCard({
                   {details}
                 </Text>
               ) : null}
+              {/* Rated or Friendly, before you say yes */}
+              {invite.summary.rated !== undefined ? <RatedPill rated={invite.summary.rated} small /> : null}
             </View>
             {/* folds it away without answering: the host hears nothing */}
             <Pressable onPress={() => setHidden(true)} accessibilityRole="button" accessibilityLabel={t('play.banner.hide')} style={styles.hide}>
