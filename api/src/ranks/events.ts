@@ -4,10 +4,9 @@ import type { PointsTier, RankedGame } from '@kurda/shared';
  * What Game Ranks tells the rest of the API, for the badges (contract-4 §B2:
  * evaluators "triggered by events … game finished … season closed").
  *
- * Usage — wherever the badge evaluators are wired (app.ts):
- *
- *   app.ranks.events.onRatedGameFinished((e) => badges.evaluateRanked(e.players.map((p) => p.userId)));
- *   app.ranks.events.onSeasonClosed((e) => badges.evaluateSeason(e.seasonId));
+ * The badges subscribe in `listenToRanks` (badges/rank-hooks.ts), which
+ * `createProgression` calls with the events of the RankService that rates the
+ * process's games (app.ts, and the worker's standalone story games).
  *
  * Both are told only after the transaction that did it has committed, so a
  * listener reading the tables sees the game or the season; and each is told
