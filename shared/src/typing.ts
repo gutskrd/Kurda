@@ -1019,12 +1019,13 @@ export interface KeyboardGuide {
 }
 
 /**
- * How to add a Kurdish keyboard, per platform — three or four steps, from
+ * How to add a Kurdish keyboard, per platform — two to four steps, from
  * research3-keyboards-review §1b. What there is to add differs: Android has
  * Kurdish (Latin) in Gboard; iPhone has a Soranî keyboard and no Kurmancî one;
- * Windows has Central Kurdish and no Latin Kurdish, and Turkish Q has every
- * Kurmancî letter; a Mac's ABC – Extended types all five; Linux has a Kurdish
- * Latin Q layout.
+ * Windows has Central Kurdish and no Latin Kurdish; a Mac's ABC – Extended
+ * types all five; Linux has a Kurdish Latin Q layout. Where there is no
+ * Kurdish keyboard to add, the guide says so and points at Hevalo's own
+ * on-screen keys — it never sends anybody to another language's keyboard.
  */
 export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   android: {
@@ -1046,8 +1047,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.android.switch',
-        en: 'To switch keyboards, touch and hold the space bar. No Kurdish (Latin)? Add {0} instead: it has ç and ş, and holding e, i or u gives ê, î, û.',
-        ui: ['Turkish'],
+        en: 'To switch keyboards, touch and hold the space bar. No Kurdish (Latin) in the list? Update {0} from the Play Store.',
+        ui: ['Gboard'],
       },
     ],
     sorani: [
@@ -1076,20 +1077,11 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
     kurmanci: [
       {
         key: 'keyboardGuide.ios.noKurmanci',
-        en: 'iPhone has no Kurmancî keyboard yet, but the English one gets you most of the way: touch and hold e, i, u or c to choose ê, î, û or ç.',
+        en: 'iPhone has no Kurdish (Kurmancî) keyboard yet, so Hevalo has its own: with the on-screen keys on, tap ç ê î ş û above the text box.',
       },
       {
-        key: 'keyboardGuide.ios.addTurkish',
-        en: 'For ş, add the Turkish keyboard: {0} → {1} → {2} → {3} → {4} → {5}.',
-        ui: ['Settings', 'General', 'Keyboard', 'Keyboards', 'Add New Keyboard', 'Turkish'],
-      },
-      {
-        key: 'keyboardGuide.ios.switch',
-        en: 'Tap the 🌐 key to switch between keyboards.',
-      },
-      {
-        key: 'keyboardGuide.ios.keyBar',
-        en: 'Or tap ç ê î ş û on the key bar above the text box — it works on every keyboard.',
+        key: 'keyboardGuide.ios.holdKeys',
+        en: 'On the iPhone’s keyboard you can also touch and hold e, i, u or c to choose ê, î, û or ç.',
       },
     ],
     sorani: [
@@ -1112,23 +1104,12 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
   windows: {
     kurmanci: [
       {
-        key: 'keyboardGuide.windows.open',
-        en: 'Open {0} → {1} → {2}.',
-        ui: ['Settings', 'Time & language', 'Language & region'],
+        key: 'keyboardGuide.windows.noKurmanci',
+        en: 'Windows has no Kurdish (Kurmancî) keyboard yet, so Hevalo has its own: with the on-screen keys on, click ç ê î ş û above the text box.',
       },
       {
-        key: 'keyboardGuide.windows.languageOptions',
-        en: 'Next to your language, choose {0} → {1}, then under {2} choose {3}.',
-        ui: ['⋯', 'Language options', 'Keyboards', 'Add a keyboard'],
-      },
-      {
-        key: 'keyboardGuide.windows.turkishQ',
-        en: 'Windows has no Kurmancî keyboard, but {0} has every letter: ç and ş have their own keys, and ^ (Shift+3) then e, i or u types ê, î, û.',
-        ui: ['Turkish Q'],
-      },
-      {
-        key: 'keyboardGuide.windows.switch',
-        en: 'Switch keyboards with Windows key + Space. On Turkish Q the i key types ı — Hevalo reads it as i.',
+        key: 'keyboardGuide.windows.typeRest',
+        en: 'Type everything else on your own keyboard — each letter you click goes in where your cursor is.',
       },
     ],
     sorani: [

@@ -38,10 +38,10 @@ describe('Get the Kurmancî keyboard', () => {
     const user = userEvent.setup();
     renderApp(<KeyboardGuide dialect="kurmanci" onClose={() => undefined} />);
 
-    expect(screen.getByText('Turkish Q', { selector: 'b' })).toBeInTheDocument();
+    expect(screen.getByText(/Windows has no Kurdish \(Kurmancî\) keyboard yet/)).toBeInTheDocument();
     await user.selectOptions(screen.getByRole('combobox'), 'mac');
     expect(screen.getByText('ABC – Extended', { selector: 'b' })).toBeInTheDocument();
-    expect(screen.queryByText('Turkish Q', { selector: 'b' })).not.toBeInTheDocument();
+    expect(screen.queryByText(/Windows has no Kurdish/)).not.toBeInTheDocument();
   });
 
   it('asks which device when it cannot tell', () => {

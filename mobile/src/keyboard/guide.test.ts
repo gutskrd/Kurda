@@ -16,11 +16,11 @@ describe('guidePlatform', () => {
 });
 
 describe('guideSteps', () => {
-  it('shows only one device’s three or four steps, for the variety', () => {
+  it('shows only one device’s two to four steps, for the variety', () => {
     for (const platform of ['ios', 'android'] as const) {
       for (const dialect of ['kurmanci', 'sorani'] as const) {
         const steps = guideSteps(platform, dialect);
-        expect(steps.length).toBeGreaterThanOrEqual(3);
+        expect(steps.length).toBeGreaterThanOrEqual(2);
         expect(steps.length).toBeLessThanOrEqual(4);
         expect(steps).toBe(KEYBOARD_GUIDES[platform][dialect]);
       }

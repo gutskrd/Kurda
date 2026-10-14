@@ -681,12 +681,12 @@ describe('findUntypeable', () => {
 });
 
 describe('keyboard guides', () => {
-  it('has three or four steps for each variety on every platform', () => {
+  it('has two to four steps for each variety on every platform', () => {
     expect(Object.keys(KEYBOARD_GUIDES).sort()).toEqual([...KEYBOARD_PLATFORMS].sort());
     for (const platform of KEYBOARD_PLATFORMS) {
       for (const dialect of ['kurmanci', 'sorani'] as const) {
         const steps = KEYBOARD_GUIDES[platform][dialect];
-        expect(steps.length, `${platform} ${dialect}`).toBeGreaterThanOrEqual(3);
+        expect(steps.length, `${platform} ${dialect}`).toBeGreaterThanOrEqual(2);
         expect(steps.length, `${platform} ${dialect}`).toBeLessThanOrEqual(4);
       }
     }
@@ -726,12 +726,23 @@ describe('keyboard guides', () => {
     // the way to Gboard's languages when its toolbar has no ⚙
     expect(names('android', 'kurmanci')).toContain('On-screen keyboard');
     expect(names('ios', 'sorani')).toContain('Kurdish, Sorani');
-    expect(names('windows', 'kurmanci')).toContain('Turkish Q');
     expect(names('windows', 'sorani')).toContain('Central Kurdish');
     expect(names('mac', 'kurmanci')).toContain('ABC – Extended');
     expect(names('mac', 'sorani')).toContain('Kurdish-Sorani');
     expect(names('linux', 'kurmanci')).toContain('Kurdish (Turkey, Latin Q)');
     expect(names('linux', 'sorani')).toContain('Kurdish (Iraq, Arabic-Latin)');
+  });
+
+  it('points a Kurmancî reader at a Kurdish keyboard or Hevalo’s own keys, never another language’s keyboard', () => {
+    for (const platform of KEYBOARD_PLATFORMS) {
+      for (const step of KEYBOARD_GUIDES[platform].kurmanci) {
+        expect(keyboardStepText(step), `${platform} ${step.key}`).not.toMatch(/Turkish|English/);
+      }
+    }
+    // where there is no Kurdish keyboard to add, the guide says so and offers the on-screen keys
+    for (const platform of ['ios', 'windows'] as const) {
+      expect(keyboardStepText(KEYBOARD_GUIDES[platform].kurmanci[0]!)).toMatch(/no Kurdish \(Kurmancî\) keyboard yet.*on-screen keys/);
+    }
   });
 
   it('puts a translated sentence’s placeholders back the same way', () => {
