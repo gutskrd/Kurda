@@ -36,6 +36,8 @@ export interface AnswerDeps {
   /** when the question stops taking answers for this player, or null when it never does */
   phaseEndsAt: string | null;
   sleep?: (ms: number) => Promise<void>;
+  /** true once the screen has moved past this question: the tries stop, as for NOT_CURRENT */
+  movedOn?: () => boolean;
 }
 
 const RETRYABLE: ReadonlySet<ApiError['kind']> = new Set(['network', 'server', 'rate_limited']);
@@ -61,5 +63,6 @@ export async function sendAnswer(deps: AnswerDeps): Promise<AnswerOutcome> {
       wait = Math.min(wait, left);
     }
     await sleep(wait);
+    if (deps.movedOn?.()) return { kind: 'not-current' };
   }
 }

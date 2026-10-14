@@ -78,6 +78,13 @@ export function Question({
     setStoryOpen(false);
   }, [q?.index]);
 
+  /*
+   * The question on screen now. An answer still on its way when the next
+   * question arrives must not land its "too late" or its choice on that one.
+   */
+  const shownIndex = useRef(q?.index);
+  shownIndex.current = q?.index;
+
   const left = timed ? secondsLeft(view.phaseEndsAt, serverNow()) : null;
   useEffect(() => {
     if (left !== null && left <= 10 && left > 0 && warned.current !== q?.index && q?.myChoice === null) {
@@ -95,12 +102,16 @@ export function Question({
 
   const answer = async (choice: number): Promise<void> => {
     if (locked || sending?.state === 'sending') return;
+    const index = q.index;
     setSending({ choice, state: 'sending' });
     const out = await sendAnswer({
-      send: () => answerQuestion(client, view.id, q.index, choice),
+      send: () => answerQuestion(client, view.id, index, choice),
       serverNow,
       phaseEndsAt: view.phaseEndsAt,
+      movedOn: () => shownIndex.current !== index,
     });
+    // the game has moved on meanwhile; the newer view already says where it is
+    if (shownIndex.current !== index) return;
     switch (out.kind) {
       case 'accepted':
         apply({ ok: true, data: out.view });

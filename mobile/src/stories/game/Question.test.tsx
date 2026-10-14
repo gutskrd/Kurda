@@ -148,6 +148,31 @@ describe('Question', () => {
     expect(announce).toHaveBeenCalledWith('Time ran out before your answer arrived, so it didn’t count.');
   });
 
+  it('lands nothing of an answer on the question after it, when the game moved on while it travelled', async () => {
+    let reply: (res: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({
+      'POST /story-games/g1/answers': () => new Promise((resolve) => (reply = resolve as (res: unknown) => void)),
+    });
+    const announce = vi.fn();
+    const apply = vi.fn(() => null);
+    const view = renderQuestion(gameView({ phaseEndsAt: new Date(Date.now() + 30_000).toISOString() }, { timerSeconds: 30 }), { announce, apply });
+    fireEvent.click(screen.getByRole('button', { name: '1. Sar' }));
+    expect(screen.getByText('Sending…')).toBeTruthy();
+    const next = gameView(
+      { phaseEndsAt: new Date(Date.now() + 30_000).toISOString(), question: question({ index: 1, prompt: 'Kê nan pijand?', options: ['Dayik', 'Bav', 'Zarok', 'Cîran'] }) },
+      { timerSeconds: 30 },
+    );
+    view.rerender(
+      <Question view={next} story={null} apply={apply} refresh={() => undefined} serverNow={() => Date.now()} announce={announce} onGloss={() => undefined} />,
+    );
+    expect(screen.getByRole('heading', { name: 'Question 2 of 5' })).toBeTruthy();
+    await act(async () => reply(fail({ code: 'TOO_LATE', status: 409 })));
+    expect(screen.queryByText('Time ran out before your answer arrived, so it didn’t count.')).toBeNull();
+    expect(announce).not.toHaveBeenCalledWith('Time ran out before your answer arrived, so it didn’t count.');
+    expect(screen.getByRole('button', { name: '1. Dayik' }).getAttribute('aria-selected')).not.toBe('true');
+    expect(apply).not.toHaveBeenCalled();
+  });
+
   it('keeps a refused choice so it can be sent again with one tap', async () => {
     let tries = 0;
     const client = fakeClient({

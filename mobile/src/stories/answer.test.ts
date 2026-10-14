@@ -41,6 +41,23 @@ describe('sendAnswer', () => {
     expect(await sendAnswer({ ...server([refused('TOO_LATE')]), phaseEndsAt: null })).toEqual({ kind: 'too-late' });
   });
 
+  it('stops trying once the screen has moved past the question', async () => {
+    const s = server([net, net, net]);
+    let moved = false;
+    const out = await sendAnswer({
+      ...s,
+      send: async () => {
+        const res = await s.send();
+        moved = s.sent.length === 2; // the next question arrived during the second try
+        return res;
+      },
+      phaseEndsAt: s.at(30_000),
+      movedOn: () => moved,
+    });
+    expect(out).toEqual({ kind: 'not-current' });
+    expect(s.sent).toHaveLength(2);
+  });
+
   it('keeps trying until the deadline plus the grace, and never after it', async () => {
     const s = server([]);
     const out = await sendAnswer({ ...s, phaseEndsAt: s.at(3_000) });
