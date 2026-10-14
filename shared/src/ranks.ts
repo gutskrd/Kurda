@@ -554,3 +554,59 @@ export interface SuspiciousPair {
   lastGameAt: string;
   score: number;
 }
+
+/** One rated game as the admin sees it: enough to find it again and to void it. */
+export interface AdminRatedGame {
+  game: RankedGame;
+  gameRef: string;
+  /** when its result was applied */
+  at: string;
+  /** players who were ranked in it */
+  players: number;
+  /** repeat-opponent damping (1 = full) */
+  weight: number;
+  voided: boolean;
+  voidReason: string | null;
+}
+
+/** A player's rated game, with what it did to them (`GET /admin/ranks/players/:userId`). */
+export interface AdminPlayerGame extends AdminRatedGame {
+  place: number | null;
+  left: boolean;
+  pointsBefore: number | null;
+  pointsAfter: number | null;
+  /** the reason code shown with the change (RANK_REASONS) */
+  reason: string | null;
+}
+
+/** `GET /admin/ranks/players/:userId`: their rank in every game and their latest rated games. */
+export interface AdminPlayerRanks {
+  ranks: RankCard[];
+  games: AdminPlayerGame[];
+}
+
+/** A rated game a suspicious pair played together (`GET /admin/ranks/pairs/:game/:a/:b`). */
+export interface AdminPairGame extends AdminRatedGame {
+  aPlace: number | null;
+  bPlace: number | null;
+}
+
+/** A season reward, before it is handed out or as it was (`GET /admin/seasons/:id/rewards`). */
+export interface AdminSeasonReward {
+  userId: string;
+  username: string;
+  /** the game of their best peak tier */
+  game: RankedGame;
+  tier: RankTier;
+  gems: number;
+  frameSku: string | null;
+  title: string | null;
+}
+
+/** `GET /admin/seasons/:id/rewards` */
+export interface AdminSeasonRewards {
+  /** who would be rewarded if the season closed now (an open season: Stêrk is judged only at its close) */
+  rewards: AdminSeasonReward[];
+  /** what was handed out already, with when */
+  given: Array<AdminSeasonReward & { grantedAt: string }>;
+}

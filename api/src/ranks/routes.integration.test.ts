@@ -152,6 +152,19 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
     expect((await get('/admin/ranks/top/wordle-battle')).statusCode).toBe(200);
     expect((await get('/admin/seasons')).json()).toHaveProperty('current');
     expect((await get('/admin/seasons/nope/rewards')).statusCode).toBe(400);
+    const rewards = await get(`/admin/seasons/${(await get('/admin/seasons')).json().current}/rewards`);
+    expect(rewards.json()).toEqual({ rewards: expect.any(Array), given: expect.any(Array) });
+
+    // a player's ranks and rated games, and a pair's games together: the host's battle with the mate
+    const player = await get(`/admin/ranks/players/${users.host!.id}`);
+    expect(player.statusCode).toBe(200);
+    expect(player.json().ranks.map((r: { game: string }) => r.game)).toEqual(['wordle-battle', 'rhyme-match', 'stories']);
+    expect(player.json().games).toEqual([expect.objectContaining({ game: 'wordle-battle', place: 1, voided: false })]);
+    expect((await get('/admin/ranks/players/00000000-0000-4000-8000-000000000000')).statusCode).toBe(404);
+    const pair = await get(`/admin/ranks/pairs/wordle-battle/${users.host!.id}/${users.mate!.id}`);
+    expect(pair.json().games).toEqual([expect.objectContaining({ aPlace: 1, bPlace: 2 })]);
+    expect((await get(`/admin/ranks/pairs/race/${users.host!.id}/${users.mate!.id}`)).statusCode).toBe(400);
+    expect((await call('stranger', 'GET', `/admin/ranks/players/${users.host!.id}`)).statusCode).toBe(403);
     const ended = await app.inject({
       method: 'POST',
       url: '/admin/seasons/end',

@@ -318,6 +318,37 @@ describe('useDialogs', () => {
     await user.click(screen.getByRole('button', { name: 'Save' }));
     expect(await screen.findByText('saved “”')).toBeInTheDocument();
   });
+
+  it('asks a dangerous change with a reason as an alert a stray tap cannot close', async () => {
+    const user = userEvent.setup();
+    function VoidPage(): React.JSX.Element {
+      const dialogs = useDialogs();
+      const [said, setSaid] = useState('');
+      return (
+        <>
+          <button
+            onClick={async () => {
+              const why = await dialogs.prompt({ title: 'Void this game?', label: 'Why', confirmLabel: 'Void it', tone: 'danger', multiline: true });
+              setSaid(why ?? 'cancelled');
+            }}
+          >
+            Void
+          </button>
+          <output>{said}</output>
+        </>
+      );
+    }
+    renderUi(<VoidPage />);
+    await user.click(screen.getByRole('button', { name: 'Void' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Void this game?' });
+    expect(within(dialog).getByRole('button', { name: 'Void it' })).toHaveClass('danger-solid');
+    await user.type(within(dialog).getByLabelText('Why'), 'win trading');
+    await user.click(document.querySelector('.layer-scrim')!);
+    // still open, with what was typed
+    expect(within(screen.getByRole('alertdialog')).getByLabelText('Why')).toHaveValue('win trading');
+    await user.click(within(dialog).getByRole('button', { name: 'Void it' }));
+    expect(await screen.findByText('win trading')).toBeInTheDocument();
+  });
 });
 
 describe('Toast', () => {

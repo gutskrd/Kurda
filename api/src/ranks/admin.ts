@@ -8,6 +8,9 @@ import {
   pointsOf,
   seasonOf,
   tierOf,
+  type AdminPairGame,
+  type AdminPlayerGame,
+  type AdminRatedGame,
   type RankTier,
   type RankedGame,
   type SuspiciousPair,
@@ -33,6 +36,31 @@ interface EventRow {
   season_id: string;
   state_before: StoredState;
   state_after: StoredState;
+}
+
+interface GameRow {
+  game: RankedGame;
+  game_ref: string;
+  applied_at: Date;
+  weight: number;
+  voided_at: Date | null;
+  void_reason: string | null;
+  players: number;
+}
+
+/** How many were ranked in the game `g` (a subquery for the admin's game lists). */
+const PLAYERS_SQL = `(SELECT count(*)::int FROM rated_game_players q WHERE q.game = g.game AND q.game_ref = g.game_ref AND q.place IS NOT NULL)`;
+
+function ratedGameOf(r: GameRow): AdminRatedGame {
+  return {
+    game: r.game,
+    gameRef: r.game_ref,
+    at: r.applied_at.toISOString(),
+    players: r.players,
+    weight: Number(r.weight),
+    voided: r.voided_at !== null,
+    voidReason: r.void_reason,
+  };
 }
 
 /**
@@ -157,6 +185,58 @@ export class RankAdmin {
       lastGameAt: r.last_game_at.toISOString(),
       score: r.score,
     }));
+  }
+
+  /**
+   * A player's latest rated games, newest first, with what each did to them —
+   * how an admin finds the game to void from the player's page. Null when
+   * there is no such account.
+   */
+  async playerGames(userId: string, limit = 30): Promise<AdminPlayerGame[] | null> {
+    const exists = await this.pool.query(`SELECT 1 FROM users WHERE id = $1`, [userId]);
+    if (!exists.rowCount) return null;
+    const rows = await this.pool.query<GameRow & {
+      place: number | null;
+      left_game: boolean;
+      points_before: number | null;
+      points_after: number | null;
+      reason: string | null;
+    }>(
+      `SELECT g.game, g.game_ref, g.applied_at, g.weight, g.voided_at, g.void_reason, p.place, p.left_game,
+              ${PLAYERS_SQL} AS players, e.points_before, e.points_after, e.reason
+         FROM rated_game_players p
+         JOIN rated_games g ON g.game = p.game AND g.game_ref = p.game_ref
+         LEFT JOIN rating_events e ON e.user_id = p.user_id AND e.game = p.game AND e.game_ref = p.game_ref AND e.kind = 'game'
+        WHERE p.user_id = $1 AND g.applied_at IS NOT NULL AND g.outcome = 'rated'
+        ORDER BY g.applied_at DESC, g.game_ref LIMIT $2`,
+      [userId, Math.min(Math.max(limit, 1), 200)],
+    );
+    return rows.rows.map((r) => ({
+      ...ratedGameOf(r),
+      place: r.place,
+      left: r.left_game,
+      pointsBefore: r.points_before,
+      pointsAfter: r.points_after,
+      reason: r.reason,
+    }));
+  }
+
+  /**
+   * The rated games a pair played together in one game, newest first: what a
+   * suspicious pair's row opens, so the games to void are a click away.
+   */
+  async pairGames(game: RankedGame, a: string, b: string, limit = 100): Promise<AdminPairGame[]> {
+    const rows = await this.pool.query<GameRow & { a_place: number | null; b_place: number | null }>(
+      `SELECT g.game, g.game_ref, g.applied_at, g.weight, g.voided_at, g.void_reason, pa.place AS a_place, pb.place AS b_place,
+              ${PLAYERS_SQL} AS players
+         FROM rated_games g
+         JOIN rated_game_players pa ON pa.game = g.game AND pa.game_ref = g.game_ref AND pa.user_id = $2
+         JOIN rated_game_players pb ON pb.game = g.game AND pb.game_ref = g.game_ref AND pb.user_id = $3
+        WHERE g.game = $1 AND g.applied_at IS NOT NULL AND g.outcome = 'rated'
+        ORDER BY g.applied_at DESC, g.game_ref LIMIT $4`,
+      [game, a, b, Math.min(Math.max(limit, 1), 500)],
+    );
+    return rows.rows.map((r) => ({ ...ratedGameOf(r), aPlace: r.a_place, bPlace: r.b_place }));
   }
 
   /**

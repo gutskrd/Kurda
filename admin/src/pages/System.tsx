@@ -12,29 +12,19 @@ interface JobDef {
   describe: (res: Record<string, unknown>) => string;
 }
 
+/**
+ * The jobs a person may run from here. The weekly league settle and the
+ * season close used to be here too; they live on the Leagues and Seasons
+ * pages now, beside what they change and with their status. The board by
+ * rating went with the old Elo rating: game ranks have boards of their own.
+ */
 const JOBS: JobDef[] = [
   {
     key: 'leaderboards',
-    label: 'Rebuild the leaderboards',
-    what: 'Recounts every leaderboard from the scores. Safe at any time; nothing is lost.',
+    label: 'Rebuild the weekly XP board',
+    what: 'Recounts the weekly XP leaderboard from the scores. Safe at any time; nothing is lost.',
     path: '/admin/leaderboards/rebuild',
-    describe: (r) => `Rebuilt: ${String(r.rating ?? 0)} by rating, ${String(r.weekly_xp ?? 0)} by weekly XP.`,
-  },
-  {
-    key: 'leagues',
-    label: 'Settle finished league weeks',
-    what: 'Moves people up and down at the end of a league week. It runs by itself; run it now only if a week has not settled.',
-    path: '/admin/leagues/settle',
-    ask: 'People in weeks that have ended are moved up or down a league now, and promotions pay their Gems.',
-    describe: (r) => `Settled ${String(r.settled ?? 0)} league ${Number(r.settled) === 1 ? 'group' : 'groups'}.`,
-  },
-  {
-    key: 'seasons',
-    label: 'End seasons that are due',
-    what: 'Closes seasons past their end date and hands out their rewards. It runs by itself.',
-    path: '/admin/seasons/end',
-    ask: 'Seasons past their end are closed now and their rewards handed out.',
-    describe: (r) => `Ended ${String(r.processed ?? 0)} ${Number(r.processed) === 1 ? 'season' : 'seasons'}.`,
+    describe: (r) => `Rebuilt the weekly XP board: ${Number(r.weekly_xp ?? 0).toLocaleString()} ${Number(r.weekly_xp) === 1 ? 'learner' : 'learners'}.`,
   },
 ];
 
@@ -100,7 +90,14 @@ function Jobs(): React.JSX.Element {
   }
 
   return (
-    <Section title="Maintenance jobs" description="Each is safe to run twice: a second run finds nothing left to do.">
+    <Section
+      title="Maintenance jobs"
+      description={
+        <>
+          Each is safe to run twice. The league settle and the season close are on the <a href="#/leagues">Leagues</a> and <a href="#/seasons">Seasons</a> pages.
+        </>
+      }
+    >
       <ul className="job-list">
         {JOBS.map((job) => (
           <li key={job.key} className="job">

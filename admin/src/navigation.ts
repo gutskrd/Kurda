@@ -57,6 +57,7 @@ const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
+const RANK_TOOLS = { roles: ['admin'] } as const; // requireRoles('admin'): ranks/routes.ts, leagues/routes.ts, badges/routes.ts
 
 export const NAV_GROUPS = [
   { key: 'overview', label: 'Overview' },
@@ -65,6 +66,7 @@ export const NAV_GROUPS = [
   { key: 'moderation', label: 'Moderation' },
   { key: 'content', label: 'Content' },
   { key: 'games', label: 'Games' },
+  { key: 'ranks', label: 'Ranks & rewards' },
   { key: 'economy', label: 'Economy' },
   { key: 'settings', label: 'Settings' },
 ] as const;
@@ -107,13 +109,18 @@ export const NAV: readonly NavEntry[] = [
 
   { id: 'lessons', label: 'Lessons', group: 'content', icon: 'book', page: 'lessons', access: LESSON_EDITORS, keywords: 'content exercises courses' },
   { id: 'stories', label: 'Stories', group: 'content', icon: 'story', page: 'stories', access: STORY_EDITORS, keywords: 'reading quiz' },
-  { id: 'tags', label: 'Tags & badges', group: 'content', icon: 'tag', page: 'tags', access: TAG_EDITORS },
+  { id: 'tags', label: 'Profile tags', group: 'content', icon: 'tag', page: 'tags', access: TAG_EDITORS, keywords: 'identity titles labels' },
   { id: 'events', label: 'Live events', group: 'content', icon: 'calendar', page: 'events', access: LEGACY_ADMIN, keywords: 'quests seasonal newroz' },
 
   { id: 'words', label: 'Words & dictionary', group: 'games', icon: 'words', page: 'words', access: GAME_EDITORS, keywords: 'word pool import wiktionary' },
   { id: 'wordle', label: 'Wordle', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
+
+  { id: 'ranks', label: 'Game ranks', group: 'ranks', icon: 'mountain', page: 'ranks', access: RANK_TOOLS, keywords: 'rating tiers top players suspicious pairs void reset' },
+  { id: 'seasons', label: 'Seasons', group: 'ranks', icon: 'trophy', page: 'seasons', access: RANK_TOOLS, keywords: 'season rewards frames gems end close' },
+  { id: 'leagues', label: 'Leagues', group: 'ranks', icon: 'waves', page: 'leagues', access: RANK_TOOLS, keywords: 'weekly groups settle merge promotion xp' },
+  { id: 'badges', label: 'Badges', group: 'ranks', icon: 'award', page: 'badges', access: RANK_TOOLS, keywords: 'achievements rarity catalogue award revoke' },
 
   { id: 'economy', label: 'Overview', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
@@ -124,7 +131,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'flags', label: 'Feature flags', group: 'settings', icon: 'toggle', page: 'flags', access: LEGACY_ADMIN, keywords: 'experiments a/b tests' },
   { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail' },
   { id: 'security', label: 'My security', group: 'settings', icon: 'lock', page: 'security', access: { anyone: true }, keywords: '2fa two-factor authenticator' },
-  { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards leagues seasons push media' },
+  { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards push media storage' },
 ];
 
 /**

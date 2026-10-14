@@ -41,6 +41,17 @@ describe('who sees which page — what the API allows, not a guess', () => {
     for (const id of ['users', 'lessons', 'audit']) expect(seen).not.toContain(id);
   });
 
+  it('opens the ranks, seasons, leagues and badges to the legacy admin role their routes are guarded by, and to nobody else', () => {
+    const tools = ['ranks', 'seasons', 'leagues', 'badges'];
+    for (const id of tools) expect(ids(LEGACY)).toContain(id);
+    for (const s of [MODERATOR, EDITOR, SUPPORT, FOUNDER, { staffRoles: ['superadmin'], capabilities: ['moderation.act', 'users.view'] }]) {
+      for (const page of tools) expect(mayOpenPage(page, s)).toBe(false);
+    }
+    expect(NAV.filter((n) => tools.includes(n.id)).every((n) => n.group === 'ranks')).toBe(true);
+    expect(searchNav(visibleNav(LEGACY), 'void').map((n) => n.id)).toEqual(['ranks']);
+    expect(searchNav(visibleNav(LEGACY), 'settle').map((n) => n.id)).toEqual(['leagues']);
+  });
+
   it('support sees the people and the feedback, a founder the tags', () => {
     expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'feedback', 'security']);
     expect(ids(FOUNDER)).toEqual(['dashboard', 'tags', 'security']);

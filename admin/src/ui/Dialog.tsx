@@ -155,6 +155,12 @@ export interface PromptOptions {
   validate?: (value: string) => string | null;
   multiline?: boolean;
   maxLength?: number;
+  /**
+   * A dangerous change asked with a reason (voiding a game, resetting a
+   * rating): the confirm button is the red one, and a stray tap on the scrim
+   * cannot close it and lose what was typed.
+   */
+  tone?: 'default' | 'danger';
 }
 
 function PromptDialog({
@@ -171,6 +177,7 @@ function PromptDialog({
   const id = useId();
   // a page's own check replaces the default one (a note may be emptied to clear it)
   const problem = options.validate ? options.validate(value) : value.trim() ? null : 'This can’t be empty.';
+  const danger = options.tone === 'danger';
   const send = (): void => {
     setTouched(true);
     if (!problem) onAnswer(value.trim());
@@ -180,12 +187,14 @@ function PromptDialog({
       open={open}
       title={options.title}
       onClose={() => onAnswer(null)}
+      dismissable={!danger}
+      alert={danger}
       footer={
         <>
           <button type="button" onClick={() => onAnswer(null)}>
             Cancel
           </button>
-          <button type="submit" form={`${id}-form`} className="primary">
+          <button type="submit" form={`${id}-form`} className={danger ? 'danger-solid' : 'primary'}>
             {options.confirmLabel ?? 'Save'}
           </button>
         </>

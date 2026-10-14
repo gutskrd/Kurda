@@ -265,6 +265,9 @@ describe('the audit log', () => {
     expect(describeAction('DELETE /admin/tags/:key')).toEqual({ verb: 'Delete', where: 'tags' });
     expect(describeAction('POST /admin/events/:key/enabled')).toEqual({ verb: 'Switch on/off', where: 'events' });
     expect(describeAction('POST /admin/gem-rules (dry run)').verb).toBe('Create (dry run)');
+    expect(describeAction('POST /admin/ranks/games/:game/:ref/void')).toEqual({ verb: 'Void', where: 'ranks › games' });
+    expect(describeAction('POST /admin/ranks/players/:userId/:game/reset')).toEqual({ verb: 'Reset', where: 'ranks › players' });
+    expect(describeAction('POST /admin/seasons/end')).toEqual({ verb: 'End', where: 'seasons' });
   });
 });
 
@@ -306,25 +309,22 @@ describe('Fraud', () => {
 describe('System', () => {
   const usage = { storedBytes: 9 * 1024 ** 3, storageLimitBytes: 10 * 1024 ** 3, objectCount: 1200, period: '2026-10', classAOps: 10, classALimit: 1_000_000, classBOps: 20, classBLimit: 10_000_000, note: '' };
 
-  it('runs a harmless job straight away and asks before one that changes what players see', async () => {
+  // The league settle and the season close moved to the Leagues and Seasons
+  // pages (ranks.test.tsx asks before them there); the board by rating went
+  // with the Elo rating, so a rebuild reports the weekly XP board only.
+  it('runs the board rebuild straight away and points to where the league and season runs are', async () => {
     const user = userEvent.setup();
-    const { calls } = fakeApi(
-      on('GET', '/admin/media/usage', json(usage)),
-      on('POST', '/admin/leaderboards/rebuild', json({ rating: 3, weekly_xp: 4 })),
-      on('POST', '/admin/leagues/settle', json({ settled: 2 })),
-    );
+    const { calls } = fakeApi(on('GET', '/admin/media/usage', json(usage)), on('POST', '/admin/leaderboards/rebuild', json({ weekly_xp: 4 })));
     renderUi(<System />);
-    const [rebuild, settle] = screen.getAllByRole('button', { name: 'Run now' });
-    await user.click(rebuild!);
+    const buttons = screen.getAllByRole('button', { name: 'Run now' });
+    expect(buttons).toHaveLength(1);
+    await user.click(buttons[0]!);
     await waitFor(() => expect(posts(calls, '/admin/leaderboards/rebuild')).toHaveLength(1));
     expect(screen.queryByRole('alertdialog')).not.toBeInTheDocument();
-
-    await user.click(settle!);
-    const dialog = screen.getByRole('alertdialog', { name: 'Settle finished league weeks?' });
-    expect(posts(calls, '/admin/leagues/settle')).toHaveLength(0);
-    await user.click(within(dialog).getByRole('button', { name: 'Run it now' }));
-    await waitFor(() => expect(posts(calls, '/admin/leagues/settle')).toHaveLength(1));
-    expect(await screen.findAllByText('Settled 2 league groups.')).not.toHaveLength(0);
+    expect(await screen.findAllByText('Rebuilt the weekly XP board: 4 learners.')).not.toHaveLength(0);
+    expect(screen.queryByText(/by rating/)).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Leagues' })).toHaveAttribute('href', '#/leagues');
+    expect(screen.getByRole('link', { name: 'Seasons' })).toHaveAttribute('href', '#/seasons');
   });
 
   it('marks storage that is nearly full', async () => {

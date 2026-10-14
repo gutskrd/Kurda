@@ -42,6 +42,9 @@ const SUGGESTIONS = [
   'POST /admin/events',
   'POST /admin/experiments',
   'POST /admin/fraud/reviews',
+  'POST /admin/ranks',
+  'POST /admin/leagues',
+  'POST /admin/seasons',
 ];
 
 /** "POST /admin/users/:id/ban" → "Ban · users" — the verb a person would use, then where. */
@@ -49,7 +52,7 @@ export function describeAction(action: string): { verb: string; where: string } 
   const [method = '', path = ''] = action.split(' ');
   const parts = path.split('/').filter((p) => p && p !== 'admin' && !p.startsWith(':'));
   const last = parts[parts.length - 1] ?? '';
-  const named = ['ban', 'unban', 'mute', 'unmute', 'warn', 'approve', 'reject', 'publish', 'unpublish', 'archive', 'submit', 'claim', 'release', 'decide', 'resolve', 'revoke', 'enabled', 'rebuild', 'settle', 'clear', 'reverse', 'escalate', 'reopen', 'note', 'stock', 'csam'];
+  const named = ['ban', 'unban', 'mute', 'unmute', 'warn', 'approve', 'reject', 'publish', 'unpublish', 'archive', 'submit', 'claim', 'release', 'decide', 'resolve', 'revoke', 'enabled', 'rebuild', 'settle', 'clear', 'reverse', 'escalate', 'reopen', 'note', 'stock', 'csam', 'void', 'reset', 'end', 'merge'];
   const verb = named.includes(last)
     ? last === 'enabled'
       ? 'Switch on/off'
