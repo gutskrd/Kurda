@@ -237,7 +237,7 @@ export const SCENES = {
       // the water and his muzzle in it — and what of him the water holds, which is only what stands above it
       // (all of him above the foot of the strip a profile card shows, his muzzle at the water)
       const water = 530;
-      const stag = deer({ x: 327, y: water + 48, size: 200, colour: '#24160a', pose: 'drink', facing: 1 });
+      const stag = deer({ x: 327, y: water + 16, size: 200, colour: '#24160a', facing: 1 });
       const rim = { x: sun[0], y: sun[1], colour: '#ffd890', width: 3, strength: 1, reach: 1500 };
       s.layer({ blur: 1.6, opacity: 0.5 }, (cv) => {
         const below = cv.id('below');
@@ -246,8 +246,8 @@ export const SCENES = {
       });
       // the rings spreading from his muzzle, and round his forelegs where they go into the water
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
-        for (const [r, o] of [[12, 0.5], [26, 0.35], [46, 0.2]]) cv.add(`<ellipse cx="452" cy="${water + 2}" rx="${r}" ry="${n(r * 0.16)}" fill="none" stroke="#fff0c0" stroke-width="1.6" stroke-opacity="${o}"/>`);
-        for (const [cx, r, o] of [[373, 9, 0.45], [373, 18, 0.25], [353, 8, 0.35]]) cv.add(`<ellipse cx="${cx}" cy="${water + 4}" rx="${r}" ry="${n(r * 0.18)}" fill="none" stroke="#fff0c0" stroke-width="1.3" stroke-opacity="${o}"/>`);
+        for (const [r, o] of [[12, 0.5], [26, 0.35], [46, 0.2]]) cv.add(`<ellipse cx="490" cy="${water + 2}" rx="${r}" ry="${n(r * 0.16)}" fill="none" stroke="#fff0c0" stroke-width="1.6" stroke-opacity="${o}"/>`);
+        for (const [cx, r, o] of [[409, 9, 0.45], [409, 18, 0.25], [366, 8, 0.35]]) cv.add(`<ellipse cx="${cx}" cy="${water + 4}" rx="${r}" ry="${n(r * 0.18)}" fill="none" stroke="#fff0c0" stroke-width="1.3" stroke-opacity="${o}"/>`);
       });
       // the bank he stands on, coming down from the left and running on into the shallows toward us
       const bankAt = (x) => {
@@ -373,7 +373,7 @@ export const SCENES = {
       s.effect('paint', { radius: 2 });
       s.layer({ rim: { x: sun[0], y: sun[1], colour: '#ffe0f8', width: 2.5, strength: 1, reach: 1200 } }, (cv) => {
         // (grazing in the pool of light, his antlers against the haze between the trunks, not in front of one)
-        cv.add(deer({ x: 788, y: 556, size: 100, colour: '#24123a', pose: 'graze', facing: -1 }));
+        cv.add(deer({ x: 788, y: 556, size: 100, colour: '#24123a', facing: -1 }));
       });
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
         cv.add(motes(rnd, { x0: 420, x1: 1080, y0: 120, y1: 560, count: 140, size: 1.8, colours: ['#ffe6fa', '#ffc6ee', '#ffffff'] }));
@@ -427,7 +427,7 @@ export const SCENES = {
       s.layer({ rim: { x: moonAt[0], y: moonAt[1], colour: '#d8f6ff', width: 2.5, strength: 1, reach: 1300 } }, (cv) => {
         cv.add(`<path d="M-20,${n(bank(-20))} ${Array.from({ length: 34 }, (_, i) => `L${n(i * 40)},${n(bank(i * 40))}`).join(' ')} L1300,${n(bank(1300))} L1300,614 C1000,608 600,614 300,610 C160,608 60,612 -20,614 Z" fill="#071518"/>`);
         cv.add(grass(rnd, { x0: -30, x1: 1310, y: 576, count: 700, height: 24, colours: ['#071518', '#0c2024', '#10282c'], wind: 0.1, width: 1.8 }));
-        cv.add(deer({ x: 600, y: 536, size: 150, colour: '#050f12', pose: 'graze', facing: 1 }));
+        cv.add(deer({ x: 600, y: 536, size: 150, colour: '#050f12', facing: 1 }));
         cv.add(grass(rnd, { x0: 540, x1: 840, y: 540, count: 90, height: 14, colours: ['#071518', '#0c2024'], wind: 0.1, width: 1.6 }));
       });
       s.layer({ blur: 0.7, blend: 'screen' }, (cv) => {
