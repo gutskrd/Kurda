@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { foldForSearch } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import {
   Badge,
@@ -138,12 +139,13 @@ export function Shop(): React.JSX.Element {
 
   const shown = useMemo(() => {
     if (!all) return null;
-    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    // (Kurdish letters folded, as the shop folds them: "istikan" finds Îstîkan)
+    const words = foldForSearch(q).split(/\s+/).filter(Boolean);
     return all.filter(
       (i) =>
         (category === 'all' || i.category === category) &&
         (state === 'all' || (state === 'listed' ? saleState(i) !== 'hidden' : saleState(i) === state)) &&
-        words.every((w) => `${i.name} ${i.sku} ${i.description ?? ''}`.toLowerCase().includes(w)),
+        words.every((w) => foldForSearch(`${i.name} ${i.sku} ${i.description ?? ''}`).includes(w)),
     );
   }, [all, q, category, state]);
   const total = shown?.length ?? 0;

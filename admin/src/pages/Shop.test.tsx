@@ -156,6 +156,15 @@ describe('the shop', () => {
     expect(screen.getByText('No item matches these filters.')).toBeInTheDocument();
   });
 
+  it('finds an item by its Kurdish name typed without the letters’ marks', async () => {
+    const user = userEvent.setup();
+    fakeApi(...shop([item(), item({ sku: 'icon-made-caydan', name: 'Îstîkan', description: 'Tea glass', category: 'icon' })]));
+    renderUi(<Shop />);
+    await user.type(await screen.findByLabelText('Search items'), 'istikan');
+    expect(screen.getByText('Îstîkan')).toBeInTheDocument();
+    expect(screen.queryByText('Newroz')).not.toBeInTheDocument();
+  });
+
   it('lists what is not retired first, and finds the retired on request', async () => {
     const user = userEvent.setup();
     fakeApi(...shop([item(), item({ sku: 'bg-old', name: 'Old hills', active: false })]));
