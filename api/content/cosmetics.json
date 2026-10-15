@@ -126,8 +126,8 @@
     },
     {
       "sku": "icon-made-sterk",
-      "name": "Stêrk",
-      "description": "Eight-point star",
+      "name": "Mohra Rojê",
+      "description": "Sun seal",
       "assetKey": "icons/made-07-sterk.png",
       "price": 600,
       "premiumOnly": true,
@@ -135,8 +135,8 @@
     },
     {
       "sku": "icon-made-caydan",
-      "name": "Çaydan",
-      "description": "Teapot",
+      "name": "Îstîkan",
+      "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
       "price": 900,
       "premiumOnly": true,
@@ -228,8 +228,8 @@
     },
     {
       "sku": "icon-accessoire-icon-04",
-      "name": "Çaydan",
-      "description": "Teapot",
+      "name": "Îstîkan",
+      "description": "Tea glass",
       "assetKey": "icons/made-08-caydan.png",
       "price": 800,
       "premiumOnly": true,
@@ -338,8 +338,8 @@
     },
     {
       "sku": "icon-accessoire-icon-16",
-      "name": "Stêrk",
-      "description": "Eight-point star",
+      "name": "Mohra Rojê",
+      "description": "Sun seal",
       "assetKey": "icons/made-07-sterk.png",
       "price": 800,
       "premiumOnly": true,

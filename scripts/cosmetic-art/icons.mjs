@@ -541,8 +541,8 @@ export const ICONS = [
   },
   {
     key: 'sterk',
-    ku: 'Stêrk',
-    en: 'Eight-point star',
+    ku: 'Mohra Rojê',
+    en: 'Sun seal',
     // a seal of dark red wax, painted: the wax spread round the stamp and pushed up in a thick lip, glossy, the
     // light running round its top; inside the lip the wax pressed flat, and the sun of the Kurdish flag standing
     // up from it — its round disc and its twenty-one rays, sharp-edged — a ring of the stamp's border round it
@@ -595,8 +595,8 @@ export const ICONS = [
   },
   {
     key: 'caydan',
-    ku: 'Çaydan',
-    en: 'Teapot',
+    ku: 'Îstîkan',
+    en: 'Tea glass',
     // a glass of tea on its saucer, painted: the tulip glass pinched at the waist, the tea in it deep red where it
     // is deep and glowing amber where the light comes through it, the glass drawn in by its dark edges and its
     // white lights; the saucer cream, scalloped, painted round its rim with orange petals and little gold sprigs,

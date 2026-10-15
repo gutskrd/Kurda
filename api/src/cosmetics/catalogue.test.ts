@@ -52,6 +52,10 @@ interface Migration {
   REPLACED_BY: Record<string, string>;
   replacementFor(sku: string, assetKey: string | null): string | null;
 }
+/** A later migration that renamed pieces 1751000161000 put on sale, by their art. */
+interface Renames {
+  RENAMED: { assetKey: string; from: [string, string]; to: [string, string] }[];
+}
 
 const manifest = JSON.parse(readFileSync(join(ROOT, 'api', 'content', 'cosmetics.json'), 'utf8')) as Manifest;
 const rows = (): (Row & { category: 'background' | 'icon' })[] => [
@@ -65,10 +69,12 @@ const files = (dir: string): string[] => readdirSync(join(COSMETICS, dir)).map((
 describe('the cosmetic catalogue', () => {
   let gen: Generator;
   let migration: Migration;
+  let renames: Renames[];
 
   beforeAll(async () => {
     gen = (await import(pathToFileURL(join(ROOT, 'scripts', 'generate-cosmetic-art.mjs')).href)) as Generator;
     migration = (await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000161000_code-made-cosmetics.js')).href)) as Migration;
+    renames = [(await import(pathToFileURL(join(ROOT, 'api', 'migrations', '1751000179000_tea-glass-and-sun-seal.js')).href)) as Renames];
   });
 
   it('names a file that exists for every asset key', () => {
@@ -133,9 +139,11 @@ describe('the cosmetic catalogue', () => {
     }
   });
 
-  it('is the catalogue migration 1751000161000 applies', () => {
+  it('is the catalogue migration 1751000161000 applies, under the names later migrations gave its pieces', () => {
     const fromManifest = made().map((r): MadeRow => [r.sku, r.category, r.name, r.description ?? '', r.assetKey, r.price, r.premiumOnly, r.displayOrder]);
-    expect([...migration.MADE].sort()).toEqual(fromManifest.sort());
+    const renamed = (row: MadeRow): MadeRow =>
+      renames.flatMap((m) => m.RENAMED).reduce<MadeRow>((acc, r) => (acc[4] === r.assetKey && acc[2] === r.from[0] && acc[3] === r.from[1] ? [acc[0], acc[1], r.to[0], r.to[1], acc[4], acc[5], acc[6], acc[7]] : acc), row);
+    expect(migration.MADE.map(renamed).sort()).toEqual(fromManifest.sort());
     const madeByAsset = new Map(made().map((r) => [r.assetKey, r.sku]));
     const fromRetired = Object.fromEntries(retired().map((r) => [r.sku, madeByAsset.get(r.assetKey)]));
     expect(migration.REPLACED_BY).toEqual(fromRetired);
