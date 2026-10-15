@@ -43,17 +43,21 @@
  * dyes, their pile knotted by the compositor (rugs.mjs, marks.mjs `pile`),
  * lying on old boards in a shaft of window light with the dust turning in it.
  *
- * Icons (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the
- * way the mascot is drawn, soft and glossy with its big-eyed face. Stickers
- * (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo deer and
- * a few words in a badge.
+ * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
+ * still lifes — a pomegranate split open, a glass of tea by its teapot, a seal
+ * of red wax with the eight-point star pressed into it, a saz, a fawn lying in
+ * the grass, a sheaf of wheat, the Newroz fire — each lit the way a thing is
+ * lit against a black cloth and cut out of it, so that it lies over a profile
+ * picture with nothing round it but its own light (cosmetic-art/still.mjs).
+ * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
+ * deer and a few words in a badge.
  *
  * Every piece has a Kurdish and an English name. The shop catalogue
  * (`api/content/cosmetics.json`) prices them; the names there must match the
  * ones here, which api/src/cosmetics/catalogue.test.ts checks; art.test.ts
  * checks that what is committed is what this draws.
  *
- * ── why (almost) nothing is read from disk ──────────────────────────────────
+ * ── why nothing is read from disk ───────────────────────────────────────────
  *
  * The lettering on the word stickers is a small stroke alphabet defined below
  * rather than a font. A font would be whatever the machine running this had
@@ -63,9 +67,7 @@
  * the same script writes the same SVG on every machine and sharp turns it into
  * the same pixels; the compositor's work on them is plain arithmetic, the same
  * everywhere too. Pieces are drawn on worker threads, one per core, and as each
- * is seeded by its own name, which thread draws it changes nothing. The one
- * file read is the mascot's own picture (web/public/mascot-deer.png), which
- * the deer icon is, and which is in the repo like the script. The test
+ * is seeded by its own name, which thread draws it changes nothing. The test
  * regenerates everything into a temporary folder and compares it with what is
  * committed: what ships is what this draws.
  *
@@ -103,6 +105,7 @@ import {
 import { BACKGROUNDS } from './cosmetic-art/backgrounds.mjs';
 import { renderScene } from './cosmetic-art/render.mjs';
 import { ICONS } from './cosmetic-art/icons.mjs';
+import { renderStill } from './cosmetic-art/still.mjs';
 
 export { BACKGROUNDS, ICONS };
 
@@ -390,14 +393,30 @@ function sunRays(cx, cy, inner, outer, rays, halfWidth) {
   return out.join(' ');
 }
 
-export function iconSvg(piece) {
-  const cv = new Canvas(ICON.size, ICON.size);
-  piece.draw(cv, random(seedOf(piece.key)));
-  return cv.svg();
+/** An icon's still life: its surfaces, shadows, light and paint (each an SVG of the whole square), in order. */
+export function iconStill(piece) {
+  return piece.still(random(seedOf(piece.key)));
 }
 
+/** The still life written out as text — the same text on every machine. */
+export function iconSvg(piece) {
+  return JSON.stringify(iconStill(piece));
+}
+
+/**
+ * An icon, painted (cosmetic-art/still.mjs) and written as a PNG of at most
+ * 256 colours and its transparency, lightly dithered: as many colours as fit
+ * the size budget.
+ */
 export async function renderIcon(piece) {
-  return sharp(Buffer.from(iconSvg(piece))).png({ palette: true, quality: 100, effort: 10, compressionLevel: 9 }).toBuffer();
+  const px = await renderStill(iconStill(piece), seedOf(`${piece.key}:grain`));
+  for (const colours of [256, 192, 128, 96]) {
+    const buf = await sharp(px, { raw: { width: ICON.size, height: ICON.size, channels: 4 } })
+      .png({ palette: true, quality: 100, colours, effort: 10, compressionLevel: 9, dither: 0.6 })
+      .toBuffer();
+    if (buf.length <= ICON.maxBytes) return buf;
+  }
+  throw new Error(`${piece.key}: cannot fit under ${ICON.maxBytes} bytes`);
 }
 
 export const iconFile = (piece, i) => `web/public/cosmetics/icons/made-${String(i + 1).padStart(2, '0')}-${piece.key}.png`;
