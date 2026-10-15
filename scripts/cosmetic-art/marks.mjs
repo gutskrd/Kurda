@@ -2,7 +2,7 @@
  * What the compositor paints itself, mark by mark and pixel by pixel, where a
  * shape filled flat would read as a cut-out: foliage leaf by leaf, ground
  * cover plant by plant, the gas and stars of a nebula, the weave and ridges of
- * oil paint on canvas, ink washed onto wet paper.
+ * oil paint on canvas, ink washed onto wet paper, a carpet's knots as pile.
  *
  * Each works on frames of premultiplied RGBA floats (pixels.mjs) and takes
  * its randomness from a seed, so the same call paints the same marks on every
@@ -588,4 +588,59 @@ export function wash(w, h, { paper, ink, stops = [[0, 0.7], [1, 0.4]], blooms = 
     }
   }
   return f;
+}
+
+// ──────────────────────────────────────────────────────────── knotted pile
+
+/**
+ * A knotted carpet's pile: `knots` (a character to a knot, row by row, '0'
+ * naming the first of `palette`) laid out `cols` × `rows` from (x0, y0),
+ * `knot` pixels to the knot. Each tuft is a little rounded, lighter at its
+ * tip than where it parts from the next; the dye drifts from one batch of
+ * wool to the next along the rug's length (`abrash`), most in the field's
+ * colour (the first), where it shows; every knot is a shade off its
+ * neighbours (`jitter`), and the wool has its fibre and the rug its years of
+ * wear (`wear`).
+ */
+export function pile(w, h, { x0, y0, knot, cols, rows, palette, knots, abrash = 0.07, jitter = 0.035, tuft = 0.3, wear = 0.05, soften = 1.1, seed = 1 }) {
+  const f = frame(w, h);
+  const P = palette.map(rgb);
+  const rnd = random(seed);
+  // the batches of wool, as the rug was knotted from one end to the other: each a band a few to a few dozen
+  // knots wide across the rug, a shade lighter or darker than the last
+  const drift = new Float32Array(cols);
+  for (let c = 0; c < cols; ) {
+    const wide = 3 + Math.floor(rnd() * 22);
+    const t = (rnd() * 2 - 1) * abrash;
+    for (let k = c; k < Math.min(cols, c + wide); k++) drift[k] = t;
+    c += wide;
+  }
+  const shade = new Float32Array(cols * rows);
+  for (let i = 0; i < shade.length; i++) shade[i] = (rnd() * 2 - 1) * jitter;
+  const noise = turbulence(seed, 1, 1);
+  const p = f.px;
+  for (let py = 0; py < rows * knot; py++) {
+    const y = y0 + py;
+    if (y < 0 || y >= h) continue;
+    const r = Math.floor(py / knot);
+    const fy = ((py % knot) + 0.5) / knot - 0.5;
+    for (let px = 0; px < cols * knot; px++) {
+      const x = x0 + px;
+      if (x < 0 || x >= w) continue;
+      const c = Math.floor(px / knot);
+      const fx = ((px % knot) + 0.5) / knot - 0.5;
+      const k = r * cols + c;
+      const dye = knots.charCodeAt(k) - 48;
+      const [R, G, B] = P[dye];
+      const fibre = 1 + noise.plain(0, x / 1.7, y / 1.7) * 0.07 + noise.plain(1, x / 4.5, y / 4.5) * 0.05;
+      const worn = 1 + noise.fbm(2, x / 90, y / 90, 3) * wear * 2;
+      const tone = (1 - tuft * (fx * fx + fy * fy)) * fibre * worn * (1 + shade[k]) * (1 + drift[c] * (dye === 0 ? 1 : 0.35));
+      const i = (y * w + x) * 4;
+      p[i] = clamp(R * tone, 0, 1);
+      p[i + 1] = clamp(G * tone, 0, 1);
+      p[i + 2] = clamp(B * tone, 0, 1);
+      p[i + 3] = 1;
+    }
+  }
+  return blur(f, soften);
 }

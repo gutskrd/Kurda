@@ -36,10 +36,12 @@
  * the layers together the way a camera sees a place: softened and hazed by
  * distance, light breaking through the gaps in shafts, water holding what
  * stands over it, a glow round what is bright and the soft bloom and streaks
- * of a lens, a film's grade and grain. And seven Kurdish kilims — the Herki's
- * hooked guls, Sine's medallion and its flowered field, Harsin's and the
- * Jaff's lattices among them — woven cell by cell, lying on old boards in a
- * shaft of window light with the dust turning in it (kilim.mjs).
+ * of a lens, a film's grade and grain. And seven Kurdish carpets, laid out
+ * knot by knot the way the weavers of Bijar and Senneh lay theirs out — a
+ * field of the Herati under a stepped medallion with its pendants, a quarter
+ * of it in each corner, a border of palmettes on a vine — each in its own
+ * dyes, their pile knotted by the compositor (rugs.mjs, marks.mjs `pile`),
+ * lying on old boards in a shaft of window light with the dust turning in it.
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the
  * way the mascot is drawn, soft and glossy with its big-eyed face. Stickers

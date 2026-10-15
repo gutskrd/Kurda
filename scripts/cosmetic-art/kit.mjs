@@ -1,8 +1,8 @@
 /**
  * What every piece of the shop's art is drawn with: the seeded randomness, the
  * number format, colour, the SVG document and its gradients, and the woven
- * motifs (eight-point star, stepped lozenge, ram's-horn hooks) the kilims and
- * the icons share.
+ * motifs (eight-point star, stepped lozenge, ram's-horn hooks) the icons are
+ * drawn with.
  *
  * See scripts/generate-cosmetic-art.mjs for why every number is rounded and
  * every choice seeded: the same script must write the same SVG on every machine.

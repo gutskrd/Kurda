@@ -186,6 +186,26 @@ export function screen(dst, src, opacity = 1) {
 }
 
 /**
+ * Light falling on a surface: `src` brightens `dst` in `dst`'s own colours,
+ * as sunlight brightens what it falls on — a dark blue lit stays blue —
+ * where `screen` would haze it toward the light's colour. White light at
+ * full strength makes it three times as bright, and what that would carry
+ * past white rolls off softly toward it, as film takes a highlight, rather
+ * than burning out flat.
+ */
+export function light(dst, src, opacity = 1) {
+  const d = dst.px;
+  const s = src.px;
+  const knee = 0.72;
+  for (let i = 0; i < d.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      const v = d[i + c] * (1 + 2 * s[i + c] * opacity);
+      d[i + c] = v <= knee ? v : knee + (1 - knee) * (1 - Math.exp(-(v - knee) / (1 - knee)));
+    }
+  }
+}
+
+/**
  * One mark of paint, laid over the frame: an ellipse `rx` along and `ry`
  * across, turned `angle` radians, in [r, g, b] at `opacity`, its edge
  * smoothed over a pixel. `tip` sharpens its ends — 0.5 is an ellipse, 1 a

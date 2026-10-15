@@ -26,8 +26,8 @@
  */
 import sharp from 'sharp';
 import { random } from './kit.mjs';
-import { carpet, impasto, leafy, nebula, wash } from './marks.mjs';
-import { blur, cells, clamp, clone, frame, luma, over, resize, rgb, screen, shrink, turbulence, valueNoise } from './pixels.mjs';
+import { carpet, impasto, leafy, nebula, pile, wash } from './marks.mjs';
+import { blur, cells, clamp, clone, frame, light, luma, over, resize, rgb, screen, shrink, turbulence, valueNoise } from './pixels.mjs';
 
 /** An SVG (the whole canvas) as a premultiplied frame, rendered at 1/scale and brought back up. */
 export async function rasterise(svg, w, h, scale = 1, bleed = 0) {
@@ -859,7 +859,7 @@ async function assemble(parts, w, h, scale, bleed) {
 
 /**
  * Renders a scene: `steps` is a list of layers ({ svg or parts, or one the
- * compositor paints itself — terrain, carpet, nebula, wash — and blur, haze,
+ * compositor paints itself — terrain, carpet, nebula, wash, pile — and blur, haze,
  * falloff, rim, opacity, blend, scale, bleed }) and effects ({ effect: 'rays' |
  * 'reflect' | 'paint' | 'texture' | 'bloom' | 'diffuse' | 'streaks' | 'grade' |
  * 'impasto', ...options }) applied in order, then `finish` (bloom, diffuse,
@@ -883,7 +883,7 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
       if (log) log(`${step.effect}: ${Date.now() - t0}ms`);
       continue;
     }
-    const painted = step.terrain ? terrain(w, h, step.terrain) : step.carpet ? carpet(w, h, step.carpet) : step.nebula ? nebula(w, h, step.nebula) : step.wash ? wash(w, h, step.wash) : null;
+    const painted = step.terrain ? terrain(w, h, step.terrain) : step.carpet ? carpet(w, h, step.carpet) : step.nebula ? nebula(w, h, step.nebula) : step.wash ? wash(w, h, step.wash) : step.pile ? pile(w, h, step.pile) : null;
     const layer = painted ?? (step.parts ? await assemble(step.parts, w, h, step.scale ?? 1, step.bleed ?? 0) : await rasterise(step.svg, w, h, step.scale ?? 1, step.bleed ?? 0));
     const t1 = log ? Date.now() : 0;
     if (step.blur) blur(layer, step.blur);
@@ -891,8 +891,9 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
     if (step.falloff) falloff(layer, step.falloff);
     if (step.rim) rimLight(layer, step.rim);
     if (step.blend === 'screen') screen(f, layer, step.opacity ?? 1);
+    else if (step.blend === 'light') light(f, layer, step.opacity ?? 1);
     else over(f, layer, step.opacity ?? 1);
-    if (log) log(painted ? `${Object.keys(step).find((k) => ['terrain', 'carpet', 'nebula', 'wash'].includes(k))}: ${t1 - t0}ms, rest ${Date.now() - t1}ms` : `layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
+    if (log) log(painted ? `${Object.keys(step).find((k) => ['terrain', 'carpet', 'nebula', 'wash', 'pile'].includes(k))}: ${t1 - t0}ms, rest ${Date.now() - t1}ms` : `layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
   }
   const t2 = log ? Date.now() : 0;
   if (finish.bloom) bloom(f, finish.bloom);
