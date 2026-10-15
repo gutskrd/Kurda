@@ -1,8 +1,9 @@
 /**
  * Figures for the backgrounds: the deer in its poses, and lambs. The deer is
  * drawn as a silhouette — against the light it is shape and nothing else, so
- * the shape has to be right: its back slopes from the withers, its hind legs
- * bend backwards at the hock, its antlers sweep back before they branch.
+ * the shape has to be right: a deep body and a thick neck, a head with a
+ * deer's deep jaw and blunt muzzle, hind legs bending backwards at the hock,
+ * antlers that sweep back before they branch.
  *
  * Each takes a position on the ground (x, y) and a size.
  */
@@ -53,62 +54,106 @@ function smooth(points) {
 
 /**
  * A deer — a stag of the Zagros — in one of its poses: 'alert' (head up,
- * looking out), 'graze' (head down in the grass), 'drink' (head down to the
- * water, the forelegs set apart). `size` is the height at the withers.
+ * looking out), 'graze' (head down, its muzzle in the grass), 'drink' (head
+ * down to the water, the forelegs set apart). `size` is the height at the
+ * withers.
  *
- * Drawn to a stag's proportions: the body a little longer than it is high,
- * deep in the chest and tucked up at the flank; the legs long and fine, the
- * forelegs straight to the knee, the hind legs bending back at the hock; a
- * thick neck, a long tapering head, ears laid back, and antlers that sweep
- * back from the brow and branch toward the tips.
+ * Built the way an animal painter blocks one in, from its masses, so that
+ * whatever the pose it keeps a deer's weight: a deep barrel of a body, round
+ * haunches, a neck as thick at the shoulder as the chest is deep and still
+ * half that where it meets the head, a long wedge of a head with a deep jaw
+ * and a blunt muzzle, big ears, legs fine below the knee and the hock, and
+ * antlers that sweep back from the brow and branch toward the tips. The head
+ * is drawn in its own frame and turned to the pose; the neck is laid between
+ * the shoulders and wherever the head is.
  */
 export function deer({ x, y, size, facing = 1, colour, pose = 'alert', antlers = true }) {
   const k = size / 100;
-  const P = ([px, py]) => [x + facing * (px - 60) * k, y + py * k];
-  const T = (pts) => taper(pts.map(([px, py, w]) => [...P([px, py]), w * k]));
+  const W = ([px, py]) => [x + facing * (px - 55) * k, y + py * k];
   const parts = [];
+  const drink = pose === 'drink';
   const low = pose !== 'alert';
-  // head down, the neck reaches forward and down; to drink, a little further, the forelegs set apart
-  const drop = pose === 'drink' ? [3, 6] : [0, 0];
-  const reach = pose === 'drink' ? 9 : 0;
-  // legs first, the far pair a little apart from the near pair; thigh and forearm run up into the body
-  const hind = (dx) => T([[14 + dx, -72, 26], [17 + dx, -52, 14], [10 + dx, -33, 7.6], [12.5 + dx, -16, 4.5], [14 + dx, -6, 4.9], [15.5 + dx, -0.6, 5.6]]);
-  const fore = (dx, r = 0) => T([[94 + dx, -68, 19], [96 + dx + r * 0.3, -46, 9.4], [97 + dx + r * 0.6, -30, 6.4], [97.5 + dx + r * 0.85, -13, 4.3], [98 + dx + r, -6, 4.7], [99.5 + dx + r, -0.6, 5.6]]);
-  parts.push(hind(9), fore(-10, -reach * 0.4), hind(0), fore(0, reach));
-  parts.push(T([[5, -95, 8], [0, -92, 6.5], [-3, -86, 3]]));
-  // the whole outline: rump, back and withers, the neck to the poll, round the head, down the throat and chest, under the belly
-  const back = [[5, -95], [15, -99], [34, -100], [56, -98], [76, -102], [86, -106]];
-  const under = [[116, -70], [110, -61], [100, -56], [84, -55], [64, -57], [46, -59], [30, -63], [22, -62], [10, -62], [2, -70], [-1, -80], [1, -89]];
-  const d = (pts) => pts.map(([px, py]) => [px + drop[0], py + drop[1]]);
-  const neckHead = low
-    ? [[98, -104], [110, -96], [122, -82], [132, -64], ...d([[139, -46], [143, -32], [149, -28], [152, -18], [153, -8], [152, -2], [149, -1], [146, -3], [142, -10], [137, -20], [134, -26], [130, -38]]), [124, -52], [119, -63]]
-    : [[96, -116], [104, -129], [110, -142], [114, -153], [121, -156], [130, -150], [138, -141], [143, -133], [146, -128], [144, -124], [139, -124], [131, -128], [124, -131], [121, -123], [122, -112], [122, -100], [119, -84]];
-  parts.push(smooth([...back, ...neckHead, ...under].map(P)));
-  // ears, and the antlers: drawn for the head held up, and turned with it when it goes down
-  const pivot = [118, -156];
-  const at = low ? [147 + drop[0], -31 + drop[1]] : pivot;
-  const turn = low ? 0.78 : 0;
-  const R = ([px, py]) => {
-    const dx = px - pivot[0];
-    const dy = py - pivot[1];
-    return [at[0] + dx * Math.cos(turn) - dy * Math.sin(turn), at[1] + dx * Math.sin(turn) + dy * Math.cos(turn)];
-  };
-  const RT = (pts) => T(pts.map(([px, py, w]) => [...R([px, py]), w]));
-  parts.push(RT([[114, -151, 8], [107, -156, 11], [100, -158, 6.5], [95, -159, 1]]));
-  parts.push(RT([[116, -154, 6], [112, -161, 8], [108, -167, 4.5], [106, -170, 1]]));
+  // where the head is, and how far it is turned down: its frame's origin is the back of the skull, between the
+  // poll and the throat, and its x runs forward along the face to the muzzle
+  const [hx, hy, angle] = pose === 'alert' ? [121, -133, 0.45] : drink ? [124, -33, 1.05] : [122, -35, 1.15];
+  const ca = Math.cos(angle);
+  const sa = Math.sin(angle);
+  const H = ([px, py]) => [hx + px * ca - py * sa, hy + px * sa + py * ca];
+  const HT = (pts) => taper(pts.map(([px, py, w]) => [...W(H([px, py])), w * k]));
+  const T = (pts) => taper(pts.map(([px, py, w]) => [...W([px, py]), w * k]));
+
+  // the legs, far pair first: thigh and forearm heavy, fine below the knee and the hock; drinking, the forelegs
+  // splay to let the head down
+  const fore = (dx, splay) => [[90 + dx, -64, 14], [91 + dx + splay * 0.25, -50, 9.6], [92 + dx + splay * 0.5, -34, 7.2], [92.4 + dx + splay * 0.56, -30, 6.8], [92.8 + dx + splay * 0.78, -16, 5], [93.2 + dx + splay * 0.94, -7, 5.4], [94.6 + dx + splay, -2.5, 5.6], [95.6 + dx + splay, 0, 6.2]];
+  const hind = (dx) => [[21 + dx, -74, 29], [28 + dx, -54, 18], [24 + dx, -43, 11.5], [17 + dx, -32, 7.6], [18 + dx, -18, 5.2], [19 + dx, -7, 5.4], [20.5 + dx, -2.5, 5.6], [21.5 + dx, 0, 6.2]];
+  parts.push(T(hind(9)), T(fore(-8, drink ? -5 : 0)), T(hind(0)), T(fore(0, drink ? 9 : 0)));
+  // the tail, short, held down
+  parts.push(T([[5, -93, 7.5], [1, -86, 5.5], [-1, -79, 2.6]]));
+  // the body: rump, the long back to the withers, the shoulder and the point of the chest, the deep brisket,
+  // the belly rising to the flank, the round of the haunch
+  const body = [[1, -80], [3, -88], [9, -94], [20, -97], [36, -96], [52, -95], [66, -97], [78, -102], [89, -102], [99, -95], [105, -86], [108, -76], [106, -64], [99, -54], [86, -50], [70, -47.5], [54, -48], [40, -51], [30, -56], [24, -58], [16, -60], [8, -65], [3, -72]];
+  parts.push(smooth(body.map(W)));
+  // the neck and the head in one outline, so nothing joins them at a seam: up the arched crest from the withers
+  // to the poll, along the brow and the long nose to the blunt muzzle and its nose, under the chin, round the
+  // deep jaw, and down the throat to the point of the chest
+  const top = low ? [78, -103] : [70, -100];
+  const chest = [107, -78];
+  // head up, the throat runs down from under the jaw; head down, from behind it
+  const jaw = low ? [[17, 10.6], [9, 12.6], [3, 12.8], [-3, 11.6]] : [[17, 10.6], [10, 12.6], [6, 12.8]];
+  const poll = H([-1, -10]);
+  const latch = H(jaw[jaw.length - 1]);
+  const vx = poll[0] - top[0];
+  const vy = poll[1] - top[1];
+  const len = Math.hypot(vx, vy);
+  let [px, py] = [vy / len, -vx / len];
+  if ((latch[0] - top[0]) * px + (latch[1] - top[1]) * py > 0) [px, py] = [-px, -py];
+  const bow = (t, amount) => [top[0] + vx * t + px * amount * len, top[1] + vy * t + py * amount * len];
+  // the throat: running down from the round of the jaw, filling out toward the chest
+  const tx = chest[0] - latch[0];
+  const ty = chest[1] - latch[1];
+  const along = (t, out) => [latch[0] + tx * t - px * out, latch[1] + ty * t - py * out];
+  const outline = [
+    top,
+    bow(0.3, low ? 0.09 : 0.04),
+    bow(0.62, low ? 0.08 : 0.06),
+    bow(0.86, low ? 0.04 : 0.035),
+    poll,
+    ...[[5, -12], [12, -11.6], [22, -8.4], [31, -5.8], [37.5, -3.7], [39.6, -0.4], [38.6, 2.9], [35, 5.2], [26, 7.2], ...jaw].map(H),
+    along(0.3, 0),
+    along(0.68, low ? 1 : 2.5),
+    chest,
+    [90, -70],
+    // in under the back, so the crest rises out of it without a seam
+    [top[0] - 6, top[1] + 8],
+  ];
+  parts.push(smooth(outline.map(W)));
+  // the ears, long and wide, laid back from the poll, the far one standing up behind
+  parts.push(smooth([[0, -8], [-5, -11.5], [-11, -15.5], [-18, -18.5], [-14, -13], [-7, -8], [3, -6]].map((q) => W(H(q)))));
+  parts.push(smooth([[3, -10], [-1, -15], [-6, -21], [-11, -25.5], [-8, -19], [-2, -12.5], [7, -10.5]].map((q) => W(H(q)))));
   if (antlers) {
-    // the far antler a little behind and below the near one; the beam sweeps back, the tines rise off its front
-    for (const [ox, oy, sc] of [[-13, 5, 0.92], [0, 0, 1]]) {
-      const A = (pts) => RT(pts.map(([px, py, w]) => [pivot[0] + (px - pivot[0]) * sc + ox, pivot[1] + (py - pivot[1]) * sc + oy, w * sc]));
-      parts.push(A([[118, -157, 7], [116, -168, 6.2], [111, -180, 5.4], [104, -191, 4.6], [98, -201, 3.8], [96, -211, 3], [99, -220, 2], [103, -226, 0.6]]));
-      parts.push(A([[118, -160, 4.2], [128, -163, 3.2], [136, -167, 2], [141, -173, 0.6]]));
-      parts.push(A([[117, -166, 3.6], [126, -170, 2.6], [132, -175, 0.6]]));
-      parts.push(A([[106, -189, 3.2], [113, -196, 2.2], [117, -203, 0.6]]));
-      parts.push(A([[97, -208, 2.8], [89, -215, 1.8], [85, -222, 0.6]]));
-      parts.push(A([[99, -216, 2.2], [97, -226, 1.2], [96, -232, 0.4]]));
+    // the far antler a little behind the near one; the beam sweeps back and up from the brow, the tines rise
+    // off its front, a crown of three at its top
+    // (the far one turned a little back from the near, so the two diverge as a stag's do seen from the side)
+    for (const [turn, sc] of [[-0.32, 0.94], [0, 1]]) {
+      const ct = Math.cos(turn);
+      const st = Math.sin(turn);
+      const A = (pts) =>
+        HT(
+          pts.map(([qx, qy, w]) => {
+            const ax = (qx - 6) * sc * 0.86;
+            const ay = (qy + 10) * sc * 0.86;
+            return [6 + ax * ct - ay * st, -10 + ax * st + ay * ct, w * sc];
+          }),
+        );
+      parts.push(A([[6, -10, 5.4], [3, -17, 4.8], [-2, -26, 4.3], [-8, -35, 3.8], [-12, -45, 3.3], [-12.5, -55, 2.8], [-10, -63, 2.2], [-6, -69, 1.3]]));
+      parts.push(A([[5, -12.5, 3.6], [11, -15.5, 2.8], [17, -19.5, 1.9], [21, -24.5, 0.7]]));
+      parts.push(A([[2, -18.5, 3.2], [9, -21.5, 2.3], [14, -26.5, 1.5], [16, -30.5, 0.5]]));
+      parts.push(A([[-9, -37, 2.8], [-2, -42, 2], [2, -47, 1.2], [3, -51.5, 0.4]]));
+      parts.push(A([[-12.5, -54, 2.4], [-19, -58.5, 1.6], [-23, -62.5, 0.5]]));
+      parts.push(A([[-12, -50, 2.2], [-6, -54, 1.4], [-3, -58.5, 0.4]]));
     }
   }
-  return `<g fill="${colour}">${parts.map((p) => `<path d="${p}"/>`).join('')}</g>`;
+  return `<g fill="${colour}">${parts.map((d) => `<path d="${d}"/>`).join('')}</g>`;
 }
 
 /**
