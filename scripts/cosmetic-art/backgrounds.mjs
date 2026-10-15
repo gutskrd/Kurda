@@ -237,7 +237,7 @@ export const SCENES = {
       // the water and his muzzle in it — and what of him the water holds, which is only what stands above it
       // (all of him above the foot of the strip a profile card shows, his muzzle at the water)
       const water = 530;
-      const stag = deer({ x: 327, y: water + 34, size: 200, colour: '#24160a', pose: 'drink', facing: 1 });
+      const stag = deer({ x: 327, y: water + 48, size: 200, colour: '#24160a', pose: 'drink', facing: 1 });
       const rim = { x: sun[0], y: sun[1], colour: '#ffd890', width: 3, strength: 1, reach: 1500 };
       s.layer({ blur: 1.6, opacity: 0.5 }, (cv) => {
         const below = cv.id('below');
@@ -246,8 +246,8 @@ export const SCENES = {
       });
       // the rings spreading from his muzzle, and round his forelegs where they go into the water
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
-        for (const [r, o] of [[12, 0.5], [26, 0.35], [46, 0.2]]) cv.add(`<ellipse cx="481" cy="${water + 2}" rx="${r}" ry="${n(r * 0.16)}" fill="none" stroke="#fff0c0" stroke-width="1.6" stroke-opacity="${o}"/>`);
-        for (const [cx, r, o] of [[397, 9, 0.45], [397, 18, 0.25], [381, 8, 0.35]]) cv.add(`<ellipse cx="${cx}" cy="${water + 4}" rx="${r}" ry="${n(r * 0.18)}" fill="none" stroke="#fff0c0" stroke-width="1.3" stroke-opacity="${o}"/>`);
+        for (const [r, o] of [[12, 0.5], [26, 0.35], [46, 0.2]]) cv.add(`<ellipse cx="452" cy="${water + 2}" rx="${r}" ry="${n(r * 0.16)}" fill="none" stroke="#fff0c0" stroke-width="1.6" stroke-opacity="${o}"/>`);
+        for (const [cx, r, o] of [[373, 9, 0.45], [373, 18, 0.25], [353, 8, 0.35]]) cv.add(`<ellipse cx="${cx}" cy="${water + 4}" rx="${r}" ry="${n(r * 0.18)}" fill="none" stroke="#fff0c0" stroke-width="1.3" stroke-opacity="${o}"/>`);
       });
       // the bank he stands on, coming down from the left and running on into the shallows toward us
       const bankAt = (x) => {

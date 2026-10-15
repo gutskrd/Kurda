@@ -444,26 +444,27 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a buck come down to drink, painted: the deer of the backgrounds (figures.mjs), heavy and deep through the
-    // chest, his rump high and his back running down into his thick neck, his head down to the water; his coat
-    // grey-brown, darker along the back, white under the belly, at the throat and round the muzzle, the hair laid
-    // on in strokes; a dark wet eye, a black nose, and a rack of tall tines, pale at their tips
+    // a buck come down to drink, painted: the deer of the backgrounds (figures.mjs), short in the body and high on
+    // his long legs, his rump the highest of him and his back falling from it down his neck, his head hanging to
+    // the water; his coat grey-brown, darker along the back, white under the belly, at the throat and round the
+    // muzzle, the hair laid on in strokes; a dark wet eye, a black nose, and a rack of tall tines, pale at their
+    // tips
     still(rnd) {
       const s = new Still(rnd);
-      const d = deerShapes({ x: 347, y: 407, size: 275, facing: -1, pose: 'drink' });
+      const d = deerShapes({ x: 339, y: 405, size: 284, facing: -1, pose: 'drink' });
       const F = d.frame;
       const Hd = d.head;
-      const k = 2.75;
+      const k = 2.84;
       const ink = '#1e140c';
       const deg = (a, b) => (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
       const box = [0, 0, 512, 512];
       const hairs = ['#2a1c10', '#4a3420', '#a88a66', '#cdb898'];
       // the way the hair lies: back along the face from the nose, down the neck to the shoulders, back along the
       // body toward the tail, down the legs
-      const [hx, hy] = Hd([16, 8]);
-      const [wx] = F([88, 0]);
+      const [hx, hy] = Hd([16, 6]);
+      const [wx] = F([76, 0]);
       const alongFace = deg(Hd([30, 8]), Hd([0, 8]));
-      const downNeck = deg(Hd([0, 10]), F([88, -80]));
+      const downNeck = deg(Hd([0, 8]), F([78, -88]));
       const flow = (x, y) => (Math.hypot(x - hx, y - hy) < 24 * k ? alongFace : x < wx ? downNeck : 10);
       const coat = (top) => (cv) => linear(cv, [[0, '#4a3420'], [0.3, '#7a5a3c'], [0.62, '#957654'], [1, '#a88a66']], 0, top, 0, F([0, 0])[1]);
       // a leg, painted: the coat's colours down to tan, its hoof black, its far side in shade
@@ -476,7 +477,7 @@ export const ICONS = [
       };
       // an antler, painted: bone, dark and rough at its burr, pale and smooth at its tips, its edges drawn in
       const antler = (cv, paths, far) => {
-        const [bx, by] = Hd([7.5, -2.5]);
+        const [bx, by] = Hd([6.5, -3]);
         const g = radial(cv, far ? [[0, '#3a2c20'], [0.35, '#6a5640'], [1, '#a8987a']] : [[0, '#4a3828'], [0.3, '#86704e'], [0.7, '#c8b48e'], [1, '#efe6d0']], bx, by, 130);
         cv.add(`<g fill="${g}" stroke="${ink}" stroke-width="1.1" stroke-opacity="0.6">${paths.map((p) => `<path d="${p}"/>`).join('')}</g>`);
       };
@@ -490,44 +491,48 @@ export const ICONS = [
       // the body, the neck and the head, the tail
       s.paint((cv) => {
         cv.add(`<path d="${d.body}" fill="${coat(F([0, -110])[1])(cv)}"/>`);
-        cv.add(`<path d="${d.tail}" fill="#5a4030"/>`);
+        // (the tail in the coat's own brown, darker to its tip, its hair lying down it)
+        cv.add(`<path d="${d.tail}" fill="${linear(cv, [[0, '#5a4028'], [1, '#3a2818']], ...F([0, -99]), ...F([-2, -76]))}"/>`);
+        strokes(cv, rnd, d.tail, box, { count: 60, colours: hairs, flow: () => 90, length: 8, width: 1.4, opacity: [0.08, 0.22] });
+        cv.add(`<path d="${d.tail}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.5"/>`);
         cv.add(`<g clip-path="${within(cv, d.body)}" filter="${softly(cv, 6)}">`);
         // (white under the belly, from the brisket back under the flank; the darker line of the back and the neck)
-        cv.add(`<path d="M${pt(F([86, -44]))} C${pt(F([70, -55]))} ${pt(F([50, -61]))} ${pt(F([28, -58]))}" fill="none" stroke="#ece4d6" stroke-width="${n(8 * k)}" stroke-opacity="0.8"/>`);
-        cv.add(`<path d="M${pt(F([12, -107]))} C${pt(F([50, -108]))} ${pt(F([84, -102]))} ${pt(F([112, -78]))}" fill="none" stroke="#2a1c10" stroke-width="${n(7 * k)}" stroke-opacity="0.5"/>`);
+        cv.add(`<path d="M${pt(F([77, -51]))} C${pt(F([64, -56]))} ${pt(F([46, -62]))} ${pt(F([29, -61]))}" fill="none" stroke="#ece4d6" stroke-width="${n(7 * k)}" stroke-opacity="0.8"/>`);
+        cv.add(`<path d="M${pt(F([10, -103]))} C${pt(F([40, -106]))} ${pt(F([72, -98]))} ${pt(F([100, -66]))}" fill="none" stroke="#2a1c10" stroke-width="${n(7 * k)}" stroke-opacity="0.5"/>`);
         cv.add('</g>');
         // the masses under the coat, painted: the haunch round, the ribs, the shoulder, lit from above and the left
-        for (const [c, rx, ry, o] of [[[18, -86], 20, 18, 0.28], [[54, -84], 26, 12, 0.2], [[84, -80], 12, 18, 0.24]]) {
+        for (const [c, rx, ry, o] of [[[18, -84], 17, 16, 0.28], [[44, -84], 20, 11, 0.2], [[68, -80], 10, 15, 0.24]]) {
           const [cx, cy] = F(c);
           cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx * k)}" ry="${n(ry * k)}" fill="#e8d4b4" fill-opacity="${o}" clip-path="${within(cv, d.body)}" filter="${softly(cv, 14)}"/>`);
         }
         crescent(cv, d.body, [0, -26], { colour: '#1e140c', opacity: 0.45, soft: 18 });
         // the face: the white round the eye and the muzzle, the dark down the bridge of the nose, and the throat patch
         cv.add(`<g clip-path="${within(cv, d.body)}"><g filter="${softly(cv, 2.6)}">`);
-        const throat = Hd([10, 23]);
-        const eye = Hd([12, 5.5]);
+        const throat = Hd([17, 15.5]);
+        const eye = Hd([12.5, 3.2]);
         cv.add(`<ellipse cx="${n(throat[0])}" cy="${n(throat[1])}" rx="${n(6.5 * k)}" ry="${n(4.2 * k)}" fill="#f2ece2" fill-opacity="0.85"/>`);
         cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(5 * k)}" ry="${n(3.8 * k)}" fill="#d8ccb8" fill-opacity="0.4"/>`);
-        cv.add(`<path d="M${pt(Hd([24.6, 4]))} L${pt(Hd([25.8, 12.6]))}" stroke="#e8e0d2" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.65"/>`);
-        cv.add(`<path d="M${pt(Hd([8, -1]))} L${pt(Hd([27, 3.4]))}" stroke="#2a1c10" stroke-width="${n(3.2 * k)}" stroke-linecap="round" stroke-opacity="0.45"/>`);
+        cv.add(`<path d="M${pt(Hd([24.4, 2.2]))} L${pt(Hd([25.4, 11.8]))}" stroke="#e8e0d2" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.65"/>`);
+        cv.add(`<path d="M${pt(Hd([8, -1.6]))} L${pt(Hd([26, 2]))}" stroke="#2a1c10" stroke-width="${n(3.2 * k)}" stroke-linecap="round" stroke-opacity="0.45"/>`);
         cv.add('</g></g>');
         strokes(cv, rnd, d.body, box, { count: 3600, colours: hairs, flow, length: 11, width: 1.8, opacity: [0.1, 0.3] });
         cv.add(`<path d="${d.body}" fill="none" stroke="${ink}" stroke-width="1.8" stroke-opacity="0.6"/>`);
       });
       // the near legs, over the body: the round of the haunch and the thigh, the shoulder and the forearm, their tops
       // let into the coat
-      s.paint((cv) => leg(cv, d.near.hind, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -84])[1], 0, F([0, -64])[1])}"/>`) });
-      s.paint((cv) => leg(cv, d.near.fore, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -62])[1], 0, F([0, -47])[1])}"/>`) });
+      s.paint((cv) => leg(cv, d.near.hind, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -80])[1], 0, F([0, -62])[1])}"/>`) });
+      s.paint((cv) => leg(cv, d.near.fore, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -60])[1], 0, F([0, -50])[1])}"/>`) });
       // the eye, the nose, the near ear, the near antler
       s.paint((cv) => {
-        const eye = Hd([12, 5.5]);
+        const eye = Hd([12.5, 3.2]);
         cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(3.2 * k)}" ry="${n(2.4 * k)}" fill="#120a04" stroke="${ink}" stroke-width="1.4"/>`);
         cv.add(`<ellipse cx="${n(eye[0] - 2.6)}" cy="${n(eye[1] - 2.4)}" rx="2.6" ry="1.7" fill="#fff" fill-opacity="0.85"/>`);
-        const nose = [Hd([26.6, 4.6]), Hd([31.4, 5.4]), Hd([33.8, 8.6]), Hd([33, 11.6]), Hd([29.6, 12.4]), Hd([26.8, 10])];
+        const nose = [Hd([27, 2.6]), Hd([30.6, 3.6]), Hd([32.4, 6.4]), Hd([31.8, 9.2]), Hd([29.2, 10]), Hd([27, 8])];
         cv.add(`<path d="${spline(nose)}" fill="#141010"/>`);
-        cv.add(`<path d="M${pt(Hd([28, 6]))} L${pt(Hd([31.5, 6.6]))}" stroke="#a09890" stroke-width="2" stroke-opacity="0.5" stroke-linecap="round"/>`);
-        cv.add(`<path d="${d.near.ear}" fill="${linear(cv, [[0, '#4e3824'], [0.5, '#7a5c3e'], [1, '#8e7050']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`);
-        strokes(cv, rnd, d.near.ear, box, { count: 70, colours: hairs, flow: () => deg(Hd([0, 0]), Hd([-6, -18])), length: 7, width: 1.4, opacity: [0.08, 0.2] });
+        cv.add(`<path d="M${pt(Hd([28, 4.4]))} L${pt(Hd([31, 5]))}" stroke="#a09890" stroke-width="2" stroke-opacity="0.5" stroke-linecap="round"/>`);
+        const [ex, ey] = Hd([2.4, 3.6]);
+        cv.add(`<path d="${d.near.ear}" fill="${linear(cv, [[0, '#4e3824'], [0.5, '#7a5c3e'], [1, '#8e7050']], ex, ey, ex, ey - 10 * k)}"/>`);
+        strokes(cv, rnd, d.near.ear, box, { count: 50, colours: hairs, flow: () => -90, length: 6, width: 1.3, opacity: [0.08, 0.2] });
         cv.add(`<path d="${d.near.ear}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.65"/>`);
         antler(cv, d.near.antler, false);
       });
