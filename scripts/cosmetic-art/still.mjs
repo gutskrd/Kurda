@@ -1,8 +1,8 @@
 /**
  * Still lifes: the shop's icons painted as real things — a fruit, a glass of
- * tea, a wax seal, a flame — lit the way a photographer lights an object
- * against a black cloth, and cut out of it, so that each lies over a profile
- * picture with nothing round it but its own glow.
+ * tea, a wax seal, a flame — against a black cloth, and cut out of it, so
+ * that each lies over a profile picture with nothing round it but its own
+ * glow.
  *
  * An icon is a short list of steps, as a scene is (render.mjs), worked at
  * twice its size and brought down at the end:
@@ -17,14 +17,17 @@
  *    (`clear`) — then faded out where `mask` is dark;
  *  - a shadow one part casts on another (`shadow`);
  *  - light given off, a flame's or the sun's (`glow`);
- *  - paint laid on as it is, unlit (`paint`).
+ *  - a mountain painted from a relief, as the backgrounds' are (`terrain`);
+ *  - paint laid on as it is, unlit (`paint`): most of an icon is this, its
+ *    light and its shadow painted in by hand (brush.mjs).
  *
- * Then a grade and the grain of film, and out it comes with its transparency.
+ * Then, for a painted thing, the painter's pass (`finish.paint`), a grade
+ * and the grain of film, and out it comes with its transparency.
  * Plain arithmetic on the rasterised SVG, every random choice seeded, so the
  * same steps paint the same pixels everywhere.
  */
 import { Canvas, random } from './kit.mjs';
-import { rasterise } from './render.mjs';
+import { rasterise, terrain } from './render.mjs';
 import { blur, blurField, clamp, frame, luma, over, rgb, smooth, turbulence } from './pixels.mjs';
 
 /** Worked at twice the size and brought down: fine edges and fine marks. */
@@ -94,6 +97,16 @@ export class Still {
   /** Light given off: `draw` in the light's colours, spread by `blur` (and three times that, fainter). */
   glow(draw, { blur: soft = 16, strength = 1, halo = 0.5 } = {}) {
     this.steps.push({ glow: { svg: this.svg(draw), blur: soft, strength, halo } });
+    return this;
+  }
+  /**
+   * A mountain painted from a relief, as the backgrounds' are (render.mjs
+   * `terrain`): `paint` gives its skyline (`ridge`), its summits (`peaks`,
+   * [x, y, half-width]), its colours, and the `scale` of its rock and snow
+   * (1: as a background's, at this size); faded where `mask` is dark.
+   */
+  terrain(paint, { mask = null } = {}) {
+    this.steps.push({ terrain: { ...paint, seed: this.seed() }, mask: mask && this.svg(mask) });
     return this;
   }
   /** Paint laid on as it is, unlit (and faded where `mask` is dark). */
@@ -399,6 +412,64 @@ function finishStill(f, { contrast = 0.12, saturation = 1.05, warmth = 0.03, gra
   }
 }
 
+/**
+ * The painter's pass (a Kuwahara filter), on a picture with its
+ * transparency: every pixel takes the colour of the calmest of the four
+ * squares round it, `radius` across, so that what is smooth stays smooth,
+ * edges and the cut-out's own edge stay where they are, and texture turns
+ * into strokes of paint.
+ */
+function paintover(f, radius) {
+  const { w, h } = f;
+  const W = w + 1;
+  const sums = [0, 1, 2, 3].map(() => new Float64Array(W * (h + 1)));
+  const lum = new Float64Array(W * (h + 1));
+  const lum2 = new Float64Array(W * (h + 1));
+  for (let y = 0; y < h; y++) {
+    const run = [0, 0, 0, 0];
+    let l = 0;
+    let l2 = 0;
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      for (let c = 0; c < 4; c++) run[c] += f.px[i + c];
+      // (the alpha counts too, so that the edge of the cut-out is an edge)
+      const v = luma(f.px[i], f.px[i + 1], f.px[i + 2]) + f.px[i + 3] * 0.5;
+      l += v;
+      l2 += v * v;
+      const k = (y + 1) * W + x + 1;
+      for (let c = 0; c < 4; c++) sums[c][k] = sums[c][k - W] + run[c];
+      lum[k] = lum[k - W] + l;
+      lum2[k] = lum2[k - W] + l2;
+    }
+  }
+  const area = (t, x0, y0, x1, y1) => t[y1 * W + x1] - t[y0 * W + x1] - t[y1 * W + x0] + t[y0 * W + x0];
+  const out = new Float32Array(f.px.length);
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      let best = Infinity;
+      let pick = null;
+      for (let q = 0; q < 4; q++) {
+        const x0 = clamp(q & 1 ? x : x - radius, 0, w);
+        const x1 = clamp(q & 1 ? x + radius + 1 : x + 1, 0, w);
+        const y0 = clamp(q & 2 ? y : y - radius, 0, h);
+        const y1 = clamp(q & 2 ? y + radius + 1 : y + 1, 0, h);
+        const m = (x1 - x0) * (y1 - y0);
+        if (m <= 0) continue;
+        const mean = area(lum, x0, y0, x1, y1) / m;
+        const v = area(lum2, x0, y0, x1, y1) / m - mean * mean;
+        if (v < best) {
+          best = v;
+          pick = [x0, y0, x1, y1, m];
+        }
+      }
+      const i = (y * w + x) * 4;
+      const [x0, y0, x1, y1, m] = pick;
+      for (let c = 0; c < 4; c++) out[i + c] = area(sums[c], x0, y0, x1, y1) / m;
+    }
+  }
+  f.px.set(out);
+}
+
 /** Brought down to its size: each pixel the average of the four it was worked as. */
 function halve(f) {
   const w = f.w / 2;
@@ -434,13 +505,21 @@ export async function renderStill({ size, steps, light = {}, finish = {} }, seed
     if (step.surface) over(out, await surface(step.surface, S, L));
     else if (step.shadow) await castShadow(out, step.shadow, S);
     else if (step.glow) await addGlow(out, step.glow, S);
-    else if (step.paint) {
+    else if (step.terrain) {
+      // (drawn at the worked size: its skyline, summits and heights in its pixels)
+      const t = step.terrain;
+      const at = (v) => (v == null ? v : v * SS);
+      const layer = terrain(S, S, { ...t, ridge: t.ridge.map(([x, y]) => [x * SS, y * SS]), peaks: t.peaks.map(([x, y, r]) => [x * SS, y * SS, r * SS]), snowline: at(t.snowline), footFrom: at(t.footFrom), scale: (t.scale ?? 1) * SS });
+      if (step.mask) await masked(layer, step.mask, S);
+      over(out, layer);
+    } else if (step.paint) {
       const layer = await rasterise(step.paint.svg, S, S, 1 / SS);
       if (step.paint.blur) blur(layer, step.paint.blur * SS);
       if (step.paint.mask) await masked(layer, step.paint.mask, S);
       over(out, layer, step.paint.opacity);
     }
   }
+  if (finish.paint) paintover(out, Math.round(finish.paint * SS));
   finishStill(out, finish, seed);
   const small = halve(out);
   const px = Buffer.alloc(size * size * 4);

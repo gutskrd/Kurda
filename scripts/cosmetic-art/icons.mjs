@@ -1,16 +1,19 @@
 /**
  * The shop's icons: Kurdish things painted as they are — a pomegranate split
  * open, a glass of tea on its saucer, a seal of red wax with the eight-point
- * star pressed into it, a saz, a buck come down to drink — each lit as a
- * photographer lights a thing against a black cloth, and cut out of the dark,
- * so that it lies over a profile picture with nothing round it but its own
- * light.
+ * star pressed into it, a saz, a buck come down to drink — painted by hand
+ * rather than modelled: each one's colours laid in, its light and its shadow
+ * laid over them as shapes of their own, brushed over and drawn in
+ * (brush.mjs), and cut out of the dark, so that it lies over a profile
+ * picture with nothing round it but its own light.
  *
  * They sit on a profile picture at about 40 pixels, so each is one clear
  * shape first, its colour second and its detail last: the detail is for the
- * shop tile. Each is a still life (still.mjs): surfaces given relief and lit,
- * shadows cast, light given off.
+ * shop tile. Each is a still life (still.mjs): paint laid on, light given off,
+ * the mountain painted from a relief as the backgrounds' mountains are, the
+ * rug's weave and the moon given relief and lit; then the painter's pass.
  */
+import { crescent, rim, softly, specks, strokes, within } from './brush.mjs';
 import { deerShapes } from './figures.mjs';
 import { eightPointStar, n, pt } from './kit.mjs';
 import { Still } from './still.mjs';
@@ -46,29 +49,6 @@ function roundish([cx, cy], r, rnd, { wobble = 0.04, count = 40, squash = 1 } = 
 }
 
 // ─────────────────────────────────────────────────────────────── icons
-
-/** Points packed over a shape, `gap` apart in staggered rows, each nudged a little: seeds in a fruit, grains in an ear. */
-function packed(inside, [x0, y0, x1, y1], gap, rnd, jitter = 0.25) {
-  const out = [];
-  for (let y = y0, row = 0; y <= y1; y += gap * 0.86, row++) {
-    for (let x = x0 + (row % 2 ? gap / 2 : 0); x <= x1; x += gap) {
-      const p = [x + (rnd() - 0.5) * gap * jitter, y + (rnd() - 0.5) * gap * jitter];
-      if (inside(p)) out.push(p);
-    }
-  }
-  return out;
-}
-
-/** Whether a point lies inside a polygon. */
-function within(poly, [x, y]) {
-  let inside = false;
-  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
-    const [xi, yi] = poly[i];
-    const [xj, yj] = poly[j];
-    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
-  }
-  return inside;
-}
 
 /** A radial gradient, `stops` [offset, colour, opacity?], centred (cx, cy) radius r, in the canvas's own units. */
 function radial(cv, stops, cx, cy, r, fx = cx, fy = cy) {
@@ -148,28 +128,6 @@ function tube(points, w0, w1 = w0, count = 24) {
 }
 
 /**
- * Fur: `count` short hairs over the box [x0, y0, x1, y1], clipped to the
- * outline `d`, each lying along `flow(x, y)` (degrees), in `colours`, as
- * faint strokes — painted into a coat's colours, or into its relief.
- */
-function fur(cv, rnd, d, [x0, y0, x1, y1], flow, count, colours, { length = 7, width = 1, opacity = [0.12, 0.3] } = {}) {
-  const clip = cv.id('fur');
-  cv.def(`<clipPath id="${clip}"><path d="${d}"/></clipPath>`);
-  let out = `<g clip-path="url(#${clip})" fill="none" stroke-linecap="round">`;
-  for (let i = 0; i < count; i++) {
-    const x = x0 + rnd() * (x1 - x0);
-    const y = y0 + rnd() * (y1 - y0);
-    const a = ((flow(x, y) + (rnd() - 0.5) * 16) * Math.PI) / 180;
-    const l = length * (0.6 + rnd() * 0.8);
-    const bend = (rnd() - 0.5) * l * 0.3;
-    const e = [x + Math.cos(a) * l, y + Math.sin(a) * l];
-    const m = [x + Math.cos(a) * l * 0.5 - Math.sin(a) * bend, y + Math.sin(a) * l * 0.5 + Math.cos(a) * bend];
-    out += `<path d="M${pt([x, y])} Q${pt(m)} ${pt(e)}" stroke="${colours[Math.floor(rnd() * colours.length)]}" stroke-width="${n(width * (0.7 + rnd() * 0.6))}" stroke-opacity="${n(opacity[0] + rnd() * (opacity[1] - opacity[0]))}"/>`;
-  }
-  cv.add(`${out}</g>`);
-}
-
-/**
  * A tulip, its cup of six tepals in `colours` ([base, middle, tip, back]): the
  * three behind just showing their tips, the three in front closing round
  * them in an egg-shaped cup, satin, fine streaks running up them, the light
@@ -177,89 +135,111 @@ function fur(cv, rnd, d, [x0, y0, x1, y1], flow, count, colours, { length = 7, w
  * with the bloom on them, folded along the middle and arching away.
  */
 function tulip(rnd, [base, middle, tip, back]) {
-  const s = new Still(rnd);
-  const satin = { gloss: 0.32, shine: 16, wrap: 0.5, sheen: 0.3 };
-  const petal = (cv, b, t, w, o) => {
+  // (a cut flower: drawn a little smaller, its stem's cut end clear of the frame)
+  const s = new Still(rnd).place([0, -4], 0.93);
+  // a tepal, painted: deep at its foot, its colour at its fullest in the middle, paler at the tip; fine veins
+  // running up it; its edge thin, so lighter, where the light comes through; the shadow of what lies over it
+  const tepal = (cv, b, t, w, o, { shade = 0, veins = 14 } = {}) => {
     const d = blade(b, t, w, o);
-    cv.add(`<path d="${d}" fill="${linear(cv, [[0, base], [0.38, middle], [0.85, tip], [1, middle]], b[0], b[1], t[0], t[1])}"/>`);
-    // (its edge thinner, so lighter, where the light comes through it)
-    const clip = cv.id('tepal');
-    cv.def(`<clipPath id="${clip}"><path d="${d}"/></clipPath>`);
-    cv.add(`<path d="${d}" clip-path="url(#${clip})" fill="none" stroke="${tip}" stroke-width="7" stroke-opacity="0.35"/>`);
+    cv.add(`<path d="${d}" fill="${linear(cv, [[0, base], [0.35, middle], [0.8, tip], [1, middle]], b[0], b[1], t[0], t[1])}"/>`);
+    let lines = '';
+    for (let i = 0; i < veins; i++) {
+      const f = (i / (veins - 1) - 0.5) * w * 0.8;
+      const m = lerp(b, t, 0.55);
+      lines += `<path d="M${pt(lerp(b, t, 0.04))} Q${pt([m[0] + f, m[1]])} ${pt([t[0] + f * 0.3, t[1] + 10 + rnd() * 18])}" stroke="${rnd() < 0.3 ? tip : base}" stroke-width="${n(0.6 + rnd() * 1.2)}" stroke-opacity="${n(0.12 + rnd() * 0.16)}"/>`;
+    }
+    cv.add(`<g clip-path="${within(cv, d)}" fill="none">${lines}</g>`);
+    // (and the paint laid on along it)
+    const ang = (Math.atan2(t[1] - b[1], t[0] - b[0]) * 180) / Math.PI;
+    strokes(cv, rnd, d, [Math.min(b[0], t[0]) - w, Math.min(b[1], t[1]), Math.max(b[0], t[0]) + w, Math.max(b[1], t[1])], { count: 240, colours: [tip, middle, base, back], flow: () => ang, length: 22, width: 3, opacity: [0.06, 0.2] });
+    if (shade) crescent(cv, d, [shade * 16, 4], { colour: '#000', opacity: 0.35, soft: 12 });
+    rim(cv, d, { colour: tip, width: 3, opacity: 0.45, soft: 1.5 });
+    cv.add(`<path d="${d}" fill="none" stroke="${back}" stroke-width="1.2" stroke-opacity="0.5"/>`);
     return d;
   };
-  // fine streaks of deeper colour, and a few paler, running up each tepal
-  const streaks = (cv, b, t, count, spread) => {
-    for (let i = 0; i < count; i++) {
-      const f = (i / (count - 1) - 0.5) * spread * (0.9 + rnd() * 0.2);
-      const m = lerp(b, t, 0.55);
-      const pale = rnd() < 0.25;
-      cv.add(`<path d="M${pt(lerp(b, t, 0.06))} Q${pt([m[0] + f, m[1]])} ${pt([t[0] + f * 0.35, t[1] + 14 + rnd() * 16])}" fill="none" stroke="${pale ? tip : base}" stroke-width="${n(0.8 + rnd() * 1.6)}" stroke-opacity="${n(0.1 + rnd() * 0.14)}"/>`);
+  // a leaf, painted: broad and grey-green with the bloom on it, rising from the stem's foot along `spine` (a
+  // cubic's four points), `width` across; folded along its midrib, so that one half takes the light and the
+  // other lies in shade, with fine veins running the length of it
+  const leaf = (cv, [p0, p1, p2, p3], width) => {
+    const N = 40;
+    const mid = [];
+    for (let k = 0; k <= N; k++) {
+      const u = k / N;
+      mid.push([0, 1].map((c) => (1 - u) ** 3 * p0[c] + 3 * (1 - u) ** 2 * u * p1[c] + 3 * (1 - u) * u ** 2 * p2[c] + u ** 3 * p3[c]));
     }
-  };
-  // a leaf: broad, folded along its midrib, its fine veins running the length of it
-  const leaf = (b, t, w, bend) => {
-    const d = blade(b, t, w, { at: 0.3, bend, point: 1 });
-    const len = Math.hypot(t[0] - b[0], t[1] - b[1]);
-    const rib = (off) => {
-      const pts = [];
-      for (let k = 0; k <= 12; k++) {
-        const u = k / 12;
-        const sway = bend * len * Math.sin(Math.PI * u);
-        const half = (w / 2) * off * Math.pow(Math.sin(Math.PI * Math.pow(u, Math.log(0.5) / Math.log(0.3))), 0.75) * (1 - Math.pow(u, 6));
-        const ux = (t[0] - b[0]) / len;
-        const uy = (t[1] - b[1]) / len;
-        pts.push([b[0] + (t[0] - b[0]) * u - uy * (sway + half), b[1] + (t[1] - b[1]) * u + ux * (sway + half)]);
+    const across = mid.map((_, k) => {
+      const a = mid[Math.max(0, k - 1)];
+      const b = mid[Math.min(N, k + 1)];
+      const l = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1;
+      return [-(b[1] - a[1]) / l, (b[0] - a[0]) / l];
+    });
+    // (narrow where it leaves the stem, broadest a third of the way up, drawn out to its point)
+    const line = (off) => mid.map((q, k) => {
+      const w = (width / 2) * Math.pow(Math.sin(Math.PI * Math.pow(k / N, 0.62)), 0.85) * off;
+      return [q[0] + across[k][0] * w, q[1] + across[k][1] * w];
+    });
+    const part = (o0, o1) => spline([...line(o0), ...line(o1).reverse()]);
+    const flow = (x, y) => {
+      let best = 0;
+      let dist = Infinity;
+      for (let k = 0; k <= N; k++) {
+        const dd = (mid[k][0] - x) ** 2 + (mid[k][1] - y) ** 2;
+        if (dd < dist) [best, dist] = [k, dd];
       }
-      return spline(pts, false);
+      return (Math.atan2(across[best][0], -across[best][1]) * 180) / Math.PI;
     };
-    const veins = (cv, colour, opacity) => cv.add(`<g fill="none" stroke="${colour}" stroke-width="1" stroke-opacity="${opacity}">${[-0.7, -0.45, -0.22, 0.22, 0.45, 0.7].map((o) => `<path d="${rib(o)}"/>`).join('')}</g>`);
-    s.surface(
-      (cv) => {
-        cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#24382c'], [0.45, '#46664f'], [1, '#7c9a88']], ...b, ...t)}"/>`);
-        // (the bloom on it: a bluish grey, thickest away from the midrib)
-        cv.add(`<path d="${d}" fill="#a8bcc0" fill-opacity="0.16"/>`);
-        veins(cv, '#9ab4a4', 0.35);
-        cv.add(`<path d="${rib(0)}" fill="none" stroke="#2a4232" stroke-width="2.5" stroke-opacity="0.6"/>`);
-      },
-      {
-        inflate: { radius: 12, profile: 'soft', height: 0.5 },
-        relief: [
-          // folded: its two halves rising from the midrib
-          { draw: (cv) => cv.add(`<path d="${d}" fill="#fff"/><path d="${rib(0)}" fill="none" stroke="#000" stroke-width="${n(w * 0.55)}" stroke-linecap="round"/>`), height: 9, blur: 9 },
-          { draw: (cv) => veins(cv, '#fff', 0.6), height: 0.8, blur: 0.6 },
-        ],
-        material: { gloss: 0.3, shine: 20, wrap: 0.3, sheen: 0.35, hollows: 0.6 },
-      },
-    );
+    const box = [Math.min(...mid.map((q) => q[0])) - width, Math.min(...mid.map((q) => q[1])) - width, Math.max(...mid.map((q) => q[0])) + width, Math.max(...mid.map((q) => q[1])) + width];
+    const d = part(1, -1);
+    cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#26382a'], [0.45, '#4a6a54'], [1, '#7a9886']], ...p0, ...p3)}"/>`);
+    cv.add(`<path d="${part(0, -1.05)}" fill="#14241a" fill-opacity="0.4" clip-path="${within(cv, d)}" filter="${softly(cv, 2.5)}"/>`);
+    cv.add(`<g clip-path="${within(cv, d)}" fill="none" stroke="#b0c8b8" stroke-width="0.9" stroke-opacity="0.32">${[-0.72, -0.48, -0.24, 0.24, 0.48, 0.72].map((o) => `<path d="${spline(line(o), false)}"/>`).join('')}</g>`);
+    cv.add(`<path d="${spline(line(0), false)}" fill="none" stroke="#c8dacc" stroke-width="1.8" stroke-opacity="0.5"/>`);
+    strokes(cv, rnd, d, box, { count: 220, colours: ['#8aa898', '#22362a', '#5a7a64'], flow, length: 24, width: 3, opacity: [0.06, 0.16], spread: 8 });
+    // (the bloom on it, and its edge)
+    cv.add(`<path d="${d}" fill="#b8c8c4" fill-opacity="0.12"/>`);
+    rim(cv, d, { colour: '#a8c0b0', width: 2, opacity: 0.3, soft: 1 });
+    cv.add(`<path d="${d}" fill="none" stroke="#14241a" stroke-width="1.2" stroke-opacity="0.6"/>`);
   };
-  // (a leaf clasps the stem low down, rises along it and arches away; the second, lower, bends out the other way)
-  leaf([268, 498], [412, 350], 58, 0.24);
-  s.surface((cv) => cv.add(`<path d="M250 292 C254 360 260 430 260 508 L276 508 C276 430 270 360 266 292 Z" fill="${linear(cv, [[0, '#2e4c2c'], [0.45, '#5a8450'], [1, '#2a4628']], 250, 0, 276, 0)}"/>`), {
-    inflate: { radius: 8, profile: 'round', height: 1 },
-    mottle: { scale: 4, amount: 0.08, stretch: 8, angle: 90 },
-    material: { gloss: 0.3, shine: 24, sheen: 0.35 },
+  // the leaves: one lower, reaching out to the right; the other rising tall beside the stem and arching over,
+  // its tip falling away
+  s.paint((cv) => leaf(cv, [[264, 506], [324, 476], [398, 424], [444, 334]], 78));
+  // the stem, bending a little under the weight of the flower: lit down its left side
+  s.paint((cv) => {
+    const spine = [[258, 296], [252, 360], [256, 430], [264, 508]];
+    const stem = tube(spine, 12, 17);
+    cv.add(`<path d="${stem}" fill="${linear(cv, [[0, '#86ac78'], [0.4, '#4c7c46'], [1, '#1a3418']], 246, 0, 276, 0)}"/>`);
+    strokes(cv, rnd, stem, [240, 290, 280, 510], { count: 60, colours: ['#a8c898', '#22401e'], flow: () => 90, length: 22, width: 2, opacity: [0.08, 0.2], spread: 4 });
+    cv.add(`<path d="${spline(spine.map(([x, y]) => [x - 3, y]), false)}" fill="none" stroke="#c4dcb4" stroke-width="1.6" stroke-opacity="0.45"/>`);
+    cv.add(`<path d="${stem}" fill="none" stroke="#14281a" stroke-width="1" stroke-opacity="0.5"/>`);
+    // (its cut end, pale and wet)
+    cv.add(`<ellipse cx="264" cy="508" rx="8.5" ry="3.2" fill="#b8d0a0" stroke="#2a4a26" stroke-width="1"/>`);
   });
-  leaf([254, 506], [112, 248], 70, -0.24);
-  const behind = [[[246, 290], [214, 66], 100, { at: 0.6, bend: -0.03, point: 0.4 }], [[266, 290], [302, 58], 100, { at: 0.6, bend: 0.04, point: 0.4 }]];
-  s.surface((cv) => {
-    for (const [b, t, w, o] of behind) petal(cv, b, t, w, o);
-    cv.add(`<g fill="${back}" fill-opacity="0.45">${behind.map(([b, t, w, o]) => `<path d="${blade(b, t, w, o)}"/>`).join('')}</g>`);
-  }, { inflate: { radius: 30, profile: 'soft', height: 0.5 }, material: satin });
-  const sides = [[[250, 304], [184, 90], 128, { at: 0.55, bend: -0.12, point: 0.4 }], [[262, 304], [330, 80], 130, { at: 0.55, bend: 0.13, point: 0.4 }]];
-  s.surface((cv) => {
-    for (const [b, t, w, o] of sides) {
-      petal(cv, b, t, w, o);
-      streaks(cv, b, t, 12, 80);
-    }
-  }, { inflate: { radius: 44, profile: 'soft', height: 0.75 }, bumps: { scale: 12, amount: 0.3, stretch: 6, angle: -80 }, material: satin });
-  const front = [[256, 312], [250, 72], 150, { at: 0.5, bend: -0.03, point: 0.35 }];
-  s.shadow((cv) => cv.add(`<path d="${blade(...front)}" fill="#000" transform="translate(10 8)"/>`), { blur: 12, opacity: 0.45 });
-  s.surface((cv) => {
-    petal(cv, ...front);
-    streaks(cv, front[0], front[1], 18, 130);
-  }, { inflate: { radius: 54, profile: 'soft', height: 0.8 }, bumps: { scale: 12, amount: 0.3, stretch: 6, angle: -90 }, material: satin });
-  return s.done({ finish: { grain: 0.004, saturation: 0.95 } });
+  s.paint((cv) => leaf(cv, [[254, 508], [196, 380], [124, 250], [66, 316]], 84));
+  // the cup, nodding a little on its stem: the tepals behind just showing their tips, two at the sides, one in
+  // front closing round them
+  const nod = (draw) => s.paint((cv) => {
+    cv.add('<g transform="rotate(-4 258 300)">');
+    draw(cv);
+    cv.add('</g>');
+  });
+  nod((cv) => {
+    const a = tepal(cv, [246, 290], [214, 66], 100, { at: 0.6, bend: -0.03, point: 0.4 }, { veins: 8 });
+    const b = tepal(cv, [266, 290], [302, 58], 100, { at: 0.6, bend: 0.04, point: 0.4 }, { veins: 8 });
+    // (the inside of the cup, in shadow, behind the tepals in front)
+    for (const d of [a, b]) cv.add(`<path d="${d}" fill="${back}" fill-opacity="0.4" clip-path="${within(cv, d)}"/>`);
+  });
+  nod((cv) => {
+    tepal(cv, [250, 304], [184, 90], 128, { at: 0.55, bend: -0.12, point: 0.4 }, { shade: -1 });
+    tepal(cv, [262, 304], [330, 80], 130, { at: 0.55, bend: 0.13, point: 0.4 }, { shade: 1 });
+  });
+  nod((cv) => {
+    const front = tepal(cv, [256, 312], [250, 72], 150, { at: 0.5, bend: -0.03, point: 0.35 }, { veins: 20 });
+    // the light on the front tepal's left, and its right in shade; and the satin sheen of it
+    crescent(cv, front, [-22, 0], { colour: '#000', opacity: 0.32, soft: 18 });
+    crescent(cv, front, [24, 0], { colour: '#fff', opacity: 0.16, soft: 18 });
+    cv.add(`<g clip-path="${within(cv, front)}"><path d="M236 292 C204 240 200 150 236 98" fill="none" stroke="#fff" stroke-width="12" stroke-opacity="0.16" stroke-linecap="round" filter="${softly(cv, 5)}"/></g>`);
+  });
+  return s.done({ finish: { paint: 1.5, grain: 0.012, contrast: 0.08, saturation: 0.95 } });
 }
 
 export const ICONS = [
@@ -267,79 +247,96 @@ export const ICONS = [
     key: 'hinar',
     ku: 'Hinar',
     en: 'Pomegranate',
-    // a ripe pomegranate, its leathery skin a little angular, the crown of its calyx at the top, split open at the
-    // front: the torn skin's pale pith round the hollow, and the seeds packed in it, ruby, wet and shining
+    // a ripe pomegranate, painted: broken open at its side, a piece of it leaning against it, the seeds packed in
+    // both in their pale pith, ruby and wet; its skin deep crimson and a little rough, lit softly from the left, the
+    // crown of its calyx at the top
     still(rnd) {
       const s = new Still(rnd);
-      const C = [250, 296];
-      const fruit = [];
-      for (let i = 0; i < 52; i++) {
-        const a = (i / 52) * Math.PI * 2;
-        const m = 1 + 0.012 * Math.cos(a * 6 + 0.4) + 0.012 * Math.sin(a * 3 + 1);
-        fruit.push([C[0] + Math.cos(a) * 178 * m, C[1] + Math.sin(a) * 166 * m]);
+      // the fruit, a little lopsided
+      const C = [226, 276];
+      const body = [];
+      for (let i = 0; i < 40; i++) {
+        const a = (i / 40) * Math.PI * 2;
+        const m = 1 + 0.025 * Math.cos(a * 3 + 0.6) + 0.015 * Math.sin(a * 5 + 1.2);
+        body.push([C[0] + Math.cos(a) * 172 * m, C[1] + Math.sin(a) * 160 * m]);
       }
-      s.surface(
-        (cv) => {
-          const skin = spline(fruit);
-          const clip = cv.id('skin');
-          cv.def(`<clipPath id="${clip}"><path d="${skin}"/></clipPath>`);
-          cv.add(`<path d="${skin}" fill="${radial(cv, [[0, '#c63e28'], [0.35, '#a8201e'], [0.75, '#80111a'], [1, '#520a10']], 196, 232, 250, 170, 200)}"/>`);
-          // the blush toward the crown, and the skin's small pale freckles
-          const blush = cv.id('bl');
-          cv.def(`<filter id="${blush}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="30"/></filter>`);
-          cv.add(`<g clip-path="url(#${clip})"><ellipse cx="196" cy="176" rx="104" ry="64" fill="#d8763a" fill-opacity="0.42" filter="url(#${blush})"/>`);
-          for (let i = 0; i < 70; i++) {
-            const a = rnd() * Math.PI * 2;
-            const r = Math.sqrt(rnd()) * 160;
-            cv.add(`<circle cx="${n(C[0] + Math.cos(a) * r)}" cy="${n(C[1] + Math.sin(a) * r * 0.94)}" r="${n(1 + rnd() * 1.6)}" fill="#e8a060" fill-opacity="${n(0.25 + rnd() * 0.3)}"/>`);
-          }
-          cv.add('</g>');
-        },
-        { inflate: { radius: 165, profile: 'round', height: 0.85, soften: 2 }, bumps: { scale: 6, amount: 0.25 }, mottle: { scale: 22, amount: 0.12 }, material: { gloss: 0.32, shine: 22, wrap: 0.1, sheen: 0.4 } },
-      );
-      // the crown: a short tube flaring into pointed sepals
-      const crown = 'M206 146 C204 128 200 116 192 104 C198 106 204 108 210 112 C212 100 214 92 216 82 C222 92 226 100 230 108 C236 98 242 92 250 86 C250 98 248 108 246 116 C254 112 262 110 270 110 C264 120 258 128 252 136 C252 142 252 148 250 154 C236 162 218 160 206 146 Z';
-      s.surface((cv) => cv.add(`<path d="${crown}" fill="${linear(cv, [[0, '#7a1a18'], [0.6, '#a0281e'], [1, '#c04a2a']], 220, 84, 230, 158)}"/>`), {
-        inflate: { radius: 16, profile: 'soft', height: 1 },
-        bumps: { scale: 3, amount: 0.15 },
-        material: { gloss: 0.25, shine: 20, sheen: 0.4 },
-      });
-      // the split: the hollow, its rim of pith, and the seeds
-      const hole = roundish([312, 318], 104, rnd, { wobble: 0.12, count: 26, squash: 0.92 });
+      const bodyD = spline(body);
+      // the hole broken in its right side, ragged
+      const hole = roundish([292, 286], 104, rnd, { wobble: 0.14, count: 22, squash: 1.05 });
       const holeD = spline(hole);
-      s.surface(
-        (cv) => cv.add(`<path d="${holeD}" fill="#2a0408"/>`),
-        { relief: { draw: (cv) => cv.add(`<path d="${holeD}" fill="${radial(cv, [[0, '#000'], [0.7, '#444'], [1, '#fff']], 312, 318, 110)}"/>`), height: 14, blur: 3 }, material: { gloss: 0.1, sheen: 0.1 } },
-      );
-      // (the torn edge of the skin: thin, ragged, the yellowish pith showing in it, and the pale membranes running in
-      // between the seeds)
-      const torn = roundish([312, 318], 99, rnd, { wobble: 0.14, count: 34, squash: 0.92 });
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${holeD}" fill="none" stroke="#e6c79c" stroke-width="11" stroke-linejoin="round"/><path d="${spline(torn)}" fill="none" stroke="#d8b080" stroke-width="5" stroke-linejoin="round" stroke-opacity="0.8"/>`);
-          for (let i = 0; i < 4; i++) {
-            const a = -0.6 + i * 0.75 + rnd() * 0.3;
-            cv.add(`<path d="M${pt([312 + Math.cos(a) * 96, 318 + Math.sin(a) * 88])} Q${pt([312 + Math.cos(a + 0.3) * 50, 318 + Math.sin(a + 0.3) * 46])} ${pt([312 + rnd() * 20 - 10, 318 + rnd() * 20 - 10])}" fill="none" stroke="#e8c898" stroke-width="5" stroke-opacity="0.85" stroke-linecap="round"/>`);
+      // seeds packed into a shape: each a little angular, ruby, darkest at its edge, a glint of light on it
+      const seeds = (cv, shape, box, gap, lit) => {
+        cv.add(`<path d="${shape}" fill="#3a0408"/>`);
+        let out = '';
+        const poly = [];
+        for (let y = box[1]; y <= box[3]; y += gap * 0.86) {
+          for (let x = box[0] + ((y / gap) % 2 ? gap / 2 : 0); x <= box[2]; x += gap) poly.push([x + (rnd() - 0.5) * gap * 0.35, y + (rnd() - 0.5) * gap * 0.35]);
+        }
+        for (const [x, y] of poly) {
+          const r = gap * (0.44 + rnd() * 0.2);
+          const pts = roundish([x, y], r, rnd, { wobble: 0.26, count: 6, squash: 1.05 + rnd() * 0.3 });
+          // (deeper in the hole, and further from the light, the seeds are darker; no two quite the same)
+          const shade = Math.max(0, Math.min(1, ((x - lit[0]) * 0.5 + (y - lit[1])) / 240 + (rnd() - 0.5) * 0.5));
+          const c0 = ['#e43a52', '#cc2440', '#b0182e', '#901024'][Math.floor(shade * 3.99)];
+          out += `<path d="${spline(pts)}" fill="${radial(cv, [[0, c0], [0.55, '#7e0a1e'], [1, '#3a020c']], x - r * 0.3, y - r * 0.35, r * 1.35)}"/>`;
+          if (rnd() < 0.7) {
+            const g = r * (0.12 + rnd() * 0.14);
+            out += `<ellipse cx="${n(x - r * 0.3)}" cy="${n(y - r * 0.36)}" rx="${n(g * 1.6)}" ry="${n(g)}" transform="rotate(-35 ${n(x - r * 0.3)} ${n(y - r * 0.36)})" fill="#fff4f0" fill-opacity="${n(0.4 + rnd() * 0.5)}"/>`;
           }
-        },
-        { inflate: { radius: 5, profile: 'soft', height: 1 }, bumps: { scale: 2, amount: 0.3 }, material: { gloss: 0.2, shine: 14, wrap: 0.4, sheen: 0.2 } },
-      );
-      const inner = roundish([312, 318], 92, rnd, { wobble: 0.1, count: 26, squash: 0.92 });
-      const seeds = packed((q) => within(inner, q), [200, 200, 420, 420], 21, rnd, 0.35);
-      s.surface(
-        (cv) => {
-          for (const [x, y] of seeds) {
-            // pressed against each other, each seed a little angular, its jewel colour deepest at its edge
-            const r = 10.5 + rnd() * 2.2;
-            const pts = roundish([x, y], r, rnd, { wobble: 0.16, count: 7, squash: 1.12 + rnd() * 0.14 });
-            cv.add(`<path d="${spline(pts)}" fill="${radial(cv, [[0, '#c41e3c'], [0.55, '#8a0c22'], [1, '#4a0410']], x - r * 0.25, y - r * 0.3, r * 1.3)}"/>`);
-          }
-        },
-        { inflate: { radius: 11, profile: 'round', height: 1 }, material: { gloss: 1.1, shine: 160, wrap: 0.6, sheen: 0.35, hollows: 0.5 } },
-      );
-      // the torn skin's shadow over the seeds below its upper edge
-      s.shadow((cv) => cv.add(`<path d="${holeD}" fill="none" stroke="#000" stroke-width="26" transform="translate(9 11)"/>`), { blur: 6, opacity: 0.5 });
-      return s.done({ finish: { grain: 0.004 } });
+        }
+        cv.add(`<g clip-path="${within(cv, shape)}">${out}</g>`);
+      };
+      s.paint((cv) => {
+        // the skin: crimson, lighter where the light falls, and its shadow side; its small pale pores
+        cv.add(`<path d="${bodyD}" fill="${radial(cv, [[0, '#c4383a'], [0.35, '#a01c22'], [0.75, '#7a1018'], [1, '#4e080e']], 150, 190, 260, 140, 170)}"/>`);
+        // (the skin mottled: patches a little browner, a little brighter)
+        cv.add(`<g clip-path="${within(cv, bodyD)}" filter="${softly(cv, 12)}">`);
+        for (let i = 0; i < 26; i++) cv.add(`<ellipse cx="${n(60 + rnd() * 340)}" cy="${n(120 + rnd() * 320)}" rx="${n(14 + rnd() * 30)}" ry="${n(10 + rnd() * 24)}" fill="${rnd() < 0.5 ? '#6a1a14' : '#d0484a'}" fill-opacity="${n(0.12 + rnd() * 0.16)}"/>`);
+        cv.add('</g>');
+        crescent(cv, bodyD, [-46, -40], { colour: '#2a0408', opacity: 0.55, soft: 26 });
+        crescent(cv, bodyD, [26, 30], { colour: '#e8786a', opacity: 0.22, soft: 30 });
+        strokes(cv, rnd, bodyD, [40, 100, 420, 450], { count: 900, colours: ['#d8505a', '#6a0c14', '#b02a2e'], flow: (x, y) => (Math.atan2(y - C[1], x - C[0]) * 180) / Math.PI + 90, length: 16, width: 3, opacity: [0.05, 0.16] });
+        specks(cv, rnd, bodyD, [40, 100, 420, 450], { count: 260, colours: ['#f0a8a0', '#e88c84'], size: [0.6, 1.6], opacity: [0.15, 0.4] });
+        cv.add(`<ellipse cx="148" cy="190" rx="52" ry="34" transform="rotate(-30 148 190)" fill="#f8c8c0" fill-opacity="0.32" filter="${softly(cv, 16)}"/>`);
+        rim(cv, bodyD, { colour: '#2a0408', width: 5, opacity: 0.5, soft: 3 });
+      });
+      // the crown: a short tube flaring into pointed sepals, darker, dry at their tips
+      const crown = 'M150 132 C146 116 140 104 130 94 C138 95 146 98 152 103 C152 90 154 80 158 70 C164 80 168 90 170 100 C176 90 184 84 194 80 C192 92 188 102 184 110 C192 107 200 106 208 108 C200 118 192 126 184 134 C178 142 160 142 150 132 Z';
+      s.paint((cv) => {
+        cv.add(`<path d="${crown}" fill="${linear(cv, [[0, '#5a0c10'], [0.6, '#8a2020'], [1, '#a83a2a']], 160, 70, 170, 140)}"/>`);
+        crescent(cv, crown, [-6, -6], { colour: '#1a0204', opacity: 0.5, soft: 4 });
+        cv.add(`<path d="M134 96 L130 94 M156 72 L158 70 M192 82 L194 80 M206 108 L208 108" stroke="#d8b090" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>`);
+        rim(cv, crown, { colour: '#1a0204', width: 2, opacity: 0.6 });
+      });
+      // the hole: the skin's broken edge round it, thick and pale, and the seeds packed in it
+      s.paint((cv) => {
+        // (the skin broken thin and ragged round the hole, the pith pink-white in the break)
+        const torn = spline(roundish([292, 286], 112, rnd, { wobble: 0.2, count: 34, squash: 1.05 }));
+        cv.add(`<path d="${torn}" fill="#e6b8a8"/>`);
+        cv.add(`<path d="${torn}" fill="none" stroke="#f4dccc" stroke-width="3" stroke-opacity="0.7"/>`);
+        seeds(cv, holeD, [176, 166, 404, 404], 17, [220, 200]);
+        // the pale membranes running in between the seeds, and the shadow of the near rim on them
+        for (let i = 0; i < 3; i++) {
+          const a = -0.4 + i * 0.9 + rnd() * 0.3;
+          cv.add(`<path d="M${pt([292 + Math.cos(a) * 100, 286 + Math.sin(a) * 100])} Q${pt([292 + Math.cos(a + 0.4) * 50, 286 + Math.sin(a + 0.4) * 50])} ${pt([292 + rnd() * 20 - 10, 286 + rnd() * 20 - 10])}" fill="none" stroke="#f0d8c4" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" clip-path="${within(cv, holeD)}"/>`);
+        }
+        crescent(cv, holeD, [16, 18], { colour: '#1a0204', opacity: 0.55, soft: 8 });
+      });
+      // the piece broken off, leaning against the fruit at the front: its skin round its back, its seeds to us
+      const piece = spline([[330, 300], [372, 270], [420, 262], [452, 290], [462, 340], [446, 398], [404, 436], [356, 446], [322, 420], [312, 370]]);
+      const face = spline([[338, 306], [374, 282], [416, 278], [442, 300], [448, 342], [432, 392], [396, 424], [358, 430], [332, 408], [326, 364]]);
+      s.shadow((cv) => cv.add(`<path d="${piece}" fill="#000" transform="translate(-12 6)"/>`), { blur: 10, opacity: 0.45 });
+      s.paint((cv) => {
+        cv.add(`<path d="${piece}" fill="${linear(cv, [[0, '#8a141c'], [1, '#4a080c']], 330, 270, 460, 440)}"/>`);
+        strokes(cv, rnd, piece, [300, 250, 470, 450], { count: 220, colours: ['#c43a3a', '#5a0a10'], flow: () => 60, length: 12, width: 2.4, opacity: [0.06, 0.16] });
+        cv.add(`<path d="${face}" fill="#e2b0a0"/>`);
+        const inner = spline([[342, 312], [374, 290], [414, 286], [438, 306], [443, 344], [428, 388], [396, 416], [360, 422], [336, 402], [331, 362]]);
+        seeds(cv, inner, [326, 280, 450, 426], 16, [340, 300]);
+        cv.add(`<path d="M${pt([392, 300])} Q${pt([380, 350])} ${pt([400, 410])}" fill="none" stroke="#f0d8c4" stroke-width="5" stroke-opacity="0.85" stroke-linecap="round" clip-path="${within(cv, inner)}"/>`);
+        crescent(cv, inner, [-8, -10], { colour: '#1a0204', opacity: 0.3, soft: 8 });
+        rim(cv, piece, { colour: '#1a0204', width: 3, opacity: 0.5, soft: 2 });
+      });
+      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.1, saturation: 1 } });
     },
   },
   {
@@ -392,63 +389,43 @@ export const ICONS = [
     key: 'ciya',
     ku: 'Çiya',
     en: 'Mountain',
-    // a high peak of the Zagros in late spring: its ridges of dark rock running down from the summit, snow lying
-    // in the gullies between them and over the shoulders, the morning light on its western faces, and its foot
-    // lost in cloud
+    // a high peak of the Zagros in late spring, painted as the mountains behind the shop's scenes are: its ribs of
+    // dark rock running down from the summit with gullies between them, snow lying in the gullies and over the
+    // shoulders, the morning light on its western faces and its eastern ones in blue shade, its foot lost in cloud
     still(rnd) {
       const s = new Still(rnd);
-      const ridge = [[18, 512], [30, 430], [66, 378], [102, 344], [138, 300], [160, 268], [186, 236], [206, 196], [226, 152], [244, 106], [262, 62], [278, 84], [298, 118], [322, 150], [346, 176], [366, 192], [384, 176], [404, 160], [424, 186], [446, 226], [470, 280], [490, 340], [500, 430], [494, 512]];
+      const ridge = [[22, 512], [36, 440], [66, 384], [102, 344], [138, 300], [160, 268], [186, 236], [206, 196], [226, 152], [244, 106], [262, 62], [278, 84], [298, 118], [322, 150], [346, 176], [366, 192], [384, 176], [404, 160], [424, 186], [446, 224], [466, 268], [484, 318], [494, 372], [498, 440], [498, 512]];
       // (broken, as rock breaks: each stretch of the crest split again and again, its middle pushed up or down)
       const broken = (a, b, depth, rough) => {
         if (depth === 0) return [a];
-        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-        const off = (rnd() - 0.5) * len * rough;
-        const m = [(a[0] + b[0]) / 2 + ((a[1] - b[1]) / len) * off, (a[1] + b[1]) / 2 + ((b[0] - a[0]) / len) * off];
+        const m = [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2 + (rnd() - 0.5) * Math.hypot(b[0] - a[0], b[1] - a[1]) * rough];
         return [...broken(a, m, depth - 1, rough), ...broken(m, b, depth - 1, rough)];
       };
       const crest = [];
-      for (let i = 0; i < ridge.length - 1; i++) crest.push(...(i === 0 || i === ridge.length - 2 ? [ridge[i]] : broken(ridge[i], ridge[i + 1], 4, 0.22)));
+      for (let i = 0; i < ridge.length - 1; i++) crest.push(...(i === 0 || i === ridge.length - 2 ? [ridge[i]] : broken(ridge[i], ridge[i + 1], 3, 0.3)));
       crest.push(ridge[ridge.length - 1]);
-      const outline = `M${crest.map(pt).join(' L')} Z`;
-      // (the spurs: ridges running down from the crest, each a crest of its own between two gullies)
-      const spurs = [
-        [[262, 66], [250, 150], [236, 250], [214, 360]],
-        [[244, 110], [214, 170], [180, 230], [130, 330]],
-        [[226, 154], [198, 214], [160, 290], [96, 380]],
-        [[278, 86], [290, 170], [300, 260], [312, 380]],
-        [[298, 120], [328, 190], [350, 270], [370, 380]],
-        [[404, 162], [400, 230], [392, 300], [380, 400]],
-        [[404, 162], [432, 230], [456, 300], [470, 400]],
-        [[186, 238], [160, 300], [130, 370]],
-      ];
-      s.surface(
-        (cv) => cv.add(`<path d="${outline}" fill="${linear(cv, [[0, '#6a6460'], [0.45, '#57504a'], [0.7, '#4e4a3a'], [1, '#3e3c30']], 0, 60, 0, 512)}"/>`),
-        {
-          inflate: { radius: 300, profile: 'bevel', height: 0.6, soften: 14 },
-          relief: { draw: (cv) => cv.add(`<g fill="none" stroke="#fff" stroke-linecap="round" stroke-linejoin="round">${spurs.map((sp) => `<path d="${spline(sp, false)}" stroke-width="${n(10 + rnd() * 6)}" stroke-opacity="${n(0.7 + rnd() * 0.3)}"/>`).join('')}</g>`), height: 34, blur: 14 },
-          bumps: { scale: 30, amount: 10, stretch: 2, angle: 96, ridged: true, octaves: 6 },
-          mottle: { scale: 18, amount: 0.22 },
-          snow: { colour: '#dde2ea', line: 320, soft: 170, up: 1.2, steep: 0.5, crests: 1.6, wander: 0.45, scale: 12 },
-          material: { gloss: 0.05, shine: 8, wrap: 0.1, sheen: 0.4, hollows: 0.9 },
-          mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#fff'], [0.72, '#fff'], [0.9, '#000']], 0, 0, 0, 512)}"/>`),
-        },
-      );
-      // the cloud round its foot, in wisps torn by the wind
+      // its foot fades into the cloud
+      const fade = (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#fff'], [0.72, '#fff'], [0.83, '#000']], 0, 0, 0, 512)}"/>`);
+      s.terrain({ ridge: crest, peaks: [[262, 62, 240], [404, 160, 110]], lit: '#bcae9e', shadow: '#26365a', ambient: 0.18, snowline: 262, snowLit: '#ffffff', snowShadow: '#b8c6e2', foot: '#c4cede', footFrom: 330, scale: 0.8, relief: 0.9, light: [-0.75, -0.45, 0.55] }, { mask: fade });
+      // and the cloud lying round its foot: a bank of billows, sunlit on top, grey beneath, torn at its edges
       s.paint((cv) => {
-        const torn = cv.id('wisp');
-        cv.def(`<filter id="${torn}" x="-30%" y="-60%" width="160%" height="220%"><feTurbulence type="fractalNoise" baseFrequency="0.012 0.05" numOctaves="3" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="40" xChannelSelector="R" yChannelSelector="G"/></filter>`);
-        cv.add(`<g filter="url(#${torn})" fill="#e2e8ef">`);
-        for (let i = 0; i < 12; i++) {
-          const x = 30 + rnd() * 450;
-          const y = 352 + rnd() * 70;
-          cv.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(36 + rnd() * 56)}" ry="${n(6 + rnd() * 9)}" fill-opacity="${n(0.1 + rnd() * 0.22)}"/>`);
+        const torn = (freq, tear) => {
+          const f = cv.id('wisp');
+          cv.def(`<filter id="${f}" x="-30%" y="-80%" width="160%" height="260%"><feTurbulence type="fractalNoise" baseFrequency="${freq}" numOctaves="3" seed="${Math.floor(rnd() * 1000)}" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="${tear}" xChannelSelector="R" yChannelSelector="G"/></filter>`);
+          return `url(#${f})`;
+        };
+        let bank = '<ellipse cx="258" cy="426" rx="234" ry="22"/>';
+        for (let i = 0; i < 13; i++) {
+          const t = i / 12;
+          bank += `<circle cx="${n(48 + t * 416 + (rnd() - 0.5) * 14)}" cy="${n(414 - Math.sin(t * Math.PI) * 10 + (rnd() - 0.5) * 10)}" r="${n((14 + rnd() * 12) * (0.6 + 0.4 * Math.sin(t * Math.PI)))}"/>`;
         }
+        cv.add(`<g fill="${linear(cv, [[0, '#ffffff'], [0.5, '#eaedf2'], [1, '#aab4c6']], 0, 384, 0, 450)}" filter="${torn('0.016 0.04', 30)}">${bank}</g>`);
+        // (the light on the tops of its billows)
+        cv.add(`<g fill="#fffaf0" fill-opacity="0.55" filter="${torn('0.02 0.05', 20)}">`);
+        for (let i = 0; i < 8; i++) cv.add(`<ellipse cx="${n(80 + i * 50 + rnd() * 16)}" cy="${n(398 + rnd() * 8)}" rx="${n(18 + rnd() * 14)}" ry="${n(5 + rnd() * 4)}"/>`);
         cv.add('</g>');
-      }, { blur: 5, mask: (cv) => cv.add(`<path d="${outline}" fill="#fff"/>`) });
-      return s.done({
-        light: { key: [[-0.75, -0.42, 0.5], [1, 0.95, 0.88], 1.05], fill: [[0.8, 0.1, 0.5], [0.5, 0.58, 0.76], 0.3], ambient: [0.17, 0.19, 0.24] },
-        finish: { grain: 0.004, saturation: 0.9, contrast: 0.14 },
-      });
+      }, { blur: 2.5 });
+      return s.done({ finish: { paint: 1.5, grain: 0.01, contrast: 0.08, saturation: 0.95 } });
     },
   },
   {
@@ -467,313 +444,268 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a buck come down to drink: the deer of the backgrounds (figures.mjs), heavy and deep through the chest, his
-    // rump high and his back running down into his thick neck, his head down to the water, in his grey-brown
-    // autumn coat, white at the throat, round the eye and the muzzle and under the belly; a black nose, a dark wet
-    // eye, and a rack of tall tines, pale at their tips
+    // a buck come down to drink, painted: the deer of the backgrounds (figures.mjs), heavy and deep through the
+    // chest, his rump high and his back running down into his thick neck, his head down to the water; his coat
+    // grey-brown, darker along the back, white under the belly, at the throat and round the muzzle, the hair laid
+    // on in strokes; a dark wet eye, a black nose, and a rack of tall tines, pale at their tips
     still(rnd) {
       const s = new Still(rnd);
       const d = deerShapes({ x: 347, y: 407, size: 275, facing: -1, pose: 'drink' });
       const F = d.frame;
       const Hd = d.head;
       const k = 2.75;
-      const coat = { gloss: 0.06, shine: 8, wrap: 0.45, sheen: 0.8, hollows: 0.8 };
-      const hairs = ['#24180e', '#3e2c1c', '#a88a66', '#cdb898'];
+      const ink = '#1e140c';
       const deg = (a, b) => (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+      const box = [0, 0, 512, 512];
+      const hairs = ['#2a1c10', '#4a3420', '#a88a66', '#cdb898'];
       // the way the hair lies: back along the face from the nose, down the neck to the shoulders, back along the
-      // body toward the tail
+      // body toward the tail, down the legs
       const [hx, hy] = Hd([16, 8]);
       const [wx] = F([88, 0]);
       const alongFace = deg(Hd([30, 8]), Hd([0, 8]));
       const downNeck = deg(Hd([0, 10]), F([88, -80]));
       const flow = (x, y) => (Math.hypot(x - hx, y - hy) < 24 * k ? alongFace : x < wx ? downNeck : 10);
-      const face = deg(Hd([0, 0]), Hd([10, 0]));
-      const soft = (cv, sd) => {
-        const id = cv.id('soft');
-        cv.def(`<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${sd}"/></filter>`);
-        return `url(#${id})`;
+      const coat = (top) => (cv) => linear(cv, [[0, '#4a3420'], [0.3, '#7a5a3c'], [0.62, '#957654'], [1, '#a88a66']], 0, top, 0, F([0, 0])[1]);
+      // a leg, painted: the coat's colours down to tan, its hoof black, its far side in shade
+      const leg = (cv, path, far) => {
+        cv.add(`<path d="${path}" fill="${far ? linear(cv, [[0, '#2a1e14'], [1, '#5a4430']], 0, F([0, -100])[1], 0, F([0, 0])[1]) : coat(F([0, -108])[1])(cv)}"/>`);
+        strokes(cv, rnd, path, box, { count: 260, colours: hairs, flow: () => 90, length: 9, width: 1.6, opacity: [0.1, 0.26] });
+        crescent(cv, path, [-6, 0], { colour: '#000', opacity: 0.35, soft: 4 });
+        cv.add(`<rect x="0" y="${n(F([0, -5])[1])}" width="512" height="40" fill="#14100c" clip-path="${within(cv, path)}"/>`);
+        cv.add(`<path d="${path}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.55"/>`);
       };
-      const clipTo = (cv, path) => {
-        const id = cv.id('clip');
-        cv.def(`<clipPath id="${id}"><path d="${path}"/></clipPath>`);
-        return `url(#${id})`;
+      // an antler, painted: bone, dark and rough at its burr, pale and smooth at its tips, its edges drawn in
+      const antler = (cv, paths, far) => {
+        const [bx, by] = Hd([7.5, -2.5]);
+        const g = radial(cv, far ? [[0, '#3a2c20'], [0.35, '#6a5640'], [1, '#a8987a']] : [[0, '#4a3828'], [0.3, '#86704e'], [0.7, '#c8b48e'], [1, '#efe6d0']], bx, by, 130);
+        cv.add(`<g fill="${g}" stroke="${ink}" stroke-width="1.1" stroke-opacity="0.6">${paths.map((p) => `<path d="${p}"/>`).join('')}</g>`);
       };
-      const span = (a, b) => [Math.min(a[0], b[0]) - 10, Math.min(a[1], b[1]) - 10, Math.max(a[0], b[0]) + 10, Math.max(a[1], b[1]) + 10];
-      const hooves = (cv, path) => cv.add(`<rect x="0" y="${n(F([0, -5])[1])}" width="512" height="40" fill="#1e160e" clip-path="${clipTo(cv, path)}"/>`);
-      // a leg: the coat's colours down to tan, its hoof black; a near one laid over the body, its top faded into it
-      // from `fade` (in the deer's frame) to `full`, so that the round of the haunch or the shoulder comes out of
-      // the body as it does
-      const leg = (path, top, shade, [fade, full] = [null, null]) =>
-        s.surface(
-          (cv) => {
-            cv.add(`<path d="${path}" fill="${linear(cv, shade ? [[0, '#2e2216'], [0.35, '#4a3624'], [0.65, '#5e4630'], [1, '#6a5038']] : [[0, '#4e3824'], [0.32, '#7a5c3e'], [0.6, '#957756'], [1, '#a88a66']], 0, F([0, -108])[1], 0, F([0, 0])[1])}"/>`);
-            fur(cv, rnd, path, [0, top, 512, 492], () => 90, 260, hairs, { length: 6, opacity: [0.06, 0.18] });
-            hooves(cv, path);
-          },
-          {
-            inflate: { radius: 9, profile: 'round', height: 0.8 },
-            mottle: { scale: 3, amount: 0.08, stretch: 4, angle: 90 },
-            material: coat,
-            mask: fade === null ? null : (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, fade])[1], 0, F([0, full])[1])}"/>`),
-          },
-        );
-      // an antler: bone, dark and rough at the base, pale and smooth at the tips
-      const antler = (paths, shade) =>
-        s.surface(
-          (cv) => {
-            const [bx, by] = Hd([7.5, -2.5]);
-            const g = radial(cv, shade ? [[0, '#3e3024'], [0.3, '#6a5640'], [1, '#b8a888']] : [[0, '#4a3a2a'], [0.25, '#86704e'], [0.7, '#c8b48e'], [1, '#efe6d0']], bx, by, 130);
-            cv.add(`<g fill="${g}">${paths.map((p) => `<path d="${p}"/>`).join('')}</g>`);
-          },
-          { inflate: { radius: 4, profile: 'round', height: 0.9 }, bumps: { scale: 1.6, amount: 0.5, stretch: 3 }, material: { gloss: 0.4, shine: 34, wrap: 0.1, sheen: 0.5, hollows: 0.6 } },
-        );
       // the far side, in its own shade: the far legs, the far antler and ear behind the head
-      leg(d.far.hind, F([0, -90])[1], true);
-      leg(d.far.fore, F([0, -70])[1], true);
-      antler(d.far.antler, true);
-      s.surface((cv) => cv.add(`<path d="${d.far.ear}" fill="${linear(cv, [[0, '#3a2a1c'], [1, '#6a5038']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`), { inflate: { radius: 5, profile: 'soft', height: 0.5 }, material: coat });
-      // the body, the neck and the head: grey-brown, darker along the back, white under the belly, at the throat,
-      // round the eye and the muzzle; the hair lying as it lies
-      const box = [0, 40, 512, 492];
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${d.body}" fill="${linear(cv, [[0, '#4e3824'], [0.35, '#6e5234'], [0.7, '#8e7050'], [1, '#a88c6a']], 0, F([0, -108])[1], 0, F([0, -44])[1])}"/>`);
-          cv.add(`<path d="${d.tail}" fill="#5e4430"/>`);
-          cv.add(`<g clip-path="${clipTo(cv, d.body)}" filter="${soft(cv, 6)}">`);
-          // (the white of the belly, from the brisket back under the flank)
-          cv.add(`<path d="M${pt(F([86, -44]))} C${pt(F([70, -55]))} ${pt(F([50, -61]))} ${pt(F([28, -58]))}" fill="none" stroke="#e8e0d2" stroke-width="${n(9 * k)}" stroke-opacity="0.85"/>`);
-          // (the darker line of the back, running on down the crest of the neck)
-          cv.add(`<path d="M${pt(F([12, -107]))} C${pt(F([50, -108]))} ${pt(F([84, -102]))} ${pt(F([112, -78]))}" fill="none" stroke="#2e2014" stroke-width="${n(7 * k)}" stroke-opacity="0.5"/>`);
-          cv.add('</g>');
-          const throat = Hd([10, 23]);
-          const eye = Hd([12, 5.5]);
-          cv.add(`<g clip-path="${clipTo(cv, d.body)}"><g filter="${soft(cv, 2.6)}">`);
-          cv.add(`<ellipse cx="${n(throat[0])}" cy="${n(throat[1])}" rx="${n(7 * k)}" ry="${n(4.6 * k)}" transform="rotate(${n(face + 70)} ${n(throat[0])} ${n(throat[1])})" fill="#f2ece2"/>`);
-          cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(5 * k)}" ry="${n(3.8 * k)}" transform="rotate(${n(face)} ${n(eye[0])} ${n(eye[1])})" fill="#d8ccb8" fill-opacity="0.35"/>`);
-          // the pale band behind the nose, and the white of the chin
-          cv.add(`<path d="M${pt(Hd([24.6, 4]))} L${pt(Hd([25.8, 12.6]))}" stroke="#e8e0d2" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.6"/>`);
-          cv.add(`<path d="M${pt(Hd([20, 17]))} L${pt(Hd([28, 14.6]))}" stroke="#ece4d6" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.7"/>`);
-          // the bridge of the nose, darker
-          cv.add(`<path d="M${pt(Hd([8, -1]))} L${pt(Hd([27, 3.4]))}" stroke="#2a1c10" stroke-width="${n(3.4 * k)}" stroke-linecap="round" stroke-opacity="0.45"/>`);
-          cv.add('</g></g>');
-          fur(cv, rnd, d.body, box, flow, 2600, hairs, { length: 7, opacity: [0.06, 0.2] });
-        },
-        {
-          inflate: { radius: 34, profile: 'soft', height: 0.7, soften: 2 },
-          relief: [
-            // the masses under the coat: the haunch, the ribs, the shoulder, the neck's muscle, the cheek
-            {
-              draw: (cv) => {
-                cv.add(`<g filter="${soft(cv, 10)}" fill="#fff">`);
-                const blob = (c, rx, ry, rot, o) => {
-                  const [cx, cy] = F(c);
-                  cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx * k)}" ry="${n(ry * k)}" transform="rotate(${n(rot)} ${n(cx)} ${n(cy)})" fill-opacity="${o}"/>`);
-                };
-                blob([18, -82], 19, 22, 0, 1);
-                blob([54, -80], 24, 15, 0, 0.55);
-                blob([82, -76], 12, 21, 15, 0.9);
-                blob([80, -54], 8, 10, 0, 0.6);
-                blob([110, -72], 20, 11, deg(F([90, -96]), Hd([0, 8])), 0.6);
-                cv.add('</g>');
-                const [cx, cy] = Hd([10, 11]);
-                cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(7 * k)}" ry="${n(5 * k)}" fill="#fff" fill-opacity="0.7" filter="${soft(cv, 4)}"/>`);
-              },
-              height: 16,
-              blur: 2,
-            },
-            // the hollow of the eye, and the nostril
-            {
-              draw: (cv) => {
-                for (const [c, rx, ry] of [[Hd([12, 5.5]), 4.6, 3.6], [Hd([31, 8]), 1.4, 1.1]]) cv.add(`<ellipse cx="${n(c[0])}" cy="${n(c[1])}" rx="${n(rx * k)}" ry="${n(ry * k)}" transform="rotate(${n(face)} ${n(c[0])} ${n(c[1])})" fill="#fff"/>`);
-              },
-              height: -4,
-              blur: 2,
-            },
-            // the coat's hair, raised a little
-            { draw: (cv) => fur(cv, rnd, d.body, box, flow, 1600, ['#fff'], { length: 8, width: 1.2, opacity: [0.3, 0.7] }), height: 0.9, blur: 0.4 },
-          ],
-          mottle: { scale: 5, amount: 0.08 },
-          material: coat,
-        },
-      );
-      // the near legs, lit, over the body: the haunch and the thigh, the shoulder and the forearm
-      leg(d.near.hind, F([0, -96])[1], false, [-84, -64]);
-      leg(d.near.fore, F([0, -70])[1], false, [-62, -47]);
-      // the eye: dark, wet, a glint of the sky in it
-      const eye = Hd([12, 5.5]);
-      s.surface((cv) => cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(3.2 * k)}" ry="${n(2.4 * k)}" transform="rotate(${n(face - 8)} ${n(eye[0])} ${n(eye[1])})" fill="${radial(cv, [[0, '#2a1608'], [0.7, '#120904'], [1, '#050302']], eye[0], eye[1], 3.2 * k)}"/>`), {
-        inflate: { radius: 2.4 * k, profile: 'round', height: 0.7 },
-        material: { gloss: 1.6, shine: 220, sheen: 0.4, hollows: 0 },
+      s.paint((cv) => {
+        leg(cv, d.far.hind, true);
+        leg(cv, d.far.fore, true);
+        antler(cv, d.far.antler, true);
+        cv.add(`<path d="${d.far.ear}" fill="#4a3624" stroke="${ink}" stroke-width="1.2" stroke-opacity="0.6"/>`);
       });
-      s.paint((cv) => cv.add(`<ellipse cx="${n(eye[0] - 2.4)}" cy="${n(eye[1] - 2.4)}" rx="2.6" ry="1.7" fill="#fff" fill-opacity="0.85"/>`), { blur: 0.4 });
-      // the nose, black and wet
-      const nose = [Hd([26.6, 4.6]), Hd([31.4, 5.4]), Hd([33.8, 8.6]), Hd([33, 11.6]), Hd([29.6, 12.4]), Hd([26.8, 10])];
-      s.surface((cv) => cv.add(`<path d="${spline(nose)}" fill="#141010"/>`), {
-        inflate: { radius: 2.6 * k, profile: 'round', height: 0.8 },
-        bumps: { scale: 1, amount: 0.4 },
-        material: { gloss: 0.9, shine: 70, sheen: 0.3 },
+      // the body, the neck and the head, the tail
+      s.paint((cv) => {
+        cv.add(`<path d="${d.body}" fill="${coat(F([0, -110])[1])(cv)}"/>`);
+        cv.add(`<path d="${d.tail}" fill="#5a4030"/>`);
+        cv.add(`<g clip-path="${within(cv, d.body)}" filter="${softly(cv, 6)}">`);
+        // (white under the belly, from the brisket back under the flank; the darker line of the back and the neck)
+        cv.add(`<path d="M${pt(F([86, -44]))} C${pt(F([70, -55]))} ${pt(F([50, -61]))} ${pt(F([28, -58]))}" fill="none" stroke="#ece4d6" stroke-width="${n(8 * k)}" stroke-opacity="0.8"/>`);
+        cv.add(`<path d="M${pt(F([12, -107]))} C${pt(F([50, -108]))} ${pt(F([84, -102]))} ${pt(F([112, -78]))}" fill="none" stroke="#2a1c10" stroke-width="${n(7 * k)}" stroke-opacity="0.5"/>`);
+        cv.add('</g>');
+        // the masses under the coat, painted: the haunch round, the ribs, the shoulder, lit from above and the left
+        for (const [c, rx, ry, o] of [[[18, -86], 20, 18, 0.28], [[54, -84], 26, 12, 0.2], [[84, -80], 12, 18, 0.24]]) {
+          const [cx, cy] = F(c);
+          cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx * k)}" ry="${n(ry * k)}" fill="#e8d4b4" fill-opacity="${o}" clip-path="${within(cv, d.body)}" filter="${softly(cv, 14)}"/>`);
+        }
+        crescent(cv, d.body, [0, -26], { colour: '#1e140c', opacity: 0.45, soft: 18 });
+        // the face: the white round the eye and the muzzle, the dark down the bridge of the nose, and the throat patch
+        cv.add(`<g clip-path="${within(cv, d.body)}"><g filter="${softly(cv, 2.6)}">`);
+        const throat = Hd([10, 23]);
+        const eye = Hd([12, 5.5]);
+        cv.add(`<ellipse cx="${n(throat[0])}" cy="${n(throat[1])}" rx="${n(6.5 * k)}" ry="${n(4.2 * k)}" fill="#f2ece2" fill-opacity="0.85"/>`);
+        cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(5 * k)}" ry="${n(3.8 * k)}" fill="#d8ccb8" fill-opacity="0.4"/>`);
+        cv.add(`<path d="M${pt(Hd([24.6, 4]))} L${pt(Hd([25.8, 12.6]))}" stroke="#e8e0d2" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.65"/>`);
+        cv.add(`<path d="M${pt(Hd([8, -1]))} L${pt(Hd([27, 3.4]))}" stroke="#2a1c10" stroke-width="${n(3.2 * k)}" stroke-linecap="round" stroke-opacity="0.45"/>`);
+        cv.add('</g></g>');
+        strokes(cv, rnd, d.body, box, { count: 3600, colours: hairs, flow, length: 11, width: 1.8, opacity: [0.1, 0.3] });
+        cv.add(`<path d="${d.body}" fill="none" stroke="${ink}" stroke-width="1.8" stroke-opacity="0.6"/>`);
       });
-      // the near ear, up from the poll, its back to us: the coat's brown, darker toward its rim, its edge furred pale
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${d.near.ear}" fill="${linear(cv, [[0, '#4e3824'], [0.5, '#7a5c3e'], [1, '#8e7050']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`);
-          fur(cv, rnd, d.near.ear, span(Hd([4, 2]), Hd([-10, -24])), () => deg(Hd([0, 0]), Hd([-6, -18])), 90, hairs, { length: 6, opacity: [0.08, 0.2] });
-          cv.add(`<path d="${d.near.ear}" clip-path="${clipTo(cv, d.near.ear)}" fill="none" stroke="#2a1c10" stroke-width="5" stroke-opacity="0.45"/>`);
-        },
-        { inflate: { radius: 5, profile: 'soft', height: 0.5 }, material: coat },
-      );
-      antler(d.near.antler, false);
-      return s.done({ finish: { grain: 0.004, saturation: 0.95 } });
+      // the near legs, over the body: the round of the haunch and the thigh, the shoulder and the forearm, their tops
+      // let into the coat
+      s.paint((cv) => leg(cv, d.near.hind, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -84])[1], 0, F([0, -64])[1])}"/>`) });
+      s.paint((cv) => leg(cv, d.near.fore, false), { mask: (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, -62])[1], 0, F([0, -47])[1])}"/>`) });
+      // the eye, the nose, the near ear, the near antler
+      s.paint((cv) => {
+        const eye = Hd([12, 5.5]);
+        cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(3.2 * k)}" ry="${n(2.4 * k)}" fill="#120a04" stroke="${ink}" stroke-width="1.4"/>`);
+        cv.add(`<ellipse cx="${n(eye[0] - 2.6)}" cy="${n(eye[1] - 2.4)}" rx="2.6" ry="1.7" fill="#fff" fill-opacity="0.85"/>`);
+        const nose = [Hd([26.6, 4.6]), Hd([31.4, 5.4]), Hd([33.8, 8.6]), Hd([33, 11.6]), Hd([29.6, 12.4]), Hd([26.8, 10])];
+        cv.add(`<path d="${spline(nose)}" fill="#141010"/>`);
+        cv.add(`<path d="M${pt(Hd([28, 6]))} L${pt(Hd([31.5, 6.6]))}" stroke="#a09890" stroke-width="2" stroke-opacity="0.5" stroke-linecap="round"/>`);
+        cv.add(`<path d="${d.near.ear}" fill="${linear(cv, [[0, '#4e3824'], [0.5, '#7a5c3e'], [1, '#8e7050']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`);
+        strokes(cv, rnd, d.near.ear, box, { count: 70, colours: hairs, flow: () => deg(Hd([0, 0]), Hd([-6, -18])), length: 7, width: 1.4, opacity: [0.08, 0.2] });
+        cv.add(`<path d="${d.near.ear}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.65"/>`);
+        antler(cv, d.near.antler, false);
+      });
+      return s.done({ finish: { paint: 1, grain: 0.012, contrast: 0.08, saturation: 0.95 } });
     },
   },
   {
     key: 'sterk',
     ku: 'Stêrk',
     en: 'Eight-point star',
-    // a seal of dark red wax, the eight-point star pressed into it: the wax spread out round the stamp, pushed up in a
-    // lip round it, glossy where the light catches it
+    // a seal of dark red wax, painted: the wax spread round the stamp and pushed up in a thick lip, glossy, the
+    // light running round its top; inside the lip the wax pressed flat, and the eight-point star standing up from
+    // it, sharp-edged, a ring of the stamp's border round it
     still(rnd) {
       const s = new Still(rnd);
       const C = [256, 260];
-      const wax = spline(roundish(C, 200, rnd, { wobble: 0.05 }));
-      s.surface((cv) => cv.add(`<path d="${wax}" fill="${radial(cv, [[0, '#7a1a1c'], [0.7, '#62121a'], [1, '#4a0c10']], 210, 200, 260)}"/>`), {
-        inflate: { radius: 34, profile: 'soft', height: 0.5 },
-        relief: {
-          draw: (cv) => {
-            cv.add(`<circle cx="${C[0]}" cy="${C[1]}" r="158" fill="none" stroke="#fff" stroke-width="30"/>`);
-            cv.add(`<circle cx="${C[0]}" cy="${C[1]}" r="128" fill="none" stroke="#fff" stroke-opacity="0.5" stroke-width="5"/>`);
-            cv.add(`<path d="${eightPointStar(C[0], C[1], 96)}" fill="#fff" fill-opacity="0.55"/>`);
-            cv.add(`<path d="${eightPointStar(C[0], C[1], 40)}" fill="#000" fill-opacity="0.35"/>`);
-          },
-          height: 16,
-          blur: 2.2,
-        },
-        bumps: { scale: 3, amount: 0.08 },
-        mottle: { scale: 50, amount: 0.04 },
-        material: { gloss: 0.95, shine: 46, wrap: 0.3, sheen: 0.5, hollows: 0.9 },
+      const wax = spline(roundish(C, 198, rnd, { wobble: 0.035, count: 48 }));
+      const well = spline(roundish(C, 146, rnd, { wobble: 0.012, count: 48 }));
+      // a raised shape, as a stamp raises it: lit along its upper left edges, dark along its lower right
+      const raised = (cv, d, depth, base) => {
+        cv.add(`<path d="${d}" fill="#2a0406" fill-opacity="0.85" transform="translate(${depth} ${depth})" filter="${softly(cv, depth * 0.5)}"/>`);
+        cv.add(`<path d="${d}" fill="#e07070" fill-opacity="0.75" transform="translate(${-depth * 0.7} ${-depth * 0.7})" filter="${softly(cv, depth * 0.4)}"/>`);
+        cv.add(`<path d="${d}" fill="${base}"/>`);
+      };
+      s.paint((cv) => {
+        // the wax: deep red, darker toward its edge
+        cv.add(`<path d="${wax}" fill="${radial(cv, [[0, '#86202a'], [0.7, '#6c141c'], [1, '#4c0a10']], C[0] - 30, C[1] - 30, 230)}"/>`);
+        // the lip: its outside lit at the upper left and dark at the lower right, its inside the other way about
+        crescent(cv, wax, [20, 20], { colour: '#d46a6a', opacity: 0.55, soft: 14 });
+        crescent(cv, wax, [-24, -24], { colour: '#1e0204', opacity: 0.7, soft: 16 });
+        cv.add(`<path d="${well}" fill="${radial(cv, [[0, '#7a1a22'], [1, '#64121a']], C[0] - 20, C[1] - 20, 160)}"/>`);
+        crescent(cv, well, [14, 14], { colour: '#1e0204', opacity: 0.75, soft: 10 });
+        crescent(cv, well, [-12, -12], { colour: '#e07a78', opacity: 0.45, soft: 10 });
+        // the gloss on the lip: a bright line along the top of it, and its echo low on the inside
+        cv.add(`<path d="M${pt([C[0] - 168, C[1] + 40])} A172 172 0 0 1 ${pt([C[0] + 30, C[1] - 170])}" fill="none" stroke="#fff0ec" stroke-width="5" stroke-opacity="0.75" stroke-linecap="round" filter="${softly(cv, 2.5)}"/>`);
+        cv.add(`<path d="M${pt([C[0] - 150, C[1] - 10])} A160 160 0 0 1 ${pt([C[0] - 60, C[1] - 146])}" fill="none" stroke="#fff" stroke-width="2.4" stroke-opacity="0.85" stroke-linecap="round"/>`);
+        cv.add(`<path d="M${pt([C[0] + 136, C[1] + 40])} A142 142 0 0 1 ${pt([C[0] + 20, C[1] + 140])}" fill="none" stroke="#f8c8c4" stroke-width="3" stroke-opacity="0.55" stroke-linecap="round" filter="${softly(cv, 1.5)}"/>`);
+        // the stamp's border, a fine raised ring, and the star standing up inside it, its middle pressed down
+        const ring = `M${C[0] - 128} ${C[1]} A128 128 0 1 0 ${C[0] + 128} ${C[1]} A128 128 0 1 0 ${C[0] - 128} ${C[1]} Z M${C[0] - 121} ${C[1]} A121 121 0 1 1 ${C[0] + 121} ${C[1]} A121 121 0 1 1 ${C[0] - 121} ${C[1]} Z`;
+        raised(cv, ring, 2.5, '#741820');
+        raised(cv, eightPointStar(C[0], C[1], 96), 4, linear(cv, [[0, '#8e2830'], [1, '#6a141c']], C[0] - 96, C[1] - 96, C[0] + 96, C[1] + 96));
+        const inner = eightPointStar(C[0], C[1], 46);
+        cv.add(`<path d="${inner}" fill="#e07070" fill-opacity="0.6" transform="translate(2.5 2.5)" filter="${softly(cv, 1.2)}"/>`);
+        cv.add(`<path d="${inner}" fill="#2a0406" fill-opacity="0.75" transform="translate(-2 -2)" filter="${softly(cv, 1.2)}"/>`);
+        cv.add(`<path d="${inner}" fill="#6a141c"/>`);
+        // the shine on the star's upper faces, and the wax's own small marks
+        cv.add(`<path d="${eightPointStar(C[0], C[1], 96)}" fill="none" stroke="#ffd8d4" stroke-width="1.6" stroke-opacity="0.5" transform="translate(-1.5 -1.5)" clip-path="${within(cv, eightPointStar(C[0], C[1], 96))}"/>`);
+        strokes(cv, rnd, wax, [50, 56, 462, 464], { count: 500, colours: ['#a8343c', '#4a0a10'], flow: (x, y) => (Math.atan2(y - C[1], x - C[0]) * 180) / Math.PI + 90, length: 18, width: 2.4, opacity: [0.04, 0.12] });
+        specks(cv, rnd, wax, [50, 56, 462, 464], { count: 90, colours: ['#ffd0cc', '#2a0406'], size: [0.6, 1.4], opacity: [0.15, 0.4] });
       });
-      return s.done({ finish: { contrast: 0.1, saturation: 1.02, grain: 0.004 } });
+      return s.done({ finish: { paint: 1.5, grain: 0.01, contrast: 0.1, saturation: 1 } });
     },
   },
   {
     key: 'caydan',
     ku: 'Çaydan',
     en: 'Teapot',
-    // the tea: a round teapot of white porcelain, roses painted round its belly and gold on its rims, and before it
-    // a tulip glass of tea on its saucer, the tea dark red where it is deep and glowing amber where the light comes
-    // through it
+    // a glass of tea on its saucer, painted: the tulip glass pinched at the waist, the tea in it deep red where it
+    // is deep and glowing amber where the light comes through it, the glass drawn in by its dark edges and its
+    // white lights; the saucer cream, scalloped, painted round its rim with orange petals and little gold sprigs,
+    // the glass's shadow lying on it amber
     still(rnd) {
       const s = new Still(rnd);
-      const porcelain = { ambient: 0.8, diffuse: 1.1, gloss: 1.1, shine: 110, wrap: 0.1, sheen: 0.45, hollows: 0.7 };
-      const white = (cv, x1, y1, x2, y2) => linear(cv, [[0, '#fbf9f4'], [0.55, '#e8e4dc'], [1, '#b8b4ae']], x1, y1, x2, y2);
-      // (a studio's window, seen in the glaze: a soft bright pane bent round the curve)
-      const pane = (cv, d, o = 0.75) => cv.add(`<path d="${d}" fill="#fff" fill-opacity="${n(o)}"/>`);
-      // the handle and the spout, behind the body they come out of
-      const handle = tube([[288, 186], [340, 172], [374, 206], [370, 262], [336, 300], [292, 306]], 20, 18);
-      s.surface((cv) => cv.add(`<path d="${handle}" fill="${white(cv, 290, 170, 380, 310)}"/>`), { inflate: { radius: 10, profile: 'round', height: 1 }, material: porcelain });
-      const spout = tube([[104, 296], [66, 282], [44, 244], [30, 204], [14, 170]], 46, 16);
-      s.surface((cv) => {
-        cv.add(`<path d="${spout}" fill="${white(cv, 16, 170, 104, 300)}"/>`);
-        cv.add(`<ellipse cx="15" cy="169" rx="9" ry="5" transform="rotate(-30 15 169)" fill="#b88a30"/>`);
-      }, { inflate: { radius: 16, profile: 'round', height: 1 }, material: porcelain });
-      // the foot ring under the body
-      s.surface((cv) => cv.add(`<path d="M134 338 C160 362 220 362 246 338 L242 358 C218 378 162 378 138 358 Z" fill="${white(cv, 134, 338, 246, 378)}"/><path d="M138 358 C162 378 218 378 242 358" fill="none" stroke="#b88a30" stroke-width="3"/>`), {
-        inflate: { radius: 8, profile: 'soft', height: 0.6 },
-        material: porcelain,
-      });
-      // the body, a little squat, roses round its belly
-      const body = [190, 250];
-      const rx = 128;
-      const ry = 104;
-      s.surface(
-        (cv) => {
-          const clip = cv.id('pot');
-          cv.def(`<clipPath id="${clip}"><ellipse cx="${body[0]}" cy="${body[1]}" rx="${rx}" ry="${ry}"/></clipPath>`);
-          cv.add(`<ellipse cx="${body[0]}" cy="${body[1]}" rx="${rx}" ry="${ry}" fill="${radial(cv, [[0, '#fdfbf6'], [0.55, '#ebe7df'], [1, '#a8a49e']], 140, 196, 200)}"/>`);
-          cv.add(`<g clip-path="url(#${clip})">`);
-          // (the band of roses follows the belly round, smaller where it turns away)
-          for (let k = 0; k <= 8; k++) {
-            const a = -1.2 + (k / 8) * 2.4;
-            const x = body[0] + Math.sin(a) * (rx - 6);
-            const y = body[1] + 18 + Math.cos(a) * 16;
-            const sc = Math.cos(a) * 0.8 + 0.2;
-            const r = 15 * sc + 3;
-            for (const side of [-1, 1]) cv.add(`<ellipse cx="${n(x + side * r * 1.15)}" cy="${n(y + r * 0.35)}" rx="${n(r * 0.75 * sc + 1)}" ry="${n(r * 0.42)}" transform="rotate(${n(side * 30)} ${n(x + side * r * 1.15)} ${n(y + r * 0.35)})" fill="#3e6e40"/>`);
-            cv.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="${radial(cv, [[0, '#6a0a14'], [0.5, '#a81a26'], [1, '#cc4450']], x, y, r)}"/>`);
-            cv.add(`<path d="M${pt([x - r * 0.5, y])} A${n(r * 0.5)} ${n(r * 0.45)} 0 1 1 ${pt([x + r * 0.2, y + r * 0.4])} M${pt([x - r * 0.75, y - r * 0.2])} A${n(r * 0.8)} ${n(r * 0.7)} 0 0 1 ${pt([x + r * 0.7, y - r * 0.3])}" fill="none" stroke="#4a060c" stroke-width="${n(1 + r * 0.06)}" stroke-opacity="0.7"/>`);
-          }
-          // gold lines above and below the band
-          for (const dy of [-12, 50]) cv.add(`<path d="M${body[0] - rx} ${body[1] + dy - 8} Q${body[0]} ${body[1] + dy + 26} ${body[0] + rx} ${body[1] + dy - 8}" fill="none" stroke="#b88a30" stroke-width="3"/>`);
-          cv.add('</g>');
-          cv.add(`<ellipse cx="${body[0]}" cy="${body[1] - ry + 22}" rx="72" ry="17" fill="none" stroke="#b88a30" stroke-width="4"/>`);
-        },
-        { inflate: { radius: 110, profile: 'round', height: 0.8, soften: 2 }, material: porcelain },
-      );
-      s.paint((cv) => pane(cv, `M100 188 C112 166 134 152 160 146 C150 160 140 176 134 196 C124 218 120 240 120 262 C108 250 96 214 100 188 Z`), { blur: 3 });
-      // the lid and its knob
-      const lidY = body[1] - ry + 22;
-      s.surface((cv) => {
-        cv.add(`<path d="M${body[0] - 70} ${lidY} C${body[0] - 70} ${lidY - 44} ${body[0] + 70} ${lidY - 44} ${body[0] + 70} ${lidY} C${body[0] + 70} ${lidY + 14} ${body[0] - 70} ${lidY + 14} ${body[0] - 70} ${lidY} Z" fill="${white(cv, body[0] - 56, lidY - 44, body[0] + 64, lidY + 14)}"/>`);
-        cv.add(`<path d="M${body[0] - 70} ${lidY} C${body[0] - 70} ${lidY + 14} ${body[0] + 70} ${lidY + 14} ${body[0] + 70} ${lidY}" fill="none" stroke="#b88a30" stroke-width="4"/>`);
-        cv.add(`<ellipse cx="${body[0]}" cy="${lidY - 32}" rx="18" ry="9" fill="#e4e0d8"/><circle cx="${body[0]}" cy="${lidY - 46}" r="14" fill="${white(cv, body[0] - 12, lidY - 60, body[0] + 12, lidY - 32)}"/>`);
-        cv.add(`<circle cx="${body[0]}" cy="${lidY - 46}" r="5" fill="#b88a30"/>`);
-      }, { inflate: { radius: 22, profile: 'round', height: 0.6 }, material: porcelain });
-      // the saucer: white, a band of red and a gold edge, and the glass's shadow on it
-      const G = 366;
-      s.surface((cv) => {
-        cv.add(`<ellipse cx="${G}" cy="458" rx="124" ry="31" fill="${white(cv, G - 124, 430, G + 124, 490)}"/>`);
-        cv.add(`<ellipse cx="${G}" cy="454" rx="122" ry="28" fill="none" stroke="#b88a30" stroke-width="2.5"/>`);
-        cv.add(`<ellipse cx="${G}" cy="454" rx="104" ry="22" fill="none" stroke="#a01c26" stroke-width="7"/>`);
-        for (let k = 0; k < 32; k++) {
-          const a = (k / 32) * Math.PI * 2;
-          cv.add(`<circle cx="${n(G + Math.cos(a) * 104)}" cy="${n(454 + Math.sin(a) * 22)}" r="1.6" fill="#f6e2b0"/>`);
+      const X = 256;
+      // the glass: its half-width down its height, and the outline those make, `inset` in from its outside
+      const profile = [[40, 118], [70, 114], [120, 100], [170, 86], [210, 80], [250, 86], [300, 104], [340, 114], [372, 112], [398, 100], [412, 90]];
+      const glass = (inset, top = 40, bottom = 412) => {
+        const rows = profile.filter(([y]) => y >= top && y <= bottom).map(([y, w]) => [y, w - inset]);
+        if (rows[0][0] > top) {
+          const i = profile.findIndex(([y]) => y > top);
+          const [ya, wa] = profile[i - 1];
+          const [yb, wb] = profile[i];
+          rows.unshift([top, wa + ((wb - wa) * (top - ya)) / (yb - ya) - inset]);
         }
-        cv.add(`<ellipse cx="${G}" cy="452" rx="62" ry="12" fill="#e2ded6"/>`);
-      }, {
-        inflate: { radius: 14, profile: 'soft', height: 0.35 },
-        relief: { draw: (cv) => cv.add(`<ellipse cx="${G}" cy="458" rx="124" ry="31" fill="#fff"/><ellipse cx="${G}" cy="452" rx="64" ry="13" fill="#000"/>`), height: 3, blur: 3 },
-        material: porcelain,
-      });
-      s.shadow((cv) => cv.add(`<ellipse cx="${G + 18}" cy="452" rx="52" ry="11" fill="#000"/>`), { blur: 5, opacity: 0.45 });
-      // the glass: tulip-shaped, its waist pinched; the tea in it, dark where deep, amber at its edges, glowing at the
-      // bottom where the light comes down through it
-      const profile = [[226, 52], [244, 50], [272, 44], [306, 37], [334, 34], [364, 39], [398, 46], [422, 44], [446, 37]];
-      const glass = (inset, top) => {
-        const rows = profile.filter(([y]) => y >= top).map(([y, w]) => [y, w - inset]);
-        if (rows[0][0] > top) rows.unshift([top, rows[0][1] + ((profile.find(([y]) => y < top)?.[1] ?? rows[0][1]) - rows[0][1]) * 0.4]);
-        return spline([...rows.map(([y, w]) => [G - w, y]), ...rows.reverse().map(([y, w]) => [G + w, y])]);
+        // (its two sides each a smooth curve of its own, joined straight across the top and the bottom, so that
+        // nothing bulges at the corners)
+        const left = spline(rows.map(([y, w]) => [X - w, y]), false);
+        const right = spline(rows.slice().reverse().map(([y, w]) => [X + w, y]), false);
+        return `${left} L${right.slice(1)} Z`;
       };
-      const teaTop = 254;
+      const halfAt = (y) => {
+        const i = Math.max(1, profile.findIndex(([py]) => py >= y));
+        const [ya, wa] = profile[i - 1];
+        const [yb, wb] = profile[i];
+        return wa + ((wb - wa) * (y - ya)) / (yb - ya);
+      };
+      // the saucer, scalloped
+      const S = [256, 420];
+      const scallop = [];
+      for (let i = 0; i < 72; i++) {
+        const a = (i / 72) * Math.PI * 2;
+        const r = 1 + 0.018 * Math.cos(a * 12);
+        scallop.push([S[0] + Math.cos(a) * 198 * r, S[1] + Math.sin(a) * 62 * r]);
+      }
+      const saucer = spline(scallop);
       s.paint((cv) => {
-        cv.add(`<path d="${glass(4, teaTop)}" fill="${linear(cv, [[0, '#d0601e'], [0.18, '#8a2008'], [0.5, '#4a0904'], [0.82, '#7a1806'], [1, '#c0501a']], G - 46, 0, G + 46, 0)}"/>`);
-        cv.add(`<ellipse cx="${G - 4}" cy="418" rx="30" ry="20" fill="${radial(cv, [[0, '#f08a34', 0.8], [1, '#e06a24', 0]], G - 4, 418, 30)}"/>`);
-        // the tea's surface, seen a little from above, catching the light
-        cv.add(`<ellipse cx="${G}" cy="${teaTop}" rx="45" ry="7" fill="${linear(cv, [[0, '#a8461e'], [0.5, '#5a1006'], [1, '#8a3012']], G - 45, 0, G + 45, 0)}"/>`);
-        cv.add(`<path d="M${G - 38} ${teaTop - 1} Q${G - 10} ${teaTop - 6} ${G + 14} ${teaTop - 5}" fill="none" stroke="#f4c8a0" stroke-width="1.6" stroke-opacity="0.7"/>`);
+        // its edge, the thickness of the china seen at the front
+        cv.add(`<path d="${saucer}" fill="#b8aa94" transform="translate(0 9)"/>`);
+        cv.add(`<path d="${saucer}" fill="${linear(cv, [[0, '#fbf6ec'], [0.55, '#efe6d6'], [1, '#d6c8b2']], 80, 360, 440, 480)}"/>`);
+        crescent(cv, saucer, [-30, -14], { colour: '#8a7a62', opacity: 0.35, soft: 18 });
+        // the well the glass stands in
+        cv.add(`<ellipse cx="${S[0]}" cy="${S[1] - 2}" rx="112" ry="34" fill="none" stroke="#c8b8a0" stroke-width="5" stroke-opacity="0.6" filter="${softly(cv, 2)}"/>`);
+        // the orange petals round the rim, and the gold sprigs between them, smaller where the rim turns away
+        for (let i = 0; i < 12; i++) {
+          const a = (i / 12) * Math.PI * 2 + 0.13;
+          const [cx, cy] = [S[0] + Math.cos(a) * 160, S[1] + Math.sin(a) * 50];
+          const [ix, iy] = [S[0] + Math.cos(a) * 128, S[1] + Math.sin(a) * 40];
+          const ang = (Math.atan2(cy - iy, cx - ix) * 180) / Math.PI;
+          const fore = 0.55 + 0.45 * Math.max(0, Math.sin(a));
+          // (a petal: a teardrop, its point toward the middle)
+          const l = 15 * fore + 5;
+          const w = 5.5 * fore + 2.4;
+          const petalD = `M${n(-l)} 0 Q${n(-l * 0.2)} ${n(-w * 1.25)} ${n(l)} 0 Q${n(-l * 0.2)} ${n(w * 1.25)} ${n(-l)} 0 Z`;
+          cv.add(`<path d="${petalD}" transform="translate(${n(cx)} ${n(cy)}) rotate(${n(ang)})" fill="#e4845a" stroke="#b8542c" stroke-width="1.2" stroke-opacity="0.6"/>`);
+          const b = a + Math.PI / 12;
+          const [gx, gy] = [S[0] + Math.cos(b) * 158, S[1] + Math.sin(b) * 49];
+          for (const t of [-1, 0, 1]) cv.add(`<ellipse cx="${n(gx + t * 5 * fore)}" cy="${n(gy - Math.abs(t) * 2)}" rx="${n(3.2 * fore + 1)}" ry="${n(1.6 * fore + 0.6)}" transform="rotate(${n(t * 40)} ${n(gx + t * 5 * fore)} ${n(gy)})" fill="#b88a34"/>`);
+          cv.add(`<circle cx="${n(gx)}" cy="${n(gy + 3 * fore)}" r="${n(1.4 * fore + 0.6)}" fill="#7a4a1c"/>`);
+        }
+        // the glass's shadow on the saucer: the light comes through the tea, so it is amber, dark only under the foot
+        cv.add(`<ellipse cx="${X + 70}" cy="${S[1] + 14}" rx="118" ry="30" fill="#b0581c" fill-opacity="0.38" filter="${softly(cv, 7)}"/>`);
+        cv.add(`<ellipse cx="${X + 8}" cy="${S[1] - 2}" rx="96" ry="18" fill="#2a160c" fill-opacity="0.45" filter="${softly(cv, 4)}"/>`);
+        strokes(cv, rnd, saucer, [56, 356, 456, 490], { count: 700, colours: ['#fffaf0', '#d8ccb8', '#e8dccb'], flow: () => 0, length: 14, width: 2.4, opacity: [0.06, 0.18] });
       });
-      // the glass itself, clear: seen by what it reflects, by its edges, and by its thick base
-      s.surface((cv) => {
-        cv.add(`<path d="${glass(0, 226)}" fill="#dfe8ec" fill-opacity="0.1"/>`);
-        cv.add(`<path d="M${G - 37} 434 Q${G} 448 ${G + 37} 434 L${G + 36} 446 Q${G} 460 ${G - 36} 446 Z" fill="#f0e0d0" fill-opacity="0.35"/>`);
-      }, { inflate: { radius: 30, profile: 'round', height: 0.8 }, material: { clear: true, gloss: 1.2, shine: 160, sheen: 0.9, ambient: 0.4, hollows: 0 } });
+      // the inside of the glass above the tea: its far wall, pale and clear, and the mouth of it open
       s.paint((cv) => {
-        cv.add(`<path d="${glass(0, 226)}" fill="none" stroke="#c8d0d4" stroke-width="2" stroke-opacity="0.55"/>`);
-        cv.add(`<ellipse cx="${G}" cy="226" rx="52" ry="9" fill="none" stroke="#fff" stroke-width="2.2" stroke-opacity="0.75"/>`);
-        cv.add(`<path d="M${G - 40} 240 Q${G - 30} 300 ${G - 22} 328 Q${G - 26} 376 ${G - 36} 414" fill="none" stroke="#fff" stroke-width="5" stroke-opacity="0.6" stroke-linecap="round"/>`);
-        cv.add(`<path d="M${G + 38} 270 Q${G + 30} 310 ${G + 28} 334" fill="none" stroke="#fff" stroke-width="2.5" stroke-opacity="0.4" stroke-linecap="round"/>`);
-      }, { blur: 0.8 });
-      return s.done({ finish: { grain: 0.004 } });
+        cv.add(`<path d="${glass(0, 40, 92)}" fill="${linear(cv, [[0, '#e8eae6'], [0.5, '#b8bcb8'], [1, '#d8dad6']], X - 118, 0, X + 118, 0)}" fill-opacity="0.32"/>`);
+        cv.add(`<ellipse cx="${X}" cy="40" rx="116" ry="20" fill="#3a3632" fill-opacity="0.25"/>`);
+      });
+      // the tea: dark red in the deep of the glass, amber at its sides and glowing at its foot, the window's light
+      // lying across it
+      const tea = glass(5, 82, 404);
+      s.paint((cv) => {
+        cv.add(`<path d="${tea}" fill="${linear(cv, [[0, '#c4561c'], [0.16, '#9a2c0a'], [0.45, '#5e1204'], [0.75, '#741806'], [1, '#a63e10']], X - 112, 0, X + 112, 0)}"/>`);
+        cv.add(`<g clip-path="${within(cv, tea)}">`);
+        cv.add(`<rect x="0" y="80" width="512" height="44" fill="#2a0602" fill-opacity="0.55" filter="${softly(cv, 10)}"/>`);
+        cv.add(`<ellipse cx="${X - 10}" cy="392" rx="84" ry="30" fill="#f0903a" fill-opacity="0.7" filter="${softly(cv, 14)}"/>`);
+        cv.add(`<path d="M${X - 92} 130 Q${X - 70} 250 ${X - 86} 380" fill="none" stroke="#e8884a" stroke-width="26" stroke-opacity="0.45" filter="${softly(cv, 9)}"/>`);
+        cv.add(`<path d="M${X - 100} 300 Q${X} 320 ${X + 104} 296" fill="none" stroke="#f4b07a" stroke-width="10" stroke-opacity="0.28" filter="${softly(cv, 5)}"/>`);
+        cv.add(`<path d="M${X + 30} 120 Q${X + 40} 240 ${X + 34} 370" fill="none" stroke="#2a0602" stroke-width="22" stroke-opacity="0.35" filter="${softly(cv, 10)}"/>`);
+        cv.add('</g>');
+        strokes(cv, rnd, tea, [X - 120, 80, X + 120, 410], { count: 520, colours: ['#4a0c02', '#8a2408', '#c4561c', '#e07a34'], flow: () => 90, length: 34, width: 3, opacity: [0.05, 0.16] });
+        // the surface of the tea, seen a little from above: dark, its edge caught by the light
+        const w = halfAt(82) - 5;
+        cv.add(`<ellipse cx="${X}" cy="82" rx="${n(w)}" ry="19" fill="${linear(cv, [[0, '#a8461a'], [0.5, '#5a1206'], [1, '#8a3412']], X - w, 0, X + w, 0)}"/>`);
+        cv.add(`<path d="M${n(X - w + 6)} 86 Q${X} 104 ${n(X + w - 6)} 86" fill="none" stroke="#f0a060" stroke-width="2.4" stroke-opacity="0.7"/>`);
+        cv.add(`<path d="M${n(X - w + 20)} 76 Q${X - 10} 66 ${X + 40} 68" fill="none" stroke="#fff2e0" stroke-width="2" stroke-opacity="0.55"/>`);
+      });
+      // the glass itself, painted as a painter paints glass: by its edges, dark, and by the window in it, white
+      s.paint((cv) => {
+        const outside = glass(0);
+        cv.add(`<path d="${outside}" fill="none" stroke="#1c1816" stroke-width="4" stroke-opacity="0.85"/>`);
+        cv.add(`<path d="${outside}" fill="none" stroke="#6a6662" stroke-width="9" stroke-opacity="0.25" clip-path="${within(cv, outside)}"/>`);
+        // the rim: the far side of it grey, the near side dark with the light along its top
+        cv.add(`<path d="M${X - 118} 40 A118 22 0 0 1 ${X + 118} 40" fill="none" stroke="#8a8682" stroke-width="3"/>`);
+        cv.add(`<path d="M${X - 118} 40 A118 22 0 0 0 ${X + 118} 40" fill="none" stroke="#1c1816" stroke-width="4"/>`);
+        cv.add(`<path d="M${X - 100} 52 A118 22 0 0 0 ${X + 60} 60" fill="none" stroke="#fff" stroke-width="2.6" stroke-opacity="0.8"/>`);
+        // the long light down its left side, a shorter one on the right, and the thick glass of its foot
+        cv.add(`<path d="M${X - 96} 64 Q${X - 82} 140 ${X - 66} 210 Q${X - 76} 290 ${X - 92} 360" fill="none" stroke="#fff" stroke-width="9" stroke-opacity="0.75" stroke-linecap="round" filter="${softly(cv, 1.5)}"/>`);
+        cv.add(`<path d="M${X - 80} 120 Q${X - 70} 170 ${X - 62} 200" fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.6" stroke-linecap="round"/>`);
+        cv.add(`<path d="M${X + 96} 150 Q${X + 80} 200 ${X + 74} 226" fill="none" stroke="#fff" stroke-width="4" stroke-opacity="0.55" stroke-linecap="round" filter="${softly(cv, 1)}"/>`);
+        cv.add(`<path d="M${X + 100} 320 Q${X + 108} 350 ${X + 100} 380" fill="none" stroke="#fff" stroke-width="3" stroke-opacity="0.4" stroke-linecap="round"/>`);
+        cv.add(`<path d="M${X - 88} 404 Q${X} 424 ${X + 88} 404" fill="none" stroke="#fff6e8" stroke-width="5" stroke-opacity="0.55" filter="${softly(cv, 1.5)}"/>`);
+        cv.add(`<path d="M${X - 90} 412 Q${X} 432 ${X + 90} 412" fill="none" stroke="#1c1816" stroke-width="3" stroke-opacity="0.8"/>`);
+      });
+      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.08, saturation: 1 } });
     },
   },
   {
     key: 'saz',
     ku: 'Saz',
     en: 'Saz',
-    // a saz lying slantwise: the pear of its bowl, staves of dark mulberry round a pale spruce face with its small
-    // sound hole and its bridge, the long walnut neck with its frets tied round it, the pegs at its head, the
-    // strings running the length of it, all of it varnished and catching the light
+    // a saz lying slantwise, painted: the pear of its bowl, staves of dark mulberry showing round a pale spruce face
+    // with its small sound hole and its bridge, the long walnut neck with its frets tied round it, the pegs at its
+    // head, the strings running the length of it, the varnish catching the light in long streaks
     still(rnd) {
-      const s = new Still(rnd);
+      const s = new Still(rnd).place([-6, 10], 0.95);
+      const ink = '#24120a';
       const O = [84, 446];
       const a = [Math.cos(-0.8), Math.sin(-0.8)];
       const q = [-a[1], a[0]];
@@ -782,208 +714,206 @@ export const ICONS = [
       const profile = [[0, 0], [8, 34], [20, 52], [40, 68], [65, 76], [90, 74], [115, 64], [140, 48], [165, 30], [185, 18], [200, 13]];
       const outline = (grow, shift) => spline([...profile.map(([u, w]) => S(u, -(w + grow) + shift)), ...profile.slice(1, -1).reverse().map(([u, w]) => S(u, w + grow + shift))]);
       const across = (cv, stops, u, w) => linear(cv, stops, ...S(u, -w), ...S(u, w));
-      // the bowl, its staves just showing past the face on the shadowed side
-      s.surface(
-        (cv) => {
-          const bowl = outline(4, 6);
-          const clip = cv.id('bowl');
-          cv.def(`<clipPath id="${clip}"><path d="${bowl}"/></clipPath>`);
-          cv.add(`<path d="${bowl}" fill="#4a2010"/><g clip-path="url(#${clip})">`);
-          for (let k = -4; k <= 4; k++) cv.add(`<path d="M${pt(S(4, k * 9 + 6))} Q${pt(S(90, k * 19 + 6))} ${pt(S(200, k * 3 + 6))}" fill="none" stroke="${k % 2 ? '#2e1208' : '#6a3418'}" stroke-width="7" stroke-opacity="0.8"/>`);
-          cv.add('</g>');
-        },
-        { inflate: { radius: 60, profile: 'round', height: 0.7 }, mottle: { scale: 5, amount: 0.12, stretch: 10, angle: deg }, material: { gloss: 0.7, shine: 70, sheen: 0.35 } },
-      );
-      // the face: spruce, its fine straight grain, a dark binding round its edge
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${outline(0, 0)}" fill="${across(cv, [[0, '#d8a466'], [0.5, '#c8904e'], [1, '#a8723a']], 80, 76)}" stroke="#2a1208" stroke-width="3"/>`);
-          for (let k = -8; k <= 8; k++) cv.add(`<path d="M${pt(S(2, k * 8.6))} L${pt(S(200, k * 1.4))}" stroke="#7a4a20" stroke-width="0.8" stroke-opacity="0.35"/>`);
-          // the sound hole with its ring of inlay, and the bridge the strings cross
-          cv.add(`<circle cx="${n(S(150, 0)[0])}" cy="${n(S(150, 0)[1])}" r="8" fill="#1a0a04"/><circle cx="${n(S(150, 0)[0])}" cy="${n(S(150, 0)[1])}" r="13" fill="none" stroke="#3a1c0c" stroke-width="2.5" stroke-dasharray="2 2"/>`);
-        },
-        { inflate: { radius: 22, profile: 'soft', height: 0.35 }, mottle: { scale: 3, amount: 0.1, stretch: 16, angle: deg }, material: { gloss: 0.55, shine: 50, sheen: 0.3 } },
-      );
-      s.surface((cv) => cv.add(`<path d="M${pt(S(34, -28))} L${pt(S(42, -28))} L${pt(S(42, 28))} L${pt(S(34, 28))} Z" fill="#2a1408"/><path d="M${pt(S(2, -10))} L${pt(S(12, -10))} L${pt(S(12, 10))} L${pt(S(2, 10))} Z" fill="#2a1408"/>`), {
-        inflate: { radius: 3, profile: 'round', height: 1 },
-        material: { gloss: 0.5, shine: 40, sheen: 0.3 },
-      });
-      // the neck, dark walnut, narrowing toward the head; its frets, tied round it
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="M${pt(S(192, -14))} L${pt(S(522, -11))} L${pt(S(522, 11))} L${pt(S(192, 14))} Z" fill="${across(cv, [[0, '#5a361c'], [0.5, '#3e2412'], [1, '#24140a']], 350, 13)}"/>`);
-          let u = 512;
-          for (let k = 0; k < 19; k++) {
-            cv.add(`<path d="M${pt(S(u, -13))} L${pt(S(u, 13))}" stroke="#d8c8a8" stroke-width="2.2" stroke-opacity="0.85"/>`);
-            u -= 24 * Math.pow(0.95, k);
-          }
-        },
-        { inflate: { radius: 12, profile: 'round', height: 0.8 }, mottle: { scale: 4, amount: 0.12, stretch: 14, angle: deg }, material: { gloss: 0.6, shine: 60, sheen: 0.35 } },
-      );
-      // the head and its pegs
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${spline([S(516, -13), S(560, -15), S(590, -12), S(594, 0), S(590, 12), S(560, 15), S(516, 13)])}" fill="#3a2010"/>`);
-          for (const u of [534, 556, 578]) for (const side of [-1, 1]) cv.add(`<path d="${spline([S(u - 4, side * 12), S(u - 3, side * 30), S(u - 7, side * 38), S(u, side * 41), S(u + 7, side * 38), S(u + 3, side * 30), S(u + 4, side * 12)])}" fill="#5a3418"/>`);
-        },
-        { inflate: { radius: 8, profile: 'round', height: 1 }, mottle: { scale: 4, amount: 0.1, stretch: 8, angle: deg }, material: { gloss: 0.6, shine: 60, sheen: 0.35 } },
-      );
-      // the strings, bright where the light runs along them, each with its fine shadow
-      s.shadow((cv) => {
-        for (const [v0, v1] of [[-18, -7], [-15, -5], [-2, -1], [1, 1], [14, 5], [17, 7]]) cv.add(`<path d="M${pt(S(6, v0 + 3))} L${pt(S(38, v0 + 3))} L${pt(S(560, v1 * 0.9 + 3))}" fill="none" stroke="#000" stroke-width="1.6"/>`);
-      }, { blur: 1.4, opacity: 0.5 });
+      const box = [0, 0, 512, 512];
+      // the bowl, its staves showing past the face on the shadowed side
       s.paint((cv) => {
-        for (const [v0, v1] of [[-18, -7], [-15, -5], [-2, -1], [1, 1], [14, 5], [17, 7]]) cv.add(`<path d="M${pt(S(6, v0))} L${pt(S(38, v0))} L${pt(S(560, v1 * 0.9))}" fill="none" stroke="${linear(cv, [[0, '#a8a090'], [0.4, '#f4eee0'], [1, '#9a9282']], ...S(0, 0), ...S(560, 0))}" stroke-width="1.2"/>`);
+        const bowl = outline(5, 7);
+        cv.add(`<path d="${bowl}" fill="#3e1a0c"/>`);
+        let staves = '';
+        for (let k = -4; k <= 4; k++) staves += `<path d="M${pt(S(4, k * 9 + 7))} Q${pt(S(90, k * 19 + 7))} ${pt(S(200, k * 3 + 7))}" fill="none" stroke="${k % 2 ? '#2a0e06' : '#7a3a1c'}" stroke-width="8"/>`;
+        cv.add(`<g clip-path="${within(cv, bowl)}">${staves}</g>`);
+        crescent(cv, bowl, [-10, -10], { colour: '#000', opacity: 0.5, soft: 10 });
+        cv.add(`<path d="${bowl}" fill="none" stroke="${ink}" stroke-width="2"/>`);
       });
-      return s.done({ finish: { grain: 0.004 } });
+      // the face: spruce, honey-pale, its fine straight grain; a dark binding round its edge
+      s.paint((cv) => {
+        const face = outline(0, 0);
+        cv.add(`<path d="${face}" fill="${across(cv, [[0, '#e6b878'], [0.5, '#d29a58'], [1, '#a8723a']], 80, 76)}"/>`);
+        let grain = '';
+        for (let k = -9; k <= 9; k++) grain += `<path d="M${pt(S(2, k * 8.2 + (rnd() - 0.5) * 2))} L${pt(S(200, k * 1.4))}" stroke="#7a4a20" stroke-width="${n(0.6 + rnd() * 0.6)}" stroke-opacity="${n(0.25 + rnd() * 0.2)}"/>`;
+        cv.add(`<g clip-path="${within(cv, face)}">${grain}</g>`);
+        strokes(cv, rnd, face, box, { count: 260, colours: ['#f2cc90', '#b07a40'], flow: () => deg, length: 26, width: 2.4, opacity: [0.06, 0.16] });
+        crescent(cv, face, [-16, -16], { colour: '#3a1a08', opacity: 0.4, soft: 18 });
+        // the varnish: a long light along the upper edge of the face
+        cv.add(`<path d="M${pt(S(30, -58))} Q${pt(S(90, -70))} ${pt(S(170, -30))}" fill="none" stroke="#fff4e0" stroke-width="5" stroke-opacity="0.55" stroke-linecap="round" filter="${softly(cv, 2)}"/>`);
+        cv.add(`<path d="${face}" fill="none" stroke="#2a1208" stroke-width="3.5"/>`);
+        // the sound hole with its ring of inlay, the bridge, the tail block
+        const [hx, hy] = S(150, 0);
+        cv.add(`<circle cx="${n(hx)}" cy="${n(hy)}" r="8.5" fill="#140804"/><circle cx="${n(hx)}" cy="${n(hy)}" r="13" fill="none" stroke="#3a1c0c" stroke-width="2.5" stroke-dasharray="2 2"/>`);
+        cv.add(`<path d="M${pt(S(34, -28))} L${pt(S(42, -28))} L${pt(S(42, 28))} L${pt(S(34, 28))} Z" fill="#2a1408" stroke="#5a3418" stroke-width="1"/>`);
+        cv.add(`<path d="M${pt(S(2, -10))} L${pt(S(12, -10))} L${pt(S(12, 10))} L${pt(S(2, 10))} Z" fill="#2a1408"/>`);
+      });
+      // the neck, dark walnut narrowing to the head, its frets tied round it, the light along its edge
+      s.paint((cv) => {
+        const neck = `M${pt(S(192, -14))} L${pt(S(522, -11))} L${pt(S(522, 11))} L${pt(S(192, 14))} Z`;
+        cv.add(`<path d="${neck}" fill="${across(cv, [[0, '#6a4224'], [0.45, '#432614'], [1, '#22120a']], 350, 13)}"/>`);
+        strokes(cv, rnd, neck, box, { count: 160, colours: ['#7a5030', '#1a0e06'], flow: () => deg, length: 30, width: 2, opacity: [0.08, 0.2] });
+        let u = 512;
+        let frets = '';
+        for (let k = 0; k < 19; k++) {
+          frets += `<path d="M${pt(S(u, -13))} L${pt(S(u, 13))}" stroke="#e0d0b0" stroke-width="2.2" stroke-opacity="0.85"/><path d="M${pt(S(u + 1.6, -13))} L${pt(S(u + 1.6, 13))}" stroke="#000" stroke-width="1" stroke-opacity="0.35"/>`;
+          u -= 24 * Math.pow(0.95, k);
+        }
+        cv.add(frets);
+        cv.add(`<path d="M${pt(S(200, -11))} L${pt(S(515, -9))}" stroke="#f0d8b8" stroke-width="2.4" stroke-opacity="0.45" filter="${softly(cv, 1)}"/>`);
+        cv.add(`<path d="${neck}" fill="none" stroke="${ink}" stroke-width="2"/>`);
+      });
+      // the head and its pegs
+      s.paint((cv) => {
+        const head = spline([S(516, -13), S(560, -15), S(590, -12), S(594, 0), S(590, 12), S(560, 15), S(516, 13)]);
+        for (const u of [534, 556, 578]) {
+          for (const side of [-1, 1]) {
+            const peg = spline([S(u - 4, side * 12), S(u - 3, side * 30), S(u - 7, side * 38), S(u, side * 41), S(u + 7, side * 38), S(u + 3, side * 30), S(u + 4, side * 12)]);
+            cv.add(`<path d="${peg}" fill="${linear(cv, [[0, '#8a5a30'], [1, '#3a2010']], ...S(u - 6, side * 30), ...S(u + 6, side * 30))}" stroke="${ink}" stroke-width="1.4"/>`);
+          }
+        }
+        cv.add(`<path d="${head}" fill="#3a2010" stroke="${ink}" stroke-width="2"/>`);
+        cv.add(`<path d="M${pt(S(520, -9))} L${pt(S(586, -8))}" stroke="#d8b890" stroke-width="2" stroke-opacity="0.4"/>`);
+      });
+      // the strings, each with its fine shadow
+      s.paint((cv) => {
+        for (const [v0, v1] of [[-18, -7], [-15, -5], [-2, -1], [1, 1], [14, 5], [17, 7]]) {
+          cv.add(`<path d="M${pt(S(6, v0 + 3))} L${pt(S(38, v0 + 3))} L${pt(S(560, v1 * 0.9 + 3))}" fill="none" stroke="#000" stroke-width="1.6" stroke-opacity="0.35"/>`);
+          cv.add(`<path d="M${pt(S(6, v0))} L${pt(S(38, v0))} L${pt(S(560, v1 * 0.9))}" fill="none" stroke="#efe8d8" stroke-width="1.2" stroke-opacity="0.9"/>`);
+        }
+      }, { blur: 0.3 });
+      return s.done({ finish: { paint: 1.5, grain: 0.012, contrast: 0.08 } });
     },
   },
   {
     key: 'kevok',
     ku: 'Kevok',
     en: 'Dove',
-    // a white dove in flight, its wings raised high over its back, its tail spread, a sprig of olive in its beak:
-    // each feather lying over the next, its shaft down the middle, white in the light and blue-grey in the shade
+    // a white dove flying with a letter in her beak, painted as the old printed scraps were: white, shaded in cool
+    // grey, every feather drawn in with a fine dark line and its barbs touched in, her wings up and spread, her
+    // tail fanned; a dark eye ringed with orange, a pink beak, and the letter sealed with a spot of red wax
     still(rnd) {
-      const s = new Still(rnd).place([0, 52], 0.9);
-      const plume = { gloss: 0.1, shine: 14, wrap: 0.5, sheen: 0.55, hollows: 0.8 };
-      const tone = (cv, base, tip, [dark, mid, light]) => linear(cv, [[0, dark], [0.35, mid], [1, light]], ...base, ...tip);
-      const lit = ['#b8c0cc', '#e8ecf2', '#fbfcfd'];
-      const shaded = ['#8e98a8', '#b8c0cc', '#d8dde6'];
-      // a fan of feathers: [base, tip, width] each; painted, and raised one over another in the relief
-      const fan = (list, colours, opts = { at: 0.5, point: 0.15 }) => ({
-        draw: (cv) => {
-          for (const [base, tip, w] of list) {
-            cv.add(`<path d="${blade(base, tip, w, opts)}" fill="${tone(cv, base, tip, colours)}"/>`);
-            cv.add(`<path d="M${pt(base)} L${pt(lerp(base, tip, 0.92))}" stroke="#9aa4b4" stroke-width="1.1" stroke-opacity="0.6"/>`);
-            // (a parting or two in the vane, as a feather's barbs part)
-            if (rnd() < 0.5) {
-              const t = 0.4 + rnd() * 0.4;
-              const m = lerp(base, tip, t);
-              const side = rnd() < 0.5 ? -1 : 1;
-              const dx = tip[0] - base[0];
-              const dy = tip[1] - base[1];
-              const l = Math.hypot(dx, dy);
-              cv.add(`<path d="M${pt(m)} l${n((-dy / l) * side * w * 0.45 + (dx / l) * 6)} ${n((dx / l) * side * w * 0.45 + (dy / l) * 6)}" stroke="#a8b0bc" stroke-width="1" stroke-opacity="0.5"/>`);
-            }
-          }
-        },
-        relief: (cv) => {
-          for (const [base, tip, w] of list) cv.add(`<path d="${blade(base, tip, w, opts)}" fill="#fff" stroke="#000" stroke-width="1.6" stroke-opacity="0.55"/>`);
-        },
-      });
-      const feathers = (list, colours, { inflate = 8, opts } = {}) => {
-        const f = fan(list, colours, opts);
-        s.surface(f.draw, { inflate: { radius: inflate, profile: 'soft', height: 0.5 }, relief: { draw: f.relief, height: 2.4, blur: 1.3 }, mottle: { scale: 2, amount: 0.04, stretch: 6 }, material: plume });
-      };
-      // (no two feathers quite alike: each a little longer or shorter, a little turned)
-      const ray = (base, deg, len) => {
-        const a = ((deg + (rnd() - 0.5) * 5) * Math.PI) / 180;
-        const l = len * (0.93 + rnd() * 0.14);
-        return [base[0] + Math.cos(a) * l, base[1] + Math.sin(a) * l];
-      };
-      // the far wing, behind, in its own shade
-      const far = [];
-      for (let i = 0; i < 9; i++) {
-        const t = i / 8;
-        const base = lerp([206, 104], [216, 160], t);
-        far.push([base, ray(base, -112 + t * 44, 132 - t * 26), 27]);
-      }
-      feathers(far.reverse(), shaded);
-      // the tail, spread
-      const tail = [];
-      for (let i = 0; i < 9; i++) {
-        const t = i / 8;
-        const base = [334 + t * 4, 286 + t * 12];
-        tail.push([base, ray(base, -24 + t * 44, 116 + Math.sin(t * Math.PI) * 14), 36]);
-      }
-      feathers(tail, lit, { opts: { at: 0.55, point: 0.05 } });
-      // the olive sprig, held in the beak: grey-green leaves, silver beneath, and two olives
-      const twig = [[112, 238], [92, 256], [76, 280], [62, 310], [54, 336]];
-      s.surface((cv) => cv.add(`<path d="${tube(twig, 5, 3)}" fill="#6a5a44"/>`), { inflate: { radius: 2.5, profile: 'round', height: 1 }, material: { gloss: 0.3, shine: 30 } });
-      const leaves = [[[90, 258], [44, 254], 13], [[84, 268], [112, 304], 12], [[74, 284], [32, 292], 13], [[68, 298], [94, 336], 12], [[60, 316], [24, 334], 11], [[56, 330], [70, 368], 11]];
-      s.surface(
-        (cv) => {
-          for (const [base, tip, w] of leaves) {
-            cv.add(`<path d="${blade(base, tip, w, { at: 0.5, point: 0.8 })}" fill="${linear(cv, [[0, '#3e5430'], [0.5, '#5a7244'], [1, '#8a9c70']], ...base, ...tip)}"/>`);
-            cv.add(`<path d="M${pt(base)} L${pt(lerp(base, tip, 0.9))}" stroke="#a8b490" stroke-width="1" stroke-opacity="0.7"/>`);
-          }
-        },
-        { inflate: { radius: 4, profile: 'soft', height: 0.6 }, material: { gloss: 0.5, shine: 40, wrap: 0.2, sheen: 0.4 } },
-      );
-      s.surface((cv) => cv.add(`<ellipse cx="52" cy="344" rx="8" ry="10" fill="#2e3a1c"/><ellipse cx="66" cy="352" rx="7" ry="9" fill="#3a2a30"/>`), { inflate: { radius: 7, profile: 'round', height: 1 }, material: { gloss: 0.9, shine: 90, sheen: 0.3 } });
-      // the body: the round head, the full breast, the back running into the tail
-      const body = spline([[112, 216], [128, 200], [152, 196], [172, 208], [196, 228], [236, 240], [290, 256], [338, 270], [350, 288], [338, 304], [290, 316], [240, 324], [196, 314], [166, 294], [148, 268], [130, 252], [114, 238]]);
-      // (the small feathers of the body, lying in rows like scales, each a little arc)
-      const scales = (cv, colour, width, opacity) => {
-        const clip = cv.id('body');
-        cv.def(`<clipPath id="${clip}"><path d="${body}"/></clipPath>`);
-        cv.add(`<g clip-path="url(#${clip})" fill="none" stroke="${colour}" stroke-width="${width}" stroke-opacity="${opacity}">`);
-        for (let y = 200; y < 330; y += 9) {
-          for (let x = 150 + ((y / 9) % 2) * 7; x < 350; x += 14) {
-            const r = 7 + rnd() * 2;
-            cv.add(`<path d="M${pt([x + (rnd() - 0.5) * 4, y - r])} A${n(r * 0.6)} ${n(r)} 0 0 1 ${pt([x + (rnd() - 0.5) * 4, y + r])}"/>`);
-          }
+      const s = new Still(rnd);
+      const ink = '#4a4646';
+      // a feather from `base` to `tip`, `w` wide: white down its middle, grey to its edges, drawn round with
+      // the fine line, its shaft and a few barbs touched in
+      const feather = (cv, base, tip, w, { shade = 0, point = 0.25 } = {}) => {
+        const d = blade(base, tip, w, { at: 0.45, point });
+        const dx = tip[0] - base[0];
+        const dy = tip[1] - base[1];
+        const len = Math.hypot(dx, dy);
+        const [ux, uy] = [dx / len, dy / len];
+        const mid = lerp(base, tip, 0.5);
+        const g = linear(cv, [[0, shade ? '#d8d6d4' : '#fcfbf8'], [0.5, shade ? '#c4c2c2' : '#eceae6'], [1, shade ? '#96949a' : '#c6c4c4']], mid[0] + uy * w * 0.5, mid[1] - ux * w * 0.5, mid[0] - uy * w * 0.5, mid[1] + ux * w * 0.5);
+        cv.add(`<path d="${d}" fill="${g}"/>`);
+        let barbs = '';
+        for (let k = 0; k < 6; k++) {
+          const t = 0.2 + rnd() * 0.7;
+          const p0 = lerp(base, tip, t);
+          const side = rnd() < 0.5 ? -1 : 1;
+          const l = w * (0.25 + rnd() * 0.2);
+          barbs += `<path d="M${pt(p0)} l${n(-uy * side * l + ux * l * 0.6)} ${n(ux * side * l + uy * l * 0.6)}"/>`;
         }
-        cv.add('</g>');
+        cv.add(`<g clip-path="${within(cv, d)}" stroke="${ink}" stroke-width="0.9" stroke-opacity="0.35" fill="none">${barbs}<path d="M${pt(lerp(base, tip, 0.04))} L${pt(lerp(base, tip, 0.9))}" stroke-opacity="0.45"/></g>`);
+        cv.add(`<path d="${d}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.75"/>`);
       };
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${body}" fill="${linear(cv, [[0, '#fbfcfd'], [0.5, '#eceff4'], [1, '#b4bcc8']], 0, 196, 0, 324)}"/>`);
-          scales(cv, '#aab4c2', 1, 0.12);
-        },
-        {
-          inflate: { radius: 46, profile: 'soft', height: 0.75 },
-          relief: { draw: (cv) => scales(cv, '#fff', 2.5, 0.6), height: 0.8, blur: 1.5 },
-          mottle: { scale: 4, amount: 0.03 },
-          material: plume,
-        },
-      );
-      // the beak, pink-grey, its white cere, and the dark eye with its pale ring
-      s.surface((cv) => cv.add(`<path d="M118 226 C110 226 98 230 88 237 C98 238 108 239 118 240 Z" fill="${linear(cv, [[0, '#d8b8b0'], [1, '#6a5450']], 118, 0, 88, 0)}"/><ellipse cx="117" cy="228" rx="6" ry="4" fill="#f4f0ee"/>`), {
-        inflate: { radius: 4, profile: 'round', height: 0.9 },
-        material: { gloss: 0.6, shine: 50, sheen: 0.3 },
-      });
-      s.surface((cv) => cv.add(`<circle cx="138" cy="222" r="7" fill="#c8ccd2"/><circle cx="138" cy="222" r="4.6" fill="#120c0a"/>`), { inflate: { radius: 4, profile: 'round', height: 0.8 }, material: { gloss: 1.5, shine: 200, hollows: 0 } });
-      s.paint((cv) => cv.add(`<circle cx="136.4" cy="220.4" r="1.3" fill="#fff" fill-opacity="0.9"/>`));
-      // the near wing, raised: its coverts along the leading edge, the long primaries fanned up and back from the
-      // hand, the secondaries along the arm
-      const secondaries = [];
-      for (let i = 0; i < 10; i++) {
-        const t = i / 9;
-        const base = lerp([252, 150], [238, 238], t);
-        secondaries.push([base, ray(base, -30 + t * 40, 116 - t * 22), 34]);
-      }
-      const primaries = [];
-      for (let i = 0; i < 10; i++) {
-        const t = i / 9;
-        const base = lerp([252, 150], [266, 92], t);
-        primaries.push([base, ray(base, -38 - t * 58, 128 + t * 30), 28]);
-      }
-      s.shadow((cv) => cv.add(`<path d="M232 252 C250 200 260 150 268 96 L330 120 L360 250 Z" fill="#000"/>`), { blur: 14, opacity: 0.3 });
-      feathers(secondaries.reverse(), lit);
-      feathers(primaries, lit);
-      // (the coverts: short rounded feathers in rows over the bases of the long ones)
-      const coverts = [];
-      for (const [row, from, to, len, w] of [[0, [238, 246], [266, 96], 46, 26], [1, [232, 244], [258, 104], 34, 22]]) {
+      const ray = (base, deg, len) => [base[0] + Math.cos((deg * Math.PI) / 180) * len, base[1] + Math.sin((deg * Math.PI) / 180) * len];
+      // the far wing, below and behind, a little in shade: its long feathers swept down and back
+      s.paint((cv) => {
         for (let i = 0; i < 9; i++) {
           const t = i / 8;
-          const base = lerp(from, to, t);
-          coverts.push([base, ray(base, -40 + t * -10 + row * 8, len), w]);
+          const base = lerp([300, 318], [236, 330], t);
+          feather(cv, base, ray(base, 146 + t * 14 + (rnd() - 0.5) * 4, 190 - t * 46), 34, { shade: 1 });
         }
-      }
-      feathers(coverts, lit, { inflate: 10, opts: { at: 0.5, point: 0 } });
-      return s.done({ finish: { grain: 0.004, warmth: 0.01 } });
+        const coverts = spline([[318, 300], [300, 340], [260, 372], [214, 384], [196, 360], [228, 330], [270, 310]]);
+        cv.add(`<path d="${coverts}" fill="${linear(cv, [[0, '#e4e2e0'], [1, '#aeacb0']], 300, 300, 210, 380)}"/>`);
+        cv.add(`<path d="${coverts}" fill="none" stroke="${ink}" stroke-width="1.4" stroke-opacity="0.7"/>`);
+      });
+      // the tail, fanned
+      s.paint((cv) => {
+        for (let i = 0; i < 7; i++) {
+          const t = i / 6;
+          const base = [222, 300 + t * 6];
+          feather(cv, base, ray(base, 166 + (t - 0.5) * 38, 132 + Math.sin(t * Math.PI) * 18), 36, { point: 0.05 });
+        }
+      });
+      // the body, full at the breast, and the head
+      const body = spline([[214, 290], [262, 262], [320, 246], [370, 240], [404, 232], [426, 240], [438, 262], [434, 284], [416, 300], [380, 318], [330, 336], [270, 336], [228, 322]]);
+      s.paint((cv) => {
+        cv.add(`<path d="${body}" fill="${linear(cv, [[0, '#fefdfa'], [0.6, '#eeece8'], [1, '#c4c2c4']], 0, 236, 0, 340)}"/>`);
+        crescent(cv, body, [-10, -26], { colour: '#6e6e7a', opacity: 0.42, soft: 14 });
+        // (the small feathers of the breast and the back, little arcs one over another)
+        let arcs = '';
+        for (let y = 252; y < 336; y += 9) {
+          for (let x = 230 + ((y / 9) % 2) * 7; x < 420; x += 15) {
+            const r = 6 + rnd() * 2;
+            arcs += `<path d="M${pt([x - r, y + rnd() * 3])} Q${pt([x, y + r * 0.9])} ${pt([x + r, y + rnd() * 3])}"/>`;
+          }
+        }
+        cv.add(`<g clip-path="${within(cv, body)}" fill="none" stroke="${ink}" stroke-width="0.8" stroke-opacity="0.22">${arcs}</g>`);
+        cv.add(`<path d="${body}" fill="none" stroke="${ink}" stroke-width="1.6" stroke-opacity="0.75"/>`);
+      });
+      // the letter in her beak: folded paper, its flap, a spot of red wax
+      s.paint((cv) => {
+        const L = 'M440 292 L494 274 L506 314 L452 332 Z';
+        cv.add(`<path d="${L}" fill="${linear(cv, [[0, '#fbf4e4'], [1, '#e2d2b4']], 440, 280, 500, 330)}" stroke="${ink}" stroke-width="1.4"/>`);
+        cv.add(`<path d="M440 292 L476 310 L494 274" fill="none" stroke="${ink}" stroke-width="1.1" stroke-opacity="0.7"/>`);
+        cv.add(`<circle cx="474" cy="308" r="6.5" fill="#b0182a" stroke="#6a0812" stroke-width="1"/><circle cx="472" cy="306" r="2" fill="#f0a0a0" fill-opacity="0.7"/>`);
+      });
+      // the beak, pink, and the dark eye ringed with orange
+      s.paint((cv) => {
+        cv.add(`<path d="M428 252 C436 254 446 260 454 268 C446 270 438 270 430 266 Z" fill="${linear(cv, [[0, '#e6b4a4'], [1, '#a86a5c']], 428, 252, 454, 268)}" stroke="${ink}" stroke-width="1.2"/>`);
+        cv.add(`<circle cx="414" cy="250" r="6.4" fill="#d27a2c" stroke="${ink}" stroke-width="1.2"/><circle cx="414.6" cy="250" r="3.4" fill="#1a1008"/><circle cx="413" cy="248.4" r="1.2" fill="#fff" fill-opacity="0.9"/>`);
+      });
+      // the near wing, raised high: its coverts round the shoulder, its long flight feathers fanned up and back
+      s.paint((cv) => {
+        // (the secondaries along the arm, then the long primaries from the hand, fanned up and back)
+        for (let i = 0; i < 8; i++) {
+          const t = i / 7;
+          const base = lerp([262, 262], [304, 196], t);
+          feather(cv, base, ray(base, -150 + t * 20 + (rnd() - 0.5) * 4, 120 + t * 30), 34);
+        }
+        for (let i = 0; i < 9; i++) {
+          const t = i / 8;
+          const base = lerp([304, 196], [330, 150], t);
+          feather(cv, base, ray(base, -132 + t * 36 + (rnd() - 0.5) * 4, 150 + Math.sin(t * Math.PI) * 30 - t * 10), 32);
+        }
+        const wing = spline([[278, 282], [274, 240], [286, 202], [308, 166], [332, 140], [352, 140], [362, 186], [356, 236], [334, 270], [300, 286]]);
+        cv.add(`<path d="${wing}" fill="${linear(cv, [[0, '#fefdfa'], [1, '#dcdad8']], 300, 140, 340, 270)}"/>`);
+        cv.add(`<path d="${wing}" fill="none" stroke="${ink}" stroke-width="1.5" stroke-opacity="0.75"/>`);
+        // (the coverts over the arm: row on row of small feathers, each row lying over the bases of the one behind
+        // it, the last over the flight feathers', their rounded tips lying back the way the flight feathers grow)
+        const arm = [[262, 262], [304, 196], [330, 150]];
+        for (let r = 0; r < 3; r++) {
+          for (let seg = 0; seg < 2; seg++) {
+            const [a, b] = [arm[seg], arm[seg + 1]];
+            const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+            const [nx, ny] = [-(b[1] - a[1]) / len, (b[0] - a[0]) / len];
+            const count = Math.round(len / 12);
+            for (let i = 0; i < count; i++) {
+              const t = (i + 0.5 + (r % 2) * 0.4) / count;
+              const along = (seg + t) / 2;
+              const off = 14 + r * 15;
+              const base = [a[0] + (b[0] - a[0]) * t + nx * off, a[1] + (b[1] - a[1]) * t + ny * off];
+              const lie = ((-152 + along * 40 + (rnd() - 0.5) * 6) * Math.PI) / 180;
+              const l = (28 - r * 4) * (0.92 + rnd() * 0.16);
+              const tip = [base[0] + Math.cos(lie) * l, base[1] + Math.sin(lie) * l];
+              const d = blade(base, tip, 17 - r * 2, { at: 0.62, point: 0 });
+              cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#cfcdcf'], [0.55, '#f2f1ee'], [1, '#fefdfa']], ...base, ...tip)}" stroke="${ink}" stroke-width="1" stroke-opacity="0.6"/>`);
+              cv.add(`<path d="M${pt(lerp(base, tip, 0.15))} L${pt(lerp(base, tip, 0.7))}" stroke="${ink}" stroke-width="0.7" stroke-opacity="0.3"/>`);
+            }
+          }
+        }
+        crescent(cv, wing, [6, -12], { colour: '#6e6e7a', opacity: 0.3, soft: 8 });
+      });
+      return s.done({ finish: { paint: 1.5, grain: 0.012, contrast: 0.06, saturation: 0.95 } });
     },
   },
   {
     key: 'genim',
     ku: 'Genim',
     en: 'Wheat',
-    // a sheaf of ripe wheat tied with a ribbon of brown satin: the ears fanning out above the bow, plump grains in
-    // their two rows and the long awns bristling from them, the straws crossing at the tie and spreading below
+    // a sheaf of ripe wheat tied with a bow of brown satin, painted: the ears fanning out above the bow, their husks
+    // in two rows each lying over the one above it, the long awns bristling from them; the straws crossing at the
+    // tie and spreading below; the satin smooth, its sheen running along its loops
     still(rnd) {
       const s = new Still(rnd);
+      const ink = '#5a3c18';
       const B = [256, 344];
       const fan = [-36, -23, -11, 0, 11, 23, 36];
       const stalks = fan.map((deg, i) => {
@@ -993,19 +923,17 @@ export const ICONS = [
         const down = [Math.sin(b), Math.cos(b)];
         const reach = 128 + (i % 2) * 18 + rnd() * 12;
         const ear = 128 + rnd() * 20;
-        return { up, down, base: [B[0] + up[0] * reach, B[1] + up[1] * reach], tip: [B[0] + up[0] * (reach + ear), B[1] + up[1] * (reach + ear)], foot: [B[0] + down[0] * (150 + rnd() * 14), B[1] + down[1] * (150 + rnd() * 14)] };
+        return { up, base: [B[0] + up[0] * reach, B[1] + up[1] * reach], tip: [B[0] + up[0] * (reach + ear), B[1] + up[1] * (reach + ear)], foot: [B[0] + down[0] * (150 + rnd() * 14), B[1] + down[1] * (150 + rnd() * 14)] };
       });
-      // the straws, crossing at the tie
-      s.surface(
-        (cv) => {
-          for (const st of stalks) {
-            cv.add(`<path d="M${pt(st.foot)} L${pt(st.base)}" stroke="${linear(cv, [[0, '#9a7028'], [0.45, '#d8ae5c'], [1, '#c49444']], ...st.foot, ...st.base)}" stroke-width="5.5" stroke-linecap="round"/>`);
-          }
-        },
-        { inflate: { radius: 2.8, profile: 'round', height: 1 }, mottle: { scale: 3, amount: 0.12, stretch: 12, angle: -90 }, material: { gloss: 0.4, shine: 34, wrap: 0.2, sheen: 0.4 } },
-      );
-      // the ears: their spikelets in two rows, alternating up the stem, each a husk of pointed scales lying over the
-      // one above it; a long awn from each, bristling up and out
+      // the straws: pale gold, lit down one side
+      s.paint((cv) => {
+        for (const st of stalks) {
+          cv.add(`<path d="M${pt(st.foot)} L${pt(st.base)}" stroke="#a8803a" stroke-width="6" stroke-linecap="round"/>`);
+          cv.add(`<path d="M${pt(st.foot)} L${pt(st.base)}" stroke="#e8cc8a" stroke-width="2" stroke-linecap="round" stroke-opacity="0.8" transform="translate(-1.4 0)"/>`);
+          cv.add(`<path d="M${pt(st.foot)} L${pt(st.base)}" stroke="${ink}" stroke-width="0.8" stroke-opacity="0.5" transform="translate(2.6 0)"/>`);
+        }
+      });
+      // the ears: the husks in two rows, alternating up the stem, the topmost first so each lies over the one above
       const spikelets = [];
       const awns = [];
       for (const st of stalks) {
@@ -1023,105 +951,55 @@ export const ICONS = [
           const p0 = [st.base[0] + u[0] * t + v[0] * side * 1.5, st.base[1] + u[1] * t + v[1] * side * 1.5];
           const L = 30 * shrink + 6;
           const p1 = [p0[0] + d[0] * L, p0[1] + d[1] * L];
-          ear.push({ p0, p1, w: 15 * shrink + 4, side });
-          // (the awn rises from the husk's tip, nearer upright than the husk)
+          ear.push({ p0, p1, w: 15 * shrink + 4 });
           const lean = side * (0.12 + rnd() * 0.1);
           const a = [u[0] * Math.cos(lean) - v[0] * Math.sin(lean), u[1] * Math.cos(lean) - v[1] * Math.sin(lean)];
           const l = (58 + rnd() * 40) * (0.6 + shrink * 0.4);
           const bow = (rnd() - 0.5) * 8;
           awns.push([p1, [p1[0] + a[0] * l * 0.5 + v[0] * bow, p1[1] + a[1] * l * 0.5 + v[1] * bow], [p1[0] + a[0] * l, p1[1] + a[1] * l]]);
         }
-        // the topmost first, so that each husk lies over the one above it
         spikelets.push(...ear.reverse());
       }
-      // the awns, fine and tapering, pale gold, behind the ears
       s.paint((cv) => {
-        for (const [p0, m, p1] of awns) {
-          const dx = p1[0] - p0[0];
-          const dy = p1[1] - p0[1];
-          const l = Math.hypot(dx, dy);
-          const w = [-dy / l, dx / l];
-          const side = (p, k) => [p[0] + w[0] * k, p[1] + w[1] * k];
-          cv.add(`<path d="M${pt(side(p0, -0.9))} Q${pt(side(m, -0.5))} ${pt(p1)} Q${pt(side(m, 0.5))} ${pt(side(p0, 0.9))} Z" fill="${linear(cv, [[0, '#b88a40'], [0.35, '#e6c886'], [1, '#f2e2b4', 0.5]], ...p0, ...p1)}"/>`);
+        cv.add(`<g fill="none" stroke-linecap="round">${awns.map(([p0, m, p1]) => `<path d="M${pt(p0)} Q${pt(m)} ${pt(p1)}" stroke="#d8b878" stroke-width="${n(0.8 + rnd() * 0.7)}" stroke-opacity="${n(0.55 + rnd() * 0.35)}"/>`).join('')}</g>`);
+      }, { blur: 0.2 });
+      s.paint((cv) => {
+        for (const { p0, p1, w } of spikelets) {
+          const d = blade(p0, p1, w, { at: 0.42, point: 0.8, count: 10 });
+          // (each husk lit on its upper side and shaded below, its keel pale, its edge drawn in)
+          const m = lerp(p0, p1, 0.5);
+          cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#f2dc9e'], [0.45, '#d8aa58'], [1, '#9a6a28']], m[0] - w * 0.5, m[1] - w * 0.6, m[0] + w * 0.5, m[1] + w * 0.6)}"/>`);
+          cv.add(`<path d="M${pt(lerp(p0, p1, 0.15))} L${pt(lerp(p0, p1, 0.9))}" stroke="#fbeec4" stroke-width="1.1" stroke-opacity="0.7"/>`);
+          cv.add(`<path d="${d}" fill="none" stroke="${ink}" stroke-width="0.9" stroke-opacity="0.6"/>`);
         }
-      }, { blur: 0.25 });
-      s.surface(
-        (cv) => {
-          for (const { p0, p1, w } of spikelets) {
-            const d = blade(p0, p1, w, { at: 0.42, point: 0.8, count: 10 });
-            cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#8e5e22'], [0.35, '#c99644'], [0.8, '#e8c67c'], [1, '#f2dc9e']], ...p0, ...p1)}" stroke="#7a5020" stroke-width="0.8" stroke-opacity="0.5"/>`);
-            // the keel down the husk
-            cv.add(`<path d="M${pt(lerp(p0, p1, 0.15))} L${pt(lerp(p0, p1, 0.92))}" stroke="#f6e2ac" stroke-width="1" stroke-opacity="0.45"/>`);
-          }
-        },
-        {
-          inflate: { radius: 5, profile: 'round', height: 0.6 },
-          relief: {
-            draw: (cv) => {
-              for (const { p0, p1, w } of spikelets) {
-                const c = lerp(p0, p1, 0.45);
-                cv.add(`<path d="${blade(p0, p1, w, { at: 0.42, point: 0.8, count: 10 })}" fill="${radial(cv, [[0, '#fff'], [0.7, '#bbb'], [1, '#555']], c[0], c[1], w * 0.75)}"/>`);
-              }
-            },
-            height: 5,
-            blur: 0.8,
-          },
-          mottle: { scale: 2, amount: 0.1, stretch: 6, angle: -90 },
-          material: { gloss: 0.3, shine: 24, wrap: 0.35, sheen: 0.5, hollows: 0.8 },
-        },
-      );
-      // the bow: two loops, their insides in shadow, the knot, two tails cut in a V
+      });
+      // the bow: two loops, their insides in shadow, the knot, two tails cut in a V; satin, its sheen in long bands
       const loopL = spline([[B[0] - 8, B[1] - 12], [B[0] - 60, B[1] - 46], [B[0] - 112, B[1] - 50], [B[0] - 118, B[1] - 14], [B[0] - 98, B[1] + 20], [B[0] - 50, B[1] + 18], [B[0] - 8, B[1] + 10]]);
       const loopR = spline([[B[0] + 8, B[1] - 12], [B[0] + 58, B[1] - 50], [B[0] + 108, B[1] - 60], [B[0] + 120, B[1] - 26], [B[0] + 104, B[1] + 12], [B[0] + 54, B[1] + 16], [B[0] + 8, B[1] + 10]]);
-      const openL = spline([[B[0] - 18, B[1] - 4], [B[0] - 52, B[1] - 18], [B[0] - 80, B[1] - 20], [B[0] - 86, B[1] - 12], [B[0] - 70, B[1] - 4], [B[0] - 40, B[1]]]);
-      const openR = spline([[B[0] + 18, B[1] - 6], [B[0] + 50, B[1] - 24], [B[0] + 78, B[1] - 30], [B[0] + 86, B[1] - 20], [B[0] + 70, B[1] - 10], [B[0] + 40, B[1] - 2]]);
-      // (the inside of a loop is darkest, and deepest, where it goes into the knot)
-      const inside = (cv, dark, light) => [[openL, -90], [openR, 90]].map(([d, dx]) => `<path d="${d}" fill="${linear(cv, [[0, dark], [1, light]], B[0], B[1], B[0] + dx, B[1] - 16)}"/>`).join('');
       const tailL = `M${pt([B[0] - 12, B[1] + 6])} C${pt([B[0] - 28, B[1] + 50])} ${pt([B[0] - 50, B[1] + 96])} ${pt([B[0] - 74, B[1] + 140])} L${pt([B[0] - 58, B[1] + 128])} L${pt([B[0] - 44, B[1] + 150])} C${pt([B[0] - 24, B[1] + 104])} ${pt([B[0] - 8, B[1] + 56])} ${pt([B[0] + 4, B[1] + 10])} Z`;
       const tailR = `M${pt([B[0] + 4, B[1] + 8])} C${pt([B[0] + 22, B[1] + 52])} ${pt([B[0] + 44, B[1] + 96])} ${pt([B[0] + 70, B[1] + 136])} L${pt([B[0] + 76, B[1] + 118])} L${pt([B[0] + 94, B[1] + 126])} C${pt([B[0] + 66, B[1] + 90])} ${pt([B[0] + 38, B[1] + 46])} ${pt([B[0] + 16, B[1] + 2])} Z`;
-      const satin = (cv, d, x1, y1, x2, y2) => cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#3a1a0c'], [0.45, '#6a3a1c'], [1, '#4a2410']], x1, y1, x2, y2)}"/>`);
-      const ribbon = { gloss: 0.8, shine: 12, wrap: 0.2, sheen: 0.55, hollows: 0.6 };
-      s.surface((cv) => {
-        satin(cv, tailL, B[0] - 70, B[1] + 140, B[0], B[1]);
-        satin(cv, tailR, B[0] + 80, B[1] + 130, B[0], B[1]);
-      }, {
-        inflate: { radius: 9, profile: 'soft', height: 0.5 },
-        relief: {
-          // (each tail twists once as it falls: a fold running down it)
-          draw: (cv) => {
-            cv.add(`<g fill="#fff">${[tailL, tailR].map((d) => `<path d="${d}"/>`).join('')}</g>`);
-            cv.add(`<path d="M${pt([B[0] - 6, B[1] + 14])} C${pt([B[0] - 30, B[1] + 70])} ${pt([B[0] - 34, B[1] + 110])} ${pt([B[0] - 56, B[1] + 140])} M${pt([B[0] + 10, B[1] + 10])} C${pt([B[0] + 24, B[1] + 50])} ${pt([B[0] + 58, B[1] + 90])} ${pt([B[0] + 80, B[1] + 124])}" stroke="#000" stroke-width="4" stroke-opacity="0.7" fill="none"/>`);
-          },
-          height: 3,
-          blur: 2.5,
-        },
-        material: ribbon,
+      const satin = (cv, d, [x1, y1, x2, y2], sheen) => {
+        cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#3a1c0c'], [0.5, '#6a3c1e'], [1, '#4a2612']], x1, y1, x2, y2)}"/>`);
+        cv.add(`<g clip-path="${within(cv, d)}"><path d="${sheen}" fill="none" stroke="#c8946a" stroke-width="12" stroke-opacity="0.5" stroke-linecap="round" filter="${softly(cv, 5)}"/><path d="${sheen}" fill="none" stroke="#f0caa4" stroke-width="3" stroke-opacity="0.45" stroke-linecap="round" filter="${softly(cv, 1.5)}"/></g>`);
+        cv.add(`<path d="${d}" fill="none" stroke="#24100a" stroke-width="1.6" stroke-opacity="0.7"/>`);
+      };
+      s.paint((cv) => {
+        satin(cv, tailL, [B[0] - 70, B[1] + 140, B[0], B[1]], `M${pt([B[0] - 4, B[1] + 20])} C${pt([B[0] - 22, B[1] + 70])} ${pt([B[0] - 36, B[1] + 110])} ${pt([B[0] - 52, B[1] + 136])}`);
+        satin(cv, tailR, [B[0] + 80, B[1] + 130, B[0], B[1]], `M${pt([B[0] + 12, B[1] + 16])} C${pt([B[0] + 28, B[1] + 56])} ${pt([B[0] + 52, B[1] + 92])} ${pt([B[0] + 76, B[1] + 122])}`);
       });
-      s.surface((cv) => {
-        satin(cv, loopL, B[0] - 118, B[1] - 50, B[0], B[1] + 10);
-        satin(cv, loopR, B[0] + 120, B[1] - 60, B[0], B[1] + 10);
-        cv.add(inside(cv, '#140804', '#3a1a0c'));
-      }, {
-        inflate: { radius: 20, profile: 'soft', height: 0.55 },
-        relief: {
-          // the loops raised, their insides sunk, and the creases where the ribbon gathers into the knot
-          draw: (cv) => {
-            cv.add(`<g fill="#fff">${[loopL, loopR].map((d) => `<path d="${d}"/>`).join('')}</g>`);
-            cv.add(inside(cv, '#000', '#999'));
-            cv.add(`<g stroke="#000" stroke-opacity="0.6" stroke-width="3.5" fill="none" stroke-linecap="round"><path d="M${pt([B[0] - 12, B[1] + 6])} Q${pt([B[0] - 50, B[1] + 12])} ${pt([B[0] - 82, B[1] + 14])}"/><path d="M${pt([B[0] - 12, B[1] - 8])} Q${pt([B[0] - 40, B[1] - 30])} ${pt([B[0] - 70, B[1] - 40])}"/><path d="M${pt([B[0] + 12, B[1] + 4])} Q${pt([B[0] + 50, B[1] + 8])} ${pt([B[0] + 84, B[1] + 6])}"/><path d="M${pt([B[0] + 12, B[1] - 10])} Q${pt([B[0] + 40, B[1] - 34])} ${pt([B[0] + 72, B[1] - 48])}"/></g>`);
-          },
-          height: 9,
-          blur: 5,
-        },
-        material: ribbon,
+      s.paint((cv) => {
+        satin(cv, loopL, [B[0] - 118, B[1] - 50, B[0], B[1] + 10], `M${pt([B[0] - 16, B[1] - 10])} Q${pt([B[0] - 64, B[1] - 40])} ${pt([B[0] - 110, B[1] - 34])}`);
+        satin(cv, loopR, [B[0] + 120, B[1] - 60, B[0], B[1] + 10], `M${pt([B[0] + 16, B[1] - 10])} Q${pt([B[0] + 62, B[1] - 46])} ${pt([B[0] + 112, B[1] - 44])}`);
+        // the insides of the loops, deep in shade where they go into the knot
+        for (const [d, dx] of [[loopL, -1], [loopR, 1]]) cv.add(`<g clip-path="${within(cv, d)}"><ellipse cx="${B[0] + dx * 52}" cy="${B[1] + 2}" rx="40" ry="14" fill="#140804" fill-opacity="0.75" filter="${softly(cv, 7)}"/></g>`);
       });
-      s.shadow((cv) => cv.add(`<rect x="${B[0] - 20}" y="${B[1] - 18}" width="40" height="38" rx="14" fill="#000"/>`), { blur: 8, opacity: 0.55 });
-      s.surface((cv) => cv.add(`<rect x="${B[0] - 16}" y="${B[1] - 17}" width="32" height="34" rx="11" fill="${linear(cv, [[0, '#7a4626'], [1, '#3e1e0e']], B[0] - 16, B[1] - 16, B[0] + 16, B[1] + 16)}"/>`), {
-        inflate: { radius: 12, profile: 'round', height: 0.8 },
-        relief: { draw: (cv) => cv.add(`<path d="M${B[0] - 4} ${B[1] - 16} Q${B[0] - 7} ${B[1]} ${B[0] - 4} ${B[1] + 16} M${B[0] + 6} ${B[1] - 16} Q${B[0] + 3} ${B[1]} ${B[0] + 6} ${B[1] + 16}" stroke="#fff" stroke-width="3" fill="none"/>`), height: -2, blur: 1.5 },
-        material: ribbon,
+      s.paint((cv) => {
+        const knot = `M${B[0] - 16} ${B[1] - 17} Q${B[0]} ${B[1] - 21} ${B[0] + 16} ${B[1] - 17} Q${B[0] + 20} ${B[1]} ${B[0] + 16} ${B[1] + 17} Q${B[0]} ${B[1] + 21} ${B[0] - 16} ${B[1] + 17} Q${B[0] - 20} ${B[1]} ${B[0] - 16} ${B[1] - 17} Z`;
+        cv.add(`<ellipse cx="${B[0] + 4}" cy="${B[1] + 4}" rx="24" ry="22" fill="#000" fill-opacity="0.5" filter="${softly(cv, 6)}"/>`);
+        satin(cv, knot, [B[0] - 16, B[1] - 16, B[0] + 16, B[1] + 16], `M${B[0] - 6} ${B[1] - 14} Q${B[0] - 9} ${B[1]} ${B[0] - 6} ${B[1] + 14}`);
+        cv.add(`<path d="M${B[0] + 6} ${B[1] - 15} Q${B[0] + 3} ${B[1]} ${B[0] + 6} ${B[1] + 15}" fill="none" stroke="#24100a" stroke-width="1.2" stroke-opacity="0.6"/>`);
       });
-      return s.done({ finish: { grain: 0.004 } });
+      return s.done({ finish: { paint: 1.5, grain: 0.012, contrast: 0.08 } });
     },
   },
   {
@@ -1282,58 +1160,70 @@ export const ICONS = [
     // at their wavering tips, sparks going up, all of it throwing its light round it
     still(rnd) {
       const s = new Still(rnd);
-      const bark = (angle) => ({
-        bumps: { scale: 6, amount: 5, stretch: 4, angle, ridged: true },
-        mottle: { scale: 5, amount: 0.3, stretch: 5, angle },
-        material: { gloss: 0.12, shine: 12, wrap: 0.2, sheen: 0.5, hollows: 1 },
-      });
-      // a log from a to b, `w` thick, sawn square at both ends: its bark, split along its length, charred toward the
-      // fire
-      const log = (a, b, w, cut) => {
-        const angle = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
-        const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
-        const [ux, uy] = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
-        const side = (p, k) => [p[0] - uy * k, p[1] + ux * k];
-        s.surface(
-          (cv) => {
-            // (its outline a little uneven, as a branch is)
-            const top = [];
-            const bottom = [];
-            for (let k = 0; k <= 8; k++) {
-              const p = lerp(a, b, k / 8);
-              const r = (w / 2) * (1 - (k / 8) * 0.08) * (1 + (rnd() - 0.5) * 0.06);
-              top.push(side(p, -r));
-              bottom.push(side(p, r));
+      // a log from a to b, `w` thick, sawn square at both ends, painted: its bark dark and rough, split along its
+      // length, charred where the fire has had it, lit along the edge the flames are above; the end sawn off it
+      // (`cut`) pale wood and its rings, the other end in shadow
+      const log = (a, b, w, cut) =>
+        s.paint((cv) => {
+          const angle = (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+          const len = Math.hypot(b[0] - a[0], b[1] - a[1]);
+          const [ux, uy] = [(b[0] - a[0]) / len, (b[1] - a[1]) / len];
+          const side = (p, k) => [p[0] - uy * k, p[1] + ux * k];
+          // (its outline a little uneven, as a branch is)
+          const top = [];
+          const bottom = [];
+          for (let k = 0; k <= 8; k++) {
+            const p = lerp(a, b, k / 8);
+            const r = (w / 2) * (1 - (k / 8) * 0.08) * (1 + (rnd() - 0.5) * 0.06);
+            top.push(side(p, -r));
+            bottom.push(side(p, r));
+          }
+          const d = `M${pt(top[0])} ${spline(top, false).slice(1 + pt(top[0]).length)} L${bottom.slice().reverse().map(pt).join(' L')} Z`;
+          // (which way is up across it: toward the flames)
+          const up = ux >= 0 ? [uy, -ux] : [-uy, ux];
+          const m = lerp(a, b, 0.5);
+          const box = [Math.min(a[0], b[0]) - w, Math.min(a[1], b[1]) - w, Math.max(a[0], b[0]) + w, Math.max(a[1], b[1]) + w];
+          cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#7a5638'], [0.25, '#4c3626'], [0.6, '#2a1e16'], [1, '#0e0a08']], m[0] + (up[0] * w) / 2, m[1] + (up[1] * w) / 2, m[0] - (up[0] * w) / 2, m[1] - (up[1] * w) / 2)}"/>`);
+          // the bark: rough, in ridges along the wood, split here and there
+          strokes(cv, rnd, d, box, { count: 260, colours: ['#160e0a', '#5a4030', '#2e2219', '#806044'], flow: () => angle, length: 26, width: 2.6, opacity: [0.18, 0.45], spread: 5, bend: 0.1 });
+          let cracks = '';
+          for (let k = 0; k < 12; k++) {
+            const p = lerp(a, b, rnd());
+            const off = (rnd() - 0.5) * w * 0.8;
+            const l = 20 + rnd() * 46;
+            cracks += `<path d="M${pt(side(p, off))} l${n(ux * l)} ${n(uy * l)}" stroke-width="${n(1.4 + rnd() * 1.8)}"/>`;
+          }
+          cv.add(`<g clip-path="${within(cv, d)}" fill="none" stroke="#0a0605" stroke-linecap="round" stroke-opacity="0.75">${cracks}</g>`);
+          // charred toward the fire, grey with ash
+          const char = lerp(a, b, cut === 'a' ? 0.85 : 0.5);
+          cv.add(`<g clip-path="${within(cv, d)}"><ellipse cx="${n(char[0])}" cy="${n(char[1])}" rx="${n(w * 2.4)}" ry="${n(w * 0.9)}" transform="rotate(${n(angle)} ${n(char[0])} ${n(char[1])})" fill="#0a0706" fill-opacity="0.75" filter="${softly(cv, 6)}"/></g>`);
+          specks(cv, rnd, d, [char[0] - w * 2, char[1] - w, char[0] + w * 2, char[1] + w], { count: 70, colours: ['#6e6862', '#8c8680', '#4a4440'], size: [0.6, 1.8], opacity: [0.25, 0.6] });
+          // the flames' light along its upper edge, its underside lost in shadow
+          crescent(cv, d, [-up[0] * 8, -up[1] * 8], { colour: '#ff9440', opacity: 0.55, soft: 4 });
+          crescent(cv, d, [up[0] * 10, up[1] * 10], { colour: '#000', opacity: 0.5, soft: 6 });
+          cv.add(`<path d="${d}" fill="none" stroke="#080504" stroke-width="1.4" stroke-opacity="0.6"/>`);
+          // its ends: the sawn one pale wood, ringed, checked from the heart, its bark round it; the other dark
+          for (const [end, sawn] of [[a, cut === 'a'], [b, cut === 'b']]) {
+            const [cx, cy] = end;
+            const r = w * (end === b ? 0.46 : 0.5);
+            const e = (k, extra) => `<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(r * 0.55 * k)}" ry="${n(r * k)}" transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})" ${extra}/>`;
+            if (!sawn) {
+              cv.add(e(1, `fill="${radial(cv, [[0, '#3a2a1c'], [1, '#120c08']], cx, cy, r)}"`));
+              continue;
             }
-            const d = `M${pt(top[0])} ${spline(top, false).slice(1 + pt(top[0]).length)} L${bottom.slice().reverse().map(pt).join(' L')} Z`;
-            cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#423830'], [0.5, '#2a2420'], [1, '#141110']], a[0], a[1] - w, a[0], a[1] + w)}"/>`);
-            const clip = cv.id('log');
-            cv.def(`<clipPath id="${clip}"><path d="${d}"/></clipPath>`);
-            // (charred black toward the fire)
-            const char = lerp(a, b, cut === 'a' ? 0.85 : 0.5);
-            cv.add(`<g clip-path="url(#${clip})"><ellipse cx="${n(char[0])}" cy="${n(char[1])}" rx="${n(w * 2.4)}" ry="${n(w * 0.9)}" transform="rotate(${n(angle)} ${n(char[0])} ${n(char[1])})" fill="#0c0908" fill-opacity="0.7"/></g>`);
-            cv.add(`<g clip-path="url(#${clip})" fill="none" stroke="#120c08" stroke-linecap="round">`);
-            for (let k = 0; k < 14; k++) {
-              const t = rnd();
-              const off = (rnd() - 0.5) * w * 0.8;
-              const p = lerp(a, b, t);
-              const len = 20 + rnd() * 50;
-              const ux = (b[0] - a[0]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
-              const uy = (b[1] - a[1]) / Math.hypot(b[0] - a[0], b[1] - a[1]);
-              cv.add(`<path d="M${pt([p[0] - uy * off, p[1] + ux * off])} l${n(ux * len)} ${n(uy * len)}" stroke-width="${n(1.5 + rnd() * 2)}" stroke-opacity="0.7"/>`);
+            cv.add(e(1, `fill="${radial(cv, [[0, '#c8a070'], [0.5, '#ae8050'], [0.85, '#7e5634'], [1, '#3a2414']], cx, cy, r)}"`));
+            for (const k of [0.18, 0.36, 0.54, 0.72]) cv.add(e(k, `fill="none" stroke="#6a4a2c" stroke-width="1.1" stroke-opacity="${n(0.4 + rnd() * 0.25)}"`));
+            let checks = '';
+            for (let k = 0; k < 3; k++) {
+              const t = rnd() * Math.PI * 2;
+              const [ex, ey] = [Math.cos(t) * r * 0.55 * 0.8, Math.sin(t) * r * 0.8];
+              const ca = (angle * Math.PI) / 180;
+              checks += `<path d="M${pt([cx, cy])} l${n(ex * Math.cos(ca) - ey * Math.sin(ca))} ${n(ex * Math.sin(ca) + ey * Math.cos(ca))}"/>`;
             }
-            cv.add('</g>');
-            // the sawn ends, pale wood and its rings, darkened at the rim; the far end in shadow
-            for (const [end, near] of [[a, cut === 'a'], [b, cut === 'b']]) {
-              const [cx, cy] = end;
-              const r = w * (end === b ? 0.46 : 0.5);
-              cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(r * 0.55)}" ry="${n(r)}" transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})" fill="${radial(cv, near ? [[0, '#a8845c'], [0.7, '#8a6644'], [1, '#2a1a10']] : [[0, '#4a3624'], [1, '#160e0a']], cx, cy, r)}"/>`);
-              if (near) for (const k of [0.3, 0.55, 0.8]) cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(r * 0.55 * k)}" ry="${n(r * k)}" transform="rotate(${n(angle)} ${n(cx)} ${n(cy)})" fill="none" stroke="#5a4028" stroke-width="1.2" stroke-opacity="0.6"/>`);
-            }
-          },
-          { inflate: { radius: w * 0.5, profile: 'round', height: 0.9 }, ...bark(angle) },
-        );
-      };
+            cv.add(`<g fill="none" stroke="#3a2414" stroke-width="1.3" stroke-opacity="0.6" stroke-linecap="round">${checks}</g>`);
+            cv.add(e(1, `fill="none" stroke="#1a100a" stroke-width="3.2"`));
+          }
+        });
       log([96, 446], [404, 360], 46, 'a');
       log([428, 452], [130, 372], 44, 'a');
       // (embers in the cracks where the fire has eaten into them)
@@ -1393,10 +1283,7 @@ export const ICONS = [
           cv.add(`<path d="M${pt([x, y])} l${n((rnd() - 0.5) * 6)} ${n(-3 - rnd() * 6)}" stroke="#ffd080" stroke-width="${n(1.5 + rnd() * 1.6)}" stroke-linecap="round"/>`);
         }
       }, { blur: 1.4, strength: 1.4, halo: 0.4 });
-      return s.done({
-        light: { key: [[0.05, -0.9, 0.45], [1, 0.6, 0.28], 1.25], fill: [[0, 0, 1], [0.3, 0.3, 0.4], 0.12], rim: [[0, -1, 0], [1, 0.62, 0.3], 1.2], ambient: [0.07, 0.05, 0.05] },
-        finish: { grain: 0.004, contrast: 0.08, saturation: 1.05, warmth: 0.02 },
-      });
+      return s.done({ finish: { grain: 0.005, contrast: 0.08, saturation: 1.05, warmth: 0.02 } });
     },
   },
   {

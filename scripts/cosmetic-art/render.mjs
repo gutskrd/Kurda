@@ -280,7 +280,7 @@ export function roughen(f, { scale = 8, freq = 0.08, seed = 1, octaves = 2 }) {
  * `ridge` is the skyline, [x, y] left to right; `peaks` are the summits as
  * [x, y, half-width]. Returns a premultiplied frame, the sky clear.
  */
-export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1, grassy = 0, blade = 4, wind = 0.3, dry = null, dryness = 0.5, rocky = 0, stone = 40 }) {
+export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1, grassy = 0, blade = 4, wind = 0.3, dry = null, dryness = 0.5, rocky = 0, stone = 40, scale = 1 }) {
   const f = frame(w, h);
   const skyline = new Float32Array(w);
   for (let x = 0, j = 0; x < w; x++) {
@@ -366,28 +366,28 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
         continue;
       }
       // the ridges wander as they come down, and branch: the angle off each summit, bent by broad noise
-      const bend = fbm(1, x / 210, y / 210, 3) * 0.55;
+      const bend = fbm(1, x / (210 * scale), y / (210 * scale), 3) * 0.55;
       let main = 0;
       let rib = 0;
       let crowd = 0;
       let weight = 0;
       for (const [pk, wk] of near) {
         const dx = x - pk[0];
-        const dy = Math.max(1, y - pk[1] + 14);
+        const dy = Math.max(1, y - pk[1] + 14 * scale);
         const r = Math.hypot(dx, dy);
         const a = Math.atan2(dx, dy) + bend;
         // a few great ridges off the summit with broad faces between them, and the gullies scoring those faces
-        main += ridged(a * ribs * 0.24 + 7.3 + pk[0] * 0.01, r / 700, 2, 0.5, 0) * wk;
-        rib += ridged(a * ribs + 3.1 + pk[0] * 0.013, r / 170, 3, 0.4) * wk;
-        crowd += Math.min(1, r / 110) * wk;
+        main += ridged(a * ribs * 0.24 + 7.3 + (pk[0] / scale) * 0.01, r / (700 * scale), 2, 0.5, 0) * wk;
+        rib += ridged(a * ribs + 3.1 + (pk[0] / scale) * 0.013, r / (170 * scale), 3, 0.4) * wk;
+        crowd += Math.min(1, r / (110 * scale)) * wk;
         weight += wk;
       }
       main /= weight;
       rib /= weight;
       crowd /= weight;
       // crags: small sharp-edged lumps over the ribs, the rock breaking up
-      const crag = 1 - Math.abs(fbm(3, x / 11, y / 15, 3) * 2.2);
-      const rock = crag * 0.12 + fbm(4, x / 46, y / 64, 2) * 0.12;
+      const crag = 1 - Math.abs(fbm(3, x / (11 * scale), y / (15 * scale), 3) * 2.2);
+      const rock = crag * 0.12 + fbm(4, x / (46 * scale), y / (64 * scale), 2) * 0.12;
       // the great ridges make the faces the light falls on; near a summit the ribs would crowd together like a
       // comb, and there the crags take over
       R[i] = main * 0.6 + rib * 0.4;
@@ -412,8 +412,8 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
       const a = clamp(y + 1 - sky, 0, 1);
       if (a <= 0) continue;
       const i = (y - top) * w + x;
-      const hx = H[i + (x < w - 1 ? 1 : 0)] - H[i - (x > 0 ? 1 : 0)];
-      const hy = y < h - 1 ? H[i + w] - H[i] : 0;
+      const hx = (H[i + (x < w - 1 ? 1 : 0)] - H[i - (x > 0 ? 1 : 0)]) * scale;
+      const hy = (y < h - 1 ? H[i + w] - H[i] : 0) * scale;
       // the slope's normal: the relief's, tipped toward the flank's own side and back toward the sky
       let nx = -hx * 7 * relief + flank * 1.15;
       let ny = -hy * 7 * relief - 0.4;
@@ -426,7 +426,7 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
       const shade = ambient + (1 - ambient) * lambert;
       const rib = R[i];
       // down in the gullies (or the hollows) it is darker; and the rock itself (or the grass) is not all one colour
-      const deep = (grassy ? 0.8 + 0.2 * clamp(rib, 0, 1) : rocky ? 0.5 + 0.5 * clamp(rib, 0, 1) : 0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
+      const deep = (grassy ? 0.8 + 0.2 * clamp(rib, 0, 1) : rocky ? 0.5 + 0.5 * clamp(rib, 0, 1) : 0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / (90 * scale), y / (70 * scale), 2) * 0.22);
       let tr = lr;
       let tg = lg;
       let tb = lb;
@@ -454,9 +454,9 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
       if (snowline !== null) {
         const steep = Math.min(1, Math.hypot(hx, hy) * 2);
         // the sun takes the snow higher up the flank it falls on; the other keeps it lower
-        const line = snowline + flank * Math.sign(L[0] || 1) * -26;
+        const line = snowline + flank * Math.sign(L[0] || 1) * -26 * scale;
         // the snowfield's edge frays: tongues down the gullies, rock showing through on the ridges
-        const lie = (line - y) / 46 + (0.5 - rib) * 4 + fbm(6, x / 34, y / 26, 3) * 1.1;
+        const lie = (line - y) / (46 * scale) + (0.5 - rib) * 4 + fbm(6, x / (34 * scale), y / (26 * scale), 3) * 1.1;
         const amount = clamp(lie * 1.6, 0, 1) * (1 - steep * 0.5);
         if (amount > 0) {
           const ws = Math.min(1, shade * 1.1);

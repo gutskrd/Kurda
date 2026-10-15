@@ -44,12 +44,14 @@
  * lying on old boards in a shaft of window light with the dust turning in it.
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
- * still lifes — a pomegranate split open, a glass of tea by its teapot, a seal
+ * still lifes — a pomegranate split open, a glass of tea on its saucer, a seal
  * of red wax with the eight-point star pressed into it, a saz, a buck come down
- * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat, the
- * Newroz fire — each lit the way a thing is lit against a black cloth and cut
- * out of it, so that it lies over a profile picture with nothing round it but
- * its own light (cosmetic-art/still.mjs).
+ * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat tied
+ * with a bow, a white dove with a letter, the Newroz fire — painted by hand
+ * rather than modelled, their light and shadow laid on as a painter lays them
+ * and brushed over (cosmetic-art/brush.mjs), and cut out of the dark, so that
+ * each lies over a profile picture with nothing round it but its own light
+ * (cosmetic-art/still.mjs).
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.
  *
