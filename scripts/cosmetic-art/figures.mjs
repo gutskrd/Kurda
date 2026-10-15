@@ -78,30 +78,36 @@ const POSES = {
     hind: [0, 7],
   },
   graze: {
-    back: [[14, -104.5], [26, -106.5], [42, -105.5], [58, -103], [72, -100], [86, -97], [97, -94.5]],
-    crest: [[106, -90.5], [114.5, -83], [122, -73.5], [128.5, -62], [133, -50]],
-    poll: [135.5, -42],
-    angle: 1.5,
+    back: [[15.3, -108.8], [26.7, -109.5], [45.8, -108], [64.9, -105], [80.2, -101.1], [91.6, -96.6]],
+    crest: [[101.1, -89.7], [110.2, -79], [118.4, -67.6], [124.2, -56.4]],
+    poll: [129.4, -50.4],
+    angle: 1.33,
+    head: 1.15,
     jaw: 1,
-    throat: [[118, -28], [111, -36.5], [103, -43], [95, -47]],
-    chest: [[88, -46], [81, -42.5]],
-    rack: [-0.05, -0.85],
-    ears: [-1.9, -2.15],
-    fore: [0, -9],
-    hind: [0, 7],
+    throat: [[117.6, -26.5], [110.4, -34.8], [101.1, -40.8], [91.6, -44.7]],
+    chest: [[84, -46.9], [78.2, -44.7]],
+    belly: [[68.7, -58.4], [57.3, -59.9], [45.8, -60.3], [34.4, -58.4], [28.6, -54.6]],
+    rack: [-0.3, 0.5],
+    ears: [-1.45, -1.65],
+    fore: [-10, -2],
+    hind: [0, 20],
+    rake: [13, 0],
   },
   drink: {
-    back: [[14, -104.5], [26, -106.5], [42, -105.5], [58, -103], [72, -100.5], [86, -98], [97, -95.5]],
-    crest: [[106, -91.5], [114, -85], [121.5, -76.5], [128, -67], [133, -57.5]],
-    poll: [136, -52],
-    angle: 1.42,
+    back: [[15.3, -108.8], [26.7, -109.5], [45.8, -108], [64.9, -105], [80.2, -101.1], [91.6, -96.6]],
+    crest: [[101.1, -89.7], [109.9, -80.2], [117.6, -69.8], [122.9, -59.9]],
+    poll: [128.2, -56.2],
+    angle: 1.3,
+    head: 1.15,
     jaw: 1,
-    throat: [[121, -35], [113.5, -41.5], [104, -46.5], [95, -48]],
-    chest: [[88, -46.5], [81, -42.5]],
-    rack: [0, -0.8],
-    ears: [-1.8, -2.05],
-    fore: [0, -9],
-    hind: [0, 7],
+    throat: [[116.4, -31.7], [109.9, -38.2], [101.1, -42], [91.6, -44.7]],
+    chest: [[84, -46.9], [78.2, -44.7]],
+    belly: [[68.7, -58.4], [57.3, -59.9], [45.8, -60.3], [34.4, -58.4], [28.6, -54.6]],
+    rack: [-0.3, 0.55],
+    ears: [-1.45, -1.65],
+    fore: [-10, -2],
+    hind: [0, 20],
+    rake: [13, 0],
   },
 };
 
@@ -115,15 +121,16 @@ const POSES = {
  *
  * Drawn the way an animal painter draws one, from its anatomy, since against
  * the light it is shape and nothing else: a heavy body, deep through the
- * chest — half its height and more — and drawn up under the flank, its back
- * running level from a high round rump; a thick neck, nearly as deep where it
- * leaves the shoulders as the chest is, flowing out of the back in one curve
- * and meeting the head low on the jaw; a short, deep wedge of a head with big
- * ears out from the poll; legs strong at the top, the hind ones under a heavy
- * thigh bending back at a high, sharp hock, the fore ones straight through a
- * small knee, all of them fine below on small pointed hooves; a broad tail
- * hanging from the top of the rump; and a heavy rack that rises from the
- * crown, curves forward over the face and lifts tall tines off its beams.
+ * chest — half its height and more — and drawn up under the flank; a high
+ * round rump, from which, when the head goes down, the back runs down in one
+ * curve into a thick neck, nearly as deep where it leaves the shoulders as the
+ * chest is, that meets the head low on the jaw; a short, deep wedge of a head
+ * with big ears up from the poll; legs strong at the top, the hind ones under
+ * a heavy thigh bending back at a high, sharp hock (the near one set well back
+ * when he reaches down), the fore ones straight through a small knee, all of
+ * them fine below on small pointed hooves; a broad tail hanging from the top
+ * of the rump; and a heavy rack that rises from the crown, curves forward over
+ * the face and lifts tall tines off its beams.
  */
 export function deer({ colour, ...at }) {
   const d = deerShapes(at);
@@ -152,10 +159,10 @@ export function deerShapes({ x, y, size, facing = 1, pose = 'alert', antlers = t
   // the legs, the far pair first: dx sets each forward or back (`wide` thickens a leg about its middle below
   // `from`: a leg's bones are fine, but it reads a little stronger than it is against the light)
   const wide = (pts, cx, from, by) => pts.map(([px, py]) => [py > from ? cx + (px - cx) * by : px, py]);
-  const hind = (dx) =>
-    outline(wide([[27, -90], [36, -78], [39.5, -67], [37, -59], [31, -50], [24.5, -42], [21, -35], [20.4, -28], [20.4, -18], [20.8, -10], [21.5, -7.4], [23.4, -3.4], [25.4, -0.4], [24.2, 0.4], [19.8, 0.4], [18.8, -1.6], [18.2, -4.2], [17.1, -6], [16.6, -8.6], [16.2, -16], [15.6, -26], [13.6, -32], [9.4, -36], [7.6, -40], [5.4, -48], [2.6, -58], [0, -68], [-1.6, -78], [-1.6, -88], [6, -97]].map(([px, py]) => [px + dx, py]), 18.4 + dx, -40, 1.22));
+  const hind = (dx, rake = 0) =>
+    outline(wide([[27, -90], [36, -78], [39.5, -67], [37, -59], [31, -50], [24.5, -42], [21, -35], [20.4, -28], [20.4, -18], [20.8, -10], [21.5, -7.4], [23.4, -3.4], [25.4, -0.4], [24.2, 0.4], [19.8, 0.4], [18.8, -1.6], [18.2, -4.2], [17.1, -6], [16.6, -8.6], [16.2, -16], [15.6, -26], [13.6, -32], [9.4, -36], [7.6, -40], [5.4, -48], [2.6, -58], [1.2, -66], [1.4, -73], [2.2, -80], [2.6, -88], [6, -97]].map(([px, py]) => [px + dx, py]), 18.4 + dx, -40, 1.32).map(([px, py]) => [px - rake * Math.min(1, Math.max(0, (py + 62) / 62)), py]));
   const fore = (dx) =>
-    outline(wide([[80, -70], [95, -58], [94, -49], [91.6, -41], [90, -34], [90.1, -30.5], [89.4, -27], [89, -18], [89.1, -10], [89.6, -7.4], [91.3, -3.4], [93.2, -0.4], [92.1, 0.4], [87.6, 0.4], [87, -1.6], [86.2, -4.2], [85.2, -6], [85, -8.6], [84.8, -16], [84.6, -24], [84.2, -27.5], [84.6, -31], [83.6, -35], [81.6, -43], [79, -50], [76, -56], [73, -64]].map(([px, py]) => [px + dx, py]), 87.2 + dx, -52, 1.22));
+    outline(wide([[80, -70], [95, -58], [94, -49], [91.6, -41], [90, -34], [90.1, -30.5], [89.4, -27], [89, -18], [89.1, -10], [89.6, -7.4], [91.3, -3.4], [93.2, -0.4], [92.1, 0.4], [87.6, 0.4], [87, -1.6], [86.2, -4.2], [85.2, -6], [85, -8.6], [84.8, -16], [84.6, -24], [84.2, -27.5], [84.6, -31], [83.6, -35], [81.6, -43], [79, -50], [76, -56], [73, -64]].map(([px, py]) => [px + dx, py]), 87.2 + dx, -52, 1.32));
   // the body, the neck and the head in one outline, so nothing joins them at a seam: from the root of the tail
   // over the high rump and along the back to the withers, along the crest of the neck to the poll, along the brow
   // and the face to the nose, round the muzzle and the chin, back along the jaw to where the throat leaves it,
@@ -163,9 +170,9 @@ export function deerShapes({ x, y, size, facing = 1, pose = 'alert', antlers = t
   // haunch and the buttock
   const head = [[-1, -0.5], [4.5, -2.2], [10, -2], [15.5, -0.6], [21.5, 1.4], [27, 3.4], [30.6, 5.2], [32.6, 7.2], [33, 9.4], [32, 11.4], [30, 12.6], [28.4, 13], [28.6, 14.6], [26.8, 15.8], [21.5, 16.6], [15.5, 17.8], [10, 19], [5, 19.4]];
   const jaw = head.slice(0, head.length - (P.jaw ? 4 : 0)).map(H);
-  const body = outline([[6, -97], ...P.back, ...P.crest, ...jaw, ...P.throat, ...P.chest, [72, -46], [62, -52], [52, -56.5], [42, -58], [33, -59.5], [24, -64], [14, -68.5], [6, -73], [1, -79], [-1, -86], [0.5, -93]]);
+  const body = outline([[6, -97], ...P.back, ...P.crest, ...jaw, ...P.throat, ...P.chest, ...(P.belly ?? [[72, -46], [62, -52], [52, -56.5], [42, -58], [33, -59.5]]), [24, -64], [14, -68.5], [7, -72], [3.4, -78], [2.4, -85], [3.2, -92]]);
   // the tail, broad, hanging from the top of the rump
-  const tail = outline([[7, -98], [2.6, -97], [-1.4, -94], [-3.6, -89], [-4.4, -83], [-3.6, -77.5], [-1.8, -76.6], [-0.6, -81], [1.2, -87], [4.6, -92.6]]);
+  const tail = outline([[7.4, -99], [2.8, -98.4], [-1.2, -95.6], [-3.8, -90.6], [-5, -84.6], [-5, -78.6], [-3.4, -75.4], [-1.4, -76.6], [0, -81], [1.8, -87.4], [4.8, -93.4]]);
   // the ears, long and wide, out from the poll: the far one a little behind and turned away
   const ear = (dx, dy, turn) => {
     const ct = Math.cos(turn);
@@ -196,8 +203,8 @@ export function deerShapes({ x, y, size, facing = 1, pose = 'alert', antlers = t
     }
   }
   return {
-    far: { hind: hind(P.hind[1]), fore: fore(P.fore[1]), ear: ear(-1.5, 1.5, P.ears[0]), antler: rack[0] },
-    near: { hind: hind(P.hind[0]), fore: fore(P.fore[0]), ear: ear(0, 0, P.ears[1]), antler: rack[1] },
+    far: { hind: hind(P.hind[1], P.rake?.[1]), fore: fore(P.fore[1]), ear: ear(-1.5, 1.5, P.ears[0]), antler: rack[0] },
+    near: { hind: hind(P.hind[0], P.rake?.[0]), fore: fore(P.fore[0]), ear: ear(0, 0, P.ears[1]), antler: rack[1] },
     body,
     tail,
     frame: W,

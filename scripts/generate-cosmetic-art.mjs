@@ -45,8 +45,8 @@
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
  * still lifes — a pomegranate split open, a glass of tea by its teapot, a seal
- * of red wax with the eight-point star pressed into it, a saz, a buck with his
- * head up (the deer of the backgrounds, figures.mjs), a sheaf of wheat, the
+ * of red wax with the eight-point star pressed into it, a saz, a buck come down
+ * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat, the
  * Newroz fire — each lit the way a thing is lit against a black cloth and cut
  * out of it, so that it lies over a profile picture with nothing round it but
  * its own light (cosmetic-art/still.mjs).
