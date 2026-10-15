@@ -1,18 +1,18 @@
 /**
- * Mountains and villages: the parts of the scenes drawn as flat shapes rather
- * than grown (nature.mjs) or built from plans (places.mjs).
+ * Mountains: the parts of the scenes drawn as flat shapes rather than grown
+ * (nature.mjs) or built from plans (places.mjs).
  *
  * A range is a ridge line — a few peaks shaped like real ones (concave
  * flanks, a sharp top) with fractal roughness on top — filled, then given a
  * lit face and a shadow face per peak, so it reads as rock in sunlight rather
  * than as a cut-out. Snow is the part of a range above a ragged line, shaded
- * by the same faces. A village is stepped up a slope the way Hewraman is
- * built. Beside them, two things of the sky: far birds and the aurora.
+ * by the same faces. Beside them, two things of the sky: far birds and the
+ * aurora.
  *
  * Every shape is built from numbers rounded by `n` and choices from the
  * piece's own seeded generator, like everything else in the generator.
  */
-import { between, blur, linear, n, poly, pt, radialAt, tint } from './kit.mjs';
+import { between, blur, linear, n, poly, pt, tint } from './kit.mjs';
 
 // ──────────────────────────────────────────────────────────────── noise
 
@@ -43,13 +43,6 @@ export function noise1d(rnd, { scale, octaves = 4 }) {
 }
 
 // ────────────────────────────────────────────────────────────── the sky
-
-/** Soft light: a radial glow fading to nothing. */
-export function glow(cv, cx, cy, r, colour, opacity = 1) {
-  const id = cv.id('glow');
-  cv.def(radialAt(id, [[0, colour, opacity], [0.35, colour, opacity * 0.45], [1, colour, 0]], cx, cy, r));
-  cv.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${id})"/>`);
-}
 
 /** Birds far off: a few soft V's. */
 export function birds(cv, rnd, { x, y, count, size, colour, spread = 120 }) {
@@ -272,53 +265,4 @@ export function heightAt(pts, x) {
     }
   }
   return pts[pts.length - 1][1];
-}
-
-// ──────────────────────────────────────────────────────────────── villages
-
-/**
- * A village stepped up a slope, Hewraman's way: rows of flat-roofed stone
- * houses, each row set back and up from the one below so its roofs are the
- * yards of the row above. `climb` is the way the rows rise: 1 up to the
- * right, -1 up to the left. Lit faces, shadowed sides, the beam-ends under
- * each roof, dark doors — and at night, windows lit warm.
- */
-export function village(cv, rnd, { x, y, w, rows = 5, house = 34, wall, wallLit, wallDark, roof, door = '#2a1d18', lights = null, light = -1, climb = 1, rise = 0.62, shrink = 0.1 }) {
-  const out = [];
-  const glowAt = [];
-  for (let r = rows - 1; r >= 0; r--) {
-    const rowY = y - r * house * rise;
-    const rowW = w * Math.max(0.2, 1 - r * shrink);
-    const rowX = x + climb * r * house * 0.7 + (climb < 0 ? w - rowW : 0) + between(rnd, -house, house) * 0.25;
-    let cx = rowX;
-    while (cx < rowX + rowW) {
-      const hw = house * between(rnd, 0.8, 1.6);
-      const hh = house * between(rnd, 0.55, 0.8);
-      const top = rowY - hh;
-      const sideW = hw * 0.2;
-      const deep = house * 0.5;
-      out.push(`<rect x="${n(cx)}" y="${n(top)}" width="${n(hw)}" height="${n(hh + deep)}" fill="${rnd() < 0.55 ? wall : wallLit}"/>`);
-      const sx = light < 0 ? cx + hw - sideW : cx;
-      out.push(`<rect x="${n(sx)}" y="${n(top)}" width="${n(sideW)}" height="${n(hh + deep)}" fill="${wallDark}"/>`);
-      // the flat roof, a lip of earth and timber, and the beam-ends under it
-      out.push(`<rect x="${n(cx - 1.5)}" y="${n(top - 3.5)}" width="${n(hw + 3)}" height="4.5" fill="${roof}"/>`);
-      const beams = Math.floor(hw / 7);
-      const ends = [];
-      for (let b = 1; b < beams; b++) ends.push(`M${pt([cx + b * 7, top + 1.5])} h1.6`);
-      if (ends.length) out.push(`<path d="${ends.join(' ')}" stroke="${door}" stroke-width="2" stroke-opacity="0.55"/>`);
-      const openings = Math.max(1, Math.round((hw - sideW) / (house * 0.5)));
-      for (let k = 0; k < openings; k++) {
-        const ox = cx + (light < 0 ? 0 : sideW) + ((hw - sideW) * (k + 0.5)) / openings - house * 0.06;
-        const isDoor = k === 0 && rnd() < 0.45;
-        const oh = isDoor ? hh * 0.52 : hh * 0.26;
-        const oy = isDoor ? rowY - oh : top + hh * 0.28;
-        const lit = lights && rnd() < 0.5;
-        out.push(`<rect x="${n(ox)}" y="${n(oy)}" width="${n(house * 0.13)}" height="${n(oh)}" fill="${lit ? lights : door}"/>`);
-        if (lit) glowAt.push([ox + house * 0.065, oy + oh / 2]);
-      }
-      cx += hw + between(rnd, -1, house * 0.12);
-    }
-  }
-  cv.add(out.join(''));
-  for (const [gx, gy] of glowAt) glow(cv, gx, gy, house * 0.6, lights, 0.32);
 }

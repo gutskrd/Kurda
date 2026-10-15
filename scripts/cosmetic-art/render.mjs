@@ -12,6 +12,11 @@
  * the end the frame is graded like film: glow where it is bright, colour
  * pushed toward the scene's mood, a vignette, and a fine seeded grain.
  *
+ * Some layers it paints itself rather than rasterising them: mountains and
+ * hills from a relief (`terrain`, here), and from marks.mjs ground cover plant
+ * by plant, a nebula, ink washed onto paper; crowns drawn flat it repaints
+ * leaf by leaf, and an effect lays the whole frame on canvas in oils.
+ *
  * Everything here is plain arithmetic on typed arrays — no randomness that
  * is not seeded, no library whose output could change under it but sharp's
  * SVG rasteriser, which the generator relied on already — so the same scene
@@ -21,16 +26,8 @@
  */
 import sharp from 'sharp';
 import { random } from './kit.mjs';
-
-const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
-
-export function frame(w, h) {
-  return { w, h, px: new Float32Array(w * h * 4) };
-}
-
-function clone(f) {
-  return { w: f.w, h: f.h, px: new Float32Array(f.px) };
-}
+import { carpet, impasto, leafy, nebula, wash } from './marks.mjs';
+import { blur, cells, clamp, clone, frame, luma, over, resize, rgb, screen, shrink, turbulence, valueNoise } from './pixels.mjs';
 
 /** An SVG (the whole canvas) as a premultiplied frame, rendered at 1/scale and brought back up. */
 export async function rasterise(svg, w, h, scale = 1, bleed = 0) {
@@ -56,146 +53,6 @@ export async function rasterise(svg, w, h, scale = 1, bleed = 0) {
   return small.w === w && small.h === h ? small : resize(small, w, h);
 }
 
-/** Bilinear resampling to w × h. */
-export function resize(src, w, h) {
-  const out = frame(w, h);
-  const sx = src.w / w;
-  const sy = src.h / h;
-  const s = src.px;
-  const o = out.px;
-  for (let y = 0; y < h; y++) {
-    const fy = clamp((y + 0.5) * sy - 0.5, 0, src.h - 1);
-    const y0 = Math.floor(fy);
-    const y1 = Math.min(y0 + 1, src.h - 1);
-    const ty = fy - y0;
-    for (let x = 0; x < w; x++) {
-      const fx = clamp((x + 0.5) * sx - 0.5, 0, src.w - 1);
-      const x0 = Math.floor(fx);
-      const x1 = Math.min(x0 + 1, src.w - 1);
-      const tx = fx - x0;
-      const a = (y0 * src.w + x0) * 4;
-      const b = (y0 * src.w + x1) * 4;
-      const c = (y1 * src.w + x0) * 4;
-      const d = (y1 * src.w + x1) * 4;
-      const k = (y * w + x) * 4;
-      for (let ch = 0; ch < 4; ch++) {
-        const top = s[a + ch] + (s[b + ch] - s[a + ch]) * tx;
-        const bot = s[c + ch] + (s[d + ch] - s[c + ch]) * tx;
-        o[k + ch] = top + (bot - top) * ty;
-      }
-    }
-  }
-  return out;
-}
-
-/** Averages f × f blocks. */
-function shrink(src, f) {
-  const w = Math.floor(src.w / f);
-  const h = Math.floor(src.h / f);
-  const out = frame(w, h);
-  const inv = 1 / (f * f);
-  for (let y = 0; y < h; y++) {
-    for (let x = 0; x < w; x++) {
-      const k = (y * w + x) * 4;
-      for (let dy = 0; dy < f; dy++) {
-        for (let dx = 0; dx < f; dx++) {
-          const s = ((y * f + dy) * src.w + x * f + dx) * 4;
-          out.px[k] += src.px[s];
-          out.px[k + 1] += src.px[s + 1];
-          out.px[k + 2] += src.px[s + 2];
-          out.px[k + 3] += src.px[s + 3];
-        }
-      }
-      out.px[k] *= inv;
-      out.px[k + 1] *= inv;
-      out.px[k + 2] *= inv;
-      out.px[k + 3] *= inv;
-    }
-  }
-  return out;
-}
-
-/** Radii of three box blurs that together come to a Gaussian of sigma. */
-function boxRadii(sigma) {
-  const n = 3;
-  const ideal = Math.sqrt((12 * sigma * sigma) / n + 1);
-  let wl = Math.floor(ideal);
-  if (wl % 2 === 0) wl -= 1;
-  const wu = wl + 2;
-  const m = Math.round((12 * sigma * sigma - n * wl * wl - 4 * n * wl - 3 * n) / (-4 * wl - 4));
-  const out = [];
-  for (let i = 0; i < n; i++) out.push(((i < m ? wl : wu) - 1) / 2);
-  return out;
-}
-
-function boxPass(src, dst, w, h, r, horizontal) {
-  const line = horizontal ? w : h;
-  const lines = horizontal ? h : w;
-  const step = horizontal ? 4 : w * 4;
-  const inv = 1 / (2 * r + 1);
-  for (let k = 0; k < lines; k++) {
-    const base = horizontal ? k * w * 4 : k * 4;
-    for (let c = 0; c < 4; c++) {
-      let sum = 0;
-      for (let j = -r; j <= r; j++) sum += src[base + clamp(j, 0, line - 1) * step + c];
-      for (let i = 0; i < line; i++) {
-        dst[base + i * step + c] = sum * inv;
-        sum += src[base + Math.min(i + r + 1, line - 1) * step + c] - src[base + Math.max(i - r, 0) * step + c];
-      }
-    }
-  }
-}
-
-function blurInPlace(f, sigma) {
-  if (sigma < 0.4) return f;
-  const tmp = new Float32Array(f.px.length);
-  for (const r of boxRadii(sigma)) {
-    if (r < 1) continue;
-    boxPass(f.px, tmp, f.w, f.h, r, true);
-    boxPass(tmp, f.px, f.w, f.h, r, false);
-  }
-  return f;
-}
-
-/** A Gaussian blur; wide ones are done small and brought back up, which looks the same and is far quicker. */
-export function blur(f, sigma) {
-  if (sigma < 0.4) return f;
-  const k = sigma >= 18 ? 4 : sigma >= 7 ? 2 : 1;
-  if (k === 1) return blurInPlace(f, sigma);
-  const small = blurInPlace(shrink(f, k), sigma / k);
-  const big = resize(small, f.w, f.h);
-  f.px.set(big.px);
-  return f;
-}
-
-/** Lays `src` over `dst`. */
-export function over(dst, src, opacity = 1) {
-  const d = dst.px;
-  const s = src.px;
-  for (let i = 0; i < d.length; i += 4) {
-    const a = s[i + 3] * opacity;
-    if (a <= 0) continue;
-    const keep = 1 - a;
-    d[i] = s[i] * opacity + d[i] * keep;
-    d[i + 1] = s[i + 1] * opacity + d[i + 1] * keep;
-    d[i + 2] = s[i + 2] * opacity + d[i + 2] * keep;
-    d[i + 3] = a + d[i + 3] * keep;
-  }
-}
-
-/** Adds light: `src` brightens `dst` the way light does, without darkening anything. */
-export function screen(dst, src, opacity = 1) {
-  const d = dst.px;
-  const s = src.px;
-  for (let i = 0; i < d.length; i += 4) {
-    for (let c = 0; c < 3; c++) {
-      const a = d[i + c];
-      const b = s[i + c] * opacity;
-      d[i + c] = a + b - a * b;
-    }
-  }
-}
-
 /** Washes a layer toward a colour, by its alpha — distance, in effect. */
 export function haze(f, [r, g, b], amount) {
   if (amount <= 0) return;
@@ -207,14 +64,6 @@ export function haze(f, [r, g, b], amount) {
     p[i + 2] += (b * a - p[i + 2]) * amount;
   }
 }
-
-/** '#rrggbb' as [0..1] floats, in the same space the frames are in. */
-export function rgb(hex) {
-  const h = hex.replace('#', '');
-  return [parseInt(h.slice(0, 2), 16) / 255, parseInt(h.slice(2, 4), 16) / 255, parseInt(h.slice(4, 6), 16) / 255];
-}
-
-const luma = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 
 /**
  * Light scattering: what is bright (above `threshold`) is smeared toward the
@@ -273,7 +122,7 @@ export function rays(f, { x, y, threshold = 0.55, strength = 0.8, decay = 0.965,
       out.px[o + 3] = 1;
     }
   }
-  blurInPlace(out, 0.8);
+  blur(out, 0.8);
   screen(f, resize(out, f.w, f.h));
 }
 
@@ -342,109 +191,6 @@ export function rimLight(layer, { x, y, colour, width = 3, strength = 1, soften 
 }
 
 // ──────────────────────────────────────────────────────────── rough edges
-
-const PERLIN_B = 0x100;
-const PERLIN_N = 0x1000;
-
-/**
- * The noise of SVG's feTurbulence (type fractalNoise, no stitching), from the
- * reference code in the Filter Effects specification: the same lattice, the
- * same gradients from the same seeded generator, so a seed draws the same
- * field here as it would in an SVG filter. Channel `k` of the four is
- * returned by `at(k, x, y)` in [0, 1].
- */
-function turbulence(seed, freq, octaves) {
-  const M = 2147483647;
-  const next = (s) => {
-    const r = 16807 * (s % 127773) - 2836 * Math.floor(s / 127773);
-    return r <= 0 ? r + M : r;
-  };
-  let s = Math.trunc(seed);
-  if (s <= 0) s = -(s % (M - 1)) + 1;
-  if (s > M - 1) s = M - 1;
-  const LEN = PERLIN_B + PERLIN_B + 2;
-  const lattice = new Int32Array(LEN);
-  const grad = new Float64Array(4 * LEN * 2);
-  for (let k = 0; k < 4; k++) {
-    for (let i = 0; i < PERLIN_B; i++) {
-      lattice[i] = i;
-      const g = (k * LEN + i) * 2;
-      for (let j = 0; j < 2; j++) {
-        s = next(s);
-        grad[g + j] = ((s % (PERLIN_B + PERLIN_B)) - PERLIN_B) / PERLIN_B;
-      }
-      const len = Math.sqrt(grad[g] * grad[g] + grad[g + 1] * grad[g + 1]);
-      grad[g] /= len;
-      grad[g + 1] /= len;
-    }
-  }
-  for (let i = PERLIN_B - 1; i > 0; i--) {
-    const k = lattice[i];
-    s = next(s);
-    const j = s % PERLIN_B;
-    lattice[i] = lattice[j];
-    lattice[j] = k;
-  }
-  for (let i = 0; i < PERLIN_B + 2; i++) {
-    lattice[PERLIN_B + i] = lattice[i];
-    for (let k = 0; k < 4; k++) {
-      grad[(k * LEN + PERLIN_B + i) * 2] = grad[(k * LEN + i) * 2];
-      grad[(k * LEN + PERLIN_B + i) * 2 + 1] = grad[(k * LEN + i) * 2 + 1];
-    }
-  }
-  const curve = (t) => t * t * (3 - 2 * t);
-  const noise2 = (k, vx, vy) => {
-    const tx = vx + PERLIN_N;
-    const ty = vy + PERLIN_N;
-    const ix = Math.trunc(tx);
-    const iy = Math.trunc(ty);
-    const rx0 = tx - ix;
-    const ry0 = ty - iy;
-    const rx1 = rx0 - 1;
-    const ry1 = ry0 - 1;
-    const bx0 = ix & 0xff;
-    const bx1 = (ix + 1) & 0xff;
-    const by0 = iy & 0xff;
-    const by1 = (iy + 1) & 0xff;
-    const i = lattice[bx0];
-    const j = lattice[bx1];
-    const base = k * LEN;
-    const q00 = (base + lattice[i + by0]) * 2;
-    const q10 = (base + lattice[j + by0]) * 2;
-    const q01 = (base + lattice[i + by1]) * 2;
-    const q11 = (base + lattice[j + by1]) * 2;
-    const sx = curve(rx0);
-    const sy = curve(ry0);
-    const u0 = rx0 * grad[q00] + ry0 * grad[q00 + 1];
-    const v0 = rx1 * grad[q10] + ry0 * grad[q10 + 1];
-    const a = u0 + sx * (v0 - u0);
-    const u1 = rx0 * grad[q01] + ry1 * grad[q01 + 1];
-    const v1 = rx1 * grad[q11] + ry1 * grad[q11 + 1];
-    const b = u1 + sx * (v1 - u1);
-    return a + sy * (b - a);
-  };
-  const [fx, fy] = Array.isArray(freq) ? freq : [freq, freq];
-  return {
-    /** One octave of channel k, unquantised, at (x, y) as given: roughly -0.7 to 0.7. */
-    plain(k, x, y) {
-      return noise2(k, x, y);
-    },
-    at(k, x, y) {
-      let sum = 0;
-      let vx = x * fx;
-      let vy = y * fy;
-      let ratio = 1;
-      for (let o = 0; o < octaves; o++) {
-        sum += noise2(k, vx, vy) / ratio;
-        vx *= 2;
-        vy *= 2;
-        ratio *= 2;
-      }
-      // as the filter stores it: a byte, then read back as a fraction
-      return Math.trunc(clamp((sum * 255 + 255) / 2, 0, 255) + 0.5) / 255;
-    },
-  };
-}
 
 /**
  * Rough edges: every pixel of the layer is taken from a little way off, in a
@@ -527,12 +273,14 @@ export function roughen(f, { scale = 8, freq = 0.08, seed = 1, octaves = 2 }) {
  * With `grassy` (how much the blades show) it is a hill under grass instead:
  * no ribs and no rock, only broad swells, and the colour streaked with blades
  * `blade` pixels long leaning with `wind`; given `dry`, the grass dries to it
- * in drifts across the slope (`dryness`, how far).
+ * in drifts across the slope (`dryness`, how far). With `rocky` it is stony
+ * ground: boulders `stone` pixels across where they are nearest, and rubble
+ * between them, each lit on the side toward the light.
  *
  * `ridge` is the skyline, [x, y] left to right; `peaks` are the summits as
  * [x, y, half-width]. Returns a premultiplied frame, the sky clear.
  */
-export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1, grassy = 0, blade = 4, wind = 0.3, dry = null, dryness = 0.5 }) {
+export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1, grassy = 0, blade = 4, wind = 0.3, dry = null, dryness = 0.5, rocky = 0, stone = 40 }) {
   const f = frame(w, h);
   const skyline = new Float32Array(w);
   for (let x = 0, j = 0; x < w; x++) {
@@ -579,6 +327,8 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
     return ws.map((v) => v / total);
   };
   // the relief: ribs fanning from the summits, swells under them; and how far down a gully each pixel is
+  const boulder = cells(1, seed + 11);
+  const gravel = cells(1, seed + 29);
   const top = Math.max(0, Math.floor(Math.min(...skyline)) - 1);
   const rows = h - top;
   const H = new Float32Array(w * rows);
@@ -595,6 +345,24 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
         const swell = fbm(1, x / 260, y / 64, 3);
         R[i] = 0.5 + swell;
         H[i] = swell * 1.6 + fbm(3, x / 80, y / 22, 2) * 0.3;
+        continue;
+      }
+      if (rocky) {
+        // stony ground, laid out flat and seen in perspective: rounded boulders `stone` pixels across where they
+        // are nearest, smaller and closer-packed toward the far edge, each a dome meeting the next in a crease,
+        // and rubble between them
+        const span = Math.max(1, h - skyline[x]);
+        const sc = 0.25 + 0.75 * clamp((y - skyline[x]) / span, 0, 1);
+        const gx = (x - w / 2) / (stone * sc);
+        const gz = (span / (0.75 * 0.45 * stone)) * Math.log(sc);
+        const wob = fbm(2, gx * 0.7, gz * 0.7, 2) * 0.9;
+        // (each stone its own height — some hardly out of the ground — its face rough, with earth between them)
+        const dome = (c) => Math.sqrt(Math.max(0, 1 - (c.r * (1.2 + 0.5 * c.id)) ** 2)) * (0.15 + 0.85 * c.id ** 0.7);
+        const big = dome(boulder(gx + wob, gz - wob));
+        const small = dome(gravel(gx * 3.1 + wob, gz * 3.1));
+        const grit = fbm(3, gx * 9, gz * 9, 2) * 0.08;
+        R[i] = 0.2 + big * 0.8;
+        H[i] = (big * 1.2 + small * 0.3 + grit) * sc * stone * 0.02 * rocky + fbm(1, x / 300, y / 90, 2) * 0.5;
         continue;
       }
       // the ridges wander as they come down, and branch: the angle off each summit, bent by broad noise
@@ -658,7 +426,7 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
       const shade = ambient + (1 - ambient) * lambert;
       const rib = R[i];
       // down in the gullies (or the hollows) it is darker; and the rock itself (or the grass) is not all one colour
-      const deep = (grassy ? 0.8 + 0.2 * clamp(rib, 0, 1) : 0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
+      const deep = (grassy ? 0.8 + 0.2 * clamp(rib, 0, 1) : rocky ? 0.5 + 0.5 * clamp(rib, 0, 1) : 0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
       let tr = lr;
       let tg = lg;
       let tb = lb;
@@ -711,34 +479,6 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
     }
   }
   return f;
-}
-
-/** Seeded value noise on a grid of `cell` pixels, smoothly interpolated, in [-1, 1]. */
-function valueNoise(w, h, cell, rnd) {
-  const gw = Math.ceil(w / cell) + 2;
-  const gh = Math.ceil(h / cell) + 2;
-  const grid = new Float32Array(gw * gh);
-  for (let i = 0; i < grid.length; i++) grid[i] = rnd() * 2 - 1;
-  const out = new Float32Array(w * h);
-  for (let y = 0; y < h; y++) {
-    const fy = y / cell;
-    const y0 = Math.floor(fy);
-    let ty = fy - y0;
-    ty = ty * ty * (3 - 2 * ty);
-    for (let x = 0; x < w; x++) {
-      const fx = x / cell;
-      const x0 = Math.floor(fx);
-      let tx = fx - x0;
-      tx = tx * tx * (3 - 2 * tx);
-      const a = grid[y0 * gw + x0];
-      const b = grid[y0 * gw + x0 + 1];
-      const c = grid[(y0 + 1) * gw + x0];
-      const d = grid[(y0 + 1) * gw + x0 + 1];
-      const top = a + (b - a) * tx;
-      out[y * w + x] = top + (c + (d - c) * tx - top) * ty;
-    }
-  }
-  return out;
 }
 
 /**
@@ -920,6 +660,9 @@ export function reflect(f, { y, deep, near = 0.55, far = 0.9, ripple = 3, wave =
       water.px[o + 3] = 1;
     }
   }
+  // (the water's first row carried up over the shore a little way, so softening it draws nothing dark in from there)
+  const pad = Math.min(y0, Math.ceil(soften * 3) + 1);
+  for (let yy = y0 - pad; yy < y0; yy++) water.px.copyWithin(yy * w * 4, y0 * w * 4, (y0 + 1) * w * 4);
   blur(water, soften);
   for (let yy = y0; yy < h; yy++) {
     for (let x = 0; x < w; x++) {
@@ -1099,21 +842,28 @@ export function toRGB8(f, { grain = 0.012, clumps = 0, seed = 1 }) {
   return out;
 }
 
-/** A layer drawn in parts ({ svg, rough? }), the rough ones roughened, laid one over the next. */
+/**
+ * A layer drawn in parts ({ svg, rough?, leafy? }), laid one over the next: the rough ones roughened, the leafy
+ * ones (crowns) repainted leaf by leaf (marks.mjs `leafy`).
+ */
 async function assemble(parts, w, h, scale, bleed) {
   const layer = frame(w, h);
   for (const part of parts) {
-    const drawn = await rasterise(part.svg, w, h, scale, bleed);
-    over(layer, part.rough ? roughen(drawn, part.rough) : drawn);
+    let drawn = await rasterise(part.svg, w, h, scale, bleed);
+    if (part.rough) drawn = roughen(drawn, part.rough);
+    if (part.leafy) leafy(drawn, part.leafy);
+    over(layer, drawn);
   }
   return layer;
 }
 
 /**
- * Renders a scene: `steps` is a list of layers ({ svg or parts or terrain,
- * blur, haze, falloff, rim, opacity, blend, scale, bleed }) and effects ({ effect: 'rays' | 'reflect' |
- * 'paint' | 'texture' | 'bloom' | 'grade', ...options }) applied in order,
- * then `finish` (bloom, grade, vignette, grain).
+ * Renders a scene: `steps` is a list of layers ({ svg or parts, or one the
+ * compositor paints itself — terrain, carpet, nebula, wash — and blur, haze,
+ * falloff, rim, opacity, blend, scale, bleed }) and effects ({ effect: 'rays' |
+ * 'reflect' | 'paint' | 'texture' | 'bloom' | 'diffuse' | 'streaks' | 'grade' |
+ * 'impasto', ...options }) applied in order, then `finish` (bloom, diffuse,
+ * streaks, grade, aberration, vignette, grain).
  */
 export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = null }) {
   const f = frame(w, h);
@@ -1128,11 +878,13 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
       else if (step.effect === 'diffuse') diffuse(f, step);
       else if (step.effect === 'streaks') streaks(f, step);
       else if (step.effect === 'grade') grade(f, step);
+      else if (step.effect === 'impasto') impasto(f, step);
       else throw new Error(`unknown effect ${step.effect}`);
       if (log) log(`${step.effect}: ${Date.now() - t0}ms`);
       continue;
     }
-    const layer = step.terrain ? terrain(w, h, step.terrain) : step.parts ? await assemble(step.parts, w, h, step.scale ?? 1, step.bleed ?? 0) : await rasterise(step.svg, w, h, step.scale ?? 1, step.bleed ?? 0);
+    const painted = step.terrain ? terrain(w, h, step.terrain) : step.carpet ? carpet(w, h, step.carpet) : step.nebula ? nebula(w, h, step.nebula) : step.wash ? wash(w, h, step.wash) : null;
+    const layer = painted ?? (step.parts ? await assemble(step.parts, w, h, step.scale ?? 1, step.bleed ?? 0) : await rasterise(step.svg, w, h, step.scale ?? 1, step.bleed ?? 0));
     const t1 = log ? Date.now() : 0;
     if (step.blur) blur(layer, step.blur);
     if (step.haze) haze(layer, rgb(step.haze[0]), step.haze[1]);
@@ -1140,7 +892,7 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
     if (step.rim) rimLight(layer, step.rim);
     if (step.blend === 'screen') screen(f, layer, step.opacity ?? 1);
     else over(f, layer, step.opacity ?? 1);
-    if (log) log(step.terrain ? `terrain: ${t1 - t0}ms, rest ${Date.now() - t1}ms` : `layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
+    if (log) log(painted ? `${Object.keys(step).find((k) => ['terrain', 'carpet', 'nebula', 'wash'].includes(k))}: ${t1 - t0}ms, rest ${Date.now() - t1}ms` : `layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
   }
   const t2 = log ? Date.now() : 0;
   if (finish.bloom) bloom(f, finish.bloom);

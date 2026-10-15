@@ -1,8 +1,8 @@
 /**
- * Kurdish places, drawn as they stand against the sky: the palace of Ishak
- * Pasha under Agirî, the citadel of Hewlêr on its mound, the Delal bridge at
- * Zaxo, Amêdî on its cliff-top, Akre lit up the mountainside on Newroz night,
- * a Hewraman village stepped up its slope — and the summer camp's black tents.
+ * Kurdish places, drawn as they stand against the sky: the citadel of Hewlêr
+ * on its mound, the Delal bridge at Zaxo, Amêdî on its cliff-top, Akre lit up
+ * the mountainside on Newroz night, a Hewraman village stepped up its slope —
+ * and the summer camp's black tents.
  *
  * Each takes where it stands and how big it is, and colours for its shadowed
  * and its lit faces, so the same drawing serves a silhouette at sunset and a
@@ -11,63 +11,6 @@
 import { between, n, pt } from './kit.mjs';
 
 const rect = (x, y, w, h, fill) => `<rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" fill="${fill}"/>`;
-
-/** Crenellations along the top of a wall from x0 to x1 at y. */
-function crenels(x0, x1, y, size, fill) {
-  const out = [];
-  for (let x = x0; x < x1 - size * 0.5; x += size * 2) out.push(rect(x, y - size, size, size + 1, fill));
-  return out.join('');
-}
-
-/** A dome on a drum: centre x, the drum's foot at y, radius r. */
-function dome(x, y, r, fill, lit) {
-  return (
-    rect(x - r * 0.92, y - r * 0.55, r * 1.84, r * 0.56, fill) +
-    `<path d="M${pt([x - r, y - r * 0.5])} C${pt([x - r, y - r * 1.55])} ${pt([x + r, y - r * 1.55])} ${pt([x + r, y - r * 0.5])} Z" fill="${fill}"/>` +
-    (lit ? `<path d="M${pt([x - r * 0.98, y - r * 0.55])} C${pt([x - r * 0.95, y - r * 1.35])} ${pt([x - r * 0.2, y - r * 1.4])} ${pt([x, y - r * 1.3])} C${pt([x - r * 0.45, y - r * 1.2])} ${pt([x - r * 0.7, y - r * 0.9])} ${pt([x - r * 0.6, y - r * 0.55])} Z" fill="${lit}"/>` : '') +
-    `<path d="M${pt([x, y - r * 1.3])} L${pt([x, y - r * 1.62])}" stroke="${fill}" stroke-width="${n(r * 0.08)}"/>`
-  );
-}
-
-/**
- * The palace of Ishak Pasha, below Agirî: a rocky spur, walls, the great
- * gate, the domed mosque with its striped minaret, the harem's halls.
- * `w` is its width; it stands on (x, y).
- */
-export function ishakPasha({ x, y, w, fill, lit = null, rock = fill, snow = null }) {
-  const k = w / 400;
-  const X = (u) => x + (u - 200) * k;
-  const Y = (v) => y - v * k;
-  const out = [];
-  // the spur of rock it is built on
-  out.push(`<path d="M${pt([X(-40), Y(0)])} C${pt([X(10), Y(24)])} ${pt([X(60), Y(34)])} ${pt([X(120), Y(38)])} L${pt([X(330), Y(40)])} C${pt([X(380), Y(30)])} ${pt([X(420), Y(14)])} ${pt([X(450), Y(0)])} Z" fill="${rock}"/>`);
-  // the long outer wall, battlemented
-  out.push(rect(X(0), Y(70), 400 * k, 34 * k, fill) + crenels(X(0), X(400), Y(70), 6 * k, fill));
-  // the great gate: a tall block with its pointed arch
-  out.push(rect(X(18), Y(128), 46 * k, 92 * k, fill));
-  out.push(crenels(X(18), X(64), Y(128), 5 * k, fill));
-  if (lit) out.push(`<path d="M${pt([X(30), Y(40)])} L${pt([X(30), Y(92)])} Q${pt([X(41), Y(110)])} ${pt([X(52), Y(92)])} L${pt([X(52), Y(40)])} Z" fill="${lit}" fill-opacity="0.45"/>`);
-  // the main halls
-  out.push(rect(X(64), Y(108), 120 * k, 72 * k, fill) + crenels(X(64), X(184), Y(108), 5 * k, fill));
-  // the mosque's dome
-  out.push(dome(X(230), Y(110), 34 * k, fill, lit));
-  out.push(rect(X(184), Y(112), 92 * k, 76 * k, fill));
-  // the minaret, slender and banded
-  out.push(rect(X(282), Y(212), 12 * k, 180 * k, fill));
-  out.push(rect(X(278), Y(176), 20 * k, 6 * k, fill));
-  out.push(`<path d="M${pt([X(282), Y(212)])} L${pt([X(288), Y(236)])} L${pt([X(294), Y(212)])} Z" fill="${fill}"/>`);
-  if (lit) for (let v = 40; v < 200; v += 22) out.push(rect(X(282), Y(v + 6), 4 * k, 8 * k, lit));
-  // the harem's block and the little ribbed dome of the tomb
-  out.push(rect(X(298), Y(96), 90 * k, 62 * k, fill) + crenels(X(298), X(388), Y(96), 5 * k, fill));
-  out.push(`<path d="M${pt([X(330), Y(96)])} L${pt([X(343), Y(124)])} L${pt([X(356), Y(96)])} Z" fill="${fill}"/>`);
-  // the arched windows of the halls, in rows
-  if (lit) {
-    for (let u = 76; u < 180; u += 16) out.push(rect(X(u), Y(84), 5 * k, 12 * k, lit));
-    for (let u = 306; u < 380; u += 14) out.push(rect(X(u), Y(76), 4 * k, 10 * k, lit));
-  }
-  if (snow) out.push(rect(X(0), Y(72), 400 * k, 2.2 * k, snow) + rect(X(64), Y(110), 120 * k, 2.4 * k, snow) + rect(X(298), Y(98), 90 * k, 2.4 * k, snow));
-  return out.join('');
-}
 
 /**
  * The citadel of Hewlêr: a broad mound with steep sides, its rim walled by

@@ -35,6 +35,9 @@ const KINDS = {
   poplar: { trunk: 0.12, width: 0.03, depth: 3, kids: [2, 2], spread: [0.08, 0.22], ratio: [0.78, 0.9], thin: 0.72, clumps: 4, reach: 0.04, size: [0.016, 0.03], up: 0.9, limit: 0.5 },
   // almond and Judas tree: open, airy, the blossom on bare twigs
   blossom: { trunk: 0.22, width: 0.045, depth: 6, kids: [2, 3], spread: [0.32, 0.62], ratio: [0.64, 0.8], thin: 0.62, clumps: 3, reach: 0.045, size: [0.014, 0.028], up: 0.4, limit: 1.25, leafDepth: 2, lead: true },
+  // a tree of a crowded wood: a thin trunk that forks unevenly, often going on as one, its boughs reaching up for
+  // the light every which way
+  wild: { trunk: 0.3, width: 0.035, depth: 6, kids: [1, 3], spread: [0.25, 0.6], ratio: [0.6, 0.78], thin: 0.68, clumps: 3, reach: 0.05, size: [0.018, 0.034], up: 0.35, limit: 1.25, leafDepth: 2 },
   // a tall thin trunk with short boughs near the top, for misty woods
   slender: { trunk: 0.66, width: 0.02, depth: 4, kids: [2, 3], spread: [0.2, 0.42], ratio: [0.56, 0.7], thin: 0.62, clumps: 3, reach: 0.05, size: [0.02, 0.04], up: 0.6, limit: 1.0, leafDepth: 2 },
 };
@@ -76,9 +79,10 @@ function limb(x0, y0, w0, x1, y1, w1, bend) {
  * `leafColour` may be an array, picked from at random per clump (blossom,
  * lit and shaded leaves). Detail follows size: a tree a few pixels high is
  * not grown down to twigs it could never show. `clump` scales the clumps of
- * leaf or blossom (and as many more of them, smaller, fill the same crown).
+ * leaf or blossom (and as many more of them, smaller, fill the same crown);
+ * `girth` the trunk's thickness.
  */
-export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean = 0, leafiness = 1, needles = false, twig = 4, litColour = null, light = [-1, -1], volume = null, clump = 1 }) {
+export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean = 0, leafiness = 1, needles = false, twig = 4, litColour = null, light = [-1, -1], volume = null, clump = 1, girth = 1 }) {
   const K = KINDS[kind];
   const limbs = [];
   const colours = Array.isArray(leafColour) ? [...leafColour] : [leafColour];
@@ -116,7 +120,7 @@ export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean =
     }
   };
   const trunkLen = height * K.trunk;
-  const trunkW = height * K.width;
+  const trunkW = height * K.width * girth;
   const meanRatio = (K.ratio[0] + K.ratio[1]) / 2;
   // stop splitting once a twig would be shorter than `twig` pixels (more for a tree that will be blurred)
   const depthFor = Math.max(2, Math.min(K.depth, Math.floor(Math.log(twig / Math.max(twig + 0.1, trunkLen)) / Math.log(meanRatio))));
@@ -325,11 +329,15 @@ export function tallGrass(rnd, { x0 = -20, x1 = 1300, y0, y1, top = null, count,
 
 /**
  * Reeds: tall stems bowing with the wind, each topped with a feathery plume.
- * The plumes get their own colour, so against the light they can glow.
+ * The plumes get their own colour, so against the light they can glow; with
+ * `fluffy`, the plume's strands are hung with their spikelets too (`fluff`),
+ * so it reads as the soft full head a reed has when it seeds.
  */
-export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume, wind = 0.25, plumeSize = 1 }) {
+export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume, wind = 0.25, plumeSize = 1, fluffy = false }) {
   const stems = [];
+  const blades = [];
   const plumes = [];
+  const fluff = [];
   for (let i = 0; i < count; i++) {
     const x = between(rnd, x0, x1);
     const h = height * between(rnd, 0.55, 1.1);
@@ -337,14 +345,17 @@ export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume,
     const tipX = x + bow;
     const tipY = y - h;
     stems.push(`M${pt([x, y + 10])} Q${pt([x + bow * 0.2, y - h * 0.6])} ${pt([tipX, tipY])}`);
-    // a leaf or two off the stem
+    // a leaf or two off the stem: a long blade, broad where it leaves the stem, arching over to a fine point
     for (let k = 0; k < 2; k++) {
       const t = between(rnd, 0.25, 0.6);
       const lx = x + bow * t * t;
       const ly = y - h * t;
       const s = rnd() < 0.5 ? -1 : 1;
       const len = h * between(rnd, 0.18, 0.3);
-      stems.push(`M${pt([lx, ly])} Q${pt([lx + s * len * 0.6, ly - len * 0.3])} ${pt([lx + s * len, ly + len * 0.2])}`);
+      const bw = Math.max(1.2, height * 0.006) * 1.6;
+      const tip = [lx + s * len, ly + len * 0.2];
+      const mid = [lx + s * len * 0.6, ly - len * 0.3];
+      blades.push(`M${pt([lx, ly - bw])} Q${pt([mid[0], mid[1] - bw * 0.8])} ${pt(tip)} Q${pt([mid[0], mid[1] + bw * 0.8])} ${pt([lx, ly + bw])} Z`);
     }
     // the plume: a nodding panicle, its spine curving over and down, hung both sides with fine soft strands
     const ps = h * 0.2 * plumeSize * between(rnd, 0.8, 1.2);
@@ -359,14 +370,30 @@ export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume,
         const ex = sx + side * l * 0.45 + dir * l * 0.35;
         const ey = sy + l * between(rnd, 0.6, 0.95);
         strands.push(`M${pt([sx, sy])} Q${pt([sx + side * l * 0.55, sy + l * 0.1])} ${pt([ex, ey])}`);
+        if (fluffy) {
+          // the spikelets along it, each a small soft grain turned the way the strand runs
+          const run = Math.hypot(ex - sx, ey - sy) || 1;
+          const ux = (ex - sx) / run;
+          const uy = (ey - sy) / run;
+          const ang = n((Math.atan2(uy, ux) * 180) / Math.PI);
+          const rx = ps * 0.04;
+          const ry = ps * 0.013;
+          for (let q = 0; q < 4; q++) {
+            const u = 0.35 + q * 0.2 + between(rnd, -0.05, 0.05);
+            const qx = sx + (ex - sx) * u + between(rnd, -1, 1) * ry;
+            const qy = sy + (ey - sy) * u + between(rnd, -1, 1) * ry;
+            fluff.push(`M${pt([qx - rx * ux, qy - rx * uy])} a${n(rx)},${n(ry)} ${ang} 1,0 ${n(2 * rx * ux)},${n(2 * rx * uy)} a${n(rx)},${n(ry)} ${ang} 1,0 ${n(-2 * rx * ux)},${n(-2 * rx * uy)} Z`);
+          }
+        }
       }
     }
     plumes.push(strands.join(' '));
   }
   const width = Math.max(1.6, height * 0.006);
   return {
-    stems: `<path d="${stems.join(' ')}" fill="none" stroke="${stem}" stroke-width="${n(width)}" stroke-linecap="round"/>`,
+    stems: `<path d="${stems.join(' ')}" fill="none" stroke="${stem}" stroke-width="${n(width)}" stroke-linecap="round"/><path d="${blades.join(' ')}" fill="${stem}"/>`,
     plumes: `<path d="${plumes.join(' ')}" fill="none" stroke="${plume}" stroke-width="${n(width * 0.55)}" stroke-linecap="round" stroke-opacity="0.75"/>`,
+    fluff: fluff.length ? `<path d="${fluff.join(' ')}" fill="${plume}"/>` : '',
   };
 }
 
@@ -453,17 +480,6 @@ export function flower(kind, x, y, s, { petal, centre = '#ffd36a', dark = null, 
     out.push(`<g fill="${petal}">${petals.join('')}</g><circle cx="${n(x)}" cy="${n(y)}" r="${n(s * 0.12)}" fill="${centre}"/>`);
   }
   return out.join('');
-}
-
-/** A field of flowers between y0 and y1, bigger toward the viewer. */
-export function flowerField(rnd, { kind, x0 = -20, x1 = 1300, y0, y1, count, size, colours, centre, dark, stem }) {
-  const items = [];
-  for (let i = 0; i < count; i++) {
-    const t = rnd() ** 1.5;
-    items.push([between(rnd, x0, x1), y0 + (y1 - y0) * t, size * (0.25 + 0.75 * t) * between(rnd, 0.8, 1.2)]);
-  }
-  items.sort((a, b) => a[1] - b[1]);
-  return items.map(([x, y, s]) => flower(kind, x, y, s, { petal: colours[Math.floor(rnd() * colours.length) % colours.length], centre, dark, stem }, rnd)).join('');
 }
 
 // ───────────────────────────────────────────────────────── air and light
@@ -643,40 +659,38 @@ export function orb(cv, { x, y, r, core, edge, halo, haloR = r * 8, haloOpacity 
   cv.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="url(#${d})"/>`);
 }
 
-/** A moon with its seas mottled in, by noise clipped to the disc. */
-export function moon(cv, { x, y, r, core = '#f4f1e6', edge = '#d6d2c4', sea = '#a9a596', halo = '#cfdcff', haloR = r * 7, haloOpacity = 0.45, seed = 7 }) {
-  orb(cv, { x, y, r, core, edge, halo, haloR, haloOpacity });
-  const c = cv.id('mc');
-  cv.def(`<clipPath id="${c}"><circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}"/></clipPath>`);
-  const inner = new SubCanvas(cv);
-  noise(inner, { x: x - r, y: y - r, w: r * 2, h: r * 2, freq: [3.2 / r], octaves: 3, seed, colour: sea, contrast: 3.2, bias: -1.45, opacity: 0.8 });
-  cv.add(`<g clip-path="url(#${c})">${inner.out.join('')}</g>`);
-}
-
-/** Draws into a list, its defs into the parent canvas, so a group can be clipped or moved as one. */
-export class SubCanvas {
-  constructor(cv) {
-    this.cv = cv;
-    this.out = [];
-    this.w = cv.w;
-    this.h = cv.h;
-  }
-  id(p) {
-    return this.cv.id(p);
-  }
-  def(m) {
-    this.cv.def(m);
-  }
-  add(m) {
-    this.out.push(m);
-  }
-}
-
 /** A soft glow: a radial gradient fading to nothing. */
 export function glow(cv, { x, y, r, colour, opacity = 1 }) {
   const id = cv.id('gw');
   cv.def(radialAt(id, [[0, colour, opacity], [0.3, colour, opacity * 0.5], [1, colour, 0]], x, y, r));
   cv.add(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(r)}" fill="url(#${id})"/>`);
+}
+
+/**
+ * Sunbeams: shafts of light falling from (x, y) through haze, `count` of
+ * them fanned about `angle` (radians, 0 straight down, positive toward the
+ * left) across `spread`, each `length` long, of its own width and strength,
+ * brightest where it starts and fading as it goes. For a layer laid in as
+ * light (a screen layer), softened.
+ */
+export function beams(cv, rnd, { x, y, count, angle = 0, spread = 0.8, length = 900, width = [10, 60], colour, opacity = 0.5 }) {
+  const id = cv.id('beam');
+  cv.def(radialAt(id, [[0, colour, opacity], [0.45, colour, opacity * 0.55], [1, colour, 0]], x, y, length));
+  const shafts = [];
+  for (let i = 0; i < count; i++) {
+    const a = angle + (rnd() - 0.5) * spread;
+    const w = between(rnd, width[0], width[1]);
+    const len = length * between(rnd, 0.6, 1);
+    const dx = -Math.sin(a);
+    const dy = Math.cos(a);
+    // a wedge, narrow where the light comes in and widening as it falls
+    const p0 = [x - dy * w * 0.15, y + dx * w * 0.15];
+    const p1 = [x + dy * w * 0.15, y - dx * w * 0.15];
+    const p2 = [x + dx * len + dy * w * 0.5, y + dy * len - dx * w * 0.5];
+    const p3 = [x + dx * len - dy * w * 0.5, y + dy * len + dx * w * 0.5];
+    shafts.push(`<path d="M${pt(p0)} L${pt(p1)} L${pt(p2)} L${pt(p3)} Z" fill-opacity="${n(between(rnd, 0.35, 1))}"/>`);
+  }
+  cv.add(`<g fill="url(#${id})">${shafts.join('')}</g>`);
 }
 
 /** A sky gradient over the whole canvas. */
