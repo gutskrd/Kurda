@@ -9,19 +9,22 @@
  * ── what it draws ─────────────────────────────────────────────────────────
  *
  * Backgrounds (1280×720 WebP, cosmetic-art/backgrounds.mjs): Kurdish places
- * and moments painted as scenes — Agirî and the palace of Ishak Pasha at a
- * winter dawn, Sîpan over the lake, the Delal bridge at Zaxo with the sun in
- * its arch, Hewlêr's citadel, Amêdî on its cliff, the Newroz torches climbing
- * the mountain at Akre, Hewraman's stepped houses, the black tents on the
- * summer pastures, Judas trees, almond orchards and mountain tulips in
- * flower. Each is laid up from layers: trees grown branch by branch, grass,
- * flowers, fog and cloud (cosmetic-art/nature.mjs), ranges and villages
- * (landscape.mjs), the landmarks (places.mjs), deer, lambs and a govend
- * (figures.mjs). The compositor (render.mjs) puts the layers together the way
- * a camera sees a place — softened and hazed by distance, light breaking
- * through the gaps in shafts, water holding what stands over it, a glow
- * round what is bright, a film's grade and grain. And kilims, woven cell by
- * cell on a grid and lying in soft light (kilim.mjs).
+ * and moments painted as scenes, with no people in them — Agirî and the
+ * palace of Ishak Pasha at a winter dawn, Sîpan over the lake, the Delal
+ * bridge at Zaxo with the sun in its arch, Hewlêr's citadel, Amêdî on its
+ * cliff, Newroz night at Akre with the torches climbing the mountain and the
+ * bonfire in front, Hewraman's stepped houses under the moon, the black tents
+ * on the summer pastures, ridge behind ridge in the dawn mist, Judas trees,
+ * almond orchards, tulips and Newroz's narcissus in flower. Each is laid up
+ * from layers: trees grown branch by branch, grass, flowers, fog and cloud,
+ * a bonfire (cosmetic-art/nature.mjs), ridges and villages (landscape.mjs),
+ * the landmarks (places.mjs), the deer and the lambs (figures.mjs). The
+ * compositor (render.mjs) paints the mountains from a relief — ribs and
+ * gullies lit by the sun, snow lying in them — and puts the layers together
+ * the way a camera sees a place: softened and hazed by distance, light
+ * breaking through the gaps in shafts, water holding what stands over it, a
+ * glow round what is bright, a film's grade and grain. And kilims, woven cell
+ * by cell on a grid and lying in soft light (kilim.mjs).
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the
  * way the mascot is drawn, soft and glossy with its big-eyed face. Stickers

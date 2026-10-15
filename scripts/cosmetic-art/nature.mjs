@@ -329,6 +329,27 @@ export function flower(kind, x, y, s, { petal, centre = '#ffd36a', dark = null, 
     out.push(`<path d="M${pt([cx - s * 0.44, y - s * 0.62])} C${pt([cx - s * 0.52, y - s * 0.05])} ${pt([cx - s * 0.3, y + s * 0.38])} ${pt([cx, y + s * 0.4])} C${pt([cx + s * 0.3, y + s * 0.38])} ${pt([cx + s * 0.52, y - s * 0.05])} ${pt([cx + s * 0.44, y - s * 0.62])} C${pt([cx + s * 0.3, y - s * 0.4])} ${pt([cx + s * 0.12, y - s * 0.38])} ${pt([cx, y - s * 0.22])} C${pt([cx - s * 0.12, y - s * 0.38])} ${pt([cx - s * 0.3, y - s * 0.4])} ${pt([cx - s * 0.44, y - s * 0.62])} Z" fill="${petal}"/>`);
     // the light along one petal
     out.push(`<path d="M${pt([cx - s * 0.36, y - s * 0.42])} C${pt([cx - s * 0.4, y - s * 0.05])} ${pt([cx - s * 0.26, y + s * 0.22])} ${pt([cx - s * 0.1, y + s * 0.3])}" stroke="#ffffff" stroke-opacity="0.35" stroke-width="${n(Math.max(0.8, s * 0.08))}" stroke-linecap="round" fill="none"/>`);
+  } else if (kind === 'narcissus') {
+    // nêrgiz, Newroz's own flower: six white petals round a small gold cup with an orange rim,
+    // the head turned a little toward us on a stem with long thin leaves
+    const lean = between(rnd, -0.15, 0.15) * s;
+    const cx = x + lean;
+    for (const side of [-1, 1]) {
+      const reach = s * between(rnd, 0.25, 0.5);
+      out.push(`<path d="M${pt([x, y + s * 2.8])} Q${pt([x + side * reach, y + s * 1.6])} ${pt([x + side * reach * 1.3, y + s * between(rnd, 0.6, 1.2)])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.12))}" stroke-linecap="round" fill="none"/>`);
+    }
+    out.push(`<path d="M${pt([x, y + s * 2.8])} Q${pt([x + lean * 0.5, y + s * 1.2])} ${pt([cx, y + s * 0.15])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.09))}" fill="none"/>`);
+    const tilt = between(rnd, 0.6, 0.9);
+    const turn = between(rnd, 0, Math.PI / 3);
+    const petals = [];
+    for (let k = 0; k < 6; k++) {
+      const a = turn + (k / 6) * Math.PI * 2;
+      const px = cx + Math.cos(a) * s * 0.36;
+      const py = y + Math.sin(a) * s * 0.36 * tilt;
+      petals.push(`<ellipse cx="${n(px)}" cy="${n(py)}" rx="${n(s * 0.36)}" ry="${n(s * 0.17 * (0.7 + tilt * 0.3))}" transform="rotate(${n((Math.atan2(Math.sin(a) * tilt, Math.cos(a)) * 180) / Math.PI)} ${n(px)} ${n(py)})"/>`);
+    }
+    out.push(`<g fill="${petal}">${petals.join('')}</g>`);
+    out.push(`<ellipse cx="${n(cx)}" cy="${n(y)}" rx="${n(s * 0.19)}" ry="${n(s * 0.17 * tilt)}" fill="${centre}" stroke="${dark ?? '#e8801a'}" stroke-width="${n(Math.max(0.6, s * 0.05))}"/>`);
   } else if (kind === 'daisy' || kind === 'cosmos') {
     const count = kind === 'daisy' ? 12 : 8;
     const tilt = between(rnd, 0.45, 0.9);

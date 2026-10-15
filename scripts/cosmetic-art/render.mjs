@@ -416,6 +416,10 @@ function turbulence(seed, freq, octaves) {
   };
   const [fx, fy] = Array.isArray(freq) ? freq : [freq, freq];
   return {
+    /** One octave of channel k, unquantised, at (x, y) as given: roughly -0.7 to 0.7. */
+    plain(k, x, y) {
+      return noise2(k, x, y);
+    },
     at(k, x, y) {
       let sum = 0;
       let vx = x * fx;
@@ -495,6 +499,169 @@ export function roughen(f, { scale = 8, freq = 0.08, seed = 1, octaves = 2 }) {
     }
   }
   return out;
+}
+
+// ──────────────────────────────────────────────────────────── mountains
+
+/**
+ * A mountain range painted from a relief, as a landscape painter models one,
+ * rather than filled flat: under the skyline every pixel has a height in a
+ * relief of ribs and gullies that fan down from the summits (ridged noise
+ * along the angle from each summit, so they run with the fall of the slope)
+ * over broader swells; its slope there, tilted by which flank of which peak
+ * it is on, is lit from `light` ([x, y, z]: right, down, toward us) — rock
+ * between `shadow` and `lit`, darker down in the gullies. Snow lies above
+ * `snowline`, and below it lingers in the gullies before it gives out; it
+ * slides off the steepest rock. Toward the foot the colour goes to `foot`.
+ *
+ * `ridge` is the skyline, [x, y] left to right; `peaks` are the summits as
+ * [x, y, half-width]. Returns a premultiplied frame, the sky clear.
+ */
+export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1 }) {
+  const f = frame(w, h);
+  const skyline = new Float32Array(w);
+  for (let x = 0, j = 0; x < w; x++) {
+    while (j < ridge.length - 2 && ridge[j + 1][0] < x) j++;
+    const [x0, y0] = ridge[j];
+    const [x1, y1] = ridge[j + 1];
+    skyline[x] = y0 + ((y1 - y0) * (x - x0)) / Math.max(1e-6, x1 - x0);
+  }
+  const noise = turbulence(seed, 1, 1);
+  // four channels of noise; more fields than that are told apart by where in the noise they are read
+  const fbm = (k, x, y, octaves) => {
+    let sum = 0;
+    let amp = 1;
+    let norm = 0;
+    x += k * 37.1;
+    y += k * 11.7;
+    for (let o = 0; o < octaves; o++) {
+      sum += noise.plain(k % 4, x, y) * amp;
+      norm += amp;
+      x *= 2.02;
+      y *= 2.02;
+      amp *= 0.5;
+    }
+    return sum / norm;
+  };
+  const ridged = (x, y, octaves) => {
+    let sum = 0;
+    let amp = 0.5;
+    let norm = 0;
+    for (let o = 0; o < octaves; o++) {
+      const v = 1 - Math.min(1, Math.abs(noise.plain(2, x, y) * 1.7));
+      sum += v ** 1.4 * amp;
+      norm += amp;
+      x *= 2.03;
+      y *= 2.03;
+      amp *= 0.5;
+    }
+    return sum / norm;
+  };
+  // each column belongs to the summits near it, a valley between two to both: weights that fall away with distance
+  const weights = (x) => {
+    const ws = peaks.map((pk) => Math.exp(-(((x - pk[0]) / pk[2]) ** 2) * 2.2));
+    const total = ws.reduce((a, b) => a + b, 0) || 1;
+    return ws.map((v) => v / total);
+  };
+  // the relief: ribs fanning from the summits, swells under them; and how far down a gully each pixel is
+  const top = Math.max(0, Math.floor(Math.min(...skyline)) - 1);
+  const rows = h - top;
+  const H = new Float32Array(w * rows);
+  const R = new Float32Array(w * rows);
+  const flanks = new Float32Array(w);
+  for (let x = 0; x < w; x++) {
+    const ws = weights(x);
+    flanks[x] = peaks.reduce((acc, pk, k) => acc + ws[k] * clamp((x - pk[0]) / pk[2], -1, 1), 0);
+    const near = peaks.map((pk, k) => [pk, ws[k]]).filter(([, wk]) => wk > 0.02);
+    for (let y = Math.max(top, Math.floor(skyline[x]) - 1); y < h; y++) {
+      // the ridges wander as they come down, and branch: the angle off each summit, bent by broad noise
+      const bend = fbm(1, x / 210, y / 210, 3) * 0.55;
+      let rib = 0;
+      let crowd = 0;
+      let weight = 0;
+      for (const [pk, wk] of near) {
+        const dx = x - pk[0];
+        const dy = Math.max(1, y - pk[1] + 14);
+        const r = Math.hypot(dx, dy);
+        rib += ridged((Math.atan2(dx, dy) + bend) * ribs + 7.3 + pk[0] * 0.01, r / 170, 3) * wk;
+        crowd += Math.min(1, r / 110) * wk;
+        weight += wk;
+      }
+      rib /= weight;
+      crowd /= weight;
+      // crags: small sharp-edged lumps over the ribs, the rock breaking up
+      const crag = 1 - Math.abs(fbm(3, x / 11, y / 15, 3) * 2.2);
+      const rock = crag * 0.2 + fbm(4, x / 46, y / 64, 2) * 0.12;
+      const i = (y - top) * w + x;
+      // near a summit the ribs would crowd together like a comb: there the crags take over
+      R[i] = rib;
+      H[i] = rib * (0.4 + 0.4 * crowd) + rock * (1.5 - 0.5 * crowd);
+    }
+  }
+  const L = (() => {
+    const len = Math.hypot(...light);
+    return light.map((v) => v / len);
+  })();
+  const [lr, lg, lb] = rgb(lit);
+  const [sr, sg, sb] = rgb(shadow);
+  const footRGB = foot ? rgb(foot) : null;
+  const [wr, wg, wb] = rgb(snowLit);
+  const [qr, qg, qb] = rgb(snowShadow);
+  const p = f.px;
+  for (let x = 0; x < w; x++) {
+    const flank = flanks[x];
+    const sky = skyline[x];
+    for (let y = Math.max(0, Math.floor(sky)); y < h; y++) {
+      const a = clamp(y + 1 - sky, 0, 1);
+      if (a <= 0) continue;
+      const i = (y - top) * w + x;
+      const hx = H[i + (x < w - 1 ? 1 : 0)] - H[i - (x > 0 ? 1 : 0)];
+      const hy = y < h - 1 ? H[i + w] - H[i] : 0;
+      // the slope's normal: the relief's, tipped toward the flank's own side and back toward the sky
+      let nx = -hx * 7 * relief + flank * 1.15;
+      let ny = -hy * 7 * relief - 0.4;
+      let nz = 1;
+      const nl = Math.hypot(nx, ny, nz);
+      nx /= nl;
+      ny /= nl;
+      nz /= nl;
+      const lambert = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
+      const shade = ambient + (1 - ambient) * lambert;
+      const rib = R[i];
+      // down in the gullies it is darker; and the rock itself is not all one colour
+      const deep = (0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
+      let r = (sr + (lr - sr) * shade) * deep;
+      let g = (sg + (lg - sg) * shade) * deep;
+      let b = (sb + (lb - sb) * shade) * deep;
+      if (snowline !== null) {
+        const steep = Math.min(1, Math.hypot(hx, hy) * 6);
+        // the sun takes the snow higher up the flank it falls on; the other keeps it lower
+        const line = snowline + flank * Math.sign(L[0] || 1) * -26;
+        const below = Math.max(0, y - line);
+        // the snowfield's edge frays: tongues down the gullies, rock showing through on the ribs
+        const lie = (line - y) / 40 + (0.48 - rib) * 3.6 * Math.min(1, below / 30) - below / 260 + fbm(6, x / 34, y / 26, 3) * 1.5;
+        const amount = clamp(lie * 1.6, 0, 1) * (1 - steep * 0.5);
+        if (amount > 0) {
+          const ws = Math.min(1, shade * 1.1);
+          r += (qr + (wr - qr) * ws - r) * amount;
+          g += (qg + (wg - qg) * ws - g) * amount;
+          b += (qb + (wb - qb) * ws - b) * amount;
+        }
+      }
+      if (footRGB && footFrom !== null && y > footFrom) {
+        const t = clamp((y - footFrom) / Math.max(1, h - footFrom), 0, 1) * 0.85;
+        r += (footRGB[0] - r) * t;
+        g += (footRGB[1] - g) * t;
+        b += (footRGB[2] - b) * t;
+      }
+      const j = (y * w + x) * 4;
+      p[j] = clamp(r, 0, 1) * a;
+      p[j + 1] = clamp(g, 0, 1) * a;
+      p[j + 2] = clamp(b, 0, 1) * a;
+      p[j + 3] = a;
+    }
+  }
+  return f;
 }
 
 /** Seeded value noise on a grid of `cell` pixels, smoothly interpolated, in [-1, 1]. */
@@ -795,7 +962,7 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
       if (log) log(`${step.effect}: ${Date.now() - t0}ms`);
       continue;
     }
-    const layer = step.parts ? await assemble(step.parts, w, h, step.scale ?? 1) : await rasterise(step.svg, w, h, step.scale ?? 1);
+    const layer = step.terrain ? terrain(w, h, step.terrain) : step.parts ? await assemble(step.parts, w, h, step.scale ?? 1) : await rasterise(step.svg, w, h, step.scale ?? 1);
     const t1 = log ? Date.now() : 0;
     if (step.blur) blur(layer, step.blur);
     if (step.haze) haze(layer, rgb(step.haze[0]), step.haze[1]);
@@ -803,7 +970,7 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
     if (step.rim) rimLight(layer, step.rim);
     if (step.blend === 'screen') screen(f, layer, step.opacity ?? 1);
     else over(f, layer, step.opacity ?? 1);
-    if (log) log(`layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
+    if (log) log(step.terrain ? `terrain: ${t1 - t0}ms, rest ${Date.now() - t1}ms` : `layer ${((step.svg ?? step.parts.map((part) => part.svg).join('')).length / 1024).toFixed(0)}KB svg${step.parts ? ` in ${step.parts.length} parts` : ''}: raster ${t1 - t0}ms, rest ${Date.now() - t1}ms`);
   }
   const t2 = log ? Date.now() : 0;
   if (finish.bloom) bloom(f, finish.bloom);

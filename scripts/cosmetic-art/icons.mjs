@@ -9,7 +9,8 @@
  *
  * `Ask` is Hevalo itself — the mascot's own picture, read from
  * web/public/mascot-deer.png, so the deer on a profile is exactly the deer in
- * the app.
+ * the app — looking out over a little hill in flower that its neck goes down
+ * behind.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -238,12 +239,40 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // Hevalo itself
+    // Hevalo itself, looking out over a little hill in flower: the mascot's picture ends at the neck, and the
+    // hill is what the neck goes down behind, so nothing is ever seen cut off
     draw(cv) {
       aura(cv, '#ffcf8a', { opacity: 0.5, y: 280 });
       const png = fs.readFileSync(path.join(ROOT, 'web', 'public', 'mascot-deer.png')).toString('base64');
       cv.add(`<image href="data:image/png;base64,${png}" x="14" y="30" width="484" height="453.75"/>`);
-      twinkles(cv, [[60, 60, 22], [462, 60, 16], [470, 410, 14]]);
+      blob(cv, 'M-12,530 L-12,476 C70,458 168,450 256,452 C344,454 442,458 524,478 L524,530 Z', { base: '#6cc04a', light: '#b8ee80', dark: '#2f8a34', depth: 16, shadow: 0.3, rim: 0.4 });
+      // grass along the brow of the hill, but not over the chin
+      const blades = [];
+      for (let i = 0; i < 46; i++) {
+        const x = -6 + i * 11.6 + ((i * 37) % 7) - 3;
+        if (x > 150 && x < 360) continue;
+        const top = x < 256 ? 476 - ((x + 12) / 268) * 24 : 452 + ((x - 256) / 268) * 26;
+        const h = 12 + ((i * 53) % 11);
+        const lean = ((i * 29) % 9) - 4;
+        blades.push(`M${n(x - 3)},${n(top + 6)} Q${n(x + lean * 0.4)},${n(top - h * 0.5)} ${n(x + lean)},${n(top - h)} Q${n(x + lean * 0.3 + 1.5)},${n(top - h * 0.4)} ${n(x + 3)},${n(top + 6)} Z`);
+      }
+      cv.add(`<path d="${blades.join(' ')}" fill="#4caa3c"/>`);
+      // flowers on it: a red tulip, daisies, a narcissus
+      const daisy = (cx, cy, r, petal, heart) => {
+        const out = [];
+        for (let k = 0; k < 8; k++) {
+          const a = (k / 8) * Math.PI * 2;
+          out.push(`<circle cx="${n(cx + Math.cos(a) * r * 0.62)}" cy="${n(cy + Math.sin(a) * r * 0.62)}" r="${n(r * 0.42)}" fill="${petal}"/>`);
+        }
+        out.push(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r * 0.42)}" fill="${heart}"/><circle cx="${n(cx - r * 0.14)}" cy="${n(cy - r * 0.14)}" r="${n(r * 0.14)}" fill="#ffffff" fill-opacity="0.7"/>`);
+        return out.join('');
+      };
+      cv.add(`<path d="M88,494 Q86,478 90,464" stroke="#2f8a34" stroke-width="4" fill="none" stroke-linecap="round"/>`);
+      blob(cv, 'M74,460 C72,444 80,432 90,428 C100,432 108,444 106,460 C104,470 76,470 74,460 Z', { base: '#ef3b3b', light: '#ff9a8a', dark: '#b81e2a', depth: 6, shadow: 0.3, rim: 0.5, edge: 0.4 });
+      cv.add(daisy(150, 466, 13, '#ffffff', '#ffc832'));
+      cv.add(daisy(372, 468, 12, '#ffffff', '#ffc832'));
+      cv.add(daisy(440, 480, 15, '#fff6d6', '#ff9a1a'));
+      twinkles(cv, [[60, 60, 22], [462, 60, 16], [470, 400, 14]]);
     },
   },
   {

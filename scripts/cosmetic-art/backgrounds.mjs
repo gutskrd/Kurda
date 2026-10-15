@@ -12,11 +12,11 @@
  * too — a piece is redrawn here, never renamed.
  */
 import { Canvas, between, doc, n } from './kit.mjs';
-import { deer, govend, lamb } from './figures.mjs';
-import { aurora, birds, heightAt, range, village } from './landscape.mjs';
+import { deer, lamb } from './figures.mjs';
+import { aurora, birds, heightAt, range, ridge, village } from './landscape.mjs';
 import { kilim } from './kilim.mjs';
-import { akreTorches, amedi, citadel, delal, hewraman, hillTown, ishakPasha, tent } from './places.mjs';
-import { beams, branch, clouds, embers, fire, flowerField, glow, grass, motes, moon, noise, orb, petals, pine, reeds, silhouette, sky, starfield, tree, wash } from './nature.mjs';
+import { akreTorches, amedi, citadel, delal, hewraman, ishakPasha, tent } from './places.mjs';
+import { beams, branch, clouds, embers, fire, flower, flowerField, glow, grass, motes, moon, noise, orb, petals, pine, reeds, silhouette, sky, starfield, tree, wash } from './nature.mjs';
 
 export const W = 1280;
 export const H = 720;
@@ -60,6 +60,22 @@ export class Scene {
     flush();
     this.steps.push({ ...opts, parts });
     return this;
+  }
+  /**
+   * A range of mountains painted from a relief by the compositor (render.mjs
+   * `terrain`), laid in like a layer (`opts`: blur, haze, rim, falloff).
+   * `range` gives its skyline — `base`, `peaks` of { x, h, s or l and r, k },
+   * `rough` — and its paint. Returns the skyline, for what stands on it.
+   */
+  terrain(opts, { base, peaks, rough = 0.18, scale = 90, ...paint }) {
+    const pts = ridge(this.rnd, { w: W, base, peaks, rough, scale, step: 4 });
+    const summits = peaks.map((pk) => {
+      let top = [pk.x, base - pk.h];
+      for (const [px, py] of pts) if (Math.abs(px - pk.x) < 60 && py < top[1]) top = [px, py];
+      return [top[0], top[1], Math.max(pk.s ?? 0, pk.l ?? 0, pk.r ?? 0)];
+    });
+    this.steps.push({ ...opts, terrain: { ridge: pts.map(([px, py]) => [Math.round(px * 100) / 100, Math.round(py * 100) / 100]), peaks: summits, seed: this.seed(), ...paint } });
+    return pts;
   }
   effect(effect, opts) {
     this.steps.push({ effect, ...opts });
@@ -172,9 +188,15 @@ export const SCENES = {
       });
       s.layer({ rim: { x: 820, y: 250, colour: '#ffd6f6', width: 2.5, strength: 1 } }, (cv) => {
         cv.add('<path d="M480,566 C500,540 560,534 610,548 C630,556 628,568 600,572 Z" fill="#3a1f4a"/><path d="M790,574 C800,556 850,552 880,564 C886,572 870,578 840,578 Z" fill="#3a1f4a"/>');
-        cv.add(deer({ x: 700, y: 552, size: 100, colour: '#21102e', pose: 'alert', facing: -1 }));
         cv.add(grass(rnd, { x0: -30, x1: 1310, y: 566, count: 900, height: 34, colours: ['#2a1438', '#3a1d4c', '#4c2a60'], wind: 0.1, width: 2.4 }));
         cv.add(flowerField(rnd, { kind: 'wild', y0: 566, y1: 720, count: 150, size: 10, colours: ['#ffb3e6', '#f08ad0', '#ffffff'], centre: '#ffe08a' }));
+      });
+      // brushwork over the wood and the clearing, before Hevalo steps into it, sharp
+      s.effect('texture', { amount: 0.09, cells: [60, 18, 6], seed: s.seed() });
+      s.effect('paint', { radius: 4 });
+      s.layer({ rim: { x: 820, y: 250, colour: '#ffd6f6', width: 2.5, strength: 1 } }, (cv) => {
+        cv.add(deer({ x: 700, y: 556, size: 104, colour: '#21102e', pose: 'alert', facing: -1 }));
+        cv.add(grass(rnd, { x0: 560, x1: 840, y: 562, count: 170, height: 18, colours: ['#2a1438', '#3a1d4c'], wind: 0.1, width: 2 }));
       });
       s.layer({ blur: 7 }, (cv) => {
         cv.add('<path d="M-10,-10 L64,-10 C74,240 86,500 104,740 L-10,740 Z" fill="#12061c"/><path d="M1216,-10 L1290,-10 L1290,740 L1176,740 C1194,500 1206,240 1216,-10 Z" fill="#12061c"/>');
@@ -183,8 +205,6 @@ export const SCENES = {
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
         cv.add(motes(rnd, { x0: 300, x1: 1200, y0: 120, y1: 560, count: 190, size: 2, colours: ['#ffe6fa', '#ffc6ee', '#ffffff'] }));
       });
-      s.effect('texture', { amount: 0.09, cells: [60, 18, 6], seed: s.seed() });
-      s.effect('paint', { radius: 4 });
       return s.done({
         bloom: { threshold: 0.64, strength: 0.62, radius: 34, tint: '#ffc8f0' },
         grade: { lift: [0.07, 0.03, 0.1], gain: [1, 0.92, 1.02], gamma: [1, 0.96, 1.04], saturation: 1.05, contrast: 0.22, shadows: ['#2a0a3a', 0.6] },
@@ -242,34 +262,59 @@ export const SCENES = {
   mij: {
     ku: 'Mij',
     en: 'Mist',
-    // a spruce wood lost in fog, the sun a white glow through it, daisies at its edge
+    // dawn over the Zagros: ridge behind ridge going back into the mist that lies in the valleys, oaks along
+    // their crests, the sun a pale disc through it, birds crossing
     scene(rnd) {
       const s = new Scene(rnd);
-      const sun = [640, 300];
+      const sun = [930, 220];
       s.layer({}, (cv) => {
-        sky(cv, [[0, '#c8d0dc'], [0.5, '#eceff4'], [1, '#dde2ea']]);
-        glow(cv, { x: sun[0], y: sun[1], r: 560, colour: '#ffffff', opacity: 1 });
+        sky(cv, [[0, '#9fb0c8'], [0.45, '#e0dcdc'], [0.75, '#f4e4d4'], [1, '#f0dccc']]);
+        glow(cv, { x: sun[0], y: sun[1], r: 520, colour: '#fff4e0', opacity: 0.9 });
+        cv.add(`<circle cx="${sun[0]}" cy="${sun[1]}" r="34" fill="#fffaf0" fill-opacity="0.9"/>`);
       });
-      const ranks = [[470, 220, 32, 0.9, 3], [500, 300, 20, 0.78, 2.2], [530, 380, 12, 0.6, 1.4], [570, 470, 7, 0.4, 0.7]];
-      for (const [y, h, count, hz, bl] of ranks) {
-        s.layer({ blur: bl, haze: ['#e6eaf0', hz] }, (cv) => {
-          const trees = [];
-          for (let i = 0; i < count; i++) trees.push(pine(rnd, { x: between(rnd, -40, 1320), y: y + between(rnd, -8, 8), height: h * between(rnd, 0.75, 1.2), colour: '#1e2430' }));
-          rough(cv, trees.join('') + `<rect x="-10" y="${y - 4}" width="1300" height="${H - y + 8}" fill="#1e2430"/>`, { scale: 4, freq: 0.1, seed: s.seed() });
+      // the ridges, far to near: each darker and sharper than the one behind, mist pooled in the valley before it
+      const ridges = [
+        { base: 330, peaks: [{ x: 160, h: 70, s: 300 }, { x: 640, h: 90, s: 320 }, { x: 1100, h: 60, s: 280 }], colour: '#b8bccb', blur: 2.4, trees: 0 },
+        { base: 390, peaks: [{ x: 360, h: 90, s: 320 }, { x: 900, h: 70, s: 300 }], colour: '#9ea4b8', blur: 1.8, trees: 260 },
+        { base: 450, peaks: [{ x: 120, h: 100, s: 300 }, { x: 760, h: 80, s: 360 }, { x: 1240, h: 110, s: 300 }], colour: '#7e8698', blur: 1.2, trees: 300 },
+        { base: 520, peaks: [{ x: 460, h: 110, s: 360 }, { x: 1060, h: 90, s: 320 }], colour: '#5c6476', blur: 0.7, trees: 320 },
+        { base: 610, peaks: [{ x: 180, h: 130, s: 380 }, { x: 980, h: 120, s: 420 }], colour: '#363c4a', blur: 0.3, trees: 340 },
+      ];
+      for (const [i, r] of ridges.entries()) {
+        s.layer({ blur: r.blur }, (cv) => {
+          const pts = range(cv, rnd, { base: r.base, peaks: r.peaks, rough: 0.12, scale: 70, fill: r.colour, shade: r.colour, shadeOpacity: 0, gullies: 0, spurs: false });
+          if (r.trees) {
+            // oaks along the crest, small with distance
+            const crowns = [];
+            for (let k = 0; k < r.trees; k++) {
+              const x = between(rnd, -20, 1300);
+              const h = (4 + i * 2.6) * between(rnd, 0.6, 1.4);
+              // most on the crest, some a little down the slope in front of it
+              const y = heightAt(pts, x) + 2 + rnd() ** 2 * h * 3;
+              crowns.push(`<ellipse cx="${n(x)}" cy="${n(y - h * 0.5)}" rx="${n(h * 0.6)}" ry="${n(h * 0.5)}"/>`);
+            }
+            rough(cv, `<g fill="${r.colour}">${crowns.join('')}</g>`, { scale: 2 + i * 0.8, freq: 0.2, seed: s.seed() });
+          }
+        });
+        // mist lying in the valley in front of this ridge
+        s.layer({ scale: 2, blur: 4 }, (cv) => {
+          noise(cv, { y: r.base - 40, h: 120, freq: [0.0035, 0.03], seed: s.seed(), colour: i < 3 ? '#f2ece8' : '#e8e8ee', contrast: 2.4, bias: -0.7, opacity: 0.85 - i * 0.08, fade: [[0, 0], [0.5, 1], [1, 0]] });
         });
       }
-      s.effect('rays', { x: sun[0], y: sun[1], threshold: 0.72, strength: 1.5, decay: 0.976, density: 0.95, colour: '#ffffff' });
+      s.effect('rays', { x: sun[0], y: sun[1], threshold: 0.8, strength: 1, decay: 0.975, density: 0.9, colour: '#fff4e0' });
       s.layer({}, (cv) => {
-        wash(cv, { y0: 560, y1: 720, colour: '#7f8a9a', from: 0, to: 1 });
-        cv.add(grass(rnd, { x0: -30, x1: 1310, y: 640, count: 700, height: 32, colours: ['#6c7686', '#7c8696', '#8c96a6'], wind: 0.1, width: 2 }));
-        cv.add(flowerField(rnd, { kind: 'daisy', y0: 600, y1: 720, count: 380, size: 17, colours: ['#ffffff', '#f4f2ff', '#e6e2f8'], centre: '#f2e6a0', stem: '#5f6a7a' }));
+        birds(cv, rnd, { x: 640, y: 170, count: 6, size: 7, colour: '#4a5060', spread: 110 });
       });
-      s.layer({ blur: 5 }, (cv) => {
-        cv.add(flowerField(rnd, { kind: 'daisy', y0: 690, y1: 760, count: 40, size: 44, colours: ['#ffffff', '#eeeaf8'], centre: '#f2e6a0', stem: '#59647a' }));
+      // the near crest: grass and an oak against the light, out of focus
+      s.layer({ blur: 2.5, rim: { x: sun[0], y: sun[1], colour: '#fff2dc', width: 3, strength: 0.8, reach: 1600 } }, (cv) => {
+        cv.add('<path d="M-20,690 C200,672 420,668 640,676 C860,684 1060,678 1300,668 L1300,740 L-20,740 Z" fill="#1e222c"/>');
+        cv.add(grass(rnd, { x0: -30, x1: 1310, y: 690, count: 420, height: 34, colours: ['#1e222c', '#262a36'], wind: 0.15, width: 2.6 }));
+        const t = tree(rnd, { x: 120, y: 694, height: 380, kind: 'oak', wood: '#1a1d26', leafColour: '#1e222c', light: [1, -1], leafiness: 0.7 });
+        rough(cv, t.wood + t.leaves, { scale: 8, freq: 0.06, seed: s.seed() });
       });
       return s.done({
-        bloom: { threshold: 0.75, strength: 0.5, radius: 34 },
-        grade: { lift: [0.04, 0.04, 0.06], gain: [0.98, 0.99, 1.02], saturation: 0.7, contrast: 0.12, shadows: ['#2a3040', 0.3], highlights: ['#fff8f0', 0.2] },
+        bloom: { threshold: 0.78, strength: 0.45, radius: 34, tint: '#fff0dc' },
+        grade: { lift: [0.03, 0.03, 0.05], gain: [1.02, 1, 0.98], saturation: 0.85, contrast: 0.14, shadows: ['#2a3040', 0.3], highlights: ['#fff4e8', 0.2] },
         vignette: { strength: 0.25, colour: '#3a4250' },
         grain: 0.014,
       });
@@ -286,9 +331,7 @@ export const SCENES = {
         sky(cv, [[0, '#0d1838'], [0.45, '#22346a'], [0.8, '#4a5f9a'], [1, '#6a7cb4']]);
         cv.add(starfield(rnd, { y0: 0, y1: 300, count: 220, bright: 4 }));
       });
-      s.layer({ blur: 2, haze: ['#6274ac', 0.62] }, (cv) => {
-        range(cv, rnd, { base: 400, peaks: [{ x: 260, h: 210, s: 280 }, { x: 760, h: 250, s: 300 }, { x: 1200, h: 200, s: 260 }], fill: '#2c3a6a', shade: '#121a38', shadeOpacity: 0.45, snow: 250, snowLit: '#c8d4f4', snowShade: '#8a9ad0', light: 1 });
-      });
+      s.terrain({ blur: 1.6, haze: ['#6274ac', 0.5] }, { base: 400, peaks: [{ x: 260, h: 210, s: 280 }, { x: 760, h: 250, s: 300 }, { x: 1200, h: 200, s: 260 }], lit: '#5a6aa2', shadow: '#141c42', snowline: 262, snowLit: '#d0dcf8', snowShadow: '#6e7eb8', foot: '#34447a', footFrom: 340, light: [0.7, -0.5, 0.5] });
       s.layer({ scale: 2, blur: 4 }, (cv) => {
         noise(cv, { y: 330, h: 170, freq: [0.003, 0.02], seed: s.seed(), colour: '#8a9ad0', contrast: 2.6, bias: -0.9, opacity: 0.8, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
@@ -331,24 +374,8 @@ export const SCENES = {
         glow(cv, { x: sun[0], y: sun[1], r: 700, colour: '#ffe2c4', opacity: 0.8 });
         noise(cv, { y: 60, h: 200, freq: [0.0025, 0.016], seed: s.seed(), colour: '#fff0e6', contrast: 2.2, bias: -1, opacity: 0.45, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
-      s.layer({ blur: 0.6, haze: ['#c9b4c8', 0.12] }, (cv) => {
-        range(cv, rnd, {
-          base: 470,
-          peaks: [{ x: 800, h: 330, l: 400, r: 460, k: 1.25 }, { x: 410, h: 178, s: 170, k: 1.1 }],
-          rough: 0.05,
-          scale: 70,
-          fill: '#6f7aa0',
-          foot: '#9aa2bf',
-          shade: '#2e3462',
-          shadeOpacity: 0.5,
-          snow: 300,
-          snowLit: '#fff0e4',
-          snowShade: '#d8c4d6',
-          light: 1,
-          haze: '#e9dce4',
-          hazeOpacity: 0.75,
-        });
-      });
+      // Agirî and Little Agirî, the dawn pink on their eastern snow, the western faces still blue
+      s.terrain({ blur: 0.6, haze: ['#c9b4c8', 0.1] }, { base: 470, peaks: [{ x: 800, h: 330, l: 400, r: 460, k: 1.25 }, { x: 410, h: 178, s: 170, k: 1.1 }], rough: 0.05, scale: 70, lit: '#d8b4ae', shadow: '#363a68', snowline: 300, snowLit: '#fff0e6', snowShadow: '#b4aed0', foot: '#c4bed4', footFrom: 400, light: [0.75, -0.42, 0.55] });
       s.layer({ scale: 2, blur: 3 }, (cv) => {
         noise(cv, { y: 410, h: 120, freq: [0.003, 0.03], seed: s.seed(), colour: '#f6eef2', contrast: 2.8, bias: -0.9, opacity: 0.85, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
@@ -377,7 +404,7 @@ export const SCENES = {
   'gola-sin': {
     ku: 'Gola Şîn',
     en: 'Blue lake',
-    // Sîpan over the lake at first light, mist on the water, a fisherman going out
+    // Sîpan over the lake at first light, mist on the water, the early sun laid across it in a path of sparks
     scene(rnd) {
       const s = new Scene(rnd);
       s.layer({}, (cv) => {
@@ -388,22 +415,28 @@ export const SCENES = {
       s.layer({ blur: 1.2, haze: ['#cfdced', 0.5] }, (cv) => {
         range(cv, rnd, { base: 452, peaks: [{ x: 120, h: 70, s: 240 }, { x: 1180, h: 90, s: 260 }], fill: '#7d93ba', shade: '#4a5f8f', shadeOpacity: 0.25 });
       });
-      s.layer({ blur: 0.4, haze: ['#d6e2f0', 0.18] }, (cv) => {
-        range(cv, rnd, { base: 452, peaks: [{ x: 700, h: 250, l: 420, r: 470, k: 1.2 }], rough: 0.06, fill: '#5f77a6', foot: '#9eb2d2', shade: '#2e3f70', shadeOpacity: 0.45, snow: 300, snowLit: '#ffffff', snowShade: '#d6e2f2', light: -1, haze: '#e6eef7', hazeOpacity: 0.6 });
-        cv.add('<rect x="-10" y="446" width="1300" height="8" fill="#6f84ac"/>');
-      });
+      // Sîpan: a broad old volcano, snow down its gullies, the morning on its western faces
+      s.terrain({ blur: 0.4, haze: ['#d6e2f0', 0.16] }, { base: 452, peaks: [{ x: 700, h: 250, l: 420, r: 470, k: 1.2 }], rough: 0.06, lit: '#c4b8ac', shadow: '#34466e', snowline: 300, snowLit: '#ffffff', snowShadow: '#bccbe6', foot: '#a8bad8', footFrom: 392, light: [-0.75, -0.45, 0.55] });
+      s.layer({ blur: 0.4 }, (cv) => cv.add('<rect x="-10" y="446" width="1300" height="8" fill="#6f84ac"/>'));
       s.effect('reflect', { y: 452, deep: '#24477a', near: 0.42, far: 0.92, ripple: 1.6, wave: 0.16, soften: 1.2, seed: s.seed() });
       s.layer({ scale: 2, blur: 3 }, (cv) => {
         noise(cv, { y: 430, h: 90, freq: [0.003, 0.04], seed: s.seed(), colour: '#f4f8fc', contrast: 2.6, bias: -0.85, opacity: 0.85, fade: [[0, 0], [0.45, 1], [1, 0]] });
       });
-      // the fisherman's boat, and its reflection below it
+      // the low sun's path over the water, sparks of it on every ripple, and gulls going out
+      s.layer({ blur: 0.6, blend: 'screen' }, (cv) => {
+        const sparks = [];
+        for (let i = 0; i < 420; i++) {
+          const t = rnd() ** 1.4;
+          const y = 458 + t * 262;
+          const x = 262 + (rnd() + rnd() - 1) * (16 + t * 130);
+          const w = between(rnd, 2, 7) * (0.5 + t);
+          sparks.push(`<rect x="${n(x - w / 2)}" y="${n(y)}" width="${n(w)}" height="${n(Math.max(0.8, w * 0.18))}" fill-opacity="${n(between(rnd, 0.35, 1) * (1 - t * 0.5))}"/>`);
+        }
+        cv.add(`<g fill="#fff6e4">${sparks.join('')}</g>`);
+      });
       s.layer({}, (cv) => {
-        const bx = 560;
-        const by = 548;
-        cv.add(`<g opacity="0.45" transform="translate(0 ${by * 2}) scale(1 -1)"><path d="M${bx - 62},${by - 6} C${bx - 40},${by + 8} ${bx + 40},${by + 8} ${bx + 70},${by - 10} L${bx + 58},${by - 2} Z" fill="#14233f"/><rect x="${bx - 6}" y="${by - 40}" width="10" height="34" fill="#14233f"/></g>`);
-        cv.add(`<path d="M${bx - 62},${by - 6} C${bx - 40},${by + 8} ${bx + 40},${by + 8} ${bx + 70},${by - 10} L${bx + 58},${by - 2} C${bx + 20},${by + 2} ${bx - 30},${by + 2} ${bx - 62},${by - 6} Z" fill="#14233f"/>`);
-        cv.add(`<path d="M${bx - 6},${by - 4} L${bx - 4},${by - 30} C${bx - 4},${by - 38} ${bx + 6},${by - 38} ${bx + 6},${by - 30} L${bx + 8},${by - 4} Z" fill="#14233f"/><circle cx="${bx + 1}" cy="${by - 42}" r="6" fill="#14233f"/><path d="M${bx + 6},${by - 26} L${bx + 60},${by - 52}" stroke="#14233f" stroke-width="2.5"/>`);
         birds(cv, rnd, { x: 940, y: 200, count: 5, size: 9, colour: '#40557a' });
+        birds(cv, rnd, { x: 640, y: 400, count: 3, size: 6, colour: '#5a6e92', spread: 60 });
       });
       s.layer({ blur: 5 }, (cv) => {
         const r = reeds(rnd, { x0: 1040, x1: 1320, y: 770, count: 22, height: 360, stem: '#18263e', plume: '#24344e', wind: -0.15 });
@@ -433,8 +466,8 @@ export const SCENES = {
         aurora(cv, rnd, { y: 250, amp: 80, height: 240, colours: ['#3cf0a0', '#46c8ff', '#c06cff'], opacity: 0.9 });
       });
       let windows = '';
+      const pts = s.terrain({ blur: 0.9 }, { base: 470, peaks: [{ x: 200, h: 220, s: 240 }, { x: 640, h: 270, s: 280 }, { x: 1080, h: 230, s: 260 }], lit: '#3c727a', shadow: '#08161e', snowline: 300, snowLit: '#c8f6e6', snowShadow: '#4a868a', foot: '#2a5660', footFrom: 400, light: [-0.7, -0.5, 0.5] });
       s.layer({ blur: 0.5 }, (cv) => {
-        const pts = range(cv, rnd, { base: 470, peaks: [{ x: 200, h: 220, s: 240 }, { x: 640, h: 270, s: 280 }, { x: 1080, h: 230, s: 260 }], fill: '#1c3440', foot: '#2a4a56', shade: '#06121a', shadeOpacity: 0.5, snow: 290, snowLit: '#bdf2df', snowShade: '#5f9a9a', light: -1, haze: '#2e6a6a', hazeOpacity: 0.35 });
         cv.add('<rect x="-10" y="464" width="1300" height="8" fill="#16303a"/>');
         // a village at the mountain's foot, snow on its flat roofs, its windows lit
         const v = hewraman(rnd, { x0: 730, y0: 470, x1: 900, y1: 432, thick: 46, bow: 4, ground: (x) => heightAt(pts, x), house: 10, wall: '#12262e', wallLit: '#1a323a', wallDark: '#0a161c', roof: '#a8c8c8', door: '#061014', lights: '#ffc77a', lit: 0.45, light: -1 });
@@ -480,9 +513,7 @@ export const SCENES = {
         moon(cv, { x: 880, y: 220, r: 64, core: '#f2f4f8', edge: '#d0d6e2', sea: '#a8b0c0', halo: '#d6e2ff', haloR: 520, haloOpacity: 0.5, seed: s.seed() });
         noise(cv, { y: 160, h: 140, freq: [0.003, 0.03], seed: s.seed(), colour: '#c6d0e4', contrast: 2.6, bias: -1.2, opacity: 0.55, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
-      s.layer({ blur: 1.6, haze: ['#5a6a88', 0.55] }, (cv) => {
-        range(cv, rnd, { base: 460, peaks: [{ x: 300, h: 200, s: 260 }, { x: 760, h: 170, s: 300 }, { x: 1200, h: 210, s: 240 }], fill: '#1c263a', shade: '#0a1020', shadeOpacity: 0.4, snow: 300, snowLit: '#d8e0f0', snowShade: '#8a96b0', light: 1, spurs: false });
-      });
+      s.terrain({ blur: 1.4, haze: ['#5a6a88', 0.45] }, { base: 460, peaks: [{ x: 300, h: 200, s: 260 }, { x: 760, h: 170, s: 300 }, { x: 1200, h: 210, s: 240 }], lit: '#46526e', shadow: '#0c1222', snowline: 304, snowLit: '#e2e8f4', snowShadow: '#76829e', foot: '#1c263a', footFrom: 380, light: [0.7, -0.5, 0.5] });
       s.layer({ scale: 2, blur: 3 }, (cv) => {
         noise(cv, { y: 400, h: 120, freq: [0.003, 0.03], seed: s.seed(), colour: '#9aa8c4', contrast: 2.6, bias: -0.95, opacity: 0.6, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
@@ -649,9 +680,7 @@ export const SCENES = {
         sky(cv, [[0, '#8db6e4'], [0.55, '#d2e2f2'], [1, '#f6e8f0']]);
         glow(cv, { x: sun[0], y: sun[1], r: 600, colour: '#ffffff', opacity: 0.95 });
       });
-      s.layer({ blur: 2.4, haze: ['#e8e2f2', 0.6] }, (cv) => {
-        range(cv, rnd, { base: 500, peaks: [{ x: 240, h: 170, s: 280 }, { x: 760, h: 200, s: 300 }, { x: 1180, h: 150, s: 240 }], fill: '#8a9cc4', shade: '#5a6a96', shadeOpacity: 0.3, snow: 380, snowShade: '#e4e8f4' });
-      });
+      s.terrain({ blur: 2, haze: ['#e8e2f2', 0.55] }, { base: 500, peaks: [{ x: 240, h: 170, s: 280 }, { x: 760, h: 200, s: 300 }, { x: 1180, h: 150, s: 240 }], lit: '#b0b8d8', shadow: '#5a6696', snowline: 378, snowLit: '#ffffff', snowShadow: '#d0d8ee', foot: '#a8b4d4', footFrom: 450 });
       // more Judas trees down the valley, pink in the haze
       s.layer({ blur: 1.6, haze: ['#f2e0ec', 0.5] }, (cv) => {
         cv.add('<path d="M-20,520 C300,500 700,506 1300,516 L1300,740 L-20,740 Z" fill="#94c26e"/>');
@@ -702,9 +731,7 @@ export const SCENES = {
         glow(cv, { x: sun[0], y: sun[1], r: 540, colour: '#fff6e6', opacity: 0.95 });
         clouds(cv, { y: 20, h: 280, freq: [0.005, 0.012], seed: s.seed(), colour: '#f6f2f2', light: '#ffffff', shade: '#a6b4cc', dx: 10, dy: -6, density: 3, cover: -1.6, opacity: 0.85, fade: [[0, 0], [0.4, 1], [1, 0]] });
       });
-      s.layer({ blur: 2.2, haze: ['#e6e8f2', 0.55] }, (cv) => {
-        range(cv, rnd, { base: 460, peaks: [{ x: 220, h: 200, s: 280 }, { x: 700, h: 240, s: 300 }, { x: 1180, h: 180, s: 260 }], fill: '#8698c0', shade: '#55668f', shadeOpacity: 0.35, snow: 300, snowShade: '#e2e8f4' });
-      });
+      s.terrain({ blur: 1.6, haze: ['#e6e8f2', 0.45] }, { base: 460, peaks: [{ x: 220, h: 200, s: 280 }, { x: 700, h: 240, s: 300 }, { x: 1180, h: 180, s: 260 }], lit: '#b4b4c8', shadow: '#4c5a88', snowline: 300, snowLit: '#ffffff', snowShadow: '#ccd6ec', foot: '#9eacc8', footFrom: 400 });
       s.layer({ blur: 1.2 }, (cv) => {
         cv.add('<path d="M-20,470 C300,452 800,460 1300,468 L1300,740 L-20,740 Z" fill="#86b462"/>');
         cv.add(flowerField(rnd, { kind: 'wild', y0: 468, y1: 520, count: 1800, size: 5, colours: ['#e0303c', '#c82a36', '#f0503a', '#d23a3a'], centre: '#e0303c' }));
@@ -742,9 +769,7 @@ export const SCENES = {
         glow(cv, { x: sun[0], y: sun[1], r: 620, colour: '#fff8e0', opacity: 0.85 });
         clouds(cv, { y: 20, h: 260, freq: [0.006, 0.012], seed: s.seed(), colour: '#f4f2f2', light: '#ffffff', shade: '#a0aec4', dx: 10, dy: -8, density: 3.2, cover: -1.6, opacity: 0.8, fade: [[0, 0], [0.4, 1], [1, 0]] });
       });
-      s.layer({ blur: 1.6, haze: ['#dce6ee', 0.5] }, (cv) => {
-        range(cv, rnd, { base: 420, peaks: [{ x: 200, h: 200, s: 260 }, { x: 640, h: 240, s: 300 }, { x: 1100, h: 210, s: 260 }], fill: '#8494b8', shade: '#55668f', shadeOpacity: 0.38, snow: 262, snowShade: '#e2e8f4', light: 1 });
-      });
+      s.terrain({ blur: 1.4, haze: ['#dce6ee', 0.42] }, { base: 420, peaks: [{ x: 200, h: 200, s: 260 }, { x: 640, h: 240, s: 300 }, { x: 1100, h: 210, s: 260 }], lit: '#b8b2b4', shadow: '#4a5a84', snowline: 266, snowLit: '#ffffff', snowShadow: '#cad4ea', foot: '#94a8c0', footFrom: 360, light: [0.6, -0.6, 0.5] });
       s.layer({ blur: 0.8, haze: ['#e8eee6', 0.25] }, (cv) => {
         cv.add('<path d="M-20,440 C300,420 800,428 1300,436 L1300,740 L-20,740 Z" fill="#a2c46e"/>');
         cv.add(tent({ x: 960, y: 452, w: 96, fill: '#1e1a1c' }) + tent({ x: 1076, y: 457, w: 74, fill: '#1e1a1c' }));
@@ -791,9 +816,7 @@ export const SCENES = {
         glow(cv, { x: sun[0], y: sun[1], r: 600, colour: '#fffbea', opacity: 0.9 });
         clouds(cv, { y: 10, h: 280, freq: [0.006, 0.012], seed: s.seed(), colour: '#f6f4f6', light: '#ffffff', shade: '#a2b0c8', dx: -10, dy: -8, density: 3.2, cover: -1.6, opacity: 0.85, fade: [[0, 0], [0.4, 1], [1, 0]] });
       });
-      s.layer({ blur: 1.4, haze: ['#dde8f2', 0.48] }, (cv) => {
-        range(cv, rnd, { base: 400, peaks: [{ x: 300, h: 200, s: 280 }, { x: 760, h: 250, s: 300 }, { x: 1180, h: 210, s: 260 }], fill: '#7a8eb6', shade: '#4a5c8a', shadeOpacity: 0.4, snow: 270, snowShade: '#dfe6f2', light: -1 });
-      });
+      s.terrain({ blur: 1.2, haze: ['#dde8f2', 0.4] }, { base: 400, peaks: [{ x: 300, h: 200, s: 280 }, { x: 760, h: 250, s: 300 }, { x: 1180, h: 210, s: 260 }], lit: '#b6b0ae', shadow: '#3e4e7e', snowline: 274, snowLit: '#ffffff', snowShadow: '#c8d2ea', foot: '#90a6c2', footFrom: 350, light: [-0.7, -0.5, 0.5] });
       // the far hillside with its village, the terraces stepping down from it
       s.layer({ blur: 0.8, haze: ['#e4ecee', 0.32] }, (cv) => {
         cv.add('<path d="M-20,420 C300,396 700,404 1300,416 L1300,740 L-20,740 Z" fill="#8fbf66"/>');
@@ -837,60 +860,73 @@ export const SCENES = {
   'agire-newroze': {
     ku: 'Agirê Newrozê',
     en: 'Newroz fire',
-    // Newroz night at Akre: the climbers' torches zig-zagging up the mountain to the fire at the top, the town lit
-    // below, and in front a bonfire with a govend round it, every face and sash lit by it
+    // Newroz night at Akre: the climbers' torches zig-zagging up the mountain to the fire at the top, the town
+    // lit below it, fires on the hills all round, and in front of us the bonfire, its sparks going up into the dark
     scene(rnd) {
       const s = new Scene(rnd);
-      const flame = [640, 568];
+      const flame = [640, 572];
       s.layer({}, (cv) => {
         sky(cv, [[0, '#07040f'], [0.45, '#1e0a1e'], [0.8, '#4a1418'], [1, '#6a1e1a']]);
         cv.add(starfield(rnd, { y0: 0, y1: 260, count: 200, bright: 3 }));
       });
+      // the mountain, its faces lit from below by the town and the fires
+      const pts = s.terrain({ blur: 1 }, { base: 470, peaks: [{ x: 700, h: 300, l: 420, r: 460, k: 1.1 }, { x: 160, h: 140, s: 260 }, { x: 1200, h: 170, s: 260 }], rough: 0.1, lit: '#4a1c1c', shadow: '#0e050a', foot: '#22090f', footFrom: 420, light: [0.1, 0.55, 0.6], ambient: 0.28 });
+      const yAt = (x) => heightAt(pts, x);
       let summit = [700, 170];
       let torchGlow = '';
+      let windows = '';
       s.layer({ blur: 1 }, (cv) => {
-        const pts = range(cv, rnd, { base: 470, peaks: [{ x: 700, h: 300, l: 420, r: 460, k: 1.1 }, { x: 160, h: 140, s: 260 }, { x: 1200, h: 170, s: 260 }], rough: 0.1, fill: '#1a0a14', foot: '#240c14', shade: '#0a0408', shadeOpacity: 0.4, gullies: 0.4, spurs: false });
-        const yAt = (x) => {
-          for (let i = 1; i < pts.length; i++) if (pts[i][0] >= x) return pts[i][1];
-          return pts[pts.length - 1][1];
-        };
-        cv.add(hillTown(rnd, { x0: 300, x1: 1100, yAt: (x) => Math.max(yAt(x) + 120, 440), rows: 4, house: 16, fill: '#12060c', lights: '#ffc06a' }));
         const t = akreTorches(rnd, { x: 700, y: 430, top: yAt(700) + 8, width: 600, paths: 3 });
         summit = t.summit;
         torchGlow = t.glow;
         cv.add(t.dots);
+        // Akre, its houses stepped up the foot of the mountain, every window lit
+        const town = hewraman(rnd, { x0: 270, y0: 528, x1: 1130, y1: 528, thick: 120, bow: 64, ground: (x) => yAt(x) + 60, house: 15, wall: '#1e0c10', wallLit: '#2a1216', wallDark: '#12060a', roof: '#2e1418', door: '#0a0306', lights: '#ffc06a', lit: 0.26, light: 1 });
+        cv.add(town.houses);
+        windows = town.glow;
       });
-      // the torches and the fire on the summit, as light
+      s.layer({ blur: 2, blend: 'screen', opacity: 0.5 }, (cv) => cv.add(windows));
+      // the torches, the fire on the summit, and the fires on the hills round about, as light
       s.layer({ blur: 2.2, blend: 'screen' }, (cv) => {
         cv.add(torchGlow);
         glow(cv, { x: summit[0], y: summit[1], r: 70, colour: '#ff9a3a', opacity: 0.85 });
         cv.add(`<circle cx="${summit[0]}" cy="${summit[1] + 4}" r="5" fill="#fff0c0"/>`);
+        for (const hx of [90, 210, 1130, 1240]) {
+          const hy = yAt(hx) + 3;
+          glow(cv, { x: hx, y: hy, r: 34, colour: '#ff8a3a', opacity: 0.8 });
+          cv.add(`<path d="M${hx - 4},${hy} Q${hx - 2},${hy - 9} ${hx},${hy - 13} Q${hx + 2},${hy - 9} ${hx + 4},${hy} Z" fill="#ffe0a0"/>`);
+        }
       });
       // smoke from a thousand torches over the town, lit from below
       s.layer({ scale: 2, blur: 4, blend: 'screen' }, (cv) => {
         noise(cv, { y: 300, h: 300, freq: [0.005, 0.01], seed: s.seed(), colour: '#ff6a2a', contrast: 2.4, bias: -1.1, opacity: 0.32, fade: [[0, 0], [0.5, 1], [1, 0]] });
       });
-      // the ground round the fire
+      // the ground round the fire, a ring of stones
       s.layer({}, (cv) => {
         cv.add('<path d="M-20,530 C300,518 900,518 1300,530 L1300,740 L-20,740 Z" fill="#140608"/>');
         const g = cv.id('ground');
-        cv.def(`<radialGradient id="${g}" gradientUnits="userSpaceOnUse" cx="${flame[0]}" cy="${flame[1]}" r="560" gradientTransform="translate(0 ${flame[1] * 0.72}) scale(1 0.28)"><stop offset="0" stop-color="#ff8a3a" stop-opacity="0.75"/><stop offset="0.35" stop-color="#c8401a" stop-opacity="0.35"/><stop offset="1" stop-color="#c8401a" stop-opacity="0"/></radialGradient>`);
+        cv.def(`<radialGradient id="${g}" gradientUnits="userSpaceOnUse" cx="${flame[0]}" cy="${flame[1]}" r="560" gradientTransform="translate(0 ${flame[1] * 0.72}) scale(1 0.28)"><stop offset="0" stop-color="#ff8a3a" stop-opacity="0.8"/><stop offset="0.35" stop-color="#c8401a" stop-opacity="0.38"/><stop offset="1" stop-color="#c8401a" stop-opacity="0"/></radialGradient>`);
         cv.add(`<rect x="-20" y="516" width="1320" height="224" fill="url(#${g})"/>`);
-      });
-      // the govend on the far side of the fire, its colours warm in the firelight
-      s.layer({ haze: ['#ff7a2a', 0.2], falloff: { x: flame[0], y: flame[1] - 40, r: 430, ambient: 0.16 }, rim: { x: flame[0], y: flame[1] - 60, colour: '#ffc070', width: 3, strength: 1, reach: 560 } }, (cv) => {
-        govend(cv, rnd, { x: 640, y: 548, count: 13, size: 98, step: 47, curve: 18, dress: ['#c8262a', '#2a8a4a', '#d89a1e', '#3a56b8', '#b83a8a'], vest: ['#3a0e20', '#1a2048', '#3a1c0c'], clothes: ['#5a4432', '#433e4e', '#54462f'], sash: ['#c8382a', '#d8a02a', '#2a7a44'], turban: ['#e4dccc', '#2a2424'], skin: '#c48a64', hair: '#160e0a', headscarf: '#f2e8d6', klash: '#d8ccb4', scarf: '#e8322f' });
+        const stones = [];
+        for (let i = 0; i < 16; i++) {
+          const a = (i / 16) * Math.PI * 2;
+          const sx = flame[0] + Math.cos(a) * 150;
+          const sy = flame[1] + 6 + Math.sin(a) * 26;
+          if (Math.sin(a) < -0.2) continue;
+          stones.push(`<ellipse cx="${n(sx)}" cy="${n(sy)}" rx="${n(between(rnd, 13, 19))}" ry="${n(between(rnd, 7, 10))}" fill="#2a0e0c"/><ellipse cx="${n(sx - 2)}" cy="${n(sy - 3)}" rx="${n(between(rnd, 8, 12))}" ry="${n(3.5)}" fill="#a8441e" fill-opacity="0.55"/>`);
+        }
+        cv.add(stones.join(''));
       });
       // the bonfire: the logs and the embers they lie in, then the flames as light, and its glow over everything
-      const f = fire(rnd, { x: flame[0], y: flame[1], w: 170, h: 236, wind: 0.08, tongues: 13 });
+      const f = fire(rnd, { x: flame[0], y: flame[1], w: 220, h: 320, wind: 0.08, tongues: 15 });
       s.layer({}, (cv) => cv.add(f.logs));
-      s.layer({ blur: 1.1, blend: 'screen' }, (cv) => rough(cv, f.flames, { scale: 9, freq: 0.035, seed: s.seed() }));
+      s.layer({ blur: 1.1, blend: 'screen' }, (cv) => rough(cv, f.flames, { scale: 11, freq: 0.03, seed: s.seed() }));
       s.layer({ blend: 'screen' }, (cv) => {
-        glow(cv, { x: flame[0], y: flame[1] - 90, r: 420, colour: '#ff6a1a', opacity: 0.4 });
-        glow(cv, { x: flame[0], y: flame[1] - 70, r: 150, colour: '#ffc060', opacity: 0.55 });
+        glow(cv, { x: flame[0], y: flame[1] - 110, r: 480, colour: '#ff6a1a', opacity: 0.42 });
+        glow(cv, { x: flame[0], y: flame[1] - 90, r: 180, colour: '#ffc060', opacity: 0.55 });
       });
       s.layer({ blur: 0.6, blend: 'screen' }, (cv) => {
-        cv.add(embers(rnd, { x: flame[0], y: flame[1] - 150, rise: 430, spread: 70, count: 170, wind: 0.22, colours: ['#ffd36a', '#ff9a3a', '#fff0c0', '#ff6a2a'] }));
+        cv.add(embers(rnd, { x: flame[0], y: flame[1] - 200, rise: 470, spread: 80, count: 220, wind: 0.22, colours: ['#ffd36a', '#ff9a3a', '#fff0c0', '#ff6a2a'] }));
       });
       // grass at our feet, too near to be in focus, its tips catching the fire
       s.layer({ blur: 2, rim: { x: flame[0], y: flame[1] - 80, colour: '#ff9a4a', width: 2, strength: 0.8, reach: 900 } }, (cv) => {
@@ -975,7 +1011,8 @@ export const SCENES = {
   newroz: {
     ku: 'Rengên Newrozê',
     en: 'The colours of Newroz',
-    // Newroz morning: the sun just up over the hills, its light through the govend dancing on the crest in all its colours
+    // Newroz morning: the sun just up over the hills with its twenty-one rays, and at our feet the spring
+    // in flower in Newroz's own colours — narcissus, red tulips, white daisies in the green
     scene(rnd) {
       const s = new Scene(rnd);
       const sun = [250, 400];
@@ -998,27 +1035,35 @@ export const SCENES = {
         cv.add(`<path d="${beams.join(' ')}" fill="url(#${g})"/>`);
       });
       // hills going back into the morning haze
-      s.layer({ blur: 2.2, haze: ['#ffcf8a', 0.72] }, (cv) => {
-        range(cv, rnd, { base: 470, peaks: [{ x: 640, h: 120, s: 380 }, { x: 1110, h: 160, s: 320 }], rough: 0.1, fill: '#5a7a4a', shade: '#2a4a2a', shadeOpacity: 0.3, gullies: 0.2, light: -1, spurs: false });
-      });
-      s.layer({ blur: 1.4, haze: ['#ffd090', 0.5] }, (cv) => {
+      s.terrain({ blur: 2, haze: ['#ffc880', 0.42] }, { base: 470, peaks: [{ x: 640, h: 120, s: 380 }, { x: 1110, h: 160, s: 320 }], rough: 0.1, lit: '#8ab060', shadow: '#24502e', foot: '#4a7a3e', footFrom: 440, light: [-0.7, -0.4, 0.6], ribs: 5 });
+      s.layer({ blur: 1.4, haze: ['#ffd090', 0.48] }, (cv) => {
         cv.add('<path d="M-20,505 C160,474 380,466 560,480 C760,496 980,472 1300,488 L1300,740 L-20,740 Z" fill="#4a8a3e"/>');
       });
-      // the crest, and the govend on it
-      s.layer({ blur: 0.4, haze: ['#ff9a4a', 0.12], rim: { x: sun[0], y: sun[1], colour: '#fff2b0', width: 4, strength: 1.2, reach: 1300 } }, (cv) => {
-        const g = cv.id('crest');
-        cv.def(`<linearGradient id="${g}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5aa848"/><stop offset="1" stop-color="#2f7a36"/></linearGradient>`);
-        cv.add(`<path d="M-20,566 C180,532 420,510 700,512 C960,514 1140,530 1300,542 L1300,740 L-20,740 Z" fill="url(#${g})"/>`);
-        govend(cv, rnd, { x: 800, y: 520, count: 11, size: 132, step: 57, curve: 4, dress: ['#e0262c', '#2a9a48', '#f0b02a', '#8a3ab8', '#2f6ad0', '#e04a8a'], vest: ['#3a0e24', '#14204a', '#0e3a2a', '#2a1a08'], clothes: ['#5a4632', '#46404e', '#3e4a3a', '#6a5a42'], sash: ['#d8282a', '#f0b42a', '#2a8a4a', '#ece4d4'], headscarf: ['#f6eee0', '#f0d24a', '#f6eee0', '#f08aa8'], skin: '#c88a62', light: -1, contrast: 0.5, shadow: { colour: '#14400f', opacity: 0.4, reach: 1.1 } });
+      // the near slope, rising to the right, in flower
+      s.layer({ rim: { x: sun[0], y: sun[1], colour: '#fff2b0', width: 2.5, strength: 1, reach: 1400 } }, (cv) => {
+        const g = cv.id('slope');
+        cv.def(`<linearGradient id="${g}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6aae4c"/><stop offset="1" stop-color="#3a8a3e"/></linearGradient>`);
+        cv.add(`<path d="M-20,522 C200,504 420,488 700,482 C960,476 1140,478 1300,474 L1300,740 L-20,740 Z" fill="url(#${g})"/>`);
+        for (const [y, h, count] of [[504, 12, 800], [552, 20, 700], [612, 30, 700], [690, 44, 600]]) {
+          cv.add(grass(rnd, { x0: -30, x1: 1310, y, count, height: h, colours: ['#3a8a3e', '#4c9e48', '#5eb054'], wind: 0.14, width: Math.max(1.4, h * 0.07) }));
+        }
+        // the flowers thicken toward us; each kind among the others, as a hillside in spring is
+        const kinds = [['narcissus', 300, 26, ['#fffaf0', '#fff6e2'], '#ffc21a'], ['tulip', 220, 24, ['#e0262c', '#f0402a', '#c81e2a'], null], ['daisy', 260, 18, ['#ffffff', '#fff4f4'], '#ffd23a']];
+        const items = [];
+        for (const [kind, count, size, colours, centre] of kinds) {
+          for (let i = 0; i < count; i++) {
+            const t = rnd() ** 1.3;
+            items.push([kind, between(rnd, -20, 1300), 496 + t * 234, size * (0.22 + 0.78 * t) * between(rnd, 0.8, 1.2), colours[Math.floor(rnd() * colours.length) % colours.length], centre]);
+          }
+        }
+        items.sort((a, b) => a[2] - b[2]);
+        for (const [kind, x, y, size, petal, centre] of items) cv.add(flower(kind, x, y, size, { petal, centre: centre ?? undefined, stem: '#2f7a34' }, rnd));
       });
       s.effect('rays', { x: sun[0], y: sun[1], threshold: 0.72, strength: 1.25, decay: 0.975, density: 0.95, colour: '#fff0b0' });
-      // spring at our feet: grass and flowers, the nearest out of focus
-      s.layer({}, (cv) => {
-        cv.add(grass(rnd, { x0: -30, x1: 1310, y: 650, count: 900, height: 36, colours: ['#2a7a36', '#3a9a46', '#4cae52'], wind: 0.15, width: 2.2 }));
-        cv.add(flowerField(rnd, { kind: 'wild', y0: 575, y1: 720, count: 240, size: 11, colours: ['#ffffff', '#ffd23a', '#e8322f'], centre: '#ffe08a' }));
-      });
+      // the nearest flowers, out of focus
       s.layer({ blur: 5 }, (cv) => {
-        cv.add(flowerField(rnd, { kind: 'tulip', y0: 690, y1: 780, count: 26, size: 46, colours: ['#e8322f', '#f04a2a', '#ffcf3a'], stem: '#2a6a2e' }));
+        cv.add(flowerField(rnd, { kind: 'narcissus', y0: 700, y1: 790, count: 12, size: 64, colours: ['#fffaf0'], centre: '#ffc21a', stem: '#2a6a2e' }));
+        cv.add(flowerField(rnd, { kind: 'tulip', y0: 705, y1: 800, count: 10, size: 60, colours: ['#e8322f', '#d0202a'], stem: '#2a6a2e' }));
       });
       return s.done({
         bloom: { threshold: 0.72, strength: 0.55, radius: 30, tint: '#ffe0a0' },

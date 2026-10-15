@@ -276,23 +276,6 @@ export function hewraman(rnd, { x0, y0, x1, y1, thick, bow = 0, ground = () => -
   return { houses: out.join(''), glow: lights ? `<g fill="${lights}" fill-opacity="0.25">${glows.join('')}</g>` : '' };
 }
 
-/** A town climbing a slope at night: houses in rows, many windows lit. */
-export function hillTown(rnd, { x0, x1, yAt, rows, house, fill, lights }) {
-  const out = [];
-  for (let r = rows - 1; r >= 0; r--) {
-    let u = x0 + between(rnd, 0, house);
-    while (u < x1) {
-      const hw = house * between(rnd, 0.8, 1.6);
-      const hh = house * between(rnd, 0.6, 0.9);
-      const base = yAt(u) - r * house * 0.62;
-      out.push(rect(u, base - hh, hw + 0.5, hh + house * 0.5, fill));
-      if (rnd() < 0.6) out.push(rect(u + hw * 0.3, base - hh * 0.6, Math.max(1.5, hw * 0.16), Math.max(2, hh * 0.24), lights));
-      u += hw + between(rnd, 0, house * 0.3);
-    }
-  }
-  return out.join('');
-}
-
 /**
  * The black tent of the summer camp (reşmal): a long low roof of woven goat
  * hair, peaked over its poles and sagging between them, guyed out to pegs; and
