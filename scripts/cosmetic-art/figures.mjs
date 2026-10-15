@@ -51,52 +51,56 @@ function smooth(points) {
 }
 
 /**
- * The deer's poses, in its own frame (x from the back of the rump toward the
- * chest, y up from the ground, negative, in hundredths of its height at the
- * withers): the line of its rump and of its back on to the withers, which
- * drop when the head goes down; the neck's crest from there to the back of the
- * skull (the poll), and where that is and how far the face is turned down
- * from level, in radians, and how far the antlers are turned back from the
- * face (a lowered head turns a little toward us, and its rack with it, so the
- * tines still rise); the throat from under the jaw back to the chest,
- * and the chest down to the brisket; and how far each pair of legs is set
- * forward or back, near and far.
+ * The deer's poses, in its own frame: x from the back of the rump toward the
+ * chest, y up from the ground (negative), both in hundredths of its height at
+ * the shoulder. Each gives the line of its back from the rump to the withers,
+ * the crest of its neck from there to the back of the skull (the poll), the
+ * head's angle below level (radians) and how far along its jaw the throat
+ * meets it, the line of the throat back down to the chest and the brisket,
+ * how far the antlers and the ears turn from where the skull sets them (a
+ * lowered head turns a little toward us and its rack with it, so the tines
+ * still rise), and how far each pair of legs is set forward or back, near and
+ * far.
  */
 const POSES = {
   alert: {
-    rump: [[16, -100.5], [28, -101], [42, -99.2]],
-    back: [[56, -97.5], [68, -98], [76, -99.6], [82, -100.6]],
-    crest: [[84.4, -110], [88.4, -120], [94.2, -128.2], [100.6, -133.4]],
-    poll: [107, -136],
-    angle: 0.62,
-    rack: 0,
-    throat: [[99.6, -104], [100, -94], [100.8, -84]],
-    chest: [[100.8, -76], [99, -67], [94, -60.4]],
-    fore: [0, -6],
+    back: [[14, -104.5], [26, -106], [42, -105], [58, -102.5], [72, -100.5], [86, -100.5], [95, -102]],
+    crest: [[100.5, -107.5], [105.5, -113.5], [109.5, -119.5], [113, -124.5]],
+    poll: [116.5, -128.5],
+    angle: 0.5,
+    head: 1.18,
+    jaw: 0,
+    throat: [[114, -105], [116.5, -95.5], [118, -85]],
+    chest: [[118.5, -75], [116, -62], [109.5, -51.5], [100, -45.5]],
+    rack: [0.05, -0.12],
+    ears: [-0.75, -1.05],
+    fore: [0, -7],
     hind: [0, 7],
   },
   graze: {
-    rump: [[16, -99.2], [28, -99.6], [42, -98]],
-    back: [[56, -96.2], [68, -94], [78, -91.2], [85, -88.6]],
-    crest: [[97, -84], [107.5, -77], [115.5, -67.5], [120.5, -56]],
-    poll: [123, -45],
+    back: [[14, -104.5], [26, -106.5], [42, -105.5], [58, -103], [72, -100], [86, -97], [97, -94.5]],
+    crest: [[106, -90.5], [114.5, -83], [122, -73.5], [128.5, -62], [133, -50]],
+    poll: [135.5, -42],
     angle: 1.5,
-    rack: -0.85,
-    throat: [[97.6, -42], [95.6, -50], [94, -56.5]],
-    chest: [[92.4, -59.5], [88.4, -57.6]],
-    fore: [4, -7],
+    jaw: 1,
+    throat: [[118, -28], [111, -36.5], [103, -43], [95, -47]],
+    chest: [[88, -46], [81, -42.5]],
+    rack: [-0.05, -0.85],
+    ears: [-1.9, -2.15],
+    fore: [0, -9],
     hind: [0, 7],
   },
   drink: {
-    rump: [[16, -99.2], [28, -99.6], [42, -98]],
-    back: [[56, -96.2], [68, -93.8], [78, -90.6], [85, -87.6]],
-    crest: [[97, -83], [108.5, -77.5], [119, -71.5], [127.5, -65.5]],
-    poll: [132, -60],
-    angle: 1.43,
-    rack: -0.8,
-    throat: [[103, -50], [100, -50.6], [97.4, -50.4]],
-    chest: [[95.2, -49.6], [91, -56]],
-    fore: [5, -8],
+    back: [[14, -104.5], [26, -106.5], [42, -105.5], [58, -103], [72, -100.5], [86, -98], [97, -95.5]],
+    crest: [[106, -91.5], [114, -85], [121.5, -76.5], [128, -67], [133, -57.5]],
+    poll: [136, -52],
+    angle: 1.42,
+    jaw: 1,
+    throat: [[121, -35], [113.5, -41.5], [104, -46.5], [95, -48]],
+    chest: [[88, -46.5], [81, -42.5]],
+    rack: [0, -0.8],
+    ears: [-1.8, -2.05],
+    fore: [0, -9],
     hind: [0, 7],
   },
 };
@@ -105,82 +109,100 @@ const POSES = {
  * A deer — a stag — in one of its poses: 'alert' (head up, looking out),
  * 'graze' (head down, its muzzle in the grass), 'drink' (head down and
  * reaching forward to the water at its forefeet, which stand in the
- * shallows: its muzzle is some 14 hundredths of its height above its hooves).
- * `size` is its height at the withers, (x, y) the ground under the middle of
+ * shallows: its muzzle is some 17 hundredths of its height above its hooves).
+ * `size` is its height at the shoulder, (x, y) the ground under the middle of
  * its body.
  *
  * Drawn the way an animal painter draws one, from its anatomy, since against
- * the light it is shape and nothing else: a deep round barrel of a body, the
- * back arching from a high rump that rounds down under a broad hanging tail;
- * long fine legs — the hind ones bending back at a high, sharp hock under a
- * heavy thigh, the fore ones straight through a small knee — on small
- * pointed hooves; a neck nearly as deep as the body where it leaves the
- * shoulders and not much less behind the jaw, flowing out of the back in one
- * curve; a long, deep wedge of a head with big ears out from the poll; and a
- * heavy rack that rises from the crown, sweeps forward over the face and
- * lifts tall tines off its beams.
+ * the light it is shape and nothing else: a heavy body, deep through the
+ * chest — half its height and more — and drawn up under the flank, its back
+ * running level from a high round rump; a thick neck, nearly as deep where it
+ * leaves the shoulders as the chest is, flowing out of the back in one curve
+ * and meeting the head low on the jaw; a short, deep wedge of a head with big
+ * ears out from the poll; legs strong at the top, the hind ones under a heavy
+ * thigh bending back at a high, sharp hock, the fore ones straight through a
+ * small knee, all of them fine below on small pointed hooves; a broad tail
+ * hanging from the top of the rump; and a heavy rack that rises from the
+ * crown, curves forward over the face and lifts tall tines off its beams.
  */
-export function deer({ x, y, size, facing = 1, colour, pose = 'alert', antlers = true }) {
+export function deer({ colour, ...at }) {
+  const d = deerShapes(at);
+  const parts = [d.far.hind, d.far.fore, d.near.hind, d.near.fore, d.body, d.tail, d.far.ear, d.near.ear, ...d.far.antler, ...d.near.antler];
+  return `<g fill="${colour}">${parts.map((p) => `<path d="${p}"/>`).join('')}</g>`;
+}
+
+/**
+ * The deer's parts as outlines (SVG paths), placed as `deer` places them, for
+ * whoever paints them one by one: its far and near legs, ears and antlers,
+ * its body (with the neck and the head), its tail; and `frame` and `head`,
+ * which carry a point in the deer's own frame, or in its head's (from the
+ * poll, along the face and down toward the jaw), to where it lies.
+ */
+export function deerShapes({ x, y, size, facing = 1, pose = 'alert', antlers = true }) {
   const k = size / 100;
   const W = ([px, py]) => [x + facing * (px - 50) * k, y + py * k];
   const P = POSES[pose];
-  const parts = [];
-  // the head's own frame: from the poll, x forward along the face to the nose, y down toward the jaw (drawn to a
-  // head 36 long, and grown to one 45 long: a deer's head is long)
+  // the head's own frame: from the poll, x forward along the face to the nose, y down toward the jaw
   const ca = Math.cos(P.angle);
   const sa = Math.sin(P.angle);
-  const H = ([px, py]) => [P.poll[0] + 1.24 * (px * ca - py * sa), P.poll[1] + 1.24 * (px * sa + py * ca)];
+  const hs = P.head ?? 1.08;
+  const H = ([px, py]) => [P.poll[0] + hs * (px * ca - py * sa), P.poll[1] + hs * (px * sa + py * ca)];
   const outline = (pts) => smooth(pts.map(W));
-  const stroke = (pts) => taper(pts.map(([px, py, w]) => [...W(H([px, py])), w * k * 1.24]));
 
-  // the legs, the far pair first: dx sets each forward or back
+  // the legs, the far pair first: dx sets each forward or back (`wide` thickens a leg about its middle below
+  // `from`: a leg's bones are fine, but it reads a little stronger than it is against the light)
+  const wide = (pts, cx, from, by) => pts.map(([px, py]) => [py > from ? cx + (px - cx) * by : px, py]);
   const hind = (dx) =>
-    outline([[27, -88], [35, -77], [38.5, -68], [36, -61], [30, -52], [24, -43.5], [20.6, -35.5], [20.2, -28], [20.4, -18], [20.8, -10], [21.5, -7.4], [23.4, -3.4], [25.4, -0.4], [24.2, 0.4], [19.8, 0.4], [18.8, -1.6], [18.2, -4.2], [17.1, -6], [16.6, -8.6], [16.2, -16], [15.6, -27], [13.8, -33], [10, -37], [8.6, -40.5], [6.8, -48], [4.2, -58], [1.4, -68], [-0.8, -77], [-1.4, -85], [6, -94]].map(([px, py]) => [px + dx, py]));
+    outline(wide([[27, -90], [36, -78], [39.5, -67], [37, -59], [31, -50], [24.5, -42], [21, -35], [20.4, -28], [20.4, -18], [20.8, -10], [21.5, -7.4], [23.4, -3.4], [25.4, -0.4], [24.2, 0.4], [19.8, 0.4], [18.8, -1.6], [18.2, -4.2], [17.1, -6], [16.6, -8.6], [16.2, -16], [15.6, -26], [13.6, -32], [9.4, -36], [7.6, -40], [5.4, -48], [2.6, -58], [0, -68], [-1.6, -78], [-1.6, -88], [6, -97]].map(([px, py]) => [px + dx, py]), 18.4 + dx, -40, 1.22));
   const fore = (dx) =>
-    outline([[80, -72], [91.6, -62], [90.4, -53], [88.8, -44], [87.8, -35], [88.1, -31], [87.5, -27], [87.2, -18], [87.3, -10], [87.8, -7.4], [89.5, -3.4], [91.4, -0.4], [90.3, 0.4], [85.8, 0.4], [85.2, -1.6], [84.4, -4.2], [83.4, -6], [83.2, -8.6], [83, -16], [82.8, -24], [82.4, -28], [82.8, -31.5], [82, -35.5], [80.4, -44], [78.2, -51], [75.6, -56], [73, -66]].map(([px, py]) => [px + dx, py]));
-  parts.push(hind(P.hind[1]), fore(P.fore[1]), hind(P.hind[0]), fore(P.fore[0]));
+    outline(wide([[80, -70], [95, -58], [94, -49], [91.6, -41], [90, -34], [90.1, -30.5], [89.4, -27], [89, -18], [89.1, -10], [89.6, -7.4], [91.3, -3.4], [93.2, -0.4], [92.1, 0.4], [87.6, 0.4], [87, -1.6], [86.2, -4.2], [85.2, -6], [85, -8.6], [84.8, -16], [84.6, -24], [84.2, -27.5], [84.6, -31], [83.6, -35], [81.6, -43], [79, -50], [76, -56], [73, -64]].map(([px, py]) => [px + dx, py]), 87.2 + dx, -52, 1.22));
   // the body, the neck and the head in one outline, so nothing joins them at a seam: from the root of the tail
   // over the high rump and along the back to the withers, along the crest of the neck to the poll, along the brow
-  // and the long face to the nose, round the muzzle and the chin, under the jaw to its angle, back along the
-  // throat to the chest and the brisket, along the belly to the flank, and round the haunch and the buttock
-  const head = [[-1, -0.5], [4.5, -2.4], [10, -2.2], [16, -0.5], [23, 1.8], [29.5, 4.2], [33.6, 6.4], [35.6, 8.6], [35.8, 10.6], [34.6, 12.4], [32.4, 13.4], [31, 13.6], [31.4, 15], [29.6, 16], [24, 16.2], [17, 17.2], [11, 18.6], [6, 19.4]].map(H);
-  parts.push(outline([[6, -94], ...P.rump, ...P.back, ...P.crest, ...head, ...P.throat, ...P.chest, [84, -57.4], [74, -56.8], [62, -57.4], [50, -59.4], [40, -63], [32, -67.4], [20, -72], [8, -75], [1.5, -79], [-1.5, -85], [0.5, -91]]));
+  // and the face to the nose, round the muzzle and the chin, back along the jaw to where the throat leaves it,
+  // down the throat to the chest and the brisket, along the belly as it draws up to the flank, and round the
+  // haunch and the buttock
+  const head = [[-1, -0.5], [4.5, -2.2], [10, -2], [15.5, -0.6], [21.5, 1.4], [27, 3.4], [30.6, 5.2], [32.6, 7.2], [33, 9.4], [32, 11.4], [30, 12.6], [28.4, 13], [28.6, 14.6], [26.8, 15.8], [21.5, 16.6], [15.5, 17.8], [10, 19], [5, 19.4]];
+  const jaw = head.slice(0, head.length - (P.jaw ? 4 : 0)).map(H);
+  const body = outline([[6, -97], ...P.back, ...P.crest, ...jaw, ...P.throat, ...P.chest, [72, -46], [62, -52], [52, -56.5], [42, -58], [33, -59.5], [24, -64], [14, -68.5], [6, -73], [1, -79], [-1, -86], [0.5, -93]]);
   // the tail, broad, hanging from the top of the rump
-  parts.push(outline([[7, -93], [3, -92.6], [-0.8, -90], [-3, -86], [-3.8, -81], [-3.2, -77], [-1.6, -76.4], [-0.6, -80], [1, -85.6], [4.4, -89.6]]));
+  const tail = outline([[7, -98], [2.6, -97], [-1.4, -94], [-3.6, -89], [-4.4, -83], [-3.6, -77.5], [-1.8, -76.6], [-0.6, -81], [1.2, -87], [4.6, -92.6]]);
   // the ears, long and wide, out from the poll: the far one a little behind and turned away
   const ear = (dx, dy, turn) => {
     const ct = Math.cos(turn);
     const st = Math.sin(turn);
-    return outline([[3, -0.5], [2.6, -5.5], [0.8, -10.5], [-2.4, -15.5], [-4.4, -13], [-5, -8], [-3.6, -3], [-1, 0.5]].map(([qx, qy]) => H([dx + qx * ct - qy * st, dy + qx * st + qy * ct])));
+    return outline([[3, -0.5], [2.8, -6.5], [1, -12], [-2.6, -17.5], [-5, -15], [-5.6, -9], [-4, -3], [-1, 0.5]].map(([qx, qy]) => H([dx + qx * ct - qy * st, dy + qx * st + qy * ct])));
   };
-  parts.push(ear(-1.5, 1.5, -0.6), ear(0, 0, -0.85));
+  const rack = [[], []];
   if (antlers) {
-    // the far antler a little behind and below the near one, so their tines stand apart; each beam rises from
-    // the crown, sweeps forward over the face and turns down at its tip, its tines rising off its top and leaning
-    // back, a short brow tine low on it
-    // (the far one turned up and back a little from the near, as a rack seen from the side)
-    for (const [turn, sc] of [[P.rack - 0.3, 0.9], [P.rack, 1]]) {
-      const ct = Math.cos(turn);
-      const st = Math.sin(turn);
-      const A = (pts) =>
-        stroke(
-          pts.map(([qx, qy, w]) => {
-            const ax = (qx - 7) * sc;
-            const ay = (qy + 1.5) * sc;
-            return [7 + ax * ct - ay * st, -1.5 + ax * st + ay * ct, w * sc];
-          }),
-        );
-      parts.push(A([[7, -1.5, 5.4], [6, -8, 5.1], [7, -14, 4.8], [11.4, -18.6, 4.3], [17.4, -23, 3.8], [23.6, -26.6, 3.3], [30, -28.6, 2.8], [34.8, -29.4, 2.2], [38.8, -29, 1.5], [41.8, -27.4, 0.5]]));
-      // the tines stand off the top of the beam all leaning the same way — straight up when the head is up — each
-      // curving a little forward toward its tip, a short brow tine low on the beam
-      parts.push(A([[6.2, -10.5, 3], [5.6, -16.5, 2.3], [5.8, -21.5, 0.6]]));
-      parts.push(A([[12.4, -19.4, 3.2], [8.4, -25.4, 2.6], [5.4, -31.4, 1.9], [4.4, -36.6, 0.5]]));
-      parts.push(A([[19, -24, 3], [15.4, -30.6, 2.4], [12.8, -37, 1.6], [12.4, -42, 0.5]]));
-      parts.push(A([[26, -27.4, 2.6], [23, -33.6, 2], [21.4, -38.8, 1.2], [21.6, -42.4, 0.4]]));
-      parts.push(A([[33, -28.8, 2], [31, -33.6, 1.4], [30.6, -37.4, 0.4]]));
+    // the rack as it stands on a head held up: each beam rises from the crown just behind the eye, goes back a
+    // little and up, then curves forward over the face, its tip turning in; the tines stand up off it, all of them
+    // rising the same way, each curving a little forward at its tip, and low on it a short brow tine. A lowered
+    // head carries its rack down and forward with it (`P.angle` against a head held up), and turns it a little
+    // toward us, so its tines lean out over the water rather than down into it. The far antler sits a little
+    // behind and below the near one and turns a little further, so that their tines stand apart.
+    const base = H([7.5, -2.5]);
+    for (const [i, turn, sc, [ox, oy]] of [[0, P.rack[1], 0.8, [-2.2, 1.3]], [1, P.rack[0], 0.87, [0, 0]]]) {
+      const parts = rack[i];
+      const a = P.angle - 0.62 + turn;
+      const ct = Math.cos(a);
+      const st = Math.sin(a);
+      const A = (pts) => taper(pts.map(([qx, qy, w]) => [...W([base[0] + ox + (qx * ct - qy * st) * sc, base[1] + oy + (qx * st + qy * ct) * sc]), w * sc * k]));
+      parts.push(A([[0, 0, 4.6], [-2.6, -7, 4.3], [-2.4, -14, 4], [0.6, -20, 3.7], [6.6, -24.4, 3.4], [14, -27, 3], [22, -27.6, 2.6], [29, -26.2, 2.1], [34.4, -23, 1.5], [37.6, -19, 0.5]]));
+      parts.push(A([[-2.4, -7.5, 2.4], [-2, -13, 1.8], [-0.4, -17, 0.5]]));
+      parts.push(A([[4.6, -22.8, 2.6], [4.6, -30, 2.1], [5.6, -37, 1.5], [8, -42, 0.5]]));
+      parts.push(A([[12.4, -26.4, 2.5], [12.8, -34, 2], [14.2, -41, 1.4], [16.8, -46, 0.5]]));
+      parts.push(A([[20.6, -27.6, 2.3], [21.2, -34.4, 1.8], [22.8, -39.6, 1.2], [25.4, -43, 0.4]]));
+      parts.push(A([[28.4, -26.4, 2], [29.4, -31.6, 1.5], [31.4, -35.4, 0.4]]));
     }
   }
-  return `<g fill="${colour}">${parts.map((d) => `<path d="${d}"/>`).join('')}</g>`;
+  return {
+    far: { hind: hind(P.hind[1]), fore: fore(P.fore[1]), ear: ear(-1.5, 1.5, P.ears[0]), antler: rack[0] },
+    near: { hind: hind(P.hind[0]), fore: fore(P.fore[0]), ear: ear(0, 0, P.ears[1]), antler: rack[1] },
+    body,
+    tail,
+    frame: W,
+    head: (p) => W(H(p)),
+  };
 }
 
 /**

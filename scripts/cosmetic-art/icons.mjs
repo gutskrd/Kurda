@@ -1,7 +1,7 @@
 /**
  * The shop's icons: Kurdish things painted as they are — a pomegranate split
  * open, a glass of tea on its saucer, a seal of red wax with the eight-point
- * star pressed into it, a saz, a fawn lying in the grass — each lit as a
+ * star pressed into it, a saz, a buck with his head up — each lit as a
  * photographer lights a thing against a black cloth, and cut out of the dark,
  * so that it lies over a profile picture with nothing round it but its own
  * light.
@@ -11,6 +11,7 @@
  * shop tile. Each is a still life (still.mjs): surfaces given relief and lit,
  * shadows cast, light given off.
  */
+import { deerShapes } from './figures.mjs';
 import { eightPointStar, n, pt } from './kit.mjs';
 import { Still } from './still.mjs';
 
@@ -466,139 +467,161 @@ export const ICONS = [
     key: 'ask',
     ku: 'Ask',
     en: 'Deer',
-    // a fawn lying in the grass, its legs folded under it, its head up and its great ears turned toward you: a
-    // red-brown coat with loose rows of white spots down its back, a pale throat and belly, a black nose, a dark
-    // wet eye
+    // a buck standing in the open with his head up, looking out: the deer of the backgrounds (figures.mjs), heavy
+    // and deep through the chest, his neck thick, in his grey-brown autumn coat, white at the throat, round the eye
+    // and the muzzle and under the belly; a black nose, a dark wet eye, and a rack of tall tines, pale at their
+    // tips
     still(rnd) {
       const s = new Still(rnd);
-      const coatLit = { gloss: 0.06, shine: 8, wrap: 0.45, sheen: 0.75, hollows: 0.8 };
-      const coat = (angle) => ({ scale: 4, amount: 0.1, stretch: 3, angle });
-      const brown = (cv, x1, y1, x2, y2) => linear(cv, [[0, '#4e2c16'], [0.3, '#7a4626'], [0.7, '#9a643a'], [1, '#c4a07a']], x1, y1, x2, y2);
-      const hairs = ['#2e1a0c', '#5a3418', '#c89a6a', '#e8d2b0'];
-      // (an edge darkened from inside the shape, as fur darkens toward the rim of an ear)
-      const rim = (cv, d, colour, width, opacity) => {
-        const clip = cv.id('rim');
-        cv.def(`<clipPath id="${clip}"><path d="${d}"/></clipPath>`);
-        cv.add(`<path d="${d}" clip-path="url(#${clip})" fill="none" stroke="${colour}" stroke-width="${width}" stroke-opacity="${opacity}"/>`);
+      const d = deerShapes({ x: 325, y: 490, size: 272, facing: -1, pose: 'alert' });
+      const F = d.frame;
+      const Hd = d.head;
+      const k = 2.72;
+      const coat = { gloss: 0.06, shine: 8, wrap: 0.45, sheen: 0.8, hollows: 0.8 };
+      const hairs = ['#24180e', '#3e2c1c', '#a88a66', '#cdb898'];
+      // the way the hair lies: back along the body and down its flank, down the neck, back along the face
+      const flow = (x, y) => {
+        const [nx] = F([96, 0]);
+        if (y < Hd([20, 0])[1] + 30 && x < Hd([0, 0])[0] + 20) return -10;
+        return x < nx ? 70 : 12;
       };
-      // (the hair lies back along the body, down the flank, and down and back on the neck)
-      const lie = (x, y) => (x < 200 ? 110 - (y - 150) * 0.2 : 8 + (y - 250) * 0.35);
-      // a coat's relief: the hairs, raised a little
-      const pile = (d, box, count) => ({ draw: (cv) => fur(cv, rnd, d, box, lie, count, ['#fff'], { length: 8, width: 1.2, opacity: [0.3, 0.7] }), height: 0.9, blur: 0.4 });
-      // white spots in loose rows down the back, smaller and fewer down the flank, soft-edged
-      const spots = (cv, rows, clipD) => {
-        const clip = cv.id('spots');
-        const soft = cv.id('soft');
-        cv.def(`<clipPath id="${clip}"><path d="${clipD}"/></clipPath><filter id="${soft}" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur stdDeviation="1.1"/></filter>`);
-        cv.add(`<g clip-path="url(#${clip})"><g fill="#efe4d0" filter="url(#${soft})">`);
-        for (const [x0, x1, y0, y1, r, gap] of rows) {
-          for (let x = x0; x <= x1; x += gap * (0.7 + rnd() * 0.6)) {
-            if (rnd() < 0.15) continue;
-            const y = y0 + ((x - x0) / (x1 - x0)) * (y1 - y0) + (rnd() - 0.5) * 9;
-            const rr = r * (0.6 + rnd() * 0.5);
-            cv.add(`<ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(rr * 1.35)}" ry="${n(rr)}" transform="rotate(${n((rnd() - 0.5) * 30)} ${n(x)} ${n(y)})" fill-opacity="${n(0.5 + rnd() * 0.35)}"/>`);
-          }
-        }
-        cv.add('</g></g>');
+      const deg = (a, b) => (Math.atan2(b[1] - a[1], b[0] - a[0]) * 180) / Math.PI;
+      const face = deg(Hd([0, 0]), Hd([10, 0]));
+      const soft = (cv, sd) => {
+        const id = cv.id('soft');
+        cv.def(`<filter id="${id}" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="${sd}"/></filter>`);
+        return `url(#${id})`;
       };
-      // the far ear, behind the head: its back, brown, darker at its edge
-      const farEar = blade([168, 172], [176, 94], 38, { at: 0.5, point: 0.55 });
-      s.surface((cv) => {
-        cv.add(`<path d="${farEar}" fill="${brown(cv, 176, 92, 168, 172)}"/>`);
-        rim(cv, farEar, '#2a160a', 7, 0.55);
-      }, { inflate: { radius: 10, profile: 'soft', height: 0.5 }, mottle: coat(-80), material: coatLit });
-      // the body, lying
-      const torso = spline([[176, 296], [204, 262], [250, 246], [310, 243], [370, 246], [416, 262], [446, 298], [452, 340], [436, 376], [396, 392], [320, 398], [240, 396], [190, 386], [168, 352]]);
+      const clipTo = (cv, path) => {
+        const id = cv.id('clip');
+        cv.def(`<clipPath id="${id}"><path d="${path}"/></clipPath>`);
+        return `url(#${id})`;
+      };
+      const span = (a, b) => [Math.min(a[0], b[0]) - 10, Math.min(a[1], b[1]) - 10, Math.max(a[0], b[0]) + 10, Math.max(a[1], b[1]) + 10];
+      const hooves = (cv, path) => cv.add(`<rect x="0" y="${n(F([0, -5])[1])}" width="512" height="40" fill="#1e160e" clip-path="${clipTo(cv, path)}"/>`);
+      // a leg: the coat's colours down to tan, its hoof black; a near one laid over the body, its top faded into it
+      // from `fade` (in the deer's frame) to `full`, so that the round of the haunch or the shoulder comes out of
+      // the body as it does
+      const leg = (path, top, shade, [fade, full] = [null, null]) =>
+        s.surface(
+          (cv) => {
+            cv.add(`<path d="${path}" fill="${linear(cv, shade ? [[0, '#2e2216'], [0.35, '#4a3624'], [0.65, '#5e4630'], [1, '#6a5038']] : [[0, '#4e3824'], [0.32, '#7a5c3e'], [0.6, '#957756'], [1, '#a88a66']], 0, F([0, -108])[1], 0, F([0, 0])[1])}"/>`);
+            fur(cv, rnd, path, [0, top, 512, 492], () => 90, 260, hairs, { length: 6, opacity: [0.06, 0.18] });
+            hooves(cv, path);
+          },
+          {
+            inflate: { radius: 9, profile: 'round', height: 0.8 },
+            mottle: { scale: 3, amount: 0.08, stretch: 4, angle: 90 },
+            material: coat,
+            mask: fade === null ? null : (cv) => cv.add(`<rect width="512" height="512" fill="${linear(cv, [[0, '#000'], [1, '#fff']], 0, F([0, fade])[1], 0, F([0, full])[1])}"/>`),
+          },
+        );
+      // an antler: bone, dark and rough at the base, pale and smooth at the tips
+      const antler = (paths, shade) =>
+        s.surface(
+          (cv) => {
+            const [bx, by] = Hd([7.5, -2.5]);
+            const g = radial(cv, shade ? [[0, '#3e3024'], [0.3, '#6a5640'], [1, '#b8a888']] : [[0, '#4a3a2a'], [0.25, '#86704e'], [0.7, '#c8b48e'], [1, '#efe6d0']], bx, by, 130);
+            cv.add(`<g fill="${g}">${paths.map((p) => `<path d="${p}"/>`).join('')}</g>`);
+          },
+          { inflate: { radius: 4, profile: 'round', height: 0.9 }, bumps: { scale: 1.6, amount: 0.5, stretch: 3 }, material: { gloss: 0.4, shine: 34, wrap: 0.1, sheen: 0.5, hollows: 0.6 } },
+        );
+      // the far side, in its own shade: the far legs, the far antler and ear behind the head
+      leg(d.far.hind, F([0, -90])[1], true);
+      leg(d.far.fore, F([0, -70])[1], true);
+      antler(d.far.antler, true);
+      s.surface((cv) => cv.add(`<path d="${d.far.ear}" fill="${linear(cv, [[0, '#3a2a1c'], [1, '#6a5038']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`), { inflate: { radius: 5, profile: 'soft', height: 0.5 }, material: coat });
+      // the body, the neck and the head: grey-brown, darker along the back, white under the belly, at the throat,
+      // round the eye and the muzzle; the hair lying as it lies
+      const box = [0, 40, 512, 492];
       s.surface(
         (cv) => {
-          cv.add(`<path d="${torso}" fill="${brown(cv, 0, 236, 0, 404)}"/>`);
-          // the darker line of the spine
-          cv.add(`<path d="M206 262 C260 246 360 242 420 266" fill="none" stroke="#3a1e0c" stroke-width="14" stroke-opacity="0.35" stroke-linecap="round"/>`);
-          spots(cv, [[226, 410, 264, 268, 5.5, 20], [234, 400, 288, 290, 5.5, 19], [250, 384, 314, 318, 4.2, 22], [270, 340, 340, 344, 3.4, 28]], torso);
-          fur(cv, rnd, torso, [160, 236, 460, 400], lie, 1600, hairs, { opacity: [0.08, 0.22] });
-        },
-        { inflate: { radius: 80, profile: 'soft', height: 0.7, soften: 2 }, relief: pile(torso, [160, 236, 460, 400], 1400), mottle: coat(-6), material: coatLit },
-      );
-      // the near hind leg: the round of the thigh, and below it the shank folded forward along the ground
-      const thigh = spline([[330, 290], [372, 270], [420, 280], [446, 314], [444, 356], [420, 384], [380, 394], [340, 382], [318, 350], [318, 314]]);
-      s.shadow((cv) => cv.add(`<path d="${thigh}" fill="#000" transform="translate(-8 4)"/>`), { blur: 10, opacity: 0.4 });
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${thigh}" fill="${brown(cv, 0, 266, 0, 400)}"/>`);
-          spots(cv, [[350, 420, 294, 290, 4.6, 19], [340, 430, 320, 316, 4.2, 21], [356, 410, 344, 342, 3.4, 26]], thigh);
-          fur(cv, rnd, thigh, [314, 266, 450, 396], (x) => 60 + (x - 380) * 0.3, 700, hairs, { opacity: [0.08, 0.22] });
-        },
-        { inflate: { radius: 50, profile: 'soft', height: 0.7 }, relief: pile(thigh, [314, 266, 450, 396], 600), mottle: coat(-30), material: coatLit },
-      );
-      const legs = (cv, d, y0, y1) => cv.add(`<path d="${d}" fill="${linear(cv, [[0, '#5a3418'], [1, '#8a5a36']], 0, y0, 0, y1)}"/>`);
-      const shank = tube([[448, 376], [410, 396], [356, 405], [320, 405]], 28, 15);
-      s.surface((cv) => legs(cv, shank, 380, 420), { inflate: { radius: 9, profile: 'round', height: 0.8 }, mottle: coat(0), material: coatLit });
-      const hoof = { inflate: { radius: 5, profile: 'round', height: 0.8 }, material: { gloss: 0.5, shine: 40, sheen: 0.3 } };
-      s.surface((cv) => cv.add(`<path d="${tube([[322, 405], [300, 404]], 13, 7, 6)}" fill="#1e140e"/>`), hoof);
-      // the near foreleg, folded: the knee forward, the shank tucked back under the chest
-      s.surface(
-        (cv) => {
-          legs(cv, tube([[230, 350], [212, 378], [194, 396]], 34, 26), 340, 400);
-          legs(cv, tube([[190, 400], [214, 409], [238, 410]], 20, 14), 390, 420);
-        },
-        { inflate: { radius: 10, profile: 'round', height: 0.8 }, mottle: coat(20), material: coatLit },
-      );
-      s.surface((cv) => cv.add(`<path d="${tube([[236, 410], [256, 410]], 12, 7, 6)}" fill="#1e140e"/>`), hoof);
-      // the neck, rising from the shoulders, its throat pale
-      const neck = spline([[246, 272], [230, 240], [212, 210], [194, 188], [168, 196], [146, 238], [140, 276], [152, 316], [174, 350], [214, 338]]);
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${neck}" fill="${linear(cv, [[0, '#d4bc98'], [0.3, '#a87c52'], [0.65, '#7e4c2a'], [1, '#5a3218']], 140, 290, 236, 236)}"/>`);
-          fur(cv, rnd, neck, [136, 184, 250, 354], () => 100, 700, hairs, { opacity: [0.08, 0.22] });
-        },
-        { inflate: { radius: 50, profile: 'soft', height: 0.7 }, relief: pile(neck, [136, 184, 250, 354], 500), mottle: coat(-60), material: coatLit },
-      );
-      s.shadow((cv) => cv.add(`<path d="M120 268 C144 280 174 272 194 246 L200 276 C174 298 140 298 120 284 Z" fill="#000"/>`), { blur: 9, opacity: 0.5 });
-      // the head: the round of the brow, the long muzzle, darker down its bridge, pale over the nose and at the chin
-      const head = spline([[192, 186], [170, 166], [142, 168], [120, 186], [106, 212], [92, 236], [84, 254], [90, 268], [110, 276], [140, 268], [170, 250], [192, 226]]);
-      s.surface(
-        (cv) => {
-          cv.add(`<path d="${head}" fill="${linear(cv, [[0, '#5a3218'], [0.45, '#8a5630'], [1, '#b48a62']], 174, 172, 108, 268)}"/>`);
-          const soft = cv.id('soft');
-          cv.def(`<filter id="${soft}" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="3.5"/></filter>`);
-          cv.add(`<g filter="url(#${soft})">`);
-          cv.add(`<path d="M174 174 C148 178 126 196 110 226 C102 240 96 246 92 250" fill="none" stroke="#3a1e0c" stroke-width="9" stroke-opacity="0.4" stroke-linecap="round"/>`);
-          cv.add(`<path d="M100 246 C110 252 118 260 122 270" fill="none" stroke="#e0d2bc" stroke-width="6" stroke-opacity="0.45" stroke-linecap="round"/>`);
-          cv.add(`<path d="M112 274 C126 278 142 274 154 264" fill="none" stroke="#e6dccb" stroke-width="7" stroke-opacity="0.5" stroke-linecap="round"/>`);
-          cv.add(`<ellipse cx="138" cy="206" rx="18" ry="12" transform="rotate(-28 138 206)" fill="#c49a70" fill-opacity="0.35"/>`);
+          cv.add(`<path d="${d.body}" fill="${linear(cv, [[0, '#4e3824'], [0.35, '#6e5234'], [0.7, '#8e7050'], [1, '#a88c6a']], 0, F([0, -108])[1], 0, F([0, -44])[1])}"/>`);
+          cv.add(`<path d="${d.tail}" fill="#5e4430"/>`);
+          cv.add(`<g clip-path="${clipTo(cv, d.body)}" filter="${soft(cv, 6)}">`);
+          // (the white of the belly, from the brisket back under the flank)
+          cv.add(`<path d="M${pt(F([104, -42]))} C${pt(F([80, -44]))} ${pt(F([50, -55]))} ${pt(F([26, -62]))}" fill="none" stroke="#e8e0d2" stroke-width="${n(9 * k)}" stroke-opacity="0.85"/>`);
+          // (the darker line of the back and the face)
+          cv.add(`<path d="M${pt(F([14, -106]))} C${pt(F([50, -104]))} ${pt(F([90, -103]))} ${pt(F([104, -114]))}" fill="none" stroke="#2e2014" stroke-width="${n(7 * k)}" stroke-opacity="0.5"/>`);
           cv.add('</g>');
-          fur(cv, rnd, head, [80, 162, 196, 280], (x) => 130 + (x - 134) * 0.6, 500, hairs, { length: 5, opacity: [0.08, 0.22] });
+          const throat = Hd([10, 23]);
+          const eye = Hd([12, 5.5]);
+          cv.add(`<g clip-path="${clipTo(cv, d.body)}"><g filter="${soft(cv, 2.6)}">`);
+          cv.add(`<ellipse cx="${n(throat[0])}" cy="${n(throat[1])}" rx="${n(7 * k)}" ry="${n(4.6 * k)}" transform="rotate(${n(face + 70)} ${n(throat[0])} ${n(throat[1])})" fill="#f2ece2"/>`);
+          cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(5 * k)}" ry="${n(3.8 * k)}" transform="rotate(${n(face)} ${n(eye[0])} ${n(eye[1])})" fill="#d8ccb8" fill-opacity="0.35"/>`);
+          // the pale band behind the nose, and the white of the chin
+          cv.add(`<path d="M${pt(Hd([24.6, 4]))} L${pt(Hd([25.8, 12.6]))}" stroke="#e8e0d2" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.6"/>`);
+          cv.add(`<path d="M${pt(Hd([20, 17]))} L${pt(Hd([28, 14.6]))}" stroke="#ece4d6" stroke-width="${n(2.4 * k)}" stroke-linecap="round" stroke-opacity="0.7"/>`);
+          // the bridge of the nose, darker
+          cv.add(`<path d="M${pt(Hd([8, -1]))} L${pt(Hd([27, 3.4]))}" stroke="#2a1c10" stroke-width="${n(3.4 * k)}" stroke-linecap="round" stroke-opacity="0.45"/>`);
+          cv.add('</g></g>');
+          fur(cv, rnd, d.body, box, flow, 2600, hairs, { length: 7, opacity: [0.06, 0.2] });
         },
-        { inflate: { radius: 36, profile: 'soft', height: 0.75 }, relief: pile(head, [80, 162, 196, 280], 400), mottle: coat(-40), material: coatLit },
+        {
+          inflate: { radius: 34, profile: 'soft', height: 0.7, soften: 2 },
+          relief: [
+            // the masses under the coat: the haunch, the ribs, the shoulder, the neck's muscle, the cheek
+            {
+              draw: (cv) => {
+                cv.add(`<g filter="${soft(cv, 10)}" fill="#fff">`);
+                const blob = (c, rx, ry, rot, o) => {
+                  const [cx, cy] = F(c);
+                  cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(rx * k)}" ry="${n(ry * k)}" transform="rotate(${n(rot)} ${n(cx)} ${n(cy)})" fill-opacity="${o}"/>`);
+                };
+                blob([18, -80], 19, 21, 0, 1);
+                blob([56, -78], 24, 15, 0, 0.55);
+                blob([88, -74], 12, 21, -15, 0.9);
+                blob([92, -56], 8, 10, 0, 0.6);
+                blob([106, -104], 9, 20, 30, 0.6);
+                cv.add('</g>');
+                const [cx, cy] = Hd([10, 11]);
+                cv.add(`<ellipse cx="${n(cx)}" cy="${n(cy)}" rx="${n(7 * k)}" ry="${n(5 * k)}" fill="#fff" fill-opacity="0.7" filter="${soft(cv, 4)}"/>`);
+              },
+              height: 16,
+              blur: 2,
+            },
+            // the hollow of the eye, and the nostril
+            {
+              draw: (cv) => {
+                for (const [c, rx, ry] of [[Hd([12, 5.5]), 4.6, 3.6], [Hd([31, 8]), 1.4, 1.1]]) cv.add(`<ellipse cx="${n(c[0])}" cy="${n(c[1])}" rx="${n(rx * k)}" ry="${n(ry * k)}" transform="rotate(${n(face)} ${n(c[0])} ${n(c[1])})" fill="#fff"/>`);
+              },
+              height: -4,
+              blur: 2,
+            },
+            // the coat's hair, raised a little
+            { draw: (cv) => fur(cv, rnd, d.body, box, flow, 1600, ['#fff'], { length: 8, width: 1.2, opacity: [0.3, 0.7] }), height: 0.9, blur: 0.4 },
+          ],
+          mottle: { scale: 5, amount: 0.08 },
+          material: coat,
+        },
       );
-      // the eye: large, dark, wet, a glint of the sky in it, its lids dark
-      s.surface((cv) => cv.add(`<ellipse cx="138" cy="204" rx="11.5" ry="8.5" transform="rotate(-24 138 204)" fill="${radial(cv, [[0, '#2e1a0c'], [0.65, '#140a04'], [1, '#050302']], 135, 201, 12)}" stroke="#1a0e06" stroke-width="2"/>`), {
-        inflate: { radius: 8, profile: 'round', height: 0.7 },
+      // the near legs, lit, over the body: the haunch and the thigh, the shoulder and the forearm
+      leg(d.near.hind, F([0, -96])[1], false, [-84, -64]);
+      leg(d.near.fore, F([0, -70])[1], false, [-62, -47]);
+      // the eye: dark, wet, a glint of the sky in it
+      const eye = Hd([12, 5.5]);
+      s.surface((cv) => cv.add(`<ellipse cx="${n(eye[0])}" cy="${n(eye[1])}" rx="${n(3.2 * k)}" ry="${n(2.4 * k)}" transform="rotate(${n(face - 8)} ${n(eye[0])} ${n(eye[1])})" fill="${radial(cv, [[0, '#2a1608'], [0.7, '#120904'], [1, '#050302']], eye[0], eye[1], 3.2 * k)}"/>`), {
+        inflate: { radius: 2.4 * k, profile: 'round', height: 0.7 },
         material: { gloss: 1.6, shine: 220, sheen: 0.4, hollows: 0 },
       });
-      s.paint((cv) => cv.add(`<ellipse cx="133" cy="200" rx="3" ry="2" transform="rotate(-24 133 200)" fill="#fff" fill-opacity="0.8"/>`), { blur: 0.5 });
-      // the nose
-      s.surface((cv) => cv.add(`<path d="${spline([[94, 240], [86, 248], [82, 258], [88, 266], [98, 264], [102, 252]])}" fill="#141010"/>`), {
-        inflate: { radius: 7, profile: 'round', height: 0.8 },
+      s.paint((cv) => cv.add(`<ellipse cx="${n(eye[0] - 2.4)}" cy="${n(eye[1] - 2.4)}" rx="2.6" ry="1.7" fill="#fff" fill-opacity="0.85"/>`), { blur: 0.4 });
+      // the nose, black and wet
+      const nose = [Hd([26.6, 4.6]), Hd([31.4, 5.4]), Hd([33.8, 8.6]), Hd([33, 11.6]), Hd([29.6, 12.4]), Hd([26.8, 10])];
+      s.surface((cv) => cv.add(`<path d="${spline(nose)}" fill="#141010"/>`), {
+        inflate: { radius: 2.6 * k, profile: 'round', height: 0.8 },
         bumps: { scale: 1, amount: 0.4 },
         material: { gloss: 0.9, shine: 70, sheen: 0.3 },
       });
-      // the near ear, its inside to you: pale, furred white, darker at its edge
-      const ear = blade([188, 184], [264, 122], 50, { at: 0.5, point: 0.55 });
-      s.shadow((cv) => cv.add(`<path d="${ear}" fill="#000" transform="translate(-4 8)"/>`), { blur: 6, opacity: 0.45 });
+      // the near ear, its inside to us: pale, furred white, darker at its rim
       s.surface(
         (cv) => {
-          cv.add(`<path d="${ear}" fill="${linear(cv, [[0, '#6a4028'], [0.3, '#a07858'], [1, '#c8aa90']], 188, 184, 264, 122)}"/>`);
-          fur(cv, rnd, ear, [184, 116, 270, 188], () => -40, 260, ['#f6eee2', '#fff', '#d8c4b0'], { length: 10, width: 0.9, opacity: [0.2, 0.5] });
-          rim(cv, ear, '#2a160a', 8, 0.5);
+          cv.add(`<path d="${d.near.ear}" fill="${linear(cv, [[0, '#5a4430'], [0.4, '#9a8268'], [1, '#c8b49a']], ...Hd([0, 0]), ...Hd([-6, -18]))}"/>`);
+          fur(cv, rnd, d.near.ear, span(Hd([4, 2]), Hd([-10, -24])), () => -60, 120, ['#f6eee2', '#fff', '#d8c8b4'], { length: 8, width: 0.9, opacity: [0.2, 0.5] });
+          cv.add(`<path d="${d.near.ear}" clip-path="${clipTo(cv, d.near.ear)}" fill="none" stroke="#2a1c10" stroke-width="7" stroke-opacity="0.5"/>`);
         },
-        {
-          inflate: { radius: 14, profile: 'soft', height: 0.4 },
-          relief: { draw: (cv) => cv.add(`<path d="${blade([192, 182], [256, 128], 30, { at: 0.5, point: 0.55 })}" fill="#fff"/>`), height: -5, blur: 5 },
-          mottle: coat(-40),
-          material: { ...coatLit, wrap: 0.6 },
-        },
+        { inflate: { radius: 6, profile: 'soft', height: 0.4 }, material: { ...coat, wrap: 0.6 } },
       );
+      antler(d.near.antler, false);
       return s.done({ finish: { grain: 0.004, saturation: 0.95 } });
     },
   },

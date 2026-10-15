@@ -45,10 +45,11 @@
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
  * still lifes — a pomegranate split open, a glass of tea by its teapot, a seal
- * of red wax with the eight-point star pressed into it, a saz, a fawn lying in
- * the grass, a sheaf of wheat, the Newroz fire — each lit the way a thing is
- * lit against a black cloth and cut out of it, so that it lies over a profile
- * picture with nothing round it but its own light (cosmetic-art/still.mjs).
+ * of red wax with the eight-point star pressed into it, a saz, a buck with his
+ * head up (the deer of the backgrounds, figures.mjs), a sheaf of wheat, the
+ * Newroz fire — each lit the way a thing is lit against a black cloth and cut
+ * out of it, so that it lies over a profile picture with nothing round it but
+ * its own light (cosmetic-art/still.mjs).
  * Stickers (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo
  * deer and a few words in a badge.
  *
