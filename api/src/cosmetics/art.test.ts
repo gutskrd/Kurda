@@ -5,7 +5,7 @@
  *
  * It runs the generator into a temporary folder and compares what comes out
  * with what is committed. The same script makes the same SVG on every machine
- * (checked first, cheaply), and sharp and the compositor's arithmetic turn the
+ * (checked first), and sharp and the compositor's arithmetic turn the
  * same SVG into the same pixels; the comparison is byte-for-byte where it can
  * be and pixel-for-pixel within a hair where an encoder build differs, so a
  * picture that was edited or swapped by hand fails here while a different
@@ -72,11 +72,12 @@ describe('the cosmetic art generator', () => {
     expect(new Set(keys).size).toBe(keys.length);
   });
 
+  // (every scene laid up twice over, grass blade by blade and blossom by blossom: seconds, not milliseconds)
   it('writes the same SVG every time it is asked', () => {
     for (const piece of gen.BACKGROUNDS) expect(gen.backgroundSvg(piece)).toBe(gen.backgroundSvg(piece));
     for (const piece of gen.ICONS) expect(gen.iconSvg(piece)).toBe(gen.iconSvg(piece));
     for (const piece of gen.STICKERS) expect(gen.stickerSvg(piece)).toBe(gen.stickerSvg(piece));
-  });
+  }, 120_000);
 
   it('writes every file it promises, and nothing else', () => {
     const expected = [

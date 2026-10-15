@@ -72,34 +72,80 @@ export function ishakPasha({ x, y, w, fill, lit = null, rock = fill, snow = null
 /**
  * The citadel of Hewlêr: a broad mound with steep sides, its rim walled by
  * the backs of houses, the great gate in front with the ramp running down.
+ *
+ * In one `fill` it is a silhouette, mound and all. Given `faces` it is in
+ * daylight, and only what is built is drawn (the mound is the painter's):
+ * every house's back in one of `faces.wall`, lit down its left side in
+ * `faces.edge` and shadowed down its right in `faces.dark`, with its small
+ * windows in `faces.window`.
  */
-export function citadel(rnd, { x, y, w, fill, lights = null }) {
+export function citadel(rnd, { x, y, w, fill, lights = null, faces = null }) {
   const h = w * 0.13;
   const top = y - h;
   const out = [];
-  out.push(`<path d="M${pt([x - w * 0.58, y])} C${pt([x - w * 0.5, y - h * 0.4])} ${pt([x - w * 0.47, top + h * 0.1])} ${pt([x - w * 0.42, top])} L${pt([x + w * 0.42, top])} C${pt([x + w * 0.47, top + h * 0.1])} ${pt([x + w * 0.5, y - h * 0.4])} ${pt([x + w * 0.58, y])} Z" fill="${fill}"/>`);
+  const pick = (list) => list[Math.floor(rnd() * list.length) % list.length];
+  if (!faces) out.push(`<path d="M${pt([x - w * 0.58, y])} C${pt([x - w * 0.5, y - h * 0.4])} ${pt([x - w * 0.47, top + h * 0.1])} ${pt([x - w * 0.42, top])} L${pt([x + w * 0.42, top])} C${pt([x + w * 0.47, top + h * 0.1])} ${pt([x + w * 0.5, y - h * 0.4])} ${pt([x + w * 0.58, y])} Z" fill="${fill}"/>`);
   // houses along the rim, shoulder to shoulder, of different heights
   let u = x - w * 0.42;
   const windows = [];
   while (u < x + w * 0.42) {
-    const hw = w * between(rnd, 0.018, 0.04);
-    const hh = w * between(rnd, 0.022, 0.05);
-    out.push(rect(u, top - hh, hw + 1, hh + 2, fill));
-    if (lights && rnd() < 0.35) windows.push(rect(u + hw * 0.35, top - hh * 0.65, hw * 0.2, hh * 0.25, lights));
+    if (!faces) {
+      const hw = w * between(rnd, 0.018, 0.04);
+      const hh = w * between(rnd, 0.022, 0.05);
+      out.push(rect(u, top - hh, hw + 1, hh + 2, fill));
+      if (lights && rnd() < 0.35) windows.push(rect(u + hw * 0.35, top - hh * 0.65, hw * 0.2, hh * 0.25, lights));
+      u += hw;
+      continue;
+    }
+    // in daylight the backs of the houses stand tall, one wall of brick from end to end
+    const hw = w * between(rnd, 0.016, 0.034);
+    const hh = w * between(rnd, 0.036, 0.064);
+    out.push(rect(u, top - hh, hw + 1, hh + 3, pick(faces.wall)));
+    out.push(rect(u, top - hh, Math.max(0.8, hw * 0.1), hh + 3, faces.edge));
+    if (rnd() < 0.5) out.push(rect(u + hw * 0.86, top - hh, hw * 0.14 + 1, hh + 3, faces.dark));
+    // a parapet's shadow along the top, and the windows: small and deep, in rows
+    out.push(rect(u, top - hh, hw + 1, Math.max(0.8, hh * 0.05), faces.dark));
+    const rows = Math.max(1, Math.floor(hh / (w * 0.015)));
+    for (let k = 0; k < rows; k++) {
+      for (let c = 0; c < (hw > w * 0.026 ? 2 : 1); c++) {
+        if (rnd() < 0.35) continue;
+        const wy = top - hh + hh * (0.18 + (0.7 * k) / rows);
+        const lit = lights && rnd() < 0.1;
+        windows.push(rect(u + hw * (0.22 + c * 0.42) + between(rnd, -1, 1), wy, Math.max(1, hw * 0.13), Math.max(1.4, w * 0.006), lit ? lights : faces.window));
+      }
+    }
     u += hw;
   }
+  const solid = faces ? faces.wall[0] : fill;
+  const shade = faces ? faces.dark : fill;
   // a minaret and a dome above the roofs
-  out.push(rect(x - w * 0.18, top - w * 0.14, w * 0.012, w * 0.14, fill));
-  out.push(`<path d="M${pt([x - w * 0.186, top - w * 0.14])} L${pt([x - w * 0.174, top - w * 0.165])} L${pt([x - w * 0.162, top - w * 0.14])} Z" fill="${fill}"/>`);
-  out.push(`<path d="M${pt([x + w * 0.2, top - w * 0.05])} C${pt([x + w * 0.2, top - w * 0.1])} ${pt([x + w * 0.26, top - w * 0.1])} ${pt([x + w * 0.26, top - w * 0.05])} Z" fill="${fill}"/>`);
-  // the great gate, standing proud of the rim, and the ramp
-  out.push(rect(x - w * 0.035, top - w * 0.085, w * 0.07, w * 0.085 + 2, fill));
-  out.push(`<path d="M${pt([x - w * 0.045, top - w * 0.085])} L${pt([x - w * 0.045, top - w * 0.095])} L${pt([x + w * 0.045, top - w * 0.095])} L${pt([x + w * 0.045, top - w * 0.085])} Z" fill="${fill}"/>`);
-  out.push(`<path d="M${pt([x - w * 0.03, top + 2])} L${pt([x - w * 0.16, y])} L${pt([x - w * 0.02, y])} L${pt([x + w * 0.03, top + 2])} Z" fill="${fill}"/>`);
-  if (lights) {
-    out.push(`<path d="M${pt([x - w * 0.014, top])} L${pt([x - w * 0.014, top - w * 0.04])} Q${pt([x, top - w * 0.058])} ${pt([x + w * 0.014, top - w * 0.04])} L${pt([x + w * 0.014, top])} Z" fill="${lights}"/>`);
-    out.push(...windows);
+  if (!faces) {
+    out.push(rect(x - w * 0.18, top - w * 0.14, w * 0.012, w * 0.14, solid));
+    out.push(`<path d="M${pt([x - w * 0.186, top - w * 0.14])} L${pt([x - w * 0.174, top - w * 0.165])} L${pt([x - w * 0.162, top - w * 0.14])} Z" fill="${solid}"/>`);
+  } else {
+    // the shaft tapering a little, its balcony on corbels, the cap over a lantern
+    const mx = x - w * 0.174;
+    const mh = w * 0.15;
+    out.push(`<path d="M${pt([mx - w * 0.009, top])} L${pt([mx - w * 0.007, top - mh])} L${pt([mx + w * 0.007, top - mh])} L${pt([mx + w * 0.009, top])} Z" fill="${solid}"/>`);
+    out.push(`<path d="M${pt([mx + w * 0.002, top])} L${pt([mx + w * 0.002, top - mh])} L${pt([mx + w * 0.007, top - mh])} L${pt([mx + w * 0.009, top])} Z" fill="${shade}"/>`);
+    out.push(`<path d="M${pt([mx - w * 0.008, top - mh * 0.8])} L${pt([mx - w * 0.013, top - mh * 0.84])} L${pt([mx + w * 0.013, top - mh * 0.84])} L${pt([mx + w * 0.008, top - mh * 0.8])} Z" fill="${faces.edge}"/>`);
+    out.push(rect(mx - w * 0.013, top - mh * 0.87, w * 0.026, mh * 0.03, shade));
+    out.push(rect(mx - w * 0.005, top - mh * 1.06, w * 0.01, mh * 0.08, solid));
+    out.push(`<path d="M${pt([mx - w * 0.008, top - mh * 1.06])} L${pt([mx, top - mh * 1.2])} L${pt([mx + w * 0.008, top - mh * 1.06])} Z" fill="${shade}"/>`);
   }
+  out.push(`<path d="M${pt([x + w * 0.2, top - w * 0.05])} C${pt([x + w * 0.2, top - w * 0.1])} ${pt([x + w * 0.26, top - w * 0.1])} ${pt([x + w * 0.26, top - w * 0.05])} Z" fill="${solid}"/>`);
+  if (faces) out.push(`<path d="M${pt([x + w * 0.23, top - w * 0.05])} C${pt([x + w * 0.245, top - w * 0.06])} ${pt([x + w * 0.25, top - w * 0.085])} ${pt([x + w * 0.23, top - w * 0.088])} C${pt([x + w * 0.255, top - w * 0.09])} ${pt([x + w * 0.26, top - w * 0.07])} ${pt([x + w * 0.26, top - w * 0.05])} Z" fill="${shade}"/>`);
+  // the great gate, standing proud of the rim, and the ramp
+  out.push(rect(x - w * 0.035, top - w * 0.085, w * 0.07, w * 0.085 + 2, solid));
+  out.push(`<path d="M${pt([x - w * 0.045, top - w * 0.085])} L${pt([x - w * 0.045, top - w * 0.095])} L${pt([x + w * 0.045, top - w * 0.095])} L${pt([x + w * 0.045, top - w * 0.085])} Z" fill="${solid}"/>`);
+  if (faces) out.push(rect(x + w * 0.028, top - w * 0.085, w * 0.007, w * 0.085 + 2, shade) + rect(x - w * 0.035, top - w * 0.085, w * 0.004, w * 0.085 + 2, faces.edge));
+  out.push(`<path d="M${pt([x - w * 0.03, top + 2])} L${pt([x - w * 0.16, y])} L${pt([x - w * 0.02, y])} L${pt([x + w * 0.03, top + 2])} Z" fill="${faces ? pick(faces.wall) : fill}"/>`);
+  const arch = `M${pt([x - w * 0.014, top])} L${pt([x - w * 0.014, top - w * 0.04])} Q${pt([x, top - w * 0.058])} ${pt([x + w * 0.014, top - w * 0.04])} L${pt([x + w * 0.014, top])} Z`;
+  if (faces) out.push(`<path d="${arch}" fill="${faces.window}"/>`);
+  if (lights) {
+    if (!faces) out.push(`<path d="${arch}" fill="${lights}"/>`);
+    out.push(...windows);
+  } else if (faces) out.push(...windows);
   return out.join('');
 }
 

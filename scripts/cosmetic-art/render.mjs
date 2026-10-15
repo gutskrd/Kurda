@@ -33,18 +33,27 @@ function clone(f) {
 }
 
 /** An SVG (the whole canvas) as a premultiplied frame, rendered at 1/scale and brought back up. */
-export async function rasterise(svg, w, h, scale = 1) {
-  const { data, info } = await sharp(Buffer.from(svg), { density: 72 / scale }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
-  const small = frame(info.width, info.height);
+export async function rasterise(svg, w, h, scale = 1, bleed = 0) {
+  // drawn `bleed` pixels past its edges and cut back: a filter is only ever worked inside the picture, so one
+  // that reaches in from beside it (a shifted copy) would find nothing there
+  const pad = Math.ceil(bleed / scale) * scale;
+  const src = pad ? svg.replace(/^<svg ([^>]*)width="(\d+)" height="(\d+)" viewBox="0 0 \d+ \d+"/, (m, attrs, sw, sh) => `<svg ${attrs}width="${+sw + 2 * pad}" height="${+sh + 2 * pad}" viewBox="${-pad} ${-pad} ${+sw + 2 * pad} ${+sh + 2 * pad}"`) : svg;
+  const { data, info } = await sharp(Buffer.from(src), { density: 72 / scale }).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const cut = pad / scale;
+  const small = frame(info.width - 2 * cut, info.height - 2 * cut);
   const p = small.px;
-  for (let i = 0; i < data.length; i += 4) {
-    const a = data[i + 3] / 255;
-    p[i] = (data[i] / 255) * a;
-    p[i + 1] = (data[i + 1] / 255) * a;
-    p[i + 2] = (data[i + 2] / 255) * a;
-    p[i + 3] = a;
+  for (let y = 0; y < small.h; y++) {
+    for (let x = 0; x < small.w; x++) {
+      const i = (y * small.w + x) * 4;
+      const j = ((y + cut) * info.width + x + cut) * 4;
+      const a = data[j + 3] / 255;
+      p[i] = (data[j] / 255) * a;
+      p[i + 1] = (data[j + 1] / 255) * a;
+      p[i + 2] = (data[j + 2] / 255) * a;
+      p[i + 3] = a;
+    }
   }
-  return info.width === w && info.height === h ? small : resize(small, w, h);
+  return small.w === w && small.h === h ? small : resize(small, w, h);
 }
 
 /** Bilinear resampling to w × h. */
@@ -506,18 +515,24 @@ export function roughen(f, { scale = 8, freq = 0.08, seed = 1, octaves = 2 }) {
 /**
  * A mountain range painted from a relief, as a landscape painter models one,
  * rather than filled flat: under the skyline every pixel has a height in a
- * relief of ribs and gullies that fan down from the summits (ridged noise
- * along the angle from each summit, so they run with the fall of the slope)
- * over broader swells; its slope there, tilted by which flank of which peak
- * it is on, is lit from `light` ([x, y, z]: right, down, toward us) — rock
- * between `shadow` and `lit`, darker down in the gullies. Snow lies above
- * `snowline`, and below it lingers in the gullies before it gives out; it
- * slides off the steepest rock. Toward the foot the colour goes to `foot`.
+ * relief of a few great ridges coming down from the summits with broad faces
+ * between them, and finer ribs and gullies scoring those faces (ridged noise
+ * along the angle from each summit, so they run with the fall of the slope);
+ * its slope there, tilted by which flank of which peak it is on, is lit from
+ * `light` ([x, y, z]: right, down, toward us) — rock between `shadow` and
+ * `lit`, darker down in the gullies. Snow lies above `snowline`, higher on
+ * the ridges and lower down the gullies, so its edge runs down in tongues;
+ * it slides off the steepest rock. Toward the foot the colour goes to `foot`.
+ *
+ * With `grassy` (how much the blades show) it is a hill under grass instead:
+ * no ribs and no rock, only broad swells, and the colour streaked with blades
+ * `blade` pixels long leaning with `wind`; given `dry`, the grass dries to it
+ * in drifts across the slope (`dryness`, how far).
  *
  * `ridge` is the skyline, [x, y] left to right; `peaks` are the summits as
  * [x, y, half-width]. Returns a premultiplied frame, the sky clear.
  */
-export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1 }) {
+export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, shadow, foot = null, footFrom = null, snowline = null, snowLit = '#ffffff', snowShadow = '#b6c4de', relief = 1, ribs = 7, ambient = 0.24, seed = 1, grassy = 0, blade = 4, wind = 0.3, dry = null, dryness = 0.5 }) {
   const f = frame(w, h);
   const skyline = new Float32Array(w);
   for (let x = 0, j = 0; x < w; x++) {
@@ -543,17 +558,17 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
     }
     return sum / norm;
   };
-  const ridged = (x, y, octaves) => {
+  const ridged = (x, y, octaves, gain = 0.5, k = 2) => {
     let sum = 0;
     let amp = 0.5;
     let norm = 0;
     for (let o = 0; o < octaves; o++) {
-      const v = 1 - Math.min(1, Math.abs(noise.plain(2, x, y) * 1.7));
+      const v = 1 - Math.min(1, Math.abs(noise.plain(k, x, y) * 1.7));
       sum += v ** 1.4 * amp;
       norm += amp;
       x *= 2.03;
       y *= 2.03;
-      amp *= 0.5;
+      amp *= gain;
     }
     return sum / norm;
   };
@@ -574,8 +589,17 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
     flanks[x] = peaks.reduce((acc, pk, k) => acc + ws[k] * clamp((x - pk[0]) / pk[2], -1, 1), 0);
     const near = peaks.map((pk, k) => [pk, ws[k]]).filter(([, wk]) => wk > 0.02);
     for (let y = Math.max(top, Math.floor(skyline[x]) - 1); y < h; y++) {
+      const i = (y - top) * w + x;
+      if (grassy) {
+        // ground under grass: broad swells and smaller ones over them, squashed as they go back; no ribs, no rock
+        const swell = fbm(1, x / 260, y / 64, 3);
+        R[i] = 0.5 + swell;
+        H[i] = swell * 1.6 + fbm(3, x / 80, y / 22, 2) * 0.3;
+        continue;
+      }
       // the ridges wander as they come down, and branch: the angle off each summit, bent by broad noise
       const bend = fbm(1, x / 210, y / 210, 3) * 0.55;
+      let main = 0;
       let rib = 0;
       let crowd = 0;
       let weight = 0;
@@ -583,19 +607,23 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
         const dx = x - pk[0];
         const dy = Math.max(1, y - pk[1] + 14);
         const r = Math.hypot(dx, dy);
-        rib += ridged((Math.atan2(dx, dy) + bend) * ribs + 7.3 + pk[0] * 0.01, r / 170, 3) * wk;
+        const a = Math.atan2(dx, dy) + bend;
+        // a few great ridges off the summit with broad faces between them, and the gullies scoring those faces
+        main += ridged(a * ribs * 0.24 + 7.3 + pk[0] * 0.01, r / 700, 2, 0.5, 0) * wk;
+        rib += ridged(a * ribs + 3.1 + pk[0] * 0.013, r / 170, 3, 0.4) * wk;
         crowd += Math.min(1, r / 110) * wk;
         weight += wk;
       }
+      main /= weight;
       rib /= weight;
       crowd /= weight;
       // crags: small sharp-edged lumps over the ribs, the rock breaking up
       const crag = 1 - Math.abs(fbm(3, x / 11, y / 15, 3) * 2.2);
-      const rock = crag * 0.2 + fbm(4, x / 46, y / 64, 2) * 0.12;
-      const i = (y - top) * w + x;
-      // near a summit the ribs would crowd together like a comb: there the crags take over
-      R[i] = rib;
-      H[i] = rib * (0.4 + 0.4 * crowd) + rock * (1.5 - 0.5 * crowd);
+      const rock = crag * 0.12 + fbm(4, x / 46, y / 64, 2) * 0.12;
+      // the great ridges make the faces the light falls on; near a summit the ribs would crowd together like a
+      // comb, and there the crags take over
+      R[i] = main * 0.6 + rib * 0.4;
+      H[i] = main * 5.5 * crowd + rib * 0.7 * (0.4 + 0.6 * crowd) + rock * 0.6 * (1.5 - 0.5 * crowd);
     }
   }
   const L = (() => {
@@ -607,6 +635,7 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
   const footRGB = foot ? rgb(foot) : null;
   const [wr, wg, wb] = rgb(snowLit);
   const [qr, qg, qb] = rgb(snowShadow);
+  const dryRGB = dry ? rgb(dry) : null;
   const p = f.px;
   for (let x = 0; x < w; x++) {
     const flank = flanks[x];
@@ -628,18 +657,38 @@ export function terrain(w, h, { ridge, peaks, light = [-0.7, -0.5, 0.55], lit, s
       const lambert = Math.max(0, nx * L[0] + ny * L[1] + nz * L[2]);
       const shade = ambient + (1 - ambient) * lambert;
       const rib = R[i];
-      // down in the gullies it is darker; and the rock itself is not all one colour
-      const deep = (0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
-      let r = (sr + (lr - sr) * shade) * deep;
-      let g = (sg + (lg - sg) * shade) * deep;
-      let b = (sb + (lb - sb) * shade) * deep;
+      // down in the gullies (or the hollows) it is darker; and the rock itself (or the grass) is not all one colour
+      const deep = (grassy ? 0.8 + 0.2 * clamp(rib, 0, 1) : 0.66 + 0.34 * Math.min(1, rib * 1.4)) * (1 + fbm(5, x / 90, y / 70, 2) * 0.22);
+      let tr = lr;
+      let tg = lg;
+      let tb = lb;
+      if (dryRGB) {
+        // where the grass has dried, in drifts across the slope
+        const d = clamp(fbm(7, x / 200, y / 50, 2) * 2.6 + 0.2, 0, 1) * dryness;
+        tr += (dryRGB[0] - lr) * d;
+        tg += (dryRGB[1] - lg) * d;
+        tb += (dryRGB[2] - lb) * d;
+      }
+      let r = (sr + (tr - sr) * shade) * deep;
+      let g = (sg + (tg - sg) * shade) * deep;
+      let b = (sb + (tb - sb) * shade) * deep;
+      if (grassy) {
+        // the blades: fine streaks leaning with the wind, gathered in tufts, plainest where the light is flat
+        const bx = (x + y * wind) / (blade * 0.35);
+        const by = y / blade;
+        const streak = noise.plain(0, bx, by) + noise.plain(1, bx * 2.3, by * 2.3) * 0.5;
+        const tuft = fbm(6, x / (blade * 5), y / (blade * 3), 2);
+        const tex = 1 + (streak * 0.6 + tuft * 0.5) * grassy * (0.45 + 0.55 * lambert);
+        r *= tex;
+        g *= tex;
+        b *= tex;
+      }
       if (snowline !== null) {
-        const steep = Math.min(1, Math.hypot(hx, hy) * 6);
+        const steep = Math.min(1, Math.hypot(hx, hy) * 2);
         // the sun takes the snow higher up the flank it falls on; the other keeps it lower
         const line = snowline + flank * Math.sign(L[0] || 1) * -26;
-        const below = Math.max(0, y - line);
-        // the snowfield's edge frays: tongues down the gullies, rock showing through on the ribs
-        const lie = (line - y) / 40 + (0.48 - rib) * 3.6 * Math.min(1, below / 30) - below / 260 + fbm(6, x / 34, y / 26, 3) * 1.5;
+        // the snowfield's edge frays: tongues down the gullies, rock showing through on the ridges
+        const lie = (line - y) / 46 + (0.5 - rib) * 4 + fbm(6, x / 34, y / 26, 3) * 1.1;
         const amount = clamp(lie * 1.6, 0, 1) * (1 - steep * 0.5);
         if (amount > 0) {
           const ws = Math.min(1, shade * 1.1);
@@ -728,6 +777,119 @@ export function bloom(f, { threshold = 0.7, strength = 0.45, radius = 24, tint =
   blur(wide, radius);
   screen(f, b, strength * 0.6);
   screen(f, wide, strength);
+}
+
+/**
+ * Diffusion, as a soft-focus filter gives it: a blurred copy of the frame
+ * where it is brighter than the frame, so light bleeds out over what is
+ * darker around it and the whole picture softens and glows — the dreamy
+ * haze of an old lens or a mist filter.
+ */
+export function diffuse(f, { radius = 16, strength = 0.35, soften = 0.12 }) {
+  const g = clone(f);
+  blur(g, radius);
+  const p = f.px;
+  const q = g.px;
+  for (let i = 0; i < p.length; i += 4) {
+    for (let c = 0; c < 3; c++) {
+      const d = q[i + c] - p[i + c];
+      p[i + c] += Math.max(0, d) * strength + d * soften;
+    }
+  }
+}
+
+/**
+ * Light streaks, as a lens draws them from anything bright: what is above
+ * `threshold` smeared along `angle` (radians; 0 is level) for `length`
+ * pixels either way, fading as it goes, and laid over the frame as light in
+ * `tint`. Computed at a third of the size, as streaks are soft anyway.
+ */
+export function streaks(f, { threshold = 0.82, strength = 0.5, length = 240, angle = 0, tint = '#ffe2b0', samples = 40 }) {
+  const s = 3;
+  const sw = Math.ceil(f.w / s);
+  const sh = Math.ceil(f.h / s);
+  const src = new Float32Array(sw * sh * 3);
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      const i = (Math.min(f.h - 1, y * s + 1) * f.w + Math.min(f.w - 1, x * s + 1)) * 4;
+      const l = luma(f.px[i], f.px[i + 1], f.px[i + 2]);
+      const k = Math.max(0, (l - threshold) / (1 - threshold));
+      const j = (y * sw + x) * 3;
+      src[j] = f.px[i] * k;
+      src[j + 1] = f.px[i + 1] * k;
+      src[j + 2] = f.px[i + 2] * k;
+    }
+  }
+  const dx = Math.cos(angle);
+  const dy = Math.sin(angle);
+  const reach = length / s;
+  const acc = frame(sw, sh);
+  for (let y = 0; y < sh; y++) {
+    for (let x = 0; x < sw; x++) {
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      for (let k = -samples; k <= samples; k++) {
+        const t = k / samples;
+        const sx = Math.round(x + dx * t * reach);
+        const sy = Math.round(y + dy * t * reach);
+        if (sx < 0 || sy < 0 || sx >= sw || sy >= sh) continue;
+        const wgt = (1 - Math.abs(t)) ** 2;
+        const j = (sy * sw + sx) * 3;
+        r += src[j] * wgt;
+        g += src[j + 1] * wgt;
+        b += src[j + 2] * wgt;
+      }
+      const o = (y * sw + x) * 4;
+      acc.px[o] = r / samples;
+      acc.px[o + 1] = g / samples;
+      acc.px[o + 2] = b / samples;
+      acc.px[o + 3] = 1;
+    }
+  }
+  const big = resize(acc, f.w, f.h);
+  const [tr, tg, tb] = rgb(tint);
+  for (let i = 0; i < big.px.length; i += 4) {
+    const l = (big.px[i] + big.px[i + 1] + big.px[i + 2]) / 3;
+    big.px[i] = l * tr;
+    big.px[i + 1] = l * tg;
+    big.px[i + 2] = l * tb;
+  }
+  screen(f, big, strength);
+}
+
+/**
+ * The colour fringe of a real lens: red pushed out a little and blue pulled
+ * in, growing toward the corners, `amount` pixels at the edge of the frame.
+ */
+export function aberration(f, { amount = 1.5 }) {
+  const { w, h } = f;
+  const src = clone(f);
+  const cx = w / 2;
+  const cy = h / 2;
+  const rmax = Math.hypot(cx, cy);
+  const sample = (x, y, c) => {
+    const x0 = clamp(Math.floor(x), 0, w - 1);
+    const y0 = clamp(Math.floor(y), 0, h - 1);
+    const x1 = Math.min(w - 1, x0 + 1);
+    const y1 = Math.min(h - 1, y0 + 1);
+    const tx = clamp(x - x0, 0, 1);
+    const ty = clamp(y - y0, 0, 1);
+    const a = src.px[(y0 * w + x0) * 4 + c] * (1 - tx) + src.px[(y0 * w + x1) * 4 + c] * tx;
+    const b = src.px[(y1 * w + x0) * 4 + c] * (1 - tx) + src.px[(y1 * w + x1) * 4 + c] * tx;
+    return a * (1 - ty) + b * ty;
+  };
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const dx = x - cx;
+      const dy = y - cy;
+      const r = Math.hypot(dx, dy) / rmax;
+      const k = (amount * r * r) / Math.max(1, Math.hypot(dx, dy));
+      const i = (y * w + x) * 4;
+      f.px[i] = sample(x + dx * k, y + dy * k, 0);
+      f.px[i + 2] = sample(x - dx * k, y - dy * k, 2);
+    }
+  }
 }
 
 /**
@@ -917,13 +1079,19 @@ export function vignette(f, { strength = 0.35, colour = '#000000', inner = 0.45 
   }
 }
 
-/** The finished frame as 8-bit RGB, with a seeded grain that is strongest in the middle tones, as film's is. */
-export function toRGB8(f, { grain = 0.012, seed = 1 }) {
+/**
+ * The finished frame as 8-bit RGB, with a seeded grain that is strongest in
+ * the middle tones, as film's is; `clumps` adds a coarser grain over it, the
+ * silver gathered in specks a few pixels across.
+ */
+export function toRGB8(f, { grain = 0.012, clumps = 0, seed = 1 }) {
   const rnd = random(seed);
+  const coarse = clumps ? valueNoise(f.w, f.h, 2.5, random(seed + 7)) : null;
   const out = Buffer.alloc(f.w * f.h * 3);
-  for (let i = 0, j = 0; i < f.px.length; i += 4, j += 3) {
+  for (let i = 0, j = 0, p = 0; i < f.px.length; i += 4, j += 3, p++) {
     const l = luma(f.px[i], f.px[i + 1], f.px[i + 2]);
-    const n = (rnd() + rnd() - 1) * grain * (0.35 + 2.6 * l * (1 - l));
+    const mid = 0.35 + 2.6 * l * (1 - l);
+    const n = ((rnd() + rnd() - 1) * grain + (coarse ? coarse[p] * clumps : 0)) * mid;
     out[j] = clamp(Math.round((f.px[i] + n) * 255), 0, 255);
     out[j + 1] = clamp(Math.round((f.px[i + 1] + n) * 255), 0, 255);
     out[j + 2] = clamp(Math.round((f.px[i + 2] + n) * 255), 0, 255);
@@ -932,18 +1100,18 @@ export function toRGB8(f, { grain = 0.012, seed = 1 }) {
 }
 
 /** A layer drawn in parts ({ svg, rough? }), the rough ones roughened, laid one over the next. */
-async function assemble(parts, w, h, scale) {
+async function assemble(parts, w, h, scale, bleed) {
   const layer = frame(w, h);
   for (const part of parts) {
-    const drawn = await rasterise(part.svg, w, h, scale);
+    const drawn = await rasterise(part.svg, w, h, scale, bleed);
     over(layer, part.rough ? roughen(drawn, part.rough) : drawn);
   }
   return layer;
 }
 
 /**
- * Renders a scene: `steps` is a list of layers ({ svg or parts, blur, haze,
- * falloff, rim, opacity, blend, scale }) and effects ({ effect: 'rays' | 'reflect' |
+ * Renders a scene: `steps` is a list of layers ({ svg or parts or terrain,
+ * blur, haze, falloff, rim, opacity, blend, scale, bleed }) and effects ({ effect: 'rays' | 'reflect' |
  * 'paint' | 'texture' | 'bloom' | 'grade', ...options }) applied in order,
  * then `finish` (bloom, grade, vignette, grain).
  */
@@ -957,12 +1125,14 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
       else if (step.effect === 'paint') paint(f, step.radius);
       else if (step.effect === 'texture') texture(f, step);
       else if (step.effect === 'bloom') bloom(f, step);
+      else if (step.effect === 'diffuse') diffuse(f, step);
+      else if (step.effect === 'streaks') streaks(f, step);
       else if (step.effect === 'grade') grade(f, step);
       else throw new Error(`unknown effect ${step.effect}`);
       if (log) log(`${step.effect}: ${Date.now() - t0}ms`);
       continue;
     }
-    const layer = step.terrain ? terrain(w, h, step.terrain) : step.parts ? await assemble(step.parts, w, h, step.scale ?? 1) : await rasterise(step.svg, w, h, step.scale ?? 1);
+    const layer = step.terrain ? terrain(w, h, step.terrain) : step.parts ? await assemble(step.parts, w, h, step.scale ?? 1, step.bleed ?? 0) : await rasterise(step.svg, w, h, step.scale ?? 1, step.bleed ?? 0);
     const t1 = log ? Date.now() : 0;
     if (step.blur) blur(layer, step.blur);
     if (step.haze) haze(layer, rgb(step.haze[0]), step.haze[1]);
@@ -974,9 +1144,12 @@ export async function renderScene({ w, h, steps, finish = {}, seed = 1, log = nu
   }
   const t2 = log ? Date.now() : 0;
   if (finish.bloom) bloom(f, finish.bloom);
+  if (finish.diffuse) diffuse(f, finish.diffuse);
+  if (finish.streaks) streaks(f, finish.streaks);
   if (finish.grade) grade(f, finish.grade);
+  if (finish.aberration) aberration(f, finish.aberration);
   if (finish.vignette) vignette(f, finish.vignette);
-  const out = toRGB8(f, { grain: finish.grain ?? 0.012, seed });
+  const out = toRGB8(f, { grain: finish.grain ?? 0.012, clumps: finish.clumps ?? 0, seed });
   if (log) log(`finish: ${Date.now() - t2}ms`);
   return out;
 }

@@ -10,7 +10,7 @@
  * gaps the light can come through, which is what the compositor's light
  * shafts are made from.
  */
-import { between, blur, linear, n, pt, radialAt } from './kit.mjs';
+import { between, linear, n, pt, radialAt } from './kit.mjs';
 
 /** A noise frequency, written finely enough: two decimals would turn 0.004 into 0, and the noise into stripes. */
 const freqOf = (v) => String(Math.round(v * 1e5) / 1e5);
@@ -74,9 +74,10 @@ function limb(x0, y0, w0, x1, y1, w1, bend) {
  * A tree, grown: returns { wood, leaves } markup in the colours given.
  * `leafColour` may be an array, picked from at random per clump (blossom,
  * lit and shaded leaves). Detail follows size: a tree a few pixels high is
- * not grown down to twigs it could never show.
+ * not grown down to twigs it could never show. `clump` scales the clumps of
+ * leaf or blossom (and as many more of them, smaller, fill the same crown).
  */
-export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean = 0, leafiness = 1, needles = false, twig = 4, litColour = null, light = [-1, -1], volume = null }) {
+export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean = 0, leafiness = 1, needles = false, twig = 4, litColour = null, light = [-1, -1], volume = null, clump = 1 }) {
   const K = KINDS[kind];
   const limbs = [];
   const colours = Array.isArray(leafColour) ? [...leafColour] : [leafColour];
@@ -89,11 +90,11 @@ export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean =
   const crown = [x, y - height * 0.62];
   const ll = Math.hypot(light[0], light[1]) || 1;
   const tip = (tx, ty, scale = 1) => {
-    const count = Math.max(1, Math.round(K.clumps * leafiness * between(rnd, 0.7, 1.3)));
+    const count = Math.max(1, Math.round((K.clumps * leafiness * between(rnd, 0.7, 1.3)) / (clump * clump)));
     for (let i = 0; i < count; i++) {
       const a = rnd() * Math.PI * 2;
       const d = Math.sqrt(rnd()) * K.reach * height * scale;
-      const r = between(rnd, K.size[0], K.size[1]) * height * scale;
+      const r = between(rnd, K.size[0], K.size[1]) * height * scale * clump;
       const cx = tx + Math.cos(a) * d * 1.2;
       const cy = ty + Math.sin(a) * d * 0.8;
       let c = Math.floor(rnd() * (litColour ? colours.length - 1 : colours.length)) % colours.length;
@@ -267,6 +268,52 @@ export function grass(rnd, { x0 = -20, x1 = 1300, y, count, height, colours, win
 }
 
 /**
+ * Tall grass in the wind, for the near ground where every stalk shows: long
+ * blades bowing the one way, more at their tips, and here and there (`share`
+ * of them) a stalk carrying a seed head in `heads`. Nearer (lower) is taller;
+ * `top(x)` is the line of the ground where it is a slope.
+ */
+export function tallGrass(rnd, { x0 = -20, x1 = 1300, y0, y1, top = null, count, height, colours, heads = null, share = 0.06, wind = 0.35, width = 2.6 }) {
+  const byColour = new Map();
+  const stalks = [];
+  const items = [];
+  for (let i = 0; i < count; i++) {
+    const t = rnd() ** 1.2;
+    const x = between(rnd, x0, x1);
+    // on a slope, the grass starts where the ground does
+    const from = top ? top(x) : y0;
+    items.push([x, from + (y1 - from) * t, t]);
+  }
+  items.sort((a, b) => a[1] - b[1]);
+  for (const [x, y, t] of items) {
+    const h = height * (0.35 + 0.65 * t) * between(rnd, 0.55, 1.2);
+    const lean = (wind + between(rnd, -0.12, 0.12)) * h;
+    const w = width * (0.5 + 0.5 * t) * between(rnd, 0.7, 1.3);
+    const c = colours[Math.floor(rnd() * colours.length) % colours.length];
+    const d = `M${pt([x - w, y])} Q${pt([x + lean * 0.2, y - h * 0.6])} ${pt([x + lean, y - h])} Q${pt([x + lean * 0.25 + w * 0.4, y - h * 0.55])} ${pt([x + w, y])} Z`;
+    byColour.set(c, (byColour.get(c) ?? '') + d);
+    if (heads && rnd() < share) {
+      // a stalk with its seed head nodding at the top
+      const hx = x + lean * 1.05;
+      const hy = y - h * 1.08;
+      stalks.push(`M${pt([x, y])} Q${pt([x + lean * 0.3, y - h * 0.65])} ${pt([hx, hy])}`);
+      const grains = [];
+      for (let k = 0; k < 6; k++) {
+        const a = -Math.PI / 2 + wind * 1.4 + between(rnd, -0.5, 0.5);
+        const r = h * 0.032 * (1 - k / 8);
+        grains.push(`<ellipse cx="${n(hx + Math.cos(a) * r * k * 0.6)}" cy="${n(hy - Math.sin(-a) * r * k * 0.6)}" rx="${n(Math.max(0.8, r * 0.5))}" ry="${n(Math.max(1.4, r))}" transform="rotate(${n((a * 180) / Math.PI + 90)} ${n(hx + Math.cos(a) * r * k * 0.6)} ${n(hy - Math.sin(-a) * r * k * 0.6)})"/>`);
+      }
+      stalks.push(grains);
+    }
+  }
+  const blades = [...byColour].map(([c, d]) => `<path d="${d}" fill="${c}"/>`).join('');
+  const lines = stalks.filter((v) => typeof v === 'string');
+  const grains = stalks.filter((v) => Array.isArray(v)).flat();
+  // the stalks are the grass's own green; only the heads take the light
+  return blades + (lines.length ? `<path d="${lines.join(' ')}" fill="none" stroke="${colours[0]}" stroke-width="${n(width * 0.3)}"/><g fill="${heads}">${grains.join('')}</g>` : '');
+}
+
+/**
  * Reeds: tall stems bowing with the wind, each topped with a feathery plume.
  * The plumes get their own colour, so against the light they can glow.
  */
@@ -289,23 +336,27 @@ export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume,
       const len = h * between(rnd, 0.18, 0.3);
       stems.push(`M${pt([lx, ly])} Q${pt([lx + s * len * 0.6, ly - len * 0.3])} ${pt([lx + s * len, ly + len * 0.2])}`);
     }
-    // the plume: a nodding head of fine strands
+    // the plume: a nodding panicle, its spine curving over and down, hung both sides with fine soft strands
     const ps = h * 0.2 * plumeSize * between(rnd, 0.8, 1.2);
     const dir = Math.sign(bow) || 1;
     const strands = [];
-    for (let k = 0; k < 26; k++) {
-      const t = k / 26;
-      const sx = tipX - dir * ps * 0.15 + dir * ps * 0.5 * t;
-      const sy = tipY - ps * 0.1 + ps * 0.9 * t * t * 0.6;
-      const a = -Math.PI / 2 + dir * (0.6 + t * 1.2) + between(rnd, -0.35, 0.35);
-      const l = ps * (0.35 + 0.45 * Math.sin(Math.PI * t)) * between(rnd, 0.7, 1.1);
-      strands.push(`M${pt([sx, sy])} L${pt([sx + Math.cos(a) * l, sy + Math.sin(a) * l])}`);
+    for (let k = 0; k < 34; k++) {
+      const t = k / 34;
+      const sx = tipX + dir * ps * 0.5 * t;
+      const sy = tipY - ps * 0.1 + ps * 0.85 * t * t;
+      for (const side of [-1, 1]) {
+        const l = ps * (0.18 + 0.3 * Math.sin(Math.PI * (0.12 + 0.88 * t))) * between(rnd, 0.7, 1.15);
+        const ex = sx + side * l * 0.45 + dir * l * 0.35;
+        const ey = sy + l * between(rnd, 0.6, 0.95);
+        strands.push(`M${pt([sx, sy])} Q${pt([sx + side * l * 0.55, sy + l * 0.1])} ${pt([ex, ey])}`);
+      }
     }
     plumes.push(strands.join(' '));
   }
+  const width = Math.max(1.6, height * 0.006);
   return {
-    stems: `<path d="${stems.join(' ')}" fill="none" stroke="${stem}" stroke-width="2" stroke-linecap="round"/>`,
-    plumes: `<path d="${plumes.join(' ')}" fill="none" stroke="${plume}" stroke-width="1.6" stroke-linecap="round" stroke-opacity="0.9"/>`,
+    stems: `<path d="${stems.join(' ')}" fill="none" stroke="${stem}" stroke-width="${n(width)}" stroke-linecap="round"/>`,
+    plumes: `<path d="${plumes.join(' ')}" fill="none" stroke="${plume}" stroke-width="${n(width * 0.55)}" stroke-linecap="round" stroke-opacity="0.75"/>`,
   };
 }
 
@@ -448,8 +499,13 @@ export function clouds(cv, { x = 0, y = 0, w = cv.w, h = cv.h, freq, octaves = 5
   const fy = freq[1] ?? freq[0];
   const fx = Math.max(freq[0], fy / 2.5);
   const f = cv.id('cloud');
+  // the edges are the cloud set against itself shifted: the noise runs on past the box as far as it is shifted,
+  // so nothing empty is shifted in (which would light a band along a side), and the box clips it after; the
+  // canvas is drawn that far past its own edges too (`bleed`, which the compositor cuts back)
+  const m = Math.ceil(Math.max(Math.abs(dx), Math.abs(dy)) * 2.2) + 2;
+  cv.bleed = Math.max(cv.bleed ?? 0, m);
   cv.def(
-    `<filter id="${f}" x="0" y="0" width="1" height="1" filterUnits="objectBoundingBox" color-interpolation-filters="sRGB">` +
+    `<filter id="${f}" x="${n(x - m)}" y="${n(y - m)}" width="${n(w + 2 * m)}" height="${n(h + 2 * m)}" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">` +
       `<feTurbulence type="fractalNoise" baseFrequency="${freqOf(fx)} ${freqOf(fy)}" numOctaves="${octaves}" seed="${seed}" result="t"/>` +
       `<feColorMatrix in="t" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 ${n(density)} 0 0 0 ${n(cover)}" result="d"/>` +
       `<feOffset in="d" dx="${n(-dx)}" dy="${n(-dy)}" result="far"/>` +
@@ -467,8 +523,10 @@ export function clouds(cv, { x = 0, y = 0, w = cv.w, h = cv.h, freq, octaves = 5
     cv.def(`<mask id="${m}" maskUnits="userSpaceOnUse" x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}"><rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" fill="url(#${gid})"/></mask>`);
     mask = ` mask="url(#${m})"`;
   }
+  const clip = cv.id('cc');
+  cv.def(`<clipPath id="${clip}"><rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}"/></clipPath>`);
   const turn = rotate ? ` transform="rotate(${n(rotate)} ${n(x + w / 2)} ${n(y + h / 2)})"` : '';
-  cv.add(`<g opacity="${n(opacity)}"${turn}><g${mask}><rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" filter="url(#${f})"/></g></g>`);
+  cv.add(`<g opacity="${n(opacity)}"${turn}><g${mask} clip-path="url(#${clip})"><rect x="${n(x)}" y="${n(y)}" width="${n(w)}" height="${n(h)}" filter="url(#${f})"/></g></g>`);
 }
 
 /** Small points of light — dust in a sunbeam, pollen, embers far off. */
@@ -616,28 +674,6 @@ export function sky(cv, stops) {
   const id = cv.id('sky');
   cv.def(linear(id, stops));
   cv.add(`<rect width="${cv.w}" height="${cv.h}" fill="url(#${id})"/>`);
-}
-
-/** A vertical wash, transparent at the top, `colour` at `opacity` by the bottom. */
-export function wash(cv, { y0, y1, colour, from = 0, to = 1 }) {
-  const id = cv.id('wash');
-  cv.def(`<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="0" y1="${n(y0)}" x2="0" y2="${n(y1)}"><stop offset="0" stop-color="${colour}" stop-opacity="${n(from)}"/><stop offset="1" stop-color="${colour}" stop-opacity="${n(to)}"/></linearGradient>`);
-  cv.add(`<rect x="0" y="${n(y0)}" width="${cv.w}" height="${n(y1 - y0)}" fill="url(#${id})"/>`);
-}
-
-/** Painted light shafts: long translucent wedges from a point, softened. */
-export function beams(cv, { x, y, angle, spread, count, length, colour, opacity = 0.18, width = 0.03, rnd }) {
-  const id = cv.id('bm');
-  cv.def(blur(id, 10));
-  const out = [];
-  for (let i = 0; i < count; i++) {
-    const a = angle - spread / 2 + spread * (count === 1 ? 0.5 : i / (count - 1)) + between(rnd, -0.03, 0.03);
-    const hw = width * between(rnd, 0.5, 1.6);
-    const g = cv.id('bg');
-    cv.def(`<linearGradient id="${g}" gradientUnits="userSpaceOnUse" x1="${n(x)}" y1="${n(y)}" x2="${n(x + Math.sin(a) * length)}" y2="${n(y + Math.cos(a) * length)}"><stop offset="0" stop-color="${colour}" stop-opacity="${n(opacity * between(rnd, 0.6, 1.2))}"/><stop offset="1" stop-color="${colour}" stop-opacity="0"/></linearGradient>`);
-    out.push(`<path d="M${pt([x, y])} L${pt([x + Math.sin(a - hw) * length, y + Math.cos(a - hw) * length])} L${pt([x + Math.sin(a + hw) * length, y + Math.cos(a + hw) * length])} Z" fill="url(#${g})"/>`);
-  }
-  cv.add(`<g filter="url(#${id})">${out.join('')}</g>`);
 }
 
 /**

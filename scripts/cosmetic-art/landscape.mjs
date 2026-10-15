@@ -66,19 +66,32 @@ export function birds(cv, rnd, { x, y, count, size, colour, spread = 120 }) {
 /** Curtains of aurora: soft vertical light hanging from a wavering line. */
 export function aurora(cv, rnd, { y, amp, height, colours, opacity = 0.7 }) {
   const wave = noise1d(rnd, { scale: 260, octaves: 3 });
-  const id = cv.id('blur');
-  cv.def(blur(id, 7));
+  const sharp = cv.id('blur');
+  cv.def(blur(sharp, 1.8));
+  const soft = cv.id('blur');
+  cv.def(blur(soft, 12));
   for (const [i, colour] of colours.entries()) {
     const g = cv.id('aur');
-    cv.def(linear(g, [[0, colour, 0], [0.7, colour, 0.55], [1, colour, 0]]));
-    const strips = [];
+    // each ray brightest at its foot, where the curtain's lower edge burns, fading up into the dark
+    cv.def(linear(g, [[0, colour, 0], [0.55, colour, 0.3], [0.9, colour, 0.95], [1, colour, 0]]));
     const offset = i * 90;
+    const glowStrips = [];
     for (let x = -20; x < cv.w + 20; x += 7) {
       const base = y + wave(x + offset) * amp + i * 34;
       const h = height * (0.55 + 0.45 * Math.abs(wave(x * 2.3 + offset)));
-      strips.push(`<rect x="${n(x)}" y="${n(base - h)}" width="9" height="${n(h)}"/>`);
+      glowStrips.push(`<rect x="${n(x)}" y="${n(base - h)}" width="9" height="${n(h)}"/>`);
     }
-    cv.add(`<g fill="url(#${g})" opacity="${n(opacity * (1 - i * 0.25))}" filter="url(#${id})">${strips.join('')}</g>`);
+    // the curtain itself: fine rays side by side, of uneven length and strength, folding where the wave turns
+    const rays = [];
+    for (let x = -20; x < cv.w + 20; x += 2.6) {
+      const base = y + wave(x + offset) * amp + i * 34;
+      const fold = Math.abs(wave(x * 2.3 + offset));
+      const h = height * (0.45 + 0.55 * fold) * between(rnd, 0.6, 1.1);
+      rays.push(`<rect x="${n(x)}" y="${n(base - h)}" width="${n(between(rnd, 1.2, 3))}" height="${n(h)}" fill-opacity="${n(between(rnd, 0.25, 1) * (0.45 + 0.55 * fold))}"/>`);
+    }
+    const o = opacity * (1 - i * 0.25);
+    cv.add(`<g fill="url(#${g})" opacity="${n(o * 0.55)}" filter="url(#${soft})">${glowStrips.join('')}</g>`);
+    cv.add(`<g fill="url(#${g})" opacity="${n(o)}" filter="url(#${sharp})">${rays.join('')}</g>`);
   }
 }
 
@@ -86,7 +99,8 @@ export function aurora(cv, rnd, { y, amp, height, colours, opacity = 0.7 }) {
 
 /**
  * A ridge line across the canvas: the peaks given (x, height, half-width) with
- * concave flanks, roughened by fractal noise, as points every `step` pixels.
+ * concave flanks — or, `round`, as hills — roughened by fractal noise, as
+ * points every `step` pixels.
  */
 export function ridge(rnd, { w, base, peaks, rough = 0.22, scale = 90, step = 6 }) {
   const wobble = noise1d(rnd, { scale, octaves: 5 });
@@ -98,7 +112,10 @@ export function ridge(rnd, { w, base, peaks, rough = 0.22, scale = 90, step = 6 
     for (const p of peaks) {
       const half = x < p.x ? p.l ?? p.s : p.r ?? p.s;
       const t = Math.abs(x - p.x) / half;
-      if (t < 1.6) lift = Math.max(lift, p.h * Math.max(0, 1 - t) ** (p.k ?? 1.35) + p.h * 0.06 * Math.max(0, 1.6 - t));
+      if (t >= 1.6) continue;
+      // a peak's flanks fall away concave; a hill's (`round`) roll over its top and ease out at its foot
+      if (p.round) lift = Math.max(lift, p.h * 0.5 * (1 + Math.cos(Math.PI * Math.min(1, t))) + p.h * 0.06 * Math.max(0, 1 - (t / 1.6) ** 2));
+      else lift = Math.max(lift, p.h * Math.max(0, 1 - t) ** (p.k ?? 1.35) + p.h * 0.06 * Math.max(0, 1.6 - t));
     }
     const roughness = tallest * rough * (0.35 + 0.65 * Math.min(1, lift / tallest + 0.25));
     const y = base - lift - wobble(x) * roughness - sharp(x) * roughness * 0.18;
