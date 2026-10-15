@@ -53,8 +53,8 @@ function smooth(points) {
 /**
  * The deer's poses, in its own frame (x from the back of the rump toward the
  * chest, y up from the ground, negative, in hundredths of its height at the
- * withers): the line of its back from the loins to the withers, which drop
- * when the head goes down; the neck's crest from there to the back of the
+ * withers): the line of its rump and of its back on to the withers, which
+ * drop when the head goes down; the neck's crest from there to the back of the
  * skull (the poll), and where that is and how far the face is turned down
  * from level, in radians, and how far the antlers are turned back from the
  * face (a lowered head turns a little toward us, and its rack with it, so the
@@ -64,6 +64,7 @@ function smooth(points) {
  */
 const POSES = {
   alert: {
+    rump: [[16, -100.5], [28, -101], [42, -99.2]],
     back: [[56, -97.5], [68, -98], [76, -99.6], [82, -100.6]],
     crest: [[84.4, -110], [88.4, -120], [94.2, -128.2], [100.6, -133.4]],
     poll: [107, -136],
@@ -75,7 +76,8 @@ const POSES = {
     hind: [0, 7],
   },
   graze: {
-    back: [[56, -97], [68, -94.5], [78, -91], [85, -88]],
+    rump: [[16, -99.2], [28, -99.6], [42, -98]],
+    back: [[56, -96.2], [68, -94], [78, -91.2], [85, -88.6]],
     crest: [[97, -84], [107.5, -77], [115.5, -67.5], [120.5, -56]],
     poll: [123, -45],
     angle: 1.5,
@@ -86,7 +88,8 @@ const POSES = {
     hind: [0, 7],
   },
   drink: {
-    back: [[56, -97], [68, -94], [78, -90], [85, -86.5]],
+    rump: [[16, -99.2], [28, -99.6], [42, -98]],
+    back: [[56, -96.2], [68, -93.8], [78, -90.6], [85, -87.6]],
     crest: [[97, -83], [108.5, -77.5], [119, -71.5], [127.5, -65.5]],
     poll: [132, -60],
     angle: 1.43,
@@ -141,9 +144,9 @@ export function deer({ x, y, size, facing = 1, colour, pose = 'alert', antlers =
   // and the long face to the nose, round the muzzle and the chin, under the jaw to its angle, back along the
   // throat to the chest and the brisket, along the belly to the flank, and round the haunch and the buttock
   const head = [[-1, -0.5], [4.5, -2.4], [10, -2.2], [16, -0.5], [23, 1.8], [29.5, 4.2], [33.6, 6.4], [35.6, 8.6], [35.8, 10.6], [34.6, 12.4], [32.4, 13.4], [31, 13.6], [31.4, 15], [29.6, 16], [24, 16.2], [17, 17.2], [11, 18.6], [6, 19.4]].map(H);
-  parts.push(outline([[6, -95], [16, -100.5], [28, -101], [42, -99.2], ...P.back, ...P.crest, ...head, ...P.throat, ...P.chest, [84, -57.4], [74, -56.8], [62, -57.4], [50, -59.4], [40, -63], [32, -67.4], [20, -72], [8, -75], [1.5, -79], [-1.5, -85], [0.5, -91]]));
+  parts.push(outline([[6, -94], ...P.rump, ...P.back, ...P.crest, ...head, ...P.throat, ...P.chest, [84, -57.4], [74, -56.8], [62, -57.4], [50, -59.4], [40, -63], [32, -67.4], [20, -72], [8, -75], [1.5, -79], [-1.5, -85], [0.5, -91]]));
   // the tail, broad, hanging from the top of the rump
-  parts.push(outline([[8, -96], [3, -95.6], [-1.4, -93], [-3.6, -88.6], [-4.4, -83], [-3.8, -78.6], [-2, -77.8], [-1, -82], [0.8, -88], [4.6, -92.4]]));
+  parts.push(outline([[7, -93], [3, -92.6], [-0.8, -90], [-3, -86], [-3.8, -81], [-3.2, -77], [-1.6, -76.4], [-0.6, -80], [1, -85.6], [4.4, -89.6]]));
   // the ears, long and wide, out from the poll: the far one a little behind and turned away
   const ear = (dx, dy, turn) => {
     const ct = Math.cos(turn);
