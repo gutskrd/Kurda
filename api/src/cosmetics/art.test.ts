@@ -5,10 +5,11 @@
  *
  * It runs the generator into a temporary folder and compares what comes out
  * with what is committed. The same script makes the same SVG on every machine
- * (checked first, cheaply), and sharp turns the same SVG into the same pixels;
- * the comparison is byte-for-byte where it can be and pixel-for-pixel within a
- * hair where an encoder build differs, so a picture that was edited or swapped
- * by hand fails here while a different libwebp does not.
+ * (checked first, cheaply), and sharp and the compositor's arithmetic turn the
+ * same SVG into the same pixels; the comparison is byte-for-byte where it can
+ * be and pixel-for-pixel within a hair where an encoder build differs, so a
+ * picture that was edited or swapped by hand fails here while a different
+ * libwebp does not.
  */
 import { mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';

@@ -236,6 +236,13 @@ export function kilim(cv, rnd, { field, ink, light, dyes, layout }) {
     for (let k = 0; k < h; k++) drift.push(t);
     r += h;
   }
+  // a hand-woven row never lies quite straight: each is nudged a pixel or two
+  const wobble = [];
+  let drift2 = 0;
+  for (let r = 0; r < loom.rows; r++) {
+    drift2 = Math.max(-2, Math.min(2, drift2 + Math.round(between(rnd, -1.2, 1.2))));
+    wobble.push(drift2);
+  }
   const rects = [];
   for (let r = 0; r < loom.rows; r++) {
     const row = loom.grid[r];
@@ -244,14 +251,20 @@ export function kilim(cv, rnd, { field, ink, light, dyes, layout }) {
       const colour = row[c];
       let end = c + 1;
       while (end < loom.cols && row[end] === colour) end++;
-      rects.push(`<rect x="${c * CELL}" y="${r * CELL}" width="${(end - c) * CELL}" height="${CELL}" fill="${tint(colour, drift[r])}"/>`);
+      const x0 = c === 0 ? -4 : c * CELL + wobble[r];
+      const x1 = end === loom.cols ? cv.w + 4 : end * CELL + wobble[r];
+      rects.push(`<rect x="${x0}" y="${r * CELL}" width="${x1 - x0}" height="${CELL}" fill="${tint(colour, drift[r])}"/>`);
       c = end;
     }
   }
   cv.add(`<g shape-rendering="crispEdges">${rects.join('')}</g>`);
-  // the weave itself: a fine line between weft passes, and the warps showing faintly
+  // the weave itself: each weft pass a ridge, lit on top and shadowed under, the warps showing between
   const weft = cv.id('weft');
-  cv.def(`<pattern id="${weft}" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000000" fill-opacity="0.13"/><rect x="0" y="2" width="1" height="2" fill="#ffffff" fill-opacity="0.05"/></pattern>`);
+  cv.def(
+    `<pattern id="${weft}" width="4" height="4" patternUnits="userSpaceOnUse">` +
+      `<rect width="4" height="1" fill="#ffffff" fill-opacity="0.09"/><rect y="3" width="4" height="1" fill="#000000" fill-opacity="0.2"/>` +
+      `<rect x="3" width="1" height="4" fill="#000000" fill-opacity="0.07"/></pattern>`,
+  );
   cv.add(`<rect width="${cv.w}" height="${cv.h}" fill="url(#${weft})"/>`);
   // light falling across the rug, so it lies in a room rather than on a screen
   const sheen = cv.id('sheen');

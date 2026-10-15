@@ -8,13 +8,23 @@
  *
  * ── what it draws ─────────────────────────────────────────────────────────
  *
- * Backgrounds (1280×720 WebP, cosmetic-art/backgrounds.mjs): Kurdish
- * mountains, valleys and skies painted with the landscape kit
- * (cosmetic-art/landscape.mjs) — faceted ranges with snow and haze, Zagros
- * oaks, poplars, a stepped village, black tents, Newroz fires and a govend —
- * and kilims woven cell by cell on a grid (cosmetic-art/kilim.mjs). Icons
- * (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the way
- * the mascot is drawn, soft and glossy with its big-eyed face. Stickers
+ * Backgrounds (1280×720 WebP, cosmetic-art/backgrounds.mjs): Kurdish places
+ * and moments painted as scenes — Agirî and the palace of Ishak Pasha at a
+ * winter dawn, Sîpan over the lake, the Delal bridge at Zaxo with the sun in
+ * its arch, Hewlêr's citadel, Amêdî on its cliff, the Newroz torches climbing
+ * the mountain at Akre, Hewraman's stepped houses, the black tents on the
+ * summer pastures, Judas trees, almond orchards and mountain tulips in
+ * flower. Each is laid up from layers: trees grown branch by branch, grass,
+ * flowers, fog and cloud (cosmetic-art/nature.mjs), ranges and villages
+ * (landscape.mjs), the landmarks (places.mjs), deer, lambs and a govend
+ * (figures.mjs). The compositor (render.mjs) puts the layers together the way
+ * a camera sees a place — softened and hazed by distance, light breaking
+ * through the gaps in shafts, water holding what stands over it, a glow
+ * round what is bright, a film's grade and grain. And kilims, woven cell by
+ * cell on a grid and lying in soft light (kilim.mjs).
+ *
+ * Icons (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the
+ * way the mascot is drawn, soft and glossy with its big-eyed face. Stickers
  * (512×512 WebP, here): the suns, a Kurdistan flag badge, the Hevalo deer and
  * a few words in a badge.
  *
@@ -31,10 +41,13 @@
  * on CI. Shapes are SVG strings with every number rounded to two decimals, and
  * every random choice comes from a generator seeded with the piece's name, so
  * the same script writes the same SVG on every machine and sharp turns it into
- * the same pixels. The one file read is the mascot's own picture
- * (web/public/mascot-deer.png), which the deer icon is, and which is in the
- * repo like the script. The test regenerates everything into a temporary
- * folder and compares it with what is committed: what ships is what this draws.
+ * the same pixels; the compositor's work on them is plain arithmetic, the same
+ * everywhere too. Pieces are drawn on worker threads, one per core, and as each
+ * is seeded by its own name, which thread draws it changes nothing. The one
+ * file read is the mascot's own picture (web/public/mascot-deer.png), which
+ * the deer icon is, and which is in the repo like the script. The test
+ * regenerates everything into a temporary folder and compares it with what is
+ * committed: what ships is what this draws.
  *
  * ── what it owns ──────────────────────────────────────────────────────────
  *
@@ -44,9 +57,11 @@
  * `web/public/filters/kurdistan.webp` and `admin/public/background.jpg`.
  */
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import process from 'node:process';
 import { fileURLToPath } from 'node:url';
+import { Worker, isMainThread, parentPort, workerData } from 'node:worker_threads';
 import sharp from 'sharp';
 import {
   C,
@@ -55,7 +70,6 @@ import {
   between,
   blur,
   doc,
-  hooks,
   linear,
   n,
   poly,
@@ -67,6 +81,7 @@ import {
   tint,
 } from './cosmetic-art/kit.mjs';
 import { BACKGROUNDS } from './cosmetic-art/backgrounds.mjs';
+import { renderScene } from './cosmetic-art/render.mjs';
 import { ICONS } from './cosmetic-art/icons.mjs';
 
 export { BACKGROUNDS, ICONS };
@@ -678,17 +693,20 @@ async function webpWithin(raw, info, maxBytes, { alpha = false, start = 92 } = {
   throw new Error(`cannot fit under ${maxBytes} bytes`);
 }
 
-/** A background as SVG text — the same text on every machine. */
-export function backgroundSvg(piece) {
-  const cv = new Canvas(BG.width, BG.height);
-  piece.draw(cv, random(seedOf(piece.key)));
-  return cv.svg();
+/** A background's scene: its layers (each an SVG of the whole canvas) and effects, in order. */
+export function backgroundScene(piece) {
+  return piece.scene(random(seedOf(piece.key)));
 }
 
+/** The scene written out as text — the same text on every machine. */
+export function backgroundSvg(piece) {
+  return JSON.stringify(backgroundScene(piece));
+}
+
+/** A background, rendered by the compositor (cosmetic-art/render.mjs) and fitted under the size budget. */
 export async function renderBackground(piece) {
-  const { data, info } = await rasterise(backgroundSvg(piece));
-  const rgb = await sharp(dither(data, info.channels, seedOf(`${piece.key}:grain`)), { raw: info }).removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  return webpWithin(rgb.data, rgb.info, BG.maxBytes);
+  const rgb = await renderScene({ w: BG.width, h: BG.height, ...backgroundScene(piece), seed: seedOf(`${piece.key}:grain`) });
+  return webpWithin(rgb, { width: BG.width, height: BG.height, channels: 3 }, BG.maxBytes);
 }
 
 /** Where each background is written, relative to the repo root. */
@@ -701,27 +719,86 @@ function parseArgs(argv) {
   return { out: i >= 0 ? path.resolve(argv[i + 1]) : ROOT, only: argv.includes('--only') ? argv[argv.indexOf('--only') + 1] : null };
 }
 
+// ───────────────────────────────────────────────────────────── on every core
+
+/** How each kind of piece is drawn, by its place in its list. */
+const DRAW = {
+  background: (i) => renderBackground(BACKGROUNDS[i]),
+  icon: (i) => renderIcon(ICONS[i]),
+  sticker: (i) => renderSticker(STICKERS[i]),
+  overlay: () => renderFlagOverlay(),
+  admin: () => renderAdminBackdrop(),
+};
+
+/**
+ * Draws `jobs` ({ kind, i }) on worker threads, one per core up to eight, each
+ * of which loads this script and draws what it is handed; the backgrounds take
+ * seconds apiece, the compositor being plain JavaScript. Every piece is seeded
+ * by its own name, so which thread draws it, and when, changes nothing in what
+ * comes out. Resolves to the files' bytes, in the order of `jobs`.
+ */
+function drawAll(jobs) {
+  if (!jobs.length) return Promise.resolve([]);
+  const out = new Array(jobs.length);
+  let next = 0;
+  let failed = null;
+  const threads = Math.min(os.availableParallelism(), jobs.length, 8);
+  const crew = Array.from({ length: threads }, () => new Promise((resolve, reject) => {
+    // plain Node: none of the flags this process was started with (a test runner's, an -e's)
+    const worker = new Worker(new URL(import.meta.url), { workerData: { draws: true }, execArgv: [] });
+    let stopped = false;
+    const stop = (err) => {
+      stopped = true;
+      if (err) failed ??= err;
+      worker.terminate().then(() => (err ? reject(err) : resolve()), reject);
+    };
+    const hand = () => {
+      if (failed || next >= jobs.length) return stop(null);
+      const at = next++;
+      worker.postMessage({ at, kind: jobs[at].kind, i: jobs[at].i });
+    };
+    worker.on('message', ({ at, bytes, error }) => {
+      if (error) return stop(new Error(`drawing ${jobs[at].file}: ${error}`));
+      out[at] = Buffer.from(bytes);
+      hand();
+    });
+    worker.on('error', (err) => stop(err));
+    worker.on('exit', (code) => {
+      if (!stopped) stop(new Error(`a drawing thread stopped (exit code ${code})`));
+    });
+    hand();
+  }));
+  return Promise.all(crew).then(() => out);
+}
+
+if (!isMainThread && workerData?.draws) {
+  parentPort.on('message', async ({ at, kind, i }) => {
+    try {
+      parentPort.postMessage({ at, bytes: await DRAW[kind](i) });
+    } catch (err) {
+      parentPort.postMessage({ at, error: err?.stack ?? String(err) });
+    }
+  });
+}
+
 export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
-  const written = [];
-  const put = (rel, buf) => {
-    const f = path.join(outRoot, ...rel.split('/'));
-    fs.mkdirSync(path.dirname(f), { recursive: true });
-    fs.writeFileSync(f, buf);
-    written.push(rel);
-    log(`  ${rel.padEnd(64)} ${(buf.length / 1024).toFixed(0).padStart(4)}KB`);
-  };
   const wanted = (name) => !only || name.includes(only);
-  for (const [i, piece] of BACKGROUNDS.entries()) {
-    if (wanted(piece.key)) put(backgroundFile(piece, i), await renderBackground(piece));
-  }
-  for (const [i, piece] of ICONS.entries()) {
-    if (wanted(piece.key)) put(iconFile(piece, i), await renderIcon(piece));
-  }
-  for (const piece of STICKERS) {
-    if (wanted(piece.file)) put(stickerFile(piece), await renderSticker(piece));
-  }
-  if (wanted('kurdistan')) put(OVERLAY_FILE, await renderFlagOverlay());
-  if (wanted('admin')) put(ADMIN_FILE, await renderAdminBackdrop());
+  const jobs = [
+    ...BACKGROUNDS.map((piece, i) => ({ kind: 'background', i, name: piece.key, file: backgroundFile(piece, i) })),
+    ...ICONS.map((piece, i) => ({ kind: 'icon', i, name: piece.key, file: iconFile(piece, i) })),
+    ...STICKERS.map((piece, i) => ({ kind: 'sticker', i, name: piece.file, file: stickerFile(piece) })),
+    { kind: 'overlay', i: 0, name: 'kurdistan', file: OVERLAY_FILE },
+    { kind: 'admin', i: 0, name: 'admin', file: ADMIN_FILE },
+  ].filter((job) => wanted(job.name));
+  const files = await drawAll(jobs);
+  const written = [];
+  jobs.forEach((job, k) => {
+    const f = path.join(outRoot, ...job.file.split('/'));
+    fs.mkdirSync(path.dirname(f), { recursive: true });
+    fs.writeFileSync(f, files[k]);
+    written.push(job.file);
+    log(`  ${job.file.padEnd(64)} ${(files[k].length / 1024).toFixed(0).padStart(4)}KB`);
+  });
   // the folders are this script's: whatever it did not just write goes
   if (!only) {
     for (const dir of OWNED_DIRS) {
@@ -737,7 +814,7 @@ export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
   return written;
 }
 
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+if (isMainThread && process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const { out, only } = parseArgs(process.argv.slice(2));
   await renderAll(out, { only, log: console.log });
 }
