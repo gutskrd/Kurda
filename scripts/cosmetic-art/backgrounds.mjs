@@ -1514,11 +1514,22 @@ export const SCENES = {
       const pool = { x: 520, y: 620, r: 600, ambient: 0.12, squash: 0.45, power: 1.2 };
       s.terrain({ falloff: pool, blur: 0.5 }, { base: 586, line: ground, peaks: [{ x: 640, h: 0, s: 900 }], lit: '#58c4b6', shadow: '#020a0a', foot: '#010606', footFrom: 690, light: [-0.75, -0.35, 0.55], rocky: 1, stone: 80, relief: 1.6, ambient: 0.1 });
       // the tree: a short crooked trunk and a wide crown, its leaves fine and feathery, the moon on the side of it
-      // toward us
+      // toward us; rooted in the ground, its foot a little into it, its shadow thrown back from the moon across
+      // the stones, and grass and a few stones round its foot
+      const foot = ground(600) + 5;
+      s.layer({ blur: 1.2 }, (cv) => {
+        cv.add(`<ellipse cx="636" cy="${n(foot + 1)}" rx="74" ry="7" fill="#010404" fill-opacity="0.75"/>`);
+      });
       s.layer({ blur: 0.3, rim: moonlight }, (cv) => {
-        const t = tree(rnd, { x: 600, y: 566, height: 300, kind: 'oak', wood: '#041614', leafColour: '#0e4440', volume: ['#03100f', '#125a52', '#5ae0cc'], light: [-1, -0.3], lean: 0.05, leafiness: 1.1, twig: 4, clump: 0.7 });
+        const t = tree(rnd, { x: 600, y: foot, height: 300, kind: 'oak', wood: '#041614', leafColour: '#0e4440', volume: ['#03100f', '#125a52', '#5ae0cc'], light: [-1, -0.3], lean: 0.05, leafiness: 1.1, twig: 4, clump: 0.7 });
         cv.add(t.wood);
         leaves(cv, t.leaves, { size: 2.6, masses: 4, contrast: 0.8, gaps: 0.85, light: [-1, -0.3], tip: 1, seed: s.seed() });
+        for (let i = 0; i < 9; i++) {
+          const x = 560 + rnd() * 90;
+          const r = 3 + rnd() * 5;
+          cv.add(`<ellipse cx="${n(x)}" cy="${n(foot + 2 + rnd() * 4)}" rx="${n(r * 1.4)}" ry="${n(r * 0.7)}" fill="${x < 600 ? '#0e3a36' : '#041614'}"/>`);
+        }
+        cv.add(grass(rnd, { x0: 566, x1: 640, y: foot + 3, count: 34, height: 13, colours: ['#041614', '#0c3430', '#1a5a52'], wind: 0.12, width: 1.6 }));
       });
       return s.done({
         bloom: { threshold: 0.6, strength: 0.4, radius: 24, tint: '#ff9a7a' },

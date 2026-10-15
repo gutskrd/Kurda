@@ -44,7 +44,7 @@
  * lying on old boards in a shaft of window light with the dust turning in it.
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
- * still lifes — a pomegranate split open, a glass of tea on its saucer, a seal
+ * still lifes — a ripe pomegranate, a glass of tea on its saucer, a seal
  * of red wax with the flag's sun pressed into it, a saz, a buck come down
  * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat tied
  * with a bow, a white dove with a letter, the Newroz fire — painted by hand

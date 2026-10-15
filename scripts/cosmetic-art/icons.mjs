@@ -1,6 +1,6 @@
 /**
- * The shop's icons: Kurdish things painted as they are — a pomegranate split
- * open, a glass of tea on its saucer, a seal of red wax with the sun of the
+ * The shop's icons: Kurdish things painted as they are — a ripe pomegranate,
+ * a glass of tea on its saucer, a seal of red wax with the sun of the
  * Kurdish flag pressed into it, a saz, a buck come down to drink — painted by
  * hand rather than modelled: each one's colours laid in, its light and its
  * shadow laid over them as shapes of their own, brushed over and drawn in
@@ -247,96 +247,114 @@ export const ICONS = [
     key: 'hinar',
     ku: 'Hinar',
     en: 'Pomegranate',
-    // a ripe pomegranate, painted: broken open at its side, a piece of it leaning against it, the seeds packed in
-    // both in their pale pith, ruby and wet; its skin deep crimson and a little rough, lit softly from the left, the
-    // crown of its calyx at the top
+    // a ripe pomegranate, whole, painted as a still life: round and a little faceted, faint ridges running down it
+    // from the crown; its skin a deep leathery red, blushed warmer where the sun had it, its small pale pores, a
+    // dull sheen where the light falls on it from the upper left; the crown of its calyx standing up from the top,
+    // turned a little toward us, six pointed sepals curling out round a dark mouth, dry at their tips; and its
+    // shadow under it
     still(rnd) {
       const s = new Still(rnd);
-      // the fruit, a little lopsided
-      const C = [226, 276];
-      const body = [];
-      for (let i = 0; i < 40; i++) {
-        const a = (i / 40) * Math.PI * 2;
-        const m = 1 + 0.025 * Math.cos(a * 3 + 0.6) + 0.015 * Math.sin(a * 5 + 1.2);
-        body.push([C[0] + Math.cos(a) * 172 * m, C[1] + Math.sin(a) * 160 * m]);
-      }
-      const bodyD = spline(body);
-      // the hole broken in its right side, ragged
-      const hole = roundish([292, 286], 104, rnd, { wobble: 0.14, count: 22, squash: 1.05 });
-      const holeD = spline(hole);
-      // seeds packed into a shape: each a little angular, ruby, darkest at its edge, a glint of light on it
-      const seeds = (cv, shape, box, gap, lit) => {
-        cv.add(`<path d="${shape}" fill="#3a0408"/>`);
-        let out = '';
-        const poly = [];
-        for (let y = box[1]; y <= box[3]; y += gap * 0.86) {
-          for (let x = box[0] + ((y / gap) % 2 ? gap / 2 : 0); x <= box[2]; x += gap) poly.push([x + (rnd() - 0.5) * gap * 0.35, y + (rnd() - 0.5) * gap * 0.35]);
-        }
-        for (const [x, y] of poly) {
-          const r = gap * (0.44 + rnd() * 0.2);
-          const pts = roundish([x, y], r, rnd, { wobble: 0.26, count: 6, squash: 1.05 + rnd() * 0.3 });
-          // (deeper in the hole, and further from the light, the seeds are darker; no two quite the same)
-          const shade = Math.max(0, Math.min(1, ((x - lit[0]) * 0.5 + (y - lit[1])) / 240 + (rnd() - 0.5) * 0.5));
-          const c0 = ['#e43a52', '#cc2440', '#b0182e', '#901024'][Math.floor(shade * 3.99)];
-          out += `<path d="${spline(pts)}" fill="${radial(cv, [[0, c0], [0.55, '#7e0a1e'], [1, '#3a020c']], x - r * 0.3, y - r * 0.35, r * 1.35)}"/>`;
-          if (rnd() < 0.7) {
-            const g = r * (0.12 + rnd() * 0.14);
-            out += `<ellipse cx="${n(x - r * 0.3)}" cy="${n(y - r * 0.36)}" rx="${n(g * 1.6)}" ry="${n(g)}" transform="rotate(-35 ${n(x - r * 0.3)} ${n(y - r * 0.36)})" fill="#fff4f0" fill-opacity="${n(0.4 + rnd() * 0.5)}"/>`;
-          }
-        }
-        cv.add(`<g clip-path="${within(cv, shape)}">${out}</g>`);
+      const C = [252, 298];
+      const R = 160;
+      // (the fruit turned: its top toward us, its axis leaning a little to the right)
+      const tilt = 0.5;
+      const lean = 0.3;
+      const turn = ([x, y, z]) => {
+        const y1 = y * Math.cos(tilt) - z * Math.sin(tilt);
+        const z1 = y * Math.sin(tilt) + z * Math.cos(tilt);
+        return [x * Math.cos(lean) + y1 * Math.sin(lean), -x * Math.sin(lean) + y1 * Math.cos(lean), z1];
       };
+      const view = ([x, y]) => [C[0] + x, C[1] - y * 0.95];
+      const surface = (t, f, r = R) => turn([r * Math.sin(t) * Math.cos(f), r * Math.cos(t), r * Math.sin(t) * Math.sin(f)]);
+      // its outline: round, with the faint angles of its ridges
+      const outline = [];
+      for (let i = 0; i < 72; i++) {
+        const a = (i / 72) * Math.PI * 2;
+        const m = 1 + 0.016 * Math.cos(6 * a + 0.5) + 0.01 * Math.sin(3 * a + 1.1);
+        outline.push([C[0] + Math.cos(a) * R * m, C[1] + Math.sin(a) * R * 0.95 * m]);
+      }
+      const body = spline(outline);
+      // its shadow on whatever it stands on
+      s.paint((cv) => cv.add(`<ellipse cx="${C[0] + 14}" cy="${C[1] + R * 0.95 - 6}" rx="${n(R * 0.86)}" ry="22" fill="#000" fill-opacity="0.5"/>`), { blur: 12 });
+      // the fruit
       s.paint((cv) => {
-        // the skin: crimson, lighter where the light falls, and its shadow side; its small pale pores
-        cv.add(`<path d="${bodyD}" fill="${radial(cv, [[0, '#c4383a'], [0.35, '#a01c22'], [0.75, '#7a1018'], [1, '#4e080e']], 150, 190, 260, 140, 170)}"/>`);
-        // (the skin mottled: patches a little browner, a little brighter)
-        cv.add(`<g clip-path="${within(cv, bodyD)}" filter="${softly(cv, 12)}">`);
-        for (let i = 0; i < 26; i++) cv.add(`<ellipse cx="${n(60 + rnd() * 340)}" cy="${n(120 + rnd() * 320)}" rx="${n(14 + rnd() * 30)}" ry="${n(10 + rnd() * 24)}" fill="${rnd() < 0.5 ? '#6a1a14' : '#d0484a'}" fill-opacity="${n(0.12 + rnd() * 0.16)}"/>`);
-        cv.add('</g>');
-        crescent(cv, bodyD, [-46, -40], { colour: '#2a0408', opacity: 0.55, soft: 26 });
-        crescent(cv, bodyD, [26, 30], { colour: '#e8786a', opacity: 0.22, soft: 30 });
-        strokes(cv, rnd, bodyD, [40, 100, 420, 450], { count: 900, colours: ['#d8505a', '#6a0c14', '#b02a2e'], flow: (x, y) => (Math.atan2(y - C[1], x - C[0]) * 180) / Math.PI + 90, length: 16, width: 3, opacity: [0.05, 0.16] });
-        specks(cv, rnd, bodyD, [40, 100, 420, 450], { count: 260, colours: ['#f0a8a0', '#e88c84'], size: [0.6, 1.6], opacity: [0.15, 0.4] });
-        cv.add(`<ellipse cx="148" cy="190" rx="52" ry="34" transform="rotate(-30 148 190)" fill="#f8c8c0" fill-opacity="0.32" filter="${softly(cv, 16)}"/>`);
-        rim(cv, bodyD, { colour: '#2a0408', width: 5, opacity: 0.5, soft: 3 });
-      });
-      // the crown: a short tube flaring into pointed sepals, darker, dry at their tips
-      const crown = 'M150 132 C146 116 140 104 130 94 C138 95 146 98 152 103 C152 90 154 80 158 70 C164 80 168 90 170 100 C176 90 184 84 194 80 C192 92 188 102 184 110 C192 107 200 106 208 108 C200 118 192 126 184 134 C178 142 160 142 150 132 Z';
-      s.paint((cv) => {
-        cv.add(`<path d="${crown}" fill="${linear(cv, [[0, '#5a0c10'], [0.6, '#8a2020'], [1, '#a83a2a']], 160, 70, 170, 140)}"/>`);
-        crescent(cv, crown, [-6, -6], { colour: '#1a0204', opacity: 0.5, soft: 4 });
-        cv.add(`<path d="M134 96 L130 94 M156 72 L158 70 M192 82 L194 80 M206 108 L208 108" stroke="#d8b090" stroke-width="2" stroke-linecap="round" stroke-opacity="0.7"/>`);
-        rim(cv, crown, { colour: '#1a0204', width: 2, opacity: 0.6 });
-      });
-      // the hole: the skin's broken edge round it, thick and pale, and the seeds packed in it
-      s.paint((cv) => {
-        // (the skin broken thin and ragged round the hole, the pith pink-white in the break)
-        const torn = spline(roundish([292, 286], 112, rnd, { wobble: 0.2, count: 34, squash: 1.05 }));
-        cv.add(`<path d="${torn}" fill="#e6b8a8"/>`);
-        cv.add(`<path d="${torn}" fill="none" stroke="#f4dccc" stroke-width="3" stroke-opacity="0.7"/>`);
-        seeds(cv, holeD, [176, 166, 404, 404], 17, [220, 200]);
-        // the pale membranes running in between the seeds, and the shadow of the near rim on them
-        for (let i = 0; i < 3; i++) {
-          const a = -0.4 + i * 0.9 + rnd() * 0.3;
-          cv.add(`<path d="M${pt([292 + Math.cos(a) * 100, 286 + Math.sin(a) * 100])} Q${pt([292 + Math.cos(a + 0.4) * 50, 286 + Math.sin(a + 0.4) * 50])} ${pt([292 + rnd() * 20 - 10, 286 + rnd() * 20 - 10])}" fill="none" stroke="#f0d8c4" stroke-width="5" stroke-opacity="0.8" stroke-linecap="round" clip-path="${within(cv, holeD)}"/>`);
+        // the skin: deep red, lighter and warmer where the light is, darkest round the shadow side
+        cv.add(`<path d="${body}" fill="${radial(cv, [[0, '#e0484a'], [0.28, '#c02a30'], [0.62, '#8e1420'], [0.9, '#5c0a12'], [1, '#44060c']], C[0] - 66, C[1] - 70, R * 1.55, C[0] - 80, C[1] - 86)}"/>`);
+        cv.add(`<g clip-path="${within(cv, body)}">`);
+        // (blushed warmer, toward gold, where the sun had it; and here and there browner)
+        cv.add(`<ellipse cx="${C[0] - 70}" cy="${C[1] - 50}" rx="90" ry="70" fill="#f0a050" fill-opacity="0.22" filter="${softly(cv, 30)}"/>`);
+        for (let i = 0; i < 18; i++) cv.add(`<ellipse cx="${n(C[0] - R + rnd() * 2 * R)}" cy="${n(C[1] - R + rnd() * 2 * R)}" rx="${n(16 + rnd() * 26)}" ry="${n(12 + rnd() * 20)}" fill="${rnd() < 0.55 ? '#5a1210' : '#d8504a'}" fill-opacity="${n(0.08 + rnd() * 0.12)}" filter="${softly(cv, 12)}"/>`);
+        // (the ridges running down it from the crown: each a soft fold, shade on one side and light on the other)
+        for (let k = 0; k < 6; k++) {
+          const f = (k / 6) * Math.PI * 2 + 0.3;
+          const line = [];
+          for (let t = 0.2; t <= 2.95; t += 0.05) {
+            const p = surface(t, f);
+            if (p[2] > R * 0.08) line.push(view(p));
+          }
+          if (line.length < 4) continue;
+          const d = `M${line.map(pt).join(' L')}`;
+          cv.add(`<path d="${d}" fill="none" stroke="#4a060c" stroke-width="7" stroke-opacity="0.22" filter="${softly(cv, 4)}"/>`);
+          cv.add(`<path d="${d}" fill="none" stroke="#f08070" stroke-width="5" stroke-opacity="0.1" transform="translate(-6 -3)" filter="${softly(cv, 4)}"/>`);
         }
-        crescent(cv, holeD, [16, 18], { colour: '#1a0204', opacity: 0.55, soft: 8 });
+        cv.add('</g>');
+        // the shadow side, and the warm light thrown back up into it from below
+        crescent(cv, body, [-40, -44], { colour: '#1e0206', opacity: 0.55, soft: 30 });
+        crescent(cv, body, [-14, -22], { colour: '#e2604a', opacity: 0.2, soft: 14 });
+        strokes(cv, rnd, body, [C[0] - R, C[1] - R, C[0] + R, C[1] + R], { count: 1400, colours: ['#d84a50', '#5a0a12', '#b02a30', '#7a2a1a'], flow: (x, y) => (Math.atan2(y - C[1], x - C[0]) * 180) / Math.PI + 90, length: 14, width: 2.4, opacity: [0.05, 0.14] });
+        specks(cv, rnd, body, [C[0] - R, C[1] - R, C[0] + R, C[1] + R], { count: 320, colours: ['#f4c0a0', '#f0a090', '#ffe0b0'], size: [0.5, 1.4], opacity: [0.12, 0.36] });
+        // the gloss: a broad soft sheen and a small bright one inside it
+        cv.add(`<ellipse cx="${C[0] - 70}" cy="${C[1] - 78}" rx="62" ry="40" transform="rotate(-32 ${C[0] - 70} ${C[1] - 78})" fill="#ffd8c8" fill-opacity="0.16" filter="${softly(cv, 20)}"/>`);
+        cv.add(`<ellipse cx="${C[0] - 80}" cy="${C[1] - 86}" rx="22" ry="12" transform="rotate(-32 ${C[0] - 80} ${C[1] - 86})" fill="#fff4ec" fill-opacity="0.28" filter="${softly(cv, 7)}"/>`);
+        rim(cv, body, { colour: '#2a0408', width: 4, opacity: 0.5, soft: 2 });
       });
-      // the piece broken off, leaning against the fruit at the front: its skin round its back, its seeds to us
-      const piece = spline([[330, 300], [372, 270], [420, 262], [452, 290], [462, 340], [446, 398], [404, 436], [356, 446], [322, 420], [312, 370]]);
-      const face = spline([[338, 306], [374, 282], [416, 278], [442, 300], [448, 342], [432, 392], [396, 424], [358, 430], [332, 408], [326, 364]]);
-      s.shadow((cv) => cv.add(`<path d="${piece}" fill="#000" transform="translate(-12 6)"/>`), { blur: 10, opacity: 0.45 });
+      // the crown: a short thick neck rising from the top, and round its mouth six fleshy sepals, touching at their
+      // feet, each narrowing to a point that curls out and back, dry and pale at its tip
       s.paint((cv) => {
-        cv.add(`<path d="${piece}" fill="${linear(cv, [[0, '#8a141c'], [1, '#4a080c']], 330, 270, 460, 440)}"/>`);
-        strokes(cv, rnd, piece, [300, 250, 470, 450], { count: 220, colours: ['#c43a3a', '#5a0a10'], flow: () => 60, length: 12, width: 2.4, opacity: [0.06, 0.16] });
-        cv.add(`<path d="${face}" fill="#e2b0a0"/>`);
-        const inner = spline([[342, 312], [374, 290], [414, 286], [438, 306], [443, 344], [428, 388], [396, 416], [360, 422], [336, 402], [331, 362]]);
-        seeds(cv, inner, [326, 280, 450, 426], 16, [340, 300]);
-        cv.add(`<path d="M${pt([392, 300])} Q${pt([380, 350])} ${pt([400, 410])}" fill="none" stroke="#f0d8c4" stroke-width="5" stroke-opacity="0.85" stroke-linecap="round" clip-path="${within(cv, inner)}"/>`);
-        crescent(cv, inner, [-8, -10], { colour: '#1a0204', opacity: 0.3, soft: 8 });
-        rim(cv, piece, { colour: '#1a0204', width: 3, opacity: 0.5, soft: 2 });
+        const A = turn([0, 1, 0]);
+        const e1 = turn([1, 0, 0]);
+        const e2 = turn([0, 0, 1]);
+        const base = turn([0, R * 0.95, 0]);
+        const at = (r, h, psi) => view([0, 1, 2].map((c) => base[c] + A[c] * h + (e1[c] * Math.cos(psi) + e2[c] * Math.sin(psi)) * r));
+        // (where its foot meets the fruit, a ring of shadow)
+        const foot = [];
+        for (let i = 0; i < 18; i++) foot.push(at(38, -2, (i / 18) * Math.PI * 2));
+        cv.add(`<path d="${spline(foot)}" fill="#2a0408" fill-opacity="0.5" filter="${softly(cv, 4)}"/>`);
+        // the neck
+        const neck = [];
+        for (let i = 0; i <= 12; i++) neck.push(at(35, -5, Math.PI + (i / 12) * Math.PI));
+        for (let i = 12; i >= 0; i--) neck.push(at(31, 36, Math.PI + (i / 12) * Math.PI));
+        const sepal = (psi) => {
+          const l = at(31, 35, psi - 0.52);
+          const r = at(31, 35, psi + 0.52);
+          const tip = at(56 + rnd() * 6, 72 + rnd() * 8, psi + (rnd() - 0.5) * 0.1);
+          const waist = at(37, 56, psi);
+          // (the sides drawn in toward its middle as they rise, so it narrows to its point)
+          const side = (corner) => lerp(lerp(corner, tip, 0.55), waist, 0.45);
+          return { d: `M${pt(l)} Q${pt(side(l))} ${pt(tip)} Q${pt(side(r))} ${pt(r)} Z`, front: Math.sin(psi) > 0, tip, root: at(31, 35, psi) };
+        };
+        const sepals = [0, 1, 2, 3, 4, 5].map((i) => sepal((i / 6) * Math.PI * 2 + 0.26));
+        const paintSepal = (sp) => {
+          cv.add(`<path d="${sp.d}" fill="${linear(cv, sp.front ? [[0, '#8e1c1e'], [0.55, '#b4442e'], [1, '#d8a070']] : [[0, '#5a0e12'], [0.6, '#8a3424'], [1, '#b88a5a']], ...sp.root, ...sp.tip)}"/>`);
+          crescent(cv, sp.d, [3, -2], { colour: '#1a0204', opacity: 0.3, soft: 3 });
+          cv.add(`<path d="${sp.d}" fill="none" stroke="#2a0406" stroke-width="1.3" stroke-opacity="0.6"/>`);
+        };
+        sepals.filter((sp) => !sp.front).forEach(paintSepal);
+        // (its mouth, in shadow, the dry threads of the flower in it)
+        const mouth = [];
+        for (let i = 0; i < 16; i++) mouth.push(at(29, 36, (i / 16) * Math.PI * 2));
+        cv.add(`<path d="${spline(mouth)}" fill="#1e0204"/>`);
+        for (let i = 0; i < 10; i++) {
+          const p = at(rnd() * 18, 38 + rnd() * 7, rnd() * Math.PI * 2);
+          cv.add(`<circle cx="${n(p[0])}" cy="${n(p[1])}" r="${n(0.7 + rnd() * 0.8)}" fill="#7a4a2a" fill-opacity="0.55"/>`);
+        }
+        const neckD = spline(neck);
+        cv.add(`<path d="${neckD}" fill="${linear(cv, [[0, '#6a0e14'], [0.4, '#b23232'], [1, '#5a0a10']], ...at(35, 15, Math.PI), ...at(35, 15, 0))}"/>`);
+        crescent(cv, neckD, [-8, 0], { colour: '#2a0408', opacity: 0.35, soft: 6 });
+        strokes(cv, rnd, neckD, [200, 40, 400, 240], { count: 80, colours: ['#d05a48', '#4a080c'], flow: () => -72, length: 8, width: 1.6, opacity: [0.08, 0.2] });
+        sepals.filter((sp) => sp.front).forEach(paintSepal);
       });
-      return s.done({ finish: { paint: 2, grain: 0.012, contrast: 0.1, saturation: 1 } });
+      return s.done({ finish: { paint: 1.5, grain: 0.012, contrast: 0.1, saturation: 1 } });
     },
   },
   {
