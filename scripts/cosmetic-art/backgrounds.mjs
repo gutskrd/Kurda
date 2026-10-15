@@ -11,10 +11,10 @@
  * the shop, which api/content/cosmetics.json and migration 1751000161000 hold
  * too — a piece is redrawn here, never renamed.
  */
-import { Canvas, between, doc, n } from './kit.mjs';
+import { Canvas, between, doc, n, pt } from './kit.mjs';
 import { deer, lamb } from './figures.mjs';
 import { aurora, birds, heightAt, range, ridge, village } from './landscape.mjs';
-import { kilim } from './kilim.mjs';
+import { fringes, kilim } from './kilim.mjs';
 import { akreTorches, amedi, citadel, delal, hewraman, ishakPasha, tent } from './places.mjs';
 import { branch, clouds, embers, fire, flower, flowerField, glow, grass, motes, moon, noise, orb, petals, pine, reeds, silhouette, sky, starfield, tallGrass, tree } from './nature.mjs';
 
@@ -150,11 +150,11 @@ export const SCENES = {
         rough(cv, [[868, 250], [946, 300], [998, 214], [792, 172], [722, 140]].map(([x, h]) => silhouette(rnd, { x, y: 472, height: h, kind: 'poplar', colour: '#000' })).join(''), { scale: 5, freq: 0.12, seed: s.seed() });
       });
       s.effect('rays', { x: 905, y: 372, threshold: 0.6, strength: 1.8, decay: 0.978, density: 0.97, colour: '#ffd9a0' });
-      // the near bank, and the deer drinking at its edge
+      // the near bank, and the deer drinking at its very end: its head out over the bright water, held in it
       s.layer({ rim: { x: 905, y: 372, colour: '#ffcf7a', width: 2.5, strength: 0.85 } }, (cv) => {
-        cv.add('<path d="M-30,446 C120,438 250,444 360,452 C420,457 470,465 520,471 L-30,474 Z" fill="#26170c"/>');
-        cv.add(grass(rnd, { x0: -30, x1: 470, y: 455, count: 300, height: 26, colours: ['#26170c', '#331f10'], wind: 0.25, width: 2 }));
-        cv.add(deer({ x: 300, y: 470, size: 112, colour: '#1d1209', pose: 'drink' }));
+        cv.add('<path d="M-30,446 C120,438 230,444 300,452 C328,456 346,463 360,471 L-30,474 Z" fill="#26170c"/>');
+        cv.add(grass(rnd, { x0: -30, x1: 300, y: 455, count: 260, height: 26, colours: ['#26170c', '#331f10'], wind: 0.25, width: 2 }));
+        cv.add(deer({ x: 296, y: 470, size: 112, colour: '#1d1209', pose: 'drink' }));
       });
       s.effect('reflect', { y: 471, deep: '#5a3c22', near: 0.45, far: 0.9, ripple: 2.2, wave: 0.11, soften: 1.4, seed: s.seed() });
       s.layer({ blend: 'screen' }, (cv) => {
@@ -271,7 +271,7 @@ export const SCENES = {
   'daristana-seve': {
     ku: 'Daristana Şevê',
     en: 'Forest at night',
-    // moonlight through the oaks, a deer grazing in the beam, fireflies
+    // moonlight through the oaks, a stag in the beam with its head up, listening; fireflies
     scene(rnd) {
       const s = new Scene(rnd);
       s.layer({}, (cv) => {
@@ -293,8 +293,10 @@ export const SCENES = {
       });
       s.layer({ rim: { x: 700, y: 150, colour: '#cfeeff', width: 2.5, strength: 0.9 } }, (cv) => {
         cv.add('<path d="M-20,548 C300,536 800,540 1300,552 L1300,740 L-20,740 Z" fill="#06171c"/>');
-        cv.add(deer({ x: 690, y: 566, size: 94, colour: '#04121a', pose: 'graze' }));
         cv.add(grass(rnd, { x0: -30, x1: 1310, y: 572, count: 800, height: 30, colours: ['#06171c', '#0a2228', '#0e2c33'], wind: 0.12, width: 2.2 }));
+        // the stag stands clear of the grass, the whole of him against the light, only his hooves in it
+        cv.add(deer({ x: 650, y: 570, size: 98, colour: '#04121a', pose: 'alert', facing: 1 }));
+        cv.add(grass(rnd, { x0: 600, x1: 780, y: 574, count: 90, height: 12, colours: ['#06171c', '#0a2228'], wind: 0.12, width: 1.8 }));
       });
       s.layer({ blur: 1, blend: 'screen' }, (cv) => {
         for (let i = 0; i < 70; i++) {
@@ -1251,38 +1253,110 @@ export const SCENES = {
   },
 };
 
-/** Kilim palettes: ground, outlining wool, undyed wool, and the dyes; and the layout each is woven in. */
+/**
+ * The kilims: each woven after one Kurdish tradition (kilim.mjs), and the light it lies in — a shaft from a high
+ * window falling across it at `angle` (radians below level) through `at`, `width` wide, in `colour`.
+ */
 const KILIMS = [
-  ['kilima-sor', 'Kilîma Sor', 'Red kilim', 'guls', { field: '#a3202c', ink: '#2a1418', light: '#f1e2c4', dyes: ['#e9a93a', '#1f4f8a', '#2f7a4a', '#f4d27a'] }],
-  ['kilima-mor', 'Kilîma Mor', 'Purple kilim', 'bands', { field: '#4d2a6e', ink: '#1c0f29', light: '#efe1cf', dyes: ['#d24d6a', '#e9b23a', '#7fb0d8', '#c08ad9'] }],
-  ['kilima-zer', 'Kilîma Zer', 'Gold kilim', 'lattice', { field: '#d39a2c', ink: '#3a2414', light: '#f6ead0', dyes: ['#a3202c', '#1f4f8a', '#2f6e44', '#7a3b1c'] }],
-  ['kilima-kesk', 'Kilîma Kesk', 'Green kilim', 'guls', { field: '#245c3e', ink: '#10261a', light: '#f0e6cc', dyes: ['#c8323c', '#e9b23a', '#f3d9a4', '#9a5ab0'] }],
-  ['kilima-sin', 'Kilîma Şîn', 'Blue kilim', 'bands', { field: '#1d3b72', ink: '#0d1830', light: '#ede4d0', dyes: ['#c8323c', '#e9a93a', '#7ec2c6', '#f2d27a'] }],
-  ['kilima-gulan', 'Kilîma Gulan', 'Rose kilim', 'lattice', { field: '#b8506a', ink: '#3a1420', light: '#f8e8dc', dyes: ['#2f6e5a', '#f0b84a', '#5a2c6e', '#f5c6cf'] }],
-  ['kilima-seve', 'Kilîma Şevê', 'Night kilim', 'guls', { field: '#1c1a2a', ink: '#0a0910', light: '#d9d2c4', dyes: ['#8a2a3a', '#c79a3a', '#3e6a8a', '#6b4a8a'] }],
+  ['kilima-sor', 'Kilîma Sor', 'Red kilim', 'herki', { angle: 0.62, at: [600, 340], width: 330, colour: '#ffe0aa' }],
+  ['kilima-mor', 'Kilîma Mor', 'Purple kilim', 'sine', { angle: 0.7, at: [640, 360], width: 360, colour: '#ffe6c0' }],
+  ['kilima-zer', 'Kilîma Zer', 'Gold kilim', 'harsin', { angle: 0.55, at: [560, 330], width: 300, colour: '#fff0c8' }],
+  ['kilima-kesk', 'Kilîma Kesk', 'Green kilim', 'jaff', { angle: 0.66, at: [680, 360], width: 320, colour: '#ffe8bc' }],
+  ['kilima-sin', 'Kilîma Şîn', 'Blue kilim', 'stars', { angle: 0.6, at: [620, 350], width: 340, colour: '#fff2d4' }],
+  ['kilima-gulan', 'Kilîma Gulan', 'Rose kilim', 'gulan', { angle: 0.68, at: [640, 340], width: 360, colour: '#fff0d8' }],
+  ['kilima-seve', 'Kilîma Şevê', 'Night kilim', 'night', { angle: 0.74, at: [640, 360], width: 300, colour: '#cfe0ff', night: true }],
 ];
 
-for (const [key, ku, en, layout, palette] of KILIMS) {
+/** Old floorboards, dark in the shade of the room: planks of a few tones, their grain, their joints. */
+function boards(cv, rnd) {
+  const tones = ['#3a2416', '#33200f', '#402a19', '#2e1c10', '#36220f'];
+  const grain = [];
+  for (let y = -12, i = 0; y < 740; i++) {
+    const h = between(rnd, 58, 74);
+    cv.add(`<rect x="-10" y="${n(y)}" width="1300" height="${n(h)}" fill="${tones[i % tones.length]}"/>`);
+    for (let k = 0; k < 5; k++) {
+      const gy = y + between(rnd, 6, h - 6);
+      grain.push(`M-10,${n(gy)} C${n(between(rnd, 200, 500))},${n(gy + between(rnd, -4, 4))} ${n(between(rnd, 700, 1000))},${n(gy + between(rnd, -4, 4))} 1290,${n(gy + between(rnd, -3, 3))}`);
+    }
+    cv.add(`<rect x="-10" y="${n(y + h - 2)}" width="1300" height="2" fill="#120a05"/>`);
+    for (let x = between(rnd, -200, 300); x < 1300; x += between(rnd, 380, 700)) cv.add(`<rect x="${n(x)}" y="${n(y)}" width="2" height="${n(h)}" fill="#120a05"/>`);
+    y += h;
+  }
+  cv.add(`<path d="${grain.join(' ')}" fill="none" stroke="#5a3a22" stroke-width="1" stroke-opacity="0.35"/>`);
+}
+
+for (const [key, ku, en, design, light] of KILIMS) {
   SCENES[key] = {
     ku,
     en,
-    // a kilim, woven cell by cell, lying in soft light with the folds it was kept in
+    // a kilim, woven cell by cell, lying on old boards in a dim room, a shaft of light from a high window falling
+    // across it, the dust turning in the light
     scene(rnd) {
       const s = new Scene(rnd);
-      s.layer({}, (cv) => kilim(cv, rnd, { ...palette, layout }));
-      s.layer({ blur: 26 }, (cv) => {
-        // folds: broad bands a little lighter and darker, across the weave
-        for (let i = 0; i < 4; i++) {
-          const x = between(rnd, -200, 1100);
-          const w = between(rnd, 160, 340);
-          const a = between(rnd, -0.25, 0.25);
-          cv.add(`<g transform="rotate(${(a * 57.3).toFixed(1)} ${(x + w / 2).toFixed(1)} 360)"><rect x="${x.toFixed(1)}" y="-200" width="${(w * 0.5).toFixed(1)}" height="1120" fill="#ffffff" fill-opacity="0.07"/><rect x="${(x + w * 0.5).toFixed(1)}" y="-200" width="${(w * 0.5).toFixed(1)}" height="1120" fill="#000000" fill-opacity="0.12"/></g>`);
+      const { angle, at, width, colour, night = false } = light;
+      const d = [Math.cos(angle), Math.sin(angle)];
+      const nrm = [-d[1], d[0]];
+      // the shaft, and a narrower one beside it where the window's other pane is
+      const shafts = [
+        [0, width],
+        [width * 0.95, width * 0.42],
+      ];
+      const shaftPath = shafts
+        .map(([off, w]) => {
+          const c = [at[0] + nrm[0] * off, at[1] + nrm[1] * off];
+          const P = (t, side) => [c[0] + d[0] * t + nrm[0] * side * (w / 2), c[1] + d[1] * t + nrm[1] * side * (w / 2)];
+          return `M${pt(P(-1800, -1))} L${pt(P(1800, -1))} L${pt(P(1800, 1))} L${pt(P(-1800, 1))} Z`;
+        })
+        .join(' ');
+      s.layer({}, (cv) => boards(cv, rnd));
+      // the rug's own shadow on the boards
+      s.layer({ blur: 9 }, (cv) => cv.add('<rect x="34" y="27" width="1212" height="668" rx="6" fill="#000000" fill-opacity="0.6"/>'));
+      s.layer({}, (cv) => kilim(cv, rnd, design));
+      s.layer({ blur: 0.5 }, (cv) => cv.add(fringes(rnd)));
+      // the folds it was kept in, not quite lain out of it: broad swells a little lit, a little shadowed
+      s.layer({ blur: 34 }, (cv) => {
+        for (let i = 0; i < 3; i++) {
+          const x = between(rnd, 100, 1100);
+          const w = between(rnd, 120, 260);
+          const a = between(rnd, -0.3, 0.3);
+          cv.add(`<g transform="rotate(${n(a * 57.3)} ${n(x + w / 2)} 360)"><rect x="${n(x)}" y="-200" width="${n(w * 0.5)}" height="1120" fill="#ffffff" fill-opacity="0.05"/><rect x="${n(x + w * 0.5)}" y="-200" width="${n(w * 0.5)}" height="1120" fill="#000000" fill-opacity="0.1"/></g>`);
         }
       });
+      // the room's shade everywhere the light does not fall
+      s.layer({ blur: 44 }, (cv) => {
+        cv.add(`<path d="M-200,-200 H1480 V920 H-200 Z ${shaftPath}" fill="${night ? '#04050c' : '#140a05'}" fill-opacity="${night ? 0.62 : 0.5}" fill-rule="evenodd"/>`);
+      });
+      // the light itself, brightest where it comes in at the top left, and the glow of the window it comes through
+      s.layer({ blur: 26, blend: 'screen' }, (cv) => {
+        const g = cv.id('shaft');
+        cv.def(`<linearGradient id="${g}" gradientUnits="userSpaceOnUse" x1="${n(at[0] - d[0] * 900)}" y1="${n(at[1] - d[1] * 900)}" x2="${n(at[0] + d[0] * 900)}" y2="${n(at[1] + d[1] * 900)}"><stop offset="0" stop-color="${colour}" stop-opacity="0.62"/><stop offset="0.55" stop-color="${colour}" stop-opacity="0.36"/><stop offset="1" stop-color="${colour}" stop-opacity="0.16"/></linearGradient>`);
+        cv.add(`<path d="${shaftPath}" fill="url(#${g})"/>`);
+        glow(cv, { x: at[0] - d[0] * 760, y: at[1] - d[1] * 760, r: 620, colour, opacity: 0.5 });
+      });
+      // dust turning in the light: fine motes, and a few out of focus nearer the window
+      const motesIn = (count, size, opacity) => {
+        const out = [];
+        while (out.length < count) {
+          const [off, w] = shafts[rnd() < 0.72 ? 0 : 1];
+          const t = between(rnd, -900, 900);
+          const side = between(rnd, -0.5, 0.5) * w;
+          const x = at[0] + nrm[0] * off + d[0] * t + nrm[0] * side;
+          const y = at[1] + nrm[1] * off + d[1] * t + nrm[1] * side;
+          if (x < 0 || x > 1280 || y < 0 || y > 720) continue;
+          out.push(`<circle cx="${n(x)}" cy="${n(y)}" r="${n(size * between(rnd, 0.4, 1.3))}" fill-opacity="${n(opacity * between(rnd, 0.4, 1))}"/>`);
+        }
+        return `<g fill="${night ? '#eef4ff' : '#fff6e2'}">${out.join('')}</g>`;
+      };
+      s.layer({ blur: 0.5, blend: 'screen' }, (cv) => cv.add(motesIn(220, 1.2, 0.9)));
+      s.layer({ blur: 5, blend: 'screen' }, (cv) => cv.add(motesIn(16, 7, 0.32)));
       return s.done({
-        grade: { saturation: 1.02, contrast: 0.08 },
-        vignette: { strength: 0.4, colour: '#000000', inner: 0.35 },
-        grain: 0.02,
+        bloom: { threshold: 0.7, strength: 0.42, radius: 30, tint: colour },
+        diffuse: { radius: 18, strength: 0.2, soften: 0.06 },
+        grade: night
+          ? { lift: [0.01, 0.015, 0.03], gain: [0.96, 0.99, 1.04], saturation: 1, contrast: 0.16, shadows: ['#05070e', 0.4] }
+          : { lift: [0.025, 0.015, 0.005], gain: [1.03, 1, 0.94], saturation: 1.04, contrast: 0.14, shadows: ['#1a0c06', 0.35], highlights: ['#fff2dc', 0.15] },
+        vignette: { strength: 0.42, colour: '#000000' },
+        grain: 0.012,
       });
     },
   };

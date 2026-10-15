@@ -31,7 +31,8 @@ const KINDS = {
   oak: { trunk: 0.24, width: 0.06, depth: 6, kids: [2, 3], spread: [0.34, 0.6], ratio: [0.64, 0.78], thin: 0.68, clumps: 2, reach: 0.05, size: [0.03, 0.055], up: 0.45, limit: 1.2, leafDepth: 2, lead: true },
   // walnut: taller, its crown wider and more open
   walnut: { trunk: 0.3, width: 0.055, depth: 6, kids: [2, 3], spread: [0.36, 0.62], ratio: [0.64, 0.78], thin: 0.66, clumps: 2, reach: 0.055, size: [0.03, 0.055], up: 0.4, limit: 1.25, leafDepth: 2, lead: true },
-  poplar: { trunk: 0.12, width: 0.03, depth: 3, kids: [2, 2], spread: [0.08, 0.22], ratio: [0.78, 0.9], thin: 0.72, clumps: 2, reach: 0.035, size: [0.03, 0.05], up: 0.9, limit: 0.5 },
+  // the poplar: its leaves in many small fluttering clusters, so its edge is feathery
+  poplar: { trunk: 0.12, width: 0.03, depth: 3, kids: [2, 2], spread: [0.08, 0.22], ratio: [0.78, 0.9], thin: 0.72, clumps: 4, reach: 0.04, size: [0.016, 0.03], up: 0.9, limit: 0.5 },
   // almond and Judas tree: open, airy, the blossom on bare twigs
   blossom: { trunk: 0.22, width: 0.045, depth: 6, kids: [2, 3], spread: [0.32, 0.62], ratio: [0.64, 0.8], thin: 0.62, clumps: 3, reach: 0.045, size: [0.014, 0.028], up: 0.4, limit: 1.25, leafDepth: 2, lead: true },
   // a tall thin trunk with short boughs near the top, for misty woods
@@ -83,8 +84,9 @@ export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean =
   const colours = Array.isArray(leafColour) ? [...leafColour] : [leafColour];
   if (litColour) colours.push(litColour);
   const leaves = colours.map(() => []);
-  // volume: [shadow, mid, lit] — each clump is drawn three times, smaller and nearer the light each time,
-  // and the clumps are laid back to front, so every one keeps its own shadow under the one before it
+  // volume: [shadow, mid, lit] — the crown painted flat, as a painter blocks it in: each clump one tone, the
+  // side of the crown it is on deciding which, so the light falls across the crown in broad planes and no
+  // clump carries a highlight of its own
   const vol = volume ? { tones: volume, clumps: [] } : null;
   // the crown's middle, roughly, so a clump can tell which side of it it is on
   const crown = [x, y - height * 0.62];
@@ -106,11 +108,8 @@ export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean =
         // a pine's crown in mist: flat, ragged layers of needles
         for (let k = 0; k < 3; k++) leaves[c].push(blob(rnd, cx + between(rnd, -r, r), cy + between(rnd, -r * 0.3, r * 0.3), r * between(rnd, 1.1, 1.8), r * between(rnd, 0.32, 0.5), 0.6, 11));
       } else if (vol) {
-        const lx = light[0] / ll;
-        const ly = light[1] / ll;
-        const shapes = [blob(rnd, cx, cy, r, r * 0.85, 0.45), blob(rnd, cx + lx * r * 0.2, cy + ly * r * 0.2, r * 0.78, r * 0.66, 0.5)];
-        if (rnd() < 0.85) shapes.push(blob(rnd, cx + lx * r * 0.42, cy + ly * r * 0.42, r * 0.45, r * 0.38, 0.55));
-        vol.clumps.push([cy, shapes]);
+        const facing = ((cx - crown[0]) * light[0] + (cy - crown[1]) * light[1]) / ll / (height * 0.28) + between(rnd, -0.3, 0.3);
+        vol.clumps.push([facing > 0.38 ? 2 : facing > -0.32 ? 1 : 0, blob(rnd, cx, cy, r, r * 0.85, 0.5, 11)]);
       } else {
         leaves[c].push(blob(rnd, cx, cy, r, r * 0.85, 0.45));
       }
@@ -175,39 +174,50 @@ export function tree(rnd, { x, y, height, kind = 'oak', wood, leafColour, lean =
     }
     tip(px, py, 1.3);
   } else if (kind === 'poplar') {
-    // a single leader, with short upright branches all the way up
+    // the Kurdish poplar (spîndar): one leader, the first stretch of it bare trunk, then short branches swept up
+    // close against it all the way, the crown swelling out above the bare trunk and narrowing to a point —
+    // a tree, never a hooded shape
     let px = x;
     let py = y;
-    const steps = Math.max(5, Math.min(14, Math.round(height / 14)));
+    const steps = Math.max(6, Math.min(16, Math.round(height / 12)));
+    const bare = Math.max(1, Math.round(steps * 0.14));
     for (let i = 0; i < steps; i++) {
-      const seg = (height * 0.92) / steps;
+      const seg = (height * 0.94) / steps;
       const w0 = trunkW * (1 - i / steps);
       const nx = px + lean * seg * 0.1 + between(rnd, -1, 1) * seg * 0.04;
       const ny = py - seg;
       limbs.push(limb(px, py, w0, nx, ny, w0 * 0.9, 0));
-      if (i >= 1) {
-        const taperK = 1 - i / (steps + 2);
+      if (i >= bare) {
+        const t = (i - bare + 1) / (steps - bare + 1);
+        const spread = Math.sin(Math.PI * Math.min(1, 0.25 + t * 0.85)) ** 0.7 * (1 - t * 0.55);
         for (const sd of [-1, 1]) {
-          const a = sd * between(rnd, 0.15, 0.35);
-          const bl = seg * between(rnd, 1.3, 2) * taperK;
+          const a = sd * between(rnd, 0.12, 0.3);
+          const bl = seg * between(rnd, 1.2, 1.9) * spread;
           const bx = nx + Math.sin(a) * bl;
           const by = ny + seg * 0.4 - Math.cos(a) * bl;
           limbs.push(limb(nx, ny + seg * 0.4, w0 * 0.4, bx, by, w0 * 0.15, 0));
-          tip(bx, by, 1);
-          tip((nx + bx) / 2, (ny + seg * 0.4 + by) / 2, 0.9);
+          tip(bx, by, 0.5 + 0.5 * spread);
+          tip((nx + bx) / 2, (ny + seg * 0.4 + by) / 2, 0.45 + 0.45 * spread);
         }
       }
       px = nx;
       py = ny;
     }
-    tip(px, py - height * 0.03, 0.8);
+    // the very top: the leader running on thin, a few small clusters on it, so the crown ends in a point
+    const top = [px + between(rnd, -1, 1) * height * 0.01, py - height * 0.07];
+    limbs.push(limb(px, py, trunkW * 0.22, top[0], top[1], 0.5, 0));
+    tip((px + top[0]) / 2, (py + top[1]) / 2, 0.42);
+    tip(top[0], top[1] + height * 0.015, 0.26);
   } else {
     grow(x, y, lean, trunkLen, trunkW, depthFor);
   }
+  // the shade first, the light laid over it
   const vols = vol
-    ? vol.clumps
-        .sort((a, b) => a[0] - b[0])
-        .map(([, shapes]) => shapes.map((d, i) => `<path d="${d}" fill="${vol.tones[i]}"/>`).join(''))
+    ? [0, 1, 2]
+        .map((tone) => {
+          const d = vol.clumps.filter(([t]) => t === tone).map(([, shape]) => shape);
+          return d.length ? `<path d="${d.join(' ')}" fill="${vol.tones[tone]}"/>` : '';
+        })
         .join('')
     : '';
   return {
