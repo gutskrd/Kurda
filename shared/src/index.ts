@@ -196,6 +196,12 @@ export * from './story-authoring.js';
  */
 export * from './play.js';
 export * from './gifts.js';
+
+/**
+ * Shop items by kind — the categories, the search, the filters and the orders
+ * the shop, the inventory and the gift picker share (shop-items).
+ */
+export * from './shop-items.js';
 export * from './chat-cards.js';
 
 /**
