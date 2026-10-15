@@ -233,18 +233,21 @@ export const SCENES = {
         }
         cv.add(`<g fill="#fff4d0">${sparks.join('')}</g>`);
       });
-      // the near bank on the left, the grass on it, and the stag at its foot with his muzzle in the water — and
-      // what of him the water holds
+      // the near bank on the left, the grass on it, and the stag come down off it into the shallows, his forefeet in
+      // the water and his muzzle in it — and what of him the water holds, which is only what stands above it
       // (all of him above the foot of the strip a profile card shows, his muzzle at the water)
       const water = 530;
-      const stag = deer({ x: 300, y: water - 4, size: 200, colour: '#24160a', pose: 'drink', facing: 1 });
+      const stag = deer({ x: 327, y: water + 29, size: 200, colour: '#24160a', pose: 'drink', facing: 1 });
       const rim = { x: sun[0], y: sun[1], colour: '#ffd890', width: 3, strength: 1, reach: 1500 };
       s.layer({ blur: 1.6, opacity: 0.5 }, (cv) => {
-        cv.add(`<g transform="translate(0 ${2 * water}) scale(1 -1)">${stag}</g>`);
+        const below = cv.id('below');
+        cv.def(`<clipPath id="${below}"><rect x="-20" y="${water}" width="1320" height="240"/></clipPath>`);
+        cv.add(`<g clip-path="url(#${below})"><g transform="translate(0 ${2 * water}) scale(1 -1)">${stag}</g></g>`);
       });
-      // the rings spreading from his muzzle
+      // the rings spreading from his muzzle, and round his forelegs where they go into the water
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
         for (const [r, o] of [[12, 0.5], [26, 0.35], [46, 0.2]]) cv.add(`<ellipse cx="478" cy="${water + 2}" rx="${r}" ry="${n(r * 0.16)}" fill="none" stroke="#fff0c0" stroke-width="1.6" stroke-opacity="${o}"/>`);
+        for (const [cx, r, o] of [[417, 9, 0.45], [417, 18, 0.25], [393, 8, 0.35]]) cv.add(`<ellipse cx="${cx}" cy="${water + 4}" rx="${r}" ry="${n(r * 0.18)}" fill="none" stroke="#fff0c0" stroke-width="1.3" stroke-opacity="${o}"/>`);
       });
       // the bank he stands on, coming down from the left and running on into the shallows toward us
       const bankAt = (x) => {
@@ -260,7 +263,10 @@ export const SCENES = {
         for (let x = -30; x <= 570; x += 6) edge.push(`${n(x)},${n(Math.min(770, bankAt(x)))}`);
         cv.add(`<path d="M${edge.join(' L')} L570,770 L-30,770 Z" fill="#2a1a0c"/>`);
         cv.add(tallGrass(rnd, { x0: -30, x1: 560, top: (x) => bankAt(x) + 3, y1: 760, count: 640, height: 60, colours: ['#2a1a0c', '#3a2410', '#4a3016'], heads: '#c89a50', share: 0.1, wind: 0.12, width: 2 }));
-        cv.add(stag);
+        // (of his legs, only what stands above the water and the bank)
+        const above = cv.id('above');
+        cv.def(`<clipPath id="${above}"><rect x="-20" y="-20" width="1320" height="${water + 24}"/></clipPath>`);
+        cv.add(`<g clip-path="url(#${above})">${stag}</g>`);
         cv.add(grass(rnd, { x0: 360, x1: 430, y: water + 6, count: 36, height: 20, colours: ['#2a1a0c', '#3a2410'], wind: 0.1, width: 1.6 }));
         cv.add(grass(rnd, { x0: 420, x1: 560, y: 750, count: 60, height: 60, colours: ['#2a1a0c', '#3a2410'], wind: 0.14, width: 2 }));
       });
@@ -366,7 +372,8 @@ export const SCENES = {
       s.effect('texture', { amount: 0.07, cells: [60, 18, 6], seed: s.seed() });
       s.effect('paint', { radius: 2 });
       s.layer({ rim: { x: sun[0], y: sun[1], colour: '#ffe0f8', width: 2.5, strength: 1, reach: 1200 } }, (cv) => {
-        cv.add(deer({ x: 690, y: 556, size: 92, colour: '#24123a', pose: 'alert', facing: -1 }));
+        // (his head and his antlers against the haze between the trunks, not in front of one)
+        cv.add(deer({ x: 788, y: 556, size: 100, colour: '#24123a', pose: 'alert', facing: -1 }));
       });
       s.layer({ blur: 0.8, blend: 'screen' }, (cv) => {
         cv.add(motes(rnd, { x0: 420, x1: 1080, y0: 120, y1: 560, count: 140, size: 1.8, colours: ['#ffe6fa', '#ffc6ee', '#ffffff'] }));
