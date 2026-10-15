@@ -155,19 +155,24 @@ export class Canvas {
   }
 }
 
-// ─────────────────────────────────────────────────────────────── the kilim
+// ─────────────────────────────────────────────────────────────── the sun
 
-/** An eight-point star: two squares, one turned 45°, as one sixteen-point outline. */
-export function eightPointStar(cx, cy, R) {
-  const r = R * Math.cos(Math.PI / 4) / Math.cos(Math.PI / 8) * 0.93;
-  const p = [];
-  for (let i = 0; i < 16; i++) {
-    const a = (i * Math.PI) / 8 - Math.PI / 2;
-    const rad = i % 2 === 0 ? R : r;
-    p.push([cx + Math.cos(a) * rad, cy + Math.sin(a) * rad]);
+/**
+ * The rays of a sun, as the sun of the Kurdistan flag has them (21): `rays`
+ * straight triangles round (cx, cy), each from a base `inner` out, `halfWidth`
+ * radians either side of its middle, to a point `outer` out, the first
+ * pointing straight up; as one path, to go under a disc.
+ */
+export function sunRays(cx, cy, inner, outer, rays, halfWidth) {
+  const out = [];
+  for (let i = 0; i < rays; i++) {
+    const a = (i / rays) * Math.PI * 2 - Math.PI / 2;
+    out.push(`M${pt([cx + Math.cos(a - halfWidth) * inner, cy + Math.sin(a - halfWidth) * inner])} L${pt([cx + Math.cos(a) * outer, cy + Math.sin(a) * outer])} L${pt([cx + Math.cos(a + halfWidth) * inner, cy + Math.sin(a + halfWidth) * inner])} Z`);
   }
-  return `M${poly(p)} Z`;
+  return out.join(' ');
 }
+
+// ─────────────────────────────────────────────────────────────── the kilim
 
 export const diamond = (cx, cy, w, h) => `M${pt([cx, cy - h / 2])} L${pt([cx + w / 2, cy])} L${pt([cx, cy + h / 2])} L${pt([cx - w / 2, cy])} Z`;
 

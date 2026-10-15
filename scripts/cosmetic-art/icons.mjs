@@ -1,9 +1,9 @@
 /**
  * The shop's icons: Kurdish things painted as they are — a pomegranate split
- * open, a glass of tea on its saucer, a seal of red wax with the eight-point
- * star pressed into it, a saz, a buck come down to drink — painted by hand
- * rather than modelled: each one's colours laid in, its light and its shadow
- * laid over them as shapes of their own, brushed over and drawn in
+ * open, a glass of tea on its saucer, a seal of red wax with the sun of the
+ * Kurdish flag pressed into it, a saz, a buck come down to drink — painted by
+ * hand rather than modelled: each one's colours laid in, its light and its
+ * shadow laid over them as shapes of their own, brushed over and drawn in
  * (brush.mjs), and cut out of the dark, so that it lies over a profile
  * picture with nothing round it but its own light.
  *
@@ -15,7 +15,7 @@
  */
 import { crescent, rim, softly, specks, strokes, within } from './brush.mjs';
 import { deerShapes } from './figures.mjs';
-import { eightPointStar, n, pt } from './kit.mjs';
+import { n, pt, sunRays } from './kit.mjs';
 import { Still } from './still.mjs';
 
 // ─────────────────────────────────────────────────────────────── shapes
@@ -544,8 +544,8 @@ export const ICONS = [
     ku: 'Stêrk',
     en: 'Eight-point star',
     // a seal of dark red wax, painted: the wax spread round the stamp and pushed up in a thick lip, glossy, the
-    // light running round its top; inside the lip the wax pressed flat, and the eight-point star standing up from
-    // it, sharp-edged, a ring of the stamp's border round it
+    // light running round its top; inside the lip the wax pressed flat, and the sun of the Kurdish flag standing
+    // up from it — its round disc and its twenty-one rays, sharp-edged — a ring of the stamp's border round it
     still(rnd) {
       const s = new Still(rnd);
       const C = [256, 260];
@@ -570,16 +570,23 @@ export const ICONS = [
         cv.add(`<path d="M${pt([C[0] - 168, C[1] + 40])} A172 172 0 0 1 ${pt([C[0] + 30, C[1] - 170])}" fill="none" stroke="#fff0ec" stroke-width="5" stroke-opacity="0.75" stroke-linecap="round" filter="${softly(cv, 2.5)}"/>`);
         cv.add(`<path d="M${pt([C[0] - 150, C[1] - 10])} A160 160 0 0 1 ${pt([C[0] - 60, C[1] - 146])}" fill="none" stroke="#fff" stroke-width="2.4" stroke-opacity="0.85" stroke-linecap="round"/>`);
         cv.add(`<path d="M${pt([C[0] + 136, C[1] + 40])} A142 142 0 0 1 ${pt([C[0] + 20, C[1] + 140])}" fill="none" stroke="#f8c8c4" stroke-width="3" stroke-opacity="0.55" stroke-linecap="round" filter="${softly(cv, 1.5)}"/>`);
-        // the stamp's border, a fine raised ring, and the star standing up inside it, its middle pressed down
+        // the stamp's border, a fine raised ring, and the sun standing up inside it: twenty-one rays, the first
+        // pointing straight up, from under a round disc, the disc swelling a little to its middle
         const ring = `M${C[0] - 128} ${C[1]} A128 128 0 1 0 ${C[0] + 128} ${C[1]} A128 128 0 1 0 ${C[0] - 128} ${C[1]} Z M${C[0] - 121} ${C[1]} A121 121 0 1 1 ${C[0] + 121} ${C[1]} A121 121 0 1 1 ${C[0] - 121} ${C[1]} Z`;
         raised(cv, ring, 2.5, '#741820');
-        raised(cv, eightPointStar(C[0], C[1], 96), 4, linear(cv, [[0, '#8e2830'], [1, '#6a141c']], C[0] - 96, C[1] - 96, C[0] + 96, C[1] + 96));
-        const inner = eightPointStar(C[0], C[1], 46);
-        cv.add(`<path d="${inner}" fill="#e07070" fill-opacity="0.6" transform="translate(2.5 2.5)" filter="${softly(cv, 1.2)}"/>`);
-        cv.add(`<path d="${inner}" fill="#2a0406" fill-opacity="0.75" transform="translate(-2 -2)" filter="${softly(cv, 1.2)}"/>`);
-        cv.add(`<path d="${inner}" fill="#6a141c"/>`);
-        // the shine on the star's upper faces, and the wax's own small marks
-        cv.add(`<path d="${eightPointStar(C[0], C[1], 96)}" fill="none" stroke="#ffd8d4" stroke-width="1.6" stroke-opacity="0.5" transform="translate(-1.5 -1.5)" clip-path="${within(cv, eightPointStar(C[0], C[1], 96))}"/>`);
+        const disc = (r) => `M${C[0] - r} ${C[1]} A${r} ${r} 0 1 0 ${C[0] + r} ${C[1]} A${r} ${r} 0 1 0 ${C[0] - r} ${C[1]} Z`;
+        const rays = sunRays(C[0], C[1], 48, 106, 21, 0.12);
+        const sun = `${rays} ${disc(54)}`;
+        const face = linear(cv, [[0, '#8e2830'], [1, '#6a141c']], C[0] - 106, C[1] - 106, C[0] + 106, C[1] + 106);
+        raised(cv, sun, 3.2, face);
+        // (the shine along the rays' upper edges; then the disc laid over their roots, a little proud of them,
+        // swelling to its middle, catching the light above and dark below)
+        cv.add(`<path d="${rays}" fill="none" stroke="#ffd8d4" stroke-width="1.6" stroke-opacity="0.5" transform="translate(-1.5 -1.5)" clip-path="${within(cv, rays)}"/>`);
+        cv.add(`<path d="${disc(54)}" fill="#2a0406" fill-opacity="0.6" transform="translate(1.8 1.8)" filter="${softly(cv, 1)}"/>`);
+        cv.add(`<path d="${disc(54)}" fill="${face}"/>`);
+        cv.add(`<path d="${disc(54)}" fill="${radial(cv, [[0, '#a03640', 0.7], [0.6, '#86242c', 0.35], [1, '#6a141c', 0]], C[0] - 16, C[1] - 18, 60)}"/>`);
+        cv.add(`<path d="${disc(54)}" fill="none" stroke="#ffd8d4" stroke-width="1.6" stroke-opacity="0.5" transform="translate(-1.5 -1.5)" clip-path="${within(cv, disc(54))}"/>`);
+        // the wax's own small marks
         strokes(cv, rnd, wax, [50, 56, 462, 464], { count: 500, colours: ['#a8343c', '#4a0a10'], flow: (x, y) => (Math.atan2(y - C[1], x - C[0]) * 180) / Math.PI + 90, length: 18, width: 2.4, opacity: [0.04, 0.12] });
         specks(cv, rnd, wax, [50, 56, 462, 464], { count: 90, colours: ['#ffd0cc', '#2a0406'], size: [0.6, 1.4], opacity: [0.15, 0.4] });
       });

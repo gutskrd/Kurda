@@ -45,7 +45,7 @@
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): Kurdish things painted as
  * still lifes — a pomegranate split open, a glass of tea on its saucer, a seal
- * of red wax with the eight-point star pressed into it, a saz, a buck come down
+ * of red wax with the flag's sun pressed into it, a saz, a buck come down
  * to drink (the deer of the backgrounds, figures.mjs), a sheaf of wheat tied
  * with a bow, a white dove with a letter, the Newroz fire — painted by hand
  * rather than modelled, their light and shadow laid on as a painter lays them
@@ -103,6 +103,7 @@ import {
   radialAt,
   random,
   seedOf,
+  sunRays,
   tint,
 } from './cosmetic-art/kit.mjs';
 import { BACKGROUNDS } from './cosmetic-art/backgrounds.mjs';
@@ -384,16 +385,6 @@ function deerHead(cx, cy, k) {
   parts.push(ellipse(248, 304, 8, 4, '#ffffff', ' fill-opacity="0.7"'));
   parts.push(`<path d="${T('M256 328 L256 342 M236 350 Q256 364 276 350')}" fill="none" stroke="${LINE}" stroke-width="${n(7 * k)}" stroke-linecap="round"/>`);
   return parts.join('');
-}
-
-/** A sun: a disc with `rays` triangular rays, as a set of paths (no outline). */
-function sunRays(cx, cy, inner, outer, rays, halfWidth) {
-  const out = [];
-  for (let i = 0; i < rays; i++) {
-    const a = (i / rays) * Math.PI * 2 - Math.PI / 2;
-    out.push(`M${pt([cx + Math.cos(a - halfWidth) * inner, cy + Math.sin(a - halfWidth) * inner])} L${pt([cx + Math.cos(a) * outer, cy + Math.sin(a) * outer])} L${pt([cx + Math.cos(a + halfWidth) * inner, cy + Math.sin(a + halfWidth) * inner])} Z`);
-  }
-  return out.join(' ');
 }
 
 /** An icon's still life: its surfaces, shadows, light and paint (each an SVG of the whole square), in order. */
