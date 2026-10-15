@@ -1,7 +1,7 @@
 /**
  * Living things and weather, for the backgrounds: trees grown branch by
- * branch, grass and reeds blade by blade, flowers, fog and cloud made from
- * fractal noise, stars, nebulae, motes of dust, a bonfire and its embers.
+ * branch, grass and reeds blade by blade, blossom, fog and cloud made from
+ * fractal noise, stars, motes of dust, sunbeams, a bonfire and its embers.
  *
  * Every function returns SVG markup (or adds it to a Canvas) and takes its
  * randomness from the seeded generator it is given. Trees are grown rather
@@ -395,91 +395,6 @@ export function reeds(rnd, { x0 = -20, x1 = 1300, y, count, height, stem, plume,
     plumes: `<path d="${plumes.join(' ')}" fill="none" stroke="${plume}" stroke-width="${n(width * 0.55)}" stroke-linecap="round" stroke-opacity="0.75"/>`,
     fluff: fluff.length ? `<path d="${fluff.join(' ')}" fill="${plume}"/>` : '',
   };
-}
-
-// ─────────────────────────────────────────────────────────────── flowers
-
-/** One flower head of a kind, at (x, y), `s` across. */
-export function flower(kind, x, y, s, { petal, centre = '#ffd36a', dark = null, stem = '#2f5a2a' }, rnd) {
-  const out = [];
-  if (kind === 'tulip') {
-    const lean = between(rnd, -0.12, 0.12) * s;
-    const cx = x + lean;
-    // two long leaves from the foot, one each side
-    for (const side of [-1, 1]) {
-      const reach = s * between(rnd, 0.6, 0.95);
-      const top = y + s * between(rnd, 0.4, 1.1);
-      out.push(`<path d="M${pt([x, y + s * 2.6])} C${pt([x + side * reach * 0.9, y + s * 2])} ${pt([x + side * reach, top + s * 0.4])} ${pt([x + side * reach * 0.7, top])} C${pt([x + side * reach * 0.5, top + s * 0.7])} ${pt([x + side * s * 0.12, y + s * 1.9])} ${pt([x, y + s * 2.6])} Z" fill="${stem}"/>`);
-    }
-    out.push(`<path d="M${pt([x, y + s * 2.6])} Q${pt([x + lean * 0.4, y + s * 1.3])} ${pt([cx, y + s * 0.3])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.11))}" fill="none"/>`);
-    // the cup: the back petal, then the two side petals over it
-    out.push(`<path d="M${pt([cx - s * 0.34, y - s * 0.2])} C${pt([cx - s * 0.36, y - s * 0.62])} ${pt([cx - s * 0.1, y - s * 0.78])} ${pt([cx, y - s * 0.9])} C${pt([cx + s * 0.1, y - s * 0.78])} ${pt([cx + s * 0.36, y - s * 0.62])} ${pt([cx + s * 0.34, y - s * 0.2])} Z" fill="${dark ?? petal}"/>`);
-    out.push(`<path d="M${pt([cx - s * 0.44, y - s * 0.62])} C${pt([cx - s * 0.52, y - s * 0.05])} ${pt([cx - s * 0.3, y + s * 0.38])} ${pt([cx, y + s * 0.4])} C${pt([cx + s * 0.3, y + s * 0.38])} ${pt([cx + s * 0.52, y - s * 0.05])} ${pt([cx + s * 0.44, y - s * 0.62])} C${pt([cx + s * 0.3, y - s * 0.4])} ${pt([cx + s * 0.12, y - s * 0.38])} ${pt([cx, y - s * 0.22])} C${pt([cx - s * 0.12, y - s * 0.38])} ${pt([cx - s * 0.3, y - s * 0.4])} ${pt([cx - s * 0.44, y - s * 0.62])} Z" fill="${petal}"/>`);
-    // the light along one petal
-    out.push(`<path d="M${pt([cx - s * 0.36, y - s * 0.42])} C${pt([cx - s * 0.4, y - s * 0.05])} ${pt([cx - s * 0.26, y + s * 0.22])} ${pt([cx - s * 0.1, y + s * 0.3])}" stroke="#ffffff" stroke-opacity="0.35" stroke-width="${n(Math.max(0.8, s * 0.08))}" stroke-linecap="round" fill="none"/>`);
-  } else if (kind === 'narcissus') {
-    // nêrgiz, Newroz's own flower: six white petals round a small gold cup with an orange rim,
-    // the head turned a little toward us on a stem with long thin leaves
-    const lean = between(rnd, -0.15, 0.15) * s;
-    const cx = x + lean;
-    for (const side of [-1, 1]) {
-      const reach = s * between(rnd, 0.25, 0.5);
-      out.push(`<path d="M${pt([x, y + s * 2.8])} Q${pt([x + side * reach, y + s * 1.6])} ${pt([x + side * reach * 1.3, y + s * between(rnd, 0.6, 1.2)])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.12))}" stroke-linecap="round" fill="none"/>`);
-    }
-    out.push(`<path d="M${pt([x, y + s * 2.8])} Q${pt([x + lean * 0.5, y + s * 1.2])} ${pt([cx, y + s * 0.15])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.09))}" fill="none"/>`);
-    const tilt = between(rnd, 0.6, 0.9);
-    const turn = between(rnd, 0, Math.PI / 3);
-    const petals = [];
-    for (let k = 0; k < 6; k++) {
-      const a = turn + (k / 6) * Math.PI * 2;
-      const px = cx + Math.cos(a) * s * 0.36;
-      const py = y + Math.sin(a) * s * 0.36 * tilt;
-      petals.push(`<ellipse cx="${n(px)}" cy="${n(py)}" rx="${n(s * 0.36)}" ry="${n(s * 0.17 * (0.7 + tilt * 0.3))}" transform="rotate(${n((Math.atan2(Math.sin(a) * tilt, Math.cos(a)) * 180) / Math.PI)} ${n(px)} ${n(py)})"/>`);
-    }
-    out.push(`<g fill="${petal}">${petals.join('')}</g>`);
-    out.push(`<ellipse cx="${n(cx)}" cy="${n(y)}" rx="${n(s * 0.19)}" ry="${n(s * 0.17 * tilt)}" fill="${centre}" stroke="${dark ?? '#e8801a'}" stroke-width="${n(Math.max(0.6, s * 0.05))}"/>`);
-  } else if (kind === 'daisy' || kind === 'cosmos') {
-    const count = kind === 'daisy' ? 12 : 8;
-    const tilt = between(rnd, 0.45, 0.9);
-    out.push(`<path d="M${pt([x, y])} Q${pt([x + between(rnd, -4, 4), y + s * 1.5])} ${pt([x + between(rnd, -6, 6), y + s * 3.2])}" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.07))}" fill="none"/>`);
-    const petals = [];
-    for (let k = 0; k < count; k++) {
-      const a = (k / count) * Math.PI * 2 + rnd() * 0.2;
-      const px = x + Math.cos(a) * s * 0.5;
-      const py = y + Math.sin(a) * s * 0.5 * tilt;
-      const rx = kind === 'daisy' ? s * 0.32 : s * 0.36;
-      const ry = kind === 'daisy' ? s * 0.09 : s * 0.2;
-      petals.push(`<ellipse cx="${n(px)}" cy="${n(py)}" rx="${n(rx)}" ry="${n(ry * (0.6 + tilt * 0.4))}" transform="rotate(${n((Math.atan2(Math.sin(a) * tilt, Math.cos(a)) * 180) / Math.PI)} ${n(px)} ${n(py)})"/>`);
-    }
-    out.push(`<g fill="${petal}">${petals.join('')}</g><ellipse cx="${n(x)}" cy="${n(y)}" rx="${n(s * 0.16)}" ry="${n(s * 0.16 * tilt)}" fill="${centre}"/>`);
-  } else if (kind === 'spike') {
-    // a spike of small florets: lupin, hyacinth, wild larkspur — the stem bowing a little,
-    // the florets uneven, the top still in bud
-    const h = s * between(rnd, 2.6, 3.6);
-    const bend = s * between(rnd, -0.5, 0.5);
-    const at = (t) => [x + bend * t * t, y - h * t];
-    out.push(`<path d="M${pt([x, y + s * 1.6])} Q${pt([x + bend * 0.2, y - h * 0.5])} ${pt(at(1))}" fill="none" stroke="${stem}" stroke-width="${n(Math.max(1, s * 0.08))}"/>`);
-    const fl = [];
-    const florets = Math.max(6, Math.round(s * 1.4));
-    for (let k = 0; k < florets; k++) {
-      const t = k / florets;
-      const [fx, fy] = at(t);
-      const r = s * 0.2 * (1 - t * 0.75) * between(rnd, 0.7, 1.15);
-      const side = k % 2 ? 1 : -1;
-      fl.push(`<circle cx="${n(fx + side * r * between(rnd, 0.5, 1.1))}" cy="${n(fy + between(rnd, -r * 0.4, r * 0.4))}" r="${n(r)}"/>`);
-    }
-    out.push(`<g fill="${petal}">${fl.join('')}</g>`);
-    out.push(`<circle cx="${n(at(1)[0])}" cy="${n(at(1)[1])}" r="${n(s * 0.07)}" fill="${stem}"/>`);
-  } else {
-    // a five-petalled wild flower seen from above
-    const petals = [];
-    for (let k = 0; k < 5; k++) {
-      const a = (k / 5) * Math.PI * 2;
-      petals.push(`<circle cx="${n(x + Math.cos(a) * s * 0.3)}" cy="${n(y + Math.sin(a) * s * 0.22)}" r="${n(s * 0.27)}"/>`);
-    }
-    out.push(`<g fill="${petal}">${petals.join('')}</g><circle cx="${n(x)}" cy="${n(y)}" r="${n(s * 0.12)}" fill="${centre}"/>`);
-  }
-  return out.join('');
 }
 
 // ───────────────────────────────────────────────────────── air and light

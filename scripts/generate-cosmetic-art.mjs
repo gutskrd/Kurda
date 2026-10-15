@@ -13,32 +13,33 @@
  * its own — a photograph, oils, an ink painting. Agirî through the pointed
  * arches of the palace of Ishak Pasha at a winter dawn, Sîpan over the lake,
  * the Delal bridge faint in the river mist behind reeds lit through at
- * daybreak, Hewlêr's citadel alone on a plain gone red, a lone tree lit by the
- * moon on stony ground under a red night with Amêdî's lamps on its cliff,
+ * daybreak, Hewlêr's citadel alone on a plain gone red, a lone tree lit by
+ * the moon on stony ground under a red night with Amêdî's lamps on its cliff,
  * Newroz night at Akre with the torches climbing the mountain and the bonfire
- * in front, a village's lamps under a silver moon in oils, the black tents on
- * the summer pastures by evening and lupins in the blue fog of the dusk, the
- * mist over the Zagros set down in ink with a spray of almond blossom, a
- * nebula over the mountains, a wood of Judas trees in flower, a spring wood
- * with the sun coming through in shafts, tulips and red scrub in the fog, wild
- * asters under pines in the mist, a stag drinking at a golden lake and another
- * grazing in a moonlit wood, Hevalo in a violet one, and Newroz's colours in
- * flower. Each is laid up from layers: trees grown branch by branch, grass,
- * reeds, flowers, fog and cloud, a bonfire (cosmetic-art/nature.mjs), ridges
- * (landscape.mjs), the landmarks (places.mjs), the deer and the lambs
- * (figures.mjs). The compositor (render.mjs) paints the mountains and the
- * hills from a relief — great ridges and the gullies scoring them lit by the
- * sun and snow lying down them, grass streaked over rolling ground, stony
- * ground boulder by boulder — and paints by hand what would read as cut out if
- * it were filled flat (marks.mjs): foliage leaf by leaf, ground cover plant by
- * plant, a nebula's gas and its stars, oil paint on canvas, ink washed onto wet
- * paper. It puts the layers together the way a camera sees a place: softened
- * and hazed by distance, light breaking through the gaps in shafts, water
- * holding what stands over it, a glow round what is bright and the soft bloom
- * and streaks of a lens, a film's grade and grain. And seven Kurdish kilims —
- * the Herki's hooked guls, Sine's medallion and its flowered field, Harsin's
- * and the Jaff's lattices among them — woven cell by cell, lying on old boards
- * in a shaft of window light with the dust turning in it (kilim.mjs).
+ * in front, a village's lamps under a silver moon in oils, lambs in a
+ * walnut's shade on the summer pastures in watercolour and lupins in the blue
+ * fog of the dusk there, the mist over the Zagros set down in ink with a
+ * spray of almond blossom, a nebula over the mountains, a wood of Judas trees
+ * in flower, a spring wood with the sun coming through in shafts, tulips and
+ * red scrub in the fog, wild asters under pines in the mist, a stag drinking
+ * at a golden lake and another grazing in a moonlit wood, Hevalo in a violet
+ * one, and Newroz's colours in flower. Each is laid up from layers: trees
+ * grown branch by branch, grass, reeds, flowers, fog and cloud, a bonfire
+ * (cosmetic-art/nature.mjs), ridges (landscape.mjs), the landmarks
+ * (places.mjs), the deer and the lambs (figures.mjs). The compositor
+ * (render.mjs) paints the mountains and the hills from a relief — great
+ * ridges and the gullies scoring them lit by the sun and snow lying down
+ * them, grass streaked over rolling ground, stony ground boulder by boulder —
+ * and paints by hand what would read as cut out if it were filled flat
+ * (marks.mjs): foliage leaf by leaf, ground cover plant by plant, a nebula's
+ * gas and its stars, oil paint on canvas, ink washed onto wet paper. It puts
+ * the layers together the way a camera sees a place: softened and hazed by
+ * distance, light breaking through the gaps in shafts, water holding what
+ * stands over it, a glow round what is bright and the soft bloom and streaks
+ * of a lens, a film's grade and grain. And seven Kurdish kilims — the Herki's
+ * hooked guls, Sine's medallion and its flowered field, Harsin's and the
+ * Jaff's lattices among them — woven cell by cell, lying on old boards in a
+ * shaft of window light with the dust turning in it (kilim.mjs).
  *
  * Icons (512×512 PNG, cosmetic-art/icons.mjs): small Kurdish things drawn the
  * way the mascot is drawn, soft and glossy with its big-eyed face. Stickers
