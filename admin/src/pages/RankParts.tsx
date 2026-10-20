@@ -257,10 +257,12 @@ export function useResetRating(): (user: { id: string; username: string }, game:
 
 function GameState({ g }: { g: { voided: boolean; voidReason: string | null; weight: number } }): React.JSX.Element {
   if (g.voided) {
+    // the reason on the page, not in a tooltip a finger never brings up
     return (
-      <Badge tone="neutral" title={g.voidReason ?? undefined}>
-        Voided
-      </Badge>
+      <>
+        <Badge tone="neutral">Voided</Badge>
+        {g.voidReason && <span className="cell-sub">{g.voidReason}</span>}
+      </>
     );
   }
   return g.weight < 1 ? <Badge tone="info">Counted ×{g.weight}</Badge> : <Badge tone="ok">Counted</Badge>;

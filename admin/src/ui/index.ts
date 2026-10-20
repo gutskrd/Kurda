@@ -8,7 +8,7 @@ export { useDebounced, useLoad, useMediaQuery, type Loaded } from './hooks';
 export { Icon, type IconName } from './icons';
 export { ActionMenu, type MenuItem } from './Menu';
 export { EmptyState, ErrorState, Loading } from './states';
-export { Pagination, Table, type Column, type Paging, type SortState } from './Table';
+export { Pagination, Table, type Column, type Paging, type SortState, type TableLayout } from './Table';
 export { TabPanel, Tabs, type TabItem } from './Tabs';
 export { Time, absoluteTime, duration, fromLocalInput, relativeTime, shortDate, toLocalInput } from './Time';
 export { ToastProvider, useToast, TOAST_MS, type ToastTone } from './Toast';

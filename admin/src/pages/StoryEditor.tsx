@@ -807,6 +807,19 @@ export function StoryEditor({
           <Checks checks={checks} server={server} onGo={go} />
         </aside>
       </div>
+
+      {/* on a phone the buttons are at the top, above a long form: once something changes, saving stays at the
+          foot of the screen too, as in the lesson editor (CSS shows it only where the buttons are not beside the form) */}
+      {dirty && availableActions(status).includes('save') && (
+        <div className="editor-bar st-savebar">
+          <span className="editor-bar-state">
+            {checks.blocking.length > 0 ? `Fix ${checks.blocking.length === 1 ? 'the problem' : `${checks.blocking.length} problems`} marked “Must fix” to save.` : 'Unsaved changes'}
+          </span>
+          <button type="button" className="primary" disabled={!canSave} onClick={() => void act('save')}>
+            {busy === 'save' ? 'Saving…' : status === 'in_review' ? 'Save' : 'Save draft'}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

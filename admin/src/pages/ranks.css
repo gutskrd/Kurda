@@ -18,6 +18,7 @@
 .top-place { display: inline-block; min-width: 3ch; text-align: right; }
 .pair-cell { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 2px 6px; min-width: 11rem; }
 .pair-cell a, .rank-cell, .top-place + .user-link a { white-space: nowrap; }
+@media (pointer: coarse) { .pair-cell { row-gap: 28px; } }
 
 /* ---- the spread ------------------------------------------------------------- */
 .spread-grid { display: grid; gap: 0 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
@@ -102,7 +103,7 @@
 .rank-card-title strong { font-size: 18px; }
 .rank-card-foot { display: flex; justify-content: flex-end; }
 .rank-card .badges:empty { display: none; }
-.provisional { margin-left: 4px; font-weight: 700; text-decoration: none; cursor: help; }
+.provisional { margin-left: 4px; font-weight: 700; }
 .facts.is-compact > div { padding: 6px 0; }
 .facts.is-compact > div:last-child { border-bottom: none; }
 .earned-grid { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px 16px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); }

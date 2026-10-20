@@ -119,14 +119,16 @@ export function ExerciseCard({
               <legend>Answers — choose the right one</legend>
               {strings(p.options).map((opt, i) => (
                 <div key={i} className="ex-list-row">
-                  <input
-                    type="radio"
-                    name={`${id}-right`}
-                    checked={p.correctIndex === i}
-                    disabled={readOnly}
-                    aria-label={`Answer ${i + 1} is the right one`}
-                    onChange={() => set({ correctIndex: i })}
-                  />
+                  <label className="ex-pick">
+                    <input
+                      type="radio"
+                      name={`${id}-right`}
+                      checked={p.correctIndex === i}
+                      disabled={readOnly}
+                      aria-label={`Answer ${i + 1} is the right one`}
+                      onChange={() => set({ correctIndex: i })}
+                    />
+                  </label>
                   <input
                     id={at(`options.${i}`)}
                     dir="auto"

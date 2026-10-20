@@ -127,7 +127,8 @@ export function Economy(): React.JSX.Element {
 
           {points.length > 0 && (
             <Section flush title="Day by day">
-              <Table caption={`${name} day by day`} columns={columns} rows={[...points].reverse()} rowKey={(p) => p.day} />
+              {/* thirty rows of five numbers: read down a column, so a table that scrolls rather than thirty cards */}
+              <Table caption={`${name} day by day`} columns={columns} rows={[...points].reverse()} rowKey={(p) => p.day} layout="scroll" />
             </Section>
           )}
         </>

@@ -34,6 +34,8 @@
   gap: 10px 14px; margin-bottom: 14px;
 }
 .section.is-flush .section-head { padding: 16px 18px 0; margin-bottom: 10px; }
+/* a row of tabs straight in a flush card lines up with its heading, rather than with the card's edge */
+.section.is-flush > .tabs { padding-inline: 18px; scroll-padding-inline: 18px; }
 .section-head-text { min-width: 0; flex: 1 1 260px; }
 .section-heading { font-size: 15px; font-weight: 650; }
 .section-description { margin: 4px 0 0; color: var(--text-dim); font-size: 13.5px; max-width: 75ch; }
@@ -143,66 +145,38 @@
 .table-loading td { padding: 14px; }
 .table-refresh-error { border-bottom: 1px solid var(--separator); }
 
-@container (max-width: 640px) {
-  .kit-table, .kit-table tbody, .kit-table tr, .kit-table td { display: block; }
-  .kit-table thead { display: none; }
-  .kit-table tbody tr {
-    margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline); background: var(--surface-strong);
-  }
-  .kit-table tbody tr.table-state, .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
-  .kit-table tbody tr:hover td { background: none; }
-  .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
-  .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
-  .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
-  .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
-  .kit-table td.is-card-hidden { display: none; }
-  .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
-  .kit-table td.is-end { text-align: start; }
-  .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
-  .row-actions > button, .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
+/* the cards: Table.tsx measures the table against its box and sets is-cards (narrow, or a table that would not fit) */
+.table-wrap.is-cards > .kit-table, .table-wrap.is-cards > .kit-table tbody, .table-wrap.is-cards > .kit-table tr, .table-wrap.is-cards > .kit-table td { display: block; }
+.table-wrap.is-cards > .kit-table thead { display: none; }
+.table-wrap.is-cards > .kit-table tbody tr {
+  margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline); background: var(--surface-strong);
 }
+.table-wrap.is-cards > .kit-table tbody tr.table-state, .table-wrap.is-cards > .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
+.table-wrap.is-cards > .kit-table tbody tr:hover td { background: none; }
+.table-wrap.is-cards > .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
+.table-wrap.is-cards > .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, min(34%, 200px)) minmax(0, 1fr); gap: 10px; align-items: baseline; }
+.table-wrap.is-cards > .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
+/* a card is as wide as the screen: a long name, key or address wraps rather than running off its edge */
+.table-wrap.is-cards > .kit-table .cell { min-width: 0; overflow-wrap: anywhere; }
+.table-wrap.is-cards > .kit-table .badge { white-space: normal; }
+.table-wrap.is-cards > .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
+.table-wrap.is-cards > .kit-table td.is-card-hidden { display: none; }
+.table-wrap.is-cards > .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; white-space: normal; }
+.table-wrap.is-cards > .kit-table td.is-end { text-align: start; }
+.table-wrap.is-cards .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
+.table-wrap.is-cards .row-actions > button, .table-wrap.is-cards .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
 
-
-/* a table with many columns turns into cards sooner: on a tablet it would not fit as a table */
-@container (max-width: 960px) {
-  .is-wide > .kit-table, .is-wide > .kit-table tbody, .is-wide > .kit-table tr, .is-wide > .kit-table td { display: block; }
-  .is-wide > .kit-table thead { display: none; }
-  .is-wide > .kit-table tbody tr {
-    margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline); background: var(--surface-strong);
-  }
-  .is-wide > .kit-table tbody tr.table-state, .is-wide > .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
-  .is-wide > .kit-table tbody tr:hover td { background: none; }
-  .is-wide > .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
-  .is-wide > .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
-  .is-wide > .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
-  .is-wide > .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
-  .is-wide > .kit-table td.is-card-hidden { display: none; }
-  .is-wide > .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
-  .is-wide > .kit-table td.is-end { text-align: start; }
-  .is-wide .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
-  .is-wide .row-actions > button, .is-wide .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
+/* a table that stays one: it scrolls inside its own box, never the page, with the first column pinned while it does */
+.table-wrap.is-scroll { overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: thin; }
+.table-wrap.is-scroll > .kit-table th, .table-wrap.is-scroll > .kit-table td { white-space: nowrap; }
+.table-wrap.is-scrolling > .kit-table th:first-child, .table-wrap.is-scrolling > .kit-table td:first-child {
+  position: sticky; inset-inline-start: 0; z-index: 1;
+  background: var(--surface-solid); box-shadow: inset -1px 0 0 var(--separator);
 }
-/* a table of a few wide columns (the moderation queue): a table from 860 px, so it stays one on a laptop with the sidebar */
-@container (max-width: 860px) {
-  .is-medium > .kit-table, .is-medium > .kit-table tbody, .is-medium > .kit-table tr, .is-medium > .kit-table td { display: block; }
-  .is-medium > .kit-table thead { display: none; }
-  .is-medium > .kit-table tbody tr {
-    margin: 10px; padding: 12px 14px; border-radius: var(--radius-sm);
-    border: 1px solid var(--hairline); background: var(--surface-strong);
-  }
-  .is-medium > .kit-table tbody tr.table-state, .is-medium > .kit-table tbody tr.table-loading { margin: 0; padding: 0; border: none; background: none; }
-  .is-medium > .kit-table tbody tr:hover td { background: none; }
-  .is-medium > .kit-table td { padding: 3px 0; border: none !important; text-align: start; }
-  .is-medium > .kit-table td[data-label] { display: grid; grid-template-columns: minmax(84px, 34%) minmax(0, 1fr); gap: 10px; align-items: baseline; }
-  .is-medium > .kit-table td[data-label]::before { content: attr(data-label); color: var(--text-dim); font-size: 12.5px; }
-  .is-medium > .kit-table td.is-card-title { font-size: 15px; padding-bottom: 6px; }
-  .is-medium > .kit-table td.is-card-hidden { display: none; }
-  .is-medium > .kit-table td.is-actions { width: auto; margin-top: 8px; padding-top: 10px !important; border-top: 1px solid var(--separator) !important; }
-  .is-medium > .kit-table td.is-end { text-align: start; }
-  .is-medium .row-actions { justify-content: flex-start; width: 100%; flex-wrap: wrap; }
-  .is-medium .row-actions > button, .is-medium .row-actions > .button-link { flex: 1 1 auto; min-height: var(--target); justify-content: center; }
+.table-wrap.is-scrolling > .kit-table tbody tr:hover td:first-child { background: linear-gradient(var(--control), var(--control)), var(--surface-solid); }
+@media (max-width: 560px) {
+  .table-wrap.is-scroll > .kit-table th, .table-wrap.is-scroll > .kit-table td { padding: 9px 10px; }
 }
 .pagination { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-top: 1px solid var(--separator); }
 .pagination-at { color: var(--text-dim); font-variant-numeric: tabular-nums; }
@@ -225,6 +199,13 @@
 @media (pointer: coarse), (max-width: 760px) {
   .tab { min-height: var(--target); }
 }
+/* a phone: one row that scrolls sideways in its own box, rather than wrapping into a second and a third
+   (Tabs.tsx keeps the chosen one in view); the padding leaves room for the focus ring the scroll box would clip */
+@media (max-width: 760px) {
+  .tabs { flex-wrap: nowrap; overflow-x: auto; overscroll-behavior-x: contain; scrollbar-width: none; padding-block: 3px; margin-top: -3px; margin-bottom: 13px; }
+  .tabs::-webkit-scrollbar { display: none; }
+  .tabs > .tab { flex: 0 0 auto; white-space: nowrap; }
+}
 
 /* ---- fields ---------------------------------------------------------------- */
 .field { display: grid; gap: 6px; min-width: 0; align-content: start; }
@@ -233,6 +214,8 @@
 .field-hint { font-size: 12.5px; color: var(--text-dim); }
 .field-error { font-size: 12.5px; color: var(--bad); font-weight: 500; }
 .field.is-inline { grid-template-columns: auto minmax(0, 1fr); align-items: center; }
+/* a phone: the label goes above, so the field gets the whole width */
+@media (max-width: 560px) { .field.is-inline { grid-template-columns: minmax(0, 1fr); } }
 .field-row { display: grid; gap: 14px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr)); }
 .form { display: grid; gap: 16px; }
 .form-actions { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; align-items: center; padding-top: 4px; }
@@ -287,7 +270,7 @@
 }
 .dialog {
   position: fixed; z-index: 81; left: 50%; top: 50%; transform: translate(-50%, -50%);
-  width: min(92vw, 460px); max-height: min(86vh, 720px); display: flex; flex-direction: column;
+  width: min(92vw, 460px); max-height: min(86vh, 720px); max-height: min(86dvh, 720px); display: flex; flex-direction: column;
   background: var(--surface-solid); color: var(--text);
   border: 1px solid var(--hairline); border-radius: 16px; box-shadow: var(--shadow-lg);
   animation: rise-in 0.18s ease;
@@ -297,18 +280,24 @@
 .dialog:focus { outline: none; }
 .dialog-head, .drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 18px 18px 6px 20px; }
 .dialog-title, .drawer-title { font-size: 17px; font-weight: 650; padding-top: 6px; overflow-wrap: anywhere; }
-.dialog-body { padding: 6px 20px 8px; overflow-y: auto; display: grid; gap: 14px; }
+.dialog-body { padding: 6px 20px 8px; overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 14px; }
 .dialog-text { margin: 0; color: var(--text-2); white-space: pre-line; }
 .dialog-foot, .drawer-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding: 14px 20px 18px; }
 @media (max-width: 560px) {
-  /* a phone: the dialog sits at the bottom, in reach of a thumb */
+  /* a phone: a question (a confirm, a prompt) is a sheet at the bottom, in reach of a thumb and as
+     tall as what it asks; a bigger dialog fills the screen. Either way the title and its close
+     button stay at the top and the answers at the bottom, and only what is between scrolls. */
   .dialog {
-    top: auto; bottom: 0; left: 0; transform: none; width: 100%; max-height: 92vh;
-    border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom);
+    top: auto; bottom: 0; left: 0; transform: none; width: 100%; max-height: 92vh; max-height: 92dvh;
+    border-radius: 18px 18px 0 0; padding-inline: env(safe-area-inset-left) env(safe-area-inset-right);
     animation: sheet-in 0.2s ease;
   }
-  .dialog-foot { flex-direction: column-reverse; }
+  .dialog.dialog-medium, .dialog.dialog-large {
+    top: 0; width: 100%; max-height: none; border-radius: 0; border: none; padding-top: env(safe-area-inset-top);
+  }
+  .dialog-foot { flex-direction: column-reverse; padding-bottom: calc(18px + env(safe-area-inset-bottom)); border-top: 1px solid var(--separator); }
   .dialog-foot > button { width: 100%; min-height: var(--target); }
+  .dialog-body:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 }
 
 .drawer {
@@ -318,20 +307,22 @@
   border: 1px solid var(--hairline); box-shadow: var(--shadow-lg);
 }
 .drawer:focus { outline: none; }
-.drawer-start { left: 0; border-radius: 0 16px 16px 0; animation: slide-from-start 0.2s ease; padding-top: env(safe-area-inset-top); }
-.drawer-end { right: 0; border-radius: 16px 0 0 16px; animation: slide-from-end 0.2s ease; }
-.drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 6px 20px 16px; }
+.drawer-start { left: 0; border-radius: 0 16px 16px 0; animation: slide-from-start 0.2s ease; padding-top: env(safe-area-inset-top); padding-left: env(safe-area-inset-left); }
+.drawer-end { right: 0; border-radius: 16px 0 0 16px; animation: slide-from-end 0.2s ease; padding-top: env(safe-area-inset-top); padding-right: env(safe-area-inset-right); }
+.drawer-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 6px 20px 16px; }
 .drawer-foot { border-top: 1px solid var(--separator); }
+/* a form or a detail is a whole screen on a phone, rising from the bottom; the menu stays at the side */
 @media (max-width: 560px) {
-  /* a detail or a form rises from the bottom on a phone, the menu stays at the side */
   .drawer-end {
-    top: auto; left: 0; right: 0; width: 100%; max-height: 92vh;
-    border-radius: 18px 18px 0 0; padding-bottom: env(safe-area-inset-bottom);
+    left: 0; right: 0; width: 100%; border: none; border-radius: 0;
+    padding-left: env(safe-area-inset-left);
     animation: sheet-in 0.2s ease;
   }
 }
+.drawer-foot { padding-bottom: calc(18px + env(safe-area-inset-bottom)); }
+.drawer-body:last-child { padding-bottom: calc(16px + env(safe-area-inset-bottom)); }
 .drawer.nav-drawer { width: min(340px, 88vw); }
-.nav-drawer .drawer-body { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 12px; }
+.nav-drawer .drawer-body { display: flex; flex-direction: column; gap: 10px; padding: 0 12px 12px; padding-bottom: calc(12px + env(safe-area-inset-bottom)); }
 
 @keyframes fade-in { from { opacity: 0; } }
 @keyframes rise-in { from { opacity: 0; transform: translate(-50%, calc(-50% + 8px)); } }
@@ -341,7 +332,7 @@
 
 /* ---- toasts ------------------------------------------------------------------ */
 .toasts {
-  position: fixed; z-index: 90; right: 16px; bottom: 16px; left: auto;
+  position: fixed; z-index: 90; right: max(16px, env(safe-area-inset-right)); bottom: max(16px, env(safe-area-inset-bottom)); left: auto;
   display: grid; gap: 8px; width: min(420px, calc(100vw - 32px)); pointer-events: none;
 }
 .toast-region { display: grid; gap: 8px; }
@@ -356,12 +347,13 @@
 .toast > .icon { margin-top: 2px; }
 .toast-text { flex: 1 1 auto; min-width: 0; padding-top: 1px; overflow-wrap: anywhere; }
 .toast .icon-button { width: 32px; height: 32px; }
+@media (pointer: coarse) { .toast .icon-button { width: var(--target); height: var(--target); margin: -6px -2px -6px 0; } }
 .toast-success > .icon { color: var(--ok); }
 .toast-error { border-color: color-mix(in srgb, var(--bad) 40%, var(--hairline)); }
 .toast-error > .icon { color: var(--bad); }
 .toast-info > .icon { color: var(--info); }
 @media (max-width: 560px) {
-  .toasts { left: 16px; right: 16px; width: auto; bottom: max(16px, env(safe-area-inset-bottom)); }
+  .toasts { left: var(--gutter-start); right: var(--gutter-end); width: auto; }
 }
 
 /* ---- people and times ------------------------------------------------------ */
@@ -370,6 +362,21 @@
 .user-link a { min-width: 0; overflow-wrap: anywhere; font-weight: 600; text-decoration: underline; text-decoration-color: var(--hairline); text-underline-offset: 3px; }
 .user-link a:hover { text-decoration-color: currentColor; }
 .time { white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ---- touch: a target a finger can hit -------------------------------------------- */
+@media (pointer: coarse) {
+  /* A link or a toggle that is a line of text — a name, "Open the case", a sort heading —
+     gets a box 44 px tall to land on. The margin takes the padding back, so nothing on the
+     page moves; a link inside a sentence keeps the sentence's size. */
+  :is(#main, .drawer, .dialog) a:not([class]):not(p a), .table-link, .st-open, a.subtle, .dash-facts a, .th-sort, button.link {
+    padding: 14px 6px; margin: -14px -6px;
+  }
+  button.link { min-width: var(--target); justify-content: flex-start; }
+  .page-back { min-height: var(--target); margin-block: -6px 2px; }
+  summary { padding-block: 12px; }
+  /* an icon on its own is still a whole finger wide */
+  button:not(.link):not(.th-sort), .button-link { min-width: var(--target); }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .layer-scrim, .dialog, .drawer, .toast { animation: none !important; }

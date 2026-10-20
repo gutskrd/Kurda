@@ -37,6 +37,7 @@ import { Ranks } from './pages/Ranks';
 import { Seasons } from './pages/Seasons';
 import { Leagues } from './pages/Leagues';
 import { Badges } from './pages/Badges';
+import { Email } from './pages/Email';
 
 /**
  * Each page by its key (navigation.ts has who may open it and where it sits
@@ -48,6 +49,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   analytics: () => <Analytics />,
   audio: () => <AudioStudio />,
   users: () => <Users />,
+  email: () => <Email />,
   moderation: () => <Moderation />,
   appeals: () => <Appeals />,
   'ban-approvals': () => <BanApprovals />,

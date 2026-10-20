@@ -54,8 +54,8 @@ describe('who sees which page — what the API allows, not a guess', () => {
     expect(searchNav(visibleNav(LEGACY), 'settle').map((n) => n.id)).toEqual(['leagues']);
   });
 
-  it('support sees the people and the feedback, a founder the tags', () => {
-    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'feedback', 'security']);
+  it('support sees the people, the support inbox and the feedback, a founder the tags', () => {
+    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'email', 'feedback', 'security']);
     expect(ids(FOUNDER)).toEqual(['dashboard', 'tags', 'security']);
   });
 

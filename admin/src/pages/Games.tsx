@@ -189,7 +189,11 @@ function WordsPage(): React.JSX.Element {
             disabled={busy === w.id || !w.inGames}
             onChange={(e) => void patch(w, { isRhymePrompt: e.target.checked }, e.target.checked ? `Rounds can open with “${w.headword}”.` : `Rounds no longer open with “${w.headword}”.`)}
           />
-          <span>{w.isRhymePrompt ? 'Yes' : 'No'}</span>
+          <span>
+            {w.isRhymePrompt ? 'Yes' : 'No'}
+            {/* why it cannot be ticked, in words a finger can read too (the title is a mouse's tooltip) */}
+            {!w.inGames && <span className="cell-sub">Only a word in the games can open a round.</span>}
+          </span>
         </label>
       ),
     },

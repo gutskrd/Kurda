@@ -62,6 +62,13 @@
   /* sizes a finger can hit */
   --target: 44px;
   --control-h: 38px;
+  /* the phone's top bar, under the status bar's safe area: what a sticky part of a page sits below */
+  --topbar-h: calc(var(--control-h) + 17px);
+  --topbar-bottom: calc(var(--topbar-h) + env(safe-area-inset-top));
+  /* the page's side margin, kept clear of a notch when a phone lies on its side */
+  --gutter: 16px;
+  --gutter-start: max(var(--gutter), env(safe-area-inset-left));
+  --gutter-end: max(var(--gutter), env(safe-area-inset-right));
 
   color-scheme: light dark;
 }
@@ -217,6 +224,9 @@ input, select, textarea {
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
 textarea { font: inherit; line-height: 1.5; }
+/* a date and time field has a width of its own that grid and flex cells cannot shrink, so on a narrow
+   form it ran past its column; it may scroll its own text instead */
+input { min-width: 0; max-width: 100%; }
 input[type='checkbox'], input[type='radio'] {
   width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0;
   accent-color: var(--primary); flex: 0 0 auto;
@@ -248,10 +258,11 @@ label { font-weight: 500; color: var(--text-2); }
 
 /* A phone, or any touch screen: everything a finger presses is at least 44 px,
    and fields are 16 px — below that iOS Safari zooms the page on focus and
-   never zooms back out. */
+   never zooms back out. `:root` outranks a page's own smaller field (a 13 px
+   select, a monospace code box), which otherwise brought the zoom back. */
 @media (pointer: coarse), (max-width: 760px) {
   :root { --control-h: var(--target); }
-  input, select, textarea { font-size: 16px; }
+  :root input:not([type='checkbox']):not([type='radio']):not([type='range']), :root select, :root textarea { font-size: 16px; }
 }
 
 /* ---- the shell: sidebar on a wide screen, a top bar and a drawer on a phone ---- */
@@ -262,13 +273,15 @@ label { font-weight: 500; color: var(--text-2); }
 }
 .skip-link:focus { top: 12px; color: var(--primary-ink); }
 
-.app { min-height: 100vh; }
+.app { min-height: 100vh; min-height: 100dvh; }
 .sidebar { display: none; }
 .topbar {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 8px;
+  min-height: var(--topbar-bottom);
   padding: 8px 12px;
-  padding-top: max(8px, env(safe-area-inset-top));
+  padding-top: calc(8px + env(safe-area-inset-top));
+  padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
   background: var(--surface);
   -webkit-backdrop-filter: blur(var(--blur-strong));
   backdrop-filter: blur(var(--blur-strong));
@@ -281,8 +294,12 @@ label { font-weight: 500; color: var(--text-2); }
   max-width: 1200px;
   min-width: 0;
   margin: 0 auto;
-  padding: 18px 16px 48px;
-  padding-bottom: max(48px, env(safe-area-inset-bottom));
+  padding: 18px var(--gutter-end) 48px var(--gutter-start);
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+/* below the sticky top bar: a field or a heading moved to by the keyboard or a link is not hidden under it */
+@media (max-width: 1023px) {
+  html { scroll-padding-top: calc(var(--topbar-bottom) + 8px); }
 }
 .main:focus { outline: none; }
 
@@ -360,17 +377,9 @@ label { font-weight: 500; color: var(--text-2); }
 .account-role { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account button { white-space: nowrap; padding: 6px 10px; flex: 0 0 auto; }
 
-/* ---- legacy page pieces (pages still being moved onto the kit) -------- */
+/* ---- small layout helpers ------------------------------------------------ */
 .spacer { flex: 1 1 auto; }
-.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 22px; }
 .row { display: flex; gap: 8px; align-items: center; }
-@media (max-width: 760px) {
-  .toolbar input, .toolbar select { min-width: 0; flex: 1 1 190px; width: auto; }
-  .tiles { gap: 12px; }
-  .tile { flex: 1 1 calc(50% - 6px); min-width: 0; }
-  .tile .n { font-size: 22px; }
-  td button { margin: 2px 4px 2px 0; }
-}
 
 /* ---- typography -------------------------------------------------------- */
 .subtle { color: var(--text-dim); }
@@ -406,10 +415,8 @@ label { font-weight: 500; color: var(--text-2); }
   transition: width 400ms ease;
 }
 
-/* ---- tables: crisp inside the glass card ------------------------------- */
-.tablewrap { overflow-x: auto; }
+/* ---- tables: crisp inside the glass card (the kit's Table builds on these) ---- */
 table { width: 100%; border-collapse: collapse; }
-.tablewrap table { min-width: 520px; }
 th, td { text-align: left; padding: 11px 14px; vertical-align: middle; }
 thead th {
   color: var(--text-dim); font-weight: 600; font-size: 11.5px;
@@ -449,13 +456,6 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   border-radius: var(--radius-sm); background: var(--control); color: var(--text);
   resize: vertical; white-space: pre; overflow: auto;
 }
-textarea { font: inherit; }
-.signals-json {
-  margin: 6px 0 0; padding: 10px 12px; background: var(--control);
-  border: 1px solid var(--hairline); border-radius: var(--radius-xs);
-  font-family: ui-monospace, 'Consolas', monospace; font-size: 12px;
-  max-width: 340px; max-height: 220px; overflow: auto; white-space: pre;
-}
 .secret {
   display: block; font-family: ui-monospace, 'Consolas', monospace;
   font-size: 18px; letter-spacing: 0.14em; padding: 12px 14px;
@@ -463,14 +463,7 @@ textarea { font: inherit; }
   border-radius: var(--radius-sm); word-break: break-all; user-select: all;
 }
 
-.row { display: flex; gap: 8px; align-items: center; }
-.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; }
-
 /* ---- analytics viz: neutral -------------------------------------------- */
-.tiles { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
-.tile { flex: 1; min-width: 140px; }
-.tile .n { font-size: 27px; font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; color: var(--text); }
-.tile .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 6px; }
 .bars { display: flex; align-items: flex-end; gap: 3px; height: 110px; padding-top: 8px; }
 .bars .b { flex: 1 1 0; max-width: 32px; background: var(--text-2); border-radius: 3px 3px 0 0; min-height: 2px; opacity: 0.8; transition: opacity 0.1s ease; }
 .bars .b:hover { opacity: 1; }
@@ -784,6 +777,9 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
 }
 /* on a narrow screen the buttons and checks come before the long form */
 @media (max-width: 1099px) { .st-aside { order: -1; } }
+/* the save bar at the foot (pages.css .editor-bar): only where the buttons are above the form, not beside it */
+.editor-bar.st-savebar { display: none; }
+@media (max-width: 1099px) { .editor-bar.st-savebar { display: flex; } }
 
 .st-section { display: grid; gap: 12px; }
 .st-section:focus { outline: none; }

@@ -19,6 +19,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
   const session = useSession();
   const entries = useMemo(() => visibleNav(session), [session]);
   const active = activeEntry(route);
+  const title = active ? (active.title ?? active.label) : 'Hevalo Admin';
   const [menuOpen, setMenuOpen] = useState(false);
   const counts = useNavCounts(session.capabilities.includes('moderation.act'));
   const routeKey = `${route.page}/${route.rest.join('/')}`;
@@ -28,7 +29,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
   const first = useRef(true);
   useEffect(() => {
     setMenuOpen(false);
-    document.title = active ? `${active.label} · Hevalo Admin` : 'Hevalo Admin';
+    document.title = active ? `${title} · Hevalo Admin` : 'Hevalo Admin';
     if (first.current) {
       first.current = false;
       return;
@@ -39,7 +40,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
       window.scrollTo({ top: 0 });
     });
     return () => cancelAnimationFrame(frame);
-  }, [routeKey, active]);
+  }, [routeKey, active, title]);
 
   const account = <Account onSignOut={onSignOut} />;
 
@@ -68,7 +69,9 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
           type="button"
           className="icon-button ghost"
           aria-label="Open the menu"
+          aria-haspopup="dialog"
           aria-expanded={menuOpen}
+          aria-controls={menuOpen ? 'nav-drawer' : undefined}
           onClick={() => setMenuOpen(true)}
         >
           <Icon name="menu" size={22} />
@@ -76,14 +79,14 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
         <span className="brand-mark" aria-hidden="true">
           H
         </span>
-        <span className="topbar-title">{active?.label ?? 'Hevalo Admin'}</span>
+        <span className="topbar-title">{title}</span>
       </header>
 
       <main id="main" className="main" tabIndex={-1}>
         {children}
       </main>
 
-      <Drawer open={menuOpen} onClose={() => setMenuOpen(false)} side="start" title={<Brand />} className="nav-drawer">
+      <Drawer id="nav-drawer" open={menuOpen} onClose={() => setMenuOpen(false)} side="start" title={<Brand />} className="nav-drawer">
         <NavPanel entries={entries} active={active} counts={counts} onPick={() => setMenuOpen(false)} />
         {account}
       </Drawer>

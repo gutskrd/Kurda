@@ -5,7 +5,7 @@
  * cannot load (never zeros or "nothing here"), and what it asks before acting.
  */
 import { afterEach, describe, expect, it } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/dom';
+import { fireEvent, screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { setToken } from '../api';
@@ -13,7 +13,7 @@ import { AuthProvider } from '../auth';
 import { SessionProvider, sessionFrom } from '../session';
 import { failure, fakeApi, json, on, type Call } from '../test/fetch';
 import { renderUi } from '../test/render';
-import { Analytics } from './Analytics';
+import { Analytics, Bars } from './Analytics';
 import { DictionaryImport } from './DictionaryImport';
 import { Economy } from './Economy';
 import { GemRules } from './GemRules';
@@ -28,6 +28,29 @@ const writes = (calls: Call[], path: string): Call[] => calls.filter((c) => c.me
 function asRoles(staffRoles: string[], capabilities: string[], ui: ReactNode): ReactNode {
   return <SessionProvider value={sessionFrom({ roles: staffRoles.filter((r) => r !== 'admin'), staffRoles, capabilities })}>{ui}</SessionProvider>;
 }
+
+describe('the bar chart', () => {
+  it('reads out the day a finger touches, where a tooltip never showed on a phone', () => {
+    const points = [
+      { day: '2026-10-11', value: 5 },
+      { day: '2026-10-12', value: 9 },
+      { day: '2026-10-13', value: 7 },
+    ];
+    const { container } = renderUi(<Bars points={points} unit="sign-ups" />);
+    expect(screen.getByText('21 in all')).toBeInTheDocument();
+    // the bars side by side, 10 px apart
+    const bars = [...container.querySelectorAll<HTMLElement>('.bars .b')];
+    bars.forEach((b, i) => {
+      b.getBoundingClientRect = () => new DOMRect(i * 10, 0, 8, 100);
+    });
+    // jsdom has no PointerEvent: a mouse event of the same name carries the position
+    fireEvent(container.querySelector('.bars')!, new MouseEvent('pointerdown', { bubbles: true, clientX: 23 }));
+    const label = new Date('2026-10-13T00:00:00Z').toLocaleDateString(undefined, { day: 'numeric', month: 'short', timeZone: 'UTC' });
+    expect(container.querySelector('.chart-at')).toHaveTextContent(`${label}: 7 sign-ups`);
+    expect(bars[2]).toHaveClass('is-on');
+    expect(screen.queryByText('21 in all')).not.toBeInTheDocument();
+  });
+});
 
 describe('Analytics', () => {
   const activity = [

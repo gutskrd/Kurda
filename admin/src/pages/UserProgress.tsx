@@ -75,14 +75,16 @@ function RankCardView({ card: r, onReset }: { card: RankCard; onReset: () => voi
           <span>
             {r.points.toLocaleString()} points
             {r.provisional && (
-              <abbr title="Still uncertain after placement: the apps show a “?” beside the points" className="provisional">
+              <span className="provisional" aria-hidden="true">
                 ?
-              </abbr>
+              </span>
             )}
           </span>
         </div>
       </div>
       <span className="badges">
+        {/* said in words, where it was a tooltip on the “?” that a finger never brings up */}
+        {r.provisional && <Badge tone="neutral">Still uncertain after placement: the apps show a “?”</Badge>}
         {r.resting && <Badge tone="neutral">Resting: shown as resting to others</Badge>}
         {r.shieldGames > 0 && <Badge tone="info">Shield: {r.shieldGames} more {r.shieldGames === 1 ? 'game' : 'games'}</Badge>}
       </span>

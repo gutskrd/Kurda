@@ -46,6 +46,32 @@ const COLUMNS: Column<Item>[] = [
   { key: 'price', header: 'Price', cell: (i) => i.price, sort: (a, b) => a.price - b.price, align: 'end' },
 ];
 
+/**
+ * Gives the table's box and the table a width, for as long as a test needs
+ * them: jsdom lays nothing out, so both are 0 otherwise.
+ */
+function layout({ box, table }: { box: number; table: number }): () => void {
+  const clientWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'clientWidth');
+  const offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
+  Object.defineProperty(HTMLElement.prototype, 'clientWidth', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.classList.contains('table-wrap') ? box : 0;
+    },
+  });
+  Object.defineProperty(HTMLElement.prototype, 'offsetWidth', {
+    configurable: true,
+    get(this: HTMLElement) {
+      return this.tagName === 'TABLE' ? table : 0;
+    },
+  });
+  return () => {
+    if (clientWidth) Object.defineProperty(HTMLElement.prototype, 'clientWidth', clientWidth);
+    else delete (HTMLElement.prototype as { clientWidth?: number }).clientWidth;
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', offsetWidth);
+  };
+}
+
 function names(): string[] {
   const table = screen.getByRole('table', { name: 'Shop items' });
   return within(table)
@@ -89,6 +115,64 @@ describe('Table', () => {
     renderUi(<Table caption="Cases" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide="medium" />);
     expect(screen.getByRole('table', { name: 'Cases' }).parentElement).toHaveClass('is-medium');
     expect(screen.getByRole('table', { name: 'Cases' }).parentElement).not.toHaveClass('is-wide');
+  });
+
+  it('is cards in a narrow box, and in a wide one its table would not fit — never cut off at the edge', () => {
+    // jsdom lays nothing out: the box and the table are given their widths
+    const restore = layout({ box: 1000, table: 800 });
+    try {
+      const { container } = renderUi(<Table caption="Shop items" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
+      expect(container.querySelector('.table-wrap')).not.toHaveClass('is-cards');
+    } finally {
+      restore();
+    }
+    const tooWide = layout({ box: 1000, table: 1200 });
+    try {
+      const { container } = renderUi(<Table caption="Long names" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
+      expect(container.querySelector('.table-wrap')).toHaveClass('is-cards');
+      // the cards still say what each value is
+      expect(within(screen.getByRole('table', { name: 'Long names' })).getAllByRole('cell')[1]).toHaveAttribute('data-label', 'Price');
+    } finally {
+      tooWide();
+    }
+    const narrow = layout({ box: 500, table: 400 });
+    try {
+      const { container } = renderUi(<Table caption="On a phone" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} />);
+      expect(container.querySelector('.table-wrap')).toHaveClass('is-cards');
+    } finally {
+      narrow();
+    }
+  });
+
+  it('turns into cards at the width its columns need', () => {
+    const restore = layout({ box: 900, table: 800 });
+    try {
+      renderUi(<Table caption="Many" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide />);
+      renderUi(<Table caption="A few wide" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} wide="medium" />);
+      expect(screen.getByRole('table', { name: 'Many' }).parentElement).toHaveClass('is-cards');
+      expect(screen.getByRole('table', { name: 'A few wide' }).parentElement).not.toHaveClass('is-cards');
+    } finally {
+      restore();
+    }
+  });
+
+  it('keeps a scrolling table a table, pinning its first column only while it scrolls', () => {
+    const narrow = layout({ box: 340, table: 430 });
+    try {
+      renderUi(<Table caption="Day by day" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} layout="scroll" />);
+      const box = screen.getByRole('table', { name: 'Day by day' }).parentElement!;
+      expect(box).toHaveClass('is-scroll', 'is-scrolling');
+      expect(box).not.toHaveClass('is-cards');
+    } finally {
+      narrow();
+    }
+    const wide = layout({ box: 900, table: 600 });
+    try {
+      renderUi(<Table caption="Fits" columns={COLUMNS} rows={ITEMS} rowKey={(i) => i.id} layout="scroll" />);
+      expect(screen.getByRole('table', { name: 'Fits' }).parentElement).not.toHaveClass('is-scrolling');
+    } finally {
+      wide();
+    }
   });
 
   it('says it is loading, rather than drawing an empty table', () => {
@@ -419,6 +503,43 @@ describe('Drawer', () => {
 });
 
 describe('Tabs', () => {
+  it('brings the chosen tab into view when the row scrolls sideways', () => {
+    // a phone's row: 300 px showing of 600, each tab 140 px wide and 150 apart
+    const scrollWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'scrollWidth')!;
+    const clientWidth = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth')!;
+    const offsetWidth = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth')!;
+    const rect = Element.prototype.getBoundingClientRect;
+    const isRow = (el: Element): boolean => el.getAttribute('role') === 'tablist';
+    Object.defineProperty(Element.prototype, 'scrollWidth', { configurable: true, get() { return isRow(this) ? 600 : 0; } });
+    Object.defineProperty(Element.prototype, 'clientWidth', { configurable: true, get() { return isRow(this) ? 300 : 0; } });
+    Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get() { return this.getAttribute('role') === 'tab' ? 140 : 0; } });
+    Element.prototype.getBoundingClientRect = function at(this: Element): DOMRect {
+      const i = this.getAttribute('role') === 'tab' ? [...this.parentElement!.children].indexOf(this) : 0;
+      return new DOMRect(i * 150, 0, this.getAttribute('role') === 'tab' ? 140 : 300, 44);
+    };
+    try {
+      renderUi(
+        <Tabs
+          label="Family"
+          value="events"
+          items={[
+            { key: 'all', label: 'All' },
+            { key: 'learning', label: 'Learning' },
+            { key: 'games', label: 'Games' },
+            { key: 'events', label: 'Events' },
+          ]}
+        />,
+      );
+      // the fourth tab starts at 450: centred in the 300 px that show
+      expect(screen.getByRole('tablist', { name: 'Family' }).scrollLeft).toBe(370);
+    } finally {
+      Object.defineProperty(Element.prototype, 'scrollWidth', scrollWidth);
+      Object.defineProperty(Element.prototype, 'clientWidth', clientWidth);
+      Object.defineProperty(HTMLElement.prototype, 'offsetWidth', offsetWidth);
+      Element.prototype.getBoundingClientRect = rect;
+    }
+  });
+
   it('moves with the arrow keys and chooses as it goes', async () => {
     const user = userEvent.setup();
     function Harness(): React.JSX.Element {
