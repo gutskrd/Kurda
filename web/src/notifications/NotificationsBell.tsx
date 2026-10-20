@@ -89,10 +89,9 @@ export function NotificationsBell(): React.JSX.Element | null {
       </button>
 
       {/*
-        Drawn at the end of <body> rather than inside the bar. The bar is
-        frosted glass, and glass makes itself the frame of everything fixed
-        inside it: the panel was cut off at the bar's own layer, under the
-        social column, and the page showed through it.
+        Drawn at the end of <body> rather than inside the bar, so it is above
+        everything the page and the social column draw, whatever layer the bar
+        itself is on.
       */}
       {open &&
         createPortal(
@@ -103,7 +102,7 @@ export function NotificationsBell(): React.JSX.Element | null {
             role="dialog"
             aria-label={t('notifications.title')}
             tabIndex={-1}
-            // the bar is drawn left to right in every language; the list is not
+            // hangs from the bell's end of the bar: the right, or in Arabic and Soranî the left
             dir={localeDir(locale)}
           >
             <div className="bell-panel-head">

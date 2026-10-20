@@ -2706,7 +2706,6 @@ export const ku: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'Lêgerîn',
   'nav.profile': 'Profîl',
-  'nav.tabs': 'Beşên sereke',
   'nav.tabUnread': '{place}, {count} nexwendî',
   'nav.tabWaiting': '{place}, tiştek li benda te ye',
   'notifications.bellUnread': 'Agahdarî, {count} nû',
@@ -2744,6 +2743,10 @@ export const ku: Catalogue = {
   'search.noWordsBody': 'Rastnivîsê kontrol bike, an peyvê bi îngilîzî biceribîne.',
   'search.guestWords': 'Her peyva ferhengê belaş e, bê hesab.',
   'search.openDictionary': 'Ferhengê veke',
+  'search.seeAll': 'Hemû encamên ji bo “{query}” bibîne',
+  'search.hint': 'Hevalên xwe bi navê bikarhênerê wan bibîne, an li peyvekê bi kurdî an bi îngilîzî bigere.',
+  'search.guestPeople': 'Ji bo dîtina kesan têkeve',
+  'search.close': 'Lêgerînê bigire',
   'settings.appearance.title': 'Xuyang',
   'settings.appearance.help': 'Heta ku tu tiştekî din hilnebijêrî, Hevalo tarî ye. Bijartina te li ser vê cîhazê dimîne.',
   'settings.appearance.dark': 'Tarî',

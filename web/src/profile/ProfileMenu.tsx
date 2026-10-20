@@ -5,7 +5,7 @@ import {
   FlagIcon,
   GearIcon,
   MedalIcon,
-  MenuIcon,
+  MoreIcon,
   ShareIcon,
   ShieldIcon,
   ShopIcon,
@@ -85,7 +85,8 @@ export function ProfileMenu(): React.JSX.Element {
         title={t('nav.menu')}
         onClick={() => setOpen((v) => !v)}
       >
-        <MenuIcon size={22} />
+        {/* three dots, not three lines: on a phone the bar's menu above is the three lines */}
+        <MoreIcon size={22} />
         {waiting && <span className="nav-bell-dot" aria-hidden="true" />}
       </button>
       {open && (

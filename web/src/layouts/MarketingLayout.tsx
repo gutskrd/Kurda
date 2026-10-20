@@ -3,7 +3,6 @@ import { Outlet, useLocation, useNavigationType } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
-import { TabBar } from '../components/TabBar';
 import { Footer } from '../components/Footer';
 import { useAuth } from '../auth/AuthProvider';
 import { RailProvider } from '../social/RailProvider';
@@ -63,8 +62,7 @@ export function MarketingLayout(): React.JSX.Element {
       <a href="#main" className="skip-link">
         {t('nav.skipToContent')}
       </a>
-      {/* signed in, the front page is one more page of the app, with its tab bar */}
-      <TopNav links={links} withTabBar={status === 'signedIn'} />
+      <TopNav links={links} />
       {/* signed in, the social strip is on the right here as it is in the app, and the page makes the same room for it */}
       <main id="main" className={`site-main${status === 'signedIn' ? ' has-rail' : ''}`}>
         <ErrorBoundary>
@@ -75,7 +73,6 @@ export function MarketingLayout(): React.JSX.Element {
       </main>
       <Footer />
       <SocialRail />
-      {status === 'signedIn' && <TabBar links={links} />}
     </RailProvider>
   );
 }

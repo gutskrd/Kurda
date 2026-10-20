@@ -2693,7 +2693,6 @@ export const ar: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'بحث',
   'nav.profile': 'الملف',
-  'nav.tabs': 'الأقسام الرئيسية',
   'nav.tabUnread': '{place}، {count} غير مقروءة',
   'nav.tabWaiting': '{place}، هناك ما ينتظرك',
   'notifications.bellUnread': 'الإشعارات، {count} جديدة',
@@ -2731,6 +2730,10 @@ export const ar: Catalogue = {
   'search.noWordsBody': 'تحقّق من التهجئة، أو جرّب الكلمة بالإنجليزية.',
   'search.guestWords': 'كل كلمات القاموس مجانية للقراءة، ولا حاجة إلى حساب.',
   'search.openDictionary': 'افتح القاموس',
+  'search.seeAll': 'عرض كل النتائج لـ «{query}»',
+  'search.hint': 'ابحث عن أصدقائك باسم المستخدم، أو عن كلمة بالكردية أو الإنجليزية.',
+  'search.guestPeople': 'سجّل الدخول للعثور على أشخاص',
+  'search.close': 'إغلاق البحث',
   'settings.appearance.title': 'المظهر',
   'settings.appearance.help': 'يظهر Hevalo داكنًا ما لم تختر غير ذلك. يُحفظ اختيارك على هذا الجهاز.',
   'settings.appearance.dark': 'داكن',

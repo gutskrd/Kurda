@@ -2701,7 +2701,6 @@ export const nl: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'Zoeken',
   'nav.profile': 'Profiel',
-  'nav.tabs': 'Hoofdonderdelen',
   'nav.tabUnread': '{place}, {count} ongelezen',
   'nav.tabWaiting': '{place}, er wacht iets op je',
   'notifications.bellUnread': 'Meldingen, {count} nieuw',
@@ -2739,6 +2738,10 @@ export const nl: Catalogue = {
   'search.noWordsBody': 'Controleer de spelling, of probeer het woord in het Engels.',
   'search.guestWords': 'Elk woord in het woordenboek is gratis te lezen, zonder account.',
   'search.openDictionary': 'Woordenboek openen',
+  'search.seeAll': 'Alle resultaten voor “{query}” bekijken',
+  'search.hint': 'Vind vrienden op hun gebruikersnaam, of zoek een woord op in het Koerdisch of Engels.',
+  'search.guestPeople': 'Log in om mensen te vinden',
+  'search.close': 'Zoeken sluiten',
   'settings.appearance.title': 'Weergave',
   'settings.appearance.help': 'Hevalo is donker tenzij je iets anders kiest. Je keuze blijft op dit apparaat.',
   'settings.appearance.dark': 'Donker',

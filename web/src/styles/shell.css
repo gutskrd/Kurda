@@ -1,9 +1,10 @@
 /*
- * The shell's newer parts: the tab bar, the bell, the five places' pages
- * (Learn's two halves, Search, Messages' list, your profile's menu), and the
- * small shared pieces they are built from — an icon button, a list row, a
- * two-way switch. Everything here is written against the tokens, so it is
- * right in both schemes without knowing which one is on.
+ * The shell's newer parts: the bell, search in the bar, the places' pages
+ * (Learn's two halves, Search, Messages' list, your profile's menu), what
+ * stays in place while a page scrolls, and the small shared pieces they are
+ * built from — an icon button, a list row, a two-way switch. Everything here
+ * is written against the tokens, so it is right in both schemes without
+ * knowing which one is on.
  */
 
 /* ---- small shared pieces ----------------------------------------------- */
@@ -203,22 +204,27 @@
 .nav-bell-dot {
   position: absolute;
   top: 9px;
-  right: 10px;
+  inset-inline-end: 10px;
   width: 9px;
   height: 9px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 0 2px var(--app-bg);
+  box-shadow: 0 0 0 2px var(--nav-bg);
+}
+.nav-bell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
 /*
- * The panel the bell opens: under the bell, at the end of the bar, the width
- * of a phone at most. On a phone it is the screen's width less the gutters.
+ * The panel the bell opens: under the bell, at the end of the bar (its right,
+ * or in Arabic and Soranî its left), the width of a phone at most. On a phone
+ * it is the screen's width less the gutters.
  */
 .bell-panel {
   position: fixed;
-  top: calc(var(--nav-h) + 8px);
-  right: max(12px, calc((100vw - 1440px) / 2 + 12px));
+  top: calc(var(--nav-bottom) + 8px);
+  inset-inline-end: max(12px, calc((100vw - 1440px) / 2 + 12px));
   z-index: 95;
   width: min(400px, calc(100vw - 24px));
   max-height: min(70vh, 560px);
@@ -320,15 +326,16 @@
   height: 8px;
   border-radius: 50%;
   background: var(--gold);
-  box-shadow: 0 0 0 2px var(--app-bg);
+  box-shadow: 0 0 0 2px var(--nav-bg);
 }
 /*
  * On a phone the social column's parts all have a place of their own — the
- * requests and groups in Messages, notifications on the bell — so its toggle
- * leaves the bar, which keeps the brand and the bell and nothing to mistake.
+ * requests and groups in Messages, notifications on the bell, your friends in
+ * the menu — so its toggle leaves the bar, which keeps the brand, search, the
+ * bell and the menu and nothing to mistake.
  */
 @media (max-width: 768px) {
-  .nav.has-tabbar .rail-toggle {
+  .nav .rail-toggle {
     display: none;
   }
 }
@@ -339,156 +346,336 @@
   padding: 0 14px;
 }
 
-/* ---- the tab bar ------------------------------------------------------- */
+/* ---- search, in the bar ------------------------------------------------ */
 
 /*
- * A floating island along the bottom of a phone: five equal places, an icon
- * over its word, the place you are on on a soft pill. It stands clear of the
- * screen's edges and the home indicator (the safe area), with a shadow, so it
- * reads as laid over the page rather than as part of it; and it is solid, so
- * no line of the page ever shows through a label. In Arabic and Soranî its
- * order runs right to left with the page, so Home is under the right thumb
- * where those readers start.
+ * A field on a wide screen, between the places and what is yours; its results
+ * hang from it in a panel. The field keeps one width whatever is typed and
+ * whatever arrives, so nothing in the bar moves while you search.
  */
-.tabbar {
+.nav-search {
+  position: relative;
+  flex: 0 1 320px;
+  min-width: 180px;
+}
+.nav-search-open,
+.nav-search-back {
   display: none;
 }
-@media (max-width: 768px) {
-  .tabbar {
-    display: block;
-    position: fixed;
-    z-index: 45;
-    left: 12px;
-    right: 12px;
-    bottom: calc(var(--tabbar-gap) + env(safe-area-inset-bottom, 0px));
-    margin-inline: auto;
-    max-width: 520px;
-  }
-  body.has-tabbar {
-    --bottom-chrome: calc(var(--tabbar-h) + var(--tabbar-gap) + env(safe-area-inset-bottom, 0px));
-  }
-  /* the page leaves room for the bar under its last line */
-  body.has-tabbar .app-main,
-  body.has-tabbar .site-main {
-    padding-bottom: calc(var(--bottom-chrome) + 32px + var(--rb-space, 0px));
-  }
-  body.has-tabbar .footer {
-    padding-bottom: calc(var(--bottom-chrome) + 24px);
-  }
-}
-.tabbar-list {
-  position: relative;
-  display: grid;
-  grid-template-columns: repeat(var(--tab-count, 5), minmax(0, 1fr));
-  height: var(--tabbar-h);
+.nav-search-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   margin: 0;
-  padding: 6px;
-  list-style: none;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: var(--tabbar-bg);
-  -webkit-backdrop-filter: saturate(1.4) blur(24px);
-  backdrop-filter: saturate(1.4) blur(24px);
-  box-shadow: var(--shadow);
 }
-/* the soft pill behind the place you are on; it slides between places */
-.tabbar-list.has-active::before {
-  content: '';
-  position: absolute;
-  top: 6px;
-  bottom: 6px;
-  inset-inline-start: 6px;
-  width: calc((100% - 12px) / var(--tab-count, 5));
-  border-radius: var(--r-pill);
-  background: var(--surface-3);
-  transform: translateX(calc(var(--tab-index, 0) * 100% * var(--dir, 1)));
-  transition: transform var(--dur) var(--ease-out);
-}
-[dir='rtl'] .tabbar-list {
-  --dir: -1;
-}
-.tabbar-item {
+.nav-search-field {
   position: relative;
+  flex: 1;
   min-width: 0;
 }
-.tabbar-tab {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
-  height: 100%;
-  min-height: 44px;
-  padding: 0 2px;
-  border-radius: var(--r-pill);
+.nav-search-icon {
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  transform: translateY(-50%);
   color: var(--ink-3);
-  text-decoration: none;
-  transition: color var(--dur-fast) ease;
-  -webkit-tap-highlight-color: transparent;
+  pointer-events: none;
 }
-.tabbar-tab.is-active {
+.nav-search-input {
+  display: block;
+  width: 100%;
+  height: 40px;
+  margin: 0;
+  padding-inline: 40px 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
   color: var(--ink);
+  font: inherit;
+  font-size: var(--text-secondary);
+  transition:
+    border-color var(--dur-fast) ease,
+    background var(--dur-fast) ease;
 }
-.tabbar-tab:focus-visible {
+.nav-search-input::placeholder {
+  color: var(--ink-4);
+}
+.nav-search-input:hover {
+  border-color: var(--border-strong);
+}
+/* one ring, drawn over the field's own edge rather than around it */
+.nav-search-input:focus {
   outline: 2px solid var(--focus);
-  outline-offset: -2px;
+  outline-offset: -1px;
+  border-color: transparent;
+  background: var(--input-bg);
 }
-.tabbar-icon {
-  position: relative;
+/* the browser's own clear button doubles ours */
+.nav-search-input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.nav-search-clear {
+  position: absolute;
+  inset-inline-end: 4px;
+  top: 50%;
+  transform: translateY(-50%);
   display: inline-grid;
   place-items: center;
-  height: 26px;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
 }
-.tabbar-label {
-  max-width: 100%;
-  font-size: var(--text-tab);
+.nav-search-clear:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+.nav-search-clear:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+/* the shortcut, as a key; gone once the cursor is in the field */
+.nav-search-key {
+  position: absolute;
+  inset-inline-end: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-xs);
+  color: var(--ink-3);
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  line-height: 1;
+  pointer-events: none;
+}
+.nav-search-input:focus ~ .nav-search-key {
+  display: none;
+}
+
+/* the panel the results are in, hanging from the field, under where you type */
+.nav-search-panel {
+  position: absolute;
+  top: calc(100% + 12px);
+  inset-inline-start: 0;
+  z-index: 3;
+  width: max(100%, 420px);
+  max-height: min(70vh, 560px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-lg);
+  animation: panel-in var(--dur) var(--ease-out);
+}
+.nav-search-panel:focus {
+  outline: none;
+}
+.nav-search-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 4px 4px 2px 10px;
+}
+.nav-search-head-title,
+.nav-search-group-title {
+  font-size: var(--text-caption);
   font-weight: 600;
-  line-height: 1.1;
-  letter-spacing: 0.01em;
+  color: var(--ink-3);
+}
+.nav-search-group-title {
+  padding: 8px 10px 4px;
+}
+.nav-search-group + .nav-search-group,
+.nav-search-group + .nav-search-option {
+  margin-top: 4px;
+  padding-top: 4px;
+  border-top: 1px solid var(--separator);
+}
+.nav-search-group + .nav-search-option {
+  border-radius: 0 0 var(--r-md) var(--r-md);
+}
+.nav-search-note {
+  margin: 0;
+  padding: 14px 12px;
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.nav-search-note.is-loading {
+  padding-block: 18px;
+}
+/* while the next results load, the last ones stay, a step back */
+.nav-search-list.is-stale {
+  opacity: 0.6;
+  transition: opacity var(--dur-fast) ease;
+}
+.nav-search-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 52px;
+  padding: 6px 10px;
+  border-radius: var(--r-md);
+  color: var(--ink);
+  text-decoration: none;
+  cursor: pointer;
+}
+.nav-search-option.is-recent {
+  min-height: 44px;
+}
+.nav-search-option:hover,
+.nav-search-option[aria-selected='true'] {
+  background: var(--surface-2);
+}
+/* the one the arrow keys are on has an edge as well as a fill, so it reads in either scheme */
+.nav-search-option[aria-selected='true'] {
+  box-shadow: inset 0 0 0 1px var(--border-strong);
+}
+.nav-search-option .friend-avatar {
+  width: 36px;
+  height: 36px;
+}
+.nav-search-glyph {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.nav-search-glyph.is-small {
+  width: 28px;
+  height: 28px;
+  margin-inline: 4px;
+  background: transparent;
+  color: var(--ink-3);
+}
+.nav-search-text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.nav-search-title {
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  line-height: 1.3;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-[dir='rtl'] .tabbar-label {
-  letter-spacing: normal;
+.nav-search-sub {
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  line-height: 1.35;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.tabbar-badge {
-  position: absolute;
-  top: -4px;
-  inset-inline-start: 14px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: var(--r-pill);
-  background: var(--gold);
-  color: #111111;
-  font-size: 0.6875rem;
-  font-weight: 700;
-  line-height: 1;
-  box-shadow: 0 0 0 2px var(--tabbar-bg);
+.nav-search-go {
+  flex: none;
+  color: var(--ink-3);
 }
-.tabbar-dot {
-  position: absolute;
-  top: 0;
-  inset-inline-end: -3px;
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  background: var(--gold);
-  box-shadow: 0 0 0 2px var(--tabbar-bg);
+/*
+ * A name or a handle in Latin letters keeps its own direction, but on an
+ * Arabic or Soranî page it still lines up on the right with everything else
+ * rather than drifting to the far side of the row.
+ */
+[dir='rtl'] .nav-search-title,
+[dir='rtl'] .nav-search-sub {
+  text-align: right;
+}
+/* a sentence, not a definition: it reads whole */
+.nav-search-option.is-dictionary .nav-search-sub {
+  white-space: normal;
 }
 
-/* the rest of what is pinned to the bottom of the screen rises above the bar */
-.msg-toasts,
-.rail-toasts {
-  margin-bottom: var(--bottom-chrome, 0px);
+/* the squeeze: a narrower field, so the places keep their room */
+@media (min-width: 769px) and (max-width: 1099px) {
+  .nav-search {
+    flex-basis: 240px;
+    min-width: 160px;
+  }
 }
-.rb-host {
-  margin-bottom: var(--bottom-chrome, 0px);
+
+/*
+ * A phone: a search button in the bar, which turns the bar into the field —
+ * a way back, the field across the width, and its clear button — with the
+ * results filling the screen under it. Nothing else is on screen while you
+ * search, which on a phone is what searching is.
+ */
+@media (max-width: 768px) {
+  .nav-search {
+    position: static;
+    flex: none;
+    min-width: 0;
+  }
+  .nav-search-open {
+    display: inline-grid;
+  }
+  .nav-search-bar {
+    display: none;
+  }
+  .nav-search.is-open .nav-search-bar {
+    display: flex;
+    position: absolute;
+    top: env(safe-area-inset-top, 0px);
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 3;
+    padding-inline: max(8px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px));
+    background: var(--nav-bg);
+  }
+  .nav-search.is-open .nav-search-back {
+    display: inline-grid;
+    width: 44px;
+    height: 44px;
+  }
+  .nav-search-input {
+    height: 44px;
+    /* sixteen pixels, or a phone zooms the page in when the field is touched */
+    font-size: 16px;
+  }
+  .nav-search-clear {
+    width: 40px;
+    height: 40px;
+    inset-inline-end: 2px;
+  }
+  .nav-search-key {
+    display: none;
+  }
+  .nav-search-panel {
+    position: fixed;
+    top: var(--nav-bottom);
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    max-height: none;
+    padding: 8px max(8px, env(safe-area-inset-right, 0px)) calc(24px + env(safe-area-inset-bottom, 0px)) max(8px, env(safe-area-inset-left, 0px));
+    border: 0;
+    border-radius: 0;
+    background: var(--app-bg);
+    box-shadow: none;
+    animation: none;
+  }
+  .nav-search-option {
+    min-height: 56px;
+  }
 }
 
 /* ---- Learn ------------------------------------------------------------- */
@@ -786,7 +973,7 @@
 /* the field stays with you while the results scroll under it */
 .search-bar {
   position: sticky;
-  top: var(--nav-h);
+  top: var(--nav-bottom);
   z-index: 5;
   display: grid;
   gap: var(--space-3);
@@ -1000,7 +1187,7 @@
 }
 .profile-menu-btn .nav-bell-dot {
   top: 10px;
-  right: 10px;
+  inset-inline-end: 10px;
 }
 /* it hangs from the button, down into the page, not up under the bar */
 .profile-menu-list {
@@ -1034,11 +1221,56 @@
   gap: var(--space-2);
 }
 
+/* ---- what stays in place while a page scrolls ------------------------- */
+
+/*
+ * The bar is fixed to the top (layout.css) and the social column to the side
+ * (rail.css). A page's own side column is the third: on a wide screen it stays
+ * in view under the bar while the main column scrolls past it, the way the
+ * alphabet's chart does — on a profile, the facts beside the posts.
+ */
+@media (min-width: 761px) {
+  .mkp-body {
+    align-items: start;
+  }
+  .mkp-side {
+    position: sticky;
+    top: calc(var(--nav-bottom) + var(--space-4));
+  }
+}
+
+/*
+ * Learn's two halves start at the same line.
+ *
+ * The Games half is drawn inside the frame every game sits in (`.game-page`),
+ * which adds its own top margin for a board — so the heading and the Lessons |
+ * Games switch dropped 40px when you pressed Games, and jumped back up on
+ * Lessons. On the half that carries Learn's header the frame adds nothing.
+ */
+.game-page:has(> .learn-head) {
+  padding-top: 0;
+}
+
+/*
+ * Messages on a wide screen: the list and the open conversation fill the
+ * window under the bar, each scrolling inside itself, so the page does not
+ * scroll and the field you type in stays at the bottom where you left it.
+ * The fixed fraction of the window this used to be left a phone-sized box on
+ * a tall screen and cut the composer off on a short one.
+ */
+@media (min-width: 821px) {
+  .chat-page .chat-layout {
+    height: max(420px, calc(100dvh - var(--nav-bottom) - var(--invite-banner-h, 0px) - 196px));
+  }
+}
+
 /* ---- motion, for those who asked for less ------------------------------ */
 @media (prefers-reduced-motion: reduce) {
-  .tabbar-list.has-active::before,
   .bell-panel,
-  .nav-links {
+  .nav-links,
+  .nav-scrim,
+  .nav-search-panel,
+  .nav-search-list.is-stale {
     transition: none;
     animation: none;
   }

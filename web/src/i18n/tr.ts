@@ -2695,7 +2695,6 @@ export const tr: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'Ara',
   'nav.profile': 'Profil',
-  'nav.tabs': 'Ana bölümler',
   'nav.tabUnread': '{place}, {count} okunmamış',
   'nav.tabWaiting': '{place}, seni bekleyen bir şey var',
   'notifications.bellUnread': 'Bildirimler, {count} yeni',
@@ -2733,6 +2732,10 @@ export const tr: Catalogue = {
   'search.noWordsBody': 'Yazımı kontrol et ya da kelimeyi İngilizce dene.',
   'search.guestWords': 'Sözlükteki her kelime ücretsiz, hesap gerekmez.',
   'search.openDictionary': 'Sözlüğü aç',
+  'search.seeAll': '“{query}” için tüm sonuçları gör',
+  'search.hint': 'Arkadaşlarını kullanıcı adlarıyla bul ya da Kürtçe veya İngilizce bir kelime ara.',
+  'search.guestPeople': 'Kişileri bulmak için giriş yap',
+  'search.close': 'Aramayı kapat',
   'settings.appearance.title': 'Görünüm',
   'settings.appearance.help': 'Başka bir şey seçmedikçe Hevalo koyu görünür. Seçimin bu cihazda saklanır.',
   'settings.appearance.dark': 'Koyu',

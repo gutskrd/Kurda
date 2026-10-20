@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Search } from './Search';
 import { renderApp, jsonResponse } from '../test/utils';
 
@@ -143,6 +143,45 @@ describe('Search', () => {
     serve();
     show('/app/search?type=words');
     expect(await screen.findByRole('link', { name: 'Open the dictionary' })).toHaveAttribute('href', '/dictionary/');
+  });
+
+  it('opens a word from its address, as the bar’s search links to one, and goes back to the list', async () => {
+    signIn();
+    serve({
+      '/dictionary/search': { query: 'roj', fuzzy: false, results: [] },
+      '/dictionary/entries/d1': { id: 'd1', headword: 'roj', dialect: 'kurmanji', senses: [], audio: [], xrefs: [] },
+    });
+    show('/app/search?q=roj&type=words&entry=d1');
+    await userEvent.click(await screen.findByRole('button', { name: 'Back to search' }));
+    expect(screen.getByTestId('where').textContent).toBe('/app/search?q=roj&type=words');
+    expect(field()).toHaveValue('roj');
+  });
+
+  it('takes up a search started in the bar while it is open', async () => {
+    signIn();
+    const { asked } = serve({ '/users/search': { results: [] } });
+    function FromTheBar(): React.JSX.Element {
+      const navigate = useNavigate();
+      return (
+        <button type="button" onClick={() => navigate('/app/search?q=berfin')}>
+          bar
+        </button>
+      );
+    }
+    renderApp(
+      <>
+        <Search />
+        <FromTheBar />
+        <Where />
+      </>,
+      ['/app/search?q=rojda'],
+    );
+    expect(field()).toHaveValue('rojda');
+    await userEvent.click(screen.getByRole('button', { name: 'bar' }));
+    expect(field()).toHaveValue('berfin');
+    await waitFor(() => expect(asked).toContain('/users/search?q=berfin'));
+    // and the address stays on what was asked, not what the page had been showing
+    expect(screen.getByTestId('where').textContent).toBe('/app/search?q=berfin');
   });
 
   it('tells a visitor what finding people needs, and offers it', async () => {

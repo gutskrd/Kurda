@@ -2792,7 +2792,6 @@ export const en = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'Search',
   'nav.profile': 'Profile',
-  'nav.tabs': 'Main sections',
   'nav.tabUnread': '{place}, {count} unread',
   'nav.tabWaiting': '{place}, something is waiting for you',
   'notifications.bellUnread': 'Notifications, {count} new',
@@ -2830,6 +2829,10 @@ export const en = {
   'search.noWordsBody': 'Check the spelling, or try the word in English.',
   'search.guestWords': 'Every word in the dictionary is free to read, no account needed.',
   'search.openDictionary': 'Open the dictionary',
+  'search.seeAll': 'See all results for “{query}”',
+  'search.hint': 'Find friends by their username, or look up a word in Kurdish or English.',
+  'search.guestPeople': 'Log in to find people',
+  'search.close': 'Close search',
   'settings.appearance.title': 'Appearance',
   'settings.appearance.help': 'Dark is how Hevalo looks unless you choose otherwise. Your choice is kept on this device.',
   'settings.appearance.dark': 'Dark',

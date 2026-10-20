@@ -2699,7 +2699,6 @@ export const fr: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'Recherche',
   'nav.profile': 'Profil',
-  'nav.tabs': 'Sections principales',
   'nav.tabUnread': '{place}, {count} non lus',
   'nav.tabWaiting': '{place}, quelque chose vous attend',
   'notifications.bellUnread': 'Notifications, {count} nouvelles',
@@ -2737,6 +2736,10 @@ export const fr: Catalogue = {
   'search.noWordsBody': 'Vérifiez l’orthographe, ou essayez le mot en anglais.',
   'search.guestWords': 'Tous les mots du dictionnaire sont libres d’accès, sans compte.',
   'search.openDictionary': 'Ouvrir le dictionnaire',
+  'search.seeAll': 'Voir tous les résultats pour « {query} »',
+  'search.hint': 'Trouvez vos amis par leur nom d’utilisateur, ou cherchez un mot en kurde ou en anglais.',
+  'search.guestPeople': 'Connectez-vous pour trouver des personnes',
+  'search.close': 'Fermer la recherche',
   'settings.appearance.title': 'Apparence',
   'settings.appearance.help': 'Hevalo est sombre sauf si vous choisissez autre chose. Votre choix reste sur cet appareil.',
   'settings.appearance.dark': 'Sombre',

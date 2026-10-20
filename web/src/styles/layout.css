@@ -1,4 +1,4 @@
-/* ---- top navigation (desktop-first) ------------------------------------ */
+/* ---- top navigation --------------------------------------------------- */
 
 /*
  * The bar is allowed wider than the page it sits over.
@@ -16,14 +16,25 @@
     max-width: 1440px;
   }
 }
+/*
+ * Fixed to the top of the window on every screen, the page scrolling under it.
+ *
+ * Solid, not frosted: words in the bar are read over whatever is passing
+ * beneath, and a translucent bar let a line of the page show through them. A
+ * hairline is all that separates the two. On a phone with a notch or an
+ * island the bar grows by the safe area and keeps its contents below it;
+ * what hangs from the bar is placed at `--nav-bottom`, which counts it.
+ *
+ * Above the social column (z 40) and the page, so what hangs from the bar —
+ * the search results, the phone's menu — is never drawn under either.
+ */
 .nav {
   position: sticky;
   top: 0;
-  z-index: 40;
-  height: var(--nav-h);
-  background: var(--chrome-bg);
-  -webkit-backdrop-filter: saturate(1.2) blur(20px);
-  backdrop-filter: saturate(1.2) blur(20px);
+  z-index: 50;
+  height: var(--nav-bottom);
+  padding-top: env(safe-area-inset-top, 0px);
+  background: var(--nav-bg);
   border-bottom: 1px solid var(--border);
 }
 .nav-inner {
@@ -41,6 +52,8 @@
   list-style: none;
 }
 .nav-link {
+  /* the padding, by name, so the unread count can find the glyph's corner */
+  --nav-link-pad: 14px;
   position: relative;
   display: inline-flex;
   align-items: center;
@@ -50,6 +63,7 @@
   font-size: var(--text-secondary);
   font-weight: 600;
   color: var(--ink-3);
+  white-space: nowrap;
   transition:
     color 0.15s ease,
     background 0.15s ease;
@@ -58,11 +72,15 @@
   color: var(--ink);
   background: var(--surface-2);
 }
+.nav-link:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 /*
- * The page you are on: brighter, on a pill, with a gold glyph — but the same
- * weight as the others. Bold is wider, so a bold active link pushed every link
- * after it along by a few pixels, and the bar shifted under the cursor each
- * time you moved to another page.
+ * The page you are on: brighter, on a pill, with its glyph filled in — but the
+ * same weight as the others. Bold is wider, so a bold active link pushed every
+ * link after it along by a few pixels, and the bar shifted under the cursor
+ * each time you moved to another page.
  */
 .nav-link.active {
   color: var(--ink);
@@ -72,11 +90,10 @@
   flex: 1;
 }
 /*
- * What you have, on the right.
+ * What you have, at the end.
  *
- * Given room to breathe: the purse, the shop and your face were shoulder to
- * shoulder at the same 10px that separates the nav links, which read as one
- * crowded clump rather than as three separate things.
+ * Given room to breathe: the purse and the bell shoulder to shoulder at the
+ * gap between the links read as one crowded clump rather than as two things.
  */
 .nav-actions {
   display: flex;
@@ -92,29 +109,38 @@
  * A glyph before each label; the nav reads faster as icon + word than as words.
  * The place you are on is full strength on a soft pill with its glyph filled
  * in; the rest step back to the secondary colour, glyph and word together.
+ *
+ * The glyph sits in a box of its own fixed size, so swapping the outline for
+ * your face (when your profile arrives) or a count landing on Messages moves
+ * nothing beside it.
  */
 .nav-link-icon {
   position: relative;
-  display: inline-flex;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 28px;
+  height: 28px;
   /* the side the word is on, in either direction */
-  margin-inline-end: 8px;
+  margin-inline-end: 6px;
   color: inherit;
 }
 
 /* what you have to spend, stacked: read as a pair, in the width of one line */
 /*
- * A rule to the left, not a box around it.
+ * A rule before it, not a box around it.
  *
  * A bordered box reads as a control you press; these are two numbers you glance
- * at. A single vertical rule separates them from the links without drawing a
- * frame round them, which is how a game client shows a balance.
+ * at. A single rule separates them from what comes before without drawing a
+ * frame round them.
  */
 .purse {
   display: flex;
   flex-direction: column;
   gap: 1px;
-  padding: 2px 4px 2px 14px;
-  border-left: 1px solid var(--border);
+  padding-block: 2px;
+  padding-inline: 14px 4px;
+  border-inline-start: 1px solid var(--border);
   color: var(--ink-2);
   font-size: 0.76rem;
   font-variant-numeric: tabular-nums;
@@ -138,7 +164,7 @@
   color: var(--ink-2);
   font-weight: 600;
 }
-/* actions that live only inside the mobile dropdown */
+/* the rest of the menu, which only a phone has */
 .nav-mobile-actions {
   display: none;
 }
@@ -147,23 +173,58 @@ button.nav-link {
   border: 0;
   font: inherit;
   width: 100%;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
+/*
+ * The unread count rides on the glyph's corner rather than after the word, so
+ * a count arriving a moment after the page does not push the rest of the bar
+ * along. (In the phone's menu it sits at the end of the row instead.)
+ */
+@media (min-width: 769px) {
+  .nav-link .nav-badge {
+    position: absolute;
+    top: 0;
+    inset-inline-start: calc(var(--nav-link-pad) + 15px);
+    margin: 0;
+    box-shadow: 0 0 0 2px var(--nav-bg);
+  }
+}
+/* the phone's menu button; a wider bar shows the places themselves */
 .nav-toggle {
+  position: relative;
   display: none;
   width: 44px;
   height: 44px;
+  flex: none;
   border: 0;
   border-radius: var(--r-pill);
   background: transparent;
   color: var(--ink);
-  align-items: center;
-  justify-content: center;
+  place-items: center;
   cursor: pointer;
 }
-.nav-toggle:hover {
+.nav-toggle:hover,
+.is-menu-open .nav-toggle {
   background: var(--surface-2);
+}
+.nav-toggle:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+/* something waiting inside the folded menu: an unread message, a gift */
+.nav-toggle-dot {
+  position: absolute;
+  top: 9px;
+  inset-inline-end: 9px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--nav-bg);
+}
+.nav-scrim {
+  display: none;
 }
 
 /* ---- brand mark -------------------------------------------------------- */
@@ -230,13 +291,13 @@ button.nav-link {
 /*
  * The squeeze between the phone and the full bar.
  *
- * Between 769px and 1023px the five places, the purse, the bell and the
- * social toggle all have to share one line. The words go and the glyphs stay:
- * every place is still there and still one click away, which is the point of
- * having given each one an icon — and the word is still its accessible name,
- * because it is hidden by clipping, never by display:none.
+ * Between 769px and 1099px the places, the search field, the purse, the bell
+ * and the social toggle all have to share one line. The words go and the
+ * glyphs stay: every place is still there and still one click away, which is
+ * the point of having given each one an icon — and the word is still its
+ * accessible name, because it is hidden by clipping, never by display:none.
  */
-@media (min-width: 769px) and (max-width: 1023px) {
+@media (min-width: 769px) and (max-width: 1099px) {
   .nav-link-label {
     position: absolute;
     width: 1px;
@@ -249,7 +310,8 @@ button.nav-link {
     border: 0;
   }
   .nav-link {
-    padding: 0 12px;
+    --nav-link-pad: 8px;
+    padding: 0 8px;
   }
   .nav-link-icon {
     margin-inline-end: 0;
@@ -257,36 +319,91 @@ button.nav-link {
   .nav-inner {
     gap: 16px;
   }
+  /* the hidden word comes back as a tip under the glyph, for a pointer resting on it or a keyboard on it */
+  .nav-link:hover .nav-link-label,
+  .nav-link:focus-visible .nav-link-label {
+    top: calc(100% + 8px);
+    inset-inline-start: 50%;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 4px 10px;
+    clip: auto;
+    overflow: visible;
+    transform: translateX(-50%);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--panel-bg);
+    box-shadow: var(--shadow-sm);
+    color: var(--ink);
+    font-size: var(--text-caption);
+    pointer-events: none;
+    z-index: 4;
+  }
+  [dir='rtl'] .nav-link:hover .nav-link-label,
+  [dir='rtl'] .nav-link:focus-visible .nav-link-label {
+    transform: translateX(50%);
+  }
+}
+
+/*
+ * Words back, and the social column not yet beside the page: its toggle is
+ * still in the bar, so the gaps give a little for the longest languages'
+ * labels (French) to fit.
+ */
+@media (min-width: 1100px) and (max-width: 1179px) {
+  .nav-inner {
+    gap: 20px;
+  }
+  .nav-actions {
+    gap: 12px;
+  }
 }
 
 /*
  * A phone.
  *
- * Where there is a tab bar (the app, and every page for somebody signed in)
- * the places live there, and the top bar keeps only the brand and the bell —
- * and for a visitor, the way to join. Where there is not (the front page and
- * the pages about Hevalo, for a visitor), the places fold into a menu.
+ * The same bar, compact: the brand, then search, the bell and the menu button
+ * at the end. The places fold into the menu, which drops from the bar as a
+ * list across the screen — each a full-width row of glyph and word, 48px
+ * tall, the page you are on lit — over a scrim that a press closes.
  */
 @media (max-width: 768px) {
-  .nav.has-tabbar .nav-primary {
-    display: none;
+  .nav-inner {
+    gap: 0;
+  }
+  /* search sits with the bell at the end, not beside the brand */
+  .nav-spacer {
+    order: 2;
+  }
+  .nav-search {
+    order: 3;
+  }
+  .nav-actions {
+    order: 4;
+    gap: 4px;
+    margin-inline-start: 4px;
   }
   .nav-toggle {
-    display: inline-flex;
+    display: inline-grid;
   }
   .nav-links {
     position: fixed;
-    inset: var(--nav-h) 0 auto 0;
+    top: var(--nav-bottom);
+    left: 0;
+    right: 0;
+    z-index: 2;
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
-    padding: 12px 16px 18px;
+    max-height: calc(100dvh - var(--nav-bottom));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 8px max(12px, env(safe-area-inset-right, 0px)) 16px max(12px, env(safe-area-inset-left, 0px));
     background: var(--panel-bg);
-    -webkit-backdrop-filter: blur(20px);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border-strong);
+    border-bottom: 1px solid var(--border);
     box-shadow: var(--shadow);
-    transform: translateY(-8px);
+    transform: translateY(-6px);
     opacity: 0;
     visibility: hidden;
     transition:
@@ -302,9 +419,21 @@ button.nav-link {
       opacity var(--dur-fast) ease,
       transform var(--dur-fast) ease;
   }
+  /* each row the full width of the menu, so the whole row is the target and the lit row reads as one */
   .nav-link {
+    --nav-link-pad: 12px;
+    display: flex;
+    width: 100%;
     height: 48px;
-    font-size: 1rem;
+    padding: 0 12px;
+    border-radius: var(--r-md);
+    font-size: var(--text-body);
+  }
+  .nav-link-icon {
+    margin-inline-end: 12px;
+  }
+  .nav-link .nav-badge {
+    margin-inline-start: auto;
   }
   .nav-desktop-only {
     display: none;
@@ -315,20 +444,51 @@ button.nav-link {
     gap: 2px;
     margin-top: 6px;
     padding-top: 8px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--separator);
   }
-  .nav-inner {
-    gap: 12px;
+  .nav-scrim {
+    display: block;
+    position: fixed;
+    inset: var(--nav-bottom) 0 0 0;
+    z-index: 1;
+    background: var(--scrim);
+    animation: nav-scrim-in var(--dur-fast) ease-out;
   }
-  .nav-actions {
-    gap: 8px;
+}
+/* a narrow phone keeps the deer and lets the word go, before anything else has to */
+@media (max-width: 359px) {
+  .brand span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
   }
+}
+@keyframes nav-scrim-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* your Zêr and gems at the end of the menu's Shop row */
+.nav-menu-purse {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-inline-start: auto;
+  font-size: var(--text-caption);
+  font-variant-numeric: tabular-nums;
 }
 
 /* in the menu, Get started is the button it is on the bar, not one more link */
 .nav-mobile-actions .nav-cta {
   justify-content: center;
   margin-top: 8px;
+  border-radius: var(--r-pill);
   background: var(--primary);
   color: var(--primary-ink);
   font-weight: 600;

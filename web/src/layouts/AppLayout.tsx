@@ -3,7 +3,6 @@ import { Outlet } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
-import { TabBar } from '../components/TabBar';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 import { PlayProvider } from '../play/PlayProvider';
@@ -15,9 +14,11 @@ import { FeedbackHost } from '../feedback/FeedbackHost';
 /**
  * The app shell. Content pages set their own container + header.
  *
- * The five places are the top bar's links on a wide screen and the tab bar's
- * on a phone — one list (`useNavLinks`, shared with the landing page), so a
- * place is in the same position on every screen.
+ * One bar at every width (`TopNav`): the places, the search field and the
+ * bell on a wide screen, folded into a menu on a phone — one list
+ * (`useNavLinks`, shared with the landing page), so a place is in the same
+ * position on every screen. The bar stays at the top while the page scrolls,
+ * and on a wide screen the social column stays at the side.
  *
  * A guest is shown only what a guest can use. Offering links that bounce you to
  * a sign-in wall is worse than not offering them — it teaches you the app is
@@ -34,7 +35,8 @@ export function AppLayout(): React.JSX.Element {
       <a href="#main" className="skip-link">
         {t('nav.skipToContent')}
       </a>
-      <TopNav links={links} withTabBar />
+      {/* a visitor keeps "Get started" in a phone's bar here, where most pages have no other way in */}
+      <TopNav links={links} joinOnPhone />
       <main id="main" className="app-main">
         {/*
          * The page waits here, and nothing else does.
@@ -54,8 +56,6 @@ export function AppLayout(): React.JSX.Element {
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
-      {/* the five places along the bottom of a phone; nothing wider draws it */}
-      <TabBar links={links} />
       {/* "Rojda invited you to Wordle Battle" — Join or Not now, wherever you are */}
       <InviteBanner />
       {/* web-race-rating: the one-time rating box after a first finished game */}

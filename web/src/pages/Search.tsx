@@ -31,11 +31,13 @@ const asScope = (v: string | null): Scope => (v === 'words' ? 'words' : 'people'
 const PEOPLE_MAX = 30;
 
 /**
- * Search (/app/search): people and words, from one field.
+ * Search (/app/search): every result for people and words, from one field.
  *
+ * The everyday way to search is the field in the bar (search/NavSearch.tsx),
+ * which shows a few of each as you type; its "See all results" lands here.
  * The field is the page's first thing and stays pinned while results scroll
- * under it. What is typed and which kind is being searched live in the
- * address, so a search can be shared, reloaded and gone back to.
+ * under it. What is typed, which kind is being searched and the word open
+ * live in the address, so a search can be shared, reloaded and gone back to.
  *
  * With nothing typed it is not a blank page: the searches made on this visit,
  * people you may know, and the ways into the dictionary and the rankings.
@@ -51,36 +53,63 @@ export function Search(): React.JSX.Element {
   const scope = asScope(params.get('type'));
   const [query, setQuery] = useState(params.get('q') ?? '');
   const [recents, setRecents] = useState<string[]>(readRecentSearches);
-  const [entry, setEntry] = useState<string | null>(null);
+  // the word open, from the address, so a word from the bar's search opens here and Back closes it
+  const entry = params.get('entry');
   const debounced = useDebouncedValue(query.trim(), 300);
   const field = useRef<HTMLInputElement>(null);
   const signedIn = status === 'signedIn';
 
-  // the address follows what is typed, without a history entry per letter
+  /*
+   * The address and the field follow each other, each only when the other has
+   * actually moved.
+   *
+   * What is typed goes into the address once typing settles, without a history
+   * entry per letter. A search started somewhere else — the field in the bar,
+   * while this page is open — arrives as a new address, and the field takes it
+   * up, so the page shows what was asked rather than what it was showing.
+   */
+  const asked = params.get('q') ?? '';
+  const settled = useRef(debounced);
   useEffect(() => {
-    const next = new URLSearchParams();
+    if (debounced === settled.current) return;
+    settled.current = debounced;
+    if (debounced === asked) return;
+    const next = new URLSearchParams(params);
     if (debounced) next.set('q', debounced);
-    if (scope !== 'people') next.set('type', scope);
-    if (next.toString() !== params.toString()) setParams(next, { replace: true });
-  }, [debounced, scope, params, setParams]);
+    else next.delete('q');
+    setParams(next, { replace: true });
+  }, [debounced, asked, params, setParams]);
+  const seen = useRef(asked);
+  useEffect(() => {
+    if (asked === seen.current) return;
+    seen.current = asked;
+    if (asked !== debounced) setQuery(asked);
+  }, [asked, debounced]);
+
+  const setEntry = (id: string | null): void => {
+    const p = new URLSearchParams(params);
+    if (id) p.set('entry', id);
+    else p.delete('entry');
+    // opening a word is a step Back can undo; closing one goes back to the list without adding one
+    setParams(p, { replace: !id });
+  };
 
   const choose = (next: Scope): void => {
     const p = new URLSearchParams(params);
     if (next === 'people') p.delete('type');
     else p.set('type', next);
+    p.delete('entry');
     setParams(p, { replace: true });
-    setEntry(null);
   };
 
   const remember = (term: string): void => setRecents(addRecentSearch(term));
 
   const clear = (): void => {
     setQuery('');
-    setEntry(null);
     field.current?.focus();
   };
 
-  if (entry) {
+  if (entry && signedIn) {
     return (
       <div className="container container-narrow search-page">
         <button type="button" className="btn btn-ghost btn-sm search-back" onClick={() => setEntry(null)}>

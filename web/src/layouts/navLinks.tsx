@@ -3,7 +3,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useMessages } from '../chat/MessagesProvider';
 import { Avatar } from '../components/Avatar';
 import { LevelRing } from '../profile/LevelRing';
-import { BookIcon, HomeIcon, SearchIcon, SendIcon, UserIcon } from '../components/icons';
+import { BookIcon, HomeIcon, SendIcon, UserIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import { useRail } from '../social/RailProvider';
 import { learnPath } from '../learn/learnView';
@@ -45,42 +45,44 @@ export function publishedDictionary(locale: AppLocale): string {
 const under = (pathname: string, base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
 
 /**
- * Which of the five places a page belongs to, so the place stays lit on the
- * pages inside it.
+ * Which place a page belongs to, so the place stays lit on the pages inside
+ * it.
  *
  * Written out rather than derived from the links: the Games view is part of
  * Learn although its address is /app/games, Rankings is reached from it, and
  * Settings and the Shop live behind your profile. None of that is visible in
  * a URL prefix.
+ *
+ * Search has no entry: it is the field in the bar, which is there on every
+ * page, so there is nothing to light.
  */
-export const OWNS: Record<'home' | 'learn' | 'messages' | 'search' | 'profile', (pathname: string) => boolean> = {
+export const OWNS: Record<'home' | 'learn' | 'messages' | 'profile', (pathname: string) => boolean> = {
   home: (p) => p === '/app' || p === '/app/' || under(p, '/app/library') || under(p, '/app/dimen') || under(p, '/app/civak'),
   learn: (p) =>
     ['/app/learn', '/app/games', '/app/alphabet', '/app/dictionary', '/app/rankings', '/app/leagues', '/app/season', '/app/ranks'].some(
       (base) => under(p, base),
     ),
   messages: (p) => under(p, '/app/messages') || under(p, '/app/friends'),
-  search: (p) => under(p, '/app/search'),
   profile: (p) =>
     ['/app/profile', '/app/settings', '/app/shop', '/app/saved', '/app/badges'].some((base) => under(p, base)),
 };
 
 /**
- * The five places, in the order the phone app has them: Home, Learn,
- * Messages, Search, Profile.
+ * The places, in a fixed order: Home, Learn, Messages, Profile. The fifth,
+ * Search, is the field in the bar beside them (search/NavSearch.tsx), so it is
+ * not a link here.
  *
- * One list for every bar — the top bar on a wide screen, the tab bar on a
- * phone, the front page's bar — so a place is in the same position wherever
- * you meet it, and nothing moves under the cursor between pages. Dictionary,
+ * One list for every bar — the app's and the front page's, and on a phone the
+ * menu the bar folds into — so a place is in the same position wherever you
+ * meet it, and nothing moves under the cursor between pages. Dictionary,
  * Rankings, the Shop and Settings are not lost by leaving the bar: they are
  * inside the place they belong to (the tools in Learn, Rankings at the top of
  * its Games view, the rest in your profile's menu).
  *
- * A guest gets the three places a guest can use. Messages are people you know
+ * A guest gets the two places a guest can use. Messages are people you know
  * and a profile is you; without an account there is neither, and a link that
  * only leads to "make an account" teaches a visitor the app is closed when
- * almost all of it is open. The tab bar puts a way to sign in where Profile
- * will be, which is the honest version of the same slot.
+ * almost all of it is open. The bar offers Log in and Get started instead.
  *
  * Built inside a hook rather than at module scope because every label is a
  * word: a list made once at import time keeps whatever language the app
@@ -98,8 +100,7 @@ export function useNavLinks(): NavItem[] {
 
   const home: NavItem = { key: 'home', label: t('nav.home'), to: '/app', icon: <HomeIcon size={22} />, activeIcon: <HomeIcon size={22} weight="fill" />, owns: OWNS.home };
   const learn: NavItem = { key: 'learn', label: t('nav.learn'), to: learnPath(), icon: <BookIcon size={22} />, activeIcon: <BookIcon size={22} weight="fill" />, owns: OWNS.learn };
-  const search: NavItem = { key: 'search', label: t('nav.search'), to: '/app/search', icon: <SearchIcon size={22} />, activeIcon: <SearchIcon size={22} weight="bold" />, owns: OWNS.search };
-  if (!signedIn) return [home, learn, search];
+  if (!signedIn) return [home, learn];
 
   // something waiting that is yours to open: a gift, or somebody asking to be friends
   const waiting = (data.unread.gifts ?? 0) > 0 || data.unread.requests > 0;
@@ -126,7 +127,6 @@ export function useNavLinks(): NavItem[] {
       owns: OWNS.messages,
       badge: unreadTotal,
     },
-    search,
     {
       key: 'profile',
       label: t('nav.profile'),

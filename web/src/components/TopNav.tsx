@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useRail } from '../social/RailProvider';
 import { Brand } from './Brand';
 import { LinkButton } from './Button';
-import { CoinIcon, GemIcon, MenuIcon, CloseIcon } from './icons';
+import { CoinIcon, GemIcon, GearIcon, MenuIcon, CloseIcon, ShopIcon, UserIcon, UsersIcon } from './icons';
 import { RailToggle } from '../social/RailToggle';
 import { NotificationsBell } from '../notifications/NotificationsBell';
+import { NavSearch } from '../search/NavSearch';
 import { useT } from '../i18n/I18nProvider';
-import { countLabel } from './TabBar';
 
 export interface NavItem {
-  /** which place this is — the tab bar and tests find a place by it */
+  /** which place this is — tests and the menu find a place by it */
   key?: string;
   label: string;
   to: string;
@@ -39,6 +39,11 @@ export interface NavItem {
   external?: boolean;
 }
 
+/** A count as a badge shows it: the number up to nine, then "9+". */
+export function countLabel(n: number): string {
+  return n > 9 ? '9+' : String(n);
+}
+
 /** Where the shop lives: the purse opens it. */
 const SHOP = '/app/shop';
 
@@ -55,58 +60,84 @@ function matchesExactly(to: string, all: readonly NavItem[]): boolean {
 }
 
 /**
- * The top bar.
+ * The top bar: the same bar on every screen, made smaller rather than made
+ * into something else.
  *
- * Three groups, left to right: the brand, the five places, and what is yours —
- * the purse, the bell, and on a mid-width screen the way into the social
- * column. On a phone the places move to the tab bar along the bottom
- * (components/TabBar.tsx), and this keeps only the brand and the bell: the
- * top of a phone screen is the hardest place to reach with a thumb, so it
- * holds what is glanced at rather than what is pressed.
+ * On a wide screen it holds the brand, the places, the search field and what
+ * is yours — the purse and the bell (and, until the social column has room to
+ * stand beside the page, the way into it). It stays at the top of the window
+ * while the page scrolls under it, on a solid ground with a hairline, so no
+ * line of the page ever shows through a label.
  *
- * The menu button is left only where there is no tab bar — a visitor without
- * an account on the front page and the pages about Hevalo — because there the
- * places have nowhere else to be.
+ * On a phone the bar keeps the brand, a search button and the bell, and the
+ * places fold into a menu under a button at its end: one press opens it, a
+ * second goes anywhere. The menu is a list down the screen with each place's
+ * word beside its glyph, which on a small screen is easier to hit and to read
+ * than five icons in a row, and it has room for what the wide bar shows
+ * elsewhere — your Zêr and gems with the shop, your friends, Settings, or for
+ * a visitor, the way in. Something waiting in it (an unread message, a gift)
+ * shows on the button, so it is not hidden by being folded away.
+ *
+ * In Arabic and Soranî the bar runs right to left with the page: the brand at
+ * the right, the bell and the menu at the left, as a reader of those scripts
+ * expects to find them.
  *
  * Signing out is not here. It belongs in Settings, with the other things you
  * do to your account rather than in the app.
+ *
+ * `joinOnPhone` keeps "Get started" on a phone's bar for a visitor. Inside the
+ * app it is the only invitation on most pages; the front page has its own, a
+ * screen tall, and a second one in the bar would only compete with it.
  */
-export function TopNav({ links, withTabBar = false }: { links: NavItem[]; withTabBar?: boolean }): React.JSX.Element {
+export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinOnPhone?: boolean }): React.JSX.Element {
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
   const t = useT();
   const { pathname } = useLocation();
+  const menuId = useId();
+  const toggleRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
   const signedIn = status === 'signedIn';
 
   const close = (): void => setOpen(false);
 
-  // Escape closes the open menu, as it closes every other thing that opens
+  // moving to another page puts the menu away
+  useEffect(() => setOpen(false), [pathname]);
+
   useEffect(() => {
     if (!open) return;
+    // the first place takes the focus, so a keyboard is already inside what it opened
+    listRef.current?.querySelector<HTMLElement>('a[href]')?.focus();
+    // Escape closes the open menu, as it closes every other thing that opens
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key !== 'Escape') return;
+      setOpen(false);
+      toggleRef.current?.focus();
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  // what is waiting behind the folded menu, so the button can say so
+  const unread = links.reduce((n, l) => n + (l.badge ?? 0), 0);
+  const waiting = links.some((l) => l.dot);
+  const menuName = open
+    ? t('nav.close')
+    : unread > 0
+      ? t('nav.tabUnread', { place: t('nav.menu'), count: unread })
+      : waiting
+        ? t('nav.tabWaiting', { place: t('nav.menu') })
+        : t('nav.menu');
+
   return (
-    /*
-     * Left to right in every language. In Arabic or Soranî the page mirrors —
-     * reading order is right to left — but the bar does not: brand on the
-     * left, places in the middle, what you have on the right, the same in all
-     * nine languages, as on any product's bar. Only its words change, and each
-     * label is `dir="auto"` so an Arabic word still reads right to left inside
-     * its own button.
-     */
-    <header className={`nav${withTabBar ? ' has-tabbar' : ''}`} dir="ltr">
+    <header className={`nav${open ? ' is-menu-open' : ''}`}>
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
         <Brand to={signedIn ? '/app' : '/'} />
 
         <nav aria-label={t('nav.primary')} className="nav-primary">
-          <ul className={`nav-links${open ? ' open' : ''}`}>
+          <ul id={menuId} ref={listRef} className={`nav-links${open ? ' open' : ''}`}>
             {links.map((l) => {
               const owned = l.owns?.(pathname);
               const inner = (active: boolean) => (
@@ -159,15 +190,46 @@ export function TopNav({ links, withTabBar = false }: { links: NavItem[]; withTa
               );
             })}
 
-            {/* a visitor's way in, inside the menu that only exists without a tab bar */}
-            {!signedIn && (
-              <li className="nav-mobile-actions">
-                <NavLink to="/login" className="nav-link" onClick={close}>{t('nav.login')}</NavLink>
-                <NavLink to="/register" className="nav-link nav-cta" onClick={close}>{t('nav.register')}</NavLink>
-              </li>
-            )}
+            {/* the rest of the menu, which only a phone has: what the wide bar keeps elsewhere */}
+            <li className="nav-mobile-actions">
+              {signedIn ? (
+                <>
+                  <NavLink to="/app/friends" className="nav-link" onClick={close}>
+                    <span className="nav-link-icon" aria-hidden>
+                      <UsersIcon size={22} />
+                    </span>
+                    <span className="nav-link-label" dir="auto">{t('nav.friends')}</span>
+                  </NavLink>
+                  <NavLink to={SHOP} className="nav-link" onClick={close}>
+                    <span className="nav-link-icon" aria-hidden>
+                      <ShopIcon size={22} />
+                    </span>
+                    <span className="nav-link-label" dir="auto">{t('nav.shop')}</span>
+                    <PurseAmounts />
+                  </NavLink>
+                  <NavLink to="/app/settings" className="nav-link" onClick={close}>
+                    <span className="nav-link-icon" aria-hidden>
+                      <GearIcon size={22} />
+                    </span>
+                    <span className="nav-link-label" dir="auto">{t('nav.settings')}</span>
+                  </NavLink>
+                </>
+              ) : (
+                <>
+                  <NavLink to="/login" className="nav-link" onClick={close}>
+                    <span className="nav-link-icon" aria-hidden>
+                      <UserIcon size={22} />
+                    </span>
+                    <span className="nav-link-label" dir="auto">{t('nav.login')}</span>
+                  </NavLink>
+                  <NavLink to="/register" className="nav-link nav-cta" onClick={close}>{t('nav.register')}</NavLink>
+                </>
+              )}
+            </li>
           </ul>
         </nav>
+
+        <NavSearch />
 
         <span className="nav-spacer" />
 
@@ -184,25 +246,27 @@ export function TopNav({ links, withTabBar = false }: { links: NavItem[]; withTa
               <LinkButton to="/login" variant="ghost" size="sm" className="nav-desktop-only">
                 {t('nav.login')}
               </LinkButton>
-              {/* inside the app on a phone the tab bar has Log in; this is the other half */}
-              <LinkButton to="/register" variant="primary" size="sm" className={withTabBar ? 'nav-register' : 'nav-desktop-only'}>
+              <LinkButton to="/register" variant="primary" size="sm" className={joinOnPhone ? 'nav-register' : 'nav-desktop-only'}>
                 {t('nav.register')}
               </LinkButton>
             </>
           )}
-          {!signedIn && !withTabBar && (
-            <button
-              type="button"
-              className="nav-toggle"
-              aria-label={open ? t('nav.close') : t('nav.menu')}
-              aria-expanded={open}
-              onClick={() => setOpen((v) => !v)}
-            >
-              {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
-            </button>
-          )}
+          <button
+            ref={toggleRef}
+            type="button"
+            className="nav-toggle"
+            aria-label={menuName}
+            aria-expanded={open}
+            aria-controls={menuId}
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <CloseIcon size={22} /> : <MenuIcon size={22} />}
+            {!open && (unread > 0 || waiting) && <span className="nav-toggle-dot" aria-hidden="true" />}
+          </button>
         </div>
       </div>
+      {/* the page under an open menu steps back, and a press on it closes the menu */}
+      {open && <div className="nav-scrim" onClick={close} aria-hidden="true" />}
     </header>
   );
 }
@@ -216,7 +280,9 @@ export function TopNav({ links, withTabBar = false }: { links: NavItem[]; withTa
  *
  * The numbers ride on the rail's poll, so they are already fresh and cost no
  * request of their own. Nothing is shown until they arrive; a zero that later
- * turns into 13,880 is worse than a moment of nothing.
+ * turns into 13,880 is worse than a moment of nothing. The purse sits at the
+ * start of the group at the end of the bar, so arriving late moves nothing
+ * else: what is after it is anchored to the end.
  */
 function Purse(): React.JSX.Element | null {
   const t = useT();
@@ -237,5 +303,26 @@ function Purse(): React.JSX.Element | null {
         <span className="sr-only">gems</span>
       </span>
     </Link>
+  );
+}
+
+/** The purse on one line, at the end of the menu's Shop row on a phone. */
+function PurseAmounts(): React.JSX.Element | null {
+  const { data } = useRail();
+  const you = data.you;
+  if (!you) return null;
+  return (
+    <span className="nav-menu-purse">
+      <span className="purse-row">
+        <CoinIcon size={15} />
+        <span className="purse-amount">{you.balances.zer.toLocaleString()}</span>
+        <span className="sr-only">Zêr</span>
+      </span>
+      <span className="purse-row purse-gems">
+        <GemIcon size={15} />
+        <span className="purse-amount">{you.balances.gems.toLocaleString()}</span>
+        <span className="sr-only">gems</span>
+      </span>
+    </span>
   );
 }

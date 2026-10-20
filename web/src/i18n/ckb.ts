@@ -2699,7 +2699,6 @@ export const ckb: Catalogue = {
   // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
   'nav.search': 'گەڕان',
   'nav.profile': 'پرۆفایل',
-  'nav.tabs': 'بەشە سەرەکییەکان',
   'nav.tabUnread': '{place}، {count} نەخوێنراوە',
   'nav.tabWaiting': '{place}، شتێک چاوەڕێتە',
   'notifications.bellUnread': 'ئاگادارکردنەوەکان، {count} نوێ',
@@ -2737,6 +2736,10 @@ export const ckb: Catalogue = {
   'search.noWordsBody': 'ڕێنووسەکە بپشکنە، یان وشەکە بە ئینگلیزی تاقی بکەرەوە.',
   'search.guestWords': 'هەموو وشەکانی فەرهەنگەکە بەخۆڕایین، پێویستت بە هەژمار نییە.',
   'search.openDictionary': 'فەرهەنگەکە بکەرەوە',
+  'search.seeAll': 'هەموو ئەنجامەکان بۆ «{query}» ببینە',
+  'search.hint': 'هاوڕێکانت بە ناوی بەکارهێنەرەکەیان بدۆزەرەوە، یان بەدوای وشەیەکدا بگەڕێ بە کوردی یان ئینگلیزی.',
+  'search.guestPeople': 'بۆ دۆزینەوەی کەسان بچۆ ژوورەوە',
+  'search.close': 'گەڕانەکە دابخە',
   'settings.appearance.title': 'ڕووکار',
   'settings.appearance.help': 'Hevalo تاریکە مەگەر شتێکی تر هەڵبژێریت. هەڵبژاردنەکەت لەسەر ئەم ئامێرە دەمێنێتەوە.',
   'settings.appearance.dark': 'تاریک',
