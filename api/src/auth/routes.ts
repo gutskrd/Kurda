@@ -197,6 +197,25 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
+  /**
+   * Sign out: ends the session the refresh token belongs to, on the server.
+   * The apps used to forget their tokens and nothing else, which left the
+   * session alive for its thirty days to whoever else held a copy. The refresh
+   * token is the credential, so no access token is needed (it may already have
+   * expired), and the answer is the same whatever was sent.
+   */
+  app.post(
+    '/auth/logout',
+    {
+      schema: { body: refreshBodySchema },
+      config: { rateLimit: { max: 20, windowMs: 60_000, per: 'ip' as const } },
+    },
+    async (req) => {
+      await service.logout((req.body as z.infer<typeof refreshBodySchema>).refreshToken);
+      return { ok: true };
+    },
+  );
+
   app.post(
     '/auth/verify-email',
     {
@@ -290,8 +309,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       config: {
         // no input fields — accept an empty/absent body (KUR-005 opt-out)
         skipValidation: true,
-        // a new code must not become a mail-spam vector
-        rateLimit: { max: 4, windowMs: 3_600_000, per: 'ip' as const },
+        // a new code must not become a mail-spam vector, and each new code
+        // comes with a fresh set of guesses — so the limit is the account's,
+        // not the address it asks from: from many addresses it was unlimited
+        rateLimit: { max: 4, windowMs: 3_600_000, per: 'user-or-ip' as const },
       },
     },
     async (req) => {

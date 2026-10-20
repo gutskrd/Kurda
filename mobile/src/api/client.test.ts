@@ -286,6 +286,37 @@ describe('ApiClient', () => {
     await client.get('/me');
     expect(onSuspended).not.toHaveBeenCalled();
   });
+
+  it('ends the session on the server with the stored refresh token', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    const { client, storage, ready } = makeClient(fetchFn);
+    await ready;
+
+    await client.endSession();
+    // sign-out clears the phone's copy straight after; the request already has the token
+    await storage.clear();
+
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchFn.mock.calls[0]!;
+    expect(url).toBe('https://api.test/auth/logout');
+    expect(JSON.parse(init.body as string)).toEqual({ refreshToken: 'ref-1' });
+    expect(init.headers.authorization).toBeUndefined();
+  });
+
+  it('signs out on the phone even when the server cannot be reached', async () => {
+    const fetchFn = vi.fn().mockRejectedValue(new Error('offline'));
+    const { client, ready } = makeClient(fetchFn);
+    await ready;
+    await expect(client.endSession()).resolves.toBeUndefined();
+  });
+
+  it('has nothing to end when signed out', async () => {
+    const fetchFn = vi.fn();
+    const { client, ready } = makeClient(fetchFn, false);
+    await ready;
+    await client.endSession();
+    expect(fetchFn).not.toHaveBeenCalled();
+  });
 });
 
 describe('apiBaseUrl', () => {

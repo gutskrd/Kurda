@@ -193,6 +193,22 @@ export class ApiClient {
     return this.loggedOut();
   }
 
+  /**
+   * Sign out on the server: the stored refresh token's session is revoked, so
+   * a copy of it left anywhere else stops working. Resolves once the token
+   * has been read, without waiting on the network, and never throws —
+   * signing out on the phone must not depend on reaching the API.
+   */
+  async endSession(): Promise<void> {
+    const tokens = await this.opts.storage.get();
+    if (!tokens) return;
+    void this.timedFetch(`${this.opts.baseUrl}/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+    }).catch(() => undefined);
+  }
+
   /** Single-flight: concurrent 401s wait on one refresh call. */
   private refreshOnce(): Promise<boolean> {
     this.refreshInFlight ??= this.doRefresh().finally(() => {

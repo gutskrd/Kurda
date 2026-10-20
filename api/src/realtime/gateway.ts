@@ -14,9 +14,25 @@ export const RESUME_TTL_SECONDS = 300;
  * runaway client cannot pile up sockets.
  */
 export const MAX_CONNECTIONS_PER_USER = 5;
+/**
+ * The largest message a client may send, in bytes. What clients send is a
+ * join, a leave or a ping, a few dozen bytes; the WebSocket library's own
+ * default is 100 MiB, which every connection could otherwise make the server
+ * read and parse. A larger frame closes the connection (1009).
+ */
+export const MAX_CLIENT_MESSAGE_BYTES = 16 * 1024;
+/**
+ * Messages one connection may send: a burst of this many (rejoining every room
+ * after a reconnect is the largest real one), refilled at the rate below.
+ * Past it the connection is closed — each message can cost a Redis round trip,
+ * so an unbounded stream from one socket is load on everyone's.
+ */
+export const MESSAGE_BURST = 100;
+export const MESSAGES_PER_SECOND = 10;
 /** Close codes (4xxx = application-defined). */
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
+export const CLOSE_TOO_MANY_MESSAGES = 4008;
 /** Bus-only instruction for `revoke`: handled by each node, never delivered. */
 const REVOKE_EVENT = 'rt_revoke';
 
@@ -35,6 +51,9 @@ interface Connection {
   pingSentAt?: number;
   /** last measured round-trip time in ms */
   rttMs?: number;
+  /** messages this connection may still send now (see MESSAGE_BURST) */
+  allowance: number;
+  allowanceAt: number;
 }
 
 const clientMessageSchema = z.discriminatedUnion('type', [
@@ -198,6 +217,8 @@ export class RealtimeGateway {
       rooms: new Set(),
       resumeToken: randomBytes(24).toString('base64url'),
       lastPongAt: Date.now(),
+      allowance: MESSAGE_BURST,
+      allowanceAt: Date.now(),
     };
     // dropping the oldest may have emptied and removed the set
     this.connections.set(userId, conns);
@@ -239,7 +260,22 @@ export class RealtimeGateway {
     });
   }
 
+  /** Spend one message of the connection's allowance; false when there is none left. */
+  private takeMessage(conn: Connection, now = Date.now()): boolean {
+    const refill = ((now - conn.allowanceAt) / 1000) * MESSAGES_PER_SECOND;
+    conn.allowance = Math.min(MESSAGE_BURST, conn.allowance + refill);
+    conn.allowanceAt = now;
+    if (conn.allowance < 1) return false;
+    conn.allowance -= 1;
+    return true;
+  }
+
   private async onMessage(conn: Connection, raw: string): Promise<void> {
+    if (!this.takeMessage(conn)) {
+      conn.socket.close(CLOSE_TOO_MANY_MESSAGES, 'too many messages');
+      this.dropConnection(conn);
+      return;
+    }
     let json: unknown;
     try {
       json = JSON.parse(raw);

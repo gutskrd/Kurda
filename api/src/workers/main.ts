@@ -4,6 +4,7 @@
  */
 import pino from 'pino';
 import { loadConfig } from '../config/env.js';
+import { LOG_REDACT } from '../observability/redact.js';
 import { CLEANUP_INTERVAL_MS, makeCleanupOrphansJob } from '../jobs/cleanup-orphans.js';
 import { ANONYMIZE_INTERVAL_MS, makeAnonymizeJob } from '../jobs/gdpr-jobs.js';
 import { GdprService } from '../gdpr/service.js';
@@ -27,7 +28,7 @@ async function main(): Promise<void> {
     process.exit(1);
   }
 
-  const log = pino({ level: config.LOG_LEVEL, name: 'kurda-worker' });
+  const log = pino({ level: config.LOG_LEVEL, name: 'kurda-worker', redact: LOG_REDACT });
   const worker = createWorker(config, log);
   log.info('worker started');
 

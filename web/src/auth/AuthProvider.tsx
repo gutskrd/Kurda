@@ -136,6 +136,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       await client.post('/auth/request-password-reset', { email });
     },
     logout: async () => {
+      // end the session on the server too, not only in this browser. Not
+      // awaited: the token is read before this returns, and signing out must
+      // not wait on a slow network
+      void client.endSession();
       storage.clear();
       setUser(null);
       setStatus('signedOut');

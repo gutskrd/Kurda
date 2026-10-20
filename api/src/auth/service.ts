@@ -285,6 +285,13 @@ export class AuthService {
     if (!userId) {
       throw new AppError('INVALID_TOKEN', 400, 'reset link is invalid or expired');
     }
+    // every other reset link sent to this account dies with this one: a second
+    // link left in the mailbox would otherwise reset the new password again
+    await this.pool.query(
+      `UPDATE email_tokens SET used_at = now()
+        WHERE user_id = $1 AND purpose = 'password_reset' AND used_at IS NULL`,
+      [userId],
+    );
     const passwordHash = await hashPassword(newPassword);
     // token_version bump invalidates every outstanding access token;
     // revoking refresh tokens kills all sessions (KUR-016 semantics)
@@ -454,6 +461,21 @@ export class AuthService {
       deviceName: input.deviceName,
     });
     return { user: toPublicUser(user), tokens };
+  }
+
+  /**
+   * Signs out one session: the family of the presented refresh token is
+   * revoked, so neither it nor the access tokens issued with it work again
+   * (plugins/auth.ts). Says nothing about whether the token was known — there
+   * is nothing to learn from signing out.
+   */
+  async logout(rawToken: string): Promise<void> {
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked_at = now()
+        WHERE family_id = (SELECT family_id FROM refresh_tokens WHERE token_hash = $1)
+          AND revoked_at IS NULL`,
+      [hashRefreshToken(rawToken)],
+    );
   }
 
   /**

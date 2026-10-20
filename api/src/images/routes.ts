@@ -14,6 +14,7 @@ import type { TrustService } from '../trust/service.js';
 import { PostGate } from '../trust/post-gate.js';
 import { POST_PICTURE_KIND, checkPostPictures, type PictureClaimFailure } from '../media/postMedia.js';
 import { ImagePostService, type AuthorRole } from './service.js';
+import { pageQuery, queryUuid, queryWord } from '../http/query.js';
 
 const IMAGE_POST_KIND = POST_PICTURE_KIND;
 
@@ -158,15 +159,22 @@ export function registerImagePostRoutes(
     },
   );
 
-  app.get('/images', { config: { skipValidation: true } }, async (req) => {
-    const q = req.query as Record<string, string | undefined>;
+  const imageListQuery = z.object({
+    category: queryWord,
+    language: queryWord,
+    authorId: queryUuid,
+    sort: queryWord,
+    ...pageQuery,
+  });
+  app.get('/images', { schema: { querystring: imageListQuery } }, async (req) => {
+    const q = req.query as z.infer<typeof imageListQuery>;
     const posts = await images.list({
       category: q.category === 'image' ? 'image' : q.category === 'meme' ? 'meme' : undefined,
       language: q.language,
       authorId: q.authorId,
       sort: q.sort === 'popular' ? 'popular' : 'newest',
-      limit: q.limit ? Number(q.limit) : undefined,
-      offset: q.offset ? Number(q.offset) : undefined,
+      limit: q.limit,
+      offset: q.offset,
       viewerId: req.user?.id ?? null,
     });
     // a wall of pictures with no names is not a community; the byline comes

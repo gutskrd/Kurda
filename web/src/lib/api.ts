@@ -203,6 +203,25 @@ export class ApiClient {
     return this.loggedOut();
   }
 
+  /**
+   * Sign out on the server: the stored refresh token's session is revoked, so
+   * a copy of it left anywhere else stops working. Best-effort and never
+   * throws — signing out locally must not depend on the network.
+   */
+  async endSession(): Promise<void> {
+    const tokens = this.storage.get();
+    if (!tokens) return;
+    try {
+      await this.timedFetch(`${this.baseUrl}/auth/logout`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+      });
+    } catch {
+      // offline: the session still ends locally
+    }
+  }
+
   private refreshOnce(): Promise<boolean> {
     this.refreshInFlight ??= this.doRefresh().finally(() => {
       this.refreshInFlight = null;

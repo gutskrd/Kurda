@@ -428,6 +428,30 @@ describe('a dictionary address with no page behind it', () => {
     expect(await res.text()).toContain('nehat dîtin');
   });
 
+  it('keeps the dictionary’s security headers on its 404', async () => {
+    // what the asset binding answers for a /ferheng/ address carries that path's `_headers` rules
+    const served = new Response(shell, {
+      status: 200,
+      headers: {
+        'content-type': 'text/html',
+        'content-security-policy': "default-src 'none'; frame-ancestors 'none'",
+        'x-frame-options': 'DENY',
+        'x-content-type-options': 'nosniff',
+        'cache-control': 'public, max-age=3600',
+        etag: '"shell"',
+      },
+    });
+    const res = await ferheng(served, url, env, '/ferheng');
+    expect(res.status).toBe(404);
+    expect(res.headers.get('content-security-policy')).toBe("default-src 'none'; frame-ancestors 'none'");
+    expect(res.headers.get('x-frame-options')).toBe('DENY');
+    expect(res.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(res.headers.get('content-type')).toBe('text/html; charset=utf-8');
+    // the shell's caching and validators are not this page's
+    expect(res.headers.get('cache-control')).toBeNull();
+    expect(res.headers.get('etag')).toBeNull();
+  });
+
   it('leaves a real dictionary page exactly as it found it', async () => {
     const res = await ferheng(new Response(page, { status: 200 }), url, env, '/ferheng');
     expect(res.status).toBe(200);

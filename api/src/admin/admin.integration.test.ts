@@ -83,7 +83,8 @@ describe.skipIf(!DATABASE_URL)('admin RBAC + 2FA (integration)', () => {
     expect(me.json().roles).toEqual(['moderator']);
     expect(me.json().capabilities).toEqual(expect.arrayContaining(['users.view', 'users.moderate']));
 
-    const verify = await authed('POST', '/admin/auth/verify', adminToken, { code: totpCode(secret) });
+    // the code that confirmed is spent; the next one is good (each is accepted once)
+    const verify = await authed('POST', '/admin/auth/verify', adminToken, { code: totpCode(secret, Date.now() + 30_000) });
     expect(verify.statusCode).toBe(200);
     expect(verify.json().ok).toBe(true);
   });

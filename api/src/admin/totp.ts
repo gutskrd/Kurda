@@ -68,6 +68,33 @@ export function totpCode(secretBase32: string, time: number = Date.now(), digits
   return hotp(base32Decode(secretBase32), counter, digits);
 }
 
+/**
+ * The time step a code belongs to, checked against a ±`window`-step range in
+ * constant time per candidate; null when it matches none. Knowing the step is
+ * what lets a caller refuse the same code twice (see AdminTotpService).
+ */
+export function matchTotpStep(
+  secretBase32: string,
+  code: string,
+  time: number = Date.now(),
+  window = 1,
+): number | null {
+  const trimmed = code.trim();
+  if (!/^\d{6}$/.test(trimmed)) return null;
+  const secret = base32Decode(secretBase32);
+  const counter = Math.floor(time / 1000 / TOTP_STEP_SECONDS);
+  const provided = Buffer.from(trimmed, 'utf8');
+  let matched: number | null = null;
+  for (let w = -window; w <= window; w++) {
+    const candidate = Buffer.from(hotp(secret, counter + w, TOTP_DIGITS), 'utf8');
+    // every candidate is compared, so the time taken says nothing about which matched
+    if (candidate.length === provided.length && timingSafeEqual(candidate, provided) && matched === null) {
+      matched = counter + w;
+    }
+  }
+  return matched;
+}
+
 /** Verify a code against a ±`window`-step range, constant-time per candidate. */
 export function verifyTotp(
   secretBase32: string,
@@ -75,16 +102,7 @@ export function verifyTotp(
   time: number = Date.now(),
   window = 1,
 ): boolean {
-  const trimmed = code.trim();
-  if (!/^\d{6}$/.test(trimmed)) return false;
-  const secret = base32Decode(secretBase32);
-  const counter = Math.floor(time / 1000 / TOTP_STEP_SECONDS);
-  const provided = Buffer.from(trimmed, 'utf8');
-  for (let w = -window; w <= window; w++) {
-    const candidate = Buffer.from(hotp(secret, counter + w, TOTP_DIGITS), 'utf8');
-    if (candidate.length === provided.length && timingSafeEqual(candidate, provided)) return true;
-  }
-  return false;
+  return matchTotpStep(secretBase32, code, time, window) !== null;
 }
 
 /** otpauth:// URI for provisioning in an authenticator app (QR code). */

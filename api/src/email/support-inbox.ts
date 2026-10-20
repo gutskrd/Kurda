@@ -78,19 +78,52 @@ export function parseMailbox(raw: string): { address: string; name: string | nul
   return { address: trimmed.toLowerCase(), name: null };
 }
 
-/** The text of an HTML body, for the list's preview when a mail came with no plain text. */
+/**
+ * The text of an HTML body, for the list's preview when a mail came with no plain text.
+ *
+ * Anyone can send the support address a mail, and this runs on every mail each
+ * time the inbox is listed, so it has to take time in proportion to the mail's
+ * length whatever the mail contains. The regular expressions it used before
+ * did not: a body of nothing but `<style>` repeated, with no closing tag, made
+ * each one scan to the end of the body again, and 200 KB of it held the server
+ * for seconds per mail. Each pattern here stops at the next `<` or `>`, and a
+ * block with no end is looked for once.
+ */
 export function htmlToPreviewText(html: string): string {
-  return html
-    .replace(/<(script|style|head)[^>]*>[\s\S]*?<\/\1>/gi, ' ')
-    .replace(/<[^>]+>/g, ' ')
+  return dropHiddenBlocks(html)
+    .replace(/<[^<>]*>/g, ' ')
     .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&')
     .replace(/\s+/g, ' ')
     .trim();
+}
+
+/** `<script>`, `<style>` and `<head>` with what is inside them: nothing a reader sees. */
+function dropHiddenBlocks(html: string): string {
+  const lower = html.toLowerCase();
+  const open = /<(script|style|head)\b[^<>]*>/gi;
+  const unclosed = new Set<string>();
+  let out = '';
+  let from = 0;
+  for (let m = open.exec(html); m; m = open.exec(html)) {
+    const name = m[1]!.toLowerCase();
+    if (unclosed.has(name)) continue;
+    const close = lower.indexOf(`</${name}`, open.lastIndex);
+    if (close === -1) {
+      // no end anywhere after this one, so none after any later one either
+      unclosed.add(name);
+      continue;
+    }
+    const end = lower.indexOf('>', close);
+    out += `${html.slice(from, m.index)} `;
+    from = end === -1 ? html.length : end + 1;
+    open.lastIndex = from;
+  }
+  return out + html.slice(from);
 }
 
 /**

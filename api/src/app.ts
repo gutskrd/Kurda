@@ -46,7 +46,7 @@ import { registerEconomyRoutes } from './economy/routes.js';
 import { WalletService } from './wallet/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
-import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
+import { MAX_CLIENT_MESSAGE_BYTES, RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
@@ -162,6 +162,7 @@ import { registerFeedbackRoutes } from './feedback/routes.js';
 import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
+import { LOG_REDACT } from './observability/redact.js';
 import { createWorker } from './jobs/worker.js';
 import {
   ROLLUP_INTERVAL_MS,
@@ -212,18 +213,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       level: config.LOG_LEVEL,
       // pretty logs are a dev nicety; structured JSON everywhere else
       transport: config.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
-      // PII never reaches log storage (KUR-009)
-      redact: {
-        paths: [
-          'req.headers.authorization',
-          'req.headers.cookie',
-          '*.password',
-          '*.passwordHash',
-          '*.token',
-          '*.email',
-        ],
-        censor: '[redacted]',
-      },
+      // PII never reaches log storage (KUR-009); see observability/redact.ts
+      redact: LOG_REDACT,
     },
     // trust an upstream-provided request id (gateway/LB) or generate one
     requestIdHeader: 'x-request-id',
@@ -273,7 +264,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     if (config.NODE_ENV !== 'test' && config.RUN_WORKER_IN_API !== 'false') {
       // its own pino instance: Fastify's logger type isn't pino's, and a distinct
       // name keeps job logs separable from request logs
-      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker' }));
+      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker', redact: LOG_REDACT }));
       app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
       // The dashboards read pre-aggregated tables that nothing populated, so they
       // were permanently empty. Schedule the rollups here (the dedicated worker
@@ -713,7 +704,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       : new LocalRoomBus();
     const realtime = new RealtimeGateway(kv, bus, options.gateway);
     app.decorate('realtime', realtime);
-    app.register(fastifyWebsocket);
+    // a client message is a few dozen bytes; the library's default limit is 100 MiB
+    app.register(fastifyWebsocket, { options: { maxPayload: MAX_CLIENT_MESSAGE_BYTES } });
     app.register(async (scoped) => {
       realtime.registerRoutes(scoped);
     });

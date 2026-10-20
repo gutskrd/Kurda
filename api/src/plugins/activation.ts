@@ -31,6 +31,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
  *   POST /auth/verify-email…            confirm the address
  *   POST /auth/resend-verification…     ask for another code
  *   POST /auth/login, /refresh, /oauth  sign in, and stay signed in while you do
+ *   POST /auth/logout                   sign out
  *   POST /auth/register                 (no token yet, so the gate never fires)
  *   POST /auth/request-password-reset   you can forget a password before
  *   POST /auth/reset-password           you ever confirm the address
@@ -62,6 +63,7 @@ const EXEMPT = new Set([
   'POST /auth/login',
   'POST /auth/refresh',
   'POST /auth/oauth',
+  'POST /auth/logout',
   // confirming, which is the gate itself
   'POST /auth/verify-email',
   'POST /auth/verify-email-code',

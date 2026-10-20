@@ -144,4 +144,35 @@ describe.skipIf(!DATABASE_URL)('email-code verification (integration)', () => {
     const rows = await pool.query(`SELECT 1 FROM email_verification_codes WHERE user_id = $1`, [userId]);
     expect(rows.rowCount).toBe(1);
   });
+
+  it('limits new codes per account, whichever addresses ask', async () => {
+    // a new code resets the wrong-guess budget, so a limit per address let an
+    // account be sent code after code — and guessed at — from many addresses
+    const fresh = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `vcode2_${suffix}@it.kurda.app`,
+        username: `vcode2_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: '10.11.1.1',
+    });
+    const token = fresh.json().tokens.accessToken as string;
+    const statuses: number[] = [];
+    for (let i = 0; i < 5; i++) {
+      const res = await app.inject({
+        method: 'POST',
+        url: '/auth/resend-verification-code',
+        headers: { authorization: `Bearer ${token}` },
+        remoteAddress: `10.11.2.${i + 1}`,
+      });
+      statuses.push(res.statusCode);
+    }
+    expect(statuses).toEqual([200, 200, 200, 200, 429]);
+    await pool.query(`DELETE FROM users WHERE id = $1`, [fresh.json().user.id]);
+  });
 });

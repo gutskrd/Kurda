@@ -20,6 +20,7 @@ import {
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { PostGate } from '../trust/post-gate.js';
+import { pageQuery, queryUuid, queryWord } from '../http/query.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -170,16 +171,24 @@ export function registerLibraryRoutes(
     },
   );
 
+  const postListQuery = z.object({
+    type: queryWord,
+    language: queryWord,
+    authorId: queryUuid,
+    sort: queryWord,
+    ...pageQuery,
+  });
+
   /** Browse published posts (public). */
-  app.get('/library/posts', { config: { skipValidation: true } }, async (req) => {
-    const q = req.query as Record<string, string | undefined>;
+  app.get('/library/posts', { schema: { querystring: postListQuery } }, async (req) => {
+    const q = req.query as z.infer<typeof postListQuery>;
     const posts = await library.list({
       type: isWrittenPostType(q.type) ? q.type : undefined,
       language: q.language,
       authorId: q.authorId,
       sort: q.sort === 'popular' ? 'popular' : 'newest',
-      limit: q.limit ? Number(q.limit) : undefined,
-      offset: q.offset ? Number(q.offset) : undefined,
+      limit: q.limit,
+      offset: q.offset,
       viewerId: req.user?.id ?? null,
     });
     const withAuthor = await library.withAuthors(posts, (k) => (app.storage ? app.storage.publicUrl(k) : null));

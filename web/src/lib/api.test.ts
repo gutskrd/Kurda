@@ -166,6 +166,38 @@ describe('ApiClient', () => {
     expect((fetchMock.mock.calls[1]![1]!.headers as Record<string, string>).authorization).toBe('Bearer someone-else');
   });
 
+  it('ends the session on the server with the stored refresh token', async () => {
+    persistTokens({ accessToken: 'a', refreshToken: 'the-refresh-token' }, true);
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResponse(200, { ok: true }));
+    vi.stubGlobal('fetch', fetchMock);
+    const storage = createTokenStorage();
+    const client = new ApiClient('https://api.test', storage, () => {});
+
+    // read before the caller clears storage, as sign-out does
+    const pending = client.endSession();
+    storage.clear();
+    await pending;
+
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    const [url, init] = fetchMock.mock.calls[0]!;
+    expect(url).toBe('https://api.test/auth/logout');
+    expect(JSON.parse(init!.body as string)).toEqual({ refreshToken: 'the-refresh-token' });
+    // the refresh token is the credential here; no access token rides along
+    expect((init!.headers as Record<string, string>).authorization).toBeUndefined();
+  });
+
+  it('signs out locally even when the server cannot be reached', async () => {
+    persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => {
+        throw new Error('offline');
+      }),
+    );
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    await expect(client.endSession()).resolves.toBeUndefined();
+  });
+
   it('attaches an Idempotency-Key to mutating requests', async () => {
     const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) => jsonResponse(200, {}));
     vi.stubGlobal('fetch', fetchMock);

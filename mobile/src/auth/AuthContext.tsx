@@ -275,6 +275,8 @@ export function AuthProvider({
       await client.post('/auth/request-password-reset', { email });
     },
     logout: async () => {
+      // end the session on the server too, not only on this phone
+      await client.endSession();
       await storage.clear();
       setUser(null);
       setStatus('signedOut');

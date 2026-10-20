@@ -61,5 +61,24 @@ describe('support mail helpers', () => {
     expect(htmlToPreviewText('<style>p{color:red}</style><p>Silav&nbsp;<b>heval</b> &amp; hi</p><script>x()</script>')).toBe(
       'Silav heval & hi',
     );
+    expect(htmlToPreviewText('<html><HEAD><title>t</title></HEAD><body><p>Hello</p></body></html>')).toBe('Hello');
+    // <header> is not <head>: what it holds is shown
+    expect(htmlToPreviewText('<header>Top</header><p>Body</p>')).toBe('Top Body');
+    // a block that never ends hides nothing after it
+    expect(htmlToPreviewText('<style>p{} <p>Still here</p>')).toBe('p{} Still here');
+    // an escaped entity is shown as written, not decoded twice
+    expect(htmlToPreviewText('<p>&amp;lt;b&amp;gt;</p>')).toBe('&lt;b&gt;');
+  });
+
+  it('takes time in proportion to the mail, whatever the mail is made of', () => {
+    // anyone can mail support, and every listed mail is previewed: bodies built
+    // to make a pattern rescan to the end from each tag must not hold the server
+    const size = 200_000;
+    for (const unit of ['<style>', '<script ', '<head', '<', '<style><', '</style']) {
+      const body = unit.repeat(Math.ceil(size / unit.length));
+      const started = performance.now();
+      htmlToPreviewText(body);
+      expect(performance.now() - started, unit).toBeLessThan(250);
+    }
   });
 });

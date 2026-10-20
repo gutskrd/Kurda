@@ -191,6 +191,9 @@ export class GdprService {
   }
 
   private async anonymize(userId: string, executor: Pick<pg.Pool, 'query'> = this.pool): Promise<void> {
+    // what they wrote to the support address, with the answers to it: it is
+    // found by their address, which the next statement replaces, so first
+    await eraseSupportMail(executor, userId);
     await executor.query(
       `UPDATE users SET
          email = 'deleted_' || id || '@deleted.kurda.app',
@@ -304,6 +307,17 @@ export class GdprService {
     );
     // their Game Ranks, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
+    // what they wrote to the support address from this account's address, and
+    // what they were answered; who on the team answered is not theirs
+    const support = await this.pool.query(
+      `SELECT e.subject, e.received_at, e.text_body, e.html_body,
+              COALESCE((SELECT json_agg(json_build_object('body', r.body, 'sentAt', r.sent_at) ORDER BY r.sent_at)
+                          FROM support_email_replies r WHERE r.email_id = e.id), '[]'::json) AS answers
+         FROM support_emails e
+        WHERE e.from_address = (SELECT lower(u.email::text) FROM users u WHERE u.id = $1)
+        ORDER BY e.received_at`,
+      [userId],
+    );
     return {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
@@ -314,6 +328,7 @@ export class GdprService {
       storyGames: storyGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
+      supportEmails: support.rows,
       // XP, leagues, streaks and badges (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
     };
@@ -374,6 +389,21 @@ export class GdprService {
       downloadUrl: await this.deps.storage!.createDownloadUrl(record.storage_key),
     };
   }
+}
+
+/**
+ * Mail the account's owner sent to the support address, and the answers to it
+ * (they go with it, by the foreign key). Found by the account's address, which
+ * is the one thing the inbox knows them by — so this has to run before the
+ * address is replaced, and it is the reason a closed account's address does
+ * not live on in the inbox after the account itself has been anonymized.
+ */
+export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<void> {
+  await executor.query(
+    `DELETE FROM support_emails
+      WHERE from_address = (SELECT lower(u.email::text) FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL)`,
+    [userId],
+  );
 }
 
 /**

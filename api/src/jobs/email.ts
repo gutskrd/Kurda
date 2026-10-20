@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { defineJob, type JobDefinition } from './registry.js';
 import type { EmailService } from '../email/service.js';
+import { maskEmail } from '../observability/redact.js';
 import type { EmailTemplate, EmailLocale } from '../email/templates.js';
 
 export const SEND_EMAIL_JOB_NAME = 'send-email';
@@ -39,7 +40,7 @@ export const sendEmailJob = defineJob({
   schema: payloadSchema,
   handler: async (payload, ctx) => {
     ctx.log.info(
-      { to: payload.to, template: payload.template, locale: payload.locale, attempt: ctx.attempt },
+      { to: maskEmail(payload.to), template: payload.template, locale: payload.locale, attempt: ctx.attempt },
       'email send skipped (no email service configured)',
     );
   },
@@ -63,7 +64,7 @@ export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPa
         (payload.locale ?? 'en') as EmailLocale,
       );
       ctx.log.info(
-        { to: payload.to, template: payload.template, ...result },
+        { to: maskEmail(payload.to), template: payload.template, ...result },
         result.suppressed ? 'email suppressed' : 'email sent',
       );
     },

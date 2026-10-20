@@ -137,6 +137,19 @@ describe.skipIf(!DATABASE_URL)('password reset (integration)', () => {
     expect((await reset(verifyToken, '10.7.1.3')).statusCode).toBe(400);
   });
 
+  it('a reset uses up every other reset link sent to the account', async () => {
+    // two requests, two links in the mailbox; the older one must not be able
+    // to undo the new password once the newer one set it
+    const older = await createEmailToken(pool, userId, 'password_reset');
+    const newer = await createEmailToken(pool, userId, 'password_reset');
+    const reset = (token: string, password: string, ip: string) =>
+      app.inject({ method: 'POST', url: '/auth/reset-password', payload: { token, password }, remoteAddress: ip });
+    expect((await reset(newer, 'the-chosen-password-1', '10.7.1.5')).statusCode).toBe(200);
+    const stale = await reset(older, 'someone-elses-choice-1', '10.7.1.6');
+    expect(stale.statusCode).toBe(400);
+    expect(stale.json().code).toBe('INVALID_TOKEN');
+  });
+
   it('rejects weak new passwords with the validation envelope', async () => {
     const raw = await createEmailToken(pool, userId, 'password_reset');
     const res = await app.inject({
