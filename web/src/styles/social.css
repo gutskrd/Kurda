@@ -1608,6 +1608,27 @@ button.gift-bubble:active {
   flex-basis: 100%;
   margin: 0;
 }
+/* the chosen gift, drawn by the button that sends it */
+.gift-confirm-art {
+  flex: none;
+  border-radius: var(--r-md);
+}
+/* chosen, though the filters above now hide it */
+.gift-confirm-hidden {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+/* the shelf by kind (shop/ItemBrowser): one titled shelf per kind under All */
+.gift-shelf-section {
+  margin-bottom: 8px;
+}
+.gift-tile-desc {
+  margin-top: -4px;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  text-align: center;
+  overflow-wrap: anywhere;
+}
 @media (max-width: 640px) {
   .gift-confirm {
     bottom: calc(-20px - env(safe-area-inset-bottom));

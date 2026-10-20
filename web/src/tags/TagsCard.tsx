@@ -135,7 +135,8 @@ export function TagsCard(): React.JSX.Element {
   const toBuy = catalog && profile ? purchasableTags(catalog, profile.main ?? null) : [];
 
   return (
-    <section className="card" style={{ marginTop: 24 }}>
+    // `#tags` is where the inventory's Tags tab sends an owned tag (profile/CosmeticCustomizer)
+    <section id="tags" className="card tags-card" style={{ marginTop: 24 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('tags.title')}</h2>
 
       {failure && <div className="msg msg-error" role="status">{describeError(failure, t)}</div>}

@@ -820,24 +820,7 @@ button.feature {
   backdrop-filter: blur(6px);
 }
 
-/* ---- cosmetic shop (background + icon) --------------------------------- */
-.cosmetic-section {
-  margin-top: 18px;
-}
-.cosmetic-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.cosmetic-section-title {
-  font-family: var(--font-sans);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--ink-2);
-  margin: 0;
-}
+/* ---- your cosmetics, by kind (profile/CosmeticCustomizer) --------------- */
 .cosmetic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -867,7 +850,9 @@ button.feature {
 .cosmetic-thumb-background {
   aspect-ratio: 16 / 9;
 }
-.cosmetic-thumb-icon {
+.cosmetic-thumb-icon,
+.cosmetic-thumb-frame,
+.cosmetic-thumb-tag {
   aspect-ratio: 1;
 }
 .cosmetic-thumb img {
@@ -884,10 +869,21 @@ button.feature {
   width: 100%;
   height: 100%;
 }
+/* a season frame, round your own face, in the middle of its square */
+.cosmetic-frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.cosmetic-frame .art-frame-face img {
+  object-fit: cover;
+}
 .cosmetic-badge {
   position: absolute;
   top: 4px;
-  right: 4px;
+  /* the far corner from the Owned / Equipped badge, on either side of the page */
+  inset-inline-end: 4px;
   font-size: 0.75rem;
   line-height: 1;
   padding: 3px 5px;
@@ -895,24 +891,81 @@ button.feature {
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
+/* Owned, or Equipped: said on the picture, where the eye already is */
+.cosmetic-state {
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 4px;
+  max-width: calc(100% - 36px);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink-2);
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cosmetic-state.is-equipped {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  color: var(--gold-ink);
+}
+.cosmetic-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
 .cosmetic-name {
+  display: block;
   font-size: 0.82rem;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cosmetic-equipped,
+.cosmetic-desc {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* one action per tile, on its floor, the full width of it — and allowed to
+   wrap, because "Kaufen · 800 Zêr" is wider than a phone's tile */
+.btn.cosmetic-action {
+  width: 100%;
+  margin-top: auto;
+  height: auto;
+  min-height: 38px;
+  padding: 6px 8px;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+.cosmetics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+/* the inventory's Tags tab sends you to Tags & badges: arrive under the sticky bar */
+.tags-card {
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
 .cosmetic-locked {
+  margin-top: auto;
   font-size: 0.78rem;
   font-weight: 600;
   text-align: center;
   padding: 6px 0;
-}
-.cosmetic-equipped {
-  color: var(--gold-ink);
-}
-.cosmetic-locked {
   color: var(--ink-3);
 }
 /* ---- shop -------------------------------------------------------------- */
@@ -920,6 +973,32 @@ button.feature {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
+}
+/*
+ * The price takes its own line over the buttons, which share the one below —
+ * at every width: five to a row, a tile is too narrow for a price, Buy and the
+ * gift button side by side, and the gift button fell to a line of its own.
+ */
+.shop-grid .shop-price {
+  flex-basis: 100%;
+}
+.shop-grid .shop-actions .btn {
+  flex: 1 1 auto;
+}
+/*
+ * Two to a row on a phone. One tile the width of the screen made the Shop
+ * twenty-five screens of backgrounds before the first icon; at two a row the
+ * kinds are a short scroll apart.
+ */
+@media (max-width: 640px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .shop-grid .shop-tile {
+    padding: 8px;
+    gap: 8px;
+  }
 }
 .shop-tile {
   margin: 0;
@@ -940,7 +1019,11 @@ button.feature {
 .shop-thumb-background {
   aspect-ratio: 16 / 9;
 }
-.shop-thumb-icon {
+.shop-thumb-icon,
+/* a tag, a frame or anything else is a small thing, drawn the size of an icon */
+.shop-thumb-tag,
+.shop-thumb-frame,
+.shop-thumb-other {
   aspect-ratio: 1;
   max-width: 96px;
 }
@@ -958,12 +1041,34 @@ button.feature {
   width: 100%;
   height: 100%;
 }
+/* the Kurdish name, and under it, quieter, what it is ("Tea glass") */
+.shop-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
 .shop-name {
+  display: block;
   font-size: 0.9rem;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.shop-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the price and the buttons sit on the tile's floor, level along a row
+   whether or not the tile beside has a line of description */
+.shop-tile > .shop-actions,
+.shop-tile > .shop-owned {
+  margin-top: auto;
 }
 .shop-owned {
   font-size: 0.82rem;
@@ -3080,9 +3185,11 @@ a.mkp-activity-row:hover {
    pay it — that is the whole point of knowing what to save for */
 .shop-price {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
-  margin-right: auto;
+  /* the price at the start of the row, the buttons at its end — on either side of the page */
+  margin-inline-end: auto;
   color: var(--gold-ink);
   font-size: 0.82rem;
   font-weight: 600;
@@ -3101,40 +3208,15 @@ a.mkp-activity-row:hover {
   font-weight: 500;
 }
 
-/* ---- narrowing the shop ------------------------------------------------- */
-.shop-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.shop-search {
-  flex: 1 1 190px;
-  min-width: 0;
-  max-width: 280px;
-  height: 34px;
-  padding: 0 12px;
-  font-size: 0.88rem;
-}
-.shop-afford {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--ink-3);
-  font-size: 0.86rem;
-  cursor: pointer;
-  user-select: none;
-}
-.shop-afford input {
-  accent-color: var(--primary);
-}
+/* narrowing the shop — tabs, search, sort and the toggles — is shop/items.css,
+   shared with the inventory and the gift picker */
 .shop-gift-btn {
   flex: none;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  /* level with the Buy button beside it (.btn-sm) */
+  width: 38px;
+  height: 38px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--surface-2);

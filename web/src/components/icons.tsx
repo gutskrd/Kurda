@@ -90,6 +90,11 @@ import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
 import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
 import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
+// shop items by kind: a tag, a frame, and the search over all of them
+import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
+import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
+import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlass';
+import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -227,6 +232,15 @@ export const DownIcon = named(ArrowDown, 14, 'bold');
 export const ShieldIcon = named(ShieldCheck, 14, 'fill');
 export const MedalIcon = named(Medal, 22);
 export const SparkleIcon = named(Sparkle, 16, 'fill');
+
+/* Shop items by kind (shop/ItemBrowser): what stands in for an item that has
+   no picture of its own — a tag is a tag, a frame is a frame — and the glass
+   in front of the search over all of them */
+export const TagIcon = named(Tag, 22);
+export const FrameIcon = named(FrameCorners, 22);
+export const SearchIcon = named(MagnifyingGlass, 18);
+/** The order a list is in: what the sort select carries in place of its word on a phone. */
+export const SortIcon = named(ArrowsDownUp, 18);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

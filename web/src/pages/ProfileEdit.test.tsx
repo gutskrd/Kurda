@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ProfileEdit } from './ProfileEdit';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -116,5 +116,28 @@ describe('Edit Profile page', () => {
     vi.stubGlobal('fetch', editFetch([], { ...meUser, profilePhotoUrl: 'https://cdn.test/p.webp' }));
     renderApp(<ProfileEdit />, ['/app/profile/edit']);
     expect(await screen.findByRole('button', { name: /^remove$/i })).toBeInTheDocument();
+  });
+
+  it('sends an owned tag from the inventory to Tags & badges, on the same page', async () => {
+    const base = editFetch([]);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (url.includes('/me/inventory')) {
+          return jsonResponse(200, { items: [{ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', quantity: 1, premiumOnly: false, assetUrl: null }] });
+        }
+        return base(url, init);
+      }),
+    );
+    renderApp(<ProfileEdit />, ['/app/profile/edit']);
+
+    await userEvent.click(await screen.findByRole('tab', { name: /Tags/ }));
+    const tile = screen.getByText('Kurdish Tag').closest('figure')!;
+    const link = within(tile).getByRole('link', { name: 'Manage tags' });
+    expect(link).toHaveAttribute('href', '#tags');
+    // the place it goes to is on this page: the Tags & badges card
+    const target = document.getElementById('tags');
+    expect(target).not.toBeNull();
+    expect(within(target!).getByRole('heading', { name: 'Tags & badges' })).toBeInTheDocument();
   });
 });
