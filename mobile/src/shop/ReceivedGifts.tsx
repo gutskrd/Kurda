@@ -88,7 +88,8 @@ export function ReceivedGifts(): React.JSX.Element | null {
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.xs },
+  // the Shop's inbox already sits inside the screen's margins: a second inset put this 48pt in, under a card at 24
+  wrap: { paddingTop: spacing.md, paddingBottom: spacing.sm, gap: spacing.xs },
   heading: { ...sectionLabel },
   row: {
     flexDirection: 'row',

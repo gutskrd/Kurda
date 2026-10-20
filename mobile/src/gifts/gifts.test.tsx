@@ -24,7 +24,7 @@ vi.mock('../realtime/useUserEvents', () => ({
     userEvents.handler = h;
   },
 }));
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { AccessibilityInfo, Animated, Vibration } from 'react-native';
 import type { GiftCard, GiftCatalogItem, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
@@ -252,6 +252,109 @@ describe('GiftPickerSheet', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
     expect(await screen.findByText('The gift didn’t go. Please try again.')).toBeTruthy();
     expect(screen.queryByText('a gift goes to 1–20 friends')).toBeNull();
+  });
+});
+
+describe('GiftPickerSheet, finding the gift', () => {
+  // the catalogue as GET /gifts/catalog sends it: every kind with a price, and who owns what already
+  const CATALOG = [
+    item({ sku: 'bg_mountain', name: 'Mountain dawn', price: 300 }),
+    item({ sku: 'bg-made-gola-sin', name: 'Gola Şîn', price: 400, alreadyOwnedBy: ['u2'] }),
+    item({ sku: 'bg_gold', name: 'Gold', price: 5000 }),
+    item({ sku: 'icon-made-caydan', name: 'Îstîkan', category: 'icon', price: 900, assetUrl: '/cosmetics/icons/made-08-caydan.png' }),
+    item({ sku: 'icon_star', name: 'Star', category: 'icon', currency: 'gems', price: 5, alreadyOwnedBy: ['u2'] }),
+    item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
+  ];
+
+  const sheet = (balance = { zer: 1000, gems: 2 }) => {
+    const client = fakeClient({
+      'GET /gifts/catalog?to=u2': ok({ items: CATALOG, balance }),
+      'POST /gifts': ok({ batchId: 'b9', sent: ['u2'], skipped: [], balance, message: null }),
+    });
+    testAuth.client = client;
+    const onSent = vi.fn();
+    renderWithProviders(
+      <GiftPickerSheet visible chat={{ kind: 'dm', userId: 'u2' }} friends={[{ userId: 'u2', name: 'Rojda' }]} onClose={() => undefined} onSent={onSent} />,
+    );
+    return { client, onSent };
+  };
+
+  /** The gifts on show, by name, in order. */
+  const gifts = (): string[] =>
+    screen
+      .getAllByRole('radio')
+      .map((r) => r.getAttribute('aria-label') ?? '')
+      .filter((label) => CATALOG.some((i) => label.startsWith(`${i.name},`)))
+      .map((label) => label.split(',')[0]!);
+
+  it('files the gifts under their kinds, each with a heading and a count', async () => {
+    sheet();
+    expect(await screen.findByRole('heading', { name: 'Backgrounds, 3 items' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Icons, 2 items' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Tags, 1 item' })).toBeTruthy();
+    const kinds = screen.getByRole('radiogroup', { name: 'Kinds of item' });
+    expect(within(kinds).getAllByRole('radio').map((r) => r.getAttribute('aria-label'))).toEqual([
+      'All, 6 items',
+      'Backgrounds, 3 items',
+      'Icons, 2 items',
+      'Tags, 1 item',
+    ]);
+
+    // one kind: only its gifts, and no heading to say what the chip already says
+    fireEvent.click(within(kinds).getByRole('radio', { name: 'Icons, 2 items' }));
+    expect(gifts()).toEqual(['Îstîkan', 'Star']);
+    expect(screen.queryByRole('heading', { name: /^Icons/ })).toBeNull();
+  });
+
+  it('finds a gift by its name with the Kurdish letters left out, and puts them in price order', async () => {
+    sheet();
+    const field = await screen.findByLabelText('Search gifts');
+    fireEvent.change(field, { target: { value: 'istikan' } });
+    expect(gifts()).toEqual(['Îstîkan']);
+    expect(screen.getByText('1 item')).toBeTruthy();
+    fireEvent.change(field, { target: { value: '' } });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sort: Featured' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'Price: high to low' }));
+    // within each kind, the dearest first — and gems, the dearer currency, before Zêr
+    expect(gifts()).toEqual(['Gold', 'Gola Şîn', 'Mountain dawn', 'Star', 'Îstîkan', 'Kurdish Tag']);
+  });
+
+  it('hides what they already have, and what the balance cannot cover', async () => {
+    sheet({ zer: 1000, gems: 2 });
+    await screen.findByRole('heading', { name: 'Backgrounds, 3 items' });
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Hide ones they already have' }));
+    expect(gifts()).toEqual(['Mountain dawn', 'Gold', 'Îstîkan', 'Kurdish Tag']);
+    expect(screen.getByRole('radio', { name: 'Icons, 1 item' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Within my balance' }));
+    // Gold is 5000 Zêr against 1000
+    expect(gifts()).toEqual(['Mountain dawn', 'Îstîkan', 'Kurdish Tag']);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(gifts()).toHaveLength(CATALOG.length);
+  });
+
+  it('keeps a choice the filters hide, says what it is by Send, and sends it', async () => {
+    const { client, onSent } = sheet();
+    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    expect(screen.queryByText('Selected: Mountain dawn')).toBeNull();
+
+    fireEvent.change(screen.getByLabelText('Search gifts'), { target: { value: 'kurdish' } });
+    expect(gifts()).toEqual(['Kurdish Tag']);
+    expect(screen.getByText('Selected: Mountain dawn')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Send gift' }));
+    await waitFor(() => expect(onSent).toHaveBeenCalled());
+    expect(client.calls.find((c) => c.path === '/gifts')?.body).toMatchObject({ sku: 'bg_mountain', expectedPrice: 300 });
+  });
+
+  it('says so when nothing matches, with the way back', async () => {
+    sheet();
+    fireEvent.change(await screen.findByLabelText('Search gifts'), { target: { value: 'xyzzy' } });
+    expect(screen.getByText('Nothing matches that')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(gifts()).toHaveLength(CATALOG.length);
   });
 });
 

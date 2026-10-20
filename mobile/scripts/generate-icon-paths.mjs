@@ -146,6 +146,10 @@ const MAP = {
   sparkle: { glyph: 'Sparkle', weight: 'fill', note: 'a celebration: a new division, tier or badge' },
   calendar: { glyph: 'CalendarBlank', note: 'when a week or a season ends, in local time' },
   'shield-fill': { glyph: 'ShieldCheck', weight: 'fill', note: 'a rank shield still covering a game' },
+
+  // --- the shop, the inventory and the gift picker, sorted by kind ---
+  tag: { glyph: 'Tag', note: 'a tag for the profile, such as the Kurdish tag: an item with no picture of its own' },
+  sort: { glyph: 'ArrowsDownUp', note: 'the order a list is in — featured, by price, by name' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */
