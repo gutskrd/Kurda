@@ -13,6 +13,7 @@ import { BURST } from '../../theme/celebration';
 import { useCountUp } from '../../theme/animate';
 import { AnswerMotion } from '../../theme/MotionParts';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
+import { useDirection } from '../../reports/direction';
 import type { Exercise, SessionResults } from '../types';
 
 interface Props {
@@ -47,6 +48,8 @@ const STAGE = 200;
 export function LessonResults({ results, exercises, skipped = 0, moments = NO_MOMENTS, onDone }: Props) {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  // in Soranî and Arabic the numbers and the lines under them read from the right
+  const dir = useDirection();
   const moment = useCelebration();
   useCelebrationHold(moment.playing);
   const pct = Math.round(results.accuracy * 100);
@@ -83,7 +86,7 @@ export function LessonResults({ results, exercises, skipped = 0, moments = NO_MO
           {t('lesson.complete')}
         </Text>
 
-        <View style={styles.stats}>
+        <View style={[styles.stats, { flexDirection: dir.row }]}>
           <Stat label="XP" value={`+${formatNumber(xp, locale)}`} tone="accent" a11yValue={`+${results.xpAwarded}`} />
           <Stat label={t('lesson.accuracy')} value={`${pct}%`} tone="primary" />
           <Stat label={t('lesson.correct')} value={`${results.correct}/${results.total}`} tone="primary" />
@@ -97,15 +100,15 @@ export function LessonResults({ results, exercises, skipped = 0, moments = NO_MO
         {moments.goalMet || moments.level !== null ? (
           <View style={styles.moments} accessibilityLiveRegion="polite">
             {moments.goalMet ? (
-              <View style={[styles.moment, { backgroundColor: colors.successFill }]}>
+              <View style={[styles.moment, { flexDirection: dir.row, backgroundColor: colors.successFill }]}>
                 <Icon name="seal-check" size={18} color={colors.success} />
-                <Text style={[styles.momentText, { color: colors.textPrimary }]}>{t('learn.today.goalMet')}</Text>
+                <Text style={[styles.momentText, dir.text, { color: colors.textPrimary }]}>{t('learn.today.goalMet')}</Text>
               </View>
             ) : null}
             {moments.level !== null ? (
-              <View style={[styles.moment, { backgroundColor: colors.controlTrack }]}>
+              <View style={[styles.moment, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}>
                 <Icon name="star-fill" size={18} color={colors.gold} />
-                <Text style={[styles.momentText, { color: colors.textPrimary }]}>{t('lesson.levelUp', { level: formatNumber(moments.level, locale) })}</Text>
+                <Text style={[styles.momentText, dir.text, { color: colors.textPrimary }]}>{t('lesson.levelUp', { level: formatNumber(moments.level, locale) })}</Text>
               </View>
             ) : null}
           </View>
@@ -117,14 +120,14 @@ export function LessonResults({ results, exercises, skipped = 0, moments = NO_MO
 
         {mistakes.length > 0 ? (
           <View style={[styles.mistakes, { backgroundColor: colors.controlTrack }]}>
-            <Text style={[styles.mistakesTitle, { color: colors.textPrimary }]}>{t('lesson.review')}</Text>
+            <Text style={[styles.mistakesTitle, dir.text, { color: colors.textPrimary }]}>{t('lesson.review')}</Text>
             {mistakes.map((m) => (
               <View key={m.exerciseId} style={styles.mistakeRow}>
                 {promptFor(m.exerciseId, m.prompt) ? (
-                  <Text style={[styles.mistakePrompt, { color: colors.textSecondary }]}>{promptFor(m.exerciseId, m.prompt)}</Text>
+                  <Text style={[styles.mistakePrompt, dir.free, { color: colors.textSecondary }]}>{promptFor(m.exerciseId, m.prompt)}</Text>
                 ) : null}
                 {m.correction ? (
-                  <Text style={[styles.mistakeAnswer, { color: colors.textPrimary }]}>
+                  <Text style={[styles.mistakeAnswer, dir.text, { color: colors.textPrimary }]}>
                     {t('lesson.answer')} <Text style={styles.mistakeAnswerValue}>{m.correction}</Text>
                   </Text>
                 ) : null}

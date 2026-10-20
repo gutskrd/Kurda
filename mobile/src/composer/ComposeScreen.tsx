@@ -64,6 +64,7 @@ import {
   type ComposerState,
 } from './model';
 import { uploadPicture } from './upload';
+import { haptic } from '../feedback/haptics';
 
 /** A picture somebody picked, before it is kept and uploaded. */
 export interface PickedPicture {
@@ -415,10 +416,14 @@ export function ComposeScreen({
     if (!alive.current) return;
     setPosting(false);
     if (!res.ok) {
+      // it did not go out, and the post is still here to send: in the way, so felt as an error
+      haptic('error');
       if (accountLimitOf(res.error)) setRefusal(res.error);
       else setError(describePostError(res.error, t));
       return;
     }
+    // out in the world (or saved): a light knock as the composer closes, as a comment or a message gets
+    haptic('tap');
     if (mode === 'new') {
       await forgetDraft();
       for (const p of state.pictures) void dropPicture(p.localUri);

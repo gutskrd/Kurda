@@ -34,7 +34,8 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
       key={label}
       disabled={disabled}
       onPress={onPress}
-      accessibilityState={{ selected: selected || matched }}
+      accessibilityRole="button"
+      accessibilityState={{ selected: selected || matched, disabled }}
       style={[
         styles.token,
         {

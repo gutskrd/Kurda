@@ -22,6 +22,11 @@ const STAGE = '#07080c';
  *
  * Nothing here asks for anything back. One button continues, and the
  * backdrop does not trap anybody: the system back closes it too.
+ *
+ * It is felt only when the person just did the thing it celebrates. One that
+ * is shown rather than caused — a badge earned before the app was opened, a
+ * league moved up while nobody was watching — plays the same and stays still
+ * in the hand: a buzz on opening the app is a buzz nobody asked for.
  */
 export function Celebration({
   art,
@@ -37,6 +42,7 @@ export function Celebration({
   actions,
   announce,
   onClose,
+  felt = true,
 }: {
   /** the emblem or medallion, drawn at ~168pt */
   art: ReactNode;
@@ -62,10 +68,12 @@ export function Celebration({
   /** what a screen reader hears as it opens */
   announce: string;
   onClose: () => void;
+  /** false for a moment the person did not just cause (see above) */
+  felt?: boolean;
 }): React.JSX.Element {
   const { t } = useI18n();
   const { width } = useWindowDimensions();
-  const moment = useCelebration();
+  const moment = useCelebration({ feel: felt });
   const stage = Math.min(width, 420);
   const glowSize = Math.min(stage, 300);
 

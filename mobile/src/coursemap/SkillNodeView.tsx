@@ -160,7 +160,12 @@ function Ring({ done, total, fill, track }: { done: number; total: number; fill:
   );
 }
 
-/** "Start" over the current skill, bobbing gently unless the phone asks for less motion. */
+/**
+ * "Start" over the current skill, bobbing gently unless the phone asks for less
+ * motion — a few times as the path appears, then still. A bob that never
+ * stops is something moving at the edge of the eye for as long as the screen
+ * is open, long after it has said where to tap.
+ */
 function Callout({ text, label, tone, onPress }: { text: string; label: string; tone: ToneColors; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
@@ -176,6 +181,7 @@ function Callout({ text, label, tone, onPress }: { text: string; label: string; 
         Animated.timing(lift, { toValue: -5, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
         Animated.timing(lift, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ]),
+      { iterations: BOBS },
     );
     loop.start();
     return () => loop.stop();
@@ -198,6 +204,8 @@ function Callout({ text, label, tone, onPress }: { text: string; label: string; 
 }
 
 const CALLOUT_WIDTH = 180;
+/** How many times "Start" bobs before it rests where it is. */
+const BOBS = 3;
 
 const styles = StyleSheet.create({
   stop: { position: 'absolute', width: NODE, height: NODE + LIP_RAISED },

@@ -11,6 +11,7 @@ import { timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
 import { Icon } from '../../theme/Icon';
 import { DrawnCheck } from '../../theme/MotionParts';
+import { useScreenBottomInset } from '../../navigation/tabBarLayout';
 
 interface Props {
   /** null while the learner is still answering */
@@ -29,6 +30,9 @@ interface Props {
  *
  * The verdict is a mark as well as a colour: a check that draws in, or a
  * cross. Under Reduce Motion the banner fades in where it is.
+ *
+ * Both sit clear of the home indicator: the lesson is full screen, and the
+ * bottom edge of a phone without a home button belongs to the system's swipe.
  */
 export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue }: Props) {
   const { colors } = useTheme();
@@ -36,6 +40,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
   const reduce = useReducedMotion();
   const slide = useRef(new Animated.Value(0)).current;
   const model = useAudio(feedback?.modelAudioUrl);
+  const bottom = useScreenBottomInset(spacing.lg);
 
   useEffect(() => {
     if (!feedback) {
@@ -47,7 +52,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
 
   if (!feedback) {
     return (
-      <View style={styles.footer}>
+      <View style={[styles.footer, { paddingBottom: bottom }]}>
         <ClayButton
           label={t('lesson.check')}
           tone="primary"
@@ -66,7 +71,11 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
 
   return (
     <Animated.View
-      style={[styles.banner, { backgroundColor: good ? colors.successFill : colors.dangerFill }, { opacity: slide, transform: [{ translateY }] }]}
+      style={[
+        styles.banner,
+        { paddingBottom: bottom, backgroundColor: good ? colors.successFill : colors.dangerFill },
+        { opacity: slide, transform: [{ translateY }] },
+      ]}
     >
       <View style={styles.titleRow}>
         {good ? <DrawnCheck size={24} color={colors.success} delayMs={120} /> : <Icon name="close" size={24} color={colors.danger} />}

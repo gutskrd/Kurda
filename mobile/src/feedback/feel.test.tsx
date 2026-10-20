@@ -22,7 +22,8 @@ import { Providers, renderWithProviders } from '../reports/testing/harness';
 import { useCelebration } from '../theme/CelebrationParts';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
-import { onHaptic, resetHaptics } from './haptics';
+import { onHaptic, refreshFelt, resetHaptics } from './haptics';
+import { Platform } from 'react-native';
 import type { HapticEvent } from './hapticPacing';
 import { Segmented } from '../theme/glass';
 import { Chips } from '../theme/Chips';
@@ -83,6 +84,30 @@ describe('a choice changing is a tick', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Event themes' }));
     expect(felt).toEqual(['select']);
     expect(onValueChange).toHaveBeenCalledWith(true);
+  });
+});
+
+describe('a pull to refresh', () => {
+  /** Pretend to be `os` for the length of `run`. */
+  function as(os: string, run: () => void): void {
+    const was = Platform.OS;
+    (Platform as { OS: string }).OS = os;
+    try {
+      run();
+    } finally {
+      (Platform as { OS: string }).OS = was;
+    }
+  }
+
+  it('is felt once: our tick where the system gives none, and nothing on top of iOS’s own', () => {
+    const refresh = vi.fn();
+    as('android', () => refreshFelt(refresh)());
+    expect(felt).toEqual(['tap']);
+    resetHaptics();
+    as('ios', () => refreshFelt(refresh)());
+    expect(felt).toEqual(['tap']);
+    // and the list reloads either way
+    expect(refresh).toHaveBeenCalledTimes(2);
   });
 });
 

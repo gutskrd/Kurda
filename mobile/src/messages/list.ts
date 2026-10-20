@@ -140,7 +140,8 @@ export function messagesUnread(input: { chats: readonly number[]; groups: readon
 /**
  * When a message arrived, as a list shows it: the time today, the weekday this
  * week, a short date before that. Formatted by the reader's locale, so a
- * Soranî reader gets their own digits and month names.
+ * Soranî reader gets their own digits and month names — and the hour the way
+ * the locale writes it ("3:49 PM", not "03:49 PM"; "15:49" in German).
  */
 export function listTime(iso: string | null | undefined, locale: string, now: number = Date.now()): string {
   if (!iso) return '';
@@ -150,7 +151,7 @@ export function listTime(iso: string | null | undefined, locale: string, now: nu
   const sameDay = at.toDateString() === today.toDateString();
   const days = (now - at.getTime()) / 86_400_000;
   try {
-    if (sameDay) return at.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' });
+    if (sameDay) return at.toLocaleTimeString(locale, { hour: 'numeric', minute: '2-digit' });
     if (days < 6) return at.toLocaleDateString(locale, { weekday: 'short' });
     return at.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
   } catch {

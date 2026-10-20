@@ -23,6 +23,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { useDirection } from '../reports/direction';
+import { SendButton } from '../chat/SendButton';
 import { useI18n } from '../i18n/I18nContext';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
@@ -83,6 +86,9 @@ export function GroupThreadScreen({
 }): React.JSX.Element {
   const { client, user } = useAuth();
   const { colors } = useTheme();
+  // mirrored in Soranî and Arabic, as a chat with one friend is
+  const dir = useDirection();
+  const bottom = useScreenBottomInset(spacing.md);
   const { t } = useI18n();
   const me = user?.id ?? '';
 
@@ -373,18 +379,18 @@ export function GroupThreadScreen({
         ) : null}
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
-        <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
+        <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
           <Pressable
             onPress={openPicker}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
             style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
-            <Icon name="gift" size={22} color={colors.gold} />
+            <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
           <ChatGameButton target={{ kind: 'group', groupId }} />
           <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+            style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
@@ -398,11 +404,7 @@ export function GroupThreadScreen({
             multiline
             accessibilityLabel={t('chat.messagePlaceholder')}
           />
-          <Pressable onPress={send} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('chat.send')} style={styles.sendBtn}>
-            <Text style={[styles.send, { color: draft.trim() ? colors.primary : colors.textSecondary }]}>
-              {t('chat.send')}
-            </Text>
-          </Pressable>
+          <SendButton ready={draft.trim().length > 0} onPress={() => void send()} />
         </View>
       </KeyboardAvoidingView>
 
@@ -478,6 +480,8 @@ function Bubble({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
   const card = isCardMessage(message) && !message.deleted;
   // one element for a screen reader (sender and words), with Report among its
   // actions, unless it holds a control of its own
@@ -491,13 +495,14 @@ function Bubble({
       accessible={whole}
       accessibilityActions={mine || message.deleted || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
       onAccessibilityAction={onReport}
-      style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}
+      // your own words at the end of the line and theirs (with their face) at its start, whichever side that is
+      style={[styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
     >
       {!mine ? (
         <InitialsAvatar name={message.username} id={message.senderId} size={28} photoUrl={message.avatarUrl} />
       ) : null}
       <View style={styles.bubbleMain}>
-        {!mine ? <Text style={[styles.sender, { color: colors.textSecondary }]}>{message.username}</Text> : null}
+        {!mine ? <Text style={[styles.sender, dir.text, { color: colors.textSecondary }]}>{message.username}</Text> : null}
         {card ? (
           <MessageContent message={message} mine={mine} senderName={message.username} onOpenGift={onOpenGift} onReport={report} />
         ) : (
@@ -533,10 +538,10 @@ const styles = StyleSheet.create({
   headerActions: { flexDirection: 'row', alignItems: 'center' },
   headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   bubbleRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, maxWidth: '86%' },
-  rowMine: { alignSelf: 'flex-end' },
-  rowTheirs: { alignSelf: 'flex-start' },
+  rowEnd: { alignSelf: 'flex-end' },
+  rowStart: { alignSelf: 'flex-start' },
   bubbleMain: { flexShrink: 1 },
-  sender: { fontSize: typography.sizes.xs, marginBottom: 2, marginLeft: spacing.xs },
+  sender: { fontSize: typography.sizes.xs, marginBottom: 2, marginHorizontal: spacing.xs },
   bubble: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.lg },
   deletedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   deleted: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
@@ -546,7 +551,8 @@ const styles = StyleSheet.create({
   giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   inputRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    // the buttons stay by the last line as a long message grows the field upwards
+    alignItems: 'flex-end',
     gap: spacing.sm,
     padding: spacing.md,
     borderTopWidth: StyleSheet.hairlineWidth,
@@ -561,7 +567,5 @@ const styles = StyleSheet.create({
     maxHeight: 120,
     fontSize: typography.sizes.md,
   },
-  sendBtn: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  send: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, paddingHorizontal: spacing.sm },
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });

@@ -95,4 +95,10 @@ describe('when a message arrived', () => {
     expect(listTime('2026-10-18T14:00:00Z', 'en', now)).toMatch(/^[A-Za-z]{3}/);
     expect(listTime('2026-09-01T14:00:00Z', 'en', now)).toMatch(/Sep/);
   });
+
+  it('writes the hour as the locale does, with no zero in front of a morning hour in English', () => {
+    const morning = new Date(now);
+    morning.setHours(9, 5, 0, 0);
+    expect(listTime(morning.toISOString(), 'en', now)).toMatch(/^9:05/);
+  });
 });

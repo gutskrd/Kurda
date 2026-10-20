@@ -58,6 +58,8 @@ export function LeagueMoment({ week, store = deviceStore }: { week: LeagueWeekRe
       glow={strong}
       flecks={BURST.league}
       fleckColours={[light, strong, '#ffffff']}
+      // seen on opening the league, not caused just now: shown, not felt
+      felt={false}
       seed={week.weekKey.length * 53 + tier.length}
       kicker={kicker}
       title={t('leagues.leagueName', { tier: leagueName(t, tier) })}

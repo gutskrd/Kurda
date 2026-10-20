@@ -2,10 +2,10 @@ import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
-import { LOCALES, LOCALE_LABEL, RTL_LOCALES, type Locale, type TranslationKey } from '../i18n/translations';
+import { LOCALES, LOCALE_LABEL, type Locale, type TranslationKey } from '../i18n/translations';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ClayButton, GradientBackground } from '../theme/glass';
-import { BreathingIcon } from '../theme/Icon';
+import { BreathingIcon, Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
@@ -178,17 +178,18 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
               key={locale}
               onPress={() => onSelect(locale)}
               accessibilityRole="radio"
-              accessibilityState={{ selected: active }}
+              accessibilityState={{ checked: active }}
+              accessibilityLabel={LOCALE_LABEL[locale]}
               style={[
                 styles.langRow,
                 { backgroundColor: colors.controlTrack, borderColor: active ? colors.primary : colors.glassBorder },
               ]}
             >
               <Text style={[styles.langLabel, { color: active ? colors.primary : colors.textPrimary }, active && styles.langLabelActive]}>
+                {/* each language in its own name and its own direction — nothing technical beside it */}
                 {LOCALE_LABEL[locale]}
-                {RTL_LOCALES.includes(locale) ? '  ‏(RTL)' : ''}
               </Text>
-              {active && <Text style={[styles.check, { color: colors.primary }]}>✓</Text>}
+              {active ? <Icon name="check" size={22} color={colors.primary} /> : null}
             </Pressable>
           );
         })}
@@ -268,9 +269,8 @@ const styles = StyleSheet.create({
     borderRadius: radii.md,
     borderWidth: 1,
   },
-  langLabel: { fontSize: typography.sizes.lg },
+  langLabel: { flexShrink: 1, fontSize: typography.sizes.lg, writingDirection: 'auto' },
   langLabelActive: { fontWeight: typography.weights.bold },
-  check: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   brand: { ...display(typography.sizes.xxl) },
   tagline: { fontSize: typography.sizes.lg, marginTop: spacing.xs, fontStyle: 'italic', marginBottom: spacing.lg },
   propList: { marginTop: spacing.lg, gap: spacing.sm, alignItems: 'center' },

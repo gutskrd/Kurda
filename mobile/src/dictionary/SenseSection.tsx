@@ -15,7 +15,14 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
 
   return (
     <View style={styles.sense}>
-      <Pressable onPress={() => setOpen((o) => !o)} style={styles.header} disabled={!hasExamples}>
+      <Pressable
+        onPress={() => setOpen((o) => !o)}
+        style={styles.header}
+        disabled={!hasExamples}
+        // a sense with examples opens and closes; one without is only words
+        accessibilityRole={hasExamples ? 'button' : undefined}
+        accessibilityState={hasExamples ? { expanded: open } : undefined}
+      >
         <Text style={[styles.pos, { color: colors.primary }]}>{sense.pos}</Text>
         {/*
           English on top when there is one, and the Kurdish under it. A word that

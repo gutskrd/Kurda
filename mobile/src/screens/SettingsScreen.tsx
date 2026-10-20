@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { Toggle } from '../theme/Toggle';
+import { Toggle, useSwitchThumb } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -44,6 +44,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [leagues, setLeagues] = useState<boolean | null>(null);
   // on this phone only (feedback/vibrationPref.ts)
   const [vibration, setVibration] = useVibrationPref();
+  const vibrationThumb = useSwitchThumb(vibration);
 
   // Profile visibility, username, age and leagues live server-side on /me; load
   // them so the hub reflects the saved values rather than defaulting every
@@ -234,6 +235,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
                 }}
                 accessibilityLabel={t('settings.vibration')}
                 trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                thumbColor={vibrationThumb}
               />
             }
           />

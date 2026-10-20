@@ -6,36 +6,43 @@ import { useEventTheme } from '../theme/EventThemeContext';
 import { themeAccent } from '../theme/eventThemes';
 import { isFlameLit, streakLabelKey, type Streak } from './format';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 
 /**
  * Flame + day count (KUR-031). Lit while the run is alive; dimmed when the
  * streak has lapsed to 0. Shows a snowflake when a freeze is banked. While an
- * event theme is active (KUR-092) the lit flame gets the event skin + accent.
+ * event theme is active (KUR-092) the lit flame takes the event's accent.
+ *
+ * A quiet pill with the flame in the sun's gold, the way the streak is drawn
+ * everywhere else (Learn's "Today"). It was a dark pill with a red flame and a
+ * snowflake in the page's own ink: the snowflake vanished into the pill in
+ * both schemes, and red is the colour of a wrong answer, not of a kept day.
+ * The gold is the darker ochre on the light page, so the flame clears 3:1.
  */
 export function StreakBadge({ streak }: { streak: Streak }) {
   const lit = isFlameLit(streak.current);
   const { t } = useI18n();
   const { pack } = useEventTheme();
   const { colors } = useTheme();
+  const dir = useDirection();
+  const days = t(streakLabelKey(streak.current), { count: streak.current });
+  // the snowflake is said in words too: a picture alone tells a screen reader nothing
+  const label = streak.freezes > 0 ? `${days}, ${t('profile.stat.freezes')}: ${streak.freezes}` : days;
   return (
     <View
-      style={[
-        styles.badge,
-        { backgroundColor: lit ? (pack ? themeAccent(pack, colors.accent) : colors.accent) : colors.controlTrack },
-      ]}
+      style={[styles.badge, { flexDirection: dir.row, backgroundColor: colors.controlTrack }]}
+      accessible
+      accessibilityLabel={label}
     >
-      <Icon name="flame" size={18} color={lit ? colors.danger : colors.textSecondary} />
-      <Text style={[styles.count, { color: lit ? colors.textOnPrimary : colors.textSecondary }]}>
-        {t(streakLabelKey(streak.current), { count: streak.current })}
-      </Text>
-      {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.primary} /> : null}
+      <Icon name="flame" size={18} color={lit ? (pack ? themeAccent(pack, colors.goldText) : colors.goldText) : colors.textSecondary} />
+      <Text style={[styles.count, { color: lit ? colors.textPrimary : colors.textSecondary }]}>{days}</Text>
+      {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.textSecondary} /> : null}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   badge: {
-    flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
     paddingVertical: spacing.xs,

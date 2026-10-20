@@ -64,6 +64,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
               {entry.audio.length > 0 && audio.supported ? (
                 <Pressable
                   onPress={() => audio.play(1)}
+                  accessibilityRole="button"
                   accessibilityLabel={t('dictionary.playPronunciation')}
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
@@ -72,6 +73,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
               ) : null}
               <Pressable
                 onPress={toggleSave}
+                accessibilityRole="button"
                 accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
                 accessibilityState={{ selected: saved }}
                 style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}

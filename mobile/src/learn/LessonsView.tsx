@@ -144,6 +144,17 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const [viewport, setViewport] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const scrolledFor = useRef<string | null>(null);
+  /*
+   * The cards above the path — today's goal, the league, the day's Zêr, the
+   * word of the day — each arrive when their own answer does, and one that
+   * arrives after the path has been scrolled to pushes it down the screen.
+   * For the few seconds those answers take, and until the person moves the
+   * page themselves, the scroll follows the stop it was put on. After that
+   * the page is theirs: a card changing later (the day's Zêr just claimed)
+   * never pulls it away from what they are looking at.
+   */
+  const touched = useRef(false);
+  const centredAt = useRef<{ y: number; since: number } | null>(null);
   const onFocus = useCallback((next: PathFocus | null) => {
     setFocus((was) => (was?.key === next?.key && was?.y === next?.y && was?.current === next?.current ? was : next));
   }, []);
@@ -153,8 +164,18 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   useEffect(() => {
     if (focusY === null || !focus || viewport === 0 || !courseId) return;
     const mark = `${courseId}:${focus.key}`;
-    if (scrolledFor.current === mark) return;
+    if (scrolledFor.current === mark) {
+      const was = centredAt.current;
+      if (touched.current || !was || was.y === focusY || Date.now() - was.since > FOLLOW_MS) return;
+      // the same stop, moved by something arriving above it: put it back at once, without a glide —
+      // this only undoes a shift nobody asked for
+      centredAt.current = { y: focusY, since: was.since };
+      scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: false });
+      return;
+    }
     scrolledFor.current = mark;
+    centredAt.current = { y: focusY, since: Date.now() };
+    touched.current = false;
     scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: !reduceMotion });
   }, [focusY, focus, viewport, courseId, tabBarInset, reduceMotion]);
 
@@ -182,6 +203,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
         showsVerticalScrollIndicator={false}
         onLayout={(e: LayoutChangeEvent) => setViewport(e.nativeEvent.layout.height)}
         onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y)}
+        onScrollBeginDrag={() => {
+          touched.current = true;
+        }}
         scrollEventThrottle={64}
       >
         <View style={styles.header}>
@@ -278,6 +302,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
     </View>
   );
 }
+
+/** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
+const FOLLOW_MS = 4000;
 
 /**
  * The one next step: which course and unit, the lesson's name, how far the

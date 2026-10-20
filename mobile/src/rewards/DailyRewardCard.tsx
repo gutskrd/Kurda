@@ -8,6 +8,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
 import { useCountUp } from '../theme/animate';
 import { cellState, dailyAction, type DailyStatus } from './daily';
+import { haptic } from '../feedback/haptics';
 
 /**
  * The daily Zêr calendar and claim (KUR-067).
@@ -36,7 +37,11 @@ export function DailyRewardCard() {
     setClaiming(true);
     const res = await client.post<{ reward: number }>('/rewards/daily/claim');
     setClaiming(false);
-    if (res.ok) setJustEarned(res.data.reward);
+    if (res.ok) {
+      // the day's Zêr taken: a light knock as it counts up, nothing grander for something that comes every day
+      haptic('tap');
+      setJustEarned(res.data.reward);
+    }
     // refused (say, the status was stale and nothing was learned today yet):
     // read it again, so the card says what is needed instead
     load();

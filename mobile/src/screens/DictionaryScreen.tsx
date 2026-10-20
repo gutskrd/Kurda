@@ -115,7 +115,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           <View style={styles.recents}>
             <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
             {recents.map((r) => (
-              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
+              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow} accessibilityRole="button">
                 <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
               </Pressable>
             ))}
@@ -130,14 +130,19 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             </View>
             {saved.map((w) => (
               <View key={w.entryId} style={styles.savedRow}>
-                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
+                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)} accessibilityRole="button">
                   <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
                   <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                     {w.definitionEn ?? w.definitionKu ?? ''}
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })} hitSlop={8}>
-                  <Text style={[styles.remove, { color: colors.textSecondary }]}>✕</Text>
+                <Pressable
+                  onPress={() => removeSaved(w.entryId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
+                  style={styles.removeButton}
+                >
+                  <Icon name="close" size={18} color={colors.textSecondary} />
                 </Pressable>
               </View>
             ))}
@@ -162,7 +167,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           keyExtractor={(h) => h.entryId}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
           renderItem={({ item }) => (
-            <Pressable onPress={() => openHit(item)} style={styles.hit}>
+            <Pressable onPress={() => openHit(item)} style={styles.hit} accessibilityRole="button">
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
@@ -195,7 +200,8 @@ const styles = StyleSheet.create({
   recentText: { fontSize: typography.sizes.md },
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
-  remove: { fontSize: typography.sizes.md },
+  // a fingertip's worth around the small cross, so it is not missed for the row beside it
+  removeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   hit: { paddingVertical: spacing.md },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   hitDef: { fontSize: typography.sizes.sm },

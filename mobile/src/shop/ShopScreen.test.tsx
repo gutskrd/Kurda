@@ -15,6 +15,8 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import type { ShopItem } from './format';
 import { ShopScreen } from './ShopScreen';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => vi.spyOn(Alert, 'alert').mockImplementation(() => undefined));
@@ -176,9 +178,15 @@ describe('the Shop, by kind', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();
     expect(screen.getByText('400 Zêr')).toBeTruthy();
+    const felt: HapticEvent[] = [];
+    resetHaptics();
+    const stop = onHaptic((e) => felt.push(e));
     fireEvent.click(screen.getByRole('button', { name: 'Buy' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/shop/purchase')).toBe(true));
     expect(client.calls.find((c) => c.path === '/shop/purchase')?.body).toMatchObject({ sku: 'bg-made-gola-sin', expectedPrice: 400 });
+    // bought: felt as it lands, as a purchase that failed would be
+    await waitFor(() => expect(felt).toEqual(['tap']));
+    stop();
   });
 
   it('still asks first before a dear purchase', async () => {

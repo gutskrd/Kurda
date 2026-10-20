@@ -107,7 +107,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
             ))}
           </View>
           <Text style={[styles.dur, { color: colors.textPrimary }]}>{(recorder.durationMs / 1000).toFixed(1)}s</Text>
-          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityLabel={t('lesson.speak.stop')}>
+          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityRole="button" accessibilityLabel={t('lesson.speak.stop')}>
             <Icon name="stop" size={14} color={colors.background} />
             <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
@@ -146,7 +146,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
       {message ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text> : null}
 
-      <Pressable disabled={disabled} onPress={onSkip} style={styles.skip}>
+      <Pressable disabled={disabled} onPress={onSkip} style={styles.skip} accessibilityRole="button" accessibilityState={{ disabled }}>
         <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.speak.skip')}</Text>
       </Pressable>
     </View>

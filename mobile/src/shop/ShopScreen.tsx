@@ -116,6 +116,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
       });
       setBusy(false);
       if (res.ok) {
+        // it is yours: felt as it lands, as a failure to buy it is
+        haptic('tap');
         setSelected(null);
         load();
         Alert.alert(t('shop.purchased'), t('shop.itemIsYours', { name: item.name }));

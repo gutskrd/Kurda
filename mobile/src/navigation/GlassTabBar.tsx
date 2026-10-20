@@ -182,17 +182,24 @@ export function GlassTabBar({ state, navigation }: BottomTabBarProps): React.JSX
                       <Icon name={tab?.icon ?? 'home'} size={24} color={color} />
                     )}
                     {badge ? (
-                      <View style={[styles.badge, { backgroundColor: colors.goldText }]} pointerEvents="none">
+                      <View style={[styles.badge, mirrored ? styles.badgeMirrored : null, { backgroundColor: colors.goldText }]} pointerEvents="none">
                         <Text style={[styles.badgeText, { color: colors.textOnPrimary }]} maxFontSizeMultiplier={1.2}>
                           {badge}
                         </Text>
                       </View>
                     ) : dot ? (
-                      <View style={[styles.dot, { backgroundColor: colors.goldText }]} pointerEvents="none" testID="tab-Profile-dot" />
+                      <View style={[styles.dot, mirrored ? styles.dotMirrored : null, { backgroundColor: colors.goldText }]} pointerEvents="none" testID="tab-Profile-dot" />
                     ) : null}
                   </View>
+                  {/*
+                    One line, and shrunk a little rather than cut where a word
+                    is longer than its fifth of a small phone ("Nachrichten" is
+                    65pt at 11, a slot on a 375pt screen 62).
+                  */}
                   <Text
                     numberOfLines={1}
+                    adjustsFontSizeToFit
+                    minimumFontScale={0.9}
                     maxFontSizeMultiplier={1.3}
                     style={[styles.label, { color, fontWeight: focused ? typography.weights.semibold : typography.weights.medium }]}
                   >
@@ -246,6 +253,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  // over the glyph's leading shoulder in a mirrored bar, as the platform puts it
+  badgeMirrored: { left: undefined, right: 15 },
   badgeText: { fontSize: typography.ios.tabLabel, fontWeight: typography.weights.bold },
   dot: { position: 'absolute', top: -1, right: -2, width: 10, height: 10, borderRadius: radii.pill },
+  dotMirrored: { right: undefined, left: -2 },
 });

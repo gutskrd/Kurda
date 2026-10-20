@@ -9,6 +9,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
+import { useDirection } from '../../reports/direction';
 
 export function AuthScreenShell({
   title,
@@ -40,17 +41,26 @@ export function AuthScreenShell({
 
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
   return (
     <GradientBackground>
       {onBack ? (
+        // the same way back as every other screen's header: a chevron and the word, on the reading side
         <Pressable
           onPress={onBack}
           accessibilityRole="button"
           accessibilityLabel={t('common.back')}
           hitSlop={10}
-          style={[styles.back, { top: insets.top + spacing.sm }]}
+          style={({ pressed }) => [
+            styles.back,
+            { flexDirection: dir.row, top: insets.top + spacing.sm },
+            mirrored ? styles.backEnd : styles.backStart,
+            pressed && styles.pressed,
+          ]}
         >
-          <Text style={[styles.backText, { color: colors.primary }]}>{`‹ ${t('common.back')}`}</Text>
+          <Icon name="chevron-left" size={20} color={colors.primary} style={dir.flip ?? undefined} />
+          <Text style={[styles.backText, { color: colors.primary }]}>{t('common.back')}</Text>
         </Pressable>
       ) : null}
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -195,8 +205,11 @@ export function FormError({ message }: { message: string | null }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
-  back: { position: 'absolute', top: spacing.xl, left: spacing.lg, zIndex: 1, paddingVertical: spacing.xs, paddingHorizontal: spacing.xs },
-  backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  back: { position: 'absolute', top: spacing.xl, zIndex: 1, alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: 2 },
+  backStart: { left: spacing.lg },
+  backEnd: { right: spacing.lg },
+  backText: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
+  pressed: { opacity: 0.6 },
   brand: { ...display(typography.sizes.xxl), textAlign: 'center' },
   slogan: { fontSize: typography.sizes.sm, textAlign: 'center', marginBottom: spacing.xl, fontStyle: 'italic' },
   hero: { alignSelf: 'center', marginBottom: spacing.md },

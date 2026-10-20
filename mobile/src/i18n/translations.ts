@@ -2010,7 +2010,9 @@ export type TranslationKey =
   | 'coursemap.path.practise'
   | 'coursemap.path.jump'
   | 'coursemap.path.jumpEnd'
-  | 'coursemap.path.courses';
+  | 'coursemap.path.courses'
+  | 'lesson.resultsFailed'
+  | 'lesson.failedRetry';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -3984,6 +3986,8 @@ const en: Catalog = {
   'coursemap.path.jump': 'Back to your lesson',
   'coursemap.path.jumpEnd': 'Back to where you are',
   'coursemap.path.courses': 'Your courses',
+  'lesson.resultsFailed': 'Your answers are saved, but the results didn’t come through.',
+  'lesson.failedRetry': 'That didn’t go through — tap to try again',
 };
 
 const ku: Catalog = {
@@ -5956,6 +5960,8 @@ const ku: Catalog = {
   'coursemap.path.jump': 'Vegere dersa xwe',
   'coursemap.path.jumpEnd': 'Vegere cihê xwe',
   'coursemap.path.courses': 'Kursên te',
+  'lesson.resultsFailed': 'Bersivên te hatin tomarkirin, lê encam negihîştin.',
+  'lesson.failedRetry': 'Ev negihîşt — ji bo dubarekirinê bitikîne',
 };
 
 const de: Catalog = {
@@ -7928,6 +7934,8 @@ const de: Catalog = {
   'coursemap.path.jump': 'Zurück zu deiner Lektion',
   'coursemap.path.jumpEnd': 'Zurück zu deiner Stelle',
   'coursemap.path.courses': 'Deine Kurse',
+  'lesson.resultsFailed': 'Deine Antworten sind gespeichert, aber die Ergebnisse sind nicht angekommen.',
+  'lesson.failedRetry': 'Das ist nicht durchgegangen — zum Wiederholen tippen',
 };
 
 const es: Catalog = {
@@ -9900,6 +9908,8 @@ const es: Catalog = {
   'coursemap.path.jump': 'Volver a tu lección',
   'coursemap.path.jumpEnd': 'Volver a donde estás',
   'coursemap.path.courses': 'Tus cursos',
+  'lesson.resultsFailed': 'Tus respuestas están guardadas, pero los resultados no llegaron.',
+  'lesson.failedRetry': 'No se pudo enviar: toca para intentarlo de nuevo',
 };
 
 const tr: Catalog = {
@@ -11872,6 +11882,8 @@ const tr: Catalog = {
   'coursemap.path.jump': 'Dersine dön',
   'coursemap.path.jumpEnd': 'Kaldığın yere dön',
   'coursemap.path.courses': 'Kursların',
+  'lesson.resultsFailed': 'Cevapların kaydedildi ama sonuçlar gelmedi.',
+  'lesson.failedRetry': 'Gönderilemedi — yeniden denemek için dokun',
 };
 
 const ar: Catalog = {
@@ -13844,6 +13856,8 @@ const ar: Catalog = {
   'coursemap.path.jump': 'العودة إلى درسك',
   'coursemap.path.jumpEnd': 'العودة إلى مكانك',
   'coursemap.path.courses': 'دوراتك',
+  'lesson.resultsFailed': 'إجاباتك محفوظة، لكن النتائج لم تصل.',
+  'lesson.failedRetry': 'لم يُرسَل — اضغط لإعادة المحاولة',
 };
 
 const fr: Catalog = {
@@ -15816,6 +15830,8 @@ const fr: Catalog = {
   'coursemap.path.jump': 'Revenir à ta leçon',
   'coursemap.path.jumpEnd': 'Revenir là où tu en es',
   'coursemap.path.courses': 'Tes cours',
+  'lesson.resultsFailed': 'Tes réponses sont enregistrées, mais les résultats ne sont pas arrivés.',
+  'lesson.failedRetry': 'Ça n’est pas passé — appuie pour réessayer',
 };
 
 const nl: Catalog = {
@@ -17788,6 +17804,8 @@ const nl: Catalog = {
   'coursemap.path.jump': 'Terug naar je les',
   'coursemap.path.jumpEnd': 'Terug naar waar je bent',
   'coursemap.path.courses': 'Je cursussen',
+  'lesson.resultsFailed': 'Je antwoorden zijn opgeslagen, maar de resultaten zijn niet binnengekomen.',
+  'lesson.failedRetry': 'Dat is niet gelukt — tik om het opnieuw te proberen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -19761,6 +19779,8 @@ const ckb: Catalog = {
   'coursemap.path.jump': 'گەڕانەوە بۆ وانەکەت',
   'coursemap.path.jumpEnd': 'گەڕانەوە بۆ شوێنەکەت',
   'coursemap.path.courses': 'خولەکانت',
+  'lesson.resultsFailed': 'وەڵامەکانت پاشەکەوت کران، بەڵام ئەنجامەکان نەگەیشتن.',
+  'lesson.failedRetry': 'نەگەیشت — دەست لێبدە بۆ هەوڵدانەوە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

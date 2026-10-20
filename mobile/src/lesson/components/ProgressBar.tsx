@@ -5,6 +5,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { timing } from '../../theme/animate';
 import { duration } from '../../theme/motion';
+import { useDirection } from '../../reports/direction';
 
 /**
  * Thin lesson progress bar; `value` is 0..1.
@@ -14,10 +15,15 @@ import { duration } from '../../theme/motion';
  * full-width bar slid along its track — a transform, on the native driver —
  * rather than a width that changes, which would lay the row out again on every
  * frame. Under Reduce Motion it is simply where it is.
+ *
+ * It fills from the reading side — from the right in Soranî and Arabic — and
+ * its track is the same quiet fill as every other bar's, which shows on the
+ * light page as well as the dark one.
  */
 export function ProgressBar({ value }: { value: number }) {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
+  const mirrored = useDirection().row === 'row-reverse';
   const v = Math.max(0, Math.min(1, value));
   const [width, setWidth] = useState(0);
   const p = useRef(new Animated.Value(v)).current;
@@ -32,10 +38,10 @@ export function ProgressBar({ value }: { value: number }) {
     return () => run.stop();
   }, [v, reduce, p]);
 
-  const translateX = p.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] });
+  const translateX = p.interpolate({ inputRange: [0, 1], outputRange: [mirrored ? width : -width, 0] });
   return (
     <View
-      style={[styles.track, { backgroundColor: colors.glassBorder }]}
+      style={[styles.track, { backgroundColor: colors.controlTrack }]}
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: Math.round(v * 100) }}
       onLayout={(e) => setWidth(e.nativeEvent.layout.width)}

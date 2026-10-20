@@ -12,8 +12,10 @@ export type { HapticEvent } from './hapticPacing';
  *
  *   select     the lightest tick there is: a segmented control, a filter
  *              chip, a picker or a switch changing its value
- *   tap        a light knock: something sent or given — a message, a like,
- *              a reaction, a friend request, a game started, a refresh
+ *   tap        a light knock: something sent, given or taken — a message, a
+ *              post, a like, a reaction, a friend request, a game started,
+ *              something bought in the shop, the day's Zêr claimed, a
+ *              refresh pulled (on Android; iOS's own control already ticks)
  *   correct    light and crisp: a right answer
  *   wrong      a gentle double (the system's "warning"): a wrong answer. Never
  *              the harsh error pattern — the person getting it wrong is often
@@ -21,8 +23,8 @@ export type { HapticEvent } from './hapticPacing';
  *   celebrate  the system's "success", once: a lesson finished, a goal met, a
  *              streak kept, a new level, rank, league or badge, a gift opened
  *   error      the system's "error": something the person asked for failed
- *              and is in their way (a purchase, a message that did not send).
- *              Not for a field that is still being typed in
+ *              and is in their way (a purchase, a message or a post that did
+ *              not send). Not for a field that is still being typed in
  *
  * Nothing else buzzes: not scrolling, typing, every button, the tab bar,
  * opening a screen, a message or notification arriving, a timer, or anything
@@ -163,10 +165,14 @@ export function resetHaptics(): void {
 /**
  * A pull-to-refresh's `onRefresh`, felt: the list was pulled past the point
  * where it lets go and reloads — the person's own gesture, answered once.
+ *
+ * Once means not on iOS, where the system's refresh control already ticks at
+ * exactly that point; a second buzz of our own on top of it was the same
+ * moment felt twice. Android's says nothing, so there it is ours to give.
  */
 export function refreshFelt(refresh: () => void): () => void {
   return () => {
-    haptic('tap');
+    if (Platform.OS !== 'ios') haptic('tap');
     refresh();
   };
 }

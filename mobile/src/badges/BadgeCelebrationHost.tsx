@@ -55,6 +55,9 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
   const [holds, setHolds] = useState(0);
   const [ready, setReady] = useState(false);
   const seen = useRef(new Set<string>());
+  // the unlocks that came while the app was open, as the person earned them —
+  // felt as they are celebrated; the ones waiting from before are only shown
+  const live = useRef(new Set<string>());
 
   const add = useCallback((items: PendingBadge[]) => {
     setQueue((q) => enqueue(q, items.filter((i) => badgeDef(i.key) !== undefined), seen.current));
@@ -73,7 +76,11 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
   useUserEvents(
     useCallback(
       (event) => {
-        if (event.type === 'badge_unlocked' && typeof event.key === 'string' && typeof event.tier === 'number') add([fromEvent(event)]);
+        if (event.type === 'badge_unlocked' && typeof event.key === 'string' && typeof event.tier === 'number') {
+          const badge = fromEvent(event);
+          live.current.add(seenId(badge));
+          add([badge]);
+        }
       },
       [add],
     ),
@@ -113,12 +120,14 @@ export function BadgeCelebrationHost({ children }: { children: ReactNode }): Rea
   return (
     <GateContext.Provider value={gate}>
       {children}
-      {head && ready && holds === 0 ? <BadgeMoment key={seenId(head)} badge={head} onClose={close} /> : null}
+      {head && ready && holds === 0 ? (
+        <BadgeMoment key={seenId(head)} badge={head} felt={live.current.has(seenId(head))} onClose={close} />
+      ) : null}
     </GateContext.Provider>
   );
 }
 
-function BadgeMoment({ badge, onClose }: { badge: PendingBadge; onClose: () => void }): React.JSX.Element {
+function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: boolean; onClose: () => void }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { t } = useI18n();
   const def = badgeDef(badge.key)!;
@@ -146,6 +155,7 @@ function BadgeMoment({ badge, onClose }: { badge: PendingBadge; onClose: () => v
       note={t(badgeTextKey(badge.key, 'how'))}
       announce={`${kicker}: ${label}`}
       onClose={onClose}
+      felt={felt}
       actions={
         <>
           <ClayButton label={t('badges.unlock.continue')} tone="primary" size="large" onPress={onClose} />

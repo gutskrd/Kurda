@@ -20,6 +20,9 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { SkeletonList } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { useDirection } from '../reports/direction';
+import { SendButton } from './SendButton';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { MessageContent, hasControls, isCardMessage } from './MessageContent';
@@ -60,6 +63,10 @@ export function ChatScreen({
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
+  // in Soranî and Arabic the thread is mirrored: your own words on the left, the composer's Send on the left too
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
+  const bottom = useScreenBottomInset(spacing.md);
   const me = user?.id ?? '';
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [draft, setDraft] = useState('');
@@ -81,6 +88,8 @@ export function ChatScreen({
   const name = username || messages.find((m) => m.senderId === userId)?.username || '';
   // the gift picker's one friend, the same array until the friend changes
   const giftFriends = useMemo(() => [{ userId, name }], [userId, name]);
+  // newest first, for the inverted list below — once per change to the thread, not per keystroke
+  const newestFirst = useMemo(() => [...messages].reverse(), [messages]);
 
   const markRead = useCallback(() => void client.post(`/chat/${userId}/read`), [client, userId]);
 
@@ -199,8 +208,15 @@ export function ChatScreen({
         {loading ? (
           <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
         ) : (
+          /*
+           * Newest at the bottom, and the thread opens there: inverted, as a
+           * club's thread is. Drawn top-down it opened on the oldest message
+           * of the page, and a reply arriving — or the one just sent — landed
+           * below the fold.
+           */
           <FlatList
-            data={messages}
+            data={newestFirst}
+            inverted
             keyExtractor={(m) => m.id}
             contentContainerStyle={styles.list}
             renderItem={({ item }) => {
@@ -217,7 +233,7 @@ export function ChatScreen({
                   accessible={whole}
                   accessibilityActions={mine || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
                   onAccessibilityAction={() => setReporting(item.id)}
-                  style={[styles.bubbleRow, mine ? styles.rowMine : styles.rowTheirs]}
+                  style={[styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
                 >
                   {card ? (
                     <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
@@ -242,22 +258,22 @@ export function ChatScreen({
           />
         )}
 
-        {peerTyping ? <Text style={[styles.typing, { color: colors.textSecondary }]}>{t('chat.typing.one', { name })}</Text> : null}
+        {peerTyping ? <Text style={[styles.typing, dir.text, { color: colors.textSecondary }]}>{t('chat.typing.one', { name })}</Text> : null}
 
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
-        <View style={[styles.inputRow, { borderTopColor: colors.separator }]}>
+        <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
           <Pressable
             onPress={() => setPicking(true)}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
             style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
-            <Icon name="gift" size={22} color={colors.gold} />
+            <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
           <ChatGameButton target={{ kind: 'dm', friendId: userId }} />
           <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+            style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
             placeholder={t('chat.messagePlaceholder')}
             placeholderTextColor={colors.textSecondary}
             value={draft}
@@ -266,14 +282,7 @@ export function ChatScreen({
             multiline
             accessibilityLabel={t('chat.messagePlaceholder')}
           />
-          <Pressable
-            onPress={send}
-            disabled={!draft.trim()}
-            accessibilityRole="button"
-            style={[styles.sendBtn, { backgroundColor: draft.trim() ? colors.primary : colors.controlTrack }]}
-          >
-            <Text style={[styles.sendText, { color: draft.trim() ? colors.textOnPrimary : colors.textSecondary }]}>{t('chat.send')}</Text>
-          </Pressable>
+          <SendButton ready={draft.trim().length > 0} onPress={() => void send()} />
         </View>
       </KeyboardAvoidingView>
 
@@ -320,8 +329,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   list: { padding: spacing.lg, gap: spacing.xs },
   bubbleRow: { maxWidth: '80%' },
-  rowMine: { alignSelf: 'flex-end', alignItems: 'flex-end' },
-  rowTheirs: { alignSelf: 'flex-start' },
+  // your own words at the end of the line and theirs at its start, whichever side that is
+  rowEnd: { alignSelf: 'flex-end', alignItems: 'flex-end' },
+  rowStart: { alignSelf: 'flex-start', alignItems: 'flex-start' },
   bubble: { borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   receipt: { fontSize: typography.sizes.xs, marginTop: 2 },
   empty: { textAlign: 'center', marginTop: spacing.xl },
@@ -329,6 +339,4 @@ const styles = StyleSheet.create({
   inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
   giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   input: { minHeight: MIN_TOUCH_TARGET, flex: 1, maxHeight: 120, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
-  sendBtn: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: spacing.lg, borderRadius: radii.md },
-  sendText: { fontWeight: typography.weights.bold },
 });

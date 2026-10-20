@@ -341,6 +341,9 @@ export function ProfileScreen() {
         */}
         {streak ? <LearningRow streak={streak} /> : null}
 
+        {/* who they are, in their own words, before what can be done with the page */}
+        {me?.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
+
         {/*
           The two things people do with their own profile, side by side and
           the same size: change it, and send it to somebody.
@@ -367,8 +370,6 @@ export function ProfileScreen() {
             </Text>
           </Pressable>
         </View>
-
-        {me?.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
 
         <GiftedNote background={me?.background} icon={me?.icon} />
 
@@ -494,7 +495,7 @@ const styles = StyleSheet.create({
 
   aside: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
 
-  learning: { alignSelf: 'stretch', marginTop: spacing.sm, gap: spacing.xs },
+  learning: { alignSelf: 'stretch', marginTop: spacing.sm, gap: spacing.sm },
   learningRow: { flexDirection: 'row', justifyContent: 'center' },
   learningCell: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
   learningValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

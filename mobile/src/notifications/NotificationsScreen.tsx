@@ -115,11 +115,11 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
     <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
       <Text style={[styles.label, { color: colors.textPrimary }]}>{label}</Text>
       <View style={styles.stepper}>
-        <Pressable onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8}>
+        <Pressable onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8} accessibilityRole="button">
           <Text style={[styles.stepText, { color: colors.textOnPrimary }]}>−</Text>
         </Pressable>
         <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute)}</Text>
-        <Pressable onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8}>
+        <Pressable onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.primary }]} hitSlop={8} accessibilityRole="button">
           <Text style={[styles.stepText, { color: colors.textOnPrimary }]}>+</Text>
         </Pressable>
       </View>

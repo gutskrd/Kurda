@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
 import { radii, spacing, typography } from '../theme/tokens';
-import { GradientBackground } from '../theme/glass';
+import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { LessonResults } from './components/LessonResults';
@@ -27,6 +28,7 @@ import { AnswerQueue } from './queue';
 import type { AnswerResult, Exercise, RetryResult, SelfRating, SessionResults, SessionView } from './types';
 import type { ApiClient } from '../api/client';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
 export interface SessionPaths {
@@ -51,13 +53,14 @@ const LESSON_PATHS: SessionPaths = {
  */
 export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onExit: () => void }) {
   const { client } = useAuth();
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [view, setView] = useState<SessionView | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     let active = true;
+    setLoadError(null);
     void client.get<SessionView>(`/lessons/${lessonId}/session`).then((res) => {
       if (!active) return;
       if (res.ok) setView(res.data);
@@ -66,18 +69,12 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
     return () => {
       active = false;
     };
-  }, [client, lessonId]);
+  }, [client, lessonId, attempt]);
 
   if (loadError) {
     return (
       <GradientBackground>
-        <View style={styles.centered}>
-          <Text style={[styles.errorText, { color: colors.textPrimary }]}>{t('lesson.loadFailed')}</Text>
-          <Text style={[styles.errorDetail, { color: colors.textSecondary }]}>{loadError}</Text>
-          <Pressable onPress={onExit} style={styles.exitButton}>
-            <Text style={[styles.exitText, { color: colors.primary }]}>{t('common.back')}</Text>
-          </Pressable>
-        </View>
+        <Stuck title={t('lesson.loadFailed')} detail={loadError} onRetry={() => setAttempt((n) => n + 1)} onExit={onExit} />
       </GradientBackground>
     );
   }
@@ -113,6 +110,9 @@ export function SessionPlayer({
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const bottomInset = useScreenBottomInset(spacing.lg);
+  // the way out and the bar read from the right in Soranî and Arabic, as every other screen's header does
+  const dir = useDirection();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
 
@@ -122,10 +122,19 @@ export function SessionPlayer({
   const [recorded, setRecorded] = useState(false);
   const [selfRating, setSelfRating] = useState<SelfRating | null>(null);
   const [submitting, setSubmitting] = useState(false);
-  const [offline, setOffline] = useState(false);
+  /*
+   * An answer that did not get through: 'offline' when there was no
+   * connection (it waits in the queue), 'failed' when the server could not
+   * take it just then. Each says which — "you're offline" to somebody who is
+   * not is the app blaming their phone for its own hiccup.
+   */
+  const [stall, setStall] = useState<'offline' | 'failed' | null>(null);
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  // the finished lesson could not be added up (offline, a server hiccup): said, with a retry, never a spinner for ever
+  const [completeFailed, setCompleteFailed] = useState(false);
+  const [completeAttempt, setCompleteAttempt] = useState(0);
 
   const ex = currentExercise(state);
 
@@ -156,7 +165,7 @@ export function SessionPlayer({
     setMatch(emptyMatch);
     setRecorded(false);
     setSelfRating(null);
-    setOffline(false);
+    setStall(null);
   }, [state.index]);
 
   const draft = useMemo(() => {
@@ -198,13 +207,17 @@ export function SessionPlayer({
   // things stand, for what else this lesson did (a goal met, a new level)
   useEffect(() => {
     if (state.status !== 'finished' || results) return;
+    setCompleteFailed(false);
     void client.post<SessionResults>(paths.complete(view.sessionId)).then((res) => {
-      if (!res.ok) return;
+      if (!res.ok) {
+        setCompleteFailed(true);
+        return;
+      }
       setResults(res.data);
       const streakNow: StreakMark = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn };
       void readStanding(client).then(({ standing }) => setMoments(lessonMoments(before.current, standing, streakNow)));
     });
-  }, [state.status, results, client, view.sessionId, paths]);
+  }, [state.status, results, client, view.sessionId, paths, completeAttempt]);
 
   // what was typed, so the feedback can set it beside the right answer
   const given =
@@ -223,25 +236,28 @@ export function SessionPlayer({
       const res = await client.post<RetryResult>(paths.retry(view.sessionId), body);
       setSubmitting(false);
       if (res.ok) {
+        setStall(null);
         feelAnswer(ex.type, res.data.accepted);
         dispatch({ type: 'ANSWERED', result: res.data, given });
       }
       // refused (the session ended, say): the second try counts for nothing,
       // so it is let go rather than asked over and over
       else if (res.error.kind === 'client') dispatch({ type: 'SKIP' });
-      else setOffline(true);
+      else setStall(res.error.kind === 'network' ? 'offline' : 'failed');
       return;
     }
     const res = await client.post<AnswerResult>(paths.answers(view.sessionId), body);
     setSubmitting(false);
     if (res.ok) {
+      // a retry that went through puts the verdict back where the retry was
+      setStall(null);
       feelAnswer(ex.type, res.data.accepted);
       dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
-      setOffline(true);
+      setStall('offline');
     } else {
-      setOffline(true); // surface a retry for transient server errors too
+      setStall('failed'); // surface a retry for transient server errors too
     }
   }, [ex, draft, submitting, client, view.sessionId, queue, paths, reask, given]);
 
@@ -261,7 +277,7 @@ export function SessionPlayer({
     setSubmitting(false);
     const last = sent[sent.length - 1];
     if (last) {
-      setOffline(false);
+      setStall(null);
       feelAnswer(ex?.type, last.accepted);
       dispatch({ type: 'ANSWERED', result: last, given });
     }
@@ -271,6 +287,13 @@ export function SessionPlayer({
     return (
       <GradientBackground>
         <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} moments={moments} onDone={onExit} />
+      </GradientBackground>
+    );
+  }
+  if (state.status === 'finished' && completeFailed) {
+    return (
+      <GradientBackground>
+        <Stuck title={t('lesson.resultsFailed')} onRetry={() => setCompleteAttempt((n) => n + 1)} onExit={onExit} />
       </GradientBackground>
     );
   }
@@ -287,17 +310,28 @@ export function SessionPlayer({
 
   return (
     <GradientBackground>
-      <View style={styles.screen}>
-        <View style={[styles.header, { paddingTop: topInset }]}>
-          <Pressable onPress={onExit} accessibilityLabel={t('lesson.quit')}>
-            <Text style={[styles.quit, { color: colors.textSecondary }]}>✕</Text>
+      {/* the Check button rides above the keyboard while an answer is typed, rather than under it */}
+      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
+          <Pressable
+            onPress={onExit}
+            accessibilityRole="button"
+            accessibilityLabel={t('lesson.quit')}
+            style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+          >
+            <Icon name="close" size={24} color={colors.textSecondary} />
           </Pressable>
           <View style={styles.progressWrap}>
             <ProgressBar value={progress(state)} />
           </View>
           {view.grammarMd ? (
-            <Pressable onPress={() => setShowTips(true)} accessibilityLabel={t('lesson.grammarTips')} hitSlop={8}>
-              <Icon name="lightbulb" size={22} color={colors.gold} />
+            <Pressable
+              onPress={() => setShowTips(true)}
+              accessibilityRole="button"
+              accessibilityLabel={t('lesson.grammarTips')}
+              style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
+            >
+              <Icon name="lightbulb" size={22} color={colors.goldText} />
             </Pressable>
           ) : null}
         </View>
@@ -371,10 +405,16 @@ export function SessionPlayer({
         ) : null}
       </ScrollView>
 
-        {offline ? (
-          <Pressable onPress={retry} style={[styles.offline, { backgroundColor: colors.controlTrack }]}>
+        {stall ? (
+          <Pressable
+            onPress={retry}
+            disabled={submitting}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: submitting, busy: submitting }}
+            style={[styles.offline, { backgroundColor: colors.controlTrack, marginBottom: bottomInset }]}
+          >
             <Text style={[styles.offlineText, { color: colors.textSecondary }]}>
-              {submitting ? t('lesson.syncing') : t('lesson.offlineRetry')}
+              {submitting ? t('lesson.syncing') : stall === 'offline' ? t('lesson.offlineRetry') : t('lesson.failedRetry')}
             </Text>
           </Pressable>
         ) : (
@@ -386,8 +426,29 @@ export function SessionPlayer({
             onContinue={() => dispatch({ type: 'CONTINUE' })}
           />
         )}
-      </View>
+      </KeyboardAvoidingView>
     </GradientBackground>
+  );
+}
+
+/**
+ * Something the lesson needed did not come — the lesson itself, or its
+ * results. Said plainly, with the one thing that may fix it and a way out.
+ */
+function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: string; onRetry: () => void; onExit: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.centered}>
+      <Text style={[styles.errorText, { color: colors.textPrimary }]} accessibilityRole="header">
+        {title}
+      </Text>
+      {detail ? <Text style={[styles.errorDetail, { color: colors.textSecondary }]}>{detail}</Text> : null}
+      <View style={styles.stuckActions}>
+        <ClayButton label={t('common.retry')} tone="primary" size="large" onPress={onRetry} />
+        <ClayButton label={t('common.back')} onPress={onExit} />
+      </View>
+    </View>
   );
 }
 
@@ -427,20 +488,21 @@ const styles = StyleSheet.create({
     paddingTop: spacing.xl,
     paddingBottom: spacing.md,
   },
-  quit: { fontSize: typography.sizes.lg },
+  // a fingertip's worth around a 24pt mark; the row's own gap does the spacing
+  headerButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
+  pressed: { opacity: 0.6 },
   reask: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   tallying: { fontSize: typography.sizes.md },
-  errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   errorDetail: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  exitButton: { marginTop: spacing.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.xl },
-  exitText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  stuckActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },
   offline: {
     margin: spacing.lg,
     padding: spacing.md,
     borderRadius: radii.md,
     alignItems: 'center',
   },
-  offlineText: { fontSize: typography.sizes.md },
+  offlineText: { fontSize: typography.sizes.md, textAlign: 'center' },
 });

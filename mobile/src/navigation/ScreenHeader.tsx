@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useCallback, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -29,6 +29,11 @@ import { useDirection } from '../reports/direction';
  * So the two sides are `flex: 1` and the title is between them: equal shares of
  * whatever is left means the middle is the middle, whatever either side holds
  * and whatever language it holds it in. That is what UINavigationBar does.
+ *
+ * And each side is at least as wide as the wider of the two holds, measured,
+ * so a long title is cut short with an ellipsis instead of running over the
+ * way back — a club's name beside "گەڕانەوە" and two buttons was drawn
+ * straight across both.
  *
  * The bar itself is 44pt tall — the same minimum a fingertip needs, which is
  * not a coincidence, because the back button is the thing in it.
@@ -80,6 +85,16 @@ export function ScreenHeader({
   const topInset = useScreenTopInset();
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
+  // how wide the way back and the trailing actions are, so neither side is squeezed under the title
+  const [ends, setEnds] = useState({ start: 0, end: 0 });
+  const measure = useCallback(
+    (key: 'start' | 'end') => (e: LayoutChangeEvent) => {
+      const width = Math.ceil(e.nativeEvent.layout.width);
+      setEnds((was) => (was[key] === width ? was : { ...was, [key]: width }));
+    },
+    [],
+  );
+  const sideMin = { minWidth: Math.max(ends.start, ends.end) };
 
   return (
     <View
@@ -91,9 +106,10 @@ export function ScreenHeader({
       ]}
     >
       <View style={[styles.bar, { flexDirection: dir.row }]}>
-        <View style={[styles.side, { flexDirection: dir.row }]}>
+        <View style={[styles.side, sideMin, { flexDirection: dir.row }]}>
           {onBack ? (
             <Pressable
+              onLayout={measure('start')}
               onPress={onBack}
               accessibilityRole="button"
               accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
@@ -120,10 +136,14 @@ export function ScreenHeader({
           </Text>
         ) : null}
 
-        <View style={[styles.side, { flexDirection: dir.row, justifyContent: 'flex-start' }]}>
+        <View style={[styles.side, sideMin, { flexDirection: dir.row, justifyContent: 'flex-start' }]}>
           {/* the trailing slot runs to the far edge whichever side that is */}
           <View style={styles.sideFill} />
-          {right}
+          {right ? (
+            <View onLayout={measure('end')} style={[styles.trailing, { flexDirection: dir.row }]}>
+              {right}
+            </View>
+          ) : null}
         </View>
       </View>
     </View>
@@ -137,6 +157,7 @@ const styles = StyleSheet.create({
   // without anybody having to guess how wide the word "Back" is
   side: { flex: 1, alignItems: 'center' },
   sideFill: { flex: 1 },
+  trailing: { alignItems: 'center' },
   leading: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
   leadingMirrored: { paddingRight: 0, paddingLeft: spacing.sm },
   pressed: { opacity: 0.6 },
