@@ -1,0 +1,100 @@
+/**
+ * The speaking characters: Hevalo the deer, Hamo and Xezal, drawn as layered
+ * SVG so that while a recording plays only the mouth (and now and then the
+ * eyes) is redrawn.
+ *
+ * Two ways in. `characterSvg` gives a whole, standalone drawing — for a still
+ * picture, or for a page that simply swaps the string. `characterArt` gives
+ * the parts, for a player that keeps the body drawn and changes one small
+ * layer at a time: the web puts them in groups of one inline <svg>, the phone
+ * in react-native-svg, and they line up either way because every part is in
+ * the same units.
+ *
+ * Like the rest of the app's art, a drawing is a string, the same on every
+ * machine, with no images, fonts, filters or links; gradient and clip ids
+ * carry a prefix so several characters can share a page.
+ */
+import { VISEMES, type Viseme } from '../lipsync/visemes.js';
+import { escapeXml, n, prefixFor } from '../art/svg.js';
+import type { CharacterBox, CharacterArt, CharacterId } from './types.js';
+import { CHARACTER_IDS, CHARACTER_NAMES } from './types.js';
+import { drawHevalo } from './hevalo.js';
+import { drawHamo } from './hamo.js';
+import { drawXezal } from './xezal.js';
+
+export { CHARACTER_IDS, CHARACTER_NAMES, isCharacterId, type CharacterBox, type CharacterArt, type CharacterId } from './types.js';
+
+const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
+  hevalo: drawHevalo,
+  hamo: drawHamo,
+  xezal: drawXezal,
+};
+
+/** Hevalo is the app's own mascot, so he speaks unless someone has chosen another. */
+export const DEFAULT_CHARACTER: CharacterId = 'hevalo';
+
+/** Who can speak, in the order a picker shows them. */
+export const CHARACTERS: readonly { id: CharacterId; name: string }[] = CHARACTER_IDS.map((id) => ({ id, name: CHARACTER_NAMES[id] }));
+
+/** Drawings already made, by prefix: a player asks for the same parts on every frame. */
+const made = new Map<string, CharacterArt>();
+
+/**
+ * A character's parts, with every gradient and clip id starting with
+ * `idPrefix` (by default one of the character's own, so the three never clash
+ * with each other; pass another to show the same character twice on a page).
+ * Drawn the first time it is asked for, then kept.
+ */
+export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
+  const draw = DRAW[id];
+  if (!draw) throw new RangeError(`characters: no character called ${String(id)}`);
+  const prefix = `${prefixFor(idPrefix ?? `hv${id}`)}-`;
+  const key = `${id}|${prefix}`;
+  let art = made.get(key);
+  if (!art) {
+    art = draw(prefix);
+    made.set(key, art);
+  }
+  return art;
+}
+
+export interface CharacterSvgOptions {
+  /** the mouth shape to show; at rest by default */
+  mouth?: Viseme;
+  eyes?: 'open' | 'closed';
+  /** the whole figure, or head and shoulders */
+  crop?: 'full' | 'bust';
+  /** how wide the drawing is shown, in pixels; by default the crop's own width in drawing units */
+  width?: number;
+  idPrefix?: string;
+  /** the drawing's text label for screen readers; the character's name by default */
+  title?: string;
+}
+
+const box = (b: CharacterBox): string => `${n(b.x)} ${n(b.y)} ${n(b.w)} ${n(b.h)}`;
+
+/** The group the head is drawn in: turned by `nod` degrees about the neck for a small nod. */
+export function headGroup(art: CharacterArt, mouth: Viseme = 'rest', eyes: 'open' | 'closed' = 'open', nod = 0): string {
+  const turn = nod === 0 ? '' : ` transform="rotate(${n(nod)} ${n(art.headPivot.x)} ${n(art.headPivot.y)})"`;
+  return `<g${turn}>${art.head}${art.eyes[eyes]}${art.mouths[mouth]}${art.overlay}</g>`;
+}
+
+/** A complete, standalone SVG of a character. */
+export function characterSvg(id: CharacterId, options: CharacterSvgOptions = {}): string {
+  const { mouth = 'rest', eyes = 'open', crop = 'full' } = options;
+  if (!VISEMES.includes(mouth)) throw new RangeError(`characters: no mouth shape called ${String(mouth)}`);
+  if (eyes !== 'open' && eyes !== 'closed') throw new RangeError(`characters: eyes are open or closed, not ${String(eyes)}`);
+  const art = characterArt(id, options.idPrefix);
+  const frame = crop === 'bust' ? art.bust : art.viewBox;
+  const width = options.width ?? frame.w;
+  if (!Number.isFinite(width) || width <= 0) throw new RangeError(`characters: width must be a positive number, got ${String(options.width)}`);
+  const height = (width * frame.h) / frame.w;
+  const t = `${prefixFor(options.idPrefix ?? `hv${id}`)}-title`;
+  return (
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${n(height)}" viewBox="${box(frame)}" role="img" aria-labelledby="${t}">` +
+    `<title id="${t}">${escapeXml(options.title ?? art.name)}</title>` +
+    art.body +
+    headGroup(art, mouth, eyes) +
+    '</svg>'
+  );
+}
