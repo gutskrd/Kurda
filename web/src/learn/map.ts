@@ -4,7 +4,7 @@
  * rules are tested once and the Learn page, the map and "your first lesson"
  * after sign-up all agree on them.
  */
-import { isSoraniDialect } from '@kurda/shared';
+import { isSoraniDialect, lessonStates as pathLessonStates, type LessonState as PathLessonState } from '@kurda/shared';
 import type { CourseMap, SkillNode } from './types';
 
 /**
@@ -13,17 +13,14 @@ import type { CourseMap, SkillNode } from './types';
  * locked — the rest: lessons of a skill not open yet, and those after `next`,
  *          which come in order (the phone opens a skill at its first
  *          unfinished lesson too).
+ *
+ * The rule is the lesson path's own (@kurda/shared), so the Learn page, the
+ * path and the phone read one rule.
  */
-export type LessonState = 'done' | 'next' | 'locked';
+export type LessonState = PathLessonState;
 
 export function lessonStates(skill: SkillNode): LessonState[] {
-  let nextGiven = skill.state === 'locked';
-  return skill.lessons.map((lesson) => {
-    if (lesson.completed) return 'done';
-    if (nextGiven) return 'locked';
-    nextGiven = true;
-    return 'next';
-  });
+  return pathLessonStates(skill);
 }
 
 /** A lesson the learner can open from the map: one finished, or the one up next. */

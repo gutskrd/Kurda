@@ -469,9 +469,11 @@ export function CourseGridSkeleton({ count = 2 }: { count?: number }): React.JSX
   );
 }
 
-/** A course map: the title, then a unit of skills, each a card with its lessons. */
+/** A course's lesson path: the title, a unit's banner, and the first stops down the winding line. */
 export function CourseMapSkeleton(): React.JSX.Element {
   const t = useT();
+  // the same lean as the path's own: middle, start, middle, end
+  const lean = [0, -72, 0, 72];
   return (
     <SkeletonRegion label={t('common.loading')}>
       <div className="page-header">
@@ -482,31 +484,12 @@ export function CourseMapSkeleton(): React.JSX.Element {
           <Skeleton line w={160} />
         </p>
       </div>
-      <section className="cmap-unit">
-        <h2 className="cmap-unit-title">
-          <Skeleton line w={120} />
-        </h2>
-        <ol className="cmap-skills">
-          {times(3, (i) => (
-            <li className="cmap-skill" key={i}>
-              <div className="cmap-skill-head">
-                <h3 className="cmap-skill-title">
-                  <Skeleton line w={140} />
-                </h3>
-              </div>
-              <ol className="cmap-lessons">
-                {times(2, (j) => (
-                  <li className="cmap-lesson" key={j}>
-                    <span className="cmap-lesson-row">
-                      <Skeleton line w="70%" />
-                    </span>
-                  </li>
-                ))}
-              </ol>
-            </li>
-          ))}
-        </ol>
-      </section>
+      <Skeleton className="lp-skel-banner" w="100%" />
+      <div className="lp-skel-path">
+        {times(4, (i) => (
+          <Skeleton key={i} className="lp-skel-node" style={{ top: 60 + i * 104 - 36, '--x': `${lean[i]}px` } as React.CSSProperties} />
+        ))}
+      </div>
     </SkeletonRegion>
   );
 }

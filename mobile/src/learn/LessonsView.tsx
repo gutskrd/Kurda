@@ -1,6 +1,6 @@
-import { useCallback, useState, type Ref } from 'react';
+import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, ErrorRetry } from '../theme/glass';
@@ -12,13 +12,15 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
-import { SkillNodeView } from '../coursemap/SkillNodeView';
+import { LessonPath, type PathFocus } from '../coursemap/LessonPath';
+import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
 import { EventBanner } from '../events/EventBanner';
 import { LeagueLine } from '../leagues/LeagueLine';
-import { courseRows, isLaunchable, stateHint, type CourseEntry, type MapRow } from '../coursemap/node';
-import type { CourseMap, CourseSummary, SkillNode } from '../coursemap/types';
+import type { CourseEntry } from '../coursemap/node';
+import type { CourseMap, CourseSummary } from '../coursemap/types';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
@@ -32,26 +34,37 @@ import { fraction, nextStep, type NextStep } from './next';
  *
  * Top to bottom in the order of what somebody opening it wants: the one next
  * step (a card with one button), how today is going, the practice tools, and
- * then the whole course map for anyone who wants to choose for themselves.
- * Continuing a lesson is one tap from here.
+ * then the course as a lesson path for anyone who wants to choose for
+ * themselves. Continuing a lesson is one tap from here — from the card, or
+ * from the "Continue" over the current skill on the path.
  *
  * Today is said plainly — how much of the daily goal is done, how long the
  * streak is — and nothing here counts down, warns, or says what could be
  * lost. Some of the people reading it are children.
+ *
+ * The path is one course at a time, with a switch between courses when there
+ * are several. When it first appears it scrolls to the current skill, and a
+ * button brings that back once it has been scrolled away. A course whose map
+ * could not be loaded stays in the switch, saying so, with a way to try again.
  */
-export function LessonsView({ scrollRef }: { scrollRef?: Ref<FlatList<MapRow>> }): React.JSX.Element {
+export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
+  const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [due, setDue] = useState<number | null>(null);
+  // the review count places review on the path, so the path waits for it (or for its failure) once
+  const [dueSettled, setDueSettled] = useState(false);
   const [courses, setCourses] = useState<CourseEntry[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [chosen, setChosen] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -64,7 +77,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<FlatList<MapRow>> }
         if (active && res.ok && res.data.user.streak) setStreak(res.data.user.streak);
       });
       void client.get<{ due: number }>('/practice/due').then((res) => {
-        if (active && res.ok) setDue(res.data.due);
+        if (!active) return;
+        if (res.ok) setDue(res.data.due);
+        setDueSettled(true);
       });
       void (async () => {
         const list = await client.get<{ courses: CourseSummary[] }>('/courses');
@@ -75,7 +90,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<FlatList<MapRow>> }
           return;
         }
         // every course, in the order the server lists them — not only the
-        // first; one whose map did not load stays listed, saying so (`courseRows`)
+        // first; one whose map did not load stays listed, saying so
         const loaded = await Promise.all(list.data.courses.map((c) => client.get<CourseMap>(`/courses/${c.id}/map`)));
         if (!active) return;
         setCourses(
@@ -101,92 +116,166 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<FlatList<MapRow>> }
     [client],
   );
 
-  const onNode = useCallback(
-    (node: SkillNode) => {
-      if (isLaunchable(node) && node.firstLessonId) {
-        navigation.navigate('Lesson', { lessonId: node.firstLessonId });
-      } else {
-        const hint = stateHint(node.state);
-        Alert.alert(node.title, hint ? t(hint) : t('learn.notAvailableYet'));
-      }
+  // the course on the path: the one chosen, else the one the learner is furthest into
+  const courseId = chosen && courses?.some((c) => c.course.id === chosen) ? chosen : courses ? firstCourse(courses) : null;
+  const entry = courses?.find((c) => c.course.id === courseId) ?? null;
+
+  /*
+   * Scrolling to the current skill. The path says where its focus stop sits
+   * within it; where the path sits on the page is measured here; the screen's
+   * height and the scroll are tracked as they change. Together they place the
+   * stop in the middle of what can be seen — once per course and current
+   * skill, so coming back from a lesson that moved the learner on finds the
+   * next one, and coming back to the same place leaves the scroll alone.
+   */
+  const scroller = useRef<ScrollView | null>(null);
+  const setScroller = useCallback(
+    (node: ScrollView | null) => {
+      scroller.current = node;
+      if (typeof scrollRef === 'function') scrollRef(node);
+      else if (scrollRef) (scrollRef as { current: ScrollView | null }).current = node;
     },
-    [navigation, t],
+    [scrollRef],
   );
+  // where the course section sits in the scroll, and where the path sits in it
+  const [courseTop, setCourseTop] = useState<number | null>(null);
+  const [pathInCourse, setPathInCourse] = useState<number | null>(null);
+  const [focus, setFocus] = useState<PathFocus | null>(null);
+  const [viewport, setViewport] = useState(0);
+  const [scrollY, setScrollY] = useState(0);
+  const scrolledFor = useRef<string | null>(null);
+  const onFocus = useCallback((next: PathFocus | null) => {
+    setFocus((was) => (was?.key === next?.key && was?.y === next?.y && was?.current === next?.current ? was : next));
+  }, []);
+  // a course whose map did not load has no path, and so nothing to scroll to
+  const focusY = entry?.map && focus && courseTop !== null && pathInCourse !== null ? courseTop + pathInCourse + focus.y : null;
+
+  useEffect(() => {
+    if (focusY === null || !focus || viewport === 0 || !courseId) return;
+    const mark = `${courseId}:${focus.key}`;
+    if (scrolledFor.current === mark) return;
+    scrolledFor.current = mark;
+    scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: !reduceMotion });
+  }, [focusY, focus, viewport, courseId, tabBarInset, reduceMotion]);
+
+  // only once the path is on the screen: above it, the card at the top already offers the next lesson
+  const onPath = courseTop !== null && scrollY + viewport - tabBarInset > courseTop;
+  const away = focusY === null || viewport === 0 || !onPath ? null : awayFrom(focusY, scrollY, viewport, tabBarInset);
+  // back to the skill to do now — or, with none left open, to the furthest point reached
+  const jumpWord = focus?.current ? t('coursemap.path.jump') : t('coursemap.path.jumpEnd');
+  const jump = () => {
+    if (focusY !== null) scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: !reduceMotion });
+  };
 
   const step = courses ? nextStep(courses) : null;
-  const rows = courses ? courseRows(courses) : [];
 
-  if (failed && rows.length === 0) {
+  if (failed && !courses) {
     return <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />;
   }
 
-  const header = (
-    <View style={styles.header}>
-      {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
-      <TodayCard goal={goal} streak={streak} onChangeGoal={changeGoal} />
-      <View style={styles.tools}>
-        <ToolTile
-          icon="review"
-          title={t('learn.tools.review')}
-          detail={
-            due === null
-              ? ''
-              : due === 1
-                ? t('learn.tools.dueOne')
-                : due > 1
-                  ? t('learn.tools.due', { count: formatNumber(due, locale) })
-                  : t('learn.tools.dueNone')
-          }
-          highlight={(due ?? 0) > 0}
-          onPress={() => navigation.navigate('Practice')}
-        />
-        <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-      </View>
-      {/* the week: the league and your place in it (or your own week), and the weekly goal */}
-      <LeagueLine />
-      <EventBanner />
-      <DailyRewardCard />
-      <WordOfDayCard />
-      {rows.length > 0 ? (
-        <Text style={[styles.mapLabel, { color: colors.textSecondary }]} accessibilityRole="header">
-          {t('learn.map.title')}
-        </Text>
+  return (
+    <View style={styles.screen}>
+      <ScrollView
+        ref={setScroller}
+        style={styles.screen}
+        contentContainerStyle={[styles.content, { paddingBottom: tabBarInset + spacing.xl }]}
+        showsVerticalScrollIndicator={false}
+        onLayout={(e: LayoutChangeEvent) => setViewport(e.nativeEvent.layout.height)}
+        onScroll={(e: NativeSyntheticEvent<NativeScrollEvent>) => setScrollY(e.nativeEvent.contentOffset.y)}
+        scrollEventThrottle={64}
+      >
+        <View style={styles.header}>
+          {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
+          <TodayCard goal={goal} streak={streak} onChangeGoal={changeGoal} />
+          <View style={styles.tools}>
+            <ToolTile
+              icon="review"
+              title={t('learn.tools.review')}
+              detail={
+                due === null
+                  ? ''
+                  : due === 1
+                    ? t('learn.tools.dueOne')
+                    : due > 1
+                      ? t('learn.tools.due', { count: formatNumber(due, locale) })
+                      : t('learn.tools.dueNone')
+              }
+              highlight={(due ?? 0) > 0}
+              onPress={() => navigation.navigate('Practice')}
+            />
+            <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
+          </View>
+          {/* the week: the league and your place in it (or your own week), and the weekly goal */}
+          <LeagueLine />
+          <EventBanner />
+          <DailyRewardCard />
+          <WordOfDayCard />
+        </View>
+
+        {courses && courses.length > 0 ? (
+          <View style={styles.course} onLayout={(e: LayoutChangeEvent) => setCourseTop(e.nativeEvent.layout.y)}>
+            <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+              {t('learn.map.title')}
+            </Text>
+            {courses.length > 1 ? (
+              <View style={[styles.switcher, { flexDirection: dir.row }]} accessibilityLabel={t('coursemap.path.courses')}>
+                {courses.map((c) => {
+                  const on = c.course.id === courseId;
+                  return (
+                    <Pressable
+                      key={c.course.id}
+                      onPress={() => setChosen(c.course.id)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
+                      style={({ pressed }) => [
+                        styles.chip,
+                        on ? styles.chipOn : null,
+                        { backgroundColor: on ? 'transparent' : colors.controlTrack, borderColor: colors.textPrimary, opacity: pressed ? 0.75 : 1 },
+                      ]}
+                    >
+                      <Text style={[styles.chipText, { color: on ? colors.textPrimary : colors.textSecondary }]} numberOfLines={1}>
+                        {c.map?.course.title ?? c.course.title}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            ) : null}
+            {courses.length === 1 ? (
+              <Text style={[styles.courseTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+                {entry?.map?.course.title ?? entry?.course.title}
+              </Text>
+            ) : null}
+            {entry?.map && dueSettled ? (
+              <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
+                <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} />
+              </View>
+            ) : entry && !entry.map ? (
+              <View style={styles.failed}>
+                <Text style={[styles.failedText, dir.text, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
+                <ClayButton label={t('common.retry')} variant="outline" onPress={() => setReloadKey((k) => k + 1)} />
+              </View>
+            ) : null}
+          </View>
+        ) : loading ? null : (
+          <EmptyState title={t('learn.noCourses')} />
+        )}
+      </ScrollView>
+
+      {away ? (
+        <View style={[styles.jumpWrap, { bottom: tabBarInset + spacing.sm }]} pointerEvents="box-none">
+          <Pressable
+            onPress={jump}
+            accessibilityRole="button"
+            accessibilityLabel={jumpWord}
+            style={({ pressed }) => [styles.jump, { flexDirection: dir.row, backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+          >
+            <Icon name={away === 'up' ? 'move-up' : 'move-down'} size={18} color={colors.textOnPrimary} />
+            <Text style={[styles.jumpText, { color: colors.textOnPrimary }]}>{jumpWord}</Text>
+          </Pressable>
+        </View>
       ) : null}
     </View>
-  );
-
-  const renderRow = ({ item }: { item: MapRow }) =>
-    item.kind === 'course' ? (
-      <Text accessibilityRole="header" style={[styles.courseTitle, { color: colors.textPrimary }]}>
-        {item.title}
-      </Text>
-    ) : item.kind === 'failed' ? (
-      <View style={styles.failed}>
-        <Text style={[styles.failedText, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
-        <ClayButton label={t('common.retry')} variant="outline" onPress={() => setReloadKey((k) => k + 1)} />
-      </View>
-    ) : item.kind === 'header' ? (
-      <Text style={[styles.unitHeader, { color: colors.textSecondary }]}>{item.title}</Text>
-    ) : (
-      <SkillNodeView node={item.node} onPress={() => onNode(item.node)} />
-    );
-
-  return (
-    <FlatList
-      ref={scrollRef}
-      style={styles.screen}
-      contentContainerStyle={[styles.content, { paddingBottom: tabBarInset }]}
-      data={rows}
-      keyExtractor={(r) => r.key}
-      renderItem={renderRow}
-      ListHeaderComponent={header}
-      ListEmptyComponent={loading ? null : <EmptyState title={t('learn.noCourses')} />}
-      showsVerticalScrollIndicator={false}
-      // virtualization tuning for large courses (100+ nodes)
-      initialNumToRender={12}
-      windowSize={11}
-      removeClippedSubviews
-    />
   );
 }
 
@@ -404,13 +493,24 @@ const styles = StyleSheet.create({
   tileTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   tileDetail: { fontSize: typography.sizes.xs },
 
-  mapLabel: { ...sectionLabel, marginTop: spacing.md },
-  courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginTop: spacing.xs },
+  course: { gap: spacing.sm + 4, marginTop: spacing.md },
+  mapLabel: { ...sectionLabel },
+  courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  switcher: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
+  chip: { minHeight: MIN_TOUCH_TARGET, maxWidth: '100%', paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
+  // the course you are in, drawn round, so it does not compete with the card's one button
+  chipOn: { borderWidth: 2 },
+  chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   failed: { gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.xs },
   failedText: { fontSize: typography.sizes.sm },
-  unitHeader: {
-    ...sectionLabel,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
+
+  jumpWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
+  jump: {
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: MIN_TOUCH_TARGET,
+    paddingHorizontal: spacing.md + 4,
+    borderRadius: radii.pill,
   },
+  jumpText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

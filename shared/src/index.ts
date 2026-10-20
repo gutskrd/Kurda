@@ -63,6 +63,35 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/**
+ * The lesson path a course map is drawn as: which skill is current, the
+ * milestones, each unit's colour and where every stop sits — so the browser
+ * and the phone draw the same path.
+ */
+export {
+  PATH_GEOMETRY,
+  UNIT_TONES,
+  lean,
+  lessonPath,
+  lessonStates,
+  stopKeys,
+  type Finish,
+  type LessonPath,
+  type LessonState,
+  type PathLesson,
+  type PathMapInput,
+  type PathSkill,
+  type PathSkillState,
+  type PathStop,
+  type PathUnit,
+  type PathUnitInput,
+  type PlacedStop,
+  type ReviewStop,
+  type SkillStop,
+  type StopState,
+  type TrophyStop,
+  type UnitTone,
+} from './lesson-path.js';
 export {
   KURMANJI_KEYS,
   MIN_RECORDING_BYTES,

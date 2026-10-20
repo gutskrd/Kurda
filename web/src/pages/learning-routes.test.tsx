@@ -224,35 +224,108 @@ describe('Learn', () => {
 });
 
 describe('a course map', () => {
-  it('shows each lesson done, up next or not open yet — in words — and opens a skill’s Tips', async () => {
+  it('draws the course as a path: each skill a stop that says what it is, in words', async () => {
     serve({
       'GET /courses/c1/map': basics,
-      'GET /skills/greet/grammar': { skillId: 'greet', grammarMd: '# Silavkirin\n\n**Silav** — hello' },
+      'GET /courses': courses,
+      'GET /practice/due': { due: 0, available: 3 },
     });
     routes('/app/learn/course/c1');
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Kurmanji for Beginners' })).toBeInTheDocument();
     expect(screen.getByText('1 of 3 lessons done')).toBeInTheDocument();
 
-    const hello = screen.getByRole('link', { name: /Hello.*Done/ });
-    expect(hello).toHaveAttribute('href', '/app/learn/lesson/l1?course=c1');
-    expect(screen.getByRole('link', { name: /Goodbye.*Up next/ })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
-    // a lesson that is not open yet is not a link, and says why
-    expect(screen.queryByRole('link', { name: /One to five/ })).not.toBeInTheDocument();
-    expect(screen.getByText('One to five').closest('li')).toHaveTextContent('Not open yet');
-    expect(screen.getByText('Finish the skill before this one to open it.')).toBeInTheDocument();
+    // the unit's banner: its number, its name, what it covers
+    const unit = screen.getByRole('region', { name: 'Basics' });
+    expect(within(unit).getByText('Unit 1')).toBeInTheDocument();
+    expect(within(unit).getByText('Greetings · Numbers')).toBeInTheDocument();
+    expect(within(unit).getByText('0 of 2 done')).toBeInTheDocument();
 
-    const tips = screen.getByRole('button', { name: 'Tips' });
-    expect(tips).toHaveAttribute('aria-expanded', 'false');
-    await userEvent.click(tips);
-    expect(tips).toHaveAttribute('aria-expanded', 'true');
-    const note = await screen.findByRole('region', { name: 'Tips for Greetings' });
-    // the note's headings sit under the skill's own h3
-    expect(screen.getByRole('heading', { level: 3, name: 'Greetings' })).toBeInTheDocument();
-    expect(await within(note).findByRole('heading', { level: 4, name: 'Silavkirin' })).toBeInTheDocument();
+    // every stop is a button with its whole state in its name
+    expect(within(unit).getByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
+    expect(within(unit).getByRole('button', { name: 'Numbers, Not open yet, 0 of 1 lessons done' })).toBeInTheDocument();
+    expect(within(unit).getByRole('button', { name: 'Unit 1 trophy, not earned yet' })).toBeInTheDocument();
+    // nothing due, so no review stop
+    expect(within(unit).queryByRole('button', { name: /^Review/ })).not.toBeInTheDocument();
+
+    // one tap from the map into the lesson up next
+    expect(within(unit).getByRole('link', { name: 'Continue: Greetings' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+
+    // the courses, to move between them
+    expect(screen.getByRole('navigation', { name: 'Your courses' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Newroz' })).toHaveAttribute('href', '/app/learn/course/c2');
+  });
+
+  it('opens a card on a stop: its lessons as ways in, how far along, and one thing to do', async () => {
+    serve({
+      'GET /courses/c1/map': basics,
+      'GET /practice/due': { due: 0, available: 3 },
+      'GET /skills/greet/grammar': { skillId: 'greet', grammarMd: '# Silavkirin\n\n**Silav** — hello' },
+    });
+    routes('/app/learn/course/c1');
+
+    const greetings = await screen.findByRole('button', { name: /^Greetings, You are here/ });
+    expect(greetings).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(greetings);
+    expect(greetings).toHaveAttribute('aria-expanded', 'true');
+    const card = screen.getByRole('group', { name: 'Greetings' });
+    expect(within(card).getByRole('link', { name: /Hello.*Done/ })).toHaveAttribute('href', '/app/learn/lesson/l1?course=c1');
+    expect(within(card).getByRole('link', { name: /Goodbye.*Up next/ })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+    expect(within(card).getByText('1 of 2 lessons done')).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Continue' })).toHaveAttribute('href', '/app/learn/lesson/l2?course=c1');
+
+    // its Tips, fetched once, in a sheet of their own
+    await userEvent.click(within(card).getByRole('button', { name: 'Tips' }));
+    const tips = await screen.findByRole('dialog', { name: 'Tips for Greetings' });
+    expect(await within(tips).findByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/skills/greet/grammar')).toHaveLength(1);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('link', { name: 'Continue' }));
+    // a locked one says, kindly, what opens it — and its lessons are not links yet
+    await userEvent.click(screen.getByRole('button', { name: /^Numbers, Not open yet/ }));
+    const locked = screen.getByRole('group', { name: 'Numbers' });
+    expect(within(locked).getByText('Finish “Greetings” to open this one.')).toBeInTheDocument();
+    expect(within(locked).queryByRole('link', { name: /One to five/ })).not.toBeInTheDocument();
+    expect(within(locked).getByText('One to five').closest('li')).toHaveTextContent('Not open yet');
+
+    // Escape closes it, back on its stop
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('group', { name: 'Numbers' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^Numbers, Not open yet/ })).toHaveFocus();
+  });
+
+  it('moves along the path with the arrow keys', async () => {
+    serve({ 'GET /courses/c1/map': basics, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    const greetings = await screen.findByRole('button', { name: /^Greetings/ });
+    greetings.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    expect(screen.getByRole('button', { name: /trophy/ })).toHaveFocus();
+    await userEvent.keyboard('{Home}');
+    expect(greetings).toHaveFocus();
+  });
+
+  it('puts review on the path when words are due, and a unit’s guide on its banner', async () => {
+    serve({
+      'GET /courses/c1/map': basics,
+      'GET /practice/due': { due: 6, available: 12 },
+      'GET /skills/greet/grammar': { skillId: 'greet', grammarMd: '# Silavkirin\n\n**Silav** — hello' },
+    });
+    routes('/app/learn/course/c1');
+
+    const review = await screen.findByRole('button', { name: 'Review, words ready: 6' });
+    await userEvent.click(review);
+    expect(screen.getByRole('link', { name: 'Start review' })).toHaveAttribute('href', '/app/learn/review');
+
+    await userEvent.click(screen.getByRole('button', { name: 'Guide' }));
+    const guide = await screen.findByRole('dialog', { name: 'Guide to Basics' });
+    expect(await within(guide).findByRole('heading', { level: 3, name: 'Silavkirin' })).toBeInTheDocument();
+
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(screen.getAllByRole('link', { name: 'Continue' })[0]!);
     expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
   });
 });

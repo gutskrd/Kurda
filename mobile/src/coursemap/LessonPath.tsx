@@ -1,0 +1,261 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigation } from '@react-navigation/native';
+import { Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import Svg, { Path } from 'react-native-svg';
+import { PATH_GEOMETRY, lessonPath, type PathStop, type PathUnit, type PlacedStop } from '@kurda/shared';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useI18n } from '../i18n/I18nContext';
+import type { RootNavigation } from '../navigation/rootStack';
+import { useDirection } from '../reports/direction';
+import { display } from '../theme/fonts';
+import { Icon } from '../theme/Icon';
+import { useTheme } from '../theme/ThemeProvider';
+import { layout, radii, spacing, typography } from '../theme/tokens';
+import { REST, TONES, stopLabel, type ToneColors } from './path';
+import { SkillNodeView } from './SkillNodeView';
+import { StopSheet } from './StopSheet';
+import { UnitGuide } from './UnitGuide';
+import type { CourseMap, SkillNode } from './types';
+
+const { node: NODE, step: STEP } = PATH_GEOMETRY;
+const BANNER_LIP = 5;
+const PHONE_WIDTH = 390;
+
+type Stop = PathStop<SkillNode>;
+type Unit = PathUnit<SkillNode>;
+
+/**
+ * One course as a lesson path: each unit opens with a banner in its own colour
+ * — its number and name, what it covers, how far through it you are, and its
+ * guide when it has grammar notes — and its skills follow as round stops down
+ * one gently winding line, with review beside the current skill when words
+ * are due and a trophy closing every unit. The rules are @kurda/shared's
+ * `lessonPath`, which the website draws from too.
+ *
+ * `onFocus` hears where, from the top of the path, the stop to open on sits
+ * (the current skill, or the furthest point reached), once it has been laid
+ * out, so the screen can scroll to it.
+ */
+export interface PathFocus {
+  key: string;
+  /** the stop's centre, from the top of the path */
+  y: number;
+  /** a skill to do now (rather than the end of everything open) */
+  current: boolean;
+}
+
+export function LessonPath({
+  map,
+  due,
+  onFocus,
+}: {
+  map: CourseMap;
+  due: number;
+  onFocus: (focus: PathFocus | null) => void;
+}): React.JSX.Element {
+  const navigation = useNavigation<RootNavigation>();
+  const { scheme } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const path = useMemo(() => lessonPath(map, { due }), [map, due]);
+  // the screen's width less its gutters until the path has been measured, so it draws at once
+  // (a phone's width where the window has none to give yet)
+  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
+  const [open, setOpen] = useState<{ stop: Stop; unit: Unit } | null>(null);
+  const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
+  // where each unit, and the path under its banner, sit — to find the focus stop on the page
+  const unitTop = useRef<Record<string, number>>({});
+  const pathTop = useRef<Record<string, number>>({});
+  // the app mirrors its own screens for Soranî and Arabic (reports/direction): so does the path
+  const sign = dir.row === 'row-reverse' ? -1 : 1;
+
+  const report = useCallback(() => {
+    if (!path.focus) return onFocus(null);
+    for (const unit of path.units) {
+      const placed = unit.stops.find((p) => p.stop.key === path.focus);
+      if (!placed) continue;
+      const u = unitTop.current[unit.unitId];
+      const p = pathTop.current[unit.unitId];
+      if (u !== undefined && p !== undefined) onFocus({ key: path.focus, y: u + p + placed.y, current: path.current !== null });
+      return;
+    }
+  }, [path, onFocus]);
+
+  useEffect(() => {
+    report();
+  }, [report]);
+
+  const lesson = (lessonId: string) => {
+    setOpen(null);
+    navigation.navigate('Lesson', { lessonId });
+  };
+  const review = () => {
+    setOpen(null);
+    navigation.navigate('Practice');
+  };
+
+  return (
+    <View style={styles.units}>
+      {path.units.map((unit) => {
+        const tone = TONES[scheme][unit.tone];
+        return (
+          <View
+            key={unit.unitId}
+            style={styles.unit}
+            onLayout={(e: LayoutChangeEvent) => {
+              unitTop.current[unit.unitId] = e.nativeEvent.layout.y;
+              report();
+            }}
+          >
+            <Banner unit={unit} tone={tone} onGuide={() => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide })} />
+            {unit.stops.length > 0 ? (
+              <View
+                style={[styles.path, { height: unit.height }]}
+                onLayout={(e: LayoutChangeEvent) => {
+                  pathTop.current[unit.unitId] = e.nativeEvent.layout.y;
+                  setWidth(e.nativeEvent.layout.width);
+                  report();
+                }}
+              >
+                {width > 0 ? (
+                  <>
+                    <Trail unit={unit} width={width} sign={sign} walked={tone.fill} ahead={REST[scheme].line} />
+                    {unit.stops.map((placed) => (
+                      <PathStopView
+                        key={placed.stop.key}
+                        placed={placed}
+                        unit={unit}
+                        tone={tone}
+                        left={width / 2 + sign * placed.x - NODE / 2}
+                        onOpen={() => setOpen({ stop: placed.stop, unit })}
+                        onStart={lesson}
+                      />
+                    ))}
+                  </>
+                ) : null}
+              </View>
+            ) : null}
+          </View>
+        );
+      })}
+      <StopSheet
+        open={open}
+        tone={open ? TONES[scheme][open.unit.tone] : null}
+        onClose={() => setOpen(null)}
+        onLesson={lesson}
+        onReview={review}
+        onTips={(skill) => {
+          setOpen(null);
+          setGuide({ title: t('coursemap.path.tipsFor', { skill: skill.title }), skills: [skill] });
+        }}
+      />
+      <UnitGuide guide={guide} onClose={() => setGuide(null)} />
+    </View>
+  );
+}
+
+/** A stop with its words: the full label for a screen reader, and "Start" over the current skill. */
+function PathStopView({
+  placed,
+  unit,
+  tone,
+  left,
+  onOpen,
+  onStart,
+}: {
+  placed: PlacedStop<SkillNode>;
+  unit: Unit;
+  tone: ToneColors;
+  left: number;
+  onOpen: () => void;
+  onStart: (lessonId: string) => void;
+}): React.JSX.Element {
+  const { t } = useI18n();
+  const { stop, y } = placed;
+  const { words, state } = stopLabel(stop, unit.number);
+  const label = t(words.key, { ...words.params, ...(state ? { state: t(state) } : {}) });
+  const current = stop.kind === 'skill' && stop.state === 'current' && stop.launch ? stop : null;
+  const word = current ? (current.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start')) : '';
+  return (
+    <SkillNodeView
+      stop={stop}
+      left={left}
+      top={y - NODE / 2}
+      tone={tone}
+      label={label}
+      callout={current ? { text: word, label: `${word}: ${current.skill.title}` } : undefined}
+      onPress={onOpen}
+      onStart={current?.launch ? () => onStart(current.launch!) : undefined}
+    />
+  );
+}
+
+/** A unit's banner, in its colour, sitting on a darker lip of the same colour. */
+function Banner({ unit, tone, onGuide }: { unit: Unit; tone: ToneColors; onGuide: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  return (
+    <View style={[styles.bannerLip, { backgroundColor: tone.lip }]}>
+      <View style={[styles.banner, { backgroundColor: tone.fill }]}>
+        <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
+        <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]} accessibilityRole="header">
+          {unit.title}
+        </Text>
+        {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: tone.ink }]}>{unit.topics.join(' · ')}</Text> : null}
+        <View style={[styles.bannerFoot, { flexDirection: dir.row }]}>
+          <Text style={[styles.count, { color: tone.ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
+          {unit.guide.length > 0 ? (
+            <Pressable
+              onPress={onGuide}
+              accessibilityRole="button"
+              accessibilityLabel={t('coursemap.path.guideFor', { unit: unit.title })}
+              testID="lp-unit-guide"
+              style={({ pressed }) => [styles.guide, { flexDirection: dir.row, backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+            >
+              <Icon name="book" size={18} color={tone.ink} />
+              <Text style={[styles.guideText, { color: tone.ink }]}>{t('coursemap.path.guide')}</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * The line between stops: a gentle S from one centre to the next, drawn as
+ * round dots — the stretch already walked in the unit's colour, the rest grey.
+ */
+function Trail({ unit, width, sign, walked, ahead }: { unit: Unit; width: number; sign: number; walked: string; ahead: string }): React.JSX.Element {
+  const lines: Record<'walked' | 'ahead', string[]> = { walked: [], ahead: [] };
+  const cx = (x: number) => width / 2 + sign * x;
+  unit.stops.forEach((p, i) => {
+    const before = unit.stops[i - 1];
+    if (!before || !p.trail) return;
+    const bend = STEP / 2;
+    lines[p.trail].push(`M ${cx(before.x)} ${before.y} C ${cx(before.x)} ${before.y + bend}, ${cx(p.x)} ${p.y - bend}, ${cx(p.x)} ${p.y}`);
+  });
+  return (
+    <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Svg width={width} height={unit.height}>
+        <Path d={lines.ahead.join(' ')} stroke={ahead} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
+        <Path d={lines.walked.join(' ')} stroke={walked} strokeWidth={7} strokeLinecap="round" strokeDasharray={[0.01, 15]} fill="none" />
+      </Svg>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  units: { gap: spacing.lg },
+  unit: { gap: 0 },
+  path: { position: 'relative' },
+  bannerLip: { borderRadius: radii.xl, paddingBottom: BANNER_LIP },
+  banner: { borderRadius: radii.xl, paddingVertical: spacing.md + 4, paddingHorizontal: spacing.lg, gap: 2 },
+  eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, letterSpacing: 1, textTransform: 'uppercase', opacity: 0.86 },
+  bannerTitle: { ...display(typography.sizes.lg) },
+  topics: { fontSize: typography.sizes.sm, opacity: 0.9, marginTop: 2 },
+  bannerFoot: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.sm },
+  count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  guide: { alignItems: 'center', gap: 6, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill },
+  guideText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+});
