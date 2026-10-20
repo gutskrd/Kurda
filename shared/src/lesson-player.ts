@@ -24,6 +24,8 @@
  * first answer is the one that counts.
  */
 
+import type { RecordingVoice } from './lipsync/speakers.js';
+
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
 
 /** 'correct' | 'typo' (right word, a letter slip) | 'wrong', as the server grades. */
@@ -46,10 +48,16 @@ export interface DeliveredExercise {
   rights?: string[];
   /** listening: the clip to play */
   audioUrl?: string;
+  /** who says `audioUrl`, and how their mouth moves; only when a character is chosen for it */
+  audioVoice?: RecordingVoice;
   /** a native recording that may be played before answering (its presence says so) */
   modelAudioUrl?: string;
+  /** who says `modelAudioUrl`; only when a character is chosen for it */
+  modelAudioVoice?: RecordingVoice;
   /** match pairs: recordings of the Kurdish cards, by the card's exact text */
   audio?: Record<string, string>;
+  /** who says the cards' recordings, by the same text; only the ones with a character */
+  audioVoices?: Record<string, RecordingVoice>;
   /**
    * The variety of Kurdish the item's course is in. A review mixes items from
    * any course, so each says its own; a lesson's session says it once for all.
@@ -79,6 +87,8 @@ export interface GradeResult {
   correction?: string;
   /** the native recording of the item's Kurdish, to hear now that it is answered */
   modelAudioUrl?: string;
+  /** who says `modelAudioUrl`; only when a character is chosen for it */
+  modelAudioVoice?: RecordingVoice;
   /** the server had this answer already (a replay); a retry never has one */
   duplicate?: boolean;
 }
@@ -100,6 +110,7 @@ export interface Feedback {
   accepted: boolean;
   correction?: string;
   modelAudioUrl?: string;
+  modelAudioVoice?: RecordingVoice;
   /** what was answered: a recording is not graded the way typed text is */
   exerciseType?: ExerciseType;
   /** the text the learner typed, for an answer that was typed */
@@ -218,7 +229,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
     case 'ANSWERED': {
       const step = currentStep(state);
       if (state.status !== 'answering' || !step) return state;
-      const { verdict, accepted, correction, modelAudioUrl, duplicate } = action.result;
+      const { verdict, accepted, correction, modelAudioUrl, modelAudioVoice, duplicate } = action.result;
       const id = step.exerciseId;
       // a miss comes back once: never a second try at a second try
       const comesBack =
@@ -232,6 +243,7 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
         accepted,
         correction,
         modelAudioUrl,
+        ...(modelAudioVoice ? { modelAudioVoice } : {}),
         exerciseType: state.exercises.find((ex) => ex.id === id)?.type,
         given: action.given,
         ...(step.reask ? { reask: true } : {}),

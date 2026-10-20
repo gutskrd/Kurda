@@ -14,6 +14,7 @@
  * timers, and accuracy rather than speed deciding the score.
  */
 import { foldVariantChar, isInvisibleChar, lessonAudioKey } from './lesson-audio.js';
+import type { RecordingVoice } from './lipsync/speakers.js';
 import type { RatedState } from './ranks.js';
 import { isSoraniDialect } from './lesson-answers.js';
 
@@ -473,6 +474,8 @@ export interface StoryDetail extends StoryListItem {
   glossary: StoryGlossEntry[];
   /** studio recordings by `lessonAudioKey(sentence)`, only for sentences that have one */
   audio: Record<string, string>;
+  /** who says each recording and how their mouth moves, by the same key; only those with a character, and absent when none has */
+  voices?: Record<string, RecordingVoice>;
 }
 
 /** The caller's record on a story (GET /story-games/history). */

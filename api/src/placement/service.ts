@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import type { RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { checkAnswer, sanitizeExercise } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
@@ -21,9 +22,12 @@ export interface PlacementQuestion {
   lefts?: string[];
   rights?: string[];
   audioUrl?: string;
-  /** native recordings from the audio studio, where there are any */
+  /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
   modelAudioUrl?: string;
   audio?: Record<string, string>;
+  audioVoice?: RecordingVoice;
+  modelAudioVoice?: RecordingVoice;
+  audioVoices?: Record<string, RecordingVoice>;
 }
 
 export interface PlacementView {

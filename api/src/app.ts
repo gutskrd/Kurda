@@ -128,6 +128,7 @@ import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { registerRecordingVoiceRoutes } from './speakers/routes.js';
 import { StoriesService } from './stories/service.js';
 import { StoryAdminService } from './stories/admin-service.js';
 import { registerStoryRoutes } from './stories/routes.js';
@@ -602,6 +603,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAlphabetAudioRoutes(app, config);
     // and of the Kurdish the lessons use, which lessons deliver with their exercises
     registerLessonAudioRoutes(app, config);
+    // and who says each of those recordings, chosen or changed after it was made
+    registerRecordingVoiceRoutes(app);
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
     // the admin panel, and the starter stories seeded once each as drafts for a
     // native speaker to publish. Not under test, where they would be stories no

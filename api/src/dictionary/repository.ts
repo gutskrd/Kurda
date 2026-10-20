@@ -1,5 +1,6 @@
 import type pg from 'pg';
-import { dictionaryKey, letterCount, letterKey } from '@kurda/shared';
+import { dictionaryKey, letterCount, letterKey, type DictionaryAudio } from '@kurda/shared';
+import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
 export type PartOfSpeech =
   | 'noun'
@@ -40,7 +41,8 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  audio: Array<{ url: string; dialect: string }>;
+  /** its pronunciations, each with who says it and the mouth's timeline when a character is chosen */
+  audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: XrefRelation }>;
 }
 
@@ -189,8 +191,8 @@ export class DictionaryRepository {
          WHERE entry_id = $1 ORDER BY position ASC`,
         [entryId],
       ),
-      this.pool.query<{ audio_url: string; dialect: string }>(
-        `SELECT audio_url, dialect FROM dict_audio WHERE entry_id = $1`,
+      this.pool.query<{ id: string; audio_url: string; dialect: string } & VoiceRow>(
+        `SELECT id, audio_url, dialect, ${voiceColumns()} FROM dict_audio WHERE entry_id = $1`,
         [entryId],
       ),
       this.pool.query<{ to_entry_id: string; headword: string; relation: XrefRelation }>(
@@ -227,7 +229,10 @@ export class DictionaryRepository {
         definitionKu: s.definition_ku,
         examples: examplesBySense.get(s.id) ?? [],
       })),
-      audio: audio.rows.map((a) => ({ url: a.audio_url, dialect: a.dialect })),
+      audio: audio.rows.map((a) => {
+        const voice = voiceOf(a);
+        return { id: a.id, url: a.audio_url, dialect: a.dialect, ...voice };
+      }),
       xrefs: xrefs.rows.map((x) => ({ entryId: x.to_entry_id, headword: x.headword, relation: x.relation })),
     };
   }

@@ -6,6 +6,7 @@ import {
   normalizeKurdish,
   storyAudioSentences,
   storyParagraphs,
+  type SpeakerId,
   type StoryDialect,
 } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
@@ -47,6 +48,10 @@ export interface LessonAudioItem {
   url: string | null;
   durationMs: number | null;
   updatedAt: string | null;
+  /** who is shown saying it, or null for no character (and for no recording) */
+  speaker: SpeakerId | null;
+  /** it has a mouth timeline; PATCH /admin/audio/lesson sets one for a recording made without */
+  hasLipsync: boolean;
   /** lessons that use it, in course order: the first is where the studio files it */
   usedIn: LessonAudioUsage[];
   /** recorded, but no lesson uses it any more (or it was added by hand) */
@@ -93,6 +98,24 @@ interface RecordingRow {
   url: string;
   duration_ms: number;
   updated_at: Date;
+  speaker: SpeakerId | null;
+  has_lipsync: boolean;
+}
+
+/** A text a lesson or story needs, before anything is known of its recording. */
+function unrecorded(key: string, text: string): LessonAudioItem {
+  return {
+    key,
+    text,
+    recorded: false,
+    url: null,
+    durationMs: null,
+    updatedAt: null,
+    speaker: null,
+    hasLipsync: false,
+    usedIn: [],
+    unused: false,
+  };
 }
 
 /** Whether a listening payload has no clip of its own, and plays the text keyed `key` instead. */
@@ -152,7 +175,9 @@ export class LessonAudioService {
         `SELECT id, dialect, title, status, body FROM stories WHERE status <> 'archived'
          ORDER BY dialect, level, array_position(ARRAY['short','medium','long'], length), title, id`,
       ),
-      this.pool.query<RecordingRow>(`SELECT key, text, url, duration_ms, updated_at FROM lesson_audio`),
+      this.pool.query<RecordingRow>(
+        `SELECT key, text, url, duration_ms, updated_at, speaker, lipsync IS NOT NULL AS has_lipsync FROM lesson_audio`,
+      ),
     ]);
 
     const items = new Map<string, LessonAudioItem>();
@@ -163,7 +188,7 @@ export class LessonAudioService {
         const key = lessonAudioKey(text);
         let item = items.get(key);
         if (!item) {
-          item = { key, text, recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [], unused: false };
+          item = unrecorded(key, text);
           items.set(key, item);
         }
         const slot = `${key}\u0000${row.skill_id}\u0000${row.lesson_position}`;
@@ -217,7 +242,7 @@ export class LessonAudioService {
           const key = lessonAudioKey(text);
           let item = items.get(key);
           if (!item) {
-            item = { key, text, recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [], unused: false };
+            item = unrecorded(key, text);
             items.set(key, item);
           }
           // one usage per story, however often the story says it
@@ -231,7 +256,14 @@ export class LessonAudioService {
     const unused: LessonAudioItem[] = [];
     for (const r of recordings.rows) {
       const found = items.get(r.key);
-      const recording = { recorded: true, url: r.url, durationMs: r.duration_ms, updatedAt: r.updated_at.toISOString() };
+      const recording = {
+        recorded: true,
+        url: r.url,
+        durationMs: r.duration_ms,
+        updatedAt: r.updated_at.toISOString(),
+        speaker: r.speaker,
+        hasLipsync: r.has_lipsync,
+      };
       if (found) {
         Object.assign(found, recording);
         recorded += 1;

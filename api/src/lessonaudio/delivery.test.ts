@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { lessonAudioKey } from '@kurda/shared';
+import { lessonAudioKey, type RecordingVoice } from '@kurda/shared';
 import { lessonAudioFor, modelAudioAfterAnswer } from './delivery.js';
 
-/** A database that has recordings of `have`, and counts what it is asked. */
-function fakeDb(have: Record<string, string>) {
+/**
+ * A database that has recordings of `have`, said by `voices` where it names
+ * one, and counts what it is asked. Like the real query, a recording with no
+ * speaker comes back with no timeline either.
+ */
+function fakeDb(have: Record<string, string>, voices: Record<string, RecordingVoice> = {}) {
   const calls: unknown[][] = [];
   return {
     calls,
@@ -11,10 +15,16 @@ function fakeDb(have: Record<string, string>) {
       calls.push(params);
       // a batch asks for ANY($1::text[]), a single answer for one key
       const keys = typeof params[0] === 'string' ? [params[0]] : (params[0] as string[]);
-      return { rows: keys.filter((k) => have[k]).map((k) => ({ key: k, url: have[k]! })) };
+      return {
+        rows: keys
+          .filter((k) => have[k])
+          .map((k) => ({ key: k, url: have[k]!, speaker: voices[k]?.speaker ?? null, lipsync: voices[k]?.lipsync ?? null })),
+      };
     },
   };
 }
+
+const TIMELINE = { v: 1 as const, d: 900, k: [[0, 0], [80, 5], [700, 0]] as Array<[number, number]> };
 
 const URL = (n: string) => `https://cdn.test/lesson-audio/${n}.wav`;
 
@@ -159,6 +169,31 @@ describe('lessonAudioFor', () => {
     expect(pairs).toEqual({ audio: { Av: URL('av'), 'av!': URL('av') } });
   });
 
+  it('sends who says each recording beside it, and only beside it', async () => {
+    const xezal: RecordingVoice = { speaker: 'xezal', lipsync: TIMELINE };
+    const db = fakeDb(
+      { 'ez baş im': URL('ezbasim'), av: URL('av'), nan: URL('nan'), 'roj baş': URL('roj'), silav: URL('silav') },
+      { 'ez baş im': xezal, av: { speaker: 'hevalo' }, 'roj baş': { speaker: 'hamo', lipsync: TIMELINE }, silav: xezal },
+    );
+    const [translate, listening, pairs, mc, speaking] = await lessonAudioFor(db as never, lesson);
+    expect(listening).toEqual({ audioUrl: URL('ezbasim'), audioVoice: xezal, modelAudioUrl: URL('ezbasim'), modelAudioVoice: xezal });
+    expect(speaking).toEqual({ modelAudioUrl: URL('roj'), modelAudioVoice: { speaker: 'hamo', lipsync: TIMELINE } });
+    // the Nan card has a recording and no character: its URL alone
+    expect(pairs).toEqual({ audio: { Av: URL('av'), Nan: URL('nan') }, audioVoices: { Av: { speaker: 'hevalo' } } });
+    // the right option's recording is held back, and its voice with it
+    expect(translate).toEqual({});
+    expect(mc).toEqual({});
+  });
+
+  it('holds a card’s voice back with its URL when a listening item plays the same recording', async () => {
+    const db = fakeDb({ silav: URL('silav'), av: URL('av') }, { silav: { speaker: 'hamo' }, av: { speaker: 'xezal' } });
+    const [, pairs] = await lessonAudioFor(db as never, [
+      { type: 'listening', payload: { accepted: ['Silav!'] } },
+      { type: 'match_pairs', payload: { pairs: [{ left: 'Silav', right: 'hello' }, { left: 'Av', right: 'water' }] } },
+    ]);
+    expect(pairs).toEqual({ audio: { Av: URL('av') }, audioVoices: { Av: { speaker: 'xezal' } } });
+  });
+
   it('shrugs off malformed payloads', async () => {
     const db = fakeDb({});
     const out = await lessonAudioFor(db as never, [
@@ -173,17 +208,32 @@ describe('lessonAudioFor', () => {
 describe('modelAudioAfterAnswer', () => {
   it('is the recording of the item’s primary text, whatever was sent before', async () => {
     const db = fakeDb({ silav: URL('silav'), îro: URL('iro') });
-    expect(await modelAudioAfterAnswer(db as never, 'multiple_choice', { prompt: '"Hello"?', options: ['Silav', 'Na'], correctIndex: 0, say: 'Silav' })).toBe(
-      URL('silav'),
-    );
-    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['Îro.'] })).toBe(URL('iro'));
+    expect(
+      await modelAudioAfterAnswer(db as never, 'multiple_choice', { prompt: '"Hello"?', options: ['Silav', 'Na'], correctIndex: 0, say: 'Silav' }),
+    ).toEqual({ modelAudioUrl: URL('silav') });
+    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['Îro.'] })).toEqual({
+      modelAudioUrl: URL('iro'),
+    });
   });
 
-  it('is undefined when there is nothing recorded, or nothing to record', async () => {
+  it('says who says it, when a character is chosen for it', async () => {
+    const db = fakeDb({ îro: URL('iro'), spas: URL('spas') }, { îro: { speaker: 'xezal', lipsync: TIMELINE }, spas: { speaker: 'hamo' } });
+    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['Îro.'] })).toEqual({
+      modelAudioUrl: URL('iro'),
+      modelAudioVoice: { speaker: 'xezal', lipsync: TIMELINE },
+    });
+    // a speaker chosen and no timeline made yet
+    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'thanks', accepted: ['Spas'] })).toEqual({
+      modelAudioUrl: URL('spas'),
+      modelAudioVoice: { speaker: 'hamo' },
+    });
+  });
+
+  it('is empty when there is nothing recorded, or nothing to record', async () => {
     const db = fakeDb({});
-    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['îro'] })).toBeUndefined();
-    expect(await modelAudioAfterAnswer(db as never, 'match_pairs', { pairs: [{ left: 'av', right: 'water' }] })).toBeUndefined();
-    expect(await modelAudioAfterAnswer(db as never, 'multiple_choice', { prompt: 'x', options: ['a', 'b'], correctIndex: 0 })).toBeUndefined();
+    expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['îro'] })).toEqual({});
+    expect(await modelAudioAfterAnswer(db as never, 'match_pairs', { pairs: [{ left: 'av', right: 'water' }] })).toEqual({});
+    expect(await modelAudioAfterAnswer(db as never, 'multiple_choice', { prompt: 'x', options: ['a', 'b'], correctIndex: 0 })).toEqual({});
     // nothing to look up: no query at all
     expect(db.calls).toHaveLength(1);
   });

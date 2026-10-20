@@ -357,3 +357,5 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
+export * from './lipsync/index.js';
