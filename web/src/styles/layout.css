@@ -21,7 +21,7 @@
   top: 0;
   z-index: 40;
   height: var(--nav-h);
-  background: rgba(10, 12, 16, 0.4);
+  background: var(--chrome-bg);
   -webkit-backdrop-filter: saturate(1.2) blur(20px);
   backdrop-filter: saturate(1.2) blur(20px);
   border-bottom: 1px solid var(--border);
@@ -41,14 +41,15 @@
   list-style: none;
 }
 .nav-link {
+  position: relative;
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 12px;
-  border-radius: var(--r-sm);
-  font-size: 0.92rem;
-  font-weight: 500;
-  color: var(--ink-2);
+  height: 40px;
+  padding: 0 14px;
+  border-radius: var(--r-pill);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+  color: var(--ink-3);
   transition:
     color 0.15s ease,
     background 0.15s ease;
@@ -87,40 +88,17 @@
   padding: 0;
 }
 
-/* a glyph before each label; the nav reads faster as icon + word than as words */
+/*
+ * A glyph before each label; the nav reads faster as icon + word than as words.
+ * The place you are on is full strength on a soft pill with its glyph filled
+ * in; the rest step back to the secondary colour, glyph and word together.
+ */
 .nav-link-icon {
+  position: relative;
   display: inline-flex;
   /* the side the word is on, in either direction */
-  margin-inline-end: 7px;
-  color: var(--ink-4);
-}
-.nav-link:hover .nav-link-icon,
-.nav-link.active .nav-link-icon {
-  color: var(--gold-ink);
-}
-
-/*
- * Shop stands apart from the links, because it is a place you spend rather than
- * a place you read. No word beside it — the storefront says it, and the two
- * currencies sitting next to it say what for.
- */
-.nav-shop {
-  position: relative;
-  display: grid;
-  place-items: center;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--r-sm);
-  color: var(--ink-3);
-}
-.nav-shop:hover {
-  color: var(--gold-ink);
-  background: var(--surface-2);
-}
-.nav-shop .nav-badge {
-  position: absolute;
-  top: 2px;
-  right: 2px;
+  margin-inline-end: 8px;
+  color: inherit;
 }
 
 /* what you have to spend, stacked: read as a pair, in the width of one line */
@@ -154,7 +132,7 @@
   color: var(--gold-ink);
 }
 .purse-gems {
-  color: #7cc6ff;
+  color: var(--gems);
 }
 .purse-amount {
   color: var(--ink-2);
@@ -174,15 +152,18 @@ button.nav-link {
 }
 .nav-toggle {
   display: none;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  background: var(--bg);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: var(--r-pill);
+  background: transparent;
   color: var(--ink);
   align-items: center;
   justify-content: center;
   cursor: pointer;
+}
+.nav-toggle:hover {
+  background: var(--surface-2);
 }
 
 /* ---- brand mark -------------------------------------------------------- */
@@ -247,22 +228,15 @@ button.nav-link {
 }
 
 /*
- * The squeeze between the mobile menu and the full bar.
+ * The squeeze between the phone and the full bar.
  *
- * Above 860px the whole bar is shown; below 1180px the social rail is not yet a
- * fixed column, so the bar still carries its toggle. The container is capped at
- * 1120px at every width, so what decides whether the words fit is not the window
- * — it is that toggle, which costs 52px. With it, the bar needs 1158px of 1120
- * and runs off the screen, taking the whole page sideways with it.
- *
- * Hence the upper bound is the rail's own breakpoint rather than a width that
- * looked about right: at 1180 the rail becomes a column, the toggle goes, and
- * the words fit again.
- *
- * The words go and the glyphs stay. Every destination is still there and still
- * one click away — which is the point of having given each link an icon.
+ * Between 769px and 1023px the five places, the purse, the bell and the
+ * social toggle all have to share one line. The words go and the glyphs stay:
+ * every place is still there and still one click away, which is the point of
+ * having given each one an icon — and the word is still its accessible name,
+ * because it is hidden by clipping, never by display:none.
  */
-@media (min-width: 861px) and (max-width: 1179px) {
+@media (min-width: 769px) and (max-width: 1023px) {
   .nav-link-label {
     position: absolute;
     width: 1px;
@@ -275,7 +249,7 @@ button.nav-link {
     border: 0;
   }
   .nav-link {
-    padding: 0 10px;
+    padding: 0 12px;
   }
   .nav-link-icon {
     margin-inline-end: 0;
@@ -285,8 +259,18 @@ button.nav-link {
   }
 }
 
-/* mobile nav */
-@media (max-width: 860px) {
+/*
+ * A phone.
+ *
+ * Where there is a tab bar (the app, and every page for somebody signed in)
+ * the places live there, and the top bar keeps only the brand and the bell —
+ * and for a visitor, the way to join. Where there is not (the front page and
+ * the pages about Hevalo, for a visitor), the places fold into a menu.
+ */
+@media (max-width: 768px) {
+  .nav.has-tabbar .nav-primary {
+    display: none;
+  }
   .nav-toggle {
     display: inline-flex;
   }
@@ -296,26 +280,30 @@ button.nav-link {
     flex-direction: column;
     align-items: stretch;
     gap: 2px;
-    padding: 12px 18px 18px;
-    background: rgba(6, 8, 11, 0.98);
+    padding: 12px 16px 18px;
+    background: var(--panel-bg);
     -webkit-backdrop-filter: blur(20px);
     backdrop-filter: blur(20px);
     border-bottom: 1px solid var(--border-strong);
     box-shadow: var(--shadow);
     transform: translateY(-8px);
     opacity: 0;
-    pointer-events: none;
+    visibility: hidden;
     transition:
-      opacity 0.16s ease,
-      transform 0.16s ease;
+      opacity var(--dur-fast) ease,
+      transform var(--dur-fast) ease,
+      visibility 0s linear var(--dur-fast);
   }
   .nav-links.open {
     transform: translateY(0);
     opacity: 1;
-    pointer-events: auto;
+    visibility: visible;
+    transition:
+      opacity var(--dur-fast) ease,
+      transform var(--dur-fast) ease;
   }
   .nav-link {
-    height: 44px;
+    height: 48px;
     font-size: 1rem;
   }
   .nav-desktop-only {
@@ -328,6 +316,12 @@ button.nav-link {
     margin-top: 6px;
     padding-top: 8px;
     border-top: 1px solid var(--border);
+  }
+  .nav-inner {
+    gap: 12px;
+  }
+  .nav-actions {
+    gap: 8px;
   }
 }
 
@@ -356,23 +350,35 @@ button.nav-link {
   min-height: calc(100vh - var(--nav-h));
 }
 .page-header {
-  margin-bottom: 28px;
+  margin-bottom: var(--space-6);
+}
+/* a phone's screen starts with what is on it, not with a margin */
+@media (max-width: 768px) {
+  .app-main {
+    padding-top: max(24px, calc(var(--invite-banner-h, 0px) + 16px));
+  }
+  .page-header {
+    margin-bottom: var(--space-5);
+  }
 }
 .page-header .eyebrow {
   display: block;
   margin-bottom: 12px;
 }
-/* the front page's section heads, a size down: the app is read, not toured */
+/*
+ * The front page's section heads, a size down: the app is read, not toured.
+ * The scale's large title: 28 on a phone, growing to 34 on a wide screen.
+ */
 .page-title {
-  font-size: clamp(1.9rem, 3.6vw, 2.6rem);
+  font-size: clamp(1.75rem, 1.35rem + 1.2vw, 2.125rem);
   line-height: 1.08;
   letter-spacing: -0.024em;
   text-wrap: balance;
 }
 .page-sub {
-  margin-top: 10px;
-  color: var(--ink-2);
-  font-size: 1.05rem;
+  margin-top: 8px;
+  color: var(--ink-3);
+  font-size: var(--text-body);
   line-height: 1.6;
   max-width: 60ch;
   text-wrap: pretty;
@@ -381,7 +387,7 @@ button.nav-link {
 /* ---- footer ------------------------------------------------------------ */
 .footer {
   border-top: 1px solid var(--border);
-  background: rgba(10, 12, 16, 0.4);
+  background: var(--chrome-bg);
   -webkit-backdrop-filter: blur(var(--glass-blur));
   backdrop-filter: blur(var(--glass-blur));
   padding: 48px 0 40px;

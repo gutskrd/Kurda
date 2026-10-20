@@ -1012,31 +1012,32 @@ export const STYLE = `@font-face { font-family: 'Vazirmatn'; font-style: normal;
   --app-bg: #0b0d10;
   --ink: #ffffff;
   --ink-2: rgba(255, 255, 255, 0.84);
-  --ink-3: rgba(255, 255, 255, 0.6);
-  --ink-4: rgba(255, 255, 255, 0.42);
+  --ink-3: rgba(255, 255, 255, 0.62);
+  --ink-4: rgba(255, 255, 255, 0.5);
   --bg: rgba(255, 255, 255, 0.06);
   --surface: rgba(255, 255, 255, 0.05);
-  --surface-2: rgba(255, 255, 255, 0.11);
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.28);
+  --surface-2: rgba(255, 255, 255, 0.1);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.26);
   --primary: #ffffff;
   --primary-hover: rgba(255, 255, 255, 0.88);
   --primary-ink: #141414;
   --gold: #f0c24a;
   --gold-ink: #f6d68b;
-  --focus: rgba(255, 255, 255, 0.55);
+  --focus: rgba(255, 255, 255, 0.6);
   --glass-blur: 20px;
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
   --r-xs: 6px;
   --r-sm: 8px;
   --r-md: 12px;
-  --r-lg: 18px;
+  --r-lg: 16px;
   --r-pill: 999px;
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
   --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
   --container: 1120px;
-  --nav-h: 66px;
+  --nav-h: 64px;
+  --text-secondary: 0.9375rem;
 }
 
 /* ---- base.css ---------------------------------------------------------- */
@@ -1106,7 +1107,7 @@ img { max-width: 100%; display: block; }
 }
 .nav {
   position: sticky; top: 0; z-index: 40; height: var(--nav-h);
-  background: rgba(10, 12, 16, 0.4);
+  background: rgba(11, 13, 16, 0.78);
   -webkit-backdrop-filter: saturate(1.2) blur(20px);
   backdrop-filter: saturate(1.2) blur(20px);
   border-bottom: 1px solid var(--border);
@@ -1120,21 +1121,20 @@ img { max-width: 100%; display: block; }
 .brand-mark { flex: none; width: 30px; height: 30px; object-fit: contain; filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5)); }
 .nav-links { display: flex; align-items: center; gap: 4px; }
 .nav-link {
-  display: inline-flex; align-items: center; height: 36px; padding: 0 12px;
-  border-radius: var(--r-sm); font-size: 0.92rem; font-weight: 500;
-  color: var(--ink-2); transition: color 0.15s ease, background 0.15s ease;
+  display: inline-flex; align-items: center; height: 40px; padding: 0 14px;
+  border-radius: var(--r-pill); font-size: var(--text-secondary); font-weight: 600;
+  color: var(--ink-3); transition: color 0.15s ease, background 0.15s ease;
 }
 .nav-link:hover { color: var(--ink); background: var(--surface-2); }
 .nav-link.active { color: var(--ink); background: var(--surface-2); }
-.nav-link-icon { flex: none; margin-inline-end: 7px; color: var(--ink-4); }
-.nav-link:hover .nav-link-icon, .nav-link.active .nav-link-icon { color: var(--gold-ink); }
+.nav-link-icon { flex: none; margin-inline-end: 8px; color: inherit; }
 .nav-spacer { flex: 1; }
 .nav-actions { display: flex; align-items: center; gap: 14px; }
 /* ui.css's .btn + .btn-sm, folded together: the bar's two buttons are the app's two buttons */
 .btn-sm {
-  display: inline-flex; align-items: center; justify-content: center; height: 38px; padding: 0 14px;
-  border: 1px solid transparent; border-radius: var(--r-sm);
-  font-size: 0.9rem; font-weight: 550; line-height: 1; white-space: nowrap;
+  display: inline-flex; align-items: center; justify-content: center; height: 36px; padding: 0 14px;
+  border: 1px solid transparent; border-radius: var(--r-pill);
+  font-size: 0.875rem; font-weight: 600; line-height: 1; white-space: nowrap;
   background: var(--primary); color: var(--primary-ink);
   transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
 }

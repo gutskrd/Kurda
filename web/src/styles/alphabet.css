@@ -81,7 +81,7 @@
   padding: 8px 6px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
   color: var(--ink);
   cursor: pointer;
   transition:
@@ -91,7 +91,7 @@
 }
 .ab-tile:hover {
   border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .ab-tile:active {
   transform: translateY(1px);
@@ -145,7 +145,7 @@
   padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .ab-rule-pairs,
@@ -191,7 +191,7 @@
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .modal-panel .ab-card {
@@ -242,7 +242,7 @@
   display: grid;
   gap: 4px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--separator);
 }
 .ab-card-label {
   font-size: 0.7rem;
@@ -325,7 +325,7 @@
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .ab-practice .ab-group-body {
@@ -420,7 +420,7 @@
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   color: var(--ink);
   text-decoration: none;
@@ -489,7 +489,7 @@
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   color: var(--ink-2);
   cursor: pointer;
   transition:
@@ -555,7 +555,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--surface-2);
 }
 .ab-dots li.is-right {
   background: var(--success);
@@ -653,7 +653,7 @@
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 .ab-explain-letter {
   font-family: var(--font-display);
@@ -748,7 +748,7 @@
   flex: 0 1 220px;
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .ab-progress-track span {

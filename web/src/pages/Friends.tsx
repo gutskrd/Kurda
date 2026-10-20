@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
@@ -9,7 +8,9 @@ import { Button } from '../components/Button';
 import { Avatar } from '../components/Avatar';
 import { useT } from '../i18n/I18nProvider';
 import { PlayWithButton } from '../play/PlayButtons';
-import type { SuggestedFriend, UserSummary } from '../lib/types';
+import type { UserSummary } from '../lib/types';
+import { LinkButton } from '../components/Button';
+import { SearchIcon } from '../components/icons';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -29,46 +30,26 @@ function Row({ user, actions, meta }: { user: UserSummary; actions?: React.React
   );
 }
 
+/**
+ * Friends (/app/friends): the people you have, the requests waiting on you and
+ * the ones you sent.
+ *
+ * Finding someone new is Search's job now — one field for people and words,
+ * with the people you may know under it — so this page keeps to the people
+ * already in your life, and a way across to Search at the top. Messages links
+ * here from its "Friend requests" row, which is why requests come first.
+ */
 export function Friends(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
   const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
-  const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
-
-  const [q, setQ] = useState('');
-  const [results, setResults] = useState<UserSummary[] | null>(null);
-  const [searching, setSearching] = useState(false);
-  const [requested, setRequested] = useState<Set<string>>(new Set());
-
-  async function addFriend(userId: string): Promise<void> {
-    const res = await client.post('/friends/requests', { userId });
-    if (res.ok) {
-      setRequested((prev) => new Set(prev).add(userId));
-      sent.reload();
-    }
-  }
 
   /** Take back a request you sent — nothing tells the other person either way. */
   async function cancelRequest(userId: string): Promise<void> {
     await client.delete(`/friends/requests/${userId}`);
-    setRequested((prev) => {
-      const next = new Set(prev);
-      next.delete(userId);
-      return next;
-    });
     sent.reload();
-    suggestions.reload();
-  }
-
-  async function search(e: React.FormEvent): Promise<void> {
-    e.preventDefault();
-    if (q.trim().length < 1) return;
-    setSearching(true);
-    const res = await client.get<{ results: UserSummary[] }>(`/users/search?q=${encodeURIComponent(q.trim())}`);
-    setSearching(false);
-    setResults(res.ok ? res.data.results : []);
   }
 
   /**
@@ -79,59 +60,31 @@ export function Friends(): React.JSX.Element {
   async function unfriend(userId: string): Promise<void> {
     await client.delete(`/friends/${userId}`);
     friends.reload();
-    suggestions.reload();
   }
 
   async function block(userId: string): Promise<void> {
     await client.post(`/friends/${userId}/block`);
     friends.reload();
-    suggestions.reload();
   }
 
   async function respond(userId: string, accept: boolean): Promise<void> {
     await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
     requests.reload();
     friends.reload();
-    suggestions.reload();
   }
 
   return (
     <div className="container container-narrow">
-      <div className="page-header">
-        <span className="eyebrow">{t('friends.eyebrow')}</span>
-        <h1 className="page-title">{t('friends.title')}</h1>
-        <p className="page-sub">{t('friends.subtitle')}</p>
+      <div className="page-header page-header-row">
+        <div>
+          <h1 className="page-title">{t('friends.title')}</h1>
+          <p className="page-sub">{t('friends.subtitle')}</p>
+        </div>
+        <LinkButton to="/app/search" variant="secondary" size="sm">
+          <SearchIcon size={16} />
+          {t('rail.findPeople')}
+        </LinkButton>
       </div>
-
-      {/* search */}
-      <form className="friend-search" onSubmit={search}>
-        <input
-          className="input"
-          type="search"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={t('friends.searchPlaceholder')}
-          aria-label={t('friends.searchLabel')}
-        />
-        <Button type="submit" disabled={searching}>
-          {searching ? t('friends.searching') : t('friends.search')}
-        </Button>
-      </form>
-
-      {results !== null && (
-        <section className="friend-section">
-          <h2 className="friend-heading">{t('friends.results')}</h2>
-          {results.length === 0 ? (
-            <p className="muted" style={{ fontSize: '0.92rem' }}>{t('friends.noResults')}</p>
-          ) : (
-            <div className="post-list">
-              {results.map((u) => (
-                <Row key={u.userId} user={u} />
-              ))}
-            </div>
-          )}
-        </section>
-      )}
 
       {/* incoming requests */}
       {!requests.loading && (requests.data?.requests.length ?? 0) > 0 && (
@@ -174,33 +127,6 @@ export function Friends(): React.JSX.Element {
                     title={t('friends.cancelRequest', { name: u.displayName ?? u.username })}
                     onConfirm={() => cancelRequest(u.userId)}
                   />
-                }
-              />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* people you may know */}
-      {!suggestions.loading && (suggestions.data?.suggestions?.length ?? 0) > 0 && (
-        <section className="friend-section">
-          <h2 className="friend-heading">{t('friends.suggestions')}</h2>
-          <div className="post-list">
-            {suggestions.data!.suggestions.map((u) => (
-              <Row
-                key={u.userId}
-                user={u}
-                meta={t('friends.mutual', { count: u.mutualCount })}
-                actions={
-                  requested.has(u.userId) ? (
-                    <Button size="sm" disabled>
-                      {t('friends.requested')}
-                    </Button>
-                  ) : (
-                    <Button size="sm" onClick={() => addFriend(u.userId)}>
-                      {t('friends.add')}
-                    </Button>
-                  )
                 }
               />
             ))}

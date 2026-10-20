@@ -2,7 +2,14 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!--
+      viewport-fit=cover lets the page reach the edges of a phone with a notch or
+      a home indicator, so the tab bar can sit just above the indicator rather
+      than above a strip of empty browser; base.css keeps the content itself out
+      of the notch, and the bar and the chat's composer leave room for the
+      indicator with env(safe-area-inset-bottom).
+    -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <!--
       The tab icon carries its own field, because a tab strip is light in one
       browser and dark in the next. The mark is one colour now, so the cut-out

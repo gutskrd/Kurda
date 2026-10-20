@@ -88,7 +88,7 @@
   padding: 20px 20px 16px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-xl);
-  background: rgba(18, 20, 27, 0.97);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);

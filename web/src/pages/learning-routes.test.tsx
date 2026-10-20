@@ -169,8 +169,41 @@ describe('Learn', () => {
       },
     });
     routes('/app/learn');
-    await userEvent.click(await screen.findByRole('link', { name: 'Continue' }));
+    // the one next step at the top of the page: the course furthest along, and its lesson up next
+    const next = await screen.findByRole('region', { name: 'Goodbye' });
+    expect(within(next).getByText('Kurmanji for Beginners · Greetings')).toBeInTheDocument();
+    await userEvent.click(within(next).getByRole('link', { name: 'Continue' }));
     expect(await screen.findByRole('heading', { level: 1, name: 'Goodbye' })).toBeInTheDocument();
+  });
+
+  it('offers a new learner one first lesson to start, before anything else', async () => {
+    serve({
+      'GET /courses': { courses: courses.courses.slice(1) },
+      'GET /courses/c2/map': newroz,
+      'GET /practice/due': { due: 0, available: 0 },
+    });
+    routes('/app/learn');
+    const next = await screen.findByRole('region', { name: 'The smith' });
+    expect(within(next).getByRole('link', { name: 'Start your first lesson' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
+  });
+
+  it('says how today is going, kindly, without counting anything down', async () => {
+    // /me is the session and the streak at once, so this one answers it itself
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak: { current: 5, longest: 9, freezes: 0, lastActiveOn: null } } });
+        if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    routes('/app/learn');
+    const today = await screen.findByRole('region', { name: 'Today' });
+    expect(within(today).getByText('12 of 20 XP today')).toBeInTheDocument();
+    expect(within(today).getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '60');
+    expect(within(today).getByText('5-day streak')).toBeInTheDocument();
   });
 
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {

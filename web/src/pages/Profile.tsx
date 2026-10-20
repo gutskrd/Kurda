@@ -9,6 +9,7 @@ import { ProfileProgress } from '../profile/ProfileProgress';
 import { countryName } from '../lib/countries';
 import { AvatarStack } from '../components/AvatarStack';
 import { BookmarkIcon } from '../components/icons';
+import { ProfileMenu, ShareProfile } from '../profile/ProfileMenu';
 import { ErrorState } from '../components/states';
 import { FullProfileSkeleton } from '../components/skeletons';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -113,7 +114,19 @@ export function Profile(): React.JSX.Element {
   return (
     <FullProfile
       view={view}
-      headerAction={<Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>}
+      // your name at the top, and everything that is yours but is not this page behind the menu beside it
+      header={
+        <div className="profile-head">
+          <h1 className="profile-head-name" dir="auto">@{me.username}</h1>
+          <ProfileMenu />
+        </div>
+      }
+      headerAction={
+        <div className="profile-actions-row">
+          <Link to="/app/profile/edit" className="btn btn-secondary btn-sm">{t('profile.edit')}</Link>
+          <ShareProfile userId={me.id} name={view.name} />
+        </div>
+      }
       activity={<ProfileActivity userId={me.id} sections={sections} own />}
       progress={shown ? <ProfileProgress ranks={shown.ranks} badges={shown.badges} league={shown.league} own /> : null}
       sidebarExtra={

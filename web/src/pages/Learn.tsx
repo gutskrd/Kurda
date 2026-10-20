@@ -4,20 +4,34 @@ import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton } from '../components/skeletons';
 import { Skeleton } from '../components/Skeleton';
-import { useT } from '../i18n/I18nProvider';
-import { courseProgress, dialectName } from '../learn/map';
+import { DictionaryIcon, FlameIcon } from '../components/icons';
+import { useAuth } from '../auth/AuthProvider';
+import { useLocale, useT } from '../i18n/I18nProvider';
+import { courseProgress, dialectName, type NextLesson } from '../learn/map';
 import type { PracticeDue } from '../learn/types';
+import type { MeProfile } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
+import { LearnHeader } from '../learn/LearnHeader';
+import { publishedDictionary } from '../layouts/navLinks';
 
 /** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
 const ALPHABET_TEASER = 'Aa Çç Êê';
 
+/** GET /me/daily-goal */
+interface DailyGoal {
+  goal: number;
+  effectiveGoal: number;
+  earnedXp: number;
+  progress: number;
+  completed: boolean;
+}
+
 /**
- * Review, before the courses: what is due now, and the way in. The number is
- * the one a session will find (GET /practice/due counts as a session chooses),
- * so "3 due" never opens a review of five. A review left part-way through is
- * offered first, at its own address, so coming back picks it up rather than
- * starting another beside it.
+ * Review, among the practice tools: what is due now, and the way in. The
+ * number is the one a session will find (GET /practice/due counts as a session
+ * chooses), so "3 due" never opens a review of five. A review left part-way
+ * through is offered first, at its own address, so coming back picks it up
+ * rather than starting another beside it.
  */
 function ReviewEntry(): React.JSX.Element {
   const t = useT();
@@ -46,14 +60,160 @@ function ReviewEntry(): React.JSX.Element {
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.practise')}</LinkButton>;
   }
   return (
-    <section className="learn-review" aria-labelledby="learn-review-title">
+    <section className="learn-tool learn-review" aria-labelledby="learn-review-title">
       <div className="learn-review-text">
-        <h2 className="learn-review-title" id="learn-review-title">
+        <h3 className="learn-tool-title" id="learn-review-title">
           {t('review.title')}
-        </h2>
+        </h3>
         <p className="learn-review-body">{body}</p>
       </div>
       {action}
+    </section>
+  );
+}
+
+/**
+ * The one next step, before anything else on the page.
+ *
+ * A learner who opens Learn has usually come to carry on, and a page that
+ * offers six equal ways forward makes them choose before they can start.
+ * This is the course they are furthest into (or the first one, for somebody
+ * new), the lesson up next in it, how far they have come, and one button.
+ * Everything else on the page is below it.
+ */
+function ContinueCard({ entries }: { entries: CourseEntry[] }): React.JSX.Element | null {
+  const t = useT();
+  const withNext = entries
+    .map((entry) => ({ entry, progress: entry.map ? courseProgress(entry.map) : null }))
+    .filter((e): e is { entry: CourseEntry; progress: { done: number; total: number; next: NextLesson } } => Boolean(e.progress?.next));
+  // a course already begun before one not yet started, in the server's order otherwise
+  const pick = withNext.find((e) => e.progress.done > 0) ?? withNext[0];
+  if (!pick) return null;
+  const { entry, progress } = pick;
+  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
+  const fresh = progress.done === 0;
+  return (
+    <section className="learn-hero" aria-labelledby="learn-hero-title">
+      <p className="learn-hero-where">
+        {entry.course.title} · {progress.next.skillTitle}
+      </p>
+      <h2 className="learn-hero-title" id="learn-hero-title">
+        {progress.next.title}
+      </h2>
+      <div className="learn-hero-progress">
+        <div
+          className="course-progress-bar"
+          role="progressbar"
+          aria-label={t('learn.progressLabel', { course: entry.course.title })}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+        >
+          <span style={{ width: `${pct}%` }} />
+        </div>
+        <span className="course-progress-text">{t('learn.progress', { done: progress.done, total: progress.total })}</span>
+      </div>
+      <LinkButton
+        to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(entry.course.id)}`}
+        state={{ title: progress.next.title }}
+        size="lg"
+        className="learn-hero-go"
+      >
+        {fresh ? t('learn.startFirst') : t('learn.continue')}
+      </LinkButton>
+    </section>
+  );
+}
+
+/**
+ * Today, said plainly: how much of the day's goal is done and how long the
+ * streak is.
+ *
+ * Informational and kind. Nothing here counts down or warns about losing
+ * anything — the streak is a number that went up, and a day without one is
+ * an invitation to start, not a failure to report. Hidden until both answers
+ * are in, and quietly absent if they fail: the lessons below are the page.
+ */
+function Today(): React.JSX.Element | null {
+  const t = useT();
+  const locale = useLocale();
+  const goal = useApiGet<DailyGoal>('/me/daily-goal');
+  const me = useApiGet<{ user: MeProfile }>('/me');
+  const g = goal.data;
+  const streak = me.data?.user?.streak?.current;
+  if (!g || typeof g.earnedXp !== 'number' || typeof streak !== 'number') return null;
+  const target = g.effectiveGoal || g.goal;
+  const pct = Math.round(Math.max(0, Math.min(1, g.progress)) * 100);
+  return (
+    <section className="learn-today" aria-labelledby="learn-today-title">
+      <div className="learn-today-goal">
+        <h2 className="learn-section-title" id="learn-today-title">
+          {t('learn.today.title')}
+        </h2>
+        <div
+          className="course-progress-bar learn-today-bar"
+          role="progressbar"
+          aria-label={t('learn.today.goalLabel')}
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={pct}
+        >
+          <span style={{ width: `${pct}%` }} className={g.completed ? 'is-met' : undefined} />
+        </div>
+        <p className="learn-today-line">
+          {g.completed
+            ? t('learn.today.done')
+            : t('learn.today.goal', { xp: g.earnedXp.toLocaleString(locale), goal: target.toLocaleString(locale) })}
+        </p>
+      </div>
+      <p className={`learn-today-streak${streak > 0 ? ' is-on' : ''}`}>
+        <FlameIcon size={20} weight={streak > 0 ? 'fill' : 'regular'} />
+        <span>{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
+      </p>
+    </section>
+  );
+}
+
+/**
+ * Practice tools: review, the alphabet and the dictionary, side by side.
+ *
+ * Tools, not courses — each is something to reach for between lessons — so
+ * they share a row rather than each taking a card of the page's full width.
+ * The dictionary a visitor gets is the published one, which needs no account.
+ */
+function Tools({ signedIn }: { signedIn: boolean }): React.JSX.Element {
+  const t = useT();
+  const locale = useLocale();
+  const dictionary = signedIn ? (
+    <Link to="/app/dictionary" className="learn-tool learn-tool-link">
+      <DictionaryIcon size={24} />
+      <span className="learn-tool-title">{t('nav.dictionary')}</span>
+      <span className="learn-tool-body">{t('learn.tools.dictionary')}</span>
+    </Link>
+  ) : (
+    <a href={publishedDictionary(locale)} className="learn-tool learn-tool-link">
+      <DictionaryIcon size={24} />
+      <span className="learn-tool-title">{t('nav.dictionary')}</span>
+      <span className="learn-tool-body">{t('learn.tools.dictionary')}</span>
+    </a>
+  );
+  return (
+    <section className="learn-tools-section" aria-labelledby="learn-tools-title">
+      <h2 className="learn-section-title" id="learn-tools-title">
+        {t('learn.tools.title')}
+      </h2>
+      <div className={`learn-tools${signedIn ? '' : ' is-guest'}`}>
+        {signedIn && <ReviewEntry />}
+        {/* before any course, the letters it is written in */}
+        <Link to="/app/alphabet" className="learn-tool learn-tool-link ab-start">
+          <span className="ab-start-letters" lang="ku" aria-hidden="true">
+            {ALPHABET_TEASER}
+          </span>
+          <span className="learn-tool-title ab-start-title">{t('alphabet.title')}</span>
+          <span className="learn-tool-body ab-start-body">{t('alphabet.link')}</span>
+        </Link>
+        {dictionary}
+      </div>
     </section>
   );
 }
@@ -67,11 +227,11 @@ function CourseCard({ entry }: { entry: CourseEntry }): React.JSX.Element {
   return (
     <article className="course-card">
       <span className="lp-chip">{dialectName(course.dialect)}</span>
-      <h2 className="course-card-title">
+      <h3 className="course-card-title">
         <Link to={mapPath} className="course-card-link">
           {course.title}
         </Link>
-      </h2>
+      </h3>
       {progress ? (
         <>
           <div className="course-progress">
@@ -103,11 +263,13 @@ function CourseCard({ entry }: { entry: CourseEntry }): React.JSX.Element {
           <LinkButton
             to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(course.id)}`}
             state={{ title: progress.next.title }}
+            variant="secondary"
+            size="sm"
           >
             {progress.done === 0 ? t('learn.start') : t('learn.continue')}
           </LinkButton>
         )}
-        <LinkButton to={mapPath} variant="secondary">
+        <LinkButton to={mapPath} variant="ghost" size="sm">
           {t('learn.openMap')}
         </LinkButton>
       </div>
@@ -116,47 +278,81 @@ function CourseCard({ entry }: { entry: CourseEntry }): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn): review first, then the alphabet, then every course with
- * how far the learner is through it and the lesson up next. Each course opens
- * its map; Start or Continue goes straight into the next lesson.
+ * What a visitor without an account sees where the courses would be.
+ *
+ * Asked, in place, rather than bounced: a course keeps your progress, so it
+ * needs somebody to keep it for, and that is said plainly beside the way to
+ * become somebody. The tools above it and the games one switch away are open.
  */
-export function Learn(): React.JSX.Element {
+function GuestCourses(): React.JSX.Element {
+  const t = useT();
+  return (
+    <section className="learn-guest" aria-labelledby="learn-guest-title">
+      <h2 className="learn-guest-title" id="learn-guest-title">
+        {t('learn.title')}
+      </h2>
+      <p className="learn-guest-body">{t('learn.guest.body')}</p>
+      <div className="gate-actions">
+        <Link to="/register" className="btn btn-primary" state={{ from: '/app/learn' }}>
+          {t('auth.login.createAccount')}
+        </Link>
+        <Link to="/login" className="btn btn-secondary" state={{ from: '/app/learn' }}>
+          {t('nav.login')}
+        </Link>
+      </div>
+    </section>
+  );
+}
+
+function Lessons(): React.JSX.Element {
   const t = useT();
   const { entries, error, reload } = useCourses();
-
   return (
-    <div className="container">
-      <div className="page-header">
-        <span className="eyebrow">{t('learn.eyebrow')}</span>
-        <h1 className="page-title">{t('learn.title')}</h1>
-        <p className="page-sub">{t('learn.subtitle')}</p>
-      </div>
+    <>
+      {entries && <ContinueCard entries={entries} />}
+      <Today />
+      <Tools signedIn />
+      <section aria-labelledby="learn-courses-title">
+        <h2 className="learn-section-title" id="learn-courses-title">
+          {t('learn.courses.title')}
+        </h2>
+        {error ? (
+          <ErrorState message={error} onRetry={reload} />
+        ) : !entries ? (
+          <CourseGridSkeleton />
+        ) : entries.length === 0 ? (
+          <EmptyState title={t('learn.noCourses')} message={t('learn.noCoursesBody')} />
+        ) : (
+          <div className="learn-courses">
+            {entries.map((entry) => (
+              <CourseCard key={entry.course.id} entry={entry} />
+            ))}
+          </div>
+        )}
+      </section>
+    </>
+  );
+}
 
-      <ReviewEntry />
-
-      {/* before any course, the letters it is written in */}
-      <Link to="/app/alphabet" className="ab-start">
-        <span className="ab-start-letters" lang="ku" aria-hidden="true">
-          {ALPHABET_TEASER}
-        </span>
-        <span className="ab-start-text">
-          <span className="ab-start-title">{t('alphabet.title')}</span>
-          <span className="ab-start-body">{t('alphabet.link')}</span>
-        </span>
-      </Link>
-
-      {error ? (
-        <ErrorState message={error} onRetry={reload} />
-      ) : !entries ? (
+/**
+ * Learn (/app/learn), on its Lessons half: the one next step, today, the
+ * practice tools, then every course with how far the learner is through it.
+ * The Games half is pages/Games.tsx, behind the same header.
+ */
+export function Learn(): React.JSX.Element {
+  const { status } = useAuth();
+  return (
+    <div className="container learn-page">
+      <LearnHeader view="lessons" />
+      {status === 'signedIn' ? (
+        <Lessons />
+      ) : status === 'restoring' ? (
         <CourseGridSkeleton />
-      ) : entries.length === 0 ? (
-        <EmptyState title={t('learn.noCourses')} message={t('learn.noCoursesBody')} />
       ) : (
-        <div className="learn-courses">
-          {entries.map((entry) => (
-            <CourseCard key={entry.course.id} entry={entry} />
-          ))}
-        </div>
+        <>
+          <Tools signedIn={false} />
+          <GuestCourses />
+        </>
       )}
     </div>
   );

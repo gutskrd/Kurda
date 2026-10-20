@@ -46,8 +46,11 @@ export function FullProfile({
   sidebarExtra,
   activity,
   progress,
+  header,
 }: {
   view: FullProfileView;
+  /** a line above the card: on your own profile, your name and the menu of what is yours */
+  header?: React.ReactNode;
   headerAction?: React.ReactNode;
   sidebarExtra?: React.ReactNode;
   /** the showcased badges, ranks and league (profile/ProfileProgress) */
@@ -60,6 +63,7 @@ export function FullProfile({
   return (
     <div className="mkp-page">
       <div className="mkp-wrap">
+        {header}
         {/*
           The same card as the profile popup and the front page's picture of
           one, only wider. The background used to fill the whole page behind

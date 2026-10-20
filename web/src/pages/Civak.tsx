@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
-import { ErrorState } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
+import { LinkButton } from '../components/Button';
 import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
@@ -150,7 +151,16 @@ export function Civak(): React.JSX.Element {
       {items === null ? (
         <FeedSkeleton label="civak.loading" />
       ) : items.length === 0 ? (
-        <p className="muted">{t('civak.empty')}</p>
+        // an empty wall still has a next step: the people whose posts would fill it
+        <EmptyState
+          title={t('civak.empty')}
+          message={t('civak.emptyBody')}
+          action={
+            <LinkButton to="/app/search" size="sm" className="state-action">
+              {t('rail.findPeople')}
+            </LinkButton>
+          }
+        />
       ) : (
         <>
           <div className="feed">

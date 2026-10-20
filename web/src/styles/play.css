@@ -159,7 +159,7 @@
   border: 1px solid var(--border-strong);
   border-inline-start: 3px solid var(--gold);
   border-radius: var(--r-md);
-  background: rgba(20, 24, 31, 0.97);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lg);
@@ -275,7 +275,7 @@
   padding: 4px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(20, 24, 31, 0.99);
+  background: var(--panel-bg);
   box-shadow: var(--shadow);
 }
 .invite-notnow-menu button {

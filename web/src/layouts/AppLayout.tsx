@@ -3,6 +3,7 @@ import { Outlet } from 'react-router-dom';
 import { RouteFallback } from '../components/RouteFallback';
 import { ErrorBoundary } from '../components/ErrorBoundary';
 import { TopNav } from '../components/TopNav';
+import { TabBar } from '../components/TabBar';
 import { SocialRail } from '../social/SocialRail';
 import { RailProvider } from '../social/RailProvider';
 import { PlayProvider } from '../play/PlayProvider';
@@ -14,13 +15,13 @@ import { FeedbackHost } from '../feedback/FeedbackHost';
 /**
  * The app shell. Content pages set their own container + header.
  *
+ * The five places are the top bar's links on a wide screen and the tab bar's
+ * on a phone — one list (`useNavLinks`, shared with the landing page), so a
+ * place is in the same position on every screen.
+ *
  * A guest is shown only what a guest can use. Offering links that bounce you to
  * a sign-in wall is worse than not offering them — it teaches you the app is
- * mostly closed, when in fact almost all of it is open to read. The dictionary
- * is the case that proves it: a guest gets the published pages at /ferheng/
- * rather than the gated screen, so the link works for them.
- *
- * The list itself lives in `useNavLinks`, shared with the landing page.
+ * mostly closed, when in fact almost all of it is open to read.
  */
 export function AppLayout(): React.JSX.Element {
   const t = useT();
@@ -33,7 +34,7 @@ export function AppLayout(): React.JSX.Element {
       <a href="#main" className="skip-link">
         {t('nav.skipToContent')}
       </a>
-      <TopNav links={links} />
+      <TopNav links={links} withTabBar />
       <main id="main" className="app-main">
         {/*
          * The page waits here, and nothing else does.
@@ -53,6 +54,8 @@ export function AppLayout(): React.JSX.Element {
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
+      {/* the five places along the bottom of a phone; nothing wider draws it */}
+      <TabBar links={links} />
       {/* "Rojda invited you to Wordle Battle" — Join or Not now, wherever you are */}
       <InviteBanner />
       {/* web-race-rating: the one-time rating box after a first finished game */}

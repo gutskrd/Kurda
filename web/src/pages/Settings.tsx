@@ -17,6 +17,7 @@ import type { MessageKey } from '../i18n/en';
 import { LanguagePicker } from '../i18n/LanguagePicker';
 import { KeyboardCard } from '../keyboard/KeyboardCard';
 import { SendFeedbackCard } from '../feedback/SendFeedbackCard';
+import { THEME_PREFERENCES, useThemePreference, type ThemePreference } from '../theme/theme';
 
 const VISIBILITIES = ['everyone', 'members', 'friends', 'nobody'] as const;
 type Visibility = (typeof VISIBILITIES)[number];
@@ -67,6 +68,9 @@ export function Settings(): React.JSX.Element {
       {/* first, because it is the setting that decides how everything else on
           this page reads */}
       <Language current={data.user.locale} />
+
+      {/* how it looks, beside what language it speaks */}
+      <Appearance />
 
       <Privacy current={data.user.profileVisibility} minor={data.user.minor === true} />
 
@@ -201,6 +205,43 @@ function Language({ current }: { current?: string | null }): React.JSX.Element {
   );
 }
 
+const THEME_LABEL: Record<ThemePreference, MessageKey> = {
+  dark: 'settings.appearance.dark',
+  light: 'settings.appearance.light',
+  system: 'settings.appearance.system',
+};
+
+/**
+ * Dark, light, or whatever this device is set to.
+ *
+ * Applied the moment it is chosen and kept on this device rather than the
+ * account: it is about the screen in front of you, and the same person may
+ * want light on a laptop by day and dark on a phone at night.
+ */
+function Appearance(): React.JSX.Element {
+  const t = useT();
+  const [preference, setPreference] = useThemePreference();
+  return (
+    <section className="card" style={{ marginTop: 20 }}>
+      <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.appearance.title')}</h2>
+      <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>{t('settings.appearance.help')}</p>
+      <div className="toolbar" role="group" aria-label={t('settings.appearance.title')}>
+        {THEME_PREFERENCES.map((p) => (
+          <button
+            key={p}
+            type="button"
+            className={`chip${preference === p ? ' active' : ''}`}
+            aria-pressed={preference === p}
+            onClick={() => setPreference(p)}
+          >
+            {t(THEME_LABEL[p])}
+          </button>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 /**
  * In or out of the weekly leagues, in one tap.
  *
@@ -269,7 +310,7 @@ function Privacy({ current, minor }: { current: Visibility; minor: boolean }): R
   }
 
   return (
-    <section className="card">
+    <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.privacy.title')}</h2>
       <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>{t('settings.privacy.help')}</p>
       <div className="toolbar" style={{ marginBottom: 8 }} role="group" aria-label={t('settings.privacy.title')}>
@@ -351,12 +392,12 @@ function DangerZone({ onDeleted }: { onDeleted: () => void }): React.JSX.Element
       {confirming ? (
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <Button variant="secondary" size="sm" onClick={() => setConfirming(false)}>{t('common.cancel')}</Button>
-          <button type="button" className="btn btn-sm" style={{ background: 'var(--danger)', color: '#fff', borderColor: 'var(--danger)' }} onClick={del} disabled={busy}>
+          <button type="button" className="btn btn-danger btn-sm" onClick={del} disabled={busy}>
             {busy ? t('settings.delete.deleting') : t('settings.delete.confirm')}
           </button>
         </div>
       ) : (
-        <button type="button" className="btn btn-secondary btn-sm" style={{ color: 'var(--danger)', borderColor: 'color-mix(in srgb, var(--danger) 45%, var(--border-strong))' }} onClick={() => setConfirming(true)}>
+        <button type="button" className="btn btn-secondary btn-sm btn-danger-text" onClick={() => setConfirming(true)}>
           {t('settings.delete.title')}
         </button>
       )}

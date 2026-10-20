@@ -208,7 +208,7 @@
 }
 .post-edit:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .post-edit:focus-visible {
   outline: none;

@@ -289,7 +289,7 @@ export function Shop(): React.JSX.Element {
   return (
     <div className="container">
       <div className="page-header">
-        <span className="eyebrow">{t('shop.eyebrow')}</span>
+        <span className="eyebrow">{t('nav.profile')}</span>
         <h1 className="page-title">{t('nav.shop')}</h1>
         <p className="page-sub">
           {t('shop.subtitle')}{' '}

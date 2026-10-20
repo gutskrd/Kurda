@@ -327,7 +327,7 @@
   gap: 4px 12px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
 }
 .rated-gains-who {
   display: inline-flex;
@@ -457,7 +457,7 @@
   margin: 0;
   font-size: 1.45rem;
   line-height: 1.1;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .rank-card-meaning {
   font-family: var(--font-sans);
@@ -516,7 +516,7 @@
   position: relative;
   height: 8px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .rank-progress-fill {
@@ -551,10 +551,10 @@
 }
 .rank-shield-pip {
   display: inline-grid;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--ink-4);
 }
 .rank-shield-pip.is-on {
-  color: var(--t-hi, var(--gold));
+  color: var(--t-text, var(--t-hi, var(--gold)));
 }
 
 /* ---- after a game -------------------------------------------------------------------- */
@@ -613,7 +613,7 @@
   color: var(--ink);
 }
 .rank-result.is-up .rank-result-delta {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   text-shadow: 0 0 22px color-mix(in srgb, var(--t-mid, #fff) 50%, transparent);
 }
 .rank-result-reason {
@@ -630,7 +630,7 @@
   font-size: 0.86rem;
 }
 .rank-result-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
   font-size: 0.95rem;
 }
@@ -726,7 +726,7 @@
 }
 .celebrate-kicker {
   margin: 12px 0 0;
-  color: var(--t-hi, var(--gold-ink));
+  color: var(--t-text, var(--t-hi, var(--gold-ink)));
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -817,7 +817,7 @@
   padding: 18px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .badges-showcase-head {
@@ -905,7 +905,7 @@
   display: block;
   height: 6px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .badges-stat-bar > span,
@@ -960,7 +960,7 @@
   outline-offset: 2px;
 }
 .badge-tile.is-locked {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface);
 }
 .badge-tile.is-secret {
   --t-mid: #8f70f0;
@@ -983,7 +983,7 @@
   font-size: 0.78rem;
 }
 .badge-tile-tier {
-  color: var(--t-hi, var(--ink-2));
+  color: var(--t-text, var(--t-hi, var(--ink-2)));
   font-size: 0.74rem;
   font-weight: 650;
   letter-spacing: 0.06em;
@@ -1008,7 +1008,7 @@
   align-items: center;
   gap: 4px;
   margin-top: 6px;
-  color: var(--t-hi, var(--success));
+  color: var(--t-text, var(--t-hi, var(--success)));
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -1021,7 +1021,7 @@
   width: 14px;
   height: 4px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--surface-3);
 }
 .badge-pip.is-on {
   background: var(--t-hi, var(--gold));
@@ -1088,7 +1088,7 @@
   gap: 10px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   color: var(--ink-3);
   font-size: 0.86rem;
 }
@@ -1102,7 +1102,7 @@
 }
 .badge-ladder-row.is-reached .badge-ladder-mark,
 .badge-ladder-row.is-reached .badge-ladder-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .badge-ladder-tier {
   font-weight: 650;
@@ -1199,7 +1199,7 @@
 }
 .league-card-title {
   margin: 0;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .league-head-meaning {
   margin: 0;
@@ -1336,7 +1336,7 @@
   padding: 12px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 .league-last-text {
   display: grid;
@@ -1403,7 +1403,7 @@
   width: 100%;
   max-width: 34px;
   border-radius: 8px 8px 3px 3px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
   align-self: end;
 }
 .league-week.is-met .league-week-bar {
@@ -1484,7 +1484,7 @@
   padding: 10px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   color: inherit;
   text-decoration: none;
@@ -1610,7 +1610,7 @@
   text-transform: uppercase;
 }
 .profile-rank-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
 }
 .profile-rank-best {
@@ -1708,7 +1708,7 @@
   padding: 10px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 @media (max-width: 480px) {
   .season-game {
@@ -1774,7 +1774,7 @@
   gap: 0 8px;
 }
 .season-reward-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
@@ -1823,7 +1823,7 @@
   padding: 12px 16px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
 }
 @media (max-width: 480px) {
   .season-last {
@@ -1886,7 +1886,7 @@
   text-transform: uppercase;
 }
 .season-past-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
 }
 
@@ -1980,7 +1980,7 @@
   border-radius: 14px;
 }
 .rank-rung.is-here {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t-mid, #fff) 45%, transparent);
 }
 .rank-rung-text {
@@ -1995,7 +1995,7 @@
   align-items: baseline;
   gap: 2px 8px;
   font-weight: 650;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .rank-rung-meaning,
 .rank-rung-fact {

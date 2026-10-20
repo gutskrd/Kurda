@@ -66,7 +66,7 @@
   padding: 36px 34px 32px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   -webkit-backdrop-filter: blur(28px) saturate(1.3);
   backdrop-filter: blur(28px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
@@ -253,21 +253,35 @@
 }
 .chip {
   height: 36px;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: var(--r-pill);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   background: var(--surface-2);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   color: var(--ink-2);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--text-secondary);
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.chip:hover:not(.active):not(:disabled) {
+  background: var(--surface-3);
+  color: var(--ink);
 }
 .chip.active {
   background: var(--primary);
   color: var(--primary-ink);
   border-color: var(--primary);
+}
+/* a filter is still a target for a thumb: a full 44px where the pointer is a finger */
+@media (pointer: coarse) {
+  .chip {
+    height: 44px;
+  }
+  .seg-btn {
+    min-height: 40px;
+  }
 }
 
 /* ---- rankings ---------------------------------------------------------- */
@@ -301,7 +315,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(4, 6, 10, 0.55);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   animation: fade 0.15s ease;
@@ -340,7 +354,7 @@
   padding: 32px 30px 28px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(14, 16, 22, 0.62);
+  background: var(--panel-glass);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
@@ -470,7 +484,7 @@
   padding: 6px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(18, 21, 27, 0.98);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
@@ -496,7 +510,7 @@
   cursor: pointer;
 }
 .user-menu-item:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .user-menu-item.is-danger {
   color: var(--danger);
@@ -522,7 +536,7 @@
 }
 .user-menu-x:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .user-menu-note {
   margin: 0;
@@ -536,9 +550,9 @@
   gap: 8px;
 }
 .user-menu-danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
+  color: var(--on-danger);
   font-weight: 600;
 }
 
@@ -845,7 +859,7 @@ button.feature {
   width: 100%;
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .cosmetic-thumb-background {
   aspect-ratio: 16 / 9;
@@ -1014,7 +1028,7 @@ button.feature {
   width: 100%;
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .shop-thumb-background {
   aspect-ratio: 16 / 9;
@@ -1552,6 +1566,14 @@ button.feature {
   .chat-layout.has-active .chat-list {
     display: none;
   }
+  /* the list on its own is a page that scrolls, not a box inside one */
+  .chat-layout:not(.has-active) {
+    height: auto;
+  }
+  .chat-layout:not(.has-active) .chat-list {
+    overflow: visible;
+    padding-right: 0;
+  }
   .chat-layout:not(.has-active) .chat-thread-pane {
     display: none;
   }
@@ -1663,7 +1685,7 @@ button.feature {
   letter-spacing: normal;
 }
 .mkp-showcase {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 16px 18px;
@@ -1689,7 +1711,7 @@ button.feature {
   flex: none;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   border-radius: 12px;
   font-size: 1.5rem;
 }
@@ -1705,7 +1727,7 @@ button.feature {
 
 /* right info sidebar */
 .mkp-online {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 16px 18px;
@@ -2026,7 +2048,7 @@ button.feature {
      the rest of the gesture to the page — or to the browser's back swipe */
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--separator);
   margin-bottom: 10px;
   padding-bottom: 8px;
 }
@@ -2050,19 +2072,19 @@ button.feature {
 }
 .mkp-tab:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .mkp-tab.is-active {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 .mkp-tab-hidden {
   font-size: 0.66rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 5px;
 }
@@ -2098,7 +2120,7 @@ button.feature {
   padding-inline: 2px;
 }
 .mkp-activity-feed .fcard + .fcard {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--separator);
 }
 .mkp-activity-feed .fcard:hover {
   transform: none;
@@ -2128,7 +2150,7 @@ button.feature {
   text-decoration: none;
 }
 a.mkp-activity-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .mkp-activity-glyph {
   flex: none;
@@ -2137,7 +2159,7 @@ a.mkp-activity-row:hover {
   width: 38px;
   height: 38px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   color: var(--ink-2);
 }
 .mkp-activity-meta {
@@ -2180,7 +2202,7 @@ a.mkp-activity-row:hover {
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .mkp-shot-empty {
   display: grid;
@@ -2200,7 +2222,7 @@ a.mkp-activity-row:hover {
   width: 100%;
   margin-top: 10px;
   padding: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   border-radius: 4px;
   background: transparent;
   color: var(--ink-2);
@@ -2209,7 +2231,7 @@ a.mkp-activity-row:hover {
   cursor: pointer;
 }
 .mkp-more:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   color: var(--ink);
 }
 
@@ -2493,13 +2515,13 @@ a.mkp-activity-row:hover {
 }
 .wordle-gray {
   /* the front page's grey: a letter that is not in the word steps back */
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
   border-color: transparent;
   color: var(--ink-2);
 }
 /* on the keyboard, a used-up letter is dimmer than one not tried yet */
 .wordle-key.wordle-gray {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   color: var(--ink-4);
 }
 .wordle-notice {
@@ -3202,7 +3224,7 @@ a.mkp-activity-row:hover {
 .shop-short {
   padding: 1px 7px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   color: var(--ink-3);
   font-size: 0.72rem;
   font-weight: 500;
@@ -3639,7 +3661,7 @@ a.mkp-activity-row:hover {
   cursor: pointer;
 }
 .sticker:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .sticker.is-on {
   border-color: var(--gold-ink);

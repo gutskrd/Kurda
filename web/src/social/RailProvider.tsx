@@ -13,7 +13,10 @@ interface RailContext {
   /** wide screens only: the rail is a strip of icons rather than a full column */
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
-  /** everything waiting: invites, requests, unread notifications and groups */
+  /**
+   * Everything in the social column waiting on you: invites, requests and
+   * group messages. Notifications are not counted here — they have the bell.
+   */
   total: number;
 }
 
@@ -102,8 +105,9 @@ export function RailProvider({ children }: { children: React.ReactNode }): React
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
-  const total =
-    data.unread.challenges + data.unread.requests + data.unread.notifications + data.unread.groups;
+  // notifications have their own bell; counting them here as well would put
+  // one new like on two badges at once
+  const total = data.unread.challenges + data.unread.requests + data.unread.groups;
 
   const value = useMemo(
     () => ({ data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed, total }),

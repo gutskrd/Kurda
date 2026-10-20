@@ -1,25 +1,37 @@
 /* ---- buttons ----------------------------------------------------------- */
+/*
+ * One button, three weights, all pills.
+ *
+ * Primary is the one next step on a screen — near-white on the dark page,
+ * near-black on the light one. Secondary is a surface-tone pill, the weight of
+ * "Edit profile" or "Follow". Ghost is a word that only lights up under the
+ * pointer. Destructive is red, as words or as a fill once it has been
+ * confirmed. Forty-four pixels tall by default, which is the size a finger
+ * needs; `btn-sm` is for rows and toolbars on a pointer, and grows back to 44
+ * on a touch screen (below).
+ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 0.95rem;
-  font-weight: 550;
+  font-size: var(--text-secondary);
+  font-weight: 600;
   line-height: 1;
-  padding: 0 18px;
+  padding: 0 20px;
   height: 44px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
     transform 0.05s ease;
 }
 .btn:active {
@@ -30,14 +42,14 @@
   cursor: not-allowed;
 }
 .btn-sm {
-  height: 38px;
+  height: 36px;
   padding: 0 14px;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 .btn-lg {
   height: 52px;
   padding: 0 26px;
-  font-size: 1.02rem;
+  font-size: var(--text-body);
 }
 .btn-block {
   width: 100%;
@@ -52,18 +64,15 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
-/* translucent glass button */
+/* the surface-tone pill */
 .btn-secondary {
   background: var(--surface-2);
   color: var(--ink);
-  border-color: var(--border-strong);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim);
+  border-color: var(--border);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
 }
 .btn-ghost {
   color: var(--ink-2);
@@ -71,6 +80,33 @@
 .btn-ghost:hover:not(:disabled) {
   background: var(--surface-2);
   color: var(--ink);
+}
+/* destructive, confirmed: the fill. Before confirming it is only red words */
+.btn-danger {
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
+  color: var(--on-danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-fill) 88%, #000);
+}
+.btn-danger-text,
+.btn-danger-text:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+/*
+ * On a touch screen nothing pressable is under 44px.
+ *
+ * The small button exists so a row of actions fits beside a name on a desk;
+ * a thumb does not get smaller with the screen, so where the primary pointer
+ * is coarse every button is a full target again.
+ */
+@media (pointer: coarse) {
+  .btn-sm {
+    height: 44px;
+    padding: 0 16px;
+  }
 }
 
 /* ---- forms ------------------------------------------------------------- */
@@ -100,14 +136,13 @@ input[type='password']::-ms-clear {
   width: 100%;
   height: 46px;
   padding: 0 14px;
-  font-size: 0.98rem;
+  /* 16px at least, or a phone zooms the page in when the field is touched */
+  font-size: 1rem;
   font-family: var(--font-sans);
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-md);
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
@@ -118,9 +153,8 @@ input[type='password']::-ms-clear {
 }
 .input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 0 0 3px var(--focus);
+  border-color: var(--ink-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 45%, transparent);
 }
 .input-wrap {
   position: relative;
@@ -175,14 +209,12 @@ input[type='password']::-ms-clear {
 }
 
 /* ---- surfaces / cards -------------------------------------------------- */
+/* a hairline, not a shadow: a card lies on the page, it does not float over it */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 22px;
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim), var(--shadow-sm);
+  padding: var(--space-5);
 }
 .card-link {
   display: block;
@@ -226,13 +258,11 @@ input[type='password']::-ms-clear {
 /* ---- states ------------------------------------------------------------ */
 .state {
   text-align: center;
-  padding: 56px 24px;
-  border: 1px dashed var(--border-strong);
+  padding: 40px 24px;
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   color: var(--ink-3);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
 }
 .state h3 {
   font-family: var(--font-sans);
@@ -285,7 +315,7 @@ input[type='password']::-ms-clear {
   width: 100%;
   height: 12px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
   /* a box with nothing in it still has to hold its line height open */
   flex-shrink: 0;
 }
@@ -344,7 +374,7 @@ input[type='password']::-ms-clear {
   position: absolute;
   inset: 20% 0;
   border-radius: inherit;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 /* the ray belongs to the bar, not to the line box around it */
 .skeleton-line::after {
@@ -395,7 +425,7 @@ input[type='password']::-ms-clear {
     left: 0;
     width: 100%;
     transform: none;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--surface);
   }
 }
 
@@ -441,6 +471,6 @@ select.input option,
 select.input optgroup,
 select option,
 select optgroup {
-  background-color: #14181e;
-  color: #fff;
+  background-color: var(--surface-solid);
+  color: var(--ink);
 }

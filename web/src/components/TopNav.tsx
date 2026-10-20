@@ -1,23 +1,34 @@
 import { useEffect, useState } from 'react';
-import { NavLink, Link } from 'react-router-dom';
+import { NavLink, Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import { useMessages } from '../chat/MessagesProvider';
-import { useUnseenGifts } from '../shop/useUnseenGifts';
 import { useRail } from '../social/RailProvider';
 import { Brand } from './Brand';
 import { LinkButton } from './Button';
-import { CoinIcon, GemIcon, MenuIcon, CloseIcon, ShopIcon } from './icons';
-import { Avatar } from './Avatar';
-import { LevelRing } from '../profile/LevelRing';
-import { useProfileModal } from '../profile/ProfileModal';
+import { CoinIcon, GemIcon, MenuIcon, CloseIcon } from './icons';
 import { RailToggle } from '../social/RailToggle';
+import { NotificationsBell } from '../notifications/NotificationsBell';
 import { useT } from '../i18n/I18nProvider';
+import { countLabel } from './TabBar';
 
 export interface NavItem {
+  /** which place this is — the tab bar and tests find a place by it */
+  key?: string;
   label: string;
   to: string;
   /** shown before the label; the nav reads faster as glyph + word than as words */
   icon?: React.ReactNode;
+  /** the glyph while this is the page you are on: the same shape, filled in */
+  activeIcon?: React.ReactNode;
+  /**
+   * Whether a page belongs to this place. A place stays lit on the pages
+   * inside it — Rankings is part of Learn, Settings part of your profile —
+   * which a plain prefix match on `to` cannot say.
+   */
+  owns?: (pathname: string) => boolean;
+  /** a count waiting here (unread messages); nothing is drawn at zero */
+  badge?: number;
+  /** something waiting that has no number worth saying (a gift to open) */
+  dot?: boolean;
   /**
    * A path this app does not route — the published dictionary under /ferheng/,
    * which is files on the edge rather than a screen in here.
@@ -28,40 +39,43 @@ export interface NavItem {
   external?: boolean;
 }
 
-/** Where the shop lives — kept out of `links` so it can sit on its own. */
+/** Where the shop lives: the purse opens it. */
 const SHOP = '/app/shop';
 
 /**
  * Whether a link should only light up on an exact match.
  *
  * `/app` is the parent of every other route, so without this Home stayed lit on
- * Civak, on Games, on all of them. The rule is derived rather than hardcoded:
- * a link that another link is nested under has to match exactly, which stays
- * true as links are added.
+ * every page. The rule is derived rather than hardcoded: a link that another
+ * link is nested under has to match exactly, which stays true as links are
+ * added. A place that says which pages it owns does not need it.
  */
 function matchesExactly(to: string, all: readonly NavItem[]): boolean {
   return all.some((other) => other.to !== to && other.to.startsWith(`${to}/`));
 }
 
 /**
- * Desktop-first top navigation. Collapses to a menu under 860px.
+ * The top bar.
  *
- * Three groups, left to right: the brand, where you can go, and what you have.
- * Shop is deliberately not in the middle group — it is a place you spend rather
- * than a place you read, so it sits with the currencies it spends, as an icon
- * with no word beside it.
+ * Three groups, left to right: the brand, the five places, and what is yours —
+ * the purse, the bell, and on a mid-width screen the way into the social
+ * column. On a phone the places move to the tab bar along the bottom
+ * (components/TabBar.tsx), and this keeps only the brand and the bell: the
+ * top of a phone screen is the hardest place to reach with a thumb, so it
+ * holds what is glanced at rather than what is pressed.
  *
- * Signing out is not here. It used to sit between the settings gear and your
- * face, one slip away from ending your session; it belongs in Settings, with the
- * other things you do to your account rather than in the app. Saved moved to
- * your profile for the same reason — it is yours, not a place.
+ * The menu button is left only where there is no tab bar — a visitor without
+ * an account on the front page and the pages about Hevalo — because there the
+ * places have nowhere else to be.
+ *
+ * Signing out is not here. It belongs in Settings, with the other things you
+ * do to your account rather than in the app.
  */
-export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
+export function TopNav({ links, withTabBar = false }: { links: NavItem[]; withTabBar?: boolean }): React.JSX.Element {
   const { status } = useAuth();
   const [open, setOpen] = useState(false);
-  const { unreadTotal } = useMessages();
   const t = useT();
-  const unopenedGifts = useUnseenGifts();
+  const { pathname } = useLocation();
   const signedIn = status === 'signedIn';
 
   const close = (): void => setOpen(false);
@@ -85,37 +99,52 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
      * label is `dir="auto"` so an Arabic word still reads right to left inside
      * its own button.
      */
-    <header className="nav" dir="ltr">
+    <header className={`nav${withTabBar ? ' has-tabbar' : ''}`} dir="ltr">
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
         <Brand to={signedIn ? '/app' : '/'} />
 
-        <nav aria-label={t('nav.primary')}>
+        <nav aria-label={t('nav.primary')} className="nav-primary">
           <ul className={`nav-links${open ? ' open' : ''}`}>
             {links.map((l) => {
-              const inner = (
+              const owned = l.owns?.(pathname);
+              const inner = (active: boolean) => (
                 <>
-                  {l.icon && <span className="nav-link-icon" aria-hidden>{l.icon}</span>}
+                  {l.icon && (
+                    <span className="nav-link-icon" aria-hidden>
+                      {active && l.activeIcon ? l.activeIcon : l.icon}
+                      {l.dot && !l.badge && <span className="nav-dot" />}
+                    </span>
+                  )}
                   {/* wrapped so the middle widths can hide the word and keep the
                       glyph — hidden by clipping, never display:none, or the link
                       would lose its accessible name along with its label */}
                   <span className="nav-link-label" dir="auto">{l.label}</span>
                   {/* a link carries its own waiting count, so something arriving is
                       visible from anywhere without opening the page to check */}
-                  {l.to === '/app/messages' && unreadTotal > 0 && (
-                    <span className="nav-badge" aria-label={t('nav.unreadCount', { count: unreadTotal })}>
-                      {unreadTotal > 99 ? '99+' : unreadTotal}
+                  {(l.badge ?? 0) > 0 && (
+                    <span className="nav-badge" aria-label={t('nav.unreadCount', { count: l.badge! })}>
+                      {countLabel(l.badge!)}
                     </span>
                   )}
                 </>
               );
               return (
-                <li key={l.to}>
+                <li key={l.key ?? l.to}>
                   {l.external ? (
                     <a href={l.to} className="nav-link" onClick={close}>
-                      {inner}
+                      {inner(false)}
                     </a>
+                  ) : l.owns ? (
+                    <Link
+                      to={l.to}
+                      className={`nav-link${owned ? ' active' : ''}`}
+                      aria-current={owned ? 'page' : undefined}
+                      onClick={close}
+                    >
+                      {inner(Boolean(owned))}
+                    </Link>
                   ) : (
                     <NavLink
                       to={l.to}
@@ -123,27 +152,20 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
                       className={({ isActive }) => `nav-link${isActive ? ' active' : ''}`}
                       onClick={close}
                     >
-                      {inner}
+                      {({ isActive }) => inner(isActive)}
                     </NavLink>
                   )}
                 </li>
               );
             })}
 
-            {/* actions inside the mobile dropdown only */}
-            <li className="nav-mobile-actions">
-              {signedIn ? (
-                <>
-                  <NavLink to={SHOP} className="nav-link" onClick={close}>{t('nav.shop')}</NavLink>
-                  <NavLink to="/app/settings" className="nav-link" onClick={close}>{t('nav.settings')}</NavLink>
-                </>
-              ) : (
-                <>
-                  <NavLink to="/login" className="nav-link" onClick={close}>{t('nav.login')}</NavLink>
-                  <NavLink to="/register" className="nav-link nav-cta" onClick={close}>{t('nav.register')}</NavLink>
-                </>
-              )}
-            </li>
+            {/* a visitor's way in, inside the menu that only exists without a tab bar */}
+            {!signedIn && (
+              <li className="nav-mobile-actions">
+                <NavLink to="/login" className="nav-link" onClick={close}>{t('nav.login')}</NavLink>
+                <NavLink to="/register" className="nav-link nav-cta" onClick={close}>{t('nav.register')}</NavLink>
+              </li>
+            )}
           </ul>
         </nav>
 
@@ -153,20 +175,8 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
           {signedIn ? (
             <>
               <Purse />
-              <Link
-                to={SHOP}
-                className="nav-shop nav-desktop-only"
-                aria-label={
-                  unopenedGifts > 0 ? t('nav.shopGiftsWaiting', { count: unopenedGifts }) : t('nav.shop')
-                }
-                title={t('nav.shop')}
-              >
-                <ShopIcon size={20} />
-                {unopenedGifts > 0 && <span className="nav-badge">{unopenedGifts > 99 ? '99+' : unopenedGifts}</span>}
-              </Link>
-              {/* your face is the last thing on the bar, which puts it directly
-                  above the social column it belongs to */}
-              <NavProfile />
+              {/* likes, comments, gifts, game invites and notices from Hevalo */}
+              <NotificationsBell />
               <RailToggle />
             </>
           ) : (
@@ -174,20 +184,23 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
               <LinkButton to="/login" variant="ghost" size="sm" className="nav-desktop-only">
                 {t('nav.login')}
               </LinkButton>
-              <LinkButton to="/register" variant="primary" size="sm" className="nav-desktop-only">
+              {/* inside the app on a phone the tab bar has Log in; this is the other half */}
+              <LinkButton to="/register" variant="primary" size="sm" className={withTabBar ? 'nav-register' : 'nav-desktop-only'}>
                 {t('nav.register')}
               </LinkButton>
             </>
           )}
-          <button
-            type="button"
-            className="nav-toggle"
-            aria-label={open ? t('nav.close') : t('nav.menu')}
-            aria-expanded={open}
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
-          </button>
+          {!signedIn && !withTabBar && (
+            <button
+              type="button"
+              className="nav-toggle"
+              aria-label={open ? t('nav.close') : t('nav.menu')}
+              aria-expanded={open}
+              onClick={() => setOpen((v) => !v)}
+            >
+              {open ? <CloseIcon size={20} /> : <MenuIcon size={20} />}
+            </button>
+          )}
         </div>
       </div>
     </header>
@@ -195,43 +208,11 @@ export function TopNav({ links }: { links: NavItem[] }): React.JSX.Element {
 }
 
 /**
- * You, at the end of the bar, with your level around your face.
- *
- * It sits last so it lands in the same column as the social panel and on the
- * same line as the rest of the bar — the arrangement every game client uses,
- * and the reason the ring has room here that a plain 22px button never gave it.
- *
- * Saved is not here. It is inside the profile this opens, with the rest of what
- * is yours.
- */
-function NavProfile(): React.JSX.Element | null {
-  const t = useT();
-  const { data } = useRail();
-  const { openProfile } = useProfileModal();
-  const you = data.you;
-  if (!you) return null;
-
-  return (
-    <button
-      type="button"
-      className="nav-profile nav-desktop-only"
-      onClick={() => openProfile({ kind: 'me' })}
-      aria-label={t('nav.yourProfileLevel', { level: you.level.level })}
-      title={t('nav.yourProfile')}
-    >
-      <LevelRing progress={you.level.progress} />
-      <Avatar url={you.avatarUrl} glyphSize={18} />
-      <span className="nav-profile-level">{you.level.level}</span>
-    </button>
-  );
-}
-
-/**
- * What you have to spend, stacked.
+ * What you have to spend, stacked — and the way into the shop.
  *
  * Two currencies one above the other rather than side by side: they are read as
  * a pair — "can I afford this" — and stacking keeps both under one glance
- * without stealing the width the nav links need.
+ * without stealing the width the places need.
  *
  * The numbers ride on the rail's poll, so they are already fresh and cost no
  * request of their own. Nothing is shown until they arrive; a zero that later

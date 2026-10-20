@@ -54,7 +54,7 @@
     color 0.15s ease;
 }
 .item-tab:hover {
-  border-color: rgba(255, 255, 255, 0.42);
+  border-color: var(--border-strong);
   color: var(--ink);
 }
 .item-tab.is-active {

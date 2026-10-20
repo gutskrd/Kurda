@@ -31,6 +31,9 @@ body {
 
 body {
   margin: 0;
+  /* a phone on its side keeps the page out from under its notch */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
@@ -114,9 +117,10 @@ button {
 .container-narrow {
   max-width: var(--container-narrow);
 }
+/* the 16px gutter a phone's screen has on every page */
 @media (max-width: 640px) {
   .container {
-    padding-inline: 18px;
+    padding-inline: 16px;
   }
 }
 

@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { preloadCatalogue } from './i18n/catalogues';
+import { applyTheme, watchSystemTheme } from './theme/theme';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -22,9 +23,22 @@ import './styles/social.css';
 import './styles/keyboard.css';
 import './styles/feedback.css';
 import './styles/ranks.css';
+// the shell's newer parts: the tab bar, the bell, the five places' own pages
+import './styles/shell.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');
+
+/*
+ * Light or dark before anything is drawn.
+ *
+ * The scheme is one attribute on <html> that every colour is keyed off, so it
+ * is set here, ahead of the language and the first render, rather than by a
+ * component: set later, somebody who chose light would watch the page draw
+ * dark and then flip.
+ */
+applyTheme();
+watchSystemTheme();
 
 /*
  * The language before the app.

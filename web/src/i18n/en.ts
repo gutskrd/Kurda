@@ -402,9 +402,6 @@ export const en = {
 
   // ---- games ---------------------------------------------------------------
   'games.title': 'Games',
-  'games.eyebrow': 'Learn by playing',
-  'games.subtitle':
-    'Practice that doesn’t feel like practice. Every game is scored on the server, so the leaderboards stay fair.',
   'games.playable': 'Playable',
   'games.signInToPlay': 'Sign in to play',
   'games.chooseMode': 'Choose a mode',
@@ -441,13 +438,8 @@ export const en = {
 
   // ---- friends -------------------------------------------------------------
   'friends.title': 'Friends',
-  'friends.eyebrow': 'Community',
   'friends.subtitle': 'Find other learners, send requests, and see who you’re learning alongside.',
   'friends.searchPlaceholder': 'Search by username…',
-  'friends.searchLabel': 'Search users by username',
-  'friends.search': 'Search',
-  'friends.searching': 'Searching…',
-  'friends.results': 'Search results',
   'friends.noResults': 'No users found.',
   'friends.requests': 'Requests',
   'friends.accept': 'Accept',
@@ -1132,7 +1124,6 @@ export const en = {
   'chat.newMessage': 'New message',
   'chat.newMessages': 'New messages',
   'chat.dismissFrom': 'Dismiss message from {name}',
-  'chat.direct': 'Direct',
   'groups.open': 'Open',
   'groups.openIt': 'Open',
   'groups.inviteOnlyOption': 'Invite-only',
@@ -1184,9 +1175,6 @@ export const en = {
   'footer.androidSoon': 'Android (coming soon)',
   'footer.madeWithCare': 'Made with care for the Kurdish language.',
   'footer.byZagrosian': 'A Zagrosian product',
-  'nav.shopGiftsWaiting': 'Shop — {count} gifts waiting',
-  'nav.yourProfile': 'Your profile',
-  'nav.yourProfileLevel': 'Your profile — level {level}',
   'nav.yourPurse': 'Your Zêr and gems',
   'settings.visibility.everyone': 'Anyone on the web',
   'settings.visibility.members': 'Hevalo members',
@@ -1357,7 +1345,6 @@ export const en = {
   'auth.reset.submit': 'Update password',
   'auth.reset.submitting': 'Updating…',
   'auth.restoring': 'Restoring your session…',
-  'learn.eyebrow': 'Your path',
   'learn.title': 'Learn Kurdish',
   'learn.noCourses': 'No courses available yet',
   'learn.noCoursesBody': 'New courses are being prepared. Check back soon — they’ll appear here as soon as they’re published.',
@@ -1376,7 +1363,6 @@ export const en = {
   'auth.forgot.remembered': 'Remembered it?',
   'auth.signIn': 'Sign in',
   'auth.sending': 'Sending…',
-  'learn.subtitle': 'Work through a structured course — each one is a map of skills you unlock step by step. Pick a course to begin.',
 
   // ---- learning: review, a course's map, a lesson, the results ---------------
   'review.title': 'Review',
@@ -1569,7 +1555,6 @@ export const en = {
   'edit.notEnoughGems': 'Not enough gems',
 
   // ---- the shop ------------------------------------------------------
-  'shop.eyebrow': 'Shop',
   'shop.loading': 'Loading the shop…',
   'shop.loadFailed': 'Couldn’t load the shop',
   'shop.gems': 'Gems',
@@ -1691,7 +1676,6 @@ export const en = {
   'dimen.photo': 'Photo',
   'dimen.aPicture': 'A picture',
   'dimen.views': '{count} views',
-  'saved.eyebrow': 'Saved',
   'app.description': 'Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser.',
 
   /* passing a post on, here or anywhere else */
@@ -2805,6 +2789,54 @@ export const en = {
   'badges.kaniya-zanine.desc': 'You reviewed on seven days in a row.',
   'badges.kaniya-zanine.hint': 'A little review, day after day.',
   // ---- end of Game Ranks, leagues and badges ------------------------------
+  // ---- the five places: the tab bar, Search, Learn's two halves, the bell, appearance ----
+  'nav.search': 'Search',
+  'nav.profile': 'Profile',
+  'nav.tabs': 'Main sections',
+  'nav.tabUnread': '{place}, {count} unread',
+  'nav.tabWaiting': '{place}, something is waiting for you',
+  'notifications.bellUnread': 'Notifications, {count} new',
+  'notifications.emptyTitle': 'Nothing new',
+  'notifications.emptyBody': 'Likes, comments, gifts and game invites will show up here.',
+  'learn.view.label': 'Lessons or games',
+  'learn.view.lessons': 'Lessons',
+  'learn.startFirst': 'Start your first lesson',
+  'learn.today.title': 'Today',
+  'learn.today.goal': '{xp} of {goal} XP today',
+  'learn.today.goalLabel': 'Today’s goal',
+  'learn.today.done': 'Today’s goal is done',
+  'learn.today.streak': '{count}-day streak',
+  'learn.today.noStreak': 'Finish a lesson to start a streak',
+  'learn.tools.title': 'Practice',
+  'learn.tools.dictionary': 'Look up any word',
+  'learn.courses.title': 'Courses',
+  'learn.rankingsSub': 'Leagues, seasons and who is furthest this week',
+  'chat.filter.all': 'All',
+  'chat.filter.unread': 'Unread',
+  'chat.filter.search': 'Search conversations',
+  'chat.requests': 'Friend requests',
+  'chat.allRead': 'You’re all caught up.',
+  'chat.noMatch': 'Nothing matches that name.',
+  'chat.newMessage.noneBody': 'Messages are between friends. Find someone to add first.',
+  'profile.share': 'Share profile',
+  'search.label': 'Search for people or words',
+  'search.clear': 'Clear search',
+  'search.scopeLabel': 'What to search',
+  'search.scope.people': 'People',
+  'search.scope.words': 'Words',
+  'search.clearRecent': 'Clear',
+  'search.explore': 'Explore',
+  'search.noPeopleBody': 'Try the start of their username — names are matched from the beginning.',
+  'search.noWordsBody': 'Check the spelling, or try the word in English.',
+  'search.guestWords': 'Every word in the dictionary is free to read, no account needed.',
+  'search.openDictionary': 'Open the dictionary',
+  'settings.appearance.title': 'Appearance',
+  'settings.appearance.help': 'Dark is how Hevalo looks unless you choose otherwise. Your choice is kept on this device.',
+  'settings.appearance.dark': 'Dark',
+  'settings.appearance.light': 'Light',
+  'settings.appearance.system': 'Match this device',
+  'learn.guest.body': 'Courses keep your progress, so they need an account. The alphabet, the dictionary and the games are open to everyone.',
+  'civak.emptyBody': 'Be the first: a saying, a poem or a picture, with the + button. Or find people to learn with.',
 } as const;
 
 export type MessageKey = keyof typeof en;

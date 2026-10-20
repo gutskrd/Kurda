@@ -95,6 +95,8 @@ import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
 import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
 import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlass';
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
+// starting a conversation
+import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -241,6 +243,8 @@ export const FrameIcon = named(FrameCorners, 22);
 export const SearchIcon = named(MagnifyingGlass, 18);
 /** The order a list is in: what the sort select carries in place of its word on a phone. */
 export const SortIcon = named(ArrowsDownUp, 18);
+/** a new conversation: a note being written, beside the list of them */
+export const NewMessageIcon = named(NotePencil, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

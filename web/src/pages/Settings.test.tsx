@@ -115,4 +115,20 @@ describe('Settings page', () => {
     expect(screen.getByRole('checkbox', { name: en['settings.leagues.toggle'] })).not.toBeChecked();
     expect(screen.getByText(en['settings.leagues.minorHint'])).toBeInTheDocument();
   });
+
+  it('chooses light or dark here, on this device, at once', async () => {
+    vi.stubGlobal('fetch', vi.fn(routedFetch({ '/me': me() })));
+    renderApp(<Settings />, ['/app/settings']);
+
+    // dark is the look before anybody chooses
+    const dark = await screen.findByRole('button', { name: 'Dark' });
+    expect(dark).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(screen.getByRole('button', { name: 'Light' }));
+    expect(screen.getByRole('button', { name: 'Light' })).toHaveAttribute('aria-pressed', 'true');
+    expect(document.documentElement.dataset.theme).toBe('light');
+    expect(localStorage.getItem('hevalo_theme')).toBe('light');
+    // nothing is sent: this is a choice about the screen, not the account
+    expect(vi.mocked(fetch).mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH')).toBe(false);
+    delete document.documentElement.dataset.theme;
+  });
 });

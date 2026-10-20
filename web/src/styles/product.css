@@ -13,7 +13,7 @@
   position: relative;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   overflow: hidden;
   /* the ring round the face is the colour of what is behind it */
@@ -134,7 +134,7 @@
 .pcard-level-track {
   height: 6px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .pcard-level-fill {
@@ -167,7 +167,7 @@
   padding: 10px 12px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   min-width: 0;
 }
 .pc-stat dt {
@@ -311,7 +311,7 @@
   gap: 2px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .rank-row {
@@ -369,7 +369,7 @@ a.rank-name:hover {
   font-variant-numeric: tabular-nums;
 }
 .rank-row.rank-me {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
   box-shadow: inset 0 0 0 1px var(--border);
 }
 .rank-you {
@@ -444,7 +444,7 @@ a.rank-name:hover {
   padding: 18px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .league-card-head {
@@ -523,7 +523,7 @@ a.rank-name:hover {
   bottom: 4px;
   height: 2px;
   border-radius: 2px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .player-meter > span {
@@ -542,7 +542,7 @@ a.rank-name:hover {
   border: 1px solid var(--border-strong);
   border-radius: 16px;
   /* its own surface: your own bubble is white, and a see-through card vanished in it */
-  background: rgba(22, 25, 30, 0.94);
+  background: var(--panel-bg);
   color: var(--ink);
   text-decoration: none;
   box-shadow: var(--glass-rim);
@@ -551,7 +551,7 @@ a.rank-name:hover {
     transform 0.12s ease;
 }
 a.invite-card:hover {
-  border-color: rgba(255, 255, 255, 0.45);
+  border-color: var(--border-strong);
 }
 a.invite-card:active {
   transform: translateY(1px);
@@ -615,7 +615,7 @@ a.invite-card:active {
   grid-template-rows: auto 1fr;
   border: 1px solid var(--border);
   border-radius: var(--r-xl);
-  background: rgba(255, 255, 255, 0.025);
+  background: var(--surface);
   overflow: hidden;
   transition:
     border-color 0.2s ease,
@@ -625,7 +625,7 @@ a.invite-card:active {
 /* only a tile that is itself the link lifts; in the app the button is the way in */
 .game-tile:has(.game-stretch):hover {
   border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surface);
   transform: translateY(-2px);
 }
 .game-tile-visual {
@@ -704,7 +704,7 @@ a.invite-card:active {
 .lp-card {
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .lp-chip {
@@ -751,7 +751,7 @@ a.invite-card:active {
   flex: 1;
   height: 8px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .lp-progress > span {
@@ -780,7 +780,7 @@ a.invite-card:active {
   width: 46px;
   height: 46px;
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
   animation: lp-ring 2.6s ease-out infinite;
 }
 .lp-option {
@@ -844,7 +844,7 @@ a.invite-card:active {
   border-color: #b8922e;
 }
 .lp-tile--gray {
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
   border-color: transparent;
   color: var(--ink-2);
 }
@@ -933,7 +933,7 @@ a.invite-card:active {
   width: min(100%, 240px);
   padding: 14px 16px 16px;
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   border: 1px solid var(--border);
   /* text runs as it does in the reader: from the start edge */
   align-items: flex-start;
@@ -948,7 +948,7 @@ a.invite-card:active {
   display: block;
   height: 7px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
 }
 .lp-story-word {
   font-size: 1rem;
@@ -1022,7 +1022,7 @@ a.invite-card:active {
   padding: 14px 16px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .zer-left {
@@ -1075,7 +1075,7 @@ a.invite-card:active {
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .course-card-title {

@@ -115,7 +115,10 @@ describe('Games hub', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    expect(await screen.findByRole('heading', { name: 'Spiele', level: 1 })).toBeInTheDocument();
+    // the games are Learn's second half: the page is Learn, and the switch says Games
+    expect(await screen.findByRole('heading', { name: 'Lernen', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Spiele' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Lektionen' })).toHaveAttribute('href', '/app/learn');
     expect(screen.getByRole('heading', { name: 'Kurdisches Wordle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();

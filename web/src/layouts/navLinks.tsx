@@ -1,14 +1,12 @@
+import { useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import {
-  BookIcon,
-  ChatsIcon,
-  DictionaryIcon,
-  GameIcon,
-  HomeIcon,
-  TrophyIcon,
-  UsersIcon,
-} from '../components/icons';
-import { useLocale, useT } from '../i18n/I18nProvider';
+import { useMessages } from '../chat/MessagesProvider';
+import { Avatar } from '../components/Avatar';
+import { LevelRing } from '../profile/LevelRing';
+import { BookIcon, HomeIcon, SearchIcon, SendIcon, UserIcon } from '../components/icons';
+import { useT } from '../i18n/I18nProvider';
+import { useRail } from '../social/RailProvider';
+import { learnPath } from '../learn/learnView';
 import type { AppLocale } from '@kurda/shared';
 import type { NavItem } from '../components/TopNav';
 
@@ -34,8 +32,8 @@ import type { NavItem } from '../components/TopNav';
  */
 export function dictionaryLink(signedIn: boolean, locale: AppLocale, label: string, icon?: React.ReactNode): NavItem {
   return signedIn
-    ? { label, to: '/app/dictionary', icon }
-    : { label, to: publishedDictionary(locale), icon, external: true };
+    ? { key: 'dictionary', label, to: '/app/dictionary', icon }
+    : { key: 'dictionary', label, to: publishedDictionary(locale), icon, external: true };
 }
 
 /** Where the published dictionary is, in this reader's language. */
@@ -43,52 +41,101 @@ export function publishedDictionary(locale: AppLocale): string {
   return locale === 'ku' ? '/ferheng/' : '/dictionary/';
 }
 
+/** `/app/x` and everything under it, but not `/app/xyz`. */
+const under = (pathname: string, base: string): boolean => pathname === base || pathname.startsWith(`${base}/`);
+
 /**
- * One definition of where you can go, used by every shell — the app, the front
- * page, About, the FAQ — and copied into the published dictionary's bar.
+ * Which of the five places a page belongs to, so the place stays lit on the
+ * pages inside it.
  *
- * The landing page and the app used to keep separate lists, and the landing
- * page's held a single entry — Civak. So somebody arriving at hevalo.app was
- * shown one link into a product with a dictionary, games and rankings in it,
- * all of them open to read without an account. The bar was advertising a
- * fraction of what was there.
+ * Written out rather than derived from the links: the Games view is part of
+ * Learn although its address is /app/games, Rankings is reached from it, and
+ * Settings and the Shop live behind your profile. None of that is visible in
+ * a URL prefix.
+ */
+export const OWNS: Record<'home' | 'learn' | 'messages' | 'search' | 'profile', (pathname: string) => boolean> = {
+  home: (p) => p === '/app' || p === '/app/' || under(p, '/app/library') || under(p, '/app/dimen') || under(p, '/app/civak'),
+  learn: (p) =>
+    ['/app/learn', '/app/games', '/app/alphabet', '/app/dictionary', '/app/rankings', '/app/leagues', '/app/season', '/app/ranks'].some(
+      (base) => under(p, base),
+    ),
+  messages: (p) => under(p, '/app/messages') || under(p, '/app/friends'),
+  search: (p) => under(p, '/app/search'),
+  profile: (p) =>
+    ['/app/profile', '/app/settings', '/app/shop', '/app/saved', '/app/badges'].some((base) => under(p, base)),
+};
+
+/**
+ * The five places, in the order the phone app has them: Home, Learn,
+ * Messages, Search, Profile.
  *
- * It split again later into a front-door bar of words (Learn, Games,
- * Community, Dictionary, About) and the app's bar of places, and the result
- * was a bar whose buttons rearranged themselves as you clicked along it. One
- * list, one bar: the buttons stay where they are whichever page you are on.
+ * One list for every bar — the top bar on a wide screen, the tab bar on a
+ * phone, the front page's bar — so a place is in the same position wherever
+ * you meet it, and nothing moves under the cursor between pages. Dictionary,
+ * Rankings, the Shop and Settings are not lost by leaving the bar: they are
+ * inside the place they belong to (the tools in Learn, Rankings at the top of
+ * its Games view, the rest in your profile's menu).
+ *
+ * A guest gets the three places a guest can use. Messages are people you know
+ * and a profile is you; without an account there is neither, and a link that
+ * only leads to "make an account" teaches a visitor the app is closed when
+ * almost all of it is open. The tab bar puts a way to sign in where Profile
+ * will be, which is the honest version of the same slot.
  *
  * Built inside a hook rather than at module scope because every label is a
  * word: a list made once at import time keeps whatever language the app
  * happened to start in, and cannot follow the reader when they change it.
  */
 export function useNavLinks(): NavItem[] {
-  const { status } = useAuth();
+  const { status, user } = useAuth();
   const t = useT();
-  const locale = useLocale();
+  const { unreadTotal } = useMessages();
+  const { data } = useRail();
+  // read on every render: the nav re-renders on each navigation, which is
+  // exactly when the remembered Learn view may have changed
+  useLocation();
   const signedIn = status === 'signedIn';
 
+  const home: NavItem = { key: 'home', label: t('nav.home'), to: '/app', icon: <HomeIcon size={22} />, activeIcon: <HomeIcon size={22} weight="fill" />, owns: OWNS.home };
+  const learn: NavItem = { key: 'learn', label: t('nav.learn'), to: learnPath(), icon: <BookIcon size={22} />, activeIcon: <BookIcon size={22} weight="fill" />, owns: OWNS.learn };
+  const search: NavItem = { key: 'search', label: t('nav.search'), to: '/app/search', icon: <SearchIcon size={22} />, activeIcon: <SearchIcon size={22} weight="bold" />, owns: OWNS.search };
+  if (!signedIn) return [home, learn, search];
+
+  // something waiting that is yours to open: a gift, or somebody asking to be friends
+  const waiting = (data.unread.gifts ?? 0) > 0 || data.unread.requests > 0;
+  const avatar = data.you?.avatarUrl ?? user?.avatarUrl ?? null;
+  // your face with your level drawn round it, as the bar has always shown you
+  const face = (active: boolean): React.ReactNode =>
+    avatar || data.you ? (
+      <span className={`nav-avatar${active ? ' is-active' : ''}`}>
+        {data.you && <LevelRing progress={data.you.level.progress} />}
+        <Avatar url={avatar} glyphSize={14} />
+      </span>
+    ) : (
+      <UserIcon size={22} weight={active ? 'fill' : 'regular'} />
+    );
   return [
-    /*
-     * Home, with a house on it — the same name and the same glyph the phone's
-     * first tab has.
-     *
-     * It said Civak here and Home there, for one screen. mobile/src/navigation/
-     * tabs.ts settled that already: "Civak is Home. Same screen, a house on it,
-     * because it is the first thing you land on and that is what a house
-     * means." A newspaper is what the wall is; a house is where you are.
-     */
-    { label: t('nav.home'), to: '/app', icon: <HomeIcon size={18} /> },
-    // which dictionary depends on whether there is an account — see `dictionaryLink`
-    dictionaryLink(signedIn, locale, t('nav.dictionary'), <DictionaryIcon size={18} />),
-    { label: t('nav.games'), to: '/app/games', icon: <GameIcon size={18} /> },
-    { label: t('nav.rankings'), to: '/app/rankings', icon: <TrophyIcon size={18} /> },
-    ...(signedIn
-      ? [
-          { label: t('nav.learn'), to: '/app/learn', icon: <BookIcon size={18} /> },
-          { label: t('nav.friends'), to: '/app/friends', icon: <UsersIcon size={18} /> },
-          { label: t('nav.messages'), to: '/app/messages', icon: <ChatsIcon size={18} /> },
-        ]
-      : []),
+    home,
+    learn,
+    {
+      key: 'messages',
+      label: t('nav.messages'),
+      to: '/app/messages',
+      icon: <SendIcon size={22} />,
+      activeIcon: <SendIcon size={22} weight="fill" />,
+      owns: OWNS.messages,
+      badge: unreadTotal,
+    },
+    search,
+    {
+      key: 'profile',
+      label: t('nav.profile'),
+      to: '/app/profile',
+      // your own face, which is what "you" looks like
+      icon: face(false),
+      activeIcon: face(true),
+      owns: OWNS.profile,
+      dot: waiting,
+    },
   ];
 }

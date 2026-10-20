@@ -138,14 +138,14 @@ describe('SocialRail', () => {
     expect(screen.queryByText('Invited you to play')).not.toBeInTheDocument();
   });
 
-  it('counts everything waiting on the toggle, capped', async () => {
+  it('counts everything waiting on the toggle, capped — but not notifications, which have the bell', async () => {
     signIn();
-    railFetch([rail({ unread: { notifications: 40, groups: 60, requests: 1, challenges: 1 } })]);
+    railFetch([rail({ unread: { notifications: 40, groups: 140, requests: 1, challenges: 1 } })]);
     show();
 
     // the label carries the real number for a screen reader; the badge is the
     // capped glance version
-    const toggle = await screen.findByRole('button', { name: 'Social — 102 waiting' });
+    const toggle = await screen.findByRole('button', { name: 'Social — 142 waiting' });
     await waitFor(() => expect(toggle.textContent).toContain('99+'));
   });
 
@@ -158,32 +158,6 @@ describe('SocialRail', () => {
     await screen.findByText('Wants to be friends');
     // a burst of toasts for things that were already there is noise
     expect(screen.queryByText('Friend request')).not.toBeInTheDocument();
-  });
-
-  it('opens the game a game invite in the notifications is for, said in the reader’s words', async () => {
-    signIn();
-    railFetch([
-      rail({
-        notifications: [
-          {
-            id: 'n1',
-            category: 'games',
-            title: 'Game invite',
-            body: 'Rojda invited you to play Wordle Battle.',
-            createdAt: new Date().toISOString(),
-            readAt: null,
-            data: { kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' },
-          },
-        ],
-        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
-      }),
-    ]);
-    show();
-
-    await userEvent.click(await screen.findByRole('button', { name: /Recent/i }));
-    expect(screen.getByRole('link', { name: 'Wordle Battle invite' })).toHaveAttribute('href', '/app/games/wordle-battle?id=b1');
-    // not the server's English fallback
-    expect(screen.queryByText('Rojda invited you to play Wordle Battle.')).not.toBeInTheDocument();
   });
 
   it('leaves a new game invite to its own banner rather than a second toast', async () => {
@@ -352,11 +326,27 @@ describe('SocialRail', () => {
     expect(container.querySelector('.rail-chat')).toBeNull();
   });
 
+  it('leaves notifications to the bell', async () => {
+    signIn();
+    railFetch([
+      rail({
+        notifications: [{ id: 'n1', category: 'social', title: 'Rojda liked your poem', body: null, createdAt: new Date().toISOString(), readAt: null }],
+        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
+      }),
+    ]);
+    show();
+    await screen.findByText('Online');
+    // they used to sit folded under "Recent" at the foot of this column
+    expect(screen.queryByRole('button', { name: /Recent/ })).not.toBeInTheDocument();
+    expect(screen.queryByText('Rojda liked your poem')).not.toBeInTheDocument();
+  });
+
   it('offers a way in when you have nobody yet', async () => {
     signIn();
     railFetch([rail()]);
     show();
-    expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/friends');
+    // finding people is Search's job now
+    expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
   });
 
   it('opens the group you clicked, not the list of them', async () => {
@@ -368,69 +358,5 @@ describe('SocialRail', () => {
     // you to find the group you had just named
     const row = await screen.findByRole('link', { name: /Amedspor/ });
     expect(row).toHaveAttribute('href', '/app/messages?group=g7');
-  });
-
-  /**
-   * A notification about a report or a decision used to be English text that
-   * went nowhere. Its data says what it is: it is said in the reader's words
-   * and opens the page that has the rest.
-   */
-  it('opens My reports or Account standing from their notifications', async () => {
-    signIn();
-    railFetch([
-      rail({
-        notifications: [
-          { id: 'n1', category: 'system', title: 'About your report', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'report_outcome', reportIds: ['r1'], outcome: 'no_violation' } },
-          { id: 'n2', category: 'system', title: 'Decision', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'sanction', sanctionId: 's1', sanction: 'warning', policy: 'spam', until: null } },
-        ],
-        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
-      }),
-    ]);
-    show();
-    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
-    expect(screen.getByRole('link', { name: 'About your report' })).toHaveAttribute('href', '/app/settings/reports');
-    expect(screen.getByRole('link', { name: 'A decision about your account' })).toHaveAttribute('href', '/app/settings/standing');
-  });
-
-  it('opens the badges or the league from league and badge news, said in the reader’s words', async () => {
-    signIn();
-    railFetch([
-      rail({
-        notifications: [
-          { id: 'n1', category: 'progress', title: 'A new badge', body: 'You earned Agir.', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'badge', key: 'agir', tier: '1' } },
-          { id: 'n2', category: 'progress', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'league_promotion', weekKey: '2026-10-12', tier: 'cem' } },
-        ],
-        unread: { notifications: 2, groups: 0, requests: 0, challenges: 0 },
-      }),
-    ]);
-    show();
-    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
-    expect(screen.getByRole('link', { name: 'A new badge' })).toHaveAttribute('href', '/app/badges');
-    expect(screen.getByRole('link', { name: 'You moved up' })).toHaveAttribute('href', '/app/rankings');
-    expect(screen.getByText('Welcome to Çem League.')).toBeInTheDocument();
-  });
-
-  it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
-    signIn();
-    railFetch([
-      rail({
-        notifications: [
-          { id: 'n9', category: 'system', title: 'x', body: 'x', createdAt: new Date().toISOString(), readAt: null, data: { kind: 'caring_message', helplineUrl: 'https://findahelpline.com' } },
-        ],
-        unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 },
-      }),
-    ]);
-    show();
-    await userEvent.click(await screen.findByRole('button', { name: /Recent/ }));
-    const link = screen.getByRole('link', { name: 'A message from Hevalo' });
-    expect(link).toHaveAttribute('href', 'https://findahelpline.com');
-    expect(link).toHaveAttribute('target', '_blank');
-    link.addEventListener('click', (e) => e.preventDefault()); // no navigation in a test
-    await userEvent.click(link);
-    await waitFor(() =>
-      expect(
-        vi.mocked(fetch).mock.calls.some(([u, init]) => String(u).includes('/me/notifications/n9/read') && init?.method === 'POST'),
-      ).toBe(true),
-    );
   });
 });

@@ -99,7 +99,7 @@
   width: var(--rail-w);
   display: flex;
   flex-direction: column;
-  background: rgba(16, 19, 25, 0.72);
+  background: var(--panel-glass);
   /* more blur than before: it is now doing the legibility work the alpha was */
   -webkit-backdrop-filter: blur(26px) saturate(1.25);
   backdrop-filter: blur(26px) saturate(1.25);
@@ -244,7 +244,7 @@
   text-decoration: none;
 }
 .rail-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .rail-avatar {
   position: relative;
@@ -417,7 +417,7 @@
 }
 .rail-rung:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .rail-rung.is-urgent {
   color: var(--gold-ink);
@@ -456,7 +456,7 @@
   overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(20, 24, 31, 0.96);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lg);
@@ -688,7 +688,7 @@
 }
 .rail-note-clear:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 
 /* ---- a conversation docked beside the rail ------------------------------ */
@@ -763,7 +763,7 @@
     height: min(440px, calc(100vh - var(--nav-h) - 32px));
     border: 1px solid var(--border-strong);
     border-radius: var(--r-lg);
-    background: rgba(16, 19, 25, 0.97);
+    background: var(--panel-bg);
     -webkit-backdrop-filter: blur(18px) saturate(1.2);
     backdrop-filter: blur(18px) saturate(1.2);
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
@@ -847,7 +847,7 @@
 }
 .rail-friend-chat:hover {
   color: var(--gold-ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 
 /* the dock's close sits where a window's close sits: the far end of its bar */
@@ -866,7 +866,7 @@
 }
 .chat-dock-close:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
 
 /* a group row is the friend row's shape: name links, bubble docks */
