@@ -10,12 +10,18 @@ Selection precedence (`createEmailProvider`): **Resend** → **SMTP** → **stub
 
 Set `EMAIL_FROM` for either provider (default `Hevalo <no-reply@hevalo.app>`);
 it must be an address on a domain you've verified with the provider.
+`EMAIL_REPLY_TO` (e.g. `support@hevalo.app`) is where an answer to one of
+these emails goes; unset, answers go to the no-reply address and are lost.
 
 ## Option A — Resend (HTTP API, simplest)
 
 1. Create a [Resend](https://resend.com) account and **verify your sending
    domain** (add the DNS records it gives you).
-2. Create an API key.
+2. Create an API key. A **sending access** key limited to the From domain is
+   enough, and is what to use: a key limited to one domain is refused for
+   any other ("This API key is not authorized to send emails from …"), so a
+   new sending domain needs a new key — moving to hevalo.app while the key
+   was limited to the old domain stopped every verification and reset email.
 3. Set:
 
    ```
@@ -71,8 +77,39 @@ the app). The **worker** process is what actually sends, so it must have them.
 addresses to the suppression list, and suppressed addresses are skipped on send.
 Wire your provider's bounce/complaint webhook to it when available.
 
+With Resend, `POST /webhooks/resend` does the same for its own
+`email.bounced` and `email.complained` events (see below).
+
+## The support inbox (Resend)
+
+Mail sent to the support address can be read and answered in the admin panel
+(Email → Support inbox). It needs, in Resend and in the API's environment:
+
+1. **Receiving on the domain**, and its MX record in DNS (Resend → Domains →
+   the domain → Receiving). With the MX on the root domain, *all* mail to the
+   domain goes to Resend — fine while nothing else receives there.
+2. **A webhook** (Resend → Webhooks) to `https://<api>/webhooks/resend` for
+   `email.received` (and `email.bounced`, `email.complained`), and its signing
+   secret as `RESEND_WEBHOOK_SECRET`. The route refuses everything (503) while
+   the secret is unset, and anything not signed with it (401).
+3. **`RESEND_INBOX_API_KEY`**: a *full access* key, used only to read the body
+   of received mail — the webhook carries who, to whom and the subject, never
+   the body, and a sending key may not read mail. Without it the inbox still
+   lists what arrived and says to read it in Resend.
+4. `SUPPORT_EMAIL_FROM` (default `Hevalo Support <support@hevalo.app>`): who
+   the answers are from.
+
+Received mail counts against the same Resend quota as sent mail (on the free
+plan, 100 a day and 3,000 a month, sent and received together), so a flood of
+mail to the support address could hold up verification codes for the day.
+
 ## Verify
 
-After configuring, sign up with a real address — the 6-digit verification code
-should arrive within seconds. If it doesn't, check the worker logs: a provider
-error is logged and the `send-email` job retries with backoff.
+After configuring, open the admin panel's **Email** page: it says which
+provider sends, from and reply-to which addresses, and how many sends failed
+in the last week with the last error; **Send a test email** sends one to your
+own account's address at once and shows what the provider answered.
+
+Or sign up with a real address — the 6-digit verification code should arrive
+within seconds. If it doesn't, check the worker logs: a provider error is
+logged and the `send-email` job retries with backoff.

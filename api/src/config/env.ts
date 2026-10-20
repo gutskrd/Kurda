@@ -160,6 +160,28 @@ const envSchema = z.object({
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
   /** From address for transactional email. */
   EMAIL_FROM: z.string().default('Hevalo <no-reply@hevalo.app>'),
+  /**
+   * Where an answer to a transactional email goes. They come from a no-reply
+   * address, and the password-reset email asks anyone who did not ask for it
+   * to get in touch — so a reply lands in the support inbox instead of nowhere.
+   */
+  EMAIL_REPLY_TO: z.string().optional(),
+  /** The address the support inbox answers from (admin → Email). */
+  SUPPORT_EMAIL_FROM: z.string().default('Hevalo Support <support@hevalo.app>'),
+  /**
+   * The signing secret (`whsec_…`) of the Resend webhook that tells us about
+   * mail received at the support address, and about bounces and complaints.
+   * The webhook is refused while it is unset.
+   */
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * A Resend key that can read received mail, for the bodies of support email
+   * (the webhook carries only who, to whom and the subject). Resend's keys are
+   * either "send only" or "full access", and the sending key is deliberately
+   * the first — so reading needs a key of its own. Unset, the inbox still lists
+   * what arrived, and says the body can be read in Resend.
+   */
+  RESEND_INBOX_API_KEY: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

@@ -76,6 +76,38 @@ describe('ResendEmailProvider', () => {
     });
   });
 
+  it('sends answers to the reply-to address, and lets one message come from elsewhere and thread', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{"id":"m"}', { status: 200 }));
+    const provider = createEmailProvider(
+      loadConfig({ ...base, RESEND_API_KEY: 're_test', EMAIL_REPLY_TO: 'support@hevalo.app' }),
+    );
+    await provider.send({ to: 'user@example.com', subject: 'Reset', text: 'x' });
+    expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).toMatchObject({
+      from: 'Hevalo <no-reply@hevalo.app>',
+      reply_to: 'support@hevalo.app',
+    });
+
+    await provider.send({
+      to: 'user@example.com',
+      subject: 'Re: Help',
+      text: 'y',
+      from: 'Hevalo Support <support@hevalo.app>',
+      headers: { 'In-Reply-To': '<a@b>', References: '<a@b>' },
+    });
+    const answer = JSON.parse(fetchMock.mock.calls[1]![1]!.body as string);
+    expect(answer).toMatchObject({ from: 'Hevalo Support <support@hevalo.app>', headers: { 'In-Reply-To': '<a@b>' } });
+  });
+
+  it('says nothing about replies when no reply-to is set (an empty one included)', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{"id":"m"}', { status: 200 }));
+    await createEmailProvider(loadConfig({ ...base, RESEND_API_KEY: 're_test', EMAIL_REPLY_TO: '' })).send({
+      to: 'user@example.com',
+      subject: 'Hi',
+      text: 'x',
+    });
+    expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).not.toHaveProperty('reply_to');
+  });
+
   it('throws on a non-2xx response so the job retries', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('domain not verified', { status: 422 }),

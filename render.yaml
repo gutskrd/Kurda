@@ -161,3 +161,5 @@ services:
   #       sync: false          # or SMTP_URL / SMTP_HOST instead
   #     - key: EMAIL_FROM
   #       value: Hevalo <no-reply@hevalo.app>
+  #     - key: EMAIL_REPLY_TO
+  #       value: support@hevalo.app

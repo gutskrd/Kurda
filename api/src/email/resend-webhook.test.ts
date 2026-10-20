@@ -1,0 +1,65 @@
+import { createHmac } from 'node:crypto';
+import { describe, expect, it } from 'vitest';
+import { verifyResendSignature, WEBHOOK_TOLERANCE_SECONDS } from './resend-webhook.js';
+import { htmlToPreviewText, parseMailbox, replySubject } from './support-inbox.js';
+
+const KEY = Buffer.from('a-test-signing-key-of-some-length');
+const SECRET = `whsec_${KEY.toString('base64')}`;
+const NOW = 1_800_000_000;
+
+/** A signature as Resend makes one. */
+const sign = (body: string, id = 'msg_1', ts = NOW, key = KEY): string =>
+  `v1,${createHmac('sha256', key).update(`${id}.${ts}.${body}`).digest('base64')}`;
+
+describe('verifyResendSignature', () => {
+  const body = '{"type":"email.received","data":{"email_id":"e1"}}';
+
+  it('accepts what Resend signed with our secret', () => {
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW), signature: sign(body) }, body, NOW)).toBe(true);
+  });
+
+  it('accepts any one of several signatures, as while a secret is rotated', () => {
+    const signature = `v1,bm90LWl0 ${sign(body)}`;
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW), signature }, body, NOW)).toBe(true);
+  });
+
+  it('refuses another secret, another body, another id, and a missing header', () => {
+    const other = sign(body, 'msg_1', NOW, Buffer.from('somebody-else'));
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW), signature: other }, body, NOW)).toBe(false);
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW), signature: sign(body) }, `${body} `, NOW)).toBe(false);
+    expect(verifyResendSignature(SECRET, { id: 'msg_2', timestamp: String(NOW), signature: sign(body) }, body, NOW)).toBe(false);
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW) }, body, NOW)).toBe(false);
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(NOW), signature: 'v2,abc' }, body, NOW)).toBe(false);
+  });
+
+  it('refuses a signature too old or from the future, which is how a replay looks', () => {
+    const old = NOW - WEBHOOK_TOLERANCE_SECONDS - 1;
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(old), signature: sign(body, 'msg_1', old) }, body, NOW)).toBe(false);
+    const ahead = NOW + WEBHOOK_TOLERANCE_SECONDS + 1;
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: String(ahead), signature: sign(body, 'msg_1', ahead) }, body, NOW)).toBe(
+      false,
+    );
+    expect(verifyResendSignature(SECRET, { id: 'msg_1', timestamp: 'soon', signature: sign(body) }, body, NOW)).toBe(false);
+  });
+});
+
+describe('support mail helpers', () => {
+  it('reads an address and a name out of a From', () => {
+    expect(parseMailbox('Rojda Kurd <Rojda@Example.com>')).toEqual({ address: 'rojda@example.com', name: 'Rojda Kurd' });
+    expect(parseMailbox('"Baran, B." <b@x.test>')).toEqual({ address: 'b@x.test', name: 'Baran, B.' });
+    expect(parseMailbox(' b@x.test ')).toEqual({ address: 'b@x.test', name: null });
+    expect(parseMailbox('<b@x.test>')).toEqual({ address: 'b@x.test', name: null });
+  });
+
+  it('says Re: once', () => {
+    expect(replySubject('Help with my account')).toBe('Re: Help with my account');
+    expect(replySubject('RE: Help')).toBe('RE: Help');
+    expect(replySubject('  ')).toBe('Re: (no subject)');
+  });
+
+  it('turns HTML into a line of text, leaving out styles and scripts', () => {
+    expect(htmlToPreviewText('<style>p{color:red}</style><p>Silav&nbsp;<b>heval</b> &amp; hi</p><script>x()</script>')).toBe(
+      'Silav heval & hi',
+    );
+  });
+});

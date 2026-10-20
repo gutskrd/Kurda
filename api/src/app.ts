@@ -172,6 +172,9 @@ import { DashboardService as RollupDashboards } from './analytics/dashboard-serv
 import { EconomyService as RollupEconomy } from './economy/service.js';
 import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
+import { registerResendWebhookRoutes } from './email/resend-webhook.js';
+import { registerEmailAdminRoutes } from './email/admin-routes.js';
+import { ResendMailReader, SupportInbox } from './email/support-inbox.js';
 import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
 import { ExperimentService } from './experiments/service.js';
@@ -677,11 +680,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerFeedbackRoutes(app, new FeedbackService(app.db, { secret: config.JWT_SECRET }));
     // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
     // sends themselves run in the worker's send-email job
-    registerEmailWebhookRoutes(
-      app,
-      new EmailService(app.db, createEmailProvider(config, app.log)),
-      config.EMAIL_WEBHOOK_SECRET,
-    );
+    const emailProvider = createEmailProvider(config, app.log);
+    const emailService = new EmailService(app.db, emailProvider);
+    registerEmailWebhookRoutes(app, emailService, config.EMAIL_WEBHOOK_SECRET);
+    // the support inbox: mail to support@ arrives by Resend's webhook, and is
+    // read and answered in the admin panel, beside how email is set up
+    const supportInbox = new SupportInbox(app.db, {
+      reader: config.RESEND_INBOX_API_KEY ? new ResendMailReader(config.RESEND_INBOX_API_KEY) : null,
+      provider: emailProvider,
+      from: config.SUPPORT_EMAIL_FROM,
+    });
+    registerResendWebhookRoutes(app, { secret: config.RESEND_WEBHOOK_SECRET, email: emailService, inbox: supportInbox });
+    registerEmailAdminRoutes(app, { config, provider: emailProvider, inbox: supportInbox });
 
     // core dashboards (KUR-106): daily-refreshed DAU/retention/funnel rollups
     const dashboards = new DashboardService(app.db);

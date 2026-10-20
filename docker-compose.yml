@@ -73,6 +73,9 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       EMAIL_FROM: "${EMAIL_FROM:-Hevalo <no-reply@hevalo.app>}"
+      EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      RESEND_INBOX_API_KEY: ${RESEND_INBOX_API_KEY:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -97,6 +100,9 @@ services:
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_SECURE: ${SMTP_SECURE:-false}
       EMAIL_FROM: "${EMAIL_FROM:-Hevalo <no-reply@hevalo.app>}"
+      EMAIL_REPLY_TO: ${EMAIL_REPLY_TO:-}
+      RESEND_WEBHOOK_SECRET: ${RESEND_WEBHOOK_SECRET:-}
+      RESEND_INBOX_API_KEY: ${RESEND_INBOX_API_KEY:-}
     depends_on:
       migrate:
         condition: service_completed_successfully
