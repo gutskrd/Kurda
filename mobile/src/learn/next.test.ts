@@ -37,10 +37,21 @@ describe('the next step on Learn', () => {
     expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-3', unitTitle: 'Unit 2', courseTitle: 'Course a', done: 2, total: 4 });
   });
 
-  /* a rusty skill is the one most worth going back to */
-  it('counts a skill that has gone rusty as one to continue', () => {
-    const step = nextStep([course('a', [[skill('1', 'completed'), skill('2', 'decayed')]])]);
-    expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-2' });
+  /* the card and the path's bubble must name the same lesson; a rusty skill is refreshed by review */
+  it('leaves a rusty skill to review and continues where the path is', () => {
+    const step = nextStep([course('a', [[skill('1', 'decayed'), skill('2', 'unlocked')]])]);
+    expect(step).toMatchObject({ kind: 'continue', lessonId: 'l-2', done: 1, total: 2 });
+    expect(nextStep([course('a', [[skill('1', 'completed'), skill('2', 'decayed')]])])).toEqual({
+      kind: 'review',
+      courseTitle: 'Course a',
+      done: 2,
+      total: 2,
+    });
+  });
+
+  it('opens on the course already begun, as the path does', () => {
+    const step = nextStep([course('a', [[skill('1', 'unlocked')]]), course('b', [[skill('2', 'completed'), skill('3', 'unlocked')]])]);
+    expect(step).toMatchObject({ kind: 'continue', courseTitle: 'Course b', lessonId: 'l-3' });
   });
 
   it('moves on to the next course when the first has nothing open left', () => {
