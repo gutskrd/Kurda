@@ -4,796 +4,553 @@
  * long black hair falling past her waist, her hands resting one by the other
  * in front of her.
  *
- * Drawn flat, in a few tones per colour and the odd soft gradient, with no
- * outlines: shapes meet edge to edge, as the rest of the app's art does.
+ * Drawn flat, each part one tone, with no outlines: the dress in two reds,
+ * lit and shaded, the hair black with a few lighter strands, the skin one
+ * warm brown with a blush on each cheek and a soft shade under the chin.
  *
- * Her hair is in three parts so the head can nod without the long hair
+ * Her hair is in three parts so her head can nod without the long hair
  * swinging with it: the crown and the hair framing her face belong to the
  * head; the hair behind her shoulders and the two locks over her chest belong
- * to the body, and the head's hair overlaps both by enough that a small turn
- * never opens a gap.
+ * to the body. The head's hair reaches down over the tops of both, and lies
+ * under her face as well as round it, so a small turn never opens a gap.
  */
 import type { Pt } from '../art/svg.js';
-import { linearBox, n, radialBox } from '../art/svg.js';
+import { linearAt, n, radialBox } from '../art/svg.js';
 import type { CharacterArt } from './types.js';
 import type { Knot } from './pen.js';
 import { alpha, beadsAlong, circle, clipDef, clipped, curve, ellipse, fill, line, mirror, oval, part, symmetric, taper } from './pen.js';
 import { humanMouths } from './mouth.js';
 
 const C = {
-  hair: '#0e0c0d',
-  sheen: '#34333a',
-  skin: '#b97c60',
-  skinLight: '#c2876a',
-  skinShade: '#9c5c46',
-  skinDeep: '#7c4433',
-  blush: '#b9524c',
-  white: '#f7eee8',
-  iris: '#83563b',
-  irisDeep: '#3e2318',
-  lash: '#24140f',
-  brow: '#5a3020',
-  dress: '#550409',
-  dressLight: '#5c060c',
-  dressShade: '#430308',
-  dressDeep: '#320206',
-  shoe: '#45030a',
-  gold: '#b4881f',
-  goldLight: '#d8b04a',
-  goldHi: '#f0d68a',
-  goldShade: '#8a5d0c',
-  goldDeep: '#5f3d05',
+  hair: '#060606',
+  sheen: '#2d2c2f',
+  skin: '#b8785f',
+  chest: '#ad6f58',
+  shade: '#a6604a',
+  blush: '#a8574a',
+  hand: '#b2715a',
+  handGap: '#4a0306',
+  white: '#fbd8c8',
+  iris: '#7a4f33',
+  irisLight: '#9c6c4b',
+  pupil: '#2e1810',
+  lid: '#40251a',
+  brow: '#6c3d2b',
+  dress: '#540403',
+  dressShade: '#400403',
+  shoe: '#480204',
+  gold: '#b07c14',
+  goldLight: '#cf9c34',
+  goldHi: '#ecc868',
+  goldShade: '#83560b',
 } as const;
-
-/** Her face is drawn about this upright line. */
-const AXIS = 143.5;
 
 // ─────────────────────────────────────────────────────────────── the body
 
-/** The hair that falls behind her shoulders: longer on her left, as it fell. */
+/** The hair that falls behind her shoulders, from under the crown to below her elbows. */
 const BACK_HAIR: Knot[] = [
-  [143.5, 160],
-  [104, 168],
-  [90, 182],
-  [84.5, 199],
-  [77.5, 216],
-  [70.5, 236],
-  [62, 264],
-  [53.5, 294],
-  [46.5, 320],
-  [42.6, 341],
-  [43.5, 359],
-  [48.5, 370.5],
-  [57, 378, 0.8],
-  [100, 385, 0],
-  [200, 402, 0],
-  [222, 399.5, 0.8],
-  [233.5, 390],
-  [243.5, 375.5],
-  [250.2, 359],
-  [252.2, 341],
-  [249, 321],
-  [242.5, 298],
-  [234.5, 274],
-  [225.5, 250],
-  [216.5, 229],
-  [208.5, 210],
-  [202.5, 190],
-  [195, 172],
-  [183, 162],
+  [93.2, 150.3, 0.4], [91, 165.1], [83.1, 194.4], [50.4, 302.9], [42.5, 333.4], [42.4, 347.9], [45.5, 360.9],
+  [51.6, 373.1], [53.2, 375.2], [55.1, 375.9], [57.5, 380.1], [58, 401.5, 0.4], [221, 401.7, 0.4], [221.6, 398.1],
+  [222.7, 396.1], [227.6, 393.8], [235.7, 385.9], [243.1, 376.6], [247.5, 368.9], [250.4, 360.6], [252.3, 351.4],
+  [252.6, 333.4], [249.5, 317.4], [245.5, 304.1], [205.9, 191.4], [196.8, 162.6], [194.5, 150.5, 0.4],
 ];
 
-/** The dress, neckline to hem; the V at the front is cut into it. */
+/** The dress, neckline to hem: the V at the front, the sleeves widening from the shoulders. */
 const DRESS: Knot[] = [
-  [117.5, 230.5, 0],
-  [106, 232],
-  [93, 235.5],
-  [83.5, 241],
-  [76.5, 250],
-  [70.5, 265],
-  [65, 284],
-  [60, 306],
-  [56.3, 327],
-  [54.2, 346],
-  [54.5, 364],
-  [56, 382],
-  [57.8, 402],
-  [59, 445],
-  [59.2, 505],
-  [57.8, 560],
-  [54, 590],
-  [49, 626],
-  [44, 670],
-  [40, 706],
-  [36.8, 731],
-  [37.5, 741.5, 0.6],
-  [43.5, 745.8, 0],
-  [244.5, 745.8, 0],
-  [250.3, 741.5, 0.6],
-  [250.4, 731],
-  [248, 700],
-  [244, 650],
-  [239.8, 600],
-  [235, 556],
-  [230.5, 520],
-  [227, 482],
-  [224.8, 446],
-  [222.6, 412],
-  [223, 396],
-  [227.5, 380],
-  [233, 365],
-  [235.8, 348],
-  [234.6, 328],
-  [230.8, 307],
-  [225.5, 285],
-  [219, 263],
-  [211.5, 247.5],
-  [202, 238.5],
-  [189, 233.5],
-  [176, 231],
-  [169.5, 230.5, 0],
-  [143.5, 276, 0],
+  [111.6, 226.3], [82.9, 233.9], [78.4, 238.4], [75.6, 244], [71.9, 252], [68.9, 268], [57.9, 316], [53.6, 344],
+  [53.4, 366], [54.4, 374], [56.8, 381.1], [57.4, 395.4], [56.4, 398], [56.2, 548], [51.6, 596], [38.1, 716],
+  [37, 732], [37.6, 738.8], [39.8, 741.6], [43.6, 743.2], [50, 743.7], [236, 743.6], [243.6, 743], [247.6, 741],
+  [249.6, 737.6], [248.3, 716], [229.7, 548], [221.4, 486], [221, 460], [222.9, 410], [222.1, 400.1], [223.9, 395.1],
+  [223.7, 381.1], [234.3, 364], [238, 348], [238, 340], [236.5, 332], [227.4, 292], [213.5, 244], [209, 236.6],
+  [206.6, 234], [175.6, 226.2], [169.6, 226.4, 0.4], [169.4, 236], [164.6, 238.4], [143.6, 274.6, 0.15],
+  [122.6, 238.6], [118, 236], [117.6, 226.4, 0.4],
 ];
 
-/** Her left sleeve hangs in shadow down her side, and the dress beneath it stays dark to the hem. */
-const LEFT_SHADE: Knot[] = [
-  [72, 425],
-  [84, 404],
-  [100, 398],
-  [114.5, 404],
-  [114, 440],
-  [110.5, 480],
-  [106, 540],
-  [100, 600],
-  [95, 650],
-  [90, 700],
-  [86.5, 745.8, 0],
-  [43.5, 745.8, 0],
-  [37.5, 741.5, 0.6],
-  [36.8, 731],
-  [40, 706],
-  [44, 670],
-  [49, 626],
-  [54, 592],
-  [58.6, 562],
-  [62.6, 530],
-  [63.6, 495],
-  [64.4, 462],
-  [66.6, 440],
+
+/** The shade down her left side: the sleeve hanging in shadow, and the skirt below it. */
+const SHADE_LEFT: Knot[] = [
+  [94.2, 387.2], [105.1, 387.5], [109.7, 393], [117.8, 394.5], [119.1, 396.9], [115.9, 436.1], [114.2, 440.1],
+  [112.2, 457.6], [110.5, 487.1], [106.4, 513.4], [103.6, 555.4], [102, 561.6], [101, 578.4], [97.9, 597.9],
+  [97.4, 621.9], [90.9, 672.6], [89.1, 702.9], [85.9, 722.4], [86.4, 743.6, 0], [43.6, 743.2], [39.8, 741.6],
+  [37.6, 738.8], [37, 732], [51.6, 596], [59.4, 512], [62.3, 494.4], [64.6, 419.9], [65.7, 417.3], [90, 410],
+  [94, 401.1],
 ];
 
-/**
- * Her right sleeve catches the light; the dress in its shadow, and the dress
- * below where it ends, are dark.
- */
-const RIGHT_SHADE: Knot[] = [
-  [163.5, 423],
-  [166.5, 442],
-  [172, 490],
-  [178, 530],
-  [183.5, 570],
-  [185.5, 600],
-  [186.5, 650],
-  [187.5, 700],
-  [190, 745.8, 0],
-  [244.5, 745.8, 0],
-  [250.3, 741.5, 0.6],
-  [250.4, 731],
-  [248, 700],
-  [244, 650],
-  [240.6, 610],
-  [236, 585],
-  [228, 591],
-  [219.5, 595, 0],
-  [211.5, 583],
-  [202, 566],
-  [197, 546],
-  [190, 521],
-  [181.5, 496],
-  [176, 471],
-  [170.5, 443],
-  [167.5, 423],
+/** The shade on her right: the skirt beside her, with a lit fold running down through it. */
+const SHADE_RIGHT: Knot[] = [
+  [165.5, 415.9], [162, 422.1], [163.8, 434.9], [163.5, 444.9], [169.6, 496.1], [169.7, 511.4], [173, 528.4],
+  [174.5, 546.6], [176.5, 556.9], [178.4, 585.9], [180.9, 598.4], [184, 641.6], [190.6, 691.4], [191.4, 716.1],
+  [194.8, 740.9], [196.2, 743.3], [199.9, 743.6, 0], [243.6, 743], [247.6, 741], [249.6, 737.6], [248.3, 716],
+  [229.7, 548], [221.4, 486], [220.4, 482.2, 0.4], [219, 483.1], [220.1, 488.6], [217.4, 571.9], [215.9, 586.6],
+  [214.4, 588.2, 0.4], [212.6, 586.6], [190.5, 526.1], [183.8, 510.6], [183.2, 502.6], [179.6, 495.1], [176, 480.6],
+  [174, 453.9], [166.8, 416.5],
 ];
 
-/** The lock of hair over her left shoulder (the viewer's left), ending behind the belt. */
+/** The sleeves where they fall from the shoulders, behind the hair; each lit only at the elbow. */
+const SHADE_SHOULDER_LEFT: Knot[] = [
+  [86, 236], [78.4, 238.4], [71.9, 252], [57.9, 316], [53.6, 344], [53.4, 366], [55.4, 370.3, 0.1], [56.5, 360.9],
+  [60.2, 352.4], [66.1, 348], [71.4, 346.7], [75.1, 347], [81.3, 350.2], [85.1, 360.1], [87.9, 373.9],
+  [91.8, 377.9, 0.4], [97.8, 370.3], [98.6, 366.4], [96.6, 364.7, 0.4], [92.6, 371.2], [90.4, 371], [88, 356],
+  [88, 262],
+];
+
+const SHADE_SHOULDER_RIGHT: Knot[] = [
+  [200, 236], [209, 236.6], [213.5, 244], [227.4, 292], [238, 340], [237.9, 348], [234.3, 363.5], [225.2, 378.4],
+  [223.8, 394.4], [222.6, 395.9, 0.4], [220.8, 393.8], [223, 374.9], [218.3, 361.2], [215.5, 358.7], [203.9, 352.9],
+  [200.1, 352.2], [193.7, 353], [192.3, 351.6, 0.4], [193, 350.3], [198.3, 348.7], [200, 344.6], [199, 260],
+];
+
+/** The two locks of hair that fall forward over her chest, each ending behind the belt. */
 const LOCK_LEFT: Knot[] = [
-  [84, 226],
-  [111.5, 226, 0.5],
-  [111.5, 300],
-  [111, 345],
-  [105, 362],
-  [96, 371],
-  [90.5, 372.5],
-  [87, 362],
-  [85.5, 345],
-  [80.5, 330],
-  [77.5, 310],
-  [79.2, 285],
-  [82.5, 258],
-  [83.3, 240],
+  [91.2, 372.3, 0.4], [90.1, 371.8], [88.9, 368.2], [88.3, 361.2], [87.1, 357.8], [88.4, 344.8], [87.8, 340.1],
+  [84.7, 334.9], [80.6, 324.5], [77.7, 312.1], [77.8, 304.9], [83.5, 264.9], [85.4, 262.2], [87, 252.6], [86.7, 251],
+  [85.2, 250.2], [84.2, 248.2], [83.5, 240.4], [81.1, 238.7], [80.6, 237.4, 0.4], [85.1, 236], [111.1, 236],
+  [112, 236.5], [112.1, 270.4], [112.6, 276.9], [111.8, 280.6], [112.4, 350.3], [111.5, 351.9], [110, 352.3],
+  [103.5, 350.6], [98.3, 347.8], [96.9, 348], [96.3, 350.6], [97.1, 363.3], [95.7, 364.6], [95.6, 367.4],
 ];
 
 const LOCK_RIGHT: Knot[] = [
-  [175, 226, 0.5],
-  [202, 226],
-  [203.3, 245],
-  [205, 270],
-  [207.3, 296],
-  [207.2, 318],
-  [204, 336],
-  [199.5, 352],
-  [190, 358],
-  [178, 356],
-  [175.2, 340],
-  [175.2, 280],
+  [175.5, 352.9, 0.4], [174.7, 350.9], [175.5, 336.1], [174.6, 304.9], [175.3, 284.9], [174.4, 273.1],
+  [175.2, 260.4], [174.6, 249.1], [175.2, 247.1], [174.7, 243.9], [175.1, 237.4], [177.4, 236], [204.6, 236.3, 0.4],
+  [205.4, 239.1], [203.3, 241.7], [203.5, 254.9], [205.1, 279.5], [206.9, 285.4], [208.2, 309.9], [206.4, 323],
+  [202.1, 334.8], [202.1, 343.7], [198.1, 348.7], [196.7, 349.6], [192.5, 350.4, 0.4], [191.2, 347.9],
+  [190.2, 347.6], [179.8, 352],
 ];
 
-/** Light along single strands: tapered so each fades in and out like a highlight on hair. */
-const STRANDS_BODY: readonly (readonly Pt[])[] = [
-  [
-    [97, 238],
-    [93.5, 270],
-    [89, 300],
-    [86.5, 326],
-  ],
-  [
-    [90.5, 244],
-    [86, 270],
-    [81.8, 298],
-  ],
-  [
-    [102, 242],
-    [100, 280],
-    [96.5, 315],
-    [94.5, 336],
-  ],
-  [
-    [193.5, 238],
-    [197, 270],
-    [200.5, 300],
-    [202, 320],
-  ],
-  [
-    [186, 240],
-    [188, 280],
-    [190, 334],
-  ],
-  [
-    [199, 244],
-    [203, 268],
-    [205, 292],
-  ],
-];
+/** Light along single strands of hair: fine soft lines. Those on the crown move with her head. */
 const STRANDS_HEAD: readonly (readonly Pt[])[] = [
   [
-    [98.5, 178],
-    [96, 204],
-    [94, 228],
+    [100.7, 181.9],
+    [99.1, 200.1],
   ],
   [
-    [106.5, 188],
-    [105, 210],
-    [103.5, 228],
+    [98.7, 204.4],
+    [97, 225],
+    [95.9, 240],
   ],
   [
-    [188.5, 172],
-    [191.5, 200],
-    [193.5, 228],
-  ],
-  [
-    [181.5, 188],
-    [183, 210],
-    [184, 228],
+    [186.7, 176.9],
+    [189.6, 205],
+    [191.2, 228],
+    [191.6, 240],
   ],
 ];
 
-/** Light along single strands of hair: fine lines, round at the ends. */
+const STRANDS_BODY: readonly (readonly Pt[])[] = [
+  [
+    [92, 222],
+    [89.3, 246],
+    [86.5, 278],
+    [87.6, 310.1],
+  ],
+  [
+    [95.9, 240],
+    [95.3, 262],
+    [95.8, 289.2],
+    [99.4, 331.6],
+  ],
+  [
+    [107.6, 236],
+    [106.1, 249.6],
+    [105.3, 282.4],
+    [106.5, 315.1],
+  ],
+  [
+    [180.6, 236],
+    [182, 250.9],
+    [183, 286.6],
+    [181, 322.4],
+  ],
+  [
+    [191.6, 240],
+    [192.4, 281],
+    [188.3, 333.1],
+  ],
+  [
+    [197.4, 236],
+    [199.7, 249.2],
+    [201.6, 281.5],
+    [200, 313.9],
+  ],
+];
+
 function strands(list: readonly (readonly Pt[])[]): string {
-  return line(list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join(''), C.sheen, 1.2, ' stroke-opacity="0.8"');
+  return line(list.map((s) => curve(s.map(([x, y]) => [x, y] as const), false)).join(''), C.sheen, 1.2, ' stroke-opacity="0.7"');
 }
 
-/** A gold coin: a bright rim round a struck face, and a small boss in the middle. */
+/** Her neck and the skin of her chest down to the V, under the dress: a little darker toward the V. */
+const NECK: Knot[] = [
+  [115.4, 222, 0],
+  [172, 222, 0],
+  [172, 232],
+  [143.6, 282, 0],
+  [115.4, 232],
+];
+
+/** Her shoes, the toes showing below the hem. */
+const FOOT_LEFT: Knot[] = [
+  [69.9, 763.8], [69.8, 762], [70.7, 760.8], [84.4, 751], [88.5, 747.1], [88.9, 744.8], [89.8, 744.2], [132.1, 744],
+  [133.8, 745], [133.9, 756], [132.8, 761.9], [131.3, 765.2, 0.4], [130, 765], [128.4, 765.9], [126, 765.4, 0.4],
+  [125.2, 766.8], [123.8, 766.8], [122.1, 764.5], [121.2, 759.6], [117.6, 757.9, 0.4], [116.3, 761.2],
+  [109.6, 765.5], [95.6, 767.9], [80.9, 767.9], [79.9, 767.5], [79.2, 766], [75.8, 764.7, 0.4], [75.1, 766.2],
+  [73.7, 766.5], [70.8, 765.3],
+];
+
+const FOOT_RIGHT: Knot[] = [
+  [204.9, 765.3], [203.1, 766.8], [200.3, 767.4], [199.1, 767], [198.7, 765.9, 0.4], [197.4, 765.9], [196.8, 767.5],
+  [194.3, 767.9], [178.9, 767.7], [173.5, 765.8], [171.7, 763.2], [171.4, 761.5], [174.5, 744.6], [176.6, 744],
+  [201.2, 744.4], [205.7, 756.9], [205.9, 762.3],
+];
+
+/** Her left hand, resting curled against the sleeve. */
+const HAND_LEFT: Knot[] = [
+  [98.8, 446.6], [92, 446.2], [85.8, 444], [79.6, 441.8], [74.1, 437.5], [71.2, 432.4], [68.4, 418.3],
+  [67.5, 408.8], [68.9, 405.5], [72.2, 401.8], [75.5, 398.9], [78.8, 397.1], [84.3, 396.4], [90, 398.6],
+  [93.9, 402.8], [97, 408.9], [101.7, 422.7], [101.6, 425.8], [99, 427.1], [96.5, 426.1], [94.9, 424],
+  [90.6, 414.6, 0.3], [89, 415.6], [91.6, 424.5], [100.6, 435.3], [102.2, 439.2], [100.4, 442.6], [100.2, 445.1],
+];
+
+/** Her right hand, open, the fingers pointing down and in. */
+const HAND_RIGHT: Knot[] = [
+  [128.1, 440.1], [126.7, 438.3], [127.5, 434.9], [135.7, 424.1], [137.9, 419.9], [137.6, 419.4, 0.3],
+  [136.9, 419.8], [128.6, 430.4], [126, 432.3], [123.6, 432.2], [123.1, 430.2], [124.2, 427.4], [133.7, 411.6, 0.3],
+  [130.3, 413], [126.2, 413.1], [125.1, 412], [125.3, 409.6], [133, 402.3], [136.2, 397.9], [136.8, 396.6],
+  [137.8, 392], [141, 389.4], [146, 388.6], [151.4, 389], [156.4, 390.6], [164.5, 394.9], [167.3, 399.5],
+  [167.3, 407.4], [164.7, 414.8], [158.5, 425.1], [151.9, 433.5], [148.8, 436.4], [146.5, 437.5], [145.2, 436.9],
+  [145.3, 435.4], [146.8, 432], [146.5, 431.3, 0.3], [139.9, 439.3], [137.2, 440.9], [135.2, 440.4], [134.7, 439.3],
+  [134.9, 438.2], [140.3, 429.2], [140.4, 428.3, 0.3], [131.9, 438.5], [129.7, 440],
+];
+
+/** The dark between her fingers, where the dress shows through. */
+const HAND_GAPS: readonly (readonly Pt[])[] = [
+  [
+    [89.6, 413.6],
+    [90.4, 419],
+    [91.6, 424.4],
+  ],
+  [
+    [138.2, 419.2],
+    [132.8, 426.2],
+    [127.4, 433],
+  ],
+  [
+    [142, 426.2],
+    [137.8, 432.4],
+    [133.6, 438.4],
+  ],
+  [
+    [146.8, 431],
+    [145.4, 433.6],
+    [143.8, 436.2],
+  ],
+  [
+    [134.4, 410.8],
+    [133, 412.2],
+    [131.6, 413.6],
+  ],
+];
+
+/** A gold coin: a bright rim round a struck face with a ring pressed into it. */
 function coins(list: readonly (readonly [number, number, number])[]): string {
   const rim = list.map(([x, y, r]) => oval(x, y, r)).join('');
-  const face = list.map(([x, y, r]) => oval(x, y + r * 0.04, r * 0.74)).join('');
-  const boss = list.map(([x, y, r]) => oval(x - r * 0.12, y - r * 0.1, r * 0.3)).join('');
-  // the lower half of the rim, turned from the light
-  const shade = list.map(([x, y, r]) => `M${n(x - r)},${n(y)}a${n(r)},${n(r)} 0 0 0 ${n(2 * r)},0a${n(r)},${n(r * 0.86)} 0 0 1 ${n(-2 * r)},0z`).join('');
-  return (
-    fill(rim, C.goldLight) +
-    fill(shade, C.goldShade, alpha(0.55)) +
-    fill(face, C.gold) +
-    fill(boss, C.goldLight, alpha(0.7))
-  );
+  const face = list.map(([x, y, r]) => oval(x, y + r * 0.05, r * 0.78)).join('');
+  const ring = list.map(([x, y, r]) => oval(x, y + r * 0.05, r * 0.5)).join('');
+  return fill(rim, C.goldLight) + fill(face, C.gold) + `<path d="${ring}" fill="none" stroke="${C.goldShade}" stroke-width="0.7" stroke-opacity="0.6"/>`;
 }
 
 function necklace(): string {
-  // the two strings of beads from behind her neck down to the first coins
-  const strings = curve([[120.2, 227.6], [119.2, 249], [122.4, 270.4]], false) + curve([[166.8, 227.6], [167.8, 249], [164.6, 270.4]], false);
+  // the two strings of beads, from behind her neck down to the first coins
+  const strings = curve([[120.6, 227.6], [119.6, 249], [121.6, 268.6]], false) + curve([[166.6, 227.6], [167.6, 249], [165.4, 268.6]], false);
   const links: Pt[] = [
-    [125.6, 285.4],
-    [161.2, 285.4],
-    [135.6, 298.6],
-    [151, 298.6],
-    [143.3, 296.6],
+    [126.2, 285.2],
+    [160.6, 285.2],
+    [136.8, 299.2],
+    [149.4, 299.2],
   ];
   return (
-    beadsAlong(strings, C.goldShade, 3.4, 3.4) +
-    beadsAlong(strings, C.goldLight, 2.6, 3.4) +
-    fill(links.map(([x, y]) => oval(x, y, 1.5)).join(''), C.goldLight) +
+    beadsAlong(strings, C.goldShade, 3.6, 3.4) +
+    beadsAlong(strings, C.goldLight, 2.8, 3.4) +
+    fill(links.map(([x, y]) => oval(x, y, 1.6)).join(''), C.goldLight) +
     coins([
-      [121.9, 277.2, 6.6],
-      [164.8, 277.2, 6.6],
-      [129.5, 292.4, 6.4],
-      [157.2, 292.4, 6.4],
-      [143.3, 306.6, 8.8],
+      [122, 276.8, 7.5],
+      [164.2, 277, 7.6],
+      [129.4, 292.6, 7.7],
+      [156.4, 292.9, 7.8],
+      [142.7, 307.6, 9.8],
     ])
   );
 }
 
-/** The belt: a tall middle boss between two engraved plates, with wings flaring out and up at either end. */
-function belt(panel: string): string {
-  // drawn a little inside their edges: the rim's stroke brings them out to full size
-  const wingL: Knot[] = [
-    [97.6, 347.8, 0.3],
-    [112.6, 352.6, 0],
-    [112.6, 368.4, 0],
-    [101.8, 366.2, 0.3],
-    [99.6, 358],
-  ];
-  const plateL: Knot[] = [
-    [113, 342.2, 0.4],
-    [116.4, 339.8],
-    [123.5, 340.6],
-    [130, 339.6],
-    [136, 338, 0],
-    [136, 370.8, 0],
-    [128.5, 372.2],
-    [120, 370.6],
-    [113.4, 371.4, 0.4],
-  ];
-  const boss: Knot[] = symmetric(
-    [
-      [144, 333.6],
-      [139.2, 335.2],
-      [136.4, 340.6],
-      [135.6, 354],
-      [136.6, 367],
-      [139.8, 372],
-      [144, 374.2],
-    ],
-    144,
-  );
+/** The belt's outline: a tall boss in the middle, a plate either side, and wings that flare out and up at the ends. */
+const BELT: Knot[] = [
+  [97.2, 347.6, 0.3], [104, 350.8], [112.4, 353, 0.3], [112.4, 342.2, 0.3], [113.6, 340.8], [119.8, 339.8],
+  [123.4, 338.2], [127, 339.2], [132.6, 339.2], [139.1, 335.2], [143.4, 334.2], [147.6, 335.3], [154.5, 339.3],
+  [161.9, 339.5], [164.4, 338], [167.7, 339.9], [174, 341.1, 0.3], [174.6, 352.4, 0.3], [177.8, 352.7],
+  [190.2, 347.5, 0.3], [191.6, 349.6], [191, 355.4], [190, 356.9, 0.4], [174.1, 370.7], [168.9, 371.5], [163.8, 374],
+  [150.2, 375.8], [136.8, 375.8], [132.6, 373.4], [125, 374.4], [118.1, 371.8], [112.4, 372.8], [106.3, 368.4],
+  [100, 369.2, 0.4], [96.7, 360.9], [96.3, 350.1],
+];
+
+/** The tall boss in the middle of the belt, raised above the plates. */
+const BOSS: Knot[] = symmetric(
+  [
+    [143.6, 334.6],
+    [139.4, 336.2],
+    [136.6, 341.4],
+    [135.8, 355],
+    [136.8, 368],
+    [139.8, 373.6],
+    [143.6, 375.4],
+  ],
+  143.6,
+);
+
+function belt(metal: string, rim: string): string {
   const pendants: [number, number, number][] = [
-    [101.6, 380, 6.3],
-    [114.6, 386.2, 6.3],
-    [128.6, 392.6, 6.3],
-    [143, 398.6, 6.3],
+    [101.2, 381.2, 6.4],
+    [114.4, 385.9, 6.8],
+    [128.6, 390.4, 6.8],
+    [144.4, 394.6, 6.8],
   ];
-  const chain = (x: number, y: number): string => `M${n(x)},${n(y + 2.4)}v3.1`;
-  const plates = curve(plateL) + curve(mirror(plateL, 144)) + curve(wingL) + curve(mirror(wingL, 144));
-  const piece = (d: string): string => `<path d="${d}" fill="url(#${panel})" stroke="${C.goldLight}" stroke-width="2.6" stroke-linejoin="round"/>`;
-  const rings = oval(124.8, 355.4, 6.4, 7.6) + oval(163.2, 355.4, 6.4, 7.6) + oval(144, 354.6, 4.8, 12.6);
+  // each coin hangs from two beads
+  const chain = (x: number, y: number): string => `M${n(x)},${n(y)}v3.2`;
   return (
     // the shade the belt throws on the dress
-    fill(curve([[112, 360], [144, 356], [176, 360], [172, 376], [144, 381], [116, 376]]), C.dressDeep, alpha(0.4)) +
-    // each coin hangs from two beads
-    beadsAlong(chain(101.6, 368) + chain(114.6, 374) + chain(128.6, 380.4) + chain(143, 386.2) + chain(158.6, 374.2), C.goldLight, 3, 3.1) +
+    fill(curve([[112, 362], [144, 358], [176, 362], [172, 377], [144, 381], [116, 377]]), C.dressShade, alpha(0.5)) +
+    beadsAlong(chain(101.2, 370.4) + chain(114.4, 374.4) + chain(128.6, 378.2) + chain(144.4, 381.4) + chain(158.6, 374.6), C.goldLight, 3, 3.2) +
     coins(pendants) +
     // the last pendant hangs on a hook, half hidden by her hand
     line(curve([[158.6, 378], [161.8, 382], [158.2, 387.6], [154, 392]], false), C.goldLight, 2.3) +
-    // each piece a sunken, engraved panel inside a raised rim of bright gold
-    piece(plates) +
-    piece(curve(boss)) +
-    fill(rings, C.goldLight) +
-    fill(oval(124.8, 355.4, 4.6, 5.6) + oval(163.2, 355.4, 4.6, 5.6) + oval(144, 354.6, 3.1, 10.4), C.gold) +
-    fill(oval(124.8, 355.4, 2.2, 2.6) + oval(163.2, 355.4, 2.2, 2.6) + oval(144, 348.2, 1.7, 3.2) + oval(144, 361, 1.7, 3.2), C.goldShade) +
-    // beading down either side of the boss, and a stud in each wing
-    beadsAlong('M138.9,338.5V372M149.1,338.5V372', C.goldHi, 1.5, 2.75) +
-    fill(oval(105.4, 358, 1.5) + oval(182.6, 358, 1.5) + oval(144, 337.8, 1.2), C.goldHi) +
-    // light along the top edge of each piece
-    line(curve([[113, 340.2], [123.5, 340], [134.4, 338.4]], false) + curve([[153.6, 338.4], [164.5, 340], [175, 340.2]], false), C.goldHi, 0.9) +
-    line(curve([[137, 338.6], [144, 333.2], [151, 338.6]], false) + curve([[97.6, 347.6], [112, 352.4]], false) + curve([[190.4, 347.6], [176, 352.4]], false), C.goldHi, 0.8)
+    // the metal, with a bright rim just inside its edge and where each wing meets its plate
+    clipped(rim, fill('M95,332h98v46h-98z', `url(#${metal})`) + line(curve(BELT) + 'M112.4,352.6V373M174.6,352V371', C.goldLight, 2.4)) +
+    // the engraving on each plate and wing, worked in a darker gold
+    fill(oval(124.4, 356.4, 6.6, 7.4) + oval(162.8, 356.4, 6.6, 7.4) + oval(104.6, 359, 3.2, 4.2) + oval(182.6, 358, 3.2, 4.2), C.goldShade, alpha(0.7)) +
+    fill(oval(124.4, 356.4, 4, 4.6) + oval(162.8, 356.4, 4, 4.6), C.gold) +
+    fill(oval(124.4, 356.4, 1.6, 1.8) + oval(162.8, 356.4, 1.6, 1.8) + oval(104.6, 359, 1.2) + oval(182.6, 358, 1.2), C.goldHi) +
+    // the boss: a bright rim, and inside it a long hollow with two studs
+    fill(curve(BOSS), C.goldLight) +
+    fill(oval(143.6, 355, 5.6, 17.2), C.gold) +
+    fill(oval(143.6, 355, 3.4, 12.6), C.goldShade) +
+    fill(oval(143.6, 348.6, 1.7, 2.8) + oval(143.6, 361.4, 1.7, 2.8), C.goldLight) +
+    // light along the top edges
+    line(curve([[114, 341.2], [123.4, 339.4], [133, 340.2]], false) + curve([[154.2, 340.4], [164.4, 339.2], [173, 342]], false), C.goldHi, 0.9) +
+    line(curve([[98, 348.6], [104.4, 351.6], [111.6, 353.6]], false) + curve([[189.6, 348.6], [183.6, 351], [177.2, 353.6]], false), C.goldHi, 0.8)
   );
-}
-
-const HAND_LEFT: Knot[] = [
-  [71.2, 402.7],
-  [75.7, 398.2],
-  [82, 396.4],
-  [87.5, 397.7],
-  [92, 401],
-  [95.7, 406.4],
-  [99, 412.7],
-  [101.2, 420],
-  [101.6, 425.6, 0.6],
-  [99.4, 427.3],
-  [95.7, 425.5],
-  [92, 421],
-  [89.8, 415.5],
-  [89.4, 412.3, 0],
-  [88.9, 416.4],
-  [90.3, 421.8],
-  [94, 428.2],
-  [98.5, 433.6],
-  [101.2, 438.2],
-  [102.1, 440.5, 0.6],
-  [100.4, 441.9],
-  [100.3, 444.5],
-  [98.9, 446.4, 0.6],
-  [94, 445.6],
-  [88.5, 444.6],
-  [83, 442.7],
-  [77.5, 440],
-  [73, 435.5],
-  [70.3, 429],
-  [68.5, 420],
-  [67.4, 411.8],
-  [68, 406.4],
-];
-
-/** Her other hand, open, the fingers pointing down and in: each finger is its own tongue of the outline. */
-const HAND_RIGHT: Knot[] = [
-  [138.4, 393.6],
-  [143.6, 389.8],
-  [151, 389.6],
-  [158, 391.4],
-  [164.2, 395],
-  [167.4, 400.6],
-  [167.5, 407.8],
-  [165.4, 415],
-  [161, 422.6],
-  [156.4, 428.4],
-  [152.6, 433],
-  [149.8, 436.4],
-  [147.6, 437.8, 0.6],
-  [145.8, 436.8],
-  [146.6, 433.4],
-  [149.6, 428.4],
-  [153, 423.4, 0],
-  [148.6, 428.6],
-  [145, 433.6],
-  [142.4, 437.6],
-  [139.8, 439.8],
-  [137, 440.2, 0.6],
-  [135.2, 439.4],
-  [135.6, 436.8],
-  [138.6, 431],
-  [142, 425],
-  [145.4, 418.8, 0],
-  [141.4, 424.6],
-  [137.2, 430.6],
-  [133.6, 436],
-  [131.6, 438.8],
-  [129.2, 439.6, 0.6],
-  [127.4, 438.2],
-  [128, 434.8],
-  [131.6, 428.6],
-  [135.6, 422.6],
-  [139.2, 417.8, 0],
-  [134.6, 422.4],
-  [130.4, 426.8],
-  [126.6, 430.4],
-  [124.4, 432, 0.6],
-  [123.6, 430],
-  [125.6, 426],
-  [129, 420.4],
-  [132.4, 415.4],
-  [134.4, 412.6, 0],
-  [130.4, 413.2],
-  [127, 413],
-  [125.2, 411.4, 0.6],
-  [126.6, 409],
-  [130.2, 406.6],
-  [134, 403.4],
-  [136.8, 399.4],
-];
-
-function hands(skin: string): string {
-  return (
-    fill(curve(HAND_LEFT) + curve(HAND_RIGHT), `url(#${skin})`) +
-    // her curled fingers, one behind another
-    line(
-      curve([[76.6, 429], [82.4, 435.6], [88.5, 441]], false) + curve([[81, 426.4], [87.6, 433.2], [94, 439]], false) + curve([[85.6, 433], [91.6, 438.6], [97.5, 442.6]], false),
-      C.skinShade,
-      0.7,
-      ' stroke-opacity="0.55"',
-    )
-  );
-}
-
-function shoes(): string {
-  const left: Knot[] = [
-    [93.5, 744, 0],
-    [86.5, 748.2],
-    [77, 753.2],
-    [70.2, 757.2],
-    [68, 760.8],
-    [71.4, 763.8],
-    [85, 765.2],
-    [100.5, 765.4],
-    [107.6, 762.8],
-    [110.8, 760.8, 0.4],
-    [112.4, 766.6, 0.3],
-    [116.2, 768],
-    [119.6, 767, 0.3],
-    [120.6, 757],
-    [121.6, 744, 0],
-  ];
-  const right: Knot[] = [
-    [173.2, 744, 0],
-    [171.6, 755],
-    [172.6, 763.4],
-    [178.2, 767.6],
-    [192, 768.2],
-    [199.6, 765.2],
-    [200.6, 759],
-    [197.8, 752],
-    [193.4, 744, 0],
-  ];
-  return fill(curve(left) + curve(right), C.shoe) + line(curve([[73, 758.5], [84, 755.5], [92, 750.5]], false) + curve([[177, 751], [182, 759], [190.5, 762]], false), C.dressLight, 1.1, ' stroke-opacity="0.8"');
 }
 
 function body(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const NECK: Knot[] = [
-    [125.2, 196],
-    [124.9, 215],
-    [124, 223.5],
-    [120.5, 228.4],
-    [115, 232],
-    [143.5, 282, 0],
-    [172, 232],
-    [166.5, 228.4],
-    [163, 223.5],
-    [162.1, 215],
-    [161.8, 196],
-  ];
   return part(
     [
-      linearBox(id('dress'), [
-        [0, C.dressShade],
-        [0.2, C.dress],
-        [0.5, C.dressLight],
-        [0.86, C.dress],
-        [1, C.dressShade],
-      ], 0, 0, 1, 0),
-      linearBox(id('neck'), [
-        [0, C.skinDeep],
-        [0.4, C.skinShade],
-        [1, C.skin],
-      ]),
-      linearBox(id('lshade'), [
-        [0, C.dressDeep, 0.75],
-        [0.78, C.dressShade, 0.9],
-        [1, C.dressShade, 0.35],
-      ], 0, 0, 1, 0),
-      linearBox(id('rshade'), [
-        [0, C.dressShade, 0.5],
-        [0.2, C.dressShade, 0.95],
-        [1, C.dressDeep, 0.8],
-      ], 0, 0, 1, 0),
-      linearBox(id('panel'), [
-        [0, C.goldShade],
-        [0.55, C.gold],
-        [1, C.goldShade],
-      ]),
-      linearBox(id('hand'), [
+      linearAt(id('chest'), [
         [0, C.skin],
-        [1, C.skinLight],
-      ], 0, 0, 0.4, 1),
+        [1, C.chest],
+      ], 0, 226, 0, 270),
+      linearAt(id('metal'), [
+        [0, '#c4901c'],
+        [0.45, C.gold],
+        [1, '#956610'],
+      ], 0, 334, 0, 376),
+      clipDef(id('beltrim'), curve(BELT)),
+      linearAt(id('hand'), [
+        [0, C.hand],
+        [1, '#c2826b'],
+      ], 0, 396, 0, 446),
     ],
     [
       fill(curve(BACK_HAIR), C.hair),
-      shoes(),
-      fill(curve(NECK), `url(#${id('neck')})`),
-      fill(curve(DRESS), `url(#${id('dress')})`),
-      fill(curve(LEFT_SHADE), `url(#${id('lshade')})`),
-      fill(curve(RIGHT_SHADE), `url(#${id('rshade')})`),
+      fill(curve(FOOT_LEFT) + curve(FOOT_RIGHT), C.shoe),
+      fill(curve(NECK), `url(#${id('chest')})`),
+      fill(curve(DRESS), C.dress),
+      fill(curve(SHADE_LEFT) + curve(SHADE_RIGHT) + curve(SHADE_SHOULDER_LEFT) + curve(SHADE_SHOULDER_RIGHT), C.dressShade),
       necklace(),
       fill(curve(LOCK_LEFT) + curve(LOCK_RIGHT), C.hair),
       strands(STRANDS_BODY),
-      belt(id('panel')),
-      hands(id('hand')),
+      belt(id('metal'), id('beltrim')),
+      // her hands lighter toward the fingertips
+      fill(curve(HAND_LEFT) + curve(HAND_RIGHT), `url(#${id('hand')})`),
+      fill(HAND_GAPS.map((s) => taper(s, [0, 0.9, 0.9])).join(''), C.handGap, alpha(0.85)),
+      // the fingers of her curled hand, one behind another
+      line(curve([[76.4, 428.4], [83, 436.4], [90.4, 442.6]], false) + curve([[80.6, 422.8], [88, 431.6], [96.2, 438.6]], false), C.shade, 0.8, ' stroke-opacity="0.45"'),
     ],
   );
 }
 
 // ─────────────────────────────────────────────────────────────── the head
 
-/** The crown and the hair down either side of her face, to her shoulders. */
+/**
+ * The crown and the hair down either side of her face, to her shoulders,
+ * parted in the middle. It runs on under her face, so the face is laid on
+ * hair rather than beside it.
+ */
 const HAIR_CAP: Knot[] = [
-  [143.5, 106.4],
-  [127.4, 109.2],
-  [114.6, 115.6],
-  [104.6, 124.6],
-  [97.6, 136.4],
-  [93.6, 150],
-  [92, 164],
-  [89.6, 180],
-  [85.6, 196],
-  [80.2, 212],
-  [74.8, 226],
-  [71.2, 234.5, 0.5],
-  [90, 236.6],
-  [111.6, 234.5, 0.5],
-  [118, 229.2],
-  [123.8, 222.5],
-  [124.2, 208],
-  [143.5, 200],
-  [163, 208],
-  [163.4, 222.5],
-  [169.6, 229.2],
-  [175.6, 234.5, 0.5],
-  [197, 236.6],
-  [216.6, 234.5, 0.5],
-  [213.4, 226],
-  [208.6, 212],
-  [203.6, 196],
-  [200, 180],
-  [196.8, 164],
-  [195, 150],
-  [190.4, 136.4],
-  [182.4, 124.6],
-  [172.4, 115.6],
-  [159.6, 109.2],
+  [146.1, 106.3], [154.9, 107.2], [164.3, 110.3], [172.8, 115.3], [181.5, 122.9], [188.7, 131.9], [192.7, 140.2],
+  [197.2, 162.7], [223.7, 242.8, 0.4], [214, 242.9], [207.4, 238.7], [203.8, 240.4], [201.6, 243], [176, 242.6],
+  [175.2, 241.8], [174.7, 229.7], [172.1, 227.5], [169.1, 227], [166.7, 225.1], [164.1, 226.1], [162.4, 225.3],
+  [161.6, 211.6, 0.15], [161.7, 212.3], [126.5, 211.7, 0.4], [126, 223.6], [124, 225], [120.5, 225.6], [117.7, 228],
+  [115.3, 228.2], [112.8, 229.5], [112, 233.4], [112, 241.8], [111.1, 242.8], [85.2, 243], [84, 242.4],
+  [83.3, 239.9], [81.1, 239], [77.7, 240.3], [75.2, 242.8], [69.5, 242.6, 0.4], [69.2, 239.8], [89.9, 168.5],
+  [92.4, 150.3], [94.2, 142.6], [97.3, 135.5], [101.1, 129.4], [108.6, 120.7], [115.4, 115.3], [125.2, 110.3],
+  [135.6, 107.2],
 ];
 
-const FACE: Knot[] = symmetric(
-  [
-    [AXIS, 128],
-    [124, 131.5],
-    [113.2, 144],
-    [112, 160],
-    [112.2, 182],
-    [112.7, 195, 0.7],
-    [117.4, 205.2],
-    [125.2, 213.4],
-    [134, 218.2],
-    [AXIS, 219.6],
-  ],
-  AXIS,
-);
-
-/** The hair over her forehead, parted in the middle and swept to either side. */
-const FRINGE: Knot[] = [
-  [107, 170],
-  [112, 160.4],
-  [116, 154.6],
-  [122.6, 149],
-  [130.4, 143.4],
-  [137, 138.8],
-  [141.4, 135.2],
-  [143.5, 132.8, 0],
-  [145.6, 135.2],
-  [150, 138.8],
-  [156.6, 143.4],
-  [164.4, 149],
-  [171, 154.6],
-  [175, 160.4],
-  [180, 170],
-  [189, 140],
-  [172, 112],
-  [143.5, 103],
-  [115, 112],
-  [98, 140],
+/** Her face and neck, round-cheeked, down to just above the collar of her dress. */
+const FACE: Knot[] = [
+  [143.3, 132.8, 0.3], [144.2, 134.1], [149.6, 142], [155.7, 147.9], [162.9, 152.7], [174, 157.6], [174.8, 158.8],
+  [175.3, 184.6], [174.8, 192.2], [173.5, 196.7], [170, 203.9], [163.5, 210.8], [163, 212.1], [163.3, 225.6],
+  [164.1, 227.1, 0.15], [165.4, 225.2], [166.8, 225.1], [169, 227.2], [168.9, 227.9, 0.4], [126.1, 227.8],
+  [125, 225.4], [125.1, 212.3], [116.3, 203.1], [113.7, 198.2], [112.2, 193.7], [111.3, 185.4], [111.8, 160.4],
+  [113.1, 159.3], [124.2, 153.5], [130.9, 148.8], [137.6, 142.2],
 ];
+
+/** The soft shade under her chin. */
+const CHIN: Knot[] = [
+  [160.8, 215.4, 0.4], [152.8, 223.7], [148.9, 225.8], [143.4, 226.5], [139, 225.8], [133.9, 223.2], [130.9, 221],
+  [126.9, 215.5, 0.4], [137.1, 219.3], [143.4, 220.5], [147.8, 220.1], [151.5, 219.1], [159, 214.6],
+];
+
+/** Her brows: thin and gently arched, a little fuller toward the middle of the face. */
+const BROW_LEFT: Pt[] = [
+  [116.4, 164.4],
+  [119.6, 162],
+  [124, 160.9],
+  [129, 161.3],
+  [133.4, 162.8],
+  [136.4, 164.6],
+];
+const BROW_RIGHT: Pt[] = [
+  [170.4, 164.2],
+  [167.6, 161.9],
+  [163, 160.7],
+  [158.4, 161.2],
+  [153.6, 162.6],
+  [149.6, 164.4],
+];
+const BROW_WIDTH = [0.3, 1.3, 1.8, 1.8, 1.4, 0.4];
 
 function head(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const brow = taper(
-    [
-      [116.4, 166.4],
-      [120.8, 163],
-      [126.6, 161.6],
-      [132.4, 162.4],
-      [136.6, 164.6],
-    ],
-    [0, 1.4, 1.8, 1.9, 1.3],
-  );
-  const browR = taper(
-    [
-      [170.6, 166.4],
-      [166.2, 163],
-      [160.4, 161.6],
-      [154.6, 162.4],
-      [150.4, 164.6],
-    ],
-    [0, 1.4, 1.8, 1.9, 1.3],
-  );
   return part(
     [
-      radialBox(id('face'), [
-        [0, C.skinLight],
-        [0.55, C.skin],
-        [1, C.skinShade],
-      ], 0.5, 0.42, 0.62),
       radialBox(id('blush'), [
-        [0, C.blush, 0.4],
-        [0.5, C.blush, 0.24],
+        [0, C.blush, 0.42],
+        [0.55, C.blush, 0.24],
         [1, C.blush, 0],
       ]),
     ],
     [
       fill(curve(HAIR_CAP), C.hair),
       strands(STRANDS_HEAD),
-      fill(curve(FACE), `url(#${id('face')})`),
-      ellipse(122, 188.6, 10, 7, `url(#${id('blush')})`),
-      ellipse(165, 188.6, 10, 7, `url(#${id('blush')})`),
-      // the nose: a shadow down one side, a lit tip and the soft line beneath it
-      fill(taper([[138.4, 180], [138.9, 184.6], [139.6, 188.6], [140.8, 191]], [0, 1.3, 1.5, 0.6]), C.skinShade, alpha(0.45)),
-      ellipse(143, 190, 2.2, 1.4, C.skinLight, alpha(0.6)),
-      line(curve([[139.6, 192.2], [142.8, 193.5], [146.4, 192.4]], false), C.skinDeep, 0.9, ' stroke-opacity="0.45"'),
-      fill(brow + browR, C.brow),
-      fill(curve(FRINGE), C.hair),
+      fill(curve(FACE), C.skin),
+      fill(curve(CHIN), C.shade, alpha(0.85)),
+      ellipse(121.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
+      ellipse(165.4, 188.6, 9, 6.6, `url(#${id('blush')})`),
+      // the nose: a soft shade down one side and a softer one beneath it
+      fill(taper([[137.6, 177.4], [137.3, 183.4], [137.6, 188.4], [138.6, 190.6]], [0, 1.4, 1.7, 0.9]), C.shade, alpha(0.55)),
+      fill(taper([[137.4, 190.4], [140.2, 191.3], [143.2, 190.9]], [0.3, 1.2, 0.3]), C.shade, alpha(0.5)),
+      fill(taper(BROW_LEFT, BROW_WIDTH) + taper(BROW_RIGHT, BROW_WIDTH), C.brow),
     ],
   );
 }
 
 // ─────────────────────────────────────────────────────────────── the eyes
 
+/** Her left eye's opening (on the viewer's left), round and open; the right is its mirror. */
 const EYE: Knot[] = [
-  [117.4, 175.8, 0.2],
-  [121.4, 171.8],
-  [127.2, 170.4],
-  [132.8, 171.8],
-  [136.6, 175.8, 0.2],
-  [132.4, 179.4],
-  [127.2, 180.4],
-  [121.6, 179.2],
+  [116.8, 174.8, 0.15],
+  [119.6, 172.6],
+  [123.6, 171.6],
+  [128, 171.4],
+  [132, 172.4],
+  [135, 175, 0.15],
+  [132.4, 177.8],
+  [127.6, 178.9],
+  [122, 178.4],
+  [118.6, 176.6],
 ];
-/** Her eyes sit a touch either side of the face's middle, as drawn. */
-const EYE_AXIS = 143.2;
+
+/** Her eyes sit either side of this upright line. */
+const EYE_AXIS = 143.05;
+
+/** The upper lid's dark line, and two short lashes at its outer end. */
+const LID: Pt[] = [
+  [115.8, 174.6],
+  [119.2, 171.6],
+  [124, 170.3],
+  [129, 170.3],
+  [133.2, 171.6],
+  [135.8, 174.8],
+];
+const LASHES: readonly (readonly Pt[])[] = [
+  [
+    [117.4, 173.2],
+    [115.6, 172.2],
+    [114.4, 172],
+  ],
+];
+
+const flip = (pts: readonly Pt[]): Pt[] => pts.map(([x, y]) => [2 * EYE_AXIS - x, y] as Pt);
+
+function lids(): string {
+  const one = (f: (p: readonly Pt[]) => readonly Pt[]): string =>
+    taper(f(LID), [0.5, 1.5, 1.9, 1.8, 1.2, 0.3]) + LASHES.map((l) => taper(f(l), [0.8, 0.5, 0])).join('');
+  return one((x) => x) + one(flip);
+}
 
 function eyesOpen(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   const right = mirror(EYE, EYE_AXIS);
   const iris = (cx: number): string =>
-    circle(cx, 175.6, 4.9, `url(#${id('iris')})`) + circle(cx, 175.6, 2.2, C.irisDeep) + circle(cx + 1.5, 173.8, 1.25, C.white);
-  const lid = (flip: boolean): string => {
-    const f = (pts: Pt[]): Pt[] => (flip ? pts.map(([x, y]) => [2 * EYE_AXIS - x, y] as Pt) : pts);
-    return (
-      taper(f([[117.2, 175.4], [121.4, 171.4], [127.2, 170], [132.8, 171.4], [136.7, 175.6]]), [1.3, 1.7, 1.6, 1.1, 0.3]) +
-      taper(f([[118.2, 174], [116.4, 172.8], [115, 172]]), [1.2, 0.7, 0])
-    );
-  };
-  const lower = (flip: boolean): string => {
-    const xs: Pt[] = [[119.6, 178.6], [127.2, 180.7], [134.6, 178.8]];
-    return curve((flip ? xs.map(([x, y]) => [2 * EYE_AXIS - x, y] as const) : xs) as Knot[], false);
-  };
+    circle(cx, 174.8, 4.25, `url(#${id('iris')})`) + circle(cx, 174.8, 2, C.pupil) + circle(cx + 1.3, 173.2, 1.1, C.white);
+  const lower: Pt[] = [
+    [119.6, 177.6],
+    [127.4, 179.4],
+    [133.8, 177.4],
+  ];
   return part(
     [
       radialBox(id('iris'), [
-        [0, '#b07c52'],
-        [0.6, C.iris],
-        [1, C.irisDeep],
-      ], 0.5, 0.62, 0.6),
-      clipDef(id('eyeL'), curve(EYE)),
-      clipDef(id('eyeR'), curve(right)),
+        [0, C.irisLight],
+        [0.62, C.iris],
+        [1, '#4a2c1c'],
+      ]),
     ],
     [
       fill(curve(EYE) + curve(right), C.white),
-      clipped(id('eyeL'), iris(127.4)),
-      clipped(id('eyeR'), iris(159)),
-      line(lower(false) + lower(true), C.lash, 0.6, ' stroke-opacity="0.35"'),
-      fill(lid(false) + lid(true), C.lash),
+      // each iris fits inside its eye, under the lid, so it needs no clip
+      iris(126.9),
+      iris(159.2),
+      line(curve(lower.map(([x, y]) => [x, y] as const), false) + curve(flip(lower).map(([x, y]) => [x, y] as const), false), C.lid, 0.6, ' stroke-opacity="0.3"'),
+      fill(lids(), C.lid),
     ],
   );
 }
 
+/** A blink: the eyes shut, the lash line curving down where the lids meet, the crease of each lid above it. */
 function eyesClosed(): string {
-  const lash = (flip: boolean): string => {
-    const f = (pts: Pt[]): Pt[] => (flip ? pts.map(([x, y]) => [2 * EYE_AXIS - x, y] as Pt) : pts);
-    return (
-      taper(f([[117.4, 175.6], [122, 178.2], [127.2, 179.1], [132.4, 178.2], [136.5, 175.8]]), [1.1, 1.6, 1.7, 1.3, 0.3]) +
-      taper(f([[118.4, 176.2], [116.4, 175.4], [115, 174.6]]), [1.1, 0.7, 0])
-    );
-  };
-  const crease = (flip: boolean): string => {
-    const xs: Pt[] = [[119.6, 171.6], [127.2, 169.6], [134.6, 171.6]];
-    return curve((flip ? xs.map(([x, y]) => [2 * EYE_AXIS - x, y] as const) : xs) as Knot[], false);
-  };
-  return part([], [line(crease(false) + crease(true), C.skinShade, 0.7, ' stroke-opacity="0.6"'), fill(lash(false) + lash(true), C.lash)]);
+  const shut: Pt[] = [
+    [115.8, 174.4],
+    [119.6, 176.6],
+    [124, 177.8],
+    [129, 177.8],
+    [133.2, 176.6],
+    [135.8, 174.6],
+  ];
+  const lashes: readonly (readonly Pt[])[] = [
+    [
+      [117.6, 175.6],
+      [115.8, 175.6],
+      [114.2, 175.2],
+    ],
+  ];
+  const one = (f: (p: readonly Pt[]) => readonly Pt[]): string => taper(f(shut), [0.5, 1.4, 1.7, 1.6, 1.2, 0.4]) + lashes.map((l) => taper(f(l), [1, 0.6, 0])).join('');
+  return part(
+    [],
+    [
+      fill(one((x) => x) + one(flip), C.lid),
+      line(curve(LID.map(([x, y]) => [x, y - 0.8] as const), false) + curve(flip(LID).map(([x, y]) => [x, y - 0.8] as const), false), C.shade, 0.7, ' stroke-opacity="0.6"'),
+    ],
+  );
 }
 
 // ─────────────────────────────────────────────────────────────── together
@@ -804,24 +561,21 @@ export function drawXezal(p: string): CharacterArt {
     name: 'Xezal',
     viewBox: { x: 26, y: 98, w: 236, h: 678 },
     bust: { x: 78, y: 101, w: 131, h: 131 },
-    headPivot: { x: AXIS, y: 216 },
+    headPivot: { x: 143.5, y: 216 },
     body: body(p),
     head: head(p),
     eyes: { open: eyesOpen(p), closed: eyesClosed() },
     mouths: humanMouths(
       {
-        cx: 143.4,
-        cy: 201.4,
-        w: 8.3,
-        upperLip: 0.13,
-        lowerLip: 0.32,
-        smile: 0.18,
-        lip: '#a85b55',
-        upperLipColour: '#9a524d',
-        line: '#5a2623',
-        inside: '#4a1513',
-        teeth: '#fbf3ee',
-        tongue: '#c76a66',
+        corners: [
+          [132.4, 200.2],
+          [152.4, 201.4],
+        ],
+        open: { left: [136.2, 201], right: [150.9, 201.6], top: 200.6, bottom: 203.9 },
+        upperLip: 1.2,
+        lowerLip: 2.6,
+        middle: 0.5,
+        colours: { upperLip: '#a2685a', lowerLip: '#ad7262', line: '#7a4538', inside: '#5a1f1c', teeth: '#fbdcd0', tongue: '#cf7a70' },
       },
       p,
     ),
