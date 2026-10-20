@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import type { ShopService } from '../shop/service.js';
 import type { EventService } from '../events/service.js';
+import { claimArt, releaseArt } from '../shop/art.js';
 
 export type ConfigTarget = 'shop_item' | 'event';
 export type ChangeStatus = 'pending' | 'applied' | 'rejected';
@@ -12,7 +13,10 @@ export interface ProposeResult {
   status: 'applied' | 'pending';
   id: string;
 }
-export type ProposeError = { ok: false; reason: 'invalid-target' | 'past-schedule' | 'bad-window' | 'bad-price' | 'invalid-payload' };
+export type ProposeError = {
+  ok: false;
+  reason: 'invalid-target' | 'past-schedule' | 'bad-window' | 'bad-price' | 'invalid-payload' | 'art-missing' | 'art-wrong-kind';
+};
 export type ProposeOutcome = ({ ok: true } & ProposeResult) | ProposeError;
 
 export type DecideResult =
@@ -60,8 +64,25 @@ export class ConfigService {
       const row = await this.record(target, payload, false, 'applied', proposerId, proposerId);
       return { ok: true, status: 'applied', id: row };
     }
+    const held = await this.holdArt(target, payload);
+    if (held) return { ok: false, reason: held };
     const id = await this.record(target, payload, true, 'pending', proposerId, null);
     return { ok: true, status: 'pending', id };
+  }
+
+  /**
+   * Keep the art a waiting shop change names (shop/art.ts). Art uploaded in
+   * the admin is held only once an item uses it, and a change can wait in
+   * Approvals for longer than the day an unused upload survives — the
+   * approval would then put an item on sale with a picture that is gone.
+   */
+  private async holdArt(target: ConfigTarget, p: Record<string, unknown>): Promise<'art-missing' | 'art-wrong-kind' | null> {
+    if (target !== 'shop_item' || typeof p.assetKey !== 'string') return null;
+    const stored = await this.pool.query<{ category: string }>(`SELECT category FROM shop_items WHERE sku = $1`, [p.sku]);
+    const category = typeof p.category === 'string' ? p.category : (stored.rows[0]?.category ?? 'misc');
+    const claimed = await claimArt(this.pool, p.assetKey, category);
+    if (claimed.ok) return null;
+    return claimed.code === 'ART_MISSING' ? 'art-missing' : 'art-wrong-kind';
   }
 
   /** A second admin approves a pending change → it applies. */
@@ -95,12 +116,19 @@ export class ConfigService {
 
   /** Reject a pending change. */
   async reject(reviewerId: string, id: string, reason?: string): Promise<DecideResult> {
-    const res = await this.pool.query(
+    const res = await this.pool.query<{ target: ConfigTarget; payload: Record<string, unknown> }>(
       `UPDATE admin_config_changes SET status = 'rejected', reviewer_id = $2, reason = $3, decided_at = now()
-       WHERE id = $1 AND status = 'pending'`,
+       WHERE id = $1 AND status = 'pending'
+       RETURNING target, payload`,
       [id, reviewerId, reason ?? null],
     );
-    return (res.rowCount ?? 0) > 0 ? { ok: true, status: 'rejected' } : { ok: false, reason: 'not-found' };
+    const rejected = res.rows[0];
+    if (!rejected) return { ok: false, reason: 'not-found' };
+    // art held for a change that will not happen goes back to the orphan sweep, unless an item uses it
+    if (rejected.target === 'shop_item' && typeof rejected.payload.assetKey === 'string') {
+      await releaseArt(this.pool, rejected.payload.assetKey);
+    }
+    return { ok: true, status: 'rejected' };
   }
 
   /** Pending changes awaiting a second admin, oldest first. */

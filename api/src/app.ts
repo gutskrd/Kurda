@@ -30,6 +30,7 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { registerShopAdminRoutes } from './shop/admin-routes.js';
 import { ItemReturns } from './shop/returns.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
@@ -769,6 +770,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // owners of items whose art was replaced: the notice, and returns
       returns: new ItemReturns(app.db, new WalletService(app.db)),
     });
+    // the admin's art uploads, partial edits, and delete-or-retire
+    registerShopAdminRoutes(app, shop, config);
     registerGiftRoutes(app, gifts);
 
     // inviting friends to any online game, game cards in chats, and playing

@@ -676,7 +676,7 @@ export class GiftService {
         sku: i.sku,
         name: i.name,
         category: i.category,
-        assetUrl: cosmeticAssetUrl(i.category, i.assetKey),
+        assetUrl: cosmeticAssetUrl(i.category, i.assetKey, this.publicUrl),
         currency: i.currency,
         price: i.price,
         tier: giftTierFor({ currency: i.currency, price: i.price, limited: i.availableTo !== null }),

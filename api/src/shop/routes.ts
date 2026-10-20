@@ -110,18 +110,32 @@ export function registerShopRoutes(
     },
   );
 
+  /** Public URL for a stored asset key (null when storage is unconfigured). */
+  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
+
   /**
    * Admin: the FULL catalog, including inactive / out-of-stock items and their
    * prices. `GET /shop` is the player-facing view (filtered to what they can buy),
-   * so managing prices needs its own unfiltered listing.
+   * so managing prices needs its own unfiltered listing. Each item carries its
+   * art's URL and how many people own it; retired items (deleted while people
+   * owned them, shop/catalogue.ts) only with `?retired=include`.
    */
   app.get(
     '/admin/shop/items',
-    { config: { skipValidation: true }, preHandler: requireRoles('admin', 'superadmin') },
-    async () => ({ items: await shop.allItems() }),
+    {
+      schema: { querystring: z.object({ retired: z.enum(['include', 'exclude']).optional() }) },
+      preHandler: requireRoles('admin', 'superadmin'),
+    },
+    async (req) => {
+      const { retired } = req.query as { retired?: 'include' | 'exclude' };
+      return {
+        items: (await shop.allItems({ retired })).map((i) => ({
+          ...i,
+          assetUrl: cosmeticAssetUrl(i.category, i.assetKey, publicUrl),
+        })),
+      };
+    },
   );
-  /** Public URL for a stored asset key (null when storage is unconfigured). */
-  const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
 
   /** Live catalog, filtered to what this user can currently see/buy. Cosmetic
    *  items carry a resolved `assetUrl` so the client can render thumbnails. */
