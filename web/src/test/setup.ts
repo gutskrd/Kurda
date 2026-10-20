@@ -1,6 +1,15 @@
 import '@testing-library/jest-dom/vitest';
 import { afterEach } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import { cleanup, configure } from '@testing-library/react';
+
+/*
+ * How long a findBy… or waitFor waits for the page to catch up. Testing
+ * Library's own second is often not enough when the whole suite runs at once
+ * on a busy machine, and a test that fails only then is a test nobody can
+ * trust. A passing test is no slower for it: the wait ends as soon as the
+ * page is there.
+ */
+configure({ asyncUtilTimeout: 4000 });
 
 /*
  * jsdom has no layout, so it ships no scrollIntoView at all — calling it throws
