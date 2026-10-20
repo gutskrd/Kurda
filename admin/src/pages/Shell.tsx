@@ -69,6 +69,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
           type="button"
           className="icon-button ghost"
           aria-label="Open the menu"
+          title="Open the menu"
           aria-haspopup="dialog"
           aria-expanded={menuOpen}
           aria-controls={menuOpen ? 'nav-drawer' : undefined}

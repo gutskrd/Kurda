@@ -21,11 +21,13 @@ import {
   Time,
   TOAST_MS,
   UserLink,
+  clockTime,
   describeError,
   duration,
   relativeTime,
   useDialogs,
   useToast,
+  waitText,
   type Column,
 } from './index';
 
@@ -249,6 +251,28 @@ describe('ErrorState', () => {
       'Lesson changed since you loaded it.',
     );
     expect(describeError(new ApiError(422, 'INVALID', 'invalid exercises')).kind).toBe('invalid');
+  });
+
+  it('says a lockout calmly, with how long it lasts, rather than "try again later"', () => {
+    const code = describeError(new ApiError(429, 'TOTP_LOCKED', 'too many wrong codes — try again later', { retryAfterSec: 287 }, {}, 287));
+    expect(code.kind).toBe('rate_limited');
+    expect(code.title).toBe('Code entry is paused');
+    expect(code.message).toBe('Too many codes didn’t match. To keep this account safe, no more can be tried for a while. You can try again in 5 minutes.');
+    expect(describeError(new ApiError(429, 'LOCKED', 'too many failed attempts — try again later', undefined, {}, 900)).message).toMatch(/try again in 15 minutes\.$/);
+    expect(describeError(new ApiError(429, 'RATE_LIMITED', 'too many requests', undefined, {}, 3600)).message).toBe('Wait 1 hour, then try again.');
+    // no wait given: still a sensible one
+    expect(describeError(new ApiError(429, 'RATE_LIMITED', 'too many requests')).message).toBe('Wait a minute, then try again.');
+  });
+
+  it('words a wait and draws a countdown', () => {
+    expect(waitText(30)).toBe('less than a minute');
+    expect(waitText(60)).toBe('1 minute');
+    expect(waitText(61)).toBe('2 minutes');
+    expect(waitText(3600)).toBe('1 hour');
+    expect(waitText(3601)).toBe('2 hours');
+    expect(clockTime(287)).toBe('4:47');
+    expect(clockTime(5)).toBe('0:05');
+    expect(clockTime(3725)).toBe('1:02:05');
   });
 
   it('says a refusal about who is acting is not about the role', () => {

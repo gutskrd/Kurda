@@ -130,9 +130,12 @@
 }
 .mail-files li {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 6px;
   overflow-wrap: anywhere;
+}
+.mail-files li > .icon {
+  margin-top: 3px;
 }
 .mail-answer {
   padding: 10px 12px;

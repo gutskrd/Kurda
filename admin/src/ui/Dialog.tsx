@@ -51,7 +51,7 @@ export function Dialog({ open, title, onClose, children, footer, dismissable = t
           <h2 id={titleId} className="dialog-title">
             {title}
           </h2>
-          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close">
+          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close" title="Close (Esc)">
             <Icon name="close" />
           </button>
         </div>

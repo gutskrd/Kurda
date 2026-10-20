@@ -138,7 +138,13 @@ export function Email(): React.JSX.Element {
                 <button type="button" className={`mail-row${m.readAt ? '' : ' is-unread'}`} onClick={() => setOpenId(m.id)}>
                   <span className="mail-row-top">
                     <span className="mail-from">
-                      {!m.readAt && <span className="mail-dot" aria-label="Unread" />}
+                      {/* the dot and the bold are for the eye; a screen reader is told in words (a label on a plain span is not read) */}
+                      {!m.readAt && (
+                        <>
+                          <span className="mail-dot" aria-hidden="true" />
+                          <span className="sr-only">Unread: </span>
+                        </>
+                      )}
                       {m.from.name ?? m.from.address}
                     </span>
                     <span className="mail-when">
@@ -256,6 +262,8 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
   const toast = useToast();
   const mail = useLoad(async () => (id ? api<SupportEmail>(`/admin/support/emails/${id}/open`, { method: 'POST', body: {} }) : null), [id]);
   const [answer, setAnswer] = useState('');
+  // said when "Send answer" is pressed with nothing written, and gone once something is
+  const [answerError, setAnswerError] = useState<string | null>(null);
   const [busy, setBusy] = useState<'send' | 'archive' | 'unread' | null>(null);
   const m = mail.data;
 
@@ -281,7 +289,11 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
   }
 
   async function send(): Promise<void> {
-    if (!m || !answer.trim()) return;
+    if (!m) return;
+    if (!answer.trim()) {
+      setAnswerError('Write the answer first.');
+      return;
+    }
     setBusy('send');
     try {
       await api(`/admin/support/emails/${m.id}/reply`, { method: 'POST', body: { body: answer.trim() } });
@@ -365,8 +377,12 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
               <ul>
                 {m.attachmentList.map((a, i) => (
                   <li key={a.id ?? i}>
-                    <Icon name="list" size={16} /> {a.filename ?? 'A file'}
-                    {a.contentType && <span className="subtle"> · {a.contentType}</span>}
+                    <Icon name="list" size={16} />
+                    {/* one run of text, so a long name wraps with its type after it rather than beside it */}
+                    <span>
+                      {a.filename ?? 'A file'}
+                      {a.contentType && <span className="subtle"> · {a.contentType}</span>}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -392,6 +408,8 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
             className="mail-reply"
             onSubmit={(e) => {
               e.preventDefault();
+              // nothing written: back to the box, whose error now says so
+              if (!answer.trim()) e.currentTarget.querySelector('textarea')?.focus();
               void send();
             }}
           >
@@ -399,11 +417,15 @@ function MailDrawer({ id, onClose, onChanged }: { id: string | null; onClose: ()
               label={`Answer ${m.from.name ?? m.from.address}`}
               hint="Sent from the support address, with their email quoted under it."
               value={answer}
-              onChange={(e) => setAnswer(e.target.value)}
+              onChange={(e) => {
+                setAnswer(e.target.value);
+                if (e.target.value.trim()) setAnswerError(null);
+              }}
+              error={answerError}
               rows={6}
               maxLength={20_000}
             />
-            <Button type="submit" variant="primary" busy={busy === 'send'} disabled={!answer.trim()}>
+            <Button type="submit" variant="primary" busy={busy === 'send'}>
               Send answer
             </Button>
           </form>

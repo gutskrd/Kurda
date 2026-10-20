@@ -81,6 +81,7 @@ export function ActionMenu({
         aria-expanded={open}
         aria-controls={open ? id : undefined}
         aria-label={buttonText ? undefined : label}
+        title={buttonText ? undefined : label}
         onClick={() => setOpen((v) => !v)}
         onKeyDown={(e) => {
           if (e.key === 'ArrowDown' && !open) {

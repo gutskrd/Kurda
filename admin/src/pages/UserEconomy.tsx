@@ -200,18 +200,24 @@ export function ItemsPanel({ user, canAdjust }: { user: { id: string; username: 
   const [sku, setSku] = useState('');
   const [reason, setReason] = useState('');
   const [busy, setBusy] = useState(false);
+  // as in the balance form: what is missing is said on "Give the item", and each goes once it is filled
+  const [touched, setTouched] = useState(false);
+  const skuError = sku ? null : 'Choose the item to give.';
+  const reasonError = reason.trim() ? null : 'Say why, for the audit log.';
   const toast = useToast();
   const dialogs = useDialogs();
 
   async function grant(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (!sku || !reason.trim()) return;
+    setTouched(true);
+    if (skuError || reasonError) return;
     setBusy(true);
     try {
       await api(`/admin/users/${user.id}/items`, { method: 'POST', body: { sku, reason: reason.trim() } });
       toast.success('Given.');
       setSku('');
       setReason('');
+      setTouched(false);
       await items.reload();
     } catch (err) {
       toast.error(errorLine(err, 'the economy'));
@@ -259,18 +265,20 @@ export function ItemsPanel({ user, canAdjust }: { user: { id: string; username: 
     <>
       {canAdjust && (
         <Section title="Give an item" description="Free, with your reason in the audit log.">
-          <form className="form" onSubmit={(e) => void grant(e)}>
+          <form className="form" noValidate onSubmit={(e) => void grant(e)}>
             <FieldRow>
               <Select
                 label="Item"
                 value={sku}
                 onChange={(e) => setSku(e.target.value)}
+                error={touched ? skuError : undefined}
+                required
                 options={[{ value: '', label: catalog.data ? 'Choose an item…' : 'Loading the shop…', disabled: true }, ...(catalog.data ?? []).map((c) => ({ value: c.sku, label: `${c.name} · ${humanize(c.category)}` }))]}
               />
-              <TextInput label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
+              <TextInput label="Reason" value={reason} onChange={(e) => setReason(e.target.value)} error={touched ? reasonError : undefined} required maxLength={500} />
             </FieldRow>
             <FormActions>
-              <Button type="submit" variant="primary" busy={busy} disabled={!sku || !reason.trim()}>
+              <Button type="submit" variant="primary" busy={busy}>
                 Give the item
               </Button>
             </FormActions>

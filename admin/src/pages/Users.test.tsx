@@ -373,6 +373,32 @@ describe('a person', () => {
     expect(calls.find((c) => c.method === 'DELETE')!.body).toEqual({ reason: 'Given by mistake' });
   });
 
+  it('gives an item with a reason, saying what is missing rather than greying the button out', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      `${at}/items`,
+      OWNER,
+      detailRoute(person()),
+      on('GET', `/admin/users/${SUBJECT_ID}/items`, json({ items: [] })),
+      on('GET', '/admin/shop/items', json({ items: [{ sku: 'icon-deer', name: 'Deer', category: 'icon' }] })),
+      on('POST', `/admin/users/${SUBJECT_ID}/items`, json({ ok: true })),
+    );
+    const give = await screen.findByRole('button', { name: 'Give the item' });
+    expect(give).toBeEnabled();
+    await user.click(give);
+    expect(screen.getByText('Choose the item to give.')).toBeInTheDocument();
+    expect(screen.getByText('Say why, for the audit log.')).toBeInTheDocument();
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)).toHaveLength(0);
+    // each goes as soon as it is put right
+    await user.selectOptions(await screen.findByRole('combobox', { name: /^Item/ }), 'icon-deer');
+    expect(screen.queryByText('Choose the item to give.')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Reason/), 'Lost in the outage');
+    expect(screen.queryByText('Say why, for the audit log.')).not.toBeInTheDocument();
+    await user.click(give);
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)[0]!.body).toEqual({ sku: 'icon-deer', reason: 'Lost in the outage' });
+  });
+
   it('shows what admins did to the account, in words', async () => {
     show(`${at}/audit`, MODERATOR, detailRoute(person()));
     expect(await screen.findByText('Chat mute')).toBeInTheDocument();

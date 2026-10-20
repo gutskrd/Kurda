@@ -49,6 +49,12 @@ export class ApiError extends Error {
      * dropping them left the editor saying "invalid exercises" and nothing else.
      */
     readonly body: Record<string, unknown> = {},
+    /**
+     * How long the server asked to wait before trying again, in seconds: a
+     * lockout (TOTP_LOCKED after five wrong 2FA codes, LOCKED after failed
+     * sign-ins) says it in its details, the rate limiter only in Retry-After.
+     */
+    readonly retryAfterSec: number | null = null,
   ) {
     super(message);
   }
@@ -74,6 +80,18 @@ function sessionEnded(path: string): void {
   location.reload();
 }
 
+/**
+ * The wait a refusal asks for, in whole seconds, or null. The API lets this
+ * origin read the Retry-After header (its CORS exposes it); a date there
+ * instead of seconds is not something it sends, so it is left out.
+ */
+function retryAfterOf(res: Response, data: Record<string, unknown>): number | null {
+  const details = data.details as { retryAfterSec?: unknown } | undefined;
+  const fromBody = typeof details?.retryAfterSec === 'number' ? details.retryAfterSec : NaN;
+  const seconds = Number.isFinite(fromBody) && fromBody > 0 ? fromBody : Number(res.headers.get('retry-after'));
+  return Number.isFinite(seconds) && seconds > 0 ? Math.ceil(seconds) : null;
+}
+
 /** Read a response the way every call here does: refusals become an ApiError. */
 async function read<T>(path: string, res: Response): Promise<T> {
   if (res.status === 204) return undefined as T;
@@ -91,7 +109,7 @@ async function read<T>(path: string, res: Response): Promise<T> {
   if (!res.ok) {
     // an older route answers { error: { code, message } } rather than the usual envelope
     const inner = (typeof data.error === 'object' && data.error !== null ? data.error : data) as Record<string, unknown>;
-    throw new ApiError(res.status, String(inner.code ?? 'ERROR'), String(inner.message ?? res.statusText), data.details, data);
+    throw new ApiError(res.status, String(inner.code ?? 'ERROR'), String(inner.message ?? res.statusText), data.details, data, retryAfterOf(res, data));
   }
   return data as T;
 }

@@ -83,7 +83,7 @@ export function ToastProvider({ children }: { children: ReactNode }): React.JSX.
           <div key={t.id} className={`toast toast-${t.tone}`}>
             <Icon name={t.tone === 'error' ? 'alert' : t.tone === 'success' ? 'check' : 'info'} />
             <span className="toast-text">{t.message}</span>
-            <button type="button" className="icon-button ghost" onClick={() => dismiss(t.id)} aria-label="Dismiss">
+            <button type="button" className="icon-button ghost" onClick={() => dismiss(t.id)} aria-label="Dismiss" title="Dismiss">
               <Icon name="close" size={16} />
             </button>
           </div>

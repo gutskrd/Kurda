@@ -60,6 +60,23 @@ describe('the admin API client', () => {
     expect(err.message).toBe('no such event');
   });
 
+  it('keeps how long a refusal asks to wait: from a lockout’s details, else from Retry-After', async () => {
+    fakeApi(
+      on('POST', '/admin/auth/verify', failure(429, 'TOTP_LOCKED', 'too many wrong codes — try again later', { retryAfterSec: 286.4 })),
+      on('POST', '/admin/2fa/confirm', { status: 429, body: { code: 'RATE_LIMITED', message: 'too many requests' }, headers: { 'retry-after': '90' } }),
+      on('GET', '/admin/audit', failure(400, 'BAD', 'no')),
+    );
+    const locked = (await api('/admin/auth/verify', { method: 'POST', body: { code: '000000' } }).catch((e: unknown) => e)) as ApiError;
+    expect(locked.code).toBe('TOTP_LOCKED');
+    expect(locked.retryAfterSec).toBe(287);
+    const limited = (await api('/admin/2fa/confirm', { method: 'POST', body: { code: '000000' } }).catch((e: unknown) => e)) as ApiError;
+    expect(limited.retryAfterSec).toBe(90);
+    const plain = (await api('/admin/audit').catch((e: unknown) => e)) as ApiError;
+    expect(plain.retryAfterSec).toBeNull();
+    // a lockout is not an ended session
+    expect(reload).not.toHaveBeenCalled();
+  });
+
   it('reloads for the 2FA prompt when the window runs out mid-session', async () => {
     fakeApi(on('GET', '/admin/economy/supply', failure(403, 'TOTP_REQUIRED', 'enter your 2FA code to continue')), on('GET', '/me', json({})));
     await expect(api('/admin/economy/supply')).rejects.toBeInstanceOf(ApiError);

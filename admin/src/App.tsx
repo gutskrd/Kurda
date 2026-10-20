@@ -125,7 +125,7 @@ export function App(): React.JSX.Element {
           {hasSession() ? (
             // the API refuses every /admin route without 2FA, so the workspace must
             // not render before this session has cleared it
-            <TwoFactorGate>
+            <TwoFactorGate onSignOut={refresh}>
               <Workspace onSignOut={refresh} />
             </TwoFactorGate>
           ) : (

@@ -72,6 +72,27 @@ export function useMediaQuery(query: string, fallback = true): boolean {
   return matches;
 }
 
+/**
+ * Whole seconds left until `until` (a Date.now() time), counting down once a
+ * second, and 0 once it has passed or with nothing to wait for — for a
+ * lockout, whose button says how long is left and comes back by itself.
+ * Worked out on every render, so the first render after a lockout already
+ * knows it is waiting.
+ */
+export function useCountdown(until: number | null): number {
+  const [, tick] = useState(0);
+  const left = until === null ? 0 : Math.max(0, Math.ceil((until - Date.now()) / 1000));
+  useEffect(() => {
+    if (until === null) return;
+    const timer = window.setInterval(() => {
+      tick((n) => n + 1);
+      if (Date.now() >= until) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [until]);
+  return left;
+}
+
 /** The value, once it has stopped changing for `ms` — what a search box sends. */
 export function useDebounced<T>(value: T, ms = 300): T {
   const [settled, setSettled] = useState(value);

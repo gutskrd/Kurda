@@ -49,7 +49,7 @@ export function Drawer({
           <h2 id={titleId} className="drawer-title">
             {title}
           </h2>
-          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close">
+          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close" title="Close (Esc)">
             <Icon name="close" />
           </button>
         </div>

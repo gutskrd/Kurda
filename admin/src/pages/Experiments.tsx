@@ -223,7 +223,7 @@ function FlagForm({ flag, onClose, onSaved }: { flag: Experiment | null; onClose
                 {total > 0 ? `${Math.round(((Number(v.weight) || 0) / total) * 100)}%` : '—'}
               </span>
               {variants.length > 1 && (
-                <button type="button" className="icon-button ghost" aria-label={`Remove variant ${i + 1}`} onClick={() => setVariants(variants.filter((_, j) => j !== i))}>
+                <button type="button" className="icon-button ghost" aria-label={`Remove variant ${i + 1}`} title={`Remove variant ${i + 1}`} onClick={() => setVariants(variants.filter((_, j) => j !== i))}>
                   <Icon name="close" />
                 </button>
               )}

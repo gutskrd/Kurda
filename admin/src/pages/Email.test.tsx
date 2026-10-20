@@ -123,6 +123,26 @@ describe('the support inbox', () => {
     expect(await screen.findByText('Answer sent to rojda@example.com.')).toBeInTheDocument();
   });
 
+  it('says an answer needs words, rather than greying out Send, and stops saying it once there are some', async () => {
+    const api = show();
+    await userEvent.click(await screen.findByRole('button', { name: /I did not get my code/ }));
+    const drawer = await screen.findByRole('dialog');
+    const box = await within(drawer).findByLabelText(/Answer Rojda Kurd/);
+    await userEvent.click(within(drawer).getByRole('button', { name: 'Send answer' }));
+    expect(within(drawer).getByText('Write the answer first.')).toBeInTheDocument();
+    expect(box).toHaveAttribute('aria-invalid', 'true');
+    expect(box).toHaveFocus();
+    expect(api.calls.some((c) => c.path.endsWith('/reply'))).toBe(false);
+    await userEvent.type(box, 'S');
+    expect(within(drawer).queryByText('Write the answer first.')).not.toBeInTheDocument();
+  });
+
+  it('says which mail is unread in words, not only with a dot and bold type', async () => {
+    show(on('GET', /^\/admin\/support\/emails/, json({ emails: [summary(), summary({ id: 'm2', subject: 'Thanks', readAt: new Date().toISOString() })], unread: 1 })));
+    expect(await screen.findByRole('button', { name: /^Unread: Rojda Kurd/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Thanks/ }).textContent).not.toMatch(/Unread/);
+  });
+
   it('archives a mail', async () => {
     const api = show(on('POST', /\/archive$/, json({ ok: true })));
     await userEvent.click(await screen.findByRole('button', { name: /I did not get my code/ }));

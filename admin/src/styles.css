@@ -53,10 +53,11 @@
   --shadow-sm: 0 3px 12px rgba(24, 24, 27, 0.06), 0 1px 2px rgba(24, 24, 27, 0.05);
   --shadow-lg: 0 24px 60px rgba(24, 24, 27, 0.18), 0 6px 18px rgba(24, 24, 27, 0.08);
 
-  /* muted semantic tints — status only */
-  --ok: #15803d; --ok-bg: rgba(21, 128, 61, 0.11);
-  --warn: #a14a07; --warn-bg: rgba(180, 83, 9, 0.12);
-  --bad: #b42318; --bad-bg: rgba(180, 35, 24, 0.11);
+  /* muted semantic tints — status only. Deep enough that a 12 px badge's words pass 4.5:1 on
+     their own tint over a card (the old green, amber and red measured 4.2, 4.4 and 4.4) */
+  --ok: #166534; --ok-bg: rgba(21, 128, 61, 0.11);
+  --warn: #8f3f06; --warn-bg: rgba(180, 83, 9, 0.12);
+  --bad: #a11d14; --bad-bg: rgba(180, 35, 24, 0.11);
   --info: #1d4ed8; --info-bg: rgba(29, 78, 216, 0.09);
 
   /* sizes a finger can hit */
@@ -109,7 +110,7 @@
 
     --ok: #4ade80; --ok-bg: rgba(74, 222, 128, 0.13);
     --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, 0.13);
-    --bad: #f97066; --bad-bg: rgba(249, 112, 102, 0.14);
+    --bad: #fc8d85; --bad-bg: rgba(249, 112, 102, 0.14);
     --info: #93c5fd; --info-bg: rgba(147, 197, 253, 0.13);
   }
 }
@@ -475,6 +476,19 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 /* ---- login: liquid-glass card on the consistent base color ------------- */
 .login { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 24px; overflow: hidden; }
 
+/* The sign-in is drawn light on dark in either scheme. Its clear glass and white type are made for
+   the dark backdrop; over the light one they all but vanished (white on the pale scrim measured
+   1.2:1), so in a light scheme this screen keeps the dark scrim over the same picture. Focus rings
+   and the browser's own controls (the checkbox, autofill) follow it. */
+.login { color-scheme: dark; }
+.login :focus-visible { outline-color: #fff; }
+@media (prefers-color-scheme: light) {
+  .login::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(rgba(10, 10, 12, 0.8), rgba(12, 12, 15, 0.88)), url('/background.jpg') center bottom / cover, #0a0a0c;
+  }
+}
+
 /* The card: large radius, very transparent, heavily blurred, rim highlight. */
 .login-card {
   position: relative; z-index: 1;
@@ -502,10 +516,16 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   color: rgba(255, 255, 255, 0.9);
 }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
-.login-welcome { margin: 0 0 28px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
+.login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
-/* Tall translucent inputs, placeholder-only (no left icons), soft glass fill. */
-.login-input { position: relative; margin-bottom: 15px; }
+/* Each field has its label above it: a placeholder alone vanished as soon as typing began. */
+.login-field { margin-bottom: 15px; }
+.login-label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+.login-field-error { margin-top: 7px; font-size: 13px; line-height: 1.45; color: #ffb3a7; }
+
+/* Tall translucent inputs (no left icons), soft glass fill. */
+.login-input { position: relative; }
+.login-input input[aria-invalid='true'] { border-color: rgba(255, 179, 167, 0.75); }
 .login-input input {
   width: 100%; height: 58px; padding: 0 20px;
   font-size: 16px; color: #fff;
@@ -522,14 +542,14 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   border-color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.16);
 }
-.login-input input.has-eye { padding-right: 52px; }
+.login-input input.has-eye { padding-right: 58px; }
 .login-eye {
   /* Centre vertically with top/bottom+margin (not transform) so the global
      `button:active { transform: translateY(0.5px) }` can't knock it out of
      place on click — the eye stays put. */
-  position: absolute; right: 10px; top: 0; bottom: 0; margin: auto 0;
+  position: absolute; right: 7px; top: 0; bottom: 0; margin: auto 0;
   display: flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; padding: 0;
+  width: var(--target); height: var(--target); min-width: 0; padding: 0;
   background: none; border: none; box-shadow: none;
   -webkit-backdrop-filter: none; backdrop-filter: none;
   color: rgba(255, 255, 255, 0.78); cursor: pointer; border-radius: 11px;
@@ -541,9 +561,9 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 /* remember (left) + forgot (right) */
 .login-actions {
   display: flex; justify-content: space-between; align-items: center;
-  gap: 12px; margin: 8px 0 26px; font-size: 14px;
+  gap: 12px; margin: 2px 0 20px; font-size: 14px;
 }
-.login-remember { display: flex; align-items: center; gap: 9px; color: rgba(255, 255, 255, 0.9); cursor: pointer; }
+.login-remember { display: flex; align-items: center; gap: 9px; min-height: var(--target); color: rgba(255, 255, 255, 0.9); cursor: pointer; }
 /* A clean, normal-looking checkbox: reset the global glass-input styling and
    draw a small square that shows a checkmark when ticked. */
 .login-remember input[type='checkbox'] {
@@ -577,6 +597,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   text-decoration: underline; text-underline-offset: 3px;
 }
 .login-forgot:hover { color: rgba(255, 255, 255, 0.82); background: none; }
+@media (pointer: coarse) { .login-forgot { min-height: var(--target); } }
 
 /* big translucent pill button */
 .login-submit {

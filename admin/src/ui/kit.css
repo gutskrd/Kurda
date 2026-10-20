@@ -116,6 +116,10 @@
 }
 .state-loading .skeleton:nth-child(3n) { width: 70%; }
 @keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+/* a quick answer shows no placeholder at all: one that comes and goes within a tenth of a second is
+   only a flicker, so it fades in after that (screen readers still hear "Loading…" at once) */
+.state-loading, .table-loading td { animation: show-late 0.2s ease 0.12s both; }
+@keyframes show-late { from { opacity: 0; } }
 
 /* ---- the table, and its cards on a phone -------------------------------- */
 .table-wrap { container-type: inline-size; min-width: 0; }

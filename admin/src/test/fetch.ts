@@ -10,7 +10,7 @@ export interface Call {
   body: unknown;
 }
 
-export type Reply = { status?: number; body?: unknown };
+export type Reply = { status?: number; body?: unknown; headers?: Record<string, string> };
 export type Route = (call: Call) => Reply | undefined;
 
 export function json(body: unknown, status = 200): Reply {
@@ -40,7 +40,7 @@ export function fakeApi(...routes: Route[]): { calls: Call[]; use: (...more: Rou
       const reply = [...all].reverse().reduce<Reply | undefined>((found, route) => found ?? route(call), undefined) ?? failure(404, 'NOT_FOUND', 'route not found');
       return new Response(reply.body === undefined ? null : JSON.stringify(reply.body), {
         status: reply.status ?? 200,
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', ...reply.headers },
       });
     }),
   );
