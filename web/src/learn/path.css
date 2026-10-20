@@ -116,7 +116,8 @@
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  opacity: 0.86;
+  /* no fainter than 0.9: white at 0.86 on the light meadow fell to 4.3:1 */
+  opacity: 0.9;
 }
 .lp-banner-title {
   margin: 0;
@@ -162,6 +163,17 @@
 .lp-unit-guide:focus-visible {
   outline: 2px solid var(--u-ink);
   outline-offset: 2px;
+}
+/*
+ * On the light page the banner's ink is white, and white mixed in lightens the
+ * deep fill under the words (4.1:1 on the meadow). The unit's own darker lip
+ * does the same job the other way, and the words stay at 6.7:1 or better.
+ */
+:root[data-theme='light'] .lp-unit-guide {
+  background: color-mix(in srgb, var(--u-lip) 55%, transparent);
+}
+:root[data-theme='light'] .lp-unit-guide:hover {
+  background: color-mix(in srgb, var(--u-lip) 80%, transparent);
 }
 
 /* ---- the path --------------------------------------------------------------- */
@@ -224,8 +236,9 @@
   color: inherit;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  /* moved to with the arrow keys: clear of the top bar, the bubble and the tab bar */
-  scroll-margin-top: calc(var(--nav-h) + 72px);
+  /* moved to with the arrow keys: clear of the bubble above it (the page's
+     scroll padding, base.css, already keeps it clear of the top bar) */
+  scroll-margin-top: 56px;
   scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + 72px);
 }
 /* the face is the round you see; the lip under it is what makes it feel pressable */
@@ -369,7 +382,9 @@
   text-transform: uppercase;
   white-space: nowrap;
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--u-fill) 70%, transparent), var(--shadow-sm);
-  animation: lp-bob 1.8s var(--ease-out) infinite alternate;
+  /* two slow bobs as the page opens, to show where to look, then still: a
+     bubble that never stops moving pulls at the eye the whole time it is read */
+  animation: lp-bob 1.8s var(--ease-out) 4 alternate;
 }
 [dir='rtl'] .lp-callout {
   translate: 50% 0;
@@ -427,8 +442,7 @@
   background: var(--panel-bg);
   box-shadow: var(--shadow);
   animation: lp-pop-in var(--dur) var(--ease-out);
-  /* brought into view clear of the top bar and the tab bar */
-  scroll-margin-top: calc(var(--nav-h) + var(--space-4));
+  /* brought into view clear of the tab bar; base.css keeps it clear of the top bar */
   scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + var(--space-4));
 }
 .lp-pop-arrow {

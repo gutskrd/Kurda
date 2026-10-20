@@ -65,6 +65,8 @@
   --gold-ink: #f6d68b;
   --gold-soft: rgba(240, 194, 74, 0.16);
   --gems: #7cc6ff;
+  /* a heart that has been given: its own colour, apart from gold and the semantic pair */
+  --like: #ff8fa3;
   --danger: #ff9c90;
   --danger-soft: rgba(255, 120, 105, 0.16);
   /* a filled destructive button, and the words on it (5.9:1) */
@@ -155,9 +157,10 @@
  * Light.
  *
  * Near-white page, white cards, near-black ink. Gold as a fill is the sun's
- * own #EBA905; gold as text is darker (#8A6400, 5.4:1 on white), because the
- * fill colour as words on white would be unreadable. The same goes for green
- * and red: the light scheme's are deep enough to read as text.
+ * own #EBA905; gold as text is darker (#805C00: 6.1:1 on white, 5:1 on the
+ * grey of a pressed chip or a tile), because the fill colour as words on white
+ * would be unreadable. The same goes for green, red and the heart's pink: the
+ * light scheme's are deep enough to read as text.
  */
 :root[data-theme='light'] {
   --app-bg: #f6f6f5;
@@ -191,14 +194,17 @@
   --primary-ink: #ffffff;
 
   --gold: #eba905;
-  --gold-ink: #8a6400;
+  --gold-ink: #805c00;
   --gold-soft: rgba(235, 169, 5, 0.16);
   --gems: #1f6fb2;
+  /* 5.4:1 on a card, 5:1 on the page */
+  --like: #c8285a;
   --danger: #b42318;
   --danger-soft: rgba(180, 35, 24, 0.09);
   --danger-fill: #b42318;
   --on-danger: #ffffff;
-  --success: #1a7a3a;
+  /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
+  --success: #17723a;
   --success-soft: rgba(26, 122, 58, 0.1);
   --online: #1fa45a;
 

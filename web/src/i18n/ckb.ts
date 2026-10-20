@@ -376,7 +376,6 @@ export const ckb: Catalogue = {
   'about.copyrightNote': 'شتێک لێرە کارەکەت کۆپی دەکات؟',
 
   'games.title': 'یاری',
-  'games.playable': 'دەکرێت یاری بکرێت',
   'games.signInToPlay': 'بچۆ ژوورەوە بۆ یاریکردن',
   'games.chooseMode': 'شێوازێک هەڵبژێرە',
   'games.howToPlay': 'دەتەوێت چۆن یاری بکەیت؟',
@@ -413,7 +412,7 @@ export const ckb: Catalogue = {
   'friends.cancel': 'پاشگەزبوونەوە',
   'friends.cancelRequest': 'داواکارییەکەت بۆ {name} هەڵبوەشێنەوە',
   'friends.suggestions': 'کەسانێک کە لەوانەیە بیانناسیت',
-  'friends.mutual': '{count} هاوڕێی هاوبەش',
+  'friends.mutual': 'هاوڕێی هاوبەش: {count}',
   'friends.add': 'زیادکردن',
   'friends.requested': 'نێردرا',
   'friends.yours': 'هاوڕێیەکانت',
@@ -2773,6 +2772,6 @@ export const ckb: Catalogue = {
   'settings.appearance.dark': 'تاریک',
   'settings.appearance.light': 'ڕووناک',
   'settings.appearance.system': 'وەک ئەم ئامێرە',
-  'learn.guest.body': 'خولەکان پێشکەوتنەکەت دەپارێزن، بۆیە پێویستیان بە هەژمارێکە. ئەلفوبێ، فەرهەنگ و یارییەکان بۆ هەمووان کراوەن.',
+  'learn.guest.body': 'خولەکان و یارییەکان پێشکەوتنەکەت دەپارێزن، بۆیە پێویستیان بە هەژمارێکە. ئەلفوبێ و فەرهەنگ بۆ هەمووان کراوەن.',
   'civak.emptyBody': 'یەکەم کەس بە: وتەیەک، شیعرێک یان وێنەیەک، بە دوگمەی +. یان کەسانێک بدۆزەرەوە کە لەگەڵیان فێر ببیت.',
 };

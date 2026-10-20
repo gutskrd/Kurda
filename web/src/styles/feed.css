@@ -71,21 +71,18 @@
   color: var(--ink-4);
   font-size: 0.76rem;
 }
-/* the badge says what kind of post this is, since the wall mixes them */
+/* the badge says what kind of post this is, since the wall mixes them — every
+   kind in the same quiet ink: a poem is not a reward, and gold is kept for those */
 .fcard-kind {
   flex: none;
   padding: 3px 9px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
   color: var(--ink-3);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.fcard-kind-poem {
-  color: var(--gold-ink);
-  border-color: rgba(240, 194, 74, 0.3);
 }
 
 /* ---- the post itself ---------------------------------------------------- */
@@ -163,11 +160,11 @@
   margin-left: auto;
 }
 .fcard-like.is-on {
-  color: #ff8fa3;
+  color: var(--like);
 }
 .fcard-like.is-on:hover:not(:disabled) {
-  background: rgba(255, 143, 163, 0.12);
-  color: #ff8fa3;
+  background: color-mix(in srgb, var(--like) 12%, transparent);
+  color: var(--like);
 }
 /*
  * Reposted, in green.

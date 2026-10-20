@@ -32,6 +32,10 @@ interface DailyGoal {
  * chooses), so "3 due" never opens a review of five. A review left part-way
  * through is offered first, at its own address, so coming back picks it up
  * rather than starting another beside it.
+ *
+ * Its button is a secondary one even when words are due: the page has one
+ * primary action, the Continue at the top, and two equal white buttons a
+ * screen apart ask the learner to choose before they can start.
  */
 function ReviewEntry(): React.JSX.Element {
   const t = useT();
@@ -46,7 +50,7 @@ function ReviewEntry(): React.JSX.Element {
   } else if (data.open) {
     body = t('review.open');
     action = (
-      <LinkButton to={`/app/learn/review/${encodeURIComponent(data.open)}`} size="sm">
+      <LinkButton to={`/app/learn/review/${encodeURIComponent(data.open)}`} variant="secondary" size="sm">
         {t('review.continue')}
       </LinkButton>
     );
@@ -54,7 +58,7 @@ function ReviewEntry(): React.JSX.Element {
     body = t('review.none');
   } else if (data.due > 0) {
     body = t('review.due', { count: data.due });
-    action = <LinkButton to="/app/learn/review" size="sm">{t('review.start')}</LinkButton>;
+    action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.start')}</LinkButton>;
   } else {
     body = t('review.notDue');
     action = <LinkButton to="/app/learn/review" variant="secondary" size="sm">{t('review.practise')}</LinkButton>;
@@ -126,13 +130,39 @@ function ContinueCard({ entries }: { entries: CourseEntry[] }): React.JSX.Elemen
 }
 
 /**
+ * The Continue card's shape while the courses are on their way, so the page
+ * under it does not jump down a card's height when it arrives. Built from the
+ * card's own classes, so it is the card's height by construction.
+ */
+function ContinueSkeleton(): React.JSX.Element {
+  return (
+    <div className="learn-hero" aria-hidden="true">
+      <p className="learn-hero-where">
+        <Skeleton line w="45%" />
+      </p>
+      <h2 className="learn-hero-title">
+        <Skeleton line w="60%" />
+      </h2>
+      <div className="learn-hero-progress">
+        <div className="course-progress-bar" />
+        <span className="course-progress-text">
+          <Skeleton line w="35%" />
+        </span>
+      </div>
+      <Skeleton h={52} w={160} radius="var(--r-pill)" className="learn-hero-go" />
+    </div>
+  );
+}
+
+/**
  * Today, said plainly: how much of the day's goal is done and how long the
  * streak is.
  *
  * Informational and kind. Nothing here counts down or warns about losing
  * anything — the streak is a number that went up, and a day without one is
- * an invitation to start, not a failure to report. Hidden until both answers
- * are in, and quietly absent if they fail: the lessons below are the page.
+ * an invitation to start, not a failure to report. Its shape holds the place
+ * until both answers are in, so the tools below do not jump when they land,
+ * and it is quietly absent if they fail: the lessons below are the page.
  */
 function Today(): React.JSX.Element | null {
   const t = useT();
@@ -141,6 +171,7 @@ function Today(): React.JSX.Element | null {
   const me = useApiGet<{ user: MeProfile }>('/me');
   const g = goal.data;
   const streak = me.data?.user?.streak?.current;
+  if ((goal.loading && !g) || (me.loading && !me.data)) return <TodaySkeleton />;
   if (!g || typeof g.earnedXp !== 'number' || typeof streak !== 'number') return null;
   const target = g.effectiveGoal || g.goal;
   const pct = Math.round(Math.max(0, Math.min(1, g.progress)) * 100);
@@ -171,6 +202,26 @@ function Today(): React.JSX.Element | null {
         <span>{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
       </p>
     </section>
+  );
+}
+
+/** Today's shape, from its own classes, while the goal and the streak are fetched. */
+function TodaySkeleton(): React.JSX.Element {
+  const t = useT();
+  return (
+    <div className="learn-today" aria-hidden="true">
+      <div className="learn-today-goal">
+        <h2 className="learn-section-title">{t('learn.today.title')}</h2>
+        <div className="course-progress-bar learn-today-bar" />
+        <p className="learn-today-line">
+          <Skeleton line w="40%" />
+        </p>
+      </div>
+      <p className="learn-today-streak">
+        <Skeleton w={20} h={20} circle />
+        <Skeleton line w={96} />
+      </p>
+    </div>
   );
 }
 
@@ -309,7 +360,7 @@ function Lessons(): React.JSX.Element {
   const { entries, error, reload } = useCourses();
   return (
     <>
-      {entries && <ContinueCard entries={entries} />}
+      {entries ? <ContinueCard entries={entries} /> : !error && <ContinueSkeleton />}
       <Today />
       <Tools signedIn />
       <section aria-labelledby="learn-courses-title">

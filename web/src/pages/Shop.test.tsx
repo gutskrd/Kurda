@@ -361,7 +361,7 @@ describe('Shop', () => {
     renderApp(<Shop />, ['/app/shop?kind=tag']);
     const tag = (await screen.findByText('Kurdish Tag')).closest('figure')!;
     await userEvent.click(within(tag).getByRole('button', { name: 'Buy' }));
-    expect(await screen.findByText('Kurdish Tag is yours. You’ll find it under Tags & badges in Edit Profile.')).toBeInTheDocument();
+    expect(await screen.findByText('Kurdish Tag is yours. You’ll find it under Tags & badges in Edit profile.')).toBeInTheDocument();
     expect(calls.find((c) => c.url.includes('/shop/purchase'))?.body).toMatchObject({ sku: 'tag_kurdish', expectedPrice: 500 });
   });
 

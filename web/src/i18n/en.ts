@@ -402,7 +402,6 @@ export const en = {
 
   // ---- games ---------------------------------------------------------------
   'games.title': 'Games',
-  'games.playable': 'Playable',
   'games.signInToPlay': 'Sign in to play',
   'games.chooseMode': 'Choose a mode',
   'games.howToPlay': 'How do you want to play?',
@@ -448,7 +447,7 @@ export const en = {
   'friends.cancel': 'Cancel',
   'friends.cancelRequest': 'Cancel your request to {name}',
   'friends.suggestions': 'People you may know',
-  'friends.mutual': '{count} mutual friends',
+  'friends.mutual': 'Mutual friends: {count}',
   'friends.add': 'Add',
   'friends.requested': 'Requested',
   'friends.yours': 'Your friends',
@@ -505,7 +504,7 @@ export const en = {
   'games.difficulty.medium': 'Medium',
   'games.difficulty.hard': 'Hard',
   'games.playAgain': 'Play again',
-  'games.submit': 'Submit',
+  'games.submit': 'Send',
   'games.options': 'Game options',
   'games.invite.eyebrow': 'Game invite',
   'games.invite.join': 'Join a {game} game',
@@ -725,7 +724,7 @@ export const en = {
   'profile.yoursNotLoaded': 'Your profile could not be loaded.',
   'profile.private': 'This profile is private.',
   'profile.viewFull': 'View full profile',
-  'profile.edit': 'Edit Profile',
+  'profile.edit': 'Edit profile',
   'profile.online': 'Online',
   'profile.premium': 'Premium',
   'profile.about': 'About',
@@ -1002,7 +1001,7 @@ export const en = {
   'lesson.results.levelUp': 'You reached level {level}',
   'leagues.celebrate.up': 'Moved up',
   // ---- end web-social ----
-  'profile.currentlyOnline': 'Currently Online',
+  'profile.currentlyOnline': 'Currently online',
   'profile.offline': 'Offline',
   'profile.levelN': 'Level {level}',
   'profile.xpToLevel': '{xp} XP to level {level}',
@@ -1598,8 +1597,8 @@ export const en = {
   'shop.searchFriendsLabel': 'Search friends',
   'shop.nothingYet': 'Nothing here yet — check back soon.',
   'shop.owned': 'Owned',
-  'shop.isYours': '{name} is yours. Equip it from Edit Profile.',
-  'shop.isYoursTag': '{name} is yours. You’ll find it under Tags & badges in Edit Profile.',
+  'shop.isYours': '{name} is yours. Equip it from Edit profile.',
+  'shop.isYoursTag': '{name} is yours. You’ll find it under Tags & badges in Edit profile.',
   'shop.isYoursOther': '{name} is yours.',
   'shop.onItsWay': '{name} is on its way to {to}.',
   'shop.subtitle': 'Buy profile backgrounds, icons and tags with Zêr — for yourself, or as a gift for a friend.',
@@ -2866,7 +2865,7 @@ export const en = {
   'settings.appearance.dark': 'Dark',
   'settings.appearance.light': 'Light',
   'settings.appearance.system': 'Match this device',
-  'learn.guest.body': 'Courses keep your progress, so they need an account. The alphabet, the dictionary and the games are open to everyone.',
+  'learn.guest.body': 'Courses and games keep your progress, so they need an account. The alphabet and the dictionary are open to everyone.',
   'civak.emptyBody': 'Be the first: a saying, a poem or a picture, with the + button. Or find people to learn with.',
 } as const;
 

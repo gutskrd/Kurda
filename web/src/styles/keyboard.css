@@ -389,16 +389,16 @@
 .kb-option:hover {
   border-color: var(--border-strong);
 }
+/* chosen the way every other choice is shown: a firmer edge on a raised surface */
 .kb-option.is-on {
-  border-color: var(--gold);
-  background: var(--gold-soft);
+  border-color: var(--border-strong);
+  background: var(--surface-2);
 }
 .kb-option input {
   margin-top: 3px;
   width: 17px;
   height: 17px;
   flex: none;
-  accent-color: var(--gold-ink);
 }
 .kb-option-text {
   display: flex;

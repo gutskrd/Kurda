@@ -392,7 +392,7 @@
   height: 4px;
   margin-top: -2px;
   border-radius: 50%;
-  color: #ff8fa3;
+  color: var(--like);
   box-shadow:
     0 -14px 0 currentColor,
     12px -7px 0 currentColor,

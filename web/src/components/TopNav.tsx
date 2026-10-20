@@ -118,6 +118,17 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
     return () => document.removeEventListener('keydown', onKey);
   }, [open]);
 
+  /*
+   * A keyboard that Tabs on past the end of the open menu has left it, so the
+   * menu goes away, rather than leaving the focus to walk through a page that
+   * is covered by its scrim. Only a move to somewhere else counts: a press on
+   * an empty part of the menu sends the focus nowhere, and keeps it open.
+   */
+  const onBlur = (e: React.FocusEvent<HTMLElement>): void => {
+    const next = e.relatedTarget;
+    if (open && next instanceof Node && !e.currentTarget.contains(next)) setOpen(false);
+  };
+
   // what is waiting behind the folded menu, so the button can say so
   const unread = links.reduce((n, l) => n + (l.badge ?? 0), 0);
   const waiting = links.some((l) => l.dot);
@@ -130,7 +141,7 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
         : t('nav.menu');
 
   return (
-    <header className={`nav${open ? ' is-menu-open' : ''}`}>
+    <header className={`nav${open ? ' is-menu-open' : ''}`} onBlur={onBlur}>
       <div className="container nav-inner">
         {/* signed-in users stay inside the app shell instead of
             landing on the marketing site (which has its own nav) */}
@@ -300,7 +311,7 @@ function Purse(): React.JSX.Element | null {
       <span className="purse-row purse-gems">
         <GemIcon size={15} />
         <span className="purse-amount">{you.balances.gems.toLocaleString()}</span>
-        <span className="sr-only">gems</span>
+        <span className="sr-only">{t('shop.gems')}</span>
       </span>
     </Link>
   );
@@ -308,6 +319,7 @@ function Purse(): React.JSX.Element | null {
 
 /** The purse on one line, at the end of the menu's Shop row on a phone. */
 function PurseAmounts(): React.JSX.Element | null {
+  const t = useT();
   const { data } = useRail();
   const you = data.you;
   if (!you) return null;
@@ -321,7 +333,7 @@ function PurseAmounts(): React.JSX.Element | null {
       <span className="purse-row purse-gems">
         <GemIcon size={15} />
         <span className="purse-amount">{you.balances.gems.toLocaleString()}</span>
-        <span className="sr-only">gems</span>
+        <span className="sr-only">{t('shop.gems')}</span>
       </span>
     </span>
   );

@@ -350,8 +350,10 @@
 }
 
 /* ---- the Games page: your ranks ----------------------------------------------------- */
+/* below the games, with the same room above it as between Learn's own sections */
 .ranks-section {
-  margin-bottom: 34px;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 .ranks-section-head {
   display: flex;
@@ -361,14 +363,18 @@
   gap: 12px 20px;
   margin-bottom: 14px;
 }
+/* the Games view's section title, set like the Lessons view's (Today, Practice, Courses) */
 .ranks-section-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .ranks-section-sub {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text-secondary);
 }
 .ranks-section-links {
   display: flex;
@@ -736,7 +742,7 @@
     padding: 14px;
   }
   .badges-stat dt {
-    font-size: 0.66rem;
+    font-size: var(--text-tab);
     letter-spacing: 0.06em;
   }
   .badges-stat dd {

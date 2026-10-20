@@ -345,6 +345,17 @@
   height: 36px;
   padding: 0 14px;
 }
+/* drawn at 36, but a finger gets the full 44: the press reaches 4px above and below it */
+@media (pointer: coarse) {
+  .nav-register {
+    position: relative;
+  }
+  .nav-register::after {
+    content: '';
+    position: absolute;
+    inset: -4px 0;
+  }
+}
 
 /* ---- search, in the bar ------------------------------------------------ */
 

@@ -278,6 +278,31 @@ describe('TopNav', () => {
     expect(menuButton()).toHaveFocus();
   });
 
+  it('closes the menu when the keyboard moves on past it, and not before', async () => {
+    signIn();
+    railFetch(you());
+    const { container } = renderApp(
+      <RailProvider>
+        <RealNav joinOnPhone />
+        <button type="button">On the page</button>
+      </RailProvider>,
+      ['/app'],
+    );
+    await screen.findByRole('link', { name: 'Home' });
+    await userEvent.click(menuButton());
+    const list = container.querySelector('.nav-links')!;
+    // through the places and on to the bar's own buttons: still inside, still open
+    await userEvent.tab();
+    expect(screen.getByRole('link', { name: 'Learn' })).toHaveFocus();
+    expect(list).toHaveClass('open');
+    // on past the close button, into the page the menu was covering
+    const onPage = screen.getByRole('button', { name: 'On the page' });
+    for (let i = 0; i < 30 && document.activeElement !== onPage; i++) await userEvent.tab();
+    expect(onPage).toHaveFocus();
+    expect(list).not.toHaveClass('open');
+    expect(container.querySelector('.nav-scrim')).toBeNull();
+  });
+
   it('closes the menu when a place is chosen, and on a press outside it', async () => {
     signIn();
     railFetch(you());

@@ -386,7 +386,9 @@ function Suggestions(): React.JSX.Element | null {
                   {t('friends.requested')}
                 </Button>
               ) : (
-                <Button size="sm" onClick={() => void add(u.userId)}>
+                // a row's action is a secondary pill: a column of white buttons
+                // down a list would outshout everything else on the page
+                <Button size="sm" variant="secondary" onClick={() => void add(u.userId)}>
                   {t('friends.add')}
                 </Button>
               )

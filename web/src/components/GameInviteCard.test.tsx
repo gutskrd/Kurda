@@ -20,4 +20,9 @@ describe('MessageBody', () => {
     expect(screen.getByText('just words')).toBeInTheDocument();
     expect(screen.queryByRole('link')).toBeNull();
   });
+
+  it('lets what somebody wrote run in its own direction, whatever the page’s', () => {
+    show(<MessageBody body="Sibê em Wordle bilîzin?" />);
+    expect(screen.getByText('Sibê em Wordle bilîzin?')).toHaveAttribute('dir', 'auto');
+  });
 });

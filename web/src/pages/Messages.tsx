@@ -221,7 +221,7 @@ function ConvoRow({
   active: boolean;
   avatar: React.ReactNode;
   name: string;
-  preview: string;
+  preview: React.ReactNode;
   when?: string;
   unread: number;
 }): React.JSX.Element {
@@ -336,7 +336,13 @@ function Conversations({
           active={c.userId === activeId}
           avatar={<Avatar url={c.avatarUrl} online={c.online} />}
           name={c.username}
-          preview={(c.lastFromMe ? t('chat.youPrefix') : '') + messagePreview({ body: c.lastMessage, kind: c.lastKind }, t)}
+          preview={
+            <>
+              {c.lastFromMe && t('chat.youPrefix')}
+              {/* the message in its own direction, apart from "You:" in the page's */}
+              <bdi>{messagePreview({ body: c.lastMessage, kind: c.lastKind }, t)}</bdi>
+            </>
+          }
           when={convoTime(c.lastAt, t, locale)}
           unread={c.unread}
         />

@@ -27,10 +27,10 @@ export function ErrorState({
   const heading = title ?? t('common.somethingWentWrong');
   return (
     <div className="state" role="alert">
-      <h3>{heading}</h3>
+      <h2 className="state-title">{heading}</h2>
       <p>{message}</p>
       {onRetry && (
-        <div style={{ marginTop: 18 }}>
+        <div className="state-action">
           <Button variant="secondary" size="sm" onClick={onRetry}>
             {t('common.retry')}
           </Button>
@@ -40,6 +40,11 @@ export function ErrorState({
   );
 }
 
+/*
+ * The heading is an h2 wherever the state stands: it is almost always the
+ * first thing under a page's title, and an h3 there skipped a level for
+ * anybody moving through the page by its headings.
+ */
 export function EmptyState({
   title,
   message,
@@ -52,7 +57,7 @@ export function EmptyState({
 }): React.JSX.Element {
   return (
     <div className="state">
-      <h3>{title}</h3>
+      <h2 className="state-title">{title}</h2>
       <p>{message}</p>
       {action}
     </div>

@@ -96,7 +96,8 @@ export function FullProfile({
         />
 
         <div className="mkp-body">
-          <main className="mkp-main">
+          {/* a div, not a <main>: the app's page around a profile already is the main landmark */}
+          <div className="mkp-main">
             <div className="mkp-showcase-block">
               <div className="mkp-showcase-label">{t('profile.about')}</div>
               <div className="mkp-showcase">
@@ -130,7 +131,7 @@ export function FullProfile({
               </div>
             )}
             {activity}
-          </main>
+          </div>
 
           <aside className="mkp-side">
             <div className="mkp-online">

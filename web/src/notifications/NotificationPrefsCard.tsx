@@ -167,8 +167,9 @@ function QuietEnd({
   disabled: boolean;
   onPick: (min: number) => void;
 }): React.JSX.Element {
+  // the word over its field, so "From" and "To" line up whatever their length in a language
   return (
-    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+    <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: 4 }}>
       <span className="field-hint" style={{ margin: 0 }}>{label}</span>
       <input
         type="time"

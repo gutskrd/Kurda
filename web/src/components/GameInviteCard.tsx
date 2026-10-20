@@ -16,15 +16,24 @@ import type { MessageKey } from '../i18n/en';
  * Renders a chat message body: if it carries a Hevalo game-invite link, show a
  * visual invite card (with any surrounding text kept above it); otherwise render
  * the text as-is. Used by both direct and group chat bubbles.
+ *
+ * What somebody wrote runs in its own direction (`dir="auto"`), whatever the
+ * page's: Kurmancî in an Arabic or Soranî interface stays left to right, with
+ * its question mark at the end of the question rather than the start, and
+ * Soranî in an English one runs right to left.
  */
 export function MessageBody({ body }: { body: string }): React.JSX.Element {
   const invite = parseInvite(body);
-  if (!invite) return <>{body}</>;
+  if (!invite) return <span dir="auto">{body}</span>;
   // keep any human text the sender wrote alongside the link
   const rest = body.replace(inviteLinkPattern(), ' ').replace(/\s+/g, ' ').trim();
   return (
     <>
-      {rest && <p className="invite-lead">{rest}</p>}
+      {rest && (
+        <p className="invite-lead" dir="auto">
+          {rest}
+        </p>
+      )}
       <GameInviteCard invite={invite} />
     </>
   );

@@ -111,6 +111,42 @@
   }
 }
 
+/*
+ * A button on a line of its own — the action at the end of a card, the link
+ * at the foot of a section — can carry a whole phrase, and in French or German
+ * that phrase is wider than a 320px phone ("Demander un export de mes
+ * données"), or a two-to-a-row shop tile ("L’obtenir gratuitement"). There
+ * it wraps inside its pill rather than running off the page; on one line it
+ * is exactly the height it always was. Buttons in a row beside a name are left
+ * alone: they keep their words together beside what they act on.
+ */
+.card > .btn,
+.lp-section-foot .btn,
+.ab-next-links .btn,
+.shop-actions .btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  padding-block: var(--space-2);
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+}
+.card > .btn-sm,
+.shop-actions .btn-sm {
+  min-height: 36px;
+  padding-block: 6px;
+}
+.card > .btn-lg {
+  min-height: 52px;
+}
+@media (pointer: coarse) {
+  .card > .btn-sm,
+  .shop-actions .btn-sm {
+    min-height: 44px;
+  }
+}
+
 /* ---- forms ------------------------------------------------------------- */
 .field {
   display: flex;
@@ -163,7 +199,8 @@ input[type='password']::-ms-clear {
 }
 .input-affix {
   position: absolute;
-  right: 6px;
+  /* at the field's end, which is its left on a right-to-left page */
+  inset-inline-end: 6px;
   top: 0;
   bottom: 0;
   margin: auto 0;
@@ -186,7 +223,18 @@ input[type='password']::-ms-clear {
   transform: none;
 }
 .input.has-affix {
-  padding-right: 46px;
+  padding-inline-end: 46px;
+}
+/* a finger's 44 on a touch screen: the field is 46 tall, so it still fits inside */
+@media (pointer: coarse) {
+  .input-affix {
+    inset-inline-end: 1px;
+    width: 44px;
+    height: 44px;
+  }
+  .input.has-affix {
+    padding-inline-end: 50px;
+  }
 }
 
 /* ---- inline messages --------------------------------------------------- */
@@ -237,7 +285,7 @@ input[type='password']::-ms-clear {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -266,16 +314,16 @@ input[type='password']::-ms-clear {
   color: var(--ink-3);
   background: var(--surface);
 }
-.state h3 {
+.state-title {
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text-body);
   color: var(--ink);
   margin-bottom: 6px;
 }
 .state p {
   max-width: 42ch;
   margin: 0 auto;
-  font-size: 0.95rem;
+  font-size: var(--text-secondary);
 }
 
 .spinner {
@@ -290,6 +338,18 @@ input[type='password']::-ms-clear {
   display: grid;
   place-items: center;
   min-height: 40vh;
+  /*
+   * Nothing for the first moment. Most waits are over inside a tenth of a
+   * second, and a spinner that flashes on and straight off reads as a flicker
+   * rather than as progress, so it fades in only once the wait is noticeable.
+   * The space is held from the start, so nothing moves when it appears.
+   */
+  animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
+}
+@keyframes spinner-wait {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes spin {
   to {

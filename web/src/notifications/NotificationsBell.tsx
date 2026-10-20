@@ -4,6 +4,7 @@ import { useLocation } from 'react-router-dom';
 import { localeDir } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { BellIcon, CloseIcon } from '../components/icons';
+import { wrapTab } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { useRail, useRailPresent } from '../social/RailProvider';
 import { NotificationList } from './NotificationList';
@@ -22,7 +23,9 @@ import { NotificationList } from './NotificationList';
  * The list opens in a panel under the bell rather than on a page of its own,
  * so reading what is new does not cost you the page you were on. Escape, a
  * click outside it, or following one of them closes it, and the focus goes
- * back to the bell.
+ * back to the bell. While it is open, Tab goes round inside it: it is drawn at
+ * the end of the page, so Tab past its last button used to fall out of the
+ * window and on through the page, with the panel still open over it.
  */
 export function NotificationsBell(): React.JSX.Element | null {
   const { status } = useAuth();
@@ -49,6 +52,8 @@ export function NotificationsBell(): React.JSX.Element | null {
       if (e.key === 'Escape') {
         setOpen(false);
         buttonRef.current?.focus();
+      } else if (panelRef.current) {
+        wrapTab(e, panelRef.current);
       }
     };
     const onDown = (e: PointerEvent): void => {

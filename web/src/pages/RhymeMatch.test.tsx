@@ -93,7 +93,7 @@ describe('RhymeMatch', () => {
     renderApp(<RhymeMatch />, ['/app/games/rhyme-match?id=rm1']);
 
     await userEvent.type(await screen.findByLabelText('Your rhyme'), 'koj');
-    await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(body).toMatchObject({ word: 'koj' });
     await waitFor(() => expect(screen.getByText('koj')).toBeInTheDocument());

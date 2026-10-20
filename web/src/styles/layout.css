@@ -577,6 +577,15 @@ button.nav-link {
 .footer-col a:hover {
   color: var(--ink);
 }
+/* a list of links read with a thumb: each one a finger's height */
+@media (pointer: coarse) {
+  .footer-col a {
+    display: flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0;
+  }
+}
 /* a store that is not open yet: said, not linked */
 .footer-soon {
   display: block;
@@ -649,7 +658,7 @@ button.nav-link {
   border-radius: var(--r-pill);
   background: var(--primary);
   color: var(--primary-ink);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   line-height: 1;
 }
@@ -695,7 +704,7 @@ button.nav-link {
   background: #0b0d11;
   border: 1px solid var(--border-strong);
   color: var(--gold-ink);
-  font-size: 0.62rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 13px;

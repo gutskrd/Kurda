@@ -1542,7 +1542,7 @@ button.gift-bubble:active {
   inset-inline-start: 6px;
   padding: 1px 7px;
   border-radius: var(--r-pill);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -1553,6 +1553,13 @@ button.gift-bubble:active {
 .gift-tier-legendary {
   background: rgba(217, 56, 30, 0.25);
   color: #ffc9a8;
+}
+/* the pale inks above are for the dark page; on the light one they vanish into their tint */
+:root[data-theme='light'] .gift-tier-rare {
+  color: #3b4fc4;
+}
+:root[data-theme='light'] .gift-tier-legendary {
+  color: #96301b;
 }
 .gift-tile-owned {
   font-size: 0.74rem;

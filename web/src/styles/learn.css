@@ -159,8 +159,8 @@
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   color: var(--ink-2);
 }
@@ -285,14 +285,14 @@
   display: inline-flex;
 }
 .lesson-option.is-right {
-  border-color: rgba(134, 226, 164, 0.7);
+  border-color: color-mix(in srgb, var(--success) 70%, transparent);
   background: var(--success-soft);
 }
 .lesson-option.is-right .lesson-option-mark {
   color: var(--success);
 }
 .lesson-option.is-wrong {
-  border-color: rgba(255, 156, 144, 0.7);
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
   background: var(--danger-soft);
 }
 .lesson-option.is-wrong .lesson-option-mark {
@@ -499,7 +499,7 @@
   outline-offset: 2px;
 }
 .lesson-feedback.is-right {
-  border-color: rgba(134, 226, 164, 0.55);
+  border-color: color-mix(in srgb, var(--success) 55%, transparent);
   background: var(--success-soft);
 }
 .lesson-feedback.is-almost {
@@ -507,7 +507,7 @@
   background: var(--gold-soft);
 }
 .lesson-feedback.is-notyet {
-  border-color: rgba(255, 156, 144, 0.55);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
   background: var(--danger-soft);
 }
 @media (prefers-reduced-motion: no-preference) {

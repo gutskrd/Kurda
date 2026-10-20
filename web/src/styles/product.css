@@ -171,7 +171,7 @@
   min-width: 0;
 }
 .pc-stat dt {
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -377,7 +377,7 @@ a.rank-name:hover {
   padding: 1px 7px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -557,7 +557,7 @@ a.invite-card:active {
   transform: translateY(1px);
 }
 .invite-eyebrow {
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -699,6 +699,34 @@ a.invite-card:active {
   color: var(--ink-3);
   border-style: dashed;
 }
+/*
+ * On the Games page a mode with a page of its own is a way straight in, so the
+ * chip is a link: the same pill, a firmer edge, and a finger's height on a
+ * touch screen.
+ */
+.game-tags li.is-link {
+  padding: 0;
+  border-color: var(--border-strong);
+}
+.game-tag-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  padding: 0 var(--space-3);
+  border-radius: inherit;
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: none;
+}
+.game-tag-link:hover {
+  background: var(--surface-2);
+}
+@media (pointer: coarse) {
+  .game-tag-link {
+    min-height: 44px;
+    padding: 0 var(--space-4);
+  }
+}
 
 /* ---- pieces of the pictures, shared with the screens ----------------------- */
 .lp-card {
@@ -715,7 +743,7 @@ a.invite-card:active {
   padding: 3px 9px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -781,7 +809,7 @@ a.invite-card:active {
   height: 46px;
   border: 1px solid var(--border-strong);
   background: var(--surface-2);
-  animation: lp-ring 2.6s ease-out infinite;
+  animation: lp-ring 2.6s ease-out 3;
 }
 .lp-option {
   display: inline-flex;
@@ -795,9 +823,9 @@ a.invite-card:active {
   color: var(--ink-2);
 }
 .lp-option.is-right {
-  border-color: rgba(46, 125, 91, 0.9);
-  background: rgba(46, 125, 91, 0.2);
-  color: #c6f0d8;
+  border-color: color-mix(in srgb, var(--success) 70%, transparent);
+  background: var(--success-soft);
+  color: var(--success);
 }
 .lp-option--lg {
   padding: 12px 14px;
@@ -805,7 +833,7 @@ a.invite-card:active {
   font-size: 0.9rem;
 }
 .lp-float-kicker {
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -835,13 +863,16 @@ a.invite-card:active {
   text-transform: lowercase;
   line-height: 1;
 }
+/* the same inks as the game itself (pages.css): white on green, near-black on yellow */
 .lp-tile--green {
   background: #2e7d5b;
   border-color: #2e7d5b;
+  color: #fff;
 }
 .lp-tile--yellow {
   background: #b8922e;
   border-color: #b8922e;
+  color: #111;
 }
 .lp-tile--gray {
   background: var(--surface-3);
@@ -908,7 +939,8 @@ a.invite-card:active {
   margin-inline: 1px;
   vertical-align: -0.15em;
   background: var(--gold);
-  animation: lp-blink 1.1s steps(1) infinite;
+  /* blinks a few times, as a caret does while you look, then stays */
+  animation: lp-blink 1.1s steps(1) 6;
 }
 .lp-race-stats {
   display: flex;

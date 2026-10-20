@@ -29,6 +29,9 @@
 }
 .ab-main {
   display: grid;
+  /* one column no wider than the page: left to size itself, it grew to the
+     widest line inside it, and German ran 63px off a 320px phone */
+  grid-template-columns: minmax(0, 1fr);
   gap: 34px;
   min-width: 0;
 }
@@ -311,7 +314,7 @@
   line-height: 1.2;
 }
 .ab-form small {
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   color: var(--ink-3);
 }
 .ab-step {
@@ -617,7 +620,7 @@
   position: absolute;
   top: 6px;
   inset-inline-start: 8px;
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   color: var(--ink-4);
   font-variant-numeric: tabular-nums;

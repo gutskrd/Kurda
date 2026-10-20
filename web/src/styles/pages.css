@@ -95,10 +95,28 @@
 }
 .auth-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 4px 12px;
   margin-bottom: 18px;
+}
+/* each side keeps its words together, and the row breaks between them if it must */
+.auth-row > * {
+  white-space: nowrap;
+}
+/*
+ * On a phone the card gives its width back: 54px of padding on each side left
+ * "Remember me" and "Forgotten your password?" two lines each in a 280px
+ * column. The page's own 16px gutter, and a card padding to match the others.
+ */
+@media (max-width: 480px) {
+  .auth-wrap {
+    padding: var(--space-6) var(--space-4) var(--space-8);
+  }
+  .auth-card {
+    padding: var(--space-8) var(--space-5) var(--space-6);
+  }
 }
 
 /* birth month and year: one question, so one legend over two selects */
@@ -135,7 +153,6 @@
 .check input {
   width: 17px;
   height: 17px;
-  accent-color: #fff;
   cursor: pointer;
 }
 .link-btn {
@@ -918,7 +935,7 @@ button.feature {
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   color: var(--ink-2);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 650;
   line-height: 1.4;
   white-space: nowrap;
@@ -969,10 +986,6 @@ button.feature {
   align-items: baseline;
   gap: 12px;
   margin-bottom: 14px;
-}
-/* the inventory's Tags tab sends you to Tags & badges: arrive under the sticky bar */
-.tags-card {
-  scroll-margin-top: calc(var(--nav-h) + 16px);
 }
 .cosmetic-locked {
   margin-top: auto;
@@ -1104,7 +1117,6 @@ button.feature {
 .icon-visibility input {
   width: 18px;
   height: 18px;
-  accent-color: var(--gold);
   cursor: pointer;
 }
 
@@ -1298,20 +1310,29 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/*
+ * A hairline and the surface, without frosting: there is only the flat page
+ * behind a conversation, and a blur of a flat colour adds nothing but a dark
+ * ring round the inside of the panel where it runs out of page to sample.
+ */
 .chat-thread-pane,
 .chat-empty {
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim);
   overflow: hidden;
 }
+/* drawn inside the thread's pane, which already has the edge and the surface */
 .chat-empty {
   display: grid;
   place-items: center;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 .chat-thread {
   display: flex;
@@ -1329,6 +1350,14 @@ button.feature {
   display: none;
   color: var(--ink-2);
   transform: rotate(180deg);
+  /* an 18px arrow in a thumb's 44px square, pulled back so the arrow stays where it was drawn */
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-block: -13px;
+  margin-inline-start: -13px;
+  border-radius: 50%;
 }
 /* "back" points the way a right-to-left page reads back: to the right */
 [dir='rtl'] .chat-back {
@@ -1542,6 +1571,9 @@ button.feature {
 /* the composer grows with its content instead of scrolling one line */
 .chat-compose-input {
   resize: none;
+  /* one line sits in the middle of the field, which stands as tall as the Send beside it */
+  min-height: 44px;
+  padding-block: 9px;
   max-height: 132px;
   overflow-y: auto;
   line-height: 1.4;
@@ -1549,8 +1581,10 @@ button.feature {
 .chat-senderr {
   margin: 0 16px;
 }
+/* as the field grows, the tools and Send stay down by its last line, where the thumb is */
 .chat-compose {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
   padding: 12px 16px;
   border-top: 1px solid var(--border);
@@ -2080,7 +2114,7 @@ button.feature {
   border-color: var(--border);
 }
 .mkp-tab-hidden {
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-4);
@@ -2256,7 +2290,6 @@ a.mkp-activity-row:hover {
   width: 17px;
   height: 17px;
   flex: none;
-  accent-color: var(--gold-ink);
 }
 .section-toggle-label {
   display: block;
@@ -2508,10 +2541,11 @@ a.mkp-activity-row:hover {
   border-color: #2e7d5b;
   color: #fff;
 }
+/* near-black on the yellow: white on it measured 2.9:1, too faint for a letter you have to read */
 .wordle-yellow {
   background: #b8922e;
   border-color: #b8922e;
-  color: #fff;
+  color: #111;
 }
 .wordle-gray {
   /* the front page's grey: a letter that is not in the word steps back */
@@ -2526,7 +2560,7 @@ a.mkp-activity-row:hover {
 }
 .wordle-notice {
   text-align: center;
-  color: #c0392b;
+  color: var(--danger);
   margin-top: 8px;
   font-size: 0.92rem;
 }
@@ -2620,9 +2654,9 @@ a.mkp-activity-row:hover {
   color: var(--ink);
 }
 .rhyme-timer.low {
-  color: #fff;
-  background: #c0392b;
-  border-color: #c0392b;
+  color: var(--on-danger);
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
 }
 .rhyme-score {
   color: var(--ink-2);
@@ -2781,7 +2815,7 @@ a.mkp-activity-row:hover {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--ink-2);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -3015,7 +3049,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
   background: var(--surface-2);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3453,7 +3487,6 @@ a.mkp-activity-row:hover {
 .picture-toggle input {
   width: 16px;
   height: 16px;
-  accent-color: var(--gold-ink);
 }
 
 .text-tools {
@@ -3492,7 +3525,6 @@ a.mkp-activity-row:hover {
 }
 .tool-row input[type='range'] {
   flex: 1;
-  accent-color: var(--gold-ink);
 }
 .tool-value {
   flex: none;
@@ -3552,7 +3584,7 @@ a.mkp-activity-row:hover {
   border: 1px dashed rgba(255, 255, 255, 0.4);
   background: rgba(8, 10, 14, 0.35);
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.62rem;
+  font-size: var(--text-tab);
   pointer-events: none;
   overflow: hidden;
 }
@@ -3770,7 +3802,7 @@ a.mkp-activity-row:hover {
 }
 .cpick-field-label {
   color: var(--ink-4);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }

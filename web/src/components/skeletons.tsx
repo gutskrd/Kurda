@@ -341,7 +341,7 @@ export function FullProfileSkeleton({ label }: { label?: MessageKey }): React.JS
         </div>
 
         <div className="mkp-body">
-          <main className="mkp-main">
+          <div className="mkp-main">
             {times(2, (i) => (
               <div className="mkp-showcase-block" key={i}>
                 <div className="mkp-showcase-label">
@@ -354,7 +354,7 @@ export function FullProfileSkeleton({ label }: { label?: MessageKey }): React.JS
                 </div>
               </div>
             ))}
-          </main>
+          </div>
           <aside className="mkp-side">
             <div className="mkp-online">
               <div className="mkp-online-title">

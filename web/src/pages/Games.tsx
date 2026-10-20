@@ -142,29 +142,44 @@ export function Games(): React.JSX.Element {
           // nothing at all before there is something to play
           const playable = comingSoon ? [] : signedIn ? g.modes : g.modes.filter((m) => m.open);
           const single = playable.length === 1 ? playable[0] : undefined;
+          /*
+           * A badge only when it tells you something: that the game is not
+           * here yet, or what a visitor can do without an account. "Playable"
+           * on every card of a signed-in player said nothing the Play button
+           * did not, in the gold that is kept for what is earned.
+           */
+          const badge = comingSoon
+            ? t('stories.comingSoon')
+            : signedIn
+              ? null
+              : playable.length > 0
+                ? t('games.stories.readFree')
+                : t('games.signInToPlay');
+          // each mode its own way in, when each has its own page (Stories chooses on its own)
+          const direct = !g.hub && playable.length > 1;
           return (
             <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
               <div className="game-tile-visual">{g.visual}</div>
               <div className="game-tile-text">
                 <div className="game-tile-head">
                   <h3>{t(g.nameKey)}</h3>
-                  <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
-                    {comingSoon
-                      ? t('stories.comingSoon')
-                      : signedIn
-                        ? t('games.playable')
-                        : playable.length > 0
-                          ? t('games.stories.readFree')
-                          : t('games.signInToPlay')}
-                  </span>
+                  {badge && <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>{badge}</span>}
                 </div>
                 <p>{t(g.bodyKey)}</p>
                 <ul className="game-tags">
                   {g.modes.map((m) => {
                     const locked = !signedIn && !m.open;
                     return (
-                      <li key={m.labelKey} className={locked ? 'is-locked' : undefined}>
-                        {t(m.labelKey)}
+                      <li key={m.labelKey} className={locked ? 'is-locked' : direct ? 'is-link' : undefined}>
+                        {/* straight into the game: Learn opens on Games for somebody who plays,
+                            so this is the second tap from anywhere, not the fourth */}
+                        {direct ? (
+                          <Link to={m.href} className="game-tag-link">
+                            {t(m.labelKey)}
+                          </Link>
+                        ) : (
+                          t(m.labelKey)
+                        )}
                         {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
                       </li>
                     );

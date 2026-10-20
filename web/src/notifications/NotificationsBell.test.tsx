@@ -83,6 +83,21 @@ describe('NotificationsBell', () => {
     expect(bell).toHaveFocus();
   });
 
+  it('keeps Tab inside the open panel, round from its last button to its first', async () => {
+    signIn();
+    serve([]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
+    const panel = screen.getByRole('dialog', { name: 'Notifications' });
+    const close = screen.getByRole('button', { name: 'Close' });
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+    // the close button is the only control: Tab from it comes back to it, not out to the page
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+    expect(panel).toBeInTheDocument();
+  });
+
   it('says what will arrive there when nothing has', async () => {
     signIn();
     serve([]);

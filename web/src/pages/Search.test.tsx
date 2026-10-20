@@ -117,7 +117,7 @@ describe('Search', () => {
 
     expect(await screen.findByText('People you may know')).toBeInTheDocument();
     expect(screen.getByText('Baran')).toBeInTheDocument();
-    expect(screen.getByText('2 mutual friends')).toBeInTheDocument();
+    expect(screen.getByText('Mutual friends: 2')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^add$/i }));
     expect(await screen.findByRole('button', { name: /requested/i })).toBeDisabled();
     expect(posts).toContainEqual({ path: '/friends/requests', body: { userId: 'u5' } });
