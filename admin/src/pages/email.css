@@ -1,0 +1,167 @@
+/* The Email page: the sending settings, and the support inbox. */
+
+.mail-settings {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px 24px;
+  margin: 0;
+}
+.mail-settings div {
+  min-width: 0;
+}
+.mail-settings dt {
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.mail-settings dd {
+  margin: 2px 0 0;
+  overflow-wrap: anywhere;
+}
+.mail-error {
+  display: block;
+  margin-top: 6px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.mail-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.mail-list li + li {
+  border-top: 1px solid var(--separator);
+}
+.mail-row {
+  display: grid;
+  gap: 2px;
+  width: 100%;
+  min-height: 44px;
+  padding: 12px 16px;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+.mail-row:hover,
+.mail-row:focus-visible {
+  background: var(--control-hover);
+}
+.mail-row-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+.mail-from {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mail-row.is-unread .mail-from,
+.mail-row.is-unread .mail-subject {
+  font-weight: 600;
+}
+.mail-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--primary);
+}
+.mail-when {
+  flex: none;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+}
+.mail-subject,
+.mail-preview {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.mail-preview {
+  font-size: 0.875rem;
+  color: var(--text-dim);
+}
+.mail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.mail {
+  display: grid;
+  gap: 16px;
+}
+.mail-head p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+.mail-body {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.55;
+}
+.mail-html {
+  width: 100%;
+  min-height: 320px;
+  border: 1px solid var(--separator);
+  border-radius: 8px;
+  background: #fff;
+}
+.mail-files h3,
+.mail-answers h3 {
+  margin: 0 0 8px;
+  font-size: 0.9rem;
+}
+.mail-files ul {
+  list-style: none;
+  margin: 0 0 6px;
+  padding: 0;
+}
+.mail-files li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.mail-answer {
+  padding: 10px 12px;
+  border-inline-start: 3px solid var(--separator);
+}
+.mail-answer + .mail-answer {
+  margin-top: 8px;
+}
+.mail-answer p {
+  margin: 0 0 4px;
+}
+.mail-reply {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+.mail-reply > :first-child {
+  width: 100%;
+}
+.mail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+@media (max-width: 640px) {
+  .mail-reply > button {
+    width: 100%;
+  }
+  .mail-reply textarea {
+    font-size: 16px;
+  }
+}
