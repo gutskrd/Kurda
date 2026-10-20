@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import type { DeliveredExercise, PlayableSession } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LESSON_PATHS, PRACTICE_PATHS, SessionPlayer, type SessionPaths } from './SessionPlayer';
+import { PATTERNS, resetHaptics } from '../lib/haptics';
 
 /*
  * The lesson player against a fake API: each exercise type, the feedback, a
@@ -185,7 +186,9 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
     expect(screen.getByText('3 of 4')).toBeInTheDocument();
-    expect(screen.getByText('+15')).toBeInTheDocument();
+    // the XP counts up as the results arrive, and is read out as the number it ends on
+    expect(screen.getByLabelText('+15')).toBeInTheDocument();
+    expect(await screen.findByText('+15', undefined, { timeout: 3000 })).toBeInTheDocument();
     const mistakes = screen.getByRole('heading', { name: 'To go over' }).parentElement!;
     expect(within(mistakes).getByText('“Roj baş” tê çi wateyê?')).toBeInTheDocument();
     expect(within(mistakes).getByText('Good day')).toBeInTheDocument();
@@ -660,5 +663,43 @@ describe('Tips', () => {
     // still on the feedback behind the dialog
     expect(screen.getByRole('region', { name: 'Feedback' })).toBeInTheDocument();
     expect(screen.queryByText('apple')).not.toBeInTheDocument();
+  });
+});
+
+describe('how it feels on a touch screen', () => {
+  it('buzzes crisp for a right answer, a gentle double for a wrong one, once at the end — and shows each on the answer', async () => {
+    const vibrate = vi.fn((_pattern: VibratePattern) => true);
+    Object.defineProperty(navigator, 'vibrate', { value: vibrate, configurable: true, writable: true });
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q === '(pointer: coarse)', media: q, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList);
+    resetHaptics();
+    serve({
+      'POST /sessions/s1/answers': (body: unknown) =>
+        (body as { exerciseId: string }).exerciseId === 'mc' ? right : { verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false },
+      'POST /sessions/s1/retry': { verdict: 'wrong', accepted: false, correction: 'sêv' },
+      'POST /sessions/s1/complete': results({ correct: 1, total: 2, accuracy: 0.5 }),
+    });
+    play({ sessionId: 's1', exercises: [{ id: 'mc', type: 'multiple_choice', options: ['av', 'nan'] }, typed('t', 'apple')], answered: {} });
+
+    await userEvent.click(await screen.findByRole('button', { name: /av/ }));
+    await verdict('Correct');
+    expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.correct);
+    // the option chosen is the one that answers back (styles/motion.css)
+    expect(screen.getByRole('button', { name: /av/ })).toHaveClass('is-right', 'is-chosen');
+    await next();
+
+    await answerTyped('sev');
+    await screen.findByRole('region', { name: 'Feedback' });
+    expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.wrong);
+    expect(screen.getByRole('textbox')).toHaveClass('is-wrong');
+    await next();
+
+    // the miss asked again, missed again; then the end, celebrated once
+    await answerTyped('sev');
+    await screen.findByRole('region', { name: 'Feedback' });
+    await next();
+    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    await waitFor(() => expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.celebrate));
+    expect(vibrate.mock.calls.filter(([p]) => p === PATTERNS.celebrate)).toHaveLength(1);
+    delete (navigator as { vibrate?: unknown }).vibrate;
   });
 });

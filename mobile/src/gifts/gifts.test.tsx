@@ -25,7 +25,8 @@ vi.mock('../realtime/useUserEvents', () => ({
   },
 }));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { AccessibilityInfo, Animated, Vibration } from 'react-native';
+import { AccessibilityInfo, Animated } from 'react-native';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
 import type { GiftCard, GiftCatalogItem, GiftChatRef, GiftUserEvent } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -406,9 +407,11 @@ describe('GiftUnwrap', () => {
     expect(onThanks).toHaveBeenCalledTimes(1);
   });
 
-  it('gives a light tick as the lid comes off, and none when skipped first', async () => {
+  it('is felt once, as the lid comes off — or at the tap that skips to it', async () => {
     vi.useFakeTimers();
-    const vibrate = vi.spyOn(Vibration, 'vibrate').mockImplementation(() => undefined);
+    resetHaptics();
+    const felt: string[] = [];
+    const off = onHaptic((e) => felt.push(e));
     testAuth.client = fakeClient({ 'POST /gifts/g1/open': ok({ card: card({ myGiftId: 'g1', myOpened: true }), equippable: null }) });
     const first = renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
@@ -416,20 +419,27 @@ describe('GiftUnwrap', () => {
     act(() => {
       vi.advanceTimersByTime(400);
     });
-    expect(vibrate).toHaveBeenCalledWith(15);
+    expect(felt).toEqual(['celebrate']);
+    act(() => {
+      vi.advanceTimersByTime(3000);
+    });
+    // once for the gift, not again as it finishes
+    expect(felt).toEqual(['celebrate']);
     first.unmount();
 
-    vibrate.mockClear();
+    felt.length = 0;
+    resetHaptics();
     renderWithProviders(
       <GiftUnwrap target={{ giftId: 'g1', card: card({ myGiftId: 'g1' }), fromName: 'Azad' }} onClose={() => undefined} onOpened={() => undefined} onThanks={async () => null} />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'Skip' }));
+    expect(felt).toEqual(['celebrate']);
     act(() => {
       vi.advanceTimersByTime(3000);
     });
-    expect(vibrate).not.toHaveBeenCalled();
+    expect(felt).toEqual(['celebrate']);
+    off();
     vi.useRealTimers();
-    vibrate.mockRestore();
   });
 
   it('reveals the item by itself when the moment has played out', async () => {

@@ -8,6 +8,9 @@ import { Icon, type IconName } from './Icon';
 import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
+import { haptic } from '../feedback/haptics';
+import { usePressScale } from './animate';
+import { MenuIn } from './MotionParts';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -194,20 +197,24 @@ export function ClayButton({
   // one already has a shape and a rim round it is just a rim
   const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
   const off = busy || disabled;
+  // gives a little under the finger and springs back (animate.ts); still under Reduce Motion
+  const press = usePressScale(!off);
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={off}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
-      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1, transform: [{ scale: pressed && !off ? 0.98 : 1 }] }, style]}
+      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1 }, style]}
     >
-      <View
+      <Animated.View
         style={[
           styles.clay,
           size === 'large' && styles.clayLarge,
-          { backgroundColor: fill, borderColor: edge },
+          { backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
         ]}
       >
         {busy ? (
@@ -223,7 +230,7 @@ export function ClayButton({
             <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
           </View>
         ) : null}
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -347,7 +354,11 @@ export function Segmented<T extends string>({
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
+            onPress={() => {
+              // a tick for a change of value, and nothing for tapping the one already chosen
+              if (!active) haptic('select');
+              onChange(opt);
+            }}
             accessibilityRole={groupLabel ? 'radio' : 'button'}
             accessibilityState={groupLabel ? { checked: active } : { selected: active }}
             accessibilityLabel={label}
@@ -412,29 +423,33 @@ export function GlassSelect<T extends string>({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
           <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
-            <GlassCard style={styles.selectMenu}>
-              <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
-              {options.map((opt) => {
-                const active = opt === value;
-                return (
-                  <Pressable
-                    key={opt}
-                    onPress={() => {
-                      onChange(opt);
-                      setOpen(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    style={styles.selectOption}
-                  >
-                    <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
-                      {labelOf(opt)}
-                    </Text>
-                    {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
-                  </Pressable>
-                );
-              })}
-            </GlassCard>
+            {/* the menu grows in from just under its size as the scrim fades */}
+            <MenuIn>
+              <GlassCard style={styles.selectMenu}>
+                <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
+                {options.map((opt) => {
+                  const active = opt === value;
+                  return (
+                    <Pressable
+                      key={opt}
+                      onPress={() => {
+                        if (!active) haptic('select');
+                        onChange(opt);
+                        setOpen(false);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      style={styles.selectOption}
+                    >
+                      <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
+                        {labelOf(opt)}
+                      </Text>
+                      {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </GlassCard>
+            </MenuIn>
           </Pressable>
         </Pressable>
       </Modal>

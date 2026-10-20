@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import {
   DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
@@ -17,6 +18,7 @@ import {
   type ItemFilter,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
@@ -86,7 +88,7 @@ export function GiftPickerSheet({
   const title = group ? t('gift.button') : t('gift.picker.titleFor', { name: friends[0]?.name ?? '' });
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.flex}>
         <Pressable
           style={[styles.backdrop, { backgroundColor: colors.scrim }]}
@@ -94,7 +96,7 @@ export function GiftPickerSheet({
           accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
           <View style={[styles.header, { flexDirection: dir.row }]}>
             {group && step === 'what' ? (
@@ -123,7 +125,7 @@ export function GiftPickerSheet({
           ) : visible && recipients.length > 0 ? (
             <WhatStep chat={chat} recipients={recipients} onSent={onSent} onClose={onClose} />
           ) : null}
-        </View>
+        </SheetIn>
       </View>
     </Modal>
   );
@@ -326,6 +328,8 @@ function WhatStep({
     setBusy(true);
     setSendError(null);
     setNote(null);
+    // given: felt as it goes; and felt as an error if it did not go
+    haptic('tap');
     void sendGift(client, {
       sku: picked.sku,
       toUserIds: ids.filter((id) => !owners(picked).includes(id)),
@@ -343,6 +347,7 @@ function WhatStep({
         onSent(res.data, picked, recipients.filter((r) => res.data.sent.includes(r.userId)));
         return;
       }
+      haptic('error');
       // what is on offer changed while the sheet was open (a new price, a
       // Newroz item that has gone): say so, and show the catalog as it is now
       const code = res.error.code;

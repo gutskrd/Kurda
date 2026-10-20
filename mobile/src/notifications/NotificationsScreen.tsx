@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -65,7 +66,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
             <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
               <Text style={[styles.label, { color: colors.textPrimary }]}>{t(CATEGORY_LABEL[cat])}</Text>
-              <Switch
+              <Toggle
                 value={prefs[cat]}
                 onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
                 trackColor={{ true: colors.primary, false: colors.controlTrack }}
@@ -76,7 +77,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
           <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.quietHours')}</Text>
           <View style={[styles.row, { backgroundColor: colors.controlTrack }]}>
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.enableQuietHours')}</Text>
-            <Switch
+            <Toggle
               value={quiet}
               onValueChange={(on) =>
                 save(on ? { quietStartMin: DEFAULT_QUIET.start, quietEndMin: DEFAULT_QUIET.end } : { quietStartMin: null, quietEndMin: null })

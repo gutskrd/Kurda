@@ -12,6 +12,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display, sectionLabel } from '../theme/fonts';
@@ -65,7 +66,7 @@ export function Sheet({
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.backdropWrap}>
         <Pressable
           style={StyleSheet.absoluteFill}
@@ -77,7 +78,7 @@ export function Sheet({
         >
           <View style={[StyleSheet.absoluteFill, styles.backdrop]} />
         </Pressable>
-        <View
+        <SheetIn
           style={[styles.sheet, { backgroundColor: colors.background, paddingBottom: spacing.lg + insets.bottom }]}
           accessibilityViewIsModal
         >
@@ -103,7 +104,7 @@ export function Sheet({
             {children}
           </ScrollView>
           {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
-        </View>
+        </SheetIn>
       </View>
     </Modal>
   );

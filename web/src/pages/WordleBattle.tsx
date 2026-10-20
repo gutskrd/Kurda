@@ -26,6 +26,7 @@ import { useLobbyUpdates } from '../play/usePlay';
 import { playError } from '../play/playApi';
 import { useQuietInvites } from '../play/quietInvites';
 import { PlayerReport } from '../reports/PlayerReport';
+import { haptic } from '../lib/haptics';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 type GameStatus = 'playing' | 'won' | 'lost';
@@ -202,6 +203,9 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     if (res.ok) {
       setBattle(res.data);
       setCurrent('');
+      // this guess finished your board: found, or out of tries
+      const after = res.data.me;
+      if (after && (after.solved || after.status !== 'playing')) haptic(after.solved ? 'correct' : 'wrong');
     } else {
       setNotice(guessMsg(res.error, t));
     }

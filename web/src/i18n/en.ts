@@ -996,6 +996,11 @@ export const en = {
   'settings.sounds.title': 'Sounds',
   'settings.sounds.giftChime': 'Play a short chime when you open a gift',
   'settings.sounds.giftChimeHint': 'On this device only. There’s no chime when your device asks for reduced motion.',
+  'settings.vibration.title': 'Vibration',
+  'settings.vibration.toggle': 'Buzz for right answers and moments worth marking',
+  'settings.vibration.hint': 'On this device only, and never for anything that happens by itself.',
+  'lesson.results.levelUp': 'You reached level {level}',
+  'leagues.celebrate.up': 'Moved up',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Currently Online',
   'profile.offline': 'Offline',

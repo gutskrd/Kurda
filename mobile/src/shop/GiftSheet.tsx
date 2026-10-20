@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import type { Translate } from '../api/errors';
 import { restrictionOf } from '../reports/sendErrors';
@@ -72,6 +74,7 @@ export function GiftSheet({
       const name = to.displayName || to.username;
       const key = keys.current.get(to.userId) ?? newGiftKey();
       keys.current.set(to.userId, key);
+      haptic('tap');
       void giftItem(client, { sku: item.sku, toUserId: to.userId, expectedPrice: item.price, idempotencyKey: key }).then((res) => {
         setBusy(null);
         if (res.ok) {
@@ -81,6 +84,7 @@ export function GiftSheet({
         // the server said no, so nothing was sent: the next try is a new one.
         // Offline or a server error may have sent it, so that key is kept.
         if (res.error.kind === 'client' || res.error.kind === 'rate_limited') keys.current.delete(to.userId);
+        haptic('error');
         setError({ error: res.error, name });
       });
     },
@@ -93,7 +97,7 @@ export function GiftSheet({
   );
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <Pressable
         style={styles.backdrop}
         onPress={onClose}
@@ -101,67 +105,69 @@ export function GiftSheet({
         accessibilityLabel={t('common.cancel')}
       >
         {/* a tap inside the sheet must not reach the backdrop and close it */}
-        <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background }]}
-          onPress={() => undefined}
-        >
-          <Text style={[styles.title, { color: colors.textPrimary }]}>{t('shop.giftTo', { name: item.name })}</Text>
-          <Text style={[styles.note, { color: colors.textSecondary }]}>
-            {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })}
-          </Text>
-
-          {friends === null ? (
-            <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-          ) : friends.length === 0 ? (
-            <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
-          ) : (
-            <>
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                placeholder={t('shop.searchFriends')}
-                placeholderTextColor={colors.textSecondary}
-                autoCapitalize="none"
-                style={[
-                  styles.search,
-                  { color: colors.textPrimary, backgroundColor: colors.controlTrack },
-                ]}
-              />
-              <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
-                {shown.map((f) => (
-                  <Pressable
-                    key={f.userId}
-                    onPress={() => send(f)}
-                    accessibilityRole="button"
-                    // each row names its friend: a screen reader heard "Send <item>" on every one
-                    accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
-                    style={styles.row}
-                  >
-                    <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
-                    <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
-                      {f.displayName || f.username}
-                    </Text>
-                    {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
-                  </Pressable>
-                ))}
-              </ScrollView>
-            </>
-          )}
-
-          {error && restrictionOf(error.error) ? (
-            // a limit on the account (a gift is a chat message): calm, what and
-            // until when, and Account standing after this sheet has closed
-            <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
-          ) : error ? (
-            <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
-              {shopGiftErrorText(error.error, error.name, t)}
+        <SheetIn style={styles.sheetWrap}>
+          <Pressable
+            style={[styles.sheet, { backgroundColor: colors.background }]}
+            onPress={() => undefined}
+          >
+            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('shop.giftTo', { name: item.name })}</Text>
+            <Text style={[styles.note, { color: colors.textSecondary }]}>
+              {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })}
             </Text>
-          ) : null}
 
-          <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
-            <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+            {friends === null ? (
+              <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+            ) : friends.length === 0 ? (
+              <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
+            ) : (
+              <>
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  placeholder={t('shop.searchFriends')}
+                  placeholderTextColor={colors.textSecondary}
+                  autoCapitalize="none"
+                  style={[
+                    styles.search,
+                    { color: colors.textPrimary, backgroundColor: colors.controlTrack },
+                  ]}
+                />
+                <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
+                  {shown.map((f) => (
+                    <Pressable
+                      key={f.userId}
+                      onPress={() => send(f)}
+                      accessibilityRole="button"
+                      // each row names its friend: a screen reader heard "Send <item>" on every one
+                      accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
+                      style={styles.row}
+                    >
+                      <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
+                      <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
+                        {f.displayName || f.username}
+                      </Text>
+                      {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </>
+            )}
+
+            {error && restrictionOf(error.error) ? (
+              // a limit on the account (a gift is a chat message): calm, what and
+              // until when, and Account standing after this sheet has closed
+              <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
+            ) : error ? (
+              <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
+                {shopGiftErrorText(error.error, error.name, t)}
+              </Text>
+            ) : null}
+
+            <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
+              <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </SheetIn>
       </Pressable>
     </Modal>
   );
@@ -190,8 +196,10 @@ export function shopGiftErrorText(error: ApiError, name: string, t: Translate): 
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  // the cap is on the part that springs in, so the sheet inside it can shrink to fit
+  sheetWrap: { maxHeight: '80%' },
   sheet: {
-    maxHeight: '80%',
+    flexShrink: 1,
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
     padding: spacing.lg,

@@ -190,10 +190,10 @@
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
-/* the fill lands rather than appears, so a tap feels answered */
-.fcard-like.is-on svg,
-.fcard-repost.is-on svg,
-.fcard-save.is-on svg {
+/* the fill lands rather than appears, so a tap feels answered — a tap here, not a page that loaded liked */
+.fcard-like.just-on.is-on svg,
+.fcard-repost.just-on.is-on svg,
+.fcard-save.just-on.is-on svg {
   animation: fcard-pop 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
 }
 @keyframes fcard-pop {
@@ -202,8 +202,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fcard-like.is-on svg,
-  .fcard-save.is-on svg {
+  .fcard-act.just-on.is-on svg {
     animation: none;
   }
 }

@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import type { GiftCard, GiftTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -279,8 +280,10 @@ export function GroupThreadScreen({
     setDraft('');
     setError(null);
     setSendError(null);
+    haptic('tap');
     const refused = await post(body);
     if (!refused) return;
+    haptic('error');
     // the draft comes back when the message did not go, so nothing is lost; a
     // limit on the account says what and until when, with the way to Account
     // standing, and anything else as it always did

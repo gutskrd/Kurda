@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -18,6 +19,8 @@ import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, typ
 import { CREDIT_LINES } from './credits';
 import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
+import { useVibrationPref } from '../feedback/vibrationPref';
+import { haptic } from '../feedback/haptics';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = 'https://hevalo.app/copyright';
@@ -39,6 +42,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [minor, setMinor] = useState(false);
   // null until /me answers, so the switch never shows a guess
   const [leagues, setLeagues] = useState<boolean | null>(null);
+  // on this phone only (feedback/vibrationPref.ts)
+  const [vibration, setVibration] = useVibrationPref();
 
   // Profile visibility, username, age and leagues live server-side on /me; load
   // them so the hub reflects the saved values rather than defaulting every
@@ -66,6 +71,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   const changeVisibility = (v: Visibility) => {
     if (!visibilityOffered(v, minor)) return;
+    if (v !== visibility) haptic('select');
     const before = visibility;
     setVisibility(v);
     void client.put('/me/privacy', { visibility: v }).then((res) => {
@@ -207,7 +213,29 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow
             icon="star"
             title={t('settings.eventThemes')}
-            trailing={<Switch value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+            trailing={<Toggle value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+          />
+          {/*
+            Whether this phone buzzes at all: a light tick for a right answer, a
+            send, a moment worth marking — never for anything that happens by
+            itself. Turning it on is felt, so the switch shows what it does;
+            turning it off is not.
+          */}
+          <GlassRow
+            icon="vibrate"
+            title={t('settings.vibration')}
+            subtitle={t('settings.vibration.hint')}
+            trailing={
+              <Switch
+                value={vibration}
+                onValueChange={(on) => {
+                  setVibration(on);
+                  if (on) haptic('select');
+                }}
+                accessibilityLabel={t('settings.vibration')}
+                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+              />
+            }
           />
         </GlassCard>
 
@@ -247,7 +275,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             icon="trophy"
             title={t('settings.leagues.toggle')}
             trailing={
-              <Switch
+              <Toggle
                 value={leagues === true}
                 disabled={leagues === null}
                 onValueChange={changeLeagues}

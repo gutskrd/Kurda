@@ -20,9 +20,12 @@ import { SpeakingExercise } from './components/SpeakingExercise';
 import { WritingExercise } from './components/WritingExercise';
 import { TranslateExercise } from './components/TranslateExercise';
 import { emptyMatch, type MatchState } from './match';
-import { currentExercise, initPlayer, isReask, progress, reduce } from './player';
+import { answerFeel, currentExercise, initPlayer, isReask, progress, reduce } from './player';
+import { NO_MOMENTS, lessonMoments, type LessonMoments, type Standing, type StreakMark } from './moments';
+import { haptic } from '../feedback/haptics';
 import { AnswerQueue } from './queue';
-import type { AnswerResult, RetryResult, SelfRating, SessionResults, SessionView } from './types';
+import type { AnswerResult, Exercise, RetryResult, SelfRating, SessionResults, SessionView } from './types';
+import type { ApiClient } from '../api/client';
 import { useI18n } from '../i18n/I18nContext';
 
 /** Endpoint paths for a playable session — lessons and practice differ only here. */
@@ -126,10 +129,16 @@ export function SessionPlayer({
 
   const ex = currentExercise(state);
 
-  // learner's course-wide "skip speaking" preference (KUR-036)
+  // what a finished lesson is compared with (moments.ts): the level, the
+  // streak and today's goal as they stood when it opened
+  const before = useRef<Standing | null>(null);
+  const [moments, setMoments] = useState<LessonMoments>(NO_MOMENTS);
+
+  // learner's course-wide "skip speaking" preference (KUR-036), and where they stand
   useEffect(() => {
-    void client.get<{ user: { skipSpeaking?: boolean } }>('/me').then((res) => {
-      if (res.ok) setSkipSpeaking(!!res.data.user.skipSpeaking);
+    void readStanding(client).then(({ standing, skipSpeaking: skip }) => {
+      before.current = standing;
+      setSkipSpeaking(skip);
     });
   }, [client]);
 
@@ -185,11 +194,15 @@ export function SessionPlayer({
     }
   }, [ex, draft]);
 
-  // finish → complete the session and show results
+  // finish → complete the session and show results; then ask again where
+  // things stand, for what else this lesson did (a goal met, a new level)
   useEffect(() => {
     if (state.status !== 'finished' || results) return;
     void client.post<SessionResults>(paths.complete(view.sessionId)).then((res) => {
-      if (res.ok) setResults(res.data);
+      if (!res.ok) return;
+      setResults(res.data);
+      const streakNow: StreakMark = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn };
+      void readStanding(client).then(({ standing }) => setMoments(lessonMoments(before.current, standing, streakNow)));
     });
   }, [state.status, results, client, view.sessionId, paths]);
 
@@ -197,6 +210,8 @@ export function SessionPlayer({
   const given =
     draft?.type === 'translate' || draft?.type === 'listening' || draft?.type === 'writing' ? draft.text.trim() : undefined;
   const reask = isReask(state);
+  // how the answer on screen was graded, for the exercise to answer back with
+  const verdict = state.feedback ? (state.feedback.accepted ? 'right' : 'wrong') : null;
 
   const check = useCallback(async () => {
     if (!ex || !draft || submitting) return;
@@ -207,7 +222,10 @@ export function SessionPlayer({
     if (reask) {
       const res = await client.post<RetryResult>(paths.retry(view.sessionId), body);
       setSubmitting(false);
-      if (res.ok) dispatch({ type: 'ANSWERED', result: res.data, given });
+      if (res.ok) {
+        feelAnswer(ex.type, res.data.accepted);
+        dispatch({ type: 'ANSWERED', result: res.data, given });
+      }
       // refused (the session ended, say): the second try counts for nothing,
       // so it is let go rather than asked over and over
       else if (res.error.kind === 'client') dispatch({ type: 'SKIP' });
@@ -217,6 +235,7 @@ export function SessionPlayer({
     const res = await client.post<AnswerResult>(paths.answers(view.sessionId), body);
     setSubmitting(false);
     if (res.ok) {
+      feelAnswer(ex.type, res.data.accepted);
       dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
@@ -243,14 +262,15 @@ export function SessionPlayer({
     const last = sent[sent.length - 1];
     if (last) {
       setOffline(false);
+      feelAnswer(ex?.type, last.accepted);
       dispatch({ type: 'ANSWERED', result: last, given });
     }
-  }, [queue, client, view.sessionId, paths, check, given]);
+  }, [queue, client, view.sessionId, paths, check, given, ex]);
 
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
-        <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} onDone={onExit} />
+        <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} moments={moments} onDone={onExit} />
       </GradientBackground>
     );
   }
@@ -296,6 +316,7 @@ export function SessionPlayer({
             choice={choice}
             onSelect={setChoice}
             disabled={state.status !== 'answering'}
+            feedback={state.feedback}
           />
         ) : null}
         {ex?.type === 'translate' ? (
@@ -304,6 +325,7 @@ export function SessionPlayer({
             text={text}
             onChangeText={setText}
             dialect={view.dialect}
+            verdict={verdict}
             disabled={state.status !== 'answering'}
           />
         ) : null}
@@ -313,6 +335,7 @@ export function SessionPlayer({
             text={text}
             onChangeText={setText}
             dialect={view.dialect}
+            verdict={verdict}
             onSkip={() => dispatch({ type: 'SKIP' })}
             disabled={state.status !== 'answering'}
           />
@@ -323,6 +346,7 @@ export function SessionPlayer({
             text={text}
             onChangeText={setText}
             dialect={view.dialect}
+            verdict={verdict}
             disabled={state.status !== 'answering'}
           />
         ) : null}
@@ -342,6 +366,7 @@ export function SessionPlayer({
             state={match}
             onChange={setMatch}
             disabled={state.status !== 'answering'}
+            verdict={verdict}
           />
         ) : null}
       </ScrollView>
@@ -364,6 +389,30 @@ export function SessionPlayer({
       </View>
     </GradientBackground>
   );
+}
+
+/** Felt as the verdict arrives (`answerFeel`): crisp when right, a gentle double when not. */
+function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean): void {
+  const feel = answerFeel(type, accepted);
+  if (feel) haptic(feel);
+}
+
+/** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */
+async function readStanding(client: ApiClient): Promise<{ standing: Standing | null; skipSpeaking: boolean }> {
+  const [me, goal] = await Promise.all([
+    client.get<{ user: { skipSpeaking?: boolean; level?: { level?: number }; streak?: StreakMark } }>('/me'),
+    client.get<{ completed?: boolean }>('/me/daily-goal'),
+  ]);
+  if (!me.ok) return { standing: null, skipSpeaking: false };
+  const user = me.data.user;
+  return {
+    skipSpeaking: !!user.skipSpeaking,
+    standing: {
+      level: typeof user.level?.level === 'number' ? user.level.level : null,
+      streak: user.streak ? { current: user.streak.current, lastActiveOn: user.streak.lastActiveOn ?? null } : null,
+      goalCompleted: goal.ok && typeof goal.data.completed === 'boolean' ? goal.data.completed : null,
+    },
+  };
 }
 
 const styles = StyleSheet.create({

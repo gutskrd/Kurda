@@ -32,10 +32,12 @@
     background var(--dur-fast) ease,
     border-color var(--dur-fast) ease,
     color var(--dur-fast) ease,
-    transform 0.05s ease;
+    transform var(--dur) var(--ease-spring);
 }
-.btn:active {
-  transform: translateY(0.5px);
+.btn:active:not(:disabled) {
+  /* gives a little under the finger, and springs back when it is let go (tokens.css) */
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 80ms;
 }
 .btn:disabled {
   opacity: 0.5;
@@ -324,9 +326,10 @@ input[type='password']::-ms-clear {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -60%;
+  left: 0;
   width: 60%;
-  transform: skewX(-18deg);
+  /* parked off the left edge; the keyframes carry it across with a transform alone */
+  transform: translateX(-100%) skewX(-18deg);
   background: linear-gradient(
     90deg,
     transparent,
@@ -401,14 +404,16 @@ input[type='password']::-ms-clear {
 }
 
 @keyframes skeleton-ray {
+  /* the band is 60% of the box wide, so -100% of itself is -60% of the box and
+     216.67% of itself is 130% of it: from just off the left edge to past the right */
   0% {
-    left: -60%;
+    transform: translateX(-100%) skewX(-18deg);
   }
   /* it rests off the right edge before coming round again, so the ray reads as
      one pass rather than a band bouncing back and forth */
   70%,
   100% {
-    left: 130%;
+    transform: translateX(216.67%) skewX(-18deg);
   }
 }
 

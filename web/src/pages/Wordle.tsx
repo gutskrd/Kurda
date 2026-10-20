@@ -11,6 +11,7 @@ import { useWordleKeys } from '../keyboard/wordleKeys';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
+import { haptic } from '../lib/haptics';
 
 type Mode = 'daily' | 'practice';
 type Difficulty = 'easy' | 'medium' | 'hard';
@@ -83,6 +84,8 @@ export function Wordle(): React.JSX.Element {
     if (res.ok) {
       setGame(res.data);
       setCurrent('');
+      // the word found is a right answer, running out of tries a gentle miss; a guess along the way is neither
+      if (res.data.status !== 'playing') haptic(res.data.status === 'won' ? 'correct' : 'wrong');
     } else {
       setNotice(guessError(res.error, t));
     }

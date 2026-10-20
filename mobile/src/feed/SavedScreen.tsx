@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
@@ -88,9 +91,14 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     );
   }, []);
 
+  const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => <FeedCard item={item} onChanged={changed} />,
-    [changed],
+    ({ item, index }: { item: FeedItem; index: number }) => (
+      <Rise delay={entering(index)}>
+        <FeedCard item={item} onChanged={changed} />
+      </Rise>
+    ),
+    [changed, entering],
   );
 
   return (
@@ -105,7 +113,7 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={

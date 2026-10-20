@@ -1,6 +1,9 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { layout, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
@@ -126,9 +129,15 @@ export function CivakScreen(): React.JSX.Element {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
 
+  // the first screenful rises in once, as the wall arrives
+  const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => <FeedCard item={item} onChanged={replace} />,
-    [replace],
+    ({ item, index }: { item: FeedItem; index: number }) => (
+      <Rise delay={entering(index)}>
+        <FeedCard item={item} onChanged={replace} />
+      </Rise>
+    ),
+    [replace, entering],
   );
 
   const everything = section === 'all' && !kind;
@@ -177,7 +186,7 @@ export function CivakScreen(): React.JSX.Element {
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             showsVerticalScrollIndicator={false}

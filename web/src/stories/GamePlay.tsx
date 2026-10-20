@@ -16,6 +16,7 @@ import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
 import type { AnswerOutcome } from './useStoryGame';
 import { useStoryAudio } from './useStoryAudio';
+import { haptic } from '../lib/haptics';
 
 /** "This question closes soon" shows in the last stretch of an untimed question's cap. */
 const CLOSES_SOON_MS = 30_000;
@@ -390,6 +391,8 @@ export function GameReveal({
     const verdict =
       r.myCorrect === true ? t('stories.game.right') : r.myChoice === null ? t('stories.game.noAnswer') : t('stories.game.notThisTime');
     announce(t('stories.game.revealSaid', { verdict, answer: right }));
+    // felt as the verdict on your answer is shown, on a touch screen that can; nothing when you gave none
+    if (r.myChoice !== null) haptic(r.myCorrect ? 'correct' : 'wrong');
     next.current?.focus();
     // once per answer
   }, [r?.index]);

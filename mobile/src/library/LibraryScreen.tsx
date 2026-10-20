@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -83,30 +86,34 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setLoadingMore(false);
   }, [fetchPage, loadingMore, end, posts]);
 
+  // the first screenful rises in once, as the list arrives
+  const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: LibraryPost }) => (
-      <Pressable
-        onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill }]}
-        accessibilityRole="button"
-        accessibilityLabel={t('library.readLabel', { title: postName(item) })}
-      >
-        <View style={styles.cardHead}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {postName(item)}
+    ({ item, index }: { item: LibraryPost; index: number }) => (
+      <Rise delay={entering(index)}>
+        <PressableScale
+          onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
+          style={[styles.card, { backgroundColor: colors.glassFill }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('library.readLabel', { title: postName(item) })}
+        >
+          <View style={styles.cardHead}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              {postName(item)}
+            </Text>
+            {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
+          </View>
+          <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
+            {bodyPreview(item.body)}
           </Text>
-          {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
-        </View>
-        <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
-          {bodyPreview(item.body)}
-        </Text>
-        <View style={styles.cardFoot}>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>👁 {item.viewCount}</Text>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
-        </View>
-      </Pressable>
+          <View style={styles.cardFoot}>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>👁 {item.viewCount}</Text>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
+          </View>
+        </PressableScale>
+      </Rise>
     ),
-    [navigation, colors],
+    [navigation, colors, entering],
   );
 
   return (
@@ -135,7 +142,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={

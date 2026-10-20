@@ -929,6 +929,11 @@ export const ar: Catalogue = {
   'settings.sounds.title': 'الأصوات',
   'settings.sounds.giftChime': 'شغّل رنينًا قصيرًا عند فتح هدية',
   'settings.sounds.giftChimeHint': 'على هذا الجهاز فقط. لا رنين عندما يطلب جهازك تقليل الحركة.',
+  'settings.vibration.title': 'الاهتزاز',
+  'settings.vibration.toggle': 'اهتزّ للإجابات الصحيحة واللحظات المميزة',
+  'settings.vibration.hint': 'على هذا الجهاز فقط، وليس أبدًا لشيء يحدث من تلقاء نفسه.',
+  'lesson.results.levelUp': 'وصلت إلى المستوى {level}',
+  'leagues.celebrate.up': 'صعدت',
   // ---- end web-social ----
   'profile.currentlyOnline': 'متصل الآن',
   'profile.offline': 'غير متصل',

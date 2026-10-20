@@ -10,6 +10,7 @@ import { useTypeOnly } from '../components/typeOnly';
 import { useT } from '../i18n/I18nProvider';
 import { useGameFinished } from '../feedback/gameFinished';
 import type { MessageKey } from '../i18n/en';
+import { haptic } from '../lib/haptics';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -108,6 +109,7 @@ export function Rhyme(): React.JSX.Element {
       setGame(g);
       setRemaining(g.remainingMs);
       setWord('');
+      haptic(result.accepted ? 'correct' : 'wrong');
       if (result.accepted) {
         setFound((f) => [{ word: result.normalized, quality: result.quality, points: result.points }, ...f]);
       } else {

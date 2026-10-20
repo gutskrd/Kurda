@@ -931,6 +931,11 @@ export const tr: Catalogue = {
   'settings.sounds.title': 'Sesler',
   'settings.sounds.giftChime': 'Bir hediye açtığında kısa bir zil çal',
   'settings.sounds.giftChimeHint': 'Yalnızca bu cihazda. Cihazın daha az hareket istediğinde zil çalmaz.',
+  'settings.vibration.title': 'Titreşim',
+  'settings.vibration.toggle': 'Doğru cevaplarda ve özel anlarda titret',
+  'settings.vibration.hint': 'Yalnızca bu cihazda ve kendiliğinden olan hiçbir şey için asla.',
+  'lesson.results.levelUp': '{level}. seviyeye ulaştın',
+  'leagues.celebrate.up': 'Yükseldin',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Şu anda çevrimiçi',
   'profile.offline': 'Çevrimdışı',

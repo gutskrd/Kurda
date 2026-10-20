@@ -8,7 +8,6 @@ import {
   Pressable,
   StyleSheet,
   Text,
-  Vibration,
   View,
 } from 'react-native';
 import type { EquippableCategory, GiftCard } from '@kurda/shared';
@@ -17,6 +16,7 @@ import { assetUrl } from '../api/env';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { DarkScheme, useTheme } from '../theme/ThemeProvider';
 import { PALETTES } from '../theme/palette';
@@ -38,9 +38,6 @@ export interface UnwrapTarget {
   fromName: string;
 }
 
-/** A light tick as the lid comes off — 15 ms, the lightest the platforms give. */
-const HAPTIC_MS = 15;
-
 /**
  * Unwrapping a present.
  *
@@ -48,8 +45,9 @@ const HAPTIC_MS = 15;
  * a small card at the bubble's scale, a rare one rises in a sheet with
  * pomegranate seeds thrown out of it, a legendary one takes the whole screen
  * with the Newroz flame behind it. Every one can be skipped with a tap; with
- * Reduce Motion it is a short fade to the item and nothing moves. A light
- * haptic tick marks the lid coming off (skipped with the rest).
+ * Reduce Motion it is a short fade to the item and nothing moves. It is felt
+ * once (`haptic('celebrate')`) as the lid comes off and the item is seen — or
+ * at the tap that skips to it.
  *
  * It runs on the native driver — one progress value, transforms and opacity
  * only — so a busy JS thread cannot make it stutter.
@@ -95,6 +93,12 @@ export function GiftUnwrap({
   const [actionError, setActionError] = useState<string | null>(null);
   const [thanksError, setThanksError] = useState<ApiError | null>(null);
   const tick = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const felt = useRef(false);
+  const feel = (): void => {
+    if (felt.current) return;
+    felt.current = true;
+    haptic('celebrate');
+  };
   // held in a ref: a parent passing a fresh one on every render must not reopen the gift
   const opened = useRef(onOpened);
   opened.current = onOpened;
@@ -118,6 +122,7 @@ export function GiftUnwrap({
 
   const reveal = (): void => {
     if (tick.current) clearTimeout(tick.current);
+    feel();
     progress.stopAnimation();
     progress.setValue(1);
     setRevealed(true);
@@ -133,7 +138,7 @@ export function GiftUnwrap({
     run.start(({ finished }) => {
       if (finished) setRevealed(true);
     });
-    tick.current = setTimeout(() => Vibration.vibrate(HAPTIC_MS), plan.durationMs * plan.popAt);
+    tick.current = setTimeout(feel, plan.durationMs * plan.popAt);
     return () => {
       run.stop();
       if (tick.current) clearTimeout(tick.current);

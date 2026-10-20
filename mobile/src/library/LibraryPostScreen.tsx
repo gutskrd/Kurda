@@ -10,6 +10,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
@@ -92,9 +93,11 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
       }
       audioMediaId = up.audioMediaId;
     }
+    haptic('tap');
     const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
+      haptic('error');
       showSendError(t('comment.failed'), res.error);
       return;
     }

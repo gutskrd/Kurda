@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -189,55 +190,57 @@ function NewClub({
   };
 
   return (
-    <Modal visible={open} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
-        <Pressable
-          style={[styles.sheet, { backgroundColor: colors.background }]}
-          onPress={() => undefined}
-        >
-          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('groups.new')}</Text>
+        <SheetIn>
+          <Pressable
+            style={[styles.sheet, { backgroundColor: colors.background }]}
+            onPress={() => undefined}
+          >
+            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('groups.new')}</Text>
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
-          <TextInput
-            style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-            value={name}
-            onChangeText={setName}
-            placeholder={t('groups.namePlaceholder')}
-            placeholderTextColor={colors.textSecondary}
-            maxLength={60}
-            accessibilityLabel={t('groups.name')}
-          />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+              value={name}
+              onChangeText={setName}
+              placeholder={t('groups.namePlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              maxLength={60}
+              accessibilityLabel={t('groups.name')}
+            />
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.description')}</Text>
-          <TextInput
-            style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-            value={description}
-            onChangeText={setDescription}
-            multiline
-            maxLength={300}
-            accessibilityLabel={t('groups.description')}
-          />
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.description')}</Text>
+            <TextInput
+              style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+              value={description}
+              onChangeText={setDescription}
+              multiline
+              maxLength={300}
+              accessibilityLabel={t('groups.description')}
+            />
 
-          <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.privacy')}</Text>
-          <Segmented<Privacy>
-            options={PRIVACIES}
-            value={privacy}
-            onChange={setPrivacy}
-            labelOf={(p) => t(p === 'open' ? 'settings.visibility.everyone' : 'groups.inviteOnly')}
-          />
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>
-            {t(privacy === 'open' ? 'groups.privacy.openHint' : 'groups.privacy.inviteHint')}
-          </Text>
+            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.privacy')}</Text>
+            <Segmented<Privacy>
+              options={PRIVACIES}
+              value={privacy}
+              onChange={setPrivacy}
+              labelOf={(p) => t(p === 'open' ? 'settings.visibility.everyone' : 'groups.inviteOnly')}
+            />
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>
+              {t(privacy === 'open' ? 'groups.privacy.openHint' : 'groups.privacy.inviteHint')}
+            </Text>
 
-          {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
-          <ClayButton
-            label={busy ? t('groups.creating') : t('groups.create')}
-            tone="primary"
-            onPress={submit}
-            style={name.trim().length >= 2 && !busy ? undefined : styles.dim}
-          />
-        </Pressable>
+            <ClayButton
+              label={busy ? t('groups.creating') : t('groups.create')}
+              tone="primary"
+              onPress={submit}
+              style={name.trim().length >= 2 && !busy ? undefined : styles.dim}
+            />
+          </Pressable>
+        </SheetIn>
       </Pressable>
     </Modal>
   );

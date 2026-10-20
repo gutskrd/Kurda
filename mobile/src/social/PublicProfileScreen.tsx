@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -90,6 +91,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const perform = useCallback(
     async (status: FriendStatus) => {
       setBusy(true);
+      // an offer made — a request sent, or one accepted — is felt; taking one back is quiet
+      if (status === 'none' || status === 'pending_in') haptic('tap');
       if (status === 'none') await client.post('/friends/requests', { userId });
       else if (status === 'pending_in') await client.post(`/friends/requests/${userId}/accept`);
       else if (status === 'pending_out') await client.delete(`/friends/requests/${userId}`);

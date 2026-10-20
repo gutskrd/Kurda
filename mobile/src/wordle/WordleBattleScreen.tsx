@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
@@ -220,7 +221,10 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
       setDraft([]);
       // this guess finished your board (solved, or out of tries): a game played to its end
       const after = res.data.me;
-      if (after && (after.solved || after.status !== 'playing')) reportGameFinished({ moment: after.solved ? 'won' : 'other' });
+      if (after && (after.solved || after.status !== 'playing')) {
+        haptic(after.solved ? 'correct' : 'wrong');
+        reportGameFinished({ moment: after.solved ? 'won' : 'other' });
+      }
     } else {
       // a rejected guess costs no attempt — the draft stays put, with a reason
       setNotice(guessMessage(res.error, t));
@@ -307,7 +311,10 @@ function BattleRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; 
           <ClayButton
             label={busy ? t('games.starting') : t('games.battle.start')}
             tone="primary"
-            onPress={() => void act(() => startBattle(client, id))}
+            onPress={() => {
+              haptic('tap');
+              void act(() => startBattle(client, id));
+            }}
             style={styles.stretch}
           />
         ) : (

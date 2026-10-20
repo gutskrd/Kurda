@@ -12,6 +12,8 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
+import { Pop } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
@@ -82,6 +84,8 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     async (reaction: Reaction) => {
       if (!reactions) return;
       const isSame = reactions.mine === reaction;
+      // choosing a reaction is felt; taking it back is quiet
+      if (!isSame) haptic('tap');
       const res = isSame ? await clearReaction(client, postId) : await setReaction(client, postId, reaction);
       if (res.ok) setReactions(res.data);
     },
@@ -92,9 +96,11 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
     const body = draft.trim();
     if (!body || posting) return;
     setPosting(true);
+    haptic('tap');
     const res = await addComment(client, postId, body);
     setPosting(false);
     if (!res.ok) {
+      haptic('error');
       showSendError(t('comment.failed'), res.error);
       return;
     }
@@ -163,7 +169,10 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
                       accessibilityLabel={t(REACTION_LABEL[r])}
                       accessibilityState={{ selected: active }}
                     >
-                      <Text style={styles.reactionEmoji}>{REACTION_EMOJI[r]}</Text>
+                      {/* the one chosen pops as it becomes yours */}
+                      <Pop when={active}>
+                        <Text style={styles.reactionEmoji}>{REACTION_EMOJI[r]}</Text>
+                      </Pop>
                       {n > 0 ? <Text style={[styles.reactionCount, { color: active ? colors.textOnPrimary : colors.textSecondary }]}>{n}</Text> : null}
                     </Pressable>
                   );

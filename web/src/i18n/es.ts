@@ -934,6 +934,11 @@ export const es: Catalogue = {
   'settings.sounds.title': 'Sonidos',
   'settings.sounds.giftChime': 'Sonar un breve tintineo al abrir un regalo',
   'settings.sounds.giftChimeHint': 'Solo en este dispositivo. No suena si tu dispositivo pide menos movimiento.',
+  'settings.vibration.title': 'Vibración',
+  'settings.vibration.toggle': 'Vibrar con las respuestas correctas y los momentos especiales',
+  'settings.vibration.hint': 'Solo en este dispositivo, y nunca por algo que pasa solo.',
+  'lesson.results.levelUp': 'Has llegado al nivel {level}',
+  'leagues.celebrate.up': 'Has subido',
   // ---- end web-social ----
   'profile.currentlyOnline': 'En línea ahora',
   'profile.offline': 'Desconectado',

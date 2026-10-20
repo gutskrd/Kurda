@@ -16,6 +16,7 @@ import { ChatsIcon, ChevronIcon, InviteIcon, NewMessageIcon, SearchIcon } from '
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { SendError } from '../reports/SendError';
+import { useArrival } from '../lib/motion';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -298,6 +299,7 @@ function Conversations({
   }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
+  const arriving = useArrival(convos !== null);
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
   useRealtimeEvent('group_msg', onDm);
@@ -325,7 +327,8 @@ function Conversations({
     return <p className="muted chat-list-none">{unreadOnly && !needle ? t('chat.allRead') : t('chat.noMatch')}</p>;
 
   return (
-    <>
+    // the first screenful of conversations rises in once, as the list arrives (styles/motion.css)
+    <div className={arriving ? 'list-arrival rise-in' : 'list-arrival'}>
       {people.map((c) => (
         <ConvoRow
           key={c.userId}
@@ -353,7 +356,7 @@ function Conversations({
           unread={groupUnread[g.id] ?? 0}
         />
       ))}
-    </>
+    </div>
   );
 }
 

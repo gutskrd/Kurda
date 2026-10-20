@@ -47,8 +47,12 @@ body {
   html {
     scroll-behavior: auto;
   }
-  * {
+  /* every movement lands where it ends, at once — and a loop runs once, not a thousand times a second */
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }

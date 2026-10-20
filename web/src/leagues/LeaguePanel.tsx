@@ -17,6 +17,7 @@ import { LeagueEmblem } from '../ranks/art';
 import { leagueName, leagueNamed, withMeaning, type Translate } from '../ranks/names';
 import { RankList, RankRow } from '../ui/RankRow';
 import { GoalRing } from './GoalRing';
+import { LeagueMoment } from './LeagueMoment';
 
 /**
  * This week's Learning League (contract 4 §L, §U), rebuilt.
@@ -82,6 +83,8 @@ export function LeaguePanel(): React.JSX.Element | null {
         <p className="league-join-hint">{t('leagues.joinHint')}</p>
       )}
       {league.lastWeek && <LastWeek result={league.lastWeek} />}
+      {/* moved up last week: celebrated once, the first time the league is opened after */}
+      <LeagueMoment week={league.lastWeek} />
     </section>
   );
 }

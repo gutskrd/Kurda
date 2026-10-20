@@ -2,6 +2,8 @@ import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable, Share, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
+import { HeartBurst } from '../theme/MotionParts';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -42,6 +44,8 @@ export function FeedCard({
   const { colors } = useTheme();
   const { t } = useI18n();
   const [busy, setBusy] = useState<EngagementKind | null>(null);
+  // each like made here, so the heart answers the press before the server does
+  const [likes, setLikes] = useState(0);
 
   const open = useCallback(() => {
     if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
@@ -142,7 +146,15 @@ export function FeedCard({
           disabled={busy !== null}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
           count={e.likes}
-          onPress={() => void toggle('like')}
+          burst={likes}
+          onPress={() => {
+            // a like is felt and pops; taking one back is quiet
+            if (!e.liked) {
+              haptic('tap');
+              setLikes((n) => n + 1);
+            }
+            void toggle('like');
+          }}
         />
         <Action
           icon="repost"
@@ -179,6 +191,7 @@ function Action({
   count,
   on = false,
   disabled = false,
+  burst,
   onPress,
   style,
 }: {
@@ -187,6 +200,8 @@ function Action({
   count?: number;
   on?: boolean;
   disabled?: boolean;
+  /** goes up each time the icon should pop with a burst (a like) */
+  burst?: number;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -202,7 +217,13 @@ function Action({
       accessibilityLabel={count ? `${label} (${count})` : label}
       style={[styles.action, disabled && styles.actionDisabled, style]}
     >
-      <Icon name={icon} size={18} color={tint} />
+      {burst !== undefined ? (
+        <HeartBurst fired={burst} color={colors.danger} size={18}>
+          <Icon name={icon} size={18} color={tint} />
+        </HeartBurst>
+      ) : (
+        <Icon name={icon} size={18} color={tint} />
+      )}
       {count ? <Text style={[styles.count, { color: tint }]}>{count}</Text> : null}
     </Pressable>
   );

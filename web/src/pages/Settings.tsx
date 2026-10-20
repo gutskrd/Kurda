@@ -10,6 +10,7 @@ import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { SafetyCard } from '../reports/SafetyCard';
 import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
+import { VibrationSetting } from '../settings/VibrationSetting';
 import { NotificationPrefsCard } from '../notifications/NotificationPrefsCard';
 import { APP_LOCALES, isAppLocale, type AppLocale } from '@kurda/shared';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -91,6 +92,9 @@ export function Settings(): React.JSX.Element {
 
       {/* what the app may make a sound for: opening a gift */}
       <GiftSoundSetting />
+
+      {/* whether a touch screen buzzes for an answer and a moment worth marking (only where it can) */}
+      <VibrationSetting />
 
       <Leagues enabled={data.user.leaguesEnabled !== false} minor={data.user.minor === true} />
 

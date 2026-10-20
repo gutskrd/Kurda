@@ -21,6 +21,9 @@ import { LeagueEmblem } from '../ranks/art';
 import { getLeague } from '../ranks/api';
 import { leagueTint } from '../ranks/tint';
 import { GoalRing } from './GoalRing';
+import { LeagueMoment } from './LeagueMoment';
+import { useListEntrance } from '../theme/animate';
+import { Rise } from '../theme/MotionParts';
 import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, zoneRules, type TableItem } from './format';
 
 interface BoardEntry {
@@ -130,6 +133,8 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
             labelOf={(k) => (k === 'league' ? t('profile.league') : t('rankings.leaderboard'))}
           />
         </View>
+        {/* moved up last week: celebrated once, the first time the league is opened after */}
+        <LeagueMoment week={league?.lastWeek} />
         {tab === 'league' ? (
           <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague}>
             {league ? <LeagueTab league={league} joining={joining} onJoin={() => void join()} /> : null}
@@ -159,13 +164,19 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
 function LeagueTab({ league, joining, onJoin }: { league: LeagueView; joining: boolean; onJoin: () => void }): React.JSX.Element {
   if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} />;
   const items = league.joined ? tableItems(league.standings) : [];
+  // the first screenful of the table rises in once, as it arrives
+  const entering = useListEntrance(items.length > 0);
   return (
     <FlatList
       data={items}
       keyExtractor={(item, i) => (item.kind === 'row' ? `r-${item.row.rank}` : `${item.kind}-${i}`)}
       contentContainerStyle={styles.list}
       ListHeaderComponent={<LeagueHead league={league} />}
-      renderItem={({ item }) => <TableRow item={item} />}
+      renderItem={({ item, index }) => (
+        <Rise delay={entering(index)}>
+          <TableRow item={item} />
+        </Rise>
+      )}
     />
   );
 }

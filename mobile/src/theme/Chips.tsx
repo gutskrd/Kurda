@@ -3,6 +3,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { layout, radii, spacing, typography } from './tokens';
 import { useTheme } from './ThemeProvider';
 import { useDirection } from '../reports/direction';
+import { haptic } from '../feedback/haptics';
 
 /**
  * A row of filter chips: All · Unread · Groups, People · Words · Lessons.
@@ -57,7 +58,10 @@ export function Chips<T extends string>({
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
+            onPress={() => {
+              if (!active) haptic('select');
+              onChange(opt);
+            }}
             accessibilityRole="button"
             accessibilityState={{ selected: active }}
             accessibilityLabel={count ? `${label}, ${count}` : label}

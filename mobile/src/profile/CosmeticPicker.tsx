@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Toggle } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -292,7 +293,7 @@ export function CosmeticPicker({
           {current === 'icon' && ofKind.length > 0 ? (
             <View style={[styles.toggleRow, { flexDirection: dir.row }]}>
               <Text style={[styles.toggleLabel, dir.text, { color: colors.textPrimary }]}>{t('edit.showPremiumIcon')}</Text>
-              <Switch
+              <Toggle
                 value={showIcon}
                 onValueChange={toggleIcon}
                 accessibilityLabel={t('edit.showPremiumIcon')}

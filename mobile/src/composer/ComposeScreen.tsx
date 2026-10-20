@@ -8,11 +8,12 @@ import {
   Pressable,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   TextInput,
   View,
 } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
+import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
 import {
   POST_ALT_MAX,
@@ -595,7 +596,7 @@ export function ComposeScreen({
                   <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.meme')}</Text>
                   <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.memeHint')}</Text>
                 </View>
-                <Switch
+                <Toggle
                   value={state.draft.meme}
                   onValueChange={(meme) => setState((s) => ({ ...s, draft: { ...s.draft, meme } }))}
                   accessibilityLabel={t('composer.meme')}
@@ -853,9 +854,9 @@ function AltSheet({
   const { t } = useI18n();
   const counter = counterFor(picture.altText, POST_ALT_MAX);
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView style={[styles.scrim, { backgroundColor: colors.scrim }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
             {t('composer.alt.title')}
           </Text>
@@ -884,7 +885,7 @@ function AltSheet({
                   {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
                 </Text>
               </View>
-              <Switch
+              <Toggle
                 value={picture.ownWork}
                 onValueChange={(ownWork) => onChange({ ownWork })}
                 accessibilityLabel={t('composer.ownWork')}
@@ -893,7 +894,7 @@ function AltSheet({
             </View>
           ) : null}
           <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
-        </View>
+        </SheetIn>
       </KeyboardAvoidingView>
     </Modal>
   );

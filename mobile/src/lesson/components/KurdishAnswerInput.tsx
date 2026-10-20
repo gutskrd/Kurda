@@ -12,6 +12,8 @@ import { isSoraniDialect, typingKeys } from '@kurda/shared';
 import { KeyBar } from '../../keyboard/KeyBar';
 import { insertAtSelection, type Selection } from '../kurdishKeys';
 import { spacing } from '../../theme/tokens';
+import { useTheme } from '../../theme/ThemeProvider';
+import { AnswerMotion } from '../../theme/MotionParts';
 
 /**
  * A lesson's answer box with the Kurdish key bar above it — on Translate,
@@ -26,6 +28,10 @@ import { spacing } from '../../theme/tokens';
  * right after a key: a `selection` held on the field for good is what makes a
  * React Native cursor jump about as you type, so it is let go again as soon as
  * the field reports it has moved there.
+ *
+ * Once the answer is graded the field answers back: tinted and popping a
+ * little when it was accepted, tinted and shaking once when it was not (still
+ * under Reduce Motion, where the tint says it alone).
  */
 export function KurdishAnswerInput({
   text,
@@ -36,6 +42,7 @@ export function KurdishAnswerInput({
   placeholderTextColor,
   accessibilityLabel,
   multiline = false,
+  verdict = null,
   style,
 }: {
   text: string;
@@ -47,8 +54,11 @@ export function KurdishAnswerInput({
   placeholderTextColor: string;
   accessibilityLabel: string;
   multiline?: boolean;
+  /** how the answer was graded, once it has been */
+  verdict?: 'right' | 'wrong' | null;
   style?: StyleProp<TextStyle>;
 }): React.JSX.Element {
+  const { colors } = useTheme();
   const sorani = isSoraniDialect(dialect);
   const selection = useRef<Selection>({ start: text.length, end: text.length });
   const [place, setPlace] = useState<Selection | undefined>(undefined);
@@ -75,21 +85,27 @@ export function KurdishAnswerInput({
         disabled={disabled}
         style={styles.bar}
       />
-      <TextInput
-        value={text}
-        onChangeText={onChangeText}
-        onSelectionChange={onSelectionChange}
-        selection={place}
-        editable={!disabled}
-        multiline={multiline}
-        placeholder={placeholder}
-        placeholderTextColor={placeholderTextColor}
-        autoCapitalize="none"
-        autoCorrect={false}
-        spellCheck={false}
-        accessibilityLabel={accessibilityLabel}
-        style={[style, sorani && styles.rtl]}
-      />
+      <AnswerMotion verdict={verdict}>
+        <TextInput
+          value={text}
+          onChangeText={onChangeText}
+          onSelectionChange={onSelectionChange}
+          selection={place}
+          editable={!disabled}
+          multiline={multiline}
+          placeholder={placeholder}
+          placeholderTextColor={placeholderTextColor}
+          autoCapitalize="none"
+          autoCorrect={false}
+          spellCheck={false}
+          accessibilityLabel={accessibilityLabel}
+          style={[
+            style,
+            sorani && styles.rtl,
+            verdict && { opacity: 1, backgroundColor: verdict === 'right' ? colors.successFill : colors.dangerFill },
+          ]}
+        />
+      </AnswerMotion>
     </View>
   );
 }

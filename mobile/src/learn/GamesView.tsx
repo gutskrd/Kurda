@@ -1,6 +1,7 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import type { IncomingInvite, MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -214,7 +215,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
             const name = t(card.name);
             const mode = soon ? t('stories.card.soon') : t(MODE_LABEL[card.mode]);
             return (
-              <Pressable
+              <PressableScale
                 key={card.key}
                 disabled={soon}
                 onPress={() => navigation.navigate(card.route)}
@@ -222,11 +223,11 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 accessibilityState={{ disabled: soon }}
                 accessibilityLabel={`${name}, ${mode}. ${t(card.line)}`}
                 testID={`game-${card.key}`}
-                style={({ pressed }) => [
+                style={[
                   styles.card,
                   {
                     backgroundColor: colors.surface,
-                    opacity: soon ? 0.55 : pressed ? 0.75 : 1,
+                    opacity: soon ? 0.55 : 1,
                     alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start',
                   },
                 ]}
@@ -252,7 +253,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                     </Text>
                   </View>
                 </View>
-              </Pressable>
+              </PressableScale>
             );
           })}
         </View>

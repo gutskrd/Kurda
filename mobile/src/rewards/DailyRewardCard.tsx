@@ -6,6 +6,7 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
+import { useCountUp } from '../theme/animate';
 import { cellState, dailyAction, type DailyStatus } from './daily';
 
 /**
@@ -84,11 +85,25 @@ export function DailyRewardCard() {
       ) : action === 'learnFirst' ? (
         <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
       ) : (
-        <Text style={[styles.done, { color: colors.textSecondary }]}>
-          {justEarned != null ? t('rewards.claimedZer', { amount: justEarned }) : t('rewards.comeBackTomorrow')}
-        </Text>
+        justEarned != null ? (
+          <ClaimedLine amount={justEarned} />
+        ) : (
+          <Text style={[styles.done, { color: colors.textSecondary }]}>{t('rewards.comeBackTomorrow')}</Text>
+        )
       )}
     </View>
+  );
+}
+
+/** The Zêr just claimed, counting up to what was paid (theme/animate.ts); read out as the final amount. */
+function ClaimedLine({ amount }: { amount: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const shown = useCountUp(amount);
+  return (
+    <Text style={[styles.done, { color: colors.textSecondary }]} accessibilityLabel={t('rewards.claimedZer', { amount })}>
+      {t('rewards.claimedZer', { amount: shown })}
+    </Text>
   );
 }
 

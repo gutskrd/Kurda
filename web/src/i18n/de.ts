@@ -937,6 +937,11 @@ export const de: Catalogue = {
   'settings.sounds.title': 'Töne',
   'settings.sounds.giftChime': 'Beim Öffnen eines Geschenks einen kurzen Klang abspielen',
   'settings.sounds.giftChimeHint': 'Nur auf diesem Gerät. Kein Klang, wenn dein Gerät weniger Bewegung wünscht.',
+  'settings.vibration.title': 'Vibration',
+  'settings.vibration.toggle': 'Bei richtigen Antworten und besonderen Momenten vibrieren',
+  'settings.vibration.hint': 'Nur auf diesem Gerät, und nie bei etwas, das von selbst passiert.',
+  'lesson.results.levelUp': 'Du hast Stufe {level} erreicht',
+  'leagues.celebrate.up': 'Aufgestiegen',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Gerade online',
   'profile.offline': 'Offline',

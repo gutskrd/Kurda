@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
@@ -124,6 +125,7 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const start = async (mode: 'daily' | 'practice') => {
     // the rating box, if it came, belonged to the board this replaces
     leftResults();
+    haptic('tap');
     setStarting(true);
     setNote(null);
     setDraft([]);
@@ -183,6 +185,8 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
       setDraft([]);
       setNote(null);
       if (res.data.status !== 'playing') {
+        // the word found is a right answer; running out of tries a gentle miss — a guess along the way is neither
+        haptic(res.data.status === 'won' ? 'correct' : 'wrong');
         loadStats();
         void fetchEducation(res.data.target);
         // this guess ended it — a daily reopened after it was played is not a finish

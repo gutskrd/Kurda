@@ -6,6 +6,11 @@ import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
 import { feedbackTitle, type Feedback } from '../player';
 import { useAudio } from '../useAudio';
+import { useReducedMotion } from '../../a11y/useReducedMotion';
+import { timing } from '../../theme/animate';
+import { duration } from '../../theme/motion';
+import { Icon } from '../../theme/Icon';
+import { DrawnCheck } from '../../theme/MotionParts';
 
 interface Props {
   /** null while the learner is still answering */
@@ -21,19 +26,23 @@ interface Props {
  * it slides up a coloured banner (green accepted / red wrong) with the
  * correction, the native recording to hear when there is one, and a
  * Continue button. A miss says it will come back.
+ *
+ * The verdict is a mark as well as a colour: a check that draws in, or a
+ * cross. Under Reduce Motion the banner fades in where it is.
  */
 export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const reduce = useReducedMotion();
   const slide = useRef(new Animated.Value(0)).current;
   const model = useAudio(feedback?.modelAudioUrl);
 
   useEffect(() => {
-    Animated.timing(slide, {
-      toValue: feedback ? 1 : 0,
-      duration: 180,
-      useNativeDriver: true,
-    }).start();
+    if (!feedback) {
+      slide.setValue(0);
+      return;
+    }
+    timing(slide, 1, duration.base).start();
   }, [feedback, slide]);
 
   if (!feedback) {
@@ -53,13 +62,18 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
 
   const good = feedback.accepted;
   const title = t(feedbackTitle(feedback));
-  const translateY = slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
+  const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
   return (
     <Animated.View
       style={[styles.banner, { backgroundColor: good ? colors.successFill : colors.dangerFill }, { opacity: slide, transform: [{ translateY }] }]}
     >
-      <Text accessibilityLiveRegion="polite" style={[styles.bannerTitle, { color: good ? colors.success : colors.danger }]}>{title}</Text>
+      <View style={styles.titleRow}>
+        {good ? <DrawnCheck size={24} color={colors.success} delayMs={120} /> : <Icon name="close" size={24} color={colors.danger} />}
+        <Text accessibilityLiveRegion="polite" style={[styles.bannerTitle, { color: good ? colors.success : colors.danger }]}>
+          {title}
+        </Text>
+      </View>
       {feedback.correction ? (
         <Text style={[styles.correction, { color: colors.textPrimary }]}>
           {t('lesson.answer')} <Text style={styles.correctionValue}>{feedback.correction}</Text>
@@ -87,7 +101,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: radii.lg,
     borderTopRightRadius: radii.lg,
   },
-  bannerTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  bannerTitle: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   correction: { fontSize: typography.sizes.md },
   correctionValue: { fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.sm },

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import {
   DEFAULT_ITEM_FILTER,
   applyItemFilter,
@@ -14,6 +15,7 @@ import {
   type ItemFilter,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -122,6 +124,8 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         load(); // pull fresh prices
         Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
       } else {
+        // the purchase did not happen and nothing else will make it: felt as an error
+        haptic('error');
         Alert.alert(t('shop.purchaseFailed'), describeError(res.error, t));
       }
     },
@@ -294,7 +298,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </ScrollView>
         </AsyncBoundary>
 
-        <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
+        <Modal visible={selected !== null} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
           <View style={styles.backdrop}>
             {/*
               Beside the sheet, not around it: a pressable wrapping the sheet
@@ -307,7 +311,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
               accessibilityElementsHidden
               importantForAccessibility="no-hide-descendants"
             />
-            <View
+            <SheetIn
               style={[styles.sheet, { backgroundColor: colors.background }]}
               accessibilityViewIsModal
               onAccessibilityEscape={() => setSelected(null)}
@@ -336,7 +340,7 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
                   }}
                 />
               ) : null}
-            </View>
+            </SheetIn>
           </View>
         </Modal>
 

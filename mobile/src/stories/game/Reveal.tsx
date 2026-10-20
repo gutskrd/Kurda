@@ -7,6 +7,8 @@ import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
+import { AnswerMotion, DrawnCheck } from '../../theme/MotionParts';
+import { haptic } from '../../feedback/haptics';
 import { useTheme } from '../../theme/ThemeProvider';
 import { display } from '../../theme/fonts';
 import { radii, spacing, typography } from '../../theme/tokens';
@@ -67,6 +69,8 @@ export function Reveal({
     if (!r || said.current === r.index) return;
     said.current = r.index;
     announce(revealAnnouncement(r.myCorrect, right, t));
+    // felt as the verdict on your answer is shown; nothing when you gave none
+    if (r.myCorrect !== null) haptic(r.myCorrect ? 'correct' : 'wrong');
   }, [r, right, announce, t]);
 
   if (!r) return null;
@@ -94,12 +98,17 @@ export function Reveal({
       <Text style={[styles.index, { color: colors.textSecondary }]}>
         {t('stories.questionOf', { index: r.index + 1, total: q?.total ?? view.settings.questionCount })}
       </Text>
-      <View style={[styles.verdict, { backgroundColor: r.myCorrect === true ? colors.successFill : r.myCorrect === false ? colors.dangerFill : colors.controlTrack }]}>
-        <Icon name={verdictIcon} size={24} color={verdictColor} />
+      <AnswerMotion
+        key={r.index}
+        onMount
+        verdict={r.myCorrect === true ? 'right' : r.myCorrect === false ? 'wrong' : null}
+        style={[styles.verdict, { backgroundColor: r.myCorrect === true ? colors.successFill : r.myCorrect === false ? colors.dangerFill : colors.controlTrack }]}
+      >
+        {r.myCorrect === true ? <DrawnCheck size={24} color={verdictColor} /> : <Icon name={verdictIcon} size={24} color={verdictColor} />}
         <Text style={[styles.verdictText, { color: verdictColor }]} accessibilityRole="header">
           {r.myCorrect === true ? t('stories.reveal.right') : r.myCorrect === false ? t('stories.reveal.wrong') : t('stories.reveal.noAnswer')}
         </Text>
-      </View>
+      </AnswerMotion>
 
       <Text {...props} style={[styles.prompt, { color: colors.textPrimary }, dir]}>
         {prompt}

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { Toggle } from '../../theme/Toggle';
 import type { StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import type { ApiError, ApiResult } from '../../api/types';
@@ -57,7 +58,7 @@ export function ExtraTimeSwitch({
         <Text style={[styles.label, { color: colors.textPrimary }]}>{t('stories.extraTime')}</Text>
         <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('stories.extraTimeHint')}</Text>
       </View>
-      <Switch
+      <Toggle
         value={view.extraTime}
         onValueChange={(on) => void toggle(on)}
         disabled={busy}

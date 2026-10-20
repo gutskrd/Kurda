@@ -10,15 +10,18 @@ import {
 } from '../match';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { AnswerMotion } from '../../theme/MotionParts';
 
 interface Props {
   exercise: Exercise;
   state: MatchState;
   onChange: (state: MatchState) => void;
   disabled: boolean;
+  /** how the pairs were graded, once they have been: they pop, or shake once */
+  verdict?: 'right' | 'wrong' | null;
 }
 
-export function MatchPairsExercise({ exercise, state, onChange, disabled }: Props) {
+export function MatchPairsExercise({ exercise, state, onChange, disabled, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const token = (
@@ -48,7 +51,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled }: Prop
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.match.prompt')}</Text>
-      <View style={styles.columns}>
+      <AnswerMotion verdict={verdict} style={styles.columns}>
         <View style={styles.column}>
           {(exercise.lefts ?? []).map((left) =>
             token(left, isLeftMatched(state, left), state.selectedLeft === left, () =>
@@ -61,7 +64,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled }: Prop
             token(right, isRightMatched(state, right), false, () => onChange(tapRight(state, right))),
           )}
         </View>
-      </View>
+      </AnswerMotion>
     </View>
   );
 }

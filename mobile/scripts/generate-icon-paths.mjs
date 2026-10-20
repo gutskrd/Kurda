@@ -155,6 +155,9 @@ const MAP = {
   history: { glyph: 'ClockCounterClockwise', note: 'a search you made before' },
   'clear-fill': { glyph: 'XCircle', weight: 'fill', note: 'empty a search field — the filled circle every platform puts at the end of one' },
   review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
+
+  // --- how the app feels ---
+  vibrate: { glyph: 'Vibrate', note: 'Settings → Vibration: whether this phone buzzes' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

@@ -134,7 +134,7 @@ function BadgeMoment({ badge, onClose }: { badge: PendingBadge; onClose: () => v
   const reached = typeof threshold === 'number' ? `${threshold} ${t(UNIT_KEY[def.unit])}` : null;
   return (
     <Celebration
-      art={<BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={tierCount} size={168} label={label} shine="loop" />}
+      art={<BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={tierCount} size={168} label={label} shine="once" />}
       glow={strong}
       flecks={FLECKS.badge}
       fleckColours={[light, strong, '#ffffff']}

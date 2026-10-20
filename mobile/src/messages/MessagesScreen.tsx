@@ -1,6 +1,9 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import type { TabNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -145,6 +148,8 @@ export function MessagesScreen(): React.JSX.Element {
     () => messageRows({ chats: chats ?? [], groups, filter, query, preview }),
     [chats, groups, filter, query, preview],
   );
+  // the first screenful of conversations rises in once, as the list arrives
+  const entering = useListEntrance(chats !== null && rows.length > 0);
   const unreadCount = useMemo(
     () => (chats ?? []).filter((c) => c.unread > 0).length + groups.filter((g) => g.unread > 0).length,
     [chats, groups],
@@ -254,7 +259,11 @@ export function MessagesScreen(): React.JSX.Element {
         ref={listRef}
         data={rows}
         keyExtractor={(r) => r.key}
-        renderItem={({ item }) => <ConversationRow row={item} locale={locale} preview={preview} onPress={() => open(item)} />}
+        renderItem={({ item, index }) => (
+          <Rise delay={entering(index)}>
+            <ConversationRow row={item} locale={locale} preview={preview} onPress={() => open(item)} />
+          </Rise>
+        )}
         ListHeaderComponent={header}
         ListEmptyComponent={empty}
         ListFooterComponent={
@@ -272,7 +281,7 @@ export function MessagesScreen(): React.JSX.Element {
         contentContainerStyle={[styles.list, { paddingBottom: bottomInset }]}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
         showsVerticalScrollIndicator={false}
       />
       <CaringMessageDialog message={caring} onClose={() => setCaring(null)} />

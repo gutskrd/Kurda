@@ -1,4 +1,4 @@
-import { feedbackKind, type Feedback } from '@kurda/shared';
+import { feedbackKind, type ExerciseType, type Feedback } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 
 /**
@@ -45,4 +45,15 @@ export function feedbackTitle(feedback: Feedback): TranslationKey {
     case 'correct':
       return 'lesson.correct';
   }
+}
+
+/**
+ * How an answer is felt as its verdict arrives: crisp for a right one, a
+ * gentle double for one that was not (never the harsh error buzz — a miss is
+ * part of learning). A spoken answer is the learner's own rating of their
+ * recording rather than a grade, so it is not felt as either.
+ */
+export function answerFeel(type: ExerciseType | undefined, accepted: boolean): 'correct' | 'wrong' | null {
+  if (type === 'speaking') return null;
+  return accepted ? 'correct' : 'wrong';
 }

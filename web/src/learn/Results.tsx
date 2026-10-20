@@ -1,7 +1,9 @@
 import { useEffect, useRef } from 'react';
-import { practisableMistakes, type DeliveredExercise } from '@kurda/shared';
+import { BURST, NO_LESSON_MOMENTS, practisableMistakes, type DeliveredExercise, type LessonMoments } from '@kurda/shared';
 import { Button, LinkButton } from '../components/Button';
-import { FlameIcon } from '../components/icons';
+import { CheckIcon, FlameIcon, StarIcon, TrophyIcon } from '../components/icons';
+import { CelebrationArt, useCelebrationHold } from '../ranks/Celebration';
+import { useCelebrationMoment, useCountUp } from '../lib/motion';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 import type { SessionResults } from './types';
@@ -20,6 +22,13 @@ const KURDISH_ANSWER = new Set(['translate', 'writing', 'listening', 'speaking']
  * mistake nor a right answer: the server leaves it out of the score, so "8 of
  * 8" with two put off is a perfect score of the eight answered. Saying how many
  * were put off keeps a lesson of ten from reading as "8 of 8" with two lost.
+ *
+ * It opens as the app's one celebration (ranks/Celebration.tsx): the trophy
+ * springs in, a ring widens once, a light handful of gold flecks, one buzz on
+ * a touch screen — however many things the lesson did at once (finished,
+ * today's goal, the streak, a new level), it is one moment — then the numbers
+ * fade in and the XP counts up. A click on it skips to the end, and while it
+ * plays a badge the lesson earned waits its turn.
  */
 export function Results({
   results,
@@ -27,6 +36,7 @@ export function Results({
   skipped = 0,
   kind,
   dialect,
+  moments = NO_LESSON_MOMENTS,
   exitTo,
   exitLabel,
   onPractise,
@@ -37,6 +47,8 @@ export function Results({
   skipped?: number;
   kind: 'lesson' | 'practice';
   dialect: string | null | undefined;
+  /** what else the lesson did: today's goal, the streak, a new level */
+  moments?: LessonMoments;
   exitTo: string;
   exitLabel: string;
   /** start a practice session of these exercises */
@@ -45,6 +57,10 @@ export function Results({
   const t = useT();
   const locale = useLocale();
   const heading = useRef<HTMLHeadingElement>(null);
+  const moment = useCelebrationMoment();
+  useCelebrationHold(moment.playing);
+  // counts up as the numbers arrive, after the trophy has landed
+  const xp = useCountUp(results.xpAwarded, { delayMs: 420 });
   const mistakes = results.mistakes ?? [];
   const practise = practisableMistakes(mistakes, exercises);
   // "80 %", "%80", "٨٠٪": the reader's own way of writing a percentage
@@ -58,10 +74,21 @@ export function Results({
 
   return (
     <section className="lesson-results" aria-labelledby="lesson-results-title">
-      {/* the page's h1 is the lesson's name; this is the part of it on screen now */}
-      <h2 className="lesson-results-title" id="lesson-results-title" tabIndex={-1} ref={heading}>
-        {kind === 'lesson' ? t('lesson.results.lessonDone') : t('lesson.results.reviewDone')}
-      </h2>
+      {/* a click on it while it plays skips to the end */}
+      <div
+        className={`celebrate celebrate-inline tone-zer ${moment.playing ? 'is-playing' : 'is-done'}`}
+        onClick={moment.playing ? moment.skip : undefined}
+      >
+        <CelebrationArt flecks={BURST.lesson} seed={results.correct * 31 + results.total} reach={120}>
+          <TrophyIcon size={72} className="lesson-trophy" />
+        </CelebrationArt>
+        <div className="celebrate-details">
+          {/* the page's h1 is the lesson's name; this is the part of it on screen now */}
+          <h2 className="lesson-results-title" id="lesson-results-title" tabIndex={-1} ref={heading}>
+            {kind === 'lesson' ? t('lesson.results.lessonDone') : t('lesson.results.reviewDone')}
+          </h2>
+        </div>
+      </div>
 
       <dl className="lesson-stats">
         <div className="lesson-stat">
@@ -71,9 +98,12 @@ export function Results({
         </div>
         <div className="lesson-stat">
           <dt>{t('lesson.results.xp')}</dt>
-          <dd>+{results.xpAwarded}</dd>
+          {/* read out as the number it ends on, not every number on the way */}
+          <dd aria-label={`+${results.xpAwarded}`}>
+            <span aria-hidden="true">+{xp}</span>
+          </dd>
         </div>
-        <div className="lesson-stat">
+        <div className={`lesson-stat${moments.streakKept ? ' is-kept' : ''}`}>
           <dt>{t('lesson.results.streak')}</dt>
           <dd>
             <FlameIcon size={20} />
@@ -81,6 +111,22 @@ export function Results({
           </dd>
         </div>
       </dl>
+      {(moments.goalMet || moments.level !== null) && (
+        <ul className="lesson-moments" aria-live="polite">
+          {moments.goalMet && (
+            <li className="lesson-moment is-goal">
+              <CheckIcon size={18} />
+              {t('learn.today.done')}
+            </li>
+          )}
+          {moments.level !== null && (
+            <li className="lesson-moment">
+              <StarIcon size={18} weight="fill" />
+              {t('lesson.results.levelUp', { level: new Intl.NumberFormat(locale).format(moments.level) })}
+            </li>
+          )}
+        </ul>
+      )}
       {skipped > 0 && <p className="lesson-results-note">{t('lesson.results.skipped', { count: skipped })}</p>}
 
       {mistakes.length === 0 ? (

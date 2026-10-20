@@ -942,6 +942,11 @@ export const ckb: Catalogue = {
   'settings.sounds.title': 'دەنگەکان',
   'settings.sounds.giftChime': 'کاتێک دیارییەک دەکەیتەوە، زەنگێکی کورت لێبدە',
   'settings.sounds.giftChimeHint': 'تەنها لەسەر ئەم ئامێرە. کاتێک ئامێرەکەت جوڵەی کەم دەخوازێت، زەنگ لێنادرێت.',
+  'settings.vibration.title': 'لەرزین',
+  'settings.vibration.toggle': 'بۆ وەڵامی ڕاست و ساتە تایبەتەکان بلەرزە',
+  'settings.vibration.hint': 'تەنها لەسەر ئەم ئامێرە. بۆ شتێک کە خۆی ڕوودەدات هەرگیز نالەرزێت.',
+  'lesson.results.levelUp': 'گەیشتیتە ئاستی {level}',
+  'leagues.celebrate.up': 'سەرکەوتیت',
   // ---- end web-social ----
   'profile.currentlyOnline': 'ئێستا سەرهێڵە',
   'profile.offline': 'دەرهێڵ',

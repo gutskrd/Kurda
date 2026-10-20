@@ -6,6 +6,7 @@ import type { ClaimResult, DailyRewardStatus, WalletBalances } from '../lib/type
 import { Button } from './Button';
 import { CoinIcon } from './icons';
 import { useT } from '../i18n/I18nProvider';
+import { useCountUp } from '../lib/motion';
 
 /**
  * Daily Zêr reward — mirrors the mobile daily claim. Shows the Zêr balance and,
@@ -44,12 +45,17 @@ export function DailyReward(): React.JSX.Element | null {
     };
   }, [client]);
 
+  const [countFrom, setCountFrom] = useState<number | null>(null);
+  const shown = useCountUp(balance ?? 0, { from: countFrom ?? balance ?? 0 });
+
   async function claim(): Promise<void> {
     setBusy(true);
     setMsg(null);
     const res = await client.post<ClaimResult>('/rewards/daily/claim');
     setBusy(false);
     if (res.ok) {
+      // the balance counts up from what it was to what it is now (lib/motion.ts)
+      setCountFrom(balance);
       setBalance(res.data.balance);
       setStatus((s) => (s ? { ...s, canClaim: false, alreadyClaimedToday: true } : s));
       setMsg(t('daily.claimed', { amount: res.data.reward }));
@@ -73,7 +79,7 @@ export function DailyReward(): React.JSX.Element | null {
         </span>
         <div>
           <div className="zer-balance">
-            {balance === null ? '—' : balance.toLocaleString()} <span className="zer-unit">Zêr</span>
+            {balance === null ? '—' : shown.toLocaleString()} <span className="zer-unit">Zêr</span>
           </div>
           <div className="zer-sub">
             {canClaim

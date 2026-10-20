@@ -5,12 +5,14 @@ import {
   Alert,
   FlatList,
   Image,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -131,35 +133,39 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     setPosts((prev) => (prev ? [created.data, ...prev] : [created.data]));
   }, [client, category, uploading, t, locale, showSendError]);
 
+  // the first screenful rises in once, as the list arrives
+  const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: ImagePost }) => (
-      <Pressable
-        onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill }]}
-        accessibilityRole="button"
-        accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
-      >
-        <View style={styles.cardHead}>
-          <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
-          <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
-        </View>
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
-        ) : (
-          <View style={[styles.image, styles.imageFallback, { backgroundColor: colors.controlTrack }]}>
-            <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
+    ({ item, index }: { item: ImagePost; index: number }) => (
+      <Rise delay={entering(index)}>
+        <PressableScale
+          onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
+          style={[styles.card, { backgroundColor: colors.glassFill }]}
+          accessibilityRole="button"
+          accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
+        >
+          <View style={styles.cardHead}>
+            <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
+            <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
           </View>
-        )}
-        {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
-        <View style={styles.cardFoot}>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>
-            {REACTION_EMOJI.laugh} {item.reactionCount}
-          </Text>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
-        </View>
-      </Pressable>
+          {item.imageUrl ? (
+            <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
+          ) : (
+            <View style={[styles.image, styles.imageFallback, { backgroundColor: colors.controlTrack }]}>
+              <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
+            </View>
+          )}
+          {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
+          <View style={styles.cardFoot}>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>
+              {REACTION_EMOJI.laugh} {item.reactionCount}
+            </Text>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
+          </View>
+        </PressableScale>
+      </Rise>
     ),
-    [navigation, colors],
+    [navigation, colors, entering],
   );
 
   return (
@@ -188,7 +194,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={

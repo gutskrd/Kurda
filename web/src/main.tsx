@@ -23,7 +23,9 @@ import './styles/social.css';
 import './styles/keyboard.css';
 import './styles/feedback.css';
 import './styles/ranks.css';
-// the shell's newer parts: the tab bar, the bell, the five places' own pages
+// how things move: presses, answers, bars, lists arriving, sheets, celebrations
+import './styles/motion.css';
+// the shell's newer parts: the top bar and its menu, the bell, the five places' own pages
 import './styles/shell.css';
 
 const root = document.getElementById('root');

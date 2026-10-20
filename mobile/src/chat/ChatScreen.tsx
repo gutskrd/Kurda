@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import type { GiftCard, GiftTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -180,8 +181,11 @@ export function ChatScreen({
     if (!body) return;
     setDraft('');
     setSendError(null);
+    // felt as it goes; and if it did not go, felt again as an error — it is in the way
+    haptic('tap');
     const refused = await post(body);
     if (!refused) return;
+    haptic('error');
     // a refused message is put back, so nothing typed is lost
     setSendError(refused);
     setDraft(body);

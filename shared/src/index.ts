@@ -63,6 +63,27 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** How often a buzz may be felt, on the phone and on a touch screen alike. */
+export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
+/** The one celebration — a lesson, a level, a rank, a league, a badge — timed and thrown the same on both. */
+export {
+  BURST,
+  CELEBRATE_MS,
+  burstPlan,
+  celebrationEndMs,
+  celebrationPlan,
+  type CelebrationPlan,
+  type Fleck as CelebrationFleck,
+} from './celebration.js';
+/** What else a finished lesson did — today's goal, the streak, a new level — read the same on both. */
+export {
+  NO_LESSON_MOMENTS,
+  anyLessonMoment,
+  lessonMoments,
+  type LessonMoments,
+  type LessonStanding,
+  type LessonStreakMark,
+} from './lesson-moments.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser

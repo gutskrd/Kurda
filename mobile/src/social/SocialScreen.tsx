@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
@@ -109,6 +110,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
 
   const respond = useCallback(
     async (userId: string, accept: boolean) => {
+      if (accept) haptic('tap');
       await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
       loadLists();
     },
@@ -143,6 +145,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const addFriend = useCallback(
     (userId: string) => {
       setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
+      haptic('tap');
       void client.post('/friends/requests', { userId }).then(loadLists);
     },
     [client, loadLists],

@@ -937,6 +937,11 @@ export const nl: Catalogue = {
   'settings.sounds.title': 'Geluiden',
   'settings.sounds.giftChime': 'Speel een kort belletje als je een cadeau opent',
   'settings.sounds.giftChimeHint': 'Alleen op dit apparaat. Geen belletje als je apparaat om minder beweging vraagt.',
+  'settings.vibration.title': 'Trillen',
+  'settings.vibration.toggle': 'Trillen bij goede antwoorden en momenten om te vieren',
+  'settings.vibration.hint': 'Alleen op dit apparaat, en nooit bij iets dat vanzelf gebeurt.',
+  'lesson.results.levelUp': 'Je hebt niveau {level} bereikt',
+  'leagues.celebrate.up': 'Gestegen',
   // ---- end web-social ----
   'profile.currentlyOnline': 'Nu online',
   'profile.offline': 'Offline',

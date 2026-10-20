@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, GradientBackground } from '../theme/glass';
@@ -52,6 +53,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
 
   const respond = useCallback(
     (userId: string, accept: boolean) => {
+      if (accept) haptic('tap');
       setRequests((list) => (list ?? []).filter((r) => r.userId !== userId));
       void client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`).then(() => refresh());
     },

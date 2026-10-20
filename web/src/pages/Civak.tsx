@@ -12,6 +12,7 @@ import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
 import { DailyReward } from '../components/DailyReward';
 import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
+import { useArrival } from '../lib/motion';
 
 const PAGE = 20;
 
@@ -43,6 +44,7 @@ export function Civak(): React.JSX.Element {
   };
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
+  const arriving = useArrival(!!items && items.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
 
@@ -163,7 +165,8 @@ export function Civak(): React.JSX.Element {
         />
       ) : (
         <>
-          <div className="feed">
+          {/* the first screenful rises in once, as the wall arrives (styles/motion.css) */}
+          <div className={arriving ? 'feed rise-in' : 'feed'}>
             {items.map((item) => (
               <FeedCard key={item.key} item={item} onChanged={replace} onRemoved={drop} />
             ))}
