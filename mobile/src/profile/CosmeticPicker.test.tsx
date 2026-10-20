@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -99,13 +99,25 @@ describe('the inventory (Edit profile → Cosmetics)', () => {
     expect(screen.getByText('Gir')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Zozan season frame, equipped' })).toBeTruthy();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Gir season frame' }));
-    expect(await screen.findByRole('button', { name: 'Gir season frame, equipped' })).toBeTruthy();
+    /*
+     * Each tap is made inside act(), so its answer has come back and the tile
+     * has been told what it does now before it is tapped again. The tile's
+     * press handler hears that in an effect after the draw; a second tap that
+     * landed in between still ran the handler from while the first was
+     * saving, which ignores a tap, and nothing was sent.
+     */
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Gir season frame' }));
+    });
+    expect(screen.getByRole('button', { name: 'Gir season frame, equipped' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Zozan season frame' })).toBeTruthy();
     expect(client.calls.find((c) => c.method === 'PUT')).toMatchObject({ path: '/me/cosmetics/frame', body: { sku: 'frame_rank_gir' } });
 
-    fireEvent.click(screen.getByRole('button', { name: 'Gir season frame, equipped' }));
-    await waitFor(() => expect(client.calls.filter((c) => c.method === 'PUT')[1]).toMatchObject({ body: { sku: null } }));
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Gir season frame, equipped' }));
+    });
+    expect(client.calls.filter((c) => c.method === 'PUT')[1]).toMatchObject({ body: { sku: null } });
+    expect(screen.getByRole('button', { name: 'Gir season frame' })).toBeTruthy();
   });
 
   it('says how frames are earned when you have none, with the way to the season', async () => {

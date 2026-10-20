@@ -11,7 +11,7 @@ const navigate = vi.fn();
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate, goBack: vi.fn() }), useFocusEffect: () => undefined }));
 // the thread's live events are not under test here
 vi.mock('./useChatSocket', () => ({ useChatSocket: () => undefined }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { GiftCard } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -131,20 +131,31 @@ describe('ChatScreen reports', () => {
       'POST /chat/u2/read': ok({ ok: true }),
       'GET /play/cards/wordle-battle/abc12345': wordleCard,
     });
+  /*
+   * The thread is opened inside act(), so it has loaded and finished drawing
+   * before a finger goes down. A bubble is signed up for presses in an effect
+   * that runs after it is drawn; a hold that began in between — which waiting
+   * only for the bubble to appear allowed, on a busy machine — reached nothing
+   * and never became a long press.
+   */
+  const openThread = async (): Promise<void> => {
+    testAuth.client = thread();
+    await act(async () => {
+      renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    });
+  };
 
   it('reports a gift you were sent by pressing and holding it, though the gift takes the touch', async () => {
-    testAuth.client = thread();
-    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
-    fireEvent.mouseDown(await screen.findByRole('button', { name: 'A gift from rojda. Tap to open.' }), { button: 0, buttons: 1 });
+    await openThread();
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'A gift from rojda. Tap to open.' }), { button: 0, buttons: 1 });
     expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
     // a hold is not a tap: nothing was unwrapped
     expect(screen.queryByRole('button', { name: 'Skip' })).toBeNull();
   });
 
   it('reports a message with an invite link by holding the game card it is drawn as', async () => {
-    testAuth.client = thread();
-    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
-    fireEvent.mouseDown(await screen.findByRole('button', { name: 'Join: Wordle Battle' }), { button: 0, buttons: 1 });
+    await openThread();
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Join: Wordle Battle' }), { button: 0, buttons: 1 });
     expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
     // and the game did not open
     expect(navigate).not.toHaveBeenCalled();

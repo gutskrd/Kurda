@@ -136,8 +136,16 @@ describe('RaceScreen', () => {
       'POST /race': ok(game()),
       [FINISH]: () => (++calls === 1 ? fail({ kind: 'server', status: 500, message: 'down' }) : ok(result())),
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Give up and score' }).getAttribute('aria-disabled')).not.toBe('true'));
+    /*
+     * Given up inside act(), so the failed finish has been shown and the
+     * button made pressable again — on screen and in its press handler, which
+     * hears it in an effect after the draw — before it is pressed a second
+     * time. Waiting only for it to look enabled let a press land in between.
+     */
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
+    });
+    expect(screen.getByRole('button', { name: 'Give up and score' }).getAttribute('aria-disabled')).not.toBe('true');
     expect(screen.getByLabelText('Type the text')).toBeTruthy();
     expect(document.body.textContent).toMatch(/server|wrong|try again/i);
     fireEvent.click(screen.getByRole('button', { name: 'Give up and score' }));
