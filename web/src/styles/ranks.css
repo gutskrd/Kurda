@@ -10,12 +10,13 @@
  */
 
 /* ---- tier colours -------------------------------------------------------------- */
-.tier-dest { --t-hi: #ffd58a; --t-mid: #f4a63a; --t-deep: #5c2c04; }
-.tier-gir { --t-hi: #9ff58f; --t-mid: #36d46e; --t-deep: #043f27; }
-.tier-zozan { --t-hi: #7df5e6; --t-mid: #17c9c0; --t-deep: #043a4d; }
-.tier-ciya { --t-hi: #9ccaff; --t-mid: #4f86ff; --t-deep: #14196a; }
-.tier-lutke { --t-hi: #f2a6ff; --t-mid: #c552ff; --t-deep: #3a0850; }
-.tier-sterk { --t-hi: #fff2a8; --t-mid: #ffcf3a; --t-deep: #6e3300; }
+/* the light, mid and deep steps of each tier's metal in shared/src/art/palette.ts (RANK_METAL) */
+.tier-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; --t-deep: #55220f; }
+.tier-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; --t-deep: #0f4424; }
+.tier-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; --t-deep: #06474a; }
+.tier-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; --t-deep: #0e1f5c; }
+.tier-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; --t-deep: #311660; }
+.tier-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; --t-deep: #6a4204; }
 .is-placing { --t-hi: #e3c4ff; --t-mid: #b874f0; --t-deep: #2a1250; }
 .league-dilop { --t-hi: #d4f1ff; --t-mid: #8fd2f7; }
 .league-kani { --t-hi: #94f5e3; --t-mid: #2fd6c0; }
@@ -125,7 +126,7 @@
 .pc-face .cosmetic-icon-overlay {
   z-index: 2;
 }
-/* Lûtke and Stêrk: a glint travels round the ring */
+/* Lûtke and Stêrk: a soft gleam travels round the ring */
 .art-frame-shine {
   animation: frame-turn 6s linear infinite;
 }
@@ -660,12 +661,12 @@
   text-align: center;
   isolation: isolate;
 }
-.celebrate.tone-dest { --t-hi: #ffd58a; --t-mid: #f4a63a; }
-.celebrate.tone-gir { --t-hi: #9ff58f; --t-mid: #36d46e; }
-.celebrate.tone-zozan { --t-hi: #7df5e6; --t-mid: #17c9c0; }
-.celebrate.tone-ciya { --t-hi: #9ccaff; --t-mid: #4f86ff; }
-.celebrate.tone-lutke { --t-hi: #f2a6ff; --t-mid: #c552ff; }
-.celebrate.tone-sterk { --t-hi: #fff2a8; --t-mid: #ffcf3a; }
+.celebrate.tone-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; }
+.celebrate.tone-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; }
+.celebrate.tone-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; }
+.celebrate.tone-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; }
+.celebrate.tone-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; }
+.celebrate.tone-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; }
 .celebrate.tone-sifir { --t-hi: #ffb48e; --t-mid: #ee7b52; }
 .celebrate.tone-ziv { --t-hi: #e4edf8; --t-mid: #b3c4dc; }
 .celebrate.tone-zer { --t-hi: #ffe16a; --t-mid: #ffbd1f; }

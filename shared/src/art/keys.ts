@@ -63,7 +63,7 @@ export interface BadgeArt {
   family: BadgeFamily;
   /** Kurmancî name, for the default title */
   name: string;
-  /** how many tiers it has; 1 = a single badge with no tier chevrons */
+  /** how many tiers it has; 1 = a single badge with no tier pips */
   tiers: number;
 }
 

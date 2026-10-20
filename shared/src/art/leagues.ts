@@ -1,138 +1,91 @@
 /**
- * Learning-league emblems (contract 4, L1/B3): six water tiers, each a cut
- * crystal drop with its water glowing inside — a single drop, a spring
- * welling up, a river winding to the viewer, a lake under a mountain, the sea
- * rolling in, and the ocean's great wave.
+ * Learning-league emblems (contract 4, L1/B3): six water tiers, each an enamel
+ * piece with a scene of the water's journey inside it — a dewdrop on a leaf,
+ * a spring bubbling up between stones, a river winding through its valley, a
+ * mountain lake holding its peak, the sea with the sun on the horizon, and the
+ * ocean's swell with a whale's tail rising from it.
  *
- * Every league emblem is a drop, so a league reads as a league before its
- * picture does — the way every rank emblem is a crest. The water deepens from
- * a pale dew-blue to the ocean's midnight, and the drop grows as it does: bare
- * for Dilop and Kanî, a pair of blades for Çem, two for Gol, two and a pearl
- * at the tip for Derya, and for Okyanûs three, the pearl, a burst of light and
- * the ocean's own living glints.
+ * The shape is the journey too: Dilop is a drop, and each tier the drop
+ * fills out and rounds, until Okyanûs is a full round medallion — the drop
+ * has become the ocean. The rim's metal climbs with it (pearl, silver, gold,
+ * rose gold, platinum, mother-of-pearl), and from Çem up a ring of beads is
+ * set into it; the sea and the ocean glow. So the ladder reads at a glance by
+ * its outline and its rim, before its colours or its picture.
  */
-import { cubic, offset, place } from './geometry.js';
-import type { Part } from './icons.js';
-import { circ, drop } from './icons.js';
-import { paintIcon } from './iconpaint.js';
+import { stations } from './geometry.js';
 import type { LeagueTier } from './keys.js';
 import { LEAGUE_TIER_NAMES, LEAGUE_TIERS } from './keys.js';
-import type { Field } from './palette.js';
-import { LEAGUE_METAL } from './palette.js';
-import { blade, edge, facetBand, halo, rays, sparkle } from './paint.js';
+import { LEAGUE_METAL, LEAGUE_RIM } from './palette.js';
+import { dotsAt, gloss, halo, lipMetal, pinShadow, rimMetal } from './paint.js';
+import { detailFor } from './ranks.js';
+import { sceneAt } from './scenes.js';
 import type { Pt } from './svg.js';
-import { Drawing, checkSize, linearAt, mix, n, n2, polyPath, prefixFor, radialAt, seeded } from './svg.js';
+import { Drawing, checkSize, n, n2, prefixFor } from './svg.js';
 
-/** The drop: a point at the top, a round body below, centred on 60,58 at full size. */
-function dropOutline(): Pt[] {
-  const top: Pt = [60, 7];
-  const out: Pt[] = [top];
-  out.push(...cubic(top, [67, 22], [97, 40], [97, 66], 18));
-  out.push(...cubic([97, 66], [97, 86.5], [80.5, 103], [60, 103], 14));
-  out.push(...cubic([60, 103], [39.5, 103], [23, 86.5], [23, 66], 14));
-  out.push(...cubic([23, 66], [23, 40], [53, 22], top, 18).slice(0, -1));
+interface Ladder {
+  /** how far the drop's point stands above its round body, as a share of the body's radius */
+  point: number;
+  beads: boolean;
+  glow: number;
+}
+
+const LADDER: Record<LeagueTier, Ladder> = {
+  dilop: { point: 0.66, beads: false, glow: 0 },
+  kani: { point: 0.52, beads: false, glow: 0 },
+  cem: { point: 0.39, beads: true, glow: 0 },
+  gol: { point: 0.27, beads: true, glow: 0 },
+  derya: { point: 0.14, beads: true, glow: 0.28 },
+  okyanus: { point: 0, beads: true, glow: 0.5 },
+};
+
+/**
+ * A drop at cx,cy (the middle of its round body), `r` in radius, its point
+ * `h` above the body and rounded by `tip`: straight sides running into the
+ * circle where they meet it, so the outline is smooth all the way round.
+ * With no point it is a circle. Returns path data.
+ */
+function dropPath(cx: number, cy: number, r: number, h: number, tip: number): string {
+  if (h < 0.5) return `M${n(cx - r)},${n(cy)}A${n(r)},${n(r)} 0 1 0 ${n(cx + r)},${n(cy)}A${n(r)},${n(r)} 0 1 0 ${n(cx - r)},${n(cy)}Z`;
+  const d = r + h;
+  const cos = r / d;
+  const sin = Math.sqrt(1 - cos * cos);
+  const top: Pt = [cx, cy - d];
+  const right: Pt = [cx + r * sin, cy - r * cos];
+  const left: Pt = [cx - r * sin, cy - r * cos];
+  const side = Math.hypot(right[0] - top[0], right[1] - top[1]);
+  const k = Math.min(0.45, tip / side);
+  const nearL: Pt = [top[0] + (left[0] - top[0]) * k, top[1] + (left[1] - top[1]) * k];
+  const nearR: Pt = [top[0] + (right[0] - top[0]) * k, top[1] + (right[1] - top[1]) * k];
+  return `M${n(left[0])},${n(left[1])}L${n(nearL[0])},${n(nearL[1])}Q${n(top[0])},${n(top[1])} ${n(nearR[0])},${n(nearR[1])}L${n(right[0])},${n(right[1])}A${n(r)},${n(r)} 0 1 1 ${n(left[0])},${n(left[1])}Z`;
+}
+
+/** The same drop as points, for setting beads along its rim. */
+function dropPoints(cx: number, cy: number, r: number, h: number): Pt[] {
+  const d = r + h;
+  const a = h < 0.5 ? 0 : Math.acos(r / d);
+  const out: Pt[] = [];
+  if (h >= 0.5) out.push([cx, cy - d]);
+  // round the body from the right tangent point, under, to the left one
+  const from = -90 + (a * 180) / Math.PI;
+  const to = 270 - (a * 180) / Math.PI;
+  const steps = 72;
+  for (let i = 0; i <= steps; i++) {
+    const deg = from + ((to - from) * i) / steps;
+    const t = (deg * Math.PI) / 180;
+    out.push([cx + Math.cos(t) * r, cy + Math.sin(t) * r]);
+  }
+  if (h < 0.5) out.pop();
   return out;
 }
 
-const DROP = dropOutline();
-
-interface Grandeur {
-  blades: number;
-  pearl: boolean;
-  glow: number;
-  rays: number;
-  glints: boolean;
+/** Where a league emblem sits: every tier the same height, so the drop widens as it rounds. */
+function layoutOf(tier: LeagueTier, small: boolean): { cy: number; r: number; h: number } {
+  const p = LADDER[tier].point;
+  const top = small ? 3 : 9;
+  const tall = small ? 111 : 94;
+  const r = tall / (2 + p);
+  return { cy: top + p * r + r, r, h: p * r };
 }
-
-const GRANDEUR: Record<LeagueTier, Grandeur> = {
-  dilop: { blades: 0, pearl: false, glow: 0.14, rays: 0, glints: false },
-  kani: { blades: 0, pearl: false, glow: 0.2, rays: 0, glints: false },
-  cem: { blades: 1, pearl: false, glow: 0.26, rays: 0, glints: false },
-  gol: { blades: 2, pearl: false, glow: 0.32, rays: 0, glints: false },
-  derya: { blades: 2, pearl: true, glow: 0.42, rays: 0, glints: false },
-  okyanus: { blades: 3, pearl: true, glow: 0.6, rays: 18, glints: true },
-};
-
-/** A league tier's water as a field: its deep tones, so its bright glyph stands out. */
-function leagueField(t: LeagueTier): Field {
-  const m = LEAGUE_METAL[t];
-  if (t === 'okyanus') return { glow: '#163a8f', mid: '#0b1a5c', deep: m.deep };
-  return { glow: mix(m.dark, m.deep, 0.15), mid: mix(m.dark, m.deep, 0.55), deep: m.deep };
-}
-
-/** The glyphs are drawn in a round window of this radius. */
-const R = 19.5;
-
-/**
- * Water from a wavy line at y down to the round window's lower edge: a crest
- * every `len`, `amp` high.
- */
-function wave(y: number, amp: number, len: number): string {
-  const x1 = Math.sqrt(R * R - y * y);
-  const x0 = -x1;
-  const count = Math.max(1, Math.round((x1 - x0) / len));
-  const step = (x1 - x0) / count;
-  let d = `M${n(x0)},${n(y)}`;
-  for (let i = 0; i < count; i++) {
-    const x = x0 + i * step;
-    d += `Q${n(x + step * 0.25)},${n(y - amp)} ${n(x + step * 0.5)},${n(y)}Q${n(x + step * 0.75)},${n(y + amp)} ${n(x + step)},${n(y)}`;
-  }
-  return `${d}A${n(R)},${n(R)} 0 ${y < 0 ? 1 : 0} 1 ${n(x0)},${n(y)}Z`;
-}
-
-/** Each tier's glyph, in the 40-unit icon box. */
-const LEAGUE_GLYPHS: Record<LeagueTier, () => Part[]> = {
-  // Dilop, the drop: one drop falling, and the ring it will make
-  dilop: () => [
-    { k: 'l', d: 'M-13,15.5C-13,12.5 13,12.5 13,15.5C13,18.5 -13,18.5 -13,15.5Z', w: 1.8 },
-    { k: 'f', d: drop(0, -1.5, 1.55) },
-    { k: 'h', d: 'M-6,2C-6,-3 -3.5,-7 -1.5,-10C-2.6,-5.5 -3.4,-1.5 -3.2,2.5Z', o: 0.8 },
-  ],
-  // Kanî, the spring: water welling up between stones, throwing up drops
-  kani: () => [
-    { k: 'a', d: 'M-21,18C-21,12 -16,9 -11,10.5C-8,11.4 -7,14.5 -7,18Z' },
-    { k: 'a', d: 'M21,18C21,13 17,10.5 13,11.5C10,12.3 9,15 9,18Z' },
-    { k: 'f', d: 'M-12,18C-11,8 -6,2 0,2C6,2 11,8 12,18Z' },
-    { k: 'w', d: drop(0, -11, 0.72) },
-    { k: 'w', d: drop(-9, -4.5, 0.48) },
-    { k: 'w', d: drop(9, -4.5, 0.48) },
-    { k: 'h', d: 'M-7,13C-6,8.5 -3.5,5.4 -0.6,4.6C-3,6.8 -4.6,9.8 -5,13.5Z', o: 0.7, fine: true },
-  ],
-  // Çem, the river: running water, the sign every map draws a river with
-  cem: () => [
-    { k: 'l', d: 'M-15,-9Q-11.2,-13.5 -7.5,-9T0,-9T7.5,-9T15,-9', w: 4.2 },
-    { k: 'l', d: 'M-17,0Q-12.75,-4.5 -8.5,0T0,0T8.5,0T17,0', w: 4.6 },
-    { k: 'l', d: 'M-15,9Q-11.2,4.5 -7.5,9T0,9T7.5,9T15,9', w: 4.2 },
-  ],
-  // Gol, the lake: a mountain and, upside down in the still water, its reflection
-  gol: () => [
-    { k: 'f', d: 'M-20,3L-7,-16L3,-3L9,-10L20,3Z' },
-    { k: 'w', d: 'M-7,-16L-11.6,-9.2L-8.8,-10.2L-6.8,-8.4L-4.4,-10.2L-3.4,-9.6Z' },
-    { k: 'a', d: 'M-21,5H21C21,13 12,19 0,19C-12,19 -21,13 -21,5Z' },
-    { k: 'd', d: 'M-14,8.5H-2M4,11.5H14M-8,14.5H4', w: 1.5 },
-    { k: 'h', d: 'M-14,3L-7,-7.5L-5,-5Z', o: 0.4, fine: true },
-  ],
-  // Derya, the sea: the sun on the horizon and rollers coming in
-  derya: () => [
-    { k: 'c', d: 'M-9,-3A9,9 0 0 1 9,-3Z', c: 'glow' },
-    { k: 'f', d: wave(-1, 2.2, 10) },
-    { k: 'a', d: wave(7, 3, 12) },
-    { k: 'l', d: 'M-15,12C-12,9.5 -9,9.5 -6,12M5,12C8,9.5 11,9.5 14,12', w: 1.6, c: 'snow' },
-  ],
-  // Okyanûs, the ocean: the great wave rising and curling over, spray flying
-  okyanus: () => [
-    {
-      k: 'f',
-      d: 'M-21,19C-15,15 -10,10 -8,2C-6,-7 -2,-15 6,-17.5C13,-19.5 19.5,-15 19.5,-8.5C19.5,-3 15,0.5 10.5,-0.5C7,-1.3 6,-5.5 9,-7C4.5,-7.5 1.5,-3.5 2.5,2C3.5,8 10,12 21,13V19Z',
-    },
-    { k: 'w', d: 'M-2,-13C2,-17 8,-19 13,-17.5C18,-16 20.5,-11 19.2,-6.4C18.6,-4.4 17.2,-2.4 15,-1.4C16.8,-5 16.4,-10.4 11.6,-12.6C7,-14.6 2,-13.6 -2,-13Z' },
-    { k: 'l', d: 'M-15,16C-11,11 -8,7 -6.5,1M-3,17C0,12 1,8 0.5,4', w: 1.5, c: 'blue' },
-    { k: 'c', d: `${circ(-12.5, -10, 2)}${circ(-15.5, -3.5, 1.4)}${circ(-8, -15, 1.3)}`, c: 'water' },
-  ],
-};
-
-/** Where the drop sits and how big, large or small. */
-const BODY = { large: { s: 0.84, y: 60 }, small: { s: 0.97, y: 60 } };
 
 export interface LeagueEmblemOptions {
   tier: LeagueTier;
@@ -143,7 +96,7 @@ export interface LeagueEmblemOptions {
   idPrefix?: string;
 }
 
-/** Under this many pixels an emblem is drawn in its small version: bolder, fewer blades, no rays. */
+/** Under this many pixels an emblem is drawn in its small version: filling its square, bolder. */
 export const SMALL_LEAGUE = 56;
 
 /** A learning league's emblem as an SVG string. */
@@ -151,69 +104,36 @@ export function leagueEmblemSvg(opts: LeagueEmblemOptions): string {
   const { tier } = opts;
   if (!LEAGUE_TIERS.includes(tier)) throw new RangeError(`art: unknown league tier ${String(tier)}`);
   const size = checkSize(opts.size, 128);
-  const small = size < SMALL_LEAGUE;
-  const dr = new Drawing(prefixFor(opts.idPrefix, 'league', tier, small));
-  const g = GRANDEUR[tier];
-  const m = LEAGUE_METAL[tier];
-  const field = leagueField(tier);
-  const body = small ? BODY.small : BODY.large;
-  const outline = place(
-    DROP.map(([x, y]) => [x - 60, y - 62] as Pt),
-    { x: 60, y: body.y + 4 * body.s, s: body.s },
-  );
-  const top = Math.min(...outline.map((p) => p[1]));
-  const cy = body.y + 8 * body.s;
+  const detail = detailFor(size, SMALL_LEAGUE);
+  const bold = detail > 0;
+  const dr = new Drawing(prefixFor(opts.idPrefix, 'league', tier, detail));
+  const g = LADDER[tier];
+  const m = LEAGUE_RIM[tier];
+  const { cy, r, h } = layoutOf(tier, bold);
   const out: string[] = [];
 
-  out.push(halo(dr, 60, cy, small ? 54 : 60, m.mid, g.glow, 0.4));
-  if (g.rays > 0 && !small) out.push(rays(dr, 60, cy, 38, 60, g.rays, m.glint, 0.75));
+  // the water's own light, fading out before the square's edge so it never shows a hard side
+  if (g.glow > 0) out.push(halo(dr, 60, 60, 59, LEAGUE_METAL[tier].light, g.glow, 0.55));
+  const outline = dropPath(60, cy, r, h, r * 0.16);
+  out.push(pinShadow(dr, outline, m.deep, 60, cy + r, r * 2, bold ? 3 : 2.2));
 
-  const bladeCount = small ? Math.min(g.blades, 1) : g.blades;
-  for (let i = bladeCount - 1; i >= 0; i--) {
-    const len = (small ? 24 : 27) - i * 4.5;
-    const deg = 30 - i * 19;
-    const y = cy - 6 + i * 10;
-    for (const side of [1, -1] as const) out.push(blade(60 + side * 28 * body.s, y, side, len, small ? 11 : 9.5, deg, m));
+  const rimW = r * (bold ? 0.16 : 0.17);
+  const fr = r - rimW;
+  const fh = (h * fr) / r;
+  out.push(`<path d="${outline}" fill="url(#${rimMetal(dr, m, 60, cy - h / 2, r + h / 2)})" stroke="${m.deep}" stroke-width="${n2(detail === 2 ? 3 : bold ? 2.2 : 1.2)}" stroke-linejoin="round"/>`);
+  if (g.beads && detail < 2) {
+    const mid = dropPoints(60, cy, r - rimW / 2, (h * (r - rimW / 2)) / r);
+    const count = detail === 0 ? 26 : 13;
+    out.push(`<path d="${dotsAt(stations(mid, count, 0.5).map((s) => s.p), rimW * (detail === 0 ? 0.17 : 0.2))}" fill="${m.hi}"/>`);
   }
 
-  const rim = small ? 7 : 5.5;
-  const inner = offset(outline, -rim);
-  out.push(facetBand(outline, inner, m, 3 + Math.min(4, Math.ceil(LEAGUE_TIERS.indexOf(tier) * 0.8))));
-  out.push(edge(polyPath(outline), m.deep, small ? 1.8 : 1.2, 0.95));
-  const fieldPath = polyPath(offset(outline, -rim - 0.2));
-  out.push(`<path d="${polyPath(inner)}" fill="${m.deep}"/>`);
-  const ground = dr.id('e');
-  dr.def(radialAt(ground, [[0, field.glow], [0.55, field.mid], [1, field.deep]], 60, cy - 6, 44));
-  out.push(`<path d="${fieldPath}" fill="url(#${ground})"/>`);
-  const clip = dr.clip(fieldPath);
-  const rimLight = dr.id('l');
-  dr.def(linearAt(rimLight, [[0, m.glint, 0], [0.5, m.glint, 0], [1, m.glint, 0.85]], 30, 20, 90, 104));
-  let glints = '';
-  if (g.glints) {
-    const rnd = seeded('okyanus-glints');
-    const dots: string[] = [];
-    for (let i = 0; i < 16; i++) dots.push(`<circle cx="${n(30 + rnd() * 60)}" cy="${n(30 + rnd() * 66)}" r="${n2(0.5 + rnd() * 0.8)}" fill="${m.glint}" fill-opacity="${n2(0.35 + rnd() * 0.5)}"/>`);
-    glints = dots.join('');
-  }
-  out.push(
-    `<g clip-path="url(#${clip})">${glints}` +
-      `<path d="M${n(60 + 70)},${n(cy - 70)}L${n(60 - 70)},${n(cy + 70)}L${n(60 - 70)},${n(cy - 70)}Z" fill="#ffffff" fill-opacity="0.07"/>` +
-      `<path d="${fieldPath}" fill="none" stroke="url(#${rimLight})" stroke-width="${small ? 2.4 : 1.8}"/></g>`,
-  );
-  const scale = (small ? 1.3 : 1.12) * body.s;
-  out.push(halo(dr, 60, cy, 24 * scale, mix(field.glow, '#ffffff', 0.3), 0.5));
-  out.push(`<g transform="translate(60 ${n(cy)}) scale(${n2(scale)})">${paintIcon(LEAGUE_GLYPHS[tier](), { dr, metal: m, field, small, locked: false })}</g>`);
-
-  if (g.pearl) {
-    const py = top + (small ? 1 : 0);
-    const pearl = dr.id('p');
-    dr.def(radialAt(pearl, [[0, '#ffffff'], [0.6, m.light], [1, m.mid]], 58.4, py - 2, 7));
-    out.push(halo(dr, 60, py, 14, m.glint, 0.7, 0.2));
-    out.push(`<path d="${circ(60, py, small ? 6 : 5)}" fill="url(#${pearl})" stroke="${m.deep}" stroke-width="1.2"/>`);
-  }
-  if (g.glints && !small) out.push(`<path d="${sparkle(88, 34, 5.5)}${sparkle(33, 90, 3.6)}" fill="${m.glint}"/>`);
+  const field = dropPath(60, cy, fr, fh, r * 0.1);
+  const clip = dr.clip(field);
+  out.push(`<g clip-path="url(#${clip})">${sceneAt(dr, tier, 60, cy, fr, detail)}${gloss(dr, 60, cy - fh * 0.3, fr + fh * 0.3, bold ? 0.16 : 0.22)}</g>`);
+  out.push(`<path d="${field}" fill="none" stroke="url(#${lipMetal(dr, m, 60, cy - fh / 2, fr + fh / 2)})" stroke-width="${n2(bold ? 2.4 : 1.6)}" stroke-linejoin="round"/>`);
 
   dr.add(out.join(''));
   const nm = LEAGUE_TIER_NAMES[tier];
   return dr.svg(size, opts.title ?? `${nm.ku} (${nm.en})`);
 }
+

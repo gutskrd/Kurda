@@ -26,6 +26,9 @@ import {
 } from './index.js';
 import { ICONS } from './icons.js';
 import { SHAPES } from './shapes.js';
+import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
+import { TINY_BADGE } from './badges.js';
+import { escapeXml } from './svg.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
 import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS } from '../leagues.js';
 import { RANK_TIER_KEYS, SEASON_NAMES as SEASON_LABEL_KEYS } from '../ranks.js';
@@ -150,6 +153,51 @@ function checkSvg(svg: string, size: number): Set<string> {
 
 const TIERS: readonly BadgeTier[] = [1, 2, 3, 4];
 
+/**
+ * The pips in a drawing: the small circles drawn with an edge. A lit one is a
+ * raised bead filled with its own gradient, an unlit one an empty socket — so
+ * the count is told by shape, not only by colour.
+ */
+function pipsOf(svg: string): { lit: number; all: number } {
+  let lit = 0;
+  let all = 0;
+  walk(parse(svg), (e) => {
+    if (e.name !== 'circle' || !e.attrs.stroke || Number(e.attrs.r) > 8) return;
+    all += 1;
+    if (/^url\(#[\w-]*pip\d+\)$/.test(e.attrs.fill ?? '')) lit += 1;
+  });
+  return { lit, all };
+}
+
+/** A point as the drawings write one. */
+const POINT = '[\\d.-]+,[\\d.-]+';
+/** Paths that are only a run of ten or more small diamonds: a kilim band's eyes. */
+function kilimBands(svg: string): number {
+  const one = new RegExp(`^(M${POINT}L${POINT} ${POINT} ${POINT}Z){10,}$`);
+  let count = 0;
+  walk(parse(svg), (e) => {
+    if (e.name === 'path' && one.test(e.attrs.d ?? '')) count += 1;
+  });
+  return count;
+}
+/** Paths that are only a run of ten or more little circles: beads set round a rim. */
+function beadRings(svg: string): number {
+  const one = new RegExp(`^(M${POINT}A[\\d.]+,[\\d.]+ 0 1 0 ${POINT}A[\\d.]+,[\\d.]+ 0 1 0 ${POINT}Z){10,}$`);
+  let count = 0;
+  walk(parse(svg), (e) => {
+    if (e.name === 'path' && one.test(e.attrs.d ?? '')) count += 1;
+  });
+  return count;
+}
+/** How many elements a drawing has: a measure of how much detail it carries. */
+function elements(svg: string): number {
+  let count = 0;
+  walk(parse(svg), () => {
+    count += 1;
+  });
+  return count;
+}
+
 describe('the checks themselves', () => {
   it('reject a drawing that is broken, unlabelled or reaches outside', () => {
     const good = badgeSvg({ key: 'agir' });
@@ -213,27 +261,19 @@ describe('badgeSvg', () => {
     for (const key of BADGE_KEYS) expect(badgeSvg({ key, tier: 4 })).toBe(badgeSvg({ key, tier: 4 }));
   });
 
-  it('draws each tier differently, and tells them apart without colour: the chevrons count the tier', () => {
-    const chevronPaths = (svg: string): number[] => {
-      const out: number[] = [];
-      walk(parse(svg), (e) => {
-        // a chevron is a closed six-point outline; the lit ones are one path, the unlit another
-        if (e.name === 'path' && /^(M[\d.,-]+l(?:[\d.,-]+ ){4}[\d.,-]+z)+$/.test(e.attrs.d ?? '') && (e.attrs.d?.match(/M/g)?.length ?? 0) <= 4) {
-          out.push(e.attrs.d?.match(/M/g)?.length ?? 0);
-        }
-      });
-      return out;
-    };
+  it('draws each tier differently, and tells them apart without colour: the pips count the tier', () => {
     for (const key of ['ders', 'agir', 'peyvzan', 'rank-ciya', 'heval', 'newroz'] as BadgeKey[]) {
       const tiers = TIERS.map((tier) => badgeSvg({ key, tier }));
       expect(new Set(tiers).size).toBe(4);
-      // four chevrons on every tiered badge, as many lit as the tier
-      tiers.forEach((svg, i) => expect(chevronPaths(svg), `${key} tier ${i + 1}`).toEqual(i === 3 ? [4] : [i + 1, 3 - i]));
-      // and the same count small
-      TIERS.forEach((tier, i) => expect(chevronPaths(badgeSvg({ key, tier, size: 40 })), `${key} tier ${tier} small`).toEqual(i === 3 ? [4] : [i + 1, 3 - i]));
+      // four pips on every tiered badge, as many lit as the tier — and the same count small and tiny
+      for (const size of [96, 40, 24]) {
+        TIERS.forEach((tier) => expect(pipsOf(badgeSvg({ key, tier, size })), `${key} tier ${tier} at ${size}`).toEqual({ lit: tier, all: 4 }));
+      }
+      // not yet earned: four empty sockets
+      expect(pipsOf(badgeSvg({ key, state: 'locked' }))).toEqual({ lit: 0, all: 4 });
     }
     // a single badge has none
-    expect(chevronPaths(badgeSvg({ key: 'hemereng' }))).toEqual([]);
+    expect(pipsOf(badgeSvg({ key: 'hemereng' }))).toEqual({ lit: 0, all: 0 });
   });
 
   it('gives single badges no pips and the same look whatever tier is asked for', () => {
@@ -254,18 +294,26 @@ describe('badgeSvg', () => {
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
   });
 
-  it('cuts the leaf the same at both tips, and runs its rim evenly into them', () => {
-    const leaf = SHAPES.friends.outline;
-    const key = ([x, y]: readonly [number, number]): string => `${x.toFixed(4)},${y.toFixed(4)}`;
-    const points = new Set(leaf.map(key));
-    // turned half round about its middle, the leaf is itself
-    for (const [x, y] of leaf) expect(points.has(key([120 - x, 112 - y])), `${x},${y}`).toBe(true);
-    // no long chords: every step along the outline is within a third of the others
-    const steps = leaf.map((p, i) => {
-      const q = leaf[(i + 1) % leaf.length] as readonly [number, number];
-      return Math.hypot(q[0] - p[0], q[1] - p[1]);
-    });
-    expect(Math.max(...steps) / Math.min(...steps)).toBeLessThan(1.34);
+  it('gives every family a soft, symmetrical silhouette: every outward corner rounded', () => {
+    for (const family of BADGE_FAMILIES) {
+      const body = SHAPES[family].body;
+      if (body.kind === 'circle') continue;
+      const { vertices: v, radii } = body.shape;
+      const area = v.reduce((sum, p, i) => {
+        const q = v[(i + 1) % v.length] as readonly [number, number];
+        return sum + p[0] * q[1] - q[0] * p[1];
+      }, 0);
+      v.forEach((p, i) => {
+        const a = v[(i - 1 + v.length) % v.length] as readonly [number, number];
+        const b = v[(i + 1) % v.length] as readonly [number, number];
+        const outward = ((p[0] - a[0]) * (b[1] - p[1]) - (p[1] - a[1]) * (b[0] - p[0])) * area > 0;
+        if (outward) expect(radii[i], `${family} corner ${i}`).toBeGreaterThanOrEqual(7);
+      });
+      const key = ([x, y]: readonly [number, number]): string => `${x.toFixed(3)},${y.toFixed(3)}`;
+      const points = new Set(v.map(key));
+      // the leaf lies on the diagonal, so it is itself turned half round; the rest are their own mirror image
+      for (const [x, y] of v) expect(points.has(key(family === 'friends' ? [120 - x, 112 - y] : [120 - x, y])), `${family} ${x},${y}`).toBe(true);
+    }
   });
 
   it('respects the size it is asked for, and draws a small version under the threshold', () => {
@@ -273,6 +321,16 @@ describe('badgeSvg', () => {
     const small = badgeSvg({ key: 'heval', tier: 3, size: SMALL_BADGE - 1 });
     const large = badgeSvg({ key: 'heval', tier: 3, size: SMALL_BADGE });
     expect(small.replace(/width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, '')).not.toBe(large.replace(/width="\d+" height="\d+"/, ''));
+  });
+
+  it('keeps a tiny badge to its shape, rim, glyph and pips', () => {
+    for (const key of ['ders', 'agir', 'rank-lutke', 'newroz'] as BadgeKey[]) {
+      const large = badgeSvg({ key, tier: 4 });
+      const tiny = badgeSvg({ key, tier: 4, size: TINY_BADGE - 8 });
+      expect(kilimBands(large), key).toBe(1);
+      expect(kilimBands(tiny) + beadRings(tiny), key).toBe(0);
+      expect(elements(tiny), key).toBeLessThan(elements(large));
+    }
   });
 
   it('labels itself, and escapes a caller’s label', () => {
@@ -362,6 +420,45 @@ describe('rankEmblemSvg', () => {
     expect(rankEmblemSvg({ tier: 'sterk', division: 1 })).toMatch(/>Stêrk \(Star\)<\/title>/);
   });
 
+  it('counts the division in pips under the medallion: one lit for III, two for II, three for I', () => {
+    for (const tier of RANK_TIERS.filter((t) => t !== 'sterk')) {
+      for (const division of [3, 2, 1] as const) expect(pipsOf(rankEmblemSvg({ tier, division })), `${tier} ${division}`).toEqual({ lit: 4 - division, all: 3 });
+      expect(pipsOf(rankEmblemSvg({ tier }))).toEqual({ lit: 0, all: 0 });
+      // small, the pips give way to a bigger medallion; the app writes the division beside it
+      expect(pipsOf(rankEmblemSvg({ tier, division: 1, size: SMALL_EMBLEM - 1 }))).toEqual({ lit: 0, all: 0 });
+    }
+    expect(pipsOf(rankEmblemSvg({ tier: 'sterk', division: 1 }))).toEqual({ lit: 0, all: 0 });
+  });
+
+  it('draws less as it gets smaller: the fine things go first, then the rim’s ornament', () => {
+    for (const tier of RANK_TIERS) {
+      const large = rankEmblemSvg({ tier, size: 128 });
+      const small = rankEmblemSvg({ tier, size: SMALL_EMBLEM - 8 });
+      const tiny = rankEmblemSvg({ tier, size: TINY_EMBLEM - 8 });
+      expect(elements(small), tier).toBeLessThan(elements(large));
+      expect(elements(tiny), tier).toBeLessThan(elements(small));
+      expect(tiny.length, tier).toBeLessThan(large.length);
+      // tiny, nothing is set into the rim at all
+      expect(kilimBands(tiny) + beadRings(tiny), tier).toBe(0);
+    }
+    // the rim's ornament is part of the ladder: beads from Gir, the kilim band from Zozan, and small the kilim becomes beads
+    expect(RANK_TIERS.map((tier) => [beadRings(rankEmblemSvg({ tier })), kilimBands(rankEmblemSvg({ tier }))])).toEqual([
+      [0, 0],
+      [1, 0],
+      [0, 1],
+      [0, 1],
+      [0, 1],
+      [0, 1],
+    ]);
+    expect(kilimBands(rankEmblemSvg({ tier: 'zozan', size: 40 }))).toBe(0);
+    expect(beadRings(rankEmblemSvg({ tier: 'zozan', size: 40 }))).toBe(1);
+    // the high pasture's flowers and the plain's ears of wheat are fine detail, gone when small
+    expect(rankEmblemSvg({ tier: 'zozan' })).toContain('#ff9ecf');
+    expect(rankEmblemSvg({ tier: 'zozan', size: 24 })).not.toContain('#ff9ecf');
+    expect(rankEmblemSvg({ tier: 'dest' })).toContain('#ffd977');
+    expect(rankEmblemSvg({ tier: 'dest', size: 40 })).not.toContain('#ffd977');
+  });
+
   it('refuses an unknown tier or division', () => {
     expect(() => rankEmblemSvg({ tier: 'bronze' as never })).toThrow(RangeError);
     expect(() => rankEmblemSvg({ tier: 'gir', division: 4 as never })).toThrow(RangeError);
@@ -375,6 +472,11 @@ describe('rankEmblemSvg', () => {
     expect(placementEmblemSvg({ done: 2 })).toMatch(/>Placing 2\/5<\/title>/);
     expect(placementEmblemSvg({ done: 2 })).toBe(all[2]);
     expect(PLACEMENT_GAMES).toBe(5);
+    // five pips, as many lit as games played; small, the pips go but the path's stones still count
+    all.forEach((svg, done) => expect(pipsOf(svg)).toEqual({ lit: done, all: 5 }));
+    const small = [0, 1, 2, 3, 4, 5].map((done) => placementEmblemSvg({ done, size: 24, idPrefix: 'p' }));
+    expect(new Set(small).size).toBe(6);
+    small.forEach((svg) => expect(pipsOf(svg).all).toBe(0));
     expect(() => placementEmblemSvg({ done: 6 })).toThrow(RangeError);
     expect(() => placementEmblemSvg({ done: 1.5 })).toThrow(RangeError);
   });
@@ -407,6 +509,13 @@ describe('leagueEmblemSvg', () => {
       expect(leagueEmblemSvg({ tier })).toBe(leagueEmblemSvg({ tier }));
     }
     expect(leagueEmblemSvg({ tier: 'okyanus' })).toMatch(/>Okyanûs \(Ocean\)<\/title>/);
+    // smaller, less: the rim's beads go at the tiny size, and the picture loses its finest parts
+    for (const tier of LEAGUE_TIERS) {
+      expect(elements(leagueEmblemSvg({ tier, size: 24 })), tier).toBeLessThan(elements(leagueEmblemSvg({ tier })));
+      expect(beadRings(leagueEmblemSvg({ tier, size: 24 })), tier).toBe(0);
+    }
+    // the rim climbs too: beads are set into it from Çem up
+    expect(LEAGUE_TIERS.map((tier) => beadRings(leagueEmblemSvg({ tier })))).toEqual([0, 0, 1, 1, 1, 1]);
     expect(() => leagueEmblemSvg({ tier: 'diamond' as never })).toThrow(RangeError);
   });
 });
@@ -436,6 +545,59 @@ describe('seasonFrameSvg', () => {
   });
 });
 
+describe('the label', () => {
+  /** A caller's title can be anything: markup, quotes, an ampersand, characters XML cannot carry. */
+  const nasty = `</title><script>alert("hi")</script> & 'q' \u0007\u0000\ud800 Çiya`;
+  const builders: [string, (title: string) => string][] = [
+    ['badge', (title) => badgeSvg({ key: 'agir', tier: 2, title })],
+    ['rank', (title) => rankEmblemSvg({ tier: 'ciya', division: 2, title })],
+    ['season', (title) => rankEmblemSvg({ tier: 'gir', season: { name: 'bihar', year: 2027 }, title })],
+    ['placement', (title) => placementEmblemSvg({ done: 2, title })],
+    ['league', (title) => leagueEmblemSvg({ tier: 'gol', title })],
+    ['frame', (title) => seasonFrameSvg({ tier: 'lutke', title })],
+  ];
+
+  it.each(builders)('is escaped in the %s, so it is only ever text', (_name, build) => {
+    const svg = build(nasty);
+    const size = Number(/width="([\d.]+)"/.exec(svg)?.[1]);
+    checkSvg(svg, size);
+    expect(svg).not.toMatch(/<script|<\/title><script/);
+    const title = parse(svg).children[0];
+    expect(title?.name).toBe('title');
+    expect(title?.children).toEqual([]);
+    expect(title?.text).toBe('&lt;/title&gt;&lt;script&gt;alert(&quot;hi&quot;)&lt;/script&gt; &amp; &apos;q&apos;  Çiya');
+    // nothing XML cannot carry: no control characters, no half of a surrogate pair
+    expect(svg).not.toMatch(/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/);
+    expect(/[\ud800-\udfff]/.test(svg.replace(/[\ud800-\udbff][\udc00-\udfff]/g, ''))).toBe(false);
+  });
+
+  it('keeps whole characters, emoji and all, and only drops what XML cannot carry', () => {
+    expect(escapeXml('Heval 🌸 & <b>')).toBe('Heval 🌸 &amp; &lt;b&gt;');
+    expect(escapeXml('a\tb\nc')).toBe('a\tb\nc');
+    expect(escapeXml('x\u0001y\ufffez\udc00')).toBe('xyz');
+  });
+});
+
+describe('light', () => {
+  it('never reaches the edge of the square, so no glow shows a hard side', () => {
+    const drawings = [
+      ...RANK_TIERS.flatMap((tier) => [rankEmblemSvg({ tier }), rankEmblemSvg({ tier, division: 1 }), rankEmblemSvg({ tier, size: 40 }), rankEmblemSvg({ tier, season: { name: 'havin', year: 2026 } })]),
+      ...LEAGUE_TIERS.flatMap((tier) => [leagueEmblemSvg({ tier }), leagueEmblemSvg({ tier, size: 40 })]),
+      ...RANK_TIERS.flatMap((tier) => [seasonFrameSvg({ tier }), seasonFrameSvg({ tier, size: 40 })]),
+      ...TIERS.flatMap((tier) => [badgeSvg({ key: 'agir', tier }), badgeSvg({ key: 'agir', tier, size: 40 })]),
+    ];
+    for (const svg of drawings) {
+      walk(parse(svg), (e) => {
+        // a glow is a radial fade to nothing; the enamel's own gradient is clipped to the piece and never fades out
+        if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse' || e.children.at(-1)?.attrs['stop-opacity'] !== '0') return;
+        const [cx, cy, r] = [Number(e.attrs.cx), Number(e.attrs.cy), Number(e.attrs.r)];
+        expect(Math.min(cx - r, cy - r), svg.slice(0, 160)).toBeGreaterThanOrEqual(0);
+        expect(Math.max(cx + r, cy + r), svg.slice(0, 160)).toBeLessThanOrEqual(120);
+      });
+    }
+  });
+});
+
 describe('weight', () => {
   it('keeps every drawing small enough to inline a page of them', () => {
     const biggest = Math.max(
@@ -443,7 +605,9 @@ describe('weight', () => {
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, division: 1 }).length),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }).length),
       ...RANK_TIERS.map((tier) => seasonFrameSvg({ tier, shine: true }).length),
+      ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, season: { name: 'payiz', year: 2026 } }).length),
+      ...[0, 5].map((done) => placementEmblemSvg({ done }).length),
     );
-    expect(biggest).toBeLessThan(24 * 1024);
+    expect(biggest).toBeLessThan(16 * 1024);
   });
 });

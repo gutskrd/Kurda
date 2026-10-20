@@ -79,7 +79,7 @@ export function RankEmblem({
   size: number;
   /** the translated name, "Gir II (Hill)" */
   label: string;
-  /** a season's emblem shows the season under the crest instead of the division */
+  /** a season's emblem shows the season under the medallion instead of the division */
   season?: { name: ArtSeason; year: number };
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
