@@ -1,18 +1,21 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useNavigation, useScrollToTop } from '@react-navigation/native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { statValue, statCaption, display } from '../theme/fonts';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
-import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { useOpenMenu } from '../navigation/SideMenu';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { useDirection } from '../reports/direction';
+import { useUnread } from '../messages/unread';
+import { SITE_ORIGIN } from '../feed/api';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
@@ -26,7 +29,7 @@ import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
 import { learningStats, type Streak } from '../streak/format';
 
-/** How big the face is. TikTok's is about this, and so is Instagram's. */
+/** How big the face is: the largest thing on the screen, and no larger. */
 const AVATAR = 96;
 /** The face with a season frame round it: the frame's ring sits outside the face, which stays the same size. */
 const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
@@ -49,25 +52,20 @@ interface Me extends ProfileCosmetics {
 }
 
 /**
- * Your profile: a face, a name, three numbers and one button.
+ * Your profile: your name at the top, a face, three numbers, and two buttons.
  *
- * Built to the shape every social app has settled on — TikTok's and
- * Instagram's are the same five bands — because it is the shape that answers
- * what somebody opening their own profile actually wants to know, in the
- * order they want it: is this me, how am I doing, and how do I change it.
+ * In the order somebody opening their own profile wants it answered: is this
+ * me, how am I doing, and how do I change it — then what I have made.
  *
- * What it is not any more is a menu. It carried seven buttons across the
- * bottom — League, Shop, Edit, Saved, Tags, a notification bell and Settings —
- * and every one of them is a place rather than a thing you do to a profile.
- * Six are in the side panel, one tap from every screen in the app instead of
- * from this one, and the bell is the Inbox tab. Only Edit is about the
- * profile, so only Edit stays, as the wide button it is in every other app.
+ * What it is not is a menu. Everything that is a place rather than a thing
+ * you do to a profile — the shop, settings, what you saved, badges, tags, the
+ * library — is behind the menu at the top, one tap away. The two buttons are
+ * the two things people do with their own profile: change it, and share it.
  *
  * The numbers are split in two. Three get the big centred row, because
  * friends, level and streak are the three that answer "how am I doing". The
- * other four — XP, Zêr, rank, icons — are one quiet line underneath: still
- * there, still yours, no longer shouting over the face. Seven equal
- * statistics is a dashboard, and this is a profile.
+ * other ones — XP, Zêr, icons — are one quiet line underneath: still there,
+ * still yours, no longer shouting over the face.
  */
 export function ProfileScreen() {
   const { user, client } = useAuth();
@@ -76,6 +74,11 @@ export function ProfileScreen() {
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const openMenu = useOpenMenu();
+  const { counts } = useUnread();
+  const dir = useDirection();
+  const scrollRef = useRef<ScrollView>(null);
+  // tapping Profile while on Profile goes back to the top
+  useScrollToTop(scrollRef);
   const [streak, setStreak] = useState<Streak | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [me, setMe] = useState<Me | null>(null);
@@ -171,6 +174,17 @@ export function ProfileScreen() {
     else showSendError(t('profile.photoFailed'), { message: res.error, limited: res.limited });
   }, [client, uploading, showSendError, t, locale]);
 
+  /*
+   * Your profile's address, to send to somebody. The website opens it for
+   * anyone; the app opens it for anyone who has the app.
+   */
+  const share = useCallback(() => {
+    const id = me?.id ?? user?.id;
+    if (!id) return;
+    const url = `${SITE_ORIGIN}/app/users/${id}`;
+    void Share.share({ message: t('profile.shareMessage', { name: me?.displayName ?? user?.username ?? '', url }) });
+  }, [me, user, t]);
+
   const country = me?.country ? countryName(me.country, locale) ?? me.country : null;
   const frameTier = frameTierOf(progress?.frameSku);
 
@@ -212,12 +226,30 @@ export function ProfileScreen() {
       ) : null}
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
       >
-        {/* the panel opens from the left on every other tab, so it does here */}
-        <View style={styles.topBar}>
-          <SideMenuButton onPress={openMenu} />
+        {/*
+          Who this is, at the top, and the menu at the end: the shop, settings,
+          what you saved and the rest. A gift waiting to be unwrapped puts a
+          dot on it, the same dot that is on the tab.
+        */}
+        <View style={[styles.topBar, { flexDirection: dir.row }]}>
+          <View style={styles.topSide} />
+          <Text style={[styles.topName, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+            @{me?.username ?? user?.username}
+          </Text>
+          <View style={[styles.topSide, { alignItems: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]}>
+            <HeaderButton
+              icon="menu"
+              label={counts.gifts > 0 ? t('nav.menuWaiting') : t('nav.menu')}
+              dot={counts.gifts > 0}
+              onPress={openMenu}
+              edge="end"
+              testID="profile-menu"
+            />
+          </View>
         </View>
 
         <Pressable
@@ -256,7 +288,6 @@ export function ProfileScreen() {
           </Text>
           {me?.premium ? <PremiumPill /> : null}
         </View>
-        <Text style={[styles.handle, { color: colors.textSecondary }]}>@{me?.username ?? user?.username}</Text>
 
         {country ? (
           <View style={styles.country}>
@@ -311,29 +342,29 @@ export function ProfileScreen() {
         {streak ? <LearningRow streak={streak} /> : null}
 
         {/*
-          One wide button and one square one, which is the arrangement every
-          app with a profile has arrived at: the thing you came to do, and the
-          one shortcut worth a tap beside it.
+          The two things people do with their own profile, side by side and
+          the same size: change it, and send it to somebody.
         */}
         <View style={styles.actions}>
           <Pressable
             onPress={() => navigation.navigate('EditProfile')}
             accessibilityRole="button"
             accessibilityLabel={t('profile.edit')}
-            style={({ pressed }) => [styles.edit, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
-            <Text style={[styles.editText, { color: colors.textPrimary }]}>{t('profile.edit')}</Text>
+            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('profile.edit')}
+            </Text>
           </Pressable>
           <Pressable
-            onPress={() => navigation.navigate('Saved')}
+            onPress={share}
             accessibilityRole="button"
-            accessibilityLabel={t('saved.title')}
-            style={({ pressed }) => [
-              styles.squareAction,
-              { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 },
-            ]}
+            accessibilityLabel={t('profile.share')}
+            style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
-            <Icon name="bookmark" size={20} color={colors.textPrimary} />
+            <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('profile.share')}
+            </Text>
           </Pressable>
         </View>
 
@@ -425,12 +456,15 @@ function Stat({ label, value, onPress }: { label: string; value: string; onPress
 }
 
 const styles = StyleSheet.create({
-  content: { alignItems: 'center', paddingHorizontal: spacing.lg, gap: spacing.sm },
+  content: { alignItems: 'center', paddingHorizontal: layout.gutter, gap: spacing.sm },
   // full-bleed behind the header; the scrim sits on top of it at the same size
   cosmeticBg: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
   cosmeticScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
 
-  topBar: { alignSelf: 'stretch', alignItems: 'flex-start' },
+  // equal sides, so the name between them is centred whatever is at the end
+  topBar: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET },
+  topSide: { width: MIN_TOUCH_TARGET },
+  topName: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
 
   avatarWrap: { marginTop: spacing.sm },
   avatarOverlay: {
@@ -446,7 +480,6 @@ const styles = StyleSheet.create({
 
   nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
   name: { ...display(typography.sizes.xl) },
-  handle: { fontSize: typography.sizes.md },
   country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   // the browser draws a plain 22x16 image and so does this; a corner radius on
   // something this small is a rounding error rather than a shape
@@ -469,21 +502,15 @@ const styles = StyleSheet.create({
   learningHint: { fontSize: typography.sizes.xs, textAlign: 'center', lineHeight: 16 },
 
   actions: { alignSelf: 'stretch', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
-  edit: {
+  action: {
     flex: 1,
     minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
-  editText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  squareAction: {
-    width: MIN_TOUCH_TARGET,
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 
   bio: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
 });

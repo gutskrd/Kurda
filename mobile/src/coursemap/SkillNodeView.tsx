@@ -2,10 +2,11 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { Icon } from '../theme/Icon';
 import { STATE_LABEL, stateIcon } from './node';
 import type { SkillNode } from './types';
 
-const NODE = 72;
+const NODE = 64;
 
 /** A single skill node on the map; ring/fill reflect its state (KUR-040). */
 export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () => void }) {
@@ -16,6 +17,7 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
     s === 'gold' ? colors.gold : s === 'decayed' ? colors.danger : s === 'locked' ? colors.glassBorder : colors.primary;
   const fill = s === 'locked' ? colors.controlTrack : s === 'unlocked' ? colors.glassFill : colors.primary;
   const cracked = s === 'decayed';
+  const glyph = stateIcon(s);
 
   return (
     <View style={styles.row}>
@@ -25,7 +27,11 @@ export function SkillNodeView({ node, onPress }: { node: SkillNode; onPress: () 
         accessibilityLabel={t('coursemap.nodeLabel', { title: node.title, state: t(STATE_LABEL[s]) })}
         style={[styles.node, { borderColor: ringColor, backgroundColor: fill }, cracked && styles.cracked]}
       >
-        <Text style={[styles.icon, { color: s === 'unlocked' ? colors.primary : colors.textOnPrimary }]}>{stateIcon(s) || node.level}</Text>
+        {glyph ? (
+          <Icon name={glyph} size={28} color={s === 'locked' ? colors.textSecondary : colors.textOnPrimary} />
+        ) : (
+          <Text style={[styles.icon, { color: colors.primary }]}>{node.level}</Text>
+        )}
       </Pressable>
       <View style={styles.meta}>
         <Text style={[styles.title, { color: colors.textPrimary }]}>{node.title}</Text>
@@ -47,14 +53,14 @@ const styles = StyleSheet.create({
     width: NODE,
     height: NODE,
     borderRadius: radii.pill,
-    borderWidth: 4,
+    borderWidth: 3,
     alignItems: 'center',
     justifyContent: 'center',
   },
   cracked: { borderStyle: 'dashed' },
-  icon: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  icon: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   meta: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   strength: { fontSize: typography.sizes.sm },
   locked: { fontSize: typography.sizes.sm },
 });

@@ -47,7 +47,6 @@ const MAP = {
   person: { glyph: 'User', note: 'web UserIcon — one person, an account, you' },
   home: { glyph: 'House', note: 'web HomeIcon — the tab bar falls back to it' },
   search: { glyph: 'MagnifyingGlass', note: 'web SearchIcon — one field for people, words, lessons and games' },
-  tray: { glyph: 'Tray', note: 'the inbox — chats, requests and alerts in one place; a bell would mean only the alerts' },
 
   // --- the rest of the browser's façade, same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },
@@ -114,7 +113,7 @@ const MAP = {
   quotes: { glyph: 'Quotes', note: 'source / credit — where a quote or a picture came from' },
 
   // --- the way in to everywhere the tab bar has no room for ---
-  menu: { glyph: 'List', note: 'the side panel; three lines, which is what every app uses and what the recording used' },
+  menu: { glyph: 'List', note: 'the profile menu; three lines, which is what a menu is understood to look like' },
 
   // --- the typographic glyphs that four screens drew instead of icons ---
   stop: { glyph: 'Stop', weight: 'fill', note: 'stop recording — the square the speaking exercise typed as U+25A0' },
@@ -150,6 +149,12 @@ const MAP = {
   // --- the shop, the inventory and the gift picker, sorted by kind ---
   tag: { glyph: 'Tag', note: 'a tag for the profile, such as the Kurdish tag: an item with no picture of its own' },
   sort: { glyph: 'ArrowsDownUp', note: 'the order a list is in — featured, by price, by name' },
+
+  // --- the five tabs and what moved into them ---
+  compose: { glyph: 'NotePencil', note: 'start a new conversation — a page and a pencil, not the paper plane the tab is' },
+  history: { glyph: 'ClockCounterClockwise', note: 'a search you made before' },
+  'clear-fill': { glyph: 'XCircle', weight: 'fill', note: 'empty a search field — the filled circle every platform puts at the end of one' },
+  review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

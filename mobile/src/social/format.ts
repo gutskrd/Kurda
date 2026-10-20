@@ -1,6 +1,7 @@
 /** Pure social view helpers (KUR-082) — no React Native. */
 
 import type { TranslationKey } from '../i18n/translations';
+import type { Translate } from '../api/errors';
 
 export type FriendStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked' | 'self';
 /**
@@ -111,3 +112,14 @@ export const VISIBILITY_LABEL: Record<Visibility, TranslationKey> = {
   friends: 'settings.visibility.friends',
   nobody: 'settings.visibility.nobody',
 };
+
+/**
+ * "1 mutual friend", "3 mutual friends".
+ *
+ * One key for one and one for the rest, as the shop's item counts do: a single
+ * "{count} mutual friends" read "1 mutual friends" under the first person it
+ * suggested.
+ */
+export function mutualText(t: Translate, count: number): string {
+  return count === 1 ? t('friends.mutualOne') : t('friends.mutual', { count });
+}

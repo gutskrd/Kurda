@@ -45,23 +45,12 @@ describe('palettes', () => {
   });
 
   /*
-   * The rim is dispersion, not a tint.
-   *
-   * Each band is a pair — the hue at the boundary and the hue just inside it —
-   * and the pair has to actually be two different colours, or the gradient is a
-   * flat band and the whole point of it is gone. A single hue at an edge is a
-   * coloured line, which is what the rim replaced.
+   * Nothing blurs behind the island, so any alpha in its fill is content
+   * showing through between the tab labels — on the phone exactly as in a
+   * browser. It is a solid colour in both schemes.
    */
-  it('each lens band spreads across two colours', () => {
-    for (const p of [LIGHT, DARK]) {
-      for (const band of [p.lensWarm, p.lensCool, p.lensFringe]) {
-        expect(band).toHaveLength(2);
-        expect(band[0]).toMatch(CSS_COLOR);
-        expect(band[1]).toMatch(CSS_COLOR);
-        expect(band[0]).not.toBe(band[1]);
-      }
-
-    }
+  it('gives the tab bar a solid fill', () => {
+    for (const p of [LIGHT, DARK]) expect(p.barFill, p.scheme).toMatch(HEX);
   });
 
   it('PALETTES maps each scheme to its own palette', () => {

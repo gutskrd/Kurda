@@ -1,4 +1,12 @@
-import { NavigationContainer, DefaultTheme, DarkTheme, useNavigation, type LinkingOptions, type Theme } from '@react-navigation/native';
+import {
+  NavigationContainer,
+  DefaultTheme,
+  DarkTheme,
+  getStateFromPath,
+  useNavigation,
+  type LinkingOptions,
+  type Theme,
+} from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
@@ -9,12 +17,18 @@ import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
-import { TABS, linkingScreens } from './src/navigation/tabs';
+import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
 import { GlassTabBar } from './src/navigation/GlassTabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
-import { chatRouteId, groupThreadRouteId, type RootNavigation, type RootStackParamList } from './src/navigation/rootStack';
+import {
+  chatRouteId,
+  groupThreadRouteId,
+  type RootNavigation,
+  type RootStackParamList,
+  type TabParamList,
+} from './src/navigation/rootStack';
 import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
@@ -25,9 +39,8 @@ import { SavedScreen } from './src/feed/SavedScreen';
 import { EditProfileScreen } from './src/profile/EditProfileScreen';
 import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
-import { LearnScreen } from './src/screens/LearnScreen';
+import { LearnScreen } from './src/learn/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
-import { PlayScreen } from './src/screens/PlayScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
@@ -41,12 +54,12 @@ import { BadgesScreen } from './src/badges/BadgesScreen';
 import { BadgeCelebrationHost } from './src/badges/BadgeCelebrationHost';
 import { SocialScreen } from './src/social/SocialScreen';
 import { SearchScreen } from './src/search/SearchScreen';
-import { InboxScreen } from './src/inbox/InboxScreen';
-import { useUnseenGifts } from './src/shop/useUnseenGifts';
+import { MessagesScreen } from './src/messages/MessagesScreen';
+import { FriendRequestsScreen } from './src/messages/FriendRequestsScreen';
+import { UnreadProvider, useUnread } from './src/messages/unread';
 import { unreadBadge } from './src/notifications/inbox';
 import { PublicProfileScreen } from './src/social/PublicProfileScreen';
 import { ChatScreen } from './src/chat/ChatScreen';
-import { ChatListScreen } from './src/chat/ChatListScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
@@ -86,7 +99,7 @@ import { NotificationCenterScreen } from './src/notifications/NotificationCenter
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
 import { InviteBanner } from './src/play/InviteBanner';
 
-const Tab = createBottomTabNavigator();
+const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 
@@ -112,9 +125,18 @@ const linking: LinkingOptions<RootStackParamList> = {
   // `hevalo://` is the scheme app.json registers; this said `kurda://`, which
   // no phone hands to the app
   prefixes: [Linking.createURL('/'), 'hevalo://', 'https://hevalo.app'],
+  /*
+   * Addresses from before the tabs changed — `hevalo://play`, `hevalo://inbox`,
+   * the website's `/app/games` — are rewritten to where those things are now
+   * before they are read (navigation/tabs.ts, `legacyTabPath`).
+   */
+  getStateFromPath: (path, options) => getStateFromPath(legacyTabPath(path), options),
   config: {
     screens: {
+      // `?view=games` on Learn arrives as the tab's own param
       Tabs: { screens: linkingScreens() },
+      // a shared profile (Profile → Share) opens in the app for anyone who has it
+      UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
       Practice: 'practice',
       WordleBattle: inviteRoutePath('wordle-battle'),
@@ -127,29 +149,24 @@ const linking: LinkingOptions<RootStackParamList> = {
 };
 
 /**
- * Everywhere the tab bar has no room for.
+ * The profile's menu: everywhere the tab bar has no room for.
  *
- * Six tabs is already one more than iOS suggests, and the app has thirty-three
- * screens. Most of the rest were reachable only by going Profile → a row, or
- * Settings → a row — and two of them, the library and the memes, had no link
- * pointing at them from anywhere at all. They were built, they work, and there
- * was no way in.
- */
-/**
- * The panel’s contents.
+ * Five tabs, and the app has more than thirty screens. The ones that are
+ * places of your own or ways to look around — the shop, settings, what you
+ * saved, the library, the memes, the league — are here, one tap from the
+ * profile, which is where somebody looks for "my stuff".
  *
- * `giftBadge` is the count of gifts you have not opened. It used to sit on a
- * Shop button on the profile, with a comment saying why it existed: a gift
- * that arrives silently may as well not have arrived. The profile stopped
- * being a menu, so the count moved to where Shop now lives.
+ * `giftBadge` is the count of gifts you have not opened, on the Shop row
+ * where the gifts are: a gift that arrives silently may as well not have
+ * arrived. The same count puts a dot on the Profile tab and on this menu's
+ * button.
  */
 function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
-  const giftBadge = unreadBadge(useUnseenGifts()) ?? undefined;
+  const giftBadge = unreadBadge(useUnread().counts.gifts) ?? undefined;
   return [
     {
       titleKey: null,
       links: [
-        { key: 'chats', labelKey: 'nav.messages', icon: 'chat', onPress: () => navigation.navigate('Chats') },
         { key: 'friends', labelKey: 'nav.friends', icon: 'people', onPress: () => navigation.navigate('Friends') },
         { key: 'clubs', labelKey: 'groups.discover', icon: 'people', onPress: () => navigation.navigate('Clubs') },
       ],
@@ -181,6 +198,7 @@ function useMenuGroups(navigation: RootNavigation): MenuGroup[] {
 function SignedInTabs() {
   const navigation = useNavigation<RootNavigation>();
   const groups = useMenuGroups(navigation);
+  const reduceMotion = useReducedMotion();
   const [menuOpen, setMenuOpen] = useState(false);
   const openMenu = useCallback(() => setMenuOpen(true), []);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
@@ -194,42 +212,45 @@ function SignedInTabs() {
       screenOptions={{
         headerShown: false,
         /*
-         * Tabs cross-fade; they do not cut.
-         *
-         * The default is no animation at all — one screen is replaced by
-         * another between two frames, which reads as a flicker rather than as
-         * a move. The app this was measured against dissolves one into the
-         * other, and both are on screen together in the middle of it.
-         *
-         * 200ms, measured off a screen recording at 50ms granularity: the old
-         * tab is whole at one sample, both are half there at the next, and the
-         * new one is whole at the one after.
+         * Tabs cross-fade; they do not cut. With no animation one screen is
+         * replaced by another between two frames, which reads as a flicker
+         * rather than as a move. 200ms, and nothing at all for somebody who
+         * has asked for less motion.
          */
-        animation: 'fade',
+        animation: reduceMotion ? 'none' : 'fade',
         transitionSpec: { animation: 'timing', config: { duration: 200 } },
       }}
-      // custom frosted-glass island with labels + a sliding active highlight
+      // the floating island: icons, labels, the badges and a sliding pill
       tabBar={(props) => <GlassTabBar {...props} />}
     >
-      {TABS.map((tab) => (
-        <Tab.Screen key={tab.name} name={tab.name}>
-          {() =>
-            tab.name === 'Home' ? (
-              <CivakScreen />
-            ) : tab.name === 'Search' ? (
-              <SearchScreen />
-            ) : tab.name === 'Play' ? (
-              <PlayScreen />
-            ) : tab.name === 'Inbox' ? (
-              <InboxScreen />
-            ) : (
-              <ProfileScreen />
-            )
-          }
-        </Tab.Screen>
-        ))}
-      </Tab.Navigator>
-      <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} />
+      {/* in the order TABS gives, which is the order the tests hold it to */}
+      {TABS.map((tab) =>
+        tab.name === 'Learn' ? (
+          <Tab.Screen key={tab.name} name="Learn">
+            {({ route, navigation: tabs }) => (
+              <LearnScreen view={route.params?.view} onViewShown={() => tabs.setParams({ view: undefined })} />
+            )}
+          </Tab.Screen>
+        ) : (
+          <Tab.Screen key={tab.name} name={tab.name}>
+            {() =>
+              tab.name === 'Home' ? (
+                <CivakScreen />
+              ) : tab.name === 'Messages' ? (
+                <MessagesScreen />
+              ) : tab.name === 'Search' ? (
+                <SearchScreen />
+              ) : (
+                <ProfileScreen />
+              )
+            }
+          </Tab.Screen>
+        ),
+      )}
+    </Tab.Navigator>
+      {/* the profile's menu comes in from the end, the side its button is on */}
+      <SideMenu open={menuOpen} onClose={closeMenu} groups={groups} side="end" />
+      {/* your people, opened by Messages' new-message button: tap a friend to write to them */}
       <SocialSlide open={slideOpen} onClose={closeSlide} />
     </SlideProvider>
     </MenuProvider>
@@ -241,6 +262,8 @@ function SignedInRoot() {
   const reduceMotion = useReducedMotion();
   return (
     <RealtimeProvider>
+      {/* the badges' counts, for the tab bar, Home's bell and the profile's menu */}
+      <UnreadProvider>
       <PushRegistration />
       {/* a badge just earned has its moment over whatever screen is up, once a game's own result has had its turn */}
       <BadgeCelebrationHost>
@@ -264,7 +287,11 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (
-          <ShopScreen onExit={() => navigation.goBack()} onEarnMore={() => navigation.navigate('Tabs')} />
+          // Zêr is earned by learning, so "earn more" opens the lessons
+          <ShopScreen
+            onExit={() => navigation.goBack()}
+            onEarnMore={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="League" options={{ presentation: 'fullScreenModal' }}>
@@ -310,7 +337,7 @@ function SignedInRoot() {
           <GroupMembersScreen
             groupId={route.params.groupId}
             onExit={() => navigation.goBack()}
-            onLeft={() => navigation.navigate('Chats')}
+            onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
           />
         )}
       </RootStack.Screen>
@@ -323,14 +350,14 @@ function SignedInRoot() {
             groupId={route.params.groupId}
             name={route.params.name}
             openGift={route.params.openGift}
-            onLeft={() => navigation.navigate('Chats')}
+            onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
             onExit={() => navigation.goBack()}
             onOpenMembers={() => navigation.navigate('GroupMembers', { groupId: route.params.groupId })}
           />
         )}
       </RootStack.Screen>
-      <RootStack.Screen name="Chats" options={{ presentation: 'card' }}>
-        {({ navigation }) => <ChatListScreen onExit={() => navigation.goBack()} />}
+      <RootStack.Screen name="FriendRequests" options={{ presentation: 'card' }}>
+        {({ navigation }) => <FriendRequestsScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="EventQuests" options={{ presentation: 'card' }}>
         {({ navigation }) => <EventQuestsScreen onExit={() => navigation.goBack()} />}
@@ -405,10 +432,7 @@ function SignedInRoot() {
         {({ navigation }) => <EditProfileScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Friends" options={{ presentation: 'card' }}>
-        {() => <SocialScreen />}
-      </RootStack.Screen>
-      <RootStack.Screen name="Learn" options={{ presentation: 'card' }}>
-        {({ navigation }) => <LearnScreen onBack={() => navigation.goBack()} />}
+        {({ navigation }) => <SocialScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Dictionary" options={{ presentation: 'card' }}>
         {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
@@ -437,6 +461,7 @@ function SignedInRoot() {
       {/* over every screen: a gift that arrives, a warning to read once */}
       <SocialOverlays />
       </BadgeCelebrationHost>
+      </UnreadProvider>
     </RealtimeProvider>
   );
 }

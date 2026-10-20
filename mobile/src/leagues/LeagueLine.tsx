@@ -15,6 +15,7 @@ import { getLeague } from '../ranks/api';
 import { leagueTint } from '../ranks/tint';
 import { GoalRing } from './GoalRing';
 import { knownTier, leagueLabel, leagueName } from './format';
+import { useDirection } from '../reports/direction';
 
 /**
  * The week in one line on the home of learning (contract 4 §U): the league
@@ -27,6 +28,7 @@ export function LeagueLine(): React.JSX.Element | null {
   const navigation = useNavigation<RootNavigation>();
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
+  const dir = useDirection();
   const [league, setLeague] = useState<LeagueView | null>(null);
 
   useFocusEffect(
@@ -59,7 +61,7 @@ export function LeagueLine(): React.JSX.Element | null {
       onPress={() => navigation.navigate('League')}
       accessibilityRole="button"
       accessibilityLabel={`${tier && !personal ? leagueLabel(t, tier) : title}. ${sub}. ${goal}`}
-      style={({ pressed }) => [styles.row, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.75 : 1 }]}
+      style={({ pressed }) => [styles.row, { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1, flexDirection: dir.row }]}
     >
       {tier && !personal ? (
         <LeagueEmblem tier={tier} size={44} label={leagueLabel(t, tier)} />
@@ -69,12 +71,12 @@ export function LeagueLine(): React.JSX.Element | null {
         </View>
       )}
       <View style={styles.text}>
-        <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {title}
         </Text>
-        <View style={styles.subRow}>
+        <View style={[styles.subRow, { flexDirection: dir.row }]}>
           {league.safe ? <Icon name="seal-check" size={14} color={colors.success} /> : null}
-          <Text style={[styles.sub, { color: league.safe ? colors.success : colors.textSecondary }]} numberOfLines={2}>
+          <Text style={[styles.sub, dir.text, { color: league.safe ? colors.success : colors.textSecondary }]} numberOfLines={2}>
             {sub}
           </Text>
         </View>
@@ -85,10 +87,10 @@ export function LeagueLine(): React.JSX.Element | null {
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: MIN_TOUCH_TARGET + 16, alignSelf: 'stretch' },
+  row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: MIN_TOUCH_TARGET + 16, alignSelf: 'stretch' },
   iconBox: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
   text: { flex: 1, gap: 2 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  subRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  subRow: { alignItems: 'center', gap: 4 },
   sub: { fontSize: typography.sizes.sm, flexShrink: 1 },
 });

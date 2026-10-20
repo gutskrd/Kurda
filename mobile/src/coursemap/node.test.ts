@@ -83,10 +83,13 @@ describe('isLaunchable', () => {
 });
 
 describe('stateIcon / stateHint', () => {
-  it('maps each state to a glyph', () => {
-    expect(stateIcon('locked')).toBe('🔒');
-    expect(stateIcon('gold')).toBe('⭐');
-    expect(stateIcon('unlocked')).toBe('');
+  it('maps each state to a glyph from the one icon family', () => {
+    expect(stateIcon('locked')).toBe('lock');
+    expect(stateIcon('gold')).toBe('star-fill');
+    expect(stateIcon('completed')).toBe('check');
+    expect(stateIcon('decayed')).toBe('alert');
+    // an open skill shows its level instead
+    expect(stateIcon('unlocked')).toBeNull();
   });
   it('hints only for locked and decayed', () => {
     expect(stateHint('locked')).toBe('coursemap.locked');

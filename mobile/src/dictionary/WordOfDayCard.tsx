@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Modal, Pressable, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
+import { display, sectionLabel } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { EntryDetail } from './EntryDetail';
 import { useI18n } from '../i18n/I18nContext';
@@ -37,10 +37,20 @@ export function WordOfDayCard() {
 
   return (
     <>
-      <Pressable onPress={() => setOpen(true)} style={[styles.card, { backgroundColor: colors.primary }]} accessibilityRole="button">
-        <Text style={[styles.label, { color: colors.textOnPrimary }]}>{t('dictionary.wordOfDay')}</Text>
-        <Text style={[styles.headword, { color: colors.textOnPrimary }]}>{word.headword}</Text>
-        <Text style={[styles.def, { color: colors.textOnPrimary }]} numberOfLines={1}>
+      {/*
+        A card like the others on the page, with the word itself as the
+        thing that stands out. It used to be the one solid black (or white)
+        block on the Learn screen, louder than the lesson above it.
+      */}
+      <Pressable
+        onPress={() => setOpen(true)}
+        style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 }]}
+        accessibilityRole="button"
+        accessibilityLabel={`${t('dictionary.wordOfDay')}: ${word.headword}`}
+      >
+        <Text style={[styles.label, { color: colors.goldText }]}>{t('dictionary.wordOfDay')}</Text>
+        <Text style={[styles.headword, { color: colors.textPrimary }]}>{word.headword}</Text>
+        <Text style={[styles.def, { color: colors.textSecondary }]} numberOfLines={1}>
           {word.pos ? `${word.pos} · ` : ''}
           {word.definitionEn ?? word.definitionKu ?? ''}
         </Text>
@@ -55,11 +65,11 @@ export function WordOfDayCard() {
 const styles = StyleSheet.create({
   card: {
     alignSelf: 'stretch',
-    borderRadius: radii.md,
-    padding: spacing.lg,
+    borderRadius: radii.lg,
+    padding: spacing.md,
     gap: spacing.xs,
   },
-  label: { fontSize: typography.sizes.xs, textTransform: 'uppercase', opacity: 0.8 },
-  headword: { ...display(typography.sizes.xxl) },
-  def: { fontSize: typography.sizes.md, opacity: 0.9 },
+  label: { ...sectionLabel },
+  headword: { ...display(typography.sizes.xl) },
+  def: { fontSize: typography.sizes.sm },
 });

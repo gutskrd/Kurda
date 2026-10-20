@@ -7,6 +7,7 @@ import { display } from '../theme/fonts';
 import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from './tabBarLayout';
+import { useDirection } from '../reports/direction';
 
 /**
  * The bar at the top of a screen that is not a tab.
@@ -31,6 +32,10 @@ import { useScreenTopInset } from './tabBarLayout';
  *
  * The bar itself is 44pt tall — the same minimum a fingertip needs, which is
  * not a coincidence, because the back button is the thing in it.
+ *
+ * In Soranî and Arabic the bar is mirrored: the way back is on the right and
+ * its chevron points right, which is the direction "back" is for a reader of
+ * those languages.
  */
 export function ScreenHeader({
   title,
@@ -73,6 +78,8 @@ export function ScreenHeader({
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
 
   return (
     <View
@@ -83,22 +90,22 @@ export function ScreenHeader({
         style,
       ]}
     >
-      <View style={styles.bar}>
-        <View style={styles.side}>
+      <View style={[styles.bar, { flexDirection: dir.row }]}>
+        <View style={[styles.side, { flexDirection: dir.row }]}>
           {onBack ? (
             <Pressable
               onPress={onBack}
               accessibilityRole="button"
               accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
               hitSlop={10}
-              style={({ pressed }) => [styles.leading, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.leading, { flexDirection: dir.row }, mirrored && styles.leadingMirrored, pressed && styles.pressed]}
             >
               {leading === 'close' ? (
                 <Icon name="close" size={22} color={colors.primary} />
               ) : (
                 <>
-                  <Icon name="chevron-left" size={20} color={colors.primary} />
-                  <Text style={[styles.backLabel, { color: colors.primary }]} numberOfLines={1}>
+                  <Icon name="chevron-left" size={20} color={colors.primary} style={dir.flip ?? undefined} />
+                  <Text style={[styles.backLabel, mirrored && styles.backLabelMirrored, { color: colors.primary }]} numberOfLines={1}>
                     {t('common.back')}
                   </Text>
                 </>
@@ -113,7 +120,11 @@ export function ScreenHeader({
           </Text>
         ) : null}
 
-        <View style={[styles.side, styles.sideEnd]}>{right}</View>
+        <View style={[styles.side, { flexDirection: dir.row, justifyContent: 'flex-start' }]}>
+          {/* the trailing slot runs to the far edge whichever side that is */}
+          <View style={styles.sideFill} />
+          {right}
+        </View>
       </View>
     </View>
   );
@@ -124,12 +135,14 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.sm },
   // equal shares of what the title does not use, so the title is centred
   // without anybody having to guess how wide the word "Back" is
-  side: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  sideEnd: { justifyContent: 'flex-end' },
-  leading: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
+  side: { flex: 1, alignItems: 'center' },
+  sideFill: { flex: 1 },
+  leading: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
+  leadingMirrored: { paddingRight: 0, paddingLeft: spacing.sm },
   pressed: { opacity: 0.6 },
   // the chevron already carries the spacing; -2 closes the gap the glyph's own
   // side bearing leaves, which is what makes it read as one control
   backLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, marginLeft: -2 },
+  backLabelMirrored: { marginLeft: 0, marginRight: -2 },
   title: { ...display(typography.sizes.lg), flexShrink: 1, textAlign: 'center' },
 });

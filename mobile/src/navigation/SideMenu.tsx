@@ -21,31 +21,19 @@ import { sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
+import { useDirection } from '../reports/direction';
 
 /**
  * How much of the screen the panel covers, and how long it takes.
- *
- * Both measured off the screen recording this was asked to match, frame by
- * frame: the panel's right edge settles at 323 of 384 device pixels, and it
- * travels there in about six frames at 60fps.
  *
  * The strip of the screen left over is not decoration. It is what tells you
  * the app is still behind the panel rather than replaced by it, and it is
  * where you tap to get back.
  */
 const WIDTH_RATIO = 0.84;
-const DURATION = 300;
+const DURATION = 250;
 
-/**
- * The shape of the travel.
- *
- * Six samples off the recording, 50ms apart: 18%, 43%, 64%, 83% of the way.
- * Of the curves React Native names, sine-out is much the closest — its own
- * four points are 26/50/71/87, against 42/70/88/96 for cubic-out, which was
- * the first guess and is visibly quicker off the edge. Six samples at 50ms
- * on a 300ms move is not enough to fit a bezier to, so this is the nearest
- * standard curve rather than a reconstruction of theirs.
- */
+/** Quick off the edge and settling gently: a sine ease-out. */
 const EASE = Easing.out(Easing.sin);
 
 /** Past this much of the way, a flick opens rather than falls back. */
@@ -74,19 +62,19 @@ export interface MenuGroup {
 }
 
 /**
- * The panel that comes in from the left.
+ * The menu panel: the places that have no tab of their own.
  *
- * It slides over the app rather than pushing it, which is what the recording
- * does: the screen behind stays where it is and a scrim darkens it. The panel
- * itself is a real surface — the app's background colour, a hairline down its
- * trailing edge — not a floating card, because it is attached to the left edge
- * of the screen and a card would look like it had come loose.
+ * It belongs to Profile and comes in from that screen's menu button, at the
+ * end of its header — so it slides in from the end edge, the side the button
+ * is on. It slides over the app rather than pushing it: the screen behind
+ * stays where it is and a scrim darkens it. The panel itself is a real
+ * surface, the app's background colour, not a floating card, because it is
+ * attached to the edge of the screen and a card would look like it had come
+ * loose.
  *
  * Built on `Animated` and `PanResponder` from React Native itself. The
  * alternative was `@react-navigation/drawer`, which needs Reanimated and
- * Gesture Handler: two native dependencies, a rebuild, and geometry decided by
- * somebody else's defaults. This is forty lines of animation for a panel whose
- * width and timing were the point.
+ * Gesture Handler: two native dependencies and a rebuild for one panel.
  */
 export function SideMenu({
   open,
@@ -94,16 +82,23 @@ export function SideMenu({
   header,
   groups,
   footer,
+  side = 'start',
 }: {
   open: boolean;
   onClose: () => void;
-  /** Who you are, at the top — the same thing the recording puts there. */
+  /** Who you are, at the top. */
   header?: ReactNode;
   groups: MenuGroup[];
   footer?: ReactNode;
+  /** The edge it comes from: the side its button is on. Mirrored in a right-to-left language. */
+  side?: 'start' | 'end';
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  // which physical edge: the end is the right in a left-to-right language
+  const fromRight = (side === 'end') !== (dir.row === 'row-reverse');
+  const sign = fromRight ? 1 : -1;
   const insets = useSafeAreaInsets();
   const reduceMotion = useReducedMotion();
 
@@ -156,20 +151,23 @@ export function SideMenu({
     PanResponder.create({
       onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
       onPanResponderMove: (_e, g) => {
-        const next = 1 + Math.min(0, g.dx) / width;
-        slide.setValue(Math.max(0, Math.min(1, next)));
+        // towards the edge it came from closes it; the other way does nothing
+        const towardsEdge = Math.max(0, signRef.current * g.dx);
+        slide.setValue(Math.max(0, Math.min(1, 1 - towardsEdge / width)));
       },
       onPanResponderRelease: (_e, g) => {
-        const travelled = -Math.min(0, g.dx) / width;
-        if (travelled > COMMIT || g.vx < -0.5) onCloseRef.current();
+        const travelled = Math.max(0, signRef.current * g.dx) / width;
+        if (travelled > COMMIT || signRef.current * g.vx > 0.5) onCloseRef.current();
         else Animated.timing(slide, { toValue: 1, duration: 150, useNativeDriver: true }).start();
       },
     }),
   ).current;
 
-  // the responder is built once; this keeps the handler it calls current
+  // the responder is built once; these keep what it reads current
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
+  const signRef = useRef(sign);
+  signRef.current = sign;
 
   const renderLink = useCallback(
     (link: MenuLink) => (
@@ -180,20 +178,20 @@ export function SideMenu({
           link.onPress();
         }}
         accessibilityRole="button"
-        style={({ pressed }) => [styles.link, pressed && { backgroundColor: colors.controlTrack }]}
+        style={({ pressed }) => [styles.link, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
       >
         <Icon name={link.icon} size={20} color={colors.textSecondary} />
-        <Text style={[styles.linkText, { color: colors.textPrimary }]} numberOfLines={1}>
+        <Text style={[styles.linkText, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
           {t(link.labelKey)}
         </Text>
         {link.badge ? (
-          <View style={[styles.badge, { backgroundColor: colors.primary }]}>
+          <View style={[styles.badge, { backgroundColor: colors.goldText }]}>
             <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{link.badge}</Text>
           </View>
         ) : null}
       </Pressable>
     ),
-    [colors.controlTrack, colors.primary, colors.textOnPrimary, colors.textPrimary, colors.textSecondary, onClose, t],
+    [colors.controlTrack, colors.goldText, colors.textOnPrimary, colors.textPrimary, colors.textSecondary, dir, onClose, t],
   );
 
   return (
@@ -221,13 +219,14 @@ export function SideMenu({
         accessibilityViewIsModal={open}
         style={[
           styles.panel,
+          fromRight ? styles.panelRight : styles.panelLeft,
           {
             width,
             backgroundColor: colors.background,
             paddingTop: insets.top + spacing.md,
             paddingBottom: insets.bottom,
             transform: [
-              { translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [-width, 0] }) },
+              { translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [sign * width, 0] }) },
             ],
           },
         ]}
@@ -238,7 +237,7 @@ export function SideMenu({
           {groups.map((group, i) => (
             <View key={group.titleKey ?? 'group-' + i} style={styles.group}>
               {group.titleKey ? (
-                <Text style={[styles.groupTitle, { color: colors.textSecondary }]}>{t(group.titleKey)}</Text>
+                <Text style={[styles.groupTitle, dir.text, { color: colors.textSecondary }]}>{t(group.titleKey)}</Text>
               ) : null}
               {group.links.map(renderLink)}
             </View>
@@ -267,30 +266,15 @@ export function useOpenMenu(): () => void {
   return useContext(OpenMenu);
 }
 
-/** The button that opens it, for a screen's header. */
-export function SideMenuButton({ onPress }: { onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={t('nav.menu')}
-      hitSlop={10}
-      style={({ pressed }) => [styles.menuButton, pressed && { opacity: 0.6 }]}
-    >
-      <Icon name="menu" size={22} color={colors.textPrimary} />
-    </Pressable>
-  );
-}
 
 const styles = StyleSheet.create({
   panel: {
     position: 'absolute',
     top: 0,
     bottom: 0,
-    left: 0,
   },
+  panelLeft: { left: 0 },
+  panelRight: { right: 0 },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   body: { paddingBottom: spacing.lg },
   group: { paddingVertical: spacing.xs },
@@ -314,5 +298,4 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm },
-  menuButton: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingRight: spacing.sm },
 });

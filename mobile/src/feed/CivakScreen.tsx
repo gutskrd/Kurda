@@ -1,20 +1,21 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { radii, spacing } from '../theme/tokens';
+import { layout, spacing, typography } from '../theme/tokens';
+import { display } from '../theme/fonts';
 import { GradientBackground, Segmented } from '../theme/glass';
-import { Icon } from '../theme/Icon';
-import type { RootNavigation } from '../navigation/rootStack';
+import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
-import { LargeTitle } from '../navigation/LargeTitle';
-import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
-import { SocialSlideButton, useOpenSlide } from '../social/SocialSlide';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { NotificationBell } from '../notifications/NotificationBell';
+import { useUnread } from '../messages/unread';
+import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
@@ -23,23 +24,30 @@ import { EmptyState } from '../theme/EmptyState';
 const PAGE = 20;
 
 /**
- * Civak — everything the community has written and posted, on one wall.
+ * Home — everything the community has written and posted, on one wall.
  *
  * The same wall the web app opens on, reading the same `/feed`. Before this the
  * phone had Library and Memes as two separate screens behind two links in the
  * Social tab, which meant a poem posted this morning was invisible to anyone
- * looking at pictures — the exact split the web app removed. One wall, one
- * card, and a filter for when you do want just one kind.
+ * looking at pictures. One wall, one card, and a filter for when you do want
+ * just one kind.
+ *
+ * Its header is the app's own: a "+" to post at the start, the name in the
+ * middle, and at the end the bell — notifications live here now, a tap from
+ * the screen people open first, with a dot while any are unread.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const openMenu = useOpenMenu();
-  const openSlide = useOpenSlide();
+  const dir = useDirection();
   const topInset = useScreenTopInset();
+  const { refresh: refreshBadges } = useUnread();
 
-  const navigation = useNavigation<RootNavigation>();
+  const navigation = useNavigation<TabNavigation>();
+  const listRef = useRef<FlatList<FeedItem>>(null);
+  // tapping Home while on Home goes back to the newest post
+  useScrollToTop(listRef);
   const tabBarInset = useTabBarInset();
   const [section, setSection] = useState<FeedSection>('all');
   const [kind, setKind] = useState<string | null>(null);
@@ -60,6 +68,13 @@ export function CivakScreen(): React.JSX.Element {
   const fetchPage = useCallback(
     (offset: number) => getFeed(client, { section, kind, limit: PAGE, offset }),
     [client, section, kind],
+  );
+
+  // the bell's dot is worth getting right on the screen it sits on
+  useFocusEffect(
+    useCallback(() => {
+      refreshBadges({ soon: true });
+    }, [refreshBadges]),
   );
 
   useFocusEffect(
@@ -116,37 +131,32 @@ export function CivakScreen(): React.JSX.Element {
     [replace],
   );
 
+  const everything = section === 'all' && !kind;
+
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
-        <LargeTitle left={<SideMenuButton onPress={openMenu} />} right={<SocialSlideButton onPress={openSlide} />} title={t('nav.home')} subtitle={t('civak.subtitle')} style={styles.head} />
+        <View style={[styles.bar, { flexDirection: dir.row }]}>
+          {/*
+           * Posting is a "+", at the start of the bar: it says "add" and
+           * nothing about what, and it sits beside the wall it adds to. It
+           * used to be a filled circle beside the filters, the loudest thing
+           * on the screen; it is an ordinary header control now.
+           */}
+          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} edge="start" testID="home-post" />
+          <Text style={[styles.wordmark, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
+            Hevalo
+          </Text>
+          <NotificationBell />
+        </View>
 
         <View style={styles.filters}>
-          <View style={styles.filterRow}>
-            <View style={styles.filterGrow}>
-              <Segmented
-                options={SECTIONS.map((s) => s.key)}
-                value={section}
-                onChange={chooseSection}
-                labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-              />
-            </View>
-            {/*
-             * Posting lives here, next to the wall it adds to, exactly where
-             * the browser keeps it — and it is a plus, which says "add" and
-             * nothing about what. It used to be a sparkle in a pill floating
-             * over the bottom-right corner: an Android habit, and on iOS the
-             * one corner a tab bar has already claimed.
-             */}
-            <Pressable
-              onPress={() => navigation.navigate('Compose')}
-              accessibilityRole="button"
-              accessibilityLabel={t('post.open')}
-              style={({ pressed }) => [styles.plus, { backgroundColor: colors.primary, opacity: pressed ? 0.9 : 1 }]}
-            >
-              <Icon name="plus" size={20} color={colors.textOnPrimary} />
-            </Pressable>
-          </View>
+          <Segmented
+            options={SECTIONS.map((s) => s.key)}
+            value={section}
+            onChange={chooseSection}
+            labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
+          />
           {/* the second level appears only once there is a half to narrow */}
           {kinds.length > 0 && (
             <Segmented
@@ -162,22 +172,39 @@ export function CivakScreen(): React.JSX.Element {
 
         <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
           <FlatList
+            ref={listRef}
             data={items}
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
             contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.textSecondary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
+            showsVerticalScrollIndicator={false}
             ListEmptyComponent={
-              <EmptyState
-                title={t('civak.empty')}
-                body={t('civak.empty.body')}
-                action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
-              />
+              everything ? (
+                /*
+                 * A new reader's wall is empty because they follow nobody and
+                 * have written nothing, so it offers both, and nothing else:
+                 * finding people first, since a wall of other people's posts
+                 * is what makes the second one worth doing.
+                 */
+                <EmptyState
+                  title={t('civak.empty.welcome')}
+                  body={t('civak.empty.body')}
+                  action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
+                  secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
+                />
+              ) : (
+                <EmptyState
+                  title={t('civak.empty')}
+                  body={t('civak.empty.body')}
+                  action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
+                />
+              )
             }
             ListFooterComponent={
-              loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null
+              loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
             }
           />
         </AsyncBoundary>
@@ -187,16 +214,10 @@ export function CivakScreen(): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
-  head: { marginBottom: spacing.md },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
+  // the two controls are the same width, so the name between them is centred
+  bar: { alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
+  wordmark: { ...display(typography.sizes.xl), flex: 1, textAlign: 'center' },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
-  list: { gap: spacing.md },
-  filterRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  filterGrow: { flex: 1 },
-  /*
-   * The browser shrinks its post button to a 38px circle at this width. iOS
-   * asks for 44 before it will call something tappable, so it is 44 here —
-   * same shape, same place, a thumb-sized version of it.
-   */
-  plus: { width: 44, height: 44, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  list: { gap: layout.rowGap },
 });

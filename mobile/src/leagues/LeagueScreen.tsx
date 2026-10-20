@@ -262,7 +262,7 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
             <Icon name="people" size={28} color={colors.textSecondary} />
             <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.notJoined.title')}</Text>
             <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
-            <ClayButton label={t('leagues.notJoined.start')} icon="book" tone="primary" onPress={() => navigation.navigate('Learn')} style={styles.stretch} />
+            <ClayButton label={t('leagues.notJoined.start')} icon="book" tone="primary" onPress={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })} style={styles.stretch} />
           </View>
         </GlassCard>
       )}

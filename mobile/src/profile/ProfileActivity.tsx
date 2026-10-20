@@ -109,10 +109,13 @@ export function ProfileActivity({
       <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('profile.activity')}</Text>
 
       {/*
-        Scrollable would hide a tab off the edge; four fit across a phone, so
-        they share the width and keep their labels.
+        Scrollable would hide a tab off the edge, so they share the width and
+        keep their labels — the glyph above the word rather than beside it,
+        which is what lets five fit across a phone without "Reposts" arriving
+        as "Repo…". The same track and the same chosen fill as the switches
+        elsewhere in the app.
       */}
-      <View style={[styles.tabs, { backgroundColor: colors.glassFill }]}>
+      <View style={[styles.tabs, { backgroundColor: colors.controlTrack }]} accessibilityRole="tablist">
         {shown.map((s) => {
           const on = s === active;
           return (
@@ -121,9 +124,9 @@ export function ProfileActivity({
               onPress={() => setSection(s)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              style={[styles.tab, on ? { backgroundColor: colors.controlTrack } : null]}
+              style={[styles.tab, on ? { backgroundColor: colors.selectedFill } : null]}
             >
-              <Icon name={GLYPH[s]} size={15} color={on ? colors.textPrimary : colors.textSecondary} />
+              <Icon name={GLYPH[s]} size={18} color={on ? colors.textPrimary : colors.textSecondary} />
               <Text
                 numberOfLines={1}
                 style={[styles.tabText, { color: on ? colors.textPrimary : colors.textSecondary }]}
@@ -170,20 +173,21 @@ const styles = StyleSheet.create({
   heading: { ...sectionLabel },
   tabs: {
     flexDirection: 'row',
-    borderRadius: radii.pill,
+    borderRadius: radii.lg,
     padding: 3,
     gap: 2,
   },
   tab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 2,
+    minHeight: 50,
     paddingVertical: 6,
-    borderRadius: radii.pill,
+    paddingHorizontal: 2,
+    borderRadius: radii.md,
   },
-  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   list: { gap: spacing.md },
   row: {
     borderRadius: radii.md,

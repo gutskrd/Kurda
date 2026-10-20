@@ -1,55 +1,33 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useAuth } from '../auth/AuthContext';
+import { useNavigation } from '@react-navigation/native';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
-import { Icon } from '../theme/Icon';
-import { useTheme } from '../theme/ThemeProvider';
-import { unreadBadge } from './inbox.js';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { useUnread } from '../messages/unread';
 import { useI18n } from '../i18n/I18nContext';
 
-/** Bell row with an unread badge → the notification center (KUR-097). */
-export function NotificationBell() {
-  const { client } = useAuth();
+/**
+ * The bell at the top of Home, and the way into the notification list.
+ *
+ * Likes, comments, gifts, invites, badges and notices from Hevalo used to sit
+ * in the Inbox tab between friend requests and conversations — three kinds of
+ * thing in one list, so the conversation you were looking for was under a
+ * morning of likes. They are their own list again, behind a bell, with a dot
+ * while any are unread. A dot rather than a number on purpose: a count of
+ * likes is the kind of number that asks to be checked, and this should only
+ * ever say "something is new".
+ */
+export function NotificationBell(): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
-  const { colors } = useTheme();
   const { t } = useI18n();
-  const [unread, setUnread] = useState(0);
-
-  useFocusEffect(
-    useCallback(() => {
-      void client.get<{ count: number }>('/me/notifications/unread-count').then((res) => {
-        if (res.ok) setUnread(res.data.count);
-      });
-    }, [client]),
-  );
-
-  const badge = unreadBadge(unread);
-
+  const { counts } = useUnread();
+  const unread = counts.notifications;
   return (
-    <Pressable
-      style={[styles.row, { backgroundColor: colors.controlTrack }]}
+    <HeaderButton
+      icon="bell"
+      dot={unread > 0}
+      label={unread > 0 ? t('notifications.unreadLabel', { count: unread }) : t('notifications.title')}
       onPress={() => navigation.navigate('NotificationCenter')}
-      accessibilityRole="button"
-      accessibilityLabel={
-        unread > 0 ? t('notifications.unreadLabel', { count: unread }) : t('notifications.title')
-      }
-    >
-      <Icon name="bell" size={20} color={colors.textPrimary} />
-      <Text style={[styles.label, { color: colors.textPrimary }]}>{t('notifications.title')}</Text>
-      {badge ? (
-        <View style={[styles.badge, { backgroundColor: colors.danger }]}>
-          <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
-        </View>
-      ) : null}
-    </Pressable>
+      edge="end"
+      testID="home-bell"
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  row: { marginTop: spacing.lg, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, height: 44, paddingHorizontal: 18, borderRadius: radii.sm },
-  label: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
-  badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-});

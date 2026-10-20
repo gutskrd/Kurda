@@ -5,6 +5,7 @@ import {
   friendActionLabel,
   isActionable,
   isUndo,
+  mutualText,
   undoAction,
   VISIBILITY_LABEL,
   visibilityOffered,
@@ -152,5 +153,25 @@ describe('visibilityOffered', () => {
     expect(visibilityOffered('members', true)).toBe(true);
     expect(visibilityOffered('friends', true)).toBe(true);
     expect(visibilityOffered('nobody', true)).toBe(true);
+  });
+});
+
+describe('mutualText', () => {
+  const t = (key: string, vars?: Record<string, string | number>) => {
+    const value = TRANSLATIONS.en[key as keyof typeof TRANSLATIONS.en];
+    return vars ? value.replace('{count}', String(vars.count)) : value;
+  };
+
+  it('says one friend, and more than one friends', () => {
+    expect(mutualText(t as never, 1)).toBe('1 mutual friend');
+    expect(mutualText(t as never, 2)).toBe('2 mutual friends');
+    expect(mutualText(t as never, 0)).toBe('0 mutual friends');
+  });
+
+  it('has the one-friend form in every language', () => {
+    for (const locale of LOCALES) {
+      expect(TRANSLATIONS[locale]['friends.mutualOne'], locale).toBeTruthy();
+      expect(TRANSLATIONS[locale]['friends.mutualOne'], locale).not.toContain('{count}');
+    }
   });
 });

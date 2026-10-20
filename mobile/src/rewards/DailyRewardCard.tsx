@@ -45,7 +45,7 @@ export function DailyRewardCard() {
   const action = dailyAction(status);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
       <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('daily.title')}</Text>
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
@@ -55,13 +55,14 @@ export function DailyRewardCard() {
           const active = state !== 'upcoming';
           const borderColor =
             state === 'claimed' ? colors.success : state === 'today' ? colors.primary : bonus ? colors.accent : colors.glassBorder;
-          const textColor = active ? colors.textOnPrimary : colors.textSecondary;
+          // the claimed day sits on the success fill; today and the days to come sit on the card
+          const textColor = state === 'claimed' ? colors.textOnPrimary : active ? colors.textPrimary : colors.textSecondary;
           return (
             <View
               key={day}
               style={[
                 styles.cell,
-                { borderColor, backgroundColor: state === 'claimed' ? colors.success : colors.glassFill },
+                { borderColor, backgroundColor: state === 'claimed' ? colors.success : colors.controlTrack },
                 state === 'today' && styles.cellToday,
               ]}
             >
@@ -73,9 +74,10 @@ export function DailyRewardCard() {
       </View>
 
       {action === 'claim' ? (
+        // the quieter pill: on Learn the one solid button is the next lesson
         <ClayButton
           label={t('rewards.claimZer', { amount: status.reward })}
-          tone="primary"
+          icon="coin"
           busy={claiming}
           onPress={claim}
         />
@@ -91,7 +93,7 @@ export function DailyRewardCard() {
 }
 
 const styles = StyleSheet.create({
-  card: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
+  card: { alignSelf: 'stretch', borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
   cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, borderWidth: 1, gap: 2 },

@@ -56,6 +56,7 @@ export function EmptyState({
   title,
   body,
   action,
+  secondary,
 }: {
   /** `empty` for a list with nothing in it, `offline` for a screen that could not load. */
   art?: EmptyArt;
@@ -65,6 +66,13 @@ export function EmptyState({
   body?: string;
   /** The way out, where the screen has one. */
   action?: { label: string; onPress: () => void };
+  /**
+   * A second, quieter way out — never instead of `action`, and never a third.
+   * A new reader's empty feed has two honest next steps (find people, or
+   * write something); offering one would hide the other, and more than two
+   * is a menu.
+   */
+  secondary?: { label: string; onPress: () => void };
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   return (
@@ -90,6 +98,16 @@ export function EmptyState({
           <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
         </Pressable>
       ) : null}
+      {secondary ? (
+        <Pressable
+          onPress={secondary.onPress}
+          accessibilityRole="button"
+          accessibilityLabel={secondary.label}
+          style={({ pressed }) => [styles.secondary, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+        >
+          <Text style={[styles.actionText, { color: colors.textPrimary }]}>{secondary.label}</Text>
+        </Pressable>
+      ) : null}
     </View>
   );
 }
@@ -99,7 +117,7 @@ const styles = StyleSheet.create({
   // 160 at 480 of source is exactly @3x, which is the densest screen there is
   art: { width: 160, height: 135, marginBottom: spacing.xs },
   title: { ...display(typography.sizes.lg), textAlign: 'center' },
-  body: { fontSize: typography.sizes.md, textAlign: 'center', maxWidth: 280 },
+  body: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center', maxWidth: 300 },
   action: {
     minHeight: MIN_TOUCH_TARGET,
     borderRadius: radii.pill,
@@ -108,5 +126,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: spacing.sm,
   },
-  actionText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  secondary: {
+    minHeight: MIN_TOUCH_TARGET,
+    borderRadius: radii.pill,
+    paddingHorizontal: spacing.xl,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
 });

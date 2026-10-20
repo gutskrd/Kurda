@@ -16,13 +16,19 @@ export const TAB_BAR_HEIGHT = 62;
  * than the system's.
  */
 export const TAB_BAR_MARGIN = 21;
+/**
+ * How far above the island the page fades out under it (GlassTabBar), so
+ * content scrolling down dissolves before it reaches the bar.
+ */
+export const TAB_BAR_FADE = 28;
 
 /** Bottom padding a scrollable tab screen needs so its content clears the island. */
 export function useTabBarInset(): number {
   const insets = useSafeAreaInsets();
   // the island is TAB_BAR_MARGIN off the bottom edge, not off the safe area,
-  // so content has to clear whichever of the two reaches higher
-  return Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + 16;
+  // so content has to clear whichever of the two reaches higher — and the
+  // fade above it, so the last row is whole when the list is scrolled to its end
+  return Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + TAB_BAR_FADE;
 }
 
 /**

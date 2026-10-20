@@ -1,11 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -14,8 +14,16 @@ import { followDeepLink, notificationText } from './followLink';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
+import { useDirection } from '../reports/direction';
+import { useUnread } from '../messages/unread';
 
-/** In-app notification center: list, mark-read, deep links (KUR-097). */
+/**
+ * The notification list (KUR-097): likes, comments, gifts, invites, badges and
+ * notices from Hevalo, newest first. Opened from the bell on Home.
+ *
+ * An unread one is marked three ways — a dot, a bold title, and the words a
+ * screen reader hears — and reading them here takes the dot off the bell.
+ */
 export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
@@ -25,6 +33,13 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
   const [error, setError] = useState<ApiError | null>(null);
   // the moderators' caring message, opened with its helpline (reports/CaringMessage.tsx)
   const [caring, setCaring] = useState<CaringMessage | null>(null);
+  const dir = useDirection();
+  const { report } = useUnread();
+
+  // the bell's dot follows what is read here, without asking the server again
+  useEffect(() => {
+    if (items) report({ notifications: items.filter((i) => !i.readAt).length });
+  }, [items, report]);
 
   const load = useCallback(() => {
     void client.get<{ notifications: InboxItem[] }>('/me/notifications').then((res) => {
@@ -95,23 +110,30 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
             data={items ?? []}
             keyExtractor={(i) => i.id}
             contentContainerStyle={styles.list}
-            renderItem={({ item }) => (
-              <Pressable
-                onPress={() => open(item)}
-                style={[
-                  styles.card,
-                  { backgroundColor: colors.controlTrack },
-                  !item.readAt && { borderLeftWidth: 3, borderLeftColor: colors.primary },
-                ]}
-              >
-                {!item.readAt ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : <View style={styles.dotSpacer} />}
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.title, { color: colors.textPrimary }]}>{notificationText(item, t, locale).title}</Text>
-                  <Text style={[styles.body, { color: colors.textSecondary }]}>{notificationText(item, t, locale).body}</Text>
-                </View>
-                <Text style={[styles.time, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
-              </Pressable>
-            )}
+            renderItem={({ item }) => {
+              const text = notificationText(item, t, locale);
+              const unread = !item.readAt;
+              return (
+                <Pressable
+                  onPress={() => open(item)}
+                  accessibilityRole="button"
+                  accessibilityLabel={unread ? `${t('messages.filter.unread')}: ${text.title}` : text.title}
+                  style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
+                >
+                  {/* marked, not coloured: the row keeps its own contrast */}
+                  <View style={[styles.dot, { backgroundColor: unread ? colors.goldText : 'transparent' }]} />
+                  <View style={styles.main}>
+                    <Text style={[styles.title, dir.free, unread && styles.titleUnread, { color: colors.textPrimary }]} numberOfLines={2}>
+                      {text.title}
+                    </Text>
+                    <Text style={[styles.body, dir.free, { color: colors.textSecondary }]} numberOfLines={2}>
+                      {text.body}
+                    </Text>
+                  </View>
+                  <Text style={[styles.time, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
+                </Pressable>
+              );
+            }}
           />
         </AsyncBoundary>
       </View>
@@ -122,12 +144,19 @@ export function NotificationCenterScreen({ onExit }: { onExit: () => void }) {
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
-  list: { gap: spacing.sm, padding: spacing.lg, paddingBottom: spacing.xl },
-  card: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.md },
-  dot: { width: 8, height: 8, borderRadius: radii.pill },
-  dotSpacer: { width: 8 },
-  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  markAll: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  list: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, paddingBottom: spacing.xl },
+  row: {
+    alignItems: 'flex-start',
+    gap: spacing.md - 4,
+    borderRadius: radii.md,
+    paddingHorizontal: layout.gutter - spacing.sm,
+    paddingVertical: spacing.md - 4,
+  },
+  dot: { width: 8, height: 8, borderRadius: radii.pill, marginTop: 8 },
+  main: { flex: 1, gap: 2 },
+  title: { fontSize: typography.sizes.md, fontWeight: typography.weights.regular },
+  titleUnread: { fontWeight: typography.weights.semibold },
   body: { fontSize: typography.sizes.sm },
-  time: { fontSize: typography.sizes.xs },
+  time: { fontSize: typography.sizes.xs, marginTop: 3 },
 });

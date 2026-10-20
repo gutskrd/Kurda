@@ -15,10 +15,10 @@ import type { TranslationKey } from '../i18n/translations';
 import { SkeletonList } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
-import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { BackButton } from '../navigation/BackButton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { EmptyState } from '../theme/EmptyState';
-import { undoAction } from './format';
+import { mutualText, undoAction } from './format';
 
 interface UserRow {
   userId: string;
@@ -32,16 +32,19 @@ interface Suggestion extends UserRow {
 }
 
 /**
- * Social tab (KUR-082): find people, and see and manage every friendship in
+ * Friends (KUR-082): find people, and see and manage every friendship in
  * flight — friends, requests coming in, requests you sent, and who to ask next.
+ *
+ * A pushed screen, opened from the friend count on your profile and from the
+ * profile's menu, so it has a way back; it used to carry the menu button it
+ * had as a tab, which did nothing once it was not one.
  */
-export function SocialScreen() {
+export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
 
   const { t } = useI18n();
-  const openMenu = useOpenMenu();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -193,12 +196,12 @@ export function SocialScreen() {
             showing halves of the same wall. Both now live on the Civak tab,
             together, which is what this tab stopped being about. */}
         <LargeTitle
-          left={<SideMenuButton onPress={openMenu} />}
+          left={<BackButton onPress={onExit} />}
           title={t('nav.friends')}
           style={styles.head}
           right={
             <Pressable
-              onPress={() => navigation.navigate('Chats')}
+              onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
               style={styles.messagesLink}
               accessibilityRole="button"
@@ -308,7 +311,7 @@ export function SocialScreen() {
                       >
                         <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.add')}</Text>
                       </Pressable>,
-                      t('friends.mutual', { count: s.mutualCount }),
+                      mutualText(t, s.mutualCount),
                     ),
                   )}
                 </View>

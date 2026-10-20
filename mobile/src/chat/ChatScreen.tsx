@@ -223,7 +223,8 @@ export function ChatScreen({
                         styles.bubble,
                         mine
                           ? { backgroundColor: colors.primary }
-                          : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth },
+                          : // a soft fill, no edge: the hairline had no colour of its own and drew black
+                  { backgroundColor: colors.controlTrack },
                       ]}
                     >
                       <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />

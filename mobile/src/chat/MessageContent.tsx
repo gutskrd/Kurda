@@ -89,7 +89,7 @@ function GameMessage({
   return (
     <View style={[styles.game, mine ? styles.gameMine : null]}>
       {game.rest ? (
-        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.glassFill }]}>
+        <View style={[styles.bubble, { backgroundColor: mine ? colors.primary : colors.controlTrack }]}>
           <Text style={[styles.body, { color: mine ? colors.textOnPrimary : colors.textPrimary }]}>{game.rest}</Text>
         </View>
       ) : null}

@@ -503,7 +503,8 @@ function Bubble({
               styles.bubble,
               mine
                 ? { backgroundColor: colors.primary }
-                : { backgroundColor: colors.glassFill, borderWidth: StyleSheet.hairlineWidth },
+                : // a soft fill, no edge: the hairline had no colour of its own and drew black
+                  { backgroundColor: colors.controlTrack },
             ]}
           >
             {message.deleted ? (

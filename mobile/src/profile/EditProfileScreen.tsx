@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
-import { countriesIn } from '@kurda/shared';
+import { countriesIn, foldDiacritics } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { describeError } from '../api/errors';
@@ -14,6 +14,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { SearchField } from '../theme/SearchField';
 import { InitialsAvatar } from './InitialsAvatar';
 import { CosmeticPicker } from './CosmeticPicker';
 import { FavoritesPicker } from './FavoritesPicker';
@@ -92,6 +93,19 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
   }, [load]);
 
   const countries = useMemo(() => countriesIn(locale), [locale]);
+  /*
+   * The country is found by typing, not by scrolling. All of them at once was
+   * two hundred chips — a wall several screens tall between the bio and the
+   * save button — so the field shows the one chosen, and the ones a few
+   * letters match.
+   */
+  const [countryQuery, setCountryQuery] = useState('');
+  const countryMatches = useMemo(() => {
+    const q = foldDiacritics(countryQuery).toLowerCase().trim();
+    if (!q) return [];
+    return countries.filter((c) => foldDiacritics(c.name).toLowerCase().includes(q) && c.code !== country).slice(0, 12);
+  }, [countries, countryQuery, country]);
+  const chosenCountry = countries.find((c) => c.code === country) ?? null;
 
   const dirty =
     me !== null &&
@@ -196,15 +210,26 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
             <Text style={[styles.label, { color: colors.textSecondary }]}>{t('edit.country')}</Text>
             <View style={styles.countries}>
-              <CountryChip
-                label={t('edit.noCountry')}
-                on={country === ''}
-                onPress={() => setCountry('')}
-              />
-              {countries.map((c) => (
-                <CountryChip key={c.code} label={c.name} on={country === c.code} onPress={() => setCountry(c.code)} />
-              ))}
+              <CountryChip label={chosenCountry ? chosenCountry.name : t('edit.noCountry')} on onPress={() => undefined} />
+              {/* taking it off is one tap, without having to find "none" */}
+              {chosenCountry ? <CountryChip label={t('edit.noCountry')} on={false} onPress={() => setCountry('')} /> : null}
             </View>
+            <SearchField value={countryQuery} onChangeText={setCountryQuery} label={t('edit.countrySearch')} returnKeyType="done" />
+            {countryMatches.length > 0 ? (
+              <View style={styles.countries}>
+                {countryMatches.map((c) => (
+                  <CountryChip
+                    key={c.code}
+                    label={c.name}
+                    on={false}
+                    onPress={() => {
+                      setCountry(c.code);
+                      setCountryQuery('');
+                    }}
+                  />
+                ))}
+              </View>
+            ) : null}
 
             {/* ClayButton has no disabled state, so a save that cannot do
                 anything simply is not offered */}
@@ -284,12 +309,10 @@ function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPre
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
-      style={[
-        styles.chip,
-        { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : colors.glassBorder },
-      ]}
+      hitSlop={{ top: 4, bottom: 4 }}
+      style={[styles.chip, { backgroundColor: on ? colors.primary : colors.controlTrack }]}
     >
-      <Text style={[styles.chipText, { color: on ? colors.textPrimary : colors.textSecondary }]}>{label}</Text>
+      <Text style={[styles.chipText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>{label}</Text>
     </Pressable>
   );
 }
@@ -303,9 +326,9 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, marginTop: spacing.sm },
   input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   bio: { minHeight: 96, textAlignVertical: 'top' },
-  countries: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginTop: spacing.xs },
-  chip: { borderWidth: 1, borderRadius: radii.pill, paddingHorizontal: spacing.md, paddingVertical: 6 },
-  chipText: { fontSize: typography.sizes.sm },
+  countries: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.xs },
+  chip: { minHeight: 36, justifyContent: 'center', borderRadius: radii.pill, paddingHorizontal: spacing.md - 2 },
+  chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   save: { marginTop: spacing.md },
   avatars: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
   avatarTile: { width: 56, height: 56, borderRadius: radii.md, borderWidth: 2, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },

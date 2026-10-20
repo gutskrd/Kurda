@@ -1,5 +1,6 @@
 import type { CourseMap, SkillNode, SkillState } from './types';
 import type { TranslationKey } from '../i18n/translations';
+import type { IconName } from '../theme/icon-paths';
 
 /**
  * The state as a word, for the label a screen reader reads after the title.
@@ -68,19 +69,27 @@ export function isLaunchable(node: SkillNode): boolean {
   return node.state !== 'locked' && node.firstLessonId !== null;
 }
 
-/** Glyph shown on the node for each state. */
-export function stateIcon(state: SkillState): string {
+/**
+ * The glyph drawn on a node for its state, or none for an open skill (which
+ * shows its level instead).
+ *
+ * These were emoji — a padlock, a star, a warning sign — which every platform
+ * draws in its own colours and its own style, beside an app whose every other
+ * icon is one outline family in one tint. A padlock in full colour on the
+ * course map read as louder than the lesson it was locking.
+ */
+export function stateIcon(state: SkillState): IconName | null {
   switch (state) {
     case 'locked':
-      return '🔒';
+      return 'lock';
     case 'gold':
-      return '⭐';
+      return 'star-fill';
     case 'completed':
-      return '✓';
+      return 'check';
     case 'decayed':
-      return '⚠️';
+      return 'alert';
     case 'unlocked':
-      return '';
+      return null;
   }
 }
 
