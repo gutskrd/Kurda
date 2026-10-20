@@ -110,8 +110,8 @@ const HIND_RIGHT: Knot[] = atK([
 /** The cream of his chest and belly, from under the chin to between the legs. */
 const BIB: Knot[] = atK([
   [190, 455.8], [181.5, 452.7], [178.3, 449.6], [172.4, 441.4], [168.2, 433.7], [165.1, 425.7], [163.1, 418.2],
-  [161.9, 409.5], [159.3, 409.8, 0.4], [159.4, 392.7], [161.1, 376.3], [165, 356.9], [169.6, 341], [176, 334.6],
-  [192.8, 332.6], [209.6, 334.6], [216, 341], [221, 357.1], [225.9, 383.9], [227.9, 408.3, 0.4], [224.5, 407.8],
+  [161.9, 409.5], [159.3, 409.8, 0.4], [159.4, 392.7], [161.1, 376.3], [165, 356.9], [168.4, 338], [173, 327],
+  [180, 323], [192.8, 322.4], [205.6, 323], [212.6, 327], [217.4, 338], [221, 357.1], [225.9, 383.9], [227.9, 408.3, 0.4], [224.5, 407.8],
   [222.9, 420.1], [219.8, 430.2], [215.8, 439.7], [211.4, 446], [205.9, 452.5], [197.5, 456.1], [192.6, 454.7],
 ]);
 
@@ -146,8 +146,8 @@ function body(p: string): string {
   const [left] = at(137, 0);
   const [right] = at(249, 0);
   const [, foot] = at(0, 610);
-  const [, bibTop] = at(0, 333);
-  const [, bibMid] = at(0, 368);
+  const [, bibTop] = at(0, 323);
+  const [, bibMid] = at(0, 350);
   const [, hoofTop] = at(0, 606);
   const [, hoofEnd] = at(0, 626);
   return part(
@@ -211,12 +211,17 @@ function body(p: string): string {
 
 const ANTLER: Knot[] = [
   [159.6, 160],
-  [158.6, 134],
+  [158.8, 150],
+  [156, 142],
+  [151.6, 135.4],
   [138, 130],
-  [114.6, 124],
-  [92.6, 112.4],
-  [78.6, 96.4],
-  [70.8, 74],
+  [118, 123.6],
+  [106, 117.2],
+  [96, 109.4],
+  [86.8, 100],
+  [79.6, 91.6],
+  [74, 82],
+  [70.4, 72],
   [66.4, 50],
   [65.6, 27],
   [70, 9.6],
@@ -376,10 +381,12 @@ const MUZZLE: Knot[] = symmetric(
     [207.6, 364],
     [194, 383],
     [189.4, 404],
-    [193.6, 425],
-    [204.6, 442],
-    [222, 454.6],
-    [AXIS, 460.4],
+    [193.4, 416],
+    [200.6, 427],
+    [211.4, 437.6],
+    [222, 447.6],
+    [238, 456],
+    [AXIS, 458],
   ],
   AXIS,
 );
@@ -401,12 +408,16 @@ function freckles(): string {
 
 function head(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const antlers = curve(ANTLER) + curve(mirror(ANTLER, AXIS));
+  // his two sides are not quite each other's mirror: the right antler sits a little further out and is a
+  // little smaller, and the light inside each ear lies a little lower and further out
+  const right = (x: number, y: number): Pt => [374.4 + (x - 372.9) * 0.99, 80.6 + (y - 80.6) * 0.99];
+  const moved = (k: readonly Knot[], dx: number, dy: number): Knot[] => k.map(([x, y, r]) => [x + dx, y + dy, r] as Knot);
+  const antlers = curve(ANTLER) + curve(mirror(ANTLER, AXIS).map(([x, y, r]) => [...right(x, y), r] as Knot));
   const ears = curve(EAR) + curve(mirror(EAR, AXIS));
-  const earsIn = curve(EAR_IN) + curve(mirror(EAR_IN, AXIS));
-  const tufts = curve(EAR_TUFT) + curve(mirror(EAR_TUFT, AXIS));
+  const earsIn = curve(moved(EAR_IN, -3, 3)) + curve(moved(mirror(EAR_IN, AXIS), 5, 3));
+  const tufts = curve(moved(EAR_TUFT, -3, 3)) + curve(moved(mirror(EAR_TUFT, AXIS), 5, 3));
   const lights = ANTLER_LIGHT.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
-  const lightsR = ANTLER_LIGHT.map((s) => taper(s.map(([x, y]) => [2 * AXIS - x, y] as Pt), s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
+  const lightsR = ANTLER_LIGHT.map((s) => taper(s.map(([x, y]) => right(2 * AXIS - x, y)), s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
   return part(
     [
       linearBox(id('antler'), [
@@ -449,8 +460,11 @@ function head(p: string): string {
       fill(earsIn, C.earIn),
       fill(tufts, C.earTuft),
       fill(curve(HEAD), `url(#${id('head')})`),
-      ellipse(EYE_AXIS - 76, 281, 64, 71, `url(#${id('patch')})`),
-      ellipse(EYE_AXIS + 76, 281, 64, 71, `url(#${id('patch')})`),
+      ellipse(EYE_AXIS - 76, 284, 70, 84, `url(#${id('patch')})`),
+      ellipse(EYE_AXIS + 76, 284, 70, 84, `url(#${id('patch')})`),
+      // the light of the face carries on under each eye
+      ellipse(EYE_AXIS - 58, 352, 34, 27, `url(#${id('bridge')})`),
+      ellipse(EYE_AXIS + 58, 352, 34, 27, `url(#${id('bridge')})`),
       ellipse(AXIS, 318, 60, 128, `url(#${id('bridge')})`),
       fill(curve(MUZZLE), `url(#${id('muzzle')})`),
       freckles(),
@@ -464,25 +478,19 @@ function eyesOpen(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
-      // each eye is brightest toward the nose and fades to cream at its outer side
-      radialBox(id('whiteL'), [
+      // each eye is white in the middle, warming to cream in a band all round its edge
+      radialBox(id('white'), [
         [0, C.white],
-        [0.55, C.white],
-        [0.78, '#f8ead9'],
-        [0.92, '#efd7bd'],
-        [1, '#e5c6a5'],
-      ], 0.6, 0.48, 0.62),
-      radialBox(id('whiteR'), [
-        [0, C.white],
-        [0.55, C.white],
-        [0.78, '#f8ead9'],
-        [0.92, '#efd7bd'],
-        [1, '#e5c6a5'],
-      ], 0.4, 0.48, 0.62),
+        [0.6, C.white],
+        [0.8, '#f7e7d7'],
+        [0.88, '#f3e0ca'],
+        [0.94, '#f2d5b4'],
+        [1, '#e6c49c'],
+      ], 0.5, 0.49),
     ],
     [
-      ellipse(EYE_AXIS - 76, 281, 53.4, 60.6, `url(#${id('whiteL')})`),
-      ellipse(EYE_AXIS + 76, 281, 53.4, 60.6, `url(#${id('whiteR')})`),
+      ellipse(EYE_AXIS - 76, 281, 53.4, 60.6, `url(#${id('white')})`),
+      ellipse(EYE_AXIS + 76, 281, 53.4, 60.6, `url(#${id('white')})`),
       ellipse(EYE_AXIS - 60, 281.6, 22, 34, C.pupil),
       ellipse(EYE_AXIS + 60, 281.6, 22, 34, C.pupil),
       // the light in each eye, on the same side of both, as one light falls on them
@@ -553,6 +561,24 @@ function nose(p: string): string {
     ],
     [fill(curve(shape), `url(#${id('nose')})`), ellipse(AXIS, 373.6, 25, 7.6, C.noseLight, alpha(0.85))],
   );
+}
+
+/**
+ * The deer's mouth at rest, and pressed shut: down from the nose, then out to
+ * either side and a little down, full along its length and thinning at the
+ * corners. `sag` is how far below `y` it runs at its lowest; `w` its fullest.
+ */
+function mouthTaper(y: number, hw: number, sag: number, w: number): string {
+  // along each side: how far out, how far down (in parts of `sag`), and how thick (in parts of `w`)
+  const at: readonly (readonly [number, number, number])[] = [
+    [1, 0.85, 0.3],
+    [0.82, 1, 0.8],
+    [0.5, 0.94, 1],
+    [0.18, 0.4, 1],
+  ];
+  const side = (k: number): Pt[] => at.map(([f, d]) => [AXIS + k * hw * f, y + sag * d] as Pt);
+  const thick = at.map(([, , t]) => t * w);
+  return line(`M${AXIS},414V${y - 1}`, C.mouth, w * 0.85) + fill(taper([...side(-1), [AXIS, y], ...side(1).reverse()], [...thick, w, ...thick.reverse()]), C.mouth);
 }
 
 /**
@@ -653,9 +679,9 @@ function deerOpen(o: DeerOpening, clipId: string): string {
 function deerMouths(p: string): Record<Viseme, string> {
   const id = (v: Viseme): string => `${p}mouth-${v}`;
   return {
-    rest: mouthLine(428, 43.5, 9.4, 3.4),
-    // pressed: the line drawn straighter and firmer, the chin pushed up beneath it
-    mbp: mouthLine(429, 36, 3, -1, 6.4) + line(curve([[AXIS - 16, 441], [AXIS, 443.4], [AXIS + 16, 441]], false), C.lip, 3),
+    rest: mouthTaper(428.5, 43, 10, 6.6),
+    // pressed: the same line drawn flatter and firmer
+    mbp: mouthTaper(429, 40, 5, 8.4),
     // the lower lip drawn up under the front teeth
     fv: part(
       [],
