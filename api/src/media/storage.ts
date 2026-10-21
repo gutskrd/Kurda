@@ -3,6 +3,7 @@ import {
   DeleteObjectCommand,
   GetObjectCommand,
   HeadObjectCommand,
+  ListObjectsV2Command,
   PutObjectCommand,
   S3Client,
 } from '@aws-sdk/client-s3';
@@ -45,6 +46,24 @@ export const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable';
 export const PRIVATE_CACHE_CONTROL = 'private, no-store, max-age=0';
 
 /**
+ * Where private files live, by the start of their key: what moderation keeps
+ * as evidence (moderation/pseudonym.ts `quarantine/…`) and one person's data
+ * export (gdpr/service.ts `user-export/…`). With a private bucket they are
+ * kept there; these are also the prefixes moved out of the public bucket when
+ * one is first configured (`movePrivateFiles`).
+ */
+export const PRIVATE_PREFIXES = ['quarantine/', 'user-export/'] as const;
+
+const isPrivateKey = (key: string): boolean => PRIVATE_PREFIXES.some((prefix) => key.startsWith(prefix));
+
+/**
+ * Private buckets that refused a write at start-up (`checkPrivateBucket`), for
+ * every storage in the process: the background jobs build their own, and a
+ * data export must not go to a bucket the API has found it cannot write to.
+ */
+const refusedPrivateBuckets = new Set<string>();
+
+/**
  * Asks the CDN in front of the public bucket to forget some URLs; true when it
  * accepted. A deleted object is otherwise served from the edge for as long as
  * its year-long `immutable` cache lasts.
@@ -54,9 +73,10 @@ export type CdnPurge = (urls: string[]) => Promise<boolean>;
 export interface MediaStorageOptions {
   /**
    * A bucket that is NOT publicly readable, for what moderation keeps as
-   * evidence. Without one, evidence goes to an unguessable `quarantine/` key
-   * in the public bucket, written `private, no-store` — reachable only by
-   * someone who already has the key, never listed and never cached.
+   * evidence and for people's data exports (PRIVATE_PREFIXES). Without one,
+   * they go to unguessable keys in the public bucket, written `private,
+   * no-store` — never listed and never cached, but readable by anyone who has
+   * the address.
    */
   evidenceBucket?: string;
   purge?: CdnPurge;
@@ -79,8 +99,33 @@ export class MediaStorage {
     private readonly options: MediaStorageOptions = {},
   ) {}
 
-  private get evidenceBucket(): string {
-    return this.options.evidenceBucket ?? this.bucket;
+  /** Where private files go: the private bucket, or the public one when there is none (or it refused). */
+  private get privateBucket(): string {
+    const own = this.options.evidenceBucket;
+    return own && !refusedPrivateBuckets.has(own) ? own : this.bucket;
+  }
+
+  /** Whether private files have a bucket of their own (and older ones may still be in the public one). */
+  get hasPrivateBucket(): boolean {
+    return this.privateBucket !== this.bucket;
+  }
+
+  private async inBucket(bucket: string, key: string): Promise<boolean> {
+    try {
+      await this.s3.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * The bucket a private file is in: the private one, or — for a file kept
+   * before there was a private bucket, and not yet moved — the public one.
+   */
+  private async bucketOfPrivate(key: string): Promise<string> {
+    if (!this.hasPrivateBucket || (await this.inBucket(this.privateBucket, key))) return this.privateBucket;
+    return (await this.inBucket(this.bucket, key)) ? this.bucket : this.privateBucket;
   }
 
   publicUrl(key: string): string {
@@ -119,7 +164,14 @@ export class MediaStorage {
     };
   }
 
-  /** Short-lived signed GET for private objects (GDPR exports). */
+  /** Short-lived signed GET for a private file (a data export), wherever it is kept. */
+  async createPrivateDownloadUrl(key: string, expiresInSeconds = 900): Promise<string> {
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: await this.bucketOfPrivate(key), Key: key }), {
+      expiresIn: expiresInSeconds,
+    });
+  }
+
+  /** Short-lived signed GET for an object in the public bucket (a case's media, read by a moderator). */
   async createDownloadUrl(key: string, expiresInSeconds = 900): Promise<string> {
     return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.bucket, Key: key }), {
       expiresIn: expiresInSeconds,
@@ -167,6 +219,12 @@ export class MediaStorage {
 
   async delete(key: string): Promise<void> {
     await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: key }));
+    // a private file (a data export) is in the private bucket, or in this one
+    // if it was kept before there was one: deleting a key that is not there is
+    // no error, so both are asked
+    if (this.hasPrivateBucket && isPrivateKey(key)) {
+      await this.s3.send(new DeleteObjectCommand({ Bucket: this.privateBucket, Key: key }));
+    }
   }
 
   /** Upload a processed object directly (through-server flow, KUR-177 hardening). */
@@ -204,7 +262,7 @@ export class MediaStorage {
   async putPrivate(key: string, body: Buffer, contentType: string): Promise<void> {
     await this.s3.send(
       new PutObjectCommand({
-        Bucket: this.bucket,
+        Bucket: this.privateBucket,
         Key: key,
         Body: body,
         ContentType: contentType,
@@ -224,7 +282,7 @@ export class MediaStorage {
   async copyToEvidence(key: string, target: string, contentType?: string): Promise<void> {
     await this.s3.send(
       new CopyObjectCommand({
-        Bucket: this.evidenceBucket,
+        Bucket: this.privateBucket,
         Key: target,
         // keys are `kind/<sha256>.ext` (mediaKey), nothing that needs escaping
         CopySource: `${this.bucket}/${key}`,
@@ -236,23 +294,93 @@ export class MediaStorage {
   }
 
   async evidenceExists(target: string): Promise<boolean> {
-    try {
-      await this.s3.send(new HeadObjectCommand({ Bucket: this.evidenceBucket, Key: target }));
-      return true;
-    } catch {
-      return false;
-    }
+    if (await this.inBucket(this.privateBucket, target)) return true;
+    // kept before there was a private bucket, and not moved yet
+    return this.hasPrivateBucket && this.inBucket(this.bucket, target);
   }
 
   /** A short-lived signed GET for a piece of evidence (the case view's media). */
   async createEvidenceDownloadUrl(target: string, expiresInSeconds = 300): Promise<string> {
-    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: this.evidenceBucket, Key: target }), {
+    return getSignedUrl(this.s3, new GetObjectCommand({ Bucket: await this.bucketOfPrivate(target), Key: target }), {
       expiresIn: expiresInSeconds,
     });
   }
 
   async deleteEvidence(target: string): Promise<void> {
-    await this.s3.send(new DeleteObjectCommand({ Bucket: this.evidenceBucket, Key: target }));
+    await this.s3.send(new DeleteObjectCommand({ Bucket: this.privateBucket, Key: target }));
+    if (this.hasPrivateBucket) await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: target }));
+  }
+
+  // ---- the private bucket, once there is one ---------------------------------
+
+  /**
+   * Whether the private bucket takes a write and a delete with these
+   * credentials: an R2 token scoped to the public bucket alone would refuse,
+   * and evidence could then not be taken off the public bucket. Asked once at
+   * start-up (`preparePrivateStorage`), so a missing grant shows in the log
+   * the moment the bucket is configured. Null when there is no private bucket.
+   */
+  async checkPrivateBucket(): Promise<{ ok: true } | { ok: false; error: string } | null> {
+    const own = this.options.evidenceBucket;
+    if (!own || own === this.bucket) return null;
+    const key = 'quarantine/.write-check';
+    try {
+      await this.s3.send(
+        new PutObjectCommand({ Bucket: own, Key: key, Body: Buffer.from('ok'), ContentType: 'text/plain', CacheControl: PRIVATE_CACHE_CONTROL }),
+      );
+      await this.s3.send(new DeleteObjectCommand({ Bucket: own, Key: key }));
+      refusedPrivateBuckets.delete(own);
+      return { ok: true };
+    } catch (err) {
+      const e = err as { name?: string; message?: string };
+      // until the next start, private files are kept as they were before
+      // there was a private bucket, rather than not kept at all
+      refusedPrivateBuckets.add(own);
+      return { ok: false, error: e.name ?? e.message ?? 'unknown error' };
+    }
+  }
+
+  /**
+   * Move the private files kept in the public bucket before there was a
+   * private one (PRIVATE_PREFIXES) into the private bucket: copied, then
+   * deleted from the public one, then forgotten by the CDN — a data export
+   * from before exports were written `no-store` carried a year-long cache
+   * directive. A file that fails is left where it was, still found there, and
+   * tried again at the next start.
+   */
+  async movePrivateFiles(): Promise<{ moved: number; failed: number }> {
+    let moved = 0;
+    let failed = 0;
+    if (!this.hasPrivateBucket) return { moved, failed };
+    const done: string[] = [];
+    for (const prefix of PRIVATE_PREFIXES) {
+      let token: string | undefined;
+      do {
+        const page = await this.s3.send(new ListObjectsV2Command({ Bucket: this.bucket, Prefix: prefix, ContinuationToken: token }));
+        for (const item of page.Contents ?? []) {
+          if (!item.Key) continue;
+          try {
+            await this.s3.send(
+              new CopyObjectCommand({
+                Bucket: this.privateBucket,
+                Key: item.Key,
+                CopySource: `${this.bucket}/${item.Key}`,
+                MetadataDirective: 'REPLACE',
+                CacheControl: PRIVATE_CACHE_CONTROL,
+              }),
+            );
+            await this.s3.send(new DeleteObjectCommand({ Bucket: this.bucket, Key: item.Key }));
+            done.push(item.Key);
+            moved++;
+          } catch {
+            failed++;
+          }
+        }
+        token = page.IsTruncated ? page.NextContinuationToken : undefined;
+      } while (token);
+    }
+    if (done.length > 0) await this.purgePublic(done);
+    return { moved, failed };
   }
 
   /** Ask the CDN to drop these keys' public URLs. Null when no purge is configured. */
@@ -279,6 +407,32 @@ export function cloudflarePurge(zoneId: string, apiToken: string, fetchFn: typeo
     });
     return res.ok;
   };
+}
+
+/**
+ * At start-up, with a private bucket configured: prove it takes a write, then
+ * move what was kept privately in the public bucket into it. Neither holds up
+ * the start, and a refusal leaves private files where they always went.
+ */
+export async function preparePrivateStorage(
+  storage: MediaStorage,
+  log: { info: (obj: object, msg: string) => void; error: (obj: object, msg: string) => void },
+): Promise<void> {
+  const check = await storage.checkPrivateBucket();
+  if (!check) return;
+  if (!check.ok) {
+    log.error(
+      { error: check.error },
+      'private storage refused a write: evidence and data exports stay in the public bucket under unguessable keys until the token can write to S3_EVIDENCE_BUCKET',
+    );
+    return;
+  }
+  try {
+    const result = await storage.movePrivateFiles();
+    log.info(result, 'private storage ready: private files are kept in the private bucket');
+  } catch (err) {
+    log.error({ err }, 'private storage could not list the public bucket to move older private files; they are still found where they are');
+  }
 }
 
 export function createStorage(config: AppConfig): MediaStorage | null {

@@ -31,6 +31,10 @@ async function main(): Promise<void> {
 
   // recurring maintenance schedules (worker owns them, not the API)
   const storage = createStorage(config);
+  // a private bucket this process cannot write to is not used by its jobs
+  // either (media/storage.ts); the API moves the older private files, not this
+  const privateCheck = await storage?.checkPrivateBucket();
+  if (privateCheck && !privateCheck.ok) log.error({ error: privateCheck.error }, 'private storage refused a write: data exports stay in the public bucket under unguessable keys');
   if (config.DATABASE_URL) {
     const pool = createPool(config);
     const queue = JobQueue.create(config);
