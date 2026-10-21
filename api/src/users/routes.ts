@@ -274,21 +274,42 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     return { ok: true };
   });
 
-  /** Active sessions = live refresh-token families (KUR-022). */
+  /**
+   * The devices signed in to the account (KUR-022), each listed once.
+   *
+   * A session is a live refresh-token family. One device can hold several — it
+   * signed in again after the browser forgot the last one, or the admin
+   * console signed in beside the website — and they are one row: the device's
+   * name, when it first signed in and when it was last used. A session from an
+   * app that sends no device id is a row of its own. `id` is a session of the
+   * device (this one's, for the device in hand), and signing it out ends the
+   * device's every session.
+   */
   app.get('/me/sessions', { preHandler: requireAuth }, async (req) => {
     const result = await app.db.query<{
       family_id: string;
       device_name: string | null;
       started_at: Date;
       last_seen_at: Date;
+      current: boolean;
     }>(
-      `SELECT family_id, max(device_name) AS device_name,
-              min(created_at) AS started_at, max(created_at) AS last_seen_at
-       FROM refresh_tokens
-       WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
-       GROUP BY family_id
-       ORDER BY max(created_at) DESC`,
-      [req.user!.id],
+      `WITH families AS (
+         -- a live session has one unrevoked token, the latest: its row says
+         -- when it was last used, and carries the session's start along
+         SELECT family_id, device_hash, device_name, session_started_at, created_at,
+                family_id::text = coalesce($2::text, '') AS current
+           FROM refresh_tokens
+          WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+       )
+       SELECT (array_agg(family_id ORDER BY current DESC, created_at DESC))[1] AS family_id,
+              (array_agg(device_name ORDER BY created_at DESC) FILTER (WHERE device_name IS NOT NULL))[1] AS device_name,
+              min(session_started_at) AS started_at,
+              max(created_at) AS last_seen_at,
+              bool_or(current) AS current
+         FROM families
+        GROUP BY coalesce(device_hash, family_id::text)
+        ORDER BY max(created_at) DESC`,
+      [req.user!.id, req.user!.familyId ?? null],
     );
     return {
       sessions: result.rows.map((row) => ({
@@ -296,11 +317,12 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
         deviceName: row.device_name,
         startedAt: new Date(row.started_at).toISOString(),
         lastSeenAt: new Date(row.last_seen_at).toISOString(),
-        current: row.family_id === req.user!.familyId,
+        current: row.current,
       })),
     };
   });
 
+  /** Sign one device out: the session `id` and every other session its device holds. */
   app.delete(
     '/me/sessions/:id',
     {
@@ -309,17 +331,23 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req) => {
       const { id } = req.params as { id: string };
-      const result = await app.db.query(
+      const result = await app.db.query<{ family_id: string }>(
         `UPDATE refresh_tokens SET revoked_at = now()
-         WHERE family_id = $1 AND user_id = $2 AND revoked_at IS NULL`,
+          WHERE user_id = $2 AND revoked_at IS NULL
+            AND (family_id = $1
+                 OR device_hash = (SELECT device_hash FROM refresh_tokens
+                                    WHERE family_id = $1 AND user_id = $2 AND revoked_at IS NULL
+                                      AND device_hash IS NOT NULL
+                                    LIMIT 1))
+          RETURNING family_id`,
         [id, req.user!.id],
       );
       if ((result.rowCount ?? 0) === 0) {
         throw new AppError('SESSION_NOT_FOUND', 404, 'no active session with that id');
       }
-      // when the caller revoked their own session, the client must drop
+      // when the caller signed out their own device, the client must drop
       // its tokens now — the access token would otherwise live ≤15 min
-      return { revoked: true, current: id === req.user!.familyId };
+      return { revoked: true, current: result.rows.some((r) => r.family_id === req.user!.familyId) };
     },
   );
 
@@ -429,13 +457,25 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     const { except } = req.query as { except?: 'current' };
     const current = req.user!.familyId;
     if (except === 'current' && current) {
-      const others = await app.db.query<{ family_id: string }>(
-        `UPDATE refresh_tokens SET revoked_at = now()
-          WHERE user_id = $1 AND revoked_at IS NULL AND family_id::text <> $2
-          RETURNING family_id`,
+      // every session but this one ends, this device's older ones too; what
+      // is counted is the other devices, as the list showed them
+      const others = await app.db.query<{ devices: number }>(
+        `WITH here AS (
+           SELECT device_hash FROM refresh_tokens
+            WHERE user_id = $1 AND family_id::text = $2 AND revoked_at IS NULL
+            LIMIT 1
+         ), ended AS (
+           UPDATE refresh_tokens SET revoked_at = now()
+            WHERE user_id = $1 AND revoked_at IS NULL AND family_id::text <> $2
+            RETURNING family_id, device_hash, expires_at
+         )
+         SELECT count(DISTINCT coalesce(device_hash, family_id::text))::int AS devices
+           FROM ended
+          WHERE expires_at > now()
+            AND (device_hash IS NULL OR device_hash IS DISTINCT FROM (SELECT device_hash FROM here))`,
         [req.user!.id, current],
       );
-      return { revoked: true, everywhere: false, sessionsEnded: new Set(others.rows.map((r) => r.family_id)).size };
+      return { revoked: true, everywhere: false, sessionsEnded: others.rows[0]?.devices ?? 0 };
     }
     await app.db.query(
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,

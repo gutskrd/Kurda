@@ -22,7 +22,7 @@ export interface DeviceSession {
 function DevicePicture({ name }: { name: string | null }): React.JSX.Element {
   if (!name) return <DeviceIcon />;
   if (/\b(iPad|tablet)\b/i.test(name)) return <TabletIcon />;
-  if (/\b(iPhone|Android|phone|Pixel|Galaxy)\b/i.test(name)) return <PhoneIcon />;
+  if (/\b(iPhone|iOS|Android|phone|Pixel|Galaxy)\b/i.test(name)) return <PhoneIcon />;
   if (/\b(Windows|Mac|macOS|Linux|ChromeOS)\b/i.test(name)) return <ComputerIcon />;
   return <DeviceIcon />;
 }

@@ -65,13 +65,14 @@ export function orderSessions(sessions: readonly DeviceSession[]): DeviceSession
  *
  * The phone names itself "iPhone", "iPad", "Android phone (…)" or "Android
  * tablet (…)" (auth/deviceName.ts); the browser names itself after the browser
- * and the system it runs on. Anything that is neither a phone nor a tablet
+ * and the system it runs on; an older build of the app, which named nothing,
+ * is "Hevalo app on iOS" or "… on Android", read by the server. Anything that is neither a phone nor a tablet
  * is a computer, and a session that never said gets the pair of devices.
  */
 export function deviceIcon(name: string | null): IconName {
   if (!name?.trim()) return 'devices';
   if (/ipad|tablet/i.test(name)) return 'device-tablet';
-  if (/iphone|android|phone|mobile/i.test(name)) return 'device-phone';
+  if (/iphone|android|phone|mobile|\bios\b/i.test(name)) return 'device-phone';
   return 'device-computer';
 }
 

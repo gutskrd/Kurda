@@ -92,9 +92,29 @@ describe('Login', () => {
     await screen.findByText('App home');
 
     const [url, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
-    expect(JSON.parse(String(init!.body))).toEqual({ email: 'a@b.com', password: 'rightpass1', deviceName: 'Chrome on Windows' });
+    // remembered unless the box is unticked: the server keeps the session a month, not a day
+    expect(JSON.parse(String(init!.body))).toEqual({ email: 'a@b.com', password: 'rightpass1', deviceName: 'Chrome on Windows', remember: true });
     expect((init!.headers as Record<string, string>)['x-device-id']).toBe(deviceId());
     expect(url).not.toContain(deviceId());
+  });
+
+  it('tells the server a sign-in is not to be remembered, so it keeps the session a day', async () => {
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      jsonResponse(200, {
+        user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: true },
+        tokens: { accessToken: 'x', refreshToken: 'y' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await screen.findByText('App home');
+
+    const [, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
+    expect(JSON.parse(String(init!.body)).remember).toBe(false);
   });
 
   /**
