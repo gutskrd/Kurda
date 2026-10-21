@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { api, ApiError, getToken, setToken } from './api';
-import { failure, fakeApi, json, on } from './test/fetch';
+import { api, ApiError, apiUpload, getRefreshToken, getToken, setToken } from './api';
+import { failure, fakeApi, json, on, type Call } from './test/fetch';
 
 let reload: ReturnType<typeof vi.fn>;
 
@@ -81,5 +81,98 @@ describe('the admin API client', () => {
     fakeApi(on('GET', '/admin/economy/supply', failure(403, 'TOTP_REQUIRED', 'enter your 2FA code to continue')), on('GET', '/me', json({})));
     await expect(api('/admin/economy/supply')).rejects.toBeInstanceOf(ApiError);
     expect(reload).toHaveBeenCalledOnce();
+  });
+});
+
+describe('keeping the session alive', () => {
+  /** An API whose /admin/audit takes only the `good` token, and whose refresh hands out `next`. */
+  function expiring(good: string, next: { accessToken: string; refreshToken: string } | null) {
+    return fakeApi(
+      on('GET', '/admin/audit', (call: Call) =>
+        call.headers.authorization === `Bearer ${good}` ? json({ entries: [] }) : failure(401, 'UNAUTHENTICATED', 'token expired'),
+      ),
+      on('POST', '/auth/refresh', next ? json(next) : failure(401, 'INVALID_REFRESH', 'invalid refresh token')),
+    );
+  }
+
+  it('renews an expired token and makes the call again, instead of sending the admin to sign in', async () => {
+    setToken('old', true, 'ref-1');
+    const fake = expiring('new', { accessToken: 'new', refreshToken: 'ref-2' });
+    await expect(api('/admin/audit')).resolves.toEqual({ entries: [] });
+    expect(fake.calls.find((c) => c.path === '/auth/refresh')!.body).toEqual({ refreshToken: 'ref-1' });
+    expect(getToken()).toBe('new');
+    expect(getRefreshToken()).toBe('ref-2');
+    expect(reload).not.toHaveBeenCalled();
+  });
+
+  it('renews once for every call that found the token expired at the same moment', async () => {
+    setToken('old', true, 'ref-1');
+    const fake = expiring('new', { accessToken: 'new', refreshToken: 'ref-2' });
+    await Promise.all([api('/admin/audit'), api('/admin/audit'), api('/admin/audit')]);
+    expect(fake.calls.filter((c) => c.path === '/auth/refresh')).toHaveLength(1);
+  });
+
+  it('takes the token another tab already renewed, rather than renewing with a refresh token it replaced', async () => {
+    setToken('old', true, 'ref-1');
+    // the other tab renewed: storage holds its pair, this tab still the old token
+    localStorage.setItem('kurda_admin_token', 'new');
+    localStorage.setItem('kurda_admin_refresh', 'ref-2');
+    const fake = expiring('new', null);
+    await expect(api('/admin/audit')).resolves.toEqual({ entries: [] });
+    expect(fake.calls.some((c) => c.path === '/auth/refresh')).toBe(false);
+  });
+
+  it('ends the session when it cannot be renewed', async () => {
+    setToken('old', true, 'ref-1');
+    expiring('new', null);
+    await expect(api('/admin/audit')).rejects.toBeInstanceOf(ApiError);
+    expect(reload).toHaveBeenCalledOnce();
+    expect(getToken()).toBeNull();
+    expect(getRefreshToken()).toBeNull();
+  });
+
+  it('renews a session that is not remembered where it lives: this tab only', async () => {
+    setToken('old', false, 'ref-1');
+    expiring('new', { accessToken: 'new', refreshToken: 'ref-2' });
+    await api('/admin/audit');
+    expect(sessionStorage.getItem('kurda_admin_refresh')).toBe('ref-2');
+    expect(localStorage.getItem('kurda_admin_token')).toBeNull();
+  });
+
+  it('renews for an upload too, sending the same bytes again', async () => {
+    setToken('old', true, 'ref-1');
+    const fake = fakeApi(
+      on('PUT', '/admin/audio/letters/a', (call: Call) =>
+        call.headers.authorization === 'Bearer new' ? json({ ok: true }) : failure(401, 'UNAUTHENTICATED', 'token expired'),
+      ),
+      on('POST', '/auth/refresh', json({ accessToken: 'new', refreshToken: 'ref-2' })),
+    );
+    await expect(apiUpload('/admin/audio/letters/a', new Uint8Array([1, 2, 3]), 'audio/wav')).resolves.toEqual({ ok: true });
+    expect(fake.calls.filter((c) => c.path === '/admin/audio/letters/a')).toHaveLength(2);
+  });
+
+  it('renews holding the lock the console’s tabs share, and takes what a tab that held it before got', async () => {
+    setToken('old', true, 'ref-1');
+    const request = vi.fn(async (_name: string, run: () => Promise<boolean>) => {
+      // the other tab held the lock first and renewed
+      localStorage.setItem('kurda_admin_token', 'new');
+      localStorage.setItem('kurda_admin_refresh', 'ref-2');
+      return run();
+    });
+    vi.stubGlobal('navigator', { ...navigator, userAgent: navigator.userAgent, locks: { request } });
+    const fake = expiring('new', null);
+    await expect(api('/admin/audit')).resolves.toEqual({ entries: [] });
+    expect(request).toHaveBeenCalledWith('kurda-admin-renew', expect.any(Function));
+    // the refresh token it would have presented was already replaced: it is not sent
+    expect(fake.calls.some((c) => c.path === '/auth/refresh')).toBe(false);
+  });
+
+  it("sends this browser's device id with every call, the same one each time", async () => {
+    const fake = fakeApi(on('GET', '/admin/audit', json({})));
+    await api('/admin/audit');
+    await api('/admin/audit');
+    const [first, second] = fake.calls.map((c) => c.headers['x-device-id']);
+    expect(first).toMatch(/^[0-9a-f-]{36}$/);
+    expect(second).toBe(first);
   });
 });

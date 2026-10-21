@@ -8,6 +8,11 @@ export interface Call {
   method: string;
   path: string;
   body: unknown;
+  /**
+   * The request's headers, names in lower case. Not one of the record's own
+   * keys, so a test comparing whole calls compares method, path and body.
+   */
+  readonly headers: Record<string, string>;
 }
 
 export type Reply = { status?: number; body?: unknown; headers?: Record<string, string> };
@@ -30,11 +35,12 @@ export function fakeApi(...routes: Route[]): { calls: Call[]; use: (...more: Rou
     'fetch',
     vi.fn(async (input: string, init: RequestInit = {}) => {
       const url = new URL(String(input), 'http://admin.test');
-      const call: Call = {
+      const call = {
         method: init.method ?? 'GET',
         path: `${url.pathname}${url.search}`,
         body: typeof init.body === 'string' ? JSON.parse(init.body) : undefined,
-      };
+      } as Call;
+      Object.defineProperty(call, 'headers', { value: Object.fromEntries(new Headers(init.headers).entries()), enumerable: false });
       calls.push(call);
       // newest routes first, so a test can override what it set up
       const reply = [...all].reverse().reduce<Reply | undefined>((found, route) => found ?? route(call), undefined) ?? failure(404, 'NOT_FOUND', 'route not found');

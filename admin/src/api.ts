@@ -3,6 +3,8 @@
  * proxied same-origin to the api dev server (see vite.config). Throws `ApiError`
  * with the server's error envelope on non-2xx.
  */
+import { deviceId } from './deviceId';
+
 /**
  * Where the API lives. The admin is served from its own origin (Cloudflare Pages)
  * while the API runs elsewhere, so in production these calls MUST be absolute —
@@ -21,18 +23,110 @@ function readApiBase(): string {
 export const API_BASE = readApiBase();
 
 const TOKEN_KEY = 'kurda_admin_token';
+const REFRESH_KEY = 'kurda_admin_refresh';
 // "Remember me" on → localStorage (persists across browser restarts);
 // off → sessionStorage (cleared when the tab/browser closes).
-let token: string | null = localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+const storedToken = (): string | null => localStorage.getItem(TOKEN_KEY) ?? sessionStorage.getItem(TOKEN_KEY);
+let token: string | null = storedToken();
 
-export function setToken(next: string | null, persist = true): void {
+/**
+ * Keep the session: the access token every call carries, and the refresh
+ * token that renews it when its fifteen minutes are up (`renewOnce`). Without
+ * the second, an expired token sent the admin back to the sign-in — and every
+ * sign-in was a new session on their account and a new 2FA code. Null ends
+ * both here (`endSession` ends it on the server).
+ */
+export function setToken(next: string | null, persist = true, refresh: string | null = null): void {
   token = next;
-  localStorage.removeItem(TOKEN_KEY);
-  sessionStorage.removeItem(TOKEN_KEY);
-  if (next) (persist ? localStorage : sessionStorage).setItem(TOKEN_KEY, next);
+  for (const key of [TOKEN_KEY, REFRESH_KEY]) {
+    localStorage.removeItem(key);
+    sessionStorage.removeItem(key);
+  }
+  if (!next) return;
+  const store = persist ? localStorage : sessionStorage;
+  store.setItem(TOKEN_KEY, next);
+  if (refresh) store.setItem(REFRESH_KEY, refresh);
 }
 export function getToken(): string | null {
   return token;
+}
+/**
+ * The refresh token, read from storage each time: another tab of the console
+ * may have renewed the session since, and presenting the one it replaced
+ * would look like a stolen token and end the session (auth/service.ts).
+ */
+export function getRefreshToken(): string | null {
+  return localStorage.getItem(REFRESH_KEY) ?? sessionStorage.getItem(REFRESH_KEY);
+}
+
+let renewing: Promise<boolean> | null = null;
+
+/**
+ * Renew the session once, however many calls found `expired` refused at the
+ * same moment — and one tab at a time: two tabs presenting the same refresh
+ * token would look like a stolen one, and the server would end the session
+ * (auth/service.ts). So the renewal holds a lock the console's tabs share,
+ * and a tab that waited for it takes the token the other one got.
+ */
+function renewOnce(expired: string): Promise<boolean> {
+  renewing ??= withRenewLock(() => renew(expired)).finally(() => {
+    renewing = null;
+  });
+  return renewing;
+}
+
+function withRenewLock(run: () => Promise<boolean>): Promise<boolean> {
+  const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+  // a browser without Web Locks renews unguarded, as the website does
+  return locks ? locks.request('kurda-admin-renew', run) : run();
+}
+
+async function renew(expired: string): Promise<boolean> {
+  // renewed already, by another tab or by this one's last turn with the lock
+  const stored = storedToken();
+  if (stored && stored !== expired) {
+    token = stored;
+    return true;
+  }
+  const presented = getRefreshToken();
+  if (!presented) return false;
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-device-id': deviceId() },
+      body: JSON.stringify({ refreshToken: presented }),
+    });
+  } catch {
+    return false;
+  }
+  if (!res.ok) return false;
+  const next = (await res.json().catch(() => null)) as { accessToken?: unknown; refreshToken?: unknown } | null;
+  if (typeof next?.accessToken !== 'string' || typeof next.refreshToken !== 'string') return false;
+  // signed out (or in again) while this was on its way: that stands
+  if (getRefreshToken() !== presented) return false;
+  // renewed where the session already lives, so "Remember me" holds
+  setToken(next.accessToken, localStorage.getItem(TOKEN_KEY) !== null, next.refreshToken);
+  return true;
+}
+
+/**
+ * Sign out on the server: the refresh token's session ends, its access
+ * tokens with it, and it leaves the admin's list of signed-in devices.
+ * Best effort and never throws — signing out here must not wait on the
+ * network.
+ */
+export async function endSession(refresh: string | null): Promise<void> {
+  if (!refresh) return;
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-device-id': deviceId() },
+      body: JSON.stringify({ refreshToken: refresh }),
+    });
+  } catch {
+    // offline: the session still ends here, and on the server when it runs out
+  }
 }
 
 export class ApiError extends Error {
@@ -73,11 +167,36 @@ export class ApiError extends Error {
  */
 const ANSWERS_401_ITSELF = ['/auth/login', '/admin/auth/verify', '/admin/2fa/confirm'];
 
+const answers401Itself = (path: string): boolean => ANSWERS_401_ITSELF.some((p) => path === p || path.startsWith(`${p}?`));
+
 function sessionEnded(path: string): void {
-  if (ANSWERS_401_ITSELF.some((p) => path === p || path.startsWith(`${p}?`))) return;
-  // session expired/invalid — drop the token and bounce to the login screen
+  if (answers401Itself(path)) return;
+  // the session is over and could not be renewed — drop it and bounce to the login screen
   setToken(null);
   location.reload();
+}
+
+/**
+ * One call to the API, with this session's token and this browser's device id.
+ * An expired access token is renewed and the call made once more, with the
+ * token another tab already renewed or else a fresh one (`renewOnce`). Only
+ * when that fails too does the 401 reach `read`, which ends the session.
+ */
+async function send(path: string, init: RequestInit = {}): Promise<Response> {
+  const go = (): Promise<Response> =>
+    fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: {
+        ...(init.headers as Record<string, string> | undefined),
+        'x-device-id': deviceId(),
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
+      },
+    });
+  const sentWith = token;
+  const res = await go();
+  if (res.status !== 401 || !sentWith || answers401Itself(path)) return res;
+  if (!(await renewOnce(sentWith))) return res;
+  return go();
 }
 
 /**
@@ -118,12 +237,9 @@ export async function api<T>(
   path: string,
   opts: { method?: string; body?: unknown; signal?: AbortSignal } = {},
 ): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await send(path, {
     method: opts.method ?? 'GET',
-    headers: {
-      ...(opts.body ? { 'content-type': 'application/json' } : {}),
-      ...(token ? { authorization: `Bearer ${token}` } : {}),
-    },
+    headers: opts.body ? { 'content-type': 'application/json' } : {},
     body: opts.body ? JSON.stringify(opts.body) : undefined,
     ...(opts.signal ? { signal: opts.signal } : {}),
   });
@@ -136,10 +252,7 @@ export async function api<T>(
  * code and details. `signal` stops the download.
  */
 export async function apiFile(path: string, opts: { signal?: AbortSignal } = {}): Promise<ArrayBuffer> {
-  const res = await fetch(`${API_BASE}${path}`, {
-    headers: token ? { authorization: `Bearer ${token}` } : {},
-    ...(opts.signal ? { signal: opts.signal } : {}),
-  });
+  const res = await send(path, opts.signal ? { signal: opts.signal } : {});
   if (!res.ok) return read<never>(path, res);
   return res.arrayBuffer();
 }
@@ -149,9 +262,9 @@ export async function apiFile(path: string, opts: { signal?: AbortSignal } = {})
  * as `api`, so an expired session or 2FA window behaves the same way.
  */
 export async function apiUpload<T>(path: string, body: Uint8Array, contentType: string, method = 'PUT'): Promise<T> {
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await send(path, {
     method,
-    headers: { 'content-type': contentType, ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    headers: { 'content-type': contentType },
     body: body as BodyInit,
   });
   return read<T>(path, res);

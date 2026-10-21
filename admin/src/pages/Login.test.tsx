@@ -7,7 +7,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { screen, waitFor } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
-import { setToken } from '../api';
+import { getRefreshToken, getToken, setToken } from '../api';
 import { AuthProvider } from '../auth';
 import { failure, fakeApi, json, on, type Route } from '../test/fetch';
 import { renderUi } from '../test/render';
@@ -81,11 +81,29 @@ describe('signing in', () => {
   });
 
   it('signs in, with the email as typed less its spaces', async () => {
-    const { api, done } = show(on('POST', '/auth/login', json({ tokens: { accessToken: 'tok-9' } })));
+    const { api, done } = show(on('POST', '/auth/login', json({ tokens: { accessToken: 'tok-9', refreshToken: 'ref-9' } })));
     await userEvent.type(screen.getByLabelText('Email'), ' rojda@hevalo.app ');
     await userEvent.type(screen.getByLabelText('Password'), 'right{Enter}');
     await waitFor(() => expect(done).toHaveBeenCalledOnce());
-    expect(api.calls.find((c) => c.path === '/auth/login')!.body).toEqual({ email: 'rojda@hevalo.app', password: 'right' });
+    const login = api.calls.find((c) => c.path === '/auth/login')!;
+    // named for the admin's own list of signed-in devices, and remembered unless told otherwise
+    expect(login.body).toEqual({ email: 'rojda@hevalo.app', password: 'right', deviceName: expect.stringMatching(/^Admin console/), remember: true });
+    expect(login.headers['x-device-id']).toMatch(/^[0-9a-f-]{36}$/);
+    // the session is kept to be renewed, not signed in to again in fifteen minutes
+    expect(getToken()).toBe('tok-9');
+    expect(getRefreshToken()).toBe('ref-9');
+  });
+
+  it('keeps a sign-in that is not to be remembered for this tab only, and says so to the server', async () => {
+    const { api, done } = show(on('POST', '/auth/login', json({ tokens: { accessToken: 'tok-9', refreshToken: 'ref-9' } })));
+    await userEvent.type(screen.getByLabelText('Email'), 'rojda@hevalo.app');
+    await userEvent.type(screen.getByLabelText('Password'), 'right');
+    await userEvent.click(screen.getByRole('checkbox'));
+    await userEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => expect(done).toHaveBeenCalledOnce());
+    expect((api.calls.find((c) => c.path === '/auth/login')!.body as { remember: boolean }).remember).toBe(false);
+    expect(sessionStorage.getItem('kurda_admin_refresh')).toBe('ref-9');
+    expect(localStorage.getItem('kurda_admin_refresh')).toBeNull();
   });
 
   it('says how long signing in is paused after too many tries, and counts it down on the button', async () => {
