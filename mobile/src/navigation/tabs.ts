@@ -6,26 +6,18 @@ export interface TabDef {
   /** Route name used by navigation and deep links. */
   name: TabName;
   /**
-   * What the bar says, looked up at render time so it follows the chosen
-   * language. The labels used to be a hardcoded English `title` with an
-   * unused `titleKu` beside it — five tabs that stayed English in an app
-   * read in eight languages, while every screen behind them translated.
+   * The tab's name, looked up at render time so it follows the chosen
+   * language: what a screen reader says for the tab, and what shows above it
+   * while it is held. The bar itself draws only the icons.
    */
   labelKey: TranslationKey;
-  /**
-   * A shorter name, for a tab whose screen is called something long.
-   *
-   * Nothing uses it at five tabs — each gets about 66 points of the island
-   * and every label fits. It earned its place at six, where "Community"
-   * needed 58 points of the 55 it had and arrived as "Communi…", and it
-   * stays because the next tab added is the one that needs it.
-   */
-  shortLabelKey?: TranslationKey;
   /**
    * Which glyph the bar draws (see theme/Icon). The Profile tab draws your
    * own picture instead, and keeps a glyph only for before you are known.
    */
   icon: IconName;
+  /** The same glyph drawn solid, for while you are on the tab. */
+  activeIcon: IconName;
   /** Path segment for hevalo:// deep links. */
   path: string;
 }
@@ -57,11 +49,12 @@ export type TabName = 'Home' | 'Learn' | 'Messages' | 'Search' | 'Profile';
  * the top of Home. `legacyTabPath` keeps the old links working.
  */
 export const TABS: readonly TabDef[] = [
-  { name: 'Home', labelKey: 'nav.home', icon: 'home', path: 'home' },
-  { name: 'Learn', labelKey: 'nav.learn', icon: 'book', path: 'learn' },
-  { name: 'Messages', labelKey: 'nav.messages', icon: 'send', path: 'messages' },
-  { name: 'Search', labelKey: 'nav.search', icon: 'search', path: 'search' },
-  { name: 'Profile', labelKey: 'nav.profile', icon: 'person', path: 'profile' },
+  { name: 'Home', labelKey: 'nav.home', icon: 'home', activeIcon: 'home-fill', path: 'home' },
+  { name: 'Learn', labelKey: 'nav.learn', icon: 'book', activeIcon: 'book-fill', path: 'learn' },
+  { name: 'Messages', labelKey: 'nav.messages', icon: 'send', activeIcon: 'send-fill', path: 'messages' },
+  { name: 'Search', labelKey: 'nav.search', icon: 'search', activeIcon: 'search-bold', path: 'search' },
+  // your picture is this tab; the glyph is only for before you are known
+  { name: 'Profile', labelKey: 'nav.profile', icon: 'person', activeIcon: 'person', path: 'profile' },
 ] as const;
 
 /** react-navigation linking config: hevalo://learn opens the Learn tab, etc. */

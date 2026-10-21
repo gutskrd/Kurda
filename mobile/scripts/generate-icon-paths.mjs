@@ -47,6 +47,11 @@ const MAP = {
   person: { glyph: 'User', note: 'web UserIcon — one person, an account, you' },
   home: { glyph: 'House', note: 'web HomeIcon — the tab bar falls back to it' },
   search: { glyph: 'MagnifyingGlass', note: 'web SearchIcon — one field for people, words, lessons and games' },
+  // the tab you are on is drawn solid, the others in outline: a change of shape, not only of colour
+  'home-fill': { glyph: 'House', weight: 'fill', note: 'the Home tab, while you are on it' },
+  'book-fill': { glyph: 'BookOpen', weight: 'fill', note: 'the Learn tab, while you are on it' },
+  'send-fill': { glyph: 'PaperPlaneTilt', weight: 'fill', note: 'the Messages tab, while you are on it' },
+  'search-bold': { glyph: 'MagnifyingGlass', weight: 'bold', note: 'the Search tab, while you are on it: a lens has no inside to fill' },
 
   // --- the rest of the browser's façade, same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },

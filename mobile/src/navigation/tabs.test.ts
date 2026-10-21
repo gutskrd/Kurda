@@ -38,16 +38,12 @@ describe('tab registry', () => {
   });
 
   /*
-   * Five tabs, and none of them needs a short name.
-   *
-   * At six the island gave each tab 55.5 points at 375pt and two labels did
-   * not fit in any language. At five it gives about 66, which the longest of
-   * these — "Nachrichten" in German — still fits at 11pt. This is the test
-   * that notices when a sixth is added and the labels start being clipped.
+   * Five tabs: a fifth of a 375pt phone is 75pt, room for a glyph and a
+   * thumb. A sixth would make every tab narrower than a fingertip is wide.
    */
-  it('fits every label without a short form', () => {
+  it('has five tabs, each with a solid glyph for when it is the one you are on', () => {
     expect(TABS).toHaveLength(5);
-    for (const tab of TABS) expect(tab.shortLabelKey).toBeUndefined();
+    for (const tab of TABS) expect(tab.activeIcon).toBeTruthy();
   });
 
   it('maps every tab to a deep-link path (hevalo://<path>)', () => {

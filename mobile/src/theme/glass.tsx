@@ -461,8 +461,8 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   /*
    * A card sits on the page; it does not float over it. The shadow is only
-   * enough to lift a near-white card off a near-white page — the island bar,
-   * the sheets and the menus are the things that float, and they keep the
+   * enough to lift a near-white card off a near-white page — the sheets and
+   * the menus are the things that float, and they keep the
    * deeper one.
    */
   shadow: {

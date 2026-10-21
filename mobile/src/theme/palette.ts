@@ -7,8 +7,8 @@
  * Zêr and highlights. Green and red mean right and wrong (or safe and
  * destructive) and are used sparingly, never as the only signal.
  *
- * The floating island bar and the cards keep a light glass treatment; the
- * page itself is flat. Components read the active `Palette` from
+ * The cards keep a light glass treatment; the page and the tab bar are
+ * flat. Components read the active `Palette` from
  * ThemeProvider so both schemes stay in sync, and `palette.contrast.test.ts`
  * holds every text-on-surface pair to WCAG AA.
  */
@@ -94,12 +94,12 @@ export interface Palette {
   /**
    * The bar's own fill: solid.
    *
-   * There is no blur behind the island on any platform, so any translucency
-   * shows what scrolls beneath as a ghost between the tab labels — at 94%
-   * white text and bright cards were still plainly visible through it, on
-   * the phone as much as in a browser, because an rgba fill composites the
-   * same way everywhere. The island reads as floating from its shadow and
-   * the fade under it, not from being see-through.
+   * There is no blur behind the bar on any platform, so any translucency
+   * shows what scrolls beneath as a ghost between the icons — at 94% white
+   * text and bright cards were still plainly visible through it, on the
+   * phone as much as in a browser, because an rgba fill composites the same
+   * way everywhere. A hairline along its top edge is what separates it from
+   * the page.
    */
   barFill: string;
 

@@ -13,7 +13,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { UnreadProvider } from '../messages/unread';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { GlassTabBar } from './GlassTabBar';
+import { TabBar } from './TabBar';
 import { TABS } from './tabs';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -41,20 +41,42 @@ function open({ index = 0, chats = [] as number[], groups = [] as number[], requ
   const state = { index, routes: TABS.map((t) => ({ key: `${t.name}-key`, name: t.name })) };
   renderWithProviders(
     <UnreadProvider>
-      <GlassTabBar {...({ state, navigation, descriptors: {}, insets: { top: 0, bottom: 0, left: 0, right: 0 } } as unknown as BottomTabBarProps)} />
+      <TabBar {...({ state, navigation, descriptors: {}, insets: { top: 0, bottom: 0, left: 0, right: 0 } } as unknown as BottomTabBarProps)} />
     </UnreadProvider>,
   );
   return { navigation, emitted };
 }
 
 describe('the tab bar', () => {
-  it('shows the five tabs in order, each with its word under it', async () => {
+  it('shows the five tabs in order, as icons, each named for a screen reader', async () => {
     open();
     const bar = await screen.findByRole('tablist');
     const tabs = within(bar).getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-label'))).toEqual(['Home', 'Learn', 'Messages', 'Search', 'Profile']);
-    // the labels are visible words, not only names for a screen reader
-    for (const word of ['Home', 'Learn', 'Messages', 'Search', 'Profile']) expect(within(bar).getByText(word)).toBeTruthy();
+    // no words under the icons: the bar is the glyphs alone
+    for (const word of ['Home', 'Learn', 'Messages', 'Search', 'Profile']) expect(within(bar).queryByText(word)).toBeNull();
+  });
+
+  /*
+   * With no words under the icons, holding a tab says which it is, for as
+   * long as it is held, and letting go takes the name away without moving.
+   */
+  it('shows a tab’s name while it is held, and goes nowhere when it is let go', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    try {
+      const { navigation, emitted } = open({ index: 0 });
+      const learn = await screen.findByRole('tab', { name: 'Learn' });
+      fireEvent.touchStart(learn, { touches: [{ identifier: 1, clientX: 0, clientY: 0 }], changedTouches: [{ identifier: 1, clientX: 0, clientY: 0 }] });
+      await vi.advanceTimersByTimeAsync(600);
+      expect(screen.getByText('Learn')).toBeTruthy();
+      expect(emitted).toContainEqual(expect.objectContaining({ type: 'tabLongPress', target: 'Learn-key' }));
+      fireEvent.touchEnd(learn, { touches: [], changedTouches: [{ identifier: 1, clientX: 0, clientY: 0 }] });
+      await vi.advanceTimersByTimeAsync(50);
+      expect(screen.queryByText('Learn')).toBeNull();
+      expect(navigation.navigate).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('marks the tab you are on as selected', async () => {

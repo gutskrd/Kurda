@@ -8,7 +8,7 @@ import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
-import { TAB_BAR_HEIGHT, TAB_BAR_MARGIN } from '../navigation/tabBarLayout';
+import { TAB_BAR_HEIGHT } from '../navigation/tabBarLayout';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useRealtimeReconnect } from '../realtime/RealtimeProvider';
 import { useUserEvents } from '../realtime/useUserEvents';
@@ -111,7 +111,7 @@ export function InviteBanner(): React.JSX.Element | null {
    * Low on the screen, so the header stays free: just above the tab bar on a
    * tab, and just above the bottom edge on a pushed screen, which has none.
    */
-  const bottom = onTabs ? Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + spacing.sm : insets.bottom + spacing.md;
+  const bottom = onTabs ? insets.bottom + TAB_BAR_HEIGHT + spacing.sm : insets.bottom + spacing.md;
   // keyed by the invite: a new invite at the front starts open, whatever was done with the last one
   return <InviteCard key={invite.id} invite={invite} headline={headline} count={shown.length} bottom={bottom} onGone={remove} />;
 }

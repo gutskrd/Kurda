@@ -18,7 +18,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { GlassTabBar } from './src/navigation/GlassTabBar';
+import { TabBar } from './src/navigation/TabBar';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
@@ -225,8 +225,8 @@ function SignedInTabs() {
         animation: reduceMotion ? 'none' : 'fade',
         transitionSpec: { animation: 'timing', config: { duration: 200 } },
       }}
-      // the floating island: icons, labels, the badges and a sliding pill
-      tabBar={(props) => <GlassTabBar {...props} />}
+      // five icons along the bottom edge, with the badges
+      tabBar={(props) => <TabBar {...props} />}
     >
       {/* in the order TABS gives, which is the order the tests hold it to */}
       {TABS.map((tab) =>
