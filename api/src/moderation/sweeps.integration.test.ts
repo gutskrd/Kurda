@@ -8,7 +8,7 @@ import pg from 'pg';
 import { SECOND_APPROVAL_HOURS } from '@kurda/shared';
 import { MediaService } from '../media/service.js';
 import { FakeStorage } from '../test/fake-storage.js';
-import { eraseChildData } from '../gdpr/service.js';
+import { eraseAccountData } from '../gdpr/service.js';
 import { LibraryService } from '../library/service.js';
 import { ModerationAlerts } from './alerts.js';
 import { CasesService } from './cases-service.js';
@@ -211,7 +211,7 @@ describe.skipIf(!DATABASE_URL)('moderation sweeps (integration)', () => {
 
     // the account is closed: the file is not deleted (a report holds it), but it
     // is an orphan now, and on its way off the public bucket
-    const erased = await eraseChildData(pool, author);
+    const erased = await eraseAccountData(pool, author);
     expect(erased).not.toContain(key);
     expect(await row()).toEqual({ preserve_evidence: true, confirmed: false, quarantine_state: 'pending' });
     // while the evidence is kept, no cleanup takes it

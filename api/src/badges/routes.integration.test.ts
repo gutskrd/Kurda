@@ -10,7 +10,7 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend } from '../test/social.js';
-import { GdprService, eraseChildData } from '../gdpr/service.js';
+import { GdprService, eraseAccountData } from '../gdpr/service.js';
 import { LeagueService } from '../leagues/service.js';
 import { learningAward } from '../test/progress.js';
 
@@ -173,7 +173,7 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await eraseChildData(client, child.id);
+      await eraseAccountData(client, child.id);
       await client.query('ROLLBACK');
     } finally {
       client.release();

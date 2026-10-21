@@ -81,7 +81,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(cancelled.rows[0].deletion_requested_at).toBeNull();
   });
 
-  it('anonymization scrubs PII after the grace period but keeps the row', async () => {
+  it('deletion scrubs PII after the grace period but keeps the row', async () => {
     const user = await makeUser('anon');
     await pool.query(
       `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
@@ -195,7 +195,36 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(doc.user).toMatchObject({ birth_year: 1990, birth_month: 4 });
   });
 
-  it('an adult’s deletion leaves their unfinished story games and keeps the finished ones as history', async () => {
+  /*
+   * What the app says when somebody deletes their account — "your account and
+   * all your data will be permanently deleted" — is what happens, whatever
+   * their age: what they posted goes, not just their name from it.
+   */
+  it('an adult’s deletion removes what they posted, as the app says it will', async () => {
+    const adult = await makeUser('deladult');
+    const post = await app.inject({
+      method: 'POST',
+      url: '/library/posts',
+      headers: { authorization: `Bearer ${adult.token}` },
+      payload: { type: 'gotin', body: 'Silav hevalno' },
+      remoteAddress: '10.13.1.23',
+    });
+    expect(post.statusCode, post.body).toBe(201);
+    const postId = post.json().id as string;
+
+    await pool.query(
+      `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
+      [adult.id],
+    );
+    await new GdprService(pool).anonymizeExpired();
+
+    const row = await pool.query(`SELECT deleted_at FROM users WHERE id = $1`, [adult.id]);
+    expect(row.rows[0].deleted_at).not.toBeNull();
+    expect((await pool.query(`SELECT 1 FROM library_posts WHERE id = $1`, [postId])).rowCount).toBe(0);
+    expect((await app.inject({ method: 'GET', url: `/library/posts/${postId}`, remoteAddress: '10.13.1.24' })).statusCode).toBe(404);
+  });
+
+  it('a deletion leaves their unfinished story games, and takes their seat out of the finished ones', async () => {
     const user = await makeUser('anongames');
     const story = await insertStory(pool, { slug: `gdpr-anon-${Date.now().toString(36)}` });
     try {
@@ -219,8 +248,10 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
       );
       await new GdprService(pool).anonymizeExpired();
       expect((await pool.query(`SELECT status FROM story_games WHERE id = $1`, [lobby])).rows[0].status).toBe('cancelled');
-      const kept = await pool.query(`SELECT score FROM story_game_players WHERE game_id = $1 AND user_id = $2`, [finished, user.id]);
-      expect(kept.rows).toEqual([{ score: 200 }]);
+      // the game stays for whoever else played it, with no host and no seat of theirs
+      expect((await pool.query(`SELECT host_id FROM story_games WHERE id = $1`, [finished])).rows).toEqual([{ host_id: null }]);
+      const seat = await pool.query(`SELECT 1 FROM story_game_players WHERE game_id = $1 AND user_id = $2`, [finished, user.id]);
+      expect(seat.rowCount).toBe(0);
     } finally {
       await deleteStories(pool, [story.id]);
     }

@@ -669,21 +669,8 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       expect(feedback.answers[0]).not.toHaveProperty('status');
     });
 
-    it('scrubs the comment when an account is anonymised, and keeps the stars', async () => {
+    it('deletes their answers, rated or only words, when the account is deleted', async () => {
       const user = await register('gdprAnon');
-      const res = await call('POST', '/me/app-feedback', user, answer);
-      const id = res.json().id as string;
-      await pool.query(
-        `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
-        [user.id],
-      );
-      await new GdprService(pool).anonymizeExpired();
-      const row = await pool.query(`SELECT comment, stars, categories FROM app_feedback WHERE id = $1`, [id]);
-      expect(row.rows[0]).toEqual({ comment: null, stars: 2, categories: ['games', 'bugs'] });
-    });
-
-    it('removes an answer that was only words when the account is anonymised', async () => {
-      const user = await register('gdprWords');
       const words = await call('POST', '/me/app-feedback', user, {
         comment: `Only words ${suffix}`,
         source: 'settings',
@@ -697,14 +684,10 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
         [user.id],
       );
       await new GdprService(pool).anonymizeExpired();
-
-      // the account is anonymised (scrubbing the comment did not stop it) …
       const account = await pool.query(`SELECT deleted_at FROM users WHERE id = $1`, [user.id]);
       expect(account.rows[0].deleted_at).not.toBeNull();
-      // … the answer with nothing left once its words go is gone, and the rated one keeps its stars
-      expect((await pool.query(`SELECT 1 FROM app_feedback WHERE id = $1`, [words.json().id])).rowCount).toBe(0);
-      const kept = await pool.query(`SELECT comment, stars FROM app_feedback WHERE id = $1`, [rated.json().id]);
-      expect(kept.rows[0]).toEqual({ comment: null, stars: 2 });
+      const left = await pool.query(`SELECT 1 FROM app_feedback WHERE id = ANY($1::uuid[])`, [[words.json().id, rated.json().id]]);
+      expect(left.rowCount).toBe(0);
     });
 
     it('deletes a child’s answers when the account is closed', async () => {
