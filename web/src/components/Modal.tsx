@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 import { escapeClearsField } from './SearchField';
 import { wrapTab } from './Sheet';
@@ -10,6 +11,11 @@ import { useT } from '../i18n/I18nProvider';
  * in a Sheet — a dialog that lets the keyboard walk out into the page under
  * its backdrop has lost its reader), restores focus on close, and locks body
  * scroll while open.
+ *
+ * It is drawn at the end of the page, as a Sheet is, and not where it is
+ * written: a dialog opened from inside a box with its own layer (a chat open
+ * full-screen on a phone is one) was otherwise drawn inside that layer, under
+ * the site's header, its top and its close button out of reach.
  */
 export function Modal({
   open,
@@ -56,7 +62,7 @@ export function Modal({
 
   if (!open) return null;
 
-  return (
+  return createPortal(
     <div className="modal-overlay" onMouseDown={onClose}>
       <div
         className="modal-panel"
@@ -72,6 +78,7 @@ export function Modal({
         </button>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

@@ -26,6 +26,8 @@ export interface RailGroup {
   name: string;
   memberCount: number;
   unread: number;
+  /** the group's picture, when the server sends it; else its initials stand in */
+  photoUrl?: string | null;
 }
 
 export interface RailNotification {

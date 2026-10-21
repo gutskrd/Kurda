@@ -410,6 +410,13 @@ export interface Group {
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
+  /** the group's own picture on the CDN; null (or absent, from an older server) shows its initials */
+  photoUrl?: string | null;
+}
+
+/** A group as discovery lists it (GET /groups): whether the reader is already in it. */
+export interface DiscoverGroup extends Group {
+  joined?: boolean;
 }
 
 /** A group in the caller's own list (GET /me/groups) — carries their role. */

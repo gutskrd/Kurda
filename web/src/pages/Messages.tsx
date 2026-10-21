@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, Conversation, Group, MyGroup, UserSummary } from '../lib/types';
+import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
@@ -18,6 +18,9 @@ import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { SendError } from '../reports/SendError';
 import { useArrival } from '../lib/motion';
+import { GroupAvatar } from '../groups/GroupAvatar';
+import { DiscoverGroups } from '../groups/DiscoverGroups';
+import { useGroupsChanged } from '../groups/groupsChanged';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -298,6 +301,7 @@ function Conversations({
   }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
+  useGroupsChanged(onDm);
   const arriving = useArrival(convos !== null);
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
@@ -351,11 +355,7 @@ function Conversations({
           key={g.id}
           to={`/app/messages?group=${g.id}`}
           active={g.id === activeGroup}
-          avatar={
-            <span className="group-avatar" aria-hidden>
-              {g.name.slice(0, 1).toUpperCase()}
-            </span>
-          }
+          avatar={<GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />}
           name={g.name}
           preview={t('groups.memberCount', { count: g.memberCount })}
           unread={groupUnread[g.id] ?? 0}
@@ -438,6 +438,7 @@ function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
 function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; query?: string }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  const navigate = useNavigate();
   const [mine, setMine] = useState<MyGroup[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -461,6 +462,8 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
   // a new group message can change previews/unread — cheap to refresh the list
   const onGroupMsg = useCallback(() => void load(), [load]);
   useRealtimeEvent('group_msg', onGroupMsg);
+  // a group renamed, given a picture, joined or left somewhere on the page
+  useGroupsChanged(onGroupMsg);
 
   return (
     <>
@@ -486,16 +489,14 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
             to={`/app/messages?group=${g.id}`}
             className={`chat-convo${g.id === activeGroup ? ' active' : ''}`}
           >
-            <span className="group-avatar" aria-hidden>
-              {g.name.slice(0, 1).toUpperCase()}
-            </span>
+            <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />
             <span className="chat-convo-body">
               <span className="chat-convo-top">
-                <span className="chat-convo-name">{g.name}</span>
+                <span className="chat-convo-name" dir="auto">{g.name}</span>
               </span>
               <span className="chat-convo-last">
                 {t('groups.memberCount', { count: g.memberCount })}
-                {g.privacy === 'invite' ? ` · ${t('groups.inviteOnly')}` : ''}
+                {g.privacy === 'invite' ? ` · ${t('groups.inviteGroup')}` : ''}
               </span>
             </span>
           </Link>
@@ -513,9 +514,15 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
       <Modal open={discovering} onClose={() => setDiscovering(false)} label={t('groups.discover')}>
         <DiscoverGroups
           mineIds={new Set((mine ?? []).map((g) => g.id))}
-          onJoined={() => {
+          onOpen={() => setDiscovering(false)}
+          onJoined={(g) => {
             setDiscovering(false);
             void load();
+            navigate(`/app/messages?group=${g.id}`);
+          }}
+          onNew={() => {
+            setDiscovering(false);
+            setCreating(true);
           }}
         />
       </Modal>
@@ -581,71 +588,3 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
     </form>
   );
 }
-
-/** Browse open groups and join one. */
-function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined: () => void }): React.JSX.Element {
-  const t = useT();
-  const { client } = useAuth();
-  const [groups, setGroups] = useState<Group[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [joining, setJoining] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setError(null);
-    const res = await client.get<{ groups: Group[] }>('/groups');
-    if (res.ok) setGroups(res.data.groups);
-    else setError(describeError(res.error, t));
-  }, [client]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function join(id: string): Promise<void> {
-    setJoining(id);
-    const res = await client.post(`/groups/${id}/join`);
-    setJoining(null);
-    if (res.ok) onJoined();
-    else setError(describeError(res.error, t));
-  }
-
-  if (error && groups === null) return <ErrorState message={error} onRetry={() => void load()} />;
-  if (groups === null) return <ConversationsSkeleton count={4} />;
-  // show open groups AND the caller's own (marked as already-in), rather than hiding them
-  const open = groups.filter((g) => g.privacy === 'open' || mineIds.has(g.id));
-  if (open.length === 0)
-    return <EmptyState title={t('groups.nothingHereYet')} message={t('groups.nothingToDiscover')} />;
-
-  return (
-    <div className="group-discover">
-      {error && <div className="msg msg-error">{error}</div>}
-      {open.map((g) => {
-        const joined = mineIds.has(g.id);
-        return (
-          <div className="group-discover-row" key={g.id}>
-            <span className="group-avatar" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
-            <span className="chat-convo-body">
-              <span className="chat-convo-name">
-                {g.name}
-                {joined && <span className="group-joined-badge">{t('groups.joined')}</span>}
-              </span>
-              <span className="chat-convo-last">
-                {g.description || t('groups.memberCount', { count: g.memberCount })}
-              </span>
-            </span>
-            {joined ? (
-              <Link to={`/app/messages?group=${g.id}`} className="btn btn-secondary btn-sm" onClick={onJoined}>
-                {t('groups.openIt')}
-              </Link>
-            ) : (
-              <Button size="sm" disabled={joining === g.id} onClick={() => void join(g.id)}>
-                {joining === g.id ? t('groups.joining') : t('groups.join')}
-              </Button>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-

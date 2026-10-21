@@ -1,10 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { canManage as canManageRole, canSetRole as canSetRoleShared, roleRank } from '@kurda/shared';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, GroupDetail, GroupMember, GroupMessage } from '../lib/types';
-import { ConfirmButton } from '../components/ConfirmButton';
+import type { ApiError, GroupDetail, GroupMessage } from '../lib/types';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useMessages } from './MessagesProvider';
 import { MessageList } from './MessageList';
@@ -18,14 +16,14 @@ import type { RealtimeEventEnvelope } from '../realtime/events';
 import { sendError } from './DmThread';
 import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 import { ThreadSkeleton } from '../components/skeletons';
-import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { ArrowIcon, CloseIcon, FlagIcon } from '../components/icons';
+import { ArrowIcon, CloseIcon } from '../components/icons';
 import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useChatGifts } from '../gifts/useChatGifts';
 import { useT } from '../i18n/I18nProvider';
-import { Avatar } from '../components/Avatar';
+import { GroupAvatar } from '../groups/GroupAvatar';
+import { GroupInfo } from '../groups/GroupInfo';
 
 /**
  * A group conversation, as a page or as a dock beside the social rail.
@@ -52,7 +50,7 @@ export function GroupThread({
   const { state } = useRealtime();
   const [name, setName] = useState<string>(t('groups.title'));
   const [detail, setDetail] = useState<GroupDetail | null>(null);
-  const [showMembers, setShowMembers] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
   const [messages, setMessages] = useState<GroupMessage[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [text, setText] = useState('');
@@ -126,7 +124,8 @@ export function GroupThread({
     const r = await client.get<GroupDetail>(`/groups/${groupId}`);
     if (r.ok) {
       setDetail(r.data);
-      setName(r.data.name);
+      // an answer without a name keeps the one already shown
+      if (r.data.name) setName(r.data.name);
     }
   }, [client, groupId]);
   useEffect(() => {
@@ -197,6 +196,9 @@ export function GroupThread({
     }
   }
 
+  // the group's real size; an older answer has only the roster to count
+  const memberCount = detail?.memberCount ?? detail?.members?.length;
+
   return (
     <div className={`chat-thread${className ? ` ${className}` : ''}`}>
       <header className="chat-thread-head">
@@ -206,11 +208,17 @@ export function GroupThread({
             <ArrowIcon size={18} />
           </Link>
         )}
-        <span className="chat-thread-title" aria-current="page">
-          {name}
-        </span>
-        <button type="button" className="chat-members-btn" onClick={() => setShowMembers(true)}>
-          {detail?.members ? t('groups.memberCount', { count: detail.members.length }) : t('groups.members')}
+        {/* the group's picture and name open its page: who is in it, and for the owner and admins, changing it */}
+        <button type="button" className="ghead" aria-haspopup="dialog" title={t('groups.info')} onClick={() => setShowInfo(true)}>
+          <GroupAvatar id={groupId} name={name} photoUrl={detail?.photoUrl} size={36} />
+          <span className="ghead-text">
+            <span className="ghead-name" dir="auto" aria-current="page">
+              {name}
+            </span>
+            <span className="ghead-sub">
+              {typeof memberCount === 'number' ? t('groups.memberCount', { count: memberCount }) : t('groups.members')}
+            </span>
+          </span>
         </button>
         {onClose && (
           <button type="button" className="chat-dock-close" onClick={onClose} aria-label={t('chat.closeWith', { name })}>
@@ -219,14 +227,18 @@ export function GroupThread({
         )}
       </header>
 
-      <Modal open={showMembers} onClose={() => setShowMembers(false)} label={t('groups.membersOf')}>
+      <Modal open={showInfo} onClose={() => setShowInfo(false)} label={t('groups.info')}>
         {detail?.members && (
-          <GroupMembers
+          <GroupInfo
             detail={detail}
             onChanged={loadDetail}
             // reloading the detail of a group you just left would only 403, so
             // leave it: a dock closes, a page goes back to the list
-            onLeft={() => (onClose ? onClose() : navigateAway('/app/messages?group='))}
+            onLeft={() => {
+              setShowInfo(false);
+              if (onClose) onClose();
+              else navigateAway('/app/messages?group=');
+            }}
           />
         )}
       </Modal>
@@ -292,191 +304,6 @@ export function GroupThread({
         }
       />
       {gifts.overlays}
-    </div>
-  );
-}
-
-/** Higher rank = more power, mirroring the server's group role hierarchy. */
-/**
- * The group's roster and its admins. A group's creator is its owner; owners can
- * promote members to moderator (a group admin) or demote them, and owners and
- * moderators can remove anyone they outrank. This is entirely separate from
- * Hevalo staff roles — being a group admin grants nothing outside the group.
- * The server re-checks every action; this only mirrors the rules to hide buttons
- * that would be rejected.
- */
-function GroupMembers({
-  detail,
-  onChanged,
-  onLeft,
-}: {
-  detail: GroupDetail;
-  onChanged: () => Promise<void>;
-  onLeft: () => void;
-}): React.JSX.Element {
-  const { client, user } = useAuth();
-  const t = useT();
-  const { openProfile } = useProfileModal();
-  const [busy, setBusy] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [reportingGroup, setReportingGroup] = useState(false);
-
-  const myRole = detail.myRole;
-  // the rules live in shared, so what this offers and what the API allows
-  // cannot drift apart; the only thing added here is that you do not manage
-  // yourself, which is a UI concern rather than a permission
-  const canManage = (target: GroupMember): boolean =>
-    myRole !== null && canManageRole(myRole, target.role) && target.userId !== user?.id;
-  const canSetRole = myRole !== null && canSetRoleShared(myRole, 'moderator');
-
-  /*
-   * No `confirm()` here any more. The destructive actions below are
-   * ConfirmButtons instead: a browser dialog cannot be styled, lands outside the
-   * page for a screen reader, and is blocked outright in some embedded browsers
-   * — where it returns false and the action becomes quietly impossible.
-   */
-  async function act(key: string, run: () => Promise<{ ok: boolean; error?: ApiError }>): Promise<void> {
-    setBusy(key);
-    setError(null);
-    const res = await run();
-    setBusy(null);
-    if (res.ok) await onChanged();
-    else setError(res.error ? describeError(res.error, t) : t('chat.thatDidNotWork'));
-  }
-
-  const setRole = (m: GroupMember, role: 'moderator' | 'member'): Promise<void> =>
-    act(`${m.userId}:role`, () => client.put(`/groups/${detail.id}/members/${m.userId}/role`, { role }));
-
-  const remove = (m: GroupMember): Promise<void> =>
-    act(`${m.userId}:remove`, () => client.delete(`/groups/${detail.id}/members/${m.userId}`));
-
-  const transfer = (m: GroupMember): Promise<void> =>
-    act(`${m.userId}:transfer`, () => client.post(`/groups/${detail.id}/transfer`, { userId: m.userId }));
-
-  /**
-   * Leaving is the one action here that is about you rather than someone else,
-   * so it sits apart from the roster. The owner cannot leave — the server
-   * refuses, since a group with no owner has nobody who can hand it on — so they
-   * are told what to do instead of being given a button that fails.
-   */
-  async function leave(): Promise<void> {
-    setBusy('leave');
-    setError(null);
-    const res = await client.post(`/groups/${detail.id}/leave`);
-    setBusy(null);
-    if (res.ok) onLeft();
-    else setError(res.error ? describeError(res.error, t) : t('chat.thatDidNotWork'));
-  }
-
-  const ordered = [...detail.members].sort(
-    (a, b) => roleRank(b.role) - roleRank(a.role) || a.username.localeCompare(b.username),
-  );
-
-  return (
-    <div className="group-members">
-      <h2 className="friend-heading" style={{ marginTop: 0 }}>{detail.name}</h2>
-      <p className="muted">
-        {t('groups.memberCount', { count: detail.members.length })}
-        {myRole && (
-          <>
-            {' · '}
-            {myRole === 'owner' ? t('groups.youAreTheOwner') : t('groups.youAreAnAdmin')}
-          </>
-        )}
-      </p>
-      {error && <div className="msg msg-error">{error}</div>}
-
-      <ul className="group-member-list">
-        {ordered.map((m) => (
-          <li className="group-member" key={m.userId}>
-            {/* the whole identity opens the profile — a roster you cannot click
-                through is a dead end when you want to know who someone is */}
-            <button
-              type="button"
-              className="group-member-who"
-              onClick={() => openProfile({ kind: 'user', userId: m.userId, username: m.username })}
-            >
-              <Avatar url={m.avatarUrl} glyphSize={18} />
-              <span className="chat-convo-body">
-                <span className="chat-convo-name">
-                  {m.username}
-                  {m.userId === user?.id && <span className="group-joined-badge">{t('chat.you')}</span>}
-                </span>
-                <span className="chat-convo-last">
-                  <span className={`member-role member-role-${m.role}`}>
-                    {m.role === 'owner' ? t('groups.role.owner') : m.role === 'moderator' ? t('groups.role.admin') : t('groups.role.member')}
-                  </span>
-                </span>
-              </span>
-            </button>
-            <span className="group-member-actions">
-              {canSetRole && m.role === 'member' && m.userId !== user?.id && (
-                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'moderator')}>
-                  {t('groups.makeAdmin')}
-                </Button>
-              )}
-              {canSetRole && m.role === 'moderator' && (
-                <Button size="sm" variant="ghost" disabled={busy !== null} onClick={() => void setRole(m, 'member')}>
-                  {t('groups.removeAdmin')}
-                </Button>
-              )}
-              {canSetRole && m.role === 'moderator' && (
-                <ConfirmButton
-                  className="btn btn-ghost btn-sm"
-                  label={t('groups.makeOwner')}
-                  disabled={busy !== null}
-                  title={t('groups.makeOwnerWarning', { name: m.username })}
-                  onConfirm={() => transfer(m)}
-                />
-              )}
-              {canManage(m) && (
-                <ConfirmButton
-                  className="btn btn-ghost btn-sm"
-                  label={t('groups.remove')}
-                  disabled={busy !== null}
-                  title={t('groups.removeFrom', { name: m.username, group: detail.name })}
-                  onConfirm={() => remove(m)}
-                />
-              )}
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      {myRole === 'owner' ? (
-        <p className="muted group-leave-note">
-          {t('groups.ownerCannotLeave', { group: detail.name })}
-        </p>
-      ) : (
-        myRole !== null && (
-          <div className="group-leave">
-            <ConfirmButton
-              className="btn btn-ghost btn-sm danger"
-              label={t('groups.leave', { group: detail.name })}
-              disabled={busy !== null}
-              title={t('groups.leave', { group: detail.name })}
-              onConfirm={leave}
-            />
-          </div>
-        )
-      )}
-
-      {/* the group itself — its name, its purpose — can be reported from here */}
-      {myRole !== 'owner' && (
-        <div className="group-leave">
-          <button type="button" className="btn btn-ghost btn-sm" onClick={() => setReportingGroup(true)}>
-            <FlagIcon size={15} /> {t('report.group')}
-          </button>
-        </div>
-      )}
-      <ReportSheet
-        open={reportingGroup}
-        onClose={() => setReportingGroup(false)}
-        target={{ targetType: 'group', targetId: detail.id }}
-        name={detail.name}
-        leaveGroup={myRole !== null && myRole !== 'owner' ? { groupId: detail.id, name: detail.name } : null}
-        onLeftGroup={onLeft}
-      />
     </div>
   );
 }

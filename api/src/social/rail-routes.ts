@@ -40,7 +40,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       // the rail needs every friend: it asks who is live, over the whole list
       deps.friends.list(me, publicUrl).then((page) => page.friends),
       deps.friends.incomingRequests(me, publicUrl),
-      deps.groups.myGroups(me),
+      deps.groups.myGroups(me, publicUrl),
       deps.groupChat.unread(me),
       deps.inbox.list(me),
       deps.inbox.unreadCount(me),
@@ -72,7 +72,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       challenges: [] as never[],
       groups: groups
         .filter((g) => g.archivedAt === null)
-        .map((g) => ({ id: g.id, name: g.name, memberCount: g.memberCount, unread: unreadByGroup.get(g.id) ?? 0 })),
+        .map((g) => ({ id: g.id, name: g.name, memberCount: g.memberCount, photoUrl: g.photoUrl, unread: unreadByGroup.get(g.id) ?? 0 })),
       notifications: notifications.slice(0, RECENT_NOTIFICATIONS),
       unread: {
         notifications: unreadNotifications,

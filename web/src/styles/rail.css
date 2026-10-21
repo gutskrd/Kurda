@@ -289,19 +289,6 @@
 .rail-row-sub.is-playing {
   color: var(--gold-ink);
 }
-.rail-group-mark {
-  flex: none;
-  display: grid;
-  place-items: center;
-  width: 28px;
-  height: 28px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
 /* ---- something waiting on you ------------------------------------------- */
 .rail-card {
   display: grid;

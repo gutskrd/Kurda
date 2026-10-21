@@ -78,6 +78,7 @@ import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
 import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
 import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
 import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
+import { UserMinus } from '@phosphor-icons/react/dist/icons/UserMinus';
 // web-race-rating: Peyvok's delete key, the rating box's stars
 import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
 import { Star } from '@phosphor-icons/react/dist/icons/Star';
@@ -239,6 +240,8 @@ export const NextIcon = named(SkipForward, 20, 'fill');
 export const TimerIcon = named(Timer, 20);
 export const HostIcon = named(Crown, 16, 'fill');
 export const InviteIcon = named(UserPlus, 22);
+// taking someone out of a group
+export const RemovePersonIcon = named(UserMinus, 22);
 export const CopyIcon = named(Copy, 20);
 export const CaretDownIcon = named(CaretDown, 16);
 

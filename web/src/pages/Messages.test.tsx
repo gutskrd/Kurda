@@ -269,12 +269,11 @@ describe('Messages', () => {
     await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
     await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
 
-    // my own group appears with a Joined marker + an Open link (not a Join button)
-    expect(await screen.findByText('Joined')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /open/i })).toHaveAttribute('href', '/app/messages?group=g1');
+    // my own group appears with Open (not Join), which goes to its thread
+    expect(await screen.findByRole('link', { name: 'Open: My Club' })).toHaveAttribute('href', '/app/messages?group=g1');
     // a group I'm not in still offers Join
     expect(screen.getByText('Open Circle')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^join$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Join: Open Circle' })).toBeInTheDocument();
   });
 
   it('lets a group owner promote a member to group admin', async () => {
@@ -306,10 +305,11 @@ describe('Messages', () => {
 
     renderApp(<Messages />, ['/app/messages?group=g1']);
 
-    // the creator is the owner, so the roster offers promoting a member to admin
+    // the creator is the owner: the group's page offers changing it, and a member's ⋯ offers making them an admin
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
-    expect(await screen.findByText(/you are the owner/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /make admin/i }));
+    expect(await screen.findByRole('button', { name: 'Edit group' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Options for zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Make admin' }));
 
     expect(calls[0]?.method).toBe('PUT');
     expect(calls[0]?.body).toMatchObject({ role: 'moderator' });
@@ -342,18 +342,17 @@ describe('Messages', () => {
     );
   }
 
-  it('lets a member leave a group, on the second press', async () => {
+  it('lets a member leave a group, once they have said yes', async () => {
     const calls: Array<{ url: string; method: string }> = [];
     stubGroup('member', calls);
     renderApp(<Messages />, ['/app/messages?group=g1']);
 
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
-    const leave = await screen.findByRole('button', { name: /^Leave Test Group$/ });
+    await userEvent.click(await screen.findByRole('button', { name: /^Leave Test Group$/ }));
+    expect(calls).toHaveLength(0); // asked, not done
 
-    await userEvent.click(leave);
-    expect(calls).toHaveLength(0); // armed, not fired
-
-    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    const ask = screen.getByRole('alertdialog', { name: 'Leave Test Group' });
+    await userEvent.click(within(ask).getByRole('button', { name: 'Leave Test Group' }));
     expect(calls[0]?.method).toBe('POST');
   });
 

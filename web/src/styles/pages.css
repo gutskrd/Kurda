@@ -1222,35 +1222,6 @@ button.feature {
   gap: 8px;
   margin-bottom: 8px;
 }
-/* a simple monogram tile standing in for a group's icon */
-.group-avatar {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-.group-discover {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.group-discover-row {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-.group-discover-row .chat-convo-body {
-  flex: 1;
-  min-width: 0;
-}
 /* sender name above a group message that isn't yours */
 .bubble-author {
   display: block;
@@ -2776,20 +2747,6 @@ a.mkp-activity-row:hover {
   max-width: 100%;
 }
 
-/* a "you're in" marker on a group row in Discover */
-.group-joined-badge {
-  margin-left: 8px;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--ink-2);
-  font-size: var(--text-tab);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  vertical-align: middle;
-}
 
 /* ---- games hub: one box per game + mode chooser ------------------------ */
 .mode-chooser .mode-list {
@@ -2823,61 +2780,7 @@ a.mkp-activity-row:hover {
   font-size: 0.88rem;
 }
 
-/* ---- group members / roles --------------------------------------------- */
-.chat-members-btn {
-  margin-left: auto;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.chat-members-btn:hover {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
-.group-member-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.group-member {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-.group-member-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-}
 
-/* leaving is about you, not the roster, so it sits below it and apart */
-.group-leave {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.group-leave-note {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  font-size: 0.9rem;
-  text-align: center;
-}
 
 /* ---- email verification code ------------------------------------------- */
 .verify-code-input {
@@ -2990,49 +2893,6 @@ a.mkp-activity-row:hover {
   }
 }
 
-/* ---- group roster ------------------------------------------------------- */
-/* the identity half of a row is one big target that opens the profile */
-.group-member-who {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  border-radius: var(--r-sm);
-}
-.group-member-who:hover .chat-convo-name {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-/* role reads as a badge, not as body text that looks like a message preview */
-.member-role {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  font-size: var(--text-tab);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.member-role-owner {
-  color: var(--gold);
-  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--gold-soft);
-}
-.member-role-moderator {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
 
 /* ---- byline: who wrote a post or comment -------------------------------- */
 .byline {
