@@ -1,7 +1,7 @@
 /**
  * Hevalo Admin — calm, readable frosted glass.
  *
- * A soft dawn picture sits far behind a strong scrim, and the content sits on
+ * Rain on the flag moves far behind a strong scrim, and the content sits on
  * near-opaque frosted surfaces: the glass is the frame, never something to
  * read text through. Neutral zinc for structure; colour only where it means
  * something (a status, a warning, a failure). Light and dark follow the
@@ -126,24 +126,38 @@ body {
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /*
-   * The backdrop the glass panels sample — a soft dawn drawn by
-   * scripts/generate-cosmetic-art.mjs. It is fixed and covered so it never
-   * scrolls or tiles, and it sits UNDER a strong scrim (::before) rather than
-   * behind raw text — a picture straight behind dense tables destroys
-   * legibility, which is the usual way a background like this goes wrong.
-   * The base colour stays as the fallback if the image is missing.
-   */
+  /* the base colour shows only until the backdrop's still frame has loaded */
   background: var(--bg-2);
+}
+/*
+ * The backdrop the glass panels sample: rain on the flag (ui/Backdrop.tsx),
+ * its first frame as the still behind the video and in place of it for less
+ * motion. It is fixed and covered so it never scrolls or tiles, and it sits
+ * UNDER a strong scrim (body::before) rather than behind raw text — a picture
+ * straight behind dense tables destroys legibility, which is the usual way a
+ * background like this goes wrong. Anchored left of centre, so a phone's narrow
+ * crop keeps the flag rather than the door beside it.
+ */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: #0a0a0c url('/backdrop/rain.jpg') 32% center / cover no-repeat;
+}
+.backdrop video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 32% center;
 }
 body::before {
   content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image: linear-gradient(var(--scrim-top), var(--scrim-bottom)), url('/background.jpg');
-  background-size: cover;
-  background-position: center bottom;
+  background: linear-gradient(var(--scrim-top), var(--scrim-bottom));
   pointer-events: none;
 }
 /* a layer is open: the page behind it stays where it is */
@@ -478,14 +492,21 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 
 /* The sign-in is drawn light on dark in either scheme. Its clear glass and white type are made for
    the dark backdrop; over the light one they all but vanished (white on the pale scrim measured
-   1.2:1), so in a light scheme this screen keeps the dark scrim over the same picture. Focus rings
-   and the browser's own controls (the checkbox, autofill) follow it. */
+   1.2:1), so in a light scheme this screen swaps in the dark scrim over the same backdrop. Focus
+   rings and the browser's own controls (the checkbox, autofill) follow it. */
 .login { color-scheme: dark; }
 .login :focus-visible { outline-color: #fff; }
 @media (prefers-color-scheme: light) {
-  .login::before {
-    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-    background: linear-gradient(rgba(10, 10, 12, 0.8), rgba(12, 12, 15, 0.88)), url('/background.jpg') center bottom / cover, #0a0a0c;
+  :root:has(.login) {
+    --scrim-top: rgba(10, 10, 12, 0.8);
+    --scrim-bottom: rgba(12, 12, 15, 0.88);
+  }
+  /* a browser without :has() lays the dark scrim over the light one instead */
+  @supports not selector(:has(*)) {
+    .login::before {
+      content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+      background: linear-gradient(rgba(10, 10, 12, 0.8), rgba(12, 12, 15, 0.88));
+    }
   }
 }
 

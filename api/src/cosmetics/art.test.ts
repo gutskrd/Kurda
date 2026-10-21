@@ -33,7 +33,6 @@ interface Generator {
   STICKER: { size: number; maxBytes: number };
   OVERLAY: { size: number; maxBytes: number };
   OVERLAY_FILE: string;
-  ADMIN_FILE: string;
   backgroundSvg(piece: unknown): string;
   iconSvg(piece: unknown): string;
   stickerSvg(piece: unknown): string;
@@ -85,7 +84,6 @@ describe('the cosmetic art generator', () => {
       ...gen.ICONS.map((p, i) => gen.iconFile(p, i)),
       ...gen.STICKERS.map((p) => gen.stickerFile(p)),
       gen.OVERLAY_FILE,
-      gen.ADMIN_FILE,
     ];
     expect([...written].sort()).toEqual([...expected].sort());
   });
@@ -111,7 +109,6 @@ describe('the cosmetic art generator', () => {
     }
     const overlay = await sharp(join(out, gen.OVERLAY_FILE)).metadata();
     expect([overlay.format, overlay.width, overlay.height, overlay.hasAlpha]).toEqual(['webp', gen.OVERLAY.size, gen.OVERLAY.size, true]);
-    expect((await sharp(join(out, gen.ADMIN_FILE)).metadata()).format).toBe('jpeg');
   });
 
   /**
