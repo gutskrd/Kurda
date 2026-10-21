@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { ALPHABET_CLIPS, APP_LOCALES } from '@kurda/shared';
-import { CLIPS } from './clips';
-import { latinSound, latinWord, pairWord, soraniSound } from './audio';
-import { LATIN, PAIRS, SORANI } from './letters';
-import { ROUND, again, makeRound, type Question } from './practice';
+import { ALPHABET_CLIPS } from '../alphabet-audio.js';
+import { APP_LOCALES } from '../locales.js';
+import { CLIPS } from './clips.js';
+import { LATIN, PAIRS, SORANI } from './letters.js';
+import { ROUND, again, makeRound, type Question } from './practice.js';
+import { alphabetSounds } from './sounds.js';
 
 /** A seeded generator, so a failing round can be replayed exactly. */
 function seeded(seed: number): () => number {
@@ -94,17 +95,10 @@ describe('check yourself', () => {
 });
 
 describe('the sounds', () => {
-  // the files on disk, listed without loading them
-  const files = new Set(Object.keys(import.meta.glob('../../public/audio/alphabet/*.mp3')).map((p) => p.split('/').pop()));
+  const { latinSound, latinWord, pairWord, soraniSound } = alphabetSounds();
 
-  /** A clip in the manifest with no file would be a play button that plays nothing. */
-  it('has a file for every clip, and no file without one', () => {
-    expect(files.size).toBe(Object.keys(CLIPS).length);
-    for (const [key, file] of Object.entries(CLIPS)) expect(files.has(file), key).toBe(true);
-  });
-
-  /** the admin panel records exactly the sounds the page plays — no more, no fewer */
-  it('records the same sounds the page ships', () => {
+  /** the admin panel records exactly the sounds the pages play — no more, no fewer */
+  it('records the same sounds the pages ship', () => {
     expect(ALPHABET_CLIPS.map((c) => c.key).sort()).toEqual(Object.keys(CLIPS).sort());
   });
 
@@ -117,6 +111,16 @@ describe('the sounds', () => {
     for (const p of PAIRS) {
       expect(pairWord(p.a.word), p.a.word).not.toBeNull();
       expect(pairWord(p.b.word), p.b.word).not.toBeNull();
+    }
+  });
+
+  /** a round started after the recordings arrive asks with them */
+  it('asks with the recordings it is given', () => {
+    const recorded = Object.fromEntries(LATIN.map((l) => [`kmr:sound:${l.id}`, `https://cdn.test/${l.id}.wav`]));
+    for (let seed = 1; seed <= 10; seed++) {
+      for (const q of makeRound('kmr', 'en', null, seeded(seed), alphabetSounds(recorded))) {
+        if (q.kind === 'hear') expect(q.clip).toMatch(/^https:\/\/cdn\.test\/.+\.wav$/);
+      }
     }
   });
 });

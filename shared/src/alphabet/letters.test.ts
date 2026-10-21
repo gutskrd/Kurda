@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { APP_LOCALES } from '@kurda/shared';
-import { BANDS, COMPARE_LOCALES, LATIN, LIKE, MEANINGS, SORANI, formsOf, indexInWord, parseLike } from './letters';
+import { APP_LOCALES } from '../locales.js';
+import { BANDS, COMPARE_LOCALES, LATIN, LIKE, MEANINGS, SORANI, formsOf, indexInWord, parseLike } from './letters.js';
 
 const EXTRA = ['ḧ', 'ʿ', 'ẍ', 'ł', 'ř', 'hamza'];
 

@@ -1,5 +1,4 @@
-import type { AppLocale } from '@kurda/shared';
-import { latinSound, latinWord, pairWord, soraniSound } from './audio';
+import type { AppLocale } from '../locales.js';
 import {
   LATIN,
   PAIRS,
@@ -12,7 +11,8 @@ import {
   type Likeness,
   type Meaning,
   type SoraniLetter,
-} from './letters';
+} from './letters.js';
+import { alphabetSounds, type AlphabetSounds } from './sounds.js';
 
 /**
  * "Check yourself": a short round of questions, built to teach as much as to test.
@@ -78,6 +78,9 @@ const SHAPES: readonly (readonly string[])[] = [
 
 type Random = () => number;
 
+/** The synthesised clips alone: what a round asks with before any recordings have arrived. */
+const SYNTHESISED = alphabetSounds();
+
 function shuffle<T>(xs: readonly T[], rand: Random): T[] {
   const out = [...xs];
   for (let i = out.length - 1; i > 0; i--) {
@@ -114,8 +117,8 @@ function hardLatin(locale: AppLocale): LatinLetter[] {
 }
 
 /** The example word, spelled three ways: once right, twice with a letter people mistake for one in it. */
-function spellQuestion(target: LatinLetter, rand: Random): Question | null {
-  const clip = latinWord(target.id);
+function spellQuestion(target: LatinLetter, rand: Random, sounds: AlphabetSounds): Question | null {
+  const clip = sounds.latinWord(target.id);
   if (!clip) return null;
   const word = target.word;
   const at = word.indexOf(target.id);
@@ -128,7 +131,7 @@ function spellQuestion(target: LatinLetter, rand: Random): Question | null {
   return { kind: 'spell', clip, meaning: target.meaning, options, answer: word, topic: { script: 'kmr', id: target.id } };
 }
 
-function pairQuestion(rand: Random, focus: Set<string> | null): Question | null {
+function pairQuestion(rand: Random, focus: Set<string> | null, sounds: AlphabetSounds): Question | null {
   // a pair practises the vowel that tells its two words apart
   const at = (p: (typeof PAIRS)[number]): number => [...p.b.word].findIndex((c, i) => c !== [...p.a.word][i]);
   const differs = (p: (typeof PAIRS)[number]): string => [...p.b.word][at(p)] ?? '';
@@ -136,7 +139,7 @@ function pairQuestion(rand: Random, focus: Set<string> | null): Question | null 
   const pool = PAIRS.filter((p) => !focus || focus.has(differs(p)) || focus.has([...p.a.word][at(p)] ?? ''));
   const pair = shuffle(pool.length ? pool : PAIRS, rand)[0]!;
   const said = rand() < 0.5 ? pair.a : pair.b;
-  const clip = pairWord(said.word);
+  const clip = sounds.pairWord(said.word);
   if (!clip) return null;
   const options = shuffle([pair.a, pair.b], rand).map((w) => ({ id: w.word, text: w.word, script: 'kmr' as const }));
   return { kind: 'pair', clip, pair, options, answer: said.word, topic: { script: 'kmr', id: differs(pair) } };
@@ -181,9 +184,17 @@ function formQuestion(target: SoraniLetter, rand: Random): Question {
 
 /**
  * A round of eight. `focus` narrows it to letters the reader missed last time.
- * `rand` is injectable so the tests can pin a round down.
+ * `rand` is injectable so the tests can pin a round down. `sounds` is where
+ * each sound plays from now (`alphabetSounds`): a round started after the
+ * recordings arrive asks with them.
  */
-export function makeRound(script: Script, locale: AppLocale, focus: readonly string[] | null = null, rand: Random = Math.random): Question[] {
+export function makeRound(
+  script: Script,
+  locale: AppLocale,
+  focus: readonly string[] | null = null,
+  rand: Random = Math.random,
+  sounds: AlphabetSounds = SYNTHESISED,
+): Question[] {
   const want = focus && focus.length ? new Set(focus) : null;
   const out: Question[] = [];
 
@@ -200,15 +211,15 @@ export function makeRound(script: Script, locale: AppLocale, focus: readonly str
       for (let tries = 0; !q && tries < pool.length + 2; tries++) {
         const l = next();
         if (kind === 'hear') {
-          const clip = latinSound(l.id);
+          const clip = sounds.latinSound(l.id);
           q = clip ? { kind, clip, options: latinOptions(l, rand), answer: l.id, topic: { script: 'kmr', id: l.id } } : null;
         } else if (kind === 'like') {
           const like = likeFor(l.id, locale);
           q = like ? { kind, like, options: latinOptions(l, rand), answer: l.id, topic: { script: 'kmr', id: l.id } } : null;
         } else if (kind === 'spell') {
-          q = spellQuestion(l, rand);
+          q = spellQuestion(l, rand, sounds);
         } else if (kind === 'pair') {
-          q = pairQuestion(rand, want);
+          q = pairQuestion(rand, want, sounds);
         } else {
           const partner = SHARED.find((s) => s.latin === l.id) ?? shuffle(SHARED, rand)[0]!;
           q = scriptQuestion(partner, locale === 'ckb', rand);
@@ -228,7 +239,7 @@ export function makeRound(script: Script, locale: AppLocale, focus: readonly str
       const l = pool[i++ % pool.length]!;
       if (kind === 'script') q = l.latin && !l.extra ? scriptQuestion(l, locale === 'ckb', rand) : null;
       else if (kind === 'hear') {
-        const clip = soraniSound(l);
+        const clip = sounds.soraniSound(l);
         q = clip ? { kind, clip, options: soraniOptions(l, rand), answer: l.id, topic: { script: 'ckb', id: l.id } } : null;
       } else q = formQuestion(l, rand);
     }

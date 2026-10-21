@@ -24,8 +24,8 @@ describe('recordings from the admin panel', () => {
   it('carry over to the Soranî partner letter', async () => {
     const audio = await fresh({ clips: { 'kmr:sound:c': 'https://cdn.example/c.wav' } });
     await audio.loadRecordings();
-    const { SORANI } = await import('./letters');
-    expect(audio.soraniSound(SORANI.find((l) => l.id === 'cîm')!)).toBe('https://cdn.example/c.wav');
+    const { SORANI_LETTERS } = await import('@kurda/shared');
+    expect(audio.soraniSound(SORANI_LETTERS.find((l) => l.id === 'cîm')!)).toBe('https://cdn.example/c.wav');
   });
 
   it('ignore unknown keys and anything not https', async () => {

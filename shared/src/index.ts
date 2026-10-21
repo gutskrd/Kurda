@@ -201,6 +201,60 @@ export {
   type AlphabetClipGroup,
 } from './alphabet-audio.js';
 /**
+ * The two Kurdish alphabets as the alphabet pages teach them: each letter, its
+ * sound beside the reader's own language, a word to remember it by, where each
+ * sound plays from, and the "Check yourself" round — one copy for the website
+ * and the phone. The plainer names inside alphabet/ take a prefix here, so
+ * they cannot clash with the rest of the package.
+ */
+export {
+  LATIN as LATIN_LETTERS,
+  SORANI as SORANI_LETTERS,
+  MEANINGS as ALPHABET_MEANINGS,
+  bandOf,
+  compareLocaleOf,
+  formsOf,
+  indexInWord,
+  likeFor,
+  soraniLikeFor,
+  type Band as LetterBand,
+  type CompareLocale,
+  type LatinLetter,
+  type Likeness as SoundLikeness,
+  type Meaning as AlphabetMeaning,
+  type SoraniLetter,
+} from './alphabet/letters.js';
+export {
+  ROUND as ALPHABET_ROUND,
+  again as askAgain,
+  makeRound as alphabetRound,
+  type Option as AlphabetOption,
+  type Question as AlphabetQuestion,
+  type Script as AlphabetScript,
+  type Topic as AlphabetTopic,
+} from './alphabet/practice.js';
+export {
+  latinGroups as latinLetterGroups,
+  latinHint as latinLetterHint,
+  meaningLocale as exampleMeaningLocale,
+  soraniGroups as soraniLetterGroups,
+  type GroupId as LetterGroupId,
+  type LetterGroup,
+} from './alphabet/page.js';
+export { CLIPS as SYNTHESISED_ALPHABET_CLIPS } from './alphabet/clips.js';
+export {
+  SYNTHESISED_ALPHABET_PATH,
+  alphabetClipText,
+  alphabetRecordings,
+  alphabetSounds,
+  latinSoundKey,
+  latinWordKey,
+  pairWordKey,
+  soraniSoundKey,
+  soraniWordKey,
+  type AlphabetSounds,
+} from './alphabet/sounds.js';
+/**
  * Which Kurdish texts a lesson wants recorded, and the key a recording is filed
  * under — the admin's audio studio and the API's lesson delivery must agree.
  */

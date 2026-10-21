@@ -1,4 +1,4 @@
-import type { AppLocale } from '@kurda/shared';
+import type { AppLocale } from '../locales.js';
 
 /**
  * The two Kurdish alphabets, for somebody meeting them for the first time.
