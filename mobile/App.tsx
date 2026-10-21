@@ -3,6 +3,7 @@ import {
   DefaultTheme,
   DarkTheme,
   getStateFromPath,
+  useLinkTo,
   useNavigation,
   type LinkingOptions,
   type Theme,
@@ -18,6 +19,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
+import { holdLink, takeHeldLink } from './src/navigation/heldLink';
 import { TabBar } from './src/navigation/TabBar';
 import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
@@ -151,9 +153,31 @@ const linking: LinkingOptions<RootStackParamList> = {
       // `/app/games/stories?id=…` is a game to join; without an id it is the hub
       Stories: inviteRoutePath('stories'),
       StoryReader: 'app/games/stories/:slug',
+      // a shared post: the address the website gives a written one and a picture
+      LibraryPost: 'app/library/:postId',
+      MemeDetail: 'app/dimen/:postId',
     },
   },
 };
+
+/**
+ * Opens a link that arrived before signing in (navigation/heldLink.ts), once
+ * the signed-in screens it names are there to open. A path the app cannot
+ * place is dropped; Home is where it would have landed anyway.
+ */
+function OpenHeldLink(): null {
+  const linkTo = useLinkTo();
+  useEffect(() => {
+    const path = takeHeldLink();
+    if (!path) return;
+    try {
+      linkTo(legacyTabPath(path));
+    } catch {
+      // not a screen this version of the app has
+    }
+  }, [linkTo]);
+  return null;
+}
 
 /**
  * The profile's menu: everywhere the tab bar has no room for.
@@ -493,6 +517,14 @@ function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
 
+  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  useEffect(() => {
+    if (status !== 'signedOut') return;
+    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
+    return () => sub.remove();
+  }, [status]);
+
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
   }
@@ -566,6 +598,7 @@ function Root() {
   return (
     <Entrance>
       <SignedInRoot />
+      <OpenHeldLink />
       {/* the one-time rating box (and, rarely, the store's own prompt) after a finished game */}
       <GameFeedbackHost />
       {/* once: the shop's items you own have new art, and can be returned */}
