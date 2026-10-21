@@ -56,10 +56,8 @@ export function DevicePushControl(): React.JSX.Element | null {
     <>
       <SettingsSection title={t('notifications.device.title')} first>
         <View accessibilityLiveRegion="polite">
-          <SettingsRow
-            icon={state.status === 'granted' ? 'check' : 'bell'}
-            title={line}
-          />
+          {/* on, in ink: nothing to do; off or not yet asked, in gold: the one thing here to act on */}
+          <SettingsRow icon={state.status === 'granted' ? 'check' : 'alert'} title={line} attention={state.status !== 'granted'} />
         </View>
         {action !== 'none' ? (
           <SettingsRow

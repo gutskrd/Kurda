@@ -74,14 +74,29 @@ export interface Palette {
   clayBorder: string;
   softShadow: string; // outer drop shadow colour (spatial elevation)
 
-  controlTrack: string; // inactive segmented / toggle track
+  controlTrack: string; // inactive segmented control track
   /**
-   * A switch that is on: the system's own green in each mode. It was the
-   * button ink, which is white in dark mode — under iOS's white grip, so a
-   * switch that was on showed a white knob on a white track and could hardly
-   * be told from one that was off.
+   * A switch, on and off: its track and its knob.
+   *
+   * In the app's ink, not green. Green in this app means a right answer, and
+   * a switch that is on is not right, only on; a screen of settings in green
+   * reads as a screen of things that went well, and pulls the eye to every
+   * switch at once. Ink is what every other control here is drawn in, so the
+   * switches are calm and look like they belong. Colour is kept for what
+   * needs noticing: gold for something to act on, red for what cannot be
+   * undone.
+   *
+   * Each track clears 3:1 against every surface it sits on, and each knob
+   * 3:1 against its track (WCAG 1.4.11); the knob's side is the second sign
+   * of the state, so it is never told by colour alone. The knob is drawn in
+   * its own colour on every platform, rather than iOS's shadowed white,
+   * because in dark mode a white knob on the white track of a switch that is
+   * on could not be seen.
    */
   switchOn: string;
+  switchOnThumb: string;
+  switchOff: string;
+  switchOffThumb: string;
   /** The chosen option in a segmented control: a step up from its track. */
   selectedFill: string;
 
@@ -159,7 +174,10 @@ export const LIGHT: Palette = {
   softShadow: '#3A3A3A',
 
   controlTrack: 'rgba(0,0,0,0.05)',
-  switchOn: '#34C759',
+  switchOn: '#1A1A1A',
+  switchOnThumb: '#FFFFFF',
+  switchOff: '#86898F',
+  switchOffThumb: '#FFFFFF',
   selectedFill: '#FFFFFF',
 
   surface: '#FFFFFF',
@@ -201,7 +219,10 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
-  switchOn: '#30D158',
+  switchOn: '#F2F3F5',
+  switchOnThumb: '#0B0D10',
+  switchOff: '#686C73',
+  switchOffThumb: '#FFFFFF',
   selectedFill: 'rgba(255,255,255,0.16)',
 
   surface: '#14171C',

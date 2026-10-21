@@ -237,7 +237,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         accessibilityRole={single ? 'radio' : 'checkbox'}
         accessibilityState={{ checked: on, disabled: locked }}
         accessibilityLabel={f.online ? t('play.sheet.friendOnline', { name }) : name}
-        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.successFill : 'transparent', opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? 0.8 : 1 }]}
       >
         <View>
           <InitialsAvatar name={name} id={f.userId} size={36} photoUrl={f.avatarUrl} />

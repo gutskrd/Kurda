@@ -449,7 +449,7 @@ function ShowcasePicker({ data, onClose, onSaved }: { data: BadgesResponse; onCl
               accessibilityLabel={badgeLabel(t, b)}
               style={({ pressed }) => [
                 styles.pick,
-                { backgroundColor: on ? colors.successFill : colors.controlTrack, opacity: pressed ? 0.8 : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
+                { backgroundColor: colors.controlTrack, borderColor: on ? colors.textPrimary : 'transparent', opacity: pressed ? 0.8 : !on && keys.length >= SHOWCASE_SIZE ? 0.5 : 1 },
               ]}
             >
               <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={56} label={badgeLabel(t, b)} />
@@ -513,7 +513,7 @@ const styles = StyleSheet.create({
   rungFact: { fontSize: typography.sizes.xs },
   showcaseAction: { gap: spacing.xs },
   pickGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
-  pick: { width: '31%', alignItems: 'center', gap: spacing.xs, borderRadius: radii.md, padding: spacing.sm, minHeight: MIN_TOUCH_TARGET },
+  pick: { width: '31%', alignItems: 'center', gap: spacing.xs, borderRadius: radii.md, borderWidth: 1.5, padding: spacing.sm, minHeight: MIN_TOUCH_TARGET },
   pickName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   order: { position: 'absolute', top: 6, right: 6, width: 20, height: 20, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   orderText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

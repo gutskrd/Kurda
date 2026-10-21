@@ -41,7 +41,6 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
   const { colors } = useTheme();
   const { t } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
-  const track = { true: colors.switchOn, false: colors.controlTrack };
   return (
     <>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('keyboard.accent.title')}</Text>
@@ -77,7 +76,6 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
             value={prefs.keyBar}
             onValueChange={(on) => setPrefs({ keyBar: on })}
             accessibilityLabel={t('keyboard.keyBar.title')}
-            trackColor={track}
           />
         }
       />
@@ -90,7 +88,6 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
             value={prefs.backtick}
             onValueChange={(on) => setPrefs({ backtick: on })}
             accessibilityLabel={t('keyboard.backtick.title')}
-            trackColor={track}
           />
         }
       />

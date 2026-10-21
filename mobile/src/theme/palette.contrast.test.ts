@@ -27,6 +27,21 @@ function over(fill: string, behind: string): Rgb {
  */
 for (const p of [LIGHT, DARK]) {
   describe(`palette contrast — ${p.scheme}`, () => {
+    /*
+     * A switch must be seen, on or off, wherever it is (WCAG 1.4.11): its
+     * track against the page, a card and a raised surface, and its knob
+     * against its track. Ink, not green: green is for a right answer.
+     */
+    it('a switch’s track and knob clear 3:1, on and off, on every surface', () => {
+      for (const surface of [p.background, p.surface, p.surfaceRaised]) {
+        expect(contrastRatio(p.switchOn, surface), `on, ${surface}`).toBeGreaterThanOrEqual(AA_LARGE);
+        expect(contrastRatio(p.switchOff, surface), `off, ${surface}`).toBeGreaterThanOrEqual(AA_LARGE);
+      }
+      expect(contrastRatio(p.switchOnThumb, p.switchOn)).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(contrastRatio(p.switchOffThumb, p.switchOff)).toBeGreaterThanOrEqual(AA_LARGE);
+      expect(p.switchOn).not.toBe(p.success);
+    });
+
     it('primary text on the background meets AA (4.5:1)', () => {
       expect(contrastRatio(p.textPrimary, p.background)).toBeGreaterThanOrEqual(AA_NORMAL);
     });

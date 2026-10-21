@@ -17,6 +17,7 @@ import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { SearchField } from '../theme/SearchField';
 import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
 import { useMyAccount } from '../settings/account';
+import { useSettingsAttention } from '../settings/attention';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 import { SettingsNote, SettingsPage, SettingsRow, SettingsSection, useOnOff } from '../settings/list';
 
@@ -52,6 +53,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const { t, locale } = useI18n();
   const [keyboard] = useKeyboardPrefs();
   const account = useMyAccount();
+  const attention = useSettingsAttention();
+  const limited = attention.standing !== null && attention.standing !== 'good';
   const onOff = useOnOff();
   const [query, setQuery] = useState('');
 
@@ -146,7 +149,16 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         {
           key: 'notifications',
           terms: [t('notifications.title'), t('notifications.categories'), t('notifications.quietHours')],
-          row: <SettingsRow icon="bell" title={t('notifications.title')} onPress={() => navigation.navigate('Notifications')} />,
+          row: (
+            <SettingsRow
+              icon="bell"
+              title={t('notifications.title')}
+              // the phone is not letting them through: the one thing in this section to act on
+              value={attention.pushOff ? t('settings.off') : undefined}
+              attention={attention.pushOff}
+              onPress={() => navigation.navigate('Notifications')}
+            />
+          ),
         },
         {
           key: 'language',
@@ -198,8 +210,17 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         },
         {
           key: 'standing',
-          terms: [t('standing.title')],
-          row: <SettingsRow icon="shield" title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />,
+          terms: [t('standing.title'), limited ? t(`standing.status.${attention.standing!}` as const) : undefined],
+          row: (
+            <SettingsRow
+              icon={limited ? 'alert' : 'shield'}
+              title={t('standing.title')}
+              // said in words, not only in gold: what is wrong, before it is opened
+              subtitle={limited ? t(`standing.status.${attention.standing!}` as const) : undefined}
+              attention={limited}
+              onPress={() => navigation.navigate('AccountStanding')}
+            />
+          ),
         },
       ],
     },

@@ -74,23 +74,32 @@ interface RowLook {
   subtitle?: string;
   /** what it is set to now, before the chevron */
   value?: string;
+  /** cannot be undone (deleting the account): red, the one red on the screen */
   destructive?: boolean;
+  /**
+   * Wants something done (notifications blocked on the phone, an account
+   * that is limited): its icon, value and what is under it in gold, the colour
+   * this app keeps for "notice this". Only then; a row that is merely set to
+   * something stays in ink, so the one that is gold is seen.
+   */
+  attention?: boolean;
 }
 
 /** The inside of a row: icon, name and what is under it, then whatever ends the row. */
-function RowBody({ icon, title, subtitle, value, destructive, end }: RowLook & { end?: ReactNode }): React.JSX.Element {
+function RowBody({ icon, title, subtitle, value, destructive, attention, end }: RowLook & { end?: ReactNode }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const ink = destructive ? colors.danger : colors.textPrimary;
+  const note = attention ? colors.goldText : colors.textSecondary;
   return (
     <View style={[styles.row, { flexDirection: dir.row }]}>
-      {icon ? <Icon name={icon} size={24} color={ink} /> : null}
+      {icon ? <Icon name={icon} size={24} color={attention ? colors.goldText : ink} /> : null}
       <View style={styles.words}>
         <Text style={[styles.title, dir.text, { color: ink }]}>{title}</Text>
-        {subtitle ? <Text style={[styles.subtitle, dir.text, { color: colors.textSecondary }]}>{subtitle}</Text> : null}
+        {subtitle ? <Text style={[styles.subtitle, dir.text, { color: note }]}>{subtitle}</Text> : null}
       </View>
       {value ? (
-        <Text style={[styles.value, { color: colors.textSecondary }]} numberOfLines={1}>
+        <Text style={[styles.value, { color: note }]} numberOfLines={1}>
           {value}
         </Text>
       ) : null}

@@ -13,6 +13,7 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
@@ -36,6 +37,25 @@ describe('Settings', () => {
     expect(screen.getByRole('button', { name: 'Weekly leagues, On' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Language, English' })).toBeTruthy();
     expect(screen.getByRole('button', { name: /^Keyboard and accents, / })).toBeTruthy();
+  });
+
+  it('marks in gold, and says in words, only what needs doing: a limited account', async () => {
+    testAuth.client = fakeClient({
+      'GET /me': ME(),
+      'GET /me/standing': ok({ status: 'limited', active: [], past: [], unacknowledgedWarnings: [], reportAppeals: [], restrictions: {} }),
+    });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    expect(await screen.findByText('Some things are limited for now.')).toBeTruthy();
+    // an account in good standing is just a row
+    cleanup();
+    testAuth.client = fakeClient({
+      'GET /me': ME(),
+      'GET /me/standing': ok({ status: 'good', active: [], past: [], unacknowledgedWarnings: [], reportAppeals: [], restrictions: {} }),
+    });
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    await screen.findByRole('button', { name: 'Username, @rojda' });
+    expect(screen.queryByText(/good standing/)).toBeNull();
+    expect(screen.getByRole('button', { name: 'Account standing' })).toBeTruthy();
   });
 
   it('opens each kind of setting on a page of its own', () => {
