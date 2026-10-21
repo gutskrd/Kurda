@@ -1,7 +1,7 @@
 import type { Viseme } from '../lipsync/visemes.js';
 
 /** The characters who can say a recording. */
-export const CHARACTER_IDS = ['hevalo', 'hamo', 'xezal'] as const;
+export const CHARACTER_IDS = ['hevalo', 'hamo', 'xezo'] as const;
 
 export type CharacterId = (typeof CHARACTER_IDS)[number];
 
@@ -9,7 +9,7 @@ export type CharacterId = (typeof CHARACTER_IDS)[number];
 export const CHARACTER_NAMES: Readonly<Record<CharacterId, string>> = {
   hevalo: 'Hevalo',
   hamo: 'Hamo',
-  xezal: 'Xezal',
+  xezo: 'Xezo',
 };
 
 export function isCharacterId(value: unknown): value is CharacterId {

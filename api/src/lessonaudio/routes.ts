@@ -7,7 +7,7 @@
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
  *
  * The PUT may also say who says the recording and how their mouth moves, as
- * `&speaker=hevalo|hamo|xezal|none` and `&lipsync=<the timeline as JSON>`
+ * `&speaker=hevalo|hamo|xezo|none` and `&lipsync=<the timeline as JSON>`
  * (speakers/voice.ts). Without a speaker the new take keeps the old one's;
  * without a timeline it has none, since the old timeline was the old take's.
  * PATCH /admin/audio/lesson?key=… changes either later (speakers/routes.ts).

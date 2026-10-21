@@ -359,5 +359,5 @@ export {
 } from './art/palette.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
-/** Hevalo, Hamo and Xezal: the characters who say a recording, drawn once for web and phone. */
+/** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */
 export * from './characters/index.js';

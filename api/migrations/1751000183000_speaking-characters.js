@@ -2,7 +2,7 @@
  * Speaking characters: who says each recording, and how their mouth moves.
  *
  * When a recording plays, a learner can see one of three characters say it —
- * Hevalo the deer, Hamo or Xezal (SPEAKERS in @kurda/shared) — with the mouth
+ * Hevalo the deer, Hamo or Xezo (SPEAKERS in @kurda/shared) — with the mouth
  * moving in time with the sound. Every kind of recording gets the same two
  * columns: the lesson and story sentences (lesson_audio), the alphabet's
  * sounds (alphabet_audio) and the dictionary's pronunciations (dict_audio).
@@ -31,7 +31,7 @@ export const up = (pgm) => {
       lipsync: { type: 'jsonb' },
     });
     pgm.addConstraint(table, `${table}_speaker_check`, {
-      check: "speaker IS NULL OR speaker IN ('hevalo', 'hamo', 'xezal')",
+      check: "speaker IS NULL OR speaker IN ('hevalo', 'hamo', 'xezo')",
     });
     // the API checks every cue; this only keeps anything but a timeline object out
     pgm.addConstraint(table, `${table}_lipsync_check`, {

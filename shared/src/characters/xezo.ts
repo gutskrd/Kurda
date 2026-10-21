@@ -1,5 +1,5 @@
 /**
- * Xezal: a young woman in a long burgundy Kurdish dress with wide hanging
+ * Xezo: a young woman in a long burgundy Kurdish dress with wide hanging
  * sleeves, a gold coin necklace and a broad gold belt hung with coins, her
  * long black hair falling past her waist, her hands resting one by the other
  * in front of her.
@@ -560,10 +560,10 @@ function eyesClosed(): string {
 
 // ─────────────────────────────────────────────────────────────── together
 
-export function drawXezal(p: string): CharacterArt {
+export function drawXezo(p: string): CharacterArt {
   return {
-    id: 'xezal',
-    name: 'Xezal',
+    id: 'xezo',
+    name: 'Xezo',
     viewBox: { x: 26, y: 98, w: 236, h: 678 },
     bust: { x: 78, y: 101, w: 131, h: 131 },
     headPivot: { x: 143.5, y: 216 },

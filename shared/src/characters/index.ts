@@ -1,5 +1,5 @@
 /**
- * The speaking characters: Hevalo the deer, Hamo and Xezal, drawn as layered
+ * The speaking characters: Hevalo the deer, Hamo and Xezo, drawn as layered
  * SVG so that while a recording plays only the mouth (and now and then the
  * eyes) is redrawn.
  *
@@ -20,14 +20,14 @@ import type { CharacterBox, CharacterArt, CharacterId } from './types.js';
 import { CHARACTER_IDS, CHARACTER_NAMES } from './types.js';
 import { drawHevalo } from './hevalo.js';
 import { drawHamo } from './hamo.js';
-import { drawXezal } from './xezal.js';
+import { drawXezo } from './xezo.js';
 
 export { CHARACTER_IDS, CHARACTER_NAMES, isCharacterId, type CharacterBox, type CharacterArt, type CharacterId } from './types.js';
 
 const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
   hevalo: drawHevalo,
   hamo: drawHamo,
-  xezal: drawXezal,
+  xezo: drawXezo,
 };
 
 /** Hevalo is the app's own mascot, so he speaks unless someone has chosen another. */

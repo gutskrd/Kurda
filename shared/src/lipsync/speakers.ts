@@ -15,7 +15,7 @@ export const SPEAKERS = [
   /** a man */
   'hamo',
   /** a woman */
-  'xezal',
+  'xezo',
 ] as const;
 
 export type SpeakerId = (typeof SPEAKERS)[number];

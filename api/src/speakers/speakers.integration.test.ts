@@ -256,17 +256,17 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
   describe('saving a recording', () => {
     it('stores who says it and its timeline with the recording', async () => {
       const { pcm, lipsync } = take(T.listening, [150, 200, 180]);
-      const res = await putLesson(T.listening, wav(pcm), { speaker: 'xezal', lipsync: JSON.stringify(lipsync) });
+      const res = await putLesson(T.listening, wav(pcm), { speaker: 'xezo', lipsync: JSON.stringify(lipsync) });
       expect(res.statusCode, res.body).toBe(201);
-      expect(res.json()).toMatchObject({ key: lessonAudioKey(T.listening), durationMs: durationOf(pcm), speaker: 'xezal', lipsync });
-      expect(await row(lessonAudioKey(T.listening))).toMatchObject({ speaker: 'xezal', lipsync });
+      expect(res.json()).toMatchObject({ key: lessonAudioKey(T.listening), durationMs: durationOf(pcm), speaker: 'xezo', lipsync });
+      expect(await row(lessonAudioKey(T.listening))).toMatchObject({ speaker: 'xezo', lipsync });
       // a stored timeline is one the apps can decode
       expect(decodeLipsync(res.json().lipsync).durationMs).toBe(durationOf(pcm));
 
       // the studio's list says so, without the timeline itself
       const list = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${editor}` } });
       const item = (list.json().items as Array<Record<string, unknown>>).find((i) => i.key === lessonAudioKey(T.listening));
-      expect(item).toMatchObject({ recorded: true, speaker: 'xezal', hasLipsync: true });
+      expect(item).toMatchObject({ recorded: true, speaker: 'xezo', hasLipsync: true });
       expect(item).not.toHaveProperty('lipsync');
       const unrecorded = (list.json().items as Array<Record<string, unknown>>).find((i) => i.key === lessonAudioKey(T.translate));
       expect(unrecorded).toMatchObject({ recorded: false, speaker: null, hasLipsync: false });
@@ -378,7 +378,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       expect((await patch('lesson', lessonAudioKey(T.left1), { speaker: 'hevalo', lipsync: takes.get(T.left1)!.lipsync })).statusCode).toBe(
         200,
       );
-      expect((await patch('lesson', lessonAudioKey(T.story1), { speaker: 'xezal', lipsync: takes.get(T.story1)!.lipsync })).statusCode).toBe(
+      expect((await patch('lesson', lessonAudioKey(T.story1), { speaker: 'xezo', lipsync: takes.get(T.story1)!.lipsync })).statusCode).toBe(
         200,
       );
     });
@@ -388,15 +388,15 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       // the take recorded last, with its timeline made now
       const current = speech([210, 260], 0.22);
       const lipsync = encodeLipsync(lipsyncFromAudio(T.other, current, RATE));
-      expect((await patch('lesson', key, { speaker: 'xezal', lipsync })).json()).toMatchObject({ speaker: 'xezal', lipsync });
-      expect((await patch('lesson', key, { lipsync: null })).json()).toMatchObject({ speaker: 'xezal', lipsync: null });
+      expect((await patch('lesson', key, { speaker: 'xezo', lipsync })).json()).toMatchObject({ speaker: 'xezo', lipsync });
+      expect((await patch('lesson', key, { lipsync: null })).json()).toMatchObject({ speaker: 'xezo', lipsync: null });
       expect((await patch('lesson', key, { speaker: null })).json()).toMatchObject({ speaker: null, lipsync: null });
     });
 
     it('works for the alphabet and the dictionary', async () => {
-      const letter = await patch('alphabet', LETTERS[1]!, { speaker: 'xezal' });
+      const letter = await patch('alphabet', LETTERS[1]!, { speaker: 'xezo' });
       expect(letter.statusCode, letter.body).toBe(200);
-      expect(letter.json()).toMatchObject({ kind: 'alphabet', key: LETTERS[1], speaker: 'xezal' });
+      expect(letter.json()).toMatchObject({ kind: 'alphabet', key: LETTERS[1], speaker: 'xezo' });
 
       // a dictionary pronunciation has no stored length: held to a word's
       const lipsync = encodeLipsync(lipsyncFromAudio('dengbêj', speech([200, 260]), RATE));
@@ -467,8 +467,8 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
 
     it('is only for those who record', async () => {
       const key = lessonAudioKey(T.speaking);
-      expect((await patch('lesson', key, { speaker: 'xezal' }, learner)).statusCode).toBe(403);
-      expect((await patch('lesson', key, { speaker: 'xezal' }, null)).statusCode).toBe(401);
+      expect((await patch('lesson', key, { speaker: 'xezo' }, learner)).statusCode).toBe(403);
+      expect((await patch('lesson', key, { speaker: 'xezo' }, null)).statusCode).toBe(401);
       expect((await row(key)).speaker).toBe('hamo');
     });
   });
@@ -480,7 +480,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
       const byId = (id: string) => exercises.find((e) => e.id === id)!;
 
-      const listening = { speaker: 'xezal', lipsync: takes.get(T.listening)!.lipsync };
+      const listening = { speaker: 'xezo', lipsync: takes.get(T.listening)!.lipsync };
       expect(byId(ex.li)).toMatchObject({ audioVoice: listening, modelAudioVoice: listening });
       expect(byId(ex.sp)).toMatchObject({
         modelAudioVoice: { speaker: 'hamo', lipsync: takes.get(T.speaking)!.lipsync },
@@ -524,7 +524,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       expect(res.statusCode, res.body).toBe(200);
       const exercises = res.json().exercises as Array<Record<string, unknown>>;
       const listening = exercises.find((e) => e.id === ex.li)!;
-      expect(listening.audioVoice).toEqual({ speaker: 'xezal', lipsync: takes.get(T.listening)!.lipsync });
+      expect(listening.audioVoice).toEqual({ speaker: 'xezo', lipsync: takes.get(T.listening)!.lipsync });
       const pairs = exercises.find((e) => e.id === ex.mp)!;
       expect(pairs.audioVoices).toEqual({ [T.left1]: { speaker: 'hevalo', lipsync: takes.get(T.left1)!.lipsync } });
       const graded = await authed('POST', `/practice/sessions/${res.json().sessionId}/answers`, {
@@ -532,7 +532,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
         answer: { text: T.listening },
       });
       expect(graded.statusCode, graded.body).toBe(200);
-      expect(graded.json().modelAudioVoice).toEqual({ speaker: 'xezal', lipsync: takes.get(T.listening)!.lipsync });
+      expect(graded.json().modelAudioVoice).toEqual({ speaker: 'xezo', lipsync: takes.get(T.listening)!.lipsync });
     });
 
     it('the alphabet page: voices only for the sounds with a speaker', async () => {
@@ -542,7 +542,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       expect(Object.keys(body.clips)).toEqual(expect.arrayContaining(LETTERS));
       expect(body.voices?.[LETTERS[0]!]).toEqual({ speaker: 'hevalo', lipsync: expect.objectContaining({ v: 1 }) });
       // a speaker chosen and no timeline made yet
-      expect(body.voices?.[LETTERS[1]!]).toEqual({ speaker: 'xezal' });
+      expect(body.voices?.[LETTERS[1]!]).toEqual({ speaker: 'xezo' });
     });
 
     it('a story: its sentences’ voices, by the same key as their recordings', async () => {
@@ -551,7 +551,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const story = res.json() as { audio: Record<string, string>; voices?: Record<string, unknown> };
       const [first, second] = storyAudioSentences(`${T.story1} ${T.story2}`).map(lessonAudioKey);
       expect(Object.keys(story.audio).sort()).toEqual([first, second].sort());
-      expect(story.voices).toEqual({ [first!]: { speaker: 'xezal', lipsync: takes.get(T.story1)!.lipsync } });
+      expect(story.voices).toEqual({ [first!]: { speaker: 'xezo', lipsync: takes.get(T.story1)!.lipsync } });
     });
 
     it('a dictionary entry: each pronunciation with its own speaker and timeline', async () => {

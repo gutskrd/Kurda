@@ -170,13 +170,13 @@ describe('lessonAudioFor', () => {
   });
 
   it('sends who says each recording beside it, and only beside it', async () => {
-    const xezal: RecordingVoice = { speaker: 'xezal', lipsync: TIMELINE };
+    const xezo: RecordingVoice = { speaker: 'xezo', lipsync: TIMELINE };
     const db = fakeDb(
       { 'ez baş im': URL('ezbasim'), av: URL('av'), nan: URL('nan'), 'roj baş': URL('roj'), silav: URL('silav') },
-      { 'ez baş im': xezal, av: { speaker: 'hevalo' }, 'roj baş': { speaker: 'hamo', lipsync: TIMELINE }, silav: xezal },
+      { 'ez baş im': xezo, av: { speaker: 'hevalo' }, 'roj baş': { speaker: 'hamo', lipsync: TIMELINE }, silav: xezo },
     );
     const [translate, listening, pairs, mc, speaking] = await lessonAudioFor(db as never, lesson);
-    expect(listening).toEqual({ audioUrl: URL('ezbasim'), audioVoice: xezal, modelAudioUrl: URL('ezbasim'), modelAudioVoice: xezal });
+    expect(listening).toEqual({ audioUrl: URL('ezbasim'), audioVoice: xezo, modelAudioUrl: URL('ezbasim'), modelAudioVoice: xezo });
     expect(speaking).toEqual({ modelAudioUrl: URL('roj'), modelAudioVoice: { speaker: 'hamo', lipsync: TIMELINE } });
     // the Nan card has a recording and no character: its URL alone
     expect(pairs).toEqual({ audio: { Av: URL('av'), Nan: URL('nan') }, audioVoices: { Av: { speaker: 'hevalo' } } });
@@ -186,12 +186,12 @@ describe('lessonAudioFor', () => {
   });
 
   it('holds a card’s voice back with its URL when a listening item plays the same recording', async () => {
-    const db = fakeDb({ silav: URL('silav'), av: URL('av') }, { silav: { speaker: 'hamo' }, av: { speaker: 'xezal' } });
+    const db = fakeDb({ silav: URL('silav'), av: URL('av') }, { silav: { speaker: 'hamo' }, av: { speaker: 'xezo' } });
     const [, pairs] = await lessonAudioFor(db as never, [
       { type: 'listening', payload: { accepted: ['Silav!'] } },
       { type: 'match_pairs', payload: { pairs: [{ left: 'Silav', right: 'hello' }, { left: 'Av', right: 'water' }] } },
     ]);
-    expect(pairs).toEqual({ audio: { Av: URL('av') }, audioVoices: { Av: { speaker: 'xezal' } } });
+    expect(pairs).toEqual({ audio: { Av: URL('av') }, audioVoices: { Av: { speaker: 'xezo' } } });
   });
 
   it('shrugs off malformed payloads', async () => {
@@ -217,10 +217,10 @@ describe('modelAudioAfterAnswer', () => {
   });
 
   it('says who says it, when a character is chosen for it', async () => {
-    const db = fakeDb({ îro: URL('iro'), spas: URL('spas') }, { îro: { speaker: 'xezal', lipsync: TIMELINE }, spas: { speaker: 'hamo' } });
+    const db = fakeDb({ îro: URL('iro'), spas: URL('spas') }, { îro: { speaker: 'xezo', lipsync: TIMELINE }, spas: { speaker: 'hamo' } });
     expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'today', accepted: ['Îro.'] })).toEqual({
       modelAudioUrl: URL('iro'),
-      modelAudioVoice: { speaker: 'xezal', lipsync: TIMELINE },
+      modelAudioVoice: { speaker: 'xezo', lipsync: TIMELINE },
     });
     // a speaker chosen and no timeline made yet
     expect(await modelAudioAfterAnswer(db as never, 'translate', { prompt: 'thanks', accepted: ['Spas'] })).toEqual({

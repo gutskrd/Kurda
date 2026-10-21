@@ -108,10 +108,10 @@ function parts(art: CharacterArt): [string, string][] {
 const bytes = (s: string): number => new TextEncoder().encode(s).length;
 
 describe('the characters', () => {
-  it('are Hevalo, Hamo and Xezal, by those names', () => {
-    expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezal']);
-    expect(CHARACTER_NAMES).toEqual({ hevalo: 'Hevalo', hamo: 'Hamo', xezal: 'Xezal' });
-    expect(CHARACTERS.map((c) => c.name)).toEqual(['Hevalo', 'Hamo', 'Xezal']);
+  it('are Hevalo, Hamo and Xezo, by those names', () => {
+    expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezo']);
+    expect(CHARACTER_NAMES).toEqual({ hevalo: 'Hevalo', hamo: 'Hamo', xezo: 'Xezo' });
+    expect(CHARACTERS.map((c) => c.name)).toEqual(['Hevalo', 'Hamo', 'Xezo']);
     expect(DEFAULT_CHARACTER).toBe('hevalo');
     expect(isCharacterId('hamo')).toBe(true);
     expect(isCharacterId('Hamo')).toBe(false);
@@ -234,8 +234,8 @@ describe('characterSvg', () => {
   });
 
   it('shows the mouth and eyes asked for, and crops to the bust', () => {
-    const art = characterArt('xezal');
-    const svg = characterSvg('xezal', { mouth: 'o', eyes: 'closed', crop: 'bust', width: 96 });
+    const art = characterArt('xezo');
+    const svg = characterSvg('xezo', { mouth: 'o', eyes: 'closed', crop: 'bust', width: 96 });
     expect(svg).toContain(art.mouths.o);
     expect(svg).toContain(art.eyes.closed);
     expect(svg).not.toContain(art.eyes.open);

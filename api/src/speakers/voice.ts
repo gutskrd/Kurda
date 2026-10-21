@@ -84,7 +84,7 @@ export function fitLipsync(timeline: LipsyncTimeline, durationMs: number): Lipsy
  * The speaker and timeline that come with a new recording, in its upload's
  * query string beside the text or key (the body is the audio itself):
  *
- *   speaker=hevalo|hamo|xezal   who says it
+ *   speaker=hevalo|hamo|xezo   who says it
  *   speaker=none                no character
  *   (no speaker)                whoever said the recording it replaces
  *   lipsync={"v":1,…}           its timeline, URL-encoded JSON
