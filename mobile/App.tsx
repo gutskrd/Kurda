@@ -12,13 +12,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath } from '@kurda/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
 import { TabBar } from './src/navigation/TabBar';
+import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
@@ -605,6 +606,10 @@ function ThemedNavigation() {
 }
 
 export default function App() {
+  // lesson audio plays with the ring switch on, from the first word, not only after a first recording
+  useEffect(() => {
+    void prepareAudioSession();
+  }, []);
   return (
     <SafeAreaProvider>
       <ThemeProvider>

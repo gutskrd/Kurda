@@ -58,7 +58,21 @@ const RECORDING_MODE = { allowsRecording: true, playsInSilentMode: true } as con
  * goes back to its default, and `playsInSilentMode` defaults to off, so after
  * one take a lesson's sounds would go quiet behind the ring switch.
  */
-const PLAYBACK_MODE = { allowsRecording: false, playsInSilentMode: true } as const;
+export const PLAYBACK_MODE = { allowsRecording: false, playsInSilentMode: true } as const;
+
+/**
+ * The playback mode from the moment the app starts, not only after a first
+ * take: a learning app's sounds are its lessons, and somebody whose phone is
+ * on silent opened a lesson to hear the words. Failing to set it is no reason
+ * to stop the app; the default plays everywhere but behind the ring switch.
+ */
+export async function prepareAudioSession(): Promise<void> {
+  try {
+    await setAudioModeAsync(PLAYBACK_MODE);
+  } catch {
+    // the platform's default mode stays
+  }
+}
 
 /** Delete a take's file: only ever a file on this device, and quietly when it has already gone. */
 export async function discardRecording(uri: string | null | undefined): Promise<void> {
