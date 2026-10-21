@@ -7,6 +7,8 @@ import { ClayButton } from '../../theme/glass';
 import type { Exercise } from '../types';
 import { useAudio } from '../useAudio';
 import { useI18n } from '../../i18n/I18nContext';
+import { useDirection } from '../../reports/direction';
+import { SpeakingCharacter, knownVoice, useStageSize } from '../../characters/SpeakingCharacter';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
 
 interface Props {
@@ -27,6 +29,10 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const { t } = useI18n();
   const audio = useAudio(exercise.audioUrl);
   const skippedRef = useRef(false);
+  const dir = useDirection();
+  const stage = useStageSize();
+  // who says the clip, when an editor has chosen somebody; the buttons alone otherwise
+  const voice = knownVoice(exercise.audioVoice);
 
   // audio download/playback failure → auto-skip once (KUR-035 edge case)
   const cannotPlay = !audio.supported || audio.error;
@@ -37,27 +43,48 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
     }
   }, [audio.error, onSkip]);
 
+  const controls = (
+    <>
+      <ClayButton
+        label={t('lesson.listen.playShort')}
+        icon="speaker"
+        tone="primary"
+        disabled={disabled || cannotPlay}
+        onPress={() => audio.play(1)}
+      />
+      {/* the same sound, slower; quieter than the button beside it */}
+      <ClayButton
+        label="0.75×"
+        tone="primary"
+        variant="outline"
+        disabled={disabled || cannotPlay}
+        onPress={() => audio.play(0.75)}
+      />
+    </>
+  );
+
   return (
     <View style={styles.container}>
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.listen.prompt')}</Text>
 
-      <View style={styles.controls}>
-        <ClayButton
-          label={t('lesson.listen.playShort')}
-          icon="speaker"
-          tone="primary"
-          disabled={disabled || cannotPlay}
-          onPress={() => audio.play(1)}
-        />
-        {/* the same sound, slower; quieter than the button beside it */}
-        <ClayButton
-          label="0.75×"
-          tone="primary"
-          variant="outline"
-          disabled={disabled || cannotPlay}
-          onPress={() => audio.play(0.75)}
-        />
-      </View>
+      {voice ? (
+        <View style={[styles.stage, { flexDirection: dir.row }]}>
+          <SpeakingCharacter
+            key={exercise.id}
+            speaker={voice.speaker}
+            voice={voice}
+            player={audio.clock}
+            playing={audio.playing}
+            source={exercise.audioUrl}
+            size={stage}
+            flip={dir.rtl}
+          />
+          {/* beside the character the buttons follow the reading direction too, Play nearest to it */}
+          <View style={[styles.controls, styles.besideCharacter, { flexDirection: dir.row }]}>{controls}</View>
+        </View>
+      ) : (
+        <View style={styles.controls}>{controls}</View>
+      )}
 
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textSecondary }]}>{exercise.prompt}</Text> : null}
 
@@ -83,7 +110,9 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
+  stage: { alignItems: 'center', gap: spacing.md },
   controls: { flexDirection: 'row', gap: spacing.sm },
+  besideCharacter: { flexShrink: 1, flexWrap: 'wrap' },
   prompt: { fontSize: typography.sizes.md },
   input: {
     minHeight: MIN_TOUCH_TARGET,

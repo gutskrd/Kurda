@@ -17,7 +17,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { activeGames, createGame, getGame, getStory, isView } from './api';
 import { DIALECT_NAME, LENGTH_KEY } from './labels';
-import { narrationItems } from './narration';
+import { narrationItems, narrationLine } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { createInput, initialSetup } from './setup';
@@ -26,6 +26,7 @@ import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowStyle, storyTextProps, 
 import { useNarration } from './useNarration';
 import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
+import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 
 /**
  * Reading a story (contract §A1 "Reader"), then playing it.
@@ -76,6 +77,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
 
   const items = useMemo(() => (story ? narrationItems(story.paragraphs, story.audio) : []), [story]);
   const listenable = useMemo(() => new Set(items.map((i) => i.paragraph)), [items]);
+  // what each recorded sentence says and who says it; a paragraph with a character keeps room for one
+  const lines = useMemo(() => new Map(items.map((i) => [i, narrationLine(story?.paragraphs ?? [], story?.voices, i)])), [items, story]);
+  const voiced = useMemo(() => new Set(items.filter((i) => lines.get(i)?.voice).map((i) => i.paragraph)), [items, lines]);
 
   // the sentence being read stays in view; reduced motion jumps rather than glides
   const followed = narration.scope === 'story' ? narration.current?.paragraph : undefined;
@@ -183,6 +187,27 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
 
   const dir = storyTextStyle(story.dialect);
   const props = storyTextProps(story.dialect);
+  const reading = narration.current;
+  const line = reading ? lines.get(reading) : undefined;
+  // the character faces back toward the Listen it stands after
+  const speaker =
+    reading && line?.voice
+      ? {
+          paragraph: reading.paragraph,
+          view: (
+            <SpeakingCharacter
+              speaker={line.voice.speaker}
+              voice={line.voice}
+              text={line.text}
+              player={narrator.clock}
+              playing={narration.playing}
+              source={reading.url}
+              size={CHARACTER_SIZE.row}
+              flip={dir.writingDirection !== 'rtl'}
+            />
+          ),
+        }
+      : null;
 
   return (
     <GradientBackground>
@@ -226,6 +251,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             listening={narration.scope === 'paragraph' ? narration.paragraph : null}
             playing={narration.playing}
             onListen={listenTo}
+            voiced={voiced}
+            speaker={speaker}
             onParagraphLayout={(p, y) => paragraphTops.current.set(p, y)}
           />
         </View>

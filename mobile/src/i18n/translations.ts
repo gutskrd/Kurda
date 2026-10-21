@@ -2070,7 +2070,8 @@ export type TranslationKey =
   | 'security.devices.onlyThis'
   | 'security.devices.empty'
   | 'security.password.heading'
-  | 'security.devices.heading';
+  | 'security.devices.heading'
+  | 'characters.saidBy';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -4105,6 +4106,7 @@ const en: Catalog = {
   'security.devices.empty': 'No signed-in devices to show.',
   'security.password.heading': 'Password',
   'security.devices.heading': 'Devices',
+  'characters.saidBy': 'Said by {name}',
 };
 
 const ku: Catalog = {
@@ -6138,6 +6140,7 @@ const ku: Catalog = {
   'security.devices.empty': 'Cîhazeke têketî tune ye.',
   'security.password.heading': 'Şîfre',
   'security.devices.heading': 'Cîhazên te',
+  'characters.saidBy': 'Dengê {name}',
 };
 
 const de: Catalog = {
@@ -8171,6 +8174,7 @@ const de: Catalog = {
   'security.devices.empty': 'Keine angemeldeten Geräte.',
   'security.password.heading': 'Passwort',
   'security.devices.heading': 'Geräte',
+  'characters.saidBy': 'Gesprochen von {name}',
 };
 
 const es: Catalog = {
@@ -10204,6 +10208,7 @@ const es: Catalog = {
   'security.devices.empty': 'No hay dispositivos con sesión iniciada.',
   'security.password.heading': 'Contraseña',
   'security.devices.heading': 'Dispositivos',
+  'characters.saidBy': 'Voz de {name}',
 };
 
 const tr: Catalog = {
@@ -12237,6 +12242,7 @@ const tr: Catalog = {
   'security.devices.empty': 'Oturum açık cihaz yok.',
   'security.password.heading': 'Parola',
   'security.devices.heading': 'Cihazlar',
+  'characters.saidBy': 'Seslendiren: {name}',
 };
 
 const ar: Catalog = {
@@ -14270,6 +14276,7 @@ const ar: Catalog = {
   'security.devices.empty': 'لا توجد أجهزة مسجّل دخولها.',
   'security.password.heading': 'كلمة المرور',
   'security.devices.heading': 'الأجهزة',
+  'characters.saidBy': 'بصوت {name}',
 };
 
 const fr: Catalog = {
@@ -16303,6 +16310,7 @@ const fr: Catalog = {
   'security.devices.empty': 'Aucun appareil connecté.',
   'security.password.heading': 'Mot de passe',
   'security.devices.heading': 'Appareils',
+  'characters.saidBy': 'Voix de {name}',
 };
 
 const nl: Catalog = {
@@ -18336,6 +18344,7 @@ const nl: Catalog = {
   'security.devices.empty': 'Geen ingelogde apparaten.',
   'security.password.heading': 'Wachtwoord',
   'security.devices.heading': 'Apparaten',
+  'characters.saidBy': 'Ingesproken door {name}',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -20370,6 +20379,7 @@ const ckb: Catalog = {
   'security.devices.empty': 'هیچ ئامێرێکی چالاک نییە.',
   'security.password.heading': 'وشەی نهێنی',
   'security.devices.heading': 'ئامێرەکانت',
+  'characters.saidBy': 'دەنگی {name}',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

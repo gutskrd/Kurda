@@ -1,4 +1,5 @@
 /** Dictionary contract — mirrors the server (KUR-044/043). */
+import type { DictionaryAudio } from '@kurda/shared';
 
 export type MatchType = 'exact' | 'prefix' | 'definition' | 'fuzzy';
 
@@ -34,7 +35,8 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  audio: Array<{ url: string; dialect: string }>;
+  /** its pronunciations, each with who says it when an editor has chosen somebody */
+  audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: string }>;
   /** whether the learner has bookmarked this entry (KUR-047) */
   saved?: boolean;

@@ -22,6 +22,7 @@ function expoPlayer(): PlayerLike {
       sub.remove();
       player.remove();
     },
+    clock: player,
   };
 }
 

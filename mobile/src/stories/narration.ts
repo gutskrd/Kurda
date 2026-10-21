@@ -1,4 +1,5 @@
-import { lessonAudioKey, storySentences } from '@kurda/shared';
+import { lessonAudioKey, storySentences, type RecordingVoice } from '@kurda/shared';
+import { knownVoice, type PlaybackClock } from '../characters/voice';
 
 /**
  * Listening to a story: the recorded sentences, one after another.
@@ -34,6 +35,20 @@ export function narrationItems(paragraphs: readonly string[], audio: Readonly<Re
   return items;
 }
 
+/**
+ * What a recorded sentence says, and who says it when an editor has chosen a
+ * character for it (`voices` is keyed like `audio`, by `lessonAudioKey`).
+ */
+export function narrationLine(
+  paragraphs: readonly string[],
+  voices: Readonly<Record<string, RecordingVoice>> | undefined,
+  item: NarrationItem,
+): { text: string; voice: RecordingVoice | null } {
+  const text = storySentences(paragraphs[item.paragraph] ?? '')[item.sentence] ?? '';
+  const key = text ? lessonAudioKey(text) : '';
+  return { text, voice: key && voices && Object.hasOwn(voices, key) ? knownVoice(voices[key]) : null };
+}
+
 /** A small surface of an audio player: what the queue needs and nothing more. */
 export interface PlayerLike {
   load(url: string): void;
@@ -43,6 +58,8 @@ export interface PlayerLike {
   /** called when the loaded recording plays to its end */
   onEnded(listener: () => void): () => void;
   release(): void;
+  /** where the loaded recording is, for a speaking character to follow */
+  readonly clock?: PlaybackClock;
 }
 
 export type NarrationScope = 'paragraph' | 'story';
@@ -74,6 +91,11 @@ export class Narrator {
     private readonly createPlayer: () => PlayerLike,
     private readonly onChange: (state: NarrationState) => void,
   ) {}
+
+  /** the player's clock once there is a player; a character reads it while a sentence plays */
+  get clock(): PlaybackClock | null {
+    return this.player?.clock ?? null;
+  }
 
   get state(): NarrationState {
     const current = this.scope ? (this.queue[this.index] ?? null) : null;

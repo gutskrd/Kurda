@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
+import { CHARACTER_SIZE, SpeakingCharacter, knownVoice } from '../characters/SpeakingCharacter';
 import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
@@ -15,6 +17,12 @@ import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
 
+/** A pronunciation's speaker and timeline, which the entry sends beside its URL rather than as one voice. */
+function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
+  if (!recording.speaker) return null;
+  return knownVoice(recording.lipsync ? { speaker: recording.speaker, lipsync: recording.lipsync } : { speaker: recording.speaker });
+}
+
 /** Senses beyond this start collapsed so long entries stay scannable (KUR-045). */
 const COLLAPSE_AFTER = 8;
 
@@ -25,7 +33,9 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   const tabBarInset = useTabBarInset();
   const [entry, setEntry] = useState<Entry | null>(null);
   const [saved, setSaved] = useState(false);
-  const audio = useAudio(entry?.audio[0]?.url);
+  // with a character to say any of them, each pronunciation gets its own row; else the one button, as before
+  const voiced = !!entry?.audio.some((a) => voiceOf(a) !== null);
+  const audio = useAudio(voiced ? undefined : entry?.audio[0]?.url);
 
   useEffect(() => {
     let active = true;
@@ -58,7 +68,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
               <Text style={[styles.headword, { color: colors.textPrimary }]}>{entry.headword}</Text>
-              {entry.audio.length > 0 && audio.supported ? (
+              {entry.audio.length > 0 && !voiced && audio.supported ? (
                 <Pressable
                   onPress={() => audio.play(1)}
                   accessibilityRole="button"
@@ -80,6 +90,14 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
             </View>
             <Text style={[styles.dialect, { color: colors.textSecondary }]}>{entry.dialect}</Text>
 
+            {voiced ? (
+              <View style={styles.pronunciations}>
+                {entry.audio.map((recording) => (
+                  <Pronunciation key={recording.id} recording={recording} word={entry.headword} />
+                ))}
+              </View>
+            ) : null}
+
             <View style={styles.senses}>
               {entry.senses.map((sense, i) => (
                 <SenseSection key={sense.id} sense={sense} startCollapsed={entry.senses.length > COLLAPSE_AFTER && i >= 3} />
@@ -100,6 +118,46 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
         )}
       </View>
     </GradientBackground>
+  );
+}
+
+/**
+ * One pronunciation: who says it and in which variety, beside its own play
+ * button. The character says the word as it plays. Laid out as the headword's
+ * row above it is, in every interface language.
+ */
+function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: string }): React.JSX.Element | null {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const audio = useAudio(recording.url);
+  const voice = voiceOf(recording);
+  if (!audio.supported) return null;
+  return (
+    <View style={styles.pronunciation}>
+      {voice ? (
+        <SpeakingCharacter
+          speaker={voice.speaker}
+          voice={voice}
+          text={word}
+          player={audio.clock}
+          playing={audio.playing}
+          source={recording.url}
+          size={CHARACTER_SIZE.row}
+        />
+      ) : null}
+      <View style={styles.flex}>
+        {voice ? <Text style={[styles.speakerName, { color: colors.textPrimary }]}>{CHARACTER_NAMES[voice.speaker]}</Text> : null}
+        <Text style={[styles.dialect, { color: colors.textSecondary }]}>{recording.dialect}</Text>
+      </View>
+      <Pressable
+        onPress={() => audio.play(1)}
+        accessibilityRole="button"
+        accessibilityLabel={t('dictionary.playPronunciation')}
+        style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
+      >
+        <Icon name="speaker" size={22} tone="primary" />
+      </Pressable>
+    </View>
   );
 }
 
@@ -155,6 +213,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   dialect: { fontSize: typography.sizes.sm, textTransform: 'capitalize' },
+  pronunciations: { marginTop: spacing.sm, gap: spacing.sm },
+  pronunciation: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
+  speakerName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   senses: { marginTop: spacing.md },
   xrefs: { marginTop: spacing.lg, gap: spacing.xs },
   xrefsTitle: { ...sectionLabel },
