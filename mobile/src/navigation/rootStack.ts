@@ -62,6 +62,7 @@ export type RootStackParamList = {
   GroupThread: { groupId: string; name: string; openGift?: string };
   Clubs: undefined;
   GroupMembers: { groupId: string };
+  GroupEdit: { groupId: string };
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;

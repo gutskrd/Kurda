@@ -13,6 +13,8 @@ export interface Group {
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
+  /** the group's own picture, or null for its initials */
+  photoUrl?: string | null;
   myRole: Role;
 }
 
@@ -78,8 +80,8 @@ export function groupUnread(
  * different things, and hiding them would make the club you were told about
  * simply not exist.
  */
-export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Group[] }>> {
-  return client.get<{ groups: Group[] }>('/groups');
+export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Array<Group & { joined?: boolean }> }>> {
+  return client.get<{ groups: Array<Group & { joined?: boolean }> }>('/groups');
 }
 
 export function joinGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
@@ -129,6 +131,29 @@ export function setMemberRole(
 
 export function removeMember(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ ok: true }>> {
   return client.delete<{ ok: true }>(`/groups/${groupId}/members/${userId}`);
+}
+
+/**
+ * Change the group's name and/or description, as its owner or an admin. Only
+ * what changed is sent; an empty description clears it. The server cleans the
+ * text, holds it to the lengths and refuses words that are not allowed here.
+ */
+export function updateGroup(
+  client: ApiClient,
+  groupId: string,
+  changes: { name?: string; description?: string | null },
+): Promise<ApiResult<{ name: string; description: string | null }>> {
+  return client.patch<{ name: string; description: string | null }>(`/groups/${groupId}`, changes);
+}
+
+/** Take the group's picture down, back to its initials. */
+export function clearGroupPhoto(client: ApiClient, groupId: string): Promise<ApiResult<{ photoUrl: null }>> {
+  return client.delete<{ photoUrl: null }>(`/groups/${groupId}/photo`);
+}
+
+/** Delete the group and its messages for everyone. The owner only. */
+export function deleteGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
+  return client.delete<{ ok: true }>(`/groups/${groupId}`);
 }
 
 /** Hand the club over. The old owner becomes a moderator and cannot undo it. */

@@ -7,7 +7,14 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // the catch-up when the screen comes back into focus (realtime/catchUp) is not under test here
-vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn() }), useFocusEffect: () => undefined }));
+// a focus effect runs once, as the screen comes into view
+vi.mock('@react-navigation/native', async () => {
+  const { useEffect } = await import('react');
+  return {
+    useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn() }),
+    useFocusEffect: (effect: () => void | (() => void)) => useEffect(effect, [effect]),
+  };
+});
 // the room's live events are not under test here
 vi.mock('../realtime/useRoomEvents', () => ({ useRoomEvents: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';

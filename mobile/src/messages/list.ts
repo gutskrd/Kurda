@@ -28,6 +28,8 @@ export interface GroupConversation {
   name: string;
   memberCount: number;
   unread: number;
+  /** the group's own picture, or none for its initials */
+  photoUrl?: string | null;
 }
 
 /** One row of the list: a person, or a group. */

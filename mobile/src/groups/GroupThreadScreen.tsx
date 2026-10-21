@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,6 +24,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { GroupAvatar } from './GroupAvatar';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
@@ -101,6 +103,7 @@ export function GroupThreadScreen({
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   // null until the club says: the report button waits rather than flash at its owner
   const [owner, setOwner] = useState<boolean | null>(null);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
@@ -168,19 +171,24 @@ export function GroupThreadScreen({
     );
   }, [client, groupId, me, nameParam]);
 
-  // the header's name when the way in did not bring one, and whether the club
-  // is yours — its owner is the one person who cannot report it
-  useEffect(() => {
-    let active = true;
-    void groupDetail(client, groupId).then((res) => {
-      if (!active || !res.ok) return;
-      if (!nameParam) setName(res.data.name);
-      setOwner(res.data.myRole === 'owner');
-    });
-    return () => {
-      active = false;
-    };
-  }, [client, groupId, nameParam]);
+  // the header's name and picture as the group has them now — asked each time
+  // the thread comes back into view, so a rename made on its info page shows
+  // here at once — and whether the club is yours: its owner is the one person
+  // who cannot report it
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void groupDetail(client, groupId).then((res) => {
+        if (!active || !res.ok) return;
+        setName(res.data.name);
+        setPhotoUrl(res.data.photoUrl ?? null);
+        setOwner(res.data.myRole === 'owner');
+      });
+      return () => {
+        active = false;
+      };
+    }, [client, groupId]),
+  );
 
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
   const loadOlder = useCallback(async () => {
@@ -309,9 +317,9 @@ export function GroupThreadScreen({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
           title={name}
-          titleAvatar={<InitialsAvatar name={name} id={groupId} size={28} />}
+          titleAvatar={<GroupAvatar name={name} id={groupId} size={30} photoUrl={photoUrl} />}
           onTitlePress={onOpenMembers}
-          titleHint={t('groups.membersOf')}
+          titleHint={t('groups.info')}
           onBack={onExit}
           hairline
           right={
@@ -320,7 +328,7 @@ export function GroupThreadScreen({
                 onPress={onOpenMembers}
                 hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel={t('groups.members')}
+                accessibilityLabel={t('groups.info')}
                 style={styles.headerBtn}
               >
                 <Icon name="people" size={20} tone="primary" />

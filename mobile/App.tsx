@@ -67,6 +67,7 @@ import { ChatScreen } from './src/chat/ChatScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
+import { GroupEditScreen } from './src/groups/GroupEditScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
@@ -371,8 +372,12 @@ function SignedInRoot() {
             groupId={route.params.groupId}
             onExit={() => navigation.goBack()}
             onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+            onEdit={() => navigation.navigate('GroupEdit', { groupId: route.params.groupId })}
           />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="GroupEdit" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
