@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deviceNameFrom } from './deviceName';
+import { DEVICE_NAME_MAX, deviceNameFrom } from './device-name.js';
 
 /** Real user agents, as each browser sends them. */
 const AGENTS: Array<[string, string, string | null]> = [
@@ -41,7 +41,7 @@ describe('deviceNameFrom', () => {
     for (const [, ua] of AGENTS) {
       const name = deviceNameFrom(ua);
       if (name === null) continue;
-      expect(name.length).toBeLessThanOrEqual(80);
+      expect(name.length).toBeLessThanOrEqual(DEVICE_NAME_MAX);
       expect(name).not.toMatch(/\d/);
     }
     // a hostile, enormous user agent is read only as far as it needs to be

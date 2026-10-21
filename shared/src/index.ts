@@ -415,3 +415,5 @@ export {
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */
 export * from './characters/index.js';
+/** "Chrome on Windows": the name a signed-in browser is listed under. */
+export { DEVICE_NAME_MAX, deviceNameFrom } from './device-name.js';
