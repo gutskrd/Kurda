@@ -65,6 +65,10 @@
   object-fit: cover;
   background: #dfe4f2;
 }
+/* a face still on its way is grey like the rest of the placeholder, not a pale disc */
+.pc-face-img.skeleton {
+  background: var(--surface-2);
+}
 .pc-face-glyph {
   display: grid;
   place-items: center;

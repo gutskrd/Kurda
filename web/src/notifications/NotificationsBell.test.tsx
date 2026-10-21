@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NotificationsBell } from './NotificationsBell';
 import { RailProvider } from '../social/RailProvider';
@@ -16,15 +16,15 @@ const signIn = () =>
 
 type Note = Record<string, unknown>;
 
-/** Serve /me/social with these notifications, and log what is written. */
-function serve(notifications: Note[]) {
+/** Serve /me/social with these notifications (and these friends), and log what is written. */
+function serve(notifications: Note[], friends: Note[] = []) {
   const posts: string[] = [];
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init?: RequestInit) => {
       if (url.includes('/me/social')) {
         return jsonResponse(200, {
-          you: null, friends: [], requests: [], challenges: [], groups: [],
+          you: null, friends, requests: [], challenges: [], groups: [],
           notifications,
           unread: { notifications: notifications.filter((n) => n.readAt === null).length, groups: 0, requests: 0, challenges: 0 },
         });
@@ -83,31 +83,41 @@ describe('NotificationsBell', () => {
     expect(bell).toHaveFocus();
   });
 
-  it('keeps Tab inside the open panel, round from its last button to its first', async () => {
+  it('keeps Tab inside the open panel, round from its last control to its first', async () => {
     signIn();
     serve([]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
-    const panel = screen.getByRole('dialog', { name: 'Notifications' });
+    const panel = await screen.findByRole('dialog', { name: 'Notifications' });
+    await screen.findByText('Nothing new');
+    const settings = screen.getByRole('link', { name: 'Notification settings' });
     const close = screen.getByRole('button', { name: 'Close' });
+    const next = screen.getByRole('link', { name: 'Find friends' });
+    await userEvent.tab();
+    expect(settings).toHaveFocus();
     await userEvent.tab();
     expect(close).toHaveFocus();
-    // the close button is the only control: Tab from it comes back to it, not out to the page
     await userEvent.tab();
-    expect(close).toHaveFocus();
+    expect(next).toHaveFocus();
+    // past the last control, round to the first rather than out to the page
+    await userEvent.tab();
+    expect(settings).toHaveFocus();
     expect(panel).toBeInTheDocument();
   });
 
-  it('says what will arrive there when nothing has', async () => {
+  it('says what will arrive there when nothing has, with one way on', async () => {
     signIn();
     serve([]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
-    expect(screen.getByText('Nothing new')).toBeInTheDocument();
+    expect(await screen.findByText('Nothing new')).toBeInTheDocument();
     expect(screen.getByText('Likes, comments, gifts and game invites will show up here.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Find friends' })).toHaveAttribute('href', '/app/friends');
+    // nothing is new, so there is nothing to mark
+    expect(screen.queryByRole('button', { name: 'Mark all as read' })).not.toBeInTheDocument();
   });
 
-  it('dismisses one, and all of them, marking them read', async () => {
+  it('marks one read from its dot, and all of them from the header', async () => {
     signIn();
     const posts = serve([
       { id: 'n1', category: 'social', title: 'One', body: null, createdAt: now(), readAt: null },
@@ -115,8 +125,113 @@ describe('NotificationsBell', () => {
     ]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
-    await userEvent.click(screen.getByRole('button', { name: 'Dismiss: One' }));
+    expect(screen.getByText('2 unread')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Mark as read: One' }));
     await waitFor(() => expect(posts).toContain('POST /me/notifications/n1/read'));
+    // the dot goes at once, without waiting for the next answer
+    expect(screen.queryByRole('button', { name: 'Mark as read: One' })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Mark all as read' }));
+    await waitFor(() => expect(posts).toContain('POST /me/notifications/read-all'));
+    expect(screen.queryByRole('button', { name: /Mark as read/ })).not.toBeInTheDocument();
+  });
+
+  it('files them under Today, This week and Earlier', async () => {
+    signIn();
+    const daysAgo = (n: number) => new Date(Date.now() - n * 86_400_000).toISOString();
+    serve([
+      { id: 'n1', category: 'social', title: 'Fresh', body: null, createdAt: now(), readAt: null },
+      { id: 'n2', category: 'social', title: 'Few days', body: null, createdAt: daysAgo(3), readAt: daysAgo(3) },
+      { id: 'n3', category: 'social', title: 'Long ago', body: null, createdAt: daysAgo(20), readAt: daysAgo(20) },
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    const today = screen.getByRole('region', { name: 'Today' });
+    const week = screen.getByRole('region', { name: 'This week' });
+    const earlier = screen.getByRole('region', { name: 'Earlier' });
+    expect(within(today).getByText('Fresh')).toBeInTheDocument();
+    expect(within(week).getByText('Few days')).toBeInTheDocument();
+    expect(within(earlier).getByText('Long ago')).toBeInTheDocument();
+  });
+
+  it('opens the notification settings from the header, and closes', async () => {
+    signIn();
+    serve([]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
+    const settings = screen.getByRole('link', { name: 'Notification settings' });
+    expect(settings).toHaveAttribute('href', '/app/settings#notifications');
+    await userEvent.click(settings);
+    expect(screen.queryByRole('dialog', { name: 'Notifications' })).not.toBeInTheDocument();
+  });
+
+  it('names who sent a gift, in bold, and offers to open it', async () => {
+    signIn();
+    serve(
+      [
+        {
+          id: 'n1',
+          category: 'friends',
+          title: 'You have a gift',
+          body: 'berfin sent you Gola Şîn.',
+          createdAt: now(),
+          readAt: null,
+          data: { kind: 'gift', giftId: 'g1', chat: 'dm:u-berfin', fromUserId: 'u-berfin' },
+        },
+      ],
+      [{ userId: 'u-berfin', username: 'berfin', displayName: 'Berfin', avatarUrl: null, online: false }],
+    );
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    const link = screen.getByRole('link', { name: 'A gift from Berfin' });
+    expect(link).toHaveAttribute('href', '/app/messages?to=u-berfin&gift=g1');
+    expect(within(link).getByText('Berfin').tagName).toBe('STRONG');
+    // the one thing to do about it, drawn as a button; the row's link is what does it
+    expect(screen.getByText('Open')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('holds the rows’ shape while the first answer is on its way', async () => {
+    signIn();
+    let answer: (r: Response) => void = () => undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((url: string) => {
+        if (url.endsWith('/me')) return Promise.resolve(jsonResponse(200, { user: { id: 'me', username: 'ada', emailVerified: true } }));
+        if (url.includes('/me/social')) return new Promise<Response>((r) => (answer = r));
+        return Promise.resolve(jsonResponse(200, {}));
+      }),
+    );
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
+    const panel = screen.getByRole('dialog', { name: 'Notifications' });
+    expect(within(panel).getByRole('status')).toHaveTextContent('Loading…');
+    // not "Nothing new" before anything has been asked
+    expect(within(panel).queryByText('Nothing new')).not.toBeInTheDocument();
+    answer(jsonResponse(200, { you: null, friends: [], requests: [], challenges: [], groups: [], notifications: [], unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 } }));
+    expect(await within(panel).findByText('Nothing new')).toBeInTheDocument();
+  });
+
+  it('says calmly when the list did not come, and asks again', async () => {
+    signIn();
+    let fail = true;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', emailVerified: true } });
+        if (url.includes('/me/social')) {
+          return fail
+            ? jsonResponse(503, { code: 'UNAVAILABLE', message: 'down' })
+            : jsonResponse(200, { you: null, friends: [], requests: [], challenges: [], groups: [], notifications: [{ id: 'n1', category: 'social', title: 'Back again', body: null, createdAt: now(), readAt: null }], unread: { notifications: 1, groups: 0, requests: 0, challenges: 0 } });
+        }
+        return jsonResponse(200, {});
+      }),
+    );
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('Your notifications didn’t load this time.');
+    fail = false;
+    await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
+    expect(await screen.findByText('Back again')).toBeInTheDocument();
   });
 
   it('opens the game a game invite is for, said in the reader’s words', async () => {

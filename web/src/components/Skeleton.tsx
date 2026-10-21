@@ -100,6 +100,10 @@ export function SkeletonText({
  * `role="status"` with the label is what a screen reader gets; `aria-busy`
  * is what tells assistive tech the region is not finished. The boxes inside
  * are all `aria-hidden`, so this is the only thing announced.
+ *
+ * It is drawn a moment late (`.skeleton-region`, ui.css), the way the spinner
+ * is: most answers come inside a tenth of a second, and a page that flashes
+ * grey for one frame reads as a flicker. Its space is held from the start.
  */
 export function SkeletonRegion({
   label,
@@ -111,7 +115,7 @@ export function SkeletonRegion({
   className?: string;
 }): React.JSX.Element {
   return (
-    <div className={className} role="status" aria-busy="true" aria-live="polite">
+    <div className={className ? `skeleton-region ${className}` : 'skeleton-region'} role="status" aria-busy="true" aria-live="polite">
       <span className="sr-only">{label}</span>
       {children}
     </div>

@@ -62,7 +62,9 @@ interface Option {
  * takes the one that is lit or else opens all the results, and Escape closes
  * the panel — on a phone, closing the field as well and handing the focus back
  * to the button that opened it. "/" anywhere outside a field jumps here, which
- * is the key people already reach for.
+ * is the key people already reach for. It is not drawn in the field: the few
+ * who use it know it, and for everyone else a key cap in the box was one more
+ * thing to read before typing.
  *
  * A visitor without an account can look a word up in the published
  * dictionary, which is open to everyone; finding people needs an account, and
@@ -358,7 +360,7 @@ export function NavSearch(): React.JSX.Element {
             onClick={() => setOpen(true)}
             onKeyDown={onKeyDown}
           />
-          {query ? (
+          {query && (
             <button
               type="button"
               className="nav-search-clear"
@@ -373,11 +375,6 @@ export function NavSearch(): React.JSX.Element {
             >
               <CloseIcon size={16} />
             </button>
-          ) : (
-            // the shortcut, shown where the cursor would go
-            <kbd className="nav-search-key" aria-hidden="true">
-              /
-            </kbd>
           )}
         </div>
       </form>

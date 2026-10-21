@@ -103,6 +103,8 @@ const POLL_MS = 20_000;
 export function useSocialRail(): {
   data: SocialRailData;
   loading: boolean;
+  /** nothing has arrived yet and the last ask failed: there is no list to show, only a way to ask again */
+  failed: boolean;
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
@@ -113,6 +115,7 @@ export function useSocialRail(): {
   const signedIn = status === 'signedIn';
   const [data, setData] = useState<SocialRailData>(EMPTY);
   const [loading, setLoading] = useState(true);
+  const [failed, setFailed] = useState(false);
   const [arrivals, setArrivals] = useState<Arrival[]>([]);
   /** ids already seen, so a toast fires once per thing rather than once per poll */
   const seen = useRef<Set<string> | null>(null);
@@ -120,14 +123,23 @@ export function useSocialRail(): {
   const refresh = useCallback(() => {
     if (!signedIn) return;
     void (async () => {
+      // asking again after a first answer that never came is loading again, not still failing
+      if (seen.current === null) {
+        setFailed(false);
+        setLoading(true);
+      }
       const res = await client.get<SocialRailData>('/me/social');
       if (!res.ok) {
         setLoading(false);
+        // a failed poll after a good answer keeps the list it had; only a list
+        // that never arrived is a failure worth saying
+        setFailed(seen.current === null);
         return;
       }
       const next = { ...EMPTY, ...res.data };
       setData(next);
       setLoading(false);
+      setFailed(false);
 
       const keys = arrivalKeys(next, t, locale);
       if (seen.current === null) {
@@ -166,7 +178,7 @@ export function useSocialRail(): {
     setArrivals((prev) => prev.filter((a) => a.key !== key));
   }, []);
 
-  return { data, loading, arrivals, dismiss, refresh };
+  return { data, loading, failed, arrivals, dismiss, refresh };
 }
 
 /** Everything in this answer that could be announced, with a stable key each. */

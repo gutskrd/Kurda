@@ -5,6 +5,7 @@ import { useT } from '../i18n/I18nProvider';
 import { ErrorState } from '../components/states';
 import { BookmarkIcon, WaveformIcon } from '../components/icons';
 import type { Entry } from './types';
+import { EntrySkeleton } from '../components/skeletons';
 
 /**
  * One dictionary entry: its senses, their examples, a pronunciation if the
@@ -69,7 +70,7 @@ export function EntryView({
   };
 
   if (error && !entry) return <ErrorState message={error} onRetry={load} />;
-  if (!entry) return <p className="muted">{t('common.loading')}</p>;
+  if (!entry) return <EntrySkeleton />;
 
   return (
     <article className="dict-entry">

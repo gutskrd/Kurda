@@ -6,7 +6,7 @@ import { useApiGet } from '../lib/useApi';
 import { requestId } from '../lib/api';
 import type { ApiError, PurchaseResult, ShopItem } from '../lib/types';
 import { ErrorState } from '../components/states';
-import { FriendListSkeleton, TileGridSkeleton } from '../components/skeletons';
+import { PickFriendSkeleton, ShopSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
@@ -247,10 +247,34 @@ export function Shop(): React.JSX.Element {
     }
   }
 
+  const gemPriced = tiles.some((tile) => tile.currency === 'gems');
+  const zer = balanceOf('zer');
+  const gems = balanceOf('gems');
+  // the heading is the page's own from the first frame; only the catalogue waits
+  const header = (
+    <div className="page-header">
+      <span className="eyebrow">{t('nav.profile')}</span>
+      <h1 className="page-title">{t('nav.shop')}</h1>
+      <p className="page-sub">
+        {t('shop.subtitle')}{' '}
+        {zer !== null && <strong>{zer.toLocaleString(locale)} Zêr</strong>}
+        {gemPriced && gems !== null && (
+          <>
+            {' · '}
+            <strong>
+              {gems.toLocaleString(locale)} {t('shop.gems')}
+            </strong>
+          </>
+        )}
+      </p>
+    </div>
+  );
+
   if (shop.loading)
     return (
       <div className="container">
-        <TileGridSkeleton label="shop.loading" />
+        {header}
+        <ShopSkeleton label="shop.loading" />
       </div>
     );
   if (shop.error) return <ErrorState title={t('shop.loadFailed')} message={shop.error} onRetry={shop.reload} />;
@@ -269,9 +293,6 @@ export function Shop(): React.JSX.Element {
   const shown = active === 'all' ? matching : matching.filter((tile) => itemCategory(tile.category) === active);
   const filtered = shopViewFiltered(view);
   const anyFree = tiles.some((tile) => tile.price === 0);
-  const gemPriced = tiles.some((tile) => tile.currency === 'gems');
-  const zer = balanceOf('zer');
-  const gems = balanceOf('gems');
   const clear = (): void => setView(DEFAULT_SHOP_VIEW);
 
   const grid = (list: Tile[]): React.JSX.Element => (
@@ -288,22 +309,7 @@ export function Shop(): React.JSX.Element {
 
   return (
     <div className="container">
-      <div className="page-header">
-        <span className="eyebrow">{t('nav.profile')}</span>
-        <h1 className="page-title">{t('nav.shop')}</h1>
-        <p className="page-sub">
-          {t('shop.subtitle')}{' '}
-          {zer !== null && <strong>{zer.toLocaleString(locale)} Zêr</strong>}
-          {gemPriced && gems !== null && (
-            <>
-              {' · '}
-              <strong>
-                {gems.toLocaleString(locale)} {t('shop.gems')}
-              </strong>
-            </>
-          )}
-        </p>
-      </div>
+      {header}
 
       {/* a refusal says what stopped it — a limit on the account with when it
           ends and where the reasons are (SendError) — rather than "try again" */}
@@ -507,7 +513,7 @@ function GiftPicker({
       </p>
 
       {friends === null ? (
-        <FriendListSkeleton count={4} />
+        <PickFriendSkeleton />
       ) : friends.length === 0 ? (
         <p className="muted">{t('shop.noFriendsToGift')}</p>
       ) : (

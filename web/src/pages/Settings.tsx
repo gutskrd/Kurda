@@ -5,7 +5,7 @@ import { describeError } from '../lib/api';
 import { useApiGet } from '../lib/useApi';
 import type { MeProfile } from '../lib/types';
 import { ErrorState } from '../components/states';
-import { CardStackSkeleton } from '../components/skeletons';
+import { SettingsCardsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
 import { SafetyCard } from '../reports/SafetyCard';
@@ -51,16 +51,13 @@ export function Settings(): React.JSX.Element {
   const navigate = useNavigate();
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
 
-  if (loading)
-    return (
-      <div className="container container-narrow">
-        <CardStackSkeleton count={4} label="settings.loading" />
-      </div>
-    );
-  if (error || !data) return <ErrorState message={error ?? t('settings.unavailable')} onRetry={reload} />;
-
-  return (
-    <div className="container container-narrow">
+  /*
+   * The heading, the language and how it looks need nothing from the account,
+   * so they are the page from its first frame; only what does waits, as its
+   * own cards' shape.
+   */
+  const top = (
+    <>
       <div className="page-header">
         <span className="eyebrow">{t('settings.eyebrow')}</span>
         <h1 className="page-title">{t('settings.title')}</h1>
@@ -68,10 +65,31 @@ export function Settings(): React.JSX.Element {
 
       {/* first, because it is the setting that decides how everything else on
           this page reads */}
-      <Language current={data.user.locale} />
+      <Language current={data?.user.locale} />
 
       {/* how it looks, beside what language it speaks */}
       <Appearance />
+    </>
+  );
+
+  if (loading)
+    return (
+      <div className="container container-narrow">
+        {top}
+        <SettingsCardsSkeleton label="settings.loading" />
+      </div>
+    );
+  if (error || !data)
+    return (
+      <div className="container container-narrow">
+        {top}
+        <ErrorState message={error ?? t('settings.unavailable')} onRetry={reload} />
+      </div>
+    );
+
+  return (
+    <div className="container container-narrow">
+      {top}
 
       <Privacy current={data.user.profileVisibility} minor={data.user.minor === true} />
 

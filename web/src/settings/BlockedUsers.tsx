@@ -4,7 +4,7 @@ import { describeError } from '../lib/api';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
-import { FriendListSkeleton } from '../components/skeletons';
+import { BlocklistSkeleton } from '../components/skeletons';
 import type { BlockedUser } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 
@@ -120,7 +120,7 @@ export function BlockedUsers(): React.JSX.Element {
       {error && <div className="msg msg-error" style={{ marginBottom: 12 }}>{error}</div>}
 
       {state === 'loading' ? (
-        <FriendListSkeleton count={3} label="settings.blocked.loading" />
+        <BlocklistSkeleton label="settings.blocked.loading" />
       ) : state === 'error' ? (
         <Button variant="secondary" size="sm" onClick={() => void load(0)}>
           {t('common.retry')}

@@ -5,6 +5,8 @@ import { readRenamed } from '../lib/renamedKey';
 interface RailContext {
   data: SocialRailData;
   loading: boolean;
+  /** the first answer never came: the bell offers to ask again */
+  failed: boolean;
   arrivals: Arrival[];
   dismiss: (key: string) => void;
   refresh: () => void;
@@ -39,6 +41,7 @@ const ABSENT: RailContext = {
     unread: { notifications: 0, groups: 0, requests: 0, challenges: 0 },
   },
   loading: false,
+  failed: false,
   arrivals: [],
   dismiss: () => undefined,
   refresh: () => undefined,
@@ -80,7 +83,7 @@ export function useRail(): RailContext {
  * and two answers that could disagree.
  */
 export function RailProvider({ children }: { children: React.ReactNode }): React.JSX.Element {
-  const { data, loading, arrivals, dismiss, refresh } = useSocialRail();
+  const { data, loading, failed, arrivals, dismiss, refresh } = useSocialRail();
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(readCollapsed);
 
@@ -110,8 +113,8 @@ export function RailProvider({ children }: { children: React.ReactNode }): React
   const total = data.unread.challenges + data.unread.requests + data.unread.groups;
 
   const value = useMemo(
-    () => ({ data, loading, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed, total }),
-    [data, loading, arrivals, dismiss, refresh, open, collapsed, total],
+    () => ({ data, loading, failed, arrivals, dismiss, refresh, open, setOpen, collapsed, setCollapsed, total }),
+    [data, loading, failed, arrivals, dismiss, refresh, open, collapsed, total],
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;

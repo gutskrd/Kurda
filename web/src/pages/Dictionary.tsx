@@ -4,6 +4,7 @@ import { describeError } from '../lib/api';
 import { Link } from 'react-router-dom';
 import { useT } from '../i18n/I18nProvider';
 import { EmptyState, ErrorState } from '../components/states';
+import { DictRowsSkeleton } from '../components/skeletons';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
 import { EntryView } from '../dictionary/EntryView';
 import { SourceLine } from '../dictionary/SourceLine';
@@ -155,9 +156,13 @@ export function Dictionary(): React.JSX.Element {
         </section>
       ) : null}
 
-      {!idle && !searching && results.length === 0 && !failed ? (
+      {/* "no results" only once an answer has said so, not in the moment before the first search goes out */}
+      {!idle && !searching && result !== null && results.length === 0 && !failed ? (
         <EmptyState title={t('dictionary.noResults', { query: query.trim() })} message="" />
       ) : null}
+
+      {/* the first search's rows, before there are any; a later search keeps the last ones up meanwhile */}
+      {!idle && !result && !failed ? <DictRowsSkeleton /> : null}
 
       {results.length > 0 ? (
         <ul className="dict-list">

@@ -208,7 +208,10 @@ describe('NavSearch', () => {
   it('jumps to the field on "/", and gives the focus back on Escape', async () => {
     signIn();
     serve();
-    show();
+    const { container } = show();
+    // the shortcut works without being drawn in the field: nothing sits where the cursor goes
+    expect(container.querySelector('.nav-search-field kbd')).toBeNull();
+    expect(field()).not.toHaveAttribute('aria-describedby');
     const elsewhere = screen.getByRole('button', { name: 'Somewhere on the page' });
     elsewhere.focus();
     await userEvent.keyboard('/');

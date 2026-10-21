@@ -1205,6 +1205,12 @@ button.feature {
   gap: 6px;
   padding-right: 4px;
 }
+/* the list's placeholder rows, spaced as the rows that replace them */
+.chat-skel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 /* Direct / Groups switch + list actions */
 .chat-tabs {
   display: flex;
@@ -1385,6 +1391,12 @@ button.feature {
   gap: 10px;
   /* a run's own bubbles sit tighter than the gap between separate runs */
   scroll-behavior: smooth;
+}
+/* the thread's placeholder bursts, spaced as the bursts that replace them */
+.chat-skel-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 @media (prefers-reduced-motion: reduce) {
   .chat-messages {

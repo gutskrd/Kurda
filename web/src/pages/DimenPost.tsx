@@ -29,6 +29,10 @@ export function DimenPost(): React.JSX.Element {
   const { client } = useAuth();
   const { data: post, error, loading, reload } = useApiGet<ImagePost>(`/images/${id}`);
   const [reactions, setReactions] = useState<ReactionSummary | null>(null);
+  // the picture's sides are not in the post, so its box is held at four by three
+  // until it has loaded and can say its own shape; the page under it moves once
+  // at most, by the difference, rather than from nothing to the whole picture
+  const [shown, setShown] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +71,13 @@ export function DimenPost(): React.JSX.Element {
         </div>
 
         {post.imageUrl ? (
-          <img className="dimen-full-img" src={post.imageUrl} alt={post.caption ?? t('dimen.aPicture')} />
+          <img
+            className="dimen-full-img"
+            src={post.imageUrl}
+            alt={post.caption ?? t('dimen.aPicture')}
+            style={shown ? undefined : { aspectRatio: '4 / 3' }}
+            onLoad={() => setShown(true)}
+          />
         ) : (
           <div className="dimen-full-img dimen-thumb-empty" aria-hidden="true" />
         )}

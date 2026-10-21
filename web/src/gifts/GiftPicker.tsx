@@ -459,7 +459,7 @@ function WhoStep({
   );
 }
 
-/** The shelf while it loads: the same tiles, empty. */
+/** The shelf while it loads: the same tiles, empty — the picture, the name, the line under it and the price. */
 function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -467,7 +467,15 @@ function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
       {Array.from({ length: count }, (_, i) => (
         <span className="gift-tile is-skeleton" key={i}>
           <Skeleton w={72} h={72} radius="var(--r-md)" />
-          <Skeleton line w="70%" />
+          <span className="gift-tile-name">
+            <Skeleton line w={[64, 80, 56][i % 3]} />
+          </span>
+          <span className="gift-tile-desc">
+            <Skeleton line w={[72, 56, 64][i % 3]} />
+          </span>
+          <span className="gift-tile-price">
+            <Skeleton line w={40} />
+          </span>
         </span>
       ))}
     </SkeletonRegion>

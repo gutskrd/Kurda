@@ -11,7 +11,7 @@ import { SourceLine } from '../dictionary/SourceLine';
 import { Avatar } from '../components/Avatar';
 import { Button } from '../components/Button';
 import { EmptyState, ErrorState } from '../components/states';
-import { FriendListSkeleton } from '../components/skeletons';
+import { ListRowsSkeleton } from '../components/skeletons';
 import { ChevronIcon, CloseIcon, DictionaryIcon, SearchIcon, TrophyIcon, UsersIcon } from '../components/icons';
 import { useProfileModal } from '../profile/ProfileModal';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -245,7 +245,7 @@ function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void })
   }, [client, query, t, nonce]);
 
   if (error) return <ErrorState message={error} onRetry={() => setNonce((n) => n + 1)} />;
-  if (!results) return <FriendListSkeleton count={3} />;
+  if (!results) return <ListRowsSkeleton avatar />;
   if (results.length === 0)
     return <EmptyState title={t('friends.noResults')} message={t('search.noPeopleBody')} />;
   return (
@@ -281,7 +281,7 @@ function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: strin
   }, [client, query, t, nonce]);
 
   if (error) return <ErrorState message={error} onRetry={() => setNonce((n) => n + 1)} />;
-  if (!result) return <FriendListSkeleton count={3} />;
+  if (!result) return <ListRowsSkeleton />;
   const hits = result.results ?? [];
   if (hits.length === 0) return <EmptyState title={t('dictionary.noResults', { query })} message={t('search.noWordsBody')} />;
   return (

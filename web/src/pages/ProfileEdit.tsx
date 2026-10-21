@@ -53,9 +53,19 @@ export function ProfileEdit(): React.JSX.Element {
     void refreshUser();
   };
 
+  // the heading needs nothing from the account, so it is the page's from the first frame
+  const header = (
+    <div className="page-header">
+      <span className="eyebrow">{t('edit.eyebrow')}</span>
+      <h1 className="page-title">{t('profile.edit')}</h1>
+      <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
+    </div>
+  );
+
   if (loading)
     return (
       <div className="container container-narrow">
+        {header}
         <CardStackSkeleton count={4} label="profile.loadingYours" />
       </div>
     );
@@ -67,11 +77,7 @@ export function ProfileEdit(): React.JSX.Element {
 
   return (
     <div className="container container-narrow">
-      <div className="page-header">
-        <span className="eyebrow">{t('edit.eyebrow')}</span>
-        <h1 className="page-title">{t('profile.edit')}</h1>
-        <p className="page-sub"><Link to="/app/profile" className="link">{t('edit.back')}</Link></p>
-      </div>
+      {header}
 
       {/* refreshed backgrounds and icons: the one-time notice (contract-3 §S) */}
       <RefreshedNoticeLoader />

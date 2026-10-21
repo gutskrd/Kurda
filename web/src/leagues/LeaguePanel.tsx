@@ -11,6 +11,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
+import { LeagueCardSkeleton } from '../components/skeletons';
 import { DownIcon, ShieldIcon, SparkleIcon, UpIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
@@ -66,8 +67,10 @@ export function LeaguePanel(): React.JSX.Element | null {
     }
   }
 
-  // an extra panel above boards that work without it: nothing while it loads or if it fails
-  if (failed || !league) return null;
+  // an extra panel above boards that work without it: nothing if it fails, and
+  // while it loads, its own shape, so the boards under it do not drop when it lands
+  if (failed) return null;
+  if (!league) return <LeagueCardSkeleton />;
 
   if (league.mode === 'personal' || league.optedOut) {
     return <PersonalWeek league={league} onJoin={() => void join()} joining={joining} />;

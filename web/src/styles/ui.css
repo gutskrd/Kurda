@@ -470,6 +470,40 @@ input[type='password']::-ms-clear {
   white-space: normal;
 }
 
+/*
+ * A placeholder is drawn a moment late, as the spinner is (`spinner-wait`
+ * above): nothing for the first 120ms, then a short fade. Most answers land
+ * inside that, and then there is no grey flash at all. Only its opacity
+ * waits — the space is held from the first frame, so nothing moves when it
+ * appears — and with reduced motion it appears at once when the wait is over.
+ */
+.skeleton-region,
+.skeleton-late {
+  animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
+}
+
+/*
+ * A button's place, at the height that size of button has on this screen:
+ * 44 by default, 36 for a small one on a desk and 44 again under a thumb,
+ * 52 for a large one — the same numbers as `.btn` above, so a row of
+ * placeholder buttons is the height of the row that replaces it.
+ */
+.skeleton-btn {
+  height: 44px;
+  border-radius: var(--r-pill);
+}
+.skeleton-btn-sm {
+  height: 36px;
+}
+.skeleton-btn-lg {
+  height: 52px;
+}
+@media (pointer: coarse) {
+  .skeleton-btn-sm {
+    height: 44px;
+  }
+}
+
 @keyframes skeleton-ray {
   /* the band is 60% of the box wide, so -100% of itself is -60% of the box and
      216.67% of itself is 130% of it: from just off the left edge to past the right */

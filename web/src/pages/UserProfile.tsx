@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { FriendStatus, PublicProfile } from '../lib/types';
+import type { FriendStatus, PublicProfile, UserSummary } from '../lib/types';
 import { FullProfile, type FullProfileView } from '../profile/FullProfile';
-import { ProfileFriends } from '../profile/ProfileFriends';
+import { FRIENDS_SHOWN, ProfileFriends } from '../profile/ProfileFriends';
 import { UserActions } from '../profile/UserActions';
 import { ProfileActivity } from '../profile/ProfileActivity';
 import { ProfileProgress } from '../profile/ProfileProgress';
@@ -22,6 +22,7 @@ export function UserProfile(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const [profile, setProfile] = useState<PublicProfile | null>(null);
+  const [friends, setFriends] = useState<{ friends: UserSummary[]; total: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [attempt, setAttempt] = useState(0);
@@ -31,8 +32,14 @@ export function UserProfile(): React.JSX.Element {
     setLoading(true);
     setError(null);
     void (async () => {
-      const r = await client.get<PublicProfile>(`/users/${id}`);
+      // their friends with their profile, so the page is drawn once, whole
+      const [r, f] = await Promise.all([
+        client.get<PublicProfile>(`/users/${id}`),
+        client.get<{ friends: UserSummary[]; total?: number }>(`/users/${id}/friends?limit=${FRIENDS_SHOWN}`),
+      ]);
       if (cancelled) return;
+      const list = f.ok ? (f.data.friends ?? []) : [];
+      setFriends(f.ok ? { friends: list, total: f.data.total ?? list.length } : null);
       if (r.ok && r.data?.username) setProfile(r.data);
       else setError(r.ok ? t('profile.notLoaded') : describeError(r.error, t));
       setLoading(false);
@@ -87,7 +94,7 @@ export function UserProfile(): React.JSX.Element {
       headerAction={<FriendActions userId={profile.userId} username={profile.username} status={profile.friendStatus} />}
       activity={
         <>
-          <ProfileFriends userId={profile.userId} />
+          <ProfileFriends userId={profile.userId} initial={friends} />
           <ProfileActivity userId={profile.userId} sections={profile.sections} />
         </>
       }

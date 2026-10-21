@@ -136,7 +136,7 @@ function ContinueCard({ entries }: { entries: CourseEntry[] }): React.JSX.Elemen
  */
 function ContinueSkeleton(): React.JSX.Element {
   return (
-    <div className="learn-hero" aria-hidden="true">
+    <div className="learn-hero skeleton-late" aria-hidden="true">
       <p className="learn-hero-where">
         <Skeleton line w="45%" />
       </p>
@@ -209,7 +209,7 @@ function Today(): React.JSX.Element | null {
 function TodaySkeleton(): React.JSX.Element {
   const t = useT();
   return (
-    <div className="learn-today" aria-hidden="true">
+    <div className="learn-today skeleton-late" aria-hidden="true">
       <div className="learn-today-goal">
         <h2 className="learn-section-title">{t('learn.today.title')}</h2>
         <div className="course-progress-bar learn-today-bar" />

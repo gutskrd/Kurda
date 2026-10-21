@@ -629,9 +629,10 @@ a.lp-part-row:hover {
 
 /* ---- the path while it loads ------------------------------------------------- */
 
+/* the banner's own box and lip, in the grey of something not here yet */
 .lp-skel-banner {
-  height: 108px;
-  border-radius: var(--r-xl);
+  background: var(--surface);
+  box-shadow: 0 5px 0 var(--surface-2);
 }
 .lp-skel-path {
   position: relative;

@@ -270,6 +270,12 @@
   font-size: 0.94rem;
   line-height: 1.55;
 }
+/* a placeholder summary's second line: a narrow card wraps a summary onto it, a wide one does not */
+@media (min-width: 960px) {
+  .story-skel-wrap {
+    display: none;
+  }
+}
 .story-card-summary[lang='ckb'] {
   line-height: 1.8;
 }

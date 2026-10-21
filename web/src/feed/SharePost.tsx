@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { Modal } from '../components/Modal';
-import { FriendListSkeleton } from '../components/skeletons';
+import { PickFriendSkeleton } from '../components/skeletons';
 import { ShareIcon, LinkIcon, SendIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiError, FeedItem, UserSummary } from '../lib/types';
@@ -177,7 +177,7 @@ function SendToFriend({
       {sentTo ? (
         <p className="share-sent">{t('share.sentTo', { name: sentTo })}</p>
       ) : friends === null ? (
-        <FriendListSkeleton count={3} />
+        <PickFriendSkeleton count={3} />
       ) : friends.length === 0 ? (
         <p className="muted share-note">{t('share.noFriendsYet')}</p>
       ) : (

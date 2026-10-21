@@ -11,6 +11,7 @@ import { PlayWithButton } from '../play/PlayButtons';
 import type { UserSummary } from '../lib/types';
 import { LinkButton } from '../components/Button';
 import { SearchIcon } from '../components/icons';
+import { useRail } from '../social/RailProvider';
 
 function Row({ user, actions, meta }: { user: UserSummary; actions?: React.ReactNode; meta?: string }): React.JSX.Element {
   const { openProfile } = useProfileModal();
@@ -45,6 +46,10 @@ export function Friends(): React.JSX.Element {
   const friends = useApiGet<{ friends: UserSummary[] }>('/friends');
   const requests = useApiGet<{ requests: UserSummary[] }>('/friends/requests');
   const sent = useApiGet<{ requests: UserSummary[] }>('/friends/requests/outgoing');
+  // how many requests are waiting, as the social column already knows: their
+  // place is held while this page asks for them, rather than opening up above
+  // your friends once they arrive
+  const waiting = useRail().data.requests.length;
 
   /** Take back a request you sent — nothing tells the other person either way. */
   async function cancelRequest(userId: string): Promise<void> {
@@ -87,6 +92,12 @@ export function Friends(): React.JSX.Element {
       </div>
 
       {/* incoming requests */}
+      {requests.loading && waiting > 0 && (
+        <section className="friend-section">
+          <h2 className="friend-heading">{t('friends.requests')}</h2>
+          <FriendListSkeleton count={waiting} actions={2} />
+        </section>
+      )}
       {!requests.loading && (requests.data?.requests.length ?? 0) > 0 && (
         <section className="friend-section">
           <h2 className="friend-heading">{t('friends.requests')}</h2>
@@ -138,7 +149,7 @@ export function Friends(): React.JSX.Element {
       <section className="friend-section">
         <h2 className="friend-heading">{t('friends.yours')}</h2>
         {friends.loading ? (
-          <FriendListSkeleton />
+          <FriendListSkeleton actions={3} />
         ) : friends.error ? (
           <ErrorState message={friends.error} onRetry={friends.reload} />
         ) : (friends.data?.friends.length ?? 0) === 0 ? (

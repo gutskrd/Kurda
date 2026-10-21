@@ -428,7 +428,7 @@ export function CourseMap(): React.JSX.Element {
 
   if ((loading && !data) || (data && !dueSettled)) {
     return (
-      <div className="container container-narrow">
+      <div className="container container-narrow lp">
         <CourseMapSkeleton />
       </div>
     );

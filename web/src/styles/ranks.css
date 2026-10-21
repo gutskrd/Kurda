@@ -1152,6 +1152,25 @@
   color: var(--ink-3);
   font-size: 0.82rem;
 }
+/* the emblem and the ring while the league is on its way, at their own sizes */
+.league-skel-emblem {
+  width: 92px;
+  height: 92px;
+}
+.league-skel-ring {
+  width: 92px;
+  height: 92px;
+}
+@media (max-width: 480px) {
+  .league-skel-emblem {
+    width: 64px;
+    height: 64px;
+  }
+  .league-skel-ring {
+    width: 72px;
+    height: 72px;
+  }
+}
 @media (max-width: 480px) {
   .league-head {
     gap: 10px;

@@ -89,6 +89,8 @@ import { Handshake } from '@phosphor-icons/react/dist/icons/Handshake';
 import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
 import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
 import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
+import { HandHeart } from '@phosphor-icons/react/dist/icons/HandHeart';
+import { Checks } from '@phosphor-icons/react/dist/icons/Checks';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
 // shop items by kind: a tag, a frame, and the search over all of them
 import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
@@ -233,6 +235,12 @@ export const UpIcon = named(ArrowUp, 14, 'bold');
 export const DownIcon = named(ArrowDown, 14, 'bold');
 export const ShieldIcon = named(ShieldCheck, 14, 'fill');
 export const MedalIcon = named(Medal, 22);
+/* a notice about your account's safety: a report answered, a decision, an appeal */
+export const SafetyIcon = named(ShieldCheck, 22);
+/* a caring message, with a helpline */
+export const CareIcon = named(HandHeart, 22);
+/* every notification read at once */
+export const ReadAllIcon = named(Checks, 18);
 export const SparkleIcon = named(Sparkle, 16, 'fill');
 
 /* Shop items by kind (shop/ItemBrowser): what stands in for an item that has

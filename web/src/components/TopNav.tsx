@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { useRail } from '../social/RailProvider';
 import { Brand } from './Brand';
 import { LinkButton } from './Button';
+import { Skeleton } from './Skeleton';
 import { CoinIcon, GemIcon, GearIcon, MenuIcon, CloseIcon, ShopIcon, UserIcon, UsersIcon } from './icons';
 import { RailToggle } from '../social/RailToggle';
 import { NotificationsBell } from '../notifications/NotificationsBell';
@@ -290,16 +291,30 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
  * without stealing the width the places need.
  *
  * The numbers ride on the rail's poll, so they are already fresh and cost no
- * request of their own. Nothing is shown until they arrive; a zero that later
- * turns into 13,880 is worse than a moment of nothing. The purse sits at the
- * start of the group at the end of the bar, so arriving late moves nothing
- * else: what is after it is anchored to the end.
+ * request of their own. No number is shown until they arrive; a zero that
+ * later turns into 13,880 is worse than a moment of nothing. Until then the
+ * purse is two grey bars of its own size, so the bar does not open up a gap
+ * for it when the numbers land.
  */
 function Purse(): React.JSX.Element | null {
   const t = useT();
-  const { data } = useRail();
+  const { data, loading } = useRail();
   const you = data.you;
-  if (!you) return null;
+  if (!you) {
+    if (!loading) return null;
+    return (
+      <span className="purse nav-desktop-only skeleton-late" aria-hidden="true">
+        <span className="purse-row">
+          <CoinIcon size={15} />
+          <Skeleton line w={34} />
+        </span>
+        <span className="purse-row purse-gems">
+          <GemIcon size={15} />
+          <Skeleton line w={20} />
+        </span>
+      </span>
+    );
+  }
 
   return (
     <Link to={SHOP} className="purse nav-desktop-only" title={t('nav.yourPurse')}>

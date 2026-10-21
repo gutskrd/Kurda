@@ -23,10 +23,13 @@ const FRIEND_FACES = 3;
  * sidebar adds private-to-you rows: Zêr, an owned-icon stack, and a friend stack.
  */
 export function Profile(): React.JSX.Element {
-  const { client } = useAuth();
+  const { client, user } = useAuth();
   const t = useT();
   const locale = useLocale();
   const [me, setMe] = useState<MeProfile | null>(null);
+  // who you are is known before /me answers, so your public profile (sections,
+  // badges, frame) is asked for with the rest rather than after it
+  const selfId = user?.id ?? null;
   const [zer, setZer] = useState<number | null>(null);
   // three faces and a number is the whole of what this draws, so it asks for
   // three; `friendCount` is the real total, which arrives with them
@@ -46,11 +49,12 @@ export function Profile(): React.JSX.Element {
     setLoading(true);
     setError(null);
     void (async () => {
-      const [m, w, f, inv] = await Promise.all([
+      const [m, w, f, inv, early] = await Promise.all([
         client.get<{ user: MeProfile }>('/me'),
         client.get<{ balances: WalletBalances }>('/me/wallet'),
         client.get<{ friends: UserSummary[]; total: number }>(`/friends?limit=${FRIEND_FACES}`),
         client.get<{ items: InventoryItem[] }>('/me/inventory'),
+        selfId ? client.get<PublicProfile>(`/users/${selfId}`) : Promise.resolve(null),
       ]);
       if (cancelled) return;
       if (m.ok && m.data?.user?.username) setMe(m.data.user);
@@ -64,26 +68,28 @@ export function Profile(): React.JSX.Element {
         setFriendCount(f.data.total ?? list.length);
       }
       if (inv.ok) setIcons((inv.data.items ?? []).filter((i) => i.category === 'icon'));
-      setLoading(false);
 
       // your own activity sections: /me does not carry them, and the public
       // profile endpoint already works them out the same way it does for
-      // everyone else
+      // everyone else. Asked with the rest, so the badges and the activity are
+      // there when the page is, rather than arriving a moment later and
+      // pushing everything under them down; asked after, only when who you are
+      // was not known yet.
       const id = m.ok ? m.data?.user?.id : undefined;
-      if (id) {
-        const p = await client.get<PublicProfile>(`/users/${id}`);
-        if (!cancelled && p.ok) {
-          setSections(p.data.sections ?? null);
-          setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku });
-        }
+      const p = early && id === selfId ? early : id ? await client.get<PublicProfile>(`/users/${id}`) : null;
+      if (cancelled) return;
+      if (p?.ok) {
+        setSections(p.data.sections ?? null);
+        setShown({ ranks: p.data.ranks, badges: p.data.badges, league: p.data.league, frameSku: p.data.frameSku });
       }
+      setLoading(false);
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, reloadKey, t]);
+  }, [client, reloadKey, t, selfId]);
 
-  if (loading) return <FullProfileSkeleton label="profile.loadingYours" />;
+  if (loading) return <FullProfileSkeleton label="profile.loadingYours" own />;
   if (error || !me) return <ErrorState title={t('profile.loadFailedYours')} message={error ?? t('profile.unavailable')} onRetry={() => setReloadKey((n) => n + 1)} />;
 
   const view: FullProfileView = {
