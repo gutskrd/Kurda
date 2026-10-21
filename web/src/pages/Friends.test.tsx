@@ -45,7 +45,7 @@ describe('Friends', () => {
     renderApp(<Friends />);
 
     expect(await screen.findByRole('heading', { name: 'Amis', level: 1 })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Rechercher' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Trouver des gens' })).toHaveAttribute('href', '/app/search');
     expect(screen.getByRole('heading', { name: 'Vos amis' })).toBeInTheDocument();
     expect(screen.getByTitle('Retirer zana de vos amis')).toBeInTheDocument();
     expect(screen.getByTitle('Bloquer zana')).toBeInTheDocument();
@@ -176,26 +176,6 @@ describe('Friends', () => {
     ).toBe(true);
   });
 
-  it('shows people-you-may-know with mutual count and an Add button', async () => {
-    vi.stubGlobal(
-      'fetch',
-      routedFetch({
-        '/friends/suggestions': { suggestions: [{ userId: 'u5', username: 'baran', displayName: 'Baran', mutualCount: 2 }] },
-        '/friends/requests/outgoing': { requests: [] },
-        '/friends/requests': { requests: [] },
-        '/friends': { friends: [] },
-      }),
-    );
-    renderApp(<Friends />);
-
-    expect(await screen.findByText('People you may know')).toBeInTheDocument();
-    expect(screen.getByText('Baran')).toBeInTheDocument();
-    expect(screen.getByText('2 mutual friends')).toBeInTheDocument();
-    const add = screen.getByRole('button', { name: /^add$/i });
-    await userEvent.click(add);
-    expect(await screen.findByRole('button', { name: /requested/i })).toBeInTheDocument();
-  });
-
   it('offers a game with each friend: the invite sheet, with them already chosen', async () => {
     vi.stubGlobal(
       'fetch',
@@ -215,23 +195,19 @@ describe('Friends', () => {
     expect(within(sheet).getByRole('button', { name: 'Create and invite (1)' })).toBeInTheDocument();
   });
 
-  it('searches for users and renders results', async () => {
+  it('sends finding someone new to Search', async () => {
     vi.stubGlobal(
       'fetch',
       routedFetch({
         '/friends/requests/outgoing': { requests: [] },
         '/friends/requests': { requests: [] },
         '/friends': { friends: [] },
-        '/users/search': { results: [{ userId: 'u9', username: 'newro', displayName: 'Newroz' }] },
       }),
     );
     renderApp(<Friends />);
 
-    await userEvent.type(screen.getByLabelText(/search users/i), 'new');
-    await userEvent.click(screen.getByRole('button', { name: /^search$/i }));
-
-    expect(await screen.findByText('Search results')).toBeInTheDocument();
-    expect(screen.getByText('Newroz')).toBeInTheDocument();
-    expect(screen.getByText('@newro')).toBeInTheDocument();
+    // one field for people and words, with the people you may know under it
+    expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
+    expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
 });

@@ -391,7 +391,7 @@ function ActionRow({
         <strong>
           For {who} <span className="subtle">({forSubject ? 'reported' : 'reporter'})</span>
         </strong>
-        <button type="button" className="icon-button ghost" aria-label={`Remove this action for ${who}`} onClick={onRemove}>
+        <button type="button" className="icon-button ghost" aria-label={`Remove this action for ${who}`} title="Remove this action" onClick={onRemove}>
           <Icon name="close" />
         </button>
       </div>

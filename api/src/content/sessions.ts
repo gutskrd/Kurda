@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import type { RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
@@ -47,10 +48,13 @@ export interface SessionView {
     options?: string[];
     lefts?: string[];
     rights?: string[];
-    /** native recordings from the audio studio, where there are any */
+    /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
     audioUrl?: string;
+    audioVoice?: RecordingVoice;
     modelAudioUrl?: string;
+    modelAudioVoice?: RecordingVoice;
     audio?: Record<string, string>;
+    audioVoices?: Record<string, RecordingVoice>;
   }>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
@@ -74,6 +78,8 @@ export interface AnswerResult {
    * would have said the answer (lessonaudio/delivery.ts).
    */
   modelAudioUrl?: string;
+  /** who says `modelAudioUrl`, when a character is chosen for it */
+  modelAudioVoice?: RecordingVoice;
   /** true when this exercise was already answered (idempotent replay). */
   duplicate: boolean;
 }
@@ -303,8 +309,7 @@ export class LessonSessionService {
     const ex = await this.lessonExercise(session, exerciseId);
 
     const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
-    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
-    const heard = modelAudioUrl ? { modelAudioUrl } : {};
+    const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
 
     // idempotent per (session, exercise): first answer wins
     const client = await this.pool.connect();
@@ -386,12 +391,12 @@ export class LessonSessionService {
     }
 
     const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
-    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
     return {
       verdict: result.verdict,
       accepted: result.accepted,
       correction: result.correction,
-      ...(modelAudioUrl ? { modelAudioUrl } : {}),
+      ...heard,
     };
   }
 

@@ -29,6 +29,9 @@
 }
 .ab-main {
   display: grid;
+  /* one column no wider than the page: left to size itself, it grew to the
+     widest line inside it, and German ran 63px off a 320px phone */
+  grid-template-columns: minmax(0, 1fr);
   gap: 34px;
   min-width: 0;
 }
@@ -81,7 +84,7 @@
   padding: 8px 6px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
   color: var(--ink);
   cursor: pointer;
   transition:
@@ -91,7 +94,7 @@
 }
 .ab-tile:hover {
   border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .ab-tile:active {
   transform: translateY(1px);
@@ -145,7 +148,7 @@
   padding: 16px 18px;
   border: 1px solid var(--border);
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .ab-rule-pairs,
@@ -191,7 +194,7 @@
   padding: 22px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.045);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .modal-panel .ab-card {
@@ -242,7 +245,7 @@
   display: grid;
   gap: 4px;
   padding-top: 14px;
-  border-top: 1px solid rgba(255, 255, 255, 0.07);
+  border-top: 1px solid var(--separator);
 }
 .ab-card-label {
   font-size: 0.7rem;
@@ -311,7 +314,7 @@
   line-height: 1.2;
 }
 .ab-form small {
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   color: var(--ink-3);
 }
 .ab-step {
@@ -325,7 +328,7 @@
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .ab-practice .ab-group-body {
@@ -420,7 +423,7 @@
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: 22px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   color: var(--ink);
   text-decoration: none;
@@ -489,7 +492,7 @@
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   color: var(--ink-2);
   cursor: pointer;
   transition:
@@ -520,8 +523,15 @@
 }
 .ab-card-tools {
   display: inline-flex;
+  /* on the narrowest phones a wide letter beside a speaker puts the IPA on a line of its own */
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
+}
+/* who says the letter's recordings, beside the button that plays them (characters/ClipSpeaker.tsx) */
+.ab-voice-face {
+  --speaker-size: 60px;
 }
 .ab-card-word-row {
   display: inline-flex;
@@ -555,7 +565,7 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--surface-2);
 }
 .ab-dots li.is-right {
   background: var(--success);
@@ -617,7 +627,7 @@
   position: absolute;
   top: 6px;
   inset-inline-start: 8px;
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   color: var(--ink-4);
   font-variant-numeric: tabular-nums;
@@ -653,7 +663,7 @@
   padding: 12px 14px;
   border: 1px solid var(--border);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 .ab-explain-letter {
   font-family: var(--font-display);
@@ -748,7 +758,7 @@
   flex: 0 1 220px;
   height: 6px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .ab-progress-track span {

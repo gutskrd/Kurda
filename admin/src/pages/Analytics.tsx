@@ -142,6 +142,7 @@ export function Analytics(): React.JSX.Element {
               rows={d.retention}
               rowKey={(r) => `${r.cohortDay}-${r.dayN}`}
               empty="No group has been around long enough in this range."
+              layout="scroll"
             />
           </Section>
         </>
@@ -154,12 +155,35 @@ export function Analytics(): React.JSX.Element {
  * A bar per day, with the highest value and the first and last day written
  * beside it, and the total under it unless it is a level rather than a count
  * (`total={false}`: what is in circulation is not summed over days).
+ *
+ * A day's own number is read by pointing at its bar, or by touching it and
+ * sliding along: it takes the total's place under the chart. It used to be a
+ * tooltip, which a finger never brings up.
  */
 export function Bars({ points, unit, total: showTotal = true }: { points: Array<{ day: string; value: number }>; unit: string; total?: boolean }): React.JSX.Element {
+  const [at, setAt] = useState<number | null>(null);
   if (points.length === 0) return <EmptyState title="Nothing in this range." compact icon="chart" />;
   const max = Math.max(1, ...points.map((p) => p.value));
   const total = points.reduce((n, p) => n + p.value, 0);
   const peak = points.reduce((a, b) => (b.value > a.value ? b : a));
+  const chosen = at === null ? undefined : points[at];
+
+  // the bar under the pointer, or the nearest one: a bar can be a few pixels wide
+  const pick = (e: React.PointerEvent<HTMLDivElement>): void => {
+    const bars = [...e.currentTarget.children] as HTMLElement[];
+    let best = 0;
+    let gap = Infinity;
+    bars.forEach((b, i) => {
+      const r = b.getBoundingClientRect();
+      const d = Math.abs(e.clientX - (r.left + r.width / 2));
+      if (d < gap) {
+        gap = d;
+        best = i;
+      }
+    });
+    setAt(best);
+  };
+
   return (
     <figure className="chart">
       <div className="chart-plot">
@@ -171,15 +195,28 @@ export function Bars({ points, unit, total: showTotal = true }: { points: Array<
           className="bars"
           role="img"
           aria-label={`${points.length} days, from ${dayLabel(points[0]!.day)} to ${dayLabel(points[points.length - 1]!.day)}. Highest: ${peak.value.toLocaleString()} ${unit} on ${dayLabel(peak.day)}.`}
+          onPointerDown={pick}
+          onPointerMove={pick}
+          onPointerLeave={(e) => {
+            if (e.pointerType === 'mouse') setAt(null);
+          }}
         >
-          {points.map((p) => (
-            <div key={p.day} className="b" style={{ height: `${(Math.max(0, p.value) / max) * 100}%` }} title={`${dayLabel(p.day)}: ${p.value.toLocaleString()} ${unit}`} />
+          {points.map((p, i) => (
+            <div key={p.day} className={`b${i === at ? ' is-on' : ''}`} style={{ height: `${(Math.max(0, p.value) / max) * 100}%` }} />
           ))}
         </div>
       </div>
       <figcaption className="chart-x">
         <span>{dayLabel(points[0]!.day)}</span>
-        {showTotal ? <span className="subtle">{total.toLocaleString()} in all</span> : <span />}
+        {chosen ? (
+          <span className="chart-at">
+            {dayLabel(chosen.day)}: <strong>{chosen.value.toLocaleString()}</strong> {unit}
+          </span>
+        ) : showTotal ? (
+          <span className="subtle">{total.toLocaleString()} in all</span>
+        ) : (
+          <span />
+        )}
         {/* one day is named once */}
         <span>{points.length > 1 ? dayLabel(points[points.length - 1]!.day) : ''}</span>
       </figcaption>

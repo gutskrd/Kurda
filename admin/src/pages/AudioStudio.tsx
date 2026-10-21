@@ -3,9 +3,11 @@ import { useRoute } from '../nav';
 import type { Filter } from '../lessonAudio';
 import { PageHeader, Tabs } from '../ui';
 import { AlphabetAudio, type Filter as LetterFilter } from './AlphabetAudio';
+import { Characters } from './Characters';
+import { DictionaryVoices } from './DictionaryVoices';
 import { LessonAudio } from './LessonAudio';
 
-type Side = 'letters' | 'lessons' | 'stories';
+type Side = 'letters' | 'lessons' | 'stories' | 'dictionary' | 'characters';
 
 const SIDES: ReadonlyArray<{ key: Side; tab: string; title: string; subtitle: string }> = [
   {
@@ -26,6 +28,18 @@ const SIDES: ReadonlyArray<{ key: Side; tab: string; title: string; subtitle: st
     title: 'Record story sentences',
     subtitle: 'Every sentence of every story, as the reader cuts it. A story with all its sentences recorded can be listened to from start to end.',
   },
+  {
+    key: 'dictionary',
+    tab: 'Dictionary',
+    title: 'Dictionary pronunciations',
+    subtitle: 'The recordings that come with the dictionary’s words. Choose who says each one, and hear the character say it.',
+  },
+  {
+    key: 'characters',
+    tab: 'Characters',
+    title: 'Characters',
+    subtitle: 'Who learners see saying each recording, and the mouth timelines they move with. Give older recordings a character, and make the timelines they are missing.',
+  },
 ];
 
 const TAB_KEY = 'kurda_admin_audio_tab';
@@ -33,7 +47,7 @@ const TAB_KEY = 'kurda_admin_audio_tab';
 function savedSide(): Side {
   try {
     const v = localStorage.getItem(TAB_KEY);
-    return v === 'lessons' || v === 'stories' ? v : 'letters';
+    return v === 'lessons' || v === 'stories' || v === 'dictionary' || v === 'characters' ? v : 'letters';
   } catch {
     return 'letters';
   }
@@ -47,7 +61,10 @@ function savedSide(): Side {
  * the owner could not find where to record. `?show=missing` opens on what is
  * still missing (the dashboard's links); `?lesson=` and `?story=` on one
  * lesson or story (the Record links in their lists). All sides record, trim,
- * level and save the same way (recorder.tsx).
+ * level and save the same way (recorder.tsx). Two more sides are for who is
+ * shown saying the recordings: #/audio/dictionary for the dictionary's
+ * pronunciations, which are not recorded here (DictionaryVoices.tsx), and
+ * #/audio/characters for every recording at once (Characters.tsx).
  */
 export function AudioStudio(): React.JSX.Element {
   const route = useRoute();
@@ -83,7 +100,11 @@ export function AudioStudio(): React.JSX.Element {
         value={side.key}
         items={SIDES.map((s) => ({ key: s.key, label: s.tab, href: `#/audio/${s.key}` }))}
       />
-      {side.key === 'letters' ? (
+      {side.key === 'characters' ? (
+        <Characters key="characters" />
+      ) : side.key === 'dictionary' ? (
+        <DictionaryVoices key="dictionary" />
+      ) : side.key === 'letters' ? (
         <AlphabetAudio key="letters" initialFilter={show === 'missing' || show === 'recorded' || show === 'all' ? (show as LetterFilter) : undefined} />
       ) : (
         <LessonAudio

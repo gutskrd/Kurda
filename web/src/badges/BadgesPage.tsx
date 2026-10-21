@@ -4,7 +4,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
-import { ErrorState, Loading } from '../components/states';
+import { ErrorState } from '../components/states';
+import { BadgesSkeleton } from '../components/skeletons';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { FAMILY_KEY, UNIT_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed } from '../ranks/names';
@@ -46,8 +47,23 @@ export function BadgesPage(): React.JSX.Element {
     return groups;
   }, [data]);
 
+  // the heading is the page's own from the first frame; only what is yours waits
+  const header = (
+    <div className="page-header">
+      <span className="eyebrow">{t('badges.eyebrow')}</span>
+      <h1 className="page-title">{t('badges.title')}</h1>
+      <p className="page-sub">{t('badges.sub')}</p>
+    </div>
+  );
+
   if (error && !data) return <ErrorState message={error} onRetry={() => void load()} />;
-  if (!data) return <Loading />;
+  if (!data)
+    return (
+      <div className="container badges-page">
+        {header}
+        <BadgesSkeleton />
+      </div>
+    );
 
   const earned = data.badges.filter((b) => b.tier > 0).length;
   const showcase = data.showcase.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => Boolean(b));
@@ -55,11 +71,7 @@ export function BadgesPage(): React.JSX.Element {
 
   return (
     <div className="container badges-page">
-      <div className="page-header">
-        <span className="eyebrow">{t('badges.eyebrow')}</span>
-        <h1 className="page-title">{t('badges.title')}</h1>
-        <p className="page-sub">{t('badges.sub')}</p>
-      </div>
+      {header}
 
       <div className="badges-top">
         <section className="badges-showcase" aria-labelledby="showcase-title">

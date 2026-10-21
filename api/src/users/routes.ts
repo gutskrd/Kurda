@@ -419,8 +419,24 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
     return gdpr.exportStatus(req.user!.id);
   });
 
-  /** Logout everywhere: kills refresh sessions AND live access tokens. */
-  app.delete('/me/sessions', { preHandler: requireAuth }, async (req) => {
+  /**
+   * Logout everywhere: kills refresh sessions AND live access tokens.
+   * `?except=current` signs out every OTHER session and keeps this one: their
+   * access tokens stop at once too, because a revoked family's tokens are
+   * refused (plugins/auth.ts).
+   */
+  app.delete('/me/sessions', { schema: { querystring: z.object({ except: z.literal('current').optional() }) }, preHandler: requireAuth }, async (req) => {
+    const { except } = req.query as { except?: 'current' };
+    const current = req.user!.familyId;
+    if (except === 'current' && current) {
+      const others = await app.db.query<{ family_id: string }>(
+        `UPDATE refresh_tokens SET revoked_at = now()
+          WHERE user_id = $1 AND revoked_at IS NULL AND family_id::text <> $2
+          RETURNING family_id`,
+        [req.user!.id, current],
+      );
+      return { revoked: true, everywhere: false, sessionsEnded: new Set(others.rows.map((r) => r.family_id)).size };
+    }
     await app.db.query(
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
       [req.user!.id],
@@ -476,6 +492,7 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
               'TIMEZONE_CHANGE_COOLDOWN',
               429,
               `timezone can only be changed once every ${TIMEZONE_CHANGE_COOLDOWN_DAYS} days`,
+              { retryAfterSec: Math.ceil((new Date(row.timezone_changed_at).getTime() + cooldownMs - Date.now()) / 1_000) },
             );
           }
           add('timezone', body.timezone);
@@ -504,7 +521,11 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
               'USERNAME_CHANGE_COOLDOWN',
               429,
               `You can change your username again on ${availableAt.toISOString().slice(0, 10)}.`,
-              { availableAt: availableAt.toISOString(), cooldownDays: USERNAME_CHANGE_COOLDOWN_DAYS },
+              {
+                availableAt: availableAt.toISOString(),
+                cooldownDays: USERNAME_CHANGE_COOLDOWN_DAYS,
+                retryAfterSec: Math.ceil((availableAt.getTime() - Date.now()) / 1_000),
+              },
             );
           }
           add('username', username);

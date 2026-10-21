@@ -6,7 +6,9 @@ import { useT } from '../i18n/I18nProvider';
 import type { UserSummary } from '../lib/types';
 
 /** Enough to show who someone knows without turning a profile into a directory. */
-const SHOW = 12;
+/** How many faces the block draws; a page that asks for the list itself asks for this many. */
+export const FRIENDS_SHOWN = 12;
+const SHOW = FRIENDS_SHOWN;
 
 /**
  * A friend, as `GET /users/:id/friends` actually returns one.
@@ -37,14 +39,27 @@ type FriendOf = UserSummary;
  * Each face opens that person's own card, which is how you get from one person
  * to the next without going back to search.
  */
-export function ProfileFriends({ userId }: { userId: string }): React.JSX.Element | null {
+export function ProfileFriends({
+  userId,
+  initial,
+}: {
+  userId: string;
+  /**
+   * The list, when the page asked for it alongside the profile (UserProfile):
+   * then the block is there when the page is, instead of opening up under the
+   * bio a moment later and pushing the activity down.
+   */
+  initial?: { friends: FriendOf[]; total: number } | null;
+}): React.JSX.Element | null {
   const { client } = useAuth();
   const { openProfile } = useProfileModal();
   const t = useT();
-  const [friends, setFriends] = useState<FriendOf[] | null>(null);
-  const [total, setTotal] = useState(0);
+  const [friends, setFriends] = useState<FriendOf[] | null>(initial?.friends ?? null);
+  const [total, setTotal] = useState(initial?.total ?? 0);
+  const given = initial != null;
 
   useEffect(() => {
+    if (given) return;
     let cancelled = false;
     setFriends(null);
     void (async () => {
@@ -63,7 +78,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
     return () => {
       cancelled = true;
     };
-  }, [client, userId]);
+  }, [client, userId, given]);
 
   if (!friends || friends.length === 0) return null;
 

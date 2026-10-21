@@ -3,7 +3,8 @@ import { useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
-import { ErrorState } from '../components/states';
+import { EmptyState, ErrorState } from '../components/states';
+import { LinkButton } from '../components/Button';
 import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { PostButton } from '../feed/PostButton';
@@ -11,6 +12,7 @@ import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
 import { DailyReward } from '../components/DailyReward';
 import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
+import { useArrival } from '../lib/motion';
 
 const PAGE = 20;
 
@@ -42,6 +44,7 @@ export function Civak(): React.JSX.Element {
   };
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
+  const arriving = useArrival(!!items && items.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
 
@@ -150,10 +153,20 @@ export function Civak(): React.JSX.Element {
       {items === null ? (
         <FeedSkeleton label="civak.loading" />
       ) : items.length === 0 ? (
-        <p className="muted">{t('civak.empty')}</p>
+        // an empty wall still has a next step: the people whose posts would fill it
+        <EmptyState
+          title={t('civak.empty')}
+          message={t('civak.emptyBody')}
+          action={
+            <LinkButton to="/app/search" size="sm" className="state-action">
+              {t('rail.findPeople')}
+            </LinkButton>
+          }
+        />
       ) : (
         <>
-          <div className="feed">
+          {/* the first screenful rises in once, as the wall arrives (styles/motion.css) */}
+          <div className={arriving ? 'feed rise-in' : 'feed'}>
             {items.map((item) => (
               <FeedCard key={item.key} item={item} onChanged={replace} onRemoved={drop} />
             ))}

@@ -160,8 +160,37 @@ const envSchema = z.object({
   SMTP_SECURE: z.enum(['true', 'false']).optional(),
   /** From address for transactional email. */
   EMAIL_FROM: z.string().default('Hevalo <no-reply@hevalo.app>'),
+  /**
+   * Where an answer to a transactional email goes. They come from a no-reply
+   * address, and the password-reset email asks anyone who did not ask for it
+   * to get in touch — so a reply lands in the support inbox instead of nowhere.
+   */
+  EMAIL_REPLY_TO: z.string().optional(),
+  /** The address the support inbox answers from (admin → Email). */
+  SUPPORT_EMAIL_FROM: z.string().default('Hevalo Support <support@hevalo.app>'),
+  /**
+   * The signing secret (`whsec_…`) of the Resend webhook that tells us about
+   * mail received at the support address, and about bounces and complaints.
+   * The webhook is refused while it is unset.
+   */
+  RESEND_WEBHOOK_SECRET: z.string().optional(),
+  /**
+   * A Resend key that can read received mail, for the bodies of support email
+   * (the webhook carries only who, to whom and the subject). Resend's keys are
+   * either "send only" or "full access", and the sending key is deliberately
+   * the first — so reading needs a key of its own. Unset, the inbox still lists
+   * what arrived, and says the body can be read in Resend.
+   */
+  RESEND_INBOX_API_KEY: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
+  /**
+   * Whether a new password is checked against the public corpus of breached
+   * passwords (auth/breached-password.ts; only five characters of its SHA-1
+   * leave the server). Unset: on everywhere but under test, which must not
+   * reach the internet. 'false' turns it off.
+   */
+  PASSWORD_BREACH_CHECK: z.enum(['true', 'false']).optional(),
   /**
    * Comma-separated browser origins allowed to call the API (CORS).
    * The web client (localhost:8081) needs this; native apps don't send
@@ -200,6 +229,13 @@ const envSchema = z.object({
    * can open a connection to it at all. Name exact addresses instead wherever
    * the origin is reachable from the public internet.
    *
+   * On Render that is still not the whole chain. Render puts Cloudflare in
+   * front of every service, so the walk ends at a Cloudflare edge address — the
+   * same few dozen for everybody. Reading past it is CLOUDFLARE_CLIENT_IP's job
+   * below, not this list's: Cloudflare's ranges must never be named here, or a
+   * caller on Cloudflare's own network (a Worker) would be walked past into
+   * text it wrote itself.
+   *
    * `true` trusts the client's own text and is refused in production below.
    */
   TRUST_PROXY: z
@@ -211,6 +247,18 @@ const envSchema = z.object({
         'presets loopback/linklocal/uniquelocal — a bare hop count no longer ' +
         'works (fastify GHSA-3m5p-2c4r-xxw2)',
     ),
+  /**
+   * Whether to read the client's address past a Cloudflare edge.
+   *
+   * When the first hop `TRUST_PROXY` does not cover is one of Cloudflare's
+   * published addresses, the client is the address Cloudflare reports: its
+   * `CF-Connecting-IP` header, or failing that the X-Forwarded-For entry it
+   * wrote just left of the edge (net/client-ip.ts). Neither is believed from
+   * anything that is not a Cloudflare address, so a deployment that is not
+   * behind Cloudflare is unaffected either way. `off` keeps the edge as the
+   * client, as before.
+   */
+  CLOUDFLARE_CLIENT_IP: z.enum(['auto', 'off']).default('auto'),
   /**
    * Bearer token a Prometheus scraper must present at /metrics.
    *

@@ -13,9 +13,11 @@ interface Props {
   disabled: boolean;
   /** the course's variety of Kurdish, for the key bar */
   dialect?: string | null;
+  /** how the answer was graded, once it has been */
+  verdict?: 'right' | 'wrong' | null;
 }
 
-export function TranslateExercise({ exercise, text, onChangeText, disabled, dialect }: Props) {
+export function TranslateExercise({ exercise, text, onChangeText, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   return (
@@ -27,6 +29,7 @@ export function TranslateExercise({ exercise, text, onChangeText, disabled, dial
         onChangeText={onChangeText}
         dialect={dialect}
         disabled={disabled}
+        verdict={verdict}
         placeholder={t('lesson.translate.placeholder')}
         placeholderTextColor={colors.textSecondary}
         style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}

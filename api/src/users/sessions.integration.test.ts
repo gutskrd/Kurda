@@ -100,6 +100,8 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
       remoteAddress: '10.11.0.4',
     });
     expect(refresh.statusCode).toBe(401);
+    // and its access token stops now, not when its fifteen minutes are up
+    expect((await authed('GET', '/me', tabletTokens.accessToken)).statusCode).toBe(401);
 
     const after = await authed('GET', '/me/sessions', phoneTokens.accessToken);
     expect(after.json().sessions).toHaveLength(1);
@@ -121,6 +123,7 @@ describe.skipIf(!DATABASE_URL)('session management (integration)', () => {
       remoteAddress: '10.11.0.5',
     });
     expect(refresh.statusCode).toBe(401);
+    expect((await authed('GET', '/me', phoneTokens.accessToken)).statusCode).toBe(401);
   });
 
   it('revoking an unknown session id is a 404', async () => {

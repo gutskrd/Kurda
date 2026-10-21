@@ -1,12 +1,15 @@
 import { z } from 'zod';
 import { defineJob, type JobDefinition } from './registry.js';
 import type { EmailService } from '../email/service.js';
+import { maskEmail } from '../observability/redact.js';
+import { EMAIL_PATTERN } from '../auth/email-address.js';
 import type { EmailTemplate, EmailLocale } from '../email/templates.js';
 
 export const SEND_EMAIL_JOB_NAME = 'send-email';
 
 const payloadSchema = z.object({
-  to: z.email(),
+  // the same pattern the forms accept, or an address we let sign up gets no mail
+  to: z.email({ pattern: EMAIL_PATTERN }),
   template: z.enum([
     'verify-email',
     'verify-email-code',
@@ -20,6 +23,8 @@ const payloadSchema = z.object({
     'copyright-upheld',
     'copyright-kept',
     'copyright-counter-notice',
+    'new-sign-in',
+    'sign-in-attempts',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; omitted → English (KUR-098). */
@@ -39,7 +44,7 @@ export const sendEmailJob = defineJob({
   schema: payloadSchema,
   handler: async (payload, ctx) => {
     ctx.log.info(
-      { to: payload.to, template: payload.template, locale: payload.locale, attempt: ctx.attempt },
+      { to: maskEmail(payload.to), template: payload.template, locale: payload.locale, attempt: ctx.attempt },
       'email send skipped (no email service configured)',
     );
   },
@@ -63,7 +68,7 @@ export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPa
         (payload.locale ?? 'en') as EmailLocale,
       );
       ctx.log.info(
-        { to: payload.to, template: payload.template, ...result },
+        { to: maskEmail(payload.to), template: payload.template, ...result },
         result.suppressed ? 'email suppressed' : 'email sent',
       );
     },

@@ -58,6 +58,15 @@ describe('Alphabet', () => {
     expect(await screen.findByRole('tab', { name: /سۆرانی/, selected: true })).toBeInTheDocument();
   });
 
+  /** A sound nobody was chosen to say — every synthesised clip — shows the card as it always was. */
+  it('shows no character for a sound without one', async () => {
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: 'C, like j' }));
+    const card = await screen.findByRole('dialog');
+    expect(within(card).getByRole('button', { name: 'Listen' })).toBeInTheDocument();
+    expect(card.querySelector('.speaking-character')).toBeNull();
+  });
+
   /** Tapping a letter plays it, ticks it, and counts it — all in this browser only. */
   it('plays a letter when tapped and counts the ones opened', async () => {
     const played = vi.spyOn(HTMLMediaElement.prototype, 'play');

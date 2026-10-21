@@ -13,7 +13,7 @@ import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
@@ -37,11 +37,14 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
   const [recents, setRecents] = useState<string[]>([]);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [saved, setSaved] = useState<SavedWord[]>([]);
+  // the saved words' place is held until the first answer, so the list does not drop in under the field
+  const [savedSettled, setSavedSettled] = useState(false);
   const debounced = useDebouncedValue(query, 250);
 
   const loadSaved = useCallback(() => {
     void client.get<{ words: SavedWord[] }>('/me/saved-words').then((res) => {
       if (res.ok) setSaved(res.data.words);
+      setSavedSettled(true);
     });
   }, [client]);
 
@@ -115,12 +118,14 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           <View style={styles.recents}>
             <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
             {recents.map((r) => (
-              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow}>
+              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow} accessibilityRole="button">
                 <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
               </Pressable>
             ))}
           </View>
         ) : null}
+
+        {isEmpty && !savedSettled ? <SavedSkeleton /> : null}
 
         {isEmpty && saved.length > 0 ? (
           <View style={styles.recents}>
@@ -130,23 +135,26 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             </View>
             {saved.map((w) => (
               <View key={w.entryId} style={styles.savedRow}>
-                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)}>
+                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)} accessibilityRole="button">
                   <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
                   <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                     {w.definitionEn ?? w.definitionKu ?? ''}
                   </Text>
                 </Pressable>
-                <Pressable onPress={() => removeSaved(w.entryId)} accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })} hitSlop={8}>
-                  <Text style={[styles.remove, { color: colors.textSecondary }]}>✕</Text>
+                <Pressable
+                  onPress={() => removeSaved(w.entryId)}
+                  accessibilityRole="button"
+                  accessibilityLabel={t('dictionary.removeSaved', { word: w.headword })}
+                  style={styles.removeButton}
+                >
+                  <Icon name="close" size={18} color={colors.textSecondary} />
                 </Pressable>
               </View>
             ))}
           </View>
         ) : null}
 
-        {loading && results.length === 0 ? (
-          <SkeletonList avatar={false} count={5} style={{ marginTop: spacing.sm }} />
-        ) : null}
+        {loading && results.length === 0 ? <HitsSkeleton /> : null}
 
         {failed && !loading ? (
           <ErrorRetry
@@ -162,7 +170,7 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           keyExtractor={(h) => h.entryId}
           contentContainerStyle={{ paddingBottom: tabBarInset }}
           renderItem={({ item }) => (
-            <Pressable onPress={() => openHit(item)} style={styles.hit}>
+            <Pressable onPress={() => openHit(item)} style={styles.hit} accessibilityRole="button">
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
@@ -175,6 +183,42 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         />
       </View>
     </GradientBackground>
+  );
+}
+
+/** The saved words in grey: the heading, then each word, its meaning and its ✕. */
+function SavedSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <View style={styles.recents} accessibilityLabel={t('common.loading')}>
+      <SkeletonText size={typography.sizes.xs} width={72} />
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={styles.savedRow}>
+          <View style={styles.savedMain}>
+            <SkeletonText size={typography.sizes.md} width={i % 2 ? 56 : 80} />
+            <SkeletonText size={typography.sizes.sm} width={i % 2 ? '44%' : '60%'} />
+          </View>
+          <View style={styles.removeButton}>
+            <Skeleton width={18} height={18} radius={radii.pill} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** Results in grey while a search is out: the word and its first meaning, at the rows' own spacing. */
+function HitsSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <View accessibilityLabel={t('common.loading')}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={styles.hit}>
+          <SkeletonText size={typography.sizes.lg} width={i % 2 ? 72 : 104} />
+          <SkeletonText size={typography.sizes.sm} width={i % 2 ? '52%' : '68%'} />
+        </View>
+      ))}
+    </View>
   );
 }
 
@@ -195,7 +239,8 @@ const styles = StyleSheet.create({
   recentText: { fontSize: typography.sizes.md },
   savedRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.sm, gap: spacing.md },
   savedMain: { flex: 1 },
-  remove: { fontSize: typography.sizes.md },
+  // a fingertip's worth around the small cross, so it is not missed for the row beside it
+  removeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   hit: { paddingVertical: spacing.md },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   hitDef: { fontSize: typography.sizes.sm },

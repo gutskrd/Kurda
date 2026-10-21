@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@testing-library/react';
+import { screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Profile } from './Profile';
 import { renderApp, routedFetch } from '../test/utils';
 import { en } from '../i18n/en';
@@ -114,5 +115,43 @@ describe('Profile view (full, read-only)', () => {
     expect(screen.getByText('River Song')).toBeInTheDocument();
     // the level badge on the card says 3
     expect(document.querySelector('.pcard-level-badge')?.textContent).toBe('Level 3');
+  });
+
+  it('puts your name at the top, and everything that is yours behind the menu beside it', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        routedFetch({
+          '/me/wallet': { balances: { zer: 450, gems: 0 }, history: [] },
+          '/friends': { friends: [], total: 0 },
+          '/me': { user: meUser },
+        }),
+      ),
+    );
+    renderApp(<Profile />, ['/app/profile']);
+
+    expect(await screen.findByRole('heading', { level: 1, name: '@ada' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /share profile/i })).toBeInTheDocument();
+
+    const menu = screen.getByRole('button', { name: 'Menu' });
+    expect(menu).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.click(menu);
+    expect(menu).toHaveAttribute('aria-expanded', 'true');
+    for (const [name, href] of [
+      ['Shop', '/app/shop'],
+      ['Saved', '/app/saved'],
+      ['Friends', '/app/friends'],
+      ['Badges', '/app/badges'],
+      ['Rankings', '/app/rankings'],
+      ['Settings', '/app/settings'],
+      ['My reports', '/app/settings/reports'],
+      ['Account standing', '/app/settings/standing'],
+    ]) {
+      const list = document.querySelector<HTMLElement>('.profile-menu-list')!;
+      expect(within(list).getByRole('link', { name })).toHaveAttribute('href', href);
+    }
+    await userEvent.keyboard('{Escape}');
+    expect(document.querySelector('.profile-menu-list')).toBeNull();
+    expect(menu).toHaveFocus();
   });
 });

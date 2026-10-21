@@ -48,8 +48,28 @@ describe('Games hub', () => {
     await userEvent.click(playButtons[0]!);
 
     expect(await screen.findByText(/how do you want to play/i)).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /play solo/i })).toHaveAttribute('href', '/app/games/wordle');
-    expect(screen.getByRole('link', { name: /play online/i })).toHaveAttribute('href', '/app/games/wordle-battle');
+    const chooser = screen.getByRole('dialog');
+    expect(within(chooser).getByRole('link', { name: /play solo/i })).toHaveAttribute('href', '/app/games/wordle');
+    expect(within(chooser).getByRole('link', { name: /play online/i })).toHaveAttribute('href', '/app/games/wordle-battle');
+  });
+
+  it('lets each mode be chosen on the card itself, without the chooser', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    const wordle = (await screen.findByRole('heading', { name: 'Kurdish Wordle' })).closest('article')!;
+    await within(wordle).findByRole('button', { name: /^play$/i });
+    expect(within(wordle).getByRole('link', { name: 'Play solo' })).toHaveAttribute('href', '/app/games/wordle');
+    expect(within(wordle).getByRole('link', { name: 'Play online' })).toHaveAttribute('href', '/app/games/wordle-battle');
+    // Stories chooses its mode on its own page, so its modes stay words
+    const stories = screen.getByRole('heading', { name: 'Stories' }).closest('article')!;
+    expect(within(stories).queryByRole('link', { name: 'Quiz yourself' })).toBeNull();
+  });
+
+  it('marks a card only when the mark says something a signed-in player needs', async () => {
+    signIn();
+    renderApp(<Games />, ['/app/games']);
+    await screen.findAllByRole('button', { name: /^play$/i });
+    expect(screen.queryByText('Playable')).toBeNull();
   });
 
   it('links a single-mode game straight to its page', async () => {
@@ -115,7 +135,10 @@ describe('Games hub', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    expect(await screen.findByRole('heading', { name: 'Spiele', level: 1 })).toBeInTheDocument();
+    // the games are Learn's second half: the page is Learn, and the switch says Games
+    expect(await screen.findByRole('heading', { name: 'Lernen', level: 1 })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Spiele' })).toHaveAttribute('aria-current', 'page');
+    expect(screen.getByRole('link', { name: 'Lektionen' })).toHaveAttribute('href', '/app/learn');
     expect(screen.getByRole('heading', { name: 'Kurdisches Wordle' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();

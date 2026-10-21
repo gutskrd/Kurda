@@ -42,7 +42,7 @@
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(4, 6, 10, 0.6);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   animation: fade 0.15s ease;
@@ -57,7 +57,7 @@
   padding: 30px 26px 24px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(14, 16, 22, 0.86);
+  background: var(--panel-glass);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
@@ -609,17 +609,6 @@
   min-height: 44px;
 }
 
-/* a notification that opens the page with the rest of it */
-.rail-note-link {
-  color: inherit;
-  text-decoration: underline;
-  text-decoration-color: var(--border-strong);
-  text-underline-offset: 3px;
-}
-.rail-note-link:hover {
-  text-decoration-color: currentColor;
-}
-
 /* ---- the ⋯ beside something reportable (reports/MessageMenu.tsx) --------- */
 .msg-menu {
   position: relative;
@@ -660,7 +649,7 @@
   padding: 6px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(18, 21, 27, 0.98);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
@@ -1113,7 +1102,7 @@ button.gift-bubble:active {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(4, 6, 10, 0.66);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
   animation: fade 0.18s ease;
@@ -1132,7 +1121,7 @@ button.gift-bubble:active {
   padding: 32px 22px 24px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(14, 16, 22, 0.92);
+  background: var(--panel-bg);
   box-shadow: var(--glass-rim), var(--shadow-lg);
   overflow: hidden;
 }
@@ -1329,7 +1318,7 @@ button.gift-bubble:active {
   padding: 28px 22px 24px;
   border-radius: var(--r-xl);
   border: 1px solid color-mix(in srgb, var(--gold) 50%, transparent);
-  background: rgba(14, 12, 10, 0.86);
+  background: var(--panel-bg);
   box-shadow:
     0 0 60px rgba(240, 160, 60, 0.25),
     var(--shadow-lg);
@@ -1542,7 +1531,7 @@ button.gift-bubble:active {
   inset-inline-start: 6px;
   padding: 1px 7px;
   border-radius: var(--r-pill);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 800;
   letter-spacing: 0.02em;
 }
@@ -1553,6 +1542,13 @@ button.gift-bubble:active {
 .gift-tier-legendary {
   background: rgba(217, 56, 30, 0.25);
   color: #ffc9a8;
+}
+/* the pale inks above are for the dark page; on the light one they vanish into their tint */
+:root[data-theme='light'] .gift-tier-rare {
+  color: #3b4fc4;
+}
+:root[data-theme='light'] .gift-tier-legendary {
+  color: #96301b;
 }
 .gift-tile-owned {
   font-size: 0.74rem;
@@ -1581,7 +1577,7 @@ button.gift-bubble:active {
   margin: 4px -26px -24px;
   padding: 14px 26px calc(14px + env(safe-area-inset-bottom));
   border-top: 1px solid var(--border);
-  background: rgba(14, 16, 22, 0.96);
+  background: var(--panel-bg);
 }
 .gift-confirm-text {
   flex: 1 1 180px;
@@ -1607,6 +1603,27 @@ button.gift-bubble:active {
 .gift-confirm-note {
   flex-basis: 100%;
   margin: 0;
+}
+/* the chosen gift, drawn by the button that sends it */
+.gift-confirm-art {
+  flex: none;
+  border-radius: var(--r-md);
+}
+/* chosen, though the filters above now hide it */
+.gift-confirm-hidden {
+  font-size: 0.8rem;
+  color: var(--ink-3);
+}
+/* the shelf by kind (shop/ItemBrowser): one titled shelf per kind under All */
+.gift-shelf-section {
+  margin-bottom: 8px;
+}
+.gift-tile-desc {
+  margin-top: -4px;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  text-align: center;
+  overflow-wrap: anywhere;
 }
 @media (max-width: 640px) {
   .gift-confirm {

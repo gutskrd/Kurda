@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { lessonAudioKey } from '@kurda/shared';
-import { Narrator, narrationItems, type NarrationState, type PlayerLike } from './narration';
+import { Narrator, narrationItems, narrationLine, type NarrationState, type PlayerLike } from './narration';
 
 const paragraphs = ['Rojda çû sûkê. Ew sêv kirî!', 'Bavê wê li malê bû.'];
 const audio = {
@@ -38,6 +38,24 @@ describe('narrationItems', () => {
   it('skips a sentence nobody has recorded yet', () => {
     const partial = Object.fromEntries(Object.entries(audio).filter(([k]) => k !== lessonAudioKey('Ew sêv kirî!')));
     expect(narrationItems(paragraphs, partial).map((i) => i.url)).toEqual(['a.m4a', 'c.m4a']);
+  });
+});
+
+describe('narrationLine', () => {
+  it('says what a recorded sentence says, and who says it when somebody was chosen', () => {
+    const [first, second] = narrationItems(paragraphs, audio);
+    const voices = { [lessonAudioKey('Rojda çû sûkê.')]: { speaker: 'xezo' as const } };
+    expect(narrationLine(paragraphs, voices, first!)).toEqual({ text: 'Rojda çû sûkê.', voice: { speaker: 'xezo' } });
+    expect(narrationLine(paragraphs, voices, second!)).toEqual({ text: 'Ew sêv kirî!', voice: null });
+    expect(narrationLine(paragraphs, undefined, first!).voice).toBeNull();
+  });
+
+  it('finds nobody in what an object inherits, or in a speaker this app cannot draw', () => {
+    const item = { paragraph: 0, sentence: 0, url: 'a.m4a' };
+    const lines = ['constructor.'];
+    expect(narrationLine(lines, {}, item)).toEqual({ text: 'constructor.', voice: null });
+    const stranger = { [lessonAudioKey('constructor.')]: { speaker: 'somebody' } } as never;
+    expect(narrationLine(lines, stranger, item).voice).toBeNull();
   });
 });
 

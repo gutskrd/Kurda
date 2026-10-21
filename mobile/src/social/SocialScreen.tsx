@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
@@ -12,13 +13,13 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
-import { SideMenuButton, useOpenMenu } from '../navigation/SideMenu';
+import { BackButton } from '../navigation/BackButton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { EmptyState } from '../theme/EmptyState';
-import { undoAction } from './format';
+import { mutualText, undoAction } from './format';
 
 interface UserRow {
   userId: string;
@@ -32,16 +33,19 @@ interface Suggestion extends UserRow {
 }
 
 /**
- * Social tab (KUR-082): find people, and see and manage every friendship in
+ * Friends (KUR-082): find people, and see and manage every friendship in
  * flight — friends, requests coming in, requests you sent, and who to ask next.
+ *
+ * A pushed screen, opened from the friend count on your profile and from the
+ * profile's menu, so it has a way back; it used to carry the menu button it
+ * had as a tab, which did nothing once it was not one.
  */
-export function SocialScreen() {
+export function SocialScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
 
   const { t } = useI18n();
-  const openMenu = useOpenMenu();
   const tabBarInset = useTabBarInset();
   const topInset = useScreenTopInset();
   const [query, setQuery] = useState('');
@@ -52,9 +56,12 @@ export function SocialScreen() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [failed, setFailed] = useState(false);
+  // the list's place is held until the first answer, rather than "search to start" showing to somebody with friends
+  const [settled, setSettled] = useState(false);
 
   const loadLists = useCallback(() => {
     void client.get<{ friends: UserRow[] }>('/friends').then((r) => {
+      setSettled(true);
       if (r.ok) {
         setFriends(r.data.friends);
         setFailed(false);
@@ -106,6 +113,7 @@ export function SocialScreen() {
 
   const respond = useCallback(
     async (userId: string, accept: boolean) => {
+      if (accept) haptic('tap');
       await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
       loadLists();
     },
@@ -140,6 +148,7 @@ export function SocialScreen() {
   const addFriend = useCallback(
     (userId: string) => {
       setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
+      haptic('tap');
       void client.post('/friends/requests', { userId }).then(loadLists);
     },
     [client, loadLists],
@@ -193,12 +202,12 @@ export function SocialScreen() {
             showing halves of the same wall. Both now live on the Civak tab,
             together, which is what this tab stopped being about. */}
         <LargeTitle
-          left={<SideMenuButton onPress={openMenu} />}
+          left={<BackButton onPress={onExit} />}
           title={t('nav.friends')}
           style={styles.head}
           right={
             <Pressable
-              onPress={() => navigation.navigate('Chats')}
+              onPress={() => navigation.navigate('Tabs', { screen: 'Messages' })}
               hitSlop={hitSlopFor(MIN_TOUCH_TARGET, 22)}
               style={styles.messagesLink}
               accessibilityRole="button"
@@ -226,7 +235,7 @@ export function SocialScreen() {
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
-                <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
+                <PeopleSkeleton />
               ) : (
                 <EmptyState title={t('friends.noResults')} />
               )
@@ -292,7 +301,9 @@ export function SocialScreen() {
             }
             // a friend's row has a Play button: any game, that friend picked (play/InviteSheet)
             renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text>}
+            ListEmptyComponent={
+              settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
+            }
             ListFooterComponent={
               suggestions.length > 0 ? (
                 <View>
@@ -308,7 +319,7 @@ export function SocialScreen() {
                       >
                         <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.add')}</Text>
                       </Pressable>,
-                      t('friends.mutual', { count: s.mutualCount }),
+                      mutualText(t, s.mutualCount),
                     ),
                   )}
                 </View>
@@ -321,7 +332,28 @@ export function SocialScreen() {
   );
 }
 
+/** People in grey, row for row: the face, the name and the line under it, the button at the end. */
+function PeopleSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
+          <Skeleton width={36} height={36} radius={radii.pill} raised />
+          <View style={styles.rowMain}>
+            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} raised />
+            <SkeletonText size={typography.sizes.sm} width="28%" raised />
+          </View>
+          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} raised />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  skeleton: { gap: spacing.xs },
   screen: { flex: 1, padding: spacing.lg },
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

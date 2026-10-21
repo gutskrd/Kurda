@@ -57,6 +57,7 @@ const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
+const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
 /** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
 export const RANK_TOOL_ROLES = ['admin', 'superadmin'] as const;
 const RANK_TOOLS = { roles: RANK_TOOL_ROLES } as const;
@@ -88,6 +89,12 @@ export interface NavEntry {
   sub?: string;
   access: Access;
   keywords?: string;
+  /**
+   * The page's name where the nav's group is not beside it — the phone's top
+   * bar and the browser tab — when the label alone would not say it: the
+   * Economy group's "Overview" is the economy's overview, not the dashboard.
+   */
+  title?: string;
 }
 
 export const NAV: readonly NavEntry[] = [
@@ -98,10 +105,13 @@ export const NAV: readonly NavEntry[] = [
   { id: 'record-letters', label: 'Record the alphabet', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
   { id: 'record-stories', label: 'Record story sentences', group: 'record', icon: 'story', page: 'audio', sub: 'stories', access: RECORDERS, keywords: 'audio studio stories voice microphone narration' },
+  { id: 'record-dictionary', label: 'Dictionary pronunciations', group: 'record', icon: 'words', page: 'audio', sub: 'dictionary', access: RECORDERS, keywords: 'audio studio speakers words pronunciation' },
+  { id: 'record-characters', label: 'Characters', group: 'record', icon: 'face', page: 'audio', sub: 'characters', access: RECORDERS, keywords: 'audio studio speakers hevalo hamo xezo lip sync mouth timelines' },
 
   { id: 'users', label: 'Users', group: 'people', icon: 'users', page: 'users', access: USER_VIEWERS, keywords: 'accounts people ban mute wallet' },
+  { id: 'email', label: 'Email', group: 'people', icon: 'inbox', page: 'email', access: SUPPORT_READERS, keywords: 'support inbox mail sending resend reply' },
 
-  { id: 'moderation', label: 'Queue', group: 'moderation', icon: 'flag', page: 'moderation', access: MODERATORS, keywords: 'reports cases moderation' },
+  { id: 'moderation', label: 'Queue', title: 'Moderation queue', group: 'moderation', icon: 'flag', page: 'moderation', access: MODERATORS, keywords: 'reports cases moderation' },
   { id: 'appeals', label: 'Appeals', group: 'moderation', icon: 'scale', page: 'appeals', access: MODERATORS, keywords: 'review standing sanctions' },
   { id: 'ban-approvals', label: 'Ban approvals', group: 'moderation', icon: 'approve', page: 'ban-approvals', access: MODERATORS, keywords: 'permanent ban second admin' },
   { id: 'aimod', label: 'Automated flags', group: 'moderation', icon: 'shield', page: 'aimod', access: MODERATORS, keywords: 'ai text image flags' },
@@ -124,7 +134,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'leagues', label: 'Leagues', group: 'ranks', icon: 'waves', page: 'leagues', access: RANK_TOOLS, keywords: 'weekly groups settle merge promotion xp' },
   { id: 'badges', label: 'Badges', group: 'ranks', icon: 'award', page: 'badges', access: RANK_TOOLS, keywords: 'achievements rarity catalogue award revoke' },
 
-  { id: 'economy', label: 'Overview', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
+  { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
   { id: 'gem-rules', label: 'Gem rules', group: 'economy', icon: 'gem', page: 'gem-rules', access: LEGACY_ADMIN, keywords: 'earning' },
   { id: 'fraud', label: 'Fraud', group: 'economy', icon: 'alert', page: 'fraud', access: LEGACY_ADMIN, keywords: 'purchases holds iap' },

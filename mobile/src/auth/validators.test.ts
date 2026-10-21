@@ -6,6 +6,16 @@ describe('validateEmail', () => {
     expect(validateEmail('rojda@example.com')).toBeNull();
     expect(validateEmail('  rojda@example.com  ')).toBeNull();
   });
+  /*
+   * The addresses an iPhone hands out: iCloud and me.com, a plus tag, Apple's
+   * private relay, and capitals the keyboard or a password manager put in.
+   * None of them may be turned away on the phone before the server sees them.
+   */
+  it('accepts iCloud, plus-tagged, private relay and capitalised addresses', () => {
+    for (const address of ['name@icloud.com', 'Name.Surname+tag@me.com', 'x@privaterelay.appleid.com', 'ROJDA@ICLOUD.COM', 'a.b-c_d@mac.com']) {
+      expect(validateEmail(address), address).toBeNull();
+    }
+  });
   it('rejects empties and malformed values', () => {
     expect(validateEmail('')).toBe('required');
     expect(validateEmail('nope')).toBe('invalid_email');

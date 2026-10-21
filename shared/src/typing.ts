@@ -1065,8 +1065,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.android.sorani',
-        en: 'Search for "Kurdish", choose {0}, pick a layout and tap {1}.',
-        ui: ['Kurdish (Iraq) Arabic', 'Done'],
+        en: 'Search for "Kurdish", choose the one that ends in {0}, pick a layout and tap {1}.',
+        ui: ['Arabic', 'Done'],
       },
       {
         key: 'keyboardGuide.android.switchSorani',
@@ -1198,8 +1198,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.linux.kurmanci',
-        en: 'Choose {0}, then {1}. (Or in a terminal: setxkbmap tr ku)',
-        ui: ['Kurdish', 'Kurdish (Turkey, Latin Q)'],
+        en: 'Choose {0}, then the layout that ends in {1}.',
+        ui: ['Kurdish', 'Latin Q'],
       },
       {
         key: 'keyboardGuide.linux.switch',
@@ -1214,8 +1214,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.linux.sorani',
-        en: 'Choose {0}, then {1}.',
-        ui: ['Kurdish', 'Kurdish (Iraq, Arabic-Latin)'],
+        en: 'Choose {0}, then the layout that ends in {1}.',
+        ui: ['Kurdish', 'Arabic-Latin'],
       },
       {
         key: 'keyboardGuide.linux.switch',

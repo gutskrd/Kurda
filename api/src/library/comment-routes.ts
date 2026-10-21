@@ -6,6 +6,7 @@ import { requireUnrestricted, voiceAttachable } from '../moderation/restrictions
 import { LibraryCommentService, type CreateCommentInput } from './comment-service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
+import { pageQuery, queryWord } from '../http/query.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
@@ -91,15 +92,17 @@ export function registerLibraryCommentRoutes(
     },
   );
 
+  const commentPageQuery = z.object({ sort: queryWord, ...pageQuery });
+
   /** Top-level comments of a post (public, paginated). */
-  app.get('/library/posts/:postId/comments', { schema: { params: postIdParam } }, async (req) => {
+  app.get('/library/posts/:postId/comments', { schema: { params: postIdParam, querystring: commentPageQuery } }, async (req) => {
     const { postId } = req.params as { postId: string };
-    const q = req.query as Record<string, string | undefined>;
+    const q = req.query as z.infer<typeof commentPageQuery>;
     const rows = await comments.topLevel(
       postId,
       {
-        limit: q.limit ? Number(q.limit) : undefined,
-        offset: q.offset ? Number(q.offset) : undefined,
+        limit: q.limit,
+        offset: q.offset,
         sort: q.sort === 'oldest' ? 'oldest' : 'newest',
       },
       req.user?.id ?? null,
@@ -109,12 +112,12 @@ export function registerLibraryCommentRoutes(
   });
 
   /** Direct replies to a comment (public, load-more per branch). */
-  app.get('/library/comments/:id/replies', { schema: { params: idParam } }, async (req) => {
+  app.get('/library/comments/:id/replies', { schema: { params: idParam, querystring: commentPageQuery } }, async (req) => {
     const { id } = req.params as { id: string };
-    const q = req.query as Record<string, string | undefined>;
+    const q = req.query as z.infer<typeof commentPageQuery>;
     const rows = await comments.replies(
       id,
-      { limit: q.limit ? Number(q.limit) : undefined, offset: q.offset ? Number(q.offset) : undefined },
+      { limit: q.limit, offset: q.offset },
       req.user?.id ?? null,
     );
     const authored = await comments.withAuthors(rows, (k) => (app.storage ? app.storage.publicUrl(k) : null));

@@ -2,6 +2,7 @@ import type pg from 'pg';
 import { AppError } from '../plugins/errors.js';
 import { WalletService, type Currency } from '../wallet/service.js';
 import type { Cache } from '../cache/cache.js';
+import { claimArt, releaseArt } from './art.js';
 
 export interface ShopItem {
   sku: string;
@@ -76,6 +77,14 @@ export interface ItemRow {
   asset_key: string | null;
   premium_only: boolean;
   display_order: number;
+  /** an admin deleted it while people owned it: kept for them, gone from the shop (migration 1751000180000) */
+  retired_at: Date | null;
+}
+
+/** A catalogue row as the admin sees it: when it was retired, and how many people own it. */
+export interface AdminShopItem extends ShopItem {
+  retiredAt: Date | null;
+  owners: number;
 }
 
 /**
@@ -145,44 +154,118 @@ export class ShopService {
     private readonly cache?: Cache,
   ) {}
 
-  private async invalidate(): Promise<void> {
+  /** Drop the cached catalogue, after any change an admin makes to it. */
+  async invalidate(): Promise<void> {
     await this.cache?.del('shop', CATALOG_KEY);
   }
 
-  /** Admin: upsert a catalog item, then bust the catalog cache. */
+  /** Run `fn` in a transaction on one client. */
+  private async tx<T>(fn: (client: pg.PoolClient) => Promise<T>): Promise<T> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const out = await fn(client);
+      await client.query('COMMIT');
+      return out;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
+  }
+
+  /** Hold the art an item is being saved with (shop/art.ts), or refuse the save. */
+  private async claim(client: pg.PoolClient, assetKey: string | null, category: string): Promise<void> {
+    const claimed = await claimArt(client, assetKey, category);
+    if (!claimed.ok) throw new AppError(claimed.code, 409, claimed.message);
+  }
+
+  /**
+   * Admin: upsert a catalog item, then bust the catalog cache.
+   *
+   * Uploaded art is held for the item, and the art it had before let go of if
+   * nothing else uses it (shop/art.ts). Listing an item again (`active`)
+   * un-retires it: retired means deleted-but-kept, and an item on the shelves
+   * is not that.
+   */
   async createItem(input: CreateItemInput): Promise<ShopItem> {
     if (input.price < 0) throw new AppError('BAD_PRICE', 400, 'price must be ≥ 0');
-    const row = await this.pool.query<ItemRow>(
-      `INSERT INTO shop_items
-         (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to,
-          asset_key, premium_only, display_order)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-       ON CONFLICT (sku) DO UPDATE SET
-         name = EXCLUDED.name, description = EXCLUDED.description, category = EXCLUDED.category,
-         currency = EXCLUDED.currency, price = EXCLUDED.price, is_unique = EXCLUDED.is_unique,
-         active = EXCLUDED.active, in_stock = EXCLUDED.in_stock,
-         available_from = EXCLUDED.available_from, available_to = EXCLUDED.available_to,
-         asset_key = EXCLUDED.asset_key, premium_only = EXCLUDED.premium_only, display_order = EXCLUDED.display_order
-       RETURNING *`,
-      [
-        input.sku,
-        input.name,
-        input.description ?? null,
-        input.category ?? 'misc',
-        input.currency,
-        input.price,
-        input.isUnique ?? true,
-        input.active ?? true,
-        input.inStock ?? true,
-        input.availableFrom ?? null,
-        input.availableTo ?? null,
-        input.assetKey ?? null,
-        input.premiumOnly ?? false,
-        input.displayOrder ?? 0,
-      ],
-    );
+    const category = input.category ?? 'misc';
+    const row = await this.tx(async (client) => {
+      const was = await client.query<{ asset_key: string | null }>(
+        `SELECT asset_key FROM shop_items WHERE sku = $1 FOR UPDATE`,
+        [input.sku],
+      );
+      await this.claim(client, input.assetKey ?? null, category);
+      const saved = await client.query<ItemRow>(
+        `INSERT INTO shop_items
+           (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to,
+            asset_key, premium_only, display_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         ON CONFLICT (sku) DO UPDATE SET
+           name = EXCLUDED.name, description = EXCLUDED.description, category = EXCLUDED.category,
+           currency = EXCLUDED.currency, price = EXCLUDED.price, is_unique = EXCLUDED.is_unique,
+           active = EXCLUDED.active, in_stock = EXCLUDED.in_stock,
+           available_from = EXCLUDED.available_from, available_to = EXCLUDED.available_to,
+           asset_key = EXCLUDED.asset_key, premium_only = EXCLUDED.premium_only, display_order = EXCLUDED.display_order,
+           retired_at = CASE WHEN EXCLUDED.active THEN NULL ELSE shop_items.retired_at END
+         RETURNING *`,
+        this.params(input, category),
+      );
+      const before = was.rows[0]?.asset_key ?? null;
+      if (before !== (input.assetKey ?? null)) await releaseArt(client, before);
+      return saved.rows[0]!;
+    });
     await this.invalidate();
-    return this.toItem(row.rows[0]!);
+    return this.toItem(row);
+  }
+
+  /**
+   * Admin: add a new item, never touching one that exists — null when the SKU
+   * is taken. The upsert above overwrites whatever has the SKU it is given,
+   * which is right for an edit and wrong for "add": a new item that happened
+   * to reuse an SKU would quietly replace an item people own.
+   */
+  async addItem(input: CreateItemInput): Promise<ShopItem | null> {
+    if (input.price < 0) throw new AppError('BAD_PRICE', 400, 'price must be ≥ 0');
+    const category = input.category ?? 'misc';
+    const row = await this.tx(async (client) => {
+      const saved = await client.query<ItemRow>(
+        `INSERT INTO shop_items
+           (sku, name, description, category, currency, price, is_unique, active, in_stock, available_from, available_to,
+            asset_key, premium_only, display_order)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
+         ON CONFLICT (sku) DO NOTHING
+         RETURNING *`,
+        this.params(input, category),
+      );
+      if (!saved.rows[0]) return null;
+      await this.claim(client, input.assetKey ?? null, category);
+      return saved.rows[0];
+    });
+    if (!row) return null;
+    await this.invalidate();
+    return this.toItem(row);
+  }
+
+  private params(input: CreateItemInput, category: string): unknown[] {
+    return [
+      input.sku,
+      input.name,
+      input.description ?? null,
+      category,
+      input.currency,
+      input.price,
+      input.isUnique ?? true,
+      input.active ?? true,
+      input.inStock ?? true,
+      input.availableFrom ?? null,
+      input.availableTo ?? null,
+      input.assetKey ?? null,
+      input.premiumOnly ?? false,
+      input.displayOrder ?? 0,
+    ];
   }
 
   /** Admin: flip an item in/out of stock (invalidates the cache). */
@@ -196,13 +279,25 @@ export class ShopService {
    * Admin: every catalog row, including inactive and out-of-stock ones, so prices
    * and availability can be managed. Reads straight through (no cache) — an admin
    * must always see the current truth right after editing it.
+   *
+   * Retired items (deleted while people owned them) are left out unless asked
+   * for: they are not the shop any more, and a list to grant items from or to
+   * price should not offer them. Each row says how many people own it, which
+   * is what decides whether deleting it deletes it.
    */
-  async allItems(): Promise<(ShopItem & { active: boolean; inStock: boolean })[]> {
-    const rows = await this.pool.query<ItemRow>(
-      `SELECT * FROM shop_items ORDER BY category, display_order, price`,
-    );
-    return rows.rows.map((r) => ({ ...this.toItem(r), active: r.active, inStock: r.in_stock }));
+  async allItems(opts: { retired?: 'exclude' | 'include' } = {}): Promise<AdminShopItem[]> {
+    const [rows, owners] = await Promise.all([
+      this.pool.query<ItemRow>(
+        `SELECT * FROM shop_items
+          ${opts.retired === 'include' ? '' : 'WHERE retired_at IS NULL'}
+          ORDER BY category, display_order, price`,
+      ),
+      this.pool.query<{ sku: string; n: number }>(`SELECT sku, count(*)::int AS n FROM user_entitlements GROUP BY sku`),
+    ]);
+    const owned = new Map(owners.rows.map((r) => [r.sku, r.n]));
+    return rows.rows.map((r) => ({ ...this.toItem(r), retiredAt: r.retired_at, owners: owned.get(r.sku) ?? 0 }));
   }
+
   /** All active items (window applied by callers), cached 5 min. */
   private async activeItems(): Promise<CachedItem[]> {
     const load = async (): Promise<CachedItem[]> => {
@@ -437,21 +532,26 @@ export class ShopService {
   }
 
   private toItem(r: ItemRow): ShopItem {
-    return {
-      sku: r.sku,
-      name: r.name,
-      description: r.description,
-      category: r.category,
-      currency: r.currency,
-      price: r.price,
-      isUnique: r.is_unique,
-      active: r.active,
-      inStock: r.in_stock,
-      availableFrom: r.available_from,
-      availableTo: r.available_to,
-      assetKey: r.asset_key,
-      premiumOnly: r.premium_only,
-      displayOrder: r.display_order,
-    };
+    return toShopItem(r);
   }
+}
+
+/** A `shop_items` row in the shape the API answers with. */
+export function toShopItem(r: ItemRow): ShopItem {
+  return {
+    sku: r.sku,
+    name: r.name,
+    description: r.description,
+    category: r.category,
+    currency: r.currency,
+    price: r.price,
+    isUnique: r.is_unique,
+    active: r.active,
+    inStock: r.in_stock,
+    availableFrom: r.available_from,
+    availableTo: r.available_to,
+    assetKey: r.asset_key,
+    premiumOnly: r.premium_only,
+    displayOrder: r.display_order,
+  };
 }

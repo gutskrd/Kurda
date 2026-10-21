@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { useT } from '../i18n/I18nProvider';
+import { challengeSiteKey } from '../auth/challenge';
 
 export function Login(): React.JSX.Element {
   const { login } = useAuth();
@@ -16,17 +17,26 @@ export function Login(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     const err = await login(email, password, remember);
     setBusy(false);
-    if (err) setError(err);
-    else navigate(from, { replace: true });
+    if (err) {
+      setError(err.message);
+      setErrorCode(err.code ?? null);
+    } else navigate(from, { replace: true });
   }
+
+  // Sign-in paused after failed attempts, or asking for a challenge this build
+  // has no way to show: not a mistake in the form, so said calmly, with the
+  // other way in beside it.
+  const paused = errorCode === 'LOCKED' || (errorCode === 'CAPTCHA_REQUIRED' && challengeSiteKey() === null);
 
   return (
     <div className="auth-wrap">
@@ -37,10 +47,21 @@ export function Login(): React.JSX.Element {
         </div>
 
         <form onSubmit={submit} noValidate>
-          {error && (
-            <div className="msg msg-error" role="alert">
+          {error && paused ? (
+            <div className="msg" role="alert">
               {error}
+              <span className="msg-actions">
+                <Link to="/forgot-password" className="btn btn-secondary btn-sm">
+                  {t('auth.reset.title')}
+                </Link>
+              </span>
             </div>
+          ) : (
+            error && (
+              <div className="msg msg-error" role="alert">
+                {error}
+              </div>
+            )
           )}
 
           <div className="field">

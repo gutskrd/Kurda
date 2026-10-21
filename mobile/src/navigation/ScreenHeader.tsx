@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useCallback, useState, type ReactNode } from 'react';
+import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -7,6 +7,7 @@ import { display } from '../theme/fonts';
 import { spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { useScreenTopInset } from './tabBarLayout';
+import { useDirection } from '../reports/direction';
 
 /**
  * The bar at the top of a screen that is not a tab.
@@ -29,8 +30,17 @@ import { useScreenTopInset } from './tabBarLayout';
  * whatever is left means the middle is the middle, whatever either side holds
  * and whatever language it holds it in. That is what UINavigationBar does.
  *
+ * And each side is at least as wide as the wider of the two holds, measured,
+ * so a long title is cut short with an ellipsis instead of running over the
+ * way back — a club's name beside "گەڕانەوە" and two buttons was drawn
+ * straight across both.
+ *
  * The bar itself is 44pt tall — the same minimum a fingertip needs, which is
  * not a coincidence, because the back button is the thing in it.
+ *
+ * In Soranî and Arabic the bar is mirrored: the way back is on the right and
+ * its chevron points right, which is the direction "back" is for a reader of
+ * those languages.
  */
 export function ScreenHeader({
   title,
@@ -73,6 +83,18 @@ export function ScreenHeader({
   const { colors } = useTheme();
   const { t } = useI18n();
   const topInset = useScreenTopInset();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
+  // how wide the way back and the trailing actions are, so neither side is squeezed under the title
+  const [ends, setEnds] = useState({ start: 0, end: 0 });
+  const measure = useCallback(
+    (key: 'start' | 'end') => (e: LayoutChangeEvent) => {
+      const width = Math.ceil(e.nativeEvent.layout.width);
+      setEnds((was) => (was[key] === width ? was : { ...was, [key]: width }));
+    },
+    [],
+  );
+  const sideMin = { minWidth: Math.max(ends.start, ends.end) };
 
   return (
     <View
@@ -83,22 +105,23 @@ export function ScreenHeader({
         style,
       ]}
     >
-      <View style={styles.bar}>
-        <View style={styles.side}>
+      <View style={[styles.bar, { flexDirection: dir.row }]}>
+        <View style={[styles.side, sideMin, { flexDirection: dir.row }]}>
           {onBack ? (
             <Pressable
+              onLayout={measure('start')}
               onPress={onBack}
               accessibilityRole="button"
               accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
               hitSlop={10}
-              style={({ pressed }) => [styles.leading, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.leading, { flexDirection: dir.row }, mirrored && styles.leadingMirrored, pressed && styles.pressed]}
             >
               {leading === 'close' ? (
                 <Icon name="close" size={22} color={colors.primary} />
               ) : (
                 <>
-                  <Icon name="chevron-left" size={20} color={colors.primary} />
-                  <Text style={[styles.backLabel, { color: colors.primary }]} numberOfLines={1}>
+                  <Icon name="chevron-left" size={20} color={colors.primary} style={dir.flip ?? undefined} />
+                  <Text style={[styles.backLabel, mirrored && styles.backLabelMirrored, { color: colors.primary }]} numberOfLines={1}>
                     {t('common.back')}
                   </Text>
                 </>
@@ -113,7 +136,15 @@ export function ScreenHeader({
           </Text>
         ) : null}
 
-        <View style={[styles.side, styles.sideEnd]}>{right}</View>
+        <View style={[styles.side, sideMin, { flexDirection: dir.row, justifyContent: 'flex-start' }]}>
+          {/* the trailing slot runs to the far edge whichever side that is */}
+          <View style={styles.sideFill} />
+          {right ? (
+            <View onLayout={measure('end')} style={[styles.trailing, { flexDirection: dir.row }]}>
+              {right}
+            </View>
+          ) : null}
+        </View>
       </View>
     </View>
   );
@@ -124,12 +155,15 @@ const styles = StyleSheet.create({
   bar: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.sm },
   // equal shares of what the title does not use, so the title is centred
   // without anybody having to guess how wide the word "Back" is
-  side: { flex: 1, flexDirection: 'row', alignItems: 'center' },
-  sideEnd: { justifyContent: 'flex-end' },
-  leading: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
+  side: { flex: 1, alignItems: 'center' },
+  sideFill: { flex: 1 },
+  trailing: { alignItems: 'center' },
+  leading: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
+  leadingMirrored: { paddingRight: 0, paddingLeft: spacing.sm },
   pressed: { opacity: 0.6 },
   // the chevron already carries the spacing; -2 closes the gap the glyph's own
   // side bearing leaves, which is what makes it read as one control
   backLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, marginLeft: -2 },
+  backLabelMirrored: { marginLeft: 0, marginRight: -2 },
   title: { ...display(typography.sizes.lg), flexShrink: 1, textAlign: 'center' },
 });

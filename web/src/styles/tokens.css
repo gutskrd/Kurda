@@ -1,9 +1,20 @@
 /*
- * Hevalo web — liquid-glass design tokens.
- * The app sits on ONE consistent base color (--app-bg); surfaces are translucent,
- * blurred glass with white text. The only user-specific background is the profile
- * background, rendered inside profiles — never the whole page.
- * Gold (#EBA905, the Zêr/XP accent) stays for meaning. Single immersive theme.
+ * Hevalo web — design tokens, in two schemes.
+ *
+ * The interface is mostly monochrome, near-black or near-white, so that what
+ * people post and the art carry the colour. One warm accent — the gold of the
+ * Kurdish sun — marks rewards, the streak, Zêr and the thing you are on; green
+ * and red say right and wrong and are used sparingly, and never alone.
+ *
+ * Dark is the default and is written on :root. Light is the same set of names
+ * with different values, switched by `data-theme="light"` on <html>, which
+ * theme/theme.ts sets from the choice in Settings. Nothing outside this file
+ * should need to know which scheme is on: a colour that has to differ between
+ * them belongs here, under a name that says what it is for.
+ *
+ * Every text colour below was checked against the surfaces it sits on (WCAG AA:
+ * 4.5:1 for text, 3:1 for large text and the edges of controls). The numbers
+ * are noted beside the ones that were close.
  */
 :root {
   /* the single, consistent page background behind every surface */
@@ -12,15 +23,36 @@
   /* ink (light text on the base color) */
   --ink: #ffffff;
   --ink-2: rgba(255, 255, 255, 0.84);
-  --ink-3: rgba(255, 255, 255, 0.6);
-  --ink-4: rgba(255, 255, 255, 0.42);
+  /* secondary text: ≈ #A3A6AD, 7.7:1 on the page, 7.4:1 on a card */
+  --ink-3: rgba(255, 255, 255, 0.62);
+  /* the quietest text a reader still has to read (placeholders, counts): 5.3:1 */
+  --ink-4: rgba(255, 255, 255, 0.5);
 
-  /* translucent glass surfaces */
+  /* raised surfaces, lightest last: #14171C → #1B1F26 over the page */
   --bg: rgba(255, 255, 255, 0.06); /* card/input fill */
   --surface: rgba(255, 255, 255, 0.05);
-  --surface-2: rgba(255, 255, 255, 0.11);
-  --border: rgba(255, 255, 255, 0.14);
-  --border-strong: rgba(255, 255, 255, 0.28);
+  --surface-2: rgba(255, 255, 255, 0.1);
+  --surface-3: rgba(255, 255, 255, 0.16);
+  /* an opaque raised surface, for things that float over the page (menus, sheets) */
+  --surface-solid: #1b1f26;
+  /* a panel that floats over the page — a menu, a toast, a dialog — near-opaque, and frosted where it is glass */
+  --panel-bg: #161a21;
+  --panel-glass: rgba(14, 16, 22, 0.86);
+  --separator: rgba(255, 255, 255, 0.08);
+  --border: rgba(255, 255, 255, 0.12);
+  --border-strong: rgba(255, 255, 255, 0.26);
+  /* the edge of a field you type into: 3:1 against the page, as a control's edge must be */
+  --input-border: rgba(255, 255, 255, 0.36);
+  --input-bg: rgba(255, 255, 255, 0.07);
+
+  /*
+   * The top bar is solid, and so are the panels that float: words on them
+   * must never have other words showing through. The footer is the one piece
+   * of chrome still frosted (`--chrome-bg`).
+   */
+  --nav-bg: #0b0d10;
+  --chrome-bg: rgba(11, 13, 16, 0.78);
+  --scrim: rgba(0, 0, 0, 0.55);
 
   /* primary action = solid white for contrast on glass */
   --primary: #ffffff;
@@ -29,32 +61,84 @@
 
   /* meaning-only accents */
   --gold: #f0c24a;
+  /* gold used as text */
   --gold-ink: #f6d68b;
   --gold-soft: rgba(240, 194, 74, 0.16);
+  --gems: #7cc6ff;
+  /* a heart that has been given: its own colour, apart from gold and the semantic pair */
+  --like: #ff8fa3;
   --danger: #ff9c90;
   --danger-soft: rgba(255, 120, 105, 0.16);
+  /* a filled destructive button, and the words on it (5.9:1) */
+  --danger-fill: #d93a2b;
+  --on-danger: #ffffff;
   --success: #86e2a4;
   --success-soft: rgba(87, 185, 107, 0.18);
+  /* someone online: a dot, never the only sign of it */
+  --online: #3ddc84;
 
-  --focus: rgba(255, 255, 255, 0.55);
+  --focus: rgba(255, 255, 255, 0.6);
 
   /* glass mechanics */
   --glass-blur: 20px;
-  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.12);
 
   /* type */
   --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --font-display: 'Iowan Old Style', 'Palatino Linotype', 'Palatino', 'Georgia', 'Times New Roman', serif;
 
-  /* radii */
+  /*
+   * One type scale for every screen: large titles, a section title, rows and
+   * body, secondary lines, captions, and the smallest labels — nothing
+   * smaller than that last one.
+   */
+  --text-title-lg: 2.125rem; /* 34 */
+  --text-title: 1.75rem; /* 28 */
+  --text-section: 1.375rem; /* 22 */
+  --text-body: 1.0625rem; /* 17 */
+  --text-secondary: 0.9375rem; /* 15 */
+  --text-caption: 0.8125rem; /* 13 */
+  --text-tab: 0.6875rem; /* 11 */
+
+  /* the 4/8 rhythm */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+
+  /* radii: pills for buttons and chips, 12–16 for cards, 20–28 for sheets */
   --r-xs: 6px;
   --r-sm: 8px;
   --r-md: 12px;
-  --r-lg: 18px;
-  --r-xl: 26px;
+  --r-lg: 16px;
+  --r-xl: 24px;
   --r-pill: 999px;
 
-  /* depth */
+  /*
+   * Motion, decided once — the same numbers the phone keeps in
+   * mobile/src/theme/motion.ts. Quick for a state change, a little longer for
+   * something arriving, longest for a value moving to where it now is; out-
+   * curves only (things arrive fast and settle). `--ease-spring` overshoots a
+   * hair, for the few things allowed a little joy: an emblem landing, a heart
+   * filling, a right answer. A celebration is over inside `--dur-celebrate`.
+   * Only transform and opacity move, and base.css stills all of it under
+   * prefers-reduced-motion.
+   */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-emphasis: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+  --dur-fast: 120ms;
+  --dur: 200ms;
+  --dur-slow: 320ms;
+  --dur-progress: 400ms;
+  --dur-celebrate: 1600ms;
+  /* how far a pressed button, card or tile gives under a finger */
+  --press-scale: 0.97;
+
+  /* depth: hairlines first; shadows only for what floats */
   --shadow-sm: 0 2px 10px rgba(0, 0, 0, 0.3);
   --shadow: 0 10px 34px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 30px 80px rgba(0, 0, 0, 0.5);
@@ -62,7 +146,75 @@
   /* layout */
   --container: 1120px;
   --container-narrow: 720px;
-  --nav-h: 66px;
+  --nav-h: 64px;
+  /* where the bar ends: its height, and on a screen with a notch the safe area above it, which the bar grows into */
+  --nav-bottom: calc(var(--nav-h) + env(safe-area-inset-top, 0px));
 
   color-scheme: dark;
+}
+
+/*
+ * Light.
+ *
+ * Near-white page, white cards, near-black ink. Gold as a fill is the sun's
+ * own #EBA905; gold as text is darker (#805C00: 6.1:1 on white, 5:1 on the
+ * grey of a pressed chip or a tile), because the fill colour as words on white
+ * would be unreadable. The same goes for green, red and the heart's pink: the
+ * light scheme's are deep enough to read as text.
+ */
+:root[data-theme='light'] {
+  --app-bg: #f6f6f5;
+
+  --ink: #111111;
+  --ink-2: #2f3033;
+  /* secondary: 5.8:1 on the page, 6.3:1 on a card */
+  --ink-3: #5e6066;
+  /* 4.5:1 on the page */
+  --ink-4: #6f7177;
+
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --surface-2: rgba(17, 17, 17, 0.06);
+  --surface-3: rgba(17, 17, 17, 0.1);
+  --surface-solid: #ffffff;
+  --panel-bg: #ffffff;
+  --panel-glass: rgba(255, 255, 255, 0.94);
+  --separator: rgba(17, 17, 17, 0.08);
+  --border: rgba(17, 17, 17, 0.1);
+  --border-strong: rgba(17, 17, 17, 0.22);
+  --input-border: rgba(17, 17, 17, 0.42);
+  --input-bg: #ffffff;
+
+  --nav-bg: #ffffff;
+  --chrome-bg: rgba(246, 246, 245, 0.86);
+  --scrim: rgba(17, 17, 17, 0.4);
+
+  --primary: #111111;
+  --primary-hover: #2b2c2f;
+  --primary-ink: #ffffff;
+
+  --gold: #eba905;
+  --gold-ink: #805c00;
+  --gold-soft: rgba(235, 169, 5, 0.16);
+  --gems: #1f6fb2;
+  /* 5.4:1 on a card, 5:1 on the page */
+  --like: #c8285a;
+  --danger: #b42318;
+  --danger-soft: rgba(180, 35, 24, 0.09);
+  --danger-fill: #b42318;
+  --on-danger: #ffffff;
+  /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
+  --success: #17723a;
+  --success-soft: rgba(26, 122, 58, 0.1);
+  --online: #1fa45a;
+
+  --focus: rgba(17, 17, 17, 0.7);
+
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+
+  --shadow-sm: 0 1px 3px rgba(17, 17, 17, 0.08);
+  --shadow: 0 8px 28px rgba(17, 17, 17, 0.1);
+  --shadow-lg: 0 24px 64px rgba(17, 17, 17, 0.16);
+
+  color-scheme: light;
 }

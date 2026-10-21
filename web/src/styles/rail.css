@@ -41,7 +41,8 @@
   border-radius: var(--r-pill);
   border: 1px solid var(--gold-ink);
   opacity: 0;
-  animation: rail-breathe 2.6s ease-out infinite;
+  /* three breaths when something arrives, then it rests: the dot still says so */
+  animation: rail-breathe 2.6s ease-out 3;
   pointer-events: none;
 }
 @keyframes rail-breathe {
@@ -60,7 +61,7 @@
   border-radius: var(--r-pill);
   background: var(--gold);
   color: #1a1408;
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -99,7 +100,7 @@
   width: var(--rail-w);
   display: flex;
   flex-direction: column;
-  background: rgba(16, 19, 25, 0.72);
+  background: var(--panel-glass);
   /* more blur than before: it is now doing the legibility work the alpha was */
   -webkit-backdrop-filter: blur(26px) saturate(1.25);
   backdrop-filter: blur(26px) saturate(1.25);
@@ -202,7 +203,7 @@
   border: 0;
   background: transparent;
   font: inherit;
-  text-align: left;
+  text-align: start;
 }
 .rail-section-head.is-button {
   cursor: pointer;
@@ -244,7 +245,7 @@
   text-decoration: none;
 }
 .rail-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .rail-avatar {
   position: relative;
@@ -258,11 +259,12 @@
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  border: 2px solid #101319;
+  /* the ring parts the dot from the picture: the panel's own colour, in either scheme */
+  border: 2px solid var(--panel-bg);
 }
 .rail-dot.is-online { background: var(--success); }
 .rail-dot.is-playing { background: var(--gold); }
-.rail-dot.is-offline { background: rgba(255, 255, 255, 0.28); }
+.rail-dot.is-offline { background: var(--border-strong); }
 .rail-row-text {
   flex: 1;
   min-width: 0;
@@ -354,29 +356,6 @@
   to { opacity: 1; transform: translateX(0); }
 }
 
-.rail-note {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 8px;
-  border-radius: var(--r-sm);
-}
-.rail-note.is-unread {
-  background: rgba(240, 194, 74, 0.07);
-  box-shadow: inset 2px 0 0 var(--gold-ink);
-}
-.rail-note-title {
-  font-size: 0.82rem;
-}
-.rail-note-body {
-  color: var(--ink-4);
-  font-size: 0.76rem;
-}
-.rail-note-when {
-  color: var(--ink-4);
-  font-size: 0.7rem;
-}
-
 /* ---- folded to a strip of icons ----------------------------------------- */
 .rail-fold {
   display: none; /* only the fixed column can fold; the drawer has no room */
@@ -417,7 +396,7 @@
 }
 .rail-rung:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .rail-rung.is-urgent {
   color: var(--gold-ink);
@@ -429,7 +408,7 @@
   right: -3px;
   min-width: 16px;
   height: 16px;
-  font-size: 0.62rem;
+  font-size: var(--text-tab);
 }
 /* a count that is only informational should not shout like an invite does */
 .rail-rung:not(.is-urgent) .rail-rung-count {
@@ -456,7 +435,7 @@
   overflow: hidden;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(20, 24, 31, 0.96);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(16px);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-lg);
@@ -476,7 +455,7 @@
   background: transparent;
   color: var(--ink);
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
   min-width: 0;
 }
@@ -526,7 +505,7 @@
 }
 .rail-toast-timer {
   position: absolute;
-  left: 0;
+  inset-inline-start: 0;
   bottom: 0;
   height: 2px;
   background: var(--gold-ink);
@@ -655,42 +634,6 @@
   }
 }
 
-/* a notification you can be done with */
-.rail-note-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-.rail-note-dismiss {
-  border: 0;
-  background: transparent;
-  color: var(--ink-4);
-  cursor: pointer;
-  padding: 2px;
-  line-height: 0;
-}
-.rail-note-dismiss:hover {
-  color: var(--ink);
-}
-.rail-note-clear {
-  display: block;
-  width: 100%;
-  margin-top: 6px;
-  padding: 7px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-sm);
-  background: transparent;
-  color: var(--ink-3);
-  font: inherit;
-  font-size: 0.78rem;
-  cursor: pointer;
-}
-.rail-note-clear:hover {
-  color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
-}
-
 /* ---- a conversation docked beside the rail ------------------------------ */
 /*
  * Reaching someone should not cost you the page you are on — that is the whole
@@ -763,7 +706,7 @@
     height: min(440px, calc(100vh - var(--nav-h) - 32px));
     border: 1px solid var(--border-strong);
     border-radius: var(--r-lg);
-    background: rgba(16, 19, 25, 0.97);
+    background: var(--panel-bg);
     -webkit-backdrop-filter: blur(18px) saturate(1.2);
     backdrop-filter: blur(18px) saturate(1.2);
     box-shadow: 0 18px 44px rgba(0, 0, 0, 0.5);
@@ -847,7 +790,7 @@
 }
 .rail-friend-chat:hover {
   color: var(--gold-ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 
 /* the dock's close sits where a window's close sits: the far end of its bar */
@@ -857,7 +800,7 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  margin-left: auto;
+  margin-inline-start: auto;
   border: 0;
   border-radius: var(--r-sm);
   background: transparent;
@@ -866,7 +809,7 @@
 }
 .chat-dock-close:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
 
 /* a group row is the friend row's shape: name links, bubble docks */
@@ -878,4 +821,77 @@
   min-width: 0;
   color: inherit;
   text-decoration: none;
+}
+
+/* ---- right to left ------------------------------------------------------ */
+/*
+ * In Arabic and Soranî the page runs from the right, so its end — where the
+ * column docks, and where its drawer, its toasts and the chat beside it come
+ * from — is the left. The rules above were written for a page that ends on
+ * the right; these turn the same pieces round, in one place, rather than
+ * leaving a right-to-left reader a column on the side they start reading from.
+ */
+[dir='rtl'] .social-rail {
+  right: auto;
+  left: 0;
+  border-left: 0;
+  border-right: 1px solid var(--border);
+}
+[dir='rtl'] .rail-toggle .rail-badge {
+  right: auto;
+  left: -5px;
+}
+[dir='rtl'] .rail-rung-count {
+  right: auto;
+  left: -3px;
+}
+/* the arrows point the other way: towards the edge to fold, away to open */
+[dir='rtl'] .rail-fold-arrow {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .rail-fold-arrow.is-open {
+  transform: rotate(180deg) scaleX(-1);
+}
+[dir='rtl'] .rail-chevron {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .rail-chevron.is-open {
+  transform: rotate(90deg);
+}
+[dir='rtl'] .rail-card-in {
+  animation-name: rail-slide-in-rtl;
+}
+[dir='rtl'] .rail-toast {
+  animation-name: rail-toast-in-rtl;
+}
+@keyframes rail-slide-in-rtl {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes rail-toast-in-rtl {
+  from { opacity: 0; transform: translateX(-26px) scale(0.98); }
+  to { opacity: 1; transform: translateX(0) scale(1); }
+}
+@media (min-width: 1180px) {
+  [dir='rtl'] .rail-toasts {
+    right: auto;
+    left: calc(var(--rail-strip-w) + 16px);
+  }
+  [dir='rtl'] .rail-chat {
+    right: auto;
+    left: calc(var(--rail-w) + 10px);
+    transition: left 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  [dir='rtl'] .rail-chat.is-tight {
+    right: auto;
+    left: calc(var(--rail-strip-w) + 10px);
+  }
+}
+@media (max-width: 1179px) {
+  [dir='rtl'] .social-rail {
+    transform: translateX(-100%);
+  }
+  [dir='rtl'] .social-rail.is-open {
+    transform: translateX(0);
+  }
 }

@@ -1,16 +1,16 @@
 /**
  * The colours the badges, emblems and frames are made of.
  *
- * One hero hue per thing, lit from within. A hue is five steps — a near-white
- * highlight, a light, the hue itself, a deep shade and the darkest tone — and
- * a piece is painted from those alone: its lit facets from the top two, its
- * shaded facets from the bottom two, its edge from the darkest. There is no
- * outline in a foreign ink: what separates a piece from the page is its own
- * darkest tone, which is what keeps a pale tier from vanishing on the light
- * theme, and its glow and highlight are what lift it off the dark one.
+ * Everything is painted like an enamel pin: a metal rim and coloured enamel
+ * inside it. A metal is five steps — a near-white highlight, a light, the hue
+ * itself, a deep shade and the darkest tone — and a rim is lit from those
+ * alone, light at its upper left running to shade at its lower right. There is
+ * no outline in a foreign ink: what separates a piece from the page is its own
+ * darkest tone, which keeps a pale tier from vanishing on the light theme,
+ * and its own light rim is what lifts it off the dark one.
  *
- * Shadows lean cool and violet, highlights lean warm or toward white, so the
- * tones stay clean instead of going grey or brown as they darken.
+ * Shadows lean toward the hue rather than toward grey, so a piece stays warm
+ * as it darkens.
  */
 import type { BadgeFamily, BadgeTier, LeagueTier, RankTier } from './keys.js';
 
@@ -85,42 +85,48 @@ export type AccentName = keyof typeof ACCENT;
 // ───────────────────────────────────────────────────────────── game ranks
 
 /**
- * Rank tiers climb in light as they climb in height: the warm sand and amber
- * of the plain, a fresh hill green, the aqua of a high pasture's streams, a
- * mountain's ice blue going to indigo, a summit's violet going to magenta at
- * dusk, and Stêrk's gold burning to white.
+ * Rank tiers climb from the warm earth of the plain to the sky: the clay and
+ * terracotta of Deşt, Gir's fresh spring green, the turquoise of a high
+ * pasture's streams, Çiya's deep sapphire, Lûtke's amethyst at dusk, and
+ * Stêrk's gold. Neighbours never share a hue, and the light steps of the
+ * upper tiers are paler, so the ladder also reads as getting brighter.
  */
 export const RANK_METAL: Record<RankTier, Metal> = {
-  dest: { hi: '#fff4d6', light: '#ffd58a', mid: '#f4a63a', dark: '#bd6a12', deep: '#5c2c04' },
-  gir: { hi: '#ecffd9', light: '#9ff58f', mid: '#36d46e', dark: '#0f9450', deep: '#043f27' },
-  zozan: { hi: '#dcfffb', light: '#7df5e6', mid: '#17c9c0', dark: '#0a8494', deep: '#043a4d' },
-  ciya: { hi: '#eaf4ff', light: '#9ccaff', mid: '#4f86ff', dark: '#2f3fd0', deep: '#14196a' },
-  lutke: { hi: '#fdeaff', light: '#f2a6ff', mid: '#c552ff', dark: '#b4249e', deep: '#3a0850' },
-  sterk: { hi: '#ffffff', light: '#fff2a8', mid: '#ffcf3a', dark: '#f08c0a', deep: '#6e3300' },
+  dest: { hi: '#ffe9dc', light: '#f6ad86', mid: '#dc7a52', dark: '#a94c30', deep: '#55220f' },
+  gir: { hi: '#eeffdc', light: '#a6e58c', mid: '#4fba5c', dark: '#2a8a44', deep: '#0f4424' },
+  zozan: { hi: '#e0fffa', light: '#86ebdd', mid: '#22c2b2', dark: '#118a86', deep: '#06474a' },
+  ciya: { hi: '#e8f0ff', light: '#97b8ff', mid: '#3f71e6', dark: '#2446a6', deep: '#0e1f5c' },
+  lutke: { hi: '#f7ecff', light: '#d2acf7', mid: '#9d66e0', dark: '#6b3cb0', deep: '#311660' },
+  sterk: { hi: '#fffbe8', light: '#ffe58e', mid: '#f7c235', dark: '#cc8d10', deep: '#6a4204' },
 };
 
 /**
- * The ground inside each rank crest: the tier's hue gone deep and saturated,
- * never toward brown. Deşt's sand glows on a sunset running from ember to
- * plum; Stêrk's gold burns on a night sky, the star's own.
+ * The enamel behind a rank tier's glyph where one is drawn on a badge, and
+ * under its season plaque: the tier's hue gone deep, never toward brown.
  */
 export const RANK_FIELD: Record<RankTier, Field> = {
-  dest: { glow: '#b8400e', mid: '#7a1a2a', deep: '#36081f' },
-  gir: { glow: '#0d8048', mid: '#06552f', deep: '#022817' },
-  zozan: { glow: '#0a7385', mid: '#064a5c', deep: '#032432' },
-  ciya: { glow: '#2a44cc', mid: '#18248a', deep: '#0a0e42' },
-  lutke: { glow: '#7a1fc4', mid: '#4f0d7e', deep: '#21063f' },
-  sterk: { glow: '#3a2ab0', mid: '#1d166e', deep: '#090732' },
+  dest: { glow: '#c2603a', mid: '#8a3820', deep: '#3e170b' },
+  gir: { glow: '#3b9a4c', mid: '#1f6a34', deep: '#0b3119' },
+  zozan: { glow: '#169c93', mid: '#0b6a68', deep: '#053536' },
+  ciya: { glow: '#2f5fd0', mid: '#1b3a96', deep: '#0b1a4c' },
+  lutke: { glow: '#7d48c4', mid: '#522a8c', deep: '#26114a' },
+  sterk: { glow: '#d99a1c', mid: '#9a620a', deep: '#4a2c03' },
 };
+
+/** The placement emblem's pearl, neutral until a tier is earned. */
+export const PEARL: Metal = { hi: '#ffffff', light: '#eef0f5', mid: '#c9cfda', dark: '#8d96a8', deep: '#434b5c' };
+
+/** The placement count's violet: Hevalo's own, the one colour the placing emblem counts in. */
+export const PLACING: Metal = { hi: '#f6ecff', light: '#e3c4ff', mid: '#b874f0', dark: '#6b3fa0', deep: '#2a1250' };
 
 // ──────────────────────────────────────────────────────── learning leagues
 
 /**
- * Water deepens tier by tier, and no two neighbours share a hue: a pale
- * dew-blue drop, a fresh mint-green spring, an azure river, a still lake gone
- * cobalt-lilac at dusk, a deep sea-teal under a sunrise (its pearl and glint
- * are the rising sun's peach), and the ocean's midnight, which glows with
- * living light (`glint` is that bioluminescent edge).
+ * Each league's own water, the colour of its picture and of everything an app
+ * draws around its emblem: a pale dew-blue drop, a fresh mint spring, an
+ * azure river, a still lake gone cobalt-lilac at dusk, a sea-teal under a
+ * sunrise (its highlight is the rising sun's peach), and the ocean's
+ * midnight, which glows with living light (`glint` is that bioluminescent edge).
  */
 export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
   dilop: { hi: '#ffffff', light: '#d4f1ff', mid: '#8fd2f7', dark: '#3a8ed6', deep: '#0f3570', glint: '#ffffff' },
@@ -129,4 +135,28 @@ export const LEAGUE_METAL: Record<LeagueTier, Metal & { glint: string }> = {
   gol: { hi: '#f1eeff', light: '#bdb6ff', mid: '#7a6ff2', dark: '#4639c4', deep: '#16105e', glint: '#e0d8ff' },
   derya: { hi: '#fff1db', light: '#7fe3e6', mid: '#119fae', dark: '#0a5f86', deep: '#042a4a', glint: '#ffc98a' },
   okyanus: { hi: '#d6fff8', light: '#5ff5df', mid: '#16b8d0', dark: '#123f9e', deep: '#070a3a', glint: '#4dffd8' },
+};
+
+/**
+ * The rim each league's water is set in, rising in worth the way the water
+ * deepens: pearl, silver, gold, rose gold, platinum, and for the ocean a
+ * mother-of-pearl rim that runs through the colours of a shell's lining.
+ * The pearl and the mother-of-pearl have a `sheen`: the colours their lustre
+ * runs through, light to shade. The ladder reads at a glance even where the pictures are too
+ * small to see.
+ */
+export const LEAGUE_RIM: Record<LeagueTier, Metal & { sheen?: readonly string[] }> = {
+  dilop: { hi: '#ffffff', light: '#f5eff6', mid: '#ddd2cc', dark: '#a8978f', deep: '#5d4f4c', sheen: ['#ffffff', '#f7f1fb', '#eae9f6', '#f3e7df', '#d9cbc4', '#a99a92'] },
+  kani: { hi: '#ffffff', light: '#e9eef4', mid: '#bfc8d4', dark: '#86919f', deep: '#3d4553' },
+  cem: { hi: '#fff7d6', light: '#ffe28a', mid: '#f3bd3a', dark: '#c5871a', deep: '#5f3c08' },
+  gol: { hi: '#fff1ec', light: '#f8cbbb', mid: '#e39b87', dark: '#b0645a', deep: '#5a2b2b' },
+  derya: { hi: '#ffffff', light: '#e4effa', mid: '#b4c8df', dark: '#6f86a5', deep: '#24344d' },
+  okyanus: {
+    hi: '#ffffff',
+    light: '#d4f7ff',
+    mid: '#a9b8ff',
+    dark: '#5d55c2',
+    deep: '#1f1f5c',
+    sheen: ['#e6fdff', '#bdf3ff', '#d8c9ff', '#ffd0ec', '#fff0c4', '#b3f2e2', '#8fa4f0'],
+  },
 };

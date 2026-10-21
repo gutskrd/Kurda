@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { glossFor, type StoryDetail, type StoryGameMode, type StoryGlossEntry } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -10,22 +10,23 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
-import { SkeletonLines } from '../theme/Skeleton';
+import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
-import { spacing, typography } from '../theme/tokens';
+import { radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { activeGames, createGame, getGame, getStory, isView } from './api';
 import { DIALECT_NAME, LENGTH_KEY } from './labels';
-import { narrationItems } from './narration';
+import { narrationItems, narrationLine } from './narration';
 import { TEXT_SCALES, useStoryPrefs, type TextScale } from './prefs';
 import { createErrorMessage, SetupSheet } from './SetupSheet';
 import { createInput, initialSetup } from './setup';
-import { STORY_BODY_SIZE, StoryText } from './StoryText';
+import { STORY_BODY_SIZE, StoryText, storyLineHeight } from './StoryText';
 import { ENGLISH_TEXT_PROPS, ENGLISH_TEXT_STYLE, storyRowStyle, storyTextProps, storyTextStyle } from './storyText';
 import { useNarration } from './useNarration';
 import { COLUMN, Card, Note, Pill, SectionLabel, Sheet } from './ui';
 import { NarrationBar } from './NarrationBar';
+import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
 
 /**
  * Reading a story (contract §A1 "Reader"), then playing it.
@@ -76,6 +77,9 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
 
   const items = useMemo(() => (story ? narrationItems(story.paragraphs, story.audio) : []), [story]);
   const listenable = useMemo(() => new Set(items.map((i) => i.paragraph)), [items]);
+  // what each recorded sentence says and who says it; a paragraph with a character keeps room for one
+  const lines = useMemo(() => new Map(items.map((i) => [i, narrationLine(story?.paragraphs ?? [], story?.voices, i)])), [items, story]);
+  const voiced = useMemo(() => new Set(items.filter((i) => lines.get(i)?.voice).map((i) => i.paragraph)), [items, lines]);
 
   // the sentence being read stays in view; reduced motion jumps rather than glides
   const followed = narration.scope === 'story' ? narration.current?.paragraph : undefined;
@@ -175,7 +179,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             <ErrorRetry message={describeError(error, t)} onRetry={load} />
           )
         ) : (
-          <SkeletonLines count={8} style={styles.content} />
+          <ReaderSkeleton scale={textScale} />
         )}
       </GradientBackground>
     );
@@ -183,6 +187,27 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
 
   const dir = storyTextStyle(story.dialect);
   const props = storyTextProps(story.dialect);
+  const reading = narration.current;
+  const line = reading ? lines.get(reading) : undefined;
+  // the character faces back toward the Listen it stands after
+  const speaker =
+    reading && line?.voice
+      ? {
+          paragraph: reading.paragraph,
+          view: (
+            <SpeakingCharacter
+              speaker={line.voice.speaker}
+              voice={line.voice}
+              text={line.text}
+              player={narrator.clock}
+              playing={narration.playing}
+              source={reading.url}
+              size={CHARACTER_SIZE.row}
+              flip={dir.writingDirection !== 'rtl'}
+            />
+          ),
+        }
+      : null;
 
   return (
     <GradientBackground>
@@ -226,6 +251,8 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
             listening={narration.scope === 'paragraph' ? narration.paragraph : null}
             playing={narration.playing}
             onListen={listenTo}
+            voiced={voiced}
+            speaker={speaker}
             onParagraphLayout={(p, y) => paragraphTops.current.set(p, y)}
           />
         </View>
@@ -359,7 +386,50 @@ function GlossSheet({ entry, dialect, onClose }: { entry: StoryGlossEntry; diale
   );
 }
 
+/**
+ * The story while it loads, in the reader's own column: the title, the facts,
+ * the summary, and paragraphs at the reader's chosen size and the story's own
+ * line height — so the words arrive on the lines that were waiting for them.
+ */
+function ReaderSkeleton({ scale }: { scale: number }): React.JSX.Element {
+  const { t } = useI18n();
+  const line = storyLineHeight(Math.round(STORY_BODY_SIZE * scale));
+  const size = Math.round(STORY_BODY_SIZE * scale);
+  const widths = ['96%', '92%', '98%', '70%'] as const;
+  const { height } = useWindowDimensions();
+  const paragraphs = Math.max(3, Math.ceil((height - 260) / (line * widths.length + spacing.md)));
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <View style={styles.head}>
+        <SkeletonText size={typography.sizes.xl} lineHeight={TITLE_LINE} width="60%" />
+        <View style={styles.pills}>
+          {[72, 56, 64, 80].map((w) => (
+            <Skeleton key={w} width={w} height={lineOf(typography.sizes.xs) + 6} radius={radii.pill} />
+          ))}
+        </View>
+        <View>
+          <SkeletonText size={typography.sizes.md} lineHeight={22} width="94%" />
+          <SkeletonText size={typography.sizes.md} lineHeight={22} width="58%" />
+        </View>
+      </View>
+      <View style={styles.paragraphs}>
+        {Array.from({ length: paragraphs }, (_, p) => (
+          <View key={p}>
+            {widths.map((w, i) => (
+              <SkeletonText key={i} size={size} lineHeight={line} width={w} />
+            ))}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** display(28) sets 1.12 */
+const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+
 const styles = StyleSheet.create({
+  paragraphs: { gap: spacing.md },
   content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
   head: { gap: spacing.sm },
   title: { ...display(typography.sizes.xl) },

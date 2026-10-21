@@ -1,7 +1,23 @@
+import { useMemo } from 'react';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { spokenClips } from '../characters/clips';
 import { useT } from '../i18n/I18nProvider';
 import { HeadphonesIcon, NextIcon, PauseIcon, PlayIcon, PreviousIcon } from '../components/icons';
 import { TEXT_SIZES } from './prefs';
 import type { StoryAudio } from './useStoryAudio';
+
+/**
+ * Who says the story's lines, at the head of the reader's tools so it stays
+ * in view while the text scrolls: the character of the line being read,
+ * mouth moving with it, and between lines the last one heard (before any, the
+ * first). A story's lines can each have their own. Nothing when none has a
+ * character. Named for a screen reader ("Xezo speaking"), since no button
+ * says who is reading.
+ */
+export function StorySpeaker({ audio }: { audio: StoryAudio }): React.JSX.Element | null {
+  const clips = useMemo(() => spokenClips(audio.track.map((s) => ({ src: s.url, voice: s.voice, text: s.text }))), [audio.track]);
+  return <ClipSpeaker clips={clips} className="speaker-tile story-speaker" />;
+}
 
 /** Smaller / larger text, remembered on the device by the caller. */
 export function TextSizeControl({ step, onChange }: { step: number; onChange: (next: number) => void }): React.JSX.Element {

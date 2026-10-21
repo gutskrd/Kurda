@@ -7,7 +7,8 @@
  * It lived in the alphabet page (alphabet/audio.ts still re-exports it). Lessons
  * need the same thing plus a speed: the listening exercise's 0.75× button plays
  * the same recording slower, and `preservesPitch` (on by default in browsers)
- * keeps it the same voice rather than a lower one.
+ * keeps it the same voice rather than a lower one. A dictionary entry's
+ * pronunciation and a story read aloud play through it too.
  */
 let player: HTMLAudioElement | null = null;
 let current: string | null = null;
@@ -15,29 +16,45 @@ let currentRate = 1;
 const listeners = new Set<(src: string | null, rate: number) => void>();
 const endings = new Set<(src: string) => void>();
 
-export function play(src: string, rate = 1): void {
+/**
+ * The one <audio> every sound plays through, once anything has played; null
+ * before. A speaking character watches it to move its mouth with the
+ * recording (characters/SpeakingCharacter.tsx) rather than playing a copy of
+ * its own, and showing one never makes the element.
+ */
+export function soundPlayer(): HTMLAudioElement | null {
+  return player;
+}
+
+function made(): HTMLAudioElement {
   if (!player) {
-    player = new Audio();
+    const el = new Audio();
     // the events, not the calls, say what is sounding: a pause from switching clips arrives before the new one plays
     const now = (s: string | null) => () => listeners.forEach((l) => l(s, currentRate));
-    player.addEventListener('playing', () => listeners.forEach((l) => l(current, currentRate)));
-    player.addEventListener('ended', now(null));
+    el.addEventListener('playing', () => listeners.forEach((l) => l(current, currentRate)));
+    el.addEventListener('ended', now(null));
     // after the "nothing is playing" above, so a listener that starts the next clip is the last word
-    player.addEventListener('ended', () => {
+    el.addEventListener('ended', () => {
       const done = current;
       if (done) endings.forEach((l) => l(done));
     });
-    player.addEventListener('pause', now(null));
-    player.addEventListener('error', now(null));
+    el.addEventListener('pause', now(null));
+    el.addEventListener('error', now(null));
+    player = el;
   }
-  player.pause();
+  return player;
+}
+
+export function play(src: string, rate = 1): void {
+  const el = made();
+  el.pause();
   current = src;
   currentRate = rate;
-  player.src = src;
+  el.src = src;
   // loading a source resets the rate to the default one, so both are set
-  player.defaultPlaybackRate = rate;
-  player.playbackRate = rate;
-  const started = player.play() as Promise<void> | undefined;
+  el.defaultPlaybackRate = rate;
+  el.playbackRate = rate;
+  const started = el.play() as Promise<void> | undefined;
   started?.catch(() => listeners.forEach((l) => l(null, currentRate)));
 }
 

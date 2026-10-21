@@ -1,9 +1,16 @@
 /**
- * Themed palettes (KUR-268). A glass-first visual language in light + dark:
- * frosted **glassmorphism / liquid-glass** surfaces are the hero (translucent
- * fills + a top sheen over a spatial gradient), with **claymorphic / neumorphic**
- * soft controls, minimalist spacing, and layered depth. Components read the
- * active `Palette` from ThemeProvider so both schemes stay in sync.
+ * Themed palettes (KUR-268), light and dark.
+ *
+ * A calm, mostly monochrome interface — near-black on near-white, near-white
+ * on near-black — so that what people write and the art carry the colour,
+ * with one warm accent: the gold of the Kurdish sun, for rewards, the streak,
+ * Zêr and highlights. Green and red mean right and wrong (or safe and
+ * destructive) and are used sparingly, never as the only signal.
+ *
+ * The floating island bar and the cards keep a light glass treatment; the
+ * page itself is flat. Components read the active `Palette` from
+ * ThemeProvider so both schemes stay in sync, and `palette.contrast.test.ts`
+ * holds every text-on-surface pair to WCAG AA.
  */
 import type { ColorScheme } from './appearance';
 
@@ -34,36 +41,6 @@ export interface Palette {
   // (cards, rows) where heavy blur costs performance and hurts readability.
   glassFill: string; // translucent tint painted over the blur
   glassBorder: string; // hairline edge — kept subtle (no "frost line")
-
-  /*
-   * What the edge of a piece of glass is made of.
-   *
-   * Not a line. Light bending through a lens leaves warm where it exits and
-   * cool where it enters, with a bright catch along one edge — which is what
-   * the recordings show, and what a hairline in a single grey never looks
-   * like.
-   *
-   * Two stops each, because one hue per edge is a tint and the thing being
-   * copied is dispersion: white light comes out of a lens spread, amber
-   * running to orange on the way out and cyan running to violet on the way
-   * in. The first of each pair sits at the boundary, the second just inside
-   * it. Both are barely there on purpose — at full strength a rim like this
-   * reads as a sticker.
-   */
-  lensWarm: readonly [string, string];
-  lensCool: readonly [string, string];
-
-
-  /*
-   * The same two ends of the spectrum, for a glyph rather than a band.
-   *
-   * The rim colours are spread over three points and seen edge-on. These
-   * are painted as a whole word a point and a bit to one side of itself,
-   * nearly on top of the letter they are fringing, so they have to be far
-   * stronger to register at all — at rim strength the fringe was in the DOM
-   * and invisible on screen.
-   */
-  lensFringe: readonly [string, string];
 
   /*
    * The boundary between two regions of a screen — and only that.
@@ -98,12 +75,50 @@ export interface Palette {
   softShadow: string; // outer drop shadow colour (spatial elevation)
 
   controlTrack: string; // inactive segmented / toggle track
+  /** The chosen option in a segmented control: a step up from its track. */
+  selectedFill: string;
+
+  /*
+   * The two raised surfaces, for things that sit on the page rather than
+   * float over it: a card, a tile, a row that needs a ground of its own.
+   *
+   * Solid, not glass. The calm look the app is going for is a near-black or
+   * near-white page with the user's own content and the art carrying the
+   * colour, and a translucent fill over a gradient reads a little different
+   * on every screen depending on what is behind it. `surfaceRaised` is the
+   * one step up, for something inside a surface (a chip on a card).
+   */
+  surface: string;
+  surfaceRaised: string;
+
+  /**
+   * The bar's own fill: solid.
+   *
+   * There is no blur behind the island on any platform, so any translucency
+   * shows what scrolls beneath as a ghost between the tab labels — at 94%
+   * white text and bright cards were still plainly visible through it, on
+   * the phone as much as in a browser, because an rgba fill composites the
+   * same way everywhere. The island reads as floating from its shadow and
+   * the fade under it, not from being see-through.
+   */
+  barFill: string;
+
+  /*
+   * Gold for words, which is not gold for fills.
+   *
+   * The sun's gold (`gold`) is what a reward, a streak or Zêr is painted in.
+   * On the dark page it is legible as text too; on the light one it is
+   * 1.9:1, so text in gold uses this darker ochre there, which clears 4.5:1
+   * against the page and against a white card.
+   */
+  goldText: string;
 }
 
 export const LIGHT: Palette = {
   scheme: 'light',
-  // Monochrome brand: near-black on a near-white app (SCRL-style). Functional
-  // accents (gold XP, danger, success) stay coloured for meaning.
+  // Monochrome brand: near-black on a near-white app. The one warm accent is
+  // the gold of the sun (rewards, streak, Zêr); danger and success stay
+  // coloured for meaning and are never the only signal.
   primary: '#1A1A1A',
   primaryStrong: '#000000',
   accent: '#333333',
@@ -113,23 +128,22 @@ export const LIGHT: Palette = {
   successFill: '#E6F4EA',
   dangerFill: '#FBE9E7',
 
-  textPrimary: '#141414',
-  textSecondary: '#6B6B6B',
+  textPrimary: '#111111',
+  // 5.8:1 on the page; the old #6B6B6B was 4.9 on #F3F3F3 and under 4.5 on a
+  // pressed row
+  textSecondary: '#5E6066',
   textOnPrimary: '#FFFFFF',
 
-  background: '#F3F3F3',
-  gradient: ['#FBFBFB', '#F4F4F4', '#EDEDED'],
+  // a near-white with the faintest warmth, so white cards lift off it
+  background: '#F6F6F5',
+  gradient: ['#F9F9F8', '#F6F6F5', '#F1F1EF'],
 
-  // no blur behind it any more, so this is the whole surface: enough to hold
-  // text and no more. It was 0.55 — more than half opaque, which is a milky
-  // pane rather than a pane you can see through.
-  glassFill: 'rgba(255,255,255,0.34)',
+  // no blur behind it, so this is the whole surface. At 0.34 white over a
+  // near-white page a card was all but invisible and only its shadow said
+  // where it was; nearly white, it is a card again without needing one.
+  glassFill: 'rgba(255,255,255,0.88)',
   glassBorder: 'rgba(255,255,255,0.45)',
 
-  lensWarm: ['rgba(255,207,150,0.34)', 'rgba(255,146,94,0.20)'],
-  lensCool: ['rgba(126,206,255,0.22)', 'rgba(150,132,255,0.28)'],
-
-  lensFringe: ['rgba(240,110,40,0.55)', 'rgba(40,120,235,0.50)'],
   scrim: 'rgba(0,0,0,0.45)',
   separator: 'rgba(20,20,20,0.07)',
 
@@ -138,12 +152,18 @@ export const LIGHT: Palette = {
   softShadow: '#3A3A3A',
 
   controlTrack: 'rgba(0,0,0,0.05)',
+  selectedFill: '#FFFFFF',
+
+  surface: '#FFFFFF',
+  surfaceRaised: '#FFFFFF',
+  barFill: '#FFFFFF',
+  goldText: '#8A6400',
 };
 
 export const DARK: Palette = {
   scheme: 'dark',
-  // Monochrome brand: near-white on a near-black app (SCRL-style). Functional
-  // accents (gold XP, danger, success) stay coloured for meaning.
+  // Monochrome brand: near-white on a near-black app, with the sun's gold as
+  // the one warm accent. Danger and success stay coloured for meaning.
   primary: '#FFFFFF',
   primaryStrong: '#FFFFFF',
   accent: '#CFCFCF',
@@ -154,7 +174,8 @@ export const DARK: Palette = {
   dangerFill: 'rgba(255,120,105,0.16)',
 
   textPrimary: '#FFFFFF',
-  textSecondary: '#9D9E9F',
+  // 8:1 on the page and 6.9:1 on the raised surface
+  textSecondary: '#A3A6AD',
   textOnPrimary: '#141414',
 
   background: '#0B0D10',
@@ -164,10 +185,6 @@ export const DARK: Palette = {
   glassFill: 'rgba(255,255,255,0.07)',
   glassBorder: 'rgba(255,255,255,0.14)',
 
-  lensWarm: ['rgba(255,190,128,0.30)', 'rgba(255,132,80,0.18)'],
-  lensCool: ['rgba(110,198,255,0.20)', 'rgba(138,118,255,0.26)'],
-
-  lensFringe: ['rgba(255,150,70,0.60)', 'rgba(90,160,255,0.55)'],
   scrim: 'rgba(0,0,0,0.6)',
   separator: 'rgba(255,255,255,0.08)',
 
@@ -176,6 +193,12 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
+  selectedFill: 'rgba(255,255,255,0.16)',
+
+  surface: '#14171C',
+  surfaceRaised: '#1B1F26',
+  barFill: '#1B1F26',
+  goldText: '#F0C24A',
 };
 
 export const PALETTES: Record<ColorScheme, Palette> = { light: LIGHT, dark: DARK };

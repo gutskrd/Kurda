@@ -1,0 +1,154 @@
+import { describe, expect, it } from 'vitest';
+import { PATH_GEOMETRY, UNIT_TONES, lean, lessonPath, lessonStates, stopKeys, type PathSkill, type PathSkillState } from './lesson-path.js';
+
+const lesson = (id: string, completed = false) => ({ lessonId: id, title: `Lesson ${id}`, completed });
+
+const skill = (id: string, state: PathSkillState, done = 0, count = 2, over: Partial<PathSkill> = {}): PathSkill => ({
+  skillId: id,
+  title: `Skill ${id}`,
+  state,
+  strength: 0,
+  hasGrammar: false,
+  firstLessonId: `${id}-1`,
+  lessons: Array.from({ length: count }, (_, i) => lesson(`${id}-${i + 1}`, i < done)),
+  ...over,
+});
+
+const map = (...units: PathSkill[][]) => ({ units: units.map((skills, i) => ({ unitId: `u${i + 1}`, title: `Unit ${i + 1}`, skills })) });
+
+const skills = (path: ReturnType<typeof lessonPath>) =>
+  path.units.flatMap((u) => u.stops.map((p) => p.stop)).filter((s) => s.kind === 'skill');
+
+describe('lessonStates', () => {
+  it('marks what is done, the one lesson up next, and closes the rest', () => {
+    expect(lessonStates(skill('a', 'unlocked', 1, 3))).toEqual(['done', 'next', 'locked']);
+  });
+
+  it('opens nothing in a skill that is not open yet, but keeps what was finished', () => {
+    expect(lessonStates(skill('a', 'locked', 1, 2))).toEqual(['done', 'locked']);
+    expect(lessonStates({ state: 'unlocked' })).toEqual([]);
+  });
+});
+
+describe('lessonPath — which skill is which', () => {
+  it('makes the very first skill current for somebody new, and closes the rest', () => {
+    const path = lessonPath(map([skill('a', 'unlocked'), skill('b', 'locked')], [skill('c', 'locked')]));
+    expect(skills(path).map((s) => s.kind === 'skill' && s.state)).toEqual(['current', 'locked', 'locked']);
+    expect(path.current).toBe('s:a');
+    expect(path.focus).toBe('s:a');
+  });
+
+  it('is part-way: done skills behind, the first open unfinished one current, its lessons counted', () => {
+    const path = lessonPath(
+      map([skill('a', 'gold', 2), skill('b', 'decayed', 2)], [skill('c', 'unlocked', 1, 4), skill('d', 'locked')]),
+    );
+    const [a, b, c, d] = skills(path);
+    expect(a).toMatchObject({ state: 'done', finish: 'strong', launch: 'a-1' });
+    // a skill gone rusty is done, not current: the learner is not sent back to it
+    expect(b).toMatchObject({ state: 'done', finish: 'refresh' });
+    expect(c).toMatchObject({ state: 'current', lessonsDone: 1, lessonsTotal: 4, launch: 'c-2', number: 1 });
+    expect(d).toMatchObject({ state: 'locked', launch: null });
+    expect(d?.kind === 'skill' && d.after?.skillId).toBe('c');
+    expect(path.current).toBe('s:c');
+    expect({ done: path.done, total: path.total }).toEqual({ done: 2, total: 4 });
+  });
+
+  it('calls a second open skill available, not current (a placement test opens several)', () => {
+    const path = lessonPath(map([skill('a', 'unlocked'), skill('b', 'unlocked'), skill('c', 'locked')]));
+    expect(skills(path).map((s) => s.kind === 'skill' && s.state)).toEqual(['current', 'available', 'locked']);
+  });
+
+  it('skips an open skill with nothing published when choosing the current one', () => {
+    const empty = skill('a', 'unlocked', 0, 0, { firstLessonId: null });
+    const path = lessonPath(map([empty, skill('b', 'unlocked')]));
+    expect(skills(path)[0]).toMatchObject({ state: 'available', launch: null });
+    expect(path.current).toBe('s:b');
+  });
+
+  it('still reads a map without lessons listed', () => {
+    const bare = { ...skill('a', 'unlocked'), lessons: undefined };
+    const path = lessonPath(map([bare]));
+    expect(skills(path)[0]).toMatchObject({ state: 'current', lessonsTotal: 0, launch: 'a-1' });
+  });
+
+  it('opens on the last trophy of a finished course', () => {
+    const path = lessonPath(map([skill('a', 'completed', 2)], [skill('b', 'gold', 2)]));
+    expect(path.current).toBeNull();
+    expect(path.focus).toBe('t:u2');
+  });
+
+  it('opens on the first stop when nothing is open at all', () => {
+    expect(lessonPath(map([skill('a', 'locked')])).focus).toBe('s:a');
+    expect(lessonPath(map()).focus).toBeNull();
+  });
+});
+
+describe('lessonPath — milestones', () => {
+  it('ends every unit with its trophy, earned once every skill in it is done', () => {
+    const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'gold', 2)], [skill('c', 'unlocked')], []));
+    expect(path.units.map((u) => u.stops.at(-1)?.stop)).toEqual([
+      { kind: 'trophy', key: 't:u1', earned: true, unitNumber: 1 },
+      { kind: 'trophy', key: 't:u2', earned: false, unitNumber: 2 },
+      undefined,
+    ]);
+  });
+
+  it('puts review just before the current skill, and only with words due', () => {
+    const m = map([skill('a', 'completed', 2), skill('b', 'unlocked')]);
+    expect(lessonPath(m).units[0]!.stops.map((p) => p.stop.key)).toEqual(['s:a', 's:b', 't:u1']);
+    expect(lessonPath(m, { due: 5 }).units[0]!.stops.map((p) => p.stop.key)).toEqual(['s:a', 'review', 's:b', 't:u1']);
+    expect(lessonPath(m, { due: 5 }).units[0]!.stops[1]!.stop).toEqual({ kind: 'review', key: 'review', due: 5 });
+  });
+
+  it('puts review after the last skill done when nothing open is left to do', () => {
+    const path = lessonPath(map([skill('a', 'completed', 2)], [skill('b', 'decayed', 2), skill('c', 'locked')]), { due: 3 });
+    expect(stopKeys(path)).toEqual(['s:a', 't:u1', 's:b', 'review', 's:c', 't:u2']);
+  });
+});
+
+describe('lessonPath — the way it winds', () => {
+  it('starts each unit in the middle and leans start, middle, end in turn', () => {
+    expect([0, 1, 2, 3, 4, 5].map(lean)).toEqual([0, -1, 0, 1, 0, -1]);
+    const path = lessonPath(map([skill('a', 'unlocked'), skill('b', 'locked'), skill('c', 'locked')], [skill('d', 'locked')]));
+    expect(path.units[0]!.stops.map((p) => p.x)).toEqual([0, -PATH_GEOMETRY.sway, 0, PATH_GEOMETRY.sway]);
+    expect(path.units[1]!.stops[0]!.x).toBe(0);
+  });
+
+  it('spaces stops a step apart, with room above the current skill for its bubble', () => {
+    const { step, lift, pad } = PATH_GEOMETRY;
+    const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked'), skill('c', 'locked')]));
+    const ys = path.units[0]!.stops.map((p) => p.y);
+    expect(ys).toEqual([pad, pad + step + lift, pad + 2 * step + lift, pad + 3 * step + lift]);
+    expect(path.units[0]!.height).toBe(ys.at(-1)! + pad);
+  });
+
+  it('walks the line up to the current skill, and leaves the rest ahead', () => {
+    const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked'), skill('c', 'locked')]), { due: 2 });
+    expect(path.units[0]!.stops.map((p) => [p.stop.key, p.trail])).toEqual([
+      ['s:a', null],
+      ['review', 'walked'],
+      ['s:b', 'walked'],
+      ['s:c', 'ahead'],
+      ['t:u1', 'ahead'],
+    ]);
+  });
+});
+
+describe('lessonPath — units', () => {
+  it('numbers units, gives each a colour in turn, and says what each covers', () => {
+    const units = Array.from({ length: UNIT_TONES.length + 1 }, (_, i) => [skill(`s${i}`, 'locked', 0, 2, { hasGrammar: i === 0 })]);
+    const path = lessonPath(map(...units));
+    expect(path.units.map((u) => u.number)).toEqual(units.map((_, i) => i + 1));
+    expect(path.units[0]!.tone).toBe(UNIT_TONES[0]);
+    // the colours come round again rather than running out
+    expect(path.units[UNIT_TONES.length]!.tone).toBe(UNIT_TONES[0]);
+    expect(path.units[0]!.topics).toEqual(['Skill s0']);
+    expect(path.units[0]!.guide.map((s) => s.skillId)).toEqual(['s0']);
+    expect(path.units[1]!.guide).toEqual([]);
+  });
+
+  it('counts skills done per unit', () => {
+    const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked')]));
+    expect(path.units[0]).toMatchObject({ done: 1, total: 2 });
+  });
+});

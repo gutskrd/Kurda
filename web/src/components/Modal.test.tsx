@@ -45,6 +45,23 @@ describe('Modal', () => {
     expect(search).toHaveFocus();
   });
 
+  it('keeps the keyboard inside: Tab past the last control comes back to the first, and the other way', async () => {
+    render(
+      <I18nProvider>
+        <Page tick={0} />
+      </I18nProvider>,
+    );
+    const close = screen.getByRole('button', { name: 'Close' });
+    const search = screen.getByRole('textbox', { name: 'Search your friends' });
+    await userEvent.click(search);
+    await userEvent.tab();
+    expect(close).toHaveFocus();
+    await userEvent.tab({ shift: true });
+    expect(search).toHaveFocus();
+    // never out to the "open" button under the backdrop
+    expect(screen.getByRole('button', { name: 'open' })).not.toHaveFocus();
+  });
+
   it('still closes on Escape with the latest onClose', async () => {
     render(
       <I18nProvider>

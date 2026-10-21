@@ -5,6 +5,7 @@ import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES } from './roles.js';
 import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
+import { escapeLike } from '../db/like.js';
 import { CasesService, DEFAULT_STATEMENTS, linkedAccounts } from '../moderation/cases-service.js';
 import { IN_FORCE_SQL, SanctionsService, toAppealView, type AppealRow } from '../moderation/sanctions-service.js';
 
@@ -135,16 +136,17 @@ export class UserAdminService {
       where += ` AND roles && $${params.length}::text[]`;
     }
 
-    // every fragment appended here is a literal; only values go in `params`
+    // every fragment appended here is a literal; only values go in `params`,
+    // and the typed text is matched as written (an `_` is not a wildcard)
     if (q.length > 0) {
       if (UUID_RE.test(q)) {
         params.push(q);
         where += ` AND id = $${params.length}`;
       } else if (q.includes('@')) {
-        params.push(`${q}%`);
+        params.push(`${escapeLike(q)}%`);
         where += ` AND lower(email) LIKE lower($${params.length})`;
       } else {
-        params.push(`${q}%`);
+        params.push(`${escapeLike(q)}%`);
         where += ` AND username ILIKE $${params.length}`;
       }
     }

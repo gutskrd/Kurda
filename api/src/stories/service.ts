@@ -21,6 +21,7 @@ import {
   storyLengthFor,
   storyParagraphs,
   type QuestionKind,
+  type RecordingVoice,
   type StoryDetail,
   type StoryDialect,
   type StoryGlossEntry,
@@ -29,9 +30,34 @@ import {
   type StoryListItem,
 } from '@kurda/shared';
 import type { Cache } from '../cache/cache.js';
+import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
 /** The pool (its own transaction) or a client inside the caller's transaction. */
 export type Executor = Pick<pg.Pool, 'query'>;
+
+/**
+ * The studio's recordings of a story's sentences by recording key, and who
+ * says each that has a character, by the same key. One query, for the reader
+ * and for a game's copy of a story alike.
+ */
+export async function sentenceRecordings(
+  db: Executor,
+  keys: readonly string[],
+): Promise<{ audio: Record<string, string>; voices: Record<string, RecordingVoice> }> {
+  const audio: Record<string, string> = {};
+  const voices: Record<string, RecordingVoice> = {};
+  if (keys.length === 0) return { audio, voices };
+  const res = await db.query<{ key: string; url: string; text: string; duration_ms: number } & VoiceRow>(
+    `SELECT key, url, text, duration_ms, ${voiceColumns()} FROM lesson_audio WHERE key = ANY($1::text[])`,
+    [keys],
+  );
+  for (const r of res.rows) {
+    audio[r.key] = r.url;
+    const voice = voiceOf(r, { text: r.text, durationMs: r.duration_ms });
+    if (voice) voices[r.key] = voice;
+  }
+  return { audio, voices };
+}
 
 export const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -311,32 +337,34 @@ export class StoriesService {
     const row = res.rows[0];
     if (!row) return null;
     const paragraphs = storyParagraphs(row.body);
-    const { audio, fullyNarrated } = await this.audioFor(paragraphs);
-    return { ...listItem({ ...row, fully_narrated: fullyNarrated }), paragraphs, glossary: row.glossary, audio };
+    const { audio, voices, fullyNarrated } = await this.audioFor(paragraphs);
+    return {
+      ...listItem({ ...row, fully_narrated: fullyNarrated }),
+      paragraphs,
+      glossary: row.glossary,
+      audio,
+      ...(voices ? { voices } : {}),
+    };
   }
 
   /**
    * The studio recordings of a text's sentences, by recording key, and whether
-   * every sentence has one — for a story as it was when a game copied it.
+   * every sentence has one — for a story as it was when a game copied it —
+   * with who says the ones that have a character, when any has.
    */
-  async audioFor(paragraphs: readonly string[]): Promise<{ audio: Record<string, string>; fullyNarrated: boolean }> {
+  async audioFor(
+    paragraphs: readonly string[],
+  ): Promise<{ audio: Record<string, string>; voices?: Record<string, RecordingVoice>; fullyNarrated: boolean }> {
     const keys = new Set<string>();
     for (const paragraph of paragraphs) {
       for (const sentence of storyAudioSentences(paragraph)) keys.add(lessonAudioKey(sentence));
     }
-    const audio = await this.recordings([...keys]);
-    return { audio, fullyNarrated: keys.size > 0 && Object.keys(audio).length === keys.size };
-  }
-
-  private async recordings(keys: readonly string[]): Promise<Record<string, string>> {
-    if (keys.length === 0) return {};
-    const res = await this.pool.query<{ key: string; url: string }>(
-      `SELECT key, url FROM lesson_audio WHERE key = ANY($1::text[])`,
-      [keys],
-    );
-    const audio: Record<string, string> = {};
-    for (const r of res.rows) audio[r.key] = r.url;
-    return audio;
+    const { audio, voices } = await sentenceRecordings(this.pool, [...keys]);
+    return {
+      audio,
+      ...(Object.keys(voices).length > 0 ? { voices } : {}),
+      fullyNarrated: keys.size > 0 && Object.keys(audio).length === keys.size,
+    };
   }
 
   /**

@@ -3,8 +3,15 @@
  * the admin's audio studio, beside the alphabet's recordings.
  *
  *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used
+ *                                         (&withLipsync=1: each with its stored timeline, or null)
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
+ *
+ * The PUT may also say who says the recording and how their mouth moves, as
+ * `&speaker=hevalo|hamo|xezo|none` and `&lipsync=<the timeline as JSON>`
+ * (speakers/voice.ts). Without a speaker the new take keeps the old one's;
+ * without a timeline it has none, since the old timeline was the old take's.
+ * PATCH /admin/audio/lesson?key=… changes either later (speakers/routes.ts).
  *
  * There is no public list: learners get the recordings with the exercises that
  * use them (lessonaudio/delivery.ts), and with the stories that say them
@@ -19,7 +26,14 @@
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { LESSON_AUDIO_MAX_SECONDS, LESSON_AUDIO_TEXT_MAX, lessonAudioKey, normalizeKurdish } from '@kurda/shared';
+import {
+  LESSON_AUDIO_MAX_SECONDS,
+  LESSON_AUDIO_TEXT_MAX,
+  lessonAudioKey,
+  normalizeKurdish,
+  type LipsyncData,
+  type SpeakerId,
+} from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AuditService } from '../admin/audit-service.js';
 import { requireRoles } from '../plugins/auth.js';
@@ -32,6 +46,7 @@ import { readWav } from '../alphabet/wav.js';
 import { LessonAudioService } from './service.js';
 import { lessonsPlaying } from './publish-guard.js';
 import { bustStoryLists } from '../stories/service.js';
+import { fitLipsync, lipsyncSummary, voiceFromQuery } from '../speakers/voice.js';
 
 const KIND = 'lesson-audio';
 
@@ -44,8 +59,11 @@ interface Row {
   url: string;
   duration_ms: number;
   updated_at: Date;
+  speaker: SpeakerId | null;
+  lipsync: LipsyncData | null;
 }
 
+const listQuery = z.object({ withLipsync: z.enum(['0', '1', 'false', 'true']).optional() });
 const textQuery = z.object({ text: z.string() });
 const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
@@ -72,7 +90,10 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
 
   registerAudioParser(app, base.maxUploadBytes);
 
-  app.get('/admin/lesson-audio', { preHandler: canRecord }, async () => service.list());
+  app.get('/admin/lesson-audio', { schema: { querystring: listQuery }, preHandler: canRecord }, async (req) => {
+    const { withLipsync } = req.query as z.infer<typeof listQuery>;
+    return service.list({ withLipsync: withLipsync === '1' || withLipsync === 'true' });
+  });
 
   app.put(
     '/admin/lesson-audio',
@@ -88,6 +109,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     },
     async (req, reply) => {
       const { text, key } = textFrom(req.query);
+      const voice = voiceFromQuery(req.query);
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_AUDIO', message: 'send the recording as audio/wav' });
@@ -102,6 +124,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
           .code(400)
           .send({ code: 'TOO_LONG', message: `keep it under ${LESSON_AUDIO_MAX_SECONDS} seconds: one sentence` });
       }
+      // checked before the file is stored, so a timeline from another take stores nothing
+      const lipsync = voice.lipsync ? fitLipsync(voice.lipsync, info.durationMs) : null;
 
       const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, KIND, raw);
       if (!res.ok) return reply.code(res.status).send({ code: res.code, message: res.message });
@@ -110,15 +134,32 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       let saved: Row;
       try {
         await client.query('BEGIN');
-        const before = await client.query<Row>(`SELECT key, text, url FROM lesson_audio WHERE key = $1 FOR UPDATE`, [key]);
+        const before = await client.query<Row>(
+          `SELECT key, text, url, speaker FROM lesson_audio WHERE key = $1 FOR UPDATE`,
+          [key],
+        );
         const upserted = await client.query<Row>(
-          `INSERT INTO lesson_audio (key, text, media_key, url, content_type, duration_ms, recorded_by, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, now())
+          `INSERT INTO lesson_audio
+             (key, text, media_key, url, content_type, duration_ms, recorded_by, updated_at, speaker, lipsync)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, now(), $8, $9::jsonb)
            ON CONFLICT (key) DO UPDATE SET text = EXCLUDED.text, media_key = EXCLUDED.media_key, url = EXCLUDED.url,
              content_type = EXCLUDED.content_type, duration_ms = EXCLUDED.duration_ms,
-             recorded_by = EXCLUDED.recorded_by, updated_at = now()
-           RETURNING key, text, url, duration_ms, updated_at`,
-          [key, text, res.mediaId, res.url, res.contentType, info.durationMs, req.user!.id],
+             recorded_by = EXCLUDED.recorded_by, updated_at = now(),
+             speaker = CASE WHEN $10::boolean THEN lesson_audio.speaker ELSE EXCLUDED.speaker END,
+             lipsync = EXCLUDED.lipsync
+           RETURNING key, text, url, duration_ms, updated_at, speaker, lipsync`,
+          [
+            key,
+            text,
+            res.mediaId,
+            res.url,
+            res.contentType,
+            info.durationMs,
+            req.user!.id,
+            voice.speaker ?? null,
+            lipsync === null ? null : JSON.stringify(lipsync),
+            voice.speaker === undefined,
+          ],
         );
         saved = upserted.rows[0]!;
         await audit.record(client, {
@@ -126,8 +167,10 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
           action: 'lesson.audio.set',
           targetType: 'lesson_audio',
           targetId: key,
-          before: before.rows[0] ? { text: before.rows[0].text, url: before.rows[0].url } : null,
-          after: { text, url: res.url, durationMs: info.durationMs },
+          before: before.rows[0]
+            ? { text: before.rows[0].text, url: before.rows[0].url, speaker: before.rows[0].speaker }
+            : null,
+          after: { text, url: res.url, durationMs: info.durationMs, speaker: saved.speaker, lipsync: lipsyncSummary(lipsync) },
           requestId: req.id,
         });
         await client.query('COMMIT');
@@ -145,6 +188,8 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
         url: saved.url,
         durationMs: saved.duration_ms,
         updatedAt: saved.updated_at.toISOString(),
+        speaker: saved.speaker,
+        lipsync: saved.lipsync,
       });
     },
   );

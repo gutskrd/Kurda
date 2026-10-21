@@ -21,6 +21,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -90,7 +91,7 @@ export function SeasonScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   return (
     <GradientBackground>
       <ScreenHeader title={t('season.title')} onBack={onExit} />
-      <AsyncBoundary loading={!overview && !error} error={!overview ? error : null} onRetry={load}>
+      <AsyncBoundary loading={!overview && !error} error={!overview ? error : null} onRetry={load} skeleton={<SeasonSkeleton />}>
         {() =>
           overview ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -289,7 +290,68 @@ function FramePreview({ tier }: { tier: RankTier }): React.JSX.Element {
   );
 }
 
+/**
+ * The season while it loads, in the page's own column: the emblem and its
+ * name, the three games' meters, and the rewards' first rows.
+ */
+function SeasonSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <GlassCard>
+        <View style={styles.hero}>
+          <Skeleton width={136} height={136} radius={radii.pill} />
+          <SkeletonText size={typography.sizes.xxl} lineHeight={HERO_TITLE_LINE} width={160} align="center" style={styles.heroSkeleton} />
+          <SkeletonText size={typography.sizes.md} width={88} align="center" />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width={120} align="center" style={styles.daysSkeleton} />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="60%" align="center" style={styles.stretch} />
+        </View>
+      </GlassCard>
+      <View style={styles.section}>
+        <SkeletonText size={typography.sizes.xs} width={112} />
+        <SkeletonText size={typography.sizes.sm} lineHeight={19} width="84%" />
+        <GlassCard>
+          <View style={styles.games}>
+            {[0, 1, 2].map((i) => (
+              <View key={i} style={styles.game}>
+                <View style={styles.gameHead}>
+                  <SkeletonText size={typography.sizes.md} width={i % 2 ? 96 : 120} />
+                  <SkeletonText size={typography.sizes.sm} lineHeight={19} width={64} />
+                </View>
+                <Skeleton height={6} radius={radii.pill} />
+              </View>
+            ))}
+          </View>
+        </GlassCard>
+      </View>
+      <View style={styles.section}>
+        <SkeletonText size={typography.sizes.xs} width={80} />
+        <SkeletonText size={typography.sizes.sm} lineHeight={19} width="76%" />
+        <GlassCard padding="tight">
+          {/* one for each tier with a reward, as the season pays them */}
+          {[0, 1, 2, 3, 4].map((i) => (
+            <View key={i} style={styles.reward}>
+              <Skeleton width={52} height={52} radius={radii.pill} />
+              <View style={styles.flex}>
+                <SkeletonText size={typography.sizes.md} width="40%" />
+                <SkeletonText size={typography.sizes.sm} lineHeight={19} width="64%" />
+              </View>
+            </View>
+          ))}
+        </GlassCard>
+      </View>
+    </View>
+  );
+}
+
+/** display(34) sets 1.12 */
+const HERO_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
+
 const styles = StyleSheet.create({
+  // a centred line in the hero spans it, so a bar given as a share of it has something to be a share of
+  stretch: { alignSelf: 'stretch' },
+  heroSkeleton: { marginTop: spacing.sm },
+  daysSkeleton: { marginTop: spacing.xs },
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: spacing.xs },
   dim: { opacity: 0.55 },

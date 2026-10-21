@@ -53,15 +53,23 @@
   --shadow-sm: 0 3px 12px rgba(24, 24, 27, 0.06), 0 1px 2px rgba(24, 24, 27, 0.05);
   --shadow-lg: 0 24px 60px rgba(24, 24, 27, 0.18), 0 6px 18px rgba(24, 24, 27, 0.08);
 
-  /* muted semantic tints — status only */
-  --ok: #15803d; --ok-bg: rgba(21, 128, 61, 0.11);
-  --warn: #a14a07; --warn-bg: rgba(180, 83, 9, 0.12);
-  --bad: #b42318; --bad-bg: rgba(180, 35, 24, 0.11);
+  /* muted semantic tints — status only. Deep enough that a 12 px badge's words pass 4.5:1 on
+     their own tint over a card (the old green, amber and red measured 4.2, 4.4 and 4.4) */
+  --ok: #166534; --ok-bg: rgba(21, 128, 61, 0.11);
+  --warn: #8f3f06; --warn-bg: rgba(180, 83, 9, 0.12);
+  --bad: #a11d14; --bad-bg: rgba(180, 35, 24, 0.11);
   --info: #1d4ed8; --info-bg: rgba(29, 78, 216, 0.09);
 
   /* sizes a finger can hit */
   --target: 44px;
   --control-h: 38px;
+  /* the phone's top bar, under the status bar's safe area: what a sticky part of a page sits below */
+  --topbar-h: calc(var(--control-h) + 17px);
+  --topbar-bottom: calc(var(--topbar-h) + env(safe-area-inset-top));
+  /* the page's side margin, kept clear of a notch when a phone lies on its side */
+  --gutter: 16px;
+  --gutter-start: max(var(--gutter), env(safe-area-inset-left));
+  --gutter-end: max(var(--gutter), env(safe-area-inset-right));
 
   color-scheme: light dark;
 }
@@ -102,7 +110,7 @@
 
     --ok: #4ade80; --ok-bg: rgba(74, 222, 128, 0.13);
     --warn: #fbbf24; --warn-bg: rgba(251, 191, 36, 0.13);
-    --bad: #f97066; --bad-bg: rgba(249, 112, 102, 0.14);
+    --bad: #fc8d85; --bad-bg: rgba(249, 112, 102, 0.14);
     --info: #93c5fd; --info-bg: rgba(147, 197, 253, 0.13);
   }
 }
@@ -217,6 +225,9 @@ input, select, textarea {
   transition: border-color 0.14s ease, box-shadow 0.14s ease;
 }
 textarea { font: inherit; line-height: 1.5; }
+/* a date and time field has a width of its own that grid and flex cells cannot shrink, so on a narrow
+   form it ran past its column; it may scroll its own text instead */
+input { min-width: 0; max-width: 100%; }
 input[type='checkbox'], input[type='radio'] {
   width: 18px; height: 18px; min-height: 0; padding: 0; margin: 0;
   accent-color: var(--primary); flex: 0 0 auto;
@@ -248,10 +259,11 @@ label { font-weight: 500; color: var(--text-2); }
 
 /* A phone, or any touch screen: everything a finger presses is at least 44 px,
    and fields are 16 px — below that iOS Safari zooms the page on focus and
-   never zooms back out. */
+   never zooms back out. `:root` outranks a page's own smaller field (a 13 px
+   select, a monospace code box), which otherwise brought the zoom back. */
 @media (pointer: coarse), (max-width: 760px) {
   :root { --control-h: var(--target); }
-  input, select, textarea { font-size: 16px; }
+  :root input:not([type='checkbox']):not([type='radio']):not([type='range']), :root select, :root textarea { font-size: 16px; }
 }
 
 /* ---- the shell: sidebar on a wide screen, a top bar and a drawer on a phone ---- */
@@ -262,13 +274,15 @@ label { font-weight: 500; color: var(--text-2); }
 }
 .skip-link:focus { top: 12px; color: var(--primary-ink); }
 
-.app { min-height: 100vh; }
+.app { min-height: 100vh; min-height: 100dvh; }
 .sidebar { display: none; }
 .topbar {
   position: sticky; top: 0; z-index: 40;
   display: flex; align-items: center; gap: 8px;
+  min-height: var(--topbar-bottom);
   padding: 8px 12px;
-  padding-top: max(8px, env(safe-area-inset-top));
+  padding-top: calc(8px + env(safe-area-inset-top));
+  padding-inline: max(12px, env(safe-area-inset-left)) max(12px, env(safe-area-inset-right));
   background: var(--surface);
   -webkit-backdrop-filter: blur(var(--blur-strong));
   backdrop-filter: blur(var(--blur-strong));
@@ -281,8 +295,12 @@ label { font-weight: 500; color: var(--text-2); }
   max-width: 1200px;
   min-width: 0;
   margin: 0 auto;
-  padding: 18px 16px 48px;
-  padding-bottom: max(48px, env(safe-area-inset-bottom));
+  padding: 18px var(--gutter-end) 48px var(--gutter-start);
+  padding-bottom: calc(48px + env(safe-area-inset-bottom));
+}
+/* below the sticky top bar: a field or a heading moved to by the keyboard or a link is not hidden under it */
+@media (max-width: 1023px) {
+  html { scroll-padding-top: calc(var(--topbar-bottom) + 8px); }
 }
 .main:focus { outline: none; }
 
@@ -360,17 +378,9 @@ label { font-weight: 500; color: var(--text-2); }
 .account-role { font-size: 12px; color: var(--text-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account button { white-space: nowrap; padding: 6px 10px; flex: 0 0 auto; }
 
-/* ---- legacy page pieces (pages still being moved onto the kit) -------- */
+/* ---- small layout helpers ------------------------------------------------ */
 .spacer { flex: 1 1 auto; }
-.toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 22px; }
 .row { display: flex; gap: 8px; align-items: center; }
-@media (max-width: 760px) {
-  .toolbar input, .toolbar select { min-width: 0; flex: 1 1 190px; width: auto; }
-  .tiles { gap: 12px; }
-  .tile { flex: 1 1 calc(50% - 6px); min-width: 0; }
-  .tile .n { font-size: 22px; }
-  td button { margin: 2px 4px 2px 0; }
-}
 
 /* ---- typography -------------------------------------------------------- */
 .subtle { color: var(--text-dim); }
@@ -406,10 +416,8 @@ label { font-weight: 500; color: var(--text-2); }
   transition: width 400ms ease;
 }
 
-/* ---- tables: crisp inside the glass card ------------------------------- */
-.tablewrap { overflow-x: auto; }
+/* ---- tables: crisp inside the glass card (the kit's Table builds on these) ---- */
 table { width: 100%; border-collapse: collapse; }
-.tablewrap table { min-width: 520px; }
 th, td { text-align: left; padding: 11px 14px; vertical-align: middle; }
 thead th {
   color: var(--text-dim); font-weight: 600; font-size: 11.5px;
@@ -449,13 +457,6 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   border-radius: var(--radius-sm); background: var(--control); color: var(--text);
   resize: vertical; white-space: pre; overflow: auto;
 }
-textarea { font: inherit; }
-.signals-json {
-  margin: 6px 0 0; padding: 10px 12px; background: var(--control);
-  border: 1px solid var(--hairline); border-radius: var(--radius-xs);
-  font-family: ui-monospace, 'Consolas', monospace; font-size: 12px;
-  max-width: 340px; max-height: 220px; overflow: auto; white-space: pre;
-}
 .secret {
   display: block; font-family: ui-monospace, 'Consolas', monospace;
   font-size: 18px; letter-spacing: 0.14em; padding: 12px 14px;
@@ -463,14 +464,7 @@ textarea { font: inherit; }
   border-radius: var(--radius-sm); word-break: break-all; user-select: all;
 }
 
-.row { display: flex; gap: 8px; align-items: center; }
-.toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 22px; }
-
 /* ---- analytics viz: neutral -------------------------------------------- */
-.tiles { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
-.tile { flex: 1; min-width: 140px; }
-.tile .n { font-size: 27px; font-weight: 600; line-height: 1.15; letter-spacing: -0.02em; color: var(--text); }
-.tile .k { color: var(--text-dim); font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.04em; margin-top: 6px; }
 .bars { display: flex; align-items: flex-end; gap: 3px; height: 110px; padding-top: 8px; }
 .bars .b { flex: 1 1 0; max-width: 32px; background: var(--text-2); border-radius: 3px 3px 0 0; min-height: 2px; opacity: 0.8; transition: opacity 0.1s ease; }
 .bars .b:hover { opacity: 1; }
@@ -481,6 +475,19 @@ textarea { font: inherit; }
 
 /* ---- login: liquid-glass card on the consistent base color ------------- */
 .login { position: relative; min-height: 100vh; display: grid; place-items: center; padding: 24px; overflow: hidden; }
+
+/* The sign-in is drawn light on dark in either scheme. Its clear glass and white type are made for
+   the dark backdrop; over the light one they all but vanished (white on the pale scrim measured
+   1.2:1), so in a light scheme this screen keeps the dark scrim over the same picture. Focus rings
+   and the browser's own controls (the checkbox, autofill) follow it. */
+.login { color-scheme: dark; }
+.login :focus-visible { outline-color: #fff; }
+@media (prefers-color-scheme: light) {
+  .login::before {
+    content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(rgba(10, 10, 12, 0.8), rgba(12, 12, 15, 0.88)), url('/background.jpg') center bottom / cover, #0a0a0c;
+  }
+}
 
 /* The card: large radius, very transparent, heavily blurred, rim highlight. */
 .login-card {
@@ -509,10 +516,16 @@ textarea { font: inherit; }
   color: rgba(255, 255, 255, 0.9);
 }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
-.login-welcome { margin: 0 0 28px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
+.login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
-/* Tall translucent inputs, placeholder-only (no left icons), soft glass fill. */
-.login-input { position: relative; margin-bottom: 15px; }
+/* Each field has its label above it: a placeholder alone vanished as soon as typing began. */
+.login-field { margin-bottom: 15px; }
+.login-label { display: block; margin: 0 0 7px; font-size: 13px; font-weight: 600; color: rgba(255, 255, 255, 0.9); }
+.login-field-error { margin-top: 7px; font-size: 13px; line-height: 1.45; color: #ffb3a7; }
+
+/* Tall translucent inputs (no left icons), soft glass fill. */
+.login-input { position: relative; }
+.login-input input[aria-invalid='true'] { border-color: rgba(255, 179, 167, 0.75); }
 .login-input input {
   width: 100%; height: 58px; padding: 0 20px;
   font-size: 16px; color: #fff;
@@ -529,14 +542,14 @@ textarea { font: inherit; }
   border-color: rgba(255, 255, 255, 0.6);
   background: rgba(255, 255, 255, 0.16);
 }
-.login-input input.has-eye { padding-right: 52px; }
+.login-input input.has-eye { padding-right: 58px; }
 .login-eye {
   /* Centre vertically with top/bottom+margin (not transform) so the global
      `button:active { transform: translateY(0.5px) }` can't knock it out of
      place on click — the eye stays put. */
-  position: absolute; right: 10px; top: 0; bottom: 0; margin: auto 0;
+  position: absolute; right: 7px; top: 0; bottom: 0; margin: auto 0;
   display: flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; padding: 0;
+  width: var(--target); height: var(--target); min-width: 0; padding: 0;
   background: none; border: none; box-shadow: none;
   -webkit-backdrop-filter: none; backdrop-filter: none;
   color: rgba(255, 255, 255, 0.78); cursor: pointer; border-radius: 11px;
@@ -548,9 +561,9 @@ textarea { font: inherit; }
 /* remember (left) + forgot (right) */
 .login-actions {
   display: flex; justify-content: space-between; align-items: center;
-  gap: 12px; margin: 8px 0 26px; font-size: 14px;
+  gap: 12px; margin: 2px 0 20px; font-size: 14px;
 }
-.login-remember { display: flex; align-items: center; gap: 9px; color: rgba(255, 255, 255, 0.9); cursor: pointer; }
+.login-remember { display: flex; align-items: center; gap: 9px; min-height: var(--target); color: rgba(255, 255, 255, 0.9); cursor: pointer; }
 /* A clean, normal-looking checkbox: reset the global glass-input styling and
    draw a small square that shows a checkmark when ticked. */
 .login-remember input[type='checkbox'] {
@@ -584,6 +597,7 @@ textarea { font: inherit; }
   text-decoration: underline; text-underline-offset: 3px;
 }
 .login-forgot:hover { color: rgba(255, 255, 255, 0.82); background: none; }
+@media (pointer: coarse) { .login-forgot { min-height: var(--target); } }
 
 /* big translucent pill button */
 .login-submit {
@@ -738,7 +752,8 @@ kbd {
 button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .la-play { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; font-size: 13px; }
 .la-row-main {
-  flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; justify-items: start;
+  /* the button's own centring would centre the text's column in the row */
+  flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; justify-items: start; justify-content: stretch;
   padding: 6px 8px; text-align: left; font-weight: 400;
 }
 .la-text { font-size: 22px; font-weight: 600; line-height: 1.3; color: var(--text); word-break: break-word; max-width: 100%; }
@@ -756,6 +771,59 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
   .la-row .badge { grid-column: 2; justify-self: start; margin-left: 8px; }
   .la-studio { padding: 4px 8px 12px; }
   .la-text { font-size: 19px; }
+}
+
+/* ---- speaking characters: who says it, the preview, the jobs over every recording ---- */
+.voice-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 28px; padding: 4px 0 10px; }
+.voice-pick { display: grid; gap: 6px; min-width: 0; }
+.voice-pick-label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+.voice-pick-options { display: grid; grid-template-columns: repeat(4, minmax(64px, 76px)); gap: 6px; }
+.voice-pick-options:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(64px, 76px)); }
+button.voice-pick-option {
+  display: grid; justify-items: center; gap: 3px; min-height: 0; padding: 6px 4px 5px;
+  font-size: 12.5px; font-weight: 500; color: var(--text-2);
+  background: var(--control); border-color: transparent; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+button.voice-pick-option:hover { background: var(--control-hover); }
+button.voice-pick-option.is-on { background: var(--surface-strong); border-color: var(--text); color: var(--text); font-weight: 600; box-shadow: var(--shadow-sm); }
+.voice-pick-face {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  background: var(--surface-strong); color: var(--text-dim);
+}
+.voice-pick-face img { display: block; width: 40px; height: 40px; }
+.voice-pick .field-hint { max-width: 40ch; }
+.voice-tag { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-strong); border: 1px solid var(--hairline); }
+
+.speaking { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.speaking-figure { flex: 0 0 auto; display: block; border-radius: var(--radius-sm); background: var(--control); overflow: hidden; }
+.speaking-figure svg { display: block; width: 100%; height: 100%; }
+.speaking-side { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.speaking-note { font-size: 12.5px; }
+.aa-studio .speaking { padding-top: 10px; border-top: 1px solid var(--separator); }
+
+.dv-tools { display: grid; gap: 12px; margin-bottom: 4px; }
+.dv-search { max-width: 360px; }
+.dv-list { margin-top: 4px; }
+.dv-more { display: flex; justify-content: center; margin: 4px 0 16px; }
+@media (max-width: 560px) { .dv-search { max-width: none; } .dv-more > button { width: 100%; } }
+
+.vc-form { display: grid; gap: 14px; max-width: 560px; }
+.vc-job { display: grid; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--separator); }
+.vc-job-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.vc-job-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-variant-numeric: tabular-nums; }
+.vc-job-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.vc-fails { display: grid; gap: 6px; margin-top: 4px; }
+.vc-fails-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.vc-fail-list { list-style: none; margin: 0; padding: 0; }
+.vc-fail { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--separator); }
+.vc-fail-text { min-width: 0; overflow-wrap: anywhere; }
+.vc-fail-what { font-weight: 600; color: var(--text); }
+.vc-fail .field-error { margin-top: 2px; }
+@media (max-width: 560px) {
+  .la-row .voice-tag { grid-column: 1; justify-self: center; }
+  .vc-go > button, .vc-job-actions > button { flex: 1 1 0; width: 100%; }
+  .vc-job-actions { width: 100%; }
 }
 
 /* ---- stories: the list, and the editor beside its checks ----------------- */
@@ -784,6 +852,9 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
 }
 /* on a narrow screen the buttons and checks come before the long form */
 @media (max-width: 1099px) { .st-aside { order: -1; } }
+/* the save bar at the foot (pages.css .editor-bar): only where the buttons are above the form, not beside it */
+.editor-bar.st-savebar { display: none; }
+@media (max-width: 1099px) { .editor-bar.st-savebar { display: flex; } }
 
 .st-section { display: grid; gap: 12px; }
 .st-section:focus { outline: none; }

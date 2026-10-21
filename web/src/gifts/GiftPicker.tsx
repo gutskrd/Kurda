@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  applyItemFilter,
+  categoriesIn,
+  countByCategory,
+  DEFAULT_ITEM_FILTER,
+  groupByCategory,
+  isFiltered,
+  itemCategory,
   MAX_GIFT_RECIPIENTS,
   type GiftCatalogItem,
   type GiftChatRef,
+  type ItemFilter,
   type SendGiftResult,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -16,7 +24,23 @@ import { Skeleton, SkeletonRegion } from '../components/Skeleton';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
+import {
+  FilterToggle,
+  ItemSearch,
+  ItemSort,
+  ItemToolbar,
+  KindHeading,
+  KindPanel,
+  KindTabs,
+  NoMatches,
+  ResultsLine,
+  useIdPrefix,
+  type KindTab,
+} from '../shop/ItemBrowser';
 import { GiftItemArt } from './GiftArt';
+
+/** A shelf item; a description is read when the catalogue sends one (it does not today). */
+type ShelfItem = GiftCatalogItem & { description?: string | null };
 
 /** Someone a gift can go to: a friend you are talking to, or a friend in the group. */
 export interface GiftPerson {
@@ -111,14 +135,20 @@ function PickerFlow({
   const group = chat.kind === 'group';
   const [chosen, setChosen] = useState<string[]>(() => (!group && people?.[0] ? [people[0].userId] : []));
   const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
-  const [shelf, setShelf] = useState<{ items: GiftCatalogItem[]; balance: { zer: number; gems: number } } | null>(null);
+  const [shelf, setShelf] = useState<{ items: ShelfItem[]; balance: { zer: number; gems: number } } | null>(null);
   const [shelfError, setShelfError] = useState<ApiError | null>(null);
-  const [picked, setPicked] = useState<GiftCatalogItem | null>(null);
+  const [picked, setPicked] = useState<ShelfItem | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | string | null>(null);
   const [skippedNote, setSkippedNote] = useState<string | null>(null);
   // one key per attempt at one choice: a retry of the same send never pays twice
   const [key, setKey] = useState(() => requestId());
+  // what the shelf shows: a kind, words, an order — and the two narrowings a
+  // gift has that a purchase does not (the balance, and who has it already)
+  const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
+  const [affordOnly, setAffordOnly] = useState(false);
+  const [hideOwned, setHideOwned] = useState(false);
+  const ids = useIdPrefix('gift-shelf');
 
   // in a direct message the one friend is the recipient as soon as they are known
   // (the list arrives a moment after the sheet opens)
@@ -133,7 +163,7 @@ function PickerFlow({
   const loadShelf = useCallback(async () => {
     setShelf(null);
     setShelfError(null);
-    const res = await client.get<{ items: GiftCatalogItem[]; balance: { zer: number; gems: number } }>(
+    const res = await client.get<{ items: ShelfItem[]; balance: { zer: number; gems: number } }>(
       `/gifts/catalog?to=${chosen.join(',')}`,
     );
     if (res.ok) {
@@ -191,6 +221,67 @@ function PickerFlow({
     onSent({ ...res.data, item: picked, partialNote });
   }
 
+  // ---- the shelf, by kind: what the tabs count and what the panel shows ----
+  const items = shelf?.items ?? [];
+  // everyone chosen already has it: there is nobody left to give it to
+  const everyoneHasIt = (item: ShelfItem): boolean => getting(item).length === 0;
+  const keep = (item: ShelfItem): boolean => (!affordOnly || affordable(item)) && (!hideOwned || !everyoneHasIt(item));
+  const kinds = categoriesIn(items);
+  const matching = applyItemFilter(items, { ...filter, category: 'all' }, keep, locale);
+  const counts = countByCategory(matching);
+  const active: KindTab = filter.category !== 'all' && kinds.includes(filter.category) ? filter.category : 'all';
+  const shown = active === 'all' ? matching : matching.filter((item) => itemCategory(item.category) === active);
+  const filtered = isFiltered(filter) || affordOnly || hideOwned;
+  const clear = (): void => {
+    setFilter(DEFAULT_ITEM_FILTER);
+    setAffordOnly(false);
+    setHideOwned(false);
+  };
+  // the choice stays made when a filter hides it; the bar by Send says so
+  const pickedHidden = picked !== null && !shown.some((item) => item.sku === picked.sku);
+
+  const renderTile = (item: ShelfItem): React.JSX.Element => {
+    const owners = item.alreadyOwnedBy;
+    const canPay = affordable(item);
+    const selected = picked?.sku === item.sku;
+    return (
+      <li key={item.sku}>
+        <button
+          type="button"
+          className={`gift-tile${selected ? ' is-picked' : ''} gift-tile-${item.tier}`}
+          aria-pressed={selected}
+          disabled={everyoneHasIt(item)}
+          onClick={() => {
+            setPicked(selected ? null : item);
+            setError(null);
+            setSkippedNote(null);
+          }}
+        >
+          <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} />
+          <span className="gift-tile-name">{item.name}</span>
+          {item.description && <span className="gift-tile-desc">{item.description}</span>}
+          <span className={`gift-tile-price${canPay ? '' : ' is-short'}`}>
+            {item.currency === 'gems' ? <GemIcon size={13} /> : <CoinIcon size={13} />} {fmt(item.price)}
+            <span className="sr-only">{item.currency === 'gems' ? t('shop.gems') : 'Zêr'}</span>
+          </span>
+          {item.tier !== 'common' && <span className={`gift-tier gift-tier-${item.tier}`}>{t(TIER_LABEL[item.tier])}</span>}
+          {owners.length > 0 && (
+            <span className="gift-tile-owned">
+              {group
+                ? t('gift.picker.someHaveIt', { names: owners.map((id) => nameOf.get(id) ?? '').join(', ') })
+                : t('gift.picker.hasIt')}
+            </span>
+          )}
+          {selected && (
+            <span className="gift-tile-check" aria-hidden>
+              <CheckIcon size={14} />
+            </span>
+          )}
+        </button>
+      </li>
+    );
+  };
+
   const names = chosen.map((id) => nameOf.get(id) ?? '').filter(Boolean);
   const title = group ? t('gift.picker.titleGroup') : t('gift.picker.title', { name: people?.[0]?.name ?? '' });
 
@@ -234,53 +325,59 @@ function PickerFlow({
           ) : shelf.items.length === 0 ? (
             <p className="muted">{t('gift.picker.empty')}</p>
           ) : (
-            <ul className="gift-shelf" aria-label={t('gift.picker.shelf')}>
-              {shelf.items.map((item) => {
-                const owners = item.alreadyOwnedBy;
-                const allHave = getting(item).length === 0;
-                const canPay = affordable(item);
-                const selected = picked?.sku === item.sku;
-                return (
-                  <li key={item.sku}>
-                    <button
-                      type="button"
-                      className={`gift-tile${selected ? ' is-picked' : ''} gift-tile-${item.tier}`}
-                      aria-pressed={selected}
-                      disabled={allHave}
-                      onClick={() => {
-                        setPicked(selected ? null : item);
-                        setError(null);
-                        setSkippedNote(null);
-                      }}
-                    >
-                      <GiftItemArt assetUrl={item.assetUrl} category={item.category} size={72} />
-                      <span className="gift-tile-name">{item.name}</span>
-                      <span className={`gift-tile-price${canPay ? '' : ' is-short'}`}>
-                        {item.currency === 'gems' ? <GemIcon size={13} /> : <CoinIcon size={13} />} {fmt(item.price)}
-                        <span className="sr-only">{item.currency === 'gems' ? t('shop.gems') : 'Zêr'}</span>
-                      </span>
-                      {item.tier !== 'common' && <span className={`gift-tier gift-tier-${item.tier}`}>{t(TIER_LABEL[item.tier])}</span>}
-                      {owners.length > 0 && (
-                        <span className="gift-tile-owned">
-                          {group
-                            ? t('gift.picker.someHaveIt', { names: owners.map((id) => nameOf.get(id) ?? '').join(', ') })
-                            : t('gift.picker.hasIt')}
-                        </span>
-                      )}
-                      {selected && (
-                        <span className="gift-tile-check" aria-hidden>
-                          <CheckIcon size={14} />
-                        </span>
-                      )}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+            <>
+              <KindTabs
+                kinds={['all', ...kinds]}
+                value={active}
+                counts={counts}
+                idPrefix={ids}
+                onChange={(category) => setFilter((f) => ({ ...f, category }))}
+              />
+              <ItemToolbar>
+                <ItemSearch
+                  value={filter.query}
+                  label={t('gift.picker.searchLabel')}
+                  placeholder={t('items.searchByName')}
+                  onChange={(query) => setFilter((f) => ({ ...f, query }))}
+                />
+                <ItemSort value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
+                <div className="item-toggles">
+                  <FilterToggle checked={affordOnly} onChange={setAffordOnly}>
+                    {t('items.withinBalance')}
+                  </FilterToggle>
+                  <FilterToggle checked={hideOwned} onChange={setHideOwned}>
+                    {t('gift.picker.hideOwned')}
+                  </FilterToggle>
+                </div>
+              </ItemToolbar>
+              <ResultsLine count={shown.length} filtered={filtered && shown.length > 0} onClear={clear} />
+
+              <KindPanel idPrefix={ids} kind={active}>
+                {shown.length === 0 ? (
+                  <NoMatches onClear={clear} />
+                ) : active === 'all' ? (
+                  groupByCategory(shown).map((g) => (
+                    <section key={g.category} className="gift-shelf-section" aria-labelledby={`${ids}-${g.category}`}>
+                      <KindHeading kind={g.category} count={g.items.length} id={`${ids}-${g.category}`} level={3} />
+                      <ul className="gift-shelf" aria-labelledby={`${ids}-${g.category}`}>
+                        {g.items.map(renderTile)}
+                      </ul>
+                    </section>
+                  ))
+                ) : (
+                  <ul className="gift-shelf" aria-label={t('gift.picker.shelf')}>
+                    {shown.map(renderTile)}
+                  </ul>
+                )}
+              </KindPanel>
+            </>
           )}
 
           {picked && (
             <div className="gift-confirm">
+              {/* what is chosen, drawn, by the button that sends it — even when
+                  the filters above have since hidden it from the shelf */}
+              <GiftItemArt assetUrl={picked.assetUrl} category={picked.category} size={44} className="gift-confirm-art" />
               <span className="gift-confirm-text">
                 {t('gift.picker.confirm', {
                   item: picked.name,
@@ -289,6 +386,7 @@ function PickerFlow({
                 <strong className="gift-confirm-cost">
                   {picked.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />} {fmt(cost(picked))}
                 </strong>
+                {pickedHidden && <span className="gift-confirm-hidden">{t('gift.picker.pickHidden')}</span>}
               </span>
               {!affordable(picked) && <span className="gift-confirm-short">{t('gift.error.funds')}</span>}
               <Button onClick={() => void send()} disabled={busy || !affordable(picked)}>
@@ -361,7 +459,7 @@ function WhoStep({
   );
 }
 
-/** The shelf while it loads: the same tiles, empty. */
+/** The shelf while it loads: the same tiles, empty — the picture, the name, the line under it and the price. */
 function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
   const t = useT();
   return (
@@ -369,7 +467,15 @@ function ShelfSkeleton({ count }: { count: number }): React.JSX.Element {
       {Array.from({ length: count }, (_, i) => (
         <span className="gift-tile is-skeleton" key={i}>
           <Skeleton w={72} h={72} radius="var(--r-md)" />
-          <Skeleton line w="70%" />
+          <span className="gift-tile-name">
+            <Skeleton line w={[64, 80, 56][i % 3]} />
+          </span>
+          <span className="gift-tile-desc">
+            <Skeleton line w={[72, 56, 64][i % 3]} />
+          </span>
+          <span className="gift-tile-price">
+            <Skeleton line w={40} />
+          </span>
         </span>
       ))}
     </SkeletonRegion>

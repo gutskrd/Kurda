@@ -207,6 +207,29 @@ describe('reading', () => {
     await userEvent.click(screen.getByRole('button', { name: 'I’ve finished reading' }));
     expect(await screen.findByText('You’ve finished')).toBeInTheDocument();
   });
+
+  it('shows who says the story’s lines in the reading tools, and nobody when no line has a character', async () => {
+    const s1 = 'Îro Rojîn diçe dibistanê.';
+    const reading = (voiced: boolean) =>
+      fakeApi({
+        'GET /story-games/g-1/story': detail({
+          paragraphs: [`${s1} Ew deh salî ye.`],
+          audio: { [lessonAudioKey(s1)]: 'https://cdn.test/1.m4a' },
+          ...(voiced ? { voices: { [lessonAudioKey(s1)]: { speaker: 'xezo' as const } } } : {}),
+        }),
+        'GET /story-games/g-1': (c: Call) => (c.path.includes('?v=') ? heldPoll().answer(c) : gameView({ mode: 'solo', status: 'reading', version: 2 })),
+      });
+    reading(true);
+    const first = game();
+    expect(await screen.findByRole('img', { name: 'Xezo' })).toBeInTheDocument();
+    expect(document.querySelector('.story-tools .speaking-character')).toHaveAttribute('data-speaker', 'xezo');
+    first.unmount();
+
+    reading(false);
+    game();
+    expect(await screen.findByRole('button', { name: 'Listen' })).toBeInTheDocument();
+    expect(document.querySelector('.speaking-character')).toBeNull();
+  });
 });
 
 describe('reading, near the end', () => {
@@ -258,8 +281,10 @@ describe('reading, near the end', () => {
     const before = pauses.length;
     act(() => poll.release(question({ mode: 'duo', activeCount: 2, version: 3 })));
     await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    // the player was paused when the reading went, with this story's sentence in it
-    expect(pauses.length).toBeGreaterThan(before);
+    // the player was paused when the reading went, with this story's sentence in it;
+    // the reading phase lets go of the player as it unmounts, which can be a beat
+    // after the question is on screen
+    await waitFor(() => expect(pauses.length).toBeGreaterThan(before));
     expect(pauses.at(-1)).toBe('https://cdn.test/1.m4a');
     vi.unstubAllGlobals();
   });

@@ -12,10 +12,12 @@ interface Props {
   disabled: boolean;
   /** the course's variety of Kurdish, for the key bar */
   dialect?: string | null;
+  /** how the answer was graded, once it has been */
+  verdict?: 'right' | 'wrong' | null;
 }
 
 /** Free-text writing with the Kurdish key bar (KUR-037), in the course's variety. */
-export function WritingExercise({ exercise, text, onChangeText, disabled, dialect }: Props) {
+export function WritingExercise({ exercise, text, onChangeText, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
 
@@ -29,6 +31,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
         onChangeText={onChangeText}
         dialect={dialect}
         disabled={disabled}
+        verdict={verdict}
         multiline
         placeholder={t('lesson.write.placeholder')}
         placeholderTextColor={colors.textSecondary}

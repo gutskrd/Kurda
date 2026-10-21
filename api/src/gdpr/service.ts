@@ -13,6 +13,7 @@ import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
+import { userHash } from '../moderation/pseudonym.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -191,6 +192,9 @@ export class GdprService {
   }
 
   private async anonymize(userId: string, executor: Pick<pg.Pool, 'query'> = this.pool): Promise<void> {
+    // what they wrote to the support address, with the answers to it: it is
+    // found by their address, which the next statement replaces, so first
+    await eraseSupportMail(executor, userId);
     await executor.query(
       `UPDATE users SET
          email = 'deleted_' || id || '@deleted.kurda.app',
@@ -211,6 +215,19 @@ export class GdprService {
     await executor.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
+    // what sign-in protection kept about the account: its devices and networks
+    // (and the failure counts kept under them), the security emails it was
+    // sent, any count or lock on it, the failures aimed at it, and the networks
+    // it was seen on
+    await executor.query(
+      `DELETE FROM auth_lockouts WHERE scope = 'device' AND key IN (SELECT device_hash FROM known_devices WHERE user_id = $1)`,
+      [userId],
+    );
+    await executor.query(`DELETE FROM known_devices WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM security_notices WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM auth_lockouts WHERE scope = 'account' AND key = $1::text`, [userId]);
+    await executor.query(`DELETE FROM auth_network_failures WHERE target_hash = $1`, [userHash(userId)]);
+    await executor.query(`DELETE FROM network_sightings WHERE user_id = $1`, [userId]);
     // off this week's league table at once (their earlier weeks stay, tied to
     // no name), their showcase gone from the profile nobody can open now, and
     // no badge push queued for an account that is closed
@@ -304,16 +321,47 @@ export class GdprService {
     );
     // their Game Ranks, every change with its reason (ranks/gdpr.ts)
     const ranks = await exportRanks(this.pool, userId);
+    // what they wrote to the support address from this account's address, and
+    // what they were answered; who on the team answered is not theirs
+    // the devices and networks that have signed in to the account, by when,
+    // the networks it was seen on by day, and the security emails it was sent;
+    // each device and network is kept only as a keyed hash, which would mean
+    // nothing to them, so the hashes are left out
+    const devices = await this.pool.query(
+      `SELECT kind, first_seen_at, last_seen_at, expires_at FROM known_devices WHERE user_id = $1 ORDER BY first_seen_at`,
+      [userId],
+    );
+    const networks = await this.pool.query(
+      `SELECT day, count(*)::int AS networks_seen FROM network_sightings WHERE user_id = $1 GROUP BY day ORDER BY day`,
+      [userId],
+    );
+    const notices = await this.pool.query(
+      `SELECT kind, sent_at FROM security_notices WHERE user_id = $1 ORDER BY sent_at`,
+      [userId],
+    );
+    const support = await this.pool.query(
+      `SELECT e.subject, e.received_at, e.text_body, e.html_body,
+              COALESCE((SELECT json_agg(json_build_object('body', r.body, 'sentAt', r.sent_at) ORDER BY r.sent_at)
+                          FROM support_email_replies r WHERE r.email_id = e.id), '[]'::json) AS answers
+         FROM support_emails e
+        WHERE e.from_address = (SELECT lower(u.email::text) FROM users u WHERE u.id = $1)
+        ORDER BY e.received_at`,
+      [userId],
+    );
     return {
       exportedAt: new Date().toISOString(),
       format: 'kurda-user-export/v1',
       user: user.rows[0] ?? null,
       posts,
       sessions: sessions.rows,
+      signInDevices: devices.rows,
+      networksSeen: networks.rows,
+      securityEmails: notices.rows,
       oauthIdentities: identities.rows,
       storyGames: storyGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },
       gameRanks: ranks,
+      supportEmails: support.rows,
       // XP, leagues, streaks and badges (gdpr/progress-export.ts)
       progress: await exportProgress(this.pool, userId),
     };
@@ -374,6 +422,21 @@ export class GdprService {
       downloadUrl: await this.deps.storage!.createDownloadUrl(record.storage_key),
     };
   }
+}
+
+/**
+ * Mail the account's owner sent to the support address, and the answers to it
+ * (they go with it, by the foreign key). Found by the account's address, which
+ * is the one thing the inbox knows them by — so this has to run before the
+ * address is replaced, and it is the reason a closed account's address does
+ * not live on in the inbox after the account itself has been anonymized.
+ */
+export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<void> {
+  await executor.query(
+    `DELETE FROM support_emails
+      WHERE from_address = (SELECT lower(u.email::text) FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL)`,
+    [userId],
+  );
 }
 
 /**

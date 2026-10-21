@@ -11,6 +11,8 @@ import { setToken } from '../api';
 import { AuthProvider } from '../auth';
 import { failure, fakeApi, json, on, type Call } from '../test/fetch';
 import { renderUi } from '../test/render';
+import { AiModeration } from './AiModeration';
+import { Antibot } from './Antibot';
 import { Approvals } from './Approvals';
 import { Audit, describeAction } from './Audit';
 import { Events, lifecycle } from './Events';
@@ -362,5 +364,44 @@ describe('Feature flags', () => {
     renderUi(<Experiments />);
     await user.click(await screen.findByRole('button', { name: 'Turn off' }));
     expect(screen.getByRole('alertdialog')).toHaveTextContent('Everyone gets “control” straight away.');
+  });
+});
+
+describe('Bot flags', () => {
+  const flag = { userId: '7d1c2c1e-0000-4000-8000-0000000000aa', score: 0.92, tier: 'flagged', signals: { burstMessages: 40 }, computedAt: '2026-10-13T10:00:00.000Z' };
+
+  it('lists a flag with its account, and asks in the admin’s own dialog before confirming a bot', async () => {
+    const user = userEvent.setup();
+    const { calls } = fakeApi(
+      on('GET', '/admin/antibot/flagged', json({ flagged: [flag] })),
+      on('POST', `/admin/antibot/${flag.userId}/reverse`, json({ reversedXp: 340 })),
+    );
+    renderUi(<Antibot />);
+    const row = (await screen.findByRole('link', { name: 'User 7d1c2c1e' })).closest('tr')!;
+    expect(row).toHaveTextContent('92%');
+    await user.click(within(row).getByRole('button', { name: 'Confirm bot' }));
+    const dialog = screen.getByRole('alertdialog', { name: 'Confirm 7d1c2c1e as a bot?' });
+    await user.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+    expect(posts(calls, /reverse$/)).toHaveLength(0);
+
+    await user.click(within(row).getByRole('button', { name: 'Confirm bot' }));
+    await user.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Confirm bot' }));
+    await waitFor(() => expect(posts(calls, /reverse$/)).toHaveLength(1));
+    expect(await screen.findByText('Confirmed 7d1c2c1e as a bot: 340 XP reversed.')).toBeInTheDocument();
+  });
+});
+
+describe('Automated flags', () => {
+  it('says on the row why a flag with its evidence kept cannot be overturned', async () => {
+    const image = {
+      id: 'i-1', mediaKey: 'posts/2026/10/a.webp', surface: 'post', action: 'block', reasons: ['csam'], nsfwScore: 0.9, violenceScore: 0,
+      csamMatch: true, preserveEvidence: true, modelVersion: 'img', createdAt: '2026-10-13T10:00:00.000Z',
+    };
+    fakeApi(on('GET', '/admin/moderation/flags', json({ flags: [] })), on('GET', '/admin/moderation/image-flags', json({ flags: [image] })));
+    renderUi(<AiModeration />);
+    const row = (await screen.findByText('Evidence is kept: it can be upheld, not overturned.')).closest('tr')!;
+    expect(within(row).getByRole('button', { name: 'Overturn' })).toBeDisabled();
+    expect(within(row).getByRole('button', { name: 'Uphold' })).toBeEnabled();
+    expect(screen.getByText('No text flags are waiting.')).toBeInTheDocument();
   });
 });

@@ -1,9 +1,10 @@
 import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
-import { screen, waitFor, within } from '@testing-library/react';
+import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { lessonAudioKey } from '@kurda/shared';
 import { renderApp } from '../test/utils';
+import { soundPlayer } from '../lib/sound';
 import { StoryReader } from './StoryReader';
 import { detail, fakeApi, gameView, notFound } from './testing';
 
@@ -116,6 +117,37 @@ describe('Story reader', () => {
     expect(document.querySelector('.story-sentence.is-reading')?.textContent).toBe(s1);
     // whole-story controls only for a story recorded throughout
     expect(screen.queryByRole('group', { name: 'Listen to the story' })).toBeNull();
+  });
+
+  it('shows who says the line being read, at the top of the reader, line by line', async () => {
+    const s1 = 'Îro Rojîn diçe dibistanê.';
+    const s2 = 'Ew deh salî ye.';
+    fakeApi({
+      'GET /stories/qelema-sin': detail({
+        audio: { [lessonAudioKey(s1)]: 'https://cdn.test/1.m4a', [lessonAudioKey(s2)]: 'https://cdn.test/2.m4a' },
+        voices: { [lessonAudioKey(s1)]: { speaker: 'hamo' }, [lessonAudioKey(s2)]: { speaker: 'xezo' } },
+      }),
+    });
+    reader();
+    // before anything plays, the first line's speaker waits in the tools
+    const tools = (await screen.findByRole('button', { name: 'Listen' })).closest('.story-page')!.querySelector('.story-tools')!;
+    expect(within(tools as HTMLElement).getByRole('img', { name: 'Hamo' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Listen' }));
+    expect(await within(tools as HTMLElement).findByRole('img', { name: 'Hamo speaking' })).toBeInTheDocument();
+    // the first line ends and the next, Xezo's, begins
+    act(() => soundPlayer()!.dispatchEvent(new Event('ended')));
+    expect(played).toEqual(['https://cdn.test/1.m4a', 'https://cdn.test/2.m4a']);
+    expect(await within(tools as HTMLElement).findByRole('img', { name: 'Xezo speaking' })).toBeInTheDocument();
+    expect(tools.querySelectorAll('.speaking-character')).toHaveLength(1);
+  });
+
+  it('shows nobody for a story whose recordings have no character', async () => {
+    const s1 = 'Îro Rojîn diçe dibistanê.';
+    fakeApi({ 'GET /stories/qelema-sin': detail({ audio: { [lessonAudioKey(s1)]: 'https://cdn.test/1.m4a' } }) });
+    reader();
+    expect(await screen.findByRole('button', { name: 'Listen' })).toBeInTheDocument();
+    expect(document.querySelector('.speaking-character')).toBeNull();
   });
 
   it('shows the whole-story player when every sentence is recorded', async () => {

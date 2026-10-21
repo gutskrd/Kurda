@@ -56,7 +56,11 @@ function person(over: Partial<UserDetail> = {}): UserDetail {
     ],
     appeals: [{ id: 'ap-1', sanctionId: 's-now', caseId: null, text: 'It was a joke.', status: 'open', decisionNote: null, createdAt: ago(1), decidedAt: null }],
     cases: [{ id: 'case-1', status: 'actioned', priority: 2, category: 'harassment', summary: 'Group message reported', createdAt: ago(24 * 41) }],
-    linkedAccounts: [{ id: 'u-alt', username: 'baran2', via: 'device', banned: true }],
+    linkedAccounts: [
+      { id: 'u-alt', username: 'baran2', via: 'device', days: 2, lastSeenTogether: ago(24 * 3), banned: true },
+      { id: 'u-flat', username: 'rojda7', via: 'network', days: 3, lastSeenTogether: ago(30), banned: false },
+      { id: 'u-once', username: 'dilan4', via: 'network', days: 1, lastSeenTogether: ago(24 * 20), banned: false },
+    ],
     chatOffenses: null,
     mutedPermanently: false,
     ...over,
@@ -155,6 +159,11 @@ describe('a person', () => {
     expect(screen.getByText('baran@example.org')).toBeInTheDocument();
     expect(screen.getByText('18 or over')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '@baran2' })).toBeInTheDocument();
+    expect(screen.getByText('same device')).toHaveAttribute('title', expect.stringMatching(/same device/));
+    // a network says on how many days, and on hover what that means
+    const flat = screen.getByText('same network · 3 days');
+    expect(flat).toHaveAttribute('title', expect.stringMatching(/within 48 hours of each other on 3 days.*Busy networks/));
+    expect(screen.getByText('same network · 1 day')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Standing/ })).toHaveAttribute('href', `${at}/standing`);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '#/users');
@@ -371,6 +380,32 @@ describe('a person', () => {
     await user.click(within(ask).getByRole('button', { name: 'Take it back' }));
     await waitFor(() => expect(calls.some((c) => c.method === 'DELETE')).toBe(true));
     expect(calls.find((c) => c.method === 'DELETE')!.body).toEqual({ reason: 'Given by mistake' });
+  });
+
+  it('gives an item with a reason, saying what is missing rather than greying the button out', async () => {
+    const user = userEvent.setup();
+    const { calls } = show(
+      `${at}/items`,
+      OWNER,
+      detailRoute(person()),
+      on('GET', `/admin/users/${SUBJECT_ID}/items`, json({ items: [] })),
+      on('GET', '/admin/shop/items', json({ items: [{ sku: 'icon-deer', name: 'Deer', category: 'icon' }] })),
+      on('POST', `/admin/users/${SUBJECT_ID}/items`, json({ ok: true })),
+    );
+    const give = await screen.findByRole('button', { name: 'Give the item' });
+    expect(give).toBeEnabled();
+    await user.click(give);
+    expect(screen.getByText('Choose the item to give.')).toBeInTheDocument();
+    expect(screen.getByText('Say why, for the audit log.')).toBeInTheDocument();
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)).toHaveLength(0);
+    // each goes as soon as it is put right
+    await user.selectOptions(await screen.findByRole('combobox', { name: /^Item/ }), 'icon-deer');
+    expect(screen.queryByText('Choose the item to give.')).not.toBeInTheDocument();
+    await user.type(screen.getByLabelText(/^Reason/), 'Lost in the outage');
+    expect(screen.queryByText('Say why, for the audit log.')).not.toBeInTheDocument();
+    await user.click(give);
+    await waitFor(() => expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)).toHaveLength(1));
+    expect(posts(calls, `/admin/users/${SUBJECT_ID}/items`)[0]!.body).toEqual({ sku: 'icon-deer', reason: 'Lost in the outage' });
   });
 
   it('shows what admins did to the account, in words', async () => {

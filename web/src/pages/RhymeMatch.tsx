@@ -25,6 +25,7 @@ import { PlayerReport } from '../reports/PlayerReport';
 import type { RatedState } from '@kurda/shared';
 import { LobbyRated, RatedBadge, shownRated } from '../ranks/rated';
 import { RankResult } from '../ranks/RankResult';
+import { haptic } from '../lib/haptics';
 
 type Dialect = 'kurmanci' | 'sorani';
 
@@ -202,6 +203,7 @@ function MatchRoom({ id }: { id: string }): React.JSX.Element {
       setRemaining(res.data.match.remainingMs);
       setWord('');
       const { result } = res.data;
+      haptic(result.accepted ? 'correct' : 'wrong');
       if (result.accepted) setFound((f) => [{ word: result.normalized, quality: result.quality, points: result.points }, ...f]);
       else setNotice(t(REJECT_KEY[result.reason ?? ''] ?? 'games.rhyme.reject.other'));
       inputRef.current?.focus();

@@ -79,13 +79,13 @@ export function ExerciseCard({
         </h3>
         {!readOnly && (
           <div className="ex-tools">
-            <button type="button" className="icon-button ghost" onClick={() => onMove(-1)} disabled={index === 0} aria-label={`Move exercise ${index + 1} up`}>
+            <button type="button" className="icon-button ghost" onClick={() => onMove(-1)} disabled={index === 0} aria-label={`Move exercise ${index + 1} up`} title={`Move exercise ${index + 1} up`}>
               <Icon name="chevronUp" />
             </button>
-            <button type="button" className="icon-button ghost" onClick={() => onMove(1)} disabled={index === count - 1} aria-label={`Move exercise ${index + 1} down`}>
+            <button type="button" className="icon-button ghost" onClick={() => onMove(1)} disabled={index === count - 1} aria-label={`Move exercise ${index + 1} down`} title={`Move exercise ${index + 1} down`}>
               <Icon name="chevronDown" />
             </button>
-            <button type="button" className="icon-button ghost is-danger" onClick={onRemove} aria-label={`Remove exercise ${index + 1}`}>
+            <button type="button" className="icon-button ghost is-danger" onClick={onRemove} aria-label={`Remove exercise ${index + 1}`} title={`Remove exercise ${index + 1}`}>
               <Icon name="trash" />
             </button>
           </div>
@@ -119,14 +119,16 @@ export function ExerciseCard({
               <legend>Answers — choose the right one</legend>
               {strings(p.options).map((opt, i) => (
                 <div key={i} className="ex-list-row">
-                  <input
-                    type="radio"
-                    name={`${id}-right`}
-                    checked={p.correctIndex === i}
-                    disabled={readOnly}
-                    aria-label={`Answer ${i + 1} is the right one`}
-                    onChange={() => set({ correctIndex: i })}
-                  />
+                  <label className="ex-pick">
+                    <input
+                      type="radio"
+                      name={`${id}-right`}
+                      checked={p.correctIndex === i}
+                      disabled={readOnly}
+                      aria-label={`Answer ${i + 1} is the right one`}
+                      onChange={() => set({ correctIndex: i })}
+                    />
+                  </label>
                   <input
                     id={at(`options.${i}`)}
                     dir="auto"
@@ -142,6 +144,7 @@ export function ExerciseCard({
                       type="button"
                       className="icon-button ghost"
                       aria-label={`Remove answer ${i + 1}`}
+                      title={`Remove answer ${i + 1}`}
                       onClick={() => {
                         const options = strings(p.options).filter((_, j) => j !== i);
                         const right = typeof p.correctIndex === 'number' ? p.correctIndex : 0;
@@ -235,7 +238,7 @@ export function ExerciseCard({
                   />
                 ))}
                 {!readOnly && all.length > 2 && (
-                  <button type="button" className="icon-button ghost" aria-label={`Remove pair ${i + 1}`} onClick={() => set({ pairs: all.filter((_, j) => j !== i) })}>
+                  <button type="button" className="icon-button ghost" aria-label={`Remove pair ${i + 1}`} title={`Remove pair ${i + 1}`} onClick={() => set({ pairs: all.filter((_, j) => j !== i) })}>
                     <Icon name="close" />
                   </button>
                 )}
@@ -326,7 +329,7 @@ function TextList({
             onChange={(e) => onChange(values.map((x, j) => (j === i ? e.target.value : x)))}
           />
           {!readOnly && values.length > 1 && (
-            <button type="button" className="icon-button ghost" aria-label={`Remove ${label.toLowerCase()} ${i + 1}`} onClick={() => onChange(values.filter((_, j) => j !== i))}>
+            <button type="button" className="icon-button ghost" aria-label={`Remove ${label.toLowerCase()} ${i + 1}`} title={`Remove ${label.toLowerCase()} ${i + 1}`} onClick={() => onChange(values.filter((_, j) => j !== i))}>
               <Icon name="close" />
             </button>
           )}

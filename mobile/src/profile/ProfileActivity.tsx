@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { FeedCard } from '../feed/FeedCard';
+import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
+import { SkeletonText } from '../theme/Skeleton';
 import type { FeedItem } from '../feed/types';
 import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
@@ -109,10 +110,13 @@ export function ProfileActivity({
       <Text style={[styles.heading, { color: colors.textSecondary }]}>{t('profile.activity')}</Text>
 
       {/*
-        Scrollable would hide a tab off the edge; four fit across a phone, so
-        they share the width and keep their labels.
+        Scrollable would hide a tab off the edge, so they share the width and
+        keep their labels — the glyph above the word rather than beside it,
+        which is what lets five fit across a phone without "Reposts" arriving
+        as "Repo…". The same track and the same chosen fill as the switches
+        elsewhere in the app.
       */}
-      <View style={[styles.tabs, { backgroundColor: colors.glassFill }]}>
+      <View style={[styles.tabs, { backgroundColor: colors.controlTrack }]} accessibilityRole="tablist">
         {shown.map((s) => {
           const on = s === active;
           return (
@@ -121,9 +125,9 @@ export function ProfileActivity({
               onPress={() => setSection(s)}
               accessibilityRole="tab"
               accessibilityState={{ selected: on }}
-              style={[styles.tab, on ? { backgroundColor: colors.controlTrack } : null]}
+              style={[styles.tab, on ? { backgroundColor: colors.selectedFill } : null]}
             >
-              <Icon name={GLYPH[s]} size={15} color={on ? colors.textPrimary : colors.textSecondary} />
+              <Icon name={GLYPH[s]} size={18} color={on ? colors.textPrimary : colors.textSecondary} />
               <Text
                 numberOfLines={1}
                 style={[styles.tabText, { color: on ? colors.textPrimary : colors.textSecondary }]}
@@ -136,7 +140,7 @@ export function ProfileActivity({
       </View>
 
       {page === null ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.lg }} />
+        <ActivitySkeleton games={active === 'games'} />
       ) : empty ? (
         <EmptyState title={t('profile.nothingHere')} body={t('profile.nothingHere.body')} />
       ) : (
@@ -165,25 +169,64 @@ export function ProfileActivity({
   );
 }
 
+/**
+ * The whole section in grey, for a profile that is itself still loading: the
+ * heading, the tab strip, and the first posts.
+ */
+export function ProfileActivitySkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={styles.wrap}>
+      <SkeletonText size={typography.sizes.xs} width={72} />
+      <View style={[styles.tabs, styles.tabsSkeleton, { backgroundColor: colors.controlTrack }]} />
+      <ActivitySkeleton games={false} />
+    </View>
+  );
+}
+
+/**
+ * A section while it loads: the posts as the cards they will be, or the games
+ * as the rows they will be — not a spinner over the space where they arrive.
+ */
+function ActivitySkeleton({ games }: { games: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      {games
+        ? [0, 1, 2].map((i) => (
+            <View key={i} style={[styles.row, { backgroundColor: colors.glassFill }]}>
+              <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '52%'} />
+              <SkeletonText size={typography.sizes.sm} width="30%" />
+            </View>
+          ))
+        : [0, 1].map((i) => <FeedCardSkeleton key={i} titled={i > 0} />)}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   wrap: { alignSelf: 'stretch', marginTop: spacing.lg, gap: spacing.sm },
   heading: { ...sectionLabel },
   tabs: {
     flexDirection: 'row',
-    borderRadius: radii.pill,
+    borderRadius: radii.lg,
     padding: 3,
     gap: 2,
   },
+  // the strip's own height: a tab is 50, inside 3 of padding
+  tabsSkeleton: { height: 50 + 3 * 2 },
   tab: {
     flex: 1,
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 4,
+    gap: 2,
+    minHeight: 50,
     paddingVertical: 6,
-    borderRadius: radii.pill,
+    paddingHorizontal: 2,
+    borderRadius: radii.md,
   },
-  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.medium },
+  tabText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   list: { gap: spacing.md },
   row: {
     borderRadius: radii.md,

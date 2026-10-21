@@ -10,13 +10,14 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonLines, SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -92,9 +93,11 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
       }
       audioMediaId = up.audioMediaId;
     }
+    haptic('tap');
     const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
     setPosting(false);
     if (!res.ok) {
+      haptic('error');
       showSendError(t('comment.failed'), res.error);
       return;
     }
@@ -129,10 +132,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
         {header}
         <View style={styles.screen}>
           {post === null ? (
-            <View style={styles.loading}>
-              <Skeleton width="60%" height={24} />
-              <SkeletonLines count={5} />
-            </View>
+            <PostSkeleton />
           ) : (
             <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
               {/* a gotin has no title; its pictures come first on its own page, words under them */}
@@ -162,7 +162,7 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
                 {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
               </Text>
               {comments === null ? (
-                <SkeletonList count={3} style={{ marginTop: spacing.xs }} />
+                <CommentsSkeleton />
               ) : comments.length === 0 ? (
                 <EmptyState title={t('comments.empty')} />
               ) : (
@@ -241,14 +241,62 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   );
 }
 
+/**
+ * The page while it loads: the title, a page of the body at its own line
+ * height, and the comments' heading — laid out by the page's own styles, so
+ * the words arrive where the grey stood.
+ */
+function PostSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const widths = ['96%', '92%', '98%', '88%', '94%', '72%'] as const;
+  return (
+    <View style={styles.body} accessibilityLabel={t('common.loading')}>
+      <SkeletonText size={typography.sizes.xl} lineHeight={TITLE_LINE} width="64%" />
+      <View>
+        {Array.from({ length: 12 }, (_, i) => (
+          <SkeletonText key={i} size={typography.sizes.md} lineHeight={BODY_LINE} width={widths[i % widths.length]} />
+        ))}
+      </View>
+      {/* "Report this post", under it on anybody else's */}
+      <View>
+        <Skeleton width={14} height={14} radius={radii.xs} />
+        <SkeletonText size={typography.sizes.sm} width={112} />
+      </View>
+      <SkeletonText size={typography.sizes.sm} width={96} style={styles.commentsTitleSkeleton} />
+      <CommentsSkeleton />
+    </View>
+  );
+}
+
+/** Three comments in grey: the small picture, a line, the line under it. */
+function CommentsSkeleton(): React.JSX.Element {
+  return (
+    <View>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={styles.comment}>
+          <Skeleton width={28} height={28} radius={radii.pill} />
+          <View style={styles.commentMain}>
+            <SkeletonText size={typography.sizes.md} width={i === 1 ? '54%' : '80%'} />
+            <SkeletonText size={typography.sizes.xs} width={48} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** display(28) sets 1.12 */
+const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+const BODY_LINE = 24;
+
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
-  loading: { padding: spacing.lg, gap: spacing.lg },
   title: { ...display(typography.sizes.xl) },
-  postBody: { fontSize: typography.sizes.md, lineHeight: 24 },
+  postBody: { fontSize: typography.sizes.md, lineHeight: BODY_LINE },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
+  commentsTitleSkeleton: { marginTop: spacing.sm },
   comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
   commentMain: { flex: 1, gap: 2 },
   commentBody: { fontSize: typography.sizes.md },

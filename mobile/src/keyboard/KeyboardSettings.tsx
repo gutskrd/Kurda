@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
+import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
@@ -71,7 +73,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
         title={t('keyboard.keyBar.title')}
         subtitle={t('keyboard.keyBar.hint')}
         trailing={
-          <Switch
+          <Toggle
             value={prefs.keyBar}
             onValueChange={(on) => setPrefs({ keyBar: on })}
             accessibilityLabel={t('keyboard.keyBar.title')}
@@ -84,7 +86,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
         title={t('keyboard.backtick.title')}
         subtitle={t('keyboard.backtick.hint')}
         trailing={
-          <Switch
+          <Toggle
             value={prefs.backtick}
             onValueChange={(on) => setPrefs({ backtick: on })}
             accessibilityLabel={t('keyboard.backtick.title')}
@@ -112,10 +114,10 @@ export function KeyboardSettingsSheet({
   const { t } = useI18n();
   const [guide, setGuide] = useState(false);
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} accessibilityRole="button" />
-        <View style={[styles.sheet, { backgroundColor: colors.background }]}>
+        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]}>
           <View style={styles.sheetHead}>
             <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
               {t('keyboard.settings.title')}
@@ -128,7 +130,7 @@ export function KeyboardSettingsSheet({
             <TypingOptions midRace={midRace} />
             <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
           </ScrollView>
-        </View>
+        </SheetIn>
       </View>
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
     </Modal>

@@ -209,9 +209,45 @@ describe('LeaguePanel', () => {
       ),
     );
     renderApp(<LeaguePanel />);
-    expect(await screen.findByText('You moved up to Çem League.')).toBeInTheDocument();
+    // celebrated once, as the league is first opened after the week that moved you up
+    const moment = await screen.findByRole('dialog', { name: en['leagues.celebrate.up'] });
+    expect(within(moment).getByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
+    await userEvent.click(within(moment).getByRole('button', { name: en['lesson.continue'] }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(localStorage.getItem('hevalo_league_celebrated')).toBe('2026-10-05');
+    // and said on the card, where it stays
+    expect(screen.getByText('You moved up to Çem League.')).toBeInTheDocument();
     expect(screen.getByText('+10 Gems')).toBeInTheDocument();
     expect(screen.getByText(en['leagues.result.goalMet'])).toBeInTheDocument();
+  });
+
+  it('does not celebrate the same week twice, nor a week that did not move you up', async () => {
+    localStorage.setItem('hevalo_league_celebrated', '2026-10-05');
+    const week = {
+      weekKey: '2026-10-05',
+      mode: 'league' as const,
+      tier: 'kani' as const,
+      tierAfter: 'cem' as const,
+      outcome: 'promoted' as const,
+      rank: 2,
+      groupSize: 16,
+      weeklyXp: 240,
+      goalXp: 150,
+      goalMet: true,
+      trophy: false,
+      gems: 10,
+    };
+    vi.stubGlobal('fetch', answer(league('cem', 20, 12, { lastWeek: week })));
+    const seen = renderApp(<LeaguePanel />);
+    expect(await screen.findByText('You moved up to Çem League.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
+    seen.unmount();
+
+    localStorage.clear();
+    vi.stubGlobal('fetch', answer(league('kani', 20, 12, { lastWeek: { ...week, tierAfter: 'kani', outcome: 'stayed' } })));
+    renderApp(<LeaguePanel />);
+    expect(await screen.findByText('You stayed in Kanî League.')).toBeInTheDocument();
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 
   /**

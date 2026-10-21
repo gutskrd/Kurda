@@ -17,7 +17,7 @@ export interface RiskSignals {
   deviceKnownGood: boolean;
   /** accounts created from this device in the recent window */
   accountsFromDeviceRecently: number;
-  /** accounts created from this IP in the recent window */
+  /** accounts created from this network (an IPv4 address, or an IPv6 /64) in the recent window */
   accountsFromIpRecently: number;
   /** the email is from a disposable-domain (#025) */
   disposableEmail: boolean;
@@ -25,7 +25,10 @@ export interface RiskSignals {
   velocityPerMin: number;
   /** geo / timezone mismatch vs. the account's usual */
   geoMismatch: boolean;
-  /** a shared IP (campus / café) — softens IP volume, never device volume */
+  /**
+   * a shared network (campus / café / carrier NAT), by reputation or because
+   * many established accounts use it — softens IP volume, never device volume
+   */
   sharedNetwork: boolean;
 }
 

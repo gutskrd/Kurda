@@ -48,6 +48,7 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
   });
 
   afterAll(async () => {
+    await pool.query(`DELETE FROM support_emails WHERE provider_id LIKE $1`, [`gdpr-${suffix}-%`]);
     await pool.query(
       `DELETE FROM users WHERE email LIKE '%_${suffix}@it.kurda.app' OR email LIKE 'deleted_%@deleted.kurda.app'`,
     );
@@ -140,6 +141,51 @@ describe.skipIf(!DATABASE_URL)('GDPR (integration)', () => {
     expect(row.rows[0].birth_year).toBeNull();
     expect((await pool.query(`SELECT 1 FROM library_posts WHERE id = $1`, [postId])).rowCount).toBe(0);
     expect((await app.inject({ method: 'GET', url: `/library/posts/${postId}`, remoteAddress: '10.13.1.22' })).statusCode).toBe(404);
+  });
+
+  /** Mail to the support address, as the Resend webhook keeps it (email/support-inbox.ts). */
+  async function supportMail(from: string, subject: string): Promise<string> {
+    const { rows } = await pool.query<{ id: string }>(
+      `INSERT INTO support_emails (provider_id, from_address, from_name, to_addresses, subject, text_body, received_at)
+       VALUES ($1, $2, 'Someone', '{support@hevalo.app}', $3, 'my password reset never came', now())
+       RETURNING id`,
+      [`gdpr-${suffix}-${subject}`, from.toLowerCase(), subject],
+    );
+    const id = rows[0]!.id;
+    await pool.query(`INSERT INTO support_email_replies (email_id, body) VALUES ($1, 'we sent it again')`, [id]);
+    return id;
+  }
+
+  it('the export carries what they wrote to support, and the answers', async () => {
+    const user = await makeUser('exportsupport');
+    // the inbox keeps addresses in lower case; the account's may be mixed
+    await pool.query(`UPDATE users SET email = $2 WHERE id = $1`, [user.id, user.email.replace('exportsupport', 'ExportSupport')]);
+    await supportMail(user.email, 'help-export');
+    await supportMail(`someone-else-${suffix}@it.kurda.app`, 'not-theirs');
+
+    const doc = await new GdprService(pool).buildExport(user.id);
+    const mail = doc.supportEmails as Array<{ subject: string; text_body: string; answers: Array<{ body: string }> }>;
+    expect(mail).toHaveLength(1);
+    expect(mail[0]).toMatchObject({ subject: 'help-export', text_body: 'my password reset never came' });
+    expect(mail[0]!.answers.map((a) => a.body)).toEqual(['we sent it again']);
+  });
+
+  it('anonymizing an account removes its mail to support, which names its address', async () => {
+    const user = await makeUser('anonsupport');
+    const theirs = await supportMail(user.email, 'help-anon');
+    const other = await supportMail(`bystander-${suffix}@it.kurda.app`, 'bystander');
+    await pool.query(
+      `UPDATE users SET deletion_requested_at = now() - interval '${DELETION_GRACE_DAYS + 1} days' WHERE id = $1`,
+      [user.id],
+    );
+    await new GdprService(pool).anonymizeExpired();
+
+    expect((await pool.query(`SELECT 1 FROM support_emails WHERE id = $1`, [theirs])).rowCount).toBe(0);
+    expect((await pool.query(`SELECT 1 FROM support_email_replies WHERE email_id = $1`, [theirs])).rowCount).toBe(0);
+    expect((await pool.query(`SELECT 1 FROM support_emails WHERE from_address = $1`, [user.email])).rowCount).toBe(0);
+    // somebody else's mail stays
+    expect((await pool.query(`SELECT 1 FROM support_emails WHERE id = $1`, [other])).rowCount).toBe(1);
+    await pool.query(`DELETE FROM support_emails WHERE id = $1`, [other]);
   });
 
   it('the export carries the birth month and year it was given', async () => {

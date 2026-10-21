@@ -1,12 +1,17 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { ActivityIndicator, Animated, Easing, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
-import { LensRim } from './LensRim';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from './ThemeProvider';
 import { Icon, type IconName } from './Icon';
 import { useI18n } from '../i18n/I18nContext';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useDirection } from '../reports/direction';
+import { haptic } from '../feedback/haptics';
+import { usePressScale } from './animate';
+import { MenuIn } from './MotionParts';
+import { EmptyState } from './EmptyState';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -113,7 +118,6 @@ export function GlassRow({
   );
 }
 
-/** Claymorphic / neumorphic soft button — puffy gradient fill + soft shadow. */
 /** What a button is for, and what colour that makes it. */
 export type ClayTone = 'neutral' | 'primary' | 'accent' | 'success' | 'danger';
 
@@ -127,10 +131,17 @@ export function ClayButton({
   badge,
   busy = false,
   disabled = false,
+  accessibilityLabel,
   style,
 }: {
   label: string;
   onPress: () => void;
+  /**
+   * What a screen reader says, where the visible word is not enough on its
+   * own — a list of requests has an "Accept" on every row, and each needs to
+   * say whose request it accepts.
+   */
+  accessibilityLabel?: string;
   /**
    * Neutral unless the button means something: the brand for the action a
    * screen is for, accent for a way to earn, success and danger for the two
@@ -187,20 +198,24 @@ export function ClayButton({
   // one already has a shape and a rim round it is just a rim
   const edge = outline ? (toneColor ?? colors.glassBorder) : 'transparent';
   const off = busy || disabled;
+  // gives a little under the finger and springs back (animate.ts); still under Reduce Motion
+  const press = usePressScale(!off);
   return (
     <Pressable
       onPress={onPress}
+      onPressIn={press.onPressIn}
+      onPressOut={press.onPressOut}
       disabled={off}
       accessibilityRole="button"
-      accessibilityLabel={label}
+      accessibilityLabel={accessibilityLabel ?? label}
       accessibilityState={{ busy, disabled: off }}
-      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1, transform: [{ scale: pressed && !off ? 0.98 : 1 }] }, style]}
+      style={({ pressed }) => [{ opacity: off ? 0.5 : pressed ? 0.92 : 1 }, style]}
     >
-      <View
+      <Animated.View
         style={[
           styles.clay,
           size === 'large' && styles.clayLarge,
-          { backgroundColor: fill, borderColor: edge },
+          { backgroundColor: fill, borderColor: edge, transform: [{ scale: press.scale }] },
         ]}
       >
         {busy ? (
@@ -216,7 +231,7 @@ export function ClayButton({
             <Text style={[styles.clayBadgeText, { color: colors.textOnPrimary }]}>{badge}</Text>
           </View>
         ) : null}
-      </View>
+      </Animated.View>
     </Pressable>
   );
 }
@@ -225,6 +240,11 @@ export function ClayButton({
  * A centered "couldn't load — try again" state (KUR-278). Shown in place of a
  * screen's content when its data fetch fails, so a network/server error reads as
  * an error with a retry — not a misleading empty state.
+ *
+ * It wears the same picture and the same button as being offline, which is the
+ * same news for the reader: the page did not arrive, and here is the way to ask
+ * again. It used to be a red cross over a full-width button — the one alarm in a
+ * calm app, for something that is never the reader's doing.
  */
 export function ErrorRetry({
   message,
@@ -235,62 +255,32 @@ export function ErrorRetry({
   onRetry: () => void;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={[styles.errorWrap, style]}>
-      <Icon name="close" size={28} color={colors.danger} />
-      <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>{t('net.loadFailed')}</Text>
-      <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
-        {message ?? t('error.offline')}
-      </Text>
-      <ClayButton label={t('common.retry')} tone="primary" onPress={onRetry} style={styles.errorButton} />
+      <EmptyState art="offline" title={t('net.loadFailed')} body={message ?? t('error.offline')} action={{ label: t('common.retry'), onPress: onRetry }} />
     </View>
   );
 }
 
-/**
- * How much bigger the glass makes what is under it.
- *
- * 1.18 is small enough that the label still fits its segment at four
- * options and large enough to be unmistakably a magnification rather than a
- * bolder weight. Below about 1.1 it reads as the text simply being heavier.
- */
-const LENS_MAGNIFY = 1.18;
-
-/**
- * How far apart the glass puts the warm and the cool end of the spectrum.
- *
- * On a thirteen-point label a stroke is about a point and a half wide, so
- * this is roughly one stroke: enough to show at the edge of a letter and
- * not enough to read as the word being printed twice.
- */
-const LENS_SPLIT = 1.2;
-
-/** Inset of the travelling lens from the edge of its track. */
+/** Inset of the travelling capsule from the edge of its track. */
 const SEG_PAD = 3;
 
-/** A labelled (radio) segment's vertical padding: 3 + 11 + a 17pt line + 11 + 3 clears 44. */
+/** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
 const SEG_PAD_V_TALL = 11;
 
 /**
- * A segmented control, and the one piece of real glass in the app.
+ * A segmented control: a track, and a capsule that slides to the option you
+ * picked.
  *
- * Everything else here is a flat translucent fill. This is the thing with a
- * selection that travels, so this is where the lens goes: a clear capsule
- * that slides to the option you picked, and inside it the label is bigger
- * and its letters carry colour at their edges.
- *
- * The magnification is a transform on the label that is already there — the
- * real content being scaled, not a copy drawn over it — so there is nothing
- * to keep aligned and nothing to double.
- *
- * The two ghosts behind it are the dispersion: the same word in the warm end
- * of the rim colour a point and a half to one side, and in the cool end a
- * point and a half to the other. At rest you read it as an edge on the
- * letters. That is what the glass in the recording does to the text under
- * it, and it is as close as this gets without a backdrop shader — Skia’s
- * `RuntimeShader` or the system glass on iOS 26, neither of which is here.
+ * It used to be the one piece of "real glass" in the app — a clear lens over
+ * the chosen word, which it magnified and fringed with colour at the edges
+ * of its letters. Up close that read as the word printed twice slightly out
+ * of register, and the magnified label was the first to be cut off in a
+ * longer language. The capsule is now a plain raised fill, the chosen word is
+ * the same size as the others and heavier, and the slide is the only motion.
+ * It is instant when the reader has asked for less motion, and mirrored in a
+ * right-to-left language, where the first option is the one on the right.
  */
 export function Segmented<T extends string>({
   options,
@@ -298,6 +288,7 @@ export function Segmented<T extends string>({
   onChange,
   labelOf,
   groupLabel,
+  size = 'regular',
 }: {
   options: readonly T[];
   value: T;
@@ -310,50 +301,51 @@ export function Segmented<T extends string>({
    * Without it the segments stay buttons, as every older caller has them.
    */
   groupLabel?: string;
+  /**
+   * `large` is a fingertip tall (44, with the track's padding) whatever it is
+   * used for — the switch at the top of a tab is one of the first things a
+   * new reader touches. A preset picker (one with a `groupLabel`) is always
+   * that tall; the older, denser filters keep their height.
+   */
+  size?: 'regular' | 'large';
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const reduceMotion = useReducedMotion();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
   const [box, setBox] = useState({ w: 0, h: 0 });
-  const index = Math.max(0, options.indexOf(value));
+  const chosen = Math.max(0, options.indexOf(value));
+  // where the capsule sits, counted from the left whichever way the options run
+  const index = mirrored ? options.length - 1 - chosen : chosen;
   const seg = box.w > 0 ? (box.w - SEG_PAD * 2) / options.length : 0;
-  // its real radius, not `radii.pill` — a capsule is round by half its height
-  const lensRadius = Math.max(2, (box.h - SEG_PAD * 2) / 2);
   const x = useRef(new Animated.Value(0)).current;
-  // a preset picker is a row of things to tap, so it is a fingertip tall (44
-  // with the track's padding); the older, denser uses keep their height
-  const padV = groupLabel ? SEG_PAD_V_TALL : 6;
+  const padV = groupLabel || size === 'large' ? SEG_PAD_V_TALL : 6;
 
   useEffect(() => {
     if (seg <= 0) return;
-    Animated.timing(x, {
-      toValue: SEG_PAD + index * seg,
-      duration: 240,
-      easing: Easing.out(Easing.sin),
-      useNativeDriver: true,
-    }).start();
-  }, [index, seg, x]);
+    const to = SEG_PAD + index * seg;
+    if (reduceMotion) {
+      x.setValue(to);
+      return;
+    }
+    Animated.timing(x, { toValue: to, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+  }, [index, seg, x, reduceMotion]);
 
   return (
     <View
-      style={[styles.segTrack, { backgroundColor: colors.glassFill }]}
+      style={[styles.segTrack, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}
       onLayout={(e) => setBox({ w: e.nativeEvent.layout.width, h: e.nativeEvent.layout.height })}
       accessibilityRole={groupLabel ? 'radiogroup' : undefined}
       accessibilityLabel={groupLabel}
     >
-      {/*
-        The glass. It sits under the labels rather than over them, because a
-        capsule drawn on top would need to redraw the word it covers, and the
-        word it covers is the one being magnified anyway.
-      */}
       {seg > 0 ? (
         <Animated.View
           pointerEvents="none"
           style={[
-            styles.segLens,
-            { width: seg, backgroundColor: colors.glassFill, transform: [{ translateX: x }] },
+            styles.segCapsule,
+            { width: seg, backgroundColor: colors.selectedFill, shadowColor: colors.softShadow, transform: [{ translateX: x }] },
           ]}
-        >
-          <LensRim radius={lensRadius} axis="x" />
-        </Animated.View>
+        />
       ) : null}
 
       {options.map((opt) => {
@@ -362,41 +354,21 @@ export function Segmented<T extends string>({
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
+            onPress={() => {
+              // a tick for a change of value, and nothing for tapping the one already chosen
+              if (!active) haptic('select');
+              onChange(opt);
+            }}
             accessibilityRole={groupLabel ? 'radio' : 'button'}
             accessibilityState={groupLabel ? { checked: active } : { selected: active }}
             accessibilityLabel={label}
             style={[styles.segItem, { paddingVertical: padV }]}
           >
-            {active ? (
-              <>
-                <Text
-                  style={[
-                    styles.segText,
-                    styles.segGhost,
-                    { top: padV, color: colors.lensFringe[0], transform: [{ translateX: LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-                <Text
-                  style={[
-                    styles.segText,
-                    styles.segGhost,
-                    { top: padV, color: colors.lensFringe[1], transform: [{ translateX: -LENS_SPLIT }, { scale: LENS_MAGNIFY }] },
-                  ]}
-                  numberOfLines={1}
-                >
-                  {label}
-                </Text>
-              </>
-            ) : null}
             <Text
               style={[
                 styles.segText,
                 { color: active ? colors.textPrimary : colors.textSecondary },
-                active ? { transform: [{ scale: LENS_MAGNIFY }] } : null,
+                active && styles.segTextActive,
               ]}
               numberOfLines={1}
             >
@@ -451,29 +423,33 @@ export function GlassSelect<T extends string>({
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.selectBackdrop} onPress={() => setOpen(false)}>
           <Pressable onPress={() => undefined} style={styles.selectMenuWrap}>
-            <GlassCard style={styles.selectMenu}>
-              <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
-              {options.map((opt) => {
-                const active = opt === value;
-                return (
-                  <Pressable
-                    key={opt}
-                    onPress={() => {
-                      onChange(opt);
-                      setOpen(false);
-                    }}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: active }}
-                    style={styles.selectOption}
-                  >
-                    <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
-                      {labelOf(opt)}
-                    </Text>
-                    {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
-                  </Pressable>
-                );
-              })}
-            </GlassCard>
+            {/* the menu grows in from just under its size as the scrim fades */}
+            <MenuIn>
+              <GlassCard style={styles.selectMenu}>
+                <Text style={[styles.selectMenuTitle, { color: colors.textSecondary }]}>{label}</Text>
+                {options.map((opt) => {
+                  const active = opt === value;
+                  return (
+                    <Pressable
+                      key={opt}
+                      onPress={() => {
+                        if (!active) haptic('select');
+                        onChange(opt);
+                        setOpen(false);
+                      }}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: active }}
+                      style={styles.selectOption}
+                    >
+                      <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
+                        {labelOf(opt)}
+                      </Text>
+                      {active ? <Icon name="check" size={18} color={colors.primary} /> : null}
+                    </Pressable>
+                  );
+                })}
+              </GlassCard>
+            </MenuIn>
           </Pressable>
         </Pressable>
       </Modal>
@@ -483,13 +459,19 @@ export function GlassSelect<T extends string>({
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
+  /*
+   * A card sits on the page; it does not float over it. The shadow is only
+   * enough to lift a near-white card off a near-white page — the island bar,
+   * the sheets and the menus are the things that float, and they keep the
+   * deeper one.
+   */
   shadow: {
     borderRadius: radii.lg,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.18,
-    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
     // elevation is Android-only; web/iOS use the shadow* props above
-    elevation: 8,
+    elevation: 1,
   },
   clip: { borderRadius: radii.lg, overflow: 'hidden' },
   glassFace: { borderRadius: radii.lg, padding: spacing.lg, overflow: 'hidden' },
@@ -503,40 +485,42 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
   rowSubtitle: { fontSize: typography.sizes.sm },
   rowValue: { fontSize: typography.ios.row },
+  /*
+   * A capsule, flat. Buttons and chips are pills everywhere in the app now, so
+   * a button reads as one at a glance whatever screen it is on; the drop
+   * shadow went with the clay, since a button is part of the page.
+   */
   clay: {
-    borderRadius: radii.sm,
+    borderRadius: radii.pill,
     borderWidth: 1,
     height: MIN_TOUCH_TARGET,
-    paddingHorizontal: 18,
+    paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.sm,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.22,
-    shadowRadius: 14,
-    elevation: 6,
   },
   // 50, which is what iOS gives the full-width button a screen is about
   clayLarge: { height: 50, alignSelf: 'stretch' },
   clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  segTrack: { flexDirection: 'row', borderRadius: radii.pill, padding: SEG_PAD },
+  segTrack: { borderRadius: radii.pill, padding: SEG_PAD },
   // absolute, so it can travel independently of the row it sits behind
-  segLens: {
+  segCapsule: {
     position: 'absolute',
     left: 0,
     top: SEG_PAD,
     bottom: SEG_PAD,
     borderRadius: radii.pill,
-    overflow: 'hidden',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
+    shadowRadius: 3,
+    elevation: 1,
   },
-  segItem: { flex: 1, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' },
+  segItem: { flex: 1, paddingVertical: 6, paddingHorizontal: spacing.xs, alignItems: 'center', justifyContent: 'center' },
   segText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
-  // sits exactly where the label sits, so the two ends of the spectrum land
-  // a point and a half either side of it
-  segGhost: { position: 'absolute', left: 0, right: 0, top: 6, textAlign: 'center' },
+  segTextActive: { fontWeight: typography.weights.semibold },
   selectBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
   selectMenuWrap: { alignSelf: 'stretch' },
   selectMenu: { alignSelf: 'stretch', gap: spacing.xs },
@@ -544,8 +528,5 @@ const styles = StyleSheet.create({
   selectOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
   selectOptionText: { fontSize: typography.sizes.lg },
   selectOptionActive: { fontWeight: typography.weights.bold },
-  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  errorTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  errorMsg: { fontSize: typography.sizes.md, textAlign: 'center' },
-  errorButton: { marginTop: spacing.md, alignSelf: 'stretch' },
+  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

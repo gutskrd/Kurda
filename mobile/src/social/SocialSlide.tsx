@@ -23,7 +23,7 @@ import { useReducedMotion } from '../a11y/useReducedMotion';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
-import { bucket, waitingCount, type RailFriend, type SocialRailData } from './rail';
+import { bucket, type RailFriend, type SocialRailData } from './rail';
 import { elapsed, lastSeen } from './time';
 
 const WIDTH_RATIO = 0.86;
@@ -103,7 +103,6 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
 
   const friends = data?.friends ?? [];
   const { playing, online, offline } = bucket(friends);
-  const waiting = data ? waitingCount(data) : 0;
 
   const heading = (key: TranslationKey, count?: number) => (
     <Text style={[styles.heading, { color: colors.textSecondary }]}>
@@ -167,8 +166,12 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
         ]}
       >
         <View style={styles.head}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
-            {waiting > 0 ? t('rail.titleWaiting', { count: waiting }) : t('rail.title')}
+          {/*
+            Opened by Messages' new-message pencil: your people, by who is
+            around, and a tap on one opens the conversation with them.
+          */}
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+            {t('messages.new')}
           </Text>
           <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={t('rail.closePanel')}>
             <Icon name="close" size={20} tone="secondary" />
@@ -187,7 +190,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                   <Pressable
                     key={`c:${c.userId}`}
                     style={[styles.row, { backgroundColor: colors.controlTrack }]}
-                    onPress={() => go(() => navigation.navigate('Inbox'))}
+                    onPress={() => go(() => navigation.navigate('FriendRequests'))}
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                   >
@@ -204,7 +207,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                   <Pressable
                     key={`r:${r.userId}`}
                     style={[styles.row, { backgroundColor: colors.controlTrack }]}
-                    onPress={() => go(() => navigation.navigate('Inbox'))}
+                    onPress={() => go(() => navigation.navigate('FriendRequests'))}
                     accessibilityRole="button"
                     accessibilityLabel={t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
                   >
@@ -272,7 +275,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
             {/* no friends at all is a different thing to say than none about today */}
             {data && friends.length === 0 ? (
               <Pressable
-                onPress={() => go(() => navigation.navigate('Friends'))}
+                onPress={() => go(() => navigation.navigate('Tabs', { screen: 'Search' }))}
                 style={styles.empty}
                 accessibilityRole="button"
                 accessibilityLabel={t('rail.findPeople')}
@@ -312,7 +315,6 @@ const styles = StyleSheet.create({
   unreadText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   empty: { gap: spacing.xs, alignItems: 'center', marginTop: spacing.lg },
   emptyText: { fontSize: typography.sizes.md, textAlign: 'center' },
-  trigger: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   emptyLink: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
 });
 
@@ -331,19 +333,3 @@ export function useOpenSlide(): () => void {
   return useContext(OpenSlide);
 }
 
-/** The header button. Trailing edge, because that is the side the panel is on. */
-export function SocialSlideButton({ onPress }: { onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  return (
-    <Pressable
-      onPress={onPress}
-      hitSlop={10}
-      accessibilityRole="button"
-      accessibilityLabel={t('rail.title')}
-      style={styles.trigger}
-    >
-      <Icon name="people" size={20} color={colors.textPrimary} />
-    </Pressable>
-  );
-}

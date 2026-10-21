@@ -4,6 +4,8 @@ import { createTokenStorage, persistTokens, type TokenStorage } from './tokenSto
 import type { MessageKey } from '../i18n/en';
 import { isMissingRoute, type SuspendedErrorDetails } from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
+import { deviceId } from './deviceId';
+import { durationInWords } from './timeWords';
 
 /** Just enough of the i18n contract to write a sentence; no React in here. */
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
@@ -16,6 +18,8 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
  *   - every mutating request carries an Idempotency-Key generated BEFORE the
  *     first attempt and reused on the replay, so a call can never double-apply
  *   - network failures and 429s come back as typed results, never throws
+ *   - every request says which browser it comes from (`X-Device-Id`,
+ *     lib/deviceId.ts), which sign-in protection and the devices list key on
  *
  * The server remains authoritative for all auth/authz/validation — this client
  * only transports requests. The browser is untrusted.
@@ -94,6 +98,7 @@ export class ApiClient {
         headers: {
           'content-type': blob.type || 'application/octet-stream',
           'idempotency-key': requestId(),
+          'x-device-id': deviceId(),
           ...(tokens ? { authorization: `Bearer ${tokens.accessToken}` } : {}),
         },
         body: blob,
@@ -121,6 +126,7 @@ export class ApiClient {
       xhr.timeout = TIMEOUT_MS * 4;
       xhr.setRequestHeader('content-type', blob.type || 'application/octet-stream');
       xhr.setRequestHeader('idempotency-key', requestId());
+      xhr.setRequestHeader('x-device-id', deviceId());
       if (tokens) xhr.setRequestHeader('authorization', `Bearer ${tokens.accessToken}`);
       xhr.upload.onprogress = (e) => {
         if (e.lengthComputable && e.total > 0) onProgress(Math.min(1, e.loaded / e.total));
@@ -155,7 +161,7 @@ export class ApiClient {
   }
 
   async request<T>(method: string, path: string, options: RequestOptions = {}): Promise<ApiResult<T>> {
-    const headers: Record<string, string> = { ...options.headers };
+    const headers: Record<string, string> = { ...options.headers, 'x-device-id': deviceId() };
     if (options.body !== undefined) headers['content-type'] = 'application/json';
     if (MUTATING.has(method)) headers['idempotency-key'] = requestId();
 
@@ -203,6 +209,37 @@ export class ApiClient {
     return this.loggedOut();
   }
 
+  /**
+   * Sign out on the server: the stored refresh token's session is revoked, so
+   * a copy of it left anywhere else stops working. Best-effort and never
+   * throws — signing out locally must not depend on the network.
+   */
+  async endSession(): Promise<void> {
+    const tokens = this.storage.get();
+    if (!tokens) return;
+    try {
+      await this.timedFetch(`${this.baseUrl}/auth/logout`, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', 'x-device-id': deviceId() },
+        body: JSON.stringify({ refreshToken: tokens.refreshToken }),
+      });
+    } catch {
+      // offline: the session still ends locally
+    }
+  }
+
+  /**
+   * Swap in a new access token and keep the refresh token, where it already
+   * lives. Changing the password answers with one: it ends every access token
+   * issued before it, this session's included, and this session carries on.
+   */
+  replaceAccessToken(accessToken: string): void {
+    const tokens = this.storage.get();
+    if (!tokens) return;
+    const remembered = localStorage.getItem('hevalo_tokens') !== null;
+    persistTokens({ accessToken, refreshToken: tokens.refreshToken }, remembered);
+  }
+
   private refreshOnce(): Promise<boolean> {
     this.refreshInFlight ??= this.doRefresh().finally(() => {
       this.refreshInFlight = null;
@@ -217,7 +254,7 @@ export class ApiClient {
     try {
       res = await this.timedFetch(`${this.baseUrl}/auth/refresh`, {
         method: 'POST',
-        headers: { 'content-type': 'application/json' },
+        headers: { 'content-type': 'application/json', 'x-device-id': deviceId() },
         body: JSON.stringify({ refreshToken: tokens.refreshToken }),
       });
     } catch {
@@ -319,6 +356,16 @@ export const CODE_COPY: Record<string, MessageKey> = {
   SIGNUP_REJECTED: 'error.code.signupRejected',
   TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
   USERNAME_TAKEN: 'error.code.usernameTaken',
+  // an address that may already have an account: said without saying whether
+  // it does, as the server means it (nobody may learn which addresses are
+  // registered), and with the two ways on for somebody it does belong to
+  REGISTRATION_FAILED: 'error.code.registrationFailed',
+  // a sign-in the server wants to check before it lets it through
+  LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
+  // a session that cannot be renewed, for any of the reasons the server has
+  INVALID_REFRESH: 'error.sessionExpired',
+  REFRESH_EXPIRED: 'error.sessionExpired',
+  REFRESH_REUSED: 'error.sessionExpired',
   // age and the protections that follow from it
   UNDER_MINIMUM_AGE: 'error.code.underMinimumAge',
   INVALID_BIRTH_MONTH: 'error.code.invalidBirthMonth',
@@ -326,23 +373,95 @@ export const CODE_COPY: Record<string, MessageKey> = {
   OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
+  // a new password found in a public breach (sign-up, reset, change)
+  PASSWORD_BREACHED: 'error.code.passwordBreached',
+  // a sign-in asked for a challenge; said the same for every reason the
+  // server has, and whether or not the address has an account
+  CAPTCHA_REQUIRED: 'error.code.captchaRequired',
+  // changing the password while signed in
+  WRONG_PASSWORD: 'error.code.wrongPassword',
+  NO_PASSWORD: 'error.code.noPassword',
+  // ending a session that has already ended
+  SESSION_NOT_FOUND: 'error.code.sessionNotFound',
 };
+/**
+ * What a password the server turned down needs (`WEAK_PASSWORD`'s
+ * `details.reason`, api/src/auth/password-policy.ts), in the reader's words.
+ * The numbers are the policy's own.
+ */
+const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
+  'too-short': ['error.code.passwordTooShort', { count: 8 }],
+  'too-long': ['error.code.passwordTooLong', { count: 128 }],
+  'needs-letter': ['error.code.passwordNeedsLetter'],
+  'needs-number': ['error.code.passwordNeedsNumber'],
+};
+
+/** What a username the server turned down needs (`INVALID_USERNAME`, api/src/users/username.ts). */
+const USERNAME_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
+  'too-short': ['error.code.usernameTooShort', { count: 3 }],
+  'too-long': ['error.code.usernameTooLong', { count: 30 }],
+  'invalid-chars': ['error.code.usernameChars'],
+  'edge-underscore': ['error.code.usernameUnderscore'],
+  'consecutive-underscore': ['error.code.usernameUnderscore'],
+  'numbers-only': ['error.code.usernameLetter'],
+  'no-letter': ['error.code.usernameLetter'],
+  reserved: ['error.code.usernameUnavailable'],
+};
+
+function reasonOf(details: unknown): string | null {
+  return details && typeof details === 'object' && typeof (details as { reason?: unknown }).reason === 'string'
+    ? (details as { reason: string }).reason
+    : null;
+}
+
+/**
+ * The sentence for a refusal whose code alone is not enough: which rule a
+ * password or a username broke, and which field of a form did not pass the
+ * server's check. Null when the code is not one of these.
+ */
+function detailedCopy(error: ApiError, t: Translate): string | null {
+  if (error.code === 'WEAK_PASSWORD' || error.code === 'INVALID_USERNAME') {
+    const table = error.code === 'WEAK_PASSWORD' ? PASSWORD_REASON : USERNAME_REASON;
+    const found = table[reasonOf(error.details) ?? ''];
+    if (found) return t(found[0], found[1]);
+    return t(error.code === 'WEAK_PASSWORD' ? 'auth.passwordHint' : 'error.code.usernameChars');
+  }
+  if (error.code === 'VALIDATION_ERROR') {
+    // the issues name the field; an email address is the one people most often mistype
+    const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];
+    const email = issues.some((i) => Array.isArray(i.path) && i.path.includes('email'));
+    return t(email ? 'error.code.badEmail' : 'error.code.checkDetails');
+  }
+  return null;
+}
+
+/** How long a lockout has left, from its header or, failing that, its details. */
+function lockedForSec(error: ApiError): number | null {
+  const fromDetails = (error.details as { retryAfterSec?: unknown } | undefined)?.retryAfterSec;
+  const sec = error.retryAfterSec ?? (typeof fromDetails === 'number' ? fromDetails : undefined);
+  return sec !== undefined && Number.isFinite(sec) && sec > 0 ? sec : null;
+}
+
 export function describeError(error: ApiError, t: Translate, locale?: string): string {
+  // The language is the page's when a caller does not pass one: I18nProvider
+  // keeps <html lang> in step with the reader's choice.
+  const lang = (locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : '')) || 'en';
+
   // A limit on the account says what is limited and until when, in the
-  // reader's words and time zone (reports/restriction.ts). The language is
-  // the page's when a caller does not pass one: I18nProvider keeps <html
-  // lang> in step with the reader's choice.
+  // reader's words and time zone (reports/restriction.ts).
   const restriction = restrictionOf(error);
-  if (restriction) {
-    const lang = locale ?? (typeof document !== 'undefined' ? document.documentElement.lang : '') ?? '';
-    return restrictionText(restriction, t, lang || 'en');
+  if (restriction) return restrictionText(restriction, t, lang);
+
+  // Sign-in paused after failed attempts: how long, the way a person says it
+  // ("about 15 minutes"), rather than a countdown in seconds. Without a
+  // number it falls through to CODE_COPY's plain sentence.
+  if (error.code === 'LOCKED') {
+    const sec = lockedForSec(error);
+    if (sec !== null) return t('error.code.lockedFor', { duration: durationInWords(sec, t, lang) });
   }
 
-  // A live countdown beats any sentence, so it wins when the server sent one.
-  // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
-  // locked you out and puts the number in details, which nothing turns into a
-  // retry-after header — so that branch is waiting for an API fix rather than
-  // being unreachable.
+  // A live countdown beats any sentence, so it wins when the server sent one:
+  // every 429 carries a Retry-After.
   if (error.kind === 'rate_limited' && error.retryAfterSec && error.retryAfterSec > 0) {
     // A lockout is minutes. The copy that only ever saw a rate limiter said
     // seconds, and a real lockout came back as 792 of them.
@@ -356,6 +475,8 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  const detailed = detailedCopy(error, t);
+  if (detailed) return detailed;
   // a route the API does not have: this build is newer than the server, and
   // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute)
   if (isMissingRoute(error)) return t('error.notOnServer');

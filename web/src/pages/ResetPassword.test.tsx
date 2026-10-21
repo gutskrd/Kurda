@@ -3,6 +3,7 @@ import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ResetPassword } from './ResetPassword';
 import { renderApp, jsonResponse } from '../test/utils';
+import { en } from '../i18n/en';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -63,6 +64,24 @@ describe('ResetPassword', () => {
     await userEvent.click(screen.getByRole('button', { name: /update password/i }));
 
     expect(await screen.findByText(/invalid or has expired/i)).toBeInTheDocument();
+  });
+
+  it('says a password found in a data leak is not safe, and keeps the link usable', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) =>
+        url.includes('/auth/reset-password')
+          ? jsonResponse(400, { code: 'PASSWORD_BREACHED', message: 'x', details: { reason: 'breached' } })
+          : jsonResponse(200, {}),
+      ),
+    );
+    renderApp(<ResetPassword />, ['/reset-password?token=tok-123']);
+    await userEvent.type(await screen.findByLabelText('New password'), 'password123');
+    await userEvent.type(screen.getByLabelText('Confirm new password'), 'password123');
+    await userEvent.click(screen.getByRole('button', { name: /update password/i }));
+    expect(await screen.findByText(en['error.code.passwordBreached'])).toBeInTheDocument();
+    // the form stays, so a different password can be tried with the same link
+    expect(screen.getByLabelText('New password')).toBeInTheDocument();
   });
 
   it('handles a link with no token at all', async () => {

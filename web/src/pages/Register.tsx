@@ -21,6 +21,8 @@ export function Register(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
   const [error, setError] = useState<string | null>(null);
+  /** the server's code for the refusal, where it calls for a way on rather than a fix to the form */
+  const [errorCode, setErrorCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   // read once: an earlier refusal in this browser session keeps the form away
   const [stopped, setStopped] = useState<AgeStopKind | null>(ageStopRemembered);
@@ -34,6 +36,7 @@ export function Register(): React.JSX.Element {
     }
     setBusy(true);
     setError(null);
+    setErrorCode(null);
     // the language they chose here is the account's from the first moment,
     // so the confirmation email and the next sign-in already speak it
     const err = await register({ email, username, password, locale, ...chosen });
@@ -42,7 +45,10 @@ export function Register(): React.JSX.Element {
       // no account was made; the explanation replaces the form, and stays
       rememberAgeStop('refused');
       setStopped('refused');
-    } else if (err) setError(err.message);
+    } else if (err) {
+      setError(err.message);
+      setErrorCode(err.code ?? null);
+    }
     else {
       // a friend's invite or a story's quiz that sent them here: opened once
       // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
@@ -62,10 +68,30 @@ export function Register(): React.JSX.Element {
         </div>
 
         <form onSubmit={submit} noValidate>
-          {error && (
-            <div className="msg msg-error" role="alert">
+          {/*
+            An address that may already have an account is not a mistake in the
+            form, so it is said calmly and with the two ways on: signing in, or
+            a new password. The server keeps it vague on purpose — nobody may
+            learn from here which addresses are registered — and so does this.
+          */}
+          {error && errorCode === 'REGISTRATION_FAILED' ? (
+            <div className="msg" role="alert">
               {error}
+              <span className="msg-actions">
+                <Link to="/login" state={location.state} className="btn btn-secondary btn-sm">
+                  {t('nav.login')}
+                </Link>
+                <Link to="/forgot-password" className="btn btn-ghost btn-sm">
+                  {t('auth.reset.title')}
+                </Link>
+              </span>
             </div>
+          ) : (
+            error && (
+              <div className="msg msg-error" role="alert">
+                {error}
+              </div>
+            )
           )}
 
           <div className="field">

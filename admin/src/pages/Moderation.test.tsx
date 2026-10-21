@@ -158,6 +158,7 @@ describe('a case', () => {
     expect(screen.getByText('1 earlier sanction')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '@baran2' })).toBeInTheDocument();
     expect(screen.getByText('same device')).toBeInTheDocument();
+    expect(screen.getByText('same network · 4 days')).toHaveAttribute('title', expect.stringMatching(/within 48 hours/));
     expect(screen.getByText('Claimed it')).toBeInTheDocument();
   });
 

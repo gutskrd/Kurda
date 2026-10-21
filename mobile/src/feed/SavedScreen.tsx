@@ -1,6 +1,9 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
@@ -10,7 +13,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { getSaved } from './api';
-import { FeedCard } from './FeedCard';
+import { FeedCard, FeedSkeleton } from './FeedCard';
 import type { FeedItem } from './types';
 
 const PAGE = 20;
@@ -88,9 +91,14 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     );
   }, []);
 
+  const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: FeedItem }) => <FeedCard item={item} onChanged={changed} />,
-    [changed],
+    ({ item, index }: { item: FeedItem; index: number }) => (
+      <Rise delay={entering(index)}>
+        <FeedCard item={item} onChanged={changed} />
+      </Rise>
+    ),
+    [changed, entering],
   );
 
   return (
@@ -99,13 +107,18 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
       <View style={styles.screen}>
         <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 
-        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
+        <AsyncBoundary
+          loading={items === null}
+          error={items === null ? error : null}
+          onRetry={() => void refresh()}
+          skeleton={<FeedSkeleton style={styles.skeleton} />}
+        >
           <FlatList
             data={items}
             keyExtractor={(i) => i.key}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
@@ -127,5 +140,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
+  // the list's own gap, so the cards land where the grey ones stood
+  skeleton: { gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
 });

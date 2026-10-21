@@ -46,6 +46,27 @@ export function duration(seconds: number): string {
 }
 
 /**
+ * A wait in words, rounded up so it is never shorter than it says: "less than
+ * a minute", "5 minutes", "2 hours" — how long a lockout has left.
+ */
+export function waitText(seconds: number): string {
+  if (seconds < 60) return 'less than a minute';
+  const minutes = Math.ceil(seconds / 60);
+  if (minutes < 60) return minutes === 1 ? '1 minute' : `${minutes} minutes`;
+  const hours = Math.ceil(minutes / 60);
+  return hours === 1 ? '1 hour' : `${hours} hours`;
+}
+
+/** A countdown as a clock: "4:07", "1:02:05". */
+export function clockTime(seconds: number): string {
+  const s = Math.max(0, Math.ceil(seconds));
+  const pad = (n: number): string => String(n).padStart(2, '0');
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  return h ? `${h}:${pad(m)}:${pad(s % 60)}` : `${m}:${pad(s % 60)}`;
+}
+
+/**
  * A moment as an <input type="datetime-local"> wants it: local time, to the
  * minute ("2026-10-13T18:30"). The input has no time zone, so an ISO string
  * put in as it is would show the UTC hour as if it were local.

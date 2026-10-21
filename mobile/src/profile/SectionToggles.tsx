@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Switch, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { spacing, typography } from '../theme/tokens';
@@ -85,7 +86,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
             <Text style={[styles.label, { color: colors.textPrimary }]}>{t(COPY[key].label)}</Text>
             <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(COPY[key].hint)}</Text>
           </View>
-          <Switch
+          <Toggle
             value={sections[key] !== false}
             onValueChange={(next) => toggle(key, next)}
             trackColor={{ true: colors.primary, false: colors.controlTrack }}

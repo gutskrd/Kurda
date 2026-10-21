@@ -18,6 +18,7 @@
 import { isMissingRoute } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
+import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
@@ -35,10 +36,39 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',
+  // never which of the two was wrong: that would tell a stranger the address has an account
   INVALID_CREDENTIALS: 'error.code.invalidCredentials',
   INVALID_TOKEN: 'error.code.invalidLink',
+  // without a wait the server named; with one, `lockedFor` says how long
   LOCKED: 'error.code.locked',
+  /*
+   * Sign-in wants the challenge after several failed attempts. No challenge
+   * is configured in production yet, so there is nothing to show but a calm
+   * pause and the reset that does not wait (the login form offers it).
+   */
+  CAPTCHA_REQUIRED: 'error.code.captchaRequired',
+  // a new password found in a data leak: sign-up, reset and change
+  PASSWORD_BREACHED: 'error.code.passwordBreached',
+  // changing the password while signed in (POST /me/password)
+  WRONG_PASSWORD: 'error.code.wrongPassword',
+  NO_PASSWORD: 'error.code.noPassword',
+  SESSION_NOT_FOUND: 'error.code.sessionNotFound',
   SIGNUP_REJECTED: 'error.code.signupRejected',
+  /*
+   * An address that already has an account. The server keeps this vague on
+   * purpose, so nobody can learn which addresses are registered; the words
+   * stay as vague, and point at the two ways forward for whoever it is.
+   */
+  REGISTRATION_FAILED: 'error.code.registrationFailed',
+  // a sign-in the server wants to check before it lets it through
+  LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
+  INVALID_OAUTH_TOKEN: 'error.code.oauthFailed',
+  OAUTH_NOT_CONFIGURED: 'error.code.oauthUnavailable',
+  // a session that has run out, however the server put it
+  UNAUTHORIZED: 'error.sessionExpired',
+  INVALID_REFRESH: 'error.sessionExpired',
+  REFRESH_EXPIRED: 'error.sessionExpired',
+  REFRESH_REUSED: 'error.sessionExpired',
   TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
   USERNAME_TAKEN: 'error.code.usernameTaken',
   // age and the protections that follow from it — the browser says the same
@@ -49,12 +79,68 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
 };
+/**
+ * Codes whose code alone is not enough: which rule a password or a username
+ * broke (`details.reason`, api/src/auth/password-policy.ts and
+ * api/src/users/username.ts), and which field of a form the server could not
+ * accept. The password's reasons get the words the phone's own field check
+ * already says; the browser says the same things for the same reasons.
+ */
+const PASSWORD_REASON: Record<string, TranslationKey> = {
+  'too-short': 'field.passwordTooShort',
+  'too-long': 'field.passwordTooLong',
+  'needs-letter': 'field.passwordNeedsLetter',
+  'needs-number': 'field.passwordNeedsNumber',
+};
+const USERNAME_REASON: Record<string, TranslationKey> = {
+  'too-short': 'field.invalidUsername',
+  'too-long': 'field.invalidUsername',
+  'invalid-chars': 'error.code.usernameChars',
+  'edge-underscore': 'error.code.usernameUnderscore',
+  'consecutive-underscore': 'error.code.usernameUnderscore',
+  'numbers-only': 'error.code.usernameLetter',
+  'no-letter': 'error.code.usernameLetter',
+  reserved: 'error.code.usernameUnavailable',
+};
+
+function byReason(error: ApiError, t: Translate): string | null {
+  const reason = (error.details as { reason?: unknown } | undefined)?.reason;
+  const key = typeof reason === 'string' ? reason : '';
+  if (error.code === 'WEAK_PASSWORD') return t(PASSWORD_REASON[key] ?? PASSWORD_RULES_KEY, FIELD_ERROR_VARS);
+  if (error.code === 'INVALID_USERNAME') return t(USERNAME_REASON[key] ?? 'error.code.usernameChars', FIELD_ERROR_VARS);
+  if (error.code === 'VALIDATION_ERROR') {
+    // the issues name the field; an email address is the one people most often mistype
+    const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];
+    const email = issues.some((i) => Array.isArray(i.path) && i.path.includes('email'));
+    return t(email ? 'error.code.badEmail' : 'error.code.checkDetails');
+  }
+  return null;
+}
+
+/**
+ * How long a locked sign-in waits, in words: "about 15 minutes", never 792
+ * seconds. Past ten minutes the wait is rounded up to five, because the
+ * number is the server's estimate of a lock that it may lift early, and
+ * "about 14 minutes" claims a precision nobody needs.
+ */
+export function lockedFor(seconds: number, t: Translate): string {
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  if (minutes <= 1) return t('error.code.lockedMinute');
+  if (minutes < 10) return t('error.code.lockedMinutes', { count: minutes });
+  const rounded = Math.ceil(minutes / 5) * 5;
+  if (rounded < 60) return t('error.code.lockedMinutes', { count: rounded });
+  const hours = Math.round(minutes / 60);
+  return hours <= 1 ? t('error.code.lockedHour') : t('error.code.lockedHours', { count: hours });
+}
+
 export function describeError(error: ApiError, t: Translate): string {
+  // A lock says how long it lasts, in the body and the Retry-After header both.
+  if (error.code === 'LOCKED') {
+    const inDetails = (error.details as { retryAfterSec?: unknown } | undefined)?.retryAfterSec;
+    const seconds = typeof inDetails === 'number' && inDetails > 0 ? inDetails : error.retryAfterSec;
+    if (seconds && seconds > 0) return lockedFor(seconds, t);
+  }
   // A live countdown beats any sentence, so it wins when the server sent one.
-  // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
-  // locked you out and puts the number in details, which nothing turns into a
-  // retry-after header — so that branch is waiting for an API fix rather than
-  // being unreachable.
   if (error.kind === 'rate_limited' && error.retryAfterSec && error.retryAfterSec > 0) {
     // A lockout is minutes. The copy that only ever saw a rate limiter said
     // seconds, and a real lockout came back as 792 of them.
@@ -68,6 +154,8 @@ export function describeError(error: ApiError, t: Translate): string {
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  const reasoned = byReason(error, t);
+  if (reasoned) return reasoned;
   // A route the API does not have: this build is newer than the server it
   // talks to (a game invite from a build whose API is not deployed yet), and
   // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute).

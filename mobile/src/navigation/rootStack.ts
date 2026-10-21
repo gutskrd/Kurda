@@ -1,17 +1,40 @@
+import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RankedGame } from '@kurda/shared';
+import type { AlphabetScript, RankedGame } from '@kurda/shared';
+import type { LearnView } from './tabs';
+
+/**
+ * The five tabs and what each can be opened with.
+ *
+ * Learn takes the view to open on, which is how `hevalo://play` (and anything
+ * else that means "the games") lands on Games rather than on the lessons.
+ */
+export type TabParamList = {
+  Home: undefined;
+  Learn: { view?: LearnView } | undefined;
+  Messages: undefined;
+  Search: undefined;
+  Profile: undefined;
+};
 
 /**
  * Root stack sitting above the tab navigator so a lesson can be pushed as a
  * full-screen route over the tabs (KUR-029).
  */
 export type RootStackParamList = {
-  Tabs: undefined;
+  /**
+   * The tab shell. A screen above it reaches a tab with
+   * `navigate('Tabs', { screen: 'Messages' })` — naming the tab alone only
+   * works from inside the tabs, since a navigator looks for a name among its
+   * own screens and its parents', never its children's.
+   */
+  Tabs: NavigatorScreenParams<TabParamList> | undefined;
   Lesson: { lessonId: string };
   Practice: undefined;
   Shop: undefined;
   League: undefined;
-  /** Game Ranks up close: a game's rank, the climb, its boards (the Play tab's rank cards open it) */
+  /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */
   Ranks: { game?: RankedGame } | undefined;
   /** The season: days left, its rewards, last season, the frames you own */
   Season: undefined;
@@ -32,7 +55,8 @@ export type RootStackParamList = {
    * knew the id — the thread then names them from the messages.
    */
   Chat: { userId: string; username: string; openGift?: string };
-  Chats: undefined;
+  /** The friend requests waiting on you, opened from the row at the top of Messages. */
+  FriendRequests: undefined;
   /** As Chat: `openGift` to unwrap at once; `name` may be '' and is then looked up. */
   GroupThread: { groupId: string; name: string; openGift?: string };
   Clubs: undefined;
@@ -64,19 +88,22 @@ export type RootStackParamList = {
   PostPicture: undefined;
   Tags: undefined;
   ChangeUsername: undefined;
-  Library: undefined;
-  Inbox: undefined;
-  /*
-   * Learn, Dictionary and Play.
-   *
-   * Tabs until the bar came down to four. They are pushed screens now,
-   * opened by the action button above the bar — things you set out to do,
-   * rather than places you keep an eye on.
+  /** Settings → Security: the current password, then the new one twice (security/ChangePasswordScreen) */
+  ChangePassword: undefined;
+  /** Settings → Security: the devices signed in to your account (security/DevicesScreen) */
+  Devices: undefined;
+  /**
+   * The reset link, asked for while signed in: Change password's way in for
+   * an account that signs in with Google or Apple and has no password yet.
    */
+  ForgotPassword: { email?: string } | undefined;
+  Library: undefined;
+  /** The people you are friends with, and the requests in both directions (social/SocialScreen). */
   Friends: undefined;
-  Learn: undefined;
+  /** The dictionary, opened from Learn's tools (and a word found in Search opens its entry in place). */
   Dictionary: undefined;
-  Play: undefined;
+  /** Both alphabets, opened from Learn's tools: `script` to open on one, else the reader's own dialect. */
+  Alphabet: { script?: AlphabetScript } | undefined;
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };
@@ -90,6 +117,12 @@ export type RootStackParamList = {
 };
 
 export type RootNavigation = NativeStackNavigationProp<RootStackParamList>;
+
+/**
+ * Navigation as a tab's own screen has it: the other tabs by name, and every
+ * screen of the root stack above them.
+ */
+export type TabNavigation = CompositeNavigationProp<BottomTabNavigationProp<TabParamList>, RootNavigation>;
 
 /**
  * Each conversation is its own route.

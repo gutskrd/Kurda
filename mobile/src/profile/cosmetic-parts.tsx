@@ -26,6 +26,10 @@ import type { ProfileBackground, ProfileIcon } from './types';
  * server sends a URL and a type and no poster — so rather than draw a black
  * rectangle where a background should be, this draws nothing and the screen's
  * own gradient shows through.
+ *
+ * The URL goes through `assetUrl`: the backgrounds the shop ships with arrive
+ * as paths on the website (`/cosmetics/backgrounds/…`), which a phone cannot
+ * load as they are, and the ones added in the admin as whole CDN addresses.
  */
 export function CosmeticBackground({
   background,
@@ -34,8 +38,9 @@ export function CosmeticBackground({
   background: ProfileBackground;
   style?: object;
 }): React.JSX.Element | null {
-  if (background.type === 'video') return null;
-  return <Image source={{ uri: background.url }} style={style} resizeMode="cover" accessibilityElementsHidden />;
+  const uri = assetUrl(background.url);
+  if (background.type === 'video' || !uri) return null;
+  return <Image source={{ uri }} style={style} resizeMode="cover" accessibilityElementsHidden />;
 }
 
 /**
@@ -46,12 +51,15 @@ export function CosmeticBackground({
  * `size` is the avatar's, and the icon is a third of it in the bottom-trailing
  * corner, which is where the browser's CSS puts it.
  */
-export function IconOverlay({ icon, size }: { icon: ProfileIcon; size: number }): React.JSX.Element {
+export function IconOverlay({ icon, size }: { icon: ProfileIcon; size: number }): React.JSX.Element | null {
   const { t } = useI18n();
   const d = Math.round(size / 3);
+  // a site path for the icons that ship, a CDN address for uploaded ones (as the background above)
+  const uri = assetUrl(icon.url);
+  if (!uri) return null;
   return (
     <Image
-      source={{ uri: icon.url }}
+      source={{ uri }}
       accessibilityRole="image"
       accessibilityLabel={t('profile.premiumIcon')}
       style={{ position: 'absolute', right: -d / 6, bottom: -d / 6, width: d, height: d }}

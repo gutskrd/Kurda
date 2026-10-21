@@ -18,7 +18,8 @@ import { setupAuth } from './plugins/auth.js';
 import { installActivationGate } from './plugins/activation.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
-import { logProxyChainOnce } from './plugins/proxy-chain.js';
+import { setupClientIp } from './plugins/client-ip.js';
+import { setupNetworkSightings } from './net/sightings.js';
 import { setupCachePolicy } from './plugins/cache-policy.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
@@ -30,6 +31,7 @@ import { TournamentService } from './tournament/service.js';
 import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
+import { registerShopAdminRoutes } from './shop/admin-routes.js';
 import { ItemReturns } from './shop/returns.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
@@ -45,7 +47,7 @@ import { registerEconomyRoutes } from './economy/routes.js';
 import { WalletService } from './wallet/service.js';
 import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
-import { RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
+import { MAX_CLIENT_MESSAGE_BYTES, RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
@@ -127,6 +129,8 @@ import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
+import { registerRecordingVoiceRoutes } from './speakers/routes.js';
+import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
 import { StoryAdminService } from './stories/admin-service.js';
 import { registerStoryRoutes } from './stories/routes.js';
@@ -161,6 +165,7 @@ import { registerFeedbackRoutes } from './feedback/routes.js';
 import { EmailService } from './email/service.js';
 import { createEmailProvider } from './email/provider.js';
 import pino from 'pino';
+import { LOG_REDACT } from './observability/redact.js';
 import { createWorker } from './jobs/worker.js';
 import {
   ROLLUP_INTERVAL_MS,
@@ -171,7 +176,11 @@ import {
 import { DashboardService as RollupDashboards } from './analytics/dashboard-service.js';
 import { EconomyService as RollupEconomy } from './economy/service.js';
 import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
+import { scheduleMaintenance } from './jobs/maintenance.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
+import { registerResendWebhookRoutes } from './email/resend-webhook.js';
+import { registerEmailAdminRoutes } from './email/admin-routes.js';
+import { ResendMailReader, SupportInbox } from './email/support-inbox.js';
 import { DashboardService } from './analytics/dashboard-service.js';
 import { registerDashboardRoutes } from './analytics/dashboard-routes.js';
 import { ExperimentService } from './experiments/service.js';
@@ -196,6 +205,8 @@ export interface BuildAppOptions {
   moderation?: ModerationOptions;
   /** Test seam for copyright notices: where their emails go. */
   copyright?: CopyrightWireOptions;
+  /** Test seam for reading a recording's file from another site: the fetch, the name lookup, the time allowed. */
+  recordingFiles?: RecordingFileOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -208,26 +219,22 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       level: config.LOG_LEVEL,
       // pretty logs are a dev nicety; structured JSON everywhere else
       transport: config.NODE_ENV === 'development' ? { target: 'pino-pretty' } : undefined,
-      // PII never reaches log storage (KUR-009)
-      redact: {
-        paths: [
-          'req.headers.authorization',
-          'req.headers.cookie',
-          '*.password',
-          '*.passwordHash',
-          '*.token',
-          '*.email',
-        ],
-        censor: '[redacted]',
-      },
+      // PII never reaches log storage (KUR-009); see observability/redact.ts
+      redact: LOG_REDACT,
     },
     // trust an upstream-provided request id (gateway/LB) or generate one
     requestIdHeader: 'x-request-id',
+    // a whole request, body included, within two minutes: Fastify otherwise
+    // turns Node's own limit off, and a client dripping a body a byte at a time
+    // would hold its connection for ever. Two minutes covers the largest upload
+    // on a slow phone connection.
+    requestTimeout: 120_000,
     // who the client is, when there is a proxy in between — see TRUST_PROXY
     trustProxy: trustProxyOption(config.TRUST_PROXY),
   });
 
-  logProxyChainOnce(app, config);
+  // who the client is, read past the proxies once, before any hook asks
+  setupClientIp(app, config);
 
   setupCors(app, config);
   setupValidation(app);
@@ -269,7 +276,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     if (config.NODE_ENV !== 'test' && config.RUN_WORKER_IN_API !== 'false') {
       // its own pino instance: Fastify's logger type isn't pino's, and a distinct
       // name keeps job logs separable from request logs
-      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker' }));
+      const worker = createWorker(config, pino({ level: config.LOG_LEVEL, name: 'hevalo-api-worker', redact: LOG_REDACT }));
       app.log.info('processing background jobs in-process (set RUN_WORKER_IN_API=false if a dedicated worker runs)');
       // The dashboards read pre-aggregated tables that nothing populated, so they
       // were permanently empty. Schedule the rollups here (the dedicated worker
@@ -283,6 +290,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
           try {
             await jobs.scheduleEvery(analyticsJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
             await jobs.scheduleEvery(economyJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
+            // and the housekeeping only the undeployed worker used to schedule:
+            // deletions past their grace period, unclaimed uploads
+            await scheduleMaintenance(jobs, app.db, createStorage(config));
             // Backfill once, not on every boot: this host spins down when idle, so
             // an unconditional 60-day re-aggregate would run constantly for nothing.
             // Each dashboard is checked against ITS OWN table — gating both on the
@@ -338,6 +348,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
     installAdminGate(app, adminTotp);
+
+    // which network each signed-in account is on, for account linking, and the
+    // daily prune of that and the risk decisions; also before any route
+    setupNetworkSightings(app, { pruneAtStart: config.NODE_ENV !== 'test' });
   }
   app.addHook('onRequest', async (req) => {
     if (req.user?.id) {
@@ -607,6 +621,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerAlphabetAudioRoutes(app, config);
     // and of the Kurdish the lessons use, which lessons deliver with their exercises
     registerLessonAudioRoutes(app, config);
+    // and who says each of those recordings, chosen or changed after it was made
+    registerRecordingVoiceRoutes(app, config, options.recordingFiles);
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
     // the admin panel, and the starter stories seeded once each as drafts for a
     // native speaker to publish. Not under test, where they would be stories no
@@ -677,11 +693,18 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerFeedbackRoutes(app, new FeedbackService(app.db, { secret: config.JWT_SECRET }));
     // transactional email (KUR-098): bounce/complaint webhook feeds suppression;
     // sends themselves run in the worker's send-email job
-    registerEmailWebhookRoutes(
-      app,
-      new EmailService(app.db, createEmailProvider(config, app.log)),
-      config.EMAIL_WEBHOOK_SECRET,
-    );
+    const emailProvider = createEmailProvider(config, app.log);
+    const emailService = new EmailService(app.db, emailProvider);
+    registerEmailWebhookRoutes(app, emailService, config.EMAIL_WEBHOOK_SECRET);
+    // the support inbox: mail to support@ arrives by Resend's webhook, and is
+    // read and answered in the admin panel, beside how email is set up
+    const supportInbox = new SupportInbox(app.db, {
+      reader: config.RESEND_INBOX_API_KEY ? new ResendMailReader(config.RESEND_INBOX_API_KEY) : null,
+      provider: emailProvider,
+      from: config.SUPPORT_EMAIL_FROM,
+    });
+    registerResendWebhookRoutes(app, { secret: config.RESEND_WEBHOOK_SECRET, email: emailService, inbox: supportInbox });
+    registerEmailAdminRoutes(app, { config, provider: emailProvider, inbox: supportInbox });
 
     // core dashboards (KUR-106): daily-refreshed DAU/retention/funnel rollups
     const dashboards = new DashboardService(app.db);
@@ -702,7 +725,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       : new LocalRoomBus();
     const realtime = new RealtimeGateway(kv, bus, options.gateway);
     app.decorate('realtime', realtime);
-    app.register(fastifyWebsocket);
+    // a client message is a few dozen bytes; the library's default limit is 100 MiB
+    app.register(fastifyWebsocket, { options: { maxPayload: MAX_CLIENT_MESSAGE_BYTES } });
     app.register(async (scoped) => {
       realtime.registerRoutes(scoped);
     });
@@ -759,6 +783,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // owners of items whose art was replaced: the notice, and returns
       returns: new ItemReturns(app.db, new WalletService(app.db)),
     });
+    // the admin's art uploads, partial edits, and delete-or-retire
+    registerShopAdminRoutes(app, shop, config);
     registerGiftRoutes(app, gifts);
 
     // inviting friends to any online game, game cards in chats, and playing

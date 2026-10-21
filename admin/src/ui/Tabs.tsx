@@ -4,8 +4,12 @@
  * every tab list on the web uses. A tab with an `href` is a link, so a tab
  * that has an address of its own (#/audio/lessons) can be opened in a new tab
  * or bookmarked.
+ *
+ * On a phone the row scrolls sideways rather than wrapping (kit.css), so the
+ * chosen tab is brought into view — a page opened on its fifth tab would
+ * otherwise show the first four and no sign of which one is on.
  */
-import { useRef, type KeyboardEvent, type ReactNode } from 'react';
+import { useLayoutEffect, useRef, type KeyboardEvent, type ReactNode } from 'react';
 
 export interface TabItem<K extends string> {
   key: K;
@@ -33,6 +37,18 @@ export function Tabs<K extends string>({
   className?: string;
 }): React.JSX.Element {
   const refs = useRef(new Map<K, HTMLElement>());
+  const list = useRef<HTMLDivElement>(null);
+
+  // the row only: scrollIntoView would move the page too
+  useLayoutEffect(() => {
+    const row = list.current;
+    const tab = refs.current.get(value);
+    if (!row || !tab || row.scrollWidth <= row.clientWidth) return;
+    const left = tab.getBoundingClientRect().left - row.getBoundingClientRect().left + row.scrollLeft;
+    if (left < row.scrollLeft || left + tab.offsetWidth > row.scrollLeft + row.clientWidth) {
+      row.scrollLeft = left - (row.clientWidth - tab.offsetWidth) / 2;
+    }
+  }, [value]);
 
   const move = (e: KeyboardEvent, at: number): void => {
     const last = items.length - 1;
@@ -55,7 +71,7 @@ export function Tabs<K extends string>({
   };
 
   return (
-    <div className={`tabs${className ? ` ${className}` : ''}`} role="tablist" aria-label={label}>
+    <div ref={list} className={`tabs${className ? ` ${className}` : ''}`} role="tablist" aria-label={label}>
       {items.map((item, i) => {
         const selected = item.key === value;
         const props = {

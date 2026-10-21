@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Toggle, useSwitchThumb } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -18,6 +19,9 @@ import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, typ
 import { CREDIT_LINES } from './credits';
 import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
+import { useVibrationPref } from '../feedback/vibrationPref';
+import { haptic } from '../feedback/haptics';
+import { SkeletonText } from '../theme/Skeleton';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = 'https://hevalo.app/copyright';
@@ -39,6 +43,11 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [minor, setMinor] = useState(false);
   // null until /me answers, so the switch never shows a guess
   const [leagues, setLeagues] = useState<boolean | null>(null);
+  // until /me answers, no visibility is shown as chosen and its sentence is held in grey: a guess that then flips reads as a change
+  const [loaded, setLoaded] = useState(false);
+  // on this phone only (feedback/vibrationPref.ts)
+  const [vibration, setVibration] = useVibrationPref();
+  const vibrationThumb = useSwitchThumb(vibration);
 
   // Profile visibility, username, age and leagues live server-side on /me; load
   // them so the hub reflects the saved values rather than defaulting every
@@ -51,6 +60,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           user: { profileVisibility: Visibility; username: string; minor?: boolean; leaguesEnabled?: boolean };
         }>('/me')
         .then((res) => {
+          if (active) setLoaded(true);
           if (active && res.ok) {
             setVisibility(res.data.user.profileVisibility);
             setUsername(res.data.user.username);
@@ -66,6 +76,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   const changeVisibility = (v: Visibility) => {
     if (!visibilityOffered(v, minor)) return;
+    if (v !== visibility) haptic('select');
     const before = visibility;
     setVisibility(v);
     void client.put('/me/privacy', { visibility: v }).then((res) => {
@@ -207,7 +218,30 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow
             icon="star"
             title={t('settings.eventThemes')}
-            trailing={<Switch value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+            trailing={<Toggle value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+          />
+          {/*
+            Whether this phone buzzes at all: a light tick for a right answer, a
+            send, a moment worth marking — never for anything that happens by
+            itself. Turning it on is felt, so the switch shows what it does;
+            turning it off is not.
+          */}
+          <GlassRow
+            icon="vibrate"
+            title={t('settings.vibration')}
+            subtitle={t('settings.vibration.hint')}
+            trailing={
+              <Switch
+                value={vibration}
+                onValueChange={(on) => {
+                  setVibration(on);
+                  if (on) haptic('select');
+                }}
+                accessibilityLabel={t('settings.vibration')}
+                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                thumbColor={vibrationThumb}
+              />
+            }
           />
         </GlassCard>
 
@@ -228,14 +262,21 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
               <Pill
                 key={v}
                 label={t(VISIBILITY_LABEL[v])}
-                active={visibility === v}
+                active={loaded && visibility === v}
                 onPress={() => changeVisibility(v)}
                 disabled={!visibilityOffered(v, minor)}
               />
             ))}
           </View>
           {/* a setting about who sees you is worth a sentence, not just a word */}
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
+          {loaded ? (
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
+          ) : (
+            <View style={styles.hintSkeleton}>
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="92%" />
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="48%" />
+            </View>
+          )}
           {minor ? (
             <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.visibility.minorHint')}</Text>
           ) : null}
@@ -247,7 +288,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
             icon="trophy"
             title={t('settings.leagues.toggle')}
             trailing={
-              <Switch
+              <Toggle
                 value={leagues === true}
                 disabled={leagues === null}
                 onValueChange={changeLeagues}
@@ -280,15 +321,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow icon="shield" iconColor={colors.textSecondary} title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
+        {/* how you sign in, and where you are signed in */}
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.security')}</Text>
         <GlassCard padding="tight">
-          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
+          <GlassRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />
+          <GlassRow icon="devices" title={t('security.devices.title')} onPress={() => navigation.navigate('Devices')} />
           <GlassRow
             icon="sign-out"
             title={t('settings.sessions.signOutEverywhere')}
             onPress={signOutEverywhere}
             destructive
           />
+        </GlassCard>
+
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
+        <GlassCard padding="tight">
+          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow
             icon="download"
             title={t('settings.data.request')}
@@ -344,6 +392,7 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: typography.sizes.sm },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
+  hintSkeleton: { marginTop: spacing.sm },
   credit: { fontSize: typography.sizes.sm, marginTop: spacing.xs, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },
   pillDisabled: { opacity: 0.4 },

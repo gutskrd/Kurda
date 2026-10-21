@@ -17,6 +17,30 @@ describe('the art, inlined', () => {
     }
   });
 
+  /** The drawing goes into the page as markup, so a title must only ever become text. */
+  it('keeps a title as text, whatever it holds', () => {
+    const title = '</title><img src="x" onerror="alert(1)"><script>alert(2)</script> & Çiya';
+    const { container } = render(
+      <>
+        <RankEmblem tier="ciya" division={2} title={title} />
+        <LeagueEmblem tier="gol" title={title} />
+        <BadgeMedal badgeKey="agir" tier={3} title={title} />
+        <SeasonFrame tier="sterk" size={64} title={title}>
+          <span />
+        </SeasonFrame>
+      </>,
+    );
+    expect(container.querySelector('img, script, [onerror]')).toBeNull();
+    // the frame's shine is a layer of its own, hidden from screen readers; the four drawings carry the title
+    const titles = [...container.querySelectorAll('title')].filter((t) => !t.closest('[aria-hidden="true"]'));
+    expect(titles).toHaveLength(4);
+    for (const t of titles) {
+      expect(t.textContent).toBe(title);
+      expect(t.children).toHaveLength(0);
+    }
+    expect(screen.getAllByRole('img', { name: title })).toHaveLength(4);
+  });
+
   /** Two copies of one drawing must not share gradient ids, or a hidden first copy blanks the second. */
   it('gives each copy of a drawing its own ids', () => {
     const { container } = render(

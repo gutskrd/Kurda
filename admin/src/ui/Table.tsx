@@ -5,12 +5,18 @@
  * sideways on a phone. The old tables were 520 px wide at least and scrolled
  * off the side of a phone, with their action buttons last, out of sight.
  *
- * The card layout is CSS (a container query on the table's own width, so a
- * table in a narrow panel turns into cards too); the markup stays a table with
- * its roles spelled out, because a table restyled as blocks loses them in
+ * Whether the rows are cards is decided by the table's own box, not the
+ * window, so a table in a narrow panel turns into cards too: below a width
+ * (640 px, or later for a table with many columns), and at any width where the
+ * table would not fit — a long name in one row could make a table wider than
+ * its card, which cut off its last column, buttons and all, even on a laptop.
+ * A table of numbers read across (a day per row) can instead stay a table
+ * that scrolls sideways in its own box, its first column pinned, since thirty
+ * days as cards is a very long page. The markup stays a table with its roles
+ * spelled out either way, because a table restyled as blocks loses them in
  * some browsers.
  */
-import { useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import { Icon } from './icons';
 import { EmptyState, ErrorState } from './states';
 
@@ -57,6 +63,7 @@ export function Table<T>({
   rowClassName,
   what,
   wide = false,
+  layout = 'cards',
 }: {
   columns: ReadonlyArray<Column<T>>;
   /** null while the first load is running */
@@ -80,9 +87,17 @@ export function Table<T>({
    * the row off; 'medium' for a few wide ones, cards below 860 px
    */
   wide?: boolean | 'medium';
+  /**
+   * 'cards' (the default): rows become cards when the table does not fit.
+   * 'scroll': it stays a table and scrolls sideways in its own box, the first
+   * column pinned — for numbers compared down a column, where cards would
+   * stretch thirty short rows into a long page.
+   */
+  layout?: TableLayout;
 }): React.JSX.Element {
   const [sort, setSort] = useState<SortState | null>(defaultSort ?? null);
   const span = columns.length + (actions ? 1 : 0);
+  const wrap = useRef<HTMLDivElement>(null);
 
   const sorted = useMemo(() => {
     if (!rows || !sort) return rows;
@@ -149,8 +164,16 @@ export function Table<T>({
     ));
   }
 
+  const fit = useFit(wrap, layout === 'scroll' ? 0 : wide === 'medium' ? 860 : wide ? 960 : 640, [sorted, columns, layout, loading, error]);
+  const classes = [
+    'table-wrap',
+    wide === 'medium' ? 'is-medium' : wide ? 'is-wide' : '',
+    layout === 'scroll' ? 'is-scroll' : '',
+    fit === 'cards' ? 'is-cards' : fit === 'scrolls' ? 'is-scrolling' : '',
+  ];
+
   return (
-    <div className={`table-wrap${wide === 'medium' ? ' is-medium' : wide ? ' is-wide' : ''}`}>
+    <div ref={wrap} className={classes.filter(Boolean).join(' ')}>
       {error != null && rows && rows.length > 0 && (
         <div className="table-refresh-error">
           <ErrorState error={error} onRetry={onRetry} what={what} compact />
@@ -193,6 +216,59 @@ export function Table<T>({
       {paging && paging.pageCount > 1 && <Pagination {...paging} />}
     </div>
   );
+}
+
+export type TableLayout = 'cards' | 'scroll';
+
+/** How a table sits in its box: as a table that fits, as cards, or (a 'scroll' table) scrolling sideways. */
+type Fit = 'table' | 'cards' | 'scrolls';
+
+/**
+ * Measures the table against its box after every render and whenever the box
+ * changes width. A table that is cards is laid out as a table for the length
+ * of one measurement, inside the same task, so the screen never shows it.
+ * `cardsBelow` 0 is a 'scroll' table: never cards, only told whether it scrolls.
+ */
+function useFit(ref: RefObject<HTMLDivElement | null>, cardsBelow: number, deps: readonly unknown[]): Fit {
+  const [fit, setFit] = useState<Fit>('table');
+
+  const measure = (): Fit => {
+    const box = ref.current;
+    const table = box?.querySelector('table');
+    if (!box || !table) return 'table';
+    const width = box.clientWidth;
+    if (cardsBelow > 0 && width < cardsBelow) return 'cards';
+    const cards = box.classList.contains('is-cards');
+    if (cards) box.classList.remove('is-cards');
+    const over = table.offsetWidth > width + 1;
+    if (cards) box.classList.add('is-cards');
+    if (!over) return 'table';
+    return cardsBelow > 0 ? 'cards' : 'scrolls';
+  };
+  // read by the observer, which is set up once
+  const latest = useRef(measure);
+  latest.current = measure;
+
+  // before the first paint, and again whenever what is in the table changes
+  useLayoutEffect(() => {
+    setFit(measure());
+  }, [cardsBelow, ...deps]);
+
+  useEffect(() => {
+    const box = ref.current;
+    if (!box || typeof ResizeObserver === 'undefined') return;
+    let width = box.clientWidth;
+    // a new width only: the height changes every time the rows turn into cards and back
+    const observer = new ResizeObserver(() => {
+      if (box.clientWidth === width) return;
+      width = box.clientWidth;
+      setFit(latest.current());
+    });
+    observer.observe(box);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return fit;
 }
 
 export function Pagination({ page, pageCount, onPage, total, pageSize }: Paging): React.JSX.Element {

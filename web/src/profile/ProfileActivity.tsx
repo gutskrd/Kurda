@@ -4,7 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ActivityEntry, FeedItem, ProfileSection, ProfileSections } from '../lib/types';
 import { FeedCard } from '../feed/FeedCard';
-import { FeedSkeleton } from '../components/skeletons';
+import { ActivityRowsSkeleton, FeedSkeleton } from '../components/skeletons';
 import { PROFILE_SECTIONS } from '../lib/types';
 import { BookmarkIcon, GameIcon, HeartIcon, RepostIcon, WallIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
@@ -162,11 +162,7 @@ function ActivityPanel({ userId, kind }: { userId: string; kind: ProfileSection 
   const shown = asCards ? items.length : entries.length;
 
   if (state === 'loading') {
-    return asCards ? (
-      <FeedSkeleton count={2} />
-    ) : (
-      <p className="muted mkp-activity-note">{t('common.loading')}</p>
-    );
+    return asCards ? <FeedSkeleton count={2} className="mkp-activity-feed" /> : <ActivityRowsSkeleton />;
   }
   if (state === 'error') return <p className="muted mkp-activity-note">{error}</p>;
   if (shown === 0) return <p className="muted mkp-activity-note">{t('profile.nothingHere')}</p>;

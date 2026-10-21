@@ -63,6 +63,56 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** How often a buzz may be felt, on the phone and on a touch screen alike. */
+export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
+/** The one celebration — a lesson, a level, a rank, a league, a badge — timed and thrown the same on both. */
+export {
+  BURST,
+  CELEBRATE_MS,
+  burstPlan,
+  celebrationEndMs,
+  celebrationPlan,
+  type CelebrationPlan,
+  type Fleck as CelebrationFleck,
+} from './celebration.js';
+/** What else a finished lesson did — today's goal, the streak, a new level — read the same on both. */
+export {
+  NO_LESSON_MOMENTS,
+  anyLessonMoment,
+  lessonMoments,
+  type LessonMoments,
+  type LessonStanding,
+  type LessonStreakMark,
+} from './lesson-moments.js';
+/**
+ * The lesson path a course map is drawn as: which skill is current, the
+ * milestones, each unit's colour and where every stop sits — so the browser
+ * and the phone draw the same path.
+ */
+export {
+  PATH_GEOMETRY,
+  UNIT_TONES,
+  lean,
+  lessonPath,
+  lessonStates,
+  stopKeys,
+  type Finish,
+  type LessonPath,
+  type LessonState,
+  type PathLesson,
+  type PathMapInput,
+  type PathSkill,
+  type PathSkillState,
+  type PathStop,
+  type PathUnit,
+  type PathUnitInput,
+  type PlacedStop,
+  type ReviewStop,
+  type SkillStop,
+  type StopState,
+  type TrophyStop,
+  type UnitTone,
+} from './lesson-path.js';
 export {
   KURMANJI_KEYS,
   MIN_RECORDING_BYTES,
@@ -151,6 +201,60 @@ export {
   type AlphabetClipGroup,
 } from './alphabet-audio.js';
 /**
+ * The two Kurdish alphabets as the alphabet pages teach them: each letter, its
+ * sound beside the reader's own language, a word to remember it by, where each
+ * sound plays from, and the "Check yourself" round — one copy for the website
+ * and the phone. The plainer names inside alphabet/ take a prefix here, so
+ * they cannot clash with the rest of the package.
+ */
+export {
+  LATIN as LATIN_LETTERS,
+  SORANI as SORANI_LETTERS,
+  MEANINGS as ALPHABET_MEANINGS,
+  bandOf,
+  compareLocaleOf,
+  formsOf,
+  indexInWord,
+  likeFor,
+  soraniLikeFor,
+  type Band as LetterBand,
+  type CompareLocale,
+  type LatinLetter,
+  type Likeness as SoundLikeness,
+  type Meaning as AlphabetMeaning,
+  type SoraniLetter,
+} from './alphabet/letters.js';
+export {
+  ROUND as ALPHABET_ROUND,
+  again as askAgain,
+  makeRound as alphabetRound,
+  type Option as AlphabetOption,
+  type Question as AlphabetQuestion,
+  type Script as AlphabetScript,
+  type Topic as AlphabetTopic,
+} from './alphabet/practice.js';
+export {
+  latinGroups as latinLetterGroups,
+  latinHint as latinLetterHint,
+  meaningLocale as exampleMeaningLocale,
+  soraniGroups as soraniLetterGroups,
+  type GroupId as LetterGroupId,
+  type LetterGroup,
+} from './alphabet/page.js';
+export { CLIPS as SYNTHESISED_ALPHABET_CLIPS } from './alphabet/clips.js';
+export {
+  SYNTHESISED_ALPHABET_PATH,
+  alphabetClipText,
+  alphabetRecordings,
+  alphabetSounds,
+  latinSoundKey,
+  latinWordKey,
+  pairWordKey,
+  soraniSoundKey,
+  soraniWordKey,
+  type AlphabetSounds,
+} from './alphabet/sounds.js';
+/**
  * Which Kurdish texts a lesson wants recorded, and the key a recording is filed
  * under — the admin's audio studio and the API's lesson delivery must agree.
  */
@@ -196,6 +300,12 @@ export * from './story-authoring.js';
  */
 export * from './play.js';
 export * from './gifts.js';
+
+/**
+ * Shop items by kind — the categories, the search, the filters and the orders
+ * the shop, the inventory and the gift picker share (shop-items).
+ */
+export * from './shop-items.js';
 export * from './chat-cards.js';
 
 /**
@@ -301,3 +411,7 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
+export * from './lipsync/index.js';
+/** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */
+export * from './characters/index.js';

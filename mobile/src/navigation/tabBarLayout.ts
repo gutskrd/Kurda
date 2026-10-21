@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { Keyboard, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { spacing } from '../theme/tokens';
 
@@ -16,13 +18,19 @@ export const TAB_BAR_HEIGHT = 62;
  * than the system's.
  */
 export const TAB_BAR_MARGIN = 21;
+/**
+ * How far above the island the page fades out under it (GlassTabBar), so
+ * content scrolling down dissolves before it reaches the bar.
+ */
+export const TAB_BAR_FADE = 28;
 
 /** Bottom padding a scrollable tab screen needs so its content clears the island. */
 export function useTabBarInset(): number {
   const insets = useSafeAreaInsets();
   // the island is TAB_BAR_MARGIN off the bottom edge, not off the safe area,
-  // so content has to clear whichever of the two reaches higher
-  return Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + 16;
+  // so content has to clear whichever of the two reaches higher — and the
+  // fade above it, so the last row is whole when the list is scrolled to its end
+  return Math.max(insets.bottom, TAB_BAR_MARGIN) + TAB_BAR_HEIGHT + TAB_BAR_FADE;
 }
 
 /**
@@ -32,4 +40,35 @@ export function useTabBarInset(): number {
 export function useScreenTopInset(): number {
   const insets = useSafeAreaInsets();
   return insets.top + spacing.md;
+}
+
+/**
+ * Bottom padding for the last thing on a screen the tab bar is not over — a
+ * lesson's Check button, a chat's composer — so it clears the home indicator
+ * instead of sitting on it. Never less than `min`, the room the screen gives
+ * it anyway on a phone with no indicator.
+ *
+ * While the keyboard is up the keyboard is what is under it, and the home
+ * indicator is under the keyboard: keeping the inset then would leave a band
+ * of empty page between what is being typed and the keys.
+ */
+export function useScreenBottomInset(min: number): number {
+  const insets = useSafeAreaInsets();
+  const keyboard = useKeyboardShown();
+  return keyboard ? min : Math.max(insets.bottom, min);
+}
+
+/** Whether the on-screen keyboard is up — from the moment it starts to rise on iOS, once it is up on Android. */
+export function useKeyboardShown(): boolean {
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const ios = Platform.OS === 'ios';
+    const show = Keyboard.addListener(ios ? 'keyboardWillShow' : 'keyboardDidShow', () => setShown(true));
+    const hide = Keyboard.addListener(ios ? 'keyboardWillHide' : 'keyboardDidHide', () => setShown(false));
+    return () => {
+      show.remove();
+      hide.remove();
+    };
+  }, []);
+  return shown;
 }

@@ -1,43 +1,57 @@
 /* ---- buttons ----------------------------------------------------------- */
+/*
+ * One button, three weights, all pills.
+ *
+ * Primary is the one next step on a screen — near-white on the dark page,
+ * near-black on the light one. Secondary is a surface-tone pill, the weight of
+ * "Edit profile" or "Follow". Ghost is a word that only lights up under the
+ * pointer. Destructive is red, as words or as a fill once it has been
+ * confirmed. Forty-four pixels tall by default, which is the size a finger
+ * needs; `btn-sm` is for rows and toolbars on a pointer, and grows back to 44
+ * on a touch screen (below).
+ */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   font-family: var(--font-sans);
-  font-size: 0.95rem;
-  font-weight: 550;
+  font-size: var(--text-secondary);
+  font-weight: 600;
   line-height: 1;
-  padding: 0 18px;
+  padding: 0 20px;
   height: 44px;
-  border-radius: var(--r-sm);
+  border-radius: var(--r-pill);
   border: 1px solid transparent;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
   white-space: nowrap;
+  text-decoration: none;
   transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease,
-    transform 0.05s ease;
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
 }
-.btn:active {
-  transform: translateY(0.5px);
+.btn:active:not(:disabled) {
+  /* gives a little under the finger, and springs back when it is let go (tokens.css) */
+  transform: scale(var(--press-scale));
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 80ms;
 }
 .btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 .btn-sm {
-  height: 38px;
+  height: 36px;
   padding: 0 14px;
-  font-size: 0.9rem;
+  font-size: 0.875rem;
 }
 .btn-lg {
   height: 52px;
   padding: 0 26px;
-  font-size: 1.02rem;
+  font-size: var(--text-body);
 }
 .btn-block {
   width: 100%;
@@ -52,18 +66,15 @@
   background: var(--primary-hover);
   border-color: var(--primary-hover);
 }
-/* translucent glass button */
+/* the surface-tone pill */
 .btn-secondary {
   background: var(--surface-2);
   color: var(--ink);
-  border-color: var(--border-strong);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim);
+  border-color: var(--border);
 }
 .btn-secondary:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.18);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: var(--surface-3);
+  border-color: var(--border-strong);
 }
 .btn-ghost {
   color: var(--ink-2);
@@ -71,6 +82,69 @@
 .btn-ghost:hover:not(:disabled) {
   background: var(--surface-2);
   color: var(--ink);
+}
+/* destructive, confirmed: the fill. Before confirming it is only red words */
+.btn-danger {
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
+  color: var(--on-danger);
+}
+.btn-danger:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--danger-fill) 88%, #000);
+}
+.btn-danger-text,
+.btn-danger-text:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+/*
+ * On a touch screen nothing pressable is under 44px.
+ *
+ * The small button exists so a row of actions fits beside a name on a desk;
+ * a thumb does not get smaller with the screen, so where the primary pointer
+ * is coarse every button is a full target again.
+ */
+@media (pointer: coarse) {
+  .btn-sm {
+    height: 44px;
+    padding: 0 16px;
+  }
+}
+
+/*
+ * A button on a line of its own — the action at the end of a card, the link
+ * at the foot of a section — can carry a whole phrase, and in French or German
+ * that phrase is wider than a 320px phone ("Demander un export de mes
+ * données"), or a two-to-a-row shop tile ("L’obtenir gratuitement"). There
+ * it wraps inside its pill rather than running off the page; on one line it
+ * is exactly the height it always was. Buttons in a row beside a name are left
+ * alone: they keep their words together beside what they act on.
+ */
+.card > .btn,
+.lp-section-foot .btn,
+.ab-next-links .btn,
+.shop-actions .btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  padding-block: var(--space-2);
+  white-space: normal;
+  text-align: center;
+  line-height: 1.3;
+}
+.card > .btn-sm,
+.shop-actions .btn-sm {
+  min-height: 36px;
+  padding-block: 6px;
+}
+.card > .btn-lg {
+  min-height: 52px;
+}
+@media (pointer: coarse) {
+  .card > .btn-sm,
+  .shop-actions .btn-sm {
+    min-height: 44px;
+  }
 }
 
 /* ---- forms ------------------------------------------------------------- */
@@ -89,6 +163,14 @@
   font-size: 0.8rem;
   color: var(--ink-3);
 }
+/* what is wrong with this field, under it, rather than in a banner above the form */
+.field.has-problem .input {
+  border-color: var(--danger);
+}
+.field-problem {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
 /* Hide the browser's own password reveal/clear control (Edge/IE ::-ms-reveal,
    ::-ms-clear) so it never doubles up with our custom show/hide eye button. */
 input[type='password']::-ms-reveal,
@@ -100,14 +182,13 @@ input[type='password']::-ms-clear {
   width: 100%;
   height: 46px;
   padding: 0 14px;
-  font-size: 0.98rem;
+  /* 16px at least, or a phone zooms the page in when the field is touched */
+  font-size: 1rem;
   font-family: var(--font-sans);
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid var(--border-strong);
-  border-radius: var(--r-sm);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--r-md);
   transition:
     border-color 0.15s ease,
     background 0.15s ease,
@@ -118,16 +199,16 @@ input[type='password']::-ms-clear {
 }
 .input:focus {
   outline: none;
-  border-color: rgba(255, 255, 255, 0.6);
-  background: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 0 0 3px var(--focus);
+  border-color: var(--ink-2);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 45%, transparent);
 }
 .input-wrap {
   position: relative;
 }
 .input-affix {
   position: absolute;
-  right: 6px;
+  /* at the field's end, which is its left on a right-to-left page */
+  inset-inline-end: 6px;
   top: 0;
   bottom: 0;
   margin: auto 0;
@@ -150,7 +231,18 @@ input[type='password']::-ms-clear {
   transform: none;
 }
 .input.has-affix {
-  padding-right: 46px;
+  padding-inline-end: 46px;
+}
+/* a finger's 44 on a touch screen: the field is 46 tall, so it still fits inside */
+@media (pointer: coarse) {
+  .input-affix {
+    inset-inline-end: 1px;
+    width: 44px;
+    height: 44px;
+  }
+  .input.has-affix {
+    padding-inline-end: 50px;
+  }
 }
 
 /* ---- inline messages --------------------------------------------------- */
@@ -162,6 +254,13 @@ input[type='password']::-ms-clear {
   border: 1px solid var(--border);
   color: var(--ink-2);
   background: var(--surface);
+}
+/* the ways on from a message: its own row of buttons under the words */
+.msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
 }
 .msg-error {
   color: var(--danger);
@@ -175,14 +274,12 @@ input[type='password']::-ms-clear {
 }
 
 /* ---- surfaces / cards -------------------------------------------------- */
+/* a hairline, not a shadow: a card lies on the page, it does not float over it */
 .card {
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  padding: 22px;
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
-  box-shadow: var(--glass-rim), var(--shadow-sm);
+  padding: var(--space-5);
 }
 .card-link {
   display: block;
@@ -203,7 +300,7 @@ input[type='password']::-ms-clear {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -226,24 +323,22 @@ input[type='password']::-ms-clear {
 /* ---- states ------------------------------------------------------------ */
 .state {
   text-align: center;
-  padding: 56px 24px;
-  border: 1px dashed var(--border-strong);
+  padding: 40px 24px;
+  border: 1px solid var(--border);
   border-radius: var(--r-lg);
   color: var(--ink-3);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
 }
-.state h3 {
+.state-title {
   font-family: var(--font-sans);
-  font-size: 1.05rem;
+  font-size: var(--text-body);
   color: var(--ink);
   margin-bottom: 6px;
 }
 .state p {
   max-width: 42ch;
   margin: 0 auto;
-  font-size: 0.95rem;
+  font-size: var(--text-secondary);
 }
 
 .spinner {
@@ -258,6 +353,18 @@ input[type='password']::-ms-clear {
   display: grid;
   place-items: center;
   min-height: 40vh;
+  /*
+   * Nothing for the first moment. Most waits are over inside a tenth of a
+   * second, and a spinner that flashes on and straight off reads as a flicker
+   * rather than as progress, so it fades in only once the wait is noticeable.
+   * The space is held from the start, so nothing moves when it appears.
+   */
+  animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
+}
+@keyframes spinner-wait {
+  from {
+    opacity: 0;
+  }
 }
 @keyframes spin {
   to {
@@ -285,7 +392,7 @@ input[type='password']::-ms-clear {
   width: 100%;
   height: 12px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
   /* a box with nothing in it still has to hold its line height open */
   flex-shrink: 0;
 }
@@ -294,9 +401,10 @@ input[type='password']::-ms-clear {
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -60%;
+  left: 0;
   width: 60%;
-  transform: skewX(-18deg);
+  /* parked off the left edge; the keyframes carry it across with a transform alone */
+  transform: translateX(-100%) skewX(-18deg);
   background: linear-gradient(
     90deg,
     transparent,
@@ -344,7 +452,7 @@ input[type='password']::-ms-clear {
   position: absolute;
   inset: 20% 0;
   border-radius: inherit;
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--surface-2);
 }
 /* the ray belongs to the bar, not to the line box around it */
 .skeleton-line::after {
@@ -370,15 +478,51 @@ input[type='password']::-ms-clear {
   white-space: normal;
 }
 
+/*
+ * A placeholder is drawn a moment late, as the spinner is (`spinner-wait`
+ * above): nothing for the first 120ms, then a short fade. Most answers land
+ * inside that, and then there is no grey flash at all. Only its opacity
+ * waits — the space is held from the first frame, so nothing moves when it
+ * appears — and with reduced motion it appears at once when the wait is over.
+ */
+.skeleton-region,
+.skeleton-late {
+  animation: spinner-wait var(--dur) var(--ease-out) 120ms both;
+}
+
+/*
+ * A button's place, at the height that size of button has on this screen:
+ * 44 by default, 36 for a small one on a desk and 44 again under a thumb,
+ * 52 for a large one — the same numbers as `.btn` above, so a row of
+ * placeholder buttons is the height of the row that replaces it.
+ */
+.skeleton-btn {
+  height: 44px;
+  border-radius: var(--r-pill);
+}
+.skeleton-btn-sm {
+  height: 36px;
+}
+.skeleton-btn-lg {
+  height: 52px;
+}
+@media (pointer: coarse) {
+  .skeleton-btn-sm {
+    height: 44px;
+  }
+}
+
 @keyframes skeleton-ray {
+  /* the band is 60% of the box wide, so -100% of itself is -60% of the box and
+     216.67% of itself is 130% of it: from just off the left edge to past the right */
   0% {
-    left: -60%;
+    transform: translateX(-100%) skewX(-18deg);
   }
   /* it rests off the right edge before coming round again, so the ray reads as
      one pass rather than a band bouncing back and forth */
   70%,
   100% {
-    left: 130%;
+    transform: translateX(216.67%) skewX(-18deg);
   }
 }
 
@@ -395,7 +539,7 @@ input[type='password']::-ms-clear {
     left: 0;
     width: 100%;
     transform: none;
-    background: rgba(255, 255, 255, 0.04);
+    background: var(--surface);
   }
 }
 
@@ -441,6 +585,6 @@ select.input option,
 select.input optgroup,
 select option,
 select optgroup {
-  background-color: #14181e;
-  color: #fff;
+  background-color: var(--surface-solid);
+  color: var(--ink);
 }

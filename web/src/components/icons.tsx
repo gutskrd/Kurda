@@ -89,7 +89,21 @@ import { Handshake } from '@phosphor-icons/react/dist/icons/Handshake';
 import { Medal } from '@phosphor-icons/react/dist/icons/Medal';
 import { Mountains } from '@phosphor-icons/react/dist/icons/Mountains';
 import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
+import { HandHeart } from '@phosphor-icons/react/dist/icons/HandHeart';
+import { Checks } from '@phosphor-icons/react/dist/icons/Checks';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
+// shop items by kind: a tag, a frame, and the search over all of them
+import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
+import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
+import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlass';
+import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
+// starting a conversation
+import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
+// signed-in devices, by kind
+import { DeviceMobile } from '@phosphor-icons/react/dist/icons/DeviceMobile';
+import { DeviceTablet } from '@phosphor-icons/react/dist/icons/DeviceTablet';
+import { Laptop } from '@phosphor-icons/react/dist/icons/Laptop';
+import { Devices } from '@phosphor-icons/react/dist/icons/Devices';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -226,7 +240,31 @@ export const UpIcon = named(ArrowUp, 14, 'bold');
 export const DownIcon = named(ArrowDown, 14, 'bold');
 export const ShieldIcon = named(ShieldCheck, 14, 'fill');
 export const MedalIcon = named(Medal, 22);
+/* a notice about your account's safety: a report answered, a decision, an appeal */
+export const SafetyIcon = named(ShieldCheck, 22);
+/* a caring message, with a helpline */
+export const CareIcon = named(HandHeart, 22);
+/* every notification read at once */
+export const ReadAllIcon = named(Checks, 18);
 export const SparkleIcon = named(Sparkle, 16, 'fill');
+
+/* Shop items by kind (shop/ItemBrowser): what stands in for an item that has
+   no picture of its own — a tag is a tag, a frame is a frame — and the glass
+   in front of the search over all of them */
+export const TagIcon = named(Tag, 22);
+export const FrameIcon = named(FrameCorners, 22);
+export const SearchIcon = named(MagnifyingGlass, 18);
+/** The order a list is in: what the sort select carries in place of its word on a phone. */
+export const SortIcon = named(ArrowsDownUp, 18);
+/** a new conversation: a note being written, beside the list of them */
+export const NewMessageIcon = named(NotePencil, 22);
+
+/* A signed-in device in Settings, by what its name says it is; the pair of
+   screens for one that says nothing */
+export const PhoneIcon = named(DeviceMobile, 22);
+export const TabletIcon = named(DeviceTablet, 22);
+export const ComputerIcon = named(Laptop, 22);
+export const DeviceIcon = named(Devices, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

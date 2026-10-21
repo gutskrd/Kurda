@@ -4,16 +4,26 @@ import {
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
   type AlphabetClip,
+  type LipsyncData,
+  type SpeakerId,
 } from '@kurda/shared';
-import { api, apiUpload } from '../api';
+import { api } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
 import { EmptyState, ErrorState, Tabs } from '../ui';
+import { SpeakerPicker, useSpeakerChange } from '../ui/SpeakerPicker';
+import { SpeakingPreview } from '../ui/SpeakingPreview';
+import { rememberSpeaker, rememberedSpeaker, scriptOfClip, uploadWithVoice, type Speaker } from '../voice';
 
 interface Recording {
   key: string;
   url: string;
   durationMs: number | null;
   updatedAt: string;
+  /** who is shown saying it, or null for no character */
+  speaker?: SpeakerId | null;
+  hasLipsync?: boolean;
+  /** the stored timeline, null for none, as the list and a save made here send it */
+  lipsync?: LipsyncData | null;
 }
 
 export type Filter = 'missing' | 'recorded' | 'all';
@@ -29,6 +39,10 @@ export type Filter = 'missing' | 'recorded' | 'all';
  *
  * Removing a recording brings the synthesised clip back, so nothing here can
  * leave a letter silent.
+ *
+ * The studio also says who is shown saying the sound, as the sentences' does:
+ * a new take goes up with that character and a timeline read in the sound's
+ * own script (voice.ts).
  */
 export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}): React.JSX.Element {
   const [recordings, setRecordings] = useState<Record<string, Recording>>({});
@@ -37,6 +51,11 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
   const [filter, setFilter] = useState<Filter>(initialFilter ?? 'missing');
   const [selected, setSelectedKey] = useState<string>(ALPHABET_CLIPS[0]!.key);
   const studio = useRef<HTMLElement>(null);
+  // who says the next new recording: the last choice made for one
+  const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
+  const changeSpeaker = useSpeakerChange('alphabet', (key, speaker) =>
+    setRecordings((all) => (all[key] ? { ...all, [key]: { ...all[key], speaker } } : all)),
+  );
 
   // on a phone the studio sits above the list: a tap on a letter far down brings it back into view
   const setSelected = (key: string, reveal = false): void => {
@@ -165,6 +184,16 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
           ref={studio}
           clip={clip}
           recording={recordings[clip.key] ?? null}
+          nextSpeaker={nextSpeaker}
+          onSpeaker={(speaker) => {
+            const recording = recordings[clip.key];
+            if (recording) {
+              changeSpeaker({ key: clip.key, from: recording.speaker ?? null, to: speaker, label: clip.say });
+            } else {
+              setNextSpeaker(speaker);
+              rememberSpeaker(speaker);
+            }
+          }}
           onPrev={() => move(-1)}
           onNext={() => move(1)}
           onSaved={(r) => {
@@ -188,6 +217,8 @@ function Studio({
   ref,
   clip,
   recording,
+  nextSpeaker,
+  onSpeaker,
   onPrev,
   onNext,
   onSaved,
@@ -196,12 +227,16 @@ function Studio({
   ref: React.Ref<HTMLElement>;
   clip: AlphabetClip;
   recording: Recording | null;
+  /** who says it when it is recorded now, if it has no recording yet */
+  nextSpeaker: Speaker;
+  onSpeaker: (speaker: Speaker) => void;
   onPrev: () => void;
   onNext: () => void;
   onSaved: (r: Recording) => void;
   onRemoved: (key: string) => void;
 }): React.JSX.Element {
   const group = ALPHABET_CLIP_GROUPS.find((g) => g.group === clip.group)!.title;
+  const speaker = recording ? (recording.speaker ?? null) : nextSpeaker;
 
   return (
     <aside ref={ref} className="card aa-studio" aria-label="Record this sound">
@@ -221,6 +256,22 @@ function Studio({
         </div>
       )}
 
+      <SpeakerPicker
+        value={speaker}
+        onChange={onSpeaker}
+        hint={recording ? 'Changed as soon as you choose.' : 'Saved with the recording, and kept for the next one.'}
+      />
+      {recording?.speaker && (
+        <SpeakingPreview
+          key={`${recording.url}|${recording.speaker}`}
+          speaker={recording.speaker}
+          url={recording.url}
+          text={clip.say}
+          lipsync={recording.lipsync ?? (recording.hasLipsync ? undefined : null)}
+          durationMs={recording.durationMs}
+        />
+      )}
+
       <ClipRecorder
         say={clip.say}
         maxSeconds={ALPHABET_CLIP_MAX_SECONDS}
@@ -230,12 +281,20 @@ function Studio({
         onPrev={onPrev}
         onNext={onNext}
         onSave={async (wav) => {
-          const res = await apiUpload<{ key: string; url: string; durationMs: number }>(
+          const res = await uploadWithVoice<{ key: string; url: string; durationMs: number; speaker?: SpeakerId | null; lipsync?: LipsyncData | null }>(
             `/admin/alphabet/audio?key=${encodeURIComponent(clip.key)}`,
             wav,
-            'audio/wav',
+            { speaker, text: clip.say, script: scriptOfClip(clip.script) },
           );
-          onSaved({ key: res.key, url: res.url, durationMs: res.durationMs, updatedAt: new Date().toISOString() });
+          onSaved({
+            key: res.key,
+            url: res.url,
+            durationMs: res.durationMs,
+            updatedAt: new Date().toISOString(),
+            speaker: res.speaker ?? null,
+            hasLipsync: Boolean(res.lipsync),
+            lipsync: res.lipsync ?? null,
+          });
         }}
         removePrompt={`Remove the recording of “${clip.say}”?\n\nThe synthesised voice plays there again until a new one is saved.`}
         onRemove={async () => {

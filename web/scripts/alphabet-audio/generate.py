@@ -23,7 +23,8 @@ Running it
     ESPEAK_DIR=/tmp/esp/espeakng_loader python3 web/scripts/alphabet-audio/generate.py
 
 It needs ffmpeg with libmp3lame. Output: web/public/audio/alphabet/*.mp3 and
-web/src/alphabet/clips.ts, which maps each clip's key to its file.
+shared/src/alphabet/clips.ts, which maps each clip's key to its file for the
+website and the phone.
 """
 import json, os, subprocess, sys, tempfile, hashlib
 
@@ -32,7 +33,7 @@ import espeak  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
 OUT = os.path.join(ROOT, 'public', 'audio', 'alphabet')
-MANIFEST = os.path.join(ROOT, 'src', 'alphabet', 'clips.ts')
+MANIFEST = os.path.join(ROOT, '..', 'shared', 'src', 'alphabet', 'clips.ts')
 
 # (key, text, expected IPA without stress marks). A text in [[ ]] is an eSpeak
 # phoneme given directly — only the short u, which the voice otherwise reads long.

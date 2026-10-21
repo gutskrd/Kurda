@@ -88,6 +88,8 @@ export interface Mistake {
 export interface Streak {
   current: number;
   longest: number;
+  /** the last day that counted (the server always sends it; older test data may not) */
+  lastActiveOn?: string | null;
 }
 
 /** POST …/complete — a lesson's results carry `firstCompletion`, practice's do not */

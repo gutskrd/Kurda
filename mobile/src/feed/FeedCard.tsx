@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, Share, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
+import { HeartBurst } from '../theme/MotionParts';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -13,6 +15,7 @@ import { relativeTime } from '../memes/types';
 import { postUrl, toggleEngagement } from './api';
 import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
 import { PostPictures } from '../composer/PostPictures';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 
 /**
  * One card on the wall, whichever half it came from.
@@ -42,6 +45,8 @@ export function FeedCard({
   const { colors } = useTheme();
   const { t } = useI18n();
   const [busy, setBusy] = useState<EngagementKind | null>(null);
+  // each like made here, so the heart answers the press before the server does
+  const [likes, setLikes] = useState(0);
 
   const open = useCallback(() => {
     if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
@@ -142,7 +147,15 @@ export function FeedCard({
           disabled={busy !== null}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
           count={e.likes}
-          onPress={() => void toggle('like')}
+          burst={likes}
+          onPress={() => {
+            // a like is felt and pops; taking one back is quiet
+            if (!e.liked) {
+              haptic('tap');
+              setLikes((n) => n + 1);
+            }
+            void toggle('like');
+          }}
         />
         <Action
           icon="repost"
@@ -167,6 +180,70 @@ export function FeedCard({
 }
 
 /**
+ * A card while the wall loads: the same card, its head, a title on most, a
+ * couple of lines and the row of actions, all at the card's own spacing — so
+ * the real one lands in the grey one's place. A written post with no title
+ * comes first because that is what most of a wall is.
+ */
+export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolean; lines?: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
+      <View style={styles.body}>
+        <View style={styles.head}>
+          <Skeleton width={28} height={28} radius={radii.pill} />
+          <View style={styles.headText}>
+            <SkeletonText size={typography.sizes.md} width="38%" />
+            <SkeletonText size={typography.sizes.sm} width={32} />
+          </View>
+          <Skeleton width={64} height={BADGE_HEIGHT} radius={radii.pill} />
+        </View>
+        {titled ? <SkeletonText size={typography.sizes.lg} lineHeight={TITLE_LINE} width="52%" /> : null}
+        {/* one paragraph, its lines with nothing between them */}
+        <View>
+          {Array.from({ length: lines }, (_, i) => (
+            <SkeletonText key={i} size={typography.sizes.md} width={i === lines - 1 ? '64%' : '94%'} />
+          ))}
+        </View>
+      </View>
+      <View style={styles.actions}>
+        {[0, 1, 2, 3].map((i) => (
+          <View key={i} style={styles.action}>
+            <SkeletonText size={typography.sizes.sm} width={i === 3 ? 18 : 30} />
+          </View>
+        ))}
+        <View style={[styles.action, styles.save]}>
+          <SkeletonText size={typography.sizes.sm} width={18} />
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** As many cards as reach the foot of the screen, the way the wall lays them out. */
+export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const { height, width } = useWindowDimensions();
+  const { t } = useI18n();
+  const count = Math.max(2, Math.ceil(height / 200));
+  // a few lines of a post run to two on a phone and fit on one across a tablet
+  const lines = width >= WIDE ? 1 : 2;
+  return (
+    <View style={[styles.skeletonList, style]} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <FeedCardSkeleton key={i} titled={i % 3 !== 0} lines={lines} />
+      ))}
+    </View>
+  );
+}
+
+/** past this a short paragraph fits on one line */
+const WIDE = 600;
+/** a 13pt word in a pill, 2pt above and below, inside a hairline: 16 + 4 + 2 */
+const BADGE_HEIGHT = 22;
+/** display(22) sets 1.12 */
+const TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+
+/**
  * One button in the row under a card.
  *
  * The label says what pressing it does, never what it counts: these buttons
@@ -179,6 +256,7 @@ function Action({
   count,
   on = false,
   disabled = false,
+  burst,
   onPress,
   style,
 }: {
@@ -187,6 +265,8 @@ function Action({
   count?: number;
   on?: boolean;
   disabled?: boolean;
+  /** goes up each time the icon should pop with a burst (a like) */
+  burst?: number;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
@@ -202,7 +282,13 @@ function Action({
       accessibilityLabel={count ? `${label} (${count})` : label}
       style={[styles.action, disabled && styles.actionDisabled, style]}
     >
-      <Icon name={icon} size={18} color={tint} />
+      {burst !== undefined ? (
+        <HeartBurst fired={burst} color={colors.danger} size={18}>
+          <Icon name={icon} size={18} color={tint} />
+        </HeartBurst>
+      ) : (
+        <Icon name={icon} size={18} color={tint} />
+      )}
       {count ? <Text style={[styles.count, { color: tint }]}>{count}</Text> : null}
     </Pressable>
   );
@@ -240,4 +326,5 @@ const styles = StyleSheet.create({
   action: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 11, borderRadius: radii.pill },
   actionDisabled: { opacity: 0.5 },
   count: { fontSize: typography.sizes.sm },
+  skeletonList: { gap: layout.rowGap },
 });

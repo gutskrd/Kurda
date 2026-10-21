@@ -1,12 +1,13 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { safeEqual } from '../iap/webhook-auth.js';
+import { emailAddress } from '../auth/email-address.js';
 import type { EmailService } from './service.js';
 
 const webhookBody = z.object({
   // provider-normalized event; adapters map SES/Postmark payloads to this
   type: z.enum(['bounce', 'complaint']),
-  email: z.string().email(),
+  email: emailAddress,
 });
 
 /**

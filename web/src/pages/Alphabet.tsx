@@ -1,36 +1,41 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import '@fontsource-variable/vazirmatn';
-import type { AppLocale } from '@kurda/shared';
+import {
+  LATIN_LETTERS,
+  SORANI_LETTERS,
+  bandOf,
+  compareLocaleOf,
+  formsOf,
+  indexInWord,
+  latinLetterGroups,
+  latinLetterHint,
+  likeFor,
+  soraniLetterGroups,
+  soraniLikeFor,
+  type AppLocale,
+  type LatinLetter,
+  type LetterGroup,
+  type LetterGroupId,
+  type SoraniLetter,
+  type SoundLikeness,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Modal } from '../components/Modal';
 import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
-import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, useRecordings } from '../alphabet/audio';
+import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, spokenAlphabet, useRecordings } from '../alphabet/audio';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
 import { Practice } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
-import {
-  LATIN,
-  SORANI,
-  bandOf,
-  compareLocaleOf,
-  formsOf,
-  indexInWord,
-  likeFor,
-  soraniLikeFor,
-  type Band,
-  type LatinLetter,
-  type Likeness,
-  type SoraniLetter,
-} from '../alphabet/letters';
 
 /**
  * The alphabet, for a beginner: every letter, what it sounds like next to the
  * reader's own language, and a word to remember it by. See
- * `alphabet/letters.ts` for how it teaches and why.
+ * `alphabet/letters.ts` in @kurda/shared for how it teaches and why.
  *
  * Open to everyone, account or not: it is the first thing a beginner needs and
  * it costs nothing to serve — no request leaves the page.
@@ -45,41 +50,40 @@ interface Group<L> {
   letters: L[];
 }
 
-const BAND_TITLE: Record<Band, MessageKey> = {
+const GROUP_TITLE: Record<LetterGroupId, MessageKey> = {
   watch: 'alphabet.group.watch',
   new: 'alphabet.group.new',
   same: 'alphabet.group.same',
+  vowels: 'alphabet.group.vowels',
+  consonants: 'alphabet.group.consonants',
+  throat: 'alphabet.group.throat',
 };
-const BAND_BODY: Record<Band, MessageKey> = {
+const GROUP_BODY: Record<LetterGroupId, MessageKey> = {
   watch: 'alphabet.group.watchBody',
   new: 'alphabet.group.newBody',
   same: 'alphabet.group.sameBody',
+  vowels: 'alphabet.group.vowelsBodyKmr',
+  consonants: 'alphabet.group.consonantsBody',
+  throat: 'alphabet.group.throatBody',
 };
+
+/** A group as the page shows it; the groups themselves are @kurda/shared's, the same as the phone's. */
+function titled<L>(g: LetterGroup<L>, script: Script): Group<L> {
+  const body = g.id === 'vowels' && script === 'ckb' ? 'alphabet.group.vowelsBodyCkb' : GROUP_BODY[g.id];
+  return { id: g.id, title: GROUP_TITLE[g.id], body, letters: g.letters };
+}
 
 /** Kurmancî, sorted against the reader's language — the false friends first, because that is where the mistakes are. */
 function latinGroups(locale: AppLocale): Group<LatinLetter>[] {
-  const lang = compareLocaleOf(locale);
-  if (!lang) {
-    return [
-      { id: 'vowels', title: 'alphabet.group.vowels', body: 'alphabet.group.vowelsBodyKmr', letters: LATIN.filter((l) => l.vowel) },
-      { id: 'consonants', title: 'alphabet.group.consonants', body: 'alphabet.group.consonantsBody', letters: LATIN.filter((l) => !l.vowel) },
-    ];
-  }
-  return (['watch', 'new', 'same'] as const)
-    .map((band) => ({ id: band, title: BAND_TITLE[band], body: BAND_BODY[band], letters: LATIN.filter((l) => bandOf(l.id, lang) === band) }))
-    .filter((g) => g.letters.length > 0);
+  return latinLetterGroups(locale).map((g) => titled(g, 'kmr'));
 }
 
 function soraniGroups(): Group<SoraniLetter>[] {
-  return [
-    { id: 'vowels', title: 'alphabet.group.vowels', body: 'alphabet.group.vowelsBodyCkb', letters: SORANI.filter((l) => l.kind === 'vowel') },
-    { id: 'consonants', title: 'alphabet.group.consonants', body: 'alphabet.group.consonantsBody', letters: SORANI.filter((l) => l.kind === 'consonant') },
-    { id: 'throat', title: 'alphabet.group.throat', body: 'alphabet.group.throatBody', letters: SORANI.filter((l) => l.kind === 'throat') },
-  ];
+  return soraniLetterGroups().map((g) => titled(g, 'ckb'));
 }
 
 /** A comparison, with the sound itself picked out. */
-function Like({ like }: { like: Likeness }): React.JSX.Element {
+function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   return (
     <span className="ab-like" dir="auto">
       {like.before}
@@ -100,16 +104,6 @@ function KurdishWord({ word, letter }: { word: string; letter: string }): React.
       {word.slice(at + letter.length)}
     </span>
   );
-}
-
-/** What a tile says under its letter: the sound it is like, or its partner in the other script. */
-function latinHint(l: LatinLetter, locale: AppLocale): string | null {
-  const lang = compareLocaleOf(locale);
-  if (!lang) return l.sorani;
-  if (bandOf(l.id, lang) === 'same') return null;
-  // a vowel's comparison marks the same letter ("f[a]ther"); repeating it under the tile says nothing
-  const sound = likeFor(l.id, locale)?.sound ?? null;
-  return sound && sound.toLocaleLowerCase() !== l.id ? sound : null;
 }
 
 /**
@@ -183,7 +177,7 @@ export function Alphabet(): React.JSX.Element {
   const open = (id: string): void => {
     setPicked(id);
     markSeen(id);
-    const sorani = script === 'ckb' ? SORANI.find((l) => l.id === id) : undefined;
+    const sorani = script === 'ckb' ? SORANI_LETTERS.find((l) => l.id === id) : undefined;
     const clip = sorani ? soraniSound(sorani) : latinSound(id);
     if (clip) play(clip);
   };
@@ -210,13 +204,13 @@ export function Alphabet(): React.JSX.Element {
   );
 
   const lang = compareLocaleOf(locale);
-  const same = lang ? LATIN.filter((l) => bandOf(l.id, lang) === 'same').length : 0;
+  const same = lang ? LATIN_LETTERS.filter((l) => bandOf(l.id, lang) === 'same').length : 0;
 
   const card =
     script === 'kmr' ? (
-      <LatinCard letter={LATIN.find((l) => l.id === current)!} locale={locale} onStep={step} />
+      <LatinCard letter={LATIN_LETTERS.find((l) => l.id === current)!} locale={locale} onStep={step} />
     ) : (
-      <SoraniCard letter={SORANI.find((l) => l.id === current)!} locale={locale} onStep={step} />
+      <SoraniCard letter={SORANI_LETTERS.find((l) => l.id === current)!} locale={locale} onStep={step} />
     );
 
   const dictionary = status === 'signedIn' ? '/app/dictionary' : publishedDictionary(locale);
@@ -250,7 +244,7 @@ export function Alphabet(): React.JSX.Element {
             <>
               <p className="ab-summary">
                 {lang
-                  ? t('alphabet.summary.compare', { same, total: LATIN.length, rest: LATIN.length - same })
+                  ? t('alphabet.summary.compare', { same, total: LATIN_LETTERS.length, rest: LATIN_LETTERS.length - same })
                   : t('alphabet.summary.bridge')}
               </p>
               {progress}
@@ -263,7 +257,7 @@ export function Alphabet(): React.JSX.Element {
                   <p className="ab-group-body">{t(g.body)}</p>
                   <div className="ab-grid" dir="ltr">
                     {g.letters.map((l) => {
-                      const hint = latinHint(l, locale);
+                      const hint = latinLetterHint(l, locale);
                       return (
                         <button
                           key={l.id}
@@ -429,6 +423,7 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
           <small>{letter.id}</small>
         </span>
         <span className="ab-card-tools">
+          <ClipSpeaker clips={spokenAlphabet(latinSound(letter.id), latinWord(letter.id))} decorative className="speaker-tile ab-voice-face" />
           <Sound src={latinSound(letter.id)} label={t('alphabet.listen')} size="lg" />
           <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
             /{letter.ipa}/
@@ -487,6 +482,7 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
           {letter.char}
         </span>
         <span className="ab-card-tools">
+          <ClipSpeaker clips={spokenAlphabet(soraniSound(letter), soraniWord(letter))} decorative className="speaker-tile ab-voice-face" />
           <Sound src={soraniSound(letter)} label={t('alphabet.listen')} size="lg" />
           <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
             /{letter.ipa}/

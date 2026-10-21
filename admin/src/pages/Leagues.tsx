@@ -81,7 +81,7 @@ function WeekPage({ week, thisWeek }: { week: string; thisWeek: string }): React
       />
 
       <nav className="week-nav" aria-label="Week">
-        <a className="button-link" href={weekHref(previousWeek(week), thisWeek)} aria-label="The week before">
+        <a className="button-link" href={weekHref(previousWeek(week), thisWeek)} aria-label="The week before" title="The week before">
           <Icon name="arrowLeft" size={16} />
           <span className="week-nav-word">Before</span>
         </a>
@@ -90,7 +90,7 @@ function WeekPage({ week, thisWeek }: { week: string; thisWeek: string }): React
           <span className="subtle">{week === thisWeek ? 'This week' : week < thisWeek ? 'A past week' : 'Not started'}</span>
         </div>
         {week < thisWeek ? (
-          <a className="button-link" href={weekHref(nextWeek(week), thisWeek)} aria-label="The week after">
+          <a className="button-link" href={weekHref(nextWeek(week), thisWeek)} aria-label="The week after" title="The week after">
             <span className="week-nav-word">After</span>
             <Icon name="arrowRight" size={16} />
           </a>

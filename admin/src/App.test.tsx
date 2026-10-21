@@ -107,9 +107,12 @@ describe('the admin’s navigation', () => {
       'Record the alphabet',
       'Record lesson sentences',
       'Record story sentences',
+      'Dictionary pronunciations',
+      'Characters',
     ]);
     expect(within(group).getByRole('link', { name: 'Record the alphabet' })).toHaveAttribute('aria-current', 'page');
     expect(within(group).getByRole('link', { name: 'Record lesson sentences' })).toHaveAttribute('href', '#/audio/lessons');
+    expect(within(group).getByRole('link', { name: 'Characters' })).toHaveAttribute('href', '#/audio/characters');
   });
 
   it('finds a page by what it is for, and opens it with Enter', async () => {
@@ -143,5 +146,35 @@ describe('the admin’s navigation', () => {
     });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(location.hash).toBe('#/tags');
+  });
+
+  it('keeps the keyboard inside the open menu, and Escape closes it back onto its button', async () => {
+    const user = userEvent.setup();
+    fakeApi(session(['founder'], []), me('ferhad'), on('GET', '/tags', json({ tags: [] })));
+    await openAt('#/dashboard');
+    const open = screen.getByRole('button', { name: 'Open the menu' });
+    expect(open).not.toHaveAttribute('aria-controls');
+    await user.click(open);
+    const drawer = screen.getByRole('dialog', { name: /hevalo admin/i });
+    expect(open).toHaveAttribute('aria-controls', drawer.id);
+    // round the drawer and past its ends: focus never reaches the page behind it
+    for (let i = 0; i < 14; i++) {
+      await user.tab();
+      expect(drawer).toContainElement(document.activeElement as HTMLElement);
+    }
+    await user.tab({ shift: true });
+    expect(drawer).toContainElement(document.activeElement as HTMLElement);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(open).toHaveFocus();
+    expect(open).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('names the page in the phone’s top bar and the tab, where the nav’s label alone would not', async () => {
+    fakeApi(session(['admin'], []), me('ferhad'));
+    await openAt('#/economy');
+    // the Economy group's "Overview" is the economy's, not the dashboard
+    expect(document.querySelector('.topbar-title')).toHaveTextContent(/^Economy$/);
+    await waitFor(() => expect(document.title).toBe('Economy · Hevalo Admin'));
   });
 });

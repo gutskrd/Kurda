@@ -4,7 +4,7 @@
  * when an editor is working through what is missing. Kept apart from the page
  * so it can be tested without a browser.
  */
-import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from '@kurda/shared';
+import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, type LipsyncData, type SpeakerId } from '@kurda/shared';
 
 export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
 
@@ -41,6 +41,15 @@ export interface Item {
   url: string | null;
   durationMs: number | null;
   updatedAt: string | null;
+  /** who is shown saying it, or null for no character */
+  speaker?: SpeakerId | null;
+  /** it has a mouth timeline */
+  hasLipsync?: boolean;
+  /**
+   * the timeline itself, null for none: the list carries it only when asked
+   * (`withLipsync`), and a save made here answers with it; missing while not known
+   */
+  lipsync?: LipsyncData | null;
   usedIn: Usage[];
   /** recorded, but no lesson uses it (or added here by hand) */
   unused: boolean;
@@ -200,10 +209,51 @@ export function addPhrase(items: readonly Item[], raw: string): AddResult {
   return { ok: true, items: [...items, added], key, existed: false };
 }
 
+export interface Saved {
+  key: string;
+  url: string;
+  durationMs: number;
+  updatedAt: string;
+  speaker?: SpeakerId | null;
+  lipsync?: LipsyncData | null;
+}
+
 /** After a save: the item recorded, with what the server stored. */
-export function withRecording(items: readonly Item[], saved: { key: string; url: string; durationMs: number; updatedAt: string }): Item[] {
+export function withRecording(items: readonly Item[], saved: Saved): Item[] {
   return items.map((i) =>
-    i.key === saved.key ? { ...i, recorded: true, url: saved.url, durationMs: saved.durationMs, updatedAt: saved.updatedAt, unused: isLoose(i) } : i,
+    i.key === saved.key
+      ? {
+          ...i,
+          recorded: true,
+          url: saved.url,
+          durationMs: saved.durationMs,
+          updatedAt: saved.updatedAt,
+          speaker: saved.speaker ?? null,
+          hasLipsync: Boolean(saved.lipsync),
+          lipsync: saved.lipsync ?? null,
+          unused: isLoose(i),
+        }
+      : i,
+  );
+}
+
+/**
+ * The stored timelines from the list read `withLipsync`, on the items that do
+ * not know theirs yet — where it is still the same take, not one saved since.
+ */
+export function withTimelines(items: readonly Item[], read: readonly Item[]): Item[] {
+  const stored = new Map(read.map((i) => [i.key, i]));
+  return items.map((i) => {
+    const r = stored.get(i.key);
+    if (i.lipsync !== undefined || !r || r.lipsync === undefined || r.url !== i.url) return i;
+    return { ...i, lipsync: r.lipsync, hasLipsync: r.lipsync !== null };
+  });
+}
+
+/** Who says an item, and its timeline when that changed too: shown at once, before the server has answered. */
+export function withVoice(items: readonly Item[], key: string, speaker: SpeakerId | null, lipsync?: LipsyncData | null): Item[] {
+  return items.map((i) =>
+    i.key === key ? { ...i, speaker, ...(lipsync !== undefined ? { lipsync, hasLipsync: lipsync !== null } : {}) } : i,
   );
 }
 
@@ -212,7 +262,7 @@ export function withoutRecording(items: readonly Item[], key: string): Item[] {
   return items.flatMap((i) => {
     if (i.key !== key) return [i];
     if (isLoose(i)) return [];
-    return [{ ...i, recorded: false, url: null, durationMs: null, updatedAt: null }];
+    return [{ ...i, recorded: false, url: null, durationMs: null, updatedAt: null, speaker: null, hasLipsync: false, lipsync: null }];
   });
 }
 

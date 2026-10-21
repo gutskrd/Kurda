@@ -57,7 +57,7 @@ describe('Rhyme (solo training)', () => {
     renderApp(<Rhyme />, ['/app/games/rhyme']);
 
     await userEvent.type(await screen.findByLabelText('Your rhyme'), 'koj');
-    await userEvent.click(screen.getByRole('button', { name: /submit/i }));
+    await userEvent.click(screen.getByRole('button', { name: 'Send' }));
 
     expect(guessBody).toMatchObject({ word: 'koj' });
     await waitFor(() => expect(screen.getByText('koj')).toBeInTheDocument());

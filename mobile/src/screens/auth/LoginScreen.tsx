@@ -1,5 +1,9 @@
 import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { ClayButton } from '../../theme/glass';
+import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import { FIELD_ERROR_COPY, validateEmail, validatePassword, FIELD_ERROR_VARS } from '../../auth/validators';
 import type { AuthStackParamList } from '../../navigation/authStack';
@@ -8,13 +12,22 @@ import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-export function LoginScreen({ navigation }: Props) {
+/**
+ * Refusals that are not a wrong password: sign-in is held back for a while
+ * after several failed attempts. Nothing was typed wrong just now, and a
+ * reset is the way in that does not wait, so they get the notice with it.
+ */
+const HELD_BACK = new Set(['CAPTCHA_REQUIRED', 'LOCKED']);
+
+export function LoginScreen({ navigation, route }: Props) {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
   const [formError, setFormError] = useState<string | null>(null);
+  const [heldBack, setHeldBack] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const { colors } = useTheme();
   const { t } = useI18n();
 
   const submit = async () => {
@@ -28,9 +41,11 @@ export function LoginScreen({ navigation }: Props) {
 
     setBusy(true);
     setFormError(null);
+    setHeldBack(null);
     const error = await login(email.trim(), password);
     setBusy(false);
-    if (error) setFormError(error);
+    if (error?.code && HELD_BACK.has(error.code)) setHeldBack(error.message);
+    else if (error) setFormError(error.message);
   };
 
   return (
@@ -40,6 +55,17 @@ export function LoginScreen({ navigation }: Props) {
       onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
     >
       <FormError message={formError} />
+      {heldBack ? (
+        <View style={[styles.notice, { backgroundColor: colors.controlTrack }]} accessibilityLiveRegion="polite" testID="login-held-back">
+          <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{heldBack}</Text>
+          <ClayButton
+            label={t('auth.reset.title')}
+            variant="outline"
+            tone="primary"
+            onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
+          />
+        </View>
+      ) : null}
       <Field
         label={t('auth.email')}
         value={email}
@@ -62,7 +88,7 @@ export function LoginScreen({ navigation }: Props) {
       <SubmitButton label={busy ? t('auth.login.submitting') : t('auth.login.submit')} busy={busy} onPress={submit} />
       <LinkText
         label={t('auth.login.forgot')}
-        onPress={() => navigation.navigate('ForgotPassword')}
+        onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
       />
       {/* one sentence with the action in it, the way the browser asks */}
       <LinkText
@@ -72,3 +98,9 @@ export function LoginScreen({ navigation }: Props) {
     </AuthScreenShell>
   );
 }
+
+const styles = StyleSheet.create({
+  // the sign-up notice's calm panel (RegisterScreen.tsx): a pause, not a mistake
+  notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
+  noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
+});

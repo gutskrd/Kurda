@@ -10,6 +10,8 @@ import { useAudio } from '../useAudio';
 import { useRecorder } from '../useRecorder';
 import { useI18n } from '../../i18n/I18nContext';
 import type { TranslationKey } from '../../i18n/translations';
+import { useDirection } from '../../reports/direction';
+import { SpeakingCharacter, knownVoice, useStageSize } from '../../characters/SpeakingCharacter';
 
 interface Props {
   exercise: Exercise;
@@ -60,6 +62,10 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const own = useMemo(() => blobUrl(recorder.result?.blob), [recorder.result]);
   const ownAudio = useAudio(own);
   const model = useAudio(exercise.modelAudioUrl);
+  const dir = useDirection();
+  const stage = useStageSize();
+  // who says the native model, when an editor has chosen somebody
+  const voice = knownVoice(exercise.modelAudioVoice);
   useEffect(() => () => {
     if (own) blobUrls()?.revokeObjectURL?.(own);
   }, [own]);
@@ -91,7 +97,29 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.speak.prompt')}</Text>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
-      {model.supported ? (
+      {model.supported && voice ? (
+        <View style={[styles.stage, { flexDirection: dir.row }]}>
+          <SpeakingCharacter
+            key={exercise.id}
+            speaker={voice.speaker}
+            voice={voice}
+            text={exercise.prompt}
+            player={model.clock}
+            playing={model.playing}
+            source={exercise.modelAudioUrl}
+            size={stage}
+            flip={dir.rtl}
+          />
+          <ClayButton
+            label={t('lesson.speak.playModel')}
+            icon="speaker"
+            variant="outline"
+            tone="primary"
+            onPress={() => model.play(1)}
+            style={styles.besideCharacter}
+          />
+        </View>
+      ) : model.supported ? (
         <ClayButton label={t('lesson.speak.playModel')} icon="speaker" variant="outline" tone="primary" onPress={() => model.play(1)} />
       ) : null}
 
@@ -107,7 +135,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
             ))}
           </View>
           <Text style={[styles.dur, { color: colors.textPrimary }]}>{(recorder.durationMs / 1000).toFixed(1)}s</Text>
-          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityLabel={t('lesson.speak.stop')}>
+          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityRole="button" accessibilityLabel={t('lesson.speak.stop')}>
             <Icon name="stop" size={14} color={colors.background} />
             <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
@@ -146,7 +174,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
       {message ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text> : null}
 
-      <Pressable disabled={disabled} onPress={onSkip} style={styles.skip}>
+      <Pressable disabled={disabled} onPress={onSkip} style={styles.skip} accessibilityRole="button" accessibilityState={{ disabled }}>
         <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.speak.skip')}</Text>
       </Pressable>
     </View>
@@ -158,6 +186,8 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
+  stage: { alignItems: 'center', gap: spacing.md },
+  besideCharacter: { flexShrink: 1 },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },

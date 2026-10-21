@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isRankedGame, partWeightReason, progressToNext, type PartWeightReason, type PlayGame, type RankResult as RankResultData, type RankTier } from '@kurda/shared';
+import { BURST, isRankedGame, partWeightReason, progressToNext, type PartWeightReason, type PlayGame, type RankResult as RankResultData, type RankTier } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { ShieldIcon } from '../components/icons';
 import { prefersReducedMotion } from '../gifts/motion';
@@ -200,6 +200,9 @@ function CountedResult({
           open={celebrating}
           label={label!}
           tone={tierAfter}
+          // a division is a nod, a new tier or a first rank a little more
+          flecks={result.tierUp ? BURST.tier : placed ? BURST.placed : BURST.division}
+          seed={tierAfter.length * 31 + (result.divisionAfter ?? 0)}
           art={<RankEmblem tier={tierAfter} division={result.divisionAfter} size={168} title={withMeaning(t, { ...rankTierNamed(t, tierAfter), name: label! })} />}
           kicker={placed ? t('rankResult.placedKicker') : result.tierUp ? t('rankResult.tierUpKicker') : t('rankResult.divisionUpKicker')}
           title={label!}

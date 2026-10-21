@@ -12,10 +12,11 @@ import { useT } from '../i18n/I18nProvider';
 import { storyError } from './api';
 import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
 import { rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
-import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
+import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
 import type { AnswerOutcome } from './useStoryGame';
 import { useStoryAudio } from './useStoryAudio';
+import { haptic } from '../lib/haptics';
 
 /** "This question closes soon" shows in the last stretch of an untimed question's cap. */
 const CLOSES_SOON_MS = 30_000;
@@ -48,7 +49,7 @@ export function GameReading({
   const [size, setSize] = useState(rememberedTextSize);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO);
+  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO, story?.voices);
   const solo = view.mode === 'solo';
   const soft = view.readingSoftCapAt ? Date.parse(view.readingSoftCapAt) : null;
   const hard = view.readingHardCapAt ? Date.parse(view.readingHardCapAt) : null;
@@ -90,6 +91,7 @@ export function GameReading({
       {story ? (
         <>
           <div className="story-tools">
+            <StorySpeaker audio={audio} />
             <TextSizeControl
               step={size}
               onChange={(n) => {
@@ -390,6 +392,8 @@ export function GameReveal({
     const verdict =
       r.myCorrect === true ? t('stories.game.right') : r.myChoice === null ? t('stories.game.noAnswer') : t('stories.game.notThisTime');
     announce(t('stories.game.revealSaid', { verdict, answer: right }));
+    // felt as the verdict on your answer is shown, on a touch screen that can; nothing when you gave none
+    if (r.myChoice !== null) haptic(r.myCorrect ? 'correct' : 'wrong');
     next.current?.focus();
     // once per answer
   }, [r?.index]);

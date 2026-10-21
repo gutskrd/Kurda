@@ -4,6 +4,8 @@ import type { Redis } from 'ioredis';
 import { assessRisk, type RiskAssessment, type RiskSignals } from './score.js';
 import { isDisposableEmail } from '../auth/disposable-domains.js';
 import { safeLookup, type IpReputationProvider } from './ip-reputation.js';
+import { networkHashOf } from '../net/network-key.js';
+import { networkIsBusy } from '../net/evidence.js';
 
 export type RiskEvent = 'signup' | 'login';
 
@@ -22,18 +24,25 @@ export interface AssessResult {
   decisionId: string;
 }
 
-/** Recent window for per-device/IP account-creation counting (24h). */
+/** Recent window for per-device/network account-creation counting (24h). */
 export const RISK_WINDOW_MS = 24 * 60 * 60 * 1000;
 /** Retention bound for logged decisions (#109). */
 export const RISK_RETENTION_DAYS = 90;
+/** Retention bound for network sightings (net/sightings.ts), pruned with the decisions. */
+export const SIGHTING_RETENTION_DAYS = 90;
 
 /**
  * Orchestrates signup/login risk scoring (KUR-296). It gathers the signals the
  * pure engine (`score.ts`) needs — IP reputation (provider-agnostic, degrades
- * gracefully), per-device/IP account velocity from `risk_decisions`, request
- * velocity from Redis, disposable-email (#025), known-good device — assesses
- * the risk, and logs the decision for tuning + audit (#104). IP/device values
- * are stored **hashed only**.
+ * gracefully), per-device/network account velocity from `risk_decisions`,
+ * request velocity from Redis, disposable-email (#025), known-good device —
+ * assesses the risk, and logs the decision for tuning + audit (#104). Device
+ * and network values are stored **hashed only**.
+ *
+ * "IP" here means the caller's network (net/network-key.ts): an IPv4 address,
+ * or an IPv6 /64, so rotating through one's own /64 does not reset the counts.
+ * It is stored as a keyed hash — a plain hash of an IPv4 address can be
+ * reversed by trying all of them.
  */
 export class RiskService {
   private readonly pool: pg.Pool;
@@ -59,26 +68,48 @@ export class RiskService {
     return this.assess('login', input);
   }
 
-  /** Attach the created/authenticated user to a logged decision (post-hoc). */
+  /**
+   * Attach the created/authenticated user to a logged decision (post-hoc), and
+   * note that the account was on the decision's network then (net/sightings.ts).
+   * One statement, so a sign-up or sign-in costs no extra round trip for it.
+   */
   async attachUser(decisionId: string, userId: string): Promise<void> {
-    await this.pool.query(`UPDATE risk_decisions SET user_id = $2 WHERE id = $1`, [
-      decisionId,
-      userId,
-    ]);
+    await this.pool.query(
+      `WITH d AS (
+         UPDATE risk_decisions SET user_id = $2 WHERE id = $1 RETURNING net_hash, created_at
+       )
+       INSERT INTO network_sightings (user_id, net_hash, day, first_at, last_at)
+       SELECT $2, d.net_hash, (d.created_at AT TIME ZONE 'UTC')::date, d.created_at, d.created_at
+         FROM d WHERE d.net_hash IS NOT NULL
+       ON CONFLICT (user_id, net_hash, day) DO UPDATE SET
+         first_at = LEAST(network_sightings.first_at, EXCLUDED.first_at),
+         last_at = GREATEST(network_sightings.last_at, EXCLUDED.last_at)`,
+      [decisionId, userId],
+    );
   }
 
-  /** Retention prune (#109): drop decisions older than the bound. */
-  async prune(olderThanDays: number = RISK_RETENTION_DAYS): Promise<number> {
-    const res = await this.pool.query(
-      `DELETE FROM risk_decisions WHERE created_at < now() - ($1 || ' days')::interval`,
-      [String(olderThanDays)],
+  /**
+   * Retention prune (#109): drop decisions older than the bound, and the
+   * network sightings with them.
+   */
+  async prune(
+    olderThanDays: number = RISK_RETENTION_DAYS,
+    sightingsOlderThanDays: number = SIGHTING_RETENTION_DAYS,
+  ): Promise<{ decisions: number; sightings: number }> {
+    const decisions = await this.pool.query(
+      `DELETE FROM risk_decisions WHERE created_at < now() - make_interval(days => $1::int)`,
+      [olderThanDays],
     );
-    return res.rowCount ?? 0;
+    const sightings = await this.pool.query(
+      `DELETE FROM network_sightings WHERE day < (now() AT TIME ZONE 'UTC')::date - $1::int`,
+      [sightingsOlderThanDays],
+    );
+    return { decisions: decisions.rowCount ?? 0, sightings: sightings.rowCount ?? 0 };
   }
 
   private async assess(event: RiskEvent, input: AssessInput): Promise<AssessResult> {
     const now = input.now ?? this.now();
-    const ipHash = hash(input.ip);
+    const netHash = networkHashOf(input.ip);
     const deviceHash = input.deviceId ? hash(input.deviceId) : null;
     const rep = await safeLookup(this.ipReputation, input.ip);
 
@@ -88,7 +119,10 @@ export class RiskService {
         ? (await this.countRecentSignups('device_hash', deviceHash, now)) + 1
         : 0;
     const accountsFromIpRecently =
-      event === 'signup' ? (await this.countRecentSignups('ip_hash', ipHash, now)) + 1 : 0;
+      event === 'signup' ? (netHash ? await this.countRecentSignups('net_hash', netHash, now) : 0) + 1 : 0;
+    // A network many established accounts use (a carrier's NAT, a campus) gets
+    // the shared cap even when no reputation provider says so.
+    const busy = event === 'signup' && netHash && !rep.sharedNetwork ? await networkIsBusy(this.pool, netHash, now) : false;
 
     const signals: RiskSignals = {
       ipReputation: rep.reputation,
@@ -96,33 +130,33 @@ export class RiskService {
       accountsFromDeviceRecently,
       accountsFromIpRecently,
       disposableEmail: input.email ? isDisposableEmail(input.email) : false,
-      velocityPerMin: await this.bumpVelocity(event, ipHash, now),
+      velocityPerMin: await this.bumpVelocity(event, netHash ?? 'unknown', now),
       geoMismatch: false, // computed once login-history geo lands (follow-up)
-      sharedNetwork: rep.sharedNetwork,
+      sharedNetwork: rep.sharedNetwork || busy,
     };
 
     const assessment = assessRisk(signals);
-    const decisionId = await this.record(event, ipHash, deviceHash, assessment, signals);
+    const decisionId = await this.record(event, netHash, deviceHash, assessment, signals);
     return { assessment, signals, decisionId };
   }
 
   private async record(
     event: RiskEvent,
-    ipHash: string,
+    netHash: string | null,
     deviceHash: string | null,
     a: RiskAssessment,
     signals: RiskSignals,
   ): Promise<string> {
     const res = await this.pool.query<{ id: string }>(
-      `INSERT INTO risk_decisions (event, ip_hash, device_hash, score, band, action, hard_block, signals)
+      `INSERT INTO risk_decisions (event, net_hash, device_hash, score, band, action, hard_block, signals)
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8::jsonb) RETURNING id`,
-      [event, ipHash, deviceHash, a.score, a.band, a.action, a.hardBlock, JSON.stringify(signals)],
+      [event, netHash, deviceHash, a.score, a.band, a.action, a.hardBlock, JSON.stringify(signals)],
     );
     return res.rows[0]!.id;
   }
 
   private async countRecentSignups(
-    column: 'device_hash' | 'ip_hash',
+    column: 'device_hash' | 'net_hash',
     value: string,
     now: Date,
   ): Promise<number> {
@@ -148,18 +182,23 @@ export class RiskService {
     return res.rows[0]?.ok ?? false;
   }
 
-  /** Requests-per-minute for this IP, via a Redis minute bucket (0 if no Redis). */
-  private async bumpVelocity(event: RiskEvent, ipHash: string, now: Date): Promise<number> {
+  /** Requests-per-minute from this network, via a Redis minute bucket (0 if no Redis). */
+  private async bumpVelocity(event: RiskEvent, netHash: string, now: Date): Promise<number> {
     if (!this.redis) return 0;
     const minute = Math.floor(now.getTime() / 60_000);
-    const key = `risk:vel:${event}:${ipHash}:${minute}`;
+    const key = `risk:vel:${event}:${netHash}:${minute}`;
     const count = await this.redis.incr(key);
     if (count === 1) await this.redis.expire(key, 120);
     return count;
   }
 }
 
-/** SHA-256 hex of an identifier — minimization: raw IP/device never stored. */
+/**
+ * SHA-256 hex of a device id — minimization: the raw id is never stored. A
+ * device id is an opaque value the client chooses, not something enumerable
+ * like an address, and existing decisions are matched by this hash, so it
+ * stays as it was.
+ */
 function hash(value: string): string {
   return createHash('sha256').update(value).digest('hex');
 }

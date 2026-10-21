@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -9,6 +10,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { statCaption, statValue } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { friendActionLabel, isActionable, isUndo, undoAction, type FriendStatus } from './format';
@@ -19,7 +21,7 @@ import { TIER_NAME_KEY } from '../ranks/format';
 import { SEASON_FRAME_INNER, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { FavoriteRow } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { ProfileActivity } from '../profile/ProfileActivity';
+import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
 import type { FavoriteRef } from '../profile/types';
 import { ProfileFriends } from '../profile/ProfileFriends';
 import type { ProfileSections } from '../profile/sections';
@@ -90,6 +92,8 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
   const perform = useCallback(
     async (status: FriendStatus) => {
       setBusy(true);
+      // an offer made — a request sent, or one accepted — is felt; taking one back is quiet
+      if (status === 'none' || status === 'pending_in') haptic('tap');
       if (status === 'none') await client.post('/friends/requests', { userId });
       else if (status === 'pending_in') await client.post(`/friends/requests/${userId}/accept`);
       else if (status === 'pending_out') await client.delete(`/friends/requests/${userId}`);
@@ -153,7 +157,17 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       <View style={styles.screen}>
         <Header onExit={onExit} />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-        <AsyncBoundary loading={!profile} error={!profile ? error : null} onRetry={load}>
+        <AsyncBoundary
+          loading={!profile}
+          error={!profile ? error : null}
+          onRetry={load}
+          skeleton={
+            <>
+              <ProfileCardSkeleton />
+              <ProfileActivitySkeleton />
+            </>
+          }
+        >
           {() => {
             if (!profile) return null;
             const labelKey = friendActionLabel(profile.friendStatus);
@@ -270,6 +284,38 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
     </GradientBackground>
   );
 }
+
+/**
+ * The card while it loads, in its own shape: the picture, the name, the four
+ * numbers and the two buttons a friend's profile has — so the card that
+ * arrives is the one that was standing there.
+ */
+function ProfileCardSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.controlTrack }]} accessibilityLabel={t('common.loading')}>
+      <Skeleton width={96} height={96} radius={radii.pill} raised />
+      <SkeletonText size={typography.sizes.xl} width={120} align="center" raised />
+      <SkeletonText size={typography.sizes.md} width={72} align="center" raised />
+      <View style={styles.stats}>
+        {[0, 1, 2, 3].map((i) => (
+          <View key={i} style={styles.stat}>
+            <SkeletonText size={typography.sizes.lg} width={36} align="center" raised />
+            <SkeletonText size={typography.sizes.xs} width={48} align="center" raised />
+          </View>
+        ))}
+      </View>
+      <View style={styles.actions}>
+        <Skeleton height={LARGE_BUTTON} radius={radii.pill} raised />
+        <Skeleton height={LARGE_BUTTON} radius={radii.pill} raised />
+      </View>
+    </View>
+  );
+}
+
+/** ClayButton's large size */
+const LARGE_BUTTON = 50;
 
 /** No title: on a profile the person is the title, and their name is on the card below. */
 function Header({ onExit }: { onExit: () => void }) {

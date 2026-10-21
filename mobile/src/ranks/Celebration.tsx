@@ -1,26 +1,32 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AccessibilityInfo, Animated, Easing, Modal, StyleSheet, Text, Vibration, View, useWindowDimensions } from 'react-native';
-import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useEffect, type ReactNode } from 'react';
+import { AccessibilityInfo, Animated, Modal, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { DarkScheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
-import { confettiPlan, revealPlan, type Fleck } from './motion';
+import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../theme/CelebrationParts';
+import { useI18n } from '../i18n/I18nContext';
 
-/** The tick as the emblem lands — the lightest the platforms give, the same as a gift's. */
-const HAPTIC_MS = 15;
 /** The night the moment is staged on, in either scheme. */
 const STAGE = '#07080c';
 
 /**
  * A moment on its own stage: a new division, a new tier, a first placement,
- * a badge. Night-dark whatever the scheme (the art is light on dark), the
- * thing earned rising into a glow in its own colour with a slow turn of rays
- * behind it, a few flecks drifting down once, one light tick — and the words.
- * Under Reduce Motion it is a fade: no rays, no flecks, no tick.
+ * a new league, a badge. Night-dark whatever the scheme (the art is light on
+ * dark), and the same short sequence every time (theme/celebration.ts): the
+ * thing earned springs in, a ring of its colour widens once behind it, a
+ * light handful of flecks in its colours is thrown out and falls away, it is
+ * felt once as it lands, and then the words fade in. All of it is over in
+ * about a second and a half and a tap on the art skips to the end; after
+ * that nothing moves while the words are read. Under Reduce Motion it is a
+ * fade.
  *
  * Nothing here asks for anything back. One button continues, and the
  * backdrop does not trap anybody: the system back closes it too.
+ *
+ * It is felt only when the person just did the thing it celebrates. One that
+ * is shown rather than caused — a badge earned before the app was opened, a
+ * league moved up while nobody was watching — plays the same and stays still
+ * in the hand: a buzz on opening the app is a buzz nobody asked for.
  */
 export function Celebration({
   art,
@@ -36,12 +42,13 @@ export function Celebration({
   actions,
   announce,
   onClose,
+  felt = true,
 }: {
   /** the emblem or medallion, drawn at ~168pt */
   art: ReactNode;
-  /** the glow behind it */
+  /** the glow behind it, and the ring */
   glow: string;
-  /** how many flecks fall (0 for none) */
+  /** how many flecks are thrown (0 for none) */
   flecks: number;
   fleckColours: string[];
   /** keeps the same moment looking the same */
@@ -61,76 +68,47 @@ export function Celebration({
   /** what a screen reader hears as it opens */
   announce: string;
   onClose: () => void;
+  /** false for a moment the person did not just cause (see above) */
+  felt?: boolean;
 }): React.JSX.Element {
-  const reduce = useReducedMotion();
-  const plan = revealPlan(reduce);
-  const { width, height } = useWindowDimensions();
-  const rise = useRef(new Animated.Value(0)).current;
-  const words = useRef(new Animated.Value(0)).current;
-  const turn = useRef(new Animated.Value(0)).current;
-
-  // played as it opens — and again if the system's Reduce Motion answer comes in late (it is asked
-  // asynchronously): then everything is simply at rest, with no flecks, no rays and no tick
-  useEffect(() => {
-    if (reduce) {
-      rise.setValue(1);
-      words.setValue(1);
-      return;
-    }
-    const run = Animated.parallel([
-      Animated.timing(rise, { toValue: 1, duration: plan.emblemMs, easing: Easing.out(Easing.back(1.4)), useNativeDriver: true }),
-      Animated.timing(words, { toValue: 1, duration: 420, delay: plan.textDelayMs, useNativeDriver: true }),
-    ]);
-    run.start();
-    const tick = plan.hapticAtMs === null ? null : setTimeout(() => Vibration.vibrate(HAPTIC_MS), plan.hapticAtMs);
-    const spin = plan.rays ? Animated.loop(Animated.timing(turn, { toValue: 1, duration: 24000, easing: Easing.linear, useNativeDriver: true })) : null;
-    spin?.start();
-    return () => {
-      run.stop();
-      spin?.stop();
-      if (tick) clearTimeout(tick);
-    };
-  }, [reduce, plan.emblemMs, plan.textDelayMs, plan.hapticAtMs, plan.rays, rise, words, turn]);
+  const { t } = useI18n();
+  const { width } = useWindowDimensions();
+  const moment = useCelebration({ feel: felt });
+  const stage = Math.min(width, 420);
+  const glowSize = Math.min(stage, 300);
 
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(announce);
     // said once, as it opens
   }, []);
 
-  const scale = reduce ? 1 : rise.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1] });
-  const lift = reduce ? 0 : words.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
-  const rotate = turn.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
-  const stage = Math.min(width, 420);
-  const fall = useMemo(() => (plan.confetti && flecks > 0 ? confettiPlan(flecks, seed, fleckColours.length) : []), [plan.confetti, flecks, seed, fleckColours.length]);
+  const scale = moment.plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) : 1;
+  const opacity = moment.art.interpolate({ inputRange: [0, 0.4, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+  const lift = moment.plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [10, 0] }) : 0;
 
   return (
-    // a fade either way: under Reduce Motion the moment is that fade and nothing else
+    // the scrim fades either way; under Reduce Motion the moment is that fade and nothing else
     <Modal visible transparent animationType="fade" onRequestClose={onClose} statusBarTranslucent>
       <DarkScheme>
         <View style={[styles.backdrop, { backgroundColor: STAGE }]} accessibilityViewIsModal>
-          <View style={styles.flecks} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            {fall.map((f, i) => (
-              <FallingFleck key={i} fleck={f} colour={fleckColours[f.colour] ?? glow} width={width} height={height} />
-            ))}
-          </View>
           <View style={[styles.column, { maxWidth: 420 }]}>
-            <View style={[styles.artStage, { width: stage, height: Math.min(stage, 300) }]}>
-              <View pointerEvents="none" style={StyleSheet.absoluteFill} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-                <Glow colour={glow} size={Math.min(stage, 300)} />
-              </View>
-              {plan.rays ? (
-                <Animated.View
-                  pointerEvents="none"
-                  style={[StyleSheet.absoluteFill, styles.center, { transform: [{ rotate }], opacity: rise }]}
-                  accessibilityElementsHidden
-                  importantForAccessibility="no-hide-descendants"
-                >
-                  <Rays colour={glow} size={Math.min(stage, 300)} />
-                </Animated.View>
+            <Pressable
+              onPress={moment.playing ? moment.skip : undefined}
+              disabled={!moment.playing}
+              // a skip while it plays; afterwards only the picture, not a nameless button
+              accessible={moment.playing}
+              accessibilityRole={moment.playing ? 'button' : undefined}
+              accessibilityLabel={moment.playing ? t('common.skip') : undefined}
+              style={[styles.artStage, { width: stage, height: glowSize }]}
+            >
+              <SoftGlow colour={glow} size={glowSize} />
+              {moment.plan.travel ? <GlowRing progress={moment.ring} colour={glow} size={glowSize * 0.62} /> : null}
+              {moment.plan.travel ? (
+                <ConfettiBurst progress={moment.burst} count={flecks} seed={seed} colours={fleckColours} reach={Math.min(stage * 0.48, 190)} />
               ) : null}
-              <Animated.View style={{ opacity: rise, transform: [{ scale }] }}>{art}</Animated.View>
-            </View>
-            <Animated.View style={[styles.words, { opacity: words, transform: [{ translateY: lift }] }]}>
+              <Animated.View style={{ opacity, transform: [{ scale }] }}>{art}</Animated.View>
+            </Pressable>
+            <Animated.View style={[styles.words, { opacity: moment.details, transform: [{ translateY: lift }] }]}>
               <Text style={[sectionLabel, styles.kicker, { color: glow }]}>{kicker}</Text>
               <Text style={styles.title} accessibilityRole="header">
                 {title}
@@ -151,82 +129,10 @@ export function Celebration({
   );
 }
 
-/** A soft round glow in the moment's colour. */
-function Glow({ colour, size }: { colour: string; size: number }): React.JSX.Element {
-  return (
-    <View style={[StyleSheet.absoluteFill, styles.center]}>
-      <Svg width={size} height={size}>
-        <Defs>
-          <RadialGradient id="celebrate-glow" cx="50%" cy="50%" r="50%">
-            <Stop offset="0" stopColor={colour} stopOpacity={0.55} />
-            <Stop offset="0.45" stopColor={colour} stopOpacity={0.18} />
-            <Stop offset="1" stopColor={colour} stopOpacity={0} />
-          </RadialGradient>
-        </Defs>
-        <Rect x="0" y="0" width={size} height={size} fill="url(#celebrate-glow)" />
-      </Svg>
-    </View>
-  );
-}
-
-/** Twelve thin rays round the middle, faint, turned slowly by the parent. */
-function Rays({ colour, size }: { colour: string; size: number }): React.JSX.Element {
-  const c = size / 2;
-  const d: string[] = [];
-  for (let i = 0; i < 12; i++) {
-    const a = (i / 12) * Math.PI * 2;
-    const half = 0.05;
-    const r0 = size * 0.2;
-    const r1 = size * 0.5;
-    d.push(
-      `M${(c + Math.cos(a - half) * r0).toFixed(1)},${(c + Math.sin(a - half) * r0).toFixed(1)}` +
-        `L${(c + Math.cos(a) * r1).toFixed(1)},${(c + Math.sin(a) * r1).toFixed(1)}` +
-        `L${(c + Math.cos(a + half) * r0).toFixed(1)},${(c + Math.sin(a + half) * r0).toFixed(1)}Z`,
-    );
-  }
-  return (
-    <Svg width={size} height={size}>
-      <Path d={d.join('')} fill={colour} fillOpacity={0.16} />
-    </Svg>
-  );
-}
-
-function FallingFleck({ fleck, colour, width, height }: { fleck: Fleck; colour: string; width: number; height: number }): React.JSX.Element {
-  const p = useRef(new Animated.Value(0)).current;
-  const [done, setDone] = useState(false);
-  useEffect(() => {
-    const run = Animated.timing(p, { toValue: 1, duration: fleck.duration, delay: fleck.delay, easing: Easing.out(Easing.quad), useNativeDriver: true });
-    run.start(({ finished }) => finished && setDone(true));
-    return () => run.stop();
-  }, [p, fleck]);
-  if (done) return <View />;
-  const translateY = p.interpolate({ inputRange: [0, 1], outputRange: [-24, height * fleck.fall] });
-  const translateX = p.interpolate({ inputRange: [0, 1], outputRange: [0, fleck.drift] });
-  const rotate = p.interpolate({ inputRange: [0, 1], outputRange: ['0deg', `${fleck.spin}deg`] });
-  const opacity = p.interpolate({ inputRange: [0, 0.08, 0.75, 1], outputRange: [0, 0.95, 0.85, 0] });
-  return (
-    <Animated.View
-      style={{
-        position: 'absolute',
-        left: fleck.x * width,
-        top: 0,
-        width: fleck.w,
-        height: fleck.h,
-        borderRadius: radii.xs / 3,
-        backgroundColor: colour,
-        opacity,
-        transform: [{ translateX }, { translateY }, { rotate }],
-      }}
-    />
-  );
-}
-
 const styles = StyleSheet.create({
   backdrop: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.lg },
-  flecks: { ...StyleSheet.absoluteFill, overflow: 'hidden' },
   column: { width: '100%', alignItems: 'center' },
   artStage: { alignItems: 'center', justifyContent: 'center' },
-  center: { alignItems: 'center', justifyContent: 'center' },
   words: { alignItems: 'center', alignSelf: 'stretch', gap: spacing.xs },
   kicker: { letterSpacing: 2 },
   title: { ...display(typography.sizes.xxl + 6), color: '#FFFFFF', textAlign: 'center' },

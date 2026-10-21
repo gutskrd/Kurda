@@ -11,10 +11,33 @@ import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
-export function ForgotPasswordScreen({ navigation }: Props) {
+export function ForgotPasswordScreen({ navigation, route }: Props) {
+  return (
+    <ForgotPasswordForm
+      email={route.params?.email}
+      onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
+      onBackToLogin={(email) => navigation.navigate('Login', { email })}
+    />
+  );
+}
+
+/**
+ * Ask for a reset link. Signed out, from the sign-in form; signed in, from
+ * Change password, for an account that signs in with Google or Apple and has
+ * no password to change yet — where there is no sign-in to go back to.
+ */
+export function ForgotPasswordForm({
+  email: initialEmail,
+  onBack,
+  onBackToLogin,
+}: {
+  email?: string;
+  onBack?: () => void;
+  onBackToLogin?: (email: string) => void;
+}) {
   const { requestPasswordReset } = useAuth();
   const { colors } = useTheme();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(initialEmail ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { t } = useI18n();
@@ -31,7 +54,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
   };
 
   return (
-    <AuthScreenShell title={t('auth.reset.title')} onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}>
+    <AuthScreenShell title={t('auth.reset.title')} onBack={onBack}>
       {sent ? (
         <Text
           style={{
@@ -56,7 +79,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           <SubmitButton label={t('auth.reset.sendLink')} busy={busy} onPress={submit} />
         </>
       )}
-      <LinkText label={t('auth.reset.backToLogin')} onPress={() => navigation.navigate('Login')} />
+      {onBackToLogin ? <LinkText label={t('auth.reset.backToLogin')} onPress={() => onBackToLogin(email.trim())} /> : null}
     </AuthScreenShell>
   );
 }

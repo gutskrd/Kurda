@@ -39,12 +39,17 @@ export function FeedCard({
   const { client, status, user } = useAuth();
   const { openProfile } = useProfileModal();
   const [busy, setBusy] = useState<'like' | 'bookmark' | 'repost' | null>(null);
+  // turned on here, by a press: only then does its icon land with a pop (and a like with its sparks),
+  // never for a post that was already liked when the page drew it
+  const [justOn, setJustOn] = useState<{ kind: 'like' | 'bookmark' | 'repost'; n: number } | null>(null);
   const signedIn = status === 'signedIn';
   const { locale } = useI18n();
   const t = useT();
 
   async function toggle(kind: 'like' | 'bookmark' | 'repost'): Promise<void> {
     if (!signedIn || busy) return;
+    const on = kind === 'like' ? item.engagement.liked : kind === 'repost' ? item.engagement.reposted : item.engagement.bookmarked;
+    if (!on) setJustOn((j) => ({ kind, n: (j?.n ?? 0) + 1 }));
     setBusy(kind);
     const res = await client.post<{ on: boolean; engagement: FeedItem['engagement'] }>(
       `/posts/${item.targetType}/${item.id}/${kind}`,
@@ -130,7 +135,7 @@ export function FeedCard({
 
         <button
           type="button"
-          className={`fcard-act fcard-like${e.liked ? ' is-on' : ''}`}
+          className={`fcard-act fcard-like${e.liked ? ' is-on' : ''}${justOn?.kind === 'like' ? ' just-on' : ''}`}
           disabled={!signedIn || busy !== null}
           aria-pressed={e.liked}
           aria-label={actionLabel(t('feed.like'), e.liked ? t('feed.unlike') : t('feed.like'), e.likes)}
@@ -138,6 +143,8 @@ export function FeedCard({
           onClick={() => void toggle('like')}
         >
           <HeartIcon size={18} weight={e.liked ? 'fill' : 'regular'} />
+          {/* a fresh element for each like, so its sparks play once per press (styles/motion.css) */}
+          {justOn?.kind === 'like' && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
           {e.likes > 0 && <span>{e.likes.toLocaleString()}</span>}
         </button>
 
@@ -172,7 +179,7 @@ export function FeedCard({
         */}
         <button
           type="button"
-          className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}`}
+          className={`fcard-act fcard-repost${e.reposted ? ' is-on' : ''}${justOn?.kind === 'repost' ? ' just-on' : ''}`}
           disabled={!signedIn || busy !== null}
           aria-pressed={e.reposted}
           aria-label={actionLabel(t('repost.do'), e.reposted ? t('repost.undo') : t('repost.do'), e.reposts)}
@@ -187,7 +194,7 @@ export function FeedCard({
 
         <button
           type="button"
-          className={`fcard-act fcard-save${e.bookmarked ? ' is-on' : ''}`}
+          className={`fcard-act fcard-save${e.bookmarked ? ' is-on' : ''}${justOn?.kind === 'bookmark' ? ' just-on' : ''}`}
           disabled={!signedIn || busy !== null}
           aria-pressed={e.bookmarked}
           aria-label={actionLabel(t('feed.save'), e.bookmarked ? t('feed.removeFromSaved') : t('feed.save'))}

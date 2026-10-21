@@ -112,7 +112,7 @@ export async function giftCards(
       sku: first.sku,
       name: first.name,
       category: first.category,
-      assetUrl: cosmeticAssetUrl(first.category, first.asset_key),
+      assetUrl: cosmeticAssetUrl(first.category, first.asset_key, publicUrl),
       tier: giftTierFor({ currency: first.currency, price: first.price, limited: first.limited }),
       recipients,
       myGiftId: mine?.id ?? null,

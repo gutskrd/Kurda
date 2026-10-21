@@ -6,7 +6,11 @@ import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { ClayButton } from '../theme/glass';
+import { useCountUp } from '../theme/animate';
 import { cellState, dailyAction, type DailyStatus } from './daily';
+import { haptic } from '../feedback/haptics';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 
 /**
  * The daily Zêr calendar and claim (KUR-067).
@@ -22,10 +26,13 @@ export function DailyRewardCard() {
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [justEarned, setJustEarned] = useState<number | null>(null);
+  // until the first answer, the card's place is held in grey; after a failed one it is given up
+  const [settled, setSettled] = useState(false);
 
   const load = useCallback(() => {
     void client.get<DailyStatus>('/rewards/daily').then((res) => {
       if (res.ok) setStatus(res.data);
+      setSettled(true);
     });
   }, [client]);
 
@@ -35,17 +42,21 @@ export function DailyRewardCard() {
     setClaiming(true);
     const res = await client.post<{ reward: number }>('/rewards/daily/claim');
     setClaiming(false);
-    if (res.ok) setJustEarned(res.data.reward);
+    if (res.ok) {
+      // the day's Zêr taken: a light knock as it counts up, nothing grander for something that comes every day
+      haptic('tap');
+      setJustEarned(res.data.reward);
+    }
     // refused (say, the status was stale and nothing was learned today yet):
     // read it again, so the card says what is needed instead
     load();
   }, [client, load]);
 
-  if (!status) return null;
+  if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
       <Text style={[styles.heading, { color: colors.textPrimary }]}>{t('daily.title')}</Text>
       <View style={styles.row}>
         {status.schedule.map((amount, i) => {
@@ -55,13 +66,14 @@ export function DailyRewardCard() {
           const active = state !== 'upcoming';
           const borderColor =
             state === 'claimed' ? colors.success : state === 'today' ? colors.primary : bonus ? colors.accent : colors.glassBorder;
-          const textColor = active ? colors.textOnPrimary : colors.textSecondary;
+          // the claimed day sits on the success fill; today and the days to come sit on the card
+          const textColor = state === 'claimed' ? colors.textOnPrimary : active ? colors.textPrimary : colors.textSecondary;
           return (
             <View
               key={day}
               style={[
                 styles.cell,
-                { borderColor, backgroundColor: state === 'claimed' ? colors.success : colors.glassFill },
+                { borderColor, backgroundColor: state === 'claimed' ? colors.success : colors.controlTrack },
                 state === 'today' && styles.cellToday,
               ]}
             >
@@ -73,29 +85,64 @@ export function DailyRewardCard() {
       </View>
 
       {action === 'claim' ? (
+        // the quieter pill: on Learn the one solid button is the next lesson
         <ClayButton
           label={t('rewards.claimZer', { amount: status.reward })}
-          tone="primary"
+          icon="coin"
           busy={claiming}
           onPress={claim}
         />
       ) : action === 'learnFirst' ? (
         <Text style={[styles.done, { color: colors.textPrimary }]}>{t('daily.learnFirst', { amount: status.reward })}</Text>
       ) : (
-        <Text style={[styles.done, { color: colors.textSecondary }]}>
-          {justEarned != null ? t('rewards.claimedZer', { amount: justEarned }) : t('rewards.comeBackTomorrow')}
-        </Text>
+        justEarned != null ? (
+          <ClaimedLine amount={justEarned} />
+        ) : (
+          <Text style={[styles.done, { color: colors.textSecondary }]}>{t('rewards.comeBackTomorrow')}</Text>
+        )
       )}
     </View>
   );
 }
 
+/** The card in grey: its heading, the week's seven days, the button under them. */
+function DailyRewardSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+      <SkeletonText size={typography.sizes.md} width={120} />
+      <View style={styles.row}>
+        {Array.from({ length: 7 }, (_, i) => (
+          <Skeleton key={i} height={DAY_CELL} radius={radii.sm} style={styles.cellSkeleton} />
+        ))}
+      </View>
+      <Skeleton height={MIN_TOUCH_TARGET} radius={radii.pill} />
+    </View>
+  );
+}
+
+/** a day: two 13pt lines, 2 between, 8 above and below, inside a hairline */
+const DAY_CELL = lineOf(typography.sizes.xs) * 2 + 2 + spacing.sm * 2 + 2;
+
+/** The Zêr just claimed, counting up to what was paid (theme/animate.ts); read out as the final amount. */
+function ClaimedLine({ amount }: { amount: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const shown = useCountUp(amount);
+  return (
+    <Text style={[styles.done, { color: colors.textSecondary }]} accessibilityLabel={t('rewards.claimedZer', { amount })}>
+      {t('rewards.claimedZer', { amount: shown })}
+    </Text>
+  );
+}
+
 const styles = StyleSheet.create({
-  card: { alignSelf: 'stretch', borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
+  card: { alignSelf: 'stretch', borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
   heading: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
   cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, borderWidth: 1, gap: 2 },
   cellToday: { borderWidth: 2 },
+  cellSkeleton: { flex: 1 },
   cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   cellAmount: { fontSize: typography.sizes.xs },
   done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },

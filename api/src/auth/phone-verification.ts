@@ -9,6 +9,14 @@
  * Optional feature: a verified phone raises trust (#295) and lowers risk
  * (#296); it is never required for normal use.
  */
+import { timingSafeEqual } from 'node:crypto';
+
+/** Hashes compared in constant time: how long a mismatch takes says nothing. */
+function sameHash(a: string, b: string): boolean {
+  const x = Buffer.from(a, 'utf8');
+  const y = Buffer.from(b, 'utf8');
+  return x.length === y.length && timingSafeEqual(x, y);
+}
 
 /** How long a sent code stays valid. */
 export const CODE_TTL_MS = 10 * 60 * 1000; // 10 minutes
@@ -113,7 +121,7 @@ export function verifyCode(
   if (now > state.expiresAt) {
     return { ok: false, reason: 'expired', state };
   }
-  if (submittedHash === state.codeHash) {
+  if (sameHash(submittedHash, state.codeHash)) {
     return { ok: true, state };
   }
   return {

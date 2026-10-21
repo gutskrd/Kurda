@@ -19,6 +19,7 @@ import {
   type TypingDialect,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
@@ -141,6 +142,7 @@ export function RaceScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
       setGuideOpen(true);
       return;
     }
+    haptic('tap');
     setStarting(true);
     setError(null);
     setNotice(null);

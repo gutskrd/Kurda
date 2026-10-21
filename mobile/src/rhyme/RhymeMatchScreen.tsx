@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, ScrollView, Share, StyleSheet, Text, TextInput, View } from 'react-native';
 import { parseInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { leftResults, reportGameFinished } from '../feedback/gameFinished';
@@ -249,6 +250,8 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
     const res = await submitRhyme(client, id, typed);
     setBusy(false);
     if (!res.ok) {
+      // time running out is the game, not a failure; anything else kept the word from going
+      if (res.error.code !== 'NOT_ACTIVE') haptic('error');
       setNotice(res.error.code === 'NOT_ACTIVE' ? t('games.rhymeMatch.timeUpMatch') : describeError(res.error, t));
       return;
     }
@@ -256,6 +259,7 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
     setRemaining(res.data.match.remainingMs);
     setWord('');
     const { result } = res.data;
+    haptic(result.accepted ? 'correct' : 'wrong');
     if (result.accepted) {
       setFound((f) => [{ word: result.normalized, quality: result.quality, points: result.points }, ...f]);
     } else {
@@ -333,7 +337,10 @@ function MatchRoom({ id, onLeave, onOpen }: { id: string; onLeave: () => void; o
           <ClayButton
             label={busy ? t('games.starting') : t('games.rhymeMatch.start')}
             tone="primary"
-            onPress={() => void act(() => startMatch(client, id))}
+            onPress={() => {
+              haptic('tap');
+              void act(() => startMatch(client, id));
+            }}
             style={styles.stretch}
           />
         ) : (

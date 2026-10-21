@@ -5,6 +5,12 @@
  *   PUT    /admin/alphabet/audio?key=…   store a recording for one sound (raw audio body)
  *   DELETE /admin/alphabet/audio?key=…   remove it, so the synthesised clip plays again
  *
+ * The PUT may say who says the sound, `&speaker=…`, and give its mouth's
+ * timeline, `&lipsync=…`, as the lessons' does (speakers/voice.ts); the
+ * public list sends both for the recordings with a speaker, under `voices`,
+ * with a timeline made from the sound's `say` where none is stored.
+ * PATCH /admin/audio/alphabet?key=… changes either later.
+ *
  * The admin panel records or takes a file, trims the silence, levels the volume
  * and sends a short mono WAV; the server checks it is one, and no longer than a
  * letter or a word needs. The key travels in the query string because it holds
@@ -14,7 +20,15 @@
  * kind of work as editing a lesson.
  */
 import type { FastifyInstance } from 'fastify';
-import { ALPHABET_CLIP_MAX_SECONDS, isAlphabetClipKey } from '@kurda/shared';
+import {
+  ALPHABET_CLIPS,
+  ALPHABET_CLIP_MAX_SECONDS,
+  isAlphabetClipKey,
+  type AlphabetAudioResponse,
+  type LipsyncData,
+  type RecordingVoice,
+  type SpeakerId,
+} from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AuditService } from '../admin/audit-service.js';
 import { requireRoles } from '../plugins/auth.js';
@@ -23,6 +37,14 @@ import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { readWav } from './wav.js';
+import {
+  fitLipsync,
+  lipsyncSummary,
+  voiceColumns,
+  voiceFromQuery,
+  voiceOf,
+  type SpokenWords,
+} from '../speakers/voice.js';
 
 const KIND = 'alphabet-audio';
 
@@ -34,6 +56,17 @@ interface Row {
   url: string;
   duration_ms: number | null;
   updated_at: Date;
+  speaker: SpeakerId | null;
+  lipsync: LipsyncData | null;
+}
+
+const CLIPS = new Map(ALPHABET_CLIPS.map((clip) => [clip.key, clip]));
+
+/** What a sound's recording says, in its script, for a timeline made from its words. */
+function wordsOf(row: Pick<Row, 'key' | 'duration_ms'>): SpokenWords | undefined {
+  const clip = CLIPS.get(row.key);
+  if (!clip) return undefined;
+  return { text: clip.say, durationMs: row.duration_ms, script: clip.script === 'ckb' ? 'arabic' : 'latin' };
 }
 
 function keyFrom(query: unknown): string {
@@ -53,17 +86,42 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
   registerAudioParser(app, base.maxUploadBytes);
 
   /** Public: the page asks once, and plays a recording wherever there is one. */
-  app.get('/alphabet/audio', async (req, reply) => {
-    const { rows } = await app.db.query<Row>(`SELECT key, url, duration_ms, updated_at FROM alphabet_audio ORDER BY key`);
+  app.get('/alphabet/audio', async (req, reply): Promise<AlphabetAudioResponse> => {
+    const { rows } = await app.db.query<Row>(
+      `SELECT key, url, duration_ms, ${voiceColumns()} FROM alphabet_audio ORDER BY key`,
+    );
     if (!req.user) reply.header('cache-control', 'public, max-age=60');
-    return { clips: Object.fromEntries(rows.map((r) => [r.key, r.url])) };
+    const voices: Record<string, RecordingVoice> = {};
+    for (const r of rows) {
+      const voice = voiceOf(r, wordsOf(r));
+      if (voice) voices[r.key] = voice;
+    }
+    return {
+      clips: Object.fromEntries(rows.map((r) => [r.key, r.url])),
+      // only when a sound has a speaker, so the page's payload is what it was until one does
+      ...(Object.keys(voices).length > 0 ? { voices } : {}),
+    };
   });
 
-  /** The admin list: the same, with when each was recorded. */
+  /**
+   * The admin list: the same, with when each was recorded and its stored
+   * timeline, so the studio can preview the mouth as the apps will move it.
+   * A sound or two of seconds each: every timeline together is a few kB.
+   */
   app.get('/admin/alphabet/audio', { preHandler: canRecord }, async () => {
-    const { rows } = await app.db.query<Row>(`SELECT key, url, duration_ms, updated_at FROM alphabet_audio ORDER BY key`);
+    const { rows } = await app.db.query<Row>(
+      `SELECT key, url, duration_ms, updated_at, speaker, lipsync FROM alphabet_audio ORDER BY key`,
+    );
     return {
-      recordings: rows.map((r) => ({ key: r.key, url: r.url, durationMs: r.duration_ms, updatedAt: r.updated_at })),
+      recordings: rows.map((r) => ({
+        key: r.key,
+        url: r.url,
+        durationMs: r.duration_ms,
+        updatedAt: r.updated_at,
+        speaker: r.speaker,
+        hasLipsync: r.lipsync !== null,
+        lipsync: r.lipsync,
+      })),
     };
   });
 
@@ -78,6 +136,7 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
     },
     async (req, reply) => {
       const key = keyFrom(req.query);
+      const voice = voiceFromQuery(req.query);
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
       if (!raw) return reply.code(415).send({ code: 'INVALID_AUDIO', message: 'send the recording as audio/wav' });
@@ -90,29 +149,46 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
           .code(400)
           .send({ code: 'TOO_LONG', message: `keep it under ${ALPHABET_CLIP_MAX_SECONDS} seconds: one letter or one word` });
       }
+      // checked before the file is stored, so a timeline from another take stores nothing
+      const lipsync = voice.lipsync ? fitLipsync(voice.lipsync, info.durationMs) : null;
 
       const res = await storeAudioMedia({ pool: app.db, storage: app.storage, usage, limits, log: app.log }, KIND, raw);
       if (!res.ok) return reply.code(res.status).send({ code: res.code, message: res.message });
 
-      const before = await app.db.query<Row>(`SELECT key, url, duration_ms, updated_at FROM alphabet_audio WHERE key = $1`, [key]);
       const client = await app.db.connect();
+      let saved: Row;
       try {
         await client.query('BEGIN');
-        await client.query(
-          `INSERT INTO alphabet_audio (key, media_key, url, content_type, duration_ms, updated_by, updated_at)
-           VALUES ($1, $2, $3, $4, $5, $6, now())
+        const before = await client.query<Row>(`SELECT key, url, speaker FROM alphabet_audio WHERE key = $1 FOR UPDATE`, [key]);
+        const upserted = await client.query<Row>(
+          `INSERT INTO alphabet_audio (key, media_key, url, content_type, duration_ms, updated_by, updated_at, speaker, lipsync)
+           VALUES ($1, $2, $3, $4, $5, $6, now(), $7, $8::jsonb)
            ON CONFLICT (key) DO UPDATE SET media_key = EXCLUDED.media_key, url = EXCLUDED.url,
              content_type = EXCLUDED.content_type, duration_ms = EXCLUDED.duration_ms,
-             updated_by = EXCLUDED.updated_by, updated_at = now()`,
-          [key, res.mediaId, res.url, res.contentType, info.durationMs, req.user!.id],
+             updated_by = EXCLUDED.updated_by, updated_at = now(),
+             speaker = CASE WHEN $9::boolean THEN alphabet_audio.speaker ELSE EXCLUDED.speaker END,
+             lipsync = EXCLUDED.lipsync
+           RETURNING key, url, duration_ms, updated_at, speaker, lipsync`,
+          [
+            key,
+            res.mediaId,
+            res.url,
+            res.contentType,
+            info.durationMs,
+            req.user!.id,
+            voice.speaker ?? null,
+            lipsync === null ? null : JSON.stringify(lipsync),
+            voice.speaker === undefined,
+          ],
         );
+        saved = upserted.rows[0]!;
         await audit.record(client, {
           adminId: req.user!.id,
           action: 'alphabet.audio.set',
           targetType: 'alphabet_audio',
           targetId: key,
-          before: before.rows[0] ? { url: before.rows[0].url } : null,
-          after: { url: res.url, durationMs: info.durationMs },
+          before: before.rows[0] ? { url: before.rows[0].url, speaker: before.rows[0].speaker } : null,
+          after: { url: res.url, durationMs: info.durationMs, speaker: saved.speaker, lipsync: lipsyncSummary(lipsync) },
           requestId: req.id,
         });
         await client.query('COMMIT');
@@ -122,7 +198,9 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
       } finally {
         client.release();
       }
-      return reply.code(201).send({ key, url: res.url, durationMs: info.durationMs });
+      return reply
+        .code(201)
+        .send({ key, url: res.url, durationMs: info.durationMs, speaker: saved.speaker, lipsync: saved.lipsync });
     },
   );
 

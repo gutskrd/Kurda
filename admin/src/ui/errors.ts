@@ -6,6 +6,7 @@
  * superadmin, enter a code, or try again later.
  */
 import { ApiError } from '../api';
+import { waitText } from './Time';
 
 export type ErrorKind =
   /** signed in, but this account's role is not allowed this */
@@ -93,7 +94,30 @@ export function describeError(err: unknown, what = 'this'): DescribedError {
       return { kind: 'conflict', title: 'Something changed', message: serverMessage(err) || 'Reload and try again.', requestId };
     }
     if (err.status === 429) {
-      return { kind: 'rate_limited', title: 'Too many tries', message: 'Wait a minute, then try again.', requestId };
+      // the server says how long; "wait a minute" was wrong for a fifteen-minute lockout
+      const wait = err.retryAfterSec ? waitText(err.retryAfterSec) : 'a few minutes';
+      if (err.code === 'TOTP_LOCKED') {
+        return {
+          kind: 'rate_limited',
+          title: 'Code entry is paused',
+          message: `Too many codes didn’t match. To keep this account safe, no more can be tried for a while. You can try again in ${wait}.`,
+          requestId,
+        };
+      }
+      if (err.code === 'LOCKED') {
+        return {
+          kind: 'rate_limited',
+          title: 'Signing in is paused',
+          message: `Several sign-ins didn’t match, so signing in is paused for a while to keep the account safe. You can try again in ${wait}.`,
+          requestId,
+        };
+      }
+      return {
+        kind: 'rate_limited',
+        title: 'Too many tries',
+        message: err.retryAfterSec ? `Wait ${wait}, then try again.` : 'Wait a minute, then try again.',
+        requestId,
+      };
     }
     if (err.status >= 400 && err.status < 500) {
       return { kind: 'invalid', title: 'That wasn’t accepted', message: serverMessage(err) || 'Check the form and try again.', requestId };

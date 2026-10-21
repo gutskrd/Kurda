@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import { spacing, radii, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -8,7 +9,7 @@ import { display } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useShake } from '../theme/animate';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -65,7 +66,6 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const reduceMotion = useReducedMotion();
 
   const [game, setGame] = useState<RhymeGameView | null>(null);
   const [found, setFound] = useState<Found[]>([]);
@@ -74,19 +74,12 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const [starting, setStarting] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [remaining, setRemaining] = useState(0);
-  const shake = useRef(new Animated.Value(0)).current;
+  // a rhyme that was not accepted shakes the field (theme/animate.ts; still under Reduce Motion)
+  const shake = useShake();
 
   const finished = game != null && (game.status === 'ended' || remaining <= 0);
 
-  const runShake = () => {
-    if (reduceMotion) return;
-    shake.setValue(0);
-    Animated.sequence([
-      Animated.timing(shake, { toValue: 1, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: -1, duration: 60, useNativeDriver: true }),
-      Animated.timing(shake, { toValue: 0, duration: 60, useNativeDriver: true }),
-    ]).start();
-  };
+  const runShake = shake.run;
 
   /** `early`: "End round" with time still on the clock — the player stopped, which is giving up. */
   const end = useCallback(
@@ -117,6 +110,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
   const start = async () => {
     // the rating box, if it came, belonged to the round this replaces
     leftResults();
+    haptic('tap');
     setStarting(true);
     setNote(null);
     setFound([]);
@@ -141,11 +135,13 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
     setSubmitting(false);
     if (!res.ok) {
       setNote(describeError(res.error, t));
+      haptic('error');
       runShake();
       return;
     }
     setGame(res.data.game);
     const r = res.data.result;
+    haptic(r.accepted ? 'correct' : 'wrong');
     if (r.accepted) {
       setFound((f) => [{ word, quality: r.quality, points: r.points }, ...f]);
       setInput('');
@@ -200,7 +196,7 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
               </View>
             </View>
 
-            <Animated.View style={{ transform: [{ translateX: shake.interpolate({ inputRange: [-1, 1], outputRange: [-8, 8] }) }] }}>
+            <Animated.View style={{ transform: [{ translateX: shake.translateX }] }}>
               <View style={styles.inputRow}>
                 <TextInput
                   style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}

@@ -34,6 +34,7 @@ import {
   type TimerSeconds,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { sentenceRecordings } from '../stories/service.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import { areFriendsSql } from '../users/age.js';
 import { XpService } from '../xp/service.js';
@@ -674,16 +675,14 @@ export class StoryGamesService {
       };
     }
     const keys = [...new Set(detail.paragraphs.flatMap((p) => storyAudioSentences(p)).map((s) => lessonAudioKey(s)))];
-    const audio: Record<string, string> = {};
-    if (keys.length) {
-      const rec = await this.pool.query<{ key: string; url: string }>(
-        `SELECT key, url FROM lesson_audio WHERE key = ANY($1::text[])`,
-        [keys],
-      );
-      for (const r of rec.rows) audio[r.key] = r.url;
-    }
+    const { audio, voices } = await sentenceRecordings(this.pool, keys);
     return {
-      story: { ...detail, audio, fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined) },
+      story: {
+        ...detail,
+        audio,
+        ...(Object.keys(voices).length > 0 ? { voices } : {}),
+        fullyNarrated: keys.length > 0 && keys.every((k) => audio[k] !== undefined),
+      },
       frozen: row.story_snapshot !== null,
     };
   }

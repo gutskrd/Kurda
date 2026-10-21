@@ -212,3 +212,112 @@ describe('GiftPicker in a group', () => {
     expect(screen.getByText('None of your friends are in this group yet. Gifts only go to friends.')).toBeInTheDocument();
   });
 });
+
+describe('GiftPicker’s shelf, by kind', () => {
+  /** The shelf as `/gifts/catalog` sends it: in the shop's order, every priced kind. */
+  const shelf = (): GiftCatalogItem[] => [
+    item({ sku: 'bg-sunset', name: 'Sunset over Amed', price: 500 }),
+    item({ sku: 'bg-kilim', name: 'Kilîma Sor', price: 600, alreadyOwnedBy: ['u-rojda'] }),
+    item({ sku: 'icon-caydan', name: 'Îstîkan', category: 'icon', price: 900 }),
+    item({ sku: 'icon-roj', name: 'Roj', category: 'icon', price: 600 }),
+    item({ sku: 'bg-night', name: 'Night sky', currency: 'gems', price: 40, tier: 'rare' }),
+    item({ sku: 'tag_kurdish', name: 'Kurdish Tag', category: 'tag', price: 500 }),
+  ];
+  const tiles = (): string[] => [...document.querySelectorAll('.gift-tile .gift-tile-name')].map((el) => el.textContent ?? '');
+  const open = (people = [rojda], chat: { kind: 'dm'; userId: string } | { kind: 'group'; groupId: string } = { kind: 'dm', userId: 'u-rojda' }) =>
+    renderApp(<GiftPicker open onClose={() => undefined} chat={chat} people={people} onSent={() => undefined} />);
+
+  it('puts each kind on a tab with its count, and under All gives each its own titled shelf', async () => {
+    stub(shelf());
+    open();
+    await screen.findByText('Sunset over Amed');
+
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['All6', 'Backgrounds3', 'Icons2', 'Tags1']);
+    expect(screen.getAllByRole('heading', { level: 3 }).map((h) => h.textContent)).toEqual(['Backgrounds3', 'Icons2', 'Tags1']);
+    // each shelf is a list named by its heading
+    expect(screen.getByRole('list', { name: /Icons/ })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
+    expect(tiles()).toEqual(['Îstîkan', 'Roj']);
+    expect(screen.queryByRole('heading', { level: 3 })).not.toBeInTheDocument();
+  });
+
+  it('finds a Kurdish name typed without its Kurdish letters', async () => {
+    stub(shelf());
+    open();
+    await screen.findByText('Sunset over Amed');
+    await userEvent.type(screen.getByLabelText('Search gifts'), 'istikan');
+    expect(tiles()).toEqual(['Îstîkan']);
+    expect(screen.getByRole('status')).toHaveTextContent('1 item');
+  });
+
+  it('sorts by price — Zêr before gems, dearest first when asked', async () => {
+    stub(shelf());
+    open();
+    await screen.findByText('Sunset over Amed');
+    await userEvent.click(screen.getByRole('tab', { name: /Backgrounds/ }));
+    await userEvent.selectOptions(screen.getByLabelText('Sort'), 'price-desc');
+    expect(tiles()).toEqual(['Night sky', 'Kilîma Sor', 'Sunset over Amed']);
+    await userEvent.selectOptions(screen.getByLabelText('Sort'), 'price-asc');
+    expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Night sky']);
+  });
+
+  it('holds each gift against its own currency, for everyone it would go to', async () => {
+    // 1,200 Zêr and 10 gems; two friends chosen, so each gift costs twice its price
+    stub(shelf(), null, { zer: 1200, gems: 10 });
+    open([rojda, { userId: 'u-baran', name: 'baran', avatarUrl: null }], { kind: 'group', groupId: 'g1' });
+    await userEvent.click(screen.getByLabelText('Select all'));
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByText('Sunset over Amed');
+
+    await userEvent.click(screen.getByLabelText('Within my balance'));
+    // 2 × 500 and 2 × 600 fit in 1,200 Zêr; Kilîma Sor is 600 for baran alone (rojda has it);
+    // 2 × 900 does not; 40 gems is more than the 10 held, whatever the Zêr
+    expect(tiles()).toEqual(['Sunset over Amed', 'Kilîma Sor', 'Roj', 'Kurdish Tag']);
+  });
+
+  it('hides what everyone chosen already has, and only that', async () => {
+    stub(shelf());
+    open();
+    await screen.findByText('Sunset over Amed');
+    expect(screen.getByText('Kilîma Sor').closest('button')).toBeDisabled();
+
+    await userEvent.click(screen.getByLabelText('Hide ones they already have'));
+    expect(screen.queryByText('Kilîma Sor')).not.toBeInTheDocument();
+    expect(tiles()).toHaveLength(5);
+  });
+
+  it('keeps a hidden choice chosen, and says so by the Send button', async () => {
+    const calls = stub(shelf());
+    open();
+    await userEvent.click(await screen.findByRole('button', { name: /Sunset over Amed/ }));
+    const bar = screen.getByRole('button', { name: 'Send gift' }).closest('.gift-confirm') as HTMLElement;
+    expect(within(bar).queryByText('Your filters hide it, but it’s still chosen.')).not.toBeInTheDocument();
+
+    // a filter that hides it from the shelf
+    await userEvent.click(screen.getByRole('tab', { name: /Icons/ }));
+    expect(screen.queryByRole('button', { name: /Sunset over Amed/ })).not.toBeInTheDocument();
+    // …and the bar still says what is chosen, drawn, and that the filter hides it
+    expect(within(bar).getByText('Sunset over Amed for rojda')).toBeInTheDocument();
+    expect(within(bar).getByText('Your filters hide it, but it’s still chosen.')).toBeInTheDocument();
+    expect(bar.querySelector('.gift-confirm-art')).not.toBeNull();
+
+    await userEvent.click(within(bar).getByRole('button', { name: 'Send gift' }));
+    expect(calls.find((c) => c.url.endsWith('/gifts'))!.body).toMatchObject({ sku: 'bg-sunset', toUserIds: ['u-rojda'] });
+  });
+
+  it('clears every narrowing at once, and says so when nothing matches', async () => {
+    stub(shelf());
+    open();
+    await screen.findByText('Sunset over Amed');
+    await userEvent.click(screen.getByLabelText('Within my balance'));
+    await userEvent.type(screen.getByLabelText('Search gifts'), 'zzzz');
+    expect(screen.getByText(/Nothing matches that/)).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Clear filters' }));
+    expect(tiles()).toHaveLength(6);
+    expect(screen.getByLabelText('Within my balance')).not.toBeChecked();
+    expect(screen.getByLabelText('Search gifts')).toHaveValue('');
+    expect(screen.queryByRole('button', { name: 'Clear filters' })).not.toBeInTheDocument();
+  });
+});

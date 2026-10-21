@@ -9,16 +9,19 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 vi.mock('expo-image-picker', () => ({}));
 vi.mock('expo-file-system/legacy', () => ({ documentDirectory: null }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { postDraftStorageKey } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { memoryStore } from '../keyboard/deviceStore';
 import type { ComposerPost } from './api';
+import type { ApiResult } from '../api/types';
 import { ComposeScreen, type PickedPicture } from './ComposeScreen';
 import type { PictureUpload } from './upload';
 import { onPostSaved } from './postSaved';
+import { onHaptic, resetHaptics } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
 
 patchReactNativeWeb({ reduceMotion: true });
 
@@ -245,9 +248,10 @@ describe('pictures', () => {
     );
     await waitFor(() => expect(p.pick).toHaveBeenCalledOnce());
     await waitFor(() => expect(p.upload).toHaveBeenCalledOnce());
-    p.done(0);
-    expect(((await screen.findByRole('switch', { name: 'Meme' })) as HTMLInputElement).checked).toBe(true);
-    await waitFor(() => expect(disabled(postButton())).toBe(false));
+    // finished inside act(), so Post is enabled — and told so — before it is pressed (see "a post going up")
+    await act(async () => p.done(0));
+    expect((screen.getByRole('switch', { name: 'Meme' }) as HTMLInputElement).checked).toBe(true);
+    expect(disabled(postButton())).toBe(false);
     fireEvent.click(postButton());
     await waitFor(() => expect(client.calls.find((c) => c.method === 'POST')?.body).toMatchObject({ meme: true }));
     expect(p.pick).toHaveBeenCalledOnce();
@@ -287,8 +291,11 @@ describe('drafts', () => {
       [KEY]: JSON.stringify({ version: 1, type: 'poem', title: 'Şev', body: 'Stêrk', pictures: [], meme: false, sourceCredit: '', savedAt: Date.now() }),
     });
     const onExit = vi.fn();
-    renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
-    expect(((await screen.findByLabelText('Your post')) as HTMLTextAreaElement).value).toBe('Stêrk');
+    // opened inside act(), so the draft has been read back and Cancel knows there is one before it is pressed
+    await act(async () => {
+      renderWithProviders(<ComposeScreen onExit={onExit} store={store} />);
+    });
+    expect((screen.getByLabelText('Your post') as HTMLTextAreaElement).value).toBe('Stêrk');
     expect((screen.getByLabelText('Title (a story or a poem has one)') as HTMLInputElement).value).toBe('Şev');
     expect(screen.getByRole('radio', { name: 'Poem' }).getAttribute('aria-checked')).toBe('true');
 
@@ -371,5 +378,46 @@ describe('editing', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     fireEvent.click(screen.getByRole('button', { name: 'Discard changes' }));
     expect(onExit).toHaveBeenCalled();
+  });
+});
+
+describe('a post going up', () => {
+  it('is felt as a light tap, and one that is refused as an error', async () => {
+    const felt: HapticEvent[] = [];
+    resetHaptics();
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      /*
+       * The refusal is answered inside act(), so the screen has finished with
+       * it — drawn, and Post enabled again — before it is pressed a second
+       * time. Waiting only for the words to appear was not enough: Post is
+       * told it is pressable again in an effect after that draw, and a press
+       * that landed in between, on a busy machine, was dropped.
+       */
+      let answer: (result: ApiResult<ComposerPost>) => void = () => undefined;
+      let refused = false;
+      testAuth.client = fakeClient({
+        [DRAFTS]: ok({ posts: [] }),
+        'POST /library/posts': () => (refused ? ok(created({ body: 'Dîsa' })) : new Promise<ApiResult<ComposerPost>>((resolve) => (answer = resolve))),
+      });
+      const onExit = vi.fn();
+      renderWithProviders(<ComposeScreen onExit={onExit} store={memoryStore()} />);
+      fireEvent.change(await screen.findByLabelText('Your post'), { target: { value: 'Dîsa' } });
+      fireEvent.click(postButton());
+      await act(async () => {
+        refused = true;
+        answer(fail({ code: 'TRUST_VELOCITY', kind: 'rate_limited', status: 429 }));
+      });
+      expect(screen.getByText('You’re posting quickly. Wait a little and try again.')).toBeTruthy();
+      expect(disabled(postButton())).toBe(false);
+      expect(felt).toEqual(['error']);
+
+      resetHaptics();
+      fireEvent.click(postButton());
+      await waitFor(() => expect(onExit).toHaveBeenCalled());
+      expect(felt).toEqual(['error', 'tap']);
+    } finally {
+      stop();
+    }
   });
 });

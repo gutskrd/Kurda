@@ -196,6 +196,8 @@ export function Audit(): React.JSX.Element {
           error={error}
           onRetry={() => void load(applied)}
           what="the audit log"
+          // ids, routes and names that do not break well: cards on a tablet rather than a column per word
+          wide="medium"
           empty="No entries match."
           actions={(e) => <Button onClick={() => setLooking(e)}>Details</Button>}
         />

@@ -56,6 +56,7 @@ export function TextAnswer({
   dialect,
   locked,
   busy,
+  verdict = null,
   onAnswer,
 }: {
   label: string;
@@ -63,6 +64,8 @@ export function TextAnswer({
   /** graded: the answer stands as typed */
   locked: boolean;
   busy: boolean;
+  /** how it was graded, once it has been: the field pops, or shakes once (styles/motion.css) */
+  verdict?: 'right' | 'wrong' | null;
   onAnswer: (answer: { text: string }, given: string) => void;
 }): React.JSX.Element {
   const t = useT();
@@ -108,7 +111,7 @@ export function TextAnswer({
       <input
         id={id}
         ref={input}
-        className="input lesson-input"
+        className={`input lesson-input${verdict ? ` is-${verdict}` : ''}`}
         value={text}
         onChange={(e) => setText(e.target.value)}
         readOnly={locked}

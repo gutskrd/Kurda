@@ -1,0 +1,647 @@
+/*
+ * The lesson path (pages/CourseMap.tsx).
+ *
+ * Calm on purpose: soft colours, one line to follow, nothing that counts down.
+ * Each unit takes a colour of its own (`lp-tone-*`, in the order
+ * @kurda/shared's UNIT_TONES gives them) and everything in the unit is drawn
+ * from it — the banner, the lessons done, the line walked so far. The gold of
+ * the sun is kept for what was earned: a strong lesson's rim, a unit's trophy.
+ *
+ * Every tone has two sets of values. On the dark page the colours are light
+ * and the words on them dark; on the light page the colours are deep and the
+ * words on them white. Both pairs were checked: the words on a banner read at
+ * 4.5:1 or better, and every filled stop stands 3:1 or better against the page.
+ */
+
+.lp-tone-meadow { --u-fill: #7fcf9f; --u-lip: #4d9a6c; --u-ink: #0d1f15; --u-text: #8fdcad; }
+.lp-tone-river { --u-fill: #86bfe8; --u-lip: #4f88b3; --u-ink: #0b1a26; --u-text: #96c9ee; }
+.lp-tone-clay { --u-fill: #eda585; --u-lip: #b46e50; --u-ink: #2a120a; --u-text: #f2b59a; }
+.lp-tone-dusk { --u-fill: #b9aaf0; --u-lip: #8273bd; --u-ink: #18122e; --u-text: #c4b7f4; }
+.lp-tone-pine { --u-fill: #bcd283; --u-lip: #849a4f; --u-ink: #1a220a; --u-text: #c6da94; }
+.lp-tone-rose { --u-fill: #eda0bf; --u-lip: #b56a8a; --u-ink: #2b0f1b; --u-text: #f1b1ca; }
+
+:root[data-theme='light'] .lp-tone-meadow { --u-fill: #2e7a52; --u-lip: #1f5739; --u-ink: #ffffff; --u-text: #256843; }
+:root[data-theme='light'] .lp-tone-river { --u-fill: #2a6a93; --u-lip: #1c4c6b; --u-ink: #ffffff; --u-text: #235a7e; }
+:root[data-theme='light'] .lp-tone-clay { --u-fill: #a9532f; --u-lip: #7d3c21; --u-ink: #ffffff; --u-text: #934627; }
+:root[data-theme='light'] .lp-tone-dusk { --u-fill: #6551a6; --u-lip: #493a7d; --u-ink: #ffffff; --u-text: #57459a; }
+:root[data-theme='light'] .lp-tone-pine { --u-fill: #56692b; --u-lip: #3e4c1e; --u-ink: #ffffff; --u-text: #4b5c25; }
+:root[data-theme='light'] .lp-tone-rose { --u-fill: #a3446b; --u-lip: #78304e; --u-ink: #ffffff; --u-text: #8f3b5d; }
+
+.lp {
+  /* the grey of what is not open yet, and of the line still ahead */
+  --lp-rest: #262a31;
+  --lp-rest-lip: #1a1d22;
+  --lp-rest-ink: rgba(255, 255, 255, 0.5);
+  --lp-line: rgba(255, 255, 255, 0.2);
+  /* the gold rim and the trophy: the sun, as everywhere else it marks something earned */
+  --lp-gold-lip: #b88d1f;
+  --lp-gold-ink: #3a2a00;
+  --node: 72px;
+}
+:root[data-theme='light'] .lp {
+  --lp-rest: #e4e4e1;
+  --lp-rest-lip: #c9c9c5;
+  --lp-rest-ink: #74767c;
+  --lp-line: rgba(17, 17, 17, 0.18);
+  --lp-gold-lip: #b07f00;
+}
+
+/* ---- the top of the page ---------------------------------------------------- */
+
+.lp-back {
+  display: inline-block;
+}
+.lp-continue {
+  margin-top: var(--space-4);
+}
+.lp-courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+}
+.lp-course {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.lp-course:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+}
+/* the course you are in: drawn round, so it does not compete with the page's one button */
+.lp-course.is-on {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--ink);
+  color: var(--ink);
+}
+
+/* ---- a unit ----------------------------------------------------------------- */
+
+.lp-map {
+  display: grid;
+  gap: var(--space-6);
+  margin-top: var(--space-2);
+}
+.lp-unit {
+  display: grid;
+}
+.lp-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-4);
+  padding: var(--space-5) var(--space-5) var(--space-5) var(--space-6);
+  border-radius: var(--r-xl);
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 5px 0 var(--u-lip);
+}
+.lp-banner-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 220px;
+}
+.lp-banner-eyebrow {
+  margin: 0;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  /* no fainter than 0.9: white at 0.86 on the light meadow fell to 4.3:1 */
+  opacity: 0.9;
+}
+.lp-banner-title {
+  margin: 0;
+  font-size: var(--text-section);
+  color: inherit;
+}
+.lp-banner-topics {
+  margin: 2px 0 0;
+  font-size: var(--text-secondary);
+  opacity: 0.9;
+}
+.lp-banner-side {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex: none;
+}
+.lp-banner-count {
+  font-size: var(--text-caption);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.9;
+}
+.lp-unit-guide {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 0;
+  border-radius: var(--r-pill);
+  /* the banner's own ink, faintly, so the guide belongs to its unit */
+  background: color-mix(in srgb, var(--u-ink) 12%, transparent);
+  color: inherit;
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  cursor: pointer;
+}
+.lp-unit-guide:hover {
+  background: color-mix(in srgb, var(--u-ink) 20%, transparent);
+}
+.lp-unit-guide:focus-visible {
+  outline: 2px solid var(--u-ink);
+  outline-offset: 2px;
+}
+/*
+ * On the light page the banner's ink is white, and white mixed in lightens the
+ * deep fill under the words (4.1:1 on the meadow). The unit's own darker lip
+ * does the same job the other way, and the words stay at 6.7:1 or better.
+ */
+:root[data-theme='light'] .lp-unit-guide {
+  background: color-mix(in srgb, var(--u-lip) 55%, transparent);
+}
+:root[data-theme='light'] .lp-unit-guide:hover {
+  background: color-mix(in srgb, var(--u-lip) 80%, transparent);
+}
+
+/* ---- the path --------------------------------------------------------------- */
+
+/*
+ * Stops are placed by @kurda/shared's `lessonPath`: `top` from it, and `--x`,
+ * how far a stop leans from the middle toward the end of the line. Placing
+ * them from the logical start makes a right-to-left page lean the other way.
+ */
+.lp-path {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lp-trail {
+  position: absolute;
+  inset-inline-start: 50%;
+  top: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+[dir='rtl'] .lp-trail {
+  transform: scaleX(-1);
+}
+.lp-trail path {
+  fill: none;
+  stroke-width: 7;
+  stroke-linecap: round;
+  stroke-dasharray: 0 15;
+}
+.lp-trail-ahead {
+  stroke: var(--lp-line);
+}
+.lp-trail-walked {
+  stroke: var(--u-fill);
+}
+
+.lp-stop {
+  position: absolute;
+  inset-inline: 0;
+  height: var(--node);
+}
+.lp-stop.is-open {
+  z-index: 5;
+}
+
+.lp-node {
+  position: absolute;
+  top: 0;
+  inset-inline-start: calc(50% + var(--x, 0px) - var(--node) / 2);
+  display: grid;
+  place-items: center;
+  width: var(--node);
+  height: var(--node);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  /* moved to with the arrow keys: clear of the bubble above it (the page's
+     scroll padding, base.css, already keeps it clear of the top bar) */
+  scroll-margin-top: 56px;
+  scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + 72px);
+}
+/* the face is the round you see; the lip under it is what makes it feel pressable */
+.lp-node-face {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: var(--lp-rest);
+  color: var(--lp-rest-ink);
+  box-shadow: 0 5px 0 var(--lp-rest-lip);
+  transition: transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast) var(--ease-out);
+}
+.lp-node:active .lp-node-face {
+  transform: translateY(3px);
+  box-shadow: 0 2px 0 var(--lp-rest-lip);
+}
+.lp-node:focus-visible {
+  outline: none;
+}
+.lp-node:focus-visible .lp-node-face {
+  outline: 3px solid var(--focus);
+  outline-offset: 5px;
+}
+.lp-node-num {
+  font-size: 1.6rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+/* done: filled in the unit's colour */
+.lp-node.is-done .lp-node-face {
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 5px 0 var(--u-lip);
+}
+.lp-node.is-done:active .lp-node-face {
+  box-shadow: 0 2px 0 var(--u-lip);
+}
+/* strong: a rim of the sun's gold, the achievement it is */
+.lp-node.is-strong .lp-node-face::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 3px solid var(--gold);
+}
+/* ready for a refresh: still done, a little faded, with a small review sign until a review brings it back */
+.lp-node.is-refresh .lp-node-face {
+  background: color-mix(in srgb, var(--u-fill) 55%, var(--lp-rest));
+}
+.lp-node-badge {
+  position: absolute;
+  top: -4px;
+  inset-inline-end: -4px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--surface-solid);
+  color: var(--u-text);
+  box-shadow: 0 0 0 2px var(--u-fill);
+}
+
+/* current: raised higher, with a ring for its parts */
+.lp-node.is-current .lp-node-face {
+  background: var(--u-fill);
+  color: var(--u-ink);
+  box-shadow: 0 7px 0 var(--u-lip);
+}
+.lp-node.is-current:active .lp-node-face {
+  transform: translateY(5px);
+  box-shadow: 0 2px 0 var(--u-lip);
+}
+.lp-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  translate: -50% -50%;
+  transform: rotate(-90deg);
+  overflow: visible;
+  pointer-events: none;
+}
+[dir='rtl'] .lp-ring {
+  transform: rotate(-90deg) scaleY(-1);
+}
+.lp-ring circle {
+  fill: none;
+  stroke-width: 6;
+}
+.lp-ring-track {
+  stroke: var(--lp-line);
+}
+.lp-ring-fill {
+  stroke: var(--u-fill);
+  stroke-linecap: round;
+}
+
+/* open, but not the one up next: outlined in the unit's colour */
+.lp-node.is-available .lp-node-face {
+  background: var(--surface-solid);
+  color: var(--u-text);
+  box-shadow: inset 0 0 0 4px var(--u-fill), 0 5px 0 var(--u-lip);
+}
+
+/* review: the unit's colour, quietly, behind the review arrows */
+.lp-node.is-review .lp-node-face {
+  background: var(--surface-solid);
+  color: var(--u-text);
+  box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--u-fill) 60%, transparent), 0 5px 0 var(--lp-rest-lip);
+}
+
+/* a unit's trophy: grey until earned, then the sun */
+.lp-node.is-trophy.is-earned .lp-node-face {
+  background: var(--gold);
+  color: var(--lp-gold-ink);
+  box-shadow: 0 5px 0 var(--lp-gold-lip);
+}
+
+/* "Start" over the current lesson, bobbing gently — and still, for anyone who asked for less motion */
+.lp-callout {
+  position: absolute;
+  bottom: calc(100% + 22px);
+  inset-inline-start: calc(50% + var(--x, 0px));
+  translate: -50% 0;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0 var(--space-4);
+  border-radius: var(--r-md);
+  background: var(--surface-solid);
+  color: var(--u-text);
+  font-size: var(--text-secondary);
+  font-weight: 750;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--u-fill) 70%, transparent), var(--shadow-sm);
+  /* two slow bobs as the page opens, to show where to look, then still: a
+     bubble that never stops moving pulls at the eye the whole time it is read */
+  animation: lp-bob 1.8s var(--ease-out) 4 alternate;
+}
+[dir='rtl'] .lp-callout {
+  translate: 50% 0;
+}
+.lp-callout::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  width: 12px;
+  height: 12px;
+  margin: -7px 0 0 -6px;
+  background: inherit;
+  rotate: 45deg;
+  box-shadow: 2px 2px 0 0 color-mix(in srgb, var(--u-fill) 70%, transparent);
+}
+.lp-callout:hover {
+  color: var(--u-text);
+  text-decoration: none;
+}
+.lp-callout:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+@keyframes lp-bob {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-5px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-callout {
+    animation: none;
+  }
+  .lp-node-face {
+    transition: none;
+  }
+}
+
+/* ---- the card a stop opens -------------------------------------------------- */
+
+.lp-pop {
+  position: absolute;
+  top: calc(var(--node) + 26px);
+  inset-inline: 0;
+  margin-inline: auto;
+  width: min(340px, 100%);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-5);
+  border: 1px solid var(--border);
+  border-radius: var(--r-xl);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow);
+  animation: lp-pop-in var(--dur) var(--ease-out);
+  /* brought into view clear of the tab bar; base.css keeps it clear of the top bar */
+  scroll-margin-bottom: calc(var(--bottom-chrome, 0px) + var(--space-4));
+}
+.lp-pop-arrow {
+  position: absolute;
+  top: -8px;
+  /* under the stop it belongs to: the card is centred, the stop leans by --x */
+  inset-inline-start: calc(50% + var(--x, 0px) - 8px);
+  width: 16px;
+  height: 16px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--border);
+  border-inline-start: 1px solid var(--border);
+  rotate: 45deg;
+}
+[dir='rtl'] .lp-pop-arrow {
+  rotate: -45deg;
+}
+@keyframes lp-pop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-pop {
+    animation: none;
+  }
+}
+.lp-pop > * {
+  margin: 0;
+}
+.lp-pop-eyebrow {
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--u-text);
+}
+.lp-pop-title {
+  font-size: var(--text-section);
+  line-height: 1.2;
+}
+.lp-pop-line {
+  font-size: var(--text-secondary);
+  color: var(--ink-3);
+}
+.lp-pop-progress {
+  display: grid;
+  gap: 6px;
+  font-size: var(--text-caption);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.lp-bar {
+  height: 8px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.lp-bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--u-fill);
+}
+.lp-pop-tips {
+  justify-self: center;
+  gap: 6px;
+}
+
+.lp-parts {
+  display: grid;
+  gap: 2px;
+  padding: 0;
+  list-style: none;
+}
+.lp-part-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 44px;
+  padding: 0 var(--space-2);
+  margin-inline: calc(-1 * var(--space-2));
+  border-radius: var(--r-md);
+  color: var(--ink);
+}
+a.lp-part-row:hover {
+  background: var(--surface-2);
+  text-decoration: none;
+}
+.lp-part.is-locked .lp-part-row {
+  color: var(--ink-4);
+}
+.lp-part-mark {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--surface-2);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.lp-part.is-done .lp-part-mark {
+  background: var(--u-fill);
+  color: var(--u-ink);
+}
+.lp-part.is-next .lp-part-mark {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px var(--u-fill);
+  color: var(--u-text);
+}
+.lp-part-title {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ---- the way back to your lesson -------------------------------------------- */
+
+.lp-jump {
+  position: fixed;
+  z-index: 40;
+  inset-inline: 0;
+  bottom: calc(var(--bottom-chrome, 0px) + var(--space-4));
+  margin-inline: auto;
+  width: max-content;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 44px;
+  padding: 0 var(--space-5);
+  border: 0;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font: inherit;
+  font-size: var(--text-secondary);
+  font-weight: 650;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  animation: lp-pop-in var(--dur) var(--ease-out);
+}
+.lp-jump:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+}
+.lp-jump-arrow {
+  display: inline-grid;
+}
+.lp-jump-arrow.is-up {
+  rotate: -90deg;
+}
+.lp-jump-arrow.is-down {
+  rotate: 90deg;
+}
+@media (prefers-reduced-motion: reduce) {
+  .lp-jump {
+    animation: none;
+  }
+}
+
+/* ---- a unit's guide --------------------------------------------------------- */
+
+.lp-guide-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-section);
+  padding-inline-end: 40px;
+}
+.lp-guide-skill {
+  display: grid;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
+}
+/* the skill's name over its note: a quiet label, under the note's own heading in weight */
+.lp-guide-skill-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--text-caption);
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+/* ---- the path while it loads ------------------------------------------------- */
+
+/* the banner's own box and lip, in the grey of something not here yet */
+.lp-skel-banner {
+  background: var(--surface);
+  box-shadow: 0 5px 0 var(--surface-2);
+}
+.lp-skel-path {
+  position: relative;
+  height: 420px;
+}
+.lp-skel-node {
+  position: absolute;
+  inset-inline-start: calc(50% + var(--x, 0px) - 36px);
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+}

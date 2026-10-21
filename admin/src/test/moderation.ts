@@ -127,7 +127,10 @@ export function caseDetail(over: { case?: Partial<CaseDetail['case']> } & Partia
       activeSanctions: [],
       pastSanctions: [sanction()],
       priorCases: [{ id: 'c-old', status: 'actioned', category: 'harassment', createdAt: ago(24 * 40), resolvedAt: ago(24 * 40) }],
-      linkedAccounts: [{ id: 'u-alt', username: 'baran2', via: 'device', banned: false }],
+      linkedAccounts: [
+        { id: 'u-alt', username: 'baran2', via: 'device', days: 1, lastSeenTogether: ago(24 * 3), banned: false },
+        { id: 'u-flat', username: 'rojda7', via: 'network', days: 4, lastSeenTogether: ago(30), banned: false },
+      ],
     },
     media: [],
     notes: [],

@@ -24,6 +24,7 @@ Disallow: /app/settings
 Disallow: /app/profile/edit
 Disallow: /app/saved
 Disallow: /app/messages
+Disallow: /app/search
 Disallow: /api/
 
 # Three, because the dictionary has its own and it is the bigger half: 3,300

@@ -46,6 +46,8 @@ describe('CORS on the API', () => {
     expect(res.statusCode).toBeLessThan(300);
     expect(res.headers['access-control-allow-origin']).toBe('http://localhost:8081');
     expect(res.headers['access-control-allow-headers']).toContain('idempotency-key');
+    // the per-install id sign-in protection reads must pass the browser's preflight
+    expect(res.headers['access-control-allow-headers']).toContain('x-device-id');
   });
 
   it('does not reflect a disallowed origin', async () => {

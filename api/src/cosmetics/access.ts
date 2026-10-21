@@ -83,21 +83,69 @@ const STATIC_BASE = '/cosmetics';
 /** Resolves a stored object key to a public URL (null when storage is unconfigured). */
 export type PublicUrl = (key: string) => string | null;
 
+/** The kinds of art an admin can upload for the shop (backgrounds and profile icons). */
+export const ART_KINDS = ['background', 'icon'] as const;
+export type ArtKind = (typeof ART_KINDS)[number];
+
+/**
+ * Where art uploaded in the admin is stored: `cosmetic/background/<sha256>.webp`
+ * and `cosmetic/icon/<sha256>.png`, content-addressed like every other upload.
+ *
+ * The art the shop started with ships with the website (`backgrounds/…`,
+ * `icons/…` under web/public/cosmetics) and is served from the site's own
+ * origin; art added later lives in object storage and is served from the CDN.
+ * The prefix is how an `asset_key` says which of the two it is, and the
+ * pattern is exact so that no other stored object — somebody's profile photo,
+ * say — can be dressed up as a shop item by naming its key.
+ */
+const UPLOADED_ART = /^cosmetic\/(background|icon)\/[a-f0-9]{64}\.(webp|png)$/;
+
+/** Whether an asset key names art uploaded in the admin (in object storage). */
+export function isUploadedArtKey(key: string): boolean {
+  return UPLOADED_ART.test(key);
+}
+
+/** The kind of art an uploaded key holds, or null for a built-in key. */
+export function uploadedArtKind(key: string): ArtKind | null {
+  const m = UPLOADED_ART.exec(key);
+  return m ? (m[1] as ArtKind) : null;
+}
+
+/**
+ * A built-in background or icon: a file the website ships, by its path under
+ * /cosmetics. Plain file names only, so a key can never climb out of that
+ * folder into the rest of the site.
+ */
+const BUILT_IN_ART: Record<ArtKind, RegExp> = {
+  background: /^backgrounds\/[a-z0-9][a-z0-9._-]*\.(webp|png|jpg|jpeg|gif|mp4|webm)$/,
+  icon: /^icons\/[a-z0-9][a-z0-9._-]*\.(png|webp)$/,
+};
+
+export function isBuiltInArtKey(kind: ArtKind, key: string): boolean {
+  return BUILT_IN_ART[kind].test(key) && !key.includes('..');
+}
+
+/**
+ * The URL a background or icon's art is served from: uploaded art from the
+ * CDN (null while storage is unconfigured, as a profile photo is), built-in art
+ * from the site, as a site-relative path the web resolves against its own
+ * origin and the phone against the site's (mobile `assetUrl()`).
+ */
+export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string | null {
+  return isUploadedArtKey(assetKey) ? publicUrl(assetKey) : `${STATIC_BASE}/${assetKey}`;
+}
+
 /**
  * Resolve a cosmetic catalog item's asset key to a public URL for *browsing*
- * (shop + inventory). Cosmetics (avatars, icons, backgrounds) are all web-static
- * — served from the web app's own origin (Cloudflare CDN), no object storage —
- * so this needs no R2. The `publicUrl` param is kept for signature compatibility
- * but unused here. Returns null for non-cosmetic categories or a missing key.
+ * (shop, inventory, gifts, the admin's catalogue). Every place that shows a
+ * background or icon goes through here or `resolveCosmetics`, so art uploaded
+ * in the admin and art that ships with the site resolve the same way
+ * everywhere. Returns null for non-cosmetic categories or a missing key.
  * Presentation only — ownership/premium access is enforced server-side at equip.
  */
-export function cosmeticAssetUrl(
-  category: string,
-  assetKey: string | null,
-  _publicUrl?: (key: string) => string | null,
-): string | null {
+export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
   if (!assetKey) return null;
-  if (category === 'background' || category === 'icon') return `${STATIC_BASE}/${assetKey}`;
+  if (category === 'background' || category === 'icon') return cosmeticArtUrl(assetKey, publicUrl);
   return null;
 }
 
@@ -148,8 +196,9 @@ function bgType(assetKey: string): 'image' | 'gif' | 'video' {
 
 /**
  * Resolve the profile's visible cosmetics.
- * @param publicUrl resolves an R2 object key to a public CDN URL (backgrounds);
- *                   null when storage is unconfigured.
+ * @param publicUrl resolves an object key to a public CDN URL (an uploaded
+ *                   photo, art uploaded in the admin); null when storage is
+ *                   unconfigured.
  */
 export function resolveCosmetics(
   raw: CosmeticRaw,
@@ -162,25 +211,27 @@ export function resolveCosmetics(
   const avatarUrl = resolveAvatarUrl(raw.profilePhotoKey, raw.selectedAvatarKey, publicUrl, premium);
 
   let background: ResolvedBackground | null = null;
-  if (raw.background && raw.background.assetKey && hasAccess(raw.background, premium)) {
-    // backgrounds are web-static (like icons): assetKey is "backgrounds/x.webp"
+  // built-in art is "backgrounds/x.webp" on the site, uploaded art a CDN key;
+  // uploaded art with no storage to serve it from shows no background at all
+  const bgUrl = raw.background?.assetKey ? cosmeticArtUrl(raw.background.assetKey, publicUrl) : null;
+  if (raw.background && raw.background.assetKey && bgUrl && hasAccess(raw.background, premium)) {
     background = {
       sku: raw.background.sku,
       assetKey: raw.background.assetKey,
       type: bgType(raw.background.assetKey),
-      url: `${STATIC_BASE}/${raw.background.assetKey}`,
+      url: bgUrl,
       giftedBy: raw.background.giftedBy ?? null,
     };
   }
 
   let icon: ResolvedIcon | null = null;
+  const iconUrl = raw.icon?.assetKey ? cosmeticArtUrl(raw.icon.assetKey, publicUrl) : null;
   // visibility toggle (default on) gates rendering; access still required
-  if (raw.premiumIconEnabled !== false && raw.icon && raw.icon.assetKey && hasAccess(raw.icon, premium)) {
-    // icons are web-static: assetKey is like "icons/made-01-hinar.png"
+  if (raw.premiumIconEnabled !== false && raw.icon && raw.icon.assetKey && iconUrl && hasAccess(raw.icon, premium)) {
     icon = {
       sku: raw.icon.sku,
       assetKey: raw.icon.assetKey,
-      url: `${STATIC_BASE}/${raw.icon.assetKey}`,
+      url: iconUrl,
       giftedBy: raw.icon.giftedBy ?? null,
     };
   }

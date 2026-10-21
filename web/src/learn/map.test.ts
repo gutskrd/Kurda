@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { lessonPath } from '@kurda/shared';
 import { courseProgress, dialectName, isOpen, kurdishText, lessonStates } from './map';
 import type { CourseMap, SkillNode } from './types';
 
@@ -55,6 +56,35 @@ describe('courseProgress', () => {
     expect(courseProgress(map([[skill({ state: 'completed', lessons: [lesson('1', true)] })]])).next).toBeNull();
     expect(courseProgress(map([[skill({ state: 'locked', lessons: [lesson('1')] })]])).next).toBeNull();
     expect(courseProgress(map([])).total).toBe(0);
+  });
+});
+
+describe('the lesson path and the map', () => {
+  const map: CourseMap = {
+    course: { id: 'c', title: 'Kurmanji for Beginners' },
+    units: [
+      { unitId: 'u1', title: 'Basics', skills: [skill({ skillId: 'a', state: 'gold', lessons: [lesson('1', true), lesson('2', true)] })] },
+      {
+        unitId: 'u2',
+        title: 'Family',
+        skills: [
+          skill({ skillId: 'b', title: 'Family', lessons: [lesson('3', true), lesson('4'), lesson('5')] }),
+          skill({ skillId: 'c', state: 'locked', lessons: [lesson('6')] }),
+        ],
+      },
+    ],
+  };
+
+  it('agree on the lesson up next: the path’s current stop opens the one the Learn page offers', () => {
+    const path = lessonPath(map);
+    const current = path.units.flatMap((u) => u.stops).find((p) => p.stop.key === path.current)?.stop;
+    expect(current?.kind === 'skill' && current.launch).toBe(courseProgress(map).next?.lessonId);
+    expect(current?.kind === 'skill' && [current.lessonsDone, current.lessonsTotal]).toEqual([1, 3]);
+  });
+
+  it('agree on which lessons of a skill are open', () => {
+    const family = map.units[1]!.skills[0]!;
+    expect(lessonStates(family)).toEqual(['done', 'next', 'locked']);
   });
 });
 

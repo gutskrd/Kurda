@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { foldForSearch } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import {
   Badge,
@@ -12,8 +13,9 @@ import {
   PageHeader,
   Section,
   Select,
-  Stat,
   Table,
+  TabPanel,
+  Tabs,
   TextInput,
   Textarea,
   errorLine,
@@ -23,72 +25,32 @@ import {
   useLoad,
   useToast,
   type Column,
-  type Tone,
 } from '../ui';
+import { ArtCatalogue } from '../shop/ArtCatalogue';
+import { ArtForm } from '../shop/ArtForm';
+import { KIND_NAME } from '../shop/art';
+import { RemoveDialog, removedText } from '../shop/RemoveDialog';
+import {
+  CATEGORIES,
+  STATE,
+  categoryName,
+  isArtKind,
+  needsApproval,
+  priceText,
+  saleState,
+  type ArtKind,
+  type Currency,
+  type SaleState,
+  type ShopItem,
+} from '../shop/model';
 
-type Currency = 'zer' | 'gems';
-
-export interface ShopItem {
-  sku: string;
-  name: string;
-  description: string | null;
-  category: string;
-  currency: Currency;
-  price: number;
-  isUnique: boolean;
-  active: boolean;
-  inStock: boolean;
-  availableFrom: string | null;
-  availableTo: string | null;
-  assetKey: string | null;
-  premiumOnly: boolean;
-  displayOrder: number;
-}
-
-/** The categories POST /shop/items accepts, in words; `tag` was missing, so the Kurdish tag could not be saved. */
-export const CATEGORIES: ReadonlyArray<{ value: string; label: string }> = [
-  { value: 'background', label: 'Background' },
-  { value: 'icon', label: 'Profile icon' },
-  { value: 'cosmetic', label: 'Cosmetic' },
-  { value: 'tag', label: 'Tag' },
-  { value: 'powerup', label: 'Power-up' },
-  { value: 'freeze', label: 'Streak freeze' },
-  { value: 'misc', label: 'Other' },
-];
-
-const categoryName = (c: string): string => CATEGORIES.find((x) => x.value === c)?.label ?? c;
-
-/** The price at which a change waits for a second admin (SENSITIVE_PRICE on the server). */
-export const APPROVAL_PRICE = 1000;
+// what the page has always offered to other modules and its tests
+export { APPROVAL_PRICE, CATEGORIES, needsApproval, priceText, saleState, type SaleState, type ShopItem } from '../shop/model';
 
 const PAGE = 50;
 
-export function priceText(price: number, currency: Currency): string {
-  return price === 0 ? 'Free' : `${price.toLocaleString()} ${currency === 'gems' ? 'Gems' : 'Zêr'}`;
-}
-
-export type SaleState = 'on' | 'off' | 'scheduled' | 'ended' | 'hidden';
-
-/**
- * Whether someone can buy it now, and if not why: retired, taken off sale, or
- * outside its sale window. All four keep it out of the shop for players; the
- * badge says which, because each is undone in a different place.
- */
-export function saleState(item: Pick<ShopItem, 'active' | 'inStock' | 'availableFrom' | 'availableTo'>, now = Date.now()): SaleState {
-  if (!item.active) return 'hidden';
-  if (!item.inStock) return 'off';
-  if (item.availableFrom && Date.parse(item.availableFrom) > now) return 'scheduled';
-  if (item.availableTo && Date.parse(item.availableTo) < now) return 'ended';
-  return 'on';
-}
-
-const STATE: Record<SaleState, { text: string; tone: Tone }> = {
-  on: { text: 'On sale', tone: 'ok' },
-  off: { text: 'Off sale', tone: 'warn' },
-  scheduled: { text: 'Starts later', tone: 'info' },
-  ended: { text: 'Sale ended', tone: 'neutral' },
-  hidden: { text: 'Retired', tone: 'neutral' },
-};
+/** Everything that is not a background or an icon: the table's categories. */
+const OTHER_CATEGORIES = CATEGORIES.filter((c) => !isArtKind(c.value));
 
 function windowText(item: ShopItem): string | null {
   const from = item.availableFrom ? shortDate(new Date(item.availableFrom)) : null;
@@ -102,13 +64,20 @@ function windowText(item: ShopItem): string | null {
 /** 'listed' is everything not retired: what the shop has, or will have, on its shelves. */
 type StateFilter = 'listed' | 'all' | SaleState;
 
+type View = ArtKind | 'other';
+
 /**
  * The shop's catalogue: what is on sale, at what price, and when.
+ *
+ * Backgrounds and icons are pictures, so each has a view of its own, as cards
+ * with their art, where they are added with an uploaded picture, edited and
+ * deleted (admin/src/shop). Everything else — tags, power-ups, streak freezes
+ * — is in the table, as before.
  *
  * Prices are the server's: a purchase sends only the SKU and is refused if
  * the price moved since the player saw it, so a change here is safe the moment
  * it lands. A new price of 1,000 or more waits for a second admin (Approvals);
- * the server refuses it anywhere else, and the form says so before saving.
+ * the server refuses it anywhere else, and the forms say so before saving.
  *
  * The form used to drop an item's sale window on every edit, had no `tag`
  * category (so the Kurdish tag could not be saved), and reported problems with
@@ -116,34 +85,154 @@ type StateFilter = 'listed' | 'all' | SaleState;
  */
 export function Shop(): React.JSX.Element {
   const toast = useToast();
-  const items = useLoad(() => api<{ items: ShopItem[] }>('/admin/shop/items').then((r) => r.items), []);
+  // retired items too: the views leave them out until asked for
+  const items = useLoad(() => api<{ items: ShopItem[] }>('/admin/shop/items?retired=include').then((r) => r.items), []);
   // shop changes waiting for a second admin, so a saved-but-pending price is not a mystery
   const pending = useLoad(
     () => api<{ pending: { target: string }[] }>('/admin/config/changes').then((r) => r.pending.filter((c) => c.target === 'shop_item').length),
     [],
   );
+  const [view, setView] = useState<View>('background');
+  const [editing, setEditing] = useState<ShopItem | 'new' | null>(null);
+  const [removing, setRemoving] = useState<ShopItem | null>(null);
+
+  const all = items.data;
+  const taken = useMemo(() => new Set((all ?? []).map((i) => i.sku)), [all]);
+  const count = (v: View): number | undefined =>
+    all ? all.filter((i) => (v === 'other' ? !isArtKind(i.category) : i.category === v) && !i.retiredAt).length : undefined;
+  const reload = (): Promise<unknown> => Promise.all([items.reload(), pending.reload()]);
+  const saved = async (message: string): Promise<void> => {
+    setEditing(null);
+    toast.success(message);
+    await reload();
+  };
+  const nextOrder = (kind: ArtKind): number =>
+    Math.min(100_000, Math.max(0, ...(all ?? []).filter((i) => i.category === kind).map((i) => i.displayOrder)) + 1);
+
+  return (
+    <div>
+      <PageHeader
+        title="Shop"
+        subtitle="Backgrounds, icons and everything else on sale, at what price, and when. A price of 1,000 or more waits for a second admin."
+        actions={
+          <>
+            <Button icon="refresh" onClick={() => void reload()} disabled={items.loading}>
+              Refresh
+            </Button>
+            <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>
+              {view === 'other' ? 'New item' : `New ${KIND_NAME[view].one}`}
+            </Button>
+          </>
+        }
+      />
+
+      {(pending.data ?? 0) > 0 && (
+        <Banner tone="info" title={`${pending.data} shop ${pending.data === 1 ? 'change waits' : 'changes wait'} for a second admin`} actions={<a href="#/approvals">Open Approvals</a>}>
+          A price of 1,000 or more takes effect once another admin approves it.
+        </Banner>
+      )}
+
+      <Tabs<View>
+        label="Kind of item"
+        idBase="shop"
+        value={view}
+        onChange={(v) => {
+          setView(v);
+          setEditing(null);
+        }}
+        items={[
+          { key: 'background', label: 'Backgrounds', count: count('background') },
+          { key: 'icon', label: 'Icons', count: count('icon') },
+          { key: 'other', label: 'Other items', count: count('other') },
+        ]}
+      />
+      <TabPanel idBase="shop" value={view}>
+        {view === 'other' ? (
+          <OtherItems items={all ?? null} loading={items.loading} error={items.error} onReload={reload} onEdit={setEditing} />
+        ) : (
+          <ArtCatalogue
+            key={view}
+            kind={view}
+            items={all ?? null}
+            loading={items.loading}
+            error={items.error}
+            onRetry={() => void items.reload()}
+            onAdd={() => setEditing('new')}
+            onEdit={setEditing}
+            onRemove={setRemoving}
+          />
+        )}
+      </TabPanel>
+
+      {editing && view !== 'other' && (
+        <ArtForm
+          key={editing === 'new' ? `new-${view}` : editing.sku}
+          kind={view}
+          item={editing === 'new' ? null : editing}
+          taken={taken}
+          nextOrder={nextOrder(view)}
+          onClose={() => setEditing(null)}
+          onSaved={saved}
+        />
+      )}
+      {editing && view === 'other' && (
+        <ItemForm
+          key={editing === 'new' ? 'new' : editing.sku}
+          item={editing === 'new' ? null : editing}
+          taken={taken}
+          onClose={() => setEditing(null)}
+          onSaved={saved}
+        />
+      )}
+      {removing && (
+        <RemoveDialog
+          item={removing}
+          onClose={() => setRemoving(null)}
+          onDone={async (result) => {
+            setRemoving(null);
+            toast.success(removedText(removing.name, result));
+            await reload();
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+/**
+ * Everything that is not a picture — tags, power-ups, streak freezes — as a
+ * table: what is on sale, at what price, and inside which window.
+ */
+function OtherItems({
+  items,
+  loading,
+  error,
+  onReload,
+  onEdit,
+}: {
+  items: readonly ShopItem[] | null;
+  loading: boolean;
+  error: unknown;
+  onReload: () => Promise<unknown>;
+  onEdit: (item: ShopItem) => void;
+}): React.JSX.Element {
+  const toast = useToast();
   const [q, setQ] = useState('');
   const [category, setCategory] = useState('all');
   const [state, setState] = useState<StateFilter>('listed');
   const [page, setPage] = useState(0);
-  const [editing, setEditing] = useState<ShopItem | 'new' | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
-  const all = items.data;
-  const counts = useMemo(() => {
-    const c: Record<SaleState, number> = { on: 0, off: 0, scheduled: 0, ended: 0, hidden: 0 };
-    for (const i of all ?? []) c[saleState(i)] += 1;
-    return c;
-  }, [all]);
-
+  const all = useMemo(() => (items ? items.filter((i) => !isArtKind(i.category)) : null), [items]);
   const shown = useMemo(() => {
     if (!all) return null;
-    const words = q.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    // (Kurdish letters folded, as the shop folds them: "istikan" finds Îstîkan)
+    const words = foldForSearch(q).split(/\s+/).filter(Boolean);
     return all.filter(
       (i) =>
         (category === 'all' || i.category === category) &&
-        (state === 'all' || (state === 'listed' ? saleState(i) !== 'hidden' : saleState(i) === state)) &&
-        words.every((w) => `${i.name} ${i.sku} ${i.description ?? ''}`.toLowerCase().includes(w)),
+        (state === 'all' || (state === 'listed' ? saleState(i) !== 'retired' : saleState(i) === state)) &&
+        words.every((w) => foldForSearch(`${i.name} ${i.sku} ${i.description ?? ''}`).includes(w)),
     );
   }, [all, q, category, state]);
   const total = shown?.length ?? 0;
@@ -156,7 +245,7 @@ export function Shop(): React.JSX.Element {
     try {
       await api(`/shop/items/${encodeURIComponent(item.sku)}/stock`, { method: 'PATCH', body: { inStock: !item.inStock } });
       toast.success(item.inStock ? `“${item.name}” is off sale. Anyone who owns it keeps it.` : `“${item.name}” is on sale again.`);
-      await items.reload();
+      await onReload();
     } catch (err) {
       toast.error(errorLine(err, 'the shop'));
     } finally {
@@ -207,135 +296,81 @@ export function Shop(): React.JSX.Element {
     },
   ];
 
-
   return (
-    <div>
-      <PageHeader
-        title="Shop"
-        subtitle="What is on sale, at what price, and when. A price of 1,000 or more waits for a second admin."
-        actions={
+    <Section flush title={shown && all ? `Items (${total.toLocaleString()}${total !== all.length ? ` of ${all.length.toLocaleString()}` : ''})` : 'Items'}>
+      <div className="table-tools">
+        <div className="search-box">
+          <Icon name="search" size={16} />
+          <input
+            type="search"
+            aria-label="Search items"
+            placeholder="Search by name or SKU"
+            value={q}
+            onChange={(e) => {
+              setQ(e.target.value);
+              setPage(0);
+            }}
+          />
+        </div>
+        <select
+          aria-label="Filter by category"
+          value={category}
+          onChange={(e) => {
+            setCategory(e.target.value);
+            setPage(0);
+          }}
+        >
+          <option value="all">Every category</option>
+          {OTHER_CATEGORIES.map((c) => (
+            <option key={c.value} value={c.value}>
+              {c.label}
+            </option>
+          ))}
+        </select>
+        <select
+          aria-label="Filter by status"
+          value={state}
+          onChange={(e) => {
+            setState(e.target.value as StateFilter);
+            setPage(0);
+          }}
+        >
+          <option value="listed">All but retired</option>
+          <option value="all">Any status</option>
+          {(Object.keys(STATE) as SaleState[]).map((k) => (
+            <option key={k} value={k}>
+              {STATE[k].text}
+            </option>
+          ))}
+        </select>
+      </div>
+      <Table
+        caption="Shop items"
+        columns={columns}
+        rows={rows}
+        rowKey={(i) => i.sku}
+        loading={loading}
+        error={error}
+        onRetry={() => void onReload()}
+        what="the shop"
+        empty={all && all.length > 0 ? 'No item matches these filters.' : 'No items yet. Add one with New item.'}
+        paging={{ page: at, pageCount, onPage: setPage, total, pageSize: PAGE }}
+        actions={(i) => (
+          // Edit last, so it sits in the same place on every row
           <>
-            <Button icon="refresh" onClick={() => void Promise.all([items.reload(), pending.reload()])} disabled={items.loading}>
-              Refresh
-            </Button>
-            <Button variant="primary" icon="plus" onClick={() => setEditing('new')}>
-              New item
+            {i.active && !i.retiredAt && (
+              <Button onClick={() => void toggleSale(i)} busy={busy === i.sku}>
+                {i.inStock ? 'Take off sale' : 'Put on sale'}
+              </Button>
+            )}
+            <Button onClick={() => onEdit(i)} aria-label={`Edit “${i.name}”`}>
+              Edit
             </Button>
           </>
-        }
+        )}
       />
-
-      {(pending.data ?? 0) > 0 && (
-        <Banner tone="info" title={`${pending.data} shop ${pending.data === 1 ? 'change waits' : 'changes wait'} for a second admin`} actions={<a href="#/approvals">Open Approvals</a>}>
-          A price of 1,000 or more takes effect once another admin approves it.
-        </Banner>
-      )}
-
-      <div className="stats">
-        <Stat icon="store" label="On sale" value={all ? counts.on.toLocaleString() : '…'} />
-        <Stat label="Off sale" value={all ? counts.off.toLocaleString() : '…'} hint="Taken out for now" />
-        <Stat label="Outside their window" value={all ? (counts.scheduled + counts.ended).toLocaleString() : '…'} hint="Not started, or ended" />
-        <Stat label="Retired" value={all ? counts.hidden.toLocaleString() : '…'} />
-      </div>
-
-      <Section flush title={shown && all ? `Items (${total.toLocaleString()}${total !== all.length ? ` of ${all.length.toLocaleString()}` : ''})` : 'Items'}>
-        <div className="table-tools">
-          <div className="search-box">
-            <Icon name="search" size={16} />
-            <input
-              type="search"
-              aria-label="Search items"
-              placeholder="Search by name or SKU"
-              value={q}
-              onChange={(e) => {
-                setQ(e.target.value);
-                setPage(0);
-              }}
-            />
-          </div>
-          <select
-            aria-label="Filter by category"
-            value={category}
-            onChange={(e) => {
-              setCategory(e.target.value);
-              setPage(0);
-            }}
-          >
-            <option value="all">Every category</option>
-            {CATEGORIES.map((c) => (
-              <option key={c.value} value={c.value}>
-                {c.label}
-              </option>
-            ))}
-          </select>
-          <select
-            aria-label="Filter by status"
-            value={state}
-            onChange={(e) => {
-              setState(e.target.value as StateFilter);
-              setPage(0);
-            }}
-          >
-            <option value="listed">Listed (not retired)</option>
-            <option value="all">Any status</option>
-            {(Object.keys(STATE) as SaleState[]).map((k) => (
-              <option key={k} value={k}>
-                {STATE[k].text}
-              </option>
-            ))}
-          </select>
-        </div>
-        <Table
-          caption="Shop items"
-          columns={columns}
-          rows={rows}
-          rowKey={(i) => i.sku}
-          loading={items.loading}
-          error={items.error}
-          onRetry={() => void items.reload()}
-          what="the shop"
-          empty={all && all.length > 0 ? 'No item matches these filters.' : 'No items yet. Add one with New item.'}
-          paging={{ page: at, pageCount, onPage: setPage, total, pageSize: PAGE }}
-          actions={(i) => (
-            // Edit last, so it sits in the same place on every row
-            <>
-              {i.active && (
-                <Button onClick={() => void toggleSale(i)} busy={busy === i.sku}>
-                  {i.inStock ? 'Take off sale' : 'Put on sale'}
-                </Button>
-              )}
-              <Button onClick={() => setEditing(i)} aria-label={`Edit “${i.name}”`}>
-                Edit
-              </Button>
-            </>
-          )}
-        />
-      </Section>
-
-      {editing && (
-        <ItemForm
-          key={editing === 'new' ? 'new' : editing.sku}
-          item={editing === 'new' ? null : editing}
-          taken={new Set((all ?? []).map((i) => i.sku))}
-          onClose={() => setEditing(null)}
-          onSaved={async (message) => {
-            setEditing(null);
-            toast.success(message);
-            await Promise.all([items.reload(), pending.reload()]);
-          }}
-        />
-      )}
-    </div>
+    </Section>
   );
-}
-
-/**
- * Whether saving this goes to a second admin: a price (or currency) that is new
- * and at or over the line. The rest of a dear item saves at once.
- */
-export function needsApproval(before: Pick<ShopItem, 'price' | 'currency'> | null, price: number, currency: Currency): boolean {
-  if (price < APPROVAL_PRICE) return false;
-  return !before || before.price !== price || before.currency !== currency;
 }
 
 /**
@@ -357,7 +392,7 @@ function ItemForm({
   const [sku, setSku] = useState(item?.sku ?? '');
   const [name, setName] = useState(item?.name ?? '');
   const [description, setDescription] = useState(item?.description ?? '');
-  const [category, setCategory] = useState(item?.category ?? 'background');
+  const [category, setCategory] = useState(item?.category ?? 'cosmetic');
   const [currency, setCurrency] = useState<Currency>(item?.currency ?? 'zer');
   const [price, setPrice] = useState(String(item?.price ?? 0));
   const [from, setFrom] = useState(item?.availableFrom ? toLocalInput(item.availableFrom) : '');
@@ -376,8 +411,9 @@ function ItemForm({
   const [serverSaysDear, setServerSaysDear] = useState(false);
   const value = Number(price);
   const dear = serverSaysDear || (price !== '' && Number.isInteger(value) && needsApproval(item, value, currency));
-  // the categories the server accepts, plus one an older item may carry
-  const categories = CATEGORIES.some((c) => c.value === category) ? CATEGORIES : [...CATEGORIES, { value: category, label: category }];
+  // the categories the server accepts, but for backgrounds and icons, which are added with a picture in their own
+  // views; plus one an older item may carry
+  const categories = OTHER_CATEGORIES.some((c) => c.value === category) ? OTHER_CATEGORIES : [...OTHER_CATEGORIES, { value: category, label: categoryName(category) }];
 
   function check(): Record<string, string> {
     const e: Record<string, string> = {};
@@ -519,7 +555,7 @@ function ItemForm({
         <Checkbox label="On sale" hint="Off takes it out of the shop for now. Anyone who owns it keeps it." checked={inStock} onChange={setInStock} />
         <Checkbox label="One per person" hint="Someone who owns it no longer sees it in the shop." checked={isUnique} onChange={setIsUnique} />
         <Checkbox label="Included with Premium" hint="Anyone with Premium can use it without buying it, while it is listed." checked={premiumOnly} onChange={setPremiumOnly} />
-        <Checkbox label="Listed" hint="Off retires it: it leaves the shop and Premium stops lending it. Anyone who bought it keeps it." checked={active} onChange={setActive} />
+        <Checkbox label="Listed" hint="Off hides it: it leaves the shop and Premium stops lending it. Anyone who bought it keeps it." checked={active} onChange={setActive} />
         {problem && (
           <p className="field-error" role="alert">
             {problem}

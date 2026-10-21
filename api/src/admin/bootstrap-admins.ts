@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { AuditService } from './audit-service.js';
+import { maskEmail } from '../observability/redact.js';
 
 /**
  * Bootstrap admin grants (BOOTSTRAP_ADMIN_EMAILS).
@@ -98,12 +99,12 @@ export async function grantBootstrapAdmins(
 
     if (!user) {
       result.missing.push(email);
-      log.info({ email }, 'bootstrap admin: no account with this address yet — will retry on next start');
+      log.info({ address: maskEmail(email) }, 'bootstrap admin: no account with this address yet — will retry on next start');
       continue;
     }
     if (user.deleted_at || user.banned_at) {
       result.skipped.push(email);
-      log.warn({ email, userId: user.id }, 'bootstrap admin: account is deleted or banned — not granting');
+      log.warn({ address: maskEmail(email), userId: user.id }, 'bootstrap admin: account is deleted or banned — not granting');
       continue;
     }
     // The security boundary: the address alone proves nothing, confirming it does.
@@ -136,7 +137,7 @@ export async function grantBootstrapAdmins(
         // raced with a delete/ban/unverify between the read and the write
         await client.query('ROLLBACK');
         result.skipped.push(email);
-        log.warn({ email, userId: user.id }, 'bootstrap admin: account changed during grant — skipped');
+        log.warn({ address: maskEmail(email), userId: user.id }, 'bootstrap admin: account changed during grant — skipped');
         continue;
       }
       await audit.record(client, {
@@ -150,10 +151,10 @@ export async function grantBootstrapAdmins(
       });
       await client.query('COMMIT');
       result.granted.push(email);
-      log.info({ email, userId: user.id, roles: updated.rows[0]!.roles }, 'bootstrap admin: granted');
+      log.info({ address: maskEmail(email), userId: user.id, roles: updated.rows[0]!.roles }, 'bootstrap admin: granted');
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
-      log.warn({ err, email }, 'bootstrap admin: grant failed');
+      log.warn({ err, address: maskEmail(email) }, 'bootstrap admin: grant failed');
     } finally {
       client.release();
     }

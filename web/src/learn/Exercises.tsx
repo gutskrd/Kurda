@@ -8,6 +8,7 @@ import { useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
 import { TextAnswer } from './TextAnswer';
+import { ExerciseVoice, exerciseClips } from './Voice';
 
 /** What every exercise is given by the player. */
 export interface ExerciseProps {
@@ -23,6 +24,11 @@ export interface ExerciseProps {
   onAnswer: (answer: unknown, given?: string) => void;
   /** put this one off: not answered, not a mistake ("can't listen now") */
   onSkip: () => void;
+}
+
+/** How an answer was graded, for the part it was given with to answer back. */
+function verdictOf(feedback: Feedback | null): 'right' | 'wrong' | null {
+  return feedback ? (feedback.accepted ? 'right' : 'wrong') : null;
 }
 
 /**
@@ -107,11 +113,14 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.mc.ask')}</Ask>
-      <Prompt text={exercise.prompt} />
-      <Model exercise={exercise} />
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <Prompt text={exercise.prompt} />
+        <Model exercise={exercise} />
+      </ExerciseVoice>
       <div className="lesson-options" role="group" aria-label={t('lesson.mc.options')}>
         {options.map((option, i) => {
-          const state = !locked ? '' : right(i) ? ' is-right' : i === chosen ? ' is-wrong' : ' is-dim';
+          // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
+          const state = (!locked ? '' : right(i) ? ' is-right' : i === chosen ? ' is-wrong' : ' is-dim') + (locked && i === chosen ? ' is-chosen' : '');
           const clip = exercise.audio?.[option];
           return (
             <div className="lesson-option-row" key={`${i}:${option}`}>
@@ -148,18 +157,21 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
 // ---------- translate and writing ----------
 
 /** Translate into Kurdish, or write a sentence: a typed answer with the key bar. */
-export function TypedExercise({ exercise, dialect, locked, busy, onAnswer }: ExerciseProps): React.JSX.Element {
+export function TypedExercise({ exercise, dialect, locked, busy, feedback, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{exercise.type === 'writing' ? t('lesson.write.ask') : t('lesson.translate.ask')}</Ask>
-      <Prompt text={exercise.prompt} />
-      <Model exercise={exercise} />
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <Prompt text={exercise.prompt} />
+        <Model exercise={exercise} />
+      </ExerciseVoice>
       <TextAnswer
         label={exercise.type === 'writing' ? t('lesson.write.label') : t('lesson.translate.label')}
         dialect={dialect}
         locked={locked}
         busy={busy}
+        verdict={verdictOf(feedback)}
         onAnswer={onAnswer}
       />
     </div>
@@ -174,7 +186,7 @@ export function TypedExercise({ exercise, dialect, locked, busy, onAnswer }: Exe
  * An item with no recording at all cannot be done, so it is put off by
  * itself, once.
  */
-export function Listening({ exercise, dialect, locked, busy, onAnswer, onSkip }: ExerciseProps): React.JSX.Element | null {
+export function Listening({ exercise, dialect, locked, busy, feedback, onAnswer, onSkip }: ExerciseProps): React.JSX.Element | null {
   const t = useT();
   const src = exercise.audioUrl;
   const [played, setPlayed] = useState(false);
@@ -202,12 +214,14 @@ export function Listening({ exercise, dialect, locked, busy, onAnswer, onSkip }:
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{t('lesson.listen.ask')}</Ask>
-      <div className="lesson-listen">
-        <PlayButton src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} primary />
-        <PlayButton src={src} rate={0.75} label={t('lesson.listen.slow')} />
-      </div>
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <div className="lesson-listen">
+          <PlayButton src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} primary />
+          <PlayButton src={src} rate={0.75} label={t('lesson.listen.slow')} />
+        </div>
+      </ExerciseVoice>
       <Prompt text={exercise.prompt} />
-      <TextAnswer label={t('lesson.listen.label')} dialect={dialect} locked={locked} busy={busy} onAnswer={onAnswer} />
+      <TextAnswer label={t('lesson.listen.label')} dialect={dialect} locked={locked} busy={busy} verdict={verdictOf(feedback)} onAnswer={onAnswer} />
       {!locked && (
         <button type="button" className="link-btn lesson-skip" onClick={onSkip} disabled={busy}>
           {t('lesson.listen.skip')}
@@ -225,7 +239,7 @@ export function Listening({ exercise, dialect, locked, busy, onAnswer, onSkip }:
  * either card again to undo it. A Kurdish card with a recording plays it when
  * it is tapped — hearing the word as it is chosen.
  */
-export function MatchPairs({ exercise, dialect, locked, busy, onAnswer }: ExerciseProps): React.JSX.Element {
+export function MatchPairs({ exercise, dialect, locked, busy, feedback, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   const lefts = exercise.lefts ?? [];
   const rights = exercise.rights ?? [];
@@ -274,8 +288,10 @@ export function MatchPairs({ exercise, dialect, locked, busy, onAnswer }: Exerci
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.match.ask')}</Ask>
-      <p className="lesson-hint">{t('lesson.match.how')}</p>
-      <div className="lesson-match">
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <p className="lesson-hint">{t('lesson.match.how')}</p>
+      </ExerciseVoice>
+      <div className={`lesson-match${verdictOf(feedback) ? ` is-${verdictOf(feedback)}` : ''}`}>
         <div className="lesson-match-col" role="group" aria-label={t('lesson.match.kurdish')}>
           {lefts.map((l) => card('left', l))}
         </div>

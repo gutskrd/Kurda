@@ -41,6 +41,16 @@ export function networkHash(ip: string): string {
 }
 
 /**
+ * A network as account linking, the signup caps and the network sightings
+ * store it: the keyed hash of `networkKey` (net/network-key.ts), never the
+ * address. Plain hashes of IPv4 addresses are not a minimisation at all — there
+ * are only 2^32 of them to try.
+ */
+export function networkKeyHash(key: string): string {
+  return keyed('network-v2', key);
+}
+
+/**
  * An email as the ban registry compares it: lower-cased and trimmed, without a
  * `+tag`, and for Gmail without the dots Gmail ignores — the cheap tricks for
  * making "a new address" that delivers to the same inbox.

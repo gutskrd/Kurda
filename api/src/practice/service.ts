@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import type { RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
@@ -31,10 +32,13 @@ export interface PracticeExercise {
   options?: string[];
   lefts?: string[];
   rights?: string[];
-  /** native recordings from the audio studio, where there are any */
+  /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
   audioUrl?: string;
+  audioVoice?: RecordingVoice;
   modelAudioUrl?: string;
+  modelAudioVoice?: RecordingVoice;
   audio?: Record<string, string>;
+  audioVoices?: Record<string, RecordingVoice>;
   /**
    * The variety of Kurdish of the item's course. A review mixes courses, so
    * each item says its own, and a client offers the letters it is typed in.
@@ -69,6 +73,8 @@ export interface PracticeAnswerResult {
   correction?: string;
   /** the native recording of the item's Kurdish, now that it is answered (as AnswerResult) */
   modelAudioUrl?: string;
+  /** who says `modelAudioUrl`, when a character is chosen for it */
+  modelAudioVoice?: RecordingVoice;
   duplicate: boolean;
 }
 
@@ -346,8 +352,7 @@ export class PracticeService {
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
     const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
-    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
-    const heard = modelAudioUrl ? { modelAudioUrl } : {};
+    const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
 
     const client = await this.pool.connect();
     try {
@@ -411,12 +416,12 @@ export class PracticeService {
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
     const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
-    const modelAudioUrl = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
+    const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
     return {
       verdict: result.verdict,
       accepted: result.accepted,
       correction: result.correction,
-      ...(modelAudioUrl ? { modelAudioUrl } : {}),
+      ...heard,
     };
   }
 

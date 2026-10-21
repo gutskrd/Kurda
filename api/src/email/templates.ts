@@ -17,6 +17,8 @@ export const EMAIL_TEMPLATES = [
   'copyright-upheld',
   'copyright-kept',
   'copyright-counter-notice',
+  'new-sign-in',
+  'sign-in-attempts',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -182,6 +184,31 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
       subject: 'Bersiveke dijber ji agahdariya te ya mafê nivîskariyê re ({reference})',
       text:
         'Kesê ku naveroka di {reference} de şandibû bersiveke dijber şand. Ew dibêje ku ew bi şaşî hat rakirin an jî şaş hat naskirin. Bersiva wî/wê, wek ku hatiye şandin:\n\nNav: {name}\nNavnîşan: {address}\nTelefon: {phone}\nE-name: {email}\n\nDaxuyanî:\n{statement}\n\nEw di bin cezaya derewê de dibêje ku bi baweriya baş naverok bi şaşî hat rakirin, ku ew dadgehên ku 17 U.S.C. §512(g)(3)(D) bi nav dike qebûl dike, û ku ew ê belgeyên dadgehê ji te qebûl bike. Îmze: {signature}\n\nHeke tu berî {restoreDate} li {contact} ji me re nebêjî ku te dozek vekiriye, dibe ku em naverokê vegerînin.\n\n— Hevalo',
+    },
+  },
+  /*
+   * Security notices. Plain text, and nothing in them the person signing in
+   * chose (not the device's name): whoever did it may not be the owner, and
+   * this lands in the owner's inbox.
+   */
+  'new-sign-in': {
+    en: {
+      subject: 'New sign-in to your Hevalo account',
+      text: 'Hello {username},\n\nYour Hevalo account was just signed in to from a device it has not been used on before ({time}).\n\nIf this was you, there is nothing to do.\n\nIf it was not, reset your password now (choose “Forgot password” on the sign-in screen): that signs every device out.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Têketineke nû li hesabê te yê Hevalo',
+      text: 'Silav {username},\n\nNiha ji amûreke ku berê qet bi hesabê te yê Hevalo re nehatibû bikaranîn têketin hate kirin ({time}).\n\nHeke ev tu bûyî, tiştek nayê kirin.\n\nHeke ne tu bûyî, niha şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfre ji bîr kir” hilbijêre): bi vî awayî hemû amûr ji hesabê derdikevin.\n\n— Tîma Hevalo',
+    },
+  },
+  'sign-in-attempts': {
+    en: {
+      subject: 'Many failed sign-ins to your Hevalo account',
+      text: 'Hello {username},\n\nSomeone has tried several wrong passwords for your Hevalo account, so we have paused sign-ins from new devices for a while ({time}). Devices you already use are not affected.\n\nIf this was you, wait a little or reset your password (choose “Forgot password” on the sign-in screen).\n\nIf it was not, your password has not been changed, but choosing a new, unique one is a good idea.\n\n— The Hevalo team',
+    },
+    ku: {
+      subject: 'Gelek hewldanên têketinê yên têkçûyî li hesabê te yê Hevalo',
+      text: 'Silav {username},\n\nKesekî ji bo hesabê te yê Hevalo çend şîfreyên şaş ceribandine, ji ber vê yekê me ji bo demekê têketinên ji amûrên nû rawestandin ({time}). Amûrên ku tu jixwe bikar tînî bandor nabin.\n\nHeke ev tu bûyî, hinekî bisekine an şîfreya xwe ji nû ve saz bike (li ser rûpela têketinê “Şîfre ji bîr kir” hilbijêre).\n\nHeke ne tu bûyî, şîfreya te nehatiye guhertin, lê hilbijartina şîfreyeke nû û yekta baş e.\n\n— Tîma Hevalo',
     },
   },
   'deletion-notice': {

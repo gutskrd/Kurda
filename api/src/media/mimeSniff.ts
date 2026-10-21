@@ -119,3 +119,22 @@ export function sniffAudioType(bytes: Uint8Array): SniffedAudioType | null {
   if (startsWith(bytes, RIFF) && startsWith(bytes, WAVE, 8)) return 'audio/wav';
   return null;
 }
+
+/** What a recording may be played back as, beyond what may be uploaded. */
+export type SniffedPlayableAudioType = SniffedAudioType | 'audio/ogg' | 'audio/flac';
+
+const OGG = [0x4f, 0x67, 0x67, 0x53]; // "OggS"
+const FLAC = [0x66, 0x4c, 0x61, 0x43]; // "fLaC"
+
+/**
+ * Audio type by magic bytes, for a recording that is only read back, never
+ * stored: the upload types, and the Ogg and FLAC files pronunciations from
+ * other sites come in. Uploads keep `sniffAudioType`, which accepts neither.
+ */
+export function sniffPlayableAudioType(bytes: Uint8Array): SniffedPlayableAudioType | null {
+  const uploaded = sniffAudioType(bytes);
+  if (uploaded) return uploaded;
+  if (startsWith(bytes, OGG)) return 'audio/ogg';
+  if (startsWith(bytes, FLAC)) return 'audio/flac';
+  return null;
+}

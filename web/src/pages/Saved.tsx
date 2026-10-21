@@ -8,6 +8,7 @@ import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
 import { useT } from '../i18n/I18nProvider';
 import { BookmarkIcon } from '../components/icons';
+import { useArrival } from '../lib/motion';
 
 const PAGE = 20;
 
@@ -22,6 +23,7 @@ export function Saved(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
   const [items, setItems] = useState<FeedItem[] | null>(null);
+  const arriving = useArrival(!!items && items.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
 
@@ -61,7 +63,7 @@ export function Saved(): React.JSX.Element {
   return (
     <div className="container container-feed">
       <div className="page-header">
-        <span className="eyebrow">{t('saved.eyebrow')}</span>
+        <span className="eyebrow">{t('nav.profile')}</span>
         <h1 className="page-title">{t('saved.title')}</h1>
         <p className="page-sub">{t('saved.subtitle')}</p>
       </div>
@@ -81,7 +83,8 @@ export function Saved(): React.JSX.Element {
         </div>
       ) : (
         <>
-          <div className="feed">
+          {/* the first screenful rises in once, as the wall arrives (styles/motion.css) */}
+          <div className={arriving ? 'feed rise-in' : 'feed'}>
             {items.map((item) => (
               <FeedCard key={item.key} item={item} onChanged={changed} onRemoved={(gone) => changed({ ...gone, engagement: { ...gone.engagement, bookmarked: false } })} />
             ))}

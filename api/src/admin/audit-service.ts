@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { escapeLike } from '../db/like.js';
 
 /** A pg executor: the pool (own transaction) or a client (caller's transaction). */
 export interface Executor {
@@ -82,7 +83,7 @@ export class AuditService {
       clauses.push(`a.admin_id = $${params.length}`);
     }
     if (filters.action) {
-      params.push(`${filters.action}%`);
+      params.push(`${escapeLike(filters.action)}%`);
       clauses.push(`a.action LIKE $${params.length}`);
     }
     if (filters.targetId) {

@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import {
   HELPLINE_URL,
@@ -125,7 +126,7 @@ export function ReportSheet({
   const title = name ? t('report.title.named', { name }) : t(TITLE[target.type]);
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable
           style={[styles.backdrop, { backgroundColor: colors.scrim }]}
@@ -133,7 +134,7 @@ export function ReportSheet({
           accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
           <View style={[styles.header, { flexDirection: dir.row }]}>
             <Icon name="flag" size={18} color={colors.textSecondary} />
@@ -182,7 +183,7 @@ export function ReportSheet({
               />
             ) : null}
           </ScrollView>
-        </View>
+        </SheetIn>
       </KeyboardAvoidingView>
     </Modal>
   );

@@ -23,7 +23,7 @@
   border: 1px solid var(--border);
   /* the front page's post: one card, a rim of light, the writing set in the serif */
   border-radius: 18px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   overflow: hidden;
 }
@@ -71,21 +71,18 @@
   color: var(--ink-4);
   font-size: 0.76rem;
 }
-/* the badge says what kind of post this is, since the wall mixes them */
+/* the badge says what kind of post this is, since the wall mixes them — every
+   kind in the same quiet ink: a poem is not a reward, and gold is kept for those */
 .fcard-kind {
   flex: none;
   padding: 3px 9px;
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
   color: var(--ink-3);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-}
-.fcard-kind-poem {
-  color: var(--gold-ink);
-  border-color: rgba(240, 194, 74, 0.3);
 }
 
 /* ---- the post itself ---------------------------------------------------- */
@@ -134,7 +131,7 @@
   align-items: center;
   gap: 4px;
   padding: 4px 10px 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.05);
+  border-top: 1px solid var(--separator);
 }
 .fcard-act {
   display: inline-flex;
@@ -153,7 +150,7 @@
 }
 .fcard-act:hover:not(:disabled) {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .fcard-act:disabled {
   cursor: default;
@@ -163,11 +160,11 @@
   margin-left: auto;
 }
 .fcard-like.is-on {
-  color: #ff8fa3;
+  color: var(--like);
 }
 .fcard-like.is-on:hover:not(:disabled) {
-  background: rgba(255, 143, 163, 0.12);
-  color: #ff8fa3;
+  background: color-mix(in srgb, var(--like) 12%, transparent);
+  color: var(--like);
 }
 /*
  * Reposted, in green.
@@ -190,10 +187,10 @@
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
-/* the fill lands rather than appears, so a tap feels answered */
-.fcard-like.is-on svg,
-.fcard-repost.is-on svg,
-.fcard-save.is-on svg {
+/* the fill lands rather than appears, so a tap feels answered — a tap here, not a page that loaded liked */
+.fcard-like.just-on.is-on svg,
+.fcard-repost.just-on.is-on svg,
+.fcard-save.just-on.is-on svg {
   animation: fcard-pop 0.28s cubic-bezier(0.2, 1.5, 0.4, 1);
 }
 @keyframes fcard-pop {
@@ -202,8 +199,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .fcard-like.is-on svg,
-  .fcard-save.is-on svg {
+  .fcard-act.just-on.is-on svg {
     animation: none;
   }
 }

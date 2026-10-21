@@ -547,10 +547,14 @@ async function ferheng(assets: Response, url: URL, env: Env, base: string): Prom
   // the 404 of the language whose path was asked for, so a reader who typed a
   // dead /dictionary/ address is not answered in Kurmancî
   const page = await env.ASSETS.fetch(new Request(new URL(`${base}/404.html`, url.origin).toString()));
-  return new Response(page.body, {
-    status: 404,
-    headers: { 'content-type': 'text/html; charset=utf-8' },
-  });
+  // A response made here gets none of `_headers` on the way out, so the
+  // dictionary's policy (CSP, framing, nosniff…) is carried over from what the
+  // asset binding answered for this address. Not its caching or validators,
+  // which described the shell and not this page.
+  const headers = new Headers(assets.headers);
+  for (const name of ['cache-control', 'etag', 'last-modified', 'content-length']) headers.delete(name);
+  headers.set('content-type', 'text/html; charset=utf-8');
+  return new Response(page.body, { status: 404, headers });
 }
 
 export default {

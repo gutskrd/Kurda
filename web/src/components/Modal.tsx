@@ -1,10 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { CloseIcon } from './icons';
+import { wrapTab } from './Sheet';
 import { useT } from '../i18n/I18nProvider';
 
 /**
- * Accessible modal dialog: closes on Escape / backdrop click, traps initial
- * focus, restores focus on close, and locks body scroll while open.
+ * Accessible modal dialog: closes on Escape / backdrop click, takes the focus
+ * when it opens and keeps it (Tab and Shift+Tab wrap round inside, as they do
+ * in a Sheet — a dialog that lets the keyboard walk out into the page under
+ * its backdrop has lost its reader), restores focus on close, and locks body
+ * scroll while open.
  */
 export function Modal({
   open,
@@ -37,6 +41,7 @@ export function Modal({
 
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') closeRef.current();
+      else if (panelRef.current) wrapTab(e, panelRef.current);
     };
     document.addEventListener('keydown', onKey);
     return () => {

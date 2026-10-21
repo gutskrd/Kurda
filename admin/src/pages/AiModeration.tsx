@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useState } from 'react';
+import { api } from '../api';
+import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, useLoad, useToast, type Column, type Tone } from '../ui';
 
 interface TextFlag {
   id: string;
@@ -28,220 +29,161 @@ interface ImageFlag {
 }
 
 type Outcome = 'actioned' | 'reversed';
+type Kind = 'flags' | 'image-flags';
 
 function short(id: string | null): string {
   return id ? id.slice(0, 8) : '—';
 }
-function fmt(d: string): string {
-  return new Date(d).toLocaleString();
-}
 /** Auto-actions above `allow` show as amber; hard blocks as red. */
-function actionCls(action: string): string {
-  if (action === 'auto_hide' || action === 'block' || action === 'reject') return 'hi';
-  return 'mid';
+function actionTone(action: string): Tone {
+  if (action === 'auto_hide' || action === 'block' || action === 'reject') return 'bad';
+  return 'warn';
 }
+const percent = (score: number): string => `${Math.round(score * 100)}%`;
 
-/** Automated-moderation review (KUR-293 text + KUR-294 image): uphold / overturn. */
+/**
+ * Automated-moderation review (KUR-293 text + KUR-294 image): uphold or
+ * overturn what the automatic checks did. On the kit's tables, so a flag is a
+ * card on a phone rather than a row scrolled half off the screen, its buttons
+ * last and out of sight.
+ */
 export function AiModeration(): React.JSX.Element {
-  const [text, setText] = useState<TextFlag[]>([]);
-  const [images, setImages] = useState<ImageFlag[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [t, i] = await Promise.all([
-        api<{ flags: TextFlag[] }>('/admin/moderation/flags'),
-        api<{ flags: ImageFlag[] }>('/admin/moderation/image-flags'),
-      ]);
-      setText(t.flags);
-      setImages(i.flags);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load the moderation feed');
-    } finally {
-      setLoading(false);
-    }
+  const toast = useToast();
+  const feed = useLoad(async () => {
+    const [text, images] = await Promise.all([
+      api<{ flags: TextFlag[] }>('/admin/moderation/flags'),
+      api<{ flags: ImageFlag[] }>('/admin/moderation/image-flags'),
+    ]);
+    return { text: text.flags, images: images.flags };
   }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const [busy, setBusy] = useState<string | null>(null);
 
-  async function resolve(kind: 'flags' | 'image-flags', id: string, outcome: Outcome): Promise<void> {
+  async function resolve(kind: Kind, id: string, outcome: Outcome): Promise<void> {
     setBusy(id);
-    setMsg(null);
     try {
       await api(`/admin/moderation/${kind}/${id}/resolve`, { method: 'POST', body: { outcome } });
-      setMsg(outcome === 'actioned' ? `Upheld the auto-action on ${short(id)}.` : `Overturned ${short(id)} as a false positive.`);
-      await load();
+      toast.success(outcome === 'actioned' ? `Upheld the automatic action on ${short(id)}.` : `Overturned ${short(id)} as a false positive.`);
+      await feed.reload();
     } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Failed');
+      toast.error(errorLine(err, 'automated flags'));
     } finally {
       setBusy(null);
     }
   }
 
+  const textColumns: Column<TextFlag>[] = [
+    { key: 'surface', header: 'Surface', card: 'title', cell: (f) => <strong>{f.surface}</strong> },
+    { key: 'type', header: 'Type', cell: (f) => f.contentType },
+    { key: 'author', header: 'Author', cell: (f) => (f.authorId ? <UserLink user={{ id: f.authorId, username: null }} /> : <span className="subtle">—</span>) },
+    { key: 'action', header: 'Action', cell: (f) => <Badge tone={actionTone(f.action)}>{f.action}</Badge> },
+    {
+      key: 'category',
+      header: 'Top category',
+      cell: (f) =>
+        f.topCategory ? (
+          <>
+            {f.topCategory} <span className="subtle">({percent(f.topScore)})</span>
+          </>
+        ) : (
+          <span className="subtle">—</span>
+        ),
+    },
+    { key: 'when', header: 'Opened', sort: (a, b) => a.createdAt.localeCompare(b.createdAt), cell: (f) => <Time value={f.createdAt} /> },
+  ];
+
+  const imageColumns: Column<ImageFlag>[] = [
+    { key: 'media', header: 'Media', card: 'title', cell: (f) => <code className="strong-code">{short(f.mediaKey)}</code> },
+    { key: 'surface', header: 'Surface', cell: (f) => f.surface },
+    {
+      key: 'action',
+      header: 'Action',
+      cell: (f) => (
+        <>
+          <span className="badges">
+            <Badge tone={actionTone(f.action)}>{f.action}</Badge>
+            {f.csamMatch && <Badge tone="bad">CSAM</Badge>}
+          </span>
+          {/* said on the row rather than in a tooltip on the disabled button, which a finger never brings up */}
+          {f.preserveEvidence && <span className="cell-sub">Evidence is kept: it can be upheld, not overturned.</span>}
+        </>
+      ),
+    },
+    {
+      key: 'reasons',
+      header: 'Reasons',
+      cell: (f) => (
+        <span className="badges">
+          {f.reasons.map((r) => (
+            <Badge key={r}>{r}</Badge>
+          ))}
+        </span>
+      ),
+    },
+    { key: 'scores', header: 'Scores', cell: (f) => `nudity ${percent(f.nsfwScore)} · violence ${percent(f.violenceScore)}` },
+    { key: 'when', header: 'Opened', sort: (a, b) => a.createdAt.localeCompare(b.createdAt), cell: (f) => <Time value={f.createdAt} /> },
+  ];
+
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>AI Moderation</h1>
-          <div className="subtle">Automated text &amp; image flags awaiting a moderator</div>
-        </div>
-        <div className="spacer" />
-        <button onClick={() => void load()} disabled={loading}>
-          Refresh
-        </button>
-      </div>
-
-      {msg && <div className={msg.startsWith('❌') ? 'error' : 'subtle'} style={{ marginBottom: 12 }}>{msg}</div>}
-      {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
-
-      {loading ? (
-        <div className="card empty">Loading…</div>
-      ) : (
-        <>
-          <div className="card" style={{ padding: 0, marginBottom: 16 }}>
-            <div className="section-title" style={{ margin: '14px 16px 8px' }}>
-              Text flags ({text.length})
-            </div>
-            {text.length === 0 ? (
-              <div className="empty">No pending text flags.</div>
-            ) : (
-              <div className="tablewrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Surface</th>
-                      <th>Type</th>
-                      <th>Author</th>
-                      <th>Action</th>
-                      <th>Top category</th>
-                      <th>Opened</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {text.map((f) => (
-                      <tr key={f.id}>
-                        <td>{f.surface}</td>
-                        <td className="subtle">{f.contentType}</td>
-                        <td>
-                          <code title={f.authorId ?? ''}>{short(f.authorId)}</code>
-                        </td>
-                        <td>
-                          <span className={`badge ${actionCls(f.action)}`}>{f.action}</span>
-                        </td>
-                        <td>
-                          {f.topCategory ? (
-                            <>
-                              {f.topCategory} <span className="subtle">({Math.round(f.topScore * 100)}%)</span>
-                            </>
-                          ) : (
-                            '—'
-                          )}
-                        </td>
-                        <td className="subtle" style={{ whiteSpace: 'nowrap' }}>{fmt(f.createdAt)}</td>
-                        <td>
-                          <ResolveButtons busy={busy === f.id} onResolve={(o) => resolve('flags', f.id, o)} />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-
-          <div className="card" style={{ padding: 0 }}>
-            <div className="section-title" style={{ margin: '14px 16px 8px' }}>
-              Image flags ({images.length})
-            </div>
-            {images.length === 0 ? (
-              <div className="empty">No pending image flags.</div>
-            ) : (
-              <div className="tablewrap">
-                <table>
-                  <thead>
-                    <tr>
-                      <th>Media</th>
-                      <th>Surface</th>
-                      <th>Action</th>
-                      <th>Reasons</th>
-                      <th>Scores</th>
-                      <th>Opened</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {images.map((f) => (
-                      <tr key={f.id}>
-                        <td>
-                          <code title={f.mediaKey}>{short(f.mediaKey)}</code>
-                        </td>
-                        <td className="subtle">{f.surface}</td>
-                        <td>
-                          <span className={`badge ${actionCls(f.action)}`}>{f.action}</span>
-                          {f.csamMatch && <span className="badge hi" style={{ marginLeft: 4 }}>CSAM</span>}
-                        </td>
-                        <td>
-                          <div className="row" style={{ gap: 4, flexWrap: 'wrap' }}>
-                            {f.reasons.map((r) => (
-                              <span key={r} className="badge">
-                                {r}
-                              </span>
-                            ))}
-                          </div>
-                        </td>
-                        <td className="subtle" style={{ whiteSpace: 'nowrap' }}>
-                          nsfw {Math.round(f.nsfwScore * 100)}% · viol {Math.round(f.violenceScore * 100)}%
-                        </td>
-                        <td className="subtle" style={{ whiteSpace: 'nowrap' }}>{fmt(f.createdAt)}</td>
-                        <td>
-                          <ResolveButtons
-                            busy={busy === f.id}
-                            // a preserved-evidence CSAM flag can only be actioned, never overturned
-                            noReverse={f.preserveEvidence}
-                            onResolve={(o) => resolve('image-flags', f.id, o)}
-                          />
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </div>
-        </>
-      )}
+      <PageHeader
+        title="Automated flags"
+        subtitle="What the automatic text and picture checks held or hid, waiting for a moderator to uphold it or overturn it."
+        actions={
+          <Button icon="refresh" onClick={() => void feed.reload()} busy={feed.loading && !!feed.data}>
+            Refresh
+          </Button>
+        }
+      />
+      <Section title={`Text flags${feed.data ? ` (${feed.data.text.length})` : ''}`} flush>
+        <Table
+          caption="Text flags"
+          columns={textColumns}
+          rows={feed.data?.text ?? null}
+          rowKey={(f) => f.id}
+          loading={feed.loading}
+          error={feed.error}
+          onRetry={() => void feed.reload()}
+          what="automated flags"
+          empty="No text flags are waiting."
+          wide
+          actions={(f) => <Resolve busy={busy === f.id} onResolve={(o) => void resolve('flags', f.id, o)} />}
+        />
+      </Section>
+      <Section title={`Picture flags${feed.data ? ` (${feed.data.images.length})` : ''}`} flush>
+        <Table
+          caption="Picture flags"
+          columns={imageColumns}
+          rows={feed.data?.images ?? null}
+          rowKey={(f) => f.id}
+          loading={feed.loading}
+          error={feed.error}
+          onRetry={() => void feed.reload()}
+          what="automated flags"
+          empty="No picture flags are waiting."
+          wide
+          actions={(f) => (
+            <Resolve
+              busy={busy === f.id}
+              // a preserved-evidence CSAM flag can only be actioned, never overturned
+              noReverse={f.preserveEvidence}
+              onResolve={(o) => void resolve('image-flags', f.id, o)}
+            />
+          )}
+        />
+      </Section>
     </div>
   );
 }
 
-function ResolveButtons({
-  busy,
-  noReverse,
-  onResolve,
-}: {
-  busy: boolean;
-  noReverse?: boolean;
-  onResolve: (outcome: Outcome) => void;
-}): React.JSX.Element {
+function Resolve({ busy, noReverse = false, onResolve }: { busy: boolean; noReverse?: boolean; onResolve: (outcome: Outcome) => void }): React.JSX.Element {
   return (
-    <div className="row" style={{ gap: 6 }}>
-      <button className="danger" onClick={() => onResolve('actioned')} disabled={busy}>
+    <>
+      <Button variant="danger" onClick={() => onResolve('actioned')} disabled={busy}>
         Uphold
-      </button>
-      <button
-        onClick={() => onResolve('reversed')}
-        disabled={busy || noReverse}
-        title={noReverse ? 'Evidence preserved — this flag cannot be overturned' : undefined}
-      >
+      </Button>
+      <Button onClick={() => onResolve('reversed')} disabled={busy || noReverse}>
         Overturn
-      </button>
-    </div>
+      </Button>
+    </>
   );
 }

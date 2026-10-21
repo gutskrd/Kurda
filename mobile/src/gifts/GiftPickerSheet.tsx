@@ -1,14 +1,24 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { SheetIn } from '../theme/MotionParts';
 import {
+  DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
   GIFTS_PER_FRIEND_PER_DAY,
   MAX_GIFT_RECIPIENTS,
+  applyItemFilter,
+  categoriesIn,
+  countByCategory,
+  groupByCategory,
+  isFiltered,
+  itemCategory,
   type GiftCatalogItem,
   type GiftChatRef,
+  type ItemCategory,
+  type ItemFilter,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { assetUrl } from '../api/env';
+import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
@@ -24,6 +34,9 @@ import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
+import { EmptyState } from '../theme/EmptyState';
+import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
+import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
 import { giftCatalog, newGiftKey, sendGift, type GiftCatalog, type SentGift } from './api';
 
 /** A friend a gift can go to. */
@@ -39,9 +52,10 @@ export interface GiftFriend {
  * In a direct message the friend is already chosen. In a group it starts with
  * who: only your friends among the members can be given anything (the server's
  * rule too), with "All my friends here" to choose them at once. Then what:
- * everything on sale with a price, its price, your balance, which recipients
- * already own something there is only one of, and what you cannot afford.
- * Send, and the sheet closes on the send animation.
+ * everything on sale with a price, by kind as the shop sorts it, with a search,
+ * an order, "Within my balance" and "Hide ones they already have"; its price,
+ * your balance, which recipients already own something there is only one of,
+ * and what you cannot afford. Send, and the sheet closes on the send animation.
  */
 export function GiftPickerSheet({
   visible,
@@ -74,7 +88,7 @@ export function GiftPickerSheet({
   const title = group ? t('gift.button') : t('gift.picker.titleFor', { name: friends[0]?.name ?? '' });
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <View style={styles.flex}>
         <Pressable
           style={[styles.backdrop, { backgroundColor: colors.scrim }]}
@@ -82,7 +96,7 @@ export function GiftPickerSheet({
           accessibilityRole="button"
           accessibilityLabel={t('common.cancel')}
         />
-        <View style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
+        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
           <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
           <View style={[styles.header, { flexDirection: dir.row }]}>
             {group && step === 'what' ? (
@@ -111,7 +125,7 @@ export function GiftPickerSheet({
           ) : visible && recipients.length > 0 ? (
             <WhatStep chat={chat} recipients={recipients} onSent={onSent} onClose={onClose} />
           ) : null}
-        </View>
+        </SheetIn>
       </View>
     </Modal>
   );
@@ -239,7 +253,7 @@ function WhatStep({
 }): React.JSX.Element {
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const dir = useDirection();
   // keyed on who, not on the array: the parent draws a fresh one on every
   // render (a friend typing is a render a second), and each new array was a
@@ -252,6 +266,10 @@ function WhatStep({
   const [busy, setBusy] = useState(false);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [note, setNote] = useState<string | null>(null);
+  // finding one's way through the catalogue: the shop's kinds, search and orders
+  const [filter, setFilter] = useState<ItemFilter>(DEFAULT_ITEM_FILTER);
+  const [affordableOnly, setAffordableOnly] = useState(false);
+  const [hideOwned, setHideOwned] = useState(false);
   // one key per choice: a retry of the same gift replays it, never pays twice
   // (a fresh one only if the server says this key already named another request)
   const [keyRound, setKeyRound] = useState(0);
@@ -267,16 +285,51 @@ function WhatStep({
 
   useEffect(load, [load]);
 
-  const owners = (item: GiftCatalogItem) => item.alreadyOwnedBy.filter((id) => ids.includes(id));
+  const owners = useCallback((item: GiftCatalogItem) => item.alreadyOwnedBy.filter((id) => ids.includes(id)), [ids]);
   const total = picked ? picked.price * (recipients.length - owners(picked).length) : 0;
-  const affordable = (item: GiftCatalogItem) =>
-    catalog ? catalog.balance[item.currency] >= item.price * Math.max(1, recipients.length - owners(item).length) : false;
+  const affordable = useCallback(
+    (item: GiftCatalogItem) =>
+      catalog ? withinBalance(item, catalog.balance, Math.max(1, recipients.length - owners(item).length)) : false,
+    [catalog, recipients.length, owners],
+  );
+
+  const all = useMemo(() => catalog?.items ?? [], [catalog]);
+  const kinds = useMemo(() => categoriesIn(all), [all]);
+  const category: ItemCategory | 'all' = filter.category === 'all' || kinds.includes(filter.category) ? filter.category : 'all';
+  // "hide ones they already have": what every friend it is for owns already
+  const keep = useCallback(
+    (item: GiftCatalogItem) =>
+      (!affordableOnly || affordable(item)) && (!hideOwned || owners(item).length < recipients.length),
+    [affordableOnly, affordable, hideOwned, owners, recipients.length],
+  );
+  const counts = useMemo(() => countByCategory(applyItemFilter(all, { ...filter, category: 'all' }, keep)), [all, filter, keep]);
+  const shown = useMemo(() => applyItemFilter(all, { ...filter, category }, keep, locale), [all, filter, category, keep, locale]);
+  const groups = useMemo(() => groupByCategory(shown), [shown]);
+  const filtered = isFiltered({ ...filter, category }) || affordableOnly || hideOwned;
+  const clear = (): void => {
+    setFilter(DEFAULT_ITEM_FILTER);
+    setAffordableOnly(false);
+    setHideOwned(false);
+  };
+  // a choice the filters have hidden stays chosen, and is named by the Send button
+  const pickedHidden = picked !== null && !shown.some((i) => i.sku === picked.sku);
+  // a new filter shows its results from the top, not from where the longer list was scrolled to
+  const scroller = useRef<ScrollView>(null);
+  const filterKey = JSON.stringify([filter, affordableOnly, hideOwned]);
+  const lastFilterKey = useRef(filterKey);
+  useEffect(() => {
+    if (lastFilterKey.current === filterKey) return;
+    lastFilterKey.current = filterKey;
+    scroller.current?.scrollTo({ y: 0, animated: false });
+  }, [filterKey]);
 
   const send = (): void => {
     if (!picked || busy) return;
     setBusy(true);
     setSendError(null);
     setNote(null);
+    // given: felt as it goes; and felt as an error if it did not go
+    haptic('tap');
     void sendGift(client, {
       sku: picked.sku,
       toUserIds: ids.filter((id) => !owners(picked).includes(id)),
@@ -294,6 +347,7 @@ function WhatStep({
         onSent(res.data, picked, recipients.filter((r) => res.data.sent.includes(r.userId)));
         return;
       }
+      haptic('error');
       // what is on offer changed while the sheet was open (a new price, a
       // Newroz item that has gone): say so, and show the catalog as it is now
       const code = res.error.code;
@@ -319,6 +373,68 @@ function WhatStep({
   }
   if (!catalog) return <ActivityIndicator color={colors.primary} style={styles.spinner} />;
 
+  const priceWords = (item: GiftCatalogItem): string => `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
+
+  const tile = (item: GiftCatalogItem): React.JSX.Element => {
+    const own = owners(item);
+    const everyone = own.length >= recipients.length;
+    const canPay = affordable(item);
+    const disabled = everyone || !canPay;
+    const selected = picked?.sku === item.sku;
+    const wide = itemCategory(item.category) === 'background';
+    const ownedLine = everyone
+      ? recipients.length > 1
+        ? t('gift.picker.allHaveIt')
+        : t('gift.picker.hasIt')
+      : own.length > 0
+        ? t('gift.picker.someHaveIt', { count: own.length })
+        : null;
+    return (
+      <Pressable
+        key={item.sku}
+        onPress={() => setPicked(item)}
+        disabled={disabled}
+        accessibilityRole="radio"
+        accessibilityState={{ selected, disabled }}
+        aria-checked={selected}
+        aria-disabled={disabled}
+        accessibilityLabel={[item.name, priceWords(item), ownedLine, !canPay && !everyone ? t('gift.picker.cantAfford') : null]
+          .filter(Boolean)
+          .join(', ')}
+        style={({ pressed }) => [
+          styles.item,
+          {
+            backgroundColor: colors.controlTrack,
+            borderColor: selected ? colors.gold : 'transparent',
+            opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
+          },
+        ]}
+      >
+        {/* a background as the 16:9 picture it is; an icon, and the art-less tag, on a square */}
+        <View style={[styles.itemArt, wide ? null : styles.itemArtSquare]}>
+          <ItemArt category={item.category} path={item.assetUrl} width={wide ? undefined : 64} />
+          {item.tier !== 'common' ? (
+            <View style={[styles.tier, dir.row === 'row-reverse' ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
+              <Text style={[styles.tierText, { color: colors.textOnPrimary }]}>{t(TIER_LABEL[item.tier])}</Text>
+            </View>
+          ) : null}
+        </View>
+        {/* a Kurmancî name, read in its own direction whatever the app is in */}
+        <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
+          {item.name}
+        </Text>
+        <View style={[styles.priceRow, { flexDirection: dir.row }]}>
+          <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.accent} />
+          <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
+        </View>
+        {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
+        {!canPay && !everyone ? (
+          <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text>
+        ) : null}
+      </Pressable>
+    );
+  };
+
   return (
     <>
       <View style={[styles.balance, { flexDirection: dir.row }]} accessibilityLabel={t('gift.picker.balance', { zer: catalog.balance.zer, gems: catalog.balance.gems })}>
@@ -332,71 +448,55 @@ function WhatStep({
           <Text style={[styles.chipText, { color: colors.textPrimary }]}>{catalog.balance.gems}</Text>
         </View>
       </View>
-      <ScrollView contentContainerStyle={[styles.grid, { flexDirection: dir.row }]}>
-        {catalog.items.length === 0 ? (
-          <Text style={[styles.note, { color: colors.textSecondary }]}>{t('gift.picker.empty')}</Text>
-        ) : null}
-        {catalog.items.map((item) => {
-          const own = owners(item);
-          const everyone = own.length >= recipients.length;
-          const canPay = affordable(item);
-          const disabled = everyone || !canPay;
-          const selected = picked?.sku === item.sku;
-          const uri = assetUrl(item.assetUrl);
-          const ownedLine = everyone
-            ? recipients.length > 1
-              ? t('gift.picker.allHaveIt')
-              : t('gift.picker.hasIt')
-            : own.length > 0
-              ? t('gift.picker.someHaveIt', { count: own.length })
-              : null;
-          return (
-            <Pressable
-              key={item.sku}
-              onPress={() => setPicked(item)}
-              disabled={disabled}
-              accessibilityRole="radio"
-              accessibilityState={{ selected, disabled }}
-              aria-checked={selected}
-              aria-disabled={disabled}
-              accessibilityLabel={[item.name, `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`, ownedLine, !canPay && !everyone ? t('gift.picker.cantAfford') : null]
-                .filter(Boolean)
-                .join(', ')}
-              style={({ pressed }) => [
-                styles.item,
-                {
-                  backgroundColor: colors.controlTrack,
-                  borderColor: selected ? colors.gold : 'transparent',
-                  opacity: disabled ? 0.45 : pressed ? 0.8 : 1,
-                },
-              ]}
-            >
-              <View style={styles.itemArt}>
-                {uri ? (
-                  <Image source={{ uri }} style={[styles.itemImage, { borderRadius: item.category === 'icon' ? radii.pill : radii.sm }]} />
-                ) : (
-                  <Icon name="gift" size={34} color={colors.gold} />
-                )}
-                {item.tier !== 'common' ? (
-                  <View style={[styles.tier, dir.rtl ? styles.tierLeft : styles.tierRight, { backgroundColor: colors.gold }]}>
-                    <Text style={[styles.tierText, { color: colors.textOnPrimary }]}>{t(TIER_LABEL[item.tier])}</Text>
-                  </View>
-                ) : null}
+
+      {/* the search and the kinds stay put while the gifts scroll under them */}
+      {all.length > 0 ? (
+        <View style={styles.filters}>
+          <SearchField
+            value={filter.query}
+            onChange={(query) => setFilter((f) => ({ ...f, query }))}
+            label={t('gift.picker.search')}
+            style={styles.gutter}
+          />
+          <KindChips
+            options={(['all', ...kinds] as const).map((k) => ({ key: k, label: t(KIND_LABEL[k]), count: counts[k], a11y: kindWithCount(t, k, counts[k]) }))}
+            value={category}
+            onChange={(next) => setFilter((f) => ({ ...f, category: next }))}
+            label={t('shop.kind.label')}
+            inset={spacing.lg}
+          />
+        </View>
+      ) : null}
+
+      <ScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+        {all.length === 0 ? (
+          <Text style={[styles.note, styles.gutter, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.empty')}</Text>
+        ) : (
+          <>
+            <OptionRow inset={spacing.lg}>
+              <SortChip value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
+              <ToggleChip label={t('shop.filter.withinBalance')} value={affordableOnly} onChange={setAffordableOnly} />
+              <ToggleChip label={t('gift.picker.hideOwned')} value={hideOwned} onChange={setHideOwned} />
+            </OptionRow>
+            {/* the All chip says how many there are; narrowed, the count and the way back are worth a line of the sheet */}
+            {filtered && shown.length > 0 ? (
+              <View style={styles.gutter}>
+                <ResultsLine count={shown.length} onClear={clear} />
               </View>
-              <Text style={[styles.itemName, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
-                {item.name}
-              </Text>
-              <View style={[styles.priceRow, { flexDirection: dir.row }]}>
-                <Icon name={CURRENCY_ICON[item.currency]} size={14} color={item.currency === 'zer' ? colors.gold : colors.accent} />
-                <Text style={[styles.price, { color: colors.textPrimary }]}>{item.price}</Text>
-              </View>
-              {ownedLine ? <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{ownedLine}</Text> : null}
-              {!canPay && !everyone ? (
-                <Text style={[styles.owned, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.cantAfford')}</Text>
-              ) : null}
-            </Pressable>
-          );
-        })}
+            ) : null}
+            {shown.length === 0 ? (
+              <EmptyState title={t('shop.noMatches.title')} body={t('shop.noMatches.body')} action={{ label: t('shop.filter.clear'), onPress: clear }} />
+            ) : (
+              groups.map((group) => (
+                <View key={group.category} style={styles.group}>
+                  {/* under All, each kind under its own heading; one kind needs none, its chip says it */}
+                  {category === 'all' ? <KindHeading kind={group.category} count={group.items.length} style={styles.gutter} /> : null}
+                  <View style={[styles.grid, { flexDirection: dir.row }]}>{group.items.map(tile)}</View>
+                </View>
+              ))
+            )}
+          </>
+        )}
       </ScrollView>
 
       <View style={styles.footer}>
@@ -405,6 +505,16 @@ function WhatStep({
           <Text style={[styles.note, styles.center, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">
             {note}
           </Text>
+        ) : null}
+        {picked && pickedHidden ? (
+          <View style={[styles.selected, { flexDirection: dir.row }]} accessible accessibilityLabel={`${t('gift.picker.selected', { name: picked.name })}, ${priceWords(picked)}`}>
+            <ItemArt category={picked.category} path={picked.assetUrl} width={itemCategory(picked.category) === 'background' ? 40 : 24} />
+            <Text style={[styles.selectedText, { color: colors.textPrimary }]} numberOfLines={1}>
+              {t('gift.picker.selected', { name: picked.name })}
+            </Text>
+            <Icon name={CURRENCY_ICON[picked.currency]} size={14} color={picked.currency === 'zer' ? colors.gold : colors.accent} />
+            <Text style={[styles.price, { color: colors.textPrimary }]}>{picked.price}</Text>
+          </View>
         ) : null}
         <Text style={[styles.limits, styles.center, { color: colors.textSecondary }]}>
           {t('gift.picker.limits', { perDay: GIFTS_PER_DAY, perFriend: GIFTS_PER_FRIEND_PER_DAY })}
@@ -505,11 +615,17 @@ const styles = StyleSheet.create({
   balanceLabel: { fontSize: typography.sizes.sm },
   chip: { alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: spacing.sm, borderRadius: radii.pill },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  gutter: { marginHorizontal: spacing.lg },
+  filters: { gap: spacing.sm, paddingBottom: spacing.sm },
+  scroll: { paddingBottom: spacing.sm, gap: spacing.xs },
+  group: { gap: spacing.sm, marginTop: spacing.sm },
   // two columns edge to edge: the gap between them is what is left over, so both line up with the header
-  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: spacing.lg },
   item: { width: '48.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
-  itemArt: { height: 72, alignItems: 'center', justifyContent: 'center' },
-  itemImage: { width: 64, height: 64 },
+  itemArt: { alignItems: 'center', justifyContent: 'center' },
+  itemArtSquare: { height: 72 },
+  selected: { alignItems: 'center', gap: spacing.sm, minHeight: 28 },
+  selectedText: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   tier: { position: 'absolute', top: 0, paddingHorizontal: 6, paddingVertical: 2, borderRadius: radii.pill },
   tierRight: { right: 0 },
   tierLeft: { left: 0 },

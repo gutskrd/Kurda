@@ -4,6 +4,7 @@ import type { MessageKey } from '../i18n/en';
 import { BackspaceIcon } from './icons';
 import { BACKSPACE, ENTER, wordleRows } from '../keyboard/wordleKeys';
 import { useKeyboardPrefs, type WordleLayout } from '../keyboard/prefs';
+import { useKeyboardKind } from '../keyboard/device';
 
 /**
  * How wide the board is allowed to get is a CSS question, not a JS one.
@@ -110,6 +111,12 @@ const LAYOUT_LABEL: Record<WordleLayout, MessageKey> = {
  * rows stretch to the full width the screen has: on a phone the ten-key
  * QWERTY row is the widest, and ç ê î ş û get a row of their own, as the
  * biggest keys on the board.
+ *
+ * Beside a real keyboard (keyboard/device.ts) the same keys are drawn the way
+ * a desk keyboard is: a row no wider than the board needs, keys of one size,
+ * ç ê î ş û as ordinary keys under the rest, and a line saying the keyboard
+ * in front of you works — the on-screen one is there for the colours and the
+ * five letters a Latin keyboard may not have.
  */
 export function WordleKeyboard({
   keyboard,
@@ -122,6 +129,7 @@ export function WordleKeyboard({
 }): React.JSX.Element {
   const t = useT();
   const [prefs, setPrefs] = useKeyboardPrefs();
+  const desktop = useKeyboardKind() === 'desktop';
   const rows = wordleRows(prefs.wordleLayout);
   /*
    * A click or tap does not move the focus onto the key. Left there, the next
@@ -131,7 +139,7 @@ export function WordleKeyboard({
    */
   const keepFocus = (e: React.MouseEvent): void => e.preventDefault();
   return (
-    <div className="wordle-keys">
+    <div className={desktop ? 'wordle-keys is-desktop' : 'wordle-keys'}>
       <div className={`wordle-keyboard wordle-keyboard-${prefs.wordleLayout}`} role="group" aria-label={t('games.wordle.keyboard')}>
         {rows.map((row, i) => (
           <div className={`wordle-krow${i === rows.length - 1 ? ' wordle-krow-last' : ''}`} key={i}>
@@ -176,6 +184,7 @@ export function WordleKeyboard({
           </div>
         ))}
       </div>
+      {desktop && <p className="wordle-type-hint">{t('games.wordle.typeHint')}</p>}
       <div className="wordle-layout" role="radiogroup" aria-label={t('keyboard.wordle.title')}>
         {(['qwerty', 'alphabet'] as const).map((l) => (
           <button

@@ -1,10 +1,19 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
 import { z } from 'zod';
 import { requireAuth, requireRoles, markPrivileged } from '../plugins/auth.js';
+import { AppError } from '../plugins/errors.js';
 import { capabilitiesFor, hasCapability, isAdmin, isAdminRole, PRIVILEGED_ROLES, type AdminRole, type Capability } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
 
 const codeBody = z.object({ code: z.string().regex(/^\d{6}$/) });
+
+/** Code attempts per person, whichever of the two code routes they go through. */
+const CODE_RATE_LIMIT = { max: 10, windowMs: 5 * 60_000, per: 'user-or-ip' as const };
+
+/** Too many wrong codes: the second factor is locked for a while (AdminTotpService). */
+function codeLocked(retryAfterSec: number): AppError {
+  return new AppError('TOTP_LOCKED', 429, 'too many wrong codes — try again later', { retryAfterSec });
+}
 
 function forbid(reply: FastifyReply, req: FastifyRequest, code: string, message: string): void {
   void reply.code(403).send({ code, message, requestId: req.id });
@@ -98,16 +107,24 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
     };
   });
 
-  /** Confirm enrollment by entering a live code. */
+  /**
+   * Confirm enrollment by entering a live code.
+   *
+   * Both code routes are limited per person on top of the count of wrong codes
+   * the service keeps (AdminTotpService.checkCode): a burst is stopped here,
+   * and guessing over a longer time is stopped there.
+   */
   app.post(
     '/admin/2fa/confirm',
-    { schema: { body: codeBody }, preHandler: adminOnly },
+    { schema: { body: codeBody }, config: { rateLimit: CODE_RATE_LIMIT }, preHandler: adminOnly },
     async (req, reply) => {
-      const ok = await totp.confirm(req.user!.id, (req.body as z.infer<typeof codeBody>).code);
-      if (!ok) return reply.code(400).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
       // confirming proves possession right now, so it also clears the gate for
       // this session — otherwise enrollment would end by asking for a second code
-      await totp.verify(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
+      const res = await totp.confirm(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
+      if (!res.ok) {
+        if (res.reason === 'locked') throw codeLocked(res.retryAfterSec);
+        return reply.code(400).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
+      }
       return { confirmed: true };
     },
   );
@@ -115,15 +132,18 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   /** Login 2FA step: verify a code against the confirmed secret. */
   app.post(
     '/admin/auth/verify',
-    { schema: { body: codeBody }, preHandler: adminOnly },
+    { schema: { body: codeBody }, config: { rateLimit: CODE_RATE_LIMIT }, preHandler: adminOnly },
     async (req, reply) => {
       // no family id means nothing can be recorded, so the gate would refuse
       // straight after a "successful" check — fail loudly instead
       if (!req.user!.familyId) {
         return reply.code(400).send({ code: 'SESSION_UNVERIFIABLE', message: 'sign in again, then enter your code' });
       }
-      const ok = await totp.verify(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
-      if (!ok) return reply.code(401).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
+      const res = await totp.verify(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
+      if (!res.ok) {
+        if (res.reason === 'locked') throw codeLocked(res.retryAfterSec);
+        return reply.code(401).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
+      }
       return { ok: true, capabilities: capabilitiesFor(req.user!.roles) };
     },
   );

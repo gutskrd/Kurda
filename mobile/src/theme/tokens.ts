@@ -70,12 +70,23 @@ export const typography = {
   /** The website sets line-height 1.12 and letter-spacing -0.01em on headings. */
   displayLineHeight: 1.12,
   displayTracking: -0.01,
+  /**
+   * One scale, used everywhere: 34 and 28 for large titles (in the display
+   * serif, where it is already used), 22 for a section's title, 17 for body
+   * text and rows, 15 for what is secondary, 13 for captions. Nothing smaller
+   * than 11, which only the tab labels use.
+   *
+   * It was the website's 12/14/16/20/26/34, a point under the platform's own
+   * sizes at every step, so a row read as nearly native rather than native
+   * and a caption was harder to read than it needed to be for the youngest
+   * readers.
+   */
   sizes: {
-    xs: 12,
-    sm: 14,
-    md: 16,
-    lg: 20,
-    xl: 26,
+    xs: 13,
+    sm: 15,
+    md: 17,
+    lg: 22,
+    xl: 28,
     xxl: 34,
   },
   /**
@@ -105,6 +116,27 @@ export const typography = {
     semibold: '600',
     bold: '700',
   },
+} as const;
+
+/**
+ * The page's own geometry.
+ *
+ * `gutter` is the space between a screen's edge and its content on a phone:
+ * 16, so the five tabs line up with each other and with the island bar's
+ * inner edge. It lives here rather than in `spacing`, which is a scale of
+ * steps — this is one decision, not a step on it.
+ */
+export const layout = {
+  gutter: 16,
+  /** between rows in a list that has no dividers */
+  rowGap: 12,
+  /**
+   * How wide a list or a page of reading gets on a tablet or a wide window.
+   * Past this a row is a band across the screen and the eye loses its place
+   * on the way back to the start of the next line. The shop, the season and
+   * the stories already stopped here; this names the number they share.
+   */
+  column: 680,
 } as const;
 
 /**

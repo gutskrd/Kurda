@@ -20,6 +20,7 @@ import {
 import { useAuth } from '../auth/AuthProvider';
 import { Button } from '../components/Button';
 import { ErrorState, Loading } from '../components/states';
+import { StoryListSkeleton } from '../components/skeletons';
 import { ArrowIcon, ChevronIcon, HeadphonesIcon } from '../components/icons';
 import { RequireAccount } from '../components/RequireAccount';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -207,7 +208,7 @@ function Hub(): React.JSX.Element {
       <PlayRow catalogueReady={!empty && stories !== null} onPlayWithFriends={() => setSetup(true)} signedIn={signedIn} />
 
       {error && <ErrorState title={t('stories.loadFailed')} message={error} onRetry={reload} />}
-      {!error && stories === null && <Loading label={t('stories.loading')} />}
+      {!error && stories === null && <StoryListSkeleton label="stories.loading" />}
 
       {empty && (
         <div className="state story-empty">

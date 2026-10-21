@@ -10,11 +10,7 @@ import { badgeLabel, elapsed, lastSeen } from './time';
 import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
-import { useLocale, useT } from '../i18n/I18nProvider';
-import { socialNotification, type NoteView } from '../reports/notifications';
-import { playNotification } from '../play/notifications';
-import { progressNotification } from '../ranks/notifications';
-import { usePlayInvites } from '../play/PlayProvider';
+import { useT } from '../i18n/I18nProvider';
 
 /**
  * What the dock beside the rail is showing.
@@ -207,13 +203,9 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
         ))}
       </Section>
 
-      <Section title={t('rail.recent')} count={data.notifications.length} collapsible defaultOpen={false} hideWhenEmpty>
-        <Notifications items={data.notifications} onActed={onActed} />
-      </Section>
-
       {data.friends.length === 0 && (
         <p className="rail-empty">
-          {t('rail.noFriendsYet')} <Link to="/app/friends" className="link">{t('rail.findPeople')}</Link>
+          {t('rail.noFriendsYet')} <Link to="/app/search" className="link">{t('rail.findPeople')}</Link>
         </p>
       )}
     </>
@@ -356,99 +348,5 @@ function RequestCard({ who, onActed }: { who: RailFriend; onActed: () => void })
         </button>
       </span>
     </div>
-  );
-}
-
-/**
- * The notification tail, and a way to be done with it.
- *
- * A notification you have read but cannot clear is a badge that never goes
- * away, so each one can be dismissed and the whole list can be cleared at once.
- * Dismissing marks it read on the server — there is no separate "ignored"
- * state, and inventing one would mean a second thing to keep in step.
- */
-function Notifications({
-  items,
-  onActed,
-}: {
-  items: SocialRailData['notifications'];
-  onActed: () => void;
-}): React.JSX.Element {
-  const { client } = useAuth();
-  const t = useT();
-  const locale = useLocale();
-  const [going, setGoing] = useState<Set<string>>(new Set());
-  const unread = items.filter((n) => n.readAt === null).length;
-  // who sent a game invite, in the reader's words, while the app still has it
-  const incoming = usePlayInvites().lists?.incoming;
-
-  async function dismiss(id: string): Promise<void> {
-    setGoing((prev) => new Set(prev).add(id));
-    await client.post(`/me/notifications/${id}/read`);
-    onActed();
-  }
-
-  async function dismissAll(): Promise<void> {
-    await client.post('/me/notifications/read-all');
-    onActed();
-  }
-
-  return (
-    <>
-      {items.map((n) => {
-        // the reader's words and a way in, for the kinds that have them
-        // (reports/notifications.ts, play/notifications.ts, ranks/notifications.ts)
-        const view: NoteView | null =
-          socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t);
-        const title = view?.title ?? n.title;
-        const body = view ? view.body : n.body;
-        return (
-          <div
-            key={n.id}
-            className={`rail-note${n.readAt === null && !going.has(n.id) ? ' is-unread' : ''}`}
-          >
-            <span className="rail-note-title">
-              {view?.to ? (
-                <Link to={view.to} className="rail-note-link" onClick={() => n.readAt === null && void dismiss(n.id)}>
-                  {title}
-                </Link>
-              ) : view?.href ? (
-                <a
-                  href={view.href}
-                  className="rail-note-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={() => n.readAt === null && void dismiss(n.id)}
-                >
-                  {title}
-                </a>
-              ) : (
-                title
-              )}
-            </span>
-            {body && <span className="rail-note-body">{body}</span>}
-            <span className="rail-note-foot">
-              <time className="rail-note-when" dateTime={n.createdAt}>{lastSeen(n.createdAt, t)}</time>
-              {n.readAt === null && !going.has(n.id) && (
-                <button
-                  type="button"
-                  className="rail-note-dismiss"
-                  aria-label={t('rail.dismissWhat', { what: title })}
-                  onClick={() => void dismiss(n.id)}
-                >
-                  <CloseIcon size={13} />
-                </button>
-              )}
-            </span>
-          </div>
-        );
-      })}
-
-      {unread > 1 && (
-        <button type="button" className="rail-note-clear" onClick={() => void dismissAll()}>
-          {t('rail.dismissAll')}
-        </button>
-      )}
-    </>
   );
 }

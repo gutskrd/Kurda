@@ -10,6 +10,13 @@
 html {
   -webkit-text-size-adjust: 100%;
   scroll-behavior: smooth;
+  /*
+   * The top bar stays over the page, so anything the browser brings into view
+   * — a link to a section, the next field on Tab, the previous one on
+   * Shift+Tab — has to stop below it, not under it. Said once here for every
+   * page, rather than as a margin on each thing somebody might jump to.
+   */
+  scroll-padding-top: calc(var(--nav-bottom) + var(--space-4));
 }
 
 /*
@@ -31,6 +38,9 @@ body {
 
 body {
   margin: 0;
+  /* a phone on its side keeps the page out from under its notch */
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
   font-family: var(--font-sans);
   font-size: 16px;
   line-height: 1.6;
@@ -44,8 +54,12 @@ body {
   html {
     scroll-behavior: auto;
   }
-  * {
+  /* every movement lands where it ends, at once — and a loop runs once, not a thousand times a second */
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
   }
 }
@@ -75,6 +89,17 @@ img {
 }
 button {
   font-family: inherit;
+}
+/*
+ * One colour for every control that is on — a ticked box, a chosen option, a
+ * slider's filled side: the scheme's primary, as on a chosen chip. Gold is
+ * kept for what is earned, so a settings page full of ticks does not read as
+ * a page full of rewards.
+ */
+input[type='checkbox'],
+input[type='radio'],
+input[type='range'] {
+  accent-color: var(--primary);
 }
 
 :focus-visible {
@@ -114,9 +139,10 @@ button {
 .container-narrow {
   max-width: var(--container-narrow);
 }
+/* the 16px gutter a phone's screen has on every page */
 @media (max-width: 640px) {
   .container {
-    padding-inline: 18px;
+    padding-inline: 16px;
   }
 }
 

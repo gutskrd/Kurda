@@ -1,4 +1,4 @@
-import { BellIcon, ChatsIcon, GameIcon, UsersIcon } from '../components/icons';
+import { ChatsIcon, GameIcon, InviteIcon, UsersIcon } from '../components/icons';
 import { badgeLabel } from './time';
 import type { SocialRailData } from './useSocialRail';
 import { useT } from '../i18n/I18nProvider';
@@ -29,7 +29,8 @@ export function rungs(data: SocialRailData): Rung[] {
       key: 'waiting',
       labelKey: 'rail.waitingOnYou',
       count: data.challenges.length + data.requests.length,
-      icon: <BellIcon size={20} />,
+      // a person asking, not a bell: the bell in the top bar is notifications
+      icon: <InviteIcon size={20} />,
       urgent: true,
     },
     { key: 'playing', labelKey: 'rail.inAGame', count: playing, icon: <GameIcon size={20} /> },

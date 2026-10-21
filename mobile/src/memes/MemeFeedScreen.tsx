@@ -5,12 +5,14 @@ import {
   Alert,
   FlatList,
   Image,
-  Pressable,
   RefreshControl,
   StyleSheet,
   Text,
   View,
 } from 'react-native';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -25,6 +27,7 @@ import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useSendErrorAlert } from '../reports/SendError';
 import { restrictionOf } from '../reports/sendErrors';
 
@@ -131,35 +134,39 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     setPosts((prev) => (prev ? [created.data, ...prev] : [created.data]));
   }, [client, category, uploading, t, locale, showSendError]);
 
+  // the first screenful rises in once, as the list arrives
+  const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: ImagePost }) => (
-      <Pressable
-        onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill }]}
-        accessibilityRole="button"
-        accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
-      >
-        <View style={styles.cardHead}>
-          <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
-          <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
-        </View>
-        {item.imageUrl ? (
-          <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
-        ) : (
-          <View style={[styles.image, styles.imageFallback, { backgroundColor: colors.controlTrack }]}>
-            <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
+    ({ item, index }: { item: ImagePost; index: number }) => (
+      <Rise delay={entering(index)}>
+        <PressableScale
+          onPress={() => navigation.navigate('MemeDetail', { postId: item.id })}
+          style={[styles.card, { backgroundColor: colors.glassFill }]}
+          accessibilityRole="button"
+          accessibilityLabel={item.caption ? t('memes.openPostCaption', { caption: item.caption }) : t('memes.openPost')}
+        >
+          <View style={styles.cardHead}>
+            <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
+            <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
           </View>
-        )}
-        {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
-        <View style={styles.cardFoot}>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>
-            {REACTION_EMOJI.laugh} {item.reactionCount}
-          </Text>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
-        </View>
-      </Pressable>
+          {item.imageUrl ? (
+            <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
+          ) : (
+            <View style={[styles.image, styles.imageFallback, { backgroundColor: colors.controlTrack }]}>
+              <Text style={{ color: colors.textSecondary }}>{t('memes.imageUnavailable')}</Text>
+            </View>
+          )}
+          {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
+          <View style={styles.cardFoot}>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>
+              {REACTION_EMOJI.laugh} {item.reactionCount}
+            </Text>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
+          </View>
+        </PressableScale>
+      </Rise>
     ),
-    [navigation, colors],
+    [navigation, colors, entering],
   );
 
   return (
@@ -182,13 +189,13 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </View>
 
-        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()}>
+        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()} skeleton={<MemesSkeleton />}>
           <FlatList
             data={posts}
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
@@ -210,6 +217,31 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </View>
       </View>
     </GradientBackground>
+  );
+}
+
+/** The list while it loads: the same cards — who and when, the square picture, the counts. */
+function MemesSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      {[0, 1].map((i) => (
+        <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+          <View style={styles.cardHead}>
+            <Skeleton width={28} height={28} radius={radii.pill} />
+            <SkeletonText size={typography.sizes.sm} width={28} />
+          </View>
+          <View style={styles.image}>
+            <Skeleton height="100%" radius={radii.md} />
+          </View>
+          <View style={styles.cardFoot}>
+            <SkeletonText size={typography.sizes.sm} width={40} />
+            <SkeletonText size={typography.sizes.sm} width={36} />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 

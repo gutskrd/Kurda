@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
-import { api, ApiError } from '../api';
+import { useState } from 'react';
+import { api } from '../api';
+import { Badge, Button, PageHeader, Section, Table, Time, UserLink, errorLine, useDialogs, useLoad, useToast, type Column, type Tone } from '../ui';
 
 interface BotFlag {
   userId: string;
@@ -9,61 +10,53 @@ interface BotFlag {
   computedAt: string;
 }
 
-const TIER_CLS: Record<string, string> = { flagged: 'hi', challenge: 'mid', clear: 'ok' };
+const TIER_TONE: Record<string, Tone> = { flagged: 'bad', challenge: 'warn', clear: 'ok' };
 
 function short(id: string): string {
   return id.slice(0, 8);
 }
 
-/** Behavioral bot-detection review (KUR-110): flagged accounts, confirm/clear. */
+/**
+ * Behavioural bot detection (KUR-110): flagged accounts, confirmed as bots or
+ * cleared. On the kit, like the pages around it: a flag is a card on a phone,
+ * and confirming one asks in the admin's own dialog rather than the browser's,
+ * which some phones block outright.
+ */
 export function Antibot(): React.JSX.Element {
-  const [flagged, setFlagged] = useState<BotFlag[]>([]);
-  const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const dialogs = useDialogs();
+  const list = useLoad(() => api<{ flagged: BotFlag[] }>('/admin/antibot/flagged').then((r) => r.flagged), []);
   const [scoring, setScoring] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await api<{ flagged: BotFlag[] }>('/admin/antibot/flagged');
-      setFlagged(res.flagged);
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Failed to load flagged accounts');
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-  useEffect(() => {
-    void load();
-  }, [load]);
 
   async function runScoring(): Promise<void> {
     setScoring(true);
-    setMsg(null);
     try {
       const res = await api<{ scored: number }>('/admin/antibot/score', { method: 'POST' });
-      setMsg(`Scored ${res.scored} active account${res.scored === 1 ? '' : 's'}.`);
-      await load();
+      toast.success(`Scored ${res.scored} active account${res.scored === 1 ? '' : 's'}.`);
+      await list.reload();
     } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Scoring failed');
+      toast.error(errorLine(err, 'bot flags'));
     } finally {
       setScoring(false);
     }
   }
 
   async function reverse(userId: string): Promise<void> {
-    if (!confirm(`Confirm ${short(userId)} as a bot? This reverses its XP gains through the ledger.`)) return;
+    const yes = await dialogs.confirm({
+      title: `Confirm ${short(userId)} as a bot?`,
+      body: 'Its XP gains are reversed through the ledger.',
+      confirmLabel: 'Confirm bot',
+      tone: 'danger',
+    });
+    if (!yes) return;
     setBusy(userId);
-    setMsg(null);
     try {
       const res = await api<{ reversedXp: number }>(`/admin/antibot/${userId}/reverse`, { method: 'POST' });
-      setMsg(`Confirmed ${short(userId)} — reversed ${res.reversedXp} XP.`);
-      await load();
+      toast.success(`Confirmed ${short(userId)} as a bot: ${res.reversedXp} XP reversed.`);
+      await list.reload();
     } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Failed');
+      toast.error(errorLine(err, 'bot flags'));
     } finally {
       setBusy(null);
     }
@@ -71,89 +64,73 @@ export function Antibot(): React.JSX.Element {
 
   async function clear(userId: string): Promise<void> {
     setBusy(userId);
-    setMsg(null);
     try {
       await api(`/admin/antibot/${userId}/clear`, { method: 'POST' });
-      setMsg(`Cleared ${short(userId)} as a false positive.`);
-      await load();
+      toast.success(`Cleared ${short(userId)} as a false positive.`);
+      await list.reload();
     } catch (err) {
-      setMsg(err instanceof ApiError ? `❌ ${err.message}` : '❌ Failed');
+      toast.error(errorLine(err, 'bot flags'));
     } finally {
       setBusy(null);
     }
   }
 
+  const columns: Column<BotFlag>[] = [
+    { key: 'user', header: 'Account', card: 'title', cell: (f) => <UserLink user={{ id: f.userId, username: null }} /> },
+    { key: 'score', header: 'Score', align: 'end', sort: (a, b) => a.score - b.score, cell: (f) => `${Math.round(f.score * 100)}%` },
+    { key: 'tier', header: 'Tier', cell: (f) => <Badge tone={TIER_TONE[f.tier] ?? 'neutral'}>{f.tier}</Badge> },
+    { key: 'when', header: 'Flagged', sort: (a, b) => a.computedAt.localeCompare(b.computedAt), cell: (f) => <Time value={f.computedAt} /> },
+    {
+      key: 'signals',
+      header: 'Signals',
+      cell: (f) => (
+        <details>
+          <summary className="subtle">Show</summary>
+          <pre className="code-block">{JSON.stringify(f.signals, null, 2)}</pre>
+        </details>
+      ),
+    },
+  ];
+
   return (
     <div>
-      <div className="toolbar">
-        <div>
-          <h1>Antibot</h1>
-          <div className="subtle">Behaviorally flagged accounts awaiting review</div>
-        </div>
-        <div className="spacer" />
-        <button onClick={() => void runScoring()} disabled={scoring}>
-          {scoring ? 'Scoring…' : 'Run scoring job'}
-        </button>
-        <button onClick={() => void load()} disabled={loading}>
-          Refresh
-        </button>
-      </div>
-
-      {msg && <div className={msg.startsWith('❌') ? 'error' : 'subtle'} style={{ marginBottom: 12 }}>{msg}</div>}
-      {error && <div className="error" style={{ marginBottom: 12 }}>{error}</div>}
-
-      <div className="card" style={{ padding: 0 }}>
-        {loading ? (
-          <div className="empty">Loading…</div>
-        ) : flagged.length === 0 ? (
-          <div className="empty">No accounts are currently flagged.</div>
-        ) : (
-          <div className="tablewrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>User</th>
-                  <th>Score</th>
-                  <th>Tier</th>
-                  <th>Flagged</th>
-                  <th>Signals</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                {flagged.map((f) => (
-                  <tr key={f.userId}>
-                    <td>
-                      <code title={f.userId}>{short(f.userId)}</code>
-                    </td>
-                    <td>{Math.round(f.score * 100)}%</td>
-                    <td>
-                      <span className={`badge ${TIER_CLS[f.tier] ?? ''}`}>{f.tier}</span>
-                    </td>
-                    <td className="subtle" style={{ whiteSpace: 'nowrap' }}>{new Date(f.computedAt).toLocaleString()}</td>
-                    <td>
-                      <details>
-                        <summary className="subtle" style={{ cursor: 'pointer' }}>view</summary>
-                        <pre className="signals-json">{JSON.stringify(f.signals, null, 2)}</pre>
-                      </details>
-                    </td>
-                    <td>
-                      <div className="row" style={{ gap: 6 }}>
-                        <button className="danger" onClick={() => void reverse(f.userId)} disabled={busy === f.userId}>
-                          Confirm bot
-                        </button>
-                        <button onClick={() => void clear(f.userId)} disabled={busy === f.userId}>
-                          Clear
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+      <PageHeader
+        title="Bot flags"
+        subtitle="Accounts whose behaviour scored as likely bots, waiting for a person to confirm or clear them."
+        actions={
+          <>
+            <Button busy={scoring} onClick={() => void runScoring()}>
+              {scoring ? 'Scoring…' : 'Run the scoring'}
+            </Button>
+            <Button icon="refresh" onClick={() => void list.reload()} busy={list.loading && !!list.data}>
+              Refresh
+            </Button>
+          </>
+        }
+      />
+      <Section flush>
+        <Table
+          caption="Flagged accounts"
+          columns={columns}
+          rows={list.data ?? null}
+          rowKey={(f) => f.userId}
+          loading={list.loading}
+          error={list.error}
+          onRetry={() => void list.reload()}
+          what="bot flags"
+          empty="No account is flagged."
+          actions={(f) => (
+            <>
+              <Button variant="danger" onClick={() => void reverse(f.userId)} disabled={busy === f.userId}>
+                Confirm bot
+              </Button>
+              <Button onClick={() => void clear(f.userId)} disabled={busy === f.userId}>
+                Clear
+              </Button>
+            </>
+          )}
+        />
+      </Section>
     </div>
   );
 }

@@ -23,6 +23,8 @@ describe('who sees which page — what the API allows, not a guess', () => {
       'record-letters',
       'record-lessons',
       'record-stories',
+      'record-dictionary',
+      'record-characters',
       'lessons',
       'stories',
       'words',
@@ -54,8 +56,8 @@ describe('who sees which page — what the API allows, not a guess', () => {
     expect(searchNav(visibleNav(LEGACY), 'settle').map((n) => n.id)).toEqual(['leagues']);
   });
 
-  it('support sees the people and the feedback, a founder the tags', () => {
-    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'feedback', 'security']);
+  it('support sees the people, the support inbox and the feedback, a founder the tags', () => {
+    expect(ids(SUPPORT)).toEqual(['dashboard', 'users', 'email', 'feedback', 'security']);
     expect(ids(FOUNDER)).toEqual(['dashboard', 'tags', 'security']);
   });
 
@@ -107,7 +109,9 @@ describe('addresses', () => {
 describe('finding a page', () => {
   it('finds a page by its name, its group or the words people use for it', () => {
     const all = visibleNav(OWNER);
-    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories']);
+    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories', 'record-dictionary', 'record-characters']);
+    expect(searchNav(all, 'pronunciation').map((n) => n.id)).toEqual(['record-dictionary']);
+    expect(searchNav(all, 'lip sync').map((n) => n.id)).toEqual(['record-characters']);
     expect(searchNav(all, 'microphone').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories']);
     expect(searchNav(all, 'ban').map((n) => n.id)).toEqual(['users', 'ban-approvals']);
     expect(searchNav(all, 'audit log').map((n) => n.id)).toEqual(['audit']);

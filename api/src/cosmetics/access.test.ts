@@ -1,5 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import { resolveCosmetics, levelInfo, isPremiumActive, hasAccess, cosmeticAssetUrl, resolveAvatarUrl, type EquippedItem } from './access.js';
+import {
+  resolveCosmetics,
+  levelInfo,
+  isPremiumActive,
+  hasAccess,
+  cosmeticAssetUrl,
+  isBuiltInArtKey,
+  isUploadedArtKey,
+  resolveAvatarUrl,
+  uploadedArtKind,
+  type EquippedItem,
+} from './access.js';
 
 const url = (key: string): string => `https://cdn.test/${key}`;
 const NOW = new Date('2026-08-25T12:00:00Z');
@@ -167,6 +178,30 @@ describe('resolveCosmetics — background access + fallback', () => {
   });
 });
 
+describe('resolveCosmetics — art uploaded in the admin', () => {
+  const raw = (background: EquippedItem | null, ic: EquippedItem | null) => ({
+    profilePhotoKey: null,
+    selectedAvatarKey: null,
+    premiumUntil: null,
+    background,
+    icon: ic,
+  });
+  it('serves an equipped uploaded background and icon from the CDN', () => {
+    const r = resolveCosmetics(raw(bg({ assetKey: UPLOADED_BG }), icon({ assetKey: UPLOADED_ICON })), url, NOW);
+    expect(r.background).toMatchObject({ url: `https://cdn.test/${UPLOADED_BG}`, type: 'image' });
+    expect(r.icon).toMatchObject({ url: `https://cdn.test/${UPLOADED_ICON}` });
+  });
+  it('shows nothing rather than a broken picture while storage is unconfigured', () => {
+    const r = resolveCosmetics(raw(bg({ assetKey: UPLOADED_BG }), icon({ assetKey: UPLOADED_ICON })), () => null, NOW);
+    expect(r.background).toBeNull();
+    expect(r.icon).toBeNull();
+  });
+  it('lets an owner keep wearing an uploaded item that was retired', () => {
+    const r = resolveCosmetics(raw(bg({ assetKey: UPLOADED_BG, active: false, owned: true }), null), url, NOW);
+    expect(r.background?.url).toBe(`https://cdn.test/${UPLOADED_BG}`);
+  });
+});
+
 describe('resolveCosmetics — icon', () => {
   it('owned icon resolves to a web-static url', () => {
     const r = resolveCosmetics(
@@ -240,15 +275,44 @@ describe('resolveAvatarUrl (shared by profile + social/chat lists)', () => {
   });
 });
 
+const SHA = 'ab'.repeat(32);
+const UPLOADED_BG = `cosmetic/background/${SHA}.webp`;
+const UPLOADED_ICON = `cosmetic/icon/${SHA}.png`;
+
 describe('cosmeticAssetUrl (shop/inventory browsing)', () => {
-  it('resolves backgrounds and icons via the web-static base (no R2)', () => {
-    expect(cosmeticAssetUrl('background', 'backgrounds/a.webp')).toBe('/cosmetics/backgrounds/a.webp');
-    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4')).toBe('/cosmetics/backgrounds/a.mp4');
-    expect(cosmeticAssetUrl('icon', 'icons/i.png')).toBe('/cosmetics/icons/i.png');
+  it('resolves built-in backgrounds and icons via the web-static base (no storage)', () => {
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.webp', url)).toBe('/cosmetics/backgrounds/a.webp');
+    expect(cosmeticAssetUrl('background', 'backgrounds/a.mp4', url)).toBe('/cosmetics/backgrounds/a.mp4');
+    expect(cosmeticAssetUrl('icon', 'icons/i.png', url)).toBe('/cosmetics/icons/i.png');
+  });
+  it('resolves art uploaded in the admin to the CDN, and to nothing without storage', () => {
+    expect(cosmeticAssetUrl('background', UPLOADED_BG, url)).toBe(`https://cdn.test/${UPLOADED_BG}`);
+    expect(cosmeticAssetUrl('icon', UPLOADED_ICON, url)).toBe(`https://cdn.test/${UPLOADED_ICON}`);
+    expect(cosmeticAssetUrl('icon', UPLOADED_ICON, () => null)).toBeNull();
   });
   it('is null for non-cosmetic categories or a missing key', () => {
-    expect(cosmeticAssetUrl('powerup', 'x')).toBeNull();
-    expect(cosmeticAssetUrl('background', null)).toBeNull();
+    expect(cosmeticAssetUrl('powerup', 'x', url)).toBeNull();
+    expect(cosmeticAssetUrl('background', null, url)).toBeNull();
+  });
+});
+
+describe('art keys', () => {
+  it('tell uploaded art by its exact shape, so no other stored object passes for it', () => {
+    expect(isUploadedArtKey(UPLOADED_BG)).toBe(true);
+    expect(uploadedArtKind(UPLOADED_ICON)).toBe('icon');
+    // a profile photo, a short hash, another extension, a path that climbs out
+    expect(isUploadedArtKey(`profile-photo/${SHA}.webp`)).toBe(false);
+    expect(isUploadedArtKey('cosmetic/background/abc.webp')).toBe(false);
+    expect(isUploadedArtKey(`cosmetic/icon/${SHA}.svg`)).toBe(false);
+    expect(isUploadedArtKey(`cosmetic/icon/../profile-photo/${SHA}.png`)).toBe(false);
+    expect(uploadedArtKind('icons/made-08-caydan.png')).toBeNull();
+  });
+  it('accept a built-in file name for its own kind only', () => {
+    expect(isBuiltInArtKey('icon', 'icons/made-08-caydan.png')).toBe(true);
+    expect(isBuiltInArtKey('background', 'backgrounds/made-20-newroz.webp')).toBe(true);
+    expect(isBuiltInArtKey('background', 'icons/made-08-caydan.png')).toBe(false);
+    expect(isBuiltInArtKey('icon', 'icons/../index.html')).toBe(false);
+    expect(isBuiltInArtKey('icon', UPLOADED_ICON)).toBe(false);
   });
 });
 

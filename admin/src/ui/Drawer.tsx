@@ -16,6 +16,7 @@ export function Drawer({
   children,
   footer,
   className,
+  id,
 }: {
   open: boolean;
   onClose: () => void;
@@ -25,6 +26,8 @@ export function Drawer({
   children: ReactNode;
   footer?: ReactNode;
   className?: string;
+  /** for the button that opens it to name it (aria-controls) */
+  id?: string;
 }): React.JSX.Element | null {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
@@ -35,6 +38,7 @@ export function Drawer({
       <div className="layer-scrim" onClick={onClose} aria-hidden="true" />
       <div
         ref={ref}
+        id={id}
         className={`drawer drawer-${side}${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
@@ -45,7 +49,7 @@ export function Drawer({
           <h2 id={titleId} className="drawer-title">
             {title}
           </h2>
-          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close">
+          <button type="button" className="icon-button ghost" onClick={onClose} aria-label="Close" title="Close (Esc)">
             <Icon name="close" />
           </button>
         </div>

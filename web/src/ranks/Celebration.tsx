@@ -1,15 +1,22 @@
-import { useEffect, useMemo, useSyncExternalStore } from 'react';
+import { useEffect, useMemo, useSyncExternalStore, type CSSProperties } from 'react';
+import { BURST, burstPlan, celebrationPlan } from '@kurda/shared';
 import { Modal } from '../components/Modal';
 import { Button } from '../components/Button';
+import { useCelebrationMoment } from '../lib/motion';
 
 /**
  * The moment something is earned: a new division or tier, a placement
- * finished, a badge (contract 4 §U).
+ * finished, a new league, a badge (contract 4 §U) — and, inline, a lesson
+ * finished.
  *
- * The art rises out of its own light, a few flecks of colour drift down —
- * kilim diamonds in the tier's colours, not a burst of party confetti — and
- * one button carries on. Under reduced motion it simply fades in. A dialog,
- * so focus goes to it and Escape closes it, and what it says is read out.
+ * The same short sequence everywhere (shared celebration.ts, drawn by
+ * styles/motion.css): the art springs in, a ring of its colour widens once
+ * behind it, a light handful of flecks in its colours is thrown out and falls
+ * away, it is felt once as it lands (lib/haptics.ts, on a touch screen that
+ * can), and then the words fade in. It is over in about a second and a half;
+ * a click or a tap on it skips to the end, and after that nothing moves while
+ * it is read. Under reduced motion it simply appears. A dialog, so focus goes
+ * to it and Escape closes it, and what it says is read out.
  *
  * Celebrations queue rather than stack: a game's result holds the badge
  * celebrations back (`useCelebrationHold`) until its own moment is over, so a
@@ -26,6 +33,9 @@ export function Celebration({
   action,
   onClose,
   extra,
+  flecks = BURST.badge,
+  seed = 7,
+  colours,
 }: {
   open: boolean;
   /** the dialog's accessible name */
@@ -40,24 +50,71 @@ export function Celebration({
   action: string;
   onClose: () => void;
   extra?: React.ReactNode;
+  /** how many flecks are thrown */
+  flecks?: number;
+  /** keeps the same moment looking the same */
+  seed?: number;
+  /** the light and strong colour, for a moment whose tone has no class of its own (a league) */
+  colours?: readonly [string, string];
 }): React.JSX.Element | null {
-  const flecks = useMemo(() => fleckField(14), []);
   if (!open) return null;
   return (
     <Modal open onClose={onClose} label={label}>
-      <div className={`celebrate tone-${tone}`}>
-        <div className="celebrate-stage" aria-hidden="true">
-          <span className="celebrate-rays" />
-          <span className="celebrate-glow" />
-          {flecks.map((f, i) => (
-            <span
-              key={i}
-              className="celebrate-fleck"
-              style={{ left: `${f.x}%`, animationDelay: `${f.delay}ms`, animationDuration: `${f.duration}ms`, width: f.size, height: f.size }}
-            />
-          ))}
-        </div>
-        <div className="celebrate-art">{art}</div>
+      <CelebrationBody
+        art={art}
+        kicker={kicker}
+        title={title}
+        body={body}
+        tone={tone}
+        action={action}
+        onClose={onClose}
+        extra={extra}
+        flecks={flecks}
+        seed={seed}
+        colours={colours}
+      />
+    </Modal>
+  );
+}
+
+function CelebrationBody({
+  art,
+  kicker,
+  title,
+  body,
+  tone,
+  action,
+  onClose,
+  extra,
+  flecks,
+  seed,
+  colours,
+}: {
+  art: React.ReactNode;
+  kicker?: string;
+  title: string;
+  body?: string | null;
+  tone: string;
+  action: string;
+  onClose: () => void;
+  extra?: React.ReactNode;
+  flecks: number;
+  seed: number;
+  colours?: readonly [string, string];
+}): React.JSX.Element {
+  const moment = useCelebrationMoment();
+  const style = colours ? ({ '--t-hi': colours[0], '--t-mid': colours[1] } as CSSProperties) : undefined;
+  return (
+    // a click anywhere on it while it plays skips to the end; the button is always there for a keyboard
+    <div
+      className={`celebrate tone-${tone} ${moment.playing ? 'is-playing' : 'is-done'}`}
+      style={style}
+      onClick={moment.playing ? moment.skip : undefined}
+    >
+      <CelebrationArt flecks={flecks} seed={seed} reach={150}>
+        {art}
+      </CelebrationArt>
+      <div className="celebrate-details">
         {kicker && <p className="celebrate-kicker">{kicker}</p>}
         <h2 className="celebrate-title">{title}</h2>
         {body && <p className="celebrate-body">{body}</p>}
@@ -66,18 +123,60 @@ export function Celebration({
           {action}
         </Button>
       </div>
-    </Modal>
+    </div>
   );
 }
 
-/** Where the flecks fall from: spread across the top, unhurried, never the same twice in a row. */
-function fleckField(count: number): Array<{ x: number; delay: number; duration: number; size: number }> {
-  return Array.from({ length: count }, (_, i) => ({
-    x: 6 + ((i * 37) % 88),
-    delay: (i * 173) % 1400,
-    duration: 2600 + ((i * 251) % 1600),
-    size: 6 + ((i * 3) % 5),
-  }));
+/**
+ * The art on its stage: the glow behind it, the ring, the flecks — each fleck
+ * told where it flies by custom properties, so the whole burst is one
+ * stylesheet animation per fleck and costs the page nothing once it is over.
+ * Inside an element with `.celebrate` and a `tone-*` (the colours) and
+ * `is-playing` / `is-done` (whether it still moves).
+ */
+const FULL = celebrationPlan(false);
+
+export function CelebrationArt({
+  children,
+  flecks,
+  seed,
+  reach,
+}: {
+  children: React.ReactNode;
+  flecks: number;
+  seed: number;
+  reach: number;
+}): React.JSX.Element {
+  const plan = useMemo(() => burstPlan(flecks, seed, 3, reach), [flecks, seed, reach]);
+  // each fleck's slice of the burst, in the burst's own time (shared celebration.ts)
+  const { burstMs, burstDelayMs } = FULL;
+  return (
+    <div className="celebrate-art">
+      <span className="celebrate-glow" aria-hidden="true" />
+      <span className="celebrate-ring" aria-hidden="true" />
+      <span className="celebrate-burst" aria-hidden="true">
+        {plan.map((f, i) => (
+          <span
+            key={i}
+            className={`celebrate-fleck c${f.colour}`}
+            style={
+              {
+                '--dx': `${f.dx}px`,
+                '--dy': `${f.dy}px`,
+                '--fall': `${f.fall}px`,
+                '--spin': `${f.spin}deg`,
+                width: f.w,
+                height: f.h,
+                animationDelay: `${burstDelayMs + Math.round(f.start * burstMs)}ms`,
+                animationDuration: `${Math.round((f.end - f.start) * burstMs)}ms`,
+              } as CSSProperties
+            }
+          />
+        ))}
+      </span>
+      <span className="celebrate-art-inner">{children}</span>
+    </div>
+  );
 }
 
 // ---- the queue ----------------------------------------------------------------------

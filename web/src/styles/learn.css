@@ -23,7 +23,7 @@
   padding: 18px 20px;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .learn-review-text {
@@ -66,7 +66,7 @@
   height: 8px;
   overflow: hidden;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-2);
 }
 .course-progress-bar > span,
 .lesson-progress > span {
@@ -94,156 +94,13 @@
   margin-top: 18px;
 }
 
-/* ---- a course's map --------------------------------------------------------- */
-.cmap-back {
-  display: inline-block;
-}
-.cmap-continue {
-  margin-top: 16px;
-}
-.cmap-unit {
-  margin-bottom: 34px;
-}
-.cmap-unit-title {
-  margin-bottom: 12px;
-  font-size: 1.35rem;
-}
-.cmap-skills,
-.cmap-lessons {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.cmap-skills {
-  display: grid;
-  gap: 12px;
-}
-.cmap-skill {
-  display: grid;
-  gap: 10px;
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: rgba(255, 255, 255, 0.035);
-}
-.cmap-skill.is-locked {
-  background: transparent;
-  border-style: dashed;
-}
-.cmap-skill-head {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px 12px;
-}
-.cmap-skill-title {
-  font-size: 1.15rem;
-}
-.cmap-state {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 2px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--ink-3);
-}
-.cmap-state.is-completed,
-.cmap-state.is-gold {
-  border-color: rgba(134, 226, 164, 0.4);
-  color: var(--success);
-}
-.cmap-state.is-decayed {
-  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
-  color: var(--gold-ink);
-}
-.cmap-why {
-  margin: 0;
-  font-size: 0.88rem;
-  color: var(--ink-3);
-}
-.cmap-why a {
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-.cmap-lessons {
-  display: grid;
-  gap: 6px;
-}
-.cmap-lesson-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  padding: 8px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  color: var(--ink);
-}
-a.cmap-lesson-row:hover {
-  border-color: var(--border-strong);
-  background: rgba(255, 255, 255, 0.05);
-}
-.cmap-lesson.is-next .cmap-lesson-row {
-  border-color: var(--ink);
-  background: var(--surface-2);
-}
-.cmap-lesson.is-locked .cmap-lesson-row {
-  color: var(--ink-4);
-  border-style: dashed;
-}
-.cmap-lesson-mark {
-  flex: none;
-  display: inline-grid;
-  place-items: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 1px solid var(--border-strong);
-  font-size: 0.8rem;
-  font-weight: 650;
-  font-variant-numeric: tabular-nums;
-}
-.cmap-lesson.is-done .cmap-lesson-mark {
-  border-color: rgba(134, 226, 164, 0.5);
-  background: var(--success-soft);
-  color: var(--success);
-}
-.cmap-lesson-title {
-  flex: 1;
-  min-width: 0;
-}
-.cmap-lesson-state {
-  font-size: 0.8rem;
-  color: var(--ink-3);
-}
-.cmap-lesson-row svg:last-child {
-  flex: none;
-  color: var(--ink-3);
-}
-[dir='rtl'] .cmap-lesson-row svg:last-child {
-  transform: scaleX(-1);
-}
-.cmap-tips {
-  display: grid;
-  justify-items: start;
-  gap: 8px;
-}
-.cmap-tips-body {
-  justify-self: stretch;
-}
-
-/* a skill's grammar note, on the map and in the lesson's Tips */
+/* a skill's grammar note, in the lesson's Tips and in a unit's guide on the path */
 .grammar-note {
   display: grid;
   gap: 10px;
   padding: 14px 16px;
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   color: var(--ink-2);
 }
 .grammar-note > * {
@@ -302,8 +159,8 @@ a.cmap-lesson-row:hover {
   flex: none;
   display: inline-grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   color: var(--ink-2);
 }
@@ -357,6 +214,37 @@ a.cmap-lesson-row:hover {
   align-items: center;
   gap: 10px;
 }
+/*
+ * Who says the exercise's recordings (learn/Voice.tsx): a portrait beside the
+ * buttons that play them, or the words being asked about. Only for a
+ * recording an editor gave a character; the rest of the exercise is where it
+ * always was, below.
+ */
+.lesson-voice {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.lesson-voice-face {
+  --speaker-size: 104px;
+}
+.lesson-voice-body {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .lesson-voice {
+    gap: 20px;
+  }
+  .lesson-voice-face {
+    --speaker-size: 128px;
+  }
+}
+.lesson-feedback-face {
+  --speaker-size: 64px;
+}
 .lesson-play svg {
   direction: ltr;
 }
@@ -388,7 +276,7 @@ a.cmap-lesson-row:hover {
   padding: 12px 16px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
   font-size: 1.1rem;
@@ -400,7 +288,7 @@ a.cmap-lesson-row:hover {
 }
 .lesson-option:hover:not(:disabled) {
   border-color: var(--ink-3);
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
 .lesson-option:disabled {
   cursor: default;
@@ -428,14 +316,14 @@ a.cmap-lesson-row:hover {
   display: inline-flex;
 }
 .lesson-option.is-right {
-  border-color: rgba(134, 226, 164, 0.7);
+  border-color: color-mix(in srgb, var(--success) 70%, transparent);
   background: var(--success-soft);
 }
 .lesson-option.is-right .lesson-option-mark {
   color: var(--success);
 }
 .lesson-option.is-wrong {
-  border-color: rgba(255, 156, 144, 0.7);
+  border-color: color-mix(in srgb, var(--danger) 70%, transparent);
   background: var(--danger-soft);
 }
 .lesson-option.is-wrong .lesson-option-mark {
@@ -471,7 +359,7 @@ a.cmap-lesson-row:hover {
 }
 .lesson-input:read-only {
   border-color: var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
 }
 .lesson-keys {
   display: flex;
@@ -484,14 +372,14 @@ a.cmap-lesson-row:hover {
   padding: 0 10px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   color: var(--ink);
   font: inherit;
   font-size: 1.15rem;
   cursor: pointer;
 }
 .lesson-key:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--surface-2);
 }
 .lesson-key:disabled {
   opacity: 0.45;
@@ -526,7 +414,7 @@ a.cmap-lesson-row:hover {
   padding: 10px 34px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   color: var(--ink);
   font: inherit;
   font-size: 1.05rem;
@@ -538,7 +426,7 @@ a.cmap-lesson-row:hover {
     background 0.15s ease;
 }
 .lesson-card:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--surface-2);
 }
 .lesson-card:disabled {
   cursor: default;
@@ -632,7 +520,7 @@ a.cmap-lesson-row:hover {
   border: 1px solid var(--border);
   border-inline-start-width: 4px;
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .lesson-feedback:focus {
   outline: none;
@@ -642,7 +530,7 @@ a.cmap-lesson-row:hover {
   outline-offset: 2px;
 }
 .lesson-feedback.is-right {
-  border-color: rgba(134, 226, 164, 0.55);
+  border-color: color-mix(in srgb, var(--success) 55%, transparent);
   background: var(--success-soft);
 }
 .lesson-feedback.is-almost {
@@ -650,7 +538,7 @@ a.cmap-lesson-row:hover {
   background: var(--gold-soft);
 }
 .lesson-feedback.is-notyet {
-  border-color: rgba(255, 156, 144, 0.55);
+  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
   background: var(--danger-soft);
 }
 @media (prefers-reduced-motion: no-preference) {
@@ -770,7 +658,7 @@ a.cmap-lesson-row:hover {
   padding: 14px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
 }
 .lesson-stat dt {
   font-size: 0.8rem;

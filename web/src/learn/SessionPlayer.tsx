@@ -3,13 +3,18 @@ import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import '@fontsource-variable/vazirmatn';
 import { Link } from 'react-router-dom';
 import {
+  NO_LESSON_MOMENTS,
   currentExercise,
   initPlayer,
   isReask,
+  lessonMoments,
   progress,
   reduce,
   type DeliveredExercise,
+  type ExerciseType,
   type Feedback,
+  type LessonMoments,
+  type LessonStanding,
   type PlayableSession,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
@@ -19,12 +24,15 @@ import { Modal } from '../components/Modal';
 import { ErrorState, Loading } from '../components/states';
 import { describeError } from '../lib/api';
 import { stop } from '../lib/sound';
+import { haptic } from '../lib/haptics';
+import type { ApiClient } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { MatchPairs, MultipleChoice, Listening, TypedExercise, type ExerciseProps } from './Exercises';
 import { FeedbackPanel, announce } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
 import { Results } from './Results';
 import { Speaking } from './Speaking';
+import { feedbackClip } from './Voice';
 import type { AnswerResult, RetryResult, SessionResults } from './types';
 
 /** Where a session's answers go — a lesson and a review differ only here. */
@@ -90,13 +98,39 @@ function ExerciseView(props: ExerciseProps): React.JSX.Element | null {
   }
 }
 
+/** The lesson's bar: it slides to each new value on the out-curve (styles/motion.css). */
 function ProgressBar({ value, label }: { value: number; label: string }): React.JSX.Element {
   const pct = Math.round(value * 100);
   return (
     <div className="lesson-progress" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
-      <span style={{ width: `${pct}%` }} />
+      <span style={{ '--p': Math.max(0, Math.min(1, value)) } as React.CSSProperties} />
     </div>
   );
+}
+
+/**
+ * Felt as the verdict arrives, on a touch screen that can (lib/haptics.ts):
+ * one short pulse when right, a gentle double when not. A spoken answer is the
+ * learner's own rating of their recording, not a grade, so it is not felt.
+ */
+function feelAnswer(type: ExerciseType | undefined, accepted: boolean): void {
+  if (type === 'speaking') return;
+  haptic(accepted ? 'correct' : 'wrong');
+}
+
+/** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */
+async function readStanding(client: ApiClient): Promise<LessonStanding | null> {
+  const [me, goal] = await Promise.all([
+    client.get<{ user: { level?: { level?: number }; streak?: { current: number; lastActiveOn?: string | null } } }>('/me'),
+    client.get<{ completed?: boolean }>('/me/daily-goal'),
+  ]);
+  if (!me.ok) return null;
+  const user = me.data.user;
+  return {
+    level: typeof user.level?.level === 'number' ? user.level.level : null,
+    streak: user.streak ? { current: user.streak.current, lastActiveOn: user.streak.lastActiveOn ?? null } : null,
+    goalCompleted: goal.ok && typeof goal.data.completed === 'boolean' ? goal.data.completed : null,
+  };
 }
 
 interface Problem {
@@ -154,6 +188,18 @@ export function SessionPlayer({
   const [results, setResults] = useState<SessionResults | null>(null);
   const [completeTry, setCompleteTry] = useState(0);
   const [tips, setTips] = useState(false);
+  // what a finished lesson is compared with: the level, the streak and today's goal as the lesson opened
+  const before = useRef<LessonStanding | null>(null);
+  const [moments, setMoments] = useState<LessonMoments>(NO_LESSON_MOMENTS);
+  useEffect(() => {
+    let live = true;
+    void readStanding(client).then((standing) => {
+      if (live) before.current = standing;
+    });
+    return () => {
+      live = false;
+    };
+  }, [client]);
 
   const ex: DeliveredExercise | null = currentExercise(state);
   const reask = isReask(state);
@@ -174,6 +220,7 @@ export function SessionPlayer({
         : await client.post<AnswerResult>(paths.answers(sessionId), body);
       setBusy(false);
       if (res.ok) {
+        feelAnswer(ex.type, res.data.accepted);
         dispatch({ type: 'ANSWERED', result: res.data, given });
         return;
       }
@@ -212,6 +259,9 @@ export function SessionPlayer({
         setResults(res.data);
         setProblem(null);
         writeReasked(sessionId, null);
+        // and what else it did: a goal met, the streak kept today, a new level
+        const streakNow = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn ?? null };
+        void readStanding(client).then((after) => setMoments(lessonMoments(before.current, after, streakNow)));
       } else {
         setProblem({ message: describeError(res.error, t), retry: () => setCompleteTry((n) => n + 1) });
       }
@@ -273,7 +323,15 @@ export function SessionPlayer({
               )}
             </div>
           )}
-          {feedback && <FeedbackPanel key={`feedback-${state.index}`} feedback={feedback} dialect={exDialect} onContinue={next} />}
+          {feedback && (
+            <FeedbackPanel
+              key={`feedback-${state.index}`}
+              feedback={feedback}
+              dialect={exDialect}
+              speaker={feedbackClip(ex, feedback)}
+              onContinue={next}
+            />
+          )}
           <p className="lesson-saved">{t('lesson.savedAsYouGo')}</p>
         </div>
       ) : results ? (
@@ -283,6 +341,7 @@ export function SessionPlayer({
           skipped={state.skipped.length}
           kind={kind}
           dialect={dialect}
+          moments={moments}
           exitTo={exitTo}
           exitLabel={exitLabel}
           onPractise={onPractise}

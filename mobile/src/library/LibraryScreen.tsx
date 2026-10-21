@@ -1,6 +1,10 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { SkeletonText } from '../theme/Skeleton';
+import { PressableScale, Rise } from '../theme/MotionParts';
+import { useListEntrance } from '../theme/animate';
+import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -83,30 +87,34 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
     setLoadingMore(false);
   }, [fetchPage, loadingMore, end, posts]);
 
+  // the first screenful rises in once, as the list arrives
+  const entering = useListEntrance(!!posts && posts.length > 0);
   const renderItem = useCallback(
-    ({ item }: { item: LibraryPost }) => (
-      <Pressable
-        onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
-        style={[styles.card, { backgroundColor: colors.glassFill }]}
-        accessibilityRole="button"
-        accessibilityLabel={t('library.readLabel', { title: postName(item) })}
-      >
-        <View style={styles.cardHead}>
-          <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
-            {postName(item)}
+    ({ item, index }: { item: LibraryPost; index: number }) => (
+      <Rise delay={entering(index)}>
+        <PressableScale
+          onPress={() => navigation.navigate('LibraryPost', { postId: item.id })}
+          style={[styles.card, { backgroundColor: colors.glassFill }]}
+          accessibilityRole="button"
+          accessibilityLabel={t('library.readLabel', { title: postName(item) })}
+        >
+          <View style={styles.cardHead}>
+            <Text style={[styles.cardTitle, { color: colors.textPrimary }]} numberOfLines={1}>
+              {postName(item)}
+            </Text>
+            {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
+          </View>
+          <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
+            {bodyPreview(item.body)}
           </Text>
-          {item.audioUrl ? <Icon name="speaker" size={16} tone="primary" /> : null}
-        </View>
-        <Text style={[styles.preview, { color: colors.textSecondary }]} numberOfLines={2}>
-          {bodyPreview(item.body)}
-        </Text>
-        <View style={styles.cardFoot}>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>👁 {item.viewCount}</Text>
-          <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
-        </View>
-      </Pressable>
+          <View style={styles.cardFoot}>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>👁 {item.viewCount}</Text>
+            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
+          </View>
+        </PressableScale>
+      </Rise>
     ),
-    [navigation, colors],
+    [navigation, colors, entering],
   );
 
   return (
@@ -129,13 +137,13 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           />
         </View>
 
-        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()}>
+        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()} skeleton={<LibrarySkeleton />}>
           <FlatList
             data={posts}
             keyExtractor={(p) => p.id}
             renderItem={renderItem}
             contentContainerStyle={styles.list}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} tintColor={colors.primary} />}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.primary} />}
             onEndReached={loadMore}
             onEndReachedThreshold={0.5}
             ListEmptyComponent={
@@ -156,7 +164,37 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   );
 }
 
+/** The list while it loads: the same cards — a title, two lines, the counts — as many as fill the screen. */
+function LibrarySkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const { height, width } = useWindowDimensions();
+  const count = Math.max(3, Math.ceil(height / 130));
+  // the two-line preview fits on one across a wide tablet
+  const wide = width >= 900;
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+          <View style={styles.cardHead}>
+            <SkeletonText size={typography.sizes.lg} width={i % 2 ? '48%' : '62%'} style={styles.flex} />
+          </View>
+          <View>
+            <SkeletonText size={typography.sizes.md} width={wide ? '64%' : '96%'} />
+            {wide ? null : <SkeletonText size={typography.sizes.md} width="70%" />}
+          </View>
+          <View style={styles.cardFoot}>
+            <SkeletonText size={typography.sizes.sm} width={44} />
+            <SkeletonText size={typography.sizes.sm} width={36} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },

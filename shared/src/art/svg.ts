@@ -35,13 +35,6 @@ export type Pt = readonly [number, number];
 
 export const pt = (p: Pt): string => `${n(p[0])},${n(p[1])}`;
 
-/** A closed outline through `points`. */
-export function polyPath(points: readonly Pt[]): string {
-  if (points.length === 0) return '';
-  const [first, ...rest] = points as [Pt, ...Pt[]];
-  return `M${pt(first)}L${rest.map(pt).join(' ')}Z`;
-}
-
 /** An open line through `points`. */
 export function linePath(points: readonly Pt[]): string {
   if (points.length === 0) return '';
@@ -49,9 +42,28 @@ export function linePath(points: readonly Pt[]): string {
   return `M${pt(first)}L${rest.map(pt).join(' ')}`;
 }
 
-/** Text that goes inside `<title>` or an attribute. */
+/**
+ * Text that goes inside `<title>` or an attribute. A title is a caller's
+ * string — often a translation, sometimes a person's own words — and the web
+ * puts the drawing into the page as markup, so every character that could
+ * open a tag, an entity or an attribute is escaped, and the control
+ * characters XML cannot carry at all (they would stop the phone's parser
+ * cold) are dropped.
+ */
 export function escapeXml(text: string): string {
-  return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  return Array.from(text)
+    .filter((ch) => isXmlChar(ch.codePointAt(0) ?? 0))
+    .join('')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/** Whether XML 1.0 can carry a code point at all (a lone surrogate half cannot, nor most control characters). */
+function isXmlChar(c: number): boolean {
+  return c === 0x9 || c === 0xa || c === 0xd || (c >= 0x20 && c <= 0xd7ff) || (c >= 0xe000 && c <= 0xfffd) || (c >= 0x10000 && c <= 0x10ffff);
 }
 
 /** FNV-1a, as base 36: a drawing's inputs become a short, stable id prefix. */
@@ -117,6 +129,10 @@ export const linearAt = (id: string, stops: readonly Stop[], x1: number, y1: num
 /** A linear gradient over each shape's own box (top to bottom unless told otherwise). */
 export const linearBox = (id: string, stops: readonly Stop[], x1 = 0, y1 = 0, x2 = 0, y2 = 1): string =>
   `<linearGradient id="${id}" x1="${n2(x1)}" y1="${n2(y1)}" x2="${n2(x2)}" y2="${n2(y2)}">${stopsOf(stops)}</linearGradient>`;
+
+/** A radial gradient over each shape's own box: centred in it and reaching its edge unless told otherwise. */
+export const radialBox = (id: string, stops: readonly Stop[], cx = 0.5, cy = 0.5, r = 0.5): string =>
+  `<radialGradient id="${id}" cx="${n2(cx)}" cy="${n2(cy)}" r="${n2(r)}">${stopsOf(stops)}</radialGradient>`;
 
 /** A radial gradient in canvas units. */
 export const radialAt = (id: string, stops: readonly Stop[], cx: number, cy: number, r: number): string =>

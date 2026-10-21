@@ -6,6 +6,7 @@ import { useT } from '../i18n/I18nProvider';
 import { Confetti, GiftBox, GiftItemArt } from './GiftArt';
 import { GiftReveal, GiftStage, type GiftActions } from './GiftReveal';
 import { playChime, unwrapMs } from './motion';
+import { haptic } from '../lib/haptics';
 
 type Phase = 'idle' | 'unwrapping' | 'revealed';
 
@@ -65,6 +66,8 @@ export function GiftBubble({
     }
     setOpened(result);
     setPhase('revealed');
+    // the item seen: felt once, on a touch screen that can (lib/haptics.ts)
+    haptic('celebrate');
   }, []);
 
   const unwrap = useCallback(() => {

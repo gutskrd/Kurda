@@ -1,9 +1,16 @@
 # Cloudflare Pages response headers for the Hevalo admin (admin.hevalo.app).
 # The admin is a self-contained Vite SPA: it loads only its own hashed
-# /assets/*.js + /assets/*.css and renders no external images/fonts. There is no
+# /assets/*.js + /assets/*.css, no external fonts, and only the shop's art as
+# external images (img-src, below). There is no
 # edge proxy, so it calls the API on its own origin cross-origin — that origin is
 # listed in connect-src below and must be kept in step with VITE_API_URL (see
-# admin/src/api.ts). If it starts rendering media from R2, add that host to img-src.
+# admin/src/api.ts).
+#
+# img-src carries the website (https://hevalo.app, where the shop's own
+# backgrounds and icons are served from) and its subdomains (the media CDN that
+# serves art uploaded here, CDN_BASE_URL), so the shop page can show every
+# item's picture, and blob: for the preview of a picture before it is
+# uploaded. If CDN_BASE_URL is ever on another domain, add it here too.
 #
 # style-src carries 'unsafe-inline' because React writes every inline style as
 # a style attribute, and the admin sets a few (the width of a progress bar, the
@@ -29,8 +36,14 @@
 # style-src-attr 'unsafe-inline' would be tighter, but a browser without
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
+#
+# connect-src names no media host. The Characters page reads each stored
+# recording to make its mouth timeline, but through the API
+# (GET /admin/audio/:kind/file), not from the CDN or wherever a dictionary
+# pronunciation is kept: those are only ever played (media-src) or shown
+# (img-src), which needs neither a connect-src entry nor CORS on their side.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://hevalo.app https://*.hevalo.app; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer

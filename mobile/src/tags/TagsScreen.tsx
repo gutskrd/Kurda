@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Toggle } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -154,7 +155,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
                       {tag.sensitive ? ` · ${t('tags.sensitive')}` : ''}
                     </Text>
                   </View>
-                  <Switch value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
+                  <Toggle value={tag.displayed} onValueChange={(v) => void toggleDisplay(tag, v)} accessibilityLabel={t('tags.showOnProfile', { tag: tag.label })} />
                   <Pressable onPress={() => revoke(tag)} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('tags.removeTag', { tag: tag.label })}>
                     <Icon name="close" size={20} color={colors.danger} />
                   </Pressable>
@@ -195,7 +196,7 @@ export function TagsScreen({ onExit }: { onExit: () => void }): React.JSX.Elemen
             />
             {claiming.sensitive ? (
               <View style={styles.consentRow}>
-                <Switch value={consent} onValueChange={setConsent} />
+                <Toggle value={consent} onValueChange={setConsent} />
                 <Text style={[styles.consentText, { color: colors.textSecondary }]}>
                   {t('tags.sensitiveConsent')}
                 </Text>

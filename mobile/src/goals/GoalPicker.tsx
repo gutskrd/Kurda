@@ -3,6 +3,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { GOAL_OPTIONS, type GoalOption } from './format';
+import { haptic } from '../feedback/haptics';
 
 interface Props {
   value: GoalOption;
@@ -21,7 +22,11 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
           <Pressable
             key={option}
             disabled={disabled}
-            onPress={() => onChange(option)}
+            onPress={() => {
+              // a tick for a new goal, nothing for the one already set
+              if (!selected) haptic('select');
+              onChange(option);
+            }}
             accessibilityRole="button"
             accessibilityState={{ selected }}
             style={[

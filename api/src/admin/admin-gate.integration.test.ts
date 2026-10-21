@@ -161,7 +161,8 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     expect(stale.json().code).toBe('TOTP_REQUIRED');
 
     // and entering one restores access
-    const verified = await call('POST', '/admin/auth/verify', adminToken, { code: totpCode(secret) });
+    // (the next code: the one that confirmed has been used)
+    const verified = await call('POST', '/admin/auth/verify', adminToken, { code: totpCode(secret, Date.now() + 30_000) });
     expect(verified.statusCode).toBe(200);
     expect((await call('GET', '/admin/economy/supply?currency=zer', adminToken)).statusCode).toBe(200);
   });

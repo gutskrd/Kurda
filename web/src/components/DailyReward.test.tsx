@@ -39,7 +39,8 @@ describe('DailyReward', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /claim daily zêr/i }));
     expect(await screen.findByText(/\+20 zêr claimed/i)).toBeInTheDocument();
-    expect(screen.getByText('120')).toBeInTheDocument();
+    // the balance counts up from 100 to where it now is
+    expect(await screen.findByText('120', undefined, { timeout: 2000 })).toBeInTheDocument();
     expect(screen.getByText(/claimed today/i)).toBeInTheDocument();
   });
 

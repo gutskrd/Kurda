@@ -1,15 +1,16 @@
 /**
- * Outlines as lists of points, and the two things done to them: moving an
- * outline in or out by a fixed distance, and walking along it at even steps.
+ * Outlines as lists of points or as rounded corners, and what is done to
+ * them: moving an outline in or out by a fixed distance, walking along it at
+ * even steps, and writing a rounded outline as a short exact path.
  *
- * Every badge shape — circle, hexagon, shield, leaf, star — is sampled into a
- * dense polygon once. That costs a few hundred bytes over an exact path and
- * buys one way to draw everything around it: the rim is the outline and the
- * same outline moved in by the rim's width; the kilim border is motifs placed
- * at even steps along the middle of that band, turned to follow it. A circle
- * and a star then get the same rim and the same border by the same code.
+ * A rim is an outline and the same outline moved in by the rim's width; the
+ * beads and kilim set into a rim are placed at even steps along the middle of
+ * that band. A badge's body is kept as its corners and how round each is, so
+ * it is written as a dozen curves however often it is drawn, and its inset
+ * stays exact; the points are only for finding where along it things go.
  */
 import type { Pt } from './svg.js';
+import { pt } from './svg.js';
 
 const TAU = Math.PI * 2;
 
@@ -20,52 +21,6 @@ export function circle(cx: number, cy: number, r: number, count = 96): Pt[] {
     const a = (i / count) * TAU - Math.PI / 2;
     out.push([cx + Math.cos(a) * r, cy + Math.sin(a) * r]);
   }
-  return out;
-}
-
-/** A cubic Bézier sampled into `count` points, without its start point (so curves chain). */
-export function cubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, count: number): Pt[] {
-  const out: Pt[] = [];
-  for (let i = 1; i <= count; i++) {
-    const t = i / count;
-    const u = 1 - t;
-    const a = u * u * u;
-    const b = 3 * u * u * t;
-    const c = 3 * u * t * t;
-    const d = t * t * t;
-    out.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]);
-  }
-  return out;
-}
-
-/**
- * A cubic Bézier sampled into `count` points at even steps of length rather
- * than of t, without its start point. Where a curve runs fast — into a sharp
- * point, say — even steps of t leave long straight chords that show as flats
- * on a rim; even steps of length keep every stretch of the outline as smooth
- * as every other.
- */
-export function evenCubic(p0: Pt, p1: Pt, p2: Pt, p3: Pt, count: number): Pt[] {
-  const fine = [p0, ...cubic(p0, p1, p2, p3, count * 16)];
-  const lengths = [0];
-  for (let i = 1; i < fine.length; i++) {
-    const a = fine[i - 1] as Pt;
-    const b = fine[i] as Pt;
-    lengths.push((lengths[i - 1] ?? 0) + Math.hypot(b[0] - a[0], b[1] - a[1]));
-  }
-  const total = lengths[lengths.length - 1] ?? 0;
-  const out: Pt[] = [];
-  let j = 1;
-  for (let i = 1; i < count; i++) {
-    const s = (i / count) * total;
-    while (j < fine.length - 1 && (lengths[j] ?? 0) < s) j++;
-    const a = fine[j - 1] as Pt;
-    const b = fine[j] as Pt;
-    const l0 = lengths[j - 1] ?? 0;
-    const t = ((s - l0) / ((lengths[j] ?? 0) - l0)) || 0;
-    out.push([a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t]);
-  }
-  out.push(p3);
   return out;
 }
 
@@ -253,4 +208,69 @@ export function place(points: readonly Pt[], { x = 0, y = 0, deg = 0, s = 1 }: {
   const c = Math.cos(a);
   const sn = Math.sin(a);
   return points.map(([px, py]) => [x + (px * c - py * sn) * s, y + (px * sn + py * c) * s] as Pt);
+}
+
+/**
+ * A closed path through `vertices` with each corner rounded by a quadratic
+ * that starts `radius` before the vertex and ends `radius` after it — the
+ * same corners `roundedPolygon` samples, written exactly. A badge's body is
+ * drawn four or five times over (its shadow, rim, lip, field and clip), so a
+ * path of a dozen curves instead of a hundred points is most of what keeps a
+ * page of them light.
+ */
+export function roundPath(vertices: readonly Pt[], radius: number | readonly number[]): string {
+  const count = vertices.length;
+  let d = '';
+  for (let i = 0; i < count; i++) {
+    const prev = vertices[(i - 1 + count) % count] as Pt;
+    const v = vertices[i] as Pt;
+    const next = vertices[(i + 1) % count] as Pt;
+    const r = typeof radius === 'number' ? radius : (radius[i] ?? 0);
+    const cmd = i === 0 ? 'M' : 'L';
+    if (r <= 0) {
+      d += `${cmd}${pt(v)}`;
+      continue;
+    }
+    const ta = Math.min(0.5, r / (Math.hypot(prev[0] - v[0], prev[1] - v[1]) || 1));
+    const tb = Math.min(0.5, r / (Math.hypot(next[0] - v[0], next[1] - v[1]) || 1));
+    const a: Pt = [v[0] + (prev[0] - v[0]) * ta, v[1] + (prev[1] - v[1]) * ta];
+    const b: Pt = [v[0] + (next[0] - v[0]) * tb, v[1] + (next[1] - v[1]) * tb];
+    d += `${cmd}${pt(a)}Q${pt(v)} ${pt(b)}`;
+  }
+  return `${d}Z`;
+}
+
+/** A rounded outline: its corners, and how round each is. */
+export interface RoundShape {
+  vertices: Pt[];
+  radii: number[];
+}
+
+/**
+ * A rounded outline moved in by `d` (out by a negative `d`): the corners move
+ * as `offset` moves them, a convex corner's rounding shrinks by `d` and a
+ * hollow one's grows by it, which is what keeps a rim the same width all the
+ * way round.
+ */
+export function insetRound(shape: RoundShape, d: number): RoundShape {
+  const { vertices, radii } = shape;
+  const sign = signedArea(vertices) >= 0 ? 1 : -1;
+  const count = vertices.length;
+  return {
+    vertices: offset(vertices, -d),
+    radii: radii.map((r, i) => {
+      const a = vertices[(i - 1 + count) % count] as Pt;
+      const v = vertices[i] as Pt;
+      const b = vertices[(i + 1) % count] as Pt;
+      const cross = (v[0] - a[0]) * (b[1] - v[1]) - (v[1] - a[1]) * (b[0] - v[0]);
+      const convex = cross * sign >= 0;
+      return Math.max(0, convex ? r - d : r + d);
+    }),
+  };
+}
+
+/** A rounded outline placed: scaled about the origin, then moved. */
+export function placeRound(shape: RoundShape, at: { x?: number; y?: number; s?: number }): RoundShape {
+  const s = at.s ?? 1;
+  return { vertices: place(shape.vertices, at), radii: shape.radii.map((r) => r * s) };
 }

@@ -2,6 +2,7 @@ import type pg from 'pg';
 import type { Cache } from '../cache/cache.js';
 import { normalizedHeadword, type PartOfSpeech } from './repository.js';
 import { hasSearchableChars, isWithinOneEdit } from './search.js';
+import { escapeLike } from '../db/like.js';
 
 export type MatchType = 'exact' | 'prefix' | 'definition' | 'fuzzy';
 
@@ -76,14 +77,15 @@ export class DictionarySearchService {
       }
     }
 
-    // English → Kurdish: definition contains the (raw) query
+    // English → Kurdish: definition contains the (raw) query, taken literally,
+    // so a `%` or `_` in it is a character to find rather than a wildcard
     if (hits.size < cap && english.length >= 2) {
       const rows = await this.pool.query<EntryRow>(
         `SELECT DISTINCT e.id, e.headword, e.headword_folded, e.dialect
          FROM dict_entries e JOIN dict_senses s ON s.entry_id = e.id
          WHERE s.definition_en ILIKE '%' || $1 || '%'
          LIMIT $2`,
-        [english, cap],
+        [escapeLike(english), cap],
       );
       for (const r of rows.rows) if (!hits.has(r.id)) hits.set(r.id, this.hit(r, 'definition'));
     }

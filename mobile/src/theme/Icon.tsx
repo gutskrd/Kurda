@@ -81,11 +81,13 @@ export function BreathingIcon(props: {
 
   useEffect(() => {
     if (reduce) return;
+    // a few breaths and then still: a hero that pulses for ever pulls at the eye while the form under it is filled in
     const loop = Animated.loop(
       Animated.sequence([
         Animated.timing(opacity, { toValue: 0.4, duration: 1700, useNativeDriver: true }),
         Animated.timing(opacity, { toValue: 1, duration: 1700, useNativeDriver: true }),
       ]),
+      { iterations: 3 },
     );
     loop.start();
     return () => loop.stop();

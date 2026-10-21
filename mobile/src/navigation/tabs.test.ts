@@ -1,22 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { TABS, linkingScreens } from './tabs';
+import { TABS, isLearnView, legacyTabPath, linkingScreens } from './tabs';
 import { LOCALES, TRANSLATIONS } from '../i18n/translations';
 
 describe('tab registry', () => {
-  it('has exactly the five, home first and play in the middle', () => {
-    expect(TABS.map((t) => t.name)).toEqual(['Home', 'Search', 'Play', 'Inbox', 'Profile']);
+  /*
+   * The order is the design, so it is asserted whole rather than as a set:
+   * reordering the list would move every tab under every thumb that has
+   * learned where they are, and nothing else would notice.
+   */
+  it('has exactly the five, in order: Home, Learn, Messages, Search, Profile', () => {
+    expect(TABS.map((t) => t.name)).toEqual(['Home', 'Learn', 'Messages', 'Search', 'Profile']);
   });
 
-  /*
-   * Play is in the middle on purpose.
-   *
-   * It is the one of the five you open to do something rather than to look at
-   * something, and the middle of a five-item bar is the slot a thumb finds
-   * without aiming. Reordering the list would move it without anything
-   * noticing, so the position is asserted rather than the membership alone.
-   */
-  it('puts play in the middle slot', () => {
-    expect(TABS[Math.floor(TABS.length / 2)]?.name).toBe('Play');
+  it('draws a house, an open book, a paper plane, a magnifier and you', () => {
+    expect(TABS.map((t) => t.icon)).toEqual(['home', 'book', 'send', 'search', 'person']);
   });
 
   it('has unique names and paths', () => {
@@ -30,51 +27,67 @@ describe('tab registry', () => {
    */
   it('labels every tab in Kurmanji with correct diacritics', () => {
     const ku = TABS.map((t) => TRANSLATIONS.ku[t.labelKey]);
-    expect(ku).toContain('Mal');
-    expect(ku).toContain('Lêgerîn');
-    expect(ku).toContain('Profîl');
-    for (const label of ku) expect(label.length).toBeGreaterThan(2);
+    expect(ku).toEqual(['Mal', 'Fêrbûn', 'Peyam', 'Lêgerîn', 'Profîl']);
   });
 
   it('gives no two tabs the same label, in any language', () => {
     for (const locale of LOCALES) {
       const labels = TABS.map((t) => TRANSLATIONS[locale][t.labelKey]);
-      // Civak and the friends tab both read "Civak" in Kurmancî until the
-      // friends tab stopped borrowing the word the wall needed
       expect(new Set(labels).size, locale).toBe(TABS.length);
     }
   });
 
   /*
-   * Four tabs, and none of them needs a short name.
+   * Five tabs, and none of them needs a short name.
    *
    * At six the island gave each tab 55.5 points at 375pt and two labels did
-   * not fit in any language. At five it gives 66, and the longest of these
-   * five is "Search" at 44 — which is why `shortLabelKey` is unused, and this
-   * is the test that notices when a sixth is added and the labels start being
-   * clipped again.
+   * not fit in any language. At five it gives about 66, which the longest of
+   * these — "Nachrichten" in German — still fits at 11pt. This is the test
+   * that notices when a sixth is added and the labels start being clipped.
    */
   it('fits every label without a short form', () => {
     expect(TABS).toHaveLength(5);
     for (const tab of TABS) expect(tab.shortLabelKey).toBeUndefined();
   });
 
-  /*
-   * What a four-item bar is for.
-   *
-   * Home is where you land, Search is how you find anything, Play is what you
-   * came to do, Inbox is what arrived, Profile is you. Everything else in the
-   * app is reached from one of those five — and if a sixth ever looks
-   * necessary, it is worth asking which of these it is really a part of.
-   */
-  it('keeps the bar to places rather than to tasks', () => {
-    expect(TABS.map((t) => t.path)).toEqual(['home', 'search', 'play', 'inbox', 'profile']);
+  it('maps every tab to a deep-link path (hevalo://<path>)', () => {
+    expect(linkingScreens()).toEqual({ Home: 'home', Learn: 'learn', Messages: 'messages', Search: 'search', Profile: 'profile' });
+  });
+});
+
+describe('old addresses', () => {
+  it('opens Learn on its Games view for the old Play tab, on the phone and the website', () => {
+    expect(legacyTabPath('play')).toBe('learn?view=games');
+    expect(legacyTabPath('/play')).toBe('/learn?view=games');
+    expect(legacyTabPath('/app/games')).toBe('/learn?view=games');
+    expect(legacyTabPath('app/games/')).toBe('learn?view=games');
   });
 
-  it('maps every tab to a deep-link path (hevalo://<path>)', () => {
-    const screens = linkingScreens();
-    expect(screens['Home']).toBe('home');
-    expect(screens['Search']).toBe('search');
-    expect(Object.keys(screens)).toHaveLength(TABS.length);
+  it('opens Messages for the old Inbox', () => {
+    expect(legacyTabPath('inbox')).toBe('messages');
+    expect(legacyTabPath('/inbox')).toBe('/messages');
+  });
+
+  it('keeps a query the old address carried', () => {
+    expect(legacyTabPath('play?from=push')).toBe('learn?view=games&from=push');
+    expect(legacyTabPath('inbox?from=push')).toBe('messages?from=push');
+  });
+
+  /*
+   * An invite is a game's address *under* /app/games, and it is the link that
+   * somebody else sends, so it is the one that must never be swallowed by the
+   * rewrite of the bare /app/games.
+   */
+  it('leaves a game invite, a lesson and the current tabs alone', () => {
+    for (const path of ['app/games/wordle-battle?id=abc123', '/app/games/stories', 'lesson/l1', 'learn', 'messages', 'home', 'playground']) {
+      expect(legacyTabPath(path), path).toBe(path);
+    }
+  });
+
+  it('knows the two halves of Learn and nothing else', () => {
+    expect(isLearnView('lessons')).toBe(true);
+    expect(isLearnView('games')).toBe(true);
+    expect(isLearnView('play')).toBe(false);
+    expect(isLearnView(undefined)).toBe(false);
   });
 });

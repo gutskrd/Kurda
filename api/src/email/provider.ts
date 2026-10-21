@@ -15,6 +15,12 @@ export interface EmailPayload {
   text: string;
   /** sent alongside `text` as multipart when the template defines one */
   html?: string;
+  /** who it is from, when not the provider's own address (the support inbox answers as support) */
+  from?: string;
+  /** where an answer goes, when not the provider's own reply-to */
+  replyTo?: string;
+  /** extra headers — `In-Reply-To` and `References`, so an answer threads under the mail it answers */
+  headers?: Record<string, string>;
 }
 
 export interface EmailProvider {
@@ -40,9 +46,11 @@ export class ResendEmailProvider implements EmailProvider {
   constructor(
     private readonly apiKey: string,
     private readonly from: string,
+    private readonly replyTo?: string,
   ) {}
 
-  async send({ to, subject, text, html }: EmailPayload): Promise<{ messageId: string }> {
+  async send({ to, subject, text, html, from, replyTo, headers }: EmailPayload): Promise<{ messageId: string }> {
+    const answerTo = replyTo ?? this.replyTo;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
@@ -50,7 +58,15 @@ export class ResendEmailProvider implements EmailProvider {
         'Content-Type': 'application/json',
       },
       // `text` always goes too, so a client refusing HTML still gets the message
-      body: JSON.stringify({ from: this.from, to, subject, text, ...(html ? { html } : {}) }),
+      body: JSON.stringify({
+        from: from ?? this.from,
+        to,
+        subject,
+        text,
+        ...(html ? { html } : {}),
+        ...(answerTo ? { reply_to: answerTo } : {}),
+        ...(headers ? { headers } : {}),
+      }),
     });
     if (!res.ok) {
       const detail = await res.text().catch(() => '');
@@ -69,7 +85,11 @@ export class ResendEmailProvider implements EmailProvider {
 export class SmtpEmailProvider implements EmailProvider {
   private readonly transport: Transporter;
 
-  constructor(config: AppConfig, private readonly from: string) {
+  constructor(
+    config: AppConfig,
+    private readonly from: string,
+    private readonly replyTo?: string,
+  ) {
     this.transport = config.SMTP_URL
       ? nodemailer.createTransport(config.SMTP_URL)
       : nodemailer.createTransport({
@@ -81,8 +101,17 @@ export class SmtpEmailProvider implements EmailProvider {
         });
   }
 
-  async send({ to, subject, text, html }: EmailPayload): Promise<{ messageId: string }> {
-    const info = await this.transport.sendMail({ from: this.from, to, subject, text, ...(html ? { html } : {}) });
+  async send({ to, subject, text, html, from, replyTo, headers }: EmailPayload): Promise<{ messageId: string }> {
+    const answerTo = replyTo ?? this.replyTo;
+    const info = await this.transport.sendMail({
+      from: from ?? this.from,
+      to,
+      subject,
+      text,
+      ...(html ? { html } : {}),
+      ...(answerTo ? { replyTo: answerTo } : {}),
+      ...(headers ? { headers } : {}),
+    });
     return { messageId: info.messageId };
   }
 }
@@ -98,10 +127,10 @@ export function createEmailProvider(
   log?: { warn: (obj: Record<string, unknown>, msg: string) => void },
 ): EmailProvider {
   if (config.RESEND_API_KEY) {
-    return new ResendEmailProvider(config.RESEND_API_KEY, config.EMAIL_FROM);
+    return new ResendEmailProvider(config.RESEND_API_KEY, config.EMAIL_FROM, config.EMAIL_REPLY_TO);
   }
   if (config.SMTP_URL || config.SMTP_HOST) {
-    return new SmtpEmailProvider(config, config.EMAIL_FROM);
+    return new SmtpEmailProvider(config, config.EMAIL_FROM, config.EMAIL_REPLY_TO);
   }
   // Nothing configured: the stub records sends in memory and delivers nothing.
   // That is fine in dev/test, but in production it silently strands everyone who

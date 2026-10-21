@@ -14,6 +14,7 @@ vi.mock('@react-navigation/native', async () => {
     useNavigation: () => ({ navigate, goBack: vi.fn() }),
     // the screen is in front: its focus effect runs once, as on arrival
     useFocusEffect: (effect: () => void) => useEffect(effect, [effect]),
+    useScrollToTop: () => undefined,
   };
 });
 import { cleanup, fireEvent, screen } from '@testing-library/react';
@@ -22,7 +23,7 @@ import type { InboxItem } from '../notifications/inbox';
 import { renderWithProviders } from './testing/harness';
 import { patchReactNativeWeb } from './testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from './testing/auth';
-import { InboxScreen } from '../inbox/InboxScreen';
+import { MessagesScreen } from '../messages/MessagesScreen';
 import { NotificationCenterScreen } from '../notifications/NotificationCenterScreen';
 
 patchReactNativeWeb();
@@ -58,14 +59,21 @@ const client = () =>
   fakeClient({
     'GET /friends/requests': ok({ requests: [] }),
     'GET /chat/conversations': ok({ conversations: [] }),
+    'GET /me/groups': ok({ groups: [] }),
+    'GET /me/groups/unread': ok({ unread: [] }),
     'GET /me/notifications': ok({ notifications: [caring] }),
     'POST /me/notifications/n1/read': ok({ ok: true }),
   });
 
 describe('a caring message', () => {
-  it('opens from the Inbox in full, with its helpline one tap away', async () => {
+  /*
+   * Notifications moved to the bell on Home, but this one is pinned at the top
+   * of Messages too until it is read: a check on somebody's wellbeing is the
+   * one notice that must not wait behind a bell.
+   */
+  it('is pinned at the top of Messages, and opens there in full with its helpline one tap away', async () => {
     testAuth.client = client();
-    renderWithProviders(<InboxScreen />);
+    renderWithProviders(<MessagesScreen />);
     const row = await screen.findByRole('button', { name: "We're thinking of you" });
     expect(screen.queryByRole('button', { name: 'Find a helpline' })).toBeNull();
     fireEvent.click(row);

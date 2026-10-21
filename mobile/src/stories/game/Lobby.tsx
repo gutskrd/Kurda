@@ -10,6 +10,7 @@ import {
   type StoryListItem,
 } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
+import { haptic } from '../../feedback/haptics';
 import { describeError } from '../../api/errors';
 import type { ApiError, ApiResult } from '../../api/types';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
@@ -228,7 +229,10 @@ export function Lobby({
             size="large"
             busy={busy === 'start'}
             disabled={!canStart}
-            onPress={() => void run('start', () => startGame(client, view.id))}
+            onPress={() => {
+              haptic('tap');
+              void run('start', () => startGame(client, view.id));
+            }}
           />
           {!canStart ? (
             <Text style={[styles.waiting, { color: colors.textSecondary }]} accessibilityLiveRegion="polite">

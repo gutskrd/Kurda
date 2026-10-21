@@ -66,7 +66,7 @@
   padding: 36px 34px 32px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   -webkit-backdrop-filter: blur(28px) saturate(1.3);
   backdrop-filter: blur(28px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
@@ -95,10 +95,28 @@
 }
 .auth-row {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 4px 12px;
   margin-bottom: 18px;
+}
+/* each side keeps its words together, and the row breaks between them if it must */
+.auth-row > * {
+  white-space: nowrap;
+}
+/*
+ * On a phone the card gives its width back: 54px of padding on each side left
+ * "Remember me" and "Forgotten your password?" two lines each in a 280px
+ * column. The page's own 16px gutter, and a card padding to match the others.
+ */
+@media (max-width: 480px) {
+  .auth-wrap {
+    padding: var(--space-6) var(--space-4) var(--space-8);
+  }
+  .auth-card {
+    padding: var(--space-8) var(--space-5) var(--space-6);
+  }
 }
 
 /* birth month and year: one question, so one legend over two selects */
@@ -135,7 +153,6 @@
 .check input {
   width: 17px;
   height: 17px;
-  accent-color: #fff;
   cursor: pointer;
 }
 .link-btn {
@@ -253,21 +270,35 @@
 }
 .chip {
   height: 36px;
-  padding: 0 15px;
+  padding: 0 16px;
   border-radius: var(--r-pill);
-  border: 1px solid var(--border-strong);
+  border: 1px solid var(--border);
   background: var(--surface-2);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   color: var(--ink-2);
-  font-size: 0.9rem;
-  font-weight: 500;
+  font-size: var(--text-secondary);
+  font-weight: 600;
   cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    color var(--dur-fast) ease;
+}
+.chip:hover:not(.active):not(:disabled) {
+  background: var(--surface-3);
+  color: var(--ink);
 }
 .chip.active {
   background: var(--primary);
   color: var(--primary-ink);
   border-color: var(--primary);
+}
+/* a filter is still a target for a thumb: a full 44px where the pointer is a finger */
+@media (pointer: coarse) {
+  .chip {
+    height: 44px;
+  }
+  .seg-btn {
+    min-height: 40px;
+  }
 }
 
 /* ---- rankings ---------------------------------------------------------- */
@@ -301,7 +332,7 @@
   display: grid;
   place-items: center;
   padding: 24px;
-  background: rgba(4, 6, 10, 0.55);
+  background: var(--scrim);
   -webkit-backdrop-filter: blur(6px);
   backdrop-filter: blur(6px);
   animation: fade 0.15s ease;
@@ -340,7 +371,7 @@
   padding: 32px 30px 28px;
   border-radius: var(--r-xl);
   border: 1px solid var(--border-strong);
-  background: rgba(14, 16, 22, 0.62);
+  background: var(--panel-glass);
   -webkit-backdrop-filter: blur(30px) saturate(1.3);
   backdrop-filter: blur(30px) saturate(1.3);
   box-shadow: var(--glass-rim), var(--shadow-lg);
@@ -470,7 +501,7 @@
   padding: 6px;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-md);
-  background: rgba(18, 21, 27, 0.98);
+  background: var(--panel-bg);
   -webkit-backdrop-filter: blur(20px) saturate(1.2);
   backdrop-filter: blur(20px) saturate(1.2);
   box-shadow: var(--shadow-lg);
@@ -496,7 +527,7 @@
   cursor: pointer;
 }
 .user-menu-item:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .user-menu-item.is-danger {
   color: var(--danger);
@@ -522,7 +553,7 @@
 }
 .user-menu-x:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .user-menu-note {
   margin: 0;
@@ -536,9 +567,9 @@
   gap: 8px;
 }
 .user-menu-danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: #fff;
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
+  color: var(--on-danger);
   font-weight: 600;
 }
 
@@ -820,24 +851,7 @@ button.feature {
   backdrop-filter: blur(6px);
 }
 
-/* ---- cosmetic shop (background + icon) --------------------------------- */
-.cosmetic-section {
-  margin-top: 18px;
-}
-.cosmetic-section-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-.cosmetic-section-title {
-  font-family: var(--font-sans);
-  font-size: 0.95rem;
-  font-weight: 600;
-  color: var(--ink-2);
-  margin: 0;
-}
+/* ---- your cosmetics, by kind (profile/CosmeticCustomizer) --------------- */
 .cosmetic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -862,12 +876,14 @@ button.feature {
   width: 100%;
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .cosmetic-thumb-background {
   aspect-ratio: 16 / 9;
 }
-.cosmetic-thumb-icon {
+.cosmetic-thumb-icon,
+.cosmetic-thumb-frame,
+.cosmetic-thumb-tag {
   aspect-ratio: 1;
 }
 .cosmetic-thumb img {
@@ -884,10 +900,21 @@ button.feature {
   width: 100%;
   height: 100%;
 }
+/* a season frame, round your own face, in the middle of its square */
+.cosmetic-frame {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.cosmetic-frame .art-frame-face img {
+  object-fit: cover;
+}
 .cosmetic-badge {
   position: absolute;
   top: 4px;
-  right: 4px;
+  /* the far corner from the Owned / Equipped badge, on either side of the page */
+  inset-inline-end: 4px;
   font-size: 0.75rem;
   line-height: 1;
   padding: 3px 5px;
@@ -895,24 +922,77 @@ button.feature {
   background: var(--gold-soft);
   color: var(--gold-ink);
 }
+/* Owned, or Equipped: said on the picture, where the eye already is */
+.cosmetic-state {
+  position: absolute;
+  top: 4px;
+  inset-inline-start: 4px;
+  max-width: calc(100% - 36px);
+  padding: 2px 7px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border);
+  background: rgba(10, 12, 16, 0.72);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  color: var(--ink-2);
+  font-size: var(--text-tab);
+  font-weight: 650;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.cosmetic-state.is-equipped {
+  border-color: color-mix(in srgb, var(--gold) 45%, transparent);
+  color: var(--gold-ink);
+}
+.cosmetic-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
 .cosmetic-name {
+  display: block;
   font-size: 0.82rem;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
-.cosmetic-equipped,
+.cosmetic-desc {
+  display: block;
+  font-size: 0.74rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* one action per tile, on its floor, the full width of it — and allowed to
+   wrap, because "Kaufen · 800 Zêr" is wider than a phone's tile */
+.btn.cosmetic-action {
+  width: 100%;
+  margin-top: auto;
+  height: auto;
+  min-height: 38px;
+  padding: 6px 8px;
+  white-space: normal;
+  line-height: 1.2;
+  text-align: center;
+}
+.cosmetics-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 14px;
+}
 .cosmetic-locked {
+  margin-top: auto;
   font-size: 0.78rem;
   font-weight: 600;
   text-align: center;
   padding: 6px 0;
-}
-.cosmetic-equipped {
-  color: var(--gold-ink);
-}
-.cosmetic-locked {
   color: var(--ink-3);
 }
 /* ---- shop -------------------------------------------------------------- */
@@ -920,6 +1000,32 @@ button.feature {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;
+}
+/*
+ * The price takes its own line over the buttons, which share the one below —
+ * at every width: five to a row, a tile is too narrow for a price, Buy and the
+ * gift button side by side, and the gift button fell to a line of its own.
+ */
+.shop-grid .shop-price {
+  flex-basis: 100%;
+}
+.shop-grid .shop-actions .btn {
+  flex: 1 1 auto;
+}
+/*
+ * Two to a row on a phone. One tile the width of the screen made the Shop
+ * twenty-five screens of backgrounds before the first icon; at two a row the
+ * kinds are a short scroll apart.
+ */
+@media (max-width: 640px) {
+  .shop-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .shop-grid .shop-tile {
+    padding: 8px;
+    gap: 8px;
+  }
 }
 .shop-tile {
   margin: 0;
@@ -935,12 +1041,16 @@ button.feature {
   width: 100%;
   border-radius: var(--r-sm);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .shop-thumb-background {
   aspect-ratio: 16 / 9;
 }
-.shop-thumb-icon {
+.shop-thumb-icon,
+/* a tag, a frame or anything else is a small thing, drawn the size of an icon */
+.shop-thumb-tag,
+.shop-thumb-frame,
+.shop-thumb-other {
   aspect-ratio: 1;
   max-width: 96px;
 }
@@ -958,12 +1068,34 @@ button.feature {
   width: 100%;
   height: 100%;
 }
+/* the Kurdish name, and under it, quieter, what it is ("Tea glass") */
+.shop-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
 .shop-name {
+  display: block;
   font-size: 0.9rem;
   color: var(--ink-2);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+.shop-desc {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* the price and the buttons sit on the tile's floor, level along a row
+   whether or not the tile beside has a line of description */
+.shop-tile > .shop-actions,
+.shop-tile > .shop-owned {
+  margin-top: auto;
 }
 .shop-owned {
   font-size: 0.82rem;
@@ -985,7 +1117,6 @@ button.feature {
 .icon-visibility input {
   width: 18px;
   height: 18px;
-  accent-color: var(--gold);
   cursor: pointer;
 }
 
@@ -1073,6 +1204,12 @@ button.feature {
   flex-direction: column;
   gap: 6px;
   padding-right: 4px;
+}
+/* the list's placeholder rows, spaced as the rows that replace them */
+.chat-skel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
 /* Direct / Groups switch + list actions */
 .chat-tabs {
@@ -1179,20 +1316,29 @@ button.feature {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/*
+ * A hairline and the surface, without frosting: there is only the flat page
+ * behind a conversation, and a blur of a flat colour adds nothing but a dark
+ * ring round the inside of the panel where it runs out of page to sample.
+ */
 .chat-thread-pane,
 .chat-empty {
   min-width: 0;
   border: 1px solid var(--border);
   border-radius: var(--r-lg);
   background: var(--surface);
-  -webkit-backdrop-filter: blur(var(--glass-blur));
-  backdrop-filter: blur(var(--glass-blur));
   box-shadow: var(--glass-rim);
   overflow: hidden;
 }
+/* drawn inside the thread's pane, which already has the edge and the surface */
 .chat-empty {
   display: grid;
   place-items: center;
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
 }
 .chat-thread {
   display: flex;
@@ -1210,6 +1356,14 @@ button.feature {
   display: none;
   color: var(--ink-2);
   transform: rotate(180deg);
+  /* an 18px arrow in a thumb's 44px square, pulled back so the arrow stays where it was drawn */
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  margin-block: -13px;
+  margin-inline-start: -13px;
+  border-radius: 50%;
 }
 /* "back" points the way a right-to-left page reads back: to the right */
 [dir='rtl'] .chat-back {
@@ -1237,6 +1391,12 @@ button.feature {
   gap: 10px;
   /* a run's own bubbles sit tighter than the gap between separate runs */
   scroll-behavior: smooth;
+}
+/* the thread's placeholder bursts, spaced as the bursts that replace them */
+.chat-skel-thread {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 @media (prefers-reduced-motion: reduce) {
   .chat-messages {
@@ -1423,6 +1583,9 @@ button.feature {
 /* the composer grows with its content instead of scrolling one line */
 .chat-compose-input {
   resize: none;
+  /* one line sits in the middle of the field, which stands as tall as the Send beside it */
+  min-height: 44px;
+  padding-block: 9px;
   max-height: 132px;
   overflow-y: auto;
   line-height: 1.4;
@@ -1430,8 +1593,10 @@ button.feature {
 .chat-senderr {
   margin: 0 16px;
 }
+/* as the field grows, the tools and Send stay down by its last line, where the thumb is */
 .chat-compose {
   display: flex;
+  align-items: flex-end;
   gap: 10px;
   padding: 12px 16px;
   border-top: 1px solid var(--border);
@@ -1446,6 +1611,14 @@ button.feature {
   }
   .chat-layout.has-active .chat-list {
     display: none;
+  }
+  /* the list on its own is a page that scrolls, not a box inside one */
+  .chat-layout:not(.has-active) {
+    height: auto;
+  }
+  .chat-layout:not(.has-active) .chat-list {
+    overflow: visible;
+    padding-right: 0;
   }
   .chat-layout:not(.has-active) .chat-thread-pane {
     display: none;
@@ -1558,7 +1731,7 @@ button.feature {
   letter-spacing: normal;
 }
 .mkp-showcase {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 16px 18px;
@@ -1584,7 +1757,7 @@ button.feature {
   flex: none;
   display: grid;
   place-items: center;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   border-radius: 12px;
   font-size: 1.5rem;
 }
@@ -1600,7 +1773,7 @@ button.feature {
 
 /* right info sidebar */
 .mkp-online {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   border: 1px solid var(--border);
   border-radius: 18px;
   padding: 16px 18px;
@@ -1921,7 +2094,7 @@ button.feature {
      the rest of the gesture to the page — or to the browser's back swipe */
   overscroll-behavior-x: contain;
   scrollbar-width: none;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--separator);
   margin-bottom: 10px;
   padding-bottom: 8px;
 }
@@ -1945,19 +2118,19 @@ button.feature {
 }
 .mkp-tab:hover {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .mkp-tab.is-active {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.09);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: var(--surface-2);
+  border-color: var(--border);
 }
 .mkp-tab-hidden {
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--ink-4);
-  border: 1px solid rgba(255, 255, 255, 0.16);
+  border: 1px solid var(--border);
   border-radius: 3px;
   padding: 1px 5px;
 }
@@ -1993,7 +2166,7 @@ button.feature {
   padding-inline: 2px;
 }
 .mkp-activity-feed .fcard + .fcard {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-top: 1px solid var(--separator);
 }
 .mkp-activity-feed .fcard:hover {
   transform: none;
@@ -2023,7 +2196,7 @@ button.feature {
   text-decoration: none;
 }
 a.mkp-activity-row:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
 }
 .mkp-activity-glyph {
   flex: none;
@@ -2032,7 +2205,7 @@ a.mkp-activity-row:hover {
   width: 38px;
   height: 38px;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
   color: var(--ink-2);
 }
 .mkp-activity-meta {
@@ -2075,7 +2248,7 @@ a.mkp-activity-row:hover {
   aspect-ratio: 1;
   object-fit: cover;
   border-radius: 3px;
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg);
 }
 .mkp-shot-empty {
   display: grid;
@@ -2095,7 +2268,7 @@ a.mkp-activity-row:hover {
   width: 100%;
   margin-top: 10px;
   padding: 9px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+  border: 1px solid var(--border);
   border-radius: 4px;
   background: transparent;
   color: var(--ink-2);
@@ -2104,7 +2277,7 @@ a.mkp-activity-row:hover {
   cursor: pointer;
 }
 .mkp-more:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   color: var(--ink);
 }
 
@@ -2129,7 +2302,6 @@ a.mkp-activity-row:hover {
   width: 17px;
   height: 17px;
   flex: none;
-  accent-color: var(--gold-ink);
 }
 .section-toggle-label {
   display: block;
@@ -2375,31 +2547,68 @@ a.mkp-activity-row:hover {
     height: 48px;
   }
 }
+/*
+ * Beside a real keyboard (keyboard/device.ts): a desk keyboard's keys rather
+ * than a phone's. One size of key, a little wider than tall, in rows no wider
+ * than the game column needs — ten keys across at about the board's cell
+ * size — and ç ê î ş û as five ordinary keys centred under the rest, not a
+ * row of double keys. The line under it says the real keyboard works.
+ */
+.wordle-keys.is-desktop {
+  max-width: 520px;
+}
+.is-desktop .wordle-keyboard {
+  gap: 6px;
+}
+.is-desktop .wordle-key {
+  height: 46px;
+  border-radius: var(--r-xs);
+  font-size: 1rem;
+}
+.is-desktop .wordle-key-wide {
+  font-size: 0.82rem;
+}
+/* the Kurdish letters: each the width of one key of the ten-key row */
+.is-desktop .wordle-keyboard-qwerty .wordle-krow-last {
+  margin-top: 4px;
+}
+.is-desktop .wordle-keyboard-qwerty .wordle-krow-last .wordle-key {
+  flex: 0 0 calc((100% - 9 * 6px) / 10);
+  font-size: 1.05rem;
+}
+.wordle-type-hint {
+  margin: 14px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
 /* feedback colors — defined after the base rules so they win on shared elements */
 .wordle-green {
   background: #2e7d5b;
   border-color: #2e7d5b;
   color: #fff;
 }
+/* near-black on the yellow: white on it measured 2.9:1, too faint for a letter you have to read */
 .wordle-yellow {
   background: #b8922e;
   border-color: #b8922e;
-  color: #fff;
+  color: #111;
 }
 .wordle-gray {
   /* the front page's grey: a letter that is not in the word steps back */
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
   border-color: transparent;
   color: var(--ink-2);
 }
 /* on the keyboard, a used-up letter is dimmer than one not tried yet */
 .wordle-key.wordle-gray {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   color: var(--ink-4);
 }
 .wordle-notice {
   text-align: center;
-  color: #c0392b;
+  color: var(--danger);
   margin-top: 8px;
   font-size: 0.92rem;
 }
@@ -2493,9 +2702,9 @@ a.mkp-activity-row:hover {
   color: var(--ink);
 }
 .rhyme-timer.low {
-  color: #fff;
-  background: #c0392b;
-  border-color: #c0392b;
+  color: var(--on-danger);
+  background: var(--danger-fill);
+  border-color: var(--danger-fill);
 }
 .rhyme-score {
   color: var(--ink-2);
@@ -2654,7 +2863,7 @@ a.mkp-activity-row:hover {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--ink-2);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2888,7 +3097,7 @@ a.mkp-activity-row:hover {
   border-radius: var(--r-pill);
   border: 1px solid var(--border);
   background: var(--surface-2);
-  font-size: 0.68rem;
+  font-size: var(--text-tab);
   font-weight: 700;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -3080,9 +3289,11 @@ a.mkp-activity-row:hover {
    pay it — that is the whole point of knowing what to save for */
 .shop-price {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 5px;
-  margin-right: auto;
+  /* the price at the start of the row, the buttons at its end — on either side of the page */
+  margin-inline-end: auto;
   color: var(--gold-ink);
   font-size: 0.82rem;
   font-weight: 600;
@@ -3095,46 +3306,21 @@ a.mkp-activity-row:hover {
 .shop-short {
   padding: 1px 7px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--bg);
   color: var(--ink-3);
   font-size: 0.72rem;
   font-weight: 500;
 }
 
-/* ---- narrowing the shop ------------------------------------------------- */
-.shop-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 20px;
-}
-.shop-search {
-  flex: 1 1 190px;
-  min-width: 0;
-  max-width: 280px;
-  height: 34px;
-  padding: 0 12px;
-  font-size: 0.88rem;
-}
-.shop-afford {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: var(--ink-3);
-  font-size: 0.86rem;
-  cursor: pointer;
-  user-select: none;
-}
-.shop-afford input {
-  accent-color: var(--primary);
-}
+/* narrowing the shop — tabs, search, sort and the toggles — is shop/items.css,
+   shared with the inventory and the gift picker */
 .shop-gift-btn {
   flex: none;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  /* level with the Buy button beside it (.btn-sm) */
+  width: 38px;
+  height: 38px;
   border-radius: var(--r-sm);
   border: 1px solid var(--border);
   background: var(--surface-2);
@@ -3349,7 +3535,6 @@ a.mkp-activity-row:hover {
 .picture-toggle input {
   width: 16px;
   height: 16px;
-  accent-color: var(--gold-ink);
 }
 
 .text-tools {
@@ -3388,7 +3573,6 @@ a.mkp-activity-row:hover {
 }
 .tool-row input[type='range'] {
   flex: 1;
-  accent-color: var(--gold-ink);
 }
 .tool-value {
   flex: none;
@@ -3448,7 +3632,7 @@ a.mkp-activity-row:hover {
   border: 1px dashed rgba(255, 255, 255, 0.4);
   background: rgba(8, 10, 14, 0.35);
   color: rgba(255, 255, 255, 0.7);
-  font-size: 0.62rem;
+  font-size: var(--text-tab);
   pointer-events: none;
   overflow: hidden;
 }
@@ -3557,7 +3741,7 @@ a.mkp-activity-row:hover {
   cursor: pointer;
 }
 .sticker:hover {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
 }
 .sticker.is-on {
   border-color: var(--gold-ink);
@@ -3666,7 +3850,7 @@ a.mkp-activity-row:hover {
 }
 .cpick-field-label {
   color: var(--ink-4);
-  font-size: 0.66rem;
+  font-size: var(--text-tab);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
@@ -3718,7 +3902,7 @@ a.mkp-activity-row:hover {
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 /* ---- the blocklist ------------------------------------------------------- */
@@ -3793,6 +3977,104 @@ a.mkp-activity-row:hover {
   .blocklist-row .btn {
     margin-left: auto;
   }
+}
+
+/* ---- signed-in devices ---------------------------------------------------- */
+
+/*
+ * The blocklist's rows, with a picture of the device where a face would be.
+ * `min-width: 0` for the same reason as there: a long device name gives way,
+ * never the Sign out button.
+ */
+.device-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.device-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.device-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+.device-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.device-name {
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.device-meta {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.device-row .btn {
+  flex: none;
+}
+/* the one you are holding: said in the colour of "fine", not of a warning */
+.device-here {
+  color: var(--success);
+  font-weight: 600;
+}
+.device-others {
+  margin-top: var(--space-3);
+}
+/* signing out here, or everywhere at once: apart from the list, under a hairline */
+.device-here-actions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/*
+ * On a phone a name and its last-used line stop fitting beside Sign out, so
+ * the button takes the line under them, at its end, as a friend row's do.
+ */
+@media (max-width: 560px) {
+  .device-row.has-action {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+  .device-row.has-action .device-who {
+    flex-basis: calc(100% - 52px);
+  }
+  .device-row.has-action .btn,
+  .device-row.has-action .skeleton-btn {
+    margin-inline-start: auto;
+  }
+}
+
+/* the password form: a column to type a password into, not the card's width */
+.password-form {
+  max-width: 416px;
+}
+.password-form .settings-actions {
+  margin-top: var(--space-2);
 }
 
 /* ---- who gave them what they are wearing --------------------------------- */
@@ -4094,7 +4376,17 @@ a.mkp-activity-row:hover {
 }
 .dict-entry-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+/* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
+.dict-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dict-voice-face {
+  --speaker-size: 56px;
 }
 .dict-headword {
   margin: 0 0 4px;

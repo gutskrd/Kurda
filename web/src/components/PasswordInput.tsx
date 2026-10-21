@@ -8,12 +8,19 @@ export function PasswordInput({
   autoComplete = 'current-password',
   placeholder = 'Password',
   id,
+  invalid = false,
+  describedBy,
+  autoFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
   autoComplete?: string;
   placeholder?: string;
   id?: string;
+  /** the field's own error is showing (its id goes in `describedBy`) */
+  invalid?: boolean;
+  describedBy?: string;
+  autoFocus?: boolean;
 }): React.JSX.Element {
   const t = useT();
   const [show, setShow] = useState(false);
@@ -28,6 +35,9 @@ export function PasswordInput({
         autoComplete={autoComplete}
         placeholder={placeholder}
         required
+        aria-invalid={invalid || undefined}
+        aria-describedby={describedBy}
+        autoFocus={autoFocus}
       />
       <button
         type="button"

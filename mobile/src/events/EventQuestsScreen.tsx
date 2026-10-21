@@ -127,7 +127,13 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
         {state === 'claimed' ? (
           <Text style={[styles.claimed, { color: colors.success }]}>✓ {t('events.claimed')}</Text>
         ) : state === 'claimable' ? (
-          <Pressable onPress={onClaim} disabled={busy} style={[styles.claimBtn, { backgroundColor: colors.primary }]}>
+          <Pressable
+            onPress={onClaim}
+            disabled={busy}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: busy, busy }}
+            style={[styles.claimBtn, { backgroundColor: colors.primary }]}
+          >
             {busy ? (
               <ActivityIndicator color={colors.textOnPrimary} />
             ) : (

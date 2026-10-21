@@ -39,7 +39,9 @@ The nav shows a page only to roles the API lets in (`GET /admin/session`), and
 everyone starts on the first page their role opens.
 
 - **Overview** — Dashboard (what waits, by role), Analytics
-- **Record audio** — the alphabet, lesson sentences, story sentences
+- **Record audio** — the alphabet, lesson sentences, story sentences, who says
+  each dictionary pronunciation, and the characters who say them all (who says
+  each recording, and its mouth timeline, many at once)
 - **People** — Users
 - **Moderation** — Queue, Automated flags, Bot flags
 - **Content** — Lessons, Stories, Tags & badges, Live events

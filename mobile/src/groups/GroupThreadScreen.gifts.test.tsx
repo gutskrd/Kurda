@@ -10,7 +10,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn() }), useFocusEffect: () => undefined }));
 // the room's live events are not under test here
 vi.mock('../realtime/useRoomEvents', () => ({ useRoomEvents: () => undefined }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import type { GiftCatalogItem } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -113,10 +113,17 @@ describe('GroupThreadScreen reports', () => {
       }),
     });
 
+  // react-native-web wires a pressable's handlers in an effect, so a press the
+  // moment a sheet appears can land before they exist; let it settle first
+  const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+
   const reportTheMessage = async (): Promise<void> => {
     fireEvent.mouseDown(await screen.findByText('silav'), { button: 0, buttons: 1 });
     // a hold is a real long press, so wait longer than findBy's default second
-    fireEvent.click(await screen.findByRole('button', { name: 'Scam or spam' }, { timeout: 3000 }));
+    const reason = await screen.findByRole('button', { name: 'Scam or spam' }, { timeout: 3000 });
+    await settle();
+    fireEvent.click(reason);
+    await settle();
     fireEvent.click(screen.getByRole('button', { name: 'Send report' }));
     await screen.findByText('Thanks for telling us');
   };

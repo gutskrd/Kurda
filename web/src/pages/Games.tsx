@@ -8,6 +8,8 @@ import { useAuth } from '../auth/AuthProvider';
 import { RaceMini, RhymeMini, StoriesMini, WordleMini } from '../landing/mocks';
 import { useStoriesAvailable } from '../stories/catalogue';
 import { RanksSection } from '../ranks/RanksSection';
+import { LearnHeader } from '../learn/LearnHeader';
+import { ChevronIcon, TrophyIcon } from '../components/icons';
 
 /**
  * A game, before it has words.
@@ -90,7 +92,7 @@ const GAMES: GameCard[] = [
 ];
 
 /**
- * Games overview. Every game is one box; clicking it asks how you want to play
+ * Learn, on its Games half (/app/games). Every game is one box; clicking it asks how you want to play
  * (solo vs online) instead of scattering each mode across its own card. All
  * games are server-authoritative — the client never scores itself.
  *
@@ -114,16 +116,25 @@ export function Games(): React.JSX.Element {
 
   return (
     <div className="container game-page">
-      <div className="page-header">
-        <span className="eyebrow">{t('games.eyebrow')}</span>
-        <h1 className="page-title">{t('games.title')}</h1>
-        <p className="page-sub">{t('games.subtitle')}</p>
-      </div>
+      <LearnHeader view="games" />
 
-      {/* your rank in each game played against people, and the season (signed in only) */}
-      <RanksSection />
+      {/*
+        Rankings, small and first: the way to the leagues and the season from
+        the games they are about. Invites from friends are not repeated here —
+        they arrive as the banner above every page, this one included, where
+        they can be answered at once.
+      */}
+      <Link to="/app/rankings" className="games-rankings">
+        <TrophyIcon size={20} />
+        <span className="games-rankings-text">
+          <span className="games-rankings-title">{t('nav.rankings')}</span>
+          <span className="games-rankings-sub">{t('learn.rankingsSub')}</span>
+        </span>
+        <ChevronIcon size={16} className="games-rankings-go" />
+      </Link>
 
       {/* the front page's tiles, with the real ways in: the same pictures, the same grid */}
+      <h2 className="sr-only">{t('games.title')}</h2>
       <div className="game-grid">
         {GAMES.map((g) => {
           const comingSoon = g.id === 'stories' && stories === 'none';
@@ -131,29 +142,44 @@ export function Games(): React.JSX.Element {
           // nothing at all before there is something to play
           const playable = comingSoon ? [] : signedIn ? g.modes : g.modes.filter((m) => m.open);
           const single = playable.length === 1 ? playable[0] : undefined;
+          /*
+           * A badge only when it tells you something: that the game is not
+           * here yet, or what a visitor can do without an account. "Playable"
+           * on every card of a signed-in player said nothing the Play button
+           * did not, in the gold that is kept for what is earned.
+           */
+          const badge = comingSoon
+            ? t('stories.comingSoon')
+            : signedIn
+              ? null
+              : playable.length > 0
+                ? t('games.stories.readFree')
+                : t('games.signInToPlay');
+          // each mode its own way in, when each has its own page (Stories chooses on its own)
+          const direct = !g.hub && playable.length > 1;
           return (
             <article className={`game-tile game-tile--${g.id}`} key={g.nameKey}>
               <div className="game-tile-visual">{g.visual}</div>
               <div className="game-tile-text">
                 <div className="game-tile-head">
                   <h3>{t(g.nameKey)}</h3>
-                  <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>
-                    {comingSoon
-                      ? t('stories.comingSoon')
-                      : signedIn
-                        ? t('games.playable')
-                        : playable.length > 0
-                          ? t('games.stories.readFree')
-                          : t('games.signInToPlay')}
-                  </span>
+                  {badge && <span className={`badge${playable.length > 0 ? ' badge-gold' : ''}`}>{badge}</span>}
                 </div>
                 <p>{t(g.bodyKey)}</p>
                 <ul className="game-tags">
                   {g.modes.map((m) => {
                     const locked = !signedIn && !m.open;
                     return (
-                      <li key={m.labelKey} className={locked ? 'is-locked' : undefined}>
-                        {t(m.labelKey)}
+                      <li key={m.labelKey} className={locked ? 'is-locked' : direct ? 'is-link' : undefined}>
+                        {/* straight into the game: Learn opens on Games for somebody who plays,
+                            so this is the second tap from anywhere, not the fourth */}
+                        {direct ? (
+                          <Link to={m.href} className="game-tag-link">
+                            {t(m.labelKey)}
+                          </Link>
+                        ) : (
+                          t(m.labelKey)
+                        )}
                         {locked && <span className="mode-locked"> · {t('games.mode.needsAccount')}</span>}
                       </li>
                     );
@@ -178,6 +204,9 @@ export function Games(): React.JSX.Element {
           );
         })}
       </div>
+
+      {/* your rank in each game played against people, and the season (signed in only) */}
+      <RanksSection />
 
       <Modal open={chooser !== null} onClose={() => setChooser(null)} label={chooser ? t('games.howToPlay') : t('games.chooseMode')}>
         {chooser && (

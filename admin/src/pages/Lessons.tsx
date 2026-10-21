@@ -159,6 +159,8 @@ function LessonListPage({ initialStatus }: { initialStatus: string | null }): Re
           error={list.error}
           onRetry={() => void list.reload()}
           what="lessons"
+          // five columns and two buttons: on a tablet the titles wrapped a word to a line, so cards there
+          wide="medium"
           empty={query ? 'No lesson matches that search.' : status === 'current' ? 'No lessons yet. Create the first with “New lesson”.' : `No lesson is ${STATUS_NAME[status as ContentStatus].toLowerCase()}.`}
           actions={(l) => (
             <>

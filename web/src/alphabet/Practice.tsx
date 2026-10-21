@@ -1,16 +1,28 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { AppLocale } from '@kurda/shared';
+import {
+  LATIN_LETTERS,
+  SORANI_LETTERS,
+  alphabetRound,
+  askAgain,
+  compareLocaleOf,
+  likeFor,
+  type AlphabetOption,
+  type AlphabetQuestion,
+  type AlphabetScript,
+  type AlphabetTopic,
+  type AppLocale,
+  type SoundLikeness,
+} from '@kurda/shared';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { latinSound, latinWord, pairWord, play, soraniSound, useRecordings } from './audio';
-import { LATIN, SORANI, compareLocaleOf, likeFor, type Likeness } from './letters';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { currentSounds, latinSound, latinWord, pairWord, play, soraniSound, spokenAlphabet, useRecordings } from './audio';
 import { Meaning } from './Meaning';
-import { again, makeRound, type Option, type Question, type Script, type Topic } from './practice';
 import { Sound } from './Sound';
 
 interface Item {
-  q: Question;
+  q: AlphabetQuestion;
   /** a miss coming back later in the round; it does not count toward the score */
   retry: boolean;
 }
@@ -24,7 +36,7 @@ const POSITION: Record<'start' | 'middle' | 'end', MessageKey> = {
 /** How far back a missed question comes: far enough to be recalled, not just remembered. */
 const COMEBACK = 3;
 
-function Like({ like }: { like: Likeness }): React.JSX.Element {
+function Like({ like }: { like: SoundLikeness }): React.JSX.Element {
   return (
     <span className="ab-like" dir="auto">
       {like.before}
@@ -34,7 +46,7 @@ function Like({ like }: { like: Likeness }): React.JSX.Element {
   );
 }
 
-function Glyph({ o, className = '' }: { o: Option; className?: string }): React.JSX.Element {
+function Glyph({ o, className = '' }: { o: AlphabetOption; className?: string }): React.JSX.Element {
   return (
     <span className={`${className}${o.script === 'ckb' ? ' ab-ar' : ''}`} lang={o.script === 'ckb' ? 'ckb' : 'ku'} dir={o.script === 'ckb' ? 'rtl' : 'ltr'}>
       {o.text}
@@ -42,23 +54,23 @@ function Glyph({ o, className = '' }: { o: Option; className?: string }): React.
   );
 }
 
-function clipOf(q: Question): string | null {
+function clipOf(q: AlphabetQuestion): string | null {
   return 'clip' in q ? q.clip : null;
 }
 
-export function Practice({ script, locale, onOpen }: { script: Script; locale: AppLocale; onOpen: (id: string) => void }): React.JSX.Element {
+export function Practice({ script, locale, onOpen }: { script: AlphabetScript; locale: AppLocale; onOpen: (id: string) => void }): React.JSX.Element {
   const t = useT();
   // a round started after the recordings arrive asks with them
   useRecordings();
   const [queue, setQueue] = useState<Item[] | null>(null);
   const [at, setAt] = useState(0);
   const [chosen, setChosen] = useState<string | null>(null);
-  const [missed, setMissed] = useState<Topic[]>([]);
+  const [missed, setMissed] = useState<AlphabetTopic[]>([]);
   const [results, setResults] = useState<Array<boolean | null>>([]);
   const nextRef = useRef<HTMLButtonElement>(null);
 
   const start = (focus: string[] | null = null): void => {
-    const round = makeRound(script, locale, focus);
+    const round = alphabetRound(script, locale, focus, Math.random, currentSounds());
     setQueue(round.map((q) => ({ q, retry: false })));
     setResults(round.map(() => null));
     setAt(0);
@@ -91,7 +103,7 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
         if (!item.retry) {
           setQueue((qs) => {
             const list = [...qs!];
-            list.splice(Math.min(at + 1 + COMEBACK, list.length), 0, { q: again(q), retry: true });
+            list.splice(Math.min(at + 1 + COMEBACK, list.length), 0, { q: askAgain(q), retry: true });
             return list;
           });
         }
@@ -124,7 +136,7 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
     return () => window.removeEventListener('keydown', onKey);
   }, [q, chosen, choose]);
 
-  const ask = (question: Question): string => {
+  const ask = (question: AlphabetQuestion): string => {
     switch (question.kind) {
       case 'hear':
         return t('alphabet.practice.qHear');
@@ -171,7 +183,10 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
 
           <div className="ab-q-prompt">
             {(q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') && (
-              <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />
+              <>
+                <ClipSpeaker clips={spokenAlphabet(q.clip)} decorative className="speaker-tile ab-voice-face" />
+                <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />
+              </>
             )}
             {q.kind === 'spell' && (
               // for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead
@@ -248,7 +263,7 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
               </p>
               <div className="ab-review">
                 {missed.map((m) => {
-                  const text = m.script === 'kmr' ? m.id : SORANI.find((l) => l.id === m.id)?.char ?? m.id;
+                  const text = m.script === 'kmr' ? m.id : SORANI_LETTERS.find((l) => l.id === m.id)?.char ?? m.id;
                   return (
                     <button key={`${m.script}:${m.id}`} type="button" className="ab-tile ab-review-tile" onClick={() => onOpen(m.id)}>
                       <Glyph o={{ id: m.id, text, script: m.script }} className="ab-tile-glyph" />
@@ -271,7 +286,7 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
 }
 
 /** Why the answer is what it is: the letter, its sound, a word with it in. */
-function Explain({ q, locale }: { q: Question; locale: AppLocale }): React.JSX.Element | null {
+function Explain({ q, locale }: { q: AlphabetQuestion; locale: AppLocale }): React.JSX.Element | null {
   const t = useT();
   if (q.kind === 'pair') {
     return (
@@ -290,7 +305,7 @@ function Explain({ q, locale }: { q: Question; locale: AppLocale }): React.JSX.E
     );
   }
   if (q.topic.script === 'kmr') {
-    const l = LATIN.find((x) => x.id === q.topic.id);
+    const l = LATIN_LETTERS.find((x) => x.id === q.topic.id);
     if (!l) return null;
     const like = compareLocaleOf(locale) ? likeFor(l.id, locale) : null;
     return (
@@ -311,7 +326,7 @@ function Explain({ q, locale }: { q: Question; locale: AppLocale }): React.JSX.E
       </div>
     );
   }
-  const l = SORANI.find((x) => x.id === q.topic.id);
+  const l = SORANI_LETTERS.find((x) => x.id === q.topic.id);
   if (!l) return null;
   return (
     <div className="ab-explain">

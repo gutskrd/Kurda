@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { AuthProvider } from '../auth/AuthProvider';
@@ -425,5 +425,90 @@ describe('Messages', () => {
 
     await waitFor(() => expect(screen.getByText('Silav hemû!')).toBeInTheDocument());
     expect(screen.getByText('zana')).toBeInTheDocument(); // sender name shown on others' bubbles
+  });
+
+  describe('the list', () => {
+    const convos = [
+      { userId: 'u2', username: 'zana', lastMessage: 'Silav!', lastAt: new Date().toISOString(), lastFromMe: false, unread: 2 },
+      { userId: 'u3', username: 'berfin', lastMessage: 'Spas', lastAt: new Date().toISOString(), lastFromMe: true, unread: 0 },
+    ];
+    const groups = [{ id: 'g1', name: 'Kurmancî club', description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 4, myRole: 'owner' }];
+
+    function serve(over: Record<string, unknown> = {}) {
+      localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+      const answers: Record<string, unknown> = {
+        '/chat/conversations': { conversations: convos },
+        '/me/groups/unread': { unread: [{ groupId: 'g1', unread: 0 }] },
+        '/me/groups': { groups },
+        '/friends/requests': { requests: [] },
+        '/friends': { friends: [{ userId: 'u7', username: 'rojda', displayName: 'Rojda' }] },
+        ...over,
+      };
+      const keys = Object.keys(answers).sort((a, b) => b.length - a.length);
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string) => {
+          if (url.endsWith('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', emailVerified: true } });
+          const key = keys.find((k) => url.includes(k));
+          return jsonResponse(200, key ? answers[key] : {});
+        }),
+      );
+    }
+
+    it('shows people and groups together, with when each last moved', async () => {
+      serve();
+      renderApp(<Messages />, ['/app/messages']);
+      expect(await screen.findByText('zana')).toBeInTheDocument();
+      expect(screen.getByText('berfin')).toBeInTheDocument();
+      expect(await screen.findByText('Kurmancî club')).toBeInTheDocument();
+      // unread reads as unread: bolder, and counted
+      expect(screen.getByText('zana').closest('a')).toHaveClass('is-unread');
+      expect(screen.getByText('berfin').closest('a')).not.toHaveClass('is-unread');
+      expect(screen.getAllByText('just now').length).toBeGreaterThan(0);
+    });
+
+    it('narrows to unread, and by name as you type', async () => {
+      serve();
+      renderApp(<Messages />, ['/app/messages']);
+      await screen.findByText('zana');
+      await userEvent.click(screen.getByRole('tab', { name: 'Unread' }));
+      expect(screen.getByText('zana')).toBeInTheDocument();
+      expect(screen.queryByText('berfin')).not.toBeInTheDocument();
+
+      await userEvent.click(screen.getByRole('tab', { name: 'All' }));
+      await userEvent.type(screen.getByRole('searchbox', { name: 'Search conversations' }), 'ber');
+      expect(screen.getByText('berfin')).toBeInTheDocument();
+      expect(screen.queryByText('zana')).not.toBeInTheDocument();
+    });
+
+    it('keeps friend requests at the top, where they cannot sink', async () => {
+      serve({ '/friends/requests': { requests: [{ userId: 'u8', username: 'serhat', displayName: 'Serhat' }] } });
+      renderApp(<Messages />, ['/app/messages']);
+      const row = await screen.findByRole('link', { name: /Friend requests/ });
+      expect(row).toHaveAttribute('href', '/app/friends');
+      expect(row.textContent).toContain('Serhat');
+      // above the first conversation
+      const first = await screen.findByText('zana');
+      expect(row.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+
+    it('offers the next step when there is nobody to talk to yet', async () => {
+      serve({ '/chat/conversations': { conversations: [] }, '/me/groups': { groups: [] } });
+      renderApp(<Messages />, ['/app/messages']);
+      expect(await screen.findByText('No messages yet')).toBeInTheDocument();
+      expect(screen.getByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
+    });
+
+    it('starts a new conversation with a friend', async () => {
+      serve();
+      renderApp(<Messages />, ['/app/messages']);
+      // at the top of the list, and in the empty half of the screen beside it
+      const [start] = await screen.findAllByRole('button', { name: 'New message' });
+      await userEvent.click(start!);
+      const dialog = await screen.findByRole('dialog', { name: 'New message' });
+      await userEvent.click(await within(dialog).findByRole('button', { name: /Rojda/ }));
+      // the thread opens for them
+      expect(await screen.findByRole('textbox', { name: 'Message' })).toBeInTheDocument();
+    });
   });
 });

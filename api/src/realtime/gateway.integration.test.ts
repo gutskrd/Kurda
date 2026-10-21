@@ -5,7 +5,14 @@ import pg from 'pg';
 import WebSocket from 'ws';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { CLOSE_BAD_TICKET, CLOSE_CONNECTED_ELSEWHERE, MAX_CONNECTIONS_PER_USER } from './gateway.js';
+import {
+  CLOSE_BAD_TICKET,
+  CLOSE_CONNECTED_ELSEWHERE,
+  CLOSE_TOO_MANY_MESSAGES,
+  MAX_CLIENT_MESSAGE_BYTES,
+  MAX_CONNECTIONS_PER_USER,
+  MESSAGE_BURST,
+} from './gateway.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -249,6 +256,41 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     ws.send(JSON.stringify({ type: 'ping' }));
     const pong = await waitFor(ws, (m) => m.type === 'pong');
     expect(pong.at).toBeGreaterThan(0);
+  });
+
+  it('closes a connection that sends a message larger than any client sends', async () => {
+    const user = await makeUser('bigframe');
+    const { ws } = await connect(user.token);
+    const closed = waitForClose(ws);
+    ws.send(JSON.stringify({ type: 'ping', pad: 'x'.repeat(MAX_CLIENT_MESSAGE_BYTES) }));
+    // 1009: message too big — refused before it is read into a string and parsed
+    expect(await closed).toBe(1009);
+  });
+
+  it('closes a connection that sends messages faster than any client does', async () => {
+    const user = await makeUser('flood');
+    const { ws } = await connect(user.token);
+    const closed = waitForClose(ws);
+    for (let i = 0; i < MESSAGE_BURST + 20; i++) ws.send(JSON.stringify({ type: 'ping' }));
+    expect(await closed).toBe(CLOSE_TOO_MANY_MESSAGES);
+  });
+
+  it('lets a reconnect rejoin every room at once', async () => {
+    // the biggest burst a real client sends: a join for each room it was in
+    const user = await makeUser('rejoin');
+    const rooms = Array.from({ length: 40 }, (_, i) => `group:${suffix}:rejoin:${i}`);
+    for (const room of rooms) await app.realtime.invite(room, user.id);
+    const { ws } = await connect(user.token);
+    let joined = 0;
+    const all = new Promise<void>((resolve, reject) => {
+      ws.on('message', (raw) => {
+        if ((JSON.parse(raw.toString()) as WsMessage).type === 'joined' && ++joined === rooms.length) resolve();
+      });
+      ws.on('close', (code) => reject(new Error(`closed (${code})`)));
+    });
+    for (const room of rooms) ws.send(JSON.stringify({ type: 'join', room }));
+    await all;
+    expect(joined).toBe(rooms.length);
   });
 
   it.skipIf(!REDIS_URL)('events cross nodes via the Redis bus', async () => {

@@ -10,12 +10,13 @@
  */
 
 /* ---- tier colours -------------------------------------------------------------- */
-.tier-dest { --t-hi: #ffd58a; --t-mid: #f4a63a; --t-deep: #5c2c04; }
-.tier-gir { --t-hi: #9ff58f; --t-mid: #36d46e; --t-deep: #043f27; }
-.tier-zozan { --t-hi: #7df5e6; --t-mid: #17c9c0; --t-deep: #043a4d; }
-.tier-ciya { --t-hi: #9ccaff; --t-mid: #4f86ff; --t-deep: #14196a; }
-.tier-lutke { --t-hi: #f2a6ff; --t-mid: #c552ff; --t-deep: #3a0850; }
-.tier-sterk { --t-hi: #fff2a8; --t-mid: #ffcf3a; --t-deep: #6e3300; }
+/* the light, mid and deep steps of each tier's metal in shared/src/art/palette.ts (RANK_METAL) */
+.tier-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; --t-deep: #55220f; }
+.tier-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; --t-deep: #0f4424; }
+.tier-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; --t-deep: #06474a; }
+.tier-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; --t-deep: #0e1f5c; }
+.tier-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; --t-deep: #311660; }
+.tier-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; --t-deep: #6a4204; }
 .is-placing { --t-hi: #e3c4ff; --t-mid: #b874f0; --t-deep: #2a1250; }
 .league-dilop { --t-hi: #d4f1ff; --t-mid: #8fd2f7; }
 .league-kani { --t-hi: #94f5e3; --t-mid: #2fd6c0; }
@@ -125,7 +126,7 @@
 .pc-face .cosmetic-icon-overlay {
   z-index: 2;
 }
-/* Lûtke and Stêrk: a glint travels round the ring */
+/* Lûtke and Stêrk: a soft gleam travels round the ring */
 .art-frame-shine {
   animation: frame-turn 6s linear infinite;
 }
@@ -327,7 +328,7 @@
   gap: 4px 12px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
 }
 .rated-gains-who {
   display: inline-flex;
@@ -349,8 +350,10 @@
 }
 
 /* ---- the Games page: your ranks ----------------------------------------------------- */
+/* below the games, with the same room above it as between Learn's own sections */
 .ranks-section {
-  margin-bottom: 34px;
+  margin-top: var(--space-8);
+  margin-bottom: var(--space-8);
 }
 .ranks-section-head {
   display: flex;
@@ -360,14 +363,18 @@
   gap: 12px 20px;
   margin-bottom: 14px;
 }
+/* the Games view's section title, set like the Lessons view's (Today, Practice, Courses) */
 .ranks-section-title {
   margin: 0;
-  font-size: 1.5rem;
+  font-family: var(--font-sans);
+  font-size: var(--text-section);
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 .ranks-section-sub {
   margin: 4px 0 0;
   color: var(--ink-3);
-  font-size: 0.9rem;
+  font-size: var(--text-secondary);
 }
 .ranks-section-links {
   display: flex;
@@ -457,7 +464,7 @@
   margin: 0;
   font-size: 1.45rem;
   line-height: 1.1;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .rank-card-meaning {
   font-family: var(--font-sans);
@@ -516,7 +523,7 @@
   position: relative;
   height: 8px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .rank-progress-fill {
@@ -551,10 +558,10 @@
 }
 .rank-shield-pip {
   display: inline-grid;
-  color: rgba(255, 255, 255, 0.22);
+  color: var(--ink-4);
 }
 .rank-shield-pip.is-on {
-  color: var(--t-hi, var(--gold));
+  color: var(--t-text, var(--t-hi, var(--gold)));
 }
 
 /* ---- after a game -------------------------------------------------------------------- */
@@ -613,7 +620,7 @@
   color: var(--ink);
 }
 .rank-result.is-up .rank-result-delta {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   text-shadow: 0 0 22px color-mix(in srgb, var(--t-mid, #fff) 50%, transparent);
 }
 .rank-result-reason {
@@ -630,7 +637,7 @@
   font-size: 0.86rem;
 }
 .rank-result-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
   font-size: 0.95rem;
 }
@@ -660,73 +667,21 @@
   text-align: center;
   isolation: isolate;
 }
-.celebrate.tone-dest { --t-hi: #ffd58a; --t-mid: #f4a63a; }
-.celebrate.tone-gir { --t-hi: #9ff58f; --t-mid: #36d46e; }
-.celebrate.tone-zozan { --t-hi: #7df5e6; --t-mid: #17c9c0; }
-.celebrate.tone-ciya { --t-hi: #9ccaff; --t-mid: #4f86ff; }
-.celebrate.tone-lutke { --t-hi: #f2a6ff; --t-mid: #c552ff; }
-.celebrate.tone-sterk { --t-hi: #fff2a8; --t-mid: #ffcf3a; }
+.celebrate.tone-dest { --t-hi: #f6ad86; --t-mid: #dc7a52; }
+.celebrate.tone-gir { --t-hi: #a6e58c; --t-mid: #4fba5c; }
+.celebrate.tone-zozan { --t-hi: #86ebdd; --t-mid: #22c2b2; }
+.celebrate.tone-ciya { --t-hi: #97b8ff; --t-mid: #3f71e6; }
+.celebrate.tone-lutke { --t-hi: #d2acf7; --t-mid: #9d66e0; }
+.celebrate.tone-sterk { --t-hi: #ffe58e; --t-mid: #f7c235; }
 .celebrate.tone-sifir { --t-hi: #ffb48e; --t-mid: #ee7b52; }
 .celebrate.tone-ziv { --t-hi: #e4edf8; --t-mid: #b3c4dc; }
 .celebrate.tone-zer { --t-hi: #ffe16a; --t-mid: #ffbd1f; }
 .celebrate.tone-firuze { --t-hi: #72f6e6; --t-mid: #19d2c4; }
 .celebrate.tone-secret { --t-hi: #c9b5ff; --t-mid: #8f70f0; }
-.celebrate-stage {
-  position: absolute;
-  inset: -32px -30px auto;
-  height: 280px;
-  overflow: hidden;
-  pointer-events: none;
-  z-index: -1;
-  border-radius: var(--r-xl) var(--r-xl) 0 0;
-}
-.celebrate-glow {
-  position: absolute;
-  left: 50%;
-  top: 130px;
-  width: 300px;
-  height: 300px;
-  translate: -50% -50%;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, color-mix(in srgb, var(--t-mid, #fff) 55%, transparent), transparent);
-  animation: celebrate-glow 900ms ease-out both;
-}
-.celebrate-rays {
-  position: absolute;
-  left: 50%;
-  top: 130px;
-  width: 520px;
-  height: 520px;
-  translate: -50% -50%;
-  background: repeating-conic-gradient(from 0deg, color-mix(in srgb, var(--t-hi, #fff) 16%, transparent) 0deg 6deg, transparent 6deg 22deg);
-  mask: radial-gradient(closest-side, #000 20%, transparent 70%);
-  animation: celebrate-rays 24s linear infinite, celebrate-fade 900ms ease-out both;
-}
-.celebrate-fleck {
-  position: absolute;
-  top: -12px;
-  rotate: 45deg;
-  border-radius: 2px;
-  background: linear-gradient(135deg, var(--t-hi, #fff), var(--t-mid, #fff));
-  opacity: 0;
-  animation-name: celebrate-fall;
-  animation-timing-function: cubic-bezier(0.3, 0.2, 0.6, 1);
-  animation-iteration-count: 2;
-}
-.celebrate-fleck:nth-child(3n) {
-  background: var(--gold);
-}
-.celebrate-fleck:nth-child(4n) {
-  background: rgba(255, 255, 255, 0.85);
-}
-.celebrate-art {
-  line-height: 0;
-  animation: celebrate-rise 760ms cubic-bezier(0.2, 1.2, 0.35, 1) both;
-  filter: drop-shadow(0 14px 30px color-mix(in srgb, var(--t-mid, #000) 55%, transparent));
-}
+/* the stage, the ring, the flecks and the art's arrival: styles/motion.css */
 .celebrate-kicker {
   margin: 12px 0 0;
-  color: var(--t-hi, var(--gold-ink));
+  color: var(--t-text, var(--t-hi, var(--gold-ink)));
   font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -766,23 +721,6 @@
   margin-top: 14px;
   min-width: 180px;
 }
-@keyframes celebrate-rise {
-  from { opacity: 0; transform: translateY(18px) scale(0.6); }
-}
-@keyframes celebrate-glow {
-  from { opacity: 0; transform: scale(0.5); }
-}
-@keyframes celebrate-fade {
-  from { opacity: 0; }
-}
-@keyframes celebrate-rays {
-  to { rotate: 360deg; }
-}
-@keyframes celebrate-fall {
-  0% { opacity: 0; transform: translateY(0); }
-  12% { opacity: 1; }
-  100% { opacity: 0; transform: translateY(290px) rotate(200deg); }
-}
 
 /* ---- badges ------------------------------------------------------------------------- */
 .badges-page {
@@ -804,7 +742,7 @@
     padding: 14px;
   }
   .badges-stat dt {
-    font-size: 0.66rem;
+    font-size: var(--text-tab);
     letter-spacing: 0.06em;
   }
   .badges-stat dd {
@@ -817,7 +755,7 @@
   padding: 18px;
   border-radius: 20px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.035);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
 }
 .badges-showcase-head {
@@ -905,7 +843,7 @@
   display: block;
   height: 6px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.09);
+  background: var(--surface-2);
   overflow: hidden;
 }
 .badges-stat-bar > span,
@@ -960,7 +898,7 @@
   outline-offset: 2px;
 }
 .badge-tile.is-locked {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--surface);
 }
 .badge-tile.is-secret {
   --t-mid: #8f70f0;
@@ -983,7 +921,7 @@
   font-size: 0.78rem;
 }
 .badge-tile-tier {
-  color: var(--t-hi, var(--ink-2));
+  color: var(--t-text, var(--t-hi, var(--ink-2)));
   font-size: 0.74rem;
   font-weight: 650;
   letter-spacing: 0.06em;
@@ -1008,7 +946,7 @@
   align-items: center;
   gap: 4px;
   margin-top: 6px;
-  color: var(--t-hi, var(--success));
+  color: var(--t-text, var(--t-hi, var(--success)));
   font-size: 0.76rem;
   font-weight: 600;
 }
@@ -1021,7 +959,7 @@
   width: 14px;
   height: 4px;
   border-radius: var(--r-pill);
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--surface-3);
 }
 .badge-pip.is-on {
   background: var(--t-hi, var(--gold));
@@ -1088,7 +1026,7 @@
   gap: 10px;
   padding: 8px 10px;
   border-radius: var(--r-sm);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
   color: var(--ink-3);
   font-size: 0.86rem;
 }
@@ -1102,7 +1040,7 @@
 }
 .badge-ladder-row.is-reached .badge-ladder-mark,
 .badge-ladder-row.is-reached .badge-ladder-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .badge-ladder-tier {
   font-weight: 650;
@@ -1199,7 +1137,7 @@
 }
 .league-card-title {
   margin: 0;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .league-head-meaning {
   margin: 0;
@@ -1213,6 +1151,25 @@
   margin: 2px 0 0;
   color: var(--ink-3);
   font-size: 0.82rem;
+}
+/* the emblem and the ring while the league is on its way, at their own sizes */
+.league-skel-emblem {
+  width: 92px;
+  height: 92px;
+}
+.league-skel-ring {
+  width: 92px;
+  height: 92px;
+}
+@media (max-width: 480px) {
+  .league-skel-emblem {
+    width: 64px;
+    height: 64px;
+  }
+  .league-skel-ring {
+    width: 72px;
+    height: 72px;
+  }
 }
 @media (max-width: 480px) {
   .league-head {
@@ -1336,7 +1293,7 @@
   padding: 12px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 .league-last-text {
   display: grid;
@@ -1403,7 +1360,7 @@
   width: 100%;
   max-width: 34px;
   border-radius: 8px 8px 3px 3px;
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--surface-3);
   align-self: end;
 }
 .league-week.is-met .league-week-bar {
@@ -1484,7 +1441,7 @@
   padding: 10px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
   box-shadow: var(--glass-rim);
   color: inherit;
   text-decoration: none;
@@ -1610,7 +1567,7 @@
   text-transform: uppercase;
 }
 .profile-rank-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
 }
 .profile-rank-best {
@@ -1708,7 +1665,7 @@
   padding: 10px 14px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--surface);
 }
 @media (max-width: 480px) {
   .season-game {
@@ -1774,7 +1731,7 @@
   gap: 0 8px;
 }
 .season-reward-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-family: var(--font-display);
   font-size: 1.15rem;
   font-weight: 600;
@@ -1823,7 +1780,7 @@
   padding: 12px 16px;
   border-radius: var(--r-lg);
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--surface);
 }
 @media (max-width: 480px) {
   .season-last {
@@ -1886,7 +1843,7 @@
   text-transform: uppercase;
 }
 .season-past-tier {
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
   font-weight: 650;
 }
 
@@ -1900,13 +1857,8 @@
   .art-badge.is-playing .art-badge-shine g[clip-path] > g {
     animation: none;
   }
-  .celebrate-rays,
-  .celebrate-fleck {
-    display: none;
-  }
-  .celebrate-art,
-  .celebrate-glow,
   .rank-result {
+    /* a fade only (the keyframes are in motion.css, with the rest of the celebration) */
     animation: celebrate-fade 300ms ease-out both;
   }
   .rank-progress-fill.is-animated,
@@ -1980,7 +1932,7 @@
   border-radius: 14px;
 }
 .rank-rung.is-here {
-  background: rgba(255, 255, 255, 0.07);
+  background: var(--bg);
   box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--t-mid, #fff) 45%, transparent);
 }
 .rank-rung-text {
@@ -1995,7 +1947,7 @@
   align-items: baseline;
   gap: 2px 8px;
   font-weight: 650;
-  color: var(--t-hi, var(--ink));
+  color: var(--t-text, var(--t-hi, var(--ink)));
 }
 .rank-rung-meaning,
 .rank-rung-fact {

@@ -1,18 +1,34 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { applyItemFilter, categoriesIn, countByCategory, groupByCategory, itemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
 import { requestId } from '../lib/api';
 import type { ApiError, PurchaseResult, ShopItem } from '../lib/types';
 import { ErrorState } from '../components/states';
-import { FriendListSkeleton, TileGridSkeleton } from '../components/skeletons';
+import { PickFriendSkeleton, ShopSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
-import { CoinIcon, GiftIcon } from '../components/icons';
+import { CoinIcon, GemIcon, GiftIcon } from '../components/icons';
 import { giftsWereOpened } from '../shop/useUnseenGifts';
 import { RefreshedNotice, ReturnableItems, type InventoryWithRefunds } from '../shop/RefreshedItems';
-import { useT } from '../i18n/I18nProvider';
+import {
+  FilterToggle,
+  ItemSearch,
+  ItemSort,
+  ItemToolbar,
+  KindHeading,
+  KindPanel,
+  KindTabs,
+  NoMatches,
+  ResultsLine,
+  useIdPrefix,
+  type KindTab,
+} from '../shop/ItemBrowser';
+import { ItemGlyph } from '../shop/ItemGlyph';
+import { DEFAULT_SHOP_VIEW, shopViewFiltered, useShopView } from '../shop/useShopView';
+import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { SendError } from '../reports/SendError';
 
@@ -47,11 +63,15 @@ function shopGiftRefusal(error: ApiError, name: string, t: (key: MessageKey, var
 interface Tile {
   sku: string;
   name: string;
+  description: string | null;
+  category: string;
   price: number;
   currency: 'zer' | 'gems';
   assetUrl: string | null;
   owned: boolean;
 }
+
+type Currency = Tile['currency'];
 
 /**
  * A friend as `GET /friends` sends one (`FriendSummary`). It was declared with
@@ -81,44 +101,33 @@ interface ReceivedGift {
  * Zêr is the app's own currency and keeps its Kurmancî name in every language,
  * the way a currency does; gems are a common noun and get translated.
  */
-function currencyName(currency: 'zer' | 'gems', t: (key: MessageKey) => string): string {
+function currencyName(currency: Currency, t: (key: MessageKey) => string): string {
   return currency === 'gems' ? t('shop.gems') : 'Zêr';
 }
 
-/** What the shop can be narrowed to. 'all' is first because it is the default. */
-const CATEGORIES = [
-  { key: 'all', labelKey: 'shop.filter.all' },
-  { key: 'background', labelKey: 'shop.filter.backgrounds' },
-  { key: 'icon', labelKey: 'shop.filter.icons' },
-] as const satisfies ReadonlyArray<{ key: string; labelKey: MessageKey }>;
-type Category = (typeof CATEGORIES)[number]['key'];
+/** What a purchase says once it is yours: where a thing of its kind is put to use. */
+function boughtMessage(category: string): MessageKey {
+  switch (itemCategory(category)) {
+    case 'tag':
+      return 'shop.isYoursTag';
+    case 'background':
+    case 'icon':
+    case 'frame':
+      return 'shop.isYours';
+    default:
+      return 'shop.isYoursOther';
+  }
+}
 
 /**
- * Narrow the catalogue: by kind, by name, and by what the wallet can reach.
+ * Shop — browse, buy, and gift what is on sale, by kind.
  *
- * Kept out of the component so it can be reasoned about on its own — the
- * affordability rule in particular, which has to leave owned items alone. You
- * already have those; hiding one because it costs more than you hold today
- * would be telling you that you cannot afford something you own.
- */
-function narrow(tiles: Tile[], query: string, affordable: boolean, balance: number | null): Tile[] {
-  const q = query.trim().toLowerCase();
-  return tiles.filter((t) => {
-    if (q && !t.name.toLowerCase().includes(q)) return false;
-    if (affordable && !t.owned && (balance === null || balance < t.price)) return false;
-    return true;
-  });
-}
-
-function tilesFor(cat: string, shop: ShopItem[], owned: Set<string>): Tile[] {
-  // /shop hides owned unique items, so owned ones come from inventory (below).
-  return shop
-    .filter((i) => i.category === cat)
-    .map((i) => ({ sku: i.sku, name: i.name, price: i.price, currency: i.currency, assetUrl: i.assetUrl, owned: owned.has(i.sku) }));
-}
-
-/**
- * Shop — browse, buy, and gift profile cosmetics with Zêr.
+ * Everything the API sends is shown, under its kind (backgrounds, icons, tags,
+ * and anything else under "More"), with a count on each tab; under All each
+ * kind has its own titled section. It can be searched (name and description,
+ * with or without the Kurdish letters), sorted, and narrowed to what the
+ * balance reaches or to what is free — and all of that is kept in the address,
+ * so a narrowed Shop survives a reload and Back.
  *
  * Buying only grants ownership; equipping happens in Edit Profile. All prices,
  * ownership and payment are server-authoritative (POST /shop/purchase and
@@ -128,11 +137,15 @@ function tilesFor(cat: string, shop: ShopItem[], owned: Set<string>): Tile[] {
 export function Shop(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
+  const locale = useLocale();
   const shop = useApiGet<{ items: ShopItem[] }>('/shop');
   const inventory = useApiGet<InventoryWithRefunds>('/me/inventory');
-  const wallet = useApiGet<{ balances: { zer: number } }>('/me/wallet');
+  const wallet = useApiGet<{ balances: { zer: number; gems?: number } }>('/me/wallet');
+  const [view, setView] = useShopView();
+  const ids = useIdPrefix('shop');
 
-  const [zer, setZer] = useState<number | null>(null);
+  /** balances learned since the wallet was read: a purchase, a gift or a return answers with the new one */
+  const [known, setKnown] = useState<Partial<Record<Currency, number>>>({});
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<{ kind: 'ok'; text: string } | { kind: 'err'; error: ApiError | string } | null>(null);
   /** the chat a gift just went to, where it now waits wrapped */
@@ -140,24 +153,47 @@ export function Shop(): React.JSX.Element {
   const [bought, setBought] = useState<Set<string>>(new Set());
   /** the tile that just succeeded — drives the one-shot celebration */
   const [celebrating, setCelebrating] = useState<string | null>(null);
-  const [category, setCategory] = useState<Category>('all');
-  const [query, setQuery] = useState('');
-  const [affordable, setAffordable] = useState(false);
   const [gifting, setGifting] = useState<Tile | null>(null);
 
-  const balance = zer ?? wallet.data?.balances?.zer ?? null;
+  const balanceOf = useCallback(
+    (currency: Currency): number | null => known[currency] ?? wallet.data?.balances?.[currency] ?? null,
+    [known, wallet.data],
+  );
+  /**
+   * Whether this can be paid for now — in its own currency. "Within my Zêr"
+   * used to hold a gem-priced item against the Zêr balance.
+   */
+  const canAfford = useCallback(
+    (tile: Tile): boolean => {
+      if (tile.price === 0) return true;
+      const held = balanceOf(tile.currency);
+      return held !== null && held >= tile.price;
+    },
+    [balanceOf],
+  );
+
   const ownedSkus = useMemo(() => {
     const s = new Set((inventory.data?.items ?? []).map((i) => i.sku));
     for (const sku of bought) s.add(sku);
     return s;
   }, [inventory.data, bought]);
 
-  const items = shop.data?.items ?? [];
-  const backgrounds = narrow(tilesFor('background', items, ownedSkus), query, affordable, balance);
-  const icons = narrow(tilesFor('icon', items, ownedSkus), query, affordable, balance);
-  const showing = { background: category !== 'icon', icon: category !== 'background' };
-  const nothingMatches =
-    (!showing.background || backgrounds.length === 0) && (!showing.icon || icons.length === 0);
+  // /shop hides owned unique items, so "owned" here is what was bought on this visit
+  // (or an item that can be owned more than once)
+  const tiles: Tile[] = useMemo(
+    () =>
+      (shop.data?.items ?? []).map((i) => ({
+        sku: i.sku,
+        name: i.name,
+        description: i.description ?? null,
+        category: i.category,
+        price: i.price,
+        currency: i.currency,
+        assetUrl: i.assetUrl,
+        owned: ownedSkus.has(i.sku),
+      })),
+    [shop.data, ownedSkus],
+  );
 
   /** Play the celebration once, then clear it so it can play again later. */
   const celebrate = useCallback((sku: string) => {
@@ -176,10 +212,11 @@ export function Shop(): React.JSX.Element {
     });
     setBusy(null);
     if (res.ok) {
-      setZer(res.data.balance);
+      // the answer is the balance of the item's own currency
+      setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
       setBought((prev) => new Set(prev).add(tile.sku));
       celebrate(tile.sku);
-      setMsg({ kind: 'ok', text: t('shop.isYours', { name: tile.name }) });
+      setMsg({ kind: 'ok', text: t(boughtMessage(tile.category), { name: tile.name }) });
     } else {
       setMsg({ kind: 'err', error: res.error });
     }
@@ -200,7 +237,7 @@ export function Shop(): React.JSX.Element {
     if (res.ok) {
       // the answer is the balance of the item's own currency: a gift bought
       // with gems must not overwrite the Zêr shown at the top
-      if (tile.currency === 'zer') setZer(res.data.balance);
+      setKnown((k) => ({ ...k, [tile.currency]: res.data.balance }));
       celebrate(tile.sku);
       setMsg({ kind: 'ok', text: t('shop.onItsWay', { name: tile.name, to: to.username }) });
       // every gift arrives in the chat between the two of you, wrapped
@@ -210,24 +247,69 @@ export function Shop(): React.JSX.Element {
     }
   }
 
+  const gemPriced = tiles.some((tile) => tile.currency === 'gems');
+  const zer = balanceOf('zer');
+  const gems = balanceOf('gems');
+  // the heading is the page's own from the first frame; only the catalogue waits
+  const header = (
+    <div className="page-header">
+      <span className="eyebrow">{t('nav.profile')}</span>
+      <h1 className="page-title">{t('nav.shop')}</h1>
+      <p className="page-sub">
+        {t('shop.subtitle')}{' '}
+        {zer !== null && <strong>{zer.toLocaleString(locale)} Zêr</strong>}
+        {gemPriced && gems !== null && (
+          <>
+            {' · '}
+            <strong>
+              {gems.toLocaleString(locale)} {t('shop.gems')}
+            </strong>
+          </>
+        )}
+      </p>
+    </div>
+  );
+
   if (shop.loading)
     return (
       <div className="container">
-        <TileGridSkeleton label="shop.loading" />
+        {header}
+        <ShopSkeleton label="shop.loading" />
       </div>
     );
   if (shop.error) return <ErrorState title={t('shop.loadFailed')} message={shop.error} onRetry={shop.reload} />;
 
+  // ---- what is shown: the kinds on sale, and the items the view lets through ----
+  const kinds = categoriesIn(tiles);
+  const keep = (tile: Tile): boolean =>
+    // an owned item stays: hiding it for costing more than is held today would
+    // be telling someone they cannot afford what they already have
+    (!view.afford || tile.owned || canAfford(tile)) && (!view.free || tile.price === 0);
+  // every kind at once, searched, narrowed and sorted: what the tabs count
+  const matching = applyItemFilter(tiles, { ...view, category: 'all' }, keep, locale);
+  const counts = countByCategory(matching);
+  // a kind the Shop has none of (an old link) shows everything instead of nothing
+  const active: KindTab = view.category !== 'all' && kinds.includes(view.category) ? view.category : 'all';
+  const shown = active === 'all' ? matching : matching.filter((tile) => itemCategory(tile.category) === active);
+  const filtered = shopViewFiltered(view);
+  const anyFree = tiles.some((tile) => tile.price === 0);
+  const clear = (): void => setView(DEFAULT_SHOP_VIEW);
+
+  const grid = (list: Tile[]): React.JSX.Element => (
+    <ShopGrid
+      tiles={list}
+      canAfford={canAfford}
+      balanceOf={balanceOf}
+      busy={busy}
+      celebrating={celebrating}
+      onBuy={(tile) => void buy(tile)}
+      onGift={setGifting}
+    />
+  );
+
   return (
     <div className="container">
-      <div className="page-header">
-        <span className="eyebrow">{t('shop.eyebrow')}</span>
-        <h1 className="page-title">{t('nav.shop')}</h1>
-        <p className="page-sub">
-          {t('shop.subtitle')}{' '}
-          {balance !== null && <strong>{balance.toLocaleString()} Zêr</strong>}
-        </p>
-      </div>
+      {header}
 
       {/* a refusal says what stopped it — a limit on the account with when it
           ends and where the reasons are (SendError) — rather than "try again" */}
@@ -258,76 +340,77 @@ export function Shop(): React.JSX.Element {
       <ReturnableItems
         inventory={inventory.data}
         onReturned={(r) => {
-          if (r.refund.currency === 'zer') setZer(r.balance);
+          setKnown((k) => ({ ...k, [r.refund.currency]: r.balance }));
           inventory.reload();
         }}
       />
 
       {/* the catalogue only grows, and scrolling all of it to find one thing is
           not browsing — it is searching, badly */}
-      <div className="shop-filters">
-        <div className="seg" role="group" aria-label={t('shop.show')}>
-          {CATEGORIES.map((c) => (
-            <button
-              key={c.key}
-              type="button"
-              className={`seg-btn${category === c.key ? ' is-active' : ''}`}
-              aria-pressed={category === c.key}
-              onClick={() => setCategory(c.key)}
-            >
-              {t(c.labelKey)}
-            </button>
-          ))}
-        </div>
+      {tiles.length === 0 ? (
+        <p className="muted">{t('shop.nothingYet')}</p>
+      ) : (
+        <>
+          <KindTabs
+            kinds={['all', ...kinds]}
+            value={active}
+            counts={counts}
+            idPrefix={ids}
+            onChange={(category) => setView({ ...view, category })}
+          />
+          <ItemToolbar>
+            <ItemSearch
+              value={view.query}
+              label={t('shop.searchLabel')}
+              placeholder={t('shop.searchPlaceholder')}
+              onChange={(query) => setView({ ...view, query }, { replace: true })}
+            />
+            <ItemSort value={view.sort} onChange={(sort) => setView({ ...view, sort })} />
+            <div className="item-toggles">
+              <FilterToggle checked={view.afford} onChange={(afford) => setView({ ...view, afford })}>
+                {t('items.withinBalance')}
+              </FilterToggle>
+              {(anyFree || view.free) && (
+                <FilterToggle checked={view.free} onChange={(free) => setView({ ...view, free })}>
+                  {t('items.free')}
+                </FilterToggle>
+              )}
+            </div>
+          </ItemToolbar>
+          <ResultsLine count={shown.length} filtered={filtered && shown.length > 0} onClear={clear} />
 
-        <input
-          type="search"
-          className="input shop-search"
-          value={query}
-          placeholder={t('shop.searchPlaceholder')}
-          aria-label={t('shop.searchLabel')}
-          onChange={(e) => setQuery(e.target.value)}
-        />
-
-        <label className="shop-afford">
-          <input type="checkbox" checked={affordable} onChange={(e) => setAffordable(e.target.checked)} />
-          {t('shop.withinMyZer')}
-        </label>
-      </div>
-
-      {nothingMatches && (
-        <p className="muted">{t('shop.noMatches')}</p>
-      )}
-
-      {showing.background && (
-        <ShopSection
-          title={t('shop.profileBackgrounds')}
-          cat="background"
-          tiles={backgrounds}
-          balance={balance}
-          busy={busy}
-          celebrating={celebrating}
-          onBuy={(t) => void buy(t)}
-          onGift={setGifting}
-        />
-      )}
-      {showing.icon && (
-        <ShopSection
-          title={t('shop.premiumIcons')}
-          cat="icon"
-          tiles={icons}
-          balance={balance}
-          busy={busy}
-          celebrating={celebrating}
-          onBuy={(t) => void buy(t)}
-          onGift={setGifting}
-        />
+          <KindPanel idPrefix={ids} kind={active} className="shop-catalogue">
+            {shown.length === 0 ? (
+              <NoMatches onClear={clear} />
+            ) : active === 'all' ? (
+              groupByCategory(shown).map((group) => (
+                <section key={group.category} className="item-section" aria-labelledby={`${ids}-${group.category}`}>
+                  <KindHeading kind={group.category} count={group.items.length} id={`${ids}-${group.category}`} />
+                  {grid(group.items)}
+                </section>
+              ))
+            ) : (
+              grid(shown)
+            )}
+          </KindPanel>
+        </>
       )}
 
       <Modal open={gifting !== null} onClose={() => setGifting(null)} label={t('shop.sendGift')}>
         {gifting && <GiftPicker tile={gifting} busy={busy !== null} onPick={(f) => void gift(gifting, f)} />}
       </Modal>
     </div>
+  );
+}
+
+/** An item's picture, or its kind's glyph when it has none (the Kurdish tag). */
+function TileArt({ assetUrl, category }: { assetUrl: string | null; category: string }): React.JSX.Element {
+  return assetUrl ? (
+    <img src={assetUrl} alt="" loading="lazy" />
+  ) : (
+    <span className="item-glyph" aria-hidden="true">
+      <ItemGlyph category={category} size={34} />
+    </span>
   );
 }
 
@@ -370,19 +453,24 @@ function GiftsReceived({ onEquipHint }: { onEquipHint: () => void }): React.JSX.
     <section className="friend-section">
       <h2 className="friend-heading">{t('shop.yourGifts')}</h2>
       <div className="shop-grid">
-        {gifts.map((g) => (
-          <figure className={`shop-tile shop-tile-${g.category} gift-tile${g.seenAt ? '' : ' gift-new'}`} key={g.id}>
-            <div className={`shop-thumb shop-thumb-${g.category}`}>
-              {g.assetUrl ? <img src={g.assetUrl} alt="" loading="lazy" /> : <span className="shop-thumb-empty" aria-hidden="true" />}
-            </div>
-            <figcaption className="shop-name" title={g.name}>
-              {g.name}
-            </figcaption>
-            <span className="gift-from" onClick={onEquipHint}>
-              {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
-            </span>
-          </figure>
-        ))}
+        {gifts.map((g) => {
+          const kind = itemCategory(g.category);
+          return (
+            <figure className={`shop-tile shop-tile-${kind} gift-tile${g.seenAt ? '' : ' gift-new'}`} key={g.id}>
+              <div className={`shop-thumb shop-thumb-${kind}`}>
+                <TileArt assetUrl={g.assetUrl} category={g.category} />
+              </div>
+              <figcaption className="shop-caption">
+                <span className="shop-name" title={g.name}>
+                  {g.name}
+                </span>
+              </figcaption>
+              <span className="gift-from" onClick={onEquipHint}>
+                {g.from ? t('shop.giftFrom', { name: g.from.username }) : t('shop.giftFromFormer')}
+              </span>
+            </figure>
+          );
+        })}
       </div>
     </section>
   );
@@ -425,7 +513,7 @@ function GiftPicker({
       </p>
 
       {friends === null ? (
-        <FriendListSkeleton count={4} />
+        <PickFriendSkeleton />
       ) : friends.length === 0 ? (
         <p className="muted">{t('shop.noFriendsToGift')}</p>
       ) : (
@@ -457,89 +545,99 @@ function GiftPicker({
   );
 }
 
-function ShopSection({
-  title,
-  cat,
+/** One kind's items (or the one kind chosen), as priced tiles. */
+function ShopGrid({
   tiles,
-  balance,
+  canAfford,
+  balanceOf,
   busy,
   celebrating,
   onBuy,
   onGift,
 }: {
-  title: string;
-  cat: string;
   tiles: Tile[];
-  balance: number | null;
+  canAfford: (tile: Tile) => boolean;
+  balanceOf: (currency: Currency) => number | null;
   busy: string | null;
   celebrating: string | null;
   onBuy: (tile: Tile) => void;
   onGift: (tile: Tile) => void;
 }): React.JSX.Element {
   const t = useT();
+  const locale = useLocale();
   return (
-    <section className="friend-section">
-      <h2 className="friend-heading">{title}</h2>
-      {tiles.length === 0 ? (
-        <p className="muted" style={{ margin: 0 }}>{t('shop.nothingYet')}</p>
-      ) : (
-        <div className="shop-grid">
-          {tiles.map((tile) => {
-            const canAfford = balance !== null && balance >= tile.price;
-            return (
-              <figure
-                className={`shop-tile shop-tile-${cat}${celebrating === tile.sku ? ' shop-tile-won' : ''}`}
-                key={tile.sku}
-              >
-                <div className={`shop-thumb shop-thumb-${cat}`}>
-                  {tile.assetUrl ? <img src={tile.assetUrl} alt="" loading="lazy" /> : <span className="shop-thumb-empty" aria-hidden="true" />}
-                  {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
-                </div>
-                <figcaption className="shop-name" title={tile.name}>{tile.name}</figcaption>
-                {tile.owned ? (
-                  <span className="shop-owned">{t('shop.owned')}</span>
-                ) : (
-                  <div className="shop-actions">
-                    {/*
-                      The price is on the tile, not only inside the button. It used
-                      to live in the button's label, which meant an item you could
-                      not yet afford said "Not enough Zêr" and nothing else — so
-                      the one thing you needed to know, what to save towards, was
-                      the one thing the shop would not tell you.
-                    */}
-                    <span className={`shop-price${canAfford ? '' : ' is-short'}`}>
-                      <CoinIcon size={14} />
-                      {tile.price.toLocaleString()} {currencyName(tile.currency, t)}
-                      {!canAfford && balance !== null && (
-                        <span className="shop-short">
-                          {t('shop.amountMore', { amount: (tile.price - balance).toLocaleString() })}
-                        </span>
-                      )}
+    <div className="shop-grid">
+      {tiles.map((tile) => {
+        const kind = itemCategory(tile.category);
+        const affordable = canAfford(tile);
+        const held = balanceOf(tile.currency);
+        return (
+          <figure className={`shop-tile shop-tile-${kind}${celebrating === tile.sku ? ' shop-tile-won' : ''}`} key={tile.sku}>
+            <div className={`shop-thumb shop-thumb-${kind}`}>
+              <TileArt assetUrl={tile.assetUrl} category={tile.category} />
+              {celebrating === tile.sku && <span className="shop-shine" aria-hidden />}
+            </div>
+            {/* the name is Kurdish and the line under it says what it is, as
+                the phone has always shown it */}
+            <figcaption className="shop-caption">
+              <span className="shop-name" title={tile.name}>
+                {tile.name}
+              </span>
+              {tile.description && (
+                <span className="shop-desc" title={tile.description}>
+                  {tile.description}
+                </span>
+              )}
+            </figcaption>
+            {tile.owned ? (
+              <span className="shop-owned">{t('shop.owned')}</span>
+            ) : (
+              <div className="shop-actions">
+                {/*
+                  The price is on the tile, not only inside the button. It used
+                  to live in the button's label, which meant an item you could
+                  not yet afford said "Not enough Zêr" and nothing else — so
+                  the one thing you needed to know, what to save towards, was
+                  the one thing the shop would not tell you.
+                */}
+                <span className={`shop-price${affordable ? '' : ' is-short'}`}>
+                  {/* what the Free filter calls it, rather than "0 Zêr" — and no coin beside it */}
+                  {tile.price === 0 ? (
+                    t('items.free')
+                  ) : (
+                    <>
+                      {tile.currency === 'gems' ? <GemIcon size={14} /> : <CoinIcon size={14} />}
+                      {`${tile.price.toLocaleString(locale)} ${currencyName(tile.currency, t)}`}
+                    </>
+                  )}
+                  {!affordable && held !== null && (
+                    <span className="shop-short">
+                      {t('shop.amountMore', { amount: (tile.price - held).toLocaleString(locale) })}
                     </span>
-                    <Button size="sm" disabled={busy !== null || !canAfford} onClick={() => onBuy(tile)}>
-                      {t('shop.buy')}
-                    </Button>
-                    {/* a free item is not a gift (the API refuses it: it would be a
-                        notification in someone's face at no cost) */}
-                    {tile.price > 0 && (
-                      <button
-                        type="button"
-                        className="shop-gift-btn"
-                        disabled={busy !== null || !canAfford}
-                        onClick={() => onGift(tile)}
-                        title={t('shop.giftTo', { name: tile.name })}
-                        aria-label={t('shop.giftTo', { name: tile.name })}
-                      >
-                        <GiftIcon size={17} />
-                      </button>
-                    )}
-                  </div>
+                  )}
+                </span>
+                <Button size="sm" disabled={busy !== null || !affordable} onClick={() => onBuy(tile)}>
+                  {tile.price === 0 ? t('edit.getFree') : t('shop.buy')}
+                </Button>
+                {/* a free item is not a gift (the API refuses it: it would be a
+                    notification in someone's face at no cost) */}
+                {tile.price > 0 && (
+                  <button
+                    type="button"
+                    className="shop-gift-btn"
+                    disabled={busy !== null || !affordable}
+                    onClick={() => onGift(tile)}
+                    title={t('shop.giftTo', { name: tile.name })}
+                    aria-label={t('shop.giftTo', { name: tile.name })}
+                  >
+                    <GiftIcon size={17} />
+                  </button>
                 )}
-              </figure>
-            );
-          })}
-        </div>
-      )}
-    </section>
+              </div>
+            )}
+          </figure>
+        );
+      })}
+    </div>
   );
 }

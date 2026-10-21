@@ -10,6 +10,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, GlassCard, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -70,7 +71,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   return (
     <GradientBackground>
       <ScreenHeader title={t('badges.title')} onBack={onExit} />
-      <AsyncBoundary loading={!data && !error} error={!data ? error : null} onRetry={load}>
+      <AsyncBoundary loading={!data && !error} error={!data ? error : null} onRetry={load} skeleton={<BadgesSkeleton columns={columns} tile={tile} />}>
         {() =>
           data ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -200,6 +201,60 @@ function MonthlyChallenge({ month }: { month: BadgesResponse['monthlyChallenge']
     </View>
   );
 }
+
+/**
+ * The badges while they load: the showcase card with its three places, then
+ * each family's heading over a grid of the same number of columns and the
+ * same tile width the real grid will use, so a phone and a tablet each get
+ * their own grey.
+ */
+function BadgesSkeleton({ columns, tile }: { columns: number; tile: number }): React.JSX.Element {
+  const { t } = useI18n();
+  const medal = Math.min(76, tile - spacing.sm * 2);
+  const { height } = useWindowDimensions();
+  // a family is its heading and two rows of tiles: as many as reach the foot of the screen
+  const families = Math.max(2, Math.ceil((height - 260) / (2 * (medal + 64) + 40)));
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <GlassCard>
+        <View style={styles.showHead}>
+          <View style={styles.flex}>
+            <SkeletonText size={typography.sizes.xs} width={96} />
+            <SkeletonText size={typography.sizes.lg} lineHeight={SUMMARY_LINE} width="52%" />
+          </View>
+        </View>
+        <View style={styles.slots}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.slot}>
+              <Skeleton width={72} height={72} radius={radii.pill} style={styles.slotSkeleton} />
+              <SkeletonText size={typography.sizes.xs} width={56} align="center" />
+            </View>
+          ))}
+        </View>
+      </GlassCard>
+      {Array.from({ length: families }, (_, f) => (
+        <View key={f} style={styles.family}>
+          <View style={styles.familyHead}>
+            <SkeletonText size={typography.sizes.xs} width={88} />
+            <SkeletonText size={typography.sizes.xs} width={40} />
+          </View>
+          <View style={styles.grid}>
+            {Array.from({ length: columns * 2 }, (_, i) => (
+              <View key={i} style={[styles.tile, { width: tile }]}>
+                <Skeleton width={medal} height={medal} radius={radii.pill} />
+                <SkeletonText size={typography.sizes.sm} width="70%" align="center" style={styles.tileNameSkeleton} />
+                <SkeletonText size={typography.sizes.xs} width="44%" align="center" style={styles.tileTierSkeleton} />
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** display(22) sets 1.12 */
+const SUMMARY_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 
 function BadgeTile({ badge, width, onPress }: { badge: BadgeView; width: number; onPress: () => void }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -439,6 +494,9 @@ const styles = StyleSheet.create({
   tileName: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', marginTop: spacing.xs },
   tileTier: { fontSize: typography.sizes.xs },
   tileMeter: { width: '62%', alignSelf: 'center', marginTop: 4 },
+  tileNameSkeleton: { alignSelf: 'stretch', marginTop: spacing.xs },
+  tileTierSkeleton: { alignSelf: 'stretch' },
+  slotSkeleton: { margin: 6 },
   month: { borderRadius: radii.md, padding: spacing.md, gap: spacing.sm },
   monthHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   monthText: { flex: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
