@@ -52,7 +52,7 @@ export function MessageList<T extends ChatMessage>({
    * card can do (unwrap, join) belongs to the thread.
    */
   renderBody?: (m: T) => ReactNode | undefined;
-  /** report someone else's message: puts a ⋯ beside each of theirs */
+  /** report someone else's message, from its options (held, right-clicked, or by keyboard) */
   onReport?: (m: T) => void;
 }): React.JSX.Element {
   const locale = useLocale();
@@ -118,13 +118,20 @@ export function MessageList<T extends ChatMessage>({
                         )}
                       </div>
                     );
-                    // someone else's message can be reported, from a ⋯ (or a long press)
-                    return onReport && !mine && !m.deleted ? (
-                      <MessageLine key={m.id} label={t('report.messageMenu', { name })} onReport={() => onReport(m)}>
+                    // held, right-clicked or reached by keyboard: copy its words, report someone else's
+                    if (m.deleted) return bubble;
+                    const words = !m.kind || m.kind === 'text' ? (m.body ?? null) : null;
+                    const report = onReport && !mine ? () => onReport(m) : undefined;
+                    return (
+                      <MessageLine
+                        key={m.id}
+                        label={mine ? t('chat.messageOptions') : t('report.messageMenu', { name })}
+                        onReport={report}
+                        copyText={words}
+                        mine={mine}
+                      >
                         {bubble}
                       </MessageLine>
-                    ) : (
-                      bubble
                     );
                   })}
 
