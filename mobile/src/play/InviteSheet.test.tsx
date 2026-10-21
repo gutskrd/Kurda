@@ -126,8 +126,10 @@ describe('InviteSheet', () => {
     );
     renderWithProviders(<InviteSheet target={{ kind: 'dm', friendId: 'u-rojda' }} onClose={onClose} />);
     await screen.findByRole('radio', { name: 'Rojda' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Create the game' }).getAttribute('aria-disabled')).not.toBe('true'));
     fireEvent.click(screen.getByRole('button', { name: 'Create the game' }));
     expect(await screen.findByText('You can’t send messages right now.')).toBeTruthy();
+    await act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(screen.getByRole('link', { name: 'See your account standing' }));
     expect(onClose).toHaveBeenCalled();
     expect(navigation.navigate).toHaveBeenCalledWith('AccountStanding');

@@ -69,10 +69,15 @@ describe('GiftSheet (the Shop)', () => {
     ];
     testAuth.client = fakeClient({ 'GET /friends?limit=50': friends, 'POST /shop/gift': () => answers.shift()! });
     renderWithProviders(<GiftSheet item={item} onClose={() => undefined} onSent={() => undefined} />);
+    // each refusal re-enables the row in a later render; let it settle before
+    // pressing again, or the press can land while the row is still busy
+    const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
     fireEvent.click(await screen.findByText('Şîlan'));
     expect(await screen.findByText('Şîlan already has it.')).toBeTruthy();
+    await settle();
     fireEvent.click(screen.getByText('Şîlan'));
     expect(await screen.findByText('A gift to Şîlan isn’t possible yet.')).toBeTruthy();
+    await settle();
     fireEvent.click(screen.getByText('Şîlan'));
     expect(await screen.findByText('That’s today’s limit for Şîlan.')).toBeTruthy();
   });
