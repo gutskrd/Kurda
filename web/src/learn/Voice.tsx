@@ -1,5 +1,5 @@
 import type { DeliveredExercise, Feedback } from '@kurda/shared';
-import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { CharacterStage } from '../characters/CharacterStage';
 import { spokenClips, type MaybeSpoken, type SpokenClip } from '../characters/clips';
 
 /** A run of words in quotation marks: the Kurdish a prompt such as “Roj baş” tê çi wateyê? asks about. */
@@ -37,20 +37,26 @@ export function feedbackClip(exercise: DeliveredExercise, feedback: Feedback): S
 }
 
 /**
- * Who says an exercise's recordings, beside what plays them: a bust in a
- * portrait tile that speaks while one of `clips` plays (and waits, mouth at
- * rest, between them), with `children` — the play buttons, or the words
- * being asked about — beside it. With no character among `clips`, the
+ * Who says an exercise's recordings, beside what plays them: the whole figure
+ * on a stage (`CharacterStage`), speaking while one of `clips` plays and
+ * waiting between them, with `children` — the play buttons, or the words
+ * being asked about — standing beside it. It cheers a right answer and
+ * thinks a wrong one over (`verdict`). With no character among `clips`, the
  * children alone, exactly as before.
- *
- * Decorative: the buttons say what is heard, and the character adds who.
  */
-export function ExerciseVoice({ clips, children }: { clips: readonly SpokenClip[]; children?: React.ReactNode }): React.JSX.Element {
+export function ExerciseVoice({
+  clips,
+  verdict = null,
+  children,
+}: {
+  clips: readonly SpokenClip[];
+  verdict?: 'right' | 'wrong' | null;
+  children?: React.ReactNode;
+}): React.JSX.Element {
   if (clips.length === 0) return <>{children}</>;
   return (
-    <div className="lesson-voice">
-      <ClipSpeaker clips={clips} decorative className="speaker-tile lesson-voice-face" />
-      <div className="lesson-voice-body">{children}</div>
-    </div>
+    <CharacterStage clips={clips} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
+      {children}
+    </CharacterStage>
   );
 }

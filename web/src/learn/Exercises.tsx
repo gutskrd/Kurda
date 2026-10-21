@@ -113,7 +113,7 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.mc.ask')}</Ask>
-      <ExerciseVoice clips={exerciseClips(exercise)}>
+      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
         <Prompt text={exercise.prompt} />
         <Model exercise={exercise} />
       </ExerciseVoice>
@@ -162,7 +162,7 @@ export function TypedExercise({ exercise, dialect, locked, busy, feedback, onAns
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{exercise.type === 'writing' ? t('lesson.write.ask') : t('lesson.translate.ask')}</Ask>
-      <ExerciseVoice clips={exerciseClips(exercise)}>
+      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
         <Prompt text={exercise.prompt} />
         <Model exercise={exercise} />
       </ExerciseVoice>
@@ -214,7 +214,7 @@ export function Listening({ exercise, dialect, locked, busy, feedback, onAnswer,
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{t('lesson.listen.ask')}</Ask>
-      <ExerciseVoice clips={exerciseClips(exercise)}>
+      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
         <div className="lesson-listen">
           <PlayButton src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} primary />
           <PlayButton src={src} rate={0.75} label={t('lesson.listen.slow')} />
@@ -288,7 +288,7 @@ export function MatchPairs({ exercise, dialect, locked, busy, feedback, onAnswer
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.match.ask')}</Ask>
-      <ExerciseVoice clips={exerciseClips(exercise)}>
+      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
         <p className="lesson-hint">{t('lesson.match.how')}</p>
       </ExerciseVoice>
       <div className={`lesson-match${verdictOf(feedback) ? ` is-${verdictOf(feedback)}` : ''}`}>

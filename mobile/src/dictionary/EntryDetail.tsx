@@ -143,6 +143,7 @@ function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: 
           playing={audio.playing}
           source={recording.url}
           size={CHARACTER_SIZE.row}
+          onPress={() => audio.play(1)}
         />
       ) : null}
       <View style={styles.flex}>

@@ -16,9 +16,9 @@ vi.mock('react-native-svg', async () => {
 });
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 
-import { act, cleanup, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { encodeLipsync, visemeAt, voiceTimeline, type RecordingVoice } from '@kurda/shared';
+import { NOD_DEGREES, SWAY, encodeLipsync, visemeAt, voiceTimeline, type RecordingVoice } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { characterLayers } from './layers';
@@ -235,7 +235,8 @@ describe('SpeakingCharacter', () => {
     const moving = await speak(false);
     expect(moving.mouth).toBe('a');
     expect(moving.turns.some((deg) => deg !== 0)).toBe(true);
-    expect(moving.turns.every((deg) => Math.abs(deg) <= 1.2)).toBe(true);
+    // a nod, and at most the head's own slow drift on top of it
+    expect(moving.turns.every((deg) => Math.abs(deg) <= NOD_DEGREES + SWAY.degrees + 1e-6)).toBe(true);
     // the head's own pivot, where the neck meets it
     expect(moving.origin).toBe(`${HAMO.pivot.x * 100}% ${HAMO.pivot.y * 100}%`);
 
@@ -243,4 +244,44 @@ describe('SpeakingCharacter', () => {
     expect(still.mouth).toBe('a');
     expect(still.turns.every((deg) => deg === 0)).toBe(true);
   });
+
+  it('draws the deer’s ears, pupils and nose as parts of their own, so they can move', async () => {
+    const deer = characterLayers('hevalo', 'full');
+    renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={300} />);
+    await settle();
+    const rig = deer.rig!;
+    for (const part of [rig.crown, rig.earLeft, rig.earRight, rig.face, rig.whites, rig.pupilLeft, rig.pupilRight, deer.body, deer.overlay]) {
+      expect(drawn.markups).toContain(part);
+    }
+    // drawn in its parts, not as the one head the people have
+    expect(drawn.markups).not.toContain(deer.head);
+    // as tall as asked, as wide as the figure is for that height
+    const svg = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === deer.body)!;
+    expect(Number(svg.getAttribute('height'))).toBeCloseTo(300);
+    expect(Number(svg.getAttribute('width'))).toBeCloseTo((300 * deer.frame.w) / deer.frame.h);
+  });
+
+  it('beams at a right answer: eyes smiling and mouth open, even with motion turned down', async () => {
+    renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="cheer" />);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(drawn.markups).toContain(HAMO.eyes.happy);
+    expect(mouthShown()).toBe('a');
+  });
+
+  it('greets a tap, and then does what the screen asked (says it again)', async () => {
+    const again = vi.fn();
+    renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} onPress={again} />);
+    await settle();
+    fireEvent.click(screen.getByRole('img', { name: 'Said by Hamo' }));
+    expect(again).toHaveBeenCalledTimes(1);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(drawn.markups).toContain(HAMO.eyes.happy);
+  });
+
+  it('takes no touch when there is nothing for a tap to do', async () => {
+    renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} />);
+    await settle();
+    expect(screen.queryByRole('button')).toBeNull();
+  });
 });
+

@@ -38,3 +38,129 @@
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-soft);
 }
+
+/*
+ * The parts that move turn and grow about points in the drawing's own units
+ * (set on each group), so their box is the drawing's.
+ */
+.speaking-character .sc-breathe,
+.speaking-character .sc-drift,
+.speaking-character [data-sc],
+.speaking-character [data-pupil] {
+  transform-box: view-box;
+}
+/* a look eases to where it goes, as an eye does, rather than jumping */
+.speaking-character [data-pupil] {
+  transition: transform 160ms ease-out;
+}
+.speaking-character.is-pressable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Alive between the words: a breath, and the head drifting a degree either
+ * way. Only while it can be seen (`is-alive`, set as it comes on screen) and
+ * for a reader who has not asked for less motion. The numbers are the shared
+ * ones (BREATH, SWAY), handed over as custom properties.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .speaking-character.is-alive .sc-breathe {
+    animation: sc-breathe var(--sc-breath-ms, 3600ms) ease-in-out infinite;
+  }
+  .speaking-character.is-alive .sc-drift {
+    animation: sc-drift var(--sc-sway-ms, 6200ms) ease-in-out infinite;
+  }
+}
+@keyframes sc-breathe {
+  50% {
+    transform: scaleY(var(--sc-breath, 1.012));
+  }
+}
+@keyframes sc-drift {
+  25% {
+    transform: rotate(var(--sc-sway, 1.1deg));
+  }
+  75% {
+    transform: rotate(calc(-1 * var(--sc-sway, 1.1deg)));
+  }
+}
+
+/*
+ * A stage (CharacterStage.tsx): where a lesson's character stands to say what
+ * it says, the whole figure in its own light with the Zagros behind it, and
+ * the buttons or the words it is saying standing beside it.
+ */
+.character-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: 12px;
+  height: var(--stage-h, 320px);
+  padding: 0 16px 0 8px;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  isolation: isolate;
+}
+/* the backdrop keeps to the card's rounded corners; the character may hop out over its top edge */
+.character-stage-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.character-stage .speaking-character > svg {
+  overflow: visible;
+}
+.character-stage-figure {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  align-self: stretch;
+  min-width: 0;
+  padding-bottom: calc(var(--stage-h, 320px) * 0.06);
+}
+.character-stage-figure > .speaking-character {
+  height: calc(var(--stage-h, 320px) * 0.94 - 8px);
+  width: auto;
+  max-width: 100%;
+}
+.character-stage-figure > .speaking-character[data-crop='half'] {
+  height: calc(var(--stage-h, 320px) - 8px);
+}
+.character-stage-side {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 12px;
+}
+.character-stage[data-speaking-within] {
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+/* the backdrop drawn for the page's own scheme: dark unless the page is light */
+.character-stage-backdrop.is-light {
+  display: none;
+}
+:root[data-theme='light'] .character-stage-backdrop.is-light {
+  display: block;
+}
+:root[data-theme='light'] .character-stage-backdrop.is-dark {
+  display: none;
+}
+.character-stage-backdrop > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* beside the character there is less room than a whole line: a long label wraps rather than running off the stage */
+.character-stage-side .btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  white-space: normal;
+  text-align: start;
+}

@@ -58,7 +58,7 @@ describe('a lesson’s speaking characters', () => {
   it('puts the chosen character beside a listening clip’s buttons', async () => {
     lesson({ id: 'e1', type: 'listening', audioUrl: CLIP, audioVoice: hamo });
     const play = await screen.findByRole('button', { name: 'Play' });
-    const voice = play.closest('.lesson-voice')!;
+    const voice = play.closest('.character-stage')!;
     expect(voice).not.toBeNull();
     const face = voice.querySelector('.speaking-character')!;
     expect(face).toHaveAttribute('data-speaker', 'hamo');
@@ -70,15 +70,15 @@ describe('a lesson’s speaking characters', () => {
   it('shows nobody for a clip with no character', async () => {
     lesson({ id: 'e1', type: 'listening', audioUrl: CLIP });
     expect(await screen.findByRole('button', { name: 'Play' })).toBeInTheDocument();
-    expect(document.querySelector('.lesson-voice')).toBeNull();
+    expect(document.querySelector('.character-stage')).toBeNull();
     expect(speakers()).toHaveLength(0);
   });
 
   it('puts the speaker of a speaking item’s model beside the phrase to say', async () => {
     lesson({ id: 'e1', type: 'speaking', prompt: 'Bêje: Ez baş im', modelAudioUrl: MODEL, modelAudioVoice: xezo });
     const model = await screen.findByRole('button', { name: /native speaker/i });
-    expect(model.closest('.lesson-voice')?.querySelector('.speaking-character')).toHaveAttribute('data-speaker', 'xezo');
-    expect(within(model.closest('.lesson-voice') as HTMLElement).getByText('Bêje: Ez baş im')).toBeInTheDocument();
+    expect(model.closest('.character-stage')?.querySelector('.speaking-character')).toHaveAttribute('data-speaker', 'xezo');
+    expect(within(model.closest('.character-stage') as HTMLElement).getByText('Bêje: Ez baş im')).toBeInTheDocument();
   });
 
   it('has the options’ speaker say them', async () => {

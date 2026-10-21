@@ -13,11 +13,12 @@ const TIMELINE: LipsyncTimeline = {
 };
 
 describe('eyesAt', () => {
-  it('keeps the eyes open most of the time and shuts them briefly', () => {
+  it('keeps the eyes open most of the time and blinks briefly: half shut, shut, half shut', () => {
     expect(eyesAt(0)).toBe('open');
     expect(eyesAt(3200 - BLINK_MS - 1)).toBe('open');
-    expect(eyesAt(3200 - BLINK_MS)).toBe('closed');
-    expect(eyesAt(3199)).toBe('closed');
+    expect(eyesAt(3200 - BLINK_MS)).toBe('half');
+    expect(eyesAt(3200 - BLINK_MS / 2)).toBe('closed');
+    expect(eyesAt(3199)).toBe('half');
     expect(eyesAt(3200)).toBe('open');
   });
 

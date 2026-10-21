@@ -217,6 +217,8 @@ describe('an answer, as its verdict arrives', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+    // two answers a test gives faster than a person can: the chimes' pacing is not what this is about
+    resetSounds();
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['correct', 'wrong']));
     // and heard: a bright pair for the right answer, a low soft one for the miss

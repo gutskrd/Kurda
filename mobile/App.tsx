@@ -105,6 +105,7 @@ import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
 import { InviteBanner } from './src/play/InviteBanner';
+import { GazeArea } from './src/characters/gaze';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -641,6 +642,9 @@ function ThemedNavigation() {
   );
 }
 
+/** The whole window, for the gaze area round everything. */
+const rootStyle = { flex: 1 } as const;
+
 export default function App() {
   // lesson audio plays with the ring switch on, from the first word, not only after a first recording
   useEffect(() => {
@@ -648,15 +652,18 @@ export default function App() {
   }, []);
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <I18nProvider>
-          <AuthProvider>
-            <EventThemeProvider>
-              <ThemedNavigation />
-            </EventThemeProvider>
-          </AuthProvider>
-        </I18nProvider>
-      </ThemeProvider>
+      {/* the characters' eyes follow a finger anywhere in the app; it only listens, so it takes no touch from anything */}
+      <GazeArea style={rootStyle}>
+        <ThemeProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <EventThemeProvider>
+                <ThemedNavigation />
+              </EventThemeProvider>
+            </AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </GazeArea>
     </SafeAreaProvider>
   );
 }

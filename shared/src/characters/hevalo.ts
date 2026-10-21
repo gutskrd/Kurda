@@ -406,18 +406,15 @@ function freckles(): string {
   return FRECKLES.map((f) => one(f, false) + one(f, true)).join('');
 }
 
-function head(p: string): string {
+/** His two sides are not quite each other's mirror: the right antler sits a little further out and is a little smaller. */
+const rightAntler = (x: number, y: number): Pt => [374.4 + (x - 372.9) * 0.99, 80.6 + (y - 80.6) * 0.99];
+
+/** The antlers, standing up behind the ears. */
+function crown(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  // his two sides are not quite each other's mirror: the right antler sits a little further out and is a
-  // little smaller, and the light inside each ear lies a little lower and further out
-  const right = (x: number, y: number): Pt => [374.4 + (x - 372.9) * 0.99, 80.6 + (y - 80.6) * 0.99];
-  const moved = (k: readonly Knot[], dx: number, dy: number): Knot[] => k.map(([x, y, r]) => [x + dx, y + dy, r] as Knot);
-  const antlers = curve(ANTLER) + curve(mirror(ANTLER, AXIS).map(([x, y, r]) => [...right(x, y), r] as Knot));
-  const ears = curve(EAR) + curve(mirror(EAR, AXIS));
-  const earsIn = curve(moved(EAR_IN, -3, 3)) + curve(moved(mirror(EAR_IN, AXIS), 5, 3));
-  const tufts = curve(moved(EAR_TUFT, -3, 3)) + curve(moved(mirror(EAR_TUFT, AXIS), 5, 3));
+  const antlers = curve(ANTLER) + curve(mirror(ANTLER, AXIS).map(([x, y, r]) => [...rightAntler(x, y), r] as Knot));
   const lights = ANTLER_LIGHT.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
-  const lightsR = ANTLER_LIGHT.map((s) => taper(s.map(([x, y]) => right(2 * AXIS - x, y)), s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
+  const lightsR = ANTLER_LIGHT.map((s) => taper(s.map(([x, y]) => rightAntler(2 * AXIS - x, y)), s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
   return part(
     [
       linearBox(id('antler'), [
@@ -425,11 +422,49 @@ function head(p: string): string {
         [0.35, C.antler],
         [1, C.antlerDeep],
       ]),
-      radialBox(id('ear'), [
-        [0, C.furLight],
-        [0.6, C.fur],
-        [1, C.furDeep],
-      ], 0.6, 0.5, 0.62),
+    ],
+    [fill(antlers, `url(#${id('antler')})`), fill(lights + lightsR, C.antlerLight, alpha(0.55))],
+  );
+}
+
+/** Where each ear meets the head, and turns about when it twitches: low on its inner side, as a deer's does. */
+const EAR_PIVOT_LEFT = { x: 120, y: 198 } as const;
+const EAR_PIVOT_RIGHT = { x: 2 * AXIS - EAR_PIVOT_LEFT.x, y: EAR_PIVOT_LEFT.y } as const;
+
+/**
+ * The ears' light: the radial the pair was painted with over the box round
+ * both (1.2 to 508.8 across, 106.6 to 240 down), centred at 0.6 across and
+ * 0.5 down and reaching 0.62 of the box each way.
+ */
+const EAR_LIGHT = { cx: 1.2 + 0.6 * 507.6, cy: 106.6 + 0.5 * 133.4, rx: 0.62 * 507.6, ry: 0.62 * 133.4 } as const;
+
+/** One ear, its light inside and the tuft of fur at its foot; the light lies a little lower and further out on the right. */
+function ear(p: string, side: 'left' | 'right'): string {
+  const id = (name: string): string => `${p}${name}`;
+  const moved = (k: readonly Knot[], dx: number, dy: number): Knot[] => k.map(([x, y, r]) => [x + dx, y + dy, r] as Knot);
+  const left = side === 'left';
+  const outline = left ? EAR : mirror(EAR, AXIS);
+  const inside = left ? moved(EAR_IN, -3, 3) : moved(mirror(EAR_IN, AXIS), 5, 3);
+  const tuft = left ? moved(EAR_TUFT, -3, 3) : moved(mirror(EAR_TUFT, AXIS), 5, 3);
+  // The light is the one the two ears were always painted with as a pair: centred a little right of
+  // the head's middle and spread wide and flat across both. Fixed in the drawing's own units, so each
+  // ear on its own is lit exactly as it was beside the other.
+  const light = id(left ? 'earL' : 'earR');
+  return part(
+    [
+      `<radialGradient id="${light}" gradientUnits="userSpaceOnUse" cx="${n(EAR_LIGHT.cx)}" cy="${n(EAR_LIGHT.cy)}" r="${n(EAR_LIGHT.rx)}" ` +
+        `gradientTransform="translate(0 ${n(EAR_LIGHT.cy)}) scale(1 ${n(EAR_LIGHT.ry / EAR_LIGHT.rx)}) translate(0 ${n(-EAR_LIGHT.cy)})">` +
+        `<stop offset="0" stop-color="${C.furLight}"/><stop offset="0.6" stop-color="${C.fur}"/><stop offset="1" stop-color="${C.furDeep}"/></radialGradient>`,
+    ],
+    [fill(curve(outline), `url(#${light})`), fill(curve(inside), C.earIn), fill(curve(tuft), C.earTuft)],
+  );
+}
+
+/** The head itself: its fur, the light round the eyes and down the nose, the muzzle and the freckles. */
+function face(p: string): string {
+  const id = (name: string): string => `${p}${name}`;
+  return part(
+    [
       radialBox(id('head'), [
         [0, C.furLight],
         [0.55, C.fur],
@@ -454,11 +489,6 @@ function head(p: string): string {
       ], 0.5, 0.45, 0.6),
     ],
     [
-      fill(antlers, `url(#${id('antler')})`),
-      fill(lights + lightsR, C.antlerLight, alpha(0.55)),
-      fill(ears, `url(#${id('ear')})`),
-      fill(earsIn, C.earIn),
-      fill(tufts, C.earTuft),
       fill(curve(HEAD), `url(#${id('head')})`),
       ellipse(EYE_AXIS - 76, 284, 70, 84, `url(#${id('patch')})`),
       ellipse(EYE_AXIS + 76, 284, 70, 84, `url(#${id('patch')})`),
@@ -472,9 +502,30 @@ function head(p: string): string {
   );
 }
 
+/** The whole head but for the eyes and the mouth: the antlers, the ears over them, the head over those. */
+function head(p: string): string {
+  return crown(p) + ear(p, 'left') + ear(p, 'right') + face(p);
+}
+
 // ─────────────────────────────────────────────────────────────── the eyes
 
-function eyesOpen(p: string): string {
+/** Each eye's white: its middle, and how wide and tall it is (half-widths). */
+const EYE_WHITE = { y: 281, rx: 53.4, ry: 60.6, apart: 76 } as const;
+
+/** Each pupil as drawn: turned in towards the other, as on the icon, with the light in it to the upper left. */
+const PUPIL = { y: 281.6, rx: 22, ry: 34, apart: 60 } as const;
+const PUPIL_LIGHT = { dx: -9.1, dy: -15, r: 10.4 } as const;
+
+/** The lid's colour, warming to the fur round the eye at its edge. */
+const lidLight = (id: string): string =>
+  radialBox(id, [
+    [0, C.patch],
+    [0.8, C.patch],
+    [1, '#dba06a'],
+  ], 0.5, 0.4, 0.55);
+
+/** The whites of the eyes, with nothing in them. */
+function whites(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
@@ -489,12 +540,47 @@ function eyesOpen(p: string): string {
       ], 0.5, 0.49),
     ],
     [
-      ellipse(EYE_AXIS - 76, 281, 53.4, 60.6, `url(#${id('white')})`),
-      ellipse(EYE_AXIS + 76, 281, 53.4, 60.6, `url(#${id('white')})`),
-      ellipse(EYE_AXIS - 60, 281.6, 22, 34, C.pupil),
-      ellipse(EYE_AXIS + 60, 281.6, 22, 34, C.pupil),
-      // the light in each eye, on the same side of both, as one light falls on them
-      fill(oval(184.4, 266.6, 10.4) + oval(305.4, 266.6, 10.4), C.white),
+      ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx, EYE_WHITE.ry, `url(#${id('white')})`),
+      ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx, EYE_WHITE.ry, `url(#${id('white')})`),
+    ],
+  );
+}
+
+/** One pupil and the light in it; the light is on the same side in both, as one light falls on them. */
+function pupil(side: 'left' | 'right'): string {
+  const x = side === 'left' ? EYE_AXIS - PUPIL.apart : EYE_AXIS + PUPIL.apart;
+  // the right eye's light sits a hair nearer its pupil's middle, as the icon has it
+  const dx = side === 'left' ? PUPIL_LIGHT.dx : PUPIL_LIGHT.dx + 1;
+  return ellipse(x, PUPIL.y, PUPIL.rx, PUPIL.ry, C.pupil) + fill(oval(x + dx, PUPIL.y + PUPIL_LIGHT.dy, PUPIL_LIGHT.r), C.white);
+}
+
+function eyesOpen(p: string): string {
+  return whites(p) + pupil('left') + pupil('right');
+}
+
+/** The lids half down, from the brow to about the middle of each eye, closing along a soft dark edge. */
+function lidsHalf(p: string): string {
+  const id = (name: string): string => `${p}${name}`;
+  const edge = (cx: number): string =>
+    taper(
+      [
+        [cx - 52, 266],
+        [cx - 26, 276],
+        [cx, 279],
+        [cx + 26, 276],
+        [cx + 52, 266],
+      ],
+      [1.4, 5, 6, 5, 1.4],
+    );
+  // the lid comes down to a soft curve, lowest in the middle, as a sleepy eye's does
+  const cover = (cx: number): string =>
+    `M${n(cx - 60)},${n(200)}H${n(cx + 60)}V${n(264)}C${n(cx + 40)},${n(275)} ${n(cx + 20)},${n(278)} ${n(cx)},${n(278)}C${n(cx - 20)},${n(278)} ${n(cx - 40)},${n(275)} ${n(cx - 60)},${n(264)}z`;
+  return part(
+    [lidLight(id('lidHalf')), clipDef(id('halfL'), cover(EYE_AXIS - EYE_WHITE.apart)), clipDef(id('halfR'), cover(EYE_AXIS + EYE_WHITE.apart))],
+    [
+      clipped(id('halfL'), ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHalf')})`)),
+      clipped(id('halfR'), ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHalf')})`)),
+      fill(edge(EYE_AXIS - EYE_WHITE.apart) + edge(EYE_AXIS + EYE_WHITE.apart), C.pupil, alpha(0.85)),
     ],
   );
 }
@@ -514,17 +600,35 @@ function eyesClosed(p: string): string {
       [2, 6.4, 7.4, 6.4, 2],
     );
   return part(
+    [lidLight(id('lid'))],
     [
-      radialBox(id('lid'), [
-        [0, C.patch],
-        [0.8, C.patch],
-        [1, '#dba06a'],
-      ], 0.5, 0.4, 0.55),
+      ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lid')})`),
+      ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lid')})`),
+      fill(lid(EYE_AXIS - EYE_WHITE.apart) + lid(EYE_AXIS + EYE_WHITE.apart), C.pupil),
     ],
+  );
+}
+
+/** Smiling eyes: shut, the line where the lids meet curved up instead of down, as a face is when it beams. */
+function eyesHappy(p: string): string {
+  const id = (name: string): string => `${p}${name}`;
+  const arc = (cx: number): string =>
+    taper(
+      [
+        [cx - 42, 304],
+        [cx - 24, 284],
+        [cx, 276],
+        [cx + 24, 284],
+        [cx + 42, 304],
+      ],
+      [2.4, 7, 8.4, 7, 2.4],
+    );
+  return part(
+    [lidLight(id('lidHappy'))],
     [
-      ellipse(EYE_AXIS - 76, 281, 54.4, 61.6, `url(#${id('lid')})`),
-      ellipse(EYE_AXIS + 76, 281, 54.4, 61.6, `url(#${id('lid')})`),
-      fill(lid(EYE_AXIS - 76) + lid(EYE_AXIS + 76), C.pupil),
+      ellipse(EYE_AXIS - EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHappy')})`),
+      ellipse(EYE_AXIS + EYE_WHITE.apart, EYE_WHITE.y, EYE_WHITE.rx + 1, EYE_WHITE.ry + 1, `url(#${id('lidHappy')})`),
+      fill(arc(EYE_AXIS - EYE_WHITE.apart) + arc(EYE_AXIS + EYE_WHITE.apart), C.pupil),
     ],
   );
 }
@@ -709,11 +813,38 @@ export function drawHevalo(p: string): CharacterArt {
     name: 'Hevalo',
     viewBox: { x: -14, y: -14, w: 540, h: 1556 },
     bust: { x: -15, y: -16, w: 540, h: 540 },
+    // antlers to the tops of his legs: the chest and the cream of it, standing
+    half: { x: -14, y: -14, w: 540, h: 1034 },
     headPivot: { x: AXIS, y: 446 },
     body: body(p),
     head: head(p),
-    eyes: { open: eyesOpen(p), closed: eyesClosed(p) },
+    eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p) },
     mouths: deerMouths(p),
     overlay: nose(p),
+    rig: {
+      face: face(p),
+      crown: crown(p),
+      ears: {
+        left: { art: ear(p, 'left'), pivot: EAR_PIVOT_LEFT },
+        right: { art: ear(p, 'right'), pivot: EAR_PIVOT_RIGHT },
+      },
+      look: {
+        whites: whites(p),
+        left: {
+          art: pupil('left'),
+          rest: { x: EYE_AXIS - PUPIL.apart, y: PUPIL.y },
+          centre: { x: EYE_AXIS - EYE_WHITE.apart, y: EYE_WHITE.y },
+        },
+        right: {
+          art: pupil('right'),
+          rest: { x: EYE_AXIS + PUPIL.apart, y: PUPIL.y },
+          centre: { x: EYE_AXIS + EYE_WHITE.apart, y: EYE_WHITE.y },
+        },
+        // as far as a pupil goes and stays inside its white, with a little white left round it
+        reach: { x: EYE_WHITE.rx - PUPIL.rx - 8, y: EYE_WHITE.ry - PUPIL.ry - 9 },
+        half: lidsHalf(p),
+      },
+      sniff: { x: AXIS, y: 392 },
+    },
   };
 }

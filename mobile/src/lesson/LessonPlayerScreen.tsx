@@ -13,6 +13,7 @@ import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLay
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
+import { knownVoice } from '../characters/SpeakingCharacter';
 import { LessonResults } from './components/LessonResults';
 import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
@@ -466,6 +467,7 @@ export function SessionPlayer({
           <FeedbackFooter
             feedback={state.feedback}
             inARow={inARow}
+            staged={(ex?.type === 'listening' && knownVoice(ex.audioVoice) !== null) || (ex?.type === 'speaking' && knownVoice(ex.modelAudioVoice) !== null)}
             canCheck={canCheck}
             submitting={submitting}
             onCheck={check}

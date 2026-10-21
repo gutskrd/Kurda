@@ -12,7 +12,8 @@ import { useRecorder } from '../useRecorder';
 import { useI18n } from '../../i18n/I18nContext';
 import type { TranslationKey } from '../../i18n/translations';
 import { useDirection } from '../../reports/direction';
-import { SpeakingCharacter, knownVoice, useStageSize } from '../../characters/SpeakingCharacter';
+import { knownVoice } from '../../characters/SpeakingCharacter';
+import { CharacterStage } from '../../characters/CharacterStage';
 
 interface Props {
   exercise: Exercise;
@@ -64,7 +65,6 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const ownAudio = useAudio(recorder.result?.uri || undefined);
   const model = useAudio(exercise.modelAudioUrl);
   const dir = useDirection();
-  const stage = useStageSize();
   // who says the native model, when an editor has chosen somebody
   const voice = knownVoice(exercise.modelAudioVoice);
 
@@ -124,27 +124,21 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
-        <View style={[styles.stage, { flexDirection: dir.row }]}>
-          <SpeakingCharacter
-            key={exercise.id}
-            speaker={voice.speaker}
-            voice={voice}
-            text={exercise.prompt}
-            player={model.clock}
-            playing={model.playing}
-            source={exercise.modelAudioUrl}
-            size={stage}
-            flip={dir.rtl}
-          />
-          <ClayButton
-            label={t('lesson.speak.playModel')}
-            icon="speaker"
-            variant="outline"
-            tone="primary"
-            onPress={() => model.play(1)}
-            style={styles.besideCharacter}
-          />
-        </View>
+        // the whole figure on its stage, saying the sentence; a tap on it says it again too
+        <CharacterStage
+          key={exercise.id}
+          speaker={voice.speaker}
+          voice={voice}
+          text={exercise.prompt}
+          player={model.clock}
+          playing={model.playing}
+          source={exercise.modelAudioUrl}
+          onPress={() => model.play(1)}
+          // pleased when the learner says they said it well; their own judgement of a near miss is theirs to make
+          reaction={selfRating === 'good' ? 'cheer' : null}
+        >
+          <ClayButton label={t('lesson.speak.playModel')} icon="speaker" variant="outline" tone="primary" onPress={() => model.play(1)} />
+        </CharacterStage>
       ) : model.supported ? (
         <ClayButton label={t('lesson.speak.playModel')} icon="speaker" variant="outline" tone="primary" onPress={() => model.play(1)} />
       ) : null}
@@ -218,8 +212,6 @@ const styles = StyleSheet.create({
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  stage: { alignItems: 'center', gap: spacing.md },
-  besideCharacter: { flexShrink: 1 },
   recordingBox: { alignItems: 'center', gap: spacing.sm },
   row: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: spacing.sm },
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },

@@ -2,6 +2,8 @@ import { lipsyncFromText } from '../lipsync/align.js';
 import type { RecordingVoice } from '../lipsync/speakers.js';
 import { safeDecodeLipsync, visemeAt, type LipsyncTimeline } from '../lipsync/timeline.js';
 import type { Viseme } from '../lipsync/visemes.js';
+import { BLINK_STEPS } from './life.js';
+import type { EyeState } from './types.js';
 
 /**
  * What a speaking character looks like at one moment, worked out the same way
@@ -13,7 +15,7 @@ import type { Viseme } from '../lipsync/visemes.js';
  */
 export interface SpeakingFrame {
   mouth: Viseme;
-  eyes: 'open' | 'closed';
+  eyes: EyeState;
   /** degrees the head turns about its pivot; 0 when still */
   nod: number;
 }
@@ -31,8 +33,8 @@ export interface SpeakingInput {
   reducedMotion?: boolean;
 }
 
-/** How long the eyes stay shut in a blink. */
-export const BLINK_MS = 140;
+/** How long a blink takes, from the lids starting down to the eyes open again: half shut, shut, half shut. */
+export const BLINK_MS = 2 * BLINK_STEPS.half + BLINK_STEPS.shut;
 
 /**
  * The gaps between blinks, in turn. Uneven, as a person's are, and the same
@@ -42,12 +44,16 @@ export const BLINK_MS = 140;
 const BLINK_GAPS = [3200, 4700, 3900, 5600, 2800, 4300] as const;
 const BLINK_CYCLE = BLINK_GAPS.reduce((a, b) => a + b, 0);
 
-/** Whether the eyes are open `sinceMs` after the character appeared. */
-export function eyesAt(sinceMs: number): 'open' | 'closed' {
+/** How the eyes are `sinceMs` after the character appeared: open, or somewhere in a blink at the end of each gap. */
+export function eyesAt(sinceMs: number): 'open' | 'half' | 'closed' {
   if (!(sinceMs >= 0)) return 'open';
   let t = sinceMs % BLINK_CYCLE;
   for (const gap of BLINK_GAPS) {
-    if (t < gap) return t >= gap - BLINK_MS ? 'closed' : 'open';
+    if (t < gap) {
+      const into = t - (gap - BLINK_MS);
+      if (into < 0) return 'open';
+      return into < BLINK_STEPS.half || into >= BLINK_STEPS.half + BLINK_STEPS.shut ? 'half' : 'closed';
+    }
     t -= gap;
   }
   return 'open';

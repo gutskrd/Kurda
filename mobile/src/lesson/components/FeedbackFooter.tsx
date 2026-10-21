@@ -28,6 +28,8 @@ interface Props {
   onContinue: () => void;
   /** right answers in a row, this one included: named from the third, a small "keep going" */
   inARow?: number;
+  /** the exercise's character is on its stage above and reacts there, so the banner needs no second one */
+  staged?: boolean;
 }
 
 /**
@@ -42,7 +44,7 @@ interface Props {
  * Both sit clear of the home indicator: the lesson is full screen, and the
  * bottom edge of a phone without a home button belongs to the system's swipe.
  */
-export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue, inARow = 0 }: Props) {
+export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue, inARow = 0, staged = false }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduce = useReducedMotion();
@@ -108,7 +110,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
       {feedback.comesBack ? <Text style={[styles.note, { color: colors.textPrimary }]}>{t('lesson.comesBack')}</Text> : null}
       {model.supported ? (
         <HearIt
-          voice={knownVoice(feedback.modelAudioVoice)}
+          voice={staged ? null : knownVoice(feedback.modelAudioVoice)}
           model={model}
           source={feedback.modelAudioUrl}
           text={feedback.correction}
@@ -151,6 +153,7 @@ function HearIt({
   if (!voice) return button;
   return (
     <View style={[styles.hearRow, { flexDirection: row }]}>
+      {/* head to waist, cheering a right answer and tilting its head at one that was not yet; a tap says it again */}
       <SpeakingCharacter
         speaker={voice.speaker}
         voice={voice}
@@ -158,8 +161,11 @@ function HearIt({
         player={model.clock}
         playing={model.playing}
         source={source}
-        size={CHARACTER_SIZE.row}
+        crop="half"
+        height={CHARACTER_SIZE.answer}
         flip={rtl}
+        reaction={tone === 'success' ? 'cheer' : 'hmm'}
+        onPress={() => model.play(1)}
       />
       {button}
     </View>
@@ -190,6 +196,6 @@ const styles = StyleSheet.create({
   correction: { fontSize: typography.sizes.md },
   correctionValue: { fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.sm },
-  hearRow: { alignItems: 'center', gap: spacing.md },
+  hearRow: { alignItems: 'flex-end', gap: spacing.md },
   grow: { flex: 1 },
 });

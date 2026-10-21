@@ -556,6 +556,16 @@ function eyesClosed(): string {
   );
 }
 
+/** Smiling eyes: shut, the lash line along where the upper lid was, curved up, the way eyes close when someone beams. */
+function eyesHappy(): string {
+  const arc = (eye: readonly Knot[], weight: number): string =>
+    taper(
+      [eye[0], eye[1], eye[2], eye[3], eye[4]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 1.8] as Pt),
+      [0.4 * weight, 1.2 * weight, 1.5 * weight, 1.2 * weight, 0.4 * weight],
+    );
+  return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
+}
+
 /** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
 const MOUSTACHE: Knot[] = [
   [171, 137.9, 0.15],
@@ -581,10 +591,12 @@ export function drawHamo(p: string): CharacterArt {
     name: 'Hamo',
     viewBox: { x: 34, y: 42, w: 278, h: 664 },
     bust: { x: 118, y: 44, w: 134, h: 134 },
+    // head to hips: his hands on his sash, and the top of his trousers
+    half: { x: 34, y: 42, w: 278, h: 360 },
     headPivot: { x: 181, y: 160 },
     body: body(p),
     head: head(),
-    eyes: { open: eyesOpen(p), closed: eyesClosed() },
+    eyes: { open: eyesOpen(p), closed: eyesClosed(), happy: eyesHappy() },
     mouths: humanMouths(
       {
         open: { left: [184.4, 139], right: [201.3, 139.2], top: 138.2, bottom: 142.9 },

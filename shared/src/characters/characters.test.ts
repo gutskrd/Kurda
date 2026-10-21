@@ -105,6 +105,27 @@ function parts(art: CharacterArt): [string, string][] {
   ];
 }
 
+/** The parts drawn for expressions and for moving on their own: not part of the plain figure's size. */
+function extras(art: CharacterArt): [string, string][] {
+  const rig = art.rig;
+  return [
+    ['eyes.happy', art.eyes.happy],
+    ...(art.eyes.half ? ([['eyes.half', art.eyes.half]] as [string, string][]) : []),
+    ...(rig
+      ? ([
+          ['rig.face', rig.face],
+          ['rig.crown', rig.crown],
+          ['rig.ears.left', rig.ears.left.art],
+          ['rig.ears.right', rig.ears.right.art],
+          ['rig.look.whites', rig.look.whites],
+          ['rig.look.left', rig.look.left.art],
+          ['rig.look.right', rig.look.right.art],
+          ['rig.look.half', rig.look.half],
+        ] as [string, string][])
+      : []),
+  ];
+}
+
 const bytes = (s: string): number => new TextEncoder().encode(s).length;
 
 describe('the characters', () => {
@@ -184,13 +205,15 @@ describe('the characters', () => {
 
       it('stays small: the whole figure within its budget, and a mouth a sliver of it', () => {
         const total = parts(art).reduce((s, [, m]) => s + bytes(m), 0);
-        expect(total).toBeLessThan(30_000);
+        // each of the deer's ears carries its own light, so either can be drawn alone
+        expect(total).toBeLessThan(31_000);
         for (const v of VISEMES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
         expect(bytes(art.eyes.open) + bytes(art.eyes.closed)).toBeLessThan(3_500);
+        for (const [name, markup] of extras(art)) expect(bytes(markup), name).toBeLessThan(name === 'rig.face' ? 9_000 : 3_000);
       });
 
       it('uses no pictures, filters, masks, styles or text', () => {
-        for (const [name, markup] of parts(art)) {
+        for (const [name, markup] of [...parts(art), ...extras(art)]) {
           expect(markup, name).not.toMatch(/<image|<filter|<mask|<pattern|<style|<text|<use|<script|<foreignObject|data:|https?:/i);
         }
       });
@@ -262,7 +285,7 @@ describe('characterSvg', () => {
 
   it('refuses what it cannot draw', () => {
     expect(() => characterSvg('hamo', { mouth: 'x' as never })).toThrow(RangeError);
-    expect(() => characterSvg('hamo', { eyes: 'half' as never })).toThrow(RangeError);
+    expect(() => characterSvg('hamo', { eyes: 'squint' as never })).toThrow(RangeError);
     expect(() => characterSvg('hamo', { width: 0 })).toThrow(RangeError);
     expect(() => characterSvg('nobody' as never)).toThrow(RangeError);
   });
