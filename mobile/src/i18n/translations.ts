@@ -1947,6 +1947,8 @@ export type TranslationKey =
   | 'learn.today.goalMet'
   | 'learn.today.goalSetting'
   | 'learn.today.streakStart'
+  | 'learn.bar.streak'
+  | 'learn.bar.zer'
   | 'learn.tools.review'
   | 'learn.tools.due'
   | 'learn.tools.dueOne'
@@ -4057,6 +4059,8 @@ const en: Catalog = {
   'learn.today.goalMet': 'Daily goal reached. Nice work!',
   'learn.today.goalSetting': 'Goal: {xp} XP',
   'learn.today.streakStart': 'A lesson today starts a streak',
+  'learn.bar.streak': 'Streak: {days}',
+  'learn.bar.zer': '{count} Zêr. Open the shop',
   'learn.tools.review': 'Review',
   'learn.tools.due': '{count} words due',
   'learn.tools.dueOne': '1 word due',
@@ -6167,6 +6171,8 @@ const ku: Catalog = {
   'learn.today.goalMet': 'Armanca rojane pêk hat. Destê te xweş!',
   'learn.today.goalSetting': 'Armanc: {xp} XP',
   'learn.today.streakStart': 'Dersek îro rêzeyekê dide destpêkirin',
+  'learn.bar.streak': 'Rêze: {days}',
+  'learn.bar.zer': '{count} Zêr. Firoşgehê veke',
   'learn.tools.review': 'Dubarekirin',
   'learn.tools.due': '{count} peyv li benda dubarekirinê ne',
   'learn.tools.dueOne': '1 peyv li benda dubarekirinê ye',
@@ -8277,6 +8283,8 @@ const de: Catalog = {
   'learn.today.goalMet': 'Tagesziel erreicht. Gut gemacht!',
   'learn.today.goalSetting': 'Ziel: {xp} XP',
   'learn.today.streakStart': 'Eine Lektion heute startet eine Serie',
+  'learn.bar.streak': 'Serie: {days}',
+  'learn.bar.zer': '{count} Zêr. Shop öffnen',
   'learn.tools.review': 'Wiederholen',
   'learn.tools.due': '{count} Wörter fällig',
   'learn.tools.dueOne': '1 Wort fällig',
@@ -10387,6 +10395,8 @@ const es: Catalog = {
   'learn.today.goalMet': 'Meta diaria cumplida. ¡Buen trabajo!',
   'learn.today.goalSetting': 'Meta: {xp} XP',
   'learn.today.streakStart': 'Una lección hoy empieza una racha',
+  'learn.bar.streak': 'Racha: {days}',
+  'learn.bar.zer': '{count} Zêr. Abrir la tienda',
   'learn.tools.review': 'Repasar',
   'learn.tools.due': '{count} palabras para repasar',
   'learn.tools.dueOne': '1 palabra para repasar',
@@ -12497,6 +12507,8 @@ const tr: Catalog = {
   'learn.today.goalMet': 'Günlük hedefe ulaştın. Aferin!',
   'learn.today.goalSetting': 'Hedef: {xp} XP',
   'learn.today.streakStart': 'Bugün bir ders, bir seri başlatır',
+  'learn.bar.streak': 'Seri: {days}',
+  'learn.bar.zer': '{count} Zêr. Mağazayı aç',
   'learn.tools.review': 'Tekrar',
   'learn.tools.due': '{count} kelime tekrar bekliyor',
   'learn.tools.dueOne': '1 kelime tekrar bekliyor',
@@ -14607,6 +14619,8 @@ const ar: Catalog = {
   'learn.today.goalMet': 'حققت هدفك اليومي. أحسنت!',
   'learn.today.goalSetting': 'الهدف: {xp} XP',
   'learn.today.streakStart': 'درس واحد اليوم يبدأ تتابعاً',
+  'learn.bar.streak': 'التتابع: {days}',
+  'learn.bar.zer': '{count} Zêr. افتح المتجر',
   'learn.tools.review': 'مراجعة',
   'learn.tools.due': '{count} كلمات للمراجعة',
   'learn.tools.dueOne': 'كلمة واحدة للمراجعة',
@@ -16717,6 +16731,8 @@ const fr: Catalog = {
   'learn.today.goalMet': 'Objectif du jour atteint. Bravo !',
   'learn.today.goalSetting': 'Objectif : {xp} XP',
   'learn.today.streakStart': 'Une leçon aujourd’hui lance une série',
+  'learn.bar.streak': 'Série : {days}',
+  'learn.bar.zer': '{count} Zêr. Ouvrir la boutique',
   'learn.tools.review': 'Réviser',
   'learn.tools.due': '{count} mots à réviser',
   'learn.tools.dueOne': '1 mot à réviser',
@@ -18827,6 +18843,8 @@ const nl: Catalog = {
   'learn.today.goalMet': 'Dagdoel gehaald. Goed gedaan!',
   'learn.today.goalSetting': 'Doel: {xp} XP',
   'learn.today.streakStart': 'Eén les vandaag start een reeks',
+  'learn.bar.streak': 'Reeks: {days}',
+  'learn.bar.zer': '{count} Zêr. Winkel openen',
   'learn.tools.review': 'Herhalen',
   'learn.tools.due': '{count} woorden te herhalen',
   'learn.tools.dueOne': '1 woord te herhalen',
@@ -20938,6 +20956,8 @@ const ckb: Catalog = {
   'learn.today.goalMet': 'ئامانجی ڕۆژانە پێکهات. دەستت خۆش!',
   'learn.today.goalSetting': 'ئامانج: {xp} XP',
   'learn.today.streakStart': 'وانەیەک ئەمڕۆ زنجیرەیەک دەست پێ دەکات',
+  'learn.bar.streak': 'زنجیرە: {days}',
+  'learn.bar.zer': '{count} Zêr. فرۆشگا بکەرەوە',
   'learn.tools.review': 'پێداچوونەوە',
   'learn.tools.due': '{count} وشە چاوەڕێی پێداچوونەوەن',
   'learn.tools.dueOne': '1 وشە چاوەڕێی پێداچوونەوەیە',

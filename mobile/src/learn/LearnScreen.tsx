@@ -11,6 +11,7 @@ import type { MapRow } from '../coursemap/node';
 import { LessonsView } from './LessonsView';
 import { GamesView } from './GamesView';
 import { useLearnView } from './useLearnView';
+import { LearnBar } from './LearnBar';
 
 const VIEWS: readonly LearnView[] = ['lessons', 'games'] as const;
 
@@ -41,7 +42,8 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
   return (
     <GradientBackground>
       <View style={[styles.head, { paddingTop: topInset }]}>
-        <LargeTitle title={t('nav.learn')} />
+        {/* the streak, the day's goal and the Zêr, in the corner where they are looked for */}
+        <LargeTitle title={t('nav.learn')} right={<LearnBar />} />
         <Segmented
           options={VIEWS}
           value={view}

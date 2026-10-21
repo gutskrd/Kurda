@@ -45,14 +45,34 @@ export interface PathFocus {
   current: boolean;
 }
 
+/**
+ * Where a unit sits on the path, from the path's top: what the screen needs
+ * to keep the unit being scrolled through named at the top of the page.
+ */
+export interface UnitPlace {
+  unitId: string;
+  /** the unit's top, and where its banner ends and the unit itself ends */
+  top: number;
+  bannerBottom: number;
+  bottom: number;
+  number: number;
+  title: string;
+  tone: ToneColors;
+  /** open the unit's guide; absent when it has none */
+  openGuide?: () => void;
+}
+
 export function LessonPath({
   map,
   due,
   onFocus,
+  onUnits,
 }: {
   map: CourseMap;
   due: number;
   onFocus: (focus: PathFocus | null) => void;
+  /** where each unit lies, once laid out, for a pinned banner */
+  onUnits?: (units: UnitPlace[]) => void;
 }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { scheme } = useTheme();
@@ -66,6 +86,7 @@ export function LessonPath({
   const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
   // where each unit, and the path under its banner, sit — to find the focus stop on the page
   const unitTop = useRef<Record<string, number>>({});
+  const unitHeight = useRef<Record<string, number>>({});
   const pathTop = useRef<Record<string, number>>({});
   // the app mirrors its own screens for Soranî and Arabic (reports/direction): so does the path
   const sign = dir.row === 'row-reverse' ? -1 : 1;
@@ -86,6 +107,29 @@ export function LessonPath({
     report();
   }, [report]);
 
+  // every unit laid out: where each starts, where its banner ends and where it ends
+  const placeUnits = useCallback(() => {
+    if (!onUnits) return;
+    const places: UnitPlace[] = [];
+    for (const unit of path.units) {
+      const top = unitTop.current[unit.unitId];
+      const height = unitHeight.current[unit.unitId];
+      if (top === undefined || height === undefined) return;
+      places.push({
+        unitId: unit.unitId,
+        top,
+        bannerBottom: top + (pathTop.current[unit.unitId] ?? height),
+        bottom: top + height,
+        number: unit.number,
+        title: unit.title,
+        tone: TONES[scheme][unit.tone],
+        openGuide:
+          unit.guide.length > 0 ? () => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide }) : undefined,
+      });
+    }
+    onUnits(places);
+  }, [onUnits, path, scheme, t]);
+
   const lesson = (lessonId: string) => {
     setOpen(null);
     navigation.navigate('Lesson', { lessonId });
@@ -105,7 +149,9 @@ export function LessonPath({
             style={styles.unit}
             onLayout={(e: LayoutChangeEvent) => {
               unitTop.current[unit.unitId] = e.nativeEvent.layout.y;
+              unitHeight.current[unit.unitId] = e.nativeEvent.layout.height;
               report();
+              placeUnits();
             }}
           >
             <Banner unit={unit} tone={tone} onGuide={() => setGuide({ title: t('coursemap.path.guideFor', { unit: unit.title }), skills: unit.guide })} />
@@ -116,6 +162,7 @@ export function LessonPath({
                   pathTop.current[unit.unitId] = e.nativeEvent.layout.y;
                   setWidth(e.nativeEvent.layout.width);
                   report();
+                  placeUnits();
                 }}
               >
                 {width > 0 ? (
@@ -224,6 +271,42 @@ function Banner({ unit, tone, onGuide }: { unit: Unit; tone: ToneColors; onGuide
 }
 
 /**
+ * The unit being scrolled through, pinned to the top of the page once its own
+ * banner has gone up out of sight: one line, in the unit's colour, so it is
+ * always clear which unit these stops belong to — and its guide still one
+ * tap away.
+ */
+export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { tone } = unit;
+  return (
+    <View style={[styles.pinLip, { backgroundColor: tone.lip }]} testID="lp-pinned-unit">
+      <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
+        <View style={styles.pinWords}>
+          <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]} numberOfLines={1}>
+            {t('coursemap.path.unit', { n: unit.number })}
+          </Text>
+          <Text style={[styles.pinTitle, dir.text, { color: tone.ink }]} numberOfLines={1}>
+            {unit.title}
+          </Text>
+        </View>
+        {unit.openGuide ? (
+          <Pressable
+            onPress={unit.openGuide}
+            accessibilityRole="button"
+            accessibilityLabel={t('coursemap.path.guideFor', { unit: unit.title })}
+            style={({ pressed }) => [styles.pinGuide, { backgroundColor: `${tone.ink}1F`, opacity: pressed ? 0.75 : 1 }]}
+          >
+            <Icon name="book" size={18} color={tone.ink} />
+          </Pressable>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
+/**
  * The line between stops: a gentle S from one centre to the next, drawn as
  * round dots — the stretch already walked in the unit's colour, the rest grey.
  */
@@ -305,4 +388,9 @@ const styles = StyleSheet.create({
   count: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
   guide: { alignItems: 'center', gap: 6, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md, borderRadius: radii.pill },
   guideText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  pinLip: { borderRadius: radii.lg, paddingBottom: 4 },
+  pin: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.lg, paddingVertical: spacing.sm, paddingStart: spacing.md, paddingEnd: spacing.sm },
+  pinWords: { flex: 1 },
+  pinTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  pinGuide: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
 });
