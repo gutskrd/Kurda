@@ -1,9 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
+import { Animated, Pressable, Share, StyleSheet, Text, View, useWindowDimensions, type StyleProp, type ViewStyle } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { HeartBurst } from '../theme/MotionParts';
+import { useReducedMotion } from '../a11y/useReducedMotion';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -11,28 +13,41 @@ import { display } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { relativeTime } from '../memes/types';
+import { noticeTime } from '../notifications/inbox';
+import { formatNumber } from '../i18n/format';
+import { springTo, timing } from '../theme/animate';
+import { useDirection } from '../reports/direction';
 import { postUrl, toggleEngagement } from './api';
 import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
 import { PostPictures } from '../composer/PostPictures';
 import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 
+/** The avatar beside a post's author: big enough to recognise somebody by. */
+const AUTHOR = 36;
+/** Two taps closer together than this are one double tap. */
+const DOUBLE_TAP_MS = 260;
+
 /**
- * One card on the wall, whichever half it came from.
+ * One post on the wall, whichever half it came from: a written post and a
+ * picture are the same shape, because on a wall they sit next to each other
+ * and anything else reads as two apps stitched together.
  *
- * A written post and a picture were two different cards on two different
- * screens; here they are one, because on a wall they sit next to each other and
- * anything else reads as two apps stitched together. What differs is only what
- * there is to show: a picture has an image and no title, a gotin has a body and
- * no title, a story has both.
+ * The shape every social app has taught its readers: no box round it, the
+ * author's face and name and how long ago on one line at the top, the words,
+ * then the pictures from edge to edge of the phone, then a row of plain
+ * glyphs — like, comment, repost, share, and saving it apart at the end.
+ * A hairline between posts is all that separates them.
+ *
+ * A double tap on the words or the pictures likes the post, with a heart
+ * that blooms in the middle of it and the tick of a like; a single tap opens
+ * it. A like counts at once, before the server has answered, and quietly
+ * goes back if the server says no. Holding the post opens your own post's
+ * Edit and Delete (and a screen reader finds them as an action).
  *
  * No signed-out variant, unlike the web card: the phone's tabs sit behind the
- * auth stack, so anyone looking at this has an account. Adding "sign in to
- * like" states here would be writing for a reader who cannot get here.
+ * auth stack, so anyone looking at this has an account.
  */
-/** The rim the website puts on a poem badge: the gold, well faded back. */
-const GOLD_RIM = 'rgba(240,194,74,0.3)';
 export function FeedCard({
   item,
   onChanged,
@@ -44,10 +59,16 @@ export function FeedCard({
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
-  const { t } = useI18n();
-  const [busy, setBusy] = useState<EngagementKind | null>(null);
+  const { t, locale } = useI18n();
+  const dir = useDirection();
   // each like made here, so the heart answers the press before the server does
   const [likes, setLikes] = useState(0);
+  // each like made by a double tap, for the heart in the middle of the post
+  const [blooms, setBlooms] = useState(0);
+  // the engagement shown: the server's, or the change just made while it answers
+  const [shown, setShown] = useState(item.engagement);
+  const pending = useRef<EngagementKind | null>(null);
+  useEffect(() => setShown(item.engagement), [item.engagement]);
 
   const open = useCallback(() => {
     if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
@@ -55,26 +76,73 @@ export function FeedCard({
   }, [navigation, item.targetType, item.id]);
   // your own post's Edit and Delete, on a long press (and as an action for a screen reader)
   const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onActivate: open });
-
-  const toggle = useCallback(
-    async (kind: EngagementKind) => {
-      if (busy) return;
-      setBusy(kind);
-      const res = await toggleEngagement(client, item, kind);
-      setBusy(null);
-      // the server returns the fresh totals; taking them keeps the count right
-      // even when somebody else liked it while this screen was open
-      if (res.ok && onChanged) onChanged({ ...item, engagement: res.data.engagement });
-    },
-    [busy, client, item, onChanged],
-  );
+  const openAuthor = useCallback(() => navigation.navigate('UserProfile', { userId: item.author.id }), [navigation, item.author.id]);
 
   /**
-   * Hand the post to whatever the phone shares with.
-   *
-   * The system sheet rather than the web card's own panel: on a phone that
-   * sheet is where every app already puts this, and it reaches the messaging
-   * app somebody actually uses instead of the handful we could list.
+   * Like, repost or save at once, and tell the server after: the glyph fills
+   * and the count moves under the finger. The server's answer brings the true
+   * totals (somebody else may have liked it meanwhile); a refusal puts back
+   * what was there.
+   */
+  const toggle = useCallback(
+    async (kind: EngagementKind) => {
+      if (pending.current) return;
+      pending.current = kind;
+      const before = shown;
+      const flag = kind === 'like' ? 'liked' : kind === 'repost' ? 'reposted' : 'bookmarked';
+      const count = kind === 'like' ? 'likes' : kind === 'repost' ? 'reposts' : 'bookmarks';
+      const on = !before[flag];
+      setShown({ ...before, [flag]: on, [count]: Math.max(0, before[count] + (on ? 1 : -1)) });
+      const res = await toggleEngagement(client, item, kind);
+      pending.current = null;
+      if (!res.ok) {
+        setShown(before);
+        return;
+      }
+      setShown(res.data.engagement);
+      onChanged?.({ ...item, engagement: res.data.engagement });
+    },
+    [client, item, onChanged, shown],
+  );
+
+  const like = useCallback(() => {
+    // a like is felt and pops; taking one back is quiet
+    if (!shown.liked) {
+      haptic('tap');
+      setLikes((n) => n + 1);
+    }
+    void toggle('like');
+  }, [shown.liked, toggle]);
+
+  /*
+   * One tap opens the post; two quick taps like it. The first tap waits a
+   * moment to see whether a second follows — the price of the gesture, and
+   * the reason it is short. A double tap on a post already liked keeps it
+   * liked: the gesture only ever adds a heart, never takes one away.
+   */
+  const lastTap = useRef(0);
+  const single = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => () => (single.current ? clearTimeout(single.current) : undefined), []);
+  const tap = useCallback(() => {
+    const now = Date.now();
+    if (now - lastTap.current < DOUBLE_TAP_MS) {
+      lastTap.current = 0;
+      if (single.current) clearTimeout(single.current);
+      single.current = null;
+      setBlooms((n) => n + 1);
+      if (!shown.liked) like();
+      return;
+    }
+    lastTap.current = now;
+    single.current = setTimeout(() => {
+      single.current = null;
+      open();
+    }, DOUBLE_TAP_MS);
+  }, [like, open, shown.liked]);
+
+  /**
+   * Hand the post to whatever the phone shares with: the system sheet, where
+   * every app already puts this, reaching the messaging app somebody uses.
    */
   const share = useCallback(async () => {
     const url = postUrl(item);
@@ -83,127 +151,154 @@ export function FeedCard({
       await Share.share({ message, url });
     } catch {
       // the sheet was dismissed, or the platform refused it; nothing was shared
-      // and there is nothing to tell anybody
     }
   }, [item]);
 
-  // an unfamiliar kind prints itself rather than an empty chip
+  // an unfamiliar kind prints itself rather than an empty word
   const badgeKey = CARD_LABEL_KEY[item.kind];
   const badge = badgeKey ? t(badgeKey) : item.kind;
   const who = item.author.displayName || item.author.username;
-  const e = item.engagement;
+  const e = shown;
+  const pictures = feedImages(item);
+  const when = noticeTime(item.at, t, locale);
 
   return (
-    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
-      <Pressable
-        onPress={open}
-        onLongPress={menu.open}
-        {...menu.a11y}
-        accessibilityRole="button"
-        accessibilityLabel={item.title ? `${badge}: ${item.title}` : `${badge} — ${who}`}
-        style={styles.body}
-      >
-        <View style={styles.head}>
-          <InitialsAvatar name={who} id={item.author.id} size={28} photoUrl={item.author.avatarUrl} />
-          <View style={styles.headText}>
-            <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
-              {who}
-            </Text>
-            <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.at)}</Text>
-          </View>
-          <Text
-            style={[
-              styles.badge,
-              item.kind === 'poem'
-                ? { color: colors.gold, borderColor: GOLD_RIM }
-                : { color: colors.textSecondary, borderColor: colors.glassBorder },
-            ]}
-          >
-            {badge}
+    <View style={[styles.post, { borderBottomColor: colors.separator }]}>
+      {/* who, how long ago, and what kind of post, on one line */}
+      <View style={[styles.head, { flexDirection: dir.row }]}>
+        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={4}>
+          <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
+        </Pressable>
+        <View style={[styles.byline, { flexDirection: dir.row }]}>
+          <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1} onPress={openAuthor} accessibilityRole="link">
+            {who}
+          </Text>
+          <Text style={[styles.age, { color: colors.textSecondary }]} numberOfLines={1}>
+            {`· ${when}`}
           </Text>
         </View>
+        <Text style={[styles.kind, { color: item.kind === 'poem' ? colors.goldText : colors.textSecondary }]} numberOfLines={1}>
+          {badge}
+        </Text>
+      </View>
 
-        {item.title ? (
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={2}>
-            {item.title}
-          </Text>
+      <Bloom fired={blooms}>
+        {item.title || item.excerpt ? (
+          <Pressable
+            onPress={tap}
+            onLongPress={menu.open}
+            {...menu.a11y}
+            accessibilityRole="button"
+            accessibilityLabel={item.title ? `${badge}: ${item.title}` : `${badge} — ${who}`}
+            accessibilityHint={t('feed.doubleTapHint')}
+            style={styles.words}
+          >
+            {item.title ? (
+              <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
+                {item.title}
+              </Text>
+            ) : null}
+            {item.excerpt ? (
+              <Text style={[styles.excerpt, dir.text, { color: colors.textPrimary }]} numberOfLines={4}>
+                {item.excerpt}
+              </Text>
+            ) : null}
+          </Pressable>
         ) : null}
 
-        {item.excerpt ? (
-          <Text style={[styles.excerpt, { color: colors.textSecondary }]} numberOfLines={3}>
-            {item.excerpt}
-          </Text>
+        {pictures.length > 0 ? (
+          // the pictures from edge to edge of the phone, each named by what it shows, the double tap reaching them too
+          <View style={styles.pictures}>
+            <PostPictures images={pictures} onPress={tap} onLongPress={menu.open} bleed />
+          </View>
         ) : null}
-      </Pressable>
+      </Bloom>
 
-      {/* after the words, as X has them; each picture is named by its own description */}
-      <PostPictures images={feedImages(item)} onPress={open} />
-
-      <View style={styles.actions}>
-        <Action
-          icon="chat"
-          label={t('feed.comments', { count: item.commentCount })}
-          count={item.commentCount}
-          onPress={open}
-        />
+      <View style={[styles.actions, { flexDirection: dir.row }]}>
         <Action
           icon={e.liked ? 'heart-fill' : 'heart'}
+          tint={e.liked ? colors.danger : undefined}
           on={e.liked}
-          disabled={busy !== null}
           label={e.liked ? t('feed.unlike') : t('feed.like')}
-          count={e.likes}
           burst={likes}
-          onPress={() => {
-            // a like is felt and pops; taking one back is quiet
-            if (!e.liked) {
-              haptic('tap');
-              setLikes((n) => n + 1);
-            }
-            void toggle('like');
-          }}
+          onPress={like}
         />
+        <Action icon="chat" label={t('feed.comments', { count: item.commentCount })} count={item.commentCount} onPress={open} />
         <Action
           icon="repost"
+          tint={e.reposted ? colors.success : undefined}
           on={e.reposted}
-          disabled={busy !== null}
           label={e.reposted ? t('repost.undo') : t('repost.do')}
           count={e.reposts}
           onPress={() => void toggle('repost')}
         />
         <Action icon="share" label={t('share.post')} onPress={() => void share()} />
+        <View style={styles.spacer} />
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
-          style={styles.save}
           on={e.bookmarked}
-          disabled={busy !== null}
           label={e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')}
           onPress={() => void toggle('bookmark')}
         />
       </View>
+      {/* how many liked it, in words under the glyphs, where it is read rather than counted */}
+      {e.likes > 0 ? (
+        <Text style={[styles.likes, dir.text, { color: colors.textPrimary }]}>
+          {e.likes === 1 ? t('feed.likesOne') : t('feed.likesCount', { count: formatNumber(e.likes, locale) })}
+        </Text>
+      ) : null}
       {menu.sheet}
     </View>
   );
 }
 
 /**
- * A card while the wall loads: the same card, its head, a title on most, a
- * couple of lines and the row of actions, all at the card's own spacing — so
- * the real one lands in the grey one's place. A written post with no title
- * comes first because that is what most of a wall is.
+ * The heart that blooms in the middle of a post liked by a double tap: it
+ * grows past its size, settles, and fades, in about two thirds of a second.
+ * Under Reduce Motion it only fades in and out.
+ */
+function Bloom({ fired, children }: { fired: number; children: React.ReactNode }): React.JSX.Element {
+  const { colors } = useTheme();
+  const reduce = useReducedMotion();
+  const scale = useRef(new Animated.Value(0)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
+  const seen = useRef(fired);
+  useEffect(() => {
+    if (fired === seen.current) return;
+    seen.current = fired;
+    scale.setValue(reduce ? 1 : 0.3);
+    opacity.setValue(1);
+    const grow = reduce ? Animated.delay(0) : springTo(scale, 1, 'bouncy');
+    Animated.sequence([grow, Animated.delay(320), timing(opacity, 0, 220)]).start();
+  }, [fired, reduce, scale, opacity]);
+  return (
+    <View>
+      {children}
+      <View pointerEvents="none" style={styles.bloomLayer} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Animated.View style={{ opacity, transform: [{ scale }] }}>
+          <Icon name="heart-fill" size={92} color={colors.danger} />
+        </Animated.View>
+      </View>
+    </View>
+  );
+}
+
+/**
+ * A post while the wall loads: its head, a title on most, a couple of lines
+ * and the row of glyphs, at the post's own spacing — so the real one lands in
+ * the grey one's place. A written post with no title comes first because that
+ * is what most of a wall is.
  */
 export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolean; lines?: number }): React.JSX.Element {
-  const { colors } = useTheme();
   return (
-    <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
-      <View style={styles.body}>
-        <View style={styles.head}>
-          <Skeleton width={28} height={28} radius={radii.pill} />
-          <View style={styles.headText}>
-            <SkeletonText size={typography.sizes.md} width="38%" />
-            <SkeletonText size={typography.sizes.sm} width={32} />
-          </View>
-          <Skeleton width={64} height={BADGE_HEIGHT} radius={radii.pill} />
+    <View style={styles.post}>
+      <View style={styles.head}>
+        <Skeleton width={AUTHOR} height={AUTHOR} radius={radii.pill} />
+        <View style={styles.byline}>
+          <SkeletonText size={typography.sizes.sm} width="42%" />
         </View>
+      </View>
+      <View style={styles.words}>
         {titled ? <SkeletonText size={typography.sizes.lg} lineHeight={TITLE_LINE} width="52%" /> : null}
         {/* one paragraph, its lines with nothing between them */}
         <View>
@@ -215,18 +310,15 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
       <View style={styles.actions}>
         {[0, 1, 2, 3].map((i) => (
           <View key={i} style={styles.action}>
-            <SkeletonText size={typography.sizes.sm} width={i === 3 ? 18 : 30} />
+            <Skeleton width={24} height={24} radius={radii.pill} />
           </View>
         ))}
-        <View style={[styles.action, styles.save]}>
-          <SkeletonText size={typography.sizes.sm} width={18} />
-        </View>
       </View>
     </View>
   );
 }
 
-/** As many cards as reach the foot of the screen, the way the wall lays them out. */
+/** As many posts as reach the foot of the screen, the way the wall lays them out. */
 export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
   const { height, width } = useWindowDimensions();
   const { t } = useI18n();
@@ -234,7 +326,7 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
   // a few lines of a post run to two on a phone and fit on one across a tablet
   const lines = width >= WIDE ? 1 : 2;
   return (
-    <View style={[styles.skeletonList, style]} accessibilityLabel={t('common.loading')}>
+    <View style={style} accessibilityLabel={t('common.loading')}>
       {Array.from({ length: count }, (_, i) => (
         <FeedCardSkeleton key={i} titled={i % 3 !== 0} lines={lines} />
       ))}
@@ -244,93 +336,77 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
 
 /** past this a short paragraph fits on one line */
 const WIDE = 600;
-/** a 13pt word in a pill, 2pt above and below, inside a hairline: 16 + 4 + 2 */
-const BADGE_HEIGHT = 22;
-/** display(22) sets 1.12 */
-const TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+/** display(20) sets 1.12 */
+const TITLE_LINE = Math.round(20 * typography.displayLineHeight);
 
 /**
- * One button in the row under a card.
+ * One glyph in the row under a post: 24pt, in a full 44pt square, the count
+ * beside it when there is one.
  *
- * The label says what pressing it does, never what it counts: these buttons
- * show a number, and a number is what a screen reader announces as the name
- * unless told otherwise — "4" tells you nothing about what would happen.
+ * The label says what pressing it does, never what it counts: a number is
+ * what a screen reader announces as the name unless told otherwise, and "4"
+ * tells you nothing about what would happen.
  */
 function Action({
   icon,
   label,
   count,
   on = false,
-  disabled = false,
+  tint,
   burst,
   onPress,
-  style,
 }: {
   icon: IconName;
   label: string;
   count?: number;
   on?: boolean;
-  disabled?: boolean;
+  /** the colour while on, when it is not the ink (a red heart, a green repost) */
+  tint?: string;
   /** goes up each time the icon should pop with a burst (a like) */
   burst?: number;
   onPress: () => void;
-  style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
-  const tint = on ? colors.primary : colors.textSecondary;
+  const colour = tint ?? colors.textPrimary;
+  const glyph = <Icon name={icon} size={24} color={colour} />;
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled}
-      hitSlop={8}
       accessibilityRole="button"
-      accessibilityState={{ selected: on, disabled }}
+      accessibilityState={{ selected: on }}
       accessibilityLabel={count ? `${label} (${count})` : label}
-      style={[styles.action, disabled && styles.actionDisabled, style]}
+      style={({ pressed }) => [styles.action, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
-        <HeartBurst fired={burst} color={colors.danger} size={18}>
-          <Icon name={icon} size={18} color={tint} />
+        <HeartBurst fired={burst} color={colors.danger} size={24}>
+          {glyph}
         </HeartBurst>
       ) : (
-        <Icon name={icon} size={18} color={tint} />
+        glyph
       )}
-      {count ? <Text style={[styles.count, { color: tint }]}>{count}</Text> : null}
+      {count ? <Text style={[styles.count, { color: colors.textPrimary }]}>{count}</Text> : null}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.sm },
-  body: { gap: spacing.sm },
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
-  headText: { flex: 1 },
-  who: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  age: { fontSize: typography.sizes.sm },
-  badge: {
-    fontSize: typography.sizes.xs,
-    letterSpacing: 0.66,
-    textTransform: 'uppercase',
-    borderWidth: 1,
-    borderRadius: radii.pill,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 2,
-    overflow: 'hidden',
-  },
-  title: { ...display(typography.sizes.lg) },
-  excerpt: { fontSize: typography.sizes.md },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingTop: spacing.xs,
-    marginTop: spacing.xs,
-
-  },
-  /** Saved sits apart: it is about you, not about the post. */
-  save: { marginLeft: 'auto' },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 11, borderRadius: radii.pill },
-  actionDisabled: { opacity: 0.5 },
-  count: { fontSize: typography.sizes.sm },
-  skeletonList: { gap: layout.rowGap },
+  // no box: the post runs the width of the phone, a hairline under it
+  post: { paddingTop: spacing.sm + 4, paddingBottom: spacing.sm, borderBottomWidth: StyleSheet.hairlineWidth },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2, paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  byline: { flex: 1, flexDirection: 'row', alignItems: 'baseline', gap: 4, minWidth: 0 },
+  who: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, flexShrink: 1 },
+  age: { fontSize: typography.sizes.sm, flexShrink: 0 },
+  kind: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, letterSpacing: 0.4, textTransform: 'uppercase' },
+  words: { paddingHorizontal: layout.gutter, gap: 4, paddingBottom: spacing.sm },
+  title: { ...display(20) },
+  excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
+  pictures: { marginBottom: spacing.xs },
+  bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
+  // the glyphs start under the author's face, the gutter less the room round a 24pt glyph in a 44pt square
+  actions: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.gutter - (MIN_TOUCH_TARGET - 24) / 2 },
+  spacer: { flex: 1 },
+  action: { flexDirection: 'row', alignItems: 'center', gap: 2, minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: 4 },
+  pressed: { opacity: 0.5 },
+  count: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium, fontVariant: ['tabular-nums'] },
+  likes: { paddingHorizontal: layout.gutter, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

@@ -21,6 +21,7 @@ import { useUnread } from '../messages/unread';
 import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
+import { FriendsRow } from './FriendsRow';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
@@ -36,9 +37,12 @@ const PAGE = 20;
  * looking at pictures. One wall, one card, and a filter for when you do want
  * just one kind.
  *
- * Its header is the app's own: a "+" to post at the start, the name in the
- * middle, and at the end the bell — notifications live here now, a tap from
- * the screen people open first, with a dot while any are unread.
+ * Its header is the shape every social app's home has, so nobody has to learn
+ * it: the name at the start, and at the end a "+" to post and the bell —
+ * notifications live here, a tap from the screen people open first, with a
+ * dot while any are unread. Under it, the row of friends' faces, then the
+ * filters, then the posts, which run the full width of the screen: a picture
+ * is the size of the phone, not of a card on it.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
@@ -113,6 +117,13 @@ export function CivakScreen(): React.JSX.Element {
     setRefreshing(false);
   }, [fetchPage]);
 
+  // a pull asks the friends row again too: who is online moves faster than the wall
+  const [pulls, setPulls] = useState(0);
+  const onPull = useCallback(async () => {
+    setPulls((n) => n + 1);
+    await refresh();
+  }, [refresh]);
+
   const loadMore = useCallback(async () => {
     if (loadingMore || end || !items) return;
     setLoadingMore(true);
@@ -150,87 +161,90 @@ export function CivakScreen(): React.JSX.Element {
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={[styles.bar, { flexDirection: dir.row }]}>
-          {/*
-           * Posting is a "+", at the start of the bar: it says "add" and
-           * nothing about what, and it sits beside the wall it adds to. It
-           * used to be a filled circle beside the filters, the loudest thing
-           * on the screen; it is an ordinary header control now.
-           */}
-          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} edge="start" testID="home-post" />
-          <Text style={[styles.wordmark, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
+          <Text style={[styles.wordmark, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
             Hevalo
           </Text>
+          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} testID="home-post" />
           <NotificationBell />
         </View>
 
-        <View style={styles.filters}>
-          <Segmented
-            options={SECTIONS.map((s) => s.key)}
-            value={section}
-            onChange={chooseSection}
-            labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-          />
-          {/* the second level appears only once there is a half to narrow */}
-          {kinds.length > 0 && (
-            <Segmented
-              options={['all', ...kinds.map((k) => k.key)]}
-              value={kind ?? 'all'}
-              onChange={(next) => setKind(next === 'all' ? null : next)}
-              labelOf={(key) =>
-                key === 'all' ? t('civak.filter.allKinds') : t(kinds.find((k) => k.key === key)!.labelKey)
-              }
-            />
-          )}
-        </View>
-
-        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
-          <FlatList
-            ref={listRef}
-            data={items}
-            keyExtractor={(i) => i.key}
-            renderItem={renderItem}
-            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.5}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              everything ? (
-                /*
-                 * A new reader's wall is empty because they follow nobody and
-                 * have written nothing, so it offers both, and nothing else:
-                 * finding people first, since a wall of other people's posts
-                 * is what makes the second one worth doing.
-                 */
-                <EmptyState
-                  title={t('civak.empty.welcome')}
-                  body={t('civak.empty.body')}
-                  action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
-                  secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
+        <FlatList
+          ref={listRef}
+          data={items ?? []}
+          keyExtractor={(i) => i.key}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: tabBarInset }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              <FriendsRow refreshKey={pulls} />
+              <View style={styles.filters}>
+                <Segmented
+                  options={SECTIONS.map((s) => s.key)}
+                  value={section}
+                  onChange={chooseSection}
+                  labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
                 />
-              ) : (
-                <EmptyState
-                  title={t('civak.empty')}
-                  body={t('civak.empty.body')}
-                  action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
-                />
-              )
-            }
-            ListFooterComponent={
-              loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
-            }
-          />
-        </AsyncBoundary>
+                {/* the second level appears only once there is a half to narrow */}
+                {kinds.length > 0 && (
+                  <Segmented
+                    options={['all', ...kinds.map((k) => k.key)]}
+                    value={kind ?? 'all'}
+                    onChange={(next) => setKind(next === 'all' ? null : next)}
+                    labelOf={(key) =>
+                      key === 'all' ? t('civak.filter.allKinds') : t(kinds.find((k) => k.key === key)!.labelKey)
+                    }
+                  />
+                )}
+              </View>
+            </>
+          }
+          ListEmptyComponent={
+            items === null ? (
+              // the faces and the filters stay put while the posts load, or fail to
+              <View style={styles.waiting}>
+                <AsyncBoundary loading={!error} error={error} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
+                  {null}
+                </AsyncBoundary>
+              </View>
+            ) : everything ? (
+              /*
+               * A new reader's wall is empty because they follow nobody and
+               * have written nothing, so it offers both, and nothing else:
+               * finding people first, since a wall of other people's posts
+               * is what makes the second one worth doing.
+               */
+              <EmptyState
+                title={t('civak.empty.welcome')}
+                body={t('civak.empty.body')}
+                action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
+                secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
+              />
+            ) : (
+              <EmptyState
+                title={t('civak.empty')}
+                body={t('civak.empty.body')}
+                action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
+              />
+            )
+          }
+          ListFooterComponent={
+            loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
+          }
+        />
       </View>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: layout.gutter },
-  // the two controls are the same width, so the name between them is centred
-  bar: { alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  wordmark: { ...display(typography.sizes.xl), flex: 1, textAlign: 'center' },
-  filters: { gap: spacing.sm, marginBottom: spacing.md },
-  list: { gap: layout.rowGap },
+  screen: { flex: 1 },
+  // the bell reaches past the gutter so its glyph, not its target, lines up with the name's edge
+  bar: { alignItems: 'center', paddingHorizontal: layout.gutter, minHeight: 44 },
+  wordmark: { ...display(typography.sizes.xl), flex: 1 },
+  filters: { gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xs, paddingBottom: spacing.sm },
+  waiting: { paddingHorizontal: layout.gutter },
 });

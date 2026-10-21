@@ -237,7 +237,8 @@ describe('something given', () => {
     const { rerender } = renderWithProviders(<FeedCard item={item} />);
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     expect(felt).toEqual(['tap']);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy());
+    // the heart fills at once, before the server has answered
+    await waitFor(() => expect(screen.getByRole('button', { name: /Unlike/ })).toBeTruthy());
     resetHaptics();
     rerender(<FeedCard item={{ ...item, engagement: { ...item.engagement, liked: true, likes: 1 } }} />);
     fireEvent.click(screen.getByRole('button', { name: /Unlike/ }));

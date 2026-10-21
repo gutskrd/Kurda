@@ -28,10 +28,16 @@ export function singleRatio(image: Pick<FeedImage, 'width' | 'height'>): number 
 export function PostPictures({
   images,
   onPress,
+  onLongPress,
+  bleed = false,
 }: {
   images: readonly FeedImage[];
   /** opening the post (on the wall); left out where the post is already open */
   onPress?: () => void;
+  /** the post's menu, held down on a picture as on the words */
+  onLongPress?: () => void;
+  /** edge to edge, square-cornered, as a wall shows a picture: the whole width of the phone */
+  bleed?: boolean;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -58,6 +64,7 @@ export function PostPictures({
           // a picture that opens the post: named by what it shows, and said to open the post
           <Pressable
             onPress={onPress}
+            onLongPress={onLongPress}
             style={styles.fill}
             accessibilityRole="button"
             accessibilityLabel={label}
@@ -73,11 +80,11 @@ export function PostPictures({
   };
 
   if (shown.length === 1) {
-    return <View style={[styles.box, { aspectRatio: singleRatio(shown[0]!) }]}>{tile(shown[0]!, 0, styles.fill)}</View>;
+    return <View style={[styles.box, bleed && styles.bleed, { aspectRatio: singleRatio(shown[0]!) }]}>{tile(shown[0]!, 0, styles.fill)}</View>;
   }
 
   return (
-    <View style={[styles.box, styles.wide]}>
+    <View style={[styles.box, bleed && styles.bleed, styles.wide]}>
       {shown.length === 2 ? (
         <>
           {tile(shown[0]!, 0, styles.cell)}
@@ -114,6 +121,7 @@ const styles = StyleSheet.create({
   // on a tablet or a wide window the pictures stop growing where a phone's would: a
   // post is read, not a poster — and the shape, not the height, is what is kept
   box: { width: '100%', maxWidth: 560, borderRadius: radii.md, overflow: 'hidden' },
+  bleed: { maxWidth: '100%', borderRadius: 0 },
   wide: { aspectRatio: 16 / 9, flexDirection: 'row', gap: GAP },
   column: { flex: 1, gap: GAP },
   row: { flex: 1, flexDirection: 'row', gap: GAP },
