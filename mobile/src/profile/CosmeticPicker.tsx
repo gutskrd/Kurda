@@ -297,7 +297,7 @@ export function CosmeticPicker({
                 value={showIcon}
                 onValueChange={toggleIcon}
                 accessibilityLabel={t('edit.showPremiumIcon')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
               />
             </View>
           ) : null}

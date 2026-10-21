@@ -265,6 +265,7 @@ export function ErrorRetry({
 
 /** Inset of the travelling capsule from the edge of its track. */
 const SEG_PAD = 3;
+const SEG_SLOP = { top: 6, bottom: 6 };
 
 /** A labelled (radio) segment's vertical padding: 3 + 11 + an 18pt line + 11 + 3 clears 44. */
 const SEG_PAD_V_TALL = 11;
@@ -362,6 +363,8 @@ export function Segmented<T extends string>({
             accessibilityRole={groupLabel ? 'radio' : 'button'}
             accessibilityState={groupLabel ? { checked: active } : { selected: active }}
             accessibilityLabel={label}
+            // a regular segment is drawn 32pt tall; the slop takes its touch to 44 without making it look bigger
+            hitSlop={padV < SEG_PAD_V_TALL ? SEG_SLOP : undefined}
             style={[styles.segItem, { paddingVertical: padV }]}
           >
             <Text
@@ -413,8 +416,9 @@ export function GlassSelect<T extends string>({
                   <Icon name={icon} size={20} color={colors.primary} />
                 </View>
               ) : null}
-              <Text style={[styles.rowTitle, { color: colors.textPrimary }]} numberOfLines={1}>{label}</Text>
-              <Text style={[styles.rowValue, { color: colors.textSecondary }]} numberOfLines={1}>{labelOf(value)}</Text>
+              {/* the name takes the room, so the value sits at the end of the row as in the system's own settings */}
+              <Text style={[styles.rowTitle, styles.fill, { color: colors.textPrimary }]} numberOfLines={1}>{label}</Text>
+              <Text style={[styles.rowValue, styles.selectValue, { color: colors.textSecondary }]} numberOfLines={1}>{labelOf(value)}</Text>
               <Icon name="chevron-down" size={14} color={colors.textSecondary} />
             </View>
           </>
@@ -485,6 +489,7 @@ const styles = StyleSheet.create({
   rowTitle: { fontSize: typography.ios.row, fontWeight: typography.weights.regular },
   rowSubtitle: { fontSize: typography.sizes.sm },
   rowValue: { fontSize: typography.ios.row },
+  selectValue: { maxWidth: '50%' },
   /*
    * A capsule, flat. Buttons and chips are pills everywhere in the app now, so
    * a button reads as one at a glance whatever screen it is on; the drop
@@ -493,7 +498,9 @@ const styles = StyleSheet.create({
   clay: {
     borderRadius: radii.pill,
     borderWidth: 1,
-    height: MIN_TOUCH_TARGET,
+    // at least a fingertip; taller when the reader's text size makes the label wrap
+    minHeight: MIN_TOUCH_TARGET,
+    paddingVertical: spacing.xs,
     paddingHorizontal: 20,
     flexDirection: 'row',
     alignItems: 'center',
@@ -501,7 +508,7 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
   },
   // 50, which is what iOS gives the full-width button a screen is about
-  clayLarge: { height: 50, alignSelf: 'stretch' },
+  clayLarge: { minHeight: 50, alignSelf: 'stretch' },
   clayText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
   clayBadge: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   clayBadgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

@@ -63,7 +63,7 @@ export function ExtraTimeSwitch({
         onValueChange={(on) => void toggle(on)}
         disabled={busy}
         accessibilityLabel={t('stories.extraTime')}
-        trackColor={{ true: colors.primary, false: colors.controlTrack }}
+        trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
       />
     </View>
   );

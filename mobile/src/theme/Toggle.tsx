@@ -8,10 +8,12 @@ import { useTheme } from './ThemeProvider';
  * platform's own control, in the app's two inks.
  */
 export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Element {
+  const { colors } = useTheme();
   const thumbColor = useSwitchThumb(rest.value);
   return (
     <Switch
       thumbColor={thumbColor}
+      trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
       {...rest}
       onValueChange={(next) => {
         haptic('select');
@@ -25,14 +27,11 @@ export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Eleme
  * The grip's colour, on Android only.
  *
  * Left alone, Android paints a switch that is on in the build's own accent — a
- * colour that is nowhere else in the app — and on the dark page that sits on
- * a white track. So it is the button ink when on (white on the near-black
- * track, near-black on the white one) and plain white when off. iOS keeps its
- * own white grip: giving it a colour takes away the shadow that lets it be
- * seen on a pale track.
+ * colour that is nowhere else in the app. So it is white, on or off, over
+ * the green track, as iOS draws it. iOS keeps its own white grip: giving it a
+ * colour takes away the shadow that lets it be seen on a pale track.
  */
-export function useSwitchThumb(on: boolean | undefined): string | undefined {
-  const { colors } = useTheme();
+export function useSwitchThumb(_on: boolean | undefined): string | undefined {
   if (Platform.OS !== 'android') return undefined;
-  return on ? colors.textOnPrimary : '#FFFFFF';
+  return '#FFFFFF';
 }

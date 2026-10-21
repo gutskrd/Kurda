@@ -7,7 +7,7 @@ vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
 const auth = vi.hoisted(() => ({ oauthSignIn: vi.fn(), baseUrl: 'https://api.test' }));
 vi.mock('../../auth/AuthContext', () => ({ useAuth: () => auth }));
-vi.mock('../../auth/google', () => ({ signInWithGoogle: vi.fn() }));
+vi.mock('../../auth/google', () => ({ signInWithGoogle: vi.fn(), isGoogleConfigured: false }));
 const apple = vi.hoisted(() => ({ signInAsync: vi.fn() }));
 // Apple's sheet is native: its button is a plain one here, and the sheet answers what each test says
 vi.mock('expo-apple-authentication', async () => {

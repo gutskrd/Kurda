@@ -75,6 +75,13 @@ export interface Palette {
   softShadow: string; // outer drop shadow colour (spatial elevation)
 
   controlTrack: string; // inactive segmented / toggle track
+  /**
+   * A switch that is on: the system's own green in each mode. It was the
+   * button ink, which is white in dark mode — under iOS's white grip, so a
+   * switch that was on showed a white knob on a white track and could hardly
+   * be told from one that was off.
+   */
+  switchOn: string;
   /** The chosen option in a segmented control: a step up from its track. */
   selectedFill: string;
 
@@ -152,6 +159,7 @@ export const LIGHT: Palette = {
   softShadow: '#3A3A3A',
 
   controlTrack: 'rgba(0,0,0,0.05)',
+  switchOn: '#34C759',
   selectedFill: '#FFFFFF',
 
   surface: '#FFFFFF',
@@ -193,6 +201,7 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
+  switchOn: '#30D158',
   selectedFill: 'rgba(255,255,255,0.16)',
 
   surface: '#14171C',

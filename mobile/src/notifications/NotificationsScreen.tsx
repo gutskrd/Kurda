@@ -73,7 +73,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
               <Toggle
                 value={prefs[cat]}
                 onValueChange={(on) => save({ [cat]: on } as Partial<NotificationPrefs>)}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
               />
             </View>
           ))}
@@ -86,7 +86,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
               onValueChange={(on) =>
                 save(on ? { quietStartMin: DEFAULT_QUIET.start, quietEndMin: DEFAULT_QUIET.end } : { quietStartMin: null, quietEndMin: null })
               }
-              trackColor={{ true: colors.primary, false: colors.controlTrack }}
+              trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
             />
           </View>
           {quiet ? (

@@ -605,7 +605,7 @@ export function ComposeScreen({
                   value={state.draft.meme}
                   onValueChange={(meme) => setState((s) => ({ ...s, draft: { ...s.draft, meme } }))}
                   accessibilityLabel={t('composer.meme')}
-                  trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                  trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
                 />
               </View>
             ) : null}
@@ -894,7 +894,7 @@ function AltSheet({
                 value={picture.ownWork}
                 onValueChange={(ownWork) => onChange({ ownWork })}
                 accessibilityLabel={t('composer.ownWork')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
               />
             </View>
           ) : null}

@@ -219,7 +219,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow
             icon="star"
             title={t('settings.eventThemes')}
-            trailing={<Toggle value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.primary, false: colors.controlTrack }} />}
+            trailing={<Toggle value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.switchOn, false: colors.controlTrack }} />}
           />
           {/*
             Whether this phone buzzes at all: a light tick for a right answer, a
@@ -239,7 +239,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
                   if (on) haptic('select');
                 }}
                 accessibilityLabel={t('settings.vibration')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
                 thumbColor={vibrationThumb}
               />
             }
@@ -294,7 +294,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
                 disabled={leagues === null}
                 onValueChange={changeLeagues}
                 accessibilityLabel={t('settings.leagues.toggle')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
               />
             }
           />

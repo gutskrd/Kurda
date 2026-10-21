@@ -89,7 +89,7 @@ export function SectionToggles({ userId }: { userId: string }): React.JSX.Elemen
           <Toggle
             value={sections[key] !== false}
             onValueChange={(next) => toggle(key, next)}
-            trackColor={{ true: colors.primary, false: colors.controlTrack }}
+            trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
           />
         </View>
       ))}
