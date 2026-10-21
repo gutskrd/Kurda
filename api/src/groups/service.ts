@@ -2,7 +2,44 @@ import type pg from 'pg';
 import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { weekStart } from '../leagues/league-logic.js';
-import { canManage, canSetRole, isRole, MAX_GROUP_MEMBERS, type Role } from '@kurda/shared';
+import {
+  canEditGroup,
+  canManage,
+  canSetRole,
+  GROUP_DESCRIPTION_MAX,
+  GROUP_NAME_MAX,
+  GROUP_NAME_MIN,
+  isRole,
+  MAX_GROUP_MEMBERS,
+  type Role,
+} from '@kurda/shared';
+import { unconfirmIfUnused } from '../media/groupPhoto.js';
+import { filterText } from '../moderation/filter.js';
+
+/**
+ * A group's name or description as it is kept: control characters out
+ * (`stripControlChars`), and the invisible ones a name could hide behind —
+ * the zero-width space, the byte-order mark and the bidi overrides and
+ * isolates that can make text read back to front — out as well. The
+ * zero-width joiner and non-joiner stay: Soranî spelling and emoji use them.
+ */
+function cleanGroupText(text: string): string {
+  return stripControlChars(text)
+    .replace(/[\u200B\uFEFF\u202A-\u202E\u2066-\u2069]/g, '')
+    .trim();
+}
+
+/**
+ * A group's name and description are read by everyone who finds it, so words
+ * the chat would mask are refused outright rather than published masked.
+ */
+function screenGroupText(...texts: Array<string | null | undefined>): void {
+  for (const text of texts) {
+    if (text && filterText(text).flagged) {
+      throw new AppError('GROUP_TEXT_REJECTED', 422, 'the name or description has words that are not allowed here');
+    }
+  }
+}
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { isMinorUser, isNotKnownAdultUser, shownToSql } from '../users/age.js';
 import { canonicalPair } from '../friends/pair.js';
@@ -23,6 +60,8 @@ export interface Group {
   ownerId: string | null;
   archivedAt: string | null;
   memberCount: number;
+  /** the group's own picture on the CDN, or null for its initials */
+  photoUrl: string | null;
 }
 
 export interface GroupMember {
@@ -84,8 +123,9 @@ export class GroupService {
     try {
       await client.query('BEGIN');
       // strip control/invisible chars from user-visible text (#108)
-      const name = stripControlChars(input.name).trim();
-      const description = input.description != null ? stripControlChars(input.description).trim() : null;
+      const name = cleanGroupText(input.name);
+      const description = input.description != null ? cleanGroupText(input.description) || null : null;
+      screenGroupText(name, description);
       const g = await client.query<{ id: string }>(
         `INSERT INTO groups (name, description, privacy, owner_id) VALUES ($1, $2, $3, $4) RETURNING id`,
         [name, description, input.privacy ?? 'open', ownerId],
@@ -244,7 +284,54 @@ export class GroupService {
   async deleteGroup(ownerId: string, groupId: string): Promise<void> {
     const role = await this.roleOf(this.pool, groupId, ownerId);
     if (role !== 'owner') throw new AppError('FORBIDDEN', 403, 'only the owner can delete the group');
-    await this.pool.query(`DELETE FROM groups WHERE id = $1`, [groupId]);
+    const gone = await this.pool.query<{ photo_key: string | null }>(`DELETE FROM groups WHERE id = $1 RETURNING photo_key`, [groupId]);
+    // its picture goes to the orphan job, unless another group shows the same one
+    await unconfirmIfUnused(this.pool, gone.rows[0]?.photo_key ?? null);
+  }
+
+  /**
+   * Change how a group presents itself — its name, its description, or both —
+   * as its owner or one of its admins (`canEditGroup`). The text is cleaned as
+   * it is when a group is made: invisible and control characters taken out,
+   * trimmed, and held to the same lengths; an empty description clears it.
+   * Who changed it, and when, is kept, so a report about the new name reaches
+   * the person who wrote it.
+   */
+  async update(actorId: string, groupId: string, input: { name?: string; description?: string | null }): Promise<{ name: string; description: string | null }> {
+    const name = input.name !== undefined ? cleanGroupText(input.name) : undefined;
+    if (name !== undefined && (name.length < GROUP_NAME_MIN || name.length > GROUP_NAME_MAX)) {
+      throw new AppError('GROUP_NAME_LENGTH', 400, `a group's name is ${GROUP_NAME_MIN} to ${GROUP_NAME_MAX} characters`);
+    }
+    const description = input.description === undefined ? undefined : cleanGroupText(input.description ?? '') || null;
+    if (description && description.length > GROUP_DESCRIPTION_MAX) {
+      throw new AppError('GROUP_DESCRIPTION_LENGTH', 400, `a group's description is at most ${GROUP_DESCRIPTION_MAX} characters`);
+    }
+    screenGroupText(name, description);
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const g = await client.query<{ archived_at: Date | null }>(`SELECT archived_at FROM groups WHERE id = $1 FOR UPDATE`, [groupId]);
+      if (!g.rows[0] || g.rows[0].archived_at) throw new AppError('GROUP_NOT_FOUND', 404, 'no such group');
+      if (!canEditGroup(await this.roleOf(client, groupId, actorId))) {
+        throw new AppError('NOT_GROUP_ADMIN', 403, 'only the owner and admins can change the group');
+      }
+      const r = await client.query<{ name: string; description: string | null }>(
+        `UPDATE groups
+            SET name = COALESCE($2, name),
+                description = CASE WHEN $3::boolean THEN $4 ELSE description END,
+                edited_by = $5, edited_at = now()
+          WHERE id = $1
+          RETURNING name, description`,
+        [groupId, name ?? null, description !== undefined, description ?? null, actorId],
+      );
+      await client.query('COMMIT');
+      return r.rows[0]!;
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   /**
@@ -266,9 +353,9 @@ export class GroupService {
   ): Promise<Group & { members: GroupMember[]; myRole: Role | null }> {
     const g = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null;
-      n: number;
+      n: number; photo_key: string | null;
     }>(
-      `SELECT id, name, description, privacy, owner_id, archived_at,
+      `SELECT id, name, description, privacy, owner_id, archived_at, photo_key,
               (SELECT count(*)::int FROM group_members x WHERE x.group_id = groups.id) AS n
          FROM groups WHERE id = $1`,
       [groupId],
@@ -303,6 +390,7 @@ export class GroupService {
       ownerId: ownerShown ? grp.owner_id : null,
       archivedAt: grp.archived_at ? grp.archived_at.toISOString() : null,
       memberCount: grp.n,
+      photoUrl: grp.photo_key ? publicUrl(grp.photo_key) : null,
       members: list,
       myRole,
     };
@@ -319,11 +407,12 @@ export class GroupService {
   }
 
   /** Groups the user belongs to. */
-  async myGroups(userId: string): Promise<Array<Group & { myRole: Role }>> {
+  async myGroups(userId: string, publicUrl: PublicUrl = () => null): Promise<Array<Group & { myRole: Role }>> {
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; role: string; n: number;
+      photo_key: string | null;
     }>(
-      `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, g.archived_at, m.role,
+      `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, g.archived_at, m.role, g.photo_key,
               (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n
          FROM group_members m JOIN groups g ON g.id = m.group_id
         WHERE m.user_id = $1 ORDER BY g.name`,
@@ -332,6 +421,7 @@ export class GroupService {
     return rows.rows.map((r) => ({
       id: r.id, name: r.name, description: r.description, privacy: r.privacy, ownerId: r.owner_id,
       archivedAt: r.archived_at ? r.archived_at.toISOString() : null, memberCount: r.n,
+      photoUrl: r.photo_key ? publicUrl(r.photo_key) : null,
       myRole: isRole(r.role) ? r.role : 'member',
     }));
   }
@@ -340,17 +430,19 @@ export class GroupService {
    * Open groups for discovery (not archived, not full). None for a minor, who
    * cannot join any of them, nor for an account whose age is not on record yet.
    */
-  async discover(viewerId: string, limit = 30): Promise<Group[]> {
+  async discover(viewerId: string, limit = 30, publicUrl: PublicUrl = () => null): Promise<Array<Group & { joined: boolean }>> {
     if (await isNotKnownAdultUser(this.pool, viewerId)) return [];
     const rows = await this.pool.query<{
       id: string; name: string; description: string | null; privacy: 'open' | 'invite'; owner_id: string | null; archived_at: Date | null; n: number;
+      photo_key: string | null; joined: boolean;
     }>(
       // an open group's owner is a known adult (a minor's are handed on when
       // their age is recorded), but one whose age is not on record yet is not named
       `SELECT g.id, g.name, g.description, g.privacy,
               CASE WHEN o.id IS NULL OR ${shownToSql('o', '$2::uuid')} THEN g.owner_id END AS owner_id,
-              g.archived_at,
-              (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n
+              g.archived_at, g.photo_key,
+              (SELECT count(*)::int FROM group_members x WHERE x.group_id = g.id) AS n,
+              EXISTS (SELECT 1 FROM group_members y WHERE y.group_id = g.id AND y.user_id = $2::uuid) AS joined
          FROM groups g LEFT JOIN users o ON o.id = g.owner_id
         WHERE g.privacy = 'open' AND g.archived_at IS NULL
         ORDER BY n DESC LIMIT $1`,
@@ -359,6 +451,8 @@ export class GroupService {
     return rows.rows.map((r) => ({
       id: r.id, name: r.name, description: r.description, privacy: r.privacy, ownerId: r.owner_id,
       archivedAt: r.archived_at ? r.archived_at.toISOString() : null, memberCount: r.n,
+      photoUrl: r.photo_key ? publicUrl(r.photo_key) : null,
+      joined: r.joined,
     }));
   }
 

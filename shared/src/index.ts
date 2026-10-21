@@ -148,6 +148,10 @@ export { parseInline, parseMarkdown, type Block, type Span } from './grammar-mar
 export {
   ROLES,
   MAX_GROUP_MEMBERS,
+  GROUP_NAME_MIN,
+  GROUP_NAME_MAX,
+  GROUP_DESCRIPTION_MAX,
+  canEditGroup,
   isRole,
   roleRank,
   outranks,

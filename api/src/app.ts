@@ -533,7 +533,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerImageReportRoutes(app, moderationKit.reports);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
-    registerGroupRoutes(app, groups, trust);
+    registerGroupRoutes(app, groups, trust, config, aiMod);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
       6 * 60 * 60 * 1000,
