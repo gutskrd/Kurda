@@ -1,24 +1,20 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View } from 'react-native';
-import {
-  RecordingPresets,
-  requestRecordingPermissionsAsync,
-  setAudioModeAsync,
-  useAudioRecorder,
-  useAudioRecorderState,
-} from 'expo-audio';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
 import { AudioPlayer } from './AudioPlayer';
 import { clock } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { useMicRecorder, type MicTake } from '../recording/useMicRecorder';
 
 /**
  * Record a voice note (KUR-282): request mic permission → record (auto-stops at
- * `maxSeconds`) → preview via the shared AudioPlayer → keep or re-record. Reports
- * the local file uri through `onChange` (null when cleared); the parent uploads it
- * via /media/voice. HIGH_QUALITY records .m4a (audio/mp4).
+ * `maxSeconds`, or when the app leaves the front) → preview via the shared
+ * AudioPlayer → keep or re-record. Reports the local file uri through
+ * `onChange` (null when cleared); the parent uploads it via /media/voice. The
+ * microphone itself is useMicRecorder, which a speaking exercise records with
+ * too.
  */
 export function VoiceRecorder({
   value,
@@ -29,47 +25,24 @@ export function VoiceRecorder({
   onChange: (uri: string | null) => void;
   maxSeconds?: number;
 }): React.JSX.Element {
-  const recorder = useAudioRecorder(RecordingPresets.HIGH_QUALITY);
-  const state = useAudioRecorderState(recorder);
   const { colors } = useTheme();
   const { t } = useI18n();
-  const [busy, setBusy] = useState(false);
 
-  const stop = useCallback(async () => {
-    setBusy(true);
-    try {
-      await recorder.stop();
-      await setAudioModeAsync({ allowsRecording: false });
-      onChange(recorder.uri ?? null);
-    } catch {
-      Alert.alert(t('recorder.failed'), t('recorder.couldNotSave'));
-    } finally {
-      setBusy(false);
-    }
-  }, [recorder, onChange]);
+  const keep = useCallback(
+    (take: MicTake | null) => {
+      if (take) onChange(take.uri);
+      else Alert.alert(t('recorder.failed'), t('recorder.couldNotSave'));
+    },
+    [onChange, t],
+  );
+  const mic = useMicRecorder({ maxMs: maxSeconds * 1000, onStop: keep });
+  const { start: begin } = mic;
 
   const start = useCallback(async () => {
-    const perm = await requestRecordingPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert(t('recorder.micNeeded'), t('recorder.micHelp'));
-      return;
-    }
-    setBusy(true);
-    try {
-      await setAudioModeAsync({ allowsRecording: true, playsInSilentMode: true });
-      await recorder.prepareToRecordAsync();
-      recorder.record();
-    } catch {
-      Alert.alert(t('recorder.failed'), t('recorder.couldNotStart'));
-    } finally {
-      setBusy(false);
-    }
-  }, [recorder]);
-
-  // auto-stop at the cap
-  useEffect(() => {
-    if (state.isRecording && state.durationMillis >= maxSeconds * 1000) void stop();
-  }, [state.isRecording, state.durationMillis, maxSeconds, stop]);
+    const outcome = await begin();
+    if (outcome === 'denied') Alert.alert(t('recorder.micNeeded'), t('recorder.micHelp'));
+    else if (outcome === 'failed') Alert.alert(t('recorder.failed'), t('recorder.couldNotStart'));
+  }, [begin, t]);
 
   if (value) {
     return (
@@ -84,17 +57,17 @@ export function VoiceRecorder({
     );
   }
 
-  if (state.isRecording) {
+  if (mic.recording) {
     return (
       <Pressable
-        onPress={() => void stop()}
+        onPress={() => void mic.stop()}
         style={[styles.pill, { backgroundColor: colors.dangerFill, borderColor: colors.danger }]}
         accessibilityRole="button"
         accessibilityLabel={t('lesson.speak.stop')}
       >
         <View style={[styles.dot, { backgroundColor: colors.danger }]} />
         <Text style={[styles.pillText, { color: colors.danger }]}>
-          {t('recorder.recording', { time: clock(state.durationMillis / 1000) })}
+          {t('recorder.recording', { time: clock(mic.durationMs / 1000) })}
         </Text>
       </Pressable>
     );
@@ -103,8 +76,8 @@ export function VoiceRecorder({
   return (
     <Pressable
       onPress={() => void start()}
-      disabled={busy}
-      style={[styles.pill, { backgroundColor: colors.glassFill, opacity: busy ? 0.5 : 1 }]}
+      disabled={mic.busy}
+      style={[styles.pill, { backgroundColor: colors.glassFill, opacity: mic.busy ? 0.5 : 1 }]}
       accessibilityRole="button"
       accessibilityLabel={t('recorder.startNote')}
     >

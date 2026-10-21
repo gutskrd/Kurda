@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
-import { recordingRejection } from '../recording';
+import { haptic } from '../../feedback/haptics';
+import { MAX_TAKE_MS, recordingRejection, type Take } from '../recording';
 import type { Exercise, SelfRating } from '../types';
 import { useAudio } from '../useAudio';
 import { useRecorder } from '../useRecorder';
@@ -31,14 +32,10 @@ const RATINGS: Array<{ rating: SelfRating; label: TranslationKey }> = [
   { rating: 'retry', label: 'lesson.speak.rateRetry' },
 ];
 
-type BlobUrls = { createObjectURL?: (b: Blob) => string; revokeObjectURL?: (url: string) => void };
-const blobUrls = (): BlobUrls | undefined => (globalThis as { URL?: BlobUrls }).URL;
-
-/** A recording as something to play back: a blob URL where the platform has them. */
-function blobUrl(blob: Blob | undefined): string | undefined {
-  const urls = blobUrls();
-  return blob && typeof urls?.createObjectURL === 'function' ? urls.createObjectURL(blob) : undefined;
-}
+const FAILED: Record<'start' | 'save', TranslationKey> = {
+  start: 'recorder.couldNotStart',
+  save: 'recorder.couldNotSave',
+};
 
 /**
  * Speaking (KUR-036): record, hear your recording beside the native speaker,
@@ -49,8 +46,11 @@ function blobUrl(blob: Blob | undefined): string | undefined {
  * data kept for no use. Comparing your own attempt with a model is the
  * practice.
  *
- * A refused microphone used to switch speaking off for the whole course, with
- * no way to turn it back on. It now says so and offers to skip this one.
+ * The microphone is asked for at the first press of record, not before. A
+ * refused one used to switch speaking off for the whole course, with no way
+ * to turn it back on; it now says so, offers the phone's settings where it
+ * can be allowed again, and the skip below puts this one off without a
+ * mistake.
  */
 export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, onSkip, disabled }: Props) {
   const { colors } = useTheme();
@@ -58,39 +58,65 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   const recorder = useRecorder();
   const [status, setStatus] = useState<'idle' | 'ready' | 'rejected'>('idle');
   const [message, setMessage] = useState<string | null>(null);
-  const processed = useRef<unknown>(null);
-  const own = useMemo(() => blobUrl(recorder.result?.blob), [recorder.result]);
-  const ownAudio = useAudio(own);
+  const processed = useRef<Take | null>(null);
+  // the learner's own press ended the take, rather than its time running out or the app leaving the front
+  const stoppedByHand = useRef(false);
+  const ownAudio = useAudio(recorder.result?.uri || undefined);
   const model = useAudio(exercise.modelAudioUrl);
   const dir = useDirection();
   const stage = useStageSize();
   // who says the native model, when an editor has chosen somebody
   const voice = knownVoice(exercise.modelAudioVoice);
-  useEffect(() => () => {
-    if (own) blobUrls()?.revokeObjectURL?.(own);
-  }, [own]);
 
   // a fresh recording arrived → validate it, then it is ready to rate
+  const { result, reset } = recorder;
   useEffect(() => {
-    const r = recorder.result;
-    if (!r || processed.current === r.blob) return;
-    processed.current = r.blob;
+    if (!result || processed.current === result) return;
+    processed.current = result;
+    const byHand = stoppedByHand.current;
+    stoppedByHand.current = false;
     onRate(null);
 
-    const reject = recordingRejection({ durationMs: r.durationMs, byteSize: r.blob.size });
+    const reject = recordingRejection({ durationMs: result.durationMs, byteSize: result.byteSize });
     if (reject) {
       setStatus('rejected');
       setMessage(t(reject));
       onSetRecorded(false);
-      recorder.reset();
+      reset();
       return;
     }
     onSetRecorded(true);
     setStatus('ready');
     setMessage(null);
-  }, [recorder, onSetRecorded, onRate, t]);
+    // a take kept is something taken, felt as the learner's Stop lands; one
+    // that stopped by itself is not a buzz anybody asked for
+    if (byHand) haptic('tap');
+  }, [result, reset, onSetRecorded, onRate, t]);
+
+  // a take that could not be started or kept is in the learner's way
+  useEffect(() => {
+    if (recorder.failed) haptic('error');
+  }, [recorder.failed]);
+
+  const record = (): void => {
+    // whatever was on screen was about the take this one replaces
+    stoppedByHand.current = false;
+    setStatus('idle');
+    setMessage(null);
+    onRate(null);
+    onSetRecorded(false);
+    void recorder.start();
+  };
+
+  const finish = (): void => {
+    stoppedByHand.current = true;
+    recorder.stop();
+  };
 
   const micOff = recorder.permission === 'denied';
+  const note = message ?? (recorder.failed ? t(FAILED[recorder.failed]) : null);
+  // how much of a take's time has gone; it stops by itself at the end
+  const used = Math.min(1, recorder.durationMs / MAX_TAKE_MS);
 
   return (
     <View style={styles.container}>
@@ -126,7 +152,12 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       {!recorder.supported ? (
         <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.unavailable')}</Text>
       ) : micOff ? (
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.micOff')}</Text>
+        <View style={styles.recordingBox}>
+          <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('lesson.speak.micOff')}</Text>
+          {recorder.openSettings ? (
+            <ClayButton label={t('lesson.speak.openSettings')} icon="gear" variant="outline" tone="primary" onPress={recorder.openSettings} />
+          ) : null}
+        </View>
       ) : recorder.recording ? (
         <View style={styles.recordingBox}>
           <View style={styles.waveform}>
@@ -135,7 +166,14 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
             ))}
           </View>
           <Text style={[styles.dur, { color: colors.textPrimary }]}>{(recorder.durationMs / 1000).toFixed(1)}s</Text>
-          <Pressable onPress={recorder.stop} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityRole="button" accessibilityLabel={t('lesson.speak.stop')}>
+          <View
+            style={[styles.track, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            <View style={[styles.used, { width: `${used * 100}%`, backgroundColor: colors.danger }]} />
+          </View>
+          <Pressable onPress={finish} style={[styles.stop, { backgroundColor: colors.textPrimary }]} accessibilityRole="button" accessibilityLabel={t('lesson.speak.stop')}>
             <Icon name="stop" size={14} color={colors.background} />
             <Text style={[styles.stopText, { color: colors.background }]}>{t('lesson.speak.stop')}</Text>
           </Pressable>
@@ -146,7 +184,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
             {ownAudio.supported ? (
               <ClayButton label={t('lesson.speak.playOwn')} icon="play" variant="outline" tone="primary" onPress={() => ownAudio.play(1)} />
             ) : null}
-            <ClayButton label={t('lesson.speak.reRecord')} icon="record" variant="outline" disabled={disabled} onPress={() => recorder.start()} />
+            <ClayButton label={t('lesson.speak.reRecord')} icon="record" variant="outline" disabled={disabled} onPress={record} />
           </View>
           <Text style={[styles.detail, { color: colors.textPrimary }]}>{t('lesson.speak.rateQuestion')}</Text>
           <View style={styles.row}>
@@ -163,16 +201,10 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           </View>
         </View>
       ) : (
-        <ClayButton
-          label={t('lesson.speak.start')}
-          icon="record"
-          tone="danger"
-          disabled={disabled}
-          onPress={() => recorder.start()}
-        />
+        <ClayButton label={t('lesson.speak.start')} icon="record" tone="danger" disabled={disabled} busy={recorder.busy} onPress={record} />
       )}
 
-      {message ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{message}</Text> : null}
+      {note ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{note}</Text> : null}
 
       <Pressable disabled={disabled} onPress={onSkip} style={styles.skip} accessibilityRole="button" accessibilityState={{ disabled }}>
         <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.speak.skip')}</Text>
@@ -193,6 +225,8 @@ const styles = StyleSheet.create({
   waveform: { flexDirection: 'row', alignItems: 'center', gap: 4, height: 36 },
   bar: { width: 4, borderRadius: radii.pill },
   dur: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  track: { width: 160, height: 4, borderRadius: radii.pill, overflow: 'hidden' },
+  used: { height: '100%', borderRadius: radii.pill },
   stop: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xl, borderRadius: radii.md },
   stopText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   skip: { alignItems: 'center', paddingVertical: spacing.sm },
