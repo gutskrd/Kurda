@@ -552,6 +552,7 @@ export const fr: Catalogue = {
   'games.race.accents': 'Accents : {right} sur {total} tapés avec leur accent',
   'games.race.nudgeLater': 'Plus tard',
   'games.wordle.keyboard': 'Clavier kurde',
+  'games.wordle.typeHint': 'Tape sur ton clavier ou clique sur les touches. ç ê î ş û sont sur la dernière rangée.',
   'games.wordle.guessNumber': 'Essai {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'à la bonne place',

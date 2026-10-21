@@ -548,6 +548,7 @@ export const tr: Catalogue = {
   'games.race.accents': 'Aksanlar: {total} harften {right} tanesi aksanıyla yazıldı',
   'games.race.nudgeLater': 'Belki sonra',
   'games.wordle.keyboard': 'Kürtçe klavye',
+  'games.wordle.typeHint': 'Klavyenle yaz ya da tuşlara tıkla. ç ê î ş û en alt sırada.',
   'games.wordle.guessNumber': 'Tahmin {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'doğru yerde',

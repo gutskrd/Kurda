@@ -554,6 +554,7 @@ export const nl: Catalogue = {
   'games.race.accents': 'Accenten: {right} van {total} met accent getypt',
   'games.race.nudgeLater': 'Misschien later',
   'games.wordle.keyboard': 'Koerdisch toetsenbord',
+  'games.wordle.typeHint': 'Typ op je toetsenbord of klik op de toetsen. ç ê î ş û staan op de onderste rij.',
   'games.wordle.guessNumber': 'Poging {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'op de goede plek',

@@ -609,6 +609,7 @@ export const en = {
   'games.race.accents': 'Accents: {right} of {total} typed with their accent',
   'games.race.nudgeLater': 'Maybe later',
   'games.wordle.keyboard': 'Kurdish keyboard',
+  'games.wordle.typeHint': 'Type with your keyboard, or click the keys. ç ê î ş û are on the bottom row.',
   'games.wordle.guessNumber': 'Guess {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'in the right place',

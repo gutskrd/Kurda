@@ -546,6 +546,7 @@ export const ar: Catalogue = {
   'games.race.accents': 'العلامات: {right} من {total} كُتبت بعلامتها',
   'games.race.nudgeLater': 'ربما لاحقًا',
   'games.wordle.keyboard': 'لوحة مفاتيح كردية',
+  'games.wordle.typeHint': 'اكتب بلوحة مفاتيحك أو انقر على المفاتيح. ç ê î ş û في الصف الأخير.',
   'games.wordle.guessNumber': 'التخمين {n}',
   'games.wordle.letterState': '{letter}، {state}',
   'games.wordle.state.green': 'في المكان الصحيح',

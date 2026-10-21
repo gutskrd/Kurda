@@ -559,6 +559,7 @@ export const ckb: Catalogue = {
   'games.race.accents': 'نیشانەکان: {right} لە {total} بە نیشانەکەیانەوە نووسران',
   'games.race.nudgeLater': 'دواتر',
   'games.wordle.keyboard': 'تەختەکلیلی کوردی',
+  'games.wordle.typeHint': 'بە کیبۆردەکەت بنووسە، یان کلیک لە دوگمەکان بکە. ç ê î ş û لە ڕیزی خوارەوەن.',
   'games.wordle.guessNumber': 'هەوڵی {n}',
   'games.wordle.letterState': '{letter}، {state}',
   'games.wordle.state.green': 'لە شوێنی ڕاستدایە',

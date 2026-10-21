@@ -2535,6 +2535,42 @@ a.mkp-activity-row:hover {
     height: 48px;
   }
 }
+/*
+ * Beside a real keyboard (keyboard/device.ts): a desk keyboard's keys rather
+ * than a phone's. One size of key, a little wider than tall, in rows no wider
+ * than the game column needs — ten keys across at about the board's cell
+ * size — and ç ê î ş û as five ordinary keys centred under the rest, not a
+ * row of double keys. The line under it says the real keyboard works.
+ */
+.wordle-keys.is-desktop {
+  max-width: 520px;
+}
+.is-desktop .wordle-keyboard {
+  gap: 6px;
+}
+.is-desktop .wordle-key {
+  height: 46px;
+  border-radius: var(--r-xs);
+  font-size: 1rem;
+}
+.is-desktop .wordle-key-wide {
+  font-size: 0.82rem;
+}
+/* the Kurdish letters: each the width of one key of the ten-key row */
+.is-desktop .wordle-keyboard-qwerty .wordle-krow-last {
+  margin-top: 4px;
+}
+.is-desktop .wordle-keyboard-qwerty .wordle-krow-last .wordle-key {
+  flex: 0 0 calc((100% - 9 * 6px) / 10);
+  font-size: 1.05rem;
+}
+.wordle-type-hint {
+  margin: 14px 0 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  text-align: center;
+}
+
 /* feedback colors — defined after the base rules so they win on shared elements */
 .wordle-green {
   background: #2e7d5b;

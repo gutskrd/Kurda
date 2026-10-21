@@ -555,6 +555,7 @@ export const ku: Catalogue = {
   'games.race.accents': 'Nîşan: {right} ji {total} bi nîşana xwe hatin nivîsîn',
   'games.race.nudgeLater': 'Paşê',
   'games.wordle.keyboard': 'Klavyeya kurdî',
+  'games.wordle.typeHint': 'Bi klavyeya xwe binivîse, an li bişkokan bitikîne. ç ê î ş û li rêza jêrîn in.',
   'games.wordle.guessNumber': 'Texmîn {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'li cihê rast',

@@ -551,6 +551,7 @@ export const es: Catalogue = {
   'games.race.accents': 'Acentos: {right} de {total} escritos con su acento',
   'games.race.nudgeLater': 'Quizá luego',
   'games.wordle.keyboard': 'Teclado kurdo',
+  'games.wordle.typeHint': 'Escribe con tu teclado o haz clic en las teclas. ç ê î ş û están en la fila de abajo.',
   'games.wordle.guessNumber': 'Intento {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'en el lugar correcto',

@@ -10,6 +10,7 @@ import { renderApp } from '../test/utils';
 beforeEach(() => resetKeyboardPrefsForTests());
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
   localStorage.clear();
 });
 
@@ -44,6 +45,28 @@ describe('the on-screen layouts', () => {
 });
 
 describe('WordleKeyboard', () => {
+  /** A browser answering these media queries (keyboard/device.ts asks which pointers there are and how wide it is). */
+  const media = (matches: string[]): void => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: matches.includes(query), media: query, addEventListener() {}, removeEventListener() {} }));
+  };
+
+  it('is a desk keyboard beside a mouse or trackpad, and says the real keyboard works', () => {
+    media(['(any-pointer: fine)']);
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => {}} disabled={false} />);
+    expect(document.querySelector('.wordle-keys')).toHaveClass('is-desktop');
+    expect(screen.getByText('Type with your keyboard, or click the keys. ç ê î ş û are on the bottom row.')).toBeInTheDocument();
+    // the same keys either way: only how they are drawn changes
+    expect(document.querySelectorAll('.wordle-krow')).toHaveLength(4);
+  });
+
+  it('keeps the touch keys, and no keyboard hint, on a phone', () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue('Mozilla/5.0 (Linux; Android 14) Mobile');
+    media(['(pointer: coarse)', '(max-width: 640px)']);
+    renderApp(<WordleKeyboard keyboard={{}} onPress={() => {}} disabled={false} />);
+    expect(document.querySelector('.wordle-keys')).not.toHaveClass('is-desktop');
+    expect(screen.queryByText(/Type with your keyboard/)).not.toBeInTheDocument();
+  });
+
   it('lays out QWERTY by default, with Delete as an icon that says what it does', async () => {
     const onPress = vi.fn();
     renderApp(<WordleKeyboard keyboard={{}} onPress={onPress} disabled={false} />);

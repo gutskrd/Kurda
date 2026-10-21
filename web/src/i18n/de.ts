@@ -554,6 +554,7 @@ export const de: Catalogue = {
   'games.race.accents': 'Akzente: {right} von {total} mit Akzent getippt',
   'games.race.nudgeLater': 'Vielleicht später',
   'games.wordle.keyboard': 'Kurdische Tastatur',
+  'games.wordle.typeHint': 'Tippe auf deiner Tastatur oder klicke auf die Tasten. ç ê î ş û sind in der untersten Reihe.',
   'games.wordle.guessNumber': 'Versuch {n}',
   'games.wordle.letterState': '{letter}, {state}',
   'games.wordle.state.green': 'an der richtigen Stelle',
