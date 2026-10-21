@@ -14,6 +14,8 @@ export interface CharacterStageProps extends Omit<SpeakingCharacterProps, 'crop'
   children?: ReactNode;
   /** how much of the window the rest of the screen needs; the stage takes what is left (`stageHeight`) */
   reserve?: number;
+  /** a stage this tall whatever the window, for a place with more to show than a lesson's exercise (`STAGE_HEIGHT.card`) */
+  height?: number;
 }
 
 /** A stage this tall or taller shows the whole figure; a shorter one (with the keyboard up), head to waist, so the face stays big enough to see. */
@@ -34,13 +36,13 @@ const STAND_AT = 0.27;
  * stage steps back to head to waist, so the field stays in view, and comes
  * forward again when the keyboard goes.
  */
-export function CharacterStage({ children, reserve, flip, speaker, ...character }: CharacterStageProps): React.JSX.Element {
+export function CharacterStage({ children, reserve, height: fixed, flip, speaker, ...character }: CharacterStageProps): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   const reduce = useReducedMotion();
   const screen = useWindowDimensions();
   const [keyboard, setKeyboard] = useState(false);
-  const height = stageHeight(screen.height, keyboard, reserve);
+  const height = fixed ?? stageHeight(screen.height, keyboard, reserve);
   const [width, setWidth] = useState(0);
 
   // the stage eases between its sizes as the keyboard comes and goes, rather than jumping, unless motion is turned down

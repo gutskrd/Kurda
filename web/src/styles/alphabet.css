@@ -529,9 +529,35 @@
   align-items: center;
   gap: 10px;
 }
-/* who says the letter's recordings, beside the button that plays them (characters/ClipSpeaker.tsx) */
-.ab-voice-face {
-  --speaker-size: 60px;
+/*
+ * Who says the letter's recordings stands whole on a stage at the head of the
+ * card (characters/CharacterStage.tsx), the letter large beside them; and so
+ * does whoever asks a practice question out loud, beside its button.
+ */
+.ab-stage-letter {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+}
+.ab-stage-letter .ab-card-glyph {
+  font-size: 5.4rem;
+}
+.ab-stage-letter .ab-card-glyph.ab-ar {
+  font-size: 5.6rem;
+}
+.ab-stage-letter .ab-card-tools {
+  justify-content: center;
+}
+/* in the sheet on a phone, the stage starts below the close button rather than under it */
+.modal-panel .ab-card-stage {
+  margin-top: 28px;
+}
+.ab-q-stage {
+  max-width: 520px;
+}
+.ab-q-stage .ab-q-prompt {
+  justify-content: center;
+  margin: 0;
 }
 .ab-card-word-row {
   display: inline-flex;

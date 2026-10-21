@@ -16,10 +16,26 @@ import {
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { CharacterStage, STAGE } from '../characters/CharacterStage';
+import type { SpokenClip } from '../characters/clips';
+import type { CharacterReaction } from '../characters/SpeakingCharacter';
 import { currentSounds, latinSound, latinWord, pairWord, play, soraniSound, spokenAlphabet, useRecordings } from './audio';
 import { Meaning } from './Meaning';
 import { Sound } from './Sound';
+
+/**
+ * A question's prompt, and when it is asked out loud by a character, that
+ * character standing whole on a stage beside it: pleased with a right answer,
+ * curious about one that was not yet.
+ */
+function Asked({ clips, reaction, children }: { clips: SpokenClip[]; reaction: CharacterReaction | null; children: React.ReactNode }): React.JSX.Element {
+  if (clips.length === 0) return <>{children}</>;
+  return (
+    <CharacterStage clips={clips} height={STAGE.card} reaction={reaction} className="ab-q-stage">
+      {children}
+    </CharacterStage>
+  );
+}
 
 interface Item {
   q: AlphabetQuestion;
@@ -181,30 +197,30 @@ export function Practice({ script, locale, onOpen }: { script: AlphabetScript; l
 
           <p className="ab-q-ask">{ask(q)}</p>
 
-          <div className="ab-q-prompt">
-            {(q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') && (
-              <>
-                <ClipSpeaker clips={spokenAlphabet(q.clip)} decorative className="speaker-tile ab-voice-face" />
-                <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />
-              </>
-            )}
-            {q.kind === 'spell' && (
-              // for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead
-              <span className="ab-q-meaning">
-                <Meaning meaning={q.meaning} script="kmr" locale={locale} />
-              </span>
-            )}
-            {q.kind === 'like' && <Like like={q.like} />}
-            {q.kind === 'script' && <Glyph o={q.prompt} className="ab-q-glyph" />}
-            {q.kind === 'form' && (
-              <span className="ab-q-form">
-                <span className="ab-q-glyph ab-ar" lang="ckb" dir="rtl">
-                  {q.prompt}
+          <Asked
+            clips={q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair' ? spokenAlphabet(q.clip) : []}
+            reaction={chosen === null ? null : chosen === q.answer ? 'cheer' : 'hmm'}
+          >
+            <div className="ab-q-prompt">
+              {(q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') && <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />}
+              {q.kind === 'spell' && (
+                // for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead
+                <span className="ab-q-meaning">
+                  <Meaning meaning={q.meaning} script="kmr" locale={locale} />
                 </span>
-                <small>{t(POSITION[q.position])}</small>
-              </span>
-            )}
-          </div>
+              )}
+              {q.kind === 'like' && <Like like={q.like} />}
+              {q.kind === 'script' && <Glyph o={q.prompt} className="ab-q-glyph" />}
+              {q.kind === 'form' && (
+                <span className="ab-q-form">
+                  <span className="ab-q-glyph ab-ar" lang="ckb" dir="rtl">
+                    {q.prompt}
+                  </span>
+                  <small>{t(POSITION[q.position])}</small>
+                </span>
+              )}
+            </div>
+          </Asked>
 
           <div className={`ab-q-options${q.kind === 'spell' || q.kind === 'pair' ? ' is-words' : ''}`}>
             {q.options.map((o, i) => {

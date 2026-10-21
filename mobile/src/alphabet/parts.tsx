@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { I18nManager, Pressable, StyleSheet, Text, View, type StyleProp, type TextStyle, type ViewStyle } from 'react-native';
 import {
   ALPHABET_MEANINGS,
@@ -8,7 +9,8 @@ import {
   type SoundLikeness,
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { CHARACTER_SIZE, SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { CharacterStage } from '../characters/CharacterStage';
+import { STAGE_HEIGHT } from '../characters/voice';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { display, sectionLabel } from '../theme/fonts';
@@ -20,9 +22,9 @@ import type { ClipPlayer } from './useClipPlayer';
 
 /**
  * The small parts the alphabet screen and its practice are made of: a sound's
- * play button and the character who says it, a comparison with its sound
- * picked out, a Kurdish word with its letter picked out, and what the word
- * means.
+ * play button, the stage the character who says it stands on, a comparison
+ * with its sound picked out, a Kurdish word with its letter picked out, and
+ * what the word means.
  *
  * Gold is the colour this app keeps for "notice this", so it marks exactly one
  * thing here, as on the website: the sound inside a comparison and the letter
@@ -82,36 +84,54 @@ export function PlayButton({
 }
 
 /**
- * Who says the recording at `src`, beside its play button, saying it as it
- * plays. Nothing for a synthesised clip or for a recording nobody was chosen
- * for, so the play button stands alone as it always did.
+ * Whoever says the recordings at `srcs`, standing whole on a stage of their
+ * own with `children` — the letter, the button that plays it — beside them:
+ * the one sounding now, else the last that sounded, else the first. A tap on
+ * them greets you and says it again; `reaction` gets a cheer for a right
+ * answer and a curious tilt of the head for one that was not yet.
+ *
+ * `fallback` instead when none of the recordings has a character (a
+ * synthesised clip, or a recording nobody was chosen for), so the place is as
+ * it always was without one.
  */
-export function Speaker({
-  src,
+export function SpokenStage({
+  srcs,
   audio,
   player,
-  size = CHARACTER_SIZE.letter,
-  flip = false,
+  reaction = null,
+  fallback,
+  children,
 }: {
-  src: string | null;
+  srcs: ReadonlyArray<string | null>;
   audio: AlphabetAudio;
   player: ClipPlayer;
-  size?: number;
-  flip?: boolean;
-}): React.JSX.Element | null {
+  reaction?: 'cheer' | 'hmm' | null;
+  fallback: React.ReactNode;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const voiced = srcs.filter((src): src is string => !!src && audio.voiceOf(src) !== null);
+  const sounding = voiced.find((src) => player.isPlaying(src)) ?? null;
+  const [heard, setHeard] = useState<string | null>(null);
+  useEffect(() => {
+    if (sounding) setHeard(sounding);
+  }, [sounding]);
+  const src = sounding ?? (heard && voiced.includes(heard) ? heard : (voiced[0] ?? null));
   const spoken = audio.voiceOf(src);
-  if (!spoken || !player.supported) return null;
+  if (!src || !spoken || !player.supported) return <>{fallback}</>;
   return (
-    <SpeakingCharacter
+    <CharacterStage
       speaker={spoken.voice.speaker}
       voice={spoken.voice}
       text={spoken.text}
       player={player.clockFor(src)}
       playing={player.isPlaying(src)}
       source={src}
-      size={size}
-      flip={flip}
-    />
+      height={STAGE_HEIGHT.card}
+      reaction={reaction}
+      onPress={() => player.play(src)}
+    >
+      {children}
+    </CharacterStage>
   );
 }
 

@@ -24,7 +24,7 @@ import { AnswerMotion, Pop } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
-import { Like, Meaning, PlayButton, Speaker, scriptLanguage, scriptText } from './parts';
+import { Like, Meaning, PlayButton, SpokenStage, scriptLanguage, scriptText } from './parts';
 import type { ClipPlayer } from './useClipPlayer';
 
 interface Item {
@@ -151,6 +151,16 @@ export function Practice({
     }
   };
 
+  // a question asked out loud: the button that says it again, and for a spelling the meaning of the word
+  const sounded =
+    q && (q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') ? (
+      <>
+        <PlayButton src={q.clip} label={t('alphabet.practice.replay')} player={player} size="large" />
+        {/* for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead */}
+        {q.kind === 'spell' ? <Meaning meaning={q.meaning} script="kmr" style={styles.promptMeaning} /> : null}
+      </>
+    ) : null;
+
   const firstTries = results.length;
   const firstRight = results.filter((r) => r === true).length;
   const answered = results.filter((r) => r !== null).length;
@@ -192,24 +202,29 @@ export function Practice({
 
           <Text style={[styles.ask, dir.text, { color: colors.textSecondary }]}>{ask(q)}</Text>
 
-          <View style={[styles.prompt, { flexDirection: dir.row }]}>
-            {q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair' ? (
-              <>
-                <Speaker src={q.clip} audio={audio} player={player} flip={dir.rtl} />
-                <PlayButton src={q.clip} label={t('alphabet.practice.replay')} player={player} size="large" />
-              </>
-            ) : null}
-            {/* for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead */}
-            {q.kind === 'spell' ? <Meaning meaning={q.meaning} script="kmr" style={styles.promptMeaning} /> : null}
-            {q.kind === 'like' ? <Like like={q.like} style={styles.promptLike} /> : null}
-            {q.kind === 'script' ? <Glyph o={q.prompt} size={PROMPT_GLYPH} /> : null}
-            {q.kind === 'form' ? (
-              <View style={[styles.form, { backgroundColor: colors.controlTrack }]}>
-                <Glyph o={{ id: q.topic.id, text: q.prompt, script: 'ckb' }} size={PROMPT_GLYPH} />
-                <Text style={[styles.formLabel, { color: colors.textSecondary }]}>{t(POSITION[q.position])}</Text>
-              </View>
-            ) : null}
-          </View>
+          {q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair' ? (
+            // whoever says the sound stands on a stage beside its button, and is pleased with a right answer
+            <SpokenStage
+              srcs={[q.clip]}
+              audio={audio}
+              player={player}
+              reaction={chosen === null ? null : chosen === q.answer ? 'cheer' : 'hmm'}
+              fallback={<View style={[styles.prompt, { flexDirection: dir.row }]}>{sounded}</View>}
+            >
+              <View style={styles.staged}>{sounded}</View>
+            </SpokenStage>
+          ) : (
+            <View style={[styles.prompt, { flexDirection: dir.row }]}>
+              {q.kind === 'like' ? <Like like={q.like} style={styles.promptLike} /> : null}
+              {q.kind === 'script' ? <Glyph o={q.prompt} size={PROMPT_GLYPH} /> : null}
+              {q.kind === 'form' ? (
+                <View style={[styles.form, { backgroundColor: colors.controlTrack }]}>
+                  <Glyph o={{ id: q.topic.id, text: q.prompt, script: 'ckb' }} size={PROMPT_GLYPH} />
+                  <Text style={[styles.formLabel, { color: colors.textSecondary }]}>{t(POSITION[q.position])}</Text>
+                </View>
+              ) : null}
+            </View>
+          )}
 
           <View style={[styles.options, { flexDirection: dir.row }]} testID="alphabet-options">
             {q.options.map((o) => (
@@ -470,6 +485,7 @@ const styles = StyleSheet.create({
   pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   ask: { fontSize: typography.sizes.md },
   prompt: { alignItems: 'center', flexWrap: 'wrap', gap: spacing.sm + 6, minHeight: 56 },
+  staged: { alignItems: 'center', gap: spacing.sm },
   promptMeaning: { fontSize: typography.sizes.md, flexShrink: 1 },
   promptLike: { flexShrink: 1 },
   form: { alignItems: 'center', gap: 2, minWidth: 84, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingTop: spacing.xs, paddingBottom: spacing.sm },

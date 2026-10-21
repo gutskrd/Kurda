@@ -25,9 +25,9 @@ export function knownVoice(voice: RecordingVoice | null | undefined): RecordingV
 /**
  * How big a character is drawn where it is not on a stage of its own: as tall
  * as `answer` above a lesson's answer, head to waist; as wide as `row` beside
- * a row's own play button and `letter` beside a letter's, head and shoulders.
+ * a row's own play button, head and shoulders.
  */
-export const CHARACTER_SIZE = { answer: 132, row: 72, letter: 88 } as const;
+export const CHARACTER_SIZE = { answer: 132, row: 72 } as const;
 
 /**
  * How tall a lesson's stage is in a window this tall: the whole figure, as
@@ -38,8 +38,12 @@ export const CHARACTER_SIZE = { answer: 132, row: 72, letter: 88 } as const;
  * character; nor so large on a tablet that it is all there is. With the
  * keyboard up the stage steps back to `compact`, head to waist, so the field
  * being typed in stays in view.
+ *
+ * A stage in a card with more on it than an exercise — a letter, a practice
+ * question — is `card` tall on every phone: smaller than a lesson's, and
+ * still the whole figure.
  */
-export const STAGE_HEIGHT = { reserve: 500, min: 300, max: 400, compact: 150 } as const;
+export const STAGE_HEIGHT = { reserve: 500, min: 300, max: 400, compact: 150, card: 260 } as const;
 
 export function stageHeight(windowHeight: number, keyboardShown = false, reserve: number = STAGE_HEIGHT.reserve): number {
   if (keyboardShown) return STAGE_HEIGHT.compact;

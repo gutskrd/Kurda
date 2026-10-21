@@ -27,7 +27,8 @@ import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
 import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, spokenAlphabet, useRecordings } from '../alphabet/audio';
-import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { CharacterStage, STAGE } from '../characters/CharacterStage';
+import type { SpokenClip } from '../characters/clips';
 import { Practice } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
@@ -410,6 +411,40 @@ function Stepper({ onStep }: { onStep: (by: number) => void }): React.JSX.Elemen
   );
 }
 
+/**
+ * The letter large, and its sound beside it: the head of either card. When
+ * the letter's recordings have a character, it stands whole on a stage with
+ * the letter beside it, and says the letter and the word below it both;
+ * without one, the letter and its button stand on the card as they are.
+ */
+function CardHead({ clips, glyph, sound, ipa }: { clips: SpokenClip[]; glyph: React.ReactNode; sound: string | null; ipa: string }): React.JSX.Element {
+  const t = useT();
+  const tools = (
+    <span className="ab-card-tools">
+      <Sound src={sound} label={t('alphabet.listen')} size="lg" />
+      <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
+        /{ipa}/
+      </span>
+    </span>
+  );
+  if (clips.length === 0) {
+    return (
+      <div className="ab-card-head">
+        {glyph}
+        {tools}
+      </div>
+    );
+  }
+  return (
+    <CharacterStage clips={clips} height={STAGE.card} className="ab-card-stage">
+      <span className="ab-stage-letter">
+        {glyph}
+        {tools}
+      </span>
+    </CharacterStage>
+  );
+}
+
 function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: AppLocale; onStep: (by: number) => void }): React.JSX.Element {
   const t = useT();
   useRecordings();
@@ -417,19 +452,17 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
   const synthetic = [latinSound(letter.id), latinWord(letter.id)].some(isSynthesised);
   return (
     <article className="ab-card" aria-live="polite">
-      <div className="ab-card-head">
-        <span className="ab-card-glyph" lang="ku" dir="ltr">
-          {letter.upper}
-          <small>{letter.id}</small>
-        </span>
-        <span className="ab-card-tools">
-          <ClipSpeaker clips={spokenAlphabet(latinSound(letter.id), latinWord(letter.id))} decorative className="speaker-tile ab-voice-face" />
-          <Sound src={latinSound(letter.id)} label={t('alphabet.listen')} size="lg" />
-          <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
-            /{letter.ipa}/
+      <CardHead
+        clips={spokenAlphabet(latinSound(letter.id), latinWord(letter.id))}
+        glyph={
+          <span className="ab-card-glyph" lang="ku" dir="ltr">
+            {letter.upper}
+            <small>{letter.id}</small>
           </span>
-        </span>
-      </div>
+        }
+        sound={latinSound(letter.id)}
+        ipa={letter.ipa}
+      />
 
       {like && (
         <div className="ab-card-row">
@@ -477,18 +510,16 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
   const forms = formsOf(letter);
   return (
     <article className="ab-card" aria-live="polite">
-      <div className="ab-card-head">
-        <span className="ab-card-glyph ab-ar" lang="ckb" dir="rtl">
-          {letter.char}
-        </span>
-        <span className="ab-card-tools">
-          <ClipSpeaker clips={spokenAlphabet(soraniSound(letter), soraniWord(letter))} decorative className="speaker-tile ab-voice-face" />
-          <Sound src={soraniSound(letter)} label={t('alphabet.listen')} size="lg" />
-          <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
-            /{letter.ipa}/
+      <CardHead
+        clips={spokenAlphabet(soraniSound(letter), soraniWord(letter))}
+        glyph={
+          <span className="ab-card-glyph ab-ar" lang="ckb" dir="rtl">
+            {letter.char}
           </span>
-        </span>
-      </div>
+        }
+        sound={soraniSound(letter)}
+        ipa={letter.ipa}
+      />
       {locale === 'ar' && letter.kurdishOnly && <p className="ab-badge">{t('alphabet.notInArabic')}</p>}
 
       {like && (

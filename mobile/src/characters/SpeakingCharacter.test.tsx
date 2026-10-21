@@ -90,11 +90,15 @@ describe('SpeakingCharacter', () => {
     expect(mouthShown()).toBe('rest');
   });
 
-  it('keeps the shape of its frame from the first render, in the bust’s own proportions', async () => {
+  it('keeps the shape of its frame from the first render, and leaves room in its tile around the head', async () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} />);
+    // the tile, in the bust's own proportions
+    const tall = (104 * HAMO.frame.h) / HAMO.frame.w;
+    expect(document.querySelector(`[style*="width: 104px"][style*="height: ${tall}px"]`)).not.toBeNull();
+    // the drawing a little smaller, standing on its foot: no antler, ear or hair is cut off
     const svg = document.querySelector('svg[data-markup]')!;
-    expect(svg.getAttribute('width')).toBe('104');
-    expect(Number(svg.getAttribute('height'))).toBeCloseTo((104 * HAMO.frame.h) / HAMO.frame.w);
+    expect(Number(svg.getAttribute('width'))).toBeCloseTo(104 * 0.88);
+    expect(Number(svg.getAttribute('height'))).toBeCloseTo(tall * 0.88);
   });
 
   it('moves the mouth with the recording, and draws only the mouth again, only when its shape changes', async () => {

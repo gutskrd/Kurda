@@ -11,21 +11,26 @@ import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
  * exercise, and never shorter than `min`, so every phone shows the same stage
  * with the whole figure on it (a small one scrolls a little); nor so large on
  * a big screen that it is all there is. The phone app's `stageHeight`.
+ *
+ * A stage in a card with more on it than an exercise — a letter, a practice
+ * question — is `card` tall in every window: smaller, and still the whole
+ * figure.
  */
-export const STAGE = { reserve: 500, min: 300, max: 380 } as const;
+export const STAGE = { reserve: 500, min: 300, max: 380, card: 260 } as const;
 
 export function stageHeight(windowHeight: number): number {
   return Math.round(Math.min(STAGE.max, Math.max(STAGE.min, windowHeight - STAGE.reserve)));
 }
 
-function useStageHeight(): number {
+function useStageHeight(fixed: number | undefined): number {
   const [height, setHeight] = useState(() => stageHeight(typeof window === 'undefined' ? 820 : window.innerHeight));
   useEffect(() => {
+    if (fixed !== undefined) return;
     const onResize = (): void => setHeight(stageHeight(window.innerHeight));
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, []);
-  return height;
+  }, [fixed]);
+  return fixed ?? height;
 }
 
 /** Where the character stands, as a share of the stage's width from its start: where its light is brightest. */
@@ -47,14 +52,19 @@ const STAND_AT = 0.26;
 export function CharacterStage({
   clips,
   reaction = null,
+  height: fixed,
+  className,
   children,
 }: {
   clips: readonly SpokenClip[];
   reaction?: CharacterReaction | null;
+  /** a stage this tall whatever the window (`STAGE.card`) */
+  height?: number;
+  className?: string;
   children?: ReactNode;
 }): React.JSX.Element | null {
   const clip = useSpokenClip(clips);
-  const height = useStageHeight();
+  const height = useStageHeight(fixed);
   const stage = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(480);
   useEffect(() => {
@@ -83,7 +93,7 @@ export function CharacterStage({
   if (!clip || !backdrops) return null;
   const replay = (): void => play(clip.src);
   return (
-    <div ref={stage} className="character-stage" style={{ '--stage-h': `${height}px` } as React.CSSProperties}>
+    <div ref={stage} className={className ? `character-stage ${className}` : 'character-stage'} style={{ '--stage-h': `${height}px` } as React.CSSProperties}>
       <span className="character-stage-backdrop is-light" aria-hidden="true" dangerouslySetInnerHTML={backdrops.light} />
       <span className="character-stage-backdrop is-dark" aria-hidden="true" dangerouslySetInnerHTML={backdrops.dark} />
       <div className="character-stage-figure">

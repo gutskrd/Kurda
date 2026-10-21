@@ -78,6 +78,14 @@ const TURN_RANGE = 30;
 /** A bust this wide or wider sits in the larger corner. */
 const LARGE_TILE = 88;
 
+/**
+ * In a tile, the head and shoulders are drawn this much smaller than the tile
+ * and stand on its foot, centred: room above for antlers, a hop or a nod, and
+ * a little either side for the ears, so no part of a head is ever cut off.
+ * The website's tile leaves the same room.
+ */
+const TILE_ROOM = 0.12;
+
 /** How long a look takes to reach what it looks at, and to come back. */
 const LOOK_MS = { to: 140, back: 420, glance: 260 } as const;
 
@@ -153,8 +161,12 @@ export function SpeakingCharacter({
   const layers = characterLayers(speaker, crop);
   const art = characterArt(speaker);
   const rig = layers.rig;
-  const width = size ?? ((tall ?? 0) * layers.frame.w) / layers.frame.h;
-  const height = (width * layers.frame.h) / layers.frame.w;
+  // the place it takes, and the drawing inside it: the same but in a tile, where the drawing leaves room
+  const boxWidth = size ?? ((tall ?? 0) * layers.frame.w) / layers.frame.h;
+  const boxHeight = (boxWidth * layers.frame.h) / layers.frame.w;
+  const room = crop === 'bust' ? TILE_ROOM : 0;
+  const width = boxWidth * (1 - room);
+  const height = boxHeight * (1 - room);
   /** points per drawing unit */
   const unit = width / layers.frame.w;
 
@@ -419,8 +431,10 @@ export function SpeakingCharacter({
     const aim = (point: { x: number; y: number }): void => {
       const box = placed.current;
       if (!box || box.w === 0) return;
-      const eyeX = box.x + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * box.w;
-      const eyeY = box.y + layers.eyesAt.y * box.h;
+      // in a tile the drawing stands on the foot, centred, `room` smaller than the box measured
+      const inner = 1 - room;
+      const eyeX = box.x + box.w * (room / 2 + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * inner);
+      const eyeY = box.y + box.h * (room + layers.eyesAt.y * inner);
       // measured on the screen; `look` turns it round for a character drawn facing the other way
       const where = lookToward(point.x - eyeX, point.y - eyeY, Math.max(box.w, box.h) * 1.2);
       following.current = true;
@@ -442,7 +456,7 @@ export function SpeakingCharacter({
         aim(point);
       });
     });
-  }, [gaze, rig, reduce, flip, layers, look]);
+  }, [gaze, rig, reduce, flip, layers, look, room]);
 
   const greet = (): void => {
     haptic('tap');
@@ -507,7 +521,7 @@ export function SpeakingCharacter({
   );
 
   const tile: ViewStyle | null =
-    crop === 'bust' ? { borderRadius: width >= LARGE_TILE ? radii.lg : radii.md, backgroundColor: colors.controlTrack, overflow: 'hidden' } : null;
+    crop === 'bust' ? { borderRadius: boxWidth >= LARGE_TILE ? radii.lg : radii.md, backgroundColor: colors.controlTrack, overflow: 'hidden' } : null;
 
   const face = rig ? (
     <>
@@ -537,46 +551,48 @@ export function SpeakingCharacter({
 
   const drawing = (
     <View style={[styles.frame, tile, flip && styles.flip]}>
-      {crop === 'full' ? (
-        // the ground under the feet: a soft shadow that shrinks and fades as the figure leaves it
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.shadow,
-            {
-              width: width * 0.8,
-              height: Math.max(6, height * 0.045),
-              left: width * 0.1,
-              bottom: -height * 0.02,
-              ...shadowMotion,
-            },
-          ]}
-        >
-          <SvgXml xml={colors.scheme === 'dark' ? SHADOW.dark : SHADOW.light} width={width * 0.8} height={Math.max(6, height * 0.045)} />
-        </Animated.View>
-      ) : null}
-      <Animated.View style={[StyleSheet.absoluteFill, figure]}>
-        <Layer xml={layers.body} width={width} height={height} />
-        <Animated.View style={[StyleSheet.absoluteFill, turn]}>
-          {face}
-          <Layer xml={layers.mouths[mouth]} width={width} height={height} />
-          {layers.overlay ? (
-            rig ? (
-              <Animated.View style={[StyleSheet.absoluteFill, parts?.nose]}>
+      <View style={[styles.drawn, { left: (boxWidth - width) / 2, width, height }]}>
+        {crop === 'full' ? (
+          // the ground under the feet: a soft shadow that shrinks and fades as the figure leaves it
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.shadow,
+              {
+                width: width * 0.8,
+                height: Math.max(6, height * 0.045),
+                left: width * 0.1,
+                bottom: -height * 0.02,
+                ...shadowMotion,
+              },
+            ]}
+          >
+            <SvgXml xml={colors.scheme === 'dark' ? SHADOW.dark : SHADOW.light} width={width * 0.8} height={Math.max(6, height * 0.045)} />
+          </Animated.View>
+        ) : null}
+        <Animated.View style={[StyleSheet.absoluteFill, figure]}>
+          <Layer xml={layers.body} width={width} height={height} />
+          <Animated.View style={[StyleSheet.absoluteFill, turn]}>
+            {face}
+            <Layer xml={layers.mouths[mouth]} width={width} height={height} />
+            {layers.overlay ? (
+              rig ? (
+                <Animated.View style={[StyleSheet.absoluteFill, parts?.nose]}>
+                  <Layer xml={layers.overlay} width={width} height={height} />
+                </Animated.View>
+              ) : (
                 <Layer xml={layers.overlay} width={width} height={height} />
-              </Animated.View>
-            ) : (
-              <Layer xml={layers.overlay} width={width} height={height} />
-            )
-          ) : null}
+              )
+            ) : null}
+          </Animated.View>
         </Animated.View>
-      </Animated.View>
+      </View>
     </View>
   );
 
   const label = t('characters.saidBy', { name: CHARACTER_NAMES[speaker] });
   return (
-    <Rise delay={reduce ? null : 0} style={[{ width, height }, style]}>
+    <Rise delay={reduce ? null : 0} style={[{ width: boxWidth, height: boxHeight }, style]}>
       <View
         ref={root}
         style={styles.fill}
@@ -603,5 +619,7 @@ const styles = StyleSheet.create({
   frame: { flex: 1 },
   layer: { position: 'absolute', left: 0, top: 0 },
   flip: { transform: [{ scaleX: -1 }] },
+  // the drawing in its box, on the foot: the whole box but in a tile
+  drawn: { position: 'absolute', bottom: 0 },
   shadow: { position: 'absolute' },
 });
