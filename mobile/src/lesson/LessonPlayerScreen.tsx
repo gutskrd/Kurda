@@ -120,8 +120,9 @@ export function SessionPlayer({
   const dir = useDirection();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
-  // right answers in a row, which the chime climbs with
+  // right answers in a row, which the chime climbs with and the banner names from the third
   const run = useRef(0);
+  const [inARow, setInARow] = useState(0);
 
   const [choice, setChoice] = useState<number | null>(null);
   const [text, setText] = useState('');
@@ -245,7 +246,7 @@ export function SessionPlayer({
       setSubmitting(false);
       if (res.ok) {
         setStall(null);
-        feelAnswer(ex.type, res.data.accepted, run);
+        feelAnswer(ex.type, res.data.accepted, run, setInARow);
         dispatch({ type: 'ANSWERED', result: res.data, given });
       }
       // refused (the session ended, say): the second try counts for nothing,
@@ -259,7 +260,7 @@ export function SessionPlayer({
     if (res.ok) {
       // a retry that went through puts the verdict back where the retry was
       setStall(null);
-      feelAnswer(ex.type, res.data.accepted, run);
+      feelAnswer(ex.type, res.data.accepted, run, setInARow);
       dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
@@ -286,7 +287,7 @@ export function SessionPlayer({
     const last = sent[sent.length - 1];
     if (last) {
       setStall(null);
-      feelAnswer(ex?.type, last.accepted, run);
+      feelAnswer(ex?.type, last.accepted, run, setInARow);
       dispatch({ type: 'ANSWERED', result: last, given });
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
@@ -464,6 +465,7 @@ export function SessionPlayer({
         ) : (
           <FeedbackFooter
             feedback={state.feedback}
+            inARow={inARow}
             canCheck={canCheck}
             submitting={submitting}
             onCheck={check}
@@ -501,7 +503,12 @@ function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: str
  * gentle double when not. A right answer's chime climbs a step for each one
  * in a row (`run`, counted per lesson); a miss starts the run again.
  */
-function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean, run: { current: number }): void {
+function feelAnswer(
+  type: Exercise['type'] | undefined,
+  accepted: boolean,
+  run: { current: number },
+  shown: (inARow: number) => void,
+): void {
   const feel = answerFeel(type, accepted);
   if (feel) haptic(feel);
   if (feel === 'correct') {
@@ -511,6 +518,7 @@ function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean, run: 
     playSound('wrong');
     run.current = 0;
   }
+  shown(run.current);
 }
 
 /** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */

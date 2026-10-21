@@ -16,6 +16,9 @@ import { useScreenBottomInset } from '../../navigation/tabBarLayout';
 import { useDirection } from '../../reports/direction';
 import { CHARACTER_SIZE, SpeakingCharacter, knownVoice } from '../../characters/SpeakingCharacter';
 
+/** A run of right answers is named once it is three long: two in a row is common, three is a run. */
+const RUN_SHOWN_FROM = 3;
+
 interface Props {
   /** null while the learner is still answering */
   feedback: Feedback | null;
@@ -23,6 +26,8 @@ interface Props {
   submitting: boolean;
   onCheck: () => void;
   onContinue: () => void;
+  /** right answers in a row, this one included: named from the third, a small "keep going" */
+  inARow?: number;
 }
 
 /**
@@ -37,7 +42,7 @@ interface Props {
  * Both sit clear of the home indicator: the lesson is full screen, and the
  * bottom edge of a phone without a home button belongs to the system's swipe.
  */
-export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue }: Props) {
+export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onContinue, inARow = 0 }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduce = useReducedMotion();
@@ -86,6 +91,13 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
         <Text accessibilityLiveRegion="polite" style={[styles.bannerTitle, { color: good ? colors.success : colors.danger }]}>
           {title}
         </Text>
+        {/* a run of right answers, named from the third: the chime has been climbing, and this says why */}
+        {good && inARow >= RUN_SHOWN_FROM ? (
+          <View style={[styles.run, { backgroundColor: colors.background }]} testID="lesson-in-a-row">
+            <Icon name="flame" size={14} color={colors.goldText} />
+            <Text style={[styles.runText, { color: colors.goldText }]}>{t('lesson.inARow', { count: inARow })}</Text>
+          </View>
+        ) : null}
       </View>
       {feedback.correction ? (
         <Text style={[styles.correction, { color: colors.textPrimary }]}>
@@ -163,6 +175,17 @@ const styles = StyleSheet.create({
   },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   bannerTitle: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
+  // at the end of the title's line, a small pill on the banner's tint
+  run: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginStart: 'auto',
+    paddingHorizontal: spacing.sm,
+    paddingVertical: 4,
+    borderRadius: radii.pill,
+  },
+  runText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   correction: { fontSize: typography.sizes.md },
   correctionValue: { fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.sm },

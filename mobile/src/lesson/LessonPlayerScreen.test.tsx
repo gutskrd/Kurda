@@ -28,6 +28,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { mic } from '../recording/testing/fakeMic';
 import type { ApiResult } from '../api/types';
 import { LessonPlayerScreen, SessionPlayer } from './LessonPlayerScreen';
+import { onSound, resetSounds } from '../feedback/sounds';
 import type { SessionResults, SessionView } from './types';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -106,6 +107,38 @@ describe('a lesson that cannot reach the server', () => {
     expect(await screen.findByText('Couldn’t load the lesson.')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
     expect(await screen.findByRole('radio', { name: 'av' })).toBeTruthy();
+  });
+});
+
+describe('a run of right answers', () => {
+  // the chime climbs with each one, and from the third the banner says how many
+  it('is heard climbing and, from the third, named in the banner', async () => {
+    resetSounds();
+    const heard: string[] = [];
+    const stop = onSound((f) => heard.push(f));
+    try {
+      const three: SessionView = {
+        ...view,
+        exercises: [1, 2, 3].map((n) => ({ id: `mc${n}`, type: 'multiple_choice' as const, prompt: `Water ${n}?`, options: ['av', 'nan'], position: n })),
+      };
+      testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+      renderWithProviders(<SessionPlayer view={three} paths={paths} onExit={() => undefined} />);
+      for (let n = 1; n <= 3; n++) {
+        // seconds apart for a person; here, faster than the sounds' pacing allows
+        resetSounds();
+        fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+        await screen.findByRole('button', { name: 'Continue' });
+        if (n < 3) {
+          expect(screen.queryByTestId('lesson-in-a-row')).toBeNull();
+          fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+        }
+      }
+      expect(screen.getByText('3 in a row')).toBeTruthy();
+      expect(heard).toEqual(['correct-1', 'correct-2', 'correct-3']);
+    } finally {
+      stop();
+    }
   });
 });
 

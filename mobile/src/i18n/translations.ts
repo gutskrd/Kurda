@@ -1760,6 +1760,7 @@ export type TranslationKey =
   | 'time.daysAgo'
   | 'library.emptyAction'
   | 'lesson.secondTry'
+  | 'lesson.inARow'
   | 'lesson.comesBack'
   | 'lesson.hearIt'
   | 'lesson.speak.playModel'
@@ -3911,6 +3912,7 @@ const en: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'You’re welcome back when you’re 13.',
   'lesson.secondTry': 'One more try — practice only, it doesn’t change your score',
+  'lesson.inARow': '{count} in a row',
   'lesson.comesBack': 'This one will come back in a moment.',
   'lesson.hearIt': 'Hear it',
   'lesson.speak.playModel': 'Hear a native speaker',
@@ -6063,6 +6065,7 @@ const ku: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'Dema tu bibî 13 salî, dîsa were.',
   'lesson.secondTry': 'Careke din — tenê ji bo fêrbûnê, nayê hejmartin',
+  'lesson.inARow': '{count} li pey hev',
   'lesson.comesBack': 'Ev pirs piştî çend pirsan dîsa tê.',
   'lesson.hearIt': 'Guhdarî bike',
   'lesson.speak.playModel': 'Guh bide axêverekî zikmakî',
@@ -8215,6 +8218,7 @@ const de: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'Mit 13 bist du herzlich willkommen.',
   'lesson.secondTry': 'Noch ein Versuch — nur zum Üben, er zählt nicht zur Wertung',
+  'lesson.inARow': '{count} in Folge',
   'lesson.comesBack': 'Diese Aufgabe kommt gleich noch einmal.',
   'lesson.hearIt': 'Anhören',
   'lesson.speak.playModel': 'Muttersprachler anhören',
@@ -10367,6 +10371,7 @@ const es: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'Vuelve cuando tengas 13 años.',
   'lesson.secondTry': 'Otro intento: solo para practicar, no cambia tu puntuación',
+  'lesson.inARow': '{count} seguidas',
   'lesson.comesBack': 'Esta volverá a salir en un momento.',
   'lesson.hearIt': 'Escuchar',
   'lesson.speak.playModel': 'Escuchar a un hablante nativo',
@@ -12519,6 +12524,7 @@ const tr: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': '13 yaşına geldiğinde yine bekleriz.',
   'lesson.secondTry': 'Bir deneme daha — sadece alıştırma, puanını değiştirmez',
+  'lesson.inARow': 'Üst üste {count}',
   'lesson.comesBack': 'Bu soru birazdan tekrar gelecek.',
   'lesson.hearIt': 'Dinle',
   'lesson.speak.playModel': 'Anadili konuşanı dinle',
@@ -14671,6 +14677,7 @@ const ar: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'يسعدنا أن تعود عندما تبلغ 13 عامًا.',
   'lesson.secondTry': 'محاولة أخرى — للتمرين فقط، لا تغيّر نتيجتك',
+  'lesson.inARow': '{count} على التوالي',
   'lesson.comesBack': 'سيعود هذا السؤال بعد قليل.',
   'lesson.hearIt': 'استمع',
   'lesson.speak.playModel': 'استمع إلى متحدث أصلي',
@@ -16823,6 +16830,7 @@ const fr: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'Reviens quand tu auras 13 ans.',
   'lesson.secondTry': 'Encore un essai — pour s’entraîner, il ne change pas votre score',
+  'lesson.inARow': '{count} d’affilée',
   'lesson.comesBack': 'Cette question reviendra dans un instant.',
   'lesson.hearIt': 'Écouter',
   'lesson.speak.playModel': 'Écouter un locuteur natif',
@@ -18975,6 +18983,7 @@ const nl: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'Kom terug als je 13 bent.',
   'lesson.secondTry': 'Nog een poging — alleen om te oefenen, je score verandert niet',
+  'lesson.inARow': '{count} op rij',
   'lesson.comesBack': 'Deze komt zo nog een keer terug.',
   'lesson.hearIt': 'Beluisteren',
   'lesson.speak.playModel': 'Luister naar een moedertaalspreker',
@@ -21128,6 +21137,7 @@ const ckb: Catalog = {
   // ---- end mobile-ranks ----
   'age.stop.welcomeBack': 'کاتێک بوویت بە 13 ساڵ، بەخێربێیتەوە.',
   'lesson.secondTry': 'جارێکی تر — تەنها بۆ ڕاهێنان، ناژمێردرێت',
+  'lesson.inARow': '{count} لەسەر یەک',
   'lesson.comesBack': 'ئەم پرسیارە دوای چەند پرسیارێک دەگەڕێتەوە.',
   'lesson.hearIt': 'گوێ بگرە',
   'lesson.speak.playModel': 'گوێ لە قسەکەرێکی ڕەسەن بگرە',
