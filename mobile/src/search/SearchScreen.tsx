@@ -6,7 +6,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
-import { GradientBackground } from '../theme/glass';
+import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Chips } from '../theme/Chips';
 import { SearchField } from '../theme/SearchField';
 import { Icon, type IconName } from '../theme/Icon';
@@ -26,6 +26,8 @@ import type { CourseMap, CourseSummary } from '../coursemap/types';
 import { flattenMap } from '../coursemap/node';
 import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, matches, readyForServer, scopesToRun, type Scope } from './scope';
 import { EmptyState } from '../theme/EmptyState';
+import { describeError } from '../api/errors';
+import type { ApiError } from '../api/types';
 import { DiscoverGrid } from './DiscoverGrid';
 
 interface UserRow {
@@ -92,6 +94,9 @@ export function SearchScreen(): React.JSX.Element {
   const [words, setWords] = useState<SearchHit[]>([]);
   const [lessons, setLessons] = useState<LessonRow[]>([]);
   const [busy, setBusy] = useState(false);
+  // a search the server could not answer, which is not the same as one that found nothing
+  const [failure, setFailure] = useState<ApiError | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -184,6 +189,7 @@ export function SearchScreen(): React.JSX.Element {
       if (!wanted.includes('people')) setPeople([]);
       if (!wanted.includes('words')) setWords([]);
 
+      setFailure(null);
       if (!readyForServer(trimmed)) {
         setPeople([]);
         setWords([]);
@@ -199,6 +205,8 @@ export function SearchScreen(): React.JSX.Element {
       setBusy(false);
       if (p?.ok) setPeople(p.data.results);
       if (w?.ok) setWords(w.data.results);
+      const refused = [p, w].find((r) => r && !r.ok);
+      if (refused && !refused.ok) setFailure(refused.error);
     },
     [client, allLessons],
   );
@@ -211,7 +219,8 @@ export function SearchScreen(): React.JSX.Element {
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
-  }, [query, scope, run]);
+    // a retry runs the same search again
+  }, [query, scope, run, attempt]);
 
   const games = useMemo(() => {
     if (!scopesToRun(scope).includes('games')) return [];
@@ -219,7 +228,7 @@ export function SearchScreen(): React.JSX.Element {
   }, [scope, query, t]);
 
   const typed = query.trim().length > 0;
-  const nothing = typed && !busy && people.length === 0 && words.length === 0 && lessons.length === 0 && games.length === 0;
+  const nothing = typed && !busy && !failure && people.length === 0 && words.length === 0 && lessons.length === 0 && games.length === 0;
 
   const section = (labelKey: TranslationKey, rows: React.ReactNode[]) =>
     rows.length === 0 ? null : (
@@ -409,6 +418,8 @@ export function SearchScreen(): React.JSX.Element {
         {nothing ? (
           <EmptyState title={t('search.empty', { query: query.trim() })} />
         ) : null}
+
+        {typed && !busy && failure ? <ErrorRetry message={describeError(failure, t)} onRetry={() => setAttempt((n) => n + 1)} /> : null}
       </ScrollView>
     </GradientBackground>
   );
