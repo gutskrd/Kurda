@@ -722,18 +722,31 @@ describe('keyboard guides', () => {
     const names = (platform: (typeof KEYBOARD_PLATFORMS)[number], dialect: 'kurmanci' | 'sorani') =>
       KEYBOARD_GUIDES[platform][dialect].flatMap((s) => s.ui ?? []);
     expect(names('android', 'kurmanci')).toContain('Kurdish (Latin)');
-    expect(names('android', 'sorani')).toContain('Kurdish (Iraq) Arabic');
+    expect(names('android', 'sorani')).toContain('Arabic');
     // the way to Gboard's languages when its toolbar has no ⚙
     expect(names('android', 'kurmanci')).toContain('On-screen keyboard');
     expect(names('ios', 'sorani')).toContain('Kurdish, Sorani');
     expect(names('windows', 'sorani')).toContain('Central Kurdish');
     expect(names('mac', 'kurmanci')).toContain('ABC – Extended');
     expect(names('mac', 'sorani')).toContain('Kurdish-Sorani');
-    // the Linux list names its Kurmancî layouts by the state they were drawn up for; the guide names
-    // only the part a reader needs to spot, so it names no state
+    // the part of a layout's name a reader needs to spot (see 'names no state in any step')
     expect(names('linux', 'kurmanci')).toContain('Latin Q');
-    expect(KEYBOARD_GUIDES.linux.kurmanci.map((step) => keyboardStepText(step)).join(' ')).not.toMatch(/Turkey|setxkbmap tr/);
-    expect(names('linux', 'sorani')).toContain('Kurdish (Iraq, Arabic-Latin)');
+    expect(names('linux', 'sorani')).toContain('Arabic-Latin');
+  });
+
+  /*
+   * Device menus name some Kurdish keyboards after the state they were drawn
+   * up for. The guide names only the part a reader needs to spot, for every
+   * platform and both dialects, and no state at all.
+   */
+  it('names no state in any step', () => {
+    for (const platform of KEYBOARD_PLATFORMS) {
+      for (const dialect of ['kurmanci', 'sorani'] as const) {
+        for (const step of KEYBOARD_GUIDES[platform][dialect]) {
+          expect(keyboardStepText(step), `${platform} ${dialect} ${step.key}`).not.toMatch(/Turkey|Iraq|Iran|Syria|setxkbmap tr/);
+        }
+      }
+    }
   });
 
   it('points a Kurmancî reader at Kurdish (Latin), never another language’s keyboard', () => {

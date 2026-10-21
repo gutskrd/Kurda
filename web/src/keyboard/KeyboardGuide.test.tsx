@@ -119,7 +119,7 @@ describe('Get the Kurmancî keyboard', () => {
     renderApp(<KeyboardGuide dialect="sorani" onClose={() => undefined} />);
 
     expect(screen.getByRole('heading', { name: 'Get the Soranî keyboard' })).toBeInTheDocument();
-    expect(screen.getByText('Kurdish (Iraq) Arabic', { selector: 'b' })).toBeInTheDocument();
+    expect(screen.getByText('Arabic', { selector: 'b' })).toBeInTheDocument();
     const box = screen.getByLabelText(/^Try it: type/);
     expect(box).toHaveAttribute('dir', 'rtl');
     expect(box).toHaveAttribute('lang', 'ckb');
