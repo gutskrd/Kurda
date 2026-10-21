@@ -219,6 +219,8 @@ export function MessageLine({
       ref={wrapRef}
       className={`bubble-line${mine ? ' mine' : ''}${pressing ? ' is-pressing' : ''}${open ? ' is-open' : ''}`}
       onPointerDown={(e) => {
+        // a new press: whatever the last hold left behind is over
+        justHeld.current = false;
         touching.current = e.pointerType === 'touch';
         if (!touching.current) return;
         cancel();
