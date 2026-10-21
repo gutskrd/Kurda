@@ -8,6 +8,8 @@ import { ErrorState } from '../components/states';
 import { SettingsCardsSkeleton } from '../components/skeletons';
 import { Button } from '../components/Button';
 import { BlockedUsers } from '../settings/BlockedUsers';
+import { ChangePassword } from '../settings/ChangePassword';
+import { SignedInDevices } from '../settings/SignedInDevices';
 import { SafetyCard } from '../reports/SafetyCard';
 import { GiftSoundSetting } from '../gifts/GiftSoundSetting';
 import { VibrationSetting } from '../settings/VibrationSetting';
@@ -46,10 +48,12 @@ const VIS_HINT_KEY: Record<Visibility, MessageKey> = {
 };
 
 export function Settings(): React.JSX.Element {
-  const { client, logout } = useAuth();
+  const { logout } = useAuth();
   const t = useT();
   const navigate = useNavigate();
   const { data, loading, error, reload } = useApiGet<{ user: MeProfile }>('/me');
+  // a new password ends every other session, so the devices list is fetched again
+  const [passwordChanges, setPasswordChanges] = useState(0);
 
   /*
    * The heading, the language and how it looks need nothing from the account,
@@ -120,34 +124,9 @@ export function Settings(): React.JSX.Element {
       <KeyboardCard />
       <SendFeedbackCard />
 
-      <section className="card" style={{ marginTop: 20 }}>
-        <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('settings.sessions.title')}</h2>
-        <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-          {t('settings.sessions.help')}
-        </p>
-        {/*
-          Signing out lives here now rather than in the nav, where it sat one slip
-          away from ending your session every time you reached for your profile.
-          It belongs with the other things you do to your account.
-        */}
-        <div className="settings-actions">
-          <Button
-            onClick={() => {
-              void logout().then(() => navigate('/'));
-            }}
-          >
-            {t('settings.sessions.signOut')}
-          </Button>
-          <Button
-            variant="secondary"
-            onClick={() => {
-              void client.delete('/me/sessions').then(() => logout()).then(() => navigate('/'));
-            }}
-          >
-            {t('settings.sessions.signOutEverywhere')}
-          </Button>
-        </div>
-      </section>
+      {/* who can get into the account: the password, and where it is signed in */}
+      <ChangePassword onChanged={() => setPasswordChanges((n) => n + 1)} />
+      <SignedInDevices refreshKey={passwordChanges} />
 
       <ExportData />
 

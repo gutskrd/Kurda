@@ -3,7 +3,11 @@ import { ApiClient, CODE_COPY, describeError } from './api';
 import { createTokenStorage, persistTokens } from './tokenStorage';
 import { englishOnly as t, translator } from '../i18n/I18nProvider';
 import { fr } from '../i18n/fr';
+import { de } from '../i18n/de';
+import { ku } from '../i18n/ku';
+import { ckb } from '../i18n/ckb';
 import { en } from '../i18n/en';
+import { deviceId } from './deviceId';
 
 function jsonResponse(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), {
@@ -343,6 +347,117 @@ describe('CODE_COPY', () => {
   });
 
   it('prefers a countdown to a sentence when the server sent one', () => {
-    expect(describeError({ kind: 'rate_limited', code: 'LOCKED', message: 'x', retryAfterSec: 30 }, t)).toMatch(/30s/);
+    expect(describeError({ kind: 'rate_limited', code: 'RATE_LIMITED', message: 'x', retryAfterSec: 30 }, t)).toMatch(/30s/);
+  });
+});
+
+describe('the sign-in protection refusals', () => {
+  const locked = (retryAfterSec?: number, details?: unknown) => ({
+    kind: 'rate_limited' as const,
+    code: 'LOCKED',
+    message: 'too many failed attempts — try again later',
+    status: 429,
+    ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
+    ...(details !== undefined ? { details } : {}),
+  });
+
+  /**
+   * A lockout is a quarter of an hour at least, and up to a day. It is said the
+   * way a person says it, never as 792 seconds.
+   */
+  it('says how long a lockout lasts in words, not in seconds', () => {
+    expect(describeError(locked(900), t, 'en')).toBe(en['error.code.lockedFor'].replace('{duration}', '15 minutes'));
+    // 13.2 minutes left is "about 14 minutes": the sentence says "about"
+    expect(describeError(locked(792), t, 'en')).toContain('about 14 minutes');
+    expect(describeError(locked(792), t, 'en')).not.toMatch(/792|\ds\b/);
+    expect(describeError(locked(2 * 3600), t, 'en')).toContain('about 2 hours');
+    expect(describeError(locked(60), t, 'en')).toContain('about 1 minute ');
+  });
+
+  it('takes the wait from the details when there is no header', () => {
+    const said = describeError({ ...locked(undefined, { retryAfterSec: 1800 }), kind: 'client' as const }, t, 'en');
+    expect(said).toContain('about 30 minutes');
+  });
+
+  it('falls back to the plain sentence when it does not know how long', () => {
+    expect(describeError(locked(), t, 'en')).toBe(en['error.code.locked']);
+  });
+
+  it('says the wait in the reader’s language, Kurdish from the catalogue', () => {
+    expect(describeError(locked(900), translator(de), 'de')).toContain('etwa 15 Minuten');
+    expect(describeError(locked(900), translator(ku), 'ku')).toContain('nêzîkî 15 deqîqe');
+    expect(describeError(locked(3 * 3600), translator(ckb), 'ckb')).toContain('نزیکەی 3 کاتژمێر');
+  });
+
+  it('answers a sign-in that asks for a challenge calmly, whatever the reason', () => {
+    for (const reason of ['attempts', 'network', 'surge']) {
+      const said = describeError(
+        { kind: 'client', code: 'CAPTCHA_REQUIRED', message: 'complete the challenge to sign in', status: 403, details: { captchaRequired: true, reason } },
+        t,
+      );
+      expect(said, reason).toBe(en['error.code.captchaRequired']);
+    }
+    expect(en['error.code.captchaRequired']).toMatch(/wait a few minutes/);
+    expect(en['error.code.captchaRequired']).toMatch(/reset your password/);
+  });
+
+  it('says a password from a data leak is not safe', () => {
+    const breached = { kind: 'client' as const, code: 'PASSWORD_BREACHED', message: 'x', status: 400, details: { reason: 'breached' } };
+    expect(describeError(breached, t)).toBe('This password has shown up in a data leak, so it isn’t safe. Choose a different one.');
+    expect(describeError(breached, translator(ku))).toBe(ku['error.code.passwordBreached']);
+  });
+
+  it('says what went wrong changing a password, and ending a session', () => {
+    const said = (code: string) => describeError({ kind: 'client', code, message: 'raw', status: 400 }, t);
+    expect(said('WRONG_PASSWORD')).toBe('Your current password isn’t right.');
+    expect(said('NO_PASSWORD')).toBe('Your account doesn’t have a password yet.');
+    expect(said('SESSION_NOT_FOUND')).toBe('That device is already signed out.');
+  });
+
+  it('never says which of the email and the password was wrong', () => {
+    const said = describeError({ kind: 'unauthorized', code: 'INVALID_CREDENTIALS', message: 'invalid email or password', status: 401 }, t);
+    expect(said).toBe('That email or password isn’t right.');
+  });
+});
+
+describe('the device id header', () => {
+  it('goes with every request the client makes, the same on each', async () => {
+    persistTokens({ accessToken: 'a', refreshToken: 'r' }, true);
+    const fetchMock = vi.fn(async (url: string, _init?: RequestInit) =>
+      url.endsWith('/stale') ? jsonResponse(401, { code: 'UNAUTHORIZED', message: 'no' }) : jsonResponse(200, { accessToken: 'b', refreshToken: 'r2' }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {});
+    await client.get('/thing');
+    await client.post('/thing', { a: 1 });
+    await client.delete('/me/sessions?except=current');
+    await client.uploadBytes('/me/photo', new Blob(['x'], { type: 'image/png' }));
+    await client.endSession();
+    await client.get('/stale'); // a 401: the refresh goes out too
+
+    const sent = fetchMock.mock.calls.map(([url, init]) => [url, (init!.headers as Record<string, string>)['x-device-id']]);
+    expect(sent.map(([u]) => u)).toEqual(expect.arrayContaining(['https://api.test/auth/refresh', 'https://api.test/auth/logout']));
+    for (const [url, id] of sent) expect(id, String(url)).toBe(deviceId());
+    // an id for a header, never a part of an address
+    for (const [url] of sent) expect(String(url)).not.toContain(deviceId());
+  });
+});
+
+describe('replacing the access token', () => {
+  it('keeps the refresh token, and keeps it where it was', () => {
+    persistTokens({ accessToken: 'old', refreshToken: 'keep-me' }, false);
+    const storage = createTokenStorage();
+    const client = new ApiClient('https://api.test', storage, () => {});
+    client.replaceAccessToken('new');
+    expect(storage.get()).toEqual({ accessToken: 'new', refreshToken: 'keep-me' });
+    // a session that was not remembered is still not remembered
+    expect(localStorage.getItem('hevalo_tokens')).toBeNull();
+    expect(sessionStorage.getItem('hevalo_tokens')).not.toBeNull();
+  });
+
+  it('does nothing when signed out', () => {
+    const storage = createTokenStorage();
+    new ApiClient('https://api.test', storage, () => {}).replaceAccessToken('new');
+    expect(storage.get()).toBeNull();
   });
 });

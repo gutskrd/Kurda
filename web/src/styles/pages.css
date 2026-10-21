@@ -3902,7 +3902,7 @@ a.mkp-activity-row:hover {
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
+  gap: var(--space-2);
 }
 
 /* ---- the blocklist ------------------------------------------------------- */
@@ -3977,6 +3977,104 @@ a.mkp-activity-row:hover {
   .blocklist-row .btn {
     margin-left: auto;
   }
+}
+
+/* ---- signed-in devices ---------------------------------------------------- */
+
+/*
+ * The blocklist's rows, with a picture of the device where a face would be.
+ * `min-width: 0` for the same reason as there: a long device name gives way,
+ * never the Sign out button.
+ */
+.device-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+.device-row {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+}
+.device-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+}
+.device-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.device-name {
+  font-weight: 550;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.device-meta {
+  color: var(--ink-3);
+  font-size: 0.82rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.device-row .btn {
+  flex: none;
+}
+/* the one you are holding: said in the colour of "fine", not of a warning */
+.device-here {
+  color: var(--success);
+  font-weight: 600;
+}
+.device-others {
+  margin-top: var(--space-3);
+}
+/* signing out here, or everywhere at once: apart from the list, under a hairline */
+.device-here-actions {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+/*
+ * On a phone a name and its last-used line stop fitting beside Sign out, so
+ * the button takes the line under them, at its end, as a friend row's do.
+ */
+@media (max-width: 560px) {
+  .device-row.has-action {
+    flex-wrap: wrap;
+    row-gap: var(--space-2);
+  }
+  .device-row.has-action .device-who {
+    flex-basis: calc(100% - 52px);
+  }
+  .device-row.has-action .btn,
+  .device-row.has-action .skeleton-btn {
+    margin-inline-start: auto;
+  }
+}
+
+/* the password form: a column to type a password into, not the card's width */
+.password-form {
+  max-width: 416px;
+}
+.password-form .settings-actions {
+  margin-top: var(--space-2);
 }
 
 /* ---- who gave them what they are wearing --------------------------------- */

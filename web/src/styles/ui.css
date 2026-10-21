@@ -163,6 +163,14 @@
   font-size: 0.8rem;
   color: var(--ink-3);
 }
+/* what is wrong with this field, under it, rather than in a banner above the form */
+.field.has-problem .input {
+  border-color: var(--danger);
+}
+.field-problem {
+  font-size: 0.8rem;
+  color: var(--danger);
+}
 /* Hide the browser's own password reveal/clear control (Edge/IE ::-ms-reveal,
    ::-ms-clear) so it never doubles up with our custom show/hide eye button. */
 input[type='password']::-ms-reveal,

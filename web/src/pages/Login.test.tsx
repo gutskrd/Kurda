@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { Login } from './Login';
 import { renderApp, jsonResponse } from '../test/utils';
 import { en } from '../i18n/en';
+import { deviceId } from '../lib/deviceId';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -67,6 +68,77 @@ describe('Login', () => {
     await userEvent.click(screen.getByRole('button', { name: /log in/i }));
 
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+  });
+
+  /**
+   * The name is what Settings lists this session under; the id is what the
+   * server's sign-in protection keys on, and goes in a header, never the body.
+   */
+  it('says which browser this is: a name for the devices list, an id for sign-in protection', async () => {
+    vi.spyOn(navigator, 'userAgent', 'get').mockReturnValue(
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0.0.0 Safari/537.36',
+    );
+    const fetchMock = vi.fn(async (_url: string, _init?: RequestInit) =>
+      jsonResponse(200, {
+        user: { id: '1', email: 'a@b.com', username: 'ada', displayName: null, emailVerified: true },
+        tokens: { accessToken: 'x', refreshToken: 'y' },
+      }),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+    await screen.findByText('App home');
+
+    const [url, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
+    expect(JSON.parse(String(init!.body))).toEqual({ email: 'a@b.com', password: 'rightpass1', deviceName: 'Chrome on Windows' });
+    expect((init!.headers as Record<string, string>)['x-device-id']).toBe(deviceId());
+    expect(url).not.toContain(deviceId());
+  });
+
+  /**
+   * Production has no challenge to show yet, so a sign-in that asks for one
+   * says to wait or set a new password, calmly, with the way to do the second.
+   */
+  it('answers a sign-in that asks for a challenge with a wait, or a new password', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () =>
+        jsonResponse(403, { code: 'CAPTCHA_REQUIRED', message: 'complete the challenge to sign in', details: { captchaRequired: true, reason: 'attempts' } }),
+      ),
+    );
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'wrongpass1');
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent(en['error.code.captchaRequired']);
+    expect(alert).not.toHaveClass('msg-error');
+    expect(within(alert).getByRole('link', { name: en['auth.reset.title'] })).toHaveAttribute('href', '/forgot-password');
+  });
+
+  it('says how long a paused sign-in lasts in words, with the way to a new password', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(JSON.stringify({ code: 'LOCKED', message: 'too many failed attempts', details: { retryAfterSec: 900 } }), {
+            status: 429,
+            headers: { 'content-type': 'application/json', 'retry-after': '900' },
+          }),
+      ),
+    );
+    renderLogin();
+    await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
+    await userEvent.type(screen.getByLabelText('Password'), 'wrongpass1');
+    await userEvent.click(screen.getByRole('button', { name: /log in/i }));
+
+    const alert = await screen.findByRole('alert');
+    expect(alert).toHaveTextContent('wait about 15 minutes');
+    expect(alert).not.toHaveTextContent('900');
+    expect(within(alert).getByRole('link', { name: en['auth.reset.title'] })).toHaveAttribute('href', '/forgot-password');
   });
 
   it('toggles password visibility', async () => {

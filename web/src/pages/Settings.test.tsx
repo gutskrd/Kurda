@@ -47,7 +47,10 @@ describe('Settings page', () => {
     expect(screen.getByRole('button', { name: 'Friends only' })).toBeInTheDocument();
     // signing out moved here from the nav, where it sat beside your own face
     expect(screen.getByRole('button', { name: /^sign out$/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /log out everywhere/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^sign out everywhere$/i })).toBeInTheDocument();
+    // who can get into the account: the password, and every device signed in to it
+    expect(screen.getByRole('button', { name: en['settings.password.change'] })).toBeInTheDocument();
+    expect(screen.getByText(en['settings.devices.title'])).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /request data export/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^delete account$/i })).toBeInTheDocument();
     // Settings is the only screen that can undo a block — a blocked person is
@@ -130,5 +133,37 @@ describe('Settings page', () => {
     // nothing is sent: this is a choice about the screen, not the account
     expect(vi.mocked(fetch).mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH')).toBe(false);
     delete document.documentElement.dataset.theme;
+  });
+
+  /** A new password ends every other session, so the list of them is read again. */
+  it('lists the devices again once the password has changed', async () => {
+    const others = [
+      { id: 'a', deviceName: 'Chrome on Windows', startedAt: '2026-10-01T00:00:00.000Z', lastSeenAt: new Date().toISOString(), current: true },
+      { id: 'b', deviceName: 'Safari on iPhone', startedAt: '2026-10-01T00:00:00.000Z', lastSeenAt: '2026-10-20T00:00:00.000Z', current: false },
+    ];
+    let changed = false;
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.endsWith('/me/password')) {
+        changed = true;
+        return jsonResponse(200, { changed: true, accessToken: 'new', accessExpiresInSeconds: 900 });
+      }
+      if (url.endsWith('/me/sessions')) return jsonResponse(200, { sessions: changed ? others.slice(0, 1) : others });
+      void init;
+      return jsonResponse(200, url.endsWith('/me') ? me() : {});
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<Settings />, ['/app/settings']);
+    expect(await screen.findByText('Safari on iPhone')).toBeInTheDocument();
+
+    const user = userEvent.setup();
+    await user.click(screen.getByRole('button', { name: en['settings.password.change'] }));
+    await user.type(screen.getByLabelText(en['settings.password.current']), 'old-password1');
+    await user.type(screen.getByLabelText(en['auth.newPassword']), 'a-new-password2');
+    await user.type(screen.getByLabelText(en['auth.reset.confirmNew']), 'a-new-password2');
+    await user.click(screen.getAllByRole('button', { name: en['settings.password.change'] }).at(-1)!);
+
+    expect(await screen.findByText(en['settings.password.changed'])).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText('Safari on iPhone')).not.toBeInTheDocument());
+    expect(screen.getByText(en['settings.devices.onlyThis'])).toBeInTheDocument();
   });
 });

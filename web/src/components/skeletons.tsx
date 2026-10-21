@@ -204,6 +204,35 @@ export function BlocklistSkeleton({ count = 3, label }: { count?: number; label?
   );
 }
 
+/**
+ * Signed-in devices, as Settings lists them: the device's picture, its name
+ * and when it was last used, and Sign out on every row but the first, which is
+ * the device you are holding.
+ */
+export function DeviceListSkeleton({ count = 2, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
+  const t = useT();
+  return (
+    <SkeletonRegion label={t(label ?? 'common.loading')}>
+      <ul className="device-list">
+        {times(count, (i) => (
+          <li className={`device-row${i === 0 ? '' : ' has-action'}`} key={i}>
+            <Skeleton className="device-icon" />
+            <span className="device-who">
+              <span className="device-name">
+                <Skeleton line w={[136, 112, 124][i % 3]} />
+              </span>
+              <span className="device-meta">
+                <Skeleton line w={[148, 128, 112][i % 3]} />
+              </span>
+            </span>
+            {i > 0 && <ButtonBox size="sm" w={84} />}
+          </li>
+        ))}
+      </ul>
+    </SkeletonRegion>
+  );
+}
+
 /** Friends to send something to (a gift, a post): a face and a name per row, as the picker lists them. */
 export function PickFriendSkeleton({ count = 4, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
   const t = useT();

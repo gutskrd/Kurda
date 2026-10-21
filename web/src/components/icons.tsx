@@ -99,6 +99,11 @@ import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlas
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
+// signed-in devices, by kind
+import { DeviceMobile } from '@phosphor-icons/react/dist/icons/DeviceMobile';
+import { DeviceTablet } from '@phosphor-icons/react/dist/icons/DeviceTablet';
+import { Laptop } from '@phosphor-icons/react/dist/icons/Laptop';
+import { Devices } from '@phosphor-icons/react/dist/icons/Devices';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -253,6 +258,13 @@ export const SearchIcon = named(MagnifyingGlass, 18);
 export const SortIcon = named(ArrowsDownUp, 18);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
+
+/* A signed-in device in Settings, by what its name says it is; the pair of
+   screens for one that says nothing */
+export const PhoneIcon = named(DeviceMobile, 22);
+export const TabletIcon = named(DeviceTablet, 22);
+export const ComputerIcon = named(Laptop, 22);
+export const DeviceIcon = named(Devices, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

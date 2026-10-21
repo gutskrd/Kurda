@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
+import { thisDeviceName } from '../lib/deviceName';
 import type { AuthPayload, SessionUser } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import type { SuspendedErrorDetails } from '@kurda/shared';
@@ -22,8 +23,12 @@ interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
   client: ApiClient;
-  /** Resolve to an error message, or null on success. */
-  login(email: string, password: string, remember: boolean): Promise<string | null>;
+  /**
+   * Resolve to the error, or null on success. The code rides along because
+   * some refusals need a way on beside the words: a paused sign-in offers a
+   * new password.
+   */
+  login(email: string, password: string, remember: boolean): Promise<{ message: string; code?: string } | null>;
   /**
    * Resolve to the error, or null on success. The code rides along because one
    * refusal is not a message to show under a form: UNDER_MINIMUM_AGE replaces
@@ -115,19 +120,20 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     user,
     client,
     login: async (email, password, remember) => {
-      const res = await client.post<AuthPayload>('/auth/login', { email, password });
+      // the name is what Settings lists this session under ("Chrome on Windows")
+      const res = await client.post<AuthPayload>('/auth/login', { email, password, deviceName: thisDeviceName() });
       if (!res.ok) {
         // a suspended account gets the suspension screen, not a line under the form
         const suspended = suspensionOf(res.error);
         if (suspended) setSuspension(suspended);
-        return describeError(res.error, t);
+        return { message: describeError(res.error, t), code: res.error.code };
       }
       setSuspension(null);
       applyAuth(res.data, remember);
       return null;
     },
     register: async (input) => {
-      const res = await client.post<AuthPayload>('/auth/register', { ...input, acceptTerms: true });
+      const res = await client.post<AuthPayload>('/auth/register', { ...input, deviceName: thisDeviceName(), acceptTerms: true });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
       applyAuth(res.data, true);
       return null;
