@@ -8,9 +8,9 @@ import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Login'>;
 
-export function LoginScreen({ navigation }: Props) {
+export function LoginScreen({ navigation, route }: Props) {
   const { login } = useAuth();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route.params?.email ?? '');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string | null; password?: string | null }>({});
   const [formError, setFormError] = useState<string | null>(null);
@@ -62,7 +62,7 @@ export function LoginScreen({ navigation }: Props) {
       <SubmitButton label={busy ? t('auth.login.submitting') : t('auth.login.submit')} busy={busy} onPress={submit} />
       <LinkText
         label={t('auth.login.forgot')}
-        onPress={() => navigation.navigate('ForgotPassword')}
+        onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
       />
       {/* one sentence with the action in it, the way the browser asks */}
       <LinkText

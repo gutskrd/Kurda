@@ -1,5 +1,5 @@
 import { useState, type ReactNode } from 'react';
-import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassCard, GradientBackground } from '../../theme/glass';
@@ -37,7 +37,8 @@ export function AuthScreenShell({
    * edge. The screens with fields have no hero and stay left-aligned, because a
    * centred heading above left-aligned labels is the same mistake mirrored.
    */
-  const centred = Boolean(hero);
+  const centred = Boolean(hero);
+
 
   const { t } = useI18n();
   const insets = useSafeAreaInsets();
@@ -63,7 +64,19 @@ export function AuthScreenShell({
           <Text style={[styles.backText, { color: colors.primary }]}>{t('common.back')}</Text>
         </Pressable>
       ) : null}
-      <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/*
+          Scrolls once the form is taller than the screen — sign-up with its
+          birth month, or with a note above it, on a small phone — and stays
+          centred while it is not. Fixed, the overflow ran under the way back
+          and off the bottom with the button in it.
+        */}
+        <ScrollView
+          // clear of the way back above, and as much below, so a form that fits stays in the middle
+          contentContainerStyle={[styles.screen, { paddingVertical: insets.top + MIN_TOUCH_TARGET + spacing.sm }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
         <Text style={[styles.brand, { color: colors.primary }]}>Hevalo</Text>
         <Text style={[styles.slogan, { color: colors.textSecondary }]}>Jiyan bi kurdî xweştire</Text>
         <GlassCard>
@@ -78,6 +91,7 @@ export function AuthScreenShell({
           ) : null}
           {children}
         </GlassCard>
+        </ScrollView>
       </KeyboardAvoidingView>
     </GradientBackground>
   );
@@ -204,7 +218,8 @@ export function FormError({ message }: { message: string | null }) {
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, padding: spacing.lg, justifyContent: 'center' },
+  flex: { flex: 1 },
+  screen: { flexGrow: 1, padding: spacing.lg, justifyContent: 'center' },
   back: { position: 'absolute', top: spacing.xl, zIndex: 1, alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: 2 },
   backStart: { left: spacing.lg },
   backEnd: { right: spacing.lg },

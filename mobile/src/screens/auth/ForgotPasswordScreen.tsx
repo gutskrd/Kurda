@@ -11,10 +11,10 @@ import { useI18n } from '../../i18n/I18nContext';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'ForgotPassword'>;
 
-export function ForgotPasswordScreen({ navigation }: Props) {
+export function ForgotPasswordScreen({ navigation, route }: Props) {
   const { requestPasswordReset } = useAuth();
   const { colors } = useTheme();
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(route.params?.email ?? '');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const { t } = useI18n();
@@ -56,7 +56,7 @@ export function ForgotPasswordScreen({ navigation }: Props) {
           <SubmitButton label={t('auth.reset.sendLink')} busy={busy} onPress={submit} />
         </>
       )}
-      <LinkText label={t('auth.reset.backToLogin')} onPress={() => navigation.navigate('Login')} />
+      <LinkText label={t('auth.reset.backToLogin')} onPress={() => navigation.navigate('Login', { email: email.trim() })} />
     </AuthScreenShell>
   );
 }

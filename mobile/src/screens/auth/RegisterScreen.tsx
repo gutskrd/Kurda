@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
-import { spacing, typography } from '../../theme/tokens';
+import { radii, spacing, typography } from '../../theme/tokens';
+import { ClayButton } from '../../theme/glass';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useAuth } from '../../auth/AuthContext';
 import {
@@ -29,6 +30,8 @@ export function RegisterScreen({ navigation }: Props) {
   const [birth, setBirth] = useState(EMPTY_BIRTH_MONTH);
   const [errors, setErrors] = useState<Record<string, string | null | undefined>>({});
   const [formError, setFormError] = useState<string | null>(null);
+  // the address may already have an account: said without saying so, with the two ways on
+  const [mayHaveAccount, setMayHaveAccount] = useState(false);
   const [busy, setBusy] = useState(false);
   const { t, locale } = useI18n();
 
@@ -47,6 +50,7 @@ export function RegisterScreen({ navigation }: Props) {
 
     setBusy(true);
     setFormError(null);
+    setMayHaveAccount(false);
     const error = await register({
       email: email.trim(),
       username: username.normalize('NFC').trim(),
@@ -62,6 +66,7 @@ export function RegisterScreen({ navigation }: Props) {
     // under 13 no account was made: the explanation replaces the form (the
     // app root shows it), and stays for as long as the app is open
     if (error?.code === 'UNDER_MINIMUM_AGE') void stopForAge('refused');
+    else if (error?.code === 'REGISTRATION_FAILED') setMayHaveAccount(true);
     else if (error) setFormError(error.message);
   };
 
@@ -72,6 +77,30 @@ export function RegisterScreen({ navigation }: Props) {
       onBack={navigation.canGoBack() ? () => navigation.goBack() : undefined}
     >
       <FormError message={formError} />
+      {mayHaveAccount ? (
+        <View
+          style={[styles.notice, { backgroundColor: colors.controlTrack }]}
+          accessibilityLiveRegion="polite"
+          testID="register-may-have-account"
+        >
+          <Text style={[styles.noticeText, { color: colors.textPrimary }]}>{t('error.code.registrationFailed')}</Text>
+          <View style={styles.noticeActions}>
+            <ClayButton
+              label={t('auth.login.submit')}
+              tone="primary"
+              onPress={() => navigation.navigate('Login', { email: email.trim() })}
+              style={styles.noticeAction}
+            />
+            <ClayButton
+              label={t('auth.reset.title')}
+              variant="outline"
+              tone="primary"
+              onPress={() => navigation.navigate('ForgotPassword', { email: email.trim() })}
+              style={styles.noticeAction}
+            />
+          </View>
+        </View>
+      ) : null}
       <Field
         label={t('auth.email')}
         value={email}
@@ -115,6 +144,14 @@ export function RegisterScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  /*
+   * Not the red line a failed form gets: nothing was done wrong, the address
+   * may simply have an account already, and the answer is a way forward.
+   */
+  notice: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md, marginBottom: spacing.md },
+  noticeText: { fontSize: typography.sizes.sm, lineHeight: 21 },
+  noticeActions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  noticeAction: { flexGrow: 1 },
   hint: {
     marginTop: -spacing.sm,
     marginBottom: spacing.sm,

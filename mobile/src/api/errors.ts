@@ -18,6 +18,7 @@
 import { isMissingRoute } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
+import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
@@ -39,6 +40,21 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   INVALID_TOKEN: 'error.code.invalidLink',
   LOCKED: 'error.code.locked',
   SIGNUP_REJECTED: 'error.code.signupRejected',
+  /*
+   * An address that already has an account. The server keeps this vague on
+   * purpose, so nobody can learn which addresses are registered; the words
+   * stay as vague, and point at the two ways forward for whoever it is.
+   */
+  REGISTRATION_FAILED: 'error.code.registrationFailed',
+  // a sign-in the server wants to check before it lets it through
+  LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
+  INVALID_OAUTH_TOKEN: 'error.code.oauthFailed',
+  OAUTH_NOT_CONFIGURED: 'error.code.oauthUnavailable',
+  // a session that has run out, however the server put it
+  UNAUTHORIZED: 'error.sessionExpired',
+  INVALID_REFRESH: 'error.sessionExpired',
+  REFRESH_EXPIRED: 'error.sessionExpired',
+  REFRESH_REUSED: 'error.sessionExpired',
   TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
   USERNAME_TAKEN: 'error.code.usernameTaken',
   // age and the protections that follow from it — the browser says the same
@@ -49,6 +65,44 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
 };
+/**
+ * Codes whose code alone is not enough: which rule a password or a username
+ * broke (`details.reason`, api/src/auth/password-policy.ts and
+ * api/src/users/username.ts), and which field of a form the server could not
+ * accept. The password's reasons get the words the phone's own field check
+ * already says; the browser says the same things for the same reasons.
+ */
+const PASSWORD_REASON: Record<string, TranslationKey> = {
+  'too-short': 'field.passwordTooShort',
+  'too-long': 'field.passwordTooLong',
+  'needs-letter': 'field.passwordNeedsLetter',
+  'needs-number': 'field.passwordNeedsNumber',
+};
+const USERNAME_REASON: Record<string, TranslationKey> = {
+  'too-short': 'field.invalidUsername',
+  'too-long': 'field.invalidUsername',
+  'invalid-chars': 'error.code.usernameChars',
+  'edge-underscore': 'error.code.usernameUnderscore',
+  'consecutive-underscore': 'error.code.usernameUnderscore',
+  'numbers-only': 'error.code.usernameLetter',
+  'no-letter': 'error.code.usernameLetter',
+  reserved: 'error.code.usernameUnavailable',
+};
+
+function byReason(error: ApiError, t: Translate): string | null {
+  const reason = (error.details as { reason?: unknown } | undefined)?.reason;
+  const key = typeof reason === 'string' ? reason : '';
+  if (error.code === 'WEAK_PASSWORD') return t(PASSWORD_REASON[key] ?? PASSWORD_RULES_KEY, FIELD_ERROR_VARS);
+  if (error.code === 'INVALID_USERNAME') return t(USERNAME_REASON[key] ?? 'error.code.usernameChars', FIELD_ERROR_VARS);
+  if (error.code === 'VALIDATION_ERROR') {
+    // the issues name the field; an email address is the one people most often mistype
+    const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];
+    const email = issues.some((i) => Array.isArray(i.path) && i.path.includes('email'));
+    return t(email ? 'error.code.badEmail' : 'error.code.checkDetails');
+  }
+  return null;
+}
+
 export function describeError(error: ApiError, t: Translate): string {
   // A live countdown beats any sentence, so it wins when the server sent one.
   // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
@@ -68,6 +122,8 @@ export function describeError(error: ApiError, t: Translate): string {
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  const reasoned = byReason(error, t);
+  if (reasoned) return reasoned;
   // A route the API does not have: this build is newer than the server it
   // talks to (a game invite from a build whose API is not deployed yet), and
   // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute).

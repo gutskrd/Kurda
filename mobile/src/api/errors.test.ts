@@ -124,6 +124,81 @@ describe('CODE_COPY', () => {
    * messages apiece, so the code alone cannot say which. The server's own
    * sentence is the honest thing to show for them.
    */
+  /*
+   * Every refusal the sign-up, sign-in and email-check routes can give
+   * (api/src/auth/routes.ts and service.ts), with the details the server
+   * sends: none of them may reach the reader as the server's English or as
+   * "Something went wrong".
+   */
+  it('answers every sign-up, sign-in and verification refusal in the reader\'s words', () => {
+    const refusals: ApiError[] = [
+      err({ kind: 'client', status: 409, code: 'REGISTRATION_FAILED' }),
+      err({ kind: 'client', status: 409, code: 'USERNAME_TAKEN' }),
+      err({ kind: 'client', status: 400, code: 'SIGNUP_REJECTED' }),
+      err({ kind: 'client', status: 400, code: 'INVALID_USERNAME', details: { reason: 'reserved' } }),
+      err({ kind: 'client', status: 400, code: 'INVALID_USERNAME', details: { reason: 'too-short' } }),
+      err({ kind: 'client', status: 400, code: 'WEAK_PASSWORD', details: { reason: 'needs-number' } }),
+      err({ kind: 'client', status: 400, code: 'WEAK_PASSWORD' }),
+      err({ kind: 'client', status: 400, code: 'VALIDATION_ERROR' }),
+      err({ kind: 'client', status: 400, code: 'VALIDATION_ERROR', details: [{ path: ['email'], message: 'Invalid email address' }] }),
+      err({ kind: 'client', status: 400, code: 'INVALID_BIRTH_MONTH' }),
+      err({ kind: 'client', status: 403, code: 'UNDER_MINIMUM_AGE' }),
+      err({ kind: 'client', status: 401, code: 'INVALID_CREDENTIALS' }),
+      err({ kind: 'client', status: 403, code: 'LOGIN_VERIFICATION_REQUIRED' }),
+      err({ kind: 'client', status: 403, code: 'ACCOUNT_DISABLED' }),
+      err({ kind: 'client', status: 401, code: 'INVALID_OAUTH_TOKEN' }),
+      err({ kind: 'server', status: 503, code: 'OAUTH_NOT_CONFIGURED' }),
+      err({ kind: 'client', status: 400, code: 'INVALID_TOKEN' }),
+      err({ kind: 'client', status: 400, code: 'INVALID_CODE' }),
+      err({ kind: 'client', status: 400, code: 'CODE_EXPIRED' }),
+      err({ kind: 'rate_limited', status: 429, code: 'TOO_MANY_ATTEMPTS' }),
+      err({ kind: 'rate_limited', status: 429, code: 'LOCKED' }),
+      err({ kind: 'rate_limited', status: 429, code: 'RATE_LIMITED' }),
+      err({ kind: 'client', status: 401, code: 'UNAUTHORIZED' }),
+    ];
+    for (const locale of ['en', 'ku'] as const) {
+      for (const refusal of refusals) {
+        const said = describeError(refusal, translator(locale));
+        expect(said, `${locale} ${refusal.code}`).not.toBe('raw technical detail');
+        expect(said, `${locale} ${refusal.code}`).not.toBe(TRANSLATIONS[locale]['error.generic']);
+        expect(said, `${locale} ${refusal.code}`).not.toMatch(/\{\w+\}/);
+      }
+    }
+  });
+
+  /*
+   * The server will not say whether an address has an account, so neither
+   * does the phone: the sentence is the same whether it has one or not, and
+   * it names both ways on.
+   */
+  it('words an address that may already have an account without confirming it', () => {
+    const said = describeError(err({ kind: 'client', status: 409, code: 'REGISTRATION_FAILED', message: 'unable to register with these details' }), t);
+    expect(said).toBe('We couldn’t create an account with these details. If you already have one, log in or reset your password.');
+    expect(said).not.toMatch(/already (registered|in use|exists)/i);
+  });
+
+  it('names the broken password or username rule from the reason the server gives', () => {
+    expect(describeError(err({ kind: 'client', code: 'WEAK_PASSWORD', details: { reason: 'needs-letter' } }), t)).toBe(
+      TRANSLATIONS.en['field.passwordNeedsLetter'],
+    );
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'numbers-only' } }), t)).toBe(
+      TRANSLATIONS.en['error.code.usernameLetter'],
+    );
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'reserved' } }), t)).toBe(
+      'That username isn’t available. Try another one.',
+    );
+    expect(describeError(err({ kind: 'client', code: 'INVALID_USERNAME', details: { reason: 'too-long' } }), t)).toBe('Username must be 3–30 characters (letters, digits or _)');
+  });
+
+  it('names the email when that is the field the server could not accept, and asks for another look otherwise', () => {
+    expect(describeError(err({ kind: 'client', code: 'VALIDATION_ERROR', details: [{ path: ['email'] }] }), t)).toBe(
+      'That email address doesn’t look complete. Check it and try again.',
+    );
+    expect(describeError(err({ kind: 'client', code: 'VALIDATION_ERROR', details: [{ path: ['username'] }] }), t)).toBe(
+      TRANSLATIONS.en['error.code.checkDetails'],
+    );
+  });
+
   it('falls through to the server message for a code it does not know', () => {
     expect(describeError(err({ kind: 'client', code: 'BAD_ROSTER', status: 409 }), t)).toBe('raw technical detail');
   });
