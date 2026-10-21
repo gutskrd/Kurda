@@ -6,7 +6,7 @@ import { registerAuthRoutes } from './auth/routes.js';
 import { setShuffleKey } from './content/exercises.js';
 import { Cache } from './cache/cache.js';
 import { JobQueue } from './jobs/queue.js';
-import { createStorage, type MediaStorage } from './media/storage.js';
+import { createStorage, preparePrivateStorage, type MediaStorage } from './media/storage.js';
 import { registerImageUploadParser } from './media/uploadParser.js';
 import { mediaLimits } from './media/mediaLimits.js';
 import { createRedis, redisHealthCheck } from './cache/redis.js';
@@ -366,6 +366,13 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   const storage = createStorage(config);
   if (storage) {
     app.decorate('storage', storage);
+    // a private bucket for evidence and data exports: checked, and the older
+    // private files moved into it, once the server is up (media/storage.ts)
+    if (storage.hasPrivateBucket && config.NODE_ENV !== 'test') {
+      app.addHook('onReady', async () => {
+        void preparePrivateStorage(storage, app.log);
+      });
+    }
   }
 
   // auth + user endpoints need the database

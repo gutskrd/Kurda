@@ -57,6 +57,10 @@ export class FakeStorage {
     return `https://signed.test/public/${key}?ttl=${ttl}`;
   }
 
+  async createPrivateDownloadUrl(key: string, ttl = 900): Promise<string> {
+    return `https://signed.test/private/${key}?ttl=${ttl}`;
+  }
+
   async createEvidenceDownloadUrl(target: string, ttl = 300): Promise<string> {
     return `https://signed.test/evidence/${target}?ttl=${ttl}`;
   }

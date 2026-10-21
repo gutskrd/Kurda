@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { S3Client } from '@aws-sdk/client-s3';
+import { S3Client } from '@aws-sdk/client-s3';
 import { loadConfig } from '../config/env.js';
 import {
   IMMUTABLE_CACHE_CONTROL,
@@ -9,6 +9,7 @@ import {
   cloudflarePurge,
   createStorage,
   mediaKey,
+  preparePrivateStorage,
 } from './storage.js';
 
 const HASH = 'a'.repeat(64);
@@ -196,5 +197,146 @@ describe('evidence storage', () => {
       evidenceBucket: 'kurda-evidence',
       purge: expect.any(Function),
     });
+  });
+});
+
+describe('the private bucket', () => {
+  type Input = Record<string, string | undefined> & { Bucket: string; Key?: string; CopySource?: string; Prefix?: string; ContinuationToken?: string };
+
+  /**
+   * Two buckets in memory behind a real client — so links are really signed —
+   * whose requests are answered here. Listing pages two keys at a time.
+   */
+  function buckets(initial: Record<string, string[]>) {
+    const store = new Map<string, Map<string, { cacheControl?: string }>>();
+    const bucket = (name: string) => {
+      if (!store.has(name)) store.set(name, new Map());
+      return store.get(name)!;
+    };
+    for (const [name, keys] of Object.entries(initial)) for (const key of keys) bucket(name).set(key, {});
+    let refusing: string | null = null;
+    const s3 = new S3Client({ region: 'auto', endpoint: 'http://localhost:9000', forcePathStyle: true, credentials: { accessKeyId: 'x', secretAccessKey: 'y' } });
+    (s3 as unknown as { send: unknown }).send = async (cmd: { constructor: { name: string }; input: Input }) => {
+      const i = cmd.input;
+      switch (cmd.constructor.name) {
+        case 'HeadObjectCommand':
+          if (!bucket(i.Bucket).has(i.Key!)) throw Object.assign(new Error('not found'), { name: 'NotFound' });
+          return {};
+        case 'PutObjectCommand':
+          if (refusing === i.Bucket) throw Object.assign(new Error('denied'), { name: 'AccessDenied' });
+          bucket(i.Bucket).set(i.Key!, { cacheControl: i.CacheControl });
+          return {};
+        case 'CopyObjectCommand': {
+          const [from, ...rest] = i.CopySource!.split('/');
+          if (!bucket(from!).has(rest.join('/'))) throw new Error('NoSuchKey');
+          bucket(i.Bucket).set(i.Key!, { cacheControl: i.CacheControl });
+          return {};
+        }
+        case 'DeleteObjectCommand':
+          bucket(i.Bucket).delete(i.Key!);
+          return {};
+        case 'ListObjectsV2Command': {
+          // as S3 does: the token marks the last key listed, so deleting what
+          // was listed does not shift the next page
+          const after = i.ContinuationToken ?? '';
+          const keys = [...bucket(i.Bucket).keys()].filter((k) => k.startsWith(i.Prefix!) && k > after).sort();
+          const page = keys.slice(0, 2);
+          return { Contents: page.map((Key) => ({ Key })), IsTruncated: keys.length > 2, NextContinuationToken: page.at(-1) };
+        }
+      }
+      throw new Error(`unexpected ${cmd.constructor.name}`);
+    };
+    return { s3, keys: (name: string) => [...bucket(name).keys()].sort(), meta: (name: string, key: string) => bucket(name).get(key), refuse: (name: string) => (refusing = name) };
+  }
+
+  const EXPORT = `user-export/${HASH}.json`;
+  const EVIDENCE = 'quarantine/abc/image-post/x.webp';
+
+  it('keeps a data export there, and signs its link there', async () => {
+    const b = buckets({});
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'priv' });
+    await storage.putPrivate(EXPORT, Buffer.from('{}'), 'application/json');
+    expect(b.keys('priv')).toEqual([EXPORT]);
+    expect(b.keys('pub')).toEqual([]);
+    expect(b.meta('priv', EXPORT)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
+    expect(await storage.createPrivateDownloadUrl(EXPORT)).toContain(`/priv/${EXPORT}?`);
+  });
+
+  it('still finds an export or evidence kept in the public bucket before there was a private one', async () => {
+    const b = buckets({ pub: [EXPORT, EVIDENCE] });
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'priv' });
+    expect(await storage.createPrivateDownloadUrl(EXPORT)).toContain(`/pub/${EXPORT}?`);
+    expect(await storage.evidenceExists(EVIDENCE)).toBe(true);
+    expect(await storage.createEvidenceDownloadUrl(EVIDENCE)).toContain(`/pub/${EVIDENCE}?`);
+  });
+
+  it('deletes a private file from wherever it is kept', async () => {
+    const b = buckets({ pub: [EXPORT, EVIDENCE], priv: [EXPORT, EVIDENCE] });
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'priv' });
+    await storage.delete(EXPORT);
+    await storage.deleteEvidence(EVIDENCE);
+    expect(b.keys('pub')).toEqual([]);
+    expect(b.keys('priv')).toEqual([]);
+  });
+
+  it('moves the private files out of the public bucket, every page of them, and has the CDN forget them', async () => {
+    const quarantined = ['quarantine/a/x.webp', 'quarantine/b/y.webp', 'quarantine/c/z.webp'];
+    const b = buckets({ pub: [...quarantined, EXPORT, 'image-post/kept.webp'] });
+    const forgotten: string[] = [];
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', {
+      evidenceBucket: 'priv',
+      purge: async (urls) => {
+        forgotten.push(...urls);
+        return true;
+      },
+    });
+    expect(await storage.movePrivateFiles()).toEqual({ moved: 4, failed: 0 });
+    // what everyone may see stays where it is
+    expect(b.keys('pub')).toEqual(['image-post/kept.webp']);
+    expect(b.keys('priv')).toEqual([...quarantined, EXPORT].sort());
+    for (const key of b.keys('priv')) expect(b.meta('priv', key)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
+    expect(forgotten.sort()).toEqual([...quarantined, EXPORT].map((k) => `https://media.hevalo.app/${k}`).sort());
+  });
+
+  it('keeps private files as before when the private bucket refuses a write, and says so', async () => {
+    const b = buckets({});
+    // a bucket of its own: a refusal holds for the whole process
+    b.refuse('locked');
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'locked' });
+    const said: Array<{ level: string; obj: object }> = [];
+    await preparePrivateStorage(storage, {
+      info: (obj) => said.push({ level: 'info', obj }),
+      error: (obj) => said.push({ level: 'error', obj }),
+    });
+    expect(said).toEqual([{ level: 'error', obj: { error: 'AccessDenied' } }]);
+    expect(storage.hasPrivateBucket).toBe(false);
+    await storage.putPrivate(EXPORT, Buffer.from('{}'), 'application/json');
+    expect(b.keys('pub')).toEqual([EXPORT]);
+    expect(b.meta('pub', EXPORT)!.cacheControl).toBe(PRIVATE_CACHE_CONTROL);
+    // the background jobs' own storage, in the same process, keeps to that too
+    const jobs = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'locked' });
+    expect(jobs.hasPrivateBucket).toBe(false);
+  });
+
+  it('once the private bucket takes a write, moves what is waiting and says how much', async () => {
+    const b = buckets({ pub: [EVIDENCE] });
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app', { evidenceBucket: 'priv' });
+    const said: Array<{ level: string; obj: object }> = [];
+    await preparePrivateStorage(storage, {
+      info: (obj) => said.push({ level: 'info', obj }),
+      error: (obj) => said.push({ level: 'error', obj }),
+    });
+    expect(said).toEqual([{ level: 'info', obj: { moved: 1, failed: 0 } }]);
+    // the write check leaves nothing behind
+    expect(b.keys('priv')).toEqual([EVIDENCE]);
+  });
+
+  it('without one, checks and moves nothing', async () => {
+    const b = buckets({ pub: [EVIDENCE] });
+    const storage = new MediaStorage(b.s3, 'pub', 'https://media.hevalo.app');
+    expect(storage.hasPrivateBucket).toBe(false);
+    expect(await storage.checkPrivateBucket()).toBeNull();
+    expect(await storage.movePrivateFiles()).toEqual({ moved: 0, failed: 0 });
+    expect(b.keys('pub')).toEqual([EVIDENCE]);
   });
 });

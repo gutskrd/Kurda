@@ -2,9 +2,16 @@ import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import type pg from 'pg';
 import type { AppConfig } from '../config/env.js';
+import { knownHash } from './known-devices.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_DAYS = 30;
+/**
+ * How long a session lasts after it was last used when its sign-in asked not
+ * to be remembered ("Remember me" left off): the browser forgets it when the
+ * window closes, so the server need not keep it for a month after.
+ */
+export const UNREMEMBERED_TTL_DAYS = 1;
 /**
  * The longest a session lasts, however often it is refreshed: each refresh
  * token lives REFRESH_TOKEN_TTL_DAYS, but never past this many days after the
@@ -79,6 +86,26 @@ export interface IssuedTokens {
   familyId: string;
 }
 
+/** Where a session was opened, and how: what a sign-in says, and a rotation carries along. */
+export interface SessionOptions {
+  /** continue this rotation chain rather than start a new session */
+  familyId?: string;
+  /** what the devices list calls it ("Chrome on Windows") */
+  deviceName?: string;
+  /** the app's `X-Device-Id`, stored as the account's keyed hash of it */
+  deviceId?: string | null;
+  /** the hash itself, as a rotation carries it (wins over `deviceId`) */
+  deviceHash?: string | null;
+  /** the sign-in asked not to be remembered: UNREMEMBERED_TTL_DAYS, not REFRESH_TOKEN_TTL_DAYS */
+  shortLived?: boolean;
+  sessionStartedAt?: Date;
+}
+
+/** The device a session is listed under for one account (`knownHash`, as known_devices keeps it). */
+export function sessionDeviceHash(config: AppConfig, userId: string, deviceId: string): string {
+  return knownHash(config.JWT_SECRET, userId, 'device', deviceId);
+}
+
 /**
  * Creates a refresh token (returned raw once, stored hashed) and an
  * access token. familyId starts a new rotation chain unless continuing
@@ -88,21 +115,24 @@ export async function issueTokenPair(
   config: AppConfig,
   executor: Pick<pg.Pool, 'query'>,
   user: { id: string; token_version?: number },
-  opts: { familyId?: string; deviceName?: string; sessionStartedAt?: Date } = {},
+  opts: SessionOptions = {},
 ): Promise<IssuedTokens> {
   const raw = randomBytes(32).toString('base64url');
   const familyId = opts.familyId ?? randomUUID();
   // a rotation carries its session's start along; a sign-in starts one
   const startedAt = opts.sessionStartedAt ?? new Date();
   const day = 24 * 3_600_000;
+  const shortLived = opts.shortLived === true;
+  const lifetimeDays = shortLived ? UNREMEMBERED_TTL_DAYS : REFRESH_TOKEN_TTL_DAYS;
   const expiresAt = new Date(
-    Math.min(Date.now() + REFRESH_TOKEN_TTL_DAYS * day, startedAt.getTime() + SESSION_MAX_DAYS * day),
+    Math.min(Date.now() + lifetimeDays * day, startedAt.getTime() + SESSION_MAX_DAYS * day),
   );
+  const deviceHash = opts.deviceHash ?? (opts.deviceId ? sessionDeviceHash(config, user.id, opts.deviceId) : null);
   const inserted = await executor.query<{ id: string }>(
-    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at, session_started_at)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at, session_started_at, device_hash, short_lived)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      RETURNING id`,
-    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt],
+    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt, deviceHash, shortLived],
   );
   const accessToken = await issueAccessToken(config, {
     sub: user.id,

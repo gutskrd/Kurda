@@ -114,6 +114,8 @@ export class OAuthService {
     provider: OAuthProvider,
     idToken: string,
     deviceName?: string,
+    /** the app's `x-device-id`: the devices list lists the session under it */
+    deviceId?: string | null,
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     const identity = await verifyProviderToken(this.config, provider, idToken, this.jwksResolver);
 
@@ -125,7 +127,7 @@ export class OAuthService {
     if (known.rows[0]) {
       const user = await this.activeUser(known.rows[0].user_id);
       await this.refuseIfSuspended(user);
-      const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName });
+      const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
       return { user: toPublicUser(user), tokens, created: false };
     }
 
@@ -149,7 +151,7 @@ export class OAuthService {
         }
         await this.refuseIfSuspended(account);
         await this.link(account.id, identity);
-        const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName });
+        const tokens = await issueTokenPair(this.config, this.pool, account, { deviceName, deviceId });
         return { user: toPublicUser(account), tokens, created: false };
       }
     }
@@ -171,7 +173,7 @@ export class OAuthService {
     );
     const user = created.rows[0] as UserRow;
     await this.link(user.id, identity);
-    const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName });
+    const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
     return { user: toPublicUser(user), tokens, created: true };
   }
 

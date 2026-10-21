@@ -62,6 +62,10 @@ describe('the picture beside a device', () => {
     expect(deviceIcon('iPad')).toBe('device-tablet');
     expect(deviceIcon('Android tablet (Samsung SM-X710)')).toBe('device-tablet');
     expect(deviceIcon('Firefox on Windows')).toBe('device-computer');
+    // what the server calls an older build of this app, which sent no name
+    expect(deviceIcon('Hevalo app on iOS')).toBe('device-phone');
+    expect(deviceIcon('Hevalo app on Android')).toBe('device-phone');
+    expect(deviceIcon('Admin console · Chrome on Mac')).toBe('device-computer');
     expect(deviceIcon(null)).toBe('devices');
     expect(deviceIcon('  ')).toBe('devices');
   });

@@ -13,6 +13,16 @@ export const KNOWN_DEVICE_DAYS = 180;
 export type KnownKind = 'device' | 'network';
 
 /**
+ * What a device or network is stored as for one account: a keyed hash,
+ * unlinkable across accounts. Sessions keep their device the same way
+ * (refresh_tokens.device_hash), so one hash names the device in both places.
+ */
+export function knownHash(secret: string, userId: string, kind: KnownKind, value: string): string {
+  const label = kind === 'device' ? 'hevalo-known-device-v1' : 'hevalo-known-network-v1';
+  return createHmac('sha256', secret).update(`${label}:${userId}:${value}`).digest('hex');
+}
+
+/**
  * Devices and networks that have signed in to an account before, kept per
  * account as a keyed hash, never the id or the address itself.
  *
@@ -34,10 +44,9 @@ export class KnownDevices {
     private readonly secret: string,
   ) {}
 
-  /** What a device or network is stored as for one account: unlinkable across accounts. */
+  /** What a device or network is stored as for one account (`knownHash`). */
   hash(userId: string, kind: KnownKind, value: string): string {
-    const label = kind === 'device' ? 'hevalo-known-device-v1' : 'hevalo-known-network-v1';
-    return createHmac('sha256', this.secret).update(`${label}:${userId}:${value}`).digest('hex');
+    return knownHash(this.secret, userId, kind, value);
   }
 
   /** Whether this device or network has signed in to this account and not expired since. */

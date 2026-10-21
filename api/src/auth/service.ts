@@ -541,6 +541,7 @@ export class AuthService {
 
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
+      deviceId: input.deviceId,
     });
     // the device it was made on is the account's first known one
     if (input.deviceId) await this.devices.remember(user.id, 'device', input.deviceId).catch(() => undefined);
@@ -578,6 +579,8 @@ export class AuthService {
     /** the app's `x-device-id` */
     deviceId?: string | null;
     captchaToken?: string;
+    /** false: "Remember me" was left off, and the session is kept a day, not a month */
+    remember?: boolean;
   }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const invalid = () => new AppError('INVALID_CREDENTIALS', 401, 'invalid email or password');
     const locked = (seconds: number) =>
@@ -668,6 +671,8 @@ export class AuthService {
 
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
+      deviceId,
+      shortLived: input.remember === false,
     });
     // the device is known from now on; a sign-in from one this account has
     // never used is worth an email to its owner (not the very first, though)
@@ -703,8 +708,13 @@ export class AuthService {
    * Rotates a refresh token (KUR-015): the presented token is retired and
    * a new one issued in the same family. Presenting an already-rotated or
    * revoked token is treated as theft — the entire family is revoked.
+   *
+   * The session keeps its device, its name and how long it lasts. One opened
+   * by an app that said neither (a sign-in from before devices were kept)
+   * takes them from this request: its `x-device-id`, and a name from its
+   * User-Agent, so a session still in use is listed by its device from now on.
    */
-  async refresh(rawToken: string): Promise<IssuedTokens> {
+  async refresh(rawToken: string, from: { deviceId?: string | null; deviceName?: string } = {}): Promise<IssuedTokens> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
@@ -713,6 +723,8 @@ export class AuthService {
         user_id: string;
         family_id: string;
         device_name: string | null;
+        device_hash: string | null;
+        short_lived: boolean;
         expires_at: Date;
         revoked_at: Date | null;
         replaced_by: string | null;
@@ -779,7 +791,10 @@ export class AuthService {
 
       const tokens = await issueTokenPair(this.config, client, user, {
         familyId: row.family_id,
-        deviceName: row.device_name ?? undefined,
+        deviceName: row.device_name ?? from.deviceName,
+        deviceHash: row.device_hash,
+        deviceId: from.deviceId,
+        shortLived: row.short_lived,
         // the session keeps its start, so SESSION_MAX_DAYS ends it however often it refreshes
         sessionStartedAt: new Date(row.session_started_at),
       });

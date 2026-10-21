@@ -13,6 +13,7 @@ import { RiskService } from '../risk/service.js';
 import { validateUsername, USERNAME_ERROR_MESSAGE } from '../users/username.js';
 import { validatePassword, PASSWORD_ERROR_MESSAGE, PASSWORD_MIN, PASSWORD_MAX } from './password-policy.js';
 import { requireAuth } from '../plugins/auth.js';
+import { sessionName } from './session-name.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
 import { safeTimeZone } from '../streaks/streak-logic.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
@@ -66,6 +67,12 @@ export const loginBodySchema = z.object({
   email: emailAddress,
   password: z.string().min(1).max(128),
   deviceName: z.string().max(80).optional(),
+  /**
+   * "Remember me": false keeps the session a day after it was last used
+   * instead of thirty (auth/tokens.ts UNREMEMBERED_TTL_DAYS). Absent means
+   * remembered, as every sign-in was before the apps said.
+   */
+  remember: z.boolean().optional(),
   /** only once a sign-in has answered CAPTCHA_REQUIRED (auth/service.ts) */
   captchaToken: z.string().max(3_000).optional(),
 });
@@ -150,7 +157,12 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       // a permanently banned person's address (or a +tag/dot variant of it)
       if (await isBannedEmail(app.db, body.email)) throw signupRejected();
 
-      const result = await service.register({ ...body, deviceId: deviceIdOf(req.headers), ip: req.ip });
+      const result = await service.register({
+        ...body,
+        deviceName: sessionName(body.deviceName, req.headers['user-agent']),
+        deviceId: deviceIdOf(req.headers),
+        ip: req.ip,
+      });
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
@@ -178,7 +190,12 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       if (assessment.action === 'verify_or_block') {
         throw new AppError('LOGIN_VERIFICATION_REQUIRED', 403, 'additional verification required');
       }
-      const result = await service.login({ ...body, ip: req.ip, deviceId: deviceIdOf(req.headers) });
+      const result = await service.login({
+        ...body,
+        deviceName: sessionName(body.deviceName, req.headers['user-agent']),
+        ip: req.ip,
+        deviceId: deviceIdOf(req.headers),
+      });
       await risk.attachUser(decisionId, result.user.id).catch((err) => {
         app.log.warn({ err }, 'failed to attach user to risk decision');
       });
@@ -195,9 +212,10 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       },
     },
     async (req) => {
-      const tokens = await service.refresh(
-        (req.body as z.infer<typeof refreshBodySchema>).refreshToken,
-      );
+      const tokens = await service.refresh((req.body as z.infer<typeof refreshBodySchema>).refreshToken, {
+        deviceId: deviceIdOf(req.headers),
+        deviceName: sessionName(undefined, req.headers['user-agent']),
+      });
       // rotation bookkeeping ids stay server-side
       return {
         accessToken: tokens.accessToken,
@@ -367,7 +385,12 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
     async (req, reply) => {
       const body = req.body as z.infer<typeof oauthBodySchema>;
-      const result = await oauth.signIn(body.provider, body.idToken, body.deviceName);
+      const result = await oauth.signIn(
+        body.provider,
+        body.idToken,
+        sessionName(body.deviceName, req.headers['user-agent']),
+        deviceIdOf(req.headers),
+      );
       return reply.code(result.created ? 201 : 200).send(result);
     },
   );

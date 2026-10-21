@@ -419,7 +419,7 @@ export class GdprService {
     return {
       status: 'ready',
       requestedAt: new Date(record.requested_at).toISOString(),
-      downloadUrl: await this.deps.storage!.createDownloadUrl(record.storage_key),
+      downloadUrl: await this.deps.storage!.createPrivateDownloadUrl(record.storage_key),
     };
   }
 }

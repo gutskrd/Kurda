@@ -135,6 +135,16 @@ describe('a way out', () => {
     expect(api.calls.some((c) => c.method === 'POST' && c.path === '/admin/session/end')).toBe(true);
   });
 
+  it('ends the session on the server when signing out, so it leaves the list of signed-in devices', async () => {
+    const { api, signedOut } = show(on('POST', '/auth/logout', json({ ok: true })));
+    // a sign-in that kept its refresh token, as every one does now
+    setToken('tok', true, 'ref-7');
+    await userEvent.click(await screen.findByRole('button', { name: 'Sign out' }));
+    expect(signedOut).toHaveBeenCalledOnce();
+    expect(getToken()).toBeNull();
+    await waitFor(() => expect(api.calls.find((c) => c.path === '/auth/logout')?.body).toEqual({ refreshToken: 'ref-7' }));
+  });
+
   it('tells an account without admin access so, with a way to sign out', async () => {
     const { signedOut } = show(on('GET', '/admin/session', failure(403, 'FORBIDDEN', 'insufficient permissions')));
     expect(await screen.findByRole('heading', { name: 'Not an admin account' })).toBeInTheDocument();

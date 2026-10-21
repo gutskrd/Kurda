@@ -120,8 +120,10 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     user,
     client,
     login: async (email, password, remember) => {
-      // the name is what Settings lists this session under ("Chrome on Windows")
-      const res = await client.post<AuthPayload>('/auth/login', { email, password, deviceName: thisDeviceName() });
+      // the name is what Settings lists this session under ("Chrome on Windows");
+      // not remembered, the server keeps the session a day rather than a month,
+      // as this browser forgets it when the window closes
+      const res = await client.post<AuthPayload>('/auth/login', { email, password, deviceName: thisDeviceName(), remember });
       if (!res.ok) {
         // a suspended account gets the suspension screen, not a line under the form
         const suspended = suspensionOf(res.error);
