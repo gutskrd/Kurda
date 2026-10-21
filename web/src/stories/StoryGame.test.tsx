@@ -281,8 +281,10 @@ describe('reading, near the end', () => {
     const before = pauses.length;
     act(() => poll.release(question({ mode: 'duo', activeCount: 2, version: 3 })));
     await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    // the player was paused when the reading went, with this story's sentence in it
-    expect(pauses.length).toBeGreaterThan(before);
+    // the player was paused when the reading went, with this story's sentence in it;
+    // the reading phase lets go of the player as it unmounts, which can be a beat
+    // after the question is on screen
+    await waitFor(() => expect(pauses.length).toBeGreaterThan(before));
     expect(pauses.at(-1)).toBe('https://cdn.test/1.m4a');
     vi.unstubAllGlobals();
   });

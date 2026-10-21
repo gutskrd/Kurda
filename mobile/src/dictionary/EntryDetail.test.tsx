@@ -64,12 +64,12 @@ describe('a dictionary entry’s pronunciations', () => {
 
     fireEvent.click(play[0]!);
     // the player starts on a later turn of the event loop, and the screen may
-    // make it afresh as it settles: put the newest one at 0.2 s and draw a frame
-    // until the character shows that moment's mouth
+    // make it afresh as it settles: put every one made for the word at 0.2 s
+    // and draw a frame until the character shows that moment's mouth
     await waitFor(() => {
-      const clip = FakeAudio.of('https://media.test/mal.wav');
-      if (!clip) throw new Error('no player yet');
-      clip.currentTime = 0.2;
+      const clips = FakeAudio.made.filter((a) => a.src === 'https://media.test/mal.wav');
+      if (clips.length === 0) throw new Error('no player yet');
+      for (const clip of clips) clip.currentTime = 0.2;
       act(() => frames.step());
       const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
       expect(drawn).toContain(characterLayers('hamo', 'bust').mouths.a);

@@ -682,18 +682,23 @@ describe('how it feels on a touch screen', () => {
 
     await userEvent.click(await screen.findByRole('button', { name: /av/ }));
     await verdict('Correct');
-    expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.correct);
+    // the buzz is paced to the answer's reveal, so it can land a moment after the words
+    await waitFor(() => expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.correct));
     // the option chosen is the one that answers back (styles/motion.css)
     expect(screen.getByRole('button', { name: /av/ })).toHaveClass('is-right', 'is-chosen');
     await next();
 
+    // a fast run can answer again within the pacer's 60 ms, which would
+    // (rightly) swallow the second buzz; start this answer from a still phone
+    resetHaptics();
     await answerTyped('sev');
     await screen.findByRole('region', { name: 'Feedback' });
-    expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.wrong);
+    await waitFor(() => expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.wrong));
     expect(screen.getByRole('textbox')).toHaveClass('is-wrong');
     await next();
 
     // the miss asked again, missed again; then the end, celebrated once
+    resetHaptics();
     await answerTyped('sev');
     await screen.findByRole('region', { name: 'Feedback' });
     await next();
