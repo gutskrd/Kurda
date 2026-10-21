@@ -2,13 +2,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_GEOMETRY, lessonPath, type PathStop, type PathUnit, type PlacedStop } from '@kurda/shared';
+import { PATH_GEOMETRY, lean, lessonPath, type PathStop, type PathUnit, type PlacedStop } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
 import { display } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
@@ -245,7 +246,53 @@ function Trail({ unit, width, sign, walked, ahead }: { unit: Unit; width: number
   );
 }
 
+/**
+ * The path while the course loads: a unit's banner and its first stops, on
+ * the same zigzag and at the same spacing as the real ones (the geometry is
+ * shared), so the course drops into the shape that held its place.
+ */
+export function LessonPathSkeleton({ stops = 4 }: { stops?: number }): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
+  const sign = dir.row === 'row-reverse' ? -1 : 1;
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View style={styles.units}>
+      <View style={styles.unit}>
+        <View style={[styles.bannerLip, { backgroundColor: colors.surface }]}>
+          <View style={[styles.banner, { backgroundColor: colors.surface }]}>
+            <SkeletonText size={typography.sizes.xs} width={56} style={start} />
+            <SkeletonText size={typography.sizes.lg} lineHeight={BANNER_TITLE_LINE} width="42%" style={start} />
+            <SkeletonText size={typography.sizes.sm} width="72%" style={[start, styles.topicsSkeleton]} />
+            <View style={[styles.bannerFoot, { flexDirection: dir.row }]}>
+              <SkeletonText size={typography.sizes.xs} width={72} />
+              <Skeleton width={96} height={MIN_TOUCH_TARGET} radius={radii.pill} />
+            </View>
+          </View>
+        </View>
+        <View style={[styles.path, { height: PATH_GEOMETRY.pad + (stops - 1) * STEP + NODE }]} onLayout={(e) => setWidth(e.nativeEvent.layout.width)}>
+          {Array.from({ length: stops }, (_, i) => (
+            <Skeleton
+              key={i}
+              width={NODE}
+              height={NODE}
+              radius={radii.pill}
+              style={[styles.stopSkeleton, { left: width / 2 + sign * lean(i) * PATH_GEOMETRY.sway - NODE / 2, top: PATH_GEOMETRY.pad + i * STEP - NODE / 2 }]}
+            />
+          ))}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+/** display(22) sets 1.12 */
+const BANNER_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+
 const styles = StyleSheet.create({
+  stopSkeleton: { position: 'absolute' },
+  topicsSkeleton: { marginTop: 2 },
   units: { gap: spacing.lg },
   unit: { gap: 0 },
   path: { position: 'relative' },

@@ -6,7 +6,8 @@ import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, GradientBackground } from '../theme/glass';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { EmptyState } from '../theme/EmptyState';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -69,7 +70,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           requests === null ? (
-            <SkeletonList count={3} />
+            <RequestsSkeleton />
           ) : (
             <EmptyState title={t('messages.requestsEmpty')} body={t('messages.requestsEmpty.body')} />
           )
@@ -122,7 +123,35 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
   );
 }
 
+/** The requests while they load: each card's face, name and two buttons, in grey. */
+function RequestsSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
+      {[0, 1, 2].map((i) => (
+        <View key={i} style={[styles.card, { backgroundColor: colors.surface }]}>
+          <View style={[styles.who, { flexDirection: dir.row }]}>
+            <Skeleton width={44} height={44} radius={radii.pill} />
+            <View style={styles.names}>
+              <SkeletonText size={typography.sizes.md} width={i % 2 ? '34%' : '46%'} style={start} />
+              <SkeletonText size={typography.sizes.sm} width="28%" style={start} />
+            </View>
+          </View>
+          <View style={[styles.actions, { flexDirection: dir.row }]}>
+            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.pill} style={styles.action} />
+            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.pill} style={styles.action} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  skeleton: { gap: layout.rowGap },
   list: { padding: layout.gutter, gap: layout.rowGap },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md - 4 },
   who: { alignItems: 'center', gap: spacing.md - 4 },

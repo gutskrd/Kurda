@@ -1,5 +1,7 @@
 /** Pure notification-inbox helpers (KUR-097) — no React Native. */
-import { isPlayGame, type PlayGame } from '@kurda/shared';
+import { isPlayGame, type IncomingInvite, type PlayGame } from '@kurda/shared';
+import type { Translate } from '../api/errors';
+import type { IconName } from '../theme/icon-paths';
 import { socialDeepLink, type SocialDeepLink } from '../reports/deepLinks';
 
 export interface InboxItem {
@@ -87,4 +89,158 @@ export function relativeTime(iso: string, now: number = Date.now()): string {
 export function unreadBadge(count: number, cap = 9): string | null {
   if (count <= 0) return null;
   return count > cap ? `${cap}+` : String(count);
+}
+
+/** The three stretches of time the list is cut into. */
+export type NoticeGroup = 'today' | 'week' | 'earlier';
+
+const DAY_MS = 86_400_000;
+
+/**
+ * Which stretch a notification falls in: today by the reader's own calendar
+ * (not the last 24 hours, which would put last night's under "Today"), this
+ * week for the six days before that, and earlier for the rest.
+ */
+export function noticeGroup(iso: string, now: number = Date.now()): NoticeGroup {
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return 'earlier';
+  if (new Date(at).toDateString() === new Date(now).toDateString()) return 'today';
+  return now - at < 7 * DAY_MS ? 'week' : 'earlier';
+}
+
+/**
+ * The list in its stretches, newest first within each, skipping a stretch
+ * with nothing in it. The server already sends them newest first; sorting
+ * again keeps one that arrives out of order from landing under the wrong
+ * heading.
+ */
+export function groupNotices<T extends Pick<InboxItem, 'createdAt'>>(items: readonly T[], now: number = Date.now()): Array<{ key: NoticeGroup; items: T[] }> {
+  const order: NoticeGroup[] = ['today', 'week', 'earlier'];
+  const sorted = [...items].sort((a, b) => (Date.parse(b.createdAt) || 0) - (Date.parse(a.createdAt) || 0));
+  return order
+    .map((key) => ({ key, items: sorted.filter((i) => noticeGroup(i.createdAt, now) === key) }))
+    .filter((g) => g.items.length > 0);
+}
+
+/**
+ * When, quietly and in the reader's words: "just now", "5m ago", "3h ago",
+ * "2d ago", and past a week the date itself, which by then says more than a
+ * count of days.
+ */
+export function noticeTime(iso: string, t: Translate, locale: string, now: number = Date.now()): string {
+  const at = Date.parse(iso);
+  if (Number.isNaN(at)) return '';
+  const minutes = Math.max(0, Math.floor((now - at) / 60_000));
+  if (minutes < 1) return t('time.justNow');
+  if (minutes < 60) return t('time.minutesAgo', { count: minutes });
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return t('time.hoursAgo', { count: hours });
+  const days = Math.floor(hours / 24);
+  if (days < 7) return t('time.daysAgo', { count: days });
+  try {
+    return new Date(at).toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  } catch {
+    // a locale the runtime does not know falls back to the device's own
+    return new Date(at).toLocaleDateString();
+  }
+}
+
+/**
+ * What kind of thing a notification is, as the small picture beside it says:
+ * the glyph, and whether it is a reward (drawn in the sun's gold, the one
+ * warm colour the app has) or anything else (drawn in the text colour).
+ *
+ * From what the server writes — `data.kind` first, then the screen a link
+ * names, then the category the reader can switch off in settings — so a kind
+ * the app has not met yet still gets the picture of its category rather than
+ * a blank.
+ */
+export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): { icon: IconName; reward: boolean } {
+  switch (item.data.kind) {
+    case 'play_invite':
+      return { icon: 'play', reward: false };
+    case 'gift':
+      return { icon: 'gift', reward: true };
+    case 'badge':
+      return { icon: 'medal', reward: true };
+    case 'league_safe':
+      return { icon: 'shield-fill', reward: true };
+    case 'league_promotion':
+      return { icon: 'move-up', reward: true };
+    case 'league_trophy':
+      return { icon: 'trophy', reward: true };
+    case 'report_outcome':
+      return { icon: 'flag', reward: false };
+    case 'sanction':
+    case 'sanction_lifted':
+    case 'appeal_decided':
+      return { icon: 'shield', reward: false };
+    case 'caring_message':
+      return { icon: 'lifebuoy', reward: false };
+  }
+  switch (item.data.screen) {
+    case 'Chat':
+      return { icon: 'chat', reward: false };
+    case 'Profile':
+      return { icon: 'person', reward: false };
+    case 'EventQuests':
+      return { icon: 'sparkle', reward: true };
+  }
+  switch (item.category) {
+    case 'streak':
+      return { icon: 'flame', reward: true };
+    case 'friends':
+      return { icon: 'people', reward: false };
+    case 'games':
+      return { icon: 'play', reward: false };
+    case 'events':
+      return { icon: 'calendar', reward: true };
+    case 'progress':
+      return { icon: 'trophy', reward: true };
+    case 'moderation':
+      return { icon: 'shield', reward: false };
+    default:
+      return { icon: 'bell', reward: false };
+  }
+}
+
+/** Somebody a notification is about: whose picture it wears, and whose name is set in bold. */
+export interface NoticeActor {
+  name: string;
+  /** what the monogram's colour is keyed on */
+  id: string;
+  photoUrl: string | null;
+}
+
+/**
+ * Who a notification is from, where the app can know it without asking the
+ * server anything new.
+ *
+ * An invite names its host while it can still be answered — the same list the
+ * invite banner holds (`GET /play/invites`) — and a message names its sender.
+ * Everything else is from Hevalo, or from somebody the stored data does not
+ * name, and wears the picture of its kind instead of a guessed face.
+ */
+export function noticeActor(item: Pick<InboxItem, 'data'>, invites: readonly IncomingInvite[] = []): NoticeActor | null {
+  const { data } = item;
+  if (data.kind === 'play_invite') {
+    const invite = invites.find((i) => i.id === data.inviteId);
+    return invite ? { name: invite.from.name, id: invite.from.name, photoUrl: invite.from.avatarUrl } : null;
+  }
+  if (data.screen === 'Chat' && typeof data.username === 'string' && data.username && typeof data.userId === 'string') {
+    return { name: data.username, id: data.userId, photoUrl: null };
+  }
+  return null;
+}
+
+/**
+ * A line with one name in it, cut so the name can be set in bold: the text
+ * before it, the name, and the text after. The whole line as `before` when
+ * the name is not in it — a translation that declines the name, or a line
+ * that never had it.
+ */
+export function splitName(text: string, name: string | null | undefined): { before: string; name: string; after: string } {
+  const at = name ? text.indexOf(name) : -1;
+  if (!name || at < 0) return { before: text, name: '', after: '' };
+  return { before: text.slice(0, at), name, after: text.slice(at + name.length) };
 }

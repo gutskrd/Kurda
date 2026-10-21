@@ -9,6 +9,8 @@ import { ClayButton } from '../theme/glass';
 import { useCountUp } from '../theme/animate';
 import { cellState, dailyAction, type DailyStatus } from './daily';
 import { haptic } from '../feedback/haptics';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 
 /**
  * The daily Zêr calendar and claim (KUR-067).
@@ -24,10 +26,13 @@ export function DailyRewardCard() {
   const [status, setStatus] = useState<DailyStatus | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [justEarned, setJustEarned] = useState<number | null>(null);
+  // until the first answer, the card's place is held in grey; after a failed one it is given up
+  const [settled, setSettled] = useState(false);
 
   const load = useCallback(() => {
     void client.get<DailyStatus>('/rewards/daily').then((res) => {
       if (res.ok) setStatus(res.data);
+      setSettled(true);
     });
   }, [client]);
 
@@ -47,7 +52,7 @@ export function DailyRewardCard() {
     load();
   }, [client, load]);
 
-  if (!status) return null;
+  if (!status) return settled ? null : <DailyRewardSkeleton />;
   const action = dailyAction(status);
 
   return (
@@ -100,6 +105,25 @@ export function DailyRewardCard() {
   );
 }
 
+/** The card in grey: its heading, the week's seven days, the button under them. */
+function DailyRewardSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+      <SkeletonText size={typography.sizes.md} width={120} />
+      <View style={styles.row}>
+        {Array.from({ length: 7 }, (_, i) => (
+          <Skeleton key={i} height={DAY_CELL} radius={radii.sm} style={styles.cellSkeleton} />
+        ))}
+      </View>
+      <Skeleton height={MIN_TOUCH_TARGET} radius={radii.pill} />
+    </View>
+  );
+}
+
+/** a day: two 13pt lines, 2 between, 8 above and below, inside a hairline */
+const DAY_CELL = lineOf(typography.sizes.xs) * 2 + 2 + spacing.sm * 2 + 2;
+
 /** The Zêr just claimed, counting up to what was paid (theme/animate.ts); read out as the final amount. */
 function ClaimedLine({ amount }: { amount: number }): React.JSX.Element {
   const { colors } = useTheme();
@@ -118,6 +142,7 @@ const styles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.xs },
   cell: { flex: 1, alignItems: 'center', paddingVertical: spacing.sm, borderRadius: radii.sm, borderWidth: 1, gap: 2 },
   cellToday: { borderWidth: 2 },
+  cellSkeleton: { flex: 1 },
   cellDay: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   cellAmount: { fontSize: typography.sizes.xs },
   done: { textAlign: 'center', fontSize: typography.sizes.sm, paddingVertical: spacing.sm },

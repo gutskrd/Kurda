@@ -11,6 +11,7 @@ import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
 import { usePressScale } from './animate';
 import { MenuIn } from './MotionParts';
+import { EmptyState } from './EmptyState';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
 export function GradientBackground({ children, style }: { children?: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
@@ -239,6 +240,11 @@ export function ClayButton({
  * A centered "couldn't load — try again" state (KUR-278). Shown in place of a
  * screen's content when its data fetch fails, so a network/server error reads as
  * an error with a retry — not a misleading empty state.
+ *
+ * It wears the same picture and the same button as being offline, which is the
+ * same news for the reader: the page did not arrive, and here is the way to ask
+ * again. It used to be a red cross over a full-width button — the one alarm in a
+ * calm app, for something that is never the reader's doing.
  */
 export function ErrorRetry({
   message,
@@ -249,16 +255,10 @@ export function ErrorRetry({
   onRetry: () => void;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   return (
     <View style={[styles.errorWrap, style]}>
-      <Icon name="close" size={28} color={colors.danger} />
-      <Text style={[styles.errorTitle, { color: colors.textPrimary }]}>{t('net.loadFailed')}</Text>
-      <Text style={[styles.errorMsg, { color: colors.textSecondary }]}>
-        {message ?? t('error.offline')}
-      </Text>
-      <ClayButton label={t('common.retry')} tone="primary" onPress={onRetry} style={styles.errorButton} />
+      <EmptyState art="offline" title={t('net.loadFailed')} body={message ?? t('error.offline')} action={{ label: t('common.retry'), onPress: onRetry }} />
     </View>
   );
 }
@@ -528,8 +528,5 @@ const styles = StyleSheet.create({
   selectOption: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: spacing.md },
   selectOptionText: { fontSize: typography.sizes.lg },
   selectOptionActive: { fontWeight: typography.weights.bold },
-  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, padding: spacing.xl },
-  errorTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  errorMsg: { fontSize: typography.sizes.md, textAlign: 'center' },
-  errorButton: { marginTop: spacing.md, alignSelf: 'stretch' },
+  errorWrap: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 });

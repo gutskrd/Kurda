@@ -13,7 +13,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { LargeTitle } from '../navigation/LargeTitle';
 import { BackButton } from '../navigation/BackButton';
@@ -56,9 +56,12 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [searching, setSearching] = useState(false);
   const [failed, setFailed] = useState(false);
+  // the list's place is held until the first answer, rather than "search to start" showing to somebody with friends
+  const [settled, setSettled] = useState(false);
 
   const loadLists = useCallback(() => {
     void client.get<{ friends: UserRow[] }>('/friends').then((r) => {
+      setSettled(true);
       if (r.ok) {
         setFriends(r.data.friends);
         setFailed(false);
@@ -232,7 +235,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             renderItem={({ item }) => row(item)}
             ListEmptyComponent={
               searching ? (
-                <SkeletonList count={5} style={{ marginTop: spacing.sm }} />
+                <PeopleSkeleton />
               ) : (
                 <EmptyState title={t('friends.noResults')} />
               )
@@ -298,7 +301,9 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             }
             // a friend's row has a Play button: any game, that friend picked (play/InviteSheet)
             renderItem={({ item }) => row(item, <PlayWithButton friendId={item.userId} name={item.displayName ?? item.username} compact />)}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text>}
+            ListEmptyComponent={
+              settled ? <Text style={[styles.empty, { color: colors.textSecondary }]}>{t('friends.searchToStart')}</Text> : <PeopleSkeleton />
+            }
             ListFooterComponent={
               suggestions.length > 0 ? (
                 <View>
@@ -327,7 +332,28 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
+/** People in grey, row for row: the face, the name and the line under it, the button at the end. */
+function PeopleSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.skeleton} accessibilityLabel={t('common.loading')}>
+      {[0, 1, 2, 3, 4].map((i) => (
+        <View key={i} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
+          <Skeleton width={36} height={36} radius={radii.pill} raised />
+          <View style={styles.rowMain}>
+            <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '50%'} raised />
+            <SkeletonText size={typography.sizes.sm} width="28%" raised />
+          </View>
+          <Skeleton width={64} height={MIN_TOUCH_TARGET - 12} radius={radii.pill} raised />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  skeleton: { gap: spacing.xs },
   screen: { flex: 1, padding: spacing.lg },
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

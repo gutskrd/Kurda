@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text } from 'react-native';
+import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
@@ -22,18 +23,22 @@ export function WordOfDayCard() {
   const { t } = useI18n();
   const [word, setWord] = useState<WordOfDay | null>(null);
   const [open, setOpen] = useState(false);
+  // until the first answer, the card's place is held in grey; with no word (or no answer) it is given up
+  const [settled, setSettled] = useState(false);
 
   useEffect(() => {
     let active = true;
     void client.get<{ word: WordOfDay | null }>('/dictionary/word-of-day').then((res) => {
-      if (active && res.ok) setWord(res.data.word);
+      if (!active) return;
+      if (res.ok) setWord(res.data.word);
+      setSettled(true);
     });
     return () => {
       active = false;
     };
   }, [client]);
 
-  if (!word) return null;
+  if (!word) return settled ? null : <WordOfDaySkeleton />;
 
   return (
     <>
@@ -61,6 +66,21 @@ export function WordOfDayCard() {
     </>
   );
 }
+
+/** The card in grey: its label, the word, the line under it. */
+function WordOfDaySkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  return (
+    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+      <SkeletonText size={typography.sizes.xs} width={112} />
+      <SkeletonText size={typography.sizes.xl} lineHeight={HEADWORD_LINE} width={96} />
+      <SkeletonText size={typography.sizes.sm} width="40%" />
+    </View>
+  );
+}
+
+/** display(28) sets 1.12 */
+const HEADWORD_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 
 const styles = StyleSheet.create({
   card: {

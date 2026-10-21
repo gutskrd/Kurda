@@ -21,6 +21,7 @@ import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { useVibrationPref } from '../feedback/vibrationPref';
 import { haptic } from '../feedback/haptics';
+import { SkeletonText } from '../theme/Skeleton';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = 'https://hevalo.app/copyright';
@@ -42,6 +43,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [minor, setMinor] = useState(false);
   // null until /me answers, so the switch never shows a guess
   const [leagues, setLeagues] = useState<boolean | null>(null);
+  // until /me answers, no visibility is shown as chosen and its sentence is held in grey: a guess that then flips reads as a change
+  const [loaded, setLoaded] = useState(false);
   // on this phone only (feedback/vibrationPref.ts)
   const [vibration, setVibration] = useVibrationPref();
   const vibrationThumb = useSwitchThumb(vibration);
@@ -57,6 +60,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           user: { profileVisibility: Visibility; username: string; minor?: boolean; leaguesEnabled?: boolean };
         }>('/me')
         .then((res) => {
+          if (active) setLoaded(true);
           if (active && res.ok) {
             setVisibility(res.data.user.profileVisibility);
             setUsername(res.data.user.username);
@@ -258,14 +262,21 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
               <Pill
                 key={v}
                 label={t(VISIBILITY_LABEL[v])}
-                active={visibility === v}
+                active={loaded && visibility === v}
                 onPress={() => changeVisibility(v)}
                 disabled={!visibilityOffered(v, minor)}
               />
             ))}
           </View>
           {/* a setting about who sees you is worth a sentence, not just a word */}
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
+          {loaded ? (
+            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
+          ) : (
+            <View style={styles.hintSkeleton}>
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="92%" />
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="48%" />
+            </View>
+          )}
           {minor ? (
             <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.visibility.minorHint')}</Text>
           ) : null}
@@ -374,6 +385,7 @@ const styles = StyleSheet.create({
   },
   pillText: { fontSize: typography.sizes.sm },
   hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
+  hintSkeleton: { marginTop: spacing.sm },
   credit: { fontSize: typography.sizes.sm, marginTop: spacing.xs, lineHeight: 19 },
   pillTextActive: { fontWeight: typography.weights.bold },
   pillDisabled: { opacity: 0.4 },

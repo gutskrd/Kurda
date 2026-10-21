@@ -22,6 +22,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -74,7 +75,7 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
       <View style={styles.picker}>
         <Segmented<RankedGame> options={RANKED_GAMES} value={game} onChange={setGame} labelOf={(g) => t(GAME_NAME_KEY[g])} groupLabel={t('play.sheet.game')} />
       </View>
-      <AsyncBoundary loading={!ranks && !error} error={!ranks ? error : null} onRetry={load}>
+      <AsyncBoundary loading={!ranks && !error} error={!ranks ? error : null} onRetry={load} skeleton={<RanksSkeleton />}>
         {() =>
           ranks && card ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
@@ -106,6 +107,62 @@ export function RanksScreen({ game: initial, onExit }: { game?: RankedGame; onEx
     </GradientBackground>
   );
 }
+
+/**
+ * A game's rank while it loads, in the page's own layout: the emblem, the
+ * rank's name, its points and meter, the three numbers, the season's row and
+ * the climb — the column the screen is about to fill.
+ */
+function RanksSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <GlassCard>
+        <View style={styles.hero}>
+          <Skeleton width={148} height={148} radius={radii.pill} />
+          <SkeletonText size={typography.sizes.xxl} lineHeight={HERO_TITLE_LINE} width={150} align="center" style={styles.heroTitleRow} />
+          <SkeletonText size={typography.sizes.md} width={96} align="center" />
+          <SkeletonText size={typography.sizes.lg} width={88} align="center" />
+          <Skeleton height={10} radius={radii.pill} style={styles.heroMeter} />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="70%" align="center" style={styles.stretch} />
+        </View>
+        <View style={[styles.stats, { borderTopColor: colors.separator }]}>
+          {[0, 1, 2].map((i) => (
+            <View key={i} style={styles.stat}>
+              <SkeletonText size={typography.sizes.lg} width={32} align="center" />
+              <SkeletonText size={typography.sizes.xs} width={52} align="center" />
+            </View>
+          ))}
+        </View>
+      </GlassCard>
+      <View style={[styles.seasonRow, { backgroundColor: colors.controlTrack }]}>
+        <Skeleton width={18} height={18} radius={radii.pill} raised />
+        <View style={styles.flex}>
+          <SkeletonText size={typography.sizes.md} width="62%" raised />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="44%" raised />
+        </View>
+      </View>
+      <View style={styles.section}>
+        <SkeletonText size={typography.sizes.xs} width={72} />
+        <GlassCard padding="tight">
+          {[0, 1, 2, 3, 4, 5].map((i) => (
+            <View key={i} style={styles.rung}>
+              <Skeleton width={44} height={44} radius={radii.pill} />
+              <View style={styles.flex}>
+                <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '48%'} />
+                <SkeletonText size={typography.sizes.sm} lineHeight={19} width="40%" />
+              </View>
+            </View>
+          ))}
+        </GlassCard>
+      </View>
+    </View>
+  );
+}
+
+/** display(34) sets 1.12 */
+const HERO_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
 function Hero({ card }: { card: RankCard }): React.JSX.Element {
   const { colors, scheme } = useTheme();
@@ -286,6 +343,8 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
 }
 
 const styles = StyleSheet.create({
+  // a centred line in the hero spans it, so a bar given as a share of it has something to be a share of
+  stretch: { alignSelf: 'stretch' },
   picker: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
   content: { padding: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
   flex: { flex: 1, gap: 2 },

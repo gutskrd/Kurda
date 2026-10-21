@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
 import {
   STORY_DIALECTS,
   STORY_LENGTHS,
@@ -20,7 +20,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, ErrorRetry, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -233,7 +233,7 @@ export function StoriesHubScreen({ id, onExit }: { id?: string; onExit: () => vo
         <View style={styles.section}>
           <SectionLabel>{t('stories.read')}</SectionLabel>
           {stories === null && !error ? (
-            <SkeletonList count={4} avatar={false} />
+            <StoriesSkeleton />
           ) : error ? (
             <ErrorRetry message={describeError(error, t)} onRetry={load} />
           ) : ofVariety.length === 0 ? (
@@ -345,6 +345,40 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
     </Pressable>
   );
 }
+
+/** The list while it loads: story cards in grey — the title, two lines of summary, the facts as pills. */
+function StoriesSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const { width, height } = useWindowDimensions();
+  const wide = width >= 600;
+  // cards enough to reach the foot of the screen under the choices above them
+  const count = Math.max(3, Math.ceil((height - 420) / 112));
+  return (
+    <View style={styles.section} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} style={[styles.story, { backgroundColor: colors.glassFill }]}>
+          <SkeletonText size={typography.sizes.lg} lineHeight={STORY_TITLE_LINE} width={i % 2 ? '42%' : '56%'} />
+          {/* a summary runs to two lines across a phone and fits on one across a tablet */}
+          <View>
+            <SkeletonText size={typography.sizes.sm} lineHeight={20} width={wide ? '72%' : '94%'} />
+            {wide ? null : <SkeletonText size={typography.sizes.sm} lineHeight={20} width="60%" />}
+          </View>
+          <View style={styles.pills}>
+            {[56, 64, 80].map((w) => (
+              <Skeleton key={w} width={w} height={PILL_HEIGHT} radius={radii.pill} />
+            ))}
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** display(22) sets 1.12 */
+const STORY_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+/** a pill: a 13pt line, 3 above and below */
+const PILL_HEIGHT = lineOf(typography.sizes.xs) + 6;
 
 function StoryRow({
   story,

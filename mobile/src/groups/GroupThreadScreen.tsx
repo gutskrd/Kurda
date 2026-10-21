@@ -20,7 +20,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
@@ -337,7 +337,7 @@ export function GroupThreadScreen({
         />
 
         {loading ? (
-          <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
+          <ClubThreadSkeleton />
         ) : (
           <FlatList
             data={[...messages].reverse()}
@@ -463,6 +463,37 @@ export function GroupThreadScreen({
 }
 
 /**
+ * The thread while it loads: the members' bubbles at the start with a face
+ * and a name over them, yours at the end, sitting on the composer where the
+ * newest are — the shapes the thread is about to draw.
+ */
+function ClubThreadSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
+  const shape: Array<[boolean, number]> = [
+    [false, 0.56],
+    [false, 0.42],
+    [true, 0.5],
+    [false, 0.66],
+    [true, 0.38],
+  ];
+  return (
+    <View style={[styles.flex, styles.list, styles.skeletonThread]} accessibilityLabel={t('common.loading')}>
+      {shape.map(([mine, share], i) => (
+        <View key={i} style={[styles.bubbleRow, { flexDirection: dir.row, width: `${Math.round(share * 100)}%` }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}>
+          {!mine ? <Skeleton width={28} height={28} radius={radii.pill} /> : null}
+          <View style={[styles.bubbleMain, styles.flex]}>
+            {!mine ? <SkeletonText size={typography.sizes.xs} width={56} style={[styles.senderSkeleton, { alignItems: mirrored ? 'flex-end' : 'flex-start' }]} /> : null}
+            <Skeleton height={spacing.sm * 2 + lineOf(typography.sizes.md)} radius={radii.lg} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/**
  * A deleted message keeps its place. Removing the row instead would renumber
  * the conversation around whoever was moderated, which reads as though nothing
  * happened — and the person who was replying to it is left talking to nobody.
@@ -533,6 +564,9 @@ function Bubble({
 }
 
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
+  senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },
   screen: { flex: 1 },
   list: { padding: spacing.lg, gap: spacing.sm },
   headerActions: { flexDirection: 'row', alignItems: 'center' },

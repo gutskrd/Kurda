@@ -53,3 +53,27 @@ describe('the day’s Zêr', () => {
     }
   });
 });
+
+describe('the day’s Zêr while it loads', () => {
+  /*
+   * The card used to appear only once its answer came, pushing the word of
+   * the day and the course down the page under the reader's thumb. Its place
+   * is held in grey until then — and given up if the answer never comes.
+   */
+  it('holds its place in grey until the answer, then draws the week', async () => {
+    let answer: (v: unknown) => void = () => undefined;
+    testAuth.client = fakeClient({ 'GET /rewards/daily': () => new Promise((go) => (answer = go)) as never });
+    renderWithProviders(<DailyRewardCard />);
+    expect(screen.getAllByTestId('skeleton')).toHaveLength(9);
+    answer(ok(status(false)));
+    expect(await screen.findByRole('button', { name: 'Claim 15 Zêr' })).toBeTruthy();
+    expect(screen.queryAllByTestId('skeleton')).toHaveLength(0);
+  });
+
+  it('gives the place up when the answer does not come', async () => {
+    testAuth.client = fakeClient({});
+    renderWithProviders(<DailyRewardCard />);
+    await waitFor(() => expect(screen.queryAllByTestId('skeleton')).toHaveLength(0));
+    expect(screen.queryByText('Daily Zêr')).toBeNull();
+  });
+});

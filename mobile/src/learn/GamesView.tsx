@@ -8,6 +8,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon, type IconName } from '../theme/Icon';
+import { SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -81,6 +82,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
    */
   const [hasStories, setHasStories] = useState<boolean | null>(null);
   const [ranks, setRanks] = useState<MyRanks | null>(null);
+  // the season's line under Ranks is held in grey until its answer, so the word above it does not jump
+  const [ranksSettled, setRanksSettled] = useState(false);
   const [invites, setInvites] = useState<IncomingInvite[]>([]);
 
   useFocusEffect(
@@ -90,7 +93,9 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
         if (live && res.ok) setHasStories(res.data.stories.length > 0);
       });
       void getMyRanks(client).then((res) => {
-        if (live && res.ok) setRanks(res.data);
+        if (!live) return;
+        if (res.ok) setRanks(res.data);
+        setRanksSettled(true);
       });
       void listInvites(client).then((res) => {
         if (live && res.ok) setInvites(res.data.incoming);
@@ -149,6 +154,8 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
               <Text style={[styles.entryDetail, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
                 {season}
               </Text>
+            ) : !ranksSettled ? (
+              <SkeletonText size={typography.sizes.xs} width={72} style={{ alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }} />
             ) : null}
           </View>
         </Pressable>

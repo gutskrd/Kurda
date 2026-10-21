@@ -23,6 +23,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -203,17 +204,25 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
             <View style={styles.balances}>
               <View style={styles.balanceChip}>
                 <Icon name="coin" size={18} color={colors.gold} />
-                <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+                {loading ? (
+                  <SkeletonText size={typography.sizes.md} width={40} />
+                ) : (
+                  <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.zer}</Text>
+                )}
               </View>
               <View style={styles.balanceChip}>
                 <Icon name="gem" size={18} color={colors.accent} />
-                <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
+                {loading ? (
+                  <SkeletonText size={typography.sizes.md} width={20} />
+                ) : (
+                  <Text style={[styles.balance, { color: colors.textPrimary }]}>{balances.gems}</Text>
+                )}
               </View>
             </View>
           }
         />
 
-        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load}>
+        <AsyncBoundary loading={loading} error={items.length === 0 ? error : null} onRetry={load} skeleton={<ShopSkeleton />}>
           {/*
             One scroll, three parts, and the second sticks: what arrived for
             you, then the search and the kinds (which stay at the top once the
@@ -385,6 +394,65 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   );
 }
 
+/**
+ * The shop while it loads, laid out by its own styles: the search, the kinds,
+ * the order and the filter, the count, and two kinds of rows — a background's
+ * wide picture and an icon's square one — so the catalogue lands in place.
+ */
+function ShopSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { height } = useWindowDimensions();
+  // rows enough to reach the foot of the screen, shared between the two kinds shown
+  const perKind = Math.max(3, Math.ceil((height - 300) / (64 + spacing.sm) / 2));
+  const chips = (widths: number[]) => (
+    <View style={[styles.skeletonChips, { flexDirection: dir.row }]}>
+      {widths.map((w, i) => (
+        <Skeleton key={i} width={w} height={MIN_TOUCH_TARGET} radius={radii.pill} />
+      ))}
+    </View>
+  );
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <View style={styles.toolbar}>
+        <View style={[styles.column, styles.toolbarInner]}>
+          <View style={styles.gutter}>
+            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
+          </View>
+          {chips([72, 136, 84, 80])}
+        </View>
+      </View>
+      <View style={[styles.catalogue, styles.column]}>
+        {chips([136, 180])}
+        <View style={[styles.gutter, styles.skeletonResults, start]}>
+          <SkeletonText size={typography.sizes.sm} width={64} />
+        </View>
+        {[THUMB, ICON_THUMB].map((thumb) => (
+          <View key={thumb} style={[styles.section, styles.gutter]}>
+            <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+            <View style={styles.rows}>
+              {Array.from({ length: perKind }, (_, i) => (
+                <View key={i} style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}>
+                  <View style={styles.thumb}>
+                    <Skeleton width={thumb} height={thumb === THUMB ? Math.round((THUMB * 9) / 16) : ICON_THUMB} radius={radii.sm} />
+                  </View>
+                  <View style={styles.rowMain}>
+                    <SkeletonText size={typography.sizes.md} width={i % 2 ? '44%' : '58%'} style={start} />
+                    <SkeletonText size={typography.sizes.sm} width="72%" style={start} />
+                  </View>
+                  <SkeletonText size={typography.sizes.md} width={48} style={styles.skeletonPrice} />
+                </View>
+              ))}
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** The price as it is read: "Free", or the number and the currency (Zêr keeps its name; gems are translated, as the gift picker says them). */
 function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') => string): string {
   if (item.price === 0) return t('shop.free');
@@ -538,6 +606,9 @@ const styles = StyleSheet.create({
   toolbarInner: { gap: spacing.sm },
   catalogue: { paddingTop: spacing.xs },
   section: { gap: spacing.sm, marginTop: spacing.sm, marginBottom: spacing.sm },
+  skeletonChips: { gap: spacing.sm, paddingHorizontal: GUTTER, overflow: 'hidden' },
+  skeletonResults: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
+  skeletonPrice: { paddingHorizontal: spacing.xs },
   rows: { gap: spacing.sm },
   row: { alignItems: 'center', gap: spacing.md, borderRadius: radii.md, padding: spacing.sm, minHeight: 64 },
   thumb: { width: THUMB, alignItems: 'center', justifyContent: 'center' },

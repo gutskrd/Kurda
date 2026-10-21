@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -12,7 +12,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Chips } from '../theme/Chips';
 import { SearchField } from '../theme/SearchField';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { EmptyState } from '../theme/EmptyState';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -219,7 +219,7 @@ export function MessagesScreen(): React.JSX.Element {
     chats === null && failed ? (
       <ErrorRetry onRetry={() => void load()} style={styles.error} />
     ) : chats === null ? (
-      <SkeletonList count={5} style={styles.skeleton} />
+      <ConversationsSkeleton />
     ) : typed ? (
       <Text style={[styles.note, { color: colors.textSecondary }]}>{t('messages.noMatch', { query: query.trim() })}</Text>
     ) : filter === 'unread' ? (
@@ -362,11 +362,40 @@ function ConversationRow({
   );
 }
 
+/**
+ * The list while it loads: conversation rows in grey, at the row's own size
+ * — the 52pt picture, the name and the time on one line, the last message
+ * under it — as many as the screen holds.
+ */
+function ConversationsSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { height } = useWindowDimensions();
+  const count = Math.max(4, Math.ceil(height / 72));
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
+          <Skeleton width={52} height={52} radius={radii.pill} />
+          <View style={styles.rowMain}>
+            <View style={[styles.rowTop, { flexDirection: dir.row }]}>
+              <SkeletonText size={typography.sizes.md} width={i % 2 ? '42%' : '56%'} style={[styles.flex, start]} />
+              <SkeletonText size={typography.sizes.xs} width={36} />
+            </View>
+            <SkeletonText size={typography.sizes.sm} width={i % 3 === 1 ? '58%' : '78%'} style={start} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   head: { paddingHorizontal: layout.gutter, gap: spacing.md - 4, paddingBottom: spacing.sm },
   list: { paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
   listHead: { gap: spacing.sm, paddingHorizontal: spacing.sm, marginBottom: spacing.xs },
-  skeleton: { paddingHorizontal: spacing.sm },
   error: { paddingTop: spacing.xxl },
   note: { textAlign: 'center', fontSize: typography.sizes.sm, marginTop: spacing.xl, paddingHorizontal: layout.gutter },
 

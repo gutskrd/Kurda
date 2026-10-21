@@ -8,7 +8,7 @@ import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton, SkeletonLines } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { SenseSection } from './SenseSection';
 import { SourceLine } from './SourceLine';
@@ -53,10 +53,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
         <ScreenHeader onBack={onBack} backLabel={t('dictionary.backToSearch')} />
 
         {!entry ? (
-          <View style={styles.body}>
-            <Skeleton width="45%" height={28} />
-            <SkeletonLines count={4} />
-          </View>
+          <EntrySkeleton />
         ) : (
           <ScrollView contentContainerStyle={[styles.body, { paddingBottom: tabBarInset }]}>
             <View style={styles.headwordRow}>
@@ -106,8 +103,46 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   );
 }
 
+/**
+ * The entry while it loads: the word with its two round buttons, the variety,
+ * and its senses — the part of speech in its column and the meaning beside it.
+ */
+function EntrySkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  return (
+    <View style={styles.body} accessibilityLabel={t('common.loading')}>
+      <View style={styles.headwordRow}>
+        <SkeletonText size={typography.sizes.xxl} lineHeight={HEADWORD_LINE} width={120} />
+        <Skeleton width={44} height={44} radius={radii.pill} />
+      </View>
+      <SkeletonText size={typography.sizes.sm} width={72} />
+      <View style={styles.senses}>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={styles.senseSkeleton}>
+            <View style={styles.senseHead}>
+              <SkeletonText size={typography.sizes.xs} width={32} style={styles.posSkeleton} />
+              <SkeletonText size={typography.sizes.md} width={i === 1 ? '50%' : '70%'} style={styles.flex} />
+            </View>
+            <SkeletonText size={typography.sizes.sm} width="46%" style={styles.underPos} />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** display(34) sets 1.12 */
+const HEADWORD_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
+/** the part of speech's column in a sense (SenseSection.tsx) */
+const POS_COLUMN = 64;
+
 const styles = StyleSheet.create({
   screen: { flex: 1 },
+  flex: { flex: 1 },
+  senseSkeleton: { paddingVertical: spacing.sm, gap: 4 },
+  senseHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  posSkeleton: { minWidth: POS_COLUMN },
+  underPos: { marginLeft: POS_COLUMN + spacing.sm },
 
   body: { padding: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

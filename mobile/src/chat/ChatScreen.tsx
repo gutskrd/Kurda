@@ -18,7 +18,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { SkeletonList } from '../theme/Skeleton';
+import { Skeleton, lineOf } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
@@ -206,7 +206,7 @@ export function ChatScreen({
         <ScreenHeader title={name} onBack={onExit} hairline />
 
         {loading ? (
-          <SkeletonList style={{ marginTop: spacing.md, paddingHorizontal: spacing.lg }} />
+          <ThreadSkeleton mirrored={mirrored} />
         ) : (
           /*
            * Newest at the bottom, and the thread opens there: inverted, as a
@@ -325,7 +325,39 @@ export function ChatScreen({
   );
 }
 
+/**
+ * The thread while it loads: bubbles in grey, theirs at the start and yours
+ * at the end, sitting on the composer the way the newest messages do — the
+ * thread opens at its foot, so that is where the grey is.
+ */
+function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element {
+  const { t } = useI18n();
+  const shape: Array<[boolean, number]> = [
+    [false, 0.62],
+    [false, 0.4],
+    [true, 0.55],
+    [false, 0.7],
+    [true, 0.34],
+    [true, 0.6],
+    [false, 0.48],
+  ];
+  return (
+    <View style={[styles.flex, styles.list, styles.skeletonThread]} accessibilityLabel={t('common.loading')}>
+      {shape.map(([mine, share], i) => (
+        <View key={i} style={[styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart, { width: `${Math.round(share * 100)}%` }]}>
+          <Skeleton height={BUBBLE_LINE} radius={radii.md} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
+/** a one-line bubble: 8 above and below a 17pt line */
+const BUBBLE_LINE = spacing.sm * 2 + lineOf(typography.sizes.md);
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
+  skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   screen: { flex: 1 },
   list: { padding: spacing.lg, gap: spacing.xs },
   bubbleRow: { maxWidth: '80%' },

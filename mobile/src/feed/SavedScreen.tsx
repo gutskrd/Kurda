@@ -13,7 +13,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { getSaved } from './api';
-import { FeedCard } from './FeedCard';
+import { FeedCard, FeedSkeleton } from './FeedCard';
 import type { FeedItem } from './types';
 
 const PAGE = 20;
@@ -107,7 +107,12 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
       <View style={styles.screen}>
         <Text style={[styles.sub, { color: colors.textSecondary }]}>{t('saved.subtitle')}</Text>
 
-        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
+        <AsyncBoundary
+          loading={items === null}
+          error={items === null ? error : null}
+          onRetry={() => void refresh()}
+          skeleton={<FeedSkeleton style={styles.skeleton} />}
+        >
           <FlatList
             data={items}
             keyExtractor={(i) => i.key}
@@ -135,5 +140,7 @@ const styles = StyleSheet.create({
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   sub: { fontSize: typography.sizes.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
+  // the list's own gap, so the cards land where the grey ones stood
+  skeleton: { gap: spacing.md },
   empty: { textAlign: 'center', marginTop: spacing.xl },
 });

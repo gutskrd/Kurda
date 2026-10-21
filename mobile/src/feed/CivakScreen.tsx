@@ -20,7 +20,7 @@ import { NotificationBell } from '../notifications/NotificationBell';
 import { useUnread } from '../messages/unread';
 import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
-import { FeedCard } from './FeedCard';
+import { FeedCard, FeedSkeleton } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -179,7 +179,7 @@ export function CivakScreen(): React.JSX.Element {
           )}
         </View>
 
-        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()}>
+        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
           <FlatList
             ref={listRef}
             data={items}

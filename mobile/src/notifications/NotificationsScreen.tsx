@@ -3,6 +3,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Toggle } from '../theme/Toggle';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -56,7 +57,7 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
     <GradientBackground>
       <View style={styles.screen}>
         <ScreenHeader title={t('notifications.title')} onBack={onExit} />
-        <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load}>
+        <AsyncBoundary loading={!prefs} error={!prefs ? error : null} onRetry={load} skeleton={<PrefsSkeleton />}>
           {() => {
             if (!prefs) return null;
             const quiet = quietEnabled(prefs);
@@ -109,6 +110,42 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
+/** The settings while they load: each kind's row with its switch, and quiet hours under them. */
+function PrefsSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const row = (i: number) => (
+    <View key={i} style={[styles.row, { backgroundColor: colors.controlTrack }]}>
+      <SkeletonText size={typography.sizes.md} width={i % 2 ? '38%' : '52%'} raised style={styles.flex} />
+      <SwitchSkeleton />
+    </View>
+  );
+  return (
+    <View style={styles.content} accessibilityLabel={t('common.loading')}>
+      <SkeletonText size={typography.sizes.xs} width={88} style={styles.sectionSkeleton} />
+      {NOTIFICATION_CATEGORIES.map((_, i) => row(i))}
+      <SkeletonText size={typography.sizes.xs} width={96} style={styles.sectionSkeleton} />
+      {row(NOTIFICATION_CATEGORIES.length)}
+    </View>
+  );
+}
+
+/**
+ * A switch's place in grey, exactly the platform's own switch's size: one is
+ * drawn unseen underneath to take the room, since iOS, Android and a browser
+ * each make it a different size.
+ */
+function SwitchSkeleton(): React.JSX.Element {
+  return (
+    <View>
+      <View style={styles.unseen} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Toggle value={false} disabled />
+      </View>
+      <Skeleton width="100%" height="100%" radius={radii.pill} raised style={StyleSheet.absoluteFill} />
+    </View>
+  );
+}
+
 function TimeRow({ label, minute, onStep }: { label: string; minute: number; onStep: (dir: 1 | -1) => void }) {
   const { colors } = useTheme();
   return (
@@ -131,6 +168,9 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   content: { gap: spacing.xs, padding: spacing.lg, paddingBottom: spacing.xl },
   section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
+  sectionSkeleton: { marginTop: spacing.lg, marginBottom: spacing.xs },
+  flex: { flex: 1 },
+  unseen: { opacity: 0 },
   row: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
   label: { fontSize: typography.sizes.md, flex: 1 },
   stepper: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },

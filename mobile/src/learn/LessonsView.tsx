@@ -5,14 +5,14 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
-import { Skeleton } from '../theme/Skeleton';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
-import { LessonPath, type PathFocus } from '../coursemap/LessonPath';
+import { LessonPath, LessonPathSkeleton, type PathFocus } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
@@ -57,6 +57,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const tabBarInset = useTabBarInset();
   const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
   const [streak, setStreak] = useState<Streak | null>(null);
+  // whether today's two answers are in (either way), so the card's place is held until then and no longer
+  const [goalSettled, setGoalSettled] = useState(false);
+  const [streakSettled, setStreakSettled] = useState(false);
   const [due, setDue] = useState<number | null>(null);
   // the review count places review on the path, so the path waits for it (or for its failure) once
   const [dueSettled, setDueSettled] = useState(false);
@@ -71,10 +74,14 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
       let active = true;
       setFailed(false);
       void client.get<DailyGoalStatus>('/me/daily-goal').then((res) => {
-        if (active && res.ok) setGoal(res.data);
+        if (!active) return;
+        if (res.ok) setGoal(res.data);
+        setGoalSettled(true);
       });
       void client.get<{ user: { streak?: Streak } }>('/me').then((res) => {
-        if (active && res.ok && res.data.user.streak) setStreak(res.data.user.streak);
+        if (!active) return;
+        if (res.ok && res.data.user.streak) setStreak(res.data.user.streak);
+        setStreakSettled(true);
       });
       void client.get<{ due: number }>('/practice/due').then((res) => {
         if (!active) return;
@@ -210,7 +217,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
       >
         <View style={styles.header}>
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
-          <TodayCard goal={goal} streak={streak} onChangeGoal={changeGoal} />
+          {!goal && !streak && !(goalSettled && streakSettled) ? <TodaySkeleton /> : <TodayCard goal={goal} streak={streak} onChangeGoal={changeGoal} />}
           <View style={styles.tools}>
             <ToolTile
               icon="review"
@@ -274,6 +281,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
               <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
                 <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} />
               </View>
+            ) : entry?.map ? (
+              // the path waits for the review count, which places review on it
+              <LessonPathSkeleton />
             ) : entry && !entry.map ? (
               <View style={styles.failed}>
                 <Text style={[styles.failedText, dir.text, { color: colors.textSecondary }]}>{t('learn.mapFailed')}</Text>
@@ -281,7 +291,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
               </View>
             ) : null}
           </View>
-        ) : loading ? null : (
+        ) : loading ? (
+          <CourseSkeleton />
+        ) : (
           <EmptyState title={t('learn.noCourses')} />
         )}
       </ScrollView>
@@ -346,17 +358,73 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   );
 }
 
+/**
+ * The card while the course loads, line for line: where, the lesson's name,
+ * the bar, how far, the button — each at the card's own sizes, so the card
+ * that arrives is the one that was already there.
+ */
 function ContinueSkeleton(): React.JSX.Element {
   const { colors } = useTheme();
+  const start = useStartEdge();
   return (
     <View style={[styles.hero, { backgroundColor: colors.surface }]}>
-      <Skeleton width="45%" height={13} />
-      <Skeleton width="70%" height={22} />
+      <SkeletonText size={typography.sizes.xs} width="52%" style={start} />
+      <SkeletonText size={typography.sizes.lg} lineHeight={HERO_TITLE_LINE} width="38%" style={start} />
       <Skeleton height={6} radius={radii.pill} />
-      <Skeleton height={50} radius={radii.pill} style={styles.heroButton} />
+      <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+      <Skeleton height={LARGE_BUTTON} radius={radii.pill} style={styles.heroButton} />
     </View>
   );
 }
+
+/** Today's card while the goal and the streak are on their way: its heading and chip, the goal and its bar, the streak. */
+function TodaySkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const dir = useDirection();
+  const start = useStartEdge();
+  return (
+    <View style={[styles.today, { backgroundColor: colors.surface }]}>
+      <View style={[styles.todayHead, { flexDirection: dir.row }]}>
+        <SkeletonText size={typography.sizes.xs} width={56} />
+        <Skeleton width={104} height={GOAL_CHIP} radius={radii.pill} />
+      </View>
+      <View style={styles.todayRow}>
+        <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
+          <Skeleton width={20} height={20} radius={radii.pill} />
+          <SkeletonText size={typography.sizes.md} width="46%" style={[styles.flex, start]} />
+        </View>
+        <Skeleton height={6} radius={radii.pill} />
+      </View>
+      <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
+        <Skeleton width={20} height={20} radius={radii.pill} />
+        <SkeletonText size={typography.sizes.md} width="28%" style={[styles.flex, start]} />
+      </View>
+    </View>
+  );
+}
+
+/** The course's heading, its name and the start of its path, while the course is on its way. */
+function CourseSkeleton(): React.JSX.Element {
+  const start = useStartEdge();
+  return (
+    <View style={styles.course}>
+      <SkeletonText size={typography.sizes.xs} width={96} style={start} />
+      <SkeletonText size={typography.sizes.lg} width="56%" style={[start, styles.courseTitleSkeleton]} />
+      <LessonPathSkeleton />
+    </View>
+  );
+}
+
+/** Bars start on the reading edge — the right, in Soranî. */
+function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
+  return { alignItems: useDirection().row === 'row-reverse' ? 'flex-end' : 'flex-start' };
+}
+
+/** display(22) sets 1.12 */
+const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
+/** ClayButton's large size */
+const LARGE_BUTTON = 50;
+const GOAL_CHIP = 32;
 
 /**
  * How today is going, in two plain facts: the daily goal so far, and the
@@ -506,7 +574,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    minHeight: 32,
+    minHeight: GOAL_CHIP,
     paddingHorizontal: spacing.md - 4,
     borderRadius: radii.pill,
   },
@@ -523,6 +591,8 @@ const styles = StyleSheet.create({
   course: { gap: spacing.sm + 4, marginTop: spacing.md },
   mapLabel: { ...sectionLabel },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
+  courseTitleSkeleton: { marginBottom: spacing.xs },
+  flex: { flex: 1 },
   switcher: { flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.xs },
   chip: { minHeight: MIN_TOUCH_TARGET, maxWidth: '100%', paddingHorizontal: spacing.md, borderRadius: radii.pill, justifyContent: 'center' },
   // the course you are in, drawn round, so it does not compete with the card's one button

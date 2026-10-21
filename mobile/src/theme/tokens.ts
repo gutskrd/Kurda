@@ -130,6 +130,13 @@ export const layout = {
   gutter: 16,
   /** between rows in a list that has no dividers */
   rowGap: 12,
+  /**
+   * How wide a list or a page of reading gets on a tablet or a wide window.
+   * Past this a row is a band across the screen and the eye loses its place
+   * on the way back to the start of the next line. The shop, the season and
+   * the stories already stopped here; this names the number they share.
+   */
+  column: 680,
 } as const;
 
 /**

@@ -14,6 +14,8 @@ import { useI18n } from '../i18n/I18nContext';
  * that loops, and only while something is loading.
  */
 const SWEEP_MS = 1600;
+/** what the browser waits before showing its placeholders, so the two apps feel the same */
+const REVEAL_AFTER_MS = 120;
 const sweep = new Animated.Value(0);
 let watching = 0;
 let loop: Animated.CompositeAnimation | null = null;
@@ -46,16 +48,34 @@ export function Skeleton({
   width = '100%',
   height = 14,
   radius = radii.sm,
+  raised = false,
   style,
 }: {
   width?: DimensionValue;
-  height?: number;
+  /** a number, or '100%' to fill a box that has its own shape (a square picture) */
+  height?: DimensionValue;
   radius?: number;
+  /**
+   * Drawn on a card that already has the block's own grey (a profile's card):
+   * one step up, so the shape still shows.
+   */
+  raised?: boolean;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const reduce = useReducedMotion();
   const [w, setW] = useState(0);
+  /*
+   * Grey only once the wait is long enough to notice. An answer that comes
+   * back at once would otherwise flash a page of grey for a frame or two; the
+   * shape still takes its room from the first frame, so nothing moves when
+   * it does appear.
+   */
+  const [shown, setShown] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => setShown(true), REVEAL_AFTER_MS);
+    return () => clearTimeout(id);
+  }, []);
 
   useEffect(() => {
     if (reduce) return;
@@ -70,14 +90,60 @@ export function Skeleton({
     <View
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
+      // how a test, or a check of a screen's loading state against its loaded one, finds the blocks
+      testID="skeleton"
       onLayout={(e) => setW(e.nativeEvent.layout.width)}
-      style={[{ width, height, borderRadius: radius, backgroundColor: colors.controlTrack, overflow: 'hidden' }, style]}
+      style={[
+        { width, height, borderRadius: radius, backgroundColor: raised ? colors.selectedFill : colors.controlTrack, overflow: 'hidden', opacity: shown ? 1 : 0 },
+        style,
+      ]}
     >
       {!reduce && w > 0 ? (
         <Animated.View pointerEvents="none" style={[styles.band, { width: band, transform: [{ translateX }] }]}>
           <LinearGradient colors={['transparent', light, 'transparent']} start={{ x: 0, y: 0.5 }} end={{ x: 1, y: 0.5 }} style={StyleSheet.absoluteFill} />
         </Animated.View>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * How tall a line of text at `size` stands when the style gives it no line
+ * height of its own: about 1.2 times the size on the platforms' own faces
+ * (17 → 20, 15 → 18, 13 → 16). Near enough that a placeholder built from it
+ * lands within a point or two of the words that replace it.
+ */
+export function lineOf(size: number): number {
+  return Math.round(size * 1.2);
+}
+
+/**
+ * One line of text, in grey: as tall as the line it stands for, with a bar
+ * about as tall as its letters centred in it — so a stack of these is exactly
+ * as tall as the paragraph, and each bar sits where the words will.
+ *
+ * `align` is which edge the bar starts from: the reading edge (`start`, the
+ * right in Soranî when the caller mirrors), or the middle for centred text.
+ */
+export function SkeletonText({
+  size,
+  lineHeight,
+  width = '100%',
+  align = 'flex-start',
+  raised = false,
+  style,
+}: {
+  size: number;
+  /** the style's own line height, when it sets one */
+  lineHeight?: number;
+  width?: DimensionValue;
+  align?: 'flex-start' | 'center' | 'flex-end';
+  raised?: boolean;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  return (
+    <View style={[{ height: lineHeight ?? lineOf(size), justifyContent: 'center', alignItems: align }, style]}>
+      <Skeleton width={width} height={Math.max(8, Math.round(size * 0.68))} raised={raised} />
     </View>
   );
 }

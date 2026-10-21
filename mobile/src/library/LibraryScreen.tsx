@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { SkeletonText } from '../theme/Skeleton';
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
@@ -136,7 +137,7 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
           />
         </View>
 
-        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()}>
+        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void refresh()} skeleton={<LibrarySkeleton />}>
           <FlatList
             data={posts}
             keyExtractor={(p) => p.id}
@@ -163,7 +164,37 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
   );
 }
 
+/** The list while it loads: the same cards — a title, two lines, the counts — as many as fill the screen. */
+function LibrarySkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const { height, width } = useWindowDimensions();
+  const count = Math.max(3, Math.ceil(height / 130));
+  // the two-line preview fits on one across a wide tablet
+  const wide = width >= 900;
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      {Array.from({ length: count }, (_, i) => (
+        <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+          <View style={styles.cardHead}>
+            <SkeletonText size={typography.sizes.lg} width={i % 2 ? '48%' : '62%'} style={styles.flex} />
+          </View>
+          <View>
+            <SkeletonText size={typography.sizes.md} width={wide ? '64%' : '96%'} />
+            {wide ? null : <SkeletonText size={typography.sizes.md} width="70%" />}
+          </View>
+          <View style={styles.cardFoot}>
+            <SkeletonText size={typography.sizes.sm} width={44} />
+            <SkeletonText size={typography.sizes.sm} width={36} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  flex: { flex: 1 },
   screen: { flex: 1, paddingHorizontal: spacing.lg },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },

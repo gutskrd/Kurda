@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { FIRST_LEAGUE_TIER, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -11,6 +11,7 @@ import { radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -136,7 +137,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
         {/* moved up last week: celebrated once, the first time the league is opened after */}
         <LeagueMoment week={league?.lastWeek} />
         {tab === 'league' ? (
-          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague}>
+          <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague} skeleton={<LeagueSkeleton />}>
             {league ? <LeagueTab league={league} joining={joining} onJoin={() => void join()} /> : null}
           </AsyncBoundary>
         ) : (
@@ -149,7 +150,7 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
                 labelOf={(key) => t(SCOPES.find((s) => s.key === key)!.labelKey)}
               />
             </View>
-            <AsyncBoundary loading={!board && !boardError} error={!board ? boardError : null} onRetry={() => loadBoard(0)}>
+            <AsyncBoundary loading={!board && !boardError} error={!board ? boardError : null} onRetry={() => loadBoard(0)} skeleton={<BoardSkeleton />}>
               {board ? (
                 <BoardTab board={board} entries={entries} scope={scope} loadingMore={loadingMore} onMore={() => loadBoard(entries.length)} />
               ) : null}
@@ -280,6 +281,90 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
     </View>
   );
 }
+
+/**
+ * The week while it loads, in the card's own layout: the emblem and the
+ * league's name, the goal ring and its lines, the group's rules, and the
+ * table's first rows — what the screen is about to be, in grey.
+ */
+function LeagueSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const { height, width } = useWindowDimensions();
+  const { colors } = useTheme();
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      <View style={styles.head}>
+        <GlassCard>
+          <View style={styles.hero}>
+            <Skeleton width={104} height={104} radius={radii.pill} />
+            <View style={styles.heroText}>
+              <SkeletonText size={typography.sizes.xs} width={80} />
+              <SkeletonText size={typography.sizes.xl} lineHeight={HERO_TITLE_LINE} width="80%" />
+              <SkeletonText size={typography.sizes.md} width="40%" />
+              {/* when the week ends runs to two lines beside the emblem on a phone */}
+              <View style={styles.endsSkeleton}>
+                <SkeletonText size={typography.sizes.sm} width="90%" />
+                {width < 600 ? <SkeletonText size={typography.sizes.sm} width="40%" /> : null}
+              </View>
+            </View>
+          </View>
+          <View style={[styles.goalRow, { borderTopColor: colors.separator }]}>
+            <Skeleton width={84} height={84} radius={radii.pill} />
+            <View style={styles.goalText}>
+              <SkeletonText size={typography.sizes.md} width="54%" />
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="88%" />
+              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="40%" />
+            </View>
+          </View>
+        </GlassCard>
+        <View style={styles.rules}>
+          <SkeletonText size={typography.sizes.xs} width={96} />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="90%" />
+          <SkeletonText size={typography.sizes.sm} lineHeight={19} width="76%" />
+        </View>
+      </View>
+      <TableSkeleton rows={Math.max(6, Math.ceil((height - 520) / ROW))} zone />
+    </View>
+  );
+}
+
+/** The XP board while it loads: its line of explanation and its rows. */
+function BoardSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const { height } = useWindowDimensions();
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      <View style={styles.boardHead}>
+        <SkeletonText size={typography.sizes.sm} lineHeight={19} width="80%" />
+        <SkeletonText size={typography.sizes.md} width="44%" />
+      </View>
+      <TableSkeleton rows={Math.max(10, Math.ceil((height - 260) / ROW))} />
+    </View>
+  );
+}
+
+/** Rows of a table in grey: the place, the face, the name, the XP. */
+function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean }): React.JSX.Element {
+  return (
+    <>
+      {/* the "Moving up" heading the group's table opens with */}
+      {zone ? <SkeletonText size={typography.sizes.xs} width={96} style={styles.zoneSkeleton} /> : null}
+      {Array.from({ length: rows }, (_, i) => (
+        <View key={i} style={styles.row}>
+          <SkeletonText size={typography.sizes.sm} width={14} align="center" style={styles.rankSkeleton} />
+          <Skeleton width={32} height={32} radius={radii.pill} />
+          <SkeletonText size={typography.sizes.md} width={i % 2 ? '40%' : '56%'} style={styles.nameSkeleton} />
+          <SkeletonText size={typography.sizes.sm} width={52} />
+        </View>
+      ))}
+    </>
+  );
+}
+
+/** a table row: a fingertip and 4, with the 4 between rows */
+const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
+/** display(28) sets 1.12 */
+const HERO_TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 
 function TableRow({ item }: { item: TableItem }): React.JSX.Element {
   const { colors } = useTheme();
@@ -518,6 +603,10 @@ const styles = StyleSheet.create({
     borderTopWidth: StyleSheet.hairlineWidth,
   },
   goalText: { flex: 1, gap: spacing.xs },
+  endsSkeleton: { marginTop: spacing.xs },
+  rankSkeleton: { width: 26 },
+  zoneSkeleton: { paddingTop: spacing.sm, paddingBottom: 2, paddingHorizontal: spacing.xs },
+  nameSkeleton: { flex: 1 },
   goalTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   goalHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   safe: { flexDirection: 'row', alignItems: 'center', alignSelf: 'flex-start', gap: 6, borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 4 },

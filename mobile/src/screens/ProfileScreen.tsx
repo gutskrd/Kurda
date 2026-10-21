@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -10,6 +10,7 @@ import { GradientBackground } from '../theme/glass';
 import { LinearGradient } from 'expo-linear-gradient';
 import { statValue, statCaption, display } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
 import { useOpenMenu } from '../navigation/SideMenu';
 import { HeaderButton } from '../navigation/HeaderButton';
@@ -82,6 +83,10 @@ export function ProfileScreen() {
   const [streak, setStreak] = useState<Streak | null>(null);
   const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   const [me, setMe] = useState<Me | null>(null);
+  // the first answers are in: until then the numbers and the lines under them are held in grey, not shown as zeros
+  const [settled, setSettled] = useState(false);
+  // and the showcase's, which comes after them
+  const [progressSettled, setProgressSettled] = useState(false);
   const [zer, setZer] = useState<number | null>(null);
   const [friends, setFriends] = useState<number | null>(null);
   /** what the profile shows of the climb: ranks, the league, the showcase, the season frame */
@@ -115,6 +120,7 @@ export function ProfileScreen() {
         client.get<{ items: { category: string }[] }>('/me/inventory'),
       ]);
       if (!active) return;
+      setSettled(true);
       if (m.ok) {
         setMe(m.data.user);
         setStreak(m.data.user.streak);
@@ -146,6 +152,7 @@ export function ProfileScreen() {
           setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null });
         }
       }
+      if (active) setProgressSettled(true);
     })();
     return () => {
       active = false;
@@ -319,15 +326,18 @@ export function ProfileScreen() {
           <Stat
             label={t('nav.friends')}
             value={friends === null ? '—' : String(friends)}
+            loading={!settled}
             onPress={() => navigation.navigate('Friends')}
           />
           <View style={[styles.statDivider, { backgroundColor: colors.separator }]} />
-          <Stat label={t('profile.stat.level')} value={String(me?.level?.level ?? 1)} />
+          <Stat label={t('profile.stat.level')} value={String(me?.level?.level ?? 1)} loading={!settled} />
           <View style={[styles.statDivider, { backgroundColor: colors.separator }]} />
-          <Stat label={t('profile.stat.streak')} value={String(streak?.current ?? 0)} />
+          <Stat label={t('profile.stat.streak')} value={String(streak?.current ?? 0)} loading={!settled} />
         </View>
 
-        {aside.length > 0 ? (
+        {!settled ? (
+          <SkeletonText size={typography.sizes.sm} width={180} align="center" style={styles.asideSkeleton} />
+        ) : aside.length > 0 ? (
           <Text style={[styles.aside, { color: colors.textSecondary }]} numberOfLines={1}>
             {aside.join('  ·  ')}
           </Text>
@@ -339,7 +349,7 @@ export function ProfileScreen() {
           earned. Smaller than the three above — they answer "how far have I
           come", which is the question to ask after a lapse, not the first one.
         */}
-        {streak ? <LearningRow streak={streak} /> : null}
+        {streak ? <LearningRow streak={streak} /> : !settled ? <LearningRowSkeleton /> : null}
 
         {/* who they are, in their own words, before what can be done with the page */}
         {me?.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
@@ -374,6 +384,13 @@ export function ProfileScreen() {
         <GiftedNote background={me?.background} icon={me?.icon} />
 
         {/* the three badges chosen for the profile, each game's rank and the league */}
+        {!progress && !progressSettled ? (
+          // your own profile always has the badges' row, chosen or still to choose
+          <View style={styles.showcaseSkeleton}>
+            <SkeletonText size={typography.sizes.xs} width={64} />
+            <Skeleton height={MIN_TOUCH_TARGET} radius={radii.md} />
+          </View>
+        ) : null}
         {progress ? (
           <ProgressShowcase
             own
@@ -430,14 +447,42 @@ function LearningRow({ streak }: { streak: Streak }): React.JSX.Element {
   );
 }
 
+/** The three cells and the line under them, in grey, at their own sizes. */
+function LearningRowSkeleton(): React.JSX.Element {
+  const { width } = useWindowDimensions();
+  return (
+    <View style={styles.learning}>
+      <View style={styles.learningRow}>
+        {[0, 1, 2].map((i) => (
+          <View key={i} style={styles.learningCell}>
+            <SkeletonText size={typography.sizes.md} width={28} align="center" />
+            <SkeletonText size={typography.sizes.xs} width={64} align="center" />
+          </View>
+        ))}
+      </View>
+      {/* the hint runs to three lines across a phone and two across a tablet */}
+      <View>
+        {(width >= 600 ? (['84%', '50%'] as const) : (['94%', '92%', '56%'] as const)).map((w) => (
+          <SkeletonText key={w} size={typography.sizes.xs} lineHeight={16} width={w} align="center" />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 /** One of the three: the number, then what it counts. */
-function Stat({ label, value, onPress }: { label: string; value: string; onPress?: () => void }): React.JSX.Element {
+function Stat({ label, value, onPress, loading = false }: { label: string; value: string; onPress?: () => void; loading?: boolean }): React.JSX.Element {
   const { colors } = useTheme();
   const body = (
     <>
-      <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
-        {value}
-      </Text>
+      {loading ? (
+        // the number's own line, held: a 0 or a 1 shown before the real one arrives reads as the real one
+        <SkeletonText size={typography.sizes.lg} width={28} align="center" />
+      ) : (
+        <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
+          {value}
+        </Text>
+      )}
       <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1}>
         {label}
       </Text>
@@ -494,6 +539,8 @@ const styles = StyleSheet.create({
   statDivider: { width: StyleSheet.hairlineWidth, height: 28 },
 
   aside: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
+  asideSkeleton: { marginTop: spacing.xs },
+  showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
   learning: { alignSelf: 'stretch', marginTop: spacing.sm, gap: spacing.sm },
   learningRow: { flexDirection: 'row', justifyContent: 'center' },

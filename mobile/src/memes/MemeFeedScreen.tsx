@@ -27,6 +27,7 @@ import { createPost, listPosts, uploadMemeImage } from './api';
 import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useSendErrorAlert } from '../reports/SendError';
 import { restrictionOf } from '../reports/sendErrors';
 
@@ -188,7 +189,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </View>
 
-        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()}>
+        <AsyncBoundary loading={posts === null} error={posts === null ? error : null} onRetry={() => void load()} skeleton={<MemesSkeleton />}>
           <FlatList
             data={posts}
             keyExtractor={(p) => p.id}
@@ -216,6 +217,31 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </View>
       </View>
     </GradientBackground>
+  );
+}
+
+/** The list while it loads: the same cards — who and when, the square picture, the counts. */
+function MemesSkeleton(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <View style={styles.list} accessibilityLabel={t('common.loading')}>
+      {[0, 1].map((i) => (
+        <View key={i} style={[styles.card, { backgroundColor: colors.glassFill }]}>
+          <View style={styles.cardHead}>
+            <Skeleton width={28} height={28} radius={radii.pill} />
+            <SkeletonText size={typography.sizes.sm} width={28} />
+          </View>
+          <View style={styles.image}>
+            <Skeleton height="100%" radius={radii.md} />
+          </View>
+          <View style={styles.cardFoot}>
+            <SkeletonText size={typography.sizes.sm} width={40} />
+            <SkeletonText size={typography.sizes.sm} width={36} />
+          </View>
+        </View>
+      ))}
+    </View>
   );
 }
 

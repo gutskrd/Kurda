@@ -10,6 +10,7 @@ import { GradientBackground } from '../theme/glass';
 import { Chips } from '../theme/Chips';
 import { SearchField } from '../theme/SearchField';
 import { Icon, type IconName } from '../theme/Icon';
+import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -93,6 +94,8 @@ export function SearchScreen(): React.JSX.Element {
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  // people you may know are on their way: their place is held, rather than "search for something" flashing first
+  const [suggestionsSettled, setSuggestionsSettled] = useState(false);
 
   /*
    * What the empty field offers: the searches made before, read once from
@@ -112,7 +115,9 @@ export function SearchScreen(): React.JSX.Element {
       }
     });
     void client.get<{ suggestions: Suggestion[] }>('/friends/suggestions').then((r) => {
-      if (live && r.ok) setSuggestions(r.data.suggestions);
+      if (!live) return;
+      if (r.ok) setSuggestions(r.data.suggestions);
+      setSuggestionsSettled(true);
     });
     return () => {
       live = false;
@@ -330,7 +335,9 @@ export function SearchScreen(): React.JSX.Element {
             )
           : null}
 
-        {!typed && recents.length === 0 && suggestions.length === 0 ? (
+        {!typed && !suggestionsSettled ? <SuggestionsSkeleton /> : null}
+
+        {!typed && suggestionsSettled && recents.length === 0 && suggestions.length === 0 ? (
           <EmptyState title={t('search.start')} body={t('search.start.body')} />
         ) : null}
 
@@ -398,12 +405,36 @@ export function SearchScreen(): React.JSX.Element {
   );
 }
 
+/** People you may know, in grey: the heading and five rows at the rows' own size. */
+function SuggestionsSkeleton(): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const start = { alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' } as const;
+  return (
+    <View style={styles.section} accessibilityLabel={t('common.loading')}>
+      <SkeletonText size={typography.sizes.xs} width={140} style={[styles.sectionTitleSkeleton, start]} />
+      <View style={styles.rows}>
+        {[0, 1, 2, 3, 4].map((i) => (
+          <View key={i} style={[styles.row, { flexDirection: dir.row }]}>
+            <Skeleton width={40} height={40} radius={radii.pill} />
+            <View style={styles.rowMain}>
+              <SkeletonText size={typography.sizes.md} width={i % 2 ? '36%' : '48%'} style={start} />
+              <SkeletonText size={typography.sizes.sm} width={i % 2 ? '52%' : '30%'} style={start} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   controls: { paddingHorizontal: layout.gutter, gap: spacing.md - 4, paddingBottom: spacing.xs },
   content: { paddingHorizontal: spacing.sm, paddingTop: spacing.md, gap: spacing.lg },
   section: { gap: spacing.xs },
   sectionHead: { alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: spacing.sm },
   sectionTitle: { ...sectionLabel, paddingHorizontal: spacing.sm },
+  sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
   sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   rows: { gap: 2 },
   row: {
