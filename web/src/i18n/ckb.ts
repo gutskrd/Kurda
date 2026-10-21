@@ -129,6 +129,9 @@ export const ckb: Catalogue = {
   'feed.deleteConfirm': 'بیسڕمەوە؟',
   'feed.today': 'ئەمڕۆ',
   'feed.yesterday': 'دوێنێ',
+  'feed.viewComments': 'بینینی هەموو {count} لێدوانەکە',
+  'feed.viewCommentOne': 'بینینی لێدوانێک',
+  'feed.deleteShort': 'بیسڕەوە',
 
   'post.open': 'شتێک بڵاو بکەرەوە',
   'post.button': 'بڵاوکردنەوە',
@@ -1288,14 +1291,6 @@ export const ckb: Catalogue = {
   'photo.duplicate': 'کۆپی بکە',
   'photo.layerHint': 'گۆشەیەک ڕابکێشە بۆ گۆڕینی قەبارە، دەستەکەی سەرەوەی بۆ سووڕاندن. کلیلە تیرەکان دەیجوڵێنن، Delete لایدەبات.',
   'photo.font': 'فۆنت',
-  'react.love': 'خۆشەویستی',
-  'react.peace': 'ئاشتی',
-  'react.like': 'بەدڵبوون',
-  'react.laugh': 'پێکەنیناوی',
-  'react.wow': 'واو',
-  'react.sad': 'خەمگین',
-  'react.angry': 'تووڕە',
-  'react.signInToReact': 'بۆ کاردانەوە بچۆ ژوورەوە',
   'picture.couldNotPrepare': 'ئەو وێنەیە بۆ بارکردن ئامادە نەکرا.',
   'picture.storageOff': 'هەڵگرتنی وێنە هێشتا نەکراوەتەوە — کاتێک کرایەوە دووبارە هەوڵ بدە.',
   'picture.file': 'فایلی وێنە',
@@ -1665,9 +1660,6 @@ export const ckb: Catalogue = {
   'profile.iconGiftedBy': 'ئایکۆن لەلایەن @{name} دیاری کراوە',
   'dimen.notFound': 'ئەو وێنەیە نەدۆزرایەوە.',
   'dimen.allPictures': 'هەموو وێنەکان',
-  'dimen.photo': 'وێنە',
-  'dimen.aPicture': 'وێنەیەک',
-  'dimen.views': '{count} بینین',
   'app.description': 'لەگەڵ هاوڕێکانت فێری کوردی ببە: یاریی وشە بە کورمانجی، پێشبڕکێی یەک بە یەک، فەرهەنگێکی کوردیی بەخۆڕایی و کۆمەڵگایەک. بەخۆڕایی، لە وێبگەڕەکەتدا.',
 
   /* passing a post on, here or anywhere else */
@@ -1701,7 +1693,6 @@ export const ckb: Catalogue = {
   'saved.emptyTail': 'لەسەر هەر بابەتێک دەست بە نیشانەی پاشەکەوت بدە تا لێرە بمێنێتەوە.',
   'auth.register.terms': 'بە دروستکردنی هەژمارێک ڕازی دەبیت بە مەرجەکان و سیاسەتی تایبەتێتی Hevalo.',
   'post.audioUnsupported': 'وێبگەڕەکەت ناتوانێت ئەم تۆمارە لێبدات.',
-  'images.reactions': 'کاردانەوەکان',
   'picture.decodeFailed': 'دەبووایە ئەم {format}ـە لێرە بکرێتەوە بەڵام نەکرایەوە. دووبارە هەوڵ بدە — یان وەک خۆی بڵاوی بکەرەوە، کە هێشتا کار دەکات.',
 
   // ---- Stories, and playing with friends --------------------------------

@@ -112,6 +112,9 @@ export const nl: Catalogue = {
   'feed.deleteConfirm': 'Verwijderen?',
   'feed.today': 'Vandaag',
   'feed.yesterday': 'Gisteren',
+  'feed.viewComments': 'Alle {count} reacties bekijken',
+  'feed.viewCommentOne': '1 reactie bekijken',
+  'feed.deleteShort': 'Verwijderen',
 
   'post.open': 'Iets plaatsen',
   'post.button': 'Plaatsen',
@@ -1283,14 +1286,6 @@ export const nl: Catalogue = {
   'photo.duplicate': 'Dupliceren',
   'photo.layerHint': 'Sleep een hoek om het formaat te wijzigen, de greep erboven om te draaien. Pijltjestoetsen duwen, Delete verwijdert.',
   'photo.font': 'Lettertype',
-  'react.love': 'Liefde',
-  'react.peace': 'Vrede',
-  'react.like': 'Leuk',
-  'react.laugh': 'Grappig',
-  'react.wow': 'Wauw',
-  'react.sad': 'Verdrietig',
-  'react.angry': 'Boos',
-  'react.signInToReact': 'Log in om te reageren',
   'picture.couldNotPrepare': 'Die foto kon niet worden voorbereid voor uploaden.',
   'picture.storageOff': 'Fotoopslag staat nog niet aan — probeer het opnieuw zodra dat wel zo is.',
   'picture.file': 'Fotobestand',
@@ -1660,9 +1655,6 @@ export const nl: Catalogue = {
   'profile.iconGiftedBy': 'Icoon cadeau gedaan door @{name}',
   'dimen.notFound': 'Die foto is niet gevonden.',
   'dimen.allPictures': 'Alle foto’s',
-  'dimen.photo': 'Foto',
-  'dimen.aPicture': 'Een foto',
-  'dimen.views': '{count} keer bekeken',
   'app.description': 'Leer Koerdisch samen met je vrienden: woordspellen in het Kurmanci, duels, een gratis Koerdisch woordenboek en een community. Gratis, in je browser.',
 
   /* passing a post on, here or anywhere else */
@@ -1696,7 +1688,6 @@ export const nl: Catalogue = {
   'saved.emptyTail': 'om het hier te bewaren.',
   'auth.register.terms': 'Door een account aan te maken ga je akkoord met de Voorwaarden en het Privacybeleid van Hevalo.',
   'post.audioUnsupported': 'Je browser kan deze opname niet afspelen.',
-  'images.reactions': 'Reacties',
   'picture.decodeFailed': 'Deze {format} had hier moeten openen, maar deed dat niet. Probeer het opnieuw — of plaats hem zoals hij is, dat werkt ook.',
 
   // ---- Stories, and playing with friends --------------------------------

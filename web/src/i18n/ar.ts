@@ -117,6 +117,9 @@ export const ar: Catalogue = {
   'feed.deleteConfirm': 'حذف؟',
   'feed.today': 'اليوم',
   'feed.yesterday': 'أمس',
+  'feed.viewComments': 'عرض كل التعليقات ({count})',
+  'feed.viewCommentOne': 'عرض تعليق واحد',
+  'feed.deleteShort': 'حذف',
 
   'post.open': 'انشر شيئاً',
   'post.button': 'نشر',
@@ -1275,14 +1278,6 @@ export const ar: Catalogue = {
   'photo.duplicate': 'تكرار',
   'photo.layerHint': 'اسحب زاوية لتغيير الحجم، والمقبض فوقها للتدوير. مفاتيح الأسهم تزحزح، وDelete يحذف.',
   'photo.font': 'الخط',
-  'react.love': 'حب',
-  'react.peace': 'سلام',
-  'react.like': 'إعجاب',
-  'react.laugh': 'مضحك',
-  'react.wow': 'واو',
-  'react.sad': 'حزين',
-  'react.angry': 'غاضب',
-  'react.signInToReact': 'سجّل الدخول للتفاعل',
   'picture.couldNotPrepare': 'تعذّر تجهيز هذه الصورة للرفع.',
   'picture.storageOff': 'لم يُفعَّل تخزين الصور بعد — حاول مرة أخرى بعد تفعيله.',
   'picture.file': 'ملف الصورة',
@@ -1652,9 +1647,6 @@ export const ar: Catalogue = {
   'profile.iconGiftedBy': 'الأيقونة هدية من @{name}',
   'dimen.notFound': 'تعذّر العثور على هذه الصورة.',
   'dimen.allPictures': 'كل الصور',
-  'dimen.photo': 'صورة',
-  'dimen.aPicture': 'صورة',
-  'dimen.views': '{count} مشاهدة',
   'app.description': 'تعلّم الكردية مع أصدقائك: ألعاب كلمات بالكرمانجية، ومبارزات وجهًا لوجه، وقاموس كردي مجاني، ومجتمع. مجانًا، في متصفحك.',
 
   /* passing a post on, here or anywhere else */
@@ -1688,7 +1680,6 @@ export const ar: Catalogue = {
   'saved.emptyTail': 'للاحتفاظ به هنا.',
   'auth.register.terms': 'بإنشاء حساب فإنك توافق على شروط Hevalo وسياسة الخصوصية.',
   'post.audioUnsupported': 'متصفحك لا يستطيع تشغيل هذا التسجيل.',
-  'images.reactions': 'التفاعلات',
   'picture.decodeFailed': 'كان من المفترض أن يُفتح هذا الـ{format} هنا لكنه لم يُفتح. حاول مرة أخرى — أو انشره كما هو، فهذا يعمل أيضًا.',
 
   // ---- Stories, and playing with friends --------------------------------

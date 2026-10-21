@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { fireEvent, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { FeedImage } from '@kurda/shared';
 import { preloadCatalogue } from '../i18n/catalogues';
@@ -45,6 +45,66 @@ describe('PostPictures', () => {
     expect(within(described).getByText('ALT')).toBeInTheDocument();
     const plain = screen.getByRole('button', { name: 'Open picture 2 of 2' });
     expect(within(plain).queryByText('ALT')).toBeNull();
+  });
+
+  describe('one at a time, on the wall', () => {
+    /** Where the strip has been scrolled to: jsdom lays nothing out, so the sizes are given. */
+    function scrollTo(track: HTMLElement, left: number, width = 400): void {
+      Object.defineProperty(track, 'clientWidth', { configurable: true, value: width });
+      track.scrollLeft = left;
+      fireEvent.scroll(track);
+    }
+
+    it('puts two or more in a row that is swiped, all at the first one’s shape, with where you are in the corner', () => {
+      renderApp(<PostPictures strip images={[pic(1, null, 1000, 500), pic(2, null, 500, 2000), pic(3)]} />);
+      const strip = screen.getByRole('group', { name: '3 pictures' });
+      expect(strip).toHaveClass('pp-strip');
+      expect(strip.querySelector('.pp-grid')).toBeNull();
+      expect(strip).toHaveStyle({ aspectRatio: '1.91' });
+      expect(strip.querySelectorAll('.pp-slide')).toHaveLength(3);
+      // each still says which it is, or what it shows; the counter and the dots are not read out
+      expect(within(strip).getByRole('button', { name: 'Open picture 2 of 3' })).toBeInTheDocument();
+      const counter = strip.querySelector('.pp-counter')!;
+      expect(counter).toHaveAttribute('aria-hidden', 'true');
+      expect(counter.textContent).toBe('1/3');
+      expect(strip.querySelector('.pp-dots')).toHaveAttribute('aria-hidden', 'true');
+      expect(strip.querySelectorAll('.pp-dot.is-on')).toHaveLength(1);
+
+      scrollTo(strip.querySelector<HTMLElement>('.pp-track')!, 800);
+      expect(counter.textContent).toBe('3/3');
+      expect(strip.querySelectorAll('.pp-dot')[2]).toHaveClass('is-on');
+    });
+
+    it('counts the same way in a right-to-left language, where the row scrolls the other way', () => {
+      renderApp(<PostPictures strip images={[pic(1), pic(2), pic(3)]} />);
+      const strip = screen.getByRole('group', { name: '3 pictures' });
+      scrollTo(strip.querySelector<HTMLElement>('.pp-track')!, -400);
+      expect(strip.querySelector('.pp-counter')?.textContent).toBe('2/3');
+    });
+
+    it('offers a button to the next and the previous picture, but not past either end', async () => {
+      renderApp(<PostPictures strip images={[pic(1), pic(2)]} />);
+      expect(screen.queryByRole('button', { name: 'Previous picture' })).toBeNull();
+      await userEvent.click(screen.getByRole('button', { name: 'Next picture' }));
+      expect(screen.getByRole('group').querySelector('.pp-counter')?.textContent).toBe('2/2');
+      expect(screen.queryByRole('button', { name: 'Next picture' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Previous picture' })).toBeInTheDocument();
+    });
+
+    it('keeps one picture, and anywhere but the wall, as it was', () => {
+      const { unmount } = renderApp(<PostPictures strip images={[pic(1)]} />);
+      expect(screen.getByRole('group')).toHaveClass('pp-grid');
+      expect(document.querySelector('.pp-counter')).toBeNull();
+      unmount();
+      renderApp(<PostPictures images={[pic(1), pic(2), pic(3)]} />);
+      expect(screen.getByRole('group')).toHaveClass('pp-n3');
+    });
+
+    it('still opens a picture full size', async () => {
+      renderApp(<PostPictures strip images={[pic(1, 'Mountains'), pic(2)]} />);
+      await userEvent.click(screen.getByRole('button', { name: 'Open picture 1 of 2: Mountains' }));
+      expect(screen.getByRole('dialog', { name: 'Picture 1 of 2' })).toBeInTheDocument();
+    });
   });
 
   describe('the lightbox', () => {

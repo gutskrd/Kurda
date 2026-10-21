@@ -400,7 +400,7 @@
 .fcard-burst {
   position: absolute;
   top: 50%;
-  inset-inline-start: 18px;
+  inset-inline-start: 20px;
   width: 4px;
   height: 4px;
   margin-top: -2px;

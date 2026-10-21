@@ -118,6 +118,9 @@ export const ku: Catalogue = {
   'feed.deleteConfirm': 'Jê bibim?',
   'feed.today': 'Îro',
   'feed.yesterday': 'Duh',
+  'feed.viewComments': 'Hemû {count} şîroveyan bibîne',
+  'feed.viewCommentOne': 'Şîroveyê bibîne',
+  'feed.deleteShort': 'Jê bibe',
 
   'post.open': 'Tiştek biweşîne',
   'post.button': 'Biweşîne',
@@ -1284,14 +1287,6 @@ export const ku: Catalogue = {
   'photo.duplicate': 'Dubare bike',
   'photo.layerHint': 'Ji goşeyekê bikişîne da ku mezinahiyê biguherînî, ji destikê jorê da ku bizivirînî. Bişkojkên tîran dilivînin, Delete radike.',
   'photo.font': 'Tîp',
-  'react.love': 'Evîn',
-  'react.peace': 'Aştî',
-  'react.like': 'Ecibandin',
-  'react.laugh': 'Kenok',
-  'react.wow': 'Wey',
-  'react.sad': 'Xemgîn',
-  'react.angry': 'Hêrs',
-  'react.signInToReact': 'Ji bo bertekê têkeve',
   'picture.couldNotPrepare': 'Ew wêne ji bo barkirinê nehat amadekirin.',
   'picture.storageOff': 'Hilanîna wêneyan hê nehatiye vekirin — gava vebû dîsa biceribîne.',
   'picture.file': 'Pelê wêneyê',
@@ -1661,9 +1656,6 @@ export const ku: Catalogue = {
   'profile.iconGiftedBy': 'Îkon ji aliyê @{name} ve hatiye diyarîkirin',
   'dimen.notFound': 'Ew wêne nehat dîtin.',
   'dimen.allPictures': 'Hemû wêne',
-  'dimen.photo': 'Wêne',
-  'dimen.aPicture': 'Wêneyek',
-  'dimen.views': '{count} dîtin',
   'app.description': 'Bi hevalên xwe re fêrî kurdî bibe: lîstikên peyvan bi kurmancî, pêşbaziyên yek li hember yek, ferhengeke kurdî ya belaş û civakek. Belaş, di geroka te de.',
 
   /* passing a post on, here or anywhere else */
@@ -1697,7 +1689,6 @@ export const ku: Catalogue = {
   'saved.emptyTail': 'li ser her şandiyekê bişkoka tomarkirinê bitikîne da ku li vir bimîne.',
   'auth.register.terms': 'Bi çêkirina hesabekî tu Mercên Hevalo û Politîkaya Nihêniyê qebûl dikî.',
   'post.audioUnsupported': 'Geroka te nikare vê dengê lê bide.',
-  'images.reactions': 'Berteka',
   'picture.decodeFailed': 'Divê ev {format} li vir vebûya lê venebû. Dîsa biceribîne — an wê wek xwe biweşîne, ku hîn jî dixebite.',
 
   // ---- Stories, and playing with friends --------------------------------

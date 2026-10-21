@@ -74,7 +74,10 @@ describe('Civak', () => {
     // page — and it opens full size, so it is a button named for what it does
     const picture = screen.getByRole('button', { name: 'Open picture 1 of 1' });
     expect(picture.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
-    expect(screen.getAllByText('dilan')).toHaveLength(3);
+    // one name over each post, and once more where the picture's caption starts
+    expect(screen.getAllByText('dilan')).toHaveLength(4);
+    expect(document.querySelectorAll('.fcard-name')).toHaveLength(3);
+    expect(screen.getByText('Çiyayên welêt').closest('.fcard-caption')?.textContent).toBe('dilan Çiyayên welêt');
   });
 
   it('asks the server for the filter rather than filtering what it already has', async () => {
@@ -257,7 +260,7 @@ describe('Civak', () => {
   describe('pictures on written posts', () => {
     const pic = (n: number, alt: string | null = null) => ({ url: `https://cdn.test/${n}.webp`, alt, width: 1200, height: 900 });
 
-    it('lays out up to four pictures under the words, each named by its description', async () => {
+    it('shows up to four pictures one at a time, each named by its description', async () => {
       feedFetch([
         item('library:g1', {
           kind: 'gotin',
@@ -270,11 +273,13 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
 
       const group = await screen.findByRole('group', { name: '3 pictures' });
-      expect(within(group).getAllByRole('button')).toHaveLength(3);
+      expect(within(group).getAllByRole('button', { name: /^Open picture/ })).toHaveLength(3);
       // the author's description, never the post's words, is what a reader hears
       expect(within(group).getByRole('button', { name: 'Open picture 1 of 3: Agirê Newrozê' })).toBeInTheDocument();
       expect(within(group).getByRole('button', { name: 'Open picture 2 of 3' })).toBeInTheDocument();
-      expect(group).toHaveClass('pp-n3');
+      // on the wall they are swiped through, not tiled
+      expect(group).toHaveClass('pp-strip');
+      expect(group.querySelector('.pp-counter')?.textContent).toBe('1/3');
     });
 
     it('badges a post marked as a meme as a meme, and one that is only pictures as a photo', async () => {

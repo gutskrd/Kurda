@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { jsonResponse, renderApp } from '../test/utils';
@@ -33,6 +33,8 @@ function serve(body: unknown, me: { id: string; username: string } | null = null
     vi.fn(async (url: string) => {
       if (url.endsWith('/me')) return me ? jsonResponse(200, { user: me }) : jsonResponse(401, {});
       if (url.includes('/comments')) return jsonResponse(200, { comments: [] });
+      if (url.includes('/posts/library/p1/engagement'))
+        return jsonResponse(200, { engagement: { likes: 5, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false } });
       if (url.includes('/library/posts/p1')) return jsonResponse(200, body);
       if (url.includes('/me/library/drafts')) return jsonResponse(200, { posts: [] });
       return jsonResponse(200, {});
@@ -95,6 +97,15 @@ describe('LibraryPostPage', () => {
     await userEvent.click(await screen.findByRole('button', { name: 'Edit' }));
     const dialog = await screen.findByRole('dialog', { name: 'Edit post' });
     expect(within(dialog).getByDisplayValue('Dar bi berê xwe tê naskirin.')).toBeInTheDocument();
+  });
+
+  it('carries the wall’s row of actions under the post, with the counts for whoever is reading', async () => {
+    serve(post());
+    show();
+    const like = await screen.findByRole('button', { name: 'Sign in to like' });
+    await waitFor(() => expect(like.textContent).toContain('5'));
+    expect(screen.getByRole('button', { name: 'Share this post' })).toBeInTheDocument();
+    expect(screen.queryByRole('group', { name: 'Reactions' })).toBeNull();
   });
 
   it('does not offer Edit to anybody else', async () => {

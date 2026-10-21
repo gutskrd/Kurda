@@ -1,109 +1,122 @@
-import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { useEffect, useRef, useState } from 'react';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
-import type { ImagePost } from '../lib/types';
+import type { FeedItem, ImagePost, PostEngagement } from '../lib/types';
 import { ErrorState } from '../components/states';
 import { PostSkeleton } from '../components/skeletons';
-import { PostAuthor } from '../library/PostAuthor';
 import { Comments } from '../library/Comments';
-import { Reactions, type ReactionSummary } from '../images/Reactions';
 import { ArrowIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
-import { ReportAction } from '../reports/ReportAction';
+import { FeedCard } from '../feed/FeedCard';
 
-const NO_REACTIONS: ReactionSummary = { counts: {}, total: 0, mine: null };
+const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
- * One picture, in full, with who posted it, how people reacted, and the
- * conversation under it.
+ * One picture on its own page: the same post the wall shows — who posted it,
+ * the picture, the heart and the rest, the caption — and the conversation
+ * under it.
  *
- * Reactions are fetched separately from the post because only that call knows
- * the viewer's own reaction — the post itself is public and cached the same for
- * everyone. Comments reuse the library's threaded component; the two APIs are
- * the same shape, and a second copy of the reply tree would drift.
+ * The likes, reposts and saves are fetched separately from the post because
+ * only that call knows whether you are among them — the post itself is public
+ * and cached the same for everyone. Until they arrive the row of actions is
+ * already there, waiting, so nothing under it moves when the numbers land.
+ * Comments reuse the library's threaded component; the two APIs are the same
+ * shape, and a second copy of the reply tree would drift.
  */
 export function DimenPost(): React.JSX.Element {
   const t = useT();
   const { id } = useParams<{ id: string }>();
-  const { client } = useAuth();
+  const { client, status } = useAuth();
+  const navigate = useNavigate();
   const { data: post, error, loading, reload } = useApiGet<ImagePost>(`/images/${id}`);
-  const [reactions, setReactions] = useState<ReactionSummary | null>(null);
-  // the picture's sides are not in the post, so its box is held at four by three
-  // until it has loaded and can say its own shape; the page under it moves once
-  // at most, by the difference, rather than from nothing to the whole picture
-  const [shown, setShown] = useState(false);
+  // kept with the post it is for, so another post's numbers never show for a moment on this one
+  const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
+  const [size, setSize] = useState<{ url: string; width: number; height: number } | null>(null);
+  const commentsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // asked once whoever is reading is known, so "liked" is yours and not a guest's
+    if (status === 'restoring' || !id) return;
     let cancelled = false;
-    setReactions(null);
     void (async () => {
-      const res = await client.get<ReactionSummary>(`/images/${id}/reactions`);
+      const res = await client.get<{ engagement?: PostEngagement }>(`/posts/image/${id}/engagement`);
       if (cancelled) return;
-      // a failed reactions call must not take the picture down with it
-      setReactions(res.ok ? res.data : NO_REACTIONS);
+      // a failed count must not take the picture down with it
+      setCounts({ id, engagement: res.ok && res.data.engagement ? res.data.engagement : NO_ENGAGEMENT });
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, id]);
+  }, [client, id, status]);
 
-  if (loading) return <div className="container container-narrow"><PostSkeleton withImage /></div>;
+  // the picture's sides are not in the post, so they are read off the picture
+  // itself; until then it is held at the grid's usual shape, and moves once at
+  // most, by the difference
+  const imageUrl = post?.imageUrl ?? null;
+  useEffect(() => {
+    if (!imageUrl) return;
+    const img = new Image();
+    img.onload = () => setSize({ url: imageUrl, width: img.naturalWidth, height: img.naturalHeight });
+    img.src = imageUrl;
+    return () => {
+      img.onload = null;
+    };
+  }, [imageUrl]);
+
+  if (loading) return <div className="container container-feed"><PostSkeleton withImage /></div>;
   if (error || !post) {
     return (
-      <div className="container container-narrow">
+      <div className="container container-feed">
         <ErrorState message={error ?? t('dimen.notFound')} onRetry={reload} />
       </div>
     );
   }
 
+  const engagement = counts?.id === post.id ? counts.engagement : null;
+  const measured = size?.url === post.imageUrl ? size : null;
+  const item: FeedItem = {
+    key: `image:${post.id}`,
+    targetType: 'image',
+    id: post.id,
+    kind: post.category === 'meme' ? 'meme' : 'image',
+    author: post.author,
+    title: null,
+    excerpt: post.caption,
+    imageUrl: post.imageUrl,
+    imageAlt: null,
+    images: post.imageUrl ? [{ url: post.imageUrl, alt: null, width: measured?.width ?? null, height: measured?.height ?? null }] : [],
+    href: `/app/dimen/${post.id}`,
+    viewCount: post.viewCount,
+    commentCount: post.commentCount,
+    engagement: engagement ?? NO_ENGAGEMENT,
+    at: post.createdAt,
+  };
+
   return (
-    <div className="container container-narrow">
-      <Link to="/app/dimen" className="back-link">
+    <div className="container container-feed post-page">
+      <Link to="/app/civak?section=dimen" className="back-link">
         <ArrowIcon size={16} />
         {t('dimen.allPictures')}
       </Link>
 
-      <article className="dimen-full">
-        <div className="post-meta">
-          <span className="badge">{post.category === 'meme' ? t('civak.kind.meme') : t('dimen.photo')}</span>
-          <span>{t('dimen.views', { count: post.viewCount.toLocaleString() })}</span>
-        </div>
+      <FeedCard
+        item={item}
+        onChanged={(next) => setCounts({ id: post.id, engagement: next.engagement })}
+        onRemoved={() => navigate('/app/civak?section=dimen', { replace: true })}
+        onPage={{
+          pending: engagement === null,
+          onComment: () => {
+            const box = commentsRef.current;
+            box?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            box?.querySelector<HTMLTextAreaElement>('textarea')?.focus({ preventScroll: true });
+          },
+        }}
+      />
 
-        {post.imageUrl ? (
-          <img
-            className="dimen-full-img"
-            src={post.imageUrl}
-            alt={post.caption ?? t('dimen.aPicture')}
-            style={shown ? undefined : { aspectRatio: '4 / 3' }}
-            onLoad={() => setShown(true)}
-          />
-        ) : (
-          <div className="dimen-full-img dimen-thumb-empty" aria-hidden="true" />
-        )}
-
-        <PostAuthor
-          author={post.author}
-          at={post.createdAt}
-          trailing={
-            <ReportAction
-              target={{ targetType: 'image_post', targetId: post.id }}
-              authorId={post.author?.id}
-              label={t('report.aboutPost')}
-              block={post.author ? { userId: post.author.id, name: post.author.username } : null}
-            />
-          }
-        />
-        {post.caption && <p className="dimen-caption">{post.caption}</p>}
-
-        {reactions === null ? (
-          <div className="reactions" aria-hidden />
-        ) : (
-          <Reactions postId={post.id} initial={reactions} />
-        )}
-      </article>
-
-      <Comments postId={post.id} commentCount={post.commentCount} surface="images" />
+      <div ref={commentsRef} className="post-page-comments">
+        <Comments postId={post.id} commentCount={post.commentCount} surface="images" />
+      </div>
     </div>
   );
 }

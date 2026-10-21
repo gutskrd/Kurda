@@ -2023,65 +2023,6 @@ button.feature {
   overflow: hidden;
 }
 
-/* one picture, in full */
-.dimen-full {
-  margin-top: 8px;
-}
-.dimen-full-img {
-  display: block;
-  width: 100%;
-  /* a picture is the point of the page: show all of it, whatever shape it is */
-  max-height: 72vh;
-  object-fit: contain;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  margin-bottom: 14px;
-}
-.dimen-caption {
-  color: var(--ink-2);
-  line-height: 1.55;
-  margin: 10px 0 0;
-  white-space: pre-wrap;
-}
-
-/* reactions */
-.reactions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  min-height: 36px;
-}
-.reaction {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-3);
-  font: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-.reaction:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
-.reaction:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-.reaction.is-mine {
-  color: var(--gold-ink);
-  border-color: var(--gold-ink);
-  background: var(--gold-soft);
-}
-.reaction-count {
-  font-variant-numeric: tabular-nums;
-}
-
 /* activity: what someone has posted and played, under the showcases */
 .mkp-activity {
   padding: 12px 14px 14px;
@@ -2139,46 +2080,26 @@ button.feature {
 }
 
 /*
- * Whole posts inside the profile panel.
+ * Whole posts inside the profile panel: the same chain as the wall, a post
+ * after a post with only space between them.
  *
- * The panel is already a card on a card, so the posts inside it drop their own
- * frame and separate with a rule instead — three nested boxes with three
- * borders and three shadows reads as clutter at any width, and on a phone it
- * costs padding the words need.
- *
- * `min-width: 0` on the cards is load-bearing: a flex/grid child defaults to
+ * `min-width: 0` on the posts is load-bearing: a flex/grid child defaults to
  * min-content, so one long unbroken word in a post — a URL, a hashtag — would
- * push the card wider than the panel and take the page's horizontal scrollbar
- * with it.
+ * push it wider than the panel and take the page's horizontal scrollbar with
+ * it.
  */
 .mkp-activity-feed {
   display: grid;
-  gap: 0;
+  gap: 20px;
+  padding-top: 6px;
 }
 .mkp-activity-feed .fcard {
   min-width: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  padding-inline: 2px;
-}
-.mkp-activity-feed .fcard + .fcard {
-  border-top: 1px solid var(--separator);
-}
-.mkp-activity-feed .fcard:hover {
-  transform: none;
 }
 /* a picture in a profile tab is a preview, not the page's centrepiece */
-.mkp-activity-feed .pp-grid {
+.mkp-activity-feed .pp-grid,
+.mkp-activity-feed .pp-strip {
   max-height: 340px;
-}
-@media (max-width: 560px) {
-  .mkp-activity-feed .fcard {
-    padding-inline: 0;
-  }
 }
 
 .mkp-activity-list {

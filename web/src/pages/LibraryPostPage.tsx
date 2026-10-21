@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { useApiGet } from '../lib/useApi';
@@ -11,8 +11,12 @@ import { Composer } from '../composer/Composer';
 import { PostPictures } from '../composer/PostPictures';
 import type { ComposedPost } from '../composer/types';
 import { CARD_LABEL_KEY } from '../feed/postKinds';
+import { PostActions, useEngagement } from '../feed/FeedCard';
 import { useT } from '../i18n/I18nProvider';
+import type { FeedItem, PostEngagement } from '../lib/types';
 import { ReportAction } from '../reports/ReportAction';
+
+const NO_ENGAGEMENT: PostEngagement = { likes: 0, bookmarks: 0, reposts: 0, liked: false, bookmarked: false, reposted: false };
 
 /**
  * One written post, in full: a gotin, a çîrok or a helbest, its pictures, who
@@ -22,13 +26,35 @@ import { ReportAction } from '../reports/ReportAction';
  * "Story" badge, an empty heading and a link back to the stories. A post can
  * carry pictures now, laid out as the wall lays them out and opening full size;
  * "Source / credit" sits under the words; and the author can edit it here.
+ *
+ * Under it, the same row of actions the wall has — the heart, comments,
+ * repost, share and save — with the counts fetched for whoever is reading
+ * (the post itself is public and cached the same for everyone).
  */
 export function LibraryPostPage(): React.JSX.Element {
   const t = useT();
-  const { user } = useAuth();
+  const { user, client, status } = useAuth();
   const { id } = useParams<{ id: string }>();
   const { data: post, error, loading, reload } = useApiGet<ComposedPost>(`/library/posts/${id}`);
   const [editing, setEditing] = useState(false);
+  // kept with the post it is for, so another post's numbers never show for a moment on this one
+  const [counts, setCounts] = useState<{ id: string; engagement: PostEngagement } | null>(null);
+  const commentsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // asked once whoever is reading is known, so "liked" is yours and not a guest's
+    if (status === 'restoring' || !id) return;
+    let cancelled = false;
+    void (async () => {
+      const res = await client.get<{ engagement?: PostEngagement }>(`/posts/library/${id}/engagement`);
+      if (cancelled) return;
+      // a failed count must not take the post down with it
+      setCounts({ id, engagement: res.ok && res.data.engagement ? res.data.engagement : NO_ENGAGEMENT });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [client, id, status]);
 
   if (loading) return <div className="container container-narrow"><PostSkeleton /></div>;
   if (error || !post) {
@@ -111,9 +137,38 @@ export function LibraryPostPage(): React.JSX.Element {
             {t('post.source', { source: `\u2068${post.sourceCredit}\u2069` })}
           </p>
         )}
+
+        <PostActionRow
+          item={{
+            key: `library:${post.id}`,
+            targetType: 'library',
+            id: post.id,
+            kind: post.meme ? 'meme' : post.type,
+            author: post.author ?? { id: post.authorId, username: '', avatarUrl: null },
+            title: post.title,
+            excerpt: post.body || null,
+            imageUrl: pictures[0]?.url ?? null,
+            images: pictures,
+            meme: post.meme,
+            href: `/app/library/${post.id}`,
+            viewCount: post.viewCount,
+            commentCount: post.commentCount,
+            engagement: (counts?.id === post.id ? counts.engagement : null) ?? NO_ENGAGEMENT,
+            at: post.publishedAt ?? post.createdAt,
+          }}
+          pending={counts?.id !== post.id}
+          onChanged={(next) => setCounts({ id: post.id, engagement: next.engagement })}
+          onComment={() => {
+            const box = commentsRef.current;
+            box?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            box?.querySelector<HTMLTextAreaElement>('textarea')?.focus({ preventScroll: true });
+          }}
+        />
       </article>
 
-      <Comments postId={post.id} commentCount={post.commentCount} />
+      <div ref={commentsRef} className="post-page-comments">
+        <Comments postId={post.id} commentCount={post.commentCount} />
+      </div>
 
       {editing && (
         <Composer
@@ -127,4 +182,20 @@ export function LibraryPostPage(): React.JSX.Element {
       )}
     </div>
   );
+}
+
+/** The wall's row of actions, under the post on its own page. */
+function PostActionRow({
+  item,
+  pending,
+  onChanged,
+  onComment,
+}: {
+  item: FeedItem;
+  pending: boolean;
+  onChanged: (next: FeedItem) => void;
+  onComment: () => void;
+}): React.JSX.Element {
+  const engage = useEngagement(item, onChanged, pending);
+  return <PostActions item={item} engage={engage} waiting={pending} onComment={onComment} />;
 }

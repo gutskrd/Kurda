@@ -112,6 +112,9 @@ export const tr: Catalogue = {
   'feed.deleteConfirm': 'Silinsin mi?',
   'feed.today': 'Bugün',
   'feed.yesterday': 'Dün',
+  'feed.viewComments': '{count} yorumun tümünü gör',
+  'feed.viewCommentOne': '1 yorumu gör',
+  'feed.deleteShort': 'Sil',
 
   'post.open': 'Bir şey paylaş',
   'post.button': 'Paylaş',
@@ -1277,14 +1280,6 @@ export const tr: Catalogue = {
   'photo.duplicate': 'Çoğalt',
   'photo.layerHint': 'Boyutlandırmak için bir köşeyi, döndürmek için üstündeki tutamacı sürükle. Ok tuşları kaydırır, Delete siler.',
   'photo.font': 'Yazı tipi',
-  'react.love': 'Sevgi',
-  'react.peace': 'Barış',
-  'react.like': 'Beğeni',
-  'react.laugh': 'Komik',
-  'react.wow': 'Vay',
-  'react.sad': 'Üzgün',
-  'react.angry': 'Kızgın',
-  'react.signInToReact': 'Tepki vermek için giriş yap',
   'picture.couldNotPrepare': 'Bu fotoğraf yükleme için hazırlanamadı.',
   'picture.storageOff': 'Fotoğraf depolama henüz açık değil — açıldığında tekrar dene.',
   'picture.file': 'Fotoğraf dosyası',
@@ -1654,9 +1649,6 @@ export const tr: Catalogue = {
   'profile.iconGiftedBy': 'Simgeyi @{name} hediye etti',
   'dimen.notFound': 'Bu fotoğraf bulunamadı.',
   'dimen.allPictures': 'Tüm fotoğraflar',
-  'dimen.photo': 'Fotoğraf',
-  'dimen.aPicture': 'Bir fotoğraf',
-  'dimen.views': '{count} görüntülenme',
   'app.description': 'Kürtçeyi arkadaşlarınla öğren: Kurmanci kelime oyunları, birebir düellolar, ücretsiz bir Kürtçe sözlük ve bir topluluk. Ücretsiz, tarayıcında.',
 
   /* passing a post on, here or anywhere else */
@@ -1690,7 +1682,6 @@ export const tr: Catalogue = {
   'saved.emptyTail': 'içindeki herhangi bir gönderide yer imine dokunarak burada tut.',
   'auth.register.terms': 'Hesap oluşturarak Hevalo Koşulları’nı ve Gizlilik Politikası’nı kabul etmiş olursun.',
   'post.audioUnsupported': 'Tarayıcın bu kaydı oynatamıyor.',
-  'images.reactions': 'Tepkiler',
   'picture.decodeFailed': 'Bu {format} burada açılmalıydı ama açılmadı. Tekrar dene — ya da olduğu gibi paylaş, o da çalışır.',
 
   // ---- Stories, and playing with friends --------------------------------

@@ -224,7 +224,6 @@ export interface ImagePost {
   category: 'meme' | 'image';
   language: string | null;
   viewCount: number;
-  reactionCount: number;
   commentCount: number;
   createdAt: string;
 }

@@ -112,6 +112,9 @@ export const fr: Catalogue = {
   'feed.deleteConfirm': 'Supprimer ?',
   'feed.today': 'Aujourd’hui',
   'feed.yesterday': 'Hier',
+  'feed.viewComments': 'Voir les {count} commentaires',
+  'feed.viewCommentOne': 'Voir 1 commentaire',
+  'feed.deleteShort': 'Supprimer',
 
   'post.open': 'Publier quelque chose',
   'post.button': 'Publier',
@@ -1281,14 +1284,6 @@ export const fr: Catalogue = {
   'photo.duplicate': 'Dupliquer',
   'photo.layerHint': 'Fais glisser un coin pour redimensionner, la poignée au-dessus pour pivoter. Les flèches décalent, Suppr supprime.',
   'photo.font': 'Police',
-  'react.love': 'Amour',
-  'react.peace': 'Paix',
-  'react.like': 'J’aime',
-  'react.laugh': 'Drôle',
-  'react.wow': 'Waouh',
-  'react.sad': 'Triste',
-  'react.angry': 'En colère',
-  'react.signInToReact': 'Connecte-toi pour réagir',
   'picture.couldNotPrepare': 'Cette image n’a pas pu être préparée pour l’envoi.',
   'picture.storageOff': 'Le stockage des images n’est pas encore activé — réessaie quand ce sera le cas.',
   'picture.file': 'Fichier image',
@@ -1658,9 +1653,6 @@ export const fr: Catalogue = {
   'profile.iconGiftedBy': 'Icône offerte par @{name}',
   'dimen.notFound': 'Cette image est introuvable.',
   'dimen.allPictures': 'Toutes les images',
-  'dimen.photo': 'Photo',
-  'dimen.aPicture': 'Une image',
-  'dimen.views': '{count} vues',
   'app.description': 'Apprenez le kurde entre amis : jeux de mots en kurmandji, duels en face à face, un dictionnaire kurde gratuit et une communauté. Gratuit, dans votre navigateur.',
 
   /* passing a post on, here or anywhere else */
@@ -1694,7 +1686,6 @@ export const fr: Catalogue = {
   'saved.emptyTail': 'pour la garder ici.',
   'auth.register.terms': 'En créant un compte, vous acceptez les Conditions et la Politique de confidentialité de Hevalo.',
   'post.audioUnsupported': 'Votre navigateur ne peut pas lire cet enregistrement.',
-  'images.reactions': 'Réactions',
   'picture.decodeFailed': 'Ce {format} aurait dû s’ouvrir ici et ne l’a pas fait. Réessaie — ou publie-le tel quel, ça marche aussi.',
 
   // ---- Stories, and playing with friends --------------------------------

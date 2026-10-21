@@ -112,6 +112,9 @@ export const de: Catalogue = {
   'feed.deleteConfirm': 'Löschen?',
   'feed.today': 'Heute',
   'feed.yesterday': 'Gestern',
+  'feed.viewComments': 'Alle {count} Kommentare ansehen',
+  'feed.viewCommentOne': '1 Kommentar ansehen',
+  'feed.deleteShort': 'Löschen',
 
   'post.open': 'Etwas veröffentlichen',
   'post.button': 'Posten',
@@ -1283,14 +1286,6 @@ export const de: Catalogue = {
   'photo.duplicate': 'Duplizieren',
   'photo.layerHint': 'Zieh an einer Ecke, um die Größe zu ändern, am Griff darüber, um zu drehen. Pfeiltasten schieben, Entf entfernt.',
   'photo.font': 'Schrift',
-  'react.love': 'Liebe',
-  'react.peace': 'Frieden',
-  'react.like': 'Gefällt mir',
-  'react.laugh': 'Lustig',
-  'react.wow': 'Wow',
-  'react.sad': 'Traurig',
-  'react.angry': 'Wütend',
-  'react.signInToReact': 'Melde dich an, um zu reagieren',
   'picture.couldNotPrepare': 'Dieses Bild konnte nicht zum Hochladen vorbereitet werden.',
   'picture.storageOff': 'Der Bildspeicher ist noch nicht eingeschaltet — versuch es erneut, sobald er es ist.',
   'picture.file': 'Bilddatei',
@@ -1660,9 +1655,6 @@ export const de: Catalogue = {
   'profile.iconGiftedBy': 'Symbol geschenkt von @{name}',
   'dimen.notFound': 'Dieses Bild wurde nicht gefunden.',
   'dimen.allPictures': 'Alle Bilder',
-  'dimen.photo': 'Foto',
-  'dimen.aPicture': 'Ein Bild',
-  'dimen.views': '{count} Aufrufe',
   'app.description': 'Kurdisch zu lernen macht mit Freunden mehr Spaß: Wortspiele auf Kurmandschi, Duelle, ein kostenloses kurdisches Wörterbuch und eine Community — gratis im Browser.',
 
   /* passing a post on, here or anywhere else */
@@ -1696,7 +1688,6 @@ export const de: Catalogue = {
   'saved.emptyTail': 'auf das Lesezeichen, damit er hier landet.',
   'auth.register.terms': 'Mit dem Erstellen eines Kontos stimmst du den Bedingungen und der Datenschutzerklärung von Hevalo zu.',
   'post.audioUnsupported': 'Dein Browser kann diese Aufnahme nicht abspielen.',
-  'images.reactions': 'Reaktionen',
   'picture.decodeFailed': 'Dieses {format} hätte sich hier öffnen sollen, hat es aber nicht. Versuch es noch einmal — oder poste es so, wie es ist, das geht auch.',
 
   // ---- Stories, and playing with friends --------------------------------

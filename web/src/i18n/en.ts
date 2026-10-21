@@ -153,6 +153,9 @@ export const en = {
   'feed.deleteConfirm': 'Delete?',
   'feed.today': 'Today',
   'feed.yesterday': 'Yesterday',
+  'feed.viewComments': 'View all {count} comments',
+  'feed.viewCommentOne': 'View 1 comment',
+  'feed.deleteShort': 'Delete',
 
   // ---- posting -------------------------------------------------------------
   'post.open': 'Post something',
@@ -1357,15 +1360,7 @@ export const en = {
   'photo.layerHint': 'Drag a corner to resize, the handle above it to turn. Arrow keys nudge, Delete removes.',
   'photo.font': 'Font',
 
-  // ---- reactions, and choosing a picture -----------------------------
-  'react.love': 'Love',
-  'react.peace': 'Peace',
-  'react.like': 'Like',
-  'react.laugh': 'Funny',
-  'react.wow': 'Wow',
-  'react.sad': 'Sad',
-  'react.angry': 'Angry',
-  'react.signInToReact': 'Sign in to react',
+  // ---- choosing a picture --------------------------------------------
   'picture.couldNotPrepare': 'That picture could not be prepared for upload.',
   'picture.storageOff': 'Picture storage isn’t switched on yet — try again once it is.',
   'picture.file': 'Picture file',
@@ -1753,9 +1748,6 @@ export const en = {
   'profile.iconGiftedBy': 'Icon gifted by @{name}',
   'dimen.notFound': 'That picture could not be found.',
   'dimen.allPictures': 'All pictures',
-  'dimen.photo': 'Photo',
-  'dimen.aPicture': 'A picture',
-  'dimen.views': '{count} views',
   'app.description': 'Learn Kurdish with your friends: Kurmanji word games, head-to-head challenges, a free Kurdish dictionary and a community. Free, in your browser.',
 
   /* passing a post on, here or anywhere else */
@@ -1789,7 +1781,6 @@ export const en = {
   'saved.emptyTail': 'to keep it here.',
   'auth.register.terms': 'By creating an account you agree to the Hevalo Terms and Privacy Policy.',
   'post.audioUnsupported': 'Your browser cannot play this recording.',
-  'images.reactions': 'Reactions',
   'picture.decodeFailed': 'This {format} should have opened here and didn’t. Try again — or post it as it is, which still works.',
 
   // ---- Stories, and playing with friends --------------------------------

@@ -112,6 +112,9 @@ export const es: Catalogue = {
   'feed.deleteConfirm': '¿Eliminar?',
   'feed.today': 'Hoy',
   'feed.yesterday': 'Ayer',
+  'feed.viewComments': 'Ver los {count} comentarios',
+  'feed.viewCommentOne': 'Ver 1 comentario',
+  'feed.deleteShort': 'Eliminar',
 
   'post.open': 'Publicar algo',
   'post.button': 'Publicar',
@@ -1280,14 +1283,6 @@ export const es: Catalogue = {
   'photo.duplicate': 'Duplicar',
   'photo.layerHint': 'Arrastra una esquina para cambiar el tamaño y el tirador de arriba para girar. Las flechas desplazan, Supr elimina.',
   'photo.font': 'Tipografía',
-  'react.love': 'Amor',
-  'react.peace': 'Paz',
-  'react.like': 'Me gusta',
-  'react.laugh': 'Divertido',
-  'react.wow': 'Guau',
-  'react.sad': 'Triste',
-  'react.angry': 'Enfadado',
-  'react.signInToReact': 'Inicia sesión para reaccionar',
   'picture.couldNotPrepare': 'Esa imagen no se ha podido preparar para subirla.',
   'picture.storageOff': 'El almacenamiento de imágenes todavía no está activado; inténtalo cuando lo esté.',
   'picture.file': 'Archivo de imagen',
@@ -1657,9 +1652,6 @@ export const es: Catalogue = {
   'profile.iconGiftedBy': 'Icono regalado por @{name}',
   'dimen.notFound': 'No se ha encontrado esa imagen.',
   'dimen.allPictures': 'Todas las imágenes',
-  'dimen.photo': 'Foto',
-  'dimen.aPicture': 'Una imagen',
-  'dimen.views': '{count} visualizaciones',
   'app.description': 'Aprende kurdo con tus amigos: juegos de palabras en kurmanji, duelos cara a cara, un diccionario kurdo gratuito y una comunidad. Gratis, en tu navegador.',
 
   /* passing a post on, here or anywhere else */
@@ -1693,7 +1685,6 @@ export const es: Catalogue = {
   'saved.emptyTail': 'para guardarla aquí.',
   'auth.register.terms': 'Al crear una cuenta aceptas los Términos y la Política de Privacidad de Hevalo.',
   'post.audioUnsupported': 'Tu navegador no puede reproducir esta grabación.',
-  'images.reactions': 'Reacciones',
   'picture.decodeFailed': 'Este {format} debería haberse abierto aquí y no lo hizo. Inténtalo de nuevo, o publícalo tal cual, que también funciona.',
 
   // ---- Stories, and playing with friends --------------------------------

@@ -1,7 +1,7 @@
 /*
  * A post's pictures on the wall and on its page, and the lightbox.
  *
- * The grid is X's: one picture at its own shape, two side by side, three as
+ * The grid: one picture at its own shape, two side by side, three as
  * one tall and two stacked, four in a square — with a 2px seam and rounded
  * outer corners, so several pictures read as one block rather than a gallery.
  */
@@ -52,7 +52,7 @@
   outline: none;
   box-shadow: inset 0 0 0 3px var(--focus);
 }
-/* "this one is described" — the badge X shows, for sighted readers who want to read it */
+/* "this one is described" — a small badge, for sighted readers who want to read it */
 .pp-alt {
   position: absolute;
   bottom: 8px;
@@ -66,12 +66,121 @@
   letter-spacing: 0.04em;
 }
 
-/* on the wall the block sits inside the card's padding */
-.fcard-pics {
-  padding: 0 18px 14px;
-}
 .post-pictures {
   margin: 18px 0 6px;
+}
+
+/* ---- one at a time, on the wall (PostPictures `Strip`) --------------------- */
+.pp-strip {
+  position: relative;
+  width: 100%;
+  max-height: 640px;
+  border-radius: var(--r-lg);
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.pp-track {
+  display: flex;
+  width: 100%;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  overscroll-behavior-x: contain;
+  scrollbar-width: none;
+}
+.pp-track::-webkit-scrollbar {
+  display: none;
+}
+.pp-slide {
+  flex: 0 0 100%;
+  width: 100%;
+  height: 100%;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+/* where you are, small, on the picture whatever its colours and the theme: white on a dimmed pill */
+.pp-counter {
+  position: absolute;
+  top: 12px;
+  inset-inline-end: 12px;
+  padding: 2px 9px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.5;
+  pointer-events: none;
+}
+.pp-dots {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 5px;
+  padding: 4px 6px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.45);
+  pointer-events: none;
+}
+.pp-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  opacity: 0.45;
+}
+.pp-dot.is-on {
+  opacity: 1;
+}
+/* with a mouse there is nothing to swipe: a round button at each side, shown on hover or focus */
+.pp-step {
+  position: absolute;
+  top: 50%;
+  display: inline-grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  margin-top: -15px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.88);
+  color: #111;
+  box-shadow: 0 1px 6px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity var(--dur, 0.15s) ease;
+}
+.pp-strip:hover .pp-step,
+.pp-step:focus-visible {
+  opacity: 1;
+}
+.pp-step-prev {
+  inset-inline-start: 10px;
+}
+.pp-step-next {
+  inset-inline-end: 10px;
+}
+/* the chevron points the way it goes: back is the reading direction's start */
+.pp-step-prev svg {
+  transform: scaleX(-1);
+}
+[dir='rtl'] .pp-step-prev svg {
+  transform: none;
+}
+[dir='rtl'] .pp-step-next svg {
+  transform: scaleX(-1);
+}
+/* a finger swipes; the buttons are for a pointer that cannot */
+@media (hover: none) {
+  .pp-step {
+    display: none;
+  }
 }
 
 /* ---- the lightbox --------------------------------------------------------- */
@@ -176,9 +285,6 @@
   }
   .pp-figure img {
     max-height: calc(100dvh - 200px);
-  }
-  .fcard-pics {
-    padding: 0 14px 12px;
   }
 }
 /* ---- the post page around them ------------------------------------------ */
