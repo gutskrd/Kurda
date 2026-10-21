@@ -623,7 +623,7 @@ export const ku: Catalogue = {
   'keyboardGuide.mac.switch': 'Bi bişkoka 🌐 (fn) an Control+Space klavyeyê biguherîne.',
   'keyboardGuide.mac.sorani': 'Li {0} bitikîne û {1} lê zêde bike.',
   'keyboardGuide.linux.open': '{0} → {1} → {2} veke û li {3} bitikîne.',
-  'keyboardGuide.linux.kurmanci': '{0} hilbijêre, paşê {1}. (An di termînalê de: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': '{0} hilbijêre, paşê rêzkirina ku bi {1} diqede.',
   'keyboardGuide.linux.switch': 'Bi Super+Space klavyeyê biguherîne.',
   'keyboardGuide.linux.sorani': '{0} hilbijêre, paşê {1}.',
   'appFeedback.question': 'Tu Hevalo çawa dibînî?',

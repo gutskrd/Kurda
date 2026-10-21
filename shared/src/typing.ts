@@ -1198,8 +1198,8 @@ export const KEYBOARD_GUIDES: Record<KeyboardPlatform, KeyboardGuide> = {
       },
       {
         key: 'keyboardGuide.linux.kurmanci',
-        en: 'Choose {0}, then {1}. (Or in a terminal: setxkbmap tr ku)',
-        ui: ['Kurdish', 'Kurdish (Turkey, Latin Q)'],
+        en: 'Choose {0}, then the layout that ends in {1}.',
+        ui: ['Kurdish', 'Latin Q'],
       },
       {
         key: 'keyboardGuide.linux.switch',

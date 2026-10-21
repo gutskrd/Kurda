@@ -677,7 +677,7 @@ export const en = {
   'keyboardGuide.mac.switch': 'Switch keyboards with the 🌐 (fn) key or Control+Space.',
   'keyboardGuide.mac.sorani': 'Click {0} and add {1}.',
   'keyboardGuide.linux.open': 'Open {0} → {1} → {2} and click {3}.',
-  'keyboardGuide.linux.kurmanci': 'Choose {0}, then {1}. (Or in a terminal: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': 'Choose {0}, then the layout that ends in {1}.',
   'keyboardGuide.linux.switch': 'Switch keyboards with Super+Space.',
   'keyboardGuide.linux.sorani': 'Choose {0}, then {1}.',
   'appFeedback.question': 'How are you enjoying Hevalo?',

@@ -729,7 +729,10 @@ describe('keyboard guides', () => {
     expect(names('windows', 'sorani')).toContain('Central Kurdish');
     expect(names('mac', 'kurmanci')).toContain('ABC – Extended');
     expect(names('mac', 'sorani')).toContain('Kurdish-Sorani');
-    expect(names('linux', 'kurmanci')).toContain('Kurdish (Turkey, Latin Q)');
+    // the Linux list names its Kurmancî layouts by the state they were drawn up for; the guide names
+    // only the part a reader needs to spot, so it names no state
+    expect(names('linux', 'kurmanci')).toContain('Latin Q');
+    expect(KEYBOARD_GUIDES.linux.kurmanci.map((step) => keyboardStepText(step)).join(' ')).not.toMatch(/Turkey|setxkbmap tr/);
     expect(names('linux', 'sorani')).toContain('Kurdish (Iraq, Arabic-Latin)');
   });
 

@@ -614,7 +614,7 @@ export const ar: Catalogue = {
   'keyboardGuide.mac.switch': 'بدّل لوحة المفاتيح بمفتاح 🌐 (fn) أو Control+Space.',
   'keyboardGuide.mac.sorani': 'انقر {0} وأضف {1}.',
   'keyboardGuide.linux.open': 'افتح {0} ← {1} ← {2} وانقر {3}.',
-  'keyboardGuide.linux.kurmanci': 'اختر {0}، ثم {1}. (أو في الطرفية: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': 'اختر {0}، ثم التخطيط الذي ينتهي بـ {1}.',
   'keyboardGuide.linux.switch': 'بدّل لوحة المفاتيح بـ Super+Space.',
   'keyboardGuide.linux.sorani': 'اختر {0}، ثم {1}.',
   'appFeedback.question': 'ما رأيك في Hevalo حتى الآن؟',

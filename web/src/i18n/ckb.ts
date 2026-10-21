@@ -627,7 +627,7 @@ export const ckb: Catalogue = {
   'keyboardGuide.mac.switch': 'بە دوگمەی 🌐 (fn) یان Control+Space کیبۆرد بگۆڕە.',
   'keyboardGuide.mac.sorani': 'کرتە لە {0} بکە و {1} زیاد بکە.',
   'keyboardGuide.linux.open': '{0} ← {1} ← {2} بکەرەوە و کرتە لە {3} بکە.',
-  'keyboardGuide.linux.kurmanci': '{0} هەڵبژێرە، پاشان {1}. (یان لە تێرمیناڵ: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': '{0} هەڵبژێرە، پاشان ئەو شێوەیەی بە {1} کۆتایی دێت.',
   'keyboardGuide.linux.switch': 'بە Super+Space کیبۆرد بگۆڕە.',
   'keyboardGuide.linux.sorani': '{0} هەڵبژێرە، پاشان {1}.',
   'appFeedback.question': 'Hevalo چۆن دەبینیت؟',

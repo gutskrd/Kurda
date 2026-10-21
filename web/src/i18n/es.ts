@@ -619,7 +619,7 @@ export const es: Catalogue = {
   'keyboardGuide.mac.switch': 'Cambia de teclado con la tecla 🌐 (fn) o Control+Espacio.',
   'keyboardGuide.mac.sorani': 'Haz clic en {0} y añade {1}.',
   'keyboardGuide.linux.open': 'Abre {0} → {1} → {2} y haz clic en {3}.',
-  'keyboardGuide.linux.kurmanci': 'Elige {0} y luego {1}. (O en una terminal: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': 'Elige {0} y luego la distribución que termina en {1}.',
   'keyboardGuide.linux.switch': 'Cambia de teclado con Super+Espacio.',
   'keyboardGuide.linux.sorani': 'Elige {0} y luego {1}.',
   'appFeedback.question': '¿Qué te parece Hevalo?',

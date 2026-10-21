@@ -622,7 +622,7 @@ export const nl: Catalogue = {
   'keyboardGuide.mac.switch': 'Wissel van toetsenbord met de 🌐-toets (fn) of Control+spatie.',
   'keyboardGuide.mac.sorani': 'Klik op {0} en voeg {1} toe.',
   'keyboardGuide.linux.open': 'Open {0} → {1} → {2} en klik op {3}.',
-  'keyboardGuide.linux.kurmanci': 'Kies {0} en daarna {1}. (Of in een terminal: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': 'Kies {0} en daarna de indeling die eindigt op {1}.',
   'keyboardGuide.linux.switch': 'Wissel van toetsenbord met Super+spatie.',
   'keyboardGuide.linux.sorani': 'Kies {0} en daarna {1}.',
   'appFeedback.question': 'Hoe bevalt Hevalo je?',

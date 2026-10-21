@@ -622,7 +622,7 @@ export const de: Catalogue = {
   'keyboardGuide.mac.switch': 'Wechsle die Tastatur mit der 🌐-Taste (fn) oder Control+Leertaste.',
   'keyboardGuide.mac.sorani': 'Klicke auf {0} und füge {1} hinzu.',
   'keyboardGuide.linux.open': 'Öffne {0} → {1} → {2} und klicke auf {3}.',
-  'keyboardGuide.linux.kurmanci': 'Wähle {0}, dann {1}. (Oder im Terminal: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': 'Wähle {0}, dann das Layout, das auf {1} endet.',
   'keyboardGuide.linux.switch': 'Wechsle die Tastatur mit Super+Leertaste.',
   'keyboardGuide.linux.sorani': 'Wähle {0}, dann {1}.',
   'appFeedback.question': 'Wie gefällt dir Hevalo?',

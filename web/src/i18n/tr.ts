@@ -616,7 +616,7 @@ export const tr: Catalogue = {
   'keyboardGuide.mac.switch': 'Klavyeyi 🌐 (fn) tuşu veya Control+Boşluk ile değiştir.',
   'keyboardGuide.mac.sorani': '{0} tıkla ve {1} ekle.',
   'keyboardGuide.linux.open': '{0} → {1} → {2} aç ve {3} tıkla.',
-  'keyboardGuide.linux.kurmanci': '{0} seç, sonra {1}. (Ya da terminalde: setxkbmap tr ku)',
+  'keyboardGuide.linux.kurmanci': '{0} seç, sonra {1} ile biten düzeni seç.',
   'keyboardGuide.linux.switch': 'Klavyeyi Super+Boşluk ile değiştir.',
   'keyboardGuide.linux.sorani': '{0} seç, sonra {1}.',
   'appFeedback.question': 'Hevalo’yu nasıl buluyorsun?',
