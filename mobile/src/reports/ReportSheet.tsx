@@ -1,18 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import {
-  AccessibilityInfo,
-  KeyboardAvoidingView,
-  Linking,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { AccessibilityInfo, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import {
   HELPLINE_URL,
@@ -33,15 +20,14 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
+import { BottomSheet } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { ClayButton } from '../theme/glass';
-import { display } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { fileReport } from './api';
 import { CATEGORY_LABEL } from './labels';
 import { useDirection } from './direction';
-import { SHEET_MAX_WIDTH } from './sheet';
 
 /**
  * What is being reported. The sheet turns it into `POST /reports`.
@@ -65,7 +51,7 @@ export type ReportTarget =
  * The one report sheet, everywhere something can be reported.
  *
  * Props:
- * - `visible` — show it (it is a Modal; keep it mounted and flip this).
+ * - `visible` — show it (it is a BottomSheet; keep it mounted and flip this).
  * - `target` — what is reported (`ReportTarget`).
  * - `name` — whom the title names ("Report Rojda", "Report Player 2"); left
  *   out, the title says what it is ("Report this message").
@@ -75,7 +61,7 @@ export type ReportTarget =
  *   person is you; nothing is offered then.
  * - `leavable` — `{ groupId, name }` to offer **Leave group** on the done
  *   screen (a group, or a message in one).
- * - `onClose()` — the sheet was closed (Cancel, Done, the back button).
+ * - `onClose()` — the sheet was closed (the ✕, a drag down, Done, the back button).
  * - `onBlocked(userId)` / `onLeftGroup(groupId)` — after the one-tap action
  *   worked, so the screen can step away from what is now gone.
  *
@@ -108,9 +94,7 @@ export function ReportSheet({
   onBlocked?: (userId: string) => void;
   onLeftGroup?: (groupId: string) => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
-  const dir = useDirection();
   const [step, setStep] = useState<'category' | 'help' | 'note' | 'done'>('category');
   const [category, setCategory] = useState<ReportCategoryInfo | null>(null);
   const [receipt, setReceipt] = useState<ReportReceipt | null>(null);
@@ -126,66 +110,39 @@ export function ReportSheet({
   const title = name ? t('report.title.named', { name }) : t(TITLE[target.type]);
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.scrim }]}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.cancel')}
-        />
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-          <View style={[styles.header, { flexDirection: dir.row }]}>
-            <Icon name="flag" size={18} color={colors.textSecondary} />
-            <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={2}>
-              {title}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              hitSlop={12}
-              style={styles.close}
-              accessibilityRole="button"
-              accessibilityLabel={t('social.close')}
-            >
-              <Icon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-
-          <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
-            {step === 'category' ? (
-              <CategoryStep
-                onPick={(c) => {
-                  setCategory(c);
-                  setStep(c.showsHelp ? 'help' : 'note');
-                }}
-              />
-            ) : step === 'help' ? (
-              <HelpFirst onContinue={() => setStep('note')} />
-            ) : step === 'note' && category ? (
-              <NoteStep
-                target={target}
-                category={category}
-                onChange={() => setStep('category')}
-                onSent={(r) => {
-                  setReceipt(r);
-                  setStep('done');
-                }}
-              />
-            ) : receipt ? (
-              <DoneStep
-                receipt={receipt}
-                blockable={blockable ?? null}
-                leavable={leavable ?? null}
-                onClose={onClose}
-                onBlocked={onBlocked}
-                onLeftGroup={onLeftGroup}
-              />
-            ) : null}
-          </ScrollView>
-        </SheetIn>
-      </KeyboardAvoidingView>
-    </Modal>
+    <BottomSheet visible={visible} onClose={onClose} title={title} icon="flag" contentStyle={styles.scroller}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
+        {step === 'category' ? (
+          <CategoryStep
+            onPick={(c) => {
+              setCategory(c);
+              setStep(c.showsHelp ? 'help' : 'note');
+            }}
+          />
+        ) : step === 'help' ? (
+          <HelpFirst onContinue={() => setStep('note')} />
+        ) : step === 'note' && category ? (
+          <NoteStep
+            target={target}
+            category={category}
+            onChange={() => setStep('category')}
+            onSent={(r) => {
+              setReceipt(r);
+              setStep('done');
+            }}
+          />
+        ) : receipt ? (
+          <DoneStep
+            receipt={receipt}
+            blockable={blockable ?? null}
+            leavable={leavable ?? null}
+            onClose={onClose}
+            onBlocked={onBlocked}
+            onLeftGroup={onLeftGroup}
+          />
+        ) : null}
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
@@ -523,23 +480,9 @@ function reportErrorText(error: ApiError, t: (key: TranslationKey, vars?: Record
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    maxHeight: '90%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-  },
-  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radii.pill, marginBottom: spacing.sm },
-  header: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  title: { ...display(typography.sizes.lg), flex: 1 },
-  close: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
-  body: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.sm },
+  // the gutter is the ScrollView's own, so it scrolls edge to edge under the sheet's header
+  scroller: { paddingHorizontal: 0 },
+  body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   lead: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm, lineHeight: 20 },
   bodyText: { fontSize: typography.sizes.md, lineHeight: 22 },

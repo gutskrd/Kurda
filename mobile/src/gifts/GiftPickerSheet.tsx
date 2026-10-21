@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   DEFAULT_ITEM_FILTER,
   GIFTS_PER_DAY,
@@ -24,16 +23,14 @@ import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
+import { BottomSheet } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { display } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { restrictionOf } from '../reports/sendErrors';
 import { SendErrorNotice } from '../reports/SendError';
 import { useDirection } from '../reports/direction';
-import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { EmptyState } from '../theme/EmptyState';
 import { KIND_LABEL, kindWithCount, withinBalance } from '../shop/format';
 import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from '../shop/ItemFilters';
@@ -71,9 +68,7 @@ export function GiftPickerSheet({
   onClose: () => void;
   onSent: (result: SentGift, item: GiftCatalogItem, to: GiftFriend[]) => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
-  const dir = useDirection();
   const group = chat.kind === 'group';
   const [step, setStep] = useState<'who' | 'what'>(group ? 'who' : 'what');
   const [chosen, setChosen] = useState<string[]>(group ? [] : friends.map((f) => f.userId));
@@ -88,46 +83,20 @@ export function GiftPickerSheet({
   const title = group ? t('gift.button') : t('gift.picker.titleFor', { name: friends[0]?.name ?? '' });
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.flex}>
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.scrim }]}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.cancel')}
-        />
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-          <View style={[styles.header, { flexDirection: dir.row }]}>
-            {group && step === 'what' ? (
-              <Pressable
-                onPress={() => setStep('who')}
-                hitSlop={12}
-                style={styles.headerBtn}
-                accessibilityRole="button"
-                accessibilityLabel={t('common.back')}
-              >
-                <Icon name="chevron-left" size={20} color={colors.textSecondary} style={dir.flip} />
-              </Pressable>
-            ) : (
-              <Icon name="gift" size={20} color={colors.gold} />
-            )}
-            <Text style={[styles.title, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
-              {title}
-            </Text>
-            <Pressable onPress={onClose} hitSlop={12} style={styles.headerBtn} accessibilityRole="button" accessibilityLabel={t('social.close')}>
-              <Icon name="close" size={20} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-
-          {step === 'who' ? (
-            <WhoStep friends={friends} chosen={chosen} onChange={setChosen} onNext={() => setStep('what')} />
-          ) : visible && recipients.length > 0 ? (
-            <WhatStep chat={chat} recipients={recipients} onSent={onSent} onClose={onClose} />
-          ) : null}
-        </SheetIn>
-      </View>
-    </Modal>
+    <BottomSheet
+      visible={visible}
+      onClose={onClose}
+      title={title}
+      icon="gift"
+      onBack={group && step === 'what' ? () => setStep('who') : undefined}
+      contentStyle={styles.edge}
+    >
+      {step === 'who' ? (
+        <WhoStep friends={friends} chosen={chosen} onChange={setChosen} onNext={() => setStep('what')} />
+      ) : visible && recipients.length > 0 ? (
+        <WhatStep chat={chat} recipients={recipients} onSent={onSent} onClose={onClose} />
+      ) : null}
+    </BottomSheet>
   );
 }
 
@@ -463,7 +432,7 @@ function WhatStep({
             value={category}
             onChange={(next) => setFilter((f) => ({ ...f, category: next }))}
             label={t('shop.kind.label')}
-            inset={spacing.lg}
+            inset={layout.gutter}
           />
         </View>
       ) : null}
@@ -473,7 +442,7 @@ function WhatStep({
           <Text style={[styles.note, styles.gutter, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.empty')}</Text>
         ) : (
           <>
-            <OptionRow inset={spacing.lg}>
+            <OptionRow inset={layout.gutter}>
               <SortChip value={filter.sort} onChange={(sort) => setFilter((f) => ({ ...f, sort }))} />
               <ToggleChip label={t('shop.filter.withinBalance')} value={affordableOnly} onChange={setAffordableOnly} />
               <ToggleChip label={t('gift.picker.hideOwned')} value={hideOwned} onChange={setHideOwned} />
@@ -586,41 +555,27 @@ export function giftErrorText(error: ApiError, t: (key: TranslationKey) => strin
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    maxHeight: '88%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.lg,
-  },
-  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radii.pill, marginBottom: spacing.sm },
-  header: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
-  headerBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginHorizontal: -spacing.sm },
-  title: { ...display(typography.sizes.lg), flex: 1 },
-  body: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, gap: spacing.sm },
+  // the steps lay out their own gutters: the chips and the gifts scroll edge to edge, under the sheet's header
+  edge: { paddingHorizontal: 0, gap: 0 },
+  body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.md, gap: spacing.sm },
   lead: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm, lineHeight: 20 },
   center: { textAlign: 'center' },
   checkRow: { alignItems: 'center', gap: spacing.md, minHeight: 52, paddingVertical: spacing.xs },
   checkLabel: { flex: 1, fontSize: typography.sizes.md },
   box: { width: 24, height: 24, borderRadius: radii.xs, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
-  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
+  footer: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
   spinner: { marginVertical: spacing.xl },
-  balance: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  balance: { alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   balanceLabel: { fontSize: typography.sizes.sm },
   chip: { alignItems: 'center', gap: 4, paddingVertical: 4, paddingHorizontal: spacing.sm, borderRadius: radii.pill },
   chipText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  gutter: { marginHorizontal: spacing.lg },
+  gutter: { marginHorizontal: layout.gutter },
   filters: { gap: spacing.sm, paddingBottom: spacing.sm },
   scroll: { paddingBottom: spacing.sm, gap: spacing.xs },
   group: { gap: spacing.sm, marginTop: spacing.sm },
   // two columns edge to edge: the gap between them is what is left over, so both line up with the header
-  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: spacing.lg },
+  grid: { flexWrap: 'wrap', justifyContent: 'space-between', rowGap: spacing.sm, paddingHorizontal: layout.gutter },
   item: { width: '48.5%', borderRadius: radii.md, borderWidth: 2, padding: spacing.sm, gap: 4, minHeight: 150 },
   itemArt: { alignItems: 'center', justifyContent: 'center' },
   itemArtSquare: { height: 72 },
