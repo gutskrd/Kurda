@@ -125,14 +125,14 @@ export function EntryView({
               puts that definition here rather than leaving an empty line above
               it, so the sense reads as a definition rather than as a gap.
             */}
-            <p className="dict-def">{s.definitionEn ?? s.definitionKu}</p>
-            {s.definitionEn && s.definitionKu ? <p className="dict-def-ku">{s.definitionKu}</p> : null}
+            <p className="dict-def" dir="auto">{s.definitionEn ?? s.definitionKu}</p>
+            {s.definitionEn && s.definitionKu ? <p className="dict-def-ku" dir="auto">{s.definitionKu}</p> : null}
             {s.examples.length > 0 ? (
               <ul className="dict-examples">
                 {s.examples.map((e, i) => (
                   <li key={i}>
-                    <span className="dict-example-ku">{e.textKu}</span>
-                    {e.textEn ? <span className="dict-example-en">{e.textEn}</span> : null}
+                    <span className="dict-example-ku" dir="auto">{e.textKu}</span>
+                    {e.textEn ? <span className="dict-example-en" dir="auto">{e.textEn}</span> : null}
                   </li>
                 ))}
               </ul>
