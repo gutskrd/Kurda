@@ -1,4 +1,4 @@
-import { Fragment, useEffect, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import {
   LEAGUE_TIERS,
   NO_DEMOTION_TIERS,
@@ -6,13 +6,16 @@ import {
   tierAbove,
   tierBelow,
   type LeagueStandingRow,
+  type LeagueTier,
   type LeagueView,
   type LeagueWeekResult,
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
-import { Button } from '../components/Button';
+import { Button, LinkButton } from '../components/Button';
+import { Modal } from '../components/Modal';
 import { LeagueCardSkeleton } from '../components/skeletons';
-import { DownIcon, ShieldIcon, SparkleIcon, UpIcon } from '../components/icons';
+import { DownIcon, ShieldIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
+import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import { leagueName, leagueNamed, withMeaning, type Translate } from '../ranks/names';
@@ -26,18 +29,23 @@ import { LeagueMoment } from './LeagueMoment';
  * A group of up to twenty who earned learning XP this week, in one of six
  * tiers named for water — a drop to the ocean. The top quarter move up if they
  * also met the weekly goal; the bottom 15% move down only if they missed it,
- * and never from Dilop or Kanî. So the page leads with the goal: the ring, and
- * "Safe this week ✓" the moment it is met.
+ * and never from Dilop or Kanî.
+ *
+ * It reads from the top: the league's name and how many days the week has
+ * left (whole days, never a clock running down), the six leagues in a row with
+ * yours the biggest, those behind you in their colours and those ahead still
+ * locked, and under a line, the week — the goal ring and "Safe this week ✓"
+ * the moment it is met, then the table. Before the first lesson of the week
+ * there is no table yet, and Hevalo is asleep beside the way in. At the end,
+ * the way out of the leagues, asked once, plainly.
  *
  * The zones are drawn with an arrow, a word and a line across the table —
- * never colour alone — and the week's end is a local day and time, said once,
- * without a ticking clock. Personal mode (someone not taking part, and teens
- * by default) keeps the same ring and compares this week with the last ones,
+ * never colour alone. Personal mode (someone not taking part, and teens by
+ * default) keeps the same ring and compares this week with the last ones,
  * with no group and no table.
  */
 export function LeaguePanel(): React.JSX.Element | null {
   const { client, refreshUser } = useAuth();
-  const t = useT();
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [failed, setFailed] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -56,16 +64,18 @@ export function LeaguePanel(): React.JSX.Element | null {
     };
   }, [client, reloadKey]);
 
-  /** The way back in, one tap from where the table would be (Settings has the other). */
-  async function join(): Promise<void> {
+  /** In or out of the leagues, from here (Settings has the other switch): saved, then the week read again. */
+  async function choose(leaguesEnabled: boolean): Promise<boolean> {
     setJoining(true);
-    const res = await client.request('PATCH', '/me', { body: { leaguesEnabled: true } });
+    const res = await client.request('PATCH', '/me', { body: { leaguesEnabled } });
     setJoining(false);
     if (res.ok) {
       await refreshUser();
       setReloadKey((n) => n + 1);
     }
+    return res.ok;
   }
+  const join = (): Promise<boolean> => choose(true);
 
   // an extra panel above boards that work without it: nothing if it fails, and
   // while it loads, its own shape, so the boards under it do not drop when it lands
@@ -77,19 +87,38 @@ export function LeaguePanel(): React.JSX.Element | null {
   }
 
   return (
-    <section className={`league-card league-${league.tier ?? 'none'}`} aria-labelledby="league-heading">
+    <section className={`league-card league-now league-${league.tier ?? 'none'}`} aria-labelledby="league-heading">
       <LeagueHead league={league} />
-      <GoalLine league={league} />
-      {league.joined && league.standings.length > 0 ? (
-        <Standings league={league} />
+      <Ladder tier={league.tier ?? 'dilop'} />
+      <hr className="league-week-rule" />
+      {league.joined ? (
+        <>
+          <GoalRow league={league} />
+          {league.standings.length > 0 && <Standings league={league} />}
+        </>
       ) : (
-        <p className="league-join-hint">{t('leagues.joinHint')}</p>
+        <Resting />
       )}
       {league.lastWeek && <LastWeek result={league.lastWeek} />}
       {/* moved up last week: celebrated once, the first time the league is opened after */}
       <LeagueMoment week={league.lastWeek} />
+      <LeaveLeagues busy={joining} onLeave={() => choose(false)} />
     </section>
   );
+}
+
+/**
+ * How long the week has left, in whole days and said calmly — "3 days left",
+ * "1 day left" — and on its last day the local day and time it closes. Never
+ * hours and minutes running down: a week is something to plan, not to race.
+ */
+export function weekLeft(t: Translate, endsAt: string, locale: string, now: number = Date.now()): string {
+  const at = new Date(endsAt).getTime();
+  if (Number.isNaN(at)) return '';
+  const days = Math.floor((at - now) / 86_400_000);
+  if (days >= 2) return t('leagues.daysLeft', { count: days });
+  if (days === 1) return t('leagues.dayLeft');
+  return t('leagues.weekEnds', { when: weekEnds(endsAt, locale) });
 }
 
 /** "Monday 02:00": when the week closes, in the reader's own clock and words. */
@@ -99,25 +128,129 @@ export function weekEnds(endsAt: string, locale: string): string {
   return d.toLocaleString(locale, { weekday: 'long', hour: '2-digit', minute: '2-digit' });
 }
 
+/** The league's name, what it means, and how many days the week has left. */
 function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const tier = league.tier ?? 'dilop';
   const named = leagueNamed(t, tier);
   return (
-    <div className="league-head">
-      <LeagueEmblem tier={tier} size={92} title={withMeaning(t, named)} className="league-head-emblem" />
-      <div className="league-head-text">
-        <h2 id="league-heading" className="league-card-title">
-          {leagueName(t, tier)}
-        </h2>
-        {named.meaning && <p className="league-head-meaning">{named.meaning}</p>}
-        <p className="league-head-meta">
-          {league.joined && league.groupSize > 0 && <span>{t('leagues.groupOf', { count: league.groupSize })}</span>}
-          <span>{t('leagues.weekEnds', { when: weekEnds(league.endsAt, locale) })}</span>
-        </p>
+    <header className="league-week-head">
+      <h2 id="league-heading" className="league-week-title">
+        {leagueName(t, tier)}
+      </h2>
+      {named.meaning && <p className="league-week-meaning">{named.meaning}</p>}
+      <p className="league-week-left">
+        <TimerIcon size={16} />
+        <span>{weekLeft(t, league.endsAt, locale)}</span>
+      </p>
+    </header>
+  );
+}
+
+/**
+ * The six leagues in a row, a drop to the ocean: those you have come through
+ * in their colours, yours bigger than the rest, and those still ahead as their
+ * own shapes in grey with a keyhole. Each is named for a screen reader with
+ * where it stands for you. Too wide for a phone, it scrolls sideways, and it
+ * opens with yours in the middle of it.
+ */
+function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
+  const t = useT();
+  const here = LEAGUE_TIERS.indexOf(tier);
+  const strip = useRef<HTMLOListElement>(null);
+  const mine = useRef<HTMLLIElement>(null);
+  useEffect(() => {
+    const row = strip.current;
+    const item = mine.current;
+    if (!row || !item || typeof row.scrollBy !== 'function') return;
+    // only sideways: the page itself does not move
+    const a = row.getBoundingClientRect();
+    const b = item.getBoundingClientRect();
+    row.scrollBy({ left: b.left + b.width / 2 - (a.left + a.width / 2) });
+  }, [tier]);
+  return (
+    <ol className="league-ladder" ref={strip}>
+      {LEAGUE_TIERS.map((each, i) => {
+        const where = i < here ? 'reached' : i === here ? 'here' : 'ahead';
+        const league = withMeaning(t, leagueNamed(t, each));
+        return (
+          <li key={each} ref={i === here ? mine : undefined} className={`league-ladder-step is-${where}`} aria-current={i === here ? 'true' : undefined}>
+            <LeagueEmblem tier={each} size={i === here ? 88 : 56} locked={i > here} title={t(LADDER_SAYS[where], { league })} />
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+const LADDER_SAYS = { reached: 'leagues.ladder.reached', here: 'leagues.ladder.here', ahead: 'leagues.ladder.ahead' } as const;
+
+/** Joined this week: the goal ring, where the week stands, and the group's size. */
+function GoalRow({ league }: { league: LeagueView }): React.JSX.Element {
+  const t = useT();
+  return (
+    <div className="league-goal-row">
+      <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={84} />
+      <div className="league-goal-text">
+        <GoalLine league={league} />
+        {league.groupSize > 0 && <p className="league-goal-group">{t('leagues.groupOf', { count: league.groupSize })}</p>}
       </div>
-      <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={92} />
+    </div>
+  );
+}
+
+/**
+ * Not in a group yet this week: there is no table to show, so none is — Hevalo
+ * asleep, and the one thing that starts the week, said as an invitation.
+ */
+function Resting(): React.JSX.Element {
+  const t = useT();
+  return (
+    <div className="league-resting">
+      <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} resting className="league-resting-figure" />
+      <h3 className="league-resting-title">{t('leagues.resting.title')}</h3>
+      <p className="league-resting-body">{t('leagues.joinHint')}</p>
+      <LinkButton to="/app/learn">{t('leagues.notJoined.start')}</LinkButton>
+    </div>
+  );
+}
+
+/**
+ * The way out of the weekly leagues, at the end where it is found when it is
+ * looked for. Asked once, in plain words that say what stays — no "are you
+ * sure you want to give up", and Leave is not drawn as a danger: nothing is
+ * lost, and the way back in is on the page that follows.
+ */
+function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => Promise<boolean> }): React.JSX.Element {
+  const t = useT();
+  const [asking, setAsking] = useState(false);
+  return (
+    <div className="league-leave">
+      <Button variant="ghost" size="sm" onClick={() => setAsking(true)}>
+        {t('leagues.leave')}
+      </Button>
+      <Modal open={asking} onClose={() => setAsking(false)} label={t('leagues.leave.title')}>
+        <div className="league-leave-dialog">
+          <h2 className="league-leave-title">{t('leagues.leave.title')}</h2>
+          <p className="league-leave-body">{t('leagues.leave.body')}</p>
+          <div className="league-leave-actions">
+            <Button variant="secondary" onClick={() => setAsking(false)}>
+              {t('common.cancel')}
+            </Button>
+            <Button
+              disabled={busy}
+              onClick={() => {
+                void onLeave().then((ok) => {
+                  if (ok) setAsking(false);
+                });
+              }}
+            >
+              {t('leagues.leave.confirm')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

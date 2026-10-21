@@ -84,6 +84,14 @@
   --switch-on-thumb: #0b0d10;
   --switch-off: #686c73;
   --switch-off-thumb: #ffffff;
+  /*
+   * Something not reached yet, a league above yours: its shape in a quiet grey
+   * and the keyhole on it a step lighter. Seen, so it is something to look
+   * forward to, but nothing like the colour of what has been earned. Not a
+   * control, so not held to 3:1.
+   */
+  --locked: #262b33;
+  --locked-mark: #4d545e;
   /* someone online: a dot, never the only sign of it */
   --online: #3ddc84;
 
@@ -220,6 +228,8 @@
   --switch-on-thumb: #ffffff;
   --switch-off: #86898f;
   --switch-off-thumb: #ffffff;
+  --locked: #e2e4e8;
+  --locked-mark: #a5a9b0;
   --online: #1fa45a;
 
   --focus: rgba(17, 17, 17, 0.7);

@@ -336,6 +336,29 @@ describe('SpeakingCharacter', () => {
     expect(mouth(root)).toBe('a');
   });
 
+  it('rests where there is nothing to do yet: eyes shut, head dipped, z’s beside it, still under the pointer', () => {
+    const { root } = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'full', resting: true });
+    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBe(root);
+    expect(root).toHaveClass('is-resting');
+    expect(root.querySelector('[data-eyes="closed"]')).not.toHaveAttribute('visibility');
+    expect(root.querySelector('[data-sc="head"]')?.getAttribute('transform')).toMatch(/^rotate\(5 /);
+    // three z's for the stylesheet to float up, inside the drawing a screen reader already skips
+    expect(root.querySelectorAll('.sc-z')).toHaveLength(3);
+    expect(root.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    // a slower, deeper breath than awake
+    expect(root.style.getPropertyValue('--sc-breath-ms')).toBe('5600ms');
+    // the eyes do not follow the pointer while it sleeps
+    root.getBoundingClientRect = () => ({ left: 100, top: 100, width: 100, height: 100, right: 200, bottom: 200, x: 100, y: 100, toJSON: () => ({}) });
+    act(() => {
+      window.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 900, clientY: 150, pointerType: 'mouse' }));
+    });
+    expect(root.querySelector<SVGGElement>('[data-pupil="left"]')!.style.transform).toBe('');
+    // awake, none of it
+    const awake = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' } }).root;
+    expect(awake.querySelectorAll('.sc-z')).toHaveLength(0);
+    expect(awake.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
+  });
+
   it('greets a click, and then does what the page asked', async () => {
     const again = vi.fn();
     const { root } = face(new FakeMedia(), { onPress: again });

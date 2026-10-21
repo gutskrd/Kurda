@@ -2638,6 +2638,17 @@ export const en = {
   'leagues.noDemotion': 'Nobody moves down from {tier}.',
   'leagues.inZoneNeedGoal': 'You’re in the top {count}. Reach {goal} XP this week to move up to {tier}.',
   'leagues.joinHint': 'Finish a lesson, a review or a story this week to join a group.',
+  'leagues.daysLeft': '{count} days left',
+  'leagues.dayLeft': '1 day left',
+  'leagues.ladder.reached': '{league}, reached',
+  'leagues.ladder.here': '{league}, your league',
+  'leagues.ladder.ahead': '{league}, still ahead',
+  'leagues.resting.title': 'Your week starts with a lesson',
+  'leagues.leave': 'Leave weekly leagues',
+  'leagues.leave.title': 'Leave the weekly leagues?',
+  'leagues.leave.body': 'You won’t be in a group or on a table. Your weekly goal stays, just for you, and you can join again any time.',
+  'leagues.leave.confirm': 'Leave',
+  'leagues.notJoined.start': 'Start a lesson',
   'leagues.zone.up': 'Up',
   'leagues.zone.down': 'Down',
   'leagues.zone.trophy': 'Pêla',
@@ -2926,6 +2937,7 @@ export const en = {
   'learn.guest.body': 'Courses and games keep your progress, so they need an account. The alphabet and the dictionary are open to everyone.',
   'civak.emptyBody': 'Be the first: a saying, a poem or a picture, with the + button. Or find people to learn with.',
   'character.speaking': '{name} speaking',
+  'characters.resting': '{name} is resting',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -5,6 +5,7 @@ import {
   BREATH,
   CHARACTER_NAMES,
   HABITS,
+  RESTING,
   SWAY,
   VISEMES,
   between,
@@ -66,9 +67,10 @@ const about = (p: CharacterPoint): string => ` style="transform-origin:${px(p)}"
  * One inline SVG holding every layer: the body, then the head's group with
  * every pair of eyes and all ten mouths, every one hidden but the shown one,
  * so speaking only flips an attribute on two groups. The deer's ears, pupils
- * and nose are groups of their own, so they can move.
+ * and nose are groups of their own, so they can move. Resting, three "z"s
+ * wait beside the head for the stylesheet to float them up.
  */
-function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop): string {
+function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean): string {
   const own = (part: string): string => part.split(`${TEMPLATE}-`).join(`${prefix}-`);
   const hidden = ' visibility="hidden"';
   const feet = { x: frame.x + frame.w / 2, y: art.viewBox.y + art.viewBox.h };
@@ -94,6 +96,18 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
       ? `<defs><radialGradient id="${prefix}-ground"><stop offset="0" stop-color="#2a1408" stop-opacity="0.3"/><stop offset="1" stop-color="#2a1408" stop-opacity="0"/></radialGradient></defs>` +
         `<ellipse data-sc="shadow" cx="${feet.x}" cy="${feet.y - frame.h * 0.012}" rx="${frame.w * 0.4}" ry="${frame.h * 0.022}" fill="url(#${prefix}-ground)"${about(feet)}/>`
       : '';
+  // just above the eyes and to the side, outside the figure's groups so they neither breathe nor dip with it
+  const eyesAt = eyesMiddle(art);
+  const snooze = resting
+    ? '<g class="sc-snooze">' +
+      [0, 1, 2]
+        .map(
+          () =>
+            `<text class="sc-z" x="${eyesAt.x + frame.w * 0.16}" y="${eyesAt.y - frame.h * 0.05}" font-size="${frame.h * 0.075}" text-anchor="middle">z</text>`,
+        )
+        .join('') +
+      '</g>'
+    : '';
   return (
     // standing on the bottom of its box: a bust's shoulders meet the edge, whatever room is left above
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box(frame)}" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false">` +
@@ -105,7 +119,9 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     eyes +
     VISEMES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('') +
     nose +
-    '</g></g></g></g></g></svg>'
+    '</g></g></g></g></g>' +
+    snooze +
+    '</svg>'
   );
 }
 
@@ -162,6 +178,13 @@ export interface SpeakingCharacterProps {
   decorative?: boolean;
   /** what it has just seen: it reacts each time this changes, and when it arrives with one */
   reaction?: CharacterReaction | null;
+  /**
+   * Asleep, where there is nothing to do yet (shared `RESTING`): eyes shut,
+   * the head dipped, a slower and deeper breath, and a "z" drifting up now
+   * and then. No blinks, glances or twitches, and it does not follow the
+   * pointer; a click still wakes it for its greeting.
+   */
+  resting?: boolean;
   /** a click or a tap on the character: it greets you, and then this (say it again, usually) */
   onPress?: () => void;
   className?: string;
@@ -200,6 +223,7 @@ export function SpeakingCharacter({
   size,
   decorative = false,
   reaction = null,
+  resting = false,
   onPress,
   className,
 }: SpeakingCharacterProps): React.JSX.Element {
@@ -208,7 +232,7 @@ export function SpeakingCharacter({
   const prefix = `sc${id.replace(/[^A-Za-z0-9]/g, '')}`;
   const art = useMemo(() => characterArt(speaker, TEMPLATE), [speaker]);
   const frame = cropBox(art, crop);
-  const markup = useMemo(() => ({ __html: drawing(art, prefix, frame, crop) }), [art, prefix, frame, crop]);
+  const markup = useMemo(() => ({ __html: drawing(art, prefix, frame, crop, resting) }), [art, prefix, frame, crop, resting]);
   const root = useRef<HTMLSpanElement>(null);
   const source = useRef(audio);
   source.current = audio;
@@ -248,7 +272,10 @@ export function SpeakingCharacter({
     };
     const draw = (next: SpeakingFrame, force = false): void => {
       const mouth = next.mouth === 'rest' && held.mouth ? held.mouth : next.mouth;
-      const eyes = held.eyes ?? next.eyes;
+      // asleep the eyes stay shut, but for the face a greeting puts on
+      const eyes = held.eyes ?? (resting ? 'closed' : next.eyes);
+      // and the head stays dipped to one side
+      const nod = next.nod + (resting ? RESTING.dip : 0);
       if (force || mouth !== shown.mouth) {
         if (force) mouths.forEach((g, v) => show(g, v === mouth));
         else {
@@ -257,11 +284,11 @@ export function SpeakingCharacter({
         }
       }
       if (force || eyes !== shown.eyes) eyeGroups.forEach((g, state) => show(g, state === eyes));
-      if (force || next.nod !== shown.nod) {
-        if (next.nod === 0) head?.removeAttribute('transform');
-        else head?.setAttribute('transform', `rotate(${next.nod} ${pivot})`);
+      if (force || nod !== shown.nod) {
+        if (nod === 0) head?.removeAttribute('transform');
+        else head?.setAttribute('transform', `rotate(${nod} ${pivot})`);
       }
-      shown = { mouth, eyes, nod: next.nod };
+      shown = { mouth, eyes, nod };
     };
     // the same markup may still show the last recording's face
     draw(shown, true);
@@ -328,7 +355,8 @@ export function SpeakingCharacter({
       if (!loop) loop = requestAnimationFrame(tick);
     };
     function blink(): void {
-      if (!awake() || blinker) return;
+      // nothing to blink with the eyes shut
+      if (!awake() || blinker || resting) return;
       blinker = window.setInterval(() => {
         // a recording started on an element this has not heard from yet
         bind();
@@ -433,7 +461,7 @@ export function SpeakingCharacter({
       following = false;
       look(null);
     };
-    const gazing = !!art.rig;
+    const gazing = !!art.rig && !resting;
     const listen = (on: boolean): void => {
       if (!gazing) return;
       const method = on ? 'addEventListener' : 'removeEventListener';
@@ -464,7 +492,7 @@ export function SpeakingCharacter({
     };
     const startHabits = (): void => {
       stopHabits();
-      if (!awake() || reduced.now || !art.rig) return;
+      if (!awake() || reduced.now || !art.rig || resting) return;
       every(HABITS.glance, () => {
         if (following || running.some((a) => a.playState === 'running')) return;
         look(glanceTarget());
@@ -572,28 +600,32 @@ export function SpeakingCharacter({
       query?.removeEventListener?.('change', onMotion);
       play.current = () => undefined;
     };
-  }, [markup, art, frame, src, text, voice, decorative]);
+  }, [markup, art, frame, src, text, voice, decorative, resting]);
 
   // a reaction plays when it is given, and each time it changes; the deer pricks up his ears on arriving
   const arrived = useRef(false);
   useEffect(() => {
     const wait = window.setTimeout(() => {
       if (reaction) play.current(reaction);
-      else if (!arrived.current && art.rig) play.current('arrive');
+      else if (!arrived.current && art.rig && !resting) play.current('arrive');
       arrived.current = true;
     }, reaction ? 120 : 160);
     return () => window.clearTimeout(wait);
-  }, [reaction, art]);
+  }, [reaction, art, resting]);
 
   const name = CHARACTER_NAMES[speaker];
   const style = {
     aspectRatio: `${frame.w} / ${frame.h}`,
     // the breath and the drift, from the shared numbers, for the stylesheet's animations
-    '--sc-breath-ms': `${BREATH.ms}ms`,
-    '--sc-breath': `${1 + BREATH.depth}`,
+    '--sc-breath-ms': `${resting ? RESTING.breathMs : BREATH.ms}ms`,
+    '--sc-breath': `${1 + (resting ? RESTING.depth : BREATH.depth)}`,
     '--sc-sway-ms': `${SWAY.ms}ms`,
     '--sc-sway': `${SWAY.degrees}deg`,
     '--sc-blink-ms': `${BLINK_STEPS.shut}ms`,
+    // the "z"s: how often, and how far up and aside each goes, in the drawing's own units
+    '--sc-z-ms': `${RESTING.zMs}ms`,
+    '--sc-z-rise': `${-frame.h * RESTING.zRise}px`,
+    '--sc-z-drift': `${frame.h * RESTING.zRise * 0.45}px`,
   } as React.CSSProperties;
   if (size) {
     style.height = size;
@@ -608,12 +640,14 @@ export function SpeakingCharacter({
   return (
     <span
       ref={root}
-      className={`speaking-character${onPress ? ' is-pressable' : ''}${className ? ` ${className}` : ''}`}
+      className={`speaking-character${onPress ? ' is-pressable' : ''}${resting ? ' is-resting' : ''}${className ? ` ${className}` : ''}`}
       data-speaker={speaker}
       data-crop={crop}
       style={style}
       onClick={greet}
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': talking ? t('character.speaking', { name }) : name })}
+      {...(decorative
+        ? { 'aria-hidden': true }
+        : { role: 'img', 'aria-label': resting ? t('characters.resting', { name }) : talking ? t('character.speaking', { name }) : name })}
       dangerouslySetInnerHTML={markup}
     />
   );

@@ -87,6 +87,55 @@
 }
 
 /*
+ * Resting (`resting`): a "z" drifting up beside the head, three at a time,
+ * each a third of the way behind the one before, growing as it rises and
+ * fading out (shared RESTING). The drawing lets them past its top edge. While
+ * the character is still — off screen, or for a reader who asked for less
+ * motion — two of them stay where they are, the second higher and bigger.
+ */
+.speaking-character.is-resting > svg {
+  overflow: visible;
+}
+.speaking-character .sc-z {
+  fill: var(--ink-3);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.speaking-character.is-alive .sc-z {
+  animation: sc-z var(--sc-z-ms, 2400ms) ease-out infinite;
+}
+.speaking-character.is-alive .sc-z:nth-of-type(2) {
+  animation-delay: calc(var(--sc-z-ms, 2400ms) / 3);
+}
+.speaking-character.is-alive .sc-z:nth-of-type(3) {
+  animation-delay: calc(var(--sc-z-ms, 2400ms) * 2 / 3);
+}
+.speaking-character:not(.is-alive) .sc-z:nth-of-type(1) {
+  opacity: 0.8;
+}
+.speaking-character:not(.is-alive) .sc-z:nth-of-type(2) {
+  opacity: 0.8;
+  transform: translate(calc(var(--sc-z-drift, 20px) * 0.55), calc(var(--sc-z-rise, -40px) * 0.5)) scale(1.3);
+}
+@keyframes sc-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  15%,
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sc-z-drift, 20px), var(--sc-z-rise, -40px)) scale(1.3);
+  }
+}
+
+/*
  * A stage (CharacterStage.tsx): where a lesson's character stands to say what
  * it says, the whole figure in its own light with the Zagros behind it, and
  * the buttons or the words it is saying standing beside it.

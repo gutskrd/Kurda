@@ -1208,9 +1208,12 @@
   grid-column: 1 / -1;
 }
 .league-status.is-safe {
-  background: rgba(87, 185, 107, 0.14);
-  border: 1px solid rgba(134, 226, 164, 0.3);
-  color: #d4f6df;
+  background: var(--success-soft);
+  border: 1px solid color-mix(in srgb, var(--success) 30%, transparent);
+  color: var(--ink);
+}
+.league-status.is-safe strong {
+  color: var(--success);
 }
 .league-status.is-safe svg {
   color: var(--success);
@@ -1229,6 +1232,166 @@
   margin: 0;
   color: var(--ink-3);
   font-size: 0.9rem;
+}
+
+/*
+ * The week, in the order it is read (LeaguePanel): the league's name and the
+ * days left, the six leagues in a row, a line across, then the week itself.
+ * No boxes inside the card: the line is what separates the league from the week.
+ */
+.league-week-head {
+  display: grid;
+  gap: 4px;
+}
+.league-week-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-title);
+  line-height: 1.15;
+}
+.league-week-meaning {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: 0.95rem;
+}
+.league-week-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+.league-week-left svg {
+  flex: none;
+}
+/* the ladder: to the card's edges, sideways on a phone, spread out where there is room */
+.league-ladder {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 -18px;
+  padding: 4px 18px 6px;
+  list-style: none;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.league-ladder::-webkit-scrollbar {
+  display: none;
+}
+@media (min-width: 560px) {
+  .league-ladder {
+    justify-content: space-between;
+  }
+}
+.league-ladder-step {
+  display: flex;
+  flex: none;
+}
+.league-ladder-step.is-here .art {
+  filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--t-mid, #000) 40%, transparent));
+}
+/* a league not reached yet, in the scheme's own greys (art.tsx draws it in the light ones) */
+.art-league.is-locked path:first-of-type {
+  fill: var(--locked);
+}
+.art-league.is-locked path:last-of-type {
+  fill: var(--locked-mark);
+}
+.league-skel-step {
+  width: 56px;
+  height: 56px;
+}
+.league-skel-here {
+  width: 88px;
+  height: 88px;
+}
+.league-week-rule {
+  margin: 0 -18px;
+  border: 0;
+  border-top: 1px solid var(--separator);
+}
+.league-goal-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+.league-goal-row .league-skel-ring {
+  width: 84px;
+  height: 84px;
+}
+.league-goal-text {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+/* beside the ring, where the week stands is a line of its own rather than a box */
+.league-goal-row .league-status {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-2);
+}
+.league-goal-group {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.82rem;
+}
+/* not in a group yet: Hevalo asleep, with room above for the "z"s to rise into */
+.league-resting {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 40px 0 8px;
+  text-align: center;
+}
+.league-resting-figure {
+  margin-bottom: 8px;
+}
+.league-resting-title {
+  margin: 0;
+  color: var(--ink);
+  font-size: 1.15rem;
+}
+.league-resting-body {
+  max-width: 34ch;
+  margin: 0 0 8px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+/* the way out: quiet, at the end */
+.league-leave {
+  display: flex;
+  justify-content: center;
+}
+.league-leave > .btn {
+  color: var(--ink-3);
+}
+.league-leave-dialog {
+  display: grid;
+  gap: 12px;
+  max-width: 420px;
+}
+.league-leave-title {
+  margin: 0;
+  padding-inline-end: 36px;
+  font-size: 1.25rem;
+}
+.league-leave-body {
+  margin: 0;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+.league-leave-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
 }
 .league-divider {
   display: flex;

@@ -322,33 +322,46 @@ export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.
 }
 
 /**
- * The week's league card while it is on its way: the emblem, the league's
- * name, what it means and when the week closes, the goal ring, the line about
- * the goal, and the first places of the table — the card's own classes, so it
- * is the card's size at every width (the emblem and ring shrink on a phone).
+ * The week's league card while it is on its way, in its own order: the
+ * league's name, what it means and the days left, the six emblems in a row
+ * (the middle one bigger), the line across, the goal ring with the line about
+ * the goal beside it, and the first places of the table — the card's own
+ * classes, so it is the card's size at every width.
  */
 export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.Element {
   return (
-    <div className="league-card skeleton-late" aria-hidden="true">
-      <div className="league-head">
-        <Skeleton circle className="league-skel-emblem" />
-        <div className="league-head-text">
-          <h2 className="league-card-title">
-            <Skeleton line w={136} />
-          </h2>
-          <p className="league-head-meaning">
-            <Skeleton line w={60} />
+    <div className="league-card league-now skeleton-late" aria-hidden="true">
+      <div className="league-week-head">
+        <h2 className="league-week-title">
+          <Skeleton line w={176} />
+        </h2>
+        <p className="league-week-meaning">
+          <Skeleton line w={60} />
+        </p>
+        <p className="league-week-left">
+          <Skeleton line w={96} />
+        </p>
+      </div>
+      <ol className="league-ladder">
+        {times(6, (i) => (
+          <li key={i} className={`league-ladder-step${i === 1 ? ' is-here' : ''}`}>
+            <Skeleton circle className={i === 1 ? 'league-skel-here' : 'league-skel-step'} />
+          </li>
+        ))}
+      </ol>
+      <hr className="league-week-rule" />
+      <div className="league-goal-row">
+        <Skeleton circle className="league-skel-ring" />
+        <div className="league-goal-text">
+          {/* the status line's own grey box, empty */}
+          <p className="league-status is-plain">
+            <span style={{ visibility: 'hidden' }}>{'\u00a0'}</span>
           </p>
-          <p className="league-head-meta">
-            <Skeleton line w={176} />
+          <p className="league-goal-group">
+            <Skeleton line w={140} />
           </p>
         </div>
-        <Skeleton circle className="league-skel-ring" />
       </div>
-      {/* the status line's own grey box, empty */}
-      <p className="league-status is-plain">
-        <span style={{ visibility: 'hidden' }}>{'\u00a0'}</span>
-      </p>
       <ol className="rank-list">
         {times(rows, (i) => (
           <Fragment key={i}>
