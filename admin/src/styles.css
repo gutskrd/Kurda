@@ -772,6 +772,53 @@ button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-fil
   .la-text { font-size: 19px; }
 }
 
+/* ---- speaking characters: who says it, the preview, the jobs over every recording ---- */
+.voice-row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 14px 28px; padding: 4px 0 10px; }
+.voice-pick { display: grid; gap: 6px; min-width: 0; }
+.voice-pick-label { font-size: 11.5px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-dim); }
+.voice-pick-options { display: grid; grid-template-columns: repeat(4, minmax(64px, 76px)); gap: 6px; }
+.voice-pick-options:has(> :nth-child(3):last-child) { grid-template-columns: repeat(3, minmax(64px, 76px)); }
+button.voice-pick-option {
+  display: grid; justify-items: center; gap: 3px; min-height: 0; padding: 6px 4px 5px;
+  font-size: 12.5px; font-weight: 500; color: var(--text-2);
+  background: var(--control); border-color: transparent; box-shadow: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+button.voice-pick-option:hover { background: var(--control-hover); }
+button.voice-pick-option.is-on { background: var(--surface-strong); border-color: var(--text); color: var(--text); font-weight: 600; box-shadow: var(--shadow-sm); }
+.voice-pick-face {
+  display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; overflow: hidden;
+  background: var(--surface-strong); color: var(--text-dim);
+}
+.voice-pick-face img { display: block; width: 40px; height: 40px; }
+.voice-pick .field-hint { max-width: 40ch; }
+.voice-tag { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; background: var(--surface-strong); border: 1px solid var(--hairline); }
+
+.speaking { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.speaking-figure { flex: 0 0 auto; display: block; border-radius: var(--radius-sm); background: var(--control); overflow: hidden; }
+.speaking-figure svg { display: block; width: 100%; height: 100%; }
+.speaking-side { display: grid; gap: 4px; justify-items: start; min-width: 0; }
+.speaking-note { font-size: 12.5px; }
+.aa-studio .speaking { padding-top: 10px; border-top: 1px solid var(--separator); }
+
+.vc-form { display: grid; gap: 14px; max-width: 560px; }
+.vc-job { display: grid; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--separator); }
+.vc-job-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; }
+.vc-job-text { display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 10px; font-variant-numeric: tabular-nums; }
+.vc-job-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.vc-fails { display: grid; gap: 6px; margin-top: 4px; }
+.vc-fails-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.vc-fail-list { list-style: none; margin: 0; padding: 0; }
+.vc-fail { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 10px 0; border-top: 1px solid var(--separator); }
+.vc-fail-text { min-width: 0; overflow-wrap: anywhere; }
+.vc-fail-what { font-weight: 600; color: var(--text); }
+.vc-fail .field-error { margin-top: 2px; }
+@media (max-width: 560px) {
+  .la-row .voice-tag { grid-column: 1; justify-self: center; }
+  .vc-go > button, .vc-job-actions > button { flex: 1 1 0; width: 100%; }
+  .vc-job-actions { width: 100%; }
+}
+
 /* ---- stories: the list, and the editor beside its checks ----------------- */
 .st-coverage { display: grid; gap: 8px; }
 .st-coverage-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }

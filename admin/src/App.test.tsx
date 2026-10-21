@@ -107,9 +107,11 @@ describe('the admin’s navigation', () => {
       'Record the alphabet',
       'Record lesson sentences',
       'Record story sentences',
+      'Characters',
     ]);
     expect(within(group).getByRole('link', { name: 'Record the alphabet' })).toHaveAttribute('aria-current', 'page');
     expect(within(group).getByRole('link', { name: 'Record lesson sentences' })).toHaveAttribute('href', '#/audio/lessons');
+    expect(within(group).getByRole('link', { name: 'Characters' })).toHaveAttribute('href', '#/audio/characters');
   });
 
   it('finds a page by what it is for, and opens it with Enter', async () => {

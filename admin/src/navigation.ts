@@ -105,6 +105,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'record-letters', label: 'Record the alphabet', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
   { id: 'record-stories', label: 'Record story sentences', group: 'record', icon: 'story', page: 'audio', sub: 'stories', access: RECORDERS, keywords: 'audio studio stories voice microphone narration' },
+  { id: 'record-characters', label: 'Characters', group: 'record', icon: 'face', page: 'audio', sub: 'characters', access: RECORDERS, keywords: 'audio studio speakers hevalo hamo xezo lip sync mouth timelines' },
 
   { id: 'users', label: 'Users', group: 'people', icon: 'users', page: 'users', access: USER_VIEWERS, keywords: 'accounts people ban mute wallet' },
   { id: 'email', label: 'Email', group: 'people', icon: 'inbox', page: 'email', access: SUPPORT_READERS, keywords: 'support inbox mail sending resend reply' },

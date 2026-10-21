@@ -36,8 +36,16 @@
 # style-src-attr 'unsafe-inline' would be tighter, but a browser without
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
+#
+# connect-src also carries the website and its subdomains, as img-src does,
+# for the media CDN: the Characters page downloads each stored recording to
+# make its mouth timeline in the browser, and a download is a fetch, which
+# media-src does not cover. The CDN has to allow this origin as well (CORS on
+# the bucket, GET from https://admin.hevalo.app); until it does, the page
+# names each recording it could not read. If CDN_BASE_URL is ever on another
+# domain, add it here too.
 /*
-  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://hevalo.app https://*.hevalo.app; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://hevalo.app https://*.hevalo.app; font-src 'self'; media-src 'self' blob: https:; connect-src 'self' https://kurda-api.onrender.com https://hevalo.app https://*.hevalo.app; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; object-src 'none'; manifest-src 'self'; worker-src 'self'; upgrade-insecure-requests
   X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer

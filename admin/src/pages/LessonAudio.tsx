@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LESSON_AUDIO_MAX_SECONDS, LESSON_AUDIO_TEXT_MAX } from '@kurda/shared';
-import { api, apiUpload, ApiError } from '../api';
+import { api, ApiError } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
 import {
   addPhrase,
@@ -18,13 +18,18 @@ import {
   progress,
   scriptOf,
   withRecording,
+  withVoice,
   withoutRecording,
   type Filter,
   type Item,
   type Listing,
+  type Saved,
   type Scope,
 } from '../lessonAudio';
 import { Banner, Button, EmptyState, ErrorState, Icon, Loading, Tabs, useDialogs } from '../ui';
+import { SpeakerPicker, bustUrl, speakerName, useSpeakerChange } from '../ui/SpeakerPicker';
+import { SpeakingPreview } from '../ui/SpeakingPreview';
+import { rememberSpeaker, rememberedSpeaker, uploadWithVoice, type Speaker } from '../voice';
 
 const FILTER_LABEL: Record<Filter, string> = {
   missing: 'Still to record',
@@ -50,6 +55,10 @@ const FILTER_LABEL: Record<Filter, string> = {
  * the next comes up. A "Record" link from the lesson or story list opens this
  * on that one lesson or story (`focus`). Anything else can be recorded too,
  * through "Add a phrase".
+ *
+ * Each row's studio also says who is shown saying it: a new take goes up with
+ * that character and a mouth timeline made from it (voice.ts), and a change
+ * to a saved one is sent at once.
  */
 export function LessonAudio({
   scope = 'lessons',
@@ -74,6 +83,9 @@ export function LessonAudio({
   const [phraseProblem, setPhraseProblem] = useState<string | null>(null);
   const rows = useRef(new Map<string, HTMLElement>());
   const player = usePlayer();
+  // who says the next new recording: the last choice made for one
+  const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
+  const changeSpeaker = useSpeakerChange('lesson', (key, speaker) => setItems((all) => withVoice(all, key, speaker)));
 
   // this side's view of the list: only its own uses of each text
   const scoped = useMemo(() => items.flatMap((i) => inScope(i, scope, focus) ?? []), [items, scope, focus]);
@@ -140,7 +152,7 @@ export function LessonAudio({
     select(first.key);
   };
 
-  const onSaved = (saved: { key: string; url: string; durationMs: number; updatedAt: string }): void => {
+  const onSaved = (saved: Saved): void => {
     const next = withRecording(latest.current.items, saved);
     setItems(next);
     if (!latest.current.walking) return;
@@ -189,6 +201,15 @@ export function LessonAudio({
       rowRef={(el) => (el ? rows.current.set(item.key, el) : rows.current.delete(item.key))}
       onSelect={() => select(item.key === selected ? null : item.key)}
       player={player}
+      nextSpeaker={nextSpeaker}
+      onSpeaker={(speaker) => {
+        if (item.recorded) {
+          changeSpeaker({ key: item.key, from: item.speaker ?? null, to: speaker, label: item.text });
+        } else {
+          setNextSpeaker(speaker);
+          rememberSpeaker(speaker);
+        }
+      }}
       onSaved={onSaved}
       onRemoved={onRemoved}
       onPrev={() => move(-1)}
@@ -375,6 +396,8 @@ function Row({
   rowRef,
   onSelect,
   player,
+  nextSpeaker,
+  onSpeaker,
   onSaved,
   onRemoved,
   onPrev,
@@ -389,13 +412,17 @@ function Row({
   rowRef: (el: HTMLElement | null) => void;
   onSelect: () => void;
   player: Player;
-  onSaved: (saved: { key: string; url: string; durationMs: number; updatedAt: string }) => void;
+  /** who says it when it is recorded now, if it has no recording yet */
+  nextSpeaker: Speaker;
+  onSpeaker: (speaker: Speaker) => void;
+  onSaved: (saved: Saved) => void;
   onRemoved: (key: string) => void;
   onPrev: () => void;
   onNext: () => void;
   confirm: ReturnType<typeof useDialogs>['confirm'];
 }): React.JSX.Element {
   const script = scriptOf(item.text);
+  const speaker = item.recorded ? (item.speaker ?? null) : nextSpeaker;
   const [first, ...more] = full.usedIn;
   const listening = neededForListening(full);
   const status = item.recorded
@@ -444,10 +471,30 @@ function Row({
               }`}
           </span>
         </button>
+        {item.recorded && item.speaker && (
+          <img className="voice-tag" src={bustUrl(item.speaker)} width={28} height={28} alt={`Said by ${speakerName(item.speaker)}`} title={`Said by ${speakerName(item.speaker)}`} />
+        )}
         <span className={`badge${status.tone}`}>{status.label}</span>
       </div>
       {selected && (
         <div className="la-studio">
+          <div className="voice-row">
+            <SpeakerPicker
+              value={speaker}
+              onChange={onSpeaker}
+              hint={item.recorded ? 'Changed as soon as you choose.' : 'Saved with the recording, and kept for the next one.'}
+            />
+            {item.recorded && item.url && item.speaker && (
+              <SpeakingPreview
+                key={`${item.url}|${item.speaker}`}
+                speaker={item.speaker}
+                url={item.url}
+                text={item.text}
+                lipsync={item.lipsync}
+                durationMs={item.durationMs}
+              />
+            )}
+          </div>
           <ClipRecorder
             say={item.text}
             maxSeconds={LESSON_AUDIO_MAX_SECONDS}
@@ -457,12 +504,8 @@ function Row({
             onPrev={onPrev}
             onNext={onNext}
             onSave={async (wav) => {
-              const res = await apiUpload<{ key: string; url: string; durationMs: number; updatedAt: string }>(
-                `/admin/lesson-audio?text=${encodeURIComponent(item.text)}`,
-                wav,
-                'audio/wav',
-              );
-              onSaved({ key: item.key, url: res.url, durationMs: res.durationMs, updatedAt: res.updatedAt });
+              const res = await uploadWithVoice<Saved>(`/admin/lesson-audio?text=${encodeURIComponent(item.text)}`, wav, { speaker, text: item.text });
+              onSaved({ ...res, key: item.key });
             }}
             removePrompt={removePrompt}
             onRemove={async () => {
