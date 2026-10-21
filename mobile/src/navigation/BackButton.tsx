@@ -22,14 +22,14 @@ export function BackButton({ onPress }: { onPress: () => void }): React.JSX.Elem
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={t('common.back')}
-      hitSlop={10}
-      style={({ pressed }) => [styles.button, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [styles.button, pressed && { opacity: 0.5 }]}
     >
-      <Icon name="chevron-left" size={22} color={colors.textPrimary} style={flip ?? undefined} />
+      <Icon name="chevron-left" size={26} color={colors.textPrimary} style={flip ?? undefined} />
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  button: { width: 32, height: 32, alignItems: 'center', justifyContent: 'center' },
+  // a whole fingertip, the same as the way back in every other header
+  button: { width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
 });
