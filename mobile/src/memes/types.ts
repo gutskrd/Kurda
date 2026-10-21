@@ -3,6 +3,7 @@
 
 import type { Translate } from '../api/errors';
 import type { TranslationKey } from '../i18n/translations.js';
+import type { CommentAuthor } from '../comments/thread';
 
 export type Reaction = 'like' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
 export type Category = 'meme' | 'image';
@@ -59,6 +60,8 @@ export interface Comment {
   postId: string;
   authorId: string;
   authorRole: AuthorRole;
+  /** who wrote it: a face and a name, rather than an id */
+  author?: CommentAuthor;
   parentCommentId: string | null;
   depth: number;
   body: string | null;

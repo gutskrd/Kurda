@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SkeletonText } from '../theme/Skeleton';
@@ -16,6 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, postName, type LibraryPost, type PostType } from './types';
+import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -63,6 +64,15 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         active = false;
       };
     }, [fetchPage]),
+  );
+
+  // a post deleted on its own page is gone from here before the list reloads
+  useEffect(
+    () =>
+      onPostDeleted((gone) => {
+        if (gone.targetType === 'library') setPosts((prev) => prev && prev.filter((p) => p.id !== gone.id));
+      }),
+    [],
   );
 
   const refresh = useCallback(async () => {

@@ -52,3 +52,11 @@ export const addComment = (
     ...(input.audioMediaId ? { audioMediaId: input.audioMediaId } : {}),
     ...(input.parentId ? { parentId: input.parentId } : {}),
   });
+
+/** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
+export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: LibraryComment[] }>> =>
+  client.get(`/library/comments/${commentId}/replies?limit=50`);
+
+/** Delete your own comment; the server keeps a placeholder where it had replies. */
+export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<LibraryComment>> =>
+  client.delete(`/library/comments/${commentId}`);

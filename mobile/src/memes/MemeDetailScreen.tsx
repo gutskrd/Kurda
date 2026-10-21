@@ -8,32 +8,26 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { Pop } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
-import { useSendErrorAlert } from '../reports/SendError';
-import { EmptyState } from '../theme/EmptyState';
-import { addComment, clearReaction, getPost, getReactions, listComments, setReaction } from './api';
+import { PostMenuButton } from '../composer/PostExtras';
+import { CommentComposer, CommentList, CommentsSkeleton } from '../comments/CommentList';
+import { useCommentThread } from '../comments/useCommentThread';
+import { addComment, clearReaction, getPost, getReactions, setReaction } from './api';
 import {
-  commentText,
-  relativeTime,
   REACTION_EMOJI,
   REACTION_LABEL,
   REACTION_ORDER,
-  type Comment,
   type ImagePost,
   type Reaction,
   type ReactionSummary,
@@ -48,33 +42,31 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
-  const showSendError = useSendErrorAlert();
   // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
-  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null } | null>(null);
+  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<ImagePost | null>(null);
   const [reactions, setReactions] = useState<ReactionSummary | null>(null);
-  const [comments, setComments] = useState<Comment[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [draft, setDraft] = useState('');
-  const [posting, setPosting] = useState(false);
+
+  const countBy = useCallback(
+    (delta: number) => setPost((prev) => (prev ? { ...prev, commentCount: Math.max(0, prev.commentCount + delta) } : prev)),
+    [],
+  );
+  const thread = useCommentThread('images', postId, countBy);
+  const loadComments = thread.load;
 
   const loadAll = useCallback(async () => {
     setFailed(false);
-    const [p, r, c] = await Promise.all([
-      getPost(client, postId),
-      getReactions(client, postId),
-      listComments(client, postId, { sort: 'newest' }),
-    ]);
+    const [p, r] = await Promise.all([getPost(client, postId), getReactions(client, postId), loadComments()]);
     if (!p.ok) {
       setFailed(true);
       return;
     }
     setPost(p.data);
     if (r.ok) setReactions(r.data);
-    if (c.ok) setComments(c.data.comments);
-  }, [client, postId]);
+  }, [client, postId, loadComments]);
 
   useEffect(() => {
     void loadAll();
@@ -94,20 +86,18 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
 
   const submit = useCallback(async () => {
     const body = draft.trim();
-    if (!body || posting) return;
-    setPosting(true);
-    haptic('tap');
-    const res = await addComment(client, postId, body);
-    setPosting(false);
-    if (!res.ok) {
-      haptic('error');
-      showSendError(t('comment.failed'), res.error);
-      return;
-    }
+    if (!body) return;
     setDraft('');
-    setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
-    setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, posting, showSendError, t]);
+    const sent = await thread.send({ body }, async (parentId) => {
+      const res = await addComment(client, postId, body, parentId);
+      return res.ok ? { ok: true, comment: res.data } : { ok: false, title: t('comment.failed'), error: res.error };
+    });
+    // a refused comment goes back into the composer, so nothing written is lost
+    if (!sent) setDraft((current) => current || body);
+  }, [client, postId, draft, thread, t]);
+
+  // your own picture's menu, once it has loaded and it is yours
+  const menu = post ? <PostMenuButton post={{ targetType: 'image', id: post.id, authorId: post.authorId }} onDeleted={onExit} /> : undefined;
 
   if (failed && !post) {
     return (
@@ -122,8 +112,9 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
 
   return (
     <GradientBackground>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
-        <Header onExit={onExit} />
+      {/* the screen starts at the top of the window, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
+        <Header onExit={onExit} right={menu} />
         <View style={styles.screen}>
           {post === null ? (
             <MemeSkeleton />
@@ -179,74 +170,35 @@ export function MemeDetailScreen({ postId, onExit }: { postId: string; onExit: (
               <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
                 {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
               </Text>
-              {comments === null ? (
-                <CommentsSkeleton />
-              ) : comments.length === 0 ? (
-                <EmptyState title={t('comments.empty')} />
-              ) : (
-                comments.map((c) => (
-                  <View key={c.id} style={styles.comment}>
-                    <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
-                    <View style={styles.commentMain}>
-                      <Text style={[styles.commentAge, { color: colors.textSecondary }]}>{relativeTime(c.createdAt)}</Text>
-                      <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
-                        {commentText(c, t)}
-                      </Text>
-                      <View style={styles.commentFoot}>
-                        {c.replyCount > 0 ? (
-                          <Text style={[styles.replyHint, { color: colors.textSecondary }]}>
-                            {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
-                          </Text>
-                        ) : null}
-                        {c.status !== 'removed' && c.authorId !== user?.id ? (
-                          <Pressable
-                            onPress={() =>
-                              setReporting({
-                                target: { type: 'image_comment', commentId: c.id },
-                                authorId: c.authorRole === 'user' ? c.authorId : null,
-                              })
-                            }
-                            hitSlop={13} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
-                            <Icon name="flag" size={12} color={colors.textSecondary} />
-                            <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    </View>
-                  </View>
-                ))
-              )}
+              <CommentList
+                thread={thread}
+                onReport={(c) =>
+                  setReporting({
+                    target: { type: 'image_comment', commentId: c.id },
+                    authorId: c.authorRole === 'user' ? c.authorId : null,
+                    name: c.author?.username,
+                  })
+                }
+              />
             </ScrollView>
           )}
 
-          <View style={[styles.composer, { backgroundColor: colors.glassFill }]}>
-            <TextInput
-              style={[styles.input, { color: colors.textPrimary }]}
-              placeholder={t('comments.add')}
-              placeholderTextColor={colors.textSecondary}
-              value={draft}
-              onChangeText={setDraft}
-              multiline
-              maxLength={2000}
-            />
-            <Pressable
-              onPress={() => void submit()}
-              disabled={!draft.trim() || posting}
-              hitSlop={8}
-              accessibilityRole="button"
-              accessibilityLabel={t('comments.post')}
-              style={{ opacity: !draft.trim() || posting ? 0.4 : 1 }}
-            >
-              <Icon name="chevron-right" size={24} tone="primary" />
-            </Pressable>
-          </View>
+          <CommentComposer
+            thread={thread}
+            value={draft}
+            onChangeText={setDraft}
+            onSubmit={() => void submit()}
+            ready={!!draft.trim()}
+            placeholder={t('comments.add')}
+            maxLength={2000}
+          />
         </View>
       </KeyboardAvoidingView>
       {reporting ? (
         <ReportSheet
           visible
           target={reporting.target}
-          blockable={reporting.authorId ? { userId: reporting.authorId, name: null } : null}
+          blockable={reporting.authorId ? { userId: reporting.authorId, name: reporting.name ?? null } : null}
           onClose={() => setReporting(null)}
         />
       ) : null}
@@ -279,30 +231,13 @@ function MemeSkeleton(): React.JSX.Element {
   );
 }
 
-/** Three comments in grey: the small picture, when, what they said. */
-function CommentsSkeleton(): React.JSX.Element {
-  return (
-    <View>
-      {[0, 1, 2].map((i) => (
-        <View key={i} style={styles.comment}>
-          <Skeleton width={28} height={28} radius={radii.pill} />
-          <View style={styles.commentMain}>
-            <SkeletonText size={typography.sizes.xs} width={28} />
-            <SkeletonText size={typography.sizes.md} width={i === 1 ? '54%' : '80%'} />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
 /** a reaction: an emoji's line, 6 above and below, inside a hairline */
 const REACTION_HEIGHT = lineOf(typography.sizes.lg) + 6 * 2 + 2;
 const REACTION_WIDTH = lineOf(typography.sizes.lg) + spacing.sm * 2 + 2;
 
-function Header({ onExit }: { onExit: () => void }): React.JSX.Element {
+function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode }): React.JSX.Element {
   const { t } = useI18n();
-  return <ScreenHeader title={t('memes.post')} onBack={onExit} />;
+  return <ScreenHeader title={t('memes.post')} onBack={onExit} right={right} />;
 }
 
 const styles = StyleSheet.create({
@@ -317,13 +252,5 @@ const styles = StyleSheet.create({
   reactionCount: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   commentsTitleSkeleton: { marginTop: spacing.sm },
-  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
-  commentMain: { flex: 1, gap: 2 },
-  commentAge: { fontSize: typography.sizes.xs },
-  commentBody: { fontSize: typography.sizes.md },
-  commentFoot: { flexDirection: 'row', gap: spacing.md },
-  replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, marginBottom: spacing.md },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

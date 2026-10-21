@@ -16,7 +16,7 @@ import { navigation } from '../play/testing/navigation';
 import { feedImages, type FeedItem } from '../feed/types';
 import { FeedCard } from '../feed/FeedCard';
 import { PostPictures, singleRatio } from './PostPictures';
-import { EditPostButton, SourceCredit, postImages } from './PostExtras';
+import { PostMenuButton, SourceCredit, postImages } from './PostExtras';
 
 patchReactNativeWeb({ reduceMotion: true });
 afterEach(cleanup);
@@ -104,12 +104,13 @@ describe('pictures on the wall and on a post', () => {
     expect(screen.getByText('Source: Cegerxwîn')).toBeTruthy();
   });
 
-  it('lets only the author edit', () => {
+  it('lets only the author edit, from the post’s menu', () => {
     testAuth.user = { ...testAuth.user, id: 'me' };
-    const { unmount } = renderWithProviders(<EditPostButton post={{ id: 'p1', authorId: 'someone' }} />);
-    expect(screen.queryByRole('button', { name: 'Edit post' })).toBeNull();
+    const { unmount } = renderWithProviders(<PostMenuButton post={{ targetType: 'library', id: 'p1', authorId: 'someone' }} />);
+    expect(screen.queryByRole('button', { name: 'Post options' })).toBeNull();
     unmount();
-    renderWithProviders(<EditPostButton post={{ id: 'p1', authorId: 'me' }} />);
+    renderWithProviders(<PostMenuButton post={{ targetType: 'library', id: 'p1', authorId: 'me' }} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Post options' }));
     fireEvent.click(screen.getByRole('button', { name: 'Edit post' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Compose', { postId: 'p1' });
   });

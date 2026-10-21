@@ -57,6 +57,13 @@ export const toggleEngagement = (
 ): Promise<ApiResult<{ on: boolean; engagement: PostEngagement }>> =>
   client.post(`/posts/${item.targetType}/${item.id}/${kind}`);
 
+/**
+ * Delete your own post, written or a picture — the calls the website's card
+ * makes. The server checks it is yours; the app only decides whether to offer.
+ */
+export const deletePost = (client: ApiClient, item: Pick<FeedItem, 'targetType' | 'id'>): Promise<ApiResult<unknown>> =>
+  client.delete(item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`);
+
 /** The posts you bookmarked. Yours alone — the server scopes it to you. */
 export const getSaved = (
   client: ApiClient,
