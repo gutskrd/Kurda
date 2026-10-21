@@ -123,7 +123,15 @@ export class RealtimeGateway {
     await this.bus.publish(roomId, { type: REVOKE_EVENT, userId });
   }
 
-  /** Server-side event fan-out to everyone in the room (all nodes). */
+  /**
+   * Server-side event fan-out to everyone in the room (all nodes).
+   *
+   * An event may name users it is not for in `hiddenFrom`: a group message
+   * goes to the whole group except the members with a block between them and
+   * whoever wrote it. Their connections stay in the room — they are still in
+   * the group — and are skipped for this one event. The list is the server's
+   * own and no client ever sees it.
+   */
   async publish(roomId: string, event: RoomEvent): Promise<void> {
     await this.bus.publish(roomId, event);
   }
@@ -348,8 +356,11 @@ export class RealtimeGateway {
       return;
     }
     if (!members) return;
+    const { hiddenFrom, ...shown } = event;
+    const hidden = new Set(Array.isArray(hiddenFrom) ? hiddenFrom : []);
     for (const conn of members) {
-      this.send(conn, { type: 'event', room: roomId, event });
+      if (hidden.has(conn.userId)) continue;
+      this.send(conn, { type: 'event', room: roomId, event: shown });
     }
   }
 

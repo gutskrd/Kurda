@@ -5,6 +5,7 @@ import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
 import { canonicalPair, FRIEND_CAP, REQUEST_TTL_DAYS } from './pair.js';
 import { isNotKnownAdultUser, notKnownAdultSql, shownToSql } from '../users/age.js';
+import { notBlockedSql } from './blocked.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
@@ -383,6 +384,10 @@ export class FriendService {
    * `shownToSql`): a list of an adult's friends was a way to find the minors
    * among them, signed in or not. The count leaves them out too, so it never
    * says that somebody is missing.
+   *
+   * Nor does it name, to the viewer, anyone with a block between the two of
+   * them (friends/blocked.ts), and the count agrees. On your own list there is
+   * nobody to leave out: a block ends the friendship.
    */
   async list(
     user: string,
@@ -397,6 +402,7 @@ export class FriendService {
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
           AND ($4::uuid = $1 OR ${shownToSql('u', '$4::uuid')})
+          AND ${notBlockedSql('u.id', '$4::uuid')}
         ORDER BY u.username
         LIMIT $2 OFFSET $3`,
       [user, Math.min(Math.max(limit, 1), FRIENDS_PAGE_MAX), Math.max(offset, 0), viewer],
@@ -421,7 +427,8 @@ export class FriendService {
       `SELECT count(*)::int n FROM friendships f
          JOIN users u ON u.id = CASE WHEN f.user_lo = $1 THEN f.user_hi ELSE f.user_lo END
         WHERE f.status = 'accepted' AND (f.user_lo = $1 OR f.user_hi = $1) AND u.deleted_at IS NULL
-          AND ($2::uuid = $1 OR ${shownToSql('u', '$2::uuid')})`,
+          AND ($2::uuid = $1 OR ${shownToSql('u', '$2::uuid')})
+          AND ${notBlockedSql('u.id', '$2::uuid')}`,
       [user, viewer],
     );
     return r.rows[0]!.n;

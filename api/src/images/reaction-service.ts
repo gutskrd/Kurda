@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 /** The emoji reactions a user can leave on an image/meme post (KUR-291). */
 /*
@@ -38,10 +39,12 @@ export class ImageReactionService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
-      // a picture the reacting user may not see answers as missing
+      // a picture the reacting user may not see answers as missing — a minor's,
+      // or one across a block
       const post = await client.query(
         `SELECT 1 FROM image_posts
           WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+            AND ${notBlockedSql('image_posts.author_id', '$2::uuid')}
           FOR UPDATE`,
         [postId, userId],
       );

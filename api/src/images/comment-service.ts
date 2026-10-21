@@ -3,6 +3,7 @@ import { stripControlChars } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export type AuthorRole = 'user' | 'admin' | 'founder';
 export const MAX_COMMENT_LEN = 2_000;
@@ -55,7 +56,9 @@ interface Row {
  *
  * A minor's comments are read by them and their friends only, as in the
  * library (users/age.ts `writtenForSql`), and nobody comments on a picture they
- * cannot see or replies to a comment they cannot read.
+ * cannot see or replies to a comment they cannot read. A block hides each
+ * person's pictures and comments from the other, as in the library
+ * (friends/blocked.ts).
  */
 export class ImageCommentService {
   constructor(private readonly pool: pg.Pool) {}
@@ -70,6 +73,7 @@ export class ImageCommentService {
       const post = await client.query(
         `SELECT id FROM image_posts
           WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+            AND ${notBlockedSql('image_posts.author_id', '$2::uuid')}
           FOR UPDATE`,
         [postId, authorId],
       );
@@ -81,6 +85,7 @@ export class ImageCommentService {
           `SELECT depth FROM image_comments
             WHERE id = $1 AND post_id = $2 AND status = 'visible'
               AND ${writtenForSql('image_comments.author_id', '$3::uuid')}
+              AND ${notBlockedSql('image_comments.author_id', '$3::uuid')}
             FOR UPDATE`,
           [input.parentId, postId, authorId],
         );
@@ -113,7 +118,9 @@ export class ImageCommentService {
   /** Direct replies to a comment (paginated, oldest-first by default). */
   async replies(parentId: string, page: Page = {}, viewerId: string | null = null): Promise<Comment[]> {
     const parent = await this.pool.query<{ post_id: string }>(
-      `SELECT post_id FROM image_comments WHERE id = $1 AND ${writtenForSql('image_comments.author_id', '$2::uuid')}`,
+      `SELECT post_id FROM image_comments
+        WHERE id = $1 AND ${writtenForSql('image_comments.author_id', '$2::uuid')}
+          AND ${notBlockedSql('image_comments.author_id', '$2::uuid')}`,
       [parentId, viewerId],
     );
     if (parent.rowCount === 0) return [];
@@ -139,9 +146,11 @@ export class ImageCommentService {
       `SELECT * FROM image_comments
        WHERE post_id = $1 AND parent_comment_id ${parentId === null ? 'IS NULL' : '= $5'}
          AND ${writtenForSql('image_comments.author_id', '$4::uuid')}
+         AND ${notBlockedSql('image_comments.author_id', '$4::uuid')}
          AND EXISTS (
            SELECT 1 FROM image_posts ip
-            WHERE ip.id = image_comments.post_id AND ${writtenForSql('ip.author_id', '$4::uuid')})
+            WHERE ip.id = image_comments.post_id AND ${writtenForSql('ip.author_id', '$4::uuid')}
+              AND ${notBlockedSql('ip.author_id', '$4::uuid')})
        ORDER BY ${order} LIMIT $2 OFFSET $3`,
       parentId === null ? [postId, limit, offset, viewerId] : [postId, limit, offset, viewerId, parentId],
     );

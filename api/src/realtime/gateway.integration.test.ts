@@ -250,6 +250,38 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     expect(second.hello.resumedRooms).toEqual([]);
   });
 
+  it('leaves the people an event is hidden from out of it, and shows nobody the list', async () => {
+    // a group message from somebody with a block between them and one member
+    const reader = await makeUser('shown');
+    const blocked = await makeUser('hidden');
+    const room = `group:${suffix}:hidden`;
+    const a = await connect(reader.token);
+    const b = await connect(blocked.token);
+    const seenByB: unknown[] = [];
+    b.ws.on('message', (raw) => {
+      const msg = JSON.parse(raw.toString()) as WsMessage;
+      if (msg.type === 'event') seenByB.push(msg.event);
+    });
+    for (const [user, ws] of [
+      [reader, a.ws],
+      [blocked, b.ws],
+    ] as const) {
+      await app.realtime.invite(room, user.id);
+      ws.send(JSON.stringify({ type: 'join', room }));
+      await waitFor(ws, (m) => m.type === 'joined');
+    }
+
+    const heardByA = waitFor(a.ws, (m) => m.type === 'event');
+    await app.realtime.publish(room, { type: 'group_msg', n: 1, hiddenFrom: [blocked.id] });
+    expect((await heardByA).event).toEqual({ type: 'group_msg', n: 1 });
+
+    // the next event for everyone has reached B, so the hidden one would have too
+    const nextForB = waitFor(b.ws, (m) => m.type === 'event');
+    await app.realtime.publish(room, { type: 'group_msg', n: 2 });
+    await nextForB;
+    expect(seenByB).toEqual([{ type: 'group_msg', n: 2 }]);
+  });
+
   it('application-level ping gets a pong', async () => {
     const user = await makeUser('ping');
     const { ws } = await connect(user.token);
