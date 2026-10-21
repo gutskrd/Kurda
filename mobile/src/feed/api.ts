@@ -43,6 +43,12 @@ export const SITE_ORIGIN = 'https://hevalo.app';
 /** The absolute URL of a post — a share target is somewhere else, so it needs the origin. */
 export const postUrl = (item: Pick<FeedItem, 'href'>): string => `${SITE_ORIGIN}${item.href}`;
 
+/** One post's likes, reposts and saves, and your part in them: what its own page shows under it. */
+export const getEngagement = (
+  client: ApiClient,
+  item: Pick<FeedItem, 'targetType' | 'id'>,
+): Promise<ApiResult<{ engagement: PostEngagement }>> => client.get(`/posts/${item.targetType}/${item.id}/engagement`);
+
 /**
  * Like / save / repost, as one toggle.
  *

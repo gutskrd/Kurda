@@ -86,6 +86,68 @@ describe('your own post on the wall', () => {
   });
 });
 
+describe('a post in the chain', () => {
+  it('names who posted it at the top, and keeps its numbers beside the heart, the comments and the reposts', () => {
+    renderWithProviders(
+      <FeedCard
+        item={item({
+          key: 'image:i1',
+          id: 'i1',
+          targetType: 'image',
+          kind: 'meme',
+          title: 'Newroz',
+          excerpt: null,
+          imageUrl: 'https://cdn.test/i1.webp',
+          commentCount: 36,
+          engagement: { liked: false, likes: 9224, reposted: false, reposts: 851, bookmarked: false, bookmarks: 4 },
+        })}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'rojda' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Like (9224)' })).toBeTruthy();
+    expect(screen.getByText('9,224')).toBeTruthy();
+    expect(screen.getByRole('button', { name: '36 comments (36)' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Repost (851)' })).toBeTruthy();
+    // what is saved is nobody else's business, so the bookmark has no number
+    expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Share this post' })).toBeTruthy();
+    // the caption after the name, then a way into the comments
+    expect(screen.getByText((_, el) => el?.textContent === 'rojda Newroz' && el.children.length === 1)).toBeTruthy();
+    fireEvent.click(screen.getByRole('link', { name: 'View all 36 comments' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('MemeDetail', { postId: 'i1' });
+  });
+
+  it('shows no number where there is none yet, and no way into comments that are not there', () => {
+    renderWithProviders(<FeedCard item={item()} />);
+    expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
+    expect(screen.queryByRole('link', { name: /^View/ })).toBeNull();
+  });
+
+  it('likes with the heart, and the number follows what the server says', async () => {
+    const client = fakeClient({
+      'POST /posts/library/p1/like': ok({ on: true, engagement: { liked: true, likes: 1, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 } }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<FeedCard item={item()} />);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Like' }));
+    });
+    expect(await screen.findByRole('button', { name: 'Unlike (1)' })).toBeTruthy();
+    expect(client.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['POST /posts/library/p1/like']);
+  });
+
+  it('opens the menu from the ⋯ on your own, and reporting from it on somebody else’s', () => {
+    renderWithProviders(<FeedCard item={item()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Post options' }));
+    expect(screen.getByRole('button', { name: 'Delete post' })).toBeTruthy();
+    cleanup();
+    renderWithProviders(<FeedCard item={item({ author: { id: 'u-azad', username: 'azad', displayName: null, avatarUrl: null } })} />);
+    expect(screen.queryByRole('button', { name: 'Post options' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'Report this post' }));
+    expect(screen.queryByRole('button', { name: 'Delete post' })).toBeNull();
+  });
+});
+
 describe('the wall', () => {
   it('drops a deleted post at once, and every repost of it', async () => {
     testAuth.client = fakeClient({

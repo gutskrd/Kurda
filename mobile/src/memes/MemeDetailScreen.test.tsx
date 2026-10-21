@@ -67,7 +67,7 @@ const comment = (id: string, over: Partial<Comment> = {}): Comment => ({
 function open(routes: Parameters<typeof fakeClient>[0] = {}) {
   const client = fakeClient({
     'GET /images/i1': ok(PICTURE),
-    'GET /images/i1/reactions': ok({ counts: {}, total: 0, mine: null }),
+    'GET /posts/image/i1/engagement': ok({ engagement: { likes: 3, bookmarks: 0, reposts: 1, liked: false, bookmarked: false, reposted: false } }),
     'GET /images/i1/comments?sort=newest': ok({ comments: [comment('c1', { replyCount: 1 })] }),
     ...routes,
   });
@@ -81,7 +81,8 @@ describe('a picture’s comments', () => {
   it('say who and when in words, and open their replies from the picture’s own thread', async () => {
     open({ 'GET /images/comments/c1/replies?limit=50': ok({ comments: [comment('r1', { parentCommentId: 'c1', depth: 1, body: 'a reply' })] }) });
     expect(await screen.findByRole('button', { name: 'rojda — open profile' })).toBeTruthy();
-    expect(screen.getByText('2h ago')).toBeTruthy();
+    // the picture's own time, then the comment's
+    expect(screen.getAllByText('2h ago')).toHaveLength(2);
     fireEvent.click(screen.getByRole('button', { name: 'View 1 reply' }));
     expect(await screen.findByText('a reply')).toBeTruthy();
   });

@@ -272,6 +272,27 @@ export function registerSocialRoutes(
   );
 
   /**
+   * How one post has been received — likes, reposts, saves — and whether you
+   * are among them: what a post's own page shows under it, the same numbers
+   * the wall carries for each post. Readable signed out (the post's page is
+   * public); a signed-out reader is simply in none of them. Only counts and
+   * your own part in them, so nothing about who else did what.
+   */
+  app.get(
+    '/posts/:type/:id/engagement',
+    {
+      schema: { params: z.object({ type: z.string().max(16), id: z.uuid() }) },
+      config: { rateLimit: { max: 240, windowMs: 60_000, per: 'user-or-ip' as const }, skipValidation: true },
+    },
+    async (req) => {
+      const { type, id } = req.params as { type: string; id: string };
+      if (!isTargetType(type)) throw new AppError('BAD_TARGET', 400, 'unknown post type');
+      const counts = await engagement.forPosts(req.user?.id ?? null, type, [id]);
+      return { engagement: counts.get(id) };
+    },
+  );
+
+  /**
    * A user's public profile (privacy- and block-gated).
    *
    * Readable without an account: the bylines on the public wall have to lead

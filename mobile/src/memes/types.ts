@@ -2,41 +2,17 @@
  *  the helpers are unit-testable. */
 
 import type { Translate } from '../api/errors';
-import type { TranslationKey } from '../i18n/translations.js';
 import type { CommentAuthor } from '../comments/thread';
 
-export type Reaction = 'like' | 'laugh' | 'love' | 'wow' | 'sad' | 'angry';
 export type Category = 'meme' | 'image';
 export type AuthorRole = 'user' | 'admin' | 'founder';
-
-/**
- * What a screen reader says in place of the emoji. A TranslationKey rather
- * than a string, so a name cannot reach a button without going through t().
- */
-export const REACTION_LABEL: Record<Reaction, TranslationKey> = {
-  like: 'memes.reaction.like',
-  laugh: 'memes.reaction.laugh',
-  love: 'memes.reaction.love',
-  wow: 'memes.reaction.wow',
-  sad: 'memes.reaction.sad',
-  angry: 'memes.reaction.angry',
-};
-
-/** Display order + emoji for the reaction bar. */
-export const REACTION_ORDER: readonly Reaction[] = ['laugh', 'love', 'like', 'wow', 'sad', 'angry'];
-export const REACTION_EMOJI: Record<Reaction, string> = {
-  like: '👍',
-  laugh: '😂',
-  love: '❤️',
-  wow: '😮',
-  sad: '😢',
-  angry: '😡',
-};
 
 export interface ImagePost {
   id: string;
   authorId: string;
   authorRole: AuthorRole;
+  /** who posted it: a face and a name; older APIs leave it out */
+  author?: { id: string; username: string; avatarUrl: string | null } | null;
   imageMediaId: string;
   imageUrl: string | null;
   caption: string | null;
@@ -47,12 +23,6 @@ export interface ImagePost {
   commentCount: number;
   createdAt: string;
   updatedAt: string;
-}
-
-export interface ReactionSummary {
-  counts: Partial<Record<Reaction, number>>;
-  total: number;
-  mine: Reaction | null;
 }
 
 export interface Comment {
@@ -69,15 +39,6 @@ export interface Comment {
   replyCount: number;
   createdAt: string;
   updatedAt: string;
-}
-
-/** The top-N reacted emojis for a compact summary chip, most-used first. */
-export function topReactionEmojis(summary: ReactionSummary, max = 3): string[] {
-  return (Object.entries(summary.counts) as [Reaction, number][])
-    .filter(([, n]) => n > 0)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, max)
-    .map(([r]) => REACTION_EMOJI[r]);
 }
 
 /**

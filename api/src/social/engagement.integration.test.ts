@@ -127,6 +127,17 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     expect(story.get(storyId)!.likes).toBe(2);
   });
 
+  it('reads one post’s numbers, with your part in them, signed in or not', async () => {
+    const mine = await call('GET', `/posts/image/${pictureId}/engagement`, tokens.me!);
+    expect(mine.statusCode).toBe(200);
+    expect(mine.json().engagement).toMatchObject({ likes: 1, liked: true });
+    const guest = await app.inject({ method: 'GET', url: `/posts/image/${pictureId}/engagement`, remoteAddress: '10.91.2.3' });
+    expect(guest.statusCode).toBe(200);
+    expect(guest.json().engagement).toMatchObject({ likes: 1, liked: false });
+    const bad = await call('GET', `/posts/nonsense/${pictureId}/engagement`, tokens.me!);
+    expect(bad.json().code).toBe('BAD_TARGET');
+  });
+
   it('answers for a whole page in one query', async () => {
     const counts = await engagement.forPosts(ids.me!, 'library', [storyId, storyId, crypto.randomUUID()]);
     // every id asked about comes back, including ones nobody has touched

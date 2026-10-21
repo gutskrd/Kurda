@@ -24,7 +24,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { createPost, listPosts, uploadMemeImage } from './api';
-import { REACTION_EMOJI, type Category, type ImagePost } from './types';
+import { type Category, type ImagePost } from './types';
+import { Icon } from '../theme/Icon';
 import { noticeTime } from '../notifications/inbox';
 import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
@@ -39,7 +40,7 @@ const PAGE = 20;
  * Meme/image feed (KUR-291). Browses published posts (filter meme/image, sort
  * newest/popular), infinite-scrolls, and uploads a new post through the cost-safe
  * server pipeline (pick → /images/upload → create). Tapping a post opens the
- * detail screen with reactions + comments.
+ * post on a page of its own, with its likes and comments under it.
  */
 export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -164,12 +165,13 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             </View>
           )}
           {item.caption ? <Text style={[styles.caption, { color: colors.textPrimary }]}>{item.caption}</Text> : null}
-          <View style={styles.cardFoot}>
-            <Text style={[styles.stat, { color: colors.textSecondary }]}>
-              {REACTION_EMOJI.laugh} {item.reactionCount}
-            </Text>
-            <Text style={[styles.stat, { color: colors.textSecondary }]}>💬 {item.commentCount}</Text>
-          </View>
+          {/* a heart is the one reaction there is, counted on the post itself; here, how many have said something */}
+          {item.commentCount > 0 ? (
+            <View style={styles.cardFoot}>
+              <Icon name="chat" size={16} color={colors.textSecondary} />
+              <Text style={[styles.stat, { color: colors.textSecondary }]}>{item.commentCount}</Text>
+            </View>
+          ) : null}
         </PressableScale>
       </Rise>
     ),
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md },
   imageFallback: { alignItems: 'center', justifyContent: 'center' },
   caption: { fontSize: typography.sizes.md },
-  cardFoot: { flexDirection: 'row', gap: spacing.lg },
+  cardFoot: { flexDirection: 'row', alignItems: 'center', gap: 4 },
   stat: { fontSize: typography.sizes.sm },
   fab: { position: 'absolute', right: spacing.lg },
 });

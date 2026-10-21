@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { describeUploadFailure, uploadWasLimited, normalizeContentType } from '../profile/photoUploadResult';
-import type { Category, Comment, ImagePost, Reaction, ReactionSummary } from './types';
+import type { Category, Comment, ImagePost } from './types';
 
 export interface FeedFilters {
   category?: Category;
@@ -31,15 +31,6 @@ export const createPost = (
   client: ApiClient,
   input: { imageMediaId: string; caption?: string; category?: Category },
 ): Promise<ApiResult<ImagePost>> => client.post('/images', input);
-
-export const getReactions = (client: ApiClient, postId: string): Promise<ApiResult<ReactionSummary>> =>
-  client.get(`/images/${postId}/reactions`);
-
-export const setReaction = (client: ApiClient, postId: string, reaction: Reaction): Promise<ApiResult<ReactionSummary>> =>
-  client.put(`/images/${postId}/reaction`, { reaction });
-
-export const clearReaction = (client: ApiClient, postId: string): Promise<ApiResult<ReactionSummary>> =>
-  client.delete(`/images/${postId}/reaction`);
 
 export const listComments = (
   client: ApiClient,
