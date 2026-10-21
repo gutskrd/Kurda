@@ -1,7 +1,7 @@
 import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RankedGame } from '@kurda/shared';
+import type { AlphabetScript, RankedGame } from '@kurda/shared';
 import type { LearnView } from './tabs';
 
 /**
@@ -102,6 +102,8 @@ export type RootStackParamList = {
   Friends: undefined;
   /** The dictionary, opened from Learn's tools (and a word found in Search opens its entry in place). */
   Dictionary: undefined;
+  /** Both alphabets, opened from Learn's tools: `script` to open on one, else the reader's own dialect. */
+  Alphabet: { script?: AlphabetScript } | undefined;
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };

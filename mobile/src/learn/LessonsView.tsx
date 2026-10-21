@@ -1,6 +1,16 @@
 import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View, type LayoutChangeEvent, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
+import {
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+  useWindowDimensions,
+  type LayoutChangeEvent,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
+} from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, ErrorRetry } from '../theme/glass';
@@ -235,6 +245,13 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
               onPress={() => navigation.navigate('Practice')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
+            {/* the letters every course is written in: a row of their own on a phone, a third beside the two on a tablet */}
+            <ToolTile
+              letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
+              title={t('nav.alphabet')}
+              detail={t('learn.tools.alphabetHint')}
+              onPress={() => navigation.navigate('Alphabet')}
+            />
           </View>
           {/* the week: the league and your place in it (or your own week), and the weekly goal */}
           <LeagueLine />
@@ -317,6 +334,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
 
 /** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
 const FOLLOW_MS = 4000;
+
+/** From this window width up, Learn's tools stand three to a row. */
+const TOOLS_THREE_ACROSS = 600;
 
 /**
  * The one next step: which course and unit, the lesson's name, how far the
@@ -513,14 +533,21 @@ function TodayCard({
   );
 }
 
+/** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
+const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
+const SORANI_TEASER = { text: 'ئ ب پ چ', rtl: true } as const;
+
 function ToolTile({
   icon,
+  letters,
   title,
   detail,
   highlight = false,
   onPress,
 }: {
-  icon: IconName;
+  icon?: IconName;
+  /** letters to show where the icon would be */
+  letters?: { text: string; rtl: boolean };
   title: string;
   detail: string;
   /** something is waiting in it (words due), said in gold as well as in words */
@@ -529,6 +556,8 @@ function ToolTile({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
+  // two to a row on a phone, so the third has a row of its own; three to a row from a tablet's width
+  const across = useWindowDimensions().width >= TOOLS_THREE_ACROSS ? 3 : 2;
   return (
     <Pressable
       onPress={onPress}
@@ -536,11 +565,23 @@ function ToolTile({
       accessibilityLabel={detail ? `${title}, ${detail}` : title}
       style={({ pressed }) => [
         styles.tile,
+        { flexBasis: across === 3 ? '30%' : '40%' },
         // a column starts on the reading side too
         { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
       ]}
     >
-      <Icon name={icon} size={24} color={colors.textPrimary} />
+      {letters ? (
+        <Text
+          style={[styles.tileLetters, { color: colors.goldText, writingDirection: letters.rtl ? 'rtl' : 'ltr' }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+          maxFontSizeMultiplier={1.2}
+        >
+          {letters.text}
+        </Text>
+      ) : icon ? (
+        <Icon name={icon} size={24} color={colors.textPrimary} />
+      ) : null}
       <Text style={[styles.tileTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
         {title}
       </Text>
@@ -583,8 +624,9 @@ const styles = StyleSheet.create({
   todayFacts: { alignItems: 'center', gap: spacing.sm },
   todayText: { flex: 1, fontSize: typography.sizes.md },
 
-  tools: { flexDirection: 'row', gap: layout.rowGap },
-  tile: { flex: 1, minHeight: MIN_TOUCH_TARGET * 2, borderRadius: radii.lg, padding: spacing.md, gap: 4 },
+  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: layout.rowGap },
+  tile: { flexGrow: 1, minHeight: MIN_TOUCH_TARGET * 2, borderRadius: radii.lg, padding: spacing.md, gap: 4 },
+  tileLetters: { ...display(typography.sizes.lg), lineHeight: 24 },
   tileTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   tileDetail: { fontSize: typography.sizes.xs },
 

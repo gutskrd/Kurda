@@ -15,7 +15,7 @@ import type { PlaybackClock } from '../characters/voice';
  * exercise turns into an auto-skip (not a wrong answer).
  *
  * `clock` is the player itself, for a speaking character to follow while
- * `playing` says the recording plays.
+ * `playing` says the recording plays; `source` is the URL it has loaded.
  */
 interface WebAudioEl {
   playbackRate: number;
@@ -35,6 +35,11 @@ function audioCtor(): AudioCtor | null {
   return typeof g.Audio === 'function' ? g.Audio : null;
 }
 
+/** Whether this host can play a recording at all, before there is one to play. */
+export function canPlayAudio(): boolean {
+  return audioCtor() !== null || Platform.OS !== 'web';
+}
+
 export interface AudioControls {
   supported: boolean;
   error: boolean;
@@ -42,6 +47,8 @@ export interface AudioControls {
   playing: boolean;
   /** the loaded recording's player; null until one is loaded */
   clock: PlaybackClock | null;
+  /** the URL `clock` has loaded; null until one is */
+  source: string | null;
   play: (rate?: number) => void;
 }
 
@@ -120,7 +127,7 @@ export function useAudio(url: string | undefined): AudioControls {
   const loadedRef = useRef<Loaded | null>(null);
   const [error, setError] = useState(false);
   const [playing, setPlaying] = useState(false);
-  const [clock, setClock] = useState<PlaybackClock | null>(null);
+  const [current, setCurrent] = useState<{ url: string; clock: PlaybackClock } | null>(null);
 
   useEffect(() => {
     if (!url || (!Ctor && !phone)) return;
@@ -141,7 +148,7 @@ export function useAudio(url: string | undefined): AudioControls {
       }
       loaded = next;
       loadedRef.current = next;
-      setClock(next.clock);
+      setCurrent({ url, clock: next.clock });
     };
     setError(false);
     if (Ctor) take(elementPlayback(Ctor, url, on));
@@ -151,7 +158,7 @@ export function useAudio(url: string | undefined): AudioControls {
       loaded?.release();
       loadedRef.current = null;
       setPlaying(false);
-      setClock(null);
+      setCurrent(null);
     };
   }, [Ctor, phone, url]);
 
@@ -159,5 +166,5 @@ export function useAudio(url: string | undefined): AudioControls {
     loadedRef.current?.play(rate);
   }, []);
 
-  return { supported, error, playing, clock, play };
+  return { supported, error, playing, clock: current?.clock ?? null, source: current?.url ?? null, play };
 }

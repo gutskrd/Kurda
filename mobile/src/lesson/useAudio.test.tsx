@@ -62,6 +62,8 @@ describe('useAudio in a browser', () => {
     el.load(2);
     el.currentTime = 0.5;
     expect(controls.clock).toMatchObject({ currentTime: 0.5, duration: 2, playing: false });
+    // which recording the clock is, for a screen with one player and many sounds
+    expect(controls.source).toBe('https://media.test/a.wav');
 
     act(() => controls.play(0.75));
     expect(el.playbackRate).toBe(0.75);
@@ -96,6 +98,18 @@ describe('useAudio on a phone', () => {
     view.unmount();
     expect(made.calls).toContain('unsubscribe');
     expect(made.removed).toBe(true);
+  });
+
+  /** another recording asked for: the last one goes, and the clock and its source are the new one's */
+  it('lets the last recording go when asked for another', async () => {
+    const view = render(<Probe url="https://media.test/e.wav" />);
+    await act(async () => undefined);
+    expect(controls.source).toBe('https://media.test/e.wav');
+    view.rerender(<Probe url="https://media.test/f.wav" />);
+    expect(phone.made[0]!.removed).toBe(true);
+    await act(async () => undefined);
+    expect(controls.source).toBe('https://media.test/f.wav');
+    expect(phone.made[1]!.uri).toBe('https://media.test/f.wav');
   });
 
   it('turns a player that cannot load into the error the exercise skips on', async () => {

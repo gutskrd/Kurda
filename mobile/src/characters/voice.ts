@@ -24,9 +24,10 @@ export function knownVoice(voice: RecordingVoice | null | undefined): RecordingV
 
 /**
  * How wide a character is drawn: beside a lesson's play button (larger from a
- * tablet's width up), and beside a row's own play button.
+ * tablet's width up), beside a row's own play button, and beside a letter's
+ * play buttons on the alphabet.
  */
-export const CHARACTER_SIZE = { stage: 104, wideStage: 120, row: 56 } as const;
+export const CHARACTER_SIZE = { stage: 104, wideStage: 120, row: 56, letter: 72 } as const;
 
 /** From this window width up the lesson's character is drawn at `wideStage`. */
 const WIDE_STAGE_FROM = 768;

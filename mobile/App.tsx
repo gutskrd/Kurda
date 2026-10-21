@@ -41,6 +41,7 @@ import { LoginScreen } from './src/screens/auth/LoginScreen';
 import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/learn/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
+import { AlphabetScreen } from './src/alphabet/AlphabetScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
@@ -141,6 +142,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
       Practice: 'practice',
+      // the website's alphabet, `?script=ckb` and all, opens the phone's
+      Alphabet: 'app/alphabet',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       // `/app/games/stories?id=…` is a game to join; without an id it is the hub
@@ -438,6 +441,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Dictionary" options={{ presentation: 'card' }}>
         {({ navigation }) => <DictionaryScreen onBack={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Alphabet" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
         {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}
