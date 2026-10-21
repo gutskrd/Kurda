@@ -1,3 +1,5 @@
+import type { DictionaryAudio } from '@kurda/shared';
+
 /**
  * Dictionary contract — mirrors the server (KUR-043/044/047), and deliberately
  * the same shape the phone uses. One API, one set of names for what it returns.
@@ -38,7 +40,8 @@ export interface Entry {
   headword: string;
   dialect: string;
   senses: Sense[];
-  audio: Array<{ url: string; dialect: string }>;
+  /** its pronunciations, each with who says it when an editor chose a character */
+  audio: DictionaryAudio[];
   xrefs: Array<{ entryId: string; headword: string; relation: string }>;
   /** whether the reader has bookmarked this entry (KUR-047) */
   saved?: boolean;

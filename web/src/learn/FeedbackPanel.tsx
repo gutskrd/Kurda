@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { feedbackKind, letterDiff, type DiffSegment, type ExerciseType, type Feedback, type FeedbackKind } from '@kurda/shared';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
+import type { SpokenClip } from '../characters/clips';
 import { Button } from '../components/Button';
 import { CheckIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
@@ -41,17 +43,21 @@ export function announce(feedback: Feedback, t: (key: MessageKey, vars?: Record<
 /**
  * After an answer: the verdict in words and a mark (never colour alone), the
  * learner's typed answer above the right one with the letters that differ
- * marked, the native recording to hear now that it gives nothing away, and
- * Continue. The focus comes here so a keyboard can go on with Enter, and the
- * exercise that follows takes it back.
+ * marked, the native recording to hear now that it gives nothing away (with
+ * the character who says it, when the exercise above does not show them
+ * already), and Continue. The focus comes here so a keyboard can go on with
+ * Enter, and the exercise that follows takes it back.
  */
 export function FeedbackPanel({
   feedback,
   dialect,
+  speaker = null,
   onContinue,
 }: {
   feedback: Feedback;
   dialect: string | null | undefined;
+  /** who says the model, when nobody above does (`feedbackClip`) */
+  speaker?: SpokenClip | null;
   onContinue: () => void;
 }): React.JSX.Element {
   const t = useT();
@@ -116,6 +122,7 @@ export function FeedbackPanel({
       {feedback.reask && <p className="lesson-note">{t('lesson.fb.reaskNote')}</p>}
 
       <div className="lesson-feedback-actions">
+        {feedback.modelAudioUrl && speaker && <ClipSpeaker clips={[speaker]} decorative className="speaker-tile lesson-feedback-face" />}
         {feedback.modelAudioUrl && <PlayButton src={feedback.modelAudioUrl} label={t('lesson.fb.hear')} />}
         <Button onClick={onContinue}>{t('lesson.continue')}</Button>
       </div>

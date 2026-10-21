@@ -32,6 +32,7 @@ import { FeedbackPanel, announce } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
 import { Results } from './Results';
 import { Speaking } from './Speaking';
+import { feedbackClip } from './Voice';
 import type { AnswerResult, RetryResult, SessionResults } from './types';
 
 /** Where a session's answers go — a lesson and a review differ only here. */
@@ -322,7 +323,15 @@ export function SessionPlayer({
               )}
             </div>
           )}
-          {feedback && <FeedbackPanel key={`feedback-${state.index}`} feedback={feedback} dialect={exDialect} onContinue={next} />}
+          {feedback && (
+            <FeedbackPanel
+              key={`feedback-${state.index}`}
+              feedback={feedback}
+              dialect={exDialect}
+              speaker={feedbackClip(ex, feedback)}
+              onContinue={next}
+            />
+          )}
           <p className="lesson-saved">{t('lesson.savedAsYouGo')}</p>
         </div>
       ) : results ? (

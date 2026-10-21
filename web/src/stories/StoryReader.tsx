@@ -17,7 +17,7 @@ import { useT } from '../i18n/I18nProvider';
 import { dialectName } from '../learn/map';
 import { STORIES_HUB, createGame, gamePath, storyError } from './api';
 import { rememberTextSize, rememberedExtraTime, rememberedSolo, rememberedTextSize, soloCountFor } from './prefs';
-import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
+import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { LENGTH_KEY, SetupSheet } from './SetupSheet';
 import { StoryText, StoryWords } from './StoryText';
 import { useStoryAudio } from './useStoryAudio';
@@ -78,7 +78,7 @@ function ReaderPage({ slug }: { slug: string }): React.JSX.Element {
 function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
   const t = useT();
   const [size, setSize] = useState(rememberedTextSize);
-  const audio = useStoryAudio(story.paragraphs, story.audio);
+  const audio = useStoryAudio(story.paragraphs, story.audio, story.voices);
   const { lang, dir } = storyTextDirection(story.dialect);
 
   const changeSize = useCallback((next: number) => {
@@ -112,6 +112,7 @@ function ReadStory({ story }: { story: StoryDetail }): React.JSX.Element {
       </header>
 
       <div className="story-tools">
+        <StorySpeaker audio={audio} />
         <TextSizeControl step={size} onChange={changeSize} />
         {story.fullyNarrated && <StoryPlayerBar audio={audio} />}
       </div>

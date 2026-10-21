@@ -2821,4 +2821,5 @@ export const tr: Catalogue = {
   'settings.appearance.system': 'Cihaza uy',
   'learn.guest.body': 'Kurslar ve oyunlar ilerlemeni saklar, bu yüzden bir hesap gerekir. Alfabe ve sözlük herkese açık.',
   'civak.emptyBody': 'İlk sen ol: + düğmesiyle bir söz, bir şiir ya da bir resim. Ya da birlikte öğreneceğin kişileri bul.',
+  'character.speaking': '{name} konuşuyor',
 };

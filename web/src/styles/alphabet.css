@@ -523,8 +523,15 @@
 }
 .ab-card-tools {
   display: inline-flex;
+  /* on the narrowest phones a wide letter beside a speaker puts the IPA on a line of its own */
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
   gap: 10px;
+}
+/* who says the letter's recordings, beside the button that plays them (characters/ClipSpeaker.tsx) */
+.ab-voice-face {
+  --speaker-size: 60px;
 }
 .ab-card-word-row {
   display: inline-flex;

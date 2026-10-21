@@ -4376,7 +4376,17 @@ a.mkp-activity-row:hover {
 }
 .dict-entry-actions {
   display: flex;
+  align-items: center;
   gap: 8px;
+}
+/* a pronunciation with a character: the speaker beside its button (dictionary/EntryView.tsx) */
+.dict-voice {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.dict-voice-face {
+  --speaker-size: 56px;
 }
 .dict-headword {
   margin: 0 0 4px;

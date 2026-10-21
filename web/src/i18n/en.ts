@@ -2918,6 +2918,7 @@ export const en = {
   'settings.appearance.system': 'Match this device',
   'learn.guest.body': 'Courses and games keep your progress, so they need an account. The alphabet and the dictionary are open to everyone.',
   'civak.emptyBody': 'Be the first: a saying, a poem or a picture, with the + button. Or find people to learn with.',
+  'character.speaking': '{name} speaking',
 } as const;
 
 export type MessageKey = keyof typeof en;

@@ -8,7 +8,8 @@ import { useLocale, usePageMeta, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { publishedDictionary } from '../layouts/navLinks';
-import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, useRecordings } from '../alphabet/audio';
+import { isSynthesised, latinSound, latinWord, play, soraniSound, soraniWord, spokenAlphabet, useRecordings } from '../alphabet/audio';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
 import { Practice } from '../alphabet/Practice';
 import { Sound } from '../alphabet/Sound';
 import { Meaning } from '../alphabet/Meaning';
@@ -429,6 +430,7 @@ function LatinCard({ letter, locale, onStep }: { letter: LatinLetter; locale: Ap
           <small>{letter.id}</small>
         </span>
         <span className="ab-card-tools">
+          <ClipSpeaker clips={spokenAlphabet(latinSound(letter.id), latinWord(letter.id))} decorative className="speaker-tile ab-voice-face" />
           <Sound src={latinSound(letter.id)} label={t('alphabet.listen')} size="lg" />
           <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
             /{letter.ipa}/
@@ -487,6 +489,7 @@ function SoraniCard({ letter, locale, onStep }: { letter: SoraniLetter; locale: 
           {letter.char}
         </span>
         <span className="ab-card-tools">
+          <ClipSpeaker clips={spokenAlphabet(soraniSound(letter), soraniWord(letter))} decorative className="speaker-tile ab-voice-face" />
           <Sound src={soraniSound(letter)} label={t('alphabet.listen')} size="lg" />
           <span className="ab-ipa" title={t('alphabet.ipa')} dir="ltr">
             /{letter.ipa}/

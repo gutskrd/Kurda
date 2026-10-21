@@ -2832,4 +2832,5 @@ export const ku: Catalogue = {
   'settings.appearance.system': 'Wek vê cîhazê',
   'learn.guest.body': 'Kurs û lîstik pêşketina te diparêzin, ji ber vê yekê hesabek divê. Alfabe û ferheng ji her kesî re vekirî ne.',
   'civak.emptyBody': 'Bibe yê yekem: gotinek, helbestek an wêneyek, bi bişkoka +. An jî kesên ku tu bi wan re fêr bibî bibîne.',
+  'character.speaking': '{name} diaxive',
 };

@@ -6,7 +6,8 @@
  * answer pops when it was right and shakes once when it was not; a bar slides
  * to its new value; a list's first screenful rises in once as it arrives; a
  * sheet or a dialog springs up while the scrim fades; a heart pops with a tiny
- * burst; and something earned is celebrated (ranks/Celebration.tsx). Nothing
+ * burst; a speaking character rises into its tile; and something earned is
+ * celebrated (ranks/Celebration.tsx). Nothing
  * loops but a loading shimmer, and nothing moves while it is being read.
  *
  * Only transform and opacity are animated. Under prefers-reduced-motion,
@@ -118,6 +119,18 @@
 }
 [dir='rtl'] .lesson-progress > span {
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
+}
+
+/* ---- a speaking character arrives ------------------------------------------ */
+/* rises a little into its tile as the exercise, the letter or the word opens; it does not move after */
+@keyframes speaker-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.96);
+  }
+}
+.speaker-tile {
+  animation: speaker-arrive var(--dur-slow) var(--ease-out) both;
 }
 
 /* ---- something earned ------------------------------------------------------ */

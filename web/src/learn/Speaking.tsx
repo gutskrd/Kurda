@@ -7,6 +7,7 @@ import type { MessageKey } from '../i18n/en';
 import { Ask, Prompt, type ExerciseProps } from './Exercises';
 import { PlayButton } from './PlayButton';
 import { recorderSupported, useRecorder } from './useRecorder';
+import { ExerciseVoice, exerciseClips } from './Voice';
 
 const RATINGS: Array<{ rating: SelfRating; label: MessageKey }> = [
   { rating: 'good', label: 'lesson.speak.rateGood' },
@@ -163,12 +164,15 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
   return (
     <div className="lesson-exercise" ref={root}>
       <Ask focus>{t('lesson.speak.ask')}</Ask>
-      <Prompt text={exercise.prompt} />
-      {exercise.modelAudioUrl && taken.status !== 'ready' && (
-        <div className="lesson-listen">
-          <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />
-        </div>
-      )}
+      {/* the speaker stays while the take is compared: it speaks again when the model is played there */}
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <Prompt text={exercise.prompt} />
+        {exercise.modelAudioUrl && taken.status !== 'ready' && (
+          <div className="lesson-listen">
+            <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />
+          </div>
+        )}
+      </ExerciseVoice>
       <div className="lesson-speak" ref={controls}>
         {body}
       </div>

@@ -12,7 +12,7 @@ import { useT } from '../i18n/I18nProvider';
 import { storyError } from './api';
 import { EnglishToggle, Evidence, ExtraTimeToggle, FromMemoryNote, optionNumber, typingElsewhere, useTick, type Act, type Announce } from './GameParts';
 import { rememberTextSize, rememberedEnglish, rememberedTextSize, showEnglishFor } from './prefs';
-import { StoryPlayerBar, TextSizeControl } from './ReaderControls';
+import { StoryPlayerBar, StorySpeaker, TextSizeControl } from './ReaderControls';
 import { StoryText } from './StoryText';
 import type { AnswerOutcome } from './useStoryGame';
 import { useStoryAudio } from './useStoryAudio';
@@ -49,7 +49,7 @@ export function GameReading({
   const [size, setSize] = useState(rememberedTextSize);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO);
+  const audio = useStoryAudio(story?.paragraphs ?? NO_PARAGRAPHS, story?.audio ?? NO_AUDIO, story?.voices);
   const solo = view.mode === 'solo';
   const soft = view.readingSoftCapAt ? Date.parse(view.readingSoftCapAt) : null;
   const hard = view.readingHardCapAt ? Date.parse(view.readingHardCapAt) : null;
@@ -91,6 +91,7 @@ export function GameReading({
       {story ? (
         <>
           <div className="story-tools">
+            <StorySpeaker audio={audio} />
             <TextSizeControl
               step={size}
               onChange={(n) => {

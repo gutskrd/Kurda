@@ -2827,4 +2827,5 @@ export const nl: Catalogue = {
   'settings.appearance.system': 'Zoals dit apparaat',
   'learn.guest.body': 'Cursussen en spellen bewaren je voortgang, dus daar is een account voor nodig. Het alfabet en het woordenboek zijn voor iedereen open.',
   'civak.emptyBody': 'Wees de eerste: een gezegde, een gedicht of een afbeelding, met de knop +. Of zoek mensen om mee te leren.',
+  'character.speaking': '{name} spreekt',
 };

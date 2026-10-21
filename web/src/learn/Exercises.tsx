@@ -8,6 +8,7 @@ import { useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
 import { TextAnswer } from './TextAnswer';
+import { ExerciseVoice, exerciseClips } from './Voice';
 
 /** What every exercise is given by the player. */
 export interface ExerciseProps {
@@ -112,8 +113,10 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.mc.ask')}</Ask>
-      <Prompt text={exercise.prompt} />
-      <Model exercise={exercise} />
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <Prompt text={exercise.prompt} />
+        <Model exercise={exercise} />
+      </ExerciseVoice>
       <div className="lesson-options" role="group" aria-label={t('lesson.mc.options')}>
         {options.map((option, i) => {
           // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
@@ -159,8 +162,10 @@ export function TypedExercise({ exercise, dialect, locked, busy, feedback, onAns
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{exercise.type === 'writing' ? t('lesson.write.ask') : t('lesson.translate.ask')}</Ask>
-      <Prompt text={exercise.prompt} />
-      <Model exercise={exercise} />
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <Prompt text={exercise.prompt} />
+        <Model exercise={exercise} />
+      </ExerciseVoice>
       <TextAnswer
         label={exercise.type === 'writing' ? t('lesson.write.label') : t('lesson.translate.label')}
         dialect={dialect}
@@ -209,10 +214,12 @@ export function Listening({ exercise, dialect, locked, busy, feedback, onAnswer,
   return (
     <div className="lesson-exercise">
       <Ask focus={false}>{t('lesson.listen.ask')}</Ask>
-      <div className="lesson-listen">
-        <PlayButton src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} primary />
-        <PlayButton src={src} rate={0.75} label={t('lesson.listen.slow')} />
-      </div>
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <div className="lesson-listen">
+          <PlayButton src={src} label={played ? t('lesson.listen.again') : t('lesson.listen.play')} primary />
+          <PlayButton src={src} rate={0.75} label={t('lesson.listen.slow')} />
+        </div>
+      </ExerciseVoice>
       <Prompt text={exercise.prompt} />
       <TextAnswer label={t('lesson.listen.label')} dialect={dialect} locked={locked} busy={busy} verdict={verdictOf(feedback)} onAnswer={onAnswer} />
       {!locked && (
@@ -281,7 +288,9 @@ export function MatchPairs({ exercise, dialect, locked, busy, feedback, onAnswer
   return (
     <div className="lesson-exercise">
       <Ask focus>{t('lesson.match.ask')}</Ask>
-      <p className="lesson-hint">{t('lesson.match.how')}</p>
+      <ExerciseVoice clips={exerciseClips(exercise)}>
+        <p className="lesson-hint">{t('lesson.match.how')}</p>
+      </ExerciseVoice>
       <div className={`lesson-match${verdictOf(feedback) ? ` is-${verdictOf(feedback)}` : ''}`}>
         <div className="lesson-match-col" role="group" aria-label={t('lesson.match.kurdish')}>
           {lefts.map((l) => card('left', l))}

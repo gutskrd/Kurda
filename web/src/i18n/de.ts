@@ -2827,4 +2827,5 @@ export const de: Catalogue = {
   'settings.appearance.system': 'Wie dieses Gerät',
   'learn.guest.body': 'Kurse und Spiele speichern deinen Fortschritt und brauchen deshalb ein Konto. Alphabet und Wörterbuch sind für alle offen.',
   'civak.emptyBody': 'Sei der Erste: ein Spruch, ein Gedicht oder ein Bild, mit dem +-Knopf. Oder finde Leute, mit denen du lernst.',
+  'character.speaking': '{name} spricht',
 };

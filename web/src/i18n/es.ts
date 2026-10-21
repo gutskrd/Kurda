@@ -2824,4 +2824,5 @@ export const es: Catalogue = {
   'settings.appearance.system': 'Como este dispositivo',
   'learn.guest.body': 'Los cursos y los juegos guardan tu progreso, así que necesitan una cuenta. El alfabeto y el diccionario están abiertos a todos.',
   'civak.emptyBody': 'Sé el primero: un dicho, un poema o una imagen, con el botón +. O encuentra personas con quienes aprender.',
+  'character.speaking': '{name} está hablando',
 };

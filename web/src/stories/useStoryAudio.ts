@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { lessonAudioKey, storySentences } from '@kurda/shared';
+import { lessonAudioKey, storySentences, type RecordingVoice } from '@kurda/shared';
 import { onEnded, onPlaying, play, setRate, stop } from '../lib/sound';
 
 /** One recorded sentence, where it is in the story. */
@@ -8,6 +8,10 @@ export interface AudioSentence {
   /** index into `storySentences(paragraph)` */
   sentence: number;
   url: string;
+  /** what it says */
+  text: string;
+  /** who says it, when an editor chose a character for it */
+  voice?: RecordingVoice;
 }
 
 /** What is being read aloud: the whole story, or one paragraph. */
@@ -41,11 +45,13 @@ export interface StoryAudio {
  * recording is skipped, never guessed at. Nothing plays by touching the
  * text: a paragraph has its own Listen button, and a fully narrated story a
  * player bar. Whatever is playing stops when the screen goes, and when
- * `stopWhen` turns true (the questions starting).
+ * `stopWhen` turns true (the questions starting). `voices` says who says
+ * each recording, by the same keys as `audio`, for the reader to show them.
  */
 export function useStoryAudio(
   paragraphs: readonly string[],
   audio: Readonly<Record<string, string>>,
+  voices?: Readonly<Record<string, RecordingVoice>>,
   stopWhen = false,
 ): StoryAudio {
   const track = useMemo<AudioSentence[]>(() => {
@@ -54,11 +60,12 @@ export function useStoryAudio(
       storySentences(p).forEach((s, sentence) => {
         const key = lessonAudioKey(s);
         const url = key ? audio[key] : undefined;
-        if (url) out.push({ paragraph, sentence, url });
+        const voice = key ? voices?.[key] : undefined;
+        if (url) out.push({ paragraph, sentence, url, text: s, ...(voice ? { voice } : {}) });
       });
     });
     return out;
-  }, [paragraphs, audio]);
+  }, [paragraphs, audio, voices]);
   const paragraphsWithAudio = useMemo(() => new Set(track.map((t) => t.paragraph)), [track]);
 
   const [scope, setScope] = useState<AudioScope | null>(null);

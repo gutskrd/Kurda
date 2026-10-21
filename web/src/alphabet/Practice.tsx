@@ -3,7 +3,8 @@ import type { AppLocale } from '@kurda/shared';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { latinSound, latinWord, pairWord, play, soraniSound, useRecordings } from './audio';
+import { ClipSpeaker } from '../characters/ClipSpeaker';
+import { latinSound, latinWord, pairWord, play, soraniSound, spokenAlphabet, useRecordings } from './audio';
 import { LATIN, SORANI, compareLocaleOf, likeFor, type Likeness } from './letters';
 import { Meaning } from './Meaning';
 import { again, makeRound, type Option, type Question, type Script, type Topic } from './practice';
@@ -171,7 +172,10 @@ export function Practice({ script, locale, onOpen }: { script: Script; locale: A
 
           <div className="ab-q-prompt">
             {(q.kind === 'hear' || q.kind === 'spell' || q.kind === 'pair') && (
-              <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />
+              <>
+                <ClipSpeaker clips={spokenAlphabet(q.clip)} decorative className="speaker-tile ab-voice-face" />
+                <Sound src={q.clip} label={t('alphabet.practice.replay')} size="lg" />
+              </>
             )}
             {q.kind === 'spell' && (
               // for a Kurmancî reader the meaning would be the answer, so they get the Soranî word instead

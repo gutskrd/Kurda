@@ -2819,4 +2819,5 @@ export const ar: Catalogue = {
   'settings.appearance.system': 'مثل هذا الجهاز',
   'learn.guest.body': 'تحفظ الدورات والألعاب تقدّمك، لذا تحتاج إلى حساب. الأبجدية والقاموس متاحان للجميع.',
   'civak.emptyBody': 'كن الأول: قول أو قصيدة أو صورة، بزر +. أو ابحث عن أشخاص تتعلم معهم.',
+  'character.speaking': 'صوت {name}',
 };

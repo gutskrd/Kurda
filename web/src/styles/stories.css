@@ -383,6 +383,10 @@
     top: 8px;
   }
 }
+/* who says the line being read (ReaderControls.tsx), first in the tools so it stays in view */
+.story-speaker {
+  --speaker-size: 52px;
+}
 .story-size {
   display: inline-flex;
   border-radius: var(--r-pill);

@@ -1,7 +1,9 @@
 import { useEffect, useSyncExternalStore } from 'react';
+import { isSpeakerId, type AlphabetAudioResponse, type RecordingVoice } from '@kurda/shared';
+import { spokenClips, type SpokenClip } from '../characters/clips';
 import { API_URL } from '../lib/config';
 import { CLIPS } from './clips';
-import type { SoraniLetter } from './letters';
+import { LATIN, SORANI, type SoraniLetter } from './letters';
 
 /**
  * Where each sound is. The clips are files on this site (see
@@ -19,20 +21,28 @@ const BASE = '/audio/alphabet/';
  * unreachable) the synthesised clips play, so the page never waits on them.
  */
 let recorded: Readonly<Record<string, string>> = {};
+/** who says a recording, by its URL, with the words it says; only the recordings an editor gave a character */
+let voices: ReadonlyMap<string, { voice: RecordingVoice; text: string | null }> = new Map();
 let version = 0;
 let loading: Promise<void> | null = null;
 const changed = new Set<() => void>();
 
 export function loadRecordings(): Promise<void> {
   loading ??= fetch(`${API_URL}/alphabet/audio`)
-    .then((res) => (res.ok ? (res.json() as Promise<{ clips?: Record<string, unknown> }>) : { clips: {} }))
-    .then(({ clips }) => {
+    .then((res) => (res.ok ? (res.json() as Promise<Partial<AlphabetAudioResponse>>) : { clips: {} }))
+    .then(({ clips, voices: said }) => {
       // only https URLs to keys the page knows: anything else is not ours to play
       const ok = Object.entries(clips ?? {}).filter(
         (e): e is [string, string] => e[0] in CLIPS && typeof e[1] === 'string' && e[1].startsWith('https://'),
       );
       if (ok.length === 0) return;
       recorded = Object.fromEntries(ok);
+      const heard = new Map<string, { voice: RecordingVoice; text: string | null }>();
+      for (const [key, url] of ok) {
+        const voice = said?.[key];
+        if (voice && isSpeakerId(voice.speaker)) heard.set(url, { voice, text: wordsOf(key) });
+      }
+      voices = heard;
       version++;
       changed.forEach((f) => f());
     })
@@ -50,6 +60,23 @@ export function useRecordings(): number {
     },
     () => version,
   );
+}
+
+/** What a sound's recording says, for moving a character's mouth when no timeline was saved with it. */
+function wordsOf(key: string): string | null {
+  const [script, kind, id = ''] = key.split(':');
+  if (script === 'pair') return kind ?? null;
+  if (script === 'kmr') return kind === 'word' ? (LATIN.find((l) => l.id === id)?.word ?? null) : id;
+  const letter = SORANI.find((l) => l.id === id);
+  return (kind === 'word' ? letter?.word : letter?.char) ?? null;
+}
+
+/**
+ * The recordings among `srcs` that an editor gave a character, with who says
+ * each: a synthesised clip never has one.
+ */
+export function spokenAlphabet(...srcs: Array<string | null>): SpokenClip[] {
+  return spokenClips(srcs.map((src) => ({ src, ...(src ? voices.get(src) : undefined) })));
 }
 
 /** True for a synthesised clip, so the page can say so — and only then. */
