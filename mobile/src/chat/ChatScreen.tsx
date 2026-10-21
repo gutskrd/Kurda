@@ -28,7 +28,7 @@ import { showActions } from '../theme/actionSheet';
 import { blockUser } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
-import { SendButton } from './SendButton';
+import { COMPOSER_FIELD, SendButton } from './SendButton';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { MessageContent, hasControls, isCardMessage } from './MessageContent';
@@ -314,7 +314,7 @@ export function ChatScreen({
             onPress={() => setPicking(true)}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
           >
             <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
@@ -426,7 +426,16 @@ const styles = StyleSheet.create({
   receipt: { fontSize: typography.sizes.xs, marginTop: 2 },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   typing: { fontStyle: 'italic', paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, fontSize: typography.sizes.sm },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
-  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, maxHeight: 120, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  // the buttons stay by the last line as a long message grows the field upwards
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  input: COMPOSER_FIELD,
 });

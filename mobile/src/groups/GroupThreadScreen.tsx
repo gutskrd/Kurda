@@ -25,7 +25,7 @@ import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
-import { SendButton } from '../chat/SendButton';
+import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
 import { useI18n } from '../i18n/I18nContext';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
@@ -384,7 +384,7 @@ export function GroupThreadScreen({
             onPress={openPicker}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
           >
             <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
@@ -587,19 +587,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     // the buttons stay by the last line as a long message grows the field upwards
     alignItems: 'flex-end',
-    gap: spacing.sm,
-    padding: spacing.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    flex: 1,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    maxHeight: 120,
-    fontSize: typography.sizes.md,
-  },
+  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  input: COMPOSER_FIELD,
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });
