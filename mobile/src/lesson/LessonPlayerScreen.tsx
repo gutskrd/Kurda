@@ -8,6 +8,7 @@ import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
+import { BottomSheet } from '../theme/BottomSheet';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
@@ -135,6 +136,7 @@ export function SessionPlayer({
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // the finished lesson could not be added up (offline, a server hiccup): said, with a retry, never a spinner for ever
   const [completeFailed, setCompleteFailed] = useState(false);
   const [completeAttempt, setCompleteAttempt] = useState(0);
@@ -286,6 +288,21 @@ export function SessionPlayer({
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
 
+  /*
+   * The ✕ before anything is answered just goes. After that it asks once,
+   * saying how far the lesson has come and that nothing is lost — the answers
+   * stay on the server and the lesson opens where it stopped — so a stray tap
+   * near the corner does not end it, and leaving is never made to feel bad.
+   */
+  const quit = () => {
+    if (state.answeredCount === 0) {
+      onExit();
+      return;
+    }
+    haptic('select');
+    setLeaving(true);
+  };
+
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
@@ -324,7 +341,7 @@ export function SessionPlayer({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
           <Pressable
-            onPress={onExit}
+            onPress={quit}
             accessibilityRole="button"
             accessibilityLabel={t('lesson.quit')}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
@@ -346,6 +363,16 @@ export function SessionPlayer({
           ) : null}
         </View>
         {reask ? <Text style={[styles.reask, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
+
+      <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('lesson.leave.title')} testID="lesson-leave">
+        <Text style={[styles.leaveBody, dir.text, { color: colors.textSecondary }]}>
+          {t('lesson.leave.body', { done: state.answeredCount, total: state.exercises.length })}
+        </Text>
+        <View style={styles.leaveActions}>
+          <ClayButton label={t('lesson.leave.stay')} tone="primary" onPress={() => setLeaving(false)} />
+          <ClayButton label={t('lesson.leave.go')} variant="outline" onPress={onExit} />
+        </View>
+      </BottomSheet>
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
@@ -509,6 +536,8 @@ const styles = StyleSheet.create({
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   tallying: { fontSize: typography.sizes.md },
+  leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  leaveActions: { gap: spacing.sm, marginTop: spacing.sm },
   errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   errorDetail: { fontSize: typography.sizes.sm, textAlign: 'center' },
   stuckActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },

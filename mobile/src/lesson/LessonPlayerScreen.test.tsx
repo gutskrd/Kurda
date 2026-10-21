@@ -117,6 +117,30 @@ describe('the way out of a lesson', () => {
     fireEvent.click(await screen.findByRole('button', { name: 'Quit lesson' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
   });
+
+  /*
+   * Once something is answered, the ✕ asks first — saying how far the lesson
+   * has come and that the answers are kept — and staying is the first choice.
+   */
+  it('asks once something is answered, and keeping going keeps the lesson', async () => {
+    testAuth.client = fakeClient(standing);
+    const onExit = vi.fn();
+    const resumed: SessionView = {
+      ...view,
+      answered: { mc: { verdict: 'correct', accepted: true } },
+      exercises: [...view.exercises, { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 }],
+    };
+    renderWithProviders(<SessionPlayer view={resumed} paths={paths} onExit={onExit} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Quit lesson' }));
+    expect(await screen.findByText('You’ve done 1 of 2. Your answers are kept, so next time you pick up right here.')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep going' }));
+    expect(onExit).not.toHaveBeenCalled();
+    expect(screen.getByRole('radio', { name: 'av' })).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Quit lesson' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Leave' }));
+    expect(onExit).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('one speaking exercise after another', () => {

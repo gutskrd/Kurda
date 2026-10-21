@@ -80,8 +80,9 @@ describe('the Shop, by kind', () => {
   it('files every item under its kind, in the shared order, with a translated title and a count', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
-    const headings = screen.getAllByRole('heading').map((h) => h.getAttribute('aria-label'));
-    expect(headings).toEqual(['Backgrounds, 4 items', 'Icons, 3 items', 'Tags, 1 item', 'More, 1 item']);
+    // the screen's own title first, then a heading for each kind
+    const headings = screen.getAllByRole('heading').map((h) => h.getAttribute('aria-label') ?? h.textContent);
+    expect(headings).toEqual(['Shop', 'Backgrounds, 4 items', 'Icons, 3 items', 'Tags, 1 item', 'More, 1 item']);
     // the server's own words never reach the screen
     for (const raw of ['BACKGROUND', 'background', 'ICON', 'TAG', 'freeze', 'SHOP.CATEGORY.MISC']) {
       expect(screen.queryByText(raw)).toBeNull();
