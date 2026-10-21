@@ -75,6 +75,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
   }
 
   const good = feedback.accepted;
+  const showRun = good && inARow >= RUN_SHOWN_FROM;
   const title = t(feedbackTitle(feedback));
   const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
 
@@ -92,7 +93,7 @@ export function FeedbackFooter({ feedback, canCheck, submitting, onCheck, onCont
           {title}
         </Text>
         {/* a run of right answers, named from the third: the chime has been climbing, and this says why */}
-        {good && inARow >= RUN_SHOWN_FROM ? (
+        {showRun ? (
           <View style={[styles.run, { backgroundColor: colors.background }]} testID="lesson-in-a-row">
             <Icon name="flame" size={14} color={colors.goldText} />
             <Text style={[styles.runText, { color: colors.goldText }]}>{t('lesson.inARow', { count: inARow })}</Text>

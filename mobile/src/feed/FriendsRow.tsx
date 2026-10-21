@@ -1,6 +1,7 @@
 import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -93,7 +94,7 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
 
       {ordered.map((f) => {
         const name = f.displayName || f.username;
-        const ring = f.activity ? colors.gold : f.online ? colors.success : 'transparent';
+        const ring = f.activity ? 'playing' : f.online ? 'online' : 'none';
         const spoken = f.activity ? t('feed.friends.playing', { name }) : f.online ? t('feed.friends.online', { name }) : name;
         return (
           <Face key={f.userId} label={name} spoken={spoken} ring={ring} onPress={() => navigation.navigate('UserProfile', { userId: f.userId })}>
@@ -105,21 +106,31 @@ export function FriendsRow({ refreshKey = 0 }: { refreshKey?: number }): React.J
   );
 }
 
+/** The warm ring round a friend who is playing now: the app's gold running into a coral. */
+const PLAYING_FROM = '#F5B400';
+const PLAYING_TO = '#F0533C';
+
 /** One circle and the name under it. */
 function Face({
   label,
   spoken,
-  ring = 'transparent',
+  ring = 'none',
   onPress,
   children,
 }: {
   label: string;
   spoken: string;
-  ring?: string;
+  /**
+   * Who is about, as a ring: a warm gradient for a friend playing a game now
+   * (the liveliest thing on the row, and the one worth a tap), quiet green for
+   * one who is online, nothing for the rest.
+   */
+  ring?: 'playing' | 'online' | 'none';
   onPress: () => void;
   children: React.ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const r = (CIRCLE - RING) / 2;
   return (
     <Pressable
       onPress={onPress}
@@ -127,7 +138,27 @@ function Face({
       accessibilityLabel={spoken}
       style={({ pressed }) => [styles.face, pressed && styles.pressed]}
     >
-      <View style={[styles.ring, { borderColor: ring }]}>{children}</View>
+      <View style={styles.ring}>
+        {ring !== 'none' ? (
+          <Svg width={CIRCLE} height={CIRCLE} style={StyleSheet.absoluteFill} pointerEvents="none">
+            <Defs>
+              <LinearGradient id="playing" x1="0" y1="1" x2="1" y2="0">
+                <Stop offset="0" stopColor={PLAYING_FROM} />
+                <Stop offset="1" stopColor={PLAYING_TO} />
+              </LinearGradient>
+            </Defs>
+            <Circle
+              cx={CIRCLE / 2}
+              cy={CIRCLE / 2}
+              r={r}
+              stroke={ring === 'playing' ? 'url(#playing)' : colors.success}
+              strokeWidth={RING}
+              fill="none"
+            />
+          </Svg>
+        ) : null}
+        {children}
+      </View>
       <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
         {label}
       </Text>
@@ -142,8 +173,6 @@ const styles = StyleSheet.create({
   ring: {
     width: CIRCLE,
     height: CIRCLE,
-    borderRadius: radii.pill,
-    borderWidth: RING,
     alignItems: 'center',
     justifyContent: 'center',
   },
