@@ -61,6 +61,9 @@ export function ScreenHeader({
   backLabel,
   right,
   hairline = false,
+  titleAvatar,
+  onTitlePress,
+  titleHint,
   style,
 }: {
   /** Centred, one line, truncated rather than wrapped — a bar is one line tall. */
@@ -90,6 +93,16 @@ export function ScreenHeader({
    * of a chat does. Chat had one of each, and they were two different greys.
    */
   hairline?: boolean;
+  /**
+   * A face before the title, where the screen is about one person or one
+   * group: a conversation's header shows who it is with, as every messaging
+   * app's does.
+   */
+  titleAvatar?: ReactNode;
+  /** Makes the title (and its face) a way into whoever it names — their profile, the group's people. */
+  onTitlePress?: () => void;
+  /** What a screen reader says a tap on the title does. */
+  titleHint?: string;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -135,7 +148,21 @@ export function ScreenHeader({
           ) : null}
         </View>
 
-        {title ? (
+        {title && (titleAvatar || onTitlePress) ? (
+          <Pressable
+            onPress={onTitlePress}
+            disabled={!onTitlePress}
+            accessibilityRole={onTitlePress ? 'button' : 'header'}
+            accessibilityLabel={title}
+            accessibilityHint={titleHint}
+            style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
+          >
+            {titleAvatar}
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+              {title}
+            </Text>
+          </Pressable>
+        ) : title ? (
           <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {title}
           </Text>
@@ -167,4 +194,6 @@ const styles = StyleSheet.create({
   leading: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   pressed: { opacity: 0.5 },
   title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  // the face and the name together, centred as the title alone is, a fingertip tall
+  titleRow: { flexShrink: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
 });

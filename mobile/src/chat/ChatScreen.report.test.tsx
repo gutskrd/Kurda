@@ -25,6 +25,15 @@ describe('reporting from the top of a conversation', () => {
    * Holding a message reports that message; the "⋯" at the top is about the
    * person — their profile, a report, a block — where anybody looks first.
    */
+  // the name at the top, with their face, is the quickest way to their profile, as in any conversation
+  it('opens their profile from the name at the top', async () => {
+    navigate.mockReset();
+    testAuth.client = fakeClient({ 'GET /chat/u2/messages': ok({ messages: [] }) });
+    renderWithProviders(<ChatScreen userId="u2" username="rojda" onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'rojda' }));
+    expect(navigate).toHaveBeenCalledWith('UserProfile', { userId: 'u2' });
+  });
+
   it('offers the profile, a report and a block from the header, the block last and confirmed', async () => {
     const client = fakeClient({
       'GET /chat/u2/messages': ok({

@@ -29,6 +29,7 @@ import { blockUser } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COMPOSER_FIELD, SendButton } from './SendButton';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { MessageContent, hasControls, isCardMessage } from './MessageContent';
@@ -43,6 +44,8 @@ import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 const MAX_LEN = 2000;
+/** The face beside the name in the header: big enough to know them by, small enough for a bar. */
+const HEADER_FACE = 28;
 
 /**
  * 1:1 conversation thread (KUR-083).
@@ -245,6 +248,9 @@ export function ChatScreen({
         */}
         <ScreenHeader
           title={name}
+          titleAvatar={<InitialsAvatar name={name} id={userId} size={HEADER_FACE} />}
+          onTitlePress={() => navigation.navigate('UserProfile', { userId })}
+          titleHint={t('chat.viewProfile')}
           onBack={onExit}
           hairline
           right={

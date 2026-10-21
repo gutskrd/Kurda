@@ -308,6 +308,9 @@ export function GroupThreadScreen({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
           title={name}
+          titleAvatar={<InitialsAvatar name={name} id={groupId} size={28} />}
+          onTitlePress={onOpenMembers}
+          titleHint={t('groups.membersOf')}
           onBack={onExit}
           hairline
           right={
