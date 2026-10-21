@@ -1739,6 +1739,7 @@ export type TranslationKey =
   | 'lesson.speak.playModel'
   | 'lesson.speak.playOwn'
   | 'lesson.speak.micOff'
+  | 'lesson.speak.openSettings'
   | 'lesson.speak.rateQuestion'
   | 'lesson.speak.rateGood'
   | 'lesson.speak.rateClose'
@@ -3863,6 +3864,7 @@ const en: Catalog = {
   'lesson.speak.playModel': 'Hear a native speaker',
   'lesson.speak.playOwn': 'Hear yourself',
   'lesson.speak.micOff': 'The microphone is off for Hevalo. Allow it in your device settings to record, or skip this one.',
+  'lesson.speak.openSettings': 'Open Settings',
   'lesson.speak.rateQuestion': 'How did it sound to you?',
   'lesson.speak.rateGood': 'Sounded right',
   'lesson.speak.rateClose': 'Close',
@@ -5988,6 +5990,7 @@ const ku: Catalog = {
   'lesson.speak.playModel': 'Guh bide axêverekî zikmakî',
   'lesson.speak.playOwn': 'Guh bide xwe',
   'lesson.speak.micOff': 'Mîkrofon ji bo Hevalo girtî ye. Ji mîhengên cîhazê destûrê bide, an vê derbas bike.',
+  'lesson.speak.openSettings': 'Mîhengan veke',
   'lesson.speak.rateQuestion': 'Bi ya te, çawa bû?',
   'lesson.speak.rateGood': 'Rast bû',
   'lesson.speak.rateClose': 'Nêzîk bû',
@@ -8113,6 +8116,7 @@ const de: Catalog = {
   'lesson.speak.playModel': 'Muttersprachler anhören',
   'lesson.speak.playOwn': 'Dich selbst anhören',
   'lesson.speak.micOff': 'Das Mikrofon ist für Hevalo aus. Erlaube es in den Geräteeinstellungen oder überspringe diese Aufgabe.',
+  'lesson.speak.openSettings': 'Einstellungen öffnen',
   'lesson.speak.rateQuestion': 'Wie klang es für dich?',
   'lesson.speak.rateGood': 'Klang richtig',
   'lesson.speak.rateClose': 'Fast',
@@ -10238,6 +10242,7 @@ const es: Catalog = {
   'lesson.speak.playModel': 'Escuchar a un hablante nativo',
   'lesson.speak.playOwn': 'Escucharte',
   'lesson.speak.micOff': 'El micrófono está desactivado para Hevalo. Permítelo en los ajustes del dispositivo o salta este ejercicio.',
+  'lesson.speak.openSettings': 'Abrir ajustes',
   'lesson.speak.rateQuestion': '¿Cómo te sonó?',
   'lesson.speak.rateGood': 'Sonó bien',
   'lesson.speak.rateClose': 'Casi',
@@ -12363,6 +12368,7 @@ const tr: Catalog = {
   'lesson.speak.playModel': 'Anadili konuşanı dinle',
   'lesson.speak.playOwn': 'Kendini dinle',
   'lesson.speak.micOff': 'Hevalo için mikrofon kapalı. Cihaz ayarlarından izin ver ya da bunu atla.',
+  'lesson.speak.openSettings': 'Ayarları aç',
   'lesson.speak.rateQuestion': 'Sana nasıl geldi?',
   'lesson.speak.rateGood': 'Doğru geldi',
   'lesson.speak.rateClose': 'Yakın',
@@ -14488,6 +14494,7 @@ const ar: Catalog = {
   'lesson.speak.playModel': 'استمع إلى متحدث أصلي',
   'lesson.speak.playOwn': 'استمع إلى نفسك',
   'lesson.speak.micOff': 'الميكروفون متوقف لـ Hevalo. اسمح به من إعدادات الجهاز أو تخطَّ هذا التمرين.',
+  'lesson.speak.openSettings': 'افتح الإعدادات',
   'lesson.speak.rateQuestion': 'كيف بدا لك؟',
   'lesson.speak.rateGood': 'بدا صحيحًا',
   'lesson.speak.rateClose': 'قريب',
@@ -16613,6 +16620,7 @@ const fr: Catalog = {
   'lesson.speak.playModel': 'Écouter un locuteur natif',
   'lesson.speak.playOwn': 'Vous écouter',
   'lesson.speak.micOff': 'Le micro est désactivé pour Hevalo. Autorisez-le dans les réglages de l’appareil, ou passez cet exercice.',
+  'lesson.speak.openSettings': 'Ouvrir les réglages',
   'lesson.speak.rateQuestion': 'Comment cela vous a-t-il semblé ?',
   'lesson.speak.rateGood': 'C’était juste',
   'lesson.speak.rateClose': 'Presque',
@@ -18738,6 +18746,7 @@ const nl: Catalog = {
   'lesson.speak.playModel': 'Luister naar een moedertaalspreker',
   'lesson.speak.playOwn': 'Luister naar jezelf',
   'lesson.speak.micOff': 'De microfoon staat uit voor Hevalo. Sta hem toe in de instellingen van je apparaat, of sla deze over.',
+  'lesson.speak.openSettings': 'Instellingen openen',
   'lesson.speak.rateQuestion': 'Hoe klonk het volgens jou?',
   'lesson.speak.rateGood': 'Klonk goed',
   'lesson.speak.rateClose': 'Bijna',
@@ -20864,6 +20873,7 @@ const ckb: Catalog = {
   'lesson.speak.playModel': 'گوێ لە قسەکەرێکی ڕەسەن بگرە',
   'lesson.speak.playOwn': 'گوێ لە خۆت بگرە',
   'lesson.speak.micOff': 'مایکرۆفۆن بۆ Hevalo داخراوە. لە ڕێکخستنەکانی ئامێرەکەت ڕێگە بدە، یان ئەمە تێپەڕێنە.',
+  'lesson.speak.openSettings': 'ڕێکخستنەکان بکەرەوە',
   'lesson.speak.rateQuestion': 'بە بۆچوونی تۆ چۆن بوو؟',
   'lesson.speak.rateGood': 'ڕاست بوو',
   'lesson.speak.rateClose': 'نزیک بوو',

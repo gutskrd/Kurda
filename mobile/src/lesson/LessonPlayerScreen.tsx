@@ -385,7 +385,11 @@ export function SessionPlayer({
           />
         ) : null}
         {ex?.type === 'speaking' ? (
+          // a fresh one for each step: two speaking exercises in a row would
+          // otherwise share one microphone, and the first one's take (or one
+          // still running when it was skipped) would follow into the second
           <SpeakingExercise
+            key={state.index}
             exercise={ex}
             onSetRecorded={setRecorded}
             selfRating={selfRating}

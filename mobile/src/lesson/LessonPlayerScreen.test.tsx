@@ -7,6 +7,10 @@ vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
+vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
+vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
+// the phone's recorder, as Metro picks it on iOS and Android
+vi.mock('./useRecorder', () => import('./useRecorder.native'));
 vi.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: vi.fn(), goBack: vi.fn(), addListener: () => () => undefined, isFocused: () => true }),
   useFocusEffect: (run: () => void | (() => void)) => {
@@ -15,10 +19,11 @@ vi.mock('@react-navigation/native', () => ({
     useEffect(() => run(), [run]);
   },
 }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { mic } from '../recording/testing/fakeMic';
 import type { ApiResult } from '../api/types';
 import { LessonPlayerScreen, SessionPlayer } from './LessonPlayerScreen';
 import type { SessionResults, SessionView } from './types';
@@ -109,5 +114,31 @@ describe('the way out of a lesson', () => {
     renderWithProviders(<SessionPlayer view={view} paths={paths} onExit={onExit} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Quit lesson' }));
     await waitFor(() => expect(onExit).toHaveBeenCalled());
+  });
+});
+
+describe('one speaking exercise after another', () => {
+  const twoToSay: SessionView = {
+    ...view,
+    exercises: [
+      { id: 'sp1', type: 'speaking', prompt: 'Silav', position: 1 },
+      { id: 'sp2', type: 'speaking', prompt: 'Spas', position: 2 },
+    ],
+  };
+
+  it('starts the next afresh: a take still running when the first is skipped is stopped and deleted, not carried over', async () => {
+    mic.reset();
+    testAuth.client = fakeClient(standing);
+    renderWithProviders(<SessionPlayer view={twoToSay} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Start recording' }));
+    await screen.findByRole('button', { name: 'Stop recording' });
+    act(() => mic.recorder!.run(2000));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Can’t do this now — skip' }));
+    expect(await screen.findByText('Spas')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Start recording' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Stop recording' })).toBeNull();
+    await waitFor(() => expect(mic.deleted).toEqual(['file:///cache/Audio/take-1.m4a']));
+    expect(mic.modes.at(-1)).toEqual({ allowsRecording: false, playsInSilentMode: true });
   });
 });
