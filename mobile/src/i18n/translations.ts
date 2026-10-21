@@ -1751,6 +1751,7 @@ export type TranslationKey =
   | 'time.minutes'
   | 'time.hours'
   | 'time.hoursMinutes'
+  | 'time.daysHours'
   | 'time.minutesAgo'
   | 'time.hoursAgo'
   | 'time.daysAgo'
@@ -3142,6 +3143,7 @@ const en: Catalog = {
   'time.minutes': '{count}m',
   'time.hours': '{count}h',
   'time.hoursMinutes': '{hours}h {minutes}m',
+  'time.daysHours': '{days}d {hours}h',
   'time.minutesAgo': '{count}m ago',
   'time.hoursAgo': '{count}h ago',
   'time.daysAgo': '{count}d ago',
@@ -5290,6 +5292,7 @@ const ku: Catalog = {
   'time.minutes': '{count}d',
   'time.hours': '{count}s',
   'time.hoursMinutes': '{hours}s {minutes}d',
+  'time.daysHours': '{days}r {hours}s',
   'time.minutesAgo': 'berî {count}d',
   'time.hoursAgo': 'berî {count}s',
   'time.daysAgo': 'berî {count} rojan',
@@ -7438,6 +7441,7 @@ const de: Catalog = {
   'time.minutes': '{count} Min.',
   'time.hours': '{count} Std.',
   'time.hoursMinutes': '{hours} Std. {minutes} Min.',
+  'time.daysHours': '{days} T. {hours} Std.',
   'time.minutesAgo': 'vor {count} Min.',
   'time.hoursAgo': 'vor {count} Std.',
   'time.daysAgo': 'vor {count} Tagen',
@@ -9586,6 +9590,7 @@ const es: Catalog = {
   'time.minutes': '{count} min',
   'time.hours': '{count} h',
   'time.hoursMinutes': '{hours} h {minutes} min',
+  'time.daysHours': '{days} d {hours} h',
   'time.minutesAgo': 'hace {count} min',
   'time.hoursAgo': 'hace {count} h',
   'time.daysAgo': 'hace {count} d',
@@ -11734,6 +11739,7 @@ const tr: Catalog = {
   'time.minutes': '{count} dk',
   'time.hours': '{count} sa',
   'time.hoursMinutes': '{hours} sa {minutes} dk',
+  'time.daysHours': '{days} g {hours} sa',
   'time.minutesAgo': '{count} dk önce',
   'time.hoursAgo': '{count} sa önce',
   'time.daysAgo': '{count} gün önce',
@@ -13882,6 +13888,7 @@ const ar: Catalog = {
   'time.minutes': '{count} د',
   'time.hours': '{count} س',
   'time.hoursMinutes': '{hours} س {minutes} د',
+  'time.daysHours': '{days} ي {hours} س',
   'time.minutesAgo': 'قبل {count} د',
   'time.hoursAgo': 'قبل {count} س',
   'time.daysAgo': 'قبل {count} يوم',
@@ -16030,6 +16037,7 @@ const fr: Catalog = {
   'time.minutes': '{count} min',
   'time.hours': '{count} h',
   'time.hoursMinutes': '{hours} h {minutes} min',
+  'time.daysHours': '{days} j {hours} h',
   'time.minutesAgo': 'il y a {count} min',
   'time.hoursAgo': 'il y a {count} h',
   'time.daysAgo': 'il y a {count} j',
@@ -18178,6 +18186,7 @@ const nl: Catalog = {
   'time.minutes': '{count}m',
   'time.hours': '{count}u',
   'time.hoursMinutes': '{hours}u {minutes}m',
+  'time.daysHours': '{days}d {hours}u',
   'time.minutesAgo': '{count}m geleden',
   'time.hoursAgo': '{count}u geleden',
   'time.daysAgo': '{count}d geleden',
@@ -20327,6 +20336,7 @@ const ckb: Catalog = {
   'time.minutes': '{count}خ',
   'time.hours': '{count}ک',
   'time.hoursMinutes': '{hours}ک {minutes}خ',
+  'time.daysHours': '{days}ڕ {hours}ک',
   'time.minutesAgo': '{count}خ لەمەوپێش',
   'time.hoursAgo': '{count}ک لەمەوپێش',
   'time.daysAgo': '{count} ڕۆژ لەمەوپێش',

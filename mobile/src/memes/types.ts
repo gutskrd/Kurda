@@ -71,23 +71,6 @@ export interface Comment {
   updatedAt: string;
 }
 
-/** Short relative age, e.g. "now", "5m", "3h", "2d", "5w". */
-export function relativeTime(iso: string, now: number = Date.now()): string {
-  const then = new Date(iso).getTime();
-  if (Number.isNaN(then)) return '';
-  const s = Math.max(0, Math.floor((now - then) / 1000));
-  if (s < 45) return 'now';
-  const m = Math.floor(s / 60);
-  if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60);
-  if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24);
-  if (d < 7) return `${d}d`;
-  const w = Math.floor(d / 7);
-  if (w < 5) return `${w}w`;
-  return new Date(iso).toLocaleDateString();
-}
-
 /** The top-N reacted emojis for a compact summary chip, most-used first. */
 export function topReactionEmojis(summary: ReactionSummary, max = 3): string[] {
   return (Object.entries(summary.counts) as [Reaction, number][])

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { IncomingInvite } from '@kurda/shared';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
-import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, relativeTime, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
+import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
 import { NOTICE, NOTICE_ROW_HEIGHT } from './rowMetrics';
 
 describe('resolveDeepLink', () => {
@@ -45,16 +45,6 @@ describe('resolveDeepLink', () => {
     expect(resolveDeepLink({ screen: 'Profile' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Nope' })).toBeNull();
     expect(resolveDeepLink({})).toBeNull();
-  });
-});
-
-describe('relativeTime', () => {
-  const now = Date.parse('2026-03-21T12:00:00.000Z');
-  it('formats recency compactly', () => {
-    expect(relativeTime('2026-03-21T11:59:40.000Z', now)).toBe('now');
-    expect(relativeTime('2026-03-21T11:45:00.000Z', now)).toBe('15m');
-    expect(relativeTime('2026-03-21T09:00:00.000Z', now)).toBe('3h');
-    expect(relativeTime('2026-03-19T12:00:00.000Z', now)).toBe('2d');
   });
 });
 

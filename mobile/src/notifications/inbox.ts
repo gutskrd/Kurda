@@ -71,20 +71,6 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   }
 }
 
-/** Compact relative age: "now", "5m", "2h", "3d", else a short date. */
-export function relativeTime(iso: string, now: number = Date.now()): string {
-  const diff = now - Date.parse(iso);
-  if (Number.isNaN(diff)) return '';
-  const min = Math.floor(diff / 60_000);
-  if (min < 1) return 'now';
-  if (min < 60) return `${min}m`;
-  const hr = Math.floor(min / 60);
-  if (hr < 24) return `${hr}h`;
-  const day = Math.floor(hr / 24);
-  if (day < 7) return `${day}d`;
-  return new Date(iso).toLocaleDateString();
-}
-
 /** Badge text for an unread count: null when zero, "9+" when capped. */
 export function unreadBadge(count: number, cap = 9): string | null {
   if (count <= 0) return null;

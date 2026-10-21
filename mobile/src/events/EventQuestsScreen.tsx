@@ -80,7 +80,7 @@ export function EventQuestsScreen({ onExit }: { onExit: () => void }) {
           {() => events == null ? null : (
           <ScrollView contentContainerStyle={styles.content}>
             {events.map((event) => {
-              const countdown = formatCountdown(remainingUntil(event.endsAt, now));
+              const countdown = formatCountdown(remainingUntil(event.endsAt, now), t);
               return (
                 <View key={event.eventKey} style={styles.eventBlock}>
                   <View style={styles.eventHeader}>
