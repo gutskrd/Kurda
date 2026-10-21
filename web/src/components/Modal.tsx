@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { CloseIcon } from './icons';
+import { escapeClearsField } from './SearchField';
 import { wrapTab } from './Sheet';
 import { useT } from '../i18n/I18nProvider';
 
@@ -40,8 +41,10 @@ export function Modal({
     panelRef.current?.focus();
 
     const onKey = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') closeRef.current();
-      else if (panelRef.current) wrapTab(e, panelRef.current);
+      // words in a search field go first; the next Escape closes
+      if (e.key === 'Escape') {
+        if (!escapeClearsField(e)) closeRef.current();
+      } else if (panelRef.current) wrapTab(e, panelRef.current);
     };
     document.addEventListener('keydown', onKey);
     return () => {

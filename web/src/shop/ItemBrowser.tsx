@@ -2,7 +2,8 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { ITEM_SORTS, type ItemCategory, type ItemSort } from '@kurda/shared';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
-import { SearchIcon, SortIcon } from '../components/icons';
+import { SortIcon } from '../components/icons';
+import { SearchField } from '../components/SearchField';
 import './items.css';
 
 /**
@@ -175,22 +176,20 @@ export function ItemSearch({
   placeholder: string;
 }): React.JSX.Element {
   return (
-    <div className="item-search">
-      <SearchIcon size={17} className="item-search-glass" />
-      <input
-        type="search"
-        className="input item-search-input"
-        value={value}
-        maxLength={80}
-        placeholder={placeholder}
-        aria-label={label}
-        // a search box should not try to correct the Kurdish typed into it
-        autoComplete="off"
-        autoCorrect="off"
-        spellCheck={false}
-        onChange={(e) => onChange(e.target.value)}
-      />
-    </div>
+    <SearchField
+      icon
+      className="item-search"
+      inputClassName="item-search-input"
+      value={value}
+      onValueChange={onChange}
+      maxLength={80}
+      placeholder={placeholder}
+      aria-label={label}
+      // a search box should not try to correct the Kurdish typed into it
+      autoComplete="off"
+      autoCorrect="off"
+      spellCheck={false}
+    />
   );
 }
 

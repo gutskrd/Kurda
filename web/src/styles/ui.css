@@ -245,6 +245,80 @@ input[type='password']::-ms-clear {
   }
 }
 
+/* ---- a search field (components/SearchField.tsx) ----------------------- */
+.search-box {
+  position: relative;
+  min-width: 0;
+}
+.search-box-icon {
+  position: absolute;
+  inset-inline-start: 14px;
+  top: 50%;
+  /* over the field: a glass field's blur is a stacking context of its own */
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--ink-3);
+  pointer-events: none;
+}
+.input.search-box-input {
+  /* room at the end for the clear button, so the words never run under it */
+  padding-inline-end: 44px;
+}
+.search-box.has-icon .input.search-box-input {
+  padding-inline-start: 40px;
+}
+/* the browser's own clear button doubles ours, and differs in every browser */
+.search-box-input::-webkit-search-cancel-button,
+.search-box-input::-webkit-search-decoration {
+  -webkit-appearance: none;
+  appearance: none;
+}
+.search-box-clear {
+  position: absolute;
+  inset-inline-end: 4px;
+  top: 50%;
+  z-index: 1;
+  transform: translateY(-50%);
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: none;
+  color: var(--ink-3);
+  cursor: pointer;
+  animation: search-clear-in var(--dur-fast) var(--ease-out);
+}
+.search-box-clear:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.search-box-clear:active {
+  transform: translateY(-50%) scale(0.92);
+}
+.search-box-clear:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 0;
+}
+@keyframes search-clear-in {
+  from {
+    opacity: 0;
+  }
+}
+/* a finger's 44 on a touch screen, still inside the field */
+@media (pointer: coarse) {
+  .search-box-clear {
+    inset-inline-end: 1px;
+    width: 44px;
+    height: 44px;
+  }
+  .input.search-box-input {
+    padding-inline-end: 48px;
+  }
+}
+
 /* ---- inline messages --------------------------------------------------- */
 .msg {
   font-size: 0.88rem;

@@ -1,6 +1,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
+import { escapeClearsField } from './SearchField';
 import { useT } from '../i18n/I18nProvider';
 
 /**
@@ -78,6 +79,8 @@ export function Sheet({
 
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
+        // words in a search field go first; the next Escape closes
+        if (escapeClearsField(e)) return;
         e.stopPropagation();
         closeRef.current();
         return;

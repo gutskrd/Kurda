@@ -12,7 +12,8 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import { ErrorState, EmptyState } from '../components/states';
 import { ConversationsSkeleton } from '../components/skeletons';
 import { Button, LinkButton } from '../components/Button';
-import { ChatsIcon, ChevronIcon, InviteIcon, NewMessageIcon, SearchIcon } from '../components/icons';
+import { ChatsIcon, ChevronIcon, InviteIcon, NewMessageIcon } from '../components/icons';
+import { SearchField } from '../components/SearchField';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { SendError } from '../reports/SendError';
@@ -108,18 +109,16 @@ export function Messages(): React.JSX.Element {
 
       <div className={`chat-layout${activeId || activeGroup ? ' has-active' : ''}`}>
         <aside className="chat-list" aria-label={t('chat.conversations')}>
-          <div className="chat-filter">
-            <SearchIcon size={18} className="chat-filter-icon" />
-            <input
-              className="input chat-filter-input"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('chat.filter.search')}
-              aria-label={t('chat.filter.search')}
-              autoComplete="off"
-            />
-          </div>
+          <SearchField
+            icon
+            className="chat-filter"
+            inputClassName="chat-filter-input"
+            value={query}
+            onValueChange={setQuery}
+            placeholder={t('chat.filter.search')}
+            aria-label={t('chat.filter.search')}
+            autoComplete="off"
+          />
           <div className="chat-tabs" role="tablist" aria-label={t('chat.type')}>
             {filters.map((f) => (
               <button
@@ -400,11 +399,10 @@ function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
         />
       ) : (
         <>
-          <input
-            className="input"
-            type="search"
+          <SearchField
+            icon
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onValueChange={setQ}
             placeholder={t('share.searchFriends')}
             aria-label={t('share.searchFriends')}
             autoComplete="off"

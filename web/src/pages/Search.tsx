@@ -151,9 +151,20 @@ export function Search(): React.JSX.Element {
             autoComplete="off"
             spellCheck={false}
             enterKeyHint="search"
+            onKeyDown={(e) => {
+              if (e.key !== 'Escape' || !query) return;
+              e.preventDefault();
+              clear();
+            }}
           />
           {query && (
-            <button type="button" className="search-clear" onClick={clear} aria-label={t('search.clear')}>
+            <button
+              type="button"
+              className="search-clear"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={clear}
+              aria-label={t('search.clear')}
+            >
               <CloseIcon size={16} />
             </button>
           )}

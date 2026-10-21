@@ -6,6 +6,7 @@ import { useT } from '../i18n/I18nProvider';
 import { EmptyState, ErrorState } from '../components/states';
 import { DictRowsSkeleton } from '../components/skeletons';
 import { BookmarkIcon, CloseIcon } from '../components/icons';
+import { SearchField } from '../components/SearchField';
 import { EntryView } from '../dictionary/EntryView';
 import { SourceLine } from '../dictionary/SourceLine';
 import { pushRecent } from '../dictionary/recents';
@@ -97,11 +98,11 @@ export function Dictionary(): React.JSX.Element {
     <div className="container dict">
       <h1 className="page-title">{t('nav.dictionary')}</h1>
 
-      <input
-        className="input dict-search"
-        type="search"
+      <SearchField
+        icon
+        inputClassName="dict-search"
         value={query}
-        onChange={(e) => setQuery(e.target.value)}
+        onValueChange={setQuery}
         placeholder={t('dictionary.searchPlaceholder')}
         aria-label={t('dictionary.searchLabel')}
         autoComplete="off"
