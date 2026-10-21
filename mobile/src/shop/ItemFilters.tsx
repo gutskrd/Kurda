@@ -287,10 +287,12 @@ export function SearchField({
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const input = useRef<TextInput>(null);
   return (
     <View style={[styles.field, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, style]}>
       <Icon name="search" size={18} color={colors.textSecondary} />
       <TextInput
+        ref={input}
         value={value}
         onChangeText={onChange}
         placeholder={label}
@@ -304,12 +306,16 @@ export function SearchField({
       />
       {value ? (
         <Pressable
-          onPress={() => onChange('')}
+          onPress={() => {
+            // emptied, with the cursor left in it for the next search
+            onChange('');
+            input.current?.focus();
+          }}
           accessibilityRole="button"
           accessibilityLabel={t('shop.search.clear')}
           style={({ pressed }) => [styles.clearSearch, { opacity: pressed ? 0.6 : 1 }]}
         >
-          <Icon name="close" size={16} color={colors.textSecondary} />
+          <Icon name="clear-fill" size={18} color={colors.textSecondary} />
         </Pressable>
       ) : null}
     </View>

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TextInput } from 'react-native';
+import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { SheetIn } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
@@ -11,10 +11,10 @@ import { newGiftKey } from '../gifts/api';
 import { giftErrorText } from '../gifts/GiftPickerSheet';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
+import { SearchField } from '../theme/SearchField';
 
 interface Friend {
   userId: string;
@@ -121,16 +121,12 @@ export function GiftSheet({
               <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
             ) : (
               <>
-                <TextInput
+                <SearchField
                   value={query}
                   onChangeText={setQuery}
-                  placeholder={t('shop.searchFriends')}
-                  placeholderTextColor={colors.textSecondary}
-                  autoCapitalize="none"
-                  style={[
-                    styles.search,
-                    { color: colors.textPrimary, backgroundColor: colors.controlTrack },
-                  ]}
+                  label={t('shop.searchFriends')}
+                  returnKeyType="done"
+                  style={styles.search}
                 />
                 <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
                   {shown.map((f) => (
@@ -210,14 +206,7 @@ const styles = StyleSheet.create({
   note: { fontSize: typography.sizes.sm },
   // lined up with the search field and the list, inside the sheet's own padding
   notice: { marginHorizontal: 0, marginBottom: 0 },
-  search: {
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    height: 44,
-    fontSize: typography.sizes.md,
-    marginTop: spacing.xs,
-  },
+  search: { marginTop: spacing.xs },
   list: { marginTop: spacing.xs },
   row: {
     flexDirection: 'row',

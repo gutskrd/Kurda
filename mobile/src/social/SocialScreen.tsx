@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -20,6 +20,7 @@ import { BackButton } from '../navigation/BackButton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
+import { SearchField } from '../theme/SearchField';
 
 interface UserRow {
   userId: string;
@@ -218,14 +219,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             </Pressable>
           }
         />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-          placeholder={t('friends.searchPlaceholder')}
-          placeholderTextColor={colors.textSecondary}
-          autoCapitalize="none"
-          value={query}
-          onChangeText={search}
-        />
+        <SearchField value={query} onChangeText={search} label={t('friends.searchPlaceholder')} returnKeyType="done" />
 
         {showingSearch ? (
           <FlatList
@@ -358,7 +352,6 @@ const styles = StyleSheet.create({
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },
