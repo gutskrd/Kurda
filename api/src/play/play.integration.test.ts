@@ -77,7 +77,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
         [lobbyId, inviteeId],
       )
     ).rows[0];
-  /** plays a Wordle Battle to the end: everyone guesses the word */
+  /** plays a Peyvok Battle to the end: everyone guesses the word */
   const finish = async (lobbyId: string, host: User, players: User[]) => {
     expect((await call(host, 'POST', `/wordle/battles/${lobbyId}/start`)).status).toBe(200);
     const target = (await pool.query<{ target: string }>(`SELECT target FROM wordle_battles WHERE id = $1`, [lobbyId])).rows[0]!.target;
@@ -165,7 +165,7 @@ describe.skipIf(!DATABASE_URL)('play: invites, cards and playing again (integrat
       game: 'wordle-battle',
       lobbyId: made.lobbyId,
     });
-    expect(inbox.rows[0]!.body).toMatch(/invited you to play Wordle Battle/);
+    expect(inbox.rows[0]!.body).toMatch(/invited you to play Peyvok Battle/);
 
     const theirs = await call(friend, 'GET', '/play/invites');
     expect(theirs.body.incoming).toHaveLength(1);

@@ -371,7 +371,7 @@ describe('Messages', () => {
   });
 
   it('renders a game-invite link in a DM as an invite card', async () => {
-    const invite = 'https://hevalo.app/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
+    const invite = 'https://hevalo.app/app/games/peyvok-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -383,10 +383,10 @@ describe('Messages', () => {
     );
     renderApp(<Messages />, ['/app/messages?to=u2&name=zana']);
 
-    expect(await screen.findByText('Join a Wordle Battle game')).toBeInTheDocument();
+    expect(await screen.findByText('Join a Peyvok Battle game')).toBeInTheDocument();
     expect(screen.getByText('Play me!')).toBeInTheDocument();
     const join = screen.getByRole('link', { name: /join/i });
-    expect(join).toHaveAttribute('href', '/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555');
+    expect(join).toHaveAttribute('href', '/app/games/peyvok-battle?id=11111111-2222-3333-4444-555555555555');
   });
 
   it('appends an incoming group message over realtime', async () => {

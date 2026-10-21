@@ -89,7 +89,7 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
 };
 
 /**
- * Kurdish Wordle (KUR-305). Server-authoritative: the screen never holds the
+ * Kurdish Peyvok (KUR-305). Server-authoritative: the screen never holds the
  * answer — it posts guesses to #304 and renders the scored feedback. Board and
  * keyboard are derived from the returned state (pure `board.ts`); the keyboard
  * carries upgrade-only colour memory. Win/lose reveals the word with an
@@ -412,8 +412,8 @@ const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   keyboardDock: { paddingHorizontal: spacing.sm, paddingTop: spacing.sm, alignItems: 'center' },
   // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
-  // kurdî" is three
+  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
+  // Battle" in some languages is three
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
   startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

@@ -17,7 +17,7 @@
  *   - **two people press the button**, and the second is refused by a unique
  *     index rather than by a check both requests can pass at once.
  *
- * Nothing imported is put in front of a player as a Wordle answer or a rhyme
+ * Nothing imported is put in front of a player as a Peyvok answer or a rhyme
  * prompt: `in_games` defaults false (1751000112000). An import makes the games
  * accept more, not ask differently.
  */

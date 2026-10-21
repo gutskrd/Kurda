@@ -111,6 +111,16 @@ function CivakMoved(): React.JSX.Element {
 }
 
 /**
+ * The word game's old addresses, from before it was called Peyvok: a
+ * bookmark, or a battle invite already sent in a chat or an email, lands on
+ * the game with its `?id=` kept.
+ */
+function PeyvokMoved({ to }: { to: string }): React.JSX.Element {
+  const { search } = useLocation();
+  return <Navigate to={{ pathname: to, search }} replace />;
+}
+
+/**
  * Every address the site answers, and what is drawn at each.
  *
  * Its own component, inside whatever router is above it, so the table itself
@@ -216,7 +226,8 @@ export function AppRoutes(): React.JSX.Element {
         {/* the games played alone need an account too: every round is
             scored on the server against the player (api/src/game), so a
             guest is asked here rather than shown a game that cannot start */}
-        <Route path="games/wordle" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
+        <Route path="games/peyvok" element={<RequireAccount what="gate.what.play"><Wordle /></RequireAccount>} />
+        <Route path="games/wordle" element={<PeyvokMoved to="/app/games/peyvok" />} />
         <Route path="games/rhyme" element={<RequireAccount what="gate.what.play"><Rhyme /></RequireAccount>} />
         <Route path="games/race" element={<RequireAccount what="gate.what.play"><Race /></RequireAccount>} />
         {/* Stories replaced the ranked quiz: its old address leads there. The
@@ -230,9 +241,10 @@ export function AppRoutes(): React.JSX.Element {
         />
         {/* the two games played against other people */}
         <Route
-          path="games/wordle-battle"
+          path="games/peyvok-battle"
           element={<RequireAccount what="gate.what.playOthers"><WordleBattle /></RequireAccount>}
         />
+        <Route path="games/wordle-battle" element={<PeyvokMoved to="/app/games/peyvok-battle" />} />
         <Route
           path="games/rhyme-match"
           element={<RequireAccount what="gate.what.playOthers"><RhymeMatch /></RequireAccount>}

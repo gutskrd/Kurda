@@ -105,13 +105,13 @@ const MAP = {
   apple: { glyph: 'AppleLogo', note: 'sign in with Apple' },
 
   // --- so that four games do not all look like the same game ---
-  grid: { glyph: 'GridFour', note: 'Wordle — a board of letter squares, which is what the game is' },
+  grid: { glyph: 'GridFour', note: 'Peyvok — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
   // --- typing, rating Hevalo, and writing a post ---
   keyboard: { glyph: 'Keyboard', note: 'keyboard settings and the guide to adding a Kurdish keyboard' },
-  backspace: { glyph: 'Backspace', note: 'delete a letter — the Wordle key drew an ✕, which reads as "close"' },
-  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Wordle keyboard: send this guess' },
+  backspace: { glyph: 'Backspace', note: 'delete a letter — the Peyvok key drew an ✕, which reads as "close"' },
+  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Peyvok keyboard: send this guess' },
   'star-fill': { glyph: 'Star', weight: 'fill', note: 'a star chosen in the rating box' },
   pencil: { glyph: 'PencilSimple', note: 'edit your own post' },
   'text-t': { glyph: 'TextT', note: 'give a post a title' },

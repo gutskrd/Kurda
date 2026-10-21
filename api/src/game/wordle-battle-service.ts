@@ -209,7 +209,7 @@ function greenProgress(guesses: GuessRow[]): number {
 const minutesAfter = (at: Date, minutes: number): Date => new Date(at.getTime() + minutes * 60_000);
 
 /**
- * Wordle Battle mode (KUR-306) — server-authoritative match service. Every player
+ * Peyvok Battle mode (KUR-306) — server-authoritative match service. Every player
  * races the same server-held word; guesses are scored here (via the #303 engine)
  * and only a player's own feedback + opponents' progress are ever returned.
  * Placement (first-solve → fewest-guesses → fastest-time) and XP are computed by

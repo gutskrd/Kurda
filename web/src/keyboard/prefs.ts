@@ -2,7 +2,7 @@ import { useCallback, useSyncExternalStore } from 'react';
 import { DEFAULT_ACCENT_MODE, isAccentMode, isTypingDialect, type AccentMode, type TypingDialect } from '@kurda/shared';
 
 /**
- * How this device types Kurdish: the settings the typing race, Wordle and the
+ * How this device types Kurdish: the settings the typing race, Peyvok and the
  * keyboard guide share (contract §K3 — "per device").
  *
  * Per device rather than per account because they are about the keyboard in
@@ -19,7 +19,7 @@ export interface KeyboardPrefs {
   keyBar: boolean;
   /** e then ` is ê — for a keyboard with no Kurdish layout */
   backtick: boolean;
-  /** Wordle's on-screen keyboard: QWERTY, or the 31 letters in alphabet order */
+  /** Peyvok's on-screen keyboard: QWERTY, or the 31 letters in alphabet order */
   wordleLayout: WordleLayout;
   /** the variety the last race was in; null until one was chosen */
   raceDialect: TypingDialect | null;

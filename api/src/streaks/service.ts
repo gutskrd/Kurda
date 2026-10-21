@@ -154,7 +154,7 @@ export class StreakService {
 
   /**
    * Keep today's streak for something that is not a lesson or a practice
-   * session (a daily Wordle win). The day counts for the streak only: it is not
+   * session (a daily Peyvok win). The day counts for the streak only: it is not
    * a day learned, it does not earn towards a freeze, and it does not unlock
    * the daily Zêr, which are all paid for learning.
    */

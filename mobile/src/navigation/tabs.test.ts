@@ -64,6 +64,11 @@ describe('old addresses', () => {
     expect(legacyTabPath('/inbox')).toBe('/messages');
   });
 
+  it('opens a Peyvok Battle invite sent before the game was renamed', () => {
+    expect(legacyTabPath('app/games/wordle-battle?id=abc123')).toBe('app/games/peyvok-battle?id=abc123');
+    expect(legacyTabPath('/app/games/wordle-battle?id=abc123')).toBe('/app/games/peyvok-battle?id=abc123');
+  });
+
   it('keeps a query the old address carried', () => {
     expect(legacyTabPath('play?from=push')).toBe('learn?view=games&from=push');
     expect(legacyTabPath('inbox?from=push')).toBe('messages?from=push');
@@ -75,7 +80,7 @@ describe('old addresses', () => {
    * rewrite of the bare /app/games.
    */
   it('leaves a game invite, a lesson and the current tabs alone', () => {
-    for (const path of ['app/games/wordle-battle?id=abc123', '/app/games/stories', 'lesson/l1', 'learn', 'messages', 'home', 'playground']) {
+    for (const path of ['app/games/peyvok-battle?id=abc123', '/app/games/stories', 'lesson/l1', 'learn', 'messages', 'home', 'playground']) {
       expect(legacyTabPath(path), path).toBe(path);
     }
   });

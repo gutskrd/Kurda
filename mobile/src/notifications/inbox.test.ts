@@ -134,7 +134,7 @@ describe('what a notification is, and who it is from', () => {
   });
 
   it('cuts a line round the name, so the name alone can be bold', () => {
-    expect(splitName('Azad invited you to Wordle', 'Azad')).toEqual({ before: '', name: 'Azad', after: ' invited you to Wordle' });
+    expect(splitName('Azad invited you to Peyvok', 'Azad')).toEqual({ before: '', name: 'Azad', after: ' invited you to Peyvok' });
     expect(splitName('بانگهێشتی کردیت Azad', 'Azad')).toEqual({ before: 'بانگهێشتی کردیت ', name: 'Azad', after: '' });
     expect(splitName('A new badge', 'Azad')).toEqual({ before: 'A new badge', name: '', after: '' });
     expect(splitName('A new badge', null)).toEqual({ before: 'A new badge', name: '', after: '' });

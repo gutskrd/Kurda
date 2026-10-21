@@ -18,7 +18,7 @@ respects Reduce Motion, and meets WCAG AA contrast in light **and** dark.
 - [ ] Text meets **AA 4.5:1** (large text / muted 3:1) on its surface, in both
       schemes. The palette itself is guarded by `palette.contrast.test.ts` —
       re-run it after any palette change.
-- [ ] State is **never colour-only**: pair it with text/icon (e.g. Wordle tiles
+- [ ] State is **never colour-only**: pair it with text/icon (e.g. Peyvok tiles
       announce `"s, correct"`; the tab bar shows the active label, not just a hue).
 
 ## Dynamic Type

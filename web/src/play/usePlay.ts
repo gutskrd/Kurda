@@ -12,7 +12,7 @@ function visible(): boolean {
 }
 
 /**
- * Keeps a Wordle Battle or Rhyme Match screen current (contract §B4): the
+ * Keeps a Peyvok Battle or Rhyme Match screen current (contract §B4): the
  * server says `play_changed` whenever the lobby or game moves, and the screen
  * reads it then. Polling every 1.5 s did this before, from every open tab,
  * hidden or not; now a slow read every 10 s covers a missed event, and stops

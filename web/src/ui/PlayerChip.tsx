@@ -5,7 +5,7 @@ import { PersonGlyph } from '../components/icons';
  * One player in a head-to-head game: face, name, how they are doing, and — for
  * an opponent whose board you cannot see — a thin bar of how close they are.
  *
- * The same chip the front page draws above its Wordle Battle, and the one the
+ * The same chip the front page draws above its Peyvok Battle, and the one the
  * real battle draws, so the picture is the product.
  */
 export function PlayerChip({

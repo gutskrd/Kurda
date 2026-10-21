@@ -68,7 +68,7 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
     expect(row.rows[0]).toEqual({ freezes: 1, freeze_progress: 0, days_learned: 4, last: '2026-05-04' });
   });
 
-  it('a daily Wordle win keeps the streak but is not a day learned', async () => {
+  it('a daily Peyvok win keeps the streak but is not a day learned', async () => {
     const played = await streaks.recordPlayDay(userId, 'UTC', at('2026-05-05'));
     expect(played).toMatchObject({ current: 5, daysLearned: 4, freezeProgress: 0 });
     expect(await streaks.lastLearnedOn(userId)).toBe('2026-05-04');

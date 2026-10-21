@@ -39,7 +39,7 @@ export function summaryParts(summary: InviteSummary, t: Translate): string[] {
   return parts;
 }
 
-/** "Wordle Battle · Hard" */
+/** "Peyvok Battle · Hard" */
 export function gameLine(game: PlayGame, summary: InviteSummary, t: Translate): string {
   return [t(GAME_NAME_KEY[game]), ...summaryParts(summary, t)].join(' · ');
 }

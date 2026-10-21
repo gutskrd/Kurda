@@ -31,9 +31,9 @@ describe('ChatGameCard', () => {
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
 
     expect(await screen.findByText('2 of 4 joined')).toBeInTheDocument();
-    expect(screen.getByRole('group', { name: 'Wordle Battle invite' })).toHaveTextContent('Easy');
+    expect(screen.getByRole('group', { name: 'Peyvok Battle invite' })).toHaveTextContent('Easy');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));
-    await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=b1'));
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
     expect(calls.some((c: Call) => c.method === 'POST' && c.path === '/wordle/battles/b1/join')).toBe(true);
   });
 
@@ -47,7 +47,7 @@ describe('ChatGameCard', () => {
     fakeApi({ [CARD]: card({ isMember: true, canJoin: false, status: 'started' }) });
     renderPlay(<ChatGameCard game="wordle-battle" lobbyId="b1" />);
     expect(await screen.findByText('Started')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/app/games/wordle-battle?id=b1');
+    expect(screen.getByRole('link', { name: 'Open' })).toHaveAttribute('href', '/app/games/peyvok-battle?id=b1');
   });
 
   it('reads as no longer available when the reader may not see it — the same as gone', async () => {

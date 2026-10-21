@@ -69,7 +69,7 @@ describe('Game ranks', () => {
     fakeApi(on('GET', '/admin/ranks/spread', json({ games: SPREAD })));
     at('#/ranks');
     renderUi(<Ranks />);
-    const bars = await screen.findByRole('list', { name: 'Wordle Battle: players per tier' });
+    const bars = await screen.findByRole('list', { name: 'Peyvok Battle: players per tier' });
     const rows = within(bars).getAllByRole('listitem');
     // the climb reads top down: Stêrk first
     expect(rows[0]).toHaveTextContent('Stêrk');
@@ -78,7 +78,7 @@ describe('Game ranks', () => {
     // a game under fifty is said to be one
     const rhyme = screen.getByRole('heading', { name: 'Rhyme Match' }).closest('section')!;
     expect(rhyme).toHaveTextContent('Under 50 active players');
-    expect(screen.getByRole('heading', { name: 'Wordle Battle' }).closest('section')).not.toHaveTextContent('Under 50 active players');
+    expect(screen.getByRole('heading', { name: 'Peyvok Battle' }).closest('section')).not.toHaveTextContent('Under 50 active players');
     // the comparison table: a row per tier, a column per game
     const table = screen.getByRole('table', { name: 'Players per tier in each game' });
     const zozan = within(table).getByText('Zozan (High pasture)', { ignore: 'title' }).closest('tr')!;
@@ -165,13 +165,13 @@ describe('Game ranks', () => {
     expect(within(row).getByText('7')).toHaveClass('danger');
 
     await user.click(within(row).getByRole('button', { name: 'Games of @baran and @cihan' }));
-    const drawer = screen.getByRole('dialog', { name: 'Wordle Battle: @baran and @cihan' });
+    const drawer = screen.getByRole('dialog', { name: 'Peyvok Battle: @baran and @cihan' });
     await within(drawer).findByText('Counted ×0.5');
     expect(within(drawer).getByText('Voided')).toBeInTheDocument();
     // a voided game has nothing more to void
     expect(within(drawer).getAllByRole('button', { name: 'Void…' })).toHaveLength(1);
     await user.click(within(drawer).getByRole('button', { name: 'Void…' }));
-    const ask = screen.getByRole('alertdialog', { name: 'Void this Wordle Battle game’s rating effect?' });
+    const ask = screen.getByRole('alertdialog', { name: 'Void this Peyvok Battle game’s rating effect?' });
     expect(ask).toHaveTextContent('stops counting for its 2 players');
     await user.click(within(ask).getByRole('button', { name: 'Cancel' }));
     expect(posts(calls, `/admin/ranks/games/wordle-battle/${REF}/void`)).toHaveLength(0);

@@ -272,7 +272,7 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           />
         </GlassCard>
 
-        {/* accents, the key bar, the backtick, Wordle's layout and the keyboard guide (keyboard/) */}
+        {/* accents, the key bar, the backtick, Peyvok's layout and the keyboard guide (keyboard/) */}
         <KeyboardSettingsSection />
 
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.notifications')}</Text>

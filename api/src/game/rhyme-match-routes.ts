@@ -25,7 +25,7 @@ const notFound = (reply: FastifyReply) => reply.code(404).send({ code: 'NOT_FOUN
  * the realtime scoreboard push (#049) + matchmaking (#050) layer onto these
  * endpoints. Solo training stays on the existing /rhyme routes.
  *
- * As for Wordle Battle: creating and joining need a birth month on record,
+ * As for Peyvok Battle: creating and joining need a birth month on record,
  * and only members get a match's state or results.
  */
 export function registerRhymeMatchRoutes(app: FastifyInstance, deps: Omit<RhymeMatchDeps, 'publicUrl'> = {}): void {

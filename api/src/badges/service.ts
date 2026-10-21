@@ -137,7 +137,7 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     await this.evaluate(userId, BADGE_TRIGGERS.learning);
   }
 
-  /** A solo game finished: Wordle, Rhyme training, the Typing Race. */
+  /** A solo game finished: Peyvok, Rhyme training, the Typing Race. */
   async recordSoloGame(userId: string): Promise<void> {
     await this.evaluate(userId, BADGE_TRIGGERS.solo);
   }

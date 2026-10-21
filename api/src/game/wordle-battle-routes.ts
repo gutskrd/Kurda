@@ -19,7 +19,7 @@ const idParam = z.object({ id: z.uuid() });
 const notFound = (reply: FastifyReply) => reply.code(404).send({ code: 'NOT_FOUND', message: 'no such battle' });
 
 /**
- * Wordle Battle routes (KUR-306) — server-authoritative multiplayer. All
+ * Peyvok Battle routes (KUR-306) — server-authoritative multiplayer. All
  * authenticated; the guess endpoint is rate-limited (#010). State/results are
  * poll-safe; the realtime gateway (#049) pushing opponent progress is an additive
  * transport on top of these same endpoints.

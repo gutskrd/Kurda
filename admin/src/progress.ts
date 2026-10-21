@@ -33,7 +33,7 @@ import type { Tone } from './ui';
 // ---- names -----------------------------------------------------------------------
 
 export const GAME_NAME: Readonly<Record<RankedGame, string>> = {
-  'wordle-battle': 'Wordle Battle',
+  'wordle-battle': 'Peyvok Battle',
   'rhyme-match': 'Rhyme Match',
   stories: 'Stories',
 };

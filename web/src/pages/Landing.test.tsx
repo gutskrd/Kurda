@@ -26,7 +26,7 @@ describe('Landing', () => {
   it('links every game to the place it is played', () => {
     show();
     for (const [name, href] of [
-      ['Kurdish Wordle', '/app/games/wordle'],
+      ['Peyvok', '/app/games/peyvok'],
       ['Rhyming Words', '/app/games/rhyme'],
       ['Typing Race', '/app/games/race'],
       ['Stories', '/app/games/stories'],

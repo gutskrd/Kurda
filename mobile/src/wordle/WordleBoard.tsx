@@ -8,7 +8,7 @@ import type { BoardRow, Feedback } from './board';
 /**
  * The grid of guessed letters.
  *
- * Pulled out of the solo screen so Wordle Battle can show the same board rather
+ * Pulled out of the solo screen so Peyvok Battle can show the same board rather
  * than a second one that drifts — the colours, the sizing rule and the letter
  * announcements are all decisions worth having in one place.
  */

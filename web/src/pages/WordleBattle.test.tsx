@@ -64,10 +64,10 @@ function signedIn(route: (url: string, init?: RequestInit) => Response | undefin
 describe('WordleBattle', () => {
   it('shows the lobby with an invite link, start gated on a second player', async () => {
     signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, lobby) : undefined));
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByText(/invite link/i)).toBeInTheDocument();
-    expect(screen.getByText(/\/app\/games\/wordle-battle\?id=b1/)).toBeInTheDocument();
+    expect(screen.getByText(/\/app\/games\/peyvok-battle\?id=b1/)).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: /waiting for a second player/i })).toBeInTheDocument();
   });
 
@@ -84,7 +84,7 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, activeBattle);
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     await userEvent.click(await screen.findByRole('button', { name: 'k' }));
     await userEvent.click(screen.getByRole('button', { name: 'a' }));
@@ -98,7 +98,7 @@ describe('WordleBattle', () => {
   it('names a friend in the lobby, and someone it may not name by seat', async () => {
     const full = { ...lobby, players: [...lobby.players, seat(2, { name: 'Rojda' }), seat(3)] };
     signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, full) : undefined));
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     const players = await screen.findByRole('list', { name: /players · 3 of 8/i });
     expect(within(players).getByText('You')).toBeInTheDocument();
@@ -120,7 +120,7 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, full);
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     const remove = await screen.findByRole('button', { name: 'Remove Rojda from the game' });
     await userEvent.click(remove);
@@ -138,7 +138,7 @@ describe('WordleBattle', () => {
       me: { ...lobby.me, seat: 2 },
     };
     signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, guest) : undefined));
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByText(/waiting for the host/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /invite friends/i })).not.toBeInTheDocument();
@@ -150,16 +150,16 @@ describe('WordleBattle', () => {
     signedIn((url) =>
       url.includes('/wordle/battles/b1') ? jsonResponse(409, { code: 'GAME_STARTED', message: 'this battle has already started' }) : undefined,
     );
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByRole('heading', { name: 'Already started' })).toBeInTheDocument();
     expect(screen.getByText('This game has already started.')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'New battle' })).toHaveAttribute('href', '/app/games/wordle-battle');
+    expect(screen.getByRole('link', { name: 'New battle' })).toHaveAttribute('href', '/app/games/peyvok-battle');
   });
 
   it('says a battle the host called off is off', async () => {
     signedIn((url) => (url.includes('/wordle/battles/b1') ? jsonResponse(200, { ...lobby, status: 'cancelled' }) : undefined));
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
     expect(await screen.findByRole('heading', { name: 'Game called off' })).toBeInTheDocument();
   });
 
@@ -188,7 +188,7 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByText('Rojda')).toBeInTheDocument();
     await userEvent.click(await screen.findByRole('button', { name: 'Rematch' }));
@@ -210,7 +210,7 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, guestLobby);
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByText('Rated')).toBeInTheDocument();
     expect(await screen.findByText('Win ≈ +24 · Lose ≈ −8')).toBeInTheDocument();
@@ -232,7 +232,7 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b1')) return jsonResponse(200, finished);
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
 
     expect(await screen.findByText('you beat a higher-ranked player')).toBeInTheDocument();
   });
@@ -248,11 +248,11 @@ describe('WordleBattle', () => {
       if (url.includes('/wordle/battles/b9')) return jsonResponse(200, { ...lobby, id: 'b9' });
       return undefined;
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle']);
 
     await userEvent.click(await screen.findByRole('radio', { name: 'Hard' }));
     await userEvent.click(screen.getByRole('button', { name: 'Create game' }));
     await waitFor(() => expect(created).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false } }));
-    expect(await screen.findByText(/\/app\/games\/wordle-battle\?id=b9/)).toBeInTheDocument();
+    expect(await screen.findByText(/\/app\/games\/peyvok-battle\?id=b9/)).toBeInTheDocument();
   });
 });

@@ -160,7 +160,7 @@ export const BADGES: readonly BadgeDef[] = [
   // the non-speed route through typing: accuracy, at any speed
   badge('rastnivis', 'games', 'Rastnivîs', 'Accurate writer', [10, 50, 200, 500], 'races_98_percent', 'races'), // [review]
   badge('guhdar', 'games', 'Guhdar', 'Listener', [3, 15, 50, 150], 'story_quiz_perfect', 'games'), // [review]
-  // Wordle, Rhyme, the Typing Race and Stories: each played at least once
+  // Peyvok, Rhyme, the Typing Race and Stories: each played at least once
   badge('hemereng', 'games', 'Hemereng', 'All colours', [4], 'games_tried', 'games'), // [review]
   badge('dilpak', 'games', 'Dilpak', 'Pure-hearted', [50, 150, 400, 1000], 'fair_rated_games', 'games'), // [review]
 

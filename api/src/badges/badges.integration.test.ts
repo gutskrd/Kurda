@@ -130,7 +130,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     return g.rows[0]!.id;
   };
 
-  /** A finished Wordle Battle: each player solved (in so many guesses) or not. */
+  /** A finished Peyvok Battle: each player solved (in so many guesses) or not. */
   const battle = async (host: TestLearner, players: Array<{ user: TestLearner; solved: boolean; guesses: number; ms?: number }>) => {
     const b = await pool.query<{ id: string }>(
       `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, status, finished_at)
@@ -332,7 +332,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
   });
 
   describe('games', () => {
-    it('Peyvzan, Tîrê rast, Heval and Mêvandar from a finished Wordle Battle, through the play layer’s event', async () => {
+    it('Peyvzan, Tîrê rast, Heval and Mêvandar from a finished Peyvok Battle, through the play layer’s event', async () => {
       const me = await counted();
       const friend = await counted();
       await befriend(pool, me.id, friend.id);

@@ -38,7 +38,7 @@ describe('InviteBanner', () => {
   it('shows who invited you to what, as a polite live region, without a timer taking it away', async () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [invite], outgoing: [] }) });
     renderWithProviders(<InviteBanner />);
-    expect(await screen.findByText('Rojda invited you to Wordle Battle')).toBeTruthy();
+    expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeTruthy();
     expect(screen.getByText('Hard')).toBeTruthy();
     expect(document.querySelector('[aria-live="polite"]')).not.toBeNull();
   });
@@ -52,7 +52,7 @@ describe('InviteBanner', () => {
     renderWithProviders(<InviteBanner />);
     fireEvent.click(await screen.findByRole('button', { name: 'Join Rojda’s game' }));
     await waitFor(() => expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle', { id: 'lobby-1' }));
-    expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+    expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
   });
 
   it('says not now with a preset reason, never free text', async () => {
@@ -66,7 +66,7 @@ describe('InviteBanner', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Not this game' }));
     await act(async () => undefined);
     expect(client.calls.find((c) => c.path === '/play/invites/inv-1/decline')?.body).toEqual({ reason: 'not_this_game' });
-    expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+    expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
   });
 
   it('opens the reasons under Not now, keeps Join beside them, and closes them again', async () => {
@@ -92,7 +92,7 @@ describe('InviteBanner', () => {
     expect(screen.getByText('Game invites: 2')).toBeTruthy();
     // the host hears nothing about it being put aside
     expect(client.calls.filter((c) => c.method !== 'GET')).toEqual([]);
-    fireEvent.click(screen.getByRole('button', { name: 'Rojda invited you to Wordle Battle' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Rojda invited you to Peyvok Battle' }));
     expect(screen.getByRole('button', { name: 'Join Rojda’s game' })).toBeTruthy();
   });
 
@@ -109,14 +109,14 @@ describe('InviteBanner', () => {
       </>,
     );
     await act(async () => undefined);
-    expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+    expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
     view.rerender(
       <>
         <Game playing={false} />
         <InviteBanner />
       </>,
     );
-    expect(await screen.findByText('Rojda invited you to Wordle Battle')).toBeTruthy();
+    expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeTruthy();
   });
 
   it('keeps the invite after a passing failure, so Join can be tried again', async () => {
@@ -157,7 +157,7 @@ describe('InviteBanner', () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(4_100);
       });
-      expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+      expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
     } finally {
       vi.useRealTimers();
     }
@@ -188,7 +188,7 @@ describe('InviteBanner', () => {
   it('tells a rematch apart from a first invite', async () => {
     testAuth.client = fakeClient({ 'GET /play/invites': ok({ incoming: [{ ...invite, rematch: true }], outgoing: [] }) });
     renderWithProviders(<InviteBanner />);
-    expect(await screen.findByText('Rojda wants to play again: Wordle Battle')).toBeTruthy();
+    expect(await screen.findByText('Rojda wants to play again: Peyvok Battle')).toBeTruthy();
   });
 
   describe('on the shared connection', () => {
@@ -225,16 +225,16 @@ describe('InviteBanner', () => {
           <InviteBanner />
         </RealtimeProvider>,
       );
-      expect(await screen.findByText('Rojda invited you to Wordle Battle')).toBeTruthy();
+      expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeTruthy();
       await flush();
       act(() => FakeSocket.all[0]!.hello());
       await waitFor(() => expect(gets).toBe(2));
       fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
       fireEvent.click(screen.getByRole('button', { name: 'Later' }));
-      expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+      expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
       await act(async () => answerLate());
       await flush();
-      expect(screen.queryByText('Rojda invited you to Wordle Battle')).toBeNull();
+      expect(screen.queryByText('Rojda invited you to Peyvok Battle')).toBeNull();
     });
 
     it('shows a new invite open, even when the one before it was folded away', async () => {

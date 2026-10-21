@@ -41,10 +41,10 @@ export function foldDiacritics(input: string): string {
  * How many letters a word has, as a game counts them.
  *
  * Code points, not UTF-16 units, and letters only: apostrophes, hyphens and
- * spaces do not fill a Wordle square, and `'`.length` would say otherwise. NFC
+ * spaces do not fill a Peyvok square, and `'`.length` would say otherwise. NFC
  * first so a decomposed ê counts once rather than twice.
  *
- * This decides which Wordle band a word belongs to, so the admin screen that
+ * This decides which Peyvok band a word belongs to, so the admin screen that
  * offers a word and the engine that picks one have to agree exactly. They each
  * had their own copy of it, each commented as matching the other; this is the
  * one both now use.
@@ -71,7 +71,7 @@ export function letterKey(word: string): string {
  *
  * Finding is not comparing. Somebody searching for "sev" means sêv, and an
  * importer meeting "zabît" after "zabit" is meeting the same headword twice —
- * neither of those is true of a Wordle guess, which is why this is a second key
+ * neither of those is true of a Peyvok guess, which is why this is a second key
  * rather than a change to the first.
  *
  * Idempotent: folding an already-folded key leaves it alone, so it is safe to

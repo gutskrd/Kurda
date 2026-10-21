@@ -10,7 +10,7 @@ dictionary. This is how you add a real one.
 
 | | what it is | wants |
 |---|---|---|
-| **the pool** (`in_games = true`) | what a game *chooses from* — Wordle targets, Rhyme prompts | small, curated, recognisable |
+| **the pool** (`in_games = true`) | what a game *chooses from* — Peyvok targets, Rhyme prompts | small, curated, recognisable |
 | **the dictionary** (every row) | what a guess is *checked against* | as large as it can be |
 
 A bad target is an unplayable round, so the pool stays hand-picked. A missing

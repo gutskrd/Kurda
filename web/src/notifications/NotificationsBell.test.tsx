@@ -241,7 +241,7 @@ describe('NotificationsBell', () => {
         id: 'n1',
         category: 'games',
         title: 'Game invite',
-        body: 'Rojda invited you to play Wordle Battle.',
+        body: 'Rojda invited you to play Peyvok Battle.',
         createdAt: now(),
         readAt: null,
         data: { kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' },
@@ -249,9 +249,9 @@ describe('NotificationsBell', () => {
     ]);
     show();
     await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
-    expect(screen.getByRole('link', { name: 'Wordle Battle invite' })).toHaveAttribute('href', '/app/games/wordle-battle?id=b1');
+    expect(screen.getByRole('link', { name: 'Peyvok Battle invite' })).toHaveAttribute('href', '/app/games/peyvok-battle?id=b1');
     // not the server's English fallback
-    expect(screen.queryByText('Rojda invited you to play Wordle Battle.')).not.toBeInTheDocument();
+    expect(screen.queryByText('Rojda invited you to play Peyvok Battle.')).not.toBeInTheDocument();
   });
 
   /**

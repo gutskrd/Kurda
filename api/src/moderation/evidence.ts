@@ -439,7 +439,7 @@ export function hasGameSeats(game: string): boolean {
 }
 
 /**
- * Wordle Battle and Rhyme Match seats: the `seat` column the shared lobby
+ * Peyvok Battle and Rhyme Match seats: the `seat` column the shared lobby
  * rules give their players (migration 1751000149000), handed out in join
  * order and never given to a second person, which is what their views show
  * ("Player 2"). A player who left a started game keeps theirs (`left_at`);

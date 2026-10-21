@@ -148,7 +148,7 @@ describe('VerifyEmail', () => {
 
   it('sends a new account made for a friend’s game to that game once confirmed', async () => {
     signedIn();
-    rememberAfterSignup('/app/games/wordle-battle?id=b1');
+    rememberAfterSignup('/app/games/peyvok-battle?id=b1');
     let verified = false;
     vi.stubGlobal(
       'fetch',
@@ -169,7 +169,7 @@ describe('VerifyEmail', () => {
             <Routes>
               <Route path="/verify-email" element={<VerifyEmail />} />
               <Route path="/app/learn/next" element={<div>Your first lesson</div>} />
-              <Route path="/app/games/wordle-battle" element={<div>The battle</div>} />
+              <Route path="/app/games/peyvok-battle" element={<div>The battle</div>} />
             </Routes>
           </ProfileModalProvider>
         </MemoryRouter>

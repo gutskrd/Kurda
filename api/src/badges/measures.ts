@@ -148,7 +148,7 @@ export function yearsWithChallengeIn(days: readonly string[], quarter: number): 
 }
 
 /**
- * The ranking of a finished Wordle Battle in SQL, the comparator of
+ * The ranking of a finished Peyvok Battle in SQL, the comparator of
  * game/wordle-battle.ts's `rankBattle`: solvers first, then fewer guesses,
  * then faster; among the rest, more progress, then faster. Ties share a rank.
  */

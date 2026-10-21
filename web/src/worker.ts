@@ -385,7 +385,7 @@ const STATIC_PAGES: ReadonlyArray<StaticPage> = [
     path: '/app/games',
     title: 'Kurdish word games · Hevalo',
     description:
-      'Wordle, rhyming rounds and quizzes played in Kurdish, against a dictionary of hundreds of thousands of words.',
+      'Peyvok, rhyming rounds and quizzes played in Kurdish, against a dictionary of hundreds of thousands of words.',
   },
   {
     path: '/app/rankings',

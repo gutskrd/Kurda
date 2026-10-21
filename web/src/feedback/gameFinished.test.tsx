@@ -43,7 +43,7 @@ describe('a game finishing', () => {
     expect(heard).toEqual([{ game: 'wordle', gaveUp: false }]);
   });
 
-  /** a daily Wordle opened again after it was played is not a game just finished (map3-rating §2) */
+  /** a daily Peyvok opened again after it was played is not a game just finished (map3-rating §2) */
   it('is not reported for a game that was already finished when it was opened', () => {
     const { rerender } = render(<Game round="daily" finished />);
     rerender(<Game round="daily" finished />);

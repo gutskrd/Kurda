@@ -1,5 +1,5 @@
 /**
- * Wordle's targets against real Postgres: only Kurmancî words the keyboard can
+ * Peyvok's targets against real Postgres: only Kurmancî words the keyboard can
  * type, however the pool is curated.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
@@ -71,7 +71,7 @@ describe.skipIf(!DATABASE_URL)('the Wordle word pool (integration)', () => {
     expect(words.sort()).toEqual(['mala', 'çîrok'].sort());
   });
 
-  it('never sets a daily or practice Wordle the player could not type', async () => {
+  it('never sets a daily or practice Peyvok the player could not type', async () => {
     await withPool(
       [
         ['mala', 'kurmanji'],

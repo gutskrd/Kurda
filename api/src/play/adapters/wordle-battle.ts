@@ -5,7 +5,7 @@ import type { WordleBattleService } from '../../game/wordle-battle-service.js';
 import { nextGameError, openGamesAdultsOnly, parseSettings, setRatedError } from '../errors.js';
 import type { JoinOutcome, LobbyFacts, PlayAdapter, Series } from '../types.js';
 
-/** The presets a Wordle Battle is created with from an invite (as on POST /wordle/battles). */
+/** The presets a Peyvok Battle is created with from an invite (as on POST /wordle/battles). */
 const settingsSchema = z.object({
   difficulty: z.enum(['easy', 'medium', 'hard']).default('medium'),
   maxPlayers: z.number().int().min(2).max(8).optional(),
@@ -13,7 +13,7 @@ const settingsSchema = z.object({
   rated: z.boolean().optional(),
 });
 
-/** Wordle Battle, as the play layer drives it: a thin translation of the battle service. */
+/** Peyvok Battle, as the play layer drives it: a thin translation of the battle service. */
 export class WordleBattleAdapter implements PlayAdapter {
   readonly game = 'wordle-battle' as const;
 

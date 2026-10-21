@@ -4,7 +4,7 @@
  *
  * "Finished" is each game's own end, read where the game records it, never
  * the XP ledger (a game that paid nothing wrote nothing there):
- *   Wordle, daily and practice    — won or lost, never left playing
+ *   Peyvok, daily and practice    — won or lost, never left playing
  *   Rhyming Words (training)      — the round ended
  *   Typing Race                   — finished with something typed right.
  *                                   Giving up finishes a race too, and the
@@ -12,7 +12,7 @@
  *                                   but a race given up before a letter was
  *                                   typed right was never played (the apps
  *                                   do not show the box after a give-up)
- *   Wordle Battle                 — the player's own board finished
+ *   Peyvok Battle                 — the player's own board finished
  *   Rhyme Match                   — the match finished with them in it,
  *                                   not left or taken out of it
  *   Stories (duo and group games) — the game finished with them in it, not

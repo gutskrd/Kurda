@@ -206,12 +206,12 @@ describe('the alphabet', () => {
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:word:ç'))?.paused).toBe(false));
   });
 
-  it('sends the reader on to the dictionary and to Wordle', async () => {
+  it('sends the reader on to the dictionary and to Peyvok', async () => {
     serve();
     await show();
     await press('Look words up in the dictionary');
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
-    await press('Play Kurdish Wordle');
+    await press('Play Peyvok');
     expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
   });
 });

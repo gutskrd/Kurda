@@ -1,8 +1,8 @@
 /**
- * Kurdish Wordle engine (KUR-303) — the pure core for the daily/practice
+ * Kurdish Peyvok engine (KUR-303) — the pure core for the daily/practice
  * service (KUR-304), the mobile UI (KUR-305), and multiplayer battle (KUR-306).
  * Given a target word and a guess it produces per-letter green/yellow/gray
- * feedback using the official Wordle duplicate-letter algorithm, validates
+ * feedback using the usual two-pass duplicate-letter rule, validates
  * guesses (exact length + dictionary), and advances the 6-attempt game state.
  *
  * No storage, no network, no React — and crucially the game state never holds
@@ -32,7 +32,7 @@ export function toLetters(word: string): string[] {
 }
 
 /**
- * Score a guess against a target using the official two-pass Wordle algorithm:
+ * Score a guess against a target using the usual two-pass duplicate-letter rule:
  *  1. mark exact-position matches green and consume them from the target's
  *     per-letter counts;
  *  2. mark each remaining guess letter yellow only while that letter still has

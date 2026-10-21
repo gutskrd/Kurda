@@ -20,7 +20,7 @@ import { dictionaryKey, letterCount } from '@kurda/shared';
 /**
  * Admin management of the shared game word pool (`dict_entries`).
  *
- * One dictionary drives every word game: Wordle picks its targets from it and
+ * One dictionary drives every word game: Peyvok picks its targets from it and
  * validates guesses against it, and Rhyme draws prompts from it and only accepts
  * submissions that are in it. So adding a word here makes it playable everywhere.
  *
@@ -44,7 +44,7 @@ const queryBool = z.enum(['true', 'false']).transform((v) => v === 'true');
 
 const listQuery = z.object({
   q: z.string().max(80).optional(),
-  /** filter to one letter-length (the Wordle difficulty bands are length-based) */
+  /** filter to one letter-length (the Peyvok difficulty bands are length-based) */
   length: z.coerce.number().int().min(1).max(40).optional(),
   /** only words marked as rhyme prompts */
   prompts: queryBool.optional(),
@@ -737,12 +737,12 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
   );
 
   /**
-   * Pool health: how many words sit in each Wordle difficulty band, so an admin
+   * Pool health: how many words sit in each Peyvok difficulty band, so an admin
    * can see at a glance whether a difficulty is thin (or empty → EMPTY_POOL).
    */
   app.get('/admin/dictionary/stats', { config: { skipValidation: true }, preHandler: canEdit }, async () => {
     /*
-     * Length bands describe what Wordle can offer, so they count the pool. The
+     * Length bands describe what Peyvok can offer, so they count the pool. The
      * dictionary behind it is counted separately below — the two numbers
      * answer different questions, and showing only the second is how you end up
      * believing there are 447,000 words to play with.

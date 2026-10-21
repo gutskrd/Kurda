@@ -45,7 +45,7 @@ export interface PlayDeps {
 
 /** How a game is named in the English fallback text of an inbox entry (clients write their own from `data`). */
 const GAME_NAMES: Record<PlayGame, string> = {
-  'wordle-battle': 'Wordle Battle',
+  'wordle-battle': 'Peyvok Battle',
   'rhyme-match': 'Rhyme Match',
   stories: 'a story quiz',
 };

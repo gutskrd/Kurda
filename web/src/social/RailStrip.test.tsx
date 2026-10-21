@@ -18,7 +18,7 @@ const person = (id: string, extra: Record<string, unknown> = {}) => ({
 });
 
 const playing = (id: string) =>
-  person(id, { online: true, activity: { game: 'Wordle', since: new Date().toISOString() } });
+  person(id, { online: true, activity: { game: 'Peyvok', since: new Date().toISOString() } });
 
 const data = (over: Partial<SocialRailData> = {}): SocialRailData => ({
   friends: [],

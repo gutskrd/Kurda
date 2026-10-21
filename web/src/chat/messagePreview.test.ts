@@ -4,15 +4,15 @@ import { englishOnly as t, translator } from '../i18n/I18nProvider';
 import { de } from '../i18n/de';
 import { ku } from '../i18n/ku';
 
-const wordle = 'https://hevalo.app/app/games/wordle-battle?id=8f3c1a9d-4b2e-4c77-9a01-2de5f6b7c8d9';
+const wordle = 'https://hevalo.app/app/games/peyvok-battle?id=8f3c1a9d-4b2e-4c77-9a01-2de5f6b7c8d9';
 const rhyme = 'https://hevalo.app/app/games/rhyme-match?id=2ab41c9d-4b2e-4c77-9a01-2de5f6b7c8d9';
 
 describe('messagePreview', () => {
   it('describes a game invite instead of showing its URL', () => {
     // the whole point: a conversation row used to read
-    // "https://hevalo.app/app/games/wordle-battle?id=8f3c…"
+    // "https://hevalo.app/app/games/peyvok-battle?id=8f3c…"
     const out = messagePreview(wordle, t);
-    expect(out).toBe('Wordle Battle invite');
+    expect(out).toBe('Peyvok Battle invite');
     expect(out).not.toContain('http');
     expect(out).not.toContain('id=');
   });
@@ -22,7 +22,7 @@ describe('messagePreview', () => {
   });
 
   it('keeps what the sender wrote around the link', () => {
-    expect(messagePreview(`join me! ${wordle} now`, t)).toBe('join me! now · Wordle Battle invite');
+    expect(messagePreview(`join me! ${wordle} now`, t)).toBe('join me! now · Peyvok Battle invite');
   });
 
   it('leaves an ordinary message alone', () => {
@@ -56,7 +56,7 @@ describe('messagePreview', () => {
   it('strips every link when several are pasted', () => {
     // a global pattern is rebuilt per call; a shared one would skip matches
     // because lastIndex carries over between uses
-    expect(messagePreview(`${wordle} and ${rhyme}`, t)).toBe('and · Wordle Battle invite');
+    expect(messagePreview(`${wordle} and ${rhyme}`, t)).toBe('and · Peyvok Battle invite');
   });
 });
 

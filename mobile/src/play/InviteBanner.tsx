@@ -24,7 +24,7 @@ import { useInvitesQuieted } from './quietInvites';
 import { lobbyRoute } from './routes';
 
 /**
- * "Rojda invited you to Wordle Battle · Hard" — [Join] [Not now ▾] (contract
+ * "Rojda invited you to Peyvok Battle · Hard" — [Join] [Not now ▾] (contract
  * §B1), over whatever screen you are on.
  *
  * It does not take the screen reader's focus and does not go away by itself

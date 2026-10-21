@@ -138,14 +138,14 @@ describe('Register', () => {
         <Route path="/register" element={<Register />} />
         <Route path="/app" element={<div>App home</div>} />
       </Routes>,
-      [{ pathname: '/register', state: { from: '/app/games/wordle-battle?id=b1' } }],
+      [{ pathname: '/register', state: { from: '/app/games/peyvok-battle?id=b1' } }],
     );
     await fillAccount();
     await chooseBirth('3', '1990');
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
 
     await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
-    expect(JSON.parse(localStorage.getItem('hevalo.afterSignup') ?? '{}')).toMatchObject({ path: '/app/games/wordle-battle?id=b1' });
+    expect(JSON.parse(localStorage.getItem('hevalo.afterSignup') ?? '{}')).toMatchObject({ path: '/app/games/peyvok-battle?id=b1' });
   });
 
   /**

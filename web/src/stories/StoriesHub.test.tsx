@@ -20,7 +20,7 @@ const hub = (entry = '/app/games/stories') =>
     <Routes>
       <Route path="/app/games/stories" element={<StoriesHub />} />
       <Route path="/app/games/stories/play/:id" element={<p>the game page</p>} />
-      <Route path="/app/games/wordle-battle" element={<p>the battle page</p>} />
+      <Route path="/app/games/peyvok-battle" element={<p>the battle page</p>} />
     </Routes>,
     [entry],
   );
@@ -144,7 +144,7 @@ describe('Stories hub', () => {
   it('sends a link to another game to that game', async () => {
     fakeApi({ 'GET /stories': { stories: kurmanci } });
     hub();
-    await userEvent.type(await screen.findByLabelText('Join with a code'), 'hevalo.app/app/games/wordle-battle?id=abcdef12');
+    await userEvent.type(await screen.findByLabelText('Join with a code'), 'hevalo.app/app/games/peyvok-battle?id=abcdef12');
     await userEvent.click(screen.getByRole('button', { name: 'Join' }));
     expect(await screen.findByText('the battle page')).toBeInTheDocument();
   });

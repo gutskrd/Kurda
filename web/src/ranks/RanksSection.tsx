@@ -8,7 +8,7 @@ import { RankCard } from './RankCard';
 import { seasonNamed } from './names';
 
 /**
- * "Your ranks" on the Games page: one card per game with opponents (Wordle
+ * "Your ranks" on the Games page: one card per game with opponents (Peyvok
  * Battle, Rhyme Match, Stories), the season they are in, and the way to the
  * season's rewards and the badges.
  *

@@ -45,7 +45,7 @@ const LANG_LABEL: Record<string, string> = {
  * to. A deploy in the middle does stop it, and pressing the button again carries
  * on from the file it reached.
  *
- * Nothing it imports becomes a Wordle answer or a rhyme prompt — those come from
+ * Nothing it imports becomes a Peyvok answer or a rhyme prompt — those come from
  * the curated pool, and this only makes the games accept more of what players
  * type. The note under the button says so, because that is the thing most likely
  * to be misread as "it did not work".
@@ -129,7 +129,7 @@ export function DictionaryImport(): React.JSX.Element | null {
   return (
     <Section
       title="Import the dictionary"
-      description="Words arrive in the dictionary, which is what a guess is checked against. None of them becomes a Wordle answer or a rhyme base word: add the ones you want asked to the games above."
+      description="Words arrive in the dictionary, which is what a guess is checked against. None of them becomes a Peyvok answer or a rhyme base word: add the ones you want asked to the games above."
       actions={run ? <span className="subtle">{describe(run)}</span> : undefined}
     >
       {error != null && <ErrorState error={error} onRetry={() => void load()} what="the dictionary import" compact />}

@@ -1,5 +1,5 @@
 /**
- * Game Ranks against real Postgres, through the games that use it (Wordle
+ * Game Ranks against real Postgres, through the games that use it (Peyvok
  * Battle here; Rhyme Match and Stories in games.integration.test.ts): Rated or
  * Friendly and why, the decision at the start, the result and its reason,
  * repeat-opponent damping, the new-account limit, leaving and its cooldown,

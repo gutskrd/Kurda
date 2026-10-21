@@ -23,7 +23,7 @@ export interface ChatGameRef {
 /**
  * What a DM or group message carries besides its text, by kind. `body` is null
  * for 'gift' and 'game' messages; the clients write the line shown in
- * conversation lists ("🎁 Gift", "Wordle Battle") from the kind.
+ * conversation lists ("🎁 Gift", "Peyvok Battle") from the kind.
  */
 export interface ChatMessageExtras {
   kind: ChatMessageKind;

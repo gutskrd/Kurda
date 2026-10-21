@@ -20,7 +20,7 @@ export interface ClaimResult {
  *
  * A claim needs a lesson or practice session finished on that same local day —
  * the streak service's `last_learned_on`, written when a session completes.
- * A daily Wordle win keeps a streak but does not count here.
+ * A daily Peyvok win keeps a streak but does not count here.
  */
 export class DailyRewardService {
   private readonly streaks: StreakService;

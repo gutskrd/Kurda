@@ -48,7 +48,7 @@ describe('messagePreview', () => {
   const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ku[key], vars);
   it('writes its own line for a gift or a game, in the reader’s language', () => {
     expect(messagePreview({ lastMessage: 'Sent a gift', lastKind: 'gift' }, t)).toBe('🎁 Diyarî');
-    expect(messagePreview({ lastMessage: 'Wordle Battle', lastKind: 'game' }, t)).toBe(TRANSLATIONS.ku['play.chat.preview']);
+    expect(messagePreview({ lastMessage: 'Peyvok Battle', lastKind: 'game' }, t)).toBe(TRANSLATIONS.ku['play.chat.preview']);
     expect(messagePreview({ lastMessage: 'silav', lastKind: 'text' }, t)).toBe('silav');
     // an older server sends no kind
     expect(messagePreview({ lastMessage: 'silav' }, t)).toBe('silav');

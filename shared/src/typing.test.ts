@@ -171,7 +171,7 @@ describe('the varieties and their keys', () => {
   });
 });
 
-describe('kurmanciLetter (Wordle’s physical keyboard)', () => {
+describe('kurmanciLetter (Peyvok’s physical keyboard)', () => {
   it('reads the character a key produced, whatever modifier made it', () => {
     expect(kurmanciLetter('a')).toBe('a');
     expect(kurmanciLetter('Ş')).toBe('ş'); // Shift

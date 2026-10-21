@@ -1,5 +1,5 @@
 /**
- * Wordle multiplayer Battle — placement ranking (KUR-306). Pure comparator +
+ * Peyvok multiplayer Battle — placement ranking (KUR-306). Pure comparator +
  * ranking for a match where every player raced the same hidden word. The
  * server drives the match (session engine #051, realtime #049); this module
  * decides the finishing order and the placement XP, so it is fully

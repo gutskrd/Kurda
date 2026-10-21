@@ -230,7 +230,7 @@ export class ProfileActivityService {
       id: string; game: string; outcome: string | null; detail: string | null; at: Date;
     }>(
       `SELECT id, game, outcome, detail, at FROM (
-         SELECT w.id::text AS id, 'Wordle' AS game, w.status AS outcome,
+         SELECT w.id::text AS id, 'Peyvok' AS game, w.status AS outcome,
                 w.difficulty AS detail, w.finished_at AS at
            FROM wordle_games w
           WHERE w.user_id = $1 AND w.finished_at IS NOT NULL AND w.status <> 'playing'
@@ -245,7 +245,7 @@ export class ProfileActivityService {
            FROM race_games g
           WHERE g.user_id = $1 AND g.finished_at IS NOT NULL
          UNION ALL
-         SELECT b.battle_id::text, 'Wordle Battle',
+         SELECT b.battle_id::text, 'Peyvok Battle',
                 CASE WHEN b.solved THEN 'won' ELSE 'lost' END,
                 b.guess_count::text || ' guesses', b.finished_at
            FROM wordle_battle_players b

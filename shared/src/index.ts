@@ -309,7 +309,7 @@ export * from './shop-items.js';
 export * from './chat-cards.js';
 
 /**
- * Typing Kurdish (the race, Wordle's keyboard, the keyboard guide): how a
+ * Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how a
  * typed text is read and scored, and the race's shapes — one reading for the
  * server and both apps.
  */

@@ -1,6 +1,6 @@
 /**
  * Typing Kurdish: what a keyboard sends, read as what the writer meant — for
- * the typing race, the Wordle keyboard and the "get the Kurmancî keyboard"
+ * the typing race, the Peyvok keyboard and the "get the Kurmancî keyboard"
  * guide.
  *
  * The race used to compare what was typed with its text code point by code
@@ -96,7 +96,7 @@ const KURMANCI_LETTERS = new Set<string>(KURMANCI_ALPHABET);
 /**
  * The Kurmancî letter a key press means, or null when it is not one.
  *
- * For Wordle's physical keyboard, which used to drop every letter typed with a
+ * For Peyvok's physical keyboard, which used to drop every letter typed with a
  * modifier — and that is how most people type ç ê î ş û: Option+c on a Mac,
  * AltGr on Windows, a dead key, Shift+Ş. Rather than guess which modifiers are
  * innocent, read the character the key produced: if it is a letter of the

@@ -125,7 +125,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'events', label: 'Live events', group: 'content', icon: 'calendar', page: 'events', access: LEGACY_ADMIN, keywords: 'quests seasonal newroz' },
 
   { id: 'words', label: 'Words & dictionary', group: 'games', icon: 'words', page: 'words', access: GAME_EDITORS, keywords: 'word pool import wiktionary' },
-  { id: 'wordle', label: 'Wordle', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage' },
+  { id: 'wordle', label: 'Peyvok', group: 'games', icon: 'grid', page: 'wordle', access: GAME_EDITORS, keywords: 'coverage word game' },
   { id: 'rhyme', label: 'Rhyme', group: 'games', icon: 'rhyme', page: 'rhyme', access: GAME_EDITORS, keywords: 'rhymes base words' },
   { id: 'race', label: 'Race texts', group: 'games', icon: 'keyboard', page: 'race', access: GAME_EDITORS, keywords: 'typing race' },
 

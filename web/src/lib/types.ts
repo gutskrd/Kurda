@@ -358,7 +358,7 @@ export interface WordleGuessRow {
   feedback: LetterFeedback[];
 }
 
-/** Client-safe Wordle game view (POST /wordle/daily|practice, guess). */
+/** Client-safe Peyvok game view (POST /wordle/daily|practice, guess). */
 export interface WordleGame {
   id: string;
   mode: 'daily' | 'practice';

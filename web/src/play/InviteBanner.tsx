@@ -28,7 +28,7 @@ const SPACE_VAR = '--invite-banner-h';
 const SPACE_BELOW = 8;
 
 /**
- * The invites waiting for you (contract §B1): "Rojda invited you to Wordle
+ * The invites waiting for you (contract §B1): "Rojda invited you to Peyvok
  * Battle · Hard", with Join and "Not now ▾" (Later, or Not this game — the
  * host is told softly, and never in your words).
  *

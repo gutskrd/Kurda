@@ -68,7 +68,7 @@ export interface BattleResults {
 }
 
 /**
- * Wordle Battle (KUR-306), over the REST endpoints rather than the socket.
+ * Peyvok Battle (KUR-306), over the REST endpoints rather than the socket.
  *
  * The API says so itself: "State/results are poll-safe; the realtime gateway
  * pushing opponent progress is an additive transport on top of these same

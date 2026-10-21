@@ -7,7 +7,7 @@ import type { LobbyFacts, LobbyPhase } from './types.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
- * Wordle Battle and Rhyme Match keep their lobbies the same way — a game row,
+ * Peyvok Battle and Rhyme Match keep their lobbies the same way — a game row,
  * a row per player — so the lobby rules they share (who may join, seats,
  * names, idle lobbies, what a chat card says) live here once, over either
  * pair of tables.

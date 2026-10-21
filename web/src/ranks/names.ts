@@ -79,7 +79,7 @@ export function rankLabel(t: Translate, tier: RankTier, division: Division | nul
   return t('ranks.tierDivision', { tier: name, division: ROMAN[division] });
 }
 
-/** The game's own name ("Wordle Battle"), from the play layer's map. */
+/** The game's own name ("Peyvok Battle"), from the play layer's map. */
 export function gameName(t: Translate, game: RankedGame): string {
   return t(GAME_NAME_KEY[game]);
 }

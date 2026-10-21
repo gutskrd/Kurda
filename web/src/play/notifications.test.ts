@@ -5,7 +5,7 @@ import { playNotification } from './notifications';
 
 const note = (data: Record<string, unknown> | null) => ({
   title: 'Game invite',
-  body: 'Rojda invited you to play Wordle Battle.',
+  body: 'Rojda invited you to play Peyvok Battle.',
   data,
 });
 
@@ -24,7 +24,7 @@ const invite: IncomingInvite = {
 describe('playNotification', () => {
   it('opens the game an invite is for: the lobby of a battle', () => {
     const view = playNotification(note({ kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' }), t);
-    expect(view?.to).toBe('/app/games/wordle-battle?id=b1');
+    expect(view?.to).toBe('/app/games/peyvok-battle?id=b1');
   });
 
   it('opens a story game by its link, which joins on arrival', () => {
@@ -34,7 +34,7 @@ describe('playNotification', () => {
 
   it('names who asked in the reader’s words while the invite is still known', () => {
     const view = playNotification(note({ kind: 'play_invite', inviteId: 'i1', game: 'wordle-battle', lobbyId: 'b1' }), t, [invite]);
-    expect(view?.title).toBe('Rojda invited you to Wordle Battle');
+    expect(view?.title).toBe('Rojda invited you to Peyvok Battle');
   });
 
   it('names just the game once the invite is gone, never the server’s English', () => {

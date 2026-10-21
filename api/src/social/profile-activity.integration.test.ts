@@ -119,7 +119,7 @@ describe.skipIf(!DATABASE_URL)('profile activity (integration)', () => {
   it('interleaves finished games from every mode, newest first', async () => {
     const res = await call('GET', `/users/${ids.owner}/activity?kind=games`, tokens.viewer!);
     const titles = res.json().entries.map((e: { title: string }) => e.title);
-    expect(titles).toContain('Wordle');
+    expect(titles).toContain('Peyvok');
     expect(titles).toContain('Rhyming Words');
     const times = res.json().entries.map((e: { at: string }) => new Date(e.at).getTime());
     expect([...times].sort((a, b) => b - a)).toEqual(times);

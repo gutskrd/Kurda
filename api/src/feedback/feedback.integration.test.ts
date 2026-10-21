@@ -65,7 +65,7 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
     return res.json() as { shouldPrompt: boolean; storeReviewEligible: boolean };
   };
 
-  /** A finished daily or practice Wordle, `daysAgo` days back. */
+  /** A finished daily or practice Peyvok, `daysAgo` days back. */
   async function finishedWordle(userId: string, daysAgo = 0, status: 'won' | 'lost' | 'playing' = 'won'): Promise<void> {
     await pool.query(
       `INSERT INTO wordle_games (user_id, mode, difficulty, target, target_length, status, started_at, finished_at)

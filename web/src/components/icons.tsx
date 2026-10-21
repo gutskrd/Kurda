@@ -78,7 +78,7 @@ import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
 import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
 import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
 import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
-// web-race-rating: Wordle's delete key, the rating box's stars
+// web-race-rating: Peyvok's delete key, the rating box's stars
 import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
 import { Star } from '@phosphor-icons/react/dist/icons/Star';
 // Game Ranks, leagues and badges: rated and friendly games, a zone moving up
@@ -132,7 +132,7 @@ export const PersonGlyph = named(User, 128, 'fill');
 
 export const BookIcon = named(BookOpen, 22);
 export const FeatherIcon = named(PenNib, 22);
-/* A puzzle piece, not a console controller: these are word games — Wordle,
+/* A puzzle piece, not a console controller: these are word games — Peyvok,
    rhyming, a race to answer — and a gamepad promised the wrong thing. */
 export const GameIcon = named(PuzzlePiece, 22);
 /** Typing, specifically — the race is about keys, not about writing. */
@@ -215,7 +215,7 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
-/* web-race-rating: Wordle's delete key; a star you can choose, filled once it is */
+/* web-race-rating: Peyvok's delete key; a star you can choose, filled once it is */
 export const BackspaceIcon = named(Backspace, 22);
 export const StarIcon = named(Star, 36);
 

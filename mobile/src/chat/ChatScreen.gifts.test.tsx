@@ -78,7 +78,7 @@ describe('ChatScreen', () => {
     // the name comes from the conversation when the way in did not bring it
     expect(screen.getAllByText('rojda').length).toBeGreaterThan(0);
     expect(screen.getByText('Werin!')).toBeTruthy();
-    fireEvent.click(await screen.findByRole('button', { name: 'Join: Wordle Battle' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Join: Peyvok Battle' }));
     expect(navigate).toHaveBeenCalledWith('WordleBattle', { id: 'abc12345' });
     expect(screen.getByText('A gift for you')).toBeTruthy();
   });
@@ -155,7 +155,7 @@ describe('ChatScreen reports', () => {
 
   it('reports a message with an invite link by holding the game card it is drawn as', async () => {
     await openThread();
-    fireEvent.mouseDown(screen.getByRole('button', { name: 'Join: Wordle Battle' }), { button: 0, buttons: 1 });
+    fireEvent.mouseDown(screen.getByRole('button', { name: 'Join: Peyvok Battle' }), { button: 0, buttons: 1 });
     expect(await screen.findByText('Report this message', {}, HOLD)).toBeTruthy();
     // and the game did not open
     expect(navigate).not.toHaveBeenCalled();

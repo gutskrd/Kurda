@@ -35,7 +35,7 @@ function card(over: Partial<RankCardData> = {}): RankCardData {
 describe('RankCard', () => {
   it('shows the tier and division with its meaning, the points and the way to the next division', () => {
     renderApp(<RankCard rank={card()} />);
-    const article = screen.getByRole('article', { name: 'Wordle Battle' });
+    const article = screen.getByRole('article', { name: 'Peyvok Battle' });
     expect(within(article).getByRole('heading', { name: /Çiya I/ })).toBeInTheDocument();
     expect(within(article).getByText('Mountain')).toBeInTheDocument();
     expect(within(article).getByText('1,160')).toBeInTheDocument();

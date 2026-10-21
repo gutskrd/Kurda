@@ -20,7 +20,7 @@ afterEach(() => {
   document.body.innerHTML = '';
 });
 
-describe('which physical keys Wordle takes', () => {
+describe('which physical keys Peyvok takes', () => {
   it('takes plain letters, and the Kurdish ones however they were typed', () => {
     expect(wordleKeyFrom(press('a'))).toBe('a');
     expect(wordleKeyFrom(press('Ş'))).toBe('ş');

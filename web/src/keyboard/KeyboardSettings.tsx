@@ -23,7 +23,7 @@ const LAYOUTS: Array<{ value: WordleLayout; label: MessageKey }> = [
 
 /**
  * How this device types Kurdish: accents, the letter keys, the backtick
- * shortcut, Wordle's layout — and the way back to the keyboard guide.
+ * shortcut, Peyvok's layout — and the way back to the keyboard guide.
  *
  * The same controls in the race's own settings and in Settings, so a choice
  * made in one is the choice in the other (they share one store, `prefs`). Each
@@ -35,7 +35,7 @@ export function KeyboardSettings({
   context,
   onHelp,
 }: {
-  /** the race shows its own note about the race in progress; Settings shows Wordle's layout too */
+  /** the race shows its own note about the race in progress; Settings shows Peyvok's layout too */
   context: 'race' | 'settings';
   onHelp: () => void;
 }): React.JSX.Element {

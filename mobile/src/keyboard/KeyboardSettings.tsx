@@ -125,7 +125,7 @@ export function KeyboardSettingsSheet({
 }
 
 /**
- * The same settings in Settings, with Wordle's layout and the keyboard guide —
+ * The same settings in Settings, with Peyvok's layout and the keyboard guide —
  * one line in SettingsScreen, so the screen's other sections are untouched.
  */
 export function KeyboardSettingsSection(): React.JSX.Element {

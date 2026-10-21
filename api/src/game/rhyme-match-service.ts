@@ -151,14 +151,14 @@ export interface RhymeMatchDeps {
 
 /**
  * Rhyme multiplayer 1v1 / free-for-all (KUR-299) — server-authoritative match
- * service parallel to Wordle Battle (#306). Every player races the same server-held
+ * service parallel to Peyvok Battle (#306). Every player races the same server-held
  * prompt within one shared window; each submission is validated + scored by the
  * #298 engine here (client never decides). When the window elapses the match
  * finalizes: rank by score (pure `rhyme-match.ts`) → placement XP. Poll-safe, so
  * the whole flow is integration-testable without the realtime gateway.
  *
  * Joining, seeing each other and leaving follow the rules every online game
- * shares (play/access.ts, play/lobby.ts), as Wordle Battle does. The prompt is
+ * shares (play/access.ts, play/lobby.ts), as Peyvok Battle does. The prompt is
  * drawn from the match's own dialect.
  */
 export class RhymeMatchService {
@@ -176,7 +176,7 @@ export class RhymeMatchService {
     this.publicUrl = deps.publicUrl ?? (() => null);
   }
 
-  /** A new lobby with its host in it; Rated or Friendly as for Wordle Battle (`WordleBattleService.create`). */
+  /** A new lobby with its host in it; Rated or Friendly as for Peyvok Battle (`WordleBattleService.create`). */
   async create(
     userId: string,
     opts: {

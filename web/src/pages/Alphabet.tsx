@@ -330,7 +330,7 @@ export function Alphabet(): React.JSX.Element {
               <a className="btn btn-secondary" href={dictionary}>
                 {t('alphabet.next.dictionary')}
               </a>
-              <Link className="btn btn-secondary" to="/app/games/wordle">
+              <Link className="btn btn-secondary" to="/app/games/peyvok">
                 {t('alphabet.next.wordle')}
               </Link>
             </div>

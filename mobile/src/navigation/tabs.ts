@@ -75,9 +75,10 @@ export function isLearnView(v: unknown): v is LearnView {
  * Links outlive layouts: a notification sent last month, a link pasted into
  * a chat, an invite in somebody's email all say where things *were*. So
  * `hevalo://play` (and the website's `/app/games`) open Learn on its Games
- * view, and `hevalo://inbox` opens Messages. Everything else — a lesson, a
- * game's invite at `app/games/<game>?id=…` — is passed through untouched;
- * only the exact old tab addresses are rewritten, with their query kept.
+ * view, `hevalo://inbox` opens Messages, and a Peyvok Battle invite at its
+ * old `app/games/wordle-battle?id=…` opens the battle. Everything else — a
+ * lesson, any other game's invite — is passed through untouched; only the
+ * exact old addresses are rewritten, with their query kept.
  *
  * Pure, so the rewriting is tested without a navigator; App.tsx runs every
  * incoming path through it before React Navigation reads it.
@@ -92,6 +93,9 @@ export function legacyTabPath(path: string): string {
     case 'app/games':
     case 'app/play':
       return `${lead}learn?view=games${rest}`;
+    // the word game's lobby, from before the game was renamed
+    case 'app/games/wordle-battle':
+      return `${lead}app/games/peyvok-battle${query ? `?${query}` : ''}`;
     case 'inbox':
     case 'app/inbox':
     case 'chats':

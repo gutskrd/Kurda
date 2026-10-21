@@ -95,7 +95,7 @@ export function InviteSheet({
 }
 
 /**
- * The sheet's form, also drawn in place on a game's own page (Wordle Battle,
+ * The sheet's form, also drawn in place on a game's own page (Peyvok Battle,
  * Rhyme Match), where "make a game" and "ask friends" are the same step.
  */
 export function InviteForm({

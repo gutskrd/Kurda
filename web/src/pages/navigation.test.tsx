@@ -107,6 +107,16 @@ describe('the five places', () => {
     await waitFor(() => expect(where()).toBe('/app/rankings'));
   });
 
+  // a bookmark, or a battle invite already sent, from before the game was renamed
+  it('sends the word game’s old addresses to Peyvok, keeping a battle’s id', async () => {
+    serve();
+    const solo = visit('/app/games/wordle');
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok'));
+    solo.unmount();
+    visit('/app/games/wordle-battle?id=b1');
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
+  });
+
   it('has a Search page, for people and words', async () => {
     signIn();
     serve();

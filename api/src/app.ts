@@ -486,7 +486,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
     // the old achievements: only the (retired, unreachable) tournament win still
-    // awards one; lessons, practice, Wordle and Stories report to the badges above
+    // awards one; lessons, practice, Peyvok and Stories report to the badges above
     const achievements = new AchievementsService(app.db, gemService, activity);
     registerWalletRoutes(app);
 
@@ -591,11 +591,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       },
       { log: app.log },
     );
-    // a finished Wordle Battle, Rhyme Match or story game moves its players' badges
+    // a finished Peyvok Battle, Rhyme Match or story game moves its players' badges
     playEvents.onFinished(
       (game, lobbyId) => void badges.onGameFinished(game, lobbyId).catch((err) => app.log.warn({ err }, 'game badges failed')),
     );
-    // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
+    // Peyvok Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
     registerRhymeRoutes(app, { xp: xpService, milestones: badges });
     // typing race (solo time trial) over admin-curated texts

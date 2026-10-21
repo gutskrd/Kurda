@@ -138,7 +138,7 @@ describe('Learn', () => {
     client();
     renderWithProviders(<LearnScreen view="games" />);
     const battle = await screen.findByTestId('game-battle');
-    expect(battle.getAttribute('aria-label')).toBe('Wordle Battle, With friends. Race a friend to the same word.');
+    expect(battle.getAttribute('aria-label')).toBe('Peyvok Battle, With friends. Race a friend to the same word.');
     fireEvent.click(battle);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
     // the rankings and the league, small, at the top

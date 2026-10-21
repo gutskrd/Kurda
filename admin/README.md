@@ -45,7 +45,7 @@ everyone starts on the first page their role opens.
 - **People** — Users
 - **Moderation** — Queue, Automated flags, Bot flags
 - **Content** — Lessons, Stories, Tags & badges, Live events
-- **Games** — Words & dictionary, Wordle, Rhyme, Race texts
+- **Games** — Words & dictionary, Peyvok, Rhyme, Race texts
 - **Economy** — Overview, Shop, Gem rules, Fraud, Approvals
 - **Settings** — Feature flags, Audit log, My security, System
 

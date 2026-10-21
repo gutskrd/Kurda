@@ -42,7 +42,7 @@ describe('Wordle', () => {
         return jsonResponse(200, {});
       }),
     );
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
     // the keyboard renders once the game has started
     expect(await screen.findByRole('button', { name: 'k' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Enter' })).toBeInTheDocument();
@@ -61,7 +61,7 @@ describe('Wordle', () => {
         return jsonResponse(200, {});
       }),
     );
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
 
     await userEvent.click(await screen.findByRole('button', { name: 'k' }));
     await userEvent.click(screen.getByRole('button', { name: 'a' }));
@@ -80,13 +80,13 @@ describe('Wordle', () => {
         return jsonResponse(200, {});
       }),
     );
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
     expect(await screen.findByText(/no puzzles available/i)).toBeInTheDocument();
   });
 });
 
 // web-race-rating: the physical keyboard, and telling the rating box
-describe('Wordle and the keyboard in front of you', () => {
+describe('Peyvok and the keyboard in front of you', () => {
   function stubGame(first: unknown, afterGuess: unknown = wonGame): { guesses: unknown[] } {
     const seen = { guesses: [] as unknown[] };
     vi.stubGlobal(
@@ -105,7 +105,7 @@ describe('Wordle and the keyboard in front of you', () => {
 
   it('takes letters typed with AltGr or Option, and Enter, from the physical keyboard', async () => {
     const seen = stubGame(startedGame);
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
     await screen.findByRole('button', { name: 'k' });
 
     fireEvent.keyDown(window, { key: 'k' });
@@ -120,7 +120,7 @@ describe('Wordle and the keyboard in front of you', () => {
     stubGame(startedGame);
     const heard: GameFinished[] = [];
     const stop = onGameFinished((e) => heard.push(e));
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
 
     await userEvent.click(await screen.findByRole('button', { name: 'k' }));
     await userEvent.click(screen.getByRole('button', { name: 'a' }));
@@ -136,7 +136,7 @@ describe('Wordle and the keyboard in front of you', () => {
     stubGame(wonGame);
     const heard: GameFinished[] = [];
     const stop = onGameFinished((e) => heard.push(e));
-    renderApp(<Wordle />, ['/app/games/wordle']);
+    renderApp(<Wordle />, ['/app/games/peyvok']);
 
     await screen.findByText(/solved it/i);
     stop();
