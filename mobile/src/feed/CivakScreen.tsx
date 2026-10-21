@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
@@ -22,6 +22,7 @@ import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
+import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 
 const PAGE = 20;
@@ -128,6 +129,9 @@ export function CivakScreen(): React.JSX.Element {
   const replace = useCallback((next: FeedItem) => {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
+
+  // a post you deleted leaves the wall at once, reposts of it included
+  useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
 
   // the first screenful rises in once, as the wall arrives
   const entering = useListEntrance(!!items && items.length > 0);

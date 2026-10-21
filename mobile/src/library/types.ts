@@ -2,6 +2,7 @@
 
 import type { PostMediaView } from '@kurda/shared';
 import type { Translate } from '../api/errors';
+import type { CommentAuthor } from '../comments/thread';
 
 /** A gotin is a saying, with no title; a çîrok (story) and a helbest (poem) have one. */
 export type PostType = 'gotin' | 'story' | 'poem';
@@ -38,6 +39,8 @@ export interface LibraryComment {
   postId: string;
   authorId: string;
   authorRole: 'user' | 'admin';
+  /** who wrote it, on reads; the answer to a new comment leaves it out */
+  author?: CommentAuthor;
   parentCommentId: string | null;
   depth: number;
   body: string | null;

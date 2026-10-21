@@ -15,6 +15,7 @@ import { relativeTime } from '../memes/types';
 import { postUrl, toggleEngagement } from './api';
 import { CARD_LABEL_KEY, feedImages, type EngagementKind, type FeedItem } from './types';
 import { PostPictures } from '../composer/PostPictures';
+import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 
 /**
@@ -52,6 +53,8 @@ export function FeedCard({
     if (item.targetType === 'library') navigation.navigate('LibraryPost', { postId: item.id });
     else navigation.navigate('MemeDetail', { postId: item.id });
   }, [navigation, item.targetType, item.id]);
+  // your own post's Edit and Delete, on a long press (and as an action for a screen reader)
+  const menu = usePostMenu({ targetType: item.targetType, id: item.id, authorId: item.author.id }, { onActivate: open });
 
   const toggle = useCallback(
     async (kind: EngagementKind) => {
@@ -94,6 +97,8 @@ export function FeedCard({
     <View style={[styles.card, { backgroundColor: colors.glassFill }]}>
       <Pressable
         onPress={open}
+        onLongPress={menu.open}
+        {...menu.a11y}
         accessibilityRole="button"
         accessibilityLabel={item.title ? `${badge}: ${item.title}` : `${badge} — ${who}`}
         style={styles.body}
@@ -175,6 +180,7 @@ export function FeedCard({
           onPress={() => void toggle('bookmark')}
         />
       </View>
+      {menu.sheet}
     </View>
   );
 }

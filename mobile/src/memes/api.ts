@@ -61,6 +61,14 @@ export const addComment = (
   parentId?: string,
 ): Promise<ApiResult<Comment>> => client.post(`/images/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
 
+/** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
+export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: Comment[] }>> =>
+  client.get(`/images/comments/${commentId}/replies?limit=50`);
+
+/** Delete your own comment; the server keeps a placeholder where it had replies. */
+export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<Comment>> =>
+  client.delete(`/images/comments/${commentId}`);
+
 /** `limited`: refused by a limit on the account (see `UploadResult`). */
 export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };
 

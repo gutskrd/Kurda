@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   ActivityIndicator,
@@ -24,7 +24,9 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { createPost, listPosts, uploadMemeImage } from './api';
-import { relativeTime, REACTION_EMOJI, type Category, type ImagePost } from './types';
+import { REACTION_EMOJI, type Category, type ImagePost } from './types';
+import { noticeTime } from '../notifications/inbox';
+import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -91,6 +93,15 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     }, [client, category, sort]),
   );
 
+  // a picture deleted on its own page is gone from here before the list reloads
+  useEffect(
+    () =>
+      onPostDeleted((gone) => {
+        if (gone.targetType === 'image') setPosts((prev) => prev && prev.filter((p) => p.id !== gone.id));
+      }),
+    [],
+  );
+
   const refresh = useCallback(async () => {
     setRefreshing(true);
     await load();
@@ -143,7 +154,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         >
           <View style={styles.cardHead}>
             <InitialsAvatar name={item.authorId.slice(0, 2)} id={item.authorId} size={28} />
-            <Text style={[styles.age, { color: colors.textSecondary }]}>{relativeTime(item.createdAt)}</Text>
+            <Text style={[styles.age, { color: colors.textSecondary }]}>{noticeTime(item.createdAt, t, locale)}</Text>
           </View>
           {item.imageUrl ? (
             <Image source={{ uri: item.imageUrl }} style={styles.image} resizeMode="cover" accessibilityIgnoresInvertColors />
@@ -162,7 +173,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </PressableScale>
       </Rise>
     ),
-    [navigation, colors, entering],
+    [navigation, colors, entering, t, locale],
   );
 
   return (

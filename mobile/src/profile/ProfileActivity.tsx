@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { FeedCard, FeedCardSkeleton } from '../feed/FeedCard';
 import { SkeletonText } from '../theme/Skeleton';
 import type { FeedItem } from '../feed/types';
+import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
@@ -98,6 +99,12 @@ export function ProfileActivity({
   useEffect(() => {
     if (active) load(active);
   }, [load, active]);
+
+  // this list loads once, so a post deleted from its own page is taken off it here
+  useEffect(
+    () => onPostDeleted((gone) => setPage((prev) => prev && { ...prev, items: prev.items.filter((i) => !samePost(i, gone)) })),
+    [],
+  );
 
   if (active === null) return null;
 

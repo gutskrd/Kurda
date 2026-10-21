@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
@@ -15,6 +15,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { getSaved } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import type { FeedItem } from './types';
+import { onPostDeleted, samePost } from '../composer/postDeleted';
 
 const PAGE = 20;
 
@@ -90,6 +91,9 @@ export function SavedScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
       (prev ?? []).flatMap((i) => (i.key !== next.key ? [i] : next.engagement.bookmarked ? [next] : [])),
     );
   }, []);
+
+  // a post you deleted is not kept here either
+  useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
 
   const entering = useListEntrance(!!items && items.length > 0);
   const renderItem = useCallback(
