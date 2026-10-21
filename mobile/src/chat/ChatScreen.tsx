@@ -29,6 +29,7 @@ import { blockUser } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COMPOSER_FIELD, SendButton } from './SendButton';
+import { messageA11y, openMessageOptions } from './messageOptions';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
@@ -275,18 +276,19 @@ export function ChatScreen({
             renderItem={({ item }) => {
               const mine = item.senderId === me;
               const card = isCardMessage(item);
-              // one element for a screen reader, with Report among its actions, unless it holds a control of its own
+              // one element for a screen reader, with Copy and Report among its actions, unless it holds a control of its own
               const whole = !hasControls(item);
               // the controls inside a message (a gift, an invite link) report it too
               const report = mine ? undefined : () => setReporting(item.id);
+              // held, a message offers its words to copy and, if it is someone else's, a report
+              const options = { words: card ? null : item.body, onReport: report };
               return (
                 <Pressable
-                  onLongPress={report}
+                  onLongPress={() => openMessageOptions(t, options)}
                   delayLongPress={350}
                   accessible={whole}
-                  accessibilityActions={mine || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
-                  onAccessibilityAction={() => setReporting(item.id)}
-                  style={[styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
+                  {...(whole ? messageA11y(t, options) : null)}
+                  style={({ pressed }) => [styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
                 >
                   {card ? (
                     <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
@@ -420,6 +422,8 @@ function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element 
 const BUBBLE_LINE = spacing.sm * 2 + lineOf(typography.sizes.md);
 
 const styles = StyleSheet.create({
+  // a held message sinks a little under the finger, so the hold is felt to be doing something
+  held: { transform: [{ scale: 0.97 }] },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   screen: { flex: 1 },

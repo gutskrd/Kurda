@@ -1243,6 +1243,7 @@ export type TranslationKey =
   | 'friends.searchPlaceholder'
   | 'chat.receipt.read'
   | 'chat.send'
+  | 'chat.copy'
   | 'dictionary.related'
   | 'dictionary.recent'
   | 'grammar.title'
@@ -2972,6 +2973,7 @@ const en: Catalog = {
   'friends.searchPlaceholder': 'Search by username…',
   'chat.receipt.read': 'Read',
   'chat.send': 'Send',
+  'chat.copy': 'Copy',
   'dictionary.related': 'Related',
   'dictionary.recent': 'Recent',
   'grammar.title': 'Tips',
@@ -5121,6 +5123,7 @@ const ku: Catalog = {
   'friends.searchPlaceholder': 'Li gorî navê bikarhêner bigere…',
   'chat.receipt.read': 'Xwendî',
   'chat.send': 'Bişîne',
+  'chat.copy': 'Kopî bike',
   'dictionary.related': 'Peywendîdar',
   'dictionary.recent': 'Dawî',
   'grammar.title': 'Serişte',
@@ -7270,6 +7273,7 @@ const de: Catalog = {
   'friends.searchPlaceholder': 'Nach Benutzernamen suchen…',
   'chat.receipt.read': 'Gelesen',
   'chat.send': 'Senden',
+  'chat.copy': 'Kopieren',
   'dictionary.related': 'Verwandt',
   'dictionary.recent': 'Zuletzt',
   'grammar.title': 'Tipps',
@@ -9419,6 +9423,7 @@ const es: Catalog = {
   'friends.searchPlaceholder': 'Busca por nombre de usuario…',
   'chat.receipt.read': 'Leído',
   'chat.send': 'Enviar',
+  'chat.copy': 'Copiar',
   'dictionary.related': 'Relacionado',
   'dictionary.recent': 'Recientes',
   'grammar.title': 'Consejos',
@@ -11568,6 +11573,7 @@ const tr: Catalog = {
   'friends.searchPlaceholder': 'Kullanıcı adına göre ara…',
   'chat.receipt.read': 'Okundu',
   'chat.send': 'Gönder',
+  'chat.copy': 'Kopyala',
   'dictionary.related': 'İlgili',
   'dictionary.recent': 'Son',
   'grammar.title': 'İpuçları',
@@ -13717,6 +13723,7 @@ const ar: Catalog = {
   'friends.searchPlaceholder': 'ابحث باسم المستخدم…',
   'chat.receipt.read': 'مقروء',
   'chat.send': 'إرسال',
+  'chat.copy': 'نسخ',
   'dictionary.related': 'ذات صلة',
   'dictionary.recent': 'الأخيرة',
   'grammar.title': 'نصائح',
@@ -15866,6 +15873,7 @@ const fr: Catalog = {
   'friends.searchPlaceholder': 'Rechercher par nom d’utilisateur…',
   'chat.receipt.read': 'Lu',
   'chat.send': 'Envoyer',
+  'chat.copy': 'Copier',
   'dictionary.related': 'Associés',
   'dictionary.recent': 'Récents',
   'grammar.title': 'Astuces',
@@ -18015,6 +18023,7 @@ const nl: Catalog = {
   'friends.searchPlaceholder': 'Zoek op gebruikersnaam…',
   'chat.receipt.read': 'Gelezen',
   'chat.send': 'Versturen',
+  'chat.copy': 'Kopiëren',
   'dictionary.related': 'Gerelateerd',
   'dictionary.recent': 'Recent',
   'grammar.title': 'Tips',
@@ -20165,6 +20174,7 @@ const ckb: Catalog = {
   'friends.searchPlaceholder': 'بەپێی ناوی بەکارهێنەر بگەڕێ…',
   'chat.receipt.read': 'خوێندراوە',
   'chat.send': 'بنێرە',
+  'chat.copy': 'لەبەرگرتنەوە',
   'dictionary.related': 'پەیوەندیدار',
   'dictionary.recent': 'دواییەکان',
   'grammar.title': 'ئامۆژگاری',

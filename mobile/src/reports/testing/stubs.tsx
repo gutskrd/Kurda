@@ -74,3 +74,10 @@ export function clearLastNotificationResponse(): void {}
 export async function setBadgeCountAsync(): Promise<boolean> {
   return true;
 }
+
+/** expo-clipboard: what was last copied, for a test to read (testing/setup.ts mocks the module with this). */
+export const clipboardStub: { text: string | null } = { text: null };
+export async function setStringAsync(text: string): Promise<boolean> {
+  clipboardStub.text = text;
+  return true;
+}

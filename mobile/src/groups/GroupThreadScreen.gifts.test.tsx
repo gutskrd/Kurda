@@ -11,6 +11,7 @@ vi.mock('@react-navigation/native', () => ({ useNavigation: () => ({ navigate: v
 // the room's live events are not under test here
 vi.mock('../realtime/useRoomEvents', () => ({ useRoomEvents: () => undefined }));
 import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { Alert, type AlertButton } from 'react-native';
 import type { GiftCatalogItem } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -118,9 +119,17 @@ describe('GroupThreadScreen reports', () => {
   const settle = () => act(async () => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 
   const reportTheMessage = async (): Promise<void> => {
+    // a hold opens the message's options, the system's sheet (an alert here): Copy, and Report last
+    const sheets: AlertButton[][] = [];
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      sheets.push(buttons ?? []);
+    });
     fireEvent.mouseDown(await screen.findByText('silav'), { button: 0, buttons: 1 });
     // a hold is a real long press, so wait longer than findBy's default second
-    const reason = await screen.findByRole('button', { name: 'Scam or spam' }, { timeout: 3000 });
+    await waitFor(() => expect(sheets).toHaveLength(1), { timeout: 3000 });
+    expect(sheets[0]!.map((b) => b.text)).toEqual(['Copy', 'Report', 'Cancel']);
+    act(() => sheets[0]!.find((b) => b.text === 'Report')!.onPress?.());
+    const reason = await screen.findByRole('button', { name: 'Scam or spam' });
     await settle();
     fireEvent.click(reason);
     await settle();

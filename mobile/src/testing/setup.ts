@@ -1,3 +1,4 @@
+import { vi } from 'vitest';
 import { configure } from '@testing-library/dom';
 
 /*
@@ -9,3 +10,10 @@ import { configure } from '@testing-library/dom';
  * there.
  */
 configure({ asyncUtilTimeout: 4000 });
+
+/*
+ * The clipboard is a native module, which needs the app's runtime to load at
+ * all. Every test gets the stand-in, which keeps what was copied
+ * (reports/testing/stubs.ts `clipboardStub`) so a test can check it.
+ */
+vi.mock('expo-clipboard', () => import('../reports/testing/stubs'));

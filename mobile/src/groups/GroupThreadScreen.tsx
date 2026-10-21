@@ -26,6 +26,7 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
+import { messageA11y, openMessageOptions } from '../chat/messageOptions';
 import { useI18n } from '../i18n/I18nContext';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
@@ -64,8 +65,8 @@ type Message = Omit<GroupMessage, 'body'> & ChatMessage;
  * swapped in. When one is opened the room is told (`group_msg_gift_opened`)
  * and the card is fetched again, since it is drawn per viewer.
  *
- * Pressing and holding someone's message reports it; the ⋯ in the header
- * reports the group.
+ * Pressing and holding a message offers its options (Copy, and Report for
+ * someone else's); the ⋯ in the header reports the group.
  */
 export function GroupThreadScreen({
   groupId,
@@ -517,20 +518,21 @@ function Bubble({
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const card = isCardMessage(message) && !message.deleted;
-  // one element for a screen reader (sender and words), with Report among its
-  // actions, unless it holds a control of its own
+  // one element for a screen reader (sender and words), with Copy and Report
+  // among its actions, unless it holds a control of its own
   const whole = message.deleted || !hasControls(message);
   // the controls inside a message (a gift, an invite link) report it too
   const report = mine || message.deleted ? undefined : onReport;
+  // held, a message offers its words to copy and, if it is someone else's, a report
+  const options = { words: card || message.deleted ? null : message.body, onReport: report };
   return (
     <Pressable
-      onLongPress={report}
+      onLongPress={() => openMessageOptions(t, options)}
       delayLongPress={350}
       accessible={whole}
-      accessibilityActions={mine || message.deleted || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
-      onAccessibilityAction={onReport}
+      {...(whole ? messageA11y(t, options) : null)}
       // your own words at the end of the line and theirs (with their face) at its start, whichever side that is
-      style={[styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
+      style={({ pressed }) => [styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
     >
       {!mine ? (
         <InitialsAvatar name={message.username} id={message.senderId} size={28} photoUrl={message.avatarUrl} />
@@ -567,6 +569,8 @@ function Bubble({
 }
 
 const styles = StyleSheet.create({
+  // a held message sinks a little under the finger, so the hold is felt to be doing something
+  held: { transform: [{ scale: 0.97 }] },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },
