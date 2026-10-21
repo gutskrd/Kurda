@@ -29,4 +29,24 @@ describe('Settings → About Hevalo', () => {
     expect(open).toHaveBeenCalledWith('https://hevalo.app/copyright');
     expect(COPYRIGHT_URL).toBe('https://hevalo.app/copyright');
   });
+
+  /*
+   * App Review looks for the privacy policy and a way to reach a person from
+   * inside the app, not only on the website.
+   */
+  it('opens the terms, the privacy policy and how Hevalo teaches, and writes to support', () => {
+    testAuth.client = fakeClient();
+    const open = vi.spyOn(Linking, 'openURL').mockResolvedValue(true);
+    renderWithProviders(<SettingsScreen onExit={() => undefined} />);
+    fireEvent.click(screen.getByText('Terms of Use'));
+    fireEvent.click(screen.getByText('Privacy Policy'));
+    fireEvent.click(screen.getByText('How Hevalo teaches'));
+    fireEvent.click(screen.getByText('Contact support'));
+    expect(open.mock.calls.map((c) => c[0])).toEqual([
+      'https://hevalo.app/terms',
+      'https://hevalo.app/privacy',
+      'https://hevalo.app/how-hevalo-teaches',
+      'mailto:support@hevalo.app',
+    ]);
+  });
 });

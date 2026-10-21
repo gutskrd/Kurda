@@ -47,7 +47,7 @@ import { EmptyState } from '../theme/EmptyState';
 import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
-import { ItemArt, KindChips, KindHeading, OptionRow, PremiumPill, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
+import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -459,7 +459,7 @@ function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') =
   return `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 }
 
-/** One item in the list: its picture, name, meaning, Premium where it is, and its price. */
+/** One item in the list: its picture, name, meaning and price. */
 function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -470,9 +470,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[item.name, item.description, priceWords(item, t), item.premiumOnly ? t('profile.premium') : null]
-        .filter(Boolean)
-        .join(', ')}
+      accessibilityLabel={[item.name, item.description, priceWords(item, t)].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill, opacity: pressed ? 0.8 : 1 }]}
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
@@ -483,15 +481,15 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
         {/*
           The names are Kurmancî and the meanings English whatever the app is
           in, so they read in their own direction (`free`), lined up with the
-          screen. Premium is a crown beside the name: nearly everything on sale
-          is, and a pill on every row said it forty times; the item's own sheet
-          says it in words.
+          screen.
+
+          No Premium crown: Premium cannot be had in the app, and a mark for
+          something nobody can get is an advert for nothing.
         */}
         <View style={[styles.nameRow, { flexDirection: dir.row }]}>
           <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
             {item.name}
           </Text>
-          {item.premiumOnly ? <Icon name="crown" size={14} color={colors.gold} /> : null}
         </View>
         {item.description ? (
           <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -541,7 +539,6 @@ function ItemDetail({
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {item.name}
       </Text>
-      {item.premiumOnly ? <PremiumPill /> : null}
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
       <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.accent }]}>{priceWords(item, t)}</Text>
 
@@ -577,7 +574,7 @@ function ItemDetail({
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
             {t('shop.notEnough', { currency: currencyLabel(item.currency) })}{' '}
-            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.gemPacksSoon')}
+            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
           </Text>
           {item.currency === 'zer' ? (
             <ClayButton label={t('shop.earnZer')} tone="accent" onPress={onEarnMore} />

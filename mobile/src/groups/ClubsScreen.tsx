@@ -1,12 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { BottomSheet } from '../theme/BottomSheet';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -190,59 +189,49 @@ function NewClub({
   };
 
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.cancel')}>
-        <SheetIn>
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors.background }]}
-            onPress={() => undefined}
-          >
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]}>{t('groups.new')}</Text>
+    // the shared sheet: it moves up out of the keyboard's way while the name is typed
+    <BottomSheet visible={open} onClose={onClose} title={t('groups.new')}>
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
+      <TextInput
+        style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+        value={name}
+        onChangeText={setName}
+        placeholder={t('groups.namePlaceholder')}
+        placeholderTextColor={colors.textSecondary}
+        maxLength={60}
+        accessibilityLabel={t('groups.name')}
+      />
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-              value={name}
-              onChangeText={setName}
-              placeholder={t('groups.namePlaceholder')}
-              placeholderTextColor={colors.textSecondary}
-              maxLength={60}
-              accessibilityLabel={t('groups.name')}
-            />
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.description')}</Text>
+      <TextInput
+        style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+        value={description}
+        onChangeText={setDescription}
+        multiline
+        maxLength={300}
+        accessibilityLabel={t('groups.description')}
+      />
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.description')}</Text>
-            <TextInput
-              style={[styles.input, styles.multiline, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              maxLength={300}
-              accessibilityLabel={t('groups.description')}
-            />
+      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.privacy')}</Text>
+      <Segmented<Privacy>
+        options={PRIVACIES}
+        value={privacy}
+        onChange={setPrivacy}
+        labelOf={(p) => t(p === 'open' ? 'settings.visibility.everyone' : 'groups.inviteOnly')}
+      />
+      <Text style={[styles.hint, { color: colors.textSecondary }]}>
+        {t(privacy === 'open' ? 'groups.privacy.openHint' : 'groups.privacy.inviteHint')}
+      </Text>
 
-            <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.privacy')}</Text>
-            <Segmented<Privacy>
-              options={PRIVACIES}
-              value={privacy}
-              onChange={setPrivacy}
-              labelOf={(p) => t(p === 'open' ? 'settings.visibility.everyone' : 'groups.inviteOnly')}
-            />
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>
-              {t(privacy === 'open' ? 'groups.privacy.openHint' : 'groups.privacy.inviteHint')}
-            </Text>
+      {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
 
-            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
-
-            <ClayButton
-              label={busy ? t('groups.creating') : t('groups.create')}
-              tone="primary"
-              onPress={submit}
-              style={name.trim().length >= 2 && !busy ? undefined : styles.dim}
-            />
-          </Pressable>
-        </SheetIn>
-      </Pressable>
-    </Modal>
+      <ClayButton
+        label={busy ? t('groups.creating') : t('groups.create')}
+        tone="primary"
+        onPress={submit}
+        style={name.trim().length >= 2 && !busy ? undefined : styles.dim}
+      />
+    </BottomSheet>
   );
 }
 
@@ -263,9 +252,6 @@ const styles = StyleSheet.create({
   joined: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.sm },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg },
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: { margin: spacing.lg, padding: spacing.md, borderRadius: radii.lg, gap: spacing.sm },
-  sheetTitle: { ...display(typography.sizes.lg) },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   input: {
     minHeight: MIN_TOUCH_TARGET,

@@ -84,10 +84,14 @@ function typeOf(uri: string): string {
   return ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
 }
 
-/** The photo library, several at once, in the order they were tapped. */
-async function pickFromLibrary(room: number): Promise<PickedPicture[] | 'denied'> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return 'denied';
+/**
+ * The photo library, several at once, in the order they were tapped.
+ *
+ * No permission is asked for first: the system's own picker runs outside the
+ * app and hands back only the pictures chosen, so there is nothing to grant.
+ * Asking anyway meant somebody who said no could not pick a picture at all.
+ */
+async function pickFromLibrary(room: number): Promise<PickedPicture[]> {
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsMultipleSelection: room > 1,
@@ -140,7 +144,7 @@ export function ComposeScreen({
   onExit: () => void;
   /** a post went up or was saved */
   onPosted?: (post: ComposerPost) => void;
-  pick?: (room: number) => Promise<PickedPicture[] | 'denied'>;
+  pick?: (room: number) => Promise<PickedPicture[]>;
   upload?: typeof uploadPicture;
   /** where the draft is kept; this phone's storage when left out */
   store?: DeviceStore;
@@ -215,10 +219,6 @@ export function ComposeScreen({
     if (room === 0) return;
     setNotice(null);
     const picked = await pick(room);
-    if (picked === 'denied') {
-      setNotice(t('picture.accessHelp'));
-      return;
-    }
     for (const p of picked.slice(0, room)) {
       const localUri = await keepPicture(p.uri);
       const picture: ComposerPicture = {

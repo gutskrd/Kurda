@@ -91,7 +91,7 @@ describe('the Shop, by kind', () => {
 
   it('shows each item’s picture, shaped by its kind, and a glyph for the tag that has none', async () => {
     open();
-    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr, Premium$/ });
+    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr$/ });
     // the picture is drawn once it starts loading, an effect after the row
     await waitFor(() => expect(glass.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/icons/made-08-caydan.png'));
     const lake = screen.getByRole('button', { name: /^Gola Şîn/ });

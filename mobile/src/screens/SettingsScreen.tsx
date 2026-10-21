@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Toggle, useSwitchThumb } from '../theme/Toggle';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -22,9 +22,10 @@ import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { useVibrationPref } from '../feedback/vibrationPref';
 import { haptic } from '../feedback/haptics';
 import { SkeletonText } from '../theme/Skeleton';
+import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
-export const COPYRIGHT_URL = 'https://hevalo.app/copyright';
+export const COPYRIGHT_URL = LEGAL_URLS.copyright;
 
 /**
  * Settings hub (KUR-270). One place for preferences, notifications, privacy and
@@ -352,15 +353,23 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
         <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.about')}</Text>
         {/* tell us what you think, and (once the app is in the stores) rate it there */}
         <FeedbackSettingsRows />
-        {/* the copyright page on the website: a notice from a rights holder, and how one is handled */}
+        {/*
+          The website's pages the app answers to: how it teaches, the rules,
+          what happens to your data, a rights holder's notice, and a person to
+          write to. Each opens on hevalo.app, so there is one copy of each.
+        */}
         <GlassCard padding="tight">
+          <GlassRow icon="book" iconColor={colors.textSecondary} title={t('settings.teaching')} onPress={() => openLegal('teaching')} />
+          <GlassRow icon="link" iconColor={colors.textSecondary} title={t('auth.legal.terms')} onPress={() => openLegal('terms')} />
+          <GlassRow icon="link" iconColor={colors.textSecondary} title={t('auth.legal.privacy')} onPress={() => openLegal('privacy')} />
           <GlassRow
             icon="link"
             iconColor={colors.textSecondary}
             title={t('settings.copyright.title')}
             subtitle={t('settings.copyright.hint')}
-            onPress={() => void Linking.openURL(COPYRIGHT_URL).catch(() => undefined)}
+            onPress={() => openLegal('copyright')}
           />
+          <GlassRow icon="mail-fill" iconColor={colors.textSecondary} title={t('settings.support')} subtitle={SUPPORT_EMAIL} onPress={() => openLegal('support')} />
         </GlassCard>
         <GlassCard>
           <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.credits.title')}</Text>

@@ -28,6 +28,9 @@ import { useKeyboardPrefs } from './prefs';
 /** The phones this card has steps for; the browser has its own guide for computers. */
 const PHONES: readonly KeyboardPlatform[] = ['ios', 'android'];
 
+/** The app on an iPhone or an Android phone, which knows which it is, rather than in a browser. */
+const ON_A_PHONE = Platform.OS === 'ios' || Platform.OS === 'android';
+
 const PHONE_LABEL: Record<string, TranslationKey> = {
   ios: 'keyboard.guide.onIphone',
   android: 'keyboard.guide.onAndroid',
@@ -108,27 +111,35 @@ export function KeyboardGuide({
             {t(sorani ? 'keyboard.guide.leadSorani' : 'keyboard.guide.lead')}
           </Text>
 
-          <View style={styles.platformRow} accessibilityRole="radiogroup">
-            {PHONES.map((p) => {
-              const on = p === platform;
-              return (
-                <Pressable
-                  key={p}
-                  onPress={() => setPlatform(p)}
-                  accessibilityRole="radio"
-                  accessibilityState={{ checked: on }}
-                  style={[
-                    styles.platform,
-                    { backgroundColor: on ? colors.primary : colors.controlTrack },
-                  ]}
-                >
-                  <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
-                    {t(PHONE_LABEL[p]!)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
+          {/*
+            The other phone's steps only where the phone is not known (the
+            app run in a browser). On an iPhone, steps for Android and a
+            word about the Play Store are no help, and App Review reads
+            them as instructions for somebody else's platform.
+          */}
+          {ON_A_PHONE ? null : (
+            <View style={styles.platformRow} accessibilityRole="radiogroup">
+              {PHONES.map((p) => {
+                const on = p === platform;
+                return (
+                  <Pressable
+                    key={p}
+                    onPress={() => setPlatform(p)}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: on }}
+                    style={[
+                      styles.platform,
+                      { backgroundColor: on ? colors.primary : colors.controlTrack },
+                    ]}
+                  >
+                    <Text style={[styles.platformText, { color: on ? colors.textOnPrimary : colors.textPrimary }]}>
+                      {t(PHONE_LABEL[p]!)}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
 
           <View style={styles.steps}>
             {steps.map((step, i) => (

@@ -18,6 +18,7 @@ import { AuthScreenShell, Field, FormError, LinkText, SubmitButton } from './Aut
 import { useI18n } from '../../i18n/I18nContext';
 import { BirthMonthFields } from '../../auth/BirthMonthFields';
 import { birthMonthOf, EMPTY_BIRTH_MONTH } from '../../auth/birthMonth';
+import { AgreeLine } from '../../legal/links';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Register'>;
 
@@ -136,7 +137,8 @@ export function RegisterScreen({ navigation }: Props) {
       ) : null}
       <BirthMonthFields value={birth} onChange={setBirth} error={errors.birth} disabled={busy} />
       <SubmitButton label={busy ? t('auth.register.submitting') : t('auth.register.submit')} busy={busy} onPress={submit} />
-      <Text style={[styles.terms, { color: colors.textSecondary }]}>{t('auth.register.terms')}</Text>
+      {/* the rules and the privacy policy, each a link, before an account exists */}
+      <AgreeLine style={styles.terms} />
       <LinkText
         label={`${t('auth.register.haveAccount')} ${t('auth.register.signIn')}`}
         onPress={() => navigation.navigate('Login')}
@@ -159,9 +161,5 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
     fontSize: typography.sizes.xs,
   },
-  terms: {
-    marginTop: spacing.sm,
-    fontSize: typography.sizes.xs,
-    textAlign: 'center',
-  },
+  terms: { marginTop: spacing.sm },
 });

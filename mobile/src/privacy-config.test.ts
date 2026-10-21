@@ -43,8 +43,20 @@ describe('iOS privacy config (KUR-277)', () => {
     expect(mic).toBeTruthy();
     expect(photos!.length).toBeGreaterThan(20);
     expect(mic!.length).toBeGreaterThan(20);
-    // camera permission must NOT be requested — the app never opens the camera
-    expect(pluginConfig('expo-image-picker')).not.toHaveProperty('cameraPermission');
+    // the app never opens the camera or asks for Face ID. Leaving the option
+    // out is not enough: each plugin then writes its own generic "Allow Hevalo
+    // to access…" string into the app, which App Review rejects as vague.
+    // `false` is what keeps the key out altogether.
+    expect(pluginConfig('expo-image-picker')?.cameraPermission).toBe(false);
+    expect(pluginConfig('expo-secure-store')?.faceIDPermission).toBe(false);
+  });
+
+  /*
+   * Nothing plays while the app is in the background, so it does not claim
+   * the background audio mode, which App Review checks is actually used.
+   */
+  it('does not claim background audio', () => {
+    expect(pluginConfig('expo-audio')?.enableBackgroundPlayback).toBe(false);
   });
 
   it('declares the required-reason APIs the runtime uses, with reason codes', () => {
@@ -59,15 +71,33 @@ describe('iOS privacy config (KUR-277)', () => {
     }
   });
 
-  it('declares the account/content data the app collects', () => {
+  /*
+   * What the app and its server actually keep, no more and no less: the
+   * manifest and the App Store privacy label have to match what is collected.
+   * Messages, game results, feedback, the install's random device id, the
+   * birth month and self-chosen identity tags are kept; a phone number is
+   * never asked for, and no crash reports are sent anywhere.
+   */
+  it('declares exactly the data the app collects', () => {
     const types = new Set(privacyManifests.NSPrivacyCollectedDataTypes.map((d) => d.NSPrivacyCollectedDataType));
     for (const t of [
-      'NSPrivacyCollectedDataTypeEmailAddress',
-      'NSPrivacyCollectedDataTypePhotosorVideos',
-      'NSPrivacyCollectedDataTypeAudioData',
-      'NSPrivacyCollectedDataTypeUserID',
+      'EmailAddress',
+      'Name',
+      'UserID',
+      'PhotosorVideos',
+      'AudioData',
+      'OtherUserContent',
+      'EmailsOrTextMessages',
+      'GameplayContent',
+      'CustomerSupport',
+      'DeviceID',
+      'SensitiveInfo',
+      'OtherDataTypes',
     ]) {
-      expect(types.has(t)).toBe(true);
+      expect(types.has(`NSPrivacyCollectedDataType${t}`), t).toBe(true);
+    }
+    for (const t of ['PhoneNumber', 'CrashData', 'PreciseLocation', 'Contacts', 'AdvertisingData']) {
+      expect(types.has(`NSPrivacyCollectedDataType${t}`), t).toBe(false);
     }
   });
 });

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -10,7 +11,9 @@ import {
   View,
 } from 'react-native';
 import type { GiftCard, GiftTier } from '@kurda/shared';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
+import type { RootNavigation } from '../navigation/rootStack';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -20,6 +23,9 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, lineOf } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { showActions } from '../theme/actionSheet';
+import { blockUser } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { SendButton } from './SendButton';
@@ -61,6 +67,7 @@ export function ChatScreen({
   onExit: () => void;
 }) {
   const { client, user } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
   // in Soranî and Arabic the thread is mirrored: your own words on the left, the composer's Send on the left too
@@ -77,6 +84,8 @@ export function ChatScreen({
   const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
+  // the header's report: about the person, not one message
+  const [reportingPerson, setReportingPerson] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   // the gift the way in asked for, once unwrapped — by id, so a second banner
@@ -185,6 +194,32 @@ export function ChatScreen({
     [client, userId],
   );
 
+  // the person, not one message: their profile, a report, or a block
+  const personMenu = useCallback(() => {
+    showActions({
+      title: name,
+      cancel: t('common.cancel'),
+      actions: [
+        { label: t('chat.viewProfile'), onPress: () => navigation.navigate('UserProfile', { userId }) },
+        { label: t('report.title.named', { name }), onPress: () => setReportingPerson(true) },
+        {
+          label: t('report.done.block', { name }),
+          destructive: true,
+          onPress: () =>
+            Alert.alert(t('moderation.blockWhoTitle', { name }), t('moderation.blockNote'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('moderation.block'),
+                style: 'destructive',
+                // blocked: the conversation is over for you
+                onPress: () => void blockUser(client, userId).then((res) => (res.ok ? onExit() : undefined)),
+              },
+            ]),
+        },
+      ],
+    });
+  }, [client, name, navigation, onExit, t, userId]);
+
   const send = useCallback(async () => {
     const body = draft.trim();
     if (!body) return;
@@ -203,7 +238,19 @@ export function ChatScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScreenHeader title={name} onBack={onExit} hairline />
+        {/*
+          Report and block where anybody would look for them: at the top of
+          the conversation, about the person, as well as on a held message
+          about that message.
+        */}
+        <ScreenHeader
+          title={name}
+          onBack={onExit}
+          hairline
+          right={
+            <HeaderButton icon="more" label={t('chat.moreAbout', { name })} onPress={personMenu} edge="end" />
+          }
+        />
 
         {loading ? (
           <ThreadSkeleton mirrored={mirrored} />
@@ -310,6 +357,17 @@ export function ChatScreen({
         />
       ) : null}
 
+      <ReportSheet
+        visible={reportingPerson}
+        target={{ type: 'user', userId }}
+        name={name || undefined}
+        blockable={{ userId, name: name || null }}
+        onClose={() => setReportingPerson(false)}
+        onBlocked={() => {
+          setReportingPerson(false);
+          onExit();
+        }}
+      />
       <ReportSheet
         visible={reporting !== null}
         target={{ type: 'dm_message', messageId: reporting ?? '' }}

@@ -106,11 +106,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
 
   const pickAndUpload = useCallback(async () => {
     if (uploading) return;
-    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert(t('photo.accessNeeded'), t('photo.helpPost'));
-      return;
-    }
+    // the system picker hands back only the chosen picture, so there is no permission to ask for
     const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
     const asset = picked.canceled ? null : picked.assets[0];
     if (!asset) return;

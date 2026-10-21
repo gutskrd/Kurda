@@ -14,7 +14,6 @@ vi.mock('@react-navigation/native', () => ({
 }));
 // the phone's picture library: one picture, chosen
 vi.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
   launchImageLibraryAsync: async () => ({ canceled: false, assets: [{ uri: 'file:///pic.jpg', mimeType: 'image/jpeg' }] }),
 }));
 // the upload streams the file itself, past the client; the test says what the server answers
