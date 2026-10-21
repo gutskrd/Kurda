@@ -1,7 +1,7 @@
 /**
- * The shop's backgrounds and icons, the photo editor's stickers, the flag the
- * "Ala" filter lays over a picture, and the admin's backdrop — every one of
- * them drawn by code: this file and the modules in scripts/cosmetic-art/.
+ * The shop's backgrounds and icons, the photo editor's stickers and the flag
+ * the "Ala" filter lays over a picture — every one of them drawn by code: this
+ * file and the modules in scripts/cosmetic-art/.
  *
  *   node scripts/generate-cosmetic-art.mjs              write into the repo
  *   node scripts/generate-cosmetic-art.mjs --out <dir>  write the same tree under <dir>
@@ -79,7 +79,7 @@
  * `web/public/cosmetics/backgrounds`, `web/public/cosmetics/icons` and
  * `web/public/stickers` belong to this script whole: a file in them that it did
  * not write is removed when it runs against the repo. It also writes
- * `web/public/filters/kurdistan.webp` and `admin/public/background.jpg`.
+ * `web/public/filters/kurdistan.webp`.
  */
 import fs from 'node:fs';
 import os from 'node:os';
@@ -92,15 +92,12 @@ import {
   C,
   Canvas,
   FLAG,
-  between,
   blur,
   doc,
   linear,
   n,
   poly,
-  pt,
   radial,
-  radialAt,
   random,
   seedOf,
   sunRays,
@@ -114,92 +111,6 @@ import { renderStill } from './cosmetic-art/still.mjs';
 export { BACKGROUNDS, ICONS };
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-
-// ────────────────────────────────────────────────────────── landscape layers
-
-/** The sky: a vertical gradient over the whole canvas. */
-function sky(cv, stops, angle = 0) {
-  const id = cv.id('sky');
-  // a slight slant keeps a wide gradient from reading as horizontal stripes
-  const dx = Math.sin((angle * Math.PI) / 180) / 2;
-  cv.def(linear(id, stops, 0.5 - dx, 0, 0.5 + dx, 1));
-  cv.add(`<rect width="${cv.w}" height="${cv.h}" fill="url(#${id})"/>`);
-}
-
-/** A soft round light — a sun's halo, a glow behind a ridge. */
-function glow(cv, cx, cy, r, colour, opacity) {
-  const id = cv.id('glow');
-  cv.def(radialAt(id, [[0, colour, opacity], [0.45, colour, opacity * 0.45], [1, colour, 0]], cx, cy, r));
-  cv.add(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${id})"/>`);
-}
-
-/**
- * The tops of a ridge, left to right, past both edges so nothing ends in the
- * frame. `jag` is how far a peak may stray from the line through its
- * neighbours.
- */
-function ridgePoints(rnd, w, { base, amp, peaks }) {
-  const out = [];
-  const step = (w + 200) / peaks;
-  for (let i = 0; i <= peaks; i++) {
-    const x = -100 + i * step + between(rnd, -0.3, 0.3) * step;
-    // alternate high and low so it reads as peaks and saddles, then vary both
-    const high = i % 2 === 0;
-    const y = base - (high ? between(rnd, 0.55, 1) : between(rnd, 0.05, 0.4)) * amp;
-    out.push([x, y]);
-  }
-  return out;
-}
-
-/** Straight-sided mountains: a polyline of peaks, closed along the bottom. */
-function mountains(cv, rnd, { base, amp, peaks, fill, snow }) {
-  const tops = ridgePoints(rnd, cv.w, { base, amp, peaks });
-  const d = `M${pt([-100, cv.h + 10])} L${poly(tops)} L${pt([cv.w + 100, cv.h + 10])} Z`;
-  cv.add(`<path d="${d}" fill="${fill}"/>`);
-  if (snow) {
-    // a cap on each high peak: the peak and two points part-way down its flanks
-    for (let i = 0; i < tops.length; i++) {
-      if (i % 2 !== 0) continue;
-      const [x, y] = tops[i];
-      const left = tops[i - 1] ?? [x - 120, y + amp];
-      const right = tops[i + 1] ?? [x + 120, y + amp];
-      const k = 0.28;
-      const l = [x + (left[0] - x) * k, y + (left[1] - y) * k];
-      const r = [x + (right[0] - x) * k, y + (right[1] - y) * k];
-      const mid = [x + between(rnd, -8, 8), y + Math.min(l[1] - y, r[1] - y) * 0.75];
-      cv.add(`<path d="M${pt(l)} L${pt([x, y])} L${pt(r)} L${pt([(r[0] + mid[0]) / 2, mid[1] + 6])} L${pt(mid)} L${pt([(l[0] + mid[0]) / 2, mid[1] + 4])} Z" fill="${snow}"/>`);
-    }
-  }
-  return tops;
-}
-
-/**
- * Rounded hills: the same kind of ridge, drawn through with a Catmull-Rom curve
- * so it rolls rather than peaks.
- */
-function hills(cv, rnd, { base, amp, peaks, fill }) {
-  const p = ridgePoints(rnd, cv.w, { base, amp, peaks });
-  let d = `M${pt([-100, cv.h + 10])} L${pt(p[0])}`;
-  for (let i = 0; i < p.length - 1; i++) {
-    const p0 = p[i - 1] ?? p[i];
-    const p1 = p[i];
-    const p2 = p[i + 1];
-    const p3 = p[i + 2] ?? p2;
-    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += ` C${pt(c1)} ${pt(c2)} ${pt(p2)}`;
-  }
-  d += ` L${pt([cv.w + 100, cv.h + 10])} Z`;
-  cv.add(`<path d="${d}" fill="${fill}"/>`);
-  return p;
-}
-
-/** A band of haze that fades in and out again — distance between two ridges. */
-function mist(cv, y, h, colour, opacity) {
-  const id = cv.id('mist');
-  cv.def(linear(id, [[0, colour, 0], [0.5, colour, opacity], [1, colour, 0]]));
-  cv.add(`<rect x="0" y="${n(y)}" width="${cv.w}" height="${n(h)}" fill="url(#${id})"/>`);
-}
 
 // ──────────────────────────────────────────────────────────── backgrounds
 
@@ -591,7 +502,6 @@ export async function renderSticker(piece) {
 
 export const stickerFile = (piece) => `web/public/stickers/${piece.file}.webp`;
 export const OVERLAY_FILE = 'web/public/filters/kurdistan.webp';
-export const ADMIN_FILE = 'admin/public/background.jpg';
 /** Folders nothing but this script writes into. */
 export const OWNED_DIRS = ['web/public/cosmetics/backgrounds', 'web/public/cosmetics/icons', 'web/public/stickers'];
 
@@ -671,45 +581,7 @@ export async function renderFlagOverlay() {
   return webpWithin(placed.data, placed.info, OVERLAY.maxBytes, { alpha: true, start: 90 });
 }
 
-// ──────────────────────────────────────────────────────── the admin's backdrop
-
-/**
- * Behind the admin's glass panels, under a scrim that washes it nearly out:
- * so a soft dawn with a ridge or two, and nothing with detail to fight a table.
- */
-export async function renderAdminBackdrop() {
-  const cv = new Canvas(1600, 900);
-  const rnd = random(seedOf('admin'));
-  sky(cv, [[0, '#cfd9ee'], [0.5, '#f3d9e4'], [1, '#fbe9d6']], 10);
-  glow(cv, 1150, 260, 700, '#ffffff', 0.6);
-  mountains(cv, rnd, { base: 640, amp: 160, peaks: 9, fill: '#b9b4d6' });
-  mist(cv, 590, 140, '#ffffff', 0.3);
-  hills(cv, rnd, { base: 760, amp: 90, peaks: 6, fill: '#9fc49a' });
-  hills(cv, rnd, { base: 880, amp: 60, peaks: 5, fill: '#83b07e' });
-  const { data, info } = await rasterise(cv.svg());
-  return sharp(dither(data, info.channels, seedOf('admin:grain')), { raw: info }).removeAlpha().jpeg({ quality: 86, mozjpeg: true }).toBuffer();
-}
-
 // ─────────────────────────────────────────────────────────────── rendering
-
-/**
- * Dither: ±1 level of seeded noise before encoding.
- *
- * A gradient across 720 pixels moves one 8-bit level every few rows, and the
- * encoder turns those steps into visible bands. A little noise breaks the steps
- * up; seeded, so it is the same noise every time.
- */
-function dither(raw, channels, seed) {
-  const rnd = random(seed);
-  const out = Buffer.from(raw);
-  for (let i = 0; i < out.length; i += channels) {
-    const d = rnd() + rnd() - 1;
-    for (let c = 0; c < 3; c++) {
-      out[i + c] = Math.max(0, Math.min(255, Math.round(out[i + c] + d * 1.5)));
-    }
-  }
-  return out;
-}
 
 async function rasterise(svg) {
   return sharp(Buffer.from(svg), { density: 72 }).raw().toBuffer({ resolveWithObject: true });
@@ -760,7 +632,6 @@ const DRAW = {
   icon: (i) => renderIcon(ICONS[i]),
   sticker: (i) => renderSticker(STICKERS[i]),
   overlay: () => renderFlagOverlay(),
-  admin: () => renderAdminBackdrop(),
 };
 
 /**
@@ -821,7 +692,6 @@ export async function renderAll(outRoot, { only = null, log = () => {} } = {}) {
     ...ICONS.map((piece, i) => ({ kind: 'icon', i, name: piece.key, file: iconFile(piece, i) })),
     ...STICKERS.map((piece, i) => ({ kind: 'sticker', i, name: piece.file, file: stickerFile(piece) })),
     { kind: 'overlay', i: 0, name: 'kurdistan', file: OVERLAY_FILE },
-    { kind: 'admin', i: 0, name: 'admin', file: ADMIN_FILE },
   ].filter((job) => wanted(job.name));
   const files = await drawAll(jobs);
   const written = [];

@@ -30,8 +30,9 @@
 # media-src and microphone=(self) are for the Alphabet audio page: an editor
 # records a letter here (the microphone, on this origin only, and only after
 # the browser asks them), hears it back before saving (a blob: URL), and plays
-# what is already stored (the media CDN, over https). Nothing else asks for
-# either.
+# what is already stored (the media CDN, over https). The rain behind every
+# page (/backdrop/, ui/Backdrop.tsx) is the only other media, and it is this
+# origin's own. Nothing else asks for either.
 #
 # style-src-attr 'unsafe-inline' would be tighter, but a browser without
 # CSP3 attribute support falls back to style-src and silently reproduces
@@ -51,3 +52,8 @@
   Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+
+# The backdrop's video and still are not hashed like /assets/, so they are kept
+# a day rather than a year: a new loop reaches everyone by the next morning.
+/backdrop/*
+  Cache-Control: public, max-age=86400, stale-while-revalidate=604800
