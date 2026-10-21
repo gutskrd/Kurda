@@ -321,15 +321,22 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
           <GlassRow icon="shield" iconColor={colors.textSecondary} title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />
         </GlassCard>
 
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
+        {/* how you sign in, and where you are signed in */}
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.security')}</Text>
         <GlassCard padding="tight">
-          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
+          <GlassRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />
+          <GlassRow icon="devices" title={t('security.devices.title')} onPress={() => navigation.navigate('Devices')} />
           <GlassRow
             icon="sign-out"
             title={t('settings.sessions.signOutEverywhere')}
             onPress={signOutEverywhere}
             destructive
           />
+        </GlassCard>
+
+        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
+        <GlassCard padding="tight">
+          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
           <GlassRow
             icon="download"
             title={t('settings.data.request')}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiError } from './types';
-import { CODE_COPY, describeError, isOffline, isRetryable } from './errors';
+import { CODE_COPY, describeError, isOffline, isRetryable, lockedFor } from './errors';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -204,19 +204,123 @@ describe('CODE_COPY', () => {
   });
 
   /**
-   * 792 seconds is what a real lockout came back as, and "try again in 792s"
-   * is accurate and unreadable.
+   * A rate limiter's wait: a long one in minutes and a short one in seconds,
+   * because "try again in 792s" is accurate and unreadable.
    */
   it('counts a long wait in minutes and a short one in seconds', () => {
-    const locked = (retryAfterSec: number) => err({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec, status: 429 });
-    expect(describeError(locked(792), t)).toBe(
+    const limited = (retryAfterSec: number) => err({ kind: 'rate_limited', code: 'RATE_LIMITED', retryAfterSec, status: 429 });
+    expect(describeError(limited(792), t)).toBe(
       interpolate(TRANSLATIONS.en['error.tooManyRetryInMin'], { minutes: 14 }),
     );
-    expect(describeError(locked(45), t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 45 }));
+    expect(describeError(limited(45), t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 45 }));
   });
 
   it('prefers a countdown to a sentence when the server sent one', () => {
-    const limited = err({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec: 30, status: 429 });
+    const limited = err({ kind: 'rate_limited', code: 'TOO_MANY_ATTEMPTS', retryAfterSec: 30, status: 429 });
     expect(describeError(limited, t)).toBe(interpolate(TRANSLATIONS.en['error.tooManyRetryIn'], { seconds: 30 }));
+  });
+});
+
+/*
+ * A sign-in locked after failed attempts says how long, in words a person
+ * uses — "about 15 minutes" — and never a count of seconds, whichever of the
+ * body and the Retry-After header carried it.
+ */
+describe('a locked sign-in', () => {
+  const locked = (over: Partial<ApiError> = {}) => err({ kind: 'rate_limited', code: 'LOCKED', status: 429, ...over });
+
+  it('says about how long to wait, from the details the server sent', () => {
+    expect(describeError(locked({ details: { retryAfterSec: 900 } }), t)).toBe(
+      'There have been several failed sign-in attempts. For your safety, wait about 15 minutes and try again, or reset your password.',
+    );
+    // what is left of a lock rounds up to the next five minutes past ten
+    expect(describeError(locked({ details: { retryAfterSec: 792 } }), t)).toBe(
+      'There have been several failed sign-in attempts. For your safety, wait about 15 minutes and try again, or reset your password.',
+    );
+    expect(describeError(locked({ details: { retryAfterSec: 3600 } }), t)).toBe(
+      'There have been several failed sign-in attempts. For your safety, wait about an hour and try again, or reset your password.',
+    );
+  });
+
+  it('reads the Retry-After header when the body has no number', () => {
+    expect(describeError(locked({ retryAfterSec: 7200 }), t)).toBe('There have been several failed sign-in attempts. For your safety, wait about 2 hours and try again, or reset your password.');
+  });
+
+  it('never says seconds, however short or long the lock', () => {
+    for (const seconds of [1, 45, 61, 299, 600, 792, 1700, 3599, 5400, 86_400]) {
+      for (const locale of ['en', 'ku'] as const) {
+        const said = describeError(locked({ details: { retryAfterSec: seconds } }), translator(locale));
+        expect(said, `${locale} ${seconds}`).not.toContain(String(seconds));
+        expect(said, `${locale} ${seconds}`).not.toMatch(/\{\w+\}/);
+      }
+    }
+    expect(lockedFor(45, t)).toBe(TRANSLATIONS.en['error.code.lockedMinute']);
+    expect(lockedFor(299, t)).toBe(interpolate(TRANSLATIONS.en['error.code.lockedMinutes'], { count: 5 }));
+    expect(lockedFor(1700, t)).toBe(interpolate(TRANSLATIONS.en['error.code.lockedMinutes'], { count: 30 }));
+    expect(lockedFor(3599, t)).toBe(TRANSLATIONS.en['error.code.lockedHour']);
+    expect(lockedFor(86_400, t)).toBe(interpolate(TRANSLATIONS.en['error.code.lockedHours'], { count: 24 }));
+  });
+
+  it('says it in Kurmancî too', () => {
+    expect(describeError(locked({ details: { retryAfterSec: 900 } }), translator('ku'))).toBe(
+      interpolate(TRANSLATIONS.ku['error.code.lockedMinutes'], { count: 15 }),
+    );
+  });
+
+  it('falls back to the plain sentence when no wait came with it', () => {
+    expect(describeError(locked(), t)).toBe(TRANSLATIONS.en['error.code.locked']);
+  });
+});
+
+describe('signing in safely', () => {
+  it('words a password found in a data leak', () => {
+    const breached = err({ kind: 'client', status: 400, code: 'PASSWORD_BREACHED', details: { reason: 'breached' } });
+    expect(describeError(breached, t)).toBe('This password has shown up in a data leak, so it isn’t safe. Choose a different one.');
+  });
+
+  /*
+   * No challenge is configured yet, so there is nothing to solve: the answer
+   * is a pause and a way round it, whichever count asked for it.
+   */
+  it('asks calmly for a pause, or a reset, when sign-in wants the challenge', () => {
+    for (const reason of ['attempts', 'network', 'surge']) {
+      const said = describeError(err({ kind: 'client', status: 403, code: 'CAPTCHA_REQUIRED', details: { captchaRequired: true, reason } }), t);
+      expect(said).toBe('There have been several failed sign-in attempts. For your safety, wait a few minutes and try again, or reset your password.');
+    }
+  });
+
+  it('words the refusals of a password change and of signing a device out', () => {
+    expect(describeError(err({ kind: 'client', status: 400, code: 'WRONG_PASSWORD' }), t)).toBe('Your current password isn’t right.');
+    expect(describeError(err({ kind: 'client', status: 400, code: 'NO_PASSWORD' }), t)).toBe('Your account doesn’t have a password yet.');
+    expect(describeError(err({ kind: 'client', status: 404, code: 'SESSION_NOT_FOUND' }), t)).toBe('That device is already signed out.');
+  });
+
+  /*
+   * A wrong address and a wrong password are one answer: anything else tells
+   * a stranger which addresses have accounts.
+   */
+  it('never says which of the email and the password was wrong', () => {
+    const wrongEmail = describeError(err({ kind: 'client', status: 401, code: 'INVALID_CREDENTIALS', message: 'no such user' }), t);
+    const wrongPassword = describeError(err({ kind: 'client', status: 401, code: 'INVALID_CREDENTIALS', message: 'wrong password' }), t);
+    expect(wrongEmail).toBe(wrongPassword);
+    expect(wrongEmail).toMatch(/email/i);
+    expect(wrongEmail).toMatch(/password/i);
+  });
+
+  it('has every new sentence in every language', () => {
+    for (const locale of ['en', 'ku'] as const) {
+      for (const code of ['PASSWORD_BREACHED', 'CAPTCHA_REQUIRED', 'WRONG_PASSWORD', 'NO_PASSWORD', 'SESSION_NOT_FOUND']) {
+        const said = describeError(err({ kind: 'client', code }), translator(locale));
+        expect(said, `${locale} ${code}`).not.toBe('raw technical detail');
+      }
+    }
+    // and none is English left standing in another language
+    for (const locale of Object.keys(TRANSLATIONS) as Array<keyof typeof TRANSLATIONS>) {
+      if (locale === 'en') continue;
+      for (const code of ['PASSWORD_BREACHED', 'CAPTCHA_REQUIRED', 'WRONG_PASSWORD', 'NO_PASSWORD', 'SESSION_NOT_FOUND']) {
+        const key = CODE_COPY[code]!;
+        expect(TRANSLATIONS[locale][key], `${locale} ${code}`).not.toBe(TRANSLATIONS.en[key]);
+      }
+    }
   });
 });

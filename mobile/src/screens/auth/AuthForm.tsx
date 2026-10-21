@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -107,6 +107,11 @@ export function AuthScreenShell({
  *
  * A secure field gets the eye, because a password you cannot read is a password
  * you mistype on a phone keyboard, and the web has had the toggle all along.
+ *
+ * A form of several fields says on the keyboard where Return goes: Next to the
+ * field below, keeping the keyboard up, and Done on the last, which sends it.
+ *
+ * In Soranî and Arabic the label, the typing and the eye start on the right.
  */
 export function Field(props: {
   label: string;
@@ -119,21 +124,27 @@ export function Field(props: {
   placeholder?: string;
   /** what the keychain should offer here */
   complete?: 'email' | 'username' | 'current-password' | 'new-password';
+  returnKeyType?: 'next' | 'done';
+  onSubmitEditing?: () => void;
+  inputRef?: Ref<TextInput>;
   testID?: string;
 }) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
+  const mirrored = dir.row === 'row-reverse';
   const [reveal, setReveal] = useState(false);
   const hidden = props.secure && !reveal;
 
   return (
     <View style={styles.field}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{props.label}</Text>
+      <Text style={[styles.label, dir.text, { color: colors.textSecondary }]}>{props.label}</Text>
       <View>
         <TextInput
           style={[
             styles.input,
-            props.secure ? styles.inputWithAffix : null,
+            mirrored && styles.inputMirrored,
+            props.secure ? (mirrored ? styles.inputWithAffixStart : styles.inputWithAffix) : null,
             { backgroundColor: colors.controlTrack, borderColor: props.error ? colors.danger : colors.glassBorder, color: colors.textPrimary },
           ]}
           placeholder={props.placeholder}
@@ -144,8 +155,14 @@ export function Field(props: {
           autoCapitalize={props.autoCapitalize ?? 'none'}
           keyboardType={props.keyboardType ?? 'default'}
           autoComplete={props.complete}
+          accessibilityLabel={props.label}
           textContentType={TEXT_CONTENT_TYPE[props.complete ?? 'none']}
           autoCorrect={false}
+          returnKeyType={props.returnKeyType}
+          onSubmitEditing={props.onSubmitEditing}
+          // Next moves on without the keyboard dropping and coming back up
+          submitBehavior={props.returnKeyType === 'next' ? 'submit' : undefined}
+          ref={props.inputRef}
           testID={props.testID}
         />
         {props.secure ? (
@@ -155,13 +172,13 @@ export function Field(props: {
             accessibilityLabel={reveal ? t('auth.hidePassword') : t('auth.showPassword')}
             accessibilityState={{ selected: reveal }}
             hitSlop={8}
-            style={styles.affix}
+            style={[styles.affix, mirrored ? styles.affixStart : styles.affixEnd]}
           >
             <Icon name={reveal ? 'eye-off' : 'eye'} size={20} color={colors.textSecondary} />
           </Pressable>
         ) : null}
       </View>
-      {props.error ? <Text style={[styles.error, { color: colors.danger }]}>{props.error}</Text> : null}
+      {props.error ? <Text style={[styles.error, dir.text, { color: colors.danger }]}>{props.error}</Text> : null}
     </View>
   );
 }
@@ -242,8 +259,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     fontSize: typography.sizes.md,
   },
+  inputMirrored: { textAlign: 'right' },
   inputWithAffix: { paddingRight: spacing.xl + spacing.md },
-  affix: { position: 'absolute', right: spacing.sm, top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: spacing.xs },
+  inputWithAffixStart: { paddingLeft: spacing.xl + spacing.md },
+  affix: { position: 'absolute', top: 0, bottom: 0, justifyContent: 'center', paddingHorizontal: spacing.xs },
+  affixEnd: { right: spacing.sm },
+  affixStart: { left: spacing.sm },
   error: { fontSize: typography.sizes.xs, marginTop: spacing.xs },
   formError: { fontSize: typography.sizes.sm, marginBottom: spacing.md, textAlign: 'center' },
   buttonWrap: { marginTop: spacing.sm },

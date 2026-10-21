@@ -29,7 +29,7 @@ import {
   type RootStackParamList,
   type TabParamList,
 } from './src/navigation/rootStack';
-import { ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
+import { ForgotPasswordForm, ForgotPasswordScreen } from './src/screens/auth/ForgotPasswordScreen';
 import { WelcomeScreen } from './src/screens/auth/WelcomeScreen';
 import { VerifyEmailScreen } from './src/screens/auth/VerifyEmailScreen';
 import { BirthDatePromptScreen } from './src/screens/auth/BirthDatePromptScreen';
@@ -88,6 +88,8 @@ import { MemeFeedScreen } from './src/memes/MemeFeedScreen';
 import { MemeDetailScreen } from './src/memes/MemeDetailScreen';
 import { TagsScreen } from './src/tags/TagsScreen';
 import { ChangeUsernameScreen } from './src/username/ChangeUsernameScreen';
+import { ChangePasswordScreen } from './src/security/ChangePasswordScreen';
+import { DevicesScreen } from './src/security/DevicesScreen';
 import { LibraryScreen } from './src/library/LibraryScreen';
 import { LibraryPostScreen } from './src/library/LibraryPostScreen';
 import { ComposeScreen } from './src/composer/ComposeScreen';
@@ -445,6 +447,17 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="ChangeUsername" options={{ presentation: 'card' }}>
         {({ navigation }) => <ChangeUsernameScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="ChangePassword" options={{ presentation: 'card' }}>
+        {({ navigation }) => (
+          <ChangePasswordScreen onExit={() => navigation.goBack()} onSetPassword={(email) => navigation.navigate('ForgotPassword', { email })} />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="Devices" options={{ presentation: 'card' }}>
+        {({ navigation }) => <DevicesScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="ForgotPassword" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <ForgotPasswordForm email={route.params?.email} onBack={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Library" options={{ presentation: 'card' }}>
         {({ navigation }) => <LibraryScreen onExit={() => navigation.goBack()} />}

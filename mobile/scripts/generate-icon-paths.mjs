@@ -158,6 +158,12 @@ const MAP = {
 
   // --- how the app feels ---
   vibrate: { glyph: 'Vibrate', note: 'Settings → Vibration: whether this phone buzzes' },
+
+  // --- the devices signed in to your account ---
+  devices: { glyph: 'Devices', note: 'Settings → Signed-in devices, and a device that never said what it is' },
+  'device-phone': { glyph: 'DeviceMobile', note: 'a phone signed in to your account' },
+  'device-tablet': { glyph: 'DeviceTablet', note: 'a tablet signed in to your account' },
+  'device-computer': { glyph: 'Laptop', note: 'a computer signed in to your account, through a browser' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */

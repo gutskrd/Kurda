@@ -1,6 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import type { TokenPair, TokenStorage } from '../api/types';
+import type { DeviceIdStore } from './deviceId';
 
 const KEY = 'kurda_tokens_v1';
 
@@ -57,4 +58,24 @@ export class WebTokenStorage implements TokenStorage {
 
 export function createTokenStorage(): TokenStorage {
   return Platform.OS === 'web' ? new WebTokenStorage() : new SecureTokenStorage();
+}
+
+const DEVICE_KEY = 'kurda_device_id_v1';
+
+/**
+ * Where this install's device id is kept (auth/deviceId.ts): in the keystore
+ * beside the tokens on a phone, in localStorage on the web. Either may throw;
+ * the caller falls back to an id held in memory.
+ */
+export function createDeviceIdStore(): DeviceIdStore {
+  if (Platform.OS === 'web') {
+    return {
+      get: async () => globalThis.localStorage?.getItem(DEVICE_KEY) ?? null,
+      set: async (id) => globalThis.localStorage?.setItem(DEVICE_KEY, id),
+    };
+  }
+  return {
+    get: () => SecureStore.getItemAsync(DEVICE_KEY),
+    set: (id) => SecureStore.setItemAsync(DEVICE_KEY, id),
+  };
 }

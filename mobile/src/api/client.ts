@@ -21,6 +21,13 @@ export interface ApiClientOptions {
   /** Injectable for tests. */
   idGenerator?: () => string;
   /**
+   * This install's id (auth/deviceId.ts), sent as `x-device-id` on every
+   * request, refresh and sign-out included: the server gives a device it
+   * knows its own budget of failed sign-ins and tells the owner about one it
+   * does not. Null sends none.
+   */
+  deviceId?: () => Promise<string | null>;
+  /**
    * Per-request timeout in ms. Without one, a request to an unreachable API
    * (e.g. a device build pointed at a dead URL) hangs indefinitely and the UI
    * spins forever with no error. On timeout the request aborts and surfaces as
@@ -71,7 +78,7 @@ export function generateRequestId(): string {
 /**
  * Typed API client (KUR-012).
  *
- * - attaches the access token to every request
+ * - attaches the access token, and this install's device id, to every request
  * - on 401: refreshes once (single-flight across concurrent requests),
  *   replays the original request, and logs out if refresh fails or the
  *   replay 401s again
@@ -97,10 +104,12 @@ export class ApiClient {
    * caught as a network error) instead of hanging the request forever.
    */
   private async timedFetch(url: string, init: RequestInit): Promise<Response> {
+    const device = this.opts.deviceId ? await this.opts.deviceId().catch(() => null) : null;
+    const headers = device ? { ...(init.headers as Record<string, string>), 'x-device-id': device } : init.headers;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
-      return await this.fetchFn(url, { ...init, signal: controller.signal });
+      return await this.fetchFn(url, { ...init, headers, signal: controller.signal });
     } finally {
       clearTimeout(timer);
     }
@@ -116,6 +125,16 @@ export class ApiClient {
    *  (Unlike `request()`, these can't auto-refresh — the caller retries on 401.) */
   async getAccessToken(): Promise<string | null> {
     return (await this.opts.storage.get())?.accessToken ?? null;
+  }
+
+  /**
+   * Carry on with a new access token and the same refresh token: what a
+   * password change hands back for the session it was made in, after it has
+   * ended every other one.
+   */
+  async replaceAccessToken(accessToken: string): Promise<void> {
+    const tokens = await this.opts.storage.get();
+    if (tokens) await this.opts.storage.set({ ...tokens, accessToken });
   }
 
   get<T>(path: string, options?: RequestOptions): Promise<ApiResult<T>> {
@@ -276,6 +295,8 @@ export class ApiClient {
           retryAfterSec: Number.isFinite(retryAfter) ? retryAfter : undefined,
           requestId: envelope.requestId,
           status: 429,
+          // a lock names its own wait here too (LOCKED's retryAfterSec)
+          ...(envelope.details !== undefined ? { details: envelope.details } : {}),
         },
       };
     }

@@ -88,6 +88,15 @@ export type RootStackParamList = {
   PostPicture: undefined;
   Tags: undefined;
   ChangeUsername: undefined;
+  /** Settings → Security: the current password, then the new one twice (security/ChangePasswordScreen) */
+  ChangePassword: undefined;
+  /** Settings → Security: the devices signed in to your account (security/DevicesScreen) */
+  Devices: undefined;
+  /**
+   * The reset link, asked for while signed in: Change password's way in for
+   * an account that signs in with Google or Apple and has no password yet.
+   */
+  ForgotPassword: { email?: string } | undefined;
   Library: undefined;
   /** The people you are friends with, and the requests in both directions (social/SocialScreen). */
   Friends: undefined;

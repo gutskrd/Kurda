@@ -76,6 +76,18 @@ describe('signing up', () => {
     expect(screen.queryByTestId('register-may-have-account')).toBeNull();
   });
 
+  /* a password found in a data leak is about the password, so it is said under it */
+  it('says on the password field when the password has been in a data leak', async () => {
+    const message = 'This password has shown up in a data leak, so it isn’t safe. Choose a different one.';
+    auth.register.mockResolvedValue({ message, code: 'PASSWORD_BREACHED' });
+    renderRegister();
+    await signUp('name@icloud.com');
+    const said = await screen.findByText(message);
+    // in the password's own field, beside the box it is about
+    expect(said.parentElement!.contains(screen.getByTestId('password'))).toBe(true);
+    expect(screen.queryByText('At least 8 characters, including a letter and a number.')).toBeNull();
+  });
+
   it('takes an Apple private relay address without a word from the phone', async () => {
     auth.register.mockResolvedValue(null);
     renderRegister();

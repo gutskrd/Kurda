@@ -6,7 +6,9 @@ import type { TokenStorage } from '../api/types';
 import { describeError } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
-import { createTokenStorage } from './storage';
+import { createDeviceIdStore, createTokenStorage } from './storage';
+import { loadDeviceId } from './deviceId';
+import { deviceName } from './deviceName';
 import type { AgeStopKind } from './birthMonth';
 import type { SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
@@ -52,7 +54,12 @@ interface AuthContextValue {
   client: ApiClient;
   /** API origin, used to derive the realtime WebSocket URL (KUR-054). */
   baseUrl: string;
-  login(email: string, password: string): Promise<string | null>;
+  /**
+   * Resolves to the failure, or null on success. The code rides along so the
+   * form can offer the way on that goes with it: a sign-in held back after
+   * several failed attempts (CAPTCHA_REQUIRED, LOCKED) gets Reset password.
+   */
+  login(email: string, password: string): Promise<AuthFailure | null>;
   /**
    * Resolves to the failure, or null on success. The code rides along because
    * one refusal is not a message to show under a form: UNDER_MINIMUM_AGE
@@ -143,6 +150,17 @@ export function AuthProvider({
   const [baseUrl] = useState<string>(
     () => baseUrlProp ?? process.env.EXPO_PUBLIC_API_URL ?? defaultApiBaseUrl(),
   );
+  // read once as the app starts, then held in memory for every request (auth/deviceId.ts)
+  const [deviceStore] = useState(() => {
+    const store = createDeviceIdStore();
+    void loadDeviceId(store);
+    return store;
+  });
+  // what the list of signed-in devices calls this one; the same for the life of the app
+  const [device] = useState(() => {
+    const name = deviceName();
+    return name ? { deviceName: name } : {};
+  });
 
   const { t } = useI18n();
   const [status, setStatus] = useState<AuthStatus>('restoring');
@@ -160,8 +178,9 @@ export function AuthProvider({
           setStatus('signedOut');
         },
         onSuspended: setSuspension,
+        deviceId: () => loadDeviceId(deviceStore),
       }),
-    [baseUrl, storage],
+    [baseUrl, storage, deviceStore],
   );
 
   useHeartbeat(client, status === 'signedIn');
@@ -206,12 +225,12 @@ export function AuthProvider({
     client,
     baseUrl,
     login: async (email, password) => {
-      const res = await client.post<AuthPayload>('/auth/login', { email, password });
+      const res = await client.post<AuthPayload>('/auth/login', { email, password, ...device });
       if (!res.ok) {
         // a suspended account is shown why, not a sign-in error (Root renders the screen)
         const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
         if (suspended) setSuspension(suspended);
-        return describeError(res.error, t);
+        return { message: describeError(res.error, t), code: res.error.code };
       }
       await applyAuth(res.data);
       return null;
@@ -221,6 +240,7 @@ export function AuthProvider({
       // shows the ToS/privacy notice next to the submit button
       const res = await client.post<AuthPayload>('/auth/register', {
         ...input,
+        ...device,
         acceptTerms: true,
       });
       if (!res.ok) return { message: describeError(res.error, t), code: res.error.code };
@@ -244,7 +264,7 @@ export function AuthProvider({
       }
     },
     oauthSignIn: async (provider, idToken) => {
-      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken });
+      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken, ...device });
       if (!res.ok) {
         const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
         if (suspended) {

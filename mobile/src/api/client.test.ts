@@ -203,6 +203,17 @@ describe('ApiClient', () => {
     }
   });
 
+  it('keeps how long a lock lasts, as the body says it', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValue(jsonResponse(429, { code: 'LOCKED', message: 'too many failed attempts', details: { retryAfterSec: 900 } }, { 'retry-after': '900' }));
+    const { client } = makeClient(fetchFn, false);
+    const res = await client.post('/auth/login', { email: 'a@b.c', password: 'x' });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error).toMatchObject({ kind: 'rate_limited', code: 'LOCKED', retryAfterSec: 900, details: { retryAfterSec: 900 } });
+  });
+
   it('maps envelope codes on 4xx/5xx', async () => {
     const fetchFn = vi
       .fn()
@@ -316,6 +327,76 @@ describe('ApiClient', () => {
     await ready;
     await client.endSession();
     expect(fetchFn).not.toHaveBeenCalled();
+  });
+});
+
+/*
+ * The server keeps a separate budget of failed sign-ins for a device that has
+ * signed in before, and emails the owner about one it has not seen: both read
+ * x-device-id, so every request carries it, the refresh and the sign-out too.
+ */
+describe('the device id', () => {
+  function withDevice(fetchFn: ReturnType<typeof vi.fn>, deviceId: () => Promise<string | null>) {
+    const storage = new MemoryTokenStorage();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout: vi.fn(), fetchFn: fetchFn as never, deviceId });
+    return { client, storage };
+  }
+
+  it('goes on every request, the refresh and its replay included', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(200, { accessToken: 'acc-2', refreshToken: 'ref-2' }))
+      .mockResolvedValueOnce(jsonResponse(200, { ok: true }));
+    const { client, storage } = withDevice(fetchFn, async () => 'device-1');
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    await client.get('/me');
+    expect(fetchFn.mock.calls.map(([url]) => url)).toEqual(['https://api.test/me', 'https://api.test/auth/refresh', 'https://api.test/me']);
+    for (const [, init] of fetchFn.mock.calls) expect(init.headers['x-device-id']).toBe('device-1');
+  });
+
+  it('goes on a sign-in, where there is no session yet', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(401, { code: 'INVALID_CREDENTIALS', message: 'invalid email or password' }));
+    const { client } = withDevice(fetchFn, async () => 'device-1');
+    await client.post('/auth/login', { email: 'a@b.c', password: 'x' });
+    expect(fetchFn.mock.calls[0]![1].headers).toMatchObject({ 'x-device-id': 'device-1', 'content-type': 'application/json' });
+  });
+
+  it('goes on the sign-out', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(jsonResponse(200, { ok: true }));
+    const { client, storage } = withDevice(fetchFn, async () => 'device-1');
+    await storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+    await client.endSession();
+    await vi.waitFor(() => expect(fetchFn).toHaveBeenCalledTimes(1));
+    expect(fetchFn.mock.calls[0]![1].headers['x-device-id']).toBe('device-1');
+  });
+
+  it('is left off when there is none, and a failure to read it never stops a request', async () => {
+    const fetchFn = vi.fn().mockImplementation(async () => jsonResponse(200, {}));
+    await withDevice(fetchFn, async () => null).client.get('/a');
+    await withDevice(fetchFn, () => Promise.reject(new Error('keystore'))).client.get('/b');
+    expect(fetchFn).toHaveBeenCalledTimes(2);
+    for (const [, init] of fetchFn.mock.calls) expect(init.headers['x-device-id']).toBeUndefined();
+  });
+});
+
+describe('replacing the access token', () => {
+  /* what a password change hands back: this session carries on, its refresh token unchanged */
+  it('keeps the refresh token', async () => {
+    const fetchFn = vi.fn().mockImplementation(async () => jsonResponse(200, {}));
+    const { client, storage, ready } = makeClient(fetchFn);
+    await ready;
+    await client.replaceAccessToken('acc-new');
+    expect(await storage.get()).toEqual({ accessToken: 'acc-new', refreshToken: 'ref-1' });
+    await client.get('/me');
+    expect(fetchFn.mock.calls[0]![1].headers.authorization).toBe('Bearer acc-new');
+  });
+
+  it('stores nothing when signed out', async () => {
+    const { client, storage, ready } = makeClient(vi.fn(), false);
+    await ready;
+    await client.replaceAccessToken('acc-new');
+    expect(await storage.get()).toBeNull();
   });
 });
 

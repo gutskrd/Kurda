@@ -67,6 +67,8 @@ export function RegisterScreen({ navigation }: Props) {
     // app root shows it), and stays for as long as the app is open
     if (error?.code === 'UNDER_MINIMUM_AGE') void stopForAge('refused');
     else if (error?.code === 'REGISTRATION_FAILED') setMayHaveAccount(true);
+    // a password found in a data leak is about the field, so it is said there
+    else if (error?.code === 'PASSWORD_BREACHED') setErrors((was) => ({ ...was, password: error.message }));
     else if (error) setFormError(error.message);
   };
 

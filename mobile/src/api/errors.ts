@@ -36,9 +36,23 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   ACCOUNT_DISABLED: 'error.code.accountDisabled',
   CODE_EXPIRED: 'error.code.codeExpired',
   INVALID_CODE: 'error.code.invalidCode',
+  // never which of the two was wrong: that would tell a stranger the address has an account
   INVALID_CREDENTIALS: 'error.code.invalidCredentials',
   INVALID_TOKEN: 'error.code.invalidLink',
+  // without a wait the server named; with one, `lockedFor` says how long
   LOCKED: 'error.code.locked',
+  /*
+   * Sign-in wants the challenge after several failed attempts. No challenge
+   * is configured in production yet, so there is nothing to show but a calm
+   * pause and the reset that does not wait (the login form offers it).
+   */
+  CAPTCHA_REQUIRED: 'error.code.captchaRequired',
+  // a new password found in a data leak: sign-up, reset and change
+  PASSWORD_BREACHED: 'error.code.passwordBreached',
+  // changing the password while signed in (POST /me/password)
+  WRONG_PASSWORD: 'error.code.wrongPassword',
+  NO_PASSWORD: 'error.code.noPassword',
+  SESSION_NOT_FOUND: 'error.code.sessionNotFound',
   SIGNUP_REJECTED: 'error.code.signupRejected',
   /*
    * An address that already has an account. The server keeps this vague on
@@ -103,12 +117,30 @@ function byReason(error: ApiError, t: Translate): string | null {
   return null;
 }
 
+/**
+ * How long a locked sign-in waits, in words: "about 15 minutes", never 792
+ * seconds. Past ten minutes the wait is rounded up to five, because the
+ * number is the server's estimate of a lock that it may lift early, and
+ * "about 14 minutes" claims a precision nobody needs.
+ */
+export function lockedFor(seconds: number, t: Translate): string {
+  const minutes = Math.max(1, Math.ceil(seconds / 60));
+  if (minutes <= 1) return t('error.code.lockedMinute');
+  if (minutes < 10) return t('error.code.lockedMinutes', { count: minutes });
+  const rounded = Math.ceil(minutes / 5) * 5;
+  if (rounded < 60) return t('error.code.lockedMinutes', { count: rounded });
+  const hours = Math.round(minutes / 60);
+  return hours <= 1 ? t('error.code.lockedHour') : t('error.code.lockedHours', { count: hours });
+}
+
 export function describeError(error: ApiError, t: Translate): string {
+  // A lock says how long it lasts, in the body and the Retry-After header both.
+  if (error.code === 'LOCKED') {
+    const inDetails = (error.details as { retryAfterSec?: unknown } | undefined)?.retryAfterSec;
+    const seconds = typeof inDetails === 'number' && inDetails > 0 ? inDetails : error.retryAfterSec;
+    if (seconds && seconds > 0) return lockedFor(seconds, t);
+  }
   // A live countdown beats any sentence, so it wins when the server sent one.
-  // It only does for RATE_LIMITED today: LOCKED knows exactly how long it has
-  // locked you out and puts the number in details, which nothing turns into a
-  // retry-after header — so that branch is waiting for an API fix rather than
-  // being unreachable.
   if (error.kind === 'rate_limited' && error.retryAfterSec && error.retryAfterSec > 0) {
     // A lockout is minutes. The copy that only ever saw a rate limiter said
     // seconds, and a real lockout came back as 792 of them.
