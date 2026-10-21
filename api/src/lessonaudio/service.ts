@@ -6,6 +6,7 @@ import {
   normalizeKurdish,
   storyAudioSentences,
   storyParagraphs,
+  type LipsyncData,
   type SpeakerId,
   type StoryDialect,
 } from '@kurda/shared';
@@ -52,6 +53,8 @@ export interface LessonAudioItem {
   speaker: SpeakerId | null;
   /** it has a mouth timeline; PATCH /admin/audio/lesson sets one for a recording made without */
   hasLipsync: boolean;
+  /** the stored timeline (null for none), only when the list is asked for it (`withLipsync`) */
+  lipsync?: LipsyncData | null;
   /** lessons that use it, in course order: the first is where the studio files it */
   usedIn: LessonAudioUsage[];
   /** recorded, but no lesson uses it any more (or it was added by hand) */
@@ -100,6 +103,8 @@ interface RecordingRow {
   updated_at: Date;
   speaker: SpeakerId | null;
   has_lipsync: boolean;
+  /** only when asked for */
+  lipsync: LipsyncData | null;
 }
 
 /** A text a lesson or story needs, before anything is known of its recording. */
@@ -148,8 +153,14 @@ export class LessonAudioService {
    * — Kurmancî"), with the story as both its unit and its one lesson, so the
    * studio groups it like any lesson; a sentence a lesson also uses stays
    * filed under the lesson, with the story as one more usage.
+   *
+   * With `withLipsync`, every item also carries its stored timeline, null for
+   * none. Left out otherwise: a few hundred bytes a sentence, over every
+   * sentence of every lesson and story, is more than the studio's other
+   * screens need to load.
    */
-  async list(): Promise<LessonAudioList> {
+  async list(options: { withLipsync?: boolean } = {}): Promise<LessonAudioList> {
+    const withLipsync = options.withLipsync === true;
     const [exercises, stories, recordings] = await Promise.all([
       this.pool.query<ExerciseRow>(
         `WITH current AS (
@@ -176,7 +187,10 @@ export class LessonAudioService {
          ORDER BY dialect, level, array_position(ARRAY['short','medium','long'], length), title, id`,
       ),
       this.pool.query<RecordingRow>(
-        `SELECT key, text, url, duration_ms, updated_at, speaker, lipsync IS NOT NULL AS has_lipsync FROM lesson_audio`,
+        `SELECT key, text, url, duration_ms, updated_at, speaker, lipsync IS NOT NULL AS has_lipsync,
+                CASE WHEN $1::boolean THEN lipsync END AS lipsync
+           FROM lesson_audio`,
+        [withLipsync],
       ),
     ]);
 
@@ -251,6 +265,7 @@ export class LessonAudioService {
       }
     }
     const needed = items.size;
+    if (withLipsync) for (const item of items.values()) item.lipsync = null;
 
     let recorded = 0;
     const unused: LessonAudioItem[] = [];
@@ -263,6 +278,7 @@ export class LessonAudioService {
         updatedAt: r.updated_at.toISOString(),
         speaker: r.speaker,
         hasLipsync: r.has_lipsync,
+        ...(withLipsync ? { lipsync: r.lipsync } : {}),
       };
       if (found) {
         Object.assign(found, recording);

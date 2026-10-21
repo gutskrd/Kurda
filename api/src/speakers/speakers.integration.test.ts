@@ -13,10 +13,12 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { CreateBucketCommand, S3Client } from '@aws-sdk/client-s3';
 import {
+  ALPHABET_CLIPS,
   decodeLipsync,
   encodeLipsync,
   lessonAudioKey,
   lipsyncFromAudio,
+  lipsyncFromText,
   storyAudioSentences,
   type LipsyncData,
 } from '@kurda/shared';
@@ -541,8 +543,14 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const body = res.json() as { clips: Record<string, string>; voices?: Record<string, unknown> };
       expect(Object.keys(body.clips)).toEqual(expect.arrayContaining(LETTERS));
       expect(body.voices?.[LETTERS[0]!]).toEqual({ speaker: 'hevalo', lipsync: expect.objectContaining({ v: 1 }) });
-      // a speaker chosen and no timeline made yet
-      expect(body.voices?.[LETTERS[1]!]).toEqual({ speaker: 'xezo' });
+      // a speaker chosen and no timeline made yet: one from the sound's words, over its length
+      const { rows } = await pool.query<{ duration_ms: number }>(`SELECT duration_ms FROM alphabet_audio WHERE key = $1`, [LETTERS[1]]);
+      const clip = ALPHABET_CLIPS.find((c) => c.key === LETTERS[1])!;
+      expect(body.voices?.[LETTERS[1]!]).toEqual({
+        speaker: 'xezo',
+        lipsync: encodeLipsync(lipsyncFromText(clip.say, rows[0]!.duration_ms, { script: 'latin' })),
+        lipsyncSource: 'text',
+      });
     });
 
     it('a story: its sentences’ voices, by the same key as their recordings', async () => {
@@ -574,6 +582,63 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       const pairs = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === ex.mp)!;
       expect(pairs).not.toHaveProperty('audioVoices');
       expect(res.body).not.toContain('"lipsync":{"v":1,"d":' + takes.get(T.left1)!.lipsync.d + ',');
+    });
+
+    it('a speaker with no timeline stored: one made from the words over the recording’s length, marked, never stored', async () => {
+      const key = lessonAudioKey(T.listening);
+      const { lipsync: stored } = takes.get(T.listening)!;
+      expect((await patch('lesson', key, { lipsync: null })).json()).toMatchObject({ speaker: 'xezo', lipsync: null });
+      const recorded = await pool.query<{ text: string; duration_ms: number }>(`SELECT text, duration_ms FROM lesson_audio WHERE key = $1`, [key]);
+      const fromText = encodeLipsync(lipsyncFromText(recorded.rows[0]!.text, recorded.rows[0]!.duration_ms));
+      const made = { speaker: 'xezo', lipsync: fromText, lipsyncSource: 'text' };
+      try {
+        // the listening clip: the learner is not sent its words, so this is the only way its mouth moves with them
+        const res = await authed('GET', `/lessons/${live}/session`);
+        expect(res.statusCode, res.body).toBe(200);
+        const listening = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === ex.li)!;
+        expect(listening.audioVoice).toEqual(made);
+        expect(listening.modelAudioVoice).toEqual(made);
+        expect(decodeLipsync(fromText).durationMs).toBe(recorded.rows[0]!.duration_ms);
+        // and with the grading
+        const graded = await authed('POST', `/sessions/${res.json().sessionId}/answers`, {
+          exerciseId: ex.li,
+          answer: { text: T.listening },
+        });
+        expect(graded.statusCode, graded.body).toBe(200);
+        expect(graded.json().modelAudioVoice).toEqual(made);
+
+        // never stored: the studio still sees a recording whose timeline is to be made
+        expect((await row(key)).lipsync).toBeNull();
+        const studio = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${editor}` } });
+        expect((studio.json().items as Array<Record<string, unknown>>).find((i) => i.key === key)).toMatchObject({ hasLipsync: false });
+      } finally {
+        expect((await patch('lesson', key, { lipsync: stored })).statusCode).toBe(200);
+      }
+
+      // a stored timeline goes out as it was stored, with nothing to say it is approximate
+      const res = await authed('GET', `/lessons/${live}/session`);
+      const listening = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === ex.li)!;
+      expect(listening.audioVoice).toEqual({ speaker: 'xezo', lipsync: stored });
+      expect(listening.audioVoice).not.toHaveProperty('lipsyncSource');
+    });
+
+    it('a story sentence with a speaker and no timeline gets one from its words; a dictionary word, with no length, none', async () => {
+      const second = lessonAudioKey(T.story2);
+      expect((await patch('lesson', second, { speaker: 'hamo' })).statusCode).toBe(200);
+      const recorded = await pool.query<{ text: string; duration_ms: number }>(`SELECT text, duration_ms FROM lesson_audio WHERE key = $1`, [second]);
+      const story = (await app.inject({ method: 'GET', url: `/stories/${storyId}` })).json() as { voices: Record<string, unknown> };
+      expect(story.voices[second]).toEqual({
+        speaker: 'hamo',
+        lipsync: encodeLipsync(lipsyncFromText(recorded.rows[0]!.text, recorded.rows[0]!.duration_ms)),
+        lipsyncSource: 'text',
+      });
+      // the first sentence's timeline was made from its sound, and is sent as it is
+      expect(story.voices[lessonAudioKey(T.story1)]).toEqual({ speaker: 'xezo', lipsync: takes.get(T.story1)!.lipsync });
+
+      expect((await patch('dictionary', dictAudio.plain, { speaker: 'xezo' })).statusCode).toBe(200);
+      const entry = await authed('GET', `/dictionary/entries/${entryId}`);
+      const plain = (entry.json().audio as Array<Record<string, unknown>>).find((a) => a.id === dictAudio.plain);
+      expect(plain).toEqual({ id: dictAudio.plain, url: `https://cdn.test/dict/${s}-2.mp3`, dialect: 'kurmanji', speaker: 'xezo' });
     });
   });
 });

@@ -6,14 +6,23 @@
  * `speaker`, one of SPEAKERS or NULL for no character, and `lipsync`, the
  * stored timeline. A timeline is checked strictly before it is stored, so the
  * apps decode what they are sent without guarding against anything else.
+ *
+ * A recording with a speaker and no stored timeline is sent one made here
+ * from its words and its length (`lipsyncFromText`), marked
+ * `lipsyncSource: 'text'`: the apps are often not sent the words (a listening
+ * clip's are its answer), so this is the only way its mouth can move with
+ * them. It is never stored, so a stored timeline still means one made from
+ * the sound, and the admin's job of making those still finds the recording.
  */
 import { z } from 'zod';
 import {
   SPEAKERS,
   encodeLipsync,
   isSpeakerId,
+  lipsyncFromText,
   safeDecodeLipsync,
   type LipsyncData,
+  type LipsyncScript,
   type LipsyncTimeline,
   type RecordingVoice,
   type SpeakerId,
@@ -45,10 +54,59 @@ export interface VoiceRow {
   lipsync: unknown;
 }
 
-/** What travels beside a recording's URL: nothing without a speaker; the timeline when there is one. */
-export function voiceOf(row: VoiceRow): RecordingVoice | undefined {
+/** What a recording says and how long it lasts, for a timeline made from its words. */
+export interface SpokenWords {
+  text: string;
+  /** null where no length is stored (a dictionary pronunciation): then nothing is made */
+  durationMs: number | null;
+  script?: LipsyncScript;
+}
+
+/** How many timelines made from words are kept: a busy lesson's and story's worth many times over. */
+const TEXT_TIMELINES_KEPT = 2000;
+
+/** Made from words, most recently used last; null where none can be made, so that is not worked out twice. */
+const textTimelines = new Map<string, LipsyncData | null>();
+
+/**
+ * The timeline for `words` spread over their recording's length, or null when
+ * the length is unknown or no timeline fits it. The same words and length
+ * always give the same timeline, so each is made once and kept, by those two
+ * (and the script), for as long as it is among the TEXT_TIMELINES_KEPT used
+ * most recently.
+ */
+export function textLipsync(words: SpokenWords): LipsyncData | null {
+  const { text, durationMs, script } = words;
+  if (durationMs === null || !(durationMs > 0) || text === '') return null;
+  const key = `${script ?? ''}\u0000${durationMs}\u0000${text}`;
+  if (textTimelines.has(key)) {
+    const kept = textTimelines.get(key)!;
+    textTimelines.delete(key);
+    textTimelines.set(key, kept);
+    return kept;
+  }
+  let made: LipsyncData | null;
+  try {
+    made = encodeLipsync(lipsyncFromText(text, durationMs, script ? { script } : {}));
+  } catch {
+    // longer than any timeline may be: the apps rest the mouth instead
+    made = null;
+  }
+  textTimelines.set(key, made);
+  if (textTimelines.size > TEXT_TIMELINES_KEPT) textTimelines.delete(textTimelines.keys().next().value!);
+  return made;
+}
+
+/**
+ * What travels beside a recording's URL: nothing without a speaker; the
+ * stored timeline when there is one; otherwise one made from `words`, when
+ * they and the recording's length are known.
+ */
+export function voiceOf(row: VoiceRow, words?: SpokenWords): RecordingVoice | undefined {
   if (!isSpeakerId(row.speaker)) return undefined;
-  return row.lipsync ? { speaker: row.speaker, lipsync: row.lipsync as LipsyncData } : { speaker: row.speaker };
+  if (row.lipsync) return { speaker: row.speaker, lipsync: row.lipsync as LipsyncData };
+  const made = words ? textLipsync(words) : null;
+  return made ? { speaker: row.speaker, lipsync: made, lipsyncSource: 'text' } : { speaker: row.speaker };
 }
 
 /** A timeline in its stored form, checked strictly; read as the timeline it is. */

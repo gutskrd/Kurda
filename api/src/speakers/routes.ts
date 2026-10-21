@@ -1,7 +1,9 @@
 /**
  * Who says a recording already made, and its mouth's timeline.
  *
- *   PATCH /admin/audio/:kind?key=…   { speaker?: SpeakerId | null, lipsync?: { v, d, k } | null }
+ *   PATCH /admin/audio/:kind?key=…        { speaker?: SpeakerId | null, lipsync?: { v, d, k } | null }
+ *   GET   /admin/audio/:kind/file?key=…   the recording's own sound, to make its timeline from
+ *   GET   /admin/dictionary/audio         the dictionary's pronunciations (dictionary-audio.ts)
  *
  * `kind` is the kind of recording, and `key` the one recording:
  *
@@ -24,20 +26,35 @@
  * The same people who record may do it. Under /admin, so the second factor
  * and the audit trail come with it; this also writes its own audit entry with
  * what changed.
+ *
+ * The file is the recording's bytes sent through the API, so the panel can
+ * decode them without the media host allowing its origin
+ * (recording-file.ts). A read, so it writes no audit entry, as the studio's
+ * lists write none.
+ *
+ * The panel's Characters page works through every recording two at a time,
+ * reading each file and then saving its timeline, so both routes allow 1,500
+ * in any ten minutes (BATCH_RATE) rather than the default hundred a minute.
  */
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import type { AppConfig } from '../config/env.js';
 import { ALPHABET_CLIP_MAX_SECONDS, LESSON_AUDIO_TEXT_MAX, isAlphabetClipKey, type SpeakerId } from '@kurda/shared';
 import { AuditService } from '../admin/audit-service.js';
 import { requireRoles } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { LESSON_AUDIO_ROLES } from '../lessonaudio/routes.js';
 import { fitLipsync, lipsyncSchema, lipsyncSummary, speakerSchema } from './voice.js';
+import { RecordingFiles, sendAudio, type RecordingFileOptions } from './recording-file.js';
+import { registerDictionaryAudioList } from './dictionary-audio.js';
 
 /** The longest a dictionary pronunciation can be: a word, said slowly, many times over. */
 export const DICTIONARY_AUDIO_MAX_MS = 30_000;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** A batch over every recording: well over a thousand in ten minutes, each a read and a save. */
+const BATCH_RATE = { max: 1500, windowMs: 10 * 60_000, per: 'user-or-ip' as const };
 
 interface Kind {
   table: 'lesson_audio' | 'alphabet_audio' | 'dict_audio';
@@ -97,13 +114,37 @@ interface Row {
   lipsync: unknown;
 }
 
-export function registerRecordingVoiceRoutes(app: FastifyInstance): void {
+export function registerRecordingVoiceRoutes(
+  app: FastifyInstance,
+  config: Pick<AppConfig, 'CDN_BASE_URL'>,
+  fileOptions: RecordingFileOptions = {},
+): void {
   const audit = new AuditService(app.db);
   const canRecord = requireRoles(...LESSON_AUDIO_ROLES);
+  const files = new RecordingFiles(app.db, app.storage, config, fileOptions);
+
+  registerDictionaryAudioList(app, canRecord);
+
+  app.get(
+    '/admin/audio/:kind/file',
+    { schema: { params, querystring: query }, config: { rateLimit: BATCH_RATE }, preHandler: canRecord },
+    async (req, reply) => {
+      const { kind } = req.params as z.infer<typeof params>;
+      const { key } = req.query as z.infer<typeof query>;
+      const spec = KINDS[kind];
+      if (!spec.valid(key)) throw new AppError('NOT_FOUND', 404, spec.missing);
+      const signal = AbortSignal.timeout(files.timeoutMs);
+      const source =
+        spec.table === 'dict_audio'
+          ? await files.dictionary(key, spec.missing, signal)
+          : await files.stored(spec.table, key, spec.missing, signal);
+      return sendAudio(reply, source, signal);
+    },
+  );
 
   app.patch(
     '/admin/audio/:kind',
-    { schema: { params, querystring: query, body }, preHandler: canRecord },
+    { schema: { params, querystring: query, body }, config: { rateLimit: BATCH_RATE }, preHandler: canRecord },
     async (req) => {
       const { kind } = req.params as z.infer<typeof params>;
       const { key } = req.query as z.infer<typeof query>;

@@ -7,7 +7,8 @@
  *
  * The PUT may say who says the sound, `&speaker=…`, and give its mouth's
  * timeline, `&lipsync=…`, as the lessons' does (speakers/voice.ts); the
- * public list sends both for the recordings with a speaker, under `voices`.
+ * public list sends both for the recordings with a speaker, under `voices`,
+ * with a timeline made from the sound's `say` where none is stored.
  * PATCH /admin/audio/alphabet?key=… changes either later.
  *
  * The admin panel records or takes a file, trims the silence, levels the volume
@@ -20,6 +21,7 @@
  */
 import type { FastifyInstance } from 'fastify';
 import {
+  ALPHABET_CLIPS,
   ALPHABET_CLIP_MAX_SECONDS,
   isAlphabetClipKey,
   type AlphabetAudioResponse,
@@ -35,7 +37,14 @@ import { registerAudioParser, storeAudioMedia } from '../media/audioMedia.js';
 import { audioLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { readWav } from './wav.js';
-import { fitLipsync, lipsyncSummary, voiceColumns, voiceFromQuery, voiceOf } from '../speakers/voice.js';
+import {
+  fitLipsync,
+  lipsyncSummary,
+  voiceColumns,
+  voiceFromQuery,
+  voiceOf,
+  type SpokenWords,
+} from '../speakers/voice.js';
 
 const KIND = 'alphabet-audio';
 
@@ -49,6 +58,15 @@ interface Row {
   updated_at: Date;
   speaker: SpeakerId | null;
   lipsync: LipsyncData | null;
+}
+
+const CLIPS = new Map(ALPHABET_CLIPS.map((clip) => [clip.key, clip]));
+
+/** What a sound's recording says, in its script, for a timeline made from its words. */
+function wordsOf(row: Pick<Row, 'key' | 'duration_ms'>): SpokenWords | undefined {
+  const clip = CLIPS.get(row.key);
+  if (!clip) return undefined;
+  return { text: clip.say, durationMs: row.duration_ms, script: clip.script === 'ckb' ? 'arabic' : 'latin' };
 }
 
 function keyFrom(query: unknown): string {
@@ -69,11 +87,13 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
 
   /** Public: the page asks once, and plays a recording wherever there is one. */
   app.get('/alphabet/audio', async (req, reply): Promise<AlphabetAudioResponse> => {
-    const { rows } = await app.db.query<Row>(`SELECT key, url, ${voiceColumns()} FROM alphabet_audio ORDER BY key`);
+    const { rows } = await app.db.query<Row>(
+      `SELECT key, url, duration_ms, ${voiceColumns()} FROM alphabet_audio ORDER BY key`,
+    );
     if (!req.user) reply.header('cache-control', 'public, max-age=60');
     const voices: Record<string, RecordingVoice> = {};
     for (const r of rows) {
-      const voice = voiceOf(r);
+      const voice = voiceOf(r, wordsOf(r));
       if (voice) voices[r.key] = voice;
     }
     return {
@@ -83,10 +103,14 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
     };
   });
 
-  /** The admin list: the same, with when each was recorded. */
+  /**
+   * The admin list: the same, with when each was recorded and its stored
+   * timeline, so the studio can preview the mouth as the apps will move it.
+   * A sound or two of seconds each: every timeline together is a few kB.
+   */
   app.get('/admin/alphabet/audio', { preHandler: canRecord }, async () => {
-    const { rows } = await app.db.query<Row & { has_lipsync: boolean }>(
-      `SELECT key, url, duration_ms, updated_at, speaker, lipsync IS NOT NULL AS has_lipsync FROM alphabet_audio ORDER BY key`,
+    const { rows } = await app.db.query<Row>(
+      `SELECT key, url, duration_ms, updated_at, speaker, lipsync FROM alphabet_audio ORDER BY key`,
     );
     return {
       recordings: rows.map((r) => ({
@@ -95,7 +119,8 @@ export function registerAlphabetAudioRoutes(app: FastifyInstance, config: AppCon
         durationMs: r.duration_ms,
         updatedAt: r.updated_at,
         speaker: r.speaker,
-        hasLipsync: r.has_lipsync,
+        hasLipsync: r.lipsync !== null,
+        lipsync: r.lipsync,
       })),
     };
   });

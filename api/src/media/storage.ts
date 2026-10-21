@@ -7,6 +7,7 @@ import {
   S3Client,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import type { Readable } from 'node:stream';
 import type { AppConfig } from '../config/env.js';
 
 /** Only formats the product actually uses; anything else is rejected. */
@@ -132,6 +133,26 @@ export class MediaStorage {
       return { cacheControl: head.CacheControl, contentType: head.ContentType };
     } catch {
       return null;
+    }
+  }
+
+  /**
+   * An object's bytes, as they stream from the bucket, with what it was stored
+   * as; null when there is no such object. `signal` stops the read, body and
+   * all.
+   */
+  async read(
+    key: string,
+    signal?: AbortSignal,
+  ): Promise<{ body: Readable; contentType?: string; contentLength?: number } | null> {
+    try {
+      const res = await this.s3.send(new GetObjectCommand({ Bucket: this.bucket, Key: key }), { abortSignal: signal });
+      if (!res.Body) return null;
+      return { body: res.Body as Readable, contentType: res.ContentType, contentLength: res.ContentLength };
+    } catch (err) {
+      const e = err as { name?: string; $metadata?: { httpStatusCode?: number } };
+      if (e.name === 'NoSuchKey' || e.$metadata?.httpStatusCode === 404) return null;
+      throw err;
     }
   }
 

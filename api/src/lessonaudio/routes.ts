@@ -3,6 +3,7 @@
  * the admin's audio studio, beside the alphabet's recordings.
  *
  *   GET    /admin/lesson-audio            what the lessons need, what is recorded, where each is used
+ *                                         (&withLipsync=1: each with its stored timeline, or null)
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
  *
@@ -62,6 +63,7 @@ interface Row {
   lipsync: LipsyncData | null;
 }
 
+const listQuery = z.object({ withLipsync: z.enum(['0', '1', 'false', 'true']).optional() });
 const textQuery = z.object({ text: z.string() });
 const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
@@ -88,7 +90,10 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
 
   registerAudioParser(app, base.maxUploadBytes);
 
-  app.get('/admin/lesson-audio', { preHandler: canRecord }, async () => service.list());
+  app.get('/admin/lesson-audio', { schema: { querystring: listQuery }, preHandler: canRecord }, async (req) => {
+    const { withLipsync } = req.query as z.infer<typeof listQuery>;
+    return service.list({ withLipsync: withLipsync === '1' || withLipsync === 'true' });
+  });
 
   app.put(
     '/admin/lesson-audio',

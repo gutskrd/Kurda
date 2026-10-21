@@ -230,6 +230,7 @@ export class DictionaryRepository {
         examples: examplesBySense.get(s.id) ?? [],
       })),
       audio: audio.rows.map((a) => {
+        // no stored length, so no timeline is made from the headword here: the apps have the headword
         const voice = voiceOf(a);
         return { id: a.id, url: a.audio_url, dialect: a.dialect, ...voice };
       }),

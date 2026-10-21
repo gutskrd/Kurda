@@ -5,6 +5,16 @@ import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
 type Executor = Pick<pg.Pool, 'query'>;
 
+/** What a delivery reads of a recording: its URL, and its voice with the words and length it says them in. */
+const RECORDING_COLUMNS = `url, text, duration_ms, ${voiceColumns()}`;
+
+type RecordingRow = { url: string; text: string; duration_ms: number } & VoiceRow;
+
+/** Its voice, with a timeline made from its words when a speaker has none stored. */
+function voiceOfRecording(row: RecordingRow): RecordingVoice | undefined {
+  return voiceOf(row, { text: row.text, durationMs: row.duration_ms });
+}
+
 /**
  * What a delivered exercise carries of the studio's recordings. Only the
  * fields that have a recording are set.
@@ -164,14 +174,14 @@ export async function lessonAudioFor(
   }
   if (keys.size === 0) return plans.map(() => ({}));
 
-  const { rows } = await db.query<{ key: string; url: string } & VoiceRow>(
-    `SELECT key, url, ${voiceColumns()} FROM lesson_audio WHERE key = ANY($1::text[])`,
+  const { rows } = await db.query<RecordingRow & { key: string }>(
+    `SELECT key, ${RECORDING_COLUMNS} FROM lesson_audio WHERE key = ANY($1::text[])`,
     [[...keys]],
   );
   const urls = new Map(rows.map((r) => [r.key, r.url]));
   const voices = new Map<string, RecordingVoice>();
   for (const r of rows) {
-    const voice = voiceOf(r);
+    const voice = voiceOfRecording(r);
     if (voice) voices.set(r.key, voice);
   }
 
@@ -222,12 +232,9 @@ export interface ModelAudio {
 export async function modelAudioAfterAnswer(db: Executor, type: ExerciseType, payload: unknown): Promise<ModelAudio> {
   const key = keyOf(primaryAudioTarget(type, payload));
   if (!key) return {};
-  const { rows } = await db.query<{ url: string } & VoiceRow>(
-    `SELECT url, ${voiceColumns()} FROM lesson_audio WHERE key = $1`,
-    [key],
-  );
+  const { rows } = await db.query<RecordingRow>(`SELECT ${RECORDING_COLUMNS} FROM lesson_audio WHERE key = $1`, [key]);
   const row = rows[0];
   if (!row) return {};
-  const voice = voiceOf(row);
+  const voice = voiceOfRecording(row);
   return voice ? { modelAudioUrl: row.url, modelAudioVoice: voice } : { modelAudioUrl: row.url };
 }

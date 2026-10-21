@@ -47,13 +47,13 @@ export async function sentenceRecordings(
   const audio: Record<string, string> = {};
   const voices: Record<string, RecordingVoice> = {};
   if (keys.length === 0) return { audio, voices };
-  const res = await db.query<{ key: string; url: string } & VoiceRow>(
-    `SELECT key, url, ${voiceColumns()} FROM lesson_audio WHERE key = ANY($1::text[])`,
+  const res = await db.query<{ key: string; url: string; text: string; duration_ms: number } & VoiceRow>(
+    `SELECT key, url, text, duration_ms, ${voiceColumns()} FROM lesson_audio WHERE key = ANY($1::text[])`,
     [keys],
   );
   for (const r of res.rows) {
     audio[r.key] = r.url;
-    const voice = voiceOf(r);
+    const voice = voiceOf(r, { text: r.text, durationMs: r.duration_ms });
     if (voice) voices[r.key] = voice;
   }
   return { audio, voices };

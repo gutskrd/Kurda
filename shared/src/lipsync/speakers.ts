@@ -32,10 +32,16 @@ export function isSpeakerId(value: unknown): value is SpeakerId {
  * no timeline has been made for the recording yet: show the character, and
  * move its mouth from the text if the screen has it (`lipsyncFromText`), or
  * hold it at rest. Decode it once with `decodeLipsync` before playing.
+ *
+ * `lipsyncSource` says where the timeline came from. Missing, it was made
+ * from the recording's own sound. `'text'` means none has been made from the
+ * sound yet, so the server spread the recording's words over its length
+ * instead (`lipsyncFromText`): it moves with the words, not with the voice.
  */
 export interface RecordingVoice {
   speaker: SpeakerId;
   lipsync?: LipsyncData;
+  lipsyncSource?: 'audio' | 'text';
 }
 
 /**
@@ -59,4 +65,27 @@ export interface DictionaryAudio {
   dialect: string;
   speaker?: SpeakerId;
   lipsync?: LipsyncData;
+}
+
+/** One dictionary pronunciation as GET /admin/dictionary/audio lists it. */
+export interface DictionaryAudioAdminItem {
+  /** its key for PATCH /admin/audio/dictionary and GET /admin/audio/dictionary/file */
+  id: string;
+  entryId: string;
+  headword: string;
+  dialect: string;
+  url: string;
+  speaker: SpeakerId | null;
+  /** a timeline is stored: one made from the recording's sound */
+  hasLipsync: boolean;
+  lipsync: LipsyncData | null;
+}
+
+/** A page of GET /admin/dictionary/audio. */
+export interface DictionaryAudioAdminPage {
+  items: DictionaryAudioAdminItem[];
+  /** sent back as `?cursor=` for the next page; null on the last one */
+  nextCursor: string | null;
+  /** over every pronunciation, whatever the filters */
+  counts: { total: number; noSpeaker: number; speakerNoTimeline: number };
 }

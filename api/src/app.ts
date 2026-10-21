@@ -130,6 +130,7 @@ import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes
 import { registerAlphabetAudioRoutes } from './alphabet/routes.js';
 import { registerLessonAudioRoutes } from './lessonaudio/routes.js';
 import { registerRecordingVoiceRoutes } from './speakers/routes.js';
+import type { RecordingFileOptions } from './speakers/recording-file.js';
 import { StoriesService } from './stories/service.js';
 import { StoryAdminService } from './stories/admin-service.js';
 import { registerStoryRoutes } from './stories/routes.js';
@@ -204,6 +205,8 @@ export interface BuildAppOptions {
   moderation?: ModerationOptions;
   /** Test seam for copyright notices: where their emails go. */
   copyright?: CopyrightWireOptions;
+  /** Test seam for reading a recording's file from another site: the fetch, the name lookup, the time allowed. */
+  recordingFiles?: RecordingFileOptions;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -619,7 +622,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // and of the Kurdish the lessons use, which lessons deliver with their exercises
     registerLessonAudioRoutes(app, config);
     // and who says each of those recordings, chosen or changed after it was made
-    registerRecordingVoiceRoutes(app);
+    registerRecordingVoiceRoutes(app, config, options.recordingFiles);
     // Stories, which replaced the ranked quiz: reading for everyone, writing in
     // the admin panel, and the starter stories seeded once each as drafts for a
     // native speaker to publish. Not under test, where they would be stories no
