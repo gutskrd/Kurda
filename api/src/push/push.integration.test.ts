@@ -18,8 +18,9 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
   const suffix = Date.now().toString(36);
   let userA = '';
   let userB = '';
+  let accessA = '';
 
-  async function register(name: string, ip: string): Promise<string> {
+  async function register(name: string, ip: string): Promise<{ id: string; token: string }> {
     const res = await app.inject({
       method: 'POST',
       url: '/auth/register',
@@ -33,7 +34,7 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
       },
       remoteAddress: ip,
     });
-    return res.json().user.id;
+    return { id: res.json().user.id, token: res.json().tokens.accessToken };
   }
 
   beforeAll(async () => {
@@ -41,8 +42,10 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     await app.ready();
     pool = new pg.Pool({ connectionString: DATABASE_URL });
     tokens = new DeviceTokenService(pool);
-    userA = await register('pushA', '10.94.0.1');
-    userB = await register('pushB', '10.94.0.2');
+    const a = await register('pushA', '10.94.0.1');
+    userA = a.id;
+    accessA = a.token;
+    userB = (await register('pushB', '10.94.0.2')).id;
   });
 
   afterAll(async () => {
@@ -73,6 +76,24 @@ describe.skipIf(!DATABASE_URL)('push infrastructure (integration)', () => {
     expect(await tokens.touch(userA, t)).toBe(true);
     expect(await tokens.remove(userA, t)).toBe(true);
     expect(await tokens.remove(userA, t)).toBe(false); // already gone
+  });
+
+  it('registers an Expo push token from the phone, and refuses anything that is not one', async () => {
+    // the phone registers only once the address is confirmed (plugins/activation.ts)
+    await pool.query(`UPDATE users SET email_verified_at = now() WHERE id = $1`, [userA]);
+    const post = (url: string, payload: Record<string, unknown>) =>
+      app.inject({ method: 'POST', url, payload, headers: { authorization: `Bearer ${accessA}` } });
+    const expo = `ExponentPushToken[it${suffix}]`;
+    expect((await post('/me/devices', { platform: 'ios', token: expo })).statusCode).toBe(201);
+    expect((await post('/me/devices', { platform: 'android', token: `ExpoPushToken[it2${suffix}]` })).statusCode).toBe(201);
+    expect((await tokens.forUser(userA)).map((d) => d.token)).toContain(expo);
+    for (const junk of ['hello', `tok-${suffix}`, 'ExponentPushToken[]', 'ExponentPushToken[a b]', '<script>alert(1)</script>']) {
+      expect((await post('/me/devices', { platform: 'ios', token: junk })).statusCode, junk).toBe(400);
+    }
+    expect((await post('/me/devices/heartbeat', { token: expo })).statusCode).toBe(200);
+    expect((await post('/me/devices/heartbeat', { token: 'junk' })).statusCode).toBe(400);
+    expect((await post('/me/devices/remove', { token: expo })).statusCode).toBe(200);
+    expect((await tokens.forUser(userA)).map((d) => d.token)).not.toContain(expo);
   });
 
   it('delivery sends to devices and prunes provider-rejected tokens', async () => {

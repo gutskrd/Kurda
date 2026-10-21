@@ -57,11 +57,13 @@ describe('translation catalogs', () => {
    * slide may say, in any language.
    *
    * And it says where the reminder lands: in the notifications inside the
-   * app. Push to the phone is not wired yet (the API's push provider is a
-   * stub and `getPushToken` returns null), so "Hevalo can remind you" under a
-   * bell read as a phone notification that never comes. Reminders are on by
-   * default for adults and off for minors, so the slide says they can be
-   * turned on or off, not only on.
+   * app. That stays true with push: the reminder reaches the phone only once
+   * the phone allows it, which the slide does not ask for (the app asks after
+   * a lesson, or from Settings). Reminders are on by default for adults and
+   * off for minors, so the slide says they can be turned on or off, not only
+   * on — and where: Settings → Notification settings, by the names those two
+   * screens have in each language. It said "in Profile", where there is no
+   * such switch.
    */
   it('promises no daily story in the notifications slide', () => {
     expect(TRANSLATIONS.en['onboarding.notify.title']).not.toMatch(/story/i);
@@ -91,6 +93,8 @@ describe('translation catalogs', () => {
     for (const locale of LOCALES) {
       expect(TRANSLATIONS[locale]['notifications.title'], locale).toMatch(new RegExp(place[locale].slice(0, 5), 'i'));
       expect(TRANSLATIONS[locale]['onboarding.notify.body'], locale).toContain(place[locale]);
+      expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.title']);
+      expect(TRANSLATIONS[locale]['onboarding.notify.later'], locale).toContain(TRANSLATIONS[locale]['settings.notifications']);
     }
   });
 });

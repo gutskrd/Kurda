@@ -390,7 +390,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // set up here because league and badge news below goes through it
     const deviceTokens = new DeviceTokenService(app.db);
     const notificationPrefs = new NotificationPrefsService(app.db);
-    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const pushService = new PushService(deviceTokens, createPushProvider(config, app.log), notificationPrefs);
     const inbox = new InboxService(app.db);
     const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
 

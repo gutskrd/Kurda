@@ -12,6 +12,7 @@ import { sectionLabel } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { DevicePushControl } from '../push/DevicePushControl';
 import {
   CATEGORY_LABEL,
   NOTIFICATION_CATEGORIES,
@@ -24,7 +25,7 @@ import {
 
 const DEFAULT_QUIET = { start: 22 * 60, end: 7 * 60 };
 
-/** Per-category notification toggles + quiet hours (KUR-095). */
+/** This phone's permission (KUR-094), per-category notification toggles + quiet hours (KUR-095). */
 export function NotificationsScreen({ onExit }: { onExit: () => void }) {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -63,6 +64,8 @@ export function NotificationsScreen({ onExit }: { onExit: () => void }) {
             const quiet = quietEnabled(prefs);
             return (
         <ScrollView contentContainerStyle={styles.content}>
+          {/* whether the phone lets anything through at all, before what to send */}
+          <DevicePushControl />
           <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.categories')}</Text>
           {NOTIFICATION_CATEGORIES.map((cat: NotificationCategory) => (
             <View key={cat} style={[styles.row, { backgroundColor: colors.controlTrack }]}>

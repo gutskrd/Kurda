@@ -65,6 +65,7 @@ import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
 import { PushRegistration } from './src/push/PushRegistration';
+import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
@@ -475,6 +476,8 @@ function SignedInRoot() {
         {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
+      {/* a push shown while the app is open, and a tapped one opened where it belongs */}
+      <PushHost />
       {/* over every screen: an invite to play waits here until it is answered */}
       <InviteBanner />
       {/* over every screen: a gift that arrives, a warning to read once */}

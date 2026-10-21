@@ -36,3 +36,41 @@ export function SafeAreaProvider({ children }: { children?: ReactNode }): React.
 export function SafeAreaView({ children, style }: { children?: ReactNode; style?: unknown }): React.JSX.Element {
   return <View style={style as never}>{children}</View>;
 }
+
+// expo-notifications: the phone's answer is whatever a test puts in
+// `notificationsStub`, and asking turns it into `afterRequest`, as the system
+// prompt would. Everything else listens to nothing and clears nothing.
+interface PermissionAnswerStub {
+  status: 'granted' | 'denied' | 'undetermined';
+  granted: boolean;
+  canAskAgain: boolean;
+}
+export const notificationsStub: { permission: PermissionAnswerStub; afterRequest: PermissionAnswerStub; requests: number } = {
+  permission: { status: 'undetermined', granted: false, canAskAgain: true },
+  afterRequest: { status: 'granted', granted: true, canAskAgain: true },
+  requests: 0,
+};
+export async function getPermissionsAsync(): Promise<PermissionAnswerStub> {
+  return { ...notificationsStub.permission };
+}
+export async function requestPermissionsAsync(): Promise<PermissionAnswerStub> {
+  notificationsStub.requests += 1;
+  notificationsStub.permission = { ...notificationsStub.afterRequest };
+  return { ...notificationsStub.permission };
+}
+export const AndroidImportance = { DEFAULT: 3 };
+export const DEFAULT_ACTION_IDENTIFIER = 'expo.modules.notifications.actions.DEFAULT';
+export async function setNotificationChannelAsync(): Promise<null> {
+  return null;
+}
+export function setNotificationHandler(): void {}
+export function addNotificationResponseReceivedListener(): { remove: () => void } {
+  return { remove: () => undefined };
+}
+export function getLastNotificationResponse(): null {
+  return null;
+}
+export function clearLastNotificationResponse(): void {}
+export async function setBadgeCountAsync(): Promise<boolean> {
+  return true;
+}

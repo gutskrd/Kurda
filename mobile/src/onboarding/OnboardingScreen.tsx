@@ -230,7 +230,9 @@ function WelcomeSlide(): React.JSX.Element {
 }
 
 /** Soft-ask notifications intro (KUR-095 onboarding). Informational — no OS
- *  prompt here; the actual permission lives in Profile → Notification settings. */
+ *  prompt here, before there is anything to be reminded of. The system prompt
+ *  comes after a lesson, from a card that can be turned down, or from the
+ *  control at the top of Settings → Notification settings (push/). */
 function NotificationsSlide(): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();

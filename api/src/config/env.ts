@@ -182,6 +182,19 @@ const envSchema = z.object({
    * what arrived, and says the body can be read in Resend.
    */
   RESEND_INBOX_API_KEY: z.string().optional(),
+  /**
+   * Who delivers push notifications (push/provider.ts): `expo` sends through
+   * Expo's push service, `stub` records the sends and delivers nothing. Unset:
+   * Expo in production and the stub everywhere else, so a laptop or a test run
+   * never reaches somebody's phone.
+   */
+  PUSH_PROVIDER: z.enum(['expo', 'stub']).optional(),
+  /**
+   * An Expo access token, sent with every push request. Needed only once
+   * "Enhanced security for push notifications" is switched on for the project
+   * at expo.dev; without that setting Expo accepts requests without one.
+   */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**
