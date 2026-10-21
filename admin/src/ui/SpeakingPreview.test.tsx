@@ -84,7 +84,8 @@ describe('the speaking preview', () => {
     frame(48);
     expect(shownMouths(container)).toEqual(['rest']);
     expect(head(container).hasAttribute('transform')).toBe(false);
-    expect(screen.getByText('The mouth follows its saved timeline.')).toBeInTheDocument();
+    // with a stored timeline there is nothing to explain
+    expect(screen.queryByText(/timed from the words/)).toBeNull();
   });
 
   it('keeps the head still when less motion is asked for, and the mouth still moves', async () => {
@@ -109,6 +110,8 @@ describe('the speaking preview', () => {
 
   it('blinks now and then while it is on screen', () => {
     const { container } = renderUi(<SpeakingPreview speaker="hevalo" url="https://media.test/a.wav" text="a" />);
+    // a timeline not known here is not said to be missing
+    expect(screen.queryByText(/timed from the words/)).toBeNull();
     const shut = (): boolean => container.querySelector('[data-eyes="closed"]')!.getAttribute('display') !== 'none';
     frame(0);
     expect(shut()).toBe(false);
@@ -121,9 +124,9 @@ describe('the speaking preview', () => {
   });
 
   it('times the mouth from the words when no timeline is stored, once the recording’s length is known', () => {
-    const { container } = renderUi(<SpeakingPreview speaker="hamo" url="https://media.test/silav.wav" text="Silav" />);
+    const { container } = renderUi(<SpeakingPreview speaker="hamo" url="https://media.test/silav.wav" text="Silav" lipsync={null} />);
     const { audio, at } = clock(container);
-    expect(screen.getByText('The mouth is timed from the words.')).toBeInTheDocument();
+    expect(screen.getByText('No timeline yet: the mouth is timed from the words.')).toBeInTheDocument();
     Object.defineProperty(audio, 'duration', { configurable: true, value: 1.2 });
     act(() => {
       audio.dispatchEvent(new Event('loadedmetadata'));

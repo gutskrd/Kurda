@@ -264,6 +264,59 @@ describe('who says each recording', () => {
     expect(timeline.cues.map((c) => c.viseme)).toContain('a');
   });
 
+  it('reads the stored timelines only when an opened recording needs one, once, and previews with them', async () => {
+    const user = userEvent.setup();
+    const STORED = { v: 1, d: 900, k: [[0, 0], [90, 5], [500, 0]] };
+    const listed: Listing = {
+      ...LISTING,
+      items: LISTING.items.map((i) => (i.key === 'silav' ? { ...i, speaker: 'hevalo', hasLipsync: true } : i)),
+    };
+    const api = fakeApi(
+      on('GET', '/admin/lesson-audio', json(listed)),
+      on('GET', '/admin/lesson-audio?withLipsync=1', json({ ...listed, items: listed.items.map((i) => ({ ...i, lipsync: i.key === 'silav' ? STORED : null })) })),
+    );
+    location.hash = '#/audio/lessons?show=recorded';
+    renderUi(<AudioStudio />);
+    await user.click(await screen.findByRole('button', { name: /^Silav/ }));
+    await waitFor(() => expect(api.calls.filter((c) => c.path === '/admin/lesson-audio?withLipsync=1')).toHaveLength(1));
+    expect(screen.getByRole('button', { name: 'Play with Hevalo' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText(/timed from the words/)).toBeNull());
+    await user.click(screen.getByRole('button', { name: /^Silav/ }));
+    await user.click(screen.getByRole('button', { name: /^Silav/ }));
+    expect(api.calls.filter((c) => c.path.includes('withLipsync'))).toHaveLength(1);
+  });
+
+  it('asks for no timelines when the opened recording has none, and says the mouth follows the words', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi(on('GET', '/admin/lesson-audio', json(saidBy('hamo'))));
+    location.hash = '#/audio/lessons?show=recorded';
+    renderUi(<AudioStudio />);
+    await user.click(await screen.findByRole('button', { name: /^Silav/ }));
+    expect(screen.getByText('No timeline yet: the mouth is timed from the words.')).toBeInTheDocument();
+    expect(api.calls.map((c) => c.path)).toEqual(['/admin/lesson-audio']);
+  });
+
+  it('previews an alphabet sound with the timeline its list carries', async () => {
+    const user = userEvent.setup();
+    fakeApi(
+      on(
+        'GET',
+        '/admin/alphabet/audio',
+        json({
+          recordings: [
+            { key: 'kmr:sound:a', url: 'https://cdn.test/a.wav', durationMs: 900, updatedAt: '2026-10-01T10:00:00.000Z', speaker: 'xezo', hasLipsync: true, lipsync: { v: 1, d: 900, k: [[0, 0], [90, 5], [500, 0]] } },
+          ],
+        }),
+      ),
+    );
+    location.hash = '#/audio/letters?show=recorded';
+    renderUi(<AudioStudio />);
+    await user.click(await screen.findByRole('button', { name: /^a/ }));
+    const studio = screen.getByRole('complementary', { name: 'Record this sound' });
+    expect(within(studio).getByRole('button', { name: 'Play with Xezo' })).toBeInTheDocument();
+    expect(within(studio).queryByText(/timed from the words/)).toBeNull();
+  });
+
   it('sends an alphabet sound up with its character and a timeline read in its own script', async () => {
     const user = userEvent.setup();
     take.wav = encodeWav(speechPcm(0.9));

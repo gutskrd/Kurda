@@ -22,7 +22,7 @@ interface Recording {
   /** who is shown saying it, or null for no character */
   speaker?: SpeakerId | null;
   hasLipsync?: boolean;
-  /** the timeline itself, once a save made here has answered with it (the list does not carry it) */
+  /** the stored timeline, null for none, as the list and a save made here send it */
   lipsync?: LipsyncData | null;
 }
 
@@ -267,7 +267,7 @@ function Studio({
           speaker={recording.speaker}
           url={recording.url}
           text={clip.say}
-          lipsync={recording.lipsync}
+          lipsync={recording.lipsync ?? (recording.hasLipsync ? undefined : null)}
           durationMs={recording.durationMs}
         />
       )}

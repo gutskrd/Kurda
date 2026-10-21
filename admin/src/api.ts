@@ -116,7 +116,7 @@ async function read<T>(path: string, res: Response): Promise<T> {
 
 export async function api<T>(
   path: string,
-  opts: { method?: string; body?: unknown } = {},
+  opts: { method?: string; body?: unknown; signal?: AbortSignal } = {},
 ): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: opts.method ?? 'GET',
@@ -125,8 +125,23 @@ export async function api<T>(
       ...(token ? { authorization: `Bearer ${token}` } : {}),
     },
     body: opts.body ? JSON.stringify(opts.body) : undefined,
+    ...(opts.signal ? { signal: opts.signal } : {}),
   });
   return read<T>(path, res);
+}
+
+/**
+ * Read a file the API sends (a recording's bytes) rather than JSON. Same auth
+ * and error handling as `api`: a refusal is an ApiError with the server's
+ * code and details. `signal` stops the download.
+ */
+export async function apiFile(path: string, opts: { signal?: AbortSignal } = {}): Promise<ArrayBuffer> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    headers: token ? { authorization: `Bearer ${token}` } : {},
+    ...(opts.signal ? { signal: opts.signal } : {}),
+  });
+  if (!res.ok) return read<never>(path, res);
+  return res.arrayBuffer();
 }
 
 /**

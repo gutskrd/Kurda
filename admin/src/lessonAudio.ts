@@ -45,7 +45,10 @@ export interface Item {
   speaker?: SpeakerId | null;
   /** it has a mouth timeline */
   hasLipsync?: boolean;
-  /** the timeline itself, once a save or a change made here has answered with it (the list does not carry it) */
+  /**
+   * the timeline itself, null for none: the list carries it only when asked
+   * (`withLipsync`), and a save made here answers with it; missing while not known
+   */
   lipsync?: LipsyncData | null;
   usedIn: Usage[];
   /** recorded, but no lesson uses it (or added here by hand) */
@@ -232,6 +235,19 @@ export function withRecording(items: readonly Item[], saved: Saved): Item[] {
         }
       : i,
   );
+}
+
+/**
+ * The stored timelines from the list read `withLipsync`, on the items that do
+ * not know theirs yet — where it is still the same take, not one saved since.
+ */
+export function withTimelines(items: readonly Item[], read: readonly Item[]): Item[] {
+  const stored = new Map(read.map((i) => [i.key, i]));
+  return items.map((i) => {
+    const r = stored.get(i.key);
+    if (i.lipsync !== undefined || !r || r.lipsync === undefined || r.url !== i.url) return i;
+    return { ...i, lipsync: r.lipsync, hasLipsync: r.lipsync !== null };
+  });
 }
 
 /** Who says an item, and its timeline when that changed too: shown at once, before the server has answered. */

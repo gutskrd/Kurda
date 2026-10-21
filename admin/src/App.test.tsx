@@ -107,6 +107,7 @@ describe('the admin’s navigation', () => {
       'Record the alphabet',
       'Record lesson sentences',
       'Record story sentences',
+      'Dictionary pronunciations',
       'Characters',
     ]);
     expect(within(group).getByRole('link', { name: 'Record the alphabet' })).toHaveAttribute('aria-current', 'page');

@@ -1,22 +1,27 @@
 import { useEffect, useRef, useState } from 'react';
-import { CHARACTER_NAMES, DEFAULT_CHARACTER, type SpeakerId } from '@kurda/shared';
+import { CHARACTER_NAMES, DEFAULT_CHARACTER, type DictionaryAudioAdminPage, type SpeakerId } from '@kurda/shared';
 import { api } from '../api';
-import { batchControl, runBatch, type BatchControl } from '../batch';
+import { batchControl, chainSources, listSource, pagedSource, runBatch, type BatchControl, type BatchSource } from '../batch';
 import type { Listing } from '../lessonAudio';
 import { scriptOf } from '../lessonAudio';
-import { Button, Checkbox, ErrorState, Section, Select, Table, errorLine, useLoad, type Column } from '../ui';
+import { Button, Checkbox, ErrorState, Note, Section, Select, Table, errorLine, useCountdown, useLoad, type Column } from '../ui';
 import { SpeakerPicker } from '../ui/SpeakerPicker';
 import { patchVoice, rememberedSpeaker } from '../voice';
 import {
   KIND_NAMES,
-  TimelineError,
   countByKind,
+  dictionaryPage,
+  failureLine,
   fromAlphabet,
+  fromDictionary,
   fromLessons,
   needsSpeaker,
   needsTimeline,
-  timelineFromUrl,
+  ofKind,
+  retryAfterMs,
+  timelineFromFile,
   type AlphabetRecording,
+  type DictionaryFilter,
   type KindCounts,
   type KindFilter,
   type VoiceRecording,
@@ -37,28 +42,48 @@ interface Job {
   done: number;
   saved: number;
   failures: Failure[];
+  /** waiting until then (Date.now() ms) because the server asked to slow down */
+  holdUntil: number | null;
+  /** the dictionary's list could not be read on: the job did what it had */
+  problem: string | null;
 }
 
 type Work = (r: VoiceRecording, signal: AbortSignal) => Promise<void>;
+
+type DictionaryCounts = DictionaryAudioAdminPage['counts'];
+
+interface Loaded {
+  /** lesson, story and alphabet recordings, read whole */
+  listed: VoiceRecording[];
+  /** the dictionary's, which are only counted here and read a page at a time by a job */
+  dictionary: DictionaryCounts;
+}
 
 const KIND_OPTIONS: ReadonlyArray<{ value: KindFilter; label: string }> = [
   { value: 'all', label: 'Every kind' },
   { value: 'lesson', label: KIND_NAMES.lesson },
   { value: 'alphabet', label: KIND_NAMES.alphabet },
+  { value: 'dictionary', label: KIND_NAMES.dictionary },
 ];
 
 const idOf = (r: VoiceRecording): string => `${r.kind}:${r.key}`;
 
-async function loadRecordings(): Promise<VoiceRecording[]> {
-  const [lessons, letters] = await Promise.all([
+async function loadRecordings(): Promise<Loaded> {
+  const [lessons, letters, dictionary] = await Promise.all([
     api<Listing>('/admin/lesson-audio'),
     api<{ recordings: AlphabetRecording[] }>('/admin/alphabet/audio'),
+    dictionaryPage({}, null, { limit: 1 }),
   ]);
-  return [...fromLessons(lessons.items), ...fromAlphabet(letters.recordings)];
+  return { listed: [...fromLessons(lessons.items), ...fromAlphabet(letters.recordings)], dictionary: dictionary.counts };
 }
 
-function failureLine(err: unknown): string {
-  return err instanceof TimelineError ? err.message : errorLine(err);
+/** The dictionary's pronunciations that match `filter`, read a page at a time as the job gets to them. */
+function dictionarySource(filter: DictionaryFilter, keep: (r: VoiceRecording) => boolean, signal: AbortSignal): BatchSource<VoiceRecording> {
+  return pagedSource(async (cursor) => {
+    const page = await dictionaryPage(filter, cursor, { signal });
+    // the server filtered them; this only makes sure nothing else is touched
+    return { items: page.items.map(fromDictionary).filter(keep), nextCursor: page.nextCursor };
+  });
 }
 
 const COLUMNS: ReadonlyArray<Column<KindCounts>> = [
@@ -76,17 +101,19 @@ const COLUMNS: ReadonlyArray<Column<KindCounts>> = [
  * no one say it; one given a character since, without being recorded again,
  * has no timeline, so the mouth is timed from the words alone. Two jobs put
  * both right in bulk: give every recording without a character one, and make
- * the missing timelines — each file downloaded and read in this browser, as
- * the studio does for a new take, and the timeline saved with it.
+ * the missing timelines — each file read through the API and decoded in this
+ * browser, as the studio does for a new take, and the timeline saved with it.
  *
  * Both work through two recordings at a time, can be paused and cancelled,
- * and set a failure aside to retry rather than stop. They touch only the
- * recordings the filter picks; a timeline already made is replaced only when
- * the editor asks for it.
+ * and set a failure aside to retry rather than stop. The dictionary's
+ * pronunciations are read a page at a time as a job reaches them. When the
+ * server asks for a pause, the job waits as long as it said and goes on.
+ * Jobs touch only the recordings the filter picks; a timeline already made is
+ * replaced only when the editor asks for it.
  */
 export function Characters(): React.JSX.Element {
   const list = useLoad(loadRecordings, []);
-  const recordings = list.data;
+  const loaded = list.data;
   const [speakerKinds, setSpeakerKinds] = useState<KindFilter>('all');
   const [who, setWho] = useState<SpeakerId>(() => rememberedSpeaker() ?? DEFAULT_CHARACTER);
   const [timelineKinds, setTimelineKinds] = useState<KindFilter>('all');
@@ -99,55 +126,91 @@ export function Characters(): React.JSX.Element {
   useEffect(() => () => control.current?.cancel(), []);
 
   const busy = job !== null && (job.status === 'running' || job.status === 'paused' || job.status === 'stopping');
-  const toGive = recordings?.filter((r) => needsSpeaker(r, speakerKinds)) ?? [];
-  const toTime = recordings?.filter((r) => needsTimeline(r, timelineKinds, remake)) ?? [];
+  const dict = loaded?.dictionary;
+  const toGive = loaded?.listed.filter((r) => needsSpeaker(r, speakerKinds)) ?? [];
+  const dictToGive = dict && ofKind('dictionary', speakerKinds) ? dict.noSpeaker : 0;
+  const toTime = loaded?.listed.filter((r) => needsTimeline(r, timelineKinds, remake)) ?? [];
+  const dictToTime = dict && ofKind('dictionary', timelineKinds) ? (remake ? dict.total - dict.noSpeaker : dict.speakerNoTimeline) : 0;
+  const giveCount = toGive.length + dictToGive;
+  const timeCount = toTime.length + dictToTime;
 
+  /** After one is saved: the list, or the dictionary's counts, as they are now. */
   const update = (r: VoiceRecording, change: Partial<VoiceRecording>): void =>
-    list.setData((all) => (all ?? []).map((x) => (idOf(x) === idOf(r) ? { ...x, ...change } : x)));
+    list.setData((all) => {
+      if (!all) return all!;
+      if (r.kind !== 'dictionary') return { ...all, listed: all.listed.map((x) => (idOf(x) === idOf(r) ? { ...x, ...change } : x)) };
+      const c = { ...all.dictionary };
+      if (change.speaker !== undefined && r.speaker === null && change.speaker !== null) {
+        c.noSpeaker -= 1;
+        if (!r.hasLipsync) c.speakerNoTimeline += 1;
+      }
+      if (change.hasLipsync && !r.hasLipsync && r.speaker !== null) c.speakerNoTimeline -= 1;
+      return { ...all, dictionary: c };
+    });
 
-  const run = async (name: JobName, items: VoiceRecording[], how: Work, retrying = false): Promise<void> => {
+  /** Start a job over what `from` gives (passed the job's signal, so a cancel stops a page being read). */
+  const run = async (name: JobName, from: (signal: AbortSignal) => BatchSource<VoiceRecording>, total: number, how: Work, keep: Failure[] = []): Promise<void> => {
     const ctl = batchControl();
+    const source = from(ctl.signal);
     control.current = ctl;
     work.current = how;
-    const again = new Set(items.map(idOf));
-    setJob((prev) => ({
-      name,
-      status: 'running',
-      total: items.length,
-      done: 0,
-      saved: 0,
-      // a retry keeps the failures it is not retrying
-      failures: retrying && prev?.name === name ? prev.failures.filter((f) => !again.has(idOf(f.recording))) : [],
-    }));
-    await runBatch(items, how, {
+    setJob({ name, status: 'running', total, done: 0, saved: 0, failures: keep, holdUntil: null, problem: null });
+    const mine = (): boolean => control.current === ctl;
+    await runBatch(source, how, {
       control: ctl,
       concurrency: 2,
+      retryAfter: retryAfterMs,
+      onHold: (until) => mine() && setJob((j) => j && { ...j, holdUntil: until }),
+      onSourceError: (err) =>
+        mine() &&
+        setJob(
+          (j) =>
+            j && {
+              ...j,
+              problem: `The dictionary’s pronunciations could not be read on, so the job stopped there. ${errorLine(err)} Start it again to carry on.`,
+            },
+        ),
       onOutcome: (o) => {
-        if (control.current !== ctl) return;
-        setJob((j) =>
-          j && {
-            ...j,
-            done: j.done + 1,
-            saved: j.saved + (o.ok ? 1 : 0),
-            failures: o.ok ? j.failures : [...j.failures, { recording: o.item, message: failureLine(o.error) }],
-          },
+        if (!mine()) return;
+        setJob(
+          (j) =>
+            j && {
+              ...j,
+              done: j.done + 1,
+              saved: j.saved + (o.ok ? 1 : 0),
+              failures: o.ok ? j.failures : [...j.failures, { recording: o.item, message: failureLine(o.error) }],
+            },
         );
       },
     });
-    if (control.current === ctl) setJob((j) => j && { ...j, status: ctl.cancelled ? 'cancelled' : 'done' });
+    if (mine()) setJob((j) => j && { ...j, status: ctl.cancelled ? 'cancelled' : 'done', holdUntil: null });
   };
 
   const giveSpeaker = (): void => {
     const speaker = who;
-    void run('speaker', toGive, async (r) => {
+    const kinds = speakerKinds;
+    const listed = toGive;
+    const from = (signal: AbortSignal): BatchSource<VoiceRecording> =>
+      ofKind('dictionary', kinds)
+        ? chainSources(listSource(listed), dictionarySource({ speaker: 'none' }, (r) => needsSpeaker(r, kinds), signal))
+        : listSource(listed);
+    void run('speaker', from, giveCount, async (r) => {
       await patchVoice(r.kind, r.key, { speaker });
       update(r, { speaker });
     });
   };
 
   const makeTimelines = (): void => {
-    void run('timelines', toTime, async (r, signal) => {
-      const lipsync = await timelineFromUrl(r, signal);
+    const kinds = timelineKinds;
+    const again = remake;
+    const listed = toTime;
+    const filter: DictionaryFilter = again ? { speaker: 'any' } : { speaker: 'any', lipsync: 'missing' };
+    const from = (signal: AbortSignal): BatchSource<VoiceRecording> =>
+      ofKind('dictionary', kinds)
+        ? chainSources(listSource(listed), dictionarySource(filter, (r) => needsTimeline(r, kinds, again), signal))
+        : listSource(listed);
+    void run('timelines', from, timeCount, async (r, stop) => {
+      const lipsync = await timelineFromFile(r, stop);
       await patchVoice(r.kind, r.key, { lipsync });
       update(r, { hasLipsync: true });
     });
@@ -156,8 +219,10 @@ export function Characters(): React.JSX.Element {
   const retry = (failures: Failure[]): void => {
     if (!job || !work.current) return;
     // as the list has them now, not as they were when they failed
-    const current = new Map((recordings ?? []).map((r) => [idOf(r), r]));
-    void run(job.name, failures.map((f) => current.get(idOf(f.recording)) ?? f.recording), work.current, true);
+    const current = new Map((loaded?.listed ?? []).map((r) => [idOf(r), r]));
+    const again = new Set(failures.map((f) => idOf(f.recording)));
+    const items = failures.map((f) => current.get(idOf(f.recording)) ?? f.recording);
+    void run(job.name, () => listSource(items), items.length, work.current, job.failures.filter((f) => !again.has(idOf(f.recording))));
   };
 
   const pause = (): void => {
@@ -173,7 +238,7 @@ export function Characters(): React.JSX.Element {
     setJob((j) => j && { ...j, status: 'stopping' });
   };
 
-  if (list.error && !recordings) return <ErrorState error={list.error} onRetry={() => void list.reload()} what="the recordings" />;
+  if (list.error && !loaded) return <ErrorState error={list.error} onRetry={() => void list.reload()} what="the recordings" />;
 
   const panel = (name: JobName): React.JSX.Element | null =>
     job?.name === name ? <JobPanel job={job} onPause={pause} onResume={resume} onCancel={cancel} onRetry={retry} /> : null;
@@ -188,9 +253,9 @@ export function Characters(): React.JSX.Element {
         <Table
           caption="Recordings by kind"
           columns={COLUMNS}
-          rows={recordings ? countByKind(recordings) : null}
+          rows={loaded ? countByKind(loaded.listed, loaded.dictionary) : null}
           rowKey={(c) => c.kind}
-          loading={list.loading && !recordings}
+          loading={list.loading && !loaded}
           error={list.error}
           onRetry={() => void list.reload()}
         />
@@ -210,12 +275,12 @@ export function Characters(): React.JSX.Element {
           />
           <SpeakerPicker label="Character" value={who} onChange={(s) => s && setWho(s)} none={false} disabled={busy} />
           <div className="vc-go">
-            <Button variant="primary" onClick={giveSpeaker} disabled={busy || !recordings || toGive.length === 0}>
-              {!recordings
+            <Button variant="primary" onClick={giveSpeaker} disabled={busy || !loaded || giveCount === 0}>
+              {!loaded
                 ? 'Give them a character'
-                : toGive.length === 0
+                : giveCount === 0
                   ? 'Every recording here has a character'
-                  : `Give ${toGive.length} ${toGive.length === 1 ? 'recording' : 'recordings'} to ${CHARACTER_NAMES[who]}`}
+                  : `Give ${giveCount} ${giveCount === 1 ? 'recording' : 'recordings'} to ${CHARACTER_NAMES[who]}`}
             </Button>
           </div>
         </div>
@@ -224,7 +289,7 @@ export function Characters(): React.JSX.Element {
 
       <Section
         title="Make mouth timelines"
-        description="For recordings with a character that were made, or given one, without a timeline. Each file is downloaded and read in this browser, then its timeline is saved with it: keep this page open until it finishes."
+        description="For recordings with a character that were made, or given one, without a timeline. Each file is read through the server and decoded in this browser, then its timeline is saved with it: keep this page open until it finishes."
       >
         <div className="vc-form">
           <Select
@@ -242,18 +307,17 @@ export function Characters(): React.JSX.Element {
             disabled={busy}
           />
           <div className="vc-go">
-            <Button variant="primary" onClick={makeTimelines} disabled={busy || !recordings || toTime.length === 0}>
-              {!recordings
+            <Button variant="primary" onClick={makeTimelines} disabled={busy || !loaded || timeCount === 0}>
+              {!loaded
                 ? 'Make timelines'
-                : toTime.length === 0
+                : timeCount === 0
                   ? 'Every recording here has a timeline'
-                  : `Make ${toTime.length} ${toTime.length === 1 ? 'timeline' : 'timelines'}`}
+                  : `Make ${timeCount} ${timeCount === 1 ? 'timeline' : 'timelines'}`}
             </Button>
           </div>
         </div>
         {panel('timelines')}
       </Section>
-
     </div>
   );
 }
@@ -273,12 +337,18 @@ function JobPanel({
   onCancel: () => void;
   onRetry: (failures: Failure[]) => void;
 }): React.JSX.Element {
+  const waitLeft = useCountdown(job.holdUntil);
   const failed = job.failures.length;
   const running = job.status === 'running' || job.status === 'paused' || job.status === 'stopping';
+  const waiting = job.status === 'running' && job.holdUntil !== null;
+  // the counts were taken when the page loaded; the job may find a few more
+  const total = Math.max(job.total, job.done);
   const saved = `${job.saved} saved${failed ? `, ${failed} failed` : ''}`;
   const status =
     job.status === 'running'
-      ? DOING[job.name]
+      ? waiting
+        ? 'Waiting: the server asked to slow down'
+        : DOING[job.name]
       : job.status === 'paused'
         ? 'Paused'
         : job.status === 'stopping'
@@ -292,7 +362,8 @@ function JobPanel({
         <div className="vc-job-text">
           <strong role="status">{status}</strong>
           <span className="subtle">
-            {job.done} of {job.total}
+            {waiting && `carrying on in ${waitLeft} s · `}
+            {job.done} of {total}
           </span>
         </div>
         {running && (
@@ -312,16 +383,10 @@ function JobPanel({
           </div>
         )}
       </div>
-      <div
-        className="progress"
-        role="progressbar"
-        aria-label={DOING[job.name]}
-        aria-valuemin={0}
-        aria-valuemax={job.total}
-        aria-valuenow={job.done}
-      >
-        <div className="progress-bar" style={{ width: `${job.total ? (job.done / job.total) * 100 : 100}%` }} />
+      <div className="progress" role="progressbar" aria-label={DOING[job.name]} aria-valuemin={0} aria-valuemax={total} aria-valuenow={job.done}>
+        <div className="progress-bar" style={{ width: `${total ? (job.done / total) * 100 : 100}%` }} />
       </div>
+      {job.problem && <Note tone="bad">{job.problem}</Note>}
       {failed > 0 && (
         <div className="vc-fails">
           <div className="vc-fails-head">

@@ -752,7 +752,8 @@ kbd {
 button.la-play, button.la-row-main { -webkit-backdrop-filter: none; backdrop-filter: none; }
 .la-play { flex: 0 0 auto; width: 36px; height: 36px; padding: 0; font-size: 13px; }
 .la-row-main {
-  flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; justify-items: start;
+  /* the button's own centring would centre the text's column in the row */
+  flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; justify-items: start; justify-content: stretch;
   padding: 6px 8px; text-align: left; font-weight: 400;
 }
 .la-text { font-size: 22px; font-weight: 600; line-height: 1.3; color: var(--text); word-break: break-word; max-width: 100%; }
@@ -800,6 +801,12 @@ button.voice-pick-option.is-on { background: var(--surface-strong); border-color
 .speaking-side { display: grid; gap: 4px; justify-items: start; min-width: 0; }
 .speaking-note { font-size: 12.5px; }
 .aa-studio .speaking { padding-top: 10px; border-top: 1px solid var(--separator); }
+
+.dv-tools { display: grid; gap: 12px; margin-bottom: 4px; }
+.dv-search { max-width: 360px; }
+.dv-list { margin-top: 4px; }
+.dv-more { display: flex; justify-content: center; margin: 4px 0 16px; }
+@media (max-width: 560px) { .dv-search { max-width: none; } .dv-more > button { width: 100%; } }
 
 .vc-form { display: grid; gap: 14px; max-width: 560px; }
 .vc-job { display: grid; gap: 10px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--separator); }

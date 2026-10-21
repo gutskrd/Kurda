@@ -11,8 +11,9 @@
  * re-renders while it plays. With reduced motion asked for, the head stays
  * still; the mouth still moves, since it goes with the sound.
  *
- * The timeline is the one stored with the recording when it is known here,
- * or the words spread over the recording's length (`voiceTimeline`).
+ * The timeline is the one stored with the recording, as the apps play it,
+ * or the words spread over the recording's length (`voiceTimeline`) when
+ * there is none — which it says, since that is what the apps do too.
  *
  * A character's drawing carries its own ids, so a page shows one preview of
  * each character at a time.
@@ -56,7 +57,7 @@ export function SpeakingPreview({
   speaker,
   url,
   text,
-  lipsync = null,
+  lipsync,
   durationMs = null,
   size = 88,
 }: {
@@ -64,6 +65,7 @@ export function SpeakingPreview({
   url: string;
   /** the words said: the mouth follows them when no timeline is stored */
   text: string;
+  /** the stored timeline; null when there is none, left out when it is not known here */
   lipsync?: LipsyncData | null;
   durationMs?: number | null;
   /** the drawing's width and height, in pixels */
@@ -202,7 +204,7 @@ export function SpeakingPreview({
           <Icon name={playing ? 'stop' : 'play'} size={16} />
           {playing ? 'Stop' : `Play with ${name}`}
         </button>
-        <span className="subtle speaking-note">{lipsync ? 'The mouth follows its saved timeline.' : 'The mouth is timed from the words.'}</span>
+        {lipsync === null && <span className="subtle speaking-note">No timeline yet: the mouth is timed from the words.</span>}
         {problem && (
           <span className="field-error" role="alert">
             {problem}

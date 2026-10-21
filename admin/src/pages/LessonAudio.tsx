@@ -18,6 +18,7 @@ import {
   progress,
   scriptOf,
   withRecording,
+  withTimelines,
   withVoice,
   withoutRecording,
   type Filter,
@@ -86,6 +87,7 @@ export function LessonAudio({
   // who says the next new recording: the last choice made for one
   const [nextSpeaker, setNextSpeaker] = useState<Speaker>(rememberedSpeaker);
   const changeSpeaker = useSpeakerChange('lesson', (key, speaker) => setItems((all) => withVoice(all, key, speaker)));
+  const timelines = useRef<'unasked' | 'asked'>('unasked');
 
   // this side's view of the list: only its own uses of each text
   const scoped = useMemo(() => items.flatMap((i) => inScope(i, scope, focus) ?? []), [items, scope, focus]);
@@ -132,6 +134,22 @@ export function LessonAudio({
     setSelected(key);
     setNote(null);
   };
+
+  // The stored timelines, for the preview of a recording saved before: the
+  // list is read without them, since every sentence's would make it much
+  // heavier, and read once more with them only when an opened row needs one.
+  useEffect(() => {
+    const open = items.find((i) => i.key === selected);
+    if (!open?.recorded || !open.speaker || !open.hasLipsync || open.lipsync !== undefined || timelines.current !== 'unasked') return;
+    timelines.current = 'asked';
+    api<Listing>('/admin/lesson-audio?withLipsync=1').then(
+      (res) => setItems((all) => withTimelines(all, res.items)),
+      () => {
+        // the preview times the mouth from the words meanwhile; the next row opened asks again
+        timelines.current = 'unasked';
+      },
+    );
+  }, [selected, items]);
 
   // bring the selected row into view, for the keyboard and for the walk
   useEffect(() => {
@@ -490,7 +508,7 @@ function Row({
                 speaker={item.speaker}
                 url={item.url}
                 text={item.text}
-                lipsync={item.lipsync}
+                lipsync={item.lipsync ?? (item.hasLipsync ? undefined : null)}
                 durationMs={item.durationMs}
               />
             )}
@@ -530,13 +548,13 @@ function Row({
   );
 }
 
-interface Player {
+export interface Player {
   playing: string | null;
   toggle: (url: string) => void;
 }
 
 /** One audio element for the whole list, so starting a row stops the last one. */
-function usePlayer(): Player {
+export function usePlayer(): Player {
   const [playing, setPlaying] = useState<string | null>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
   useEffect(
