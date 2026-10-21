@@ -13,8 +13,7 @@ function resetError(err: ApiError, t: Translate): string {
   switch (err.code) {
     case 'INVALID_TOKEN':
       return t('auth.reset.invalidLink');
-    case 'WEAK_PASSWORD':
-      return err.message;
+    // a password the policy turned down is said in the reader's words, rule by rule (lib/api)
     default:
       return describeError(err, t);
   }

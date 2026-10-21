@@ -242,6 +242,76 @@ describe('ApiClient', () => {
   });
 });
 
+describe('the sign-up, sign-in and confirmation refusals', () => {
+  /**
+   * Every code the auth routes raise (api/src/auth/routes.ts and service.ts)
+   * answers in the reader's words. The server's English for these is either
+   * vague on purpose or technical, and "Something went wrong" under a sign-up
+   * form once made an iCloud address look as if it could not be used.
+   */
+  const AUTH_CODES = [
+    'WEAK_PASSWORD',
+    'INVALID_USERNAME',
+    'LOGIN_VERIFICATION_REQUIRED',
+    'INVALID_CODE',
+    'CODE_EXPIRED',
+    'TOO_MANY_ATTEMPTS',
+    'INVALID_TOKEN',
+    'USERNAME_TAKEN',
+    'REGISTRATION_FAILED',
+    'INVALID_CREDENTIALS',
+    'LOCKED',
+    'INVALID_REFRESH',
+    'REFRESH_REUSED',
+    'REFRESH_EXPIRED',
+    'SIGNUP_REJECTED',
+    'ACCOUNT_DISABLED',
+    'VALIDATION_ERROR',
+  ];
+
+  it('says every one of them from the catalogue, never the server’s English or the generic line', () => {
+    for (const code of AUTH_CODES) {
+      const said = describeError({ kind: 'client', code, message: 'raw server words', status: 400 }, t);
+      expect(said, code).not.toBe('raw server words');
+      expect(said, code).not.toBe(en['error.generic']);
+    }
+  });
+
+  it('answers an address that may already have an account without saying whether it does', () => {
+    const refused = { kind: 'client' as const, code: 'REGISTRATION_FAILED', message: 'unable to register with these details', status: 409 };
+    const said = describeError(refused, t);
+    expect(said).toBe(en['error.code.registrationFailed']);
+    // the two ways on are named, and nothing confirms the address is registered
+    expect(said).toMatch(/log in/i);
+    expect(said).toMatch(/reset your password/i);
+    expect(said).not.toMatch(/already (registered|in use|taken)/i);
+    expect(describeError(refused, translator(fr))).toBe(fr['error.code.registrationFailed']);
+  });
+
+  it('says which password rule was missed', () => {
+    const weak = (reason: string) => ({ kind: 'client' as const, code: 'WEAK_PASSWORD', message: 'x', details: { reason } });
+    expect(describeError(weak('too-short'), t)).toBe('Use at least 8 characters for your password.');
+    expect(describeError(weak('needs-number'), t)).toBe(en['error.code.passwordNeedsNumber']);
+    expect(describeError(weak('needs-letter'), t)).toBe(en['error.code.passwordNeedsLetter']);
+    // a rule this build does not know yet still says what a password needs
+    expect(describeError(weak('something-new'), t)).toBe(en['auth.passwordHint']);
+  });
+
+  it('says which username rule was missed', () => {
+    const bad = (reason: string) => ({ kind: 'client' as const, code: 'INVALID_USERNAME', message: 'x', details: { reason } });
+    expect(describeError(bad('too-short'), t)).toBe('Use at least 3 characters for your username.');
+    expect(describeError(bad('consecutive-underscore'), t)).toBe(en['error.code.usernameUnderscore']);
+    expect(describeError(bad('numbers-only'), t)).toBe(en['error.code.usernameLetter']);
+    expect(describeError(bad('reserved'), t)).toBe(en['error.code.usernameUnavailable']);
+  });
+
+  it('points at the email address when that is the field the server could not read', () => {
+    const invalid = (path: string) => ({ kind: 'client' as const, code: 'VALIDATION_ERROR', message: 'request validation failed', details: [{ path: [path], message: 'Invalid' }] });
+    expect(describeError(invalid('email'), t)).toBe(en['error.code.badEmail']);
+    expect(describeError(invalid('username'), t)).toBe(en['error.code.checkDetails']);
+  });
+});
+
 describe('CODE_COPY', () => {
   /**
    * Every 4xx the API raises carries an English message, and describeError

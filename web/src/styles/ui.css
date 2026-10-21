@@ -247,6 +247,13 @@ input[type='password']::-ms-clear {
   color: var(--ink-2);
   background: var(--surface);
 }
+/* the ways on from a message: its own row of buttons under the words */
+.msg-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-3);
+}
 .msg-error {
   color: var(--danger);
   background: var(--danger-soft);

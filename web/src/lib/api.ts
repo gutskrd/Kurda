@@ -338,6 +338,16 @@ export const CODE_COPY: Record<string, MessageKey> = {
   SIGNUP_REJECTED: 'error.code.signupRejected',
   TOO_MANY_ATTEMPTS: 'error.code.tooManyAttempts',
   USERNAME_TAKEN: 'error.code.usernameTaken',
+  // an address that may already have an account: said without saying whether
+  // it does, as the server means it (nobody may learn which addresses are
+  // registered), and with the two ways on for somebody it does belong to
+  REGISTRATION_FAILED: 'error.code.registrationFailed',
+  // a sign-in the server wants to check before it lets it through
+  LOGIN_VERIFICATION_REQUIRED: 'error.code.loginCheck',
+  // a session that cannot be renewed, for any of the reasons the server has
+  INVALID_REFRESH: 'error.sessionExpired',
+  REFRESH_EXPIRED: 'error.sessionExpired',
+  REFRESH_REUSED: 'error.sessionExpired',
   // age and the protections that follow from it
   UNDER_MINIMUM_AGE: 'error.code.underMinimumAge',
   INVALID_BIRTH_MONTH: 'error.code.invalidBirthMonth',
@@ -346,6 +356,57 @@ export const CODE_COPY: Record<string, MessageKey> = {
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
 };
+/**
+ * What a password the server turned down needs (`WEAK_PASSWORD`'s
+ * `details.reason`, api/src/auth/password-policy.ts), in the reader's words.
+ * The numbers are the policy's own.
+ */
+const PASSWORD_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
+  'too-short': ['error.code.passwordTooShort', { count: 8 }],
+  'too-long': ['error.code.passwordTooLong', { count: 128 }],
+  'needs-letter': ['error.code.passwordNeedsLetter'],
+  'needs-number': ['error.code.passwordNeedsNumber'],
+};
+
+/** What a username the server turned down needs (`INVALID_USERNAME`, api/src/users/username.ts). */
+const USERNAME_REASON: Record<string, [MessageKey, Record<string, number>?]> = {
+  'too-short': ['error.code.usernameTooShort', { count: 3 }],
+  'too-long': ['error.code.usernameTooLong', { count: 30 }],
+  'invalid-chars': ['error.code.usernameChars'],
+  'edge-underscore': ['error.code.usernameUnderscore'],
+  'consecutive-underscore': ['error.code.usernameUnderscore'],
+  'numbers-only': ['error.code.usernameLetter'],
+  'no-letter': ['error.code.usernameLetter'],
+  reserved: ['error.code.usernameUnavailable'],
+};
+
+function reasonOf(details: unknown): string | null {
+  return details && typeof details === 'object' && typeof (details as { reason?: unknown }).reason === 'string'
+    ? (details as { reason: string }).reason
+    : null;
+}
+
+/**
+ * The sentence for a refusal whose code alone is not enough: which rule a
+ * password or a username broke, and which field of a form did not pass the
+ * server's check. Null when the code is not one of these.
+ */
+function detailedCopy(error: ApiError, t: Translate): string | null {
+  if (error.code === 'WEAK_PASSWORD' || error.code === 'INVALID_USERNAME') {
+    const table = error.code === 'WEAK_PASSWORD' ? PASSWORD_REASON : USERNAME_REASON;
+    const found = table[reasonOf(error.details) ?? ''];
+    if (found) return t(found[0], found[1]);
+    return t(error.code === 'WEAK_PASSWORD' ? 'auth.passwordHint' : 'error.code.usernameChars');
+  }
+  if (error.code === 'VALIDATION_ERROR') {
+    // the issues name the field; an email address is the one people most often mistype
+    const issues = Array.isArray(error.details) ? (error.details as Array<{ path?: unknown }>) : [];
+    const email = issues.some((i) => Array.isArray(i.path) && i.path.includes('email'));
+    return t(email ? 'error.code.badEmail' : 'error.code.checkDetails');
+  }
+  return null;
+}
+
 export function describeError(error: ApiError, t: Translate, locale?: string): string {
   // A limit on the account says what is limited and until when, in the
   // reader's words and time zone (reports/restriction.ts). The language is
@@ -375,6 +436,8 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   // went wrong" and "that code has expired".
   const byCode = error.code ? CODE_COPY[error.code] : undefined;
   if (byCode) return t(byCode);
+  const detailed = detailedCopy(error, t);
+  if (detailed) return detailed;
   // a route the API does not have: this build is newer than the server, and
   // "route not found" is no sentence for a reader (@kurda/shared isMissingRoute)
   if (isMissingRoute(error)) return t('error.notOnServer');
