@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
@@ -29,9 +28,6 @@ import {
  * do — a settings pane with a Save button invites you to leave without pressing
  * it. A failure puts the switch back where it was and says why.
  */
-/** The card's place on the Settings page, which the bell's settings button opens. */
-const PREFS_ANCHOR = 'notifications';
-
 export function NotificationPrefsCard(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
@@ -81,18 +77,10 @@ export function NotificationPrefsCard(): React.JSX.Element {
     [client],
   );
 
-  // the bell's settings button opens Settings here; the router does not
-  // scroll to a hash by itself, and this card is drawn after the page's own wait
-  const { hash } = useLocation();
-  const cardRef = useRef<HTMLElement>(null);
-  useEffect(() => {
-    if (hash === `#${PREFS_ANCHOR}`) cardRef.current?.scrollIntoView?.({ block: 'start' });
-  }, [hash]);
-
   const quiet = prefs ? quietEnabled(prefs) : false;
 
   return (
-    <section className="card" id={PREFS_ANCHOR} ref={cardRef} style={{ marginTop: 20, scrollMarginTop: 'calc(var(--nav-bottom) + 16px)' }}>
+    <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('notifications.title')}</h2>
 
       {failure && <div className="msg msg-error" role="status">{describeError(failure, t)}</div>}

@@ -104,6 +104,17 @@ import { DeviceMobile } from '@phosphor-icons/react/dist/icons/DeviceMobile';
 import { DeviceTablet } from '@phosphor-icons/react/dist/icons/DeviceTablet';
 import { Laptop } from '@phosphor-icons/react/dist/icons/Laptop';
 import { Devices } from '@phosphor-icons/react/dist/icons/Devices';
+// Settings, one glyph for each row of the list
+import { Translate } from '@phosphor-icons/react/dist/icons/Translate';
+import { CircleHalf } from '@phosphor-icons/react/dist/icons/CircleHalf';
+import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
+import { DownloadSimple } from '@phosphor-icons/react/dist/icons/DownloadSimple';
+import { EnvelopeSimple } from '@phosphor-icons/react/dist/icons/EnvelopeSimple';
+import { Scales } from '@phosphor-icons/react/dist/icons/Scales';
+import { Copyright } from '@phosphor-icons/react/dist/icons/Copyright';
+import { Question } from '@phosphor-icons/react/dist/icons/Question';
+import { Key } from '@phosphor-icons/react/dist/icons/Key';
+import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -265,6 +276,21 @@ export const PhoneIcon = named(DeviceMobile, 22);
 export const TabletIcon = named(DeviceTablet, 22);
 export const ComputerIcon = named(Laptop, 22);
 export const DeviceIcon = named(Devices, 22);
+
+/* Settings: a row's glyph says what is behind it — the language, how it looks,
+   the keyboard, your data, the rules, a person to write to */
+export const LanguageIcon = named(Translate, 22);
+export const ThemeIcon = named(CircleHalf, 22);
+export const KeyboardIcon = named(Keyboard, 22);
+export const DownloadIcon = named(DownloadSimple, 22);
+export const MailIcon = named(EnvelopeSimple, 22);
+export const RulesIcon = named(Scales, 22);
+export const CopyrightIcon = named(Copyright, 22);
+export const HelpIcon = named(Question, 22);
+export const KeyIcon = named(Key, 22);
+export const ProfileIcon = named(UserCircle, 22);
+/** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */
+export const StandingIcon = named(ShieldCheck, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

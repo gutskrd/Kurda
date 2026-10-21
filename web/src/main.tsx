@@ -20,6 +20,7 @@ import './styles/stories.css';
 import './styles/play.css';
 // gifts in chat, reporting, account standing
 import './styles/social.css';
+import './styles/settings.css';
 import './styles/keyboard.css';
 import './styles/feedback.css';
 import './styles/ranks.css';

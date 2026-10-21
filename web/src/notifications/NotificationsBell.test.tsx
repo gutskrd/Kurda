@@ -159,7 +159,7 @@ describe('NotificationsBell', () => {
     show();
     await userEvent.click(await screen.findByRole('button', { name: 'Notifications' }));
     const settings = screen.getByRole('link', { name: 'Notification settings' });
-    expect(settings).toHaveAttribute('href', '/app/settings#notifications');
+    expect(settings).toHaveAttribute('href', '/app/settings/notifications');
     await userEvent.click(settings);
     expect(screen.queryByRole('dialog', { name: 'Notifications' })).not.toBeInTheDocument();
   });

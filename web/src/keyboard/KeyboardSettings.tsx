@@ -4,7 +4,8 @@ import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { useKeyboardPrefs, type WordleLayout } from './prefs';
 
-const ACCENT_LABEL: Record<AccentMode, MessageKey> = {
+/** What each way of treating accents is called: its row in Settings says which one is on. */
+export const ACCENT_LABEL: Record<AccentMode, MessageKey> = {
   strict: 'keyboard.accent.strict',
   forgiving: 'keyboard.accent.forgiving',
   hidden: 'keyboard.accent.hidden',

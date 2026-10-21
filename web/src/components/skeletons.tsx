@@ -1006,38 +1006,6 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   );
 }
 
-/**
- * Settings cards still on their way, as the page draws them: a heading, a line
- * of help, a row of choices and the hint under them. Settings shows the cards
- * that need nothing from the server (language, appearance) at once; these
- * stand in for the ones that do.
- */
-export function SettingsCardsSkeleton({ count = 3, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
-  const t = useT();
-  return (
-    <SkeletonRegion label={t(label ?? 'common.loading')}>
-      {times(count, (i) => (
-        <section className="card" style={{ marginTop: 20 }} key={i}>
-          <h2 className="friend-heading" style={{ marginTop: 0 }}>
-            <Skeleton line w={[150, 120, 170][i % 3]} />
-          </h2>
-          <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-            <Skeleton line w={['72%', '58%', '66%'][i % 3]} />
-          </p>
-          <div className="toolbar" style={{ marginBottom: 8 }}>
-            {times(3, (j) => (
-              <Skeleton key={j} className="chip" w={[136, 104, 88][j]} />
-            ))}
-          </div>
-          <p className="field-hint" style={{ marginBottom: 0 }}>
-            <Skeleton line w="52%" />
-          </p>
-        </section>
-      ))}
-    </SkeletonRegion>
-  );
-}
-
 /** A stack of settings cards: heading, help line, controls. */
 export function CardStackSkeleton({
   count = 3,

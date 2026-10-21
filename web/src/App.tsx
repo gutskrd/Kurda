@@ -268,6 +268,8 @@ export function AppRoutes(): React.JSX.Element {
         />
         <Route path="users/:id" element={<UserProfile />} />
         <Route path="settings" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
+        {/* a settings page of its own (pages/Settings.tsx); reports and standing below are pages of their own too */}
+        <Route path="settings/:page" element={<RequireAccount what="gate.what.settings"><Settings /></RequireAccount>} />
         <Route path="settings/reports" element={<RequireAccount what="gate.what.settings"><MyReports /></RequireAccount>} />
         <Route path="settings/standing" element={<RequireAccount what="gate.what.settings"><AccountStanding /></RequireAccount>} />
       </Route>

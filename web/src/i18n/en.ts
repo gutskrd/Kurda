@@ -67,6 +67,17 @@ export const en = {
 
   // ---- settings ------------------------------------------------------------
   'settings.title': 'Settings',
+  'settings.search': 'Search settings',
+  'settings.search.none': 'No settings match “{query}”.',
+  'settings.group.preferences': 'Preferences',
+  'settings.group.privacy': 'Privacy',
+  'settings.group.about': 'About Hevalo',
+  'settings.soundsVibration': 'Sounds and vibration',
+  'settings.on': 'On',
+  'settings.off': 'Off',
+  'settings.support': 'Contact support',
+  'settings.terms': 'Terms of Use',
+  'settings.privacyPolicy': 'Privacy Policy',
   'settings.eyebrow': 'Account',
   'settings.privacy.title': 'Profile visibility',
   'settings.privacy.help': 'Who can see your profile.',
