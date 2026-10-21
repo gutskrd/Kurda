@@ -53,7 +53,7 @@ export function LessonResults({ results, exercises, skipped = 0, moments = NO_MO
   const { t, locale } = useI18n();
   // in Soranî and Arabic the numbers and the lines under them read from the right
   const dir = useDirection();
-  const moment = useCelebration();
+  const moment = useCelebration({ sound: 'complete' });
   useCelebrationHold(moment.playing);
   const pct = Math.round(results.accuracy * 100);
   const mistakes = results.mistakes ?? [];

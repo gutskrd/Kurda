@@ -25,6 +25,7 @@ import { emptyMatch, type MatchState } from './match';
 import { answerFeel, currentExercise, initPlayer, isReask, progress, reduce } from './player';
 import { NO_MOMENTS, lessonMoments, type LessonMoments, type Standing, type StreakMark } from './moments';
 import { haptic } from '../feedback/haptics';
+import { playSound } from '../feedback/sounds';
 import { AnswerQueue } from './queue';
 import type { AnswerResult, Exercise, RetryResult, SelfRating, SessionResults, SessionView } from './types';
 import type { ApiClient } from '../api/client';
@@ -119,6 +120,8 @@ export function SessionPlayer({
   const dir = useDirection();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
+  // right answers in a row, which the chime climbs with
+  const run = useRef(0);
 
   const [choice, setChoice] = useState<number | null>(null);
   const [text, setText] = useState('');
@@ -242,7 +245,7 @@ export function SessionPlayer({
       setSubmitting(false);
       if (res.ok) {
         setStall(null);
-        feelAnswer(ex.type, res.data.accepted);
+        feelAnswer(ex.type, res.data.accepted, run);
         dispatch({ type: 'ANSWERED', result: res.data, given });
       }
       // refused (the session ended, say): the second try counts for nothing,
@@ -256,7 +259,7 @@ export function SessionPlayer({
     if (res.ok) {
       // a retry that went through puts the verdict back where the retry was
       setStall(null);
-      feelAnswer(ex.type, res.data.accepted);
+      feelAnswer(ex.type, res.data.accepted, run);
       dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
@@ -283,7 +286,7 @@ export function SessionPlayer({
     const last = sent[sent.length - 1];
     if (last) {
       setStall(null);
-      feelAnswer(ex?.type, last.accepted);
+      feelAnswer(ex?.type, last.accepted, run);
       dispatch({ type: 'ANSWERED', result: last, given });
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
@@ -493,10 +496,21 @@ function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: str
   );
 }
 
-/** Felt as the verdict arrives (`answerFeel`): crisp when right, a gentle double when not. */
-function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean): void {
+/**
+ * Felt and heard as the verdict arrives (`answerFeel`): crisp when right, a
+ * gentle double when not. A right answer's chime climbs a step for each one
+ * in a row (`run`, counted per lesson); a miss starts the run again.
+ */
+function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean, run: { current: number }): void {
   const feel = answerFeel(type, accepted);
   if (feel) haptic(feel);
+  if (feel === 'correct') {
+    playSound('correct', run.current);
+    run.current += 1;
+  } else if (feel === 'wrong') {
+    playSound('wrong');
+    run.current = 0;
+  }
 }
 
 /** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */

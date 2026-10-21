@@ -25,6 +25,7 @@ import { useCelebration } from '../theme/CelebrationParts';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { onHaptic, refreshFelt, resetHaptics } from './haptics';
+import { onSound, resetSounds } from './sounds';
 import { Platform } from 'react-native';
 import type { HapticEvent } from './hapticPacing';
 import { Segmented } from '../theme/glass';
@@ -198,6 +199,9 @@ describe('an answer, as its verdict arrives', () => {
   const paths = { answers: () => '/sessions/s1/answers', retry: () => '/sessions/s1/retry', complete: () => '/sessions/s1/complete' };
 
   it('is crisp when right and a gentle double when not — never the error buzz', async () => {
+    resetSounds();
+    const heard: string[] = [];
+    const stopHearing = onSound((f) => heard.push(f));
     testAuth.client = fakeClient({
       'GET /me': ok({ user: { skipSpeaking: false } }),
       'GET /me/daily-goal': ok({ completed: false }),
@@ -215,6 +219,9 @@ describe('an answer, as its verdict arrives', () => {
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['correct', 'wrong']));
+    // and heard: a bright pair for the right answer, a low soft one for the miss
+    expect(heard).toEqual(['correct-1', 'wrong']);
+    stopHearing();
     // and the right answer is marked where it was asked
     expect(screen.getByRole('radio', { name: 'nan, Correct' })).toBeTruthy();
   });

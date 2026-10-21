@@ -20,6 +20,8 @@ import { CREDIT_LINES } from './credits';
 import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
 import { useVibrationPref } from '../feedback/vibrationPref';
+import { useSoundPref } from '../feedback/soundPref';
+import { playSound } from '../feedback/sounds';
 import { haptic } from '../feedback/haptics';
 import { SkeletonText } from '../theme/Skeleton';
 import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
@@ -49,6 +51,8 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   // on this phone only (feedback/vibrationPref.ts)
   const [vibration, setVibration] = useVibrationPref();
   const vibrationThumb = useSwitchThumb(vibration);
+  const [sounds, setSounds] = useSoundPref();
+  const soundsThumb = useSwitchThumb(sounds);
 
   // Profile visibility, username, age and leagues live server-side on /me; load
   // them so the hub reflects the saved values rather than defaulting every
@@ -241,6 +245,28 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
                 accessibilityLabel={t('settings.vibration')}
                 trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
                 thumbColor={vibrationThumb}
+              />
+            }
+          />
+          {/*
+            The app's own chimes (feedback/sounds.ts): a right answer, a lesson
+            finished, something earned. The lesson's spoken Kurdish is not one
+            of them. Turning them on plays one, so the switch shows what it does.
+          */}
+          <GlassRow
+            icon="speaker"
+            title={t('settings.sounds')}
+            subtitle={t('settings.sounds.hint')}
+            trailing={
+              <Switch
+                value={sounds}
+                onValueChange={(on) => {
+                  setSounds(on);
+                  if (on) setTimeout(() => playSound('correct'), 0);
+                }}
+                accessibilityLabel={t('settings.sounds')}
+                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
+                thumbColor={soundsThumb}
               />
             }
           />

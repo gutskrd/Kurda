@@ -725,6 +725,8 @@ export type TranslationKey =
   | 'settings.eventThemes'
   | 'settings.vibration'
   | 'settings.vibration.hint'
+  | 'settings.sounds'
+  | 'settings.sounds.hint'
   | 'lesson.levelUp'
   | 'lesson.reminder.title'
   | 'lesson.reminder.body'
@@ -2448,6 +2450,8 @@ const en: Catalog = {
   'settings.eventThemes': 'Event themes',
   'settings.vibration': 'Vibration',
   'settings.vibration.hint': 'A light buzz for right answers and moments worth marking.',
+  'settings.sounds': 'Sounds',
+  'settings.sounds.hint': 'A soft chime for right answers, finished lessons and things you earn. Lesson audio always plays.',
   'lesson.levelUp': 'You reached level {level}',
   'lesson.reminder.title': 'Want a gentle reminder to keep learning?',
   'lesson.reminder.body': 'A short, friendly note on days you haven’t practiced yet. You can change it any time in Settings.',
@@ -4598,6 +4602,8 @@ const ku: Catalog = {
   'settings.eventThemes': 'Temayên bûyeran',
   'settings.vibration': 'Lerzîn',
   'settings.vibration.hint': 'Lerzîneke sivik ji bo bersivên rast û demên taybet.',
+  'settings.sounds': 'Deng',
+  'settings.sounds.hint': 'Zengek nerm ji bo bersivên rast, dersên qediyayî û tiştên ku tu bi dest dixî. Dengê dersê her tim tê lêdan.',
   'lesson.levelUp': 'Tu gihîştî asta {level}',
   'lesson.reminder.title': 'Bîranîneke nerm dixwazî, da ku hînbûnê bidomînî?',
   'lesson.reminder.body': 'Peyameke kurt û dostane, di rojên ku te hê temrîn nekiriye de. Tu dikarî her dem di Sazkariyan de biguherînî.',
@@ -6748,6 +6754,8 @@ const de: Catalog = {
   'settings.eventThemes': 'Event-Designs',
   'settings.vibration': 'Vibration',
   'settings.vibration.hint': 'Ein leichtes Summen bei richtigen Antworten und besonderen Momenten.',
+  'settings.sounds': 'Töne',
+  'settings.sounds.hint': 'Ein sanfter Klang bei richtigen Antworten, fertigen Lektionen und allem, was du dir verdienst. Der Ton der Lektion spielt immer.',
   'lesson.levelUp': 'Du hast Stufe {level} erreicht',
   'lesson.reminder.title': 'Möchtest du eine sanfte Erinnerung, um dranzubleiben?',
   'lesson.reminder.body': 'Eine kurze, freundliche Nachricht an Tagen, an denen du noch nicht geübt hast. Du kannst das jederzeit in den Einstellungen ändern.',
@@ -8898,6 +8906,8 @@ const es: Catalog = {
   'settings.eventThemes': 'Temas de eventos',
   'settings.vibration': 'Vibración',
   'settings.vibration.hint': 'Una vibración suave con las respuestas correctas y los momentos especiales.',
+  'settings.sounds': 'Sonidos',
+  'settings.sounds.hint': 'Un sonido suave para las respuestas correctas, las lecciones terminadas y lo que ganas. El audio de la lección siempre suena.',
   'lesson.levelUp': 'Has llegado al nivel {level}',
   'lesson.reminder.title': '¿Quieres un recordatorio amable para seguir aprendiendo?',
   'lesson.reminder.body': 'Una nota breve y amistosa los días que aún no hayas practicado. Puedes cambiarlo cuando quieras en Ajustes.',
@@ -11048,6 +11058,8 @@ const tr: Catalog = {
   'settings.eventThemes': 'Etkinlik temaları',
   'settings.vibration': 'Titreşim',
   'settings.vibration.hint': 'Doğru cevaplarda ve özel anlarda hafif bir titreşim.',
+  'settings.sounds': 'Sesler',
+  'settings.sounds.hint': 'Doğru cevaplar, biten dersler ve kazandıkların için yumuşak bir ses. Dersin sesi her zaman çalar.',
   'lesson.levelUp': '{level}. seviyeye ulaştın',
   'lesson.reminder.title': 'Öğrenmeye devam etmen için nazik bir hatırlatma ister misin?',
   'lesson.reminder.body': 'Henüz alıştırma yapmadığın günlerde kısa ve dostça bir not. Bunu istediğin zaman Ayarlar’dan değiştirebilirsin.',
@@ -13198,6 +13210,8 @@ const ar: Catalog = {
   'settings.eventThemes': 'سمات الفعاليات',
   'settings.vibration': 'الاهتزاز',
   'settings.vibration.hint': 'اهتزاز خفيف للإجابات الصحيحة واللحظات المميزة.',
+  'settings.sounds': 'الأصوات',
+  'settings.sounds.hint': 'رنّة هادئة للإجابات الصحيحة والدروس المكتملة وما تكسبه. صوت الدرس يعمل دائمًا.',
   'lesson.levelUp': 'وصلت إلى المستوى {level}',
   'lesson.reminder.title': 'هل تريد تذكيرًا لطيفًا لتواصل التعلّم؟',
   'lesson.reminder.body': 'رسالة قصيرة وودودة في الأيام التي لم تتدرّب فيها بعد. يمكنك تغيير ذلك في أي وقت من الإعدادات.',
@@ -15348,6 +15362,8 @@ const fr: Catalog = {
   'settings.eventThemes': 'Thèmes d’événement',
   'settings.vibration': 'Vibration',
   'settings.vibration.hint': 'Une légère vibration pour les bonnes réponses et les moments à fêter.',
+  'settings.sounds': 'Sons',
+  'settings.sounds.hint': 'Un doux carillon pour les bonnes réponses, les leçons finies et ce que tu gagnes. L’audio de la leçon joue toujours.',
   'lesson.levelUp': 'Tu as atteint le niveau {level}',
   'lesson.reminder.title': 'Envie d’un petit rappel bienveillant pour continuer à apprendre ?',
   'lesson.reminder.body': 'Un court message sympathique les jours où tu n’as pas encore pratiqué. Tu peux changer cela à tout moment dans Réglages.',
@@ -17498,6 +17514,8 @@ const nl: Catalog = {
   'settings.eventThemes': 'Evenementthema’s',
   'settings.vibration': 'Trillen',
   'settings.vibration.hint': 'Een lichte tik bij goede antwoorden en momenten om te vieren.',
+  'settings.sounds': 'Geluiden',
+  'settings.sounds.hint': 'Een zacht belletje bij goede antwoorden, afgeronde lessen en wat je verdient. Het geluid van de les speelt altijd.',
   'lesson.levelUp': 'Je hebt niveau {level} bereikt',
   'lesson.reminder.title': 'Wil je een vriendelijke herinnering om te blijven leren?',
   'lesson.reminder.body': 'Een kort berichtje op dagen dat je nog niet hebt geoefend. Je kunt dit altijd wijzigen in Instellingen.',
@@ -19649,6 +19667,8 @@ const ckb: Catalog = {
   'settings.eventThemes': 'ڕووکارەکانی بۆنە',
   'settings.vibration': 'لەرزین',
   'settings.vibration.hint': 'لەرزینێکی سووک بۆ وەڵامی ڕاست و ساتە تایبەتەکان.',
+  'settings.sounds': 'دەنگەکان',
+  'settings.sounds.hint': 'زەنگێکی نەرم بۆ وەڵامی دروست، وانەی تەواوبوو و ئەوەی بەدەستی دەهێنیت. دەنگی وانە هەمیشە لێدەدرێت.',
   'lesson.levelUp': 'گەیشتیتە ئاستی {level}',
   'lesson.reminder.title': 'بیرخستنەوەیەکی نەرمت دەوێت بۆ ئەوەی بەردەوام بیت لە فێربوون؟',
   'lesson.reminder.body': 'تێبینییەکی کورت و دۆستانە لەو ڕۆژانەی کە هێشتا ڕاهێنانت نەکردووە. هەر کاتێک بتەوێت دەتوانیت لە ڕێکخستنەکان بیگۆڕیت.',
