@@ -3,6 +3,7 @@ import type pino from 'pino';
 import type { AppConfig } from '../config/env.js';
 import { createPool } from '../db/pool.js';
 import { GdprService } from '../gdpr/service.js';
+import { appleTokens } from '../auth/apple-tokens.js';
 import { createRedis } from '../cache/redis.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
 import { MediaService } from '../media/service.js';
@@ -47,7 +48,8 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     // others: paid as the API pays them, and the API instances told over
     // Redis, so their players' screens move on at once.
     const storyGames = standaloneStoryGames(pool, { redis: config.REDIS_URL ? createRedis(config) : null, log });
-    const gdpr = new GdprService(pool, { storage, storyGames, log });
+    // the grace period's end revokes what Sign in with Apple issued, as Apple requires
+    const gdpr = new GdprService(pool, { storage, storyGames, log, apple: appleTokens(config, pool, { log }) });
     registry.register(makeAnonymizeJob(gdpr));
     if (storage) {
       registry.register(makeExportJob(gdpr));

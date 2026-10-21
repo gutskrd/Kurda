@@ -93,6 +93,21 @@ services:
       # Sign in with Apple: the native token audience is the app bundle id
       - key: APPLE_CLIENT_IDS
         value: app.hevalo.mobile
+      # Sign in with Apple's key, so deleting an account revokes what Apple
+      # issued for it (App Store guideline 5.1.1(v)): the API exchanges the
+      # code the app sends at sign-in for a refresh token, keeps it encrypted
+      # and revokes it when the deletion becomes final. Set these in the Render
+      # dashboard (secrets), then redeploy; until all three are set nothing is
+      # exchanged or revoked. See docs/auth/apple-signin.md for what to create
+      # in Apple's developer portal.
+      # - key: APPLE_TEAM_ID
+      #   sync: false            # 10 characters, from Membership details
+      # - key: APPLE_KEY_ID
+      #   sync: false            # the Sign in with Apple key's 10-character id
+      # - key: APPLE_PRIVATE_KEY
+      #   sync: false            # the .p8 file's text; on one line, write \n for each line break
+      # - key: APPLE_CLIENT_ID
+      #   sync: false            # optional: defaults to APPLE_CLIENT_IDS' first entry, app.hevalo.mobile
       # No App Store / Play credentials yet. This lets the API boot without
       # them; purchases are REFUSED with 503 IAP_UNAVAILABLE until a real
       # verifier is wired, which is the only safe answer an unverified
@@ -170,3 +185,11 @@ services:
   #       value: Hevalo <no-reply@hevalo.app>
   #     - key: EMAIL_REPLY_TO
   #       value: support@hevalo.app
+  #     # it also runs the deletions at the end of their grace period, which
+  #     # revoke Sign in with Apple: the same key as the API's (see above)
+  #     - key: APPLE_TEAM_ID
+  #       sync: false
+  #     - key: APPLE_KEY_ID
+  #       sync: false
+  #     - key: APPLE_PRIVATE_KEY
+  #       sync: false

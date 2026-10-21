@@ -18,6 +18,15 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
   onBack?: () => void;
 };
 
+/** The name shared with Apple as one line, given name then family name; null when none was shared. */
+function appleFullName(name: AppleAuthentication.AppleAuthenticationFullName | null): string | null {
+  const joined = [name?.givenName, name?.familyName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+  return joined || null;
+}
+
 /**
  * The sign-in method choice (KUR-271): Apple / Google / email. The auth stack's
  * initial route, so Login/Register can always go back here; its own back
@@ -101,7 +110,13 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       return;
     }
     try {
-      const err = await oauthSignIn('apple', cred.identityToken);
+      // With the token: the one-time authorization code, which the server
+      // exchanges for the token it revokes at Apple if the account is ever
+      // deleted, and the name, which Apple shares on the first sign-in only.
+      const err = await oauthSignIn('apple', cred.identityToken, {
+        authorizationCode: cred.authorizationCode,
+        fullName: appleFullName(cred.fullName),
+      });
       if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
       // never let a post-Apple failure die silently — surface it

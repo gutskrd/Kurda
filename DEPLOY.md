@@ -24,6 +24,12 @@ Railway and Fly.io are fine alternatives; the env vars below are the same.)
 `APPLE_CLIENT_IDS=app.hevalo.mobile` and a generated `JWT_SECRET` are already set
 by the Blueprint — nothing else is required for sign-in to work.
 
+Deleting an account that signed in with Apple must also revoke what Apple issued
+for it (App Store guideline 5.1.1(v)). That takes a Sign in with Apple key from
+Apple's developer portal, set as `APPLE_TEAM_ID`, `APPLE_KEY_ID` and
+`APPLE_PRIVATE_KEY`; sign-in works without them, but nothing is revoked until
+they are set. See [docs/auth/apple-signin.md](docs/auth/apple-signin.md).
+
 > **The blueprint is on `starter`** — always-on API, durable Postgres, no idle
 > sleep and no time limit. Keep it in step with the dashboard: a blueprint that
 > still said `free` would try to move a paid database back down the next time it
