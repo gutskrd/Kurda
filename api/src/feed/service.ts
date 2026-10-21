@@ -3,6 +3,7 @@ import type { FeedImage } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 import {
   EngagementService,
   NO_ENGAGEMENT,
@@ -24,6 +25,11 @@ import {
  * (users/age.ts `writtenForSql`). The wall, somebody's profile tabs and the
  * cards somebody liked are all ways of reading the same posts, and a byline on
  * any of them would be a way to find a minor.
+ *
+ * And none of them shows anything by somebody with a block between them and
+ * the reader, whichever of the two placed it (friends/blocked.ts): a block
+ * that left the other person's posts on your wall would not have done the one
+ * thing it was for.
  */
 
 /**
@@ -154,6 +160,7 @@ const FEED_SQL = `
             -- the pictured half: photos, or memes, or both
             OR ($1 = 'dimen' AND ${HAS_PICTURES} AND ($2::text IS NULL OR l.is_meme = ($2 = 'meme'))))
        AND ${writtenForSql('l.author_id', '$5::uuid')}
+       AND ${notBlockedSql('l.author_id', '$5::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
@@ -161,6 +168,7 @@ const FEED_SQL = `
        AND ($1 = 'all' OR $1 = 'dimen')
        AND ($2::text IS NULL OR i.category = $2)
        AND ${writtenForSql('i.author_id', '$5::uuid')}
+       AND ${notBlockedSql('i.author_id', '$5::uuid')}
   ) AS wall
   ORDER BY at DESC, id DESC
   LIMIT $3 OFFSET $4`;
@@ -176,10 +184,12 @@ const BY_IDS_SQL = `
     SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published' AND l.id = ANY($1) AND ${writtenForSql('l.author_id', '$3::uuid')}
+       AND ${notBlockedSql('l.author_id', '$3::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
      WHERE i.status = 'published' AND i.id = ANY($2) AND ${writtenForSql('i.author_id', '$3::uuid')}
+       AND ${notBlockedSql('i.author_id', '$3::uuid')}
   ) AS chosen`;
 
 /**
@@ -194,10 +204,12 @@ const BY_AUTHOR_SQL = `
     SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published' AND l.author_id = $1 AND ${writtenForSql('l.author_id', '$4::uuid')}
+       AND ${notBlockedSql('l.author_id', '$4::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
      WHERE i.status = 'published' AND i.author_id = $1 AND ${writtenForSql('i.author_id', '$4::uuid')}
+       AND ${notBlockedSql('i.author_id', '$4::uuid')}
   ) AS mine
   ORDER BY at DESC, id DESC
   LIMIT $2 OFFSET $3`;

@@ -1,5 +1,6 @@
 import type pg from 'pg';
 import type { Notification } from '../push/service.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export const INBOX_LIMIT = 50;
 
@@ -44,12 +45,29 @@ function toItem(row: InboxRow): InboxItem {
 export class InboxService {
   constructor(private readonly pool: pg.Pool) {}
 
-  /** Persist a notification to the inbox (called from the delivery pipeline). */
+  /**
+   * Persist a notification to the inbox (called from the delivery pipeline).
+   *
+   * A notification about something another person did names them in
+   * `data.fromUserId`, and is not recorded when there is a block between them
+   * and the recipient, whichever placed it (friends/blocked.ts): the blocker
+   * hears nothing more of them. Everything of that kind today comes from a
+   * friend, which a block ends, so this is what holds for one that races a
+   * block and for whatever kind is added next.
+   */
   async record(userId: string, notification: Notification): Promise<void> {
     await this.pool.query(
       `INSERT INTO notifications (user_id, category, title, body, data)
-       VALUES ($1, $2, $3, $4, $5::jsonb)`,
-      [userId, notification.category, notification.title, notification.body, JSON.stringify(notification.data ?? {})],
+       SELECT $1::uuid, $2::text, $3::text, $4::text, $5::jsonb
+        WHERE ${notBlockedSql('$1::uuid', '$6::uuid')}`,
+      [
+        userId,
+        notification.category,
+        notification.title,
+        notification.body,
+        JSON.stringify(notification.data ?? {}),
+        notification.data?.fromUserId ?? null,
+      ],
     );
   }
 

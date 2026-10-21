@@ -2,6 +2,7 @@ import type pg from 'pg';
 import type { Redis } from 'ioredis';
 import type { FriendService } from '../friends/service.js';
 import { broadcasts, FEED_CAP, type ActivityEvent, type ActivityType } from './feed.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export interface FeedEntry extends ActivityEvent {
   actorUsername: string;
@@ -13,10 +14,12 @@ const feedKey = (userId: string): string => `feed:${userId}`;
 
 /**
  * Friend activity feed (KUR-087). Milestone events fan out on write to each
- * friend's Redis feed (capped at 100), skipping private actors; blocks are
- * already excluded because a block dissolves the friendship. Postgres is the
- * source of truth and the rebuild fallback when Redis is absent. Reactions are
- * "congratulate" toggles.
+ * friend's Redis feed (capped at 100), skipping private actors; a block
+ * dissolves the friendship, so nothing new reaches the other side. What was
+ * fanned out while they were still friends stays in the Redis list, so the
+ * read leaves out anyone with a block between them and the reader. Postgres is
+ * the source of truth and the rebuild fallback when Redis is absent. Reactions
+ * are "congratulate" toggles.
  */
 export class ActivityService {
   constructor(
@@ -100,7 +103,10 @@ export class ActivityService {
     const ids = events.map((e) => e.id);
     const actorIds = [...new Set(events.map((e) => e.actorId))];
     const [names, counts, mine] = await Promise.all([
-      this.pool.query<{ id: string; username: string }>(`SELECT id, username FROM users WHERE id = ANY($1)`, [actorIds]),
+      this.pool.query<{ id: string; username: string; shown: boolean }>(
+        `SELECT u.id, u.username, ${notBlockedSql('u.id', '$2::uuid')} AS shown FROM users u WHERE u.id = ANY($1)`,
+        [actorIds, userId],
+      ),
       this.pool.query<{ event_id: string; n: number }>(
         `SELECT event_id, count(*)::int n FROM activity_congrats WHERE event_id = ANY($1) GROUP BY event_id`,
         [ids],
@@ -113,7 +119,8 @@ export class ActivityService {
     const nameOf = new Map(names.rows.map((r) => [r.id, r.username]));
     const countOf = new Map(counts.rows.map((r) => [r.event_id, r.n]));
     const didOf = new Set(mine.rows.map((r) => r.event_id));
-    return events.map((e) => ({
+    const blocked = new Set(names.rows.filter((r) => !r.shown).map((r) => r.id));
+    return events.filter((e) => !blocked.has(e.actorId)).map((e) => ({
       ...e,
       actorUsername: nameOf.get(e.actorId) ?? '',
       congrats: countOf.get(e.id) ?? 0,

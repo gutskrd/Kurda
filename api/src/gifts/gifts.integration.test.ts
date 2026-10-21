@@ -976,6 +976,19 @@ describe.skipIf(!DATABASE_URL)('gifts in the chat (integration)', () => {
       expect(muted.json().code).toBe('MUTED');
       await pool.query(`DELETE FROM group_mutes WHERE group_id = $1 AND user_id = $2`, [gid, gus.id]);
     });
+
+    it('keeps the message from a member with a block between them and the giver', async () => {
+      // jon is in the group, not a recipient, and has blocked gus
+      await pool.query(`INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2)`, [jon.id, gus.id]);
+      try {
+        expect((await giftGroup(gus, gid, [ivy], POWER)).statusCode).toBe(200);
+        const room = published.filter((p) => p.room === `group:${gid}` && p.ev.type === 'group_msg');
+        expect(room).toHaveLength(1);
+        expect(room[0]!.ev.hiddenFrom).toEqual([jon.id]);
+      } finally {
+        await pool.query(`DELETE FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`, [jon.id, gus.id]);
+      }
+    });
   });
 
   describe('a sender muted from chat', () => {

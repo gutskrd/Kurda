@@ -8,6 +8,7 @@ import { openGroupsAdultsOnly, type GroupService } from './service.js';
 import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
 import { canManage } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 export const MAX_GROUP_MESSAGE_LEN = 2000;
 export type MuteDuration = '1h' | '24h' | 'perm';
@@ -52,6 +53,11 @@ const ROOM_TTL = 7 * 24 * 60 * 60; // a week
  * send), so a removed member loses history access immediately. Moderators can
  * delete messages and mute members (1h / 24h / permanent); unread counts come
  * from a per-member last-read marker.
+ *
+ * Two members with a block between them, whichever placed it, both stay in the
+ * group — a block is between two people, not between a person and a group —
+ * but neither sees the other's messages: not in the history, not in the
+ * unread count, and not live (`hiddenFrom`).
  */
 export class GroupChatService {
   constructor(
@@ -123,6 +129,29 @@ export class GroupChatService {
     }
   }
 
+  /**
+   * The members who have blocked `authorId`, or whom `authorId` has blocked:
+   * whoever must not be sent what `authorId` posts to the room. The room
+   * itself is everyone in the group, so the event carries these ids and the
+   * gateway leaves their connections out (realtime/gateway.ts `hiddenFrom`).
+   * Asked per message rather than kept anywhere, so a block or an unblock
+   * counts from the next message on.
+   */
+  async hiddenFrom(groupId: string, authorId: string): Promise<string[]> {
+    const rows = await this.pool.query<{ user_id: string }>(
+      `SELECT m.user_id FROM group_members m
+        WHERE m.group_id = $1 AND NOT ${notBlockedSql('m.user_id', '$2::uuid')}`,
+      [groupId, authorId],
+    );
+    return rows.rows.map((r) => r.user_id);
+  }
+
+  /** Publish something `authorId` posted, to everyone in the room a block does not stand between. */
+  private async publishFrom(groupId: string, authorId: string, event: Record<string, unknown>): Promise<void> {
+    const hidden = await this.hiddenFrom(groupId, authorId);
+    await this.hub.publish(room(groupId), hidden.length > 0 ? { ...event, hiddenFrom: hidden } : event);
+  }
+
   async send(
     userId: string,
     groupId: string,
@@ -162,7 +191,7 @@ export class GroupChatService {
       gift: null,
       game: null,
     };
-    await this.hub.publish(room(groupId), { type: 'group_msg', groupId, message }).catch(() => undefined);
+    await this.publishFrom(groupId, userId, { type: 'group_msg', groupId, message }).catch(() => undefined);
     return message;
   }
 
@@ -204,7 +233,7 @@ export class GroupChatService {
       gift: null,
       game: card,
     };
-    await this.hub.publish(room(groupId), { type: 'group_msg', groupId, message }).catch(() => undefined);
+    await this.publishFrom(groupId, userId, { type: 'group_msg', groupId, message }).catch(() => undefined);
     return message;
   }
 
@@ -223,6 +252,8 @@ export class GroupChatService {
     // age was known (they are taken out when it is recorded) is shown to their
     // friends only, as their posts are (users/age.ts `writtenForSql`); in an
     // invite-only group everybody was put there by somebody they chose.
+    // Nothing from somebody with a block between them and the reader, in any
+    // group (friends/blocked.ts).
     const rows = await this.pool.query<
       KindColumns & {
         id: string; sender_id: string; username: string; profile_photo_key: string | null;
@@ -235,6 +266,7 @@ export class GroupChatService {
          FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
         WHERE m.group_id = $1
           AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
+          AND ${notBlockedSql('m.sender_id', '$3::uuid')}
           ${before ? 'AND m.created_at < $4::timestamptz' : ''}
         ORDER BY m.created_at DESC LIMIT $2`,
       before ? [groupId, limit, userId, before] : [groupId, limit, userId],
@@ -326,18 +358,21 @@ export class GroupChatService {
     const who = await this.pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [userId]);
     const username = who.rows[0]?.username;
     if (!username) return;
-    await this.hub
-      .publish(room(groupId), { type: 'group_typing', groupId, userId, username })
-      .catch(() => undefined);
+    await this.publishFrom(groupId, userId, { type: 'group_typing', groupId, userId, username }).catch(() => undefined);
   }
 
-  /** Per-group unread counts for the caller's groups. */
+  /**
+   * Per-group unread counts for the caller's groups. A message the history
+   * would not show them — from somebody with a block between them — is not
+   * counted, or the badge would announce messages that never appear.
+   */
   async unread(userId: string): Promise<Array<{ groupId: string; unread: number }>> {
     const rows = await this.pool.query<{ group_id: string; unread: number }>(
       `SELECT m.group_id,
               count(gm.id) FILTER (
                 WHERE gm.deleted_at IS NULL AND gm.sender_id <> $1
                   AND gm.created_at > COALESCE(r.last_read_at, '-infinity'::timestamptz)
+                  AND ${notBlockedSql('gm.sender_id', '$1::uuid')}
               )::int AS unread
          FROM group_members m
          LEFT JOIN group_reads r ON r.group_id = m.group_id AND r.user_id = $1

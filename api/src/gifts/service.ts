@@ -493,8 +493,18 @@ export class GiftService {
     if (settled.posted && chat?.kind === 'group') {
       const roomCard = await this.card(settled.batchId, { id: null, seesEveryone: groupPrivacy === 'invite' });
       const message = this.message(settled.posted, fromId, sender, roomCard, 'group');
-      await realtime
-        .publish(groupRoom(chat.groupId), { type: 'group_msg', groupId: chat.groupId, message })
+      // a message in the channel like any other, so it is kept from the
+      // members with a block between them and the sender, as a message is
+      await this.deps.groupChat
+        .hiddenFrom(chat.groupId, fromId)
+        .then((hidden) =>
+          realtime.publish(groupRoom(chat.groupId), {
+            type: 'group_msg',
+            groupId: chat.groupId,
+            message,
+            ...(hidden.length > 0 ? { hiddenFrom: hidden } : {}),
+          }),
+        )
         .catch(warn('gift message not published to the group'));
     }
 

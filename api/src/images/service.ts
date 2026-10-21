@@ -2,6 +2,7 @@ import type pg from 'pg';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 import { claimPostPictures, type PictureClaimFailure } from '../media/postMedia.js';
 import { stripControlChars } from '@kurda/shared';
 
@@ -75,6 +76,8 @@ interface Row {
  *
  * A minor's pictures, like their library posts, are for them and their friends
  * only; to anyone else they are not there (users/age.ts `writtenForSql`).
+ * Nor are anyone's pictures there for somebody with a block between the two
+ * of them, whichever placed it (friends/blocked.ts).
  */
 export class ImagePostService {
   constructor(private readonly pool: pg.Pool) {}
@@ -114,7 +117,11 @@ export class ImagePostService {
 
   async list(filters: ListFilters = {}): Promise<ImagePost[]> {
     const params: unknown[] = [filters.viewerId ?? null];
-    const conds = [`status = 'published'`, writtenForSql('image_posts.author_id', '$1::uuid')];
+    const conds = [
+      `status = 'published'`,
+      writtenForSql('image_posts.author_id', '$1::uuid'),
+      notBlockedSql('image_posts.author_id', '$1::uuid'),
+    ];
     if (filters.category) { params.push(filters.category); conds.push(`category = $${params.length}`); }
     if (filters.language) { params.push(filters.language); conds.push(`language = $${params.length}`); }
     if (filters.authorId) { params.push(filters.authorId); conds.push(`author_id = $${params.length}`); }
@@ -139,6 +146,7 @@ export class ImagePostService {
     const res = await this.pool.query<Row>(
       `UPDATE image_posts SET view_count = view_count + 1
         WHERE id = $1 AND status = 'published' AND ${writtenForSql('image_posts.author_id', '$2::uuid')}
+          AND ${notBlockedSql('image_posts.author_id', '$2::uuid')}
         RETURNING *`,
       [id, viewerId],
     );

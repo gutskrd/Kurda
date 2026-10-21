@@ -16,6 +16,7 @@ import { claimPostPictures, releasePostPictures, type PictureClaimFailure } from
 import { OPEN_CASE_PREDICATE } from '../moderation/reports-service.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 // posts and comments both re-export these, so a caller importing from here
 // still gets the one shared loader
@@ -212,6 +213,9 @@ export function changedWords(current: LibraryPost, patch: UpdateInput): string {
  * else, signed in or not, it is not there (users/age.ts `writtenForSql`). A
  * public byline was a way to find minors, and a stranger's reply a way to
  * reach one. It is worked out when read, so it ends by itself at 18.
+ *
+ * Nor is anything here read across a block, in either direction
+ * (friends/blocked.ts): to the reader the post is simply not there.
  */
 export class LibraryService {
   constructor(private readonly pool: pg.Pool) {}
@@ -263,7 +267,11 @@ export class LibraryService {
 
   async list(filters: ListFilters = {}): Promise<LibraryPost[]> {
     const params: unknown[] = [filters.viewerId ?? null];
-    const conds = [`status = 'published'`, writtenForSql('library_posts.author_id', '$1::uuid')];
+    const conds = [
+      `status = 'published'`,
+      writtenForSql('library_posts.author_id', '$1::uuid'),
+      notBlockedSql('library_posts.author_id', '$1::uuid'),
+    ];
     if (filters.type) { params.push(filters.type); conds.push(`type = $${params.length}`); }
     if (filters.language) { params.push(filters.language); conds.push(`language = $${params.length}`); }
     if (filters.authorId) { params.push(filters.authorId); conds.push(`author_id = $${params.length}`); }
@@ -316,6 +324,7 @@ export class LibraryService {
       `UPDATE library_posts
           SET view_count = view_count + CASE WHEN author_id IS NOT DISTINCT FROM $2::uuid THEN 0 ELSE 1 END
        WHERE id = $1 AND status = 'published' AND ${writtenForSql('library_posts.author_id', '$2::uuid')}
+         AND ${notBlockedSql('library_posts.author_id', '$2::uuid')}
        RETURNING *`,
       [id, viewerId],
     );
