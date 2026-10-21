@@ -56,7 +56,11 @@ function person(over: Partial<UserDetail> = {}): UserDetail {
     ],
     appeals: [{ id: 'ap-1', sanctionId: 's-now', caseId: null, text: 'It was a joke.', status: 'open', decisionNote: null, createdAt: ago(1), decidedAt: null }],
     cases: [{ id: 'case-1', status: 'actioned', priority: 2, category: 'harassment', summary: 'Group message reported', createdAt: ago(24 * 41) }],
-    linkedAccounts: [{ id: 'u-alt', username: 'baran2', via: 'device', banned: true }],
+    linkedAccounts: [
+      { id: 'u-alt', username: 'baran2', via: 'device', days: 2, lastSeenTogether: ago(24 * 3), banned: true },
+      { id: 'u-flat', username: 'rojda7', via: 'network', days: 3, lastSeenTogether: ago(30), banned: false },
+      { id: 'u-once', username: 'dilan4', via: 'network', days: 1, lastSeenTogether: ago(24 * 20), banned: false },
+    ],
     chatOffenses: null,
     mutedPermanently: false,
     ...over,
@@ -155,6 +159,11 @@ describe('a person', () => {
     expect(screen.getByText('baran@example.org')).toBeInTheDocument();
     expect(screen.getByText('18 or over')).toBeInTheDocument();
     expect(screen.getByRole('link', { name: '@baran2' })).toBeInTheDocument();
+    expect(screen.getByText('same device')).toHaveAttribute('title', expect.stringMatching(/same device/));
+    // a network says on how many days, and on hover what that means
+    const flat = screen.getByText('same network · 3 days');
+    expect(flat).toHaveAttribute('title', expect.stringMatching(/within 48 hours of each other on 3 days.*Busy networks/));
+    expect(screen.getByText('same network · 1 day')).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: 'Profile' })).toHaveAttribute('aria-selected', 'true');
     expect(screen.getByRole('tab', { name: /Standing/ })).toHaveAttribute('href', `${at}/standing`);
     expect(screen.getByRole('link', { name: 'Users' })).toHaveAttribute('href', '#/users');

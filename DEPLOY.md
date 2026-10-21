@@ -45,7 +45,8 @@ by the Blueprint — nothing else is required for sign-in to work.
 >
 > That one log line is worth reading after any deploy. It also tells you what the
 > API decided about `TRUST_PROXY`, which matters because rate limits are per-IP
-> and behind Render's proxy everyone shares one address if it is wrong.
+> and behind Render's proxy everyone shares one address if it is wrong (see
+> "Checking `TRUST_PROXY` after a deploy" below for the line to look for).
 >
 > The **dedicated worker service stays commented out**, on purpose — the
 > in-process one already does the work. Split it out when job volume starts
@@ -97,10 +98,11 @@ endpoint stays open in local development.
 
 ## Checking `TRUST_PROXY` after a deploy
 
-`req.ip` is what the rate limiter on `/auth/login` counts against, what the
-captcha is told the caller's address is, and what signup and login risk scoring
-reasons about. Behind a proxy it has to be worked out from `X-Forwarded-For`,
-and `TRUST_PROXY` names the proxies allowed to write it.
+`req.ip` is what the rate limiter counts against, what the login lockout and
+the captcha are told the caller's address is, what signup and login risk
+scoring reasons about, and which network a signed-in account is recorded on
+for account linking. Behind a proxy it has to be worked out from
+`X-Forwarded-For`, and `TRUST_PROXY` names the proxies allowed to write it.
 
 > **This changed, and an old value will stop the API booting.** `TRUST_PROXY`
 > used to be a hop count. Fastify 5.12.5 fixed GHSA-3m5p-2c4r-xxw2 by making a
@@ -121,23 +123,59 @@ Naming **too much** is the dangerous direction: include an address a stranger
 can connect from and the header they write is believed. `TRUST_PROXY=true`
 believes the client's own text and production refuses it outright.
 
-To confirm the setting is right for this deployment, read the first log line the
-API writes after a restart:
+### Cloudflare in front of Render
+
+Render puts Cloudflare in front of every service, so the chain is
+client → Cloudflare edge → Render's balancer → the container, and the walk over
+`TRUST_PROXY` ends at the **Cloudflare edge**: one of a few dozen addresses that
+everybody shares. The API reads past it by itself (`api/src/net/client-ip.ts`):
+when the first untrusted hop is one of Cloudflare's published addresses, the
+client is `CF-Connecting-IP` (which Cloudflare always overwrites), or failing
+that the `X-Forwarded-For` entry Cloudflare wrote just left of the edge.
+Neither header is believed from anything that is not a Cloudflare address, and
+nothing further left is ever read, so a client cannot name itself.
+
+Nothing needs setting for this on Render. Do **not** add Cloudflare's ranges to
+`TRUST_PROXY`. On a deployment that is not behind Cloudflare nothing changes;
+`CLOUDFLARE_CLIENT_IP=off` turns the step off entirely. Cloudflare's address
+list is hard-coded in `api/src/net/cloudflare.ts`, with where to refresh it.
+
+### The log line that proves it
+
+After a restart the API writes one line, on the first request that came
+through a proxy (not the platform's health check, which comes straight from
+`127.0.0.1` with no header):
 
 ```
-proxy chain as seen on the first request — TRUST_PROXY must cover the socket
-address, or resolvedIp is the proxy and every caller shares one rate-limit bucket
+client address on the first proxied request — rule says where it was read
+from; edge on a Cloudflare address means every caller through that edge is one caller
   trustProxy: "loopback,linklocal,uniquelocal"
+  cloudflare: "auto"
   socket: "10.x.x.x"
   forwardedFor: "203.0.113.9, 172.71.x.x"
+  cfConnectingIp: true
+  edge: "172.71.x.x"
+  rule: "cf-connecting-ip"
   resolvedIp: "203.0.113.9"
 ```
 
-`socket` is the address the list has to cover — `10.x.x.x` is a private range,
-so the default covers it. The check that matters: if `forwardedFor` has
-addresses in it but `resolvedIp` equals `socket`, the list is **not** covering
-the proxy, and every caller on earth is sharing one rate-limit bucket. If the
-API is reached directly with no proxy in front of it, set `false`.
+- `socket` is the address the list has to cover — `10.x.x.x` is a private
+  range, so the default covers it.
+- `edge` is the first hop nothing trusted vouches for; on Render it is a
+  Cloudflare address.
+- `rule` is `cf-connecting-ip` or `xff-left-of-edge` when the client was read
+  past Cloudflare, and `edge` when it was not.
+- `resolvedIp` is the caller everything keys on.
+
+What would be wrong: `rule: "edge"` with a Cloudflare `edge` means the client
+could not be read past Cloudflare and everybody behind that edge is one caller.
+`resolvedIp` equal to `socket` while `forwardedFor` has addresses in it means
+the list is **not** covering the proxy, and every caller on earth is sharing one
+rate-limit bucket. If the API is reached directly with no proxy in front of it,
+set `TRUST_PROXY=false`.
+
+Request log lines still show the edge as `remoteAddress`: Fastify writes
+"incoming request" before any hook runs. The proxy-chain line is the one to read.
 
 ## Store listing — category and developer name
 

@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { lockDurationMinutes, LOCKOUT_THRESHOLD, LockoutService } from './lockout.js';
 import { AuthService } from './service.js';
+import { networkHashOf } from '../net/network-key.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -53,7 +54,9 @@ describe.skipIf(!DATABASE_URL)('login lockout (integration)', () => {
   });
 
   afterAll(async () => {
-    await pool.query(`DELETE FROM auth_lockouts WHERE key LIKE '10.12.%' OR key = $1`, [userId]);
+    // address locks are stored under the keyed hash of the address's network
+    const ipKeys = Array.from({ length: ipCounter }, (_, i) => networkHashOf(`10.12.${Math.floor(i / 250)}.${(i % 250) + 1}`));
+    await pool.query(`DELETE FROM auth_lockouts WHERE (scope = 'ip' AND key = ANY($2)) OR key = $1`, [userId, ipKeys]);
     await pool.query(`DELETE FROM users WHERE id = $1`, [userId]);
     await pool.end();
     await app.close();
@@ -126,7 +129,9 @@ describe.skipIf(!DATABASE_URL)('login lockout (integration)', () => {
 
     const lockService = new LockoutService(pool);
     expect(await lockService.lockedFor('ip', attackerIp)).toBeGreaterThan(0);
-    await pool.query(`DELETE FROM auth_lockouts WHERE scope = 'ip' AND key = $1`, [attackerIp]);
+    // the lock is kept under the keyed hash of the network, never the address
+    expect((await pool.query(`SELECT 1 FROM auth_lockouts WHERE key = $1`, [attackerIp])).rowCount).toBe(0);
+    await pool.query(`DELETE FROM auth_lockouts WHERE scope = 'ip' AND key = $1`, [networkHashOf(attackerIp)]);
   });
 
   it('lockout rows are queryable for the admin panel', async () => {

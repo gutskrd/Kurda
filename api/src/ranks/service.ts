@@ -35,6 +35,7 @@ import {
   type RankedGame,
 } from '@kurda/shared';
 import { afterCommit } from '../db/after-commit.js';
+import { pairEvidence } from '../net/evidence.js';
 import { areFriendsSql, notKnownAdultSql } from '../users/age.js';
 import { expectedExtremes, expectedVs, freshState, rateGame, seasonReset, weightParts, type PlayerState, type RateOutcome } from './engine.js';
 import { RankEvents } from './events.js';
@@ -441,9 +442,10 @@ export class RankService {
 
   /**
    * The signals behind the admin's "suspicious pairs" (R3): games together,
-   * who won, the busiest 24 h, and — looked up once per pair, from the sign-up
-   * and sign-in risk records — a shared device or network. Stored, never acted
-   * on by themselves.
+   * who won, the busiest 24 h, and a shared device or network — by the same
+   * rules as the moderators' linked accounts (net/evidence.ts), looked up again
+   * each time the pair plays, so the flags follow what is true now. Stored,
+   * never acted on by themselves.
    */
   private async recordPairs(client: Executor, game: RankedGame, outcomes: readonly RateOutcome[], at: Date): Promise<void> {
     const sorted = [...outcomes].sort((a, b) => (a.userId < b.userId ? -1 : 1));
@@ -458,24 +460,10 @@ export class RankService {
       for (let j = i + 1; j < sorted.length; j++) {
         const lo = sorted[i]!;
         const hi = sorted[j]!;
-        const known = await client.query(`SELECT 1 FROM rating_pair_signals WHERE game = $1 AND user_lo = $2 AND user_hi = $3`, [
-          game,
-          lo.userId,
-          hi.userId,
-        ]);
-        let device = false;
-        let ip = false;
-        if (!known.rowCount) {
-          const shared = await client.query<{ device: boolean; ip: boolean }>(
-            `SELECT EXISTS (SELECT 1 FROM risk_decisions a JOIN risk_decisions b ON b.device_hash = a.device_hash
-                             WHERE a.user_id = $1 AND b.user_id = $2 AND a.device_hash IS NOT NULL) AS device,
-                    EXISTS (SELECT 1 FROM risk_decisions a JOIN risk_decisions b ON b.ip_hash = a.ip_hash
-                             WHERE a.user_id = $1 AND b.user_id = $2 AND a.ip_hash IS NOT NULL) AS ip`,
-            [lo.userId, hi.userId],
-          );
-          device = shared.rows[0]!.device;
-          ip = shared.rows[0]!.ip;
-        }
+        // indexed lookups that start from the two accounts' own rows
+        const shared = await pairEvidence(client, lo.userId, hi.userId);
+        const device = shared.device !== null;
+        const network = shared.network !== null;
         const loWin = lo.place < hi.place ? 1 : 0;
         const hiWin = hi.place < lo.place ? 1 : 0;
         await client.query(
@@ -487,6 +475,8 @@ export class RankService {
              hi_wins = rating_pair_signals.hi_wins + EXCLUDED.hi_wins,
              draws = rating_pair_signals.draws + EXCLUDED.draws,
              peak_24h = GREATEST(rating_pair_signals.peak_24h, EXCLUDED.peak_24h),
+             shared_device = EXCLUDED.shared_device,
+             shared_ip = EXCLUDED.shared_ip,
              last_game_at = EXCLUDED.last_game_at`,
           [
             game,
@@ -497,7 +487,7 @@ export class RankService {
             1 - loWin - hiWin,
             Math.max(1, counts.get(`${lo.userId}:${hi.userId}`) ?? 1),
             device,
-            ip,
+            network,
             at,
           ],
         );

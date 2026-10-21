@@ -1,6 +1,6 @@
-import type { AgeBadge, CaseDetail, CaseReportView, CaseSanctionView } from '@kurda/shared';
+import type { AgeBadge, CaseDetail, CaseReportView, CaseSanctionView, CaseSubjectView } from '@kurda/shared';
 import { categoryName, isSnapshot, sanctionName, sanctionPeriod, statusName, statusTone } from '../moderation';
-import { Badge, Button, Section, Time, UserLink, duration } from '../ui';
+import { Badge, Button, Section, Time, UserLink, absoluteTime, duration } from '../ui';
 import { Snapshot } from './CaseEvidence';
 
 /** "Minor", "Adult", "Age not given" — whether a child is involved changes what may be done. */
@@ -8,6 +8,32 @@ export function AgeTag({ age }: { age: AgeBadge }): React.JSX.Element {
   if (age === 'minor') return <Badge tone="warn">Minor</Badge>;
   if (age === 'adult') return <Badge>Adult</Badge>;
   return <Badge title="No birth year on the account">Age not given</Badge>;
+}
+
+/**
+ * How a linked account is linked: "same device", or "same network · 3 days",
+ * with what that evidence means on hover. A network only counts when both were
+ * seen on it within two days of each other and few other accounts used it,
+ * so it reads as a household rather than a phone carrier.
+ */
+export function LinkedVia({ link }: { link: CaseSubjectView['linkedAccounts'][number] }): React.JSX.Element {
+  const last = absoluteTime(new Date(link.lastSeenTogether));
+  if (link.via === 'device') {
+    return (
+      <span className="subtle" title={`Signed up or signed in with the same device. Last: ${last}.`}>
+        same device
+      </span>
+    );
+  }
+  const days = `${link.days} ${link.days === 1 ? 'day' : 'days'}`;
+  return (
+    <span
+      className="subtle"
+      title={`Seen on the same network within 48 hours of each other on ${days}, last ${last}, while few other accounts used it: often one household or a small office. Busy networks — mobile carriers, schools, cafés, VPNs — never count.`}
+    >
+      same network · {days}
+    </span>
+  );
 }
 
 /** "Account 3 days old" — a brand-new account weighs differently. */
@@ -145,12 +171,12 @@ export function SubjectPanel({
             {subject.linkedAccounts.map((a) => (
               <li key={a.id}>
                 <UserLink user={a} />
-                <span className="subtle">{a.via === 'device' ? 'same device' : 'same network'}</span>
+                <LinkedVia link={a} />
                 {a.banned && <Badge tone="bad">Banned</Badge>}
               </li>
             ))}
           </ul>
-          <p className="note">A shared network can be a school or a family. A shared device says more.</p>
+          <p className="note">A shared network means seen there within two days of each other while few others used it — often a family. A shared device says more.</p>
         </>
       )}
     </Section>

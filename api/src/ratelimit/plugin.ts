@@ -1,5 +1,6 @@
 import type { FastifyInstance, FastifyRequest } from 'fastify';
 import type { RateLimitStore } from './store.js';
+import { networkKey } from '../net/network-key.js';
 
 export interface RateLimitOptions {
   max: number;
@@ -22,9 +23,15 @@ export const DEFAULT_RATE_LIMIT: Required<RateLimitOptions> = {
 
 const EXEMPT_ROUTES = new Set(['/health', '/metrics']);
 
+/**
+ * An address is limited by its network (net/network-key.ts): the address itself
+ * for IPv4, the /64 for IPv6, so a caller cannot get a fresh budget by moving to
+ * another address in its own /64. `req.ip` is the client as net/client-ip.ts
+ * resolved it, not the proxy in front.
+ */
 function limitKey(req: FastifyRequest, route: string, per: 'ip' | 'user-or-ip'): string {
   const principal =
-    per === 'user-or-ip' && req.user?.id ? `user:${req.user.id}` : `ip:${req.ip}`;
+    per === 'user-or-ip' && req.user?.id ? `user:${req.user.id}` : `ip:${networkKey(req.ip) ?? req.ip}`;
   return `ratelimit:${route}:${principal}`;
 }
 

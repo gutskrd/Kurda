@@ -222,6 +222,13 @@ const envSchema = z.object({
    * can open a connection to it at all. Name exact addresses instead wherever
    * the origin is reachable from the public internet.
    *
+   * On Render that is still not the whole chain. Render puts Cloudflare in
+   * front of every service, so the walk ends at a Cloudflare edge address — the
+   * same few dozen for everybody. Reading past it is CLOUDFLARE_CLIENT_IP's job
+   * below, not this list's: Cloudflare's ranges must never be named here, or a
+   * caller on Cloudflare's own network (a Worker) would be walked past into
+   * text it wrote itself.
+   *
    * `true` trusts the client's own text and is refused in production below.
    */
   TRUST_PROXY: z
@@ -233,6 +240,18 @@ const envSchema = z.object({
         'presets loopback/linklocal/uniquelocal — a bare hop count no longer ' +
         'works (fastify GHSA-3m5p-2c4r-xxw2)',
     ),
+  /**
+   * Whether to read the client's address past a Cloudflare edge.
+   *
+   * When the first hop `TRUST_PROXY` does not cover is one of Cloudflare's
+   * published addresses, the client is the address Cloudflare reports: its
+   * `CF-Connecting-IP` header, or failing that the X-Forwarded-For entry it
+   * wrote just left of the edge (net/client-ip.ts). Neither is believed from
+   * anything that is not a Cloudflare address, so a deployment that is not
+   * behind Cloudflare is unaffected either way. `off` keeps the edge as the
+   * client, as before.
+   */
+  CLOUDFLARE_CLIENT_IP: z.enum(['auto', 'off']).default('auto'),
   /**
    * Bearer token a Prometheus scraper must present at /metrics.
    *

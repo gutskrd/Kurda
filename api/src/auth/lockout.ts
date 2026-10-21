@@ -1,4 +1,6 @@
 import type pg from 'pg';
+import { networkHashOf } from '../net/network-key.js';
+import { networkKeyHash } from '../moderation/pseudonym.js';
 
 export type LockoutScope = 'account' | 'ip';
 
@@ -25,12 +27,23 @@ export function lockDurationMinutes(level: number): number {
 export class LockoutService {
   constructor(private readonly pool: Pick<pg.Pool, 'query'>) {}
 
+  /**
+   * What a key is stored as. An address is kept as the keyed hash of its
+   * network (net/network-key.ts): never the raw address, and an IPv6 caller
+   * cannot shed a lock by moving to another address in the same /64. Text that
+   * is not an address is hashed as it is, so it still locks and stays apart.
+   */
+  private storedKey(scope: LockoutScope, key: string): string {
+    if (scope !== 'ip') return key;
+    return networkHashOf(key) ?? networkKeyHash(`unparsed:${key}`);
+  }
+
   /** Seconds remaining if locked, else null. */
   async lockedFor(scope: LockoutScope, key: string): Promise<number | null> {
     const result = await this.pool.query<{ locked_until: Date }>(
       `SELECT locked_until FROM auth_lockouts
        WHERE scope = $1 AND key = $2 AND locked_until > now()`,
-      [scope, key],
+      [scope, this.storedKey(scope, key)],
     );
     const row = result.rows[0];
     if (!row) return null;
@@ -58,7 +71,7 @@ export class LockoutService {
          last_failure_at = now(),
          updated_at = now()
        RETURNING failure_count, lockout_level`,
-      [scope, key],
+      [scope, this.storedKey(scope, key)],
     );
     const row = result.rows[0] as { failure_count: number; lockout_level: number };
     if (row.failure_count < LOCKOUT_THRESHOLD) return null;
@@ -70,7 +83,7 @@ export class LockoutService {
        SET lockout_level = $3, locked_until = now() + ($4 || ' minutes')::interval,
            failure_count = 0, updated_at = now()
        WHERE scope = $1 AND key = $2`,
-      [scope, key, level, String(minutes)],
+      [scope, this.storedKey(scope, key), level, String(minutes)],
     );
     return minutes * 60;
   }
@@ -81,7 +94,7 @@ export class LockoutService {
     await this.pool.query(
       `UPDATE auth_lockouts SET failure_count = 0, updated_at = now()
        WHERE scope = $1 AND key = $2 AND (locked_until IS NULL OR locked_until < now())`,
-      [scope, key],
+      [scope, this.storedKey(scope, key)],
     );
   }
 }

@@ -34,6 +34,7 @@ import {
 import type { MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { minorSql } from '../users/age.js';
+import { linkedEvidence } from '../net/evidence.js';
 import {
   mediaOfRemoval,
   removableTarget,
@@ -1350,26 +1351,27 @@ export class CasesService {
   }
 }
 
-/** Accounts that shared a hashed device or network with this one (risk decisions, last 180 days). */
+/**
+ * Accounts that shared a device or a network with this one, strongest first.
+ * What counts as a shared network — seen there within two days of each other,
+ * on a network few other accounts use — is net/evidence.ts.
+ */
 export async function linkedAccounts(db: Executor, userId: string): Promise<CaseSubjectView['linkedAccounts']> {
-  const r = await db.query<{ id: string; username: string; via: 'device' | 'ip'; banned: boolean }>(
-    `WITH mine AS (
-       SELECT ip_hash, device_hash FROM risk_decisions
-        WHERE user_id = $1 AND created_at > now() - interval '180 days'
-     )
-     SELECT DISTINCT ON (u.id) u.id, u.username,
-            CASE WHEN rd.device_hash IS NOT NULL AND rd.device_hash IN (SELECT device_hash FROM mine WHERE device_hash IS NOT NULL)
-                 THEN 'device' ELSE 'ip' END AS via,
+  const evidence = await linkedEvidence(db, userId);
+  if (evidence.length === 0) return [];
+  const r = await db.query<{ id: string; username: string; banned: boolean }>(
+    `SELECT u.id, u.username,
             (u.banned_at IS NOT NULL AND (u.banned_until IS NULL OR u.banned_until > now())) AS banned
-       FROM risk_decisions rd JOIN users u ON u.id = rd.user_id
-      WHERE rd.user_id <> $1 AND rd.created_at > now() - interval '180 days'
-        AND ((rd.device_hash IS NOT NULL AND rd.device_hash IN (SELECT device_hash FROM mine WHERE device_hash IS NOT NULL))
-          OR (rd.ip_hash IS NOT NULL AND rd.ip_hash IN (SELECT ip_hash FROM mine WHERE ip_hash IS NOT NULL)))
-      ORDER BY u.id, (rd.device_hash IN (SELECT device_hash FROM mine WHERE device_hash IS NOT NULL)) DESC
-      LIMIT 20`,
-    [userId],
+       FROM users u WHERE u.id = ANY($1::uuid[])`,
+    [evidence.map((e) => e.userId)],
   );
-  return r.rows;
+  const users = new Map(r.rows.map((u) => [u.id, u]));
+  return evidence
+    .flatMap((e) => {
+      const u = users.get(e.userId);
+      return u ? [{ id: u.id, username: u.username, via: e.via, days: e.days, lastSeenTogether: e.lastSeenTogether, banned: u.banned }] : [];
+    })
+    .slice(0, 20);
 }
 
 interface EscalationRow {

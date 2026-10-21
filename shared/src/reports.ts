@@ -662,8 +662,22 @@ export interface CaseSubjectView extends CasePerson {
   activeSanctions: CaseSanctionView[];
   pastSanctions: CaseSanctionView[];
   priorCases: Array<{ id: string; status: CaseStatus; category: ReportCategory | null; createdAt: string; resolvedAt: string | null }>;
-  /** accounts that shared a hashed device or network with this one at sign-up or sign-in */
-  linkedAccounts: Array<{ id: string; username: string; via: 'device' | 'ip'; banned: boolean }>;
+  /**
+   * Accounts that shared a device or a network with this one, strongest first.
+   * A device is a device id both signed up or signed in with. A network counts
+   * only when both were seen on it within 48 hours of each other and few other
+   * established accounts used it then, so a carrier's NAT, a campus or a VPN
+   * does not link strangers. `days` is how many distinct days that evidence
+   * covers; `lastSeenTogether` the latest of them.
+   */
+  linkedAccounts: Array<{
+    id: string;
+    username: string;
+    via: 'device' | 'network';
+    days: number;
+    lastSeenTogether: string;
+    banned: boolean;
+  }>;
 }
 
 export interface CaseNote {

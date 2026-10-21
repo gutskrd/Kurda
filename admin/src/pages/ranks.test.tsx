@@ -140,6 +140,14 @@ describe('Game ranks', () => {
     expect(within(drawer).getByRole('button', { name: 'Void…' })).toBeInTheDocument();
   });
 
+  it('says on hover what a shared network means', async () => {
+    fakeApi(on('GET', '/admin/ranks/suspicious-pairs', json({ pairs: [{ ...PAIR, sharedDevice: false, sharedIp: true, score: 1 }] })));
+    at('#/ranks/pairs');
+    renderUi(<Ranks />);
+    const row = (await screen.findByText('@baran')).closest('tr')!;
+    expect(within(row).getByText('Same network')).toHaveAttribute('title', expect.stringMatching(/within 48 hours of each other/));
+  });
+
   it('lists the suspicious pairs with their signals, and voids one of their games with a reason', async () => {
     const user = userEvent.setup();
     const { calls } = fakeApi(

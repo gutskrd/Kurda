@@ -17,9 +17,13 @@ import { RankAdmin } from './admin.js';
 import { RankEvents, type RatedGameFinished } from './events.js';
 import { freshState, rateGame, type PlayerState } from './engine.js';
 import { exportRanks, eraseRanks } from './gdpr.js';
+import { networkHashOf } from '../net/network-key.js';
+import { writeSighting } from '../net/sightings.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const MINUTE = 60_000;
+const HOUR = 60 * MINUTE;
+const DAY = 24 * HOUR;
 // five-letter words for the medium pool, so a battle always has a target to guess
 const WORDS = ['xanim', 'dilan', 'berfe', 'serok', 'kitab', 'zerdk'];
 
@@ -512,8 +516,8 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       const b = await user();
       for (const id of [a, b]) {
         await pool.query(
-          `INSERT INTO risk_decisions (event, user_id, device_hash, ip_hash, score, band, action) VALUES ('login', $1, $2, $3, 0, 'low', 'proceed')`,
-          [id, `dev-${suffix}`, `ip-${suffix}-${id}`],
+          `INSERT INTO risk_decisions (event, user_id, device_hash, net_hash, score, band, action) VALUES ('login', $1, $2, $3, 0, 'low', 'proceed')`,
+          [id, `dev-${suffix}`, `net-${suffix}-${id}`],
         );
       }
       for (let i = 0; i < 4; i++) await play([a, b], { winner: a });
@@ -521,6 +525,51 @@ describe.skipIf(!DATABASE_URL)('game ranks (integration)', () => {
       const ours = pairs.find((p) => [p.a.userId, p.b.userId].sort().join() === [a, b].sort().join());
       expect(ours).toMatchObject({ sharedDevice: true, sharedIp: false, games: 4, peak24h: 4 });
       expect(ours!.score).toBeGreaterThanOrEqual(5);
+    });
+
+    it('flags a shared network by the linked-accounts rules, and looks again each time the pair plays', async () => {
+      const flags = async (x: string, y: string) =>
+        (
+          await pool.query<{ shared_device: boolean; shared_ip: boolean }>(
+            `SELECT shared_device, shared_ip FROM rating_pair_signals WHERE game = 'wordle-battle' AND user_lo = $1 AND user_hi = $2`,
+            [x < y ? x : y, x < y ? y : x],
+          )
+        ).rows[0];
+      const seen = (id: string, ip: string, daysAgo: number, hours = 0) =>
+        writeSighting(pool, id, networkHashOf(ip)!, new Date(Date.now() - daysAgo * DAY + hours * HOUR));
+      const run = 20 + Math.floor(Math.random() * 200);
+
+      const a = await user();
+      const b = await user();
+      await play([a, b], { winner: a });
+      expect(await flags(a, b)).toEqual({ shared_device: false, shared_ip: false });
+      // then seen together on a quiet home network: the next game says so
+      await seen(a, `198.18.${run}.1`, 3);
+      await seen(b, `198.18.${run}.1`, 3, 2);
+      await play([a, b], { winner: b });
+      expect(await flags(a, b)).toEqual({ shared_device: false, shared_ip: true });
+
+      // the same network a month apart is not a shared one
+      const c = await user();
+      const d = await user();
+      await seen(c, `198.18.${run}.2`, 35);
+      await seen(d, `198.18.${run}.2`, 3);
+      await play([c, d], { winner: c });
+      expect(await flags(c, d)).toEqual({ shared_device: false, shared_ip: false });
+
+      // nor a crowded one: four other established accounts were there too
+      const e = await user();
+      const f = await user();
+      await seen(e, `198.18.${run}.3`, 5);
+      await seen(f, `198.18.${run}.3`, 5, 1);
+      for (let i = 0; i < 4; i++) {
+        const other = await rankedUser(pool, `rk_crowd_${i}_${suffix}`);
+        userIds.push(other);
+        await pool.query(`UPDATE users SET created_at = now() - interval '60 days' WHERE id = $1`, [other]);
+        await seen(other, `198.18.${run}.3`, 4, i);
+      }
+      await play([e, f], { winner: e });
+      expect(await flags(e, f)).toEqual({ shared_device: false, shared_ip: false });
     });
 
     it('shows how the active players spread over the tiers', async () => {

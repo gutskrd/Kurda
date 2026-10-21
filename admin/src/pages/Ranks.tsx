@@ -331,7 +331,11 @@ function Pairs(): React.JSX.Element {
         p.sharedDevice || p.sharedIp ? (
           <span className="badges">
             {p.sharedDevice && <Badge tone="bad">Same device</Badge>}
-            {p.sharedIp && <Badge tone="warn">Same network</Badge>}
+            {p.sharedIp && (
+              <Badge tone="warn" title="Seen on the same network within 48 hours of each other while few other accounts used it — often one household. Busy networks (mobile carriers, schools, cafés, VPNs) never count.">
+                Same network
+              </Badge>
+            )}
           </span>
         ) : (
           <span className="subtle">Nothing</span>
@@ -343,7 +347,7 @@ function Pairs(): React.JSX.Element {
   return (
     <Section
       title="Pairs worth a look"
-      description="Signals, not verdicts: a shared device (3), many rated games in one day (2), one side winning nearly every game of six or more (2), a shared network (1) — a school or a family shares a network. Open a pair to see their games and void one."
+      description="Signals, not verdicts: a shared device (3), many rated games in one day (2), one side winning nearly every game of six or more (2), a shared network (1) — seen there within two days of each other while few others used it, which a family does too. Open a pair to see their games and void one."
       flush
     >
       <Table

@@ -66,6 +66,13 @@ services:
       # which is what Render's balancer reaches the container from — nothing on
       # the public internet can open a connection to it directly.
       #
+      # Render also puts Cloudflare in front, so the chain is client →
+      # Cloudflare edge → Render's balancer → container, and this list stops
+      # at the edge. The API reads the client past a Cloudflare edge by itself
+      # (CF-Connecting-IP, believed only from Cloudflare's own addresses; see
+      # api/src/net/client-ip.ts and DEPLOY.md). Never add Cloudflare's ranges
+      # here, and nothing else needs setting for it.
+      #
       # A bare hop count is NOT valid any more and the API refuses to boot on
       # one: fastify 5.12.5 fixed GHSA-3m5p-2c4r-xxw2 by making a numeric
       # trustProxy consume no hop at all. See DEPLOY.md.

@@ -91,7 +91,9 @@ Progressive lockout backs the auth flow.
 Those IP-keyed budgets are only as good as `req.ip`, which behind a proxy has to
 be derived from X-Forwarded-For — see `TRUST_PROXY` in DEPLOY.md. Set wrong, every
 per-IP limit collapses onto the proxy's address and becomes one shared budget for
-the whole internet.
+the whole internet. Behind Render the proxy in front is Cloudflare, and the client
+is read past its edge from Cloudflare's own headers
+([network-identity.md](network-identity.md)); an IPv6 caller is limited by its /64.
 
 ## 8. Data exposure & error handling
 

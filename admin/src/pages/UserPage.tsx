@@ -38,7 +38,7 @@ import {
   type Column,
   type Tone,
 } from '../ui';
-import { AgeTag, SanctionLine } from './CasePeople';
+import { AgeTag, LinkedVia, SanctionLine } from './CasePeople';
 import { PERSON_KINDS, SanctionFields, newSanctionDraft, sanctionDraftProblems, type SanctionDraft } from './SanctionParts';
 import { ItemsPanel, WalletPanel } from './UserEconomy';
 import { BadgesTab, RanksTab } from './UserProgress';
@@ -224,12 +224,15 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
         </dl>
       </Section>
       {u.linkedAccounts && u.linkedAccounts.length > 0 && (
-        <Section title="Accounts on the same device or network" description="A shared network can be a school or a family. A shared device says more.">
+        <Section
+          title="Accounts on the same device or network"
+          description="A shared network means seen there within two days of each other while few others used it — often a family. A shared device says more."
+        >
           <ul className="link-list">
             {u.linkedAccounts.map((a) => (
               <li key={a.id}>
                 <UserLink user={a} />
-                <span className="subtle">{a.via === 'device' ? 'same device' : 'same network'}</span>
+                <LinkedVia link={a} />
                 {a.banned && <Badge tone="bad">Banned</Badge>}
               </li>
             ))}

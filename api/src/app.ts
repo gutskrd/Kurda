@@ -18,7 +18,8 @@ import { setupAuth } from './plugins/auth.js';
 import { installActivationGate } from './plugins/activation.js';
 import { setupErrorHandling } from './plugins/errors.js';
 import { setupSecurityHeaders } from './plugins/security-headers.js';
-import { logProxyChainOnce } from './plugins/proxy-chain.js';
+import { setupClientIp } from './plugins/client-ip.js';
+import { setupNetworkSightings } from './net/sightings.js';
 import { setupCachePolicy } from './plugins/cache-policy.js';
 import { setupValidation } from './plugins/validation.js';
 import { setupRateLimit } from './ratelimit/plugin.js';
@@ -223,7 +224,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     trustProxy: trustProxyOption(config.TRUST_PROXY),
   });
 
-  logProxyChainOnce(app, config);
+  // who the client is, read past the proxies once, before any hook asks
+  setupClientIp(app, config);
 
   setupCors(app, config);
   setupValidation(app);
@@ -334,6 +336,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
     installAdminGate(app, adminTotp);
+
+    // which network each signed-in account is on, for account linking, and the
+    // daily prune of that and the risk decisions; also before any route
+    setupNetworkSightings(app, { pruneAtStart: config.NODE_ENV !== 'test' });
   }
   app.addHook('onRequest', async (req) => {
     if (req.user?.id) {
