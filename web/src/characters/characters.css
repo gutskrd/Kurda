@@ -129,9 +129,6 @@
   width: auto;
   max-width: 100%;
 }
-.character-stage-figure > .speaking-character[data-crop='half'] {
-  height: calc(var(--stage-h, 320px) - 8px);
-}
 .character-stage-side {
   display: grid;
   gap: 12px;

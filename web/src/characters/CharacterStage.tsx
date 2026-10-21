@@ -8,10 +8,11 @@ import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 /**
  * How tall a stage is in a window this tall: the whole figure, as large as
  * the window can spare once `reserve` pixels are left for the rest of the
- * exercise, and never so small that a child cannot see the face, nor so large
- * on a big screen that it is all there is. The phone app's `stageHeight`.
+ * exercise, and never shorter than `min`, so every phone shows the same stage
+ * with the whole figure on it (a small one scrolls a little); nor so large on
+ * a big screen that it is all there is. The phone app's `stageHeight`.
  */
-export const STAGE = { reserve: 500, min: 190, max: 380, wholeFrom: 240 } as const;
+export const STAGE = { reserve: 500, min: 300, max: 380 } as const;
 
 export function stageHeight(windowHeight: number): number {
   return Math.round(Math.min(STAGE.max, Math.max(STAGE.min, windowHeight - STAGE.reserve)));
@@ -39,8 +40,7 @@ const STAND_AT = 0.26;
  *
  * Whoever says the recording playing now stands there (`useSpokenClip`). A
  * click on them greets you and says it again; `reaction` gets a cheer for a
- * right answer and a curious tilt of the head for one that was not yet. On a
- * window too short for a face to be seen in the whole figure, head to waist.
+ * right answer and a curious tilt of the head for one that was not yet.
  *
  * Decorative: the buttons say what is heard, and the character adds who.
  */
@@ -55,7 +55,6 @@ export function CharacterStage({
 }): React.JSX.Element | null {
   const clip = useSpokenClip(clips);
   const height = useStageHeight();
-  const whole = height >= STAGE.wholeFrom;
   const stage = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(480);
   useEffect(() => {
@@ -87,14 +86,14 @@ export function CharacterStage({
     <div ref={stage} className="character-stage" style={{ '--stage-h': `${height}px` } as React.CSSProperties}>
       <span className="character-stage-backdrop is-light" aria-hidden="true" dangerouslySetInnerHTML={backdrops.light} />
       <span className="character-stage-backdrop is-dark" aria-hidden="true" dangerouslySetInnerHTML={backdrops.dark} />
-      <div className="character-stage-figure" style={whole ? undefined : { paddingBottom: 0 }}>
+      <div className="character-stage-figure">
         <SpeakingCharacter
           speaker={clip.voice.speaker}
           audio={soundPlayer}
           src={clip.src}
           voice={clip.voice}
           text={clip.text}
-          crop={whole ? 'full' : 'half'}
+          crop="full"
           decorative
           reaction={reaction}
           onPress={replay}

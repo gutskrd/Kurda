@@ -16,7 +16,7 @@ export interface CharacterStageProps extends Omit<SpeakingCharacterProps, 'crop'
   reserve?: number;
 }
 
-/** A stage this tall or taller shows the whole figure; a shorter one, head to waist, so the face stays big enough to see. */
+/** A stage this tall or taller shows the whole figure; a shorter one (with the keyboard up), head to waist, so the face stays big enough to see. */
 const WHOLE_FROM = 240;
 
 /** Where on the stage the character stands, as a share of its width from the start: room on the far side for the buttons. */
@@ -29,9 +29,10 @@ const STAND_AT = 0.27;
  * it on the far side.
  *
  * The character can be tapped: it greets you and says it again, the same as
- * the play button. When the keyboard comes up for an answer the stage steps
- * back to a smaller size, so the field stays in view, and comes forward again
- * when the keyboard goes.
+ * the play button. Every phone gets the same stage, the whole figure on it; a
+ * small one scrolls a little. When the keyboard comes up for an answer the
+ * stage steps back to head to waist, so the field stays in view, and comes
+ * forward again when the keyboard goes.
  */
 export function CharacterStage({ children, reserve, flip, speaker, ...character }: CharacterStageProps): React.JSX.Element {
   const { colors } = useTheme();
