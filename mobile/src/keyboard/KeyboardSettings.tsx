@@ -1,13 +1,13 @@
 import { useState } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { BottomSheet } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { GlassCard, GlassRow, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -110,30 +110,17 @@ export function KeyboardSettingsSheet({
   midRace: boolean;
   onClose: () => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [guide, setGuide] = useState(false);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={[styles.backdrop, { backgroundColor: colors.scrim }]}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel={t('common.close')} accessibilityRole="button" />
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]}>
-          <View style={styles.sheetHead}>
-            <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-              {t('keyboard.settings.title')}
-            </Text>
-            <Pressable onPress={onClose} accessibilityRole="button" accessibilityLabel={t('common.close')} style={styles.close}>
-              <Icon name="close" size={22} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.sheetBody}>
-            <TypingOptions midRace={midRace} />
-            <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
-          </ScrollView>
-        </SheetIn>
-      </View>
+    <BottomSheet visible={visible} onClose={onClose} title={t('keyboard.settings.title')} contentStyle={styles.scroller}>
+      <ScrollView contentContainerStyle={styles.sheetBody}>
+        <TypingOptions midRace={midRace} />
+        <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
+      </ScrollView>
+      {/* in the sheet's own Modal, so the guide is presented over the sheet */}
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -178,16 +165,7 @@ const styles = StyleSheet.create({
   modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
   spaced: { marginTop: spacing.md },
-  backdrop: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, maxHeight: '88%', paddingBottom: spacing.lg },
-  sheetHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: spacing.lg,
-    paddingTop: spacing.md,
-  },
-  sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  close: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  sheetBody: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg, gap: spacing.xs },
+  // the gutter is the ScrollView's own, so the options scroll edge to edge
+  scroller: { paddingHorizontal: 0 },
+  sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.xs },
 });

@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
@@ -10,7 +9,8 @@ import { SendErrorNotice } from '../reports/SendError';
 import { newGiftKey } from '../gifts/api';
 import { giftErrorText } from '../gifts/GiftPickerSheet';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { radii, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
+import { BottomSheet } from '../theme/BottomSheet';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
@@ -30,8 +30,9 @@ interface Friend {
  * from a stranger is a way to put something in front of somebody who has not
  * agreed to hear from you.
  *
- * A Modal, not a positioned View: anything else inside the tab navigator draws
- * under the tab bar and lets taps through to it.
+ * The shared BottomSheet, which is a Modal, not a positioned View: anything
+ * else inside the tab navigator draws under the tab bar and lets taps through
+ * to it.
  */
 export function GiftSheet({
   item,
@@ -97,75 +98,59 @@ export function GiftSheet({
   );
 
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable
-        style={styles.backdrop}
-        onPress={onClose}
-        accessibilityRole="button"
-        accessibilityLabel={t('common.cancel')}
-      >
-        {/* a tap inside the sheet must not reach the backdrop and close it */}
-        <SheetIn style={styles.sheetWrap}>
-          <Pressable
-            style={[styles.sheet, { backgroundColor: colors.background }]}
-            onPress={() => undefined}
-          >
-            <Text style={[styles.title, { color: colors.textPrimary }]}>{t('shop.giftTo', { name: item.name })}</Text>
-            <Text style={[styles.note, { color: colors.textSecondary }]}>
-              {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })}
-            </Text>
+    <BottomSheet visible onClose={onClose} title={t('shop.giftTo', { name: item.name })}>
+      <Text style={[styles.note, { color: colors.textSecondary }]}>
+        {t('shop.giftPaidByYou', { price: item.price, currency: item.currency })}
+      </Text>
 
-            {friends === null ? (
-              <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
-            ) : friends.length === 0 ? (
-              <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
-            ) : (
-              <>
-                <SearchField
-                  value={query}
-                  onChangeText={setQuery}
-                  label={t('shop.searchFriends')}
-                  returnKeyType="done"
-                  style={styles.search}
-                />
-                <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
-                  {shown.map((f) => (
-                    <Pressable
-                      key={f.userId}
-                      onPress={() => send(f)}
-                      accessibilityRole="button"
-                      // each row names its friend: a screen reader heard "Send <item>" on every one
-                      accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
-                      style={styles.row}
-                    >
-                      <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
-                      <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
-                        {f.displayName || f.username}
-                      </Text>
-                      {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </>
-            )}
+      {friends === null ? (
+        <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.lg }} />
+      ) : friends.length === 0 ? (
+        <Text style={[styles.note, { color: colors.textSecondary }]}>{t('shop.noFriendsToGift')}</Text>
+      ) : (
+        <>
+          <SearchField
+            value={query}
+            onChangeText={setQuery}
+            label={t('shop.searchFriends')}
+            returnKeyType="done"
+            style={styles.search}
+          />
+          <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
+            {shown.map((f) => (
+              <Pressable
+                key={f.userId}
+                onPress={() => send(f)}
+                accessibilityRole="button"
+                // each row names its friend: a screen reader heard "Send <item>" on every one
+                accessibilityLabel={t('gift.picker.titleFor', { name: f.displayName || f.username })}
+                style={styles.row}
+              >
+                <InitialsAvatar name={f.displayName || f.username} id={f.userId} size={34} photoUrl={f.avatarUrl} />
+                <Text style={[styles.who, { color: colors.textPrimary }]} numberOfLines={1}>
+                  {f.displayName || f.username}
+                </Text>
+                {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
+              </Pressable>
+            ))}
+          </ScrollView>
+        </>
+      )}
 
-            {error && restrictionOf(error.error) ? (
-              // a limit on the account (a gift is a chat message): calm, what and
-              // until when, and Account standing after this sheet has closed
-              <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
-            ) : error ? (
-              <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
-                {shopGiftErrorText(error.error, error.name, t)}
-              </Text>
-            ) : null}
+      {error && restrictionOf(error.error) ? (
+        // a limit on the account (a gift is a chat message): calm, what and
+        // until when, and Account standing after this sheet has closed
+        <SendErrorNotice error={error.error} onNavigate={onClose} style={styles.notice} />
+      ) : error ? (
+        <Text style={[styles.note, { color: colors.danger }]} accessibilityLiveRegion="polite">
+          {shopGiftErrorText(error.error, error.name, t)}
+        </Text>
+      ) : null}
 
-            <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
-              <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
-            </Pressable>
-          </Pressable>
-        </SheetIn>
+      <Pressable onPress={onClose} accessibilityRole="button" style={styles.cancel}>
+        <Text style={[styles.cancelText, { color: colors.textSecondary }]}>{t('common.cancel')}</Text>
       </Pressable>
-    </Modal>
+    </BottomSheet>
   );
 }
 
@@ -191,18 +176,6 @@ export function shopGiftErrorText(error: ApiError, name: string, t: Translate): 
 }
 
 const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  // the cap is on the part that springs in, so the sheet inside it can shrink to fit
-  sheetWrap: { maxHeight: '80%' },
-  sheet: {
-    flexShrink: 1,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    padding: spacing.lg,
-    paddingBottom: spacing.xl,
-    gap: spacing.sm,
-  },
-  title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   note: { fontSize: typography.sizes.sm },
   // lined up with the search field and the list, inside the sheet's own padding
   notice: { marginHorizontal: 0, marginBottom: 0 },

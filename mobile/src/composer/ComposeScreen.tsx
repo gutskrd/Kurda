@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { BottomSheet } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -27,7 +27,7 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -859,49 +859,44 @@ function AltSheet({
   const { t } = useI18n();
   const counter = counterFor(picture.altText, POST_ALT_MAX);
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={[styles.scrim, { backgroundColor: colors.scrim }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('composer.alt.title')}
-          </Text>
-          {picture.localUri ? (
-            <Image source={{ uri: picture.localUri }} style={styles.altPreview} resizeMode="contain" accessibilityIgnoresInvertColors />
-          ) : null}
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('composer.alt.label')}</Text>
-          <TextInput
-            value={picture.altText}
-            onChangeText={(altText) => onChange({ altText })}
-            placeholder={t('composer.alt.placeholder')}
-            placeholderTextColor={colors.textSecondary}
-            accessibilityLabel={t('composer.alt.label')}
-            multiline
-            autoFocus
-            textAlignVertical="top"
-            style={[styles.altInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
-          />
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.alt.hint')}</Text>
-          {counter.show ? <Counter counter={counter} /> : null}
-          {!picture.existing ? (
-            <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
-              <View style={styles.flex}>
-                <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.ownWork')}</Text>
-                <Text style={[styles.hint, { color: colors.textSecondary }]}>
-                  {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
-                </Text>
-              </View>
-              <Toggle
-                value={picture.ownWork}
-                onValueChange={(ownWork) => onChange({ ownWork })}
-                accessibilityLabel={t('composer.ownWork')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
-              />
+    <BottomSheet visible onClose={onClose} title={t('composer.alt.title')} contentStyle={styles.altScroller}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.altBody}>
+        {picture.localUri ? (
+          <Image source={{ uri: picture.localUri }} style={styles.altPreview} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : null}
+        <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('composer.alt.label')}</Text>
+        <TextInput
+          value={picture.altText}
+          onChangeText={(altText) => onChange({ altText })}
+          placeholder={t('composer.alt.placeholder')}
+          placeholderTextColor={colors.textSecondary}
+          accessibilityLabel={t('composer.alt.label')}
+          multiline
+          autoFocus
+          textAlignVertical="top"
+          style={[styles.altInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+        />
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.alt.hint')}</Text>
+        {counter.show ? <Counter counter={counter} /> : null}
+        {!picture.existing ? (
+          <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
+            <View style={styles.flex}>
+              <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.ownWork')}</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
+              </Text>
             </View>
-          ) : null}
-          <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
-        </SheetIn>
-      </KeyboardAvoidingView>
-    </Modal>
+            <Toggle
+              value={picture.ownWork}
+              onValueChange={(ownWork) => onChange({ ownWork })}
+              accessibilityLabel={t('composer.ownWork')}
+              trackColor={{ true: colors.primary, false: colors.controlTrack }}
+            />
+          </View>
+        ) : null}
+        <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
@@ -1008,6 +1003,9 @@ const styles = StyleSheet.create({
   sheet: { margin: spacing.md, padding: spacing.lg, borderRadius: radii.lg, gap: spacing.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
   sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   draftRow: { minHeight: MIN_TOUCH_TARGET, padding: spacing.md, borderRadius: radii.md, gap: 2 },
+  // the gutter is the ScrollView's own, so the form scrolls edge to edge while the keyboard is up
+  altScroller: { paddingHorizontal: 0 },
+  altBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   altPreview: { width: '100%', height: 160, borderRadius: radii.md },
   altInput: { minHeight: 96, maxHeight: 180, borderRadius: radii.md, padding: spacing.md, fontSize: typography.sizes.md },
 });

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Animated, Pressable, View, useWindowDimensions, type PressableProps, type StyleProp, type ViewProps, type ViewStyle } from 'react-native';
+import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration } from './motion';
@@ -8,9 +8,10 @@ import { radii } from './tokens';
 
 /**
  * The shared moving parts: a row rising into a list, a card that gives under
- * a finger, a check drawn in, a sheet or a menu arriving, an answer popping or
- * shaking, a heart filling with a tiny burst. Each one honours Reduce Motion
- * by itself (see animate.ts), and moves only transform and opacity.
+ * a finger, a check drawn in, a menu arriving, an answer popping or shaking,
+ * a heart filling with a tiny burst. Each one honours Reduce Motion by itself
+ * (see animate.ts), and moves only transform and opacity. A bottom sheet's
+ * arrival is BottomSheet's own.
  *
  * Not `Motion.tsx`: beside `motion.ts` (the tokens) that name differs only in
  * case, which a case-insensitive disk — a Mac's, by default — cannot tell apart.
@@ -97,33 +98,6 @@ export function DrawnCheck({ size, color, delayMs = 60 }: { size: number; color:
         </Animated.View>
       </Animated.View>
     </View>
-  );
-}
-
-/**
- * A bottom sheet's arrival: up from below the screen on the spring, while the
- * modal around it fades the scrim in (give its `Modal` `animationType="fade"`,
- * not "slide", which slides the scrim up with the sheet). Under Reduce Motion
- * the fade is all there is.
- */
-export function SheetIn({ children, style, ...rest }: ViewProps & { children: ReactNode; style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const reduce = useReducedMotion();
-  const { height } = useWindowDimensions();
-  const [from] = useState(Math.round(height * 0.6));
-  const y = useRef(new Animated.Value(reduce ? 0 : from)).current;
-  useEffect(() => {
-    if (reduce) {
-      y.setValue(0);
-      return;
-    }
-    const run = springTo(y, 0, 'standard');
-    run.start();
-    return () => run.stop();
-  }, [reduce, y]);
-  return (
-    <Animated.View {...rest} style={[style, { transform: [{ translateY: y }] }]}>
-      {children}
-    </Animated.View>
   );
 }
 

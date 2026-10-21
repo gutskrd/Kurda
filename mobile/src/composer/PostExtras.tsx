@@ -1,21 +1,20 @@
 import { useCallback, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Modal, Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type PressableProps } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Pressable, StyleSheet, Text, View, type AccessibilityActionEvent, type PressableProps } from 'react-native';
 import type { FeedImage, PostMediaView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { MIN_TOUCH_TARGET, decorative } from '../a11y/a11y';
+import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { ApiError } from '../api/types';
 import { deletePost } from '../feed/api';
 import type { FeedItem } from '../feed/types';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { SendErrorNotice } from '../reports/SendError';
+import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
-import { SheetIn } from '../theme/MotionParts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { postDeleted } from './postDeleted';
@@ -121,7 +120,6 @@ function PostMenuSheet({ post, onClose, onDeleted }: { post: MenuPost; onClose: 
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
-  const insets = useSafeAreaInsets();
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -146,39 +144,27 @@ function PostMenuSheet({ post, onClose, onDeleted }: { post: MenuPost; onClose: 
     onDeleted?.();
   };
 
-  // not while the delete is on its way: closing then would hide whether it worked
-  const close = busy ? () => undefined : onClose;
-
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={close}>
-      <View style={styles.backdropWrap}>
-        <Pressable style={StyleSheet.absoluteFill} onPress={close} {...decorative()}>
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]} />
-        </Pressable>
-        <SheetIn
-          accessibilityViewIsModal
-          style={[styles.sheet, { backgroundColor: colors.background, paddingBottom: spacing.lg + insets.bottom }]}
-        >
-          {confirming ? (
-            <View style={styles.confirm}>
-              <Text accessibilityRole="header" style={[styles.confirmTitle, { color: colors.textPrimary }]}>
-                {t('post.deleteTitle')}
-              </Text>
-              <Text style={[styles.confirmBody, { color: colors.textSecondary }]}>{t('common.cantUndo')}</Text>
-              <SendErrorNotice error={error} onNavigate={onClose} style={styles.notice} />
-              <ClayButton label={t('common.delete')} tone="danger" size="large" busy={busy} onPress={() => void remove()} />
-              <ClayButton label={t('common.cancel')} size="large" disabled={busy} onPress={onClose} />
-            </View>
-          ) : (
-            <View>
-              {post.targetType === 'library' ? <MenuRow icon="pencil" label={t('composer.edit')} onPress={edit} /> : null}
-              <MenuRow icon="trash" label={t('post.delete')} danger onPress={() => setConfirming(true)} />
-              <MenuRow icon="close" label={t('common.cancel')} onPress={onClose} />
-            </View>
-          )}
-        </SheetIn>
-      </View>
-    </Modal>
+    // not closed while the delete is on its way: closing then would hide whether it worked
+    <BottomSheet visible onClose={onClose} dismissible={!busy}>
+      {confirming ? (
+        <View style={styles.confirm}>
+          <Text accessibilityRole="header" style={[styles.confirmTitle, { color: colors.textPrimary }]}>
+            {t('post.deleteTitle')}
+          </Text>
+          <Text style={[styles.confirmBody, { color: colors.textSecondary }]}>{t('common.cantUndo')}</Text>
+          <SendErrorNotice error={error} onNavigate={onClose} style={styles.notice} />
+          <ClayButton label={t('common.delete')} tone="danger" size="large" busy={busy} onPress={() => void remove()} />
+          <ClayButton label={t('common.cancel')} size="large" disabled={busy} onPress={onClose} />
+        </View>
+      ) : (
+        <View>
+          {post.targetType === 'library' ? <MenuRow icon="pencil" label={t('composer.edit')} onPress={edit} /> : null}
+          <MenuRow icon="trash" label={t('post.delete')} danger onPress={() => setConfirming(true)} />
+          <MenuRow icon="close" label={t('common.cancel')} onPress={onClose} />
+        </View>
+      )}
+    </BottomSheet>
   );
 }
 
@@ -197,13 +183,11 @@ const styles = StyleSheet.create({
   credit: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   creditText: { flex: 1, fontSize: typography.sizes.sm, fontStyle: 'italic' },
   menuButton: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
-  backdropWrap: { flex: 1, justifyContent: 'flex-end' },
-  sheet: { borderTopLeftRadius: radii.xl, borderTopRightRadius: radii.xl, paddingTop: spacing.sm, paddingHorizontal: spacing.lg },
   // the height GlassRow gives a row a thumb is meant to land on
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 52 },
   pressed: { opacity: 0.6 },
   rowText: { fontSize: typography.ios.row },
-  confirm: { gap: spacing.md, paddingTop: spacing.md },
+  confirm: { gap: spacing.md, paddingBottom: spacing.sm },
   confirmTitle: { ...display(typography.sizes.lg) },
   confirmBody: { fontSize: typography.sizes.md },
   notice: { marginHorizontal: 0, marginBottom: 0 },

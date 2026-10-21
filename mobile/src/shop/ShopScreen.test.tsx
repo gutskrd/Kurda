@@ -173,7 +173,8 @@ describe('the Shop, by kind', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Hevalo,/ }));
     expect(screen.getByRole('button', { name: 'Get it free' })).toBeTruthy();
     expect(screen.queryByText('Send as a gift')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    // the sheet's ✕, after the dimmed page behind it
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();

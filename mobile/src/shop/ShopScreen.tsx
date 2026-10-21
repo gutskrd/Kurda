@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import {
   DEFAULT_ITEM_FILTER,
   applyItemFilter,
@@ -19,7 +18,8 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
+import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -72,7 +72,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const dir = useDirection();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
@@ -309,51 +308,22 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </ScrollView>
         </AsyncBoundary>
 
-        <Modal visible={selected !== null} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
-          <View style={styles.backdrop}>
-            {/*
-              Beside the sheet, not around it: a pressable wrapping the sheet
-              would read as one button. A tap away for a finger; a screen
-              reader has the ✕ in the sheet and the escape gesture instead.
-            */}
-            <Pressable
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-              onPress={() => setSelected(null)}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
+        {/* no title in the header: the item's own name heads the sheet, under its picture */}
+        <BottomSheet visible={selected !== null} onClose={() => setSelected(null)}>
+          {selected ? (
+            <ItemDetail
+              item={selected}
+              balances={balances}
+              busy={busy}
+              onBuy={confirmBuy}
+              onEarnMore={onEarnMore}
+              onGift={(it) => {
+                setSelected(null);
+                setGifting(it);
+              }}
             />
-            <SheetIn
-              style={[styles.sheet, { backgroundColor: colors.background }]}
-              accessibilityViewIsModal
-              onAccessibilityEscape={() => setSelected(null)}
-            >
-              {/* inside the sheet: a screen reader kept in it by accessibilityViewIsModal cannot reach the backdrop */}
-              <View style={[styles.sheetHead, { flexDirection: dir.row }]}>
-                <Pressable
-                  onPress={() => setSelected(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('social.close')}
-                  style={({ pressed }) => [styles.close, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <Icon name="close" size={18} color={colors.textSecondary} />
-                </Pressable>
-              </View>
-              {selected ? (
-                <ItemDetail
-                  item={selected}
-                  balances={balances}
-                  busy={busy}
-                  onBuy={confirmBuy}
-                  onEarnMore={onEarnMore}
-                  onGift={(it) => {
-                    setSelected(null);
-                    setGifting(it);
-                  }}
-                />
-              ) : null}
-            </SheetIn>
-          </View>
-        </Modal>
+          ) : null}
+        </BottomSheet>
 
         {gifting ? (
           <GiftSheet
@@ -532,7 +502,7 @@ function ItemDetail({
   const affordable = canAfford(item, balances);
   const wide = itemCategory(item.category) === 'background';
   // a background as wide as the sheet allows (it is what you would be buying); a square item at a fixed size
-  const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - spacing.xl * 2, 400) : 128;
+  const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
       <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
@@ -616,27 +586,7 @@ const styles = StyleSheet.create({
   stretch: { alignSelf: 'stretch' },
   priceRow: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  backdrop: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-  },
-  // the ✕ on the closing side, pulled into the corner
-  sheetHead: { justifyContent: 'flex-end', marginHorizontal: -spacing.md },
-  close: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detail: { alignItems: 'center', gap: spacing.sm },
+  detail: { alignItems: 'center', gap: spacing.sm, paddingBottom: spacing.sm },
   preview: { marginBottom: spacing.sm },
   detailName: { ...display(typography.sizes.xl), textAlign: 'center' },
   detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },
