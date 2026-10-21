@@ -5,7 +5,8 @@ import { AppError } from '../plugins/errors.js';
 import { verifyCaptcha } from './captcha.js';
 import { isDisposableEmail } from './disposable-domains.js';
 import { emailAddress } from './email-address.js';
-import { OAuthService } from './oauth.js';
+import { defaultJwksResolver, OAuthService } from './oauth.js';
+import { appleTokens } from './apple-tokens.js';
 import { signupRejected } from './rejections.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
 import { AuthService } from './service.js';
@@ -108,11 +109,19 @@ export const verifyEmailCodeBodySchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-export const oauthBodySchema = z.object({
-  provider: z.enum(['google', 'apple']),
-  idToken: z.string().min(20).max(4_096),
-  deviceName: z.string().max(80).optional(),
-});
+export const oauthBodySchema = z
+  .object({
+    provider: z.enum(['google', 'apple']),
+    idToken: z.string().min(20).max(4_096),
+    deviceName: z.string().max(80).optional(),
+    /** Apple only: the authorization code, exchanged for a refresh token to revoke at deletion */
+    authorizationCode: z.string().min(1).max(1_024).optional(),
+    /** Apple only: the name shared on a first sign-in, for a new account (cut to a display name's length) */
+    fullName: z.string().max(200).optional(),
+  })
+  .refine((body) => body.provider === 'apple' || (body.authorizationCode === undefined && body.fullName === undefined), {
+    message: 'authorizationCode and fullName are only sent with Apple sign-in',
+  });
 
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
   const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log, redis: app.redis });
@@ -376,7 +385,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
-  const oauth = new OAuthService(config, app.db);
+  const oauth = new OAuthService(config, app.db, defaultJwksResolver, appleTokens(config, app.db, { log: app.log }));
   app.post(
     '/auth/oauth',
     {
@@ -390,6 +399,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         body.idToken,
         sessionName(body.deviceName, req.headers['user-agent']),
         deviceIdOf(req.headers),
+        { authorizationCode: body.authorizationCode, fullName: body.fullName },
       );
       return reply.code(result.created ? 201 : 200).send(result);
     },

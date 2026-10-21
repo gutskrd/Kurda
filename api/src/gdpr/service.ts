@@ -14,6 +14,7 @@ import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
+import type { AppleTokens } from '../auth/apple-tokens.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -27,6 +28,12 @@ export interface GdprDeps {
    * nobody (the worker passes one that tells the API instances, over Redis).
    */
   storyGames?: Pick<StoryGamesService, 'leaveAll'>;
+  /**
+   * Revokes at Apple what Sign in with Apple issued for an account that is
+   * closing for good (auth/apple-tokens.ts). Null or absent where Apple's key
+   * is not configured, and nothing is revoked.
+   */
+  apple?: Pick<AppleTokens, 'revokeFor'> | null;
 }
 
 export class GdprService {
@@ -71,8 +78,9 @@ export class GdprService {
   }
 
   /**
-   * Anonymizes accounts whose grace period ended: PII scrubbed, sessions
-   * and linked identities destroyed, row kept for aggregate statistics.
+   * Anonymizes accounts whose grace period ended: Sign in with Apple revoked,
+   * PII scrubbed, sessions and linked identities destroyed, row kept for
+   * aggregate statistics.
    * Idempotent — sets deleted_at, so a rerun skips processed rows.
    *
    * Gifts stay as they are, given and received: the friend keeps the present,
@@ -89,6 +97,7 @@ export class GdprService {
     );
     for (const row of due.rows) {
       await this.leaveStoryGames(row.id);
+      await this.revokeAppleSignIn(row.id);
       // A minor's friends-only posts are hidden because of their birth date,
       // and anonymizing clears it: left behind under a "deleted_…" name, what
       // a 15-year-old shared with friends would become readable by anyone.
@@ -133,6 +142,7 @@ export class GdprService {
    */
   async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
     await this.leaveStoryGames(userId);
+    await this.revokeAppleSignIn(userId);
     const files = await this.eraseAndAnonymize(userId);
     this.deps.log?.info({ userId, reason, files }, 'account closed and its data removed');
   }
@@ -147,6 +157,20 @@ export class GdprService {
   private async leaveStoryGames(userId: string): Promise<void> {
     await this.storyGames.leaveAll(userId).catch((err) => {
       this.deps.log?.warn({ err, userId }, 'could not take a closing account out of its story games');
+    });
+  }
+
+  /**
+   * App Store guideline 5.1.1(v): deleting an account that signed in with
+   * Apple revokes, at Apple, the refresh token kept for it, which ends the
+   * app's Sign in with Apple for that person too. Asked before anonymizing,
+   * which deletes the identity that holds the token, and outside its
+   * transaction, which no request to another service should hold open. Apple
+   * refusing or not answering is logged and the account closes all the same.
+   */
+  private async revokeAppleSignIn(userId: string): Promise<void> {
+    await this.deps.apple?.revokeFor(userId).catch((err: unknown) => {
+      this.deps.log?.warn({ err, userId }, 'could not revoke a closing account’s Sign in with Apple');
     });
   }
 

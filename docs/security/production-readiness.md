@@ -385,6 +385,8 @@ shutdown (drain in-flight work, close pool/Redis, run `onClose`).
 - **External-service credentials** (only where the feature is enabled) —
   `RESEND_API_KEY`/`SMTP_*` (see [email-delivery](email-delivery.md)),
   `GOOGLE_CLIENT_IDS`/`APPLE_CLIENT_IDS` (see [google-signin](google-signin.md)),
+  the Sign in with Apple key `APPLE_TEAM_ID`/`APPLE_KEY_ID`/`APPLE_PRIVATE_KEY`
+  (see [apple-signin](../auth/apple-signin.md)),
   R2/S3 keys — all from env/secrets, never committed.
 - **No dev artifacts** — no seeded test accounts, debug/test routes, or dev
   credentials in the production environment.
@@ -392,9 +394,10 @@ shutdown (drain in-flight work, close pool/Redis, run `onClose`).
 ## SSRF posture
 
 The backend performs **no** fetch of user-supplied URLs. Outbound requests go only
-to fixed provider hosts (Google/Apple JWKS, Resend) and to **server-generated**
-presigned storage URLs. If a user-URL fetch is ever added, it must use a strict
-allowlist and block localhost, private ranges, and cloud metadata endpoints.
+to fixed provider hosts (Google/Apple JWKS, Apple's token and revoke endpoints,
+Resend) and to **server-generated** presigned storage URLs. If a user-URL fetch
+is ever added, it must use a strict allowlist and block localhost, private
+ranges, and cloud metadata endpoints.
 
 ## Incident-response basics
 

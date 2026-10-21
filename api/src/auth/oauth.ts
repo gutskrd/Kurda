@@ -1,6 +1,6 @@
 import { createRemoteJWKSet, jwtVerify, type JWTVerifyGetKey } from 'jose';
 import type pg from 'pg';
-import { normalizeKurdish } from '@kurda/shared';
+import { normalizeKurdish, stripControlChars } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { canonicalUsername } from '../users/username.js';
@@ -10,8 +10,27 @@ import type { UserRow } from '../users/repository.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
 import { suspensionError } from '../moderation/suspension.js';
 import { signupRejected } from './rejections.js';
+import type { AppleTokens } from './apple-tokens.js';
 
 export type OAuthProvider = 'google' | 'apple';
+
+/** What the app sends besides the identity token on an Apple sign-in. */
+export interface AppleSignInExtras {
+  /** the one-time code Apple gave the app with the token, for a refresh token to revoke later */
+  authorizationCode?: string;
+  /** the name the person shared, which Apple gives the app on their first sign-in only */
+  fullName?: string;
+}
+
+/** The longest display name an account can have (as PATCH /me allows). */
+const DISPLAY_NAME_MAX = 60;
+
+/** A name the app passed on, as a display name: plain text, or null when nothing is left of it. */
+function displayNameFrom(raw: string | undefined): string | null {
+  if (!raw) return null;
+  const clean = stripControlChars(normalizeKurdish(raw)).replace(/\s+/g, ' ').trim().slice(0, DISPLAY_NAME_MAX).trim();
+  return clean || null;
+}
 
 interface ProviderSpec {
   issuers: string[];
@@ -108,6 +127,8 @@ export class OAuthService {
     private readonly config: AppConfig,
     private readonly pool: pg.Pool,
     private readonly jwksResolver: JwksResolver = defaultJwksResolver,
+    /** keeps Apple's refresh token for revoking at deletion; null without Apple's key */
+    private readonly apple: Pick<AppleTokens, 'keep'> | null = null,
   ) {}
 
   async signIn(
@@ -116,9 +137,24 @@ export class OAuthService {
     deviceName?: string,
     /** the app's `x-device-id`: the devices list lists the session under it */
     deviceId?: string | null,
+    extras: AppleSignInExtras = {},
   ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     const identity = await verifyProviderToken(this.config, provider, idToken, this.jwksResolver);
+    const signedIn = await this.signInAs(identity, deviceName, deviceId, extras);
+    if (provider === 'apple' && extras.authorizationCode && this.apple) {
+      // After the sign-in has succeeded, and not awaited: Apple being slow or
+      // down must not hold it up. `keep` logs its own failures as warnings.
+      void this.apple.keep(identity.providerUserId, extras.authorizationCode).catch(() => undefined);
+    }
+    return signedIn;
+  }
 
+  private async signInAs(
+    identity: ProviderIdentity,
+    deviceName: string | undefined,
+    deviceId: string | null | undefined,
+    extras: AppleSignInExtras,
+  ): Promise<{ user: PublicUser; tokens: IssuedTokens; created: boolean }> {
     // 1) known identity → login
     const known = await this.pool.query<{ user_id: string }>(
       `SELECT user_id FROM oauth_identities WHERE provider = $1 AND provider_user_id = $2`,
@@ -161,15 +197,19 @@ export class OAuthService {
       identity.email ?? `${identity.provider}_${identity.providerUserId}@noemail.kurda.app`;
     // a permanently banned address does not come back through a provider either
     if (await isBannedEmail(this.pool, email)) throw signupRejected();
+    // Apple's identity token never carries a name: the app passes on the one
+    // the person shared, which Apple gives it on their first sign-in only. It
+    // names a new account; an existing one keeps the name it has.
+    const name = identity.name ?? (identity.provider === 'apple' ? displayNameFrom(extras.fullName) : null);
     const username = await uniqueUsername(
       this.pool,
-      identity.name ?? identity.email?.split('@')[0] ?? 'learner',
+      name ?? identity.email?.split('@')[0] ?? 'learner',
     );
     const created = await this.pool.query<UserRow>(
       `INSERT INTO users (email, username, display_name, email_verified_at)
        VALUES ($1, $2, $3, $4)
        RETURNING *`,
-      [email, username, identity.name, identity.emailVerified ? new Date() : null],
+      [email, username, name, identity.emailVerified ? new Date() : null],
     );
     const user = created.rows[0] as UserRow;
     await this.link(user.id, identity);
