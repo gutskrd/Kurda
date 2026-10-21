@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
   // on a tablet or a wide window the pictures stop growing where a phone's would: a
   // post is read, not a poster — and the shape, not the height, is what is kept
   box: { width: '100%', maxWidth: 560, borderRadius: radii.md, overflow: 'hidden' },
-  bleed: { maxWidth: '100%', borderRadius: 0 },
+  bleed: { maxWidth: '100%', borderRadius: radii.none },
   wide: { aspectRatio: 16 / 9, flexDirection: 'row', gap: GAP },
   column: { flex: 1, gap: GAP },
   row: { flex: 1, flexDirection: 'row', gap: GAP },

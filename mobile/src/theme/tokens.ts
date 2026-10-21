@@ -31,6 +31,8 @@ export const spacing = {
 
 /** The website's radius scale, to the pixel — its --r-* tokens. */
 export const radii = {
+  // square: a picture run edge to edge of the phone, whose corners are the screen's
+  none: 0,
   xs: 6,
   sm: 8,
   md: 12,
