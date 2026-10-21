@@ -44,7 +44,12 @@ interface Shape {
   drop: number;
   /** 0 keeps the smile's shallow corners; 1 makes a round mouth */
   round: number;
-  /** how much of the upper teeth shows (1 is all of it, as in the smile), and of the lower teeth */
+  /**
+   * How much of each row of teeth shows. The upper row hangs from the top of
+   * the mouth; the lower row rides on the lower lip and goes down with the jaw,
+   * so an open mouth parts between the two rows rather than leaving the lower
+   * teeth up behind a dropped lip. 1 is the whole row, as in the smile.
+   */
   teeth: number;
   lower: number;
   /** how high the tongue comes (0: not seen); `tip` lifts its tip to the teeth */
@@ -61,15 +66,18 @@ interface Shape {
  * teeth nearly together, `l` with the tongue lifted to the teeth.
  */
 const SHAPES: Record<Exclude<Viseme, 'mbp' | 'fv'>, Shape> = {
-  rest: { width: 1, corner: 0, top: 0, drop: 0, round: 0, teeth: 1, lower: 0, tongue: 0, pout: 0 },
-  etc: { width: 1, corner: 0, top: 0, drop: 0.16, round: 0, teeth: 1, lower: 0.13, tongue: 0, pout: 0 },
-  i: { width: 1.1, corner: -0.05, top: -0.02, drop: 0.2, round: 0, teeth: 1, lower: 0.17, tongue: 0, pout: 0 },
-  e: { width: 1.02, corner: 0.03, top: 0, drop: 0.48, round: 0.25, teeth: 1, lower: 0.1, tongue: 0.24, pout: 0 },
-  l: { width: 0.96, corner: 0.05, top: 0, drop: 0.55, round: 0.3, teeth: 1, lower: 0, tongue: 0.6, tip: true, pout: 0 },
-  a: { width: 1, corner: 0.12, top: 0, drop: 0.95, round: 0.45, teeth: 1, lower: 0, tongue: 0.34, pout: 0 },
-  o: { width: 0.6, corner: 0.16, top: -0.08, drop: 0.7, round: 1, teeth: 0.5, lower: 0, tongue: 0.22, pout: 0.3 },
+  rest: { width: 1, corner: 0, top: 0, drop: 0, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
+  etc: { width: 1, corner: 0, top: 0, drop: 0.16, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
+  i: { width: 1.1, corner: -0.05, top: -0.02, drop: 0.2, round: 0, teeth: 1, lower: 1, tongue: 0, pout: 0 },
+  e: { width: 1.02, corner: 0.03, top: 0, drop: 0.48, round: 0.25, teeth: 1, lower: 0.85, tongue: 0.24, pout: 0 },
+  l: { width: 0.96, corner: 0.05, top: 0, drop: 0.55, round: 0.3, teeth: 1, lower: 0.75, tongue: 0.6, tip: true, pout: 0 },
+  a: { width: 1, corner: 0.12, top: 0, drop: 0.95, round: 0.45, teeth: 1, lower: 0.8, tongue: 0.34, pout: 0 },
+  o: { width: 0.6, corner: 0.16, top: -0.08, drop: 0.7, round: 1, teeth: 0.5, lower: 0.5, tongue: 0.22, pout: 0.3 },
   u: { width: 0.38, corner: 0.12, top: 0.04, drop: 0.3, round: 1, teeth: 0, lower: 0, tongue: 0, pout: 0.6 },
 };
+
+/** How much of the smile's band of teeth is the upper row; the rest is the lower row. */
+const UPPER_ROW = 0.58;
 
 /** The smile's measures, worked out once. */
 function measures(s: Smile) {
@@ -162,21 +170,39 @@ function shaped(s: Smile, k: Shape, clipId: string): string {
       ),
     );
   }
+  // the smile's band of teeth is two rows meeting: the upper a little the taller
+  const rows = m.bottom - m.top;
   if (k.teeth > 0) {
-    // the upper teeth are the smile's own, carried with the top of the mouth and trimmed by the opening;
-    // a narrower mouth shows the middle of the same row, so they never narrow with it
+    // the upper row is the smile's own, carried with the top of the mouth and trimmed by the opening;
+    // a narrower mouth shows the middle of the same row, so it never narrows with it
     const smile = opening(s, SHAPES.rest);
     const dy = top - m.top;
-    const depth = (m.bottom - m.top) * (1 - k.teeth);
+    // at rest the two rows meet in one band, as the character smiles
+    const depth = k.drop === 0 ? rows * (1 - k.teeth) : rows * (1 - UPPER_ROW * k.teeth);
     const teeth = smile.map(([x, y, r], i) => [m.cx + (x - m.cx) * Math.max(1, k.width) * 1.04, y + dy - (i >= 5 && i <= 7 ? depth : 0) + (i === 2 ? -3 : 0), r] as Knot);
     // the top of the teeth reaches up under the lip
     teeth[1] = [(teeth[1] as Knot)[0], top - 3];
     teeth[3] = [(teeth[3] as Knot)[0], top - 3];
     inner.push(fill(curve(teeth), c.teeth));
   }
-  if (k.lower > 0) {
-    const lh = k.lower * m.hw;
-    inner.push(fill(curve(open.slice(4).concat([open[0] as Knot]).map(([x, y, r], i) => [x, i === 0 || i === 4 ? y + 3 : y - lh, r] as Knot)), c.teeth));
+  if (k.lower > 0 && k.drop > 0) {
+    // the lower row sits on the lower lip and follows the bottom of the opening down with the jaw.
+    // It is a row across the middle that ends before the corners, as lower teeth do, so it never
+    // reads as a rim running up the sides; below, it reaches past the opening for the clip to trim.
+    const lh = rows * (1 - UPPER_ROW) * k.lower;
+    const at = (i: number): Knot => open[i] as Knot;
+    const inL = at(7)[0] - (at(7)[0] - at(0)[0]) * 0.32;
+    const inR = at(5)[0] + (at(4)[0] - at(5)[0]) * 0.32;
+    const band: Knot[] = [
+      [inL, at(7)[1] - lh * 0.55, 0.6],
+      [at(7)[0], at(7)[1] - lh * 0.92],
+      [at(6)[0], at(6)[1] - lh],
+      [at(5)[0], at(5)[1] - lh * 0.92],
+      [inR, at(5)[1] - lh * 0.55, 0.6],
+      [inR, at(5)[1] + 6, 0],
+      [inL, at(7)[1] + 6, 0],
+    ];
+    inner.push(fill(curve(band), c.teeth));
   }
   return part(
     [clipDef(clipId, hole)],
