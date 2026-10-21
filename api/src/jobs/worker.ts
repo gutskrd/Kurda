@@ -55,7 +55,7 @@ export function buildRegistry(config?: AppConfig, log?: pino.Logger): JobRegistr
     // queued push fan-out (KUR-094) gated by preferences at delivery time (KUR-095)
     const push = new PushService(
       new DeviceTokenService(pool),
-      createPushProvider(config),
+      createPushProvider(config, log),
       new NotificationPrefsService(pool),
     );
     registry.register(makePushSendJob(push, new InboxService(pool)));

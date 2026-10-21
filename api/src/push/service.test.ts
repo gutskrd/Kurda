@@ -24,6 +24,29 @@ describe('PushService.deliver', () => {
     expect(provider.sent[0]).toMatchObject({ title: 'Hi', body: 'there' });
   });
 
+  it('tells the phone the category beside the data, so a push naming no screen still opens somewhere', async () => {
+    const provider = new StubPushProvider();
+    const { svc } = fakeTokens([dev('a1')]);
+    await new PushService(svc, provider).deliver('u1', {
+      category: 'progress',
+      title: 'A new badge',
+      body: 'You earned Ders today.',
+      data: { kind: 'badge', day: '2026-10-21' },
+    });
+    await new PushService(svc, provider).deliver('u1', { category: 'events', title: 't', body: 'b' });
+    expect(provider.sent[0]!.data).toEqual({ kind: 'badge', day: '2026-10-21', category: 'progress' });
+    expect(provider.sent[1]!.data).toEqual({ category: 'events' });
+  });
+
+  it('lets a streak reminder lapse within hours, and leaves other news to the service default', async () => {
+    const provider = new StubPushProvider();
+    const { svc } = fakeTokens([dev('a1')]);
+    await new PushService(svc, provider).deliver('u1', { category: 'streak', title: 't', body: 'b' });
+    await new PushService(svc, provider).deliver('u1', { category: 'progress', title: 't', body: 'b' });
+    expect(provider.sent[0]!.ttlSeconds).toBe(2 * 60 * 60);
+    expect(provider.sent[1]!.ttlSeconds).toBeUndefined();
+  });
+
   it('prunes tokens the provider rejects', async () => {
     const provider = new StubPushProvider(new Set(['bad']));
     const { svc, prune } = fakeTokens([dev('good'), dev('bad')]);

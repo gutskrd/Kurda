@@ -17,6 +17,17 @@ export interface DeliveryReport {
   suppressed?: boolean;
 }
 
+/**
+ * How long a push may wait for a phone that is off or out of signal before it
+ * is no longer worth showing. A streak reminder is about today: arriving the
+ * next morning it would be wrong, so it lapses after two hours (the later one
+ * goes at 22:00, so it is never shown after midnight). Everything else keeps
+ * the push service's own default.
+ */
+const FRESH_FOR: Partial<Record<NotificationCategory, number>> = {
+  streak: 2 * 60 * 60,
+};
+
 /** Delivery-time preference gate (KUR-095). */
 export interface NotificationGate {
   allows(userId: string, category: NotificationCategory, at?: Date): Promise<boolean>;
@@ -47,12 +58,17 @@ export class PushService {
     const devices = await this.tokens.forUser(userId);
     if (devices.length === 0) return { sent: 0, pruned: 0 };
 
+    // the category rides along so the app can open something sensible for a
+    // push whose data names no screen (a streak reminder opens the lessons)
+    const data = { ...notification.data, category: notification.category };
+    const ttlSeconds = FRESH_FOR[notification.category];
     const messages: PushMessage[] = devices.map((d) => ({
       token: d.token,
       platform: d.platform,
       title: notification.title,
       body: notification.body,
-      data: notification.data,
+      data,
+      ...(ttlSeconds !== undefined ? { ttlSeconds } : {}),
     }));
 
     let sent = 0;

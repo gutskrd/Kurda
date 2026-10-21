@@ -89,7 +89,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
       </GradientBackground>
     );
   }
-  return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} />;
+  return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} offerReminders />;
 }
 
 /**
@@ -101,10 +101,13 @@ export function SessionPlayer({
   view,
   paths,
   onExit,
+  offerReminders = false,
 }: {
   view: SessionView;
   paths: SessionPaths;
   onExit: () => void;
+  /** a finished lesson may offer reminders; practice does not */
+  offerReminders?: boolean;
 }) {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -286,7 +289,14 @@ export function SessionPlayer({
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
-        <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} moments={moments} onDone={onExit} />
+        <LessonResults
+          results={results}
+          exercises={state.exercises}
+          skipped={state.skipped.length}
+          moments={moments}
+          offerReminders={offerReminders}
+          onDone={onExit}
+        />
       </GradientBackground>
     );
   }

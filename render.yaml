@@ -121,6 +121,16 @@ services:
       #   sync: false            # Cloudflare zone of CDN_BASE_URL (purges taken-down media)
       # - key: CDN_PURGE_API_TOKEN
       #   sync: false            # token with Zone → Cache Purge only
+      # Push notifications go through Expo's push service (free; Expo holds the
+      # APNs and FCM credentials, set up with `eas credentials`). That is the
+      # default under NODE_ENV=production, so nothing needs setting here.
+      # PUSH_PROVIDER=stub switches delivery off (sends are recorded, nothing
+      # leaves). EXPO_ACCESS_TOKEN is needed only if "Enhanced security for push
+      # notifications" is turned on for the project at expo.dev.
+      # - key: PUSH_PROVIDER
+      #   value: expo            # or stub
+      # - key: EXPO_ACCESS_TOKEN
+      #   sync: false            # expo.dev → Account settings → Access tokens
 
   # ---- Background worker (notifications, schedulers, queues) -----------------
   # Optional, and off. It was off because the free plan has no workers; it stays
@@ -170,3 +180,7 @@ services:
   #       value: Hevalo <no-reply@hevalo.app>
   #     - key: EMAIL_REPLY_TO
   #       value: support@hevalo.app
+  #     # the worker sends the queued pushes too (createPushProvider): Expo by
+  #     # default in production; the token only if enhanced security is on
+  #     - key: EXPO_ACCESS_TOKEN
+  #       sync: false

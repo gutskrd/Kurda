@@ -4,14 +4,17 @@ import { requireAuth, requireRoles } from '../plugins/auth.js';
 import { makePushSendJob } from '../jobs/push-jobs.js';
 import { NOTIFICATION_CATEGORIES } from '../notifications/prefs.js';
 import type { PushService } from './service.js';
-import type { DeviceTokenService } from './tokens-service.js';
+import { isExpoPushToken, type DeviceTokenService } from './tokens-service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 
+// an Expo push token, the only kind the phone registers; junk is a 400 here
+// rather than a row that Expo refuses on every send
+const pushToken = z.string().min(1).max(4096).refine(isExpoPushToken, 'must be an Expo push token');
 const registerBody = z.object({
   platform: z.enum(['ios', 'android']),
-  token: z.string().min(1).max(4096),
+  token: pushToken,
 });
-const tokenBody = z.object({ token: z.string().min(1).max(4096) });
+const tokenBody = z.object({ token: pushToken });
 
 const testBody = z.object({
   userId: z.uuid().optional(),

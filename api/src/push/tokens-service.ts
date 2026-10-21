@@ -7,6 +7,18 @@ export interface DeviceToken {
 }
 
 /**
+ * The shape of an Expo push token, the only kind the phone registers:
+ * `ExponentPushToken[…]`, or `ExpoPushToken[…]` as newer SDKs may write it,
+ * around a short run of letters, digits and the few marks base64 uses. Anything
+ * else is refused at the door rather than stored and sent to Expo to reject.
+ */
+const EXPO_PUSH_TOKEN = /^Expo(?:nent)?PushToken\[[A-Za-z0-9_+/=-]{1,200}\]$/;
+
+export function isExpoPushToken(token: string): boolean {
+  return EXPO_PUSH_TOKEN.test(token);
+}
+
+/**
  * Device token lifecycle (KUR-094). A token is globally unique; registering one
  * that already exists reassigns it to the current user (OS restore / account
  * switch) rather than duplicating. Invalid tokens are pruned wholesale by the

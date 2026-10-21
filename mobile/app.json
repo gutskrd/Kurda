@@ -161,6 +161,14 @@
           "microphonePermission": "Hevalo uses the microphone only when you record a voice note or complete a speaking exercise.",
           "enableBackgroundPlayback": false
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/android-icon-monochrome.png",
+          "color": "#b874f0",
+          "defaultChannel": "default"
+        }
       ]
     ],
     "extra": {
