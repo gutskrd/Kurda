@@ -1,5 +1,6 @@
 import argon2 from 'argon2';
 import type pg from 'pg';
+import type { Redis } from 'ioredis';
 import type { AppConfig } from '../config/env.js';
 import { AppError } from '../plugins/errors.js';
 import { grantBootstrapAdmins } from '../admin/bootstrap-admins.js';
@@ -17,10 +18,25 @@ import { CURRENT_POLICY_VERSION } from '../gdpr/consent.js';
 import { isMinorRow } from '../users/age.js';
 import { consumeEmailToken, createEmailToken } from './email-tokens.js';
 import { createVerificationCode, verifyCode, type VerifyResult } from './verification-codes.js';
-import { LockoutService } from './lockout.js';
-import { hashRefreshToken, issueTokenPair, type IssuedTokens } from './tokens.js';
+import { CAPTCHA_AFTER_FAILURES, LockoutService, type LockoutScope } from './lockout.js';
+import {
+  ACCESS_TOKEN_TTL_SECONDS,
+  SESSION_MAX_DAYS,
+  hashRefreshToken,
+  issueAccessToken,
+  issueTokenPair,
+  type IssuedTokens,
+} from './tokens.js';
+import { verifyCaptcha } from './captcha.js';
+import { KnownDevices, type KnownKind } from './known-devices.js';
+import { networkHashOf } from '../net/network-key.js';
+import { LoginSurge } from './login-surge.js';
+import { breachCheckEnabled, isBreachedPassword } from './breached-password.js';
+import { emailRegistryHash, userHash } from '../moderation/pseudonym.js';
 import { currentBan } from '../moderation/sanctions-service.js';
 import { suspendedError, suspensionError } from '../moderation/suspension.js';
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /** Verified against when the user doesn't exist, so login latency doesn't
  *  reveal account existence. */
@@ -61,6 +77,10 @@ export interface RegisterInput {
    */
   birthYear: number;
   birthMonth: number;
+  /** the app's `x-device-id`, remembered as the account's first known device */
+  deviceId?: string | null;
+  /** where the sign-up came from, remembered as the account's first known network */
+  ip?: string;
 }
 
 export interface PublicUser {
@@ -96,11 +116,30 @@ export function toPublicUser(row: UserRow): PublicUser {
 export interface AuthServiceDeps {
   jobs?: JobQueue;
   log?: { warn: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void };
+  /** the credential-stuffing breaker counts in Redis; without it, it never trips */
+  redis?: Redis;
+}
+
+/** Most reset emails one account is sent in an hour; more are quietly not sent. */
+export const RESET_EMAILS_PER_HOUR = 3;
+
+/** Why a sign-in asks for the CAPTCHA: the account's failures, the network's, or a surge everywhere. */
+export type CaptchaReason = 'attempts' | 'network' | 'surge';
+
+/**
+ * Sign-in needs the challenge first. 403 like LOGIN_VERIFICATION_REQUIRED, the
+ * other "do one more thing" answer; `details.captchaRequired` is what clients
+ * look for. Said the same way whether or not the address has an account.
+ */
+export function captchaRequired(reason: CaptchaReason): AppError {
+  return new AppError('CAPTCHA_REQUIRED', 403, 'complete the challenge to sign in', { captchaRequired: true, reason });
 }
 
 export class AuthService {
   private readonly users: UsersRepository;
   private readonly lockouts: LockoutService;
+  private readonly devices: KnownDevices;
+  private readonly surge: LoginSurge;
 
   constructor(
     private readonly config: AppConfig,
@@ -109,6 +148,61 @@ export class AuthService {
   ) {
     this.users = new UsersRepository(pool);
     this.lockouts = new LockoutService(pool);
+    this.devices = new KnownDevices(pool, config.JWT_SECRET);
+    this.surge = new LoginSurge(deps.redis, deps.log);
+  }
+
+  /** Whether sign-in can ask for a CAPTCHA at all (not in dev and tests, without a secret). */
+  private get captchaConfigured(): boolean {
+    return Boolean(this.config.TURNSTILE_SECRET);
+  }
+
+  /**
+   * Refuses a password that appears in the public corpus of breached passwords
+   * (auth/breached-password.ts). Off under test unless configured; fails open.
+   */
+  async assertNotBreached(password: string): Promise<void> {
+    if (!breachCheckEnabled(this.config)) return;
+    if (await isBreachedPassword(password)) {
+      throw new AppError(
+        'PASSWORD_BREACHED',
+        400,
+        'this password has appeared in a data breach — choose a different one',
+        { reason: 'breached' },
+      );
+    }
+  }
+
+  /**
+   * A security email, at most once a day per account and kind when `daily`.
+   * Best-effort: signing in never fails because a notice could not be queued.
+   */
+  private async securityNotice(
+    user: { id: string; email: string; username: string; locale?: string },
+    template: 'new-sign-in' | 'sign-in-attempts' | 'password-changed',
+    daily: boolean,
+  ): Promise<void> {
+    try {
+      if (daily) {
+        const claimed = await this.pool.query(
+          `INSERT INTO security_notices (user_id, kind) VALUES ($1, $2)
+           ON CONFLICT (user_id, kind) DO UPDATE SET sent_at = now()
+             WHERE security_notices.sent_at < now() - interval '24 hours'
+           RETURNING 1`,
+          [user.id, template],
+        );
+        if ((claimed.rowCount ?? 0) === 0) return;
+      }
+      if (!this.deps.jobs) return;
+      await this.deps.jobs.enqueue(sendEmailJob, {
+        to: user.email,
+        template,
+        vars: { username: user.username, time: `${new Date().toISOString().slice(0, 16).replace('T', ' ')} UTC` },
+        locale: emailLocaleFor(user.locale),
+      });
+    } catch (err) {
+      this.deps.log?.warn({ err, userId: user.id, template }, 'failed to queue a security notice');
+    }
   }
 
   /**
@@ -243,6 +337,14 @@ export class AuthService {
   async requestPasswordReset(email: string): Promise<void> {
     const user = await this.users.findByEmail(email);
     if (!user) return;
+    // a mailbox is not a target: past RESET_EMAILS_PER_HOUR, nothing more is
+    // sent, and the answer is the same as ever
+    const recent = await this.pool.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM email_tokens
+        WHERE user_id = $1 AND purpose = 'password_reset' AND created_at > now() - interval '1 hour'`,
+      [user.id],
+    );
+    if ((recent.rows[0]?.n ?? 0) >= RESET_EMAILS_PER_HOUR) return;
     try {
       if (!user.password_hash) {
         // OAuth-only account (KUR-019): there is no password to reset, but the
@@ -305,6 +407,8 @@ export class AuthService {
       `UPDATE refresh_tokens SET revoked_at = now() WHERE user_id = $1 AND revoked_at IS NULL`,
       [userId],
     );
+    // the mailbox proved who this is: a lock on the account does not outlast it
+    await this.lockouts.release('account', userId);
     const user = updated.rows[0];
     if (user && this.deps.jobs) {
       await this.deps.jobs
@@ -316,6 +420,53 @@ export class AuthService {
         })
         .catch(() => undefined);
     }
+  }
+
+  /**
+   * A signed-in change of password, the current one first. Every other session
+   * ends (its refresh tokens are revoked, and the version bump ends its access
+   * tokens at once); this one carries on with the fresh access token returned,
+   * so changing a password does not sign you out where you changed it. Reset
+   * links still waiting in the mailbox die too, and the owner is told.
+   */
+  async changePassword(
+    userId: string,
+    familyId: string | undefined,
+    current: string,
+    next: string,
+  ): Promise<{ changed: true; accessToken: string | null; accessExpiresInSeconds: number }> {
+    const found = await this.pool.query<{ password_hash: string | null; email: string; username: string; locale: string }>(
+      `SELECT password_hash, email, username, locale FROM users WHERE id = $1 AND deleted_at IS NULL`,
+      [userId],
+    );
+    const row = found.rows[0];
+    if (!row) throw new AppError('UNAUTHORIZED', 401, 'authentication required');
+    if (!row.password_hash) {
+      throw new AppError('NO_PASSWORD', 400, 'this account has no password yet — use “forgot password” to set one');
+    }
+    if (!(await verifyPassword(row.password_hash, current))) {
+      throw new AppError('WRONG_PASSWORD', 400, 'the current password is not correct');
+    }
+    const passwordHash = await hashPassword(next);
+    const updated = await this.pool.query<{ token_version: number }>(
+      `UPDATE users SET password_hash = $2, token_version = token_version + 1 WHERE id = $1 RETURNING token_version`,
+      [userId, passwordHash],
+    );
+    const keep = familyId && UUID_RE.test(familyId) ? familyId : null;
+    await this.pool.query(
+      `UPDATE refresh_tokens SET revoked_at = now()
+        WHERE user_id = $1 AND revoked_at IS NULL AND ($2::uuid IS NULL OR family_id <> $2::uuid)`,
+      [userId, keep],
+    );
+    await this.pool.query(
+      `UPDATE email_tokens SET used_at = now() WHERE user_id = $1 AND purpose = 'password_reset' AND used_at IS NULL`,
+      [userId],
+    );
+    await this.securityNotice({ id: userId, ...row }, 'password-changed', false);
+    const accessToken = keep
+      ? await issueAccessToken(this.config, { sub: userId, ver: updated.rows[0]!.token_version, fam: keep })
+      : null;
+    return { changed: true, accessToken, accessExpiresInSeconds: ACCESS_TOKEN_TTL_SECONDS };
   }
 
   async verifyEmail(rawToken: string): Promise<void> {
@@ -391,54 +542,112 @@ export class AuthService {
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
     });
+    // the device it was made on is the account's first known one
+    if (input.deviceId) await this.devices.remember(user.id, 'device', input.deviceId).catch(() => undefined);
+    const network = networkHashOf(input.ip);
+    if (network !== null) await this.devices.remember(user.id, 'network', network).catch(() => undefined);
     // Email ownership is proven by a 6-digit code the client enters (KUR-014).
     await this.sendVerificationCode(user);
     return { user: toPublicUser(user), tokens };
   }
 
+  /**
+   * Password sign-in, guarded against guessing without locking the owner out.
+   *
+   * - Every attempt draws on one budget: a device that has signed in to this
+   *   account before keeps its own (known-devices.ts), as does a network that
+   *   has, for apps that send no device id; every other client shares the
+   *   account's, which an address with no account has too, keyed by its hash,
+   *   so the answers never say whether an account exists.
+   * - After CAPTCHA_AFTER_FAILURES failures on that budget or from the network,
+   *   or while failures surge everywhere (login-surge.ts), a client the account
+   *   does not know must pass the CAPTCHA (CAPTCHA_REQUIRED). With it, even a
+   *   locked budget lets the right password in, so the owner is never stuck
+   *   for a day; without a CAPTCHA configured, a lock is a wall, as before.
+   * - A network is hard-locked only when it sprays: many failures across
+   *   several accounts (lockout.ts), never for one person mistyping on a
+   *   carrier's shared address.
+   * - Every path spends one argon2 verification, the refusals included, so how
+   *   long an answer takes says nothing about the account either.
+   */
   async login(input: {
     email: string;
     password: string;
     deviceName?: string;
     ip?: string;
+    /** the app's `x-device-id` */
+    deviceId?: string | null;
+    captchaToken?: string;
   }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const invalid = () => new AppError('INVALID_CREDENTIALS', 401, 'invalid email or password');
     const locked = (seconds: number) =>
       new AppError('LOCKED', 429, 'too many failed attempts — try again later', {
         retryAfterSec: seconds,
       });
-
-    // progressive lockout checks come before any password work (KUR-023)
-    if (input.ip) {
-      const ipLock = await this.lockouts.lockedFor('ip', input.ip);
-      if (ipLock) throw locked(ipLock);
-    }
+    const burn = async () => {
+      await verifyPassword(await DUMMY_HASH_PROMISE, input.password);
+    };
 
     const user = await this.users.findByEmail(input.email);
-    if (user) {
-      const accountLock = await this.lockouts.lockedFor('account', user.id);
-      if (accountLock) throw locked(accountLock);
+    const deviceId = input.deviceId ?? null;
+    const network = networkHashOf(input.ip);
+    // known: this device has signed in to the account before, or (for an app
+    // that sends no device id) this network has
+    let known: { kind: KnownKind; value: string } | null = null;
+    if (user && deviceId !== null && (await this.devices.isKnown(user.id, 'device', deviceId))) {
+      known = { kind: 'device', value: deviceId };
+    } else if (user && network !== null && (await this.devices.isKnown(user.id, 'network', network))) {
+      known = { kind: 'network', value: network };
+    }
+    // the budget this attempt spends, and who it is aimed at for the network's count
+    const target = user ? userHash(user.id) : `email:${emailRegistryHash(input.email)}`;
+    const scope: LockoutScope = known ? 'device' : 'account';
+    const key = known && user ? this.devices.hash(user.id, known.kind, known.value) : user ? user.id : target;
+
+    // progressive lockout checks come before any password work (KUR-023)
+    const [keyLock, keyFailures] = await Promise.all([this.lockouts.lockedFor(scope, key), this.lockouts.failures(scope, key)]);
+    const watchNetwork = !known && input.ip !== undefined;
+    const [netLock, netFailures] = watchNetwork
+      ? await Promise.all([this.lockouts.lockedFor('ip', input.ip!), this.lockouts.failures('ip', input.ip!)])
+      : [null, 0];
+    const surging = !known && (await this.surge.active());
+
+    const lockSec = keyLock ?? netLock;
+    if (this.captchaConfigured) {
+      let reason: CaptchaReason | null = null;
+      if (keyLock !== null || keyFailures >= CAPTCHA_AFTER_FAILURES) reason = 'attempts';
+      else if (netLock !== null || netFailures >= CAPTCHA_AFTER_FAILURES) reason = 'network';
+      else if (surging) reason = 'surge';
+      if (reason !== null) {
+        const passed = input.captchaToken ? await this.verifyCaptchaToken(input.captchaToken, input.ip) : false;
+        if (!passed) {
+          await burn();
+          throw captchaRequired(reason);
+        }
+      }
+    } else if (lockSec !== null) {
+      // nothing to offer instead: the lock is a wall until it lapses
+      await burn();
+      throw locked(lockSec);
     }
 
-    if (!user || !user.password_hash) {
-      // burn the same argon2 cost as a real check (timing equalization)
-      await verifyPassword(await DUMMY_HASH_PROMISE, input.password);
-      if (input.ip) await this.lockouts.recordFailure('ip', input.ip);
-      throw invalid();
-    }
-    if (!(await verifyPassword(user.password_hash, input.password))) {
-      const accountLockSec = await this.lockouts.recordFailure('account', user.id);
-      const ipLockSec = input.ip ? await this.lockouts.recordFailure('ip', input.ip) : null;
-      this.deps.log?.warn(
-        { userId: user.id, ip: input.ip, accountLockSec, ipLockSec },
-        'failed login attempt',
-      );
-      const lockSec = accountLockSec ?? ipLockSec;
-      if (lockSec) throw locked(lockSec);
+    const passwordOk = user?.password_hash ? await verifyPassword(user.password_hash, input.password) : (await burn(), false);
+    if (!user || !passwordOk) {
+      const keyLockSec = await this.lockouts.recordFailure(scope, key);
+      const netLockSec = watchNetwork ? await this.lockouts.recordFailure('ip', input.ip!, target) : null;
+      if (!known) await this.surge.recordFailure();
+      if (user) {
+        // the network as its keyed hash, never the address
+        this.deps.log?.warn({ userId: user.id, network, scope, keyLockSec, netLockSec }, 'failed login attempt');
+        // the owner hears about a lock on their account, once a day at most
+        if (keyLockSec !== null && scope === 'account') await this.securityNotice(user, 'sign-in-attempts', true);
+      }
+      const lockedNow = keyLockSec ?? netLockSec;
+      if (lockedNow !== null && !this.captchaConfigured) throw locked(lockedNow);
       throw invalid();
     }
 
-    await this.lockouts.clear('account', user.id);
+    await this.lockouts.clear(scope, key);
 
     // A banned account is told so — with why, until when, and a token that can
     // only ask for a review — instead of being handed a session the next request
@@ -460,7 +669,19 @@ export class AuthService {
     const tokens = await issueTokenPair(this.config, this.pool, user, {
       deviceName: input.deviceName,
     });
+    // the device is known from now on; a sign-in from one this account has
+    // never used is worth an email to its owner (not the very first, though)
+    if (deviceId !== null) {
+      const seen = await this.devices.remember(user.id, 'device', deviceId).catch(() => null);
+      if (seen?.isNew && !seen.firstForAccount) await this.securityNotice(user, 'new-sign-in', false);
+    }
+    if (network !== null) await this.devices.remember(user.id, 'network', network).catch(() => undefined);
     return { user: toPublicUser(user), tokens };
+  }
+
+  /** Turnstile, as at sign-up; its own method so the rule lives in one place. */
+  private verifyCaptchaToken(token: string, ip: string | undefined): Promise<boolean> {
+    return verifyCaptcha(this.config, token, ip);
   }
 
   /**
@@ -495,6 +716,7 @@ export class AuthService {
         expires_at: Date;
         revoked_at: Date | null;
         replaced_by: string | null;
+        session_started_at: Date;
       }>(`SELECT * FROM refresh_tokens WHERE token_hash = $1 FOR UPDATE`, [
         hashRefreshToken(rawToken),
       ]);
@@ -541,7 +763,10 @@ export class AuthService {
         throw new AppError('REFRESH_REUSED', 401, 'refresh token reuse detected; session revoked');
       }
 
-      if (new Date(row.expires_at).getTime() < Date.now()) {
+      // past its own expiry, or past the session's whole lifetime (a token
+      // issued before that lifetime was capped carries a later expiry)
+      const sessionEnds = new Date(row.session_started_at).getTime() + SESSION_MAX_DAYS * 24 * 3_600_000;
+      if (new Date(row.expires_at).getTime() < Date.now() || sessionEnds < Date.now()) {
         await client.query('ROLLBACK');
         throw new AppError('REFRESH_EXPIRED', 401, 'refresh token expired');
       }
@@ -555,6 +780,8 @@ export class AuthService {
       const tokens = await issueTokenPair(this.config, client, user, {
         familyId: row.family_id,
         deviceName: row.device_name ?? undefined,
+        // the session keeps its start, so SESSION_MAX_DAYS ends it however often it refreshes
+        sessionStartedAt: new Date(row.session_started_at),
       });
       await client.query(
         `UPDATE refresh_tokens SET revoked_at = now(), replaced_by = $2 WHERE id = $1`,

@@ -30,6 +30,13 @@ describe('log redaction', () => {
     expect(text).toContain('[redacted]');
   });
 
+  it('redacts a password change and a second-factor secret too', () => {
+    const { log, lines } = capture(LOG_REDACT);
+    log.info({ body: { currentPassword: 'old-pw', newPassword: 'new-pw' }, secret: 'totp-secret' }, 'change');
+    const out = lines();
+    for (const secret of ['old-pw', 'new-pw', 'totp-secret']) expect(out).not.toContain(secret);
+  });
+
   it('masks an address to its first letter and its domain', () => {
     expect(maskEmail('rojda@example.com')).toBe('r***@example.com');
     expect(maskEmail('a@b.test')).toBe('a***@b.test');

@@ -1,7 +1,7 @@
 import { createHmac } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { verifyResendSignature, WEBHOOK_TOLERANCE_SECONDS } from './resend-webhook.js';
-import { htmlToPreviewText, parseMailbox, replySubject } from './support-inbox.js';
+import { headerLine, htmlToPreviewText, parseMailbox, replySubject, threadIdOf } from './support-inbox.js';
 
 const KEY = Buffer.from('a-test-signing-key-of-some-length');
 const SECRET = `whsec_${KEY.toString('base64')}`;
@@ -55,6 +55,21 @@ describe('support mail helpers', () => {
     expect(replySubject('Help with my account')).toBe('Re: Help with my account');
     expect(replySubject('RE: Help')).toBe('RE: Help');
     expect(replySubject('  ')).toBe('Re: (no subject)');
+  });
+
+  it('answers on one line, whatever line breaks the subject arrived with', () => {
+    // an encoded line break in a received subject would start a header of the sender's choosing
+    expect(replySubject('Help\r\nBcc: everyone@example.com')).toBe('Re: Help Bcc: everyone@example.com');
+    expect(headerLine('a\u0000b\tc\n\nd\u0007')).toBe('ab c d');
+  });
+
+  it('threads an answer under a plain message id only', () => {
+    expect(threadIdOf('<abc.123@mail.example.com>')).toBe('<abc.123@mail.example.com>');
+    expect(threadIdOf('abc.123@mail.example.com')).toBe('<abc.123@mail.example.com>');
+    expect(threadIdOf('<a@b>\r\nBcc: everyone@example.com')).toBeNull();
+    expect(threadIdOf('<a@b> <c@d>')).toBeNull();
+    expect(threadIdOf('')).toBeNull();
+    expect(threadIdOf(null)).toBeNull();
   });
 
   it('turns HTML into a line of text, leaving out styles and scripts', () => {

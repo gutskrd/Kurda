@@ -6,6 +6,7 @@ import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { EquippedItem, PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from './presence.js';
 import { RankService } from '../ranks/service.js';
+import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
@@ -130,7 +131,9 @@ export class SocialService {
              WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
           )
         ORDER BY u.username LIMIT $3`,
-      [viewerId, folded, limit],
+      // a prefix taken literally: usernames hold underscores, and `_` or `%`
+      // left as wildcards would also list names that do not start this way
+      [viewerId, escapeLike(folded), limit],
     );
     return rows.rows.map((r) => ({
       userId: r.id,

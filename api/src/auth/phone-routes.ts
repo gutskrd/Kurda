@@ -38,6 +38,7 @@ export function registerPhoneVerificationRoutes(
         case 'cooldown':
           return reply
             .code(429)
+            .header('retry-after', String(Math.max(1, Math.ceil((res.retryAfterMs ?? 1_000) / 1_000))))
             .send({ code: 'RESEND_COOLDOWN', message: 'please wait before requesting another code', retryAfterMs: res.retryAfterMs });
         case 'max-sends':
           return reply.code(429).send({ code: 'MAX_SENDS', message: 'too many codes sent — try again later' });

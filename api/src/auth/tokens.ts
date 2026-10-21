@@ -5,6 +5,13 @@ import type { AppConfig } from '../config/env.js';
 
 export const ACCESS_TOKEN_TTL_SECONDS = 15 * 60;
 export const REFRESH_TOKEN_TTL_DAYS = 30;
+/**
+ * The longest a session lasts, however often it is refreshed: each refresh
+ * token lives REFRESH_TOKEN_TTL_DAYS, but never past this many days after the
+ * sign-in that began its family. A stolen refresh token cannot be kept alive
+ * for ever by refreshing it, and everyone signs in again now and then.
+ */
+export const SESSION_MAX_DAYS = 90;
 /** Tolerated clock skew when validating access tokens. */
 export const CLOCK_SKEW_SECONDS = 60;
 
@@ -81,16 +88,21 @@ export async function issueTokenPair(
   config: AppConfig,
   executor: Pick<pg.Pool, 'query'>,
   user: { id: string; token_version?: number },
-  opts: { familyId?: string; deviceName?: string } = {},
+  opts: { familyId?: string; deviceName?: string; sessionStartedAt?: Date } = {},
 ): Promise<IssuedTokens> {
   const raw = randomBytes(32).toString('base64url');
   const familyId = opts.familyId ?? randomUUID();
-  const expiresAt = new Date(Date.now() + REFRESH_TOKEN_TTL_DAYS * 24 * 3_600_000);
+  // a rotation carries its session's start along; a sign-in starts one
+  const startedAt = opts.sessionStartedAt ?? new Date();
+  const day = 24 * 3_600_000;
+  const expiresAt = new Date(
+    Math.min(Date.now() + REFRESH_TOKEN_TTL_DAYS * day, startedAt.getTime() + SESSION_MAX_DAYS * day),
+  );
   const inserted = await executor.query<{ id: string }>(
-    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO refresh_tokens (user_id, token_hash, family_id, device_name, expires_at, session_started_at)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING id`,
-    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt],
+    [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt],
   );
   const accessToken = await issueAccessToken(config, {
     sub: user.id,

@@ -6,7 +6,8 @@ import { RANK_TOOL_ROLES } from '../admin/roles.js';
 import { AppError } from '../plugins/errors.js';
 import type { LeagueService } from './service.js';
 
-const weekQuery = z.object({ week: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional() });
+// a real calendar day: 2026-13-45 has the right shape and used to reach `new Date` as a 500
+const weekQuery = z.object({ week: z.iso.date().optional() });
 const runBody = z.object({ force: z.boolean().optional() }).optional();
 
 /**

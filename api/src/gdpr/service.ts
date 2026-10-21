@@ -13,6 +13,7 @@ import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
 import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
+import { userHash } from '../moderation/pseudonym.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -214,6 +215,19 @@ export class GdprService {
     await executor.query(`DELETE FROM oauth_identities WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM email_tokens WHERE user_id = $1`, [userId]);
     await executor.query(`DELETE FROM phone_verifications WHERE user_id = $1`, [userId]);
+    // what sign-in protection kept about the account: its devices and networks
+    // (and the failure counts kept under them), the security emails it was
+    // sent, any count or lock on it, the failures aimed at it, and the networks
+    // it was seen on
+    await executor.query(
+      `DELETE FROM auth_lockouts WHERE scope = 'device' AND key IN (SELECT device_hash FROM known_devices WHERE user_id = $1)`,
+      [userId],
+    );
+    await executor.query(`DELETE FROM known_devices WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM security_notices WHERE user_id = $1`, [userId]);
+    await executor.query(`DELETE FROM auth_lockouts WHERE scope = 'account' AND key = $1::text`, [userId]);
+    await executor.query(`DELETE FROM auth_network_failures WHERE target_hash = $1`, [userHash(userId)]);
+    await executor.query(`DELETE FROM network_sightings WHERE user_id = $1`, [userId]);
     // off this week's league table at once (their earlier weeks stay, tied to
     // no name), their showcase gone from the profile nobody can open now, and
     // no badge push queued for an account that is closed
@@ -309,6 +323,22 @@ export class GdprService {
     const ranks = await exportRanks(this.pool, userId);
     // what they wrote to the support address from this account's address, and
     // what they were answered; who on the team answered is not theirs
+    // the devices and networks that have signed in to the account, by when,
+    // the networks it was seen on by day, and the security emails it was sent;
+    // each device and network is kept only as a keyed hash, which would mean
+    // nothing to them, so the hashes are left out
+    const devices = await this.pool.query(
+      `SELECT kind, first_seen_at, last_seen_at, expires_at FROM known_devices WHERE user_id = $1 ORDER BY first_seen_at`,
+      [userId],
+    );
+    const networks = await this.pool.query(
+      `SELECT day, count(*)::int AS networks_seen FROM network_sightings WHERE user_id = $1 GROUP BY day ORDER BY day`,
+      [userId],
+    );
+    const notices = await this.pool.query(
+      `SELECT kind, sent_at FROM security_notices WHERE user_id = $1 ORDER BY sent_at`,
+      [userId],
+    );
     const support = await this.pool.query(
       `SELECT e.subject, e.received_at, e.text_body, e.html_body,
               COALESCE((SELECT json_agg(json_build_object('body', r.body, 'sentAt', r.sent_at) ORDER BY r.sent_at)
@@ -324,6 +354,9 @@ export class GdprService {
       user: user.rows[0] ?? null,
       posts,
       sessions: sessions.rows,
+      signInDevices: devices.rows,
+      networksSeen: networks.rows,
+      securityEmails: notices.rows,
       oauthIdentities: identities.rows,
       storyGames: storyGames.rows,
       appFeedback: { ...prompts.rows[0], answers: feedback.rows },

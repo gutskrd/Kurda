@@ -175,6 +175,7 @@ import {
 import { DashboardService as RollupDashboards } from './analytics/dashboard-service.js';
 import { EconomyService as RollupEconomy } from './economy/service.js';
 import { grantBootstrapAdmins } from './admin/bootstrap-admins.js';
+import { scheduleMaintenance } from './jobs/maintenance.js';
 import { registerEmailWebhookRoutes } from './email/webhook-routes.js';
 import { registerResendWebhookRoutes } from './email/resend-webhook.js';
 import { registerEmailAdminRoutes } from './email/admin-routes.js';
@@ -220,6 +221,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     },
     // trust an upstream-provided request id (gateway/LB) or generate one
     requestIdHeader: 'x-request-id',
+    // a whole request, body included, within two minutes: Fastify otherwise
+    // turns Node's own limit off, and a client dripping a body a byte at a time
+    // would hold its connection for ever. Two minutes covers the largest upload
+    // on a slow phone connection.
+    requestTimeout: 120_000,
     // who the client is, when there is a proxy in between — see TRUST_PROXY
     trustProxy: trustProxyOption(config.TRUST_PROXY),
   });
@@ -281,6 +287,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
           try {
             await jobs.scheduleEvery(analyticsJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
             await jobs.scheduleEvery(economyJob, ROLLUP_INTERVAL_MS, { days: ROLLUP_WINDOW_DAYS });
+            // and the housekeeping only the undeployed worker used to schedule:
+            // deletions past their grace period, unclaimed uploads
+            await scheduleMaintenance(jobs, app.db, createStorage(config));
             // Backfill once, not on every boot: this host spins down when idle, so
             // an unconditional 60-day re-aggregate would run constantly for nothing.
             // Each dashboard is checked against ITS OWN table — gating both on the

@@ -4,10 +4,11 @@ import { requireRoles } from '../plugins/auth.js';
 import { daysBefore } from './dashboards.js';
 import type { DashboardService } from './dashboard-service.js';
 
-const DAY = /^\d{4}-\d{2}-\d{2}$/;
+// a real calendar day, not just its shape: Postgres refuses 2026-13-45 with an error
+const DAY = z.iso.date();
 const rangeQuery = z.object({
-  from: z.string().regex(DAY).optional(),
-  to: z.string().regex(DAY).optional(),
+  from: DAY.optional(),
+  to: DAY.optional(),
 });
 
 function range(q: { from?: string; to?: string }): { from: string; to: string } {
@@ -50,7 +51,7 @@ export function registerDashboardRoutes(app: FastifyInstance, dashboards: Dashbo
   app.post(
     '/admin/analytics/refresh',
     {
-      schema: { querystring: z.object({ day: z.string().regex(DAY).optional() }) },
+      schema: { querystring: z.object({ day: DAY.optional() }) },
       config: { skipValidation: true },
       preHandler: requireRoles('admin'),
     },

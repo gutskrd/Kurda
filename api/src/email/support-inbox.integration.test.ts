@@ -191,6 +191,32 @@ describe.skipIf(!DATABASE_URL)('support inbox (integration)', () => {
     expect(again.rows[0].read_at).toBeNull();
   });
 
+  it('keeps a mail whose headers carry line breaks or NULs, on one line, and still answers it', async () => {
+    const id = `e_hostile_${suffix}`;
+    bodies.set(id, { text: 'Body with a NUL\u0000 in it.', html: '<p>NUL\u0000</p>' });
+    const res = await deliver(
+      received(id, {
+        from: 'Rojda\u0000 Kurd <rojda.h@example.com>',
+        subject: 'Help\r\nBcc: everyone@example.com\u0000',
+        message_id: '<x@mail.example.com>\r\nBcc: everyone@example.com',
+      }),
+    );
+    expect(res.statusCode, res.body).toBe(200);
+    const { rows } = await pool.query(
+      `SELECT id, subject, from_name, message_id, text_body FROM support_emails WHERE provider_id = $1`,
+      [id],
+    );
+    expect(rows[0]).toMatchObject({
+      subject: 'Help Bcc: everyone@example.com',
+      from_name: 'Rojda Kurd',
+      message_id: '<x@mail.example.com> Bcc: everyone@example.com',
+      text_body: 'Body with a NUL in it.',
+    });
+    // the id is no plain message id any more, so the answer goes out unthreaded rather than with it
+    const answered = await call('POST', `/admin/support/emails/${rows[0].id}/reply`, support, { body: 'We are on it.' });
+    expect(answered.statusCode, answered.body).toBe(200);
+  });
+
   it('suppresses an address that bounced or complained', async () => {
     const bounced = `bounce_${suffix}@it.kurda.app`;
     const complained = `complaint_${suffix}@it.kurda.app`;

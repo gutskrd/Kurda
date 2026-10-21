@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import { stripControlChars } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import type { EmailProvider } from './provider.js';
 
@@ -62,6 +63,32 @@ export interface ReceivedMailReader {
 
 /** The longest body kept. A support mail is a few paragraphs; a megabyte of HTML is not one. */
 const BODY_MAX = 200_000;
+
+/**
+ * Text from a received mail that goes back out in a header of our answer (its
+ * subject, its message id) or into a one-line column: a single line with no
+ * control characters. Anyone can send the support address a subject with an
+ * encoded line break, which in our answer's headers would start a header of
+ * their choosing, or a NUL, which Postgres cannot store at all.
+ */
+export function headerLine(value: string): string {
+  return stripControlChars(value.replace(/[\r\n\t]+/g, ' ')).trim();
+}
+
+/** A body as kept: everything as sent but NUL, which Postgres cannot store. */
+function storableBody(value: string | null): string | null {
+  return value === null ? null : value.replaceAll('\u0000', '');
+}
+
+/**
+ * The `In-Reply-To` an answer carries: the mail's id in angle brackets, or none
+ * when what the mail gave is not one plain id (spaces, line breaks, brackets).
+ */
+export function threadIdOf(messageId: string | null): string | null {
+  if (!messageId) return null;
+  const bare = messageId.trim().replace(/^<|>$/g, '');
+  return /^[^\s<>]+$/.test(bare) ? `<${bare}>` : null;
+}
 
 /**
  * "Rojda Kurd <rojda@example.com>" → its address and its name; a bare address
@@ -191,7 +218,7 @@ function summary(row: Row): SupportEmailSummary {
 
 /** "Re: " once, however many times the conversation has gone back and forth. */
 export function replySubject(subject: string): string {
-  const bare = subject.trim();
+  const bare = headerLine(subject);
   return /^re:/i.test(bare) ? bare : `Re: ${bare || '(no subject)'}`;
 }
 
@@ -217,7 +244,7 @@ export class SupportInbox {
 
   /** Keep a received mail. Its id, or null when it was already kept (a webhook delivered twice). */
   async record(mail: ReceivedMail): Promise<string | null> {
-    const from = parseMailbox(mail.from);
+    const from = parseMailbox(headerLine(mail.from));
     const { rows } = await this.pool.query<{ id: string }>(
       `INSERT INTO support_emails
          (provider_id, from_address, from_name, to_addresses, cc_addresses, subject, message_id, attachments, received_at)
@@ -228,10 +255,10 @@ export class SupportInbox {
         mail.providerId,
         from.address,
         from.name,
-        mail.to.map((t) => parseMailbox(t).address),
-        mail.cc.map((c) => parseMailbox(c).address),
-        mail.subject.slice(0, 1000),
-        mail.messageId,
+        mail.to.map((t) => parseMailbox(headerLine(t)).address),
+        mail.cc.map((c) => parseMailbox(headerLine(c)).address),
+        headerLine(mail.subject).slice(0, 1000),
+        mail.messageId === null ? null : headerLine(mail.messageId),
         JSON.stringify(mail.attachments),
         mail.receivedAt,
       ],
@@ -254,7 +281,7 @@ export class SupportInbox {
       `UPDATE support_emails
           SET text_body = $2, html_body = $3, message_id = COALESCE(message_id, $4), body_fetched_at = now()
         WHERE id = $1`,
-      [id, body.text, body.html, body.messageId],
+      [id, storableBody(body.text), storableBody(body.html), body.messageId === null ? null : headerLine(body.messageId)],
     );
     return true;
   }
@@ -347,7 +374,7 @@ export class SupportInbox {
     const when = mail.received_at.toUTCString();
     const who = mail.from_name ? `${mail.from_name} <${mail.from_address}>` : mail.from_address;
     const text = quoted ? `${body}\n\nOn ${when}, ${who} wrote:\n${quoted}` : body;
-    const threadId = mail.message_id ? (mail.message_id.startsWith('<') ? mail.message_id : `<${mail.message_id}>`) : null;
+    const threadId = threadIdOf(mail.message_id);
     let messageId: string;
     try {
       ({ messageId } = await this.deps.provider.send({

@@ -35,8 +35,9 @@ export function setupCors(app: FastifyInstance, config: AppConfig): void {
     origin: origins,
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    // the mobile client sends these non-simple headers (KUR-012)
-    allowedHeaders: ['content-type', 'authorization', 'idempotency-key', 'x-request-id'],
+    // the mobile client sends these non-simple headers (KUR-012); x-device-id
+    // is the app's per-install id, which sign-in protection keys on
+    allowedHeaders: ['content-type', 'authorization', 'idempotency-key', 'x-request-id', 'x-device-id'],
     exposedHeaders: ['x-request-id', 'retry-after', 'etag'],
   });
 }

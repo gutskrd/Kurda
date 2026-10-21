@@ -8,7 +8,19 @@
  * listed twice, at the top and one level down. Shared by the request logger
  * and the job worker's, which had none at all.
  */
-const SECRET_KEYS = ['password', 'passwordHash', 'token', 'accessToken', 'refreshToken', 'idToken', 'captchaToken', 'email'];
+const SECRET_KEYS = [
+  'password',
+  'passwordHash',
+  'currentPassword',
+  'newPassword',
+  'token',
+  'accessToken',
+  'refreshToken',
+  'idToken',
+  'captchaToken',
+  'secret',
+  'email',
+];
 
 export const LOG_REDACT = {
   paths: ['req.headers.authorization', 'req.headers.cookie', ...SECRET_KEYS, ...SECRET_KEYS.map((k) => `*.${k}`)],

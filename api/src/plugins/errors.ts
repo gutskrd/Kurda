@@ -19,6 +19,9 @@ export class AppError extends Error {
   }
 }
 
+/** Retry-After for a 429 that does not know how long the wait is (a daily cap, a velocity gate). */
+export const DEFAULT_RETRY_AFTER_SEC = 60;
+
 /**
  * An AppError's details may carry `retryAfterSec`. Seconds, whole, at least
  * one — a Retry-After of 0 reads as "immediately", which is never what a
@@ -32,18 +35,47 @@ function retryAfterOf(details: unknown): number | null {
 }
 
 /**
+ * A Postgres refusal that is about what the request asked for rather than about
+ * the server, as the status and code to answer it with; null for anything else.
+ *
+ * - 23503, a foreign key: the request named a row that is not there (a friend
+ *   request to a user id nobody has, saving a word or congratulating an event
+ *   that does not exist). The services look most of these up first; this
+ *   catches the ones that let the constraint decide, which used to answer 500.
+ * - class 22, a data exception: a value Postgres cannot take as its type (a
+ *   date that is no date, a number out of range, text it cannot store).
+ *
+ * Only real driver errors count: they carry a five-character SQLSTATE and a
+ * severity, which a Node system error (`EPIPE`) or a Fastify error does not.
+ */
+export function databaseClientError(err: unknown): { statusCode: number; code: string; message: string } | null {
+  if (typeof err !== 'object' || err === null) return null;
+  const { code, severity } = err as { code?: unknown; severity?: unknown };
+  if (typeof code !== 'string' || typeof severity !== 'string' || !/^[0-9A-Z]{5}$/.test(code)) return null;
+  if (code === '23503') return { statusCode: 404, code: 'NOT_FOUND', message: 'that refers to something that does not exist' };
+  if (code.startsWith('22')) return { statusCode: 400, code: 'BAD_REQUEST', message: 'a value in this request cannot be used' };
+  return null;
+}
+
+/**
  * Standard error envelope: { code, message, details?, requestId }.
  *
  * - AppError            → its own status/code/message
  * - RequestValidationError → 400 VALIDATION_ERROR with per-field details
  *   (zod issue messages describe the expectation; raw input values are
  *   never echoed back)
+ * - a Postgres refusal of the request's own values → 404 / 400 with a
+ *   generic message (see databaseClientError)
  * - anything else       → 500 INTERNAL_ERROR; real message logged, but the
  *   response body is generic outside development (no stack/message leaks)
  */
 export function setupErrorHandling(app: FastifyInstance, config: AppConfig): void {
   app.addHook('onSend', async (req, reply) => {
     reply.header('x-request-id', req.id);
+    // every 429 says when to come back; those that know exactly have said so already
+    if (reply.statusCode === 429 && !reply.hasHeader('retry-after')) {
+      reply.header('retry-after', String(DEFAULT_RETRY_AFTER_SEC));
+    }
   });
 
   app.setNotFoundHandler((req, reply) => {
@@ -79,6 +111,13 @@ export function setupErrorHandling(app: FastifyInstance, config: AppConfig): voi
         ...(err.details !== undefined ? { details: err.details } : {}),
         requestId: req.id,
       });
+    }
+
+    // logged, never sent: the driver's text names tables, columns and values
+    const refused = databaseClientError(err);
+    if (refused) {
+      req.log.warn({ err }, 'request refused by the database');
+      return reply.code(refused.statusCode).send({ code: refused.code, message: refused.message, requestId: req.id });
     }
 
     // malformed JSON body and other fastify client errors carry 4xx codes

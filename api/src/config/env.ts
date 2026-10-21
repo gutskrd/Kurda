@@ -185,6 +185,13 @@ const envSchema = z.object({
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**
+   * Whether a new password is checked against the public corpus of breached
+   * passwords (auth/breached-password.ts; only five characters of its SHA-1
+   * leave the server). Unset: on everywhere but under test, which must not
+   * reach the internet. 'false' turns it off.
+   */
+  PASSWORD_BREACH_CHECK: z.enum(['true', 'false']).optional(),
+  /**
    * Comma-separated browser origins allowed to call the API (CORS).
    * The web client (localhost:8081) needs this; native apps don't send
    * Origin so they're unaffected. Empty = no cross-origin browser access.

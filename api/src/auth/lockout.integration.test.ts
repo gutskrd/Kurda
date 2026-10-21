@@ -4,7 +4,8 @@ import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { lockDurationMinutes, LOCKOUT_THRESHOLD, LockoutService } from './lockout.js';
+import { lockDurationMinutes, LOCKOUT_THRESHOLD, LockoutService, NETWORK_LOCK_ACCOUNTS, NETWORK_LOCK_FAILURES } from './lockout.js';
+import { emailRegistryHash } from '../moderation/pseudonym.js';
 import { AuthService } from './service.js';
 import { networkHashOf } from '../net/network-key.js';
 
@@ -112,13 +113,18 @@ describe.skipIf(!DATABASE_URL)('login lockout (integration)', () => {
     await pool.query(`DELETE FROM auth_lockouts WHERE scope = 'account' AND key = $1`, [userId]);
   });
 
-  it('locks the IP after spraying unknown accounts (service-level)', async () => {
+  it('locks the IP once it sprays: many failures across several accounts (service-level)', async () => {
     const attackerIp = '198.51.100.77';
-    for (let i = 0; i < LOCKOUT_THRESHOLD; i++) {
+    const ghosts = Array.from({ length: NETWORK_LOCK_ACCOUNTS }, (_, i) => `ghost${i}_${suffix}@it.kurda.app`);
+    // spread across the accounts, each staying under its own lock
+    for (let i = 0; i < NETWORK_LOCK_FAILURES; i++) {
       await service
-        .login({ email: `ghost${i}_${suffix}@it.kurda.app`, password: 'x'.repeat(10), ip: attackerIp })
+        .login({ email: ghosts[i % ghosts.length]!, password: 'x'.repeat(10), ip: attackerIp })
         .catch(() => undefined);
     }
+    await pool.query(`DELETE FROM auth_lockouts WHERE scope = 'account' AND key = ANY($1)`, [
+      ghosts.map((g) => `email:${emailRegistryHash(g)}`),
+    ]);
     await expect(
       service.login({ email: `ghost99_${suffix}@it.kurda.app`, password: 'x'.repeat(10), ip: attackerIp }),
     ).rejects.toMatchObject({ code: 'LOCKED' });
