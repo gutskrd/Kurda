@@ -282,6 +282,15 @@ export const BREATH = { ms: 3600, depth: 0.012 } as const;
 /** The head's drift while still: this many degrees either way, once every `ms`. */
 export const SWAY = { ms: 6200, degrees: 1.1 } as const;
 
+/**
+ * Resting — asleep where there is nothing yet to do: the eyes shut, the head
+ * dipped `dip` degrees to one side, a breath slower and deeper than awake,
+ * and a "z" drifting up from beside the head every `zMs`, `zRise` of the
+ * figure's height before it fades. No blinks, glances or twitches: it is
+ * still. A tap still wakes it for its greeting, and it settles back.
+ */
+export const RESTING = { breathMs: 5600, depth: 0.022, dip: 5, zMs: 2400, zRise: 0.22 } as const;
+
 /** The pieces of a blink, in milliseconds: half shut, shut, half shut. */
 export const BLINK_STEPS = { half: 50, shut: 90 } as const;
 

@@ -59,6 +59,20 @@ function dropPath(cx: number, cy: number, r: number, h: number, tip: number): st
   return `M${n(left[0])},${n(left[1])}L${n(nearL[0])},${n(nearL[1])}Q${n(top[0])},${n(top[1])} ${n(nearR[0])},${n(nearR[1])}L${n(right[0])},${n(right[1])}A${n(r)},${n(r)} 0 1 1 ${n(left[0])},${n(left[1])}Z`;
 }
 
+/** A keyhole in the middle of a drop's round body: a round head and a slot widening under it. */
+function keyhole(cx: number, cy: number, r: number): string {
+  const head = r * 0.2;
+  const top = cy - r * 0.12;
+  const slotTop = top + head * 0.6;
+  const slotFoot = cy + r * 0.34;
+  const neck = r * 0.08;
+  const foot = r * 0.14;
+  return (
+    `M${n(cx - head)},${n(top)}A${n(head)},${n(head)} 0 1 1 ${n(cx + head)},${n(top)}A${n(head)},${n(head)} 0 1 1 ${n(cx - head)},${n(top)}Z` +
+    `M${n(cx - neck)},${n(slotTop)}L${n(cx + neck)},${n(slotTop)}L${n(cx + foot)},${n(slotFoot)}L${n(cx - foot)},${n(slotFoot)}Z`
+  );
+}
+
 /** The same drop as points, for setting beads along its rim. */
 function dropPoints(cx: number, cy: number, r: number, h: number): Pt[] {
   const d = r + h;
@@ -94,6 +108,12 @@ export interface LeagueEmblemOptions {
   /** the accessible label; defaults to "Çem (River)" */
   title?: string;
   idPrefix?: string;
+  /**
+   * A league not reached yet: the tier's own outline, flat in `body`, with a
+   * keyhole in `mark` — its shape says which one it is, its picture waits.
+   * The colours are the screen's, so it sits quietly in light and dark.
+   */
+  locked?: { body: string; mark: string };
 }
 
 /** Under this many pixels an emblem is drawn in its small version: filling its square, bolder. */
@@ -111,6 +131,15 @@ export function leagueEmblemSvg(opts: LeagueEmblemOptions): string {
   const m = LEAGUE_RIM[tier];
   const { cy, r, h } = layoutOf(tier, bold);
   const out: string[] = [];
+
+  if (opts.locked) {
+    const { body, mark } = opts.locked;
+    out.push(`<path d="${dropPath(60, cy, r, h, r * 0.16)}" fill="${body}"/>`);
+    out.push(`<path d="${keyhole(60, cy, r)}" fill="${mark}"/>`);
+    dr.add(out.join(''));
+    const nm = LEAGUE_TIER_NAMES[tier];
+    return dr.svg(size, opts.title ?? `${nm.ku} (${nm.en})`);
+  }
 
   // the water's own light, fading out before the square's edge so it never shows a hard side
   if (g.glow > 0) out.push(halo(dr, 60, 60, 59, LEAGUE_METAL[tier].light, g.glow, 0.55));

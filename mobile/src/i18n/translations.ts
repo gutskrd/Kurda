@@ -469,6 +469,16 @@ export type TranslationKey =
   | 'leagues.notJoined.title'
   | 'leagues.notJoined.body'
   | 'leagues.notJoined.start'
+  | 'leagues.daysLeft'
+  | 'leagues.dayLeft'
+  | 'leagues.ladder.reached'
+  | 'leagues.ladder.here'
+  | 'leagues.ladder.ahead'
+  | 'leagues.resting.title'
+  | 'leagues.leave'
+  | 'leagues.leave.title'
+  | 'leagues.leave.body'
+  | 'leagues.leave.confirm'
   | 'leagues.lastWeek.title'
   | 'leagues.lastWeek.promoted'
   | 'leagues.lastWeek.stayed'
@@ -2122,6 +2132,7 @@ export type TranslationKey =
   | 'security.password.heading'
   | 'security.devices.heading'
   | 'characters.saidBy'
+  | 'characters.resting'
   | 'alphabet.lead'
   | 'alphabet.script.label'
   | 'alphabet.summary.compare'
@@ -3684,6 +3695,16 @@ const en: Catalog = {
   'leagues.notJoined.title': 'Your group is waiting',
   'leagues.notJoined.body': 'Earn XP in a lesson, practice or a story and you join this week’s group.',
   'leagues.notJoined.start': 'Start a lesson',
+  'leagues.daysLeft': '{count} days left',
+  'leagues.dayLeft': '1 day left',
+  'leagues.ladder.reached': '{league}, reached',
+  'leagues.ladder.here': '{league}, your league',
+  'leagues.ladder.ahead': '{league}, still ahead',
+  'leagues.resting.title': 'Your week starts with a lesson',
+  'leagues.leave': 'Leave weekly leagues',
+  'leagues.leave.title': 'Leave the weekly leagues?',
+  'leagues.leave.body': 'You won’t be in a group or on a table. Your weekly goal stays, just for you, and you can join again any time.',
+  'leagues.leave.confirm': 'Leave',
   'leagues.lastWeek.title': 'Last week',
   'leagues.lastWeek.promoted': 'You moved up to {tier}.',
   'leagues.lastWeek.stayed': 'You stayed in {tier}.',
@@ -4281,6 +4302,7 @@ const en: Catalog = {
   'security.password.heading': 'Password',
   'security.devices.heading': 'Devices',
   'characters.saidBy': 'Said by {name}',
+  'characters.resting': '{name} is resting',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Tap a letter to hear it.',
   'alphabet.script.label': 'Alphabet',
@@ -5843,6 +5865,16 @@ const ku: Catalog = {
   'leagues.notJoined.title': 'Koma te li bendê ye',
   'leagues.notJoined.body': 'Di dersekê, rahênanê an çîrokekê de XP qezenc bike û tu dikevî koma vê hefteyê.',
   'leagues.notJoined.start': 'Dersekê dest pê bike',
+  'leagues.daysLeft': '{count} roj mane',
+  'leagues.dayLeft': '1 roj maye',
+  'leagues.ladder.reached': '{league}, gihîştiyê',
+  'leagues.ladder.here': '{league}, lîga te',
+  'leagues.ladder.ahead': '{league}, hê li pêş',
+  'leagues.resting.title': 'Hefteya te bi dersekê dest pê dike',
+  'leagues.leave': 'Ji lîgên heftane derkeve',
+  'leagues.leave.title': 'Ji lîgên heftane derkevî?',
+  'leagues.leave.body': 'Tu yê ne di komekê de û ne di tabloyekê de bî. Armanca te ya heftane dimîne, tenê ji bo te, û tu dikarî kengê bixwazî dîsa tevlî bibî.',
+  'leagues.leave.confirm': 'Derkeve',
   'leagues.lastWeek.title': 'Hefteya borî',
   'leagues.lastWeek.promoted': 'Tu derketî {tier}.',
   'leagues.lastWeek.stayed': 'Tu di {tier} de mayî.',
@@ -6440,6 +6472,7 @@ const ku: Catalog = {
   'security.password.heading': 'Şîfre',
   'security.devices.heading': 'Cîhazên te',
   'characters.saidBy': 'Dengê {name}',
+  'characters.resting': '{name} bêhna xwe vedide',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Li tîpekê bitikîne da ku bibihîzî.',
   'alphabet.script.label': 'Alfabe',
@@ -8002,6 +8035,16 @@ const de: Catalog = {
   'leagues.notJoined.title': 'Deine Gruppe wartet',
   'leagues.notJoined.body': 'Sammle XP in einer Lektion, Übung oder Geschichte, dann bist du in der Gruppe dieser Woche.',
   'leagues.notJoined.start': 'Lektion beginnen',
+  'leagues.daysLeft': 'Noch {count} Tage',
+  'leagues.dayLeft': 'Noch 1 Tag',
+  'leagues.ladder.reached': '{league}, erreicht',
+  'leagues.ladder.here': '{league}, deine Liga',
+  'leagues.ladder.ahead': '{league}, noch vor dir',
+  'leagues.resting.title': 'Deine Woche beginnt mit einer Lektion',
+  'leagues.leave': 'Wochenligen verlassen',
+  'leagues.leave.title': 'Wochenligen verlassen?',
+  'leagues.leave.body': 'Du bist dann in keiner Gruppe und keiner Tabelle. Dein Wochenziel bleibt, nur für dich, und du kannst jederzeit wieder mitmachen.',
+  'leagues.leave.confirm': 'Verlassen',
   'leagues.lastWeek.title': 'Letzte Woche',
   'leagues.lastWeek.promoted': 'Du bist in {tier} aufgestiegen.',
   'leagues.lastWeek.stayed': 'Du bist in {tier} geblieben.',
@@ -8599,6 +8642,7 @@ const de: Catalog = {
   'security.password.heading': 'Passwort',
   'security.devices.heading': 'Geräte',
   'characters.saidBy': 'Gesprochen von {name}',
+  'characters.resting': '{name} ruht sich aus',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Tippe auf einen Buchstaben, um ihn zu hören.',
   'alphabet.script.label': 'Alphabet',
@@ -10161,6 +10205,16 @@ const es: Catalog = {
   'leagues.notJoined.title': 'Tu grupo te espera',
   'leagues.notJoined.body': 'Gana XP en una lección, una práctica o una historia y entrarás en el grupo de esta semana.',
   'leagues.notJoined.start': 'Empezar una lección',
+  'leagues.daysLeft': 'Quedan {count} días',
+  'leagues.dayLeft': 'Queda 1 día',
+  'leagues.ladder.reached': '{league}, alcanzada',
+  'leagues.ladder.here': '{league}, tu liga',
+  'leagues.ladder.ahead': '{league}, aún por delante',
+  'leagues.resting.title': 'Tu semana empieza con una lección',
+  'leagues.leave': 'Salir de las ligas semanales',
+  'leagues.leave.title': '¿Salir de las ligas semanales?',
+  'leagues.leave.body': 'No estarás en ningún grupo ni en ninguna tabla. Tu meta semanal se queda, solo para ti, y puedes volver cuando quieras.',
+  'leagues.leave.confirm': 'Salir',
   'leagues.lastWeek.title': 'La semana pasada',
   'leagues.lastWeek.promoted': 'Subiste a {tier}.',
   'leagues.lastWeek.stayed': 'Te quedaste en {tier}.',
@@ -10758,6 +10812,7 @@ const es: Catalog = {
   'security.password.heading': 'Contraseña',
   'security.devices.heading': 'Dispositivos',
   'characters.saidBy': 'Voz de {name}',
+  'characters.resting': '{name} está descansando',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Toca una letra para oírla.',
   'alphabet.script.label': 'Alfabeto',
@@ -12320,6 +12375,16 @@ const tr: Catalog = {
   'leagues.notJoined.title': 'Grubun seni bekliyor',
   'leagues.notJoined.body': 'Bir derste, alıştırmada ya da hikâyede XP kazan, bu haftanın grubuna katıl.',
   'leagues.notJoined.start': 'Bir derse başla',
+  'leagues.daysLeft': '{count} gün kaldı',
+  'leagues.dayLeft': '1 gün kaldı',
+  'leagues.ladder.reached': '{league}, ulaşıldı',
+  'leagues.ladder.here': '{league}, senin ligin',
+  'leagues.ladder.ahead': '{league}, henüz önünde',
+  'leagues.resting.title': 'Haftan bir dersle başlar',
+  'leagues.leave': 'Haftalık liglerden ayrıl',
+  'leagues.leave.title': 'Haftalık liglerden ayrılmak istiyor musun?',
+  'leagues.leave.body': 'Bir grupta ya da sıralamada olmayacaksın. Haftalık hedefin sadece senin için kalır ve istediğin zaman yeniden katılabilirsin.',
+  'leagues.leave.confirm': 'Ayrıl',
   'leagues.lastWeek.title': 'Geçen hafta',
   'leagues.lastWeek.promoted': '{tier} ligine yükseldin.',
   'leagues.lastWeek.stayed': '{tier} liginde kaldın.',
@@ -12917,6 +12982,7 @@ const tr: Catalog = {
   'security.password.heading': 'Parola',
   'security.devices.heading': 'Cihazlar',
   'characters.saidBy': 'Seslendiren: {name}',
+  'characters.resting': '{name} dinleniyor',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Duymak için bir harfe dokun.',
   'alphabet.script.label': 'Alfabe',
@@ -14479,6 +14545,16 @@ const ar: Catalog = {
   'leagues.notJoined.title': 'مجموعتك بانتظارك',
   'leagues.notJoined.body': 'اكسب XP في درس أو تمرين أو قصة لتنضم إلى مجموعة هذا الأسبوع.',
   'leagues.notJoined.start': 'ابدأ درسًا',
+  'leagues.daysLeft': 'الأيام المتبقية: {count}',
+  'leagues.dayLeft': 'باقٍ يوم واحد',
+  'leagues.ladder.reached': '{league}، تم بلوغه',
+  'leagues.ladder.here': '{league}، دوريك',
+  'leagues.ladder.ahead': '{league}، ما زال أمامك',
+  'leagues.resting.title': 'يبدأ أسبوعك بدرس',
+  'leagues.leave': 'مغادرة الدوريات الأسبوعية',
+  'leagues.leave.title': 'هل تريد مغادرة الدوريات الأسبوعية؟',
+  'leagues.leave.body': 'لن تكون في مجموعة أو في جدول. يبقى هدفك الأسبوعي لك وحدك، ويمكنك الانضمام مجددًا في أي وقت.',
+  'leagues.leave.confirm': 'مغادرة',
   'leagues.lastWeek.title': 'الأسبوع الماضي',
   'leagues.lastWeek.promoted': 'صعدت إلى {tier}.',
   'leagues.lastWeek.stayed': 'بقيت في {tier}.',
@@ -15076,6 +15152,7 @@ const ar: Catalog = {
   'security.password.heading': 'كلمة المرور',
   'security.devices.heading': 'الأجهزة',
   'characters.saidBy': 'بصوت {name}',
+  'characters.resting': '{name} يستريح',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'اضغط على حرف لتسمعه.',
   'alphabet.script.label': 'الأبجدية',
@@ -16638,6 +16715,16 @@ const fr: Catalog = {
   'leagues.notJoined.title': 'Ton groupe t’attend',
   'leagues.notJoined.body': 'Gagne de l’XP dans une leçon, un entraînement ou une histoire et tu rejoins le groupe de la semaine.',
   'leagues.notJoined.start': 'Commencer une leçon',
+  'leagues.daysLeft': 'Encore {count} jours',
+  'leagues.dayLeft': 'Encore 1 jour',
+  'leagues.ladder.reached': '{league}, atteinte',
+  'leagues.ladder.here': '{league}, ta ligue',
+  'leagues.ladder.ahead': '{league}, encore devant toi',
+  'leagues.resting.title': 'Ta semaine commence par une leçon',
+  'leagues.leave': 'Quitter les ligues hebdomadaires',
+  'leagues.leave.title': 'Quitter les ligues hebdomadaires ?',
+  'leagues.leave.body': 'Tu ne seras plus dans un groupe ni dans un classement. Ton objectif de la semaine reste, rien que pour toi, et tu peux revenir quand tu veux.',
+  'leagues.leave.confirm': 'Quitter',
   'leagues.lastWeek.title': 'La semaine dernière',
   'leagues.lastWeek.promoted': 'Tu es monté en {tier}.',
   'leagues.lastWeek.stayed': 'Tu es resté en {tier}.',
@@ -17235,6 +17322,7 @@ const fr: Catalog = {
   'security.password.heading': 'Mot de passe',
   'security.devices.heading': 'Appareils',
   'characters.saidBy': 'Voix de {name}',
+  'characters.resting': '{name} se repose',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Touchez une lettre pour l’entendre.',
   'alphabet.script.label': 'Alphabet',
@@ -18797,6 +18885,16 @@ const nl: Catalog = {
   'leagues.notJoined.title': 'Je groep wacht',
   'leagues.notJoined.body': 'Verdien XP in een les, oefening of verhaal en je komt in de groep van deze week.',
   'leagues.notJoined.start': 'Begin een les',
+  'leagues.daysLeft': 'Nog {count} dagen',
+  'leagues.dayLeft': 'Nog 1 dag',
+  'leagues.ladder.reached': '{league}, bereikt',
+  'leagues.ladder.here': '{league}, jouw competitie',
+  'leagues.ladder.ahead': '{league}, nog voor je',
+  'leagues.resting.title': 'Je week begint met een les',
+  'leagues.leave': 'Wekelijkse competities verlaten',
+  'leagues.leave.title': 'Wekelijkse competities verlaten?',
+  'leagues.leave.body': 'Je zit dan niet in een groep of op een ranglijst. Je weekdoel blijft, alleen voor jou, en je kunt altijd weer meedoen.',
+  'leagues.leave.confirm': 'Verlaten',
   'leagues.lastWeek.title': 'Vorige week',
   'leagues.lastWeek.promoted': 'Je bent gestegen naar {tier}.',
   'leagues.lastWeek.stayed': 'Je bleef in {tier}.',
@@ -19394,6 +19492,7 @@ const nl: Catalog = {
   'security.password.heading': 'Wachtwoord',
   'security.devices.heading': 'Apparaten',
   'characters.saidBy': 'Ingesproken door {name}',
+  'characters.resting': '{name} rust uit',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'Tik op een letter om hem te horen.',
   'alphabet.script.label': 'Alfabet',
@@ -20957,6 +21056,16 @@ const ckb: Catalog = {
   'leagues.notJoined.title': 'گرووپەکەت چاوەڕێیە',
   'leagues.notJoined.body': 'لە وانەیەک، ڕاهێنانێک یان چیرۆکێکدا XP بەدەست بهێنە و دەچیتە گرووپی ئەم هەفتەیە.',
   'leagues.notJoined.start': 'وانەیەک دەست پێبکە',
+  'leagues.daysLeft': '{count} ڕۆژ ماوە',
+  'leagues.dayLeft': '1 ڕۆژ ماوە',
+  'leagues.ladder.reached': '{league}، پێی گەیشتوویت',
+  'leagues.ladder.here': '{league}، لیگەکەت',
+  'leagues.ladder.ahead': '{league}، هێشتا لە پێشتە',
+  'leagues.resting.title': 'هەفتەکەت بە وانەیەک دەست پێدەکات',
+  'leagues.leave': 'جێهێشتنی لیگە هەفتانەکان',
+  'leagues.leave.title': 'لیگە هەفتانەکان جێدەهێڵیت؟',
+  'leagues.leave.body': 'لە هیچ گرووپ و خشتەیەکدا نابیت. ئامانجی هەفتانەت دەمێنێتەوە، تەنها بۆ خۆت، و هەر کاتێک بتەوێت دەتوانیت دووبارە بەشداری بکەیتەوە.',
+  'leagues.leave.confirm': 'جێهێشتن',
   'leagues.lastWeek.title': 'هەفتەی ڕابردوو',
   'leagues.lastWeek.promoted': 'سەرکەوتیت بۆ {tier}.',
   'leagues.lastWeek.stayed': 'لە {tier} مایتەوە.',
@@ -21554,6 +21663,7 @@ const ckb: Catalog = {
   'security.password.heading': 'وشەی نهێنی',
   'security.devices.heading': 'ئامێرەکانت',
   'characters.saidBy': 'دەنگی {name}',
+  'characters.resting': '{name} پشوو دەدات',
   // --- the alphabet (taken from the website, which says it the same) ---
   'alphabet.lead': 'کرتە لە پیتێک بکە بۆ ئەوەی گوێی لێ بێت.',
   'alphabet.script.label': 'ئەلفوبێ',

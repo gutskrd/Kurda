@@ -265,6 +265,16 @@ describe('SpeakingCharacter', () => {
     expect(Number(svg.getAttribute('width'))).toBeCloseTo((300 * deer.frame.w) / deer.frame.h);
   });
 
+  it('rests where there is nothing to do yet: eyes shut, said so, with z’s that a screen reader skips', async () => {
+    const deer = characterLayers('hevalo', 'full');
+    renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={170} resting />);
+    await settle();
+    expect(drawn.markups).toContain(deer.eyes.closed);
+    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeTruthy();
+    expect(screen.getAllByText('z').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('img', { name: /z/ })).toBeNull();
+  });
+
   it('beams at a right answer: eyes smiling and mouth open, even with motion turned down', async () => {
     renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} reaction="cheer" />);
     await act(() => new Promise((r) => setTimeout(r, 400)));

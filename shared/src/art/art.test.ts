@@ -518,6 +518,19 @@ describe('leagueEmblemSvg', () => {
     expect(LEAGUE_TIERS.map((tier) => beadRings(leagueEmblemSvg({ tier })))).toEqual([0, 0, 1, 1, 1, 1]);
     expect(() => leagueEmblemSvg({ tier: 'diamond' as never })).toThrow(RangeError);
   });
+
+  it('draws a league not reached yet as its own outline, flat, with a keyhole and no picture', () => {
+    const locked = { body: '#dfe3e8', mark: '#9aa3ad' };
+    for (const tier of LEAGUE_TIERS) {
+      const svg = leagueEmblemSvg({ tier, locked, size: 64 });
+      checkSvg(svg, 64);
+      expect(svg).toContain('fill="#dfe3e8"');
+      expect(svg).toContain('fill="#9aa3ad"');
+      expect(elements(svg), tier).toBeLessThan(elements(leagueEmblemSvg({ tier, size: 64 })) / 3);
+    }
+    // each keeps its own shape, so the ladder still reads from a drop to the ocean
+    expect(new Set(LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier, locked })))).toHaveProperty('size', 6);
+  });
 });
 
 describe('seasonFrameSvg', () => {

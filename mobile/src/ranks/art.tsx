@@ -22,6 +22,7 @@ import {
   type RankTier,
 } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useTheme } from '../theme/ThemeProvider';
 
 /**
  * The phone's half of the art drawn by code (contract 4 §B3): the same SVG
@@ -100,9 +101,28 @@ export function PlacementEmblem({ done, size, label, style }: { done: number; si
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
-export function LeagueEmblem({ tier, size, label, style }: { tier: LeagueTier; size: number; label: string; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+export function LeagueEmblem({
+  tier,
+  size,
+  label,
+  locked = false,
+  style,
+}: {
+  tier: LeagueTier;
+  size: number;
+  label: string;
+  /** not reached yet: its outline in the screen's quiet grey, with a keyhole */
+  locked?: boolean;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
   const idPrefix = useArtId();
-  const xml = useMemo(() => leagueEmblemSvg({ tier, size, title: label, idPrefix }), [tier, size, label, idPrefix]);
+  const { colors } = useTheme();
+  const body = locked ? colors.locked : null;
+  const mark = locked ? colors.lockedMark : null;
+  const xml = useMemo(
+    () => leagueEmblemSvg({ tier, size, title: label, idPrefix, ...(body && mark ? { locked: { body, mark } } : {}) }),
+    [tier, size, label, idPrefix, body, mark],
+  );
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 

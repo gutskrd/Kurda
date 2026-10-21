@@ -40,6 +40,7 @@ export {
   BLINK_STEPS,
   BREATH,
   HABITS,
+  RESTING,
   SWAY,
   between,
   easeInOut,

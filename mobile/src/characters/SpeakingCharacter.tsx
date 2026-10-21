@@ -16,6 +16,7 @@ import {
   BREATH,
   CHARACTER_NAMES,
   HABITS,
+  RESTING,
   SWAY,
   between,
   characterArt,
@@ -67,6 +68,8 @@ export interface SpeakingCharacterProps {
   flip?: boolean;
   /** what it has just seen: it reacts each time this changes, and when it arrives with one */
   reaction?: CharacterReaction | null;
+  /** asleep, where there is nothing to do yet: eyes shut, a slow breath, a "z" drifting up (shared `RESTING`) */
+  resting?: boolean;
   /** a tap on the character: it greets you, and then this (say it again, usually) */
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
@@ -151,6 +154,7 @@ export function SpeakingCharacter({
   height: tall,
   flip = false,
   reaction = null,
+  resting = false,
   onPress,
   style,
 }: SpeakingCharacterProps): React.JSX.Element {
@@ -191,6 +195,7 @@ export function SpeakingCharacter({
     lookX: new Animated.Value(0),
     lookY: new Animated.Value(0),
     focus: new Animated.Value(0),
+    dip: new Animated.Value(0),
   }).current;
 
   const born = useRef(Date.now());
@@ -346,21 +351,23 @@ export function SpeakingCharacter({
       const id = later(120, () => playRef.current(reaction));
       return () => clearTimeout(id);
     }
-    if (arrived.current || !rig) return;
+    if (arrived.current || !rig || resting) return;
     arrived.current = true;
     const id = later(160, () => playRef.current('arrive'));
     return () => clearTimeout(id);
-  }, [reaction, rig, later]);
+  }, [reaction, rig, later, resting]);
   useEffect(() => stopAct, [stopAct]);
 
   // ---- breathing, and the head's drift ----
   useEffect(() => {
     if (reduce || !awake) return;
     const { breathe, sway } = values;
-    const half = BREATH.ms / 2;
+    // asleep, a breath is slower and deeper
+    const half = (resting ? RESTING.breathMs : BREATH.ms) / 2;
+    const depth = resting ? RESTING.depth : BREATH.depth;
     const breath = Animated.loop(
       Animated.sequence([
-        Animated.timing(breathe, { toValue: 1 + BREATH.depth, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
+        Animated.timing(breathe, { toValue: 1 + depth, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
         Animated.timing(breathe, { toValue: 1, duration: half, easing: Easing.inOut(Easing.sin), useNativeDriver: true, isInteraction: false }),
       ]),
     );
@@ -380,11 +387,24 @@ export function SpeakingCharacter({
       breathe.setValue(1);
       sway.setValue(0);
     };
-  }, [reduce, awake, values]);
+  }, [reduce, awake, values, resting]);
+
+  // ---- resting: the head dips to one side, and comes back up on waking ----
+  useEffect(() => {
+    const to = resting ? RESTING.dip : 0;
+    if (reduce) {
+      values.dip.setValue(to);
+      return;
+    }
+    const settle = Animated.timing(values.dip, { toValue: to, duration: 700, easing: ease, useNativeDriver: true });
+    settle.start();
+    return () => settle.stop();
+  }, [resting, reduce, values]);
 
   // ---- habits: blinks for everyone, glances, and the deer's ears and nose ----
   useEffect(() => {
-    if (!awake) return;
+    // asleep it is still: no blinks, glances, twitches or sniffs
+    if (!awake || resting) return;
     const habits: ReturnType<typeof setTimeout>[] = [];
     const every = (range: readonly [number, number], run: () => void): void => {
       const next = (): void => {
@@ -421,13 +441,13 @@ export function SpeakingCharacter({
       habits.forEach(clearTimeout);
       setBlink('open');
     };
-  }, [awake, rig, reduce, look]);
+  }, [awake, rig, reduce, look, resting]);
 
   // ---- following a finger ----
   const root = useRef<View>(null);
   const placed = useRef<{ x: number; y: number; w: number; h: number; at: number } | null>(null);
   useEffect(() => {
-    if (!gaze || !rig || reduce) return;
+    if (!gaze || !rig || reduce || resting) return;
     const aim = (point: { x: number; y: number }): void => {
       const box = placed.current;
       if (!box || box.w === 0) return;
@@ -456,7 +476,7 @@ export function SpeakingCharacter({
         aim(point);
       });
     });
-  }, [gaze, rig, reduce, flip, layers, look, room]);
+  }, [gaze, rig, reduce, flip, layers, look, room, resting]);
 
   const greet = (): void => {
     haptic('tap');
@@ -465,7 +485,7 @@ export function SpeakingCharacter({
   };
 
   // ---- drawing ----
-  const eyes: EyeState = actEyes ?? blink;
+  const eyes: EyeState = actEyes ?? (resting ? 'closed' : blink);
   const mouth: Viseme = live && speech !== 'rest' ? speech : actMouth ?? speech;
 
   const figure = useMemo(
@@ -483,7 +503,7 @@ export function SpeakingCharacter({
   const turn = useMemo(
     () => ({
       transformOrigin: origin(layers.pivot),
-      transform: [{ rotate: degrees(Animated.add(Animated.add(values.nod, values.sway), values.tilt)) }],
+      transform: [{ rotate: degrees(Animated.add(Animated.add(Animated.add(values.nod, values.sway), values.tilt), values.dip)) }],
     }),
     [layers, values],
   );
@@ -590,7 +610,14 @@ export function SpeakingCharacter({
     </View>
   );
 
-  const label = t('characters.saidBy', { name: CHARACTER_NAMES[speaker] });
+  const label = t(resting ? 'characters.resting' : 'characters.saidBy', { name: CHARACTER_NAMES[speaker] });
+  // where the "z"s start: just above and beside the head, on the side it faces away from
+  const inner = 1 - room;
+  const eyeX = boxWidth * (room / 2 + (flip ? 1 - layers.eyesAt.x : layers.eyesAt.x) * inner);
+  const eyeY = boxHeight * (room + layers.eyesAt.y * inner);
+  const snooze = resting ? (
+    <Snooze x={eyeX + (flip ? -1 : 1) * width * 0.24} y={eyeY - height * 0.1} rise={height * RESTING.zRise} side={flip ? -1 : 1} reduce={reduce} awake={awake} />
+  ) : null;
   return (
     <Rise delay={reduce ? null : 0} style={[{ width: boxWidth, height: boxHeight }, style]}>
       <View
@@ -609,8 +636,52 @@ export function SpeakingCharacter({
             {drawing}
           </View>
         )}
+        {snooze}
       </View>
     </Rise>
+  );
+}
+
+/** The "z"s by a resting character's head: three at a time, each growing as it drifts up and away, then gone. */
+function Snooze({ x, y, rise, side, reduce, awake }: { x: number; y: number; rise: number; side: 1 | -1; reduce: boolean; awake: boolean }): React.JSX.Element {
+  const { colors } = useTheme();
+  const drift = useRef([new Animated.Value(0), new Animated.Value(0), new Animated.Value(0)]).current;
+  useEffect(() => {
+    if (reduce || !awake) return;
+    const loops = drift.map((value, i) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay((i * RESTING.zMs) / drift.length),
+          Animated.timing(value, { toValue: 1, duration: RESTING.zMs, easing: Easing.out(Easing.quad), useNativeDriver: true, isInteraction: false }),
+          Animated.timing(value, { toValue: 0, duration: 0, useNativeDriver: true, isInteraction: false }),
+          Animated.delay(RESTING.zMs - (i * RESTING.zMs) / drift.length),
+        ]),
+      ),
+    );
+    loops.forEach((loop) => loop.start());
+    return () => loops.forEach((loop) => loop.stop());
+  }, [reduce, awake, drift]);
+  const size = Math.max(14, rise * 0.5);
+  return (
+    <View pointerEvents="none" style={[styles.snooze, { left: x, top: y }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      {drift.map((value, i) => {
+        // under Reduce Motion, two still "z"s, the second higher and bigger
+        const still = { opacity: i === 2 ? 0 : 0.8, transform: [{ translateX: side * i * size * 0.7 }, { translateY: -i * size * 0.9 }, { scale: 0.8 + i * 0.3 }] };
+        const moving = {
+          opacity: value.interpolate({ inputRange: [0, 0.15, 0.7, 1], outputRange: [0, 0.85, 0.85, 0] }),
+          transform: [
+            { translateX: value.interpolate({ inputRange: [0, 1], outputRange: [0, side * rise * 0.45] }) },
+            { translateY: value.interpolate({ inputRange: [0, 1], outputRange: [0, -rise] }) },
+            { scale: value.interpolate({ inputRange: [0, 1], outputRange: [0.7, 1.3] }) },
+          ],
+        };
+        return (
+          <Animated.Text key={i} style={[styles.z, { fontSize: size, color: colors.textSecondary }, reduce || !awake ? still : moving]}>
+            z
+          </Animated.Text>
+        );
+      })}
+    </View>
   );
 }
 
@@ -622,4 +693,6 @@ const styles = StyleSheet.create({
   // the drawing in its box, on the foot: the whole box but in a tile
   drawn: { position: 'absolute', bottom: 0 },
   shadow: { position: 'absolute' },
+  snooze: { position: 'absolute', width: 1, height: 1, overflow: 'visible' },
+  z: { position: 'absolute', left: 0, bottom: 0, fontWeight: '800' },
 });

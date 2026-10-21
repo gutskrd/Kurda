@@ -100,6 +100,15 @@ export interface Palette {
   /** The chosen option in a segmented control: a step up from its track. */
   selectedFill: string;
 
+  /**
+   * Something not reached yet — a league above yours: its shape in a quiet
+   * grey, and the keyhole on it a step darker (lighter in the dark). Seen,
+   * so it is something to look forward to, but nothing like the colour of
+   * what has been earned. Not a control, so it is not held to 3:1.
+   */
+  locked: string;
+  lockedMark: string;
+
   /*
    * The two raised surfaces, for things that sit on the page rather than
    * float over it: a card, a tile, a row that needs a ground of its own.
@@ -179,6 +188,8 @@ export const LIGHT: Palette = {
   switchOff: '#86898F',
   switchOffThumb: '#FFFFFF',
   selectedFill: '#FFFFFF',
+  locked: '#E2E4E8',
+  lockedMark: '#A5A9B0',
 
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
@@ -224,6 +235,8 @@ export const DARK: Palette = {
   switchOff: '#686C73',
   switchOffThumb: '#FFFFFF',
   selectedFill: 'rgba(255,255,255,0.16)',
+  locked: '#262B33',
+  lockedMark: '#4D545E',
 
   surface: '#14171C',
   surfaceRaised: '#1B1F26',

@@ -69,6 +69,24 @@ export function weekEndText(endsAt: string, locale: string, timeZone?: string): 
   }
 }
 
+const DAY = 86_400_000;
+
+/**
+ * How long the week has left, in whole days and said calmly — "3 days left",
+ * "1 day left" — and on its last day the local time it closes ("Week ends
+ * Mon 01:00"). Never hours and minutes running down: a week is something to
+ * plan, not to race.
+ */
+export function weekLeftText(t: Translate, endsAt: string, locale: string, now: number = Date.now(), timeZone?: string): string {
+  const at = new Date(endsAt).getTime();
+  if (Number.isNaN(at)) return '';
+  const left = at - now;
+  if (left < DAY) return t('leagues.endsAt', { time: weekEndText(endsAt, locale, timeZone) });
+  // a day begun is a day there is still time in: 2 days and an hour is "3 days left"
+  const days = Math.ceil(left / DAY);
+  return days === 1 ? t('leagues.dayLeft') : t('leagues.daysLeft', { count: days });
+}
+
 /** 0…1 of the weekly goal. */
 export function goalFraction(xp: number, goal: number): number {
   if (goal <= 0) return 1;
