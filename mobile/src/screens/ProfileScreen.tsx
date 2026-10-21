@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigation, useScrollToTop } from '@react-navigation/native';
-import { ActivityIndicator, Image, Pressable, ScrollView, Share, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { useCallback, useRef, useState } from 'react';
+import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
+import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -8,7 +8,7 @@ import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
 import { LinearGradient } from 'expo-linear-gradient';
-import { statValue, statCaption, display } from '../theme/fonts';
+import { statValue, statCaption } from '../theme/fonts';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
@@ -28,10 +28,13 @@ import { ProfileActivity } from '../profile/ProfileActivity';
 import { uploadProfilePhoto } from '../profile/photoUpload';
 import { useSendErrorAlert } from '../reports/SendError';
 import { useI18n } from '../i18n/I18nContext';
-import { learningStats, type Streak } from '../streak/format';
+import type { Streak } from '../streak/format';
+import { StreakSheet } from '../streak/StreakSheet';
+import { formatNumber } from '../i18n/format';
+import { Icon } from '../theme/Icon';
 
-/** How big the face is: the largest thing on the screen, and no larger. */
-const AVATAR = 96;
+/** How big the face is: the largest thing on the screen, beside the numbers, with room for three of them on the smallest phone. */
+const AVATAR = 86;
 /** The face with a season frame round it: the frame's ring sits outside the face, which stays the same size. */
 const FRAMED = Math.round(AVATAR / SEASON_FRAME_INNER);
 
@@ -98,6 +101,10 @@ export function ProfileScreen() {
   } | null>(null);
   const [iconsOwned, setIconsOwned] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [streakOpen, setStreakOpen] = useState(false);
+  // a pull down the page: everything below is asked for again
+  const [refreshing, setRefreshing] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
   const { t, locale } = useI18n();
   const showSendError = useSendErrorAlert();
 
@@ -110,54 +117,65 @@ export function ProfileScreen() {
    * count from /friends and what you own from /me/inventory. The browser
    * loads exactly these.
    */
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      const [m, w, f, inv] = await Promise.all([
-        client.get<{ user: Me }>('/me'),
-        client.get<{ balances: { zer: number } }>('/me/wallet'),
-        client.get<{ friends: unknown[]; total?: number }>('/friends?limit=1'),
-        client.get<{ items: { category: string }[] }>('/me/inventory'),
-      ]);
-      if (!active) return;
-      setSettled(true);
-      if (m.ok) {
-        setMe(m.data.user);
-        setStreak(m.data.user.streak);
-        setPhotoUrl(m.data.user.profilePhotoUrl ?? null);
-      }
-      if (w.ok) setZer(w.data.balances.zer);
-      // an API that predates paging sends no total — it sent the whole list
-      if (f.ok) setFriends(f.data.total ?? f.data.friends.length);
-      if (inv.ok) setIconsOwned((inv.data.items ?? []).filter((i) => i.category === 'icon').length);
-
-      /*
-       * Your ranks, league, showcase and season frame.
-       *
-       * `/me` does not carry them, and the public profile endpoint already
-       * works them out the same way it does for everybody else — so this asks
-       * for your own public profile rather than adding a second way to
-       * compute them. The browser does exactly this. (It used to ask for a
-       * frozen all-time "#rank", which Game Ranks replaced.)
-       */
-      const id = m.ok ? m.data.user.id : null;
-      if (id) {
-        const p = await client.get<{
-          ranks?: ProfileRank[];
-          league?: ProfileLeague | null;
-          badges?: ShowcaseBadge[];
-          frameSku?: string | null;
-        }>(`/users/${id}`);
-        if (active && p.ok) {
-          setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null });
+  /*
+   * Asked for again each time the tab comes back into view, and on a pull:
+   * a new name or picture saved in Edit Profile, Zêr spent in the shop or XP
+   * from a lesson shows the moment you return, not the next time the app
+   * starts. What is on the screen stays there while the new answers come in.
+   */
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void (async () => {
+        const [m, w, f, inv] = await Promise.all([
+          client.get<{ user: Me }>('/me'),
+          client.get<{ balances: { zer: number } }>('/me/wallet'),
+          client.get<{ friends: unknown[]; total?: number }>('/friends?limit=1'),
+          client.get<{ items: { category: string }[] }>('/me/inventory'),
+        ]);
+        if (!active) return;
+        setSettled(true);
+        if (m.ok) {
+          setMe(m.data.user);
+          setStreak(m.data.user.streak);
+          setPhotoUrl(m.data.user.profilePhotoUrl ?? null);
         }
-      }
-      if (active) setProgressSettled(true);
-    })();
-    return () => {
-      active = false;
-    };
-  }, [client]);
+        if (w.ok) setZer(w.data.balances.zer);
+        // an API that predates paging sends no total — it sent the whole list
+        if (f.ok) setFriends(f.data.total ?? f.data.friends.length);
+        if (inv.ok) setIconsOwned((inv.data.items ?? []).filter((i) => i.category === 'icon').length);
+
+        /*
+         * Your ranks, league, showcase and season frame.
+         *
+         * `/me` does not carry them, and the public profile endpoint already
+         * works them out the same way it does for everybody else — so this asks
+         * for your own public profile rather than adding a second way to
+         * compute them. The browser does exactly this. (It used to ask for a
+         * frozen all-time "#rank", which Game Ranks replaced.)
+         */
+        const id = m.ok ? m.data.user.id : null;
+        if (id) {
+          const p = await client.get<{
+            ranks?: ProfileRank[];
+            league?: ProfileLeague | null;
+            badges?: ShowcaseBadge[];
+            frameSku?: string | null;
+          }>(`/users/${id}`);
+          if (active && p.ok) {
+            setProgress({ ranks: p.data.ranks ?? [], league: p.data.league ?? null, badges: p.data.badges ?? [], frameSku: p.data.frameSku ?? null });
+          }
+        }
+        if (active) {
+          setProgressSettled(true);
+          setRefreshing(false);
+        }
+      })();
+      return () => {
+        active = false;
+      };
+    }, [client, reloadKey]),
+  );
 
   const changePhoto = useCallback(async () => {
     if (uploading) return;
@@ -232,6 +250,16 @@ export function ProfileScreen() {
         ref={scrollRef}
         contentContainerStyle={[styles.content, { paddingTop: topInset, paddingBottom: tabBarInset }]}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              setRefreshing(true);
+              setReloadKey((k) => k + 1);
+            }}
+            tintColor={colors.textSecondary}
+          />
+        }
       >
         {/*
           Who this is, at the top, and the menu at the end: the shop, settings,
@@ -239,126 +267,104 @@ export function ProfileScreen() {
           dot on it, the same dot that is on the tab.
         */}
         <View style={[styles.topBar, { flexDirection: dir.row }]}>
-          <View style={styles.topSide} />
-          <Text style={[styles.topName, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
-            @{me?.username ?? user?.username}
+          <Text style={[styles.topName, dir.text, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
+            {me?.username ?? user?.username}
           </Text>
-          <View style={[styles.topSide, { alignItems: dir.row === 'row-reverse' ? 'flex-start' : 'flex-end' }]}>
-            <HeaderButton
-              icon="menu"
-              label={counts.gifts > 0 ? t('nav.menuWaiting') : t('nav.menu')}
-              dot={counts.gifts > 0}
-              onPress={openMenu}
-              edge="end"
-              testID="profile-menu"
+          <HeaderButton
+            icon="menu"
+            label={counts.gifts > 0 ? t('nav.menuWaiting') : t('nav.menu')}
+            dot={counts.gifts > 0}
+            onPress={openMenu}
+            edge="end"
+            testID="profile-menu"
+          />
+        </View>
+
+        {/*
+          The face, and beside it the three numbers that answer "how am I
+          doing": the arrangement a profile is read in everywhere, the eye
+          going from the face straight to the numbers.
+        */}
+        <View style={[styles.head, { flexDirection: dir.row }]}>
+          <Pressable onPress={changePhoto} accessibilityRole="button" accessibilityLabel={t('profile.changePhoto')}>
+            {frameTier ? (
+              // the season frame rings the face; the face and its icon stay their own size inside it
+              <SeasonFramed tier={frameTier} size={FRAMED} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTier]) })}>
+                <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={photoUrl} />
+                {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
+              </SeasonFramed>
+            ) : (
+              <>
+                <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={photoUrl} />
+                {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
+              </>
+            )}
+            {uploading ? (
+              <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
+                <ActivityIndicator color="#FFFFFF" />
+              </View>
+            ) : null}
+          </Pressable>
+
+          {/*
+            The friend count opens the friends, the way a friend count does
+            everywhere; the streak opens its whole story, with the numbers a
+            missed day never takes away. The level is a number about you with
+            nothing behind it, so it is not pressable — a control that looks
+            tappable and is not is worse than one that never did.
+          */}
+          <View style={[styles.stats, { flexDirection: dir.row }]}>
+            <Stat
+              label={t('nav.friends')}
+              value={friends === null ? '—' : formatNumber(friends, locale)}
+              loading={!settled}
+              onPress={() => navigation.navigate('Friends')}
+            />
+            <Stat label={t('profile.stat.level')} value={formatNumber(me?.level?.level ?? 1, locale)} loading={!settled} />
+            <Stat
+              label={t('profile.stat.streak')}
+              value={formatNumber(streak?.current ?? 0, locale)}
+              loading={!settled}
+              onPress={streak ? () => setStreakOpen(true) : undefined}
+              icon={streak && streak.current > 0 ? 'flame' : undefined}
             />
           </View>
         </View>
 
-        <Pressable
-          onPress={changePhoto}
-          accessibilityRole="button"
-          accessibilityLabel={t('profile.changePhoto')}
-          style={styles.avatarWrap}
-        >
-          {frameTier ? (
-            // the season frame rings the face; the face and its icon stay their own size inside it
-            <SeasonFramed tier={frameTier} size={FRAMED} label={t('season.frameOf', { tier: t(TIER_NAME_KEY[frameTier]) })}>
-              <InitialsAvatar name={user?.displayName ?? user?.username ?? ''} id={user?.id ?? ''} size={AVATAR} photoUrl={photoUrl} />
-              {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
-            </SeasonFramed>
-          ) : (
-            <>
-              <InitialsAvatar
-                name={user?.displayName ?? user?.username ?? ''}
-                id={user?.id ?? ''}
-                size={AVATAR}
-                photoUrl={photoUrl}
-              />
-              {me?.icon ? <IconOverlay icon={me.icon} size={AVATAR} /> : null}
-            </>
-          )}
-          {uploading ? (
-            <View style={[styles.avatarOverlay, { backgroundColor: colors.scrim }]}>
-              <ActivityIndicator color="#FFFFFF" />
+        {/* the name, where they are from and who they are, in their own words, under the face */}
+        <View style={styles.about}>
+          <View style={[styles.nameRow, { flexDirection: dir.row }]}>
+            <Text style={[styles.name, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
+              {me?.displayName ?? user?.displayName ?? user?.username}
+            </Text>
+            {me?.premium ? <PremiumPill /> : null}
+          </View>
+          {country ? (
+            <View style={[styles.country, { flexDirection: dir.row }]}>
+              <Image source={{ uri: flagUrl(me!.country!) }} style={styles.flag} resizeMode="contain" accessibilityElementsHidden />
+              <Text style={[styles.countryName, { color: colors.textSecondary }]}>{country}</Text>
             </View>
           ) : null}
-        </Pressable>
-
-        <View style={styles.nameRow}>
-          <Text style={[styles.name, { color: colors.textPrimary }]} numberOfLines={1}>
-            {me?.displayName ?? user?.displayName ?? user?.username}
-          </Text>
-          {me?.premium ? <PremiumPill /> : null}
+          {me?.bio ? <Text style={[styles.bio, dir.text, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
+          {!settled ? (
+            <SkeletonText size={typography.sizes.xs} width={160} />
+          ) : aside.length > 0 ? (
+            <Text style={[styles.aside, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
+              {aside.join('  ·  ')}
+            </Text>
+          ) : null}
         </View>
-
-        {country ? (
-          <View style={styles.country}>
-            <Image
-              source={{ uri: flagUrl(me!.country!) }}
-              style={styles.flag}
-              resizeMode="contain"
-              accessibilityElementsHidden
-            />
-            <Text style={[styles.countryName, { color: colors.textSecondary }]}>{country}</Text>
-          </View>
-        ) : null}
-
-        {/*
-          Three numbers with a hairline between them.
-
-          That divider is one of the few lines left in this app and it earns
-          its place: three numbers side by side with only space between them
-          read as one number in three parts. It is drawn in `separator`, which
-          is what a boundary between two regions is drawn in everywhere else.
-        */}
-        <View style={styles.stats}>
-          {/*
-            The friend count opens the friends, the way a follower count does
-            everywhere else. The other two are numbers about you and there is
-            nothing behind them to open, so they are not pressable — a control
-            that looks tappable and is not is worse than one that never did.
-          */}
-          <Stat
-            label={t('nav.friends')}
-            value={friends === null ? '—' : String(friends)}
-            loading={!settled}
-            onPress={() => navigation.navigate('Friends')}
-          />
-          <View style={[styles.statDivider, { backgroundColor: colors.separator }]} />
-          <Stat label={t('profile.stat.level')} value={String(me?.level?.level ?? 1)} loading={!settled} />
-          <View style={[styles.statDivider, { backgroundColor: colors.separator }]} />
-          <Stat label={t('profile.stat.streak')} value={String(streak?.current ?? 0)} loading={!settled} />
-        </View>
-
-        {!settled ? (
-          <SkeletonText size={typography.sizes.sm} width={180} align="center" style={styles.asideSkeleton} />
-        ) : aside.length > 0 ? (
-          <Text style={[styles.aside, { color: colors.textSecondary }]} numberOfLines={1}>
-            {aside.join('  ·  ')}
-          </Text>
-        ) : null}
-
-        {/*
-          Beside the streak, which one missed day takes to zero: the two
-          numbers a missed day never takes away, and the freezes learning has
-          earned. Smaller than the three above — they answer "how far have I
-          come", which is the question to ask after a lapse, not the first one.
-        */}
-        {streak ? <LearningRow streak={streak} /> : !settled ? <LearningRowSkeleton /> : null}
-
-        {/* who they are, in their own words, before what can be done with the page */}
-        {me?.bio ? <Text style={[styles.bio, { color: colors.textPrimary }]}>{me.bio}</Text> : null}
 
         {/*
           The two things people do with their own profile, side by side and
           the same size: change it, and send it to somebody.
         */}
-        <View style={styles.actions}>
+        <View style={[styles.actions, { flexDirection: dir.row }]}>
           <Pressable
             onPress={() => navigation.navigate('EditProfile')}
             accessibilityRole="button"
             accessibilityLabel={t('profile.edit')}
+            hitSlop={{ top: 4, bottom: 4 }}
             style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -369,6 +375,7 @@ export function ProfileScreen() {
             onPress={share}
             accessibilityRole="button"
             accessibilityLabel={t('profile.share')}
+            hitSlop={{ top: 4, bottom: 4 }}
             style={({ pressed }) => [styles.action, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
           >
             <Text style={[styles.actionText, { color: colors.textPrimary }]} numberOfLines={1}>
@@ -403,71 +410,28 @@ export function ProfileScreen() {
         {me?.favoritePoem ? <FavoriteRow label={t('profile.favoritePoem')} title={me.favoritePoem.title} /> : null}
         {me?.favoriteStory ? <FavoriteRow label={t('profile.favoriteStory')} title={me.favoriteStory.title} /> : null}
 
-        {user?.id ? <ProfileActivity userId={user.id} own /> : null}
+        {user?.id ? <ProfileActivity key={reloadKey} userId={user.id} own /> : null}
       </ScrollView>
+      <StreakSheet streak={streakOpen ? streak : null} onClose={() => setStreakOpen(false)} />
     </GradientBackground>
   );
 }
 
-/** The longest run, the days learned and the freezes, with how a freeze is earned. */
-function LearningRow({ streak }: { streak: Streak }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const stats = learningStats(streak);
-  const cells = [
-    { label: t('profile.stat.longestStreak'), value: stats.longest },
-    { label: t('profile.stat.daysLearned'), value: stats.daysLearned },
-    { label: t('profile.stat.freezes'), value: stats.freezes },
-  ];
-  return (
-    <View style={styles.learning}>
-      <View style={styles.learningRow}>
-        {cells.map((cell) => (
-          <View
-            key={cell.label}
-            style={styles.learningCell}
-            accessible
-            accessibilityLabel={`${cell.value} ${cell.label}`}
-          >
-            <Text style={[styles.learningValue, { color: colors.textPrimary }]}>{cell.value.toLocaleString()}</Text>
-            <Text style={[styles.learningLabel, { color: colors.textSecondary }]} numberOfLines={2}>
-              {cell.label}
-            </Text>
-          </View>
-        ))}
-      </View>
-      <Text style={[styles.learningHint, { color: colors.textSecondary }]}>
-        {t('profile.freezeHint', { count: stats.sessionsPerFreeze })}
-      </Text>
-    </View>
-  );
-}
-
-/** The three cells and the line under them, in grey, at their own sizes. */
-function LearningRowSkeleton(): React.JSX.Element {
-  const { width } = useWindowDimensions();
-  return (
-    <View style={styles.learning}>
-      <View style={styles.learningRow}>
-        {[0, 1, 2].map((i) => (
-          <View key={i} style={styles.learningCell}>
-            <SkeletonText size={typography.sizes.md} width={28} align="center" />
-            <SkeletonText size={typography.sizes.xs} width={64} align="center" />
-          </View>
-        ))}
-      </View>
-      {/* the hint runs to three lines across a phone and two across a tablet */}
-      <View>
-        {(width >= 600 ? (['84%', '50%'] as const) : (['94%', '92%', '56%'] as const)).map((w) => (
-          <SkeletonText key={w} size={typography.sizes.xs} lineHeight={16} width={w} align="center" />
-        ))}
-      </View>
-    </View>
-  );
-}
-
 /** One of the three: the number, then what it counts. */
-function Stat({ label, value, onPress, loading = false }: { label: string; value: string; onPress?: () => void; loading?: boolean }): React.JSX.Element {
+function Stat({
+  label,
+  value,
+  onPress,
+  loading = false,
+  icon,
+}: {
+  label: string;
+  value: string;
+  onPress?: () => void;
+  loading?: boolean;
+  /** a glyph before the number: the lit flame beside a streak */
+  icon?: 'flame';
+}): React.JSX.Element {
   const { colors } = useTheme();
   const body = (
     <>
@@ -475,9 +439,12 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
         // the number's own line, held: a 0 or a 1 shown before the real one arrives reads as the real one
         <SkeletonText size={typography.sizes.lg} width={28} align="center" />
       ) : (
-        <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
-          {value}
-        </Text>
+        <View style={styles.statLine}>
+          {icon ? <Icon name={icon} size={16} color={colors.goldText} /> : null}
+          <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
+            {value}
+          </Text>
+        </View>
       )}
       <Text style={[styles.statLabel, { color: colors.textSecondary }]} numberOfLines={1}>
         {label}
@@ -498,17 +465,15 @@ function Stat({ label, value, onPress, loading = false }: { label: string; value
 }
 
 const styles = StyleSheet.create({
-  content: { alignItems: 'center', paddingHorizontal: layout.gutter, gap: spacing.sm },
+  content: { paddingHorizontal: layout.gutter, gap: spacing.sm },
   // full-bleed behind the header; the scrim sits on top of it at the same size
   cosmeticBg: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
   cosmeticScrim: { position: 'absolute', top: 0, left: 0, right: 0, height: 320 },
 
-  // equal sides, so the name between them is centred whatever is at the end
-  topBar: { alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET },
-  topSide: { width: MIN_TOUCH_TARGET },
-  topName: { flex: 1, textAlign: 'center', fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  topBar: { alignSelf: 'stretch', alignItems: 'center', minHeight: MIN_TOUCH_TARGET },
+  topName: { flex: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
 
-  avatarWrap: { marginTop: spacing.sm },
+  head: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.lg, marginTop: spacing.xs },
   avatarOverlay: {
     position: 'absolute',
     top: 0,
@@ -520,41 +485,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 
-  nameRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },
-  name: { ...display(typography.sizes.xl) },
-  country: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  // the three numbers share what is left beside the face, evenly
+  stats: { flex: 1, justifyContent: 'space-around' },
+  stat: { alignItems: 'center', gap: 2, minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
+  statLine: { flexDirection: 'row', alignItems: 'center', gap: 2 },
+  statValue,
+  statLabel: statCaption,
+
+  about: { alignSelf: 'stretch', gap: 4, marginTop: spacing.sm + 4 },
+  nameRow: { alignItems: 'center', gap: spacing.sm },
+  name: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, flexShrink: 1 },
+  country: { alignItems: 'center', gap: spacing.xs },
   // the browser draws a plain 22x16 image and so does this; a corner radius on
   // something this small is a rounding error rather than a shape
   flag: { width: 22, height: 16 },
   countryName: { fontSize: typography.sizes.sm },
-
-  stats: { flexDirection: 'row', alignItems: 'center', marginTop: spacing.md },
-  stat: { alignItems: 'center', gap: 2, paddingHorizontal: spacing.lg },
-  statValue,
-  statLabel: statCaption,
-  statDivider: { width: StyleSheet.hairlineWidth, height: 28 },
-
-  aside: { fontSize: typography.sizes.sm, marginTop: spacing.xs },
-  asideSkeleton: { marginTop: spacing.xs },
+  bio: { fontSize: typography.sizes.sm, lineHeight: 20 },
+  aside: { fontSize: typography.sizes.xs },
   showcaseSkeleton: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
 
-  learning: { alignSelf: 'stretch', marginTop: spacing.sm, gap: spacing.sm },
-  learningRow: { flexDirection: 'row', justifyContent: 'center' },
-  learningCell: { flex: 1, alignItems: 'center', gap: 2, paddingHorizontal: spacing.xs },
-  learningValue: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  learningLabel: { fontSize: typography.sizes.xs, textAlign: 'center' },
-  learningHint: { fontSize: typography.sizes.xs, textAlign: 'center', lineHeight: 16 },
-
-  actions: { alignSelf: 'stretch', flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md },
+  actions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.md },
+  // 36 tall, as a profile's buttons are, and 44 to the finger with the slop above and below
   action: {
     flex: 1,
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.pill,
+    minHeight: 36,
+    borderRadius: radii.sm,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: spacing.md,
   },
-  actionText: { fontSize: typography.ios.button, fontWeight: typography.weights.semibold },
-
-  bio: { fontSize: typography.sizes.md, textAlign: 'center', marginTop: spacing.sm },
+  actionText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });
