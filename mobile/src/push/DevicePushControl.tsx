@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, StyleSheet, Text, View } from 'react-native';
+import { AppState, View } from 'react-native';
 import { useI18n } from '../i18n/I18nContext';
-import { sectionLabel } from '../theme/fonts';
-import { ClayButton } from '../theme/glass';
-import { Icon } from '../theme/Icon';
-import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
+import { SettingsBand, SettingsRow, SettingsSection } from '../settings/list';
 import { openPhoneSettings, pushSupported, readPermission, requestPermission } from './device';
 import { settingsAction, type PushPermissionState } from './permission';
 
@@ -19,7 +15,6 @@ import { settingsAction, type PushPermissionState } from './permission';
  * push.
  */
 export function DevicePushControl(): React.JSX.Element | null {
-  const { colors } = useTheme();
   const { t } = useI18n();
   const [state, setState] = useState<PushPermissionState | null>(null);
   const [asking, setAsking] = useState(false);
@@ -59,34 +54,24 @@ export function DevicePushControl(): React.JSX.Element | null {
 
   return (
     <>
-      <Text style={[styles.section, { color: colors.textSecondary }]}>{t('notifications.device.title')}</Text>
-      <View style={[styles.card, { backgroundColor: colors.controlTrack }]}>
-        <View style={styles.row}>
-          <Icon
-            name={state.status === 'granted' ? 'check' : 'bell'}
-            size={20}
-            color={state.status === 'granted' ? colors.success : colors.textSecondary}
+      <SettingsSection title={t('notifications.device.title')} first>
+        <View accessibilityLiveRegion="polite">
+          <SettingsRow
+            icon={state.status === 'granted' ? 'check' : 'bell'}
+            title={line}
           />
-          <Text style={[styles.line, { color: colors.textPrimary }]} accessibilityLiveRegion="polite">
-            {line}
-          </Text>
         </View>
         {action !== 'none' ? (
-          <ClayButton
-            label={action === 'request' ? t('notifications.device.allow') : t('notifications.device.openSettings')}
-            tone="primary"
-            busy={asking}
-            onPress={() => void press()}
+          <SettingsRow
+            icon={action === 'request' ? 'bell' : 'gear'}
+            title={action === 'request' ? t('notifications.device.allow') : t('notifications.device.openSettings')}
+            opens={action === 'openSettings'}
+            onPress={asking ? undefined : () => void press()}
           />
         ) : null}
-      </View>
+      </SettingsSection>
+      {/* the switches come next: a band between, as between any two sections */}
+      <SettingsBand />
     </>
   );
 }
-
-const styles = StyleSheet.create({
-  section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
-  card: { gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md },
-  row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, minHeight: 32 },
-  line: { flex: 1, fontSize: typography.sizes.md },
-});

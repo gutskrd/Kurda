@@ -3,6 +3,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import type { AlphabetScript, RankedGame } from '@kurda/shared';
 import type { LearnView } from './tabs';
+import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
 /**
  * The five tabs and what each can be opened with.
@@ -66,6 +67,8 @@ export type RootStackParamList = {
   NotificationCenter: undefined;
   Appearance: undefined;
   Settings: undefined;
+  /** One page of Settings behind a row: language, theme, sounds, keyboard, leagues, profile visibility, credits (settings/SettingsPageScreen). */
+  SettingsPage: { page: SettingsPageKey };
   BlockedUsers: undefined;
   /** Your reports and what became of them (reports/MyReportsScreen). */
   MyReports: undefined;

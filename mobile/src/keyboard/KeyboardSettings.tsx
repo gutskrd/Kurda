@@ -4,8 +4,8 @@ import { BottomSheet } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { sectionLabel } from '../theme/fonts';
-import { GlassCard, GlassRow, Segmented } from '../theme/glass';
+import { GlassRow } from '../theme/glass';
+import { SettingsChoice, SettingsRow, SettingsSection, SettingsSwitch } from '../settings/list';
 import { Icon } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -20,7 +20,7 @@ export const ACCENT_LABEL: Record<AccentMode, TranslationKey> = {
   hidden: 'keyboard.accent.hidden',
 };
 
-const ACCENT_HINT: Record<AccentMode, TranslationKey> = {
+export const ACCENT_HINT: Record<AccentMode, TranslationKey> = {
   strict: 'keyboard.accent.strictHint',
   forgiving: 'keyboard.accent.forgivingHint',
   hidden: 'keyboard.accent.hiddenHint',
@@ -125,11 +125,11 @@ export function KeyboardSettingsSheet({
 }
 
 /**
- * The same settings in Settings, with Peyvok's layout and the keyboard guide —
- * one line in SettingsScreen, so the screen's other sections are untouched.
+ * The same settings as a page of Settings, with Peyvok's layout and the
+ * keyboard guide: each choice a row with what it means under it, each switch
+ * a row, as the rest of Settings is.
  */
-export function KeyboardSettingsSection(): React.JSX.Element {
-  const { colors } = useTheme();
+export function KeyboardSettingsList(): React.JSX.Element {
   const { t, locale } = useI18n();
   const [prefs, setPrefs] = useKeyboardPrefs();
   const [guide, setGuide] = useState(false);
@@ -137,26 +137,50 @@ export function KeyboardSettingsSection(): React.JSX.Element {
   const dialect: TypingDialect = prefs.raceDialect ?? (locale === 'ckb' ? 'sorani' : 'kurmanci');
   return (
     <>
-      <Text style={[styles.section, { color: colors.textSecondary }]}>{t('keyboard.settings.title')}</Text>
-      <GlassCard>
-        <TypingOptions />
-        {/* two choices side by side, both always readable: a picker row cut them short on a phone */}
-        <Text style={[styles.label, styles.spaced, { color: colors.textSecondary }]}>{t('keyboard.wordle.title')}</Text>
-        <Segmented<WordleLayout>
+      <SettingsSection title={t('keyboard.accent.title')} first>
+        <SettingsChoice<AccentMode>
+          label={t('keyboard.accent.title')}
+          options={ACCENT_MODES}
+          value={prefs.accentMode}
+          labelOf={(mode) => t(ACCENT_LABEL[mode])}
+          hintOf={(mode) => t(ACCENT_HINT[mode])}
+          onChange={(mode) => setPrefs({ accentMode: mode })}
+        />
+      </SettingsSection>
+      <SettingsSection title={t('keyboard.settings.typing')}>
+        <SettingsSwitch
+          icon="keyboard"
+          title={t('keyboard.keyBar.title')}
+          subtitle={t('keyboard.keyBar.hint')}
+          value={prefs.keyBar}
+          onValueChange={(on) => setPrefs({ keyBar: on })}
+        />
+        <SettingsSwitch
+          icon="text"
+          title={t('keyboard.backtick.title')}
+          subtitle={t('keyboard.backtick.hint')}
+          value={prefs.backtick}
+          onValueChange={(on) => setPrefs({ backtick: on })}
+        />
+      </SettingsSection>
+      <SettingsSection title={t('keyboard.wordle.title')}>
+        <SettingsChoice<WordleLayout>
+          label={t('keyboard.wordle.title')}
           options={LAYOUTS}
           value={prefs.wordleLayout}
           labelOf={(l) => t(LAYOUT_LABEL[l])}
           onChange={(l) => setPrefs({ wordleLayout: l })}
         />
-        <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
-      </GlassCard>
+      </SettingsSection>
+      <SettingsSection>
+        <SettingsRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
+      </SettingsSection>
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  section: { ...sectionLabel, marginTop: spacing.md, marginLeft: spacing.xs, marginBottom: spacing.xs },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
   modes: { gap: spacing.sm, marginBottom: spacing.sm },
   mode: { borderRadius: radii.md, padding: spacing.md, gap: 2, borderWidth: 1.5, minHeight: MIN_TOUCH_TARGET },
@@ -164,7 +188,6 @@ const styles = StyleSheet.create({
   modeName: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
   modeHint: { fontSize: typography.sizes.sm, lineHeight: 19 },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19, marginBottom: spacing.sm },
-  spaced: { marginTop: spacing.md },
   // the gutter is the ScrollView's own, so the options scroll edge to edge
   scroller: { paddingHorizontal: 0 },
   sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.xs },

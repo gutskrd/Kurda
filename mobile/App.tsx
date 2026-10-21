@@ -79,6 +79,7 @@ import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SettingsPageScreen } from './src/settings/SettingsPageScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
 import { MyReportsScreen } from './src/reports/MyReportsScreen';
 import { AccountStandingScreen } from './src/reports/AccountStandingScreen';
@@ -405,6 +406,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={{ presentation: 'card' }}>
         {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="SettingsPage" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Wordle" options={{ presentation: 'card' }}>
         {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}

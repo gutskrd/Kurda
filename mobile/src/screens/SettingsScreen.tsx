@@ -1,112 +1,59 @@
-import { useCallback, useState } from 'react';
-import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
-import { Toggle, useSwitchThumb } from '../theme/Toggle';
+import { Fragment, useState, type ReactNode } from 'react';
+import { foldForSearch } from '@kurda/shared';
+import { useNavigation } from '@react-navigation/native';
+import { Alert, StyleSheet, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { sectionLabel } from '../theme/fonts';
-import { GlassCard, GlassRow, GlassSelect, GradientBackground } from '../theme/glass';
+import { layout, spacing } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
-import { ScreenHeader } from '../navigation/ScreenHeader';
-import { THEME_PREFERENCES, PREFERENCE_LABEL } from '../theme/appearance';
-import { useEventTheme } from '../theme/EventThemeContext';
+import { PREFERENCE_LABEL } from '../theme/appearance';
 import { useI18n } from '../i18n/I18nContext';
-import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
-import { VISIBILITIES, VISIBILITY_HINT, VISIBILITY_LABEL, visibilityOffered, type Visibility } from '../social/format';
-import { CREDIT_LINES } from './credits';
-import { KeyboardSettingsSection } from '../keyboard/KeyboardSettings';
+import { LOCALE_LABEL } from '../i18n/translations';
+import { VISIBILITY_LABEL } from '../social/format';
+import { ACCENT_LABEL } from '../keyboard/KeyboardSettings';
+import { useKeyboardPrefs } from '../keyboard/prefs';
 import { FeedbackSettingsRows } from '../feedback/FeedbackSettings';
-import { useVibrationPref } from '../feedback/vibrationPref';
-import { useSoundPref } from '../feedback/soundPref';
-import { playSound } from '../feedback/sounds';
-import { haptic } from '../feedback/haptics';
-import { SkeletonText } from '../theme/Skeleton';
+import { SearchField } from '../theme/SearchField';
 import { LEGAL_URLS, SUPPORT_EMAIL, openLegal } from '../legal/links';
+import { useMyAccount } from '../settings/account';
+import type { SettingsPageKey } from '../settings/SettingsPageScreen';
+import { SettingsNote, SettingsPage, SettingsRow, SettingsSection, useOnOff } from '../settings/list';
 
 /** The website's copyright page: a notice, counter-notices and the repeat-infringer policy. */
 export const COPYRIGHT_URL = LEGAL_URLS.copyright;
 
+/** One row of the list, and the words it can be found by. */
+interface Entry {
+  key: string;
+  /** its name and value, and the names of what is on the page behind it */
+  terms: Array<string | undefined>;
+  row: ReactNode;
+}
+
 /**
- * Settings hub (KUR-270). One place for preferences, notifications, privacy and
- * account actions — pulled off the Profile identity screen so each does one job.
- * Grouped into labelled glass sections following the iOS Settings pattern.
+ * Settings: one list, in a few short sections, each row saying what it is set
+ * to now.
+ *
+ * The order is how often each is wanted and how much it matters: the account
+ * first, where people look for it; then how the app behaves; then who can see
+ * you; then help and the fine print; and at the very end, apart from the rest,
+ * the rows that sign you out or delete the account, so nobody reaches them
+ * while looking for something else. Every choice with more than one answer is
+ * a page of its own, where each answer says what it means.
+ *
+ * The search at the top finds a row by its name, its value, or the name of
+ * anything on the page behind it ("accent" finds Keyboard and accents).
  */
 export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client, logout, deleteAccount } = useAuth();
   const navigation = useNavigation<RootNavigation>();
-  const { colors, preference, setPreference } = useTheme();
-  const { optedOut, setOptedOut } = useEventTheme();
-  const { t, locale, setLocale } = useI18n();
-  const [visibility, setVisibility] = useState<Visibility>('everyone');
-  const [username, setUsername] = useState<string | null>(null);
-  // 13–17 as the server works it out today; it decides what is offered here
-  const [minor, setMinor] = useState(false);
-  // null until /me answers, so the switch never shows a guess
-  const [leagues, setLeagues] = useState<boolean | null>(null);
-  // until /me answers, no visibility is shown as chosen and its sentence is held in grey: a guess that then flips reads as a change
-  const [loaded, setLoaded] = useState(false);
-  // on this phone only (feedback/vibrationPref.ts)
-  const [vibration, setVibration] = useVibrationPref();
-  const vibrationThumb = useSwitchThumb(vibration);
-  const [sounds, setSounds] = useSoundPref();
-  const soundsThumb = useSwitchThumb(sounds);
-
-  // Profile visibility, username, age and leagues live server-side on /me; load
-  // them so the hub reflects the saved values rather than defaulting every
-  // time it opens.
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void client
-        .get<{
-          user: { profileVisibility: Visibility; username: string; minor?: boolean; leaguesEnabled?: boolean };
-        }>('/me')
-        .then((res) => {
-          if (active) setLoaded(true);
-          if (active && res.ok) {
-            setVisibility(res.data.user.profileVisibility);
-            setUsername(res.data.user.username);
-            setMinor(res.data.user.minor === true);
-            setLeagues(res.data.user.leaguesEnabled !== false);
-          }
-        });
-      return () => {
-        active = false;
-      };
-    }, [client]),
-  );
-
-  const changeVisibility = (v: Visibility) => {
-    if (!visibilityOffered(v, minor)) return;
-    if (v !== visibility) haptic('select');
-    const before = visibility;
-    setVisibility(v);
-    void client.put('/me/privacy', { visibility: v }).then((res) => {
-      if (!res.ok) {
-        setVisibility(before);
-        Alert.alert(t('settings.privacy.title'), describeError(res.error, t));
-      }
-    });
-  };
-
-  /**
-   * In or out of the weekly leagues, in one tap. A league ranks you against
-   * strangers by XP every week, which suits some people and puts others off
-   * learning; leaving takes you out of this week's table at once and changes
-   * nothing else you have earned.
-   */
-  const changeLeagues = (on: boolean) => {
-    setLeagues(on);
-    void client.patch('/me', { leaguesEnabled: on }).then((res) => {
-      if (!res.ok) {
-        setLeagues(!on);
-        Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
-      }
-    });
-  };
+  const { preference } = useTheme();
+  const { t, locale } = useI18n();
+  const [keyboard] = useKeyboardPrefs();
+  const account = useMyAccount();
+  const onOff = useOnOff();
+  const [query, setQuery] = useState('');
 
   /**
    * Sign out on every device, including this one.
@@ -147,288 +94,230 @@ export function SettingsScreen({ onExit }: { onExit: () => void }): React.JSX.El
   // Apple-required in-app account deletion (KUR-275). Server keeps a 14-day
   // grace window — signing back in cancels it — so we warn, then sign out.
   const confirmDelete = () => {
-    Alert.alert(
-      t('settings.delete.confirmTitle'),
-      t('settings.delete.warning'),
-      [
-        { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('settings.delete.confirm'),
-          style: 'destructive',
-          onPress: () => {
-            void deleteAccount().then((err) => {
-              if (err) Alert.alert(t('settings.delete.failed'), err);
-            });
-          },
+    Alert.alert(t('settings.delete.confirmTitle'), t('settings.delete.warning'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      {
+        text: t('settings.delete.confirm'),
+        style: 'destructive',
+        onPress: () => {
+          void deleteAccount().then((err) => {
+            if (err) Alert.alert(t('settings.delete.failed'), err);
+          });
         },
-      ],
-    );
+      },
+    ]);
   };
 
-  const Pill = ({
-    label,
-    active,
-    onPress,
-    disabled = false,
-  }: {
-    label: string;
-    active: boolean;
-    onPress: () => void;
-    disabled?: boolean;
-  }) => (
-    <Pressable
-      onPress={onPress}
-      disabled={disabled}
-      accessibilityRole="button"
-      accessibilityState={{ selected: active, disabled }}
-      style={[
-        styles.pill,
+  const page = (key: SettingsPageKey) => () => navigation.navigate('SettingsPage', { page: key });
+
+  const language = LOCALE_LABEL[locale];
+  const theme = t(PREFERENCE_LABEL[preference]);
+  const accents = t(ACCENT_LABEL[keyboard.accentMode]);
+  const leagues = account.leagues === null ? undefined : onOff(account.leagues);
+  const visibility = account.visibility ? t(VISIBILITY_LABEL[account.visibility]) : undefined;
+  const username = account.username ? `@${account.username}` : undefined;
+
+  const sections: Array<{ key: string; title?: string; entries: Entry[] }> = [
+    {
+      key: 'account',
+      title: t('settings.group.account'),
+      entries: [
         {
-          backgroundColor: colors.controlTrack,
-          borderColor: active ? colors.textPrimary : colors.glassBorder,
+          key: 'username',
+          terms: [t('auth.username'), username],
+          row: <SettingsRow icon="person" title={t('auth.username')} value={username} onPress={() => navigation.navigate('ChangeUsername')} />,
         },
-        disabled && styles.pillDisabled,
-      ]}
-    >
-      <Text style={[styles.pillText, { color: active ? colors.textPrimary : colors.textSecondary }, active && styles.pillTextActive]}>
-        {label}
-      </Text>
-    </Pressable>
-  );
+        {
+          key: 'password',
+          terms: [t('security.password.title'), t('settings.group.security')],
+          row: <SettingsRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />,
+        },
+        {
+          key: 'devices',
+          terms: [t('security.devices.title'), t('settings.group.security')],
+          row: <SettingsRow icon="devices" title={t('security.devices.title')} onPress={() => navigation.navigate('Devices')} />,
+        },
+      ],
+    },
+    {
+      key: 'preferences',
+      title: t('settings.group.preferences'),
+      entries: [
+        {
+          key: 'notifications',
+          terms: [t('notifications.title'), t('notifications.categories'), t('notifications.quietHours')],
+          row: <SettingsRow icon="bell" title={t('notifications.title')} onPress={() => navigation.navigate('Notifications')} />,
+        },
+        {
+          key: 'language',
+          terms: [t('settings.language'), language],
+          row: <SettingsRow icon="translate" title={t('settings.language')} value={language} onPress={page('language')} />,
+        },
+        {
+          key: 'theme',
+          terms: [t('appearance.theme'), theme, t('settings.eventThemes'), t('settings.appearance')],
+          row: <SettingsRow icon="palette" title={t('appearance.theme')} value={theme} onPress={page('theme')} />,
+        },
+        {
+          key: 'sounds',
+          terms: [t('settings.soundsVibration'), t('settings.sounds'), t('settings.vibration')],
+          row: <SettingsRow icon="speaker" title={t('settings.soundsVibration')} onPress={page('sounds')} />,
+        },
+        {
+          key: 'keyboard',
+          terms: [t('keyboard.settings.title'), accents, t('keyboard.accent.title'), t('keyboard.keyBar.title'), t('keyboard.backtick.title'), t('keyboard.wordle.title'), t('keyboard.help')],
+          row: <SettingsRow icon="keyboard" title={t('keyboard.settings.title')} value={accents} onPress={page('keyboard')} />,
+        },
+        {
+          key: 'leagues',
+          terms: [t('settings.leagues.title'), leagues],
+          row: <SettingsRow icon="trophy" title={t('settings.leagues.title')} value={leagues} onPress={page('leagues')} />,
+        },
+      ],
+    },
+    {
+      key: 'privacy',
+      title: t('settings.group.privacy'),
+      entries: [
+        {
+          key: 'visibility',
+          terms: [t('settings.privacy.title'), visibility],
+          row: <SettingsRow icon="eye" title={t('settings.privacy.title')} value={visibility} onPress={page('visibility')} />,
+        },
+        {
+          // the only way back from a block: the person is a 404 to you afterwards, so no other screen can offer to undo it
+          key: 'blocked',
+          terms: [t('settings.blocked.title')],
+          row: <SettingsRow icon="block" title={t('settings.blocked.title')} onPress={() => navigation.navigate('BlockedUsers')} />,
+        },
+        {
+          // what you reported and what came of it; what is limited on your account and why
+          key: 'reports',
+          terms: [t('reports.title')],
+          row: <SettingsRow icon="flag" title={t('reports.title')} onPress={() => navigation.navigate('MyReports')} />,
+        },
+        {
+          key: 'standing',
+          terms: [t('standing.title')],
+          row: <SettingsRow icon="shield" title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />,
+        },
+      ],
+    },
+    {
+      key: 'about',
+      title: t('settings.group.about'),
+      entries: [
+        {
+          // tell us what you think, and (once the app is in the stores) rate it there
+          key: 'feedback',
+          terms: [t('appFeedback.sendRow'), t('appFeedback.rateRow')],
+          row: <FeedbackSettingsRows />,
+        },
+        {
+          key: 'support',
+          terms: [t('settings.support'), SUPPORT_EMAIL],
+          row: <SettingsRow icon="mail" title={t('settings.support')} subtitle={SUPPORT_EMAIL} opens={false} onPress={() => openLegal('support')} />,
+        },
+        {
+          // the website's pages the app answers to, each opened on hevalo.app so there is one copy of each
+          key: 'teaching',
+          terms: [t('settings.teaching')],
+          row: <SettingsRow icon="book" title={t('settings.teaching')} opens={false} onPress={() => openLegal('teaching')} />,
+        },
+        {
+          key: 'terms',
+          terms: [t('auth.legal.terms')],
+          row: <SettingsRow icon="text" title={t('auth.legal.terms')} opens={false} onPress={() => openLegal('terms')} />,
+        },
+        {
+          key: 'privacyPolicy',
+          terms: [t('auth.legal.privacy')],
+          row: <SettingsRow icon="lock" title={t('auth.legal.privacy')} opens={false} onPress={() => openLegal('privacy')} />,
+        },
+        {
+          key: 'copyright',
+          terms: [t('settings.copyright.title'), t('settings.copyright.hint')],
+          row: (
+            <SettingsRow
+              icon="quotes"
+              title={t('settings.copyright.title')}
+              subtitle={t('settings.copyright.hint')}
+              opens={false}
+              onPress={() => openLegal('copyright')}
+            />
+          ),
+        },
+        {
+          key: 'credits',
+          terms: [t('settings.credits.title')],
+          row: <SettingsRow icon="heart" title={t('settings.credits.title')} onPress={page('credits')} />,
+        },
+      ],
+    },
+    {
+      // apart from the rest, at the end: nobody looking for something else reaches these by accident
+      key: 'leave',
+      entries: [
+        {
+          key: 'export',
+          terms: [t('settings.data.request'), t('settings.data.title'), t('settings.data.help')],
+          row: (
+            <SettingsRow
+              icon="download"
+              title={t('settings.data.request')}
+              subtitle={t('settings.data.help')}
+              value={exporting ? t('settings.data.requesting') : undefined}
+              opens={false}
+              onPress={requestExport}
+            />
+          ),
+        },
+        {
+          key: 'everywhere',
+          terms: [t('settings.sessions.signOutEverywhere')],
+          row: <SettingsRow icon="devices" title={t('settings.sessions.signOutEverywhere')} opens={false} onPress={signOutEverywhere} />,
+        },
+        {
+          key: 'logout',
+          terms: [t('profile.logout')],
+          row: <SettingsRow icon="sign-out" title={t('profile.logout')} opens={false} onPress={() => void logout()} />,
+        },
+        {
+          key: 'delete',
+          terms: [t('settings.delete.title')],
+          row: <SettingsRow icon="trash" title={t('settings.delete.title')} destructive opens={false} onPress={confirmDelete} />,
+        },
+      ],
+    },
+  ];
+
+  // every word typed, found anywhere in a row's words; accents set aside, so "e" finds "ê"
+  const words = foldForSearch(query).split(/\s+/).filter(Boolean);
+  const finds = (e: Entry): boolean => {
+    const said = foldForSearch(e.terms.filter(Boolean).join(' '));
+    return words.every((w) => said.includes(w));
+  };
+  const shown = words.length
+    ? sections.map((s) => ({ ...s, entries: s.entries.filter(finds) })).filter((s) => s.entries.length > 0)
+    : sections;
 
   return (
-    <GradientBackground>
-      <ScreenHeader title={t('settings.title')} onBack={onExit} />
-      <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.preferences')}</Text>
-        <GlassCard padding="tight">
-          <GlassSelect
-            label={t('settings.language')}
-            icon="translate"
-            value={locale}
-            options={LOCALES}
-            labelOf={(l) => LOCALE_LABEL[l as Locale]}
-            onChange={(l) => setLocale(l as Locale)}
-          />
-          <GlassSelect
-            label={t('appearance.theme')}
-            icon="palette"
-            value={preference}
-            options={THEME_PREFERENCES}
-            labelOf={(p) => t(PREFERENCE_LABEL[p])}
-            onChange={setPreference}
-          />
-          <GlassRow icon="palette" title={t('settings.appearance')} onPress={() => navigation.navigate('Appearance')} />
-          <GlassRow
-            icon="star"
-            title={t('settings.eventThemes')}
-            trailing={<Toggle value={!optedOut} onValueChange={(on) => setOptedOut(!on)} trackColor={{ true: colors.switchOn, false: colors.controlTrack }} />}
-          />
-          {/*
-            Whether this phone buzzes at all: a light tick for a right answer, a
-            send, a moment worth marking — never for anything that happens by
-            itself. Turning it on is felt, so the switch shows what it does;
-            turning it off is not.
-          */}
-          <GlassRow
-            icon="vibrate"
-            title={t('settings.vibration')}
-            subtitle={t('settings.vibration.hint')}
-            trailing={
-              <Switch
-                value={vibration}
-                onValueChange={(on) => {
-                  setVibration(on);
-                  if (on) haptic('select');
-                }}
-                accessibilityLabel={t('settings.vibration')}
-                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
-                thumbColor={vibrationThumb}
-              />
-            }
-          />
-          {/*
-            The app's own chimes (feedback/sounds.ts): a right answer, a lesson
-            finished, something earned. The lesson's spoken Kurdish is not one
-            of them. Turning them on plays one, so the switch shows what it does.
-          */}
-          <GlassRow
-            icon="speaker"
-            title={t('settings.sounds')}
-            subtitle={t('settings.sounds.hint')}
-            trailing={
-              <Switch
-                value={sounds}
-                onValueChange={(on) => {
-                  setSounds(on);
-                  if (on) setTimeout(() => playSound('correct'), 0);
-                }}
-                accessibilityLabel={t('settings.sounds')}
-                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
-                thumbColor={soundsThumb}
-              />
-            }
-          />
-        </GlassCard>
-
-        {/* accents, the key bar, the backtick, Peyvok's layout and the keyboard guide (keyboard/) */}
-        <KeyboardSettingsSection />
-
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.notifications')}</Text>
-        <GlassCard padding="tight">
-          <GlassRow icon="gear" title={t('settings.notifications')} onPress={() => navigation.navigate('Notifications')} />
-          <GlassRow icon="bell" title={t('settings.notificationCenter')} onPress={() => navigation.navigate('NotificationCenter')} />
-        </GlassCard>
-
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.privacy')}</Text>
-        <GlassCard>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.privacy.title')}</Text>
-          <View style={styles.pillRow}>
-            {VISIBILITIES.map((v) => (
-              <Pill
-                key={v}
-                label={t(VISIBILITY_LABEL[v])}
-                active={loaded && visibility === v}
-                onPress={() => changeVisibility(v)}
-                disabled={!visibilityOffered(v, minor)}
-              />
-            ))}
-          </View>
-          {/* a setting about who sees you is worth a sentence, not just a word */}
-          {loaded ? (
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t(VISIBILITY_HINT[visibility])}</Text>
-          ) : (
-            <View style={styles.hintSkeleton}>
-              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="92%" />
-              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="48%" />
-            </View>
-          )}
-          {minor ? (
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.visibility.minorHint')}</Text>
-          ) : null}
-        </GlassCard>
-
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.leagues.title')}</Text>
-        <GlassCard>
-          <GlassRow
-            icon="trophy"
-            title={t('settings.leagues.toggle')}
-            trailing={
-              <Toggle
-                value={leagues === true}
-                disabled={leagues === null}
-                onValueChange={changeLeagues}
-                accessibilityLabel={t('settings.leagues.toggle')}
-                trackColor={{ true: colors.switchOn, false: colors.controlTrack }}
-              />
-            }
-          />
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.leagues.help')}</Text>
-          {minor ? (
-            <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.leagues.minorHint')}</Text>
-          ) : null}
-        </GlassCard>
-
-        {/*
-          With privacy rather than among the social screens: a blocklist is
-          account state, like the setting above it. It is also the only way
-          back from a block — the person is a 404 to you afterwards, so no
-          other screen can offer to undo it.
-        */}
-        <GlassCard padding="tight">
-          <GlassRow
-            icon="person"
-            iconColor={colors.textSecondary}
-            title={t('settings.blocked.title')}
-            onPress={() => navigation.navigate('BlockedUsers')}
-          />
-          {/* what you reported and what came of it; what is limited on your account and why */}
-          <GlassRow icon="flag" iconColor={colors.textSecondary} title={t('reports.title')} onPress={() => navigation.navigate('MyReports')} />
-          <GlassRow icon="shield" iconColor={colors.textSecondary} title={t('standing.title')} onPress={() => navigation.navigate('AccountStanding')} />
-        </GlassCard>
-
-        {/* how you sign in, and where you are signed in */}
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.security')}</Text>
-        <GlassCard padding="tight">
-          <GlassRow icon="lock" title={t('security.password.title')} onPress={() => navigation.navigate('ChangePassword')} />
-          <GlassRow icon="devices" title={t('security.devices.title')} onPress={() => navigation.navigate('Devices')} />
-          <GlassRow
-            icon="sign-out"
-            title={t('settings.sessions.signOutEverywhere')}
-            onPress={signOutEverywhere}
-            destructive
-          />
-        </GlassCard>
-
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.account')}</Text>
-        <GlassCard padding="tight">
-          <GlassRow icon="person" title={t('auth.username')} value={username ? `@${username}` : undefined} onPress={() => navigation.navigate('ChangeUsername')} />
-          <GlassRow
-            icon="download"
-            title={t('settings.data.request')}
-            subtitle={t('settings.data.help')}
-            value={exporting ? t('settings.data.requesting') : undefined}
-            onPress={requestExport}
-          />
-          <GlassRow icon="sign-out" title={t('profile.logout')} onPress={logout} />
-          <GlassRow icon="trash" title={t('settings.delete.title')} destructive onPress={confirmDelete} />
-        </GlassCard>
-
-        {/* whose work the app uses, and under which licence (see ./credits) */}
-        <Text style={[styles.section, { color: colors.textSecondary }]}>{t('settings.group.about')}</Text>
-        {/* tell us what you think, and (once the app is in the stores) rate it there */}
-        <FeedbackSettingsRows />
-        {/*
-          The website's pages the app answers to: how it teaches, the rules,
-          what happens to your data, a rights holder's notice, and a person to
-          write to. Each opens on hevalo.app, so there is one copy of each.
-        */}
-        <GlassCard padding="tight">
-          <GlassRow icon="book" iconColor={colors.textSecondary} title={t('settings.teaching')} onPress={() => openLegal('teaching')} />
-          <GlassRow icon="link" iconColor={colors.textSecondary} title={t('auth.legal.terms')} onPress={() => openLegal('terms')} />
-          <GlassRow icon="link" iconColor={colors.textSecondary} title={t('auth.legal.privacy')} onPress={() => openLegal('privacy')} />
-          <GlassRow
-            icon="link"
-            iconColor={colors.textSecondary}
-            title={t('settings.copyright.title')}
-            subtitle={t('settings.copyright.hint')}
-            onPress={() => openLegal('copyright')}
-          />
-          <GlassRow icon="mail-fill" iconColor={colors.textSecondary} title={t('settings.support')} subtitle={SUPPORT_EMAIL} onPress={() => openLegal('support')} />
-        </GlassCard>
-        <GlassCard>
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('settings.credits.title')}</Text>
-          <Text style={[styles.credit, { color: colors.textSecondary }]}>{t('settings.credits.lead')}</Text>
-          {CREDIT_LINES.map((key) => (
-            <Text key={key} style={[styles.credit, { color: colors.textPrimary }]}>
-              {t(key)}
-            </Text>
+    <SettingsPage title={t('settings.title')} onExit={onExit}>
+      <View style={styles.search}>
+        <SearchField value={query} onChangeText={setQuery} label={t('settings.search')} />
+      </View>
+      {shown.map((section, i) => (
+        <SettingsSection key={section.key} title={section.title} first={i === 0}>
+          {section.entries.map((entry) => (
+            <Fragment key={entry.key}>{entry.row}</Fragment>
           ))}
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('settings.credits.art')}</Text>
-        </GlassCard>
-      </ScrollView>
-    </GradientBackground>
+        </SettingsSection>
+      ))}
+      {shown.length === 0 ? <SettingsNote>{t('settings.search.none', { query: query.trim() })}</SettingsNote> : null}
+    </SettingsPage>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, gap: spacing.sm, paddingBottom: spacing.xxl },
-  section: { ...sectionLabel, marginTop: spacing.md, marginLeft: spacing.xs, marginBottom: spacing.xs },
-  groupLabel: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginBottom: spacing.sm },
-  pillRow: { flexDirection: 'row', gap: spacing.xs, flexWrap: 'wrap' },
-  pill: {
-    minHeight: MIN_TOUCH_TARGET,
-    justifyContent: 'center',
-    paddingVertical: spacing.xs,
-    paddingHorizontal: spacing.md,
-    borderRadius: radii.pill,
-    borderWidth: StyleSheet.hairlineWidth,
-  },
-  pillText: { fontSize: typography.sizes.sm },
-  hint: { fontSize: typography.sizes.sm, marginTop: spacing.sm, lineHeight: 19 },
-  hintSkeleton: { marginTop: spacing.sm },
-  credit: { fontSize: typography.sizes.sm, marginTop: spacing.xs, lineHeight: 19 },
-  pillTextActive: { fontWeight: typography.weights.bold },
-  pillDisabled: { opacity: 0.4 },
+  search: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
 });
