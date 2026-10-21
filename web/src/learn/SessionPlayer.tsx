@@ -25,6 +25,7 @@ import { ErrorState, Loading } from '../components/states';
 import { describeError } from '../lib/api';
 import { stop } from '../lib/sound';
 import { haptic } from '../lib/haptics';
+import { playLessonSound } from '../lib/sounds';
 import type { ApiClient } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
 import { MatchPairs, MultipleChoice, Listening, TypedExercise, type ExerciseProps } from './Exercises';
@@ -113,9 +114,17 @@ function ProgressBar({ value, label }: { value: number; label: string }): React.
  * one short pulse when right, a gentle double when not. A spoken answer is the
  * learner's own rating of their recording, not a grade, so it is not felt.
  */
-function feelAnswer(type: ExerciseType | undefined, accepted: boolean): void {
+function feelAnswer(type: ExerciseType | undefined, accepted: boolean, run: { current: number }): void {
   if (type === 'speaking') return;
   haptic(accepted ? 'correct' : 'wrong');
+  // heard too (lib/sounds.ts): a right answer's chime climbs with each one in a row; a miss starts again
+  if (accepted) {
+    playLessonSound('correct', run.current);
+    run.current += 1;
+  } else {
+    playLessonSound('wrong');
+    run.current = 0;
+  }
 }
 
 /** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */
@@ -203,6 +212,8 @@ export function SessionPlayer({
 
   const ex: DeliveredExercise | null = currentExercise(state);
   const reask = isReask(state);
+  // right answers in a row, which the chime climbs with
+  const run = useRef(0);
   const exDialect = ex?.dialect ?? dialect;
 
   useEffect(() => writeReasked(sessionId, state.reasked), [sessionId, state.reasked]);
@@ -220,7 +231,7 @@ export function SessionPlayer({
         : await client.post<AnswerResult>(paths.answers(sessionId), body);
       setBusy(false);
       if (res.ok) {
-        feelAnswer(ex.type, res.data.accepted);
+        feelAnswer(ex.type, res.data.accepted, run);
         dispatch({ type: 'ANSWERED', result: res.data, given });
         return;
       }

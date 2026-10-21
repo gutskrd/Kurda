@@ -3,6 +3,7 @@ import { BURST, NO_LESSON_MOMENTS, practisableMistakes, type DeliveredExercise, 
 import { Button, LinkButton } from '../components/Button';
 import { CheckIcon, FlameIcon, StarIcon, TrophyIcon } from '../components/icons';
 import { CelebrationArt, useCelebrationHold } from '../ranks/Celebration';
+import { playLessonSound } from '../lib/sounds';
 import { useCelebrationMoment, useCountUp } from '../lib/motion';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
@@ -59,6 +60,8 @@ export function Results({
   const heading = useRef<HTMLHeadingElement>(null);
   const moment = useCelebrationMoment();
   useCelebrationHold(moment.playing);
+  // heard as it opens: four notes rising to the octave (lib/sounds.ts)
+  useEffect(() => playLessonSound('complete'), []);
   // counts up as the numbers arrive, after the trophy has landed
   const xp = useCountUp(results.xpAwarded, { delayMs: 420 });
   const mistakes = results.mistakes ?? [];

@@ -956,6 +956,8 @@ export const de: Catalogue = {
   'settings.sounds.title': 'Töne',
   'settings.sounds.giftChime': 'Beim Öffnen eines Geschenks einen kurzen Klang abspielen',
   'settings.sounds.giftChimeHint': 'Nur auf diesem Gerät. Kein Klang, wenn dein Gerät weniger Bewegung wünscht.',
+  'settings.sounds.lesson': 'Einen sanften Klang bei richtigen Antworten und fertigen Lektionen spielen',
+  'settings.sounds.lessonHint': 'Nur auf diesem Gerät. Der Ton der Lektion selbst spielt immer.',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Bei richtigen Antworten und besonderen Momenten vibrieren',
   'settings.vibration.hint': 'Nur auf diesem Gerät, und nie bei etwas, das von selbst passiert.',

@@ -953,6 +953,8 @@ export const es: Catalogue = {
   'settings.sounds.title': 'Sonidos',
   'settings.sounds.giftChime': 'Sonar un breve tintineo al abrir un regalo',
   'settings.sounds.giftChimeHint': 'Solo en este dispositivo. No suena si tu dispositivo pide menos movimiento.',
+  'settings.sounds.lesson': 'Reproducir un sonido suave en las respuestas correctas y las lecciones terminadas',
+  'settings.sounds.lessonHint': 'Solo en este dispositivo. El audio de la lección siempre suena.',
   'settings.vibration.title': 'Vibración',
   'settings.vibration.toggle': 'Vibrar con las respuestas correctas y los momentos especiales',
   'settings.vibration.hint': 'Solo en este dispositivo, y nunca por algo que pasa solo.',

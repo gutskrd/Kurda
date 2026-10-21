@@ -956,6 +956,8 @@ export const nl: Catalogue = {
   'settings.sounds.title': 'Geluiden',
   'settings.sounds.giftChime': 'Speel een kort belletje als je een cadeau opent',
   'settings.sounds.giftChimeHint': 'Alleen op dit apparaat. Geen belletje als je apparaat om minder beweging vraagt.',
+  'settings.sounds.lesson': 'Een zacht belletje spelen bij goede antwoorden en afgeronde lessen',
+  'settings.sounds.lessonHint': 'Alleen op dit apparaat. Het geluid van de les zelf speelt altijd.',
   'settings.vibration.title': 'Trillen',
   'settings.vibration.toggle': 'Trillen bij goede antwoorden en momenten om te vieren',
   'settings.vibration.hint': 'Alleen op dit apparaat, en nooit bij iets dat vanzelf gebeurt.',

@@ -1015,6 +1015,8 @@ export const en = {
   'settings.sounds.title': 'Sounds',
   'settings.sounds.giftChime': 'Play a short chime when you open a gift',
   'settings.sounds.giftChimeHint': 'On this device only. There’s no chime when your device asks for reduced motion.',
+  'settings.sounds.lesson': 'Play a soft chime for right answers and finished lessons',
+  'settings.sounds.lessonHint': 'On this device only. The lesson’s own audio always plays.',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Buzz for right answers and moments worth marking',
   'settings.vibration.hint': 'On this device only, and never for anything that happens by itself.',

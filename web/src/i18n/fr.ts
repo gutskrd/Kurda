@@ -954,6 +954,8 @@ export const fr: Catalogue = {
   'settings.sounds.title': 'Sons',
   'settings.sounds.giftChime': 'Jouer un petit carillon quand tu ouvres un cadeau',
   'settings.sounds.giftChimeHint': 'Sur cet appareil uniquement. Pas de carillon quand ton appareil demande moins d’animations.',
+  'settings.sounds.lesson': 'Jouer un doux carillon pour les bonnes réponses et les leçons finies',
+  'settings.sounds.lessonHint': 'Sur cet appareil seulement. L’audio de la leçon joue toujours.',
   'settings.vibration.title': 'Vibration',
   'settings.vibration.toggle': 'Vibrer pour les bonnes réponses et les moments à fêter',
   'settings.vibration.hint': 'Sur cet appareil uniquement, et jamais pour ce qui arrive tout seul.',

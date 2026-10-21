@@ -961,6 +961,8 @@ export const ckb: Catalogue = {
   'settings.sounds.title': 'دەنگەکان',
   'settings.sounds.giftChime': 'کاتێک دیارییەک دەکەیتەوە، زەنگێکی کورت لێبدە',
   'settings.sounds.giftChimeHint': 'تەنها لەسەر ئەم ئامێرە. کاتێک ئامێرەکەت جوڵەی کەم دەخوازێت، زەنگ لێنادرێت.',
+  'settings.sounds.lesson': 'زەنگێکی نەرم بۆ وەڵامی دروست و وانەی تەواوبوو لێبدە',
+  'settings.sounds.lessonHint': 'تەنها لەسەر ئەم ئامێرە. دەنگی خودی وانەکە هەمیشە لێدەدرێت.',
   'settings.vibration.title': 'لەرزین',
   'settings.vibration.toggle': 'بۆ وەڵامی ڕاست و ساتە تایبەتەکان بلەرزە',
   'settings.vibration.hint': 'تەنها لەسەر ئەم ئامێرە. بۆ شتێک کە خۆی ڕوودەدات هەرگیز نالەرزێت.',

@@ -957,6 +957,8 @@ export const ku: Catalogue = {
   'settings.sounds.title': 'Deng',
   'settings.sounds.giftChime': 'Dema tu diyariyekê vedikî, zengek kurt lê bide',
   'settings.sounds.giftChimeHint': 'Tenê li ser vê amûrê. Dema amûra te tevgera kêm dixwaze, zeng lê nade.',
+  'settings.sounds.lesson': 'Ji bo bersivên rast û dersên qediyayî zengek nerm lê bide',
+  'settings.sounds.lessonHint': 'Tenê li ser vê amûrê. Dengê dersê bi xwe her tim tê lêdan.',
   'settings.vibration.title': 'Lerzîn',
   'settings.vibration.toggle': 'Ji bo bersivên rast û demên taybet bilerize',
   'settings.vibration.hint': 'Tenê li ser vê amûrê. Ji bo tiştekî ku bi serê xwe diqewime, qet nalerize.',
