@@ -23,6 +23,7 @@ import { drawHamo } from './hamo.js';
 import { drawXezo } from './xezo.js';
 
 export { CHARACTER_IDS, CHARACTER_NAMES, isCharacterId, type CharacterBox, type CharacterArt, type CharacterId } from './types.js';
+export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 
 const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
   hevalo: drawHevalo,
