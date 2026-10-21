@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -26,6 +26,7 @@ import type { CourseMap, CourseSummary } from '../coursemap/types';
 import { flattenMap } from '../coursemap/node';
 import { GAMES, SCOPES, SCOPE_LABEL, filterByLabel, matches, readyForServer, scopesToRun, type Scope } from './scope';
 import { EmptyState } from '../theme/EmptyState';
+import { DiscoverGrid } from './DiscoverGrid';
 
 interface UserRow {
   userId: string;
@@ -94,6 +95,9 @@ export function SearchScreen(): React.JSX.Element {
   const [openEntry, setOpenEntry] = useState<string | null>(null);
   const [recents, setRecents] = useState<string[]>([]);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  // how many pictures the grid found (null while it looks): with none, the empty state says where to start
+  const [discovered, setDiscovered] = useState<number | null>(null);
+  const { width: screenWidth } = useWindowDimensions();
   // people you may know are on their way: their place is held, rather than "search for something" flashing first
   const [suggestionsSettled, setSuggestionsSettled] = useState(false);
 
@@ -337,7 +341,12 @@ export function SearchScreen(): React.JSX.Element {
 
         {!typed && !suggestionsSettled ? <SuggestionsSkeleton /> : null}
 
-        {!typed && suggestionsSettled && recents.length === 0 && suggestions.length === 0 ? (
+        {/* kept while a search is typed, so clearing it does not ask for the pictures again */}
+        <View style={[styles.discover, typed && styles.hidden]}>
+          <DiscoverGrid width={screenWidth} onCount={setDiscovered} />
+        </View>
+
+        {!typed && suggestionsSettled && recents.length === 0 && suggestions.length === 0 && discovered === 0 ? (
           <EmptyState title={t('search.start')} body={t('search.start.body')} />
         ) : null}
 
@@ -437,6 +446,9 @@ const styles = StyleSheet.create({
   sectionTitleSkeleton: { paddingHorizontal: spacing.sm },
   sectionAction: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
   rows: { gap: 2 },
+  // edge to edge, out past the list's own inset
+  discover: { marginHorizontal: -spacing.sm },
+  hidden: { display: 'none' },
   row: {
     alignItems: 'center',
     gap: spacing.md - 4,

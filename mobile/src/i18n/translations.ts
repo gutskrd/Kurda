@@ -1687,6 +1687,7 @@ export type TranslationKey =
   | 'search.title'
   | 'search.placeholder'
   | 'search.start'
+  | 'search.fromCommunity'
   | 'search.empty'
   | 'search.scope.all'
   | 'search.scope.people'
@@ -3418,6 +3419,7 @@ const en: Catalog = {
   'search.title': 'Search',
   'search.placeholder': 'People, words, lessons, games…',
   'search.start': 'Type to search across the app.',
+  'search.fromCommunity': 'From the community',
   'search.empty': 'Nothing found for “{query}”.',
   'search.scope.all': 'All',
   'search.scope.people': 'People',
@@ -5565,6 +5567,7 @@ const ku: Catalog = {
   'search.title': 'Lêgerîn',
   'search.placeholder': 'Bikarhêner, peyv, ders, lîstik…',
   'search.start': 'Binivîse da ku li seranserê sepanê bigerî.',
+  'search.fromCommunity': 'Ji civakê',
   'search.empty': 'Ji bo “{query}” tiştek nehat dîtin.',
   'search.scope.all': 'Hemû',
   'search.scope.people': 'Bikarhêner',
@@ -7712,6 +7715,7 @@ const de: Catalog = {
   'search.title': 'Suche',
   'search.placeholder': 'Personen, Wörter, Lektionen, Spiele…',
   'search.start': 'Tippe, um die ganze App zu durchsuchen.',
+  'search.fromCommunity': 'Aus der Community',
   'search.empty': 'Nichts gefunden für „{query}“.',
   'search.scope.all': 'Alle',
   'search.scope.people': 'Personen',
@@ -9859,6 +9863,7 @@ const es: Catalog = {
   'search.title': 'Buscar',
   'search.placeholder': 'Personas, palabras, lecciones, juegos…',
   'search.start': 'Escribe para buscar en toda la aplicación.',
+  'search.fromCommunity': 'De la comunidad',
   'search.empty': 'No se encontró nada para «{query}».',
   'search.scope.all': 'Todo',
   'search.scope.people': 'Personas',
@@ -12006,6 +12011,7 @@ const tr: Catalog = {
   'search.title': 'Ara',
   'search.placeholder': 'Kişiler, kelimeler, dersler, oyunlar…',
   'search.start': 'Uygulamanın tamamında aramak için yazın.',
+  'search.fromCommunity': 'Topluluktan',
   'search.empty': '“{query}” için sonuç bulunamadı.',
   'search.scope.all': 'Tümü',
   'search.scope.people': 'Kişiler',
@@ -14153,6 +14159,7 @@ const ar: Catalog = {
   'search.title': 'بحث',
   'search.placeholder': 'أشخاص، كلمات، دروس، ألعاب…',
   'search.start': 'اكتب للبحث في التطبيق كله.',
+  'search.fromCommunity': 'من المجتمع',
   'search.empty': 'لا نتائج لـ «{query}».',
   'search.scope.all': 'الكل',
   'search.scope.people': 'أشخاص',
@@ -16300,6 +16307,7 @@ const fr: Catalog = {
   'search.title': 'Recherche',
   'search.placeholder': 'Personnes, mots, leçons, jeux…',
   'search.start': 'Tapez pour chercher dans toute l’application.',
+  'search.fromCommunity': 'De la communauté',
   'search.empty': 'Aucun résultat pour « {query} ».',
   'search.scope.all': 'Tout',
   'search.scope.people': 'Personnes',
@@ -18447,6 +18455,7 @@ const nl: Catalog = {
   'search.title': 'Zoeken',
   'search.placeholder': 'Mensen, woorden, lessen, spellen…',
   'search.start': 'Typ om de hele app te doorzoeken.',
+  'search.fromCommunity': 'Uit de community',
   'search.empty': 'Niets gevonden voor “{query}”.',
   'search.scope.all': 'Alles',
   'search.scope.people': 'Mensen',
@@ -20595,6 +20604,7 @@ const ckb: Catalog = {
   'search.title': 'گەڕان',
   'search.placeholder': 'کەسان، وشەکان، وانەکان، یارییەکان…',
   'search.start': 'بنووسە بۆ گەڕان بە ناو هەموو ئەپەکەدا.',
+  'search.fromCommunity': 'لە کۆمەڵگاوە',
   'search.empty': 'هیچ نەدۆزرایەوە بۆ «{query}».',
   'search.scope.all': 'هەموو',
   'search.scope.people': 'کەسان',
