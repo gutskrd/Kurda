@@ -7,7 +7,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
@@ -169,7 +169,7 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  content: { gap: spacing.xs, padding: spacing.lg, paddingBottom: spacing.xl },
+  content: { gap: spacing.xs, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xl },
   section: { ...sectionLabel, marginTop: spacing.lg, marginBottom: spacing.xs },
   sectionSkeleton: { marginTop: spacing.lg, marginBottom: spacing.xs },
   flex: { flex: 1 },

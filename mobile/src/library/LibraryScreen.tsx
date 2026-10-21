@@ -7,7 +7,7 @@ import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -205,7 +205,7 @@ function LibrarySkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.xs },

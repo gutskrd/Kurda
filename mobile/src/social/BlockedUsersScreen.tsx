@@ -3,7 +3,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GradientBackground } from '../theme/glass';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useTheme } from '../theme/ThemeProvider';
@@ -167,7 +167,7 @@ export function BlockedUsersScreen({ onExit }: { onExit: () => void }): React.JS
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  list: { padding: spacing.lg, gap: spacing.xs },
+  list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.xs },
   help: { fontSize: typography.sizes.sm, marginBottom: spacing.sm },
   row: {
     flexDirection: 'row',

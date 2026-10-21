@@ -7,7 +7,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -584,9 +584,9 @@ function BoardTab({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  tabs: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  choosers: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  list: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
+  tabs: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  choosers: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
   head: { gap: spacing.md, marginBottom: spacing.sm },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   heroText: { flex: 1, gap: 2 },

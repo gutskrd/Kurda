@@ -259,8 +259,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  // the initials inside a small avatar, which is an icon's worth of room
-  avatarText: { fontSize: 10 },
+  // the initials inside a small avatar: the smallest size text is drawn at, and two letters still fit
+  avatarText: { fontSize: 11 },
   badge: {
     position: 'absolute',
     top: -2,

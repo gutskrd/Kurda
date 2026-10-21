@@ -13,7 +13,7 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { Pop } from '../theme/MotionParts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -242,7 +242,7 @@ function Header({ onExit, right }: { onExit: () => void; right?: React.ReactNode
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   image: { width: '100%', aspectRatio: 1, borderRadius: radii.md, backgroundColor: '#0002' },
   caption: { fontSize: typography.sizes.md },

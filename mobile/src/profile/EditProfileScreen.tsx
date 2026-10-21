@@ -9,7 +9,7 @@ import { SendErrorNotice } from '../reports/SendError';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -318,7 +318,7 @@ function CountryChip({ label, on, onPress }: { label: string; on: boolean; onPre
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
 
   body: { paddingBottom: 140, gap: spacing.sm },
   notice: { fontSize: typography.sizes.sm, marginBottom: spacing.xs },

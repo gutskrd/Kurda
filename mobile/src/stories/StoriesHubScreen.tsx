@@ -23,7 +23,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { lobbyRoute } from '../play/routes';
 import { activeGames, joinGame, listStories, storyHistory } from './api';
@@ -426,7 +426,7 @@ function StoryRow({
 }
 
 const styles = StyleSheet.create({
-  content: { ...COLUMN, padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
+  content: { ...COLUMN, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg },
   section: { gap: spacing.sm },
   continue: {
     flexDirection: 'row',

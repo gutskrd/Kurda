@@ -4,7 +4,7 @@ import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kur
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { CHARACTER_SIZE, SpeakingCharacter, knownVoice } from '../characters/SpeakingCharacter';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   posSkeleton: { minWidth: POS_COLUMN },
   underPos: { marginLeft: POS_COLUMN + spacing.sm },
 
-  body: { padding: spacing.lg, gap: spacing.sm },
+  body: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   headword: { ...display(typography.sizes.xxl) },
   audioBtn: {

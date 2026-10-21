@@ -9,7 +9,7 @@ import {
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -227,7 +227,7 @@ const BODY_LINE = 24;
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   title: { ...display(typography.sizes.xl) },
   postBody: { fontSize: typography.sizes.md, lineHeight: BODY_LINE },

@@ -4,7 +4,7 @@ import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
@@ -348,7 +348,7 @@ function PeopleSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   skeleton: { gap: spacing.xs },
-  screen: { flex: 1, padding: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg },
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },

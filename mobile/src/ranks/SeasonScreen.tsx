@@ -24,7 +24,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { Note } from '../stories/ui';
 import { GAME_NAME_KEY } from '../play/labels';
@@ -352,7 +352,7 @@ const styles = StyleSheet.create({
   stretch: { alignSelf: 'stretch' },
   heroSkeleton: { marginTop: spacing.sm },
   daysSkeleton: { marginTop: spacing.xs },
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
+  content: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
   hero: { alignItems: 'center', gap: spacing.xs },
   dim: { opacity: 0.55 },
   heroTitle: { ...display(typography.sizes.xxl), marginTop: spacing.sm },

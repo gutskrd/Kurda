@@ -6,7 +6,7 @@ import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { statCaption, statValue } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
@@ -335,7 +335,7 @@ function Stat({ label, value, icon, iconColor }: { label: string; value: string;
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   scroll: { paddingBottom: spacing.xxl },
 
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },

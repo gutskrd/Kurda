@@ -13,7 +13,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { Note, Sheet } from '../stories/ui';
 import { BadgeMedal } from '../ranks/art';
@@ -476,7 +476,7 @@ function dateOf(iso: string | null | undefined, locale: string): string {
 }
 
 const styles = StyleSheet.create({
-  content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 720, alignSelf: 'center' },
+  content: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 720, alignSelf: 'center' },
   flex: { flex: 1, gap: 2 },
   showHead: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   summary: { ...display(typography.sizes.lg) },
