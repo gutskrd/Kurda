@@ -169,6 +169,43 @@ function pipsOf(svg: string): { lit: number; all: number } {
   return { lit, all };
 }
 
+/**
+ * The division stones under a crest: small diamonds drawn with an edge. A lit
+ * one is filled with its own gradient, an empty one is a faint setting — so
+ * the count is told by shape and fill, not only by colour.
+ */
+function stonesOf(svg: string): { lit: number; all: number } {
+  let lit = 0;
+  let all = 0;
+  walk(parse(svg), (e) => {
+    if (e.name !== 'path' || !e.attrs.stroke) return;
+    if (/^url\(#[\w-]*pip\d+\)$/.test(e.attrs.fill ?? '')) {
+      lit += 1;
+      all += 1;
+    } else if (e.attrs['fill-opacity'] === '0.25') all += 1;
+  });
+  return { lit, all };
+}
+/** A crest's glow: a radial fade to nothing behind it. */
+function glows(svg: string): number {
+  let count = 0;
+  walk(parse(svg), (e) => {
+    if (e.name === 'radialGradient' && e.attrs.gradientUnits === 'userSpaceOnUse' && e.children.at(-1)?.attrs['stop-opacity'] === '0') count += 1;
+  });
+  return count;
+}
+/** A crest's blades — its wings, its crown's points — each one a path of two curved edges. */
+function blades(svg: string): number {
+  let count = 0;
+  walk(parse(svg), (e) => {
+    // a glyph can be the same shape (a leaf), but it is cut faintly into the stone, not solid metal
+    if (e.name === 'path' && !e.attrs['fill-opacity'] && /^M[^QLZ]+Q[^QLZ]+Q[^QLZ]+Z$/.test(e.attrs.d ?? '')) count += 1;
+  });
+  return count;
+}
+/** What is cut into a crest's stone: its glyph, in the stone's deep tone. */
+const hasGlyph = (svg: string): boolean => /fill-opacity="0\.(72|8)"|stroke-opacity="0\.(72|8)"/.test(svg);
+
 /** A point as the drawings write one. */
 const POINT = '[\\d.-]+,[\\d.-]+';
 /** Paths that are only a run of ten or more small diamonds: a kilim band's eyes. */
@@ -420,17 +457,27 @@ describe('rankEmblemSvg', () => {
     expect(rankEmblemSvg({ tier: 'sterk', division: 1 })).toMatch(/>Stêrk \(Star\)<\/title>/);
   });
 
-  it('counts the division in pips under the medallion: one lit for III, two for II, three for I', () => {
+  it('counts the division in stones under the crest: one lit for III, two for II, three for I', () => {
     for (const tier of RANK_TIERS.filter((t) => t !== 'sterk')) {
-      for (const division of [3, 2, 1] as const) expect(pipsOf(rankEmblemSvg({ tier, division })), `${tier} ${division}`).toEqual({ lit: 4 - division, all: 3 });
-      expect(pipsOf(rankEmblemSvg({ tier }))).toEqual({ lit: 0, all: 0 });
-      // small, the pips give way to a bigger medallion; the app writes the division beside it
-      expect(pipsOf(rankEmblemSvg({ tier, division: 1, size: SMALL_EMBLEM - 1 }))).toEqual({ lit: 0, all: 0 });
+      for (const division of [3, 2, 1] as const) expect(stonesOf(rankEmblemSvg({ tier, division })), `${tier} ${division}`).toEqual({ lit: 4 - division, all: 3 });
+      expect(stonesOf(rankEmblemSvg({ tier }))).toEqual({ lit: 0, all: 0 });
+      // small, the stones give way to a bigger crest; the app writes the division beside it
+      expect(stonesOf(rankEmblemSvg({ tier, division: 1, size: SMALL_EMBLEM - 1 }))).toEqual({ lit: 0, all: 0 });
     }
-    expect(pipsOf(rankEmblemSvg({ tier: 'sterk', division: 1 }))).toEqual({ lit: 0, all: 0 });
+    expect(stonesOf(rankEmblemSvg({ tier: 'sterk', division: 1 }))).toEqual({ lit: 0, all: 0 });
   });
 
-  it('draws less as it gets smaller: the fine things go first, then the rim’s ornament', () => {
+  it('grows its setting with every tier, and keeps the light for the top two', () => {
+    // a lone stone at the foot, the full crest at the top: each tier has more blades than the one under it
+    const setting = RANK_TIERS.map((tier) => blades(rankEmblemSvg({ tier })));
+    expect(setting[0]).toBe(0);
+    for (let i = 1; i < setting.length; i++) expect(setting[i], RANK_TIERS[i]).toBeGreaterThan(setting[i - 1] as number);
+    expect(RANK_TIERS.map((tier) => glows(rankEmblemSvg({ tier })) > 0)).toEqual([false, false, false, false, true, true]);
+    // each stone has the place it is named for cut into it
+    for (const tier of RANK_TIERS) expect(hasGlyph(rankEmblemSvg({ tier })), tier).toBe(true);
+  });
+
+  it('draws less as it gets smaller: the fine things go first, then the stone’s table and its glyph', () => {
     for (const tier of RANK_TIERS) {
       const large = rankEmblemSvg({ tier, size: 128 });
       const small = rankEmblemSvg({ tier, size: SMALL_EMBLEM - 8 });
@@ -438,25 +485,8 @@ describe('rankEmblemSvg', () => {
       expect(elements(small), tier).toBeLessThan(elements(large));
       expect(elements(tiny), tier).toBeLessThan(elements(small));
       expect(tiny.length, tier).toBeLessThan(large.length);
-      // tiny, nothing is set into the rim at all
-      expect(kilimBands(tiny) + beadRings(tiny), tier).toBe(0);
+      expect(hasGlyph(tiny), tier).toBe(false);
     }
-    // the rim's ornament is part of the ladder: beads from Gir, the kilim band from Zozan, and small the kilim becomes beads
-    expect(RANK_TIERS.map((tier) => [beadRings(rankEmblemSvg({ tier })), kilimBands(rankEmblemSvg({ tier }))])).toEqual([
-      [0, 0],
-      [1, 0],
-      [0, 1],
-      [0, 1],
-      [0, 1],
-      [0, 1],
-    ]);
-    expect(kilimBands(rankEmblemSvg({ tier: 'zozan', size: 40 }))).toBe(0);
-    expect(beadRings(rankEmblemSvg({ tier: 'zozan', size: 40 }))).toBe(1);
-    // the high pasture's flowers and the plain's ears of wheat are fine detail, gone when small
-    expect(rankEmblemSvg({ tier: 'zozan' })).toContain('#ff9ecf');
-    expect(rankEmblemSvg({ tier: 'zozan', size: 24 })).not.toContain('#ff9ecf');
-    expect(rankEmblemSvg({ tier: 'dest' })).toContain('#ffd977');
-    expect(rankEmblemSvg({ tier: 'dest', size: 40 })).not.toContain('#ffd977');
   });
 
   it('refuses an unknown tier or division', () => {
@@ -472,11 +502,11 @@ describe('rankEmblemSvg', () => {
     expect(placementEmblemSvg({ done: 2 })).toMatch(/>Placing 2\/5<\/title>/);
     expect(placementEmblemSvg({ done: 2 })).toBe(all[2]);
     expect(PLACEMENT_GAMES).toBe(5);
-    // five pips, as many lit as games played; small, the pips go but the path's stones still count
-    all.forEach((svg, done) => expect(pipsOf(svg)).toEqual({ lit: done, all: 5 }));
+    // five stones under it, as many lit as games played; small, the stones go but the stone's own facets still count
+    all.forEach((svg, done) => expect(stonesOf(svg)).toEqual({ lit: done, all: 5 }));
     const small = [0, 1, 2, 3, 4, 5].map((done) => placementEmblemSvg({ done, size: 24, idPrefix: 'p' }));
     expect(new Set(small).size).toBe(6);
-    small.forEach((svg) => expect(pipsOf(svg).all).toBe(0));
+    small.forEach((svg) => expect(stonesOf(svg).all).toBe(0));
     expect(() => placementEmblemSvg({ done: 6 })).toThrow(RangeError);
     expect(() => placementEmblemSvg({ done: 1.5 })).toThrow(RangeError);
   });
@@ -509,17 +539,21 @@ describe('leagueEmblemSvg', () => {
       expect(leagueEmblemSvg({ tier })).toBe(leagueEmblemSvg({ tier }));
     }
     expect(leagueEmblemSvg({ tier: 'okyanus' })).toMatch(/>Okyanûs \(Ocean\)<\/title>/);
-    // smaller, less: the rim's beads go at the tiny size, and the picture loses its finest parts
+    // smaller, less: the tiny size keeps the outline and loses the stone's table and its glyph
     for (const tier of LEAGUE_TIERS) {
       expect(elements(leagueEmblemSvg({ tier, size: 24 })), tier).toBeLessThan(elements(leagueEmblemSvg({ tier })));
-      expect(beadRings(leagueEmblemSvg({ tier, size: 24 })), tier).toBe(0);
+      expect(hasGlyph(leagueEmblemSvg({ tier })), tier).toBe(true);
+      expect(hasGlyph(leagueEmblemSvg({ tier, size: 24 })), tier).toBe(false);
     }
-    // the rim climbs too: beads are set into it from Çem up
-    expect(LEAGUE_TIERS.map((tier) => beadRings(leagueEmblemSvg({ tier })))).toEqual([0, 0, 1, 1, 1, 1]);
+    // the setting grows from a lone drop to the ocean's full crest, and the sea and the ocean glow
+    const setting = LEAGUE_TIERS.map((tier) => blades(leagueEmblemSvg({ tier })));
+    expect(setting[0]).toBe(0);
+    for (let i = 1; i < setting.length; i++) expect(setting[i], LEAGUE_TIERS[i]).toBeGreaterThan(setting[i - 1] as number);
+    expect(LEAGUE_TIERS.map((tier) => glows(leagueEmblemSvg({ tier })) > 0)).toEqual([false, false, false, false, true, true]);
     expect(() => leagueEmblemSvg({ tier: 'diamond' as never })).toThrow(RangeError);
   });
 
-  it('draws a league not reached yet as its own outline, flat, with a keyhole and no picture', () => {
+  it('draws a league not reached yet as its own outline, flat, with a keyhole and no stone', () => {
     const locked = { body: '#dfe3e8', mark: '#9aa3ad' };
     for (const tier of LEAGUE_TIERS) {
       const svg = leagueEmblemSvg({ tier, locked, size: 64 });
@@ -528,7 +562,7 @@ describe('leagueEmblemSvg', () => {
       expect(svg).toContain('fill="#9aa3ad"');
       expect(elements(svg), tier).toBeLessThan(elements(leagueEmblemSvg({ tier, size: 64 })) / 3);
     }
-    // each keeps its own shape, so the ladder still reads from a drop to the ocean
+    // each keeps its own outline — its cut and its setting — so the ladder still reads from a drop to the ocean
     expect(new Set(LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier, locked })))).toHaveProperty('size', 6);
   });
 });

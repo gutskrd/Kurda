@@ -101,6 +101,23 @@ export const RANK_METAL: Record<RankTier, Metal> = {
 };
 
 /**
+ * The stone set in each rank's crest: the tier's hue as a cut jewel, deeper
+ * and more saturated than its metal so it stands out of its own setting —
+ * carnelian for the plain, emerald for the hills, turquoise for the pasture,
+ * sapphire for the mountain, amethyst for the summit, and for the star a
+ * stone of starlight — ice-blue and white in its gold, the one crest whose
+ * stone is not its metal's colour, so the top of the ladder is unmistakable.
+ */
+export const RANK_GEM: Record<RankTier, Metal> = {
+  dest: { hi: '#fff0e2', light: '#ffb07c', mid: '#ef6a34', dark: '#a8341b', deep: '#4a1408' },
+  gir: { hi: '#ecfff1', light: '#86f0a6', mid: '#22c063', dark: '#0d7a3e', deep: '#04321a' },
+  zozan: { hi: '#e8fffc', light: '#74f2e4', mid: '#13c3bd', dark: '#077e86', deep: '#033a42' },
+  ciya: { hi: '#ecf2ff', light: '#93b5ff', mid: '#3a6aff', dark: '#1b37b8', deep: '#0a1556' },
+  lutke: { hi: '#f8eeff', light: '#d9a2ff', mid: '#a650f2', dark: '#6522b2', deep: '#2c0b5c' },
+  sterk: { hi: '#ffffff', light: '#e6f6ff', mid: '#9fd4ff', dark: '#4688e0', deep: '#13357a' },
+};
+
+/**
  * The enamel behind a rank tier's glyph where one is drawn on a badge, and
  * under its season plaque: the tier's hue gone deep, never toward brown.
  */

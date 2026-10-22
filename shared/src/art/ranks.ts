@@ -1,143 +1,84 @@
 /**
- * Game-rank emblems (contract 4, R4/B3): six tiers, each a round enamel
- * medallion with a small scene of the climb inside it — the sun rising over
- * the wheat of the plain, green hills with a tree, a high pasture in flower
- * with a black tent under far peaks, a snow-capped mountain, the summit above
- * the clouds, and the sun of twenty-one rays rising over the summit.
+ * Game-rank emblems (contract 4, R4/B3): six tiers, each a crest — a cut
+ * stone in a chiselled bezel, set in the tier's own metal, with a setting
+ * that grows as the player climbs (see crest.ts).
  *
- * The medallion grows with the tier the way a collection of pins does, so a
- * higher tier is told by its silhouette before its colour: Deşt is the plain
- * medallion; Gir adds a ring of dots to its rim; Zozan a kilim band; Çiya
- * small laurel sprigs at its foot; Lûtke laurels up its sides and a crown of
- * three rounded peaks; Stêrk the full wreath, a star on its crown and a soft
- * glow of its own.
+ *   Deşt, the plain     a carnelian shield, alone in its bezel
+ *   Gir, the hills      an emerald kite with a first pair of wings
+ *   Zozan, the pasture  a turquoise hexagon, its wings fuller
+ *   Çiya, the mountain  a sapphire peak, wings above and below and a chevron under it
+ *   Lûtke, the summit   an amethyst octagon under a crown, glowing
+ *   Stêrk, the star     a round stone of starlight in gold, the full crest: a jewelled crown, a hanging stone, rays and light
  *
- * The division is a row of three round pips under the medallion, lit as the
+ * Into each stone is cut the place it is named for — an ear of wheat, the
+ * hills, the black tent, the peak, the flag on the summit, the sun — so the
+ * crest still says where you are, the way the old medallions' pictures did.
+ *
+ * The division is a row of three small cut stones under the crest, lit as the
  * player climbs: one for III, two for II, three for I — counted, not
  * coloured, so it reads for everyone; the title carries the numeral.
  *
  * A season's emblem — the peak tier a player reached, kept for good (R5) —
- * swaps the pips for the season's own plaque: its glyph (blossom, sun, leaf,
- * snowflake, the same as the season event badges) and the year's last two
- * figures, so last spring's Çiya is not this spring's.
+ * swaps the stones for the season's own plaque: its glyph (blossom, sun,
+ * leaf, snowflake, the same as the season event badges) and the year's last
+ * two figures, so last spring's Çiya is not this spring's.
  *
  * Small sizes get their own drawing rather than a shrunken one: under
- * SMALL_EMBLEM pixels the medallion fills its square and the pips give way
- * (the app writes the division beside it); under TINY_EMBLEM the rim's dots
- * and kilim go and the scene keeps only the shapes that say the place.
+ * SMALL_EMBLEM pixels the crest fills its square, keeps its longest blades and
+ * drops the division (the app writes it beside it); under TINY_EMBLEM the
+ * stone's table and its glyph go, and the setting keeps only what makes its
+ * outline.
  */
-import { ICONS, circ } from './icons.js';
+import { ICONS } from './icons.js';
 import { paintIcon } from './iconpaint.js';
+import type { Crest, CrestBox } from './crest.js';
+import { crestMarkup, divisionStones } from './crest.js';
+import { RANK_GLYPHS } from './crest-glyphs.js';
 import type { RankDivision, RankTier, Season } from './keys.js';
 import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
-import type { Field, Metal } from './palette.js';
-import { PEARL, PLACING, RANK_FIELD, RANK_METAL } from './palette.js';
-import { capsule, crown, dotsAt, gloss, halo, kilimRing, laurel, lipMetal, pinShadow, pips, rimMetal, roundAbout } from './paint.js';
+import type { Field } from './palette.js';
+import { PEARL, PLACING, RANK_FIELD, RANK_GEM, RANK_METAL } from './palette.js';
+import { capsule, rimMetal } from './paint.js';
 import type { Detail } from './scenes.js';
-import { sceneAt } from './scenes.js';
-import { Drawing, checkSize, linearAt, n, n2, prefixFor } from './svg.js';
+import { Drawing, checkSize, linearAt, n, prefixFor } from './svg.js';
 
 /** A rank tier's enamel, for a glyph or a plaque drawn in its colours. */
 function rankField(t: RankTier): Field {
   return RANK_FIELD[t];
 }
 
-/** Under this many pixels an emblem is drawn in its small version: filling its square, no pips. */
+/** Under this many pixels an emblem is drawn in its small version: filling its square, no division. */
 export const SMALL_EMBLEM = 56;
-/** Under this many pixels an emblem keeps only what says its tier: no rim ornament, its scene at its boldest. */
+/** Under this many pixels an emblem keeps only what says its tier: its outline, its colours, its cut. */
 export const TINY_EMBLEM = 32;
 
-/** How much of a scene to draw at `size` pixels. */
+/** How much of a drawing to keep at `size` pixels. */
 export function detailFor(size: number, small = SMALL_EMBLEM, tiny = TINY_EMBLEM): Detail {
   return size < tiny ? 2 : size < small ? 1 : 0;
 }
 
 // ─────────────────────────────────────────────────────────── the ladder
 
-interface Ladder {
-  /** what is set into the rim: nothing, a ring of dots, or a kilim band */
-  rim: 'plain' | 'dots' | 'kilim';
-  /** laurel: none, sprigs at the foot, branches up the sides, or the full wreath */
-  laurel: 0 | 1 | 2 | 3;
-  crown: 'none' | 'pearls' | 'star';
-  /** the soft light behind the medallion */
-  glow: number;
-}
-
-const LADDER: Record<RankTier | 'placing', Ladder> = {
-  placing: { rim: 'plain', laurel: 0, crown: 'none', glow: 0 },
-  dest: { rim: 'plain', laurel: 0, crown: 'none', glow: 0 },
-  gir: { rim: 'dots', laurel: 0, crown: 'none', glow: 0 },
-  zozan: { rim: 'kilim', laurel: 0, crown: 'none', glow: 0 },
-  ciya: { rim: 'kilim', laurel: 1, crown: 'none', glow: 0 },
-  lutke: { rim: 'kilim', laurel: 2, crown: 'pearls', glow: 0.32 },
-  sterk: { rim: 'kilim', laurel: 3, crown: 'star', glow: 0.6 },
+/** Each tier's crest: the cut of its stone and how grand its setting is. */
+const LADDER: Record<RankTier, Pick<Crest, 'cut' | 'wings' | 'base' | 'crown' | 'glow' | 'rays'>> = {
+  dest: { cut: 'shield', wings: 0, base: 0, crown: 'none', glow: 0, rays: false },
+  gir: { cut: 'kite', wings: 1, base: 0, crown: 'none', glow: 0, rays: false },
+  zozan: { cut: 'hexagon', wings: 2, base: 0, crown: 'none', glow: 0, rays: false },
+  ciya: { cut: 'peak', wings: 3, base: 1, crown: 'none', glow: 0, rays: false },
+  lutke: { cut: 'octagon', wings: 4, base: 1, crown: 'spikes', glow: 0.32, rays: false },
+  sterk: { cut: 'brilliant', wings: 5, base: 2, crown: 'jewel', glow: 0.55, rays: true },
 };
 
-/** Where the right-hand laurel stem starts and ends (degrees, 90 = the foot), and how many leaves it carries. */
-const LAUREL: Record<1 | 2 | 3, { from: number; to: number; leaves: number }> = {
-  1: { from: 72, to: 24, leaves: 3 },
-  2: { from: 76, to: -16, leaves: 5 },
-  3: { from: 78, to: -60, leaves: 8 },
-};
-
-/**
- * A medallion of `key` at cx,cy, `r` in radius: its light, shadow and
- * ornaments, the metal rim, and its scene set in enamel. Returns markup.
- */
-export function medallion(dr: Drawing, key: RankTier | 'placing', cx: number, cy: number, r: number, detail: Detail, lit = 0): string {
-  const g = LADDER[key];
-  const m: Metal = key === 'placing' ? PEARL : RANK_METAL[key];
-  const out: string[] = [];
-  const bold = detail > 0;
-
-  // the glow fades out before the square's edge, so it never shows a hard side
-  if (g.glow > 0) out.push(halo(dr, cx, cy, Math.min(r * 1.62, 59 - Math.abs(cy - 60), 59 - Math.abs(cx - 60)), m.light, g.glow, 0.5));
-  out.push(pinShadow(dr, circ(cx, cy, r), m.deep, cx, cy + r, r * 2, bold ? 3 : 2.2));
-
-  if (g.laurel !== 0) {
-    const l = LAUREL[g.laurel];
-    // small, the wreath keeps its shape with fewer, larger leaves
-    const leaves = detail === 2 ? Math.max(2, Math.ceil(l.leaves / 2)) : detail === 1 ? Math.max(2, l.leaves - 1) : l.leaves;
-    const scale = detail === 2 ? 1.5 : detail === 1 ? 1.2 : 1;
-    out.push(laurel({ cx, cy, r: r + r * 0.11, from: l.from, to: l.to, leaves, len: r * 0.27 * scale, width: r * 0.105 * scale, m, edged: !bold }));
-  }
-  if (g.crown !== 'none') {
-    const w = r * (bold ? 0.92 : 0.8);
-    const h = r * (bold ? 0.4 : 0.34);
-    out.push(crown(dr, m, cx, cy - r + r * 0.16, w, h, detail === 2 && g.crown === 'pearls' ? 'none' : g.crown));
-  }
-
-  // the rim: smooth metal, edged in its own darkest tone
-  const rimW = r * (g.rim === 'kilim' && detail === 0 ? 0.22 : bold ? 0.17 : 0.18);
-  const fr = r - rimW;
-  const metal = rimMetal(dr, m, cx, cy, r);
-  out.push(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${metal})" stroke="${m.deep}" stroke-width="${n2(detail === 2 ? 3 : bold ? 2.2 : 1.2)}"/>`);
-  const mid = r - rimW / 2;
-  if (detail < 2 && g.rim !== 'plain') {
-    if (g.rim === 'kilim' && detail === 0) out.push(kilimRing(cx, cy, mid, 18, rimW * 0.62, m.hi, m.dark));
-    else out.push(`<path d="${dotsAt(roundAbout(cx, cy, mid, detail === 0 ? 24 : 12, 0.5), rimW * (detail === 0 ? 0.17 : 0.2))}" fill="${m.hi}"/>`);
-  }
-
-  // the enamel: the scene, its one gloss, and the lip of the rim round it
-  const clip = dr.clip(circ(cx, cy, fr));
-  out.push(`<g clip-path="url(#${clip})">${sceneAt(dr, key, cx, cy, fr, detail, lit)}${gloss(dr, cx, cy, fr, bold ? 0.16 : 0.22)}</g>`);
-  out.push(`<circle cx="${n(cx)}" cy="${n(cy)}" r="${n(fr)}" fill="none" stroke="url(#${lipMetal(dr, m, cx, cy, fr)})" stroke-width="${n2(bold ? 2.4 : 1.6)}"/>`);
-  return out.join('');
+/** A tier's crest, whole. */
+export function rankCrest(tier: RankTier): Crest {
+  return { ...LADDER[tier], gem: RANK_GEM[tier], metal: RANK_METAL[tier], glyph: RANK_GLYPHS[tier] };
 }
 
-/** Where a medallion sits and how big it is: large ones leave the foot for pips; small ones fill the square. */
-function layoutOf(tier: RankTier | 'placing', detail: Detail, marked: boolean): { cy: number; r: number } {
-  const g = LADDER[tier];
-  if (detail === 0) {
-    if (g.laurel === 3) return marked ? { cy: 54, r: 32 } : { cy: 61, r: 36 };
-    return marked ? { cy: 50, r: 37 } : { cy: 58, r: 38 };
-  }
-  // small: the ornaments need their room, so the medallion gives some up as they grow
-  if (g.laurel === 0) return { cy: 59, r: 49 };
-  if (g.laurel === 1) return { cy: 56, r: 44 };
-  if (g.laurel === 2) return { cy: 63, r: 40 };
-  return { cy: 64, r: 38 };
+/** How much room a crest has: large ones leave the foot for the division; small ones fill the square. */
+export function crestBox(detail: Detail, marked: boolean): CrestBox {
+  if (detail === 2) return { top: 2, bottom: 118, cap: 40 };
+  if (detail === 1) return { top: 3, bottom: 117, cap: 36 };
+  return marked ? { top: 4, bottom: 94, cap: 24 } : { top: 6, bottom: 114, cap: 26 };
 }
 
 // ────────────────────────────────────────────────────── the season's plaque
@@ -233,11 +174,10 @@ export interface PlacementEmblemOptions {
 }
 
 /**
- * The emblem before a first tier ("Placing 3/5"): a pearl medallion with a
- * path of five stepping stones winding up toward peaks in the mist, one for
- * each placement game and lit as it is played, and five pips under it that
- * count the same — so the count still shows when the emblem is too small for
- * pips.
+ * The emblem before a first tier ("Placing 3/5"): a pearl crest whose stone
+ * is cut in five facets round its table, one for each placement game, each
+ * lit in Hevalo's violet as it is played — so the count shows in the stone
+ * itself, at any size — and five small stones under it that count the same.
  */
 export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const { done } = opts;
@@ -245,9 +185,12 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const size = checkSize(opts.size, 128);
   const detail = detailFor(size);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'placing', done, detail));
-  const at = layoutOf('placing', detail, true);
-  dr.add(medallion(dr, 'placing', 60, at.cy, at.r, detail, done));
-  if (detail === 0) dr.add(pips(dr, PLACING, PLACEMENT_GAMES, done, 60, FOOT_Y, 4.2, 4.2));
+  const crest: Crest = { cut: 'pentagon', gem: PEARL, metal: PEARL, wings: 0, base: 0, crown: 'none', glow: 0, rays: false };
+  // the facet at the top is the first game, and the count goes round clockwise
+  const order = [4, 0, 1, 2, 3];
+  const { markup } = crestMarkup(dr, crest, { detail, box: crestBox(detail, detail === 0), table: (i) => (order.indexOf(i) < done ? PLACING : PEARL) });
+  dr.add(markup);
+  if (detail === 0) dr.add(divisionStones(dr, PLACING, PEARL, PLACEMENT_GAMES, done, 60, FOOT_Y, 10, 13, 5));
   return dr.svg(size, opts.title ?? `Placing ${done}/${PLACEMENT_GAMES}`);
 }
 
@@ -264,11 +207,11 @@ export function rankEmblemSvg(opts: RankEmblemOptions): string {
   const shown = tier === 'sterk' || season ? undefined : division;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'rank', tier, shown, detail, season?.name, season?.year));
   const marked = detail === 0 && (shown !== undefined || season !== undefined);
-  const at = layoutOf(tier, detail, marked);
-  dr.add(medallion(dr, tier, 60, at.cy, at.r, detail));
+  const { markup } = crestMarkup(dr, rankCrest(tier), { detail, box: crestBox(detail, marked) });
+  dr.add(markup);
   if (detail === 0) {
     if (season) dr.add(seasonMark(dr, tier, season.name, season.year, 60, FOOT_Y + 1));
-    else if (shown !== undefined) dr.add(pips(dr, RANK_METAL[tier], 3, 4 - shown, 60, FOOT_Y, 4.8, 5.2));
+    else if (shown !== undefined) dr.add(divisionStones(dr, RANK_GEM[tier], RANK_METAL[tier], 3, 4 - shown, 60, FOOT_Y, 11, 14, 7));
   }
   const nm = RANK_TIER_NAMES[tier];
   const when = season ? ` · ${SEASON_NAMES[season.name].ku} ${season.year}` : '';
