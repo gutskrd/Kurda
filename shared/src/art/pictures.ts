@@ -14,7 +14,7 @@
  * glints — are left out of the small drawing, and at the smallest only the
  * shapes and their colours are left.
  */
-import { circ, ell, glint, line, mix, n, path, stroke } from './pen.js';
+import { circ, ell, glint, line, mix, n, path, stroke, through } from './pen.js';
 import type { Pen, Picture } from './pen.js';
 
 // ─────────────────────────────────────────────────────────────── the pictures
@@ -403,21 +403,6 @@ function teaGlass(p: Pen): string {
     out.push(path(`${glint(-16.2, -12.4, 1.8)}${glint(16.4, -4.2, 1.3)}`, '#ffffff'));
   }
   return out.join('');
-}
-
-/**
- * A smooth curve through the points, from the first (where the pen already is)
- * to the last: each bend eased by its neighbours (Catmull-Rom, as cubic curves).
- */
-function through(pts: readonly [number, number][]): string {
-  let d = '';
-  for (let i = 0; i < pts.length - 1; i++) {
-    const [p0, p1, p2, p3] = [pts[Math.max(0, i - 1)]!, pts[i]!, pts[i + 1]!, pts[Math.min(pts.length - 1, i + 2)]!];
-    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
-    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
-    d += `C${n(c1[0]!)},${n(c1[1]!)} ${n(c2[0]!)},${n(c2[1]!)} ${n(p2[0])},${n(p2[1])}`;
-  }
-  return d;
 }
 
 /** The points of a five-pointed star, its first straight up from its middle, turned by `turn` degrees. */

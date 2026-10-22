@@ -2,7 +2,7 @@
  * The pictures Hevalo shows on the friends and events badges' — two hearts, a gift, a lantern, a letter, the Newroz fire, a pen, a speech bubble with a heart, fireworks, and a pomegranate — drawn whole with the pen
  * (pen.ts), in the style of the secrets (pictures.ts).
  */
-import { circ, ell, glint, line, n, path, stroke } from '../pen.js';
+import { circ, ell, glint, line, n, path, stroke, through } from '../pen.js';
 import type { Pen, Picture } from '../pen.js';
 
 const PAIR = /(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g;
@@ -277,82 +277,128 @@ function fireworks(p: Pen): string {
   return out.join('');
 }
 
-/**
- * A pomegranate's crown: a short neck flaring into five pointed sepals, the
- * dark of its opening between them; its base at (`x`, `y`), leaning `tilt`
- * degrees.
- */
-function crown(p: Pen, x: number, y: number, w: number, h: number, tilt: number, ink: string): string {
-  const at = ` transform="translate(${n(x)} ${n(y)}) rotate(${tilt})"`;
-  const pt = (fx: number, fy: number): string => `${n(fx * w)},${n(fy * h)}`;
-  const d =
-    `M${pt(-0.38, 0.12)}C${pt(-0.36, -0.12)} ${pt(-0.32, -0.3)} ${pt(-0.34, -0.46)}` +
-    `L${pt(-0.8, -0.98)}L${pt(-0.42, -0.74)}L${pt(-0.4, -1.12)}L${pt(-0.14, -0.8)}L${pt(0.04, -1.18)}L${pt(0.2, -0.8)}` +
-    `L${pt(0.46, -1.12)}L${pt(0.46, -0.74)}L${pt(0.84, -0.98)}L${pt(0.36, -0.46)}C${pt(0.34, -0.3)} ${pt(0.38, -0.12)} ${pt(0.4, 0.12)}Z`;
-  const out = [path(d, p.box([[0, '#f0606a'], [0.45, '#b81630'], [1, '#6a0a1e']]), stroke(ink, 0.8) + at)];
-  out.push(path(ell(0, -0.76 * h, 0.36 * w, 0.1 * h), '#3a0410', at));
-  if (!p.tiny) out.push(line(`M${pt(-0.14, -0.74)}V${n(-0.95 * h)}M${pt(0.02, -0.76)}V${n(-1 * h)}M${pt(0.18, -0.74)}V${n(-0.94 * h)}`, '#e8a0a0', 0.3, at));
-  return out.join('');
-}
-
-/**
- * Seeds packed into the chambers of the fruit, row on row, each row offset
- * from the one above and each seed nudged a little off it, as seeds lie. A
- * chamber is (x, y, rx, ry, egg): an oval, wider below than above by `egg`.
- * One lattice for all of them, so where two chambers meet no seed lies on another.
- */
-function grains(chambers: readonly (readonly [number, number, number, number, number])[], gap: number): [number, number][] {
-  const out: [number, number][] = [];
-  const inside = (x: number, y: number) =>
-    chambers.some(([cx, cy, rx, ry, egg]) => ((x - cx) / (rx * (1 + (egg * (y - cy)) / ry))) ** 2 + ((y - cy) / ry) ** 2 <= 1);
-  for (let row = 0, y = -10; y <= 20; row++, y += gap * 0.87) {
-    for (let col = 0, x = -10 + (row % 2) * (gap / 2); x <= 20; col++, x += gap) {
-      const k = (row * 7 + col * 13) % 5;
-      const [jx, jy] = [(k - 2) * 0.09, (((row + col) % 3) - 1) * 0.12];
-      if (inside(x, y)) out.push([Math.round((x + jx) * 10) / 10, Math.round((y + jy) * 10) / 10]);
-    }
+/** Whether a point lies inside a closed outline (its corners, in order). */
+function within(pts: readonly [number, number][], x: number, y: number): boolean {
+  let inside = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i]!;
+    const [xj, yj] = pts[j]!;
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) inside = !inside;
   }
-  return out;
+  return inside;
 }
 
 /**
- * Yalda, the longest night, when pomegranates are shared: one whole behind,
- * its crown leaning back, and one broken open in front on the pale pith and
- * the three chambers of ruby seeds packed inside it, its rind thin where it
- * faces us and thick where it turns away.
+ * A crown's outline: up its neck, then round its sepals, notch to tip to
+ * notch, each edge bowed a little away from the crown's middle (`c`) so a
+ * sepal is curved and pointed, like a flame; then down its neck again.
+ */
+function sepalsAround(c: [number, number], pts: [number, number][]): string {
+  let d = `M${n(pts[0]![0])},${n(pts[0]![1])}`;
+  for (let i = 1; i < pts.length; i++) {
+    const [[x0, y0], [x1, y1]] = [pts[i - 1]!, pts[i]!];
+    const [mx, my] = [(x0 + x1) / 2, (y0 + y1) / 2];
+    const len = Math.hypot(mx - c[0], my - c[1]) || 1;
+    const bow = i === 1 || i === pts.length - 1 ? 0 : 0.45;
+    d += `Q${n(mx + ((mx - c[0]) / len) * bow)},${n(my + ((my - c[1]) / len) * bow)} ${n(x1)},${n(y1)}`;
+  }
+  return `${d}Z`;
+}
+
+/** A closed outline smoothed through its corners, as a path. */
+const round = (pts: [number, number][]): string => `M${n(pts[0]![0])},${n(pts[0]![1])}${through([...pts, pts[0]!])}Z`;
+
+/**
+ * Yalda, the longest night, when pomegranates are shared: two, traced from
+ * the sketch. Behind, a whole one, its shoulder rising to the crown at its top
+ * left, the crown a star of sepals round a dark eye. In front, one broken
+ * open, its crown tall and leaning right: a thin rind on its near side, a
+ * thick one where it turns away and along its foot, and inside it seeds
+ * packed right up to the rind, parted down the middle under the crown.
  */
 function pomegranate(p: Pen): string {
   const out: string[] = [];
   const ink = '#4e0616';
   const skin = (cx: number, cy: number, r: number) =>
     p.round([[0, '#ff9a92'], [0.35, '#e43448'], [0.75, '#a8122e'], [1, '#6e0a22']], cx - r * 0.38, cy - r * 0.4, r * 1.5);
-  // the whole one behind, and its crown
-  out.push(crown(p, -9.9, -11.6, 5.6, 6.6, -8, ink));
-  out.push(path(circ(-6.45, -1.35, 12.5), skin(-6.45, -1.35, 12.5), stroke(ink, 1)));
-  if (!p.tiny) out.push(path('M-16.4,-4.8C-15.6,-8.8 -12.6,-11.8 -8.8,-12.8C-11.6,-10.6 -13.8,-8 -16.4,-4.8Z', '#ffffff', ' fill-opacity="0.7"'));
-  // the open one in front: its crown, its skin, the shadow it lays on the one behind
-  out.push(crown(p, 8.8, -4.9, 5.8, 6.8, 12, ink));
-  if (!p.tiny) out.push(path(ell(5.9, 6.4, 13.6, 13.1), '#3a0410', ' fill-opacity="0.3"'));
-  out.push(path(ell(5.9, 6.4, 12.8, 12.3), skin(5.9, 6.4, 12.8), stroke(ink, 1)));
-  // where it is broken open: the pale pith, and in it three chambers of seeds
-  out.push(path(ell(4.3, 6.45, 10.75, 11), p.box([[0, '#fff1e6'], [1, '#f2c2aa']]), stroke('#c45a62', 0.6)));
-  // the left chamber narrow at its top and full below, as it is in the fruit; two on the right, one over the other
-  const chambers: [number, number, number, number, number][] = [
-    [0.2, 6.3, 4.6, 8.9, 0.1],
-    [9.6, 2.8, 4.1, 3.7, 0],
-    [9.1, 11.4, 4.1, 4.3, 0.05],
+  const sepals = p.box([[0, '#f0606a'], [0.45, '#b81630'], [1, '#6a0a1e']]);
+
+  // the whole one behind: down its shoulder from the crown, round its foot, back (behind the other) and along its top
+  const back: [number, number][] = [
+    [-12.5, -12.4], [-15.6, -9.8], [-17.7, -7.3], [-18.9, -4.4], [-19.15, -1.4], [-18.9, 1.6], [-18.1, 4.1], [-16.6, 6.7],
+    [-14.4, 8.8], [-11.4, 10.4], [-7.6, 11.1], [-3, 10], [2.6, 5.4], [5.8, -2.6], [5.6, -7], [4.35, -8.55], [2.6, -10.7],
+    [0.5, -12.1], [-2.2, -13.35], [-5, -13.95], [-7.2, -13.7],
   ];
+  out.push(path(round(back), skin(-8, -2, 13), stroke(ink, 1)));
+  if (!p.tiny) out.push(path('M-17.4,-4.6C-16.6,-7.8 -14.6,-10.2 -11.8,-11.4C-14,-9.4 -15.6,-7.2 -17.4,-4.6Z', '#ffffff', ' fill-opacity="0.7"'));
+  // its crown: a short neck, and the star of sepals round its dark eye
+  out.push(
+    path(
+      sepalsAround(
+        [-9.9, -15.6],
+        [
+          [-12.2, -12.3], [-11.7, -14.8], [-14.2, -15.9], [-11.9, -16.3], [-13.1, -18.7], [-10.9, -17.1], [-10, -19.5], [-9, -17.1],
+          [-7, -18.8], [-8, -16.4], [-6.2, -15.4], [-8.2, -14.8], [-7.4, -12.6],
+        ],
+      ),
+      sepals,
+      stroke(ink, 0.8),
+    ),
+  );
+  out.push(path(ell(-9.9, -16, 1.5, 0.6), '#3a0410'));
+  if (p.fine) out.push(line('M-10.6,-15.9V-17M-9.9,-16V-17.4M-9.2,-15.9V-17', '#e8a0a0', 0.3));
+
+  // the open one in front: round its near side and its foot, up the far side to the crown
+  const front: [number, number][] = [
+    [-0.55, -4.35], [-3.85, -1.95], [-5.55, 0.45], [-6.85, 4.05], [-7, 8.8], [-6.15, 12.45], [-4.45, 14.85], [-1.6, 16.9],
+    [1.2, 18.2], [5.5, 18.85], [9.2, 18.95], [12.75, 17.65], [16.35, 14.65], [18.15, 11.25], [18.75, 7.6], [18.45, 4.05],
+    [17.65, 1.65], [16.05, -0.75], [13.2, -3.2], [11.9, -3.9], [8.4, -4.9], [5.3, -5.5], [2.4, -5.3],
+  ];
+  out.push(path(round(front), skin(6, 6, 13), stroke(ink, 1)));
+  // where it is broken open: the rind thin on this side, thick where it turns away and along its foot
+  const open: [number, number][] = [
+    [-0.4, -3.9], [-3.5, -1.6], [-5.15, 0.8], [-6.4, 4.4], [-6.55, 8.6], [-5.75, 12.4], [-3.95, 14.8], [-0.5, 16.9],
+    [4.5, 17.9], [9.5, 16.9], [13.4, 14.3], [15.3, 9.6], [15.4, 3.6], [13.6, -1.3], [11.5, -3.5], [8.5, -4.2], [5.4, -4.8], [2.2, -4.7],
+  ];
+  out.push(path(round(open), '#6a0418', stroke('#e8a490', 0.4)));
   if (!p.tiny) {
-    // each chamber is its seeds, so its edge is as lumpy as they are
-    const seeds = grains(chambers, 1.9);
-    out.push(line(dots(seeds), '#6a0418', 2.45));
-    out.push(line(dots(seeds), p.line([[0, '#ff5a78'], [1, '#c40c34']], 0, -3, 0, 16), 1.8));
+    // the seeds, packed right up to the rind, row on row and each nudged off its row; none in the pale fold down the middle
+    const seeds: [number, number][] = [];
+    const gap = 2.05;
+    const fold = (x: number, y: number) => y < 7.5 && Math.abs(x - (5.7 - 0.05 * (y + 4))) < 0.5 + 0.04 * (7.5 - y);
+    for (let row = 0, y = -4.2; y <= 18.5; row++, y += gap * 0.87) {
+      for (let col = 0, x = -7 + (row % 2) * (gap / 2); x <= 16; col++, x += gap) {
+        const k = (row * 7 + col * 13) % 5;
+        const [sx, sy] = [x + (k - 2) * 0.14, y + (((row + col) % 3) - 1) * 0.18];
+        const room = [[0, 0], [0.8, 0], [-0.8, 0], [0, 0.8], [0, -0.8]].every(([dx, dy]) => within(open, sx + dx!, sy + dy!));
+        if (room && !fold(sx, sy)) seeds.push([Math.round(sx * 10) / 10, Math.round(sy * 10) / 10]);
+      }
+    }
+    // the fold under the crown, pale and narrowing as it goes down
+    out.push(path('M4.9,-4.6C5.2,-1 5,3 5.3,7.4C5.6,3 6.4,-1 6.9,-4.4Z', '#f2c8b2'));
+    // seeds of two sizes, as they grow
+    const ruby = p.line([[0, '#ff5a78'], [1, '#c40c34']], 0, -4, 0, 18);
+    out.push(line(dots(seeds.filter((_, i) => i % 3 !== 1)), ruby, 2.05));
+    out.push(line(dots(seeds.filter((_, i) => i % 3 === 1)), ruby, 1.6));
     if (p.fine) out.push(line(dots(seeds.map(([x, y]) => [x - 0.4, y - 0.4])), '#ffffff', 0.5, ' stroke-opacity="0.85"'));
     // the rind's light, round the side that turns away
-    out.push(line('M15.6,-1.4C17.6,1.6 18.2,5.6 17.4,9.4', '#ffffff', 0.7, ' stroke-opacity="0.6"'));
+    out.push(line('M16.2,-0.2C17.6,2 18,5.2 17.6,8.6', '#ffffff', 0.7, ' stroke-opacity="0.6"'));
   } else {
-    out.push(path(chambers.map(([x, y, rx, ry]) => ell(x, y, rx * 0.9, ry * 0.9)).join(''), '#d8203e'));
+    out.push(path(round(open), '#d8203e'));
   }
+  // its crown, tall, leaning right: a neck flaring into pointed sepals, the dark of its eye between them
+  out.push(
+    path(
+      sepalsAround(
+        [9.4, -8],
+        [[5.3, -5.3], [5.2, -7.4], [4.7, -10.9], [6.4, -8.3], [7.9, -12.3], [9.4, -8.9], [11, -11], [12, -8.8], [14.6, -10.4], [12.8, -6.8], [12.2, -3.9]],
+      ),
+      sepals,
+      stroke(ink, 0.8),
+    ),
+  );
+  out.push(path(ell(9.3, -8.5, 2, 0.5), '#3a0410', ' transform="rotate(12 9.3 -8.5)"'));
+  if (p.fine) out.push(line('M8.6,-8.7L8.4,-10M9.4,-8.5L9.5,-10.2M10.2,-8.3L10.6,-9.8', '#e8a0a0', 0.3));
   if (p.fine) out.push(path(`${glint(-17.2, 13.4, 1.8)}${glint(17.8, -9.6, 1.4)}`, '#ffffff'));
   return out.join('');
 }
