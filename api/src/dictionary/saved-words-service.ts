@@ -25,6 +25,11 @@ export interface SavedWord {
   savedAt: string;
 }
 
+/** Badges hook: a word newly saved to the list moves the Gencîne badge (badges/service.ts). */
+export interface SavedWordsBadges {
+  onWordSaved(userId: string): Promise<void>;
+}
+
 /** Bookmark dictionary words and feed them into spaced repetition (KUR-047). */
 export class SavedWordsService {
   private readonly reviews: ReviewService;
@@ -32,6 +37,7 @@ export class SavedWordsService {
   constructor(
     private readonly pool: pg.Pool,
     reviews?: ReviewService,
+    private readonly badges?: SavedWordsBadges,
   ) {
     this.reviews = reviews ?? new ReviewService(pool);
   }
@@ -46,10 +52,12 @@ export class SavedWordsService {
    * cap (10) is reached — in which case it's still saved, just not scheduled.
    */
   async save(userId: string, entryId: string, timeZone: string, now: Date = new Date()): Promise<SaveResult> {
-    await this.pool.query(
+    const inserted = await this.pool.query(
       `INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
       [userId, entryId],
     );
+    // only a word new to the list: saving one already there again changes nothing
+    if ((inserted.rowCount ?? 0) > 0 && this.badges) void this.badges.onWordSaved(userId).catch(() => undefined);
 
     const today = localDate(now, timeZone);
     const newToday = await this.pool.query<{ n: string }>(

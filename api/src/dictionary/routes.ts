@@ -5,18 +5,18 @@ import { AppError } from '../plugins/errors.js';
 import { DictionaryRepository } from './repository.js';
 import { DictionarySearchService } from './search-service.js';
 import { WordOfDayService } from './word-of-day-service.js';
-import { SavedWordsService } from './saved-words-service.js';
+import { SavedWordsService, type SavedWordsBadges } from './saved-words-service.js';
 
 const searchQuery = z.object({
   q: z.string().max(100),
   limit: z.coerce.number().int().min(1).max(50).optional(),
 });
 
-export function registerDictionaryRoutes(app: FastifyInstance): void {
+export function registerDictionaryRoutes(app: FastifyInstance, badges?: SavedWordsBadges): void {
   const search = new DictionarySearchService(app.db, app.cache);
   const repo = new DictionaryRepository(app.db);
   const wotd = new WordOfDayService(app.db);
-  const saved = new SavedWordsService(app.db);
+  const saved = new SavedWordsService(app.db, undefined, badges);
 
   async function timezoneOf(userId: string): Promise<string> {
     const tz = await app.db.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);

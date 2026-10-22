@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { areFriendsSql } from '../users/age.js';
 import { LEARNING_XP_SOURCES } from '../xp/rules.js';
+import { PRACTICE_TARGET } from '../practice/practice-select.js';
 import { rankTierIndexSql } from './rank-hooks.js';
 
 /**
@@ -118,6 +119,19 @@ export function fullWeeks(days: readonly string[]): number {
   return [...per.values()].filter((n) => n >= 7).length;
 }
 
+/** Calendar months with a learning day on every one of their days: 28 to 31 of them, as the month has. */
+export function fullMonths(days: readonly string[]): number {
+  const per = new Map<string, number>();
+  for (const d of days) per.set(d.slice(0, 7), (per.get(d.slice(0, 7)) ?? 0) + 1);
+  let count = 0;
+  for (const [month, n] of per) {
+    const [y, m] = month.split('-').map(Number) as [number, number];
+    // day 0 of the next month is the last day of this one (Date.UTC counts months from 0)
+    if (n >= new Date(Date.UTC(y, m, 0)).getUTCDate()) count += 1;
+  }
+  return count;
+}
+
 /** Distinct years with a learning day between two calendar dates (month, day), inclusive. */
 export function yearsWithin(days: readonly string[], from: [number, number], to: [number, number]): number {
   const years = new Set<string>();
@@ -196,6 +210,17 @@ const battleWins = (extra: string) => `
 /** A Peyvok's guesses, the last of which is the sixth (wordle-service.ts's MAX_ATTEMPTS). */
 export const PEYVOK_GUESSES = 6;
 
+/**
+ * The finished games of one kind the learner played with a friend among the
+ * other players, one row each: players' table, games' table, the column that
+ * joins them, and anything more a game must be.
+ */
+const withFriend = (players: string, games: string, key: string, extra = '') => `
+  SELECT p.${key} FROM ${players} p JOIN ${games} g ON g.id = p.${key}
+   WHERE p.user_id = $1 AND NOT p.removed AND g.status = 'finished' ${extra}
+     AND EXISTS (SELECT 1 FROM ${players} q WHERE q.${key} = p.${key} AND q.user_id <> $1
+                  AND NOT q.removed AND ${areFriendsSql('q.user_id', '$1::uuid')})`;
+
 /** A Newroz story: one whose title says so, in either script. */
 const NEWROZ_TITLE = `(COALESCE(g.story_snapshot->>'title', s.title) ~* '(newroz|نەورۆز|نوروز)')`;
 
@@ -272,6 +297,10 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   listening_speaking_answers: answersOf(['listening', 'speaking']),
   typed_answers: answersOf(['translate', 'writing']),
+  // an item the scheduler now brings back only after a month or more (SM-2's interval)
+  review_items_month: count(`SELECT count(*) AS n FROM review_items WHERE user_id = $1 AND interval_days >= 30`),
+  // words on the learner's list now (unsaving one does not take the bar back: progress never falls)
+  saved_words: count(`SELECT count(*) AS n FROM saved_words WHERE user_id = $1`),
 
   // ---- habit
   longest_streak: count(`SELECT GREATEST(longest_streak, current_streak) AS n FROM user_streaks WHERE user_id = $1`),
@@ -281,6 +310,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   okyanus_top_three_weeks: count(`SELECT count(*) AS n FROM league_weeks WHERE user_id = $1 AND trophy`),
   daily_goals_met: count(`SELECT count(*) AS n FROM daily_goals WHERE user_id = $1 AND completed_at IS NOT NULL`),
   full_weeks: async (ctx) => ({ progress: fullWeeks(await ctx.learningDays()) }),
+  full_months: async (ctx) => ({ progress: fullMonths(await ctx.learningDays()) }),
 
   // ---- games
   wordle_battle_wins: count(battleWins('')),
@@ -317,6 +347,9 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   ),
   daily_peyvok_solved: count(`SELECT count(DISTINCT day_index) AS n FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND status = 'won'`),
   training_rhymes: count(`SELECT COALESCE(sum(accepted), 0) AS n FROM rhyme_games WHERE user_id = $1`),
+  peyvok_three_guesses: count(
+    `SELECT count(*) AS n FROM wordle_games WHERE user_id = $1 AND status = 'won' AND jsonb_array_length(guesses) <= 3`,
+  ),
   // rated games played to the end, counted since the last moderation sanction
   // that stood against them (a report upheld starts the count again)
   fair_rated_games: count(
@@ -351,20 +384,20 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   // ---- friends
   games_with_friends: count(
     `SELECT count(*) AS n FROM (
-       SELECT p.battle_id FROM wordle_battle_players p JOIN wordle_battles b ON b.id = p.battle_id
-        WHERE p.user_id = $1 AND NOT p.removed AND b.status = 'finished'
-          AND EXISTS (SELECT 1 FROM wordle_battle_players q WHERE q.battle_id = p.battle_id AND q.user_id <> $1
-                       AND NOT q.removed AND ${areFriendsSql('q.user_id', '$1::uuid')})
+       ${withFriend('wordle_battle_players', 'wordle_battles', 'battle_id')}
        UNION ALL
-       SELECT p.match_id FROM rhyme_match_players p JOIN rhyme_matches m ON m.id = p.match_id
-        WHERE p.user_id = $1 AND NOT p.removed AND m.status = 'finished'
-          AND EXISTS (SELECT 1 FROM rhyme_match_players q WHERE q.match_id = p.match_id AND q.user_id <> $1
-                       AND NOT q.removed AND ${areFriendsSql('q.user_id', '$1::uuid')})
+       ${withFriend('rhyme_match_players', 'rhyme_matches', 'match_id')}
        UNION ALL
-       SELECT p.game_id FROM story_game_players p JOIN story_games g ON g.id = p.game_id
-        WHERE p.user_id = $1 AND NOT p.removed AND g.status = 'finished'
-          AND EXISTS (SELECT 1 FROM story_game_players q WHERE q.game_id = p.game_id AND q.user_id <> $1
-                       AND NOT q.removed AND ${areFriendsSql('q.user_id', '$1::uuid')})
+       ${withFriend('story_game_players', 'story_games', 'game_id')}
+     ) x`,
+  ),
+  // the same, for a game that was a rematch (the battle tables' `rematch_of`: a
+  // pair's rematch, or the next round a host opened); a story game has none
+  friend_rematches: count(
+    `SELECT count(*) AS n FROM (
+       ${withFriend('wordle_battle_players', 'wordle_battles', 'battle_id', 'AND g.rematch_of IS NOT NULL')}
+       UNION ALL
+       ${withFriend('rhyme_match_players', 'rhyme_matches', 'match_id', 'AND g.rematch_of IS NOT NULL')}
      ) x`,
   ),
   // a text written to a friend, once for each friend a day (only friends can be written to, chat/service.ts)
@@ -442,4 +475,15 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
     [PEYVOK_GUESSES],
   ),
   comeback_week: async (ctx) => ({ progress: comebackRuns(await ctx.learningDays()) }),
+  peyvok_first_guess: count(`SELECT count(*) AS n FROM wordle_games WHERE user_id = $1 AND status = 'won' AND jsonb_array_length(guesses) = 1`),
+  // a review that counted with as many items as a session takes (PRACTICE_TARGET),
+  // every one answered right the first time and to the letter: a 'typo' (a
+  // diacritic slip) is accepted, but not here. An item has one answer, its
+  // first: a second try is never recorded.
+  perfect_full_review: count(
+    `SELECT count(*) AS n FROM practice_sessions s
+      WHERE s.user_id = $1 AND s.completed_at IS NOT NULL AND s.xp_awarded > 0 AND s.total_count >= $2
+        AND (SELECT count(*) FROM practice_answers a WHERE a.session_id = s.id AND a.verdict = 'correct') >= s.total_count`,
+    [PRACTICE_TARGET],
+  ),
 };

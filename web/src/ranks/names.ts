@@ -246,6 +246,8 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   ferheng: { name: 'badges.ferheng.name', meaning: 'badges.ferheng.meaning', desc: 'badges.ferheng.desc' },
   zengil: { name: 'badges.zengil.name', meaning: 'badges.zengil.meaning', desc: 'badges.zengil.desc' },
   penus: { name: 'badges.penus.name', meaning: 'badges.penus.meaning', desc: 'badges.penus.desc' },
+  belur: { name: 'badges.belur.name', meaning: 'badges.belur.meaning', desc: 'badges.belur.desc' },
+  gencine: { name: 'badges.gencine.name', meaning: 'badges.gencine.meaning', desc: 'badges.gencine.desc' },
   agir: { name: 'badges.agir.name', meaning: 'badges.agir.meaning', desc: 'badges.agir.desc' },
   hefte: { name: 'badges.hefte.name', meaning: 'badges.hefte.meaning', desc: 'badges.hefte.desc' },
   roj: { name: 'badges.roj.name', meaning: 'badges.roj.meaning', desc: 'badges.roj.desc' },
@@ -253,6 +255,7 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   pela: { name: 'badges.pela.name', meaning: 'badges.pela.meaning', desc: 'badges.pela.desc' },
   cay: { name: 'badges.cay.name', meaning: 'badges.cay.meaning', desc: 'badges.cay.desc' },
   'gula-hefte': { name: 'badges.gula-hefte.name', meaning: 'badges.gula-hefte.meaning', desc: 'badges.gula-hefte.desc' },
+  'heyva-cardehe': { name: 'badges.heyva-cardehe.name', meaning: 'badges.heyva-cardehe.meaning', desc: 'badges.heyva-cardehe.desc' },
   peyvzan: { name: 'badges.peyvzan.name', meaning: 'badges.peyvzan.meaning', desc: 'badges.peyvzan.desc' },
   helbestvan: { name: 'badges.helbestvan.name', meaning: 'badges.helbestvan.meaning', desc: 'badges.helbestvan.desc' },
   bilez: { name: 'badges.bilez.name', meaning: 'badges.bilez.meaning', desc: 'badges.bilez.desc' },
@@ -262,6 +265,7 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   dilpak: { name: 'badges.dilpak.name', meaning: 'badges.dilpak.meaning', desc: 'badges.dilpak.desc' },
   mamik: { name: 'badges.mamik.name', meaning: 'badges.mamik.meaning', desc: 'badges.mamik.desc' },
   bilbil: { name: 'badges.bilbil.name', meaning: 'badges.bilbil.meaning', desc: 'badges.bilbil.desc' },
+  elmas: { name: 'badges.elmas.name', meaning: 'badges.elmas.meaning', desc: 'badges.elmas.desc' },
   'rank-dest': { name: 'ranks.tier.dest', meaning: 'ranks.meaning.dest', desc: 'badges.rank-dest.desc' },
   'rank-gir': { name: 'ranks.tier.gir', meaning: 'ranks.meaning.gir', desc: 'badges.rank-gir.desc' },
   'rank-zozan': { name: 'ranks.tier.zozan', meaning: 'ranks.meaning.zozan', desc: 'badges.rank-zozan.desc' },
@@ -274,6 +278,7 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   diyari: { name: 'badges.diyari.name', meaning: 'badges.diyari.meaning', desc: 'badges.diyari.desc' },
   mevandar: { name: 'badges.mevandar.name', meaning: 'badges.mevandar.meaning', desc: 'badges.mevandar.desc' },
   name: { name: 'badges.name.name', meaning: 'badges.name.meaning', desc: 'badges.name.desc' },
+  dilgerm: { name: 'badges.dilgerm.name', meaning: 'badges.dilgerm.meaning', desc: 'badges.dilgerm.desc' },
   newroz: { name: 'badges.newroz.name', meaning: 'badges.newroz.meaning', desc: 'badges.newroz.desc' },
   'roja-ziman': { name: 'badges.roja-ziman.name', meaning: 'badges.roja-ziman.meaning', desc: 'badges.roja-ziman.desc' },
   'zimane-dayike': { name: 'badges.zimane-dayike.name', meaning: 'badges.zimane-dayike.meaning', desc: 'badges.zimane-dayike.desc' },
@@ -292,6 +297,8 @@ export const BADGE_TEXT: Record<string, BadgeKeys> = {
   'kaniya-zanine': { name: 'badges.kaniya-zanine.name', meaning: 'badges.kaniya-zanine.meaning', desc: 'badges.kaniya-zanine.desc', hint: 'badges.kaniya-zanine.hint' },
   'pisika-wane': { name: 'badges.pisika-wane.name', meaning: 'badges.pisika-wane.meaning', desc: 'badges.pisika-wane.desc', hint: 'badges.pisika-wane.hint' },
   perperok: { name: 'badges.perperok.name', meaning: 'badges.perperok.meaning', desc: 'badges.perperok.desc', hint: 'badges.perperok.hint' },
+  'sterka-siqiti': { name: 'badges.sterka-siqiti.name', meaning: 'badges.sterka-siqiti.meaning', desc: 'badges.sterka-siqiti.desc', hint: 'badges.sterka-siqiti.hint' },
+  mirari: { name: 'badges.mirari.name', meaning: 'badges.mirari.meaning', desc: 'badges.mirari.desc', hint: 'badges.mirari.hint' },
 };
 
 /** A badge's name and meaning; a key this app does not know yet keeps the key as its name. */

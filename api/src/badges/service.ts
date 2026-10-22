@@ -32,16 +32,17 @@ type Executor = Pick<pg.Pool, 'query'>;
  */
 export const BADGE_TRIGGERS = {
   learning: [
-    'ders', 'peyven-min', 'bekemasi', 'dubare', 'cirokbej', 'rewi', 'ferheng', 'zengil', 'penus',
-    'agir', 'roj', 'vegera', 'cay', 'gula-hefte',
+    'ders', 'peyven-min', 'bekemasi', 'dubare', 'cirokbej', 'rewi', 'ferheng', 'zengil', 'penus', 'belur',
+    'agir', 'roj', 'vegera', 'cay', 'gula-hefte', 'heyva-cardehe',
     'newroz', 'roja-ziman', 'zimane-dayike', 'sersal', 'yelda', 'zivistan', 'bihar', 'havin', 'payiz', 'mehane',
-    'kaniya-zanine', 'mevane-agir', 'perperok',
+    'kaniya-zanine', 'mevane-agir', 'perperok', 'mirari',
   ],
   // a story game's rewards can meet the day's goal (Çay)
-  game: ['peyvzan', 'helbestvan', 'guhdar', 'hemereng', 'heval', 'mevandar', 'tire-rast', 'ji-nu-ve', 'mevane-agir', 'cirokbej', 'cay'],
-  solo: ['hemereng', 'bilez', 'rastnivis', 'deste-zerin', 'mamik', 'bilbil', 'pisika-wane'],
+  game: ['peyvzan', 'helbestvan', 'guhdar', 'hemereng', 'heval', 'mevandar', 'tire-rast', 'ji-nu-ve', 'mevane-agir', 'cirokbej', 'cay', 'dilgerm'],
+  solo: ['hemereng', 'bilez', 'rastnivis', 'deste-zerin', 'mamik', 'bilbil', 'pisika-wane', 'elmas', 'sterka-siqiti'],
   gift: ['diyari'],
   letter: ['name'],
+  saved: ['gencine'],
   league: ['hefte', 'pela'],
   rated: [
     'rank-dest', 'rank-gir', 'rank-zozan', 'rank-ciya', 'rank-lutke', 'rank-sterk',
@@ -57,6 +58,7 @@ export const BADGE_TRIGGERS = {
  */
 export const CATALOGUE_ADDITIONS: Readonly<Record<number, readonly string[]>> = {
   2: ['zengil', 'penus', 'cay', 'gula-hefte', 'mamik', 'bilbil', 'name', 'sersal', 'yelda', 'pisika-wane', 'perperok'],
+  3: ['belur', 'gencine', 'heyva-cardehe', 'elmas', 'dilgerm', 'sterka-siqiti', 'mirari'],
 };
 /** The catalogue's current version: the last that added badges. */
 export const CATALOGUE_VERSION = Math.max(1, ...Object.keys(CATALOGUE_ADDITIONS).map(Number));
@@ -194,6 +196,11 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     if (this.recentLetters.size >= 10_000) this.recentLetters.clear();
     this.recentLetters.add(key);
     await this.evaluate(fromUserId, BADGE_TRIGGERS.letter);
+  }
+
+  /** A word saved from the dictionary to the learner's list, new to it (Gencîne). */
+  async onWordSaved(userId: string): Promise<void> {
+    await this.evaluate(userId, BADGE_TRIGGERS.saved);
   }
 
   /** A league week was recorded for these learners (settled, or in personal mode). */

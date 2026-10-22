@@ -616,7 +616,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerVoiceRoutes(app, config);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
-    registerDictionaryRoutes(app);
+    // a word saved to the list moves the Gencîne badge
+    registerDictionaryRoutes(app, badges);
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099). adminTotp is set whenever a
     // database is configured, which this branch already requires.

@@ -15,6 +15,8 @@ import { BadgeService, profileShowcase, type BadgeNotices } from './service.js';
 import { addXp, makeLearner, removeLearners, type LearnerOptions, type TestLearner } from '../test/progress.js';
 import { befriend } from '../test/social.js';
 import type { Notification } from '../push/service.js';
+import { DictionaryRepository } from '../dictionary/repository.js';
+import { PRACTICE_TARGET } from '../practice/practice-select.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 const DAY = 86_400_000;
@@ -130,12 +132,16 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     return g.rows[0]!.id;
   };
 
-  /** A finished Peyvok Battle: each player solved (in so many guesses) or not. */
-  const battle = async (host: TestLearner, players: Array<{ user: TestLearner; solved: boolean; guesses: number; ms?: number }>) => {
+  /** A finished Peyvok Battle: each player solved (in so many guesses) or not; a rematch of another, if said. */
+  const battle = async (
+    host: TestLearner,
+    players: Array<{ user: TestLearner; solved: boolean; guesses: number; ms?: number }>,
+    rematchOf: string | null = null,
+  ) => {
     const b = await pool.query<{ id: string }>(
-      `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, status, finished_at)
-       VALUES ($1, 'easy', 'av', 2, 'finished', now()) RETURNING id`,
-      [host.id],
+      `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, status, finished_at, rematch_of)
+       VALUES ($1, 'easy', 'av', 2, 'finished', now(), $2) RETURNING id`,
+      [host.id, rematchOf],
     );
     for (const [seat, p] of players.entries()) {
       await pool.query(
@@ -147,10 +153,11 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     return b.rows[0]!.id;
   };
 
-  const rhymeMatch = async (host: TestLearner, players: Array<{ user: TestLearner; score: number }>) => {
+  const rhymeMatch = async (host: TestLearner, players: Array<{ user: TestLearner; score: number }>, rematchOf: string | null = null) => {
     const m = await pool.query<{ id: string }>(
-      `INSERT INTO rhyme_matches (created_by, window_ms, prompt, status, finished_at) VALUES ($1, 60000, 'dil', 'finished', now()) RETURNING id`,
-      [host.id],
+      `INSERT INTO rhyme_matches (created_by, window_ms, prompt, status, finished_at, rematch_of)
+       VALUES ($1, 60000, 'dil', 'finished', now(), $2) RETURNING id`,
+      [host.id, rematchOf],
     );
     for (const [seat, p] of players.entries()) {
       await pool.query(
@@ -160,6 +167,14 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     }
     return m.rows[0]!.id;
   };
+
+  /** A finished Peyvok, the day's or a practice one, won or lost in so many guesses. */
+  const peyvok = async (userId: string, g: { mode: 'daily' | 'practice'; day?: number; won: boolean; guesses: number }) =>
+    pool.query(
+      `INSERT INTO wordle_games (user_id, mode, difficulty, day_index, target, target_length, guesses, status, finished_at)
+       VALUES ($1, $2, 'easy', $3, 'av', 2, $4::jsonb, $5, now())`,
+      [userId, g.mode, g.day ?? null, JSON.stringify(Array.from({ length: g.guesses }, () => 'av')), g.won ? 'won' : 'lost'],
+    );
 
   let raceText = '';
   const race = async (userId: string, r: { wpm: number; accuracy: number; errors: number; xp?: number }) => {
@@ -208,6 +223,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     await pool.query(`DELETE FROM courses WHERE slug LIKE $1`, [`bd-${suffix}-%`]);
     if (raceText) await pool.query(`DELETE FROM race_texts WHERE id = $1`, [raceText]);
     await pool.query(`DELETE FROM shop_items WHERE sku = $1`, [`bd-gift-${suffix}`]);
+    await pool.query(`DELETE FROM dict_entries WHERE headword LIKE $1`, [`bd${suffix}w%`]);
     await pool.end();
   });
 
@@ -495,12 +511,6 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
         ]);
       }
     };
-    const peyvok = async (userId: string, g: { mode: 'daily' | 'practice'; day?: number; won: boolean; guesses: number }) =>
-      pool.query(
-        `INSERT INTO wordle_games (user_id, mode, difficulty, day_index, target, target_length, guesses, status, finished_at)
-         VALUES ($1, $2, 'easy', $3, 'av', 2, $4::jsonb, $5, now())`,
-        [userId, g.mode, g.day ?? null, JSON.stringify(Array.from({ length: g.guesses }, () => 'av')), g.won ? 'won' : 'lost'],
-      );
 
     it('Zengil counts listening and speaking answered right, Pênûs translating and writing, in finished lessons only', async () => {
       const p = await counted();
@@ -611,7 +621,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(recorded.length).toBe(before);
       expect(await badges.unseen(p.id)).toEqual([]);
       const version = await pool.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id]);
-      expect(version.rows[0]!.catalogue).toBe(2);
+      expect(version.rows[0]!.catalogue).toBe(3);
       // from now on it is a badge like any other: its next tier is told
       for (let d = 7; d < 30; d++) {
         await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, now())`, [
@@ -621,6 +631,153 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       }
       expect(await badges.evaluate(p.id, ['cay'])).toEqual([{ key: 'cay', tier: 2 }]);
       expect(recorded.length).toBe(before + 1);
+    });
+  });
+
+  describe('the seven added after those', () => {
+    /** A review that counted (or not): an item answered for each verdict, `items` of them in the session. */
+    const review = async (userId: string, verdicts: Array<'correct' | 'typo' | 'wrong'>, opts: { items?: number; xp?: number } = {}) => {
+      const s = await pool.query<{ id: string }>(
+        `INSERT INTO practice_sessions (user_id, item_ids, total_count, correct_count, xp_awarded, completed_at)
+         VALUES ($1, '{}', $2, $3, $4, now()) RETURNING id`,
+        [userId, opts.items ?? verdicts.length, verdicts.filter((v) => v !== 'wrong').length, opts.xp ?? 5],
+      );
+      for (const verdict of verdicts) {
+        await pool.query(`INSERT INTO practice_answers (session_id, exercise_id, verdict, accepted) VALUES ($1, $2, $3, $4)`, [
+          s.rows[0]!.id,
+          await uuid(),
+          verdict,
+          verdict !== 'wrong',
+        ]);
+      }
+    };
+    const right = (n: number) => Array.from({ length: n }, () => 'correct' as const);
+
+    it('Belûr counts what comes back only after a month or more; Mirarî a full review right the first time, to the letter', async () => {
+      const p = await counted();
+      for (let i = 0; i < 12; i++) {
+        await pool.query(
+          `INSERT INTO review_items (user_id, item_id, repetitions, interval_days, easiness, due_at, last_reviewed_at)
+           VALUES ($1, $2, 5, $3, 2.5, now(), now())`,
+          [p.id, `ex-${i}`, i < 10 ? 30 + i : 29],
+        );
+      }
+      // one slip, a short review, a review that did not count, and one answer short
+      await review(p.id, [...right(PRACTICE_TARGET - 1), 'typo']);
+      await review(p.id, right(PRACTICE_TARGET - 1));
+      await review(p.id, right(PRACTICE_TARGET), { xp: 0 });
+      await review(p.id, right(PRACTICE_TARGET - 1), { items: PRACTICE_TARGET });
+      await badges.recordStreak(p.id, 1);
+      expect(await progressOf(p.id, 'belur')).toBe(10);
+      expect(await tierOf(p.id, 'belur')).toBe(1);
+      expect(await tierOf(p.id, 'mirari')).toBe(0);
+      await review(p.id, right(PRACTICE_TARGET));
+      await badges.recordStreak(p.id, 1);
+      expect(await tierOf(p.id, 'mirari')).toBe(1);
+    });
+
+    it('Gencîne counts the words on the list, told by the dictionary when one is saved', async () => {
+      const p = await counted();
+      const repo = new DictionaryRepository(pool);
+      for (let i = 0; i < 10; i++) {
+        const entry = await repo.createEntry(`bd${suffix}w${++n}`);
+        await pool.query(`INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2)`, [p.id, entry]);
+      }
+      await badges.onWordSaved(p.id);
+      expect(await progressOf(p.id, 'gencine')).toBe(10);
+      expect(await tierOf(p.id, 'gencine')).toBe(1);
+      // taking words off the list does not take the badge's bar back
+      await pool.query(`DELETE FROM saved_words WHERE user_id = $1`, [p.id]);
+      await badges.onWordSaved(p.id);
+      expect(await progressOf(p.id, 'gencine')).toBe(10);
+    });
+
+    it('Heyva çardehê counts the calendar months learned on every one of their days', async () => {
+      const p = await counted();
+      // all of February 2025 (28 days), and April but its last day
+      for (let d = 0; d < 28; d++) await addXp(pool, p.id, 10, new Date(Date.parse('2025-02-01T12:00:00Z') + d * DAY), { source: 'lesson_complete' });
+      for (let d = 0; d < 29; d++) await addXp(pool, p.id, 10, new Date(Date.parse('2025-04-01T12:00:00Z') + d * DAY), { source: 'story' });
+      await badges.recordStreak(p.id, 1);
+      expect(await progressOf(p.id, 'heyva-cardehe')).toBe(1);
+      expect(await tierOf(p.id, 'heyva-cardehe')).toBe(1);
+    });
+
+    it('Elmas counts Peyvoks won in three guesses or fewer, Stêrka şiqitî one won on the very first', async () => {
+      const p = await counted();
+      for (const [d, guesses] of [2, 3, 2].entries()) await peyvok(p.id, { mode: 'daily', day: 9100 + d, won: true, guesses });
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 3 });
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 2 });
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 4 }); // four is one too many
+      await badges.recordSoloGame(p.id);
+      expect(await progressOf(p.id, 'elmas')).toBe(5);
+      expect(await tierOf(p.id, 'elmas')).toBe(1);
+      expect(await tierOf(p.id, 'sterka-siqiti')).toBe(0);
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 1 });
+      await badges.recordSoloGame(p.id);
+      expect(await tierOf(p.id, 'sterka-siqiti')).toBe(1);
+      expect(await progressOf(p.id, 'elmas')).toBe(6);
+    });
+
+    it('Dilgerm counts rematches finished with a friend in them, through the play layer’s event', async () => {
+      const me = await counted();
+      const friend = await counted();
+      const stranger = await counted();
+      await befriend(pool, me.id, friend.id);
+      const first = await battle(me, [
+        { user: me, solved: true, guesses: 3 },
+        { user: friend, solved: false, guesses: 6 },
+      ]);
+      // one more, because they both wanted it; and a rematch with someone who is not a friend
+      const again = await battle(
+        me,
+        [
+          { user: me, solved: false, guesses: 6 },
+          { user: friend, solved: true, guesses: 4 },
+        ],
+        first,
+      );
+      const other = await battle(me, [{ user: me, solved: true, guesses: 3 }], null);
+      await battle(
+        me,
+        [
+          { user: me, solved: true, guesses: 3 },
+          { user: stranger, solved: true, guesses: 5 },
+        ],
+        other,
+      );
+      const match = await rhymeMatch(friend, [
+        { user: friend, score: 5 },
+        { user: me, score: 4 },
+      ]);
+      await rhymeMatch(
+        friend,
+        [
+          { user: friend, score: 3 },
+          { user: me, score: 6 },
+        ],
+        match,
+      );
+      await badges.onGameFinished('wordle-battle', again);
+      expect(await progressOf(me.id, 'dilgerm')).toBe(2);
+      expect(await tierOf(me.id, 'dilgerm')).toBe(1);
+      expect(await progressOf(friend.id, 'dilgerm')).toBe(2);
+      await badges.evaluate(stranger.id, ['dilgerm']);
+      expect(await progressOf(stranger.id, 'dilgerm')).toBe(0);
+    });
+
+    it('counts them quietly, once, for a learner counted against the second catalogue', async () => {
+      const p = await counted();
+      await pool.query(`UPDATE badge_users SET catalogue = 2 WHERE user_id = $1`, [p.id]);
+      for (let i = 0; i < 5; i++) await peyvok(p.id, { mode: 'practice', won: true, guesses: 3 });
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 1 });
+      const before = recorded.length;
+      await badges.recordStreak(p.id, 1);
+      expect(await tierOf(p.id, 'elmas')).toBe(1);
+      expect(await tierOf(p.id, 'sterka-siqiti')).toBe(1);
+      expect(recorded.length).toBe(before);
+      expect(await badges.unseen(p.id)).toEqual([]);
+      const version = await pool.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id]);
+      expect(version.rows[0]!.catalogue).toBe(3);
     });
   });
 
@@ -757,14 +914,14 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       const secret = page.badges.find((b) => b.key === 'tire-rast')!;
       expect(secret).toMatchObject({ hidden: true, hintKey: null, thresholds: [], progress: 0 });
       expect(page.secretsFound).toBe(0);
-      expect(page.secretsTotal).toBe(8);
+      expect(page.secretsTotal).toBe(10);
       await race(p.id, { wpm: 30, accuracy: 1, errors: 0 });
       await badges.recordSoloGame(p.id);
       page = await badges.list(p.id);
       expect(page.secretsFound).toBe(1);
       expect(page.badges.find((b) => b.key === 'deste-zerin')).toMatchObject({ hidden: false, tier: 1, tierKey: 'zer' });
       expect(page.badges.find((b) => b.key === 'tire-rast')).toMatchObject({ hidden: true, hintKey: 'badges.tire-rast.hint' });
-      expect(page.badges).toHaveLength(55);
+      expect(page.badges).toHaveLength(62);
       expect(page.monthlyChallenge.goal).toBeGreaterThanOrEqual(8);
     });
 
@@ -830,7 +987,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
 
     it('lists the catalogue with holders per tier', async () => {
       const cat = await badges.adminCatalogue();
-      expect(cat.badges).toHaveLength(55);
+      expect(cat.badges).toHaveLength(62);
       expect(cat.badges.find((b) => b.key === 'agir')!.holders[0]).toBeGreaterThan(0);
     });
   });

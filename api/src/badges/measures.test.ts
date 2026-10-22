@@ -5,6 +5,7 @@ import {
   PEYVOK_GUESSES,
   comebackRuns,
   comebacks,
+  fullMonths,
   fullWeeks,
   longestRun,
   monthlyGoal,
@@ -77,6 +78,19 @@ describe('badge measures', () => {
     expect(fullWeeks([])).toBe(0);
   });
 
+  it('counts the calendar months learned on every one of their days, however many they have', () => {
+    expect(fullMonths(range('2026-01-01', 31))).toBe(1); // January: 31 days
+    expect(fullMonths(range('2026-01-01', 30))).toBe(0); // all but the 31st
+    expect(fullMonths(range('2026-04-01', 30))).toBe(1); // April: 30
+    expect(fullMonths(range('2026-02-01', 28))).toBe(1); // February in a common year: 28
+    expect(fullMonths(range('2028-02-01', 28))).toBe(0); // in a leap year the 29th is missing
+    expect(fullMonths(range('2028-02-01', 29))).toBe(1);
+    expect(fullMonths(range('2100-02-01', 28))).toBe(1); // a century is a leap year only every fourth (2000, not 2100)
+    expect(fullMonths(range('2026-01-15', 31))).toBe(0); // a month's worth of days across two months is neither
+    expect(fullMonths(range('2025-12-01', 62))).toBe(2); // December and January, across the new year
+    expect(fullMonths([])).toBe(0);
+  });
+
   it('knows a Peyvok has six guesses, as the game does', () => {
     expect(PEYVOK_GUESSES).toBe(MAX_ATTEMPTS);
   });
@@ -86,7 +100,7 @@ describe('badge measures', () => {
     expect(new Set(added).size).toBe(added.length);
     const keys = new Set(BADGES.map((b) => b.key));
     for (const k of added) expect(keys.has(k), k).toBe(true);
-    expect(CATALOGUE_VERSION).toBe(2);
+    expect(CATALOGUE_VERSION).toBe(3);
     expect(BADGES.length - added.length).toBe(44);
   });
 });
