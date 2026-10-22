@@ -4,10 +4,11 @@ import type { Filter } from '../lessonAudio';
 import { PageHeader, Tabs } from '../ui';
 import { AlphabetAudio, type Filter as LetterFilter } from './AlphabetAudio';
 import { Characters } from './Characters';
+import { ConversationAudio } from './ConversationAudio';
 import { DictionaryVoices } from './DictionaryVoices';
 import { LessonAudio } from './LessonAudio';
 
-type Side = 'letters' | 'lessons' | 'stories' | 'dictionary' | 'characters';
+type Side = 'letters' | 'lessons' | 'conversations' | 'stories' | 'dictionary' | 'characters';
 
 const SIDES: ReadonlyArray<{ key: Side; tab: string; title: string; subtitle: string }> = [
   {
@@ -21,6 +22,13 @@ const SIDES: ReadonlyArray<{ key: Side; tab: string; title: string; subtitle: st
     tab: 'Lesson sentences',
     title: 'Record lesson sentences',
     subtitle: 'The Kurdish words and sentences the lessons use, drafts included, so a lesson can be recorded before it goes live.',
+  },
+  {
+    key: 'conversations',
+    tab: 'Conversations',
+    title: 'Record conversations',
+    subtitle:
+      'The conversations in the lessons, each part recorded by its own person, wherever they are. Choose your part, hear the line before yours, and say it; send the others a link to theirs.',
   },
   {
     key: 'stories',
@@ -47,7 +55,7 @@ const TAB_KEY = 'kurda_admin_audio_tab';
 function savedSide(): Side {
   try {
     const v = localStorage.getItem(TAB_KEY);
-    return v === 'lessons' || v === 'stories' || v === 'dictionary' || v === 'characters' ? v : 'letters';
+    return v === 'lessons' || v === 'conversations' || v === 'stories' || v === 'dictionary' || v === 'characters' ? v : 'letters';
   } catch {
     return 'letters';
   }
@@ -87,6 +95,10 @@ export function AudioStudio(): React.JSX.Element {
 
   if (!side) return <div />;
 
+  // one conversation has a page of its own, with its own header: #/audio/conversations/<id>
+  const conversation = side.key === 'conversations' ? (route.rest[1] ?? null) : null;
+  if (conversation) return <ConversationAudio id={conversation} lessonId={route.query.get('lesson')} part={route.query.get('part')} />;
+
   const show = route.query.get('show');
   const focus = side.key === 'stories' ? route.query.get('story') : side.key === 'lessons' ? route.query.get('lesson') : null;
   const storyFocus = focus && side.key === 'stories' ? `${focus}:0` : focus;
@@ -102,6 +114,8 @@ export function AudioStudio(): React.JSX.Element {
       />
       {side.key === 'characters' ? (
         <Characters key="characters" />
+      ) : side.key === 'conversations' ? (
+        <ConversationAudio id={null} lessonId={null} part={null} />
       ) : side.key === 'dictionary' ? (
         <DictionaryVoices key="dictionary" />
       ) : side.key === 'letters' ? (

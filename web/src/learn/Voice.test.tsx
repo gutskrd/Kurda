@@ -129,6 +129,22 @@ describe('exerciseClips', () => {
     ]);
   });
 
+  it('lists a conversation’s recorded lines that have a character, each with its own words', () => {
+    const clips = exerciseClips({
+      id: 'e1',
+      type: 'conversation',
+      speakers: [{ name: 'Rojîn', character: 'xezo' }, { name: 'Azad' }],
+      lines: [
+        { speaker: 0, text: 'Silav!' },
+        { speaker: 1, text: 'Silav, Rojîn.' },
+        { speaker: 0, text: 'Tu çawa yî?' },
+      ],
+      lineAudio: ['https://cdn.test/0.m4a', 'https://cdn.test/1.m4a', null],
+      lineVoices: [xezo, null, null],
+    });
+    expect(clips).toEqual([{ src: 'https://cdn.test/0.m4a', voice: xezo, text: 'Silav!' }]);
+  });
+
   it('reads the quoted words of a prompt, or the prompt itself', () => {
     expect(promptWords('“Roj baş” tê çi wateyê?')).toBe('Roj baş');
     expect(promptWords('Ez baş im')).toBe('Ez baş im');

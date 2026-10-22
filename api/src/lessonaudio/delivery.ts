@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { lessonAudioKey, primaryAudioTarget, type RecordingVoice } from '@kurda/shared';
+import { conversationLineKey, lessonAudioKey, primaryAudioTarget, type RecordingVoice } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
 import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
@@ -47,6 +47,15 @@ export interface DeliveredAudio {
   audio?: Record<string, string>;
   /** who says the cards' recordings, by the same text: only the cards whose recording has a character */
   audioVoices?: Record<string, RecordingVoice>;
+  /**
+   * A conversation's recordings, one per line by the line's place, null for a
+   * line not recorded yet. Its lines are on screen in full, so their
+   * recordings give nothing away; and a line's recording is filed under its
+   * conversation and part, so its URL never matches any other item's.
+   */
+  lineAudio?: Array<string | null>;
+  /** who says each line's recording, null where there is none or no character is chosen */
+  lineVoices?: Array<RecordingVoice | null>;
 }
 
 interface Plan {
@@ -58,6 +67,8 @@ interface Plan {
   answerBearing: string[];
   /** [text as shown, its key] */
   shown: Array<[string, string]>;
+  /** a conversation's line keys, by the line's place ('' for a line with nothing to file) */
+  lines: string[];
 }
 
 function keyOf(text: unknown): string | null {
@@ -136,7 +147,16 @@ function planFor(type: ExerciseType, payload: unknown): Plan {
     modelBeforeAnswer: primary !== null && modelBeforeAnswer(type, p, primary),
     answerBearing: type === 'listening' ? [listening, primary].filter((k): k is string => k !== null) : [],
     shown,
+    lines: type === 'conversation' ? lineKeys(p) : [],
   };
+}
+
+/** Each line's key, by its place: '' for one too malformed to file. */
+function lineKeys(p: Record<string, unknown>): string[] {
+  if (typeof p.id !== 'string' || !Array.isArray(p.lines)) return [];
+  return (p.lines as Array<{ speaker?: unknown; text?: unknown }>).map((line) =>
+    typeof line?.speaker === 'number' && typeof line.text === 'string' ? conversationLineKey(p.id as string, line.speaker, line.text) : '',
+  );
 }
 
 /**
@@ -171,6 +191,7 @@ export async function lessonAudioFor(
     const model = modelKey(plan);
     if (model) keys.add(model);
     for (const [, key] of plan.shown) if (cardKey(key)) keys.add(key);
+    for (const key of plan.lines) if (key) keys.add(key);
   }
   if (keys.size === 0) return plans.map(() => ({}));
 
@@ -179,6 +200,13 @@ export async function lessonAudioFor(
     [[...keys]],
   );
   const urls = new Map(rows.map((r) => [r.key, r.url]));
+  // a line's take is its own recording, but the same file uploaded as a listening clip has the same
+  // content-addressed URL, and the line's text beside it would name the transcription
+  const heardUrls = new Set(plans.map((plan) => (plan.listening ? urls.get(plan.listening) : undefined)).filter((u): u is string => !!u));
+  const lineUrl = (key: string): string | undefined => {
+    const url = key ? urls.get(key) : undefined;
+    return url && !heardUrls.has(url) ? url : undefined;
+  };
   const voices = new Map<string, RecordingVoice>();
   for (const r of rows) {
     const voice = voiceOfRecording(r);
@@ -211,6 +239,10 @@ export async function lessonAudioFor(
     }
     if (Object.keys(audio).length > 0) out.audio = audio;
     if (Object.keys(audioVoices).length > 0) out.audioVoices = audioVoices;
+    if (plan.lines.some((key) => lineUrl(key))) {
+      out.lineAudio = plan.lines.map((key) => lineUrl(key) ?? null);
+      out.lineVoices = plan.lines.map((key) => (lineUrl(key) ? (voices.get(key) ?? null) : null));
+    }
     return out;
   });
 }

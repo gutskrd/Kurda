@@ -74,6 +74,7 @@ import { Copy } from '@phosphor-icons/react/dist/icons/Copy';
 import { Crown } from '@phosphor-icons/react/dist/icons/Crown';
 import { Headphones } from '@phosphor-icons/react/dist/icons/Headphones';
 import { Pause } from '@phosphor-icons/react/dist/icons/Pause';
+import { Stop } from '@phosphor-icons/react/dist/icons/Stop';
 import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
 import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
 import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
@@ -237,6 +238,8 @@ export const StarIcon = named(Star, 36);
    a question's clock, the host of a game, asking a friend in */
 export const HeadphonesIcon = named(Headphones, 22);
 export const PauseIcon = named(Pause, 22, 'fill');
+/** stopping a lesson's conversation, which then plays again from the top: not a pause */
+export const StopIcon = named(Stop, 22, 'fill');
 export const PreviousIcon = named(SkipBack, 20, 'fill');
 export const NextIcon = named(SkipForward, 20, 'fill');
 export const TimerIcon = named(Timer, 20);

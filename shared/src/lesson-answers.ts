@@ -22,6 +22,8 @@ export interface MatchPair {
  */
 export type DraftAnswer =
   | { type: 'multiple_choice'; choice: number | null }
+  /** the answer to the question after the conversation, chosen as a multiple-choice answer is */
+  | { type: 'conversation'; choice: number | null }
   | { type: 'translate'; text: string }
   | { type: 'listening'; text: string }
   | { type: 'writing'; text: string }
@@ -35,6 +37,7 @@ export type DraftAnswer =
 export function emptyDraft(type: ExerciseType): DraftAnswer {
   switch (type) {
     case 'multiple_choice':
+    case 'conversation':
       return { type, choice: null };
     case 'translate':
     case 'listening':
@@ -51,6 +54,7 @@ export function emptyDraft(type: ExerciseType): DraftAnswer {
 export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean {
   switch (draft.type) {
     case 'multiple_choice':
+    case 'conversation':
       return draft.choice !== null;
     case 'translate':
     case 'listening':
@@ -69,6 +73,7 @@ export function isDraftComplete(draft: DraftAnswer, pairCount: number): boolean 
 export function encodeAnswer(draft: DraftAnswer): unknown {
   switch (draft.type) {
     case 'multiple_choice':
+    case 'conversation':
       return { choice: draft.choice };
     case 'translate':
     case 'listening':

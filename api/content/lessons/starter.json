@@ -1,0 +1,206 @@
+{
+  "lessons": [
+    {
+      "slug": "kmr-hevdu-nas-dikin",
+      "course": "kurmanji-basics",
+      "skill": "Introductions",
+      "titleKu": "Em hevdu nas dikin",
+      "titleEn": "Meeting someone",
+      "exercises": [
+        {
+          "type": "match_pairs",
+          "payload": {
+            "pairs": [
+              {
+                "left": "Silav",
+                "right": "Hello"
+              },
+              {
+                "left": "Navê min",
+                "right": "My name"
+              },
+              {
+                "left": "Tu çawa yî?",
+                "right": "How are you?"
+              },
+              {
+                "left": "Ez baş im",
+                "right": "I am fine"
+              },
+              {
+                "left": "Spas",
+                "right": "Thanks"
+              }
+            ]
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "payload": {
+            "say": "Tu çawa yî?",
+            "prompt": "“Tu çawa yî?” tê çi wateyê?",
+            "options": [
+              "How are you?",
+              "Where are you from?",
+              "What is your name?"
+            ],
+            "correctIndex": 0
+          }
+        },
+        {
+          "type": "conversation",
+          "payload": {
+            "id": "kmrnasin01",
+            "title": "Li parkê",
+            "speakers": [
+              {
+                "name": "Rojda",
+                "character": "xezo"
+              },
+              {
+                "name": "Azad",
+                "character": "hamo"
+              }
+            ],
+            "lines": [
+              {
+                "speaker": 0,
+                "text": "Silav! Navê min Rojda ye. Navê te çi ye?",
+                "en": "Hello! My name is Rojda. What is your name?"
+              },
+              {
+                "speaker": 1,
+                "text": "Silav Rojda! Navê min Azad e.",
+                "en": "Hi Rojda! My name is Azad."
+              },
+              {
+                "speaker": 0,
+                "text": "Tu çawa yî, Azad?",
+                "en": "How are you, Azad?"
+              },
+              {
+                "speaker": 1,
+                "text": "Ez baş im, spas. Tu çawa yî?",
+                "en": "I am fine, thanks. How are you?"
+              },
+              {
+                "speaker": 0,
+                "text": "Ez jî baş im. Tu ji ku derê yî?",
+                "en": "I am fine too. Where are you from?"
+              },
+              {
+                "speaker": 1,
+                "text": "Ez ji Amedê me. Tu ji ku derê yî?",
+                "en": "I am from Amed. Where are you from?"
+              },
+              {
+                "speaker": 0,
+                "text": "Ez ji Hewlêrê me.",
+                "en": "I am from Hewlêr."
+              },
+              {
+                "speaker": 1,
+                "text": "Bi xatirê te, Rojda!",
+                "en": "Goodbye, Rojda!"
+              },
+              {
+                "speaker": 0,
+                "text": "Bi xêr û silamet, Azad!",
+                "en": "Go safely, Azad!"
+              }
+            ],
+            "prompt": "Azad ji ku derê ye?",
+            "options": [
+              "Ji Amedê",
+              "Ji Hewlêrê",
+              "Ji Wanê"
+            ],
+            "correctIndex": 0
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "payload": {
+            "say": "Ez ji Amedê me.",
+            "prompt": "“Ez ji Amedê me.” tê çi wateyê?",
+            "options": [
+              "I am from Amed",
+              "I live in Amed",
+              "I am going to Amed"
+            ],
+            "correctIndex": 0
+          }
+        },
+        {
+          "type": "translate",
+          "payload": {
+            "prompt": "What is your name?",
+            "accepted": [
+              "Navê te çi ye?",
+              "Navê te çi ye"
+            ]
+          }
+        },
+        {
+          "type": "translate",
+          "payload": {
+            "prompt": "I am fine, thanks.",
+            "accepted": [
+              "Ez baş im, spas.",
+              "Ez baş im, spas",
+              "Ez baş im spas",
+              "Ez baş im. Spas."
+            ]
+          }
+        },
+        {
+          "type": "listening",
+          "payload": {
+            "prompt": "Type what you hear.",
+            "accepted": [
+              "Navê min Azad e.",
+              "Navê min Azad e"
+            ]
+          }
+        },
+        {
+          "type": "speaking",
+          "payload": {
+            "prompt": "Say it aloud: “Tu ji ku derê yî?” (Where are you from?)",
+            "reference": "Tu ji ku derê yî?"
+          }
+        },
+        {
+          "type": "multiple_choice",
+          "payload": {
+            "say": "Tu çawa yî?",
+            "prompt": "Someone asks you “Tu çawa yî?”. What do you answer?",
+            "options": [
+              "Ez baş im, spas.",
+              "Navê min Rojda ye.",
+              "Bi xatirê te."
+            ],
+            "correctIndex": 0
+          }
+        },
+        {
+          "type": "translate",
+          "payload": {
+            "say": "Ez ji Hewlêrê me.",
+            "prompt": "“Ez ji Hewlêrê me.” in English",
+            "accepted": [
+              "I am from Hewlêr",
+              "I'm from Hewlêr",
+              "I’m from Hewlêr",
+              "I am from Erbil",
+              "I'm from Erbil",
+              "I’m from Erbil",
+              "I am from Hewler",
+              "I'm from Hewler"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

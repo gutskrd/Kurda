@@ -22,7 +22,7 @@ export const VERDICT: Record<FeedbackKind, MessageKey> = {
 
 /** Answers that are Kurdish typed by the learner, set letter by letter against the right one. */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
-/** Answers whose right answer is Kurdish (a multiple-choice option or a pair may be in any language). */
+/** Answers whose right answer is Kurdish (a multiple-choice option, the answer to a conversation's question or a pair may be in any language). */
 const KURDISH_ANSWER: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening', 'speaking']);
 
 function Marked({ segments }: { segments: DiffSegment[] }): React.JSX.Element {

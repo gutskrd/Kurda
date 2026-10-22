@@ -4,9 +4,11 @@
  * payload schemas (api/src/content/exercises.ts), said in words, so a draft is
  * not sent only to come back refused. The server still decides.
  */
+import { CONVERSATION_LIMITS as CONV, SPEAKERS, lessonAudioKey, normalizeKurdish } from '@kurda/shared';
+
 export type ContentStatus = 'draft' | 'in_review' | 'published' | 'archived';
 
-export const EXERCISE_TYPES = ['multiple_choice', 'translate', 'match_pairs', 'listening', 'speaking', 'writing'] as const;
+export const EXERCISE_TYPES = ['multiple_choice', 'translate', 'match_pairs', 'listening', 'speaking', 'writing', 'conversation'] as const;
 export type ExerciseType = (typeof EXERCISE_TYPES)[number];
 
 export const TYPE_NAME: Record<ExerciseType, string> = {
@@ -16,6 +18,7 @@ export const TYPE_NAME: Record<ExerciseType, string> = {
   listening: 'Listening',
   speaking: 'Speaking',
   writing: 'Writing',
+  conversation: 'Conversation',
 };
 
 export const TYPE_HINT: Record<ExerciseType, string> = {
@@ -25,6 +28,7 @@ export const TYPE_HINT: Record<ExerciseType, string> = {
   listening: 'Hear Kurdish and write it down.',
   speaking: 'Say a sentence aloud, then compare it with the native recording.',
   writing: 'Write a longer answer; any of the accepted answers counts.',
+  conversation: 'Two to four people talk, line by line; learners read and listen, then answer a question about it. Each part is recorded by its own person.',
 };
 
 export const STATUS_NAME: Record<ContentStatus, string> = {
@@ -101,11 +105,38 @@ export function recordHref(lesson: { skillId: string; position: number }, missin
   return `#/audio/lessons?lesson=${encodeURIComponent(`${lesson.skillId}:${lesson.position}`)}${missingOnly ? '&show=missing' : ''}`;
 }
 
+/**
+ * A new conversation's id: what its lines' recordings are filed under, kept by
+ * every later version of the lesson. Random, so two conversations written at
+ * once by two people never share recordings.
+ */
+export function newConversationId(): string {
+  const bytes = crypto.getRandomValues(new Uint8Array(8));
+  return `c${Array.from(bytes, (b) => b.toString(36).padStart(2, '0')).join('')}`.slice(0, 14);
+}
+
 /** A new exercise of a type, keeping what carries over from the one it replaces (its prompt, its "say"). */
 export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   const prompt = typeof from.prompt === 'string' ? from.prompt : '';
   const say = typeof from.say === 'string' && from.say ? { say: from.say } : {};
   switch (type) {
+    case 'conversation':
+      // two people to start, a woman and a man, each with a line: the smallest conversation there is
+      return {
+        id: typeof from.id === 'string' && from.id ? from.id : newConversationId(),
+        title: '',
+        speakers: [
+          { name: '', character: 'xezo' },
+          { name: '', character: 'hamo' },
+        ],
+        lines: [
+          { speaker: 0, text: '', en: '' },
+          { speaker: 1, text: '', en: '' },
+        ],
+        prompt,
+        options: ['', ''],
+        correctIndex: 0,
+      };
     case 'multiple_choice':
       return { ...say, prompt, options: ['', ''], correctIndex: 0 };
     case 'translate':
@@ -169,6 +200,9 @@ export function exerciseIssues(ex: Exercise): Issue[] {
       need('prompt', 'The instruction', 500);
       need('reference', 'The sentence to say', 300);
       break;
+    case 'conversation':
+      conversationIssues(p, out);
+      break;
     case 'match_pairs': {
       const pairs = Array.isArray(p.pairs) ? (p.pairs as Array<Record<string, unknown>>) : [];
       if (pairs.length < 2) out.push({ path: 'pairs', message: 'Add at least 2 pairs.' });
@@ -186,6 +220,67 @@ export function exerciseIssues(ex: Exercise): Issue[] {
   return out;
 }
 
+/** A conversation's checks: the server's (api/src/content/exercises.ts), in the words an editor needs. */
+function conversationIssues(p: Payload, out: Issue[]): void {
+  const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
+  const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
+  if (str(p.title).length > CONV.titleMax) out.push({ path: 'title', message: `The title is longer than ${CONV.titleMax} characters.` });
+  if (speakers.length < CONV.speakersMin) out.push({ path: 'speakers', message: 'A conversation needs at least two people.' });
+  if (speakers.length > CONV.speakersMax) out.push({ path: 'speakers', message: `At most ${CONV.speakersMax} people.` });
+  const names = new Set<string>();
+  speakers.forEach((s, i) => {
+    const name = normalizeKurdish(str(s.name)).toLowerCase();
+    if (!name) out.push({ path: `speakers.${i}.name`, message: `Person ${i + 1} needs a name.` });
+    else if (name.length > CONV.nameMax) out.push({ path: `speakers.${i}.name`, message: `Person ${i + 1}: the name is longer than ${CONV.nameMax} characters.` });
+    else if (names.has(name)) out.push({ path: `speakers.${i}.name`, message: `Two people are called “${str(s.name).trim()}”: whoever records it must know which is theirs.` });
+    names.add(name);
+    if (name && !lines.some((l) => l.speaker === i)) out.push({ path: `speakers.${i}`, message: `${str(s.name).trim()} says nothing: give them a line or remove them.` });
+  });
+  if (lines.length < CONV.linesMin) out.push({ path: 'lines', message: 'Add at least two lines.' });
+  if (lines.length > CONV.linesMax) out.push({ path: 'lines', message: `At most ${CONV.linesMax} lines.` });
+  lines.forEach((l, i) => {
+    const text = str(l.text);
+    if (typeof l.speaker !== 'number' || l.speaker < 0 || l.speaker >= speakers.length) out.push({ path: `lines.${i}.speaker`, message: `Line ${i + 1}: choose who says it.` });
+    if (!lessonAudioKey(text)) out.push({ path: `lines.${i}.text`, message: `Line ${i + 1} is empty: write what is said, or remove it.` });
+    else if (text.length > CONV.lineMax) out.push({ path: `lines.${i}.text`, message: `Line ${i + 1} is longer than ${CONV.lineMax} characters: one recording holds one or two sentences.` });
+    if (str(l.en).length > CONV.translationMax) out.push({ path: `lines.${i}.en`, message: `Line ${i + 1}: the meaning is longer than ${CONV.translationMax} characters.` });
+  });
+  if (!str(p.prompt).trim()) out.push({ path: 'prompt', message: 'The question about the conversation is needed.' });
+  else if (str(p.prompt).length > CONV.promptMax) out.push({ path: 'prompt', message: `The question is longer than ${CONV.promptMax} characters.` });
+  const options = strings(p.options);
+  if (options.filter((o) => o.trim()).length < CONV.optionsMin) out.push({ path: 'options', message: 'Add at least 2 answers.' });
+  if (options.length > CONV.optionsMax) out.push({ path: 'options', message: `At most ${CONV.optionsMax} answers.` });
+  options.forEach((o, i) => {
+    if (!o.trim()) out.push({ path: `options.${i}`, message: 'This answer is empty: fill it in or remove it.' });
+    else if (o.length > CONV.optionMax) out.push({ path: `options.${i}`, message: `Longer than ${CONV.optionMax} characters.` });
+  });
+  const right = typeof p.correctIndex === 'number' ? p.correctIndex : -1;
+  if (right < 0 || right >= options.length) out.push({ path: 'correctIndex', message: 'Choose which answer is right.' });
+}
+
+/** A conversation as it is sent: optional parts left out when empty (the schema refuses an empty title, meaning or character). */
+function conversationForSave(p: Payload): Payload {
+  const t = (v: unknown): string => str(v).trim();
+  const speakers = (Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : []).map((s) => ({
+    name: t(s.name),
+    ...((SPEAKERS as readonly string[]).includes(str(s.character)) ? { character: s.character } : {}),
+  }));
+  const lines = (Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : []).map((l) => ({
+    speaker: l.speaker,
+    text: t(l.text),
+    ...(t(l.en) ? { en: t(l.en) } : {}),
+  }));
+  return {
+    id: p.id,
+    ...(t(p.title) ? { title: t(p.title) } : {}),
+    speakers,
+    lines,
+    prompt: t(p.prompt),
+    options: strings(p.options).map((o) => o.trim()),
+    correctIndex: p.correctIndex,
+  };
+}
+
 /**
  * What is sent: positions 1, 2, 3… in the order on screen, text trimmed, and
  * optional fields left out when empty (the schemas refuse an empty string
@@ -199,6 +294,7 @@ export function forSave(exercises: readonly Exercise[]): Exercise[] {
         ? Object.fromEntries(Object.entries(x).map(([k, v]) => [k, typeof v === 'string' ? v.trim() : v]))
         : x;
   return exercises.map((ex, i) => {
+    if (ex.type === 'conversation') return { position: i + 1, type: ex.type, payload: conversationForSave(ex.payload) };
     const payload: Payload = {};
     for (const [k, v] of Object.entries(ex.payload)) {
       if (v === undefined || (k === 'strict' && v === false)) continue;

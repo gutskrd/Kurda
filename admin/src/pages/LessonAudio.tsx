@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { LESSON_AUDIO_MAX_SECONDS, LESSON_AUDIO_TEXT_MAX } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import { ClipRecorder, ShortcutHint } from '../recorder';
+import { conversationHref } from '../conversations';
 import {
   addPhrase,
   counts,
@@ -16,6 +17,7 @@ import {
   neighbour,
   nextMissing,
   progress,
+  recordPath,
   scriptOf,
   withRecording,
   withTimelines,
@@ -440,7 +442,8 @@ function Row({
   confirm: ReturnType<typeof useDialogs>['confirm'];
 }): React.JSX.Element {
   const script = scriptOf(item.text);
-  const speaker = item.recorded ? (item.speaker ?? null) : nextSpeaker;
+  // a conversation's part is said by its own character, whatever was picked last for other sentences
+  const speaker = item.recorded ? (item.speaker ?? null) : item.line ? item.line.character : nextSpeaker;
   const [first, ...more] = full.usedIn;
   const listening = neededForListening(full);
   const status = item.recorded
@@ -475,6 +478,7 @@ function Row({
         </button>
         <button type="button" className="ghost la-row-main" onClick={onSelect} aria-expanded={selected}>
           <span className="la-text" lang={script.lang} dir={script.dir}>
+            {item.line && <span className="la-who">{item.line.name}: </span>}
             {item.text}
           </span>
           <span className="subtle la-used">
@@ -496,6 +500,12 @@ function Row({
       </div>
       {selected && (
         <div className="la-studio">
+          {item.line && first && (
+            <p className="la-conversation">
+              A line of a conversation: it is best recorded with the rest of it, where the line before can be heard first.{' '}
+              <a href={conversationHref(item.line.conversation, first.lessonId, item.line.part)}>Record {item.line.name}’s part</a>
+            </p>
+          )}
           <div className="voice-row">
             <SpeakerPicker
               value={speaker}
@@ -522,7 +532,7 @@ function Row({
             onPrev={onPrev}
             onNext={onNext}
             onSave={async (wav) => {
-              const res = await uploadWithVoice<Saved>(`/admin/lesson-audio?text=${encodeURIComponent(item.text)}`, wav, { speaker, text: item.text });
+              const res = await uploadWithVoice<Saved>(recordPath(item), wav, { speaker, text: item.text });
               onSaved({ ...res, key: item.key });
             }}
             removePrompt={removePrompt}

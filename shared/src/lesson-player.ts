@@ -24,9 +24,10 @@
  * first answer is the one that counts.
  */
 
+import type { ConversationLine, ConversationSpeaker } from './conversation.js';
 import type { RecordingVoice } from './lipsync/speakers.js';
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
+export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
 /** 'correct' | 'typo' (right word, a letter slip) | 'wrong', as the server grades. */
 export type Verdict = 'correct' | 'typo' | 'wrong';
@@ -58,6 +59,16 @@ export interface DeliveredExercise {
   audio?: Record<string, string>;
   /** who says the cards' recordings, by the same text; only the ones with a character */
   audioVoices?: Record<string, RecordingVoice>;
+  /** conversation: what it is about, when the author named it */
+  title?: string;
+  /** conversation: who takes part, by the place their lines name */
+  speakers?: ConversationSpeaker[];
+  /** conversation: what is said, in order; `options` then holds the answers to `prompt`, the question about it */
+  lines?: ConversationLine[];
+  /** conversation: each line's recording by its place, null for one not recorded yet */
+  lineAudio?: Array<string | null>;
+  /** conversation: who says each line's recording, null where there is none or no character is chosen */
+  lineVoices?: Array<RecordingVoice | null>;
   /**
    * The variety of Kurdish the item's course is in. A review mixes items from
    * any course, so each says its own; a lesson's session says it once for all.

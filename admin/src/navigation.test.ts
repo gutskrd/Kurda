@@ -22,6 +22,7 @@ describe('who sees which page — what the API allows, not a guess', () => {
       'dashboard',
       'record-letters',
       'record-lessons',
+      'record-conversations',
       'record-stories',
       'record-dictionary',
       'record-characters',
@@ -109,10 +110,10 @@ describe('addresses', () => {
 describe('finding a page', () => {
   it('finds a page by its name, its group or the words people use for it', () => {
     const all = visibleNav(OWNER);
-    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories', 'record-dictionary', 'record-characters']);
+    expect(searchNav(all, 'record').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-conversations', 'record-stories', 'record-dictionary', 'record-characters']);
     expect(searchNav(all, 'pronunciation').map((n) => n.id)).toEqual(['record-dictionary']);
     expect(searchNav(all, 'lip sync').map((n) => n.id)).toEqual(['record-characters']);
-    expect(searchNav(all, 'microphone').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-stories']);
+    expect(searchNav(all, 'microphone').map((n) => n.id)).toEqual(['record-letters', 'record-lessons', 'record-conversations', 'record-stories']);
     expect(searchNav(all, 'ban').map((n) => n.id)).toEqual(['users', 'ban-approvals']);
     expect(searchNav(all, 'audit log').map((n) => n.id)).toEqual(['audit']);
     expect(searchNav(all, '')).toHaveLength(all.length);
