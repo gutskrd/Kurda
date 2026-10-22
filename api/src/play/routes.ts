@@ -83,7 +83,7 @@ export function registerPlayRoutes(app: FastifyInstance, deps: PlayRouteDeps): P
     // card could show it, so every answer and "continue" reaches the room of a
     // group the game was shared into (play/events.ts). Once the service says
     // which changes are moves in a game under way, pass `{ card: false }` for
-    // those, as Wordle Battle and Rhyme Match do.
+    // those, as Peyvok Battle and Rhyme Match do.
     deps.stories.onChange((id) => deps.events.changed('stories', id));
   }
   const play = new PlayService(app.db, {

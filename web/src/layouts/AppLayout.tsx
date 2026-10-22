@@ -56,7 +56,7 @@ export function AppLayout(): React.JSX.Element {
       </main>
       {/* after main, so a screen reader reaches the page before the sidebar */}
       <SocialRail />
-      {/* "Rojda invited you to Wordle Battle" — Join or Not now, wherever you are */}
+      {/* "Rojda invited you to Peyvok Battle" — Join or Not now, wherever you are */}
       <InviteBanner />
       {/* web-race-rating: the one-time rating box after a first finished game */}
       <FeedbackHost />

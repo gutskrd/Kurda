@@ -26,26 +26,56 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 type Executor = Pick<pg.Pool, 'query'>;
 
 /**
+ * Whether a learner did something before this first count: XP from more than
+ * an hour ago, or more than one day of learning on record. The hour covers
+ * the lesson or game that set off the count itself.
+ */
+async function hasPast(client: Executor, userId: string): Promise<boolean> {
+  const r = await client.query<{ past: boolean }>(
+    `SELECT EXISTS (SELECT 1 FROM xp_ledger WHERE user_id = $1 AND created_at < now() - interval '1 hour')
+         OR EXISTS (SELECT 1 FROM user_streaks WHERE user_id = $1 AND (days_learned > 1 OR longest_streak > 1)) AS past`,
+    [userId],
+  );
+  return r.rows[0]?.past ?? false;
+}
+
+/**
  * What each kind of event can move. An event re-counts only these, from the
  * tables (measures.ts), so it costs a handful of queries rather than all of
  * them; a learner's first count ever does them all (`evaluate`).
  */
 export const BADGE_TRIGGERS = {
   learning: [
-    'ders', 'peyven-min', 'bekemasi', 'dubare', 'cirokbej', 'rewi', 'ferheng',
-    'agir', 'roj', 'vegera',
-    'newroz', 'roja-ziman', 'zimane-dayike', 'zivistan', 'bihar', 'havin', 'payiz', 'mehane',
-    'kaniya-zanine', 'mevane-agir',
+    'ders', 'peyven-min', 'bekemasi', 'dubare', 'cirokbej', 'rewi', 'ferheng', 'zengil', 'penus', 'belur',
+    'agir', 'roj', 'vegera', 'cay', 'gula-hefte', 'heyva-cardehe',
+    'newroz', 'roja-ziman', 'zimane-dayike', 'sersal', 'yelda', 'zivistan', 'bihar', 'havin', 'payiz', 'mehane',
+    'kaniya-zanine', 'mevane-agir', 'perperok', 'mirari',
   ],
-  game: ['peyvzan', 'helbestvan', 'guhdar', 'hemereng', 'heval', 'mevandar', 'tire-rast', 'ji-nu-ve', 'mevane-agir', 'cirokbej'],
-  solo: ['hemereng', 'bilez', 'rastnivis', 'deste-zerin'],
+  // a story game's rewards can meet the day's goal (Çay)
+  game: ['peyvzan', 'helbestvan', 'guhdar', 'hemereng', 'heval', 'mevandar', 'tire-rast', 'ji-nu-ve', 'mevane-agir', 'cirokbej', 'cay', 'dilgerm'],
+  solo: ['hemereng', 'bilez', 'rastnivis', 'deste-zerin', 'mamik', 'bilbil', 'pisika-wane', 'elmas', 'sterka-siqiti'],
   gift: ['diyari'],
+  letter: ['name'],
+  saved: ['gencine'],
   league: ['hefte', 'pela'],
   rated: [
     'rank-dest', 'rank-gir', 'rank-zozan', 'rank-ciya', 'rank-lutke', 'rank-sterk',
     'hilkiser', 'cihgirti', 'dilpak', 'kewe-ciye',
   ],
 } as const satisfies Record<string, readonly string[]>;
+
+/**
+ * The badges the catalogue gained after its first version, by the version
+ * that added them. A learner counted before a version is counted for its
+ * badges quietly once, as on their own first day: what they did before a
+ * badge existed is recorded, not celebrated (`badge_users.catalogue`).
+ */
+export const CATALOGUE_ADDITIONS: Readonly<Record<number, readonly string[]>> = {
+  2: ['zengil', 'penus', 'cay', 'gula-hefte', 'mamik', 'bilbil', 'name', 'sersal', 'yelda', 'pisika-wane', 'perperok'],
+  3: ['belur', 'gencine', 'heyva-cardehe', 'elmas', 'dilgerm', 'sterka-siqiti', 'mirari'],
+};
+/** The catalogue's current version: the last that added badges. */
+export const CATALOGUE_VERSION = Math.max(1, ...Object.keys(CATALOGUE_ADDITIONS).map(Number));
 
 /** The in-app list, the live celebration, and one push a day at most. */
 export interface BadgeNotices {
@@ -111,12 +141,16 @@ const PLAY_GAMES: Record<string, { players: string; key: string }> = {
  *
  * A learner's very first count finds what they did before badges existed and
  * records it quietly, as already seen: thirty celebrations on the first day
- * would be noise, not a moment.
+ * would be noise, not a moment. A newcomer has no such past: their first count
+ * comes with their first lesson or game, and what it finds (a flawless first
+ * lesson is a badge) is theirs to celebrate (`hasPast`).
  */
 export class BadgeService implements MilestoneRecorder, RankEventsListener {
   private readonly now: () => Date;
   /** games recently counted, so the several `play_changed` of one finish count it once */
   private readonly recentGames = new Map<string, number>();
+  /** writer, friend and day of the letters already counted (Name moves once for each) */
+  private readonly recentLetters = new Set<string>();
 
   constructor(
     private readonly pool: pg.Pool,
@@ -137,14 +171,15 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
     await this.evaluate(userId, BADGE_TRIGGERS.learning);
   }
 
-  /** A solo game finished: Wordle, Rhyme training, the Typing Race. */
+  /** A solo game finished: Peyvok, Rhyme training, the Typing Race. */
   async recordSoloGame(userId: string): Promise<void> {
     await this.evaluate(userId, BADGE_TRIGGERS.solo);
   }
 
   /** A multiplayer game finished (from the play layer): every player in it is counted. */
   async onGameFinished(game: string, lobbyId: string): Promise<void> {
-    const table = PLAY_GAMES[game];
+    // its own keys only: a name like __proto__ finds nothing here either
+    const table = Object.hasOwn(PLAY_GAMES, game) ? PLAY_GAMES[game] : undefined;
     if (!table) return;
     const key = `${game}:${lobbyId}`;
     const at = Date.now();
@@ -165,6 +200,24 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
 
   async onGiftSent(fromUserId: string): Promise<void> {
     await this.evaluate(fromUserId, BADGE_TRIGGERS.gift);
+  }
+
+  /**
+   * A message written to a friend (Name). It counts once for each friend a
+   * day, so only the day's first to that friend can move the badge: the rest
+   * of a conversation is not counted again.
+   */
+  async onLetterSent(fromUserId: string, toUserId: string): Promise<void> {
+    const key = `${fromUserId}:${toUserId}:${this.now().toISOString().slice(0, 10)}`;
+    if (this.recentLetters.has(key)) return;
+    if (this.recentLetters.size >= 10_000) this.recentLetters.clear();
+    this.recentLetters.add(key);
+    await this.evaluate(fromUserId, BADGE_TRIGGERS.letter);
+  }
+
+  /** A word saved from the dictionary to the learner's list, new to it (Gencîne). */
+  async onWordSaved(userId: string): Promise<void> {
+    await this.evaluate(userId, BADGE_TRIGGERS.saved);
   }
 
   /** A league week was recorded for these learners (settled, or in personal mode). */
@@ -238,7 +291,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
   /**
    * Count `keys` (every badge when omitted) for one learner and record any tier
    * reached. Returns the unlocks it recorded. The first count for a learner
-   * counts everything and records it quietly (see the class note).
+   * counts everything, and records it quietly when they learned before badges
+   * existed (see the class note).
    */
   async evaluate(userId: string, keys?: readonly string[]): Promise<Unlock[]> {
     const { unlocks, quiet } = await this.tx(async (client) => {
@@ -246,14 +300,31 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [`badges:${userId}`]);
       const live = await client.query<{ ok: boolean }>(`SELECT deleted_at IS NULL AS ok FROM users WHERE id = $1`, [userId]);
       if (!live.rows[0]?.ok) return { unlocks: [] as Unlock[], quiet: true };
-      const first = await client.query(`INSERT INTO badge_users (user_id) VALUES ($1) ON CONFLICT DO NOTHING`, [userId]);
-      const quietly = (first.rowCount ?? 0) > 0;
-      const defs = quietly || !keys ? BADGES : keys.map((k) => badgeDef(k)).filter((d): d is BadgeDef => !!d);
+      const first = await client.query(`INSERT INTO badge_users (user_id, catalogue) VALUES ($1, $2) ON CONFLICT DO NOTHING`, [
+        userId,
+        CATALOGUE_VERSION,
+      ]);
+      const isFirst = (first.rowCount ?? 0) > 0;
+      const quietly = isFirst && (await hasPast(client, userId));
+      if (!isFirst) await this.catchUp(client, userId);
+      const defs = isFirst || !keys ? BADGES : keys.map((k) => badgeDef(k)).filter((d): d is BadgeDef => !!d);
       const found = await this.count(client, userId, defs, quietly);
       return { unlocks: found, quiet: quietly };
     });
     if (!quiet) await this.announce(userId, unlocks);
     return unlocks;
+  }
+
+  /** Count, quietly, the badges added to the catalogue since this learner was last counted. */
+  private async catchUp(client: Executor, userId: string): Promise<void> {
+    const r = await client.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [userId]);
+    const from = r.rows[0]?.catalogue ?? CATALOGUE_VERSION;
+    if (from >= CATALOGUE_VERSION) return;
+    const added = Object.entries(CATALOGUE_ADDITIONS)
+      .filter(([version]) => Number(version) > from)
+      .flatMap(([, keys]) => keys.map((k) => badgeDef(k)).filter((d): d is BadgeDef => !!d));
+    await this.count(client, userId, added, true);
+    await client.query(`UPDATE badge_users SET catalogue = $2 WHERE user_id = $1`, [userId, CATALOGUE_VERSION]);
   }
 
   private async count(client: Executor, userId: string, defs: readonly BadgeDef[], quietly: boolean): Promise<Unlock[]> {

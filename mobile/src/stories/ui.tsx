@@ -2,7 +2,6 @@ import { useCallback, useEffect, useRef, useState, type ReactNode, type RefObjec
 import {
   AccessibilityInfo,
   findNodeHandle,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -12,14 +11,12 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { display, sectionLabel } from '../theme/fonts';
+import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
-import { useI18n } from '../i18n/I18nContext';
+import { BottomSheet } from '../theme/BottomSheet';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
 import type { StoryDialect } from '@kurda/shared';
 import { storyTextProps, storyTextStyle } from './storyText';
@@ -40,12 +37,12 @@ import { storyTextProps, storyTextStyle } from './storyText';
 export const COLUMN: ViewStyle = { width: '100%', maxWidth: 680, alignSelf: 'center' };
 
 /**
- * A sheet over the screen, from the bottom.
+ * A sheet over the screen, from the bottom: the app's BottomSheet, with a
+ * body that scrolls when it is taller than the phone and a footer that does
+ * not.
  *
  * A Modal, not a positioned View: anything else inside the navigator renders
  * under the tab bar and lets taps through (ReportUserSheet says the same).
- * The backdrop closes it, and so does the ✕, which is the first thing a
- * screen reader finds; the content scrolls when it is taller than the phone.
  */
 export function Sheet({
   title,
@@ -62,51 +59,19 @@ export function Sheet({
   /** stays at the bottom while the content scrolls (the sheet's main action) */
   footer?: ReactNode;
 }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const insets = useSafeAreaInsets();
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.backdropWrap}>
-        <Pressable
-          style={StyleSheet.absoluteFill}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('stories.close')}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        >
-          <View style={[StyleSheet.absoluteFill, styles.backdrop]} />
-        </Pressable>
-        <SheetIn
-          style={[styles.sheet, { backgroundColor: colors.background, paddingBottom: spacing.lg + insets.bottom }]}
-          accessibilityViewIsModal
-        >
-          <View style={styles.sheetHead}>
-            <Text
-              {...(dialect ? storyTextProps(dialect) : null)}
-              style={[styles.sheetTitle, { color: colors.textPrimary }, dialect ? storyTextStyle(dialect) : null]}
-              accessibilityRole="header"
-              numberOfLines={2}
-            >
-              {title}
-            </Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={t('stories.close')}
-              style={[styles.close, { backgroundColor: colors.controlTrack }]}
-            >
-              <Icon name="close" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-            {children}
-          </ScrollView>
-          {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
-        </SheetIn>
-      </View>
-    </Modal>
+    <BottomSheet
+      visible
+      onClose={onClose}
+      title={title}
+      titleLanguage={dialect ? { ...storyTextProps(dialect), style: storyTextStyle(dialect) } : undefined}
+      contentStyle={styles.sheetContent}
+    >
+      <ScrollView contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+        {children}
+      </ScrollView>
+      {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
+    </BottomSheet>
   );
 }
 
@@ -283,32 +248,10 @@ export function useFocusOn(ref: RefObject<View | Text | null>, key: string | num
 
 const styles = StyleSheet.create({
   cardBody: { gap: spacing.sm },
-  backdropWrap: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { backgroundColor: 'rgba(0,0,0,0.45)' },
-  sheet: {
-    ...COLUMN,
-    maxHeight: '90%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingTop: spacing.md,
-  },
-  sheetHead: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    paddingHorizontal: spacing.lg,
-    paddingBottom: spacing.sm,
-  },
-  sheetTitle: { ...display(typography.sizes.lg), flex: 1 },
-  close: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sheetBody: { paddingHorizontal: spacing.lg, paddingBottom: spacing.md, gap: spacing.md },
-  sheetFooter: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm },
+  // the body and the footer keep their own gutters, so the body scrolls edge to edge
+  sheetContent: { paddingHorizontal: 0, gap: 0 },
+  sheetBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.md, gap: spacing.md },
+  sheetFooter: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
   pill: {
     flexDirection: 'row',
     alignItems: 'center',

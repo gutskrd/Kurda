@@ -34,6 +34,9 @@ function Marked({ segments }: { segments: DiffSegment[] }): React.JSX.Element {
 }
 
 /** One sentence for a screen reader: the verdict, and the right answer when there is one to give. */
+/** How tall the character beside the answer is: head to waist, as on the phone. */
+const FEEDBACK_FACE = 132;
+
 export function announce(feedback: Feedback, t: (key: MessageKey, vars?: Record<string, string | number>) => string): string {
   const verdict = t(VERDICT[feedbackKind(feedback)]);
   const answer = feedback.correction && !(feedback.accepted && feedback.verdict === 'correct') ? ` ${t('lesson.fb.answerIs', { answer: feedback.correction })}` : '';
@@ -122,7 +125,18 @@ export function FeedbackPanel({
       {feedback.reask && <p className="lesson-note">{t('lesson.fb.reaskNote')}</p>}
 
       <div className="lesson-feedback-actions">
-        {feedback.modelAudioUrl && speaker && <ClipSpeaker clips={[speaker]} decorative className="speaker-tile lesson-feedback-face" />}
+        {feedback.modelAudioUrl && speaker && (
+          // head to waist, cheering a right answer and thinking a wrong one over; a click says it again
+          <ClipSpeaker
+            clips={[speaker]}
+            crop="half"
+            size={FEEDBACK_FACE}
+            decorative
+            replay
+            reaction={feedback.accepted ? 'cheer' : 'hmm'}
+            className="lesson-feedback-face"
+          />
+        )}
         {feedback.modelAudioUrl && <PlayButton src={feedback.modelAudioUrl} label={t('lesson.fb.hear')} />}
         <Button onClick={onContinue}>{t('lesson.continue')}</Button>
       </div>

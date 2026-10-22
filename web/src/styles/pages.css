@@ -1222,35 +1222,6 @@ button.feature {
   gap: 8px;
   margin-bottom: 8px;
 }
-/* a simple monogram tile standing in for a group's icon */
-.group-avatar {
-  flex: none;
-  width: 40px;
-  height: 40px;
-  display: inline-grid;
-  place-items: center;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--ink);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 1.05rem;
-}
-.group-discover {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.group-discover-row {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-}
-.group-discover-row .chat-convo-body {
-  flex: 1;
-  min-width: 0;
-}
 /* sender name above a group message that isn't yours */
 .bubble-author {
   display: block;
@@ -2023,65 +1994,6 @@ button.feature {
   overflow: hidden;
 }
 
-/* one picture, in full */
-.dimen-full {
-  margin-top: 8px;
-}
-.dimen-full-img {
-  display: block;
-  width: 100%;
-  /* a picture is the point of the page: show all of it, whatever shape it is */
-  max-height: 72vh;
-  object-fit: contain;
-  border-radius: var(--r-md);
-  background: var(--surface-2);
-  margin-bottom: 14px;
-}
-.dimen-caption {
-  color: var(--ink-2);
-  line-height: 1.55;
-  margin: 10px 0 0;
-  white-space: pre-wrap;
-}
-
-/* reactions */
-.reactions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 16px;
-  min-height: 36px;
-}
-.reaction {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 11px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-3);
-  font: inherit;
-  font-size: 0.82rem;
-  cursor: pointer;
-}
-.reaction:hover:not(:disabled) {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
-.reaction:disabled {
-  cursor: default;
-  opacity: 0.55;
-}
-.reaction.is-mine {
-  color: var(--gold-ink);
-  border-color: var(--gold-ink);
-  background: var(--gold-soft);
-}
-.reaction-count {
-  font-variant-numeric: tabular-nums;
-}
-
 /* activity: what someone has posted and played, under the showcases */
 .mkp-activity {
   padding: 12px 14px 14px;
@@ -2139,46 +2051,25 @@ button.feature {
 }
 
 /*
- * Whole posts inside the profile panel.
+ * Whole posts inside the profile panel: the same list as the wall, a hairline
+ * between one post and the next.
  *
- * The panel is already a card on a card, so the posts inside it drop their own
- * frame and separate with a rule instead — three nested boxes with three
- * borders and three shadows reads as clutter at any width, and on a phone it
- * costs padding the words need.
- *
- * `min-width: 0` on the cards is load-bearing: a flex/grid child defaults to
+ * `min-width: 0` on the posts is load-bearing: a flex/grid child defaults to
  * min-content, so one long unbroken word in a post — a URL, a hashtag — would
- * push the card wider than the panel and take the page's horizontal scrollbar
- * with it.
+ * push it wider than the panel and take the page's horizontal scrollbar with
+ * it.
  */
 .mkp-activity-feed {
   display: grid;
-  gap: 0;
+  padding-top: 6px;
 }
 .mkp-activity-feed .fcard {
   min-width: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-  -webkit-backdrop-filter: none;
-  backdrop-filter: none;
-  padding-inline: 2px;
-}
-.mkp-activity-feed .fcard + .fcard {
-  border-top: 1px solid var(--separator);
-}
-.mkp-activity-feed .fcard:hover {
-  transform: none;
 }
 /* a picture in a profile tab is a preview, not the page's centrepiece */
-.mkp-activity-feed .pp-grid {
+.mkp-activity-feed .pp-grid,
+.mkp-activity-feed .pp-strip {
   max-height: 340px;
-}
-@media (max-width: 560px) {
-  .mkp-activity-feed .fcard {
-    padding-inline: 0;
-  }
 }
 
 .mkp-activity-list {
@@ -2855,20 +2746,6 @@ a.mkp-activity-row:hover {
   max-width: 100%;
 }
 
-/* a "you're in" marker on a group row in Discover */
-.group-joined-badge {
-  margin-left: 8px;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-  border: 1px solid var(--border);
-  color: var(--ink-2);
-  font-size: var(--text-tab);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  vertical-align: middle;
-}
 
 /* ---- games hub: one box per game + mode chooser ------------------------ */
 .mode-chooser .mode-list {
@@ -2902,61 +2779,7 @@ a.mkp-activity-row:hover {
   font-size: 0.88rem;
 }
 
-/* ---- group members / roles --------------------------------------------- */
-.chat-members-btn {
-  margin-left: auto;
-  padding: 6px 12px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  color: var(--ink-2);
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-.chat-members-btn:hover {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
-.group-member-list {
-  list-style: none;
-  margin: 16px 0 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.group-member {
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 10px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-}
-.group-member-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  justify-content: flex-end;
-}
 
-/* leaving is about you, not the roster, so it sits below it and apart */
-.group-leave {
-  display: flex;
-  justify-content: center;
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-}
-.group-leave-note {
-  margin-top: 16px;
-  padding-top: 14px;
-  border-top: 1px solid var(--border);
-  font-size: 0.9rem;
-  text-align: center;
-}
 
 /* ---- email verification code ------------------------------------------- */
 .verify-code-input {
@@ -3069,49 +2892,6 @@ a.mkp-activity-row:hover {
   }
 }
 
-/* ---- group roster ------------------------------------------------------- */
-/* the identity half of a row is one big target that opens the profile */
-.group-member-who {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  align-items: center;
-  gap: 11px;
-  padding: 0;
-  border: 0;
-  background: none;
-  font: inherit;
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  border-radius: var(--r-sm);
-}
-.group-member-who:hover .chat-convo-name {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-}
-/* role reads as a badge, not as body text that looks like a message preview */
-.member-role {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
-  background: var(--surface-2);
-  font-size: var(--text-tab);
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}
-.member-role-owner {
-  color: var(--gold);
-  border-color: color-mix(in srgb, var(--gold) 40%, transparent);
-  background: var(--gold-soft);
-}
-.member-role-moderator {
-  color: var(--ink);
-  border-color: var(--border-strong);
-}
 
 /* ---- byline: who wrote a post or comment -------------------------------- */
 .byline {

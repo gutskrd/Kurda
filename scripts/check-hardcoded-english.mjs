@@ -21,7 +21,7 @@
  * to say why.
  *
  * Those last two were added after this reported the phone clean enough to
- * delete its debt file, over a Wordle screen still offering "Daily puzzle" and
+ * delete its debt file, over a Peyvok screen still offering "Daily puzzle" and
  * "Out of tries" to nine languages. A gate is only worth the blind spots it
  * does not have.
  *
@@ -99,10 +99,10 @@ const NOT_COPY = new Set([
   // like the words in its game tiles, and it reads as English to this gate only
   // because it happens to need no letter outside a–z. See web/src/landing/samples.ts.
   'Baran dibare.',
-  // the header on a shared Wordle grid. A share text is pasted into somebody
+  // the header on a shared Peyvok grid. A share text is pasted into somebody
   // else's chat, where the sharer's language is not the reader's, so it stays
   // one recognisable name — the grid underneath is the content.
-  'Hevalo Wordle',
+  'Hevalo Peyvok',
   // The licence the imported dictionary arrives under, named beside the source
   // on every screen that shows a definition. A licence identifier is the same
   // string in every language — translating it would misname the licence, and
@@ -119,7 +119,7 @@ const NOT_COPY = new Set([
  *
  * The last five are this codebase's own components. A React Native button has no
  * children — its copy arrives as `label="Daily puzzle"` — so a list that stopped
- * at the HTML and accessibility props read the phone's Wordle screen as clean
+ * at the HTML and accessibility props read the phone's Peyvok screen as clean
  * while it offered "Daily puzzle", "Out of tries" and "Save to vocabulary" to
  * nine languages. A prop that a person reads belongs here whoever defined it.
  */

@@ -50,8 +50,8 @@ const GAMES: GameCard[] = [
     nameKey: 'games.wordle.name',
     bodyKey: 'games.wordle.body',
     modes: [
-      { labelKey: 'games.mode.solo', blurbKey: 'games.wordle.solo', href: '/app/games/wordle' },
-      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/wordle-battle' },
+      { labelKey: 'games.mode.solo', blurbKey: 'games.wordle.solo', href: '/app/games/peyvok' },
+      { labelKey: 'games.mode.online', blurbKey: 'games.wordle.online', href: '/app/games/peyvok-battle' },
     ],
   },
   {

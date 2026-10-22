@@ -13,7 +13,7 @@ import { en } from '../i18n/en';
  * four, words brought back "just before you would forget them" by a schedule
  * that follows fixed rules, Zêr for coming back when it is paid for learning,
  * a streak for every day you return when it counts a finished lesson or
- * review or a daily Wordle solved (api/src/game/wordle-service.ts: `daily &&
+ * review or a daily Peyvok solved (api/src/game/wordle-service.ts: `daily &&
  * won`), and a league everyone is in when it is a choice. Listening and
  * speaking exercises exist in the player, but the first course has none yet,
  * so every line that names them says "in lessons that have them".
@@ -34,9 +34,9 @@ describe('what the front page promises', () => {
 
   it('says what keeps a streak and what pays Zêr', () => {
     const { container } = renderApp(<Landing />);
-    expect(screen.getByText(/a streak for each day you finish a lesson or a review, or solve the daily wordle/i)).toBeInTheDocument();
-    // a daily Wordle played and lost keeps no streak, so finishing one is not enough
-    expect(container.textContent).not.toMatch(/a review or the daily wordle/i);
+    expect(screen.getByText(/a streak for each day you finish a lesson or a review, or solve the daily peyvok/i)).toBeInTheDocument();
+    // a daily Peyvok played and lost keeps no streak, so finishing one is not enough
+    expect(container.textContent).not.toMatch(/a review or the daily peyvok/i);
     expect(screen.getByText(/finish a lesson or a review each day for zêr/i)).toBeInTheDocument();
     expect(container.textContent).not.toMatch(/come back each day for zêr|show up every day for zêr/i);
   });

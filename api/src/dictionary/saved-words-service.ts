@@ -1,5 +1,8 @@
 import type pg from 'pg';
+import { MAX_SAVED_WORDS } from '@kurda/shared';
 import { localDate } from '../streaks/streak-logic.js';
+import { inTransaction } from '../moderation/tx.js';
+import { limitReached, lockPersonFor } from '../limits/limits.js';
 import { ReviewService } from '../review/service.js';
 import type { PartOfSpeech } from './repository.js';
 
@@ -25,6 +28,11 @@ export interface SavedWord {
   savedAt: string;
 }
 
+/** Badges hook: a word newly saved to the list moves the Gencîne badge (badges/service.ts). */
+export interface SavedWordsBadges {
+  onWordSaved(userId: string): Promise<void>;
+}
+
 /** Bookmark dictionary words and feed them into spaced repetition (KUR-047). */
 export class SavedWordsService {
   private readonly reviews: ReviewService;
@@ -32,6 +40,7 @@ export class SavedWordsService {
   constructor(
     private readonly pool: pg.Pool,
     reviews?: ReviewService,
+    private readonly badges?: SavedWordsBadges,
   ) {
     this.reviews = reviews ?? new ReviewService(pool);
   }
@@ -44,12 +53,29 @@ export class SavedWordsService {
   /**
    * Bookmark an entry and schedule it as a new SM-2 item, unless today's new
    * cap (10) is reached — in which case it's still saved, just not scheduled.
+   *
+   * A list holds at most MAX_SAVED_WORDS, counted under the learner's lock in
+   * the transaction that adds to it. Saving a word already on the list is
+   * never refused: it changes nothing.
    */
   async save(userId: string, entryId: string, timeZone: string, now: Date = new Date()): Promise<SaveResult> {
-    await this.pool.query(
-      `INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [userId, entryId],
-    );
+    const added = await inTransaction(this.pool, async (client) => {
+      await lockPersonFor(client, 'saved-words', userId);
+      const r = await client.query<{ already: boolean; n: number }>(
+        `SELECT EXISTS (SELECT 1 FROM saved_words WHERE user_id = $1 AND entry_id = $2) AS already,
+                (SELECT count(*)::int FROM saved_words WHERE user_id = $1) AS n`,
+        [userId, entryId],
+      );
+      if (r.rows[0]!.already) return false;
+      if (r.rows[0]!.n >= MAX_SAVED_WORDS) throw limitReached('saved_words', `you can save at most ${MAX_SAVED_WORDS} words`);
+      const inserted = await client.query(
+        `INSERT INTO saved_words (user_id, entry_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
+        [userId, entryId],
+      );
+      return (inserted.rowCount ?? 0) > 0;
+    });
+    // only a word new to the list: saving one already there again changes nothing
+    if (added && this.badges) void this.badges.onWordSaved(userId).catch(() => undefined);
 
     const today = localDate(now, timeZone);
     const newToday = await this.pool.query<{ n: string }>(

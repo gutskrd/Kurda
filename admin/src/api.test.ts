@@ -18,8 +18,8 @@ afterEach(() => {
 
 describe('the admin API client', () => {
   it('keeps a wrong password’s message, and the page, instead of treating it as an expired session', async () => {
-    fakeApi(on('POST', '/auth/login', failure(401, 'INVALID_CREDENTIALS', 'invalid email or password')));
-    const err = await api('/auth/login', { method: 'POST', body: { email: 'a@b.c', password: 'x' } }).catch((e: unknown) => e);
+    fakeApi(on('POST', '/admin/auth/login', failure(401, 'INVALID_CREDENTIALS', 'invalid email or password')));
+    const err = await api('/admin/auth/login', { method: 'POST', body: { email: 'a@b.c', password: 'x' } }).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(ApiError);
     expect((err as ApiError).message).toBe('invalid email or password');
     expect(reload).not.toHaveBeenCalled();

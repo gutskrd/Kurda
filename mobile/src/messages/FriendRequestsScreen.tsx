@@ -1,11 +1,14 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { ClayButton, GradientBackground } from '../theme/glass';
+import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
+import { describeError } from '../api/errors';
+import { limitErrorText } from '../limits/limitCopy';
+import type { ApiError } from '../api/types';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { EmptyState } from '../theme/EmptyState';
@@ -39,26 +42,49 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
   const dir = useDirection();
   const { refresh } = useUnread();
   const [requests, setRequests] = useState<RequestRow[] | null>(null);
+  // a list that could not be loaded says so, rather than passing for an empty one
+  const [error, setError] = useState<ApiError | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       let live = true;
+      setError(null);
       void client.get<{ requests: RequestRow[] }>('/friends/requests').then((r) => {
-        if (live) setRequests(r.ok ? r.data.requests : []);
+        if (!live) return;
+        if (r.ok) setRequests(r.data.requests);
+        else setError(r.error);
       });
       return () => {
         live = false;
       };
-    }, [client]),
+      // a retry asks again
+    }, [client, attempt]),
   );
 
   const respond = useCallback(
-    (userId: string, accept: boolean) => {
+    (row: RequestRow, accept: boolean) => {
       if (accept) haptic('tap');
-      setRequests((list) => (list ?? []).filter((r) => r.userId !== userId));
-      void client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`).then(() => refresh());
+      const at = (requests ?? []).findIndex((r) => r.userId === row.userId);
+      setRequests((list) => (list ?? []).filter((r) => r.userId !== row.userId));
+      void client.post(`/friends/requests/${row.userId}/${accept ? 'accept' : 'decline'}`).then((res) => {
+        if (res.ok) {
+          refresh();
+          return;
+        }
+        // the answer did not get through: the request comes back where it was, to be answered again
+        haptic('error');
+        // a friend list that is full (theirs or yours) will not empty on a retry, so it is said (limits/limitCopy.ts)
+        const limit = limitErrorText(res.error, t);
+        if (limit) Alert.alert(limit);
+        setRequests((list) => {
+          const next = [...(list ?? [])];
+          next.splice(at < 0 ? next.length : Math.min(at, next.length), 0, row);
+          return next;
+        });
+      });
     },
-    [client, refresh],
+    [client, refresh, requests, t],
   );
 
   return (
@@ -70,7 +96,11 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
         contentContainerStyle={styles.list}
         ListEmptyComponent={
           requests === null ? (
-            <RequestsSkeleton />
+            error ? (
+              <ErrorRetry message={describeError(error, t)} onRetry={() => setAttempt((n) => n + 1)} />
+            ) : (
+              <RequestsSkeleton />
+            )
           ) : (
             <EmptyState title={t('messages.requestsEmpty')} body={t('messages.requestsEmpty.body')} />
           )
@@ -106,13 +136,13 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
                 label={t('friends.accept')}
                 accessibilityLabel={t('friends.acceptFrom', { username: r.username })}
                 tone="primary"
-                onPress={() => respond(r.userId, true)}
+                onPress={() => respond(r, true)}
                 style={styles.action}
               />
               <ClayButton
                 label={t('friends.decline')}
                 accessibilityLabel={t('friends.declineFrom', { username: r.username })}
-                onPress={() => respond(r.userId, false)}
+                onPress={() => respond(r, false)}
                 style={styles.action}
               />
             </View>

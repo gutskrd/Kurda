@@ -6,7 +6,7 @@ import { KeyboardSettings } from './KeyboardSettings';
 import { useKeyboardPrefs } from './prefs';
 
 /**
- * Settings → Keyboard and accents: the race's keyboard settings, Wordle's
+ * Settings → Keyboard and accents: the race's keyboard settings, Peyvok's
  * layout, and the keyboard guide, for this device.
  */
 export function KeyboardCard(): React.JSX.Element {

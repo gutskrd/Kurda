@@ -4,6 +4,7 @@ import { createTokenStorage, persistTokens, type TokenStorage } from './tokenSto
 import type { MessageKey } from '../i18n/en';
 import { isMissingRoute, type SuspendedErrorDetails } from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
+import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
 import { durationInWords } from './timeWords';
 
@@ -451,6 +452,12 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
   // reader's words and time zone (reports/restriction.ts).
   const restriction = restrictionOf(error);
   if (restriction) return restrictionText(restriction, t, lang);
+
+  // A limit on how many of something one person may have (lib/limits.ts):
+  // which one, its number and what makes room, before any countdown — a full
+  // list of drafts does not empty by waiting a minute.
+  const limit = limitErrorText(error, t);
+  if (limit) return limit;
 
   // Sign-in paused after failed attempts: how long, the way a person says it
   // ("about 15 minutes"), rather than a countdown in seconds. Without a

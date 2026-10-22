@@ -143,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
   });
 
   it('keeps the admin tools to staff with 2FA', async () => {
-    expect((await call('stranger', 'GET', '/admin/ranks/spread')).statusCode).toBe(403);
+    expect((await call('stranger', 'GET', '/admin/ranks/spread')).statusCode).toBe(404);
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [users.admin!.id]);
     await pass2fa(app, users.admin!.token, '10.71.250.1');
     const get = (url: string) =>
@@ -165,7 +165,7 @@ describe.skipIf(!DATABASE_URL)('game ranks routes (integration)', () => {
     const pair = await get(`/admin/ranks/pairs/wordle-battle/${users.host!.id}/${users.mate!.id}`);
     expect(pair.json().games).toEqual([expect.objectContaining({ aPlace: 1, bPlace: 2 })]);
     expect((await get(`/admin/ranks/pairs/race/${users.host!.id}/${users.mate!.id}`)).statusCode).toBe(400);
-    expect((await call('stranger', 'GET', `/admin/ranks/players/${users.host!.id}`)).statusCode).toBe(403);
+    expect((await call('stranger', 'GET', `/admin/ranks/players/${users.host!.id}`)).statusCode).toBe(404);
     const ended = await app.inject({
       method: 'POST',
       url: '/admin/seasons/end',

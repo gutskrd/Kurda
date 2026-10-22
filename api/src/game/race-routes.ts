@@ -64,7 +64,10 @@ export function registerRaceRoutes(
   const canEdit = [requireAuth, requireRoles('admin', 'superadmin', 'content_editor')];
 
   /** Start a race; 503 when an admin has not added a text in that variety (and length) yet. */
-  app.post('/race', { schema: { body: startBody }, preHandler: requireAuth }, async (req, reply) => {
+  // every start is a row kept for the racer's history and best times: a race
+  // takes longer than two seconds to type, so thirty a minute is no racer's
+  // pace, only a script's (it had only the API's default of a hundred)
+  app.post('/race', { schema: { body: startBody }, config: { rateLimit: { max: 30, windowMs: 60_000 } }, preHandler: requireAuth }, async (req, reply) => {
     const { length, difficulty, dialect, accentMode } = req.body as z.infer<typeof startBody>;
     const game = await race.start(req.user!.id, {
       length: (length ?? difficulty) as RaceLength | undefined,

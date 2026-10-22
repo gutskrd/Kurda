@@ -56,7 +56,7 @@ describe('letterCount', () => {
 
   /**
    * A decomposed ê is two code points and one letter. Counting it as two puts
-   * the word in the wrong Wordle band, where it becomes a target the grid has
+   * the word in the wrong Peyvok band, where it becomes a target the grid has
    * no room for.
    */
   it('counts a decomposed diacritic once', () => {

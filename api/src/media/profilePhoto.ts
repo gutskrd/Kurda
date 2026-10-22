@@ -33,25 +33,35 @@ const reject = (status: number, code: string, message: string, reason: string): 
   reason,
 });
 
+/** A picture through every guard and onto the bucket, not yet anybody's: its key, or why not. */
+export type StoredPhoto = { ok: true; key: string; reused: boolean } | Extract<SetPhotoResult, { ok: false }>;
+
 /**
- * Validate, normalise and store a user's profile photo, cost-safely (KUR-177).
- * The bytes flow through here so every guard is server-side: size → op ceiling →
- * real MIME + resize/WebP/compress → storage ceiling (fail-closed) → PUT → scan →
- * a per-user-serialised swap that sets the new key and un-confirms the old (which
- * the orphan job reclaims). A failure before the swap leaves the old photo intact.
+ * Steps 1–7 of putting up a picture that stands for somebody or something —
+ * a profile photo or a group's picture — cost-safely (KUR-177): size → op
+ * ceiling → real MIME + resize/WebP/compress → storage ceiling (fail-closed)
+ * → refuse what moderation already refused → PUT → scan. `current` is the key
+ * the owner holds now: the same bytes again are a no-op. The upload is left
+ * unconfirmed; the caller's own swap confirms it, so a failure anywhere before
+ * leaves the old picture in place and the new object for the orphan job.
  */
-export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, raw: Buffer): Promise<SetPhotoResult> {
+export async function storeScannedPhoto(
+  deps: ProfilePhotoDeps,
+  raw: Buffer,
+  kind: string,
+  current: string | null,
+): Promise<StoredPhoto> {
   const { pool, storage, usage, moderation, limits, log } = deps;
 
   // 1) raw size — cheap, before any work
-  if (raw.length === 0) return reject(400, 'EMPTY_UPLOAD', 'no image data', 'empty');
+  if (raw.length === 0) return reject(400, 'EMPTY_UPLOAD', 'no image data', 'empty') as StoredPhoto;
   if (exceedsUploadSize(raw.length, limits.maxUploadBytes)) {
-    return reject(413, 'UPLOAD_TOO_LARGE', `image exceeds ${limits.maxUploadBytes} bytes`, 'oversize');
+    return reject(413, 'UPLOAD_TOO_LARGE', `image exceeds ${limits.maxUploadBytes} bytes`, 'oversize') as StoredPhoto;
   }
 
   // 2) op ceiling — we're about to do R2 writes (Class A)
   if (opLimitReached(await usage.classCount('A'), limits.classALimit)) {
-    return reject(503, 'MEDIA_OP_LIMIT_REACHED', 'media operation limit reached; try later', 'op-limit');
+    return reject(503, 'MEDIA_OP_LIMIT_REACHED', 'media operation limit reached; try later', 'op-limit') as StoredPhoto;
   }
 
   // 3) process: real type + resize + WebP + compress-to-cap (or reject)
@@ -73,25 +83,19 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
           : proc.reason === 'malformed'
             ? [422, 'MALFORMED_IMAGE', 'the image could not be decoded']
             : [422, 'IMAGE_TOO_LARGE', 'image could not be compressed to the size limit'];
-    return reject(status as number, code as string, message as string, proc.reason);
+    return reject(status as number, code as string, message as string, proc.reason) as StoredPhoto;
   }
 
-  const key = mediaKey(PROFILE_KIND, createHash('sha256').update(proc.webp).digest('hex'), 'image/webp');
+  const key = mediaKey(kind, createHash('sha256').update(proc.webp).digest('hex'), 'image/webp');
 
   // 4) storage ceiling — with the KNOWN processed size; fail closed on unknown usage
-  const current = await usage.totalStoredBytes();
-  if (wouldExceedStorage(current, proc.bytes, limits.storageLimitBytes)) {
-    return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit');
+  const total = await usage.totalStoredBytes();
+  if (wouldExceedStorage(total, proc.bytes, limits.storageLimitBytes)) {
+    return reject(507, 'MEDIA_STORAGE_LIMIT_REACHED', 'storage limit reached; new uploads are paused', 'storage-limit') as StoredPhoto;
   }
 
-  // 5) already this user's exact photo → idempotent no-op (retry-safe, no R2 write)
-  const existing = await pool.query<{ profile_photo_key: string | null }>(
-    `SELECT profile_photo_key FROM users WHERE id = $1`,
-    [userId],
-  );
-  if (existing.rows[0]?.profile_photo_key === key) {
-    return { ok: true, profilePhotoUrl: storage.publicUrl(key), reused: true };
-  }
+  // 5) already this exact picture → idempotent no-op (retry-safe, no R2 write)
+  if (current === key) return { ok: true, key, reused: true };
 
   // the same picture moderation blocked or took off the bucket (keys are
   // content hashes, so anyone uploading the same bytes lands on it) is never
@@ -101,11 +105,11 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
     [key],
   );
   if (known.rowCount) {
-    return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation');
+    return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation') as StoredPhoto;
   }
 
   // 6) register + upload (idempotent by content-addressed key). If the PUT fails,
-  //    the row stays unconfirmed (orphan-cleaned) and the old photo is untouched.
+  //    the row stays unconfirmed (orphan-cleaned) and the old picture is untouched.
   await pool.query(
     `INSERT INTO media_uploads (key, content_type, content_length)
      VALUES ($1, 'image/webp', $2)
@@ -116,15 +120,32 @@ export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, ra
     await storage.put(key, proc.webp, 'image/webp');
     await usage.recordOps('A');
   } catch (err) {
-    log.error({ err, key }, 'profile photo R2 put failed');
-    return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed');
+    log.error({ err, key }, 'photo R2 put failed');
+    return reject(502, 'MEDIA_UPLOAD_FAILED', 'could not store the image; please try again', 'put-failed') as StoredPhoto;
   }
 
-  // 7) moderation gate (#181): a non-cleared image is left unconfirmed → orphaned
+  // 7) moderation gate (#181): a non-cleared image is left unconfirmed → orphaned.
+  //    A picture that stands for somebody or a group is held to the profile bar.
   const scan = await moderation.scan(key, 'profile');
   if (scan.scanStatus !== 'cleared') {
-    return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation');
+    return reject(422, 'PHOTO_REJECTED', 'this image was rejected by moderation', 'moderation') as StoredPhoto;
   }
+  return { ok: true, key, reused: false };
+}
+
+/**
+ * Validate, normalise and store a user's profile photo, cost-safely (KUR-177):
+ * every guard in `storeScannedPhoto`, then a per-user-serialised swap that sets
+ * the new key and un-confirms the old (which the orphan job reclaims). A
+ * failure before the swap leaves the old photo intact.
+ */
+export async function setProfilePhoto(deps: ProfilePhotoDeps, userId: string, raw: Buffer): Promise<SetPhotoResult> {
+  const { pool, storage, usage, log } = deps;
+  const existing = await pool.query<{ profile_photo_key: string | null }>(`SELECT profile_photo_key FROM users WHERE id = $1`, [userId]);
+  const stored = await storeScannedPhoto(deps, raw, PROFILE_KIND, existing.rows[0]?.profile_photo_key ?? null);
+  if (!stored.ok) return stored;
+  const { key } = stored;
+  if (stored.reused) return { ok: true, profilePhotoUrl: storage.publicUrl(key), reused: true };
 
   // 8) swap, serialised per user (locks the user row) so concurrent uploads can't
   //    leave a confirmed-but-unreferenced object. Confirm new, set it, un-confirm old.

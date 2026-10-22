@@ -14,6 +14,7 @@ import { useCountUp } from '../../theme/animate';
 import { AnswerMotion } from '../../theme/MotionParts';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
+import { ReminderOffer } from '../../push/ReminderOffer';
 import type { Exercise, SessionResults } from '../types';
 
 interface Props {
@@ -23,6 +24,8 @@ interface Props {
   skipped?: number;
   /** what else the lesson did: today's goal, the streak, a new level */
   moments?: LessonMoments;
+  /** a lesson (not practice) may end with the one offer of reminders the app makes (push/ReminderOffer.tsx) */
+  offerReminders?: boolean;
   onDone: () => void;
 }
 
@@ -45,12 +48,12 @@ const STAGE = 200;
  * leaves it out of the score, so "3/3" with one put off is a perfect score of
  * the three answered. The note says how many were put off, as the web's does.
  */
-export function LessonResults({ results, exercises, skipped = 0, moments = NO_MOMENTS, onDone }: Props) {
+export function LessonResults({ results, exercises, skipped = 0, moments = NO_MOMENTS, offerReminders = false, onDone }: Props) {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   // in Soranî and Arabic the numbers and the lines under them read from the right
   const dir = useDirection();
-  const moment = useCelebration();
+  const moment = useCelebration({ sound: 'complete' });
   useCelebrationHold(moment.playing);
   const pct = Math.round(results.accuracy * 100);
   const mistakes = results.mistakes ?? [];
@@ -113,6 +116,9 @@ export function LessonResults({ results, exercises, skipped = 0, moments = NO_MO
             ) : null}
           </View>
         ) : null}
+
+        {/* after the moment, never during it */}
+        {offerReminders ? <ReminderOffer ready={!moment.playing} /> : null}
 
         {skipped > 0 ? (
           <Text style={[styles.note, { color: colors.textSecondary }]}>{t('lesson.skipped', { count: skipped })}</Text>

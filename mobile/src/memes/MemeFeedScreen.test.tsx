@@ -14,7 +14,6 @@ vi.mock('@react-navigation/native', () => ({
 }));
 // the phone's picture library: one picture, chosen
 vi.mock('expo-image-picker', () => ({
-  requestMediaLibraryPermissionsAsync: async () => ({ granted: true }),
   launchImageLibraryAsync: async () => ({ canceled: false, assets: [{ uri: 'file:///pic.jpg', mimeType: 'image/jpeg' }] }),
 }));
 // the upload streams the file itself, past the client; the test says what the server answers
@@ -23,11 +22,11 @@ vi.mock('expo-file-system/legacy', () => ({
   FileSystemUploadType: { BINARY_CONTENT: 0 },
   uploadAsync: async () => ({ status: upload.status, body: upload.body }),
 }));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { Alert } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
+import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { MemeFeedScreen } from './MemeFeedScreen';
 import { uploadMemeImage } from './api';
 import { uploadPostImage } from './imageUpload';
@@ -51,52 +50,13 @@ afterEach(() => {
 
 const feed = { 'GET /images?category=meme&sort=newest&limit=20&offset=0': ok({ posts: [] }) };
 
-/** The title, the message and the buttons of the one alert shown. */
-function shown(): { title: string; message: string; buttons: Array<{ text: string; onPress?: () => void }> } {
-  expect(alert).toHaveBeenCalledTimes(1);
-  const [title, message, buttons] = alert.mock.calls[0] as [string, string, Array<{ text: string; onPress?: () => void }> | undefined];
-  return { title, message, buttons: buttons ?? [] };
-}
-
 describe('MemeFeedScreen posting', () => {
-  it('says what a pause on pictures stops, with the way to Account standing', async () => {
-    upload.status = 403;
-    upload.body = JSON.stringify({ code: 'MUTED', message: 'muted', details: { scope: 'media', until: null } });
+  it('opens the one composer, words first, ready to make a meme of whatever picture is added — no picker forced open first', async () => {
     testAuth.client = fakeClient(feed);
     renderWithProviders(<MemeFeedScreen onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
-    await waitFor(() => expect(alert).toHaveBeenCalled());
-    const { title, message, buttons } = shown();
-    expect(title).toBe('Couldn’t upload');
-    expect(message).toBe('You can’t add pictures or voice right now.');
-    buttons.find((b) => b.text === 'See your account standing')?.onPress?.();
-    expect(navigate).toHaveBeenCalledWith('AccountStanding');
-  });
-
-  it('says a mute on posting when the picture went up but the post was refused', async () => {
-    upload.status = 200;
-    upload.body = JSON.stringify({ imageMediaId: 'im1', url: 'https://cdn.test/im1.webp' });
-    testAuth.client = fakeClient({
-      ...feed,
-      'POST /images': fail({ code: 'MUTED', message: 'muted', details: { scope: 'post', until: null } }),
-    });
-    renderWithProviders(<MemeFeedScreen onExit={() => undefined} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
-    await waitFor(() => expect(alert).toHaveBeenCalled());
-    const { title, message, buttons } = shown();
-    expect(title).toBe('Couldn’t post');
-    expect(message).toBe('You can’t post or comment right now.');
-    expect(buttons.map((b) => b.text)).toContain('See your account standing');
-  });
-
-  it('keeps the plain try-again answer for a post that failed for any other reason', async () => {
-    upload.status = 200;
-    upload.body = JSON.stringify({ imageMediaId: 'im1', url: 'https://cdn.test/im1.webp' });
-    testAuth.client = fakeClient(feed);
-    renderWithProviders(<MemeFeedScreen onExit={() => undefined} />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Post' }));
-    await waitFor(() => expect(alert).toHaveBeenCalled());
-    expect(shown().message).toBe('Your image uploaded but the post failed. Please try again.');
+    expect(navigate).toHaveBeenCalledWith('Compose', { meme: true });
+    expect(alert).not.toHaveBeenCalled();
   });
 });
 

@@ -57,10 +57,10 @@ describe('followDeepLink', () => {
 
 describe('notificationText', () => {
   const t = (key: string, vars?: Record<string, string | number>) => (vars ? `${key}(${Object.values(vars).join(',')})` : key);
-  const invite = { title: 'Rojda invited you', body: 'Wordle Battle', data: { kind: 'play_invite', game: 'wordle-battle' } };
+  const invite = { title: 'Rojda invited you', body: 'Peyvok Battle', data: { kind: 'play_invite', game: 'wordle-battle' } };
 
   it('keeps the server’s English line for English readers, and writes its own from the kind for everyone else', () => {
-    expect(notificationText(invite, t as never, 'en')).toEqual({ title: 'Rojda invited you', body: 'Wordle Battle' });
+    expect(notificationText(invite, t as never, 'en')).toEqual({ title: 'Rojda invited you', body: 'Peyvok Battle' });
     expect(notificationText(invite, t as never, 'ku')).toEqual({
       title: 'play.notification.inviteTitle',
       body: 'play.notification.inviteBody(games.battle.name)',

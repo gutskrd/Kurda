@@ -54,9 +54,9 @@ export type GamesSection = 'words' | 'wordle' | 'rhyme' | 'race';
 const TITLES: Record<GamesSection, { title: string; subtitle: string }> = {
   words: {
     title: 'Words & dictionary',
-    subtitle: 'The word pool Wordle and Rhyme choose from, and the dictionary behind it that every guess is checked against.',
+    subtitle: 'The word pool Peyvok and Rhyme choose from, and the dictionary behind it that every guess is checked against.',
   },
-  wordle: { title: 'Wordle', subtitle: 'How many words each difficulty can choose from. A difficulty with none falls back to an easier one.' },
+  wordle: { title: 'Peyvok', subtitle: 'How many words each difficulty can choose from. A difficulty with none falls back to an easier one.' },
   rhyme: { title: 'Rhyme', subtitle: 'The words a rhyme round can open with, and what rhymes with each — how strongly, and where that came from.' },
   race: { title: 'Race texts', subtitle: 'The texts a typing race draws from. An edit changes the next race.' },
 };
@@ -66,7 +66,7 @@ const TITLES: Record<GamesSection, { title: string; subtitle: string }> = {
  * used to be one page with tabs that had no addresses of their own.
  *
  * Two sets of words, not one. The **pool** is what a game chooses from —
- * Wordle's targets, Rhyme's prompts — and it is small and hand-picked, because
+ * Peyvok's targets, Rhyme's prompts — and it is small and hand-picked, because
  * a bad target is an unplayable round. The **dictionary** behind it is what a
  * guess is checked against, and should be as large as it can be, because a
  * missing word is a right answer refused. Promoting a word from the dictionary
@@ -126,7 +126,7 @@ function WordsPage(): React.JSX.Element {
   async function remove(w: Word): Promise<void> {
     const yes = await dialogs.confirm({
       title: `Delete “${w.headword}”?`,
-      body: 'It stops appearing in Wordle and Rhyme, guesses of it are no longer accepted, and its rhyme decisions are dropped. To keep it as a guess but stop asking it, take it out of the games instead.',
+      body: 'It stops appearing in Peyvok and Rhyme, guesses of it are no longer accepted, and its rhyme decisions are dropped. To keep it as a guess but stop asking it, take it out of the games instead.',
       confirmLabel: 'Delete',
       tone: 'danger',
     });
@@ -202,7 +202,7 @@ function WordsPage(): React.JSX.Element {
   return (
     <>
       <div className="stats">
-        <Stat icon="grid" label="In the games" value={stats.data ? stats.data.total.toLocaleString() : '…'} hint="What Wordle and Rhyme choose from" />
+        <Stat icon="grid" label="In the games" value={stats.data ? stats.data.total.toLocaleString() : '…'} hint="What Peyvok and Rhyme choose from" />
         <Stat icon="book" label="In the dictionary" value={stats.data ? stats.data.dictionary.toLocaleString() : '…'} hint="What a guess is checked against" />
         <Stat icon="rhyme" label="Rhyme base words" value={stats.data ? stats.data.rhymePrompts.toLocaleString() : '…'} href="#/rhyme" />
       </div>
@@ -294,7 +294,7 @@ function WordsPage(): React.JSX.Element {
   );
 }
 
-/** Wordle picks its target by letter length, so a thin difficulty is worth seeing. */
+/** Peyvok picks its target by letter length, so a thin difficulty is worth seeing. */
 function Coverage(): React.JSX.Element {
   const stats = useLoad(() => api<Stats>('/admin/dictionary/stats'), []);
   if (stats.error != null) return <ErrorState error={stats.error} onRetry={() => void stats.reload()} what="game words" />;
@@ -318,11 +318,11 @@ function Coverage(): React.JSX.Element {
         play with when the pool is a few dozen.
       */}
       <div className="stats">
-        <Stat label="Words Wordle can ask" value={s.total.toLocaleString()} href="#/words" />
+        <Stat label="Words Peyvok can ask" value={s.total.toLocaleString()} href="#/words" />
         <Stat label="Words a guess is checked against" value={s.dictionary.toLocaleString()} />
       </div>
       <Section flush title="By difficulty" description="If every difficulty is empty, the game says no words are available.">
-        <Table caption="Wordle coverage by difficulty" columns={columns} rows={s.difficulties} rowKey={(d) => d.difficulty} />
+        <Table caption="Peyvok coverage by difficulty" columns={columns} rows={s.difficulties} rowKey={(d) => d.difficulty} />
       </Section>
     </>
   );
@@ -361,7 +361,7 @@ function AddWords({ onAdded }: { onAdded: () => Promise<void> }): React.JSX.Elem
   return (
     <Section
       title="Add words to the games"
-      description="One per line, or separated by commas. A word added here can be a Wordle answer and guess, open a rhyme round, and count as a rhyme. Words already in the games are skipped, so pasting a list twice is safe."
+      description="One per line, or separated by commas. A word added here can be a Peyvok answer and guess, open a rhyme round, and count as a rhyme. Words already in the games are skipped, so pasting a list twice is safe."
     >
       <form className="form" onSubmit={(e) => void submit(e)}>
         <Textarea label="Words" rows={4} dir="auto" placeholder={'heval\nwelat\nziman'} value={text} onChange={(e) => setText(e.target.value)} />

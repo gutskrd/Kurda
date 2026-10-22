@@ -19,6 +19,16 @@ export const RANKED_TABLES: Readonly<Record<RankedGame, GameTables>> = {
   stories: { table: 'story_games', players: 'story_game_players', fk: 'game_id', host: 'host_id' },
 };
 
+/**
+ * A ranked game's tables. The name is checked against the map itself, not only
+ * where a route reads it, so nothing but these literals can reach the SQL that
+ * names them.
+ */
+export function tablesOf(game: RankedGame): GameTables {
+  if (!Object.hasOwn(RANKED_TABLES, game)) throw new Error('not a ranked game');
+  return RANKED_TABLES[game];
+}
+
 /** What a game row says about Rated/Friendly: the host's choice, and what the start decided. */
 export interface RatedColumns {
   rated: boolean;
@@ -56,7 +66,7 @@ export interface LobbyView {
 
 /** A lobby as Game Ranks needs it, or null when there is none. */
 export async function loadLobby(db: Executor, game: RankedGame, id: string): Promise<LobbyView | null> {
-  const t = RANKED_TABLES[game];
+  const t = tablesOf(game);
   const row = await db.query<{ rated: boolean; rated_state: string | null; solo: boolean }>(
     `SELECT rated, rated_state, ${game === 'stories' ? `mode = 'solo'` : 'false'} AS solo FROM ${t.table} WHERE id = $1`,
     [id],
@@ -77,7 +87,7 @@ export async function loadLobby(db: Executor, game: RankedGame, id: string): Pro
 
 /** Whether `userId` is (or was) in this game and not removed by the host. */
 export async function isInGame(db: Executor, game: RankedGame, id: string, userId: string): Promise<boolean> {
-  const t = RANKED_TABLES[game];
+  const t = tablesOf(game);
   const r = await db.query(`SELECT 1 FROM ${t.players} WHERE ${t.fk} = $1 AND user_id = $2 AND NOT removed`, [id, userId]);
   return (r.rowCount ?? 0) > 0;
 }

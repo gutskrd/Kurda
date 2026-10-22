@@ -12,7 +12,7 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { WordleKeyboard } from '../wordle/WordleKeyboard';
 import { KurdishAnswerInput } from '../lesson/components/KurdishAnswerInput';
 import { KeyboardGuide } from './KeyboardGuide';
-import { KeyboardSettingsSection } from './KeyboardSettings';
+import { KeyboardSettingsList } from './KeyboardSettings';
 import { keyboardPrefs } from './prefs';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -137,9 +137,9 @@ describe('KeyboardGuide', () => {
   });
 });
 
-describe('KeyboardSettingsSection', () => {
+describe('KeyboardSettingsList', () => {
   it('changes the accent mode, the key bar and the backtick shortcut on the device', () => {
-    renderWithProviders(<KeyboardSettingsSection />);
+    renderWithProviders(<KeyboardSettingsList />);
     fireEvent.click(screen.getByRole('radio', { name: /^Forgiving/ }));
     expect(keyboardPrefs.current.accentMode).toBe('forgiving');
     expect(screen.getByRole('radio', { name: /^Forgiving/ }).getAttribute('aria-checked')).toBe('true');
@@ -150,7 +150,7 @@ describe('KeyboardSettingsSection', () => {
   });
 
   it('opens the keyboard guide from Keyboard help', () => {
-    renderWithProviders(<KeyboardSettingsSection />);
+    renderWithProviders(<KeyboardSettingsList />);
     fireEvent.click(screen.getByRole('button', { name: 'Keyboard help' }));
     expect(screen.getByText('Get the Kurmancî keyboard')).toBeTruthy();
   });

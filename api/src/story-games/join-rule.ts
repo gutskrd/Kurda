@@ -21,7 +21,7 @@ export interface JoinFacts {
 
 /**
  * Who may join a game: the rule every online game shares (contract §B2; the
- * play module's `canJoin` is its twin for Wordle Battle and Rhyme Match).
+ * play module's `canJoin` is its twin for Peyvok Battle and Rhyme Match).
  *
  * Never anyone the host removed, and never anyone with a block either way
  * against anyone in the game — a block is checked against the whole roster,

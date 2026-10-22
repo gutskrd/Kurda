@@ -78,7 +78,8 @@ import { SkipBack } from '@phosphor-icons/react/dist/icons/SkipBack';
 import { SkipForward } from '@phosphor-icons/react/dist/icons/SkipForward';
 import { Timer } from '@phosphor-icons/react/dist/icons/Timer';
 import { UserPlus } from '@phosphor-icons/react/dist/icons/UserPlus';
-// web-race-rating: Wordle's delete key, the rating box's stars
+import { UserMinus } from '@phosphor-icons/react/dist/icons/UserMinus';
+// web-race-rating: Peyvok's delete key, the rating box's stars
 import { Backspace } from '@phosphor-icons/react/dist/icons/Backspace';
 import { Star } from '@phosphor-icons/react/dist/icons/Star';
 // Game Ranks, leagues and badges: rated and friendly games, a zone moving up
@@ -97,6 +98,8 @@ import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
 import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
 import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlass';
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
+// narrowing the wall to one kind of post
+import { Funnel } from '@phosphor-icons/react/dist/icons/Funnel';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
 // signed-in devices, by kind
@@ -104,6 +107,17 @@ import { DeviceMobile } from '@phosphor-icons/react/dist/icons/DeviceMobile';
 import { DeviceTablet } from '@phosphor-icons/react/dist/icons/DeviceTablet';
 import { Laptop } from '@phosphor-icons/react/dist/icons/Laptop';
 import { Devices } from '@phosphor-icons/react/dist/icons/Devices';
+// Settings, one glyph for each row of the list
+import { Translate } from '@phosphor-icons/react/dist/icons/Translate';
+import { CircleHalf } from '@phosphor-icons/react/dist/icons/CircleHalf';
+import { Keyboard } from '@phosphor-icons/react/dist/icons/Keyboard';
+import { DownloadSimple } from '@phosphor-icons/react/dist/icons/DownloadSimple';
+import { EnvelopeSimple } from '@phosphor-icons/react/dist/icons/EnvelopeSimple';
+import { Scales } from '@phosphor-icons/react/dist/icons/Scales';
+import { Copyright } from '@phosphor-icons/react/dist/icons/Copyright';
+import { Question } from '@phosphor-icons/react/dist/icons/Question';
+import { Key } from '@phosphor-icons/react/dist/icons/Key';
+import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
 
 /**
@@ -132,7 +146,7 @@ export const PersonGlyph = named(User, 128, 'fill');
 
 export const BookIcon = named(BookOpen, 22);
 export const FeatherIcon = named(PenNib, 22);
-/* A puzzle piece, not a console controller: these are word games — Wordle,
+/* A puzzle piece, not a console controller: these are word games — Peyvok,
    rhyming, a race to answer — and a gamepad promised the wrong thing. */
 export const GameIcon = named(PuzzlePiece, 22);
 /** Typing, specifically — the race is about keys, not about writing. */
@@ -215,7 +229,7 @@ export const SignOutIcon = named(SignOut, 22);
 export const MoreIcon = named(DotsThree, 22);
 export const BlockIcon = named(Prohibit, 22);
 export const FlagIcon = named(Flag, 22);
-/* web-race-rating: Wordle's delete key; a star you can choose, filled once it is */
+/* web-race-rating: Peyvok's delete key; a star you can choose, filled once it is */
 export const BackspaceIcon = named(Backspace, 22);
 export const StarIcon = named(Star, 36);
 
@@ -228,6 +242,8 @@ export const NextIcon = named(SkipForward, 20, 'fill');
 export const TimerIcon = named(Timer, 20);
 export const HostIcon = named(Crown, 16, 'fill');
 export const InviteIcon = named(UserPlus, 22);
+// taking someone out of a group
+export const RemovePersonIcon = named(UserMinus, 22);
 export const CopyIcon = named(Copy, 20);
 export const CaretDownIcon = named(CaretDown, 16);
 
@@ -256,6 +272,8 @@ export const FrameIcon = named(FrameCorners, 22);
 export const SearchIcon = named(MagnifyingGlass, 18);
 /** The order a list is in: what the sort select carries in place of its word on a phone. */
 export const SortIcon = named(ArrowsDownUp, 18);
+/** The wall's filter: drawn in line while it shows everything, filled in while it is narrowed. */
+export const FeedFilterIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
 
@@ -265,6 +283,21 @@ export const PhoneIcon = named(DeviceMobile, 22);
 export const TabletIcon = named(DeviceTablet, 22);
 export const ComputerIcon = named(Laptop, 22);
 export const DeviceIcon = named(Devices, 22);
+
+/* Settings: a row's glyph says what is behind it — the language, how it looks,
+   the keyboard, your data, the rules, a person to write to */
+export const LanguageIcon = named(Translate, 22);
+export const ThemeIcon = named(CircleHalf, 22);
+export const KeyboardIcon = named(Keyboard, 22);
+export const DownloadIcon = named(DownloadSimple, 22);
+export const MailIcon = named(EnvelopeSimple, 22);
+export const RulesIcon = named(Scales, 22);
+export const CopyrightIcon = named(Copyright, 22);
+export const HelpIcon = named(Question, 22);
+export const KeyIcon = named(Key, 22);
+export const ProfileIcon = named(UserCircle, 22);
+/** The account's standing: the same shield as a tier's, drawn in outline at a row's size. */
+export const StandingIcon = named(ShieldCheck, 22);
 
 /** Show / hide a password — one icon with two states, so it keeps its place. */
 export function EyeIcon({ size = 19, off = false, className }: P & { off?: boolean }): React.JSX.Element {

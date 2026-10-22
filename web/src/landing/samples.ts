@@ -20,7 +20,7 @@
 export const HEVAL = 'heval';
 
 /**
- * A Wordle Battle that ends on `heval`, guess by guess.
+ * A Peyvok Battle that ends on `heval`, guess by guess.
  *
  * Scored by the real rules: a letter in the right place is green, a letter in
  * the word but elsewhere is yellow. `dayik` (mother) and `silav` (hello) are

@@ -45,7 +45,7 @@ async function mount(): Promise<void> {
   render(
     <AuthProvider>
       <I18nProvider>
-        <MemoryRouter initialEntries={['/app/games/wordle']}>
+        <MemoryRouter initialEntries={['/app/games/peyvok']}>
           <Navigator />
           <FeedbackHost />
         </MemoryRouter>

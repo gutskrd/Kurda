@@ -322,10 +322,8 @@ function belt(metal: string, rim: string): string {
   return (
     // the shade the belt throws on the dress
     fill(curve([[112, 362], [144, 358], [176, 362], [172, 377], [144, 381], [116, 377]]), C.dressShade, alpha(0.5)) +
-    beadsAlong(chain(101.2, 370.4) + chain(115, 375.2) + chain(127.8, 378.4) + chain(143.8, 379.6) + chain(160.8, 371.8), C.goldLight, 3, 3.2) +
+    beadsAlong(chain(101.2, 370.4) + chain(115, 375.2) + chain(127.8, 378.4) + chain(143.8, 379.6), C.goldLight, 3, 3.2) +
     coins(pendants, C.goldLight) +
-    // the last pendant hangs on a rosy hook, half hidden by her hand
-    line(curve([[160.8, 375.6], [159.6, 380], [156.8, 382.6], [155, 385], [154.6, 388.2]], false), C.rose, 3.2) +
     // the metal, with a bright rim just inside its edge and where each wing meets its plate
     clipped(rim, fill('M95,332h98v46h-98z', `url(#${metal})`) + line(curve(BELT) + 'M112.4,352.6V369.6M174.6,352V371', C.goldLight, 2.4)) +
     // the engraving on each plate and wing, worked in a darker gold
@@ -558,6 +556,14 @@ function eyesClosed(): string {
   );
 }
 
+/** Smiling eyes: shut, the lash line curved up along where the upper lid was, its lash still at the outer end. */
+function eyesHappy(): string {
+  const arc: Pt[] = LID.map(([x, y]) => [x, y + 2.2] as Pt);
+  const lashes = LASHES.map((l) => l.map(([x, y]) => [x, y + 2.2] as Pt));
+  const one = (f: (p: readonly Pt[]) => readonly Pt[]): string => taper(f(arc), [0.5, 1.4, 1.8, 1.7, 1.2, 0.3]) + lashes.map((l) => taper(f(l), [0.8, 0.5, 0])).join('');
+  return part([], [fill(one((x) => x) + one(flip), C.lid)]);
+}
+
 // ─────────────────────────────────────────────────────────────── together
 
 export function drawXezo(p: string): CharacterArt {
@@ -566,10 +572,12 @@ export function drawXezo(p: string): CharacterArt {
     name: 'Xezo',
     viewBox: { x: 26, y: 98, w: 236, h: 678 },
     bust: { x: 78, y: 101, w: 131, h: 131 },
+    // head to hips: her hands at her belt, and the fall of her dress below it
+    half: { x: 26, y: 98, w: 236, h: 362 },
     headPivot: { x: 143.5, y: 216 },
     body: body(p),
     head: head(p),
-    eyes: { open: eyesOpen(p), closed: eyesClosed() },
+    eyes: { open: eyesOpen(p), closed: eyesClosed(), happy: eyesHappy() },
     mouths: humanMouths(
       {
         open: { left: [136.2, 201], right: [150.9, 201.6], top: 200.6, bottom: 203.9 },

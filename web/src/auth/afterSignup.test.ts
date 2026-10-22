@@ -8,7 +8,7 @@ afterEach(() => {
 
 describe('safeFrom', () => {
   it('keeps an address in the app, query and all', () => {
-    expect(safeFrom('/app/games/wordle-battle?id=8f3c')).toBe('/app/games/wordle-battle?id=8f3c');
+    expect(safeFrom('/app/games/peyvok-battle?id=8f3c')).toBe('/app/games/peyvok-battle?id=8f3c');
     expect(safeFrom('/app')).toBe('/app');
   });
 

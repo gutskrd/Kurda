@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   MAX_INVITEES_PER_REQUEST,
   PLAY_GAMES,
@@ -13,7 +13,6 @@ import {
 import { useAuth } from '../auth/AuthContext';
 import { describeError, type Translate } from '../api/errors';
 import type { ApiError } from '../api/types';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ClayButton, Segmented } from '../theme/glass';
@@ -35,6 +34,7 @@ import { SendErrorNotice } from '../reports/SendError';
 import { RatedChoice } from '../ranks/Rated';
 import { useRatedChoice } from '../ranks/ratedPrefs';
 import { restrictionOf } from '../reports/sendErrors';
+import { SearchField } from '../theme/SearchField';
 
 type Difficulty = 'easy' | 'medium' | 'hard';
 const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
@@ -237,7 +237,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         accessibilityRole={single ? 'radio' : 'checkbox'}
         accessibilityState={{ checked: on, disabled: locked }}
         accessibilityLabel={f.online ? t('play.sheet.friendOnline', { name }) : name}
-        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.successFill : 'transparent', opacity: pressed ? 0.8 : 1 }]}
+        style={({ pressed }) => [styles.friend, { backgroundColor: on ? colors.controlTrack : 'transparent', opacity: pressed ? 0.8 : 1 }]}
       >
         <View>
           <InitialsAvatar name={name} id={f.userId} size={36} photoUrl={f.avatarUrl} />
@@ -385,16 +385,7 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
         ) : null}
         {lockedFriend ? friendRow(lockedFriend) : null}
         {offerOthers ? (
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            placeholder={t('play.sheet.search')}
-            placeholderTextColor={colors.textSecondary}
-            accessibilityLabel={t('play.sheet.search')}
-            autoCapitalize="none"
-            autoCorrect={false}
-            style={[styles.search, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-          />
+          <SearchField value={query} onChangeText={setQuery} label={t('play.sheet.search')} returnKeyType="done" />
         ) : null}
         {friends === null || !offerOthers ? null : friends.length === 0 ? (
           <Note>{t('play.sheet.noFriends')}</Note>
@@ -433,7 +424,6 @@ const styles = StyleSheet.create({
   },
   gameName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, textAlign: 'center' },
   hint: { fontSize: typography.sizes.sm, lineHeight: 19 },
-  search: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, fontSize: typography.sizes.md },
   subhead: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   friend: {
     flexDirection: 'row',

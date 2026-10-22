@@ -87,7 +87,7 @@ describe('SocialRail', () => {
     railFetch([
       rail({
         friends: [
-          person('1', 'zana', { online: true, activity: { game: 'Wordle', since: new Date().toISOString() } }),
+          person('1', 'zana', { online: true, activity: { game: 'Peyvok', since: new Date().toISOString() } }),
           person('2', 'hevi', { online: true }),
           person('3', 'berfin', { lastSeenAt: new Date(Date.now() - 3 * 3_600_000).toISOString() }),
         ],
@@ -97,7 +97,7 @@ describe('SocialRail', () => {
 
     expect(await screen.findByText('zana')).toBeInTheDocument();
     // someone in a game is not just "online" — that is the whole point of the rail
-    expect(screen.getByText(/Wordle/)).toBeInTheDocument();
+    expect(screen.getByText(/Peyvok/)).toBeInTheDocument();
     // the section heading says Online too, so scope to the row's own label
     expect(screen.getByText('hevi').closest('.rail-row')!.textContent).toContain('Online');
 

@@ -22,6 +22,7 @@ import { LargeTitle } from '../navigation/LargeTitle';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
+import { GroupAvatar } from '../groups/GroupAvatar';
 import { resolveDeepLink, type InboxItem } from '../notifications/inbox';
 import { messagePreview } from '../chat/preview';
 import { CaringMessageDialog, type CaringMessage } from '../reports/CaringMessage';
@@ -99,7 +100,7 @@ export function MessagesScreen(): React.JSX.Element {
     const nextGroups: GroupConversation[] = g.ok
       ? g.data.groups
           .filter((x) => x.archivedAt === null)
-          .map((x) => ({ id: x.id, name: x.name, memberCount: x.memberCount, unread: unreadByGroup.get(x.id) ?? 0 }))
+          .map((x) => ({ id: x.id, name: x.name, memberCount: x.memberCount, photoUrl: x.photoUrl ?? null, unread: unreadByGroup.get(x.id) ?? 0 }))
       : [];
     setFailed(!c.ok);
     if (c.ok) setChats(c.data.conversations);
@@ -320,20 +321,12 @@ function ConversationRow({
       testID={`conversation-${row.key}`}
       style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && { backgroundColor: colors.controlTrack }]}
     >
-      <View>
-        <InitialsAvatar
-          name={row.name}
-          id={row.kind === 'direct' ? row.chat.userId : row.group.id}
-          size={52}
-          photoUrl={row.kind === 'direct' ? (row.chat.avatarUrl ?? undefined) : undefined}
-        />
-        {row.kind === 'group' ? (
-          // a group is marked as one, so it is not mistaken for a person with that name
-          <View style={[styles.groupMark, { backgroundColor: colors.surfaceRaised, borderColor: colors.background }]}>
-            <Icon name="people" size={12} color={colors.textPrimary} />
-          </View>
-        ) : null}
-      </View>
+      {row.kind === 'direct' ? (
+        <InitialsAvatar name={row.name} id={row.chat.userId} size={52} photoUrl={row.chat.avatarUrl ?? undefined} />
+      ) : (
+        // a group in its rounded square, so it is never mistaken for a person with that name
+        <GroupAvatar name={row.name} id={row.group.id} size={52} photoUrl={row.group.photoUrl} />
+      )}
       <View style={styles.rowMain}>
         <View style={[styles.rowTop, { flexDirection: dir.row }]}>
           <Text
@@ -421,17 +414,6 @@ const styles = StyleSheet.create({
   when: { fontSize: typography.sizes.xs },
   count: { minWidth: 20, height: 20, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
   countText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  groupMark: {
-    position: 'absolute',
-    right: -2,
-    bottom: -2,
-    width: 22,
-    height: 22,
-    borderRadius: radii.pill,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   discover: { alignItems: 'center', justifyContent: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET, marginTop: spacing.sm },
   discoverText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });

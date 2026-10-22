@@ -23,16 +23,27 @@ export function knownVoice(voice: RecordingVoice | null | undefined): RecordingV
 }
 
 /**
- * How wide a character is drawn: beside a lesson's play button (larger from a
- * tablet's width up), beside a row's own play button, and beside a letter's
- * play buttons on the alphabet.
+ * How big a character is drawn where it is not on a stage of its own: as tall
+ * as `answer` above a lesson's answer, head to waist; as wide as `row` beside
+ * a row's own play button, head and shoulders.
  */
-export const CHARACTER_SIZE = { stage: 104, wideStage: 120, row: 56, letter: 72 } as const;
+export const CHARACTER_SIZE = { answer: 132, row: 72 } as const;
 
-/** From this window width up the lesson's character is drawn at `wideStage`. */
-const WIDE_STAGE_FROM = 768;
+/**
+ * How tall a lesson's stage is in a window this tall: the character head to
+ * waist, as large as the screen can spare once `reserve` points are left for
+ * the rest of the exercise — the prompt, the answer, the Check button — and
+ * never shorter than `min`, so every phone shows the same stage and a small
+ * phone scrolls a little rather than shrinking the character; nor so large on
+ * a tablet that it is all there is. With the keyboard up the stage steps back
+ * to `compact`, so the field being typed in stays in view.
+ *
+ * A stage in a card with more on it than an exercise — a letter, a practice
+ * question — is `card` tall on every phone: smaller than a lesson's.
+ */
+export const STAGE_HEIGHT = { reserve: 500, min: 300, max: 400, compact: 150, card: 260 } as const;
 
-/** How wide a lesson's character is in a window this wide: a little larger on a tablet. */
-export function stageSize(windowWidth: number): number {
-  return windowWidth >= WIDE_STAGE_FROM ? CHARACTER_SIZE.wideStage : CHARACTER_SIZE.stage;
+export function stageHeight(windowHeight: number, keyboardShown = false, reserve: number = STAGE_HEIGHT.reserve): number {
+  if (keyboardShown) return STAGE_HEIGHT.compact;
+  return Math.round(Math.min(STAGE_HEIGHT.max, Math.max(STAGE_HEIGHT.min, windowHeight - reserve)));
 }

@@ -12,7 +12,7 @@
  * Shadows lean toward the hue rather than toward grey, so a piece stays warm
  * as it darkens.
  */
-import type { BadgeFamily, BadgeTier, LeagueTier, RankTier } from './keys.js';
+import type { BadgeTier, LeagueTier, RankTier } from './keys.js';
 
 export interface Metal {
   hi: string;
@@ -38,29 +38,41 @@ export const SHADOW: Metal = { hi: '#f1eaff', light: '#c9b5ff', mid: '#8f70f0', 
 
 export const TIER_METAL: Record<BadgeTier, Metal> = { 1: COPPER, 2: SILVER, 3: GOLD, 4: TURQUOISE };
 
-/**
- * Each family's field, the ground its glyph glows on: `glow` at the heart,
- * `mid` around it, `deep` at the rim. Learning is Hevalo's own violet; habit
- * is ember, for the streak's fire; games are azure; ranked a night indigo;
- * friends emerald; events the red of Newroz; secrets midnight. Red, gold and
- * green turn up across the set the way they do in a Newroz crowd — never side
- * by side as stripes.
- */
+/** A field, the enamel ground a glyph glows on: `glow` at the heart, `mid` around it, `deep` at the rim. */
 export interface Field {
   glow: string;
   mid: string;
   deep: string;
 }
 
-export const FIELD: Record<BadgeFamily, Field> = {
-  learning: { glow: '#7e48f0', mid: '#4a1fb8', deep: '#1d0a52' },
-  habit: { glow: '#c8401a', mid: '#8f220c', deep: '#420b05' },
-  games: { glow: '#2462d4', mid: '#143fa6', deep: '#081a52' },
-  ranked: { glow: '#5148e0', mid: '#28239a', deep: '#0d0b3e' },
-  friends: { glow: '#0c8a52', mid: '#06603c', deep: '#022b1a' },
-  events: { glow: '#e8264f', mid: '#a80e35', deep: '#480416' },
-  secret: { glow: '#5a3ad8', mid: '#2a1580', deep: '#0b0530' },
-};
+/**
+ * The plates a badge's picture stands on: vivid, each badge its own, so a
+ * page of them is as bright as a box of paints. `top` to `bottom` is the
+ * face lit from above, `rim` its palest tint (the heart of the light a found
+ * secret is held up in), `deep` the darkest tone — the plate's thickness,
+ * the outline round the picture and the edge of the number.
+ */
+export interface Plate {
+  top: string;
+  bottom: string;
+  rim: string;
+  deep: string;
+}
+
+export const PLATES = {
+  violet: { top: '#a77bff', bottom: '#6a3de8', rim: '#dccbff', deep: '#341478' },
+  blue: { top: '#5aaeff', bottom: '#2c6fe0', rim: '#cde6ff', deep: '#123a85' },
+  sky: { top: '#4fd8f5', bottom: '#169ccc', rim: '#c9f5ff', deep: '#0a4a6a' },
+  teal: { top: '#3fdcc0', bottom: '#11a08c', rim: '#c8f8ee', deep: '#074a42' },
+  green: { top: '#6ddb76', bottom: '#27a24c', rim: '#d3f8d6', deep: '#0c5426' },
+  gold: { top: '#ffd24a', bottom: '#f39a12', rim: '#fff1c4', deep: '#7a4100' },
+  orange: { top: '#ffa45a', bottom: '#ee6320', rim: '#ffe2cc', deep: '#7c2a06' },
+  red: { top: '#ff6b78', bottom: '#dc2a47', rim: '#ffd3d9', deep: '#700c24' },
+  pink: { top: '#ff8cc8', bottom: '#e0479b', rim: '#ffdaee', deep: '#6e1042' },
+  indigo: { top: '#8487ff', bottom: '#4c4bd8', rim: '#d8daff', deep: '#22266e' },
+  night: { top: '#4b36a8', bottom: '#150a48', rim: '#8f7be0', deep: '#0b0530' },
+} as const satisfies Record<string, Plate>;
+export type PlateName = keyof typeof PLATES;
 
 /** Named colours an icon may use besides its metal. Each is [top, bottom] of a lit fill. */
 export const ACCENT = {
@@ -98,6 +110,23 @@ export const RANK_METAL: Record<RankTier, Metal> = {
   ciya: { hi: '#e8f0ff', light: '#97b8ff', mid: '#3f71e6', dark: '#2446a6', deep: '#0e1f5c' },
   lutke: { hi: '#f7ecff', light: '#d2acf7', mid: '#9d66e0', dark: '#6b3cb0', deep: '#311660' },
   sterk: { hi: '#fffbe8', light: '#ffe58e', mid: '#f7c235', dark: '#cc8d10', deep: '#6a4204' },
+};
+
+/**
+ * The stone set in each rank's crest: the tier's hue as a cut jewel, deeper
+ * and more saturated than its metal so it stands out of its own setting —
+ * carnelian for the plain, emerald for the hills, turquoise for the pasture,
+ * sapphire for the mountain, amethyst for the summit, and for the star a
+ * stone of starlight — ice-blue and white in its gold, the one crest whose
+ * stone is not its metal's colour, so the top of the ladder is unmistakable.
+ */
+export const RANK_GEM: Record<RankTier, Metal> = {
+  dest: { hi: '#fff0e2', light: '#ffb07c', mid: '#ef6a34', dark: '#a8341b', deep: '#4a1408' },
+  gir: { hi: '#ecfff1', light: '#86f0a6', mid: '#22c063', dark: '#0d7a3e', deep: '#04321a' },
+  zozan: { hi: '#e8fffc', light: '#74f2e4', mid: '#13c3bd', dark: '#077e86', deep: '#033a42' },
+  ciya: { hi: '#ecf2ff', light: '#93b5ff', mid: '#3a6aff', dark: '#1b37b8', deep: '#0a1556' },
+  lutke: { hi: '#f8eeff', light: '#d9a2ff', mid: '#a650f2', dark: '#6522b2', deep: '#2c0b5c' },
+  sterk: { hi: '#ffffff', light: '#e6f6ff', mid: '#9fd4ff', dark: '#4688e0', deep: '#13357a' },
 };
 
 /**

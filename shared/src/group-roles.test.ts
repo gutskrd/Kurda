@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canManage, canSetRole, outranks, roleRank } from './group-roles.js';
+import { canEditGroup, canManage, canSetRole, outranks, roleRank } from './group-roles.js';
 
 describe('role hierarchy', () => {
   it('ranks owner > moderator > member', () => {
@@ -27,5 +27,14 @@ describe('canSetRole', () => {
     expect(canSetRole('owner', 'member')).toBe(true);
     expect(canSetRole('owner', 'owner')).toBe(false); // use transfer
     expect(canSetRole('moderator', 'member')).toBe(false);
+  });
+});
+
+describe('canEditGroup', () => {
+  it('lets the owner and the admins change the name, description and picture, and nobody else', () => {
+    expect(canEditGroup('owner')).toBe(true);
+    expect(canEditGroup('moderator')).toBe(true);
+    expect(canEditGroup('member')).toBe(false);
+    expect(canEditGroup(null)).toBe(false);
   });
 });

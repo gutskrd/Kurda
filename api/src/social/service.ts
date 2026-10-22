@@ -10,6 +10,7 @@ import { escapeLike } from '../db/like.js';
 import { inLeaguesSql } from '../leagues/service.js';
 import { profileShowcase } from '../badges/service.js';
 import { birthDateRequired, isKnownAdultRow, isMinorRow, notKnownAdultSql, shownToSql, writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 
 /** A favorite poem/story reference, as joined from library_posts (raw). */
 export interface FavoriteRef {
@@ -221,7 +222,8 @@ export class SocialService {
       // Who sent a gift being worn, and whose post is a favourite, are other
       // people showing up on this profile: a minor among them is named to the
       // viewer only as a friend ($2, users/age.ts), or an adult's profile on
-      // the public web would be a way to find them.
+      // the public web would be a way to find them. A favourite written by
+      // somebody with a block between them and the viewer is not shown either.
       `SELECT u.username, u.display_name, u.bio, u.profile_photo_key, u.selected_avatar_key,
               u.last_seen_at, u.premium_until, u.xp, u.profile_visibility, u.country,
               u.birth_year, u.birth_month,
@@ -275,7 +277,9 @@ export class SocialService {
             LIMIT 1
          ) icg ON true
          LEFT JOIN library_posts fp ON fp.id = u.favorite_poem_id AND ${writtenForSql('fp.author_id', '$2::uuid')}
+               AND ${notBlockedSql('fp.author_id', '$2::uuid')}
          LEFT JOIN library_posts fs ON fs.id = u.favorite_story_id AND ${writtenForSql('fs.author_id', '$2::uuid')}
+               AND ${notBlockedSql('fs.author_id', '$2::uuid')}
         WHERE u.id = $1 AND u.deleted_at IS NULL`,
       [targetId, viewerId],
     );

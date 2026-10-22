@@ -1,8 +1,9 @@
 import type pg from 'pg';
-import type { FeedImage } from '@kurda/shared';
+import { FEED_PERIOD_DAYS, sortRanks, type FeedImage, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { loadAuthors, unknownAuthor, type Author } from '../social/authors.js';
 import { writtenForSql } from '../users/age.js';
+import { notBlockedSql } from '../friends/blocked.js';
 import {
   EngagementService,
   NO_ENGAGEMENT,
@@ -24,6 +25,11 @@ import {
  * (users/age.ts `writtenForSql`). The wall, somebody's profile tabs and the
  * cards somebody liked are all ways of reading the same posts, and a byline on
  * any of them would be a way to find a minor.
+ *
+ * And none of them shows anything by somebody with a block between them and
+ * the reader, whichever of the two placed it (friends/blocked.ts): a block
+ * that left the other person's posts on your wall would not have done the one
+ * thing it was for.
  */
 
 /**
@@ -136,15 +142,40 @@ const IMAGE_COLUMNS = `'image', i.id, i.author_id, i.category, NULL, i.caption,
 const HAS_PICTURES = 'EXISTS (SELECT 1 FROM library_post_media pm WHERE pm.post_id = l.id)';
 
 /**
+ * How each order sorts the wall. Every one ends on the post's time and then
+ * its id, so two posts that tie still come in the same order on every page —
+ * paging by offset depends on that.
+ */
+const ORDER: Record<FeedSort, string> = {
+  newest: 'at DESC, id DESC',
+  oldest: 'at ASC, id ASC',
+  popular: 'score DESC, at DESC, id DESC',
+  discussed: 'comment_count DESC, at DESC, id DESC',
+};
+
+/**
+ * What "most popular" counts: a post's hearts and reposts, each person once,
+ * and its comments. Worked out only when the wall is ranked by it — the
+ * newest-first wall does not pay for a count it does not use.
+ */
+const POPULARITY = `(SELECT count(*) FROM post_engagements e
+                      WHERE e.target_type = wall.source AND e.target_id = wall.id
+                        AND e.kind IN ('like', 'repost'))::int + wall.comment_count`;
+
+/**
  * Both tables, one shape, one ordering.
  *
  * A UNION rather than two queries merged in JavaScript: paging a merge done in
  * the client means over-fetching both sides to be sure of the boundary, and
  * getting it subtly wrong the first time someone posts two things in the same
  * second.
+ *
+ * The order is one of four fixed strings, never anything a request wrote, and
+ * `$6` is how far back a ranked wall looks (null for all time).
  */
-const FEED_SQL = `
+const feedSql = (sort: FeedSort): string => `
   SELECT ${COLUMNS} FROM (
+    SELECT wall.*, ${sort === 'popular' ? POPULARITY : '0'} AS score FROM (
     SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published'
@@ -154,6 +185,7 @@ const FEED_SQL = `
             -- the pictured half: photos, or memes, or both
             OR ($1 = 'dimen' AND ${HAS_PICTURES} AND ($2::text IS NULL OR l.is_meme = ($2 = 'meme'))))
        AND ${writtenForSql('l.author_id', '$5::uuid')}
+       AND ${notBlockedSql('l.author_id', '$5::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
@@ -161,8 +193,11 @@ const FEED_SQL = `
        AND ($1 = 'all' OR $1 = 'dimen')
        AND ($2::text IS NULL OR i.category = $2)
        AND ${writtenForSql('i.author_id', '$5::uuid')}
-  ) AS wall
-  ORDER BY at DESC, id DESC
+       AND ${notBlockedSql('i.author_id', '$5::uuid')}
+    ) AS wall
+     WHERE ($6::timestamptz IS NULL OR wall.at >= $6::timestamptz)
+  ) AS ranked
+  ORDER BY ${Object.hasOwn(ORDER, sort) ? ORDER[sort] : ORDER.newest}
   LIMIT $3 OFFSET $4`;
 
 /**
@@ -176,10 +211,12 @@ const BY_IDS_SQL = `
     SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published' AND l.id = ANY($1) AND ${writtenForSql('l.author_id', '$3::uuid')}
+       AND ${notBlockedSql('l.author_id', '$3::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
      WHERE i.status = 'published' AND i.id = ANY($2) AND ${writtenForSql('i.author_id', '$3::uuid')}
+       AND ${notBlockedSql('i.author_id', '$3::uuid')}
   ) AS chosen`;
 
 /**
@@ -194,10 +231,12 @@ const BY_AUTHOR_SQL = `
     SELECT ${LIBRARY_COLUMNS}
       FROM library_posts l
      WHERE l.status = 'published' AND l.author_id = $1 AND ${writtenForSql('l.author_id', '$4::uuid')}
+       AND ${notBlockedSql('l.author_id', '$4::uuid')}
     UNION ALL
     SELECT ${IMAGE_COLUMNS}
       FROM image_posts i
      WHERE i.status = 'published' AND i.author_id = $1 AND ${writtenForSql('i.author_id', '$4::uuid')}
+       AND ${notBlockedSql('i.author_id', '$4::uuid')}
   ) AS mine
   ORDER BY at DESC, id DESC
   LIMIT $2 OFFSET $3`;
@@ -214,7 +253,19 @@ export class FeedService {
 
   async list(
     viewerId: string | null,
-    opts: { section?: FeedSection; kind?: FeedKind; limit?: number; offset?: number; publicUrl?: PublicUrl } = {},
+    opts: {
+      section?: FeedSection;
+      kind?: FeedKind;
+      /** newest first unless asked otherwise */
+      sort?: FeedSort;
+      /** how far back a ranked wall looks; newest and oldest read everything */
+      period?: FeedPeriod;
+      limit?: number;
+      offset?: number;
+      publicUrl?: PublicUrl;
+      /** for tests: the moment a range is counted back from */
+      now?: Date;
+    } = {},
   ): Promise<FeedItem[] | null> {
     const resolved = resolveKind(opts.section ?? 'all', opts.kind ?? 'all');
     // a kind that cannot live in the half asked for is a contradiction, and the
@@ -225,7 +276,11 @@ export class FeedService {
     const offset = Math.max(0, opts.offset ?? 0);
     const publicUrl = opts.publicUrl ?? (() => null);
 
-    const rows = await this.pool.query<FeedRow>(FEED_SQL, [resolved.section, resolved.dbType, limit, offset, viewerId]);
+    const sort = opts.sort ?? 'newest';
+    const period = sortRanks(sort) ? (opts.period ?? 'all') : 'all';
+    const since = period === 'all' ? null : new Date((opts.now ?? new Date()).getTime() - FEED_PERIOD_DAYS[period] * 86_400_000);
+
+    const rows = await this.pool.query<FeedRow>(feedSql(sort), [resolved.section, resolved.dbType, limit, offset, viewerId, since]);
     return this.hydrate(rows.rows, viewerId, publicUrl);
   }
 

@@ -1,11 +1,13 @@
-import { Image, Pressable, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { FlatList, Image, Pressable, StyleSheet, Text, View, useWindowDimensions, type NativeScrollEvent, type NativeSyntheticEvent } from 'react-native';
 import type { FeedImage } from '@kurda/shared';
-import { radii } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { useDirection } from '../reports/direction';
 
 /**
- * A post's pictures, one to four, laid out the way X lays them out.
+ * A post's pictures, one to four.
  *
  * One picture keeps its own shape, within limits — a tall phone photo is cut
  * to 4:5 and a panorama to 1.91:1, so one post cannot fill a whole screen or
@@ -15,6 +17,10 @@ import { useI18n } from '../i18n/I18nContext';
  * Every picture is its own element for a screen reader, named by its alt
  * text, or "Picture 2 of 3" when the poster wrote none — never by the post's
  * text, which a screen reader reads anyway, right before.
+ *
+ * On the wall (`wall`) the corners are rounder, and two or more are not cut
+ * into a box: they come one at a time, each whole and the width of the post,
+ * swiped through sideways.
  */
 export const SINGLE_MIN_RATIO = 0.8;
 export const SINGLE_MAX_RATIO = 1.91;
@@ -28,13 +34,20 @@ export function singleRatio(image: Pick<FeedImage, 'width' | 'height'>): number 
 export function PostPictures({
   images,
   onPress,
+  onLongPress,
+  wall = false,
 }: {
   images: readonly FeedImage[];
   /** opening the post (on the wall); left out where the post is already open */
   onPress?: () => void;
+  /** the post's menu, held down on a picture as on the words */
+  onLongPress?: () => void;
+  /** as the wall shows a post's pictures: inside the page's margins, rounder, several swiped through */
+  wall?: boolean;
 }): React.JSX.Element | null {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const dir = useDirection();
   const shown = images.slice(0, 4);
   if (shown.length === 0) return null;
 
@@ -58,6 +71,7 @@ export function PostPictures({
           // a picture that opens the post: named by what it shows, and said to open the post
           <Pressable
             onPress={onPress}
+            onLongPress={onLongPress}
             style={styles.fill}
             accessibilityRole="button"
             accessibilityLabel={label}
@@ -73,8 +87,9 @@ export function PostPictures({
   };
 
   if (shown.length === 1) {
-    return <View style={[styles.box, { aspectRatio: singleRatio(shown[0]!) }]}>{tile(shown[0]!, 0, styles.fill)}</View>;
+    return <View style={[styles.box, wall && styles.wall, { aspectRatio: singleRatio(shown[0]!) }]}>{tile(shown[0]!, 0, styles.fill)}</View>;
   }
+  if (wall) return <Swiped images={shown} tile={tile} mirror={dir.row === 'row-reverse'} />;
 
   return (
     <View style={[styles.box, styles.wide]}>
@@ -108,15 +123,83 @@ export function PostPictures({
   );
 }
 
+/**
+ * A wall post's pictures, one at a time. All of them take the first one's
+ * shape, so the post does not change height under the thumb as it is swiped.
+ * Where you are is said twice, small: "2/3" in the top corner and a dot for
+ * each along the bottom, the one shown filled. Neither is read out — each
+ * picture already says "Picture 2 of 3", or what it shows.
+ *
+ * In Soranî the first picture is on the right and the next one comes in from
+ * the left, as a page is turned.
+ */
+function Swiped({
+  images,
+  tile,
+  mirror,
+}: {
+  images: readonly FeedImage[];
+  tile: (image: FeedImage, i: number, style: object) => React.JSX.Element;
+  mirror: boolean;
+}): React.JSX.Element {
+  // inside the page's margins, so the phone's width less those until the post has been measured
+  const screen = useWindowDimensions().width;
+  const [measured, setMeasured] = useState(0);
+  const width = measured || Math.min(MAX_WIDTH, screen - 2 * layout.gutter);
+  const ratio = singleRatio(images[0]!);
+  const [index, setIndex] = useState(0);
+  const onScroll = (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+    if (width > 0) setIndex(Math.min(images.length - 1, Math.max(0, Math.round(e.nativeEvent.contentOffset.x / width))));
+  };
+  return (
+    <View style={[styles.box, styles.wall, { aspectRatio: ratio }]} onLayout={(e) => setMeasured(e.nativeEvent.layout.width)}>
+      <FlatList
+        data={images}
+        style={styles.fill}
+        horizontal
+        pagingEnabled
+        inverted={mirror}
+        showsHorizontalScrollIndicator={false}
+        keyExtractor={(image, i) => `${i}-${image.url}`}
+        getItemLayout={(_, i) => ({ length: width, offset: width * i, index: i })}
+        renderItem={({ item, index: i }) => tile(item, i, { width, height: width / ratio })}
+        onScroll={onScroll}
+        scrollEventThrottle={32}
+      />
+      <View style={[styles.counter, mirror ? styles.counterLeft : styles.counterRight]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        <Text style={styles.counterText}>{`${index + 1}/${images.length}`}</Text>
+      </View>
+      <View style={[styles.dots, { flexDirection: mirror ? 'row-reverse' : 'row' }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+        {images.map((image, i) => (
+          <View key={`${i}-${image.url}`} style={[styles.dot, i === index ? styles.dotOn : null]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
 const GAP = 2;
+/** on a tablet or a wide window the pictures stop growing where a phone's would */
+const MAX_WIDTH = 560;
+// on a picture, whatever its colours and whatever the theme: white on a dimmed pill
+const ON_PICTURE = '#FFFFFF';
+const UNDER = 'rgba(0,0,0,0.45)';
 
 const styles = StyleSheet.create({
   // on a tablet or a wide window the pictures stop growing where a phone's would: a
   // post is read, not a poster — and the shape, not the height, is what is kept
-  box: { width: '100%', maxWidth: 560, borderRadius: radii.md, overflow: 'hidden' },
+  box: { width: '100%', maxWidth: MAX_WIDTH, borderRadius: radii.md, overflow: 'hidden' },
+  wall: { borderRadius: radii.lg },
   wide: { aspectRatio: 16 / 9, flexDirection: 'row', gap: GAP },
   column: { flex: 1, gap: GAP },
   row: { flex: 1, flexDirection: 'row', gap: GAP },
   cell: { flex: 1 },
   fill: { width: '100%', height: '100%' },
+  counter: { position: 'absolute', top: spacing.md, paddingHorizontal: spacing.sm, paddingVertical: 3, borderRadius: radii.pill, backgroundColor: UNDER },
+  counterRight: { right: spacing.md },
+  counterLeft: { left: spacing.md },
+  counterText: { color: ON_PICTURE, fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
+  dots: { position: 'absolute', bottom: spacing.sm, alignSelf: 'center', gap: 5, paddingHorizontal: 6, paddingVertical: 5, borderRadius: radii.pill, backgroundColor: UNDER },
+  dot: { width: 6, height: 6, borderRadius: radii.pill, backgroundColor: ON_PICTURE, opacity: 0.45 },
+  dotOn: { opacity: 1 },
 });

@@ -38,11 +38,15 @@ describe('countdownParts', () => {
 });
 
 describe('formatCountdown', () => {
-  it('shows the two most significant units', () => {
-    expect(formatCountdown((2 * 24 + 3) * 3_600_000)).toBe('2d 3h');
-    expect(formatCountdown((5 * 60 + 12) * 60_000)).toBe('5h 12m');
-    expect(formatCountdown(3 * 60_000 + 40_000)).toBe('3m 40s');
-    expect(formatCountdown(0)).toBe('');
+  const words = { 'time.daysHours': '{days}d {hours}h', 'time.hoursMinutes': '{hours}h {minutes}m', 'time.minutes': '{count}m' };
+  const t = (key: keyof typeof words, vars: Record<string, number>) => interpolate(words[key], vars);
+  it('shows the two largest units, in the words it is given', () => {
+    expect(formatCountdown((2 * 24 + 3) * 3_600_000, t)).toBe('2d 3h');
+    expect(formatCountdown((5 * 60 + 12) * 60_000, t)).toBe('5h 12m');
+    expect(formatCountdown(3 * 60_000 + 40_000, t)).toBe('3m');
+    // the last minute is a minute, not seconds counting down
+    expect(formatCountdown(20_000, t)).toBe('1m');
+    expect(formatCountdown(0, t)).toBe('');
   });
 });
 

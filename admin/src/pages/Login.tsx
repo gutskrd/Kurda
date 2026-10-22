@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react';
 import { useAuth } from '../auth';
 import { api, ApiError } from '../api';
 import { clockTime, describeError, errorLine, useCountdown } from '../ui';
+import { HevaloMark } from '../brand/HevaloMark';
 
 // Whether this browser has signed in to the admin before — drives the greeting
 // ("Welcome back" for returning admins vs. a first-time prompt).
@@ -121,7 +122,10 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
     <div className="login">
       <form className="login-card" onSubmit={(e) => void submit(e)} noValidate aria-labelledby={`${id}-title`}>
         <div className="login-top">
-          <span>Hevalo</span>
+          <span className="login-brand">
+            <HevaloMark size={40} />
+            Hevalo
+          </span>
           <span>Admin console</span>
         </div>
 

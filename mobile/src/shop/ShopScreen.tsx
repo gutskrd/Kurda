@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Modal, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import {
   DEFAULT_ITEM_FILTER,
   applyItemFilter,
@@ -19,7 +18,8 @@ import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
+import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -47,7 +47,7 @@ import { EmptyState } from '../theme/EmptyState';
 import type { RootNavigation } from '../navigation/rootStack';
 import { GiftSendAnimation } from '../gifts/GiftSendAnimation';
 import { GiftSentNote } from '../gifts/GiftSentNote';
-import { ItemArt, KindChips, KindHeading, OptionRow, PremiumPill, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
+import { ItemArt, KindChips, KindHeading, OptionRow, ResultsLine, SearchField, SortChip, ToggleChip } from './ItemFilters';
 
 /** Best-effort unique idempotency key for a purchase attempt. */
 function attemptKey(sku: string): string {
@@ -72,7 +72,6 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const dir = useDirection();
   const [items, setItems] = useState<ShopItem[]>([]);
   const [balances, setBalances] = useState<Balances>({ zer: 0, gems: 0 });
   const [loading, setLoading] = useState(true);
@@ -309,51 +308,22 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
           </ScrollView>
         </AsyncBoundary>
 
-        <Modal visible={selected !== null} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
-          <View style={styles.backdrop}>
-            {/*
-              Beside the sheet, not around it: a pressable wrapping the sheet
-              would read as one button. A tap away for a finger; a screen
-              reader has the ✕ in the sheet and the escape gesture instead.
-            */}
-            <Pressable
-              style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-              onPress={() => setSelected(null)}
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
+        {/* no title in the header: the item's own name heads the sheet, under its picture */}
+        <BottomSheet visible={selected !== null} onClose={() => setSelected(null)}>
+          {selected ? (
+            <ItemDetail
+              item={selected}
+              balances={balances}
+              busy={busy}
+              onBuy={confirmBuy}
+              onEarnMore={onEarnMore}
+              onGift={(it) => {
+                setSelected(null);
+                setGifting(it);
+              }}
             />
-            <SheetIn
-              style={[styles.sheet, { backgroundColor: colors.background }]}
-              accessibilityViewIsModal
-              onAccessibilityEscape={() => setSelected(null)}
-            >
-              {/* inside the sheet: a screen reader kept in it by accessibilityViewIsModal cannot reach the backdrop */}
-              <View style={[styles.sheetHead, { flexDirection: dir.row }]}>
-                <Pressable
-                  onPress={() => setSelected(null)}
-                  accessibilityRole="button"
-                  accessibilityLabel={t('social.close')}
-                  style={({ pressed }) => [styles.close, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
-                >
-                  <Icon name="close" size={18} color={colors.textSecondary} />
-                </Pressable>
-              </View>
-              {selected ? (
-                <ItemDetail
-                  item={selected}
-                  balances={balances}
-                  busy={busy}
-                  onBuy={confirmBuy}
-                  onEarnMore={onEarnMore}
-                  onGift={(it) => {
-                    setSelected(null);
-                    setGifting(it);
-                  }}
-                />
-              ) : null}
-            </SheetIn>
-          </View>
-        </Modal>
+          ) : null}
+        </BottomSheet>
 
         {gifting ? (
           <GiftSheet
@@ -459,7 +429,7 @@ function priceWords(item: ShopItem, t: (key: 'shop.free' | 'gift.picker.gems') =
   return `${item.price} ${item.currency === 'zer' ? 'Zêr' : t('gift.picker.gems')}`;
 }
 
-/** One item in the list: its picture, name, meaning, Premium where it is, and its price. */
+/** One item in the list: its picture, name, meaning and price. */
 function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balances; onPress: () => void }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -470,9 +440,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={[item.name, item.description, priceWords(item, t), item.premiumOnly ? t('profile.premium') : null]
-        .filter(Boolean)
-        .join(', ')}
+      accessibilityLabel={[item.name, item.description, priceWords(item, t)].filter(Boolean).join(', ')}
       style={({ pressed }) => [styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill, opacity: pressed ? 0.8 : 1 }]}
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
@@ -483,15 +451,15 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
         {/*
           The names are Kurmancî and the meanings English whatever the app is
           in, so they read in their own direction (`free`), lined up with the
-          screen. Premium is a crown beside the name: nearly everything on sale
-          is, and a pill on every row said it forty times; the item's own sheet
-          says it in words.
+          screen.
+
+          No Premium crown: Premium cannot be had in the app, and a mark for
+          something nobody can get is an advert for nothing.
         */}
         <View style={[styles.nameRow, { flexDirection: dir.row }]}>
           <Text style={[styles.itemName, dir.free, { color: colors.textPrimary }]} numberOfLines={1}>
             {item.name}
           </Text>
-          {item.premiumOnly ? <Icon name="crown" size={14} color={colors.gold} /> : null}
         </View>
         {item.description ? (
           <Text style={[styles.itemDesc, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
@@ -534,14 +502,13 @@ function ItemDetail({
   const affordable = canAfford(item, balances);
   const wide = itemCategory(item.category) === 'background';
   // a background as wide as the sheet allows (it is what you would be buying); a square item at a fixed size
-  const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - spacing.xl * 2, 400) : 128;
+  const artWidth = wide ? Math.min(Math.min(width, SHEET_MAX_WIDTH) - layout.gutter * 2, 400) : 128;
   return (
     <View style={styles.detail}>
       <ItemArt category={item.category} path={item.assetUrl} width={artWidth} style={styles.preview} />
       <Text style={[styles.detailName, { color: colors.textPrimary }]} accessibilityRole="header">
         {item.name}
       </Text>
-      {item.premiumOnly ? <PremiumPill /> : null}
       {item.description ? <Text style={[styles.detailDesc, { color: colors.textSecondary }]}>{item.description}</Text> : null}
       <Text style={[styles.detailPrice, { color: item.price === 0 ? colors.success : colors.accent }]}>{priceWords(item, t)}</Text>
 
@@ -577,7 +544,7 @@ function ItemDetail({
         <View style={styles.insufficient}>
           <Text style={[styles.insufficientText, { color: colors.textSecondary }]}>
             {t('shop.notEnough', { currency: currencyLabel(item.currency) })}{' '}
-            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.gemPacksSoon')}
+            {item.currency === 'zer' ? t('shop.earnMoreZer') : t('shop.earnMoreGems')}
           </Text>
           {item.currency === 'zer' ? (
             <ClayButton label={t('shop.earnZer')} tone="accent" onPress={onEarnMore} />
@@ -619,27 +586,7 @@ const styles = StyleSheet.create({
   stretch: { alignSelf: 'stretch' },
   priceRow: { alignItems: 'center', gap: spacing.xs, paddingHorizontal: spacing.xs },
   price: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  backdrop: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
-    paddingHorizontal: spacing.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-  },
-  // the ✕ on the closing side, pulled into the corner
-  sheetHead: { justifyContent: 'flex-end', marginHorizontal: -spacing.md },
-  close: {
-    width: MIN_TOUCH_TARGET,
-    height: MIN_TOUCH_TARGET,
-    borderRadius: radii.pill,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  detail: { alignItems: 'center', gap: spacing.sm },
+  detail: { alignItems: 'center', gap: spacing.sm, paddingBottom: spacing.sm },
   preview: { marginBottom: spacing.sm },
   detailName: { ...display(typography.sizes.xl), textAlign: 'center' },
   detailDesc: { fontSize: typography.sizes.md, textAlign: 'center' },

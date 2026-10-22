@@ -39,7 +39,7 @@ function response(progress: Record<string, { tier: number; progress: number }>, 
     badges,
     showcase: [],
     secretsFound: 1,
-    secretsTotal: 6,
+    secretsTotal: BADGES.filter((b) => b.secret).length,
     legacy: [],
     monthlyChallenge: { month: '2026-10', days: 3, goal: 8 },
     ...over,
@@ -56,12 +56,14 @@ describe('BadgesPage', () => {
     for (const family of ['learning', 'habit', 'games', 'ranked', 'friends', 'events', 'secret'] as const) {
       expect(await screen.findByRole('heading', { name: new RegExp(en[`badges.family.${family}`]) })).toBeInTheDocument();
     }
-    expect(screen.getByText('12 / 30 days')).toBeInTheDocument();
-    expect(screen.getByText('4 / 10 lessons')).toBeInTheDocument();
+    const learning = screen.getByRole('heading', { name: new RegExp(en['badges.family.learning']) }).closest('section')!;
+    const habit = screen.getByRole('heading', { name: new RegExp(en['badges.family.habit']) }).closest('section')!;
+    expect(within(habit).getByText('12 / 30 days')).toBeInTheDocument();
+    expect(within(learning).getByText('4 / 10 lessons')).toBeInTheDocument();
     expect(screen.getByText('3 of 8 learning days')).toBeInTheDocument();
     // a medal not earned yet is said to be so, never hidden
-    expect(screen.getByRole('img', { name: 'Ders (Lessons), not earned yet' })).toBeInTheDocument();
-    expect(screen.getByRole('img', { name: 'Agir (Fire), Sifir' })).toBeInTheDocument();
+    expect(within(learning).getByRole('img', { name: 'Ders (Lessons), not earned yet' })).toBeInTheDocument();
+    expect(within(habit).getByRole('img', { name: 'Agir (Fire), Sifir' })).toBeInTheDocument();
   });
 
   it('keeps an unfound secret a secret, with its hint once one has been found', async () => {
@@ -69,7 +71,8 @@ describe('BadgesPage', () => {
     renderApp(<BadgesPage />);
 
     const secrets = (await screen.findByRole('heading', { name: new RegExp(en['badges.family.secret']) })).closest('section')!;
-    expect(within(secrets).getAllByText('???')).toHaveLength(5);
+    // every secret in the catalogue but the one found
+    expect(within(secrets).getAllByText('???')).toHaveLength(BADGES.filter((b) => b.secret).length - 1);
     expect(within(secrets).getByText('Tîrê rast')).toBeInTheDocument();
 
     await userEvent.click(within(secrets).getAllByRole('button')[1]!);
@@ -80,7 +83,7 @@ describe('BadgesPage', () => {
   it('opens a badge to show every tier and what it needs', async () => {
     vi.stubGlobal('fetch', answer(response({ agir: { tier: 2, progress: 41 } })));
     renderApp(<BadgesPage />);
-    await userEvent.click(await screen.findByRole('button', { name: /^Agir \(Fire\)/ }));
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Agir \(Fire\)/ }))[0]!);
 
     const dialog = await screen.findByRole('dialog', { name: 'Agir' });
     expect(within(dialog).getByText(en['badges.agir.desc'])).toBeInTheDocument();
@@ -89,12 +92,37 @@ describe('BadgesPage', () => {
     expect(within(dialog).getByText('41 / 100 days')).toBeInTheDocument();
   });
 
+  it('puts the badges nearest their next tier first, and past halfway says what is left', async () => {
+    vi.stubGlobal('fetch', answer(response({ ders: { tier: 0, progress: 9 }, agir: { tier: 1, progress: 12 }, roj: { tier: 1, progress: 100 }, heval: { tier: 0, progress: 0 } })));
+    renderApp(<BadgesPage />);
+
+    const nearest = (await screen.findByRole('heading', { name: en['badges.nearest'] })).closest('section')!;
+    const names = within(nearest)
+      .getAllByRole('button')
+      .map((b) => b.querySelector('.badge-tile-name')?.textContent);
+    // nine of ten lessons first, then most of the way to Roj's silver, then Agir; nothing untouched
+    expect(names).toEqual(['Ders', 'Roj', 'Agir']);
+    expect(within(nearest).getByText('1 lesson to go')).toBeInTheDocument();
+    expect(within(nearest).getByText('20 days to go')).toBeInTheDocument();
+    expect(within(nearest).getByText('12 / 30 days')).toBeInTheDocument();
+  });
+
+  it('says one season, not one seasons', async () => {
+    vi.stubGlobal('fetch', answer(response({})));
+    renderApp(<BadgesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Deşt \(Plain\)/ }));
+    const dialog = await screen.findByRole('dialog', { name: 'Deşt' });
+    expect(within(dialog).getByText('1 season')).toBeInTheDocument();
+    expect(within(dialog).getByText('3 seasons')).toBeInTheDocument();
+    expect(within(dialog).getByText('0 / 1 season')).toBeInTheDocument();
+  });
+
   it('shows rarity only when the server sends it', async () => {
     const body = response({ agir: { tier: 1, progress: 9 } });
     body.badges.find((b) => b.key === 'agir')!.rarity = [38.4, 9, 2, 0.4];
     vi.stubGlobal('fetch', answer(body));
     renderApp(<BadgesPage />);
-    await userEvent.click(await screen.findByRole('button', { name: /^Agir \(Fire\)/ }));
+    await userEvent.click((await screen.findAllByRole('button', { name: /^Agir \(Fire\)/ }))[0]!);
     const dialog = await screen.findByRole('dialog', { name: 'Agir' });
     expect(within(dialog).getAllByText('38% of learners have this').length).toBeGreaterThan(0);
     expect(within(dialog).getByText('<1% of learners have this')).toBeInTheDocument();

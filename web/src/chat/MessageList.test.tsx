@@ -1,5 +1,5 @@
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { beforeAll, describe, it, expect, vi } from 'vitest';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { MessageList } from './MessageList';
@@ -19,6 +19,19 @@ const msg = (id: string, senderId: string, body: string, iso: string, extra = {}
   body,
   createdAt: iso,
   ...extra,
+});
+
+/** jsdom has no PointerEvent: a mouse event that says what kind of pointer it was, and how far it moved. */
+class TestPointerEvent extends MouseEvent {
+  constructor(type: string, init: PointerEventInit = {}) {
+    super(type, init);
+    Object.defineProperty(this, 'pointerType', { value: init.pointerType ?? 'mouse', configurable: true, writable: true });
+    Object.defineProperty(this, 'movementX', { value: init.movementX ?? 0, configurable: true, writable: true });
+    Object.defineProperty(this, 'movementY', { value: init.movementY ?? 0, configurable: true, writable: true });
+  }
+}
+beforeAll(() => {
+  if (!('PointerEvent' in window)) Object.defineProperty(window, 'PointerEvent', { value: TestPointerEvent, configurable: true });
 });
 
 /** MessageBody renders game-invite links, which are react-router Links. */
@@ -198,10 +211,11 @@ describe('MessageList', () => {
   });
 
   /**
-   * A message can be reported where it is read. The ⋯ is beside other
-   * people's messages only — your own are not yours to report.
+   * A message can be reported where it is read: from its options, which a
+   * keyboard reaches by a button that is out of sight until focused. Only
+   * other people's messages — your own are not yours to report.
    */
-  it('offers Report beside other people’s messages, and only theirs', async () => {
+  it('offers Report among other people’s messages’ options, and only theirs', async () => {
     const onReport = vi.fn();
     show(
       <MessageList
@@ -229,5 +243,53 @@ describe('MessageList', () => {
       />,
     );
     expect(screen.getByText('a wrapped present').closest('.bubble')).toHaveClass('is-card');
+  });
+
+  /*
+   * Nothing sits beside a message. Held on a touch screen, or right-clicked,
+   * it opens its options under it: Copy for its words, Report for someone
+   * else's. A finger that moves is scrolling and opens nothing.
+   */
+  it('opens a message’s options when it is held, with Copy and Report', async () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = show(<MessageList messages={[msg('1', 'u2', 'silav', at(10, 0), { username: 'zana' })]} myId="me" onReport={vi.fn()} />);
+      const line = container.querySelector('.bubble-line')!;
+      // no visible ⋯ in the thread
+      expect(container.querySelector('.msg-menu-btn')).toBeNull();
+      fireEvent.pointerDown(line, { pointerType: 'touch' });
+      expect(line).toHaveClass('is-pressing');
+      act(() => vi.advanceTimersByTime(500));
+      expect(screen.getByRole('menuitem', { name: 'Copy' })).toBeInTheDocument();
+      expect(screen.getByRole('menuitem', { name: 'Report' })).toBeInTheDocument();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('opens nothing for a finger that scrolls', () => {
+    vi.useFakeTimers();
+    try {
+      const { container } = show(<MessageList messages={[msg('1', 'u2', 'silav', at(10, 0), { username: 'zana' })]} myId="me" onReport={vi.fn()} />);
+      const line = container.querySelector('.bubble-line')!;
+      fireEvent.pointerDown(line, { pointerType: 'touch' });
+      fireEvent.pointerMove(line, { pointerType: 'touch', movementY: 12 });
+      act(() => vi.advanceTimersByTime(800));
+      expect(screen.queryByRole('menu')).toBeNull();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
+  it('copies your own message from a right click, and says it did', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, 'clipboard', { value: { writeText }, configurable: true });
+    const { container } = show(<MessageList messages={[msg('1', 'me', 'my words', at(10, 0), { username: 'me' })]} myId="me" onReport={vi.fn()} />);
+    fireEvent.contextMenu(container.querySelector('.bubble-line')!);
+    // your own message: nothing to report, only its words to copy
+    expect(screen.queryByRole('menuitem', { name: 'Report' })).toBeNull();
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Copy' }));
+    expect(writeText).toHaveBeenCalledWith('my words');
+    expect(await screen.findByText('Copied')).toBeInTheDocument();
   });
 });

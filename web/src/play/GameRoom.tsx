@@ -12,7 +12,7 @@ import type { MessageKey } from '../i18n/en';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 /**
- * One player in a Wordle Battle or Rhyme Match, by seat, as the server lets
+ * One player in a Peyvok Battle or Rhyme Match, by seat, as the server lets
  * this viewer see them (contract §B2): a name only for yourself, your friends,
  * or anyone in a game open to adults; otherwise "Player 3". Another player's
  * `userId` is an opaque `seat:N`, never their account.

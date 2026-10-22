@@ -33,7 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   }, []);
 
   async function login(email: string, password: string, remember = true): Promise<void> {
-    const res = await api<{ tokens: { accessToken: string; refreshToken: string } }>('/auth/login', {
+    const res = await api<{ tokens: { accessToken: string; refreshToken: string } }>('/admin/auth/login', {
       method: 'POST',
       // the name the admin's own Settings lists this session under; "Remember
       // me" left off keeps the session on the server for a day, not a month

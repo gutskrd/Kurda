@@ -64,7 +64,7 @@ interface ReminderCopy {
  * little today needs, and nothing about what could be lost.
  *
  * It says "your streak is N days", not "you have learned N days in a row": the
- * streak is kept by a daily Wordle and by a freeze as well as by a lesson, so
+ * streak is kept by a daily Peyvok and by a freeze as well as by a lesson, so
  * the second sentence would not always be true.
  *
  * Where a language changes the noun with the number, the sentence either picks

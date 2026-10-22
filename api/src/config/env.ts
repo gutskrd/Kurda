@@ -81,6 +81,12 @@ const envSchema = z.object({
    * see grantBootstrapAdmins.
    */
   BOOTSTRAP_ADMIN_EMAILS: z.string().default(''),
+  /**
+   * Comma-separated addresses that alone may use the admin console, whatever
+   * roles anyone else holds (admin/owner-access.ts). Unset, every staff role
+   * may. Like the bootstrap list, it lives in configuration only.
+   */
+  ADMIN_ACCESS_EMAILS: z.string().default(''),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
 
@@ -130,6 +136,19 @@ const envSchema = z.object({
   /** Comma-separated OAuth audiences (iOS/Android/web client ids). */
   GOOGLE_CLIENT_IDS: z.string().optional(),
   APPLE_CLIENT_IDS: z.string().optional(),
+  /**
+   * The Sign in with Apple key (auth/apple-tokens.ts): with all three set, the
+   * code the app sends on an Apple sign-in is exchanged for a refresh token,
+   * kept encrypted, and revoked at Apple when the account is deleted (App
+   * Store guideline 5.1.1(v)). Unset, nothing is exchanged, kept or revoked.
+   * APPLE_PRIVATE_KEY is the .p8 file's PEM; a literal "\n" stands for a line
+   * break, for dashboards that take one line. See docs/auth/apple-signin.md.
+   */
+  APPLE_TEAM_ID: z.string().optional(),
+  APPLE_KEY_ID: z.string().optional(),
+  APPLE_PRIVATE_KEY: z.string().optional(),
+  /** The client those tokens belong to; defaults to the first APPLE_CLIENT_IDS entry, else the app's bundle id. */
+  APPLE_CLIENT_ID: z.string().optional(),
   /** Cloudflare Turnstile; CAPTCHA disabled when unset (KUR-025). */
   TURNSTILE_SECRET: z.string().optional(),
   /** Shared secret guarding IAP refund webhooks; disabled when unset (KUR-072). */
@@ -182,6 +201,19 @@ const envSchema = z.object({
    * what arrived, and says the body can be read in Resend.
    */
   RESEND_INBOX_API_KEY: z.string().optional(),
+  /**
+   * Who delivers push notifications (push/provider.ts): `expo` sends through
+   * Expo's push service, `stub` records the sends and delivers nothing. Unset:
+   * Expo in production and the stub everywhere else, so a laptop or a test run
+   * never reaches somebody's phone.
+   */
+  PUSH_PROVIDER: z.enum(['expo', 'stub']).optional(),
+  /**
+   * An Expo access token, sent with every push request. Needed only once
+   * "Enhanced security for push notifications" is switched on for the project
+   * at expo.dev; without that setting Expo accepts requests without one.
+   */
+  EXPO_ACCESS_TOKEN: z.string().optional(),
   /** 'true' admits traffic when the CAPTCHA provider is down. */
   CAPTCHA_FAIL_OPEN: z.enum(['true', 'false']).default('false'),
   /**

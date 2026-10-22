@@ -321,7 +321,7 @@ describe.skipIf(!DATABASE_URL)('recording files and the Characters lists (integr
         ['lesson', lessonAudioKey(T.voiced)],
         ['dictionary', dict.commons!],
       ] as const) {
-        expect((await file(kind, key, learner)).statusCode).toBe(403);
+        expect((await file(kind, key, learner)).statusCode).toBe(404);
         expect((await file(kind, key, null)).statusCode).toBe(401);
       }
     });
@@ -741,7 +741,7 @@ describe.skipIf(!DATABASE_URL)('recording files and the Characters lists (integr
     });
 
     it('is only for those who record', async () => {
-      expect((await list({}, learner)).statusCode).toBe(403);
+      expect((await list({}, learner)).statusCode).toBe(404);
       expect((await list({}, null)).statusCode).toBe(401);
     });
   });

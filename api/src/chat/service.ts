@@ -25,6 +25,11 @@ export interface ChatModeration {
   recordOffense(userId: string): Promise<unknown>;
 }
 
+/** Badges hook: a message written to a friend moves the Name badge (badges/service.ts). */
+export interface ChatBadges {
+  onLetterSent(fromUserId: string, toUserId: string): Promise<void>;
+}
+
 /**
  * A direct message. Most are text; a gift or a game card is a message with a
  * kind and the reference it needs (shared `ChatMessageExtras`), and no body.
@@ -70,6 +75,7 @@ export class ChatService {
     private readonly friends: FriendService,
     private readonly notifier: Notifier,
     private readonly moderation?: ChatModeration,
+    private readonly badges?: ChatBadges,
   ) {}
 
   async send(from: string, to: string, rawBody: string, publicUrl: PublicUrl = () => null): Promise<DmMessage> {
@@ -127,6 +133,7 @@ export class ChatService {
       [lo, hi, from, body],
     );
     if (filtered.flagged && this.moderation) void this.moderation.recordOffense(from).catch(() => undefined);
+    if (this.badges) void this.badges.onLetterSent(from, to).catch(() => undefined);
     const message: DmMessage = {
       id: row.rows[0]!.id,
       senderId: from,

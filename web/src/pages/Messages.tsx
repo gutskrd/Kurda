@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { groupLimits, type LimitDetails } from '@kurda/shared';
 import { useApiGet } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
-import type { ApiError, Conversation, Group, MyGroup, UserSummary } from '../lib/types';
+import { limitText } from '../lib/limits';
+import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { DmThread } from '../chat/DmThread';
@@ -12,11 +14,15 @@ import { useRealtime, useRealtimeEvent } from '../realtime/RealtimeProvider';
 import { ErrorState, EmptyState } from '../components/states';
 import { ConversationsSkeleton } from '../components/skeletons';
 import { Button, LinkButton } from '../components/Button';
-import { ChatsIcon, ChevronIcon, InviteIcon, NewMessageIcon, SearchIcon } from '../components/icons';
+import { ChatsIcon, ChevronIcon, InviteIcon, NewMessageIcon } from '../components/icons';
+import { SearchField } from '../components/SearchField';
 import { Modal } from '../components/Modal';
 import { Avatar } from '../components/Avatar';
 import { SendError } from '../reports/SendError';
 import { useArrival } from '../lib/motion';
+import { GroupAvatar } from '../groups/GroupAvatar';
+import { DiscoverGroups } from '../groups/DiscoverGroups';
+import { useGroupsChanged } from '../groups/groupsChanged';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
@@ -108,18 +114,16 @@ export function Messages(): React.JSX.Element {
 
       <div className={`chat-layout${activeId || activeGroup ? ' has-active' : ''}`}>
         <aside className="chat-list" aria-label={t('chat.conversations')}>
-          <div className="chat-filter">
-            <SearchIcon size={18} className="chat-filter-icon" />
-            <input
-              className="input chat-filter-input"
-              type="search"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder={t('chat.filter.search')}
-              aria-label={t('chat.filter.search')}
-              autoComplete="off"
-            />
-          </div>
+          <SearchField
+            icon
+            className="chat-filter"
+            inputClassName="chat-filter-input"
+            value={query}
+            onValueChange={setQuery}
+            placeholder={t('chat.filter.search')}
+            aria-label={t('chat.filter.search')}
+            autoComplete="off"
+          />
           <div className="chat-tabs" role="tablist" aria-label={t('chat.type')}>
             {filters.map((f) => (
               <button
@@ -299,6 +303,7 @@ function Conversations({
   }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);
+  useGroupsChanged(onDm);
   const arriving = useArrival(convos !== null);
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
@@ -352,11 +357,7 @@ function Conversations({
           key={g.id}
           to={`/app/messages?group=${g.id}`}
           active={g.id === activeGroup}
-          avatar={
-            <span className="group-avatar" aria-hidden>
-              {g.name.slice(0, 1).toUpperCase()}
-            </span>
-          }
+          avatar={<GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />}
           name={g.name}
           preview={t('groups.memberCount', { count: g.memberCount })}
           unread={groupUnread[g.id] ?? 0}
@@ -400,11 +401,10 @@ function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
         />
       ) : (
         <>
-          <input
-            className="input"
-            type="search"
+          <SearchField
+            icon
             value={q}
-            onChange={(e) => setQ(e.target.value)}
+            onValueChange={setQ}
             placeholder={t('share.searchFriends')}
             aria-label={t('share.searchFriends')}
             autoComplete="off"
@@ -440,6 +440,7 @@ function NewMessage({ onChosen }: { onChosen: () => void }): React.JSX.Element {
 function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; query?: string }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
+  const navigate = useNavigate();
   const [mine, setMine] = useState<MyGroup[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
@@ -460,9 +461,14 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
     void load();
   }, [load]);
 
+  // the group limits, counted from the list the server sent, as it counts them
+  const limits = groupLimits(mine ?? []);
+
   // a new group message can change previews/unread — cheap to refresh the list
   const onGroupMsg = useCallback(() => void load(), [load]);
   useRealtimeEvent('group_msg', onGroupMsg);
+  // a group renamed, given a picture, joined or left somewhere on the page
+  useGroupsChanged(onGroupMsg);
 
   return (
     <>
@@ -488,16 +494,14 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
             to={`/app/messages?group=${g.id}`}
             className={`chat-convo${g.id === activeGroup ? ' active' : ''}`}
           >
-            <span className="group-avatar" aria-hidden>
-              {g.name.slice(0, 1).toUpperCase()}
-            </span>
+            <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={40} />
             <span className="chat-convo-body">
               <span className="chat-convo-top">
-                <span className="chat-convo-name">{g.name}</span>
+                <span className="chat-convo-name" dir="auto">{g.name}</span>
               </span>
               <span className="chat-convo-last">
                 {t('groups.memberCount', { count: g.memberCount })}
-                {g.privacy === 'invite' ? ` · ${t('groups.inviteOnly')}` : ''}
+                {g.privacy === 'invite' ? ` · ${t('groups.inviteGroup')}` : ''}
               </span>
             </span>
           </Link>
@@ -506,6 +510,7 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
 
       <Modal open={creating} onClose={() => setCreating(false)} label={t('groups.new')}>
         <CreateGroupForm
+          limit={limits.create}
           onDone={() => {
             setCreating(false);
             void load();
@@ -515,9 +520,16 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
       <Modal open={discovering} onClose={() => setDiscovering(false)} label={t('groups.discover')}>
         <DiscoverGroups
           mineIds={new Set((mine ?? []).map((g) => g.id))}
-          onJoined={() => {
+          joinLimit={limits.join}
+          onOpen={() => setDiscovering(false)}
+          onJoined={(g) => {
             setDiscovering(false);
             void load();
+            navigate(`/app/messages?group=${g.id}`);
+          }}
+          onNew={() => {
+            setDiscovering(false);
+            setCreating(true);
           }}
         />
       </Modal>
@@ -525,8 +537,12 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
   );
 }
 
-/** Create a new group; the creator becomes owner and lands in its chat. */
-function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element {
+/**
+ * Create a new group; the creator becomes owner and lands in its chat. At a
+ * group limit (`limit`) the form says which one and what makes room, and has
+ * nothing to send, rather than letting the server refuse it.
+ */
+function CreateGroupForm({ onDone, limit }: { onDone: () => void; limit: LimitDetails | null }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
   const navigate = useNavigate();
@@ -538,7 +554,7 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (name.trim().length < 2) return;
+    if (name.trim().length < 2 || limit) return;
     setBusy(true);
     setErr(null);
     const res = await client.post<{ id: string }>('/groups', {
@@ -558,6 +574,11 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
   return (
     <form className="compose" onSubmit={submit}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
+      {limit && (
+        <div className="msg" role="status" id="g-limit">
+          {limitText(limit, t)}
+        </div>
+      )}
       <SendError error={err} />
       <div className="field">
         <label className="field-label" htmlFor="g-name">{t('groups.name')}</label>
@@ -579,75 +600,9 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
         </div>
         <span className="field-hint">{privacy === 'open' ? t('groups.privacy.openHint') : t('groups.privacy.inviteHint')}</span>
       </div>
-      <Button type="submit" disabled={busy || name.trim().length < 2}>{busy ? t('groups.creating') : t('groups.create')}</Button>
+      <Button type="submit" disabled={busy || name.trim().length < 2 || limit !== null} aria-describedby={limit ? 'g-limit' : undefined}>
+        {busy ? t('groups.creating') : t('groups.create')}
+      </Button>
     </form>
   );
 }
-
-/** Browse open groups and join one. */
-function DiscoverGroups({ mineIds, onJoined }: { mineIds: Set<string>; onJoined: () => void }): React.JSX.Element {
-  const t = useT();
-  const { client } = useAuth();
-  const [groups, setGroups] = useState<Group[] | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [joining, setJoining] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    setError(null);
-    const res = await client.get<{ groups: Group[] }>('/groups');
-    if (res.ok) setGroups(res.data.groups);
-    else setError(describeError(res.error, t));
-  }, [client]);
-
-  useEffect(() => {
-    void load();
-  }, [load]);
-
-  async function join(id: string): Promise<void> {
-    setJoining(id);
-    const res = await client.post(`/groups/${id}/join`);
-    setJoining(null);
-    if (res.ok) onJoined();
-    else setError(describeError(res.error, t));
-  }
-
-  if (error && groups === null) return <ErrorState message={error} onRetry={() => void load()} />;
-  if (groups === null) return <ConversationsSkeleton count={4} />;
-  // show open groups AND the caller's own (marked as already-in), rather than hiding them
-  const open = groups.filter((g) => g.privacy === 'open' || mineIds.has(g.id));
-  if (open.length === 0)
-    return <EmptyState title={t('groups.nothingHereYet')} message={t('groups.nothingToDiscover')} />;
-
-  return (
-    <div className="group-discover">
-      {error && <div className="msg msg-error">{error}</div>}
-      {open.map((g) => {
-        const joined = mineIds.has(g.id);
-        return (
-          <div className="group-discover-row" key={g.id}>
-            <span className="group-avatar" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
-            <span className="chat-convo-body">
-              <span className="chat-convo-name">
-                {g.name}
-                {joined && <span className="group-joined-badge">{t('groups.joined')}</span>}
-              </span>
-              <span className="chat-convo-last">
-                {g.description || t('groups.memberCount', { count: g.memberCount })}
-              </span>
-            </span>
-            {joined ? (
-              <Link to={`/app/messages?group=${g.id}`} className="btn btn-secondary btn-sm" onClick={onJoined}>
-                {t('groups.openIt')}
-              </Link>
-            ) : (
-              <Button size="sm" disabled={joining === g.id} onClick={() => void join(g.id)}>
-                {joining === g.id ? t('groups.joining') : t('groups.join')}
-              </Button>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-

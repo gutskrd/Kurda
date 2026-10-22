@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { SkeletonText } from '../theme/Skeleton';
@@ -7,7 +7,7 @@ import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
@@ -16,6 +16,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { listPosts } from './api';
 import { bodyPreview, postName, type LibraryPost, type PostType } from './types';
+import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -63,6 +64,15 @@ export function LibraryScreen({ onExit }: { onExit: () => void }): React.JSX.Ele
         active = false;
       };
     }, [fetchPage]),
+  );
+
+  // a post deleted on its own page is gone from here before the list reloads
+  useEffect(
+    () =>
+      onPostDeleted((gone) => {
+        if (gone.targetType === 'library') setPosts((prev) => prev && prev.filter((p) => p.id !== gone.id));
+      }),
+    [],
   );
 
   const refresh = useCallback(async () => {
@@ -195,7 +205,7 @@ function LibrarySkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   filters: { gap: spacing.sm, marginBottom: spacing.md },
   list: { paddingBottom: 120, gap: spacing.md },
   card: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.xs },

@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
 import { CHARACTER_SIZE, SpeakingCharacter, knownVoice } from '../characters/SpeakingCharacter';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { sectionLabel, display } from '../theme/fonts';
 import { GradientBackground } from '../theme/glass';
 import { useTabBarInset } from '../navigation/tabBarLayout';
@@ -16,6 +16,7 @@ import { SenseSection } from './SenseSection';
 import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { describeError } from '../api/errors';
 
 /** A pronunciation's speaker and timeline, which the entry sends beside its URL rather than as one voice. */
 function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
@@ -53,8 +54,12 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   const toggleSave = () => {
     const next = !saved;
     setSaved(next); // optimistic
-    if (next) void client.put(`/dictionary/entries/${entryId}/save`);
-    else void client.delete(`/dictionary/entries/${entryId}/save`);
+    void (next ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`)).then((res) => {
+      if (res.ok) return;
+      // it did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts)
+      setSaved(!next);
+      Alert.alert(describeError(res.error, t));
+    });
   };
 
   return (
@@ -143,6 +148,7 @@ function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: 
           playing={audio.playing}
           source={recording.url}
           size={CHARACTER_SIZE.row}
+          onPress={() => audio.play(1)}
         />
       ) : null}
       <View style={styles.flex}>
@@ -202,7 +208,7 @@ const styles = StyleSheet.create({
   posSkeleton: { minWidth: POS_COLUMN },
   underPos: { marginLeft: POS_COLUMN + spacing.sm },
 
-  body: { padding: spacing.lg, gap: spacing.sm },
+  body: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, gap: spacing.sm },
   headwordRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   headword: { ...display(typography.sizes.xxl) },
   audioBtn: {

@@ -7,6 +7,7 @@ import {
   TIER_KEY,
   TIER_MEANING_KEY,
   UNIT_KEY,
+  UNIT_ONE_KEY,
   badgeLabel,
   badgeMeaning,
   badgeName,
@@ -14,11 +15,13 @@ import {
   byFamily,
   isKnownBadge,
   nextFraction,
+  nextTierLine,
   progressText,
   rarityText,
   tierKeyAt,
   tierLabel,
   tierName,
+  unitWord,
 } from './format';
 
 const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.en[key] ?? key, vars);
@@ -57,6 +60,7 @@ describe('the catalogue’s words', () => {
         expect(cat[TIER_MEANING_KEY[tier]]).toBeTruthy();
       }
       for (const key of Object.values(UNIT_KEY)) expect(cat[key], `${locale} ${key}`).toBeTruthy();
+      for (const key of Object.values(UNIT_ONE_KEY)) expect(cat[key], `${locale} ${key}`).toBeTruthy();
     }
   });
 
@@ -89,6 +93,22 @@ describe('progress', () => {
     expect(progressText(t, view({ next: null, tier: 4 }))).toBeNull();
     // never more than the target, however far past it the count has gone
     expect(progressText(t, view({ progress: 45, next: 30 }))).toBe('30 / 30 days');
+  });
+
+  it('says what is left once past halfway, and one of a thing in the singular', () => {
+    expect(progressText(t, view({ progress: 20 }))).toBe('10 days to go');
+    expect(progressText(t, view({ progress: 29 }))).toBe('1 day to go');
+    expect(progressText(t, view({ key: 'rank-dest', unit: 'seasons', tier: 0, progress: 0, next: 1, thresholds: [1, 3, 5, 8] }))).toBe('0 / 1 season');
+    expect(unitWord(t, 'seasons', 1)).toBe('season');
+    expect(unitWord(t, 'seasons', 3)).toBe('seasons');
+  });
+
+  it('names the tier after the one just won', () => {
+    expect(nextTierLine(t, 'ders', 1)).toBe('Next: Zîv at 75 lessons');
+    expect(nextTierLine(t, 'rank-dest', 0)).toBe('Next: Sifir at 1 season');
+    expect(nextTierLine(t, 'rewi', 3)).toBe('Next: Firûze, for the whole course');
+    expect(nextTierLine(t, 'agir', 4)).toBeNull();
+    expect(nextTierLine(t, 'vegera', 1)).toBeNull();
   });
 
   it('fills from the tier reached, not from zero', () => {

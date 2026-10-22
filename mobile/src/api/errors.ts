@@ -19,6 +19,7 @@ import { isMissingRoute } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
+import { limitErrorText } from '../limits/limitCopy';
 
 export type Translate = (key: TranslationKey, vars?: Record<string, string | number>) => string;
 
@@ -134,6 +135,12 @@ export function lockedFor(seconds: number, t: Translate): string {
 }
 
 export function describeError(error: ApiError, t: Translate): string {
+  // A limit on how many of something one person may have (limits/limitCopy.ts):
+  // which one, its number and what makes room, before any countdown — a full
+  // list of drafts does not empty by waiting a minute.
+  const limit = limitErrorText(error, t);
+  if (limit) return limit;
+
   // A lock says how long it lasts, in the body and the Retry-After header both.
   if (error.code === 'LOCKED') {
     const inDetails = (error.details as { retryAfterSec?: unknown } | undefined)?.retryAfterSec;

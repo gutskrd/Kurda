@@ -659,41 +659,119 @@
   text-align: start;
 }
 
-/* a chat message with its ⋯: the dots wait for a pointer, a phone shows them faintly */
+/* a chat message and its options (reports/MessageMenu.tsx `MessageLine`): nothing
+   beside the bubble — held, right-clicked or reached by keyboard, the options open under it */
 .bubble-line {
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: 2px;
   max-width: 100%;
   min-width: 0;
+  -webkit-touch-callout: none;
+}
+.bubble-line.mine {
+  justify-content: flex-end;
 }
 .bubble-line > .bubble {
   min-width: 0;
+  transition: transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
 }
-.bubble-line .msg-menu-list {
-  inset-inline-end: auto;
+/* the bubble sinks a little under a finger that holds it, so the hold is felt to be doing something */
+.bubble-line.is-pressing > .bubble {
+  transform: scale(0.965);
+}
+.bubble-line.is-open > .bubble {
+  transform: scale(1.02);
+  box-shadow: var(--shadow-sm);
+}
+@media (prefers-reduced-motion: reduce) {
+  .bubble-line > .bubble {
+    transition: none;
+  }
+  .bubble-line.is-pressing > .bubble,
+  .bubble-line.is-open > .bubble {
+    transform: none;
+  }
+}
+/* for the keyboard and a screen reader: there, but out of sight until it has focus */
+.bubble-options-btn {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  padding: 0;
+  border: 0;
+}
+.bubble-options-btn:focus-visible {
+  position: static;
+  width: auto;
+  height: auto;
+  clip-path: none;
+  align-self: center;
+  margin-inline-start: 6px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 13px;
+}
+.bubble-menu {
+  position: absolute;
+  top: calc(100% + 6px);
   inset-inline-start: 0;
+  z-index: 20;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  -webkit-backdrop-filter: blur(20px) saturate(1.2);
+  backdrop-filter: blur(20px) saturate(1.2);
+  box-shadow: var(--shadow-lg);
+  animation: bubble-menu-in 0.16s ease-out;
 }
-@media (hover: hover) {
-  .bubble-line .msg-menu {
+.bubble-line.mine .bubble-menu {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
+}
+.bubble-menu .user-menu-item {
+  min-height: 44px;
+  text-align: start;
+}
+@keyframes bubble-menu-in {
+  from {
     opacity: 0;
-    transition: opacity 0.12s ease;
-  }
-  .bubble-line:hover .msg-menu,
-  .bubble-line:focus-within .msg-menu,
-  .bubble-line .msg-menu.is-open {
-    opacity: 1;
+    transform: translateY(-4px) scale(0.98);
   }
 }
-@media (hover: none) {
-  .bubble-line .msg-menu-btn {
-    color: var(--ink-4);
+@media (prefers-reduced-motion: reduce) {
+  .bubble-menu {
+    animation: none;
   }
+}
+/* "Copied", for a moment, at the message's foot */
+.bubble-copied:empty {
+  display: none;
+}
+.bubble-copied {
+  position: absolute;
+  top: calc(100% + 4px);
+  inset-inline-start: 0;
+  padding: 2px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: 12px;
+  font-weight: 600;
+}
+.bubble-line.mine .bubble-copied {
+  inset-inline-start: auto;
+  inset-inline-end: 0;
 }
 .byline .report-action {
-  margin-inline-start: auto;
-}
-.fcard-report {
   margin-inline-start: auto;
 }
 /* another player's chip in a game: the ⋯ sits at its end, clear of the meter,
@@ -709,7 +787,6 @@
 .player .player-report .msg-menu-btn::after {
   inset: -8px;
 }
-.fcard-report .msg-menu-list,
 .rank-row .msg-menu-list {
   top: auto;
   bottom: calc(100% + 4px);

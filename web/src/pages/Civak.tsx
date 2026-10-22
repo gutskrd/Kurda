@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { DEFAULT_FEED_PERIOD, DEFAULT_FEED_SORT, isFeedPeriod, isFeedSort, sortRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { FeedItem } from '../lib/types';
 import { EmptyState, ErrorState } from '../components/states';
-import { LinkButton } from '../components/Button';
+import { Button, LinkButton } from '../components/Button';
 import { FeedSkeleton } from '../components/skeletons';
 import { FeedCard } from '../feed/FeedCard';
+import { DEFAULT_FILTER, FeedFilter, isDefaultFilter, type FeedFilterValue } from '../feed/FeedFilter';
 import { PostButton } from '../feed/PostButton';
-import { SECTIONS, asSection, kindWithin } from '../feed/postKinds';
+import { asSection, kindWithin } from '../feed/postKinds';
 import { DailyReward } from '../components/DailyReward';
 import { HomeLeagueLine } from '../leagues/HomeLeagueLine';
 import { useT } from '../i18n/I18nProvider';
@@ -21,10 +23,15 @@ const PAGE = 20;
  *
  * Stories, poems and pictures were three pages that were the same page three
  * times, and a poem posted this morning was invisible to anyone browsing
- * pictures. One wall, one card, and a filter for when you do want just one kind.
+ * pictures. One wall, one card, and a filter for when you do want just one kind
+ * — behind a button, so the wall opens on the posts rather than on a choice.
  *
- * The filter lives in the URL so a filtered wall can be linked to, and so the
- * old /app/stories and /app/poems addresses can simply redirect here.
+ * The order (newest, oldest, most popular, most discussed, and how far back
+ * the ranked two look) sits behind the same button.
+ *
+ * The filter and the order live in the URL so a wall can be linked to as it
+ * is shown, and so the old /app/stories and /app/poems addresses can simply
+ * redirect here. Whatever is the plain wall's is left out of it.
  */
 export function Civak(): React.JSX.Element {
   const { client } = useAuth();
@@ -34,24 +41,40 @@ export function Civak(): React.JSX.Element {
   // a kind belongs to a half; one left over from the other half is dropped
   // rather than asked for, which the server would refuse
   const kind = kindWithin(section, params.get('kind'));
-  const kinds = SECTIONS.find((s) => s.key === section)?.kinds ?? [];
+  // an order or a range the address does not mean falls back to the plain wall's
+  const rawSort = params.get('sort');
+  const sort = isFeedSort(rawSort) ? rawSort : DEFAULT_FEED_SORT;
+  const rawPeriod = params.get('period');
+  const period = sortRanks(sort) && isFeedPeriod(rawPeriod) ? rawPeriod : DEFAULT_FEED_PERIOD;
+  const value: FeedFilterValue = { section, kind, sort, period };
+  const row = useRef<HTMLDivElement>(null);
 
-  const choose = (nextSection: string, nextKind: string | null): void => {
+  const choose = (to: FeedFilterValue): void => {
     const next: Record<string, string> = {};
-    if (nextSection !== 'all') next.section = nextSection;
-    if (nextKind) next.kind = nextKind;
+    if (to.section !== 'all') next.section = to.section;
+    if (to.kind) next.kind = to.kind;
+    if (to.sort !== DEFAULT_FEED_SORT) next.sort = to.sort;
+    if (sortRanks(to.sort) && to.period !== DEFAULT_FEED_PERIOD) next.period = to.period;
     setParams(next, { replace: true });
+    // a new order or filter starts from its first post: back up to the top of the wall if it has been scrolled past
+    const top = row.current?.getBoundingClientRect().top;
+    if (top !== undefined && top < 0) row.current?.scrollIntoView?.({ block: 'start' });
   };
 
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const arriving = useArrival(!!items && items.length > 0);
   const [error, setError] = useState<string | null>(null);
   const [more, setMore] = useState(false);
+  // where the next page starts on the server, which is not always how many cards are shown (see below)
+  const [nextOffset, setNextOffset] = useState(0);
 
   const load = useCallback(
     async (offset: number): Promise<void> => {
       const query = new URLSearchParams({ section, limit: String(PAGE), offset: String(offset) });
       if (kind) query.set('kind', kind);
+      // the plain wall's order is left out, so its address is the one it always was
+      if (sort !== DEFAULT_FEED_SORT) query.set('sort', sort);
+      if (sortRanks(sort) && period !== DEFAULT_FEED_PERIOD) query.set('period', period);
       const res = await client.get<{ items: FeedItem[] }>(`/feed?${query}`);
       if (!res.ok) {
         setError(describeError(res.error, t));
@@ -60,10 +83,17 @@ export function Civak(): React.JSX.Element {
       }
       setError(null);
       const batch = res.data.items ?? [];
-      setItems((prev) => (offset === 0 ? batch : [...(prev ?? []), ...batch]));
+      // a ranked wall can shift between two pages — a post liked meanwhile moves up — so a post
+      // already shown is not shown twice
+      setItems((prev) => {
+        if (offset === 0) return batch;
+        const seen = new Set((prev ?? []).map((i) => i.key));
+        return [...(prev ?? []), ...batch.filter((i) => !seen.has(i.key))];
+      });
+      setNextOffset(offset + batch.length);
       setMore(batch.length === PAGE);
     },
-    [client, section, kind],
+    [client, section, kind, sort, period],
   );
 
   useEffect(() => {
@@ -99,52 +129,9 @@ export function Civak(): React.JSX.Element {
       {/* the week's league in one line, with the goal ring: a door to it, not a copy */}
       <HomeLeagueLine />
 
-      {/* the + belongs with the wall it adds to, not adrift under the heading */}
-      <div className="feed-filters">
-        <div className="seg" role="group" aria-label={t('civak.filter.show')}>
-          {SECTIONS.map((sct) => (
-            <button
-              key={sct.key}
-              type="button"
-              className={`seg-btn${section === sct.key ? ' is-active' : ''}`}
-              aria-pressed={section === sct.key}
-              /* "Gotin" is both a half and a kind within it, so each says which
-                 it is — two identical buttons side by side is a coin toss */
-              aria-label={t('civak.filter.showSection', { section: t(sct.labelKey) })}
-              onClick={() => choose(sct.key, null)}
-            >
-              {t(sct.labelKey)}
-            </button>
-          ))}
-        </div>
-
-        {/* the second level appears only once there is a half to narrow */}
-        {kinds.length > 0 && (
-          <div className="seg seg-sub" role="group" aria-label={t('civak.filter.narrow')}>
-            <button
-              type="button"
-              className={`seg-btn${kind === null ? ' is-active' : ''}`}
-              aria-pressed={kind === null}
-              aria-label={t('civak.filter.onlyEverything')}
-              onClick={() => choose(section, null)}
-            >
-              {t('civak.filter.allKinds')}
-            </button>
-            {kinds.map((k) => (
-              <button
-                key={k.key}
-                type="button"
-                className={`seg-btn${kind === k.key ? ' is-active' : ''}`}
-                aria-pressed={kind === k.key}
-                aria-label={t('civak.filter.onlyKind', { kind: t(k.labelKey) })}
-                onClick={() => choose(section, k.key)}
-              >
-                {t(k.labelKey)}
-              </button>
-            ))}
-          </div>
-        )}
-
+      {/* how the wall is sorted and narrowed, then the funnel and the + — the + belongs with the wall it adds to */}
+      <div className="feed-filters" ref={row}>
+        <FeedFilter value={value} onChange={choose} />
         <PostButton onPosted={() => void load(0)} />
       </div>
 
@@ -153,14 +140,21 @@ export function Civak(): React.JSX.Element {
       {items === null ? (
         <FeedSkeleton label="civak.loading" />
       ) : items.length === 0 ? (
-        // an empty wall still has a next step: the people whose posts would fill it
+        // an empty wall still has a next step: the people whose posts would fill it,
+        // or, when it is only empty of one kind or one range, the whole wall again
         <EmptyState
           title={t('civak.empty')}
-          message={t('civak.emptyBody')}
+          message={isDefaultFilter(value) ? t('civak.emptyBody') : undefined}
           action={
-            <LinkButton to="/app/search" size="sm" className="state-action">
-              {t('rail.findPeople')}
-            </LinkButton>
+            isDefaultFilter(value) ? (
+              <LinkButton to="/app/search" size="sm" className="state-action">
+                {t('rail.findPeople')}
+              </LinkButton>
+            ) : (
+              <Button type="button" variant="secondary" size="sm" className="state-action" onClick={() => choose(DEFAULT_FILTER)}>
+                {t('civak.filter.clear')}
+              </Button>
+            )
           }
         />
       ) : (
@@ -172,7 +166,7 @@ export function Civak(): React.JSX.Element {
             ))}
           </div>
           {more && (
-            <button type="button" className="mkp-more" onClick={() => void load(items.length)}>
+            <button type="button" className="mkp-more" onClick={() => void load(nextOffset)}>
               {t('common.showMore')}
             </button>
           )}

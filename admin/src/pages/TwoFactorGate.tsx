@@ -4,6 +4,7 @@ import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { SessionProvider, sessionFrom, type AdminSession } from '../session';
 import { Banner, Button, Icon, clockTime, describeError, errorLine, useCountdown } from '../ui';
+import { HevaloMark } from '../brand/HevaloMark';
 
 /**
  * Nothing in the admin panel renders until 2FA is done.
@@ -47,16 +48,25 @@ export function TwoFactorGate({ children, onSignOut }: { children: React.ReactNo
   const { logout } = useAuth();
   const [state, setState] = useState<AdminSession | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const [denied, setDenied] = useState(false);
+
+  // every step before the workspace needs a way back to the sign-in: an
+  // admin without their authenticator had none, short of clearing the
+  // browser's storage
+  const signOut = (): void => {
+    logout();
+    onSignOut();
+  };
+  const leave = useRef(signOut);
+  leave.current = signOut;
 
   const load = useCallback(async () => {
     setError(null);
     try {
       setState(sessionFrom(await api<AdminSession>('/admin/session')));
     } catch (err) {
-      // 403 here means the account is not staff at all — a different problem
-      // from "needs 2FA", and worth saying plainly
-      if (err instanceof ApiError && err.status === 403) setDenied(true);
+      // an account the console is not for is answered as if it were not there
+      // (404), or refused (403): back to the sign-in, with nothing said about why
+      if (err instanceof ApiError && (err.status === 403 || err.status === 404)) leave.current();
       else setError(err);
     }
   }, []);
@@ -64,27 +74,6 @@ export function TwoFactorGate({ children, onSignOut }: { children: React.ReactNo
   useEffect(() => {
     void load();
   }, [load]);
-
-  // every step before the workspace needs a way back to the sign-in: an
-  // account without admin access, or an admin without their authenticator,
-  // had none, short of clearing the browser's storage
-  const signOut = (): void => {
-    logout();
-    onSignOut();
-  };
-
-  if (denied) {
-    return (
-      <Screen title="Not an admin account">
-        <p className="gate-text">
-          This account does not have admin access. Sign in with one that does; roles are given on the server, by whoever runs Hevalo.
-        </p>
-        <Button variant="primary" icon="logout" onClick={signOut}>
-          Sign out
-        </Button>
-      </Screen>
-    );
-  }
 
   if (error != null) {
     const d = describeError(error, 'the admin');
@@ -337,9 +326,7 @@ function Screen({
     <div className="gate">
       <div className="card gate-card" aria-busy={busy || undefined}>
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            H
-          </span>
+          <HevaloMark size={30} className="brand-mark" />
           Hevalo Admin
         </div>
         <h1 className="gate-title">

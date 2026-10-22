@@ -71,9 +71,6 @@ const SRC = join(ROOT, 'src');
 const ALLOWED_RAW_RADII = new Set([
   // the scale itself, where the numbers are the definition
   'theme/tokens.ts',
-  // the tab bar island is a capsule of a known height; `TAB_BAR_HEIGHT / 2` is
-  // the arithmetic, not a corner style
-  'navigation/GlassTabBar.tsx',
 ]);
 
 function sources(dir, out = []) {

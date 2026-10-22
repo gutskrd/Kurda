@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
+import { SearchField } from '../components/SearchField';
 import { useT } from '../i18n/I18nProvider';
 import type { UserSummary } from '../lib/types';
 import { recentFriends } from './playApi';
@@ -83,11 +84,11 @@ export function FriendPicker({
   return (
     <fieldset className="invite-friends">
       <legend className="chip-radio-legend">{t('play.invite.friends')}</legend>
-      <input
-        className="input invite-search"
-        type="search"
+      <SearchField
+        icon
+        inputClassName="invite-search"
         value={q}
-        onChange={(e) => setQ(e.target.value)}
+        onValueChange={setQ}
         placeholder={t('play.invite.search')}
         aria-label={t('play.invite.search')}
         autoComplete="off"

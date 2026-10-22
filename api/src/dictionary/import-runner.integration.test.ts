@@ -85,7 +85,7 @@ describe.skipIf(!DATABASE_URL)('dictionary import runner (integration)', () => {
   /**
    * Nothing imported becomes something a game asks. The pool is curated and an
    * import is not curation (1751000112000) — this is the assertion that keeps
-   * "abdurrahman" from turning up as a five-letter Wordle answer.
+   * "abdurrahman" from turning up as a five-letter Peyvok answer.
    */
   it('leaves everything it imports out of the games', async () => {
     const runner = new DictionaryImportRunner(pool, stubSource(suffix));

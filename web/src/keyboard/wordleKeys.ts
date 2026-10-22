@@ -3,9 +3,9 @@ import { KURMANCI_ALPHABET, kurmanciLetter } from '@kurda/shared';
 import type { WordleLayout } from './prefs';
 
 /**
- * Wordle's keys: the on-screen layouts, and which physical key presses count.
+ * Peyvok's keys: the on-screen layouts, and which physical key presses count.
  *
- * Shared by solo Wordle and Wordle Battle, so both take the same keys the
+ * Shared by solo Peyvok and Peyvok Battle, so both take the same keys the
  * same way.
  */
 
@@ -59,7 +59,7 @@ function typingElsewhere(target: EventTarget | null): boolean {
 }
 
 /**
- * What a physical key press means to Wordle: a letter, Enter, Backspace — or
+ * What a physical key press means to Peyvok: a letter, Enter, Backspace — or
  * nothing.
  *
  * The letter is read from the character the key produced, not from which
@@ -88,7 +88,7 @@ export function wordleKeyFrom(e: WordleKeyEvent): WordleKey | null {
 }
 
 /**
- * Take Wordle's keys from the physical keyboard while `active`. A key the game
+ * Take Peyvok's keys from the physical keyboard while `active`. A key the game
  * uses is the game's: its default (Backspace navigating back in some
  * browsers, Enter pressing whatever button has the focus, a letter starting
  * the browser's find-as-you-type) is prevented.

@@ -1,9 +1,22 @@
 import type pg from 'pg';
+import { MAX_PUSH_DEVICES } from '@kurda/shared';
 import type { PushPlatform } from './provider.js';
 
 export interface DeviceToken {
   token: string;
   platform: PushPlatform;
+}
+
+/**
+ * The shape of an Expo push token, the only kind the phone registers:
+ * `ExponentPushToken[…]`, or `ExpoPushToken[…]` as newer SDKs may write it,
+ * around a short run of letters, digits and the few marks base64 uses. Anything
+ * else is refused at the door rather than stored and sent to Expo to reject.
+ */
+const EXPO_PUSH_TOKEN = /^Expo(?:nent)?PushToken\[[A-Za-z0-9_+/=-]{1,200}\]$/;
+
+export function isExpoPushToken(token: string): boolean {
+  return EXPO_PUSH_TOKEN.test(token);
 }
 
 /**
@@ -15,7 +28,18 @@ export interface DeviceToken {
 export class DeviceTokenService {
   constructor(private readonly pool: pg.Pool) {}
 
-  /** Register or re-point a device token; refreshes last_seen + platform. */
+  /**
+   * Register or re-point a device token; refreshes last_seen + platform.
+   *
+   * An account gets notifications on its MAX_PUSH_DEVICES phones seen most
+   * recently: registering one more drops the one seen longest ago rather than
+   * refusing the new phone, which is the one in the person's hand. Every
+   * notification goes to each token an account has, so without this a script
+   * could make one notification into thousands. One statement after the
+   * insert, which keeps the newest tokens whatever runs beside it, locking
+   * the ones it drops in id order so two registrations never wait on each
+   * other (as auth/tokens.ts `endOldestSessions`).
+   */
   async register(userId: string, platform: PushPlatform, token: string): Promise<void> {
     await this.pool.query(
       `INSERT INTO device_tokens (user_id, platform, token)
@@ -23,6 +47,15 @@ export class DeviceTokenService {
        ON CONFLICT (token) DO UPDATE SET
          user_id = EXCLUDED.user_id, platform = EXCLUDED.platform, last_seen_at = now()`,
       [userId, platform, token],
+    );
+    await this.pool.query(
+      `WITH doomed AS MATERIALIZED (
+         SELECT id FROM device_tokens WHERE user_id = $1 ORDER BY last_seen_at DESC, created_at DESC, id DESC OFFSET $2
+       ), locked AS MATERIALIZED (
+         SELECT id FROM device_tokens WHERE id IN (SELECT id FROM doomed) ORDER BY id FOR UPDATE
+       )
+       DELETE FROM device_tokens WHERE id IN (SELECT id FROM locked) AND user_id = $1`,
+      [userId, MAX_PUSH_DEVICES],
     );
   }
 

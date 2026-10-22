@@ -25,7 +25,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { display, sectionLabel } from '../theme/fonts';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { GAME_NAME_KEY } from '../play/labels';
@@ -345,8 +345,8 @@ function Boards({ game }: { game: RankedGame }): React.JSX.Element {
 const styles = StyleSheet.create({
   // a centred line in the hero spans it, so a bar given as a share of it has something to be a share of
   stretch: { alignSelf: 'stretch' },
-  picker: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  content: { padding: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
+  picker: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  content: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, paddingBottom: spacing.xxl, gap: spacing.lg, width: '100%', maxWidth: 680, alignSelf: 'center' },
   flex: { flex: 1, gap: 2 },
   hero: { alignItems: 'center', gap: spacing.xs },
   heroTitleRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.sm },

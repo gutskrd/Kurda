@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { SheetIn } from '../theme/MotionParts';
+import { BottomSheet } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -27,7 +27,7 @@ import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
@@ -84,10 +84,14 @@ function typeOf(uri: string): string {
   return ext === 'png' ? 'image/png' : ext === 'webp' ? 'image/webp' : ext === 'jpg' || ext === 'jpeg' ? 'image/jpeg' : 'application/octet-stream';
 }
 
-/** The photo library, several at once, in the order they were tapped. */
-async function pickFromLibrary(room: number): Promise<PickedPicture[] | 'denied'> {
-  const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (!perm.granted) return 'denied';
+/**
+ * The photo library, several at once, in the order they were tapped.
+ *
+ * No permission is asked for first: the system's own picker runs outside the
+ * app and hands back only the pictures chosen, so there is nothing to grant.
+ * Asking anyway meant somebody who said no could not pick a picture at all.
+ */
+async function pickFromLibrary(room: number): Promise<PickedPicture[]> {
   const picked = await ImagePicker.launchImageLibraryAsync({
     mediaTypes: ['images'],
     allowsMultipleSelection: room > 1,
@@ -140,7 +144,7 @@ export function ComposeScreen({
   onExit: () => void;
   /** a post went up or was saved */
   onPosted?: (post: ComposerPost) => void;
-  pick?: (room: number) => Promise<PickedPicture[] | 'denied'>;
+  pick?: (room: number) => Promise<PickedPicture[]>;
   upload?: typeof uploadPicture;
   /** where the draft is kept; this phone's storage when left out */
   store?: DeviceStore;
@@ -215,10 +219,6 @@ export function ComposeScreen({
     if (room === 0) return;
     setNotice(null);
     const picked = await pick(room);
-    if (picked === 'denied') {
-      setNotice(t('picture.accessHelp'));
-      return;
-    }
     for (const p of picked.slice(0, room)) {
       const localUri = await keepPicture(p.uri);
       const picture: ComposerPicture = {
@@ -605,7 +605,6 @@ export function ComposeScreen({
                   value={state.draft.meme}
                   onValueChange={(meme) => setState((s) => ({ ...s, draft: { ...s.draft, meme } }))}
                   accessibilityLabel={t('composer.meme')}
-                  trackColor={{ true: colors.primary, false: colors.controlTrack }}
                 />
               </View>
             ) : null}
@@ -859,49 +858,43 @@ function AltSheet({
   const { t } = useI18n();
   const counter = counterFor(picture.altText, POST_ALT_MAX);
   return (
-    <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-      <KeyboardAvoidingView style={[styles.scrim, { backgroundColor: colors.scrim }]} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.background }]} accessibilityViewIsModal>
-          <Text style={[styles.sheetTitle, { color: colors.textPrimary }]} accessibilityRole="header">
-            {t('composer.alt.title')}
-          </Text>
-          {picture.localUri ? (
-            <Image source={{ uri: picture.localUri }} style={styles.altPreview} resizeMode="contain" accessibilityIgnoresInvertColors />
-          ) : null}
-          <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('composer.alt.label')}</Text>
-          <TextInput
-            value={picture.altText}
-            onChangeText={(altText) => onChange({ altText })}
-            placeholder={t('composer.alt.placeholder')}
-            placeholderTextColor={colors.textSecondary}
-            accessibilityLabel={t('composer.alt.label')}
-            multiline
-            autoFocus
-            textAlignVertical="top"
-            style={[styles.altInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
-          />
-          <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.alt.hint')}</Text>
-          {counter.show ? <Counter counter={counter} /> : null}
-          {!picture.existing ? (
-            <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
-              <View style={styles.flex}>
-                <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.ownWork')}</Text>
-                <Text style={[styles.hint, { color: colors.textSecondary }]}>
-                  {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
-                </Text>
-              </View>
-              <Toggle
-                value={picture.ownWork}
-                onValueChange={(ownWork) => onChange({ ownWork })}
-                accessibilityLabel={t('composer.ownWork')}
-                trackColor={{ true: colors.primary, false: colors.controlTrack }}
-              />
+    <BottomSheet visible onClose={onClose} title={t('composer.alt.title')} contentStyle={styles.altScroller}>
+      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.altBody}>
+        {picture.localUri ? (
+          <Image source={{ uri: picture.localUri }} style={styles.altPreview} resizeMode="contain" accessibilityIgnoresInvertColors />
+        ) : null}
+        <Text style={[styles.groupLabel, { color: colors.textSecondary }]}>{t('composer.alt.label')}</Text>
+        <TextInput
+          value={picture.altText}
+          onChangeText={(altText) => onChange({ altText })}
+          placeholder={t('composer.alt.placeholder')}
+          placeholderTextColor={colors.textSecondary}
+          accessibilityLabel={t('composer.alt.label')}
+          multiline
+          autoFocus
+          textAlignVertical="top"
+          style={[styles.altInput, { color: colors.textPrimary, backgroundColor: colors.controlTrack }]}
+        />
+        <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.alt.hint')}</Text>
+        {counter.show ? <Counter counter={counter} /> : null}
+        {!picture.existing ? (
+          <View style={[styles.switchRow, { backgroundColor: colors.glassFill }]}>
+            <View style={styles.flex}>
+              <Text style={[styles.switchTitle, { color: colors.textPrimary }]}>{t('composer.ownWork')}</Text>
+              <Text style={[styles.hint, { color: colors.textSecondary }]}>
+                {picture.ownWork ? t('composer.ownWorkOn') : t('composer.ownWorkOff')}
+              </Text>
             </View>
-          ) : null}
-          <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
-        </SheetIn>
-      </KeyboardAvoidingView>
-    </Modal>
+            <Toggle
+              value={picture.ownWork}
+              onValueChange={(ownWork) => onChange({ ownWork })}
+              accessibilityLabel={t('composer.ownWork')}
+            />
+          </View>
+        ) : null}
+        <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
@@ -1008,6 +1001,9 @@ const styles = StyleSheet.create({
   sheet: { margin: spacing.md, padding: spacing.lg, borderRadius: radii.lg, gap: spacing.sm, maxWidth: 520, width: '100%', alignSelf: 'center' },
   sheetTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   draftRow: { minHeight: MIN_TOUCH_TARGET, padding: spacing.md, borderRadius: radii.md, gap: 2 },
+  // the gutter is the ScrollView's own, so the form scrolls edge to edge while the keyboard is up
+  altScroller: { paddingHorizontal: 0 },
+  altBody: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm },
   altPreview: { width: '100%', height: 160, borderRadius: radii.md },
   altInput: { minHeight: 96, maxHeight: 180, borderRadius: radii.md, padding: spacing.md, fontSize: typography.sizes.md },
 });

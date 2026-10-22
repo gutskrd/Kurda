@@ -93,6 +93,29 @@ describe('signing in from this device', () => {
     expect(sent('/auth/oauth')).toEqual({ provider: 'apple', idToken: 'id-token-from-apple-0123456789', deviceName: 'iPhone' });
   });
 
+  it('passes on Apple’s authorization code and the shared name with an Apple sign-in, and neither with Google', async () => {
+    const calls = stubFetch(() => json(201, SIGNED_IN));
+    const { result } = renderHook(() => useAuth(), { wrapper: wrapperWith(new MemoryTokenStorage()) });
+    await waitFor(() => expect(result.current.status).toBe('signedOut'));
+    await act(async () => {
+      await result.current.oauthSignIn('apple', 'id-token-from-apple-0123456789', { authorizationCode: 'c1.0.first', fullName: 'Rojda Amed' });
+    });
+    await act(async () => {
+      // Apple shares the name on the first sign-in only
+      await result.current.oauthSignIn('apple', 'id-token-from-apple-0123456789', { authorizationCode: 'c2.0.later', fullName: null });
+    });
+    await act(async () => {
+      await result.current.oauthSignIn('google', 'id-token-from-google-0123456789', { authorizationCode: 'c3', fullName: 'Rojda Amed' });
+    });
+    const sent = calls.filter((c) => c.url.endsWith('/auth/oauth')).map((c) => c.body);
+    expect(sent).toEqual([
+      { provider: 'apple', idToken: 'id-token-from-apple-0123456789', authorizationCode: 'c1.0.first', fullName: 'Rojda Amed', deviceName: 'iPhone' },
+      { provider: 'apple', idToken: 'id-token-from-apple-0123456789', authorizationCode: 'c2.0.later', deviceName: 'iPhone' },
+      { provider: 'google', idToken: 'id-token-from-google-0123456789', deviceName: 'iPhone' },
+    ]);
+    expect(Object.keys(sent[1]!)).not.toContain('fullName');
+  });
+
   it('hands the form the refusal’s code with its sentence', async () => {
     stubFetch(() => json(403, { code: 'CAPTCHA_REQUIRED', message: 'complete the challenge to sign in', details: { captchaRequired: true, reason: 'attempts' } }));
     const { result } = renderHook(() => useAuth(), { wrapper: wrapperWith(new MemoryTokenStorage()) });

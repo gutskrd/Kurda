@@ -23,11 +23,37 @@ export async function uploadProfilePhoto(
   /** the app's language, so a limit's end is said as the reader would say it */
   locale?: string,
 ): Promise<UploadResult> {
+  return uploadPicture(client, '/me/profile-picture', 'profilePhotoUrl', photo, t, locale);
+}
+
+/**
+ * A group's picture, the same way: the raw bytes to `/groups/:id/photo`, where
+ * the server checks that you are its owner or an admin and puts the picture
+ * through every guard a profile photo goes through.
+ */
+export async function uploadGroupPhoto(
+  client: ApiClient,
+  groupId: string,
+  photo: { uri: string; contentType: string },
+  t: Translate,
+  locale?: string,
+): Promise<UploadResult> {
+  return uploadPicture(client, `/groups/${groupId}/photo`, 'photoUrl', photo, t, locale);
+}
+
+async function uploadPicture(
+  client: ApiClient,
+  path: string,
+  field: 'profilePhotoUrl' | 'photoUrl',
+  photo: { uri: string; contentType: string },
+  t: Translate,
+  locale?: string,
+): Promise<UploadResult> {
   try {
     const token = await client.getAccessToken();
     if (!token) return { ok: false, error: t('upload.sessionExpired') };
 
-    const res = await FileSystem.uploadAsync(`${client.baseUrl}/me/profile-picture`, photo.uri, {
+    const res = await FileSystem.uploadAsync(`${client.baseUrl}${path}`, photo.uri, {
       httpMethod: 'POST',
       headers: {
         authorization: `Bearer ${token}`,
@@ -38,8 +64,9 @@ export async function uploadProfilePhoto(
 
     if (res.status >= 200 && res.status < 300) {
       try {
-        const body = JSON.parse(res.body) as { profilePhotoUrl?: string };
-        if (body.profilePhotoUrl) return { ok: true, url: body.profilePhotoUrl };
+        const body = JSON.parse(res.body) as Record<string, string | undefined>;
+        const url = body[field];
+        if (url) return { ok: true, url };
       } catch {
         // fall through to the generic error below
       }

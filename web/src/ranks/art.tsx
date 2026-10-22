@@ -79,11 +79,33 @@ export function PlacementEmblem({ done, size = 96, title }: { done: number; size
   return <Svg svg={svg} className="art art-rank is-placing" />;
 }
 
-export function LeagueEmblem({ tier, size = 96, title, className }: { tier: LeagueTier; size?: number; title: string; className?: string }): React.JSX.Element {
+/**
+ * A league's emblem. `locked` is a league not reached yet: the tier's own
+ * outline, flat, with a keyhole. Its two colours are the stylesheet's
+ * (`--locked`, `--locked-mark`, which change with the scheme), laid over the
+ * light ones it is drawn with, so it follows the theme without being drawn again.
+ */
+export function LeagueEmblem({
+  tier,
+  size = 96,
+  title,
+  locked = false,
+  className,
+}: {
+  tier: LeagueTier;
+  size?: number;
+  title: string;
+  locked?: boolean;
+  className?: string;
+}): React.JSX.Element {
   const id = useArtId();
-  const svg = useMemo(() => leagueEmblemSvg({ tier, size, title, idPrefix: id }), [tier, size, title, id]);
-  return <Svg svg={svg} className={`art art-league is-${tier}${className ? ` ${className}` : ''}`} />;
+  const svg = useMemo(
+    () => leagueEmblemSvg({ tier, size, title, idPrefix: id, ...(locked ? { locked: LOCKED_DRAWN } : {}) }),
+    [tier, size, title, id, locked],
+  );
+  return <Svg svg={svg} className={`art art-league is-${tier}${locked ? ' is-locked' : ''}${className ? ` ${className}` : ''}`} />;
 }
+const LOCKED_DRAWN = { body: '#e2e4e8', mark: '#a5a9b0' } as const;
 
 export type MedalState = 'earned' | 'locked' | 'secret';
 

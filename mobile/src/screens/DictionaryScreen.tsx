@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { SourceLine } from '../dictionary/SourceLine';
@@ -17,6 +17,7 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
+import { SearchField } from '../theme/SearchField';
 
 /**
  * Dictionary tab (KUR-045): search-as-you-type with debounce, recent
@@ -101,15 +102,11 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
     <GradientBackground>
       <ScreenHeader title={t('nav.dictionary')} onBack={onBack} />
       <View style={styles.screen}>
-        <TextInput
+        <SearchField
           value={query}
           onChangeText={setQuery}
+          label={t('dictionary.searchLabel')}
           placeholder={t('dictionary.searchPlaceholder')}
-          placeholderTextColor={colors.textSecondary}
-          autoCapitalize="none"
-          autoCorrect={false}
-          style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-          accessibilityLabel={t('dictionary.searchLabel')}
         />
 
         {result?.fuzzy ? <Text style={[styles.banner, { color: colors.textSecondary }]}>{t('dictionary.noExactMatch')}</Text> : null}
@@ -224,13 +221,6 @@ function HitsSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   screen: { flex: 1, padding: spacing.lg, gap: spacing.sm },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.lg,
-    fontSize: typography.sizes.lg,
-  },
   banner: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   recents: { gap: spacing.xs },
   savedHeading: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },

@@ -154,11 +154,11 @@ describe.skipIf(!DATABASE_URL)('shop art and catalogue editing (integration)', (
   describe('who may', () => {
     it('refuses everyone but an admin', async () => {
       const bytes = await picture(512, 512, true);
-      expect((await upload('icon', bytes, member)).statusCode).toBe(403);
-      expect((await call(member, 'PATCH', '/shop/items/whatever', { name: 'x' })).statusCode).toBe(403);
-      expect((await call(member, 'DELETE', '/shop/items/whatever')).statusCode).toBe(403);
-      expect((await call(member, 'GET', '/admin/shop/items/whatever/usage')).statusCode).toBe(403);
-      expect((await call(member, 'POST', '/admin/shop/items', { sku: 'x', name: 'x', currency: 'zer', price: 1 })).statusCode).toBe(403);
+      expect((await upload('icon', bytes, member)).statusCode).toBe(404);
+      expect((await call(member, 'PATCH', '/shop/items/whatever', { name: 'x' })).statusCode).toBe(404);
+      expect((await call(member, 'DELETE', '/shop/items/whatever')).statusCode).toBe(404);
+      expect((await call(member, 'GET', '/admin/shop/items/whatever/usage')).statusCode).toBe(404);
+      expect((await call(member, 'POST', '/admin/shop/items', { sku: 'x', name: 'x', currency: 'zer', price: 1 })).statusCode).toBe(404);
       const stranger = await app.inject({
         method: 'POST',
         url: '/admin/shop/art/icon',

@@ -1,9 +1,14 @@
 /*
  * Civak — the community wall.
  *
- * One column of cards, all the same shape whatever the post is. A reading width
- * rather than the full page: a wall of text stretched across a desktop is a wall
- * nobody reads.
+ * One column of posts, all in the same order whatever the post is, read as one
+ * list: no box round a post, and a hairline across the column between one post
+ * and the next. A reading width rather than the full page: a wall of text
+ * stretched across a desktop is a wall nobody reads.
+ *
+ * Colour is kept for what it means. Icons, counts and controls are in ink on a
+ * soft grey; the heart turns red when you have liked a post, a repost you made
+ * turns green, and a saved post's bookmark fills in.
  */
 .container-feed {
   max-width: 640px;
@@ -14,51 +19,61 @@
 .feed {
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
 .fcard {
   display: flex;
   flex-direction: column;
-  border: 1px solid var(--border);
-  /* the front page's post: one card, a rim of light, the writing set in the serif */
-  border-radius: 18px;
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-  overflow: hidden;
+  gap: 10px;
+  min-width: 0;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--separator);
 }
-.fcard:hover {
-  border-color: var(--border-strong);
+/* on a phone the line runs to the screen's edges, past the page's 16px gutter */
+@media (max-width: 640px) {
+  .container-feed .feed .fcard {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+}
+/* a post on its own page has its comments straight under it, and no line between */
+.fcard.is-page {
+  border-bottom: 0;
 }
 
-/* ---- who, and when ------------------------------------------------------ */
+/* ---- who, what kind of post, and when: one line ---------------------------- */
 .fcard-head {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 16px 18px 8px;
+  gap: 6px;
+  min-width: 0;
 }
 .fcard-who {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
+  gap: 8px;
+  flex: 0 1 auto;
   min-width: 0;
+  min-height: 36px;
   border: 0;
   padding: 0;
   background: transparent;
   color: var(--ink);
   font: inherit;
-  text-align: left;
+  text-align: start;
   cursor: pointer;
 }
-.fcard-who-text {
-  min-width: 0;
+.fcard-who .friend-avatar {
+  flex: none;
+  width: 32px;
+  height: 32px;
 }
 .fcard-name {
   display: block;
+  min-width: 0;
   font-size: 0.9rem;
   font-weight: 600;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -66,126 +81,208 @@
 .fcard-who:hover .fcard-name {
   text-decoration: underline;
 }
-.fcard-when {
-  display: block;
-  color: var(--ink-4);
-  font-size: 0.76rem;
-}
-/* the badge says what kind of post this is, since the wall mixes them — every
-   kind in the same quiet ink: a poem is not a reward, and gold is kept for those */
-.fcard-kind {
-  flex: none;
-  padding: 3px 9px;
-  border-radius: var(--r-pill);
-  border: 1px solid var(--border);
+/* what kind of post this is and how long ago: quiet, beside the name */
+.fcard-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: var(--text-tab);
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* the ⋯ sits at the end of the line, a full 44px to tap */
+.fcard-menu {
+  flex: none;
+  margin-inline-end: -10px;
+}
+.fcard-menu .msg-menu-btn {
+  width: 44px;
+  height: 44px;
+  color: var(--ink);
+}
+.fcard-menu .msg-menu-btn::after {
+  content: none;
 }
 
-/* ---- the post itself ---------------------------------------------------- */
+/* ---- the words: a bold title, then a few lines --------------------------- */
 .fcard-body {
-  display: block;
-  padding: 2px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   color: var(--ink);
   text-decoration: none;
 }
 .fcard-title {
-  margin: 2px 0 6px;
-  font-family: var(--font-display);
-  font-size: 1.38rem;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-/* a poem is set the way the front page sets one: a big title, the lines in italic */
-.fcard-poem .fcard-title {
-  font-size: 1.75rem;
-  line-height: 1.12;
-}
-.fcard-poem .fcard-text {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.12rem;
-  line-height: 1.5;
+  display: -webkit-box;
+  margin: 0;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* the house serif is for headings of pages; a post's title is read in a list, in the text face */
+  font-family: var(--font-sans);
+  font-size: 1.19rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
 }
 .fcard-text {
+  display: -webkit-box;
   margin: 0;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   color: var(--ink-2);
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.95rem;
+  line-height: 1.5;
   /* a poem's line breaks are the poem, and an excerpt keeps them */
   white-space: pre-wrap;
 }
-/* a picture's caption sits under it and reads as a caption, not a body */
-.fcard-image .fcard-text,
-.fcard-meme .fcard-text {
-  font-size: 0.88rem;
-  color: var(--ink-3);
+/* a poem's lines are still set as verse: in italic, the way the front page sets one */
+.fcard-poem .fcard-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+/* on its own page a post is read whole */
+.fcard.is-page .fcard-title,
+.fcard.is-page .fcard-text {
+  display: block;
+  -webkit-line-clamp: none;
+  overflow: visible;
 }
 
-/* ---- comment, like, save ------------------------------------------------ */
+/* ---- the pictures, set in from the edges with round corners --------------- */
+.fcard-media {
+  position: relative;
+}
+.fcard-pics .pp-grid,
+.fcard-pics .pp-strip {
+  border: 0;
+  border-radius: var(--r-lg);
+  /* what shows while a picture loads */
+  background: var(--surface-2);
+}
+/* a double click on a picture likes the post: a heart rises in the middle of it and fades */
+.fcard-heart-pop {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.35));
+  pointer-events: none;
+  animation: fcard-heart 0.9s var(--ease-out, ease-out) both;
+}
+@keyframes fcard-heart {
+  0% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  18% {
+    opacity: 1;
+    transform: scale(1.12);
+  }
+  32% {
+    transform: scale(0.96);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+/* ---- like, comment, repost … share, save ----------------------------------- */
 .fcard-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 4px 10px 10px;
-  border-top: 1px solid var(--separator);
+  gap: 8px;
+  padding-top: 2px;
 }
+/* a narrow phone keeps the five on one line by drawing them closer */
+@media (max-width: 400px) {
+  .fcard-actions {
+    gap: 6px;
+  }
+}
+/* a soft grey pill: an icon and its count; with no count, a circle */
 .fcard-act {
   display: inline-flex;
+  flex: none;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 7px 11px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
   border: 0;
   border-radius: var(--r-pill);
-  background: transparent;
-  color: var(--ink-4);
+  background: var(--surface-2);
+  color: var(--ink);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.88rem;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   cursor: pointer;
 }
+.fcard-act:has(.fcard-count) {
+  padding-inline: 11px 14px;
+}
 .fcard-act:hover:not(:disabled) {
-  color: var(--ink);
-  background: var(--bg);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 .fcard-act:disabled {
   cursor: default;
 }
-/* the save button sits at the far end, away from the counts */
-.fcard-save {
-  margin-left: auto;
+/* share and save sit at the far end, away from the counts */
+.fcard-share {
+  margin-inline-start: auto;
+}
+@media (pointer: coarse) {
+  .fcard-act {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+  }
+  .fcard-act:has(.fcard-count) {
+    padding-inline: 12px 14px;
+  }
+}
+/* the pills while the wall loads (components/skeletons) */
+.fcard-actions .skeleton.fcard-act-box {
+  width: 64px;
+  height: 36px;
+  border-radius: var(--r-pill);
+}
+.fcard-actions .skeleton.fcard-act-box.is-round {
+  width: 36px;
+}
+@media (pointer: coarse) {
+  .fcard-actions .skeleton.fcard-act-box {
+    width: 70px;
+    height: 44px;
+  }
+  .fcard-actions .skeleton.fcard-act-box.is-round {
+    width: 44px;
+  }
 }
 .fcard-like.is-on {
   color: var(--like);
 }
-.fcard-like.is-on:hover:not(:disabled) {
-  background: color-mix(in srgb, var(--like) 12%, transparent);
-  color: var(--like);
+/* the count beside a liked heart stays in ink: the heart says it, the number counts it */
+.fcard-like.is-on .fcard-count {
+  color: var(--ink);
 }
-/*
- * Reposted, in green.
- *
- * A colour of its own rather than the heart’s pink or the bookmark’s gold:
- * three buttons sit in a row and the only way to read them at a glance is for
- * the on-state of each to be a different colour.
- */
+/* a repost you made: the arrows and their count in green */
 .fcard-repost.is-on {
   color: var(--success);
-}
-.fcard-repost.is-on:hover:not(:disabled) {
-  background: var(--success-soft);
-  color: var(--success);
-}
-.fcard-save.is-on {
-  color: var(--gold-ink);
-}
-.fcard-save.is-on:hover:not(:disabled) {
-  background: var(--gold-soft);
-  color: var(--gold-ink);
 }
 /* the fill lands rather than appears, so a tap feels answered — a tap here, not a page that loaded liked */
 .fcard-like.just-on.is-on svg,
@@ -202,6 +299,14 @@
   .fcard-act.just-on.is-on svg {
     animation: none;
   }
+  /* still shown, so a double click is answered — but it fades in place, it does not jump */
+  .fcard-heart-pop {
+    animation-name: fcard-heart-still;
+  }
+}
+@keyframes fcard-heart-still {
+  0%, 100% { opacity: 0; }
+  20%, 50% { opacity: 1; }
 }
 
 /* an empty reading list should say how to fill it, not just that it is empty */
@@ -221,28 +326,30 @@
   max-width: 34ch;
 }
 
-/* the two levels of filter stack; the second appears only when it applies */
+/*
+ * The row over the posts: what the wall is narrowed to, if it is, at the start;
+ * the filter and the + at the end. It reads as "what you are looking at … and
+ * how to change it or add to it".
+ */
 .feed-filters {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  min-height: 38px;
   margin-bottom: 18px;
 }
 
 /*
- * One button for posting anything, making no claim about what.
- *
- * `margin-left: auto` pushes it to the end of the filter row, so the row reads
- * as "what you are looking at … and how to add to it". It used to hang below the
- * page heading, attached to nothing.
+ * One button for posting anything, making no claim about what. It used to hang
+ * below the page heading, attached to nothing.
  */
 .post-plus {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 7px;
   height: 38px;
   padding: 0 16px 0 13px;
-  margin-left: auto;
   border: 0;
   border-radius: 999px;
   background: var(--primary);
@@ -268,6 +375,352 @@
   }
 }
 
+/* ---- the wall's sort and filter (feed/FeedFilter.tsx) ---------------------
+ * A funnel in ink beside the +, filled in while the wall is anything but the
+ * plain one; behind it one panel for the order, its range and the kinds — a
+ * popover, or a sheet from the bottom edge on a phone. While the order or the
+ * kinds differ, a chip for each at the start of the row says what, and its ✕
+ * undoes that part. No colour of its own: a filter is not an alert.
+ */
+.ffilter {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+.ffilter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ffilter.is-open .ffilter-btn {
+  background: var(--surface-2);
+}
+.ffilter-btn.is-on {
+  border-color: var(--border-strong);
+}
+
+.ffilter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ffilter-chip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 12px 4px;
+  border: 0;
+  border-start-start-radius: 999px;
+  border-end-start-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ffilter-chip-main > svg {
+  flex-shrink: 0;
+}
+.ffilter-chip-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ffilter-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+/* the chip and its ✕ stay small to the eye; the places to press are a full 44px */
+.ffilter-chip-main,
+.ffilter-chip-clear {
+  position: relative;
+}
+.ffilter-chip-main::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+.ffilter-chip-clear::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.ffilter-chips {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+/*
+ * The panel: a popover under the funnel on a wide screen, a sheet from the
+ * bottom edge on a phone. A head with its title and ✕, the choices in a body
+ * that scrolls on its own, and a foot that stays put with Reset and Show posts.
+ */
+.ffilter-panel {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  width: 340px;
+  max-height: min(72vh, 640px);
+  overflow: hidden;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-lg);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-lg);
+  animation: ffilter-in var(--dur-fast) ease-out;
+}
+@keyframes ffilter-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.ffilter-grip,
+.ffilter-scrim {
+  display: none;
+}
+.ffilter-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 10px 4px;
+  padding-inline: 18px 10px;
+}
+/* a panel's headings are part of the control, in the face the controls are in */
+.ffilter-title,
+.ffilter-section-title {
+  font-family: var(--font-sans);
+}
+.ffilter-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.ffilter-close {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.ffilter-close::after {
+  content: '';
+  position: absolute;
+  inset: -5px;
+}
+.ffilter-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 8px 8px;
+}
+.ffilter-section + .ffilter-section {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--separator);
+}
+.ffilter-section-title {
+  margin: 0;
+  padding: 10px 10px 4px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ffilter-radios.is-vertical {
+  display: flex;
+  flex-direction: column;
+}
+.ffilter-group {
+  display: flex;
+  flex-direction: column;
+  margin-top: 4px;
+}
+.ffilter-heading {
+  padding: 6px 10px 2px;
+  color: var(--ink-2);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+.ffilter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  padding: 6px 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: start;
+  cursor: pointer;
+}
+.ffilter-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+.ffilter-item-hint {
+  color: var(--ink-3);
+  font-size: 0.8rem;
+}
+.ffilter-item.is-on .ffilter-item-text > span:first-child {
+  font-weight: 600;
+}
+.ffilter-item > svg {
+  flex-shrink: 0;
+}
+.ffilter-item:focus-visible,
+.ffilter-period:focus-visible {
+  outline: 2px solid var(--focus, var(--ink));
+  outline-offset: -2px;
+}
+/* the range: a row of chips that wraps, the chosen one filled in ink */
+.ffilter-periods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 4px 10px 8px;
+}
+.ffilter-period {
+  height: 34px;
+  padding: 0 13px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+.ffilter-period.is-on {
+  border-color: var(--primary);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-weight: 600;
+}
+.ffilter-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 12px;
+  border-top: 1px solid var(--separator);
+  background: var(--panel-bg);
+}
+/* only where there is a pointer to hover with: a finger's last place would otherwise stay lit under the sheet */
+@media (hover: hover) {
+  .ffilter-btn:hover,
+  .ffilter-item:hover,
+  .ffilter-close:hover {
+    background: var(--surface-2);
+  }
+  .ffilter-period:not(.is-on):hover {
+    background: var(--surface-2);
+  }
+  .ffilter-chip-clear:hover {
+    color: var(--ink);
+    background: var(--surface-3);
+  }
+}
+
+/* a phone: the panel rises from the bottom edge, where the thumb already is */
+@media (max-width: 640px) {
+  .ffilter-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: var(--scrim);
+    animation: fade 0.15s ease;
+  }
+  .ffilter-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 111;
+    width: auto;
+    max-height: 88dvh;
+    border-bottom: 0;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation: sheet-up var(--dur-slow) var(--ease-spring);
+  }
+  .ffilter-grip {
+    display: block;
+    align-self: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 4px;
+    margin-top: 10px;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+  .ffilter-head {
+    padding-top: 8px;
+  }
+  .ffilter-item {
+    min-height: 48px;
+    font-size: 1rem;
+  }
+  .ffilter-period {
+    height: 38px;
+  }
+  .ffilter-foot {
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
+}
+
 /* the second row is a refinement of the first, and reads as one */
 .seg-sub {
   background: transparent;
@@ -283,17 +736,18 @@
   color: var(--gold-ink);
 }
 
-/* deleting your own post: quiet until it is armed, then unmistakable */
-.fcard-delete.is-armed,
-.fcard-delete:hover:not(:disabled) {
-  color: var(--danger);
-}
+/* deleting your own post, in its ⋯ menu: red from the start, and plainly asking once armed */
 .fcard-delete.is-armed {
   background: var(--danger-soft);
-  font-size: 0.78rem;
+  font-weight: 600;
 }
 /* an armed confirm anywhere reads the same way */
 .btn.is-armed {
   border-color: var(--danger);
   color: var(--danger);
+}
+
+/* a written post's own page carries the wall's row of actions under the post */
+.post-full .fcard-actions {
+  margin-top: 14px;
 }

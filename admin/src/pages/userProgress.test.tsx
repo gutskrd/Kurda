@@ -147,7 +147,7 @@ describe('the Ranks tab', () => {
   it('shows a card per game as the player sees it, and their rated games', async () => {
     show(`#/users/${SUBJECT_ID}/ranks`, ADMIN, on('GET', `/admin/ranks/players/${SUBJECT_ID}`, json(RANKS)));
     const cards = within(await screen.findByRole('list', { name: 'Rank per game' })).getAllByRole('listitem');
-    expect(cards[0]).toHaveTextContent('Wordle Battle');
+    expect(cards[0]).toHaveTextContent('Peyvok Battle');
     expect(cards[0]).toHaveTextContent('Gir III');
     expect(cards[0]).toHaveTextContent('353 points?');
     expect(cards[0]).toHaveTextContent('Shield: 2 more games');
@@ -178,7 +178,7 @@ describe('the Ranks tab', () => {
     );
     const cards = within(await screen.findByRole('list', { name: 'Rank per game' })).getAllByRole('listitem');
     await user.click(within(cards[0]!).getByRole('button', { name: 'Reset rating…' }));
-    const ask = screen.getByRole('alertdialog', { name: 'Reset @baran’s Wordle Battle rating?' });
+    const ask = screen.getByRole('alertdialog', { name: 'Reset @baran’s Peyvok Battle rating?' });
     await user.type(within(ask).getByLabelText(/Why/), 'points from voided games');
     await user.click(within(ask).getByRole('button', { name: 'Reset the rating' }));
     await waitFor(() => expect(posts(calls, `/admin/ranks/players/${SUBJECT_ID}/wordle-battle/reset`)).toHaveLength(1));

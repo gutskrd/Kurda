@@ -29,13 +29,13 @@ describe('Games hub', () => {
   it('shows one box per game (not one per mode)', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    expect(await screen.findByText('Kurdish Wordle')).toBeInTheDocument();
+    expect(await screen.findByText('Peyvok')).toBeInTheDocument();
     expect(screen.getByText('Rhyming Words')).toBeInTheDocument();
     // Stories took the ranked quiz's place
     expect(screen.getByText('Stories')).toBeInTheDocument();
     expect(screen.queryByText('Ranked Quiz')).not.toBeInTheDocument();
     // the separate per-mode cards are gone
-    expect(screen.queryByText('Wordle Battle')).not.toBeInTheDocument();
+    expect(screen.queryByText('Peyvok Battle')).not.toBeInTheDocument();
     expect(screen.queryByText('Rhyme Match')).not.toBeInTheDocument();
   });
 
@@ -43,23 +43,23 @@ describe('Games hub', () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
 
-    // Wordle has two modes → clicking Play opens the chooser
+    // Peyvok has two modes → clicking Play opens the chooser
     const playButtons = await screen.findAllByRole('button', { name: /^play$/i });
     await userEvent.click(playButtons[0]!);
 
     expect(await screen.findByText(/how do you want to play/i)).toBeInTheDocument();
     const chooser = screen.getByRole('dialog');
-    expect(within(chooser).getByRole('link', { name: /play solo/i })).toHaveAttribute('href', '/app/games/wordle');
-    expect(within(chooser).getByRole('link', { name: /play online/i })).toHaveAttribute('href', '/app/games/wordle-battle');
+    expect(within(chooser).getByRole('link', { name: /play solo/i })).toHaveAttribute('href', '/app/games/peyvok');
+    expect(within(chooser).getByRole('link', { name: /play online/i })).toHaveAttribute('href', '/app/games/peyvok-battle');
   });
 
   it('lets each mode be chosen on the card itself, without the chooser', async () => {
     signIn();
     renderApp(<Games />, ['/app/games']);
-    const wordle = (await screen.findByRole('heading', { name: 'Kurdish Wordle' })).closest('article')!;
+    const wordle = (await screen.findByRole('heading', { name: 'Peyvok' })).closest('article')!;
     await within(wordle).findByRole('button', { name: /^play$/i });
-    expect(within(wordle).getByRole('link', { name: 'Play solo' })).toHaveAttribute('href', '/app/games/wordle');
-    expect(within(wordle).getByRole('link', { name: 'Play online' })).toHaveAttribute('href', '/app/games/wordle-battle');
+    expect(within(wordle).getByRole('link', { name: 'Play solo' })).toHaveAttribute('href', '/app/games/peyvok');
+    expect(within(wordle).getByRole('link', { name: 'Play online' })).toHaveAttribute('href', '/app/games/peyvok-battle');
     // Stories chooses its mode on its own page, so its modes stay words
     const stories = screen.getByRole('heading', { name: 'Stories' }).closest('article')!;
     expect(within(stories).queryByRole('link', { name: 'Quiz yourself' })).toBeNull();
@@ -119,7 +119,7 @@ describe('Games hub', () => {
     renderApp(<Games />, ['/app/games']);
 
     // knowing there is more here once you sign up is the reason to sign up
-    // two modes each for Wordle and Rhyme, one for the race, two of the three for Stories
+    // two modes each for Peyvok and Rhyme, one for the race, two of the three for Stories
     expect(await screen.findAllByText(/needs an account/)).toHaveLength(7);
     expect(screen.getAllByText('Play solo').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Play online').length).toBeGreaterThan(0);
@@ -139,7 +139,7 @@ describe('Games hub', () => {
     expect(await screen.findByRole('heading', { name: 'Lernen', level: 1 })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Spiele' })).toHaveAttribute('aria-current', 'page');
     expect(screen.getByRole('link', { name: 'Lektionen' })).toHaveAttribute('href', '/app/learn');
-    expect(screen.getByRole('heading', { name: 'Kurdisches Wordle' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Peyvok' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Reimwörter' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Schreibwettlauf' })).toBeInTheDocument();
     // the mode hints under each box, and the badge
@@ -153,8 +153,9 @@ describe('Games hub', () => {
     vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, {})));
     renderApp(<Games />, ['/app/games']);
 
-    const wordle = (await screen.findByRole('heading', { name: 'Kürtçe Wordle' })).closest('article')!;
-    await userEvent.click(within(wordle).getByRole('button', { name: 'Oyna' }));
+    // the game's name is the same in every language, so wait for the Turkish around it
+    const wordle = (await screen.findByRole('heading', { name: 'Peyvok' })).closest('article')!;
+    await userEvent.click(await within(wordle).findByRole('button', { name: 'Oyna' }));
 
     expect(await screen.findByText('Nasıl oynamak istersin?')).toBeInTheDocument();
     expect(screen.getByText('Günün bulmacası ve üç zorlukta sınırsız alıştırma turu.')).toBeInTheDocument();

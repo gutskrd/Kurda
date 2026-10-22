@@ -607,7 +607,14 @@ export interface EvidenceSnapshot {
   pictures?: Array<{ mediaKey: string; altText: string | null }>;
   /** chats: ~10 messages before and 5 after, from a conversation the reporter is in */
   context?: EvidenceMessage[];
-  group?: { id: string; name: string; privacy?: string } | null;
+  group?: {
+    id: string;
+    name: string;
+    privacy?: string;
+    /** who last changed the name or description, and who put up the picture — they answer for them, not only the owner */
+    editedBy?: { id: string; username: string } | null;
+    photoSetBy?: { id: string; username: string } | null;
+  } | null;
   game?: {
     game: ReportableGame;
     gameId: string;

@@ -75,10 +75,10 @@ interface GameRow {
   time_ms: number | null;
 }
 
-const MAX_ATTEMPTS = 6;
+export const MAX_ATTEMPTS = 6;
 
 /**
- * Daily & practice Wordle backend (KUR-304). Server-authoritative: the target
+ * Daily & practice Peyvok backend (KUR-304). Server-authoritative: the target
  * lives in `wordle_games` and guesses are scored here (via the #303 engine) so
  * the answer is withheld until the game ends. Finishing a game folds XP (#030),
  * the daily streak (#031), and per-player stats in one transaction.

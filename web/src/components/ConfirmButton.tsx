@@ -23,6 +23,7 @@ export function ConfirmButton({
   className = '',
   disabled = false,
   title,
+  role,
 }: {
   label: React.ReactNode;
   confirmLabel?: string;
@@ -32,6 +33,8 @@ export function ConfirmButton({
   disabled?: boolean;
   /** the plain-words version, for the accessible name and the tooltip */
   title: string;
+  /** "menuitem" when it is one of a menu's items */
+  role?: 'menuitem';
 }): React.JSX.Element {
   const t = useT();
   // resolved here rather than as a default argument: a default is evaluated
@@ -67,6 +70,7 @@ export function ConfirmButton({
   return (
     <button
       type="button"
+      role={role}
       className={`${className}${armed ? ' is-armed' : ''}`}
       disabled={disabled || busy}
       title={title}

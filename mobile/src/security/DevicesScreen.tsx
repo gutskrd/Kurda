@@ -241,7 +241,7 @@ function DeviceRow({
         <Text style={[styles.name, dir.free, { color: colors.textPrimary }]} numberOfLines={2}>
           {name}
         </Text>
-        <Text style={[styles.meta, dir.text, { color: current ? colors.success : colors.textSecondary }, current && styles.metaCurrent]} numberOfLines={2}>
+        <Text style={[styles.meta, dir.text, { color: current ? colors.textPrimary : colors.textSecondary }, current && styles.metaCurrent]} numberOfLines={2}>
           {meta}
         </Text>
       </View>

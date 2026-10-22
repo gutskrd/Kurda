@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { KeyboardAvoidingView, Linking, Modal, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
-import { GlassCard, GlassRow } from '../theme/glass';
+import { SettingsRow } from '../settings/list';
 import { Icon } from '../theme/Icon';
 import { spacing } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
@@ -35,12 +35,10 @@ export function FeedbackSettingsRows({
 
   return (
     <>
-      <GlassCard padding="tight">
-        <GlassRow icon="chat" title={t('appFeedback.sendRow')} onPress={() => setOpen(true)} />
-        {store ? (
-          <GlassRow icon="star" title={t('appFeedback.rateRow')} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
-        ) : null}
-      </GlassCard>
+      <SettingsRow icon="chat" title={t('appFeedback.sendRow')} onPress={() => setOpen(true)} />
+      {store ? (
+        <SettingsRow icon="star" title={t('appFeedback.rateRow')} opens={false} onPress={() => void Linking.openURL(store).catch(() => undefined)} />
+      ) : null}
       <Modal visible={open} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setOpen(false)}>
         <KeyboardAvoidingView
           style={[styles.sheet, { backgroundColor: colors.background }]}

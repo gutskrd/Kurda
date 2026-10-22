@@ -1,4 +1,4 @@
-/** Wordle Battle multiplayer flow against real Postgres (CI job). KUR-306. */
+/** Peyvok Battle multiplayer flow against real Postgres (CI job). KUR-306. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { dictionaryKey, letterKey } from '@kurda/shared';
 import pg from 'pg';

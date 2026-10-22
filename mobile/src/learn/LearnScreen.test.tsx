@@ -46,7 +46,8 @@ function client() {
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
-    'GET /me': ok({ user: { streak: { current: 6, longest: 9, freezes: 0, lastActiveOn: null } } }),
+    'GET /me': ok({ user: { streak: { current: 6, longest: 9, freezes: 0, lastActiveOn: null, daysLearned: 31 } } }),
+    'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok({ due: 8, available: 20, open: null }),
     'GET /stories': ok({ stories: [{ slug: 'a' }] }),
     'GET /ranks/me': ok({ ranks: [], cooldownUntil: null, season: { id: '2026-Q4', name: 'payiz', year: 2026, startsAt: '', endsAt: '', daysLeft: 40 } }),
@@ -70,11 +71,32 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2' });
   });
 
-  it('says how today is going, plainly, and what is due for review', async () => {
+  /*
+   * The corner of Learn says where today stands at a glance — the streak, the
+   * day's goal, the Zêr — and each opens onto more.
+   */
+  it('says how today is going in the top corner, and opens each onto more', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    expect(await screen.findByText('12 of 20 XP today')).toBeTruthy();
-    expect(screen.getByText('6 days')).toBeTruthy();
+    const streak = await screen.findByRole('button', { name: 'Streak: 6 days' });
+    expect(screen.getByRole('button', { name: '12 of 20 XP today' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: '1,240 Zêr. Open the shop' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Shop');
+
+    // the streak's whole story: the run, and the numbers that never go down
+    fireEvent.click(streak);
+    expect(await screen.findByText('Longest streak')).toBeTruthy();
+    expect(screen.getByText('31')).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
+
+    // the day's goal, where it can be changed
+    fireEvent.click(screen.getByRole('button', { name: '12 of 20 XP today' }));
+    expect(await screen.findByText('Goal: 20 XP')).toBeTruthy();
+  });
+
+  it('keeps the practice tools one tap away, and says what is due for review', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
     fireEvent.click(await screen.findByRole('button', { name: 'Review, 8 words due' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Practice');
     fireEvent.click(screen.getByRole('button', { name: 'Dictionary, Look up any word' }));
@@ -116,7 +138,7 @@ describe('Learn', () => {
     client();
     renderWithProviders(<LearnScreen view="games" />);
     const battle = await screen.findByTestId('game-battle');
-    expect(battle.getAttribute('aria-label')).toBe('Wordle Battle, With friends. Race a friend to the same word.');
+    expect(battle.getAttribute('aria-label')).toBe('Peyvok Battle, With friends. Race a friend to the same word.');
     fireEvent.click(battle);
     expect(navigation.navigate).toHaveBeenCalledWith('WordleBattle');
     // the rankings and the league, small, at the top

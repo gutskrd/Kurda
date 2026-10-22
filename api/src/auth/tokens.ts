@@ -1,6 +1,7 @@
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import { SignJWT, jwtVerify } from 'jose';
 import type pg from 'pg';
+import { MAX_SESSIONS } from '@kurda/shared';
 import type { AppConfig } from '../config/env.js';
 import { knownHash } from './known-devices.js';
 
@@ -101,6 +102,36 @@ export interface SessionOptions {
   sessionStartedAt?: Date;
 }
 
+/**
+ * Keep an account to its newest MAX_SESSIONS live sessions: every live one
+ * past them, by when it was last used, is ended the way signing it out ends
+ * it. A new sign-in is never refused for the limit — that would lock somebody
+ * out of their own account from a new phone because of old ones they cannot
+ * reach — so the session used longest ago gives way instead.
+ *
+ * One statement, run after the new session is in, so it works the same on
+ * the pool or inside a caller's transaction. However many sign-ins run at
+ * once, each keeps the newest sessions it can see and ends only ones older
+ * than those, and the last of them sees every session — so what is left is
+ * never more than the limit, and never without the newest. The rows it ends
+ * are locked in id order first: two of these locking the same rows in
+ * whatever order each scan met them waited on each other.
+ */
+export async function endOldestSessions(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<number> {
+  const ended = await executor.query(
+    `WITH doomed AS MATERIALIZED (
+       SELECT id FROM refresh_tokens
+        WHERE user_id = $1 AND revoked_at IS NULL AND expires_at > now()
+        ORDER BY created_at DESC, id DESC OFFSET $2
+     ), locked AS MATERIALIZED (
+       SELECT id FROM refresh_tokens WHERE id IN (SELECT id FROM doomed) ORDER BY id FOR UPDATE
+     )
+     UPDATE refresh_tokens SET revoked_at = now() WHERE id IN (SELECT id FROM locked) AND revoked_at IS NULL`,
+    [userId, MAX_SESSIONS],
+  );
+  return ended.rowCount ?? 0;
+}
+
 /** The device a session is listed under for one account (`knownHash`, as known_devices keeps it). */
 export function sessionDeviceHash(config: AppConfig, userId: string, deviceId: string): string {
   return knownHash(config.JWT_SECRET, userId, 'device', deviceId);
@@ -134,6 +165,8 @@ export async function issueTokenPair(
      RETURNING id`,
     [user.id, hashRefreshToken(raw), familyId, opts.deviceName ?? null, expiresAt, startedAt, deviceHash, shortLived],
   );
+  // a sign-in (a new family; a rotation only carries one on) past MAX_SESSIONS ends the oldest
+  if (!opts.familyId) await endOldestSessions(executor, user.id);
   const accessToken = await issueAccessToken(config, {
     sub: user.id,
     // MUST mirror users.token_version or the auth guard rejects the

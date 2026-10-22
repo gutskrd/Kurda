@@ -104,7 +104,8 @@ describe('the lesson path', () => {
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Food, locked, 0 of 1 lessons done'));
     expect(screen.getByText('Finish “Family” to open this one.')).toBeTruthy();
-    fireEvent.click(button('Close'));
+    // the sheet's ✕, after the dimmed page behind it
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
     fireEvent.click(button('Numbers, done, ready for a refresh, 1 of 1 lessons done'));
     fireEvent.click(button('Start a review'));
     expect(navigation.navigate).toHaveBeenLastCalledWith('Practice');

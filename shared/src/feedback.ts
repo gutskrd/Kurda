@@ -189,7 +189,7 @@ export interface AdminFeedbackSummary {
 /**
  * Whether to open the box now, on the results screen.
  *
- * Only on the transition into finished — a daily Wordle reopened after it was
+ * Only on the transition into finished — a daily Peyvok reopened after it was
  * played, or a finished battle opened from a link, is not a game just
  * finished — and never after giving up, never in a session that has already
  * called the store prompt, and only when the API says this account is due.

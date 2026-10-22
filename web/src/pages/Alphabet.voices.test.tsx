@@ -15,7 +15,7 @@ afterEach(() => {
 });
 
 describe('Alphabet: who says a letter', () => {
-  it('puts the character beside the letter’s play button, and has them say the word too', async () => {
+  it('stands the character whole on a stage beside the letter, and has them say the word too', async () => {
     // a play that starts at once, as a browser's does once the clip has loaded
     vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
       this.dispatchEvent(new Event('playing'));
@@ -35,17 +35,26 @@ describe('Alphabet: who says a letter', () => {
     renderApp(<Alphabet />, ['/app/alphabet']);
     await userEvent.click(await screen.findByRole('button', { name: 'C, like j' }));
     const card = await screen.findByRole('dialog');
-    await waitFor(() => expect(card.querySelector('.ab-card-tools .speaking-character')).not.toBeNull());
-    const face = card.querySelector('.ab-card-tools .speaking-character')!;
+    await waitFor(() => expect(card.querySelector('.ab-card-stage .speaking-character')).not.toBeNull());
+    const stage = card.querySelector<HTMLElement>('.ab-card-stage')!;
+    const face = stage.querySelector('.speaking-character')!;
     expect(face).toHaveAttribute('data-speaker', 'xezo');
     expect(face).toHaveAttribute('aria-hidden', 'true');
+    // the whole figure, not a head in a tile, with the letter and its button beside it
+    expect(face.querySelector('svg')).toHaveAttribute('viewBox', '26 98 236 678');
+    expect(within(stage).getByText('C')).toBeInTheDocument();
+    expect(within(stage).getByRole('button', { name: 'Listen' })).toBeInTheDocument();
+    // one character on the card: nobody squeezed in beside the word's button
+    expect(card.querySelectorAll('.speaking-character')).toHaveLength(1);
 
-    // the word's recording is Hamo's: playing it hands the card to him
+    // the word's recording is Hamo's: playing it hands the stage to him
     await userEvent.click(within(card).getByRole('button', { name: 'Listen to the word' }));
-    await waitFor(() => expect(card.querySelector('.ab-card-tools .speaking-character')).toHaveAttribute('data-speaker', 'hamo'));
+    await waitFor(() => expect(card.querySelector('.ab-card-stage .speaking-character')).toHaveAttribute('data-speaker', 'hamo'));
 
-    // a recording with no character shows nobody
+    // a recording with no character shows nobody, and no stage: the letter and its button as they always were
     await userEvent.click(within(card).getByRole('button', { name: 'Next letter' }));
     await waitFor(() => expect(card.querySelector('.speaking-character')).toBeNull());
+    expect(card.querySelector('.character-stage')).toBeNull();
+    expect(card.querySelector('.ab-card-head')).not.toBeNull();
   });
 });

@@ -98,20 +98,8 @@
   min-width: 0;
   max-width: 440px;
 }
-.item-search-glass {
-  position: absolute;
-  inset-inline-start: 14px;
-  top: 50%;
-  /* over the field: its glass blur is a stacking context of its own, and
-     would otherwise blur the icon away underneath it */
-  z-index: 1;
-  transform: translateY(-50%);
-  color: var(--ink-3);
-  pointer-events: none;
-}
 .input.item-search-input {
   height: 44px;
-  padding-inline: 40px 12px;
   font-size: 0.92rem;
 }
 .item-sort {

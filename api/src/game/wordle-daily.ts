@@ -1,5 +1,5 @@
 /**
- * Wordle daily selection, XP, and statistics (KUR-304) — the pure, testable
+ * Peyvok daily selection, XP, and statistics (KUR-304) — the pure, testable
  * pieces of the daily/practice service. Deterministic daily-word choice (same
  * word for everyone on a given UTC day, rotating every 24h with no near-term
  * repeats), the XP-by-guess-count table, and streak/stats aggregation. Storage,

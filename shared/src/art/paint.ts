@@ -88,40 +88,6 @@ export function edge(d: string, colour: string, width = 1.2, opacity = 0.85): st
   return `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${n2(width)}" stroke-opacity="${n2(opacity)}" stroke-linejoin="round"/>`;
 }
 
-/**
- * A piece's shadow: its own outline dropped by `dy` in its darkest tone, the
- * pin's edge seen from a little above, and under that a soft pool of shade on
- * the page. Neither needs a blur, so the phone draws them as the browser does.
- */
-export function pinShadow(dr: Drawing, d: string, deep: string, cx: number, bottom: number, w: number, dy = 2.2): string {
-  const pool = dr.id('w');
-  dr.def(
-    radialBox(pool, [
-      [0, '#000000', 0.22],
-      [1, '#000000', 0],
-    ]),
-  );
-  return (
-    `<ellipse cx="${n(cx)}" cy="${n(bottom + dy * 0.6)}" rx="${n(w * 0.46)}" ry="${n(Math.max(2, w * 0.07))}" fill="url(#${pool})"/>` +
-    `<path d="${d}" transform="translate(0 ${n2(dy)})" fill="${deep}" fill-opacity="0.55"/>`
-  );
-}
-
-/**
- * The enamel's one soft highlight: a gloss over its upper part, the way light
- * lies on a glazed pin. The caller clips it to the enamel.
- */
-export function gloss(dr: Drawing, cx: number, cy: number, r: number, opacity = 0.32): string {
-  const id = dr.id('g');
-  dr.def(
-    linearBox(id, [
-      [0, '#ffffff', opacity],
-      [1, '#ffffff', 0],
-    ]),
-  );
-  return `<ellipse cx="${n(cx - r * 0.16)}" cy="${n(cy - r * 0.5)}" rx="${n(r * 0.84)}" ry="${n(r * 0.5)}" fill="url(#${id})" transform="rotate(-18 ${n(cx)} ${n(cy)})"/>`;
-}
-
 /** A halo of light behind a piece: a radial fade from `colour` to nothing. */
 export function halo(dr: Drawing, cx: number, cy: number, r: number, colour: string, opacity: number, core = 0): string {
   const id = dr.id('o');

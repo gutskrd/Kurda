@@ -1,13 +1,15 @@
 import { useCallback, useState, type ReactNode } from 'react';
 import { Pressable, StyleSheet, Text, View, type LayoutChangeEvent, type StyleProp, type ViewStyle } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { display } from '../theme/fonts';
-import { spacing, typography } from '../theme/tokens';
+import { layout, spacing, typography } from '../theme/tokens';
 import { useI18n } from '../i18n/I18nContext';
-import { useScreenTopInset } from './tabBarLayout';
 import { useDirection } from '../reports/direction';
+
+/** How far a 26pt glyph sits inside its 44pt target: the header reaches out by this much so the glyph meets the gutter. */
+const EDGE_SLACK = (MIN_TOUCH_TARGET - 26) / 2;
 
 /**
  * The bar at the top of a screen that is not a tab.
@@ -36,7 +38,17 @@ import { useDirection } from '../reports/direction';
  * straight across both.
  *
  * The bar itself is 44pt tall — the same minimum a fingertip needs, which is
- * not a coincidence, because the back button is the thing in it.
+ * not a coincidence, because the back button is the thing in it — and it sits
+ * straight under the status bar, where the system's own bar sits. It used to
+ * start 16pt lower, which on every pushed screen pushed the page down by that
+ * much and put the way back further from the thumb than anywhere else.
+ *
+ * The way back is the chevron alone, in the ink of the page, in a 44pt square:
+ * the shape every social app and the system's own photos and messages use. A
+ * "Back" beside it took 53pt in English and more in German and Soranî, and
+ * that was the room a club's name needed — "Hevalên Kur…" was cut short on
+ * every phone. The title is the system's: 17pt, semibold, the face of the
+ * text under it, not a display serif one size short of a heading.
  *
  * In Soranî and Arabic the bar is mirrored: the way back is on the right and
  * its chevron points right, which is the direction "back" is for a reader of
@@ -49,6 +61,9 @@ export function ScreenHeader({
   backLabel,
   right,
   hairline = false,
+  titleAvatar,
+  onTitlePress,
+  titleHint,
   style,
 }: {
   /** Centred, one line, truncated rather than wrapped — a bar is one line tall. */
@@ -78,13 +93,22 @@ export function ScreenHeader({
    * of a chat does. Chat had one of each, and they were two different greys.
    */
   hairline?: boolean;
+  /**
+   * A face before the title, where the screen is about one person or one
+   * group: a conversation's header shows who it is with, as every messaging
+   * app's does.
+   */
+  titleAvatar?: ReactNode;
+  /** Makes the title (and its face) a way into whoever it names — their profile, the group's people. */
+  onTitlePress?: () => void;
+  /** What a screen reader says a tap on the title does. */
+  titleHint?: string;
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
-  const topInset = useScreenTopInset();
+  const insets = useSafeAreaInsets();
   const dir = useDirection();
-  const mirrored = dir.row === 'row-reverse';
   // how wide the way back and the trailing actions are, so neither side is squeezed under the title
   const [ends, setEnds] = useState({ start: 0, end: 0 });
   const measure = useCallback(
@@ -100,7 +124,7 @@ export function ScreenHeader({
     <View
       style={[
         styles.wrap,
-        { paddingTop: topInset },
+        { paddingTop: insets.top },
         hairline && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator },
         style,
       ]}
@@ -113,25 +137,33 @@ export function ScreenHeader({
               onPress={onBack}
               accessibilityRole="button"
               accessibilityLabel={backLabel ?? (leading === 'close' ? t('common.cancel') : t('common.back'))}
-              hitSlop={10}
-              style={({ pressed }) => [styles.leading, { flexDirection: dir.row }, mirrored && styles.leadingMirrored, pressed && styles.pressed]}
+              style={({ pressed }) => [styles.leading, pressed && styles.pressed]}
             >
               {leading === 'close' ? (
-                <Icon name="close" size={22} color={colors.primary} />
+                <Icon name="close" size={24} color={colors.textPrimary} />
               ) : (
-                <>
-                  <Icon name="chevron-left" size={20} color={colors.primary} style={dir.flip ?? undefined} />
-                  <Text style={[styles.backLabel, mirrored && styles.backLabelMirrored, { color: colors.primary }]} numberOfLines={1}>
-                    {t('common.back')}
-                  </Text>
-                </>
+                <Icon name="chevron-left" size={26} color={colors.textPrimary} style={dir.flip ?? undefined} />
               )}
             </Pressable>
           ) : null}
         </View>
 
-        {title ? (
-          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+        {title && (titleAvatar || onTitlePress) ? (
+          <Pressable
+            onPress={onTitlePress}
+            disabled={!onTitlePress}
+            accessibilityRole={onTitlePress ? 'button' : 'header'}
+            accessibilityLabel={title}
+            accessibilityHint={titleHint}
+            style={({ pressed }) => [styles.titleRow, { flexDirection: dir.row }, pressed && styles.pressed]}
+          >
+            {titleAvatar}
+            <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1}>
+              {title}
+            </Text>
+          </Pressable>
+        ) : title ? (
+          <Text style={[styles.title, { color: colors.textPrimary }]} numberOfLines={1} accessibilityRole="header">
             {title}
           </Text>
         ) : null}
@@ -151,19 +183,17 @@ export function ScreenHeader({
 }
 
 const styles = StyleSheet.create({
-  wrap: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
+  // the gutter less the room round a 44pt control's glyph, so the chevron itself lines up with the page's text
+  wrap: { paddingHorizontal: layout.gutter - EDGE_SLACK, paddingBottom: spacing.xs },
   bar: { flexDirection: 'row', alignItems: 'center', minHeight: MIN_TOUCH_TARGET, gap: spacing.sm },
   // equal shares of what the title does not use, so the title is centred
-  // without anybody having to guess how wide the word "Back" is
+  // without anybody having to guess how wide the way back is
   side: { flex: 1, alignItems: 'center' },
   sideFill: { flex: 1 },
   trailing: { alignItems: 'center' },
-  leading: { alignItems: 'center', minHeight: MIN_TOUCH_TARGET, paddingRight: spacing.sm },
-  leadingMirrored: { paddingRight: 0, paddingLeft: spacing.sm },
-  pressed: { opacity: 0.6 },
-  // the chevron already carries the spacing; -2 closes the gap the glyph's own
-  // side bearing leaves, which is what makes it read as one control
-  backLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium, marginLeft: -2 },
-  backLabelMirrored: { marginLeft: 0, marginRight: -2 },
-  title: { ...display(typography.sizes.lg), flexShrink: 1, textAlign: 'center' },
+  leading: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
+  pressed: { opacity: 0.5 },
+  title: { fontSize: typography.ios.row, fontWeight: typography.weights.semibold, flexShrink: 1, textAlign: 'center' },
+  // the face and the name together, centred as the title alone is, a fingertip tall
+  titleRow: { flexShrink: 1, alignItems: 'center', gap: spacing.sm, minHeight: MIN_TOUCH_TARGET },
 });

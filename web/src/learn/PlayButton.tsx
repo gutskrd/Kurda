@@ -9,6 +9,10 @@ import { onPlaying, play } from '../lib/sound';
  * normal and the slow button play the same file, so the speed tells them
  * apart); a second tap starts it again rather than stopping it, so it is a
  * plain button, not a toggle.
+ *
+ * `round` shows the speaker alone in a round button, the label its name and
+ * its tooltip: for a recording whose button needs no words beside the one
+ * who says it.
  */
 export function PlayButton({
   src,
@@ -16,15 +20,30 @@ export function PlayButton({
   rate = 1,
   primary = false,
   disabled = false,
+  round = false,
 }: {
   src: string;
   label: string;
   rate?: number;
   primary?: boolean;
   disabled?: boolean;
+  round?: boolean;
 }): React.JSX.Element {
   const [sounding, setSounding] = useState(false);
   useEffect(() => onPlaying((now, speed) => setSounding(now === src && speed === rate)), [src, rate]);
+  if (round)
+    return (
+      <button
+        type="button"
+        className={`lesson-play lesson-play-round${sounding ? ' is-on' : ''}`}
+        aria-label={label}
+        title={label}
+        disabled={disabled}
+        onClick={() => play(src, rate)}
+      >
+        <SpeakerIcon size={22} />
+      </button>
+    );
   return (
     <button
       type="button"

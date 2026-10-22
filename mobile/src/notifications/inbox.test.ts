@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { IncomingInvite } from '@kurda/shared';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
-import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, relativeTime, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
+import { groupNotices, noticeActor, noticeGroup, noticeKind, noticeTime, resolveDeepLink, splitName, unreadBadge } from './inbox.js';
 import { NOTICE, NOTICE_ROW_HEIGHT } from './rowMetrics';
 
 describe('resolveDeepLink', () => {
@@ -45,16 +45,6 @@ describe('resolveDeepLink', () => {
     expect(resolveDeepLink({ screen: 'Profile' })).toBeNull();
     expect(resolveDeepLink({ screen: 'Nope' })).toBeNull();
     expect(resolveDeepLink({})).toBeNull();
-  });
-});
-
-describe('relativeTime', () => {
-  const now = Date.parse('2026-03-21T12:00:00.000Z');
-  it('formats recency compactly', () => {
-    expect(relativeTime('2026-03-21T11:59:40.000Z', now)).toBe('now');
-    expect(relativeTime('2026-03-21T11:45:00.000Z', now)).toBe('15m');
-    expect(relativeTime('2026-03-21T09:00:00.000Z', now)).toBe('3h');
-    expect(relativeTime('2026-03-19T12:00:00.000Z', now)).toBe('2d');
   });
 });
 
@@ -144,7 +134,7 @@ describe('what a notification is, and who it is from', () => {
   });
 
   it('cuts a line round the name, so the name alone can be bold', () => {
-    expect(splitName('Azad invited you to Wordle', 'Azad')).toEqual({ before: '', name: 'Azad', after: ' invited you to Wordle' });
+    expect(splitName('Azad invited you to Peyvok', 'Azad')).toEqual({ before: '', name: 'Azad', after: ' invited you to Peyvok' });
     expect(splitName('بانگهێشتی کردیت Azad', 'Azad')).toEqual({ before: 'بانگهێشتی کردیت ', name: 'Azad', after: '' });
     expect(splitName('A new badge', 'Azad')).toEqual({ before: 'A new badge', name: '', after: '' });
     expect(splitName('A new badge', null)).toEqual({ before: 'A new badge', name: '', after: '' });

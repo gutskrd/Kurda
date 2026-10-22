@@ -5,6 +5,7 @@ import { useAuth } from '../auth';
 import { NAV_GROUPS, ROLE_NAME, activeEntry, href, searchNav, visibleNav, type NavEntry, type Route } from '../navigation';
 import { useSession } from '../session';
 import { Drawer, Icon } from '../ui';
+import { HevaloMark } from '../brand/HevaloMark';
 
 /**
  * The admin's frame: the nav and the page (KUR-099).
@@ -77,9 +78,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
         >
           <Icon name="menu" size={22} />
         </button>
-        <span className="brand-mark" aria-hidden="true">
-          H
-        </span>
+        <HevaloMark size={30} className="brand-mark" />
         <span className="topbar-title">{title}</span>
       </header>
 
@@ -98,9 +97,7 @@ export function Shell({ route, children, onSignOut }: { route: Route; children: 
 function Brand(): React.JSX.Element {
   return (
     <span className="brand">
-      <span className="brand-mark" aria-hidden="true">
-        H
-      </span>
+      <HevaloMark size={30} className="brand-mark" />
       <span>
         Hevalo Admin
         <span className="brand-sub">Kurdish for everyone</span>

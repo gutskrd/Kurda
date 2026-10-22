@@ -1,5 +1,5 @@
 /**
- * Pure board + keyboard view-model for the Wordle screen (KUR-305). The screen
+ * Pure board + keyboard view-model for the Peyvok screen (KUR-305). The screen
  * stays server-authoritative — it never holds the answer — so everything here is
  * derived from the guesses the server has already scored plus the row the player
  * is currently typing. Kept pure so the fiddly grid/keyboard logic is unit-tested
@@ -83,7 +83,7 @@ export const DEL = 'DEL';
 
 /**
  * QWERTY as every phone has it, and ç ê î ş û as a row of their own beneath —
- * the same layout the browser's Wordle draws (contract §K3).
+ * the same layout the browser's Peyvok draws (contract §K3).
  *
  * The phone used to put ê, û and î inside the top row next to e, u and i, which
  * made it thirteen keys wide: about 20pt a key on a small phone, and the three

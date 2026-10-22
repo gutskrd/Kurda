@@ -36,7 +36,7 @@ function guessError(err: ApiError, t: (key: MessageKey) => string): string {
   }
 }
 
-/** A single-player Kurdish Wordle — server-scored, answer withheld until it ends. */
+/** A single-player Kurdish Peyvok — server-scored, answer withheld until it ends. */
 export function Wordle(): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();

@@ -14,8 +14,8 @@ import { NotificationList, useNotificationReads } from './NotificationList';
 /** Below this the panel is a sheet that fills the screen under the bar; above it, a panel hanging from the bell. */
 const PHONE = '(max-width: 560px)';
 
-/** Where the notification settings are, on the Settings page (NotificationPrefsCard). */
-export const NOTIFICATION_SETTINGS_PATH = '/app/settings#notifications';
+/** Where the notification settings are: their own page in Settings (NotificationPrefsCard). */
+export const NOTIFICATION_SETTINGS_PATH = '/app/settings/notifications';
 
 /**
  * The bell: what happened while you were elsewhere.

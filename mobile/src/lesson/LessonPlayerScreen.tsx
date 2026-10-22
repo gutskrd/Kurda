@@ -8,10 +8,12 @@ import { ClayButton, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
+import { BottomSheet } from '../theme/BottomSheet';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
 import { FeedbackFooter } from './components/FeedbackFooter';
+import { knownVoice } from '../characters/SpeakingCharacter';
 import { LessonResults } from './components/LessonResults';
 import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
@@ -24,6 +26,7 @@ import { emptyMatch, type MatchState } from './match';
 import { answerFeel, currentExercise, initPlayer, isReask, progress, reduce } from './player';
 import { NO_MOMENTS, lessonMoments, type LessonMoments, type Standing, type StreakMark } from './moments';
 import { haptic } from '../feedback/haptics';
+import { playSound } from '../feedback/sounds';
 import { AnswerQueue } from './queue';
 import type { AnswerResult, Exercise, RetryResult, SelfRating, SessionResults, SessionView } from './types';
 import type { ApiClient } from '../api/client';
@@ -89,7 +92,7 @@ export function LessonPlayerScreen({ lessonId, onExit }: { lessonId: string; onE
       </GradientBackground>
     );
   }
-  return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} />;
+  return <SessionPlayer view={view} paths={LESSON_PATHS} onExit={onExit} offerReminders />;
 }
 
 /**
@@ -101,10 +104,13 @@ export function SessionPlayer({
   view,
   paths,
   onExit,
+  offerReminders = false,
 }: {
   view: SessionView;
   paths: SessionPaths;
   onExit: () => void;
+  /** a finished lesson may offer reminders; practice does not */
+  offerReminders?: boolean;
 }) {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -115,6 +121,9 @@ export function SessionPlayer({
   const dir = useDirection();
   const [state, dispatch] = useReducer(reduce, view, (v) => initPlayer(v));
   const queue = useRef(new AnswerQueue()).current;
+  // right answers in a row, which the chime climbs with and the banner names from the third
+  const run = useRef(0);
+  const [inARow, setInARow] = useState(0);
 
   const [choice, setChoice] = useState<number | null>(null);
   const [text, setText] = useState('');
@@ -132,6 +141,7 @@ export function SessionPlayer({
   const [results, setResults] = useState<SessionResults | null>(null);
   const [skipSpeaking, setSkipSpeaking] = useState(false);
   const [showTips, setShowTips] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   // the finished lesson could not be added up (offline, a server hiccup): said, with a retry, never a spinner for ever
   const [completeFailed, setCompleteFailed] = useState(false);
   const [completeAttempt, setCompleteAttempt] = useState(0);
@@ -237,7 +247,7 @@ export function SessionPlayer({
       setSubmitting(false);
       if (res.ok) {
         setStall(null);
-        feelAnswer(ex.type, res.data.accepted);
+        feelAnswer(ex.type, res.data.accepted, run, setInARow);
         dispatch({ type: 'ANSWERED', result: res.data, given });
       }
       // refused (the session ended, say): the second try counts for nothing,
@@ -251,7 +261,7 @@ export function SessionPlayer({
     if (res.ok) {
       // a retry that went through puts the verdict back where the retry was
       setStall(null);
-      feelAnswer(ex.type, res.data.accepted);
+      feelAnswer(ex.type, res.data.accepted, run, setInARow);
       dispatch({ type: 'ANSWERED', result: res.data, given });
     } else if (res.error.kind === 'network') {
       queue.enqueue({ exerciseId: ex.id, answer: body.answer });
@@ -278,15 +288,37 @@ export function SessionPlayer({
     const last = sent[sent.length - 1];
     if (last) {
       setStall(null);
-      feelAnswer(ex?.type, last.accepted);
+      feelAnswer(ex?.type, last.accepted, run, setInARow);
       dispatch({ type: 'ANSWERED', result: last, given });
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
 
+  /*
+   * The ✕ before anything is answered just goes. After that it asks once,
+   * saying how far the lesson has come and that nothing is lost — the answers
+   * stay on the server and the lesson opens where it stopped — so a stray tap
+   * near the corner does not end it, and leaving is never made to feel bad.
+   */
+  const quit = () => {
+    if (state.answeredCount === 0) {
+      onExit();
+      return;
+    }
+    haptic('select');
+    setLeaving(true);
+  };
+
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>
-        <LessonResults results={results} exercises={state.exercises} skipped={state.skipped.length} moments={moments} onDone={onExit} />
+        <LessonResults
+          results={results}
+          exercises={state.exercises}
+          skipped={state.skipped.length}
+          moments={moments}
+          offerReminders={offerReminders}
+          onDone={onExit}
+        />
       </GradientBackground>
     );
   }
@@ -314,7 +346,7 @@ export function SessionPlayer({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <View style={[styles.header, { flexDirection: dir.row, paddingTop: topInset }]}>
           <Pressable
-            onPress={onExit}
+            onPress={quit}
             accessibilityRole="button"
             accessibilityLabel={t('lesson.quit')}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
@@ -336,6 +368,16 @@ export function SessionPlayer({
           ) : null}
         </View>
         {reask ? <Text style={[styles.reask, { color: colors.textSecondary }]}>{t('lesson.secondTry')}</Text> : null}
+
+      <BottomSheet visible={leaving} onClose={() => setLeaving(false)} title={t('lesson.leave.title')} testID="lesson-leave">
+        <Text style={[styles.leaveBody, dir.text, { color: colors.textSecondary }]}>
+          {t('lesson.leave.body', { done: state.answeredCount, total: state.exercises.length })}
+        </Text>
+        <View style={styles.leaveActions}>
+          <ClayButton label={t('lesson.leave.stay')} tone="primary" onPress={() => setLeaving(false)} />
+          <ClayButton label={t('lesson.leave.go')} variant="outline" onPress={onExit} />
+        </View>
+      </BottomSheet>
 
       {view.grammarMd ? (
         <Modal visible={showTips} animationType="slide" onRequestClose={() => setShowTips(false)}>
@@ -385,7 +427,11 @@ export function SessionPlayer({
           />
         ) : null}
         {ex?.type === 'speaking' ? (
+          // a fresh one for each step: two speaking exercises in a row would
+          // otherwise share one microphone, and the first one's take (or one
+          // still running when it was skipped) would follow into the second
           <SpeakingExercise
+            key={state.index}
             exercise={ex}
             onSetRecorded={setRecorded}
             selfRating={selfRating}
@@ -420,6 +466,8 @@ export function SessionPlayer({
         ) : (
           <FeedbackFooter
             feedback={state.feedback}
+            inARow={inARow}
+            staged={(ex?.type === 'listening' && knownVoice(ex.audioVoice) !== null) || (ex?.type === 'speaking' && knownVoice(ex.modelAudioVoice) !== null)}
             canCheck={canCheck}
             submitting={submitting}
             onCheck={check}
@@ -452,10 +500,27 @@ function Stuck({ title, detail, onRetry, onExit }: { title: string; detail?: str
   );
 }
 
-/** Felt as the verdict arrives (`answerFeel`): crisp when right, a gentle double when not. */
-function feelAnswer(type: Exercise['type'] | undefined, accepted: boolean): void {
+/**
+ * Felt and heard as the verdict arrives (`answerFeel`): crisp when right, a
+ * gentle double when not. A right answer's chime climbs a step for each one
+ * in a row (`run`, counted per lesson); a miss starts the run again.
+ */
+function feelAnswer(
+  type: Exercise['type'] | undefined,
+  accepted: boolean,
+  run: { current: number },
+  shown: (inARow: number) => void,
+): void {
   const feel = answerFeel(type, accepted);
   if (feel) haptic(feel);
+  if (feel === 'correct') {
+    playSound('correct', run.current);
+    run.current += 1;
+  } else if (feel === 'wrong') {
+    playSound('wrong');
+    run.current = 0;
+  }
+  shown(run.current);
 }
 
 /** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */
@@ -495,6 +560,8 @@ const styles = StyleSheet.create({
   progressWrap: { flex: 1 },
   body: { padding: spacing.lg, gap: spacing.lg, flexGrow: 1 },
   tallying: { fontSize: typography.sizes.md },
+  leaveBody: { fontSize: typography.sizes.md, lineHeight: 22 },
+  leaveActions: { gap: spacing.sm, marginTop: spacing.sm },
   errorText: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, textAlign: 'center' },
   errorDetail: { fontSize: typography.sizes.sm, textAlign: 'center' },
   stuckActions: { alignSelf: 'stretch', gap: spacing.sm, marginTop: spacing.sm },

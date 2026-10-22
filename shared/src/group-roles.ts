@@ -9,6 +9,12 @@ export type Role = (typeof ROLES)[number];
 
 export const MAX_GROUP_MEMBERS = 100;
 
+/** A group's name, in characters once trimmed; the server holds both ends. */
+export const GROUP_NAME_MIN = 2;
+export const GROUP_NAME_MAX = 60;
+/** A group's description, which can be left empty. */
+export const GROUP_DESCRIPTION_MAX = 300;
+
 export function isRole(value: string): value is Role {
   return (ROLES as readonly string[]).includes(value);
 }
@@ -31,4 +37,13 @@ export function canManage(actor: Role, target: Role): boolean {
 export function canSetRole(actor: Role, newRole: Role): boolean {
   if (newRole === 'owner') return false; // ownership moves via transfer, not setRole
   return actor === 'owner';
+}
+
+/**
+ * Who may change how a group presents itself — its name, its description and
+ * its picture: the owner and the admins (moderators), the people already
+ * trusted to keep it in order. Members may not; the server decides with this.
+ */
+export function canEditGroup(actor: Role | null): boolean {
+  return actor === 'owner' || actor === 'moderator';
 }

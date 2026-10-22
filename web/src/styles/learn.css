@@ -214,39 +214,44 @@
   align-items: center;
   gap: 10px;
 }
-/*
- * Who says the exercise's recordings (learn/Voice.tsx): a portrait beside the
- * buttons that play them, or the words being asked about. Only for a
- * recording an editor gave a character; the rest of the exercise is where it
- * always was, below.
- */
-.lesson-voice {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  align-items: center;
-  gap: 16px;
-}
-.lesson-voice-face {
-  --speaker-size: 104px;
-}
-.lesson-voice-body {
-  display: grid;
-  gap: 12px;
-  min-width: 0;
-}
-@media (min-width: 768px) {
-  .lesson-voice {
-    gap: 20px;
-  }
-  .lesson-voice-face {
-    --speaker-size: 128px;
-  }
-}
+/* the character beside the answer stands on the panel's floor */
 .lesson-feedback-face {
-  --speaker-size: 64px;
+  align-self: end;
 }
 .lesson-play svg {
   direction: ltr;
+}
+/* the speaker alone, in a round button the size of a fingertip */
+.lesson-play-round {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--ink);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.lesson-play-round:hover {
+  border-color: var(--border-strong);
+}
+.lesson-play-round.is-on {
+  background: var(--gold-soft);
+}
+.lesson-play-round:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.lesson-play-round:disabled {
+  cursor: default;
+  opacity: 0.5;
 }
 .lesson-play.is-on {
   border-color: var(--gold);

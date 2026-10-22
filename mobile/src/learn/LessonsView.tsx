@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Text,
   View,
-  useWindowDimensions,
   type LayoutChangeEvent,
   type NativeScrollEvent,
   type NativeSyntheticEvent,
@@ -20,9 +19,7 @@ import { Icon, type IconName } from '../theme/Icon';
 import { display, sectionLabel } from '../theme/fonts';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useTabBarInset } from '../navigation/tabBarLayout';
-import { GoalPicker } from '../goals/GoalPicker';
-import type { DailyGoalStatus, GoalOption } from '../goals/format';
-import { LessonPath, LessonPathSkeleton, type PathFocus } from '../coursemap/LessonPath';
+import { LessonPath, LessonPathSkeleton, PinnedUnit, type PathFocus, type UnitPlace } from '../coursemap/LessonPath';
 import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
@@ -36,21 +33,18 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
-import { streakLabelKey, type Streak } from '../streak/format';
 import { fraction, nextStep, type NextStep } from './next';
 
 /**
  * Learn's first half: the next lesson, today, the tools, and the course.
  *
  * Top to bottom in the order of what somebody opening it wants: the one next
- * step (a card with one button), how today is going, the practice tools, and
- * then the course as a lesson path for anyone who wants to choose for
- * themselves. Continuing a lesson is one tap from here — from the card, or
- * from the "Continue" over the current skill on the path.
- *
- * Today is said plainly — how much of the daily goal is done, how long the
- * streak is — and nothing here counts down, warns, or says what could be
- * lost. Some of the people reading it are children.
+ * step (a card with one button), the practice tools in one row, the week's
+ * league and the day's extras, and then the course as a lesson path for
+ * anyone who wants to choose for themselves. Continuing a lesson is one tap
+ * from here — from the card, or from the "Continue" over the current skill
+ * on the path. How today is going sits in the bar above (LearnBar), where it
+ * stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
  * are several. When it first appears it scrolls to the current skill, and a
@@ -65,11 +59,6 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const dir = useDirection();
   const reduceMotion = useReducedMotion();
   const tabBarInset = useTabBarInset();
-  const [goal, setGoal] = useState<DailyGoalStatus | null>(null);
-  const [streak, setStreak] = useState<Streak | null>(null);
-  // whether today's two answers are in (either way), so the card's place is held until then and no longer
-  const [goalSettled, setGoalSettled] = useState(false);
-  const [streakSettled, setStreakSettled] = useState(false);
   const [due, setDue] = useState<number | null>(null);
   // the review count places review on the path, so the path waits for it (or for its failure) once
   const [dueSettled, setDueSettled] = useState(false);
@@ -83,16 +72,6 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
     useCallback(() => {
       let active = true;
       setFailed(false);
-      void client.get<DailyGoalStatus>('/me/daily-goal').then((res) => {
-        if (!active) return;
-        if (res.ok) setGoal(res.data);
-        setGoalSettled(true);
-      });
-      void client.get<{ user: { streak?: Streak } }>('/me').then((res) => {
-        if (!active) return;
-        if (res.ok && res.data.user.streak) setStreak(res.data.user.streak);
-        setStreakSettled(true);
-      });
       void client.get<{ due: number }>('/practice/due').then((res) => {
         if (!active) return;
         if (res.ok) setDue(res.data.due);
@@ -124,15 +103,6 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
     }, [client, reloadKey]),
   );
 
-  const changeGoal = useCallback(
-    async (next: GoalOption) => {
-      setGoal((g) => (g ? { ...g, goal: next } : g));
-      const res = await client.put<DailyGoalStatus>('/me/daily-goal', { goal: next });
-      if (res.ok) setGoal(res.data);
-    },
-    [client],
-  );
-
   // the course on the path: the one chosen, else the one the learner is furthest into
   const courseId = chosen && courses?.some((c) => c.course.id === chosen) ? chosen : courses ? firstCourse(courses) : null;
   const entry = courses?.find((c) => c.course.id === courseId) ?? null;
@@ -158,6 +128,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const [courseTop, setCourseTop] = useState<number | null>(null);
   const [pathInCourse, setPathInCourse] = useState<number | null>(null);
   const [focus, setFocus] = useState<PathFocus | null>(null);
+  const [units, setUnits] = useState<UnitPlace[]>([]);
   const [viewport, setViewport] = useState(0);
   const [scrollY, setScrollY] = useState(0);
   const scrolledFor = useRef<string | null>(null);
@@ -171,30 +142,52 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
    * never pulls it away from what they are looking at.
    */
   const touched = useRef(false);
-  const centredAt = useRef<{ y: number; since: number } | null>(null);
+  const centredAt = useRef<{ target: number; since: number } | null>(null);
   const onFocus = useCallback((next: PathFocus | null) => {
     setFocus((was) => (was?.key === next?.key && was?.y === next?.y && was?.current === next?.current ? was : next));
   }, []);
   // a course whose map did not load has no path, and so nothing to scroll to
   const focusY = entry?.map && focus && courseTop !== null && pathInCourse !== null ? courseTop + pathInCourse + focus.y : null;
 
+  /*
+   * The offset that puts the stop in the middle — unless that would leave its
+   * unit's banner half on the screen, cut through the middle. Then a little
+   * further, until the banner has gone up under the pinned one, which takes
+   * its place whole.
+   */
+  const pathTopOnPage = courseTop !== null && pathInCourse !== null ? courseTop + pathInCourse : null;
+  const settle = useCallback(
+    (fy: number): number => {
+      const y = centredOffset(fy, viewport, tabBarInset);
+      if (pathTopOnPage === null) return y;
+      const unit = units.find((u) => fy >= pathTopOnPage + u.top && fy <= pathTopOnPage + u.bottom);
+      if (!unit) return y;
+      const top = pathTopOnPage + unit.top;
+      const clear = pathTopOnPage + unit.bannerBottom - PIN_HEIGHT + 1;
+      return y > top && y < clear ? clear : y;
+    },
+    [viewport, tabBarInset, pathTopOnPage, units],
+  );
+
   useEffect(() => {
     if (focusY === null || !focus || viewport === 0 || !courseId) return;
     const mark = `${courseId}:${focus.key}`;
     if (scrolledFor.current === mark) {
       const was = centredAt.current;
-      if (touched.current || !was || was.y === focusY || Date.now() - was.since > FOLLOW_MS) return;
-      // the same stop, moved by something arriving above it: put it back at once, without a glide —
-      // this only undoes a shift nobody asked for
-      centredAt.current = { y: focusY, since: was.since };
-      scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: false });
+      const target = settle(focusY);
+      if (touched.current || !was || was.target === target || Date.now() - was.since > FOLLOW_MS) return;
+      // the same stop, moved by something arriving above it (or the banners just measured): put it
+      // back at once, without a glide — this only undoes a shift nobody asked for
+      centredAt.current = { target, since: was.since };
+      scroller.current?.scrollTo({ y: target, animated: false });
       return;
     }
     scrolledFor.current = mark;
-    centredAt.current = { y: focusY, since: Date.now() };
+    const target = settle(focusY);
+    centredAt.current = { target, since: Date.now() };
     touched.current = false;
-    scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: !reduceMotion });
-  }, [focusY, focus, viewport, courseId, tabBarInset, reduceMotion]);
+    scroller.current?.scrollTo({ y: target, animated: !reduceMotion });
+  }, [focusY, focus, viewport, courseId, settle, reduceMotion]);
 
   // only once the path is on the screen: above it, the card at the top already offers the next lesson
   const onPath = courseTop !== null && scrollY + viewport - tabBarInset > courseTop;
@@ -202,10 +195,20 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   // back to the skill to do now — or, with none left open, to the furthest point reached
   const jumpWord = focus?.current ? t('coursemap.path.jump') : t('coursemap.path.jumpEnd');
   const jump = () => {
-    if (focusY !== null) scroller.current?.scrollTo({ y: centredOffset(focusY, viewport, tabBarInset), animated: !reduceMotion });
+    if (focusY !== null) scroller.current?.scrollTo({ y: settle(focusY), animated: !reduceMotion });
   };
 
   const step = courses ? nextStep(courses) : null;
+
+  /*
+   * The unit being scrolled through, once its banner has gone up out of
+   * sight and while its stops are still on the screen: pinned at the top, so
+   * it is always clear whose stops these are.
+   */
+  const pinned =
+    pathTopOnPage === null
+      ? null
+      : (units.find((u) => scrollY > pathTopOnPage + u.bannerBottom - PIN_HEIGHT && scrollY < pathTopOnPage + u.bottom - PIN_CLEAR) ?? null);
 
   if (failed && !courses) {
     return <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />;
@@ -227,7 +230,6 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
       >
         <View style={styles.header}>
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
-          {!goal && !streak && !(goalSettled && streakSettled) ? <TodaySkeleton /> : <TodayCard goal={goal} streak={streak} onChangeGoal={changeGoal} />}
           <View style={styles.tools}>
             <ToolTile
               icon="review"
@@ -245,7 +247,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
               onPress={() => navigation.navigate('Practice')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
-            {/* the letters every course is written in: a row of their own on a phone, a third beside the two on a tablet */}
+            {/* the letters every course is written in, shown rather than drawn as an icon */}
             <ToolTile
               letters={locale === 'ckb' ? SORANI_TEASER : LATIN_TEASER}
               title={t('nav.alphabet')}
@@ -296,7 +298,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
             ) : null}
             {entry?.map && dueSettled ? (
               <View onLayout={(e: LayoutChangeEvent) => setPathInCourse(e.nativeEvent.layout.y)}>
-                <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} />
+                <LessonPath key={entry.course.id} map={entry.map} due={due ?? 0} onFocus={onFocus} onUnits={setUnits} />
               </View>
             ) : entry?.map ? (
               // the path waits for the review count, which places review on it
@@ -315,6 +317,13 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
         )}
       </ScrollView>
 
+      {pinned ? (
+        // on the page's own colour, so nothing scrolling under it shows round its edges
+        <View style={[styles.pinned, { backgroundColor: colors.background }]} pointerEvents="box-none">
+          <PinnedUnit unit={pinned} />
+        </View>
+      ) : null}
+
       {away ? (
         <View style={[styles.jumpWrap, { bottom: tabBarInset + spacing.sm }]} pointerEvents="box-none">
           <Pressable
@@ -332,11 +341,17 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   );
 }
 
+/** The pinned unit gives way this far before its unit ends, so it never sits over the next unit's own banner. */
+const PIN_CLEAR = 72;
+/**
+ * The pinned unit's height: it takes over as soon as no more of the banner
+ * than that is left on the screen, so it covers the rest rather than sitting
+ * on top of half a banner.
+ */
+const PIN_HEIGHT = 68;
+
 /** How long after the path is first centred a card arriving above it may still move the scroll to follow. */
 const FOLLOW_MS = 4000;
-
-/** From this window width up, Learn's tools stand three to a row. */
-const TOOLS_THREE_ACROSS = 600;
 
 /**
  * The one next step: which course and unit, the lesson's name, how far the
@@ -397,32 +412,6 @@ function ContinueSkeleton(): React.JSX.Element {
   );
 }
 
-/** Today's card while the goal and the streak are on their way: its heading and chip, the goal and its bar, the streak. */
-function TodaySkeleton(): React.JSX.Element {
-  const { colors } = useTheme();
-  const dir = useDirection();
-  const start = useStartEdge();
-  return (
-    <View style={[styles.today, { backgroundColor: colors.surface }]}>
-      <View style={[styles.todayHead, { flexDirection: dir.row }]}>
-        <SkeletonText size={typography.sizes.xs} width={56} />
-        <Skeleton width={104} height={GOAL_CHIP} radius={radii.pill} />
-      </View>
-      <View style={styles.todayRow}>
-        <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
-          <Skeleton width={20} height={20} radius={radii.pill} />
-          <SkeletonText size={typography.sizes.md} width="46%" style={[styles.flex, start]} />
-        </View>
-        <Skeleton height={6} radius={radii.pill} />
-      </View>
-      <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
-        <Skeleton width={20} height={20} radius={radii.pill} />
-        <SkeletonText size={typography.sizes.md} width="28%" style={[styles.flex, start]} />
-      </View>
-    </View>
-  );
-}
-
 /** The course's heading, its name and the start of its path, while the course is on its way. */
 function CourseSkeleton(): React.JSX.Element {
   const start = useStartEdge();
@@ -444,94 +433,6 @@ function useStartEdge(): { alignItems: 'flex-start' | 'flex-end' } {
 const HERO_TITLE_LINE = Math.round(typography.sizes.lg * typography.displayLineHeight);
 /** ClayButton's large size */
 const LARGE_BUTTON = 50;
-const GOAL_CHIP = 32;
-
-/**
- * How today is going, in two plain facts: the daily goal so far, and the
- * streak. The goal can be changed from here, behind a small control, because
- * it is set once and rarely touched.
- */
-function TodayCard({
-  goal,
-  streak,
-  onChangeGoal,
-}: {
-  goal: DailyGoalStatus | null;
-  streak: Streak | null;
-  onChangeGoal: (next: GoalOption) => void;
-}): React.JSX.Element | null {
-  const { colors } = useTheme();
-  const { t, locale } = useI18n();
-  const dir = useDirection();
-  const [picking, setPicking] = useState(false);
-  if (!goal && !streak) return null;
-
-  const goalLine = goal
-    ? goal.completed
-      ? t('learn.today.goalMet')
-      : t('learn.today.goal', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })
-    : '';
-  const days = streak?.current ?? 0;
-  const streakLine = days > 0 ? t(streakLabelKey(days), { count: formatNumber(days, locale) }) : t('learn.today.streakStart');
-
-  return (
-    <View style={[styles.today, { backgroundColor: colors.surface }]}>
-      <View style={[styles.todayHead, { flexDirection: dir.row }]}>
-        <Text style={[styles.todayLabel, { color: colors.textSecondary }]} accessibilityRole="header">
-          {t('learn.today.title')}
-        </Text>
-        {goal ? (
-          <Pressable
-            onPress={() => setPicking((p) => !p)}
-            accessibilityRole="button"
-            accessibilityState={{ expanded: picking }}
-            accessibilityLabel={t('learn.today.goalSetting', { xp: goal.goal })}
-            hitSlop={8}
-            style={({ pressed }) => [styles.goalChip, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
-          >
-            <Text style={[styles.goalChipText, { color: colors.textPrimary }]}>{t('learn.today.goalSetting', { xp: goal.goal })}</Text>
-            <Icon name="chevron-down" size={12} color={colors.textSecondary} />
-          </Pressable>
-        ) : null}
-      </View>
-
-      {goal ? (
-        <View style={styles.todayRow}>
-          <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
-            <Icon name={goal.completed ? 'check' : 'bolt'} size={20} color={goal.completed ? colors.success : colors.textPrimary} />
-            <Text style={[styles.todayText, dir.text, { color: colors.textPrimary }]}>{goalLine}</Text>
-          </View>
-          <View style={[styles.bar, { backgroundColor: colors.controlTrack }]}>
-            <View
-              style={[
-                styles.barFill,
-                { width: `${Math.round(Math.max(0, Math.min(1, goal.progress)) * 100)}%`, backgroundColor: goal.completed ? colors.success : colors.gold },
-                dir.rtl && styles.barFillEnd,
-              ]}
-            />
-          </View>
-        </View>
-      ) : null}
-
-      {streak ? (
-        <View style={[styles.todayFacts, { flexDirection: dir.row }]}>
-          <Icon name="flame" size={20} color={days > 0 ? colors.goldText : colors.textSecondary} />
-          <Text style={[styles.todayText, dir.text, { color: days > 0 ? colors.textPrimary : colors.textSecondary }]}>{streakLine}</Text>
-        </View>
-      ) : null}
-
-      {goal && picking ? (
-        <GoalPicker
-          value={goal.goal}
-          onChange={(next) => {
-            onChangeGoal(next);
-            setPicking(false);
-          }}
-        />
-      ) : null}
-    </View>
-  );
-}
 
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
@@ -556,8 +457,6 @@ function ToolTile({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  // two to a row on a phone, so the third has a row of its own; three to a row from a tablet's width
-  const across = useWindowDimensions().width >= TOOLS_THREE_ACROSS ? 3 : 2;
   return (
     <Pressable
       onPress={onPress}
@@ -565,7 +464,6 @@ function ToolTile({
       accessibilityLabel={detail ? `${title}, ${detail}` : title}
       style={({ pressed }) => [
         styles.tile,
-        { flexBasis: across === 3 ? '30%' : '40%' },
         // a column starts on the reading side too
         { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1, alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' },
       ]}
@@ -608,26 +506,11 @@ const styles = StyleSheet.create({
   barFill: { height: 6, borderRadius: radii.pill },
   barFillEnd: { alignSelf: 'flex-end' },
 
-  today: { borderRadius: radii.lg, padding: spacing.md, gap: spacing.md },
-  todayHead: { alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
-  todayLabel: { ...sectionLabel },
-  goalChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    minHeight: GOAL_CHIP,
-    paddingHorizontal: spacing.md - 4,
-    borderRadius: radii.pill,
-  },
-  goalChipText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
-  todayRow: { gap: spacing.sm },
-  todayFacts: { alignItems: 'center', gap: spacing.sm },
-  todayText: { flex: 1, fontSize: typography.sizes.md },
-
-  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: layout.rowGap },
-  tile: { flexGrow: 1, minHeight: MIN_TOUCH_TARGET * 2, borderRadius: radii.lg, padding: spacing.md, gap: 4 },
-  tileLetters: { ...display(typography.sizes.lg), lineHeight: 24 },
-  tileTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
+  // the three side by side, one row: the path is what this screen is for, and the tools sit above it, small
+  tools: { flexDirection: 'row', gap: spacing.sm },
+  tile: { flex: 1, minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
+  tileLetters: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, lineHeight: 22 },
+  tileTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   tileDetail: { fontSize: typography.sizes.xs },
 
   course: { gap: spacing.sm + 4, marginTop: spacing.md },
@@ -643,6 +526,7 @@ const styles = StyleSheet.create({
   failed: { gap: spacing.sm, alignItems: 'flex-start', marginTop: spacing.xs },
   failedText: { fontSize: typography.sizes.sm },
 
+  pinned: { position: 'absolute', top: 0, left: 0, right: 0, paddingTop: spacing.xs, paddingHorizontal: layout.gutter },
   jumpWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center' },
   jump: {
     alignItems: 'center',

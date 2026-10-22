@@ -5,7 +5,8 @@ import { AppError } from '../plugins/errors.js';
 import { verifyCaptcha } from './captcha.js';
 import { isDisposableEmail } from './disposable-domains.js';
 import { emailAddress } from './email-address.js';
-import { OAuthService } from './oauth.js';
+import { defaultJwksResolver, OAuthService } from './oauth.js';
+import { appleTokens } from './apple-tokens.js';
 import { signupRejected } from './rejections.js';
 import { isBannedEmail } from '../moderation/ban-registry.js';
 import { AuthService } from './service.js';
@@ -17,6 +18,7 @@ import { sessionName } from './session-name.js';
 import { APP_LOCALE_CODES } from '@kurda/shared';
 import { safeTimeZone } from '../streaks/streak-logic.js';
 import { assertOldEnough, birthMonthSchema, birthYearSchema } from '../users/birth-month.js';
+import type { AdminAccess } from '../admin/owner-access.js';
 
 /** Rejects a password that fails policy with a specific, actionable reason. */
 function assertPasswordPolicy(password: string): void {
@@ -108,13 +110,21 @@ export const verifyEmailCodeBodySchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });
 
-export const oauthBodySchema = z.object({
-  provider: z.enum(['google', 'apple']),
-  idToken: z.string().min(20).max(4_096),
-  deviceName: z.string().max(80).optional(),
-});
+export const oauthBodySchema = z
+  .object({
+    provider: z.enum(['google', 'apple']),
+    idToken: z.string().min(20).max(4_096),
+    deviceName: z.string().max(80).optional(),
+    /** Apple only: the authorization code, exchanged for a refresh token to revoke at deletion */
+    authorizationCode: z.string().min(1).max(1_024).optional(),
+    /** Apple only: the name shared on a first sign-in, for a new account (cut to a display name's length) */
+    fullName: z.string().max(200).optional(),
+  })
+  .refine((body) => body.provider === 'apple' || (body.authorizationCode === undefined && body.fullName === undefined), {
+    message: 'authorizationCode and fullName are only sent with Apple sign-in',
+  });
 
-export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): void {
+export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, adminAccess?: AdminAccess): void {
   const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log, redis: app.redis });
   // Risk scoring (KUR-296): assesses signup/login, enforces per-device/IP caps,
   // logs decisions for tuning + audit. IP reputation defaults to neutral until a
@@ -202,6 +212,43 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
       return result;
     },
   );
+
+  /**
+   * The admin console's own sign-in: the same checks as above (risk, lockouts,
+   * CAPTCHA, one password check's time whatever happens), but it signs in only
+   * the console's owner (admin/owner-access.ts). Every other account, even with
+   * the right password, is answered exactly as a wrong password is and gets no
+   * session: nothing here tells anyone that their account exists, that their
+   * password was right, or that it is not staff. Its own, stricter budget.
+   */
+  if (adminAccess) {
+    const access = adminAccess;
+    app.post(
+      '/admin/auth/login',
+      {
+        schema: { body: loginBodySchema },
+        config: { rateLimit: { max: 5, windowMs: 5 * 60_000, per: 'ip' as const } },
+      },
+      async (req) => {
+        const body = req.body as z.infer<typeof loginBodySchema>;
+        const { assessment, decisionId } = await risk.assessLogin({ email: body.email, ip: req.ip, deviceId: deviceIdOf(req.headers) });
+        if (assessment.action === 'verify_or_block') {
+          throw new AppError('LOGIN_VERIFICATION_REQUIRED', 403, 'additional verification required');
+        }
+        const result = await service.login({
+          ...body,
+          deviceName: sessionName(body.deviceName, req.headers['user-agent']),
+          ip: req.ip,
+          deviceId: deviceIdOf(req.headers),
+          only: (userId) => access.allows(userId),
+        });
+        await risk.attachUser(decisionId, result.user.id).catch((err) => {
+          app.log.warn({ err }, 'failed to attach user to risk decision');
+        });
+        return result;
+      },
+    );
+  }
 
   app.post(
     '/auth/refresh',
@@ -376,7 +423,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
     },
   );
 
-  const oauth = new OAuthService(config, app.db);
+  const oauth = new OAuthService(config, app.db, defaultJwksResolver, appleTokens(config, app.db, { log: app.log }));
   app.post(
     '/auth/oauth',
     {
@@ -390,6 +437,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig): voi
         body.idToken,
         sessionName(body.deviceName, req.headers['user-agent']),
         deviceIdOf(req.headers),
+        { authorizationCode: body.authorizationCode, fullName: body.fullName },
       );
       return reply.code(result.created ? 201 : 200).send(result);
     },

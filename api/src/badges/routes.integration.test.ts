@@ -10,7 +10,7 @@ import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { bornYearsAgo } from '../test/age.js';
 import { befriend } from '../test/social.js';
-import { GdprService, eraseChildData } from '../gdpr/service.js';
+import { GdprService, eraseAccountData } from '../gdpr/service.js';
 import { LeagueService } from '../leagues/service.js';
 import { learningAward } from '../test/progress.js';
 
@@ -78,8 +78,8 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     const me = await signUp('me');
     const page = await call(me, 'GET', '/me/badges');
     expect(page.statusCode).toBe(200);
-    expect(page.json().badges).toHaveLength(44);
-    expect(page.json()).toMatchObject({ showcase: [], secretsFound: 0, secretsTotal: 6, legacy: [] });
+    expect(page.json().badges).toHaveLength(62);
+    expect(page.json()).toMatchObject({ showcase: [], secretsFound: 0, secretsTotal: 10, legacy: [] });
 
     const bad = await call(me, 'PUT', '/me/badges/showcase', { keys: ['agir'] });
     expect(bad.statusCode).toBe(400);
@@ -90,9 +90,9 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     expect((await call(me, 'GET', '/me/badges/unseen')).json()).toEqual({ unseen: [] });
     expect((await call(me, 'POST', '/me/badges/seen', {})).statusCode).toBe(200);
     expect((await call(null, 'GET', '/me/badges')).statusCode).toBe(401);
-    expect((await call(me, 'GET', '/admin/badges')).statusCode).toBe(403);
-    expect((await call(me, 'GET', '/admin/leagues')).statusCode).toBe(403);
-    expect((await call(me, 'POST', `/admin/users/${me.id}/badges/agir`, { action: 'award', tier: 1, reason: 'nope' })).statusCode).toBe(403);
+    expect((await call(me, 'GET', '/admin/badges')).statusCode).toBe(404);
+    expect((await call(me, 'GET', '/admin/leagues')).statusCode).toBe(404);
+    expect((await call(me, 'POST', `/admin/users/${me.id}/badges/agir`, { action: 'award', tier: 1, reason: 'nope' })).statusCode).toBe(404);
   });
 
   it('a profile names no league for someone never in one, nor for someone who opted out, and the tier key once they are', async () => {
@@ -173,7 +173,7 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
-      await eraseChildData(client, child.id);
+      await eraseAccountData(client, child.id);
       await client.query('ROLLBACK');
     } finally {
       client.release();

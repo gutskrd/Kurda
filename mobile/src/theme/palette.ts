@@ -7,8 +7,8 @@
  * Zêr and highlights. Green and red mean right and wrong (or safe and
  * destructive) and are used sparingly, never as the only signal.
  *
- * The floating island bar and the cards keep a light glass treatment; the
- * page itself is flat. Components read the active `Palette` from
+ * The cards keep a light glass treatment; the page and the tab bar are
+ * flat. Components read the active `Palette` from
  * ThemeProvider so both schemes stay in sync, and `palette.contrast.test.ts`
  * holds every text-on-surface pair to WCAG AA.
  */
@@ -74,9 +74,40 @@ export interface Palette {
   clayBorder: string;
   softShadow: string; // outer drop shadow colour (spatial elevation)
 
-  controlTrack: string; // inactive segmented / toggle track
+  controlTrack: string; // inactive segmented control track
+  /**
+   * A switch, on and off: its track and its knob.
+   *
+   * In the app's ink, not green. Green in this app means a right answer, and
+   * a switch that is on is not right, only on; a screen of settings in green
+   * reads as a screen of things that went well, and pulls the eye to every
+   * switch at once. Ink is what every other control here is drawn in, so the
+   * switches are calm and look like they belong. Colour is kept for what
+   * needs noticing: gold for something to act on, red for what cannot be
+   * undone.
+   *
+   * Each track clears 3:1 against every surface it sits on, and each knob
+   * 3:1 against its track (WCAG 1.4.11); the knob's side is the second sign
+   * of the state, so it is never told by colour alone. The knob is drawn in
+   * its own colour on every platform, rather than iOS's shadowed white,
+   * because in dark mode a white knob on the white track of a switch that is
+   * on could not be seen.
+   */
+  switchOn: string;
+  switchOnThumb: string;
+  switchOff: string;
+  switchOffThumb: string;
   /** The chosen option in a segmented control: a step up from its track. */
   selectedFill: string;
+
+  /**
+   * Something not reached yet — a league above yours: its shape in a quiet
+   * grey, and the keyhole on it a step darker (lighter in the dark). Seen,
+   * so it is something to look forward to, but nothing like the colour of
+   * what has been earned. Not a control, so it is not held to 3:1.
+   */
+  locked: string;
+  lockedMark: string;
 
   /*
    * The two raised surfaces, for things that sit on the page rather than
@@ -94,12 +125,12 @@ export interface Palette {
   /**
    * The bar's own fill: solid.
    *
-   * There is no blur behind the island on any platform, so any translucency
-   * shows what scrolls beneath as a ghost between the tab labels — at 94%
-   * white text and bright cards were still plainly visible through it, on
-   * the phone as much as in a browser, because an rgba fill composites the
-   * same way everywhere. The island reads as floating from its shadow and
-   * the fade under it, not from being see-through.
+   * There is no blur behind the bar on any platform, so any translucency
+   * shows what scrolls beneath as a ghost between the icons — at 94% white
+   * text and bright cards were still plainly visible through it, on the
+   * phone as much as in a browser, because an rgba fill composites the same
+   * way everywhere. A hairline along its top edge is what separates it from
+   * the page.
    */
   barFill: string;
 
@@ -152,7 +183,13 @@ export const LIGHT: Palette = {
   softShadow: '#3A3A3A',
 
   controlTrack: 'rgba(0,0,0,0.05)',
+  switchOn: '#1A1A1A',
+  switchOnThumb: '#FFFFFF',
+  switchOff: '#86898F',
+  switchOffThumb: '#FFFFFF',
   selectedFill: '#FFFFFF',
+  locked: '#E2E4E8',
+  lockedMark: '#A5A9B0',
 
   surface: '#FFFFFF',
   surfaceRaised: '#FFFFFF',
@@ -193,7 +230,13 @@ export const DARK: Palette = {
   softShadow: '#000000',
 
   controlTrack: 'rgba(255,255,255,0.11)',
+  switchOn: '#F2F3F5',
+  switchOnThumb: '#0B0D10',
+  switchOff: '#686C73',
+  switchOffThumb: '#FFFFFF',
   selectedFill: 'rgba(255,255,255,0.16)',
+  locked: '#262B33',
+  lockedMark: '#4D545E',
 
   surface: '#14171C',
   surfaceRaised: '#1B1F26',

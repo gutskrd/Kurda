@@ -48,6 +48,13 @@ export interface AuthFailure {
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
+/** What Sign in with Apple gives the app besides the identity token. */
+export interface AppleSignInExtras {
+  authorizationCode?: string | null;
+  /** given and family name, joined; Apple shares it on the first sign-in only */
+  fullName?: string | null;
+}
+
 interface AuthContextValue {
   status: AuthStatus;
   user: SessionUser | null;
@@ -105,8 +112,14 @@ interface AuthContextValue {
    * the backend (POST /auth/oauth), which verifies it and returns a session —
    * stored via the same path as email login. Resolves to an error message, or
    * null on success.
+   *
+   * Apple's sign-in also passes on what Apple gave with the token (`apple`):
+   * the one-time authorization code, which the server exchanges for the token
+   * it revokes at Apple when the account is deleted, and the name the person
+   * shared, which Apple gives on their first sign-in only and the server uses
+   * for a new account.
    */
-  oauthSignIn(provider: 'apple' | 'google', idToken: string): Promise<string | null>;
+  oauthSignIn(provider: 'apple' | 'google', idToken: string, apple?: AppleSignInExtras): Promise<string | null>;
   /**
    * Submit the 6-digit email-ownership code (KUR-014). On success the session
    * user is marked verified, which lifts the verification gate. Resolves to an
@@ -263,8 +276,15 @@ export function AuthProvider({
         setStatus('signedOut');
       }
     },
-    oauthSignIn: async (provider, idToken) => {
-      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken, ...device });
+    oauthSignIn: async (provider, idToken, apple) => {
+      const extras =
+        provider === 'apple'
+          ? {
+              ...(apple?.authorizationCode ? { authorizationCode: apple.authorizationCode } : {}),
+              ...(apple?.fullName ? { fullName: apple.fullName } : {}),
+            }
+          : {};
+      const res = await client.post<AuthPayload>('/auth/oauth', { provider, idToken, ...extras, ...device });
       if (!res.ok) {
         const suspended = res.error.code === 'ACCOUNT_SUSPENDED' ? suspendedDetails(res.error.details) : null;
         if (suspended) {

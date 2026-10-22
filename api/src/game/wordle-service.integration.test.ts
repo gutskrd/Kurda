@@ -1,4 +1,4 @@
-/** Wordle daily & practice backend against real Postgres (CI job). KUR-304. */
+/** Peyvok daily & practice backend against real Postgres (CI job). KUR-304. */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import pg from 'pg';
 import { WordleService } from './wordle-service.js';

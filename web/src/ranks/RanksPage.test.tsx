@@ -82,9 +82,9 @@ const boardUrls = (fetchMock: ReturnType<typeof mount>): string[] =>
 describe('RanksPage', () => {
   it('opens on the game in its address, with its card, and the friends board first', async () => {
     const fetchMock = mount('/app/ranks/wordle-battle', { friends });
-    expect(await screen.findByRole('heading', { level: 1, name: 'Wordle Battle' })).toBeInTheDocument();
-    expect(screen.getByRole('article', { name: 'Wordle Battle' })).toHaveTextContent('Gir II');
-    expect(screen.getByRole('link', { name: 'Wordle Battle' })).toHaveAttribute('aria-current', 'page');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Peyvok Battle' })).toBeInTheDocument();
+    expect(screen.getByRole('article', { name: 'Peyvok Battle' })).toHaveTextContent('Gir II');
+    expect(screen.getByRole('link', { name: 'Peyvok Battle' })).toHaveAttribute('aria-current', 'page');
 
     const list = await screen.findByRole('list', { name: en['ranks.board.friends'] });
     const rows = within(list).getAllByRole('listitem');

@@ -210,4 +210,27 @@ describe('Friends', () => {
     expect(await screen.findByRole('link', { name: 'Find people' })).toHaveAttribute('href', '/app/search');
     expect(screen.queryByRole('searchbox')).not.toBeInTheDocument();
   });
+  it('says so when accepting would take their friend list past its limit, instead of the request just staying', async () => {
+    localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string, init?: RequestInit) => {
+        if (init?.method === 'POST' && url.includes('/friends/requests/u3/accept')) {
+          return jsonResponse(409, {
+            code: 'FRIENDS_FULL',
+            message: 'their friend list is full (max 500)',
+            details: { limit: 'friends', max: 500, theirs: true },
+          });
+        }
+        if (url.includes('/friends/requests/outgoing')) return jsonResponse(200, { requests: [] });
+        if (url.includes('/friends/requests')) return jsonResponse(200, { requests: [{ userId: 'u3', username: 'rojda' }] });
+        if (url.includes('/friends')) return jsonResponse(200, { friends: [] });
+        return jsonResponse(200, {});
+      }),
+    );
+    renderApp(<Friends />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Accept' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('They already have 500 friends, the most anyone can have.');
+  });
 });

@@ -105,8 +105,8 @@ describe.skipIf(!DATABASE_URL)('story admin (integration)', () => {
 
   it('is for the people who edit lessons, and nobody else', async () => {
     expect((await call('GET', '/admin/stories', undefined, '')).statusCode).toBe(401);
-    expect((await call('GET', '/admin/stories', undefined, learner)).statusCode).toBe(403);
-    expect((await call('POST', '/admin/stories', testStory(slug('nope')), learner)).statusCode).toBe(403);
+    expect((await call('GET', '/admin/stories', undefined, learner)).statusCode).toBe(404);
+    expect((await call('POST', '/admin/stories', testStory(slug('nope')), learner)).statusCode).toBe(404);
     expect((await call('GET', '/admin/stories', undefined, legacyAdmin)).statusCode).toBe(200);
     expect((await call('GET', '/admin/stories')).statusCode).toBe(200);
   });

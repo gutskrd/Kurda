@@ -5,10 +5,10 @@ import { useAuth } from '../auth/AuthProvider';
 import { MedalIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { RankCard } from './RankCard';
-import { seasonNamed } from './names';
+import { seasonDaysLeft, seasonNamed } from './names';
 
 /**
- * "Your ranks" on the Games page: one card per game with opponents (Wordle
+ * "Your ranks" on the Games page: one card per game with opponents (Peyvok
  * Battle, Rhyme Match, Stories), the season they are in, and the way to the
  * season's rewards and the badges.
  *
@@ -51,7 +51,7 @@ export function RanksSection(): React.JSX.Element | null {
           <Link to="/app/season" className="ranks-season-link">
             <span className="ranks-season-name">{season.name}</span>
             <span className="ranks-season-days">
-              {ranks.season.daysLeft > 0 ? t('seasons.daysLeft', { days: ranks.season.daysLeft }) : t('seasons.lastDay')}
+              {seasonDaysLeft(t, ranks.season.daysLeft)}
             </span>
           </Link>
           <Link to="/app/badges" className="btn btn-secondary btn-sm">

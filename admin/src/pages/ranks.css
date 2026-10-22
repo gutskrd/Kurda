@@ -30,20 +30,12 @@
 .spread-fill.is-some { min-width: 4px; }
 .spread-n { text-align: right; font-size: 13.5px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .spread-card .note { margin: 0 0 12px; }
-.tier-dest { background: #bd6a12; }
-.tier-gir { background: #0f9450; }
-.tier-zozan { background: #0a8494; }
-.tier-ciya { background: #2f3fd0; }
-.tier-lutke { background: #b4249e; }
-.tier-sterk { background: #f08c0a; }
-@media (prefers-color-scheme: dark) {
-  .tier-dest { background: #f4a63a; }
-  .tier-gir { background: #36d46e; }
-  .tier-zozan { background: #17c9c0; }
-  .tier-ciya { background: #4f86ff; }
-  .tier-lutke { background: #c552ff; }
-  .tier-sterk { background: #ffcf3a; }
-}
+.tier-dest { background: #f4a63a; }
+.tier-gir { background: #36d46e; }
+.tier-zozan { background: #17c9c0; }
+.tier-ciya { background: #4f86ff; }
+.tier-lutke { background: #c552ff; }
+.tier-sterk { background: #ffcf3a; }
 
 /* a row of tabs in a section's head (the top list's game) */
 .section-actions .tabs { margin: 0; border-bottom: none; }

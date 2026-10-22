@@ -63,9 +63,20 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
             </GlassCard>
           </View>
 
-          <View style={styles.actions}>
-            <ClayButton label={t('appearance.swatch.primary')} tone="primary" onPress={() => {}} style={{ flex: 1 }} />
-            <ClayButton label={t('appearance.swatch.soft')} tone="neutral" onPress={() => {}} style={{ flex: 1 }} />
+          {/*
+           * What the two kinds of button look like, shown rather than offered:
+           * a picture of buttons, not two buttons that do nothing when tapped.
+           */}
+          <View
+            pointerEvents="none"
+            accessible
+            accessibilityRole="image"
+            accessibilityLabel={`${t('appearance.swatch.primary')}, ${t('appearance.swatch.soft')}`}
+          >
+            <View style={styles.actions} aria-hidden>
+              <ClayButton label={t('appearance.swatch.primary')} tone="primary" onPress={() => undefined} style={styles.swatch} />
+              <ClayButton label={t('appearance.swatch.soft')} tone="neutral" onPress={() => undefined} style={styles.swatch} />
+            </View>
           </View>
         </GlassCard>
 
@@ -78,6 +89,7 @@ export function AppearanceScreen({ onExit }: { onExit: () => void }): React.JSX.
 }
 
 const styles = StyleSheet.create({
+  swatch: { flex: 1 },
   content: { padding: spacing.lg, gap: spacing.lg },
   cardTitle: { ...display(typography.sizes.lg) },
   cardHint: { fontSize: typography.sizes.sm, marginTop: 4, lineHeight: 20 },

@@ -27,9 +27,34 @@ export interface GameInvite {
   id: string;
 }
 
+/**
+ * The path segment each game's lobby lives at. A game's type is what the
+ * server and the database call it; its address is what people see in a link,
+ * so it carries the game's name as players know it.
+ */
+const SEGMENT: Record<GameInviteType, string> = {
+  'wordle-battle': 'peyvok-battle',
+  'rhyme-match': 'rhyme-match',
+  stories: 'stories',
+};
+
+/**
+ * Addresses a lobby had before, still read: a link already sent in a chat,
+ * an email or a push keeps working after the game was renamed.
+ */
+const OLD_SEGMENT: Record<string, GameInviteType> = { 'wordle-battle': 'wordle-battle' };
+
+const BY_SEGMENT: Record<string, GameInviteType> = {
+  ...OLD_SEGMENT,
+  ...Object.fromEntries(Object.entries(SEGMENT).map(([type, segment]) => [segment, type as GameInviteType])),
+};
+
+/** Every segment a lobby link may have, for the patterns below. */
+const SEGMENTS = Object.keys(BY_SEGMENT).join('|');
+
 /** The in-app route for a lobby (also the path segment used in a share link). */
 export function invitePath(invite: GameInvite): string {
-  return `/app/games/${invite.type}?id=${encodeURIComponent(invite.id)}`;
+  return `/app/games/${SEGMENT[invite.type]}?id=${encodeURIComponent(invite.id)}`;
 }
 
 /**
@@ -48,8 +73,8 @@ export function buildInviteUrl(type: GameInviteType, id: string, origin = 'https
   return `${origin}${invitePath({ type, id })}`;
 }
 
-// matches "/app/games/<type>?id=<id>" anywhere in a string, any origin (or none)
-const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match|stories)\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})/;
+// matches "/app/games/<segment>?id=<id>" anywhere in a string, any origin (or none)
+const INVITE_RE = new RegExp(String.raw`/app/games/(${SEGMENTS})\?id=([A-Za-z0-9][A-Za-z0-9-]{5,63})`);
 
 /**
  * The link itself, for removing it from displayed text. Global so a body with
@@ -59,12 +84,12 @@ const INVITE_RE = /\/app\/games\/(wordle-battle|rhyme-match|stories)\?id=([A-Za-
 export function inviteLinkPattern(): RegExp {
   // built from a raw source string rather than a literal: the escaping stays
   // readable, and `/` needs none inside the constructor
-  return new RegExp(String.raw`\S*/app/games/(?:wordle-battle|rhyme-match|stories)\?id=[A-Za-z0-9-]+\S*`, 'g');
+  return new RegExp(String.raw`\S*/app/games/(?:${SEGMENTS})\?id=[A-Za-z0-9-]+\S*`, 'g');
 }
 
 /** Extract the first game invite from arbitrary text, or null. */
 export function parseInvite(text: string): GameInvite | null {
   const m = INVITE_RE.exec(text);
   if (!m) return null;
-  return { type: m[1] as GameInviteType, id: m[2]! };
+  return { type: BY_SEGMENT[m[1]!]!, id: m[2]! };
 }

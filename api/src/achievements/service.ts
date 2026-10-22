@@ -6,7 +6,7 @@ import type pg from 'pg';
  * removed in favour of profile pictures, #177–#181). Trigger points call
  * AchievementsService from their own systems:
  *  - streak-30       → any activity that extends the streak: lesson, practice,
- *                      daily Wordle win (`recordStreak`)
+ *                      daily Peyvok win (`recordStreak`)
  *  - first-perfect   → lesson completion at 100% (`recordLessonCompleted`)
  *  - tournament-win  → the tournament champion is paid (`award`)
  *
@@ -14,8 +14,8 @@ import type pg from 'pg';
  *  - words-1000      → review items are exercises, not words (KUR-043), and
  *                      the course teaches well under 1000 words; it needs the
  *                      word-level knowledge model before it means anything
- *  - first-game-win  → "a game" covers quiz 1v1/2v2/FFA, Wordle Battle, Rhyme
- *                      and solo Wordle, and the quiz ranks 2v2 players one by
+ *  - first-game-win  → "a game" covers quiz 1v1/2v2/FFA, Peyvok Battle, Rhyme
+ *                      and solo Peyvok, and the quiz ranks 2v2 players one by
  *                      one rather than by team; which of those is a win is a
  *                      product decision, not a trigger to guess at
  *  - newroz-2026     → the event has passed, and whether a "celebrant" is
@@ -63,13 +63,13 @@ export const STREAK_ACHIEVEMENT_DAYS = 30;
 
 /**
  * What a learning activity reports once it has committed, so the milestones it
- * reached are awarded. Injected into lessons, practice and Wordle so they stay
+ * reached are awarded. Injected into lessons, practice and Peyvok so they stay
  * decoupled; every call is idempotent, so reporting on each completion is safe.
  */
 export interface MilestoneRecorder {
   recordStreak(userId: string, currentStreak: number): Promise<void>;
   recordLessonCompleted(userId: string, accuracy: number): Promise<void>;
-  /** a solo game finished — Wordle, Rhyme training, the Typing Race (the badges count it) */
+  /** a solo game finished — Peyvok, Rhyme training, the Typing Race (the badges count it) */
   recordSoloGame?(userId: string): Promise<void>;
 }
 

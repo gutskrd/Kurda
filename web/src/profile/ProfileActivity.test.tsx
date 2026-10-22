@@ -88,7 +88,7 @@ describe('ProfileActivity', () => {
   it('loads only the open tab, and the next one only when it is opened', async () => {
     const { fetch, asked } = activityFetch({
       posts: [post('s1', 'Çîroka min')],
-      games: [entry('g1', 'games', 'Wordle', { detail: 'Won · easy' })],
+      games: [entry('g1', 'games', 'Peyvok', { detail: 'Won · easy' })],
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
@@ -98,7 +98,7 @@ describe('ProfileActivity', () => {
     expect(asked).toEqual(['posts']);
 
     await userEvent.click(screen.getByRole('tab', { name: /Games/ }));
-    expect(await screen.findByText('Wordle')).toBeInTheDocument();
+    expect(await screen.findByText('Peyvok')).toBeInTheDocument();
     expect(screen.getByText('Won · easy')).toBeInTheDocument();
     // and the story is gone rather than left under the games tab
     expect(screen.queryByText('Çîroka min')).not.toBeInTheDocument();
@@ -108,7 +108,7 @@ describe('ProfileActivity', () => {
   it('links a post to its page, and leaves a game result unlinked', async () => {
     const { fetch } = activityFetch({
       posts: [post('s1', 'Çîroka min')],
-      games: [entry('g1', 'games', 'Wordle')],
+      games: [entry('g1', 'games', 'Peyvok')],
     });
     vi.stubGlobal('fetch', fetch);
     renderApp(<ProfileActivity userId="u1" sections={ALL} />);
@@ -116,8 +116,8 @@ describe('ProfileActivity', () => {
     expect(await screen.findByRole('link', { name: /Çîroka min/ })).toHaveAttribute('href', '/app/library/s1');
 
     await userEvent.click(screen.getByRole('tab', { name: /Games/ }));
-    expect(await screen.findByText('Wordle')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: /Wordle/ })).not.toBeInTheDocument();
+    expect(await screen.findByText('Peyvok')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /Peyvok/ })).not.toBeInTheDocument();
   });
 
   it('says so plainly when a section is empty', async () => {

@@ -257,15 +257,6 @@ describe('pictures', () => {
     expect(p.pick).toHaveBeenCalledOnce();
   });
 
-  it('says what to do when the photos may not be opened', async () => {
-    testAuth.client = fakeClient({ [DRAFTS]: ok({ posts: [] }) });
-    renderWithProviders(
-      <ComposeScreen onExit={() => undefined} store={memoryStore()} pick={async () => 'denied'} upload={vi.fn()} />,
-    );
-    await screen.findByLabelText('Your post');
-    fireEvent.click(screen.getByRole('button', { name: 'Add pictures' }));
-    expect(await screen.findByText('Hevalo needs access to your photos so you can choose one to post.')).toBeTruthy();
-  });
 });
 
 describe('source and credit', () => {

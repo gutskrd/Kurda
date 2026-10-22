@@ -20,7 +20,7 @@ export interface JoinCheck {
 }
 
 /**
- * Who may join a game — one rule for Wordle Battle, Rhyme Match and Stories
+ * Who may join a game — one rule for Peyvok Battle, Rhyme Match and Stories
  * (contract §B2; @kurda/shared `play` DEFAULT_ACCESS).
  *
  * Never anyone the host removed, and never anyone with a block either way

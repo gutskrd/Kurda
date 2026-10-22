@@ -1,3 +1,4 @@
+import { DEFAULT_FEED_PERIOD, DEFAULT_FEED_SORT, sortRanks, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import type { EngagementKind, FeedItem, FeedSection, PostEngagement } from './types';
@@ -5,6 +6,10 @@ import type { EngagementKind, FeedItem, FeedSection, PostEngagement } from './ty
 export interface FeedQuery {
   section?: FeedSection;
   kind?: string | null;
+  /** newest first unless asked */
+  sort?: FeedSort;
+  /** how far back a ranked order looks */
+  period?: FeedPeriod;
   limit?: number;
   offset?: number;
 }
@@ -13,6 +18,9 @@ function query(q: FeedQuery): string {
   const p = new URLSearchParams();
   if (q.section) p.set('section', q.section);
   if (q.kind) p.set('kind', q.kind);
+  // only what differs from how the wall opens: the plain wall asks the plain question
+  if (q.sort && q.sort !== DEFAULT_FEED_SORT) p.set('sort', q.sort);
+  if (q.sort && sortRanks(q.sort) && q.period && q.period !== DEFAULT_FEED_PERIOD) p.set('period', q.period);
   if (q.limit != null) p.set('limit', String(q.limit));
   if (q.offset != null) p.set('offset', String(q.offset));
   const s = p.toString();
@@ -43,6 +51,12 @@ export const SITE_ORIGIN = 'https://hevalo.app';
 /** The absolute URL of a post — a share target is somewhere else, so it needs the origin. */
 export const postUrl = (item: Pick<FeedItem, 'href'>): string => `${SITE_ORIGIN}${item.href}`;
 
+/** One post's likes, reposts and saves, and your part in them: what its own page shows under it. */
+export const getEngagement = (
+  client: ApiClient,
+  item: Pick<FeedItem, 'targetType' | 'id'>,
+): Promise<ApiResult<{ engagement: PostEngagement }>> => client.get(`/posts/${item.targetType}/${item.id}/engagement`);
+
 /**
  * Like / save / repost, as one toggle.
  *
@@ -56,6 +70,13 @@ export const toggleEngagement = (
   kind: EngagementKind,
 ): Promise<ApiResult<{ on: boolean; engagement: PostEngagement }>> =>
   client.post(`/posts/${item.targetType}/${item.id}/${kind}`);
+
+/**
+ * Delete your own post, written or a picture — the calls the website's card
+ * makes. The server checks it is yours; the app only decides whether to offer.
+ */
+export const deletePost = (client: ApiClient, item: Pick<FeedItem, 'targetType' | 'id'>): Promise<ApiResult<unknown>> =>
+  client.delete(item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`);
 
 /** The posts you bookmarked. Yours alone — the server scopes it to you. */
 export const getSaved = (

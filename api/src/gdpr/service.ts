@@ -5,7 +5,8 @@ import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
-import { isMinorRow } from '../users/age.js';
+import { lockPersonFor } from '../limits/limits.js';
+import { inTransaction } from '../moderation/tx.js';
 import { handOnGroup } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
@@ -14,6 +15,7 @@ import { exportPosts } from './posts-export.js';
 import { exportProgress } from './progress-export.js';
 import { requestQuarantine, runQuarantine } from '../moderation/quarantine.js';
 import { userHash } from '../moderation/pseudonym.js';
+import type { AppleTokens } from '../auth/apple-tokens.js';
 
 export const DELETION_GRACE_DAYS = 14;
 
@@ -27,6 +29,12 @@ export interface GdprDeps {
    * nobody (the worker passes one that tells the API instances, over Redis).
    */
   storyGames?: Pick<StoryGamesService, 'leaveAll'>;
+  /**
+   * Revokes at Apple what Sign in with Apple issued for an account that is
+   * closing for good (auth/apple-tokens.ts). Null or absent where Apple's key
+   * is not configured, and nothing is revoked.
+   */
+  apple?: Pick<AppleTokens, 'revokeFor'> | null;
 }
 
 export class GdprService {
@@ -71,36 +79,40 @@ export class GdprService {
   }
 
   /**
-   * Anonymizes accounts whose grace period ended: PII scrubbed, sessions
-   * and linked identities destroyed, row kept for aggregate statistics.
-   * Idempotent — sets deleted_at, so a rerun skips processed rows.
+   * Closes, for good, the accounts whose grace period ended: Sign in with
+   * Apple revoked, then everything the person put in the account deleted
+   * (`eraseAccountData`) and the account's own fields scrubbed, in one
+   * transaction. What the app tells them when they ask — "your account and all
+   * your data will be permanently deleted" — is what happens.
    *
-   * Gifts stay as they are, given and received: the friend keeps the present,
-   * and since the row is kept its sender still points at it — shown as from a
-   * former member, never by the "deleted_…" name (shop `giftsReceived`).
+   * It used to be different for adults: their account was anonymized and what
+   * they had written, recorded and uploaded stayed up under a "deleted_…"
+   * name, their messages in their friends' conversations with it. Only a
+   * minor's went. Somebody who deletes their account expects their posts and
+   * their voice to go with it, and that is what deleting an account has to
+   * mean.
+   *
+   * What stays is the scrubbed row with the learning history every deleted
+   * account keeps (XP, lessons, streaks, ledgers) — numbers tied to no name,
+   * address or birth date — and moderation records, which are about other
+   * people's safety. Gifts already given stay with whoever received them,
+   * shown as from a former member (shop `giftsReceived`).
+   *
+   * Idempotent — sets deleted_at, so a rerun skips processed rows.
    */
   async anonymizeExpired(now = new Date()): Promise<number> {
     const cutoff = new Date(now.getTime() - DELETION_GRACE_DAYS * 24 * 3_600_000);
-    const due = await this.pool.query<{ id: string; birth_year: number | null; birth_month: number | null }>(
-      `SELECT id, birth_year, birth_month FROM users
+    const due = await this.pool.query<{ id: string }>(
+      `SELECT id FROM users
        WHERE deletion_requested_at < $1 AND deleted_at IS NULL
        LIMIT 200`,
       [cutoff],
     );
     for (const row of due.rows) {
       await this.leaveStoryGames(row.id);
-      // A minor's friends-only posts are hidden because of their birth date,
-      // and anonymizing clears it: left behind under a "deleted_…" name, what
-      // a 15-year-old shared with friends would become readable by anyone.
-      // So a minor's deletion removes what they put in, as a child's closure
-      // does, instead of leaving it.
-      if (isMinorRow(row, now)) {
-        await this.eraseAndAnonymize(row.id);
-        this.deps.log?.info({ userId: row.id }, 'minor account deleted after grace period, with its content');
-        continue;
-      }
-      await this.anonymize(row.id);
-      this.deps.log?.info({ userId: row.id }, 'account anonymized after grace period');
+      await this.revokeAppleSignIn(row.id);
+      const files = await this.eraseAndAnonymize(row.id);
+      this.deps.log?.info({ userId: row.id, files }, 'account deleted after grace period, with its content');
     }
     return due.rows.length;
   }
@@ -114,15 +126,12 @@ export class GdprService {
    * user can change their mind, and that is not a choice this account has.
    * No email either — the address may be a child's.
    *
-   * Anonymizing, which is all an ordinary deletion does, scrubs the account's
-   * own fields and leaves everything the person wrote, recorded and uploaded
-   * under a "deleted_…" name. For a child that is not enough: what we know
-   * about them is to be deleted, their voice above all. So `eraseChildData`
-   * also deletes their posts, pictures, comments, voice notes, messages,
-   * friendships, groups, story games, devices, notifications, analytics and
-   * consent records, in one transaction with the anonymizing — either the
-   * account is gone or none of it is, and the client is told it was closed
-   * only after it was. Their files are deleted from storage after the commit;
+   * It removes what an ordinary deletion removes at the end of its grace
+   * period: `eraseAccountData` deletes their posts, pictures, comments, voice
+   * notes, messages, friendships, groups, story games, devices,
+   * notifications, analytics and consent records, in one transaction with the
+   * anonymizing — either the account is gone or none of it is, and the client
+   * is told it was closed only after it was. Their files are deleted from storage after the commit;
    * any the storage cannot delete at once are left to the orphan sweep, which
    * deletes them on its next run.
    *
@@ -133,6 +142,7 @@ export class GdprService {
    */
   async closeNow(userId: string, reason: 'under_minimum_age'): Promise<void> {
     await this.leaveStoryGames(userId);
+    await this.revokeAppleSignIn(userId);
     const files = await this.eraseAndAnonymize(userId);
     this.deps.log?.info({ userId, reason, files }, 'account closed and its data removed');
   }
@@ -141,8 +151,8 @@ export class GdprService {
    * A closing account leaves the story games it is still in first, through
    * the games' own leave path — each game locked on its own, after nothing
    * else is held — so a lobby it hosts closes and a running game stops
-   * waiting for a player who will never come back. Finished games stay as
-   * learning history (a child's are erased with the rest, below).
+   * waiting for a player who will never come back. Finished games stay for
+   * the other players; the erase that follows takes this account's seat out.
    */
   private async leaveStoryGames(userId: string): Promise<void> {
     await this.storyGames.leaveAll(userId).catch((err) => {
@@ -150,14 +160,28 @@ export class GdprService {
     });
   }
 
-  /** `eraseChildData` and the anonymizing in one transaction, then the files. */
+  /**
+   * App Store guideline 5.1.1(v): deleting an account that signed in with
+   * Apple revokes, at Apple, the refresh token kept for it, which ends the
+   * app's Sign in with Apple for that person too. Asked before anonymizing,
+   * which deletes the identity that holds the token, and outside its
+   * transaction, which no request to another service should hold open. Apple
+   * refusing or not answering is logged and the account closes all the same.
+   */
+  private async revokeAppleSignIn(userId: string): Promise<void> {
+    await this.deps.apple?.revokeFor(userId).catch((err: unknown) => {
+      this.deps.log?.warn({ err, userId }, 'could not revoke a closing account’s Sign in with Apple');
+    });
+  }
+
+  /** `eraseAccountData` and the anonymizing in one transaction, then the files. */
   private async eraseAndAnonymize(userId: string): Promise<number> {
     const client = await this.pool.connect();
     let files: string[] = [];
     try {
       await client.query('BEGIN');
       // the purge reads keys and ownerships the anonymizing would clear
-      files = await eraseChildData(client, userId);
+      files = await eraseAccountData(client, userId);
       await this.anonymize(userId, client);
       await client.query('COMMIT');
     } catch (err) {
@@ -253,24 +277,32 @@ export class GdprService {
     ]);
   }
 
-  /** Creates an export request; the worker fulfills it. */
+  /**
+   * Creates an export request; the worker fulfills it. One a day: asking again
+   * within 24 hours answers with the request already made. Under the person's
+   * lock, so two taps at once make one export, not two whole copies of
+   * everything (each is a full build and a file in storage).
+   */
   async requestExport(userId: string): Promise<string> {
     if (!this.deps.storage) {
       throw new AppError('EXPORT_NOT_AVAILABLE', 503, 'data export is not available right now');
     }
-    const existing = await this.pool.query<{ id: string }>(
-      `SELECT id FROM user_exports
-       WHERE user_id = $1 AND requested_at > now() - interval '24 hours'
-       ORDER BY requested_at DESC LIMIT 1`,
-      [userId],
-    );
-    if (existing.rows[0]) return existing.rows[0].id;
+    return inTransaction(this.pool, async (client) => {
+      await lockPersonFor(client, 'export', userId);
+      const existing = await client.query<{ id: string }>(
+        `SELECT id FROM user_exports
+         WHERE user_id = $1 AND requested_at > now() - interval '24 hours'
+         ORDER BY requested_at DESC LIMIT 1`,
+        [userId],
+      );
+      if (existing.rows[0]) return existing.rows[0].id;
 
-    const created = await this.pool.query<{ id: string }>(
-      `INSERT INTO user_exports (user_id) VALUES ($1) RETURNING id`,
-      [userId],
-    );
-    return (created.rows[0] as { id: string }).id;
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO user_exports (user_id) VALUES ($1) RETURNING id`,
+        [userId],
+      );
+      return (created.rows[0] as { id: string }).id;
+    });
   }
 
   /**
@@ -440,8 +472,8 @@ export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId:
 }
 
 /**
- * Everything a closed child's account holds beyond its own fields, deleted in
- * the caller's transaction (see `GdprService.closeNow`). Returns the storage
+ * Everything a closing account holds beyond its own fields, deleted in the
+ * caller's transaction (see `GdprService.anonymizeExpired` and `closeNow`). Returns the storage
  * keys nobody else uses any more, already marked as orphans, for the caller to
  * delete from storage once this has committed.
  *
@@ -449,14 +481,14 @@ export async function eraseSupportMail(executor: Pick<pg.Pool, 'query'>, userId:
  * orphan all the same (the sweep leaves it alone while the evidence is kept,
  * and takes it once the retention lets it go), and it is quarantined — taken
  * off the public bucket into private storage — since nothing may show the
- * child's picture any more, and the bucket would otherwise go on serving it.
+ * person's picture any more, and the bucket would otherwise go on serving it.
  *
  * Posts and pictures go with the comments, reactions and likes on them. The
- * child's own comments on other people's posts are emptied the way a deleted
+ * person's own comments on other people's posts are emptied the way a deleted
  * comment is (the tombstone keeps the replies under it in place) and no longer
  * counted. Groups they own are handed on before they leave them.
  */
-export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
+export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<string[]> {
   const q = (sql: string, params: unknown[] = [userId]) => executor.query(sql, params);
 
   // the files, read before the rows that point at them go
@@ -593,7 +625,7 @@ export async function eraseChildData(executor: Pick<pg.Pool, 'query'>, userId: s
   await q(`DELETE FROM app_feedback WHERE user_id = $1`);
   await q(`DELETE FROM user_tags WHERE user_id = $1`);
   await q(`DELETE FROM saved_words WHERE user_id = $1`);
-  // the badges a child showed on their profile, as the rest of what was shown there
+  // the badges they showed on their profile, as the rest of what was shown there
   await q(`DELETE FROM user_badges WHERE user_id = $1`);
   await q(`DELETE FROM badge_users WHERE user_id = $1`);
   await q(`DELETE FROM badge_rated_games WHERE user_id = $1`);

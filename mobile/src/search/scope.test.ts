@@ -23,7 +23,7 @@ describe('matches', () => {
   });
 
   it('matches inside a word, not only at the start', () => {
-    expect(matches('Kurdish Wordle', 'word')).toBe(true);
+    expect(matches('Peyvok Battle', 'vok')).toBe(true);
   });
 
   /*
@@ -40,13 +40,13 @@ describe('matches', () => {
 });
 
 describe('filterByLabel', () => {
-  const rows = [{ n: 'Rhyming Words' }, { n: 'Typing Race' }, { n: 'Wordle Battle' }];
+  const rows = [{ n: 'Rhyming Words' }, { n: 'Typing Race' }, { n: 'Peyvok Battle' }];
 
   it('keeps the list in its own order', () => {
-    expect(filterByLabel(rows, (r) => r.n, 'r').map((r) => r.n)).toEqual([
+    expect(filterByLabel(rows, (r) => r.n, 'y').map((r) => r.n)).toEqual([
       'Rhyming Words',
       'Typing Race',
-      'Wordle Battle',
+      'Peyvok Battle',
     ]);
   });
 

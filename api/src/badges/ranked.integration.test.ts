@@ -1,5 +1,5 @@
 /**
- * The ranked badges earned from real rated games (contract 4 §R → §B2): Wordle
+ * The ranked badges earned from real rated games (contract 4 §R → §B2): Peyvok
  * Battles and Rhyme Matches played through their services, rated by Game
  * Ranks, told on `ranks.events`, and heard by the badges the way the API
  * wires them (`createProgression` given the RankService's events). Then a
@@ -143,7 +143,7 @@ describe.skipIf(!DATABASE_URL)('ranked badges from rated games (integration)', (
     await pool.end();
   });
 
-  describe('Wordle Battle', () => {
+  describe('Peyvok Battle', () => {
     beforeAll(async () => {
       for (const w of WORDS) {
         const r = await pool.query<{ id: string }>(

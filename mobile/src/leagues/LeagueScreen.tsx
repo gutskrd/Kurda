@@ -1,13 +1,13 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { FlatList, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { FIRST_LEAGUE_TIER, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
+import { Alert, FlatList, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { FIRST_LEAGUE_TIER, LEAGUE_TIERS, leagueTierIndex, type LeagueTier, type LeagueView, type LeagueWeekXp } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, GlassCard, GradientBackground, Segmented } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -25,7 +25,9 @@ import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
 import { useListEntrance } from '../theme/animate';
 import { Rise } from '../theme/MotionParts';
-import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, zoneRules, type TableItem } from './format';
+import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { useDirection } from '../reports/direction';
+import { knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules, type TableItem } from './format';
 
 interface BoardEntry {
   userId: string;
@@ -62,12 +64,19 @@ const PAGE = 25;
 /**
  * Learning Leagues, rebuilt (contract 4 §L, §U).
  *
- * The week's group of about twenty, with the zones written out — "Moving up"
- * and "Moving down" as headings in the table, with their icons, so nothing is
- * told by colour alone — the weekly goal as a ring, and "Safe this week" once
- * it is met. When the week ends is a local time, not a countdown. Last week's
- * result is one kind sentence. Somebody out of the leagues (their choice, or
- * a teen by default) gets their own week instead: the same ring, and how it
+ * The league's name and how many days the week has left, then the whole
+ * ladder from a drop to the ocean — the leagues behind you in colour, yours
+ * large, the ones ahead a quiet outline with a keyhole — so where you are is
+ * seen as a place on a journey, not only a rank. Under it the week's group
+ * of about twenty, with the zones written out — "Moving up" and "Moving
+ * down" as headings in the table, with their icons, so nothing is told by
+ * colour alone — the weekly goal as a ring, and "Safe this week" once it is
+ * met. Before the week's first lesson, Hevalo is resting, and the first
+ * lesson is what starts the week. Last week's result is one kind sentence.
+ *
+ * Leaving is a button at the end of the page, asked once in plain words and
+ * with no pull to stay. Somebody out of the leagues (their choice, or a teen
+ * by default) gets their own week instead: the same ring, and how it
  * compares with the weeks before, with nobody else in it.
  */
 export function LeagueScreen({ onExit }: { onExit: () => void }) {
@@ -113,14 +122,18 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
     }, [tab, loadBoard]),
   );
 
-  /** The way back in, one tap from where the table would be (Settings has the other). */
+  /** In or out, one tap from where the table is or would be (Settings has the other). */
   const [joining, setJoining] = useState(false);
-  const join = useCallback(async () => {
-    setJoining(true);
-    const res = await client.patch('/me', { leaguesEnabled: true });
-    setJoining(false);
-    if (res.ok) loadLeague();
-  }, [client, loadLeague]);
+  const setTakingPart = useCallback(
+    async (on: boolean) => {
+      setJoining(true);
+      const res = await client.patch('/me', { leaguesEnabled: on });
+      setJoining(false);
+      if (res.ok) loadLeague();
+      else Alert.alert(t('error.generic'), t('common.tryAgain'));
+    },
+    [client, loadLeague, t],
+  );
 
   return (
     <GradientBackground>
@@ -138,7 +151,9 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
         <LeagueMoment week={league?.lastWeek} />
         {tab === 'league' ? (
           <AsyncBoundary loading={!league && !leagueError} error={!league ? leagueError : null} onRetry={loadLeague} skeleton={<LeagueSkeleton />}>
-            {league ? <LeagueTab league={league} joining={joining} onJoin={() => void join()} /> : null}
+            {league ? (
+              <LeagueTab league={league} joining={joining} onJoin={() => void setTakingPart(true)} onLeave={() => void setTakingPart(false)} />
+            ) : null}
           </AsyncBoundary>
         ) : (
           <>
@@ -162,7 +177,17 @@ export function LeagueScreen({ onExit }: { onExit: () => void }) {
   );
 }
 
-function LeagueTab({ league, joining, onJoin }: { league: LeagueView; joining: boolean; onJoin: () => void }): React.JSX.Element {
+function LeagueTab({
+  league,
+  joining,
+  onJoin,
+  onLeave,
+}: {
+  league: LeagueView;
+  joining: boolean;
+  onJoin: () => void;
+  onLeave: () => void;
+}): React.JSX.Element {
   if (league.mode === 'personal') return <PersonalWeek league={league} joining={joining} onJoin={onJoin} />;
   const items = league.joined ? tableItems(league.standings) : [];
   // the first screenful of the table rises in once, as it arrives
@@ -173,6 +198,7 @@ function LeagueTab({ league, joining, onJoin }: { league: LeagueView; joining: b
       keyExtractor={(item, i) => (item.kind === 'row' ? `r-${item.row.rank}` : `${item.kind}-${i}`)}
       contentContainerStyle={styles.list}
       ListHeaderComponent={<LeagueHead league={league} />}
+      ListFooterComponent={<LeaveLeagues busy={joining} onLeave={onLeave} />}
       renderItem={({ item, index }) => (
         <Rise delay={entering(index)}>
           <TableRow item={item} />
@@ -182,34 +208,37 @@ function LeagueTab({ league, joining, onJoin }: { league: LeagueView; joining: b
   );
 }
 
-/** The week at the top: the emblem, the league, when it ends, the goal ring, safe, and last week. */
+/**
+ * The week at the top: the league and the days it has left, the ladder, and
+ * under a line either the goal ring with the group's rules or, before the
+ * week's first lesson, Hevalo resting; last week's result after either.
+ */
 function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  const navigation = useNavigation<RootNavigation>();
+  const dir = useDirection();
   const tier = knownTier(league.tier) ?? FIRST_LEAGUE_TIER;
   const tint = leagueTint(tier, scheme);
   const rules = zoneRules(t, { tier: knownTier(league.tier), promoteCount: league.promoteCount, demoteCount: league.demoteCount, goalXp: league.goalXp });
   const meaning = leagueMeaning(t, tier);
   return (
     <View style={styles.head}>
-      <GlassCard>
-        <View style={styles.hero}>
-          <LeagueEmblem tier={tier} size={104} label={leagueLabel(t, tier)} />
-          <View style={styles.heroText}>
-            <Text style={[sectionLabel, { color: colors.textSecondary }]}>{t('leagues.thisWeek')}</Text>
-            <Text style={[styles.heroTitle, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={2}>
-              {t('leagues.leagueName', { tier: leagueName(t, tier) })}
-            </Text>
-            {meaning ? <Text style={[styles.heroMeaning, { color: colors.textSecondary }]}>{meaning}</Text> : null}
-            <View style={styles.ends}>
-              <Icon name="calendar" size={14} color={colors.textSecondary} />
-              <Text style={[styles.endsText, { color: colors.textSecondary }]}>{t('leagues.endsAt', { time: weekEndText(league.endsAt, locale) })}</Text>
-            </View>
-          </View>
+      <View style={styles.titleBlock}>
+        <Text style={[styles.leagueTitle, dir.text, { color: colors.textPrimary }]} accessibilityRole="header">
+          {t('leagues.leagueName', { tier: leagueName(t, tier) })}
+        </Text>
+        {meaning ? <Text style={[styles.heroMeaning, dir.text, { color: colors.textSecondary }]}>{meaning}</Text> : null}
+        <View style={[styles.ends, { flexDirection: dir.row }]}>
+          <Icon name="timer" size={16} color={colors.textSecondary} />
+          <Text style={[styles.left, dir.text, { color: colors.textSecondary }]}>{weekLeftText(t, league.endsAt, locale)}</Text>
         </View>
+      </View>
 
-        <View style={[styles.goalRow, { borderTopColor: colors.separator }]}>
+      <Ladder tier={tier} />
+      <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+
+      {league.joined ? (
+        <View style={styles.goalRow}>
           <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={84} tint={tint} />
           <View style={styles.goalText}>
             <Text style={[styles.goalTitle, { color: colors.textPrimary }]}>
@@ -225,12 +254,14 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
                 {league.demoteCount > 0 ? t('leagues.goalHintSafe') : t('leagues.goalHintUp')}
               </Text>
             )}
-            {league.joined && league.groupSize > 0 ? (
+            {league.groupSize > 0 ? (
               <Text style={[styles.goalHint, { color: colors.textSecondary }]}>{t('leagues.place', { rank: league.rank, count: league.groupSize })}</Text>
             ) : null}
           </View>
         </View>
-      </GlassCard>
+      ) : (
+        <Resting />
+      )}
 
       {league.lastWeek ? (
         <GlassCard>
@@ -268,62 +299,142 @@ function LeagueHead({ league }: { league: LeagueView }): React.JSX.Element {
             </Text>
           ))}
         </View>
-      ) : (
-        <GlassCard>
-          <View style={styles.waiting}>
-            <Icon name="people" size={28} color={colors.textSecondary} />
-            <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.notJoined.title')}</Text>
-            <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
-            <ClayButton label={t('leagues.notJoined.start')} icon="book" tone="primary" onPress={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })} style={styles.stretch} />
-          </View>
-        </GlassCard>
-      )}
+      ) : null}
+    </View>
+  );
+}
+
+/** the gap between two emblems on the ladder */
+const LADDER_GAP = spacing.sm + 2;
+/** yours, and the others at most and at least */
+const LADDER_SIZE = { here: 88, max: 60, min: 36 } as const;
+
+/**
+ * All six leagues in a row, a drop to the ocean: the ones behind you in
+ * their colours, yours larger, the ones still ahead as their outline with a
+ * keyhole. Sized so all six fit across a phone; on one too narrow for that
+ * the row scrolls, and starts where yours is.
+ */
+function Ladder({ tier }: { tier: LeagueTier }): React.JSX.Element {
+  const { t } = useI18n();
+  const dir = useDirection();
+  const { width } = useWindowDimensions();
+  const here = leagueTierIndex(tier);
+  const others = LEAGUE_TIERS.length - 1;
+  const room = width - 2 * layout.gutter - LADDER_SIZE.here - others * LADDER_GAP;
+  const size = Math.max(LADDER_SIZE.min, Math.min(LADDER_SIZE.max, Math.floor(room / others)));
+  const scroll = useRef<ScrollView>(null);
+  const toHere = (contentWidth: number) => {
+    if (contentWidth <= width) return;
+    const mid = layout.gutter + here * (size + LADDER_GAP) + LADDER_SIZE.here / 2;
+    const fromStart = dir.row === 'row-reverse' ? contentWidth - mid : mid;
+    scroll.current?.scrollTo({ x: Math.max(0, fromStart - width / 2), animated: false });
+  };
+  return (
+    <ScrollView
+      ref={scroll}
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      onContentSizeChange={toHere}
+      style={styles.ladderScroll}
+      contentContainerStyle={[styles.ladder, { flexDirection: dir.row }]}
+    >
+      {LEAGUE_TIERS.map((key, i) => {
+        const league = leagueLabel(t, key);
+        const label =
+          i < here ? t('leagues.ladder.reached', { league }) : i === here ? t('leagues.ladder.here', { league }) : t('leagues.ladder.ahead', { league });
+        return <LeagueEmblem key={key} tier={key} size={i === here ? LADDER_SIZE.here : size} label={label} locked={i > here} />;
+      })}
+    </ScrollView>
+  );
+}
+
+/**
+ * Before the week's first lesson: Hevalo asleep, and the lesson that starts
+ * the week. Nothing about falling behind — there is nothing to be behind yet.
+ */
+function Resting(): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  const navigation = useNavigation<RootNavigation>();
+  return (
+    <View style={styles.resting}>
+      <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={RESTING_HEIGHT} resting />
+      <Text style={[styles.waitTitle, { color: colors.textPrimary }]}>{t('leagues.resting.title')}</Text>
+      <Text style={[styles.goalHint, styles.center, { color: colors.textSecondary }]}>{t('leagues.notJoined.body')}</Text>
+      <ClayButton
+        label={t('leagues.notJoined.start')}
+        icon="book"
+        tone="primary"
+        onPress={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+        style={styles.stretch}
+      />
+    </View>
+  );
+}
+
+/** how tall Hevalo is drawn while resting */
+const RESTING_HEIGHT = 170;
+
+/**
+ * The way out, at the end of the page: asked once, in plain words — what
+ * changes and that it can be undone — with Leave and Cancel side by side and
+ * neither one dressed up to be chosen.
+ */
+function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => void }): React.JSX.Element {
+  const { t } = useI18n();
+  const ask = () =>
+    Alert.alert(t('leagues.leave.title'), t('leagues.leave.body'), [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: t('leagues.leave.confirm'), onPress: onLeave },
+    ]);
+  return (
+    <View style={styles.leave}>
+      <ClayButton label={t('leagues.leave')} icon="sign-out" variant="outline" busy={busy} onPress={ask} />
     </View>
   );
 }
 
 /**
- * The week while it loads, in the card's own layout: the emblem and the
- * league's name, the goal ring and its lines, the group's rules, and the
- * table's first rows — what the screen is about to be, in grey.
+ * The week while it loads, in the page's own layout: the league's name and
+ * the days left, the ladder's six, the line, the goal ring and its lines,
+ * the group's rules, and the table's first rows — what the screen is about
+ * to be, in grey.
  */
 function LeagueSkeleton(): React.JSX.Element {
   const { t } = useI18n();
   const { height, width } = useWindowDimensions();
   const { colors } = useTheme();
+  const others = LEAGUE_TIERS.length - 1;
+  const size = Math.max(LADDER_SIZE.min, Math.min(LADDER_SIZE.max, Math.floor((width - 2 * layout.gutter - LADDER_SIZE.here - others * LADDER_GAP) / others)));
   return (
     <View style={styles.list} accessibilityLabel={t('common.loading')}>
       <View style={styles.head}>
-        <GlassCard>
-          <View style={styles.hero}>
-            <Skeleton width={104} height={104} radius={radii.pill} />
-            <View style={styles.heroText}>
-              <SkeletonText size={typography.sizes.xs} width={80} />
-              <SkeletonText size={typography.sizes.xl} lineHeight={HERO_TITLE_LINE} width="80%" />
-              <SkeletonText size={typography.sizes.md} width="40%" />
-              {/* when the week ends runs to two lines beside the emblem on a phone */}
-              <View style={styles.endsSkeleton}>
-                <SkeletonText size={typography.sizes.sm} width="90%" />
-                {width < 600 ? <SkeletonText size={typography.sizes.sm} width="40%" /> : null}
-              </View>
-            </View>
+        <View style={styles.titleBlock}>
+          <SkeletonText size={typography.sizes.xxl} lineHeight={LEAGUE_TITLE_LINE} width="62%" />
+          <SkeletonText size={typography.sizes.sm} width={110} style={styles.endsSkeleton} />
+        </View>
+        <View style={[styles.ladder, styles.ladderScroll, { flexDirection: 'row' }]}>
+          {LEAGUE_TIERS.map((key, i) => (
+            <Skeleton key={key} width={i === 1 ? LADDER_SIZE.here : size} height={i === 1 ? LADDER_SIZE.here : size} radius={radii.pill} />
+          ))}
+        </View>
+        <View style={[styles.divider, { backgroundColor: colors.separator }]} />
+        <View style={styles.goalRow}>
+          <Skeleton width={84} height={84} radius={radii.pill} />
+          <View style={styles.goalText}>
+            <SkeletonText size={typography.sizes.md} width="54%" />
+            <SkeletonText size={typography.sizes.sm} lineHeight={19} width="88%" />
+            <SkeletonText size={typography.sizes.sm} lineHeight={19} width="40%" />
           </View>
-          <View style={[styles.goalRow, { borderTopColor: colors.separator }]}>
-            <Skeleton width={84} height={84} radius={radii.pill} />
-            <View style={styles.goalText}>
-              <SkeletonText size={typography.sizes.md} width="54%" />
-              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="88%" />
-              <SkeletonText size={typography.sizes.sm} lineHeight={19} width="40%" />
-            </View>
-          </View>
-        </GlassCard>
+        </View>
         <View style={styles.rules}>
           <SkeletonText size={typography.sizes.xs} width={96} />
           <SkeletonText size={typography.sizes.sm} lineHeight={19} width="90%" />
           <SkeletonText size={typography.sizes.sm} lineHeight={19} width="76%" />
         </View>
       </View>
-      <TableSkeleton rows={Math.max(6, Math.ceil((height - 520) / ROW))} zone />
+      <TableSkeleton rows={Math.max(6, Math.ceil((height - 560) / ROW))} zone />
     </View>
   );
 }
@@ -363,8 +474,8 @@ function TableSkeleton({ rows, zone = false }: { rows: number; zone?: boolean })
 
 /** a table row: a fingertip and 4, with the 4 between rows */
 const ROW = MIN_TOUCH_TARGET + 4 + spacing.xs;
-/** display(28) sets 1.12 */
-const HERO_TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
+/** display(34) sets 1.12 */
+const LEAGUE_TITLE_LINE = Math.round(typography.sizes.xxl * typography.displayLineHeight);
 
 function TableRow({ item }: { item: TableItem }): React.JSX.Element {
   const { colors } = useTheme();
@@ -584,24 +695,25 @@ function BoardTab({
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  tabs: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  choosers: { paddingHorizontal: spacing.lg, marginBottom: spacing.sm },
-  list: { padding: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
+  tabs: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  choosers: { paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  list: { paddingHorizontal: layout.gutter, paddingVertical: spacing.lg, paddingTop: spacing.sm, gap: spacing.xs, paddingBottom: spacing.xxl },
   head: { gap: spacing.md, marginBottom: spacing.sm },
+  titleBlock: { gap: 2, paddingTop: spacing.xs },
+  leagueTitle: { ...display(typography.sizes.xxl) },
+  left: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase' },
+  // the ladder runs from one edge of the phone to the other, past the list's gutter
+  ladderScroll: { marginHorizontal: -layout.gutter },
+  ladder: { flexGrow: 1, justifyContent: 'center', alignItems: 'center', gap: LADDER_GAP, paddingHorizontal: layout.gutter, paddingVertical: spacing.sm },
+  divider: { height: StyleSheet.hairlineWidth, marginHorizontal: -layout.gutter },
+  resting: { alignItems: 'center', gap: spacing.sm, paddingTop: spacing.md, paddingBottom: spacing.sm },
+  leave: { alignItems: 'center', paddingTop: spacing.xl, paddingBottom: spacing.md },
   hero: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  heroText: { flex: 1, gap: 2 },
   heroTitle: { ...display(typography.sizes.xl) },
   heroMeaning: { fontSize: typography.sizes.md },
   ends: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: spacing.xs },
   endsText: { fontSize: typography.sizes.sm },
-  goalRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.md,
-    paddingTop: spacing.md,
-    borderTopWidth: StyleSheet.hairlineWidth,
-  },
+  goalRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   goalText: { flex: 1, gap: spacing.xs },
   endsSkeleton: { marginTop: spacing.xs },
   rankSkeleton: { width: 26 },

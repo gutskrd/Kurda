@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, RefreshControl, StyleSheet, Text, View } from 'react-native';
 import { Rise } from '../theme/MotionParts';
@@ -7,7 +7,7 @@ import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { layout, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
-import { GradientBackground, Segmented } from '../theme/glass';
+import { GradientBackground } from '../theme/glass';
 import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import type { ApiError } from '../api/types';
@@ -21,7 +21,21 @@ import { useUnread } from '../messages/unread';
 import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
-import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
+import { FriendsRow } from './FriendsRow';
+import type { FeedItem } from './types';
+import {
+  DEFAULT_FILTER,
+  FeedFilterChip,
+  FeedFilterChips,
+  FeedFilterSheet,
+  filterLabel,
+  filterSummary,
+  isDefaultFilter,
+  normalise,
+  sortLabel,
+  type FeedFilterValue,
+} from './FeedFilter';
+import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 
 const PAGE = 20;
@@ -35,9 +49,12 @@ const PAGE = 20;
  * looking at pictures. One wall, one card, and a filter for when you do want
  * just one kind.
  *
- * Its header is the app's own: a "+" to post at the start, the name in the
- * middle, and at the end the bell — notifications live here now, a tap from
- * the screen people open first, with a dot while any are unread.
+ * Its header is the shape every social app's home has, so nobody has to learn
+ * it: the name at the start, and at the end a "+" to post and the bell —
+ * notifications live here, a tap from the screen people open first, with a
+ * dot while any are unread. Under it, the row of friends' faces, then the
+ * filters, then the posts, which run the full width of the screen: a picture
+ * is the size of the phone, not of a card on it.
  */
 export function CivakScreen(): React.JSX.Element {
   const { client } = useAuth();
@@ -52,25 +69,25 @@ export function CivakScreen(): React.JSX.Element {
   // tapping Home while on Home goes back to the newest post
   useScrollToTop(listRef);
   const tabBarInset = useTabBarInset();
-  const [section, setSection] = useState<FeedSection>('all');
-  const [kind, setKind] = useState<string | null>(null);
+  // in what order the wall is read, from how far back, and which posts
+  const [filter, setFilter] = useState<FeedFilterValue>(DEFAULT_FILTER);
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [end, setEnd] = useState(false);
 
-  const kinds = SECTIONS.find((s) => s.key === section)?.kinds ?? [];
+  const [filtering, setFiltering] = useState(false);
 
-  /** Changing half drops a kind that belonged to the other one. */
-  const chooseSection = useCallback((next: FeedSection) => {
-    setSection(next);
-    setKind((prev) => kindWithin(next, prev));
+  /** A new way of reading the wall: from its top, the posts asked for again. */
+  const choose = useCallback((next: FeedFilterValue) => {
+    setFilter(normalise(next));
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
   const fetchPage = useCallback(
-    (offset: number) => getFeed(client, { section, kind, limit: PAGE, offset }),
-    [client, section, kind],
+    (offset: number) => getFeed(client, { section: filter.section, kind: filter.kind, sort: filter.sort, period: filter.period, limit: PAGE, offset }),
+    [client, filter],
   );
 
   // the bell's dot is worth getting right on the screen it sits on
@@ -112,13 +129,25 @@ export function CivakScreen(): React.JSX.Element {
     setRefreshing(false);
   }, [fetchPage]);
 
+  // a pull asks the friends row again too: who is online moves faster than the wall
+  const [pulls, setPulls] = useState(0);
+  const onPull = useCallback(async () => {
+    setPulls((n) => n + 1);
+    await refresh();
+  }, [refresh]);
+
   const loadMore = useCallback(async () => {
     if (loadingMore || end || !items) return;
     setLoadingMore(true);
     const res = await fetchPage(items.length);
     if (res.ok) {
       const batch = res.data.items ?? [];
-      setItems((prev) => (prev ? [...prev, ...batch] : batch));
+      // a ranked wall can shift between two pages: a post already shown is not shown twice
+      setItems((prev) => {
+        if (!prev) return batch;
+        const seen = new Set(prev.map((i) => i.key));
+        return [...prev, ...batch.filter((i) => !seen.has(i.key))];
+      });
       setEnd(batch.length < PAGE);
     }
     setLoadingMore(false);
@@ -128,6 +157,9 @@ export function CivakScreen(): React.JSX.Element {
   const replace = useCallback((next: FeedItem) => {
     setItems((prev) => (prev ?? []).map((i) => (i.key === next.key ? next : i)));
   }, []);
+
+  // a post you deleted leaves the wall at once, reposts of it included
+  useEffect(() => onPostDeleted((gone) => setItems((prev) => prev && prev.filter((i) => !samePost(i, gone)))), []);
 
   // the first screenful rises in once, as the wall arrives
   const entering = useListEntrance(!!items && items.length > 0);
@@ -140,93 +172,111 @@ export function CivakScreen(): React.JSX.Element {
     [replace, entering],
   );
 
-  const everything = section === 'all' && !kind;
+  const plain = isDefaultFilter(filter);
+  const narrowed = filterLabel(t, filter);
+  const ordered = sortLabel(t, filter);
+  const summary = filterSummary(t, filter);
 
   return (
     <GradientBackground>
       <View style={[styles.screen, { paddingTop: topInset }]}>
         <View style={[styles.bar, { flexDirection: dir.row }]}>
-          {/*
-           * Posting is a "+", at the start of the bar: it says "add" and
-           * nothing about what, and it sits beside the wall it adds to. It
-           * used to be a filled circle beside the filters, the loudest thing
-           * on the screen; it is an ordinary header control now.
-           */}
-          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} edge="start" testID="home-post" />
-          <Text style={[styles.wordmark, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
+          <Text style={[styles.wordmark, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
             Hevalo
           </Text>
+          {/* sorting and narrowing the wall is one button, out of the way until it is wanted, and filled while either is on */}
+          <HeaderButton
+            icon={plain ? 'filter' : 'filter-fill'}
+            label={summary ? t('feed.sortFilter.buttonOn', { what: summary }) : t('feed.sortFilter.button')}
+            onPress={() => setFiltering(true)}
+            testID="home-filter"
+          />
+          <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} testID="home-post" />
           <NotificationBell />
         </View>
 
-        <View style={styles.filters}>
-          <Segmented
-            options={SECTIONS.map((s) => s.key)}
-            value={section}
-            onChange={chooseSection}
-            labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-          />
-          {/* the second level appears only once there is a half to narrow */}
-          {kinds.length > 0 && (
-            <Segmented
-              options={['all', ...kinds.map((k) => k.key)]}
-              value={kind ?? 'all'}
-              onChange={(next) => setKind(next === 'all' ? null : next)}
-              labelOf={(key) =>
-                key === 'all' ? t('civak.filter.allKinds') : t(kinds.find((k) => k.key === key)!.labelKey)
-              }
-            />
-          )}
-        </View>
-
-        <AsyncBoundary loading={items === null} error={items === null ? error : null} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
-          <FlatList
-            ref={listRef}
-            data={items}
-            keyExtractor={(i) => i.key}
-            renderItem={renderItem}
-            contentContainerStyle={[styles.list, { paddingBottom: tabBarInset }]}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
-            onEndReached={loadMore}
-            onEndReachedThreshold={0.5}
-            showsVerticalScrollIndicator={false}
-            ListEmptyComponent={
-              everything ? (
-                /*
-                 * A new reader's wall is empty because they follow nobody and
-                 * have written nothing, so it offers both, and nothing else:
-                 * finding people first, since a wall of other people's posts
-                 * is what makes the second one worth doing.
-                 */
-                <EmptyState
-                  title={t('civak.empty.welcome')}
-                  body={t('civak.empty.body')}
-                  action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
-                  secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
-                />
-              ) : (
-                <EmptyState
-                  title={t('civak.empty')}
-                  body={t('civak.empty.body')}
-                  action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
-                />
-              )
-            }
-            ListFooterComponent={
-              loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
-            }
-          />
-        </AsyncBoundary>
+        <FlatList
+          ref={listRef}
+          data={items ?? []}
+          keyExtractor={(i) => i.key}
+          renderItem={renderItem}
+          contentContainerStyle={{ paddingBottom: tabBarInset }}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(onPull)} tintColor={colors.textSecondary} />}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            <>
+              <FriendsRow refreshKey={pulls} />
+              {plain ? null : (
+                <FeedFilterChips>
+                  {ordered ? (
+                    <FeedFilterChip
+                      icon="sort"
+                      label={ordered}
+                      clearLabel={t('feed.sort.clear')}
+                      onOpen={() => setFiltering(true)}
+                      onClear={() => choose({ ...filter, sort: DEFAULT_FILTER.sort, period: DEFAULT_FILTER.period })}
+                    />
+                  ) : null}
+                  {narrowed ? (
+                    <FeedFilterChip
+                      icon="filter-fill"
+                      label={narrowed}
+                      clearLabel={t('civak.filter.clear')}
+                      onOpen={() => setFiltering(true)}
+                      onClear={() => choose({ ...filter, section: 'all', kind: null })}
+                    />
+                  ) : null}
+                </FeedFilterChips>
+              )}
+            </>
+          }
+          ListEmptyComponent={
+            items === null ? (
+              // the faces and the filters stay put while the posts load, or fail to
+              <View style={styles.waiting}>
+                <AsyncBoundary loading={!error} error={error} onRetry={() => void refresh()} skeleton={<FeedSkeleton />}>
+                  {null}
+                </AsyncBoundary>
+              </View>
+            ) : plain ? (
+              /*
+               * A new reader's wall is empty because they follow nobody and
+               * have written nothing, so it offers both, and nothing else:
+               * finding people first, since a wall of other people's posts
+               * is what makes the second one worth doing.
+               */
+              <EmptyState
+                title={t('civak.empty.welcome')}
+                body={t('civak.empty.body')}
+                action={{ label: t('civak.empty.findPeople'), onPress: () => navigation.navigate('Search') }}
+                secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
+              />
+            ) : (
+              // nothing in what was asked for: the way back to the whole wall first
+              <EmptyState
+                title={t('civak.empty')}
+                body={t('civak.empty.body')}
+                action={{ label: t('civak.filter.clear'), onPress: () => choose(DEFAULT_FILTER) }}
+                secondary={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
+              />
+            )
+          }
+          ListFooterComponent={
+            loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
+          }
+        />
+        <FeedFilterSheet visible={filtering} value={filter} onApply={choose} onClose={() => setFiltering(false)} />
       </View>
     </GradientBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, paddingHorizontal: layout.gutter },
-  // the two controls are the same width, so the name between them is centred
-  bar: { alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm },
-  wordmark: { ...display(typography.sizes.xl), flex: 1, textAlign: 'center' },
-  filters: { gap: spacing.sm, marginBottom: spacing.md },
-  list: { gap: layout.rowGap },
+  screen: { flex: 1 },
+  // the bell reaches past the gutter so its glyph, not its target, lines up with the name's edge
+  bar: { alignItems: 'center', paddingHorizontal: layout.gutter, minHeight: 44 },
+  wordmark: { ...display(typography.sizes.xl), flex: 1 },
+  waiting: { paddingHorizontal: layout.gutter },
 });

@@ -11,6 +11,7 @@ vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
+vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 
@@ -20,10 +21,10 @@ describe('Settings → Security', () => {
     navigation.navigate.mockClear();
   });
 
-  it('opens Change password and Signed-in devices, beside Sign out everywhere', () => {
+  it('opens Change password and Signed-in devices from Account, and offers Sign out everywhere', () => {
     testAuth.client = fakeClient();
     renderWithProviders(<SettingsScreen onExit={() => undefined} />);
-    expect(screen.getByText('Security')).toBeTruthy();
+    expect(screen.getByText('Account')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Change password' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ChangePassword');
     fireEvent.click(screen.getByRole('button', { name: 'Signed-in devices' }));

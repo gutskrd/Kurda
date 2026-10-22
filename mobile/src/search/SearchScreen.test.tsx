@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -40,5 +40,25 @@ describe('Search with nothing typed', () => {
     renderWithProviders(<SearchScreen />);
     expect(await screen.findByText('Type to search across the app.')).toBeTruthy();
     expect(screen.queryAllByTestId('skeleton')).toHaveLength(0);
+  });
+});
+
+describe('Search when the server cannot answer', () => {
+  // a search that failed is not a search that found nothing, and it can be tried again
+  it('says it could not search, not that nothing was found, and tries again', async () => {
+    let calls = 0;
+    testAuth.client = fakeClient({
+      'GET /friends/suggestions': ok({ suggestions: [] }),
+      'GET /users/search?q=azad': () =>
+        ++calls === 1
+          ? { ok: false, error: { kind: 'server', message: 'unavailable', status: 503 } }
+          : ok({ results: [{ userId: 'u2', username: 'azad', displayName: null }] }),
+      'GET /dictionary/search?q=azad': ok({ results: [] }),
+    });
+    renderWithProviders(<SearchScreen />);
+    fireEvent.change(screen.getByLabelText('Search'), { target: { value: 'azad' } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Try again' }));
+    expect(screen.queryByText('Nothing found for “azad”.')).toBeNull();
+    expect(await screen.findByText('azad')).toBeTruthy();
   });
 });

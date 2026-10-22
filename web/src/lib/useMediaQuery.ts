@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 /**
  * True while a CSS media query matches, and re-renders when that changes.
  *
- * Used where a layout decision cannot be expressed in CSS alone — the Wordle
+ * Used where a layout decision cannot be expressed in CSS alone — the Peyvok
  * keyboard needs a different ROW SPLIT on a narrow screen, not just different
  * sizes, and rendering both layouts to toggle with CSS would duplicate every key
  * in the accessibility tree.

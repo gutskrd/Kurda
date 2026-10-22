@@ -74,6 +74,24 @@
   --on-danger: #ffffff;
   --success: #86e2a4;
   --success-soft: rgba(87, 185, 107, 0.18);
+  /*
+   * A switch, in the app's ink rather than a colour: on is a light track with a
+   * dark knob, off a mid grey with a white one, and the knob's side says it as
+   * well. Each track is 3:1 or more against every surface it sits on, and each
+   * knob 3.3:1 or more against its track.
+   */
+  --switch-on: #f2f3f5;
+  --switch-on-thumb: #0b0d10;
+  --switch-off: #686c73;
+  --switch-off-thumb: #ffffff;
+  /*
+   * Something not reached yet, a league above yours: its shape in a quiet grey
+   * and the keyhole on it a step lighter. Seen, so it is something to look
+   * forward to, but nothing like the colour of what has been earned. Not a
+   * control, so not held to 3:1.
+   */
+  --locked: #262b33;
+  --locked-mark: #4d545e;
   /* someone online: a dot, never the only sign of it */
   --online: #3ddc84;
 
@@ -206,6 +224,12 @@
   /* 5.9:1 on a card, 4.8:1 on its own soft tint over a grey panel */
   --success: #17723a;
   --success-soft: rgba(26, 122, 58, 0.1);
+  --switch-on: #1a1a1a;
+  --switch-on-thumb: #ffffff;
+  --switch-off: #86898f;
+  --switch-off-thumb: #ffffff;
+  --locked: #e2e4e8;
+  --locked-mark: #a5a9b0;
   --online: #1fa45a;
 
   --focus: rgba(17, 17, 17, 0.7);

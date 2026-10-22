@@ -62,7 +62,7 @@ const TICK_MS = 200;
 /**
  * Rhyme Match (KUR-299) on the phone: out-rhyme a friend against the clock.
  *
- * Built like Wordle Battle, for the reason the API gives — its REST endpoints
+ * Built like Peyvok Battle, for the reason the API gives — its REST endpoints
  * are poll-safe and the realtime scoreboard "layers onto these endpoints" — so
  * the socket can arrive later without this screen changing.
  *

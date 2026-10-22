@@ -1,14 +1,14 @@
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { lessonStates, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { SHEET_MAX_WIDTH } from '../reports/sheet';
+import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import type { ToneColors } from './path';
 import type { SkillNode } from './types';
 
@@ -39,27 +39,15 @@ export function StopSheet({
   onReview: () => void;
   onTips: (skill: SkillNode) => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
   return (
-    <Modal visible={open !== null} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={styles.flex}>
-        <Pressable
-          style={[styles.backdrop, { backgroundColor: colors.scrim }]}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-        />
-        <View style={[styles.sheet, { backgroundColor: colors.surfaceRaised }]} accessibilityViewIsModal>
-          <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-          {open && tone ? (
-            <ScrollView contentContainerStyle={styles.body} bounces={false}>
-              <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} />
-            </ScrollView>
-          ) : null}
-        </View>
-      </View>
-    </Modal>
+    // no title in the header: the stop's own name heads the card, under what it belongs to
+    <BottomSheet visible={open !== null} onClose={onClose} contentStyle={styles.scroller}>
+      {open && tone ? (
+        <ScrollView contentContainerStyle={styles.body} bounces={false}>
+          <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} />
+        </ScrollView>
+      ) : null}
+    </BottomSheet>
   );
 }
 
@@ -206,20 +194,9 @@ function Card({
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0 },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    maxHeight: '86%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-    paddingTop: spacing.sm,
-    paddingBottom: spacing.xl,
-  },
-  grabber: { alignSelf: 'center', width: 40, height: 5, borderRadius: radii.pill, marginBottom: spacing.sm },
-  body: { paddingHorizontal: spacing.lg, paddingTop: spacing.sm, gap: spacing.sm + 4 },
+  // the gutter is the ScrollView's own, so the card scrolls edge to edge
+  scroller: { paddingHorizontal: 0 },
+  body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm + 4 },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
   title: { ...display(typography.sizes.lg) },
   line: { fontSize: typography.sizes.sm, lineHeight: 21 },

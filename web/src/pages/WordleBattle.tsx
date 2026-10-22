@@ -97,7 +97,7 @@ function guessMsg(err: ApiError, t: (key: MessageKey) => string): string {
   }
 }
 
-/** Wordle Battle (KUR-306): race the same word. Create → share link → play. */
+/** Peyvok Battle (KUR-306): race the same word. Create → share link → play. */
 export function WordleBattle(): React.JSX.Element {
   const [params] = useSearchParams();
   const t = useT();
@@ -262,11 +262,11 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
     navigate('/app/games');
   }
 
-  if (gone) return <RoomUnavailable why={gone} newPath="/app/games/wordle-battle" newLabel={t('games.battle.new')} />;
+  if (gone) return <RoomUnavailable why={gone} newPath="/app/games/peyvok-battle" newLabel={t('games.battle.new')} />;
   if (error && !battle) return <ErrorState message={error} onRetry={() => void load()} />;
   if (!battle) return <Loading />;
   if (battle.status === 'cancelled') {
-    return <RoomUnavailable why="cancelled" newPath="/app/games/wordle-battle" newLabel={t('games.battle.new')} />;
+    return <RoomUnavailable why="cancelled" newPath="/app/games/peyvok-battle" newLabel={t('games.battle.new')} />;
   }
 
   const present = battle.players.filter((p) => !p.gone);
@@ -366,7 +366,7 @@ function BattleRoom({ id }: { id: string }): React.JSX.Element {
             isHost={battle.isHost}
           />
         )}
-        <Link to="/app/games/wordle-battle" className="btn btn-ghost">{t('games.battle.new')}</Link>
+        <Link to="/app/games/peyvok-battle" className="btn btn-ghost">{t('games.battle.new')}</Link>
       </div>
     );
   }

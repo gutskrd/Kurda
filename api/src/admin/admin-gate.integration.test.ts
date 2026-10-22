@@ -205,11 +205,11 @@ describe.skipIf(!DATABASE_URL)('admin 2FA gate (integration)', () => {
     expect(res.json().code).toBe('INVALID_CODE');
   });
 
-  it('still answers a non-admin with plain FORBIDDEN, saying nothing about 2FA', async () => {
+  it('answers a non-admin as a route that is not there, saying nothing about 2FA', async () => {
     // the gate must not tell a stranger that a path exists or what it would need
     const res = await call('GET', '/admin/economy/supply?currency=zer', plainToken);
-    expect(res.statusCode).toBe(403);
-    expect(res.json().code).toBe('FORBIDDEN');
+    expect(res.statusCode).toBe(404);
+    expect(res.json().code).toBe('NOT_FOUND');
   });
 
   it('signing out ends the 2FA for this login, so the next visit asks again', async () => {

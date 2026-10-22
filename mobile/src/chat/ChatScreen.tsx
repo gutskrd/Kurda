@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Alert,
   FlatList,
   KeyboardAvoidingView,
   Platform,
@@ -10,9 +11,12 @@ import {
   View,
 } from 'react-native';
 import type { GiftCard, GiftTier } from '@kurda/shared';
+import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
+import type { RootNavigation } from '../navigation/rootStack';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
+import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
@@ -20,9 +24,14 @@ import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, lineOf } from '../theme/Skeleton';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { HeaderButton } from '../navigation/HeaderButton';
+import { showActions } from '../theme/actionSheet';
+import { blockUser } from '../social/blocks';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
-import { SendButton } from './SendButton';
+import { COMPOSER_FIELD, SendButton } from './SendButton';
+import { messageA11y, openMessageOptions } from './messageOptions';
+import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useChatSocket } from './useChatSocket';
 import { useI18n } from '../i18n/I18nContext';
 import { MessageContent, hasControls, isCardMessage } from './MessageContent';
@@ -37,6 +46,8 @@ import { ChatGameButton } from '../play/ChatGameButton';
 import { appendOnce, mergeLatest, useCatchUp } from '../realtime/catchUp';
 
 const MAX_LEN = 2000;
+/** The face beside the name in the header: big enough to know them by, small enough for a bar. */
+const HEADER_FACE = 28;
 
 /**
  * 1:1 conversation thread (KUR-083).
@@ -61,6 +72,7 @@ export function ChatScreen({
   onExit: () => void;
 }) {
   const { client, user } = useAuth();
+  const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t } = useI18n();
   // in Soranî and Arabic the thread is mirrored: your own words on the left, the composer's Send on the left too
@@ -77,6 +89,8 @@ export function ChatScreen({
   const [flying, setFlying] = useState<{ tier: GiftTier; key: number } | null>(null);
   const [unwrapping, setUnwrapping] = useState<UnwrapTarget | null>(null);
   const [reporting, setReporting] = useState<string | null>(null);
+  // the header's report: about the person, not one message
+  const [reportingPerson, setReportingPerson] = useState(false);
   const typingTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastTypingSent = useRef(0);
   // the gift the way in asked for, once unwrapped — by id, so a second banner
@@ -185,6 +199,32 @@ export function ChatScreen({
     [client, userId],
   );
 
+  // the person, not one message: their profile, a report, or a block
+  const personMenu = useCallback(() => {
+    showActions({
+      title: name,
+      cancel: t('common.cancel'),
+      actions: [
+        { label: t('chat.viewProfile'), onPress: () => navigation.navigate('UserProfile', { userId }) },
+        { label: t('report.title.named', { name }), onPress: () => setReportingPerson(true) },
+        {
+          label: t('report.done.block', { name }),
+          destructive: true,
+          onPress: () =>
+            Alert.alert(t('moderation.blockWhoTitle', { name }), t('moderation.blockNote'), [
+              { text: t('common.cancel'), style: 'cancel' },
+              {
+                text: t('moderation.block'),
+                style: 'destructive',
+                // blocked: the conversation is over for you
+                onPress: () => void blockUser(client, userId).then((res) => (res.ok ? onExit() : Alert.alert(describeError(res.error, t)))),
+              },
+            ]),
+        },
+      ],
+    });
+  }, [client, name, navigation, onExit, t, userId]);
+
   const send = useCallback(async () => {
     const body = draft.trim();
     if (!body) return;
@@ -203,7 +243,22 @@ export function ChatScreen({
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScreenHeader title={name} onBack={onExit} hairline />
+        {/*
+          Report and block where anybody would look for them: at the top of
+          the conversation, about the person, as well as on a held message
+          about that message.
+        */}
+        <ScreenHeader
+          title={name}
+          titleAvatar={<InitialsAvatar name={name} id={userId} size={HEADER_FACE} />}
+          onTitlePress={() => navigation.navigate('UserProfile', { userId })}
+          titleHint={t('chat.viewProfile')}
+          onBack={onExit}
+          hairline
+          right={
+            <HeaderButton icon="more" label={t('chat.moreAbout', { name })} onPress={personMenu} edge="end" />
+          }
+        />
 
         {loading ? (
           <ThreadSkeleton mirrored={mirrored} />
@@ -222,18 +277,19 @@ export function ChatScreen({
             renderItem={({ item }) => {
               const mine = item.senderId === me;
               const card = isCardMessage(item);
-              // one element for a screen reader, with Report among its actions, unless it holds a control of its own
+              // one element for a screen reader, with Copy and Report among its actions, unless it holds a control of its own
               const whole = !hasControls(item);
               // the controls inside a message (a gift, an invite link) report it too
               const report = mine ? undefined : () => setReporting(item.id);
+              // held, a message offers its words to copy and, if it is someone else's, a report
+              const options = { words: card ? null : item.body, onReport: report };
               return (
                 <Pressable
-                  onLongPress={report}
+                  onLongPress={() => openMessageOptions(t, options)}
                   delayLongPress={350}
                   accessible={whole}
-                  accessibilityActions={mine || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
-                  onAccessibilityAction={() => setReporting(item.id)}
-                  style={[styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
+                  {...(whole ? messageA11y(t, options) : null)}
+                  style={({ pressed }) => [styles.bubbleRow, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
                 >
                   {card ? (
                     <MessageContent message={item} mine={mine} senderName={item.username || name} onOpenGift={startUnwrap} onReport={report} />
@@ -267,7 +323,7 @@ export function ChatScreen({
             onPress={() => setPicking(true)}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
           >
             <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
@@ -310,6 +366,17 @@ export function ChatScreen({
         />
       ) : null}
 
+      <ReportSheet
+        visible={reportingPerson}
+        target={{ type: 'user', userId }}
+        name={name || undefined}
+        blockable={{ userId, name: name || null }}
+        onClose={() => setReportingPerson(false)}
+        onBlocked={() => {
+          setReportingPerson(false);
+          onExit();
+        }}
+      />
       <ReportSheet
         visible={reporting !== null}
         target={{ type: 'dm_message', messageId: reporting ?? '' }}
@@ -356,6 +423,8 @@ function ThreadSkeleton({ mirrored }: { mirrored: boolean }): React.JSX.Element 
 const BUBBLE_LINE = spacing.sm * 2 + lineOf(typography.sizes.md);
 
 const styles = StyleSheet.create({
+  // a held message sinks a little under the finger, so the hold is felt to be doing something
+  held: { transform: [{ scale: 0.97 }] },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   screen: { flex: 1 },
@@ -368,7 +437,16 @@ const styles = StyleSheet.create({
   receipt: { fontSize: typography.sizes.xs, marginTop: 2 },
   empty: { textAlign: 'center', marginTop: spacing.xl },
   typing: { fontStyle: 'italic', paddingHorizontal: spacing.lg, paddingBottom: spacing.xs, fontSize: typography.sizes.sm },
-  inputRow: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, padding: spacing.md, borderTopWidth: StyleSheet.hairlineWidth },
-  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, maxHeight: 120, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
+  // the buttons stay by the last line as a long message grows the field upwards
+  inputRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
+    borderTopWidth: StyleSheet.hairlineWidth,
+  },
+  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  input: COMPOSER_FIELD,
 });

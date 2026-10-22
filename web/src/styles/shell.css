@@ -946,6 +946,8 @@
   }
   .nav-search-input {
     height: 44px;
+    /* the clear button's 40px and its 2px inset, so the words stop short of it */
+    padding-inline-end: 44px;
     /* sixteen pixels, or a phone zooms the page in when the field is touched */
     font-size: 16px;
   }
@@ -1370,21 +1372,9 @@
   position: relative;
   margin-bottom: var(--space-2);
 }
-.chat-filter-icon {
-  position: absolute;
-  inset-inline-start: 14px;
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--ink-3);
-  pointer-events: none;
-}
 .chat-filter-input {
   height: 42px;
-  padding-inline-start: 40px;
   border-radius: var(--r-pill);
-}
-.chat-filter-input::-webkit-search-cancel-button {
-  cursor: pointer;
 }
 /* the friend requests waiting on you, above the conversations */
 .chat-requests {
@@ -1649,18 +1639,19 @@
   .search-clear {
     width: 44px;
   }
+  /* the wider clear button and its inset, so the words stop short of it */
+  .search-input {
+    padding-inline-end: 50px;
+  }
   .chat-filter-input {
     height: 44px;
   }
   .post-plus,
+  .ffilter-btn,
   .shop-gift-btn,
   .msg-menu-btn {
     min-width: 44px;
     min-height: 44px;
-  }
-  .fcard-act {
-    min-height: 44px;
-    min-width: 44px;
   }
   .profile-progress-link {
     display: inline-flex;

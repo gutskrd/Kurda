@@ -9,7 +9,7 @@ import { useEffect, useRef } from 'react';
  * The games know nothing about the box, and the box nothing about the games.
  *
  * It has to be said on the transition into finished, not whenever a finished
- * screen is on view: a daily Wordle opened again after it was played, or a
+ * screen is on view: a daily Peyvok opened again after it was played, or a
  * battle's results opened from a link, is not a game just finished
  * (map3-rating §2). `useGameFinished` keeps that rule for a game whose state
  * arrives from the server; a game that knows the moment itself (the race's
@@ -48,7 +48,7 @@ export function onGameFinished(listener: Listener): () => void {
 }
 
 /**
- * Say that a new round has begun — "Race again", Wordle's "Play again", the
+ * Say that a new round has begun — "Race again", Peyvok's "Play again", the
  * next Rhyme round. They stay on the same page, so without this a rating box
  * still on its way from the last results would rise over the new game, and on
  * a phone over the soft keyboard and the text being typed.

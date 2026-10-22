@@ -108,7 +108,7 @@ describe.skipIf(!DATABASE_URL)('social rail (integration)', () => {
     );
     const body = await rail('me');
     const mate = body.friends.find((f: { userId: string }) => f.userId === ids.mate);
-    expect(mate.activity.game).toBe('Wordle');
+    expect(mate.activity.game).toBe('Peyvok');
     // the client counts up from this, so it has to be the real start
     const minutes = (Date.now() - new Date(mate.activity.since).getTime()) / 60_000;
     expect(minutes).toBeGreaterThan(3);
@@ -137,7 +137,7 @@ describe.skipIf(!DATABASE_URL)('social rail (integration)', () => {
     // and it comes back when they turn it on again
     await call('PATCH', '/me/profile/sections', tokens.mate!, { games: true });
     const shown = await rail('me');
-    expect(shown.friends.find((f: { userId: string }) => f.userId === ids.mate).activity.game).toBe('Wordle');
+    expect(shown.friends.find((f: { userId: string }) => f.userId === ids.mate).activity.game).toBe('Peyvok');
   });
 
   // Challenges were invites to the ranked quiz, which Stories replaced. The

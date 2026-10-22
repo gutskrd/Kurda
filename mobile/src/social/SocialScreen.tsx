@@ -1,16 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
-import { radii, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET, hitSlopFor } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { describeError } from '../api/errors';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -20,6 +21,7 @@ import { BackButton } from '../navigation/BackButton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { EmptyState } from '../theme/EmptyState';
 import { mutualText, undoAction } from './format';
+import { SearchField } from '../theme/SearchField';
 
 interface UserRow {
   userId: string;
@@ -149,9 +151,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     (userId: string) => {
       setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
       haptic('tap');
-      void client.post('/friends/requests', { userId }).then(loadLists);
+      void client.post('/friends/requests', { userId }).then((res) => {
+        // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
+        if (!res.ok) Alert.alert(describeError(res.error, t));
+        loadLists();
+      });
     },
-    [client, loadLists],
+    [client, loadLists, t],
   );
 
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });
@@ -218,14 +224,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
             </Pressable>
           }
         />
-        <TextInput
-          style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-          placeholder={t('friends.searchPlaceholder')}
-          placeholderTextColor={colors.textSecondary}
-          autoCapitalize="none"
-          value={query}
-          onChangeText={search}
-        />
+        <SearchField value={query} onChangeText={search} label={t('friends.searchPlaceholder')} returnKeyType="done" />
 
         {showingSearch ? (
           <FlatList
@@ -354,11 +353,10 @@ function PeopleSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   skeleton: { gap: spacing.xs },
-  screen: { flex: 1, padding: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter, paddingVertical: spacing.lg },
   head: { marginBottom: spacing.md },
   messagesLink: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   messages: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  input: { minHeight: MIN_TOUCH_TARGET, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md },
   list: { paddingVertical: spacing.md, gap: spacing.xs },
   section: { ...sectionLabel, marginTop: spacing.md, marginBottom: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, padding: spacing.sm },

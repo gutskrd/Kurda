@@ -1,0 +1,20 @@
+/*
+ * Hevalo's icon with eyes that follow the pointer (brand/HevaloMark.tsx). The
+ * picture has no pupils: each sits in its eye's white, measured as shares of
+ * the icon's square (each white 58 by 68 of its 360), turned in towards the
+ * other as the icon draws them, with the light in it to the upper left.
+ */
+.hevalo-mark { position: relative; display: inline-block; flex: none; line-height: 0; user-select: none; }
+.hevalo-mark img { display: block; width: 100%; height: 100%; }
+.hevalo-eye { position: absolute; top: 51.667%; width: 16.111%; height: 18.889%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
+.hevalo-eye.is-left { left: 26.944%; }
+.hevalo-eye.is-right { left: 56.111%; }
+.hevalo-pupil {
+  position: absolute; top: 17.7%; width: 53.79%; height: 70.59%;
+  border-radius: 50%; background: #532e28;
+  /* kept in forced colours too: the picture has no pupils of its own */
+  forced-color-adjust: none;
+}
+.hevalo-eye.is-left .hevalo-pupil { left: 43.1%; }
+.hevalo-eye.is-right .hevalo-pupil { left: 6.38%; }
+.hevalo-pupil::after { content: ''; position: absolute; top: 8.96%; left: -2.24%; width: 46.15%; height: 30%; border-radius: 50%; background: #fff; }

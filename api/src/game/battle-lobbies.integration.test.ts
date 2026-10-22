@@ -1,5 +1,5 @@
 /**
- * Wordle Battle and Rhyme Match lobbies under the rules every online game
+ * Peyvok Battle and Rhyme Match lobbies under the rules every online game
  * shares (contract §B2): members only, the join rule, players as seats with
  * names only for friends, leaving and removing, idle lobbies, a battle that
  * cannot hang, the latecomer's answer, prompts in the match's own dialect,
@@ -103,7 +103,7 @@ describe.skipIf(!DATABASE_URL)('battle lobbies (integration)', () => {
     await pool.end();
   });
 
-  describe('Wordle Battle', () => {
+  describe('Peyvok Battle', () => {
     it('only members read a battle; a friend may look at the lobby first; a latecomer hears it started; a stranger, that it does not exist', async () => {
       const host = await makeUser();
       const friend = await makeUser();

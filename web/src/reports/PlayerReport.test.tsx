@@ -39,7 +39,7 @@ async function report(name: string): Promise<void> {
 }
 
 describe('reporting a player while the game is played', () => {
-  it('reports a Wordle Battle opponent by seat, from their chip', async () => {
+  it('reports a Peyvok Battle opponent by seat, from their chip', async () => {
     const reports = stub('/wordle/battles/b1', {
       id: 'b1',
       status: 'active',
@@ -56,7 +56,7 @@ describe('reporting a player while the game is played', () => {
       opponents: [{ userId: 'seat:2', seat: 2, name: 'rojda', avatarUrl: null, guessCount: 1, solved: false, status: 'playing', progress: 1, finished: false, gone: false }],
       target: null,
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b1']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b1']);
     await report('More about rojda');
     await waitFor(() => expect(reports).toHaveLength(1));
     expect(reports[0]).toMatchObject({ targetType: 'game_player', targetId: 'b1', game: 'wordle-battle', seat: 2, category: 'harassment' });
@@ -93,7 +93,7 @@ describe('reporting a player while the game is played', () => {
 });
 
 describe('reporting a player in the lobby', () => {
-  it('puts a ⋯ beside every other player in a Wordle Battle lobby, by seat', async () => {
+  it('puts a ⋯ beside every other player in a Peyvok Battle lobby, by seat', async () => {
     const reports = stub('/wordle/battles/b2', {
       id: 'b2',
       status: 'lobby',
@@ -110,7 +110,7 @@ describe('reporting a player in the lobby', () => {
       opponents: [],
       target: null,
     });
-    renderApp(<WordleBattle />, ['/app/games/wordle-battle?id=b2']);
+    renderApp(<WordleBattle />, ['/app/games/peyvok-battle?id=b2']);
     // the lobby names a hidden player by seat, and its ⋯ says the same name
     await report('More about Player 1');
     await waitFor(() => expect(reports).toHaveLength(1));

@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { VISEMES } from '../lipsync/visemes.js';
-import { CHARACTER_IDS, CHARACTER_NAMES, CHARACTERS, DEFAULT_CHARACTER, characterArt, characterSvg, headGroup, isCharacterId, type CharacterArt } from './index.js';
+import {
+  CHARACTER_IDS,
+  CHARACTER_NAMES,
+  CHARACTERS,
+  DEFAULT_CHARACTER,
+  STAGE_FIGURE_SHARE,
+  characterArt,
+  characterSvg,
+  headGroup,
+  isCharacterId,
+  stageBackdrop,
+  stageFigure,
+  type CharacterArt,
+} from './index.js';
 import { curve, mirror, symmetric, taper } from './pen.js';
 
 /**
@@ -105,6 +118,28 @@ function parts(art: CharacterArt): [string, string][] {
   ];
 }
 
+/** The parts drawn for expressions and for moving on their own: not part of the plain figure's size. */
+function extras(art: CharacterArt): [string, string][] {
+  const rig = art.rig;
+  return [
+    ...(art.chest ? ([['chest', art.chest]] as [string, string][]) : []),
+    ['eyes.happy', art.eyes.happy],
+    ...(art.eyes.half ? ([['eyes.half', art.eyes.half]] as [string, string][]) : []),
+    ...(rig
+      ? ([
+          ['rig.face', rig.face],
+          ['rig.crown', rig.crown],
+          ['rig.ears.left', rig.ears.left.art],
+          ['rig.ears.right', rig.ears.right.art],
+          ['rig.look.whites', rig.look.whites],
+          ['rig.look.left', rig.look.left.art],
+          ['rig.look.right', rig.look.right.art],
+          ['rig.look.half', rig.look.half],
+        ] as [string, string][])
+      : []),
+  ];
+}
+
 const bytes = (s: string): number => new TextEncoder().encode(s).length;
 
 describe('the characters', () => {
@@ -184,18 +219,34 @@ describe('the characters', () => {
 
       it('stays small: the whole figure within its budget, and a mouth a sliver of it', () => {
         const total = parts(art).reduce((s, [, m]) => s + bytes(m), 0);
-        expect(total).toBeLessThan(30_000);
+        // each of the deer's ears carries its own light, so either can be drawn alone
+        expect(total).toBeLessThan(31_000);
         for (const v of VISEMES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
         expect(bytes(art.eyes.open) + bytes(art.eyes.closed)).toBeLessThan(3_500);
+        const budget: Record<string, number> = { 'rig.face': 9_000, chest: 5_000 };
+        for (const [name, markup] of extras(art)) expect(bytes(markup), name).toBeLessThan(budget[name] ?? 3_000);
       });
 
       it('uses no pictures, filters, masks, styles or text', () => {
-        for (const [name, markup] of parts(art)) {
+        for (const [name, markup] of [...parts(art), ...extras(art)]) {
           expect(markup, name).not.toMatch(/<image|<filter|<mask|<pattern|<style|<text|<use|<script|<foreignObject|data:|https?:/i);
         }
       });
     });
   }
+
+  it('cuts Hevalo off under his chest, for a badge: the body down to there, drawn in its place', () => {
+    const art = characterArt('hevalo');
+    const chest = art.chest ?? '';
+    const { problems, ids, refs } = inspect(chest);
+    expect(problems).toEqual([]);
+    for (const r of refs) expect(ids).toContain(r);
+    // the same drawing as the body, under the same ids, less the legs and the hooves
+    expect(new Set(ids)).toEqual(new Set(inspect(art.body).ids.filter((i) => !i.endsWith('hoof'))));
+    expect(bytes(chest)).toBeLessThan(bytes(art.body) / 2);
+    expect(characterArt('hamo').chest).toBeUndefined();
+    expect(characterArt('xezo').chest).toBeUndefined();
+  });
 
   it('is the same string every time it is drawn', () => {
     for (const id of CHARACTER_IDS) {
@@ -262,7 +313,7 @@ describe('characterSvg', () => {
 
   it('refuses what it cannot draw', () => {
     expect(() => characterSvg('hamo', { mouth: 'x' as never })).toThrow(RangeError);
-    expect(() => characterSvg('hamo', { eyes: 'half' as never })).toThrow(RangeError);
+    expect(() => characterSvg('hamo', { eyes: 'squint' as never })).toThrow(RangeError);
     expect(() => characterSvg('hamo', { width: 0 })).toThrow(RangeError);
     expect(() => characterSvg('nobody' as never)).toThrow(RangeError);
   });
@@ -271,6 +322,36 @@ describe('characterSvg', () => {
     const art = characterArt('hamo');
     expect(headGroup(art, 'rest', 'open', 0)).toMatch(/^<g>/);
     expect(headGroup(art, 'a', 'open', -2)).toContain(`rotate(-2 ${art.headPivot.x} ${art.headPivot.y})`);
+  });
+});
+
+describe('a stage', () => {
+  it('stands each character in nothing but its own light: a wash and a glow, no landscape', () => {
+    for (const id of CHARACTER_IDS) {
+      for (const dark of [false, true]) {
+        const svg = parse(stageBackdrop(id, 342, 340, 0.27, { dark, idPrefix: `t-${id}` })).children[0] as El;
+        expect(svg.name).toBe('svg');
+        expect(svg.children.map((el) => el.name)).toEqual(['defs', 'rect', 'rect']);
+      }
+    }
+  });
+
+  it('shows a character head to waist as tall as the stage allows, and smaller rather than wider than its share', () => {
+    for (const id of CHARACTER_IDS) {
+      const half = characterArt(id).half;
+      for (const [width, height] of [
+        [342, 340],
+        [342, 150],
+        [648, 380],
+      ] as const) {
+        const shown = stageFigure(id, width, height, 16);
+        expect(shown.height).toBeLessThanOrEqual(height - 16 + 1e-9);
+        expect(shown.width).toBeLessThanOrEqual(width * STAGE_FIGURE_SHARE + 1e-9);
+        expect(shown.width / shown.height).toBeCloseTo(half.w / half.h, 9);
+        // one of the two limits is reached: the figure is never smaller than it need be
+        expect(Math.max(shown.height / (height - 16), shown.width / (width * STAGE_FIGURE_SHARE))).toBeCloseTo(1, 9);
+      }
+    }
   });
 });
 

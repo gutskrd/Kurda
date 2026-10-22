@@ -1,7 +1,7 @@
 /**
  * Migration 1751000171000 against real Postgres: the frozen Elo moves into
  * Game Ranks (μ = 25 + (Elo − 1000)/48, σ = 4 with 20+ games else 6), into the
- * game a player's history was played in when it says, Wordle Battle otherwise;
+ * game a player's history was played in when it says, Peyvok Battle otherwise;
  * the old numbers stay in the migration event; the old tables go. Run down and
  * up through node-pg-migrate itself, as `migrate down`/`migrate up` would.
  */

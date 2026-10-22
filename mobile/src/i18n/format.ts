@@ -76,16 +76,23 @@ export function countdownParts(remainingMs: number): CountdownParts {
 }
 
 /**
- * Compact countdown for a deadline: the two most significant non-zero units,
- * e.g. "2d 3h", "5h 12m", "3m". Empty string once the deadline has passed.
+ * Compact countdown for a deadline, in the reader's words: the two largest
+ * units that matter — "2d 3h", "5h 12m" — down to whole minutes, with the last
+ * one shown as "1m" rather than seconds ticking away. Empty once the deadline
+ * has passed.
+ *
+ * It was English abbreviations in every language, and counted seconds, which
+ * says hurry more than when.
  */
-export function formatCountdown(remainingMs: number): string {
-  const { days, hours, minutes, seconds, done } = countdownParts(remainingMs);
+export function formatCountdown(
+  remainingMs: number,
+  t: (key: 'time.daysHours' | 'time.hoursMinutes' | 'time.minutes', vars: Record<string, number>) => string,
+): string {
+  const { days, hours, minutes, done } = countdownParts(remainingMs);
   if (done) return '';
-  if (days > 0) return `${days}d ${hours}h`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m ${seconds}s`;
-  return `${seconds}s`;
+  if (days > 0) return t('time.daysHours', { days, hours });
+  if (hours > 0) return t('time.hoursMinutes', { hours, minutes });
+  return t('time.minutes', { count: Math.max(1, minutes) });
 }
 
 /** Milliseconds until an ISO instant from `now` (default: real clock). */

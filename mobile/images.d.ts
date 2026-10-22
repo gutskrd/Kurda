@@ -32,3 +32,12 @@ declare module '*.webp' {
   const asset: ImageSourcePropType;
   export default asset;
 }
+
+/**
+ * A bundled sound (assets/sounds, made by scripts/generate-sounds.mjs): Metro
+ * hands back an asset id that expo-audio plays, as it does for a picture.
+ */
+declare module '*.wav' {
+  const asset: number;
+  export default asset;
+}

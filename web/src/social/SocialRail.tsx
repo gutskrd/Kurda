@@ -11,6 +11,7 @@ import { useRail, useRailPresent } from './RailProvider';
 import type { RailFriend, SocialRailData } from './useSocialRail';
 import { RailToasts } from './RailToasts';
 import { useT } from '../i18n/I18nProvider';
+import { GroupAvatar } from '../groups/GroupAvatar';
 
 /**
  * What the dock beside the rail is showing.
@@ -181,7 +182,7 @@ function RailContent({ data, onActed, onChat }: { data: SocialRailData; onActed:
             {/* the name goes to the page, for when you want the whole roster and
                 the members panel; the bubble docks it, like a friend's does */}
             <Link to={`/app/messages?group=${g.id}`} className="rail-row-link">
-              <span className="rail-group-mark" aria-hidden>{g.name.slice(0, 1).toUpperCase()}</span>
+              <GroupAvatar id={g.id} name={g.name} photoUrl={g.photoUrl} size={28} />
               <span className="rail-row-text">
                 <span className="rail-row-name">{g.name}</span>
                 <span className="rail-row-sub">{t('rail.members', { count: g.memberCount.toLocaleString() })}</span>

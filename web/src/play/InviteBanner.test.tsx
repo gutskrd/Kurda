@@ -21,7 +21,7 @@ describe('InviteBanner', () => {
     renderPlay(<InviteBanner />);
 
     const banner = await screen.findByRole('status');
-    expect(within(banner).getByText('Rojda invited you to Wordle Battle')).toBeInTheDocument();
+    expect(within(banner).getByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
     expect(within(banner).getByText('Hard')).toBeInTheDocument();
     expect(within(banner).getByRole('button', { name: 'Join' })).toBeInTheDocument();
     expect(document.activeElement).toBe(before);
@@ -67,7 +67,7 @@ describe('InviteBanner', () => {
     renderPlay(<InviteBanner />);
 
     await userEvent.click(await screen.findByRole('button', { name: 'Join' }));
-    await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=b1'));
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=b1'));
     expect(calls.some((c) => c.method === 'POST' && c.path === '/play/invites/i1/accept')).toBe(true);
   });
 
@@ -154,7 +154,7 @@ describe('InviteBanner', () => {
     fakeApi({ 'GET /play/invites': lists() });
     renderPlay(<InviteBanner />);
     const chip = await screen.findByRole('status');
-    expect(within(chip).getByText('Rojda invited you to Wordle Battle')).toBeInTheDocument();
+    expect(within(chip).getByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
     expect(within(chip).getByRole('button', { name: 'Join' })).toBeInTheDocument();
     // the settings and "Not now" wait behind "Show more", which is not "Not now"
     expect(within(chip).queryByText('Hard')).toBeNull();
@@ -226,6 +226,6 @@ describe('InviteBanner', () => {
 
     answer = lists();
     realtime.emit({ type: 'play_invite', invite: incoming() });
-    expect(await screen.findByText('Rojda invited you to Wordle Battle')).toBeInTheDocument();
+    expect(await screen.findByText('Rojda invited you to Peyvok Battle')).toBeInTheDocument();
   });
 });

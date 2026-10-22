@@ -39,7 +39,7 @@ export function RequireAccount({
 
   if (status === 'signedIn') return <>{children}</>;
 
-  // the whole address: a game invite is `/app/games/wordle-battle?id=…`, and
+  // the whole address: a game invite is `/app/games/peyvok-battle?id=…`, and
   // without its query the way back after signing in leads to an empty page
   const from = location.pathname + location.search;
 

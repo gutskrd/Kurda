@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { LeagueStandingRow, LeagueWeekResult } from '@kurda/shared';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
-import { goalFraction, knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, zoneRules } from './format';
+import { goalFraction, knownTier, lastWeekLine, leagueLabel, leagueMeaning, leagueName, tableItems, weekEndText, weekLeftText, zoneRules } from './format';
 
 const t = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.en[key], vars);
 const tKu = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.ku[key], vars);
@@ -44,6 +44,20 @@ describe('weekEndText', () => {
     expect(weekEndText('2026-10-19T00:00:00.000Z', 'en', 'America/New_York')).toMatch(/Sun.*20:00|Sun.*8:00/);
     expect(weekEndText('2026-10-19T00:00:00.000Z', 'en', 'Asia/Baghdad')).toMatch(/Mon.*03:00|Mon.*3:00/);
     expect(weekEndText('not a date', 'en')).toBe('');
+  });
+});
+
+describe('weekLeftText', () => {
+  const ends = '2026-10-26T00:00:00.000Z';
+  const at = (iso: string) => new Date(iso).getTime();
+  it('counts whole days while there are days, and gives the local closing time on the last', () => {
+    expect(weekLeftText(t, ends, 'en', at('2026-10-21T22:00:00Z'))).toBe('5 days left');
+    expect(weekLeftText(t, ends, 'en', at('2026-10-24T00:00:00Z'))).toBe('2 days left');
+    expect(weekLeftText(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('2 days left');
+    expect(weekLeftText(t, ends, 'en', at('2026-10-25T00:00:00Z'))).toBe('1 day left');
+    // under a day: when, not how many hours
+    expect(weekLeftText(t, ends, 'en', at('2026-10-25T09:00:00Z'), 'Asia/Baghdad')).toMatch(/^Week ends Mon.*0?3:00/);
+    expect(weekLeftText(t, 'soon', 'en')).toBe('');
   });
 });
 

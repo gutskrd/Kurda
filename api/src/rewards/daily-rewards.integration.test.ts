@@ -75,7 +75,7 @@ describe.skipIf(!DATABASE_URL)('daily rewards (integration)', () => {
     expect((await wallet.balances(userId)).zer).toBe(0);
   });
 
-  it('does not count a daily Wordle win as learning', async () => {
+  it('does not count a daily Peyvok win as learning', async () => {
     await streaks.recordPlayDay(userId, 'UTC', at('2026-02-28'));
     await expect(rewards.claim(userId, at('2026-02-28'))).rejects.toMatchObject({ code: 'LEARN_FIRST' });
   });

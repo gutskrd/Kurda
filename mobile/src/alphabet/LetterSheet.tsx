@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import {
   LATIN_LETTERS,
   SORANI_LETTERS,
@@ -14,15 +14,13 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
-import { SHEET_MAX_WIDTH } from '../reports/sheet';
+import { BottomSheet } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
-import { SheetIn } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
-import { radii, spacing, typography } from '../theme/tokens';
-import { useScreenBottomInset } from '../navigation/tabBarLayout';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import type { AlphabetAudio } from './audio';
-import { CardLabel, Like, MarkedWord, Meaning, PlayButton, Speaker, scriptLanguage, scriptRow, scriptText } from './parts';
+import { CardLabel, Like, MarkedWord, Meaning, PlayButton, SpokenStage, scriptLanguage, scriptRow, scriptText } from './parts';
 import type { ClipPlayer } from './useClipPlayer';
 
 const FORM: Record<'alone' | 'start' | 'middle' | 'end', TranslationKey> = {
@@ -34,10 +32,11 @@ const FORM: Record<'alone' | 'start' | 'middle' | 'end', TranslationKey> = {
 
 /**
  * One letter, open: the letter large, its sound and the character who says
- * it, what it sounds like in the reader's own language, a word to remember it
- * by with its own sound, its partner in the other script — and, for Soranî,
- * the shapes it takes inside a word. The way to the letter before and after
- * is at the foot, so a whole alphabet can be walked through without closing.
+ * it standing beside it, what it sounds like in the reader's own language, a
+ * word to remember it by with its own sound, its partner in the other script —
+ * and, for Soranî, the shapes it takes inside a word. The way to the letter
+ * before and after is at the foot, so a whole alphabet can be walked through
+ * without closing.
  *
  * A sheet from the foot of the screen, as the website's is on a phone; on a
  * tablet it stays a sheet, centred, rather than a band across the screen.
@@ -58,10 +57,6 @@ export function LetterSheet({
   onStep: (by: number) => void;
   onClose: () => void;
 }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-  const bottom = useScreenBottomInset(spacing.lg);
   // the letter stays on the sheet while it fades away
   const last = useRef<{ script: AlphabetScript; id: string } | null>(null);
   if (letterId) last.current = { script, id: letterId };
@@ -70,40 +65,23 @@ export function LetterSheet({
   const sorani = shown?.script === 'ckb' ? SORANI_LETTERS.find((l) => l.id === shown.id) : undefined;
 
   return (
-    <Modal visible={letterId !== null} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={styles.wrap}>
-        <Pressable
-          style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim }]}
-          onPress={onClose}
-          accessibilityRole="button"
-          accessibilityLabel={t('common.close')}
-          importantForAccessibility="no-hide-descendants"
-          accessibilityElementsHidden
-        />
-        <SheetIn style={[styles.sheet, { backgroundColor: colors.surfaceRaised, paddingBottom: bottom }]} accessibilityViewIsModal>
-          <View style={[styles.top, { flexDirection: dir.row }]}>
-            <View style={[styles.grabber, { backgroundColor: colors.separator }]} />
-            <Pressable
-              onPress={onClose}
-              accessibilityRole="button"
-              accessibilityLabel={t('common.close')}
-              style={({ pressed }) => [styles.close, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
-            >
-              <Icon name="close" size={18} color={colors.textSecondary} />
-            </Pressable>
-          </View>
-          <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} bounces={false}>
-            {latin ? <LatinCard letter={latin} audio={audio} player={player} /> : null}
-            {sorani ? <SoraniCard letter={sorani} audio={audio} player={player} /> : null}
-            <Stepper onStep={onStep} />
-          </ScrollView>
-        </SheetIn>
-      </View>
-    </Modal>
+    // no title in the header: the letter itself, large, heads the card
+    <BottomSheet visible={letterId !== null} onClose={onClose} contentStyle={styles.scroller}>
+      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} bounces={false}>
+        {latin ? <LatinCard letter={latin} audio={audio} player={player} /> : null}
+        {sorani ? <SoraniCard letter={sorani} audio={audio} player={player} /> : null}
+        <Stepper onStep={onStep} />
+      </ScrollView>
+    </BottomSheet>
   );
 }
 
-/** The letter large, and its sound beside it: the head of either card. */
+/**
+ * The letter large, and its sound beside it: the head of either card. When
+ * the letter's recordings have a character, it stands whole on a stage with
+ * the letter beside it, and says the letter and the word below it both;
+ * without one, the letter and its button stand on the card as they are.
+ */
 function Head({
   script,
   glyph,
@@ -111,6 +89,7 @@ function Head({
   ipa,
   label,
   sound,
+  word,
   audio,
   player,
 }: {
@@ -120,36 +99,62 @@ function Head({
   ipa: string;
   label: string;
   sound: string | null;
+  /** the example word's sound, which the same character says */
+  word: string | null;
   audio: AlphabetAudio;
   player: ClipPlayer;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const letter = (big: boolean) => (
+    <Text
+      style={[
+        script === 'ckb' ? styles.glyphArabic : styles.glyph,
+        big && (script === 'ckb' ? styles.glyphArabicBig : styles.glyphBig),
+        scriptText(script),
+        { color: colors.textPrimary },
+      ]}
+      accessibilityRole="header"
+      accessibilityLabel={label}
+      accessibilityLanguage={scriptLanguage(script)}
+      maxFontSizeMultiplier={1.3}
+    >
+      {glyph}
+      {small ? <Text style={[styles.glyphSmall, { color: colors.textSecondary }]}>{` ${small}`}</Text> : null}
+    </Text>
+  );
+  // the sound in the phonetic alphabet, for whoever reads it; a screen reader has the button
+  const phonetic = (
+    <View style={[styles.ipa, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+      <Text style={[styles.ipaText, { color: colors.textSecondary }]}>{`/${ipa}/`}</Text>
+    </View>
+  );
+  const listen = <PlayButton src={sound} label={t('alphabet.listen')} player={player} size="large" />;
   return (
-    <View style={[styles.head, { flexDirection: dir.row }]}>
-      <View style={[styles.glyphColumn, startOf(dir.row)]}>
-        <Text
-          style={[script === 'ckb' ? styles.glyphArabic : styles.glyph, scriptText(script), { color: colors.textPrimary }]}
-          accessibilityRole="header"
-          accessibilityLabel={label}
-          accessibilityLanguage={scriptLanguage(script)}
-          maxFontSizeMultiplier={1.3}
-        >
-          {glyph}
-          {small ? <Text style={[styles.glyphSmall, { color: colors.textSecondary }]}>{` ${small}`}</Text> : null}
-        </Text>
-        {/* the sound in the phonetic alphabet, for whoever reads it; a screen reader has the button */}
-        <View style={[styles.ipa, { backgroundColor: colors.controlTrack }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <Text style={[styles.ipaText, { color: colors.textSecondary }]}>{`/${ipa}/`}</Text>
+    <SpokenStage
+      srcs={[sound, word]}
+      audio={audio}
+      player={player}
+      fallback={
+        <View style={[styles.head, { flexDirection: dir.row }]}>
+          <View style={[styles.glyphColumn, startOf(dir.row)]}>
+            {letter(false)}
+            {phonetic}
+          </View>
+          <View style={styles.flex} />
+          {listen}
+        </View>
+      }
+    >
+      <View style={styles.staged}>
+        {letter(true)}
+        <View style={[styles.stagedTools, { flexDirection: dir.row }]}>
+          {listen}
+          {phonetic}
         </View>
       </View>
-      <View style={styles.flex} />
-      <View style={[styles.tools, { flexDirection: dir.row }]}>
-        <Speaker src={sound} audio={audio} player={player} flip={dir.rtl} />
-        <PlayButton src={sound} label={t('alphabet.listen')} player={player} size="large" />
-      </View>
-    </View>
+    </SpokenStage>
   );
 }
 
@@ -165,27 +170,14 @@ function Row({ label, children }: { label: string; children: React.ReactNode }):
   );
 }
 
-/** The example word with its meaning, and the word's own sound and speaker beside them. */
-function WordRow({
-  word,
-  sound,
-  audio,
-  player,
-}: {
-  word: React.ReactNode;
-  sound: string | null;
-  audio: AlphabetAudio;
-  player: ClipPlayer;
-}): React.JSX.Element {
+/** The example word with its meaning, and the word's own sound beside them (said by the character on the stage above). */
+function WordRow({ word, sound, player }: { word: React.ReactNode; sound: string | null; player: ClipPlayer }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   return (
     <View style={[styles.wordRow, { flexDirection: dir.row }]}>
       <View style={[styles.flex, startOf(dir.row)]}>{word}</View>
-      <View style={[styles.tools, { flexDirection: dir.row }]}>
-        <Speaker src={sound} audio={audio} player={player} flip={dir.rtl} />
-        <PlayButton src={sound} label={t('alphabet.listenWord')} player={player} />
-      </View>
+      <PlayButton src={sound} label={t('alphabet.listenWord')} player={player} />
     </View>
   );
 }
@@ -220,6 +212,7 @@ function LatinCard({ letter, audio, player }: { letter: LatinLetter; audio: Alph
         ipa={letter.ipa}
         label={`${letter.upper} ${letter.id}`}
         sound={sound}
+        word={word}
         audio={audio}
         player={player}
       />
@@ -231,7 +224,6 @@ function LatinCard({ letter, audio, player }: { letter: LatinLetter; audio: Alph
       <Row label={t('alphabet.rememberBy')}>
         <WordRow
           sound={word}
-          audio={audio}
           player={player}
           word={
             <>
@@ -267,7 +259,7 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
   const word = audio.sounds.soraniWord(letter);
   return (
     <>
-      <Head script="ckb" glyph={letter.char} ipa={letter.ipa} label={letter.char} sound={sound} audio={audio} player={player} />
+      <Head script="ckb" glyph={letter.char} ipa={letter.ipa} label={letter.char} sound={sound} word={word} audio={audio} player={player} />
       {locale === 'ar' && letter.kurdishOnly ? (
         <View style={[styles.badge, startOf(dir.row), { backgroundColor: colors.controlTrack }]}>
           <Text style={[styles.badgeText, { color: colors.goldText }]}>{t('alphabet.notInArabic')}</Text>
@@ -303,7 +295,6 @@ function SoraniCard({ letter, audio, player }: { letter: SoraniLetter; audio: Al
       <Row label={t('alphabet.rememberBy')}>
         <WordRow
           sound={word}
-          audio={audio}
           player={player}
           word={
             <>
@@ -350,31 +341,26 @@ function startOf(row: string | undefined): { alignItems: 'flex-start' | 'flex-en
 }
 
 const GLYPH = 64;
+const GLYPH_STAGED = 84;
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, justifyContent: 'flex-end' },
-  sheet: {
-    width: '100%',
-    maxWidth: SHEET_MAX_WIDTH,
-    alignSelf: 'center',
-    maxHeight: '88%',
-    borderTopLeftRadius: radii.xl,
-    borderTopRightRadius: radii.xl,
-  },
-  top: { alignItems: 'center', justifyContent: 'flex-end', paddingHorizontal: spacing.md, paddingTop: spacing.sm },
-  grabber: { position: 'absolute', top: spacing.sm, alignSelf: 'center', left: '50%', marginLeft: -20, width: 40, height: 5, borderRadius: radii.pill },
-  close: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
-  body: { paddingHorizontal: spacing.lg, paddingBottom: spacing.sm, gap: spacing.md },
+  // the gutter is the ScrollView's own, so the card scrolls edge to edge
+  scroller: { paddingHorizontal: 0 },
+  body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.md },
   flex: { flex: 1 },
 
   head: { alignItems: 'center', gap: spacing.md },
   glyphColumn: { gap: spacing.sm },
   glyph: { ...display(GLYPH), lineHeight: Math.round(GLYPH * 1.1) },
   glyphArabic: { fontSize: GLYPH, lineHeight: Math.round(GLYPH * 1.5) },
+  // beside the character on its stage the letter is bigger still: the thing to look at
+  glyphBig: { ...display(GLYPH_STAGED), lineHeight: Math.round(GLYPH_STAGED * 1.1) },
+  glyphArabicBig: { fontSize: GLYPH_STAGED, lineHeight: Math.round(GLYPH_STAGED * 1.4) },
   glyphSmall: { fontSize: Math.round(GLYPH * 0.55) },
   ipa: { borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3 },
   ipaText: { fontSize: typography.sizes.xs },
-  tools: { alignItems: 'center', gap: spacing.sm + 4 },
+  staged: { alignItems: 'center', gap: spacing.sm },
+  stagedTools: { alignItems: 'center', gap: spacing.sm + 2 },
 
   badge: { alignSelf: 'flex-start', borderRadius: radii.pill, paddingHorizontal: spacing.sm + 2, paddingVertical: 3, marginTop: -spacing.xs },
   badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },

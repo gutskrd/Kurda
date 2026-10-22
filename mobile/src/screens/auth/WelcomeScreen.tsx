@@ -4,7 +4,8 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { AuthStackParamList } from '../../navigation/authStack';
 import { useAuth } from '../../auth/AuthContext';
-import { signInWithGoogle } from '../../auth/google';
+import { isGoogleConfigured, signInWithGoogle } from '../../auth/google';
+import { AgreeLine } from '../../legal/links';
 import { Icon, type IconName } from '../../theme/Icon';
 import { GoogleMark } from '../../theme/BrandMark';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -17,6 +18,15 @@ type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
   /** re-open the intro (language / welcome / notifications slides) — from the app root */
   onBack?: () => void;
 };
+
+/** The name shared with Apple as one line, given name then family name; null when none was shared. */
+function appleFullName(name: AppleAuthentication.AppleAuthenticationFullName | null): string | null {
+  const joined = [name?.givenName, name?.familyName]
+    .map((part) => part?.trim())
+    .filter(Boolean)
+    .join(' ');
+  return joined || null;
+}
 
 /**
  * The sign-in method choice (KUR-271): Apple / Google / email. The auth stack's
@@ -101,7 +111,13 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       return;
     }
     try {
-      const err = await oauthSignIn('apple', cred.identityToken);
+      // With the token: the one-time authorization code, which the server
+      // exchanges for the token it revokes at Apple if the account is ever
+      // deleted, and the name, which Apple shares on the first sign-in only.
+      const err = await oauthSignIn('apple', cred.identityToken, {
+        authorizationCode: cred.authorizationCode,
+        fullName: appleFullName(cred.fullName),
+      });
       if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
       // never let a post-Apple failure die silently — surface it
@@ -109,18 +125,12 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     }
   };
 
-  const soon = (provider: string) =>
-    Alert.alert(`${provider} sign-in is coming soon`, t('welcome.emailInstead'));
-
   const onGoogle = async () => {
     // The native sheet and the backend exchange are separate failure domains.
     const res = await signInWithGoogle();
     if (res.kind === 'cancelled') return; // user backed out — not an error
-    if (res.kind === 'not-configured') {
-      // no GOOGLE_CLIENT_IDS in this build yet — keep the graceful fallback
-      soon('Google');
-      return;
-    }
+    // the button is not shown in a build without Google's client ids; this is only belt and braces
+    if (res.kind === 'not-configured') return;
     if (res.kind === 'error') {
       Alert.alert(t(res.messageKey), res.message ?? '');
       return;
@@ -149,13 +159,20 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
             onPress={onApple}
           />
         ) : null}
-        <MethodButton
-          mark={<GoogleMark size={18} />}
-          label={t('welcome.google')}
-          onPress={onGoogle}
-          background={GOOGLE_SURFACE}
-          foreground={GOOGLE_INK}
-        />
+        {/*
+          Only in a build that has Google's client ids. Without them the button
+          led nowhere ("coming soon"), and a sign-in button that leads nowhere
+          is an unfinished app to anybody reviewing it.
+        */}
+        {isGoogleConfigured ? (
+          <MethodButton
+            mark={<GoogleMark size={18} />}
+            label={t('welcome.google')}
+            onPress={onGoogle}
+            background={GOOGLE_SURFACE}
+            foreground={GOOGLE_INK}
+          />
+        ) : null}
         <MethodButton
           icon="mail-fill"
           label={t('welcome.email')}
@@ -168,6 +185,9 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
       <Pressable onPress={() => navigation.navigate('Login')} style={styles.link} accessibilityRole="button">
         <Text style={[styles.linkText, { color: colors.primary }]}>{t('welcome.haveAccount')}</Text>
       </Pressable>
+
+      {/* the rules and the privacy policy, each a link: Apple and Google make an account too */}
+      <AgreeLine style={styles.agree} />
 
       {/*
         Which API this build talks to, and whether it answers.
@@ -258,6 +278,7 @@ const styles = StyleSheet.create({
   methodText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   link: { marginTop: spacing.sm, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
   linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.medium },
+  agree: { marginTop: spacing.lg, paddingHorizontal: spacing.md },
   diag: { marginTop: spacing.xl, alignItems: 'center', gap: 2 },
   diagText: { fontSize: typography.sizes.xs },
 });

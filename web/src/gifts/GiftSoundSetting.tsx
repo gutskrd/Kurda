@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import { useT } from '../i18n/I18nProvider';
 import { giftSoundOn, setGiftSound } from './motion';
+import { lessonSoundsOn, playLessonSound, setLessonSounds } from '../lib/sounds';
 
 /**
- * Settings → Sounds: whether opening a gift chimes.
+ * Settings → Sounds: whether opening a gift chimes, and whether a lesson's
+ * answers and its end do (lib/sounds.ts). Turning lesson sounds on plays one,
+ * so the switch shows what it does.
  *
  * On this device only, like the other things a browser remembers for itself
  * (it is a matter of where you are — a classroom, a bus — not of who you are).
@@ -12,6 +15,7 @@ import { giftSoundOn, setGiftSound } from './motion';
 export function GiftSoundSetting(): React.JSX.Element {
   const t = useT();
   const [on, setOn] = useState(giftSoundOn);
+  const [lesson, setLesson] = useState(lessonSoundsOn);
   return (
     <section className="card" style={{ marginTop: 20 }}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>
@@ -29,6 +33,21 @@ export function GiftSoundSetting(): React.JSX.Element {
         <span className="section-toggle-text">
           <span className="section-toggle-label">{t('settings.sounds.giftChime')}</span>
           <span className="section-toggle-hint">{t('settings.sounds.giftChimeHint')}</span>
+        </span>
+      </label>
+      <label className="section-toggle">
+        <input
+          type="checkbox"
+          checked={lesson}
+          onChange={(e) => {
+            setLesson(e.target.checked);
+            setLessonSounds(e.target.checked);
+            if (e.target.checked) playLessonSound('correct');
+          }}
+        />
+        <span className="section-toggle-text">
+          <span className="section-toggle-label">{t('settings.sounds.lesson')}</span>
+          <span className="section-toggle-hint">{t('settings.sounds.lessonHint')}</span>
         </span>
       </label>
     </section>

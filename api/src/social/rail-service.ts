@@ -16,7 +16,7 @@ import { levelInfo, resolveAvatarUrl, type LevelInfo, type PublicUrl } from '../
  *
  * A row that says `status = 'playing'` is only evidence that a game was started
  * and never finished — a closed tab leaves one behind forever. Without a cap the
- * rail would cheerfully report that someone has been in a Wordle game since
+ * rail would cheerfully report that someone has been in a Peyvok game since
  * Tuesday.
  */
 export const LIVE_GAME_MAX_MINUTES = 120;
@@ -55,7 +55,7 @@ interface ActivityRow {
  */
 const LIVE_GAMES_SQL = `
   SELECT DISTINCT ON (user_id) user_id, game, started_at FROM (
-    SELECT w.user_id, 'Wordle' AS game, w.started_at
+    SELECT w.user_id, 'Peyvok' AS game, w.started_at
       FROM wordle_games w
      WHERE w.user_id = ANY($1) AND w.status = 'playing' AND w.finished_at IS NULL
        AND w.started_at > now() - ($2 || ' minutes')::interval
@@ -70,7 +70,7 @@ const LIVE_GAMES_SQL = `
      WHERE g.user_id = ANY($1) AND g.finished_at IS NULL
        AND g.started_at > now() - ($2 || ' minutes')::interval
     UNION ALL
-    SELECT p.user_id, 'Wordle Battle', COALESCE(b.started_at, b.created_at)
+    SELECT p.user_id, 'Peyvok Battle', COALESCE(b.started_at, b.created_at)
       FROM wordle_battle_players p
       JOIN wordle_battles b ON b.id = p.battle_id
      WHERE p.user_id = ANY($1) AND p.status = 'playing' AND p.finished_at IS NULL AND NOT p.removed

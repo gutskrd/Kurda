@@ -11,7 +11,7 @@ import { useSyncExternalStore } from 'react';
  *   reportGameFinished({ moment: won ? 'won' : 'other' });
  *
  * Call it on the transition into finished — when the answer that ended the game
- * comes back — never when a finished game is merely shown again (a daily Wordle
+ * comes back — never when a finished game is merely shown again (a daily Peyvok
  * reopened, a battle opened from an old link). Pass `gaveUp` when the player
  * gave up: neither the box nor the store prompt follows that.
  *

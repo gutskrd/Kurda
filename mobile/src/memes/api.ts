@@ -3,7 +3,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import { describeUploadFailure, uploadWasLimited, normalizeContentType } from '../profile/photoUploadResult';
-import type { Category, Comment, ImagePost, Reaction, ReactionSummary } from './types';
+import type { Category, Comment, ImagePost } from './types';
 
 export interface FeedFilters {
   category?: Category;
@@ -32,15 +32,6 @@ export const createPost = (
   input: { imageMediaId: string; caption?: string; category?: Category },
 ): Promise<ApiResult<ImagePost>> => client.post('/images', input);
 
-export const getReactions = (client: ApiClient, postId: string): Promise<ApiResult<ReactionSummary>> =>
-  client.get(`/images/${postId}/reactions`);
-
-export const setReaction = (client: ApiClient, postId: string, reaction: Reaction): Promise<ApiResult<ReactionSummary>> =>
-  client.put(`/images/${postId}/reaction`, { reaction });
-
-export const clearReaction = (client: ApiClient, postId: string): Promise<ApiResult<ReactionSummary>> =>
-  client.delete(`/images/${postId}/reaction`);
-
 export const listComments = (
   client: ApiClient,
   postId: string,
@@ -60,6 +51,14 @@ export const addComment = (
   body: string,
   parentId?: string,
 ): Promise<ApiResult<Comment>> => client.post(`/images/${postId}/comments`, { body, ...(parentId ? { parentId } : {}) });
+
+/** Direct replies to a comment, oldest first: one branch, loaded when it is opened. */
+export const listReplies = (client: ApiClient, commentId: string): Promise<ApiResult<{ comments: Comment[] }>> =>
+  client.get(`/images/comments/${commentId}/replies?limit=50`);
+
+/** Delete your own comment; the server keeps a placeholder where it had replies. */
+export const deleteComment = (client: ApiClient, commentId: string): Promise<ApiResult<Comment>> =>
+  client.delete(`/images/comments/${commentId}`);
 
 /** `limited`: refused by a limit on the account (see `UploadResult`). */
 export type MemeUploadResult = { ok: true; imageMediaId: string; url: string } | { ok: false; error: string; limited?: boolean };

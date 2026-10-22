@@ -469,7 +469,7 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
 
     it('is only for those who record', async () => {
       const key = lessonAudioKey(T.speaking);
-      expect((await patch('lesson', key, { speaker: 'xezo' }, learner)).statusCode).toBe(403);
+      expect((await patch('lesson', key, { speaker: 'xezo' }, learner)).statusCode).toBe(404);
       expect((await patch('lesson', key, { speaker: 'xezo' }, null)).statusCode).toBe(401);
       expect((await row(key)).speaker).toBe('hamo');
     });

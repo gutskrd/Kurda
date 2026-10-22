@@ -52,7 +52,7 @@ describe('dueReminder', () => {
 describe('reminderMessage', () => {
   // deliberately changed: the copy used to be "Don't lose your streak!" and
   // "Last chance!", and then "You have learned N days in a row", which a
-  // streak kept by Wordle or a freeze made untrue
+  // streak kept by Peyvok or a freeze made untrue
   it('varies copy by kind and includes the streak length', () => {
     expect(reminderMessage('primary', 5).body).toContain('Your streak is 5 days.');
     expect(reminderMessage('primary', 1).body).toContain('Your streak is 1 day.');

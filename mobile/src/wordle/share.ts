@@ -1,5 +1,5 @@
 /**
- * Wordle share-grid generator (KUR-305). Pure: turns a finished game's per-row
+ * Peyvok share-grid generator (KUR-305). Pure: turns a finished game's per-row
  * feedback into the spoiler-safe emoji grid players share (🟩🟨⬜), plus a
  * header line with the result. It never contains the guessed letters or the
  * answer — only tiles and counts — so sharing can't spoil the word. Includes a
@@ -56,12 +56,12 @@ const DIFFICULTY_LABEL: Record<ShareDifficulty, string> = {
 };
 
 /**
- * The header line, e.g. `Hevalo Wordle #123 (Hard) 4/6` for a solved daily, or
- * `Hevalo Wordle Practice X/6` for a failed practice game. The guess count is
+ * The header line, e.g. `Hevalo Peyvok #123 (Hard) 4/6` for a solved daily, or
+ * `Hevalo Peyvok Practice X/6` for a failed practice game. The guess count is
  * the number of rows on a win, or `X` on a loss.
  */
 export function shareHeader(input: ShareInput): string {
-  const parts = ['Hevalo Wordle'];
+  const parts = ['Hevalo Peyvok'];
   if (input.mode === 'practice') parts.push('Practice');
   else if (input.dayNumber !== undefined) parts.push(`#${input.dayNumber}`);
   if (input.difficulty) parts.push(`(${DIFFICULTY_LABEL[input.difficulty]})`);

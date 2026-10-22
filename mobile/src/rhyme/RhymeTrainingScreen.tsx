@@ -60,7 +60,7 @@ function clock(ms: number): string {
  * Rhyming Words — training (solo) screen (KUR-299). Shows a prompt word and a
  * countdown; the player types real Kurdish words that rhyme, scored server-side
  * (#298 engine). Every accepted rhyme adds to the score; when the timer runs
- * out the round ends and awards XP. Mirrors the Wordle screen's flow.
+ * out the round ends and awards XP. Mirrors the Peyvok screen's flow.
  */
 export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -243,8 +243,8 @@ export function RhymeTrainingScreen({ onExit }: { onExit: () => void }): React.J
 const styles = StyleSheet.create({
   content: { padding: spacing.lg, paddingBottom: spacing.xxl, gap: spacing.md },
   // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
-  // kurdî" is three
+  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
+  // Battle" in some languages is three
   startCard: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.xl },
   startTitle: { ...display(typography.sizes.xl), marginTop: spacing.sm },
   startHint: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

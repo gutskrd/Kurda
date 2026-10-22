@@ -15,7 +15,7 @@ const guessBody = z.object({
 });
 
 /**
- * Wordle daily & practice routes (KUR-304). All authenticated. The guess
+ * Peyvok daily & practice routes (KUR-304). All authenticated. The guess
  * endpoint is rate-limited (#010, keyed per-user by default) as an anti-abuse
  * guard on the server-authoritative scoring.
  */

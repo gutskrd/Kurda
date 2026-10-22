@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { onPlaying, soundPlayer } from '../lib/sound';
 import type { SpokenClip } from './clips';
-import { SpeakingCharacter } from './SpeakingCharacter';
+import type { CharacterCrop } from '@kurda/shared';
+import { play, onPlaying, soundPlayer } from '../lib/sound';
+import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 
 /**
  * Of the recordings a place plays, the one whose character to show: the one
@@ -31,12 +32,18 @@ export function ClipSpeaker({
   crop = 'bust',
   size,
   decorative = false,
+  reaction = null,
+  replay = false,
   className,
 }: {
   clips: readonly SpokenClip[];
-  crop?: 'bust' | 'full';
+  crop?: CharacterCrop;
   size?: number;
   decorative?: boolean;
+  /** what it has just seen: a right answer gets a cheer, one that was not yet a curious tilt of the head */
+  reaction?: CharacterReaction | null;
+  /** a click on the character says its recording again */
+  replay?: boolean;
   className?: string;
 }): React.JSX.Element | null {
   const clip = useSpokenClip(clips);
@@ -51,6 +58,8 @@ export function ClipSpeaker({
       crop={crop}
       size={size}
       decorative={decorative}
+      reaction={reaction}
+      onPress={replay ? () => play(clip.src) : undefined}
       className={className}
     />
   );

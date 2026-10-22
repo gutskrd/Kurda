@@ -36,7 +36,7 @@ import {
  * `samples.ts` for where each piece of Kurdish comes from.
  *
  * Each one is a single image to assistive technology: `role="img"` with a
- * sentence describing it, so a screen reader hears "a Wordle battle between you
+ * sentence describing it, so a screen reader hears "a Peyvok battle between you
  * and Rojîn" once, instead of thirty letter tiles one by one. Nothing inside is
  * focusable or clickable — a button in a picture that does nothing is a lie.
  */
@@ -77,7 +77,7 @@ export function Ku({ children, className }: { children: ReactNode; className?: s
 type Mark = 'green' | 'yellow' | 'gray' | 'empty';
 
 /**
- * A Wordle row in the real game's colours.
+ * A Peyvok row in the real game's colours.
  *
  * `--i` staggers the tiles so a row can turn over left to right, the way the
  * game reveals a guess; the stylesheet decides whether it animates at all.
@@ -98,7 +98,7 @@ export function TileRow({ word, marks, row = 0 }: { word: string; marks: Readonl
 const EMPTY_ROW: ReadonlyArray<Mark> = ['empty', 'empty', 'empty', 'empty', 'empty'];
 
 /**
- * The hero: a Wordle Battle against a friend, solved on `heval`.
+ * The hero: a Peyvok Battle against a friend, solved on `heval`.
  *
  * This is the product's whole argument in one screen — a Kurdish word, a game,
  * and somebody you know on the other side of it.
@@ -226,7 +226,7 @@ export function FriendsBoardMock(): React.JSX.Element {
 
 /* ---- the four games, small ------------------------------------------------ */
 
-/** Wordle's on-screen keyboard: the row with the letters Kurmancî adds. */
+/** Peyvok's on-screen keyboard: the row with the letters Kurmancî adds. */
 export function WordleMini(): React.JSX.Element {
   return (
     <div className="lp-mini lp-mini--wordle" aria-hidden>

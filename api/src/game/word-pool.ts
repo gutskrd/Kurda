@@ -1,7 +1,7 @@
 /**
- * The words a Wordle can ask for.
+ * The words a Peyvok can ask for.
  *
- * Wordle is played in Kurmancî, on a keyboard of the 31 Kurmancî letters. Its
+ * Peyvok is played in Kurmancî, on a keyboard of the 31 Kurmancî letters. Its
  * pool was every word marked for the games, whatever its variety — and the
  * admin screen adds Soranî words to the same pool, for the rhyme games
  * (game-content-routes). A Soranî target, or a Kurmancî headword with a letter
@@ -18,13 +18,13 @@ export const WORDLE_DIALECT = 'kurmanji';
 
 const LETTERS = new Set<string>(KURMANCI_ALPHABET);
 
-/** Whether every letter of a word is on the Wordle keyboard. */
+/** Whether every letter of a word is on the Peyvok keyboard. */
 export function isWordleWord(headword: string): boolean {
   const letters = [...letterKey(headword)];
   return letters.length > 0 && letters.every((ch) => LETTERS.has(ch));
 }
 
-/** The Wordle targets in the pool, in a stable order (the daily pick indexes into it). */
+/** The Peyvok targets in the pool, in a stable order (the daily pick indexes into it). */
 export async function loadWordlePool(executor: Pick<pg.Pool, 'query'>): Promise<string[]> {
   const res = await executor.query<{ headword: string }>(
     // in_games only: a target has to be a word somebody recognises (see

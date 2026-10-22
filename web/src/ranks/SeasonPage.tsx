@@ -8,7 +8,7 @@ import { Button } from '../components/Button';
 import { ErrorState, Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { RankEmblem, SeasonFrame, frameTier } from './art';
-import { gameName, rankTierNamed, seasonNamed, withMeaning } from './names';
+import { gameName, rankTierNamed, seasonDaysLeft, seasonNamed, withMeaning } from './names';
 
 /**
  * The season (contract 4 §R5, §U): its name, the days left said calmly, what
@@ -76,7 +76,7 @@ export function SeasonPage(): React.JSX.Element {
         <div className="season-hero-text">
           {named.meaning && <p className="season-hero-meaning">{named.meaning}</p>}
           <p className="season-hero-days">
-            {season.daysLeft > 0 ? t('seasons.daysLeft', { days: season.daysLeft }) : t('seasons.lastDay')}
+            {seasonDaysLeft(t, season.daysLeft)}
             <span className="season-hero-ends">{t('seasons.ends', { date: ends })}</span>
           </p>
           <p className="season-hero-sub">{t('seasons.sub')}</p>

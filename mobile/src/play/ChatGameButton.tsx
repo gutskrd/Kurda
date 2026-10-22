@@ -22,9 +22,9 @@ export function ChatGameButton({ target }: { target: Extract<InviteTarget, { kin
         onPress={() => setOpen(true)}
         accessibilityRole="button"
         accessibilityLabel={t('play.chat.button')}
-        style={({ pressed }) => [styles.button, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+        style={({ pressed }) => [styles.button, pressed && { backgroundColor: colors.controlTrack }]}
       >
-        <Icon name="play" size={20} color={colors.primary} />
+        <Icon name="play" size={22} color={colors.textPrimary} />
       </Pressable>
       {open ? <InviteSheet target={target} onClose={() => setOpen(false)} /> : null}
     </>
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   button: {
     width: MIN_TOUCH_TARGET,
     height: MIN_TOUCH_TARGET,
-    borderRadius: radii.md,
+    borderRadius: radii.pill,
     alignItems: 'center',
     justifyContent: 'center',
   },

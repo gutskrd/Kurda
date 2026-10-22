@@ -52,7 +52,7 @@ describe('RequireAccount', () => {
   /** A solo round is scored against an account too, so a guest is asked rather than shown an error. */
   it('asks a guest who opens a game played alone', async () => {
     guest();
-    renderApp(<RequireAccount what="gate.what.play">{inside}</RequireAccount>, ['/app/games/wordle']);
+    renderApp(<RequireAccount what="gate.what.play">{inside}</RequireAccount>, ['/app/games/peyvok']);
     expect(await screen.findByText(/to play the games you have to sign in/i)).toBeInTheDocument();
     expect(screen.queryByText('the protected thing')).not.toBeInTheDocument();
   });
@@ -67,7 +67,7 @@ describe('RequireAccount', () => {
   });
 
   /**
-   * A game invite is `/app/games/wordle-battle?id=…`: without its query, the way
+   * A game invite is `/app/games/peyvok-battle?id=…`: without its query, the way
    * back after signing in or signing up led to an empty game page.
    */
   it('keeps the whole address, query and all, for the way back', async () => {
@@ -77,15 +77,15 @@ describe('RequireAccount', () => {
     }
     renderApp(
       <Routes>
-        <Route path="/app/games/wordle-battle" element={<RequireAccount what="gate.what.playOthers">{inside}</RequireAccount>} />
+        <Route path="/app/games/peyvok-battle" element={<RequireAccount what="gate.what.playOthers">{inside}</RequireAccount>} />
         <Route path="/register" element={<From />} />
         <Route path="/login" element={<From />} />
       </Routes>,
-      ['/app/games/wordle-battle?id=b1'],
+      ['/app/games/peyvok-battle?id=b1'],
     );
 
     await userEvent.click(await screen.findByRole('link', { name: 'Create an account' }));
-    expect(screen.getByText('back to /app/games/wordle-battle?id=b1')).toBeInTheDocument();
+    expect(screen.getByText('back to /app/games/peyvok-battle?id=b1')).toBeInTheDocument();
   });
 
   it('still holds an unverified account away from the page', async () => {

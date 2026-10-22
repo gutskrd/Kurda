@@ -184,7 +184,7 @@ export function RhymeEditor(): React.JSX.Element {
     void (async () => {
       const yes = await dialogs.confirm({
         title: `Delete “${w.headword}” from the games?`,
-        body: 'It stops appearing in Wordle and Rhyme, guesses of it are no longer accepted, and every rhyme decision about it is dropped.\n\nTo stop it opening rounds but keep the word, use “Stop using” instead.',
+        body: 'It stops appearing in Peyvok and Rhyme, guesses of it are no longer accepted, and every rhyme decision about it is dropped.\n\nTo stop it opening rounds but keep the word, use “Stop using” instead.',
         confirmLabel: 'Delete',
         tone: 'danger',
       });
@@ -287,7 +287,7 @@ export function RhymeEditor(): React.JSX.Element {
             </Button>
           }
         >
-          The other {l.poolSize - l.total} are still in the games — guesses of them count and Wordle still asks them — but no round starts on one.
+          The other {l.poolSize - l.total} are still in the games — guesses of them count and Peyvok still asks them — but no round starts on one.
         </Banner>
       )}
 

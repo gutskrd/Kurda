@@ -79,7 +79,7 @@ export function SharePost({ item }: { item: FeedItem }): React.JSX.Element {
         title={t('share.post')}
         onClick={() => setOpen(true)}
       >
-        <ShareIcon size={18} />
+        <ShareIcon size={24} />
       </button>
 
       {open && (

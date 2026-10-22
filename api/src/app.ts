@@ -124,6 +124,7 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { AdminAccess } from './admin/owner-access.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
@@ -333,6 +334,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   // shared with the admin routes further down; declared here because the 2FA
   // gate has to be installed before any route is registered
   let adminTotp: AdminTotpService | undefined;
+  let adminAccess: AdminAccess | undefined;
   if (config.DATABASE_URL) {
     setupAuth(app, config);
     // An unverified account cannot write anything. Installed here for the same
@@ -347,7 +349,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // after it, and placing this further down would silently leave every
     // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
-    installAdminGate(app, adminTotp);
+    adminAccess = new AdminAccess(app.db, config);
+    // whether the console is for every staff role, or only the addresses listed
+    app.log.info({ listedAddressesOnly: adminAccess.listed }, 'admin console access');
+    installAdminGate(app, adminTotp, adminAccess);
 
     // which network each signed-in account is on, for account linking, and the
     // daily prune of that and the risk decisions; also before any route
@@ -390,7 +395,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // set up here because league and badge news below goes through it
     const deviceTokens = new DeviceTokenService(app.db);
     const notificationPrefs = new NotificationPrefsService(app.db);
-    const pushService = new PushService(deviceTokens, createPushProvider(config), notificationPrefs);
+    const pushService = new PushService(deviceTokens, createPushProvider(config, app.log), notificationPrefs);
     const inbox = new InboxService(app.db);
     const notices = progressNotices({ inbox, push: pushService, jobs: app.jobs });
 
@@ -477,7 +482,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const partitionSweep = setInterval(() => void ensurePartitions(), 24 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(partitionSweep));
 
-    registerAuthRoutes(app, config);
+    registerAuthRoutes(app, config, adminAccess);
     // optional phone (SMS) verification (KUR-297) — stub sender until a provider
     // is configured; raises trust (#295) and is exported/deleted with the account
     registerPhoneVerificationRoutes(app, new PhoneVerificationService(app.db, { sms: new StubSmsSender() }));
@@ -486,7 +491,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserRoutes(app, config);
     registerAchievementRoutes(app, gemService, activity);
     // the old achievements: only the (retired, unreachable) tournament win still
-    // awards one; lessons, practice, Wordle and Stories report to the badges above
+    // awards one; lessons, practice, Peyvok and Stories report to the badges above
     const achievements = new AchievementsService(app.db, gemService, activity);
     registerWalletRoutes(app);
 
@@ -533,7 +538,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerImageReportRoutes(app, moderationKit.reports);
     // user tags & badges (KUR-286): main-tag precedence + claimable tags
     registerTagRoutes(app);
-    registerGroupRoutes(app, groups, trust);
+    registerGroupRoutes(app, groups, trust, config, aiMod);
     const groupReconcile = setInterval(
       () => void groups.reconcileOwnerless().catch((err) => app.log.warn({ err }, 'group reconcile failed')),
       6 * 60 * 60 * 1000,
@@ -591,11 +596,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       },
       { log: app.log },
     );
-    // a finished Wordle Battle, Rhyme Match or story game moves its players' badges
+    // a finished Peyvok Battle, Rhyme Match or story game moves its players' badges
     playEvents.onFinished(
       (game, lobbyId) => void badges.onGameFinished(game, lobbyId).catch((err) => app.log.warn({ err }, 'game badges failed')),
     );
-    // Wordle Battle multiplayer (KUR-306) — server-authoritative, poll-safe
+    // Peyvok Battle multiplayer (KUR-306) — server-authoritative, poll-safe
     registerWordleBattleRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('wordle-battle', id, o) });
     registerRhymeRoutes(app, { xp: xpService, milestones: badges });
     // typing race (solo time trial) over admin-curated texts
@@ -616,7 +621,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerVoiceRoutes(app, config);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
-    registerDictionaryRoutes(app);
+    // a word saved to the list moves the Gencîne badge
+    registerDictionaryRoutes(app, badges);
 
     // admin RBAC + mandatory TOTP 2FA (KUR-099). adminTotp is set whenever a
     // database is configured, which this branch already requires.
@@ -743,9 +749,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationRoutes(app, moderation);
 
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
+    // a message to a friend moves the Name badge
     registerChatRoutes(
       app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges),
       trust,
       aiMod,
     );

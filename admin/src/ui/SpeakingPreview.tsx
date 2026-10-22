@@ -29,6 +29,8 @@ import {
   type LipsyncTimeline,
   type SpeakerId,
   type Viseme,
+  eyesFor,
+  type EyeState,
 } from '@kurda/shared';
 import { useMediaQuery } from './hooks';
 import { Icon } from './icons';
@@ -47,7 +49,8 @@ export function speakingSvg(speaker: SpeakerId): string {
   svg =
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${w} ${h}" focusable="false" aria-hidden="true">` +
     art.body +
-    `<g data-head="">${art.head}<g data-eyes="open">${art.eyes.open}</g><g data-eyes="closed" display="none">${art.eyes.closed}</g>${mouths}${art.overlay}</g>` +
+    `<g data-head="">${art.head}<g data-eyes="open">${art.eyes.open}</g><g data-eyes="half" display="none">${eyesFor(art, 'half')}</g>` +
+    `<g data-eyes="closed" display="none">${art.eyes.closed}</g>${mouths}${art.overlay}</g>` +
     '</svg>';
   drawings.set(speaker, svg);
   return svg;
@@ -100,24 +103,31 @@ export function SpeakingPreview({
     if (!svg || !el) return;
     const pivot = characterArt(speaker, PREFIX).headPivot;
     const mouths = new Map(VISEMES.map((v) => [v, svg.querySelector(`[data-mouth="${v}"]`)]));
-    const eyes = { open: svg.querySelector('[data-eyes="open"]'), closed: svg.querySelector('[data-eyes="closed"]') };
+    // a blink is half shut, shut, half shut; the preview has no smiles to show
+    const eyes: Record<'open' | 'half' | 'closed', Element | null> = {
+      open: svg.querySelector('[data-eyes="open"]'),
+      half: svg.querySelector('[data-eyes="half"]'),
+      closed: svg.querySelector('[data-eyes="closed"]'),
+    };
+    const eyesOf = (state: EyeState): 'open' | 'half' | 'closed' => (state === 'happy' ? 'closed' : state);
     const head = svg.querySelector('[data-head]');
     const show = (part: Element | null | undefined, on: boolean): void => {
       if (on) part?.removeAttribute('display');
       else part?.setAttribute('display', 'none');
     };
-    let shown: { mouth: Viseme; eyes: 'open' | 'closed'; nod: number } = { mouth: 'rest', eyes: 'open', nod: 0 };
+    let shown: { mouth: Viseme; eyes: 'open' | 'half' | 'closed'; nod: number } = { mouth: 'rest', eyes: 'open', nod: 0 };
     let since: number | null = null;
     let frame = 0;
     const tick = (now: number): void => {
       since ??= now;
-      const next = speakingFrame({
+      const frameNow = speakingFrame({
         timeline: live.current.timeline ?? live.current.measured,
         ms: el.currentTime * 1000,
         playing: live.current.playing,
         sinceMs: now - since,
         reducedMotion: live.current.reduced,
       });
+      const next = { ...frameNow, eyes: eyesOf(frameNow.eyes) };
       if (next.mouth !== shown.mouth) {
         show(mouths.get(shown.mouth), false);
         show(mouths.get(next.mouth), true);

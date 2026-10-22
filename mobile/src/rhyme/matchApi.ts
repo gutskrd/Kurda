@@ -71,7 +71,7 @@ export interface MatchResults {
  *
  * The API says it plainly: "State/results are poll-safe; the realtime
  * scoreboard push (#049) + matchmaking (#050) layer onto these endpoints."
- * So this polls while a match is live, exactly as Wordle Battle does, and the
+ * So this polls while a match is live, exactly as Peyvok Battle does, and the
  * gateway can be laid over it later without the screen changing.
  *
  * Scoring is entirely the server's: the phone posts a word and is told whether

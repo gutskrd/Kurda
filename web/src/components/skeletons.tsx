@@ -50,15 +50,15 @@ function AvatarBox({ className = 'friend-avatar' }: { className?: string }): Rea
 }
 
 /**
- * A feed card.
+ * A post on the wall.
  *
- * The picture is the one thing a card may or may not have, and it is by far the
+ * The picture is the one thing a post may or may not have, and it is by far the
  * tallest — so guessing wrong about it moves everything below it. Only every
- * third card gets one here, which is roughly how the wall reads, and it is the
- * same three every time so a reload does not reshuffle the page. A picture card
- * is laid out the way the wall lays one out: its caption, then the picture in
- * the card's own picture block, at the shape a picture without known sides is
- * given (PostPictures).
+ * third post gets one here, which is roughly how the wall reads, and it is the
+ * same three every time so a reload does not reshuffle the page. Each is laid
+ * out in the wall's order: who posted it, the picture (at the shape a picture
+ * without known sides is given, PostPictures) or the words, the row of
+ * actions, then a picture's caption and when.
  */
 export function FeedSkeleton({
   count = 4,
@@ -78,64 +78,62 @@ export function FeedSkeleton({
   );
 }
 
-/** The cards themselves, for a placeholder that is already inside a loading region (a profile's activity). */
+/** The posts themselves, for a placeholder that is already inside a loading region (a profile's activity). */
 function FeedCards({ count }: { count: number }): React.JSX.Element {
   return (
     <>
-      {times(count, (i) => {
-        const picture = i % 3 === 1;
-        return (
-        <article className={picture ? 'fcard fcard-image' : 'fcard'} key={i}>
-          <header className="fcard-head">
-            <span className="fcard-who">
-              <AvatarBox />
-              <span className="fcard-who-text">
-                <span className="fcard-name">
-                  <Skeleton line w={110} />
-                </span>
-                <span className="fcard-when">
-                  <Skeleton line w={64} />
-                </span>
-              </span>
-            </span>
-            <span className="fcard-kind">
-              <Skeleton line w={44} />
-            </span>
-          </header>
-
-          {picture ? (
-            <>
-              <span className="fcard-body">
-                <p className="fcard-text">
-                  <Skeleton line w="56%" />
-                </p>
-              </span>
-              <div className="fcard-pics">
-                <Skeleton className="pp-grid" radius="var(--r-lg)" style={{ height: 'auto', aspectRatio: '16 / 10' }} />
-              </div>
-            </>
-          ) : (
-            <span className="fcard-body">
-              <h2 className="fcard-title">
-                <Skeleton line w="72%" />
-              </h2>
-              <p className="fcard-text">
-                <SkeletonText lines={3} lastWidth="48%" />
-              </p>
-            </span>
-          )}
-
-          <footer className="fcard-actions">
-            {times(3, (j) => (
-              <span className="fcard-act" key={j}>
-                <Skeleton line w={30} />
-              </span>
-            ))}
-          </footer>
-        </article>
-        );
-      })}
+      {times(count, (i) => (
+        <FeedPostBox key={i} picture={i % 3 === 1} />
+      ))}
     </>
+  );
+}
+
+/** One post's placeholder, in the wall's order (feed/FeedCard): one line of who and when, the words, a picture on some, the pills. */
+function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
+  return (
+    <article className={picture ? 'fcard fcard-image has-pics' : 'fcard'}>
+      <header className="fcard-head">
+        <span className="fcard-who">
+          <AvatarBox />
+          <span className="fcard-name">
+            <Skeleton line w={96} />
+          </span>
+        </span>
+        <span className="fcard-meta">
+          <Skeleton line w={72} />
+        </span>
+      </header>
+
+      <span className="fcard-body">
+        <h2 className="fcard-title">
+          <Skeleton line w="72%" />
+        </h2>
+        {!picture && (
+          <p className="fcard-text">
+            <SkeletonText lines={3} lastWidth="48%" />
+          </p>
+        )}
+      </span>
+
+      {picture && (
+        <div className="fcard-media">
+          <div className="fcard-pics">
+            <Skeleton className="pp-grid" radius="var(--r-lg)" style={{ height: 'auto', aspectRatio: '16 / 10' }} />
+          </div>
+        </div>
+      )}
+
+      <footer className="fcard-actions">
+        {/* sized by feed.css, so they grow with the real pills on a touch screen */}
+        {times(2, (j) => (
+          <Skeleton key={`pill-${j}`} className="fcard-act-box" />
+        ))}
+        {times(2, (j) => (
+          <Skeleton key={`round-${j}`} className={j === 0 ? 'fcard-act-box is-round fcard-share' : 'fcard-act-box is-round'} />
+        ))}
+      </footer>
+    </article>
   );
 }
 
@@ -318,33 +316,46 @@ export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.
 }
 
 /**
- * The week's league card while it is on its way: the emblem, the league's
- * name, what it means and when the week closes, the goal ring, the line about
- * the goal, and the first places of the table — the card's own classes, so it
- * is the card's size at every width (the emblem and ring shrink on a phone).
+ * The week's league card while it is on its way, in its own order: the
+ * league's name, what it means and the days left, the six emblems in a row
+ * (the middle one bigger), the line across, the goal ring with the line about
+ * the goal beside it, and the first places of the table — the card's own
+ * classes, so it is the card's size at every width.
  */
 export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.Element {
   return (
-    <div className="league-card skeleton-late" aria-hidden="true">
-      <div className="league-head">
-        <Skeleton circle className="league-skel-emblem" />
-        <div className="league-head-text">
-          <h2 className="league-card-title">
-            <Skeleton line w={136} />
-          </h2>
-          <p className="league-head-meaning">
-            <Skeleton line w={60} />
+    <div className="league-page league-now skeleton-late" aria-hidden="true">
+      <div className="league-week-head">
+        <h2 className="league-week-title">
+          <Skeleton line w={176} />
+        </h2>
+        <p className="league-week-meaning">
+          <Skeleton line w={60} />
+        </p>
+        <p className="league-week-left">
+          <Skeleton line w={96} />
+        </p>
+      </div>
+      <ol className="league-ladder">
+        {times(6, (i) => (
+          <li key={i} className={`league-ladder-step${i === 1 ? ' is-here' : ''}`}>
+            <Skeleton circle className={i === 1 ? 'league-skel-here' : 'league-skel-step'} />
+          </li>
+        ))}
+      </ol>
+      <hr className="league-week-rule" />
+      <div className="league-goal-row">
+        <Skeleton circle className="league-skel-ring" />
+        <div className="league-goal-text">
+          {/* the status line's own grey box, empty */}
+          <p className="league-status is-plain">
+            <span style={{ visibility: 'hidden' }}>{'\u00a0'}</span>
           </p>
-          <p className="league-head-meta">
-            <Skeleton line w={176} />
+          <p className="league-goal-group">
+            <Skeleton line w={140} />
           </p>
         </div>
-        <Skeleton circle className="league-skel-ring" />
       </div>
-      {/* the status line's own grey box, empty */}
-      <p className="league-status is-plain">
-        <span style={{ visibility: 'hidden' }}>{'\u00a0'}</span>
-      </p>
       <ol className="rank-list">
         {times(rows, (i) => (
           <Fragment key={i}>
@@ -1006,38 +1017,6 @@ export function FullProfileSkeleton({ label, own = false }: { label?: MessageKey
   );
 }
 
-/**
- * Settings cards still on their way, as the page draws them: a heading, a line
- * of help, a row of choices and the hint under them. Settings shows the cards
- * that need nothing from the server (language, appearance) at once; these
- * stand in for the ones that do.
- */
-export function SettingsCardsSkeleton({ count = 3, label }: { count?: number; label?: MessageKey }): React.JSX.Element {
-  const t = useT();
-  return (
-    <SkeletonRegion label={t(label ?? 'common.loading')}>
-      {times(count, (i) => (
-        <section className="card" style={{ marginTop: 20 }} key={i}>
-          <h2 className="friend-heading" style={{ marginTop: 0 }}>
-            <Skeleton line w={[150, 120, 170][i % 3]} />
-          </h2>
-          <p className="muted" style={{ fontSize: '0.92rem', marginBottom: 14 }}>
-            <Skeleton line w={['72%', '58%', '66%'][i % 3]} />
-          </p>
-          <div className="toolbar" style={{ marginBottom: 8 }}>
-            {times(3, (j) => (
-              <Skeleton key={j} className="chip" w={[136, 104, 88][j]} />
-            ))}
-          </div>
-          <p className="field-hint" style={{ marginBottom: 0 }}>
-            <Skeleton line w="52%" />
-          </p>
-        </section>
-      ))}
-    </SkeletonRegion>
-  );
-}
-
 /** A stack of settings cards: heading, help line, controls. */
 export function CardStackSkeleton({
   count = 3,
@@ -1088,10 +1067,8 @@ function BylineBox(): React.JSX.Element {
 
 /**
  * A single post's page: the way back, then a written post's card — its kind
- * and reads, title, byline and body — or a picture's — its kind, the picture,
- * byline, caption and the reactions' row — and the comments' heading under it.
- * The picture is held at four by three, the shape the page also gives it until
- * the real one has loaded (DimenPost), so the two agree.
+ * and reads, title, byline and body — or a picture's, which is the wall's own
+ * post (DimenPost draws a FeedCard) — and the comments' heading under it.
  */
 export function PostSkeleton({ withImage = false }: { withImage?: boolean }): React.JSX.Element {
   const t = useT();
@@ -1101,20 +1078,7 @@ export function PostSkeleton({ withImage = false }: { withImage?: boolean }): Re
         <Skeleton line w={104} />
       </span>
       {withImage ? (
-        <article className="dimen-full">
-          <div className="post-meta">
-            <span className="badge">
-              <Skeleton line w={40} />
-            </span>
-            <Skeleton line w={56} />
-          </div>
-          <Skeleton className="dimen-full-img" style={{ height: 'auto', aspectRatio: '4 / 3' }} />
-          <BylineBox />
-          <p className="dimen-caption">
-            <Skeleton line w="58%" />
-          </p>
-          <div className="reactions" />
-        </article>
+        <FeedPostBox picture />
       ) : (
         <article className="post-full">
           <div className="post-meta">

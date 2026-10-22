@@ -31,6 +31,8 @@ export const spacing = {
 
 /** The website's radius scale, to the pixel — its --r-* tokens. */
 export const radii = {
+  // square: a picture run edge to edge of the phone, whose corners are the screen's
+  none: 0,
   xs: 6,
   sm: 8,
   md: 12,
@@ -122,8 +124,7 @@ export const typography = {
  * The page's own geometry.
  *
  * `gutter` is the space between a screen's edge and its content on a phone:
- * 16, so the five tabs line up with each other and with the island bar's
- * inner edge. It lives here rather than in `spacing`, which is a scale of
+ * 16, so the five tabs line up with each other. It lives here rather than in `spacing`, which is a scale of
  * steps — this is one decision, not a step on it.
  */
 export const layout = {

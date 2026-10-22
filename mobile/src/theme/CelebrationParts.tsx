@@ -3,6 +3,7 @@ import { Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Defs, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
+import { playSound } from '../feedback/sounds';
 import { springTo, timing } from './animate';
 import { burstPlan, celebrationPlan, type CelebrationPlan, type Fleck } from './celebration';
 import { radii } from './tokens';
@@ -30,11 +31,12 @@ export interface Celebrating {
 }
 
 /**
- * Play a celebration once, as the component mounts. It is felt as the art
- * lands — `haptic('celebrate')`, which the pacing in haptics.ts keeps to one
- * buzz however many moments arrive together.
+ * Play a celebration once, as the component mounts. It is felt and heard as
+ * the art lands — `haptic('celebrate')` and a chime (sounds.ts): `complete`
+ * for a finished lesson, `reward` for anything else earned. The pacing in
+ * each keeps it to one however many moments arrive together.
  */
-export function useCelebration({ feel = true }: { feel?: boolean } = {}): Celebrating {
+export function useCelebration({ feel = true, sound = 'reward' }: { feel?: boolean; sound?: 'complete' | 'reward' } = {}): Celebrating {
   const reduce = useReducedMotion();
   const plan = useMemo(() => celebrationPlan(reduce), [reduce]);
   const art = useRef(new Animated.Value(0)).current;
@@ -50,7 +52,8 @@ export function useCelebration({ feel = true }: { feel?: boolean } = {}): Celebr
     if (felt.current || !feel) return;
     felt.current = true;
     haptic('celebrate');
-  }, [feel]);
+    playSound(sound);
+  }, [feel, sound]);
 
   useEffect(() => {
     const parts: Animated.CompositeAnimation[] = [];

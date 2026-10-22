@@ -6,26 +6,18 @@ export interface TabDef {
   /** Route name used by navigation and deep links. */
   name: TabName;
   /**
-   * What the bar says, looked up at render time so it follows the chosen
-   * language. The labels used to be a hardcoded English `title` with an
-   * unused `titleKu` beside it — five tabs that stayed English in an app
-   * read in eight languages, while every screen behind them translated.
+   * The tab's name, looked up at render time so it follows the chosen
+   * language: what a screen reader says for the tab, and what shows above it
+   * while it is held. The bar itself draws only the icons.
    */
   labelKey: TranslationKey;
-  /**
-   * A shorter name, for a tab whose screen is called something long.
-   *
-   * Nothing uses it at five tabs — each gets about 66 points of the island
-   * and every label fits. It earned its place at six, where "Community"
-   * needed 58 points of the 55 it had and arrived as "Communi…", and it
-   * stays because the next tab added is the one that needs it.
-   */
-  shortLabelKey?: TranslationKey;
   /**
    * Which glyph the bar draws (see theme/Icon). The Profile tab draws your
    * own picture instead, and keeps a glyph only for before you are known.
    */
   icon: IconName;
+  /** The same glyph drawn solid, for while you are on the tab. */
+  activeIcon: IconName;
   /** Path segment for hevalo:// deep links. */
   path: string;
 }
@@ -57,11 +49,12 @@ export type TabName = 'Home' | 'Learn' | 'Messages' | 'Search' | 'Profile';
  * the top of Home. `legacyTabPath` keeps the old links working.
  */
 export const TABS: readonly TabDef[] = [
-  { name: 'Home', labelKey: 'nav.home', icon: 'home', path: 'home' },
-  { name: 'Learn', labelKey: 'nav.learn', icon: 'book', path: 'learn' },
-  { name: 'Messages', labelKey: 'nav.messages', icon: 'send', path: 'messages' },
-  { name: 'Search', labelKey: 'nav.search', icon: 'search', path: 'search' },
-  { name: 'Profile', labelKey: 'nav.profile', icon: 'person', path: 'profile' },
+  { name: 'Home', labelKey: 'nav.home', icon: 'home', activeIcon: 'home-fill', path: 'home' },
+  { name: 'Learn', labelKey: 'nav.learn', icon: 'book', activeIcon: 'book-fill', path: 'learn' },
+  { name: 'Messages', labelKey: 'nav.messages', icon: 'send', activeIcon: 'send-fill', path: 'messages' },
+  { name: 'Search', labelKey: 'nav.search', icon: 'search', activeIcon: 'search-bold', path: 'search' },
+  // your picture is this tab; the glyph is only for before you are known
+  { name: 'Profile', labelKey: 'nav.profile', icon: 'person', activeIcon: 'person', path: 'profile' },
 ] as const;
 
 /** react-navigation linking config: hevalo://learn opens the Learn tab, etc. */
@@ -82,9 +75,10 @@ export function isLearnView(v: unknown): v is LearnView {
  * Links outlive layouts: a notification sent last month, a link pasted into
  * a chat, an invite in somebody's email all say where things *were*. So
  * `hevalo://play` (and the website's `/app/games`) open Learn on its Games
- * view, and `hevalo://inbox` opens Messages. Everything else — a lesson, a
- * game's invite at `app/games/<game>?id=…` — is passed through untouched;
- * only the exact old tab addresses are rewritten, with their query kept.
+ * view, `hevalo://inbox` opens Messages, and a Peyvok Battle invite at its
+ * old `app/games/wordle-battle?id=…` opens the battle. Everything else — a
+ * lesson, any other game's invite — is passed through untouched; only the
+ * exact old addresses are rewritten, with their query kept.
  *
  * Pure, so the rewriting is tested without a navigator; App.tsx runs every
  * incoming path through it before React Navigation reads it.
@@ -99,6 +93,9 @@ export function legacyTabPath(path: string): string {
     case 'app/games':
     case 'app/play':
       return `${lead}learn?view=games${rest}`;
+    // the word game's lobby, from before the game was renamed
+    case 'app/games/wordle-battle':
+      return `${lead}app/games/peyvok-battle${query ? `?${query}` : ''}`;
     case 'inbox':
     case 'app/inbox':
     case 'chats':

@@ -141,7 +141,7 @@ const GAMES: ReadonlyArray<{
     id: 'wordle',
     name: 'games.wordle.name',
     body: 'landing.play.wordle',
-    href: '/app/games/wordle',
+    href: '/app/games/peyvok',
     tags: ['landing.play.tag.solo', 'landing.play.tag.friend'],
     visual: <WordleMini />,
   },

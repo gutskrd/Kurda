@@ -287,10 +287,12 @@ export function SearchField({
   const { colors } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const input = useRef<TextInput>(null);
   return (
     <View style={[styles.field, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, style]}>
       <Icon name="search" size={18} color={colors.textSecondary} />
       <TextInput
+        ref={input}
         value={value}
         onChangeText={onChange}
         placeholder={label}
@@ -304,12 +306,16 @@ export function SearchField({
       />
       {value ? (
         <Pressable
-          onPress={() => onChange('')}
+          onPress={() => {
+            // emptied, with the cursor left in it for the next search
+            onChange('');
+            input.current?.focus();
+          }}
           accessibilityRole="button"
           accessibilityLabel={t('shop.search.clear')}
           style={({ pressed }) => [styles.clearSearch, { opacity: pressed ? 0.6 : 1 }]}
         >
-          <Icon name="close" size={16} color={colors.textSecondary} />
+          <Icon name="clear-fill" size={18} color={colors.textSecondary} />
         </Pressable>
       ) : null}
     </View>
@@ -415,21 +421,6 @@ export function ItemArt({
   );
 }
 
-/** "Premium", on an item that is worn free while Premium is active. */
-export function PremiumPill({ style }: { style?: StyleProp<ViewStyle> }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  const dir = useDirection();
-  return (
-    <View style={[styles.pill, { flexDirection: dir.row, backgroundColor: colors.controlTrack }, style]}>
-      <Icon name="crown" size={12} color={colors.gold} />
-      <Text style={[styles.pillText, { color: colors.textSecondary }]} numberOfLines={1}>
-        {t('profile.premium')}
-      </Text>
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   chipRow: { gap: spacing.sm, flexGrow: 1 },
   chip: {
@@ -463,6 +454,4 @@ const styles = StyleSheet.create({
   artSquare: { borderRadius: radii.md },
   fill: { width: '100%', height: '100%' },
   inset: { width: '86%', height: '86%' },
-  pill: { alignItems: 'center', gap: 4, borderRadius: radii.pill, paddingHorizontal: spacing.sm, paddingVertical: 2 },
-  pillText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
 });

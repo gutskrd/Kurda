@@ -4,6 +4,8 @@ vi.mock('react-native', () => import('react-native-web'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
+// the lesson's end may offer reminders (push/ReminderOffer.tsx)
+vi.mock('expo-notifications', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
@@ -23,6 +25,7 @@ import { useCelebration } from '../theme/CelebrationParts';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, fail, ok, testAuth } from '../reports/testing/auth';
 import { onHaptic, refreshFelt, resetHaptics } from './haptics';
+import { onSound, resetSounds } from './sounds';
 import { Platform } from 'react-native';
 import type { HapticEvent } from './hapticPacing';
 import { Segmented } from '../theme/glass';
@@ -196,6 +199,9 @@ describe('an answer, as its verdict arrives', () => {
   const paths = { answers: () => '/sessions/s1/answers', retry: () => '/sessions/s1/retry', complete: () => '/sessions/s1/complete' };
 
   it('is crisp when right and a gentle double when not — never the error buzz', async () => {
+    resetSounds();
+    const heard: string[] = [];
+    const stopHearing = onSound((f) => heard.push(f));
     testAuth.client = fakeClient({
       'GET /me': ok({ user: { skipSpeaking: false } }),
       'GET /me/daily-goal': ok({ completed: false }),
@@ -211,8 +217,13 @@ describe('an answer, as its verdict arrives', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+    // two answers a test gives faster than a person can: the chimes' pacing is not what this is about
+    resetSounds();
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
     await waitFor(() => expect(felt).toEqual(['correct', 'wrong']));
+    // and heard: a bright pair for the right answer, a low soft one for the miss
+    expect(heard).toEqual(['correct-1', 'wrong']);
+    stopHearing();
     // and the right answer is marked where it was asked
     expect(screen.getByRole('radio', { name: 'nan, Correct' })).toBeTruthy();
   });
@@ -237,7 +248,8 @@ describe('something given', () => {
     const { rerender } = renderWithProviders(<FeedCard item={item} />);
     fireEvent.click(screen.getByRole('button', { name: 'Like' }));
     expect(felt).toEqual(['tap']);
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy());
+    // the heart fills at once, before the server has answered
+    await waitFor(() => expect(screen.getByRole('button', { name: /Unlike/ })).toBeTruthy());
     resetHaptics();
     rerender(<FeedCard item={{ ...item, engagement: { ...item.engagement, liked: true, likes: 1 } }} />);
     fireEvent.click(screen.getByRole('button', { name: /Unlike/ }));

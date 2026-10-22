@@ -5,7 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { DictionaryRepository } from './repository.js';
-import { NEW_WORDS_PER_DAY, dictItemId } from './saved-words-service.js';
+import { NEW_WORDS_PER_DAY, SavedWordsService, dictItemId } from './saved-words-service.js';
 import { activate } from '../test/activate.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -111,5 +111,15 @@ describe.skipIf(!DATABASE_URL)('saved words (integration)', () => {
     const list = await authed('GET', '/me/saved-words');
     const word = list.json().words.find((w: { entryId: string }) => w.entryId === id);
     expect(word).toMatchObject({ definitionEn: null, definitionKu: 'Fêkiyekî dardar e.' });
+  });
+
+  it('tells the badges of a word new to the list, past the day’s cap too, and of none saved again', async () => {
+    const told: string[] = [];
+    const counted = new SavedWordsService(pool, undefined, { onWordSaved: async (id) => void told.push(id) });
+    // the day's ten are scheduled already: this one is saved, not scheduled, and still a word on the list
+    expect(await counted.save(userId, entryIds[11]!, 'UTC')).toMatchObject({ saved: true, scheduled: false });
+    await counted.save(userId, entryIds[11]!, 'UTC');
+    await counted.save(userId, entryIds[1]!, 'UTC');
+    expect(told).toEqual([userId]);
   });
 });

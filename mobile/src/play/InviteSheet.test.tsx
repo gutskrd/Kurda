@@ -170,7 +170,7 @@ describe('InviteSheet', () => {
     testAuth.client = client;
     const onClose = vi.fn();
     renderWithProviders(<InviteSheet target={{ kind: 'group', groupId: 'grp-1' }} onClose={onClose} />);
-    fireEvent.click(await screen.findByRole('radio', { name: 'Wordle Battle' }));
+    fireEvent.click(await screen.findByRole('radio', { name: 'Peyvok Battle' }));
     fireEvent.click(screen.getByRole('radio', { name: 'Hard' }));
     fireEvent.click(screen.getByRole('button', { name: 'Post the game in the group' }));
     await waitFor(() => expect(onClose).toHaveBeenCalled());

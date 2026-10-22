@@ -14,6 +14,7 @@ import {
   loadFacts,
   lobbyCard,
   lobbyIdle,
+  makeRoomToHost,
   mayJoin,
   present,
   rematchChain,
@@ -209,7 +210,7 @@ function greenProgress(guesses: GuessRow[]): number {
 const minutesAfter = (at: Date, minutes: number): Date => new Date(at.getTime() + minutes * 60_000);
 
 /**
- * Wordle Battle mode (KUR-306) — server-authoritative match service. Every player
+ * Peyvok Battle mode (KUR-306) — server-authoritative match service. Every player
  * races the same server-held word; guesses are scored here (via the #303 engine)
  * and only a player's own feedback + opponents' progress are ever returned.
  * Placement (first-solve → fewest-guesses → fastest-time) and XP are computed by
@@ -242,7 +243,8 @@ export class WordleBattleService {
   /**
    * A new lobby with its host in it. Rated or Friendly is the host's choice
    * (remembered for next time); left out, it is their last choice, or Friendly
-   * for a first game among friends or from a chat (ranks/service.ts).
+   * for a first game among friends or from a chat (ranks/service.ts). A host
+   * has at most MAX_HOSTED_GAMES battles at once (play/lobby.ts `makeRoomToHost`).
    */
   async create(
     userId: string,
@@ -264,7 +266,9 @@ export class WordleBattleService {
     const rated =
       opts.rated ??
       (await this.ranks.defaultRated(this.pool, userId, 'wordle-battle', { fromChat: opts.fromChat ?? !!opts.chatGroupId, access }));
-    const id = await this.tx(async (client) => {
+    const { id, closed } = await this.tx(async (client) => {
+      // at most three of the host's own at once: the oldest lobby nobody started gives way
+      const closed = await makeRoomToHost(client, T, userId, this.now());
       const b = await client.query<BattleRow>(
         `INSERT INTO wordle_battles (created_by, difficulty, target, target_length, max_players, access, chat_group_id, updated_at, rated)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -272,8 +276,9 @@ export class WordleBattleService {
       );
       if (opts.rated !== undefined) await this.ranks.rememberChoice(client, userId, 'wordle-battle', opts.rated);
       await client.query(`INSERT INTO wordle_battle_players (battle_id, user_id, seat) VALUES ($1,$2,1)`, [b.rows[0]!.id, userId]);
-      return b.rows[0]!.id;
+      return { id: b.rows[0]!.id, closed };
     });
+    if (closed) this.changed(closed);
     this.changed(id);
     return { ok: true, battle: await this.state(id, userId) };
   }

@@ -3,6 +3,7 @@ import {
   DefaultTheme,
   DarkTheme,
   getStateFromPath,
+  useLinkTo,
   useNavigation,
   type LinkingOptions,
   type Theme,
@@ -12,13 +13,15 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
 import { inviteRoutePath } from '@kurda/shared';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from './src/auth/AuthContext';
 import { AUTH_INITIAL_ROUTE, type AuthStackParamList } from './src/navigation/authStack';
 import { TABS, legacyTabPath, linkingScreens } from './src/navigation/tabs';
-import { GlassTabBar } from './src/navigation/GlassTabBar';
+import { holdLink, takeHeldLink } from './src/navigation/heldLink';
+import { TabBar } from './src/navigation/TabBar';
+import { prepareAudioSession } from './src/recording/useMicRecorder';
 import { MenuProvider, SideMenu, type MenuGroup } from './src/navigation/SideMenu';
 import { SlideProvider, SocialSlide } from './src/social/SocialSlide';
 import { Entrance, LaunchScreen } from './src/navigation/LaunchScreen';
@@ -64,7 +67,9 @@ import { ChatScreen } from './src/chat/ChatScreen';
 import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
+import { GroupEditScreen } from './src/groups/GroupEditScreen';
 import { PushRegistration } from './src/push/PushRegistration';
+import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
 import { EventThemeProvider } from './src/theme/EventThemeContext';
 import { I18nProvider } from './src/i18n/I18nContext';
@@ -75,6 +80,7 @@ import { OfflineBanner } from './src/net/OfflineBanner';
 import { AppErrorBoundary } from './src/errors/AppErrorBoundary';
 import { AppearanceScreen } from './src/screens/AppearanceScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
+import { SettingsPageScreen } from './src/settings/SettingsPageScreen';
 import { BlockedUsersScreen } from './src/social/BlockedUsersScreen';
 import { MyReportsScreen } from './src/reports/MyReportsScreen';
 import { AccountStandingScreen } from './src/reports/AccountStandingScreen';
@@ -101,6 +107,7 @@ import { NotificationsScreen } from './src/notifications/NotificationsScreen';
 import { NotificationCenterScreen } from './src/notifications/NotificationCenterScreen';
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
 import { InviteBanner } from './src/play/InviteBanner';
+import { GazeArea } from './src/characters/gaze';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -149,9 +156,31 @@ const linking: LinkingOptions<RootStackParamList> = {
       // `/app/games/stories?id=…` is a game to join; without an id it is the hub
       Stories: inviteRoutePath('stories'),
       StoryReader: 'app/games/stories/:slug',
+      // a shared post: the address the website gives a written one and a picture
+      LibraryPost: 'app/library/:postId',
+      MemeDetail: 'app/dimen/:postId',
     },
   },
 };
+
+/**
+ * Opens a link that arrived before signing in (navigation/heldLink.ts), once
+ * the signed-in screens it names are there to open. A path the app cannot
+ * place is dropped; Home is where it would have landed anyway.
+ */
+function OpenHeldLink(): null {
+  const linkTo = useLinkTo();
+  useEffect(() => {
+    const path = takeHeldLink();
+    if (!path) return;
+    try {
+      linkTo(legacyTabPath(path));
+    } catch {
+      // not a screen this version of the app has
+    }
+  }, [linkTo]);
+  return null;
+}
 
 /**
  * The profile's menu: everywhere the tab bar has no room for.
@@ -225,8 +254,8 @@ function SignedInTabs() {
         animation: reduceMotion ? 'none' : 'fade',
         transitionSpec: { animation: 'timing', config: { duration: 200 } },
       }}
-      // the floating island: icons, labels, the badges and a sliding pill
-      tabBar={(props) => <GlassTabBar {...props} />}
+      // five icons along the bottom edge, with the badges
+      tabBar={(props) => <TabBar {...props} />}
     >
       {/* in the order TABS gives, which is the order the tests hold it to */}
       {TABS.map((tab) =>
@@ -343,8 +372,12 @@ function SignedInRoot() {
             groupId={route.params.groupId}
             onExit={() => navigation.goBack()}
             onLeft={() => navigation.navigate('Tabs', { screen: 'Messages' })}
+            onEdit={() => navigation.navigate('GroupEdit', { groupId: route.params.groupId })}
           />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="GroupEdit" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}
@@ -378,6 +411,9 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Settings" options={{ presentation: 'card' }}>
         {({ navigation }) => <SettingsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="SettingsPage" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <SettingsPageScreen page={route.params.page} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Wordle" options={{ presentation: 'card' }}>
         {({ navigation }) => <WordleScreen onExit={() => navigation.goBack()} />}
@@ -475,6 +511,8 @@ function SignedInRoot() {
         {({ navigation }) => <ComposeScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       </RootStack.Navigator>
+      {/* a push shown while the app is open, and a tapped one opened where it belongs */}
+      <PushHost />
       {/* over every screen: an invite to play waits here until it is answered */}
       <InviteBanner />
       {/* over every screen: a gift that arrives, a warning to read once */}
@@ -488,6 +526,14 @@ function SignedInRoot() {
 function Root() {
   const { status, user, ageStop, suspension, clearSuspension, baseUrl } = useAuth();
   const onboarding = useOnboarding();
+
+  // a link opened while signed out (the one that started the app, or one tapped since) waits for the sign-in
+  useEffect(() => {
+    if (status !== 'signedOut') return;
+    void Linking.getInitialURL().then((url) => holdLink(url, linking.prefixes));
+    const sub = Linking.addEventListener('url', ({ url }) => holdLink(url, linking.prefixes));
+    return () => sub.remove();
+  }, [status]);
 
   if (status === 'restoring' || !onboarding.ready) {
     return <LaunchScreen />;
@@ -562,6 +608,7 @@ function Root() {
   return (
     <Entrance>
       <SignedInRoot />
+      <OpenHeldLink />
       {/* the one-time rating box (and, rarely, the store's own prompt) after a finished game */}
       <GameFeedbackHost />
       {/* once: the shop's items you own have new art, and can be returned */}
@@ -604,18 +651,28 @@ function ThemedNavigation() {
   );
 }
 
+/** The whole window, for the gaze area round everything. */
+const rootStyle = { flex: 1 } as const;
+
 export default function App() {
+  // lesson audio plays with the ring switch on, from the first word, not only after a first recording
+  useEffect(() => {
+    void prepareAudioSession();
+  }, []);
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <I18nProvider>
-          <AuthProvider>
-            <EventThemeProvider>
-              <ThemedNavigation />
-            </EventThemeProvider>
-          </AuthProvider>
-        </I18nProvider>
-      </ThemeProvider>
+      {/* the characters' eyes follow a finger anywhere in the app; it only listens, so it takes no touch from anything */}
+      <GazeArea style={rootStyle}>
+        <ThemeProvider>
+          <I18nProvider>
+            <AuthProvider>
+              <EventThemeProvider>
+                <ThemedNavigation />
+              </EventThemeProvider>
+            </AuthProvider>
+          </I18nProvider>
+        </ThemeProvider>
+      </GazeArea>
     </SafeAreaProvider>
   );
 }

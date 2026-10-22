@@ -51,14 +51,15 @@ export function EmptyState({
   action,
 }: {
   title: string;
-  message: string;
+  /** a line under the heading, when the heading does not say enough on its own */
+  message?: string;
   /** optional way out of the empty state, e.g. a link to the setting that fills it */
   action?: React.ReactNode;
 }): React.JSX.Element {
   return (
     <div className="state">
       <h2 className="state-title">{title}</h2>
-      <p>{message}</p>
+      {message && <p>{message}</p>}
       {action}
     </div>
   );

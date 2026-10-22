@@ -244,9 +244,9 @@ describe.skipIf(!DATABASE_URL)('lesson audio (integration)', () => {
   it('is only for content editors', async () => {
     expect((await app.inject({ method: 'GET', url: '/admin/lesson-audio' })).statusCode).toBe(401);
     const asReader = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${reader}` } });
-    expect(asReader.statusCode).toBe(403);
-    expect((await put(T.translate, wav(1), reader)).statusCode).toBe(403);
-    expect((await del(lessonAudioKey(T.translate), reader)).statusCode).toBe(403);
+    expect(asReader.statusCode).toBe(404);
+    expect((await put(T.translate, wav(1), reader)).statusCode).toBe(404);
+    expect((await del(lessonAudioKey(T.translate), reader)).statusCode).toBe(404);
     const anonPut = await app.inject({
       method: 'PUT',
       url: `/admin/lesson-audio?text=${encodeURIComponent(T.translate)}`,

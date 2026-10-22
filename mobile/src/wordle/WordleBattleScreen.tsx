@@ -48,7 +48,7 @@ const DIFFICULTY_KEY: Record<Difficulty, TranslationKey> = {
 
 
 /**
- * Wordle Battle on the phone (KUR-306): race a friend to the same word.
+ * Peyvok Battle on the phone (KUR-306): race a friend to the same word.
  *
  * Built on the REST endpoints, which the API documents as poll-safe — "the
  * realtime gateway pushing opponent progress is an additive transport on top of
@@ -484,8 +484,8 @@ const styles = StyleSheet.create({
   // the keyboard reaches nearer the edges than the rest of the screen: wide keys
   keyboardBleed: { marginHorizontal: -spacing.md, width: 'auto' },
   // flex + centre so a long translated name shares the row with the back
-  // button instead of wrapping over it: "Wordle" is one word, "Wordle ya
-  // kurdî" is three
+  // button instead of wrapping over it: "Peyvok" is one word, "Peyvok
+  // Battle" in some languages is three
   card: { alignItems: 'center', gap: spacing.sm },
   stretch: { alignSelf: 'stretch', marginTop: spacing.sm },
   blurb: { fontSize: typography.sizes.md, textAlign: 'center', lineHeight: 20 },

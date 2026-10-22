@@ -49,7 +49,12 @@ async function settle(): Promise<void> {
 /** the shape of the mouth Xezo shows now */
 function mouth(): string | undefined {
   const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
-  return Object.entries(characterLayers('xezo', 'bust').mouths).find(([, xml]) => drawn.includes(xml))?.[0];
+  // a lesson's stage shows as much of the figure as there is room for; the dictionary and the stories, the bust
+  for (const crop of ['full', 'half', 'bust'] as const) {
+    const found = Object.entries(characterLayers('xezo', crop).mouths).find(([, xml]) => drawn.includes(xml))?.[0];
+    if (found) return found;
+  }
+  return undefined;
 }
 
 function listening(extra: Partial<Exercise> = {}): Exercise {
@@ -137,5 +142,26 @@ describe('the lesson’s speaking characters', () => {
     await settle();
     expect(screen.getByRole('button', { name: 'Hear it' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
+  });
+
+  it('leaves the character out of the answer’s banner when it already stands on the exercise’s stage above', async () => {
+    const props = { canCheck: true, submitting: false, onCheck: noop, onContinue: noop };
+    const graded = { verdict: 'wrong' as const, accepted: false, correction: 'silav', modelAudioUrl: CLIP, modelAudioVoice: { speaker: 'hevalo' as const } };
+    renderWithProviders(<FeedbackFooter feedback={graded} {...props} staged />);
+    await settle();
+    expect(screen.getByRole('button', { name: 'Hear it' })).toBeTruthy();
+    expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
+  });
+
+  it('stands the character on a stage head to waist, the buttons beside it, and says it again when tapped', async () => {
+    renderWithProviders(<ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
+    await settle();
+    expect(screen.getByTestId('character-stage')).toBeTruthy();
+    // drawn whole, for the stage's bottom edge to cut off at the waist: never only the head
+    const body = characterLayers('xezo', 'full').body;
+    expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === body)).toBe(true);
+    fireEvent.click(screen.getByRole('img', { name: 'Said by Xezo' }));
+    await settle();
+    expect(FakeAudio.of(CLIP)?.paused).toBe(false);
   });
 });

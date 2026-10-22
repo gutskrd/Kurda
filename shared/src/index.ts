@@ -148,6 +148,10 @@ export { parseInline, parseMarkdown, type Block, type Span } from './grammar-mar
 export {
   ROLES,
   MAX_GROUP_MEMBERS,
+  GROUP_NAME_MIN,
+  GROUP_NAME_MAX,
+  GROUP_DESCRIPTION_MAX,
+  canEditGroup,
   isRole,
   roleRank,
   outranks,
@@ -309,7 +313,7 @@ export * from './shop-items.js';
 export * from './chat-cards.js';
 
 /**
- * Typing Kurdish (the race, Wordle's keyboard, the keyboard guide): how a
+ * Typing Kurdish (the race, Peyvok's keyboard, the keyboard guide): how a
  * typed text is read and scored, and the race's shapes — one reading for the
  * server and both apps.
  */
@@ -417,3 +421,11 @@ export * from './lipsync/index.js';
 export * from './characters/index.js';
 /** "Chrome on Windows": the name a signed-in browser is listed under. */
 export { DEVICE_NAME_MAX, deviceNameFrom } from './device-name.js';
+/** How the wall can be ordered — newest, oldest, most popular, most discussed — and how far back a ranked wall looks. */
+export * from './feed-sort.js';
+/**
+ * How much of each thing one person may have — groups, friends, requests,
+ * blocks, saved words, invites, games — and the one shape a refusal for any
+ * of them takes, so the API and both apps agree on the numbers and the words.
+ */
+export * from './limits.js';

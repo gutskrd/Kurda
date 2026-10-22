@@ -85,8 +85,8 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
 
   it('refuses word management to a non-admin', async () => {
     const res = await authed('POST', '/admin/dictionary', userToken, { words: ['sêvik'] });
-    expect(res.statusCode).toBe(403);
-    expect(await authed('GET', '/admin/dictionary', userToken).then((r) => r.statusCode)).toBe(403);
+    expect(res.statusCode).toBe(404);
+    expect(await authed('GET', '/admin/dictionary', userToken).then((r) => r.statusCode)).toBe(404);
   });
 
   it('adds words, skips duplicates, and rejects junk', async () => {
@@ -236,7 +236,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
     expect(made.statusCode).toBe(404);
   });
 
-  it('reports pool coverage per Wordle difficulty band', async () => {
+  it('reports pool coverage per Peyvok difficulty band', async () => {
     const res = await authed('GET', '/admin/dictionary/stats', editorToken);
     expect(res.statusCode).toBe(200);
     const body = res.json();
@@ -364,7 +364,7 @@ describe.skipIf(!DATABASE_URL)('admin game content (integration)', () => {
 
     it('is refused to someone without the role', async () => {
       const res = await authed('POST', '/admin/rhyme/prompts/rebuild', userToken, {});
-      expect(res.statusCode).toBe(403);
+      expect(res.statusCode).toBe(404);
     });
 
     it('says what it would do without doing it', async () => {

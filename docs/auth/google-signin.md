@@ -23,7 +23,7 @@ Under **APIs & Services → Credentials**, create OAuth client IDs:
 
 - **Web application** — this is the important one: Google mints the ID token with
   the **Web** client id as its audience, on every platform.
-- **iOS** — bundle id `com.gutskrd.kurda`.
+- **iOS** — bundle id `app.hevalo.mobile`.
 - **Android** — package name + the signing SHA-1 (debug and release/Play).
 
 ## 2. App configuration (mobile)

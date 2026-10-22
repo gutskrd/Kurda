@@ -7,7 +7,6 @@ import { checkPostPictures } from '../media/postMedia.js';
 import { assertUnrestricted, requireUnrestricted, voiceAttachable } from '../moderation/restrictions.js';
 import {
   LibraryService,
-  MAX_OPEN_DRAFTS,
   addedPictures,
   changedWords,
   createProblem,
@@ -151,16 +150,12 @@ export function registerLibraryRoutes(
       if (!pictures.ok) return refuse(reply, { code: pictures.code, mediaKey: pictures.mediaKey });
       if (!(await audioOk(req, body.audioMediaId))) return reply.code(422).send(audioRefused);
       // a draft reaches nobody, so it is gated when it is published, not twice;
-      // how many a person keeps is bounded instead
+      // how many a person keeps is bounded instead (429 DRAFT_LIMIT, from the
+      // service, which counts them in the transaction that adds one)
       const publish = body.publish !== false;
       if (publish) {
         const refused = await gate.check(req.user!.id, postWords(body));
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
-      } else if ((await library.draftCount(req.user!.id)) >= MAX_OPEN_DRAFTS) {
-        return reply.code(429).send({
-          code: 'DRAFT_LIMIT',
-          message: `you have ${MAX_OPEN_DRAFTS} unfinished drafts; publish or delete one first`,
-        });
       }
       const res = await library.create(req.user!.id, isAdmin(req) ? 'admin' : 'user', body);
       if (!res.ok) return refuse(reply, res.problem);

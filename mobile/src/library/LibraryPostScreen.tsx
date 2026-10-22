@@ -6,33 +6,28 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TextInput,
   View,
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { haptic } from '../feedback/haptics';
-import { radii, spacing, typography } from '../theme/tokens';
-import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
-import { useScreenTopInset } from '../navigation/tabBarLayout';
 import { ScreenHeader } from '../navigation/ScreenHeader';
-import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { AudioPlayer } from './AudioPlayer';
-import { addComment, getPost, listComments } from './api';
+import { addComment, getPost } from './api';
 import { ReportSheet, type ReportTarget } from '../reports/ReportSheet';
-import { useSendErrorAlert } from '../reports/SendError';
 import { uploadVoiceNote } from './voiceUpload';
 import { VoiceRecorder } from './VoiceRecorder';
-import { commentText, type LibraryComment, type LibraryPost } from './types';
+import type { LibraryPost } from './types';
 import { useI18n } from '../i18n/I18nContext';
-import { EmptyState } from '../theme/EmptyState';
-import { EditPostButton, SourceCredit, postImages } from '../composer/PostExtras';
+import { PostMenuButton, SourceCredit, postImages } from '../composer/PostExtras';
 import { PostPictures } from '../composer/PostPictures';
 import { onPostSaved } from '../composer/postSaved';
+import { CommentComposer, CommentList, CommentsSkeleton } from '../comments/CommentList';
+import { useCommentThread } from '../comments/useCommentThread';
 
 /**
  * Read a library post (KUR-284): title + body, an inline audio player when it has
@@ -42,28 +37,30 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
   const { client, user } = useAuth();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const topInset = useScreenTopInset();
-  const showSendError = useSendErrorAlert();
   // what is being reported, and whose it is (the Hevalo team's own posts offer no block)
-  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null } | null>(null);
+  const [reporting, setReporting] = useState<{ target: ReportTarget; authorId: string | null; name?: string } | null>(null);
 
   const [post, setPost] = useState<LibraryPost | null>(null);
-  const [comments, setComments] = useState<LibraryComment[] | null>(null);
   const [failed, setFailed] = useState(false);
   const [draft, setDraft] = useState('');
   const [voiceUri, setVoiceUri] = useState<string | null>(null);
-  const [posting, setPosting] = useState(false);
+
+  const countBy = useCallback(
+    (delta: number) => setPost((prev) => (prev ? { ...prev, commentCount: Math.max(0, prev.commentCount + delta) } : prev)),
+    [],
+  );
+  const thread = useCommentThread('library', postId, countBy);
+  const loadComments = thread.load;
 
   const loadAll = useCallback(async () => {
     setFailed(false);
-    const [p, c] = await Promise.all([getPost(client, postId), listComments(client, postId, { sort: 'newest' })]);
+    const [p] = await Promise.all([getPost(client, postId), loadComments()]);
     if (!p.ok) {
       setFailed(true);
       return;
     }
     setPost(p.data);
-    if (c.ok) setComments(c.data.comments);
-  }, [client, postId]);
+  }, [client, postId, loadComments]);
 
   useEffect(() => {
     void loadAll();
@@ -81,37 +78,33 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   const submit = useCallback(async () => {
     const body = draft.trim();
-    if ((!body && !voiceUri) || posting) return;
-    setPosting(true);
-    let audioMediaId: string | undefined;
-    if (voiceUri) {
-      const up = await uploadVoiceNote(client, { uri: voiceUri }, t, locale);
-      if (!up.ok) {
-        setPosting(false);
-        showSendError(t('library.voiceCommentFailed'), { message: up.error, limited: up.limited });
-        return;
-      }
-      audioMediaId = up.audioMediaId;
-    }
-    haptic('tap');
-    const res = await addComment(client, postId, { body: body || undefined, audioMediaId });
-    setPosting(false);
-    if (!res.ok) {
-      haptic('error');
-      showSendError(t('comment.failed'), res.error);
-      return;
-    }
+    const voice = voiceUri;
+    if (!body && !voice) return;
     setDraft('');
     setVoiceUri(null);
-    setComments((prev) => (prev ? [res.data, ...prev] : [res.data]));
-    setPost((prev) => (prev ? { ...prev, commentCount: prev.commentCount + 1 } : prev));
-  }, [client, postId, draft, voiceUri, posting, showSendError, t, locale]);
+    const sent = await thread.send({ body: body || null, audioUrl: voice }, async (parentId) => {
+      // the voice note goes up first; the comment carries the id it comes back with
+      let audioMediaId: string | undefined;
+      if (voice) {
+        const up = await uploadVoiceNote(client, { uri: voice }, t, locale);
+        if (!up.ok) return { ok: false, title: t('library.voiceCommentFailed'), error: { message: up.error, limited: up.limited } };
+        audioMediaId = up.audioMediaId;
+      }
+      const res = await addComment(client, postId, { body: body || undefined, audioMediaId, parentId });
+      return res.ok ? { ok: true, comment: res.data } : { ok: false, title: t('comment.failed'), error: res.error };
+    });
+    // a refused comment goes back into the composer, so nothing written is lost
+    if (!sent) {
+      setDraft((current) => current || body);
+      setVoiceUri((current) => current ?? voice);
+    }
+  }, [client, postId, draft, voiceUri, thread, t, locale]);
 
   const header = (
     <ScreenHeader
       title={t(post?.type === 'poem' ? 'library.kind.poem' : post?.type === 'gotin' ? 'civak.kind.saying' : 'library.kind.story')}
       onBack={onExit}
-      right={post ? <EditPostButton post={post} /> : undefined}
+      right={post ? <PostMenuButton post={{ targetType: 'library', id: post.id, authorId: post.authorId }} onDeleted={onExit} /> : undefined}
     />
   );
 
@@ -128,7 +121,8 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
 
   return (
     <GradientBackground>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={topInset}>
+      {/* the screen starts at the top of the window, so the keyboard needs no offset; Android draws edge to edge and resizes nothing itself */}
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
         {header}
         <View style={styles.screen}>
           {post === null ? (
@@ -161,79 +155,38 @@ export function LibraryPostScreen({ postId, onExit }: { postId: string; onExit: 
               <Text style={[styles.commentsTitle, { color: colors.textSecondary }]}>
                 {post.commentCount === 1 ? t('composer.commentOne') : t('feed.comments', { count: post.commentCount })}
               </Text>
-              {comments === null ? (
-                <CommentsSkeleton />
-              ) : comments.length === 0 ? (
-                <EmptyState title={t('comments.empty')} />
-              ) : (
-                comments.map((c) => (
-                  <View key={c.id} style={styles.comment}>
-                    <InitialsAvatar name={c.authorId.slice(0, 2)} id={c.authorId} size={28} />
-                    <View style={styles.commentMain}>
-                      {c.status !== 'removed' && c.audioUrl ? <AudioPlayer url={c.audioUrl} /> : null}
-                      {c.body || c.status === 'removed' || !c.audioUrl ? (
-                        <Text style={[styles.commentBody, { color: c.status === 'removed' ? colors.textSecondary : colors.textPrimary }]}>
-                          {commentText(c, t)}
-                        </Text>
-                      ) : null}
-                      <View style={styles.commentFoot}>
-                        {c.replyCount > 0 ? (
-                          <Text style={[styles.replyHint, { color: colors.textSecondary }]}>
-                            {c.replyCount} {c.replyCount === 1 ? 'reply' : 'replies'}
-                          </Text>
-                        ) : null}
-                        {c.status !== 'removed' && c.authorId !== user?.id ? (
-                          <Pressable
-                            onPress={() =>
-                              setReporting({
-                                target: { type: 'library_comment', commentId: c.id },
-                                authorId: c.authorRole === 'user' ? c.authorId : null,
-                              })
-                            }
-                            hitSlop={13} accessibilityRole="button" accessibilityLabel={t('moderation.reportComment')}>
-                            <Icon name="flag" size={12} color={colors.textSecondary} />
-                            <Text style={[styles.replyHint, { color: colors.textSecondary }]}>{t('moderation.report')}</Text>
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    </View>
-                  </View>
-                ))
-              )}
+              <CommentList
+                thread={thread}
+                renderAudio={(url) => <AudioPlayer url={url} />}
+                onReport={(c) =>
+                  setReporting({
+                    target: { type: 'library_comment', commentId: c.id },
+                    authorId: c.authorRole === 'user' ? c.authorId : null,
+                    name: c.author?.username,
+                  })
+                }
+              />
             </ScrollView>
           )}
 
-          <View style={styles.composerWrap}>
+          <CommentComposer
+            thread={thread}
+            value={draft}
+            onChangeText={setDraft}
+            onSubmit={() => void submit()}
+            ready={!!draft.trim() || !!voiceUri}
+            placeholder={t(voiceUri ? 'library.notePlaceholder' : 'comments.add')}
+            maxLength={10000}
+          >
             <VoiceRecorder value={voiceUri} onChange={setVoiceUri} />
-            <View style={[styles.composer, { backgroundColor: colors.glassFill }]}>
-              <TextInput
-                style={[styles.input, { color: colors.textPrimary }]}
-                placeholder={t(voiceUri ? 'library.notePlaceholder' : 'comments.add')}
-                placeholderTextColor={colors.textSecondary}
-                value={draft}
-                onChangeText={setDraft}
-                multiline
-                maxLength={10000}
-              />
-              <Pressable
-                onPress={() => void submit()}
-                disabled={(!draft.trim() && !voiceUri) || posting}
-                hitSlop={8}
-                accessibilityRole="button"
-                accessibilityLabel={t('comments.post')}
-                style={{ opacity: (!draft.trim() && !voiceUri) || posting ? 0.4 : 1 }}
-              >
-                <Icon name="chevron-right" size={24} tone="primary" />
-              </Pressable>
-            </View>
-          </View>
+          </CommentComposer>
         </View>
       </KeyboardAvoidingView>
       {reporting ? (
         <ReportSheet
           visible
           target={reporting.target}
-          blockable={reporting.authorId ? { userId: reporting.authorId, name: null } : null}
+          blockable={reporting.authorId ? { userId: reporting.authorId, name: reporting.name ?? null } : null}
           onClose={() => setReporting(null)}
         />
       ) : null}
@@ -268,42 +221,17 @@ function PostSkeleton(): React.JSX.Element {
   );
 }
 
-/** Three comments in grey: the small picture, a line, the line under it. */
-function CommentsSkeleton(): React.JSX.Element {
-  return (
-    <View>
-      {[0, 1, 2].map((i) => (
-        <View key={i} style={styles.comment}>
-          <Skeleton width={28} height={28} radius={radii.pill} />
-          <View style={styles.commentMain}>
-            <SkeletonText size={typography.sizes.md} width={i === 1 ? '54%' : '80%'} />
-            <SkeletonText size={typography.sizes.xs} width={48} />
-          </View>
-        </View>
-      ))}
-    </View>
-  );
-}
-
 /** display(28) sets 1.12 */
 const TITLE_LINE = Math.round(typography.sizes.xl * typography.displayLineHeight);
 const BODY_LINE = 24;
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  screen: { flex: 1, paddingHorizontal: spacing.lg },
+  screen: { flex: 1, paddingHorizontal: layout.gutter },
   body: { paddingBottom: spacing.xl, gap: spacing.md },
   title: { ...display(typography.sizes.xl) },
   postBody: { fontSize: typography.sizes.md, lineHeight: BODY_LINE },
   commentsTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, marginTop: spacing.sm },
   commentsTitleSkeleton: { marginTop: spacing.sm },
-  comment: { flexDirection: 'row', gap: spacing.sm, paddingTop: spacing.sm },
-  commentMain: { flex: 1, gap: 2 },
-  commentBody: { fontSize: typography.sizes.md },
-  commentFoot: { flexDirection: 'row', gap: spacing.md },
-  replyHint: { fontSize: typography.sizes.xs },
   report: { fontSize: typography.sizes.sm },
-  composerWrap: { gap: spacing.sm, marginBottom: spacing.md },
-  composer: { flexDirection: 'row', alignItems: 'flex-end', gap: spacing.sm, borderRadius: radii.lg, paddingHorizontal: spacing.md, paddingVertical: spacing.sm },
-  input: { minHeight: MIN_TOUCH_TARGET, flex: 1, fontSize: typography.sizes.md, maxHeight: 120 },
 });

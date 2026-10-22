@@ -30,7 +30,7 @@ function item(over: Partial<AdminFeedbackItem> = {}): AdminFeedbackItem {
     user: { id: 'u-1', username: 'rojin' },
     stars: 2,
     categories: ['bugs', 'too_hard'],
-    comment: 'The Wordle keyboard has no ê on my phone.',
+    comment: 'The Peyvok keyboard has no ê on my phone.',
     source: 'first_game',
     platform: 'android',
     appVersion: '1.8.0',
@@ -76,7 +76,7 @@ describe('the filters', () => {
 describe('the inbox', () => {
   it('shows the average, the spread of stars and every new answer with who sent it from where', async () => {
     show('#/feedback', on('GET', /^\/admin\/feedback\?/, json({ items: [item()], total: 1 })));
-    expect(await screen.findByText('The Wordle keyboard has no ê on my phone.')).toBeInTheDocument();
+    expect(await screen.findByText('The Peyvok keyboard has no ê on my phone.')).toBeInTheDocument();
     expect(screen.getByText('3.8')).toBeInTheDocument();
     const dist = screen.getByRole('list', { name: 'Answers by stars, last 30 days' });
     expect(within(dist).getAllByRole('listitem')[0]).toHaveTextContent('5 ★5 with 5 stars');

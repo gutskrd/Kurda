@@ -110,10 +110,14 @@ const resolveGroup: Resolver = async (db, targetId, ctx) => {
   const r = await db.query<{
     id: string; name: string; description: string | null; privacy: string; owner_id: string | null;
     owner_username: string | null; created_at: Date; archived_at: Date | null; visible: boolean;
+    photo_key: string | null; edited_by: string | null; editor_username: string | null; photo_set_by: string | null; photo_setter_username: string | null;
   }>(
     `SELECT g.id, g.name, g.description, g.privacy, g.owner_id, o.username AS owner_username, g.created_at, g.archived_at,
+            g.photo_key, g.edited_by, e.username AS editor_username, g.photo_set_by, p.username AS photo_setter_username,
             (g.privacy = 'open' OR EXISTS (SELECT 1 FROM group_members m WHERE m.group_id = g.id AND m.user_id = $2::uuid)) AS visible
        FROM groups g LEFT JOIN users o ON o.id = g.owner_id
+                     LEFT JOIN users e ON e.id = g.edited_by
+                     LEFT JOIN users p ON p.id = g.photo_set_by
       WHERE g.id = $1`,
     [targetId, ctx.reporterId],
   );
@@ -134,7 +138,15 @@ const resolveGroup: Resolver = async (db, targetId, ctx) => {
       text: g.description,
       createdAt: iso(g.created_at),
       status: g.archived_at ? 'archived' : 'active',
-      group: { id: g.id, name: g.name, privacy: g.privacy },
+      // the group's picture is kept with the report like any other media
+      mediaKeys: g.photo_key ? [g.photo_key] : [],
+      group: {
+        id: g.id,
+        name: g.name,
+        privacy: g.privacy,
+        editedBy: g.edited_by && g.editor_username ? { id: g.edited_by, username: g.editor_username } : null,
+        photoSetBy: g.photo_set_by && g.photo_setter_username ? { id: g.photo_set_by, username: g.photo_setter_username } : null,
+      },
     },
   };
 };
@@ -439,7 +451,7 @@ export function hasGameSeats(game: string): boolean {
 }
 
 /**
- * Wordle Battle and Rhyme Match seats: the `seat` column the shared lobby
+ * Peyvok Battle and Rhyme Match seats: the `seat` column the shared lobby
  * rules give their players (migration 1751000149000), handed out in join
  * order and never given to a second person, which is what their views show
  * ("Player 2"). A player who left a started game keeps theirs (`left_at`);

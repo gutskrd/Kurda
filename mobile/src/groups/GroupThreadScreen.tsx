@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ActivityIndicator,
   FlatList,
@@ -23,9 +24,11 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText, lineOf } from '../theme/Skeleton';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ScreenHeader } from '../navigation/ScreenHeader';
+import { GroupAvatar } from './GroupAvatar';
 import { useScreenBottomInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
-import { SendButton } from '../chat/SendButton';
+import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
+import { messageA11y, openMessageOptions } from '../chat/messageOptions';
 import { useI18n } from '../i18n/I18nContext';
 import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
@@ -64,8 +67,8 @@ type Message = Omit<GroupMessage, 'body'> & ChatMessage;
  * swapped in. When one is opened the room is told (`group_msg_gift_opened`)
  * and the card is fetched again, since it is drawn per viewer.
  *
- * Pressing and holding someone's message reports it; the ⋯ in the header
- * reports the group.
+ * Pressing and holding a message offers its options (Copy, and Report for
+ * someone else's); the ⋯ in the header reports the group.
  */
 export function GroupThreadScreen({
   groupId,
@@ -100,6 +103,7 @@ export function GroupThreadScreen({
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
+  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
   // null until the club says: the report button waits rather than flash at its owner
   const [owner, setOwner] = useState<boolean | null>(null);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
@@ -167,19 +171,24 @@ export function GroupThreadScreen({
     );
   }, [client, groupId, me, nameParam]);
 
-  // the header's name when the way in did not bring one, and whether the club
-  // is yours — its owner is the one person who cannot report it
-  useEffect(() => {
-    let active = true;
-    void groupDetail(client, groupId).then((res) => {
-      if (!active || !res.ok) return;
-      if (!nameParam) setName(res.data.name);
-      setOwner(res.data.myRole === 'owner');
-    });
-    return () => {
-      active = false;
-    };
-  }, [client, groupId, nameParam]);
+  // the header's name and picture as the group has them now — asked each time
+  // the thread comes back into view, so a rename made on its info page shows
+  // here at once — and whether the club is yours: its owner is the one person
+  // who cannot report it
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      void groupDetail(client, groupId).then((res) => {
+        if (!active || !res.ok) return;
+        setName(res.data.name);
+        setPhotoUrl(res.data.photoUrl ?? null);
+        setOwner(res.data.myRole === 'owner');
+      });
+      return () => {
+        active = false;
+      };
+    }, [client, groupId]),
+  );
 
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
   const loadOlder = useCallback(async () => {
@@ -308,6 +317,9 @@ export function GroupThreadScreen({
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
           title={name}
+          titleAvatar={<GroupAvatar name={name} id={groupId} size={30} photoUrl={photoUrl} />}
+          onTitlePress={onOpenMembers}
+          titleHint={t('groups.info')}
           onBack={onExit}
           hairline
           right={
@@ -316,7 +328,7 @@ export function GroupThreadScreen({
                 onPress={onOpenMembers}
                 hitSlop={10}
                 accessibilityRole="button"
-                accessibilityLabel={t('groups.members')}
+                accessibilityLabel={t('groups.info')}
                 style={styles.headerBtn}
               >
                 <Icon name="people" size={20} tone="primary" />
@@ -384,7 +396,7 @@ export function GroupThreadScreen({
             onPress={openPicker}
             accessibilityRole="button"
             accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, { backgroundColor: colors.controlTrack, opacity: pressed ? 0.7 : 1 }]}
+            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
           >
             <Icon name="gift" size={22} color={colors.goldText} />
           </Pressable>
@@ -514,20 +526,21 @@ function Bubble({
   const dir = useDirection();
   const mirrored = dir.row === 'row-reverse';
   const card = isCardMessage(message) && !message.deleted;
-  // one element for a screen reader (sender and words), with Report among its
-  // actions, unless it holds a control of its own
+  // one element for a screen reader (sender and words), with Copy and Report
+  // among its actions, unless it holds a control of its own
   const whole = message.deleted || !hasControls(message);
   // the controls inside a message (a gift, an invite link) report it too
   const report = mine || message.deleted ? undefined : onReport;
+  // held, a message offers its words to copy and, if it is someone else's, a report
+  const options = { words: card || message.deleted ? null : message.body, onReport: report };
   return (
     <Pressable
-      onLongPress={report}
+      onLongPress={() => openMessageOptions(t, options)}
       delayLongPress={350}
       accessible={whole}
-      accessibilityActions={mine || message.deleted || !whole ? undefined : [{ name: 'report', label: t('moderation.report') }]}
-      onAccessibilityAction={onReport}
+      {...(whole ? messageA11y(t, options) : null)}
       // your own words at the end of the line and theirs (with their face) at its start, whichever side that is
-      style={[styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart]}
+      style={({ pressed }) => [styles.bubbleRow, { flexDirection: dir.row }, mine !== mirrored ? styles.rowEnd : styles.rowStart, pressed && styles.held]}
     >
       {!mine ? (
         <InitialsAvatar name={message.username} id={message.senderId} size={28} photoUrl={message.avatarUrl} />
@@ -564,6 +577,8 @@ function Bubble({
 }
 
 const styles = StyleSheet.create({
+  // a held message sinks a little under the finger, so the hold is felt to be doing something
+  held: { transform: [{ scale: 0.97 }] },
   flex: { flex: 1 },
   skeletonThread: { justifyContent: 'flex-end', overflow: 'hidden' },
   senderSkeleton: { marginBottom: 2, marginHorizontal: spacing.xs },
@@ -587,19 +602,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     // the buttons stay by the last line as a long message grows the field upwards
     alignItems: 'flex-end',
-    gap: spacing.sm,
-    padding: spacing.md,
+    gap: spacing.xs,
+    paddingHorizontal: spacing.sm,
+    paddingTop: spacing.sm,
     borderTopWidth: StyleSheet.hairlineWidth,
   },
-  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
-  input: {
-    minHeight: MIN_TOUCH_TARGET,
-    flex: 1,
-    borderRadius: radii.md,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    maxHeight: 120,
-    fontSize: typography.sizes.md,
-  },
+  // a plain glyph beside the field, as the tools by a message field are; the touch is still 44pt
+  giftBtn: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  input: COMPOSER_FIELD,
   picking: { position: 'absolute', top: 0, right: 0, bottom: 0, left: 0, alignItems: 'center', justifyContent: 'center' },
 });

@@ -9,7 +9,7 @@ vi.mock('@react-native-community/netinfo', () => import('../reports/testing/neti
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { SYNTHESISED_ALPHABET_CLIPS, encodeLipsync, type AlphabetAudioResponse } from '@kurda/shared';
+import { ALPHABET_CLIPS, SYNTHESISED_ALPHABET_CLIPS, encodeLipsync, type AlphabetAudioResponse } from '@kurda/shared';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
@@ -132,7 +132,7 @@ describe('the alphabet', () => {
     expect(FakeAudio.made.some((a) => a.src === synthesised('kmr:sound:c'))).toBe(false);
   });
 
-  it('puts the character who says a recording beside its button, and nobody beside one without', async () => {
+  it('stands the character who says a letter on a stage beside it, whole, and nobody beside one without', async () => {
     serve({
       clips: { 'kmr:sound:c': 'https://media.test/c.wav', 'kmr:word:c': 'https://media.test/ciran.wav', 'kmr:sound:ç': 'https://media.test/ch.wav' },
       voices: { 'kmr:sound:c': { speaker: 'xezo', lipsync: SAID }, 'kmr:word:c': { speaker: 'hamo', lipsyncSource: 'text' } },
@@ -141,16 +141,34 @@ describe('the alphabet', () => {
     await press('C, like j');
     const card = await sheet();
     expect(await within(card).findByRole('img', { name: 'Said by Xezo' })).toBeTruthy();
-    expect(within(card).getByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
+    expect(within(card).getByTestId('character-stage')).toBeTruthy();
+    // one character on the card, who says the word too: nobody squeezed in beside the word's button
+    expect(within(card).queryByRole('img', { name: 'Said by Hamo' })).toBeNull();
     // a recording, not a computer: nothing to own up to
     expect(within(card).queryByText('Computer voice — a guide, not a native speaker.')).toBeNull();
 
-    // ç has a recording that nobody was chosen for: its button stands alone
+    // the word is Hamo's: he takes the stage to say it, and stays there after
+    await press('Listen to the word', { inside: card });
+    expect(await within(card).findByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
+    expect(within(card).queryByRole('img', { name: 'Said by Xezo' })).toBeNull();
+    const word = FakeAudio.of('https://media.test/ciran.wav')!;
+    await waitFor(() => expect(word.paused).toBe(false));
+    await act(async () => word.finish());
+    expect(within(card).getByRole('img', { name: 'Said by Hamo' })).toBeTruthy();
+
+    // a tap on him says it again
+    await act(async () => {
+      fireEvent.click(within(card).getByRole('img', { name: 'Said by Hamo' }));
+    });
+    await waitFor(() => expect(word.paused).toBe(false));
+
+    // ç has a recording that nobody was chosen for: its button stands alone, with no stage
     await press('Close', { inside: card });
     await press('Ç, like ch');
     const next = await sheet();
     expect(within(next).getByRole('button', { name: 'Listen' })).toBeTruthy();
     expect(within(next).queryByRole('img', { name: /^Said by/ })).toBeNull();
+    expect(within(next).queryByTestId('character-stage')).toBeNull();
   });
 
   it('ticks the letters opened, and keeps them on this phone', async () => {
@@ -206,12 +224,12 @@ describe('the alphabet', () => {
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:word:ç'))?.paused).toBe(false));
   });
 
-  it('sends the reader on to the dictionary and to Wordle', async () => {
+  it('sends the reader on to the dictionary and to Peyvok', async () => {
     serve();
     await show();
     await press('Look words up in the dictionary');
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
-    await press('Play Kurdish Wordle');
+    await press('Play Peyvok');
     expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
   });
 });
@@ -244,6 +262,21 @@ describe('check yourself', () => {
     await press('Next');
     expect(await screen.findByLabelText('Question 2 of 8')).toBeTruthy();
     stop();
+  });
+
+  it('asks a question out loud from a stage when a character says it', async () => {
+    const keys = ALPHABET_CLIPS.map((clip) => clip.key);
+    serve({
+      clips: Object.fromEntries(keys.map((key, i) => [key, `https://media.test/alphabet/${i}.wav`])),
+      voices: Object.fromEntries(keys.map((key) => [key, { speaker: 'hevalo' as const }])),
+    });
+    await show();
+    await press('Start');
+    expect(await screen.findByLabelText('Question 1 of 8')).toBeTruthy();
+    expect(screen.getByText('Listen. Which letter is it?')).toBeTruthy();
+    const stage = await screen.findByTestId('character-stage');
+    expect(within(stage).getByRole('img', { name: 'Said by Hevalo' })).toBeTruthy();
+    expect(within(stage).getByRole('button', { name: 'Play again' })).toBeTruthy();
   });
 
   it('ends with a score and a new round', async () => {

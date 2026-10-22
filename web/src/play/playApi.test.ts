@@ -11,13 +11,13 @@ afterEach(() => {
 describe('where a game is', () => {
   it('sends someone in a story game to its own page, and a battle or match to its lobby address', () => {
     expect(lobbyPath('stories', 's1')).toBe('/app/games/stories/play/s1');
-    expect(lobbyPath('wordle-battle', 'b1')).toBe('/app/games/wordle-battle?id=b1');
+    expect(lobbyPath('wordle-battle', 'b1')).toBe('/app/games/peyvok-battle?id=b1');
     expect(lobbyPath('rhyme-match', 'r1')).toBe('/app/games/rhyme-match?id=r1');
   });
 
   it('sends someone not in a game yet to its invite link', () => {
     expect(joinPath('stories', 's1')).toBe('/app/games/stories?id=s1');
-    expect(joinPath('wordle-battle', 'b1')).toBe('/app/games/wordle-battle?id=b1');
+    expect(joinPath('wordle-battle', 'b1')).toBe('/app/games/peyvok-battle?id=b1');
   });
 });
 

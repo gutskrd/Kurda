@@ -1,5 +1,5 @@
 /**
- * Starting a game with friends, the same way for every online game — Wordle
+ * Starting a game with friends, the same way for every online game — Peyvok
  * Battle, Rhyme Match and Stories: invite a friend from the game, their
  * profile, the friends list or your chat with them; they get an in-app invite
  * they can Join or turn down; and when a game ends, the same people can play
@@ -100,7 +100,7 @@ export interface InvitePerson {
  * its own fields.
  */
 export interface InviteSummary {
-  /** Wordle Battle: easy | medium | hard */
+  /** Peyvok Battle: easy | medium | hard */
   difficulty?: string;
   /** Rhyme Match and Stories: kurmanci | sorani */
   dialect?: string;

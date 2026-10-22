@@ -80,8 +80,9 @@ describe('the Shop, by kind', () => {
   it('files every item under its kind, in the shared order, with a translated title and a count', async () => {
     open();
     await screen.findByRole('heading', { name: 'Backgrounds, 4 items' });
-    const headings = screen.getAllByRole('heading').map((h) => h.getAttribute('aria-label'));
-    expect(headings).toEqual(['Backgrounds, 4 items', 'Icons, 3 items', 'Tags, 1 item', 'More, 1 item']);
+    // the screen's own title first, then a heading for each kind
+    const headings = screen.getAllByRole('heading').map((h) => h.getAttribute('aria-label') ?? h.textContent);
+    expect(headings).toEqual(['Shop', 'Backgrounds, 4 items', 'Icons, 3 items', 'Tags, 1 item', 'More, 1 item']);
     // the server's own words never reach the screen
     for (const raw of ['BACKGROUND', 'background', 'ICON', 'TAG', 'freeze', 'SHOP.CATEGORY.MISC']) {
       expect(screen.queryByText(raw)).toBeNull();
@@ -91,7 +92,7 @@ describe('the Shop, by kind', () => {
 
   it('shows each item’s picture, shaped by its kind, and a glyph for the tag that has none', async () => {
     open();
-    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr, Premium$/ });
+    const glass = await screen.findByRole('button', { name: /^Îstîkan, Tea glass, 900 Zêr$/ });
     // the picture is drawn once it starts loading, an effect after the row
     await waitFor(() => expect(glass.querySelector('img')?.getAttribute('src')).toBe('https://hevalo.app/cosmetics/icons/made-08-caydan.png'));
     const lake = screen.getByRole('button', { name: /^Gola Şîn/ });
@@ -173,7 +174,8 @@ describe('the Shop, by kind', () => {
     fireEvent.click(await screen.findByRole('button', { name: /^Hevalo,/ }));
     expect(screen.getByRole('button', { name: 'Get it free' })).toBeTruthy();
     expect(screen.queryByText('Send as a gift')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    // the sheet's ✕, after the dimmed page behind it
+    fireEvent.click(screen.getAllByRole('button', { name: 'Close' }).at(-1)!);
 
     fireEvent.click(screen.getByRole('button', { name: /^Gola Şîn,/ }));
     expect(screen.getByText('Send as a gift')).toBeTruthy();

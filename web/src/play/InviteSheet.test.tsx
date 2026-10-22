@@ -64,7 +64,7 @@ describe('InviteSheet', () => {
     await waitFor(() =>
       expect(posted(calls, '/play/lobbies')).toEqual({ game: 'wordle-battle', settings: { difficulty: 'hard', rated: false }, invite: ['u2'] }),
     );
-    await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=new-1'));
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
   });
 
   it('makes a Rated game when the host chooses Rated, and remembers it for next time', async () => {
@@ -224,7 +224,7 @@ describe('InviteSheet', () => {
       </form>,
     );
     await userEvent.click(await screen.findByRole('button', { name: 'Create game' }));
-    await waitFor(() => expect(where()).toBe('/app/games/wordle-battle?id=new-1'));
+    await waitFor(() => expect(where()).toBe('/app/games/peyvok-battle?id=new-1'));
     expect(outer).not.toHaveBeenCalled();
   });
 });

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { resolveGroup, type LeagueTier, type LeagueView } from '@kurda/shared';
-import { LeaguePanel, weekEnds } from './LeaguePanel';
+import { LeaguePanel, weekEnds, weekLeft } from './LeaguePanel';
 import { renderApp, jsonResponse } from '../test/utils';
 import { en } from '../i18n/en';
 
@@ -56,17 +56,39 @@ function league(tier: LeagueTier, size: number, selfRank: number, over: Partial<
 const answer = (body: unknown) => vi.fn(async () => jsonResponse(200, body));
 
 describe('LeaguePanel', () => {
-  it('names the league and its meaning, and says when the week closes in local time, without a countdown', async () => {
+  it('names the league and its meaning, and says how many days the week has left, without a clock', async () => {
+    vi.spyOn(Date, 'now').mockReturnValue(Date.parse('2026-10-15T12:00:00Z'));
     vi.stubGlobal('fetch', answer(league('cem', 18, 12)));
     renderApp(<LeaguePanel />);
 
     expect(await screen.findByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
     expect(screen.getByText('River')).toBeInTheDocument();
-    expect(screen.getByText(`This week closes ${weekEnds('2026-10-19T00:00:00.000Z', 'en')}`)).toBeInTheDocument();
-    expect(screen.queryByText(/Ends in/)).not.toBeInTheDocument();
+    expect(screen.getByText('3 days left')).toBeInTheDocument();
+    expect(screen.queryByText(/Ends in|hours|minutes/)).not.toBeInTheDocument();
     expect(screen.getByText('18 learners in your group')).toBeInTheDocument();
     // the emblem is labelled, not decoration
-    expect(screen.getByRole('img', { name: 'Çem (River)' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Çem (River), your league' })).toBeInTheDocument();
+  });
+
+  it('shows the six leagues in a row: those come through, yours, and those ahead still locked', async () => {
+    vi.stubGlobal('fetch', answer(league('gol', 18, 12)));
+    const { container } = renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Gol League' });
+
+    const ladder = container.querySelector<HTMLElement>('.league-ladder')!;
+    const names = within(ladder)
+      .getAllByRole('img')
+      .map((img) => img.getAttribute('aria-label') ?? img.querySelector('title')?.textContent);
+    expect(names).toEqual([
+      'Dilop (Drop), reached',
+      'Kanî (Spring), reached',
+      'Çem (River), reached',
+      'Gol (Lake), your league',
+      'Derya (Sea), still ahead',
+      'Okyanûs (Ocean), still ahead',
+    ]);
+    expect(ladder.querySelectorAll('.art-league.is-locked')).toHaveLength(2);
+    expect(ladder.querySelector('[aria-current="true"]')).toHaveClass('is-here');
   });
 
   /**
@@ -149,13 +171,50 @@ describe('LeaguePanel', () => {
     expect(screen.queryByRole('link', { name: en['leagues.unnamed'] })).not.toBeInTheDocument();
   });
 
-  it('asks someone not in a group yet to learn something, rather than showing an empty table', async () => {
+  it('shows someone not in a group yet Hevalo asleep and the way into the week, rather than an empty table', async () => {
     vi.stubGlobal('fetch', answer({ ...league('dilop', 0, 1), joined: false, standings: [], weeklyXp: 0, goalMet: false, safe: false }));
     const { container } = renderApp(<LeaguePanel />);
     await screen.findByRole('heading', { name: 'Dilop League' });
 
+    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: en['leagues.resting.title'] })).toBeInTheDocument();
     expect(screen.getByText(en['leagues.joinHint'])).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: en['leagues.notJoined.start'] })).toHaveAttribute('href', '/app/learn');
     expect(container.querySelector('.rank-list')).toBeNull();
+    // no goal ring to fill yet, and nothing that says time is running out
+    expect(screen.queryByRole('img', { name: /Weekly goal/ })).toBeNull();
+  });
+
+  it('leaves the weekly leagues once asked, plainly, and shows your own week after', async () => {
+    let left = false;
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      if (url.includes('/me/league')) return jsonResponse(200, left ? { ...league('cem', 0, 1), mode: 'personal', optedOut: true, joined: false, standings: [] } : league('cem', 18, 12));
+      if (url.endsWith('/me') && init?.method === 'PATCH') {
+        left = true;
+        return jsonResponse(200, { user: { id: 'me', leaguesEnabled: false } });
+      }
+      return jsonResponse(200, { user: { id: 'me' } });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    renderApp(<LeaguePanel />);
+    await screen.findByRole('heading', { name: 'Çem League' });
+
+    await userEvent.click(screen.getByRole('button', { name: en['leagues.leave'] }));
+    const dialog = screen.getByRole('dialog', { name: en['leagues.leave.title'] });
+    expect(within(dialog).getByText(en['leagues.leave.body'])).toBeInTheDocument();
+    // asking is not leaving: Cancel changes nothing
+    await userEvent.click(within(dialog).getByRole('button', { name: en['common.cancel'] }));
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(fetchMock.mock.calls.some(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH')).toBe(false);
+
+    await userEvent.click(screen.getByRole('button', { name: en['leagues.leave'] }));
+    await userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: en['leagues.leave.confirm'] }));
+    expect(await screen.findByRole('heading', { name: en['leagues.personal.title'] })).toBeInTheDocument();
+    const patch = fetchMock.mock.calls.find(([, init]) => (init as RequestInit | undefined)?.method === 'PATCH');
+    expect(JSON.parse(String((patch![1] as RequestInit).body))).toEqual({ leaguesEnabled: false });
+    expect(screen.queryByRole('dialog')).toBeNull();
+    // and the way back in is right there
+    expect(screen.getByRole('button', { name: en['leagues.optedOut.join'] })).toBeInTheDocument();
   });
 
   it('shows last week as its own card, a move down said as where you are now', async () => {
@@ -310,14 +369,54 @@ describe('LeaguePanel', () => {
     expect(JSON.parse(String((patch![1] as RequestInit).body))).toEqual({ leaguesEnabled: true });
   });
 
+  it('says the days left in whole days, and on the last day when the week closes, never hours', () => {
+    const t = (key: string, vars?: Record<string, string | number>) =>
+      (en as Record<string, string>)[key]!.replace(/\{(\w+)\}/g, (_, k: string) => String(vars?.[k] ?? ''));
+    const ends = '2026-10-26T00:00:00.000Z';
+    const at = (iso: string) => Date.parse(iso);
+    expect(weekLeft(t, ends, 'en', at('2026-10-21T22:00:00Z'))).toBe('4 days left');
+    expect(weekLeft(t, ends, 'en', at('2026-10-24T00:00:00Z'))).toBe('2 days left');
+    expect(weekLeft(t, ends, 'en', at('2026-10-24T12:00:00Z'))).toBe('1 day left');
+    expect(weekLeft(t, ends, 'en', at('2026-10-25T09:00:00Z'))).toBe(`This week closes ${weekEnds(ends, 'en')}`);
+    expect(weekLeft(t, 'soon', 'en')).toBe('');
+  });
+
   /*
-   * It is an extra panel above a page that works without it, so a failure is
-   * not the reader's problem to see.
+   * It is the League tab's whole page, so a failure is said, with the way to
+   * try again — not a blank tab.
    */
-  it('shows nothing at all rather than an error over the leaderboards', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, { code: 'OOPS', message: 'no' })));
+  it('says when the week cannot be read, and reads it again on Try again', async () => {
+    let up = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/me/league')) return up ? jsonResponse(200, league('cem', 18, 12)) : jsonResponse(500, { code: 'OOPS', message: 'no' });
+        return jsonResponse(200, { user: { id: 'me' } });
+      }),
+    );
+    renderApp(<LeaguePanel />);
+    expect(await screen.findByText(en['error.generic'])).toBeInTheDocument();
+    up = true;
+    await userEvent.click(screen.getByRole('button', { name: en['common.retry'] }));
+    expect(await screen.findByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
+  });
+
+  it('gives each row a face — initials, or a silhouette for somebody who is not named', async () => {
+    const view = league('cem', 18, 12);
+    view.standings[0] = { ...view.standings[0]!, username: null, userId: null };
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, view)));
     const { container } = renderApp(<LeaguePanel />);
-    await new Promise((r) => setTimeout(r, 0));
-    expect(container).toBeEmptyDOMElement();
+    await screen.findByRole('heading', { name: 'Çem League' });
+    const faces = container.querySelectorAll('.rank-face');
+    expect(faces).toHaveLength(view.standings.length);
+    expect(faces[0]!.querySelector('.rank-initials')).toBeNull();
+    expect(faces[1]!.querySelector('.rank-initials')?.textContent).toMatch(/^\S{1,2}$/);
+  });
+
+  it('draws the way out as a button of its own, not a faint link', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, league('cem', 18, 12))));
+    renderApp(<LeaguePanel />);
+    const leave = await screen.findByRole('button', { name: en['leagues.leave'] });
+    expect(leave).toHaveClass('btn-secondary');
   });
 });

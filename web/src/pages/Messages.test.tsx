@@ -250,6 +250,78 @@ describe('Messages', () => {
     expect(created?.body).toMatchObject({ name: 'Kurmancî learners', privacy: 'open' });
   });
 
+  describe('the group limits', () => {
+    const owned = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `o${i}`, name: `Mine ${i}`, description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner',
+      }));
+    const joined = (n: number) =>
+      Array.from({ length: n }, (_, i) => ({
+        id: `j${i}`, name: `Theirs ${i}`, description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 3, myRole: 'member',
+      }));
+    const stub = (mine: unknown[], onCreate?: () => Response) => {
+      localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
+      const posts: string[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init?: RequestInit) => {
+          if (init?.method === 'POST' && url.endsWith('/groups')) {
+            posts.push(url);
+            return onCreate ? onCreate() : jsonResponse(201, { id: 'g-new' });
+          }
+          if (url.includes('/me/groups')) return jsonResponse(200, { groups: mine });
+          if (url.endsWith('/groups')) return jsonResponse(200, { groups: [{ id: 'g2', name: 'Open Circle', description: null, privacy: 'open', ownerId: 'u9', archivedAt: null, memberCount: 4 }] });
+          if (url.includes('/chat/conversations')) return jsonResponse(200, { conversations: [] });
+          if (url.includes('/me')) return jsonResponse(200, { user: { id: 'me', username: 'ada', displayName: 'Ada', email: 'a@b.com', emailVerified: true } });
+          return jsonResponse(200, {});
+        }),
+      );
+      return posts;
+    };
+
+    it('says why a new group cannot be started once you run as many as one person may, and sends nothing', async () => {
+      const posts = stub(owned(10));
+      renderApp(<Messages />, ['/app/messages']);
+      await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+
+      expect(await screen.findByText(/You run 10 groups, the most one person can/)).toBeInTheDocument();
+      await userEvent.type(screen.getByLabelText('Name'), 'One more');
+      expect(screen.getByRole('button', { name: /create group/i })).toBeDisabled();
+      expect(posts).toEqual([]);
+    });
+
+    it('does not count an archived group', async () => {
+      stub([...owned(9), { ...owned(1)[0]!, id: 'old', archivedAt: '2026-01-01T00:00:00.000Z' }]);
+      renderApp(<Messages />, ['/app/messages']);
+      await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+      await userEvent.type(screen.getByLabelText('Name'), 'The tenth');
+      expect(screen.getByRole('button', { name: /create group/i })).toBeEnabled();
+      expect(screen.queryByText(/the most one person can/)).not.toBeInTheDocument();
+    });
+
+    it('waits on Join, and says why, once you are in as many groups as anyone may be', async () => {
+      stub(joined(50));
+      renderApp(<Messages />, ['/app/messages']);
+      await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+      await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
+
+      expect(await screen.findByRole('button', { name: 'Join: Open Circle' })).toBeDisabled();
+      expect(screen.getByText(/You’re in 50 groups, the most one person can be in/)).toBeInTheDocument();
+    });
+
+    it('says which limit the server reached when it refuses', async () => {
+      stub([], () => jsonResponse(409, { code: 'LIMIT_REACHED', message: 'you can own at most 10 groups', details: { limit: 'groups_owned', max: 10 } }));
+      renderApp(<Messages />, ['/app/messages']);
+      await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
+      await userEvent.click(await screen.findByRole('button', { name: /new group/i }));
+      await userEvent.type(screen.getByLabelText('Name'), 'Raced');
+      await userEvent.click(screen.getByRole('button', { name: /create group/i }));
+      expect(await screen.findByRole('alert')).toHaveTextContent(/You run 10 groups, the most one person can/);
+    });
+  });
+
   it('shows groups I already belong to in Discover, marked as joined', async () => {
     localStorage.setItem('hevalo_tokens', JSON.stringify({ accessToken: 'a', refreshToken: 'r' }));
     const mineG = { id: 'g1', name: 'My Club', description: null, privacy: 'open', ownerId: 'me', archivedAt: null, memberCount: 1, myRole: 'owner' };
@@ -269,12 +341,11 @@ describe('Messages', () => {
     await userEvent.click(await screen.findByRole('tab', { name: /groups/i }));
     await userEvent.click(await screen.findByRole('button', { name: /discover/i }));
 
-    // my own group appears with a Joined marker + an Open link (not a Join button)
-    expect(await screen.findByText('Joined')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /open/i })).toHaveAttribute('href', '/app/messages?group=g1');
+    // my own group appears with Open (not Join), which goes to its thread
+    expect(await screen.findByRole('link', { name: 'Open: My Club' })).toHaveAttribute('href', '/app/messages?group=g1');
     // a group I'm not in still offers Join
     expect(screen.getByText('Open Circle')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /^join$/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Join: Open Circle' })).toBeInTheDocument();
   });
 
   it('lets a group owner promote a member to group admin', async () => {
@@ -306,10 +377,11 @@ describe('Messages', () => {
 
     renderApp(<Messages />, ['/app/messages?group=g1']);
 
-    // the creator is the owner, so the roster offers promoting a member to admin
+    // the creator is the owner: the group's page offers changing it, and a member's ⋯ offers making them an admin
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
-    expect(await screen.findByText(/you are the owner/i)).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: /make admin/i }));
+    expect(await screen.findByRole('button', { name: 'Edit group' })).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Options for zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Make admin' }));
 
     expect(calls[0]?.method).toBe('PUT');
     expect(calls[0]?.body).toMatchObject({ role: 'moderator' });
@@ -342,18 +414,17 @@ describe('Messages', () => {
     );
   }
 
-  it('lets a member leave a group, on the second press', async () => {
+  it('lets a member leave a group, once they have said yes', async () => {
     const calls: Array<{ url: string; method: string }> = [];
     stubGroup('member', calls);
     renderApp(<Messages />, ['/app/messages?group=g1']);
 
     await userEvent.click(await screen.findByRole('button', { name: /2 members/i }));
-    const leave = await screen.findByRole('button', { name: /^Leave Test Group$/ });
+    await userEvent.click(await screen.findByRole('button', { name: /^Leave Test Group$/ }));
+    expect(calls).toHaveLength(0); // asked, not done
 
-    await userEvent.click(leave);
-    expect(calls).toHaveLength(0); // armed, not fired
-
-    await userEvent.click(screen.getByRole('button', { name: /press again to confirm/i }));
+    const ask = screen.getByRole('alertdialog', { name: 'Leave Test Group' });
+    await userEvent.click(within(ask).getByRole('button', { name: 'Leave Test Group' }));
     expect(calls[0]?.method).toBe('POST');
   });
 
@@ -371,7 +442,7 @@ describe('Messages', () => {
   });
 
   it('renders a game-invite link in a DM as an invite card', async () => {
-    const invite = 'https://hevalo.app/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555';
+    const invite = 'https://hevalo.app/app/games/peyvok-battle?id=11111111-2222-3333-4444-555555555555';
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string) => {
@@ -383,10 +454,10 @@ describe('Messages', () => {
     );
     renderApp(<Messages />, ['/app/messages?to=u2&name=zana']);
 
-    expect(await screen.findByText('Join a Wordle Battle game')).toBeInTheDocument();
+    expect(await screen.findByText('Join a Peyvok Battle game')).toBeInTheDocument();
     expect(screen.getByText('Play me!')).toBeInTheDocument();
     const join = screen.getByRole('link', { name: /join/i });
-    expect(join).toHaveAttribute('href', '/app/games/wordle-battle?id=11111111-2222-3333-4444-555555555555');
+    expect(join).toHaveAttribute('href', '/app/games/peyvok-battle?id=11111111-2222-3333-4444-555555555555');
   });
 
   it('appends an incoming group message over realtime', async () => {

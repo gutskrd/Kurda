@@ -47,6 +47,11 @@ const MAP = {
   person: { glyph: 'User', note: 'web UserIcon — one person, an account, you' },
   home: { glyph: 'House', note: 'web HomeIcon — the tab bar falls back to it' },
   search: { glyph: 'MagnifyingGlass', note: 'web SearchIcon — one field for people, words, lessons and games' },
+  // the tab you are on is drawn solid, the others in outline: a change of shape, not only of colour
+  'home-fill': { glyph: 'House', weight: 'fill', note: 'the Home tab, while you are on it' },
+  'book-fill': { glyph: 'BookOpen', weight: 'fill', note: 'the Learn tab, while you are on it' },
+  'send-fill': { glyph: 'PaperPlaneTilt', weight: 'fill', note: 'the Messages tab, while you are on it' },
+  'search-bold': { glyph: 'MagnifyingGlass', weight: 'bold', note: 'the Search tab, while you are on it: a lens has no inside to fill' },
 
   // --- the rest of the browser's façade, same glyph, same job ---
   chat: { glyph: 'ChatCircle', note: 'web ChatsIcon' },
@@ -100,13 +105,13 @@ const MAP = {
   apple: { glyph: 'AppleLogo', note: 'sign in with Apple' },
 
   // --- so that four games do not all look like the same game ---
-  grid: { glyph: 'GridFour', note: 'Wordle — a board of letter squares, which is what the game is' },
+  grid: { glyph: 'GridFour', note: 'Peyvok — a board of letter squares, which is what the game is' },
   lightbulb: { glyph: 'Lightbulb', note: 'a grammar tip; a sparkle said something nice was coming and not what' },
 
   // --- typing, rating Hevalo, and writing a post ---
   keyboard: { glyph: 'Keyboard', note: 'keyboard settings and the guide to adding a Kurdish keyboard' },
-  backspace: { glyph: 'Backspace', note: 'delete a letter — the Wordle key drew an ✕, which reads as "close"' },
-  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Wordle keyboard: send this guess' },
+  backspace: { glyph: 'Backspace', note: 'delete a letter — the Peyvok key drew an ✕, which reads as "close"' },
+  'key-return': { glyph: 'KeyReturn', note: 'Enter on the Peyvok keyboard: send this guess' },
   'star-fill': { glyph: 'Star', weight: 'fill', note: 'a star chosen in the rating box' },
   pencil: { glyph: 'PencilSimple', note: 'edit your own post' },
   'text-t': { glyph: 'TextT', note: 'give a post a title' },
@@ -149,10 +154,13 @@ const MAP = {
   // --- the shop, the inventory and the gift picker, sorted by kind ---
   tag: { glyph: 'Tag', note: 'a tag for the profile, such as the Kurdish tag: an item with no picture of its own' },
   sort: { glyph: 'ArrowsDownUp', note: 'the order a list is in — featured, by price, by name' },
+  filter: { glyph: 'Funnel', note: 'web FunnelIcon — narrow a list to one kind: the wall to its pictures' },
+  'filter-fill': { glyph: 'Funnel', weight: 'fill', note: 'the same, while a filter is on' },
 
   // --- the five tabs and what moved into them ---
   compose: { glyph: 'NotePencil', note: 'start a new conversation — a page and a pencil, not the paper plane the tab is' },
   history: { glyph: 'ClockCounterClockwise', note: 'a search you made before' },
+  clock: { glyph: 'Clock', note: 'the wall newest first; history is the oldest first' },
   'clear-fill': { glyph: 'XCircle', weight: 'fill', note: 'empty a search field — the filled circle every platform puts at the end of one' },
   review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
 

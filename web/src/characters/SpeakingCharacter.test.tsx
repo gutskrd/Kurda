@@ -304,4 +304,68 @@ describe('SpeakingCharacter', () => {
     step();
     expect(mouth(second.root)).toBe('mbp');
   });
+
+  it('draws the deer’s ears, pupils and nose as groups of their own, so they can move', () => {
+    const { root } = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'full' });
+    for (const part of ['ear-left', 'ear-right', 'nose', 'hop', 'tilt', 'shadow']) expect(root.querySelector(`[data-sc="${part}"]`), part).not.toBeNull();
+    expect(root.querySelector('[data-pupil="left"]')).not.toBeNull();
+    expect(root.querySelector('[data-pupil="right"]')).not.toBeNull();
+    // every way the eyes can be, one shown at a time
+    for (const state of ['open', 'half', 'closed', 'happy']) expect(root.querySelector(`[data-eyes="${state}"]`), state).not.toBeNull();
+    expect([...root.querySelectorAll('[data-eyes]')].filter((g) => !g.hasAttribute('visibility'))).toHaveLength(1);
+  });
+
+  it('looks where the pointer is', () => {
+    const { root } = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' } });
+    root.getBoundingClientRect = () => ({ left: 100, top: 100, width: 100, height: 100, right: 200, bottom: 200, x: 100, y: 100, toJSON: () => ({}) });
+    act(() => {
+      window.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 900, clientY: 150, pointerType: 'mouse' }));
+    });
+    const left = root.querySelector<SVGGElement>('[data-pupil="left"]')!;
+    const moved = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(left.style.transform);
+    expect(moved).not.toBeNull();
+    // far off to the right: the pupil goes right
+    expect(Number(moved![1])).toBeGreaterThan(0);
+  });
+
+  it('beams at a right answer, eyes smiling and mouth open, even for a reader who asked for less motion', async () => {
+    vi.stubGlobal('matchMedia', (query: string) => ({ matches: query === '(prefers-reduced-motion: reduce)', media: query, addEventListener() {}, removeEventListener() {} }));
+    const { root } = face(new FakeMedia(), { reaction: 'cheer' });
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
+    expect(mouth(root)).toBe('a');
+  });
+
+  it('rests where there is nothing to do yet: eyes shut, head dipped, z’s beside it, still under the pointer', () => {
+    const { root } = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' }, crop: 'full', resting: true });
+    expect(screen.getByRole('img', { name: 'Hevalo is resting' })).toBe(root);
+    expect(root).toHaveClass('is-resting');
+    expect(root.querySelector('[data-eyes="closed"]')).not.toHaveAttribute('visibility');
+    expect(root.querySelector('[data-sc="head"]')?.getAttribute('transform')).toMatch(/^rotate\(5 /);
+    // three z's for the stylesheet to float up, inside the drawing a screen reader already skips
+    expect(root.querySelectorAll('.sc-z')).toHaveLength(3);
+    expect(root.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
+    // a slower, deeper breath than awake
+    expect(root.style.getPropertyValue('--sc-breath-ms')).toBe('5600ms');
+    // the eyes do not follow the pointer while it sleeps
+    root.getBoundingClientRect = () => ({ left: 100, top: 100, width: 100, height: 100, right: 200, bottom: 200, x: 100, y: 100, toJSON: () => ({}) });
+    act(() => {
+      window.dispatchEvent(Object.assign(new Event('pointermove'), { clientX: 900, clientY: 150, pointerType: 'mouse' }));
+    });
+    expect(root.querySelector<SVGGElement>('[data-pupil="left"]')!.style.transform).toBe('');
+    // awake, none of it
+    const awake = face(new FakeMedia(), { speaker: 'hevalo', voice: { speaker: 'hevalo' } }).root;
+    expect(awake.querySelectorAll('.sc-z')).toHaveLength(0);
+    expect(awake.querySelector('[data-eyes="open"]')).not.toHaveAttribute('visibility');
+  });
+
+  it('greets a click, and then does what the page asked', async () => {
+    const again = vi.fn();
+    const { root } = face(new FakeMedia(), { onPress: again });
+    act(() => root.click());
+    expect(again).toHaveBeenCalledTimes(1);
+    await act(() => new Promise((r) => setTimeout(r, 400)));
+    expect(root.querySelector('[data-eyes="happy"]')).not.toHaveAttribute('visibility');
+  });
 });
+

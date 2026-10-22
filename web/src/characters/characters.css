@@ -38,3 +38,180 @@
   border-color: var(--gold);
   box-shadow: 0 0 0 3px var(--gold-soft);
 }
+
+/*
+ * The parts that move turn and grow about points in the drawing's own units
+ * (set on each group), so their box is the drawing's.
+ */
+.speaking-character .sc-breathe,
+.speaking-character .sc-drift,
+.speaking-character [data-sc],
+.speaking-character [data-pupil] {
+  transform-box: view-box;
+}
+/* a look eases to where it goes, as an eye does, rather than jumping */
+.speaking-character [data-pupil] {
+  transition: transform 160ms ease-out;
+}
+.speaking-character.is-pressable {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+ * Alive between the words: a breath, and the head drifting a degree either
+ * way. Only while it can be seen (`is-alive`, set as it comes on screen) and
+ * for a reader who has not asked for less motion. The numbers are the shared
+ * ones (BREATH, SWAY), handed over as custom properties.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  .speaking-character.is-alive .sc-breathe {
+    animation: sc-breathe var(--sc-breath-ms, 3600ms) ease-in-out infinite;
+  }
+  .speaking-character.is-alive .sc-drift {
+    animation: sc-drift var(--sc-sway-ms, 6200ms) ease-in-out infinite;
+  }
+}
+@keyframes sc-breathe {
+  50% {
+    transform: scaleY(var(--sc-breath, 1.012));
+  }
+}
+@keyframes sc-drift {
+  25% {
+    transform: rotate(var(--sc-sway, 1.1deg));
+  }
+  75% {
+    transform: rotate(calc(-1 * var(--sc-sway, 1.1deg)));
+  }
+}
+
+/*
+ * Resting (`resting`): a "z" drifting up beside the head, three at a time,
+ * each a third of the way behind the one before, growing as it rises and
+ * fading out (shared RESTING). The drawing lets them past its top edge. While
+ * the character is still — off screen, or for a reader who asked for less
+ * motion — two of them stay where they are, the second higher and bigger.
+ */
+.speaking-character.is-resting > svg {
+  overflow: visible;
+}
+.speaking-character .sc-z {
+  fill: var(--ink-3);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.speaking-character.is-alive .sc-z {
+  animation: sc-z var(--sc-z-ms, 2400ms) ease-out infinite;
+}
+.speaking-character.is-alive .sc-z:nth-of-type(2) {
+  animation-delay: calc(var(--sc-z-ms, 2400ms) / 3);
+}
+.speaking-character.is-alive .sc-z:nth-of-type(3) {
+  animation-delay: calc(var(--sc-z-ms, 2400ms) * 2 / 3);
+}
+.speaking-character:not(.is-alive) .sc-z:nth-of-type(1) {
+  opacity: 0.8;
+}
+.speaking-character:not(.is-alive) .sc-z:nth-of-type(2) {
+  opacity: 0.8;
+  transform: translate(calc(var(--sc-z-drift, 20px) * 0.55), calc(var(--sc-z-rise, -40px) * 0.5)) scale(1.3);
+}
+@keyframes sc-z {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+  15%,
+  70% {
+    opacity: 0.85;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--sc-z-drift, 20px), var(--sc-z-rise, -40px)) scale(1.3);
+  }
+}
+
+/*
+ * A stage (CharacterStage.tsx): where a lesson's character stands to say what
+ * it says, head to waist in its own light, and the buttons or the words it is
+ * saying standing beside it. The script sizes the character's side
+ * (--stage-spot) and places the whole figure in it; the side cuts the figure
+ * off at the stage's bottom edge, and reaches --stage-hop above the top edge
+ * so a hop is not cut short.
+ */
+.character-stage {
+  position: relative;
+  display: grid;
+  grid-template-columns: var(--stage-spot, 45%) minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  height: var(--stage-h, 320px);
+  padding-inline-end: 16px;
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  isolation: isolate;
+}
+/* the backdrop keeps to the card's rounded corners */
+.character-stage-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  overflow: hidden;
+}
+.character-stage .speaking-character > svg {
+  overflow: visible;
+}
+.character-stage-figure {
+  position: relative;
+  align-self: stretch;
+  min-width: 0;
+  margin-top: calc(var(--stage-hop, 0px) * -1);
+  overflow: hidden;
+  border-end-start-radius: var(--r-xl);
+  pointer-events: none;
+}
+/* placed by the script (top and left), centred in the character's side whichever way the page reads */
+.character-stage-place {
+  position: absolute;
+  line-height: 0;
+  pointer-events: auto;
+}
+.character-stage-side {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  padding-block: 12px;
+}
+.character-stage[data-speaking-within] {
+  box-shadow: 0 0 0 3px var(--gold-soft);
+}
+/* the backdrop drawn for the page's own scheme: dark unless the page is light */
+.character-stage-backdrop.is-light {
+  display: none;
+}
+:root[data-theme='light'] .character-stage-backdrop.is-light {
+  display: block;
+}
+:root[data-theme='light'] .character-stage-backdrop.is-dark {
+  display: none;
+}
+.character-stage-backdrop > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* beside the character there is less room than a whole line: a long label wraps rather than running off the stage */
+.character-stage-side .btn {
+  max-width: 100%;
+  height: auto;
+  min-height: 44px;
+  white-space: normal;
+  text-align: start;
+}

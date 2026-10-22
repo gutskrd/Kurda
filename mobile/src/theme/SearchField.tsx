@@ -1,5 +1,5 @@
-import { forwardRef } from 'react';
-import { Pressable, StyleSheet, TextInput, View, type ReturnKeyTypeOptions } from 'react-native';
+import { forwardRef, useImperativeHandle, useRef } from 'react';
+import { Pressable, StyleSheet, TextInput, View, type ReturnKeyTypeOptions, type StyleProp, type ViewStyle } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -15,6 +15,9 @@ import { radii, spacing, typography } from './tokens';
  * another, and they looked different — one with a clear button and one
  * without, at two heights. Same field now, 44 tall, with the clear button a
  * fingertip wide.
+ *
+ * Clearing leaves the cursor in the field with the keyboard up, ready for the
+ * next search, as a phone's own search fields do.
  */
 export const SearchField = forwardRef<TextInput, {
   value: string;
@@ -25,8 +28,12 @@ export const SearchField = forwardRef<TextInput, {
   onSubmit?: () => void;
   returnKeyType?: ReturnKeyTypeOptions;
   autoFocus?: boolean;
-}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus }, ref) {
+  /** where the field sits (a margin), not how it looks */
+  style?: StyleProp<ViewStyle>;
+}>(function SearchField({ value, onChangeText, label, placeholder, onSubmit, returnKeyType = 'search', autoFocus, style }, ref) {
   const { colors } = useTheme();
+  const input = useRef<TextInput>(null);
+  useImperativeHandle(ref, () => input.current as TextInput);
   const { t } = useI18n();
   const dir = useDirection();
   const clearable = value.length > 0;
@@ -37,10 +44,10 @@ export const SearchField = forwardRef<TextInput, {
     ? { paddingRight: lead, paddingLeft: clearable ? 0 : lead }
     : { paddingLeft: lead, paddingRight: clearable ? 0 : lead };
   return (
-    <View style={[styles.field, inset, { backgroundColor: colors.controlTrack, flexDirection: dir.row }]}>
+    <View style={[styles.field, inset, { backgroundColor: colors.controlTrack, flexDirection: dir.row }, style]}>
       <Icon name="search" size={18} color={colors.textSecondary} />
       <TextInput
-        ref={ref}
+        ref={input}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder ?? label}
@@ -55,10 +62,13 @@ export const SearchField = forwardRef<TextInput, {
       />
       {clearable ? (
         <Pressable
-          onPress={() => onChangeText('')}
+          onPress={() => {
+            onChangeText('');
+            input.current?.focus();
+          }}
           accessibilityRole="button"
           accessibilityLabel={t('search.clear')}
-          style={styles.clear}
+          style={({ pressed }) => [styles.clear, { opacity: pressed ? 0.6 : 1 }]}
         >
           <Icon name="clear-fill" size={18} color={colors.textSecondary} />
         </Pressable>

@@ -3,7 +3,7 @@ import { DEFAULT_ACCENT_MODE, isAccentMode, isTypingDialect, type AccentMode, ty
 import { deviceStore, type DeviceStore } from './deviceStore';
 
 /**
- * How this device types Kurdish: the settings the typing race, Wordle and the
+ * How this device types Kurdish: the settings the typing race, Peyvok and the
  * keyboard guide share, kept on the device (contract §K3 — "per device").
  *
  * Per device rather than per account because they are about the keyboard in
@@ -20,7 +20,7 @@ export interface KeyboardPrefs {
   keyBar: boolean;
   /** e then ` is ê — for a hardware keyboard with no Kurdish layout */
   backtick: boolean;
-  /** Wordle's on-screen keyboard: QWERTY, or the 31 letters in alphabet order */
+  /** Peyvok's on-screen keyboard: QWERTY, or the 31 letters in alphabet order */
   wordleLayout: WordleLayout;
   /** the variety the last race was in; null until one was chosen */
   raceDialect: TypingDialect | null;
