@@ -1,6 +1,6 @@
 /**
  * The pictures Hevalo shows on the seasons' and the months' badges — spring's
- * blossom, summer's sun, an autumn leaf, a snowflake, and a boy fishing from the moon — drawn
+ * blossom, summer's sun with the Kurdish sun's twenty-one rays, an autumn leaf, a snowflake, and a boy fishing from the moon — drawn
  * whole with the pen (pen.ts), in the style of the secrets (pictures.ts).
  */
 import { circ, ell, glint, line, n, path, stroke } from '../pen.js';
@@ -40,19 +40,19 @@ function blossom(p: Pen): string {
   return out.join('');
 }
 
-/** Summer: the sun at its height, a disc of gold-white light, its rays long and short in turn, its glow round it. */
+/** Summer: the Kurdish sun at its height — twenty-one straight golden rays round its body, sharp and even, the light glowing round it. */
 function summerSun(p: Pen): string {
   const out: string[] = [];
-  out.push(path(circ(0, 0, 20), p.round([[0, '#fff6c2', 0.8], [0.55, '#ffd84a', 0.35], [1, '#ffb81c', 0]], 0, 0, 20)));
-  const rays = Array.from({ length: 12 }, (_, i) => {
-    const deg = i * 30;
-    const reach = i % 2 === 0 ? 18.6 : 15;
-    return `M${pts([turned(-2.6, -10.4, deg), turned(0, -reach, deg), turned(2.6, -10.4, deg)])}Z`;
-  });
-  out.push(path(rays.join(''), p.round([[0, '#fff3a0'], [0.6, '#ffb21f'], [1, '#f2701a']], 0, 0, 19), stroke('#b8500a', 0.9)));
-  out.push(path(circ(0, 0, 10.6), p.round([[0, '#ffffff'], [0.35, '#fff3a6'], [0.8, '#ffc21f'], [1, '#f39a12']], -3.4, -3.6, 13.6), stroke('#b8500a', 1.1)));
-  if (!p.tiny) out.push(path('M-7.6,-2.4C-7,-5.8 -4.6,-7.8 -1.6,-8.4C-4.2,-6.8 -6,-5 -7.6,-2.4Z', '#ffffff', ' fill-opacity="0.9"'));
-  if (p.fine) out.push(path(`${glint(15.6, 12.6, 1.8)}${glint(-15, 13, 1.3)}`, '#ffffff'));
+  out.push(path(circ(0, 0, 20.4), p.round([[0, '#fff6c2', 0.85], [0.5, '#ffd84a', 0.4], [1, '#ffb81c', 0]], 0, 0, 20.4)));
+  // twenty-one points, and between each two a notch at half their reach, as on the flag
+  const rays = Array.from({ length: 42 }, (_, i) => turned(0, i % 2 === 0 ? -19 : -9.4, (i * 360) / 42));
+  out.push(path(`M${pts(rays)}Z`, p.round([[0, '#fff8d0'], [0.45, '#ffd42e'], [0.8, '#fcbe14'], [1, '#f2a20c']], -2.6, -3, 20), stroke('#d07a08', 0.45)));
+  if (!p.tiny) {
+    // its body lit from the upper left, and a gleam on it
+    out.push(path(circ(0, 0, 8.6), p.round([[0, '#ffffff', 0.75], [0.6, '#fff3b0', 0.3], [1, '#fff3b0', 0]], -2.6, -3, 9.6)));
+    out.push(path('M-6.2,-1.8C-5.6,-4.6 -3.6,-6.4 -1,-6.8C-3.2,-5.6 -4.8,-3.8 -6.2,-1.8Z', '#ffffff', ' fill-opacity="0.85"'));
+  }
+  if (p.fine) out.push(path(`${glint(16.6, 13.6, 1.6)}${glint(-15.6, 14.6, 1.2)}`, '#ffffff'));
   return out.join('');
 }
 
