@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { preloadCatalogue } from '../i18n/catalogues';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useLocation } from 'react-router-dom';
 import { Civak } from './Civak';
 import { renderApp, jsonResponse } from '../test/utils';
 
@@ -86,11 +87,9 @@ describe('Civak', () => {
     await screen.findByText('Çîroka min');
     expect(queries[0]).toContain('section=all');
 
-    // the kinds appear only once a half is chosen — Helbest is not a thing you
-    // can ask for from the top level
-    expect(screen.queryByRole('button', { name: 'Only Poem' })).not.toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Show Writing' }));
-    await userEvent.click(await screen.findByRole('button', { name: 'Only Poem' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Filter posts' }));
+    const writing = within(screen.getByRole('menu', { name: 'Show' })).getByRole('group', { name: 'Writing' });
+    await userEvent.click(within(writing).getByRole('menuitemradio', { name: 'Poem' }));
 
     await waitFor(() =>
       expect(queries.some((q) => q.includes('section=gotin') && q.includes('kind=helbest'))).toBe(true),
@@ -102,8 +101,13 @@ describe('Civak', () => {
     // so /app/poems can simply redirect here and land somewhere meaningful
     renderApp(<Civak />, ['/app/civak?section=gotin&kind=helbest']);
     await waitFor(() => expect(queries[0]).toContain('kind=helbest'));
-    expect(screen.getByRole('button', { name: 'Show Writing' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Only Poem' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Filter posts — showing Writing · Poem' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Writing · Poem' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Writing · Poem' }));
+    const writing = within(screen.getByRole('menu', { name: 'Show' })).getByRole('group', { name: 'Writing' });
+    expect(within(writing).getByRole('menuitemradio', { name: 'Poem' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('menuitemradio', { name: 'Everything' })).toHaveAttribute('aria-checked', 'false');
   });
 
   it('drops a kind that does not belong to the half it is asked with', async () => {
@@ -198,9 +202,11 @@ describe('Civak', () => {
 
       expect(await screen.findByText('Relatos, poemas e imágenes de todo el mundo.')).toBeInTheDocument();
       expect(screen.getByRole('heading', { name: 'Comunidad', level: 1 })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mostrar Todo' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mostrar Escritos' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Mostrar Imágenes' })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Filtrar publicaciones' }));
+      const menu = screen.getByRole('menu', { name: 'Mostrar' });
+      expect(within(menu).getByRole('menuitemradio', { name: 'Todo' })).toBeInTheDocument();
+      expect(within(menu).getByRole('group', { name: 'Escritos' })).toBeInTheDocument();
+      expect(within(menu).getByRole('menuitemradio', { name: 'Todas las imágenes' })).toBeInTheDocument();
     });
 
     /** In Kurmancî those words ARE the translation, so they come back. */
@@ -211,8 +217,10 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
 
       expect(await screen.findByRole('heading', { name: 'Civak', level: 1 })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Gotin nîşan bide' })).toBeInTheDocument();
-      expect(screen.getByRole('button', { name: 'Dîmen nîşan bide' })).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('button', { name: 'Şandiyan parzûn bike' }));
+      const menu = screen.getByRole('menu', { name: 'Nîşan bide' });
+      expect(within(menu).getByRole('group', { name: 'Gotin' })).toBeInTheDocument();
+      expect(within(menu).getByRole('group', { name: 'Dîmen' })).toBeInTheDocument();
     });
 
     it('translates the badge on a card', async () => {
@@ -300,11 +308,12 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
       await screen.findByText('Çîroka min');
 
-      await userEvent.click(screen.getByRole('button', { name: 'Show Pictures' }));
-      await userEvent.click(await screen.findByRole('button', { name: 'Only Meme' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Filter posts' }));
+      await userEvent.click(screen.getByRole('menuitemradio', { name: 'Meme' }));
       await waitFor(() => expect(queries.some((q) => q.includes('section=dimen') && q.includes('kind=mim'))).toBe(true));
 
-      await userEvent.click(screen.getByRole('button', { name: 'Only Photo' }));
+      await userEvent.click(screen.getByRole('button', { name: 'Filter posts — showing Pictures · Meme' }));
+      await userEvent.click(screen.getByRole('menuitemradio', { name: 'Photo' }));
       await waitFor(() => expect(queries.some((q) => q.includes('section=dimen') && q.includes('kind=wene'))).toBe(true));
     });
 
@@ -313,6 +322,165 @@ describe('Civak', () => {
       renderApp(<Civak />, ['/app/civak']);
       const open = await screen.findByRole('button', { name: 'Open picture 1 of 1' });
       expect(open.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/old.webp');
+    });
+  });
+
+  /**
+   * The filter is a button, not a row of toggles: the wall opens on the posts,
+   * and the choice is there when it is wanted. A chip says what the wall is
+   * narrowed to while it is.
+   */
+  describe('the filter', () => {
+    /** Where the router is, so a test can see the filter reach the address. */
+    function Where(): React.JSX.Element {
+      return <output data-testid="where">{useLocation().search}</output>;
+    }
+    const where = (): string | null => screen.getByTestId('where').textContent;
+
+    it('puts no toggles over the wall, only a button that opens a list', async () => {
+      feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+
+      expect(screen.queryByRole('button', { name: 'Writing' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Pictures' })).not.toBeInTheDocument();
+      expect(document.querySelector('.seg')).toBeNull();
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+
+      const button = screen.getByRole('button', { name: 'Filter posts' });
+      expect(button).toHaveAttribute('aria-haspopup', 'menu');
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+      await userEvent.click(button);
+      expect(button).toHaveAttribute('aria-expanded', 'true');
+
+      const menu = screen.getByRole('menu', { name: 'Show' });
+      expect(within(menu).getAllByRole('menuitemradio').map((c) => c.textContent)).toEqual([
+        'Everything',
+        'All writing',
+        'Saying',
+        'Story',
+        'Poem',
+        'All pictures',
+        'Photo',
+        'Meme',
+      ]);
+      // what is shown now is ticked, and is where the keyboard starts
+      const everything = within(menu).getByRole('menuitemradio', { name: 'Everything' });
+      expect(everything).toHaveAttribute('aria-checked', 'true');
+      expect(everything).toHaveFocus();
+      // and nothing about it is a chip while the wall shows everything
+      expect(screen.queryByRole('button', { name: 'Show everything' })).not.toBeInTheDocument();
+    });
+
+    it('narrows the wall to memes, says so on the button and in a chip, and keeps it in the address', async () => {
+      const { queries } = feedFetch([item('library:s1')]);
+      renderApp(
+        <>
+          <Civak />
+          <Where />
+        </>,
+        ['/app/civak'],
+      );
+      await screen.findByText('Çîroka min');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Filter posts' }));
+      const pictures = within(screen.getByRole('menu', { name: 'Show' })).getByRole('group', { name: 'Pictures' });
+      await userEvent.click(within(pictures).getByRole('menuitemradio', { name: 'Meme' }));
+
+      await waitFor(() => expect(queries.at(-1)).toContain('section=dimen'));
+      expect(queries.at(-1)).toContain('kind=mim');
+      expect(where()).toBe('?section=dimen&kind=mim');
+      // a choice closes the list, and the keyboard goes back to the button
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      const button = screen.getByRole('button', { name: 'Filter posts — showing Pictures · Meme' });
+      expect(button).toHaveFocus();
+      expect(screen.getByRole('button', { name: 'Pictures · Meme' })).toBeInTheDocument();
+    });
+
+    it('shows everything again from the chip’s ✕', async () => {
+      const { queries } = feedFetch([item('library:s1')]);
+      renderApp(
+        <>
+          <Civak />
+          <Where />
+        </>,
+        ['/app/civak?section=dimen&kind=mim'],
+      );
+      await screen.findByText('Çîroka min');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Show everything' }));
+      await waitFor(() => expect(queries.at(-1)).toContain('section=all'));
+      expect(queries.at(-1)).not.toContain('kind=');
+      expect(where()).toBe('');
+      expect(screen.queryByRole('button', { name: 'Pictures · Meme' })).not.toBeInTheDocument();
+      // the chip went with the filter, so the keyboard lands on the funnel rather than nowhere
+      expect(screen.getByRole('button', { name: 'Filter posts' })).toHaveFocus();
+    });
+
+    it('opens the list again from the chip, with the filter ticked', async () => {
+      feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak?section=dimen']);
+      await screen.findByText('Çîroka min');
+
+      const chip = screen.getByRole('button', { name: 'Pictures' });
+      await userEvent.click(chip);
+      const ticked = screen.getByRole('menuitemradio', { name: 'All pictures' });
+      expect(ticked).toHaveAttribute('aria-checked', 'true');
+      expect(ticked).toHaveFocus();
+      await userEvent.keyboard('{Escape}');
+      expect(chip).toHaveFocus();
+    });
+
+    it('is worked by the keyboard: arrows move, Enter chooses, Escape closes and goes back', async () => {
+      const { queries } = feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+
+      const button = screen.getByRole('button', { name: 'Filter posts' });
+      button.focus();
+      await userEvent.keyboard('{Enter}');
+      expect(screen.getByRole('menuitemradio', { name: 'Everything' })).toHaveFocus();
+      await userEvent.keyboard('{ArrowUp}');
+      expect(screen.getByRole('menuitemradio', { name: 'Meme' })).toHaveFocus();
+      await userEvent.keyboard('{ArrowDown}{ArrowDown}');
+      expect(screen.getByRole('menuitemradio', { name: 'All writing' })).toHaveFocus();
+      await userEvent.keyboard('{End}');
+      expect(screen.getByRole('menuitemradio', { name: 'Meme' })).toHaveFocus();
+      await userEvent.keyboard('{Home}');
+      expect(screen.getByRole('menuitemradio', { name: 'Everything' })).toHaveFocus();
+
+      await userEvent.keyboard('{Escape}');
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(button).toHaveFocus();
+      expect(button).toHaveAttribute('aria-expanded', 'false');
+
+      await userEvent.keyboard('{Enter}');
+      await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}{ArrowDown}{Enter}');
+      await waitFor(() => expect(queries.some((q) => q.includes('section=gotin') && q.includes('kind=helbest'))).toBe(true));
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    });
+
+    it('closes when somewhere else is pressed, choosing nothing', async () => {
+      const { queries } = feedFetch([item('library:s1')]);
+      renderApp(<Civak />, ['/app/civak']);
+      await screen.findByText('Çîroka min');
+
+      await userEvent.click(screen.getByRole('button', { name: 'Filter posts' }));
+      expect(screen.getByRole('menu')).toBeInTheDocument();
+      await userEvent.click(screen.getByRole('heading', { name: 'Community', level: 1 }));
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+      expect(queries).toHaveLength(1);
+    });
+
+    it('offers everything else when only the chosen kind is empty', async () => {
+      const { queries } = feedFetch([]);
+      renderApp(<Civak />, ['/app/civak?section=dimen&kind=mim']);
+      expect(await screen.findByText('Nothing here yet.')).toBeInTheDocument();
+
+      // the chip's ✕ and the empty wall's button say the same thing; the latter is the second
+      const [, fromEmpty] = screen.getAllByRole('button', { name: 'Show everything' });
+      await userEvent.click(fromEmpty!);
+      await waitFor(() => expect(queries.at(-1)).toContain('section=all'));
     });
   });
 

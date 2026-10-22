@@ -98,6 +98,8 @@ import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
 import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
 import { MagnifyingGlass } from '@phosphor-icons/react/dist/icons/MagnifyingGlass';
 import { ArrowsDownUp } from '@phosphor-icons/react/dist/icons/ArrowsDownUp';
+// narrowing the wall to one kind of post
+import { Funnel } from '@phosphor-icons/react/dist/icons/Funnel';
 // starting a conversation
 import { NotePencil } from '@phosphor-icons/react/dist/icons/NotePencil';
 // signed-in devices, by kind
@@ -270,6 +272,8 @@ export const FrameIcon = named(FrameCorners, 22);
 export const SearchIcon = named(MagnifyingGlass, 18);
 /** The order a list is in: what the sort select carries in place of its word on a phone. */
 export const SortIcon = named(ArrowsDownUp, 18);
+/** The wall's filter: drawn in line while it shows everything, filled in while it is narrowed. */
+export const FeedFilterIcon = named(Funnel, 20);
 /** a new conversation: a note being written, beside the list of them */
 export const NewMessageIcon = named(NotePencil, 22);
 

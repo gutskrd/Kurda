@@ -304,28 +304,30 @@
   max-width: 34ch;
 }
 
-/* the two levels of filter stack; the second appears only when it applies */
+/*
+ * The row over the posts: what the wall is narrowed to, if it is, at the start;
+ * the filter and the + at the end. It reads as "what you are looking at … and
+ * how to change it or add to it".
+ */
 .feed-filters {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
   gap: 8px;
+  min-height: 38px;
   margin-bottom: 18px;
 }
 
 /*
- * One button for posting anything, making no claim about what.
- *
- * `margin-left: auto` pushes it to the end of the filter row, so the row reads
- * as "what you are looking at … and how to add to it". It used to hang below the
- * page heading, attached to nothing.
+ * One button for posting anything, making no claim about what. It used to hang
+ * below the page heading, attached to nothing.
  */
 .post-plus {
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
   gap: 7px;
   height: 38px;
   padding: 0 16px 0 13px;
-  margin-left: auto;
   border: 0;
   border-radius: 999px;
   background: var(--primary);
@@ -348,6 +350,224 @@
   }
   .post-plus-word {
     display: none;
+  }
+}
+
+/* ---- the wall's filter (feed/FeedFilter.tsx) ------------------------------
+ * A funnel in ink beside the +, filled in while the wall is narrowed; under it
+ * a short list in a popover, or a sheet from the bottom edge on a phone. While
+ * a filter is on, a chip at the start of the row says what it is, and its ✕
+ * shows everything again. No colour of its own: a filter is not an alert.
+ */
+.ffilter {
+  position: relative;
+  display: inline-flex;
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+.ffilter-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+}
+.ffilter.is-open .ffilter-btn {
+  background: var(--surface-2);
+}
+.ffilter-btn.is-on {
+  border-color: var(--border-strong);
+}
+
+.ffilter-chip {
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.ffilter-chip-main {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 100%;
+  padding-inline: 12px 4px;
+  border: 0;
+  border-start-start-radius: 999px;
+  border-end-start-radius: 999px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ffilter-chip-main > svg {
+  flex-shrink: 0;
+}
+.ffilter-chip-text {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+.ffilter-chip-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-inline-end: 3px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+/* the chip and its ✕ stay small to the eye; the places to press are a full 44px */
+.ffilter-chip-main,
+.ffilter-chip-clear {
+  position: relative;
+}
+.ffilter-chip-main::after {
+  content: '';
+  position: absolute;
+  inset: -5px 0;
+}
+.ffilter-chip-clear::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+}
+
+.ffilter-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-end: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  min-width: 232px;
+  padding: 6px;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  box-shadow: var(--shadow-lg);
+  animation: ffilter-in var(--dur-fast) ease-out;
+}
+@keyframes ffilter-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+.ffilter-grip,
+.ffilter-title,
+.ffilter-scrim {
+  display: none;
+}
+.ffilter-group {
+  display: flex;
+  flex-direction: column;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--separator);
+}
+.ffilter-heading {
+  padding: 4px 10px 2px;
+  color: var(--ink-3);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.ffilter-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 40px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: var(--r-sm);
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  text-align: start;
+  cursor: pointer;
+}
+.ffilter-item:focus-visible {
+  background: var(--surface-2);
+}
+/* only where there is a pointer to hover with: a finger's last place would otherwise stay lit under the sheet */
+@media (hover: hover) {
+  .ffilter-btn:hover,
+  .ffilter-item:hover {
+    background: var(--surface-2);
+  }
+  .ffilter-chip-clear:hover {
+    color: var(--ink);
+    background: var(--surface-3);
+  }
+}
+.ffilter-item.is-on {
+  font-weight: 600;
+}
+
+/* a phone: the list rises from the bottom edge, where the thumb already is */
+@media (max-width: 640px) {
+  .ffilter-scrim {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 110;
+    background: var(--scrim);
+    animation: fade 0.15s ease;
+  }
+  .ffilter-menu {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    inset-inline: 0;
+    z-index: 111;
+    max-height: 88dvh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    min-width: 0;
+    padding: 10px 12px calc(14px + env(safe-area-inset-bottom));
+    border-bottom: 0;
+    border-radius: var(--r-xl) var(--r-xl) 0 0;
+    animation: sheet-up var(--dur-slow) var(--ease-spring);
+  }
+  .ffilter-grip {
+    display: block;
+    align-self: center;
+    width: 40px;
+    height: 4px;
+    margin-bottom: 10px;
+    border-radius: 999px;
+    background: var(--border-strong);
+  }
+  .ffilter-title {
+    display: block;
+    padding: 2px 10px 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+  }
+  .ffilter-item {
+    min-height: 48px;
+    font-size: 1rem;
   }
 }
 
