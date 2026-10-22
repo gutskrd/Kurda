@@ -1,9 +1,9 @@
 /**
  * The pictures Hevalo shows on the seasons' and the months' badges — spring's
- * blossom, summer's sun, an autumn leaf, a snowflake and the new moon — drawn
+ * blossom, summer's sun, an autumn leaf, a snowflake, and a boy fishing from the moon — drawn
  * whole with the pen (pen.ts), in the style of the secrets (pictures.ts).
  */
-import { circ, glint, line, n, path, stroke } from '../pen.js';
+import { circ, ell, glint, line, n, path, stroke } from '../pen.js';
 import type { Pen, Picture } from '../pen.js';
 
 /** A point turned about 0,0 by `deg` degrees. */
@@ -112,31 +112,55 @@ function snowflake(p: Pen): string {
   return out.join('');
 }
 
-/** Where two circles meet: the crescent's two horns. */
-function meet(r1: number, x2: number, y2: number, r2: number): [[number, number], [number, number]] {
-  const d = Math.hypot(x2, y2);
-  const a = (r1 * r1 - r2 * r2 + d * d) / (2 * d);
-  const h = Math.sqrt(Math.max(0, r1 * r1 - a * a));
-  const [ux, uy] = [x2 / d, y2 / d];
-  return [
-    [a * ux - h * uy, a * uy + h * ux],
-    [a * ux + h * uy, a * uy - h * ux],
-  ];
-}
-
-/** A month: the new moon, a gold crescent glowing, and a star beside it. */
-function newMoon(p: Pen): string {
+/**
+ * A month, and a dream of one: the moon lying on its back like a boat, and
+ * a little Kurdish boy sitting in it — his şal û şapik, a red sash, a
+ * black-and-white jamana wound round his head — fishing over its side, a
+ * small gold fish on his line, clouds drifting under him.
+ */
+function moonBoat(p: Pen): string {
   const out: string[] = [];
-  const [R, cx, cy, r] = [14.4, 6.6, -4.4, 12];
-  const [a, b] = meet(R, cx, cy, r);
-  const crescent = `M${n(a[0])},${n(a[1])}A${R},${R} 0 1 1 ${n(b[0])},${n(b[1])}A${r},${r} 0 0 0 ${n(a[0])},${n(a[1])}Z`;
-  out.push(path(circ(-2, 1, 19.4), p.round([[0, '#fff6c8', 0.6], [0.6, '#ffe27a', 0.2], [1, '#ffe27a', 0]], -2, 1, 19.4)));
-  out.push(path(crescent, p.round([[0, '#fffdf0'], [0.5, '#ffe58e'], [1, '#f0a10c']], -8, -2, 20), stroke('#a8640a', 1.2)));
-  if (!p.tiny) out.push(path('M-10.4,-5.6C-9,-9.8 -5.4,-12.4 -1.4,-13C-4.6,-11 -7.6,-8.6 -10.4,-5.6Z', '#ffffff', ' fill-opacity="0.85"'));
-  // the star
-  const star = Array.from({ length: 10 }, (_, i) => turned(0, i % 2 === 0 ? -5.6 : -2.4, i * 36)).map(([x, y]): [number, number] => [x + 8.6, y - 5]);
-  out.push(path(`M${pts(star)}Z`, p.roundBox([[0, '#fffbe0'], [0.6, '#ffd84a'], [1, '#e8a21c']], 0.4, 0.35, 0.7), stroke('#a8640a', 0.9)));
-  if (p.fine) out.push(path(`${glint(16.6, 4.6, 1.8)}${glint(-15.6, 13.6, 1.2)}`, '#ffffff'));
+  const ink = '#4a2a14';
+  const turn = ' transform="rotate(-6)"';
+  // the boy, drawn first: the moon's near side hides him below the waist
+  const cloth = p.box([[0, '#efe0c2'], [0.55, '#c9ab7c'], [1, '#8a6a42']]);
+  const skin = p.box([[0, '#ffe0c4'], [1, '#e2a47a']]);
+  out.push(path('M-7,5C-7.2,0 -6.6,-3.6 -3.6,-4.6C-1.8,-5.2 0.6,-5 1.6,-4C2.8,-2.8 2.6,1 2.4,5Z', cloth, `${stroke(ink, 0.9)}${turn}`));
+  out.push(path('M-7.1,2.2C-4,2.8 0,2.8 2.5,2.2V4.8H-7.1Z', p.box([[0, '#ff6a5a'], [1, '#b8202a']], 0, 0, 0, 1), `${stroke(ink, 0.6)}${turn}`));
+  if (!p.tiny) out.push(line('M-6,3.4L-5.2,2.8L-4.4,3.4L-3.6,2.8L-2.8,3.4L-2,2.8L-1.2,3.4L-0.4,2.8L0.4,3.4L1.2,2.8', '#ffe2a0', 0.4, turn));
+  // his arm reaching out to the rod
+  out.push(line('M0.4,-2.8C2,-2.6 3.6,-2 4.6,-1.4', ink, 2.8, turn));
+  out.push(line('M0.4,-2.8C2,-2.6 3.6,-2 4.6,-1.4', cloth, 1.8, turn));
+  out.push(path(circ(4.9, -1.4, 1.05), skin, `${stroke(ink, 0.5)}${turn}`));
+  // his head, the jamana wound round it — black and white, its fringe of tassels over his brow — his face to the line
+  out.push(path(circ(-1.6, -8.2, 3.5), skin, `${stroke(ink, 0.8)}${turn}`));
+  out.push(path('M-5.4,-8.6C-5.8,-12 -3.8,-13.6 -1.4,-13.6C1,-13.6 2.6,-12 2.3,-9.2C1.2,-10.2 -0.4,-10.6 -2,-10.4C-3.4,-10.2 -4.6,-9.6 -5.4,-8.6Z', '#24202c', `${stroke('#14101a', 0.6)}${turn}`));
+  if (!p.tiny) {
+    // the wound folds, the little white figures woven in it, the tassels
+    out.push(line('M-4.8,-10.2C-2.8,-12 0,-12.2 2,-10.8M-5.2,-9.2C-3,-11 0.4,-11.2 2.3,-9.6', '#5a5468', 0.45, turn));
+    out.push(path(`${circ(-3.4, -12.4, 0.32)}${circ(-1.4, -12.9, 0.32)}${circ(0.6, -12.4, 0.32)}${circ(-4.4, -10.6, 0.3)}${circ(-2.4, -11.4, 0.3)}${circ(-0.4, -11.5, 0.3)}${circ(1.4, -10.9, 0.3)}`, '#ffffff', turn));
+    out.push(line('M-3.8,-9.8V-8.6M-2.6,-10.2V-9M-1.4,-10.4V-9.2M-0.2,-10.3V-9.1M1,-10V-8.8', '#24202c', 0.55, turn));
+    out.push(path(`${circ(0.5, -8.4, 0.55)}`, '#2a1a10', turn));
+    out.push(path(`${circ(0.35, -8.6, 0.2)}`, '#ffffff', turn));
+    out.push(line('M0.2,-6.2Q1,-5.6 1.7,-6.4', '#8a3a20', 0.45, turn));
+    out.push(path(ell(-0.6, -6.7, 0.9, 0.55), '#ff8a8a', ` fill-opacity="0.6"${turn}`));
+  }
+  // the rod, bent with the line, and the line straight down past the moon to a small gold fish
+  out.push(line('M3.6,0.2Q10.6,-7.6 18.2,-17.6', '#7a4a1e', 0.95, turn));
+  out.push(line('M18.2,-17.6V13.4', '#ffffff', 0.4, ` stroke-opacity="0.85"${turn}`));
+  out.push(path('M18.2,13.2C19.4,13.8 19.8,15.4 19.2,16.8C18.8,17.6 18.4,18 18.2,18.4C18,18 17.6,17.6 17.2,16.8C16.6,15.4 17,13.8 18.2,13.2Z M18.2,18.2L16.8,20L19.6,20Z', p.box([[0, '#fff3a0'], [1, '#e8a21c']]), `${stroke('#9a5a06', 0.5)}${turn}`));
+  // the moon on its back: the far horn, the near side over him
+  const moon = 'M-15.6,-10.8A17,17 0 1 0 15.6,-10.8A15.6,15.6 0 0 1 -15.6,-10.8Z';
+  out.push(path(moon, p.round([[0, '#fffdf0'], [0.5, '#ffe9a0'], [1, '#f2b23a']], -5, 2, 22), `${stroke('#a8640a', 1.1)}${turn}`));
+  if (!p.tiny) {
+    out.push(path(`${ell(-8.6, 9, 1.8, 1)}${ell(5.4, 10.6, 1.4, 0.8)}${ell(-1.4, 11.4, 1, 0.6)}`, '#e8b860', ` fill-opacity="0.6"${turn}`));
+    out.push(path('M-14.4,-6.4C-13.6,-1.4 -10.6,3.4 -6,6C-10.2,5 -13.6,0.4 -14.4,-6.4Z', '#ffffff', ` fill-opacity="0.85"${turn}`));
+  }
+  // clouds drifting under it
+  const cloud = p.line([[0, '#ffffff'], [1, '#cdbdf0']], 0, 10, 0, 19);
+  out.push(path('M-19.6,17.6C-19.6,14.8 -16.8,13.4 -14.2,14.4C-13.2,11.8 -9.6,11.2 -7.8,13.2C-6.2,11.8 -3.2,12.4 -2.8,14.8C-0.4,14.4 1.4,16.2 0.8,17.6Z', cloud, stroke('#6a5a9a', 0.8)));
+  out.push(path('M8.6,19.4C8.6,17.4 10.6,16.4 12.4,17C13.2,15.4 15.8,15.2 16.8,16.8C18.4,16.4 20,17.8 19.4,19.4Z', cloud, stroke('#6a5a9a', 0.8)));
+  if (p.fine) out.push(path(`${glint(-12.6, -16.6, 1.6)}${glint(9.6, -16, 1.2)}${glint(-17.6, -1.6, 1)}`, '#ffffff'));
   return out.join('');
 }
 
@@ -145,5 +169,5 @@ export const SEASONS: Readonly<Record<string, Picture>> = {
   havin: summerSun,
   payiz: autumnLeaf,
   zivistan: snowflake,
-  mehane: newMoon,
+  mehane: moonBoat,
 };

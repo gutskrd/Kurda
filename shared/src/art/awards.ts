@@ -97,7 +97,7 @@ export const SCENES: Readonly<Record<string, Scene>> = {
   bihar: { mood: 'laugh', prop: beside() },
   havin: { mood: 'proud', tilt: -5, prop: behind(1, 1.05) },
   payiz: { mood: 'dream', prop: beside(10) },
-  mehane: { mood: 'wow', prop: behind(1, 1) },
+  mehane: { mood: 'wow', prop: beside(0, 1.15) },
 };
 
 /** The ranked tiers' scene: the rank's own stone beside him, and Hevalo amazed at it. */
