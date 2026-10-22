@@ -37,7 +37,7 @@ const C = {
   suit: '#5c3a26',
   fold: '#45291a',
   shirt: '#f4ead8',
-  sash: '#1f2c5c',
+  sash: '#182248',
   shoe: '#ece2cf',
 } as const;
 
@@ -173,9 +173,9 @@ const PLEATS: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front. */
+/** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
 const SASH_TOP = 309.5;
-const SASH_BOW = 5;
+const SASH_BOW = 2.5;
 
 /** How far the pştên bows down at `x`: most at the front, none where it turns round his sides (a parabola, so each edge is one curve). */
 const bow = (x: number): number => SASH_BOW * (1 - ((x - 180) / 64) ** 2);
@@ -183,13 +183,15 @@ const bow = (x: number): number => SASH_BOW * (1 - ((x - 180) / 64) ** 2);
 /**
  * The pştên, wound round his waist from hip to hip: its top and bottom edges
  * bow down together at the front, its ends run under his hands and round his
- * sides, where they follow the line of his hips.
+ * sides, where they follow the line of his hips. It reaches below his hands,
+ * so the whole of it shows from one side of him to the other: cloth he wears,
+ * that his hands rest on, not a thing held out in front of him.
  */
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,312L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L242.7,350L244.4,${n(b)}` +
-    `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H109L110.8,347L112.4,340Z`
+    `M112.4,312L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
+    `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H104.2L106.3,359.4L110.3,348.4L112.4,340Z`
   );
 }
 
@@ -200,17 +202,20 @@ function sashOutline(bottom: number): string {
  * so they wrap round him rather than lie flat across him.
  */
 const WEAVE: readonly (readonly [number, string, ('diamond' | 'cross' | 'zigzag' | 'dots')?, string?])[] = [
-  [5.5, '#2e8577', 'diamond', '#e8782a'],
-  [1.6, '#b8232c'],
-  [5.5, '#1f2c5c', 'cross', '#efe3c4'],
-  [4.6, '#e8a42a', 'diamond', '#b8232c'],
-  [1.4, '#efe3c4'],
-  [5, '#5c2a5e', 'zigzag', '#e8782a'],
-  [4.6, '#3a7f52', 'diamond', '#f4ecd6'],
-  [1.4, '#efe3c4'],
-  [5.5, '#b8232c', 'cross', '#e8a42a'],
-  [4, '#1f2c5c', 'dots', '#efe3c4'],
-  [5, '#e8782a', 'diamond', '#1f2c5c'],
+  [5.5, '#24685d', 'diamond', '#b55e21'],
+  [1.6, '#901b22'],
+  [5.5, '#182248', 'cross', '#cbc1a7'],
+  [4.6, '#b58021', 'diamond', '#901b22'],
+  [1.4, '#cbc1a7'],
+  [5, '#482149', 'zigzag', '#b55e21'],
+  [4.6, '#2d6340', 'diamond', '#cfc9b6'],
+  [1.4, '#cbc1a7'],
+  [5.5, '#901b22', 'cross', '#b58021'],
+  [4, '#182248', 'dots', '#cbc1a7'],
+  [5, '#b55e21', 'diamond', '#182248'],
+  [1.4, '#cbc1a7'],
+  [5.5, '#24685d', 'cross', '#b58021'],
+  [6.6, '#182248', 'diamond', '#b55e21'],
 ];
 
 /** Whether a point lies inside an outline, taken as the polygon through its knots. */
@@ -234,7 +239,7 @@ function woven(): string {
   let y = SASH_TOP;
   WEAVE.forEach(([h, colour, figure, ink], band) => {
     const [a, b] = [n(y), n(y + h)];
-    out.push(fill(`M106,${a}H116Q180,${n(y + SASH_BOW * 2)} 244,${a}H250V${b}H244Q180,${n(y + h + SASH_BOW * 2)} 116,${b}H106Z`, colour));
+    out.push(fill(`M100,${a}H116Q180,${n(y + SASH_BOW * 2)} 244,${a}H254V${b}H244Q180,${n(y + h + SASH_BOW * 2)} 116,${b}H100Z`, colour));
     if (figure && ink) {
       const mid = y + h / 2;
       const r = n(h * 0.3);
@@ -262,6 +267,28 @@ function woven(): string {
     y += h;
   });
   return out.join('');
+}
+
+/** Where his fingers press into the pştên, the cloth gathers: short creases running out from under each hand towards the middle. */
+const GATHERS: readonly (readonly Pt[])[] = [
+  [[154, 330.5], [163, 332], [173, 332.8]],
+  [[155, 341.5], [164, 342.8], [174, 343.4]],
+  [[205, 329], [196, 330.6], [187, 331.4]],
+  [[208, 339.5], [199, 341], [190, 341.7]],
+];
+
+/**
+ * The pştên's shade, kept inside it: a little along its bottom edge, where
+ * the wound cloth turns under round him, and the creases his fingers make in
+ * it. It is what makes it cloth worn at the waist, not a flat band.
+ */
+function sashShade(bottom: number): string {
+  const strip = (from: number, to: number): string =>
+    `M100,${n(from)}H116Q180,${n(from + SASH_BOW * 2)} 244,${n(from)}H254V${n(to)}H244Q180,${n(to + SASH_BOW * 2)} 116,${n(to)}H100Z`;
+  return (
+    fill(strip(bottom - 3.2, bottom), '#000', alpha(0.24)) +
+    fill(GATHERS.map((s) => taper(s, [0.6, 1.6, 0.2])).join(''), '#000', alpha(0.38))
+  );
 }
 
 /** His left hand (on the viewer's left), the fingers lying forward over the sash. */
@@ -359,7 +386,8 @@ const strokes = (list: readonly (readonly Pt[])[]): string => list.map((s) => cu
 
 function body(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const sash = sashOutline(SASH_TOP + WEAVE.reduce((deep, [h]) => deep + h, 0));
+  const bottom = SASH_TOP + WEAVE.reduce((deep, [h]) => deep + h, 0);
+  const sash = sashOutline(bottom);
   return part(
     [
       clipDef(id('sash'), sash),
@@ -376,7 +404,7 @@ function body(p: string): string {
       // drawn over the jacket's hem, so they fall straight from the sash
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
-      clipped(id('sash'), woven()),
+      clipped(id('sash'), woven() + sashShade(bottom)),
       // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
       fill(curve(HAND_LEFT) + curve(HAND_RIGHT), C.skin),
       fill(CREASES.map((s) => taper(s, [0.2, 0.8, 0.25])).join(''), C.shade),

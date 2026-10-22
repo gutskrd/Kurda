@@ -2,12 +2,22 @@
  * The violet ribbons behind every page (backdrop/Backdrop.tsx), fixed on black
  * under the scrim. Until they are drawn, and wherever they cannot be, a dark
  * violet glow across the middle stands in for them.
+ *
+ * As tall as the screen is at its largest (lvh), not as tall as what is left
+ * of it: a phone's keyboard, or its browser bar sliding away, changes the
+ * second and not the first, so the ribbons stay exactly where they are while
+ * someone types and scrolls.
  */
 .ribbons {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100vh;
+  height: 100lvh;
+  overflow: hidden;
   z-index: -2;
   pointer-events: none;
-  background: radial-gradient(ellipse 70% 22% at 50% 50%, rgba(98, 60, 230, 0.32), transparent 70%), #040209;
+  background: radial-gradient(ellipse 70% 22% at 50% 50%, rgba(98, 60, 230, 0.32), transparent 70%), #030208;
 }
 .ribbons canvas { display: block; width: 100%; height: 100%; }
