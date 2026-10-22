@@ -749,8 +749,10 @@ describe('light', () => {
     ];
     for (const svg of drawings) {
       walk(parse(svg), (e) => {
-        // a glow is a radial fade to nothing; the enamel's own gradient is clipped to the piece and never fades out
+        // a glow is a radial fade to nothing; the enamel's own gradient is clipped to the piece and never fades out, and a
+        // picture's own gradients (pen.ts) are in its own small box, placed with it
         if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse' || e.children.at(-1)?.attrs['stop-opacity'] !== '0') return;
+        if (/pen[lbro]\d+$/.test(e.attrs.id ?? '')) return;
         const [cx, cy, r] = [Number(e.attrs.cx), Number(e.attrs.cy), Number(e.attrs.r)];
         expect(Math.min(cx - r, cy - r), svg.slice(0, 160)).toBeGreaterThanOrEqual(0);
         expect(Math.max(cx + r, cy + r), svg.slice(0, 160)).toBeLessThanOrEqual(120);

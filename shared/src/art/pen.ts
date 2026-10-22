@@ -62,22 +62,22 @@ export function drawPicture(picture: Picture, { dr, detail, locked = false }: Pi
     fine: detail === 0,
     tiny: detail === 2,
     line: (stops, x1, y1, x2, y2) => {
-      const id = dr.id('pl');
+      const id = dr.id('penl');
       dr.def(linearAt(id, stops, x1, y1, x2, y2));
       return `url(#${id})`;
     },
     box: (stops, x1 = 0.2, y1 = 0, x2 = 0.8, y2 = 1) => {
-      const id = dr.id('pb');
+      const id = dr.id('penb');
       dr.def(linearBox(id, stops, x1, y1, x2, y2));
       return `url(#${id})`;
     },
     round: (stops, cx, cy, r) => {
-      const id = dr.id('pr');
+      const id = dr.id('penr');
       dr.def(radialAt(id, stops, cx, cy, r));
       return `url(#${id})`;
     },
     roundBox: (stops, cx, cy, r) => {
-      const id = dr.id('po');
+      const id = dr.id('peno');
       dr.def(radialBox(id, stops, cx, cy, r));
       return `url(#${id})`;
     },
