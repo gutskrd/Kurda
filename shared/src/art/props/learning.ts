@@ -19,7 +19,7 @@ const turned = (d: string, deg: number, dx: number, dy: number): string => {
 /** A path's mirror image across the middle line. */
 const mirror = (d: string): string => d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, x: string, y: string) => `${n(-x)},${y}`);
 
-/** Lessons: a book lying open, its pages fanned, a red ribbon marking the place and a light rising off its pages. */
+/** Lessons: a book lying open, gilt-edged, a page turning over, a red ribbon marking the place and a light rising off its pages. */
 function book(p: Pen): string {
   const out: string[] = [];
   const ink = '#1b2f6e';
@@ -27,18 +27,21 @@ function book(p: Pen): string {
   // the light rising off the pages
   out.push(path(ell(0, -9, 12, 10), p.round([[0, '#ffffff'], [0.3, '#fff6c8', 0.75], [1, '#fff6c8', 0]], 0, -8, 12)));
   // the cover, its edge showing round the pages
-  out.push(path('M-20.2,-7V13.6C-13.2,12 -5.4,13 0,17.2C5.4,13 13.2,12 20.2,13.6V-7L0,-2Z', p.line([[0, '#7fb0ff'], [0.5, '#2f62d8'], [1, '#183c9e']], 0, -7, 0, 17), stroke(ink, 1.2)));
+  const cover = p.line([[0, '#7fb0ff'], [0.5, '#2f62d8'], [1, '#183c9e']], 0, -7, 0, 17);
+  out.push(path('M-20.2,-7V13.6C-13.2,12 -5.4,13 0,17.2C5.4,13 13.2,12 20.2,13.6V-7L0,-2Z', cover, stroke(ink, 1.2)));
   // the ribbon, out from under the right page
   out.push(path('M6.2,8.6V19.6L8.6,17.4L11,19.6V8.2Z', p.box([[0, '#ff8a9a'], [0.5, '#ff2d55'], [1, '#a8102e']], 0, 0, 1, 0), stroke('#6a0818', 0.8)));
   // the fan of pages beneath, then the two lying open
-  out.push(path('M0,-5.6C-4,-9.8 -11.4,-11.2 -18.4,-9V10.8C-12.4,9.6 -5,10.6 0,14.4C5,10.6 12.4,9.6 18.4,10.8V-9C11.4,-11.2 4,-9.8 0,-5.6Z', p.line([[0, '#fff3b0'], [1, '#e0a030']], 0, 8, 0, 15), stroke(paper, 1)));
+  const fan = 'M0,-5.6C-4,-9.8 -11.4,-11.2 -18.4,-9V10.8C-12.4,9.6 -5,10.6 0,14.4C5,10.6 12.4,9.6 18.4,10.8V-9C11.4,-11.2 4,-9.8 0,-5.6Z';
+  out.push(path(fan, p.line([[0, '#fff3b0'], [1, '#e0a030']], 0, 8, 0, 15), stroke(paper, 1)));
   if (!p.tiny) out.push(line('M-17.8,9.6C-11.8,8.6 -4.8,9.6 0,13.1C4.8,9.6 11.8,8.6 17.8,9.6', paper, 0.5, ' stroke-opacity="0.7"'));
   const left = 'M0,-6C-4,-10.4 -11.4,-11.8 -17.4,-10V8.2C-11.4,7 -4.6,8 0,11.6Z';
   const page = p.line([[0, '#ffffff'], [0.5, '#fbf0d6'], [1, '#e9d3a6']], -12, -10, 14, 12);
   out.push(path(left + mirror(left), page, stroke(paper, 0.9)));
   if (!p.tiny) {
     // the shade of the fold, and the lines of words on each page
-    out.push(path('M0,-6C-1.4,-7.4 -2.8,-8.2 -4.2,-8.8V9C-2.6,9.6 -1.2,10.4 0,11.6C1.2,10.4 2.6,9.6 4.2,9V-8.8C2.8,-8.2 1.4,-7.4 0,-6Z', p.box([[0, '#c8a46a', 0], [0.5, '#c8a46a', 0.8], [1, '#c8a46a', 0]], 0, 0, 1, 0)));
+    const fold = p.box([[0, '#c8a46a', 0], [0.5, '#c8a46a', 0.8], [1, '#c8a46a', 0]], 0, 0, 1, 0);
+    out.push(path('M0,-6C-1.4,-7.4 -2.8,-8.2 -4.2,-8.8V9C-2.6,9.6 -1.2,10.4 0,11.6C1.2,10.4 2.6,9.6 4.2,9V-8.8C2.8,-8.2 1.4,-7.4 0,-6Z', fold));
     const words = 'M-15,-6.8C-11.6,-8 -8,-7.8 -5,-6.2M-15,-2.8C-11.6,-4 -8,-3.8 -5,-2.2M-15,1.2C-11.6,0 -8,0.2 -5,1.8M-15,5.2C-12.6,4.4 -10.4,4.4 -8.6,4.8';
     out.push(line(words + mirror(words), '#8f9cc8', 1, ' stroke-dasharray="3.4 1.6 1.8 1.6"'));
   }
@@ -54,7 +57,8 @@ function book(p: Pen): string {
 function bubble(p: Pen): string {
   const out: string[] = [];
   const ink = '#1d4fa8';
-  const shape = 'M-12,-16H12C16.4,-16 19,-13.4 19,-9V1.6C19,6 16.4,8.6 12,8.6H-1L-10.2,16.4C-11,17 -11.8,16.4 -11.5,15.6L-9,8.6H-12C-16.4,8.6 -19,6 -19,1.6V-9C-19,-13.4 -16.4,-16 -12,-16Z';
+  const shape =
+    'M-12,-16H12C16.4,-16 19,-13.4 19,-9V1.6C19,6 16.4,8.6 12,8.6H-1L-10.2,16.4C-11,17 -11.8,16.4 -11.5,15.6L-9,8.6H-12C-16.4,8.6 -19,6 -19,1.6V-9C-19,-13.4 -16.4,-16 -12,-16Z';
   // its depth below it, then the bubble
   out.push(path(shape, '#3f72dc', `${stroke(ink, 1.3)} transform="translate(0 1.8)"`));
   out.push(path(shape, p.round([[0, '#ffffff'], [0.5, '#f2f7ff'], [0.8, '#cfe0fb'], [1, '#9dbcf0']], -8, -11, 30), stroke(ink, 1.3)));
@@ -113,7 +117,8 @@ function arrows(p: Pen): string {
   const [R, w, h, ahead] = [12.2, 3.6, 7.2, 34];
   // a band round the circle from a0 to a1, its head beyond a1, a notch cut in its tail
   const arrow = (a0: number, a1: number): string =>
-    `M${on(0, 0, R + w, a0)}A${n(R + w)},${n(R + w)} 0 0 1 ${on(0, 0, R + w, a1)}L${on(0, 0, R + h, a1)}L${on(0, 0, R, a1 + ahead)}L${on(0, 0, R - h, a1)}L${on(0, 0, R - w, a1)}` +
+    `M${on(0, 0, R + w, a0)}A${n(R + w)},${n(R + w)} 0 0 1 ${on(0, 0, R + w, a1)}` +
+    `L${on(0, 0, R + h, a1)}L${on(0, 0, R, a1 + ahead)}L${on(0, 0, R - h, a1)}L${on(0, 0, R - w, a1)}` +
     `A${n(R - w)},${n(R - w)} 0 0 0 ${on(0, 0, R - w, a0)}L${on(0, 0, R, a0 + 8)}Z`;
   const glow = p.round([[0, '#ffffff'], [0.3, '#fff6b0', 0.9], [1, '#c8ff9a', 0]], 0, 0, 7.6);
   out.push(path(circ(0, 0, 7.6), glow));
@@ -137,14 +142,20 @@ function quill(p: Pen): string {
   const goldInk = '#6a3a04';
   const gold = p.box([[0, '#fff3a0'], [0.5, '#f2b52a'], [1, '#a8640a']], 0, 0, 1, 0);
   // the pot of blue glass, its gold collar and the ink in its mouth
-  out.push(path('M-11,6.2C-16.4,8 -18,12 -17.4,15.2C-16.6,18.8 -12,20.2 -5.4,20.2C1.2,20.2 5.8,18.8 6.6,15.2C7.2,12 5.6,8 0.2,6.2Z', p.round([[0, '#8fa8ff'], [0.4, '#3d55c8'], [1, '#141c58']], -11, 10, 16), stroke(glassInk, 1.2)));
-  if (!p.tiny) out.push(path('M-15,13.2C-14.8,10.4 -13.2,8.6 -10.6,7.8C-12.4,9.6 -13.4,11.2 -13.8,13.6Z', '#ffffff', ' fill-opacity="0.8"'));
+  const glass = p.round([[0, '#8fa8ff'], [0.4, '#3d55c8'], [1, '#141c58']], -11, 10, 16);
+  out.push(path('M-11,6.2C-16.4,8 -18,12 -17.4,15.2C-16.6,18.8 -12,20.2 -5.4,20.2C1.2,20.2 5.8,18.8 6.6,15.2C7.2,12 5.6,8 0.2,6.2Z', glass, stroke(glassInk, 1.2)));
+  if (!p.tiny) {
+    // its light, and the cool light thrown back into its shade
+    out.push(path('M-15,13.2C-14.8,10.4 -13.2,8.6 -10.6,7.8C-12.4,9.6 -13.4,11.2 -13.8,13.6Z', '#ffffff', ' fill-opacity="0.8"'));
+    out.push(line('M4.6,14.8C3.8,17 1.2,18.4 -2.4,18.8', '#9fb4ff', 1, ' stroke-opacity="0.75"'));
+  }
   out.push(path('M-10.8,3.2H0V6.6H-10.8Z', gold, stroke(goldInk, 0.9)));
   out.push(path(ell(-5.4, 3.2, 6.4, 2), gold, stroke(goldInk, 0.9)));
   out.push(path(ell(-5.4, 3.1, 4.6, 1.2), '#0e1238'));
   // the quill, leaning out of it
   const at = (d: string): string => turned(d, 30, -5.4, 3.2);
-  const vane = 'M0,-2C-4,-4.4 -7.4,-9 -7.6,-13.6L-5.2,-13.6L-7.6,-16C-7.4,-20.8 -3.8,-24.8 2.2,-26.8C4,-23.2 4.6,-19.6 4,-16.4L2.4,-15.8L3.6,-14.4C2.8,-9.4 1.8,-5.4 0,-2Z';
+  const vane =
+    'M0,-2C-4,-4.4 -7.4,-9 -7.6,-13.6L-5.2,-13.6L-7.6,-16C-7.4,-20.8 -3.8,-24.8 2.2,-26.8C4,-23.2 4.6,-19.6 4,-16.4L2.4,-15.8L3.6,-14.4C2.8,-9.4 1.8,-5.4 0,-2Z';
   out.push(path(at(vane), p.box([[0, '#ffffff'], [0.6, '#f0ecff'], [1, '#bfb2e6']], 0, 0, 1, 1), stroke('#4a3a7a', 1.1)));
   if (!p.tiny) out.push(line(at('M-0.4,-7L-5,-10.6M-0.2,-11.4L-5.6,-15.4M0.4,-18L-4.4,-22.2M0.4,-9L3,-12.2M1,-19L3.8,-21.8'), '#b9addf', 0.6));
   const shaft = at('M0,1C-0.2,-8 0.2,-17 2,-25.4');
@@ -205,13 +216,15 @@ function dictionary(p: Pen): string {
   // the back cover, its edge round the pages
   out.push(path('M-16,-12.4L-8.4,-18.6H13.8V12.8L6,19.2H-16Z', '#a8182c', stroke(ink, 1.2)));
   // the tabs, out of the pages' edge
-  const tab = (y: number, fill: string, edge: string): string => path(`M10,${n(y)}H15.4Q16.6,${n(y)} 16.6,${n(y + 1.2)}V${n(y + 3.4)}Q16.6,${n(y + 4.6)} 15.4,${n(y + 4.6)}H10Z`, fill, stroke(edge, 0.8));
+  const tab = (y: number, fill: string, edge: string): string =>
+    path(`M10,${n(y)}H15.4Q16.6,${n(y)} 16.6,${n(y + 1.2)}V${n(y + 3.4)}Q16.6,${n(y + 4.6)} 15.4,${n(y + 4.6)}H10Z`, fill, stroke(edge, 0.8));
   out.push(tab(-12.4, '#ffd84a', '#8a5206'), tab(-5.4, '#5fd36a', '#14612f'), tab(1.6, '#5fb0ff', '#173f7a'));
   // the block of pages: its top and its edge
   out.push(path('M-15,-12.4L-8,-17.2H12.4V12.4L5,18.4V-12.4Z', p.line([[0, '#fffaf0'], [1, '#e2c99a']], 0, -17, 12, 18), stroke(paper, 0.8)));
   if (!p.tiny) out.push(line('M5.6,-12.8L12.4,-17.2M7.4,-13.6V17.6M9.4,-15V16M-11,-15H8.6', paper, 0.5, ' stroke-opacity="0.6"'));
   // the front cover, its spine to the left
-  out.push(path('M-16,-12.4H4.6Q6.2,-12.4 6.2,-10.8V17.6Q6.2,19.2 4.6,19.2H-16Q-17.8,19.2 -17.8,17.4V-10.6Q-17.8,-12.4 -16,-12.4Z', p.round([[0, '#ff8a80'], [0.45, '#e8303c'], [1, '#961226']], -12, -8, 30), stroke(ink, 1.2)));
+  const red = p.round([[0, '#ff8a80'], [0.45, '#e8303c'], [1, '#961226']], -12, -8, 30);
+  out.push(path('M-16,-12.4H4.6Q6.2,-12.4 6.2,-10.8V17.6Q6.2,19.2 4.6,19.2H-16Q-17.8,19.2 -17.8,17.4V-10.6Q-17.8,-12.4 -16,-12.4Z', red, stroke(ink, 1.2)));
   out.push(line('M-14,-12V18.8', ink, 0.8, ' stroke-opacity="0.6"'));
   if (!p.tiny) out.push(line('M-16.2,-10.2V17.4', '#ffffff', 0.8, ' stroke-opacity="0.5"'));
   const gold = p.line([[0, '#fff3a0'], [0.5, '#ffc21f'], [1, '#c27a0a']], 0, -8, 0, 14);
@@ -236,7 +249,8 @@ function bell(p: Pen): string {
   out.push(line(rings + mirror(rings), '#fff3a0', 1.8));
   // the clapper, the bell and its lip
   out.push(path(circ(0, 15.4, 3), gold, stroke(ink, 1)));
-  out.push(path('M0,-11.6C5.6,-11.6 8.6,-7.6 9.2,-1.6C9.8,4.6 11.4,8 15,10.4V12H-15V10.4C-11.4,8 -9.8,4.6 -9.2,-1.6C-8.6,-7.6 -5.6,-11.6 0,-11.6Z', gold, stroke(ink, 1.2)));
+  const body = 'M0,-11.6C5.6,-11.6 8.6,-7.6 9.2,-1.6C9.8,4.6 11.4,8 15,10.4V12H-15V10.4C-11.4,8 -9.8,4.6 -9.2,-1.6C-8.6,-7.6 -5.6,-11.6 0,-11.6Z';
+  out.push(path(body, gold, stroke(ink, 1.2)));
   if (!p.tiny) {
     out.push(path('M4.8,-9.6C8,-7 8.8,-3 9.2,1.6C9.8,6.6 11.6,9 14.4,10.6H10C7,8 6.6,4 6.4,-0.6C6.2,-4.6 5.8,-7.4 4.8,-9.6Z', '#c27a0a', ' fill-opacity="0.45"'));
     out.push(path('M-6,-4.4C-5.6,-8 -3.6,-10 -1,-10.4C-3,-8.4 -4,-6 -4.2,-3L-4.8,5.2C-5.6,2 -6.2,-1.4 -6,-4.4Z', '#ffffff', ' fill-opacity="0.85"'));
