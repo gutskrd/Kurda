@@ -17,7 +17,11 @@
  * (Heval counts games played with friends instead), no "helpful answer" marks
  * (Mêvandar counts games you hosted that others came to), and no alphabet
  * mastery record (Ferheng counts dictionary words you have reviewed). Pêla, the
- * Okyanûs trophy the leagues award (§L3), is the forty-fourth.
+ * Okyanûs trophy the leagues award (§L3), is the forty-fourth. Eleven more
+ * came after, counted from the same tables: what was heard and said and what
+ * was written out (Zengil, Pênûs), daily goals and full weeks (Çay, Gula
+ * heftê), the day's Peyvok and Rhyme training (Mamik, Bilbil), letters to
+ * friends (Name), two more dates (Sersal, Şeva Yeldayê) and two more secrets.
  *
  * Every Kurdish name is for a native speaker to check: [review].
  */
@@ -64,7 +68,9 @@ export type BadgeUnit =
   | 'seasons'
   | 'years'
   | 'months'
-  | 'times';
+  | 'times'
+  | 'answers'
+  | 'letters';
 
 /**
  * A threshold is a number, or `'all'` for "every unit of the course" — a number
@@ -143,6 +149,10 @@ export const BADGES: readonly BadgeDef[] = [
   badge('rewi', 'learning', 'Rêwî', 'Traveller', [1, 5, 15, 'all'], 'units_completed', 'units'), // [review]
   // replaces "Alphabet mastered": nothing records alphabet mastery
   badge('ferheng', 'learning', 'Ferheng', 'Dictionary', [10, 50, 200, 500], 'dictionary_words_reviewed', 'words'), // [review]
+  // answers in lessons and reviews that were heard or said: listening and speaking exercises
+  badge('zengil', 'learning', 'Zengil', 'Bell', [25, 100, 500, 2000], 'listening_speaking_answers', 'answers'), // [review]
+  // answers written out in full, not picked: translating and writing exercises
+  badge('penus', 'learning', 'Pênûs', 'Pen', [25, 100, 500, 2000], 'typed_answers', 'answers'), // [review]
 
   // B. Habit (rounded square)
   badge('agir', 'habit', 'Agir', 'Fire', [7, 30, 100, 365], 'longest_streak', 'days'), // [review]
@@ -152,6 +162,10 @@ export const BADGES: readonly BadgeDef[] = [
   badge('vegera', 'habit', 'Vegera', 'Return', [1], 'comebacks', 'times'), // [review]
   // the Okyanûs trophy (§L3): a top-three week in an Okyanûs group, goal met
   badge('pela', 'habit', 'Pêla', 'Wave', [1, 3, 10, 25], 'okyanus_top_three_weeks', 'weeks'), // [review]
+  // a daily goal met, like the glass of tea that is always offered: one a day
+  badge('cay', 'habit', 'Çay', 'Tea', [7, 30, 100, 365], 'daily_goals_met', 'days'), // [review]
+  // a calendar week (Monday to Sunday, UTC) with a learning day on all seven days: a flower of seven petals
+  badge('gula-hefte', 'habit', 'Gula heftê', 'Flower of the week', [1, 4, 12, 52], 'full_weeks', 'weeks'), // [review]
 
   // C. Games (hexagon)
   badge('peyvzan', 'games', 'Peyvzan', 'Word-knower', [5, 25, 100, 400], 'wordle_battle_wins', 'wins'), // [review]
@@ -163,6 +177,10 @@ export const BADGES: readonly BadgeDef[] = [
   // Peyvok, Rhyme, the Typing Race and Stories: each played at least once
   badge('hemereng', 'games', 'Hemereng', 'All colours', [4], 'games_tried', 'games'), // [review]
   badge('dilpak', 'games', 'Dilpak', 'Pure-hearted', [50, 150, 400, 1000], 'fair_rated_games', 'games'), // [review]
+  // the day's Peyvok solved: one a day at most, so it counts days
+  badge('mamik', 'games', 'Mamik', 'Riddle', [5, 30, 100, 365], 'daily_peyvok_solved', 'days'), // [review]
+  // rhymes found in Rhyme training, alone
+  badge('bilbil', 'games', 'Bilbil', 'Nightingale', [50, 250, 1000, 3000], 'training_rhymes', 'words'), // [review]
 
   // D. Ranked (shield): kept forever
   badge('rank-dest', 'ranked', 'Deşt', 'Plain', SEASON_COUNTS, 'seasons_reached_dest', 'seasons'), // [review]
@@ -182,11 +200,17 @@ export const BADGES: readonly BadgeDef[] = [
   badge('diyari', 'friends', 'Diyarî', 'Gift', [1, 10, 50, 150], 'gift_days', 'gifts'), // [review]
   // replaces "helpful answers", which nothing marks: a game you hosted that others came to and finished
   badge('mevandar', 'friends', 'Mêvandar', 'Host', [1, 10, 50, 150], 'games_hosted', 'games'), // [review]
+  // a message written to a friend: one a day for each friend counts, so it is
+  // about writing to people, not about how many messages
+  badge('name', 'friends', 'Name', 'Letter', [1, 10, 50, 150], 'friend_letter_days', 'letters'), // [review]
 
   // F. Events (eight-point star): dated, open at least seven days, never sold
   badge('newroz', 'events', 'Agirê Newrozê', 'Newroz fire', YEAR_COUNTS, 'learned_newroz_week', 'years'), // [review]
   badge('roja-ziman', 'events', 'Roja Zimanê Kurdî', 'Kurdish Language Day', YEAR_COUNTS, 'learned_language_day_week', 'years'), // [review]
   badge('zimane-dayike', 'events', 'Zimanê Dayikê', 'Mother Language', YEAR_COUNTS, 'learned_mother_language_week', 'years'), // [review]
+  badge('sersal', 'events', 'Sersal', 'New Year', YEAR_COUNTS, 'learned_new_year_week', 'years'), // [review]
+  // the longest night, kept with pomegranates in the week of the winter solstice
+  badge('yelda', 'events', 'Şeva Yeldayê', 'Yalda Night', YEAR_COUNTS, 'learned_yalda_week', 'years'), // [review]
   badge('zivistan', 'events', 'Zivistan', 'Winter', YEAR_COUNTS, 'monthly_challenge_q1', 'years'), // [review]
   badge('bihar', 'events', 'Bihar', 'Spring', YEAR_COUNTS, 'monthly_challenge_q2', 'years'), // [review]
   badge('havin', 'events', 'Havîn', 'Summer', YEAR_COUNTS, 'monthly_challenge_q3', 'years'), // [review]
@@ -200,6 +224,10 @@ export const BADGES: readonly BadgeDef[] = [
   badge('deste-zerin', 'secret', 'Destê zêrîn', 'Golden hand', [1], 'flawless_race', 'times', { secret: true }), // [review]
   badge('mevane-agir', 'secret', 'Mêvanê agir', 'Guest of the fire', [1], 'newroz_story_on_newroz', 'times', { secret: true }), // [review]
   badge('kaniya-zanine', 'secret', 'Kaniya zanînê', 'Spring of knowledge', [1], 'seven_review_days', 'times', { secret: true }), // [review]
+  // a cat always lands on its feet: a Peyvok won on the sixth and last guess
+  badge('pisika-wane', 'secret', 'Pisîka Wanê', 'Van cat', [1], 'peyvok_last_guess', 'times', { secret: true }), // [review]
+  // back after two weeks or more away, and then seven days in a row from the day of the return
+  badge('perperok', 'secret', 'Perperok', 'Butterfly', [1], 'comeback_week', 'times', { secret: true }), // [review]
 ];
 
 const BY_KEY = new Map(BADGES.map((b) => [b.key, b]));

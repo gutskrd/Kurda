@@ -61,6 +61,8 @@ export const UNIT_KEY: Record<BadgeUnit, TranslationKey> = {
   years: 'badges.unit.years',
   months: 'badges.unit.months',
   times: 'badges.unit.times',
+  answers: 'badges.unit.answers',
+  letters: 'badges.unit.letters',
 };
 
 /** The catalogue key of one of a badge's words. */

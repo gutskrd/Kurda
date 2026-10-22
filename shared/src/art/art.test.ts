@@ -245,11 +245,11 @@ describe('the checks themselves', () => {
 });
 
 describe('the badge catalogue the art draws', () => {
-  it('has the 44 badge types of the catalogue, in their seven families', () => {
-    expect(BADGE_KEYS).toHaveLength(44);
+  it('has the 55 badge types of the catalogue, in their seven families', () => {
+    expect(BADGE_KEYS).toHaveLength(55);
     const count = (family: string): number => BADGE_KEYS.filter((k) => badgeArt(k).family === family).length;
-    expect(BADGE_FAMILIES.map(count)).toEqual([7, 5, 7, 8, 3, 8, 6]);
-    expect(new Set(BADGE_KEYS).size).toBe(44);
+    expect(BADGE_FAMILIES.map(count)).toEqual([9, 7, 9, 8, 4, 10, 8]);
+    expect(new Set(BADGE_KEYS).size).toBe(55);
     for (const key of BADGE_KEYS) expect(key).toMatch(/^[a-z][a-z-]*$/);
   });
 

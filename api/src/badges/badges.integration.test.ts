@@ -449,6 +449,181 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     });
   });
 
+  describe('the badges added later', () => {
+    /** One published lesson holding an exercise of each of these kinds, finished with every answer right but the last. */
+    const answeredLesson = async (userId: string, types: string[], finished = true) => {
+      const c = await pool.query<{ id: string }>(
+        `INSERT INTO courses (slug, dialect, title_ku, title_en) VALUES ($1, 'kurmanji', 'K', 'K') RETURNING id`,
+        [`bd-${suffix}-${++n}`],
+      );
+      const unit = await pool.query<{ id: string }>(
+        `INSERT INTO units (course_id, position, title_ku, title_en) VALUES ($1, 1, 'U', 'U') RETURNING id`,
+        [c.rows[0]!.id],
+      );
+      const skill = await pool.query<{ id: string }>(
+        `INSERT INTO skills (unit_id, position, title_ku, title_en) VALUES ($1, 1, 'S', 'S') RETURNING id`,
+        [unit.rows[0]!.id],
+      );
+      const lesson = (
+        await pool.query<{ id: string }>(
+          `INSERT INTO lessons (skill_id, position, title_ku, title_en, status) VALUES ($1, 1, 'L', 'L', 'draft') RETURNING id`,
+          [skill.rows[0]!.id],
+        )
+      ).rows[0]!.id;
+      const exercises: string[] = [];
+      for (const [i, type] of types.entries()) {
+        const ex = await pool.query<{ id: string }>(
+          `INSERT INTO exercises (lesson_id, position, type, payload) VALUES ($1, $2, $3, '{"prompt":"a","accepted":["a"]}') RETURNING id`,
+          [lesson, i + 1, type],
+        );
+        exercises.push(ex.rows[0]!.id);
+      }
+      // exercises are fixed once their lesson is published
+      await pool.query(`UPDATE lessons SET status = 'published', published_at = now() WHERE id = $1`, [lesson]);
+      const s = await pool.query<{ id: string }>(
+        `INSERT INTO lesson_sessions (user_id, lesson_id, total_count, correct_count, expires_at, completed_at)
+         VALUES ($1, $2, $3, $3, now() + interval '1 hour', $4) RETURNING id`,
+        [userId, lesson, types.length, finished ? new Date() : null],
+      );
+      for (const [i, exercise] of exercises.entries()) {
+        const right = i < exercises.length - 1;
+        await pool.query(`INSERT INTO session_answers (session_id, exercise_id, verdict, accepted) VALUES ($1, $2, $3, $4)`, [
+          s.rows[0]!.id,
+          exercise,
+          right ? 'correct' : 'wrong',
+          right,
+        ]);
+      }
+    };
+    const peyvok = async (userId: string, g: { mode: 'daily' | 'practice'; day?: number; won: boolean; guesses: number }) =>
+      pool.query(
+        `INSERT INTO wordle_games (user_id, mode, difficulty, day_index, target, target_length, guesses, status, finished_at)
+         VALUES ($1, $2, 'easy', $3, 'av', 2, $4::jsonb, $5, now())`,
+        [userId, g.mode, g.day ?? null, JSON.stringify(Array.from({ length: g.guesses }, () => 'av')), g.won ? 'won' : 'lost'],
+      );
+
+    it('Zengil counts listening and speaking answered right, Pênûs translating and writing, in finished lessons only', async () => {
+      const p = await counted();
+      // two right of each kind (the third, last, wrong); and an unfinished lesson that counts for nothing
+      await answeredLesson(p.id, ['listening', 'speaking', 'listening', 'speaking', 'multiple_choice']);
+      await answeredLesson(p.id, ['translate', 'writing', 'translate', 'writing', 'match_pairs']);
+      await answeredLesson(p.id, ['listening', 'translate', 'multiple_choice'], false);
+      await badges.recordLessonCompleted(p.id, 1);
+      expect(await progressOf(p.id, 'zengil')).toBe(4);
+      expect(await progressOf(p.id, 'penus')).toBe(4);
+      expect(await tierOf(p.id, 'zengil')).toBe(0);
+    });
+
+    it('Çay counts the days a daily goal was met, Gula heftê the weeks learned on all seven days', async () => {
+      const p = await counted();
+      const monday = Date.parse('2025-09-01T08:00:00Z');
+      for (let d = 0; d < 8; d++) {
+        await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, $3)`, [
+          p.id,
+          new Date(monday + d * DAY).toISOString().slice(0, 10),
+          d < 7 ? new Date(monday + d * DAY) : null,
+        ]);
+        await addXp(pool, p.id, 10, new Date(monday + d * DAY), { source: 'lesson_complete' });
+      }
+      await badges.recordStreak(p.id, 8);
+      expect(await progressOf(p.id, 'cay')).toBe(7);
+      expect(await tierOf(p.id, 'cay')).toBe(1);
+      expect(await tierOf(p.id, 'gula-hefte')).toBe(1);
+    });
+
+    it('Mamik counts the days’ Peyvok solved, Bilbil rhymes found in training, Pisîka Wanê a Peyvok won on the last guess', async () => {
+      const p = await counted();
+      for (let d = 0; d < 5; d++) await peyvok(p.id, { mode: 'daily', day: 9000 + d, won: true, guesses: 3 });
+      await peyvok(p.id, { mode: 'daily', day: 9005, won: false, guesses: 6 });
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 4 });
+      for (const accepted of [30, 20]) {
+        await pool.query(`INSERT INTO rhyme_games (user_id, prompt, window_ms, accepted, status, ended_at) VALUES ($1, 'dil', 60000, $2, 'ended', now())`, [
+          p.id,
+          accepted,
+        ]);
+      }
+      await badges.recordSoloGame(p.id);
+      expect(await progressOf(p.id, 'mamik')).toBe(5);
+      expect(await tierOf(p.id, 'mamik')).toBe(1);
+      expect(await tierOf(p.id, 'bilbil')).toBe(1);
+      expect(await tierOf(p.id, 'pisika-wane')).toBe(0); // a loss on the sixth guess lands on nothing
+      await peyvok(p.id, { mode: 'practice', won: true, guesses: 6 });
+      await badges.recordSoloGame(p.id);
+      expect(await tierOf(p.id, 'pisika-wane')).toBe(1);
+    });
+
+    it('Name counts a day’s writing to each friend once, however many messages, and no gift', async () => {
+      const p = await counted();
+      const a = await learner();
+      const b = await learner();
+      await befriend(pool, p.id, a.id);
+      await befriend(pool, p.id, b.id);
+      const write = async (to: string, at: Date, kind: 'text' | 'gift' = 'text') => {
+        const [lo, hi] = p.id < to ? [p.id, to] : [to, p.id];
+        await pool.query(
+          kind === 'text'
+            ? `INSERT INTO dm_messages (user_lo, user_hi, sender_id, body, created_at) VALUES ($1, $2, $3, 'Silav', $4)`
+            : `INSERT INTO dm_messages (user_lo, user_hi, sender_id, kind, gift_batch_id, created_at) VALUES ($1, $2, $3, 'gift', gen_random_uuid(), $4)`,
+          [lo, hi, p.id, at],
+        );
+      };
+      const day = Date.parse('2025-10-01T09:00:00Z');
+      await write(a.id, new Date(day));
+      await write(a.id, new Date(day + 3_600_000));
+      await write(b.id, new Date(day));
+      await write(a.id, new Date(day + DAY));
+      await write(b.id, new Date(day + 2 * DAY), 'gift');
+      // their replies are theirs, not p's
+      const [lo, hi] = p.id < a.id ? [p.id, a.id] : [a.id, p.id];
+      await pool.query(`INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, 'Silav')`, [lo, hi, a.id]);
+      await badges.onLetterSent(p.id, a.id);
+      expect(await progressOf(p.id, 'name')).toBe(3);
+      expect(await tierOf(p.id, 'name')).toBe(1);
+      expect(await progressOf(a.id, 'name')).toBe(0);
+    });
+
+    it('Sersal and Şeva Yeldayê for learning in their weeks, each year; Perperok for a return that became a week', async () => {
+      const p = await counted();
+      await addXp(pool, p.id, 10, new Date('2024-01-03T12:00:00Z'), { source: 'lesson_complete' });
+      await addXp(pool, p.id, 10, new Date('2025-01-08T12:00:00Z'), { source: 'lesson_complete' }); // the eighth: too late
+      await addXp(pool, p.id, 10, new Date('2024-12-21T12:00:00Z'), { source: 'story' });
+      // away from 4 January to 1 March 2025, then seven days in a row
+      for (let d = 0; d < 7; d++) await addXp(pool, p.id, 10, new Date(Date.parse('2025-03-01T12:00:00Z') + d * DAY), { source: 'practice_complete' });
+      await badges.recordStreak(p.id, 7);
+      expect(await tierOf(p.id, 'sersal')).toBe(1);
+      expect(await tierOf(p.id, 'yelda')).toBe(1);
+      expect(await tierOf(p.id, 'perperok')).toBe(1);
+    });
+
+    it('counts them quietly, once, for a learner counted before they existed, and tells what comes after', async () => {
+      const p = await counted();
+      // counted against the first catalogue: none of the later badges has been counted for them
+      await pool.query(`UPDATE badge_users SET catalogue = 1 WHERE user_id = $1`, [p.id]);
+      for (let d = 0; d < 7; d++) {
+        await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, now())`, [
+          p.id,
+          new Date(Date.parse('2025-06-01T00:00:00Z') + d * DAY).toISOString().slice(0, 10),
+        ]);
+      }
+      const before = recorded.length;
+      expect(await badges.recordStreak(p.id, 1)).toBeUndefined();
+      expect(await tierOf(p.id, 'cay')).toBe(1);
+      expect(recorded.length).toBe(before);
+      expect(await badges.unseen(p.id)).toEqual([]);
+      const version = await pool.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id]);
+      expect(version.rows[0]!.catalogue).toBe(2);
+      // from now on it is a badge like any other: its next tier is told
+      for (let d = 7; d < 30; d++) {
+        await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, now())`, [
+          p.id,
+          new Date(Date.parse('2025-06-01T00:00:00Z') + d * DAY).toISOString().slice(0, 10),
+        ]);
+      }
+      expect(await badges.evaluate(p.id, ['cay'])).toEqual([{ key: 'cay', tier: 2 }]);
+      expect(recorded.length).toBe(before + 1);
+    });
+  });
+
   describe('ranked (from the ranks module’s events)', () => {
     it('records a rated game once, its tier and peak, and Kewê çiyê for beating a player two tiers up', async () => {
       const me = await counted();
@@ -582,14 +757,14 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       const secret = page.badges.find((b) => b.key === 'tire-rast')!;
       expect(secret).toMatchObject({ hidden: true, hintKey: null, thresholds: [], progress: 0 });
       expect(page.secretsFound).toBe(0);
-      expect(page.secretsTotal).toBe(6);
+      expect(page.secretsTotal).toBe(8);
       await race(p.id, { wpm: 30, accuracy: 1, errors: 0 });
       await badges.recordSoloGame(p.id);
       page = await badges.list(p.id);
       expect(page.secretsFound).toBe(1);
       expect(page.badges.find((b) => b.key === 'deste-zerin')).toMatchObject({ hidden: false, tier: 1, tierKey: 'zer' });
       expect(page.badges.find((b) => b.key === 'tire-rast')).toMatchObject({ hidden: true, hintKey: 'badges.tire-rast.hint' });
-      expect(page.badges).toHaveLength(44);
+      expect(page.badges).toHaveLength(55);
       expect(page.monthlyChallenge.goal).toBeGreaterThanOrEqual(8);
     });
 
@@ -655,7 +830,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
 
     it('lists the catalogue with holders per tier', async () => {
       const cat = await badges.adminCatalogue();
-      expect(cat.badges).toHaveLength(44);
+      expect(cat.badges).toHaveLength(55);
       expect(cat.badges.find((b) => b.key === 'agir')!.holders[0]).toBeGreaterThan(0);
     });
   });

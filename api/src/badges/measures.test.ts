@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import { BADGES } from '@kurda/shared';
 import {
   MEASURES,
+  PEYVOK_GUESSES,
+  comebackRuns,
   comebacks,
+  fullWeeks,
   longestRun,
   monthlyGoal,
   monthsMet,
@@ -10,7 +13,8 @@ import {
   yearsWithChallengeIn,
   yearsWithin,
 } from './measures.js';
-import { BADGE_TRIGGERS } from './service.js';
+import { BADGE_TRIGGERS, CATALOGUE_ADDITIONS, CATALOGUE_VERSION } from './service.js';
+import { MAX_ATTEMPTS } from '../game/wordle-service.js';
 
 const range = (from: string, n: number): string[] =>
   Array.from({ length: n }, (_, i) => new Date(Date.parse(`${from}T00:00:00Z`) + i * 86_400_000).toISOString().slice(0, 10));
@@ -55,5 +59,34 @@ describe('badge measures', () => {
     expect(monthsMet(days)).toEqual(['2026-01', '2026-03']);
     expect(yearsWithChallengeIn(days, 1)).toBe(1);
     expect(yearsWithChallengeIn(days, 2)).toBe(0);
+  });
+
+  it('counts a return that became a week: back after fourteen days or more, then seven days in a row', () => {
+    expect(comebackRuns(['2026-01-01', ...range('2026-01-16', 7)])).toBe(1);
+    expect(comebackRuns(['2026-01-01', ...range('2026-01-16', 6)])).toBe(0); // six days in a row is not yet a week
+    expect(comebackRuns(['2026-01-01', ...range('2026-01-15', 7)])).toBe(0); // only 13 days away
+    expect(comebackRuns(range('2026-01-01', 30))).toBe(0); // never away
+    expect(comebackRuns(['2026-01-01', ...range('2026-02-01', 7), ...range('2026-04-01', 9)])).toBe(2);
+  });
+
+  it('counts the calendar weeks, Monday to Sunday, learned on all seven days', () => {
+    expect(fullWeeks(range('2026-10-19', 7))).toBe(1); // Monday 19 to Sunday 25 October
+    expect(fullWeeks(range('2026-10-20', 7))).toBe(0); // Tuesday to Monday: two weeks, neither whole
+    expect(fullWeeks(range('2026-10-19', 14))).toBe(2);
+    expect(fullWeeks(range('2025-12-29', 7))).toBe(1); // a week across the new year
+    expect(fullWeeks([])).toBe(0);
+  });
+
+  it('knows a Peyvok has six guesses, as the game does', () => {
+    expect(PEYVOK_GUESSES).toBe(MAX_ATTEMPTS);
+  });
+
+  it('lists every badge the catalogue gained after its first version once, and only badges it has', () => {
+    const added = Object.values(CATALOGUE_ADDITIONS).flat();
+    expect(new Set(added).size).toBe(added.length);
+    const keys = new Set(BADGES.map((b) => b.key));
+    for (const k of added) expect(keys.has(k), k).toBe(true);
+    expect(CATALOGUE_VERSION).toBe(2);
+    expect(BADGES.length - added.length).toBe(44);
   });
 });

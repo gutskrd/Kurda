@@ -39,7 +39,7 @@ function response(progress: Record<string, { tier: number; progress: number }>, 
     badges,
     showcase: [],
     secretsFound: 1,
-    secretsTotal: 6,
+    secretsTotal: BADGES.filter((b) => b.secret).length,
     legacy: [],
     monthlyChallenge: { month: '2026-10', days: 3, goal: 8 },
     ...over,
@@ -69,7 +69,8 @@ describe('BadgesPage', () => {
     renderApp(<BadgesPage />);
 
     const secrets = (await screen.findByRole('heading', { name: new RegExp(en['badges.family.secret']) })).closest('section')!;
-    expect(within(secrets).getAllByText('???')).toHaveLength(5);
+    // every secret in the catalogue but the one found
+    expect(within(secrets).getAllByText('???')).toHaveLength(BADGES.filter((b) => b.secret).length - 1);
     expect(within(secrets).getByText('Tîrê rast')).toBeInTheDocument();
 
     await userEvent.click(within(secrets).getAllByRole('button')[1]!);

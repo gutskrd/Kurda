@@ -100,6 +100,17 @@ describe.skipIf(!DATABASE_URL)('direct messages (integration)', () => {
     expect(await chat.history(id.a!, id.d!)).toHaveLength(0); // and nothing stored
   });
 
+  it('tells the badges of a message written to a friend, and of none that was dropped', async () => {
+    const letters: Array<[string, string]> = [];
+    const counted = new ChatService(pool, friends, notifier, undefined, {
+      onLetterSent: async (from, to) => void letters.push([from, to]),
+    });
+    await counted.send(id.a!, id.b!, 'Rojbaş');
+    await counted.send(id.a!, id.d!, 'are you there?'); // D blocked A: dropped, so not a letter
+    await expect(counted.send(id.a!, id.c!, 'hi')).rejects.toThrow(/only message friends/i);
+    expect(letters).toEqual([[id.a, id.b]]);
+  });
+
   it('lists conversations with last message + unread counts', async () => {
     await chat.send(id.b!, id.a!, 'baş im, spas!'); // B → A, unread for A
     const convosForA = await chat.conversations(id.a!);

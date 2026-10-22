@@ -743,9 +743,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerModerationRoutes(app, moderation);
 
     // 1:1 direct messages (KUR-083): HTTP send, WS push + receipts
+    // a message to a friend moves the Name badge
     registerChatRoutes(
       app,
-      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation),
+      new ChatService(app.db, friends, { notifyUser: (uid, ev) => realtime.notifyUser(uid, ev as never) }, moderation, badges),
       trust,
       aiMod,
     );

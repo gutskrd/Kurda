@@ -9,7 +9,7 @@
  * badge's own two swatches (hero.ts), the season mark in its metal
  * (iconpaint.ts), and both grey for a badge not yet earned — and every icon
  * gets the same cut between its parts and the same light, which is what makes
- * forty-four drawings read as one set.
+ * fifty-five drawings read as one set.
  *
  * Parts marked `fine` are the details that turn to noise at 32 pixels (the
  * lines on a book's pages, a feather's barbs); the small drawing leaves them
@@ -123,6 +123,10 @@ function flameCore(cx: number, cy: number, s: number): string {
 const rrect = (x: number, y: number, w: number, h: number, r: number): string =>
   `M${n(x + r)},${n(y)}H${n(x + w - r)}Q${n(x + w)},${n(y)} ${n(x + w)},${n(y + r)}V${n(y + h - r)}Q${n(x + w)},${n(y + h)} ${n(x + w - r)},${n(y + h)}` +
   `H${n(x + r)}Q${n(x)},${n(y + h)} ${n(x)},${n(y + h - r)}V${n(y + r)}Q${n(x)},${n(y)} ${n(x + r)},${n(y)}Z`;
+
+/** The seeds at a flower's heart: five dots in a ring, so they read as seeds and never as a face. */
+const seeds = (r: number, dot: number): string =>
+  Array.from({ length: 5 }, (_, i) => circ(Math.cos(rad(i * 72 - 90)) * r, Math.sin(rad(i * 72 - 90)) * r, dot)).join('');
 
 /** A drop, point up, `s` = 1 for one 20 units tall. */
 export function drop(cx: number, cy: number, s: number): string {
@@ -258,6 +262,31 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'd', d: 'M5,-2.5H-2.5V9.5H5M-2.5,3.5H3.5', w: 2.4 },
     { k: 'd', d: 'M-1.2,-5L0.8,-7.6L2.8,-5', w: 1.8 },
   ],
+  // a hand bell with a bow, ringing: what was heard and what was said
+  zengil: () => [
+    { k: 'l', d: 'M-17.5,-7C-20,-3 -20,2 -17.5,6M17.5,-7C20,-3 20,2 17.5,6', w: 2.2, c: 'blue' },
+    { k: 'f', d: 'M0,-14C6,-14 9,-9.5 9.5,-3C10,3.5 11.5,7.5 15,10.5V12.5H-15V10.5C-11.5,7.5 -10,3.5 -9.5,-3C-9,-9.5 -6,-14 0,-14Z' },
+    { k: 'a', d: rrect(-17, 11, 34, 5, 2.5) },
+    { k: 'a', d: circ(0, 18, 2.8) },
+    { k: 'h', d: 'M-6,-6C-5.5,-9.5 -3.5,-11.5 -1,-12C-3,-10 -4,-7.5 -4.2,-4.5L-4.6,4C-5.2,1 -6.2,-2.5 -6,-6Z', o: 0.6 },
+    { k: 'c', d: 'M0,-14C-3.5,-20.5 -11,-21 -10.5,-16.5C-10,-13 -4.5,-13 0,-14Z', c: 'red' },
+    { k: 'c', d: 'M0,-14C3.5,-20.5 11,-21 10.5,-16.5C10,-13 4.5,-13 0,-14Z', c: 'red' },
+    { k: 'c', d: circ(0, -14.2, 2.4), c: 'red' },
+  ],
+  // a pencil writing its line: answers written out in full
+  penus: () => {
+    const tf = 'translate(3 -3) rotate(45)';
+    return [
+      { k: 'l', d: 'M-19.5,17C-16,12.5 -13,19 -9.5,15C-7,12.5 -4.5,15.5 -1.5,16.5', w: 2.2, c: 'blue' },
+      { k: 'c', d: 'M-5,-21.5C-5,-23 -4,-24 -2.5,-24H2.5C4,-24 5,-23 5,-21.5V-18H-5Z', c: 'pink', tf },
+      { k: 'a', d: 'M-5.4,-18.5H5.4V-13.5H-5.4Z', tf },
+      { k: 'f', d: 'M-5,-13.5H5V10H-5Z', tf },
+      { k: 'a', d: 'M1.8,-13.5H5V10H1.8Z', tf },
+      { k: 'c', d: 'M-5,10H5L0,20Z', c: 'brown', tf },
+      { k: 'a', d: 'M-1.8,16.4H1.8L0,20Z', tf },
+      { k: 'd', d: 'M-5.4,-16H5.4', w: 0.9, tf, fine: true },
+    ];
+  },
 
   // ── habit
   agir: () => [
@@ -299,6 +328,38 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'c', d: circ(0, -10, 2.4), c: 'red' },
     { k: 'd', d: 'M9,-8C12,-8 15,-6.5 17,-4M-9,-8C-12,-8 -15,-6.5 -17,-4', w: 1.1, fine: true },
   ],
+  // a teapot painted with a rose, steaming: the tea that is always offered, once a day
+  cay: () => [
+    { k: 'l', d: 'M18.5,-11.5C16.5,-14 20.5,-15.5 18.5,-18.5', w: 1.8, c: 'snow' },
+    { k: 'l', d: 'M-12,-3C-19.5,-4 -20,9 -10.5,9', w: 3 },
+    { k: 'f', d: 'M10.5,0C14.5,-2 16.5,-7 19.5,-10C20.5,-5 17.5,3 11.5,7Z' },
+    { k: 'f', d: 'M-12.5,-3.5C-12.5,-9 12.5,-9 12.5,-3.5C14.5,2.5 13.5,10 9.5,14H-9.5C-13.5,10 -14.5,2.5 -12.5,-3.5Z' },
+    { k: 'a', d: 'M-8.5,-7.8C-6.5,-12.5 6.5,-12.5 8.5,-7.8C4,-6.6 -4,-6.6 -8.5,-7.8Z' },
+    { k: 'a', d: circ(0, -13.2, 2.4) },
+    { k: 'a', d: rrect(-10, 13, 20, 4.5, 2) },
+    { k: 'c', d: 'M-1.5,6.5C-6,4 -9,6.5 -9.5,9.5C-6.5,10.5 -3,9.5 -1.5,6.5Z', c: 'green' },
+    { k: 'c', d: circ(1, 3, 5.2), c: 'pink' },
+    { k: 'd', d: 'M1.4,3C1.4,1.8 2.8,1.6 3.2,2.8C3.6,4.2 2.2,5.6 0.6,5.4C-1.4,5.2 -2.4,3 -1.4,1.2C-0.4,-0.6 2.2,-1 4,0.4', w: 1, fine: true },
+    { k: 'h', d: 'M-9.5,-2C-9.5,-4.5 -7.5,-5.8 -5,-6C-6.6,-4.6 -7.5,-3 -7.6,-0.4L-8,6C-9,4 -9.6,1 -9.5,-2Z', o: 0.6 },
+  ],
+  // a flower of seven petals, one for each day of a whole week
+  'gula-hefte': () => {
+    // the petals as one path each for the flower and its inner shade: seven drawn turned would be seven times the weight
+    const turned = (pts: readonly (readonly [number, number])[], deg: number): string => {
+      const [c, s] = [Math.cos(rad(deg)), Math.sin(rad(deg))];
+      const at = ([x, y]: readonly [number, number]): string => `${n(x * c - y * s)},${n(x * s + y * c)}`;
+      return `M${at(pts[0]!)}C${at(pts[1]!)} ${at(pts[2]!)} ${at(pts[3]!)}C${at(pts[4]!)} ${at(pts[5]!)} ${at(pts[0]!)}Z`;
+    };
+    const petal = [[0, -4], [-5, -7.5], [-6.5, -16], [0, -19.5], [6.5, -16], [5, -7.5]] as const;
+    const inner = [[0, -5.5], [-2.4, -8], [-2.8, -12.5], [0, -15], [2.8, -12.5], [2.4, -8]] as const;
+    const turns = Array.from({ length: 7 }, (_, i) => (i * 360) / 7);
+    return [
+      { k: 'f', d: turns.map((deg) => turned(petal, deg)).join('') },
+      { k: 'a', d: turns.map((deg) => turned(inner, deg)).join('') },
+      { k: 'c', d: circ(0, 0, 6), c: 'brown' },
+      { k: 'k', d: seeds(3.2, 0.85), fine: true },
+    ];
+  },
 
   // ── games
   peyvzan: () => [
@@ -362,6 +423,28 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'h', d: 'M-13.5,-7.5C-13.5,-11 -11,-12.8 -8.2,-12.8C-10,-11.2 -11.2,-9.6 -11.3,-6.8Z', o: 0.7 },
     { k: 'w', d: sparkle(14, -13.5, 5.5) },
   ],
+  // the day's riddle: a puzzle piece, the last one, found
+  mamik: () => [
+    {
+      k: 'f',
+      d:
+        'M-15,-9H-5.5C-5.5,-9 -7.5,-11.5 -7,-14.5C-6.2,-19 5.2,-19 6,-14.5C6.5,-11.5 4.5,-9 4.5,-9H14V-0.5C14,-0.5 16.5,-2.5 19,-1.5' +
+        'C22.5,0 22.5,6.5 19,8C16.5,9 14,7 14,7V17H-15V7.5C-15,7.5 -12.5,9.5 -10,8.5C-6.5,7 -6.5,0.5 -10,-1C-12.5,-2 -15,0 -15,0Z',
+    },
+    { k: 'a', d: 'M4.5,-9H14V-0.5C14,-0.5 16.5,-2.5 19,-1.5C22.5,0 22.5,6.5 19,8C16.5,9 14,7 14,7V17H4.5Z' },
+    { k: 'h', d: 'M-12.5,-6.5H-6C-8.5,-5 -10.5,-3 -11.5,-0.5C-12.2,-2.5 -12.6,-4.5 -12.5,-6.5Z', o: 0.6 },
+    { k: 'w', d: sparkle(-15.5, -16, 4.6) },
+  ],
+  // a nightingale singing: rhymes found, one after another
+  bilbil: () => [
+    { k: 'c', d: 'M9.5,-19.5V-10.2C8.8,-10.6 8,-10.8 7.2,-10.8C5,-10.8 3.4,-9.4 3.4,-7.8C3.4,-6.2 5,-5 7.2,-5C9.4,-5 11.2,-6.3 11.2,-8.2V-16.5L16,-18V-20.6Z', c: 'gold', tf: 'translate(-14 -0.5)' },
+    { k: 'a', d: 'M-11,6L-20.5,1.5L-19,10Z' },
+    { k: 'f', d: 'M-13,7C-13.5,-1 -6,-6 1,-4C2,-9.5 6,-12 10,-11.5C13.5,-11 15.5,-8 15.5,-5.5L20,-6.5L16,-3.5L19.5,-1.5L15,-1.8C14,4 9.5,10.5 2.5,12.5C-5,14.5 -12.5,13 -13,7Z' },
+    { k: 'w', d: 'M10,-2.5C13.5,-0.5 13.5,4.5 9.5,8.5C6,11.5 0.5,12.8 -3.5,12C2.5,10 7,5.5 10,-2.5Z' },
+    { k: 'a', d: 'M-9.5,4C-6.5,-2 1,-3 5.5,1C3,7 -4,10 -9.5,4Z' },
+    { k: 'k', d: circ(10.5, -7, 1.6) },
+    { k: 'l', d: 'M-2,12.5L-3,18M4,11.5L4.5,18', w: 1.8, c: 'brown' },
+  ],
 
   // ── ranked (the six tier badges are drawn from the rank emblems, in badges.ts)
   hilkiser: () => [
@@ -400,6 +483,16 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'a', d: rrect(-12, 10, 24, 7.5, 2.5) },
     { k: 'l', d: 'M-14,-1H-19M14,-1H19M-13.5,-8.5L-17,-12M13.5,-8.5L17,-12M-13.5,6.5L-17,10M13.5,6.5L17,10', w: 2, c: 'glow' },
   ],
+  // a letter to a friend, sealed with a heart
+  name: () => [
+    { k: 'f', d: rrect(-19.5, -13, 39, 28, 3.5) },
+    { k: 'a', d: 'M-18.5,13.5L-3,1.5C-1.3,0.2 1.3,0.2 3,1.5L18.5,13.5Z' },
+    { k: 'a', d: 'M-18.5,-11.5L-2.4,2C-1,3.2 1,3.2 2.4,2L18.5,-11.5Z' },
+    { k: 'd', d: 'M-18.5,-11.5L-2.4,2C-1,3.2 1,3.2 2.4,2L18.5,-11.5', w: 1.3 },
+    { k: 'c', d: heart(0, 1.5, 0.36), c: 'red' },
+    { k: 'h', d: 'M-16,-9.5H-9L-15.5,-4Z', o: 0.6, fine: true },
+    { k: 'w', d: sparkle(16.5, -16.5, 4.8) },
+  ],
 
   // ── events
   newroz: () => [
@@ -423,15 +516,43 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'f', d: 'M0,-17C11,-17 19,-10 19,-2C19,7 11,13 0,13C-2,13 -4,12.8 -6,12.3L-14,18.5L-12,8.5C-16.5,5.5 -19,2 -19,-2C-19,-10 -11,-17 0,-17Z' },
     { k: 'c', d: heart(0, -2.5, 0.48), c: 'red' },
   ],
+  // the first night of the year lit with fireworks
+  sersal: () => {
+    const rays: string[] = [];
+    const dots: string[] = [];
+    for (let i = 0; i < 12; i++) {
+      const a = rad(i * 30 - 90);
+      const [c, s] = [Math.cos(a), Math.sin(a)];
+      rays.push(`M${n(c * 5.5)},${n(-3 + s * 5.5)}L${n(c * 13.5)},${n(-3 + s * 13.5)}`);
+      dots.push(circ(c * 16.5, -3 + s * 16.5, 1.9));
+    }
+    return [
+      { k: 'l', d: rays.join(''), w: 2.4 },
+      { k: 'a', d: dots.join('') },
+      { k: 'f', d: star5(0, -3, 6.5) },
+      { k: 'c', d: sparkle(-15, 15, 3.6), c: 'pink' },
+      { k: 'c', d: sparkle(15.5, 15.5, 3), c: 'blue' },
+      { k: 'l', d: 'M0,10V19.5', w: 1.8, c: 'gold' },
+    ];
+  },
   bihar: () => {
     const petal = 'M0,-3C-6.5,-6.5 -7.5,-17 0,-19.5C7.5,-17 6.5,-6.5 0,-3Z';
     return [
       ...[0, 72, 144, 216, 288].map((deg): Part => ({ k: 'c', d: petal, c: 'pink', tf: `rotate(${deg})` })),
       { k: 'c', d: circ(0, 0, 5.4), c: 'gold' },
-      { k: 'k', d: `${circ(-1.8, -1.4, 0.9)}${circ(1.8, -1.2, 0.9)}${circ(0.2, 1.9, 0.9)}`, fine: true },
+      { k: 'k', d: seeds(2.9, 0.8), fine: true },
     ];
   },
   havin: sun,
+  // the longest night: a pomegranate open under the moon
+  yelda: () => [
+    { k: 'c', d: 'M-12.5,-21C-18,-20 -20.5,-13.5 -17.5,-9C-15.5,-6 -11,-5.5 -8.5,-7.5C-12.5,-8.5 -15,-12.5 -14,-16.5C-13.6,-18.3 -13.1,-19.8 -12.5,-21Z', c: 'gold' },
+    { k: 'a', d: 'M-1.5,-9L-3,-16L1,-12.5L3.5,-17L6,-12.5L10,-16L8.5,-9Z' },
+    { k: 'f', d: 'M3.5,-10C13,-10 20,-3.5 20,5C20,13.5 13,19.5 3.5,19.5C-6,19.5 -13,13.5 -13,5C-13,-3.5 -6,-10 3.5,-10Z' },
+    { k: 'w', d: 'M-4,9C-4,3.5 0.5,-1 6,-1C11.5,-1 15.5,3.5 15.5,9C15.5,14 11.5,17 6,17C0.5,17 -4,14 -4,9Z' },
+    { k: 'c', d: [circ(2, 5, 1.9), circ(6.2, 3.2, 1.9), circ(10.5, 5, 1.9), circ(0.8, 9.5, 1.9), circ(5, 8.3, 1.9), circ(9.3, 9.3, 1.9), circ(13, 9.8, 1.9), circ(3.2, 13.6, 1.9), circ(7.5, 13, 1.9), circ(11.4, 13.8, 1.9)].join(''), c: 'red' },
+    { k: 'h', d: 'M-9.5,2C-9,-3 -5.5,-6.5 -1,-7.5C-4.5,-5 -6.5,-1.5 -7.2,2.5Z', o: 0.6 },
+  ],
   payiz: () => [
     { k: 'l', d: 'M-12,14L-18.5,20.5', w: 2.6, c: 'brown' },
     { k: 'c', d: 'M-13,15C-18,1 -9,-15 16,-18C17,3 3,16 -13,15Z', c: 'autumn' },
@@ -495,6 +616,29 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'c', d: 'M0.6,-6.5C3.5,-14 12,-15.5 15.5,-8C16.6,-5.6 16.6,-2.6 15.6,0.5C14.2,0.5 13.2,0.4 12.2,0.2C13,-2.4 13,-4.6 12.2,-6.4C10,-11 4.6,-10.6 0.6,-6.5Z', c: 'water' },
     { k: 'c', d: drop(0, -15.5, 0.46), c: 'water' },
     { k: 'h', d: 'M-1.4,4C-1.4,-1 -1,-4.5 -0.2,-7C-0.4,-3.5 -0.4,0 -0.2,4Z', o: 0.7, fine: true },
+  ],
+  // the cat of Lake Van, white, one eye blue and one gold: it always lands on its feet
+  'pisika-wane': () => [
+    { k: 'f', d: 'M-16,-1C-16,-6.5 -15.5,-12.5 -14,-19L-6,-12.5C-4,-13.3 4,-13.3 6,-12.5L14,-19C15.5,-12.5 16,-6.5 16,-1C16,10 8.5,16.5 0,16.5C-8.5,16.5 -16,10 -16,-1Z' },
+    { k: 'c', d: 'M-12.6,-15.2L-7.6,-11.6C-9.4,-10.6 -10.8,-9.4 -12,-8Z', c: 'pink' },
+    { k: 'c', d: 'M12.6,-15.2L7.6,-11.6C9.4,-10.6 10.8,-9.4 12,-8Z', c: 'pink' },
+    { k: 'c', d: circ(-6.5, -1.5, 3.9), c: 'blue' },
+    { k: 'c', d: circ(6.5, -1.5, 3.9), c: 'gold' },
+    { k: 'd', d: 'M-6.5,-4.2V1.2M6.5,-4.2V1.2', w: 1.7 },
+    { k: 'c', d: 'M-2.2,5.5H2.2L0,8Z', c: 'pink' },
+    { k: 'd', d: 'M0,8V9.5C-1,11.3 -3,11.3 -4,10M0,9.5C1,11.3 3,11.3 4,10', w: 1.2 },
+    { k: 'd', d: 'M-8,7.5L-19,5.5M-8,9.5L-18.5,11M8,7.5L19,5.5M8,9.5L18.5,11', w: 0.9, fine: true },
+  ],
+  // a butterfly: a return that became a week
+  perperok: () => [
+    { k: 'f', d: 'M-1.5,-2C-6,-12 -14,-18 -18.5,-15.5C-21.5,-13.5 -19,-4 -11,0Z' },
+    { k: 'f', d: 'M1.5,-2C6,-12 14,-18 18.5,-15.5C21.5,-13.5 19,-4 11,0Z' },
+    { k: 'a', d: 'M-1.5,1C-5,3 -12,4.5 -14,10C-15.5,14.5 -9.5,16.5 -6,13C-3.5,10.5 -2,6 -1.5,1Z' },
+    { k: 'a', d: 'M1.5,1C5,3 12,4.5 14,10C15.5,14.5 9.5,16.5 6,13C3.5,10.5 2,6 1.5,1Z' },
+    { k: 'c', d: `${circ(-12, -8.5, 2.6)}${circ(12, -8.5, 2.6)}`, c: 'gold' },
+    { k: 'c', d: `${circ(-8.5, 9.5, 1.8)}${circ(8.5, 9.5, 1.8)}`, c: 'pink' },
+    { k: 'l', d: 'M-1,-8.5C-2.5,-13.5 -5,-16 -7.5,-17M1,-8.5C2.5,-13.5 5,-16 7.5,-17', w: 1.4, c: 'brown' },
+    { k: 'c', d: 'M0,-10C1.6,-10 2.2,-8 2.2,-5V9C2.2,12.5 1.4,15 0,15C-1.4,15 -2.2,12.5 -2.2,9V-5C-2.2,-8 -1.6,-10 0,-10Z', c: 'brown' },
   ],
 };
 

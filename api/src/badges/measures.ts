@@ -92,6 +92,32 @@ export function comebacks(days: readonly string[], awayDays = 14): number {
   return count;
 }
 
+/**
+ * Returns after at least `awayDays` days without learning that were followed
+ * by `run` days in a row, counting the day of the return.
+ */
+export function comebackRuns(days: readonly string[], awayDays = 14, run = 7): number {
+  let count = 0;
+  for (let i = 1; i < days.length; i++) {
+    if (dayNumber(days[i]!) - dayNumber(days[i - 1]!) <= awayDays) continue;
+    let length = 1;
+    while (i + length < days.length && dayNumber(days[i + length]!) - dayNumber(days[i + length - 1]!) === 1) length += 1;
+    if (length >= run) count += 1;
+  }
+  return count;
+}
+
+/** Calendar weeks, Monday to Sunday, with a learning day on all seven days. */
+export function fullWeeks(days: readonly string[]): number {
+  const per = new Map<number, number>();
+  // day 0 (1 January 1970) was a Thursday, so a week from Monday is (day + 3) / 7
+  for (const d of days) {
+    const week = Math.floor((dayNumber(d) + 3) / 7);
+    per.set(week, (per.get(week) ?? 0) + 1);
+  }
+  return [...per.values()].filter((n) => n >= 7).length;
+}
+
 /** Distinct years with a learning day between two calendar dates (month, day), inclusive. */
 export function yearsWithin(days: readonly string[], from: [number, number], to: [number, number]): number {
   const years = new Set<string>();
@@ -167,14 +193,27 @@ const battleWins = (extra: string) => `
        AND p.battle_id IN (SELECT battle_id FROM wordle_battle_players WHERE user_id = $1)
   ) x WHERE x.user_id = $1 AND x.r = 1 AND x.players >= 2 ${extra}`;
 
+/** A Peyvok's guesses, the last of which is the sixth (wordle-service.ts's MAX_ATTEMPTS). */
+export const PEYVOK_GUESSES = 6;
+
 /** A Newroz story: one whose title says so, in either script. */
 const NEWROZ_TITLE = `(COALESCE(g.story_snapshot->>'title', s.title) ~* '(newroz|نەورۆز|نوروز)')`;
 
 export type Measure = (ctx: MeasureContext) => Promise<Measured>;
 
 const count =
-  (sql: string): Measure =>
-  async (ctx) => ({ progress: await ctx.count(sql) });
+  (sql: string, params: unknown[] = []): Measure =>
+  async (ctx) => ({ progress: await ctx.count(sql, params) });
+
+/** Answers accepted to exercises of these kinds: in finished lessons, and in reviews that counted. */
+const answersOf = (types: readonly string[]): Measure =>
+  count(
+    `SELECT (SELECT count(*) FROM session_answers a JOIN lesson_sessions s ON s.id = a.session_id JOIN exercises e ON e.id = a.exercise_id
+              WHERE s.user_id = $1 AND s.completed_at IS NOT NULL AND a.accepted AND e.type = ANY($2::text[]))
+          + (SELECT count(*) FROM practice_answers a JOIN practice_sessions s ON s.id = a.session_id JOIN exercises e ON e.id = a.exercise_id
+              WHERE s.user_id = $1 AND s.xp_awarded > 0 AND a.accepted AND e.type = ANY($2::text[])) AS n`,
+    [types],
+  );
 
 /**
  * A rank tier (0 Deşt … 5 Stêrk) reached at a season's peak, counted in seasons:
@@ -231,6 +270,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   dictionary_words_reviewed: count(
     `SELECT count(*) AS n FROM review_items WHERE user_id = $1 AND item_id LIKE 'dict:%' AND last_reviewed_at IS NOT NULL`,
   ),
+  listening_speaking_answers: answersOf(['listening', 'speaking']),
+  typed_answers: answersOf(['translate', 'writing']),
 
   // ---- habit
   longest_streak: count(`SELECT GREATEST(longest_streak, current_streak) AS n FROM user_streaks WHERE user_id = $1`),
@@ -238,6 +279,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   learning_days: count(`SELECT days_learned AS n FROM user_streaks WHERE user_id = $1`),
   comebacks: async (ctx) => ({ progress: comebacks(await ctx.learningDays()) }),
   okyanus_top_three_weeks: count(`SELECT count(*) AS n FROM league_weeks WHERE user_id = $1 AND trophy`),
+  daily_goals_met: count(`SELECT count(*) AS n FROM daily_goals WHERE user_id = $1 AND completed_at IS NOT NULL`),
+  full_weeks: async (ctx) => ({ progress: fullWeeks(await ctx.learningDays()) }),
 
   // ---- games
   wordle_battle_wins: count(battleWins('')),
@@ -272,6 +315,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
           + EXISTS (SELECT 1 FROM story_game_players p JOIN story_games g ON g.id = p.game_id
                      WHERE p.user_id = $1 AND NOT p.removed AND g.status = 'finished')::int AS n`,
   ),
+  daily_peyvok_solved: count(`SELECT count(DISTINCT day_index) AS n FROM wordle_games WHERE user_id = $1 AND mode = 'daily' AND status = 'won'`),
+  training_rhymes: count(`SELECT COALESCE(sum(accepted), 0) AS n FROM rhyme_games WHERE user_id = $1`),
   // rated games played to the end, counted since the last moderation sanction
   // that stood against them (a report upheld starts the count again)
   fair_rated_games: count(
@@ -322,6 +367,11 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
                        AND NOT q.removed AND ${areFriendsSql('q.user_id', '$1::uuid')})
      ) x`,
   ),
+  // a text written to a friend, once for each friend a day (only friends can be written to, chat/service.ts)
+  friend_letter_days: count(
+    `SELECT count(DISTINCT (CASE WHEN m.user_lo = $1 THEN m.user_hi ELSE m.user_lo END, (m.created_at AT TIME ZONE 'UTC')::date)) AS n
+       FROM dm_messages m WHERE m.sender_id = $1 AND m.kind = 'text'`,
+  ),
   gift_days: count(
     `SELECT count(DISTINCT (to_user_id, (created_at AT TIME ZONE 'UTC')::date)) AS n FROM gifts WHERE from_user_id = $1`,
   ),
@@ -339,6 +389,8 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
   learned_newroz_week: async (ctx) => ({ progress: yearsWithin(await ctx.learningDays(), [3, 18], [3, 24]) }),
   learned_language_day_week: async (ctx) => ({ progress: yearsWithin(await ctx.learningDays(), [5, 12], [5, 18]) }),
   learned_mother_language_week: async (ctx) => ({ progress: yearsWithin(await ctx.learningDays(), [2, 18], [2, 24]) }),
+  learned_new_year_week: async (ctx) => ({ progress: yearsWithin(await ctx.learningDays(), [1, 1], [1, 7]) }),
+  learned_yalda_week: async (ctx) => ({ progress: yearsWithin(await ctx.learningDays(), [12, 18], [12, 24]) }),
   monthly_challenge_q1: async (ctx) => ({ progress: yearsWithChallengeIn(await ctx.learningDays(), 1) }),
   monthly_challenge_q2: async (ctx) => ({ progress: yearsWithChallengeIn(await ctx.learningDays(), 2) }),
   monthly_challenge_q3: async (ctx) => ({ progress: yearsWithChallengeIn(await ctx.learningDays(), 3) }),
@@ -385,4 +437,9 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
                                                   THEN u.timezone ELSE 'UTC' END), 'MM-DD') = '03-21'`,
   ),
   seven_review_days: async (ctx) => ({ progress: longestRun(await ctx.practiceDays()) >= 7 ? 1 : 0 }),
+  peyvok_last_guess: count(
+    `SELECT count(*) AS n FROM wordle_games WHERE user_id = $1 AND status = 'won' AND jsonb_array_length(guesses) = $2`,
+    [PEYVOK_GUESSES],
+  ),
+  comeback_week: async (ctx) => ({ progress: comebackRuns(await ctx.learningDays()) }),
 };

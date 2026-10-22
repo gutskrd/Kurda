@@ -18,11 +18,11 @@ describe('the badge catalogue', () => {
     expect(new Set(Object.values(BADGE_FAMILY_SHAPE)).size).toBe(BADGE_FAMILIES.length);
   });
 
-  it('has 44 badges: the research catalogue’s 43 and the Okyanûs trophy', () => {
-    expect(BADGES).toHaveLength(44);
+  it('has 55 badges: the research catalogue’s 43, the Okyanûs trophy and the eleven that came after', () => {
+    expect(BADGES).toHaveLength(55);
     const count = (f: string) => BADGES.filter((b) => b.family === f).length;
     expect([count('learning'), count('habit'), count('games'), count('ranked'), count('friends'), count('events'), count('secret')]).toEqual([
-      7, 5, 7, 8, 3, 8, 6,
+      9, 7, 9, 8, 4, 10, 8,
     ]);
   });
 

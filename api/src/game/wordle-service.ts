@@ -75,7 +75,7 @@ interface GameRow {
   time_ms: number | null;
 }
 
-const MAX_ATTEMPTS = 6;
+export const MAX_ATTEMPTS = 6;
 
 /**
  * Daily & practice Peyvok backend (KUR-304). Server-authoritative: the target

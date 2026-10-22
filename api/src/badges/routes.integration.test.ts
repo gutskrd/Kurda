@@ -78,8 +78,8 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     const me = await signUp('me');
     const page = await call(me, 'GET', '/me/badges');
     expect(page.statusCode).toBe(200);
-    expect(page.json().badges).toHaveLength(44);
-    expect(page.json()).toMatchObject({ showcase: [], secretsFound: 0, secretsTotal: 6, legacy: [] });
+    expect(page.json().badges).toHaveLength(55);
+    expect(page.json()).toMatchObject({ showcase: [], secretsFound: 0, secretsTotal: 8, legacy: [] });
 
     const bad = await call(me, 'PUT', '/me/badges/showcase', { keys: ['agir'] });
     expect(bad.statusCode).toBe(400);
