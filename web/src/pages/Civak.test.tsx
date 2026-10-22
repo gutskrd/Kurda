@@ -75,10 +75,10 @@ describe('Civak', () => {
     // page — and it opens full size, so it is a button named for what it does
     const picture = screen.getByRole('button', { name: 'Open picture 1 of 1' });
     expect(picture.querySelector('img')).toHaveAttribute('src', 'https://cdn.test/a.webp');
-    // one name over each post, and once more where the picture's caption starts
-    expect(screen.getAllByText('dilan')).toHaveLength(4);
+    // one name over each post, and a picture's words above it rather than a caption under it
+    expect(screen.getAllByText('dilan')).toHaveLength(3);
     expect(document.querySelectorAll('.fcard-name')).toHaveLength(3);
-    expect(screen.getByText('Çiyayên welêt').closest('.fcard-caption')?.textContent).toBe('dilan Çiyayên welêt');
+    expect(screen.getByText('Çiyayên welêt').closest('.fcard-body')?.nextElementSibling).toHaveClass('fcard-media');
   });
 
   it('asks the server for the filter rather than filtering what it already has', async () => {

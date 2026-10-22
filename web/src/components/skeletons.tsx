@@ -89,56 +89,50 @@ function FeedCards({ count }: { count: number }): React.JSX.Element {
   );
 }
 
-/** One post's placeholder, in the wall's order (feed/FeedCard). */
+/** One post's placeholder, in the wall's order (feed/FeedCard): one line of who and when, the words, a picture on some, the pills. */
 function FeedPostBox({ picture }: { picture: boolean }): React.JSX.Element {
   return (
     <article className={picture ? 'fcard fcard-image has-pics' : 'fcard'}>
       <header className="fcard-head">
         <span className="fcard-who">
           <AvatarBox />
-          <span className="fcard-who-text">
-            <span className="fcard-name">
-              <Skeleton line w={110} />
-            </span>
-            <span className="fcard-kind">
-              <Skeleton line w={52} />
-            </span>
+          <span className="fcard-name">
+            <Skeleton line w={96} />
           </span>
+        </span>
+        <span className="fcard-meta">
+          <Skeleton line w={72} />
         </span>
       </header>
 
-      {picture ? (
-        <div className="fcard-media">
-          <div className="fcard-pics">
-            <Skeleton className="pp-grid" radius="var(--r-sm)" style={{ height: 'auto', aspectRatio: '16 / 10' }} />
-          </div>
-        </div>
-      ) : (
-        <span className="fcard-body">
-          <h2 className="fcard-title">
-            <Skeleton line w="72%" />
-          </h2>
+      <span className="fcard-body">
+        <h2 className="fcard-title">
+          <Skeleton line w="72%" />
+        </h2>
+        {!picture && (
           <p className="fcard-text">
             <SkeletonText lines={3} lastWidth="48%" />
           </p>
-        </span>
+        )}
+      </span>
+
+      {picture && (
+        <div className="fcard-media">
+          <div className="fcard-pics">
+            <Skeleton className="pp-grid" radius="var(--r-lg)" style={{ height: 'auto', aspectRatio: '16 / 10' }} />
+          </div>
+        </div>
       )}
 
       <footer className="fcard-actions">
-        {times(4, (j) => (
-          <span className="fcard-act" key={j}>
-            <Skeleton size={24} circle />
-          </span>
+        {/* sized by feed.css, so they grow with the real pills on a touch screen */}
+        {times(2, (j) => (
+          <Skeleton key={`pill-${j}`} className="fcard-act-box" />
+        ))}
+        {times(2, (j) => (
+          <Skeleton key={`round-${j}`} className={j === 0 ? 'fcard-act-box is-round fcard-share' : 'fcard-act-box is-round'} />
         ))}
       </footer>
-      {picture && (
-        <p className="fcard-caption">
-          <Skeleton line w="64%" />
-        </p>
-      )}
-      <span className="fcard-when">
-        <Skeleton line w={72} />
-      </span>
     </article>
   );
 }

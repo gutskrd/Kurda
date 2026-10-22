@@ -112,8 +112,6 @@ export const tr: Catalogue = {
   'feed.deleteConfirm': 'Silinsin mi?',
   'feed.today': 'Bugün',
   'feed.yesterday': 'Dün',
-  'feed.viewComments': '{count} yorumun tümünü gör',
-  'feed.viewCommentOne': '1 yorumu gör',
   'feed.deleteShort': 'Sil',
 
   'post.open': 'Bir şey paylaş',

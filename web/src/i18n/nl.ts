@@ -112,8 +112,6 @@ export const nl: Catalogue = {
   'feed.deleteConfirm': 'Verwijderen?',
   'feed.today': 'Vandaag',
   'feed.yesterday': 'Gisteren',
-  'feed.viewComments': 'Alle {count} reacties bekijken',
-  'feed.viewCommentOne': '1 reactie bekijken',
   'feed.deleteShort': 'Verwijderen',
 
   'post.open': 'Iets plaatsen',

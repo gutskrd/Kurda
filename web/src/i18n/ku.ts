@@ -118,8 +118,6 @@ export const ku: Catalogue = {
   'feed.deleteConfirm': 'Jê bibim?',
   'feed.today': 'Îro',
   'feed.yesterday': 'Duh',
-  'feed.viewComments': 'Hemû {count} şîroveyan bibîne',
-  'feed.viewCommentOne': 'Şîroveyê bibîne',
   'feed.deleteShort': 'Jê bibe',
 
   'post.open': 'Tiştek biweşîne',

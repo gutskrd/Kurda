@@ -74,8 +74,9 @@ describe('DimenPost', () => {
     await waitFor(() => expect(like.textContent).toContain('3'));
     expect(calls).toContain('GET /posts/image/i1/engagement');
     expect(screen.getByRole('button', { name: 'Sign in to repost' }).textContent).toContain('1');
-    // the caption under the picture, after its author's name, and the comments under that
-    expect(screen.getByText('Çiyayên welêt').closest('.fcard-caption')?.textContent).toBe('dilan Çiyayên welêt');
+    // the words above the picture, read whole, and the comments under the post
+    expect(screen.getByText('Çiyayên welêt').closest('.fcard-body')?.nextElementSibling).toHaveClass('fcard-media');
+    expect(screen.getByRole('article')).toHaveClass('is-page');
     expect(await screen.findByRole('region', { name: 'Comments' })).toBeInTheDocument();
   });
 

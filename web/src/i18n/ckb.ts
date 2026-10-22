@@ -129,8 +129,6 @@ export const ckb: Catalogue = {
   'feed.deleteConfirm': 'بیسڕمەوە؟',
   'feed.today': 'ئەمڕۆ',
   'feed.yesterday': 'دوێنێ',
-  'feed.viewComments': 'بینینی هەموو {count} لێدوانەکە',
-  'feed.viewCommentOne': 'بینینی لێدوانێک',
   'feed.deleteShort': 'بیسڕەوە',
 
   'post.open': 'شتێک بڵاو بکەرەوە',

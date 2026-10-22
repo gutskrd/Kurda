@@ -117,8 +117,6 @@ export const ar: Catalogue = {
   'feed.deleteConfirm': 'حذف؟',
   'feed.today': 'اليوم',
   'feed.yesterday': 'أمس',
-  'feed.viewComments': 'عرض كل التعليقات ({count})',
-  'feed.viewCommentOne': 'عرض تعليق واحد',
   'feed.deleteShort': 'حذف',
 
   'post.open': 'انشر شيئاً',

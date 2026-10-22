@@ -153,8 +153,6 @@ export const en = {
   'feed.deleteConfirm': 'Delete?',
   'feed.today': 'Today',
   'feed.yesterday': 'Yesterday',
-  'feed.viewComments': 'View all {count} comments',
-  'feed.viewCommentOne': 'View 1 comment',
   'feed.deleteShort': 'Delete',
 
   // ---- posting -------------------------------------------------------------

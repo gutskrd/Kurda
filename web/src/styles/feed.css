@@ -2,15 +2,13 @@
  * Civak — the community wall.
  *
  * One column of posts, all in the same order whatever the post is, read as one
- * chain: no box round a post and no rule between two — the space between one
- * post's last line and the next one's name is the only seam. A reading width
- * rather than the full page: a wall of text stretched across a desktop is a
- * wall nobody reads.
+ * list: no box round a post, and a hairline across the column between one post
+ * and the next. A reading width rather than the full page: a wall of text
+ * stretched across a desktop is a wall nobody reads.
  *
- * Colour is kept for what it means. Icons, counts and controls are in ink; the
- * heart turns red when you have liked a post, and that is the only colour a
- * post wears — a repost or a save is shown by the icon filling in, not by a
- * green or a gold that would read as a reward or a warning.
+ * Colour is kept for what it means. Icons, counts and controls are in ink on a
+ * soft grey; the heart turns red when you have liked a post, a repost you made
+ * turns green, and a saved post's bookmark fills in.
  */
 .container-feed {
   max-width: 640px;
@@ -21,29 +19,42 @@
 .feed {
   display: flex;
   flex-direction: column;
-  gap: 20px;
 }
 
 .fcard {
   display: flex;
   flex-direction: column;
+  gap: 10px;
   min-width: 0;
+  padding-block: 14px;
+  border-bottom: 1px solid var(--separator);
+}
+/* on a phone the line runs to the screen's edges, past the page's 16px gutter */
+@media (max-width: 640px) {
+  .container-feed .feed .fcard {
+    margin-inline: -16px;
+    padding-inline: 16px;
+  }
+}
+/* a post on its own page has its comments straight under it, and no line between */
+.fcard.is-page {
+  border-bottom: 0;
 }
 
-/* ---- who, and what kind of post ----------------------------------------- */
+/* ---- who, what kind of post, and when: one line ---------------------------- */
 .fcard-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding-block-end: 10px;
+  gap: 6px;
+  min-width: 0;
 }
 .fcard-who {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex: 1;
+  gap: 8px;
+  flex: 0 1 auto;
   min-width: 0;
-  min-height: 40px;
+  min-height: 36px;
   border: 0;
   padding: 0;
   background: transparent;
@@ -53,16 +64,13 @@
   cursor: pointer;
 }
 .fcard-who .friend-avatar {
+  flex: none;
   width: 32px;
   height: 32px;
 }
-.fcard-who-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
 .fcard-name {
   display: block;
+  min-width: 0;
   font-size: 0.9rem;
   font-weight: 600;
   line-height: 1.25;
@@ -73,14 +81,20 @@
 .fcard-who:hover .fcard-name {
   text-decoration: underline;
 }
-/* what kind of post this is, since the wall mixes them: a quiet second line under the name */
-.fcard-kind {
+/* what kind of post this is and how long ago: quiet, beside the name */
+.fcard-meta {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
   color: var(--ink-3);
-  font-size: 0.76rem;
-  line-height: 1.3;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-/* the ⋯ sits at the end of the name's line, a full 44px to tap */
+/* the ⋯ sits at the end of the line, a full 44px to tap */
 .fcard-menu {
+  flex: none;
   margin-inline-end: -10px;
 }
 .fcard-menu .msg-menu-btn {
@@ -92,58 +106,64 @@
   content: none;
 }
 
-/* ---- the words, on a post with no pictures ------------------------------- */
+/* ---- the words: a bold title, then a few lines --------------------------- */
 .fcard-body {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
   color: var(--ink);
   text-decoration: none;
 }
 .fcard-title {
-  margin: 0 0 6px;
-  font-family: var(--font-display);
-  font-size: 1.38rem;
-  letter-spacing: -0.01em;
-  line-height: 1.2;
-}
-/* a poem is set the way the front page sets one: a big title, the lines in italic */
-.fcard-poem .fcard-title {
-  font-size: 1.75rem;
-  line-height: 1.12;
-}
-.fcard-poem .fcard-text {
-  font-family: var(--font-display);
-  font-style: italic;
-  font-size: 1.12rem;
-  line-height: 1.5;
+  display: -webkit-box;
+  margin: 0;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  /* the house serif is for headings of pages; a post's title is read in a list, in the text face */
+  font-family: var(--font-sans);
+  font-size: 1.19rem;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  line-height: 1.3;
 }
 .fcard-text {
+  display: -webkit-box;
   margin: 0;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
   color: var(--ink-2);
   font-size: 0.95rem;
-  line-height: 1.55;
+  line-height: 1.5;
   /* a poem's line breaks are the poem, and an excerpt keeps them */
   white-space: pre-wrap;
 }
+/* a poem's lines are still set as verse: in italic, the way the front page sets one */
+.fcard-poem .fcard-text {
+  font-family: var(--font-display);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.5;
+}
+/* on its own page a post is read whole */
+.fcard.is-page .fcard-title,
+.fcard.is-page .fcard-text {
+  display: block;
+  -webkit-line-clamp: none;
+  overflow: visible;
+}
 
-/* ---- the pictures, edge to edge ----------------------------------------- */
+/* ---- the pictures, set in from the edges with round corners --------------- */
 .fcard-media {
   position: relative;
 }
 .fcard-pics .pp-grid,
 .fcard-pics .pp-strip {
-  border-radius: var(--r-sm);
-  border-color: var(--separator);
-}
-/* on a phone they run to the screen's edges, past the page's 16px gutter */
-@media (max-width: 640px) {
-  .container-feed .fcard-media {
-    margin-inline: -16px;
-  }
-  .container-feed .fcard-pics .pp-grid,
-  .container-feed .fcard-pics .pp-strip {
-    border-radius: 0;
-    border-inline: 0;
-  }
+  border: 0;
+  border-radius: var(--r-lg);
+  /* what shows while a picture loads */
+  background: var(--surface-2);
 }
 /* a double click on a picture likes the post: a heart rises in the middle of it and fades */
 .fcard-heart-pop {
@@ -178,44 +198,80 @@
   }
 }
 
-/* ---- like, comment, repost, share … save --------------------------------- */
+/* ---- like, comment, repost … share, save ----------------------------------- */
 .fcard-actions {
   display: flex;
   align-items: center;
-  gap: 2px;
-  /* the first icon lines up with the name above it, not with its own padding */
-  margin-inline-start: -10px;
-  margin-inline-end: -10px;
-  padding-block: 4px 0;
+  gap: 8px;
+  padding-top: 2px;
 }
+/* a narrow phone keeps the five on one line by drawing them closer */
+@media (max-width: 400px) {
+  .fcard-actions {
+    gap: 6px;
+  }
+}
+/* a soft grey pill: an icon and its count; with no count, a circle */
 .fcard-act {
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 44px;
-  min-height: 44px;
-  padding: 0 10px;
+  min-width: 36px;
+  height: 36px;
+  padding: 0 8px;
   border: 0;
   border-radius: var(--r-pill);
-  background: transparent;
+  background: var(--surface-2);
   color: var(--ink);
   font: inherit;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   cursor: pointer;
 }
+.fcard-act:has(.fcard-count) {
+  padding-inline: 11px 14px;
+}
 .fcard-act:hover:not(:disabled) {
-  background: var(--surface-2);
+  background: color-mix(in srgb, var(--ink) 12%, transparent);
 }
 .fcard-act:disabled {
   cursor: default;
 }
-/* the save button sits at the far end, away from the counts */
-.fcard-save {
+/* share and save sit at the far end, away from the counts */
+.fcard-share {
   margin-inline-start: auto;
+}
+@media (pointer: coarse) {
+  .fcard-act {
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+  }
+  .fcard-act:has(.fcard-count) {
+    padding-inline: 12px 14px;
+  }
+}
+/* the pills while the wall loads (components/skeletons) */
+.fcard-actions .skeleton.fcard-act-box {
+  width: 64px;
+  height: 36px;
+  border-radius: var(--r-pill);
+}
+.fcard-actions .skeleton.fcard-act-box.is-round {
+  width: 36px;
+}
+@media (pointer: coarse) {
+  .fcard-actions .skeleton.fcard-act-box {
+    width: 70px;
+    height: 44px;
+  }
+  .fcard-actions .skeleton.fcard-act-box.is-round {
+    width: 44px;
+  }
 }
 .fcard-like.is-on {
   color: var(--like);
@@ -223,6 +279,10 @@
 /* the count beside a liked heart stays in ink: the heart says it, the number counts it */
 .fcard-like.is-on .fcard-count {
   color: var(--ink);
+}
+/* a repost you made: the arrows and their count in green */
+.fcard-repost.is-on {
+  color: var(--success);
 }
 /* the fill lands rather than appears, so a tap feels answered — a tap here, not a page that loaded liked */
 .fcard-like.just-on.is-on svg,
@@ -233,44 +293,6 @@
 @keyframes fcard-pop {
   from { transform: scale(0.7); }
   to { transform: scale(1); }
-}
-
-/* ---- a picture's caption, its comments, and when -------------------------- */
-.fcard-caption {
-  display: -webkit-box;
-  margin: 4px 0 0;
-  -webkit-line-clamp: 3;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--ink);
-  font-size: 0.92rem;
-  line-height: 1.45;
-  text-decoration: none;
-  white-space: pre-wrap;
-}
-.fcard-caption.is-full {
-  display: block;
-  -webkit-line-clamp: none;
-  overflow: visible;
-}
-.fcard-caption-name,
-.fcard-caption-title {
-  font-weight: 600;
-}
-.fcard-comments {
-  align-self: flex-start;
-  margin-top: 4px;
-  color: var(--ink-3);
-  font-size: 0.9rem;
-  text-decoration: none;
-}
-.fcard-comments:hover {
-  color: var(--ink-2);
-}
-.fcard-when {
-  margin-top: 4px;
-  color: var(--ink-4);
-  font-size: 0.76rem;
 }
 
 @media (prefers-reduced-motion: reduce) {

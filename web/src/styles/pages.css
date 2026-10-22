@@ -2051,8 +2051,8 @@ button.feature {
 }
 
 /*
- * Whole posts inside the profile panel: the same chain as the wall, a post
- * after a post with only space between them.
+ * Whole posts inside the profile panel: the same list as the wall, a hairline
+ * between one post and the next.
  *
  * `min-width: 0` on the posts is load-bearing: a flex/grid child defaults to
  * min-content, so one long unbroken word in a post — a URL, a hashtag — would
@@ -2061,7 +2061,6 @@ button.feature {
  */
 .mkp-activity-feed {
   display: grid;
-  gap: 20px;
   padding-top: 6px;
 }
 .mkp-activity-feed .fcard {

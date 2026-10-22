@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
 import { jsonResponse, renderApp } from '../test/utils';
 import type { FeedItem } from '../lib/types';
-import { FeedCard } from './FeedCard';
+import { FeedCard, shortCount } from './FeedCard';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -85,16 +85,68 @@ function Live({ start, onRemoved }: { start: FeedItem; onRemoved?: () => void })
 }
 
 describe('FeedCard', () => {
-  it('reads in the wall’s order: who, the picture, the actions, the caption, the comments, when', async () => {
-    renderApp(<FeedCard item={picture({ commentCount: 5 })} />);
+  it('reads as a list: one line of who, what and when, then the words, then the picture, then the actions', () => {
+    renderApp(<FeedCard item={picture({ title: 'Zozan', commentCount: 5 })} />);
     const post = screen.getByRole('article');
-    const order = [...post.querySelectorAll('.fcard-head, .fcard-media, .fcard-actions, .fcard-caption, .fcard-comments, .fcard-when')].map(
-      (el) => el.className.split(' ')[0],
-    );
-    expect(order).toEqual(['fcard-head', 'fcard-media', 'fcard-actions', 'fcard-caption', 'fcard-comments', 'fcard-when']);
-    // the kind is a quiet line under the name, and the time is said in words
-    expect(within(post).getByText('Photo')).toHaveClass('fcard-kind');
-    expect(within(post).getByText('2 days ago')).toBeInTheDocument();
+    const order = [...post.querySelectorAll('.fcard-head, .fcard-body, .fcard-media, .fcard-actions')].map((el) => el.className.split(' ')[0]);
+    expect(order).toEqual(['fcard-head', 'fcard-body', 'fcard-media', 'fcard-actions']);
+    // the kind and how long ago share the name's line, in the header
+    const head = post.querySelector('.fcard-head')!;
+    expect(within(head as HTMLElement).getByText('Photo')).toHaveClass('fcard-kind');
+    const when = within(head as HTMLElement).getByText('2d ago');
+    expect(when.tagName).toBe('TIME');
+    expect(when).toHaveAttribute('dateTime');
+    // a picture's words are above it as its title and text — not a caption under it after the name
+    expect(within(post).getByRole('heading', { name: 'Zozan' })).toBeInTheDocument();
+    expect(post.querySelector('.fcard-body')).toHaveAttribute('href', '/app/dimen/i1');
+    expect(post.querySelector('.fcard-caption, .fcard-comments')).toBeNull();
+    expect(post.querySelectorAll('time')).toHaveLength(1);
+  });
+
+  it('says how long ago briefly in the first week, and the date after it', () => {
+    const { unmount } = renderApp(<FeedCard item={item({ at: new Date(Date.now() - 42 * 60 * 1000).toISOString() })} />);
+    expect(screen.getByText('42m ago')).toBeInTheDocument();
+    unmount();
+    renderApp(<FeedCard item={item({ at: '2020-03-21T10:00:00Z' })} />);
+    expect(document.querySelector('.fcard-when')?.textContent).toMatch(/2020/);
+  });
+
+  it('puts what is counted in pills at the start, and share and save at the end', () => {
+    renderApp(<FeedCard item={item({ commentCount: 4, engagement: engagement({ likes: 18 }) })} />);
+    const row = document.querySelector('.fcard-actions')!;
+    const names = [...row.querySelectorAll('.fcard-act')].map((el) => el.getAttribute('aria-label'));
+    expect(names).toEqual(['Sign in to like', '4 comments', 'Sign in to repost', 'Share this post', 'Sign in to save']);
+    // a repost nobody has made has no count beside it; share and save never have one
+    expect(screen.getByRole('button', { name: 'Sign in to repost' }).querySelector('.fcard-count')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Share this post' }).querySelector('.fcard-count')).toBeNull();
+    // and the comment pill is the way to the comments: there is no separate line for them
+    expect(screen.getByRole('link', { name: '4 comments' })).toHaveAttribute('href', '/app/library/s1');
+    expect(screen.queryByText(/View/)).not.toBeInTheDocument();
+  });
+
+  it('keeps a big count short enough for its pill', () => {
+    expect(shortCount(1495, 'en')).toBe('1,495');
+    expect(shortCount(12_345, 'en')).toBe('12.3K');
+    expect(shortCount(2_400_000, 'en')).toBe('2.4M');
+  });
+
+  it('shows what is yours: a red heart, a green repost, a filled bookmark', async () => {
+    signIn();
+    serve();
+    renderApp(<FeedCard item={item({ engagement: engagement({ likes: 2, reposts: 1, liked: true, reposted: true, bookmarked: true }) })} />);
+    const like = await screen.findByRole('button', { name: 'Unlike (2)' });
+    expect(like).toHaveClass('fcard-like', 'is-on');
+    expect(screen.getByRole('button', { name: 'Undo repost (1)' })).toHaveClass('fcard-repost', 'is-on');
+    expect(screen.getByRole('button', { name: 'Remove from saved' })).toHaveClass('fcard-save', 'is-on');
+  });
+
+  it('draws the post whole on its own page, with no line under it', () => {
+    renderApp(<FeedCard item={item()} onPage={{ onComment: () => {} }} />);
+    const post = screen.getByRole('article');
+    expect(post).toHaveClass('is-page');
+    // the words do not link to the page the reader is already on
+    expect(post.querySelector('a.fcard-body')).toBeNull();
+    expect(post.querySelector('.fcard-body')).not.toBeNull();
   });
 
   it('shows each count beside its icon', async () => {
@@ -146,19 +198,6 @@ describe('FeedCard', () => {
     renderApp(<FeedCard item={picture()} />);
     await userEvent.click(screen.getByRole('button', { name: 'Open picture 1 of 1' }));
     expect(await screen.findByRole('dialog')).toBeInTheDocument();
-  });
-
-  it('links to the comments when there are any, and says how many', () => {
-    const { unmount } = renderApp(<FeedCard item={picture({ commentCount: 7 })} />);
-    expect(screen.getByRole('link', { name: 'View all 7 comments' })).toHaveAttribute('href', '/app/dimen/i1');
-    unmount();
-
-    const once = renderApp(<FeedCard item={picture({ commentCount: 1 })} />);
-    expect(screen.getByRole('link', { name: 'View 1 comment' })).toBeInTheDocument();
-    once.unmount();
-
-    renderApp(<FeedCard item={picture({ commentCount: 0 })} />);
-    expect(screen.queryByText(/View/)).not.toBeInTheDocument();
   });
 
   it('keeps Report in the ⋯ for somebody else’s post, out of the row of actions', async () => {

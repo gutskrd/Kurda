@@ -112,8 +112,6 @@ export const fr: Catalogue = {
   'feed.deleteConfirm': 'Supprimer ?',
   'feed.today': 'Aujourd’hui',
   'feed.yesterday': 'Hier',
-  'feed.viewComments': 'Voir les {count} commentaires',
-  'feed.viewCommentOne': 'Voir 1 commentaire',
   'feed.deleteShort': 'Supprimer',
 
   'post.open': 'Publier quelque chose',

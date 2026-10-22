@@ -10,7 +10,7 @@ import { dayLabel } from '../chat/messageGroups';
 import { useI18n, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import type { FeedItem } from '../lib/types';
-import { agoInWords } from '../lib/timeWords';
+import { lastSeen } from '../social/time';
 
 import { CARD_LABEL_KEY, cardKind } from './postKinds';
 import { PostPictures } from '../composer/PostPictures';
@@ -22,11 +22,12 @@ type Translate = (key: MessageKey, vars?: Record<string, string | number>) => st
 /**
  * One post on the wall: one link in a single chain of posts.
  *
- * No box round it and no rule under it — the space between one post's last
- * line and the next one's name is what separates them, the way a photo feed
- * reads. Every post has the same order, whatever kind it is: who posted it,
- * then the pictures (or, with none, the words), then what can be done with it,
- * then a picture's caption, the way to its comments, and when.
+ * No box round it: a hairline across the column ends one post and starts the
+ * next. Every post has the same order, whatever kind it is, read top to
+ * bottom as a list is: who posted it, what kind of post and when, all on one
+ * line; then its words — a bold title and a few lines; then its pictures, set
+ * in from the edges with round corners; then what can be done with it, as a
+ * row of soft pills, each with its count.
  *
  * The whole post is not one big link: the name opens a person, the actions
  * act, and only the words take you to the post. A post that swallowed every
@@ -73,7 +74,6 @@ export function FeedCard({
   const badge = cardKind(item);
   const pictures = cardImages(item);
   const words = Boolean(item.title || item.excerpt);
-  const comments = item.commentCount.toLocaleString(locale);
 
   async function remove(): Promise<void> {
     const path = item.targetType === 'image' ? `/images/${item.id}` : `/library/posts/${item.id}`;
@@ -97,29 +97,10 @@ export function FeedCard({
       )}
     </>
   );
-  // under a picture the words are its caption, after the name of who wrote them
-  const caption = (
-    <>
-      <span className="fcard-caption-name">{item.author.username}</span>
-      {item.title && (
-        <>
-          {' '}
-          <span className="fcard-caption-title" dir="auto">
-            {item.title}
-          </span>
-        </>
-      )}
-      {item.excerpt && (
-        <>
-          {' '}
-          <span dir="auto">{item.excerpt}</span>
-        </>
-      )}
-    </>
-  );
 
   return (
-    <article className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}`}>
+    <article className={`fcard fcard-${item.kind}${pictures.length > 0 ? ' has-pics' : ''}${onPage ? ' is-page' : ''}`}>
+      {/* one line: who (a way to their profile), what kind of post and when, and the ⋯ at the end */}
       <header className="fcard-head">
         <button
           type="button"
@@ -127,16 +108,30 @@ export function FeedCard({
           onClick={() => openProfile({ kind: 'user', userId: item.author.id, username: item.author.username })}
         >
           <Avatar url={item.author.avatarUrl} glyphSize={18} />
-          <span className="fcard-who-text">
-            <span className="fcard-name">{item.author.username}</span>
-            {/* what kind of post this is, since the wall mixes them — a quiet second line, not a badge */}
-            <span className="fcard-kind">{CARD_LABEL_KEY[badge] ? t(CARD_LABEL_KEY[badge]!) : badge}</span>
-          </span>
+          <span className="fcard-name">{item.author.username}</span>
         </button>
+        <span className="fcard-meta">
+          {/* what kind of post this is, since the wall mixes them — quiet, beside the name, not a badge */}
+          <span className="fcard-kind">{CARD_LABEL_KEY[badge] ? t(CARD_LABEL_KEY[badge]!) : badge}</span>
+          <span aria-hidden="true"> · </span>
+          <time className="fcard-when" dateTime={item.at} title={fullDate(item.at, locale)}>
+            {postAge(item.at, t, locale)}
+          </time>
+        </span>
         <PostMenu item={item} onDelete={remove} />
       </header>
 
-      {pictures.length > 0 ? (
+      {/* the words come first on every post, a picture's too: what it is, then what it shows */}
+      {words &&
+        (onPage ? (
+          <div className="fcard-body">{body}</div>
+        ) : (
+          <Link to={item.href} className="fcard-body">
+            {body}
+          </Link>
+        ))}
+
+      {pictures.length > 0 && (
         <div className="fcard-media">
           {/* one at a time, swiped; each opens full size, so they sit outside any link (web/src/composer/PostPictures) */}
           <PostPictures className="fcard-pics" images={pictures} strip onDoubleActivate={signedIn ? likeFromPicture : undefined} />
@@ -146,38 +141,9 @@ export function FeedCard({
             </span>
           )}
         </div>
-      ) : (
-        words &&
-        (onPage ? (
-          <div className="fcard-body">{body}</div>
-        ) : (
-          <Link to={item.href} className="fcard-body">
-            {body}
-          </Link>
-        ))
       )}
 
       <PostActions item={item} engage={engage} waiting={waiting} onComment={onPage?.onComment} />
-
-      {pictures.length > 0 &&
-        words &&
-        (onPage ? (
-          <p className="fcard-caption is-full">{caption}</p>
-        ) : (
-          <Link to={item.href} className="fcard-caption">
-            {caption}
-          </Link>
-        ))}
-
-      {!onPage && item.commentCount > 0 && (
-        <Link to={item.href} className="fcard-comments">
-          {item.commentCount === 1 ? t('feed.viewCommentOne') : t('feed.viewComments', { count: comments })}
-        </Link>
-      )}
-
-      <time className="fcard-when" dateTime={item.at}>
-        {postAge(item.at, t, locale)}
-      </time>
     </article>
   );
 }
@@ -217,12 +183,14 @@ export function useEngagement(item: FeedItem, onChanged: ((next: FeedItem) => vo
 }
 
 /**
- * The row under a post: the heart, comments, repost and share together, each
- * with its count beside it, and save at the far end.
+ * The row under a post: the heart, comments and repost as soft pills at the
+ * start, each with its count beside its icon, and share and save as round
+ * buttons at the end — what is counted on one side, what is only done on the
+ * other.
  *
- * All of it in ink. The heart turns red once you have liked the post; a repost
- * or a save is shown by its icon filling in, not by a colour of its own — a
- * green or a gold here would read as a reward or a warning, and it is neither.
+ * All of it in ink until it is yours: the heart turns red and fills once you
+ * have liked the post, a repost you made turns green, and a saved post's
+ * bookmark fills in.
  */
 export function PostActions({
   item,
@@ -243,7 +211,7 @@ export function PostActions({
   const signedIn = status === 'signedIn';
   const { engagement: e } = item;
   const { busy, justOn, toggle } = engage;
-  const count = (n: number): string => n.toLocaleString(locale);
+  const count = (n: number): string => shortCount(n, locale);
   const held = !signedIn || busy !== null || waiting;
 
   /**
@@ -263,7 +231,7 @@ export function PostActions({
 
   const commentInner = (
     <>
-      <CommentIcon size={24} />
+      <CommentIcon size={20} />
       {item.commentCount > 0 && <span className="fcard-count">{count(item.commentCount)}</span>}
     </>
   );
@@ -279,7 +247,7 @@ export function PostActions({
         title={signedIn ? (e.liked ? t('feed.unlike') : t('feed.like')) : t('feed.signInToLike')}
         onClick={() => void toggle('like')}
       >
-        <HeartIcon size={24} weight={e.liked ? 'fill' : 'regular'} />
+        <HeartIcon size={20} weight={e.liked ? 'fill' : 'regular'} />
         {/* a fresh element for each like, so its sparks play once per press (styles/motion.css) */}
         {justOn?.kind === 'like' && <span key={justOn.n} className="fcard-burst" aria-hidden="true" />}
         {e.likes > 0 && <span className="fcard-count">{count(e.likes)}</span>}
@@ -313,7 +281,7 @@ export function PostActions({
         title={signedIn ? (e.reposted ? t('repost.undo') : t('repost.do')) : t('repost.signIn')}
         onClick={() => void toggle('repost')}
       >
-        <RepostIcon size={24} weight={e.reposted ? 'bold' : 'regular'} />
+        <RepostIcon size={20} weight={e.reposted ? 'bold' : 'regular'} />
         {e.reposts > 0 && <span className="fcard-count">{count(e.reposts)}</span>}
       </button>
 
@@ -328,7 +296,7 @@ export function PostActions({
         title={signedIn ? (e.bookmarked ? t('feed.removeFromSaved') : t('feed.save')) : t('feed.signInToSave')}
         onClick={() => void toggle('bookmark')}
       >
-        <BookmarkIcon size={24} weight={e.bookmarked ? 'fill' : 'regular'} />
+        <BookmarkIcon size={20} weight={e.bookmarked ? 'fill' : 'regular'} />
       </button>
     </footer>
   );
@@ -345,10 +313,32 @@ function cardImages(item: FeedItem): FeedImage[] {
   return item.imageUrl ? [{ url: item.imageUrl, alt: item.imageAlt ?? null, width: null, height: null }] : [];
 }
 
-/** "5 minutes ago", "2 days ago" for the first week; after that, the date. */
+/**
+ * A count short enough for a pill: in full up to 9,999, then "12K", "1.2M" —
+ * five pills have to fit across a phone, whatever a post has gathered.
+ */
+export function shortCount(n: number, locale: string): string {
+  if (n < 10_000) return n.toLocaleString(locale);
+  try {
+    return new Intl.NumberFormat(locale, { notation: 'compact', maximumFractionDigits: 1 }).format(n);
+  } catch {
+    return n.toLocaleString(locale);
+  }
+}
+
+/**
+ * How long ago, short enough to sit beside a name on one line: "5m ago",
+ * "3h ago", "2d ago" for the first week; after that, the date. The full date
+ * and time are the element's title, for whoever points at it.
+ */
 function postAge(iso: string, t: Translate, locale: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return '';
-  if (Date.now() - d.getTime() < 7 * 24 * 60 * 60 * 1000) return agoInWords(iso, t, locale);
+  if (Date.now() - d.getTime() < 7 * 24 * 60 * 60 * 1000) return lastSeen(iso, t);
   return dayLabel(d, new Date(), { locale, today: t('feed.today'), yesterday: t('feed.yesterday') });
+}
+
+function fullDate(iso: string, locale: string): string | undefined {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? undefined : d.toLocaleString(locale, { dateStyle: 'long', timeStyle: 'short' });
 }
