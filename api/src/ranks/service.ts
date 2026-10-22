@@ -39,7 +39,7 @@ import { pairEvidence } from '../net/evidence.js';
 import { areFriendsSql, notKnownAdultSql } from '../users/age.js';
 import { expectedExtremes, expectedVs, freshState, rateGame, seasonReset, weightParts, type PlayerState, type RateOutcome } from './engine.js';
 import { RankEvents } from './events.js';
-import { RANKED_TABLES, isInGame, loadLobby, type LobbySeat } from './games.js';
+import { isInGame, loadLobby, tablesOf, type LobbySeat } from './games.js';
 import {
   fromStored,
   insertEvent,
@@ -618,7 +618,7 @@ export class RankService {
       await this.pool.query<{ rated_state: string | null; applied_at: Date | null; voided_at: Date | null; mine: boolean }>(
         `SELECT t.rated_state, g.applied_at, g.voided_at,
                 EXISTS (SELECT 1 FROM rated_game_players p WHERE p.game = $1 AND p.game_ref = t.id AND p.user_id = $3) AS mine
-           FROM ${RANKED_TABLES[game].table} t
+           FROM ${tablesOf(game).table} t
            LEFT JOIN rated_games g ON g.game = $1 AND g.game_ref = t.id
           WHERE t.id = $2`,
         [game, gameRef, viewerId],

@@ -178,7 +178,8 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
 
   /** A multiplayer game finished (from the play layer): every player in it is counted. */
   async onGameFinished(game: string, lobbyId: string): Promise<void> {
-    const table = PLAY_GAMES[game];
+    // its own keys only: a name like __proto__ finds nothing here either
+    const table = Object.hasOwn(PLAY_GAMES, game) ? PLAY_GAMES[game] : undefined;
     if (!table) return;
     const key = `${game}:${lobbyId}`;
     const at = Date.now();

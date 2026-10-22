@@ -197,7 +197,7 @@ const feedSql = (sort: FeedSort): string => `
     ) AS wall
      WHERE ($6::timestamptz IS NULL OR wall.at >= $6::timestamptz)
   ) AS ranked
-  ORDER BY ${ORDER[sort]}
+  ORDER BY ${Object.hasOwn(ORDER, sort) ? ORDER[sort] : ORDER.newest}
   LIMIT $3 OFFSET $4`;
 
 /**

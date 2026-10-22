@@ -97,6 +97,12 @@ const KINDS: Record<'lesson' | 'alphabet' | 'dictionary', Kind> = {
   },
 };
 
+/** A kind's tables, checked against the map itself as well as the route's schema: nothing but these literals names a table in SQL. */
+function kindOf(kind: string): Kind {
+  if (!Object.hasOwn(KINDS, kind)) throw new AppError('NOT_FOUND', 404, 'no such recording');
+  return KINDS[kind as keyof typeof KINDS];
+}
+
 const params = z.object({ kind: z.enum(['lesson', 'alphabet', 'dictionary']) });
 const query = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2) });
 const body = z
@@ -131,7 +137,7 @@ export function registerRecordingVoiceRoutes(
     async (req, reply) => {
       const { kind } = req.params as z.infer<typeof params>;
       const { key } = req.query as z.infer<typeof query>;
-      const spec = KINDS[kind];
+      const spec = kindOf(kind);
       if (!spec.valid(key)) throw new AppError('NOT_FOUND', 404, spec.missing);
       const signal = AbortSignal.timeout(files.timeoutMs);
       const source =
@@ -149,7 +155,7 @@ export function registerRecordingVoiceRoutes(
       const { kind } = req.params as z.infer<typeof params>;
       const { key } = req.query as z.infer<typeof query>;
       const change = req.body as z.infer<typeof body>;
-      const spec = KINDS[kind];
+      const spec = kindOf(kind);
       if (!spec.valid(key)) throw new AppError('NOT_FOUND', 404, spec.missing);
 
       const client = await app.db.connect();
