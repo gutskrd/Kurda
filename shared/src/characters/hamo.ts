@@ -16,7 +16,7 @@
  * mouth, so every mouth shape tucks its top under it, as a real mouth does.
  */
 import type { Pt } from '../art/svg.js';
-import { linearAt, n } from '../art/svg.js';
+import { n } from '../art/svg.js';
 import type { CharacterArt } from './types.js';
 import type { Knot } from './pen.js';
 import { alpha, circle, clipDef, clipped, curve, fill, line, part, taper } from './pen.js';
@@ -101,9 +101,9 @@ const TROUSERS: Knot[] = [
 ];
 
 /**
- * The jacket's own folds: the seam where each sleeve meets the body, and the
+ * The jacket's own folds: the seam where each sleeve meets the body, the
  * long crease down each forearm from the inside of the elbow to under the
- * hand.
+ * hand, and the edge of each cuff.
  */
 const FOLDS: readonly (readonly Pt[])[] = [
   [
@@ -132,6 +132,16 @@ const FOLDS: readonly (readonly Pt[])[] = [
     [251.3, 286.4],
     [244.6, 295],
     [239.6, 301],
+  ],
+  [
+    [100.9, 325],
+    [100.8, 329.1],
+    [98.8, 332.6],
+  ],
+  [
+    [261.2, 319.4],
+    [261.4, 323.5],
+    [261.8, 327.8],
   ],
 ];
 
@@ -273,12 +283,6 @@ const HAND_RIGHT: Knot[] = [
   [212.2, 311.4], [211.4, 309.7], [212.7, 307.1], [218, 305.2], [226, 303.8], [232, 302.8], [236, 301.4], [238.4, 300.6], [240.2, 302.4], [243, 303.8],
 ];
 
-/** The end of each sleeve, drawn over the wrist, so each hand comes out of its cuff; and the cuff's edge. */
-const CUFFS =
-  'M110,311.4Q107.4,320 107,328Q106.4,333 104.4,336.2L96.4,335.7L88,328L92,311Z' +
-  'M250.6,304Q254.6,313 255.6,322Q256.6,328 259.6,331.6L266,330.4L276,316L272,300Z';
-const CUFF_EDGES = 'M110,311.4Q107.4,320 107,328Q106.4,333 104.4,336.2M250.6,304Q254.6,313 255.6,322Q256.6,328 259.6,331.6';
-
 /** The lines between his fingers, where one lies against the next. */
 const CREASES: readonly (readonly Pt[])[] = [
   [
@@ -358,15 +362,6 @@ function body(p: string): string {
   const sash = sashOutline(SASH_TOP + WEAVE.reduce((deep, [h]) => deep + h, 0));
   return part(
     [
-      // each hand in the skin of his face, a little in shadow where it comes out of its cuff
-      linearAt(id('handL'), [
-        [0, C.shade],
-        [0.3, C.skin],
-      ], 108, 318, 152, 340),
-      linearAt(id('handR'), [
-        [0, C.shade],
-        [0.3, C.skin],
-      ], 256, 316, 212, 336),
       clipDef(id('sash'), sash),
     ],
     [
@@ -382,13 +377,9 @@ function body(p: string): string {
       line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
       clipped(id('sash'), woven()),
-      // the hands lie over the pştên, the fingers forward and the thumbs back
-      fill(curve(HAND_LEFT), `url(#${id('handL')})`),
-      fill(curve(HAND_RIGHT), `url(#${id('handR')})`),
+      // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
+      fill(curve(HAND_LEFT) + curve(HAND_RIGHT), C.skin),
       fill(CREASES.map((s) => taper(s, [0.2, 0.8, 0.25])).join(''), C.shade),
-      // and each comes out of its sleeve's cuff
-      fill(CUFFS, C.suit),
-      line(CUFF_EDGES, C.fold, 2),
     ],
   );
 }
