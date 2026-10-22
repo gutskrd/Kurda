@@ -231,7 +231,7 @@ function ModelButton({ playing, onPress }: { playing: boolean; onPress: () => vo
 }
 
 const styles = StyleSheet.create({
-  model: { alignSelf: 'center', width: 56, height: 56, borderRadius: 28, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  model: { alignSelf: 'center', width: 56, height: 56, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
