@@ -5,11 +5,13 @@ import {
   DEFAULT_QUESTION_COUNT,
   JOIN_CODE_ALPHABET,
   JOIN_CODE_LENGTH,
+  MAX_HOSTED_GAMES,
   MAX_PLAYERS,
   MIN_PLAYERS_TO_START,
   POINTS_PER_CORRECT,
   isAllowedQuestionCount,
   lessonAudioKey,
+  limitDetails,
   normalizeJoinCode,
   readingHardCapSeconds,
   readingMinutes,
@@ -67,8 +69,6 @@ import { phaseGame, renderView, type GameRow, type PlayerRow, type ViewAnswer, t
 export const POLL_WAIT_MS = 20_000;
 /** A finished game stops being waited on this long after it ended. */
 export const FINISHED_POLL_MINUTES = 10;
-/** Unfinished duo/group games one person may host at once. */
-export const MAX_HOSTED_GAMES = 3;
 /** A lobby or reading phase nobody touched for this long is closed by the sweep. */
 export const STALE_HOURS = 6;
 /** A game's questions, answers and text are cleared this long after it ended. */
@@ -339,7 +339,8 @@ export class StoryGamesService {
 
   /**
    * Insert a game and its host, inside the caller's transaction. Duo and group
-   * games count against the host's limit of unfinished games: a fourth closes
+   * games count against the host's limit of unfinished games (@kurda/shared
+   * MAX_HOSTED_GAMES, the same for every game): a fourth closes
    * the oldest lobby, or is refused when none of the three is a lobby. A game
    * the host has left does not count — the others may play it on for a while,
    * but the host is no longer in it.
@@ -365,7 +366,7 @@ export class StoryGamesService {
       );
       if (hosted.rows.length >= MAX_HOSTED_GAMES) {
         const oldestLobby = hosted.rows.find((g) => g.status === 'lobby');
-        if (!oldestLobby) throw new AppError('TOO_MANY_GAMES', 409, 'finish one of your games first');
+        if (!oldestLobby) throw new AppError('TOO_MANY_GAMES', 409, 'finish one of your games first', limitDetails('hosted_games'));
         const t = await this.lockWith(client, oldestLobby.id);
         if (t && t.game.status === 'lobby') {
           await this.endEarly(t);

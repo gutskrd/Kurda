@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
-import { foldForSearch } from '@kurda/shared';
+import { foldForSearch, groupLimits, type GroupLimitState, type LimitDetails } from '@kurda/shared';
 import { BottomSheet } from '../theme/BottomSheet';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -16,6 +16,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { SearchField } from '../shop/ItemFilters';
+import { limitText } from '../limits/limitCopy';
 import { createGroup, discoverGroups, joinGroup, myGroups, type Group } from './api';
 import { GroupAvatar } from './GroupAvatar';
 
@@ -39,6 +40,11 @@ function matches(group: Found, words: string[]): boolean {
  * many are in it, and one small button at the end — Join, or Open for a group
  * you are already in. A search at the top narrows the list by name or
  * description. Making a group is the + in the corner.
+ *
+ * At a group limit (@kurda/shared `groupLimits`, counted from the reader's own
+ * groups as the server counts them) the screen says which one before anything
+ * is pressed: the Join buttons wait, and the new-group sheet explains instead
+ * of sending a group the server would refuse.
  */
 export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -48,6 +54,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
   const [all, setAll] = useState<Found[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
+  const [limits, setLimits] = useState<GroupLimitState>(() => groupLimits([]));
   const [joining, setJoining] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [composing, setComposing] = useState(false);
@@ -63,7 +70,9 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     });
     // which of them the reader is already in, for a server that does not say so itself
     void myGroups(client).then((r) => {
-      if (r.ok) setMineIds(new Set(r.data.groups.map((g) => g.id)));
+      if (!r.ok) return;
+      setMineIds(new Set(r.data.groups.map((g) => g.id)));
+      setLimits(groupLimits(r.data.groups));
     });
   }, [client, t]);
 
@@ -107,6 +116,11 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
           ListHeaderComponent={
             <View style={styles.top}>
               {(all?.length ?? 0) > 0 ? <SearchField value={query} onChange={setQuery} label={t('groups.search')} /> : null}
+              {limits.join ? (
+                <Text style={[styles.notice, { color: colors.textSecondary }]} accessibilityRole="text">
+                  {limitText(limits.join, t)}
+                </Text>
+              ) : null}
               {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
             </View>
           }
@@ -116,7 +130,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
               group={item}
               joined={item.joined ?? mineIds.has(item.id)}
               joining={joining === item.id}
-              disabled={joining !== null}
+              disabled={joining !== null || limits.join !== null}
               onJoin={() => void join(item)}
               onOpen={() => navigation.navigate('GroupThread', { groupId: item.id, name: item.name })}
             />
@@ -138,6 +152,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
 
         <NewClub
           open={composing}
+          limit={limits.create}
           onClose={() => setComposing(false)}
           onCreated={(id, name) => {
             setComposing(false);
@@ -269,13 +284,19 @@ function DiscoverSkeleton(): React.JSX.Element {
 
 const ROW_AVATAR = 52;
 
-/** A Modal, not a positioned View: this screen sits inside the tab navigator. */
+/**
+ * A Modal, not a positioned View: this screen sits inside the tab navigator.
+ * At a group limit (`limit`) it says which one and what makes room, and has
+ * nothing to send.
+ */
 function NewClub({
   open,
+  limit,
   onClose,
   onCreated,
 }: {
   open: boolean;
+  limit: LimitDetails | null;
   onClose: () => void;
   onCreated: (id: string, name: string) => void;
 }): React.JSX.Element {
@@ -290,7 +311,7 @@ function NewClub({
 
   const submit = async () => {
     const trimmed = name.trim();
-    if (busy || trimmed.length < 2) return;
+    if (busy || trimmed.length < 2 || limit) return;
     setBusy(true);
     setError(null);
     const res = await createGroup(client, {
@@ -311,6 +332,7 @@ function NewClub({
   return (
     // the shared sheet: it moves up out of the keyboard's way while the name is typed
     <BottomSheet visible={open} onClose={onClose} title={t('groups.new')}>
+      {limit ? <Text style={[styles.notice, { color: colors.textSecondary }]}>{limitText(limit, t)}</Text> : null}
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('groups.name')}</Text>
       <TextInput
         style={[styles.input, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
@@ -349,7 +371,8 @@ function NewClub({
         label={busy ? t('groups.creating') : t('groups.create')}
         tone="primary"
         onPress={submit}
-        style={name.trim().length >= 2 && !busy ? undefined : styles.dim}
+        disabled={limit !== null}
+        style={name.trim().length >= 2 && !busy && !limit ? undefined : styles.dim}
       />
     </BottomSheet>
   );
@@ -374,6 +397,7 @@ const styles = StyleSheet.create({
   nothing: { alignItems: 'center', gap: spacing.md, paddingTop: spacing.xxl, paddingHorizontal: spacing.xl },
   empty: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.xl, paddingTop: spacing.lg },
   error: { textAlign: 'center', fontSize: typography.sizes.sm },
+  notice: { fontSize: typography.sizes.sm, lineHeight: 20 },
   label: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold },
   input: {
     minHeight: MIN_TOUCH_TARGET,

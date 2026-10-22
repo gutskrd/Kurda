@@ -10,9 +10,13 @@ import {
   GROUP_NAME_MAX,
   GROUP_NAME_MIN,
   isRole,
+  limitDetails,
   MAX_GROUP_MEMBERS,
+  MAX_GROUP_MEMBERSHIPS,
+  MAX_GROUPS_OWNED,
   type Role,
 } from '@kurda/shared';
+import { limitReached, lockPersonFor } from '../limits/limits.js';
 import { unconfirmIfUnused } from '../media/groupPhoto.js';
 import { filterText } from '../moderation/filter.js';
 
@@ -52,6 +56,40 @@ export function openGroupsAdultsOnly(): AppError {
   return new AppError('OPEN_GROUPS_ADULTS_ONLY', 403, 'open groups are for members aged 18 and over');
 }
 
+/**
+ * Hold a person to the group limits (@kurda/shared `MAX_GROUPS_OWNED`,
+ * `MAX_GROUP_MEMBERSHIPS`) before they are given one more group to own or to
+ * be in, under their lock, inside the caller's transaction. Archived groups
+ * count for neither. `theirs` is for a group someone else is handing them —
+ * an invite, or ownership passed on — so the refusal says whose limit it is.
+ *
+ * The lock is taken before any group row is (`addMember` locks the group), the
+ * one order every path here keeps.
+ */
+async function assertGroupRoom(
+  client: Pick<pg.Pool, 'query'>,
+  userId: string,
+  need: { owning?: boolean; joining?: boolean; theirs?: boolean },
+): Promise<void> {
+  await lockPersonFor(client, 'groups', userId);
+  const r = await client.query<{ owned: number; memberships: number }>(
+    `SELECT (SELECT count(*)::int FROM groups WHERE owner_id = $1 AND archived_at IS NULL) AS owned,
+            (SELECT count(*)::int FROM group_members m JOIN groups g ON g.id = m.group_id
+              WHERE m.user_id = $1 AND g.archived_at IS NULL) AS memberships`,
+    [userId],
+  );
+  const { owned, memberships } = r.rows[0]!;
+  const theirs = need.theirs === true;
+  if (need.owning && owned >= MAX_GROUPS_OWNED) {
+    const message = theirs ? `they already own ${MAX_GROUPS_OWNED} groups` : `you can own at most ${MAX_GROUPS_OWNED} groups`;
+    throw limitReached('groups_owned', message, { theirs });
+  }
+  if (need.joining && memberships >= MAX_GROUP_MEMBERSHIPS) {
+    const message = theirs ? `they are already in ${MAX_GROUP_MEMBERSHIPS} groups` : `you can be in at most ${MAX_GROUP_MEMBERSHIPS} groups`;
+    throw limitReached('group_memberships', message, { theirs });
+  }
+}
+
 export interface Group {
   id: string;
   name: string;
@@ -79,6 +117,11 @@ export interface GroupMember {
  * explicitly; when an owner's account is deleted the reconcile pass promotes the
  * oldest moderator (else oldest member, else archives). Group weekly XP is
  * summed from members' ledgers for the group leaderboard.
+ *
+ * One person owns at most MAX_GROUPS_OWNED groups and is in at most
+ * MAX_GROUP_MEMBERSHIPS (`assertGroupRoom`), whether they start a group, join
+ * one, are added to one or are handed one. A group passed on by the server
+ * itself (`handOnGroup`) is not held to it: nobody asked for that.
  *
  * Minors (worked out from age when asked) live in invite-only groups. They
  * cannot see, join or start an open one, and are taken out of any they were
@@ -126,6 +169,8 @@ export class GroupService {
       const name = cleanGroupText(input.name);
       const description = input.description != null ? cleanGroupText(input.description) || null : null;
       screenGroupText(name, description);
+      // the maker owns it and is in it: both limits, under their lock
+      await assertGroupRoom(client, ownerId, { owning: true, joining: true });
       const g = await client.query<{ id: string }>(
         `INSERT INTO groups (name, description, privacy, owner_id) VALUES ($1, $2, $3, $4) RETURNING id`,
         [name, description, input.privacy ?? 'open', ownerId],
@@ -154,7 +199,9 @@ export class GroupService {
     );
     const grp = g.rows[0];
     if (!grp || grp.archived_at) throw new AppError('GROUP_NOT_FOUND', 404, 'no such group');
-    if (grp.n >= MAX_GROUP_MEMBERS) throw new AppError('GROUP_FULL', 409, `group is full (max ${MAX_GROUP_MEMBERS})`);
+    if (grp.n >= MAX_GROUP_MEMBERS) {
+      throw new AppError('GROUP_FULL', 409, `group is full (max ${MAX_GROUP_MEMBERS})`, limitDetails('group_members'));
+    }
     await client.query(
       `INSERT INTO group_members (group_id, user_id, role) VALUES ($1, $2, 'member') ON CONFLICT DO NOTHING`,
       [groupId, userId],
@@ -169,6 +216,8 @@ export class GroupService {
       const grp = await client.query<{ privacy: string }>(`SELECT privacy FROM groups WHERE id = $1`, [groupId]);
       if (grp.rows[0]?.privacy !== 'open') throw new AppError('INVITE_ONLY', 403, 'this group is invite-only');
       if (await isMinorUser(client, userId)) throw openGroupsAdultsOnly();
+      // joining a group you are in already changes nothing, so it is never refused for a limit
+      if (!(await this.roleOf(client, groupId, userId))) await assertGroupRoom(client, userId, { joining: true });
       await this.addMember(client, groupId, userId);
       await client.query('COMMIT');
     } catch (err) {
@@ -205,6 +254,8 @@ export class GroupService {
       if ((friends.rowCount ?? 0) === 0) {
         throw new AppError('NOT_FRIENDS', 403, 'you can only add your friends to a group');
       }
+      // their limit, not the inviter's; like the two rules above it is the same for every account
+      if (!(await this.roleOf(client, groupId, targetId))) await assertGroupRoom(client, targetId, { joining: true, theirs: true });
       await this.addMember(client, groupId, targetId);
       await client.query('COMMIT');
     } catch (err) {
@@ -269,6 +320,8 @@ export class GroupService {
       if (!(await this.roleOf(client, groupId, newOwnerId))) {
         throw new AppError('BAD_TARGET', 400, 'new owner must be a member');
       }
+      // handing a group on is giving the other member one more to own; they are in it already
+      if (newOwnerId !== ownerId) await assertGroupRoom(client, newOwnerId, { owning: true, theirs: true });
       await client.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [groupId, newOwnerId]);
       await client.query(`UPDATE group_members SET role = 'moderator' WHERE group_id = $1 AND user_id = $2`, [groupId, ownerId]);
       await client.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [groupId, newOwnerId]);

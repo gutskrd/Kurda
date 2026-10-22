@@ -15,6 +15,7 @@ import {
   loadFacts,
   lobbyCard,
   lobbyIdle,
+  makeRoomToHost,
   mayJoin,
   present,
   rematchChain,
@@ -176,7 +177,7 @@ export class RhymeMatchService {
     this.publicUrl = deps.publicUrl ?? (() => null);
   }
 
-  /** A new lobby with its host in it; Rated or Friendly as for Peyvok Battle (`WordleBattleService.create`). */
+  /** A new lobby with its host in it; Rated or Friendly, and how many a host has at once, as for Peyvok Battle (`WordleBattleService.create`). */
   async create(
     userId: string,
     opts: {
@@ -200,7 +201,9 @@ export class RhymeMatchService {
     const rated =
       opts.rated ??
       (await this.ranks.defaultRated(this.pool, userId, 'rhyme-match', { fromChat: opts.fromChat ?? !!opts.chatGroupId, access }));
-    const id = await this.tx(async (client) => {
+    const { id, closed } = await this.tx(async (client) => {
+      // at most three of the host's own at once: the oldest lobby nobody started gives way
+      const closed = await makeRoomToHost(client, T, userId, this.now());
       const m = await client.query<MatchRow>(
         `INSERT INTO rhyme_matches (created_by, dialect, prompt, window_ms, max_players, access, chat_group_id, updated_at, rated)
          VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING *`,
@@ -208,8 +211,9 @@ export class RhymeMatchService {
       );
       if (opts.rated !== undefined) await this.ranks.rememberChoice(client, userId, 'rhyme-match', opts.rated);
       await client.query(`INSERT INTO rhyme_match_players (match_id, user_id, seat) VALUES ($1,$2,1)`, [m.rows[0]!.id, userId]);
-      return m.rows[0]!.id;
+      return { id: m.rows[0]!.id, closed };
     });
+    if (closed) this.changed(closed);
     this.changed(id);
     return { ok: true, match: await this.state(id, userId) };
   }

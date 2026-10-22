@@ -16,6 +16,7 @@ import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
+import { describeError } from '../api/errors';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { GradientBackground } from '../theme/glass';
@@ -216,7 +217,7 @@ export function ChatScreen({
                 text: t('moderation.block'),
                 style: 'destructive',
                 // blocked: the conversation is over for you
-                onPress: () => void blockUser(client, userId).then((res) => (res.ok ? onExit() : undefined)),
+                onPress: () => void blockUser(client, userId).then((res) => (res.ok ? onExit() : Alert.alert(describeError(res.error, t)))),
               },
             ]),
         },

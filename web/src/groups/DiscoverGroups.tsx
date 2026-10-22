@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { foldForSearch } from '@kurda/shared';
+import { foldForSearch, type LimitDetails } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { limitText } from '../lib/limits';
 import type { DiscoverGroup } from '../lib/types';
 import { Button } from '../components/Button';
 import { ErrorState } from '../components/states';
@@ -27,16 +28,21 @@ export function groupMatches(group: Pick<DiscoverGroup, 'name' | 'description'>,
  *
  * The server lists open groups only (an invite-only group is joined by being
  * invited), says which of them you are in (`joined`, else the ids you pass),
- * and the search narrows what it sent without asking again.
+ * and the search narrows what it sent without asking again. Someone already
+ * in as many groups as anyone may be is told so at the top, and the Join
+ * buttons wait until they have left one.
  */
 export function DiscoverGroups({
   mineIds,
+  joinLimit = null,
   onOpen,
   onJoined,
   onNew,
 }: {
   /** the groups you are in, for a server that does not say `joined` itself */
   mineIds: Set<string>;
+  /** why no group can be joined now (@kurda/shared `groupLimits`), or null */
+  joinLimit?: LimitDetails | null;
   /** a joined group was opened: whatever holds this list closes */
   onOpen: () => void;
   /** you joined one: the list of your groups reloads, and the group opens */
@@ -93,6 +99,11 @@ export function DiscoverGroups({
           autoComplete="off"
         />
       )}
+      {joinLimit && (
+        <div className="msg" role="status" id="gdisc-limit">
+          {limitText(joinLimit, t)}
+        </div>
+      )}
       {error && <div className="msg msg-error" role="alert">{error}</div>}
 
       {groups === null ? (
@@ -141,8 +152,9 @@ export function DiscoverGroups({
                   <button
                     type="button"
                     className="gdisc-btn"
-                    disabled={joining !== null}
+                    disabled={joining !== null || joinLimit !== null}
                     aria-label={`${t('groups.join')}: ${g.name}`}
+                    aria-describedby={joinLimit ? 'gdisc-limit' : undefined}
                     onClick={() => void join(g)}
                   >
                     {joining === g.id ? t('groups.joining') : t('groups.join')}

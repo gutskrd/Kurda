@@ -1,12 +1,13 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { describeError } from '../api/errors';
+import { limitErrorText } from '../limits/limitCopy';
 import type { ApiError } from '../api/types';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -73,6 +74,9 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
         }
         // the answer did not get through: the request comes back where it was, to be answered again
         haptic('error');
+        // a friend list that is full (theirs or yours) will not empty on a retry, so it is said (limits/limitCopy.ts)
+        const limit = limitErrorText(res.error, t);
+        if (limit) Alert.alert(limit);
         setRequests((list) => {
           const next = [...(list ?? [])];
           next.splice(at < 0 ? next.length : Math.min(at, next.length), 0, row);
@@ -80,7 +84,7 @@ export function FriendRequestsScreen({ onExit }: { onExit: () => void }): React.
         });
       });
     },
-    [client, refresh, requests],
+    [client, refresh, requests, t],
   );
 
   return (

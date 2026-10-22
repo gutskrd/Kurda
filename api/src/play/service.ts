@@ -3,6 +3,7 @@ import {
   DECLINE_COOLDOWN_MINUTES,
   INVITE_TTL_MINUTES,
   MAX_INVITEES_PER_REQUEST,
+  MAX_PENDING_PLAY_INVITES,
   REMATCH_OFFER_SECONDS,
   type ChatGameRef,
   type DeclineReason,
@@ -16,6 +17,7 @@ import {
   type RematchState,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { limitReached, lockPersonFor } from '../limits/limits.js';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import type { FriendService } from '../friends/service.js';
 import type { Notification } from '../push/service.js';
@@ -49,6 +51,11 @@ const GAME_NAMES: Record<PlayGame, string> = {
   'rhyme-match': 'Rhyme Match',
   stories: 'a story quiz',
 };
+
+/** Every invite the host may have waiting is waiting: answers, or invites running out, make room. */
+function tooManyInvites(): AppError {
+  return limitReached('play_invites_pending', `you have ${MAX_PENDING_PLAY_INVITES} invites waiting for an answer`);
+}
 
 /** Answered invites stay in the host's list this long, so "can't play right now" is seen. */
 const OUTGOING_HOURS = 1;
@@ -93,7 +100,8 @@ export interface CreateLobbyInput {
  * game (contract §B, @kurda/shared `play`).
  *
  * - An invite is a row (`play_invites`): one pending per host, friend and game,
- *   a newer one replacing the older; it lasts INVITE_TTL_MINUTES, or until the
+ *   a newer one replacing the older, and at most MAX_PENDING_PLAY_INVITES
+ *   waiting from one host at once; it lasts INVITE_TTL_MINUTES, or until the
  *   lobby starts, fills or is called off. It reaches the friend three ways at
  *   once: a game card in their DM with the host, a `play_invite` event (the
  *   banner) and an inbox entry. Only friends are ever invited; anybody else is
@@ -148,6 +156,12 @@ export class PlayService {
     if (groupId && !(await this.deps.groups.memberRole(groupId, hostId))) {
       throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
     }
+    // a host with no invites left to send is told before a lobby is made for them
+    const invitees = [...(input.invite ?? [])];
+    if (input.chat && 'userId' in input.chat) invitees.push(input.chat.userId);
+    if (invitees.length > 0 && (await this.pendingFrom(this.pool, hostId, this.now())) >= MAX_PENDING_PLAY_INVITES) {
+      throw tooManyInvites();
+    }
     const lobbyId = await adapter.create(hostId, input.settings, { chatGroupId: groupId, fromChat: input.chat !== undefined });
     if (groupId) {
       try {
@@ -157,21 +171,38 @@ export class PlayService {
         throw err;
       }
     }
-    const invitees = [...(input.invite ?? [])];
-    if (input.chat && 'userId' in input.chat) invitees.push(input.chat.userId);
-    const invited = invitees.length > 0 ? await this.inviteTo(hostId, input.game, lobbyId, invitees) : 0;
+    const invited = invitees.length > 0 ? (await this.inviteTo(hostId, input.game, lobbyId, invitees)).invited : 0;
     return { game: input.game, lobbyId, invited };
   }
 
   /**
    * `POST /play/invites`: the host asks friends into their lobby. Always "ok"
-   * with a count; who was skipped, and why, is never said.
+   * with a count; who was skipped, and why, is never said. The one refusal is
+   * the host's own: every one of their MAX_PENDING_PLAY_INVITES is waiting for
+   * an answer, so not one more could go — said only when none went, since the
+   * ones that did are on their way.
    */
   async invite(hostId: string, game: PlayGame, lobbyId: string, userIds: readonly string[]): Promise<{ invited: number }> {
-    return { invited: await this.inviteTo(hostId, game, lobbyId, userIds) };
+    const { invited, limited } = await this.inviteTo(hostId, game, lobbyId, userIds);
+    if (invited === 0 && limited) throw tooManyInvites();
+    return { invited };
   }
 
-  private async inviteTo(hostId: string, game: PlayGame, lobbyId: string, userIds: readonly string[]): Promise<number> {
+  /** The invites `hostId` has out that are still waiting for an answer. */
+  private async pendingFrom(executor: Pick<pg.Pool, 'query'>, hostId: string, now: Date): Promise<number> {
+    const r = await executor.query<{ n: number }>(
+      `SELECT count(*)::int AS n FROM play_invites WHERE host_id = $1 AND status = 'pending' AND expires_at > $2`,
+      [hostId, now],
+    );
+    return r.rows[0]!.n;
+  }
+
+  private async inviteTo(
+    hostId: string,
+    game: PlayGame,
+    lobbyId: string,
+    userIds: readonly string[],
+  ): Promise<{ invited: number; limited: boolean }> {
     const adapter = this.adapter(game);
     const facts = await adapter.facts(lobbyId);
     if (!facts || !facts.memberIds.includes(hostId)) throw gameNotFound();
@@ -190,6 +221,7 @@ export class PlayService {
     const sent: InviteRow[] = [];
     const superseded: InviteRow[] = [];
     let invited = 0;
+    let limited = false;
     for (const inviteeId of wanted) {
       if (facts.memberIds.includes(inviteeId) || facts.removedIds.includes(inviteeId)) continue;
       // friends only; a block reads as 'blocked' here
@@ -206,6 +238,11 @@ export class PlayService {
       const rematchOf = before?.memberIds.includes(inviteeId) ? facts.rematchOf : null;
       const outcome = await this.recordInvite(hostId, inviteeId, facts, now, { held, rematchOf });
       if (outcome === 'cooldown') continue;
+      if (outcome === 'limit') {
+        // the host's own limit: nobody further down the list could be asked either
+        limited = true;
+        break;
+      }
       invited++;
       if (outcome === 'unchanged') continue;
       sent.push(outcome.invite);
@@ -225,14 +262,17 @@ export class PlayService {
       for (const row of sent) await this.deliver(row, host, summary);
       this.deps.events.changed(game, lobbyId);
     }
-    return invited;
+    return { invited, limited };
   }
 
   /**
    * One invite, in one transaction under a lock on (host, friend, game): no
    * new invite within DECLINE_COOLDOWN_MINUTES of a "not now" to this game; the
    * same lobby's invite still pending is left as it is (asking twice notifies
-   * once); any other pending one is cancelled and replaced.
+   * once); any other pending one is cancelled and replaced. One that would be
+   * a new invite waiting, beyond the host's MAX_PENDING_PLAY_INVITES, is not
+   * made ('limit'): that count is read under the host's own lock, taken before
+   * the pair's, so a burst of invites at once cannot all slip under it.
    *
    * Everything it needs is worked out before it takes its pool client, and
    * it asks the pool for nothing else until that client is back: a request
@@ -245,10 +285,11 @@ export class PlayService {
     facts: LobbyFacts,
     now: Date,
     { held, rematchOf }: { held: boolean; rematchOf: string | null },
-  ): Promise<'cooldown' | 'unchanged' | { invite: InviteRow; replaced: InviteRow | null }> {
+  ): Promise<'cooldown' | 'limit' | 'unchanged' | { invite: InviteRow; replaced: InviteRow | null }> {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await lockPersonFor(client, 'play-invites', hostId);
       await client.query(`SELECT pg_advisory_xact_lock(hashtextextended('play-invite:' || $1 || ':' || $2 || ':' || $3, 0))`, [
         hostId,
         inviteeId,
@@ -273,6 +314,12 @@ export class PlayService {
       if (old && old.lobby_id === facts.lobbyId && old.expires_at > now) {
         await client.query('COMMIT');
         return 'unchanged';
+      }
+      // replacing one still waiting leaves as many waiting as before; anything else adds one
+      const replacing = old !== null && old.expires_at > now;
+      if (!replacing && (await this.pendingFrom(client, hostId, now)) >= MAX_PENDING_PLAY_INVITES) {
+        await client.query('COMMIT');
+        return 'limit';
       }
       let replaced: InviteRow | null = null;
       if (old) {

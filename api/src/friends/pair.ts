@@ -3,9 +3,10 @@
  * as a single row keyed on the canonically-ordered pair (lo < hi). Blocks are
  * directional and live in their own table. Pure so the ordering is testable.
  */
+import { MAX_FRIENDS } from '@kurda/shared';
 
-/** Max accepted friends per user. */
-export const FRIEND_CAP = 500;
+/** Max accepted friends per user: @kurda/shared's number, which the apps show too. */
+export const FRIEND_CAP = MAX_FRIENDS;
 /** Pending requests older than this expire. */
 export const REQUEST_TTL_DAYS = 30;
 

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
@@ -16,6 +16,7 @@ import { SenseSection } from './SenseSection';
 import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
+import { describeError } from '../api/errors';
 
 /** A pronunciation's speaker and timeline, which the entry sends beside its URL rather than as one voice. */
 function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
@@ -53,8 +54,12 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
   const toggleSave = () => {
     const next = !saved;
     setSaved(next); // optimistic
-    if (next) void client.put(`/dictionary/entries/${entryId}/save`);
-    else void client.delete(`/dictionary/entries/${entryId}/save`);
+    void (next ? client.put(`/dictionary/entries/${entryId}/save`) : client.delete(`/dictionary/entries/${entryId}/save`)).then((res) => {
+      if (res.ok) return;
+      // it did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts)
+      setSaved(!next);
+      Alert.alert(describeError(res.error, t));
+    });
   };
 
   return (

@@ -115,18 +115,24 @@ function FriendActions({ userId, username, status }: { userId: string; username:
   const navigate = useNavigate();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
+  // why a request or an answer did not go through — a full friend list says so (lib/limits.ts)
+  const [err, setErr] = useState<string | null>(null);
 
   async function add(): Promise<void> {
     setBusy(true);
+    setErr(null);
     const res = await client.post('/friends/requests', { userId });
     setBusy(false);
     if (res.ok) setState('pending_out');
+    else setErr(describeError(res.error, t));
   }
   async function accept(): Promise<void> {
     setBusy(true);
+    setErr(null);
     const res = await client.post(`/friends/requests/${userId}/accept`);
     setBusy(false);
     if (res.ok) setState('friends');
+    else setErr(describeError(res.error, t));
   }
 
   const message = (
@@ -148,6 +154,11 @@ function FriendActions({ userId, username, status }: { userId: string; username:
           <Button size="sm" onClick={() => void accept()} disabled={busy}>{busy ? t('profile.accepting') : t('profile.acceptRequest')}</Button>
           {message}
         </>
+      )}
+      {err && (
+        <div className="msg msg-error" role="alert">
+          {err}
+        </div>
       )}
       {/*
         The same menu as the profile card, for the same reasons — and it has to

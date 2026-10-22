@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { groupLimits, type LimitDetails } from '@kurda/shared';
 import { useApiGet } from '../lib/useApi';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
+import { limitText } from '../lib/limits';
 import type { ApiError, Conversation, MyGroup, UserSummary } from '../lib/types';
 import { messagePreview } from '../chat/messagePreview';
 import { useLocale, useT } from '../i18n/I18nProvider';
@@ -459,6 +461,9 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
     void load();
   }, [load]);
 
+  // the group limits, counted from the list the server sent, as it counts them
+  const limits = groupLimits(mine ?? []);
+
   // a new group message can change previews/unread — cheap to refresh the list
   const onGroupMsg = useCallback(() => void load(), [load]);
   useRealtimeEvent('group_msg', onGroupMsg);
@@ -505,6 +510,7 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
 
       <Modal open={creating} onClose={() => setCreating(false)} label={t('groups.new')}>
         <CreateGroupForm
+          limit={limits.create}
           onDone={() => {
             setCreating(false);
             void load();
@@ -514,6 +520,7 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
       <Modal open={discovering} onClose={() => setDiscovering(false)} label={t('groups.discover')}>
         <DiscoverGroups
           mineIds={new Set((mine ?? []).map((g) => g.id))}
+          joinLimit={limits.join}
           onOpen={() => setDiscovering(false)}
           onJoined={(g) => {
             setDiscovering(false);
@@ -530,8 +537,12 @@ function GroupsList({ activeGroup, query = '' }: { activeGroup: string | null; q
   );
 }
 
-/** Create a new group; the creator becomes owner and lands in its chat. */
-function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element {
+/**
+ * Create a new group; the creator becomes owner and lands in its chat. At a
+ * group limit (`limit`) the form says which one and what makes room, and has
+ * nothing to send, rather than letting the server refuse it.
+ */
+function CreateGroupForm({ onDone, limit }: { onDone: () => void; limit: LimitDetails | null }): React.JSX.Element {
   const t = useT();
   const { client } = useAuth();
   const navigate = useNavigate();
@@ -543,7 +554,7 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
-    if (name.trim().length < 2) return;
+    if (name.trim().length < 2 || limit) return;
     setBusy(true);
     setErr(null);
     const res = await client.post<{ id: string }>('/groups', {
@@ -563,6 +574,11 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
   return (
     <form className="compose" onSubmit={submit}>
       <h2 className="friend-heading" style={{ marginTop: 0 }}>{t('groups.new')}</h2>
+      {limit && (
+        <div className="msg" role="status" id="g-limit">
+          {limitText(limit, t)}
+        </div>
+      )}
       <SendError error={err} />
       <div className="field">
         <label className="field-label" htmlFor="g-name">{t('groups.name')}</label>
@@ -584,7 +600,9 @@ function CreateGroupForm({ onDone }: { onDone: () => void }): React.JSX.Element 
         </div>
         <span className="field-hint">{privacy === 'open' ? t('groups.privacy.openHint') : t('groups.privacy.inviteHint')}</span>
       </div>
-      <Button type="submit" disabled={busy || name.trim().length < 2}>{busy ? t('groups.creating') : t('groups.create')}</Button>
+      <Button type="submit" disabled={busy || name.trim().length < 2 || limit !== null} aria-describedby={limit ? 'g-limit' : undefined}>
+        {busy ? t('groups.creating') : t('groups.create')}
+      </Button>
     </form>
   );
 }

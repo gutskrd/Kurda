@@ -1,5 +1,7 @@
 import type pg from 'pg';
+import { limitDetails, MAX_BLOCKS, MAX_FRIEND_REQUESTS_RECEIVED, MAX_FRIEND_REQUESTS_SENT } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { limitReached, lockPeopleFor, lockPersonFor } from '../limits/limits.js';
 import { resolveAvatarUrl } from '../cosmetics/access.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { isOnline } from '../social/presence.js';
@@ -63,7 +65,7 @@ export interface BlockedUser {
   blockedAt: string;
 }
 
-/** One page of a blocklist. Bounded because nothing caps how many you may block. */
+/** One page of a blocklist; a list can be as long as MAX_BLOCKS. */
 export const BLOCKS_PAGE_SIZE = 25;
 export const BLOCKS_PAGE_MAX = 100;
 
@@ -88,7 +90,9 @@ interface EdgeRow {
  * friendship row, with an absolute, silent block: a block cancels any pending
  * request in either direction and hides both users from each other everywhere
  * (searches, lists, friends boards) via `areBlocked`. Friends are capped at 500;
- * pending requests expire after 30 days.
+ * pending requests expire after 30 days. Nobody has more than
+ * MAX_FRIEND_REQUESTS_SENT requests out or MAX_FRIEND_REQUESTS_RECEIVED waiting,
+ * or more than MAX_BLOCKS accounts blocked (@kurda/shared limits).
  *
  * A minor (13–17, worked out from age when asked) can send requests but never
  * receives one, so every friendship a minor has is one they started. Nobody is
@@ -139,12 +143,24 @@ export class FriendService {
     return r.rows[0]!.n;
   }
 
-  /** Send a friend request (or auto-accept if they already requested you). */
+  /**
+   * Send a friend request (or auto-accept if they already requested you).
+   *
+   * Both people's friend locks are taken first, in one order (`lockPeopleFor`),
+   * so the counts below are the ones the insert lands on: two requests, or a
+   * request and an answer, at once cannot both slip under a limit.
+   *
+   * A new request is held to the sender's friends and sent requests and the
+   * other person's waiting ones, and all three are checked before anything is
+   * said about a block. Checked after, as they used to be, a sender at a limit
+   * was refused by everyone except the people who had blocked them.
+   */
   async request(from: string, to: string): Promise<RequestOutcome> {
     if (from === to) throw new AppError('SELF_FRIEND', 400, 'you cannot friend yourself');
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await lockPeopleFor(client, 'friends', from, to);
       // I blocked them → they must be unblocked first (my own state, safe to reveal)
       const iBlocked = await client.query(
         `SELECT 1 FROM blocks WHERE blocker_id = $1 AND blocked_id = $2`,
@@ -158,17 +174,14 @@ export class FriendService {
         `SELECT 1 FROM blocks WHERE blocker_id = $2 AND blocked_id = $1`,
         [from, to],
       );
-      if ((theyBlocked.rowCount ?? 0) > 0) {
-        await client.query('COMMIT');
-        return 'silent';
-      }
+      const blocked = (theyBlocked.rowCount ?? 0) > 0;
 
       const { lo, hi } = canonicalPair(from, to);
       const existing = await client.query<EdgeRow>(
         `SELECT status, requested_by FROM friendships WHERE user_lo = $1 AND user_hi = $2 FOR UPDATE`,
         [lo, hi],
       );
-      const edge = existing.rows[0];
+      const edge = blocked ? undefined : existing.rows[0];
 
       if (edge?.status === 'accepted') {
         await client.query('COMMIT');
@@ -182,8 +195,9 @@ export class FriendService {
           await client.query('COMMIT');
           return 'requested'; // idempotent re-send
         }
-        // they already requested me → mutual → accept (respect my cap)
+        // they already requested me → mutual → accept (respect both caps)
         await this.assertUnderCap(client, from);
+        await this.assertUnderCap(client, to, true);
         await client.query(
           `UPDATE friendships SET status = 'accepted', responded_at = now() WHERE user_lo = $1 AND user_hi = $2`,
           [lo, hi],
@@ -192,7 +206,13 @@ export class FriendService {
         return 'accepted';
       }
 
+      // a new request, as far as the sender can tell — blocked or not
       await this.assertUnderCap(client, from);
+      await this.assertRequestRoom(client, from, to);
+      if (blocked) {
+        await client.query('COMMIT');
+        return 'silent';
+      }
       await client.query(
         `INSERT INTO friendships (user_lo, user_hi, status, requested_by) VALUES ($1, $2, 'pending', $3)`,
         [lo, hi, from],
@@ -207,9 +227,38 @@ export class FriendService {
     }
   }
 
-  private async assertUnderCap(executor: Pick<pg.Pool, 'query'>, userId: string): Promise<void> {
+  /**
+   * `theirs` when the full list is the other person's: the requester whose
+   * request is being accepted, or who is accepted by a request back.
+   */
+  private async assertUnderCap(executor: Pick<pg.Pool, 'query'>, userId: string, theirs = false): Promise<void> {
     if ((await this.friendCount(executor, userId)) >= FRIEND_CAP) {
-      throw new AppError('FRIENDS_FULL', 409, `friend list is full (max ${FRIEND_CAP})`);
+      const message = theirs ? `their friend list is full (max ${FRIEND_CAP})` : `friend list is full (max ${FRIEND_CAP})`;
+      throw new AppError('FRIENDS_FULL', 409, message, limitDetails('friends', { theirs }));
+    }
+  }
+
+  /**
+   * Room for one more unanswered request: under the sender's MAX_FRIEND_REQUESTS_SENT
+   * and the recipient's MAX_FRIEND_REQUESTS_RECEIVED. Expired requests, which
+   * the sweep has not deleted yet, count for neither. A request to a minor is
+   * counted like any other, as it is listed like any other (class note).
+   */
+  private async assertRequestRoom(executor: Pick<pg.Pool, 'query'>, from: string, to: string): Promise<void> {
+    const r = await executor.query<{ sent: number; waiting: number }>(
+      `SELECT count(*) FILTER (WHERE requested_by = $1 AND (user_lo = $1 OR user_hi = $1))::int AS sent,
+              count(*) FILTER (WHERE requested_by <> $2 AND (user_lo = $2 OR user_hi = $2))::int AS waiting
+         FROM friendships
+        WHERE status = 'pending' AND (user_lo IN ($1, $2) OR user_hi IN ($1, $2))
+          AND created_at > now() - ($3 || ' days')::interval`,
+      [from, to, String(REQUEST_TTL_DAYS)],
+    );
+    const { sent, waiting } = r.rows[0]!;
+    if (sent >= MAX_FRIEND_REQUESTS_SENT) {
+      throw limitReached('friend_requests_sent', `you have ${MAX_FRIEND_REQUESTS_SENT} friend requests waiting for an answer`);
+    }
+    if (waiting >= MAX_FRIEND_REQUESTS_RECEIVED) {
+      throw limitReached('friend_requests_received', 'they have too many friend requests waiting', { theirs: true });
     }
   }
 
@@ -219,6 +268,8 @@ export class FriendService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      // both lists change: both locks, before the row (see `request`)
+      if (accept) await lockPeopleFor(client, 'friends', user, other);
       const row = await client.query<EdgeRow>(
         `SELECT status, requested_by FROM friendships WHERE user_lo = $1 AND user_hi = $2 FOR UPDATE`,
         [lo, hi],
@@ -234,7 +285,9 @@ export class FriendService {
         if (await isNotKnownAdultUser(client, user)) {
           throw new AppError('NO_REQUEST', 404, 'no pending request from that user');
         }
+        // theirs too: a request sent while they had room is no way past their limit
         await this.assertUnderCap(client, user);
+        await this.assertUnderCap(client, other, true);
         await client.query(
           `UPDATE friendships SET status = 'accepted', responded_at = now() WHERE user_lo = $1 AND user_hi = $2`,
           [lo, hi],
@@ -264,6 +317,10 @@ export class FriendService {
   /**
    * Block a user: silent + absolute. Cancels any friendship/pending request in
    * either direction; the blocked user is never notified.
+   *
+   * At most MAX_BLOCKS live accounts, counted the way the blocklist counts them
+   * (`blocked`), under the blocker's lock. Blocking someone already blocked is
+   * never refused.
    */
   async block(blocker: string, blocked: string): Promise<void> {
     if (blocker === blocked) throw new AppError('SELF_BLOCK', 400, 'you cannot block yourself');
@@ -271,6 +328,16 @@ export class FriendService {
     const client = await this.pool.connect();
     try {
       await client.query('BEGIN');
+      await lockPersonFor(client, 'blocks', blocker);
+      const r = await client.query<{ already: boolean; n: number }>(
+        `SELECT EXISTS (SELECT 1 FROM blocks WHERE blocker_id = $1 AND blocked_id = $2) AS already,
+                (SELECT count(*)::int FROM blocks b JOIN users u ON u.id = b.blocked_id
+                  WHERE b.blocker_id = $1 AND u.deleted_at IS NULL) AS n`,
+        [blocker, blocked],
+      );
+      if (!r.rows[0]!.already && r.rows[0]!.n >= MAX_BLOCKS) {
+        throw limitReached('blocks', `you can block at most ${MAX_BLOCKS} accounts`);
+      }
       await client.query(
         `INSERT INTO blocks (blocker_id, blocked_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
         [blocker, blocked],

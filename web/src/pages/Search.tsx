@@ -367,12 +367,16 @@ function Suggestions(): React.JSX.Element | null {
   const t = useT();
   const suggestions = useApiGet<{ suggestions: SuggestedFriend[] }>('/friends/suggestions');
   const [requested, setRequested] = useState<Set<string>>(new Set());
+  // a request that did not go — a full friend list, too many out — says why (lib/limits.ts)
+  const [err, setErr] = useState<string | null>(null);
   const list = suggestions.data?.suggestions ?? [];
   if (suggestions.loading || list.length === 0) return null;
 
   async function add(userId: string): Promise<void> {
+    setErr(null);
     const res = await client.post('/friends/requests', { userId });
     if (res.ok) setRequested((prev) => new Set(prev).add(userId));
+    else setErr(describeError(res.error, t));
   }
 
   return (
@@ -385,6 +389,11 @@ function Suggestions(): React.JSX.Element | null {
           {t('friends.yours')}
         </Link>
       </div>
+      {err && (
+        <div className="msg msg-error" role="alert">
+          {err}
+        </div>
+      )}
       <ul className="list">
         {list.slice(0, 6).map((u) => (
           <PersonRow

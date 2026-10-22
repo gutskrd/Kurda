@@ -423,3 +423,9 @@ export * from './characters/index.js';
 export { DEVICE_NAME_MAX, deviceNameFrom } from './device-name.js';
 /** How the wall can be ordered — newest, oldest, most popular, most discussed — and how far back a ranked wall looks. */
 export * from './feed-sort.js';
+/**
+ * How much of each thing one person may have — groups, friends, requests,
+ * blocks, saved words, invites, games — and the one shape a refusal for any
+ * of them takes, so the API and both apps agree on the numbers and the words.
+ */
+export * from './limits.js';

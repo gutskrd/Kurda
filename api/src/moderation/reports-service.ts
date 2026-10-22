@@ -5,6 +5,7 @@ import {
   NEW_ACCOUNT_HOURS,
   OPEN_CASE_STATUSES,
   REPORTS_PER_DAY,
+  limitDetails,
   normalizeReportNote,
   reportCategoryInfo,
   type AgeBadge,
@@ -18,6 +19,7 @@ import {
   type ReportableGame,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
+import { lockPersonFor } from '../limits/limits.js';
 import { minorSql } from '../users/age.js';
 import { resolveTarget, type Refusal } from './evidence.js';
 import { userHash } from './pseudonym.js';
@@ -114,6 +116,24 @@ const OPEN_LIST = OPEN_CASE_STATUSES.map((s) => `'${s}'`).join(',');
 /** The partial unique index's predicate, written exactly as the migration wrote it. */
 export const OPEN_CASE_PREDICATE = `status IN (${OPEN_LIST})`;
 
+/**
+ * Under REPORTS_PER_DAY in the last 24 hours, or 429 REPORT_LIMIT with the
+ * limit's details and an hour's wait (the oldest of them leaves the window
+ * some time in the next day; an hour is the honest round number).
+ */
+async function assertReportRoom(executor: Executor, reporterId: string): Promise<void> {
+  const recent = await executor.query<{ n: number }>(
+    `SELECT count(*)::int AS n FROM reports WHERE reporter_id = $1 AND created_at > now() - interval '24 hours'`,
+    [reporterId],
+  );
+  if ((recent.rows[0]?.n ?? 0) >= REPORTS_PER_DAY) {
+    throw new AppError('REPORT_LIMIT', 429, 'you have sent a lot of reports today — try again tomorrow', {
+      retryAfterSec: 3600,
+      ...limitDetails('reports_per_day'),
+    });
+  }
+}
+
 export class ReportsService {
   constructor(
     private readonly pool: pg.Pool,
@@ -130,15 +150,9 @@ export class ReportsService {
     const me = reporter.rows[0];
     if (!me) throw new AppError('UNAUTHORIZED', 401, 'authentication required');
 
-    const recent = await this.pool.query<{ n: number }>(
-      `SELECT count(*)::int AS n FROM reports WHERE reporter_id = $1 AND created_at > now() - interval '24 hours'`,
-      [reporterId],
-    );
-    if ((recent.rows[0]?.n ?? 0) >= REPORTS_PER_DAY) {
-      throw new AppError('REPORT_LIMIT', 429, 'you have sent a lot of reports today — try again tomorrow', {
-        retryAfterSec: 3600,
-      });
-    }
+    // early, so a reporter at the limit is told before any work is done; the
+    // count that decides is the one under the lock, below
+    await assertReportRoom(this.pool, reporterId);
 
     const resolved = await resolveTarget(this.pool, input.targetType, input.targetId, {
       reporterId,
@@ -154,6 +168,9 @@ export class ReportsService {
     const note = normalizeReportNote(input.note);
 
     const result = await inTransaction(this.pool, async (client) => {
+      // reports sent at once are counted one after another: none past REPORTS_PER_DAY
+      await lockPersonFor(client, 'reports', reporterId);
+      await assertReportRoom(client, reporterId);
       const inserted = await client.query<ReportRow>(
         `INSERT INTO reports (reporter_id, reporter_hash, target_type, target_id, subject_user_id, category, priority,
                               note, evidence, weight, reporter_minor)

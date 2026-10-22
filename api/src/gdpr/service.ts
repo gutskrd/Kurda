@@ -5,6 +5,8 @@ import { emailLocaleFor } from '../email/templates.js';
 import type { JobQueue } from '../jobs/queue.js';
 import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
+import { lockPersonFor } from '../limits/limits.js';
+import { inTransaction } from '../moderation/tx.js';
 import { handOnGroup } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
@@ -275,24 +277,32 @@ export class GdprService {
     ]);
   }
 
-  /** Creates an export request; the worker fulfills it. */
+  /**
+   * Creates an export request; the worker fulfills it. One a day: asking again
+   * within 24 hours answers with the request already made. Under the person's
+   * lock, so two taps at once make one export, not two whole copies of
+   * everything (each is a full build and a file in storage).
+   */
   async requestExport(userId: string): Promise<string> {
     if (!this.deps.storage) {
       throw new AppError('EXPORT_NOT_AVAILABLE', 503, 'data export is not available right now');
     }
-    const existing = await this.pool.query<{ id: string }>(
-      `SELECT id FROM user_exports
-       WHERE user_id = $1 AND requested_at > now() - interval '24 hours'
-       ORDER BY requested_at DESC LIMIT 1`,
-      [userId],
-    );
-    if (existing.rows[0]) return existing.rows[0].id;
+    return inTransaction(this.pool, async (client) => {
+      await lockPersonFor(client, 'export', userId);
+      const existing = await client.query<{ id: string }>(
+        `SELECT id FROM user_exports
+         WHERE user_id = $1 AND requested_at > now() - interval '24 hours'
+         ORDER BY requested_at DESC LIMIT 1`,
+        [userId],
+      );
+      if (existing.rows[0]) return existing.rows[0].id;
 
-    const created = await this.pool.query<{ id: string }>(
-      `INSERT INTO user_exports (user_id) VALUES ($1) RETURNING id`,
-      [userId],
-    );
-    return (created.rows[0] as { id: string }).id;
+      const created = await client.query<{ id: string }>(
+        `INSERT INTO user_exports (user_id) VALUES ($1) RETURNING id`,
+        [userId],
+      );
+      return (created.rows[0] as { id: string }).id;
+    });
   }
 
   /**

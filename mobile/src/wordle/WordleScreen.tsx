@@ -225,7 +225,12 @@ export function WordleScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
   const saveToVocab = () => {
     if (!edu || savedWord) return;
     setSavedWord(true); // optimistic
-    void client.put(`/dictionary/entries/${edu.entryId}/save`);
+    void client.put(`/dictionary/entries/${edu.entryId}/save`).then((res) => {
+      if (res.ok) return;
+      // not saved after all — a full vocabulary says so (limits/limitCopy.ts)
+      setSavedWord(false);
+      setNote(describeError(res.error, t));
+    });
   };
 
   const shareResult = () => {

@@ -296,23 +296,24 @@ function OtherActions({
   const t = useT();
   const [state, setState] = useState<FriendStatus>(status);
   const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
 
+  // a full list, or too many requests out, says which and what makes room (lib/limits.ts)
   async function addFriend(): Promise<void> {
     setBusy(true);
-    setErr(false);
+    setErr(null);
     const res = await client.post('/friends/requests', { userId });
     setBusy(false);
     if (res.ok) setState('pending_out');
-    else setErr(true);
+    else setErr(describeError(res.error, t));
   }
   async function accept(): Promise<void> {
     setBusy(true);
-    setErr(false);
+    setErr(null);
     const res = await client.post(`/friends/requests/${userId}/accept`);
     setBusy(false);
     if (res.ok) setState('friends');
-    else setErr(true);
+    else setErr(describeError(res.error, t));
   }
 
   const message = (
@@ -342,7 +343,7 @@ function OtherActions({
           {message}
         </>
       )}
-      {err && <div className="msg msg-error" style={{ marginTop: 4 }}>{t('common.somethingWentWrong')}</div>}
+      {err && <div className="msg msg-error" role="alert" style={{ marginTop: 4 }}>{err}</div>}
     </div>
   );
 }

@@ -87,6 +87,60 @@ describe('discovering groups', () => {
   });
 });
 
+describe('the group limits', () => {
+  const mine = (n: number, myRole: string, over: Record<string, unknown> = {}) =>
+    Array.from({ length: n }, (_, i) => ({ ...found(`m${myRole}${i}`, `Mine ${i}`), myRole, ...over }));
+  const listed = { 'GET /groups': ok({ groups: [found('g3', 'Klûba helbestê')] }) };
+
+  it('waits on Join, and says why, once you are in as many groups as anyone may be', async () => {
+    testAuth.client = fakeClient({ ...listed, 'GET /me/groups': ok({ groups: mine(50, 'member') }) });
+    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
+    expect(await screen.findByText(/You’re in 50 groups, the most one person can be in/)).toBeTruthy();
+    const join = screen.getByRole('button', { name: 'Join: Klûba helbestê' });
+    expect(join.getAttribute('aria-disabled') === 'true' || join.hasAttribute('disabled')).toBe(true);
+  });
+
+  it('explains in the new-group sheet instead of sending one the server would refuse; archived groups do not count', async () => {
+    const client = fakeClient({ ...listed, 'GET /me/groups': ok({ groups: mine(10, 'owner') }), 'POST /groups': ok({ id: 'g-new' }) });
+    testAuth.client = client;
+    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
+    await screen.findByText('Klûba helbestê');
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    expect(await screen.findByText(/You run 10 groups, the most one person can/)).toBeTruthy();
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'One more' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create group' }));
+    });
+    expect(client.calls.some((c) => c.method === 'POST' && c.path === '/groups')).toBe(false);
+    cleanup();
+
+    testAuth.client = fakeClient({
+      ...listed,
+      'GET /me/groups': ok({ groups: [...mine(9, 'owner'), ...mine(3, 'owner', { archivedAt: '2026-01-01T00:00:00Z' })] }),
+    });
+    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
+    await screen.findByText('Klûba helbestê');
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    expect(screen.queryByText(/the most one person can/)).toBeNull();
+  });
+
+  it('says which limit the server reached when it refuses', async () => {
+    testAuth.client = fakeClient({
+      ...listed,
+      'GET /me/groups': ok({ groups: [] }),
+      'POST /groups': fail({ code: 'LIMIT_REACHED', status: 409, kind: 'client', details: { limit: 'groups_owned', max: 10 } }),
+    });
+    renderWithProviders(<ClubsScreen onExit={() => undefined} />);
+    await screen.findByText('Klûba helbestê');
+    fireEvent.click(screen.getByRole('button', { name: 'New group' }));
+    fireEvent.change(await screen.findByLabelText('Name'), { target: { value: 'Raced' } });
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Create group' }));
+    });
+    expect(await screen.findByText(/You run 10 groups, the most one person can/)).toBeTruthy();
+  });
+});
+
 const detail = (myRole: string) =>
   ok({
     id: 'g1',

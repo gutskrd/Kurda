@@ -11,6 +11,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
+import { describeError } from '../api/errors';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -150,9 +151,13 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
     (userId: string) => {
       setSuggestions((prev) => prev.filter((s) => s.userId !== userId));
       haptic('tap');
-      void client.post('/friends/requests', { userId }).then(loadLists);
+      void client.post('/friends/requests', { userId }).then((res) => {
+        // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
+        if (!res.ok) Alert.alert(describeError(res.error, t));
+        loadLists();
+      });
     },
-    [client, loadLists],
+    [client, loadLists, t],
   );
 
   const openProfile = (userId: string) => navigation.navigate('UserProfile', { userId });

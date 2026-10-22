@@ -1,6 +1,8 @@
+import { useState } from 'react';
 import { useAuth } from '../auth/AuthProvider';
 import { ConfirmButton } from '../components/ConfirmButton';
 import { useApiGet } from '../lib/useApi';
+import { describeError } from '../lib/api';
 import { useProfileModal } from '../profile/ProfileModal';
 import { ErrorState, EmptyState } from '../components/states';
 import { FriendListSkeleton } from '../components/skeletons';
@@ -50,6 +52,9 @@ export function Friends(): React.JSX.Element {
   // place is held while this page asks for them, rather than opening up above
   // your friends once they arrive
   const waiting = useRail().data.requests.length;
+  // why an answer or a block did not go through: a friend list that is full
+  // (theirs or yours) says so, rather than the request just staying put
+  const [err, setErr] = useState<string | null>(null);
 
   /** Take back a request you sent — nothing tells the other person either way. */
   async function cancelRequest(userId: string): Promise<void> {
@@ -68,12 +73,16 @@ export function Friends(): React.JSX.Element {
   }
 
   async function block(userId: string): Promise<void> {
-    await client.post(`/friends/${userId}/block`);
+    setErr(null);
+    const res = await client.post(`/friends/${userId}/block`);
+    if (!res.ok) setErr(describeError(res.error, t));
     friends.reload();
   }
 
   async function respond(userId: string, accept: boolean): Promise<void> {
-    await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
+    setErr(null);
+    const res = await client.post(`/friends/requests/${userId}/${accept ? 'accept' : 'decline'}`);
+    if (!res.ok) setErr(describeError(res.error, t));
     requests.reload();
     friends.reload();
   }
@@ -90,6 +99,12 @@ export function Friends(): React.JSX.Element {
           {t('rail.findPeople')}
         </LinkButton>
       </div>
+
+      {err && (
+        <div className="msg msg-error" role="alert">
+          {err}
+        </div>
+      )}
 
       {/* incoming requests */}
       {requests.loading && waiting > 0 && (

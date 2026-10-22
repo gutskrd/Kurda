@@ -1,5 +1,15 @@
 import type pg from 'pg';
-import { LOBBY_IDLE_MINUTES, type GameAccess, type InviteSummary, type LobbyCard, type LobbyCardStatus } from '@kurda/shared';
+import {
+  LOBBY_IDLE_MINUTES,
+  MAX_HOSTED_GAMES,
+  limitDetails,
+  type GameAccess,
+  type InviteSummary,
+  type LobbyCard,
+  type LobbyCardStatus,
+} from '@kurda/shared';
+import { AppError } from '../plugins/errors.js';
+import { lockPersonFor } from '../limits/limits.js';
 import type { PublicUrl } from '../cosmetics/access.js';
 import { canJoin, identities } from './access.js';
 import type { LobbyFacts, LobbyPhase } from './types.js';
@@ -60,6 +70,47 @@ export interface SeatRow {
 /** A lobby nobody started for LOBBY_IDLE_MINUTES is closed. */
 export function lobbyIdle(row: Pick<LobbyRow, 'status' | 'updated_at'>, now: Date): boolean {
   return row.status === 'lobby' && now.getTime() - row.updated_at.getTime() >= LOBBY_IDLE_MINUTES * 60_000;
+}
+
+/**
+ * A game under way that has not been touched for this long is not held
+ * against its host's limit: every game ends long before it, and one left
+ * hanging by a failed sweep must not stop its host from playing.
+ */
+const HOSTED_ACTIVE_MINUTES = 120;
+
+/**
+ * Room for one more game hosted by `hostId`, inside the transaction that
+ * makes it: at most MAX_HOSTED_GAMES lobbies and games under way of this kind
+ * that the host is still in, as Stories has always kept (story-games
+ * `insertGame`). A new one beyond that closes the host's oldest lobby nobody
+ * has started, and is refused (409 TOO_MANY_GAMES) only when every one of
+ * them is being played. A lobby gone idle, which the sweep is about to close,
+ * does not count.
+ *
+ * Under the host's lock for this game, taken before the closed lobby's row,
+ * so two lobbies made at once cannot both find room. Returns the lobby it
+ * closed, for the caller to announce once the transaction has committed.
+ */
+export async function makeRoomToHost(executor: Executor, t: BattleTables, hostId: string, now: Date): Promise<string | null> {
+  await lockPersonFor(executor, `hosting:${t.game}`, hostId);
+  const hosted = await executor.query<{ id: string; status: BattleStatus }>(
+    `SELECT g.id, g.status FROM ${t.table} g
+      WHERE g.created_by = $1 AND g.finished_at IS NULL
+        AND ((g.status = 'lobby' AND g.updated_at > $2::timestamptz - ($3 || ' minutes')::interval)
+          OR (g.status = 'active' AND g.updated_at > $2::timestamptz - ($4 || ' minutes')::interval))
+        AND EXISTS (SELECT 1 FROM ${t.players} p WHERE p.${t.fk} = g.id AND p.user_id = $1 AND p.left_at IS NULL AND NOT p.removed)
+      ORDER BY g.created_at`,
+    [hostId, now, String(LOBBY_IDLE_MINUTES), String(HOSTED_ACTIVE_MINUTES)],
+  );
+  if (hosted.rows.length < MAX_HOSTED_GAMES) return null;
+  const oldest = hosted.rows.find((g) => g.status === 'lobby');
+  if (!oldest) throw new AppError('TOO_MANY_GAMES', 409, 'finish one of your games first', limitDetails('hosted_games'));
+  const closed = await executor.query<{ id: string }>(
+    `UPDATE ${t.table} SET status = 'cancelled', finished_at = $2, updated_at = $2 WHERE id = $1 AND status = 'lobby' RETURNING id`,
+    [oldest.id, now],
+  );
+  return closed.rows[0]?.id ?? null;
 }
 
 /** Everyone the host has not removed, by seat — still there or gone. */
