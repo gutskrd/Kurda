@@ -7,7 +7,7 @@ import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
 import { layout, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
-import { GradientBackground, Segmented } from '../theme/glass';
+import { GradientBackground } from '../theme/glass';
 import type { TabNavigation } from '../navigation/rootStack';
 import { useTabBarInset } from '../navigation/tabBarLayout';
 import type { ApiError } from '../api/types';
@@ -22,7 +22,8 @@ import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import { FriendsRow } from './FriendsRow';
-import { SECTIONS, kindWithin, type FeedItem, type FeedSection } from './types';
+import { kindWithin, type FeedItem, type FeedSection } from './types';
+import { FeedFilterChip, FeedFilterSheet, filterLabel, type FeedFilterValue } from './FeedFilter';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -65,12 +66,12 @@ export function CivakScreen(): React.JSX.Element {
   const [loadingMore, setLoadingMore] = useState(false);
   const [end, setEnd] = useState(false);
 
-  const kinds = SECTIONS.find((s) => s.key === section)?.kinds ?? [];
+  const [filtering, setFiltering] = useState(false);
 
-  /** Changing half drops a kind that belonged to the other one. */
-  const chooseSection = useCallback((next: FeedSection) => {
-    setSection(next);
-    setKind((prev) => kindWithin(next, prev));
+  /** One choice from the filter: a half, and a kind only if it belongs to that half. */
+  const choose = useCallback((next: FeedFilterValue) => {
+    setSection(next.section);
+    setKind(kindWithin(next.section, next.kind));
   }, []);
 
   const fetchPage = useCallback(
@@ -156,6 +157,7 @@ export function CivakScreen(): React.JSX.Element {
   );
 
   const everything = section === 'all' && !kind;
+  const narrowed = filterLabel(t, { section, kind });
 
   return (
     <GradientBackground>
@@ -164,6 +166,13 @@ export function CivakScreen(): React.JSX.Element {
           <Text style={[styles.wordmark, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
             Hevalo
           </Text>
+          {/* narrowing the wall is one button, out of the way until it is wanted, and filled while it is on */}
+          <HeaderButton
+            icon={everything ? 'filter' : 'filter-fill'}
+            label={narrowed ? t('civak.filter.buttonOn', { what: narrowed }) : t('civak.filter.button')}
+            onPress={() => setFiltering(true)}
+            testID="home-filter"
+          />
           <HeaderButton icon="plus" label={t('post.open')} onPress={() => navigation.navigate('Compose')} testID="home-post" />
           <NotificationBell />
         </View>
@@ -181,25 +190,7 @@ export function CivakScreen(): React.JSX.Element {
           ListHeaderComponent={
             <>
               <FriendsRow refreshKey={pulls} />
-              <View style={styles.filters}>
-                <Segmented
-                  options={SECTIONS.map((s) => s.key)}
-                  value={section}
-                  onChange={chooseSection}
-                  labelOf={(key) => t(SECTIONS.find((s) => s.key === key)!.labelKey)}
-                />
-                {/* the second level appears only once there is a half to narrow */}
-                {kinds.length > 0 && (
-                  <Segmented
-                    options={['all', ...kinds.map((k) => k.key)]}
-                    value={kind ?? 'all'}
-                    onChange={(next) => setKind(next === 'all' ? null : next)}
-                    labelOf={(key) =>
-                      key === 'all' ? t('civak.filter.allKinds') : t(kinds.find((k) => k.key === key)!.labelKey)
-                    }
-                  />
-                )}
-              </View>
+              {narrowed ? <FeedFilterChip label={narrowed} onOpen={() => setFiltering(true)} onClear={() => choose({ section: 'all', kind: null })} /> : null}
             </>
           }
           ListEmptyComponent={
@@ -235,6 +226,7 @@ export function CivakScreen(): React.JSX.Element {
             loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
           }
         />
+        <FeedFilterSheet visible={filtering} value={{ section, kind }} onChoose={choose} onClose={() => setFiltering(false)} />
       </View>
     </GradientBackground>
   );
@@ -245,6 +237,5 @@ const styles = StyleSheet.create({
   // the bell reaches past the gutter so its glyph, not its target, lines up with the name's edge
   bar: { alignItems: 'center', paddingHorizontal: layout.gutter, minHeight: 44 },
   wordmark: { ...display(typography.sizes.xl), flex: 1 },
-  filters: { gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: spacing.xs, paddingBottom: spacing.sm },
   waiting: { paddingHorizontal: layout.gutter },
 });

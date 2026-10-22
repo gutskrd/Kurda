@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   ActivityIndicator,
-  Alert,
   FlatList,
   Image,
   RefreshControl,
@@ -13,7 +12,6 @@ import {
 import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
-import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -23,7 +21,7 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
-import { createPost, listPosts, uploadMemeImage } from './api';
+import { listPosts } from './api';
 import { type Category, type ImagePost } from './types';
 import { Icon } from '../theme/Icon';
 import { noticeTime } from '../notifications/inbox';
@@ -31,23 +29,19 @@ import { onPostDeleted } from '../composer/postDeleted';
 import { useI18n } from '../i18n/I18nContext';
 import { EmptyState } from '../theme/EmptyState';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
-import { useSendErrorAlert } from '../reports/SendError';
-import { restrictionOf } from '../reports/sendErrors';
 
 const PAGE = 20;
 
 /**
  * Meme/image feed (KUR-291). Browses published posts (filter meme/image, sort
- * newest/popular), infinite-scrolls, and uploads a new post through the cost-safe
- * server pipeline (pick → /images/upload → create). Tapping a post opens the
- * post on a page of its own, with its likes and comments under it.
+ * newest/popular) and infinite-scrolls; posting opens the composer. Tapping a
+ * post opens the post on a page of its own, with its likes and comments under it.
  */
 export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
   const { t, locale } = useI18n();
-  const showSendError = useSendErrorAlert();
 
   const [category, setCategory] = useState<Category>('meme');
   const [sort, setSort] = useState<'newest' | 'popular'>('newest');
@@ -56,7 +50,6 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
   const [refreshing, setRefreshing] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
   const [end, setEnd] = useState(false);
-  const [uploading, setUploading] = useState(false);
 
   const load = useCallback(
     async (opts: { append?: boolean } = {}) => {
@@ -116,31 +109,12 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
     setLoadingMore(false);
   }, [load, loadingMore, end, posts]);
 
-  const pickAndUpload = useCallback(async () => {
-    if (uploading) return;
-    // the system picker hands back only the chosen picture, so there is no permission to ask for
-    const picked = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.9 });
-    const asset = picked.canceled ? null : picked.assets[0];
-    if (!asset) return;
-    setUploading(true);
-    const up = await uploadMemeImage(client, { uri: asset.uri, contentType: asset.mimeType ?? 'image/jpeg' }, t, locale);
-    if (!up.ok) {
-      setUploading(false);
-      // a limit on pictures says what and until when, with the way to Account standing
-      showSendError(t('memes.uploadFailed'), { message: up.error, limited: up.limited });
-      return;
-    }
-    const created = await createPost(client, { imageMediaId: up.imageMediaId, category });
-    setUploading(false);
-    if (!created.ok) {
-      // a limit on posting (a mute, a suspension) says so; anything else is
-      // worth another try, and the picture is already up
-      if (restrictionOf(created.error)) showSendError(t('memes.postFailed'), created.error);
-      else Alert.alert(t('memes.postFailed'), t('memes.postFailedHelp'));
-      return;
-    }
-    setPosts((prev) => (prev ? [created.data, ...prev] : [created.data]));
-  }, [client, category, uploading, t, locale, showSendError]);
+  /**
+   * Posting here opens the one composer, as everywhere else: words first, and a
+   * picture whenever it is wanted. What is posted from the memes is a meme once
+   * a picture is in it.
+   */
+  const compose = useCallback(() => navigation.navigate('Compose', { meme: true }), [navigation]);
 
   // the first screenful rises in once, as the list arrives
   const entering = useListEntrance(!!posts && posts.length > 0);
@@ -210,11 +184,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
             ListEmptyComponent={
               <EmptyState
                 title={t('memes.empty')}
-                action={{
-                  label: t('picture.choosePicture'),
-                  // what it says: the photos open, and what is picked is a meme
-                  onPress: () => navigation.navigate('Compose', { pickPictures: true, meme: true }),
-                }}
+                action={{ label: t('post.open'), onPress: compose }}
               />
             }
             ListFooterComponent={loadingMore ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null}
@@ -222,7 +192,7 @@ export function MemeFeedScreen({ onExit }: { onExit: () => void }): React.JSX.El
         </AsyncBoundary>
 
         <View style={[styles.fab, { bottom: spacing.xl }]}>
-          <ClayButton label={t('memes.post')} icon="plus" busy={uploading} tone="primary" onPress={pickAndUpload} />
+          <ClayButton label={t('memes.post')} icon="plus" tone="primary" onPress={compose} />
         </View>
       </View>
     </GradientBackground>

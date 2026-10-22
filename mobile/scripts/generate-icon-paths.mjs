@@ -154,6 +154,8 @@ const MAP = {
   // --- the shop, the inventory and the gift picker, sorted by kind ---
   tag: { glyph: 'Tag', note: 'a tag for the profile, such as the Kurdish tag: an item with no picture of its own' },
   sort: { glyph: 'ArrowsDownUp', note: 'the order a list is in — featured, by price, by name' },
+  filter: { glyph: 'Funnel', note: 'web FunnelIcon — narrow a list to one kind: the wall to its pictures' },
+  'filter-fill': { glyph: 'Funnel', weight: 'fill', note: 'the same, while a filter is on' },
 
   // --- the five tabs and what moved into them ---
   compose: { glyph: 'NotePencil', note: 'start a new conversation — a page and a pencil, not the paper plane the tab is' },

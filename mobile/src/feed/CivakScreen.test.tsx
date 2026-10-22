@@ -23,20 +23,23 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function open({ unread = 0, items = [] as unknown[] } = {}) {
-  testAuth.client = fakeClient({
+function open({ unread = 0, items = [] as unknown[], extra = {} as Record<string, ReturnType<typeof ok>> } = {}) {
+  const client = fakeClient({
     'GET /feed?section=all&limit=20&offset=0': ok({ items }),
+    ...extra,
     'GET /chat/conversations': ok({ conversations: [] }),
     'GET /me/groups/unread': ok({ unread: [] }),
     'GET /friends/requests': ok({ requests: [] }),
     'GET /me/notifications/unread-count': ok({ count: unread }),
     'GET /me/social': ok({ unread: { gifts: 0 } }),
   });
+  testAuth.client = client;
   renderWithProviders(
     <UnreadProvider>
       <CivakScreen />
     </UnreadProvider>,
   );
+  return client;
 }
 
 describe('Home', () => {
@@ -75,5 +78,22 @@ describe('Home', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Search');
     fireEvent.click(screen.getByRole('button', { name: 'Write your first post' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Compose');
+  });
+
+  it('narrows the wall from one filter button, says what it shows, and goes back to everything from the ✕', async () => {
+    const client = open({ extra: { 'GET /feed?section=dimen&kind=mim&limit=20&offset=0': ok({ items: [] }) } });
+    // no row of choices on the wall itself
+    expect(screen.queryByRole('button', { name: 'Writing' })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Filter posts' }));
+    const options = screen.getByRole('radiogroup', { name: 'Show' });
+    expect(options.querySelector('[aria-checked="true"]')?.textContent).toBe('Everything');
+    fireEvent.click(screen.getByRole('radio', { name: 'Meme' }));
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/feed?section=dimen&kind=mim&limit=20&offset=0')).toBe(true));
+    // the button says it is on, and a chip under the faces says what is shown
+    expect(screen.getByRole('button', { name: 'Filter posts — showing Pictures · Meme' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Pictures · Meme' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Show everything' }));
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Filter posts' })).toBeTruthy());
+    expect(screen.queryByText('Pictures · Meme')).toBeNull();
   });
 });
