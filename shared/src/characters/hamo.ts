@@ -1,8 +1,8 @@
 /**
- * Hamo: a man in a traditional Kurdish suit — a camel jacket crossed over a
- * paler shirt, an olive sash wound at the waist, and wide trousers gathered
- * at the ankle — standing with his hands on his hips, his head turned a
- * little to one side, smiling under a full black moustache.
+ * Hamo: a man in a traditional Kurdish suit — a navy jacket crossed over a
+ * white shirt, a red sash wound at the waist, and wide trousers gathered at
+ * the ankle — standing with his hands on his hips, his head turned a little
+ * to one side, smiling under a full black moustache.
  *
  * Drawn flat, each part one tone, with a few shade shapes where the form
  * turns: his jaw, under his nose, inside his ear, the folds of the jacket,
@@ -35,12 +35,12 @@ const C = {
   lash: '#3a1f14',
   crease: '#8a4f36',
   moustache: '#43281a',
-  suit: '#9c6e3c',
-  fold: '#865b30',
-  shirt: '#b58f63',
-  sash: '#524c26',
-  sashFold: '#403b1b',
-  shoe: '#402e1c',
+  suit: '#2e4a78',
+  fold: '#233a60',
+  shirt: '#f2ede2',
+  sash: '#c4323a',
+  sashFold: '#96222a',
+  shoe: '#2a2a30',
 } as const;
 
 // ─────────────────────────────────────────────────────────────── the body
