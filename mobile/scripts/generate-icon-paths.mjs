@@ -160,6 +160,7 @@ const MAP = {
   // --- the five tabs and what moved into them ---
   compose: { glyph: 'NotePencil', note: 'start a new conversation — a page and a pencil, not the paper plane the tab is' },
   history: { glyph: 'ClockCounterClockwise', note: 'a search you made before' },
+  clock: { glyph: 'Clock', note: 'the wall newest first; history is the oldest first' },
   'clear-fill': { glyph: 'XCircle', weight: 'fill', note: 'empty a search field — the filled circle every platform puts at the end of one' },
   review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
 

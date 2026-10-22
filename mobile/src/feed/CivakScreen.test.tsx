@@ -8,7 +8,7 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -21,6 +21,24 @@ beforeEach(() => navigation.navigate.mockReset());
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
+});
+
+/** One post on the wall, by the letter a test reads it as. */
+const post = (id: string) => ({
+  key: `library:${id}`,
+  targetType: 'library',
+  id,
+  kind: 'poem',
+  title: `Post ${id}`,
+  excerpt: 'Şev e…',
+  imageUrl: null,
+  images: [],
+  href: `/library/${id}`,
+  viewCount: 0,
+  at: '2026-10-19T10:00:00Z',
+  author: { id: 'u1', username: 'rojda', displayName: null, avatarUrl: null },
+  commentCount: 0,
+  engagement: { liked: false, likes: 0, reposted: false, reposts: 0, bookmarked: false, bookmarks: 0 },
 });
 
 function open({ unread = 0, items = [] as unknown[], extra = {} as Record<string, ReturnType<typeof ok>> } = {}) {
@@ -80,20 +98,60 @@ describe('Home', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Compose');
   });
 
-  it('narrows the wall from one filter button, says what it shows, and goes back to everything from the ✕', async () => {
-    const client = open({ extra: { 'GET /feed?section=dimen&kind=mim&limit=20&offset=0': ok({ items: [] }) } });
+  it('narrows the wall from the sort and filter sheet, only on Show posts, and goes back to everything from the ✕', async () => {
+    const client = open({ extra: { 'GET /feed?section=dimen&kind=mim&limit=20&offset=0': ok({ items: [post('m1')] }) } });
     // no row of choices on the wall itself
     expect(screen.queryByRole('button', { name: 'Writing' })).toBeNull();
-    fireEvent.click(await screen.findByRole('button', { name: 'Filter posts' }));
-    const options = screen.getByRole('radiogroup', { name: 'Show' });
-    expect(options.querySelector('[aria-checked="true"]')?.textContent).toBe('Everything');
+    fireEvent.click(await screen.findByRole('button', { name: 'Sort and filter' }));
+    const show = screen.getByRole('radiogroup', { name: 'Show' });
+    expect(show.querySelector('[aria-checked="true"]')?.textContent).toBe('Everything');
     fireEvent.click(screen.getByRole('radio', { name: 'Meme' }));
+    // a choice is a draft until it is shown: nothing is asked for yet
+    expect(client.calls.some((c) => c.path.includes('kind=mim'))).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Show posts' }));
     await waitFor(() => expect(client.calls.some((c) => c.path === '/feed?section=dimen&kind=mim&limit=20&offset=0')).toBe(true));
-    // the button says it is on, and a chip under the faces says what is shown
-    expect(screen.getByRole('button', { name: 'Filter posts — showing Pictures · Meme' })).toBeTruthy();
+    // the button says what is on, and a chip under the faces says what is shown
+    expect(screen.getByRole('button', { name: 'Sort and filter — Pictures · Meme' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Pictures · Meme' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Show everything' }));
-    await waitFor(() => expect(screen.getByRole('button', { name: 'Filter posts' })).toBeTruthy());
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeTruthy());
     expect(screen.queryByText('Pictures · Meme')).toBeNull();
+  });
+
+  it('sorts by the most popular this week, says so in a chip, and goes back to the newest from its ✕', async () => {
+    const client = open({ items: [post('a')], extra: { 'GET /feed?section=all&sort=popular&period=week&limit=20&offset=0': ok({ items: [post('b')] }) } });
+    fireEvent.click(await screen.findByRole('button', { name: 'Sort and filter' }));
+    // a range is only offered for an order that ranks
+    expect(screen.queryByRole('radiogroup', { name: 'From' })).toBeNull();
+    fireEvent.click(screen.getByRole('radio', { name: 'Most popular, Hearts, reposts and comments' }));
+    fireEvent.click(screen.getByRole('radio', { name: 'This week' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Show posts' }));
+    expect(await screen.findByText('Post b')).toBeTruthy();
+    expect(client.calls.some((c) => c.path === '/feed?section=all&sort=popular&period=week&limit=20&offset=0')).toBe(true);
+    expect(screen.getByRole('button', { name: 'Sort and filter — Most popular, This week' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Most popular · This week' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Back to newest' }));
+    expect(await screen.findByText('Post a')).toBeTruthy();
+    expect(screen.queryByText('Most popular · This week')).toBeNull();
+  });
+
+  it('leaves the wall as it was when the sheet is closed another way, and Reset puts the choices back', async () => {
+    const client = open({ items: [post('a')] });
+    fireEvent.click(await screen.findByRole('button', { name: 'Sort and filter' }));
+    const disabled = () => screen.getByRole('button', { name: 'Reset' }).getAttribute('aria-disabled') === 'true';
+    expect(disabled()).toBe(true);
+    fireEvent.click(screen.getByRole('radio', { name: 'Oldest' }));
+    expect(disabled()).toBe(false);
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+    expect(screen.getByRole('radiogroup', { name: 'Sort by' }).querySelector('[aria-checked="true"]')?.textContent).toContain('Newest');
+    fireEvent.click(screen.getByRole('radio', { name: 'Oldest' }));
+    fireEvent.click(within(screen.getByTestId('feed-filter-sheet')).getByRole('button', { name: 'Close' }));
+    // closed without Show posts: the wall was not asked for again, and opening the sheet again starts from it
+    expect(client.calls.some((c) => c.path.includes('sort='))).toBe(false);
+    expect(screen.getByRole('button', { name: 'Sort and filter' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Sort and filter' }));
+    await waitFor(() =>
+      expect(screen.getByRole('radiogroup', { name: 'Sort by' }).querySelector('[aria-checked="true"]')?.textContent).toContain('Newest'),
+    );
   });
 });

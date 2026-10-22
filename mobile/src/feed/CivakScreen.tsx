@@ -22,8 +22,19 @@ import { useDirection } from '../reports/direction';
 import { getFeed } from './api';
 import { FeedCard, FeedSkeleton } from './FeedCard';
 import { FriendsRow } from './FriendsRow';
-import { kindWithin, type FeedItem, type FeedSection } from './types';
-import { FeedFilterChip, FeedFilterSheet, filterLabel, type FeedFilterValue } from './FeedFilter';
+import type { FeedItem } from './types';
+import {
+  DEFAULT_FILTER,
+  FeedFilterChip,
+  FeedFilterChips,
+  FeedFilterSheet,
+  filterLabel,
+  filterSummary,
+  isDefaultFilter,
+  normalise,
+  sortLabel,
+  type FeedFilterValue,
+} from './FeedFilter';
 import { onPostDeleted, samePost } from '../composer/postDeleted';
 import { EmptyState } from '../theme/EmptyState';
 
@@ -58,8 +69,8 @@ export function CivakScreen(): React.JSX.Element {
   // tapping Home while on Home goes back to the newest post
   useScrollToTop(listRef);
   const tabBarInset = useTabBarInset();
-  const [section, setSection] = useState<FeedSection>('all');
-  const [kind, setKind] = useState<string | null>(null);
+  // in what order the wall is read, from how far back, and which posts
+  const [filter, setFilter] = useState<FeedFilterValue>(DEFAULT_FILTER);
   const [items, setItems] = useState<FeedItem[] | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -68,15 +79,15 @@ export function CivakScreen(): React.JSX.Element {
 
   const [filtering, setFiltering] = useState(false);
 
-  /** One choice from the filter: a half, and a kind only if it belongs to that half. */
+  /** A new way of reading the wall: from its top, the posts asked for again. */
   const choose = useCallback((next: FeedFilterValue) => {
-    setSection(next.section);
-    setKind(kindWithin(next.section, next.kind));
+    setFilter(normalise(next));
+    listRef.current?.scrollToOffset({ offset: 0, animated: false });
   }, []);
 
   const fetchPage = useCallback(
-    (offset: number) => getFeed(client, { section, kind, limit: PAGE, offset }),
-    [client, section, kind],
+    (offset: number) => getFeed(client, { section: filter.section, kind: filter.kind, sort: filter.sort, period: filter.period, limit: PAGE, offset }),
+    [client, filter],
   );
 
   // the bell's dot is worth getting right on the screen it sits on
@@ -131,7 +142,12 @@ export function CivakScreen(): React.JSX.Element {
     const res = await fetchPage(items.length);
     if (res.ok) {
       const batch = res.data.items ?? [];
-      setItems((prev) => (prev ? [...prev, ...batch] : batch));
+      // a ranked wall can shift between two pages: a post already shown is not shown twice
+      setItems((prev) => {
+        if (!prev) return batch;
+        const seen = new Set(prev.map((i) => i.key));
+        return [...prev, ...batch.filter((i) => !seen.has(i.key))];
+      });
       setEnd(batch.length < PAGE);
     }
     setLoadingMore(false);
@@ -156,8 +172,10 @@ export function CivakScreen(): React.JSX.Element {
     [replace, entering],
   );
 
-  const everything = section === 'all' && !kind;
-  const narrowed = filterLabel(t, { section, kind });
+  const plain = isDefaultFilter(filter);
+  const narrowed = filterLabel(t, filter);
+  const ordered = sortLabel(t, filter);
+  const summary = filterSummary(t, filter);
 
   return (
     <GradientBackground>
@@ -166,10 +184,10 @@ export function CivakScreen(): React.JSX.Element {
           <Text style={[styles.wordmark, dir.text, { color: colors.textPrimary }]} accessibilityRole="header" numberOfLines={1}>
             Hevalo
           </Text>
-          {/* narrowing the wall is one button, out of the way until it is wanted, and filled while it is on */}
+          {/* sorting and narrowing the wall is one button, out of the way until it is wanted, and filled while either is on */}
           <HeaderButton
-            icon={everything ? 'filter' : 'filter-fill'}
-            label={narrowed ? t('civak.filter.buttonOn', { what: narrowed }) : t('civak.filter.button')}
+            icon={plain ? 'filter' : 'filter-fill'}
+            label={summary ? t('feed.sortFilter.buttonOn', { what: summary }) : t('feed.sortFilter.button')}
             onPress={() => setFiltering(true)}
             testID="home-filter"
           />
@@ -190,7 +208,28 @@ export function CivakScreen(): React.JSX.Element {
           ListHeaderComponent={
             <>
               <FriendsRow refreshKey={pulls} />
-              {narrowed ? <FeedFilterChip label={narrowed} onOpen={() => setFiltering(true)} onClear={() => choose({ section: 'all', kind: null })} /> : null}
+              {plain ? null : (
+                <FeedFilterChips>
+                  {ordered ? (
+                    <FeedFilterChip
+                      icon="sort"
+                      label={ordered}
+                      clearLabel={t('feed.sort.clear')}
+                      onOpen={() => setFiltering(true)}
+                      onClear={() => choose({ ...filter, sort: DEFAULT_FILTER.sort, period: DEFAULT_FILTER.period })}
+                    />
+                  ) : null}
+                  {narrowed ? (
+                    <FeedFilterChip
+                      icon="filter-fill"
+                      label={narrowed}
+                      clearLabel={t('civak.filter.clear')}
+                      onOpen={() => setFiltering(true)}
+                      onClear={() => choose({ ...filter, section: 'all', kind: null })}
+                    />
+                  ) : null}
+                </FeedFilterChips>
+              )}
             </>
           }
           ListEmptyComponent={
@@ -201,7 +240,7 @@ export function CivakScreen(): React.JSX.Element {
                   {null}
                 </AsyncBoundary>
               </View>
-            ) : everything ? (
+            ) : plain ? (
               /*
                * A new reader's wall is empty because they follow nobody and
                * have written nothing, so it offers both, and nothing else:
@@ -215,10 +254,12 @@ export function CivakScreen(): React.JSX.Element {
                 secondary={{ label: t('civak.empty.write'), onPress: () => navigation.navigate('Compose') }}
               />
             ) : (
+              // nothing in what was asked for: the way back to the whole wall first
               <EmptyState
                 title={t('civak.empty')}
                 body={t('civak.empty.body')}
-                action={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
+                action={{ label: t('civak.filter.clear'), onPress: () => choose(DEFAULT_FILTER) }}
+                secondary={{ label: t('post.open'), onPress: () => navigation.navigate('Compose') }}
               />
             )
           }
@@ -226,7 +267,7 @@ export function CivakScreen(): React.JSX.Element {
             loadingMore ? <ActivityIndicator color={colors.textSecondary} style={{ marginVertical: spacing.md }} /> : null
           }
         />
-        <FeedFilterSheet visible={filtering} value={{ section, kind }} onChoose={choose} onClose={() => setFiltering(false)} />
+        <FeedFilterSheet visible={filtering} value={filter} onApply={choose} onClose={() => setFiltering(false)} />
       </View>
     </GradientBackground>
   );

@@ -1,3 +1,4 @@
+import { DEFAULT_FEED_PERIOD, DEFAULT_FEED_SORT, sortRanks, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 import type { EngagementKind, FeedItem, FeedSection, PostEngagement } from './types';
@@ -5,6 +6,10 @@ import type { EngagementKind, FeedItem, FeedSection, PostEngagement } from './ty
 export interface FeedQuery {
   section?: FeedSection;
   kind?: string | null;
+  /** newest first unless asked */
+  sort?: FeedSort;
+  /** how far back a ranked order looks */
+  period?: FeedPeriod;
   limit?: number;
   offset?: number;
 }
@@ -13,6 +18,9 @@ function query(q: FeedQuery): string {
   const p = new URLSearchParams();
   if (q.section) p.set('section', q.section);
   if (q.kind) p.set('kind', q.kind);
+  // only what differs from how the wall opens: the plain wall asks the plain question
+  if (q.sort && q.sort !== DEFAULT_FEED_SORT) p.set('sort', q.sort);
+  if (q.sort && sortRanks(q.sort) && q.period && q.period !== DEFAULT_FEED_PERIOD) p.set('period', q.period);
   if (q.limit != null) p.set('limit', String(q.limit));
   if (q.offset != null) p.set('offset', String(q.offset));
   const s = p.toString();
