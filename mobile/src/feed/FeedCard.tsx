@@ -9,12 +9,12 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import type { RootNavigation } from '../navigation/rootStack';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { layout, radii, spacing, typography } from '../theme/tokens';
-import { display } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { noticeTime } from '../notifications/inbox';
-import { formatNumber } from '../i18n/format';
+import { formatCompact, formatNumber } from '../i18n/format';
+import type { Locale } from '../i18n/translations';
 import { springTo, timing } from '../theme/animate';
 import { useDirection } from '../reports/direction';
 import { postUrl, toggleEngagement } from './api';
@@ -24,8 +24,8 @@ import { usePostMenu } from '../composer/PostExtras';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { ReportSheet } from '../reports/ReportSheet';
 
-/** The avatar beside a post's author: big enough to recognise somebody by. */
-const AUTHOR = 34;
+/** The avatar beside a post's author: big enough to recognise somebody by, small enough to sit on one line. */
+const AUTHOR = 32;
 /** Two taps closer together than this are one double tap. */
 const DOUBLE_TAP_MS = 260;
 
@@ -34,14 +34,16 @@ const DOUBLE_TAP_MS = 260;
  * picture are the same shape, because on a wall they sit next to each other
  * and anything else reads as two apps stitched together.
  *
- * Posts follow one another as one chain: no box round a post and no line
- * between two, only the next post's face and name. Each is, top to bottom:
- * who posted it (with what kind of post under their name) and a "⋯" for its
- * menu; what was posted — the words of a written post, or the pictures from
- * edge to edge of the phone; a row of plain glyphs, each with its count
- * beside it — like, comment, repost, share, and saving it apart at the end;
- * a picture's caption after the name of whoever posted it; a way to its
- * comments; and how long ago.
+ * Posts follow one another as one chain, a hairline across the page between
+ * two and no box round any. Each is, top to bottom, the same in every post:
+ * one line of who posted it, what kind of post and how long ago, with a "⋯"
+ * for its menu at the end; its words — a bold title and a few lines of the
+ * rest; its pictures, inside the page's margins with rounded corners; and a
+ * row of soft pills, each a glyph and its count — like, comments, repost —
+ * with share and save as round buttons at the far end.
+ *
+ * The words always come before the pictures, so what a post is about is read
+ * first and every post on the wall starts the same way.
  *
  * A heart is the one reaction there is. A double tap on the words or the
  * pictures likes the post, with a heart that blooms in the middle of it and
@@ -180,18 +182,18 @@ export function FeedCard({
   const words = item.title || item.excerpt;
 
   return (
-    <View style={styles.post}>
-      {/* who, and what kind of post under their name; the "⋯" at the end */}
+    <View style={[styles.post, !standalone && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
+      {/* one line: who, what kind of post and how long ago; the "⋯" at the end */}
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={4}>
+        <Pressable onPress={openAuthor} accessibilityRole="button" accessibilityLabel={who} hitSlop={6}>
           <InitialsAvatar name={who} id={item.author.id} size={AUTHOR} photoUrl={item.author.avatarUrl} />
         </Pressable>
-        <View style={styles.byline}>
+        <View style={[styles.byline, { flexDirection: dir.row }]}>
           <Text style={[styles.who, dir.free, { color: colors.textPrimary }]} numberOfLines={1} onPress={openAuthor} accessibilityRole="link">
             {who}
           </Text>
-          <Text style={[styles.kind, dir.text, { color: colors.textSecondary }]} numberOfLines={1}>
-            {badge}
+          <Text style={[styles.meta, { color: colors.textSecondary }]} numberOfLines={1}>
+            {`${badge} · ${when}`}
           </Text>
         </View>
         <Pressable
@@ -206,7 +208,7 @@ export function FeedCard({
       </View>
 
       <Bloom fired={blooms}>
-        {pictures.length === 0 && words ? (
+        {words ? (
           <Pressable
             onPress={tap}
             onLongPress={menu.open}
@@ -217,12 +219,12 @@ export function FeedCard({
             style={styles.words}
           >
             {item.title ? (
-              <Text style={[styles.title, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 2}>
+              <Text style={[styles.title, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 3}>
                 {item.title}
               </Text>
             ) : null}
             {item.excerpt ? (
-              <Text style={[styles.excerpt, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 6}>
+              <Text style={[styles.excerpt, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 4}>
                 {item.excerpt}
               </Text>
             ) : null}
@@ -230,8 +232,10 @@ export function FeedCard({
         ) : null}
 
         {pictures.length > 0 ? (
-          // the pictures from edge to edge of the phone, each named by what it shows, the double tap reaching them too
-          <PostPictures images={pictures} onPress={tap} onLongPress={menu.open} bleed />
+          // under the words, inside the margins, each named by what it shows, the double tap reaching them too
+          <View style={styles.pictures}>
+            <PostPictures images={pictures} onPress={tap} onLongPress={menu.open} wall />
+          </View>
         ) : null}
       </Bloom>
 
@@ -249,12 +253,13 @@ export function FeedCard({
         <Action
           icon="repost"
           on={e.reposted}
+          tint={e.reposted ? colors.success : undefined}
           label={e.reposted ? t('repost.undo') : t('repost.do')}
           count={count(e.reposts)}
           onPress={() => void toggle('repost')}
         />
-        <Action icon="send" label={t('share.post')} onPress={() => void share()} />
         <View style={styles.spacer} />
+        <Action icon="send" label={t('share.post')} onPress={() => void share()} />
         <Action
           icon={e.bookmarked ? 'bookmark-fill' : 'bookmark'}
           on={e.bookmarked}
@@ -263,19 +268,6 @@ export function FeedCard({
         />
       </View>
 
-      {/* a picture's caption, after the name of whoever posted it */}
-      {pictures.length > 0 && words ? (
-        <Text style={[styles.caption, dir.free, { color: colors.textPrimary }]} numberOfLines={standalone ? undefined : 3} onPress={standalone ? undefined : open}>
-          <Text style={styles.captionWho}>{item.author.username}</Text>
-          {` ${[item.title, item.excerpt].filter(Boolean).join(' ')}`}
-        </Text>
-      ) : null}
-      {!standalone && item.commentCount > 0 ? (
-        <Text style={[styles.toComments, dir.text, { color: colors.textSecondary }]} onPress={open} accessibilityRole="link">
-          {item.commentCount === 1 ? t('feed.viewComment') : t('feed.viewComments', { count: formatNumber(item.commentCount, locale) })}
-        </Text>
-      ) : null}
-      <Text style={[styles.age, dir.text, { color: colors.textSecondary }]}>{when}</Text>
 
       {menu.sheet}
       {reporting ? (
@@ -322,22 +314,23 @@ function Bloom({ fired, children }: { fired: number; children: React.ReactNode }
 }
 
 /**
- * A post while the wall loads: its head, a title on most, a couple of lines
- * and the row of glyphs, at the post's own spacing — so the real one lands in
- * the grey one's place. A written post with no title comes first because that
- * is what most of a wall is.
+ * A post while the wall loads: its one-line head, a title on most, a couple
+ * of lines and the row of pills, at the post's own spacing — so the real one
+ * lands in the grey one's place. A written post with no title comes first
+ * because that is what most of a wall is.
  */
 export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolean; lines?: number }): React.JSX.Element {
+  const { colors } = useTheme();
   return (
-    <View style={styles.post}>
+    <View style={[styles.post, { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.separator }]}>
       <View style={styles.head}>
         <Skeleton width={AUTHOR} height={AUTHOR} radius={radii.pill} />
         <View style={styles.byline}>
-          <SkeletonText size={typography.sizes.sm} width="42%" />
+          <SkeletonText size={typography.sizes.sm} width="46%" />
         </View>
       </View>
       <View style={styles.words}>
-        {titled ? <SkeletonText size={typography.sizes.lg} lineHeight={TITLE_LINE} width="52%" /> : null}
+        {titled ? <SkeletonText size={TITLE_SIZE} lineHeight={TITLE_LINE} width="62%" /> : null}
         {/* one paragraph, its lines with nothing between them */}
         <View>
           {Array.from({ length: lines }, (_, i) => (
@@ -346,11 +339,11 @@ export function FeedCardSkeleton({ titled = true, lines = 2 }: { titled?: boolea
         </View>
       </View>
       <View style={styles.actions}>
-        {[0, 1, 2, 3].map((i) => (
-          <View key={i} style={styles.action}>
-            <Skeleton width={24} height={24} radius={radii.pill} />
-          </View>
-        ))}
+        <Skeleton width={64} height={PILL} radius={radii.pill} />
+        <Skeleton width={56} height={PILL} radius={radii.pill} />
+        <View style={styles.spacer} />
+        <Skeleton width={PILL} height={PILL} radius={radii.pill} />
+        <Skeleton width={PILL} height={PILL} radius={radii.pill} />
       </View>
     </View>
   );
@@ -374,12 +367,18 @@ export function FeedSkeleton({ style }: { style?: StyleProp<ViewStyle> }): React
 
 /** past this a short paragraph fits on one line */
 const WIDE = 600;
-/** display(20) sets 1.12 */
-const TITLE_LINE = Math.round(20 * typography.displayLineHeight);
+/** a title is bold and a size up from what is under it, in the face the rest of the post is in */
+const TITLE_SIZE = 19;
+const TITLE_LINE = 25;
+/** a pill's height: drawn at 36, reached at 44 */
+const PILL = 36;
+const PILL_SLOP = { top: (MIN_TOUCH_TARGET - PILL) / 2, bottom: (MIN_TOUCH_TARGET - PILL) / 2, left: 2, right: 2 };
 
 /**
- * One glyph in the row under a post: 24pt, in a full 44pt square, the count
- * beside it when there is one.
+ * One soft pill in the row under a post: a 20pt glyph and its count when
+ * there is one, or a round button the same height when there is not. Filled,
+ * not framed, and filled no differently when on — the glyph says that (a red
+ * heart, a green repost, a filled bookmark).
  *
  * The label says what pressing it does, never what it counts: a number is
  * what a screen reader announces as the name unless told otherwise, and "4"
@@ -398,7 +397,7 @@ function Action({
   label: string;
   count?: number;
   on?: boolean;
-  /** the colour while on, when it is not the ink (a red heart) */
+  /** the colour while on, when it is not the ink (a red heart, a green repost) */
   tint?: string;
   /** goes up each time the icon should pop with a burst (a like) */
   burst?: number;
@@ -407,47 +406,50 @@ function Action({
   const { colors } = useTheme();
   const { locale } = useI18n();
   const colour = tint ?? colors.textPrimary;
-  const glyph = <Icon name={icon} size={24} color={colour} />;
+  const glyph = <Icon name={icon} size={20} color={colour} />;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityState={{ selected: on }}
       accessibilityLabel={count ? `${label} (${count})` : label}
-      style={({ pressed }) => [styles.action, pressed && styles.pressed]}
+      hitSlop={PILL_SLOP}
+      style={({ pressed }) => [styles.pill, count ? styles.pillWide : null, { backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
     >
       {burst !== undefined ? (
-        <HeartBurst fired={burst} color={colors.danger} size={24}>
+        <HeartBurst fired={burst} color={colors.danger} size={20}>
           {glyph}
         </HeartBurst>
       ) : (
         glyph
       )}
-      {count ? <Text style={[styles.count, { color: colors.textPrimary }]}>{formatNumber(count, locale)}</Text> : null}
+      {count ? <Text style={[styles.count, { color: tint ?? colors.textPrimary }]}>{pillCount(count, locale)}</Text> : null}
     </Pressable>
   );
 }
 
+/** A count in a pill: whole up to 9,999, then short ("12.3K"), so five pills fit across a phone, as on the website. */
+export function pillCount(n: number, locale: Locale): string {
+  return n < 10_000 ? formatNumber(n, locale) : formatCompact(n, locale);
+}
+
 const styles = StyleSheet.create({
-  // no box and no line: a post is followed by the next one's face and name, a little space between
-  post: { paddingTop: spacing.sm, paddingBottom: spacing.lg },
-  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm + 2, paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
-  byline: { flex: 1, minWidth: 0 },
-  who: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
-  kind: { fontSize: typography.sizes.xs },
-  more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginEnd: -spacing.sm },
-  words: { paddingHorizontal: layout.gutter, gap: 4, paddingBottom: spacing.xs },
-  title: { ...display(20) },
+  // no box: a hairline across the page under each post, the same room above and below it
+  post: { paddingTop: spacing.sm + 4, paddingBottom: spacing.sm + 4 },
+  head: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, marginBottom: spacing.sm },
+  byline: { flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  who: { flexShrink: 1, fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
+  meta: { flexShrink: 0, fontSize: typography.sizes.sm },
+  more: { width: MIN_TOUCH_TARGET, height: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center', marginVertical: -6, marginEnd: -spacing.sm - 2 },
+  words: { paddingHorizontal: layout.gutter, gap: 6, paddingBottom: spacing.sm + 2 },
+  title: { fontSize: TITLE_SIZE, lineHeight: TITLE_LINE, fontWeight: typography.weights.bold },
   excerpt: { fontSize: typography.sizes.md, lineHeight: 23 },
+  pictures: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm + 2 },
   bloomLayer: { ...StyleSheet.absoluteFill, alignItems: 'center', justifyContent: 'center' },
-  // the glyphs start under the author's face, the gutter less the room round a 24pt glyph in a 44pt square
-  actions: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: layout.gutter - (MIN_TOUCH_TARGET - 24) / 2 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingHorizontal: layout.gutter, paddingTop: 2 },
   spacer: { flex: 1 },
-  action: { flexDirection: 'row', alignItems: 'center', gap: 4, minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, justifyContent: 'center', paddingHorizontal: 4 },
-  pressed: { opacity: 0.5 },
+  pill: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, minWidth: PILL, height: PILL, borderRadius: radii.pill },
+  pillWide: { paddingHorizontal: spacing.sm + 4 },
+  pressed: { opacity: 0.6 },
   count: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, fontVariant: ['tabular-nums'] },
-  caption: { paddingHorizontal: layout.gutter, fontSize: typography.sizes.sm, lineHeight: 20 },
-  captionWho: { fontWeight: typography.weights.semibold },
-  toComments: { paddingHorizontal: layout.gutter, paddingTop: 4, fontSize: typography.sizes.sm },
-  age: { paddingHorizontal: layout.gutter, paddingTop: 4, fontSize: typography.sizes.xs },
 });

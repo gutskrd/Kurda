@@ -49,17 +49,17 @@ describe('PostPictures', () => {
     expect(singleRatio({ width: null, height: null })).toBeCloseTo(4 / 3);
   });
 
-  it('on the wall, shows several one at a time, the width of the phone, and says how many', () => {
-    // a phone 390 wide
+  it('on the wall, shows several one at a time, the width of the post, and says how many', () => {
+    // a phone 390 wide: the pictures sit inside its 16pt margins
     Object.defineProperty(document.documentElement, 'clientWidth', { configurable: true, value: 390 });
     window.dispatchEvent(new Event('resize'));
-    renderWithProviders(<PostPictures images={[img(1, 'Çiyayên Zagrosê'), img(2), img(3)]} bleed />);
+    renderWithProviders(<PostPictures images={[img(1, 'Çiyayên Zagrosê'), img(2), img(3)]} wall />);
     // each whole, in the order posted, side by side in a strip that is swiped
     expect(named()).toEqual(['Çiyayên Zagrosê', 'Picture 2 of 3', 'Picture 3 of 3']);
     expect(screen.getByText('1/3')).toBeTruthy();
     // swiped on by one picture's width, the corner says so
     const strip = screen.getByLabelText('Çiyayên Zagrosê').closest('[class*="overflowX"]') as HTMLElement;
-    Object.defineProperty(strip, 'scrollLeft', { configurable: true, value: 390 });
+    Object.defineProperty(strip, 'scrollLeft', { configurable: true, value: 358 });
     fireEvent.scroll(strip);
     expect(screen.getByText('2/3')).toBeTruthy();
     Reflect.deleteProperty(document.documentElement, 'clientWidth');

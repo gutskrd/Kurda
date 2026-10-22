@@ -81,8 +81,9 @@ describe('a picture’s comments', () => {
   it('say who and when in words, and open their replies from the picture’s own thread', async () => {
     open({ 'GET /images/comments/c1/replies?limit=50': ok({ comments: [comment('r1', { parentCommentId: 'c1', depth: 1, body: 'a reply' })] }) });
     expect(await screen.findByRole('button', { name: 'rojda — open profile' })).toBeTruthy();
-    // the picture's own time, then the comment's
-    expect(screen.getAllByText('2h ago')).toHaveLength(2);
+    // the picture's own time, beside what kind of post it is at its top, then the comment's
+    expect(screen.getByText(/ · 2h ago$/)).toBeTruthy();
+    expect(screen.getAllByText('2h ago')).toHaveLength(1);
     fireEvent.click(screen.getByRole('button', { name: 'View 1 reply' }));
     expect(await screen.findByText('a reply')).toBeTruthy();
   });

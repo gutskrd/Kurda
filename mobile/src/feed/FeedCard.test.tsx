@@ -15,7 +15,7 @@ import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { UnreadProvider } from '../messages/unread';
 import { onPostDeleted, postDeleted, type DeletedPost } from '../composer/postDeleted';
-import { FeedCard } from './FeedCard';
+import { FeedCard, pillCount } from './FeedCard';
 import { CivakScreen } from './CivakScreen';
 import type { FeedItem } from './types';
 
@@ -87,7 +87,7 @@ describe('your own post on the wall', () => {
 });
 
 describe('a post in the chain', () => {
-  it('names who posted it at the top, and keeps its numbers beside the heart, the comments and the reposts', () => {
+  it('says who, what and when on one line, the words before the picture, and keeps its numbers in the pills', () => {
     renderWithProviders(
       <FeedCard
         item={item({
@@ -104,6 +104,8 @@ describe('a post in the chain', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'rojda' })).toBeTruthy();
+    // what kind of post and how long ago, beside the name
+    expect(screen.getByText(/^Meme · /)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Like (9224)' })).toBeTruthy();
     expect(screen.getByText('9,224')).toBeTruthy();
     expect(screen.getByRole('button', { name: '36 comments (36)' })).toBeTruthy();
@@ -111,16 +113,28 @@ describe('a post in the chain', () => {
     // what is saved is nobody else's business, so the bookmark has no number
     expect(screen.getByRole('button', { name: 'Save' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Share this post' })).toBeTruthy();
-    // the caption after the name, then a way into the comments
-    expect(screen.getByText((_, el) => el?.textContent === 'rojda Newroz' && el.children.length === 1)).toBeTruthy();
-    fireEvent.click(screen.getByRole('link', { name: 'View all 36 comments' }));
+    // the words first, then the picture, and no caption under it
+    const words = screen.getByText('Newroz');
+    const picture = screen.getByRole('button', { name: 'Picture 1 of 1' });
+    expect(words.compareDocumentPosition(picture) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByText('Newroz')).toHaveLength(1);
+    // the comments pill is the way into them; there is no line of its own for that, nor for the time
+    expect(screen.queryByRole('link', { name: /^View/ })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: '36 comments (36)' }));
     expect(navigation.navigate).toHaveBeenCalledWith('MemeDetail', { postId: 'i1' });
   });
 
-  it('shows no number where there is none yet, and no way into comments that are not there', () => {
+  it('keeps a count whole up to 9,999, then says it short', () => {
+    expect(pillCount(9224, 'en')).toBe('9,224');
+    expect(pillCount(12_340, 'en')).toBe('12.3K');
+    expect(pillCount(2_400_000, 'en')).toBe('2.4M');
+  });
+
+  it('shows no number where there is none yet', () => {
     renderWithProviders(<FeedCard item={item()} />);
     expect(screen.getByRole('button', { name: 'Like' })).toBeTruthy();
-    expect(screen.queryByRole('link', { name: /^View/ })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Repost' })).toBeTruthy();
+    expect(screen.queryByText('0')).toBeNull();
   });
 
   it('likes with the heart, and the number follows what the server says', async () => {

@@ -758,8 +758,6 @@ export type TranslationKey =
   | 'feed.save'
   | 'feed.removeFromSaved'
   | 'feed.comments'
-  | 'feed.viewComment'
-  | 'feed.viewComments'
   | 'feed.doubleTapHint'
   | 'feed.signInToLike'
   | 'feed.signInToSave'
@@ -2540,8 +2538,6 @@ const en: Catalog = {
   'feed.save': 'Save',
   'feed.removeFromSaved': 'Remove from saved',
   'feed.comments': '{count} comments',
-  'feed.viewComment': 'View 1 comment',
-  'feed.viewComments': 'View all {count} comments',
   'feed.doubleTapHint': 'Double-tap to like',
   'feed.signInToLike': 'Sign in to like',
   'feed.signInToSave': 'Sign in to save',
@@ -4740,8 +4736,6 @@ const ku: Catalog = {
   'feed.save': 'Tomar bike',
   'feed.removeFromSaved': 'Ji tomarkiriyan rake',
   'feed.comments': '{count} şîrove',
-  'feed.viewComment': 'Şîroveyê bibîne',
-  'feed.viewComments': 'Hemû {count} şîroveyan bibîne',
   'feed.doubleTapHint': 'Ji bo ecibandinê du caran bitikîne',
   'feed.signInToLike': 'Ji bo ecibandinê têkeve',
   'feed.signInToSave': 'Ji bo tomarkirinê têkeve',
@@ -6940,8 +6934,6 @@ const de: Catalog = {
   'feed.save': 'Speichern',
   'feed.removeFromSaved': 'Aus Gespeichertem entfernen',
   'feed.comments': '{count} Kommentare',
-  'feed.viewComment': '1 Kommentar ansehen',
-  'feed.viewComments': 'Alle {count} Kommentare ansehen',
   'feed.doubleTapHint': 'Doppeltippen zum Liken',
   'feed.signInToLike': 'Melde dich an, um das zu mögen',
   'feed.signInToSave': 'Melde dich an, um zu speichern',
@@ -9140,8 +9132,6 @@ const es: Catalog = {
   'feed.save': 'Guardar',
   'feed.removeFromSaved': 'Quitar de guardados',
   'feed.comments': '{count} comentarios',
-  'feed.viewComment': 'Ver 1 comentario',
-  'feed.viewComments': 'Ver los {count} comentarios',
   'feed.doubleTapHint': 'Toca dos veces para dar me gusta',
   'feed.signInToLike': 'Inicia sesión para dar me gusta',
   'feed.signInToSave': 'Inicia sesión para guardar',
@@ -11340,8 +11330,6 @@ const tr: Catalog = {
   'feed.save': 'Kaydet',
   'feed.removeFromSaved': 'Kaydedilenlerden çıkar',
   'feed.comments': '{count} yorum',
-  'feed.viewComment': '1 yorumu gör',
-  'feed.viewComments': '{count} yorumun tümünü gör',
   'feed.doubleTapHint': 'Beğenmek için iki kez dokun',
   'feed.signInToLike': 'Beğenmek için giriş yap',
   'feed.signInToSave': 'Kaydetmek için giriş yap',
@@ -13540,8 +13528,6 @@ const ar: Catalog = {
   'feed.save': 'حفظ',
   'feed.removeFromSaved': 'إزالة من المحفوظات',
   'feed.comments': '{count} تعليقات',
-  'feed.viewComment': 'عرض تعليق واحد',
-  'feed.viewComments': 'عرض كل التعليقات ({count})',
   'feed.doubleTapHint': 'انقر مرتين للإعجاب',
   'feed.signInToLike': 'سجّل الدخول للإعجاب',
   'feed.signInToSave': 'سجّل الدخول للحفظ',
@@ -15740,8 +15726,6 @@ const fr: Catalog = {
   'feed.save': 'Enregistrer',
   'feed.removeFromSaved': 'Retirer des enregistrements',
   'feed.comments': '{count} commentaires',
-  'feed.viewComment': 'Voir 1 commentaire',
-  'feed.viewComments': 'Voir les {count} commentaires',
   'feed.doubleTapHint': 'Touchez deux fois pour aimer',
   'feed.signInToLike': 'Connectez-vous pour aimer',
   'feed.signInToSave': 'Connectez-vous pour enregistrer',
@@ -17940,8 +17924,6 @@ const nl: Catalog = {
   'feed.save': 'Bewaren',
   'feed.removeFromSaved': 'Uit bewaard verwijderen',
   'feed.comments': '{count} reacties',
-  'feed.viewComment': '1 reactie bekijken',
-  'feed.viewComments': 'Alle {count} reacties bekijken',
   'feed.doubleTapHint': 'Dubbeltik om te liken',
   'feed.signInToLike': 'Log in om dit leuk te vinden',
   'feed.signInToSave': 'Log in om te bewaren',
@@ -20141,8 +20123,6 @@ const ckb: Catalog = {
   'feed.save': 'پاشەکەوت',
   'feed.removeFromSaved': 'لە پاشەکەوتکراوەکان لابە',
   'feed.comments': '{count} لێدوان',
-  'feed.viewComment': 'بینینی لێدوانێک',
-  'feed.viewComments': 'بینینی هەموو {count} لێدوانەکە',
   'feed.doubleTapHint': 'دوو جار لێی بدە بۆ حەزلێکردن',
   'feed.signInToLike': 'بچۆ ژوورەوە بۆ بەدڵبوون',
   'feed.signInToSave': 'بچۆ ژوورەوە بۆ پاشەکەوتکردن',
