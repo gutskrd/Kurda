@@ -46,6 +46,15 @@ const said = (role: 'alert' | 'status'): Promise<HTMLElement> =>
 const saysNothing = (role: 'alert' | 'status'): boolean => screen.queryAllByRole(role).every((e) => !e.textContent?.trim());
 
 describe('entering a code', () => {
+  it('is asked for on the sign-in’s own card, so the step after the password looks like the one before it', async () => {
+    show();
+    const card = (await screen.findByRole('heading', { name: 'Enter your 2FA code' })).closest('.login-card');
+    expect(card).not.toBeNull();
+    expect(card).toHaveTextContent('Admin console');
+    expect(screen.getByLabelText('Six-digit code').closest('.login-input')).not.toBeNull();
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveClass('login-submit');
+  });
+
   it('says a code is not whole yet instead of greying the button out, and sends nothing', async () => {
     const { api } = show();
     const box = await screen.findByLabelText('Six-digit code');

@@ -56,26 +56,43 @@
   .dash-audit-action { grid-column: 1 / -1; white-space: normal; }
 }
 
-/* ---- the 2FA steps before the workspace -------------------------------------- */
-/* the column is at most the card's width and may shrink below it: a grid's own column took the
-   card's 460 px as its size, and on a phone the card ran 87 px past the screen's edge */
-.gate {
-  min-height: 100vh; min-height: 100dvh; display: grid; grid-template-columns: minmax(0, 460px); place-content: center;
-  padding: 24px var(--gutter-end) 24px var(--gutter-start);
+/* ---- the 2FA steps before the workspace ----------------------------------------- */
+/* The sign-in's own card, the same frost, inputs and pill button (styles.css .login), so
+   the code that follows the password is asked for in the same place it was. Only what the
+   steps have that the sign-in does not is set here. */
+.login-title.gate-title { display: flex; align-items: center; gap: 12px; font-size: 34px; }
+.gate-busy { flex: none; width: 26px; height: 26px; animation: spin 1s linear infinite; }
+.gate-text { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
+.gate-qr { display: flex; justify-content: center; margin: 0 0 20px; }
+.qr { background: #fff; border-radius: 14px; padding: 8px; }
+/* the key typed by hand, in the inputs' glass */
+.gate-card .secret {
+  margin: -10px 0 20px; color: #fff;
+  border-radius: 16px; border: 1px solid rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
 }
-.gate-card { width: 100%; display: grid; gap: 12px; padding: 28px; background: var(--surface-strong); }
+.gate-form { display: grid; gap: 12px; }
+.gate-form .login-label { margin: 0; }
 .gate-form .banner { margin: 0; }
-.gate-foot { margin: 4px 0 0; padding-top: 14px; border-top: 1px solid var(--separator); font-size: 13px; color: var(--text-dim); }
-.gate-foot button.link { font-weight: 600; }
-.gate-card .brand { padding: 0 0 4px; }
-.gate-title { font-size: 21px; display: flex; align-items: center; gap: 8px; }
-.gate-busy { animation: spin 1s linear infinite; }
-.gate-text { margin: 0; color: var(--text-2); }
-.gate-qr { display: flex; justify-content: center; margin: 6px 0; }
-.qr { background: #fff; border-radius: 8px; padding: 4px; }
-.gate-form { display: grid; gap: 10px; margin-top: 4px; }
-.gate-form label { font-weight: 600; }
-.code-input { letter-spacing: 0.35em; font-size: 22px !important; text-align: center; font-variant-numeric: tabular-nums; min-height: 52px; }
+.gate-form .login-msg { margin: 0; text-align: left; }
+.gate-form .login-field-error { margin: 0; }
+.gate-form .login-submit { margin-top: 10px; }
+/* six digits, spaced and centred; the spacing also trails the last digit, so it is taken off the right.
+   Larger than the 16 px a phone holds every field to (styles.css): that floor is only there because a
+   field smaller than 16 px makes iOS zoom in, and one larger never does. */
+:root .gate-form .login-input input.code-input {
+  padding: 0 12px 0 calc(12px + 0.35em);
+  font-size: 24px; letter-spacing: 0.35em; text-align: center; font-variant-numeric: tabular-nums;
+}
+.gate-foot {
+  margin: 26px 0 0; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.16);
+  font-size: 13.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.72);
+}
+.gate-foot .login-forgot { font-size: 13.5px; }
+@media (max-width: 520px) {
+  .login-title.gate-title { font-size: 29px; }
+}
 @media (prefers-reduced-motion: reduce) { .gate-busy { animation: none; } }
 
 /* ---- a search box in a section's head, and links in tables ------------------- */
