@@ -39,6 +39,39 @@ describe('the ribbons', () => {
     expect(() => stop()).not.toThrow();
   });
 
+  it('stay where they are when a phone keyboard opens, and fit again when the phone turns', () => {
+    // a graphics chip that takes every call and remembers where it was asked to draw
+    const viewport = vi.fn();
+    const gl = new Proxy({} as Record<string | symbol, unknown>, {
+      get: (_, key) => {
+        if (key === 'viewport') return viewport;
+        if (typeof key === 'string' && /^[A-Z_]+$/.test(key)) return 1;
+        return () => ({});
+      },
+    });
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation(() => 0);
+    const box = document.createElement('div');
+    let screen = { width: 390, height: 844 };
+    Object.defineProperty(box, 'clientWidth', { get: () => screen.width });
+    Object.defineProperty(box, 'clientHeight', { get: () => screen.height });
+    const canvas = box.appendChild(document.createElement('canvas'));
+    vi.spyOn(canvas, 'getContext').mockReturnValue(gl as unknown as WebGLRenderingContext);
+    const stop = startRibbons(canvas);
+    expect(viewport).toHaveBeenCalledTimes(1);
+
+    // the keyboard takes half the window; the box, the screen at its largest, stays as it was
+    vi.stubGlobal('innerHeight', 420);
+    window.dispatchEvent(new Event('resize'));
+    expect(viewport).toHaveBeenCalledTimes(1);
+
+    screen = { width: 844, height: 390 };
+    window.dispatchEvent(new Event('resize'));
+    expect(viewport).toHaveBeenCalledTimes(2);
+    stop();
+    vi.unstubAllGlobals();
+    vi.restoreAllMocks();
+  });
+
   it('are hidden from assistive technology', () => {
     vi.spyOn(HTMLCanvasElement.prototype, 'getContext').mockReturnValue(null);
     const { container } = renderUi(<Backdrop />, { kit: false });

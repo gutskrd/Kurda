@@ -63,10 +63,14 @@ export function startRibbons(canvas: HTMLCanvasElement): () => void {
   };
 
   const size = (): void => {
+    // the box the ribbons fill is the screen at its largest (backdrop.css): a keyboard or a browser bar
+    // coming and going leaves it as it is, and the ribbons where they are; a new width redraws them
+    const box = canvas.parentElement;
     // sharp on a high-density screen, but no more than twice over: the finest line is under a pixel already
     const pixels = Math.min(window.devicePixelRatio || 1, 2);
-    const width = Math.round(window.innerWidth * pixels);
-    const height = Math.round(window.innerHeight * pixels);
+    const width = Math.round((box?.clientWidth || window.innerWidth) * pixels);
+    const height = Math.round((box?.clientHeight || window.innerHeight) * pixels);
+    if (width === canvas.width && height === canvas.height) return;
     canvas.width = width;
     canvas.height = height;
     ctx.viewport(0, 0, width, height);
