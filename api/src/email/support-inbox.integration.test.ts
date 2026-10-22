@@ -232,8 +232,8 @@ describe.skipIf(!DATABASE_URL)('support inbox (integration)', () => {
   });
 
   it('keeps the inbox and the email settings from players, and the settings from support', async () => {
-    expect((await call('GET', '/admin/support/emails', player)).statusCode).toBe(403);
-    expect((await call('GET', '/admin/email/status', player)).statusCode).toBe(403);
+    expect((await call('GET', '/admin/support/emails', player)).statusCode).toBe(404);
+    expect((await call('GET', '/admin/email/status', player)).statusCode).toBe(404);
     expect((await call('GET', '/admin/email/status', support)).statusCode).toBe(403);
     expect((await call('POST', '/admin/email/test', support)).statusCode).toBe(403);
   });

@@ -581,6 +581,12 @@ export class AuthService {
     captchaToken?: string;
     /** false: "Remember me" was left off, and the session is kept a day, not a month */
     remember?: boolean;
+    /**
+     * Who this sign-in is for at all (the admin console's: owner-access.ts).
+     * Asked once the password is right; an account it refuses is answered
+     * exactly as a wrong password is, counts as one, and is given nothing.
+     */
+    only?: (userId: string) => Promise<boolean>;
   }): Promise<{ user: PublicUser; tokens: IssuedTokens }> {
     const invalid = () => new AppError('INVALID_CREDENTIALS', 401, 'invalid email or password');
     const locked = (seconds: number) =>
@@ -635,13 +641,15 @@ export class AuthService {
     }
 
     const passwordOk = user?.password_hash ? await verifyPassword(user.password_hash, input.password) : (await burn(), false);
-    if (!user || !passwordOk) {
+    // an account this sign-in is not for: the same answer, the same count, nothing to tell it apart
+    const refused = !!user && passwordOk && input.only !== undefined && !(await input.only(user.id));
+    if (!user || !passwordOk || refused) {
       const keyLockSec = await this.lockouts.recordFailure(scope, key);
       const netLockSec = watchNetwork ? await this.lockouts.recordFailure('ip', input.ip!, target) : null;
       if (!known) await this.surge.recordFailure();
       if (user) {
         // the network as its keyed hash, never the address
-        this.deps.log?.warn({ userId: user.id, network, scope, keyLockSec, netLockSec }, 'failed login attempt');
+        this.deps.log?.warn({ userId: user.id, network, scope, keyLockSec, netLockSec, refused }, 'failed login attempt');
         // the owner hears about a lock on their account, once a day at most
         if (keyLockSec !== null && scope === 'account') await this.securityNotice(user, 'sign-in-attempts', true);
       }

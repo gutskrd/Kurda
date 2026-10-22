@@ -57,10 +57,10 @@ describe.skipIf(!DATABASE_URL)('admin RBAC + 2FA (integration)', () => {
     await app.close();
   });
 
-  it('denies admin routes to non-admins', async () => {
+  it('denies admin routes to non-admins, as routes that are not there', async () => {
     const res = await authed('POST', '/admin/2fa/enroll', userToken);
-    expect(res.statusCode).toBe(403);
-    expect(res.json().code).toBe('FORBIDDEN');
+    expect(res.statusCode).toBe(404);
+    expect(res.json().code).toBe('NOT_FOUND');
   });
 
   it('requires confirmed 2FA before granting admin access', async () => {
@@ -92,8 +92,8 @@ describe.skipIf(!DATABASE_URL)('admin RBAC + 2FA (integration)', () => {
   it('re-checks role on every request — a demoted admin loses access immediately', async () => {
     await pool.query(`UPDATE users SET roles = '{}' WHERE id = $1`, [adminId]);
     const res = await authed('GET', '/admin/me', adminToken);
-    expect(res.statusCode).toBe(403);
-    expect(res.json().code).toBe('FORBIDDEN');
+    expect(res.statusCode).toBe(404);
+    expect(res.json().code).toBe('NOT_FOUND');
     // restore for any later assertions
     await pool.query(`UPDATE users SET roles = '{moderator}' WHERE id = $1`, [adminId]);
   });

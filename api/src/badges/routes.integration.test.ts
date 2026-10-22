@@ -90,9 +90,9 @@ describe.skipIf(!DATABASE_URL)('badges and progress over HTTP (integration)', ()
     expect((await call(me, 'GET', '/me/badges/unseen')).json()).toEqual({ unseen: [] });
     expect((await call(me, 'POST', '/me/badges/seen', {})).statusCode).toBe(200);
     expect((await call(null, 'GET', '/me/badges')).statusCode).toBe(401);
-    expect((await call(me, 'GET', '/admin/badges')).statusCode).toBe(403);
-    expect((await call(me, 'GET', '/admin/leagues')).statusCode).toBe(403);
-    expect((await call(me, 'POST', `/admin/users/${me.id}/badges/agir`, { action: 'award', tier: 1, reason: 'nope' })).statusCode).toBe(403);
+    expect((await call(me, 'GET', '/admin/badges')).statusCode).toBe(404);
+    expect((await call(me, 'GET', '/admin/leagues')).statusCode).toBe(404);
+    expect((await call(me, 'POST', `/admin/users/${me.id}/badges/agir`, { action: 'award', tier: 1, reason: 'nope' })).statusCode).toBe(404);
   });
 
   it('a profile names no league for someone never in one, nor for someone who opted out, and the tier key once they are', async () => {

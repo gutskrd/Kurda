@@ -111,7 +111,7 @@ export async function grantBootstrapAdmins(
     if (!user.email_verified_at) {
       result.unverified.push(email);
       log.warn(
-        { email, userId: user.id },
+        { address: maskEmail(email), userId: user.id },
         'bootstrap admin: email not confirmed — NOT granting (verify the address, then restart)',
       );
       continue;

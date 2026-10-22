@@ -79,7 +79,7 @@ describe.skipIf(!DATABASE_URL)('tournament (integration)', () => {
       payload: { name: 'nope', capacity: 8, startsAt: new Date(Date.now() + 3.6e6).toISOString() },
       remoteAddress: '10.60.0.2',
     });
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
   });
 
   it('runs a full 4-player bracket and pays the champion', async () => {

@@ -105,7 +105,7 @@ describe.skipIf(!DATABASE_URL)('tags (integration)', () => {
   it('lets admins/founder create a tag but blocks normal users', async () => {
     const poet = `poet_${suffix}`;
     const body = { key: poet, label: 'Poet', kind: 'claimable' as const, category: 'custom', acquisition: 'self_claim' as const };
-    expect((await call('POST', '/admin/tags', userTok, body)).statusCode).toBe(403);
+    expect((await call('POST', '/admin/tags', userTok, body)).statusCode).toBe(404);
 
     const created = await call('POST', '/admin/tags', founderTok, body);
     expect(created.statusCode).toBe(201);

@@ -1,5 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { ROUTE_NOT_FOUND_MESSAGE } from '@kurda/shared';
 import { routeIsPrivileged } from '../plugins/auth.js';
+import type { AdminAccess } from './owner-access.js';
 import { isPrivileged } from './roles.js';
 import type { AdminTotpService } from './totp-service.js';
 
@@ -37,7 +39,14 @@ import type { AdminTotpService } from './totp-service.js';
  * the day it is written. The /admin prefix is still honoured on top of that, so
  * a route that reaches the panel some other way does not fall through.
  *
- * Two distinct refusals, so the panel can show the right screen:
+ * Before 2FA, the gate asks whether the account is the console's owner at all
+ * (owner-access.ts). To any other signed-in account every staff route answers
+ * exactly as a route that does not exist would, the console's own included, so
+ * nothing tells it that the route is there or what would open it. A request
+ * with no session at all still gets the route's own 401, as every route gives,
+ * so the console can renew an expired session.
+ *
+ * Two distinct refusals for the owner, so the panel can show the right screen:
  *   TOTP_ENROLLMENT_REQUIRED — no confirmed secret yet; set one up
  *   TOTP_REQUIRED            — enrolled, but this session has not entered a code
  */
@@ -70,7 +79,15 @@ async function refuse(reply: FastifyReply, req: FastifyRequest, code: string, me
   await reply.code(403).send({ code, message, requestId: req.id });
 }
 
-export function installAdminGate(app: FastifyInstance, totp: AdminTotpService): void {
+/** Word for word what the API answers for a route it does not have (plugins/errors.ts). */
+async function notFound(reply: FastifyReply, req: FastifyRequest): Promise<void> {
+  await reply.code(404).send({ code: 'NOT_FOUND', message: ROUTE_NOT_FOUND_MESSAGE, requestId: req.id });
+}
+
+/** The console's own sign-in: open to everyone, and answering everyone alike (auth/routes.ts). */
+const SIGN_IN = '/admin/auth/login';
+
+export function installAdminGate(app: FastifyInstance, totp: AdminTotpService, access: AdminAccess): void {
   /**
    * Route patterns — `/tournaments/:id/start`, not `/tournaments/abc/start` —
    * whose guards say they are staff surface. Collected at boot, matched exactly,
@@ -88,7 +105,12 @@ export function installAdminGate(app: FastifyInstance, totp: AdminTotpService): 
     const pattern = req.routeOptions?.url;
     const staffSurface =
       path.startsWith('/admin/') || path === '/admin' || (pattern !== undefined && privileged.has(pattern));
-    if (!staffSurface) return;
+    if (!staffSurface || path === SIGN_IN) return;
+    // anyone signed in who is not the console's owner: as if the route were not there
+    if (req.user && !(await access.allows(req.user.id))) {
+      await notFound(reply, req);
+      return;
+    }
     if (EXEMPT.has(path)) return;
 
     // Not signed in, or not staff at all: say nothing about 2FA. The route's own

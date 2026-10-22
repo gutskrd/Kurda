@@ -124,6 +124,7 @@ import { registerCourseMapRoutes } from './coursemap/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
+import { AdminAccess } from './admin/owner-access.js';
 import { installAdminGate } from './admin/admin-gate.js';
 import { registerGameContentRoutes } from './admin/game-content-routes.js';
 import { registerDictionaryImportRoutes } from './admin/dictionary-import-routes.js';
@@ -333,6 +334,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   // shared with the admin routes further down; declared here because the 2FA
   // gate has to be installed before any route is registered
   let adminTotp: AdminTotpService | undefined;
+  let adminAccess: AdminAccess | undefined;
   if (config.DATABASE_URL) {
     setupAuth(app, config);
     // An unverified account cannot write anything. Installed here for the same
@@ -347,7 +349,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // after it, and placing this further down would silently leave every
     // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
-    installAdminGate(app, adminTotp);
+    adminAccess = new AdminAccess(app.db, config);
+    if (adminAccess.shut) app.log.error('admin console: no ADMIN_ACCESS_EMAILS or BOOTSTRAP_ADMIN_EMAILS set — it is shut to everyone');
+    installAdminGate(app, adminTotp, adminAccess);
 
     // which network each signed-in account is on, for account linking, and the
     // daily prune of that and the risk decisions; also before any route
@@ -477,7 +481,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const partitionSweep = setInterval(() => void ensurePartitions(), 24 * 60 * 60 * 1000);
     app.addHook('onClose', async () => clearInterval(partitionSweep));
 
-    registerAuthRoutes(app, config);
+    registerAuthRoutes(app, config, adminAccess);
     // optional phone (SMS) verification (KUR-297) — stub sender until a provider
     // is configured; raises trust (#295) and is exported/deleted with the account
     registerPhoneVerificationRoutes(app, new PhoneVerificationService(app.db, { sms: new StubSmsSender() }));

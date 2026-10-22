@@ -81,6 +81,13 @@ const envSchema = z.object({
    * see grantBootstrapAdmins.
    */
   BOOTSTRAP_ADMIN_EMAILS: z.string().default(''),
+  /**
+   * Comma-separated addresses that may use the admin console at all, whatever
+   * roles anyone else holds (admin/owner-access.ts). Unset, the bootstrap list
+   * above is used; in production, with both empty, the console is shut to
+   * everyone. Like the bootstrap list, it lives in configuration only.
+   */
+  ADMIN_ACCESS_EMAILS: z.string().default(''),
   /** Public CDN origin serving the bucket (falls back to endpoint/bucket). */
   CDN_BASE_URL: z.string().url().optional(),
 

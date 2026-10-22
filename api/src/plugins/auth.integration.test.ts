@@ -95,10 +95,11 @@ describe.skipIf(!DATABASE_URL)('auth middleware (integration)', () => {
     await pool.query(`UPDATE users SET deleted_at = NULL WHERE id = $1`, [userId]);
   });
 
-  it('role guard: 403 without the role, 200 with it', async () => {
+  it('role guard: a route that is not there without the role, 200 with it', async () => {
+    // asking for a role makes it staff surface, which answers anyone who is not staff as if it were not there
     const denied = await call('/admin-only', accessToken);
-    expect(denied.statusCode).toBe(403);
-    expect(denied.json().code).toBe('FORBIDDEN');
+    expect(denied.statusCode).toBe(404);
+    expect(denied.json().code).toBe('NOT_FOUND');
 
     await pool.query(`UPDATE users SET roles = '{admin}' WHERE id = $1`, [userId]);
 

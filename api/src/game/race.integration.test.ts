@@ -218,7 +218,7 @@ describe.skipIf(!DATABASE_URL)('typing race (integration)', () => {
 
   it('keeps race curation to admins', async () => {
     const res = await call('GET', '/admin/race/texts', playerToken);
-    expect(res.statusCode).toBe(403);
+    expect(res.statusCode).toBe(404);
   });
 
   // ---- varieties, accent modes, and what a keyboard actually sends ---------

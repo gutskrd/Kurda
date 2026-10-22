@@ -640,8 +640,8 @@ describe.skipIf(!DATABASE_URL)('app feedback (integration)', () => {
       await pool.query(`UPDATE users SET roles = '{content_editor}' WHERE id = $1`, [editor.id]);
       await pass2fa(app, editor.token, '10.156.210.3');
       expect((await call('GET', '/admin/feedback', editor)).statusCode).toBe(403);
-      expect((await call('GET', '/admin/feedback', player)).statusCode).toBe(403);
-      expect((await call('PATCH', `/admin/feedback/${ids[1]}`, player, { status: 'read' })).statusCode).toBe(403);
+      expect((await call('GET', '/admin/feedback', player)).statusCode).toBe(404);
+      expect((await call('PATCH', `/admin/feedback/${ids[1]}`, player, { status: 'read' })).statusCode).toBe(404);
     });
 
     it('still needs the second factor', async () => {

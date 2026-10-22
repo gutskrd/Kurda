@@ -92,7 +92,7 @@ describe.skipIf(!DATABASE_URL)('moderation cases (integration)', () => {
       expect((await call('GET', '/admin/moderation/queue?limit=1', who.token)).statusCode).toBe(200);
     }
     expect((await call('GET', '/admin/moderation/queue', support.token)).statusCode).toBe(403);
-    expect((await call('GET', '/admin/moderation/queue', reporter.token)).statusCode).toBe(403);
+    expect((await call('GET', '/admin/moderation/queue', reporter.token)).statusCode).toBe(404);
     expect((await call('GET', '/admin/moderation/queue')).statusCode).toBe(401);
     // and /admin/session tells the panel so
     const session = (await call('GET', '/admin/session', legacy.token)).json() as { capabilities: string[] };
