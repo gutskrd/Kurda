@@ -63,30 +63,20 @@ factor, so a stolen session alone isn't enough.
 
 ## Who may use the console at all
 
-A role is not enough on its own either. Only the addresses in `ADMIN_ACCESS_EMAILS`
-(comma-separated, on the **API** service) may use the console; when it is not set,
-`BOOTSTRAP_ADMIN_EMAILS` is used instead. The account must also hold a staff role,
-have confirmed that address, and be neither deleted nor banned
-(`api/src/admin/owner-access.ts`).
-
-To everyone else the console gives nothing away:
+Only staff: an account holding a staff role (`admin`, `superadmin`, `moderator`,
+`support`, `content_editor` or `founder`) that is neither deleted nor banned
+(`api/src/admin/owner-access.ts`). To everyone else the console gives nothing away:
 
 - **Signing in** (`POST /admin/auth/login`) answers exactly as a wrong password does
   — same status, same message, no session — whether the account exists, the
   password was right, or the account is staff.
-- **Every staff route** answers a signed-in account that is not listed exactly as a
-  route that does not exist (`404 NOT_FOUND`), so another staff role, a moderator
-  left over, or a role written by mistake opens nothing.
+- **Every staff route** answers a signed-in account that is not staff exactly as a
+  route that does not exist (`404 NOT_FOUND`).
 
-In production, with **both lists empty, the console is shut to everyone** (the API
-logs an error at boot). Set one of them before deploying. A moderator or support
-account that should use the console needs its address added here as well.
+### A second lock: `ADMIN_ACCESS_EMAILS`
 
-## Revoking
-
-```sql
-UPDATE users SET roles = array_remove(array_remove(roles, 'admin'), 'superadmin')
-WHERE email = 'someone@example.com';
-```
-
-Remove the address from `BOOTSTRAP_ADMIN_EMAILS` too, or the next restart re-grants it.
+Set `ADMIN_ACCESS_EMAILS` on the **API** service (comma-separated) and only those
+addresses may use the console, whatever roles anyone else holds; each account must
+also have confirmed its address. A role granted by mistake, or a moderator left
+over, then opens nothing. Put every admin's address on it, yours included — anyone
+missing is answered like a stranger. Leave it unset and every staff role may sign in.

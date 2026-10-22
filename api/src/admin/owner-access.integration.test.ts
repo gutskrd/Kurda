@@ -1,8 +1,9 @@
 /**
  * The admin console is its owner's alone (integration).
  *
- * Only an address on ADMIN_ACCESS_EMAILS signs in to the console, and to
- * everyone else it gives nothing away: another staff account, an ordinary
+ * With ADMIN_ACCESS_EMAILS set, only an address on it signs in to the
+ * console (without it, every staff account does), and to everyone else it
+ * gives nothing away: another staff account, an ordinary
  * member and an address with no account at all, each with the right password
  * or the wrong one, get one and the same answer, and no session. Signed in some
  * other way, every staff route answers them as a route that is not there.
@@ -124,6 +125,26 @@ describe.skipIf(!DATABASE_URL)('the admin console is its owner’s alone (integr
       const poisoned = `{"email":"${owner}","password":"${PASSWORD}","__proto__":{"roles":["admin"]}}`;
       const res = await app.inject({ method: 'POST', url, payload: poisoned, headers: { 'content-type': 'application/json' }, remoteAddress: ip() });
       expect(res.statusCode, `${url} __proto__: ${res.body.slice(0, 120)}`).toBe(400);
+    }
+  });
+
+  it('without a list, signs in every staff account and still no one else', async () => {
+    const open = buildApp(loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal', ADMIN_ACCESS_EMAILS: '' }));
+    await open.ready();
+    try {
+      const login = (email: string, password: string) =>
+        open.inject({ method: 'POST', url: '/admin/auth/login', payload: { email, password }, remoteAddress: ip() });
+      for (const staff of [owner, otherAdmin]) {
+        const res = await login(staff, PASSWORD);
+        expect(res.statusCode, staff).toBe(200);
+      }
+      const wrong = await login(owner, 'not-the-password-1');
+      const member_ = await login(member, PASSWORD);
+      expect(member_.statusCode).toBe(401);
+      expect({ code: member_.json().code, message: member_.json().message }).toEqual({ code: wrong.json().code, message: wrong.json().message });
+      expect(member_.json().tokens).toBeUndefined();
+    } finally {
+      await open.close();
     }
   });
 

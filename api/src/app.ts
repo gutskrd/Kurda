@@ -350,7 +350,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // earlier staff route ungated.
     adminTotp = new AdminTotpService(app.db);
     adminAccess = new AdminAccess(app.db, config);
-    if (adminAccess.shut) app.log.error('admin console: no ADMIN_ACCESS_EMAILS or BOOTSTRAP_ADMIN_EMAILS set — it is shut to everyone');
+    // whether the console is for every staff role, or only the addresses listed
+    app.log.info({ listedAddressesOnly: adminAccess.listed }, 'admin console access');
     installAdminGate(app, adminTotp, adminAccess);
 
     // which network each signed-in account is on, for account linking, and the

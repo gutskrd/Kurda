@@ -3,36 +3,26 @@ import { parseAdminEmails } from './bootstrap-admins.js';
 import { isPrivileged } from './roles.js';
 
 /**
- * Who may use the admin console at all: the accounts whose addresses are
- * listed in ADMIN_ACCESS_EMAILS (or, when that is not set, BOOTSTRAP_ADMIN_EMAILS),
- * and no one else, whatever roles anyone else holds.
+ * Who may use the admin console at all: the staff, and no one else.
  *
- * A staff role alone used to be enough. Roles are data, though: a mistaken
- * grant, a leftover moderator, or a database row written by something that
- * should not have written it would each have opened the console. Tying it to a
- * short list kept in configuration (never in this repository, which is public)
- * means that even then the console stays shut to everyone but the owner.
+ * Staff means an account holding a staff role (roles.ts) that is neither
+ * deleted nor banned. Roles are only ever given through BOOTSTRAP_ADMIN_EMAILS
+ * or by hand in the database, so this is the owner and the admins they made.
  *
- * Every condition must hold:
- * - the address is on the list, compared without regard to case;
- * - the account has CONFIRMED that address, so registering someone else's
- *   address proves nothing;
- * - it holds a staff role (roles.ts), so the list cannot elevate on its own;
- * - it is neither deleted nor banned.
+ * ADMIN_ACCESS_EMAILS, when set, is a second lock on top: only the accounts
+ * whose CONFIRMED address is on it may use the console, whatever roles anyone
+ * else holds. A mistaken grant, a leftover moderator or a row written by
+ * something that should not have written it then opens nothing either. It
+ * lives in configuration only, never in this repository, which is public. Left
+ * unset, roles alone decide, so no admin is shut out by a list nobody wrote.
  *
  * To anyone else the console's sign-in answers exactly as a wrong password does
  * (auth/routes.ts), and every staff route answers exactly as a route that does
  * not exist (admin-gate.ts): nothing says the account was right, that it is
  * not staff, or that the route is there.
- *
- * In production an empty list shuts the console to everyone, rather than
- * falling back to roles alone; outside production it does fall back, so a
- * development database and the tests work without one.
  */
 export interface AccessConfig {
   ADMIN_ACCESS_EMAILS: string;
-  BOOTSTRAP_ADMIN_EMAILS: string;
-  NODE_ENV: string;
 }
 
 interface AccountRow {
@@ -44,17 +34,17 @@ interface AccountRow {
 }
 
 export class AdminAccess {
-  /** the listed addresses, lower case; null outside production with none listed, where roles alone decide */
+  /** the listed addresses, lower case; null when none are listed, and roles alone decide */
   private readonly emails: ReadonlySet<string> | null;
 
   constructor(private readonly pool: pg.Pool, config: AccessConfig) {
-    const listed = parseAdminEmails(config.ADMIN_ACCESS_EMAILS.trim() ? config.ADMIN_ACCESS_EMAILS : config.BOOTSTRAP_ADMIN_EMAILS);
-    this.emails = listed.length > 0 ? new Set(listed) : config.NODE_ENV === 'production' ? new Set() : null;
+    const listed = parseAdminEmails(config.ADMIN_ACCESS_EMAILS);
+    this.emails = listed.length > 0 ? new Set(listed) : null;
   }
 
-  /** True when no account at all can use the console: production, with no addresses listed. */
-  get shut(): boolean {
-    return this.emails !== null && this.emails.size === 0;
+  /** Whether a list of addresses narrows the console beyond the staff roles. */
+  get listed(): boolean {
+    return this.emails !== null;
   }
 
   /** Whether an account, as read from the database, may use the console. */

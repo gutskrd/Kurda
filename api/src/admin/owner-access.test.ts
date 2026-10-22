@@ -12,7 +12,7 @@ const account = (over: Partial<{ email: string | null; email_verified_at: Date |
 });
 
 const noPool = {} as pg.Pool;
-const config = (over: Partial<AccessConfig>): AccessConfig => ({ ADMIN_ACCESS_EMAILS: '', BOOTSTRAP_ADMIN_EMAILS: '', NODE_ENV: 'production', ...over });
+const config = (over: Partial<AccessConfig>): AccessConfig => ({ ADMIN_ACCESS_EMAILS: '', ...over });
 
 describe('who may use the admin console', () => {
   it('is the listed, confirmed, staff account, the address compared without regard to case', () => {
@@ -31,26 +31,21 @@ describe('who may use the admin console', () => {
     expect(access.allowsAccount(account({ email: null }))).toBe(false);
   });
 
-  it('falls back to the bootstrap list when no access list is set', () => {
-    const access = new AdminAccess(noPool, config({ BOOTSTRAP_ADMIN_EMAILS: 'owner@example.test,second@example.test' }));
-    expect(access.allowsAccount(account())).toBe(true);
-    expect(access.allowsAccount(account({ email: 'second@example.test' }))).toBe(true);
-    expect(access.allowsAccount(account({ email: 'third@example.test' }))).toBe(false);
+  it('is every staff role when no list is set, and nobody without one', () => {
+    const access = new AdminAccess(noPool, config({}));
+    expect(access.listed).toBe(false);
+    for (const roles of [['admin'], ['superadmin'], ['moderator'], ['support'], ['content_editor'], ['founder']]) {
+      expect(access.allowsAccount(account({ email: 'anyone@example.test', roles })), roles[0]).toBe(true);
+    }
+    expect(access.allowsAccount(account({ roles: [] }))).toBe(false);
+    expect(access.allowsAccount(account({ roles: ['learner'] }))).toBe(false);
+    expect(access.allowsAccount(account({ banned_at: new Date() }))).toBe(false);
+    expect(access.allowsAccount(account({ deleted_at: new Date() }))).toBe(false);
   });
 
-  it('prefers the access list to the bootstrap list when both are set', () => {
-    const access = new AdminAccess(noPool, config({ ADMIN_ACCESS_EMAILS: 'owner@example.test', BOOTSTRAP_ADMIN_EMAILS: 'second@example.test' }));
-    expect(access.allowsAccount(account({ email: 'second@example.test' }))).toBe(false);
-  });
-
-  it('is shut to everyone in production with no list at all, and left to roles elsewhere', () => {
-    const prod = new AdminAccess(noPool, config({}));
-    expect(prod.shut).toBe(true);
-    expect(prod.allowsAccount(account())).toBe(false);
-    const dev = new AdminAccess(noPool, config({ NODE_ENV: 'development' }));
-    expect(dev.shut).toBe(false);
-    expect(dev.allowsAccount(account({ email: 'anyone@example.test' }))).toBe(true);
-    expect(dev.allowsAccount(account({ roles: [] }))).toBe(false);
+  it('treats a list of only commas and spaces as no list', () => {
+    expect(new AdminAccess(noPool, config({ ADMIN_ACCESS_EMAILS: ' , ,' })).listed).toBe(false);
+    expect(new AdminAccess(noPool, config({ ADMIN_ACCESS_EMAILS: 'owner@example.test' })).listed).toBe(true);
   });
 
   it('asks the database on every request, so a revoked role or a grant takes effect at once', async () => {
@@ -72,7 +67,7 @@ describe('who may use the admin console', () => {
   });
 
   it('refuses an account that is not there', async () => {
-    const access = new AdminAccess({ query: async () => ({ rows: [] }) } as unknown as pg.Pool, config({ NODE_ENV: 'development' }));
+    const access = new AdminAccess({ query: async () => ({ rows: [] }) } as unknown as pg.Pool, config({}));
     expect(await access.allows('gone')).toBe(false);
   });
 });
