@@ -80,7 +80,7 @@ export function TwoFactorGate({ children, onSignOut }: { children: React.ReactNo
     return (
       <Screen title={d.title} onSignOut={signOut}>
         <p className="gate-text">{d.message}</p>
-        <Button variant="primary" icon="refresh" onClick={() => void load()}>
+        <Button className="login-submit" icon="refresh" onClick={() => void load()}>
           Try again
         </Button>
       </Screen>
@@ -133,7 +133,7 @@ function Enroll({ onDone, onSignOut }: { onDone: () => Promise<void>; onSignOut:
           </p>
         </>
       ) : problem ? (
-        <div className="field-error" role="alert">
+        <div className="login-field-error" role="alert">
           {problem}
         </div>
       ) : (
@@ -229,21 +229,25 @@ function CodeForm({
 
   return (
     <form onSubmit={(e) => void submit(e)} className="gate-form" noValidate>
-      <label htmlFor={`${id}-code`}>Six-digit code</label>
-      <CodeInput
-        id={`${id}-code`}
-        ref={input}
-        value={code}
-        onChange={(next) => {
-          setCode(next);
-          // a problem with the last code is gone once a new one is being typed
-          if (problem) setProblem(null);
-          if (note) setNote(null);
-        }}
-        invalid={!!problem}
-        describedBy={problem ? `${id}-problem` : pause ? `${id}-pause` : undefined}
-        autoFocus={autoFocus}
-      />
+      <label className="login-label" htmlFor={`${id}-code`}>
+        Six-digit code
+      </label>
+      <div className="login-input">
+        <CodeInput
+          id={`${id}-code`}
+          ref={input}
+          value={code}
+          onChange={(next) => {
+            setCode(next);
+            // a problem with the last code is gone once a new one is being typed
+            if (problem) setProblem(null);
+            if (note) setNote(null);
+          }}
+          invalid={!!problem}
+          describedBy={problem ? `${id}-problem` : pause ? `${id}-pause` : undefined}
+          autoFocus={autoFocus}
+        />
+      </div>
       {pause && paused ? (
         <div id={`${id}-pause`} role="alert">
           <Banner tone="warn" title={pause.title}>
@@ -251,15 +255,15 @@ function CodeForm({
           </Banner>
         </div>
       ) : problem ? (
-        <div id={`${id}-problem`} className="field-error" role="alert">
+        <div id={`${id}-problem`} className="login-field-error" role="alert">
           {problem}
         </div>
       ) : note ? (
-        <div className="field-hint" role="status">
+        <div className="login-msg" role="status">
           {note}
         </div>
       ) : null}
-      <Button variant="primary" type="submit" busy={busy} disabled={paused || !ready}>
+      <Button className="login-submit" type="submit" busy={busy} disabled={paused || !ready}>
         {paused ? (
           <>
             <Icon name="lock" />
@@ -323,13 +327,16 @@ function Screen({
   onSignOut?: () => void;
 }): React.JSX.Element {
   return (
-    <div className="gate">
-      <div className="card gate-card" aria-busy={busy || undefined}>
-        <div className="brand">
-          <HevaloMark size={30} className="brand-mark" />
-          Hevalo Admin
+    <div className="login">
+      <div className="login-card gate-card" aria-busy={busy || undefined}>
+        <div className="login-top">
+          <span className="login-brand">
+            <HevaloMark size={40} />
+            Hevalo
+          </span>
+          <span>Admin console</span>
         </div>
-        <h1 className="gate-title">
+        <h1 className="login-title gate-title">
           {busy && <Icon name="refresh" className="gate-busy" />}
           {title}
         </h1>
@@ -337,7 +344,7 @@ function Screen({
         {onSignOut && (
           <p className="gate-foot">
             Wrong account, or no authenticator to hand?{' '}
-            <button type="button" className="link" onClick={onSignOut}>
+            <button type="button" className="login-forgot" onClick={onSignOut}>
               Sign out
             </button>
           </p>
