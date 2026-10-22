@@ -5,7 +5,9 @@
  * the speaking character himself, the same drawing as when he talks, from
  * the antlers to his chest — rising out of a jewel of a plate, laughing,
  * amazed or dreaming, with the badge's picture beside him as if he were
- * showing it to you, or behind him, glazed and glowing with its own colour.
+ * showing it to you, or behind him: a jewel made of the tier's own metal,
+ * like the bezel round him, its accents set in as coloured enamel — the rose
+ * on a gold teapot, the blue of a turquoise bell's tongue.
  *
  * The plate is made like a collector's piece: the family's shape set in a
  * bezel of the tier's polished metal, bands of light across it, with its
@@ -18,8 +20,10 @@
  * soft light behind, Zêr gold with wings, a glow and lens flares, Firûze
  * turquoise with great wings and the sun's rays — while the number says it
  * without colour. On the ranked tiers he shows the rank's own cut stone, so a
- * badge and an emblem show the same thing; a secret, once found, is a
- * treasure with no plate and no deer, held up in a light of its own colour.
+ * badge and an emblem show the same thing. A secret has no deer and no
+ * plate: it is a cut stone, dark under a lighter table, rimmed in the neon of
+ * its own colour, with its picture made of that neon; once found it is held
+ * up in a light of the same colour.
  *
  * Small sizes get their own drawing rather than a shrunken one: under 56
  * pixels the plate fills the square with Hevalo inside it, the ribbon gives
@@ -28,8 +32,8 @@
  *
  * States: `earned` is the whole badge; `locked` (not yet earned) is the same
  * plate, Hevalo and picture in pewter greys, with the first number to reach; `secret`
- * is a secret badge not yet found — a night-sky gem with a "?" on it, the
- * same for every secret.
+ * is a secret badge not yet found — the stone in the night's violet neon
+ * with a "?" on it, the same for every secret.
  */
 import type { Crest, CrestBox } from './crest.js';
 import { crestMarkup, crestSilhouette } from './crest.js';
@@ -38,8 +42,8 @@ import type { CharacterArt, EyeState } from '../characters/types.js';
 import type { Viseme } from '../lipsync/visemes.js';
 import { drawHevalo } from '../characters/hevalo.js';
 import { headGroup } from '../characters/index.js';
-import { HERO, PLAIN, SWATCH, paintHero } from './hero.js';
-import { ICONS, QUESTION, circ } from './icons.js';
+import { HERO, PLAIN, paintHero } from './hero.js';
+import { ICONS, QUESTION } from './icons.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
 import { BADGE_TIER_NAMES, RANK_BADGE, RANK_TIERS, badgeArt, isBadgeKey } from './keys.js';
 import { numeral, numeralWidth } from './numerals.js';
@@ -172,8 +176,10 @@ function layoutOf(detail: Detail, tiered: boolean): Layout {
       };
 }
 
-/** A secret, once found, is a treasure held up in its own light, with no plate: the picture alone, bigger. */
-const TREASURE = { cx: 60, cy: 57, scale: 2.3 };
+/** A secret's cut stone: the family's diamond, nearly the square's size. */
+const GEM: Placement = { s: 0.9, y: 58 };
+/** Where a secret's picture stands on its stone, and how big. */
+const TREASURE = { cx: 60, cy: 57, scale: 1.5 };
 
 /** The plate's top and foot on the canvas, for lighting it. */
 const spanOf = (lay: Layout): [number, number] => [lay.plate.y - 54 * lay.plate.s, lay.plate.y + 54 * lay.plate.s];
@@ -408,17 +414,56 @@ function stars(seed: string): string {
   return `<path d="${dots.join('')}" fill="#ffffff" fill-opacity="0.7"/>`;
 }
 
-/** The light a found secret is held up in: a glowing disc of its own colour, the sun's rays round it. */
+/** The light a found secret is held up in: a glow of its own colour, the sun's rays round it. */
 function treasureLight(dr: Drawing, p: Plate, detail: Detail): string {
   const glow = dr.id('o');
-  dr.def(radialAt(glow, [[0, p.rim, 0.95], [0.3, p.top, 0.8], [0.65, p.bottom, 0.32], [1, p.bottom, 0]], 60, 58, 56));
+  dr.def(radialAt(glow, [[0, p.rim, 0.85], [0.35, p.top, 0.6], [0.7, p.bottom, 0.22], [1, p.bottom, 0]], 60, 58, 56));
   return (detail === 0 ? rays(dr, p.bottom) : '') + `<circle cx="60" cy="58" r="56" fill="url(#${glow})"/>`;
+}
+
+/** The "?" of a secret not yet found glows violet, the colour of the night it is cut from. */
+const SHADOW_NEON: Plate = { top: '#a77bff', bottom: '#6a3de8', rim: '#e6dbff', deep: '#22105c' };
+
+/** A secret's own colour as a metal: white at its brightest, through its colour to its darkest — the neon its picture is made of. */
+const neonOf = (p: Plate): Metal => ({ hi: '#ffffff', light: p.rim, mid: p.top, dark: p.bottom, deep: p.deep });
+
+/**
+ * A secret's stone: a dark cut gem in the family's diamond, its table a
+ * shade lighter, its facets running to its corners, rimmed in the secret's
+ * own neon with the glow of it round the edge. A secret not yet found is the
+ * same stone in the night's colours, a badge not yet earned in pewter.
+ */
+function gemOf(dr: Drawing, p: Plate, detail: Detail): string {
+  const outline = shapePath('secret', GEM);
+  const dark = mix(p.deep, '#000000', 0.45);
+  const body = dr.id('e');
+  dr.def(radialAt(body, [[0, mix(p.bottom, p.deep, 0.2)], [0.55, p.deep], [1, dark]], 60, 46, 58));
+  const out = [`<path d="${outline}" transform="translate(0 ${detail === 0 ? 4 : 5})" fill="${dark}"/>`, `<path d="${outline}" fill="url(#${body})"/>`];
+  if (detail < 2) {
+    const table = shapePath('secret', GEM, 15);
+    const shade = dr.id('t');
+    dr.def(linearAt(shade, [[0, p.top, 0.5], [1, p.deep, 0.15]], 0, 30, 0, 86));
+    // the crown's facets, from the table's corners out to the stone's
+    const [inner, outer] = [53 * GEM.s - 21.5, 53 * GEM.s - 7.5];
+    const y = GEM.y;
+    const facets = `M60,${n(y - inner)}V${n(y - outer)}M60,${n(y + inner)}V${n(y + outer)}M${n(60 - inner)},${n(y)}H${n(60 - outer)}M${n(60 + inner)},${n(y)}H${n(60 + outer)}`;
+    out.push(
+      `<path d="${table}" fill="url(#${shade})" stroke="${p.rim}" stroke-opacity="0.4" stroke-width="0.9" stroke-linejoin="round"/>`,
+      `<path d="${facets}" stroke="${p.rim}" stroke-opacity="0.4" stroke-width="0.9"/>`,
+    );
+  }
+  // the neon rim, and its glow
+  out.push(
+    `<path d="${outline}" fill="none" stroke="${p.top}" stroke-opacity="0.4" stroke-width="${detail === 0 ? 6 : 7}" stroke-linejoin="round"/>`,
+    `<path d="${outline}" fill="none" stroke="${p.rim}" stroke-width="${detail === 0 ? 1.8 : 2.6}" stroke-linejoin="round"/>`,
+  );
+  return out.join('');
 }
 
 // ─────────────────────────────────────────────────────────────── the picture
 
-/** A picture on its own — a found secret, or the "?" of one not found yet — sticker-painted and placed. */
-function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, detail: Detail, state: BadgeState): string {
+/** A picture on its own — a found secret, or the "?" of one not found yet — made as a jewel of its own neon and placed. */
+function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, detail: Detail, state: BadgeState, material?: Metal): string {
   const draw = ICONS[key];
   const parts = state === 'secret' || !draw ? QUESTION : draw();
   const { cx, cy, scale } = at;
@@ -426,10 +471,11 @@ function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, de
     dr,
     colours: state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN),
     edge,
-    outline: (detail === 0 ? 2 : 3) / scale,
+    outline: (detail === 0 ? 1.8 : 2.8) / scale,
     small: detail > 0,
     locked: state === 'locked',
-    shadow: detail === 0 && state !== 'locked' ? 3.2 / scale : 0,
+    shadow: detail === 0 && state !== 'locked' ? 2.6 / scale : 0,
+    ...(material && state !== 'locked' ? { material } : {}),
   });
   return `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${painted}</g>`;
 }
@@ -475,7 +521,8 @@ function greyed(markup: string): string {
  * antlers to his chest, with his face for it, and the badge's picture beside
  * him or behind him; for a ranked tier, the rank's own stone.
  */
-function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, edge: string, detail: Detail, locked: boolean): string {
+function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, m: Metal, detail: Detail, locked: boolean): string {
+  const edge = m.deep;
   const rankTier = rankTierOf(key);
   const scene = rankTier ? STONE_SCENE : SCENES[key];
   if (!scene) return heroOf(dr, key, lay.hero, edge, detail, locked ? 'locked' : 'earned');
@@ -510,13 +557,15 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, e
       outline: (detail === 0 ? 1.7 : 2.6) / place.scale,
       small: detail > 0,
       locked,
+      // made of the tier's metal, its accents set in as enamel: a jewel, like the bezel it sits on
+      material: m,
       // what he shows you throws a shadow on him, so it stands before him
       shadow: !out && detail === 0 && !locked ? 2.4 / place.scale : 0,
       gloss: false,
     });
     const turn = prop.rotate ? ` rotate(${n(prop.rotate)})` : '';
     // the picture glows with its own colour, a light of it on the plate and the page round it
-    const shine = locked || detail === 2 ? '' : halo(dr, place.x, place.y, 19 * place.scale, SWATCH[(HERO[key] ?? PLAIN).f][0], 0.75, 0.25);
+    const shine = locked || detail === 2 ? '' : halo(dr, place.x, place.y, 19 * place.scale, m.light, 0.75, 0.25);
     const g = `${shine}<g transform="translate(${n(place.x)} ${n(place.y)})${turn} scale(${n2(place.scale)})">${painted}</g>`;
     if (out) behind = g;
     else before = g;
@@ -631,9 +680,12 @@ export function badgeSvg(opts: BadgeOptions): string {
   // a secret once found is a treasure in its own light; every other badge stands on its plate
   const treasure = family === 'secret' && state === 'earned';
 
-  if (treasure) {
-    dr.add(treasureLight(dr, p, detail));
-    dr.add(heroOf(dr, key, TREASURE, PLATES.night.deep, detail, state));
+  if (family === 'secret' || state === 'secret') {
+    // a secret is a cut stone with its picture made of its own neon; found, it is held up in its light
+    const stone = locked ? PEWTER : p;
+    if (treasure) dr.add(treasureLight(dr, p, detail));
+    dr.add(gemOf(dr, stone, detail));
+    dr.add(heroOf(dr, key, TREASURE, mix(stone.deep, '#000000', 0.3), detail, state, neonOf(state === 'secret' ? SHADOW_NEON : stone)));
   } else {
     if (!locked && detail === 0) {
       // the enamel's own colour glows round it; the grander looks add the light of their metal
@@ -644,7 +696,7 @@ export function badgeSvg(opts: BadgeOptions): string {
     if (!locked && detail === 0 && state === 'earned') dr.add(wingsBehind(lay, look, m));
     dr.add(plateOf(dr, plateFamily, lay, m, p, detail, locked));
     // Hevalo on every badge but a secret; a secret not yet found shows only its "?"
-    dr.add(state === 'secret' || family === 'secret' ? heroOf(dr, key, lay.hero, p.deep, detail, state) : sceneOf(dr, key, family, lay, p.deep, detail, locked));
+    dr.add(sceneOf(dr, key, family, lay, locked ? STONE : m, detail, locked));
   }
 
   if (numbered) {
@@ -697,7 +749,7 @@ export function badgeShineSvg(opts: BadgeShineOptions): string {
   const family = badgeArt(key).family;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'glint', family, n2(phase), detail));
   // a found secret has no plate: its glint crosses the light it is held up in
-  const clip = dr.clip(family === 'secret' ? circ(60, 58, 44) : shapePath(family, layoutOf(detail, badgeArt(key).tiers > 1).plate, 0.6));
+  const clip = dr.clip(family === 'secret' ? shapePath('secret', GEM, 0.6) : shapePath(family, layoutOf(detail, badgeArt(key).tiers > 1).plate, 0.6));
   const band = dr.id('g');
   dr.def(
     linearAt(

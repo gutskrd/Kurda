@@ -1,20 +1,22 @@
 /**
- * A badge's picture painted as the hero of it: the thing itself in its own
- * colours — a flame is orange, a book's pages are white, a gift is wrapped
- * in violet — glazed: each part lit smoothly from the upper left into its
- * shade, a gloss across the top of the whole, and a fine edge of the plate's
- * darkest tone round it, so it reads on the badge's plate, over the page
- * where it rises out of the plate, and on the dark theme and the light one
- * alike.
+ * A badge's picture painted as the hero of it: each part lit smoothly from
+ * the upper left into its shade, a gloss across the top of the whole, and a
+ * fine edge of the plate's darkest tone round it, so it reads on the badge's
+ * plate, over the page where it rises out of the plate, and on the dark
+ * theme and the light one alike.
  *
  * The parts are the icons' own (icons.ts): the main body, its shaded face, a
- * named accent, snow, cut lines, stroked lines, highlights. Here the main
- * body and its face take the badge's own two swatches instead of the tier's
- * metal — the tier is told by the plate's band, the number and the light,
- * never by recolouring the picture.
+ * named accent, snow, cut lines, stroked lines, highlights. Painted plain,
+ * the main body and its face take the badge's own two swatches — a flame is
+ * orange, a book's pages are white. Given a `material` the picture is a
+ * jewel: its body and face are that metal, polished bright into its shade,
+ * its white the metal's own highlight, and only its named accents keep their
+ * colours, set in as enamel — a gold teapot with a rose on it, a silver
+ * nightingale singing a gold note.
  */
 import type { Part } from './icons.js';
 import { ACCENT, STONE } from './palette.js';
+import type { Metal } from './palette.js';
 import type { PlateName } from './palette.js';
 import type { Drawing } from './svg.js';
 import { linearBox, mix, n, n2 } from './svg.js';
@@ -129,6 +131,13 @@ export interface HeroPaint {
   shadow?: number;
   /** the gloss across its top; off for a picture Hevalo holds, which is small beside him */
   gloss?: boolean;
+  /**
+   * Made as a jewel rather than painted: its body and shaded face in this
+   * polished metal, its accents set in it as coloured enamel, its lines cut
+   * into it — the way a pin or a medal is made. Without it, the picture is
+   * painted in the badge's own two colours.
+   */
+  material?: Metal;
 }
 
 /**
@@ -197,16 +206,18 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
   }
 
   const cache = new Map<string, string>();
-  const f = SWATCH[colours.f];
-  const a = SWATCH[colours.a];
+  const m = p.material;
+  // a jewel's metal: its body polished bright to its shade, its face a step darker, its white the metal's own highlight
+  const f: Swatch = m ? [m.hi, m.light, m.dark] : SWATCH[colours.f];
+  const a: Swatch = m ? [m.light, m.mid, m.deep] : SWATCH[colours.a];
   const fillOf = (part: Part): string => {
     switch (part.k) {
       case 'f':
         return lit(dr, cache, 'f', f);
       case 'a':
-        return lit(dr, cache, 'a', [a[1], a[1], a[2]]);
+        return lit(dr, cache, 'a', m ? a : [a[1], a[1], a[2]]);
       case 'w':
-        return lit(dr, cache, 'w', SWATCH.paper);
+        return lit(dr, cache, 'w', m ? [m.hi, m.hi, m.light] : SWATCH.paper);
       case 'c': {
         const [top, foot] = ACCENT[part.c];
         return lit(dr, cache, `c-${part.c}`, [top, mix(top, foot, 0.6), foot]);
@@ -231,7 +242,7 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
           return `<path d="${part.d}" fill="none" stroke="${edge}" stroke-opacity="0.75" stroke-width="${n2((part.w ?? 1.6) * (small ? 1.3 : 1))}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`;
         case 'l': {
           const w = part.w ?? 3;
-          const colour = part.c ? ACCENT[part.c][1] : f[1];
+          const colour = part.c ? ACCENT[part.c][1] : m ? m.mid : f[1];
           return (
             `<path d="${part.d}" fill="none" stroke="${edge}" stroke-width="${n2(w + gap)}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>` +
             `<path d="${part.d}" fill="none" stroke="${colour}" stroke-width="${n2(w)}" stroke-linecap="round" stroke-linejoin="round"${tf(part)}/>`
