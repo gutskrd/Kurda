@@ -241,6 +241,37 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
     });
   });
 
+  describe('a newcomer', () => {
+    it('is told of the badge for a flawless first lesson: their first count has no past to keep quiet', async () => {
+      const p = await learner();
+      const c = await course(1);
+      await finishLesson(p.id, c.lessons[0]!, true);
+      const before = recorded.length;
+      await badges.recordLessonCompleted(p.id, 1);
+      expect(await tierOf(p.id, 'bekemasi')).toBe(1);
+      // told, and waiting to be celebrated (with Rêwî: this one-lesson course is a whole unit)
+      expect(recorded.length).toBeGreaterThan(before);
+      expect((await badges.unseen(p.id)).map((u) => u.key).sort()).toEqual(['bekemasi', 'rewi']);
+    });
+  });
+
+  describe('a harder ladder', () => {
+    it('keeps a tier earned when it took less, and points the bar at the tier after it', async () => {
+      const p = await counted();
+      // silver when Ders asked 50 lessons; it now asks more, and 60 is short of it
+      await pool.query(
+        `INSERT INTO user_badges (user_id, badge_key, tier, progress, earned_at, tier_earned_at, seen_tier)
+         VALUES ($1, 'ders', 2, 60, now(), ARRAY[now(), now()], 2)`,
+        [p.id],
+      );
+      expect(badgeDef('ders')!.tiers[1]).toBeGreaterThan(60);
+      expect(await badges.evaluate(p.id, ['ders'])).toEqual([]);
+      expect(await tierOf(p.id, 'ders')).toBe(2);
+      const view = (await badges.list(p.id)).badges.find((b) => b.key === 'ders')!;
+      expect(view).toMatchObject({ tier: 2, progress: 60, next: badgeDef('ders')!.tiers[2] });
+    });
+  });
+
   describe('learning', () => {
     it('Ders and Bêkêmasî count finished and flawless lessons; Rêwî units, up to the whole course', async () => {
       const p = await counted();
@@ -363,11 +394,13 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       expect(await progressOf(me.id, 'peyvzan')).toBe(5);
       expect(await tierOf(me.id, 'peyvzan')).toBe(1);
       expect(await tierOf(me.id, 'tire-rast')).toBe(1);
-      expect(await tierOf(me.id, 'heval')).toBe(2);
+      // five games with a friend: Heval's first tier, on the way to its second
+      expect(await progressOf(me.id, 'heval')).toBe(5);
+      expect(await tierOf(me.id, 'heval')).toBe(1);
       expect(await tierOf(me.id, 'mevandar')).toBe(1);
       // the friend won none (solving more slowly, or not at all)
       expect(await progressOf(friend.id, 'peyvzan')).toBe(0);
-      expect(await tierOf(friend.id, 'heval')).toBe(2);
+      expect(await progressOf(friend.id, 'heval')).toBe(5);
     });
 
     it('a win needs someone to beat, and a tie at the top is a win for both', async () => {
@@ -623,7 +656,7 @@ describe.skipIf(!DATABASE_URL)('badges (integration)', () => {
       const version = await pool.query<{ catalogue: number }>(`SELECT catalogue FROM badge_users WHERE user_id = $1`, [p.id]);
       expect(version.rows[0]!.catalogue).toBe(3);
       // from now on it is a badge like any other: its next tier is told
-      for (let d = 7; d < 30; d++) {
+      for (let d = 7; d < (badgeDef('cay')!.tiers[1] as number); d++) {
         await pool.query(`INSERT INTO daily_goals (user_id, goal_date, effective_goal, completed_at) VALUES ($1, $2, 10, now())`, [
           p.id,
           new Date(Date.parse('2025-06-01T00:00:00Z') + d * DAY).toISOString().slice(0, 10),

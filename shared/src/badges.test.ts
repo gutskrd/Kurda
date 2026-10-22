@@ -5,11 +5,15 @@ import {
   BADGE_FAMILY_SHAPE,
   LEGACY_ACHIEVEMENTS,
   badgeDef,
+  badgeLeft,
   badgeProgress,
   badgeTierFor,
   badgeTierKey,
+  badgeViewFraction,
   isBadgeKey,
+  nearestBadges,
   resolveThresholds,
+  type BadgeView,
 } from './badges.js';
 
 describe('the badge catalogue', () => {
@@ -97,5 +101,72 @@ describe('badge progress', () => {
     expect(badgeTierKey(agir, 1)).toBe('sifir');
     expect(badgeTierKey(agir, 4)).toBe('firuze');
     expect(badgeTierKey(agir, 0)).toBeNull();
+  });
+});
+
+describe('the ladder', () => {
+  it('gives a first-session badge, and never asks more than a year of a streak', () => {
+    // one flawless lesson is a badge at once; every other first tier comes within about a week
+    expect(badgeDef('bekemasi')!.tiers[0]).toBe(1);
+    expect(badgeDef('agir')!.tiers.at(-1)).toBe(365);
+    for (const b of BADGES) if (b.tiers.length === 4 && b.family === 'learning') expect(b.tiers[0]).not.toBe('all');
+  });
+
+  it('at least doubles from each tier to the next where it counts what you do', () => {
+    // dates (years, seasons) and typing speed climb on their own scales
+    const ownScale = new Set(['bilez', 'heyva-cardehe', 'mehane', 'dilpak']);
+    for (const b of BADGES) {
+      if (b.tiers.length !== 4 || b.unit === 'years' || b.unit === 'seasons' || ownScale.has(b.key)) continue;
+      const n = b.tiers.filter((t): t is number => typeof t === 'number');
+      for (let i = 1; i < n.length; i++) expect(n[i]! / n[i - 1]!, `${b.key} tier ${i + 1}`).toBeGreaterThanOrEqual(2);
+    }
+  });
+});
+
+describe('what to show first', () => {
+  const view = (key: string, progress: number, tier: number, thresholds: number[], extra: Partial<BadgeView> = {}): BadgeView => ({
+    key,
+    family: 'learning',
+    tier,
+    tierCount: thresholds.length,
+    tierKey: null,
+    progress,
+    thresholds,
+    next: tier < thresholds.length ? thresholds[tier]! : null,
+    unit: 'lessons',
+    earnedAt: null,
+    tierEarnedAt: [],
+    secret: false,
+    hidden: false,
+    hintKey: null,
+    rarity: null,
+    ...extra,
+  });
+
+  it('puts the badges nearest their next tier first, and leaves out the untouched, the finished and the hidden', () => {
+    const list = [
+      view('a', 9, 0, [10, 75]),
+      view('b', 40, 1, [10, 75]),
+      view('c', 0, 0, [10, 75]),
+      view('d', 75, 2, [10, 75]),
+      view('e', 5, 0, [10, 75], { hidden: true, secret: true }),
+      view('f', 70, 1, [10, 75]),
+      view('g', 1, 0, [2, 20]),
+    ];
+    expect(nearestBadges(list).map((v) => v.key)).toEqual(['f', 'a', 'g']);
+    expect(nearestBadges(list, 5).map((v) => v.key)).toEqual(['f', 'a', 'g', 'b']);
+  });
+
+  it('measures from the last tier reached, so a tier kept from an easier ladder starts the bar at nothing', () => {
+    // a silver earned when it took 50 lessons, now that it takes 75: the bar to gold starts empty, never below
+    expect(badgeViewFraction(view('x', 60, 2, [10, 75, 250]))).toBe(0);
+    expect(badgeViewFraction(view('x', 30, 1, [10, 75, 250]))).toBeCloseTo(20 / 65);
+  });
+
+  it('says what is left only once past halfway', () => {
+    expect(badgeLeft(view('x', 30, 1, [10, 75, 250]))).toBeNull();
+    expect(badgeLeft(view('x', 70, 1, [10, 75, 250]))).toBe(5);
+    expect(badgeLeft(view('x', 250, 3, [10, 75, 250]))).toBeNull();
+    expect(badgeLeft(view('x', 9, 0, [10, 75], { hidden: true }))).toBeNull();
   });
 });
