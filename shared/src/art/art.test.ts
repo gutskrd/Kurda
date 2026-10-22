@@ -25,6 +25,7 @@ import {
   type BadgeTier,
 } from './index.js';
 import { ICONS } from './icons.js';
+import { PICTURES } from './pictures.js';
 import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE } from './badges.js';
@@ -245,11 +246,11 @@ describe('the checks themselves', () => {
 });
 
 describe('the badge catalogue the art draws', () => {
-  it('has the 55 badge types of the catalogue, in their seven families', () => {
-    expect(BADGE_KEYS).toHaveLength(55);
+  it('has the 62 badge types of the catalogue, in their seven families', () => {
+    expect(BADGE_KEYS).toHaveLength(62);
     const count = (family: string): number => BADGE_KEYS.filter((k) => badgeArt(k).family === family).length;
-    expect(BADGE_FAMILIES.map(count)).toEqual([9, 7, 9, 8, 4, 10, 8]);
-    expect(new Set(BADGE_KEYS).size).toBe(55);
+    expect(BADGE_FAMILIES.map(count)).toEqual([11, 8, 10, 8, 5, 10, 10]);
+    expect(new Set(BADGE_KEYS).size).toBe(62);
     for (const key of BADGE_KEYS) expect(key).toMatch(/^[a-z][a-z-]*$/);
   });
 
@@ -266,10 +267,23 @@ describe('the badge catalogue the art draws', () => {
   });
 
   it('has a drawing for every badge of the catalogue, and none for a badge it does not have', () => {
-    const undrawn = CATALOGUE.filter((b) => !(b.family === 'ranked' && Object.values(RANK_BADGE).includes(b.key)) && ICONS[b.key] === undefined).map((b) => b.key);
-    expect(undrawn, 'catalogue badges with no drawing in icons.ts').toEqual([]);
+    const drawn = (key: string): boolean => ICONS[key] !== undefined || PICTURES[key] !== undefined;
+    const undrawn = CATALOGUE.filter((b) => !(b.family === 'ranked' && Object.values(RANK_BADGE).includes(b.key)) && !drawn(b.key)).map((b) => b.key);
+    expect(undrawn, 'catalogue badges with no drawing in icons.ts or pictures.ts').toEqual([]);
     for (const tier of RANK_TIERS) expect(isBadgeKey(RANK_BADGE[tier]), `${tier} has a ranked badge`).toBe(true);
-    expect(Object.keys(ICONS).filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
+    expect([...Object.keys(ICONS), ...Object.keys(PICTURES)].filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
+    expect(Object.keys(PICTURES).filter((k) => ICONS[k] !== undefined), 'badges drawn twice').toEqual([]);
+  });
+
+  it('draws every secret whole, in its own colours', () => {
+    for (const b of CATALOGUE.filter((d) => d.family === 'secret')) expect(PICTURES[b.key], b.key).toBeDefined();
+  });
+
+  it('sets a picture drawn whole on its plate without Hevalo, and with him every badge that has an icon', () => {
+    const hevalo = (svg: string): boolean => /-antler|-head|-ear/.test(svg);
+    for (const key of BADGE_KEYS.filter((k) => badgeArt(k).family !== 'secret' && !Object.values(RANK_BADGE).includes(k))) {
+      expect(hevalo(badgeSvg({ key, tier: 2 })), key).toBe(PICTURES[key] === undefined);
+    }
   });
 });
 

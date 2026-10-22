@@ -108,11 +108,19 @@ export const HERO: Readonly<Record<string, HeroColours>> = {
   'tire-rast': { f: 'steel', a: 'steel', plate: 'sky' },
   'ji-nu-ve': { f: 'green', a: 'wood', plate: 'green' },
   'kewe-ciye': { f: 'sand', a: 'wood', plate: 'orange' },
-  'deste-zerin': { f: 'gold', a: 'brass', plate: 'gold' },
+  'deste-zerin': { f: 'gold', a: 'brass', plate: 'indigo' },
   'mevane-agir': { f: 'paper', a: 'brass', plate: 'red' },
   'kaniya-zanine': { f: 'paper', a: 'cream', plate: 'teal' },
   'pisika-wane': { f: 'paper', a: 'cream', plate: 'pink' },
   perperok: { f: 'sky', a: 'violet', plate: 'violet' },
+  'sterka-siqiti': { f: 'gold', a: 'gold', plate: 'violet' },
+  mirari: { f: 'paper', a: 'pink', plate: 'teal' },
+  // the badges that are a picture on its own, without Hevalo: the plate is the stone it is set on
+  belur: { f: 'violet', a: 'pink', plate: 'violet' },
+  gencine: { f: 'gold', a: 'wood', plate: 'teal' },
+  'heyva-cardehe': { f: 'moon', a: 'gold', plate: 'indigo' },
+  elmas: { f: 'ice', a: 'sky', plate: 'blue' },
+  dilgerm: { f: 'pink', a: 'violet', plate: 'pink' },
 };
 
 /** The secret's "?" and anything without its own colours: plain white. */

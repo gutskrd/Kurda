@@ -22,6 +22,10 @@
  * was written out (Zengil, Pênûs), daily goals and full weeks (Çay, Gula
  * heftê), the day's Peyvok and Rhyme training (Mamik, Bilbil), letters to
  * friends (Name), two more dates (Sersal, Şeva Yeldayê) and two more secrets.
+ * Then seven: words remembered for a month and more and words saved from the
+ * dictionary (Belûr, Gencîne), whole months of learning (Heyva çardehê), a
+ * Peyvok in three guesses (Elmas), rematches with friends (Dilgerm), and two
+ * more secrets (Stêrka şiqitî, Mirarî).
  *
  * Every Kurdish name is for a native speaker to check: [review].
  */
@@ -153,6 +157,10 @@ export const BADGES: readonly BadgeDef[] = [
   badge('zengil', 'learning', 'Zengil', 'Bell', [25, 100, 500, 2000], 'listening_speaking_answers', 'answers'), // [review]
   // answers written out in full, not picked: translating and writing exercises
   badge('penus', 'learning', 'Pênûs', 'Pen', [25, 100, 500, 2000], 'typed_answers', 'answers'), // [review]
+  // a word or phrase in your review deck known so well it comes back only after a month or more: set like crystal
+  badge('belur', 'learning', 'Belûr', 'Crystal', [10, 50, 200, 600], 'review_items_month', 'words'), // [review]
+  // words saved from the dictionary to your own list, kept like treasure
+  badge('gencine', 'learning', 'Gencîne', 'Treasure', [10, 50, 200, 500], 'saved_words', 'words'), // [review]
 
   // B. Habit (rounded square)
   badge('agir', 'habit', 'Agir', 'Fire', [7, 30, 100, 365], 'longest_streak', 'days'), // [review]
@@ -166,6 +174,8 @@ export const BADGES: readonly BadgeDef[] = [
   badge('cay', 'habit', 'Çay', 'Tea', [7, 30, 100, 365], 'daily_goals_met', 'days'), // [review]
   // a calendar week (Monday to Sunday, UTC) with a learning day on all seven days: a flower of seven petals
   badge('gula-hefte', 'habit', 'Gula heftê', 'Flower of the week', [1, 4, 12, 52], 'full_weeks', 'weeks'), // [review]
+  // a calendar month (UTC) with a learning day on every one of its days, 28 to 31: the moon of the fourteenth night, full
+  badge('heyva-cardehe', 'habit', 'Heyva çardehê', 'Full moon', [1, 3, 6, 12], 'full_months', 'months'), // [review]
 
   // C. Games (hexagon)
   badge('peyvzan', 'games', 'Peyvzan', 'Word-knower', [5, 25, 100, 400], 'wordle_battle_wins', 'wins'), // [review]
@@ -181,6 +191,8 @@ export const BADGES: readonly BadgeDef[] = [
   badge('mamik', 'games', 'Mamik', 'Riddle', [5, 30, 100, 365], 'daily_peyvok_solved', 'days'), // [review]
   // rhymes found in Rhyme training, alone
   badge('bilbil', 'games', 'Bilbil', 'Nightingale', [50, 250, 1000, 3000], 'training_rhymes', 'words'), // [review]
+  // a Peyvok, the day's or a practice one, won in three guesses or fewer
+  badge('elmas', 'games', 'Elmas', 'Diamond', [5, 25, 100, 300], 'peyvok_three_guesses', 'wins'), // [review]
 
   // D. Ranked (shield): kept forever
   badge('rank-dest', 'ranked', 'Deşt', 'Plain', SEASON_COUNTS, 'seasons_reached_dest', 'seasons'), // [review]
@@ -203,6 +215,8 @@ export const BADGES: readonly BadgeDef[] = [
   // a message written to a friend: one a day for each friend counts, so it is
   // about writing to people, not about how many messages
   badge('name', 'friends', 'Name', 'Letter', [1, 10, 50, 150], 'friend_letter_days', 'letters'), // [review]
+  // a rematch with a friend in it, played to the end: when a game ends and you both want one more
+  badge('dilgerm', 'friends', 'Dilgerm', 'Warm-hearted', [1, 10, 50, 150], 'friend_rematches', 'games'), // [review]
 
   // F. Events (eight-point star): dated, open at least seven days, never sold
   badge('newroz', 'events', 'Agirê Newrozê', 'Newroz fire', YEAR_COUNTS, 'learned_newroz_week', 'years'), // [review]
@@ -228,6 +242,10 @@ export const BADGES: readonly BadgeDef[] = [
   badge('pisika-wane', 'secret', 'Pisîka Wanê', 'Van cat', [1], 'peyvok_last_guess', 'times', { secret: true }), // [review]
   // back after two weeks or more away, and then seven days in a row from the day of the return
   badge('perperok', 'secret', 'Perperok', 'Butterfly', [1], 'comeback_week', 'times', { secret: true }), // [review]
+  // a Peyvok won on the very first guess: there and gone, like a shooting star
+  badge('sterka-siqiti', 'secret', 'Stêrka şiqitî', 'Shooting star', [1], 'peyvok_first_guess', 'times', { secret: true }), // [review]
+  // a full review that counted, every answer right the first time and every letter in its place: a pearl without a flaw
+  badge('mirari', 'secret', 'Mirarî', 'Pearl', [1], 'perfect_full_review', 'times', { secret: true }), // [review]
 ];
 
 const BY_KEY = new Map(BADGES.map((b) => [b.key, b]));

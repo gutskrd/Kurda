@@ -9,7 +9,8 @@
  * deer as the app icon, so his faces are the ones he speaks with: his eyes
  * open, half shut, shut or smiling, and his mouth in one of its shapes.
  * On a badge not yet earned he is dreaming of it, eyes shut (badges.ts).
- * A secret, once found, is not his: it is a treasure on its own.
+ * A secret, once found, is not his: it is a treasure on its own; nor is a
+ * badge drawn as a picture by itself (pictures.ts), which has no scene.
  */
 import type { EyeState } from '../characters/types.js';
 import type { Viseme } from '../lipsync/visemes.js';

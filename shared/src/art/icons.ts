@@ -1,6 +1,7 @@
 /**
- * The badge icons: one bold, simple picture per badge, in a 40-unit box
- * centred on 0,0.
+ * The badge icons: one bold, simple picture for each badge where Hevalo
+ * shows what it is for, in a 40-unit box centred on 0,0. A secret, and a
+ * badge that is a picture on its own, is drawn whole instead (pictures.ts).
  *
  * An icon is a list of parts, and a part says what it is rather than what
  * colour it is: the main body, its shaded face, a named accent (a flame is a
@@ -9,7 +10,7 @@
  * badge's own two swatches (hero.ts), the season mark in its metal
  * (iconpaint.ts), and both grey for a badge not yet earned — and every icon
  * gets the same cut between its parts and the same light, which is what makes
- * fifty-five drawings read as one set.
+ * forty-one drawings read as one set.
  *
  * Parts marked `fine` are the details that turn to noise at 32 pixels (the
  * lines on a book's pages, a feather's barbs); the small drawing leaves them
@@ -177,21 +178,6 @@ function arrows(): Part[] {
     { k: 'f', d: arrowOnCircle(0, 0, 13.5, 318, 6.2) },
     { k: 'f', d: arrowOnCircle(0, 0, 13.5, 138, 6.2) },
     { k: 'a', d: circ(0, 0, 4.2) },
-  ];
-}
-
-function arrow(): Part[] {
-  // tail at bottom-left, head at top-right
-  const u = [Math.SQRT1_2, -Math.SQRT1_2] as const;
-  const nrm = [Math.SQRT1_2, Math.SQRT1_2] as const;
-  const tail = [-13.5, 13.5] as const;
-  const at = (s: number, o: number): readonly [number, number] => [tail[0] + u[0] * s + nrm[0] * o, tail[1] + u[1] * s + nrm[1] * o];
-  const feather = (side: 1 | -1): string => polygon([at(1, 0), at(10, 0), at(6.5, 6 * side), at(-2.5, 6 * side)]);
-  return [
-    { k: 'c', d: feather(1), c: 'red' },
-    { k: 'c', d: feather(-1), c: 'red' },
-    { k: 'l', d: `M${n(tail[0] - 2)},${n(tail[1] + 2)}L11,-11`, w: 3.4 },
-    { k: 'f', d: polygon([[18.5, -18.5], [5, -15.5], [15.5, -5]]) },
   ];
 }
 
@@ -570,79 +556,7 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'w', d: sparkle(-15.5, 14.5, 3.4) },
   ],
 
-  // ── secret
-  'tire-rast': arrow,
-  'ji-nu-ve': () => [
-    { k: 'a', d: 'M-16,19C-12,12.5 12,12.5 16,19Z' },
-    { k: 'l', d: 'M0,15C0,8 -1,3 0,-3', w: 2.8, c: 'green' },
-    { k: 'c', d: 'M0,-1C-3,-11 -12,-15 -18.5,-12C-15,-4 -7,0 0,-1Z', c: 'leaf' },
-    { k: 'c', d: 'M0,3C3,-7 12,-12 18.5,-9C16,-1 8,4 0,3Z', c: 'green' },
-    { k: 'd', d: 'M-1,-1.5C-6,-6 -11,-9 -15.5,-11M1,2.5C6,-2 11,-6 15.5,-8', w: 1.1, fine: true },
-  ],
-  // a chukar on its rock: the black band through the eye and round the throat, barred flanks, red beak and feet
-  'kewe-ciye': () => [
-    { k: 'a', d: 'M-19.5,19.5C-19.5,15 -15,12.5 -9,13C-5,11 3,11 7.5,12.8C13.5,12.2 19.5,14.5 19.5,19.5Z' },
-    { k: 'a', d: 'M-12.5,1.5L-20.5,-3.5C-21,0.5 -19.5,4.5 -15.5,6.5Z' },
-    { k: 'f', d: 'M-15.5,4C-15.5,-3.5 -8,-7.5 0,-7.2C3.5,-8 5.6,-10.6 6.6,-13.4C7.8,-16.6 10.6,-17.8 13.2,-17.2C15.8,-16.6 17,-14.4 16.8,-12.4L16.6,-9.6C16.4,-7 15.4,-4.6 14.8,-2.2C14,4 9.5,10.2 1,10.6C-7,11 -15.5,10 -15.5,4Z' },
-    { k: 'a', d: 'M-12.5,2C-10.5,-4 -2.5,-6.2 4.5,-3.4C2.8,2.8 -4.5,6.2 -12.5,2Z' },
-    { k: 'd', d: 'M-3,5C-2,6.8 -1.6,8 -1.4,9.6M1,4.4C2,6.2 2.4,7.4 2.6,9M5,3.4C6,5.2 6.4,6.4 6.6,7.8M9,2C9.8,3.6 10.2,4.8 10.4,6', w: 1.5 },
-    { k: 'k', d: 'M16.6,-13.4C14.2,-12.8 11.6,-13 9,-12.4C7.8,-9 8.4,-5.4 11.4,-2.8C12.9,-2.4 14.2,-2.8 14.9,-3.6C12,-4.9 10.6,-7.8 11,-10.6C12.8,-11 14.6,-11.2 16.6,-11.4Z' },
-    { k: 'c', d: circ(12.9, -12.2, 1.9), c: 'red' },
-    { k: 'w', d: circ(12.9, -12.2, 0.9) },
-    { k: 'c', d: 'M16.6,-13.2L20.4,-10.9L16.5,-9.4Z', c: 'red' },
-    { k: 'l', d: 'M-2.5,10.6L-3,13.2M4.5,10L4.8,12.8', w: 2, c: 'red' },
-  ],
-  // the golden hand at the keyboard: a golden key, a star on it
-  'deste-zerin': () => [
-    { k: 'a', d: rrect(-17, -14, 34, 33, 6) },
-    { k: 'f', d: rrect(-13.5, -17, 27, 26, 4.5) },
-    { k: 'w', d: star5(0, -4.5, 8.5) },
-    { k: 'h', d: 'M-10.5,-12C-10.5,-13.8 -9.4,-14.6 -7.6,-14.6H-1.5C-5.5,-13.8 -8.6,-12 -10.5,-8.6Z', o: 0.7, fine: true },
-    { k: 'w', d: sparkle(17, -16.5, 4.8) },
-    { k: 'w', d: sparkle(-17.5, 12.5, 3.4) },
-  ],
-  'mevane-agir': () => [
-    { k: 'a', d: 'M-17.5,14C-17.5,18.5 17.5,18.5 17.5,14C17.5,11.5 -17.5,11.5 -17.5,14Z' },
-    { k: 'w', d: 'M-8.5,-10C-8.5,-5 -5,-2 -5,1C-5,5 -9,8 -9,13.5H9C9,8 5,5 5,1C5,-2 8.5,-5 8.5,-10Z' },
-    { k: 'c', d: 'M-7,-4.5C-6,-2.5 -5,-1 -5,1C-5,5 -9,8 -9,13.5H9C9,8 5,5 5,1C5,-1 6,-2.5 7,-4.5Z', c: 'tea' },
-    { k: 'h', d: 'M-6,-3C-4.5,0 -4,3 -6,6.5C-5,3 -5.2,0 -6.8,-3Z', o: 0.7, fine: true },
-    { k: 'l', d: 'M-3,-13C-6,-16 0,-17.5 -3,-21M3.5,-13C0.5,-16 6.5,-17.5 3.5,-21', w: 2 },
-  ],
-  'kaniya-zanine': () => [
-    // the spring of knowledge: an open book, and a spring rising out of it — a
-    // jet from the spine, crowned with a drop, falling back in two arcs
-    { k: 'f', d: 'M0,8.5C-5,5 -12,4.5 -19.5,6.5V18C-12,16 -5,16.5 0,19.5Z' },
-    { k: 'a', d: 'M0,8.5C5,5 12,4.5 19.5,6.5V18C12,16 5,16.5 0,19.5Z' },
-    { k: 'd', d: 'M-15.5,10.6C-11.5,9.6 -7.5,9.9 -4,11.6M-15.5,14.2C-11.5,13.2 -7.5,13.5 -4,15.2M15.5,10.6C11.5,9.6 7.5,9.9 4,11.6M15.5,14.2C11.5,13.2 7.5,13.5 4,15.2', w: 1.1, fine: true },
-    { k: 'c', d: 'M-2.6,7.5C-2.6,0 -1.8,-5.5 0,-9.5C1.8,-5.5 2.6,0 2.6,7.5Z', c: 'water' },
-    { k: 'c', d: 'M-0.6,-6.5C-3.5,-14 -12,-15.5 -15.5,-8C-16.6,-5.6 -16.6,-2.6 -15.6,0.5C-14.2,0.5 -13.2,0.4 -12.2,0.2C-13,-2.4 -13,-4.6 -12.2,-6.4C-10,-11 -4.6,-10.6 -0.6,-6.5Z', c: 'water' },
-    { k: 'c', d: 'M0.6,-6.5C3.5,-14 12,-15.5 15.5,-8C16.6,-5.6 16.6,-2.6 15.6,0.5C14.2,0.5 13.2,0.4 12.2,0.2C13,-2.4 13,-4.6 12.2,-6.4C10,-11 4.6,-10.6 0.6,-6.5Z', c: 'water' },
-    { k: 'c', d: drop(0, -15.5, 0.46), c: 'water' },
-    { k: 'h', d: 'M-1.4,4C-1.4,-1 -1,-4.5 -0.2,-7C-0.4,-3.5 -0.4,0 -0.2,4Z', o: 0.7, fine: true },
-  ],
-  // the cat of Lake Van, white, one eye blue and one gold: it always lands on its feet
-  'pisika-wane': () => [
-    { k: 'f', d: 'M-16,-1C-16,-6.5 -15.5,-12.5 -14,-19L-6,-12.5C-4,-13.3 4,-13.3 6,-12.5L14,-19C15.5,-12.5 16,-6.5 16,-1C16,10 8.5,16.5 0,16.5C-8.5,16.5 -16,10 -16,-1Z' },
-    { k: 'c', d: 'M-12.6,-15.2L-7.6,-11.6C-9.4,-10.6 -10.8,-9.4 -12,-8Z', c: 'pink' },
-    { k: 'c', d: 'M12.6,-15.2L7.6,-11.6C9.4,-10.6 10.8,-9.4 12,-8Z', c: 'pink' },
-    { k: 'c', d: circ(-6.5, -1.5, 3.9), c: 'blue' },
-    { k: 'c', d: circ(6.5, -1.5, 3.9), c: 'gold' },
-    { k: 'd', d: 'M-6.5,-4.2V1.2M6.5,-4.2V1.2', w: 1.7 },
-    { k: 'c', d: 'M-2.2,5.5H2.2L0,8Z', c: 'pink' },
-    { k: 'd', d: 'M0,8V9.5C-1,11.3 -3,11.3 -4,10M0,9.5C1,11.3 3,11.3 4,10', w: 1.2 },
-    { k: 'd', d: 'M-8,7.5L-19,5.5M-8,9.5L-18.5,11M8,7.5L19,5.5M8,9.5L18.5,11', w: 0.9, fine: true },
-  ],
-  // a butterfly: a return that became a week
-  perperok: () => [
-    { k: 'f', d: 'M-1.5,-2C-6,-12 -14,-18 -18.5,-15.5C-21.5,-13.5 -19,-4 -11,0Z' },
-    { k: 'f', d: 'M1.5,-2C6,-12 14,-18 18.5,-15.5C21.5,-13.5 19,-4 11,0Z' },
-    { k: 'a', d: 'M-1.5,1C-5,3 -12,4.5 -14,10C-15.5,14.5 -9.5,16.5 -6,13C-3.5,10.5 -2,6 -1.5,1Z' },
-    { k: 'a', d: 'M1.5,1C5,3 12,4.5 14,10C15.5,14.5 9.5,16.5 6,13C3.5,10.5 2,6 1.5,1Z' },
-    { k: 'c', d: `${circ(-12, -8.5, 2.6)}${circ(12, -8.5, 2.6)}`, c: 'gold' },
-    { k: 'c', d: `${circ(-8.5, 9.5, 1.8)}${circ(8.5, 9.5, 1.8)}`, c: 'pink' },
-    { k: 'l', d: 'M-1,-8.5C-2.5,-13.5 -5,-16 -7.5,-17M1,-8.5C2.5,-13.5 5,-16 7.5,-17', w: 1.4, c: 'brown' },
-    { k: 'c', d: 'M0,-10C1.6,-10 2.2,-8 2.2,-5V9C2.2,12.5 1.4,15 0,15C-1.4,15 -2.2,12.5 -2.2,9V-5C-2.2,-8 -1.6,-10 0,-10Z', c: 'brown' },
-  ],
+  // the secrets, and the badges that are a picture on their own, are drawn whole: pictures.ts
 };
 
 /** The "?" a secret badge shows until it is found. */

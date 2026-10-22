@@ -20,10 +20,16 @@
  * soft light behind, Zêr gold with wings, a glow and lens flares, Firûze
  * turquoise with great wings and the sun's rays — while the number says it
  * without colour. On the ranked tiers he shows the rank's own cut stone, so a
- * badge and an emblem show the same thing. A secret has no deer and no
- * plate: it is a cut stone, dark under a lighter table, rimmed in the neon of
- * its own colour, with its picture made of that neon; once found it is held
- * up in a light of the same colour.
+ * badge and an emblem show the same thing.
+ *
+ * Some badges are a picture on their own, drawn whole in its own colours
+ * (pictures.ts) — a cluster of crystals, a chest of treasure, the full moon,
+ * a diamond, a heart of cloud: no deer, the picture large on a dark stone of
+ * the badge's colour in the family's shape, set in the same metal with the
+ * same ribbon, wings and light. A secret is drawn whole too, with no plate:
+ * a cut stone, dark under a lighter table, rimmed in the neon of its own
+ * colour, the picture on it — the white cat of Van, the spring pouring out
+ * of its rocks — and once found it is held up in a light of the same colour.
  *
  * Small sizes get their own drawing rather than a shrunken one: under 56
  * pixels the plate fills the square with Hevalo inside it, the ribbon gives
@@ -44,6 +50,7 @@ import { drawHevalo } from '../characters/hevalo.js';
 import { headGroup } from '../characters/index.js';
 import { HERO, PLAIN, paintHero } from './hero.js';
 import { ICONS, QUESTION } from './icons.js';
+import { PICTURES, drawPicture } from './pictures.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
 import { BADGE_TIER_NAMES, RANK_BADGE, RANK_TIERS, badgeArt, isBadgeKey } from './keys.js';
 import { numeral, numeralWidth } from './numerals.js';
@@ -421,10 +428,23 @@ function treasureLight(dr: Drawing, p: Plate, detail: Detail): string {
   return (detail === 0 ? rays(dr, p.bottom) : '') + `<circle cx="60" cy="58" r="56" fill="url(#${glow})"/>`;
 }
 
+/** A plate's colour gone deep, for a picture set on it by itself: a stone lit from behind what is set in it. */
+const stoneOf = (p: Plate): Plate => ({ top: mix(p.bottom, p.deep, 0.3), bottom: mix(p.deep, '#000000', 0.2), rim: p.rim, deep: mix(p.deep, '#000000', 0.55) });
+
+/** How much of the plate a picture set on it by itself may fill: the leaf is narrow across its tips, the rosette's lobes take its edge. */
+const OBJECT_FIT: Readonly<Partial<Record<BadgeFamily, number>>> = { friends: 0.82, events: 0.92 };
+
+/** Where a picture set on a plate by itself stands: in the middle of the plate's face, as big as its shape allows. */
+const objectAt = (lay: Layout, family: BadgeFamily): Layout['hero'] => ({
+  cx: 60,
+  cy: lay.plate.y - 3 * lay.plate.s,
+  scale: 1.5 * lay.plate.s * (OBJECT_FIT[family] ?? 1),
+});
+
 /** The "?" of a secret not yet found glows violet, the colour of the night it is cut from. */
 const SHADOW_NEON: Plate = { top: '#a77bff', bottom: '#6a3de8', rim: '#e6dbff', deep: '#22105c' };
 
-/** A secret's own colour as a metal: white at its brightest, through its colour to its darkest — the neon its picture is made of. */
+/** A stone's colour as a metal: white at its brightest, through its colour to its darkest — the neon the "?" is made of. */
 const neonOf = (p: Plate): Metal => ({ hi: '#ffffff', light: p.rim, mid: p.top, dark: p.bottom, deep: p.deep });
 
 /**
@@ -462,11 +482,14 @@ function gemOf(dr: Drawing, p: Plate, detail: Detail): string {
 
 // ─────────────────────────────────────────────────────────────── the picture
 
-/** A picture on its own — a found secret, or the "?" of one not found yet — made as a jewel of its own neon and placed. */
+/** A picture on its own, placed: one drawn whole (pictures.ts), or an icon painted — the "?" of a secret not found yet in neon. */
 function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, detail: Detail, state: BadgeState, material?: Metal): string {
+  const { cx, cy, scale } = at;
+  // a picture drawn whole, in its own colours
+  const picture = state === 'secret' ? undefined : PICTURES[key];
+  if (picture) return `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${drawPicture(picture, { dr, detail, locked: state === 'locked' })}</g>`;
   const draw = ICONS[key];
   const parts = state === 'secret' || !draw ? QUESTION : draw();
-  const { cx, cy, scale } = at;
   const painted = paintHero(parts, {
     dr,
     colours: state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN),
@@ -681,7 +704,7 @@ export function badgeSvg(opts: BadgeOptions): string {
   const treasure = family === 'secret' && state === 'earned';
 
   if (family === 'secret' || state === 'secret') {
-    // a secret is a cut stone with its picture made of its own neon; found, it is held up in its light
+    // a secret is a cut stone with its picture on it; found, it is held up in its light
     const stone = locked ? PEWTER : p;
     if (treasure) dr.add(treasureLight(dr, p, detail));
     dr.add(gemOf(dr, stone, detail));
@@ -694,9 +717,15 @@ export function badgeSvg(opts: BadgeOptions): string {
       if (look === 4 && state === 'earned') dr.add(rays(dr, m.light));
     }
     if (!locked && detail === 0 && state === 'earned') dr.add(wingsBehind(lay, look, m));
-    dr.add(plateOf(dr, plateFamily, lay, m, p, detail, locked));
-    // Hevalo on every badge but a secret; a secret not yet found shows only its "?"
-    dr.add(sceneOf(dr, key, family, lay, locked ? STONE : m, detail, locked));
+    if (PICTURES[key]) {
+      // a picture on its own: set on a dark stone of its colour in the family's shape, in the tier's metal
+      dr.add(plateOf(dr, plateFamily, lay, m, stoneOf(p), detail, locked));
+      dr.add(heroOf(dr, key, objectAt(lay, family), m.deep, detail, state));
+    } else {
+      dr.add(plateOf(dr, plateFamily, lay, m, p, detail, locked));
+      // Hevalo on every badge but a secret; a secret not yet found shows only its "?"
+      dr.add(sceneOf(dr, key, family, lay, locked ? STONE : m, detail, locked));
+    }
   }
 
   if (numbered) {
