@@ -48,9 +48,9 @@ export interface Field {
 /**
  * The plates a badge's picture stands on: vivid, each badge its own, so a
  * page of them is as bright as a box of paints. `top` to `bottom` is the
- * face lit from above, `rim` the lighter line just inside its edge, `deep`
- * the darkest tone — the plate's thickness, the outline round the picture
- * and the edge of the number.
+ * face lit from above, `rim` its palest tint (the heart of the light a found
+ * secret is held up in), `deep` the darkest tone — the plate's thickness,
+ * the outline round the picture and the edge of the number.
  */
 export interface Plate {
   top: string;

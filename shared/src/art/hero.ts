@@ -114,6 +114,8 @@ export interface HeroPaint {
   locked: boolean;
   /** how far below the picture its shadow falls on the plate, in the icon's own units; 0 for none */
   shadow?: number;
+  /** the gloss across its top; off for a picture Hevalo holds, which is small beside him */
+  gloss?: boolean;
 }
 
 /**
@@ -233,7 +235,7 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
 
   // a gloss over the top of the whole picture, kept to its silhouette
   let shine = '';
-  if (!small) {
+  if (!small && p.gloss !== false) {
     const clip = dr.id('c');
     const shapes = shown
       .filter((part) => part.k !== 'l' && raised(part))
