@@ -1,0 +1,13 @@
+/*
+ * The violet ribbons behind every page (backdrop/Backdrop.tsx), fixed on black
+ * under the scrim. Until they are drawn, and wherever they cannot be, a dark
+ * violet glow across the middle stands in for them.
+ */
+.ribbons {
+  position: fixed;
+  inset: 0;
+  z-index: -2;
+  pointer-events: none;
+  background: radial-gradient(ellipse 70% 22% at 50% 50%, rgba(98, 60, 230, 0.32), transparent 70%), #040209;
+}
+.ribbons canvas { display: block; width: 100%; height: 100%; }

@@ -4,6 +4,7 @@ import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { SessionProvider, sessionFrom, type AdminSession } from '../session';
 import { Banner, Button, Icon, clockTime, describeError, errorLine, useCountdown } from '../ui';
+import { HevaloMark } from '../brand/HevaloMark';
 
 /**
  * Nothing in the admin panel renders until 2FA is done.
@@ -337,9 +338,7 @@ function Screen({
     <div className="gate">
       <div className="card gate-card" aria-busy={busy || undefined}>
         <div className="brand">
-          <span className="brand-mark" aria-hidden="true">
-            H
-          </span>
+          <HevaloMark size={30} className="brand-mark" />
           Hevalo Admin
         </div>
         <h1 className="gate-title">
