@@ -18,6 +18,9 @@ function mover(x: number, y: number, s = 1, turn = 0, ox = 0, oy = 0): { pt: (u:
 /** The same path seen in a mirror, its left for its right. */
 const mirror = (d: string): string => d.replace(PAIR, (_, x: string, y: string) => `${n(-Number(x))},${y}`);
 
+/** Round dots at the points, each the round end of a stroke too short to see: a whole scatter of them in one line. */
+const dots = (pts: readonly (readonly [number, number])[]): string => pts.map(([x, y]) => `M${n(x)},${n(y)}h0.1`).join('');
+
 const HEART = 'M0,15.4C-8,10 -16.4,4.2 -16.4,-4C-16.4,-10.2 -12,-13.6 -7.8,-13.6C-4.4,-13.6 -1.6,-11.8 0,-8.8C1.6,-11.8 4.4,-13.6 7.8,-13.6C12,-13.6 16.4,-10.2 16.4,-4C16.4,4.2 8,10 0,15.4Z';
 
 /** light, body, shade, and the deep line round it */

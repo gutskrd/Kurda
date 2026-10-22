@@ -7,11 +7,14 @@ import type { Pen, Picture } from '../pen.js';
 
 // ─────────────────────────────────────────────────────────────── helpers
 
-/** Every point of a path written with M, L, C, Q and Z, turned `deg` degrees about 0,0 and then moved by dx, dy. */
-function turn(d: string, deg: number, dx = 0, dy = 0): string {
+/** Every point of a path written with M, L, C, Q and Z, scaled by kx, ky (a negative kx mirrors it), turned `deg` degrees about 0,0 and then moved by dx, dy. */
+function turn(d: string, deg: number, dx = 0, dy = 0, kx = 1, ky = Math.abs(kx)): string {
   const a = (deg * Math.PI) / 180;
   const [c, s] = [Math.cos(a), Math.sin(a)];
-  return d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, x: string, y: string) => `${n(Number(x) * c - Number(y) * s + dx)},${n(Number(x) * s + Number(y) * c + dy)}`);
+  return d.replace(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g, (_, x: string, y: string) => {
+    const [u, v] = [Number(x) * kx, Number(y) * ky];
+    return `${n(u * c - v * s + dx)},${n(u * s + v * c + dy)}`;
+  });
 }
 
 /** A box with rounded corners, written so that it can be turned. */
