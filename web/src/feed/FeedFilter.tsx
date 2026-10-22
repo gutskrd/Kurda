@@ -1,23 +1,69 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { CheckIcon, CloseIcon, FeedFilterIcon } from '../components/icons';
+import {
+  DEFAULT_FEED_PERIOD,
+  DEFAULT_FEED_SORT,
+  FEED_PERIODS,
+  FEED_SORTS,
+  sortRanks,
+  type FeedPeriod,
+  type FeedSort,
+} from '@kurda/shared';
+import { Button } from '../components/Button';
+import { CheckIcon, CloseIcon, FeedFilterIcon, SortIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { keepInView } from '../reports/keepInView';
 import { SECTIONS, type FeedSection } from './postKinds';
 
-/** One way to narrow the wall: everything, a half of it, or one kind within a half. */
+/** How the wall is shown: in what order, from how far back, and which of it. */
 export interface FeedFilterValue {
   section: FeedSection;
   kind: string | null;
+  sort: FeedSort;
+  period: FeedPeriod;
 }
+
+/** The wall as it opens: everything, newest first. */
+export const DEFAULT_FILTER: FeedFilterValue = { section: 'all', kind: null, sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD };
 
 type T = ReturnType<typeof useT>;
 
 /** "All writing", "All pictures": a half chosen whole, as it reads in the list. */
 const ALL_OF: Partial<Record<FeedSection, MessageKey>> = { gotin: 'civak.filter.allWriting', dimen: 'civak.filter.allPictures' };
 
+const SORT_LABEL: Record<FeedSort, MessageKey> = {
+  newest: 'feed.sort.newest',
+  oldest: 'feed.sort.oldest',
+  popular: 'feed.sort.popular',
+  discussed: 'feed.sort.discussed',
+};
+const SORT_HINT: Partial<Record<FeedSort, MessageKey>> = { popular: 'feed.sort.popularHint', discussed: 'feed.sort.discussedHint' };
+const PERIOD_LABEL: Record<FeedPeriod, MessageKey> = {
+  day: 'feed.period.day',
+  week: 'feed.period.week',
+  month: 'feed.period.month',
+  year: 'feed.period.year',
+  all: 'feed.period.all',
+};
+
+/** A range only belongs to the two ranked orders; newest and oldest always read everything. */
+export function normalised(value: FeedFilterValue): FeedFilterValue {
+  return sortRanks(value.sort) ? value : { ...value, period: DEFAULT_FEED_PERIOD };
+}
+
+export function isDefaultFilter(value: FeedFilterValue): boolean {
+  const v = normalised(value);
+  return v.section === 'all' && v.kind === null && v.sort === DEFAULT_FEED_SORT && v.period === DEFAULT_FEED_PERIOD;
+}
+
+const same = (a: FeedFilterValue, b: FeedFilterValue): boolean => {
+  const x = normalised(a);
+  const y = normalised(b);
+  return x.section === y.section && x.kind === y.kind && x.sort === y.sort && x.period === y.period;
+};
+
 /** What the wall is narrowed to, in words — "Pictures · Meme" — or null while it shows everything. */
-export function filterLabel(t: T, value: FeedFilterValue): string | null {
+export function filterLabel(t: T, value: Pick<FeedFilterValue, 'section' | 'kind'>): string | null {
   if (value.section === 'all') return null;
   const section = SECTIONS.find((s) => s.key === value.section);
   if (!section) return null;
@@ -25,77 +71,115 @@ export function filterLabel(t: T, value: FeedFilterValue): string | null {
   return kind ? `${t(section.labelKey)} · ${t(kind.labelKey)}` : t(section.labelKey);
 }
 
+/** The order and its range, in words — "Most popular · This week" — or null for the newest first. */
+export function sortLabel(t: T, value: Pick<FeedFilterValue, 'sort' | 'period'>): string | null {
+  if (value.sort === DEFAULT_FEED_SORT) return null;
+  const ranged = sortRanks(value.sort) && value.period !== DEFAULT_FEED_PERIOD;
+  return ranged ? `${t(SORT_LABEL[value.sort])} · ${t(PERIOD_LABEL[value.period])}` : t(SORT_LABEL[value.sort]);
+}
+
+/** Everything that differs from the plain wall, for the button's name: "Most popular, This week, Pictures · Meme". */
+function activeParts(t: T, value: FeedFilterValue): string[] {
+  const v = normalised(value);
+  const parts: string[] = [];
+  if (v.sort !== DEFAULT_FEED_SORT) parts.push(t(SORT_LABEL[v.sort]));
+  if (sortRanks(v.sort) && v.period !== DEFAULT_FEED_PERIOD) parts.push(t(PERIOD_LABEL[v.period]));
+  const kind = filterLabel(t, v);
+  if (kind) parts.push(kind);
+  return parts;
+}
+
 /**
- * The wall's filter: a funnel beside the Post button, and a short list under
- * it — Everything, then each half with its kinds — the one shown now ticked.
+ * The wall's sort and filter: a funnel beside the Post button, and behind it
+ * one panel with everything about how the wall is shown — in what order
+ * (newest, oldest, most popular, most discussed), from how far back for the
+ * two that rank, and which kinds of post.
  *
- * It used to be two rows of toggles above the posts, which made the first thing
- * on the wall a choice to make. Now the wall opens on the posts, and the choice
- * is there when it is wanted. While the wall is narrowed a chip says to what;
- * pressing it opens the list again, and its ✕ shows everything.
+ * Choices in the panel are a draft: nothing on the wall moves until "Show
+ * posts", and ✕, Escape or a press outside leave it as it was. "Reset" puts
+ * the draft back to the plain wall. While anything differs from the plain
+ * wall the funnel is filled and a chip under the heading says what — one for
+ * the order, one for the kinds — each opening the panel again and each with a
+ * ✕ that undoes just that part.
  *
- * The list is a menu of radio items (the menu-button pattern): the arrow keys
- * move between them, Enter or Space chooses and closes, Escape closes and goes
- * back to the button. On a phone it rises from the bottom edge as a sheet.
+ * On a wide screen the panel drops from the funnel; on a phone it rises from
+ * the bottom edge as a sheet. It is a modal dialog either way: the keyboard
+ * stays inside it, each list of choices is a radio group the arrow keys move
+ * through, and closing it puts the keyboard back where it came from.
  */
 export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChange: (next: FeedFilterValue) => void }): React.JSX.Element {
   const t = useT();
   const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState<FeedFilterValue>(value);
   const buttonRef = useRef<HTMLButtonElement>(null);
-  const chipRef = useRef<HTMLButtonElement>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  // what opened the list, so the keyboard goes back there when it closes
+  const sortChipRef = useRef<HTMLButtonElement>(null);
+  const kindChipRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
+  // what opened the panel, so the keyboard goes back there when it closes
   const opener = useRef<HTMLElement | null>(null);
   const refocus = useRef(false);
-  const menuId = useId();
-  const label = filterLabel(t, value);
+  const id = useId();
+  const titleId = `${id}-title`;
 
-  const toggle = (from: HTMLElement | null): void => {
+  const kindText = filterLabel(t, value);
+  const sortText = sortLabel(t, normalised(value));
+  const parts = activeParts(t, value);
+  const filled = parts.length > 0;
+  const buttonLabel = filled ? t('feed.sortFilter.buttonOn', { what: parts.join(', ') }) : t('feed.sortFilter.button');
+
+  const show = (from: HTMLElement | null): void => {
+    if (open) {
+      close(true);
+      return;
+    }
     opener.current = from;
-    setOpen((o) => !o);
+    setDraft(normalised(value));
+    setOpen(true);
   };
-  const close = (back: boolean): void => {
+  function close(back: boolean): void {
     refocus.current = back;
     setOpen(false);
-  };
-  const choose = (next: FeedFilterValue): void => {
+  }
+  const apply = (): void => {
+    const next = normalised(draft);
+    // the chip that opened it may be about to go, so the funnel is where the keyboard lands
+    opener.current = null;
     close(true);
-    onChange(next);
+    if (!same(next, value)) onChange(next);
   };
-  const clear = (): void => {
-    // the chip goes with the filter, so the funnel is where the keyboard lands
+  const undo = (part: Partial<FeedFilterValue>): void => {
     opener.current = null;
     refocus.current = true;
-    onChange({ section: 'all', kind: null });
+    onChange(normalised({ ...value, ...part }));
   };
 
-  // after the render that closed the list or cleared the filter: the chip may be gone by then
+  // after the render that closed the panel or cleared a part: the chip may be gone by then
   useEffect(() => {
     if (open || !refocus.current) return;
     refocus.current = false;
     (opener.current?.isConnected ? opener.current : buttonRef.current)?.focus();
   });
 
-  // as a popover beside a narrow window's edge the list is nudged back inside; as a sheet it is already
+  // as a popover beside a narrow window's edge the panel is nudged back inside; as a sheet it is already
   useLayoutEffect(() => {
-    const menu = menuRef.current;
-    if (open && menu && getComputedStyle(menu).position !== 'fixed') keepInView(menu);
+    const panel = panelRef.current;
+    if (open && panel && getComputedStyle(panel).position !== 'fixed') keepInView(panel);
   }, [open]);
 
   useEffect(() => {
     if (!open) return;
-    const items = menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]');
-    (menuRef.current?.querySelector<HTMLElement>('[aria-checked="true"]') ?? items?.[0])?.focus();
+    // the keyboard starts on the order chosen now, the first thing in the panel
+    panelRef.current?.querySelector<HTMLElement>('[role="radio"][aria-checked="true"]')?.focus();
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') return;
-      refocus.current = true;
-      setOpen(false);
+      e.stopPropagation();
+      close(true);
     };
-    // a press anywhere else closes it, the scrim behind the sheet included; the two buttons toggle it themselves
+    // a press anywhere else closes it, the scrim behind the sheet included; the funnel and the chips toggle it themselves
     const onDown = (e: PointerEvent): void => {
       const target = e.target as Node;
-      if (menuRef.current?.contains(target) || buttonRef.current?.contains(target) || chipRef.current?.contains(target)) return;
-      setOpen(false);
+      for (const el of [panelRef.current, buttonRef.current, sortChipRef.current, kindChipRef.current]) if (el?.contains(target)) return;
+      close(false);
     };
     document.addEventListener('keydown', onKey);
     document.addEventListener('pointerdown', onDown);
@@ -105,44 +189,54 @@ export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChan
     };
   }, [open]);
 
-  const onMenuKey = (e: React.KeyboardEvent): void => {
-    if (e.key === 'Tab') {
-      // Tab leaves the list for whatever comes next, and the list closes behind it
-      close(false);
-      return;
+  /** The keyboard stays in the panel: Tab from the last control comes round to the first, and back. */
+  const trap = (e: React.KeyboardEvent): void => {
+    if (e.key !== 'Tab') return;
+    const focusable = [...(panelRef.current?.querySelectorAll<HTMLElement>('button:not([disabled]):not([tabindex="-1"])') ?? [])];
+    if (focusable.length === 0) return;
+    const first = focusable[0]!;
+    const last = focusable[focusable.length - 1]!;
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault();
+      first.focus();
     }
-    const items = [...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitemradio"]') ?? [])];
-    const at = items.indexOf(document.activeElement as HTMLElement);
-    const to: Partial<Record<string, number>> = { ArrowDown: at + 1, ArrowUp: at - 1, Home: 0, End: items.length - 1 };
-    const next = to[e.key];
-    if (next === undefined || items.length === 0) return;
-    e.preventDefault();
-    items[(next + items.length) % items.length]?.focus();
   };
 
-  const is = (section: FeedSection, kind: string | null): boolean => value.section === section && value.kind === kind;
-  const buttonLabel = label ? t('civak.filter.buttonOn', { what: label }) : t('civak.filter.button');
+  const ranks = sortRanks(draft.sort);
+  const isKind = (section: FeedSection, kind: string | null): boolean => draft.section === section && draft.kind === kind;
+  const pick = (section: FeedSection, kind: string | null) => (): void => setDraft((d) => ({ ...d, section, kind }));
 
   return (
     <>
-      {label && (
-        <span className="ffilter-chip">
-          <button
-            ref={chipRef}
-            type="button"
-            className="ffilter-chip-main"
-            aria-haspopup="menu"
-            aria-expanded={open}
-            aria-controls={open ? menuId : undefined}
-            title={t('civak.filter.button')}
-            onClick={() => toggle(chipRef.current)}
-          >
-            <FeedFilterIcon size={16} weight="fill" />
-            <span className="ffilter-chip-text">{label}</span>
-          </button>
-          <button type="button" className="ffilter-chip-clear" aria-label={t('civak.filter.clear')} title={t('civak.filter.clear')} onClick={clear}>
-            <CloseIcon size={14} weight="bold" />
-          </button>
+      {(sortText || kindText) && (
+        <span className="ffilter-chips">
+          {sortText && (
+            <Chip
+              ref={sortChipRef}
+              icon={<SortIcon size={15} />}
+              label={sortText}
+              open={open}
+              panelId={id}
+              clearLabel={t('feed.sort.clear')}
+              onOpen={() => show(sortChipRef.current)}
+              onClear={() => undo({ sort: DEFAULT_FEED_SORT, period: DEFAULT_FEED_PERIOD })}
+            />
+          )}
+          {kindText && (
+            <Chip
+              ref={kindChipRef}
+              icon={<FeedFilterIcon size={15} weight="fill" />}
+              label={kindText}
+              open={open}
+              panelId={id}
+              clearLabel={t('civak.filter.clear')}
+              onOpen={() => show(kindChipRef.current)}
+              onClear={() => undo({ section: 'all', kind: null })}
+            />
+          )}
         </span>
       )}
 
@@ -150,38 +244,93 @@ export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChan
         <button
           ref={buttonRef}
           type="button"
-          className={`ffilter-btn${label ? ' is-on' : ''}`}
-          aria-haspopup="menu"
+          className={`ffilter-btn${filled ? ' is-on' : ''}`}
+          aria-haspopup="dialog"
           aria-expanded={open}
-          aria-controls={open ? menuId : undefined}
+          aria-controls={open ? id : undefined}
           aria-label={buttonLabel}
           title={buttonLabel}
-          onClick={() => toggle(buttonRef.current)}
+          onClick={() => show(buttonRef.current)}
         >
-          <FeedFilterIcon size={20} weight={label ? 'fill' : 'regular'} />
+          <FeedFilterIcon size={20} weight={filled ? 'fill' : 'regular'} />
         </button>
 
         {open && (
           <>
-            {/* behind the sheet on a phone; nothing on a wider screen, where the list is a popover */}
+            {/* behind the sheet on a phone; nothing on a wider screen, where the panel is a popover */}
             <span className="ffilter-scrim" aria-hidden="true" />
-            <div className="ffilter-menu" role="menu" id={menuId} aria-label={t('civak.filter.title')} ref={menuRef} onKeyDown={onMenuKey}>
+            <div className="ffilter-panel" role="dialog" aria-modal="true" aria-labelledby={titleId} id={id} ref={panelRef} onKeyDown={trap}>
               <span className="ffilter-grip" aria-hidden="true" />
-              <span className="ffilter-title" aria-hidden="true">
-                {t('civak.filter.title')}
-              </span>
-              <Choice label={t('civak.filter.everything')} on={is('all', null)} onChoose={() => choose({ section: 'all', kind: null })} />
-              {SECTIONS.filter((s) => s.key !== 'all').map((s) => (
-                <div key={s.key} className="ffilter-group" role="group" aria-labelledby={`${menuId}-${s.key}`}>
-                  <span id={`${menuId}-${s.key}`} className="ffilter-heading" role="presentation">
-                    {t(s.labelKey)}
-                  </span>
-                  <Choice label={t(ALL_OF[s.key] ?? s.labelKey)} on={is(s.key, null)} onChoose={() => choose({ section: s.key, kind: null })} />
-                  {s.kinds.map((k) => (
-                    <Choice key={k.key} label={t(k.labelKey)} on={is(s.key, k.key)} onChoose={() => choose({ section: s.key, kind: k.key })} />
-                  ))}
-                </div>
-              ))}
+              <div className="ffilter-head">
+                <h2 id={titleId} className="ffilter-title">
+                  {t('feed.sortFilter.title')}
+                </h2>
+                <button type="button" className="ffilter-close" aria-label={t('common.close')} title={t('common.close')} onClick={() => close(true)}>
+                  <CloseIcon size={18} />
+                </button>
+              </div>
+
+              <div className="ffilter-body">
+                <Section title={t('feed.sort.title')} id={`${id}-sort`}>
+                  <Radios label={`${id}-sort`} axis="vertical">
+                    {FEED_SORTS.map((s) => (
+                      <Option
+                        key={s}
+                        on={draft.sort === s}
+                        label={t(SORT_LABEL[s])}
+                        hint={SORT_HINT[s] ? t(SORT_HINT[s]!) : undefined}
+                        onChoose={() => setDraft((d) => ({ ...d, sort: s }))}
+                      />
+                    ))}
+                  </Radios>
+                </Section>
+
+                {ranks && (
+                  <Section title={t('feed.period.title')} id={`${id}-period`}>
+                    <Radios label={`${id}-period`} axis="horizontal" className="ffilter-periods">
+                      {FEED_PERIODS.map((p) => (
+                        <button
+                          key={p}
+                          type="button"
+                          role="radio"
+                          aria-checked={draft.period === p}
+                          tabIndex={draft.period === p ? 0 : -1}
+                          className={`ffilter-period${draft.period === p ? ' is-on' : ''}`}
+                          onClick={() => setDraft((d) => ({ ...d, period: p }))}
+                        >
+                          {t(PERIOD_LABEL[p])}
+                        </button>
+                      ))}
+                    </Radios>
+                  </Section>
+                )}
+
+                <Section title={t('civak.filter.title')} id={`${id}-show`}>
+                  <Radios label={`${id}-show`} axis="vertical">
+                    <Option on={isKind('all', null)} label={t('civak.filter.everything')} onChoose={pick('all', null)} />
+                    {SECTIONS.filter((x) => x.key !== 'all').map((s) => (
+                      <div key={s.key} className="ffilter-group" role="group" aria-labelledby={`${id}-${s.key}`}>
+                        <span id={`${id}-${s.key}`} className="ffilter-heading">
+                          {t(s.labelKey)}
+                        </span>
+                        <Option on={isKind(s.key, null)} label={t(ALL_OF[s.key] ?? s.labelKey)} onChoose={pick(s.key, null)} />
+                        {s.kinds.map((k) => (
+                          <Option key={k.key} on={isKind(s.key, k.key)} label={t(k.labelKey)} onChoose={pick(s.key, k.key)} />
+                        ))}
+                      </div>
+                    ))}
+                  </Radios>
+                </Section>
+              </div>
+
+              <div className="ffilter-foot">
+                <Button type="button" variant="ghost" size="sm" disabled={isDefaultFilter(draft)} onClick={() => setDraft(DEFAULT_FILTER)}>
+                  {t('feed.sortFilter.reset')}
+                </Button>
+                <Button type="button" onClick={apply}>
+                  {t('feed.sortFilter.apply')}
+                </Button>
+              </div>
             </div>
           </>
         )}
@@ -190,11 +339,123 @@ export function FeedFilter({ value, onChange }: { value: FeedFilterValue; onChan
   );
 }
 
-function Choice({ label, on, onChoose }: { label: string; on: boolean; onChoose: () => void }): React.JSX.Element {
+function Section({ title, id, children }: { title: string; id: string; children: React.ReactNode }): React.JSX.Element {
   return (
-    <button type="button" role="menuitemradio" aria-checked={on} tabIndex={-1} className={`ffilter-item${on ? ' is-on' : ''}`} onClick={onChoose}>
-      <span>{label}</span>
+    <section className="ffilter-section">
+      <h3 id={id} className="ffilter-section-title">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/**
+ * A radio group the arrow keys move through, choosing as they go — down and
+ * up in a list; along the row, the way the page reads, in a row of chips.
+ * Only the chosen one is a Tab stop, so Tab goes from group to group.
+ */
+function Radios({
+  label,
+  axis,
+  className,
+  children,
+}: {
+  label: string;
+  axis: 'vertical' | 'horizontal';
+  className?: string;
+  children: React.ReactNode;
+}): React.JSX.Element {
+  const ref = useRef<HTMLDivElement>(null);
+  const onKey = (e: React.KeyboardEvent): void => {
+    const radios = [...(ref.current?.querySelectorAll<HTMLElement>('[role="radio"]') ?? [])];
+    const at = radios.indexOf(document.activeElement as HTMLElement);
+    if (at < 0) return;
+    const rtl = getComputedStyle(ref.current!).direction === 'rtl';
+    const forward = axis === 'vertical' ? 'ArrowDown' : rtl ? 'ArrowLeft' : 'ArrowRight';
+    const back = axis === 'vertical' ? 'ArrowUp' : rtl ? 'ArrowRight' : 'ArrowLeft';
+    const to: Partial<Record<string, number>> = { [forward]: at + 1, [back]: at - 1, Home: 0, End: radios.length - 1 };
+    // a list also answers left and right, and a row up and down, the same way
+    if (axis === 'vertical') Object.assign(to, { ArrowRight: rtl ? at - 1 : at + 1, ArrowLeft: rtl ? at + 1 : at - 1 });
+    else Object.assign(to, { ArrowDown: at + 1, ArrowUp: at - 1 });
+    const next = to[e.key];
+    if (next === undefined) return;
+    e.preventDefault();
+    const target = radios[(next + radios.length) % radios.length];
+    target?.focus();
+    target?.click();
+  };
+  return (
+    <div ref={ref} role="radiogroup" aria-labelledby={label} className={`ffilter-radios is-${axis}${className ? ` ${className}` : ''}`} onKeyDown={onKey}>
+      {children}
+    </div>
+  );
+}
+
+/** One choice in a list: its name, and a line under it saying what it means where that is not obvious. */
+function Option({ on, label, hint, onChoose }: { on: boolean; label: string; hint?: string; onChoose: () => void }): React.JSX.Element {
+  const hintId = useId();
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={on}
+      aria-label={hint ? label : undefined}
+      aria-describedby={hint ? hintId : undefined}
+      tabIndex={on ? 0 : -1}
+      className={`ffilter-item${on ? ' is-on' : ''}`}
+      onClick={onChoose}
+    >
+      <span className="ffilter-item-text">
+        <span>{label}</span>
+        {hint && (
+          <span id={hintId} className="ffilter-item-hint">
+            {hint}
+          </span>
+        )}
+      </span>
       {on && <CheckIcon size={18} />}
     </button>
+  );
+}
+
+/** A part of how the wall is shown, while it differs from the plain wall: opens the panel, and its ✕ undoes just that part. */
+function Chip({
+  ref,
+  icon,
+  label,
+  open,
+  panelId,
+  clearLabel,
+  onOpen,
+  onClear,
+}: {
+  ref: React.Ref<HTMLButtonElement>;
+  icon: React.ReactNode;
+  label: string;
+  open: boolean;
+  panelId: string;
+  clearLabel: string;
+  onOpen: () => void;
+  onClear: () => void;
+}): React.JSX.Element {
+  return (
+    <span className="ffilter-chip">
+      <button
+        ref={ref}
+        type="button"
+        className="ffilter-chip-main"
+        aria-haspopup="dialog"
+        aria-expanded={open}
+        aria-controls={open ? panelId : undefined}
+        onClick={onOpen}
+      >
+        {icon}
+        <span className="ffilter-chip-text">{label}</span>
+      </button>
+      <button type="button" className="ffilter-chip-clear" aria-label={clearLabel} title={clearLabel} onClick={onClear}>
+        <CloseIcon size={14} weight="bold" />
+      </button>
+    </span>
   );
 }
