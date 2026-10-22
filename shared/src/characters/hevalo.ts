@@ -497,9 +497,10 @@ function face(p: string): string {
         [0.85, C.furShade],
         [1, C.furDeep],
       ], 0.5, 0.55, 0.62),
+      // the lighter fur round each eye, as the icon has it: a socket with a soft but clear edge, not a glow
       radialBox(id('patch'), [
         [0, C.patch],
-        [0.8, C.patch],
+        [0.9, C.patch],
         [1, C.patch, 0],
       ]),
       radialBox(id('bridge'), [
@@ -540,7 +541,8 @@ const EYE_WHITE = { y: 281, rx: 53.4, ry: 60.6, apart: 76 } as const;
 
 /** Each pupil as drawn: turned in towards the other, as on the icon, with the light in it to the upper left. */
 const PUPIL = { y: 281.6, rx: 22, ry: 34, apart: 60 } as const;
-const PUPIL_LIGHT = { dx: -9.1, dy: -15, r: 10.4 } as const;
+/** The light in each pupil, high on its left, reaching over its edge into the white as the icon's does. */
+const PUPIL_LIGHT = { dx: -12.6, dy: -17.6, r: 10.2 } as const;
 
 /** The lid's colour, warming to the fur round the eye at its edge. */
 const lidLight = (id: string): string =>
@@ -555,14 +557,13 @@ function whites(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
-      // each eye is white in the middle, warming to cream in a band all round its edge
+      // each eye is white in the middle, warming to a light cream at its edge, which meets the fur round it cleanly, as on the icon
       radialBox(id('white'), [
         [0, C.white],
         [0.6, C.white],
-        [0.8, '#f7e7d7'],
-        [0.88, '#f3e0ca'],
-        [0.94, '#f2d5b4'],
-        [1, '#e6c49c'],
+        [0.8, '#fbf2e8'],
+        [0.92, '#f6e5d1'],
+        [1, '#f1d7b8'],
       ], 0.5, 0.49),
     ],
     [
@@ -575,8 +576,7 @@ function whites(p: string): string {
 /** One pupil and the light in it; the light is on the same side in both, as one light falls on them. */
 function pupil(side: 'left' | 'right'): string {
   const x = side === 'left' ? EYE_AXIS - PUPIL.apart : EYE_AXIS + PUPIL.apart;
-  // the right eye's light sits a hair nearer its pupil's middle, as the icon has it
-  const dx = side === 'left' ? PUPIL_LIGHT.dx : PUPIL_LIGHT.dx + 1;
+  const dx = PUPIL_LIGHT.dx;
   return ellipse(x, PUPIL.y, PUPIL.rx, PUPIL.ry, C.pupil) + fill(oval(x + dx, PUPIL.y + PUPIL_LIGHT.dy, PUPIL_LIGHT.r), C.white);
 }
 
