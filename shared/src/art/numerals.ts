@@ -109,6 +109,9 @@ export interface NumeralStyle {
   /** the face, top to bottom */
   top: string;
   bottom: string;
+  /** how wide the edge is round the figures, and how far its copy falls under them, as shares of the height */
+  rim?: number;
+  drop?: number;
 }
 
 /**
@@ -121,10 +124,10 @@ export function numeral(dr: Drawing, text: string, cx: number, y: number, h: num
   const face = dr.id('nf');
   dr.def(linearAt(face, [[0, style.top], [0.55, style.top], [1, style.bottom]], 0, y - PEN * h * 0.5, 0, y + h + PEN * h * 0.5));
   const pen = PEN * h;
-  const rim = h * 0.11;
+  const rim = h * (style.rim ?? 0.11);
   const line = (extra: string): string => `<path d="${d}" fill="none" stroke-linecap="round" stroke-linejoin="round"${extra}/>`;
   return (
-    line(` transform="translate(0 ${n2(h * 0.09)})" stroke="${style.edge}" stroke-width="${n2(pen + rim * 2)}"`) +
+    line(` transform="translate(0 ${n2(h * (style.drop ?? 0.09))})" stroke="${style.edge}" stroke-width="${n2(pen + rim * 2)}"`) +
     line(` stroke="${style.edge}" stroke-width="${n2(pen + rim * 2)}"`) +
     line(` stroke="url(#${face})" stroke-width="${n2(pen)}"`)
   );

@@ -1,9 +1,11 @@
 /**
  * A badge's picture painted as the hero of it: the thing itself in its own
  * colours — a flame is orange, a book's pages are white, a gift is wrapped
- * in violet — big, flat shaded in two tones and outlined like a sticker, so
- * it reads on the badge's plate, over the page where it rises out of the
- * plate, and on the dark theme and the light one alike.
+ * in violet — glazed: each part lit smoothly from the upper left into its
+ * shade, a gloss across the top of the whole, and a fine edge of the plate's
+ * darkest tone round it, so it reads on the badge's plate, over the page
+ * where it rises out of the plate, and on the dark theme and the light one
+ * alike.
  *
  * The parts are the icons' own (icons.ts): the main body, its shaded face, a
  * named accent, snow, cut lines, stroked lines, highlights. Here the main
@@ -130,10 +132,9 @@ export interface HeroPaint {
 }
 
 /**
- * A swatch as a fill lit from the upper left, over each part's own box, in
- * two flat tones with a hard edge between them: the lit side running light
- * to its body, the shaded side its shade — the way a flat illustration turns
- * a form, without a blur.
+ * A swatch as a fill lit from the upper left, over each part's own box: a
+ * bright top turning smoothly through the body into its shade, the way light
+ * rolls over a glazed, rounded thing.
  */
 function lit(dr: Drawing, cache: Map<string, string>, name: string, [top, body, shade]: readonly [string, string, string]): string {
   let id = cache.get(name);
@@ -143,14 +144,13 @@ function lit(dr: Drawing, cache: Map<string, string>, name: string, [top, body, 
       linearBox(
         id,
         [
-          [0, top],
-          [0.56, body],
-          [0.56, mix(body, shade, 0.62)],
+          [0, mix(top, '#ffffff', 0.25)],
+          [0.42, body],
           [1, shade],
         ],
-        0.15,
+        0.2,
         0,
-        0.85,
+        0.8,
         1,
       ),
     );
@@ -171,7 +171,7 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
   const { dr, colours, edge, outline, small, locked } = p;
   const shown = parts.filter((part) => !(small && 'fine' in part && part.fine));
   const tf = (part: Part): string => (part.tf ? ` transform="${part.tf}"` : '');
-  const gap = small ? 1.8 : 1.1;
+  const gap = small ? 1.5 : 0.8;
 
   // the silhouette, drawn once wide under everything: the sticker's edge
   const silhouette = shown
@@ -254,7 +254,7 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
       .join('');
     dr.def(`<clipPath id="${clip}">${shapes}</clipPath>`);
     const g = dr.id('g');
-    dr.def(linearBox(g, [[0, '#ffffff', 0.5], [1, '#ffffff', 0]]));
+    dr.def(linearBox(g, [[0, '#ffffff', 0.75], [0.55, '#ffffff', 0.2], [1, '#ffffff', 0]]));
     shine = `<g clip-path="url(#${clip})"><ellipse cx="${n(-4)}" cy="${n(-15)}" rx="${n(26)}" ry="${n(13)}" fill="url(#${g})" transform="rotate(-12)"/></g>`;
   }
   const drop = p.shadow ? `<g fill="${edge}" stroke="${edge}" opacity="0.28" transform="translate(0 ${n2(p.shadow)})">${silhouette}</g>` : '';

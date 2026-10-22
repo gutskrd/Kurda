@@ -3,26 +3,31 @@
  *
  * A badge is Hevalo with what it is for (awards.ts): the app's own deer —
  * the speaking character himself, the same drawing as when he talks, from
- * the antlers to his chest — rising out of a plate in the family's shape and
- * the badge's own vivid colour, laughing, amazed or dreaming, with the
- * badge's picture beside him as if he were showing it to you, or behind
- * him. Under him is the number the tier was earned at, in chunky
- * round figures: the 7 of a seven-day streak, the 100 of a hundred lessons.
- * The plate is set in a smooth band of the tier's metal, and the tier climbs
- * in light as well — Sifir a rose-copper band, Zîv silver with a soft light
- * behind, Zêr gold with a glow and sparkles, Firûze turquoise with the sun's
- * rays behind it — while the number says it without colour. On the ranked
- * tiers he shows the rank's own cut stone, so a badge and an emblem show the
- * same thing; a secret, once found, is a treasure with no plate and no deer,
- * held up in a light of its own colour.
+ * the antlers to his chest — rising out of a jewel of a plate, laughing,
+ * amazed or dreaming, with the badge's picture beside him as if he were
+ * showing it to you, or behind him, glazed and glowing with its own colour.
+ *
+ * The plate is made like a collector's piece: the family's shape set in a
+ * bezel of the tier's polished metal, bands of light across it, with its
+ * thickness under it; inside, the badge's colour as deep enamel under glass,
+ * lit from behind Hevalo and darkening to its rim, the light breaking into
+ * soft rays and glitter. Across its foot is a ribbon of the same metal with
+ * the number the tier was earned at engraved in it — the 7 of a seven-day
+ * streak, the 100 of a hundred lessons — its ends folded back. The tier
+ * climbs in metal and in light: Sifir rose copper, Zîv chrome silver with a
+ * soft light behind, Zêr gold with wings, a glow and lens flares, Firûze
+ * turquoise with great wings and the sun's rays — while the number says it
+ * without colour. On the ranked tiers he shows the rank's own cut stone, so a
+ * badge and an emblem show the same thing; a secret, once found, is a
+ * treasure with no plate and no deer, held up in a light of its own colour.
  *
  * Small sizes get their own drawing rather than a shrunken one: under 56
- * pixels the plate fills the square with Hevalo inside it, the number gives
- * way to four pips that count the tier, and the light goes; under 32 the
- * picture's finest lines go too.
+ * pixels the plate fills the square with Hevalo inside it, the ribbon gives
+ * way to four pips that count the tier, and the wings, rays and light go;
+ * under 32 the picture's finest lines go too.
  *
  * States: `earned` is the whole badge; `locked` (not yet earned) is the same
- * plate, Hevalo and picture in quiet greys, with the first number to reach; `secret`
+ * plate, Hevalo and picture in pewter greys, with the first number to reach; `secret`
  * is a secret badge not yet found — a night-sky gem with a "?" on it, the
  * same for every secret.
  */
@@ -33,7 +38,7 @@ import type { CharacterArt, EyeState } from '../characters/types.js';
 import type { Viseme } from '../lipsync/visemes.js';
 import { drawHevalo } from '../characters/hevalo.js';
 import { headGroup } from '../characters/index.js';
-import { HERO, PLAIN, paintHero } from './hero.js';
+import { HERO, PLAIN, SWATCH, paintHero } from './hero.js';
 import { ICONS, QUESTION, circ } from './icons.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
 import { BADGE_TIER_NAMES, RANK_BADGE, RANK_TIERS, badgeArt, isBadgeKey } from './keys.js';
@@ -46,8 +51,8 @@ import { signedArea } from './geometry.js';
 import { detailFor, rankCrest } from './ranks.js';
 import type { Placement } from './shapes.js';
 import { SHAPES, shapePath } from './shapes.js';
-import type { Detail } from './svg.js';
-import { Drawing, checkSize, grey, linearAt, mix, n, n2, prefixFor, radialAt, seeded, wholeUnits } from './svg.js';
+import type { Detail, Pt } from './svg.js';
+import { Drawing, checkSize, grey, linearAt, mix, n, n2, prefixFor, radialAt, radialBox, seeded, wholeUnits } from './svg.js';
 
 export type BadgeState = 'earned' | 'locked' | 'secret';
 
@@ -193,10 +198,25 @@ function rays(dr: Drawing, colour: string): string {
   return `<path d="${out.join('')}" fill="url(#${id})"/>`;
 }
 
-/** A four-pointed sparkle. */
-function sparkle(x: number, y: number, r: number): string {
-  const w = r * 0.24;
-  return `M${n(x)},${n(y - r)}Q${n(x + w)},${n(y - w)} ${n(x + r)},${n(y)}Q${n(x + w)},${n(y + w)} ${n(x)},${n(y + r)}Q${n(x - w)},${n(y + w)} ${n(x - r)},${n(y)}Q${n(x - w)},${n(y - w)} ${n(x)},${n(y - r)}Z`;
+/** A flare: a four-pointed star of thin rays, the upright ones longer, like light caught on a lens. */
+function flare(x: number, y: number, r: number): string {
+  const w = r * 0.13;
+  const [up, side] = [r * 1.35, r];
+  return (
+    `M${n(x)},${n(y - up)}Q${n(x + w)},${n(y - w)} ${n(x + side)},${n(y)}Q${n(x + w)},${n(y + w)} ${n(x)},${n(y + up)}` +
+    `Q${n(x - w)},${n(y + w)} ${n(x - side)},${n(y)}Q${n(x - w)},${n(y - w)} ${n(x)},${n(y - up)}Z`
+  );
+}
+
+/** Flares with a soft light round each, in white with an edge of the tier's metal so they show on the light theme too. */
+function flares(dr: Drawing, at: readonly (readonly [number, number, number])[], m: Metal): string {
+  if (at.length === 0) return '';
+  const glow = dr.id('o');
+  dr.def(radialBox(glow, [[0, '#ffffff', 0.85], [0.35, m.hi, 0.35], [1, m.hi, 0]]));
+  return (
+    at.map(([x, y, r]) => `<circle cx="${n(x)}" cy="${n(y)}" r="${n(r * 0.95)}" fill="url(#${glow})"/>`).join('') +
+    `<path d="${at.map(([x, y, r]) => flare(x, y, r)).join('')}" fill="#ffffff" stroke="${m.mid}" stroke-width="0.7" stroke-linejoin="round"/>`
+  );
 }
 
 /** Where the sparkles go, by look: two for Zêr, four for Firûze — never on the picture. */
@@ -215,62 +235,167 @@ const SPARKLES: Record<BadgeTier, readonly (readonly [number, number, number])[]
   ],
 };
 
+// ─────────────────────────────────────────────────────────────── the wings
+
+/** The feathers of one wing, root to tip of the fan: how far up the plate's side it grows, its angle, length and width. */
+const FEATHERS: Record<3 | 4, readonly (readonly [number, number, number, number])[]> = {
+  3: [
+    [-14, -38, 22, 8],
+    [-8, -18, 19, 7.5],
+    [-2, 2, 15, 6.5],
+  ],
+  4: [
+    [-18, -52, 25, 8.5],
+    [-12, -34, 25, 8.5],
+    [-6, -16, 22, 8],
+    [0, 2, 18, 7],
+    [6, 20, 14, 6],
+  ],
+};
+
+/**
+ * Wings behind the plate, for the grand looks: three feathers a side in Zêr,
+ * five in Firûze, fanned out from the plate's shoulders in the tier's metal,
+ * each lit along its upper half — the badge's highest honour told by shape
+ * as well as by colour.
+ */
+function wingsBehind(lay: Layout, look: BadgeTier, m: Metal): string {
+  if (look < 3) return '';
+  const half = 54 * lay.plate.s;
+  const shoulder = lay.plate.y - 4;
+  const whole: string[] = [];
+  const lit: string[] = [];
+  for (const side of [-1, 1] as const) {
+    for (const [dy, deg, len, wide] of FEATHERS[look as 3 | 4]) {
+      const a = (deg * Math.PI) / 180;
+      const [ux, uy] = [Math.cos(a) * side, Math.sin(a)];
+      const [nx, ny] = [-uy * side, ux * side];
+      const root: Pt = [60 + side * (half - 6), shoulder + dy];
+      const at = (along: number, across: number): string => `${n(root[0] + ux * along + nx * across)},${n(root[1] + uy * along + ny * across)}`;
+      const r = wide / 2;
+      whole.push(`M${at(0, r)}Q${at(len * 0.55, r * 1.5)} ${at(len, 0)}Q${at(len * 0.55, -r * 1.3)} ${at(0, -r)}Z`);
+      lit.push(`M${at(0, r)}Q${at(len * 0.55, r * 1.5)} ${at(len, 0)}Q${at(len * 0.5, r * 0.15)} ${at(0, 0)}Z`);
+    }
+  }
+  return (
+    `<path d="${whole.join('')}" fill="${m.mid}" stroke="${m.deep}" stroke-width="1.1" stroke-linejoin="round"/>` +
+    `<path d="${lit.join('')}" fill="${m.light}"/>`
+  );
+}
+
 // ─────────────────────────────────────────────────────────────── the plate
 
 /**
- * The plate: the family's shape with its thickness under it, a smooth band of
- * the tier's metal round it, and inside, the badge's own vivid colour lit
- * from above — a lighter facet across its upper half and a light behind the
- * picture.
+ * Polished metal: bands of light and shade across it on a slant, the way a
+ * curved bezel catches the light of a room — the shine that makes it read as
+ * metal rather than as a colour.
+ */
+function foil(dr: Drawing, m: Metal, x1: number, y1: number, x2: number, y2: number): string {
+  const id = dr.id('m');
+  dr.def(
+    linearAt(
+      id,
+      [
+        [0, m.hi],
+        [0.14, m.light],
+        [0.3, m.dark],
+        [0.46, m.hi],
+        [0.6, m.mid],
+        [0.78, m.dark],
+        [0.92, m.light],
+        [1, m.mid],
+      ],
+      x1,
+      y1,
+      x2,
+      y2,
+    ),
+  );
+  return `url(#${id})`;
+}
+
+/** The enamel of a badge not yet earned: pewter, with the same depth as a coloured one. */
+const PEWTER: Plate = { top: STONE.hi, bottom: STONE.mid, rim: STONE.hi, deep: STONE.deep };
+
+/**
+ * The plate: the family's shape set in a bezel of the tier's polished metal,
+ * with its thickness under it; inside, the badge's own colour as deep enamel
+ * under glass — lit from behind the picture and darkening to its edge, the
+ * light breaking into soft rays and a little glitter, a sheen of glass across
+ * its top and the bezel's shadow round its rim.
  */
 function plateOf(dr: Drawing, family: BadgeFamily, lay: Layout, m: Metal, p: Plate, detail: Detail, locked: boolean): string {
   const outline = shapePath(family, lay.plate);
   const face = shapePath(family, lay.plate, lay.band);
   const [top, foot] = spanOf(lay);
+  const half = 54 * lay.plate.s;
+  const height = foot - top;
   const thick = detail === 0 ? 4 : 5;
-  if (locked) {
-    return (
-      `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${STONE.dark}" fill-opacity="0.3"/>` +
-      `<path d="${outline}" fill="${STONE.mid}" fill-opacity="0.32" stroke="${STONE.mid}" stroke-width="${n2(detail === 0 ? 1.4 : 2.2)}" stroke-linejoin="round"/>` +
-      `<path d="${face}" fill="${STONE.hi}" fill-opacity="0.16" stroke="${STONE.mid}" stroke-opacity="0.6" stroke-width="${n2(detail === 0 ? 1.2 : 1.8)}" stroke-linejoin="round"/>`
-    );
-  }
-  const band = dr.id('m');
+  const [metal, enamel] = locked ? [STONE, PEWTER] : [m, p];
+  const deep = locked ? STONE.dark : m.deep;
+  const glowAt = { x: 60, y: top + height * 0.32 };
+  const fill = dr.id('e');
   dr.def(
-    linearAt(
-      band,
+    radialAt(
+      fill,
       [
-        [0, m.hi],
-        [0.3, m.light],
-        [0.72, m.mid],
-        [1, m.dark],
+        [0, mix(enamel.top, '#ffffff', locked ? 0.15 : 0.45)],
+        [0.3, enamel.top],
+        [0.66, enamel.bottom],
+        [1, mix(enamel.bottom, enamel.deep, locked ? 0.4 : 0.82)],
       ],
-      0,
-      top,
-      0,
-      foot,
+      glowAt.x,
+      glowAt.y,
+      height * 0.8,
     ),
   );
-  const tint = dr.id('e');
-  dr.def(linearAt(tint, [[0, p.top], [1, p.bottom]], 0, top + lay.band, 0, foot - lay.band));
   const out = [
-    `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${p.deep}"/>`,
-    `<path d="${outline}" fill="url(#${band})" stroke="${p.deep}" stroke-width="${n2(detail === 0 ? 1.4 : 2.2)}" stroke-linejoin="round"/>`,
-    `<path d="${face}" fill="url(#${tint})" stroke="${m.dark}" stroke-width="${n2(detail === 0 ? 1.2 : 1.8)}" stroke-linejoin="round"/>`,
+    `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${deep}"${locked ? ' fill-opacity="0.45"' : ''}/>`,
+    `<path d="${outline}" fill="${foil(dr, metal, 60 - half, top, 60 + half, foot)}" stroke="${deep}" stroke-width="${n2(detail === 0 ? 1.3 : 2)}" stroke-linejoin="round"/>`,
+    // its edge, wide and soft, is the bezel's shadow falling inside the rim and the groove the enamel is set in
+    `<path d="${face}" fill="url(#${fill})" stroke="${locked ? STONE.dark : enamel.deep}" stroke-opacity="${locked ? 0.45 : 0.6}" stroke-width="${n2(detail === 0 ? 3.6 : 4.4)}" stroke-linejoin="round"/>`,
   ];
   if (detail < 2) {
     const clip = dr.clip(face);
-    const light = dr.id('w');
-    const [cx, cy] = [lay.hero.cx, lay.hero.cy + 6];
-    const r = 44 * lay.plate.s;
-    dr.def(radialAt(light, [[0, '#ffffff', p === PLATES.night ? 0.25 : 0.4], [1, '#ffffff', 0]], cx, cy, r));
-    // the facet: the upper left of the face a shade lighter, cut on a slant
-    const facet = `M0,0H120V${n(top + 20)}L0,${n(foot - 18)}Z`;
-    out.push(
-      `<g clip-path="url(#${clip})"><path d="${facet}" fill="#ffffff" fill-opacity="0.16"/><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${light})"/>${p === PLATES.night ? stars(family + m.mid) : ''}</g>`,
+    const inside: string[] = [];
+    if (detail === 0 && !locked) {
+      // the light behind the picture, breaking into rays
+      const beam = dr.id('r');
+      dr.def(radialBox(beam, [[0, '#ffffff', 0.34], [0.55, '#ffffff', 0.1], [1, '#ffffff', 0]]));
+      const count = 14;
+      const reach = height * 0.95;
+      const wedge = (Math.PI / count) * 0.42;
+      const d: string[] = [];
+      for (let i = 0; i < count; i++) {
+        const a = ((i * 360) / count - 90 + 360 / count / 2) * (Math.PI / 180);
+        const P = (t: number): string => `${n(glowAt.x + Math.cos(t) * reach)},${n(glowAt.y + Math.sin(t) * reach)}`;
+        d.push(`M${n(glowAt.x)},${n(glowAt.y)}L${P(a - wedge)}L${P(a + wedge)}Z`);
+      }
+      inside.push(`<path d="${d.join('')}" fill="url(#${beam})"/>`);
+      inside.push(glitter(`${family}${p.top}`, 60 - half, top, half * 2, height));
+    }
+    // the glass: a sheen across the top, and the light it gathers at the foot
+    const sheen = dr.id('s');
+    dr.def(linearAt(sheen, [[0, '#ffffff', locked ? 0.22 : 0.3], [1, '#ffffff', 0]], 0, top, 0, top + height * 0.42));
+    inside.push(
+      `<path d="M${n(60 - half * 1.2)},${n(top)}H${n(60 + half * 1.2)}V${n(top + height * 0.3)}C${n(60 + half * 0.4)},${n(top + height * 0.4)} ${n(60 - half * 0.4)},${n(top + height * 0.46)} ${n(60 - half * 1.2)},${n(top + height * 0.42)}Z" fill="url(#${sheen})"/>`,
     );
+
+    if (p === PLATES.night && !locked) inside.push(stars(family + m.mid));
+    out.push(`<g clip-path="url(#${clip})">${inside.join('')}</g>`);
   }
   return out.join('');
+}
+
+/** A little glitter in the enamel's light: tiny diamond glints, the same for every badge of a family and colour. */
+function glitter(seed: string, x: number, y: number, w: number, h: number): string {
+  const rnd = seeded(`glitter-${seed}`);
+  const d: string[] = [];
+  for (let i = 0; i < 8; i++) {
+    const [gx, gy, r] = [x + w * (0.1 + rnd() * 0.8), y + h * (0.08 + rnd() * 0.6), 0.8 + rnd() * 1.2];
+    d.push(`M${n(gx)},${n(gy - r)}l${n(r * 0.3)},${n(r)}l${n(-r * 0.3)},${n(r)}l${n(-r * 0.3)},${n(-r)}Z`);
+  }
+  return `<path d="${d.join('')}" fill="#ffffff" fill-opacity="0.85"/>`;
 }
 
 function stars(seed: string): string {
@@ -301,7 +426,7 @@ function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, de
     dr,
     colours: state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN),
     edge,
-    outline: (detail === 0 ? 2.8 : 3.6) / scale,
+    outline: (detail === 0 ? 2 : 3) / scale,
     small: detail > 0,
     locked: state === 'locked',
     shadow: detail === 0 && state !== 'locked' ? 3.2 / scale : 0,
@@ -382,7 +507,7 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, e
       dr,
       colours: HERO[key] ?? PLAIN,
       edge: locked ? STONE.dark : edge,
-      outline: (detail === 0 ? 2.4 : 3.2) / place.scale,
+      outline: (detail === 0 ? 1.7 : 2.6) / place.scale,
       small: detail > 0,
       locked,
       // what he shows you throws a shadow on him, so it stands before him
@@ -390,7 +515,9 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, e
       gloss: false,
     });
     const turn = prop.rotate ? ` rotate(${n(prop.rotate)})` : '';
-    const g = `<g transform="translate(${n(place.x)} ${n(place.y)})${turn} scale(${n2(place.scale)})">${painted}</g>`;
+    // the picture glows with its own colour, a light of it on the plate and the page round it
+    const shine = locked || detail === 2 ? '' : halo(dr, place.x, place.y, 19 * place.scale, SWATCH[(HERO[key] ?? PLAIN).f][0], 0.75, 0.25);
+    const g = `${shine}<g transform="translate(${n(place.x)} ${n(place.y)})${turn} scale(${n2(place.scale)})">${painted}</g>`;
     if (out) behind = g;
     else before = g;
   }
@@ -406,22 +533,53 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, e
 
 // ─────────────────────────────────────────────────────────────── the tier
 
-/** The number under a large tiered badge: the milestone this tier was earned at, or a star for "all of it". */
-function milestoneMark(dr: Drawing, milestone: number | 'all', style: NumeralStyle): string {
-  const foot = 112;
+/**
+ * The number under a large tiered badge, on a ribbon of the tier's metal
+ * across the plate's foot — the milestone this tier was earned at, engraved,
+ * or a star for "all of it". The ribbon's ends fold back behind it.
+ */
+function milestoneMark(dr: Drawing, milestone: number | 'all', m: Metal): string {
+  const [cy, h] = [104, 20];
+  const text = milestone === 'all' ? '' : String(milestone);
+  const size = 13;
+  const w = Math.max(36, (milestone === 'all' ? 1.2 : numeralWidth(text)) * size + 18);
+  const [x0, x1, y0, y1] = [60 - w / 2, 60 + w / 2, cy - h / 2, cy + h / 2];
+  const arch = 2;
+  // the folded ends, behind, a step lower, cut into a swallowtail
+  const tail = (x: number, dir: -1 | 1): string => {
+    const [inner, outer] = [x - dir * 3, x + dir * 9];
+    return `M${n(inner)},${n(y0 + 4)}L${n(outer)},${n(y0 + 4)}L${n(outer - dir * 3.5)},${n(cy + 3)}L${n(outer)},${n(y1 + 4)}L${n(inner)},${n(y1 + 4)}Z`;
+  };
+  const band = dr.id('n');
+  dr.def(
+    linearAt(
+      band,
+      [
+        [0, m.hi],
+        [0.3, m.light],
+        [0.62, m.mid],
+        [1, m.dark],
+      ],
+      0,
+      y0,
+      0,
+      y1,
+    ),
+  );
+  const out = [
+    `<path d="${tail(x0, -1)}${tail(x1, 1)}" fill="${m.dark}" stroke="${m.deep}" stroke-width="1.2" stroke-linejoin="round"/>`,
+    `<path d="M${n(x0)},${n(y0)}Q60,${n(y0 - arch)} ${n(x1)},${n(y0)}V${n(y1)}Q60,${n(y1 - arch)} ${n(x0)},${n(y1)}Z" fill="url(#${band})" stroke="${m.deep}" stroke-width="1.3" stroke-linejoin="round"/>`,
+    `<path d="M${n(x0 + 2.5)},${n(y0 + 1.6)}Q60,${n(y0 - arch + 1.6)} ${n(x1 - 2.5)},${n(y0 + 1.6)}" fill="none" stroke="#ffffff" stroke-opacity="0.7" stroke-width="0.9" stroke-linecap="round"/>`,
+  ];
+  // engraved: the figures in the metal's darkest tone, the light catching the cut's lower edge
+  const style: NumeralStyle = { edge: m.hi, top: m.deep, bottom: m.deep, rim: 0.07, drop: 0.07 };
   if (milestone === 'all') {
-    const id = dr.id('nf');
-    dr.def(linearAt(id, [[0, style.top], [1, style.bottom]], 0, 86, 0, 112));
-    const star = softStar(60, 98, 15.5);
-    return (
-      `<path d="${star}" transform="translate(0 2)" fill="${style.edge}" stroke="${style.edge}" stroke-width="5" stroke-linejoin="round"/>` +
-      `<path d="${star}" fill="${style.edge}" stroke="${style.edge}" stroke-width="5" stroke-linejoin="round"/>` +
-      `<path d="${star}" fill="url(#${id})"/>`
-    );
+    const star = softStar(60, cy - 0.5, 7.5);
+    out.push(`<path d="${star}" transform="translate(0 0.8)" fill="${m.hi}"/><path d="${star}" fill="${m.deep}"/>`);
+  } else {
+    out.push(numeral(dr, text, 60, cy - size / 2 - 0.5, size, style));
   }
-  const text = String(milestone);
-  const h = Math.min(18.5, 80 / numeralWidth(text));
-  return numeral(dr, text, 60, foot - h, h, style);
+  return out.join('');
 }
 
 /** The pips under a small tiered badge: four, as many lit as the tier. */
@@ -478,25 +636,24 @@ export function badgeSvg(opts: BadgeOptions): string {
     dr.add(heroOf(dr, key, TREASURE, PLATES.night.deep, detail, state));
   } else {
     if (!locked && detail === 0) {
+      // the enamel's own colour glows round it; the grander looks add the light of their metal
+      dr.add(halo(dr, 60, 60, 56, p.top, 0.34, 0.45));
       if (AURA[look] > 0) dr.add(halo(dr, 60, 58, 58, m.light, AURA[look], 0.3));
       if (look === 4 && state === 'earned') dr.add(rays(dr, m.light));
     }
+    if (!locked && detail === 0 && state === 'earned') dr.add(wingsBehind(lay, look, m));
     dr.add(plateOf(dr, plateFamily, lay, m, p, detail, locked));
     // Hevalo on every badge but a secret; a secret not yet found shows only its "?"
     dr.add(state === 'secret' || family === 'secret' ? heroOf(dr, key, lay.hero, p.deep, detail, state) : sceneOf(dr, key, family, lay, p.deep, detail, locked));
   }
 
   if (numbered) {
-    const style: NumeralStyle = locked ? { edge: STONE.mid, top: STONE.hi, bottom: STONE.light } : { edge: p.deep, top: '#ffffff', bottom: mix('#ffffff', m.light, 0.85) };
-    dr.add(locked ? `<g opacity="0.75">${milestoneMark(dr, milestone, style)}</g>` : milestoneMark(dr, milestone, style));
+    dr.add(milestoneMark(dr, milestone, locked ? STONE : m));
   } else if (tiered) {
     dr.add(tierPips(dr, shownTier, tiers, locked ? STONE : m, detail, locked));
   }
 
-  if (!locked && detail === 0 && SPARKLES[look].length > 0) {
-    // white with an edge of the tier's metal, so a sparkle shows on the light theme too
-    dr.add(`<path d="${SPARKLES[look].map(([x, y, r]) => sparkle(x, y, r)).join('')}" fill="#ffffff" stroke="${m.mid}" stroke-width="1" stroke-linejoin="round"/>`);
-  }
+  if (!locked && detail === 0) dr.add(flares(dr, SPARKLES[look], m));
   return dr.svg(size, title);
 }
 
