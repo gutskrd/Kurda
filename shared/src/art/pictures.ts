@@ -14,41 +14,8 @@
  * glints — are left out of the small drawing, and at the smallest only the
  * shapes and their colours are left.
  */
-import { circ } from './icons.js';
-import type { Stop } from './svg.js';
-import { Drawing, grey, linearAt, linearBox, mix, n, radialAt, radialBox } from './svg.js';
-
-export interface Pen {
-  /** large: every detail */
-  readonly fine: boolean;
-  /** under 32 pixels: the shapes and their colours, and nothing finer */
-  readonly tiny: boolean;
-  /** a gradient along a line, in the picture's own units */
-  line(stops: readonly Stop[], x1: number, y1: number, x2: number, y2: number): string;
-  /** a gradient across each shape's own box: from its upper left to its lower right unless told otherwise */
-  box(stops: readonly Stop[], x1?: number, y1?: number, x2?: number, y2?: number): string;
-  /** a round gradient, in the picture's own units */
-  round(stops: readonly Stop[], cx: number, cy: number, r: number): string;
-  /** a round gradient in each shape's own box */
-  roundBox(stops: readonly Stop[], cx?: number, cy?: number, r?: number): string;
-}
-
-export type Picture = (pen: Pen) => string;
-
-/** An ellipse as a path. */
-const ell = (cx: number, cy: number, rx: number, ry: number): string =>
-  `M${n(cx - rx)},${n(cy)}A${n(rx)},${n(ry)} 0 1 0 ${n(cx + rx)},${n(cy)}A${n(rx)},${n(ry)} 0 1 0 ${n(cx - rx)},${n(cy)}Z`;
-
-/** A four-point glint. */
-const glint = (cx: number, cy: number, r: number): string => {
-  const s = r * 0.22;
-  return `M${n(cx)},${n(cy - r)}Q${n(cx + s)},${n(cy - s)} ${n(cx + r)},${n(cy)}Q${n(cx + s)},${n(cy + s)} ${n(cx)},${n(cy + r)}Q${n(cx - s)},${n(cy + s)} ${n(cx - r)},${n(cy)}Q${n(cx - s)},${n(cy - s)} ${n(cx)},${n(cy - r)}Z`;
-};
-
-const path = (d: string, fill: string, more = ''): string => `<path d="${d}" fill="${fill}"${more}/>`;
-const stroke = (colour: string, width: number, more = ''): string =>
-  ` stroke="${colour}" stroke-width="${width}" stroke-linejoin="round" stroke-linecap="round"${more}`;
-const line = (d: string, colour: string, width: number, more = ''): string => `<path d="${d}" fill="none"${stroke(colour, width, more)}/>`;
+import { circ, ell, glint, line, mix, n, path, stroke } from './pen.js';
+import type { Pen, Picture } from './pen.js';
 
 // ─────────────────────────────────────────────────────────────── the pictures
 
@@ -571,52 +538,3 @@ export const PICTURES: Readonly<Record<string, Picture>> = {
   elmas: diamond,
   dilgerm: cloudHeart,
 };
-
-export interface PictureOptions {
-  dr: Drawing;
-  /** 0 every detail · 1 small · 2 the smallest */
-  detail: 0 | 1 | 2;
-  /** not yet earned: the same picture in quiet greys */
-  locked?: boolean;
-}
-
-/** Draws a picture in its 40-unit box, about 0,0; a caller places it with a transform. */
-export function drawPicture(picture: Picture, { dr, detail, locked = false }: PictureOptions): string {
-  const pen: Pen = {
-    fine: detail === 0,
-    tiny: detail === 2,
-    line: (stops, x1, y1, x2, y2) => {
-      const id = dr.id('pl');
-      dr.def(linearAt(id, stops, x1, y1, x2, y2));
-      return `url(#${id})`;
-    },
-    box: (stops, x1 = 0.2, y1 = 0, x2 = 0.8, y2 = 1) => {
-      const id = dr.id('pb');
-      dr.def(linearBox(id, stops, x1, y1, x2, y2));
-      return `url(#${id})`;
-    },
-    round: (stops, cx, cy, r) => {
-      const id = dr.id('pr');
-      dr.def(radialAt(id, stops, cx, cy, r));
-      return `url(#${id})`;
-    },
-    roundBox: (stops, cx, cy, r) => {
-      const id = dr.id('po');
-      dr.def(radialBox(id, stops, cx, cy, r));
-      return `url(#${id})`;
-    },
-  };
-  if (!locked) return picture(pen);
-  // not yet earned: every colour taken toward the stone's grey, its gradients' too
-  const greyed = (markup: string): string => markup.replace(/#[0-9a-f]{6}\b/gi, (hex) => mix(grey(hex), '#c3c7cf', 0.3));
-  const grey$ = (stops: readonly Stop[]): Stop[] => stops.map(([o, c, a]) => [o, greyed(c), a] as const);
-  return greyed(
-    picture({
-      ...pen,
-      line: (stops, x1, y1, x2, y2) => pen.line(grey$(stops), x1, y1, x2, y2),
-      box: (stops, x1, y1, x2, y2) => pen.box(grey$(stops), x1, y1, x2, y2),
-      round: (stops, cx, cy, r) => pen.round(grey$(stops), cx, cy, r),
-      roundBox: (stops, cx, cy, r) => pen.roundBox(grey$(stops), cx, cy, r),
-    }),
-  );
-}
