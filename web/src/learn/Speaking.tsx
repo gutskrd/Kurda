@@ -130,7 +130,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
       <>
         <div className="lesson-listen">
           {own && <PlayButton src={own} label={t('lesson.speak.own')} />}
-          {exercise.modelAudioUrl && <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />}
+          {exercise.modelAudioUrl && <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} round />}
           <Button variant="ghost" size="sm" onClick={record} disabled={locked || busy}>
             {t('lesson.speak.again')}
           </Button>
@@ -169,7 +169,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
         <Prompt text={exercise.prompt} />
         {exercise.modelAudioUrl && taken.status !== 'ready' && (
           <div className="lesson-listen">
-            <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} />
+            <PlayButton src={exercise.modelAudioUrl} label={t('lesson.speak.model')} round />
           </div>
         )}
       </ExerciseVoice>

@@ -137,10 +137,10 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
           // pleased when the learner says they said it well; their own judgement of a near miss is theirs to make
           reaction={selfRating === 'good' ? 'cheer' : null}
         >
-          <ClayButton label={t('lesson.speak.playModel')} icon="speaker" variant="outline" tone="primary" onPress={() => model.play(1)} />
+          <ModelButton playing={model.playing} onPress={() => model.play(1)} />
         </CharacterStage>
       ) : model.supported ? (
-        <ClayButton label={t('lesson.speak.playModel')} icon="speaker" variant="outline" tone="primary" onPress={() => model.play(1)} />
+        <ModelButton playing={model.playing} onPress={() => model.play(1)} />
       ) : null}
 
       {!recorder.supported ? (
@@ -207,7 +207,31 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
   );
 }
 
+/**
+ * The native speaker's recording: the speaker alone in a round button, lit
+ * while it plays, its name what it plays for anyone who cannot see it.
+ */
+function ModelButton({ playing, onPress }: { playing: boolean; onPress: () => void }): React.JSX.Element {
+  const { colors } = useTheme();
+  const { t } = useI18n();
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={t('lesson.speak.playModel')}
+      style={({ pressed }) => [
+        styles.model,
+        { backgroundColor: colors.controlTrack, borderColor: playing ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 },
+      ]}
+    >
+      {/* the speaker points the same way in every language */}
+      <Icon name="speaker" size={24} color={playing ? colors.goldText : colors.primary} />
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
+  model: { alignSelf: 'center', width: 56, height: 56, borderRadius: 28, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
