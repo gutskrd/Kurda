@@ -155,6 +155,7 @@ export function UserPage({ id, tab }: { id: string; tab?: string }): React.JSX.E
       {loaded.error != null && <ErrorState error={loaded.error} onRetry={reload} what="people" compact />}
       <div role="tabpanel" id="user-panel" aria-labelledby={`user-tab-${current}`}>
         {current === 'profile' && <ProfileTab user={u} />}
+        {current === 'profile' && canAdjust && <TeamRole user={u} onChanged={reload} />}
         {current === 'standing' && moderation && <StandingTab user={u} canModerate={canModerate} onChanged={reload} />}
         {current === 'reports' && moderation && <ReportsTab user={u} />}
         {current === 'wallet' && <WalletPanel user={u} canAdjust={canAdjust} onChanged={reload} />}
@@ -240,6 +241,69 @@ function ProfileTab({ user: u }: { user: UserDetail }): React.JSX.Element {
         </Section>
       )}
     </>
+  );
+}
+
+/**
+ * Lessons and recording: a superadmin gives someone the content editor role,
+ * or takes it away (PUT /admin/users/:id/content-editor) — how a person joins
+ * the team that writes lessons and records them, a part of a conversation
+ * from wherever they are, without seeing anything about people or money.
+ * Asked with a reason, which goes into the account's history.
+ */
+function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => void }): React.JSX.Element {
+  const dialogs = useDialogs();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  const has = u.roles.includes('content_editor');
+
+  async function change(on: boolean): Promise<void> {
+    const reason = await dialogs.prompt({
+      title: on ? `Let ${u.username} write and record lessons?` : `Take lessons and recording away from ${u.username}?`,
+      body: on
+        ? 'They get the content editor role: the lessons, the stories and the audio studio, with a sign-in code of their own. Nothing about people or money.'
+        : 'They lose the content editor role at once. Their recordings stay.',
+      label: 'Why (kept in their history)',
+      placeholder: on ? 'Records Azad’s part of the conversations' : undefined,
+      maxLength: 500,
+      confirmLabel: on ? 'Give the role' : 'Take it away',
+      tone: on ? 'default' : 'danger',
+    });
+    if (reason === null) return;
+    setBusy(true);
+    try {
+      await api(`/admin/users/${encodeURIComponent(u.id)}/content-editor`, { method: 'PUT', body: { on, reason } });
+      toast.success(on ? `${u.username} can now write and record lessons.` : `${u.username} no longer edits lessons.`);
+      onChanged();
+    } catch (err) {
+      toast.error(errorLine(err, 'people'));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Section
+      title="Lessons and recording"
+      description="Someone who records their part of a conversation, or writes lessons, needs the content editor role: the lessons, the stories and the audio studio, and nothing about people or money."
+      actions={
+        has ? (
+          <Button variant="danger" busy={busy} onClick={() => void change(false)}>
+            Take it away
+          </Button>
+        ) : (
+          <Button variant="primary" icon="mic" busy={busy} onClick={() => void change(true)}>
+            Let them record and write lessons
+          </Button>
+        )
+      }
+    >
+      <p className="subtle">
+        {has
+          ? `${u.username} is a content editor. They sign in at this console with their own account and code.`
+          : `${u.username} is not on the team. Given the role, they sign in here with their own account and set up a sign-in code; if the console is limited to listed addresses (ADMIN_ACCESS_EMAILS), add theirs there too.`}
+      </p>
+    </Section>
   );
 }
 

@@ -9,7 +9,7 @@ import { silentListeningMessage } from '../lessonaudio/publish-guard.js';
 
 const idParam = z.object({ id: z.uuid() });
 
-const EXERCISE_TYPES = ['multiple_choice', 'translate', 'match_pairs', 'listening', 'speaking', 'writing'] as const;
+const EXERCISE_TYPES = ['multiple_choice', 'translate', 'match_pairs', 'listening', 'speaking', 'writing', 'conversation'] as const;
 
 const createBody = z.object({
   skillId: z.uuid(),

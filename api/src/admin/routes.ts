@@ -15,8 +15,15 @@ function codeLocked(retryAfterSec: number): AppError {
   return new AppError('TOTP_LOCKED', 429, 'too many wrong codes — try again later', { retryAfterSec });
 }
 
-function forbid(reply: FastifyReply, req: FastifyRequest, code: string, message: string): void {
-  void reply.code(403).send({ code, message, requestId: req.id });
+/**
+ * Refuse, and wait until the refusal has gone out. A guard that only sent it
+ * let the route's handler run as well: the app's onSend hooks are async, so
+ * the reply is not finished when the guard returns, and Fastify goes on to the
+ * handler unless the hook waits for the reply (or returns it). A moderator
+ * asking to change a balance was told 403 — and the balance changed.
+ */
+async function forbid(reply: FastifyReply, req: FastifyRequest, code: string, message: string): Promise<void> {
+  await reply.code(403).send({ code, message, requestId: req.id });
 }
 
 /**
@@ -30,11 +37,11 @@ export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
     const userRoles = req.user?.roles ?? [];
     const roleOk = roles.length > 0 ? roles.some((r) => userRoles.includes(r)) : isAdmin(userRoles);
     if (!req.user || !roleOk) {
-      forbid(reply, req, 'FORBIDDEN', 'insufficient permissions');
+      await forbid(reply, req, 'FORBIDDEN', 'insufficient permissions');
       return;
     }
     if (!(await totp.isConfirmed(req.user.id))) {
-      forbid(reply, req, 'TOTP_REQUIRED', 'admin 2FA enrollment required');
+      await forbid(reply, req, 'TOTP_REQUIRED', 'admin 2FA enrollment required');
     }
   });
 }
@@ -48,7 +55,7 @@ export function requireAdmin(totp: AdminTotpService, ...roles: AdminRole[]) {
 export function requireCapability(capability: Capability) {
   return markPrivileged(async (req: FastifyRequest, reply: FastifyReply): Promise<void> => {
     if (!req.user || !hasCapability(req.user.roles, capability)) {
-      forbid(reply, req, 'FORBIDDEN', 'insufficient permissions');
+      await forbid(reply, req, 'FORBIDDEN', 'insufficient permissions');
     }
   });
 }

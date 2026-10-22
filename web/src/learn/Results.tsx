@@ -9,7 +9,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 import type { SessionResults } from './types';
 
-/** Answers that are Kurdish (a multiple-choice option or a set of pairs may be in any language). */
+/** Answers that are Kurdish (a multiple-choice option, the answer to a conversation's question or a set of pairs may be in any language). */
 const KURDISH_ANSWER = new Set(['translate', 'writing', 'listening', 'speaking']);
 
 /**

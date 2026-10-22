@@ -3,6 +3,11 @@ import { InsufficientFundsError, WalletService, type Currency } from '../wallet/
 import type { AdminUserModeration, AgeBadge, ReportCategory, ReportStatus, ReportTargetType } from '@kurda/shared';
 import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES } from './roles.js';
+
+/** The one role a superadmin gives from a person's page (`setContentEditor`). */
+const CONTENT_EDITOR = 'content_editor';
+
+export type RoleResult = { ok: true; roles: string[] } | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'EMAIL_UNVERIFIED' };
 import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import { escapeLike } from '../db/like.js';
@@ -452,6 +457,56 @@ export class UserAdminService {
       client.release();
     }
     return this.record(adminId, userId, 'item_revoke', reason, { sku });
+  }
+
+  /**
+   * Give someone the content editor role, or take it away: lessons, stories
+   * and the audio studio, and nothing about people or money — what a person
+   * recording their part of a conversation needs, and no more. Given only to
+   * an account that has confirmed its address (the role binds to the mailbox,
+   * as a bootstrap grant does) and is neither banned nor deleted; taken away
+   * from anyone. Roles are read on every request, so either takes effect at
+   * once. The change and its entry in the person's history are one
+   * transaction, so there is never a grant without its record.
+   */
+  async setContentEditor(adminId: string, userId: string, on: boolean, reason: string): Promise<RoleResult> {
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      const found = await client.query<{ roles: string[]; verified: boolean; deleted: boolean; banned: boolean }>(
+        `SELECT roles, email_verified_at IS NOT NULL AS verified, deleted_at IS NOT NULL AS deleted, banned_at IS NOT NULL AS banned
+           FROM users WHERE id = $1 FOR UPDATE`,
+        [userId],
+      );
+      const user = found.rows[0];
+      if (!user || user.deleted) {
+        await client.query('ROLLBACK');
+        return { ok: false, code: 'NOT_FOUND' };
+      }
+      const has = user.roles.includes(CONTENT_EDITOR);
+      if (on && !has && (user.banned || !user.verified)) {
+        await client.query('ROLLBACK');
+        return { ok: false, code: user.banned ? 'USER_BANNED' : 'EMAIL_UNVERIFIED' };
+      }
+      if (on !== has) {
+        const roles = on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR);
+        await client.query(`UPDATE users SET roles = $2 WHERE id = $1`, [userId, roles]);
+        await client.query(`INSERT INTO admin_actions (target_user_id, admin_id, action, reason, meta) VALUES ($1, $2, $3, $4, $5::jsonb)`, [
+          userId,
+          adminId,
+          on ? 'role_grant' : 'role_revoke',
+          reason,
+          JSON.stringify({ role: CONTENT_EDITOR, before: user.roles, after: roles }),
+        ]);
+      }
+      await client.query('COMMIT');
+      return { ok: true, roles: on === has ? user.roles : on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR) };
+    } catch (err) {
+      await client.query('ROLLBACK').catch(() => undefined);
+      throw err;
+    } finally {
+      client.release();
+    }
   }
 
   private async record(adminId: string, userId: string, action: string, reason: string, meta: Record<string, unknown>): Promise<ActionResult> {

@@ -6,7 +6,7 @@
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey, type LipsyncData, type SpeakerId } from '@kurda/shared';
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
+export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
 /**
  * One lesson that uses a text (GET /admin/lesson-audio) — or one story: the
@@ -53,6 +53,17 @@ export interface Item {
   usedIn: Usage[];
   /** recorded, but no lesson uses it (or added here by hand) */
   unused: boolean;
+  /**
+   * A conversation's line: which conversation, and who says it. Recorded with
+   * `&line=<conversation>:<part>` (`recordPath`), and filed under that part only.
+   */
+  line?: { conversation: string; part: number; name: string; character: SpeakerId | null };
+}
+
+/** Where a recording of an item is sent: a conversation's line goes with its conversation and part. */
+export function recordPath(item: Pick<Item, 'text' | 'line'>): string {
+  const line = item.line ? `&line=${encodeURIComponent(`${item.line.conversation}:${item.line.part}`)}` : '';
+  return `/admin/lesson-audio?text=${encodeURIComponent(item.text)}${line}`;
 }
 
 export interface Listing {
@@ -273,6 +284,7 @@ const TYPE_LABELS: Record<ExerciseType, string> = {
   listening: 'listening',
   speaking: 'speaking',
   writing: 'writing',
+  conversation: 'conversation',
 };
 
 /** A story's sentence rather than a lesson's text (see Usage). */

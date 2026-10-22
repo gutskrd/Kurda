@@ -88,3 +88,59 @@ describe('what is sent', () => {
     expect(recordHref({ skillId: 's-1', position: 3 }, true)).toBe('#/audio/lessons?lesson=s-1%3A3&show=missing');
   });
 });
+
+describe('a conversation in the editor', () => {
+  const conversation = (over: Record<string, unknown> = {}): Exercise => ({
+    position: 1,
+    type: 'conversation',
+    payload: {
+      id: 'kmrnasin01',
+      title: '',
+      speakers: [
+        { name: 'Rojda', character: 'xezo' },
+        { name: 'Azad', character: '' },
+      ],
+      lines: [
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: ' Silav Rojda. ', en: '' },
+      ],
+      prompt: 'Kî silavê dide?',
+      options: ['Rojda', 'Azad'],
+      correctIndex: 0,
+      ...over,
+    },
+  });
+
+  it('starts as two people with a line each, a woman and a man, under an id of its own', () => {
+    const p = blankPayload('conversation');
+    expect(p.id).toMatch(/^[a-z0-9]{6,32}$/);
+    expect(blankPayload('conversation').id).not.toBe(p.id);
+    expect((p.speakers as Array<{ character: string }>).map((s) => s.character)).toEqual(['xezo', 'hamo']);
+    expect(p.lines).toHaveLength(2);
+  });
+
+  it('is checked as the server checks it, in words', () => {
+    expect(exerciseIssues(conversation())).toEqual([]);
+    expect(exerciseIssues(conversation({ speakers: [{ name: 'Azad' }, { name: 'azad' }] })).map((i) => i.message)).toContain(
+      'Two people are called “azad”: whoever records it must know which is theirs.',
+    );
+    expect(exerciseIssues(conversation({ lines: [{ speaker: 0, text: 'Silav' }, { speaker: 0, text: 'Spas' }] })).map((i) => i.message)).toContain(
+      'Azad says nothing: give them a line or remove them.',
+    );
+    expect(exerciseIssues(conversation({ lines: [{ speaker: 0, text: 'Silav' }, { speaker: 1, text: ' ?' }] })).map((i) => i.path)).toContain('lines.1.text');
+  });
+
+  it('is sent without the parts left empty: no title, no character, no meaning', () => {
+    expect(forSave([conversation()])[0]!.payload).toEqual({
+      id: 'kmrnasin01',
+      speakers: [{ name: 'Rojda', character: 'xezo' }, { name: 'Azad' }],
+      lines: [
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: 'Silav Rojda.' },
+      ],
+      prompt: 'Kî silavê dide?',
+      options: ['Rojda', 'Azad'],
+      correctIndex: 0,
+    });
+  });
+});

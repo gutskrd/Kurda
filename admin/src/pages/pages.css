@@ -281,3 +281,113 @@
 .crash-message { width: 100%; max-width: 60ch; text-align: start; }
 /* a name and the badge beside it, apart, wrapping under it when there is no room */
 .with-badge { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; }
+
+/* ---------- conversations: each part its own tint, here and in the editor ---------- */
+
+.part-0 { --part: #c4b5fd; }
+.part-1 { --part: #7dd3fc; }
+.part-2 { --part: #fcd34d; }
+.part-3 { --part: #86efac; }
+.cv-initial {
+  display: inline-grid; place-items: center; flex: none; width: 44px; height: 44px; border-radius: 999px;
+  background: color-mix(in srgb, var(--part, var(--text-2)) 24%, transparent); color: var(--text); font-weight: 700; font-size: 17px;
+}
+.cv-initial.small { width: 28px; height: 28px; font-size: 13px; }
+
+/* the list: one card a conversation, a meter a part */
+.cv-list { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); }
+.cv-card { display: grid; gap: 12px; }
+.cv-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+.cv-card-title { margin: 0 0 2px; font-size: 16px; }
+.cv-card-title a { color: inherit; text-decoration: none; }
+.cv-card-title a:hover { text-decoration: underline; }
+.cv-card-parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.cv-card-part {
+  display: flex; align-items: center; gap: 10px; min-height: var(--target); padding: 4px 8px; border-radius: var(--radius-sm);
+  color: inherit; text-decoration: none;
+}
+.cv-card-part:hover { background: var(--control-hover); }
+.cv-card-part img { flex: none; border-radius: 999px; background: var(--control); }
+.cv-card-name { flex: 0 1 auto; min-width: 72px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cv-meter { flex: 1 1 auto; height: 6px; border-radius: 999px; background: var(--control); overflow: hidden; }
+.cv-meter > span { display: block; height: 100%; border-radius: inherit; background: var(--ok); }
+.cv-card-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.cv-done { color: var(--ok); font-weight: 600; }
+
+/* whose part: a card a person, the chosen one lit in its tint */
+.cv-parts { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 220px), 1fr)); }
+.cv-part {
+  display: flex; align-items: center; gap: 12px; min-height: 64px; padding: 10px 14px; text-align: start;
+  border: 1px solid var(--hairline); border-radius: var(--radius-sm); background: var(--control);
+}
+.cv-part img { flex: none; border-radius: 999px; background: var(--control-hover); }
+.cv-part.is-on { border-color: var(--part); background: color-mix(in srgb, var(--part) 16%, transparent); box-shadow: 0 0 0 1px var(--part) inset; }
+.cv-part-text { display: grid; gap: 2px; min-width: 0; }
+.cv-part-text .subtle { font-size: 12.5px; }
+.cv-share { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--separator); }
+.cv-share p { margin: 0 0 8px; }
+.cv-share-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* the script: each line in its speaker's tint, yours raised, the one playing lit */
+.cv-script { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.cv-line {
+  display: grid; gap: 6px; padding: 12px 14px; border-radius: var(--radius-sm);
+  border: 1px solid var(--hairline); border-inline-start: 4px solid var(--part); background: var(--control);
+}
+.cv-line:not(.is-mine) { opacity: 0.86; }
+.cv-line.is-mine { background: color-mix(in srgb, var(--part) 10%, var(--control)); }
+.cv-line.is-on { background: var(--glass-solid); box-shadow: var(--shadow-sm); opacity: 1; }
+.cv-line.is-playing { box-shadow: 0 0 0 2px var(--part); opacity: 1; }
+.cv-line-head { display: flex; align-items: center; gap: 8px; }
+.cv-line-head img { border-radius: 999px; background: var(--control-hover); }
+.cv-line-head .badge { margin-inline-start: auto; }
+button.cv-line-main {
+  display: grid; gap: 2px; justify-items: start; justify-content: stretch; width: 100%; padding: 2px 0; text-align: start; border: 0; background: none;
+  -webkit-backdrop-filter: none; backdrop-filter: none; min-height: 0;
+}
+.cv-text { font-size: 20px; font-weight: 600; line-height: 1.35; color: var(--text); word-break: break-word; }
+.cv-text[dir='rtl'] { justify-self: end; font-size: 22px; }
+.cv-en { font-size: 13.5px; }
+.cv-line-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.cv-by { font-size: 12.5px; }
+.cv-recorder { display: grid; gap: 12px; margin-top: 4px; padding-top: 12px; border-top: 1px solid var(--separator); }
+.cv-before { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; margin: 0; }
+.cv-help { margin-top: 14px; }
+.cv-help p { margin: 0 0 6px; }
+@media (prefers-reduced-motion: no-preference) { .cv-line { transition: box-shadow 160ms ease, background-color 160ms ease; } }
+
+/* in the editor: who takes part, and the lines in order */
+.cv-person select { width: auto; flex: 0 0 auto; min-width: 128px; }
+.cv-swatch { flex: none; width: 10px; height: 28px; border-radius: 999px; background: var(--part); }
+.cv-lines { gap: 10px; }
+.cv-edit-line { display: grid; gap: 6px; padding: 10px 12px; border-radius: var(--radius-sm); border-inline-start: 4px solid var(--part); background: var(--control); }
+.cv-edit-head { display: flex; align-items: center; gap: 8px; }
+.cv-edit-head select { width: auto; min-width: 140px; }
+.cv-edit-head .ex-tools { margin-inline-start: auto; }
+.cv-record-cta { display: flex; align-items: center; flex-wrap: wrap; gap: 8px 12px; }
+.cv-preview { margin: 0 0 8px; padding-inline-start: 18px; display: grid; gap: 4px; }
+@media (max-width: 560px) {
+  .cv-person { flex-wrap: wrap; }
+  .cv-person > input { flex: 1 1 calc(100% - 60px); }
+  .cv-person select { flex: 1 1 auto; }
+  .cv-text { font-size: 18px; }
+}
+
+/* the quick start under a lesson's exercises */
+.ex-quick { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.state-empty .ex-quick { justify-content: center; margin-top: 0; }
+
+/* is it ready: one line a check */
+.readiness { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.readiness li { display: flex; align-items: center; flex-wrap: wrap; gap: 6px 10px; min-height: 28px; }
+.readiness svg { flex: none; }
+.readiness-ok svg { color: var(--ok); }
+.readiness-warn svg { color: var(--warn); }
+.readiness-bad svg { color: var(--bad); }
+.readiness-bad span { color: var(--bad); font-weight: 600; }
+.readiness-link { margin-inline-start: auto; font-weight: 600; }
+@media (max-width: 560px) { .readiness-link { margin-inline-start: 26px; } }
+
+/* the studio's sentence list: a conversation's line says whose it is */
+.la-who { color: var(--text-2); font-weight: 600; }
+.la-conversation { margin: 0 0 10px; font-size: 13.5px; color: var(--text-2); }

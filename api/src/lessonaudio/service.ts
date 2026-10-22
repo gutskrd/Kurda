@@ -1,11 +1,14 @@
 import type pg from 'pg';
 import {
   LESSON_AUDIO_TEXT_MAX,
+  conversationClips,
+  conversationLineKey,
   lessonAudioKey,
   lessonAudioTargets,
   normalizeKurdish,
   storyAudioSentences,
   storyParagraphs,
+  type ConversationPayload,
   type LipsyncData,
   type SpeakerId,
   type StoryDialect,
@@ -55,6 +58,13 @@ export interface LessonAudioItem {
   hasLipsync: boolean;
   /** the stored timeline (null for none), only when the list is asked for it (`withLipsync`) */
   lipsync?: LipsyncData | null;
+  /**
+   * A conversation's line: which conversation, and who says it (by place, and
+   * by name as the conversation writes it). Recorded with `&line=`, and filed
+   * under that part only. Absent for a plain text, and for an unused
+   * recording, whose conversation is no longer known.
+   */
+  line?: { conversation: string; part: number; name: string; character: SpeakerId | null };
   /** lessons that use it, in course order: the first is where the studio files it */
   usedIn: LessonAudioUsage[];
   /** recorded, but no lesson uses it any more (or it was added by hand) */
@@ -198,11 +208,19 @@ export class LessonAudioService {
     // one usage per lesson slot, even when the draft and the live version both use the text
     const usageBySlot = new Map<string, LessonAudioUsage>();
     for (const row of exercises.rows) {
-      for (const text of lessonAudioTargets(row.type, row.payload)) {
-        const key = lessonAudioKey(text);
+      const clips =
+        row.type === 'conversation'
+          ? conversationClips(row.payload).map((c) => ({
+              text: c.text,
+              key: c.key,
+              line: { conversation: (row.payload as ConversationPayload).id, part: c.part, name: c.name, character: c.character },
+            }))
+          : lessonAudioTargets(row.type, row.payload).map((text) => ({ text, key: lessonAudioKey(text), line: undefined }));
+      for (const { text, key, line } of clips) {
         let item = items.get(key);
         if (!item) {
           item = unrecorded(key, text);
+          if (line) item.line = line;
           items.set(key, item);
         }
         const slot = `${key}\u0000${row.skill_id}\u0000${row.lesson_position}`;
@@ -294,4 +312,125 @@ export class LessonAudioService {
       summary: { needed, recorded, missing: needed - recorded, unused: unused.length },
     };
   }
+
+  /**
+   * One conversation, for the page its parts are recorded on: the lesson it is
+   * in, the conversation as written, and each line with its recording and who
+   * made it — so the people recording it, wherever they are, see each other's
+   * takes come in.
+   *
+   * The conversation is looked up by its id in the newest version of a lesson
+   * that has it and is not archived: a link sent to someone before the lesson
+   * got a new version still opens the conversation they are to record. With
+   * `lessonId`, in that lesson's own slot (its skill and place), else in any.
+   */
+  async conversation(id: string, lessonId: string | null): Promise<ConversationRecording | null> {
+    const { rows } = await this.pool.query<ConversationRow>(
+      `SELECT l.id lesson_id, l.title_en, l.title_ku, l.status, l.version, l.skill_id, l.position, e.position exercise_position, e.payload
+         FROM exercises e
+         JOIN lessons l ON l.id = e.lesson_id
+        WHERE e.type = 'conversation' AND e.payload->>'id' = $1
+          AND ($2::uuid IS NULL OR (l.skill_id, l.position) = (SELECT skill_id, position FROM lessons WHERE id = $2))
+        ORDER BY l.status = 'archived', l.version DESC, l.id = $2 DESC NULLS LAST
+        LIMIT 1`,
+      [id, lessonId],
+    );
+    const row = rows[0];
+    if (!row) return null;
+    const payload = row.payload as ConversationPayload;
+    const keys = payload.lines.map((line) => conversationLineKey(payload.id, line.speaker, line.text) || null);
+    const recorded = await this.pool.query<{
+      key: string;
+      url: string;
+      duration_ms: number;
+      updated_at: Date;
+      speaker: SpeakerId | null;
+      has_lipsync: boolean;
+      recorded_by: string | null;
+      username: string | null;
+    }>(
+      `SELECT a.key, a.url, a.duration_ms, a.updated_at, a.speaker, a.lipsync IS NOT NULL AS has_lipsync,
+              a.recorded_by, u.username
+         FROM lesson_audio a LEFT JOIN users u ON u.id = a.recorded_by
+        WHERE a.key = ANY($1::text[])`,
+      [keys.filter((k): k is string => k !== null)],
+    );
+    const byKey = new Map(recorded.rows.map((r) => [r.key, r]));
+    return {
+      lesson: {
+        id: row.lesson_id,
+        titleEn: row.title_en,
+        titleKu: row.title_ku,
+        status: row.status,
+        version: row.version,
+        skillId: row.skill_id,
+        position: row.position,
+        exercisePosition: row.exercise_position,
+      },
+      conversation: payload,
+      lines: payload.lines.map((line, index) => {
+        const key = keys[index] ?? null;
+        const r = key ? byKey.get(key) : undefined;
+        return {
+          index,
+          part: line.speaker,
+          key,
+          recording: r
+            ? {
+                url: r.url,
+                durationMs: r.duration_ms,
+                updatedAt: r.updated_at.toISOString(),
+                speaker: r.speaker,
+                hasLipsync: r.has_lipsync,
+                recordedBy: r.recorded_by ? { id: r.recorded_by, username: r.username ?? null } : null,
+              }
+            : null,
+        };
+      }),
+    };
+  }
+}
+
+interface ConversationRow {
+  lesson_id: string;
+  title_en: string;
+  title_ku: string;
+  status: ContentStatus;
+  version: number;
+  skill_id: string;
+  position: number;
+  exercise_position: number;
+  payload: unknown;
+}
+
+/** GET /admin/lesson-audio/conversations/:id */
+export interface ConversationRecording {
+  lesson: {
+    id: string;
+    titleEn: string;
+    titleKu: string;
+    status: ContentStatus;
+    version: number;
+    skillId: string;
+    position: number;
+    /** where the conversation is among the lesson's exercises, from 1 */
+    exercisePosition: number;
+  };
+  conversation: ConversationPayload;
+  /** every line, in order, with its recording or null */
+  lines: Array<{
+    index: number;
+    part: number;
+    /** what its recording is filed under; null for a line too malformed to file */
+    key: string | null;
+    recording: {
+      url: string;
+      durationMs: number;
+      updatedAt: string;
+      speaker: SpeakerId | null;
+      hasLipsync: boolean;
+      /** who made this take: null when the account is gone */
+      recordedBy: { id: string; username: string | null } | null;
+    } | null;
+  }>;
 }

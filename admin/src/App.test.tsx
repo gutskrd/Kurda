@@ -106,6 +106,7 @@ describe('the admin’s navigation', () => {
     expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual([
       'Record the alphabet',
       'Record lesson sentences',
+      'Record conversations',
       'Record story sentences',
       'Dictionary pronunciations',
       'Characters',
@@ -126,7 +127,7 @@ describe('the admin’s navigation', () => {
     await openAt('#/dashboard');
     const search = screen.getAllByRole('searchbox', { name: 'Find a page' })[0]!;
     await user.type(search, 'microphone');
-    expect(sidebarLinks()).toEqual(['Record the alphabet', 'Record lesson sentences', 'Record story sentences']);
+    expect(sidebarLinks()).toEqual(['Record the alphabet', 'Record lesson sentences', 'Record conversations', 'Record story sentences']);
     await user.clear(search);
     await user.type(search, 'race{Enter}');
     await waitFor(() => expect(location.hash).toBe('#/race'));

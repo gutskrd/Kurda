@@ -476,6 +476,107 @@
   }
 }
 
+/*
+ * a conversation (Conversation.tsx): the lines as speech bubbles, the first
+ * speaker's on the start side and everyone else's across from them, each
+ * speaker in a tint of the accents the app already has. The line being heard
+ * is ringed in ink, which stands out on every tint, and its own button lights
+ * as any playing button does.
+ */
+.lesson-conversation-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+.lesson-conversation-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.lesson-lines {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.lesson-line {
+  --line-tint: var(--surface-2);
+  --line-edge: var(--border);
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  max-width: 88%;
+  min-width: 0;
+}
+/* across from the first speaker: the bubble against the end edge, its button towards the middle */
+.lesson-line.is-end {
+  flex-direction: row-reverse;
+  margin-inline-start: auto;
+}
+.lesson-line.is-part-1 {
+  --line-tint: color-mix(in srgb, var(--gems) 16%, transparent);
+  --line-edge: color-mix(in srgb, var(--gems) 45%, transparent);
+}
+.lesson-line.is-part-2 {
+  --line-tint: color-mix(in srgb, var(--like) 14%, transparent);
+  --line-edge: color-mix(in srgb, var(--like) 45%, transparent);
+}
+.lesson-line.is-part-3 {
+  --line-tint: var(--gold-soft);
+  --line-edge: color-mix(in srgb, var(--gold) 45%, transparent);
+}
+.lesson-line-bubble {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 8px 14px 10px;
+  border: 1px solid var(--line-edge);
+  border-radius: var(--r-lg);
+  border-end-start-radius: var(--r-xs);
+  background: var(--line-tint);
+  transition:
+    border-color var(--dur) ease,
+    box-shadow var(--dur) ease;
+}
+.lesson-line.is-end .lesson-line-bubble {
+  border-end-start-radius: var(--r-lg);
+  border-end-end-radius: var(--r-xs);
+}
+.lesson-line.is-heard .lesson-line-bubble {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 1px var(--ink);
+}
+.lesson-line-name {
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--ink-3);
+}
+.lesson-line-text {
+  font-size: 1.1rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.lesson-line-meaning {
+  font-size: var(--text-secondary);
+  line-height: 1.35;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+}
+/* a fingertip still, beside a bubble rather than under a heading */
+.lesson-line .lesson-play-round {
+  width: 44px;
+  height: 44px;
+}
+@media (max-width: 380px) {
+  .lesson-line {
+    max-width: 94%;
+  }
+}
+
 /* speaking */
 .lesson-speak {
   display: grid;
