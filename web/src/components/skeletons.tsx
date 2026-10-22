@@ -324,7 +324,7 @@ export function RankingsSkeleton({ count = 10 }: { count?: number }): React.JSX.
  */
 export function LeagueCardSkeleton({ rows = 30 }: { rows?: number }): React.JSX.Element {
   return (
-    <div className="league-card league-now skeleton-late" aria-hidden="true">
+    <div className="league-page league-now skeleton-late" aria-hidden="true">
       <div className="league-week-head">
         <h2 className="league-week-title">
           <Skeleton line w={176} />

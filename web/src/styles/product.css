@@ -440,29 +440,12 @@ a.rank-name:hover {
   margin-bottom: 12px;
 }
 
-/* the league card: when it ends, the tier, the ladder, the table */
-.league-card {
-  display: grid;
-  gap: 18px;
-  margin-bottom: 24px;
-  padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 22px;
-  background: var(--surface);
-  box-shadow: var(--glass-rim);
-}
 .league-card-head {
   display: grid;
   gap: 4px;
 }
 .league-card-title {
   font-size: 1.35rem;
-}
-.league-card .rank-list {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
 /* ---- head-to-head: one chip per player ------------------------------------ */

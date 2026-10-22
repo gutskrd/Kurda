@@ -512,7 +512,8 @@ export const en = {
 
   // ---- rankings ------------------------------------------------------------
   'rankings.title': 'Rankings',
-  'rankings.eyebrow': 'Where you stand',
+  'rankings.tab.league': 'League',
+  'rankings.tab.board': 'Leaderboard',
 
   // ---- games: words every game uses ----------------------------------
   'games.back': 'Back to games',

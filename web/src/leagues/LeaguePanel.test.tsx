@@ -382,13 +382,41 @@ describe('LeaguePanel', () => {
   });
 
   /*
-   * It is an extra panel above a page that works without it, so a failure is
-   * not the reader's problem to see.
+   * It is the League tab's whole page, so a failure is said, with the way to
+   * try again — not a blank tab.
    */
-  it('shows nothing at all rather than an error over the leaderboards', async () => {
-    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(500, { code: 'OOPS', message: 'no' })));
+  it('says when the week cannot be read, and reads it again on Try again', async () => {
+    let up = false;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        if (url.includes('/me/league')) return up ? jsonResponse(200, league('cem', 18, 12)) : jsonResponse(500, { code: 'OOPS', message: 'no' });
+        return jsonResponse(200, { user: { id: 'me' } });
+      }),
+    );
+    renderApp(<LeaguePanel />);
+    expect(await screen.findByText(en['error.generic'])).toBeInTheDocument();
+    up = true;
+    await userEvent.click(screen.getByRole('button', { name: en['common.retry'] }));
+    expect(await screen.findByRole('heading', { name: 'Çem League' })).toBeInTheDocument();
+  });
+
+  it('gives each row a face — initials, or a silhouette for somebody who is not named', async () => {
+    const view = league('cem', 18, 12);
+    view.standings[0] = { ...view.standings[0]!, username: null, userId: null };
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, view)));
     const { container } = renderApp(<LeaguePanel />);
-    await new Promise((r) => setTimeout(r, 0));
-    expect(container).toBeEmptyDOMElement();
+    await screen.findByRole('heading', { name: 'Çem League' });
+    const faces = container.querySelectorAll('.rank-face');
+    expect(faces).toHaveLength(view.standings.length);
+    expect(faces[0]!.querySelector('.rank-initials')).toBeNull();
+    expect(faces[1]!.querySelector('.rank-initials')?.textContent).toMatch(/^\S{1,2}$/);
+  });
+
+  it('draws the way out as a button of its own, not a faint link', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(200, league('cem', 18, 12))));
+    renderApp(<LeaguePanel />);
+    const leave = await screen.findByRole('button', { name: en['leagues.leave'] });
+    expect(leave).toHaveClass('btn-secondary');
   });
 });

@@ -14,11 +14,13 @@ import { useAuth } from '../auth/AuthProvider';
 import { Button, LinkButton } from '../components/Button';
 import { Modal } from '../components/Modal';
 import { LeagueCardSkeleton } from '../components/skeletons';
-import { DownIcon, ShieldIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
+import { ErrorState } from '../components/states';
+import { BookIcon, DownIcon, PersonGlyph, ShieldIcon, SignOutIcon, SparkleIcon, TimerIcon, UpIcon } from '../components/icons';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { LeagueEmblem } from '../ranks/art';
 import { leagueName, leagueNamed, withMeaning, type Translate } from '../ranks/names';
+import { colourFor, initialsOf } from '../lib/initials';
 import { RankList, RankRow } from '../ui/RankRow';
 import { GoalRing } from './GoalRing';
 import { LeagueMoment } from './LeagueMoment';
@@ -39,6 +41,9 @@ import { LeagueMoment } from './LeagueMoment';
  * there is no table yet, and Hevalo is asleep beside the way in. At the end,
  * the way out of the leagues, asked once, plainly.
  *
+ * It is the page itself, the League tab of Rankings: nothing round it but the
+ * page, the line across under the ladder running from edge to edge.
+ *
  * The zones are drawn with an arrow, a word and a line across the table —
  * never colour alone. Personal mode (someone not taking part, and teens by
  * default) keeps the same ring and compares this week with the last ones,
@@ -46,6 +51,7 @@ import { LeagueMoment } from './LeagueMoment';
  */
 export function LeaguePanel(): React.JSX.Element | null {
   const { client, refreshUser } = useAuth();
+  const t = useT();
   const [league, setLeague] = useState<LeagueView | null>(null);
   const [failed, setFailed] = useState(false);
   const [joining, setJoining] = useState(false);
@@ -53,6 +59,7 @@ export function LeaguePanel(): React.JSX.Element | null {
 
   useEffect(() => {
     let cancelled = false;
+    setFailed(false);
     void client.get<LeagueView>('/me/league').then((res) => {
       if (cancelled) return;
       // an answer without the week's numbers (an API from before the rebuilt leagues) is not shown
@@ -77,9 +84,8 @@ export function LeaguePanel(): React.JSX.Element | null {
   }
   const join = (): Promise<boolean> => choose(true);
 
-  // an extra panel above boards that work without it: nothing if it fails, and
-  // while it loads, its own shape, so the boards under it do not drop when it lands
-  if (failed) return null;
+  // the tab's whole content: said when it cannot be read, with the way to try again
+  if (failed) return <ErrorState message={t('error.generic')} onRetry={() => setReloadKey((n) => n + 1)} />;
   if (!league) return <LeagueCardSkeleton />;
 
   if (league.mode === 'personal' || league.optedOut) {
@@ -87,7 +93,7 @@ export function LeaguePanel(): React.JSX.Element | null {
   }
 
   return (
-    <section className={`league-card league-now league-${league.tier ?? 'none'}`} aria-labelledby="league-heading">
+    <section className={`league-page league-now league-${league.tier ?? 'none'}`} aria-labelledby="league-heading">
       <LeagueHead league={league} />
       <Ladder tier={league.tier ?? 'dilop'} />
       <hr className="league-week-rule" />
@@ -211,23 +217,28 @@ function Resting(): React.JSX.Element {
       <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} resting className="league-resting-figure" />
       <h3 className="league-resting-title">{t('leagues.resting.title')}</h3>
       <p className="league-resting-body">{t('leagues.joinHint')}</p>
-      <LinkButton to="/app/learn">{t('leagues.notJoined.start')}</LinkButton>
+      <LinkButton to="/app/learn" block className="league-resting-go">
+        <BookIcon size={20} />
+        {t('leagues.notJoined.start')}
+      </LinkButton>
     </div>
   );
 }
 
 /**
- * The way out of the weekly leagues, at the end where it is found when it is
- * looked for. Asked once, in plain words that say what stays — no "are you
- * sure you want to give up", and Leave is not drawn as a danger: nothing is
- * lost, and the way back in is on the page that follows.
+ * The way out of the weekly leagues: a button of its own at the end of the
+ * week, drawn as plainly as any other, where it is found when it is looked
+ * for. Asked once, in plain words that say what stays — no "are you sure you
+ * want to give up", and Leave is not drawn as a danger: nothing is lost, and
+ * the way back in is on the page that follows.
  */
 function LeaveLeagues({ busy, onLeave }: { busy: boolean; onLeave: () => Promise<boolean> }): React.JSX.Element {
   const t = useT();
   const [asking, setAsking] = useState(false);
   return (
     <div className="league-leave">
-      <Button variant="ghost" size="sm" onClick={() => setAsking(true)}>
+      <Button variant="secondary" onClick={() => setAsking(true)}>
+        <SignOutIcon size={18} />
         {t('leagues.leave')}
       </Button>
       <Modal open={asking} onClose={() => setAsking(false)} label={t('leagues.leave.title')}>
@@ -310,6 +321,7 @@ function Standings({ league }: { league: LeagueView }): React.JSX.Element {
             name={row.isSelf ? t('games.you') : (row.username ?? t('leagues.unnamed'))}
             href={row.userId && !row.isSelf ? `/app/users/${row.userId}` : undefined}
             score={`${row.weeklyXp.toLocaleString()} ${t('rankings.unit.xp')}`}
+            face={<Face row={row} />}
             me={row.isSelf}
             zone={row.zone === 'stay' ? undefined : row.zone}
             marker={merged && row.tier !== tier ? <span className="league-row-tier">{leagueName(t, row.tier)}</span> : undefined}
@@ -324,6 +336,20 @@ function Standings({ league }: { league: LeagueView }): React.JSX.Element {
         </Fragment>
       ))}
     </RankList>
+  );
+}
+
+/**
+ * A row's face: the learner's initials on their own colour, the same as on
+ * the phone. Somebody the table may not name gets a quiet silhouette, not
+ * letters made up from "A learner".
+ */
+function Face({ row }: { row: LeagueStandingRow }): React.JSX.Element {
+  if (!row.username) return <PersonGlyph size={16} />;
+  return (
+    <span className="rank-initials" style={{ background: colourFor(row.userId ?? `row-${row.rank}`) }}>
+      {initialsOf(row.username)}
+    </span>
   );
 }
 
@@ -410,7 +436,7 @@ function PersonalWeek({ league, onJoin, joining }: { league: LeagueView; onJoin:
   const peak = Math.max(league.goalXp, ...weeks.map((w) => w.xp), 1);
   const last = weeks.length >= 2 ? weeks[weeks.length - 2] : null;
   return (
-    <section className="league-card league-personal" aria-labelledby="league-heading">
+    <section className="league-page league-personal" aria-labelledby="league-heading">
       <div className="league-head">
         <div className="league-head-text">
           <h2 id="league-heading" className="league-card-title">

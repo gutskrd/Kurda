@@ -28,6 +28,7 @@ export function RankRow({
   score,
   href,
   avatarUrl,
+  face,
   me = false,
   marker,
   trailing,
@@ -42,6 +43,8 @@ export function RankRow({
   href?: string;
   /** leave out for a board that has no faces; `null` draws the silhouette */
   avatarUrl?: string | null;
+  /** a face drawn by the board itself (initials), in place of a picture */
+  face?: ReactNode;
   me?: boolean;
   /** a word after the name, such as "you" */
   marker?: ReactNode;
@@ -60,11 +63,15 @@ export function RankRow({
   return (
     <li className={`rank-row${me ? ' rank-me' : ''}${zone ? ` is-${zone}` : ''}${rank <= 3 ? ' is-podium' : ''}`}>
       <span className="rank-pos">{rank}</span>
-      {avatarUrl !== undefined && (
+      {face !== undefined ? (
+        <span className="rank-face" aria-hidden="true">
+          {face}
+        </span>
+      ) : avatarUrl !== undefined ? (
         <span className="rank-face" aria-hidden="true">
           {avatarUrl ? <img src={avatarUrl} alt="" width={28} height={28} loading={lazy ? 'lazy' : undefined} /> : <PersonGlyph size={16} />}
         </span>
-      )}
+      ) : null}
       {href ? (
         <Link className="rank-name" to={href}>
           {who}

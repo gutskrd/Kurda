@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { countryName } from '../lib/countries';
@@ -53,7 +53,81 @@ const SCOPES: { key: Scope; labelKey: MessageKey }[] = [
   { key: 'country', labelKey: 'rankings.scope.country' },
 ];
 
+type Tab = 'league' | 'board';
+const TABS: { key: Tab; labelKey: MessageKey }[] = [
+  { key: 'league', labelKey: 'rankings.tab.league' },
+  { key: 'board', labelKey: 'rankings.tab.board' },
+];
+
+/**
+ * Where you stand, as two tabs, the way the phone has it: your league this
+ * week — its own page, with nothing boxed — and the leaderboard of everyone.
+ * The league comes first because it is the one with a week and a group; the
+ * tab is in the address (`?tab=board`), so either can be linked to.
+ */
 export function Rankings(): React.JSX.Element {
+  const t = useT();
+  const [params, setParams] = useSearchParams();
+  const tab: Tab = params.get('tab') === 'board' ? 'board' : 'league';
+  const buttons = useRef<Array<HTMLButtonElement | null>>([]);
+  const choose = (next: Tab, focus = false): void => {
+    setParams(
+      (prev) => {
+        const out = new URLSearchParams(prev);
+        if (next === 'league') out.delete('tab');
+        else out.set('tab', next);
+        return out;
+      },
+      { replace: true },
+    );
+    if (focus) buttons.current[TABS.findIndex((x) => x.key === next)]?.focus();
+  };
+  // the arrow keys move between the two, as tabs do; the order follows the reading direction
+  const onKey = (e: React.KeyboardEvent): void => {
+    const rtl = document.documentElement.dir === 'rtl';
+    const step = e.key === 'ArrowRight' ? (rtl ? -1 : 1) : e.key === 'ArrowLeft' ? (rtl ? 1 : -1) : 0;
+    if (e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      choose(e.key === 'Home' ? TABS[0]!.key : TABS[TABS.length - 1]!.key, true);
+    } else if (step) {
+      e.preventDefault();
+      const at = TABS.findIndex((x) => x.key === tab);
+      choose(TABS[(at + step + TABS.length) % TABS.length]!.key, true);
+    }
+  };
+
+  return (
+    <div className="container container-narrow rankings-page">
+      <h1 className="sr-only">{t('rankings.title')}</h1>
+      <div className="rankings-tabs" role="tablist" aria-label={t('rankings.title')} onKeyDown={onKey}>
+        {TABS.map((x, i) => (
+          <button
+            key={x.key}
+            ref={(el) => {
+              buttons.current[i] = el;
+            }}
+            type="button"
+            role="tab"
+            id={`rankings-tab-${x.key}`}
+            aria-selected={tab === x.key}
+            aria-controls={`rankings-panel-${x.key}`}
+            tabIndex={tab === x.key ? 0 : -1}
+            className={`rankings-tab${tab === x.key ? ' is-active' : ''}`}
+            onClick={() => choose(x.key)}
+          >
+            {t(x.labelKey)}
+          </button>
+        ))}
+      </div>
+      <div role="tabpanel" id={`rankings-panel-${tab}`} aria-labelledby={`rankings-tab-${tab}`}>
+        {tab === 'league' ? <LeaguePanel /> : <WeeklyBoard />}
+      </div>
+    </div>
+  );
+}
+
+/** Everyone's XP this week — worldwide, among your friends, or in your country — a page at a time. */
+function WeeklyBoard(): React.JSX.Element {
   const { client, user } = useAuth();
   const t = useT();
   const locale = useLocale();
@@ -100,16 +174,8 @@ export function Rankings(): React.JSX.Element {
   const meInList = board?.me != null && entries.some((e) => e.userId === user?.id);
 
   return (
-    <div className="container container-narrow">
-      <div className="page-header">
-        <span className="eyebrow">{t('rankings.eyebrow')}</span>
-        <h1 className="page-title">{t('rankings.title')}</h1>
-        <p className="page-sub">{t(meta.blurbKey)}</p>
-      </div>
-
-      {/* this week's cohort of thirty — a different question from the boards
-          below, and the one with a deadline, so it goes first */}
-      <LeaguePanel />
+    <>
+      <p className="page-sub rankings-blurb">{t(meta.blurbKey)}</p>
 
       <div className="toolbar" role="tablist" aria-label={t('rankings.compareWith')}>
         {SCOPES.map((s) => (
@@ -197,7 +263,7 @@ export function Rankings(): React.JSX.Element {
           </div>
         </>
       )}
-    </div>
+    </>
   );
 }
 
