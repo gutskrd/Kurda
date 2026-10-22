@@ -30,18 +30,16 @@ export function knownVoice(voice: RecordingVoice | null | undefined): RecordingV
 export const CHARACTER_SIZE = { answer: 132, row: 72 } as const;
 
 /**
- * How tall a lesson's stage is in a window this tall: the whole figure, as
- * large as the screen can spare once `reserve` points are left for the rest
- * of the exercise — the prompt, the answer, the Check button — and never
- * shorter than `min`, so every phone shows the same stage with the whole
- * figure on it and a small phone scrolls a little rather than shrinking the
- * character; nor so large on a tablet that it is all there is. With the
- * keyboard up the stage steps back to `compact`, head to waist, so the field
- * being typed in stays in view.
+ * How tall a lesson's stage is in a window this tall: the character head to
+ * waist, as large as the screen can spare once `reserve` points are left for
+ * the rest of the exercise — the prompt, the answer, the Check button — and
+ * never shorter than `min`, so every phone shows the same stage and a small
+ * phone scrolls a little rather than shrinking the character; nor so large on
+ * a tablet that it is all there is. With the keyboard up the stage steps back
+ * to `compact`, so the field being typed in stays in view.
  *
  * A stage in a card with more on it than an exercise — a letter, a practice
- * question — is `card` tall on every phone: smaller than a lesson's, and
- * still the whole figure.
+ * question — is `card` tall on every phone: smaller than a lesson's.
  */
 export const STAGE_HEIGHT = { reserve: 500, min: 300, max: 400, compact: 150, card: 260 } as const;
 

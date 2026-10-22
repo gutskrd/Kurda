@@ -153,13 +153,13 @@ describe('the lesson’s speaking characters', () => {
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
   });
 
-  it('stands the whole figure on a stage, the buttons beside it, and says it again when tapped', async () => {
+  it('stands the character on a stage head to waist, the buttons beside it, and says it again when tapped', async () => {
     renderWithProviders(<ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
     expect(screen.getByTestId('character-stage')).toBeTruthy();
-    // the whole figure, or head to waist in a window too short for the whole of it: never only the head
-    const bodies = [characterLayers('xezo', 'full').body, characterLayers('xezo', 'half').body];
-    expect([...document.querySelectorAll('svg[data-markup]')].some((el) => bodies.includes(el.getAttribute('data-markup') ?? ''))).toBe(true);
+    // drawn whole, for the stage's bottom edge to cut off at the waist: never only the head
+    const body = characterLayers('xezo', 'full').body;
+    expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === body)).toBe(true);
     fireEvent.click(screen.getByRole('img', { name: 'Said by Xezo' }));
     await settle();
     expect(FakeAudio.of(CLIP)?.paused).toBe(false);

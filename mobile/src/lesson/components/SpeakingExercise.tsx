@@ -124,7 +124,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
-        // the whole figure on its stage, saying the sentence; a tap on it says it again too
+        // head to waist on its stage, saying the sentence; a tap on it says it again too
         <CharacterStage
           key={exercise.id}
           speaker={voice.speaker}

@@ -66,7 +66,7 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
       <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.listen.prompt')}</Text>
 
       {voice ? (
-        // the whole figure on its stage, the buttons standing beside it; a tap on it says it again too
+        // head to waist on its stage, the buttons standing beside it; a tap on it says it again too
         <CharacterStage
           key={exercise.id}
           speaker={voice.speaker}

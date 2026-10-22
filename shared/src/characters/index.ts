@@ -57,7 +57,7 @@ export {
   type Hold,
   type Keys,
 } from './life.js';
-export { CHARACTER_GLOW, STAGE_GROUND, stageBackdrop, type StageOptions } from './stage.js';
+export { CHARACTER_GLOW, stageBackdrop, type StageOptions } from './stage.js';
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 
 const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
@@ -102,6 +102,21 @@ export type CharacterCrop = 'full' | 'half' | 'bust';
 /** The box a crop shows. */
 export function cropBox(art: CharacterArt, crop: CharacterCrop): CharacterBox {
   return crop === 'bust' ? art.bust : crop === 'half' ? art.half : art.viewBox;
+}
+
+/** The most of a stage's width its character takes: the rest is for the buttons or the words beside it. */
+export const STAGE_FIGURE_SHARE = 0.58;
+
+/**
+ * How big a stage shows its character's head to waist (`half`), in points: as
+ * tall as the stage less `headroom` above the head, unless that would take
+ * more than `STAGE_FIGURE_SHARE` of its width, as a character with its elbows
+ * out would; then smaller, and the stage shows it on down past the waist.
+ */
+export function stageFigure(id: CharacterId, stageWidth: number, stageHeight: number, headroom: number): { width: number; height: number } {
+  const half = characterArt(id).half;
+  const height = Math.max(0, Math.min(stageHeight - headroom, (stageWidth * STAGE_FIGURE_SHARE * half.h) / half.w));
+  return { width: (height * half.w) / half.h, height };
 }
 
 /** The eyes drawn whole for a state; a character drawn without half-shut eyes shuts them instead. */

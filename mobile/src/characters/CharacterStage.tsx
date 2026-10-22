@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, LayoutAnimation, Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import { SvgXml } from 'react-native-svg';
-import { STAGE_GROUND, characterArt, stageBackdrop } from '@kurda/shared';
+import { characterArt, stageBackdrop, stageFigure } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 import { useTheme } from '../theme/ThemeProvider';
@@ -18,23 +18,28 @@ export interface CharacterStageProps extends Omit<SpeakingCharacterProps, 'crop'
   height?: number;
 }
 
-/** A stage this tall or taller shows the whole figure; a shorter one (with the keyboard up), head to waist, so the face stays big enough to see. */
-const WHOLE_FROM = 240;
+/** Room left above the head on the stage, so it never touches the top edge. */
+const HEADROOM = spacing.md;
 
-/** Where on the stage the character stands, as a share of its width from the start: room on the far side for the buttons. */
+/** How far over the stage's top edge a hop may carry the head, as a share of the stage's height, before anything cuts it off. */
+const HOP_ROOM = 0.3;
+
+/** The least share of the stage's width the character's side of it takes, from the start: the buttons have the rest. */
 const STAND_AT = 0.27;
 
 /**
- * Where a lesson's character stands to say what it says: the whole figure,
- * as large as the screen can spare, in its own light with the Zagros behind
- * it (shared `stageBackdrop`), and the buttons that play it standing beside
- * it on the far side.
+ * Where a lesson's character stands to say what it says: head to waist, as
+ * large as the screen can spare, in nothing but its own light (shared
+ * `stageBackdrop`), and the buttons that play it standing beside it on the far
+ * side.
  *
- * The character can be tapped: it greets you and says it again, the same as
- * the play button. Every phone gets the same stage, the whole figure on it; a
- * small one scrolls a little. When the keyboard comes up for an answer the
- * stage steps back to head to waist, so the field stays in view, and comes
- * forward again when the keyboard goes.
+ * The whole figure is drawn, its head just below the stage's top edge, and
+ * the stage's bottom edge cuts off the rest: at the waist, or a little below
+ * it for a character too wide to be shown so tall. A hop lifts the legs into
+ * view rather than a cut edge, and the head may hop out over the top edge. The character can be
+ * tapped: it greets you and says it again, the same as the play button. When
+ * the keyboard comes up for an answer the stage grows shorter, so the field
+ * stays in view, and taller again when the keyboard goes.
  */
 export function CharacterStage({ children, reserve, height: fixed, flip, speaker, ...character }: CharacterStageProps): React.JSX.Element {
   const { colors } = useTheme();
@@ -62,18 +67,25 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
     };
   }, []);
 
-  // the feet on the near ridge, the head a little below the top; on a stage too short for a
-  // face to be seen in the whole figure, head to waist, standing on the stage's floor
-  const whole = height >= WHOLE_FROM;
-  const tall = Math.round(whole ? height * STAGE_GROUND - spacing.sm : height - spacing.sm);
+  // until the stage has been laid out, the window's width less the screen's margins stands in for its own
+  const across = width > 0 ? width : screen.width - spacing.lg * 2;
+  const shown = stageFigure(speaker, across, height, HEADROOM);
   const art = characterArt(speaker);
-  const frame = whole ? art.viewBox : art.half;
-  const wide = (tall * frame.w) / frame.h;
-  const standAt = dir.rtl ? 1 - STAND_AT : STAND_AT;
+  const unit = shown.height / art.half.h;
+  const flipped = flip ?? dir.rtl;
+  // the whole figure in points, and how far its top and its start lie beyond the head-to-waist box shown
+  const whole = { width: art.viewBox.w * unit, height: art.viewBox.h * unit };
+  const above = (art.half.y - art.viewBox.y) * unit;
+  const aside = (flipped ? art.viewBox.x + art.viewBox.w - (art.half.x + art.half.w) : art.half.x - art.viewBox.x) * unit;
+  const spot = Math.max(shown.width, across * STAND_AT * 2);
+  const hop = Math.round(height * HOP_ROOM);
+  const standAt = (dir.rtl ? across - spot / 2 : spot / 2) / across;
   const backdrop = useMemo(
     () => (width > 0 ? stageBackdrop(speaker, width, height, standAt, { dark: colors.scheme === 'dark' }) : null),
     [speaker, width, height, standAt, colors.scheme],
   );
+  // the side the character stands on keeps the card's rounded corner at its foot
+  const corner = dir.row === 'row-reverse' ? { borderBottomRightRadius: radii.xl } : { borderBottomStartRadius: radii.xl };
 
   return (
     <View
@@ -81,13 +93,16 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
       onLayout={(e) => setWidth(Math.round(e.nativeEvent.layout.width))}
       testID="character-stage"
     >
-      {/* the backdrop keeps to the card's rounded corners; the character may hop out over its top edge */}
       <View style={styles.backdrop} pointerEvents="none">
         {backdrop ? <SvgXml xml={backdrop} width={width} height={height} /> : null}
       </View>
       <View style={[styles.row, { flexDirection: dir.row }]}>
-        <View style={[styles.spot, { width: Math.max(wide, width * STAND_AT * 2), paddingBottom: whole ? height * (1 - STAGE_GROUND) : 0 }]}>
-          <SpeakingCharacter {...character} speaker={speaker} crop={whole ? 'full' : 'half'} height={tall} flip={flip ?? dir.rtl} />
+        <View style={[styles.spot, corner, { width: spot, marginTop: -hop }]} pointerEvents="box-none">
+          <View
+            style={[styles.figure, { top: hop + HEADROOM - above, left: (spot - shown.width) / 2 - aside, width: whole.width, height: whole.height }]}
+          >
+            <SpeakingCharacter {...character} speaker={speaker} crop="full" height={whole.height} flip={flipped} />
+          </View>
         </View>
         <View style={styles.controls}>{children}</View>
       </View>
@@ -99,6 +114,7 @@ const styles = StyleSheet.create({
   stage: { borderRadius: radii.xl },
   backdrop: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, borderRadius: radii.xl, overflow: 'hidden' },
   row: { flex: 1, alignItems: 'stretch' },
-  spot: { alignItems: 'center', justifyContent: 'flex-end' },
+  spot: { overflow: 'hidden' },
+  figure: { position: 'absolute' },
   controls: { flex: 1, justifyContent: 'center', alignItems: 'stretch', gap: spacing.sm, paddingHorizontal: spacing.md },
 });

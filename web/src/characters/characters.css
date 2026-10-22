@@ -137,22 +137,25 @@
 
 /*
  * A stage (CharacterStage.tsx): where a lesson's character stands to say what
- * it says, the whole figure in its own light with the Zagros behind it, and
- * the buttons or the words it is saying standing beside it.
+ * it says, head to waist in its own light, and the buttons or the words it is
+ * saying standing beside it. The script sizes the character's side
+ * (--stage-spot) and places the whole figure in it; the side cuts the figure
+ * off at the stage's bottom edge, and reaches --stage-hop above the top edge
+ * so a hop is not cut short.
  */
 .character-stage {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  grid-template-columns: var(--stage-spot, 45%) minmax(0, 1fr);
   align-items: center;
   gap: 12px;
   height: var(--stage-h, 320px);
-  padding: 0 16px 0 8px;
+  padding-inline-end: 16px;
   border-radius: var(--r-xl);
   background: var(--surface);
   isolation: isolate;
 }
-/* the backdrop keeps to the card's rounded corners; the character may hop out over its top edge */
+/* the backdrop keeps to the card's rounded corners */
 .character-stage-backdrop {
   position: absolute;
   inset: 0;
@@ -166,17 +169,19 @@
   overflow: visible;
 }
 .character-stage-figure {
-  display: flex;
-  justify-content: center;
-  align-items: flex-end;
+  position: relative;
   align-self: stretch;
   min-width: 0;
-  padding-bottom: calc(var(--stage-h, 320px) * 0.06);
+  margin-top: calc(var(--stage-hop, 0px) * -1);
+  overflow: hidden;
+  border-end-start-radius: var(--r-xl);
+  pointer-events: none;
 }
-.character-stage-figure > .speaking-character {
-  height: calc(var(--stage-h, 320px) * 0.94 - 8px);
-  width: auto;
-  max-width: 100%;
+/* placed by the script (top and left), centred in the character's side whichever way the page reads */
+.character-stage-place {
+  position: absolute;
+  line-height: 0;
+  pointer-events: auto;
 }
 .character-stage-side {
   display: grid;

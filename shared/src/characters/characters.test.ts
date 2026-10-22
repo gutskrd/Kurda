@@ -1,6 +1,19 @@
 import { describe, expect, it } from 'vitest';
 import { VISEMES } from '../lipsync/visemes.js';
-import { CHARACTER_IDS, CHARACTER_NAMES, CHARACTERS, DEFAULT_CHARACTER, characterArt, characterSvg, headGroup, isCharacterId, type CharacterArt } from './index.js';
+import {
+  CHARACTER_IDS,
+  CHARACTER_NAMES,
+  CHARACTERS,
+  DEFAULT_CHARACTER,
+  STAGE_FIGURE_SHARE,
+  characterArt,
+  characterSvg,
+  headGroup,
+  isCharacterId,
+  stageBackdrop,
+  stageFigure,
+  type CharacterArt,
+} from './index.js';
 import { curve, mirror, symmetric, taper } from './pen.js';
 
 /**
@@ -309,6 +322,36 @@ describe('characterSvg', () => {
     const art = characterArt('hamo');
     expect(headGroup(art, 'rest', 'open', 0)).toMatch(/^<g>/);
     expect(headGroup(art, 'a', 'open', -2)).toContain(`rotate(-2 ${art.headPivot.x} ${art.headPivot.y})`);
+  });
+});
+
+describe('a stage', () => {
+  it('stands each character in nothing but its own light: a wash and a glow, no landscape', () => {
+    for (const id of CHARACTER_IDS) {
+      for (const dark of [false, true]) {
+        const svg = parse(stageBackdrop(id, 342, 340, 0.27, { dark, idPrefix: `t-${id}` })).children[0] as El;
+        expect(svg.name).toBe('svg');
+        expect(svg.children.map((el) => el.name)).toEqual(['defs', 'rect', 'rect']);
+      }
+    }
+  });
+
+  it('shows a character head to waist as tall as the stage allows, and smaller rather than wider than its share', () => {
+    for (const id of CHARACTER_IDS) {
+      const half = characterArt(id).half;
+      for (const [width, height] of [
+        [342, 340],
+        [342, 150],
+        [648, 380],
+      ] as const) {
+        const shown = stageFigure(id, width, height, 16);
+        expect(shown.height).toBeLessThanOrEqual(height - 16 + 1e-9);
+        expect(shown.width).toBeLessThanOrEqual(width * STAGE_FIGURE_SHARE + 1e-9);
+        expect(shown.width / shown.height).toBeCloseTo(half.w / half.h, 9);
+        // one of the two limits is reached: the figure is never smaller than it need be
+        expect(Math.max(shown.height / (height - 16), shown.width / (width * STAGE_FIGURE_SHARE))).toBeCloseTo(1, 9);
+      }
+    }
   });
 });
 
