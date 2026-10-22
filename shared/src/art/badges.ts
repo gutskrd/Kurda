@@ -1,17 +1,19 @@
 /**
  * Badges (contract 4, B3): something to collect.
  *
- * A badge is its picture first — the thing itself in its own colours, big,
- * glossy and outlined like a sticker (hero.ts) — standing on a pale plate in
- * its family's shape and tint and rising out over the plate's top edge. The
- * plate is set in a smooth band of the tier's metal, and under it is the
- * number the tier was earned at, in chunky round figures: the 7 of a
- * seven-day streak, the 100 of a hundred lessons. The tier climbs in light as
- * well as in metal — Sifir a rose-copper band, Zîv silver with a soft light
- * behind, Zêr gold with a glow and sparkles, Firûze turquoise with the sun's
- * rays behind it — and the number says it without colour. The ranked family's
- * tier badges carry the rank's own cut stone as their picture, so a badge and
- * an emblem show the same thing.
+ * A badge is its picture first — the thing itself in its own colours, flat
+ * shaded in two tones and outlined like a sticker (hero.ts) — bigger than the
+ * plate it stands on, spilling over its top and sides. The plate is in the
+ * family's shape and the badge's own vivid colour, so a page of badges is as
+ * bright as a box of paints, set in a smooth band of the tier's metal; under
+ * it is the number the tier was earned at, in chunky round figures: the 7 of
+ * a seven-day streak, the 100 of a hundred lessons. The tier climbs in light
+ * as well as in metal — Sifir a rose-copper band, Zîv silver with a soft
+ * light behind, Zêr gold with a glow and sparkles, Firûze turquoise with the
+ * sun's rays behind it — and the number says it without colour. The ranked
+ * family's tier badges carry the rank's own cut stone as their picture, so a
+ * badge and an emblem show the same thing; a secret, once found, is a
+ * treasure with no plate at all, held up in a light of its own colour.
  *
  * Small sizes get their own drawing rather than a shrunken one: under 56
  * pixels the plate fills the square with the picture inside it, the number
@@ -26,13 +28,13 @@
 import type { Crest, CrestBox } from './crest.js';
 import { crestMarkup, crestSilhouette } from './crest.js';
 import { HERO, PLAIN, paintHero } from './hero.js';
-import { ICONS, QUESTION } from './icons.js';
+import { ICONS, QUESTION, circ } from './icons.js';
 import type { BadgeFamily, BadgeKey, BadgeTier, RankTier } from './keys.js';
 import { BADGE_TIER_NAMES, RANK_BADGE, RANK_TIERS, badgeArt, isBadgeKey } from './keys.js';
 import { numeral, numeralWidth } from './numerals.js';
 import type { NumeralStyle } from './numerals.js';
-import type { Metal } from './palette.js';
-import { PLATE, SHADOW, STONE, TIER_METAL } from './palette.js';
+import type { Metal, Plate } from './palette.js';
+import { PLATES, SHADOW, STONE, TIER_METAL } from './palette.js';
 import { capsule, halo, pips, softStar } from './paint.js';
 import { detailFor, rankCrest } from './ranks.js';
 import type { Placement } from './shapes.js';
@@ -104,20 +106,24 @@ interface Layout {
 }
 
 /**
- * Large, the plate sits low and a little small so the picture rises out over
- * its top and the number has the foot; small, the plate fills the square,
- * the picture stays inside it, and a tiered badge leaves the foot for pips.
+ * Large, the plate sits low and small and the picture is bigger than it,
+ * spilling over its top and sides, with the number across its foot; small,
+ * the plate fills the square, the picture mostly inside it, and a tiered
+ * badge leaves the foot for pips.
  */
 function layoutOf(detail: Detail, tiered: boolean): Layout {
   if (detail === 0) {
     return tiered
-      ? { plate: { s: 0.86, y: 63 }, band: 6.5, hero: { cx: 60, cy: 47, scale: 1.48 }, stone: { top: 14, bottom: 86, cap: 26 } }
-      : { plate: { s: 0.9, y: 62 }, band: 7, hero: { cx: 60, cy: 54, scale: 1.6 }, stone: { top: 16, bottom: 98, cap: 27 } };
+      ? { plate: { s: 0.86, y: 63 }, band: 5, hero: { cx: 60, cy: 47, scale: 1.68 }, stone: { top: 9, bottom: 86, cap: 30 } }
+      : { plate: { s: 0.9, y: 61 }, band: 5.5, hero: { cx: 60, cy: 52, scale: 1.8 }, stone: { top: 9, bottom: 100, cap: 32 } };
   }
   return tiered
-    ? { plate: { s: 0.86, y: 54 }, band: 8, hero: { cx: 60, cy: 53, scale: 1.48 }, stone: { top: 18, bottom: 90, cap: 26 } }
-    : { plate: { s: 0.96, y: 58 }, band: 8.5, hero: { cx: 60, cy: 58, scale: 1.62 }, stone: { top: 16, bottom: 100, cap: 30 } };
+    ? { plate: { s: 0.88, y: 54 }, band: 7, hero: { cx: 60, cy: 52, scale: 1.62 }, stone: { top: 10, bottom: 90, cap: 30 } }
+    : { plate: { s: 0.96, y: 58 }, band: 7.5, hero: { cx: 60, cy: 57, scale: 1.78 }, stone: { top: 10, bottom: 102, cap: 32 } };
 }
+
+/** A secret, once found, is a treasure held up in its own light, with no plate: the picture alone, bigger. */
+const TREASURE = { cx: 60, cy: 57, scale: 2.3 };
 
 /** The plate's top and foot on the canvas, for lighting it. */
 const spanOf = (lay: Layout): [number, number] => [lay.plate.y - 54 * lay.plate.s, lay.plate.y + 54 * lay.plate.s];
@@ -153,14 +159,14 @@ const SPARKLES: Record<BadgeTier, readonly (readonly [number, number, number])[]
   1: [],
   2: [],
   3: [
-    [17, 30, 6.5],
-    [104, 24, 5],
+    [13, 30, 6.5],
+    [107, 22, 5],
   ],
   4: [
-    [17, 30, 6.5],
-    [104, 24, 5],
-    [108, 74, 4.5],
-    [12, 78, 3.6],
+    [13, 30, 6.5],
+    [107, 22, 5],
+    [109, 74, 4.5],
+    [11, 80, 3.6],
   ],
 };
 
@@ -168,15 +174,15 @@ const SPARKLES: Record<BadgeTier, readonly (readonly [number, number, number])[]
 
 /**
  * The plate: the family's shape with its thickness under it, a smooth band of
- * the tier's metal round it, and the family's pale tint inside, lit from
- * above and brightest behind the picture.
+ * the tier's metal round it, and inside, the badge's own vivid colour lit
+ * from above — a lighter facet across its upper half, a pale line just inside
+ * the band, and a light behind the picture.
  */
-function plateOf(dr: Drawing, family: BadgeFamily, lay: Layout, m: Metal, detail: Detail, locked: boolean): string {
+function plateOf(dr: Drawing, family: BadgeFamily, lay: Layout, m: Metal, p: Plate, detail: Detail, locked: boolean): string {
   const outline = shapePath(family, lay.plate);
   const face = shapePath(family, lay.plate, lay.band);
   const [top, foot] = spanOf(lay);
-  const p = PLATE[family];
-  const thick = detail === 0 ? 3.4 : 4.4;
+  const thick = detail === 0 ? 4 : 5;
   if (locked) {
     return (
       `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${STONE.dark}" fill-opacity="0.3"/>` +
@@ -203,21 +209,23 @@ function plateOf(dr: Drawing, family: BadgeFamily, lay: Layout, m: Metal, detail
   const tint = dr.id('e');
   dr.def(linearAt(tint, [[0, p.top], [1, p.bottom]], 0, top + lay.band, 0, foot - lay.band));
   const out = [
-    `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${m.deep}"/>`,
-    `<path d="${outline}" fill="url(#${band})" stroke="${m.deep}" stroke-width="${n2(detail === 0 ? 1.4 : 2.2)}" stroke-linejoin="round"/>`,
-    `<path d="${face}" fill="url(#${tint})"/>`,
+    `<path d="${outline}" transform="translate(0 ${n2(thick)})" fill="${p.deep}"/>`,
+    `<path d="${outline}" fill="url(#${band})" stroke="${p.deep}" stroke-width="${n2(detail === 0 ? 1.4 : 2.2)}" stroke-linejoin="round"/>`,
+    `<path d="${face}" fill="url(#${tint})" stroke="${m.dark}" stroke-width="${n2(detail === 0 ? 1.2 : 1.8)}" stroke-linejoin="round"/>`,
   ];
   if (detail < 2) {
-    // brightest behind the picture, and a night of stars on a secret's plate
     const clip = dr.clip(face);
     const light = dr.id('w');
-    const [cx, cy] = [lay.hero.cx, lay.hero.cy + 4];
-    const r = 46 * lay.plate.s;
-    dr.def(radialAt(light, [[0, '#ffffff', family === 'secret' ? 0.32 : 0.85], [1, '#ffffff', 0]], cx, cy, r));
-    out.push(`<g clip-path="url(#${clip})"><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${light})"/>${family === 'secret' ? stars(family + m.mid) : ''}</g>`);
+    const [cx, cy] = [lay.hero.cx, lay.hero.cy + 6];
+    const r = 44 * lay.plate.s;
+    dr.def(radialAt(light, [[0, '#ffffff', p === PLATES.night ? 0.25 : 0.4], [1, '#ffffff', 0]], cx, cy, r));
+    // the facet: the upper left of the face a shade lighter, cut on a slant
+    const facet = `M0,0H120V${n(top + 20)}L0,${n(foot - 18)}Z`;
+    out.push(
+      `<g clip-path="url(#${clip})"><path d="${facet}" fill="#ffffff" fill-opacity="0.16"/><circle cx="${n(cx)}" cy="${n(cy)}" r="${n(r)}" fill="url(#${light})"/>${p === PLATES.night ? stars(family + m.mid) : ''}</g>`,
+      `<path d="${shapePath(family, lay.plate, lay.band + 2.6)}" fill="none" stroke="${p.rim}" stroke-opacity="0.6" stroke-width="${n2(detail === 0 ? 1.8 : 2.4)}" stroke-linejoin="round"/>`,
+    );
   }
-  // the inner edge of the band, where the plate sits in it
-  out.push(`<path d="${face}" fill="none" stroke="${m.dark}" stroke-opacity="0.7" stroke-width="${n2(detail === 0 ? 1.2 : 1.8)}" stroke-linejoin="round"/>`);
   return out.join('');
 }
 
@@ -231,28 +239,34 @@ function stars(seed: string): string {
   return `<path d="${dots.join('')}" fill="#ffffff" fill-opacity="0.7"/>`;
 }
 
+/** The light a found secret is held up in: a glowing disc of its own colour, the sun's rays round it. */
+function treasureLight(dr: Drawing, p: Plate, detail: Detail): string {
+  const glow = dr.id('o');
+  dr.def(radialAt(glow, [[0, p.rim, 0.95], [0.3, p.top, 0.8], [0.65, p.bottom, 0.32], [1, p.bottom, 0]], 60, 58, 56));
+  return (detail === 0 ? rays(dr, p.bottom) : '') + `<circle cx="60" cy="58" r="56" fill="url(#${glow})"/>`;
+}
+
 // ─────────────────────────────────────────────────────────────── the picture
 
-function heroOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, detail: Detail, state: BadgeState): string {
+function heroOf(dr: Drawing, key: BadgeKey, lay: Layout['hero'], stone: CrestBox, edge: string, detail: Detail, state: BadgeState): string {
   const rankTier = rankTierOf(key);
   if (rankTier && state !== 'secret') {
     // the rank's own cut stone, set in its bezel
     const crest: Crest = { ...rankCrest(rankTier), wings: 0, base: 0, crown: 'none', beads: true, glow: 0, rays: false };
-    if (state === 'locked') return `<g opacity="0.6">${crestSilhouette(crest, detail, lay.stone, STONE.light, STONE.dark)}</g>`;
-    return crestMarkup(dr, crest, { detail, box: lay.stone }).markup;
+    if (state === 'locked') return `<g opacity="0.6">${crestSilhouette(crest, detail, stone, STONE.light, STONE.dark)}</g>`;
+    return crestMarkup(dr, crest, { detail, box: stone }).markup;
   }
   const draw = ICONS[key];
   const parts = state === 'secret' || !draw ? QUESTION : draw();
-  const edge = PLATE[state === 'secret' ? 'secret' : family].deep;
-  const { cx, cy, scale } = lay.hero;
+  const { cx, cy, scale } = lay;
   const painted = paintHero(parts, {
     dr,
     colours: state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN),
     edge,
-    outline: (detail === 0 ? 2.6 : 3.6) / scale,
+    outline: (detail === 0 ? 2.8 : 3.6) / scale,
     small: detail > 0,
     locked: state === 'locked',
-    shadow: detail === 0 && state !== 'locked' ? 2.6 / scale : 0,
+    shadow: detail === 0 && state !== 'locked' ? 3.2 / scale : 0,
   });
   return `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${painted}</g>`;
 }
@@ -321,15 +335,25 @@ export function badgeSvg(opts: BadgeOptions): string {
   const milestone = badgeArt(key).milestones[(locked ? 1 : shownTier) - 1];
   const numbered = tiered && detail === 0 && milestone !== undefined;
 
-  if (!locked && detail === 0) {
-    if (AURA[look] > 0) dr.add(halo(dr, 60, 58, 58, m.light, AURA[look], 0.3));
-    if (look === 4 && state === 'earned') dr.add(rays(dr, m.light));
+  const colours = state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN);
+  const p = PLATES[colours.plate];
+  // a secret once found is a treasure in its own light; every other badge stands on its plate
+  const treasure = family === 'secret' && state === 'earned';
+
+  if (treasure) {
+    dr.add(treasureLight(dr, p, detail));
+    dr.add(heroOf(dr, key, TREASURE, lay.stone, PLATES.night.deep, detail, state));
+  } else {
+    if (!locked && detail === 0) {
+      if (AURA[look] > 0) dr.add(halo(dr, 60, 58, 58, m.light, AURA[look], 0.3));
+      if (look === 4 && state === 'earned') dr.add(rays(dr, m.light));
+    }
+    dr.add(plateOf(dr, plateFamily, lay, m, p, detail, locked));
+    dr.add(heroOf(dr, key, lay.hero, lay.stone, p.deep, detail, state));
   }
-  dr.add(plateOf(dr, plateFamily, lay, m, detail, locked));
-  dr.add(heroOf(dr, key, family, lay, detail, state));
 
   if (numbered) {
-    const style: NumeralStyle = locked ? { edge: STONE.mid, top: STONE.hi, bottom: STONE.light } : { edge: m.deep, top: '#ffffff', bottom: mix('#ffffff', m.light, 0.85) };
+    const style: NumeralStyle = locked ? { edge: STONE.mid, top: STONE.hi, bottom: STONE.light } : { edge: p.deep, top: '#ffffff', bottom: mix('#ffffff', m.light, 0.85) };
     dr.add(locked ? `<g opacity="0.75">${milestoneMark(dr, milestone, style)}</g>` : milestoneMark(dr, milestone, style));
   } else if (tiered) {
     dr.add(tierPips(dr, shownTier, tiers, locked ? STONE : m, detail, locked));
@@ -381,7 +405,8 @@ export function badgeShineSvg(opts: BadgeShineOptions): string {
   const detail = detailFor(size, SMALL_BADGE, TINY_BADGE);
   const family = badgeArt(key).family;
   const dr = new Drawing(prefixFor(opts.idPrefix, 'glint', family, n2(phase), detail));
-  const clip = dr.clip(shapePath(family, layoutOf(detail, badgeArt(key).tiers > 1).plate, 0.6));
+  // a found secret has no plate: its glint crosses the light it is held up in
+  const clip = dr.clip(family === 'secret' ? circ(60, 58, 44) : shapePath(family, layoutOf(detail, badgeArt(key).tiers > 1).plate, 0.6));
   const band = dr.id('g');
   dr.def(
     linearAt(

@@ -12,7 +12,7 @@
  * Shadows lean toward the hue rather than toward grey, so a piece stays warm
  * as it darkens.
  */
-import type { BadgeFamily, BadgeTier, LeagueTier, RankTier } from './keys.js';
+import type { BadgeTier, LeagueTier, RankTier } from './keys.js';
 
 export interface Metal {
   hi: string;
@@ -46,27 +46,33 @@ export interface Field {
 }
 
 /**
- * Each family's plate, the pale ground a badge's picture stands on: `top` to
- * `bottom` lit from above, and `deep`, the family's darkest tone, for the
- * outline round the picture. Learning is Hevalo's own lavender; habit a clear
- * sky, so the streak's fire burns bright on it; games a sweet pink; ranked a
- * periwinkle; friends mint; events a Newroz rose; and the secrets a night sky.
+ * The plates a badge's picture stands on: vivid, each badge its own, so a
+ * page of them is as bright as a box of paints. `top` to `bottom` is the
+ * face lit from above, `rim` the lighter line just inside its edge, `deep`
+ * the darkest tone — the plate's thickness, the outline round the picture
+ * and the edge of the number.
  */
 export interface Plate {
   top: string;
   bottom: string;
+  rim: string;
   deep: string;
 }
 
-export const PLATE: Record<BadgeFamily, Plate> = {
-  learning: { top: '#f7f1ff', bottom: '#d3bdff', deep: '#3b1a86' },
-  habit: { top: '#eef8ff', bottom: '#acd6ff', deep: '#123a7a' },
-  games: { top: '#fff1f7', bottom: '#ffbfdb', deep: '#7a1347' },
-  ranked: { top: '#f0f1ff', bottom: '#bec5ff', deep: '#252a7a' },
-  friends: { top: '#edfdf2', bottom: '#aeeec2', deep: '#0c5130' },
-  events: { top: '#fff1f3', bottom: '#ffc0cb', deep: '#7d1028' },
-  secret: { top: '#4b36a8', bottom: '#150a48', deep: '#0b0530' },
-};
+export const PLATES = {
+  violet: { top: '#a77bff', bottom: '#6a3de8', rim: '#dccbff', deep: '#341478' },
+  blue: { top: '#5aaeff', bottom: '#2c6fe0', rim: '#cde6ff', deep: '#123a85' },
+  sky: { top: '#4fd8f5', bottom: '#169ccc', rim: '#c9f5ff', deep: '#0a4a6a' },
+  teal: { top: '#3fdcc0', bottom: '#11a08c', rim: '#c8f8ee', deep: '#074a42' },
+  green: { top: '#6ddb76', bottom: '#27a24c', rim: '#d3f8d6', deep: '#0c5426' },
+  gold: { top: '#ffd24a', bottom: '#f39a12', rim: '#fff1c4', deep: '#7a4100' },
+  orange: { top: '#ffa45a', bottom: '#ee6320', rim: '#ffe2cc', deep: '#7c2a06' },
+  red: { top: '#ff6b78', bottom: '#dc2a47', rim: '#ffd3d9', deep: '#700c24' },
+  pink: { top: '#ff8cc8', bottom: '#e0479b', rim: '#ffdaee', deep: '#6e1042' },
+  indigo: { top: '#8487ff', bottom: '#4c4bd8', rim: '#d8daff', deep: '#22266e' },
+  night: { top: '#4b36a8', bottom: '#150a48', rim: '#8f7be0', deep: '#0b0530' },
+} as const satisfies Record<string, Plate>;
+export type PlateName = keyof typeof PLATES;
 
 /** Named colours an icon may use besides its metal. Each is [top, bottom] of a lit fill. */
 export const ACCENT = {

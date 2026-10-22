@@ -1,9 +1,9 @@
 /**
  * A badge's picture painted as the hero of it: the thing itself in its own
  * colours — a flame is orange, a book's pages are white, a gift is wrapped
- * in violet — big, glossy and outlined like a sticker, so it reads on the
- * badge's pale plate, over the page where it rises out of the plate, and on
- * the dark theme and the light one alike.
+ * in violet — big, flat shaded in two tones and outlined like a sticker, so
+ * it reads on the badge's plate, over the page where it rises out of the
+ * plate, and on the dark theme and the light one alike.
  *
  * The parts are the icons' own (icons.ts): the main body, its shaded face, a
  * named accent, snow, cut lines, stroked lines, highlights. Here the main
@@ -13,8 +13,9 @@
  */
 import type { Part } from './icons.js';
 import { ACCENT, STONE } from './palette.js';
+import type { PlateName } from './palette.js';
 import type { Drawing } from './svg.js';
-import { linearBox, n, n2 } from './svg.js';
+import { linearBox, mix, n, n2 } from './svg.js';
 
 /** A colour lit from above: its light top, its body, its shaded foot. */
 export type Swatch = readonly [string, string, string];
@@ -41,55 +42,66 @@ export const SWATCH = {
 } as const satisfies Record<string, Swatch>;
 export type SwatchName = keyof typeof SWATCH;
 
-/** The two swatches a badge's picture is painted in: its main body (`f`) and its shaded face (`a`). */
+/**
+ * How a badge's picture is coloured: its main body (`f`), its shaded face
+ * (`a`), and the plate it stands on — for a found secret, which has no plate,
+ * the colour of the light it is held up in.
+ */
 export interface HeroColours {
   f: SwatchName;
   a: SwatchName;
+  plate: PlateName;
 }
 
 export const HERO: Readonly<Record<string, HeroColours>> = {
-  ders: { f: 'paper', a: 'sky' },
-  'peyven-min': { f: 'paper', a: 'paper' },
-  bekemasi: { f: 'aqua', a: 'sky' },
-  dubare: { f: 'green', a: 'green' },
-  cirokbej: { f: 'paper', a: 'gold' },
-  rewi: { f: 'orange', a: 'orange' },
-  ferheng: { f: 'gold', a: 'rose' },
-  agir: { f: 'orange', a: 'orange' },
-  hefte: { f: 'paper', a: 'rose' },
-  roj: { f: 'gold', a: 'orange' },
-  pela: { f: 'aqua', a: 'sky' },
-  vegera: { f: 'ink', a: 'ink' },
-  peyvzan: { f: 'paper', a: 'paper' },
-  helbestvan: { f: 'wood', a: 'wood' },
-  bilez: { f: 'paper', a: 'violet' },
-  rastnivis: { f: 'paper', a: 'paper' },
-  guhdar: { f: 'paper', a: 'violet' },
-  hemereng: { f: 'paper', a: 'paper' },
-  dilpak: { f: 'gold', a: 'gold' },
-  hilkiser: { f: 'mountain', a: 'ink' },
-  cihgirti: { f: 'rose', a: 'paper' },
-  heval: { f: 'rose', a: 'pink' },
-  diyari: { f: 'violet', a: 'violet' },
-  mevandar: { f: 'brass', a: 'brass' },
-  newroz: { f: 'orange', a: 'wood' },
-  'roja-ziman': { f: 'gold', a: 'ink' },
-  'zimane-dayike': { f: 'paper', a: 'paper' },
-  bihar: { f: 'pink', a: 'pink' },
-  havin: { f: 'gold', a: 'orange' },
-  payiz: { f: 'orange', a: 'orange' },
-  zivistan: { f: 'ice', a: 'ice' },
-  mehane: { f: 'moon', a: 'gold' },
-  'tire-rast': { f: 'steel', a: 'steel' },
-  'ji-nu-ve': { f: 'green', a: 'wood' },
-  'kewe-ciye': { f: 'sand', a: 'wood' },
-  'deste-zerin': { f: 'gold', a: 'brass' },
-  'mevane-agir': { f: 'paper', a: 'brass' },
-  'kaniya-zanine': { f: 'paper', a: 'cream' },
+  ders: { f: 'paper', a: 'sky', plate: 'violet' },
+  'peyven-min': { f: 'paper', a: 'paper', plate: 'blue' },
+  bekemasi: { f: 'aqua', a: 'sky', plate: 'indigo' },
+  dubare: { f: 'green', a: 'green', plate: 'indigo' },
+  cirokbej: { f: 'paper', a: 'gold', plate: 'violet' },
+  rewi: { f: 'orange', a: 'orange', plate: 'teal' },
+  ferheng: { f: 'gold', a: 'rose', plate: 'gold' },
+  agir: { f: 'orange', a: 'orange', plate: 'red' },
+  hefte: { f: 'paper', a: 'rose', plate: 'sky' },
+  roj: { f: 'gold', a: 'orange', plate: 'pink' },
+  pela: { f: 'aqua', a: 'sky', plate: 'blue' },
+  vegera: { f: 'ink', a: 'ink', plate: 'sky' },
+  peyvzan: { f: 'paper', a: 'paper', plate: 'violet' },
+  helbestvan: { f: 'wood', a: 'wood', plate: 'teal' },
+  bilez: { f: 'paper', a: 'violet', plate: 'orange' },
+  rastnivis: { f: 'paper', a: 'paper', plate: 'blue' },
+  guhdar: { f: 'paper', a: 'violet', plate: 'pink' },
+  hemereng: { f: 'paper', a: 'paper', plate: 'indigo' },
+  dilpak: { f: 'gold', a: 'gold', plate: 'pink' },
+  'rank-dest': { f: 'paper', a: 'paper', plate: 'teal' },
+  'rank-gir': { f: 'paper', a: 'paper', plate: 'violet' },
+  'rank-zozan': { f: 'paper', a: 'paper', plate: 'indigo' },
+  'rank-ciya': { f: 'paper', a: 'paper', plate: 'gold' },
+  'rank-lutke': { f: 'paper', a: 'paper', plate: 'teal' },
+  'rank-sterk': { f: 'paper', a: 'paper', plate: 'violet' },
+  hilkiser: { f: 'mountain', a: 'ink', plate: 'orange' },
+  cihgirti: { f: 'rose', a: 'paper', plate: 'sky' },
+  heval: { f: 'rose', a: 'pink', plate: 'violet' },
+  diyari: { f: 'violet', a: 'violet', plate: 'gold' },
+  mevandar: { f: 'brass', a: 'brass', plate: 'indigo' },
+  newroz: { f: 'orange', a: 'wood', plate: 'violet' },
+  'roja-ziman': { f: 'gold', a: 'ink', plate: 'teal' },
+  'zimane-dayike': { f: 'paper', a: 'paper', plate: 'pink' },
+  bihar: { f: 'pink', a: 'pink', plate: 'green' },
+  havin: { f: 'gold', a: 'orange', plate: 'sky' },
+  payiz: { f: 'orange', a: 'orange', plate: 'teal' },
+  zivistan: { f: 'ice', a: 'ice', plate: 'blue' },
+  mehane: { f: 'moon', a: 'gold', plate: 'indigo' },
+  'tire-rast': { f: 'steel', a: 'steel', plate: 'sky' },
+  'ji-nu-ve': { f: 'green', a: 'wood', plate: 'green' },
+  'kewe-ciye': { f: 'sand', a: 'wood', plate: 'orange' },
+  'deste-zerin': { f: 'gold', a: 'brass', plate: 'gold' },
+  'mevane-agir': { f: 'paper', a: 'brass', plate: 'red' },
+  'kaniya-zanine': { f: 'paper', a: 'cream', plate: 'teal' },
 };
 
 /** The secret's "?" and anything without its own colours: plain white. */
-export const PLAIN: HeroColours = { f: 'paper', a: 'paper' };
+export const PLAIN: HeroColours = { f: 'paper', a: 'paper', plate: 'night' };
 
 export interface HeroPaint {
   dr: Drawing;
@@ -104,15 +116,29 @@ export interface HeroPaint {
   shadow?: number;
 }
 
-/** A swatch as a fill lit from above, over each part's own box. */
-function lit(dr: Drawing, cache: Map<string, string>, name: string, stops: readonly string[]): string {
+/**
+ * A swatch as a fill lit from the upper left, over each part's own box, in
+ * two flat tones with a hard edge between them: the lit side running light
+ * to its body, the shaded side its shade — the way a flat illustration turns
+ * a form, without a blur.
+ */
+function lit(dr: Drawing, cache: Map<string, string>, name: string, [top, body, shade]: readonly [string, string, string]): string {
   let id = cache.get(name);
   if (!id) {
     id = dr.id('h');
     dr.def(
       linearBox(
         id,
-        stops.map((c, i) => [stops.length === 2 ? i : [0, 0.5, 1][i] ?? 1, c] as const),
+        [
+          [0, top],
+          [0.56, body],
+          [0.56, mix(body, shade, 0.62)],
+          [1, shade],
+        ],
+        0.15,
+        0,
+        0.85,
+        1,
       ),
     );
     cache.set(name, id);
@@ -132,7 +158,7 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
   const { dr, colours, edge, outline, small, locked } = p;
   const shown = parts.filter((part) => !(small && 'fine' in part && part.fine));
   const tf = (part: Part): string => (part.tf ? ` transform="${part.tf}"` : '');
-  const gap = small ? 2.2 : 1.5;
+  const gap = small ? 1.8 : 1.1;
 
   // the silhouette, drawn once wide under everything: the sticker's edge
   const silhouette = shown
@@ -163,18 +189,19 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
   const fillOf = (part: Part): string => {
     switch (part.k) {
       case 'f':
-        return lit(dr, cache, `f`, f);
+        return lit(dr, cache, 'f', f);
       case 'a':
-        return lit(dr, cache, `a`, [a[1], a[2]]);
+        return lit(dr, cache, 'a', [a[1], a[1], a[2]]);
       case 'w':
         return lit(dr, cache, 'w', SWATCH.paper);
-      case 'c':
-        return lit(dr, cache, `c-${part.c}`, ACCENT[part.c]);
+      case 'c': {
+        const [top, foot] = ACCENT[part.c];
+        return lit(dr, cache, `c-${part.c}`, [top, mix(top, foot, 0.6), foot]);
+      }
       default:
         return 'none';
     }
   };
-  const cut = (part: Part): string => `<path d="${part.d}" fill="none" stroke="${edge}" stroke-width="${n2(gap)}" stroke-linejoin="round"${tf(part)}/>`;
 
   const body = shown
     .map((part) => {
@@ -183,7 +210,8 @@ export function paintHero(parts: readonly Part[], p: HeroPaint): string {
         case 'a':
         case 'w':
         case 'c':
-          return cut(part) + `<path d="${part.d}" fill="${fillOf(part)}"${tf(part)}/>`;
+          // each part edged by a thin line of the outline, which is what cuts it from the next
+          return `<path d="${part.d}" fill="${fillOf(part)}" stroke="${edge}" stroke-width="${n2(gap)}" stroke-linejoin="round"${tf(part)}/>`;
         case 'k':
           return `<path d="${part.d}" fill="${edge}"${tf(part)}/>`;
         case 'd':
