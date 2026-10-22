@@ -277,37 +277,83 @@ function fireworks(p: Pen): string {
   return out.join('');
 }
 
-/** Yalda, the longest night: a pomegranate broken open on its ruby seeds, and a candle burning beside it to keep the night company. */
+/**
+ * A pomegranate's crown: a short neck flaring into five pointed sepals, the
+ * dark of its opening between them; its base at (`x`, `y`), leaning `tilt`
+ * degrees.
+ */
+function crown(p: Pen, x: number, y: number, w: number, h: number, tilt: number, ink: string): string {
+  const at = ` transform="translate(${n(x)} ${n(y)}) rotate(${tilt})"`;
+  const pt = (fx: number, fy: number): string => `${n(fx * w)},${n(fy * h)}`;
+  const d =
+    `M${pt(-0.38, 0.12)}C${pt(-0.36, -0.12)} ${pt(-0.32, -0.3)} ${pt(-0.34, -0.46)}` +
+    `L${pt(-0.8, -0.98)}L${pt(-0.42, -0.74)}L${pt(-0.4, -1.12)}L${pt(-0.14, -0.8)}L${pt(0.04, -1.18)}L${pt(0.2, -0.8)}` +
+    `L${pt(0.46, -1.12)}L${pt(0.46, -0.74)}L${pt(0.84, -0.98)}L${pt(0.36, -0.46)}C${pt(0.34, -0.3)} ${pt(0.38, -0.12)} ${pt(0.4, 0.12)}Z`;
+  const out = [path(d, p.box([[0, '#f0606a'], [0.45, '#b81630'], [1, '#6a0a1e']]), stroke(ink, 0.8) + at)];
+  out.push(path(ell(0, -0.76 * h, 0.36 * w, 0.1 * h), '#3a0410', at));
+  if (!p.tiny) out.push(line(`M${pt(-0.14, -0.74)}V${n(-0.95 * h)}M${pt(0.02, -0.76)}V${n(-1 * h)}M${pt(0.18, -0.74)}V${n(-0.94 * h)}`, '#e8a0a0', 0.3, at));
+  return out.join('');
+}
+
+/**
+ * Seeds packed into the chambers of the fruit, row on row, each row offset
+ * from the one above and each seed nudged a little off it, as seeds lie. A
+ * chamber is (x, y, rx, ry, egg): an oval, wider below than above by `egg`.
+ * One lattice for all of them, so where two chambers meet no seed lies on another.
+ */
+function grains(chambers: readonly (readonly [number, number, number, number, number])[], gap: number): [number, number][] {
+  const out: [number, number][] = [];
+  const inside = (x: number, y: number) =>
+    chambers.some(([cx, cy, rx, ry, egg]) => ((x - cx) / (rx * (1 + (egg * (y - cy)) / ry))) ** 2 + ((y - cy) / ry) ** 2 <= 1);
+  for (let row = 0, y = -10; y <= 20; row++, y += gap * 0.87) {
+    for (let col = 0, x = -10 + (row % 2) * (gap / 2); x <= 20; col++, x += gap) {
+      const k = (row * 7 + col * 13) % 5;
+      const [jx, jy] = [(k - 2) * 0.09, (((row + col) % 3) - 1) * 0.12];
+      if (inside(x, y)) out.push([Math.round((x + jx) * 10) / 10, Math.round((y + jy) * 10) / 10]);
+    }
+  }
+  return out;
+}
+
+/**
+ * Yalda, the longest night, when pomegranates are shared: one whole behind,
+ * its crown leaning back, and one broken open in front on the pale pith and
+ * the three chambers of ruby seeds packed inside it, its rind thin where it
+ * faces us and thick where it turns away.
+ */
 function pomegranate(p: Pen): string {
   const out: string[] = [];
   const ink = '#4e0616';
-  // the candle behind it: its light, its wax, its flame
-  out.push(path(ell(-14.2, -12.6, 6.6, 7.4), p.roundBox([[0, '#fff3b0', 0.75], [1, '#ffd36a', 0]])));
-  out.push(path('M-17,-7.4C-17,-8.4 -11.4,-8.4 -11.4,-7.4V6H-17Z', p.box([[0, '#fffaf0'], [0.6, '#f6e2c4'], [1, '#d9b88a']], 0, 0, 1, 0), stroke('#8a5a2a', 0.8)));
-  out.push(path(ell(-14.2, -7.6, 2.8, 0.8), '#fff6e6', stroke('#8a5a2a', 0.5)));
-  out.push(line('M-14.2,-7.8V-9.6', '#4a2a10', 0.6));
-  out.push(path('M-14.2,-15.6C-12.6,-13.6 -12.4,-11.6 -12.9,-10.6C-13.3,-9.8 -15.1,-9.8 -15.5,-10.6C-16,-11.6 -15.8,-13.6 -14.2,-15.6Z', p.box([[0, '#fff6c2'], [0.6, '#ffc93a'], [1, '#ff7a1a']], 0.5, 0, 0.5, 1), stroke('#b8500a', 0.5)));
-  // the crown, then the fruit
-  out.push(path('M-2.6,-8.4L-3,-12.6L-6.6,-15.4L-2,-14.8L1.4,-18.6L4.8,-14.8L9.4,-15.4L5.8,-12.6L5.4,-8.4Z', p.box([[0, '#ff8a7a'], [0.5, '#c8202e'], [1, '#6e0a1e']]), stroke(ink, 1)));
-  if (!p.tiny) out.push(line('M-1.8,-13Q1.4,-11.4 4.6,-13', ink, 0.8, ' stroke-opacity="0.7"'));
-  const fruit = 'M1.4,-9.4C9.8,-9.4 15.8,-3.2 15.8,4.6C15.8,12.6 9.6,18.8 1.4,18.8C-6.8,18.8 -13,12.6 -13,4.6C-13,-3.2 -7,-9.4 1.4,-9.4Z';
-  out.push(path(fruit, p.round([[0, '#ffa08a'], [0.35, '#ec3a3a'], [0.75, '#b0122e'], [1, '#7a0a24']], -4.6, -3, 22), stroke(ink, 1.2)));
+  const skin = (cx: number, cy: number, r: number) =>
+    p.round([[0, '#ff9a92'], [0.35, '#e43448'], [0.75, '#a8122e'], [1, '#6e0a22']], cx - r * 0.38, cy - r * 0.4, r * 1.5);
+  // the whole one behind, and its crown
+  out.push(crown(p, -9.9, -11.6, 5.6, 6.6, -8, ink));
+  out.push(path(circ(-6.45, -1.35, 12.5), skin(-6.45, -1.35, 12.5), stroke(ink, 1)));
+  if (!p.tiny) out.push(path('M-16.4,-4.8C-15.6,-8.8 -12.6,-11.8 -8.8,-12.8C-11.6,-10.6 -13.8,-8 -16.4,-4.8Z', '#ffffff', ' fill-opacity="0.7"'));
+  // the open one in front: its crown, its skin, the shadow it lays on the one behind
+  out.push(crown(p, 8.8, -4.9, 5.8, 6.8, 12, ink));
+  if (!p.tiny) out.push(path(ell(5.9, 6.4, 13.6, 13.1), '#3a0410', ' fill-opacity="0.3"'));
+  out.push(path(ell(5.9, 6.4, 12.8, 12.3), skin(5.9, 6.4, 12.8), stroke(ink, 1)));
+  // where it is broken open: the pale pith, and in it three chambers of seeds
+  out.push(path(ell(4.3, 6.45, 10.75, 11), p.box([[0, '#fff1e6'], [1, '#f2c2aa']]), stroke('#c45a62', 0.6)));
+  // the left chamber narrow at its top and full below, as it is in the fruit; two on the right, one over the other
+  const chambers: [number, number, number, number, number][] = [
+    [0.2, 6.3, 4.6, 8.9, 0.1],
+    [9.6, 2.8, 4.1, 3.7, 0],
+    [9.1, 11.4, 4.1, 4.3, 0.05],
+  ];
   if (!p.tiny) {
-    out.push(path('M-12.4,8C-10.4,14 -4.6,18 1.4,18.2C-4.8,16.8 -9.6,13.2 -12.4,8Z', ink, ' fill-opacity="0.35"'));
-    out.push(path('M-10.6,-0.4C-9.6,-4.6 -5.6,-7.6 -1,-8C-4.8,-6.2 -7.8,-3.6 -10.6,-0.4Z', '#ffffff', ' fill-opacity="0.75"'));
+    // each chamber is its seeds, so its edge is as lumpy as they are
+    const seeds = grains(chambers, 1.9);
+    out.push(line(dots(seeds), '#6a0418', 2.45));
+    out.push(line(dots(seeds), p.line([[0, '#ff5a78'], [1, '#c40c34']], 0, -3, 0, 16), 1.8));
+    if (p.fine) out.push(line(dots(seeds.map(([x, y]) => [x - 0.4, y - 0.4])), '#ffffff', 0.5, ' stroke-opacity="0.85"'));
+    // the rind's light, round the side that turns away
+    out.push(line('M15.6,-1.4C17.6,1.6 18.2,5.6 17.4,9.4', '#ffffff', 0.7, ' stroke-opacity="0.6"'));
+  } else {
+    out.push(path(chambers.map(([x, y, rx, ry]) => ell(x, y, rx * 0.9, ry * 0.9)).join(''), '#d8203e'));
   }
-  // where it is broken open: the torn skin, its pale pith, and the seeds packed in it
-  const torn = Array.from({ length: 18 }, (_, i) => {
-    const a = (i * 20 * Math.PI) / 180;
-    const k = i % 2 === 0 ? 1 : 0.88 + (i % 3) * 0.03;
-    return `${n(5.8 + Math.cos(a) * 9.4 * k)},${n(6.8 + Math.sin(a) * 8.6 * k)}`;
-  });
-  out.push(path(`M${torn.join('L')}Z`, p.box([[0, '#fff6e6'], [1, '#f2c0a0']]), stroke('#8a2a2a', 0.8)));
-  out.push(path(ell(5.8, 6.9, 7.4, 6.6), '#5a0418'));
-  const seeds: [number, number][] = [[2.8, 1.8], [6.2, 1.4], [9.4, 1.9], [0.6, 5.2], [4, 5], [7.4, 5], [10.8, 5.2], [2.3, 8.6], [5.7, 8.6], [9.1, 8.6], [12, 8.4], [3.2, 12], [6.6, 12.2], [9.6, 11.8]];
-  out.push(line(dots(seeds), p.line([[0, '#ff5a7a'], [1, '#c00c34']], 0, 0, 0, 13), 3.3));
-  if (!p.tiny) out.push(line(dots(seeds.map(([x, y]) => [x - 0.6, y - 0.6])), '#ffffff', 1, ' stroke-opacity="0.9"'));
-  if (p.fine) out.push(path(`${glint(-16.4, 6.6, 1.8)}${glint(-5.6, -16.6, 1.4)}${glint(17.6, -4.6, 1.2)}`, '#ffffff'));
+  if (p.fine) out.push(path(`${glint(-17.2, 13.4, 1.8)}${glint(17.8, -9.6, 1.4)}`, '#ffffff'));
   return out.join('');
 }
 
