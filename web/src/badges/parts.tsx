@@ -1,7 +1,7 @@
-import { badgeTierKey, badgeDef, type BadgeView } from '@kurda/shared';
+import { badgeLeft, badgeTierKey, badgeDef, badgeViewFraction, type BadgeView } from '@kurda/shared';
 import { useT } from '../i18n/I18nProvider';
 import { BadgeMedal } from '../ranks/art';
-import { UNIT_KEY, badgeNamed, badgeTierNamed, withMeaning, type Translate } from '../ranks/names';
+import { badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
 
 /**
  * The pieces of a badge every screen draws the same way: its medallion with
@@ -51,19 +51,24 @@ export function Medal({
   );
 }
 
-/** "7 / 30 days" towards the next tier, or null once every tier is earned (or for a hidden secret). */
+/**
+ * "7 / 30 days" towards the next tier, and past halfway what is left ("3 days to
+ * go"), the smaller part being the one that keeps people going; null once every
+ * tier is earned (or for a hidden secret).
+ */
 export function progressText(t: Translate, view: BadgeView): string | null {
   if (view.hidden || view.next === null) return null;
-  return t('badges.progress', { progress: Math.min(view.progress, view.next).toLocaleString(), next: view.next.toLocaleString(), unit: t(UNIT_KEY[view.unit]) });
+  const left = badgeLeft(view);
+  if (left !== null && left > 0) return t('badges.toGo', { count: left.toLocaleString(), unit: unitWord(t, view.unit, left) });
+  return t('badges.progress', {
+    progress: Math.min(view.progress, view.next).toLocaleString(),
+    next: view.next.toLocaleString(),
+    unit: unitWord(t, view.unit, view.next),
+  });
 }
 
 /** 0–1 along the way to the next tier, from the last one reached. */
-export function progressFraction(view: BadgeView): number {
-  if (view.next === null) return 1;
-  const from = view.tier > 0 ? (view.thresholds[view.tier - 1] ?? 0) : 0;
-  const span = view.next - from;
-  return span > 0 ? Math.max(0, Math.min(1, (view.progress - from) / span)) : 0;
-}
+export const progressFraction = badgeViewFraction;
 
 /** The tier's metal as a class, for the tile's accent. */
 export function tierClass(view: Pick<BadgeView, 'tierKey' | 'tier' | 'hidden'>): string {

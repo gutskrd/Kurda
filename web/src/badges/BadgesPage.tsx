@@ -1,5 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { BADGE_FAMILIES, SHOWCASE_SIZE, badgeTierKey, badgeDef, type BadgeFamily, type BadgeView, type BadgesResponse } from '@kurda/shared';
+import {
+  BADGE_FAMILIES,
+  SHOWCASE_SIZE,
+  badgeTierKey,
+  badgeDef,
+  nearestBadges,
+  type BadgeFamily,
+  type BadgeView,
+  type BadgesResponse,
+} from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import { Button } from '../components/Button';
@@ -8,7 +17,7 @@ import { ErrorState } from '../components/states';
 import { BadgesSkeleton } from '../components/skeletons';
 import { CheckIcon, LockIcon, SparkleIcon } from '../components/icons';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { FAMILY_KEY, UNIT_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed } from '../ranks/names';
+import { FAMILY_KEY, badgeDesc, badgeHint, badgeNamed, badgeTierNamed, unitWord } from '../ranks/names';
 import { Medal, TierPips, progressFraction, progressText, tierClass } from './parts';
 
 /**
@@ -18,8 +27,10 @@ import { Medal, TierPips, progressFraction, progressText, tierClass } from './pa
  *
  * A badge not earned yet is drawn in quiet grey with its progress — never
  * hidden, so there is always a next thing in reach, and never styled as
- * missing. Rarity appears only once enough people are active for a
- * percentage to mean something (the server decides; it sends null before).
+ * missing. The few nearest their next tier come first ("Almost there"):
+ * people try hardest when a goal is close. Rarity appears only once enough
+ * people are active for a percentage to mean something (the server decides;
+ * it sends null before).
  */
 export function BadgesPage(): React.JSX.Element {
   const { client } = useAuth();
@@ -68,6 +79,7 @@ export function BadgesPage(): React.JSX.Element {
   const earned = data.badges.filter((b) => b.tier > 0).length;
   const showcase = data.showcase.map((k) => data.badges.find((b) => b.key === k)).filter((b): b is BadgeView => Boolean(b));
   const month = data.monthlyChallenge;
+  const nearest = nearestBadges(data.badges);
 
   return (
     <div className="container badges-page">
@@ -121,6 +133,21 @@ export function BadgesPage(): React.JSX.Element {
           </div>
         </dl>
       </div>
+
+      {nearest.length > 0 && (
+        <section className="badges-family badges-nearest" aria-labelledby="nearest-title">
+          <h2 id="nearest-title" className="badges-section-title">
+            {t('badges.nearest')}
+          </h2>
+          <ul className="badges-grid">
+            {nearest.map((b) => (
+              <li key={b.key}>
+                <BadgeTile view={b} onOpen={() => setOpen(b)} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {BADGE_FAMILIES.map((family) => {
         const list = byFamily.get(family) ?? [];
@@ -241,7 +268,7 @@ function BadgeDetail({ view, onClose }: { view: BadgeView; onClose: () => void }
                   </span>
                   <span className="badge-ladder-tier">{key ? badgeTierNamed(t, key).name : tierNo}</span>
                   <span className="badge-ladder-need">
-                    {need > 0 ? t('badges.need', { count: need.toLocaleString(), unit: t(UNIT_KEY[view.unit]) }) : t('badges.needAll')}
+                    {need > 0 ? t('badges.need', { count: need.toLocaleString(), unit: unitWord(t, view.unit, need) }) : t('badges.needAll')}
                   </span>
                   <span className="badge-ladder-when">
                     {reached ? date(view.tierEarnedAt[i]) : rarity != null ? t('badges.rarity', { percent: formatRarity(rarity) }) : null}

@@ -11,7 +11,7 @@ import { Celebration } from '../ranks/Celebration';
 import { FLECKS } from '../ranks/motion';
 import { badgeTint } from '../ranks/tint';
 import { getUnseenBadges, markBadgesSeen } from '../ranks/api';
-import { UNIT_KEY, badgeLabel, badgeMeaning, badgeName, badgeTextKey, tierLabel } from './format';
+import { badgeLabel, badgeMeaning, badgeName, badgeTextKey, nextTierLine, tierLabel, unitWord } from './format';
 import { enqueue, fromEvent, fromUnseen, seenId, type PendingBadge } from './queue';
 
 /**
@@ -140,7 +140,9 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
   const [light, strong] = badgeTint(tierCount > 1 ? badge.tier : 3, 'dark');
   // what this tier took: "30 days", "25 wins" (a single badge has no number to name)
   const threshold = tierCount > 1 ? def.tiers[badge.tier - 1] : undefined;
-  const reached = typeof threshold === 'number' ? `${threshold} ${t(UNIT_KEY[def.unit])}` : null;
+  const reached = typeof threshold === 'number' ? `${threshold} ${unitWord(t, def.unit, threshold)}` : null;
+  // and the tier after it, so a new goal is in view the moment this one is won
+  const next = badge.secret ? null : nextTierLine(t, badge.key, badge.tier);
   return (
     <Celebration
       art={<BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={tierCount} size={168} label={label} shine="once" />}
@@ -152,7 +154,7 @@ function BadgeMoment({ badge, felt, onClose }: { badge: PendingBadge; felt: bool
       title={name}
       subtitle={[meaning, tierWords].filter(Boolean).join(' · ') || null}
       detail={reached}
-      note={t(badgeTextKey(badge.key, 'how'))}
+      note={[t(badgeTextKey(badge.key, 'how')), next].filter(Boolean).join('\n')}
       announce={`${kicker}: ${label}`}
       onClose={onClose}
       felt={felt}

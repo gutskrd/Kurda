@@ -152,9 +152,9 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favPoem = me.favoritePoem ?? null;
     favStory = me.favoriteStory ?? null;
     stats.push({ label: 'XP', value: me.xp.toLocaleString() });
-    stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: me.streak.current }) });
+    stats.push({ label: t('profile.stat.streak'), value: t(me.streak.current === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: me.streak.current }) });
     // beside the streak, the two numbers a missed day never takes away
-    stats.push({ label: t('profile.stat.longestStreak'), value: t('profile.stat.streakDays', { count: me.streak.longest }) });
+    stats.push({ label: t('profile.stat.longestStreak'), value: t(me.streak.longest === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: me.streak.longest }) });
     if (me.streak.daysLearned !== undefined) {
       stats.push({ label: t('profile.stat.daysLearned'), value: `${me.streak.daysLearned}` });
     }
@@ -172,7 +172,7 @@ function ProfileContent({ target }: { target: Target }): React.JSX.Element {
     favPoem = other.favoritePoem ?? null;
     favStory = other.favoriteStory ?? null;
     if (other.xp !== undefined) stats.push({ label: 'XP', value: other.xp.toLocaleString() });
-    if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t('profile.stat.streakDays', { count: other.streak }) });
+    if (other.streak !== undefined) stats.push({ label: t('profile.stat.streak'), value: t(other.streak === 1 ? 'profile.stat.streakDay' : 'profile.stat.streakDays', { count: other.streak }) });
     // a league tier key, translated; none for someone not taking part (never a default tier)
     const leagueTier = toLeagueTier(other.league?.tier ?? other.tier ?? null);
     if (leagueTier) stats.push({ label: t('profile.stat.league'), value: leagueName(t, leagueTier) });

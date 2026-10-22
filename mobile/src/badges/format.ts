@@ -10,6 +10,9 @@ import {
   BADGE_FAMILIES,
   BADGE_TIERS,
   badgeDef,
+  badgeLeft,
+  badgeTierKey,
+  badgeViewFraction,
   type BadgeFamily,
   type BadgeTierKey,
   type BadgeUnit,
@@ -65,6 +68,33 @@ export const UNIT_KEY: Record<BadgeUnit, TranslationKey> = {
   letters: 'badges.unit.letters',
 };
 
+/** The same units for a count of exactly one: "1 season", never "1 seasons". */
+export const UNIT_ONE_KEY: Record<BadgeUnit, TranslationKey> = {
+  lessons: 'badges.unitOne.lessons',
+  words: 'badges.unitOne.words',
+  reviews: 'badges.unitOne.reviews',
+  stories: 'badges.unitOne.stories',
+  units: 'badges.unitOne.units',
+  days: 'badges.unitOne.days',
+  weeks: 'badges.unitOne.weeks',
+  wins: 'badges.unitOne.wins',
+  wpm: 'badges.unitOne.wpm',
+  races: 'badges.unitOne.races',
+  games: 'badges.unitOne.games',
+  gifts: 'badges.unitOne.gifts',
+  seasons: 'badges.unitOne.seasons',
+  years: 'badges.unitOne.years',
+  months: 'badges.unitOne.months',
+  times: 'badges.unitOne.times',
+  answers: 'badges.unitOne.answers',
+  letters: 'badges.unitOne.letters',
+};
+
+/** A badge unit worded for its count. */
+export function unitWord(t: Translate, unit: BadgeUnit, count: number): string {
+  return t(count === 1 ? UNIT_ONE_KEY[unit] : UNIT_KEY[unit]);
+}
+
 /** The catalogue key of one of a badge's words. */
 export function badgeTextKey(key: string, part: 'name' | 'meaning' | 'how' | 'hint'): TranslationKey {
   return `badges.${key}.${part}` as TranslationKey;
@@ -99,18 +129,37 @@ export function tierKeyAt(n: number): BadgeTierKey {
   return BADGE_TIERS[Math.max(1, Math.min(4, n)) - 1]!;
 }
 
-/** "7 / 30 days", or null once every tier is earned. */
-export function progressText(t: Translate, view: Pick<BadgeView, 'progress' | 'next' | 'unit'>): string | null {
+/**
+ * "7 / 30 days", and past halfway what is left ("3 days to go"), the smaller
+ * part being the one that keeps people going; null once every tier is earned.
+ */
+export function progressText(
+  t: Translate,
+  view: Pick<BadgeView, 'progress' | 'next' | 'unit' | 'tier' | 'thresholds'> & { hidden?: boolean },
+): string | null {
   if (view.next === null) return null;
-  return t('badges.progress', { progress: Math.min(view.progress, view.next), next: view.next, unit: t(UNIT_KEY[view.unit]) });
+  const left = badgeLeft({ ...view, hidden: view.hidden ?? false });
+  if (left !== null && left > 0) return t('badges.toGo', { count: left, unit: unitWord(t, view.unit, left) });
+  return t('badges.progress', { progress: Math.min(view.progress, view.next), next: view.next, unit: unitWord(t, view.unit, view.next) });
 }
 
 /** 0…1 towards the next tier, from the last one reached. */
-export function nextFraction(view: Pick<BadgeView, 'progress' | 'next' | 'tier' | 'thresholds'>): number {
-  if (view.next === null) return 1;
-  const from = view.tier > 0 ? (view.thresholds[view.tier - 1] ?? 0) : 0;
-  const span = view.next - from;
-  return span > 0 ? Math.max(0, Math.min(1, (view.progress - from) / span)) : 0;
+export const nextFraction = badgeViewFraction;
+
+/**
+ * The tier after the one just won ("Next: Zîv at 75 lessons"), so a new goal
+ * is in view the moment the last is reached: effort tends to drop once a badge
+ * is won, and picks up again with the next in sight. Null for the last tier.
+ */
+export function nextTierLine(t: Translate, key: string, tier: number): string | null {
+  const def = badgeDef(key);
+  if (!def || tier >= def.tiers.length) return null;
+  const need = def.tiers[tier]!;
+  const tierKey = badgeTierKey(def, tier + 1);
+  if (!tierKey) return null;
+  const name = t(TIER_KEY[tierKey]);
+  if (need === 'all') return t('badges.nextTierAll', { tier: name });
+  return t('badges.nextTier', { tier: name, count: need, unit: unitWord(t, def.unit, need) });
 }
 
 /** The badges in the families' order, each family's in the catalogue's. */

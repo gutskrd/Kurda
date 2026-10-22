@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { badgeDef, type BadgeUnlockedEvent, type BadgeTierKey, type UnseenBadge } from '@kurda/shared';
+import { badgeDef, badgeTierKey, type BadgeUnlockedEvent, type BadgeTierKey, type UnseenBadge } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
 import { useInvitesQuiet } from '../play/quietInvites';
 import { useRealtimeEvent } from '../realtime/RealtimeProvider';
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { Celebration, useCelebrationsHeld } from '../ranks/Celebration';
-import { badgeDesc, badgeNamed, badgeTierNamed, withMeaning } from '../ranks/names';
+import { badgeDesc, badgeNamed, badgeTierNamed, unitWord, withMeaning, type Translate } from '../ranks/names';
 import { Medal } from './parts';
 
 /** One unlock waiting to be celebrated. */
@@ -80,6 +80,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
   const tiered = (badgeDef(current.key)?.tiers.length ?? 1) > 1;
   const tierName = tiered && current.tierKey ? badgeTierNamed(t, current.tierKey).name : null;
   const title = named.name;
+  const next = current.secret ? null : nextTierLine(t, current.key, current.tier);
 
   function done(): void {
     void client.post('/me/badges/seen', { keys: [current!.key] });
@@ -103,6 +104,7 @@ export function BadgeCelebrations(): React.JSX.Element | null {
       extra={
         <>
           <p className="celebrate-desc">{badgeDesc(t, current.key)}</p>
+          {next && <p className="celebrate-note">{next}</p>}
           <Link to="/app/badges" className="celebrate-link" onClick={done}>
             {t('badges.seeAll')}
           </Link>
@@ -112,4 +114,20 @@ export function BadgeCelebrations(): React.JSX.Element | null {
       onClose={done}
     />
   );
+}
+
+/**
+ * The tier after the one just won, so a new goal is in view the moment the
+ * last is reached: effort tends to drop once a badge is won, and picks up
+ * again with the next in sight. Null for the last tier, or a single one.
+ */
+export function nextTierLine(t: Translate, key: string, tier: number): string | null {
+  const def = badgeDef(key);
+  if (!def || tier >= def.tiers.length) return null;
+  const need = def.tiers[tier]!;
+  const tierKey = badgeTierKey(def, tier + 1);
+  if (!tierKey) return null;
+  const name = badgeTierNamed(t, tierKey).name;
+  if (need === 'all') return t('badges.nextTierAll', { tier: name });
+  return t('badges.nextTier', { tier: name, count: need.toLocaleString(), unit: unitWord(t, def.unit, need) });
 }

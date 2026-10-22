@@ -20,7 +20,7 @@ import { useT } from '../i18n/I18nProvider';
 import { RankList, RankRow } from '../ui/RankRow';
 import { RankEmblem } from './art';
 import { RankCard } from './RankCard';
-import { gameName, rankLabel, rankTierNamed, seasonNamed } from './names';
+import { gameName, rankLabel, rankTierNamed, seasonDaysLeft, seasonNamed } from './names';
 
 /** The climb from the top down: Stêrk, then Lûtke to Deşt. */
 const LADDER: readonly RankTier[] = ['sterk', ...[...RANK_TIERS].reverse().map((r) => r.key)];
@@ -88,7 +88,7 @@ export function RanksPage(): React.JSX.Element {
       <Link to="/app/season" className="ranks-season-link ranks-page-season">
         <span className="ranks-season-name">{season.name}</span>
         <span className="ranks-season-days">
-          {ranks.season.daysLeft > 0 ? t('seasons.daysLeft', { days: ranks.season.daysLeft }) : t('seasons.lastDay')}
+          {seasonDaysLeft(t, ranks.season.daysLeft)}
         </span>
       </Link>
 

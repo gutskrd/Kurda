@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { SHOWCASE_SIZE, type BadgeView, type BadgesResponse } from '@kurda/shared';
+import { SHOWCASE_SIZE, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
@@ -22,7 +22,6 @@ import { Meter } from '../ranks/Meter';
 import { badgeTint } from '../ranks/tint';
 import {
   FAMILY_KEY,
-  UNIT_KEY,
   badgeLabel,
   badgeMeaning,
   badgeName,
@@ -34,6 +33,7 @@ import {
   tierKeyAt,
   tierLabel,
   tierName,
+  unitWord,
 } from './format';
 
 /**
@@ -43,7 +43,8 @@ import {
  * people learn here, and the three chosen for the profile.
  *
  * Nothing here is a list of failures: a badge not earned yet is drawn quietly
- * with what it takes, and the page opens on what has been earned.
+ * with what it takes, and the page opens on what has been earned, then on the
+ * few nearest their next tier: people try hardest when a goal is close.
  */
 export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Element {
   const { client } = useAuth();
@@ -67,6 +68,7 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
 
   const columns = width >= 600 ? 5 : width >= 360 ? 3 : 2;
   const tile = Math.floor((Math.min(width, 720) - spacing.lg * 2 - spacing.sm * (columns - 1)) / columns);
+  const nearest = data ? nearestBadges(data.badges) : [];
 
   return (
     <GradientBackground>
@@ -76,6 +78,19 @@ export function BadgesScreen({ onExit }: { onExit: () => void }): React.JSX.Elem
           data ? (
             <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
               <Showcase data={data} onPick={() => setPicking(true)} onOpen={setOpen} />
+
+              {nearest.length > 0 ? (
+                <View style={styles.family}>
+                  <Text style={[sectionLabel, { color: colors.textSecondary }]} accessibilityRole="header">
+                    {t('badges.nearest')}
+                  </Text>
+                  <View style={styles.grid}>
+                    {nearest.map((b) => (
+                      <BadgeTile key={b.key} badge={b} width={tile} onPress={() => setOpen(b)} />
+                    ))}
+                  </View>
+                </View>
+              ) : null}
 
               {byFamily(data.badges).map((group) => (
                 <View key={group.family} style={styles.family}>
@@ -362,7 +377,7 @@ function BadgeSheet({
                   <Text style={[styles.rungName, { color: colors.textPrimary }]}>{tierLabel(t, key)}</Text>
                   <Text style={[styles.rungFact, { color: colors.textSecondary }]}>
                     {[
-                      threshold > 0 ? `${threshold} ${t(UNIT_KEY[badge.unit])}` : null,
+                      threshold > 0 ? `${threshold} ${unitWord(t, badge.unit, threshold)}` : null,
                       reached && when ? t('badges.earnedOn', { date: dateOf(when, locale) }) : null,
                       rare !== undefined ? rarityText(t, rare) : null,
                     ]

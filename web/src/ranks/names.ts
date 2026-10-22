@@ -228,6 +228,39 @@ export const UNIT_KEY: Record<BadgeUnit, MessageKey> = {
   letters: 'badges.unit.letters',
 };
 
+/** "12 days left", "One day left", or the season's last day: calm, no countdown. */
+export function seasonDaysLeft(t: Translate, days: number): string {
+  if (days <= 0) return t('seasons.lastDay');
+  return days === 1 ? t('seasons.oneDayLeft') : t('seasons.daysLeft', { days });
+}
+
+/** The same units for a count of exactly one: "1 season", never "1 seasons". */
+export const UNIT_ONE_KEY: Record<BadgeUnit, MessageKey> = {
+  lessons: 'badges.unitOne.lessons',
+  words: 'badges.unitOne.words',
+  reviews: 'badges.unitOne.reviews',
+  stories: 'badges.unitOne.stories',
+  units: 'badges.unitOne.units',
+  days: 'badges.unitOne.days',
+  weeks: 'badges.unitOne.weeks',
+  wins: 'badges.unitOne.wins',
+  wpm: 'badges.unitOne.wpm',
+  races: 'badges.unitOne.races',
+  games: 'badges.unitOne.games',
+  gifts: 'badges.unitOne.gifts',
+  seasons: 'badges.unitOne.seasons',
+  years: 'badges.unitOne.years',
+  months: 'badges.unitOne.months',
+  times: 'badges.unitOne.times',
+  answers: 'badges.unitOne.answers',
+  letters: 'badges.unitOne.letters',
+};
+
+/** A badge unit worded for its count. */
+export function unitWord(t: Translate, unit: BadgeUnit, count: number): string {
+  return t(count === 1 ? UNIT_ONE_KEY[unit] : UNIT_KEY[unit]);
+}
+
 interface BadgeKeys {
   name: MessageKey;
   meaning: MessageKey;
