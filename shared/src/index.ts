@@ -421,3 +421,5 @@ export * from './lipsync/index.js';
 export * from './characters/index.js';
 /** "Chrome on Windows": the name a signed-in browser is listed under. */
 export { DEVICE_NAME_MAX, deviceNameFrom } from './device-name.js';
+/** How the wall can be ordered — newest, oldest, most popular, most discussed — and how far back a ranked wall looks. */
+export * from './feed-sort.js';

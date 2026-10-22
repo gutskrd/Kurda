@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { FEED_PERIODS, FEED_SORTS, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { FeedService, isFeedKind, isFeedSection } from './service.js';
@@ -21,15 +22,20 @@ export function registerFeedRoutes(app: FastifyInstance): void {
         querystring: z.object({
           section: z.string().max(16).optional(),
           kind: z.string().max(16).optional(),
+          // newest first unless asked; a range only means something to the two ranked orders
+          sort: z.enum(FEED_SORTS).optional(),
+          period: z.enum(FEED_PERIODS).optional(),
           limit: z.coerce.number().int().min(1).max(50).optional(),
           offset: z.coerce.number().int().min(0).max(10_000).optional(),
         }),
       },
     },
     async (req) => {
-      const { section = 'all', kind = 'all', limit, offset } = req.query as {
+      const { section = 'all', kind = 'all', sort, period, limit, offset } = req.query as {
         section?: string;
         kind?: string;
+        sort?: FeedSort;
+        period?: FeedPeriod;
         limit?: number;
         offset?: number;
       };
@@ -39,6 +45,8 @@ export function registerFeedRoutes(app: FastifyInstance): void {
       const items = await feed.list(req.user?.id ?? null, {
         section,
         kind,
+        sort,
+        period,
         limit,
         offset,
         publicUrl: (k) => (app.storage ? app.storage.publicUrl(k) : null),
