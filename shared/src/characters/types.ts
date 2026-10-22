@@ -104,6 +104,13 @@ export interface CharacterArt {
   headPivot: CharacterPoint;
   /** everything that never moves, all of it behind the head */
   body: string;
+  /**
+   * The body cut off under the chest, for a portrait that shows only that
+   * much of him (a badge): the same drawing as `body` down to there, under
+   * the same ids, so it is drawn in place of `body`, never beside it. Only a
+   * character drawn for it has one.
+   */
+  chest?: string;
   /** the head without its eyes or mouth */
   head: string;
   /**

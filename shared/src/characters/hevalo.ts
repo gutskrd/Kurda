@@ -140,7 +140,20 @@ const HIND_HOOF_RIGHT: Knot[] = atK([
   [208.1, 606.4], [207.6, 608.8], [208.8, 610.6], [208.5, 612.8],
 ]);
 
-function body(p: string): string {
+/**
+ * The same outline cut off straight under his chest: for a portrait that
+ * shows him from the antlers to the chest (a badge), with the legs it hides
+ * left out rather than drawn and covered.
+ */
+const CHEST: Knot[] = atK([
+  [223.0, 331.6], [242.7, 376.7], [247.5, 393.1], [248.9, 402.5], [249.2, 409.1], [247.6, 425.8], [244.7, 436.6],
+  [241.7, 444.5], [236.7, 468.8], [236.2, 476, 0.4], [149.8, 476, 0.4], [149.3, 462.3], [145.6, 444.5], [142.4, 436.0],
+  [139.4, 425.4], [138.2, 416.1], [138.0, 405.9], [139.5, 393.6], [142.2, 382.6], [163.0, 331.9], [164.6, 326.5],
+  [166, 300, 0.4], [220, 300, 0.4], [220.8, 312],
+]);
+
+/** The body: neck, chest and legs — or, `legs` false, only as far as the chest. */
+function body(p: string, legs = true): string {
   const id = (name: string): string => `${p}${name}`;
   const [, neck] = at(0, 318);
   const [left] = at(137, 0);
@@ -168,7 +181,7 @@ function body(p: string): string {
         [1, C.edge, 0.55],
       ], left, 0, right, 0),
       clipDef(id('torso'), `M${n(at(120, 0)[0])},${n(at(0, 290)[1])}H${n(at(266, 0)[0])}V${n(at(0, 470)[1])}H${n(at(120, 0)[0])}z`),
-      clipDef(id('figure'), curve(FRONT)),
+      clipDef(id('figure'), curve(legs ? FRONT : CHEST)),
       radialBox(id('neckside'), [
         [0, C.edge, 0.6],
         [1, C.edge, 0],
@@ -183,28 +196,41 @@ function body(p: string): string {
         [0.45, C.bibTop],
         [1, C.bib],
       ], 0, bibTop, 0, bibMid),
-      linearAt(id('hoof'), [
-        [0, C.hoofLight],
-        [0.4, C.hoof],
-        [1, C.hoofDeep],
-      ], 0, hoofTop, 0, hoofEnd),
+      ...(legs
+        ? [
+            linearAt(id('hoof'), [
+              [0, C.hoofLight],
+              [0.4, C.hoof],
+              [1, C.hoofDeep],
+            ], 0, hoofTop, 0, hoofEnd),
+          ]
+        : []),
     ],
     [
-      fill(curve(HIND_LEFT) + curve(HIND_RIGHT), C.hind),
-      fill(curve(HIND_HOOF_LEFT) + curve(HIND_HOOF_RIGHT), C.hindHoof),
-      fill(curve(FRONT), `url(#${id('fur')})`),
+      ...(legs ? [fill(curve(HIND_LEFT) + curve(HIND_RIGHT), C.hind), fill(curve(HIND_HOOF_LEFT) + curve(HIND_HOOF_RIGHT), C.hindHoof)] : []),
+      fill(curve(legs ? FRONT : CHEST), `url(#${id('fur')})`),
       // the sides of the body and neck turn from the light; the legs below are lit evenly
-      clipped(id('torso'), fill(curve(FRONT), `url(#${id('side')})`)),
+      clipped(id('torso'), fill(curve(legs ? FRONT : CHEST), `url(#${id('side')})`)),
       // each side of the neck in shade, softly
       clipped(id('figure'), ellipse(at(166.6, 0)[0], at(0, 332)[1], 34, 92, `url(#${id('neckside')})`) + ellipse(at(219.4, 0)[0], at(0, 332)[1], 34, 92, `url(#${id('neckside')})`)),
       // the shadow the head throws on the neck
       ellipse(at(192.6, 0)[0], at(0, 321)[1], 86, 44, `url(#${id('chin')})`),
       fill(curve(BIB), `url(#${id('bib')})`),
-      fill(curve(HOOF_LEFT) + curve(HOOF_RIGHT), `url(#${id('hoof')})`),
-      // the split between the two toes of each hoof
-      fill(taper(atK([[166.6, 616], [166.8, 620], [166.9, 623.4]]).map(([x, y]) => [x, y] as Pt), [0, 3, 4]) + taper(atK([[219, 616], [218.8, 620], [218.6, 623.6]]).map(([x, y]) => [x, y] as Pt), [0, 3, 4]), C.hoofDeep),
+      ...(legs ? hooves(p) : []),
     ],
   );
+}
+
+/** The front hooves, and the split between the two toes of each. */
+function hooves(p: string): string[] {
+  return [
+    fill(curve(HOOF_LEFT) + curve(HOOF_RIGHT), `url(#${p}hoof)`),
+    fill(
+      taper(atK([[166.6, 616], [166.8, 620], [166.9, 623.4]]).map(([x, y]) => [x, y] as Pt), [0, 3, 4]) +
+        taper(atK([[219, 616], [218.8, 620], [218.6, 623.6]]).map(([x, y]) => [x, y] as Pt), [0, 3, 4]),
+      C.hoofDeep,
+    ),
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────── the head
@@ -817,6 +843,7 @@ export function drawHevalo(p: string): CharacterArt {
     half: { x: -14, y: -14, w: 540, h: 1034 },
     headPivot: { x: AXIS, y: 446 },
     body: body(p),
+    chest: body(p, false),
     head: head(p),
     eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p) },
     mouths: deerMouths(p),

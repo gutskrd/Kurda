@@ -1,76 +1,94 @@
 /**
- * What Hevalo is doing on each badge: his mood and pose, and the badge's own
- * picture as the thing he holds up, holds at his chest, or stands in front
- * of — the book he is reading, the gem he has found, the fire of Newroz
- * behind him — or what he wears for it: glasses over the dictionary,
- * headphones to listen, a scarf in winter, flowers in spring.
+ * What Hevalo is doing on each badge: his face — laughing, amazed, proud,
+ * dreaming — the small turn of his head, and where the badge's own picture
+ * is: beside him, down by his chest, as if he were showing it to you (the
+ * book he has read, the gem he has found), or behind him over a shoulder
+ * (the sun he basks in, the snow of winter).
  *
- * Positions are in his own units (mascot.ts): `hold` is where his hooves
- * meet at his chest, `raised` above his raised hoof, `behind` round his head,
- * `front` before his chest with his hooves free.
- * A secret, once found, is not his: it is a treasure on its own (badges.ts).
+ * He is the speaking character himself (characters/hevalo.ts), the same
+ * deer as the app icon, so his faces are the ones he speaks with: his eyes
+ * open, half shut, shut or smiling, and his mouth in one of its shapes.
+ * On a badge not yet earned he is dreaming of it, eyes shut (badges.ts).
+ * A secret, once found, is not his: it is a treasure on its own.
  */
-import type { DeerPose } from './mascot.js';
+import type { EyeState } from '../characters/types.js';
+import type { Viseme } from '../lipsync/visemes.js';
+
+export type Mood = 'happy' | 'laugh' | 'grin' | 'wow' | 'proud' | 'focus' | 'dream';
+
+/** Each mood as his eyes and his mouth. */
+export const FACES: Readonly<Record<Mood, { eyes: EyeState; mouth: Viseme }>> = {
+  happy: { eyes: 'happy', mouth: 'e' },
+  laugh: { eyes: 'happy', mouth: 'a' },
+  grin: { eyes: 'open', mouth: 'e' },
+  wow: { eyes: 'open', mouth: 'o' },
+  proud: { eyes: 'happy', mouth: 'rest' },
+  focus: { eyes: 'open', mouth: 'rest' },
+  dream: { eyes: 'closed', mouth: 'rest' },
+};
 
 export interface Prop {
-  at: 'hold' | 'raised' | 'behind' | 'front';
-  /** how big, 1 being the 40-unit picture at his own scale */
-  scale: number;
+  /** beside him, down by his chest, or behind him over a shoulder */
+  at: 'beside' | 'behind';
+  /** how big, against the badge's own size for a picture there */
+  scale?: number;
+  /** moved this far from its place, in the badge's units */
   dx?: number;
   dy?: number;
   rotate?: number;
 }
 
 export interface Scene {
-  pose: DeerPose;
-  /** the badge's own picture, and where it goes; none when what he wears says it */
-  prop?: Prop;
+  mood: Mood;
+  /** how far his head is turned, in degrees: to his left below 0 */
+  tilt?: number;
+  prop: Prop;
 }
 
-const hold = (scale = 1.6, rotate = 0): Prop => ({ at: 'hold', scale, rotate });
-const raised = (scale = 1.5, rotate = 0): Prop => ({ at: 'raised', scale, rotate });
-const behind = (scale: number, dx = 0, dy = -20): Prop => ({ at: 'behind', scale, dx, dy });
+const beside = (rotate = 0, scale = 1): Prop => ({ at: 'beside', scale, rotate });
+/** Behind him, over one shoulder: `side` -1 his right (the badge's left), 1 his left. */
+const behind = (side: -1 | 1, scale = 1, dy = 0): Prop => ({ at: 'behind', scale, dx: side, dy });
 
 export const SCENES: Readonly<Record<string, Scene>> = {
   // learning
-  ders: { pose: { mood: 'happy', arms: 'hold' }, prop: hold(2.49) },
-  'peyven-min': { pose: { mood: 'laugh', arms: 'raise', tilt: -6 }, prop: raised(2.13) },
-  bekemasi: { pose: { mood: 'wow', arms: 'raise' }, prop: raised(2.13) },
-  dubare: { pose: { mood: 'wink', arms: 'hold', tilt: 6 }, prop: hold(2.3) },
-  cirokbej: { pose: { mood: 'proud', arms: 'hold' }, prop: hold(2.39, -10) },
-  rewi: { pose: { mood: 'laugh', arms: 'raise', tilt: -5 }, prop: raised(2) },
-  ferheng: { pose: { mood: 'focus', arms: 'hold', wear: ['glasses'] }, prop: hold(2.39) },
+  ders: { mood: 'happy', prop: beside() },
+  'peyven-min': { mood: 'laugh', tilt: -5, prop: beside(-8) },
+  bekemasi: { mood: 'wow', prop: beside() },
+  dubare: { mood: 'grin', tilt: 5, prop: beside() },
+  cirokbej: { mood: 'proud', prop: beside(-8) },
+  rewi: { mood: 'laugh', tilt: -4, prop: beside() },
+  ferheng: { mood: 'focus', prop: beside() },
   // habit
-  agir: { pose: { mood: 'laugh', arms: 'raise' }, prop: raised(2.15) },
-  hefte: { pose: { mood: 'happy', arms: 'hold' }, prop: hold(2.31) },
-  roj: { pose: { mood: 'dream', arms: 'down', tilt: 6 }, prop: behind(2.4, -44, -40) },
-  vegera: { pose: { mood: 'laugh', arms: 'raise', tilt: -8 }, prop: raised(2.02, -10) },
-  pela: { pose: { mood: 'wow', arms: 'cheer' }, prop: { at: 'front', scale: 2.2, dy: 6 } },
+  agir: { mood: 'laugh', prop: beside() },
+  hefte: { mood: 'happy', prop: beside() },
+  roj: { mood: 'dream', tilt: 5, prop: behind(-1, 1.05) },
+  vegera: { mood: 'laugh', tilt: -6, prop: beside(-8) },
+  pela: { mood: 'wow', prop: beside() },
   // games
-  peyvzan: { pose: { mood: 'proud', arms: 'hold' }, prop: hold(2.22) },
-  helbestvan: { pose: { mood: 'dream', arms: 'hold', tilt: -6 }, prop: hold(2.67, 8) },
-  bilez: { pose: { mood: 'focus', arms: 'hold', wear: ['headband'] }, prop: hold(2.22) },
-  rastnivis: { pose: { mood: 'wink', arms: 'hold' }, prop: hold(2.22) },
-  guhdar: { pose: { mood: 'dream', arms: 'down', tilt: -7, wear: ['headphones'] } },
-  hemereng: { pose: { mood: 'laugh', arms: 'raise' }, prop: raised(2.13) },
-  dilpak: { pose: { mood: 'happy', arms: 'hold', tilt: 5 }, prop: hold(2.31) },
-  // ranked: the six tiers hold up their stone (badges.ts); the rest
-  hilkiser: { pose: { mood: 'proud', arms: 'cheer' }, prop: { at: 'front', scale: 2.1, dy: 12 } },
-  cihgirti: { pose: { mood: 'happy', arms: 'raise' }, prop: raised(2.02) },
+  peyvzan: { mood: 'proud', prop: beside() },
+  helbestvan: { mood: 'dream', tilt: -5, prop: beside(8) },
+  bilez: { mood: 'focus', prop: beside() },
+  rastnivis: { mood: 'grin', prop: beside() },
+  guhdar: { mood: 'dream', tilt: -6, prop: beside() },
+  hemereng: { mood: 'laugh', prop: beside() },
+  dilpak: { mood: 'happy', tilt: 4, prop: beside() },
+  // ranked: the six tiers show their stone (badges.ts); the rest
+  hilkiser: { mood: 'proud', prop: beside() },
+  cihgirti: { mood: 'happy', prop: beside() },
   // friends
-  heval: { pose: { mood: 'happy', arms: 'hold', tilt: 6 }, prop: hold(2.31) },
-  diyari: { pose: { mood: 'wow', arms: 'hold' }, prop: hold(2.31) },
-  mevandar: { pose: { mood: 'happy', arms: 'raise' }, prop: raised(2.13) },
+  heval: { mood: 'happy', tilt: 5, prop: beside() },
+  diyari: { mood: 'wow', prop: beside() },
+  mevandar: { mood: 'happy', prop: beside() },
   // events
-  newroz: { pose: { mood: 'laugh', arms: 'cheer' }, prop: { at: 'front', scale: 2.2, dy: 6 } },
-  'roja-ziman': { pose: { mood: 'proud', arms: 'hold' }, prop: hold(2.22, -12) },
-  'zimane-dayike': { pose: { mood: 'happy', arms: 'raise' }, prop: raised(2.13) },
-  zivistan: { pose: { mood: 'happy', arms: 'down', wear: ['scarf'] }, prop: behind(1.7, -48, -40) },
-  bihar: { pose: { mood: 'laugh', arms: 'down', wear: ['flowers'] } },
-  havin: { pose: { mood: 'proud', arms: 'down', wear: ['sunglasses'], tilt: -6 }, prop: behind(2.1, 46, -44) },
-  payiz: { pose: { mood: 'dream', arms: 'raise' }, prop: raised(2.13, 10) },
-  mehane: { pose: { mood: 'wow', arms: 'down' }, prop: behind(2, 46, -46) },
+  newroz: { mood: 'laugh', prop: beside() },
+  'roja-ziman': { mood: 'proud', prop: beside(-10) },
+  'zimane-dayike': { mood: 'happy', prop: beside() },
+  zivistan: { mood: 'happy', prop: behind(-1, 0.9) },
+  bihar: { mood: 'laugh', prop: beside() },
+  havin: { mood: 'proud', tilt: -5, prop: behind(1, 1.05) },
+  payiz: { mood: 'dream', prop: beside(10) },
+  mehane: { mood: 'wow', prop: behind(1, 1) },
 };
 
-/** The ranked tiers' scene: Hevalo holding the rank's stone at his chest, amazed. */
-export const STONE_SCENE: Scene = { pose: { mood: 'wow', arms: 'hold' } };
+/** The ranked tiers' scene: the rank's own stone beside him, and Hevalo amazed at it. */
+export const STONE_SCENE: Scene = { mood: 'wow', prop: beside() };

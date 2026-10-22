@@ -42,6 +42,82 @@ export function linePath(points: readonly Pt[]): string {
   return `M${pt(first)}L${rest.map(pt).join(' ')}`;
 }
 
+/** How many numbers each path command takes. */
+const PATH_ARGS: Readonly<Record<string, number>> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
+
+/**
+ * A path's points in whole units: for a drawing shown far smaller than it was
+ * drawn (Hevalo on a badge is about an eighth of his own size), where a tenth
+ * of a unit is much finer than a pixel and only costs characters. Each step
+ * is measured from where the rounded path has actually got to, so rounding
+ * never adds up along a long outline of small steps: every point lands within
+ * half a unit of where it was drawn. An arc keeps its radii as they were. A
+ * path it cannot read is given back as it came.
+ */
+export function wholePath(d: string): string {
+  const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? [];
+  let out = '';
+  // where the path truly is, where its rounded copy is, and where the current outline began
+  let [x, y, rx, ry] = [0, 0, 0, 0];
+  let [sx, sy] = [0, 0];
+  let cmd = '';
+  const put = (v: number | string): void => {
+    const s = typeof v === 'string' ? v : String(Object.is(v, -0) ? 0 : v);
+    out += /[\d.]$/.test(out) && !s.startsWith('-') ? ` ${s}` : s;
+  };
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i] as string;
+    if (/[A-Za-z]/.test(t)) {
+      cmd = t;
+      i += 1;
+      out += t;
+      if (t === 'z' || t === 'Z') [x, y, rx, ry] = [sx, sy, Math.round(sx), Math.round(sy)];
+      continue;
+    }
+    const lower = cmd.toLowerCase();
+    const count = PATH_ARGS[lower];
+    if (count === undefined || count === 0 || i + count > tokens.length) return d;
+    const args = tokens.slice(i, i + count);
+    if (args.some((a) => /[A-Za-z]/.test(a))) return d;
+    i += count;
+    const rel = cmd === lower;
+    const [ox, oy, rox, roy] = rel ? [x, y, rx, ry] : [0, 0, 0, 0];
+    const ax = (v: string): number => ox + Number(v);
+    const ay = (v: string): number => oy + Number(v);
+    const px = (v: string): void => put(Math.round(ax(v)) - rox);
+    const py = (v: string): void => put(Math.round(ay(v)) - roy);
+    if (lower === 'h') {
+      px(args[0] as string);
+      x = ax(args[0] as string);
+    } else if (lower === 'v') {
+      py(args[0] as string);
+      y = ay(args[0] as string);
+    } else if (lower === 'a') {
+      for (const a of args.slice(0, 5)) put(a);
+      px(args[5] as string);
+      py(args[6] as string);
+      [x, y] = [ax(args[5] as string), ay(args[6] as string)];
+    } else {
+      for (let k = 0; k < count; k += 2) {
+        px(args[k] as string);
+        py(args[k + 1] as string);
+      }
+      [x, y] = [ax(args[count - 2] as string), ay(args[count - 1] as string)];
+      if (lower === 'm') {
+        [sx, sy] = [x, y];
+        // the pairs after a move are lines
+        cmd = rel ? 'l' : 'L';
+      }
+    }
+    [rx, ry] = [Math.round(x), Math.round(y)];
+  }
+  return out;
+}
+
+/** Every path in a piece of markup in whole units (`wholePath`). */
+export const wholeUnits = (markup: string): string => markup.replace(/ d="([^"]*)"/g, (_, d: string) => ` d="${wholePath(d)}"`);
+
 /**
  * Text that goes inside `<title>` or an attribute. A title is a caller's
  * string — often a translation, sometimes a person's own words — and the web

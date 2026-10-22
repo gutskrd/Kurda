@@ -28,7 +28,8 @@ import { ICONS } from './icons.js';
 import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE } from './badges.js';
-import { escapeXml } from './svg.js';
+import { escapeXml, wholePath } from './svg.js';
+import { characterArt } from '../characters/index.js';
 import { BADGES as CATALOGUE, BADGE_FAMILIES as CATALOGUE_FAMILIES, BADGE_TIERS as CATALOGUE_TIERS } from '../badges.js';
 import { LEAGUE_TIERS as CATALOGUE_LEAGUE_TIERS } from '../leagues.js';
 import { RANK_TIER_KEYS, SEASON_NAMES as SEASON_LABEL_KEYS } from '../ranks.js';
@@ -340,6 +341,22 @@ describe('badgeSvg', () => {
     expect(new Set(secrets.map((s) => s.replace(/<circle[^>]*fill-opacity[^>]*\/>/g, ''))).size).toBe(1);
   });
 
+  it('shows Hevalo himself, the drawing he speaks with, in greys until it is earned', () => {
+    const art = characterArt('hevalo', 'own');
+    const antlers = wholePath(/ d="([^"]*)"/.exec(art.head)?.[1] ?? '');
+    const fur = /fill="(#[0-9a-f]{6})"/.exec(art.head)?.[1] ?? '';
+    expect(antlers.length).toBeGreaterThan(200);
+    for (const key of ['agir', 'rank-ciya', 'newroz'] as BadgeKey[]) {
+      expect(badgeSvg({ key })).toContain(antlers);
+      expect(badgeSvg({ key, size: 40 })).toContain(antlers);
+      expect(badgeSvg({ key, state: 'locked' })).toContain(antlers);
+      expect(badgeSvg({ key, state: 'locked' })).not.toContain(fur);
+    }
+    // a secret, found or not, is not his
+    expect(badgeSvg({ key: 'tire-rast' })).not.toContain(antlers);
+    expect(badgeSvg({ key: 'tire-rast', state: 'secret' })).not.toContain(antlers);
+  });
+
   it('gives every family a soft, symmetrical silhouette: every outward corner rounded', () => {
     for (const family of BADGE_FAMILIES) {
       const body = SHAPES[family].body;
@@ -413,6 +430,74 @@ describe('badgeSvg', () => {
     expect(() => badgeSvg({ key: 'agir', size: 0 })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', size: Number.NaN })).toThrow(RangeError);
     expect(() => badgeSvg({ key: 'agir', idPrefix: 'a b"' })).toThrow(RangeError);
+  });
+});
+
+/** Every point a path passes through or pulls toward, where it truly is on the page. */
+function pointsOf(d: string): (readonly [number, number])[] {
+  const ARGS: Record<string, number> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
+  const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? [];
+  const out: (readonly [number, number])[] = [];
+  let [x, y, sx, sy] = [0, 0, 0, 0];
+  let cmd = '';
+  for (let i = 0; i < tokens.length; ) {
+    const t = tokens[i] as string;
+    if (/[A-Za-z]/.test(t)) {
+      cmd = t;
+      i += 1;
+      if (t === 'z' || t === 'Z') [x, y] = [sx, sy];
+      continue;
+    }
+    const lower = cmd.toLowerCase();
+    const args = tokens.slice(i, i + (ARGS[lower] ?? 0)).map(Number);
+    i += args.length;
+    const [ox, oy] = cmd === lower ? [x, y] : [0, 0];
+    if (lower === 'h') x = ox + (args[0] ?? 0);
+    else if (lower === 'v') y = oy + (args[0] ?? 0);
+    else {
+      const from = lower === 'a' ? 5 : 0;
+      for (let k = from; k < args.length; k += 2) out.push([ox + (args[k] ?? 0), oy + (args[k + 1] ?? 0)]);
+      [x, y] = [ox + (args[args.length - 2] ?? 0), oy + (args[args.length - 1] ?? 0)];
+      if (lower === 'm') {
+        [sx, sy] = [x, y];
+        cmd = cmd === 'm' ? 'l' : 'L';
+      }
+    }
+    out.push([x, y]);
+  }
+  return out;
+}
+
+describe('wholePath', () => {
+  const near = (d: string): void => {
+    const was = pointsOf(d);
+    const now = pointsOf(wholePath(d));
+    expect(now).toHaveLength(was.length);
+    now.forEach(([x, y], i) => {
+      const [wx, wy] = was[i] as readonly [number, number];
+      expect(Math.abs(x - wx)).toBeLessThanOrEqual(0.5 + 1e-9);
+      expect(Math.abs(y - wy)).toBeLessThanOrEqual(0.5 + 1e-9);
+      expect(Number.isInteger(x) && Number.isInteger(y)).toBe(true);
+    });
+  };
+
+  it('never lets rounding add up along a long outline of small steps', () => {
+    near(`M0.4,0.4${'c0.4,0.4 0.8,0.8 1.4,1.4s0.4,0.4 1.4,1.4'.repeat(60)}l-0.3,40.4h-20.4v-0.4z`);
+    near('M174,266.6a10.4,10.4 0 1 0 20.8,0a10.4,10.4 0 1 0 -20.8,0zm5.5,1.5l2.4,2.4 2.4,2.4z');
+    near('M10.6,10.4L30.4,20.6C40.4,40.6 50.5,60.5 70.4,80.6S90.4,100.4 110.6,90.4H5.5V2.5Z');
+  });
+
+  it('keeps every point of Hevalo within half a unit of where he was drawn', () => {
+    const art = characterArt('hevalo', 'whole');
+    const markup = (art.chest ?? '') + art.head + art.overlay + Object.values(art.eyes).join('') + Object.values(art.mouths).join('');
+    const paths = [...markup.matchAll(/ d="([^"]*)"/g)].map((m) => m[1] as string);
+    expect(paths.length).toBeGreaterThan(20);
+    for (const d of paths) near(d);
+  });
+
+  it('gives back a path it cannot read as it came', () => {
+    expect(wholePath('M1.5,2.5Q3.5')).toBe('M1.5,2.5Q3.5');
+    expect(wholePath('M1.5,2.5X4,5')).toBe('M1.5,2.5X4,5');
   });
 });
 
@@ -662,8 +747,10 @@ describe('light', () => {
 
 describe('weight', () => {
   it('keeps every drawing small enough to inline a page of them', () => {
+    // a badge carries Hevalo himself, the drawing he speaks with, so it may be half as heavy again as an emblem
+    const badges = Math.max(...BADGE_KEYS.flatMap((key) => TIERS.flatMap((tier) => [badgeSvg({ key, tier }).length, badgeSvg({ key, tier, size: 40 }).length])));
+    expect(badges).toBeLessThan(24 * 1024);
     const biggest = Math.max(
-      ...BADGE_KEYS.flatMap((key) => TIERS.map((tier) => badgeSvg({ key, tier }).length)),
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, division: 1 }).length),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }).length),
       ...RANK_TIERS.map((tier) => seasonFrameSvg({ tier, shine: true }).length),

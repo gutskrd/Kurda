@@ -109,6 +109,7 @@ function parts(art: CharacterArt): [string, string][] {
 function extras(art: CharacterArt): [string, string][] {
   const rig = art.rig;
   return [
+    ...(art.chest ? ([['chest', art.chest]] as [string, string][]) : []),
     ['eyes.happy', art.eyes.happy],
     ...(art.eyes.half ? ([['eyes.half', art.eyes.half]] as [string, string][]) : []),
     ...(rig
@@ -209,7 +210,8 @@ describe('the characters', () => {
         expect(total).toBeLessThan(31_000);
         for (const v of VISEMES) expect(bytes(art.mouths[v]), v).toBeLessThan(2_500);
         expect(bytes(art.eyes.open) + bytes(art.eyes.closed)).toBeLessThan(3_500);
-        for (const [name, markup] of extras(art)) expect(bytes(markup), name).toBeLessThan(name === 'rig.face' ? 9_000 : 3_000);
+        const budget: Record<string, number> = { 'rig.face': 9_000, chest: 5_000 };
+        for (const [name, markup] of extras(art)) expect(bytes(markup), name).toBeLessThan(budget[name] ?? 3_000);
       });
 
       it('uses no pictures, filters, masks, styles or text', () => {
@@ -219,6 +221,19 @@ describe('the characters', () => {
       });
     });
   }
+
+  it('cuts Hevalo off under his chest, for a badge: the body down to there, drawn in its place', () => {
+    const art = characterArt('hevalo');
+    const chest = art.chest ?? '';
+    const { problems, ids, refs } = inspect(chest);
+    expect(problems).toEqual([]);
+    for (const r of refs) expect(ids).toContain(r);
+    // the same drawing as the body, under the same ids, less the legs and the hooves
+    expect(new Set(ids)).toEqual(new Set(inspect(art.body).ids.filter((i) => !i.endsWith('hoof'))));
+    expect(bytes(chest)).toBeLessThan(bytes(art.body) / 2);
+    expect(characterArt('hamo').chest).toBeUndefined();
+    expect(characterArt('xezo').chest).toBeUndefined();
+  });
 
   it('is the same string every time it is drawn', () => {
     for (const id of CHARACTER_IDS) {
