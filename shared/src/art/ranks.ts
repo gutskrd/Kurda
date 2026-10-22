@@ -1,22 +1,23 @@
 /**
  * Game-rank emblems (contract 4, R4/B3): six tiers, each a crest — a cut
- * stone in a chiselled bezel, set in the tier's own metal, with a setting
- * that grows as the player climbs (see crest.ts).
+ * stone in a rounded bezel, set in the tier's own metal, with a setting that
+ * grows as the player climbs (see crest.ts).
  *
  *   Deşt, the plain     a carnelian shield, alone in its bezel
  *   Gir, the hills      an emerald kite with a first pair of wings
- *   Zozan, the pasture  a turquoise hexagon, its wings fuller
- *   Çiya, the mountain  a sapphire peak, wings above and below and a chevron under it
- *   Lûtke, the summit   an amethyst octagon under a crown, glowing
- *   Stêrk, the star     a round stone of starlight in gold, the full crest: a jewelled crown, a hanging stone, rays and light
+ *   Zozan, the pasture  a turquoise hexagon, its wings fuller, beads round its bezel
+ *   Çiya, the mountain  a sapphire peak on a laurel
+ *   Lûtke, the summit   an amethyst octagon under a crown of pearls, glowing
+ *   Stêrk, the star     a round stone of starlight in gold, the full crest: a star on its crown, a hanging stone, the sun's rays
  *
- * Into each stone is cut the place it is named for — an ear of wheat, the
- * hills, the black tent, the peak, the flag on the summit, the sun — so the
- * crest still says where you are, the way the old medallions' pictures did.
+ * Into each stone is cut, in white, the place it is named for — a sheaf of
+ * wheat, the hills, the black tent, the snowy peak, the star over the summit,
+ * the eight-pointed star — so the crest still says where you are.
  *
- * The division is a row of three small cut stones under the crest, lit as the
- * player climbs: one for III, two for II, three for I — counted, not
- * coloured, so it reads for everyone; the title carries the numeral.
+ * The division is a small plaque under the crest with three stones set in
+ * it, lit as the player climbs: one for III, two for II, three for I —
+ * counted, not coloured, so it reads for everyone; the title carries the
+ * numeral.
  *
  * A season's emblem — the peak tier a player reached, kept for good (R5) —
  * swaps the stones for the season's own plaque: its glyph (blossom, sun,
@@ -24,7 +25,7 @@
  * two figures, so last spring's Çiya is not this spring's.
  *
  * Small sizes get their own drawing rather than a shrunken one: under
- * SMALL_EMBLEM pixels the crest fills its square, keeps its longest blades and
+ * SMALL_EMBLEM pixels the crest fills its square, keeps its longest feathers and
  * drops the division (the app writes it beside it); under TINY_EMBLEM the
  * stone's table and its glyph go, and the setting keeps only what makes its
  * outline.
@@ -60,13 +61,13 @@ export function detailFor(size: number, small = SMALL_EMBLEM, tiny = TINY_EMBLEM
 // ─────────────────────────────────────────────────────────── the ladder
 
 /** Each tier's crest: the cut of its stone and how grand its setting is. */
-const LADDER: Record<RankTier, Pick<Crest, 'cut' | 'wings' | 'base' | 'crown' | 'glow' | 'rays'>> = {
-  dest: { cut: 'shield', wings: 0, base: 0, crown: 'none', glow: 0, rays: false },
-  gir: { cut: 'kite', wings: 1, base: 0, crown: 'none', glow: 0, rays: false },
-  zozan: { cut: 'hexagon', wings: 2, base: 0, crown: 'none', glow: 0, rays: false },
-  ciya: { cut: 'peak', wings: 3, base: 1, crown: 'none', glow: 0, rays: false },
-  lutke: { cut: 'octagon', wings: 4, base: 1, crown: 'spikes', glow: 0.32, rays: false },
-  sterk: { cut: 'brilliant', wings: 5, base: 2, crown: 'jewel', glow: 0.55, rays: true },
+const LADDER: Record<RankTier, Pick<Crest, 'cut' | 'wings' | 'base' | 'crown' | 'beads' | 'glow' | 'rays'>> = {
+  dest: { cut: 'shield', wings: 0, base: 0, crown: 'none', beads: false, glow: 0, rays: false },
+  gir: { cut: 'kite', wings: 1, base: 0, crown: 'none', beads: false, glow: 0, rays: false },
+  zozan: { cut: 'hexagon', wings: 2, base: 0, crown: 'none', beads: true, glow: 0, rays: false },
+  ciya: { cut: 'peak', wings: 3, base: 1, crown: 'none', beads: true, glow: 0, rays: false },
+  lutke: { cut: 'octagon', wings: 4, base: 1, crown: 'pearls', beads: true, glow: 0.3, rays: false },
+  sterk: { cut: 'brilliant', wings: 5, base: 2, crown: 'star', beads: true, glow: 0.55, rays: true },
 };
 
 /** A tier's crest, whole. */
@@ -185,7 +186,7 @@ export function placementEmblemSvg(opts: PlacementEmblemOptions): string {
   const size = checkSize(opts.size, 128);
   const detail = detailFor(size);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'placing', done, detail));
-  const crest: Crest = { cut: 'pentagon', gem: PEARL, metal: PEARL, wings: 0, base: 0, crown: 'none', glow: 0, rays: false };
+  const crest: Crest = { cut: 'pentagon', gem: PEARL, metal: PEARL, wings: 0, base: 0, crown: 'none', beads: false, glow: 0, rays: false };
   // the facet at the top is the first game, and the count goes round clockwise
   const order = [4, 0, 1, 2, 3];
   const { markup } = crestMarkup(dr, crest, { detail, box: crestBox(detail, detail === 0), table: (i) => (order.indexOf(i) < done ? PLACING : PEARL) });

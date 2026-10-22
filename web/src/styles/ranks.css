@@ -1284,12 +1284,13 @@
 .league-ladder-step.is-here .art {
   filter: drop-shadow(0 6px 16px color-mix(in srgb, var(--t-mid, #000) 40%, transparent));
 }
-/* a league not reached yet, in the scheme's own greys (art.tsx draws it in the light ones) */
-.art-league.is-locked path:first-of-type {
+/* a league not reached yet, in the scheme's own greys (art.tsx draws it in the light ones): its body is the first group, its marks the last */
+.art-league.is-locked g:first-of-type {
   fill: var(--locked);
 }
-.art-league.is-locked path:last-of-type {
+.art-league.is-locked g:last-of-type {
   fill: var(--locked-mark);
+  stroke: var(--locked-mark);
 }
 .league-skel-step {
   width: 56px;

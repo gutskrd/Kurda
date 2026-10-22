@@ -186,25 +186,25 @@ function stonesOf(svg: string): { lit: number; all: number } {
   });
   return { lit, all };
 }
-/** A crest's glow: a radial fade to nothing behind it. */
+/** A crest's glow: a radial fade to nothing behind it, in a colour — the shadow under every crest is black. */
 function glows(svg: string): number {
   let count = 0;
   walk(parse(svg), (e) => {
-    if (e.name === 'radialGradient' && e.attrs.gradientUnits === 'userSpaceOnUse' && e.children.at(-1)?.attrs['stop-opacity'] === '0') count += 1;
+    if (e.name !== 'radialGradient' || e.attrs.gradientUnits !== 'userSpaceOnUse') return;
+    if (e.children.at(-1)?.attrs['stop-opacity'] === '0' && e.children[0]?.attrs['stop-color'] !== '#000000') count += 1;
   });
   return count;
 }
-/** A crest's blades — its wings, its crown's points — each one a path of two curved edges. */
+/** A crest's feathers — its wings — each one three curved edges: up to its rounded tip, round it, and back; a mirrored pair shares a path. */
 function blades(svg: string): number {
   let count = 0;
   walk(parse(svg), (e) => {
-    // a glyph can be the same shape (a leaf), but it is cut faintly into the stone, not solid metal
-    if (e.name === 'path' && !e.attrs['fill-opacity'] && /^M[^QLZ]+Q[^QLZ]+Q[^QLZ]+Z$/.test(e.attrs.d ?? '')) count += 1;
+    if (e.name === 'path' && /^(M[^QLZ]+Q[^QLZ]+Q[^QLZ]+Q[^QLZ]+Z){2}$/.test(e.attrs.d ?? '')) count += 2;
   });
   return count;
 }
-/** What is cut into a crest's stone: its glyph, in the stone's deep tone. */
-const hasGlyph = (svg: string): boolean => /fill-opacity="0\.(72|8)"|stroke-opacity="0\.(72|8)"/.test(svg);
+/** What is cut into a crest's stone: its glyph, in its own white. */
+const hasGlyph = (svg: string): boolean => /(fill|stroke)="url\(#[\w-]*gl\d+\)"/.test(svg);
 
 /** A point as the drawings write one. */
 const POINT = '[\\d.-]+,[\\d.-]+';
@@ -468,7 +468,7 @@ describe('rankEmblemSvg', () => {
   });
 
   it('grows its setting with every tier, and keeps the light for the top two', () => {
-    // a lone stone at the foot, the full crest at the top: each tier has more blades than the one under it
+    // a lone stone at the foot, the full crest at the top: each tier has more feathers than the one under it
     const setting = RANK_TIERS.map((tier) => blades(rankEmblemSvg({ tier })));
     expect(setting[0]).toBe(0);
     for (let i = 1; i < setting.length; i++) expect(setting[i], RANK_TIERS[i]).toBeGreaterThan(setting[i - 1] as number);
@@ -558,8 +558,12 @@ describe('leagueEmblemSvg', () => {
     for (const tier of LEAGUE_TIERS) {
       const svg = leagueEmblemSvg({ tier, locked, size: 64 });
       checkSvg(svg, 64);
-      expect(svg).toContain('fill="#dfe3e8"');
-      expect(svg).toContain('fill="#9aa3ad"');
+      // two groups, the body and then the marks, with no colour of their own inside — so a page recolours each with one rule
+      const groups = parse(svg).children.filter((e) => e.name === 'g');
+      expect(groups.map((g) => g.attrs.fill)).toEqual(['#dfe3e8', '#9aa3ad']);
+      walk(parse(svg), (e) => {
+        if (e.name === 'path') expect(['none', undefined], tier).toContain(e.attrs.fill);
+      });
       expect(elements(svg), tier).toBeLessThan(elements(leagueEmblemSvg({ tier, size: 64 })) / 3);
     }
     // each keeps its own outline — its cut and its setting — so the ladder still reads from a drop to the ocean
