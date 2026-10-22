@@ -3,12 +3,13 @@
  * centred on 0,0.
  *
  * An icon is a list of parts, and a part says what it is rather than what
- * colour it is: the main metal, its shaded face, a named accent (a flame is a
- * flame on every tier), snow, a cut line, a stroked line, a highlight. The
- * badge decides the colours (iconpaint.ts), so the same icon is copper on a
- * Sifir badge, turquoise on a Firûze one and grey on one not yet earned — and
- * every icon gets the same cut between its parts and the same light from
- * within, which is what makes forty-four drawings read as one set.
+ * colour it is: the main body, its shaded face, a named accent (a flame is a
+ * flame on every tier), snow, a cut line, a stroked line, a highlight. Who
+ * draws it decides the colours — a badge paints its body and face in the
+ * badge's own two swatches (hero.ts), the season mark in its metal
+ * (iconpaint.ts), and both grey for a badge not yet earned — and every icon
+ * gets the same cut between its parts and the same light, which is what makes
+ * forty-four drawings read as one set.
  *
  * Parts marked `fine` are the details that turn to noise at 32 pixels (the
  * lines on a book's pages, a feather's barbs); the small drawing leaves them
@@ -79,6 +80,17 @@ const sparkle = (cx: number, cy: number, r: number): string => {
     [cx - s, cy - s],
   ]);
 };
+
+/** A five-pointed star centred on cx,cy reaching r. */
+function star5(cx: number, cy: number, r: number): string {
+  return polygon(
+    Array.from({ length: 10 }, (_, i) => {
+      const a = rad(i * 36 - 90);
+      const rr = i % 2 === 0 ? r : r * 0.45;
+      return [cx + Math.cos(a) * rr, cy + Math.sin(a) * rr] as const;
+    }),
+  );
+}
 
 /** A heart centred on cx,cy, `s` = 1 for one 38 units wide. */
 function heart(cx: number, cy: number, s: number): string {
@@ -363,11 +375,12 @@ export const ICONS: Record<string, () => Part[]> = {
   ],
 
   // ── friends
+  // two hearts, one leaning on the other: friends
   heval: () => [
-    { k: 'a', d: 'M-1.5,15C-1.5,4 2.5,-1.5 8,-1.5C13.5,-1.5 18.5,4 18.5,15Z' },
-    { k: 'a', d: circ(8, -10, 6.3) },
-    { k: 'f', d: 'M-18.5,19C-18.5,8 -12.5,3 -5,3C2.5,3 8.5,8 8.5,19Z' },
-    { k: 'f', d: circ(-5, -6, 7.3) },
+    { k: 'a', d: heart(7, -5, 0.62) },
+    { k: 'f', d: heart(-4, 3.5, 0.78) },
+    { k: 'h', d: 'M-15.2,1C-15.2,-2.6 -12.9,-4.7 -10.3,-4.8C-12,-3.2 -13.1,-1.6 -13.2,1.2Z', o: 0.7 },
+    { k: 'w', d: sparkle(15.5, 11, 4.2) },
   ],
   diyari: () => [
     { k: 'c', d: 'M0,-8C-3,-16 -13,-19 -13,-12C-13,-8 -6,-8 0,-8Z', c: 'red' },
@@ -455,15 +468,14 @@ export const ICONS: Record<string, () => Part[]> = {
     { k: 'c', d: 'M17,-10L20.5,-8.5L17,-7Z', c: 'red' },
     { k: 'l', d: 'M-3,12.5L-4,18.5M4,11.5L4.5,18.5', w: 1.8, c: 'red' },
   ],
+  // the golden hand at the keyboard: a golden key, a star on it
   'deste-zerin': () => [
-    {
-      k: 'c',
-      c: 'gold',
-      d: 'M-7,20C-11,16 -13,11 -14,6L-18,-3C-19,-6 -15,-8 -13.5,-5L-10,1L-10,-14C-10,-17 -5.5,-17 -5.5,-14L-5.5,-3L-4.5,-17C-4.5,-20 0,-20 0,-17L0,-3L1,-15C1,-18 5.5,-18 5.5,-15L5,-2L6.5,-10C7,-13 11.5,-12.5 11,-9.5L10,5C9.5,12 7,17 4,20Z',
-    },
-    { k: 'd', d: 'M-5.5,-3.5V1M0,-3.5V1M5,-2.5V2', w: 1.3, fine: true },
-    { k: 'w', d: sparkle(15, -15.5, 5.5) },
-    { k: 'w', d: sparkle(-15.5, -14, 3.5) },
+    { k: 'a', d: rrect(-17, -14, 34, 33, 6) },
+    { k: 'f', d: rrect(-13.5, -17, 27, 26, 4.5) },
+    { k: 'w', d: star5(0, -4.5, 8.5) },
+    { k: 'h', d: 'M-10.5,-12C-10.5,-13.8 -9.4,-14.6 -7.6,-14.6H-1.5C-5.5,-13.8 -8.6,-12 -10.5,-8.6Z', o: 0.7, fine: true },
+    { k: 'w', d: sparkle(17, -16.5, 4.8) },
+    { k: 'w', d: sparkle(-17.5, 12.5, 3.4) },
   ],
   'mevane-agir': () => [
     { k: 'a', d: 'M-17.5,14C-17.5,18.5 17.5,18.5 17.5,14C17.5,11.5 -17.5,11.5 -17.5,14Z' },

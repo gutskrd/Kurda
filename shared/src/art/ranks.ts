@@ -40,7 +40,7 @@ import { RANK_TIER_NAMES, RANK_TIERS, SEASONS, SEASON_NAMES } from './keys.js';
 import type { Field } from './palette.js';
 import { PEARL, PLACING, RANK_FIELD, RANK_GEM, RANK_METAL } from './palette.js';
 import { capsule, rimMetal } from './paint.js';
-import type { Detail } from './scenes.js';
+import type { Detail } from './svg.js';
 import { Drawing, checkSize, linearAt, n, prefixFor } from './svg.js';
 
 /** A rank tier's enamel, for a glyph or a plaque drawn in its colours. */

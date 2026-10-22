@@ -112,6 +112,9 @@ export function grey(hex: string): string {
   return hexOf([y, y, y]);
 }
 
+/** How much of a drawing to keep at its size: 0 all of it, 1 the small drawing, 2 the tiny one. */
+export type Detail = 0 | 1 | 2;
+
 // ─────────────────────────────────────────────────────────────── gradients
 
 /** [offset, colour, opacity?] */

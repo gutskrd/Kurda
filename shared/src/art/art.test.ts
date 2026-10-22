@@ -206,23 +206,16 @@ function blades(svg: string): number {
 /** What is cut into a crest's stone: its glyph, in its own white. */
 const hasGlyph = (svg: string): boolean => /(fill|stroke)="url\(#[\w-]*gl\d+\)"/.test(svg);
 
-/** A point as the drawings write one. */
-const POINT = '[\\d.-]+,[\\d.-]+';
 /** Paths that are only a run of ten or more small diamonds: a kilim band's eyes. */
-function kilimBands(svg: string): number {
-  const one = new RegExp(`^(M${POINT}L${POINT} ${POINT} ${POINT}Z){10,}$`);
+/**
+ * The number under a large badge: the face of its chunky figures, a round
+ * pen stroke filled with its own gradient. Each figure starts a line, so the
+ * count of moves is the count of figures.
+ */
+function figuresOf(svg: string): number {
   let count = 0;
   walk(parse(svg), (e) => {
-    if (e.name === 'path' && one.test(e.attrs.d ?? '')) count += 1;
-  });
-  return count;
-}
-/** Paths that are only a run of ten or more little circles: beads set round a rim. */
-function beadRings(svg: string): number {
-  const one = new RegExp(`^(M${POINT}A[\\d.]+,[\\d.]+ 0 1 0 ${POINT}A[\\d.]+,[\\d.]+ 0 1 0 ${POINT}Z){10,}$`);
-  let count = 0;
-  walk(parse(svg), (e) => {
-    if (e.name === 'path' && one.test(e.attrs.d ?? '')) count += 1;
+    if (e.name === 'path' && e.attrs['stroke-linecap'] === 'round' && /^url\(#[\w-]*nf\d+\)$/.test(e.attrs.stroke ?? '')) count += (e.attrs.d ?? '').split('M').length - 1;
   });
   return count;
 }
@@ -262,7 +255,7 @@ describe('the badge catalogue the art draws', () => {
   it('is the catalogue itself, not a copy of it', () => {
     expect(BADGE_KEYS).toEqual(CATALOGUE.map((b) => b.key));
     expect(BADGE_FAMILIES).toEqual(CATALOGUE_FAMILIES);
-    for (const b of CATALOGUE) expect(BADGES[b.key], b.key).toEqual({ family: b.family, name: b.nameKu, tiers: b.tiers.length });
+    for (const b of CATALOGUE) expect(BADGES[b.key], b.key).toEqual({ family: b.family, name: b.nameKu, tiers: b.tiers.length, milestones: b.tiers });
     expect(RANK_TIERS).toEqual(RANK_TIER_KEYS);
     expect(LEAGUE_TIERS).toEqual(CATALOGUE_LEAGUE_TIERS);
     expect(SEASONS).toEqual(SEASON_LABEL_KEYS);
@@ -298,19 +291,35 @@ describe('badgeSvg', () => {
     for (const key of BADGE_KEYS) expect(badgeSvg({ key, tier: 4 })).toBe(badgeSvg({ key, tier: 4 }));
   });
 
-  it('draws each tier differently, and tells them apart without colour: the pips count the tier', () => {
+  it('draws each tier differently, and tells them apart without colour: the number it was earned at, the pips when small', () => {
     for (const key of ['ders', 'agir', 'peyvzan', 'rank-ciya', 'heval', 'newroz'] as BadgeKey[]) {
       const tiers = TIERS.map((tier) => badgeSvg({ key, tier }));
       expect(new Set(tiers).size).toBe(4);
-      // four pips on every tiered badge, as many lit as the tier — and the same count small and tiny
-      for (const size of [96, 40, 24]) {
-        TIERS.forEach((tier) => expect(pipsOf(badgeSvg({ key, tier, size })), `${key} tier ${tier} at ${size}`).toEqual({ lit: tier, all: 4 }));
+      // large: the tier's milestone in figures, and no pips
+      const milestones = badgeArt(key).milestones;
+      TIERS.forEach((tier) => {
+        const svg = badgeSvg({ key, tier });
+        expect(figuresOf(svg), `${key} tier ${tier}`).toBe(String(milestones[tier - 1]).length);
+        expect(pipsOf(svg).all, `${key} tier ${tier}`).toBe(0);
+      });
+      // small and tiny: four pips, as many lit as the tier, and no figures to squint at
+      for (const size of [40, 24]) {
+        TIERS.forEach((tier) => {
+          const svg = badgeSvg({ key, tier, size });
+          expect(pipsOf(svg), `${key} tier ${tier} at ${size}`).toEqual({ lit: tier, all: 4 });
+          expect(figuresOf(svg)).toBe(0);
+        });
       }
-      // not yet earned: four empty sockets
-      expect(pipsOf(badgeSvg({ key, state: 'locked' }))).toEqual({ lit: 0, all: 4 });
+      // not yet earned: the first milestone to reach, quietly; small, four empty sockets
+      expect(figuresOf(badgeSvg({ key, state: 'locked' }))).toBe(String(milestones[0]).length);
+      expect(pipsOf(badgeSvg({ key, state: 'locked', size: 40 }))).toEqual({ lit: 0, all: 4 });
     }
-    // a single badge has none
+    // "every unit of the course" is a star, not a figure
+    expect(figuresOf(badgeSvg({ key: 'rewi', tier: 4 }))).toBe(0);
+    expect(badgeSvg({ key: 'rewi', tier: 4 })).not.toBe(badgeSvg({ key: 'rewi', tier: 3 }));
+    // a single badge has neither
     expect(pipsOf(badgeSvg({ key: 'hemereng' }))).toEqual({ lit: 0, all: 0 });
+    expect(figuresOf(badgeSvg({ key: 'hemereng' }))).toBe(0);
   });
 
   it('gives single badges no pips and the same look whatever tier is asked for', () => {
@@ -360,13 +369,15 @@ describe('badgeSvg', () => {
     expect(small.replace(/width="\d+(\.\d+)?" height="\d+(\.\d+)?"/, '')).not.toBe(large.replace(/width="\d+" height="\d+"/, ''));
   });
 
-  it('keeps a tiny badge to its shape, rim, glyph and pips', () => {
+  it('keeps a small badge to its plate, picture and pips: the light and the sparkle go', () => {
     for (const key of ['ders', 'agir', 'rank-lutke', 'newroz'] as BadgeKey[]) {
       const large = badgeSvg({ key, tier: 4 });
       const tiny = badgeSvg({ key, tier: 4, size: TINY_BADGE - 8 });
-      expect(kilimBands(large), key).toBe(1);
-      expect(kilimBands(tiny) + beadRings(tiny), key).toBe(0);
-      expect(elements(tiny), key).toBeLessThan(elements(large));
+      const small = badgeSvg({ key, tier: 4, size: SMALL_BADGE - 8 });
+      const lights = (svg: string): number => (svg.match(/<radialGradient/g) ?? []).length;
+      expect(lights(tiny), key).toBeLessThan(lights(large));
+      expect(elements(tiny), key).toBeLessThan(elements(small));
+      expect(elements(small), key).toBeLessThan(elements(large));
     }
   });
 

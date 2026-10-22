@@ -38,28 +38,34 @@ export const SHADOW: Metal = { hi: '#f1eaff', light: '#c9b5ff', mid: '#8f70f0', 
 
 export const TIER_METAL: Record<BadgeTier, Metal> = { 1: COPPER, 2: SILVER, 3: GOLD, 4: TURQUOISE };
 
-/**
- * Each family's field, the ground its glyph glows on: `glow` at the heart,
- * `mid` around it, `deep` at the rim. Learning is Hevalo's own violet; habit
- * is ember, for the streak's fire; games are azure; ranked a night indigo;
- * friends emerald; events the red of Newroz; secrets midnight. Red, gold and
- * green turn up across the set the way they do in a Newroz crowd — never side
- * by side as stripes.
- */
+/** A field, the enamel ground a glyph glows on: `glow` at the heart, `mid` around it, `deep` at the rim. */
 export interface Field {
   glow: string;
   mid: string;
   deep: string;
 }
 
-export const FIELD: Record<BadgeFamily, Field> = {
-  learning: { glow: '#7e48f0', mid: '#4a1fb8', deep: '#1d0a52' },
-  habit: { glow: '#c8401a', mid: '#8f220c', deep: '#420b05' },
-  games: { glow: '#2462d4', mid: '#143fa6', deep: '#081a52' },
-  ranked: { glow: '#5148e0', mid: '#28239a', deep: '#0d0b3e' },
-  friends: { glow: '#0c8a52', mid: '#06603c', deep: '#022b1a' },
-  events: { glow: '#e8264f', mid: '#a80e35', deep: '#480416' },
-  secret: { glow: '#5a3ad8', mid: '#2a1580', deep: '#0b0530' },
+/**
+ * Each family's plate, the pale ground a badge's picture stands on: `top` to
+ * `bottom` lit from above, and `deep`, the family's darkest tone, for the
+ * outline round the picture. Learning is Hevalo's own lavender; habit a clear
+ * sky, so the streak's fire burns bright on it; games a sweet pink; ranked a
+ * periwinkle; friends mint; events a Newroz rose; and the secrets a night sky.
+ */
+export interface Plate {
+  top: string;
+  bottom: string;
+  deep: string;
+}
+
+export const PLATE: Record<BadgeFamily, Plate> = {
+  learning: { top: '#f7f1ff', bottom: '#d3bdff', deep: '#3b1a86' },
+  habit: { top: '#eef8ff', bottom: '#acd6ff', deep: '#123a7a' },
+  games: { top: '#fff1f7', bottom: '#ffbfdb', deep: '#7a1347' },
+  ranked: { top: '#f0f1ff', bottom: '#bec5ff', deep: '#252a7a' },
+  friends: { top: '#edfdf2', bottom: '#aeeec2', deep: '#0c5130' },
+  events: { top: '#fff1f3', bottom: '#ffc0cb', deep: '#7d1028' },
+  secret: { top: '#4b36a8', bottom: '#150a48', deep: '#0b0530' },
 };
 
 /** Named colours an icon may use besides its metal. Each is [top, bottom] of a lit fill. */

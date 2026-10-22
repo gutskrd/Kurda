@@ -6,15 +6,14 @@
  * weapon — and each shape stays far enough from its neighbours to be told
  * apart at 24 pixels.
  *
- * Each is an outline on the 120-unit canvas centred a little above the middle,
- * leaving the bottom for the tier capsule, plus where its icon sits and how big:
- * a gem's field is narrower than a circle's, so its icon is smaller.
+ * Each is an outline on the 120-unit canvas centred a little above the middle;
+ * a badge places it (`Placement`) where its own layout wants the plate.
  *
  * An outline is kept as its corners and how round each is, not as points:
  * written out it is a dozen exact curves (`roundPath`), and moved in for the
  * rim it stays exact (`insetRound`).
  */
-import { circle, insetRound, place, placeRound, regular, roundPath, roundedPolygon, star } from './geometry.js';
+import { insetRound, place, placeRound, regular, roundPath, star } from './geometry.js';
 import type { RoundShape } from './geometry.js';
 import { circ } from './icons.js';
 import type { BadgeFamily } from './keys.js';
@@ -24,10 +23,6 @@ export type Body = { kind: 'circle'; r: number } | { kind: 'round'; shape: Round
 
 export interface Shape {
   body: Body;
-  /** where the icon is centred */
-  icon: Pt;
-  /** the icon's scale (1 = the 40-unit icon box at 1:1) */
-  scale: number;
 }
 
 const CX = 60;
@@ -76,7 +71,7 @@ function rosette(): RoundShape {
 }
 
 export const SHAPES: Record<BadgeFamily, Shape> = {
-  learning: { body: { kind: 'circle', r: 48 }, icon: [CX, CY], scale: 1.24 },
+  learning: { body: { kind: 'circle', r: 48 } },
   habit: {
     body: {
       kind: 'round',
@@ -90,13 +85,11 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
         radii: [28, 28, 28, 28],
       },
     },
-    icon: [CX, CY],
-    scale: 1.24,
   },
-  games: { body: { kind: 'round', shape: { vertices: regular(CX, CY, 52, 6, -90), radii: [13, 13, 13, 13, 13, 13] } }, icon: [CX, CY], scale: 1.16 },
-  ranked: { body: { kind: 'round', shape: shield() }, icon: [CX, 54], scale: 1.12 },
-  friends: { body: { kind: 'round', shape: leaf() }, icon: [CX, CY], scale: 1.06 },
-  events: { body: { kind: 'round', shape: rosette() }, icon: [CX, CY], scale: 1.08 },
+  games: { body: { kind: 'round', shape: { vertices: regular(CX, CY, 52, 6, -90), radii: [13, 13, 13, 13, 13, 13] } } },
+  ranked: { body: { kind: 'round', shape: shield() } },
+  friends: { body: { kind: 'round', shape: leaf() } },
+  events: { body: { kind: 'round', shape: rosette() } },
   secret: {
     body: {
       kind: 'round',
@@ -110,8 +103,6 @@ export const SHAPES: Record<BadgeFamily, Shape> = {
         radii: [18, 18, 18, 18],
       },
     },
-    icon: [CX, CY],
-    scale: 1.02,
   },
 };
 
@@ -137,8 +128,3 @@ export function shapePath(family: BadgeFamily, at: Placement, inset = 0): string
   return b.kind === 'circle' ? circ(CX, at.y, b.r) : roundPath(b.shape.vertices, b.shape.radii);
 }
 
-/** The same outline as points, for setting beads along it. */
-export function shapePoints(family: BadgeFamily, at: Placement, inset = 0): Pt[] {
-  const b = placed(SHAPES[family].body, at, inset);
-  return b.kind === 'circle' ? circle(CX, at.y, b.r, 96) : roundedPolygon(b.shape.vertices, b.shape.radii, 8);
-}

@@ -26,8 +26,7 @@
 import { roundPath } from './geometry.js';
 import { laurel, softStar } from './paint.js';
 import type { Metal } from './palette.js';
-import type { Detail } from './scenes.js';
-import type { Drawing, Pt } from './svg.js';
+import type { Detail, Drawing, Pt } from './svg.js';
 import { linearAt, linearBox, mix, n, n2, radialAt } from './svg.js';
 
 /** The stone's cut: each tier's own outline. */

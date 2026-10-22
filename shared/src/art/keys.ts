@@ -65,6 +65,8 @@ export interface BadgeArt {
   name: string;
   /** how many tiers it has; 1 = a single badge with no tier pips */
   tiers: number;
+  /** what each tier is earned at, low to high — the number on the badge; `all` is every unit of the course */
+  milestones: readonly (number | 'all')[];
 }
 
 /** A badge key of the catalogue, such as `agir` or `rank-ciya`. */
@@ -72,7 +74,7 @@ export type BadgeKey = string;
 
 /** Every badge of the catalogue, by key, as the art sees it. */
 export const BADGES: Readonly<Record<BadgeKey, BadgeArt>> = Object.fromEntries(
-  CATALOGUE.map((b) => [b.key, { family: b.family, name: b.nameKu, tiers: b.tiers.length }]),
+  CATALOGUE.map((b) => [b.key, { family: b.family, name: b.nameKu, tiers: b.tiers.length, milestones: b.tiers }]),
 );
 /** The catalogue's badge keys, in its order (family by family). */
 export const BADGE_KEYS: readonly BadgeKey[] = CATALOGUE.map((b) => b.key);
