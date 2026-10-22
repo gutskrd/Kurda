@@ -64,7 +64,7 @@ export const SCENES: Readonly<Record<string, Scene>> = {
   // habit
   agir: { mood: 'laugh', prop: beside() },
   hefte: { mood: 'happy', prop: beside() },
-  roj: { mood: 'dream', tilt: 5, prop: behind(-1, 1.05) },
+  roj: { mood: 'dream', tilt: 5, prop: behind(-1, 1.3) },
   vegera: { mood: 'laugh', tilt: -6, prop: beside(-8) },
   pela: { mood: 'wow', prop: beside() },
   cay: { mood: 'proud', prop: beside() },

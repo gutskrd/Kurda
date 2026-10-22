@@ -24,8 +24,9 @@ import {
   type BadgeKey,
   type BadgeTier,
 } from './index.js';
-import { ICONS } from './icons.js';
+import { SEASON_ICONS } from './icons.js';
 import { PICTURES } from './pictures.js';
+import { PROPS } from './props/index.js';
 import { SHAPES } from './shapes.js';
 import { SMALL_EMBLEM, TINY_EMBLEM } from './ranks.js';
 import { TINY_BADGE } from './badges.js';
@@ -267,12 +268,16 @@ describe('the badge catalogue the art draws', () => {
   });
 
   it('has a drawing for every badge of the catalogue, and none for a badge it does not have', () => {
-    const drawn = (key: string): boolean => ICONS[key] !== undefined || PICTURES[key] !== undefined;
-    const undrawn = CATALOGUE.filter((b) => !(b.family === 'ranked' && Object.values(RANK_BADGE).includes(b.key)) && !drawn(b.key)).map((b) => b.key);
-    expect(undrawn, 'catalogue badges with no drawing in icons.ts or pictures.ts').toEqual([]);
+    // a picture Hevalo shows (props/) or one that stands alone (pictures.ts); the ranked tiers show their rank's stone
+    const drawn = (key: string): number => (PROPS[key] ? 1 : 0) + (PICTURES[key] ? 1 : 0);
+    const stones = Object.values(RANK_BADGE) as string[];
+    const undrawn = CATALOGUE.filter((b) => !stones.includes(b.key) && drawn(b.key) === 0).map((b) => b.key);
+    expect(undrawn, 'catalogue badges with no picture').toEqual([]);
+    expect(CATALOGUE.filter((b) => drawn(b.key) > 1).map((b) => b.key), 'badges drawn twice').toEqual([]);
     for (const tier of RANK_TIERS) expect(isBadgeKey(RANK_BADGE[tier]), `${tier} has a ranked badge`).toBe(true);
-    expect([...Object.keys(ICONS), ...Object.keys(PICTURES)].filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
-    expect(Object.keys(PICTURES).filter((k) => ICONS[k] !== undefined), 'badges drawn twice').toEqual([]);
+    expect([...Object.keys(PROPS), ...Object.keys(PICTURES)].filter((k) => !isBadgeKey(k)), 'drawings for no catalogue badge').toEqual([]);
+    // the flat glyphs left are the seasons' marks on a season's emblem
+    expect(Object.keys(SEASON_ICONS).sort()).toEqual([...SEASONS].sort());
   });
 
   it('draws every secret whole, in its own colours', () => {

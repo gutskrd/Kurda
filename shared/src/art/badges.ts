@@ -5,9 +5,9 @@
  * the speaking character himself, the same drawing as when he talks, from
  * the antlers to his chest — rising out of a jewel of a plate, laughing,
  * amazed or dreaming, with the badge's picture beside him as if he were
- * showing it to you, or behind him: a jewel made of the tier's own metal,
- * like the bezel round him, its accents set in as coloured enamel — the rose
- * on a gold teapot, the blue of a turquoise bell's tongue.
+ * showing it to you, or behind him: drawn whole in its own colours (props/)
+ * like the secrets — a porcelain teapot with a rose on it, a golden bell with
+ * a pink bow, the Kurdish sun of twenty-one rays rising behind his shoulder.
  *
  * The plate is made like a collector's piece: the family's shape set in a
  * bezel of the tier's polished metal, bands of light across it, with its
@@ -49,7 +49,7 @@ import type { Viseme } from '../lipsync/visemes.js';
 import { drawHevalo } from '../characters/hevalo.js';
 import { headGroup } from '../characters/index.js';
 import { HERO, PLAIN, paintHero } from './hero.js';
-import { ICONS, QUESTION } from './icons.js';
+import { QUESTION } from './icons.js';
 import { drawPicture } from './pen.js';
 import { PICTURES } from './pictures.js';
 import { PROPS } from './props/index.js';
@@ -490,9 +490,8 @@ function heroOf(dr: Drawing, key: BadgeKey, at: Layout['hero'], edge: string, de
   // a picture drawn whole, in its own colours
   const picture = state === 'secret' ? undefined : PICTURES[key];
   if (picture) return `<g transform="translate(${n(cx)} ${n(cy)}) scale(${n2(scale)})">${drawPicture(picture, { dr, detail, locked: state === 'locked' })}</g>`;
-  const draw = ICONS[key];
-  const parts = state === 'secret' || !draw ? QUESTION : draw();
-  const painted = paintHero(parts, {
+  // otherwise the "?" of a secret not found yet
+  const painted = paintHero(QUESTION, {
     dr,
     colours: state === 'secret' ? PLAIN : (HERO[key] ?? PLAIN),
     edge,
@@ -560,7 +559,6 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, m
   let behind = '';
   let before = '';
   const prop = scene.prop;
-  const draw = ICONS[key];
   const picture = PROPS[key];
   if (rankTier) {
     // the rank's own stone, set in its bezel: drawn as the emblems' small stone, for its finest facets would only be weight here
@@ -571,27 +569,13 @@ function sceneOf(dr: Drawing, key: BadgeKey, family: BadgeFamily, lay: Layout, m
     // a crest is always drawn on the square's middle line: moved from there to where his picture would be
     const stone = locked ? `<g opacity="0.75">${crestSilhouette(crest, small, box, STONE.light, STONE.dark)}</g>` : crestMarkup(dr, crest, { detail: small, box }).markup;
     before = `<g transform="translate(${n(lay.beside.cx - 60)} 0)">${stone}</g>`;
-  } else if (picture || draw) {
+  } else if (picture) {
     const out = prop.at === 'behind';
     const place = out
       ? { x: 60 + (prop.dx ?? 1) * lay.aside.dx, y: lay.aside.cy + (prop.dy ?? 0), scale: lay.aside.scale * (prop.scale ?? 1) }
       : { x: lay.beside.cx + (prop.dx ?? 0), y: lay.beside.cy + (prop.dy ?? 0), scale: lay.beside.scale * (prop.scale ?? 1) };
     // drawn whole in its own colours; at his side it is small, so without its finest details
-    const painted = picture
-      ? drawPicture(picture, { dr, detail: detail === 2 ? 2 : 1, locked })
-      : paintHero(draw?.() ?? [], {
-          dr,
-          colours: HERO[key] ?? PLAIN,
-          edge: locked ? STONE.dark : edge,
-          outline: (detail === 0 ? 1.7 : 2.6) / place.scale,
-          small: detail > 0,
-          locked,
-          // made of the tier's metal, its accents set in as enamel: a jewel, like the bezel it sits on
-          material: m,
-          // what he shows you throws a shadow on him, so it stands before him
-          shadow: !out && detail === 0 && !locked ? 2.4 / place.scale : 0,
-          gloss: false,
-        });
+    const painted = drawPicture(picture, { dr, detail: detail === 2 ? 2 : 1, locked });
     const turn = prop.rotate ? ` rotate(${n(prop.rotate)})` : '';
     // the picture glows with its own colour, a light of it on the plate and the page round it
     const shine = locked || detail === 2 ? '' : halo(dr, place.x, place.y, 19 * place.scale, m.light, 0.75, 0.25);

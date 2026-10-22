@@ -1,5 +1,9 @@
 /**
- * A badge's picture painted as the hero of it: each part lit smoothly from
+ * The badges' pictures are drawn whole now (pen.ts, pictures.ts, props/); what
+ * is painted here is the "?" of a secret not yet found, in its neon, and the
+ * colours each badge's plate and light take (HERO).
+ *
+ * A picture painted as the hero of a badge: each part lit smoothly from
  * the upper left into its shade, a gloss across the top of the whole, and a
  * fine edge of the plate's darkest tone round it, so it reads on the badge's
  * plate, over the page where it rises out of the plate, and on the dark

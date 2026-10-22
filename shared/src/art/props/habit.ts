@@ -8,11 +8,6 @@ import type { Pen, Picture } from '../pen.js';
 /** A point `r` out from (cx, cy) at `deg` degrees, written short. */
 const at = (cx: number, cy: number, r: number, deg: number): string => `${n(cx + Math.cos((deg * Math.PI) / 180) * r)},${n(cy + Math.sin((deg * Math.PI) / 180) * r)}`;
 
-/** A spark flying up from a fire: a drop of flame, point up. */
-const spark = (x: number, y: number, s: number): string =>
-  `M${n(x)},${n(y - 2 * s)}C${n(x + 0.7 * s)},${n(y - 0.8 * s)} ${n(x + 1.1 * s)},${n(y - 0.2 * s)} ${n(x + 1.1 * s)},${n(y + 0.5 * s)}C${n(x + 1.1 * s)},${n(y + 1.2 * s)} ${n(x + 0.6 * s)},${n(y + 1.6 * s)} ${n(x)},${n(y + 1.6 * s)}` +
-  `C${n(x - 0.6 * s)},${n(y + 1.6 * s)} ${n(x - 1.1 * s)},${n(y + 1.2 * s)} ${n(x - 1.1 * s)},${n(y + 0.5 * s)}C${n(x - 1.1 * s)},${n(y - 0.2 * s)} ${n(x - 0.7 * s)},${n(y - 0.8 * s)} ${n(x)},${n(y - 2 * s)}Z`;
-
 /** Fire, the longest streak: a lively flame in three tongues, deep orange outside, gold within and white at its heart, glowing. */
 function fire(p: Pen): string {
   const out: string[] = [];
@@ -32,7 +27,7 @@ function fire(p: Pen): string {
   out.push(path('M0,16.2C-4.2,16.2 -6.8,13.4 -6.8,9.8C-6.8,6 -4.2,3.6 -2.6,0.6C-1.8,2.8 -0.6,3.8 0.6,4.2C0.6,1.2 1.8,-1.8 3.8,-3.8C4.2,-0.4 6.8,3 6.8,8.6' +
     'C6.8,13 4.2,16.2 0,16.2Z', p.round([[0, '#ffffff'], [0.55, '#fffbe0'], [1, '#ffe25a']], -0.6, 11, 9)));
   // sparks thrown up from it
-  if (!p.tiny) out.push(path(`${spark(-15, -14.6, 1.1)}${spark(14.6, -18, 0.9)}${spark(-18, -4.6, 0.7)}`, '#ffc21f', stroke(ink, 0.5)));
+  if (!p.tiny) out.push(path(`${circ(-15, -14.6, 1.3)}${circ(14.6, -18, 1.1)}${circ(-18, -4.6, 0.8)}`, p.roundBox([[0, '#ffffff'], [0.45, '#ffe066'], [1, '#ff7a1a']], 0.4, 0.4, 0.6), stroke('#c43a0a', 0.5)));
   if (p.fine) out.push(path(`${glint(-11.6, -18.4, 1.6)}${glint(17.6, -9.4, 1.3)}`, '#ffffff'));
   return out.join('');
 }
@@ -64,28 +59,26 @@ function calendar(p: Pen): string {
   return out.join('');
 }
 
-/** The days of learning: the sun rising over green hills, warm and glowing, its rays fanned out over the morning. */
+/** The days of learning: the golden sun of the Kurds half risen over green hills, its twenty-one rays sharp and straight. */
 function sunrise(p: Pen): string {
   const out: string[] = [];
-  const ink = '#b04a0a';
-  out.push(path(circ(0, 5, 21), p.round([[0, '#fff3b0', 0.9], [0.5, '#ffc46a', 0.45], [1, '#ff9a5a', 0]], 0, 5, 21)));
-  // the rays, long and short in turn, each with a rounded tip
-  const rays = Array.from({ length: 9 }, (_, i) => {
-    const a = 190 + i * 20;
-    const r = i % 2 === 0 ? 20.6 : 17.4;
-    const w = i % 2 === 0 ? 6.4 : 5;
-    return `M${at(0, 5, 13.4, a - w)}L${at(0, 5, r - 1.4, a - 2)}Q${at(0, 5, r + 0.4, a)} ${at(0, 5, r - 1.4, a + 2)}L${at(0, 5, 13.4, a + w)}Z`;
-  });
-  out.push(path(rays.join(''), p.round([[0, '#fff6b0'], [0.68, '#ffd23a'], [1, '#ff9a1a']], 0, 5, 21), stroke(ink, 1)));
-  // the sun
-  out.push(path(circ(0, 5, 12.4), p.round([[0, '#ffffff'], [0.3, '#fff6c0'], [0.72, '#ffc93a'], [1, '#ff9218']], -3.6, 0.6, 15.6), stroke(ink, 1.2)));
-  if (!p.tiny) out.push(path('M-9.6,0.6C-8.6,-3.2 -5.4,-5.8 -1.6,-6.2C-4.8,-4.6 -7.2,-2.4 -8.6,0.8Z', '#ffffff', ' fill-opacity="0.85"'));
-  // the hills it rises over: the far one lit gold-green, the near one deep
-  const ground = 'C19.6,15 10.4,18.6 0,18.6C-10.4,18.6 -19.6,15';
-  out.push(path(`M-19.6,9.8C-16,5 -9.6,4.2 -4.6,7.4C0.4,3.4 9.4,3 14.8,6.4C17.2,7.8 19,9.4 19.6,11${ground} -19.6,9.8Z`, p.line([[0, '#e8f79a'], [0.5, '#9ad65a'], [1, '#4f9e3e']], 0, 4, 0, 14), stroke('#1a5a2e', 1.1)));
-  out.push(path(`M-19.6,12.4C-13.6,8.8 -6.6,8.8 -0.6,11.8C4.6,9.6 12.6,9.6 19.4,12.4${ground.replace('C19.6,15', 'C18.4,15.4')} -19.6,12.4Z`, p.line([[0, '#7fd65a'], [1, '#1f7036']], 0, 9, 0, 18.6), stroke('#1a5a2e', 1.1)));
-  if (!p.tiny) out.push(line('M-17.4,7.2C-13.6,5 -8.6,5 -5.4,7.2M3.4,5C7.6,3.8 11.8,4.2 15,6.2', '#fff6c0', 1, ' stroke-opacity="0.9"'));
-  if (p.fine) out.push(path(`${glint(-16.4, -11.4, 1.8)}${glint(16.6, -13.6, 1.4)}`, '#ffffff'));
+  const cy = 4;
+  out.push(path(`M-21,${cy + 1}A21,21 0 0 1 21,${cy + 1}Z`, p.round([[0, '#fff3b0', 0.9], [0.5, '#ffc46a', 0.45], [1, '#ff9a5a', 0]], 0, cy, 21)));
+  // the sun's twenty-one rays: a point at the outer radius, a notch at about half of it, one straight up; only those over the hills
+  const pt = (k: number, r = k % 2 === 0 ? 20 : 11): string => at(0, cy, r, -90 + (k * 360) / 42);
+  const ks = Array.from({ length: 23 }, (_, i) => i - 11);
+  out.push(path(`M${ks.map((k) => pt(k)).join('L')}Z`, p.round([[0, '#ffffff'], [0.42, '#fff3a0'], [0.68, '#ffd23a'], [1, '#ffa214']], -2, cy - 2, 21), stroke('#cc660a', 0.75)));
+  if (!p.tiny) {
+    // the half of each ray away from the light, a shade deeper, as if cast in gold; and the light on the sun's face
+    out.push(path(ks.filter((k) => k % 2 === 0).map((k) => `M${pt(k)}L${pt(k + 1)}L${pt(k, 10.4)}Z`).join(''), '#f08a0a', ' fill-opacity="0.3"'));
+    out.push(path(`M-7.4,${cy - 0.8}C-6.8,${cy - 4.6} -3.8,${cy - 7.2} -0.2,${cy - 7.6}C-3.4,${cy - 6} -5.6,${cy - 3.6} -6.4,${cy - 0.6}Z`, '#ffffff', ' fill-opacity="0.85"'));
+  }
+  // the hills it rises over, lit gold-green along their tops and fading away below
+  const hills = `M-20.4,${cy + 2}C-15,${cy - 2} -8.4,${cy - 2.4} -3,${cy + 0.4}C2,${cy - 2.2} 10,${cy - 2.8} 15,${cy - 0.2}C17.4,${cy + 1} 19.4,${cy + 2.2} 20.4,${cy + 3}`;
+  out.push(path(`${hills}V${cy + 11}H-20.4Z`, p.roundBox([[0, '#e2f79a'], [0.3, '#8ad05a'], [0.55, '#3f9a42', 0.85], [0.9, '#2f8a3e', 0]], 0.5, 0, 1)));
+  out.push(line(hills, '#1a5a2e', 1.1));
+  if (!p.tiny) out.push(line(`M-17.6,${cy + 0.6}C-13.8,${cy - 1.4} -8.8,${cy - 1.4} -5.6,${cy + 0.2}M4.4,${cy - 1.2}C8.4,${cy - 2.4} 12,${cy - 2} 14.8,${cy - 0.6}`, '#fff6c0', 1, ' stroke-opacity="0.9"'));
+  if (p.fine) out.push(path(`${glint(-16.4, -12.4, 1.8)}${glint(16.6, -14.6, 1.4)}`, '#ffffff'));
   return out.join('');
 }
 
@@ -94,9 +87,10 @@ function wave(p: Pen): string {
   const out: string[] = [];
   const ink = '#0a2f6a';
   // the hollow under its curl, then the wave over it
-  out.push(path('M10.4,-6.6C14,-4.6 18,-5.4 19.6,-7.8C20.6,-2 20.6,5.4 19.8,12.6C13.6,11.8 8.2,8.6 5.6,3.4C4.6,0.2 6.8,-5 10.4,-6.6Z', p.line([[0, '#082c6a'], [1, '#1a6cc4']], 16, -4, 12, 12), stroke(ink, 1.1)));
+  out.push(path('M10.4,-6.6C14,-4.6 18,-5.4 19.6,-7.8C20.8,-1.6 20,5.6 17.2,13.4C11.8,11.6 7.6,8.4 5.6,3.4C4.6,0.2 6.8,-5 10.4,-6.6Z', p.line([[0, '#082c6a'], [1, '#1a6cc4']], 16, -4, 12, 12), stroke(ink, 1.1)));
+  if (!p.tiny) out.push(line('M18.6,-4.4C19.2,0.6 18.6,5.6 16.8,10.4', '#5fb8f0', 0.9, ' stroke-opacity="0.7"'));
   const body = 'M-20,19C-17.4,13.6 -14.4,8 -12.2,1.4C-9.6,-7 -3.6,-16.4 5.4,-18.2C12.8,-19.6 19.4,-14.6 19.6,-7.6C19.8,-2.4 16,1.2 12,0.4' +
-    'C9.4,-0.2 8.4,-3 9.8,-4.8C7,-4.4 4.6,-1.4 5,2.4C5.6,7.6 11.6,11 20,11.8V19Z';
+    'C9.4,-0.2 8.4,-3 9.8,-4.8C7,-4.4 4.6,-1.4 5,2.4C5.6,7.6 10.6,11.2 16.6,12.6L20,14V19Z';
   out.push(path(body, p.line([[0, '#0e4aa0'], [0.4, '#1a8ee0'], [0.75, '#3fd0f0'], [1, '#c0f8ff']], -8, 19, 4, -18), stroke(ink, 1.2)));
   if (!p.tiny) out.push(line('M-15.4,15.4C-12.4,9 -10,2 -7,-4.6M-8.6,17.6C-6,11.6 -4.6,6 -2.4,0.4M7.6,6.4C10.4,9 14,10.4 18.4,10.8', '#9eeeff', 0.9, ' stroke-opacity="0.6"'));
   // the foam along its crest and over its lip
@@ -107,6 +101,8 @@ function wave(p: Pen): string {
   out.push(path('M-20,15.6C-16.6,13.4 -13,13.8 -10.4,15.6C-7.4,13.6 -3.6,13.6 -0.6,15.6C2.6,13.4 6.4,13.4 9.4,15.4C12.4,13.2 16.4,12.8 20,14.4V19H-20Z', p.line([[0, '#3fd0f0'], [1, '#1466c0']], 0, 13, 0, 19), stroke(ink, 1)));
   if (!p.tiny) {
     out.push(line('M-18.4,15.4C-16,14.4 -13.4,14.6 -11.6,15.6M-8.8,15.2C-6.4,14.2 -3.8,14.2 -1.8,15.4M1.4,15.2C3.8,14 6.4,14 8.4,15.2M10.8,14.8C13.4,13.6 16.4,13.4 18.8,14.4', '#ffffff', 1, ' stroke-opacity="0.85"'));
+    // foam where its lip falls into the sea
+    out.push(path(`${circ(14.6, 13, 1.5)}${circ(17.4, 12.2, 1.9)}${circ(19.4, 13.8, 1.2)}`, '#ffffff', stroke(ink, 0.5)));
     // a spray of drops
     out.push(path(`${circ(-14.6, -12.4, 1.4)}${circ(-17.6, -7.4, 1)}${circ(-12.4, -17.2, 0.9)}${circ(-18.4, -14.6, 0.7)}`, '#ffffff', stroke(ink, 0.5)));
   }
@@ -121,6 +117,7 @@ function swallow(p: Pen): string {
   const blue = p.line([[0, '#6a9cff'], [0.4, '#2a52c4'], [1, '#121f66']], -10, -16, 8, 10);
   // the far wing, down behind it, and the forked tail
   out.push(path('M-4.6,-2.6C-9.6,2 -12.6,8.4 -13.4,15.6C-9.4,10.8 -5.2,6.6 0.6,2.8Z', '#1b2c7a', stroke(ink, 1)));
+  if (!p.tiny) out.push(line('M-5.6,-0.8C-8.6,2.6 -10.8,7 -12,11.8', '#6a8ce8', 0.7, ' stroke-opacity="0.6"'));
   out.push(path('M3.8,1.6C8.2,1.8 14,2.6 20,3.6C15,4.4 11.6,5.2 9.6,6C11.8,9 13.8,12.6 15.8,17.2C11,13.6 6.6,9.4 3.4,5Z', blue, stroke(ink, 1)));
   // the body: its blue back, its white belly and its red throat and brow
   out.push(path('M-14.6,-8.6C-14.6,-11.4 -12.6,-12.8 -10.4,-12.8C-7,-12.6 -3.4,-9.6 1,-5.6C3.6,-3.2 6,-0.8 8.2,1.4L7,4.8C2,5.6 -4.6,3.6 -9,-0.2C-11.8,-2.6 -14.6,-5 -14.6,-8.6Z', blue, stroke(ink, 1.1)));
@@ -173,8 +170,8 @@ function summit(p: Pen): string {
   const snow = p.line([[0, '#ffffff'], [1, '#d2e2ff']], -4, -14, 4, -1);
   const cloud = p.line([[0, '#ffffff'], [1, '#d6c6f4']], 0, 12, 0, 18);
   // the peak behind, then the mountain
-  out.push(path('M3,18L11.6,-6L14.6,-2.6L20.4,18Z', p.line([[0, '#d0d8f8'], [1, '#7480c4']], 8, -6, 16, 18), stroke(ink, 1.1)));
-  out.push(path('M11.6,-6L9.2,0.6Q10.4,-0.6 11.4,1Q12.6,2.4 13.6,0.6Q14.6,-0.4 15.6,0.8L14.6,-2.6Z', snow, stroke(ink, 0.7)));
+  out.push(path('M1.6,18L12.4,-3.6L15,-1L20.4,18Z', p.line([[0, '#d0d8f8'], [1, '#7480c4']], 8, -4, 16, 18), stroke(ink, 1.1)));
+  out.push(path('M12.4,-3.6L10,1.4Q11.2,0.4 12.1,1.8Q13.2,3 14.3,1.4Q15,0.6 15.8,1.6L15,-1Z', snow, stroke(ink, 0.7)));
   out.push(path('M-20,18L-12.4,3.6L-9.2,1.4L-1.6,-14L5.4,-2.4L8.4,-0.6L16,18Z', p.line([[0, '#d6defa'], [0.45, '#8590d0'], [1, '#3f4688']], -12, -8, 10, 18), stroke(ink, 1.2)));
   // its face away from the light, its rock, and the snow on its head
   if (!p.tiny) {
@@ -185,8 +182,8 @@ function summit(p: Pen): string {
   out.push(path('M-1.6,-14L-7.6,-1.8Q-6.2,-3.6 -5,-1.6Q-4,0.4 -3,-1.4L-2.2,-3Q-1,-1 0,-2.8Q1,-4.4 2.4,-2.2Q3.4,-0.8 4.4,-4Z', snow, stroke(ink, 0.8)));
   if (!p.tiny) out.push(path('M-1.6,-14L4.4,-4Q3.4,-0.8 2.4,-2.2Q1.4,-3.8 0.4,-2.8Z', '#9fb4ec', ' fill-opacity="0.75"'));
   // the flag on the summit
-  out.push(line('M-1.6,-13.6V-21', '#4a2a1a', 1.3));
-  out.push(path('M-1.2,-21C2,-22 5,-19.8 8.6,-20.4C6.2,-19 4,-17 -1.2,-16.8Z', p.box([[0, '#ff9a9a'], [0.5, '#f0283e'], [1, '#a80c26']]), stroke('#6a0618', 0.7)));
+  out.push(line('M-1.6,-13.6V-21.4', '#4a2a1a', 1.3));
+  out.push(path('M-1.2,-21.4C2.2,-22.6 5.4,-20.2 9.4,-20.8C6.8,-19.2 4.4,-16.8 -1.2,-16.6Z', p.box([[0, '#ff9a9a'], [0.5, '#f0283e'], [1, '#a80c26']]), stroke('#6a0618', 0.7)));
   // clouds at its feet
   out.push(path('M-20,18C-20,14.8 -17,13.2 -14.4,14.4C-13.4,11.8 -9.4,11.2 -7.6,13.4C-5.8,12 -2.6,12.8 -2.2,15.4C0,15.2 1.6,16.6 1.4,18Z', cloud, stroke('#5a4a9a', 0.9)));
   out.push(path('M8.6,18C8.6,16 10.6,14.8 12.4,15.6C13.4,13.8 16.4,13.6 17.6,15.4C19.2,15 20.4,16.4 20.2,18Z', cloud, stroke('#5a4a9a', 0.9)));

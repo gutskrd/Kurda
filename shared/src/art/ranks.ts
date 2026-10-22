@@ -30,7 +30,7 @@
  * stone's table and its glyph go, and the setting keeps only what makes its
  * outline.
  */
-import { ICONS } from './icons.js';
+import { SEASON_ICONS } from './icons.js';
 import { paintIcon } from './iconpaint.js';
 import type { Crest, CrestBox } from './crest.js';
 import { crestMarkup, divisionStones } from './crest.js';
@@ -126,7 +126,7 @@ function seasonMark(dr: Drawing, tier: RankTier, season: Season, year: number, c
   const pill = capsule(cx, cy, w, h);
   const ground = dr.id('p');
   dr.def(linearAt(ground, [[0, field.glow], [1, field.deep]], 0, cy - h / 2, 0, cy + h / 2));
-  const draw = ICONS[season];
+  const draw = SEASON_ICONS[season];
   const glyph = draw ? `<g transform="translate(${n(cx - 12.5)} ${n(cy)}) scale(0.36)">${paintIcon(draw(), { dr, metal: m, field, small: true, locked: false })}</g>` : '';
   const yy = String(((year % 100) + 100) % 100).padStart(2, '0');
   const fig = `M${n(cx + 1.5)},${n(cy - 4.6)}L${n(cx + 0.6)},${n(cy - 2.2)}` + figures(yy, cx + 4, cy - 4.2, 4.6, 8.4, 3);
