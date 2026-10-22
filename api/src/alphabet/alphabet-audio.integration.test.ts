@@ -142,7 +142,7 @@ describe.skipIf(!ready)('alphabet recordings (integration)', () => {
   });
 
   it('is only for content editors', async () => {
-    expect((await put('ckb:word:be', wav(1), reader)).statusCode).toBe(403);
+    expect((await put('ckb:word:be', wav(1), reader)).statusCode).toBe(404);
     const anon = await app.inject({ method: 'GET', url: '/admin/alphabet/audio' });
     expect(anon.statusCode).toBe(401);
   });
