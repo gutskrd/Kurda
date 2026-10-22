@@ -768,9 +768,10 @@ describe('light', () => {
 
 describe('weight', () => {
   it('keeps every drawing small enough to inline a page of them', () => {
-    // a badge carries Hevalo himself, the drawing he speaks with, and its metal, ribbon and wings, so it may be heavier than an emblem
+    // a badge carries Hevalo himself, the drawing he speaks with, and its metal, ribbon and wings, so it may be heavier than an
+    // emblem; the most detailed of the drawings (the boy fishing the sky from the moon) sets how much heavier
     const badges = Math.max(...BADGE_KEYS.flatMap((key) => TIERS.flatMap((tier) => [badgeSvg({ key, tier }).length, badgeSvg({ key, tier, size: 40 }).length])));
-    expect(badges).toBeLessThan(28 * 1024);
+    expect(badges).toBeLessThan(32 * 1024);
     const biggest = Math.max(
       ...RANK_TIERS.map((tier) => rankEmblemSvg({ tier, division: 1 }).length),
       ...LEAGUE_TIERS.map((tier) => leagueEmblemSvg({ tier }).length),

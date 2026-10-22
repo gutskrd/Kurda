@@ -127,101 +127,113 @@ function meet(x1: number, y1: number, r1: number, x2: number, y2: number, r2: nu
 }
 
 /**
- * A month, and a dream of one: a little Kurdish boy sitting on the new moon,
- * fishing. The moon is a great crescent open to the right, glowing, soft
- * craters on it; he sits on its inner curve in his şal û şapik, a red pştên
- * striped with gold round his waist, a black-and-white jamana wound round
- * his head with its fringe of tassels and its tail, white klaş on his feet
- * dangling over the moon's edge, looking up in wonder with his rod raised
- * into the moon's hollow and his line dropping past its horn to a small
- * gold fish.
+ * A month, and a dream of one: a little Kurdish boy sitting in the new moon,
+ * fishing the sky. The moon is a great crescent, its hollow open up and to the
+ * right, glowing, soft craters on it. He sits on the floor of its hollow in
+ * his şal û şapik, a red pştên striped with gold round his waist, a
+ * black-and-white jamana wound round his head with its fringe and its tail,
+ * his legs over the lower horn and his white klaş swinging in the air; the
+ * moon lights him from behind. He holds his rod up with both hands and looks
+ * up, delighted: on the end of his line, far below the moon, hangs the star
+ * he has caught, gold and glowing.
  */
 function moonBoat(p: Pen): string {
   const out: string[] = [];
-  const ink = '#3a2414';
-  // the moon: the circle about (-3, 0) with the circle about (5, -2.6) taken out of it
-  const [R, r] = [17.4, 14.6];
-  // from its lower horn round its back to its upper horn, then back down the hollow
-  const [low, high] = meet(-3, 0, R, 5, -2.6, r);
-  const moon = `M${n(low[0])},${n(low[1])}A${R},${R} 0 1 1 ${n(high[0])},${n(high[1])}A${r},${r} 0 1 0 ${n(low[0])},${n(low[1])}Z`;
-  // its glow; beside Hevalo the badge's own halo lights it
-  if (p.fine) out.push(path(circ(-3, 0, 20.4), p.round([[0, '#fff6c8', 0.6], [0.7, '#ffe27a', 0.18], [1, '#ffe27a', 0]], -3, 0, 20.4)));
-  out.push(path(moon, p.round([[0, '#fffdf0'], [0.45, '#fff0bc'], [0.8, '#f4cf76'], [1, '#d9a24a']], -9, -4, 22), stroke('#a8701c', 1)));
+  // the moon: the circle about (-5, -1) with the circle about (2.5, -4.5) taken out of it
+  const [R, r] = [15.5, 13.2];
+  const [low, high] = meet(-5, -1, R, 2.5, -4.5, r);
+  const moon = `M${n(low[0])},${n(low[1])}A${R},${R} 0 1 1 ${n(high[0])},${n(high[1])}A${r},${r} 0 0 0 ${n(low[0])},${n(low[1])}Z`;
+  if (p.fine) out.push(path(circ(-5, -1, 18.6), p.round([[0, '#fff6c8', 0.55], [0.7, '#ffe27a', 0.16], [1, '#ffe27a', 0]], -5, -1, 18.6)));
+  out.push(path(moon, p.round([[0, '#fffdf0'], [0.45, '#fff0bc'], [0.8, '#f4cf76'], [1, '#d9a24a']], -10, -5, 20), stroke('#a8701c', 1)));
   if (!p.tiny) {
     // its craters, soft, and the light along its outer edge
-    const craters: [number, number, number][] = [[-13.6, -4.6, 1.6], [-11, 4.4, 1.2], [-6.6, 11.4, 1.1], [-9.6, -10.4, 1], [-14.4, 6.4, 0.9], [-15.6, 0.4, 0.7]];
-    out.push(path(craters.slice(0, p.fine ? 6 : 4).map(([x, y, k]) => circ(x, y, k)).join(''), '#d9aa58', ' fill-opacity="0.45"'));
+    const craters: [number, number, number][] = [[-14.6, -3.6, 1.5], [-12.2, 5.4, 1.2], [-6.6, 10.6, 1.1], [-11, -10.8, 1], [-16.4, 3, 0.8]];
+    out.push(path(craters.map(([x, y, k]) => circ(x, y, k)).join(''), '#d9aa58', ' fill-opacity="0.45"'));
     if (p.fine) out.push(path(craters.map(([x, y, k]) => circ(x + k * 0.3, y + k * 0.3, k * 0.65)).join(''), '#fff8dc', ' fill-opacity="0.7"'));
-    out.push(line('M-17.6,-6.4C-18.8,-0.6 -17.6,5.6 -14.2,10.4', '#ffffff', 1.2, ' stroke-opacity="0.8"'));
-    // the moon's inner edge in its own soft shade
-    if (p.fine) out.push(line('M0.9,-15.6C-6.2,-13 -10.2,-6 -9.4,1.4C-8.8,6.8 -5,11.2 0.4,12.6', '#c8903e', 1.6, ' stroke-opacity="0.35"'));
+    out.push(line('M-19.4,-5.2C-20.4,0.6 -19,6.6 -15.2,10.8', '#ffffff', 1.1, ' stroke-opacity="0.8"'));
+    // where he sits, his shadow on the moon
+    out.push(path(ell(3.6, 8.75, 3.4, 0.6), '#8a5a1a', ' fill-opacity="0.35"'));
   }
-  const cloth = p.box([[0, '#d9c29a'], [0.55, '#a8865a'], [1, '#6e5232']]);
-  const skin = p.box([[0, '#ffdcbc'], [1, '#d99a6a']]);
-  // his legs over the moon's edge, the far one hanging behind, the near one bent forward; white klaş on both feet
-  out.push(
-    path(
-      'M3.6,12.8C3.9,14.4 4.2,16 4.6,17.6L6.4,17.4C6.2,15.8 6,14.2 5.9,12.9Z' +
-        'M-0.2,9.2C2.6,8.6 6,9 8,10.4C8.8,11 8.6,12.4 7.8,12.8C5.8,13.2 2.6,13 -0.2,12.4Z' +
-        'M6.4,11.6C7.2,13.2 7.9,15 8.3,16.8L10.1,16.4C9.7,14.4 9.2,12.6 8.6,11.2Z',
-      cloth,
-      stroke(ink, 0.6),
-    ),
-  );
-  out.push(
-    path(
-      'M4.2,17.2C4.2,18.6 5,19.4 6.4,19.4C7.6,19.4 8.6,19 9.2,18.4C8.2,18.4 7.2,18 6.6,17.2Z' +
-        'M7.9,16.6C8,17.9 8.8,18.6 10.2,18.5C11.4,18.4 12.4,17.9 12.9,17.2C11.9,17.3 10.9,17 10.3,16.2Z',
-      p.box([[0, '#ffffff'], [1, '#d8d2c6']], 0, 0, 0, 1),
-      stroke(ink, 0.55),
-    ),
-  );
-  if (p.fine) out.push(line('M5,18.4L7.4,18.2M8.8,17.6L11.4,17.3', '#a89a86', 0.35));
-  // his jacket, and the pştên wound round his waist
-  out.push(path('M-1.6,10.8C-2,7.6 -1.6,4.6 -0.2,3C1,1.8 3.4,1.8 4.6,3.2C5.6,4.6 5.4,7.8 4.8,10.8Z', cloth, stroke(ink, 0.7)));
-  out.push(path('M-1.8,8.4C0.2,9 3,9 5.1,8.4L5,10.4C3,11 0.2,11 -1.7,10.4Z', p.box([[0, '#ff5a4a'], [1, '#9a1a24']], 0, 0, 0, 1), stroke(ink, 0.5)));
-  if (!p.tiny) out.push(line('M-1.6,9.2C0.4,9.8 3,9.8 5,9.2M-1.6,9.8C0.4,10.4 3,10.4 5,9.8', '#ffd36a', 0.3));
-  if (p.fine) out.push(line('M3.2,3.2C3.4,4.8 3.6,6.6 3.6,8.4', ink, 0.45, ' stroke-opacity="0.6"'));
-  // his arms out to the rod, the rod, and his hands closed on it
-  const arms = 'M0.8,4.2C1.8,6 4,6.8 5.8,6.6M3.4,3.8C4.6,5.2 5.8,5.6 7,5.4';
-  out.push(line(arms, ink, 2.6));
-  out.push(line(arms, cloth, 1.7));
-  out.push(line('M5.6,7.8Q11.2,-1 17.6,-12.8', '#5a3410', 1.1));
-  if (p.fine) out.push(line('M5.6,7.8Q11.2,-1 17.6,-12.8', '#c8904a', 0.55));
-  out.push(path(circ(6.2, 6.4, 0.95) + circ(7.3, 5.2, 0.95), skin, stroke(ink, 0.45)));
-  // his head, turned up toward the line: ear, eye looking up, small nose, open happy mouth
-  out.push(path('M1.2,2.6C0.2,1.8 -0.2,0.6 -0.1,-0.6C0,-2.6 1.4,-3.8 3,-3.8C4.4,-3.8 5.3,-3 5.5,-1.8C5.6,-1.3 5.7,-0.9 6.2,-0.4C6.4,-0.2 6.1,0.1 5.7,0.1C5.8,0.4 5.8,0.8 5.6,1.1C5.6,1.6 5.4,2 5,2.3C4.4,2.8 3.4,3 2.4,2.9Z', skin, stroke(ink, 0.6)));
+  // he is lit from behind by the moon: light on his back, his front in its own shade. He is drawn
+  // about his seat, (4.2, 8.6), and set down a quarter bigger where he sits, at (3.6, 8.6)
+  const boy: string[] = [];
+  const ink = '#4a2c18';
+  const cloth = p.box([[0, '#e8d2a6'], [0.5, '#bc9a68'], [1, '#7e5e3a']]);
+  const skin = p.box([[0, '#ffe2c8'], [0.6, '#f4b88a'], [1, '#d99064']]);
+  const klash = p.box([[0, '#ffffff'], [1, '#d6cec2']], 0, 0, 0, 1);
+  const shade = '#3a2414';
+  // the far leg, behind: thigh along the horn, shin hanging from the knee, its klaş
+  boy.push(path('M3.4,7.1C5,6.6 6.6,6.5 7.7,6.7C8.5,6.9 8.8,7.6 8.7,8.4C8.6,9.2 8.5,9.9 8.6,10.6L7.4,10.8C7.3,10 7.3,9.2 7.4,8.6C6.2,8.7 4.8,8.8 3.6,8.7Z', cloth, stroke(ink, 0.5)));
+  boy.push(path('M7.2,10.6C7,11.4 7.4,11.9 8.2,11.9C9.1,11.9 9.9,11.6 10.4,11C9.6,11.1 8.9,10.9 8.5,10.4Z', klash, stroke(ink, 0.45)));
+  // the near leg: the wide şal from the hip to the knee, gathered at the ankle, and its klaş with its toe turned up
+  boy.push(path('M3.8,7.8C5.4,7.4 7.4,7.3 8.7,7.6C9.7,7.8 10.1,8.6 9.9,9.5C9.8,10.3 9.8,11 10,11.6L8.6,11.8C8.4,11.1 8.4,10.3 8.5,9.6C7,9.8 5.4,9.9 4,9.7Z', cloth, stroke(ink, 0.55)));
+  boy.push(path('M8.4,11.6C8.2,12.5 8.7,13 9.6,13C10.6,13 11.6,12.6 12.1,11.8C12.4,11.4 12.7,11.4 12.7,11.7C12.6,11.1 12.1,11 11.6,11.3C11,11.6 10.3,11.6 9.9,11.4Z', klash, stroke(ink, 0.45)));
   if (!p.tiny) {
-    out.push(path(ell(2, -0.1, 0.62, 0.86), skin, stroke(ink, 0.35)));
-    out.push(path(circ(4.55, -1.25, 0.44), '#2a1a10'));
-    out.push(path('M4.7,1C5.1,1 5.4,0.95 5.6,0.8C5.6,1.4 5.3,1.75 4.95,1.7C4.75,1.55 4.65,1.3 4.7,1Z', '#8a2a1a'));
+    boy.push(line('M8.6,12.4C9.6,12.7 10.8,12.6 11.8,12', '#a89a86', 0.3));
+    // the folds of the şal at the knee, and the shade under the thigh
+    boy.push(line('M8.9,8.1C9.3,8.6 9.4,9.2 9.2,9.8M6.2,9.6C6.9,9.2 7.6,9.1 8.4,9.3', shade, 0.25, ' stroke-opacity="0.5"'));
+  }
+  // his jacket, a little open at the neck on his white shirt, and the pştên wound round his waist
+  boy.push(path('M2.2,8.8C1.8,7 1.9,5.2 2.5,4C3,3.1 4,2.8 5,3C6,3.3 6.4,4.2 6.3,5.4C6.2,6.6 5.9,7.8 5.7,8.8Z', cloth, stroke(ink, 0.6)));
+  boy.push(path('M3.9,2.95L4.6,4.6L5.4,3.1C4.9,2.95 4.4,2.9 3.9,2.95Z', '#fbf6ec', stroke(ink, 0.3)));
+  boy.push(path('M2,6.8C3.3,7.3 4.7,7.3 6.1,6.8L6,8.2C4.7,8.7 3.3,8.7 2.1,8.2Z', p.box([[0, '#ff5a4a'], [1, '#9a1a24']], 0, 0, 0, 1), stroke(ink, 0.45)));
+  if (!p.tiny) {
+    boy.push(line('M2.1,7.4C3.3,7.9 4.7,7.9 6,7.4M2.1,7.9C3.3,8.4 4.7,8.4 6,7.9', '#ffd36a', 0.26));
+    boy.push(path('M5.9,4.2C6.3,5.4 6.2,6.8 5.8,8.8L5.7,8.8C5.9,7.8 6.1,6.6 6,5.4Z', shade, ' fill-opacity="0.25"'));
+  }
+  // the far arm up to the rod, the rod, then the near arm: sleeves, and his hands closed on it
+  boy.push(path('M4.9,3.4C5.8,3.8 6.6,4.1 7.3,3.9L7.6,4.9C6.7,5.3 5.6,5 4.7,4.4Z', cloth, stroke(ink, 0.45)));
+  boy.push(line('M5.2,7.2Q9.8,1 14.44,-7.24', '#5a3410', 0.85));
+  if (p.fine) boy.push(line('M5.2,7.2Q9.8,1 14.44,-7.24', '#d8a060', 0.32));
+  boy.push(path('M2.3,4.2C2,5.6 2.5,6.8 3.8,7C4.7,7.1 5.5,6.8 6,6.4L5.6,5.3C5,5.7 4.4,5.9 3.9,5.8C3.4,5.7 3.4,4.8 3.6,4.1Z', cloth, stroke(ink, 0.5)));
+  boy.push(path(circ(6.3, 5.8, 0.72) + circ(7.4, 4.35, 0.66), skin, stroke(ink, 0.4)));
+  // his head, turned up to what he has caught: hair at his nape, ear, round cheek, two bright eyes, a wide smile
+  boy.push(path('M1.4,-0.6C1.1,0.8 1.3,2 2,2.8L2.6,1.2Z', '#2a1c18'));
+  boy.push(path('M1.3,-0.6C1.3,-2.4 2.5,-3.4 4.1,-3.4C5.7,-3.4 6.9,-2.4 7,-0.6C7.1,0.6 6.8,1.6 6.2,2.2C5.5,2.9 4.6,3.1 3.7,3C2.5,2.8 1.5,1.6 1.3,-0.6Z', skin, stroke(ink, 0.5)));
+  boy.push(path(ell(2, 0.5, 0.55, 0.72), skin, stroke(ink, 0.35)));
+  boy.push(path(`${ell(4.85, -0.05, 0.46, 0.6)}${ell(6.32, -0.2, 0.34, 0.52)}`, '#2a1a10'));
+  boy.push(path('M4.8,1.3C5.2,2.3 6.3,2.4 6.75,1.3C6.1,1.55 5.4,1.55 4.8,1.3Z', '#7a2214'));
+  if (!p.tiny) {
+    boy.push(path(`${circ(5, -0.28, 0.18)}${circ(6.42, -0.42, 0.13)}`, '#ffffff'));
+    boy.push(path('M5.3,1.8C5.6,2.1 6.1,2.1 6.4,1.8C6.1,1.95 5.6,1.95 5.3,1.8Z', '#ff8a7a'));
+    boy.push(line('M6.95,0.3C7.25,0.5 7.25,0.9 6.95,1.05', ink, 0.25));
+    boy.push(path(ell(4.3, 1.25, 0.62, 0.36), '#ff8a7a', ' fill-opacity="0.5"'));
+  }
+  // the jamana wound round his head: its tail down his back, wound in folds, a fine black-and-white weave, its fringe
+  boy.push(path('M1.7,-0.6C0.6,0.4 0.2,1.9 0.5,3.6L1.6,3.5C1.4,2.2 1.6,1 2.5,-0.1Z', '#26222e', stroke('#14101a', 0.35)));
+  boy.push(path('M1,0.4C0.5,-2.2 2,-4.3 4.2,-4.4C6.4,-4.5 7.7,-2.8 7.3,-0.8C6,-1.5 4.5,-1.7 3,-1.3C2.2,-1 1.6,-0.4 1,0.4Z', '#26222e', stroke('#14101a', 0.45)));
+  if (!p.tiny) {
+    boy.push(line('M1.4,-1.6C2.6,-3 4.6,-3.4 6.6,-2.6M1.6,-2.8C2.8,-3.8 4.6,-4 6,-3.6', '#4a4458', 0.35));
+    const weave: string[] = [];
+    for (let row = 0; row < 4; row++) for (let col = 0; col < 7 - row; col++) weave.push(`M${n(1.8 + col * 0.82 + row * 0.41)},${n(-1.9 - row * 0.62)}h0.1`);
+    boy.push(line(weave.join(''), '#ffffff', 0.26, ' stroke-opacity="0.85"'));
+    // the moon behind him lights his back
+    boy.push(line('M0.9,-0.2C0.7,-2.2 1.8,-3.9 3.6,-4.3M2.1,8.4C1.8,6.8 1.9,5.2 2.4,4.1', '#fff4c0', 0.3, ' stroke-opacity="0.6"'));
   }
   if (p.fine) {
-    out.push(line('M2.1,-0.6C1.8,-0.3 1.8,0.2 2.1,0.4', ink, 0.25, ' stroke-opacity="0.6"'));
-    out.push(path(circ(4.45, -1.45, 0.17), '#ffffff'));
-    out.push(line('M3.9,-2.2Q4.5,-2.55 5.15,-2.2', ink, 0.32));
-    out.push(path(ell(3.9, 0.7, 0.7, 0.42), '#ff8a7a', ' fill-opacity="0.55"'));
+    // the jamana's fringe: little tassels over his brow
+    boy.push(path(`${circ(5, -0.7, 0.2)}${circ(5.6, -0.65, 0.2)}${circ(6.2, -0.55, 0.2)}${circ(6.8, -0.4, 0.18)}`, '#26222e'));
   }
-  // the jamana wound full round his head: its tail behind, its rolled brim, its black-and-white weave, its fringe of tassels over his brow
-  out.push(path('M-0.4,-0.6C-1.8,0.4 -2.4,1.8 -2.2,3.2L-1.2,3C-1.2,1.8 -0.8,0.8 0.2,0Z', '#24202c', stroke('#14101a', 0.4)));
-  out.push(path('M-0.9,-0.1C-1.8,-3.6 0.4,-6.2 3.2,-6.2C5.8,-6.2 7,-4.5 6.3,-2.3C5,-2.9 3.6,-3.1 2.2,-2.7C1,-2.3 0.1,-1.3 -0.9,-0.1Z', '#24202c', stroke('#14101a', 0.5)));
-  out.push(line('M-0.7,-0.4C0.4,-2 2.2,-2.9 4,-2.9C5,-2.9 5.8,-2.6 6.3,-2.3', '#14101a', 1.4));
-  if (!p.tiny) {
-    // the weave: small white crosses on the black
-    const crosses = [[0.6, -4.2], [2, -5.1], [3.6, -5.4], [5, -4.8], [1.2, -3], [2.8, -3.7], [4.4, -3.6], [5.8, -3.4], [-0.2, -2.2]];
-    out.push(line(crosses.map(([x, y]) => `M${n((x ?? 0) - 0.25)},${n((y ?? 0) - 0.25)}l.5,.5m0,-.5l-.5,.5`).join(''), '#ffffff', 0.22));
-  }
-  if (p.fine) {
-    // the folds where it is wound, the stitched brim, and the fringe: little tassels hanging over his brow and temple
-    out.push(line('M0,-3.2C1.4,-4.8 3.6,-5.2 5.4,-4.4M-0.6,-1.6C0.8,-3.4 3.2,-4 5.8,-3.2', '#5a5468', 0.3));
-    out.push(line('M-0.4,-0.6C0.8,-2.1 2.4,-2.7 4,-2.7C5,-2.7 5.8,-2.4 6.3,-2.1', '#ffffff', 0.3, ' stroke-dasharray="0.5 0.5"'));
-    out.push(line('M3.2,-2.5V-1.6M3.9,-2.6V-1.7M4.6,-2.6V-1.8M5.3,-2.5V-1.7M6,-2.3V-1.6M2.5,-2.3V-1.6', '#24202c', 0.4));
-    out.push(path(`${circ(3.2, -1.5, 0.22)}${circ(3.9, -1.6, 0.22)}${circ(4.6, -1.7, 0.22)}${circ(5.3, -1.6, 0.22)}${circ(6, -1.5, 0.22)}${circ(2.5, -1.5, 0.22)}`, '#24202c'));
-  }
-  // the line dropping past the moon's horn, and a small gold fish on it
-  out.push(line('M17.6,-12.8V15.4', '#ffffff', 0.35, ' stroke-opacity="0.9"'));
-  out.push(path('M17.6,15.2C18.6,15.7 18.9,17 18.4,18.1C18.1,18.8 17.8,19.1 17.6,19.4C17.4,19.1 17.1,18.8 16.8,18.1C16.3,17 16.6,15.7 17.6,15.2Z M17.6,19.2L16.4,20.6L18.8,20.6Z', p.box([[0, '#fff3a0'], [1, '#e8a21c']]), stroke('#9a5a06', 0.45)));
-  if (p.fine) out.push(path(`${glint(-17.6, -15.6, 1.4)}${glint(-19, 14.6, 1)}`, '#ffffff'));
+  out.push(`<g transform="translate(3.6 8.6) scale(1.25) translate(-4.2 -8.6)">${boy.join('')}</g>`);
+  // his line, straight down from the rod's tip under the weight of the star he has caught
+  const [sx, sy, sr, turn] = [16.2, 15.4, 3, -14];
+  const tips = Array.from({ length: 10 }, (_, i): [number, number] => {
+    const a = ((-90 + turn + i * 36) * Math.PI) / 180;
+    const k = i % 2 === 0 ? sr : sr * 0.46;
+    return [sx + Math.cos(a) * k, sy + Math.sin(a) * k];
+  });
+  out.push(line(`M16.4,-11.2Q15.8,0 ${n(tips[0]![0])},${n(tips[0]![1])}`, '#fffbe8', 0.35, ' stroke-opacity="0.9"'));
+  // the star: gold, its points rounded, glowing
+  if (!p.tiny) out.push(path(circ(sx, sy, sr * 1.9), p.round([[0, '#fff2a0', 0.6], [1, '#fff2a0', 0]], sx, sy, sr * 1.9)));
+  const mid = (a: [number, number], b: [number, number]) => [(a[0] + b[0]) / 2, (a[1] + b[1]) / 2];
+  const start = mid(tips[9]!, tips[0]!);
+  const star = `M${n(start[0]!)},${n(start[1]!)}${tips.map((t, i) => {
+    const m = mid(t, tips[(i + 1) % 10]!);
+    return `Q${n(t[0])},${n(t[1])} ${n(m[0]!)},${n(m[1]!)}`;
+  }).join('')}Z`;
+  out.push(path(star, p.round([[0, '#fffbd0'], [0.45, '#ffd84a'], [1, '#f09a10']], sx - 1, sy - 1, sr * 1.3), stroke('#a8600a', 0.6)));
+  if (!p.tiny) out.push(path(ell(sx - 0.8, sy - 0.9, 0.9, 0.5), '#ffffff', ` fill-opacity="0.8" transform="rotate(${turn} ${sx} ${sy})"`));
+  if (p.fine) out.push(path(`${glint(-17.4, -14.6, 1.4)}${glint(11.4, 9.2, 1)}${glint(18.6, 9.6, 0.9)}${glint(12.2, -14.8, 1.1)}`, '#ffffff'));
   return out.join('');
 }
 
