@@ -109,7 +109,7 @@ export const HERO: Readonly<Record<string, HeroColours>> = {
   'ji-nu-ve': { f: 'green', a: 'wood', plate: 'green' },
   'kewe-ciye': { f: 'sand', a: 'wood', plate: 'orange' },
   'deste-zerin': { f: 'gold', a: 'brass', plate: 'indigo' },
-  'mevane-agir': { f: 'paper', a: 'brass', plate: 'red' },
+  'mevane-agir': { f: 'paper', a: 'brass', plate: 'blue' },
   'kaniya-zanine': { f: 'paper', a: 'cream', plate: 'teal' },
   'pisika-wane': { f: 'paper', a: 'cream', plate: 'pink' },
   perperok: { f: 'sky', a: 'violet', plate: 'violet' },
