@@ -31,19 +31,21 @@ function book(p: Pen): string {
   // the ribbon, out from under the right page
   out.push(path('M6.2,8.6V19.6L8.6,17.4L11,19.6V8.2Z', p.box([[0, '#ff8a9a'], [0.5, '#ff2d55'], [1, '#a8102e']], 0, 0, 1, 0), stroke('#6a0818', 0.8)));
   // the fan of pages beneath, then the two lying open
-  out.push(path('M0,-5.6C-4,-9.8 -11.4,-11.2 -18.4,-9V10.8C-12.4,9.6 -5,10.6 0,14.4C5,10.6 12.4,9.6 18.4,10.8V-9C11.4,-11.2 4,-9.8 0,-5.6Z', p.line([[0, '#fff6df'], [1, '#dcc08a']], 0, -6, 0, 14), stroke(paper, 1)));
-  if (!p.tiny) out.push(line('M-17.6,9.2C-11.6,8.2 -4.8,9.2 0,12.6C4.8,9.2 11.6,8.2 17.6,9.2M-18,10C-12,9 -4.8,10 0,13.5C4.8,10 12,9 18,10', paper, 0.45, ' stroke-opacity="0.7"'));
+  out.push(path('M0,-5.6C-4,-9.8 -11.4,-11.2 -18.4,-9V10.8C-12.4,9.6 -5,10.6 0,14.4C5,10.6 12.4,9.6 18.4,10.8V-9C11.4,-11.2 4,-9.8 0,-5.6Z', p.line([[0, '#fff3b0'], [1, '#e0a030']], 0, 8, 0, 15), stroke(paper, 1)));
+  if (!p.tiny) out.push(line('M-17.8,9.6C-11.8,8.6 -4.8,9.6 0,13.1C4.8,9.6 11.8,8.6 17.8,9.6', paper, 0.5, ' stroke-opacity="0.7"'));
   const left = 'M0,-6C-4,-10.4 -11.4,-11.8 -17.4,-10V8.2C-11.4,7 -4.6,8 0,11.6Z';
-  out.push(path(left + mirror(left), p.line([[0, '#fffdf5'], [0.5, '#fbf0d6'], [1, '#e9d3a6']], -12, -10, 14, 12), stroke(paper, 0.9)));
+  const page = p.line([[0, '#ffffff'], [0.5, '#fbf0d6'], [1, '#e9d3a6']], -12, -10, 14, 12);
+  out.push(path(left + mirror(left), page, stroke(paper, 0.9)));
   if (!p.tiny) {
-    // the light on them, brightest at the fold
-    out.push(path(ell(0, -3, 11, 9), p.round([[0, '#ffffff', 0.95], [1, '#ffffff', 0]], 0, -4, 11)));
     // the shade of the fold, and the lines of words on each page
     out.push(path('M0,-6C-1.4,-7.4 -2.8,-8.2 -4.2,-8.8V9C-2.6,9.6 -1.2,10.4 0,11.6C1.2,10.4 2.6,9.6 4.2,9V-8.8C2.8,-8.2 1.4,-7.4 0,-6Z', p.box([[0, '#c8a46a', 0], [0.5, '#c8a46a', 0.8], [1, '#c8a46a', 0]], 0, 0, 1, 0)));
     const words = 'M-15,-6.8C-11.6,-8 -8,-7.8 -5,-6.2M-15,-2.8C-11.6,-4 -8,-3.8 -5,-2.2M-15,1.2C-11.6,0 -8,0.2 -5,1.8M-15,5.2C-12.6,4.4 -10.4,4.4 -8.6,4.8';
     out.push(line(words + mirror(words), '#8f9cc8', 1, ' stroke-dasharray="3.4 1.6 1.8 1.6"'));
   }
   out.push(line('M0,-6V11.6', paper, 0.8));
+  // a page turning over, and its shade on the page beneath
+  if (!p.tiny) out.push(path('M9.6,-10.8C10.6,-5 11,0.4 10.4,6.6L13.4,6.6C14,0.4 13.6,-5.4 12.6,-11.2Z', '#c8a46a', ' fill-opacity="0.45"'));
+  out.push(path('M0,-6C2.6,-10.2 5.6,-13.4 9.2,-15C10.6,-8.6 11.2,-1.6 10.4,6.6C6.6,7.4 3,8.8 0,11.6Z', page, stroke(paper, 0.9)));
   if (p.fine) out.push(path(`${glint(-10.6, -15.4, 1.8)}${glint(11.4, -16.2, 1.4)}${glint(1.4, -12.6, 1.1)}`, '#ffffff'));
   return out.join('');
 }
@@ -146,8 +148,8 @@ function quill(p: Pen): string {
   out.push(path(at(vane), p.box([[0, '#ffffff'], [0.6, '#f0ecff'], [1, '#bfb2e6']], 0, 0, 1, 1), stroke('#4a3a7a', 1.1)));
   if (!p.tiny) out.push(line(at('M-0.4,-7L-5,-10.6M-0.2,-11.4L-5.6,-15.4M0.4,-18L-4.4,-22.2M0.4,-9L3,-12.2M1,-19L3.8,-21.8'), '#b9addf', 0.6));
   const shaft = at('M0,1C-0.2,-8 0.2,-17 2,-25.4');
-  out.push(line(shaft, '#4a3a7a', 1.8));
-  out.push(line(shaft, '#f4ead6', 0.8));
+  out.push(line(shaft, '#4a3a7a', 1.5));
+  out.push(line(shaft, '#f4ead6', 0.6));
   if (p.fine) out.push(path(`${glint(12.6, 6.4, 1.6)}${glint(-15.4, -2.4, 1.2)}`, '#ffffff'));
   return out.join('');
 }
@@ -162,7 +164,10 @@ function compass(p: Pen): string {
   out.push(line(circ(0, -16.4, 2.8), '#f2c24e', 1.6));
   out.push(path('M-3,-14.6H3V-11.6H-3Z', brass, stroke(ink, 0.9)));
   out.push(path(circ(0, 3, 16.4), brass, stroke(ink, 1.2)));
-  if (!p.tiny) out.push(line(circ(0, 3, 14.6), ink, 0.6, ' stroke-opacity="0.5"'));
+  if (!p.tiny) {
+    out.push(line(circ(0, 3, 14.6), ink, 0.6, ' stroke-opacity="0.5"'));
+    out.push(line(`M${on(0, 3, 15.4, 196)}A15.4,15.4 0 0 1 ${on(0, 3, 15.4, 256)}`, '#ffffff', 1, ' stroke-opacity="0.8"'));
+  }
   // the dial, and the rose on it
   out.push(path(circ(0, 3, 12.8), p.round([[0, '#ffffff'], [0.7, '#fbf3df'], [1, '#e0cca0']], -3, -1, 15), stroke(ink, 0.9)));
   if (!p.tiny) {
@@ -182,7 +187,10 @@ function compass(p: Pen): string {
     out.push(path('M-10.6,-0.4C-9,-5 -4.6,-7.6 0.4,-7.6C-4,-6 -7.6,-3.6 -10.6,-0.4Z', '#ffffff', ' fill-opacity="0.85"'));
     out.push(line('M10.2,6.4C9.4,9.6 7.2,12 4.2,13.2', '#ffffff', 0.9, ' stroke-opacity="0.6"'));
   }
-  if (p.fine) out.push(path(`${glint(-12.6, -9.4, 1.8)}${glint(13.4, 15.4, 1.4)}`, '#ffffff'));
+  if (p.fine) {
+    out.push(line(circ(0, 3, 11.6), ink, 0.9, ' stroke-dasharray="0.3 2.74" stroke-opacity="0.5"'));
+    out.push(path(`${glint(-12.6, -9.4, 1.8)}${glint(13.4, 15.4, 1.4)}`, '#ffffff'));
+  }
   return out.join('');
 }
 
@@ -256,6 +264,7 @@ function pencil(p: Pen): string {
   const wave = 'M-19.4,14C-17.8,9.8 -15,9.8 -13.8,13C-12.6,16.2 -9,17 -6.2,15.4';
   out.push(line(wave, '#173f7a', 3.8));
   out.push(line(wave, '#3f8cff', 2.2));
+  if (!p.tiny) out.push(line('M-18.4,12.6C-17.2,10.6 -15.6,10.4 -14.6,12', '#ffffff', 0.7, ' stroke-opacity="0.75"'));
   // the pencil, leaning on its point
   const at = (d: string): string => turned(d, 34, 4.4, -0.4);
   out.push(path(at('M-5.6,5.4L0,19.4L5.6,5.4Z'), '#ffd9a6', stroke(ink, 0.9)));
