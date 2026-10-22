@@ -37,6 +37,9 @@
 # CSP3 attribute support falls back to style-src and silently reproduces
 # exactly this bug, so it is not the safer option it looks like.
 #
+# X-Robots-Tag keeps the console out of every search engine's index, so its
+# address is not something anyone finds by searching.
+#
 # connect-src names no media host. The Characters page reads each stored
 # recording to make its mouth timeline, but through the API
 # (GET /admin/audio/:kind/file), not from the CDN or wherever a dictionary
@@ -48,11 +51,13 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: no-referrer
   Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
-  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=()
+  Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=(), serial=(), hid=(), bluetooth=(), display-capture=(), publickey-credentials-get=(self), browsing-topics=()
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+  X-Robots-Tag: noindex, nofollow, noarchive
+  X-Permitted-Cross-Domain-Policies: none
 
-# The backdrop picture is not hashed like /assets/, so it is kept a day rather
-# than a year: a new one reaches everyone by the next morning.
-/backdrop/*
+# Hevalo's icon is not hashed like /assets/, so it is kept a day rather than a
+# year: a new one reaches everyone by the next morning.
+/brand/*
   Cache-Control: public, max-age=86400, stale-while-revalidate=604800

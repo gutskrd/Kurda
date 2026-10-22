@@ -145,10 +145,13 @@ describe('a way out', () => {
     await waitFor(() => expect(api.calls.find((c) => c.path === '/auth/logout')?.body).toEqual({ refreshToken: 'ref-7' }));
   });
 
-  it('tells an account without admin access so, with a way to sign out', async () => {
-    const { signedOut } = show(on('GET', '/admin/session', failure(403, 'FORBIDDEN', 'insufficient permissions')));
-    expect(await screen.findByRole('heading', { name: 'Not an admin account' })).toBeInTheDocument();
-    await userEvent.click(screen.getByRole('button', { name: 'Sign out' }));
-    expect(signedOut).toHaveBeenCalledOnce();
+  it.each([
+    [404, 'NOT_FOUND', 'route not found'],
+    [403, 'FORBIDDEN', 'insufficient permissions'],
+  ])('signs an account the console is not for straight back out (%i), saying nothing about why', async (status, code, message) => {
+    const { signedOut } = show(on('GET', '/admin/session', failure(status, code, message)));
+    await waitFor(() => expect(signedOut).toHaveBeenCalledOnce());
+    expect(getToken()).toBeNull();
+    expect(screen.queryByText(/admin access|not found|permissions/i)).not.toBeInTheDocument();
   });
 });

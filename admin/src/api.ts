@@ -165,7 +165,7 @@ export class ApiError extends Error {
  * session dropped the token and reloaded the page — the sign-in form lost its
  * error message, and a typo in the code signed the admin out.
  */
-const ANSWERS_401_ITSELF = ['/auth/login', '/admin/auth/verify', '/admin/2fa/confirm'];
+const ANSWERS_401_ITSELF = ['/admin/auth/login', '/admin/auth/verify', '/admin/2fa/confirm'];
 
 const answers401Itself = (path: string): boolean => ANSWERS_401_ITSELF.some((p) => path === p || path.startsWith(`${p}?`));
 
