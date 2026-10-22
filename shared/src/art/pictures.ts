@@ -277,131 +277,67 @@ function goldenKey(p: Pen): string {
 }
 
 /**
- * The guest of the fire is given tea: a tulip tea glass seen from above, as
- * it is painted, its wide rim open on its grey inside and the tea's surface
- * just below it; its sides drawing in to a narrow waist high up, swelling to
- * a round belly low down and drawing in again to a thick foot. The tea deep
- * red, banded darker where the glass bends the light, glowing at the foot,
- * white streaks down the glass; a big saucer under it painted with coral
- * petals and sprigs of gold, the glass's shadow and a run of tea on it.
+ * The guest of the fire is given tea: a tulip tea glass, wide at its rim,
+ * drawn in at a waist high up, swelling to a round belly that curves under
+ * to a small thick base, full of clear red tea glowing amber where the light
+ * comes through; a white porcelain saucer under it, rimmed with gold and
+ * painted with coral petals.
  */
 function teaGlass(p: Pen): string {
   const out: string[] = [];
-  const ink = '#2e0e08';
-  // the saucer, tilted towards us, and the faint ring of its well
-  out.push(path(ell(0.4, 9.2, 18.2, 10.3), p.round([[0, '#fbf8f4'], [0.6, '#ebe5dd'], [1, '#c8beb2']], -2, 6, 20), stroke('#9c9084', 0.6)));
-  out.push(line(ell(0.4, 9.7, 12.6, 7), '#b6ab9e', 0.45, ' stroke-opacity="0.55"'));
-  // its coral petals, each where and as it lies in the painting: centre, length, width, slant
-  const petals: [number, number, number, number, number][] = [
-    [-14.1, 8.9, 6.6, 2.3, 35],
-    [12.7, 5.9, 6.6, 2.5, -36],
-    [14.1, 13.1, 6, 2, -26],
-    [-9, 16, 4.6, 1.6, 19],
-    [-8.8, 0.8, 4, 1.6, 115],
-  ];
-  const oval = ([x, y, l, w, a]: [number, number, number, number, number]): string => {
-    const [dx, dy] = [Math.cos((a * Math.PI) / 180) * (l / 2), Math.sin((a * Math.PI) / 180) * (l / 2)];
-    const r = `${n(l / 2)},${n(w / 2)} ${a}`;
-    return `M${n(x - dx)},${n(y - dy)}A${r} 1 0 ${n(x + dx)},${n(y + dy)}A${r} 1 0 ${n(x - dx)},${n(y - dy)}Z`;
+  const ink = '#4a1a10';
+  // the saucer: its edge, its face rimmed with gold, its coral petals and gold dots, the glass's shadow on it
+  out.push(path(ell(0, 14.4, 18.6, 6), '#b8a6c8', stroke('#6a5a86', 1)));
+  out.push(path(ell(0, 13.6, 18.6, 6), p.round([[0, '#ffffff'], [0.6, '#f2eef8'], [1, '#d6cce6']], -2, 12, 19), stroke('#6a5a86', 1)));
+  out.push(line(ell(0, 13.6, 16.6, 5.1), '#e8b030', 0.6));
+  const ring = (deg: number, k: number): [number, number] => [Math.cos((deg * Math.PI) / 180) * 18.6 * k, 13.6 + Math.sin((deg * Math.PI) / 180) * 6 * k];
+  const petal = (deg: number): string => {
+    const [x, y] = ring(deg, 0.78);
+    const a = (Math.atan2(Math.sin((deg * Math.PI) / 180) * 6, Math.cos((deg * Math.PI) / 180) * 18.6) * 180) / Math.PI;
+    const l = 1.2 + Math.abs(Math.cos((deg * Math.PI) / 180)) * 1.4;
+    const [dx, dy] = [Math.cos((a * Math.PI) / 180) * l, Math.sin((a * Math.PI) / 180) * l];
+    return `M${n(x - dx)},${n(y - dy)}A${n(l)},0.8 ${n(a)} 1 0 ${n(x + dx)},${n(y + dy)}A${n(l)},0.8 ${n(a)} 1 0 ${n(x - dx)},${n(y - dy)}Z`;
   };
-  out.push(path(petals.map(oval).join(''), '#dc6e52', stroke('#b8503a', 0.2, ' stroke-opacity="0.6"')));
-  if (!p.tiny) {
-    // sprigs of gold between the petals: a curled stem, its leaves and buds
-    const sprigs: [number, number, number, number][] = [
-      [-13.2, 5.3, 1.1, -20],
-      [10.2, 2.2, 0.8, 15],
-      [14.8, 10.8, 1.1, -10],
-      [-12.8, 12.8, 0.9, 10],
-      [12.4, 16.4, 0.8, -5],
-    ];
-    const at = ([x, y, k, a]: [number, number, number, number], lx: number, ly: number): [number, number] => {
-      const [c, si] = [Math.cos((a * Math.PI) / 180), Math.sin((a * Math.PI) / 180)];
-      return [x + k * (lx * c - ly * si), y + k * (lx * si + ly * c)];
-    };
-    const stems = sprigs.map((g) => {
-      const [a, b, c] = [at(g, -1.5, 0.5), at(g, 0, -0.3), at(g, 1.5, -0.5)];
-      return `M${n(a[0])},${n(a[1])}Q${n(b[0])},${n(b[1])} ${n(c[0])},${n(c[1])}`;
-    });
-    out.push(line(stems.join(''), '#4a3812', 0.28));
-    const leaves = sprigs.map((g) =>
-      ([[-1.1, -0.3, 0.42], [-0.3, -0.85, 0.46], [0.6, -0.95, 0.4], [0.3, 0.35, 0.38], [1.2, 0.1, 0.32]] as const)
-        .map(([lx, ly, r]) => circ(...at(g, lx, ly), r * g[2]))
-        .join(''),
-    );
-    out.push(path(leaves.join(''), '#a8843a'));
-    const buds = sprigs.map((g) => `${circ(...at(g, -0.6, 0.1), 0.2 * g[2])}${circ(...at(g, 1.6, -0.6), 0.22 * g[2])}`);
-    out.push(path(buds.join(''), '#4a3410'));
-    // the glass's shadow, the amber light it throws through the tea, and a run of tea from its foot
-    out.push(path(ell(1.2, 15.8, 9.3, 2.6), '#4e4a56', ' fill-opacity="0.32" transform="rotate(4 1.2 15.8)"'));
-    out.push(path(ell(5.8, 16.6, 2, 1.4), p.roundBox([[0, '#ffb43a', 0.55], [1, '#ffb43a', 0]])));
-    out.push(line('M4.9,13.4C5.1,15 4.9,16.8 5.2,18.8', '#d6801e', 0.55));
-  }
-  // the glass's outline, measured from the painting: half its width at each height, rim to foot
+  out.push(path([200, 160, 120, 60, 20, -20, -160].map(petal).join(''), p.box([[0, '#ffa08a'], [1, '#ee5e48']])));
+  if (!p.tiny) out.push(path([180, 140, 90, 40, 0, -40].map((d) => circ(...ring(d, 0.78), 0.5)).join(''), '#f0b428'));
+  out.push(path(ell(0.8, 14.6, 7.2, 1.7), '#4a3a5a', ' fill-opacity="0.28"'));
+
+  // the glass: wide rim, waist, belly, and the belly curving under to its base
   const side: [number, number][] = [
-    [11.5, -14.12], [10.6, -12], [9.55, -10.3], [8.6, -8.6], [8.1, -7], [7.82, -4.9], [7.74, -2.7], [7.95, -0.7], [8.42, 0.9],
-    [8.92, 2.5], [9.25, 4.1], [9.45, 5.7], [9.52, 7.2], [9.42, 8.8], [9.12, 10], [8.62, 11.1], [8.1, 12], [7.8, 12.8], [7.56, 13.66],
+    [11.5, -14.1], [10.6, -12], [9.55, -10.3], [8.6, -8.6], [8.1, -7], [7.82, -4.9], [7.74, -2.7], [7.95, -0.7], [8.42, 0.9],
+    [8.92, 2.5], [9.25, 4.1], [9.45, 5.7], [9.5, 7.2], [9.3, 8.9], [8.8, 10.6], [7.9, 12.1], [6.6, 13.4], [5, 14.3],
   ];
-  const down = (pts: [number, number][]): string => through(pts);
-  const right = side;
   const left = side.map(([x, y]): [number, number] => [-x, y]).reverse();
-  const glass = `M${n(right[0]![0])},${n(right[0]![1])}${down(right)}A7.56,1.33 0 0 1 -7.56,13.66${down(left)}A11.5,5.44 0 0 1 11.5,-14.12Z`;
-  // the tea, seen through the glass from just under the rim to the bottom, in its bands
-  out.push(
-    path(
-      glass,
-      p.line(
-        [
-          [0, '#7a2414'], [0.1, '#a83c22'], [0.17, '#8e301a'], [0.26, '#5a180c'], [0.33, '#360c06'], [0.4, '#74220f'], [0.47, '#8c2c14'],
-          [0.57, '#4e140a'], [0.69, '#9a3818'], [0.75, '#a8421c'], [0.82, '#4a1208'], [0.91, '#a84620'], [1, '#c8602a'],
-        ],
-        0,
-        -9.7,
-        0,
-        12.6,
-      ),
-    ),
-  );
+  const glass = `M11.5,-14.1${through(side)}A5,1 0 0 1 -5,14.3${through(left)}A11.5,3.4 0 0 1 11.5,-14.1Z`;
+  // inside it, the tea, just in from the glass: under its surface, down to where the base begins
+  const wall = side.slice(1, 16).map(([x, y]): [number, number] => [x - 0.65, y]);
+  const tea = `M${n(wall[0]![0])},${n(wall[0]![1])}${through(wall)}A6.6,1.3 0 0 1 ${n(-wall.at(-1)![0])},${n(wall.at(-1)![1])}${through(
+    wall.map(([x, y]): [number, number] => [-x, y]).reverse(),
+  )}Z`;
+  // the glass's clear inside above the tea
+  out.push(path(ell(0, -14.1, 11.5, 3.4), p.line([[0, '#d6d8ec'], [1, '#f6f6ff']], 0, -17.5, 0, -10.7)));
+  out.push(path(tea, p.line([[0, '#c43a1a'], [0.35, '#a82614'], [0.75, '#c43a1a'], [1, '#f07a32']], 0, -12, 0, 13.4)));
   if (!p.tiny) {
-    // round, so darker at both sides, and lit through its middle
-    out.push(path(glass, p.line([[0, '#2a0804', 0.6], [0.2, '#2a0804', 0], [0.72, '#2a0804', 0], [1, '#2a0804', 0.65]], -9.6, 0, 9.6, 0)));
-    out.push(path(ell(-1.2, 3, 4.4, 9), p.roundBox([[0, '#e8582a', 0.16], [1, '#e8582a', 0]])));
-    // the dark reflection lying across it, under the waist
-    out.push(path(ell(1.5, -3, 4.3, 1.35), p.roundBox([[0, '#2a0804', 0.7], [0.7, '#2a0804', 0.35], [1, '#2a0804', 0]])));
+    // deep at its sides, glowing where the light comes through its middle
+    out.push(path(tea, p.line([[0, '#5a1006', 0.55], [0.25, '#5a1006', 0], [0.75, '#5a1006', 0], [1, '#5a1006', 0.6]], -9, 0, 9, 0)));
+    out.push(path(ell(-0.8, 4, 4.6, 8.4), p.roundBox([[0, '#ffa040', 0.5], [1, '#ffa040', 0]])));
   }
-  // the thick foot under the tea: dark glass, the saucer showing through it
-  const foot = `M-7.96,12.1C-4,12.95 4,12.95 7.96,12.1${through([[7.96, 12.1], [7.8, 12.8], [7.56, 13.66]])}A7.56,1.33 0 0 1 -7.56,13.66${through([[-7.56, 13.66], [-7.8, 12.8], [-7.96, 12.1]])}Z`;
-  out.push(path(foot, p.line([[0, '#5a2414'], [0.35, '#7a6e70'], [0.7, '#b0a8a8'], [1, '#4a4448']], 0, 12.1, 0, 15)));
-  out.push(line('M-7.4,12.2C-3.8,13 3.8,13 7.4,12.2', '#fff0e0', 0.35, ' stroke-opacity="0.75"'));
-  out.push(line('M-6.6,13.9C-3.4,14.7 3.4,14.7 6.6,13.9', '#3a3438', 0.35, ' stroke-opacity="0.7"'));
-  // above the tea, the glass's grey inside, seen over the rim
-  out.push(
-    path(
-      'M-11.1,-14.12A11.1,5.04 0 0 1 11.1,-14.12C10.6,-13.2 9.4,-12.2 8.9,-11.8A8.75,2.12 0 0 0 -8.6,-11.8C-9.2,-12.2 -10.6,-13.2 -11.1,-14.12Z',
-      p.line([[0, '#8e8c9a'], [0.45, '#e2e1e8'], [0.75, '#cfcdd8'], [1, '#9c9aa8']], -11.1, 0, 11.1, 0),
-    ),
-  );
-  // the tea's surface just under the rim: dark where it meets the glass behind, amber towards us, the light on it
-  out.push(path(ell(0.15, -11.8, 8.75, 2.12), p.line([[0, '#4a1406'], [0.3, '#ac5426'], [0.75, '#c4682c'], [1, '#a0421c']], 0, -13.92, 0, -9.68)));
-  out.push(line('M-8.6,-11.8A8.75,2.12 0 0 1 8.9,-11.8', '#2a0a04', 0.45));
-  out.push(line('M-5.6,-12.5C-2.6,-13.3 2.8,-13.3 5.8,-12.5', '#f8b050', 0.5, ' stroke-opacity="0.85"'));
-  // the glass's edge, then its rim: dark round the back, a bright line where its lip crosses the tea
-  out.push(path(glass, 'none', stroke(ink, 0.45)));
-  out.push(line('M-11.5,-14.12A11.5,5.44 0 0 1 11.5,-14.12', '#3a3236', 0.75));
-  out.push(line('M-11.1,-14.1A11.1,5.04 0 0 1 11.1,-14.1', '#e8e8ee', 0.35, ' stroke-opacity="0.9"'));
-  out.push(line('M-11.3,-13.7A11.5,5.44 0 0 0 11.3,-13.7', '#ffffff', 0.45, ' stroke-opacity="0.85"'));
+  // the thick base under the tea: clear glass with the tea's light in it
+  out.push(path(`M-5.9,13.4C-3,14.5 3,14.5 5.9,13.4C5.6,13.9 5.3,14.2 5,14.3A5,1 0 0 1 -5,14.3C-5.3,14.2 -5.6,13.9 -5.9,13.4Z`, '#ffd08a', ' fill-opacity="0.85"'));
+  // the tea's surface just under the rim, bright amber, darker where it meets the glass behind
+  out.push(path(ell(0, -12.3, 10, 2.8), p.line([[0, '#a8301a'], [0.35, '#f07a32'], [1, '#ffb45a']], 0, -15.1, 0, -9.5)));
+  if (!p.tiny) out.push(line('M-6,-11C-2.4,-10.2 2.6,-10.2 6.2,-11', '#ffe0a0', 0.7, ' stroke-opacity="0.9"'));
+  // the glass's edge and its rim, white where the light catches it
+  out.push(path(glass, 'none', stroke(ink, 1.1)));
+  out.push(line(ell(0, -14.1, 11.5, 3.4), '#ffffff', 1.3));
+  out.push(line(ell(0, -14.1, 11.5, 3.4), ink, 0.5, ' stroke-opacity="0.6"'));
   if (!p.tiny) {
-    // white streaks down the glass where the light falls on it, and its light inside the rim
-    out.push(line('M-5.4,-6.7C-6,-3.6 -6.4,-0.4 -6.8,2.8C-7.1,6.2 -7.3,8.8 -7.4,10.9', '#ffffff', 0.38, ' stroke-opacity="0.75"'));
-    out.push(line('M-2.1,-5.4C-2,-3.4 -1.9,-1.4 -1.8,0.3M0,-8C0.1,-6.9 0.2,-5.8 0.2,-4.7M2.5,-7.7C2.6,-6.8 2.8,-5.9 2.85,-5', '#ffffff', 0.22, ' stroke-opacity="0.5"'));
-    out.push(line('M-10.3,-14.6C-10,-13.6 -9.8,-12.4 -9.5,-11.3M10.1,-14.3C9.9,-13.2 9.7,-12 9.4,-10.9', '#ffffff', 0.45, ' stroke-opacity="0.7"'));
-    out.push(line('M7.6,8.2C8.1,9.4 8.2,10.4 7.9,11.4', '#ffc24a', 0.4, ' stroke-opacity="0.8"'));
+    // light down the glass: a long streak on its left, a short one on its right, and on the curve of its belly
+    out.push(line('M-8.6,-9C-7.6,-6.4 -6.9,-3.6 -6.8,-0.6C-6.8,2.4 -7.4,5.2 -7.6,7.6', '#ffffff', 1.1, ' stroke-opacity="0.8"'));
+    out.push(line('M-5.4,-8.4C-5,-6.8 -4.8,-5.2 -4.8,-3.8', '#ffffff', 0.6, ' stroke-opacity="0.55"'));
+    out.push(line('M7.9,1.8C8.6,4.2 8.6,7.2 7.6,9.8', '#ffffff', 0.7, ' stroke-opacity="0.6"'));
   }
-  if (p.fine) {
-    // the brush's own marks: light on the grey inside, gold flecks the saucer throws on the glass
-    out.push(line('M-6,-17.4V-13.4M-2.4,-18.3V-13.9M3.2,-18.2V-13.9M7,-17.2V-13.5', '#ffffff', 0.3, ' stroke-opacity="0.35"'));
-    out.push(path(`${circ(4.1, 6.8, 0.28)}${circ(4.3, 7.6, 0.22)}`, '#f2c040'));
-    out.push(path(`${glint(-16.2, -12.4, 1.8)}${glint(16.4, -4.2, 1.3)}`, '#ffffff'));
-  }
+  if (p.fine) out.push(path(`${glint(-15.4, -10.4, 1.8)}${glint(15.8, -4.6, 1.3)}`, '#ffffff'));
   return out.join('');
 }
 
