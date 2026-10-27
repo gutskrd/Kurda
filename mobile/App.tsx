@@ -108,6 +108,7 @@ import { NotificationCenterScreen } from './src/notifications/NotificationCenter
 import { RealtimeProvider } from './src/realtime/RealtimeProvider';
 import { InviteBanner } from './src/play/InviteBanner';
 import { GazeArea } from './src/characters/gaze';
+import { ArtOverridesLoader } from './src/art/ArtOverridesLoader';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -666,6 +667,8 @@ export default function App() {
         <ThemeProvider>
           <I18nProvider>
             <AuthProvider>
+              {/* the pictures an admin put in place of the app's own art, from the first screen on */}
+              <ArtOverridesLoader />
               <EventThemeProvider>
                 <ThemedNavigation />
               </EventThemeProvider>

@@ -1,9 +1,10 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
-import { Animated, Easing, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Animated, Easing, Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import { SvgXml } from 'react-native-svg';
 import {
   SEASON_FRAME_INNER,
   SEASON_FRAME_SHINE,
+  badgeLevelName,
   badgeShineSvg,
   badgeShines,
   badgeSvg,
@@ -16,12 +17,14 @@ import {
   type ArtBadgeKey,
   type ArtBadgeTier,
   type ArtSeason,
+  type ArtSlotFamily,
   type BadgeState,
   type Division,
   type LeagueTier,
   type RankTier,
 } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { useArtOverride } from '../art/overrides';
 import { useTheme } from '../theme/ThemeProvider';
 
 /**
@@ -34,6 +37,12 @@ import { useTheme } from '../theme/ThemeProvider';
  * The shine layers laid over a badge or a frame are decoration: hidden from
  * screen readers, played on the native driver, and not played at all under
  * Reduce Motion — a frame then wears its one still glint instead.
+ *
+ * Any of these an admin has replaced with an uploaded picture (a "picture
+ * slot", art/overrides.ts) is drawn from that picture instead, in the same box
+ * and under the same name; a slot with no picture, or one whose picture will
+ * not load, is drawn from the code exactly as before. The placement emblem
+ * and a secret badge not yet found are always the code's own.
  */
 
 const HIDDEN = { accessibilityElementsHidden: true, importantForAccessibility: 'no-hide-descendants' as const };
@@ -67,6 +76,49 @@ function Art({ xml, size, label, style }: { xml: string; size: number; label: st
   );
 }
 
+/**
+ * A slot's uploaded picture, until it fails to load: then the art that ships
+ * is drawn after all, rather than a hole where the medallion was.
+ */
+function usePicture(family: ArtSlotFamily, key: string, level?: string | null): [string | null, () => void] {
+  const uri = useArtOverride(family, key, level);
+  const [failed, setFailed] = useState<string | null>(null);
+  const onError = useCallback(() => setFailed(uri), [uri]);
+  return [uri !== null && uri !== failed ? uri : null, onError];
+}
+
+/**
+ * How a picture not reached yet is drawn: faded, and drained of its colour
+ * where the phone can do that (Android, the web build, and iOS where it draws
+ * filters), as the art's own locked outline is in the screen's quiet grey.
+ */
+const LOCKED_PICTURE: ViewStyle = { opacity: 0.4, filter: 'grayscale(1)' };
+
+/** An uploaded picture in place of a drawing: the same box, and the same one image to a screen reader. */
+function Picture({
+  uri,
+  size,
+  label,
+  locked = false,
+  onError,
+  style,
+}: {
+  uri: string;
+  size: number;
+  label: string;
+  locked?: boolean;
+  onError: () => void;
+  style?: StyleProp<ViewStyle>;
+}): React.JSX.Element {
+  return (
+    <View accessible accessibilityRole="image" accessibilityLabel={label} style={[{ width: size, height: size }, style]}>
+      <View {...HIDDEN} pointerEvents="none" style={locked ? LOCKED_PICTURE : null}>
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="contain" onError={onError} accessibilityIgnoresInvertColors />
+      </View>
+    </View>
+  );
+}
+
 export function RankEmblem({
   tier,
   division,
@@ -85,10 +137,13 @@ export function RankEmblem({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const idPrefix = useArtId();
+  const [picture, onError] = usePicture('rank', tier);
+  // nothing is drawn by code while an uploaded picture stands in for it
   const xml = useMemo(
-    () => rankEmblemSvg({ tier, division: division ?? undefined, size, title: label, season, idPrefix }),
-    [tier, division, size, label, season, idPrefix],
+    () => (picture ? '' : rankEmblemSvg({ tier, division: division ?? undefined, size, title: label, season, idPrefix })),
+    [picture, tier, division, size, label, season, idPrefix],
   );
+  if (picture) return <Picture uri={picture} size={size} label={label} onError={onError} style={style} />;
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
@@ -117,12 +172,14 @@ export function LeagueEmblem({
 }): React.JSX.Element {
   const idPrefix = useArtId();
   const { colors } = useTheme();
+  const [picture, onError] = usePicture('league', tier);
   const body = locked ? colors.locked : null;
   const mark = locked ? colors.lockedMark : null;
   const xml = useMemo(
-    () => leagueEmblemSvg({ tier, size, title: label, idPrefix, ...(body && mark ? { locked: { body, mark } } : {}) }),
-    [tier, size, label, idPrefix, body, mark],
+    () => (picture ? '' : leagueEmblemSvg({ tier, size, title: label, idPrefix, ...(body && mark ? { locked: { body, mark } } : {}) })),
+    [picture, tier, size, label, idPrefix, body, mark],
   );
+  if (picture) return <Picture uri={picture} size={size} label={label} locked={locked} onError={onError} style={style} />;
   return <Art xml={xml} size={size} label={label} style={style} />;
 }
 
@@ -132,6 +189,11 @@ export type ShinePlay = 'once' | 'loop' | false;
 /**
  * A badge medallion. `tier` 0 is a badge not yet earned (the quiet outline);
  * `hidden` a secret not yet found (the midnight gem with its "?").
+ *
+ * An uploaded picture is looked up by the level drawn (a level's own picture
+ * first, then the badge's one for every level), greyed while not earned, and
+ * wears no glint. A secret not yet found never shows one: its picture would
+ * give away what the secret is.
  */
 export function BadgeMedal({
   badgeKey,
@@ -159,10 +221,16 @@ export function BadgeMedal({
   const state: BadgeState = hidden ? 'secret' : tier > 0 ? 'earned' : 'locked';
   const artTier = Math.max(1, Math.min(4, tier || 1)) as ArtBadgeTier;
   const idPrefix = useArtId();
+  const [uploaded, onError] = usePicture('badge', badgeKey, tierCount > 1 ? badgeLevelName(artTier) : null);
+  const picture = state === 'secret' ? null : uploaded;
   const xml = useMemo(
-    () => (known ? badgeSvg({ key: badgeKey as ArtBadgeKey, tier: artTier, state, size, tiers: tierCount > 1 ? 4 : 1, title: label, idPrefix }) : null),
-    [known, badgeKey, artTier, state, size, tierCount, label, idPrefix],
+    () =>
+      known && !picture
+        ? badgeSvg({ key: badgeKey as ArtBadgeKey, tier: artTier, state, size, tiers: tierCount > 1 ? 4 : 1, title: label, idPrefix })
+        : null,
+    [known, picture, badgeKey, artTier, state, size, tierCount, label, idPrefix],
   );
+  if (picture) return <Picture uri={picture} size={size} label={label} locked={state === 'locked'} onError={onError} style={style} />;
   if (!xml || !known) return null;
   const glints = state === 'earned' && shine !== false && badgeShines(badgeKey as ArtBadgeKey, artTier, tierCount > 1 ? 4 : 1);
   return (
@@ -233,6 +301,10 @@ const FRAME_TURN_MS = 7000;
  * is drawn at the frame's inner diameter, centred. Lûtke's and Stêrk's frames
  * carry a glint that travels round the ring; under Reduce Motion it stands
  * still where the art bakes it in.
+ *
+ * A frame replaced with an uploaded ring is that picture laid over the avatar
+ * at the same outer size (its middle is see-through, so the avatar, unmoved,
+ * shows in the same middle two-thirds), without the travelling glint.
  */
 export function SeasonFramed({
   tier,
@@ -249,12 +321,16 @@ export function SeasonFramed({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const reduce = useReducedMotion();
+  const [picture, onError] = usePicture('frame', tier);
   const turns = SEASON_FRAME_SHINE[tier];
   const idPrefix = useArtId();
-  const xml = useMemo(() => seasonFrameSvg({ tier, size, shine: turns && reduce, title: label, idPrefix }), [tier, size, turns, reduce, label, idPrefix]);
+  const xml = useMemo(
+    () => (picture ? '' : seasonFrameSvg({ tier, size, shine: turns && reduce, title: label, idPrefix })),
+    [picture, tier, size, turns, reduce, label, idPrefix],
+  );
   const glint = useMemo(
-    () => (turns && !reduce ? seasonFrameShineSvg({ tier, size, idPrefix: `${idPrefix}s` }) : null),
-    [tier, size, turns, reduce, idPrefix],
+    () => (turns && !reduce && !picture ? seasonFrameShineSvg({ tier, size, idPrefix: `${idPrefix}s` }) : null),
+    [tier, size, turns, reduce, picture, idPrefix],
   );
   const spin = useRef(new Animated.Value(0)).current;
   useEffect(() => {
@@ -270,7 +346,7 @@ export function SeasonFramed({
     <View style={[{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
       <View style={{ width: inner, height: inner }}>{children}</View>
       <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <Art xml={xml} size={size} label={label} />
+        {picture ? <Picture uri={picture} size={size} label={label} onError={onError} /> : <Art xml={xml} size={size} label={label} />}
       </View>
       {glint ? (
         <Animated.View {...HIDDEN} pointerEvents="none" style={[StyleSheet.absoluteFill, { transform: [{ rotate }] }]}>
