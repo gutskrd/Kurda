@@ -1,4 +1,5 @@
 import {
+  COMPANION_OUTLINES,
   COMPANION_WORDS,
   CompanionMotion,
   companionLook,
@@ -45,15 +46,24 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   pupilRight: 'pupil-right',
   nose: 'nose',
   legs: 'legs',
-  arms: 'arms',
   legGate: 'leg-gate',
-  armLeft: 'arm-left',
-  armRight: 'arm-right',
   legLeft: 'leg-left',
   legRight: 'leg-right',
-  shadowLeft: 'shadow-left',
-  shadowRight: 'shadow-right',
+  rimLeft: 'rim-left',
+  rimRight: 'rim-right',
+  castLeft: 'cast-left',
+  castRight: 'cast-right',
+  hoofLeft: 'hoof-left',
+  hoofRight: 'hoof-right',
+  hoofShadowLeft: 'hoof-shadow-left',
+  hoofShadowRight: 'hoof-shadow-right',
+  shade: 'shade',
+  contactLeft: 'contact-left',
+  contactRight: 'contact-right',
 };
+
+/** The parts drawn anew as outlines (path data), the rest moved by a transform. */
+const OUTLINES: ReadonlySet<keyof CompanionTransforms> = new Set(COMPANION_OUTLINES);
 
 /** How long his eyes stay where a finger left the screen (ms). */
 const LINGER_MS = 1500;
@@ -301,7 +311,7 @@ export class CompanionPlayer {
     const t = companionTransforms(f);
     for (const key of Object.keys(PARTS) as (keyof CompanionTransforms)[]) {
       if (this.written[key] !== t[key]) {
-        this.parts[key]?.setAttribute('transform', t[key]);
+        this.parts[key]?.setAttribute(OUTLINES.has(key) ? 'd' : 'transform', t[key]);
         this.written[key] = t[key];
       }
     }

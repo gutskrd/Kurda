@@ -475,7 +475,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
  * Hevalo leans in over the card (brand/Companion) as over a windowsill, seen from the chest up:
  * the stage keeps room above the card for him, his box (shared COMPANION_VIEW, 540 by 818) stands
  * on the card's top edge, and he is drawn in front of the card, cut at the edge himself, so his
- * forelegs can hang down over its top padding (shared COMPANION_OVERHANG, 130 of 540, which the
+ * forelegs can hang down over its top padding (shared COMPANION_OVERHANG, 195 of 540, which the
  * padding keeps clear).
  */
 .login-stage {
@@ -483,7 +483,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   --cp-room: calc(var(--cp-w) * 1.35);
   position: relative; width: 452px; max-width: 100%; padding-top: var(--cp-room);
 }
-.login-stage > .login-card { width: 100%; padding-top: calc(var(--cp-w) * 130 / 540 + 16px); }
+.login-stage > .login-card { width: 100%; padding-top: calc(var(--cp-w) * 195 / 540 + 16px); }
 .login-companion {
   position: absolute; z-index: 2; left: 50%; top: calc(var(--cp-room) - var(--cp-w) * 818 / 540);
   width: var(--cp-w); height: calc(var(--cp-w) * 818 / 540); margin-left: calc(var(--cp-w) / -2);
