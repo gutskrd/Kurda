@@ -30,7 +30,10 @@ import {
 import { verifyCaptcha } from './captcha.js';
 import { KnownDevices, type KnownKind } from './known-devices.js';
 import { networkHashOf } from '../net/network-key.js';
-import { LoginSurge } from './login-surge.js';
+import { LoginSurge, SURGE_HOLD_SECONDS } from './login-surge.js';
+import { isPrivileged } from '../admin/roles.js';
+import type { SecurityRecorder } from '../security/log.js';
+import type { SecurityEventKind } from '@kurda/shared';
 import { breachCheckEnabled, isBreachedPassword } from './breached-password.js';
 import { emailRegistryHash, userHash } from '../moderation/pseudonym.js';
 import { currentBan } from '../moderation/sanctions-service.js';
@@ -118,6 +121,8 @@ export interface AuthServiceDeps {
   log?: { warn: (obj: unknown, msg: string) => void; info?: (obj: unknown, msg: string) => void };
   /** the credential-stuffing breaker counts in Redis; without it, it never trips */
   redis?: Redis;
+  /** the security log (security/log.ts): sign-ins, failures, locks, changed passwords, reused sessions */
+  security?: SecurityRecorder;
 }
 
 /** Most reset emails one account is sent in an hour; more are quietly not sent. */
@@ -312,10 +317,15 @@ export class AuthService {
   private async reconcileBootstrapAdmins(): Promise<void> {
     if (!this.config.BOOTSTRAP_ADMIN_EMAILS) return;
     try {
-      await grantBootstrapAdmins(this.pool, this.config.BOOTSTRAP_ADMIN_EMAILS, {
-        info: (obj, msg) => this.deps.log?.info?.(obj, msg),
-        warn: (obj, msg) => this.deps.log?.warn(obj, msg),
-      });
+      await grantBootstrapAdmins(
+        this.pool,
+        this.config.BOOTSTRAP_ADMIN_EMAILS,
+        {
+          info: (obj, msg) => this.deps.log?.info?.(obj, msg),
+          warn: (obj, msg) => this.deps.log?.warn(obj, msg),
+        },
+        this.deps.security,
+      );
     } catch (err) {
       this.deps.log?.warn({ err }, 'bootstrap admin reconciliation after verification failed');
     }
@@ -345,6 +355,7 @@ export class AuthService {
       [user.id],
     );
     if ((recent.rows[0]?.n ?? 0) >= RESET_EMAILS_PER_HOUR) return;
+    await this.deps.security?.record('password.reset_requested', { userId: user.id, staff: isPrivileged(user.roles) });
     try {
       if (!user.password_hash) {
         // OAuth-only account (KUR-019): there is no password to reset, but the
@@ -409,6 +420,7 @@ export class AuthService {
     );
     // the mailbox proved who this is: a lock on the account does not outlast it
     await this.lockouts.release('account', userId);
+    await this.deps.security?.record('password.reset', { userId });
     const user = updated.rows[0];
     if (user && this.deps.jobs) {
       await this.deps.jobs
@@ -445,6 +457,7 @@ export class AuthService {
       throw new AppError('NO_PASSWORD', 400, 'this account has no password yet — use “forgot password” to set one');
     }
     if (!(await verifyPassword(row.password_hash, current))) {
+      await this.deps.security?.record('password.change_failed', { userId });
       throw new AppError('WRONG_PASSWORD', 400, 'the current password is not correct');
     }
     const passwordHash = await hashPassword(next);
@@ -463,6 +476,7 @@ export class AuthService {
       [userId],
     );
     await this.securityNotice({ id: userId, ...row }, 'password-changed', false);
+    await this.deps.security?.record('password.changed', { userId, details: { otherSessionsEnded: true } });
     const accessToken = keep
       ? await issueAccessToken(this.config, { sub: userId, ver: updated.rows[0]!.token_version, fam: keep })
       : null;
@@ -600,6 +614,11 @@ export class AuthService {
     const user = await this.users.findByEmail(input.email);
     const deviceId = input.deviceId ?? null;
     const network = networkHashOf(input.ip);
+    // the security log hears of every outcome; the console's own sign-in under its own kinds
+    const forConsole = input.only !== undefined;
+    const staff = user ? isPrivileged(user.roles) : false;
+    const record = (kind: SecurityEventKind, details: Record<string, unknown> = {}) =>
+      this.deps.security?.record(kind, { userId: user?.id ?? null, staff, details: forConsole ? { ...details, console: true } : details });
     // known: this device has signed in to the account before, or (for an app
     // that sends no device id) this network has
     let known: { kind: KnownKind; value: string } | null = null;
@@ -631,12 +650,14 @@ export class AuthService {
         const passed = input.captchaToken ? await this.verifyCaptchaToken(input.captchaToken, input.ip) : false;
         if (!passed) {
           await burn();
+          await record('signin.challenged', { reason, answered: input.captchaToken !== undefined });
           throw captchaRequired(reason);
         }
       }
     } else if (lockSec !== null) {
       // nothing to offer instead: the lock is a wall until it lapses
       await burn();
+      await record(forConsole ? 'console.signin_failed' : 'signin.failed', { reason: 'locked', retryAfterSec: lockSec });
       throw locked(lockSec);
     }
 
@@ -646,7 +667,13 @@ export class AuthService {
     if (!user || !passwordOk || refused) {
       const keyLockSec = await this.lockouts.recordFailure(scope, key);
       const netLockSec = watchNetwork ? await this.lockouts.recordFailure('ip', input.ip!, target) : null;
-      if (!known) await this.surge.recordFailure();
+      const surgeBegan = !known && (await this.surge.recordFailure());
+      await record(refused ? 'console.signin_refused' : forConsole ? 'console.signin_failed' : 'signin.failed', {
+        reason: !user ? 'no-account' : !passwordOk ? 'wrong-password' : 'no-console-access',
+      });
+      if (keyLockSec !== null) await record('signin.locked', { scope, seconds: keyLockSec });
+      if (netLockSec !== null) await this.deps.security?.record('network.locked', { details: { seconds: netLockSec } });
+      if (surgeBegan) await this.deps.security?.record('signin.surge', { details: { holdSeconds: SURGE_HOLD_SECONDS } });
       if (user) {
         // the network as its keyed hash, never the address
         this.deps.log?.warn({ userId: user.id, network, scope, keyLockSec, netLockSec, refused }, 'failed login attempt');
@@ -684,11 +711,17 @@ export class AuthService {
     });
     // the device is known from now on; a sign-in from one this account has
     // never used is worth an email to its owner (not the very first, though)
+    let newDevice = false;
     if (deviceId !== null) {
       const seen = await this.devices.remember(user.id, 'device', deviceId).catch(() => null);
-      if (seen?.isNew && !seen.firstForAccount) await this.securityNotice(user, 'new-sign-in', false);
+      newDevice = seen?.isNew === true && !seen.firstForAccount;
+      if (newDevice) await this.securityNotice(user, 'new-sign-in', false);
     }
     if (network !== null) await this.devices.remember(user.id, 'network', network).catch(() => undefined);
+    const remember = input.remember !== false;
+    // the console: anywhere it has not been signed in from before is worth an alert to its owner
+    if (forConsole) await record(known ? 'console.signin' : 'console.signin_new_device', { remember });
+    else await record(newDevice ? 'signin.new_device' : 'signin.succeeded', { method: 'password', remember });
     return { user: toPublicUser(user), tokens };
   }
 
@@ -780,6 +813,7 @@ export class AuthService {
           [row.family_id],
         );
         await client.query('COMMIT');
+        await this.deps.security?.record('session.reused', { userId: row.user_id, details: { sessionEnded: true } });
         throw new AppError('REFRESH_REUSED', 401, 'refresh token reuse detected; session revoked');
       }
 

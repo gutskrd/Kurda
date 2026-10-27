@@ -19,6 +19,7 @@ export const EMAIL_TEMPLATES = [
   'copyright-counter-notice',
   'new-sign-in',
   'sign-in-attempts',
+  'security-alert',
 ] as const;
 export type EmailTemplate = (typeof EMAIL_TEMPLATES)[number];
 
@@ -111,6 +112,22 @@ const CATALOG: Record<EmailTemplate, Record<EmailLocale, Entry>> = {
     ku: {
       subject: 'Raporeke lezgîn a nû li benda nirxandinê ye',
       text: 'Raporeke lezgîn a nû li Hevalo li benda nirxandinê ye. Ji kerema xwe zû lê binêre.\n\nLi vir veke: {link}\n\n— Moderasyona Hevalo',
+    },
+  },
+  /**
+   * To superadmins, when the security log records something critical (an admin
+   * console sign-in from somewhere new, two-step codes locked, a surge of failed
+   * sign-ins). Names the kinds of event and how many, never an address or an
+   * account: the log is where those are, behind the console's sign-in.
+   */
+  'security-alert': {
+    en: {
+      subject: 'Hevalo security alert: {headline}',
+      text: 'Something on Hevalo needs your attention:\n\n{list}\n\nOpen the security log to see what happened, and mark it reviewed: {link}\n\nIf it was you, there is nothing else to do. If not, change your password now.\n\n— Hevalo security',
+    },
+    ku: {
+      subject: 'Hişyariya ewlehiyê ya Hevalo: {headline}',
+      text: 'Tiştek li Hevalo hewceyî baldariya te ye:\n\n{list}\n\nTomara ewlehiyê veke da ku bibînî çi qewimî, û wê wekî nirxandî nîşan bide: {link}\n\nHeke ew tu bûyî, tiştek din ji bo kirinê nîne. Heke ne tu bûyî, niha şîfreya xwe biguherîne.\n\n— Ewlehiya Hevalo',
     },
   },
   /*

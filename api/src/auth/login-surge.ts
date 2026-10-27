@@ -36,21 +36,24 @@ export class LoginSurge {
     }
   }
 
-  async recordFailure(now: Date = new Date()): Promise<void> {
-    if (!this.redis) return;
+  /** Count one failure; true when this one raised the flag, so a surge is reported once, as it begins. */
+  async recordFailure(now: Date = new Date()): Promise<boolean> {
+    if (!this.redis) return false;
     try {
       const key = minuteKey(Math.floor(now.getTime() / 60_000));
       const count = await this.redis.incr(key);
       if (count === 1) await this.redis.expire(key, 120);
-      if (count <= SURGE_FAILURES_PER_MINUTE) return;
+      if (count <= SURGE_FAILURES_PER_MINUTE) return false;
       const raised = await this.redis.set(SURGE_FLAG_KEY, String(now.getTime()), 'EX', SURGE_HOLD_SECONDS, 'NX');
       if (raised === 'OK') {
         this.log?.warn({ failuresThisMinute: count }, 'sign-in failures are surging: every new-device sign-in now needs the CAPTCHA');
-      } else {
-        await this.redis.expire(SURGE_FLAG_KEY, SURGE_HOLD_SECONDS);
+        return true;
       }
+      await this.redis.expire(SURGE_FLAG_KEY, SURGE_HOLD_SECONDS);
+      return false;
     } catch {
       // a counter that cannot be reached must not stop anyone signing in
+      return false;
     }
   }
 }

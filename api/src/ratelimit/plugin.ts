@@ -35,13 +35,18 @@ function limitKey(req: FastifyRequest, route: string, per: 'ip' | 'user-or-ip'):
   return `ratelimit:${route}:${principal}`;
 }
 
+export interface RateLimitHooks {
+  /** told of each refusal, without waiting on it (the security log's `request.rate_limited`) */
+  onLimited?: (req: FastifyRequest, limit: { max: number; windowSec: number; per: 'ip' | 'user-or-ip' }) => Promise<void> | void;
+}
+
 /**
  * Sliding-window rate limiting (KUR-010). Global default of
  * 100 req/min/user; routes override via
  *   { config: { rateLimit: { max, windowMs, per } } }
  * Exceeding returns the standard envelope with 429 + Retry-After.
  */
-export function setupRateLimit(app: FastifyInstance, store: RateLimitStore): void {
+export function setupRateLimit(app: FastifyInstance, store: RateLimitStore, hooks: RateLimitHooks = {}): void {
   app.addHook('onRequest', async (req, reply) => {
     const route = req.routeOptions?.url ?? req.url;
     if (EXEMPT_ROUTES.has(route)) return;
@@ -62,6 +67,7 @@ export function setupRateLimit(app: FastifyInstance, store: RateLimitStore): voi
 
     if (result.count > opts.max) {
       const retryAfterSec = Math.max(1, Math.ceil((result.oldestMs + opts.windowMs - now) / 1_000));
+      void hooks.onLimited?.(req, { max: opts.max, windowSec: Math.round(opts.windowMs / 1_000), per: opts.per });
       return reply
         .code(429)
         .header('retry-after', String(retryAfterSec))

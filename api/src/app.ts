@@ -159,6 +159,10 @@ import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 import { AuditService } from './admin/audit-service.js';
 import { registerAuditLog } from './admin/audit-routes.js';
+import { installRequestContext } from './security/context.js';
+import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
+import { registerSecurityLogRoutes } from './security/routes.js';
+import { SecurityLogReader } from './security/search.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
@@ -205,6 +209,8 @@ export interface BuildAppOptions {
   ferheng?: FerhengSource;
   /** Test seams for moderation: the moderator count and the urgent-report mailer. */
   moderation?: ModerationOptions;
+  /** where the security log's alert emails go (security/wire.ts) */
+  security?: SecurityLogOptions;
   /** Test seam for copyright notices: where their emails go. */
   copyright?: CopyrightWireOptions;
   /** Test seam for reading a recording's file from another site: the fetch, the name lookup, the time allowed. */
@@ -237,6 +243,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // who the client is, read past the proxies once, before any hook asks
   setupClientIp(app, config);
+  // and which request is being served, for the security log, from then on
+  installRequestContext(app);
 
   setupCors(app, config);
   setupValidation(app);
@@ -253,7 +261,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // reconcile the configured admin allowlist once the server is up (idempotent;
     // only grants to accounts that have confirmed their address)
     app.addHook('onReady', async () => {
-      await grantBootstrapAdmins(pool, config.BOOTSTRAP_ADMIN_EMAILS, app.log).catch((err) => {
+      await grantBootstrapAdmins(pool, config.BOOTSTRAP_ADMIN_EMAILS, app.log, app.securityLog).catch((err) => {
         app.log.warn({ err }, 'bootstrap admin reconciliation failed');
       });
     });
@@ -329,6 +337,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     health.register('redis', notConfigured('REDIS_URL not set'));
   }
   app.decorate('health', health);
+  // before the gate, the limiter and sign-in, which all record into it
+  setupSecurityLog(app, config, options.security);
 
   // hook order matters: authenticate → userId logging → rate limiting
   // (user-keyed limits need req.user set first)
@@ -367,7 +377,9 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all
-  setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
+  setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore(), {
+    onLimited: (req, limit) => app.securityLog.record('request.rate_limited', { userId: req.user?.id ?? null, details: limit }),
+  });
 
   const storage = createStorage(config);
   if (storage) {
@@ -699,6 +711,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
+    // the security log: sign-ins, lockouts, attacks and staff access, for superadmins
+    registerSecurityLogRoutes(app, new SecurityLogReader(app.db, config.JWT_SECRET, app.securityLog), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
     const droppedEvents = new Counter({
       name: 'analytics_events_dropped_total',

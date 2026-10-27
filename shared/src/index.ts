@@ -431,3 +431,5 @@ export * from './feed-sort.js';
  * of them takes, so the API and both apps agree on the numbers and the words.
  */
 export * from './limits.js';
+// the security log's kinds of event, how serious each is and how the panel names it
+export * from './security-log.js';

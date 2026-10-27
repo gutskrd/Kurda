@@ -27,6 +27,7 @@ import { Events } from './pages/Events';
 import { GemRules } from './pages/GemRules';
 import { System } from './pages/System';
 import { Audit } from './pages/Audit';
+import { SecurityLog } from './pages/SecurityLog';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
@@ -76,6 +77,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   approvals: () => <Approvals />,
   flags: () => <Experiments />,
   audit: () => <Audit />,
+  'security-log': (route) => <SecurityLog route={route} />,
   security: () => <Security />,
   system: () => <System />,
 };

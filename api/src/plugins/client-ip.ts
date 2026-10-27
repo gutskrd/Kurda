@@ -3,6 +3,18 @@ import type { AppConfig } from '../config/env.js';
 import { resolveClientIp } from '../net/client-ip.js';
 import { proxyChainLogger } from './proxy-chain.js';
 
+/** The requests whose address was read past a Cloudflare edge, so whatever else that edge says about them can be believed. */
+const viaCloudflare = new WeakSet<object>();
+
+/**
+ * Whether the request came through a Cloudflare edge this server trusts: only
+ * then is a header Cloudflare sets (the visitor's country) Cloudflare's own,
+ * not something the caller wrote.
+ */
+export function cameThroughCloudflare(req: object): boolean {
+  return viaCloudflare.has(req);
+}
+
 /**
  * Resolve the client's address once, at the door, and make `req.ip` say it.
  *
@@ -44,6 +56,7 @@ export function setupClientIp(app: FastifyInstance, config: AppConfig): void {
       ip: { value: resolved.ip, enumerable: true, configurable: true },
       ips: { value: resolved.chain, enumerable: true, configurable: true },
     });
+    if (resolved.rule !== 'edge') viaCloudflare.add(req);
     logChain(req, resolved);
   });
 }

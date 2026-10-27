@@ -125,7 +125,12 @@ export const oauthBodySchema = z
   });
 
 export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, adminAccess?: AdminAccess): void {
-  const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log, redis: app.redis });
+  const service = new AuthService(config, app.db, { jobs: app.jobs, log: app.log, redis: app.redis, security: app.securityLog });
+  /** A refused sign-up, with which check refused it, for the security log; the person is told nothing more. */
+  const rejected = async (why: string) => {
+    await app.securityLog.record('signup.rejected', { details: { why } });
+    return signupRejected();
+  };
   // Risk scoring (KUR-296): assesses signup/login, enforces per-device/IP caps,
   // logs decisions for tuning + audit. IP reputation defaults to neutral until a
   // provider is configured (graceful degradation).
@@ -150,8 +155,8 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
       const uname = validateUsername(body.username);
       if (!uname.ok) throw new AppError('INVALID_USERNAME', 400, USERNAME_ERROR_MESSAGE[uname.reason], { reason: uname.reason });
       assertPasswordPolicy(body.password);
-      if (isDisposableEmail(body.email)) throw signupRejected();
-      if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw signupRejected();
+      if (isDisposableEmail(body.email)) throw await rejected('throwaway email address');
+      if (!(await verifyCaptcha(config, body.captchaToken, req.ip))) throw await rejected('challenge not passed');
       // a password every attacker tries first is refused with its own reason
       await service.assertNotBreached(body.password);
 
@@ -163,9 +168,9 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         ip: req.ip,
         deviceId: deviceIdOf(req.headers),
       });
-      if (assessment.hardBlock) throw signupRejected();
+      if (assessment.hardBlock) throw await rejected('too many accounts from this device or network');
       // a permanently banned person's address (or a +tag/dot variant of it)
-      if (await isBannedEmail(app.db, body.email)) throw signupRejected();
+      if (await isBannedEmail(app.db, body.email)) throw await rejected('banned email address');
 
       const result = await service.register({
         ...body,
@@ -198,6 +203,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         deviceId: deviceIdOf(req.headers),
       });
       if (assessment.action === 'verify_or_block') {
+        await app.securityLog.record('signin.risk_blocked', { details: { score: assessment.score } });
         throw new AppError('LOGIN_VERIFICATION_REQUIRED', 403, 'additional verification required');
       }
       const result = await service.login({
@@ -233,6 +239,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         const body = req.body as z.infer<typeof loginBodySchema>;
         const { assessment, decisionId } = await risk.assessLogin({ email: body.email, ip: req.ip, deviceId: deviceIdOf(req.headers) });
         if (assessment.action === 'verify_or_block') {
+          await app.securityLog.record('signin.risk_blocked', { details: { score: assessment.score, console: true } });
           throw new AppError('LOGIN_VERIFICATION_REQUIRED', 403, 'additional verification required');
         }
         const result = await service.login({
@@ -439,6 +446,7 @@ export function registerAuthRoutes(app: FastifyInstance, config: AppConfig, admi
         deviceIdOf(req.headers),
         { authorizationCode: body.authorizationCode, fullName: body.fullName },
       );
+      await app.securityLog.record('signin.succeeded', { userId: result.user.id, details: { method: body.provider, newAccount: result.created } });
       return reply.code(result.created ? 201 : 200).send(result);
     },
   );

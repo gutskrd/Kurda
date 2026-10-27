@@ -25,6 +25,7 @@ const payloadSchema = z.object({
     'copyright-counter-notice',
     'new-sign-in',
     'sign-in-attempts',
+    'security-alert',
   ]),
   vars: z.record(z.string(), z.string()).default({}),
   /** Recipient language; omitted → English (KUR-098). */
