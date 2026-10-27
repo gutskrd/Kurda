@@ -64,6 +64,13 @@ export interface RigPupil {
 export interface CharacterRig {
   /** the head without the crown and the ears */
   face: string;
+  /**
+   * The same face as two layers, drawn in place of `face` by a player that
+   * turns the head: its `outline`, and the `features` on it (the light round
+   * the eyes, the muzzle), which move further as the head turns, kept inside
+   * the outline's `shape` (a path).
+   */
+  faceLayers?: { outline: string; features: string; shape: string };
   /** what stands up behind the ears and moves with the head (antlers); may be '' */
   crown: string;
   /** each ear on its own, behind the head, turning about where it meets it */

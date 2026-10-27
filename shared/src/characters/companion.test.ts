@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,
+  COMPANION_EYES,
   COMPANION_VIEW,
   CompanionMotion,
   companionLook,
@@ -40,7 +41,7 @@ describe('companionSvg', () => {
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'arms', 'arm-left', 'arm-right', 'legs', 'leg-left', 'leg-right', 'emotes']) {
+    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'arms', 'arm-left', 'arm-right', 'legs', 'leg-left', 'leg-right', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -69,11 +70,15 @@ describe('companionSvg', () => {
     expect(playful).not.toContain('glasses');
   });
 
-  it('draws him as his head alone for the console, with no forelegs', () => {
-    const head = companionSvg({ prefix: 'three', legs: false });
-    expect(head).toContain('data-cp="body"');
-    expect(head).toContain('data-cp="head"');
-    for (const part of ['legs', 'arms', 'leg-left', 'arm-left', 'leg-gate']) expect(head).not.toContain(`data-cp="${part}"`);
+  it('draws him from the chest up, as the mascot is, his face in layers that turn and kept inside its outline', () => {
+    // the sill crosses his chest, under his shoulders: his neck and the top of the cream of his chest show
+    expect(COMPANION_EDGE).toBeGreaterThan(COMPANION_EYES.y + 400);
+    expect(playful).toContain('<g data-cp="crown">');
+    expect(playful).toMatch(/<g data-cp="face">.*<g clip-path="url\(#one-face\)"><g data-cp="features">/);
+    // what turns most is inside what turns least
+    const face = playful.indexOf('data-cp="face"');
+    expect(playful.indexOf('data-cp="gaze"')).toBeGreaterThan(face);
+    expect(playful.indexOf('data-cp="pupil-left"')).toBeGreaterThan(playful.indexOf('data-cp="gaze"'));
   });
 });
 
@@ -202,16 +207,16 @@ describe('CompanionMotion', () => {
     expect(last(frames).enter).toBeCloseTo(0, 3);
     expect(Math.max(...frames.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
     expect(last(frames).hoofLeft).toBeCloseTo(0, 2);
-    // his forelegs stay lifted until he is all the way up
-    for (const f of frames) if (f.enter > 0.05) expect(f.hoofLeft).toBeGreaterThan(0.3);
-    // the console's, his head alone, pops up with a smaller bounce and has no hooves to lift
+    // the console's comes up with a smaller bounce
     const c = new CompanionMotion('calm', () => 0.5);
     c.arrive(0);
     const calm = run(c, 0, 2000);
     expect(Math.min(...calm.map((f) => f.enter))).toBeLessThan(0);
     expect(Math.min(...calm.map((f) => f.enter))).toBeGreaterThan(Math.min(...frames.map((f) => f.enter)));
     expect(last(calm).enter).toBeCloseTo(0, 3);
-    expect(calm.every((f) => f.hoofLeft === 0 && f.hoofRight === 0)).toBe(true);
+    expect(last(calm).hoofLeft).toBeCloseTo(0, 2);
+    // in both, his forelegs stay lifted until he is all the way up
+    for (const f of [...frames, ...calm]) if (f.enter > 0.05) expect(f.hoofLeft).toBeGreaterThan(0.3);
     // and for whoever asks for less motion he is simply there
     const s = new CompanionMotion('playful', () => 0.5);
     s.arrive(0);
@@ -260,53 +265,44 @@ describe('CompanionMotion', () => {
     expect(f.hoofLeft).toBeCloseTo(smooth.step(400).hoofLeft, 1);
   });
 
-  it('in the console, pops his head up with each key and sinks back to watch between them', () => {
-    const c = settled('calm');
-    c.set({ field: 'text' }, NOW);
-    const watching = last(run(c, NOW, 1200));
-    expect(watching.duck).toBeGreaterThan(0.08);
-    // the chin just behind the sill, the eyes well over it
-    expect(watching.duck).toBeLessThan(0.2);
-    c.react('keystroke', NOW + 1210);
-    const popped = run(c, NOW + 1210, 300);
-    expect(Math.min(...popped.map((f) => f.duck))).toBeLessThan(0.03);
-    expect(last(run(c, NOW + 1520, 1200)).duck).toBeCloseTo(watching.duck, 2);
-    // the website's never ducks
-    const w = settled();
-    w.set({ field: 'text' }, NOW);
-    w.react('keystroke', NOW + 100);
-    expect(run(w, NOW, 1500).every((f) => f.duck === 0)).toBe(true);
+  it('leans in to each key, his mouth round as he watches, and grins and nods at an address that looks whole', () => {
+    const m = settled();
+    m.set({ field: 'text' }, NOW);
+    run(m, NOW, 800);
+    m.react('keystroke', NOW + 810);
+    const typing = run(m, NOW + 810, 200);
+    expect(Math.max(...typing.map((f) => f.lean))).toBeGreaterThan(0.2);
+    expect(typing.every((f) => f.mouth === 'o')).toBe(true);
+    // a little after the last key he sits back, his mouth at rest
+    const after = last(run(m, NOW + 1020, 1200));
+    expect(Math.abs(after.lean)).toBeLessThan(0.01);
+    expect(after.mouth).toBe('rest');
+    m.react('approve', NOW + 2300);
+    expect(run(m, NOW + 2300, 600).some((f) => f.mouth === 'i')).toBe(true);
+    // never with his eyes covered
+    const s = settled();
+    s.set({ field: 'secret' }, NOW);
+    run(s, NOW, 1200);
+    s.react('keystroke', NOW + 1210);
+    expect(run(s, NOW + 1210, 300).every((f) => f.lean === 0 && f.mouth === 'mbp')).toBe(true);
   });
 
-  it('in the console, ducks behind the card for a password and peeks over it when it is shown', () => {
-    const c = settled('calm');
-    c.set({ field: 'secret' }, NOW);
-    const hidden = last(run(c, NOW, 1200));
-    // all but his antlers and ear tips behind the sill: his eyes go below it
-    expect(hidden.duck).toBeGreaterThan(0.5);
-    expect(hidden.hoofLeft).toBe(0);
-    c.set({ shown: true }, NOW + 1300);
-    const peeking = last(run(c, NOW + 1300, 1200));
-    expect(peeking.duck).toBeGreaterThan(0.2);
-    expect(peeking.duck).toBeLessThan(hidden.duck - 0.15);
-    expect(peeking.eyes).toEqual(['open', 'open']);
-    // a wrong password brings him up to wonder at it, then back down
-    c.set({ shown: false, status: 'error' }, NOW + 2600);
-    const wondering = run(c, NOW + 2600, 1500);
-    expect(Math.min(...wondering.map((f) => f.duck))).toBeLessThan(0.05);
-    expect(wondering.some((f) => f.emote === 'question')).toBe(true);
-    expect(last(run(c, NOW + 4200, 1500)).duck).toBeGreaterThan(0.5);
+  it('shakes his head at a mistake before he wonders at it', () => {
+    const m = settled('calm');
+    m.set({ status: 'error' }, NOW);
+    const turns = run(m, NOW, 700).map((f) => f.turn);
+    expect(Math.min(...turns)).toBeLessThan(-0.4);
+    expect(Math.max(...turns)).toBeGreaterThan(0.4);
+    expect(last(run(m, NOW + 700, 1200)).turn).toBe(0);
   });
 
-  it('in the console, now and then ducks out of sight and pops up again when left alone', () => {
-    const c = settled('calm');
-    const frames = run(c, NOW, 20_000);
-    expect(Math.max(...frames.map((f) => f.duck))).toBeGreaterThan(0.4);
-    expect(last(frames).duck).toBeCloseTo(0, 2);
-    // never while a box is being filled in
-    const busy = settled('calm');
-    busy.set({ field: 'text' }, NOW);
-    expect(Math.max(...run(busy, NOW, 20_000).map((f) => f.duck))).toBeLessThan(0.2);
+  it('lifts his hooves up by his cheeks as he gets in', () => {
+    const m = settled('calm');
+    m.set({ status: 'success' }, NOW);
+    const f = last(run(m, NOW, 900));
+    expect(f.hoofLeft).toBeGreaterThan(0.4);
+    expect(f.hoofLeft).toBeLessThan(0.8);
+    expect(f.eyes).toEqual(['happy', 'happy']);
   });
 
   it('drums a hoof on the sill now and then on the website, and not in the console', () => {
@@ -393,18 +389,35 @@ describe('CompanionMotion', () => {
     // with the word and the sparkles gone by themselves, nothing is left to wake for
     expect(last(later).say).toBeNull();
     expect(last(later).wakeAt).toBeNull();
-    // the console's ducks for a password at once, and never plays peekaboo
-    const c = new CompanionMotion('calm', () => 0.5);
-    c.arrive(0);
-    c.set({ field: 'secret' }, 0);
-    expect(c.step(16, NONE, true).duck).toBeGreaterThan(0.5);
-    c.set({ field: 'none' }, 32);
-    expect(run(c, 48, 30_000, NONE, true).every((x) => x.duck === 0 && !x.moving)).toBe(true);
   });
 });
 
 describe('companionTransforms', () => {
   const numbers = (s: string): number[] => (s.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
+
+  /** A frame of him sitting still: one hoof over its eye, the other on the sill. */
+  const frame = (): CompanionFrame => ({
+      hoofLeft: 0,
+      hoofRight: 1,
+      earLeft: 0,
+      earRight: 0,
+      tilt: 0,
+      rise: 0,
+      stretch: 1,
+      sniff: 1,
+      enter: 0,
+      lean: 0,
+      turn: 0,
+      look: { x: 0, y: 0 },
+      focus: 0,
+      eyes: ['open', 'open'],
+      mouth: 'rest',
+      emote: null,
+      say: null,
+      asleep: false,
+      moving: false,
+      wakeAt: null,
+    });
 
   it('turns every frame into finite transforms', () => {
     const m = settled();
@@ -418,27 +431,7 @@ describe('companionTransforms', () => {
   });
 
   it('hangs each leg from its knee on the sill, and folds it up from a lifted knee over its own eye', () => {
-    const base: CompanionFrame = {
-      hoofLeft: 0,
-      hoofRight: 1,
-      earLeft: 0,
-      earRight: 0,
-      tilt: 0,
-      rise: 0,
-      stretch: 1,
-      sniff: 1,
-      enter: 0,
-      duck: 0,
-      look: { x: 0, y: 0 },
-      focus: 0,
-      eyes: ['open', 'open'],
-      mouth: 'rest',
-      emote: null,
-      say: null,
-      asleep: false,
-      moving: false,
-      wakeAt: null,
-    };
+    const base = frame();
     const t = companionTransforms(base);
     const [lx, ly, lturn, lsize] = numbers(t.legLeft);
     const [rx, ry, rturn, rsize] = numbers(t.legRight);
@@ -453,12 +446,31 @@ describe('companionTransforms', () => {
     expect(rx).toBeGreaterThan(255);
     expect(Math.abs(rturn!)).toBeGreaterThan(170);
     expect(rsize).toBeGreaterThan(lsize!);
-    // the upper part reaches from the shoulder, down behind the sill, up to the knee
+    // the upper part reaches from the shoulder, on his chest's side over the sill, up to the knee
     const [ax, ay, , , reach] = numbers(t.armRight);
-    expect(ay).toBeGreaterThan(COMPANION_EDGE);
+    expect(ay).toBeLessThan(COMPANION_EDGE - 100);
+    expect(ay).toBeGreaterThan(COMPANION_EYES.y + 200);
     expect(Math.abs(ax! - rx!)).toBeLessThan(40);
     expect(Math.abs(reach!)).toBeCloseTo(Math.hypot(rx! - ax!, ry! - ay!) / 100, 1);
+    // and at rest from its shoulder down his side to the knee on the sill, never from behind the card
+    const [, lay] = numbers(t.armLeft);
+    expect(lay).toBeLessThan(ly!);
     expect(t.body).toContain('translate(0 0)');
+  });
+
+  it('turns his head towards where he looks: what is on his face furthest, the antlers and ears the other way, and nearer as he leans in', () => {
+    const base = companionTransforms({ ...frame(), look: { x: 0, y: 0 } });
+    const right = companionTransforms({ ...frame(), look: { x: 1, y: 0 } });
+    const across = (s: string): number => numbers(s)[0]!;
+    expect(across(base.features)).toBe(0);
+    expect(across(right.face)).toBeGreaterThan(0);
+    expect(across(right.face) + across(right.features)).toBeGreaterThan(across(right.face) * 2);
+    expect(right.gaze).toBe(right.features);
+    expect(across(right.ears)).toBeLessThan(0);
+    expect(across(right.crown)).toBeLessThan(0);
+    // a shake turns it as a look does
+    expect(companionTransforms({ ...frame(), turn: 1 }).face).toBe(right.face);
+    expect(companionTransforms({ ...frame(), lean: 1 }).head).toMatch(/scale\(1\.0[5-9]/);
   });
 });
 

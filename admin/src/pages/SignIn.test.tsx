@@ -330,36 +330,33 @@ describe('loading while the person is busy', () => {
   });
 });
 
-/** Hevalo's head peeking over the card (brand/Companion.tsx): how far he has ducked behind it, in his drawing's units, an eye's lid, and the sign over his head. */
+/** Hevalo leaning in over the card (brand/Companion.tsx): which way each foreleg points from the knee (about 180 over an eye), an eye's lid, and the sign over his head. */
 const companion = (): HTMLElement => document.querySelector<HTMLElement>('.login-stage > .login-companion')!;
-const ducked = (): number =>
-  Number(/^translate\(0 (\S+)\)/.exec(companion().querySelector('[data-cp="body"]')?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN);
+const legTurn = (side: 'left' | 'right'): number =>
+  Math.abs(Number(/rotate\((\S+)\)/.exec(companion().querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN));
 const lid = (side: 'left' | 'right', state: string): string | null | undefined =>
   companion().querySelector(`[data-eye="${side}"] [data-lid="${state}"]`)?.getAttribute('visibility');
 
 describe('Hevalo on the sign-in', () => {
-  it('peeks over the card as his head alone, hidden from assistive technology, with no words in the console', () => {
+  it('leans in over the card, hidden from assistive technology, with no words in the console', () => {
     show(false);
     expect(companion()).toHaveAttribute('aria-hidden', 'true');
-    expect(companion().querySelector('[data-cp="head"]')).not.toBeNull();
-    expect(companion().querySelector('[data-cp="legs"]')).toBeNull();
+    expect(companion().querySelector('[data-cp="legs"]')).not.toBeNull();
     expect(companion().querySelector('.cp-say')).toBeNull();
   });
 
-  it('ducks behind the card for the password, peeks over it when it is shown, and comes back up after', async () => {
+  it('covers his eyes for the password, peeks when it is shown, and puts his hooves back on the sill after', async () => {
     const user = userEvent.setup();
     show(false);
     await user.type(screen.getByLabelText('Email'), 'rojda@hevalo.app{Enter}');
     await screen.findByLabelText('Password');
-    // all but his antlers and ear tips behind the card
-    await waitFor(() => expect(ducked()).toBeGreaterThan(250));
+    await waitFor(() => expect(legTurn('left')).toBeGreaterThan(170));
+    await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
     await user.click(screen.getByRole('button', { name: 'Show password' }));
-    // his eyes just over it, open
-    await waitFor(() => expect(ducked()).toBeLessThan(220));
-    expect(ducked()).toBeGreaterThan(120);
-    await waitFor(() => expect(lid('right', 'closed')).toBe('hidden'));
+    await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
+    expect(legTurn('right')).toBeLessThan(legTurn('left'));
     await user.click(screen.getByRole('button', { name: 'Change the email, rojda@hevalo.app' }));
-    await waitFor(() => expect(ducked()).toBeLessThan(100));
+    await waitFor(() => expect(legTurn('left')).toBeLessThan(5));
   });
 
   it('wonders over a sign-in that did not go through', async () => {

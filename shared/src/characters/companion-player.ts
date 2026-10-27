@@ -1,5 +1,4 @@
 import {
-  COMPANION_LEGS,
   COMPANION_WORDS,
   CompanionMotion,
   companionLook,
@@ -35,6 +34,11 @@ import type { CharacterPoint, EyeState } from './types.js';
 const PARTS: Record<keyof CompanionTransforms, string> = {
   body: 'body',
   head: 'head',
+  crown: 'crown',
+  ears: 'ears',
+  face: 'face',
+  features: 'features',
+  gaze: 'gaze',
   earLeft: 'ear-left',
   earRight: 'ear-right',
   pupilLeft: 'pupil-left',
@@ -55,6 +59,9 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
 const LINGER_MS = 1500;
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** Whether a box is for an address and what is in it looks like a whole one. */
+const wholeAddress = (input: HTMLInputElement | null): boolean => input?.type === 'email' && EMAIL.test(input.value.trim());
 
 const now = (): number => performance.now();
 
@@ -113,6 +120,8 @@ export class CompanionPlayer {
   private readonly cleanups: (() => void)[] = [];
   private unwatch: (() => void) | null = null;
   private input: HTMLInputElement | null = null;
+  /** whether the address in the box being typed in looks whole */
+  private whole = false;
   private pointer: CharacterPoint | null = null;
   private linger = 0;
   private frame = 0;
@@ -125,7 +134,7 @@ export class CompanionPlayer {
     private readonly host: HTMLElement,
     { tone, prefix }: CompanionPlayerOptions,
   ) {
-    host.innerHTML = companionSvg({ prefix, legs: COMPANION_LEGS[tone] }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
+    host.innerHTML = companionSvg({ prefix }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
     this.svg = host.querySelector('svg');
     for (const [key, name] of Object.entries(PARTS) as [keyof CompanionTransforms, string][]) {
       const el = host.querySelector(`[data-cp="${name}"]`);
@@ -206,15 +215,13 @@ export class CompanionPlayer {
     if (!area) return;
     const look = (el: Element | null): void => {
       const input = inputOf(el);
+      if (input !== this.input) this.whole = wholeAddress(input);
       this.input = input;
       this.motion.set(companionField(input), now());
       this.wake();
     };
     const onFocus = (e: FocusEvent): void => look(e.target as Element);
     const onBlur = (e: FocusEvent): void => {
-      const left = inputOf(e.target as Element);
-      // an address that looks whole gets a nod as the box is left
-      if (left && left.type === 'email' && EMAIL.test(left.value.trim())) this.motion.react('approve', now());
       const next = e.relatedTarget as Element | null;
       look(next && area.contains(next) ? next : null);
     };
@@ -225,11 +232,18 @@ export class CompanionPlayer {
     // a click may show or hide a password, which changes its box once the page has drawn it
     const onClick = (): void => void requestAnimationFrame(() => look(document.activeElement && area.contains(document.activeElement) ? document.activeElement : null));
     const onMove = (): void => this.wake();
+    // an address that comes to look whole as it is typed gets a grin and a nod, once
+    const onInput = (): void => {
+      const whole = wholeAddress(this.input);
+      if (whole && !this.whole) this.motion.react('approve', now());
+      this.whole = whole;
+      this.wake();
+    };
     area.addEventListener('focusin', onFocus);
     area.addEventListener('focusout', onBlur);
     area.addEventListener('keydown', onKey);
     area.addEventListener('click', onClick);
-    area.addEventListener('input', onMove);
+    area.addEventListener('input', onInput);
     area.addEventListener('select', onMove);
     area.addEventListener('keyup', onMove);
     this.unwatch = () => {
@@ -237,7 +251,7 @@ export class CompanionPlayer {
       area.removeEventListener('focusout', onBlur);
       area.removeEventListener('keydown', onKey);
       area.removeEventListener('click', onClick);
-      area.removeEventListener('input', onMove);
+      area.removeEventListener('input', onInput);
       area.removeEventListener('select', onMove);
       area.removeEventListener('keyup', onMove);
     };
