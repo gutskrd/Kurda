@@ -77,6 +77,44 @@
   55% { transform: translateX(-4%) rotate(-2.5deg); }
   75% { transform: translateX(2%) rotate(1deg); }
 }
+/*
+ * The head and neck cut out (art="peek", 744 by 810): each eye's white 149 by
+ * 172 with its edge drawn sharp, the pupils 64 by 97 turned in as drawn, the
+ * light in each to the upper left. It stands behind what it sits on: the neck
+ * fades out at the bottom, it breathes instead of floating, and it tilts its
+ * head towards what it looks at, turning on its neck.
+ */
+.hevalo-mark.is-peek { width: min(var(--peek-width, 180px), 42vw); aspect-ratio: 744 / 810; }
+.hevalo-mark.is-peek img {
+  height: auto;
+  -webkit-mask-image: linear-gradient(#000 84%, transparent 99%);
+  mask-image: linear-gradient(#000 84%, transparent 99%);
+}
+.hevalo-mark.is-peek .hevalo-eye { top: 40.12%; width: 20.03%; height: 21.23%; }
+.hevalo-mark.is-peek .hevalo-eye.is-left { left: 25%; }
+.hevalo-mark.is-peek .hevalo-eye.is-right { left: 54.03%; }
+.hevalo-mark.is-peek .hevalo-pupil { top: 22.67%; width: 42.95%; height: 56.4%; background: #502924; }
+.hevalo-mark.is-peek .hevalo-eye.is-left .hevalo-pupil { left: 43.62%; }
+.hevalo-mark.is-peek .hevalo-eye.is-right .hevalo-pupil { left: 14.09%; }
+.hevalo-mark.is-peek .hevalo-pupil::after { top: 10.3%; left: 7.8%; width: 40.6%; height: 33%; }
+/* the whites' edge is sharp: the lids are solid to just past it */
+.hevalo-mark.is-peek .hevalo-lids {
+  top: 39.06%; width: 22.03%; height: 23.36%;
+  -webkit-mask-image: radial-gradient(closest-side, #000 92%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 92%, transparent 100%);
+}
+.hevalo-mark.is-peek .hevalo-lids.is-left { left: 24%; }
+.hevalo-mark.is-peek .hevalo-lids.is-right { left: 53.03%; }
+.hevalo-mark.is-peek .hevalo-lid.is-top { background: linear-gradient(#c68a54, #d0965a); }
+.hevalo-mark.is-peek .hevalo-lid.is-bottom { background: linear-gradient(#d39858, #d89c56); }
+.hevalo-mark.is-peek.is-lively { filter: drop-shadow(0 10px 22px rgba(20, 6, 52, 0.55)); }
+.hevalo-mark.is-peek.is-lively .hevalo-head {
+  transform: none; transform-origin: 50% 100%;
+  rotate: calc(var(--lean-y, 0deg) * 0.75);
+  animation: hevalo-breathe 4.8s ease-in-out infinite;
+}
+@keyframes hevalo-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.012 1.024; } }
+
 @media (prefers-reduced-motion: reduce) {
   .hevalo-lid { transition: none; }
   .hevalo-mark.is-lively, .hevalo-mark.is-lively .hevalo-head { animation: none; }

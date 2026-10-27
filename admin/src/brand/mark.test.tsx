@@ -3,7 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, waitFor } from '@testing-library/dom';
 import { renderUi } from '../test/render';
 import { HevaloMark } from './HevaloMark';
-import { caretPoint, followPointer } from './eyes';
+import { PEEK_EYES, caretPoint, followPointer } from './eyes';
 
 /** An element whose box on the screen is `box`. */
 function placed(box: { left: number; top: number; width: number; height: number }): HTMLElement {
@@ -109,5 +109,35 @@ describe('the sign-in’s Hevalo', () => {
     // never past the end of the box
     expect(caretPoint(input).x).toBeLessThanOrEqual(300);
     input.remove();
+  });
+});
+
+describe('the cut-out Hevalo', () => {
+  it('shows the head and neck at three sizes, with pupils and lids over its own eyes', () => {
+    const { container } = renderUi(<HevaloMark art="peek" size={180} lively />, { kit: false });
+    const mark = container.querySelector('.hevalo-mark')!;
+    expect(mark).toHaveClass('is-peek');
+    const img = mark.querySelector('img')!;
+    expect(img.getAttribute('srcset')).toMatch(/hevalo-peek-180\.webp 180w.*hevalo-peek-360\.webp 360w.*hevalo-peek-540\.webp 540w/);
+    // its own shape, 744 by 810
+    expect(img).toHaveAttribute('height', String(Math.round((180 * 810) / 744)));
+    expect(mark.querySelectorAll('.hevalo-eye .hevalo-pupil')).toHaveLength(2);
+    expect(mark.querySelectorAll('.hevalo-lids')).toHaveLength(2);
+  });
+
+  it('moves its pupils by its own eyes’ measures', () => {
+    const frames: FrameRequestCallback[] = [];
+    vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => frames.push(cb));
+    // each white shown 149 wide, as the picture has it: a pupil moves at most its reach, 36
+    const eyes = [placed({ left: 100, top: 100, width: 149, height: 172 }), placed({ left: 300, top: 100, width: 149, height: 172 })];
+    const pupils = eyes.map((eye) => eye.appendChild(document.createElement('span')));
+    const stop = followPointer(pupils[0]!, pupils[1]!, { eyes: PEEK_EYES, gaze: () => ({ x: 5000, y: 186 }) });
+    for (let i = 0; i < 120 && frames.length; i++) frames.shift()!(i * 16);
+    // the left pupil is drawn turned in already (97 of 149), so it has less far to go right than the right one (53)
+    const [left, right] = pupils.map((p) => Number.parseFloat(p.style.translate));
+    expect(left).toBeGreaterThan(0);
+    expect(right).toBeGreaterThan(left!);
+    expect(right).toBeLessThanOrEqual(74.5 + 36 - 53 + 0.5);
+    stop();
   });
 });

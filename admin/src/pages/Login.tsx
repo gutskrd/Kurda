@@ -150,9 +150,9 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
 
   return (
     <div className="login">
-      <form className="login-card has-hero" onSubmit={(e) => void submit(e)} noValidate aria-labelledby={`${id}-title`}>
-        <div className="login-hero">
-          <HevaloMark size={104} mood={mood} gaze={gaze} lively />
+      <form className="login-card has-hero has-peek" onSubmit={(e) => void submit(e)} noValidate aria-labelledby={`${id}-title`}>
+        <div className="login-hero is-peek">
+          <HevaloMark art="peek" size={180} mood={mood} gaze={gaze} lively />
         </div>
         <div className="login-top is-centred">
           <span className="login-brand">Hevalo</span>

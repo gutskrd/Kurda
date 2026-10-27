@@ -10,17 +10,39 @@
  * being typed in, say), and can lean a little towards where it looks
  * (`tilt`), as a head turns with its eyes.
  *
- * The measures are the icon's own, in pixels of the square it is cut to (360):
- * each eye's white is 58 by 68, and a pupil's middle may move this far from
- * the middle of its white.
+ * The measures are each picture's own, in its pixels (`EyeGeometry`).
  */
-const EYE = { width: 58, height: 68 } as const;
-const REACH = { x: 13, y: 10 } as const;
-/** Where each pupil's middle is drawn in the icon, in its eye's white: the left eye's, then the right's. */
-export const REST = [
-  { x: 40.6, y: 36 },
-  { x: 19.3, y: 36.1 },
-] as const;
+/** An eye as a picture draws it, in that picture's own pixels: its white, how far a pupil's middle may move from the white's middle, and where the picture has each pupil. */
+export interface EyeGeometry {
+  width: number;
+  height: number;
+  reach: Point;
+  /** the left eye's pupil, then the right's */
+  rest: readonly [Point, Point];
+}
+
+/** The icon's eyes (its square is 360): each white 58 by 68, the pupils turned in towards each other. */
+export const ICON_EYES: EyeGeometry = {
+  width: 58,
+  height: 68,
+  reach: { x: 13, y: 10 },
+  rest: [
+    { x: 40.6, y: 36 },
+    { x: 19.3, y: 36.1 },
+  ],
+};
+
+/** The sign-in's Hevalo, head and neck (744 by 810): each white 149 by 172, the pupils 64 by 97 and turned in as drawn. */
+export const PEEK_EYES: EyeGeometry = {
+  width: 149,
+  height: 172,
+  reach: { x: 36, y: 30 },
+  rest: [
+    { x: 97, y: 87.5 },
+    { x: 53, y: 87.5 },
+  ],
+};
+
 /** How long the eyes keep looking where a finger left the screen. */
 const LINGER_MS = 1500;
 
@@ -45,6 +67,7 @@ interface Pupil {
 
 interface Face {
   pupils: Pupil[];
+  eyes: EyeGeometry;
   gaze?: Gaze;
   /** the element that leans, and how far it leans now */
   tilt?: { element: HTMLElement; x: number; y: number };
@@ -63,15 +86,15 @@ function lookingAt(face: Face): Point | null {
   return given === undefined ? pointer : given;
 }
 
-/** Where a pupil looks: at the point, further the further away it is; else where the icon has it. */
-function target(pupil: Pupil, at: Point | null): Point {
+/** Where a pupil looks: at the point, further the further away it is; else where the picture has it. */
+function target(pupil: Pupil, eyes: EyeGeometry, at: Point | null): Point {
   if (!at) return pupil.rest;
   const box = pupil.eye.getBoundingClientRect();
   const dx = at.x - (box.left + box.width / 2);
   const dy = at.y - (box.top + box.height / 2);
   const distance = Math.hypot(dx, dy) || 1;
   const reach = Math.min(1, distance / (box.width * 3 + 40));
-  return { x: EYE.width / 2 + (dx / distance) * REACH.x * reach, y: EYE.height / 2 + (dy / distance) * REACH.y * reach };
+  return { x: eyes.width / 2 + (dx / distance) * eyes.reach.x * reach, y: eyes.height / 2 + (dy / distance) * eyes.reach.y * reach };
 }
 
 function frame(): void {
@@ -81,7 +104,7 @@ function frame(): void {
     for (const pupil of face.pupils) {
       const box = pupil.eye.getBoundingClientRect();
       if (box.width === 0) continue;
-      const to = target(pupil, at);
+      const to = target(pupil, face.eyes, at);
       pupil.x += (to.x - pupil.x) * 0.2;
       pupil.y += (to.y - pupil.y) * 0.2;
       if (Math.abs(to.x - pupil.x) + Math.abs(to.y - pupil.y) > 0.05) moving = true;
@@ -90,7 +113,7 @@ function frame(): void {
         pupil.y = to.y;
       }
       // in the eye's own pixels on the screen, from where the icon draws the pupil
-      const scale = box.width / EYE.width;
+      const scale = box.width / face.eyes.width;
       const x = (pupil.x - pupil.rest.x) * scale;
       const y = (pupil.y - pupil.rest.y) * scale;
       pupil.element.style.translate = Math.abs(x) + Math.abs(y) < 0.01 ? '' : `${x.toFixed(2)}px ${y.toFixed(2)}px`;
@@ -98,7 +121,8 @@ function frame(): void {
     const tilt = face.tilt;
     if (tilt) {
       // leaning as far as the eyes have turned: right and down are where the pupils' middles have moved to
-      const turned = face.pupils.reduce((sum, p) => ({ x: sum.x + (p.x - EYE.width / 2) / REACH.x, y: sum.y + (p.y - EYE.height / 2) / REACH.y }), { x: 0, y: 0 });
+      const { width, height, reach } = face.eyes;
+      const turned = face.pupils.reduce((sum, p) => ({ x: sum.x + (p.x - width / 2) / reach.x, y: sum.y + (p.y - height / 2) / reach.y }), { x: 0, y: 0 });
       const to = at ? { x: (turned.x / face.pupils.length) * LEAN.x, y: (turned.y / face.pupils.length) * LEAN.y } : { x: 0, y: 0 };
       tilt.x += (to.x - tilt.x) * 0.15;
       tilt.y += (to.y - tilt.y) * 0.15;
@@ -151,13 +175,18 @@ const stillWanted = (): boolean => typeof window.matchMedia === 'function' && wi
  * gives, and `tilt` lean with them; returns what stops them. The page listens
  * for the pointer only while an icon is there.
  */
-export function followPointer(left: HTMLElement, right: HTMLElement, options: { gaze?: Gaze; tilt?: HTMLElement | null } = {}): () => void {
+export function followPointer(
+  left: HTMLElement,
+  right: HTMLElement,
+  options: { gaze?: Gaze; tilt?: HTMLElement | null; eyes?: EyeGeometry } = {},
+): () => void {
   if (typeof window === 'undefined' || stillWanted()) return () => undefined;
+  const eyes = options.eyes ?? ICON_EYES;
   const mine = [left, right].map((element, i) => {
-    const rest = REST[i]!;
+    const rest = eyes.rest[i]!;
     return { element, eye: element.parentElement ?? element, rest, x: rest.x, y: rest.y };
   });
-  const face: Face = { pupils: mine, gaze: options.gaze, tilt: options.tilt ? { element: options.tilt, x: 0, y: 0 } : undefined };
+  const face: Face = { pupils: mine, eyes, gaze: options.gaze, tilt: options.tilt ? { element: options.tilt, x: 0, y: 0 } : undefined };
   faces.add(face);
   if (!listening) {
     listening = true;

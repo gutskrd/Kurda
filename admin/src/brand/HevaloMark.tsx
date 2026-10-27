@@ -1,7 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
-import { followPointer, nudge, type Gaze } from './eyes';
+import { ICON_EYES, PEEK_EYES, followPointer, nudge, type Gaze } from './eyes';
 
-const SOURCES = [96, 192, 288].map((size) => `/brand/hevalo-${size}.webp ${size}w`).join(', ');
+/**
+ * The pictures: the app's icon, square; or Hevalo's head and neck cut out
+ * (`peek`, 744 by 710), for standing behind the sign-in card and looking over
+ * it. Neither has pupils of its own.
+ */
+const ART = {
+  icon: { sizes: [96, 192, 288], file: 'hevalo', ratio: 1, eyes: ICON_EYES },
+  peek: { sizes: [180, 360, 540], file: 'hevalo-peek', ratio: 810 / 744, eyes: PEEK_EYES },
+} as const;
 
 /**
  * How Hevalo is: looking about (idle), eyes shut (shy: a password is being
@@ -13,7 +21,8 @@ export type MarkMood = 'idle' | 'shy' | 'peek' | 'happy' | 'sad' | 'thinking';
 const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Hevalo's icon, whose eyes follow the pointer (eyes.ts). The pictures have
+ * Hevalo, whose eyes follow the pointer (eyes.ts): the app's icon, or its
+ * head and neck (`art`). The pictures have
  * no pupils of their own: they are drawn over them where the icon has them,
  * so they can move. `size` is how
  * wide it is shown, in pixels. Decorative beside the name it stands for, so
@@ -31,13 +40,17 @@ export function HevaloMark({
   mood = 'idle',
   gaze,
   lively = false,
+  art = 'icon',
 }: {
+  /** how wide it is shown, in pixels */
   size: number;
   className?: string;
   mood?: MarkMood;
   gaze?: Gaze;
   lively?: boolean;
+  art?: keyof typeof ART;
 }): React.JSX.Element {
+  const picture = ART[art];
   const root = useRef<HTMLSpanElement>(null);
   const left = useRef<HTMLSpanElement>(null);
   const right = useRef<HTMLSpanElement>(null);
@@ -51,6 +64,7 @@ export function HevaloMark({
   useEffect(() => {
     if (!left.current || !right.current) return undefined;
     return followPointer(left.current, right.current, {
+      eyes: picture.eyes,
       tilt: lively ? root.current : null,
       gaze: () => {
         const { mood: now, gaze: given } = looking.current;
@@ -62,7 +76,7 @@ export function HevaloMark({
         return given?.();
       },
     });
-  }, [lively]);
+  }, [lively, picture]);
 
   useEffect(() => nudge(), [shown, gaze]);
 
@@ -104,18 +118,29 @@ export function HevaloMark({
     return () => window.clearTimeout(timer);
   }, [poked]);
 
-  const classes = ['hevalo-mark', lively && 'is-lively', blinking && 'is-blinking', className].filter(Boolean).join(' ');
+  const classes = ['hevalo-mark', art === 'peek' && 'is-peek', lively && 'is-lively', blinking && 'is-blinking', className].filter(Boolean).join(' ');
+  const height = Math.round(size * picture.ratio);
+  const sources = picture.sizes.map((w) => `/brand/${picture.file}-${w}.webp ${w}w`).join(', ');
   return (
     <span
       ref={root}
       className={classes}
       data-mood={shown}
-      style={{ width: size, height: size }}
+      style={art === 'peek' ? ({ '--peek-width': `${size}px` } as React.CSSProperties) : { width: size, height: size }}
       aria-hidden="true"
       onPointerDown={lively && !stillWanted() ? () => setPoked((n) => n + 1) : undefined}
     >
       <span className="hevalo-head">
-        <img src="/brand/hevalo-192.webp" srcSet={SOURCES} sizes={`${size}px`} width={size} height={size} alt="" draggable={false} decoding="async" />
+        <img
+          src={`/brand/${picture.file}-${picture.sizes[1]}.webp`}
+          srcSet={sources}
+          sizes={`${size}px`}
+          width={size}
+          height={height}
+          alt=""
+          draggable={false}
+          decoding="async"
+        />
         <span className="hevalo-eye is-left">
           <span ref={left} className="hevalo-pupil" />
         </span>
