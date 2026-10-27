@@ -203,7 +203,7 @@ export function companionSvg({ prefix, tone }: { prefix: string; tone: Companion
     `<clipPath id="${id('edge')}"><rect x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${2 * v.h}"/></clipPath>` +
     `<clipPath id="${id('half-left')}">${half('left')}</clipPath><clipPath id="${id('half-right')}">${half('right')}</clipPath>` +
     `</defs>` +
-    `<g clip-path="url(#${id('edge')})"><g data-cp="body"><g class="cp-breathe">` +
+    `<g clip-path="url(#${id('edge')})"><g data-cp="body">` +
     (art.chest ?? art.body) +
     `<g data-cp="head">` +
     rig.crown +
@@ -219,7 +219,7 @@ export function companionSvg({ prefix, tone }: { prefix: string; tone: Companion
     (tone === 'calm' ? glasses(art) : '') +
     `</g>` +
     `<g data-cp="hoof-left">${foreleg(id('legL'))}</g><g data-cp="hoof-right">${foreleg(id('legR'))}</g>` +
-    `</g></g></g>` +
+    `</g></g>` +
     `<g data-cp="emotes">${emotes(id('emote'))}</g>` +
     `</svg>`
   );
@@ -541,7 +541,8 @@ export class CompanionMotion {
    * One frame at `now` (ms, the same clock as `set` and `react`), with where
    * the pointer and the caret are as looks from his eyes. `still` is for
    * whoever asks for less motion: every part goes straight to where it is
-   * going, with no habits, acts or bounce, and he never dozes.
+   * going, with no habits, acts or bounce, and he never dozes; his signs
+   * and words, which do not move, stay.
    */
   step(now: number, looks: CompanionLooks = NOWHERE, still = false): CompanionFrame {
     const dt = this.last === null ? 0 : Math.min(0.05, Math.max(0, (now - this.last) / 1000));
@@ -550,8 +551,6 @@ export class CompanionMotion {
       this.act = null;
       this.blink = null;
       this.glance = null;
-      if (this.sign && this.sign.emote !== 'question') this.sign = null;
-      this.word = null;
       this.lastInput = now;
     }
     const pose = this.pose(now);

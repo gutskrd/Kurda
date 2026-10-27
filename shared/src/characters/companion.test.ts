@@ -232,7 +232,7 @@ describe('CompanionMotion', () => {
     expect(frames.some((f) => f.eyes[0] === 'closed')).toBe(true);
   });
 
-  it('for whoever asks for less motion goes straight to each pose, with no acts, habits, words or doze', () => {
+  it('for whoever asks for less motion goes straight to each pose, with no acts, habits or doze, keeping his signs and words', () => {
     const m = new CompanionMotion('playful', () => 0.5);
     m.arrive(0);
     m.set({ field: 'secret' }, 0);
@@ -244,10 +244,13 @@ describe('CompanionMotion', () => {
     const pleased = m.step(48, NONE, true);
     expect(pleased.eyes).toEqual(['happy', 'happy']);
     expect(pleased.rise).toBe(0);
-    expect(pleased.say).toBeNull();
+    expect(pleased.emote).toBe('spark');
+    expect(pleased.say).toBe('welcome');
     m.set({ status: 'idle' }, 64);
     const later = run(m, 80, COMPANION_DOZE_MS + 2000, NONE, true);
     expect(later.every((x) => !x.asleep && !x.moving && x.eyes[0] === 'open')).toBe(true);
+    // with the word and the sparkles gone by themselves, nothing is left to wake for
+    expect(last(later).say).toBeNull();
     expect(last(later).wakeAt).toBeNull();
   });
 });
