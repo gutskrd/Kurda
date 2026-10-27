@@ -40,7 +40,8 @@ async function eventually<T>(fn: () => Promise<T>, ok: (v: T) => boolean, tries 
   return value;
 }
 
-describe.skipIf(!DATABASE_URL)('the security log (integration)', () => {
+// every sign-in spends a full password check, so a test of several takes seconds on a busy machine
+describe.skipIf(!DATABASE_URL)('the security log (integration)', { timeout: 30_000 }, () => {
   const s = Date.now().toString(36);
   const sent: Array<{ to: string; vars: { headline: string; list: string; link: string } }> = [];
   const mailer = { send: async (to: string, vars: { headline: string; list: string; link: string }) => void sent.push({ to, vars }) };

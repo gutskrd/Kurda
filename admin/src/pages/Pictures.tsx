@@ -208,7 +208,15 @@ function SlotDrawer({
     <Drawer open onClose={onClose} title={slotName(entry)}>
       <p className="subtle pic-drawer-hint">{ART_SLOT_FAMILY_INFO[entry.family].hint}</p>
       {slots.map((s) => (
-        <SlotEditor key={s.slot} entry={s} override={overrides.get(s.slot)} levelled={slots.length > 1} onChanged={onChanged} />
+        <SlotEditor
+          key={s.slot}
+          entry={s}
+          override={overrides.get(s.slot)}
+          // a level with no picture of its own shows the one for every level, as the apps do
+          inherited={s.level ? overrides.get(slots[0]!.slot) : undefined}
+          levelled={slots.length > 1}
+          onChanged={onChanged}
+        />
       ))}
     </Drawer>
   );
@@ -217,11 +225,13 @@ function SlotDrawer({
 function SlotEditor({
   entry,
   override,
+  inherited,
   levelled,
   onChanged,
 }: {
   entry: ArtSlotEntry;
   override: Override | undefined;
+  inherited: Override | undefined;
   levelled: boolean;
   onChanged: () => void;
 }): React.JSX.Element {
@@ -282,8 +292,10 @@ function SlotEditor({
           <figcaption>Original</figcaption>
         </figure>
         <figure>
-          <Shown entry={entry} override={override} size={96} />
-          <figcaption>{override ? `Now: replaced${override.updatedBy ? ` by ${override.updatedBy}` : ''}` : levelled && entry.level ? 'Now: as every level' : 'Now: the original'}</figcaption>
+          <Shown entry={entry} override={override ?? inherited} size={96} />
+          <figcaption>
+            {override ? `Now: replaced${override.updatedBy ? ` by ${override.updatedBy}` : ''}` : inherited ? 'Now: the picture for every level' : 'Now: the original'}
+          </figcaption>
         </figure>
       </div>
       {override?.note && <p className="subtle">“{override.note}”</p>}
