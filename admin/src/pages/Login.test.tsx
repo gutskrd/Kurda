@@ -156,13 +156,13 @@ describe('Hevalo on the sign-in', () => {
     const user = userEvent.setup();
     show();
     await user.click(screen.getByLabelText('Password'));
-    await waitFor(() => expect(hoofY('left')).toBeLessThan(300));
+    await waitFor(() => expect(hoofY('left')).toBeLessThan(360));
     await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
     await user.click(screen.getByRole('button', { name: 'Show password' }));
     await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
     expect(hoofY('right')).toBeGreaterThan(hoofY('left'));
     await user.click(screen.getByLabelText('Email'));
-    await waitFor(() => expect(hoofY('left')).toBeGreaterThan(480));
+    await waitFor(() => expect(hoofY('left')).toBeGreaterThan(440));
   });
 
   it('wonders over a sign-in that did not go through', async () => {

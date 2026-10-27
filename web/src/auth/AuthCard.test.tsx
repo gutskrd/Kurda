@@ -43,13 +43,13 @@ describe('AuthCard', () => {
   it('covers his eyes with his hooves while a password is typed', async () => {
     const { container } = render(<Form />);
     await userEvent.click(container.querySelector('#password')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeLessThan(300));
+    await waitFor(() => expect(hoofY(container, 'left')).toBeLessThan(360));
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
     expect(lid(container, 'right', 'closed')).toBe('visible');
 
     // leaving it, the hooves go back down to the edge
     await userEvent.click(container.querySelector('#email')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeGreaterThan(480));
+    await waitFor(() => expect(hoofY(container, 'left')).toBeGreaterThan(440));
   });
 
   it('shows the form going wrong and going right with a sign over his head, and a word on getting in', async () => {
@@ -69,7 +69,7 @@ describe('AuthCard', () => {
     const { container } = render(<Form />);
     container.querySelector<HTMLInputElement>('#password')!.focus();
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
-    expect(hoofY(container, 'left')).toBeCloseTo(286, 0);
+    expect(hoofY(container, 'left')).toBeCloseTo(346, 0);
   });
 });
 

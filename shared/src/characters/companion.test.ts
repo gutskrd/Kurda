@@ -269,7 +269,7 @@ describe('companionTransforms', () => {
     }
   });
 
-  it('rests the hooves on the edge, and brings each over its own eye', () => {
+  it('stands the hooves on the edge toes down, and turns each over its own eye toes up', () => {
     const base: CompanionFrame = {
       hoofLeft: 0,
       hoofRight: 1,
@@ -290,12 +290,19 @@ describe('companionTransforms', () => {
       wakeAt: null,
     };
     const t = companionTransforms(base);
-    const [lx, ly] = numbers(t.hoofLeft);
-    const [rx, ry] = numbers(t.hoofRight);
-    expect(ly).toBeGreaterThan(480);
+    const [lx, ly, lturn] = numbers(t.hoofLeft);
+    const [rx, ry, rturn] = numbers(t.hoofRight);
+    // standing: the fetlock just above the edge, the toes down on it
+    expect(ly).toBeGreaterThan(440);
     expect(lx).toBeLessThan(255);
-    expect(ry).toBeLessThan(300);
+    expect(lturn).toBe(0);
+    // over the eye: turned over, the toes up
+    expect(ry).toBeLessThan(360);
     expect(rx).toBeGreaterThan(255);
+    expect(Math.abs(rturn!)).toBeGreaterThan(170);
+    // each leg reaches from his chest to its fetlock
+    const [, , , , legScale] = numbers(t.legRight);
+    expect(legScale).toBeGreaterThan(1);
     expect(t.body).toContain('translate(0 0)');
   });
 });

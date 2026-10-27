@@ -39,6 +39,8 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   pupilLeft: 'pupil-left',
   pupilRight: 'pupil-right',
   nose: 'nose',
+  legLeft: 'leg-left',
+  legRight: 'leg-right',
   hoofLeft: 'hoof-left',
   hoofRight: 'hoof-right',
 };
