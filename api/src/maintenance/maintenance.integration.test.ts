@@ -22,7 +22,7 @@ const DATABASE_URL = process.env.DATABASE_URL;
 const HOUR = 3_600_000;
 
 describe.skipIf(!DATABASE_URL)('taking Hevalo offline (integration)', { timeout: 30_000 }, () => {
-  const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
+  const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal', CORS_ORIGINS: 'https://hevalo.app' });
   const storage = memoryStorage();
   let shift = 21 * 24 * HOUR;
   const now = (): Date => new Date(Date.now() + shift);
@@ -110,6 +110,11 @@ describe.skipIf(!DATABASE_URL)('taking Hevalo offline (integration)', { timeout:
       code: 'MAINTENANCE',
       maintenance: { title: 'Back soon', message: 'New lessons are on the way.\nSee you shortly.', pictureUrl: storage.publicUrl(picture), backBy: expect.any(String) },
     });
+    // the website, on another origin, can read the answer and its Retry-After
+    const fromSite = await app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${member.token}`, origin: 'https://hevalo.app' }, remoteAddress: ip() });
+    expect(fromSite.statusCode).toBe(503);
+    expect(fromSite.headers['access-control-allow-origin']).toBe('https://hevalo.app');
+    expect(String(fromSite.headers['access-control-expose-headers'])).toContain('retry-after');
     // signed out too, and a route that does not exist
     expect((await call(null, 'GET', '/dictionary/word-of-day')).statusCode).toBe(503);
     expect((await call(null, 'POST', '/auth/register', {})).statusCode).toBe(503);
