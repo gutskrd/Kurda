@@ -20,13 +20,17 @@ import type { CharacterPoint, EyeState } from './types.js';
  * behind it as the page opens, his hooves up by his cheeks, and then lays
  * them over the sill.
  *
- * He turns his head after the caret along a box being typed in, his face
- * turning further than the back of his head, as a head in the round does;
- * he leans in a little with each key, his mouth round in an "oo", a hanging
- * hoof swinging, and an address that looks whole gets a grin and a nod. His
- * legs move as legs do: the knee leads and what hangs from it follows a
- * moment later and swings on. For a password he lifts his hooves over his
- * eyes, and when the password is shown he lowers one and peeks over it.
+ * He turns his head after the caret along a box being typed in, as a head
+ * in the round turns: what is on his face comes round furthest, the side
+ * turning away falls into shade, and his ears and antlers stay on his head
+ * where they grow from it, the one on the side he turns to going round
+ * behind and the other coming round towards us, his ears swinging on a
+ * moment after. He leans in a little with each key, his mouth round in an
+ * "oo", a hanging hoof swinging, and an address that looks whole gets a
+ * grin and a nod. His legs move as legs do: the knee leads and what hangs
+ * from it follows a moment later and swings on. For a password he lifts his
+ * hooves over his eyes, and when the password is shown he lowers one and
+ * peeks over it.
  * While a form is being sent he looks up and thinks; a mistake gets a shake
  * of the head, a stamp of a hoof as a deer gives at something odd, and a
  * question, never a sad face; getting in gets a hop, his hooves up. Left
@@ -98,7 +102,7 @@ export const COMPANION_VIEW = { x: -15, y: -78, w: 540, h: COMPANION_EDGE + 78 }
 const RIG = drawHevalo('cprig-');
 
 /** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
-export const COMPANION_OVERHANG = 195;
+export const COMPANION_OVERHANG = 285;
 
 /** How far below the sill he waits before he pops up into view. */
 const ENTER_DROP = 860;
@@ -121,13 +125,13 @@ const KNEES_OVER = 40;
  * shoulder lifts a little, as in a shrug.
  */
 const LEG_KEYS: readonly (readonly [k: number, sx: number, sy: number, kx: number, ky: number, turn: number, cannon: number, tip: number, size: number, hoof: number])[] = [
-  [0, 128, 640, 92, 744, 2, 112, 0, 1, 1],
-  [0.2, 128, 638, 94, 738, -10, 94, -18, 1.02, 0.85],
-  [0.32, 128, 634, 98, 690, -24, 86, -26, 1.04, 0.82],
-  [0.44, 129, 631, 74, 612, -100, 86, -10, 1.07, 0.92],
-  [0.55, 130, 628, 112, 540, -210, 104, 6, 1.1, 1],
-  [0.8, 131, 626, 150, 506, -178, 100, 0, 1.14, 1],
-  [1, 132, 624, 160, 480, -174, 128, 0, 1.16, 1],
+  [0, 138, 612, 96, 746, 2, 185, 0, 1, 1],
+  [0.2, 138, 610, 98, 738, -10, 150, -18, 1.02, 0.85],
+  [0.32, 138, 606, 96, 686, -26, 84, -26, 1.04, 0.75],
+  [0.44, 138, 603, 82, 616, -96, 40, -10, 1.07, 0.6],
+  [0.55, 139, 600, 112, 540, -210, 110, 6, 1.1, 1],
+  [0.8, 140, 598, 150, 506, -178, 104, 0, 1.14, 1],
+  [1, 141, 596, 160, 480, -174, 130, 0, 1.16, 1],
 ];
 
 /**
@@ -141,16 +145,19 @@ const LEG_KEYS: readonly (readonly [k: number, sx: number, sy: number, kx: numbe
  * the fetlock.
  */
 const FOREARM: readonly (readonly [along: number, half: number, out: number])[] = [
-  [0, 27, 0],
-  [0.45, 27.5, 8],
-  [0.84, 21.5, 6],
-  [1, 25.5, 0],
+  [0, 34, 0],
+  [0.45, 35, 10],
+  [0.84, 27, 8],
+  [1, 31, 0],
 ];
 const CANNON: readonly (readonly [along: number, half: number, out: number])[] = [
-  [0.22, 18.5, 0],
-  [0.62, 16.5, 0],
-  [1, 19.5, 0],
+  [0.2, 23, 0],
+  [0.6, 20.5, 0],
+  [1, 24, 0],
 ];
+
+/** How large a hoof is drawn on a leg of this size, to the leg's fetlock. */
+const HOOF = 1.24;
 
 /** How far a hanging cannon swings out, in degrees, for each unit its swing goes on past rest. */
 const SWING_TURN = 70;
@@ -161,8 +168,9 @@ const BODY_AXIS = 257.5;
 /** Just under his chin, however he turns his head: a leg's shadow falls on his chest from here down, never on his face. */
 const CHIN = 505;
 
-/** The middle of the face, where each eye's state is split from the other's. */
+/** The middle of the face, where each eye's state is split from the other's, and the upright line his head is drawn about. */
 const FACE_AXIS = 253.5;
+const HEAD_AXIS = 255;
 
 /** Where the signs stand: over his right shoulder, clear of the antlers. */
 const EMOTE_AT = { x: 446, y: -22 } as const;
@@ -349,6 +357,17 @@ function hoof(id: string): string {
   );
 }
 
+/**
+ * The foot of an ear run on in under his head, in the ear's own light (the
+ * character's gradient): its inner edge carries on the way it was going, in
+ * under the head. So an ear coming round with a turning head, or lowered,
+ * shows a little more of itself there, never where it was cut off.
+ */
+function earRoot(p: string, side: 'left' | 'right'): string {
+  const at = (x: number, y: number): string => xy(side === 'left' ? { x, y } : { x: 2 * HEAD_AXIS - x, y });
+  return `<path d="M${at(118, 236)}L${at(128, 210)}L${at(138, 185)}L${at(140, 172)}Q${at(147, 181)} ${at(151, 190)}Q${at(154, 200)} ${at(148, 216)}L${at(132, 238)}Z" fill="url(#${p}ear${side === 'left' ? 'L' : 'R'})"/>`;
+}
+
 /** The signs over his head, each hidden until it is the one shown (the platform's stylesheet brings it in). */
 function emotes(id: string): string {
   const { x, y } = EMOTE_AT;
@@ -394,9 +413,9 @@ export function companionSvg({ prefix }: { prefix: string }): string {
   const art = drawHevalo(p);
   const rig = art.rig;
   const layers = rig?.faceLayers;
-  if (!rig || !layers) throw new Error('companion: Hevalo is drawn without his rig');
+  const antlers = rig?.antlers;
+  if (!rig || !layers || !antlers) throw new Error('companion: Hevalo is drawn without his rig');
   const id = (name: string): string => `${p}${name}`;
-  const about = (pt: CharacterPoint): string => `${n(pt.x)} ${n(pt.y)}`;
   const v = COMPANION_VIEW;
   const half = (side: 'left' | 'right'): string =>
     side === 'left' ? `<rect x="${v.x}" y="${v.y}" width="${n(FACE_AXIS - v.x)}" height="${v.h}"/>` : `<rect x="${FACE_AXIS}" y="${v.y}" width="${n(v.x + v.w - FACE_AXIS)}" height="${v.h}"/>`;
@@ -411,6 +430,11 @@ export function companionSvg({ prefix }: { prefix: string }): string {
       `<g data-lid="happy" visibility="hidden">${from.eyes.happy}</g>` +
       `</g>`
     );
+  };
+  // the side of his face turning away from us, in shade: waiting just outside its outline until he turns
+  const cheek = (side: 'left' | 'right'): string => {
+    const x = side === 'left' ? 2 * HEAD_AXIS - CHEEK.x : CHEEK.x;
+    return `<ellipse data-cp="cheek-${side}" cx="${x}" cy="${CHEEK.y}" rx="${CHEEK.rx}" ry="${CHEEK.ry}" fill="url(#${id('cheek')})" transform="${cheekAt(side, 0)}"/>`;
   };
   const mouths = (Object.keys(art.mouths) as Viseme[]).map((m) => `<g data-mouth="${m}"${m === 'rest' ? '' : ' visibility="hidden"'}>${art.mouths[m]}</g>`).join('');
   // the forelegs and his shadow drawn as they rest, until a frame moves them
@@ -452,6 +476,7 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `<radialGradient id="${id('contact')}"><stop offset="0" stop-color="${C.cardShade}" stop-opacity="0.6"/><stop offset="1" stop-color="${C.cardShade}" stop-opacity="0"/></radialGradient>` +
     // his own shadow on the card under his chest, soft all round
     `<radialGradient id="${id('ambient')}"><stop offset="0" stop-color="${C.cardShade}" stop-opacity="0.36"/><stop offset="0.55" stop-color="${C.cardShade}" stop-opacity="0.16"/><stop offset="1" stop-color="${C.cardShade}" stop-opacity="0"/></radialGradient>` +
+    `<radialGradient id="${id('cheek')}"><stop offset="0" stop-color="${C.shade}" stop-opacity="0.34"/><stop offset="0.5" stop-color="${C.shade}" stop-opacity="0.2"/><stop offset="1" stop-color="${C.shade}" stop-opacity="0"/></radialGradient>` +
     // below the sill, out of the light, the hanging legs darken down to the hoof
     `<linearGradient id="${id('shins')}" gradientUnits="userSpaceOnUse" x1="0" y1="${COMPANION_EDGE}" x2="0" y2="${COMPANION_EDGE + 150}"><stop offset="0" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.4"/></linearGradient>` +
     `</defs>` +
@@ -459,16 +484,14 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     (art.chest ?? art.body) +
     // (on down below the sill, so a hop does not lift it off the sill)
     `<rect x="${v.x}" y="${COMPANION_EDGE - 70}" width="${v.w}" height="130" fill="url(#${id('sill')})" clip-path="url(#${p}figure)"/>` +
-    // the head, in layers that turn by different amounts: the antlers and ears behind least, then the face's outline, then what is on it
+    // the head, in the round: each antler and each ear on its own where it grows from the head, behind its outline, then what is on his face
     `<g data-cp="head">` +
-    `<g data-cp="crown">${rig.crown}</g>` +
-    `<g data-cp="ears">` +
-    `<g data-cp="ear-left" data-pivot="${about(rig.ears.left.pivot)}">${rig.ears.left.art}</g>` +
-    `<g data-cp="ear-right" data-pivot="${about(rig.ears.right.pivot)}">${rig.ears.right.art}</g>` +
-    `</g>` +
+    `<g data-cp="antler-left">${antlers.left.art}</g><g data-cp="antler-right">${antlers.right.art}</g>` +
+    `<g data-cp="ear-left">${earRoot(p, 'left')}${rig.ears.left.art}</g>` +
+    `<g data-cp="ear-right">${earRoot(p, 'right')}${rig.ears.right.art}</g>` +
     `<g data-cp="face">` +
     layers.outline +
-    `<g clip-path="url(#${id('face')})"><g data-cp="features">${layers.features}</g></g>` +
+    `<g clip-path="url(#${id('face')})"><g data-cp="features">${layers.features}</g>${cheek('left')}${cheek('right')}</g>` +
     `<g data-cp="gaze">` +
     rig.look.whites +
     `<g data-cp="pupil-left">${rig.look.left.art}</g><g data-cp="pupil-right">${rig.look.right.art}</g>` +
@@ -614,8 +637,50 @@ const SHAKE: CompanionAct = {
 const LEAN_KICK = 7;
 const OO_MS = 650;
 
-/** How much further than his head's outline what is on his face turns, and the antlers and ears the other way, in the character's units at full turn. */
-const TURN = { outline: 7, features: 17, ears: -9, crown: -6, up: 6 } as const;
+/**
+ * His head in the round, for turning it. Each part of it is moved as a point
+ * on a head turned that far would be: what stands in front of the middle of
+ * his head goes the way he turns, what is behind it the other way, and what
+ * is out at a side comes in as that side turns away. So the ears and the
+ * antlers stay on his head, each where it grows from it, while the one on
+ * the side he turns to goes round behind and the other comes round towards
+ * us; and each, turning, is seen narrower or wider, as a flat thing is.
+ */
+const ROUND = {
+  /** the middle of his head, which it turns about */
+  centre: { x: HEAD_AXIS, y: 300 },
+  /** how far it turns, in degrees, as he looks all the way to one side, and all the way up or down */
+  yaw: 17,
+  pitch: 6,
+  /** how far each part stands in front of the middle (behind it, less than 0): what is on his face, his jaw at his chin, the ears and the antlers */
+  features: 62,
+  jaw: 30,
+  ear: -10,
+  antler: -24,
+  /** how far each ear and each antler faces out to its own side, and how far each leans back, in degrees */
+  earOut: 26,
+  earBack: 14,
+  /** how far in from where an ear turns its foot ends, under the head */
+  earRoot: 20,
+  antlerOut: 18,
+  antlerBack: 24,
+  /** how high on his head the outline begins to come round with his jaw */
+  brow: 175,
+  /** the bottom of his head's outline, under his chin */
+  chin: 461,
+} as const;
+
+/** The shade on the right side of his face as it turns away (the left's is its mirror): just outside his outline, and how far in it comes at a full turn. */
+const CHEEK = { x: 490, y: 318, rx: 84, ry: 200, reach: 80 } as const;
+
+/** Where the shade on one side of his face is with his head turned `share` of a full turn towards that side. */
+function cheekAt(side: 'left' | 'right', share: number): string {
+  const inward = CHEEK.reach * clamp(share, 0, 1.3) * (side === 'left' ? 1 : -1);
+  return `translate(${n(inward)} 0)`;
+}
+
+/** How far his head is turned, from where he looks across and how far beyond it he turns (a shake): -1.3 to 1.3. */
+const headTurn = (lookX: number, turn: number): number => clamp(lookX + turn, -1.3, 1.3);
 
 /** Springs: how quickly each part goes where it is going, and how much it overshoots on the way (ζ under 1). */
 interface Spring {
@@ -623,15 +688,16 @@ interface Spring {
   zeta: number;
 }
 
-type Part = 'hoof' | 'swing' | 'ear' | 'tilt' | 'look' | 'focus' | 'enter' | 'lean';
+type Part = 'hoof' | 'swing' | 'ear' | 'sway' | 'tilt' | 'look' | 'focus' | 'enter' | 'lean';
 
 const SPRINGS: Record<CompanionTone, Record<Part, Spring>> = {
   // a little overshoot on the hooves and ears, the bounce of something alive, and a pop as he comes up;
-  // what hangs from a knee follows it more slowly and swings on past
+  // what hangs from a knee follows it more slowly and swings on past, and so do his ears as he turns his head
   playful: {
     hoof: { k: 150, zeta: 0.72 },
     swing: { k: 60, zeta: 0.5 },
     ear: { k: 220, zeta: 0.55 },
+    sway: { k: 110, zeta: 0.4 },
     tilt: { k: 110, zeta: 0.8 },
     look: { k: 420, zeta: 1 },
     focus: { k: 160, zeta: 1 },
@@ -643,6 +709,7 @@ const SPRINGS: Record<CompanionTone, Record<Part, Spring>> = {
     hoof: { k: 170, zeta: 1 },
     swing: { k: 90, zeta: 0.7 },
     ear: { k: 200, zeta: 0.9 },
+    sway: { k: 160, zeta: 0.7 },
     tilt: { k: 110, zeta: 1 },
     look: { k: 420, zeta: 1 },
     focus: { k: 160, zeta: 1 },
@@ -651,8 +718,8 @@ const SPRINGS: Record<CompanionTone, Record<Part, Spring>> = {
   },
 };
 
-type Channel = 'hoofLeft' | 'hoofRight' | 'swingLeft' | 'swingRight' | 'earLeft' | 'earRight' | 'tilt' | 'lookX' | 'lookY' | 'focus' | 'enter' | 'lean';
-const CHANNELS: readonly Channel[] = ['hoofLeft', 'hoofRight', 'swingLeft', 'swingRight', 'earLeft', 'earRight', 'tilt', 'lookX', 'lookY', 'focus', 'enter', 'lean'];
+type Channel = 'hoofLeft' | 'hoofRight' | 'swingLeft' | 'swingRight' | 'earLeft' | 'earRight' | 'sway' | 'tilt' | 'lookX' | 'lookY' | 'focus' | 'enter' | 'lean';
+const CHANNELS: readonly Channel[] = ['hoofLeft', 'hoofRight', 'swingLeft', 'swingRight', 'earLeft', 'earRight', 'sway', 'tilt', 'lookX', 'lookY', 'focus', 'enter', 'lean'];
 const SPRING_OF: Record<Channel, Part> = {
   hoofLeft: 'hoof',
   hoofRight: 'hoof',
@@ -660,6 +727,7 @@ const SPRING_OF: Record<Channel, Part> = {
   swingRight: 'swing',
   earLeft: 'ear',
   earRight: 'ear',
+  sway: 'sway',
   tilt: 'tilt',
   lookX: 'look',
   lookY: 'look',
@@ -706,6 +774,8 @@ export interface CompanionFrame {
   lean: number;
   /** how far his head is turned aside beyond where he looks (a shake), -1 to 1 */
   turn: number;
+  /** how far his ears are turned, on the same measure as his head: after it, a moment later, and swinging on past it */
+  sway: number;
   /** where the pupils look, each way from -1 to 1, and how far from as drawn (0) to looking (1) */
   look: CharacterPoint;
   focus: number;
@@ -739,8 +809,8 @@ export class CompanionMotion {
   private input: CompanionInput = { field: 'none', shown: false, status: 'idle' };
   private readonly amp: number;
   private readonly springs: Record<Part, Spring>;
-  private readonly x: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, swingLeft: 0, swingRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, lean: 0 };
-  private readonly v: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, swingLeft: 0, swingRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, lean: 0 };
+  private readonly x: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, swingLeft: 0, swingRight: 0, earLeft: 0, earRight: 0, sway: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, lean: 0 };
+  private readonly v: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, swingLeft: 0, swingRight: 0, earLeft: 0, earRight: 0, sway: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, lean: 0 };
   private act: { act: CompanionAct; at: number } | null = null;
   private sign: { emote: CompanionEmote; until: number } | null = null;
   private word: { word: CompanionWord; at: number; until: number } | null = null;
@@ -1002,6 +1072,7 @@ export class CompanionMotion {
     const climbing = !still && this.climbing(now);
     const climb = climbing ? CLIMB : 0;
     const hoof = (side: 0 | 1): number => Math.max(climb, pose.hooves[side] + (this.tap?.side === side ? drum : 0));
+    const turn = act?.turn ? sampleKeys(act.turn, t) : 0;
     const target: Record<Channel, number> = {
       hoofLeft: hoof(0),
       hoofRight: hoof(1),
@@ -1009,6 +1080,8 @@ export class CompanionMotion {
       swingRight: hoof(1),
       earLeft: pose.ears[0] + add(act?.earLeft),
       earRight: pose.ears[1] + add(act?.earRight),
+      // the ears go after his head where it is, not where it is going (or, still, straight there with it)
+      sway: headTurn(still ? look.x : this.x.lookX, turn),
       tilt: pose.tilt + lean + add(act?.tilt),
       lookX: look.x,
       lookY: look.y,
@@ -1080,7 +1153,8 @@ export class CompanionMotion {
       sniff,
       enter: this.x.enter,
       lean: this.x.lean,
-      turn: act?.turn ? sampleKeys(act.turn, t) : 0,
+      turn,
+      sway: this.x.sway,
       look: { x: this.x.lookX, y: this.x.lookY },
       focus: this.x.focus,
       eyes,
@@ -1100,14 +1174,17 @@ export class CompanionMotion {
 export interface CompanionTransforms {
   body: string;
   head: string;
-  /** the head's layers as it turns: the antlers and the ears the other way, the face's outline a little, what is on it (`features`, and the eyes, mouth and nose in `gaze`) furthest */
-  crown: string;
-  ears: string;
+  /** the head's parts as it turns in the round: each antler and each ear where it grows from his head, the face's outline coming round with his jaw, what is on it (`features`, and the eyes, mouth and nose in `gaze`) furthest */
+  antlerLeft: string;
+  antlerRight: string;
+  earLeft: string;
+  earRight: string;
+  /** the shade on each side of his face, in as that side turns away */
+  cheekLeft: string;
+  cheekRight: string;
   face: string;
   features: string;
   gaze: string;
-  earLeft: string;
-  earRight: string;
   pupilLeft: string;
   pupilRight: string;
   nose: string;
@@ -1203,7 +1280,7 @@ function foreleg(side: 'left' | 'right', v: number, swing: number): { outline: s
   // its shadow starts down the forearm, narrower than the leg there, so none shows round the shoulder
   const cast = legOutline([{ ...rounds[1]!, r: rounds[1]!.r * 0.7 }, ...rounds.slice(2)]).outline;
   const lifted = clamp((COMPANION_EDGE - 6 - knee.y) / 40, 0, 1);
-  const hoof = `translate(${n(fetlock.x)} ${n(fetlock.y)}) rotate(${n(turn + flip * legKey(w, 7))}) scale(${f3(size)} ${f3(size * legKey(w, 9))})`;
+  const hoof = `translate(${n(fetlock.x)} ${n(fetlock.y)}) rotate(${n(turn + flip * legKey(w, 7))}) scale(${f3(size * HOOF)} ${f3(size * HOOF * legKey(w, 9))})`;
   return {
     outline,
     rim,
@@ -1213,6 +1290,47 @@ function foreleg(side: 'left' | 'right', v: number, swing: number): { outline: s
     hoofShadow: `translate(6 10) ${hoof}`,
     contact: `translate(${n(knee.x + 5)} ${COMPANION_EDGE + 4}) scale(${f3(1 - ease(lifted))})`,
   };
+}
+
+const DEG = Math.PI / 180;
+
+/** Where each ear is held to his head: the inner end of its foot, level with where it turns when it twitches. */
+const earRootAt = (side: 'left' | 'right'): CharacterPoint => {
+  const pivot = RIG.rig!.ears[side].pivot;
+  return { x: pivot.x + (side === 'left' ? ROUND.earRoot : -ROUND.earRoot), y: pivot.y };
+};
+
+/** How far a point on his head, `depth` in front of its middle, moves as the head turns `yaw` across (to his left, our right, more than 0) and `pitch` down (radians). */
+function inTheRound(p: CharacterPoint, depth: number, yaw: number, pitch: number): CharacterPoint {
+  const x = p.x - ROUND.centre.x;
+  const y = p.y - ROUND.centre.y;
+  const across = x * Math.cos(yaw) + depth * Math.sin(yaw);
+  const nearer = depth * Math.cos(yaw) - x * Math.sin(yaw);
+  return { x: across - x, y: y * Math.cos(pitch) + nearer * Math.sin(pitch) - y };
+}
+
+/**
+ * An ear or an antler on his head, turned `yaw` and `pitch`: it goes with
+ * the point it grows from (`pivot`, `depth` in front of the middle of his
+ * head); it leans back `back` degrees, so as the head turns its tip swings
+ * the other way from its foot, and it is seen shorter as the head tips back;
+ * and it is seen narrower as its side turns away and wider as it comes round
+ * towards us (it faces `out` degrees out to its side), as far as it has
+ * turned itself, `own` (an ear swings on after his head). All this about
+ * `root`, where it is held to the head (an ear by the inner end of its
+ * foot); `lift` turns it about `pivot` first (an ear's twitch).
+ */
+function onTheHead(side: 'left' | 'right', pivot: CharacterPoint, depth: number, yaw: number, pitch: number, out: number, back: number, own = yaw, lift = 0, root = pivot): string {
+  const move = inTheRound(root, depth, yaw, pitch);
+  const o = out * DEG;
+  const b = back * DEG;
+  const wide = Math.cos(o + (side === 'left' ? -own : own)) / Math.cos(o);
+  const tall = Math.cos(b - pitch) / Math.cos(b);
+  const lean = Math.atan(Math.tan(b) * Math.sin(yaw)) / DEG;
+  return (
+    `translate(${n(move.x + root.x)} ${n(move.y + root.y)}) skewX(${n(lean)}) scale(${f3(wide)} ${f3(tall)}) translate(${n(-root.x)} ${n(-root.y)})` +
+    (lift ? ` rotate(${n(lift)} ${n(pivot.x)} ${n(pivot.y)})` : '')
+  );
 }
 
 /** His shadow on the card's top, under his chest: none while he is still below the sill, and smaller and fainter as he hops off it. */
@@ -1228,11 +1346,19 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
   const shift = pupilShift(RIG, frame.look, frame.focus);
   // up for a hop, and down behind the sill before he has come up
   const up = frame.rise * RIG.bust.h - frame.enter * ENTER_DROP;
-  // the head turns towards where he looks, and further for a shake; nearer as he leans in
-  const tx = clamp(frame.look.x + frame.turn, -1.3, 1.3);
-  const ty = clamp(frame.look.y, -1, 1);
+  // the head turns towards where he looks, and further for a shake, in the round; nearer as he leans in
+  const yaw = headTurn(frame.look.x, frame.turn) * ROUND.yaw * DEG;
+  const pitch = clamp(frame.look.y, -1, 1) * ROUND.pitch * DEG;
+  // the ears turn as his head does, but a moment after it, and swing on past
+  const sway = clamp(frame.sway, -1.6, 1.6) * ROUND.yaw * DEG;
   const near = 1 + clamp(frame.lean, -0.4, 1.4) * 0.07;
-  const inner = TURN.features - TURN.outline;
+  // the outline comes round with his jaw, not at all at his brow; what is on his face, in front, comes furthest
+  const jaw = (Math.sin(yaw) * ROUND.jaw) / (ROUND.chin - ROUND.brow);
+  const drop = Math.sin(pitch) * ROUND.jaw * 0.5;
+  const front = inTheRound({ x: ROUND.centre.x, y: COMPANION_EYES.y }, ROUND.features, yaw, pitch);
+  const inner = `translate(${n(front.x - (COMPANION_EYES.y - ROUND.brow) * jaw)} ${n(front.y - drop)})`;
+  const ears = rig.ears;
+  const antlers = rig.antlers!;
   const tall = frame.stretch;
   // a crouch spreads a little and a stretch narrows, as something soft does
   const wide = 1 + (1 - tall) * 0.6;
@@ -1242,13 +1368,15 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
   return {
     body: `translate(0 ${n(-up)}) translate(${n(pivot.x)} ${edge}) scale(${f3(wide)} ${f3(tall)}) translate(${n(-pivot.x)} ${-edge})`,
     head: `rotate(${n(frame.tilt)} ${n(pivot.x)} ${n(pivot.y)}) translate(${n(pivot.x)} ${n(pivot.y)}) scale(${f3(near)}) translate(${n(-pivot.x)} ${n(-pivot.y)})`,
-    crown: `translate(${n(TURN.crown * tx)} ${n(-TURN.up * 0.4 * ty)})`,
-    ears: `translate(${n(TURN.ears * tx)} 0)`,
-    face: `translate(${n(TURN.outline * tx)} ${n(TURN.up * 0.4 * ty)})`,
-    features: `translate(${n(inner * tx)} ${n(TURN.up * 0.6 * ty)})`,
-    gaze: `translate(${n(inner * tx)} ${n(TURN.up * 0.6 * ty)})`,
-    earLeft: `rotate(${n(frame.earLeft)} ${n(rig.ears.left.pivot.x)} ${n(rig.ears.left.pivot.y)})`,
-    earRight: `rotate(${n(-frame.earRight)} ${n(rig.ears.right.pivot.x)} ${n(rig.ears.right.pivot.y)})`,
+    antlerLeft: onTheHead('left', antlers.left.pivot, ROUND.antler, yaw, pitch, ROUND.antlerOut, ROUND.antlerBack),
+    antlerRight: onTheHead('right', antlers.right.pivot, ROUND.antler, yaw, pitch, ROUND.antlerOut, ROUND.antlerBack),
+    earLeft: onTheHead('left', ears.left.pivot, ROUND.ear, yaw, pitch, ROUND.earOut, ROUND.earBack, sway, frame.earLeft, earRootAt('left')),
+    earRight: onTheHead('right', ears.right.pivot, ROUND.ear, yaw, pitch, ROUND.earOut, ROUND.earBack, sway, -frame.earRight, earRootAt('right')),
+    cheekLeft: cheekAt('left', -Math.sin(yaw) / Math.sin(ROUND.yaw * DEG)),
+    cheekRight: cheekAt('right', Math.sin(yaw) / Math.sin(ROUND.yaw * DEG)),
+    face: `translate(0 ${n(drop)}) translate(0 ${ROUND.brow}) skewX(${n(Math.atan(jaw) / DEG)}) translate(0 ${-ROUND.brow})`,
+    features: inner,
+    gaze: inner,
     pupilLeft: `translate(${n(shift.left.x)} ${n(shift.left.y)})`,
     pupilRight: `translate(${n(shift.right.x)} ${n(shift.right.y)})`,
     nose: `translate(${n(rig.sniff.x)} ${n(rig.sniff.y)}) scale(${f3(frame.sniff)}) translate(${n(-rig.sniff.x)} ${n(-rig.sniff.y)})`,

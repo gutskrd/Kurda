@@ -73,6 +73,13 @@ export interface CharacterRig {
   faceLayers?: { outline: string; features: string; shape: string };
   /** what stands up behind the ears and moves with the head (antlers); may be '' */
   crown: string;
+  /**
+   * The same antlers one by one, for a player that turns the head in the
+   * round: each drawn about the middle of its foot (`pivot`), where it stands
+   * on the head, and run on down into the head below it, so a turn never
+   * shows it ending there.
+   */
+  antlers?: { left: RigPart; right: RigPart };
   /** each ear on its own, behind the head, turning about where it meets it */
   ears: { left: RigPart; right: RigPart };
   look: {
