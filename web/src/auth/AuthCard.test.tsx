@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { AuthCard } from './AuthCard';
 import { arrivalHeld, holdArrival } from './arrival';
 
-/** Which way a foreleg below the knee points, in degrees from straight down, from its group's transform: about 180 over an eye. */
+/** Which way a foreleg's hoof points from the knee, in degrees from straight down, from its group's transform: about 180 over an eye. */
 function legTurn(container: HTMLElement, side: 'left' | 'right'): number {
-  const t = container.querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '';
+  const t = container.querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
   return Math.abs(Number(/rotate\((\S+)\)/.exec(t)?.[1] ?? Number.NaN));
 }
 

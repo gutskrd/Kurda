@@ -330,10 +330,10 @@ describe('loading while the person is busy', () => {
   });
 });
 
-/** Hevalo leaning in over the card (brand/Companion.tsx): which way each foreleg points from the knee (about 180 over an eye), an eye's lid, and the sign over his head. */
+/** Hevalo leaning in over the card (brand/Companion.tsx): which way each foreleg's hoof points from the knee (about 180 over an eye), an eye's lid, and the sign over his head. */
 const companion = (): HTMLElement => document.querySelector<HTMLElement>('.login-stage > .login-companion')!;
 const legTurn = (side: 'left' | 'right'): number =>
-  Math.abs(Number(/rotate\((\S+)\)/.exec(companion().querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN));
+  Math.abs(Number(/rotate\((\S+)\)/.exec(companion().querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN));
 const lid = (side: 'left' | 'right', state: string): string | null | undefined =>
   companion().querySelector(`[data-eye="${side}"] [data-lid="${state}"]`)?.getAttribute('visibility');
 
@@ -354,7 +354,8 @@ describe('Hevalo on the sign-in', () => {
     await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
     await user.click(screen.getByRole('button', { name: 'Show password' }));
     await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
-    expect(legTurn('right')).toBeLessThan(legTurn('left'));
+    // the hoof comes down under the eye a moment after it opens, as a leg follows
+    await waitFor(() => expect(legTurn('right')).toBeLessThan(legTurn('left') - 2));
     await user.click(screen.getByRole('button', { name: 'Change the email, rojda@hevalo.app' }));
     await waitFor(() => expect(legTurn('left')).toBeLessThan(5));
   });

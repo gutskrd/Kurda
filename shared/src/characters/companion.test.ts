@@ -3,6 +3,7 @@ import {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,
   COMPANION_EYES,
+  COMPANION_OVERHANG,
   COMPANION_VIEW,
   CompanionMotion,
   companionLook,
@@ -35,13 +36,39 @@ function settled(tone: CompanionTone = 'playful'): CompanionMotion {
 
 const NOW = 10_000;
 
+/** A frame of him sitting still, his forelegs over the sill. */
+const sitting = (): CompanionFrame => ({
+  hoofLeft: 0,
+  hoofRight: 0,
+  swingLeft: 0,
+  swingRight: 0,
+  earLeft: 0,
+  earRight: 0,
+  tilt: 0,
+  rise: 0,
+  stretch: 1,
+  sniff: 1,
+  enter: 0,
+  lean: 0,
+  turn: 0,
+  look: { x: 0, y: 0 },
+  focus: 0,
+  eyes: ['open', 'open'],
+  mouth: 'rest',
+  emote: null,
+  say: null,
+  asleep: false,
+  moving: false,
+  wakeAt: null,
+});
+
 describe('companionSvg', () => {
   const playful = companionSvg({ prefix: 'one' });
   const calm = companionSvg({ prefix: 'two' });
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'arms', 'arm-left', 'arm-right', 'legs', 'leg-left', 'leg-right', 'emotes']) {
+    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'contact-left', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -70,6 +97,18 @@ describe('companionSvg', () => {
     expect(playful).not.toContain('glasses');
   });
 
+  it('draws each foreleg in the fur of his chest, so it grows out of his side, all of a piece from the shoulder to the hoof', () => {
+    // one outline, filled as his chest is, shaded at its rim and casting a shadow, with the hoof on its end
+    expect(playful).toMatch(/<path id="one-leg-left" data-cp="leg-left" d="M[^"]+Z"\/>/);
+    expect(playful).toContain('<use href="#one-leg-left" fill="url(#one-fur)"/><use href="#one-leg-left" fill="url(#one-side)"/>');
+    expect(playful).toContain('<clipPath id="one-in-left"><use href="#one-leg-left"/></clipPath>');
+    expect(playful).toMatch(/<g data-cp="hoof-left" transform="translate\([^"]+\)">/);
+    // drawn at rest before any frame: the same as a frame at rest
+    const rest = companionTransforms(sitting());
+    expect(playful).toContain(`data-cp="leg-left" d="${rest.legLeft}"`);
+    expect(playful).toContain(`data-cp="hoof-right" transform="${rest.hoofRight}"`);
+  });
+
   it('draws him from the chest up, as the mascot is, his face in layers that turn and kept inside its outline', () => {
     // the sill crosses his chest, under his shoulders: his neck and the top of the cream of his chest show
     expect(COMPANION_EDGE).toBeGreaterThan(COMPANION_EYES.y + 400);
@@ -94,7 +133,7 @@ describe('CompanionMotion', () => {
     m.set({ shown: true }, NOW + 1300);
     const peeking = last(run(m, NOW + 1300, 1200));
     expect(peeking.hoofLeft).toBeCloseTo(1, 2);
-    expect(peeking.hoofRight).toBeCloseTo(0.62, 2);
+    expect(peeking.hoofRight).toBeCloseTo(0.8, 2);
     expect(peeking.eyes).toEqual(['closed', 'half']);
 
     m.set({ field: 'none', shown: false }, NOW + 2600);
@@ -305,7 +344,58 @@ describe('CompanionMotion', () => {
     expect(f.eyes).toEqual(['happy', 'happy']);
   });
 
-  it('drums a hoof on the sill now and then on the website, and not in the console', () => {
+  it('swings what hangs from each knee a moment after it, on past and back, as legs do', () => {
+    const m = settled();
+    m.set({ field: 'secret' }, NOW);
+    const lifting = run(m, NOW, 1500);
+    // the knee leads, the hoof follows
+    expect(lifting.slice(2, 12).every((f) => f.swingLeft < f.hoofLeft)).toBe(true);
+    // and swings past before it settles
+    expect(Math.max(...lifting.map((f) => f.swingLeft))).toBeGreaterThan(1.02);
+    expect(last(lifting).swingLeft).toBeCloseTo(1, 2);
+    // the console's swing less
+    const c = settled('calm');
+    c.set({ field: 'secret' }, NOW);
+    const calm = run(c, NOW, 1500);
+    expect(Math.max(...calm.map((f) => f.swingLeft))).toBeLessThan(Math.max(...lifting.map((f) => f.swingLeft)));
+    // for whoever asks for less motion, straight there
+    const s = settled();
+    s.set({ field: 'secret' }, NOW);
+    expect(s.step(NOW + 16, NONE, true).swingLeft).toBe(1);
+  });
+
+  it('sets a hanging hoof swinging with each key, one and then the other, the knees staying on the sill', () => {
+    const m = settled();
+    m.set({ field: 'text' }, NOW);
+    run(m, NOW, 800);
+    const swings = (frames: CompanionFrame[]): [number, number] => [
+      Math.max(...frames.map((f) => Math.abs(f.swingLeft))),
+      Math.max(...frames.map((f) => Math.abs(f.swingRight))),
+    ];
+    m.react('keystroke', NOW + 810);
+    const one = run(m, NOW + 810, 300);
+    const [left, right] = swings(one);
+    expect(Math.max(left, right)).toBeGreaterThan(0.04);
+    expect(Math.min(left, right)).toBeLessThan(0.001);
+    expect(one.every((f) => f.hoofLeft === 0 && f.hoofRight === 0)).toBe(true);
+    // the next key, the other
+    run(m, NOW + 1110, 1500);
+    m.react('keystroke', NOW + 2700);
+    const [nextLeft, nextRight] = swings(run(m, NOW + 2700, 300));
+    expect(left > right ? nextRight : nextLeft).toBeGreaterThan(0.04);
+  });
+
+  it('stamps a hoof at a mistake, as a deer does', () => {
+    const m = settled('calm');
+    m.set({ status: 'error' }, NOW);
+    const frames = run(m, NOW, 1200);
+    const lift = Math.max(...frames.map((f) => Math.max(f.hoofLeft, f.hoofRight)));
+    expect(lift).toBeGreaterThan(0.08);
+    expect(lift).toBeLessThan(0.3);
+    expect(Math.max(last(frames).hoofLeft, last(frames).hoofRight)).toBeLessThan(0.01);
+  });
+
+  it('paws at the sill now and then on the website, and not in the console', () => {
     const lifts = (tone: CompanionTone): number => {
       const m = settled(tone);
       return Math.max(...run(m, NOW, 30_000).map((f) => Math.max(f.hoofLeft, f.hoofRight)));
@@ -396,28 +486,7 @@ describe('companionTransforms', () => {
   const numbers = (s: string): number[] => (s.match(/-?\d+(\.\d+)?/g) ?? []).map(Number);
 
   /** A frame of him sitting still: one hoof over its eye, the other on the sill. */
-  const frame = (): CompanionFrame => ({
-      hoofLeft: 0,
-      hoofRight: 1,
-      earLeft: 0,
-      earRight: 0,
-      tilt: 0,
-      rise: 0,
-      stretch: 1,
-      sniff: 1,
-      enter: 0,
-      lean: 0,
-      turn: 0,
-      look: { x: 0, y: 0 },
-      focus: 0,
-      eyes: ['open', 'open'],
-      mouth: 'rest',
-      emote: null,
-      say: null,
-      asleep: false,
-      moving: false,
-      wakeAt: null,
-    });
+  const frame = (): CompanionFrame => ({ ...sitting(), hoofRight: 1, swingRight: 1 });
 
   it('turns every frame into finite transforms', () => {
     const m = settled();
@@ -430,32 +499,47 @@ describe('companionTransforms', () => {
     }
   });
 
-  it('hangs each leg from its knee on the sill, and folds it up from a lifted knee over its own eye', () => {
-    const base = frame();
-    const t = companionTransforms(base);
-    const [lx, ly, lturn, lsize] = numbers(t.legLeft);
-    const [rx, ry, rturn, rsize] = numbers(t.legRight);
-    // hanging: the knee on the sill, the leg straight down the card, the hoof its end
-    expect(ly).toBeGreaterThan(490);
-    expect(ly).toBeLessThan(COMPANION_EDGE);
-    expect(lx).toBeLessThan(255);
-    expect(lturn).toBe(0);
+  it('hangs each leg from its shoulder in his chest over the sill and down the card, and folds it up from a lifted knee over its own eye', () => {
+    const t = companionTransforms(frame());
+    const ys = (d: string): number[] => numbers(d).filter((_, i) => i % 2 === 1);
+    const xs = (d: string): number[] => numbers(d).filter((_, i) => i % 2 === 0);
+    const points = (d: string): string => d.replace(/A[^A-Z]*?(?=[A-Z]|$)/g, (arc) => `L${arc.trim().split(/[ ,]+/).slice(-2).join(',')}`);
+    const left = points(t.legLeft);
+    const right = points(t.legRight);
+    // at rest: from the side of his chest, under his chin and over the sill, down the card's face, on his left
+    expect(Math.min(...ys(left))).toBeGreaterThan(COMPANION_EYES.y + 280);
+    expect(Math.min(...ys(left))).toBeLessThan(COMPANION_EDGE - 80);
+    expect(Math.max(...ys(left))).toBeGreaterThan(COMPANION_EDGE + 60);
+    expect(Math.max(...ys(left))).toBeLessThan(COMPANION_EDGE + COMPANION_OVERHANG);
+    expect(Math.max(...xs(left))).toBeLessThan(200);
+    const [lx, ly, lturn, lsize, lhoof] = numbers(t.hoofLeft);
+    expect(ly).toBeGreaterThan(COMPANION_EDGE + 60);
+    expect(lx).toBeLessThan(200);
+    expect(Math.abs(lturn!)).toBeLessThan(5);
     expect(lsize).toBe(1);
-    // over the eye: the knee up off the sill by the cheek, the leg turned up from it, nearer to us
-    expect(ry).toBeLessThan(ly! - 30);
+    expect(lhoof).toBe(1);
+    expect(t.contactLeft).toMatch(/scale\(1\)$/);
+    // its shadow starts down the forearm, none round the shoulder
+    expect(Math.min(...ys(points(t.castLeft)))).toBeGreaterThan(Math.min(...ys(left)) + 30);
+    // over the eye: the hoof turned up over it from a lifted knee, nearer to us, and nothing of the leg below the sill
+    const [rx, ry, rturn, rsize] = numbers(t.hoofRight);
     expect(rx).toBeGreaterThan(255);
+    expect(Math.abs(ry! - COMPANION_EYES.y)).toBeLessThan(70);
     expect(Math.abs(rturn!)).toBeGreaterThan(170);
     expect(rsize).toBeGreaterThan(lsize!);
-    // the upper part reaches from the shoulder, on his chest's side over the sill, up to the knee
-    const [ax, ay, , , reach] = numbers(t.armRight);
-    expect(ay).toBeLessThan(COMPANION_EDGE - 100);
-    expect(ay).toBeGreaterThan(COMPANION_EYES.y + 200);
-    expect(Math.abs(ax! - rx!)).toBeLessThan(40);
-    expect(Math.abs(reach!)).toBeCloseTo(Math.hypot(rx! - ax!, ry! - ay!) / 100, 1);
-    // and at rest from its shoulder down his side to the knee on the sill, never from behind the card
-    const [, lay] = numbers(t.armLeft);
-    expect(lay).toBeLessThan(ly!);
+    expect(Math.max(...ys(right))).toBeLessThan(COMPANION_EDGE - 40);
+    expect(Math.min(...xs(right))).toBeGreaterThan(255);
+    expect(t.contactRight).toMatch(/scale\(0\)$/);
     expect(t.body).toContain('translate(0 0)');
+  });
+
+  it('swings a hanging hoof out from the face past rest, the knee staying on the sill', () => {
+    const rest = companionTransforms(sitting());
+    const swung = companionTransforms({ ...sitting(), swingLeft: -0.2 });
+    expect(numbers(swung.hoofLeft)[2]).toBeGreaterThan(numbers(rest.hoofLeft)[2]! + 10);
+    expect(numbers(swung.hoofLeft)[0]).toBeLessThan(numbers(rest.hoofLeft)[0]!);
+    expect(swung.contactLeft).toBe(rest.contactLeft);
+    expect(swung.legRight).toBe(rest.legRight);
   });
 
   it('turns his head towards where he looks: what is on his face furthest, the antlers and ears the other way, and nearer as he leans in', () => {
