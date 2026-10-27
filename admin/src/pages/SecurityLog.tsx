@@ -346,12 +346,12 @@ export function SecurityLog({ route }: { route?: Route }): React.JSX.Element {
           <div className="stats">
             <Stat
               icon="lock"
-              label="Failed sign-ins, last 24 h"
+              label="Failed sign-ins (24 h)"
               value={s.failedSignIns.now.toLocaleString()}
               hint={change(s.failedSignIns.now, s.failedSignIns.before)}
               tone={s.failedSignIns.now > Math.max(20, s.failedSignIns.before * 2) ? 'warn' : 'neutral'}
             />
-            <Stat icon="shield" label="Stopped, last 24 h" value={s.blocked.now.toLocaleString()} hint={`Locks, limits and refusals · ${change(s.blocked.now, s.blocked.before)}`} />
+            <Stat icon="shield" label="Stopped (24 h)" value={s.blocked.now.toLocaleString()} hint={`Locks, limits and refusals · ${change(s.blocked.now, s.blocked.before)}`} />
             <Stat
               icon="alert"
               label="Needs attention"

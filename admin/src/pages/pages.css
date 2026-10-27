@@ -395,7 +395,7 @@ button.cv-line-main {
 /* ---- security log ------------------------------------------------------ */
 .sec-updated { font-size: 12.5px; }
 .sec-chart .sec-bars { gap: 2px; }
-.sec-bar { flex: 1 1 0; max-width: 28px; min-height: 2px; display: flex; flex-direction: column; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
+.sec-bar { flex: 1 1 0; max-width: 48px; min-height: 2px; display: flex; flex-direction: column; gap: 2px; border-radius: 4px 4px 0 0; overflow: hidden; }
 .sec-bar > span { display: block; min-height: 2px; flex-basis: 0; }
 .sec-bar.is-on { outline: 2px solid var(--text); outline-offset: 1px; }
 .sec-bar .is-routine, .sec-swatch.is-routine { background: #71717a; }
@@ -411,7 +411,7 @@ button.cv-line-main {
 .sec-alert-text { display: grid; gap: 3px; min-width: 0; flex: 1 1 260px; }
 .sec-alert-meaning { font-size: 13px; color: var(--text-2); }
 .sec-alert-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.sec-network { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; width: 100%; text-align: start; padding: 10px 12px; border-radius: var(--radius-sm); min-height: var(--target); }
+.sec-network { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-start; gap: 6px 10px; width: 100%; text-align: start; padding: 10px 12px; border-radius: var(--radius-sm); min-height: var(--target); }
 .sec-network > .subtle { flex: 1 1 100%; font-size: 13px; }
 .sec-filters { display: grid; gap: 12px; padding: 0 16px 14px; }
 .sec-filter-row { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: flex-end; }
@@ -419,11 +419,40 @@ button.cv-line-main {
 .sec-meaning { margin: 0 0 12px; color: var(--text-2); line-height: 1.5; }
 .sec-drawer-actions { justify-content: flex-start; padding-top: 14px; }
 .sec-from { display: grid; }
-tr.is-flagged > td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+/* a row still waiting on someone: a bar down its start edge (the card's own edge on a phone) */
+.table-wrap:not(.is-cards) tr.is-flagged > td:first-child { box-shadow: inset 3px 0 0 var(--warn); }
+.table-wrap.is-cards tr.is-flagged { border-inline-start: 3px solid var(--warn); }
 @media (max-width: 640px) {
   .sec-alert-actions { width: 100%; }
   .sec-alert-actions > button { flex: 1 1 0; min-height: var(--target); }
   .sec-filter-row > .field { flex: 1 1 100%; }
   .sec-filters .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 16px; }
   .sec-filters .chips > .chip { flex: 0 0 auto; }
+}
+
+/* ---- analytics: the range, dense charts, the retention grid ------------- */
+.range-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin-bottom: 16px; }
+.range-says { font-size: 13px; font-variant-numeric: tabular-nums; }
+.chart .bars.is-dense { gap: 1px; }
+.chart .bars.is-dense .b { border-radius: 2px 2px 0 0; }
+.funnel-step-rate { display: block; margin-top: 4px; font-size: 12px; color: var(--text-dim); }
+.cohorts { display: grid; gap: 4px; margin-top: 14px; font-variant-numeric: tabular-nums; }
+.cohort-row { display: grid; grid-template-columns: minmax(0, 1.3fr) repeat(var(--cohort-cols, 3), minmax(0, 1fr)); gap: 4px; align-items: stretch; }
+.cohort-row.is-head { font-size: 12px; color: var(--text-dim); }
+.cohort-row.is-head > span:not(:first-child) { text-align: center; }
+.cohort-day { display: grid; font-size: 13px; padding: 4px 0; }
+.cohort-day .subtle { font-size: 11.5px; }
+/* one hue, lighter to darker with the share who came back; the number stays in text ink */
+.cohort-cell { display: grid; place-items: center; min-height: 40px; border-radius: 8px; font-size: 13px; font-weight: 600;
+  background: rgba(147, 197, 253, calc(0.05 + var(--share, 0) * 0.45)); }
+.cohort-cell.is-empty { background: var(--control); color: var(--text-dim); font-weight: 400; }
+@media (max-width: 640px) {
+  .range-bar { gap: 8px; }
+  .range-bar .chips { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; max-width: 100%; }
+  .range-bar .chips > .chip { flex: 0 0 auto; }
+}
+.retention-totals { grid-template-columns: repeat(auto-fit, minmax(min(100%, 140px), 1fr)); }
+@media (max-width: 640px) {
+  .retention-totals { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .retention-totals .stat { padding: 12px; }
 }
