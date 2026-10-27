@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import type { CompanionStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { AuthCard } from '../auth/AuthCard';
+import { arrivalPause, holdArrival } from '../auth/arrival';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { useI18n, useT } from '../i18n/I18nProvider';
@@ -26,6 +29,9 @@ export function Register(): React.JSX.Element {
   const [busy, setBusy] = useState(false);
   // read once: an earlier refusal in this browser session keeps the form away
   const [stopped, setStopped] = useState<AgeStopKind | null>(ageStopRemembered);
+  const [inside, setInside] = useState(false);
+  const held = useRef<(() => void) | null>(null);
+  useEffect(() => () => held.current?.(), []);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
@@ -37,9 +43,13 @@ export function Register(): React.JSX.Element {
     setBusy(true);
     setError(null);
     setErrorCode(null);
+    // made, the page stays a moment for Hevalo to be pleased, then leaves by itself
+    const release = holdArrival();
+    held.current = release;
     // the language they chose here is the account's from the first moment,
     // so the confirmation email and the next sign-in already speak it
     const err = await register({ email, username, password, locale, ...chosen });
+    if (err) release?.();
     setBusy(false);
     if (err?.code === 'UNDER_MINIMUM_AGE') {
       // no account was made; the explanation replaces the form, and stays
@@ -53,15 +63,20 @@ export function Register(): React.JSX.Element {
       // a friend's invite or a story's quiz that sent them here: opened once
       // the email is confirmed (pages/VerifyEmail), not lost to the first lesson
       rememberAfterSignup((location.state as { from?: unknown } | null)?.from);
+      setInside(true);
+      if (release) await arrivalPause();
+      release?.();
       navigate('/app', { replace: true });
     }
   }
 
   if (stopped) return <AgeStop accountClosed={stopped === 'closed'} />;
 
+  const companion: CompanionStatus = inside ? 'success' : busy ? 'busy' : error ? 'error' : 'idle';
+
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
+      <AuthCard status={companion} word="welcome">
         <div className="auth-head">
           <h1>{t('auth.register.title')}</h1>
           <p>{t('auth.register.freeToStart')}</p>
@@ -165,7 +180,7 @@ export function Register(): React.JSX.Element {
             {t('auth.register.signIn')}
           </Link>
         </p>
-      </div>
+      </AuthCard>
     </div>
   );
 }

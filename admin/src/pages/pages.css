@@ -56,13 +56,77 @@
   .dash-audit-action { grid-column: 1 / -1; white-space: normal; }
 }
 
-/* ---- the 2FA steps before the workspace ----------------------------------------- */
-/* The sign-in's own card, the same frost, inputs and pill button (styles.css .login), so
-   the code that follows the password is asked for in the same place it was. Only what the
-   steps have that the sign-in does not is set here. */
+/* ---- the sign-in wheel (pages/SignIn) -------------------------------------------- */
+/* The steps of signing in on one card: a rail of where you are across the top, and the
+   steps turning past like the faces of a wheel. Each face turns about an axis behind the
+   card, so it rises and tips away as the next comes up from below (and back again). */
+.wheel-rail {
+  list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  margin: 0 0 24px; padding: 0;
+}
+.wheel-rail li {
+  position: relative; display: grid; justify-items: center; gap: 7px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.5);
+  transition: color 300ms ease;
+}
+/* the track from the step before, filling as each is done */
+.wheel-rail li + li::before, .wheel-rail li + li::after {
+  content: ''; position: absolute; top: 8px; right: calc(50% + 12px); width: calc(100% - 24px); height: 2px; border-radius: 2px;
+}
+.wheel-rail li + li::before { background: rgba(255, 255, 255, 0.16); }
+.wheel-rail li + li::after {
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), #c9b2ff);
+  transform: scaleX(0); transform-origin: left center; transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.wheel-rail li.is-done::after, .wheel-rail li.is-now::after { transform: scaleX(1); }
+.wheel-dot {
+  position: relative; z-index: 1; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.3); color: #1a0f33;
+  transition: background 300ms ease, border-color 300ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 300ms ease;
+}
+.wheel-dot svg { width: 11px; height: 11px; }
+.wheel-rail li.is-done .wheel-dot { background: #fff; border-color: #fff; }
+.wheel-rail li.is-now .wheel-dot { background: #fff; border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 5px rgba(201, 178, 255, 0.22), 0 0 18px rgba(201, 178, 255, 0.75); }
+.wheel-rail li.is-done, .wheel-rail li.is-now { color: #fff; }
+.wheel-label { white-space: nowrap; }
+
+.wheel { position: relative; perspective: 1100px; transition: height 380ms cubic-bezier(0.2, 0.8, 0.2, 1); }
+.wheel-face { transform-origin: 50% 50% -170px; backface-visibility: hidden; }
+/* the face leaving is gone from sight before the next is half up, so the two are never read over each other */
+.wheel-face.is-leaving { position: absolute; top: 0; left: 0; right: 0; pointer-events: none; animation: wheel-away 380ms cubic-bezier(0.55, 0, 0.75, 0.35) both; }
+.wheel-face.is-entering { animation: wheel-up 560ms cubic-bezier(0.16, 1, 0.3, 1) 110ms both; }
+.wheel-face.is-leaving.is-back { animation-name: wheel-away-back; }
+.wheel-face.is-entering.is-back { animation-name: wheel-up-back; }
+@keyframes wheel-away { 55% { opacity: 0; } to { transform: rotateX(78deg); opacity: 0; } }
+@keyframes wheel-up { from { transform: rotateX(-78deg); opacity: 0; } 40% { opacity: 1; } }
+@keyframes wheel-away-back { 55% { opacity: 0; } to { transform: rotateX(-78deg); opacity: 0; } }
+@keyframes wheel-up-back { from { transform: rotateX(78deg); opacity: 0; } 40% { opacity: 1; } }
+@keyframes wheel-fade { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .wheel { transition: none; }
+  .wheel-rail li::after, .wheel-dot { transition: none; }
+  .wheel-face.is-entering, .wheel-face.is-entering.is-back { animation: wheel-fade 160ms ease both; }
+}
+
+/* the email the password goes with: a tap goes back to change it */
+.wheel-who { display: flex; justify-content: center; margin: -4px 0 22px; }
+.wheel-chip {
+  display: inline-flex; align-items: center; gap: 10px; max-width: 100%; min-height: 40px; padding: 5px 6px 5px 16px;
+  border-radius: 999px; border: 1px solid rgba(255, 255, 255, 0.26); background: rgba(255, 255, 255, 0.08);
+  color: #fff; font: inherit; font-size: 14px; cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease;
+}
+.wheel-chip:hover { background: rgba(255, 255, 255, 0.14); border-color: rgba(255, 255, 255, 0.5); }
+.wheel-chip-who { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wheel-chip-change { flex: none; padding: 5px 11px; border-radius: 999px; background: rgba(255, 255, 255, 0.16); font-size: 12.5px; font-weight: 600; }
+.wheel-centred { text-align: center; }
+
+/* The steps after the password use the same card, frost, inputs and pill button (styles.css
+   .login); only what they have that the first two do not is set here. */
 .login-title.gate-title { display: flex; align-items: center; gap: 12px; font-size: 34px; }
-.login-card.has-hero .login-title.gate-title { justify-content: center; }
+.login-card.has-companion .login-title.gate-title { justify-content: center; }
 .gate-busy { flex: none; width: 26px; height: 26px; animation: spin 1s linear infinite; }
+.login-title.gate-title:focus { outline: none; }
 .gate-text { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 .gate-qr { display: flex; justify-content: center; margin: 0 0 20px; }
 .qr { background: #fff; border-radius: 14px; padding: 8px; }

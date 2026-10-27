@@ -1,6 +1,7 @@
 import { lazy } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './auth/AuthProvider';
+import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
 import { AuthLayout } from './layouts/AuthLayout';
@@ -88,10 +89,10 @@ import { MessagesProvider } from './chat/MessagesProvider';
 import { I18nProvider } from './i18n/I18nProvider';
 import { AccountLocale } from './i18n/AccountLocale';
 
-/** Keep signed-in users out of the sign-in / sign-up pages. */
+/** Keep signed-in users out of the sign-in / sign-up pages, except for the moment the page itself holds to see them in (auth/arrival). */
 function RedirectIfAuthed({ children }: { children: React.ReactNode }): React.JSX.Element {
   const { status } = useAuth();
-  if (status === 'signedIn') return <Navigate to="/app" replace />;
+  if (status === 'signedIn' && !arrivalHeld()) return <Navigate to="/app" replace />;
   return <>{children}</>;
 }
 

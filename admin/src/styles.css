@@ -471,17 +471,27 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   color: rgba(255, 255, 255, 0.9);
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
-/* Hevalo sits on the card's top edge, half above it, and the name and the title are centred under it */
-.login-card.has-hero { margin-top: 62px; padding-top: 0; }
-.login-hero { display: flex; justify-content: center; margin: -58px 0 16px; }
+/*
+ * Hevalo leans in over the card (brand/Companion) as over a windowsill: the stage keeps room
+ * above the card for him, his box (shared COMPANION_VIEW, 540 by 598) stands on the card's top
+ * edge, and he is drawn in front of the card, cut at the edge himself, so his forelegs can hang
+ * down over its top padding (shared COMPANION_OVERHANG, 92 of 540).
+ */
+.login-stage {
+  --cp-w: min(176px, 40vw);
+  --cp-room: calc(var(--cp-w) * 0.94);
+  position: relative; width: 452px; max-width: 100%; padding-top: var(--cp-room);
+}
+.login-stage > .login-card { width: 100%; }
+.login-companion {
+  position: absolute; z-index: 2; left: 50%; top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
+  width: var(--cp-w); height: calc(var(--cp-w) * 598 / 540); margin-left: calc(var(--cp-w) / -2);
+  filter: drop-shadow(0 10px 22px rgba(20, 6, 52, 0.45));
+}
+@media (max-height: 560px) { .login-stage { --cp-w: 112px; } }
 .login-top.is-centred { justify-content: center; gap: 10px; margin-bottom: 20px; }
 .login-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.6; }
-/* the cut-out Hevalo stands behind the card and looks over it, its neck fading into the card's top edge */
-/* the card's edge across its neck, a tenth of the picture up from the bottom (it is 744 by 810) */
-.login-card.has-peek { margin-top: calc(min(180px, 42vw) * 1.0887 * 0.9 + 10px); }
-.login-hero.is-peek { position: relative; display: block; height: calc(min(180px, 42vw) * 1.0887 * 0.1); margin: 0 0 14px; }
-.login-hero.is-peek .hevalo-mark { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; }
-.login-card.has-hero .login-title, .login-card.has-hero .login-welcome { text-align: center; }
+.login-card.has-companion .login-title, .login-card.has-companion .login-welcome { text-align: center; }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
 .login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
@@ -585,6 +595,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-msg.error { color: #ffb3a7; }
 
 @media (max-width: 520px) {
+  .login-stage { width: 100%; }
   /* a phone shows the ribbons small, right behind the card: less frost, so they still show through it */
   .login-card {
     width: 100%; padding: 30px 24px 32px; border-radius: 24px;

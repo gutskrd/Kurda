@@ -101,6 +101,41 @@
   gap: 4px 12px;
   margin-bottom: 18px;
 }
+/*
+ * Hevalo leans in over the card (auth/AuthCard) as over a windowsill: the
+ * stage keeps room above the card for him, his box (shared COMPANION_VIEW,
+ * 540 by 598) stands on the card's top edge, and he is drawn in front of the
+ * card, cut at the edge himself, so his forelegs can hang down over its top
+ * padding (shared COMPANION_OVERHANG, 92 of 540) while the rest of him is
+ * behind it.
+ */
+.auth-stage {
+  --cp-w: 196px;
+  --cp-room: calc(var(--cp-w) * 0.96);
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  padding-top: var(--cp-room);
+}
+.auth-stage > .auth-card {
+  position: relative;
+  z-index: 1;
+}
+.auth-companion {
+  position: absolute;
+  z-index: 2;
+  left: 50%;
+  top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
+  width: var(--cp-w);
+  height: calc(var(--cp-w) * 598 / 540);
+  margin-left: calc(var(--cp-w) / -2);
+}
+/* his word, to the left of his head */
+.auth-companion .cp-say {
+  right: 99%;
+  top: 30%;
+  transform-origin: 100% 100%;
+}
 /* each side keeps its words together, and the row breaks between them if it must */
 .auth-row > * {
   white-space: nowrap;
@@ -116,6 +151,16 @@
   }
   .auth-card {
     padding: var(--space-8) var(--space-5) var(--space-6);
+  }
+  .auth-stage {
+    --cp-w: 150px;
+    --cp-say-size: 0.85rem;
+  }
+}
+/* a short window (a phone on its side) keeps the form in view */
+@media (max-height: 560px) {
+  .auth-stage {
+    --cp-w: 112px;
   }
 }
 

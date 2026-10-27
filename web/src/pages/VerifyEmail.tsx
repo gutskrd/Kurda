@@ -1,6 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { AuthCard } from '../auth/AuthCard';
+import { arrivalPause } from '../auth/arrival';
+import { prefersReducedMotion } from '../lib/motion';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
 import { Button } from '../components/Button';
@@ -45,6 +48,7 @@ export function VerifyEmail(): React.JSX.Element {
   const navigate = useNavigate();
   const [code, setCode] = useState('');
   const [busy, setBusy] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [cooldown, setCooldown] = useState(0);
@@ -106,6 +110,9 @@ export function VerifyEmail(): React.JSX.Element {
       if (res.ok) {
         // pull the fresh profile so emailVerified flips before we route onward
         await refreshUser();
+        // a moment for Hevalo to be pleased before the page moves on
+        setConfirmed(true);
+        if (!prefersReducedMotion()) await arrivalPause();
         setBusy(false);
         navigate(afterVerify(), { replace: true });
         return;
@@ -132,7 +139,7 @@ export function VerifyEmail(): React.JSX.Element {
 
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
+      <AuthCard status={confirmed ? 'success' : busy ? 'busy' : error ? 'error' : 'idle'} word="bravo">
         <div className="auth-head">
           <h1>{t('auth.verify.title')}</h1>
           <p>{t('auth.verify.sentTo', { digits: CODE_LENGTH, email: user?.email ?? '' })}</p>
@@ -179,7 +186,7 @@ export function VerifyEmail(): React.JSX.Element {
             .
           </div>
         </div>
-      </div>
+      </AuthCard>
     </div>
   );
 }

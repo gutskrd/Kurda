@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { Register } from './Register';
-import { renderApp, jsonResponse } from '../test/utils';
+import { renderApp, jsonResponse, MOVES_ON } from '../test/utils';
 import { en } from '../i18n/en';
 
 afterEach(() => {
@@ -84,7 +84,7 @@ describe('Register', () => {
     await chooseBirth('3', '1990');
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
 
-    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
     expect(bodyOf(fetchMock, '/auth/register')).toMatchObject({ birthYear: 1990, birthMonth: 3, acceptTerms: true });
   });
 
@@ -103,7 +103,7 @@ describe('Register', () => {
     await fillAccount();
     await chooseBirth('3', '1990');
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
-    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
     expect(bodyOf(fetchMock, '/auth/register')).toMatchObject({ deviceName: 'Safari on iPhone' });
   });
 
@@ -144,7 +144,7 @@ describe('Register', () => {
     await chooseBirth('3', '1990');
     await userEvent.click(screen.getByRole('button', { name: en['auth.register.submit'] }));
 
-    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
     expect(JSON.parse(localStorage.getItem('hevalo.afterSignup') ?? '{}')).toMatchObject({ path: '/app/games/peyvok-battle?id=b1' });
   });
 

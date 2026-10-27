@@ -1,0 +1,161 @@
+/*
+ * The companion (companion-player.ts), as the website and the admin console
+ * both draw him; each places and sizes him in its own stylesheet.
+ *
+ * Only what is cheap moves here: the breath is a transform on the element
+ * itself, which the browser does without drawing him again, and a sign's own
+ * small movement runs only while that sign is shown and he can be seen. For
+ * whoever asks for less motion, nothing here moves at all.
+ */
+.companion {
+  display: block;
+  line-height: 0;
+  transform-origin: 50% 100%;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+}
+.companion > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* a word in a bubble beside his head, the website's: the platform gives it its place */
+.cp-say {
+  position: absolute;
+  padding: 0.38em 0.8em 0.42em;
+  border-radius: 999px;
+  background: var(--cp-say-bg, #fffaf2);
+  color: var(--cp-say-ink, #3a2418);
+  box-shadow: 0 6px 18px rgb(40 18 8 / 0.18);
+  font-weight: 700;
+  font-size: var(--cp-say-size, 0.95rem);
+  line-height: 1.2;
+  white-space: nowrap;
+  pointer-events: none;
+  /* his words are Kurmancî, in Latin letters, whatever the page's direction */
+  direction: ltr;
+  unicode-bidi: isolate;
+}
+.cp-say[hidden] {
+  display: none;
+}
+/* its tail, on the side towards him */
+.cp-say::after {
+  content: '';
+  position: absolute;
+  right: 14%;
+  bottom: -5px;
+  width: 12px;
+  height: 12px;
+  background: inherit;
+  border-radius: 2px;
+  transform: rotate(45deg);
+}
+
+/* the signs grow about their own middle */
+.companion .cp-dot,
+.companion .cp-spark,
+.companion .cp-z,
+.companion [data-emote] {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .companion.is-shown {
+    animation: cp-breathe 3600ms ease-in-out infinite;
+  }
+  .companion.is-shown.is-asleep {
+    animation-duration: 5600ms;
+  }
+
+  /* each sign pops in as it comes */
+  .companion[data-emote='think'] [data-emote='think'],
+  .companion[data-emote='question'] [data-emote='question'],
+  .companion[data-emote='spark'] [data-emote='spark'],
+  .companion[data-emote='heart'] [data-emote='heart'],
+  .companion[data-emote='sleep'] [data-emote='sleep'] {
+    animation: cp-pop 320ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+  .companion.is-shown[data-emote='think'] .cp-dot {
+    animation: cp-dot 1200ms ease-in-out infinite;
+  }
+  .companion.is-shown[data-emote='think'] .cp-dot-1 {
+    animation-delay: 150ms;
+  }
+  .companion.is-shown[data-emote='think'] .cp-dot-2 {
+    animation-delay: 300ms;
+  }
+  .companion.is-shown[data-emote='spark'] .cp-spark {
+    animation: cp-twinkle 900ms ease-in-out infinite;
+  }
+  .companion.is-shown[data-emote='spark'] .cp-spark-1 {
+    animation-delay: 220ms;
+  }
+  .companion.is-shown[data-emote='spark'] .cp-spark-2 {
+    animation-delay: 440ms;
+  }
+  .companion.is-shown[data-emote='sleep'] .cp-z {
+    animation: cp-z 2400ms ease-in-out infinite;
+  }
+  .companion.is-shown[data-emote='sleep'] .cp-z-1 {
+    animation-delay: 800ms;
+  }
+  .companion.is-shown[data-emote='sleep'] .cp-z-2 {
+    animation-delay: 1600ms;
+  }
+  .cp-say:not([hidden]) {
+    animation: cp-pop 280ms cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  }
+}
+
+@keyframes cp-breathe {
+  50% {
+    transform: scale(1.006, 1.014);
+  }
+}
+@keyframes cp-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+@keyframes cp-dot {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.45;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+@keyframes cp-twinkle {
+  0%,
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(0.7) rotate(15deg);
+    opacity: 0.75;
+  }
+}
+@keyframes cp-z {
+  0% {
+    transform: translate(0, 6px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(10px, -16px);
+    opacity: 0;
+  }
+}

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act } from 'react';
 import { screen, waitFor, within } from '@testing-library/dom';
 import userEvent from '@testing-library/user-event';
@@ -39,6 +39,11 @@ function sidebarLinks(): string[] {
     .getAllByRole('link')
     .map((a) => a.querySelector('.navlink-label')?.textContent ?? '');
 }
+
+// the console's code, fetched in the background while the sign-in is on screen in the app (pages/SignIn): here, before the tests
+beforeAll(async () => {
+  await import('./Console');
+}, 60_000);
 
 beforeEach(() => {
   setToken('tok');
