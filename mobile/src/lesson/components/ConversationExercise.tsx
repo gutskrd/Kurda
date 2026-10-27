@@ -4,7 +4,7 @@ import { isSoraniDialect, type ConversationLine, type ConversationSpeaker, type 
 import { hitSlopFor } from '../../a11y/a11y';
 import { AAA_NORMAL } from '../../a11y/contrast';
 import { ensureContrast } from '../../a11y/ensureContrast';
-import { SpeakingCharacter, knownVoice } from '../../characters/SpeakingCharacter';
+import { ConversationStage, conversationCast } from '../../characters/ConversationStage';
 import type { PlaybackClock } from '../../characters/voice';
 import { useI18n } from '../../i18n/I18nContext';
 import { AVATAR_COLORS, AVATAR_TEXT_COLOR, deriveInitials } from '../../profile/initials';
@@ -39,7 +39,7 @@ const PART_COLOURS = [AVATAR_COLORS[1], AVATAR_COLORS[4], AVATAR_COLORS[2], AVAT
 /** How much of a part's colour washes its bubbles, as a hex alpha: more on the dark page, where the colours are darker than it. */
 const WASH = { light: '1F', dark: '3D' } as const;
 
-/** The face beside each line: the part's initial, or its character while it says the line. */
+/** The initial beside each line. */
 const FACE = 40;
 
 /** The round play button in a bubble, drawn smaller than a fingertip and reaching one (`hitSlopFor`). */
@@ -55,8 +55,13 @@ const NONE: readonly never[] = [];
  * initial beside them, so who is talking is told by the name, the side and the
  * colour together. A recorded line has its own play button, and "Play
  * conversation" plays every recorded line in order, lighting each bubble as it
- * is heard. When a line's recording names its character, the initial gives way
- * to that character saying it, lip-synced to the sound, and comes back after.
+ * is heard.
+ *
+ * Above the lines, when every part is played by a character, the characters
+ * stand together on one stage looking at each other (`ConversationStage`):
+ * whoever says the line being heard says it, lip-synced to the sound, and the
+ * others look at them. A line is always said by its own part's character,
+ * whichever voice its recording was saved under.
  *
  * The question is asked, and answers back once graded, exactly as a
  * multiple-choice item's is: it is one (`MultipleChoiceExercise`).
@@ -77,8 +82,11 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
   const meanings = lines.some((line) => !!line.en);
   const playingAll = !!audio.turn?.all;
   // Kurdish in its own direction, whatever language the app is read in
-  const kurdish = isSoraniDialect(dialect ?? exercise.dialect) ? styles.rtl : styles.ltr;
+  const sorani = isSoraniDialect(dialect ?? exercise.dialect);
+  const kurdish = sorani ? styles.rtl : styles.ltr;
   const wash = colors.scheme === 'dark' ? WASH.dark : WASH.light;
+  // the characters playing the parts, when every part has one, to stand on the stage
+  const staged = conversationCast(speakers) !== null;
 
   return (
     <View style={styles.container}>
@@ -89,6 +97,22 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
         <Text style={[styles.title, kurdish, { color: colors.textPrimary }]} accessibilityRole="header">
           {exercise.title}
         </Text>
+      ) : null}
+
+      {staged ? (
+        // the same way round as the bubbles below: the first part stands on the side its lines start from
+        <ConversationStage
+          speakers={speakers}
+          lines={lines}
+          voices={voices}
+          at={audio.at}
+          source={audio.at !== null ? (lineAudio[audio.at] ?? null) : null}
+          playing={audio.playing}
+          player={audio.clock}
+          rtl={mirrored}
+          // they are all pleased with a right answer, and think a wrong one over with you
+          reaction={feedback ? (feedback.accepted ? 'cheer' : 'hmm') : null}
+        />
       ) : null}
 
       {listenable || meanings ? (
@@ -123,33 +147,16 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
           const url = listenable ? lineAudio[i] : null;
           const heard = audio.turn?.line === i;
           const sounding = heard && audio.playing;
-          const voice = heard ? knownVoice(voices[i]) : null;
-          // the first part's face at the start of the line and everybody else's at the end, whichever side that is
+          // the first part's initial at the start of the line and everybody else's at the end, whichever side that is
           const row = first ? dir.row : mirrored ? 'row' : 'row-reverse';
           return (
             <View key={i} style={[styles.row, { flexDirection: row }, first !== mirrored ? styles.rowStart : styles.rowEnd]}>
-              <View style={styles.face}>
-                {voice ? (
-                  // facing its own bubble, saying the line with the sound
-                  <SpeakingCharacter
-                    speaker={voice.speaker}
-                    voice={voice}
-                    text={line.text}
-                    player={audio.clock}
-                    playing={audio.playing}
-                    source={audio.source}
-                    size={FACE}
-                    flip={first === mirrored}
-                  />
-                ) : (
-                  <View
-                    style={[styles.initial, { backgroundColor: ensureContrast(tint, AVATAR_TEXT_COLOR, AAA_NORMAL) }]}
-                    accessibilityElementsHidden
-                    importantForAccessibility="no-hide-descendants"
-                  >
-                    <Text style={[styles.initialText, { color: AVATAR_TEXT_COLOR }]}>{Array.from(deriveInitials(name))[0]}</Text>
-                  </View>
-                )}
+              <View
+                style={[styles.initial, { backgroundColor: ensureContrast(tint, AVATAR_TEXT_COLOR, AAA_NORMAL) }]}
+                accessibilityElementsHidden
+                importantForAccessibility="no-hide-descendants"
+              >
+                <Text style={[styles.initialText, { color: AVATAR_TEXT_COLOR }]}>{Array.from(deriveInitials(name))[0]}</Text>
               </View>
               <View
                 testID={heard ? 'conversation-heard' : undefined}
@@ -212,6 +219,8 @@ function nextRecorded(lineAudio: ReadonlyArray<string | null>, from: number): nu
  */
 function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   turn: Turn | null;
+  /** the line playing now, or else the one heard last; null before any has been asked for */
+  at: number | null;
   /** the line's recording is sounding now */
   playing: boolean;
   clock: PlaybackClock | null;
@@ -221,6 +230,8 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   stop: () => void;
 } {
   const [turn, setTurn] = useState<Turn | null>(null);
+  // the line heard last, kept once its turn is over: the stage still shows who said it
+  const [last, setLast] = useState<number | null>(null);
   const url = turn ? (lineAudio[turn.line] ?? undefined) : undefined;
   const { source, playing, error, clock, play } = useAudio(url);
   const asked = useRef(0);
@@ -233,6 +244,10 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
   const ask = useCallback((line: number | null, all: boolean) => {
     setTurn(line === null ? null : { line, all, n: ++asked.current });
   }, []);
+
+  useEffect(() => {
+    if (turn) setLast(turn.line);
+  }, [turn]);
 
   useEffect(() => {
     if (!turn || !url || source !== url || started.current === turn.n) return;
@@ -261,6 +276,7 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
 
   return {
     turn,
+    at: turn ? turn.line : last,
     playing: playing && !!url && source === url,
     clock: url && source === url ? clock : null,
     source,
@@ -279,8 +295,6 @@ const styles = StyleSheet.create({
   row: { alignItems: 'flex-end', gap: spacing.sm, maxWidth: '92%' },
   rowStart: { alignSelf: 'flex-start' },
   rowEnd: { alignSelf: 'flex-end' },
-  face: { width: FACE, height: FACE },
-  // the same corner as a character's own tile, so one stands in for the other without a jump
   initial: { width: FACE, height: FACE, borderRadius: radii.md, alignItems: 'center', justifyContent: 'center' },
   initialText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
   bubble: {

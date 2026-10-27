@@ -20,12 +20,15 @@ import {
   SWAY,
   between,
   characterArt,
+  eyeShift,
   glanceTarget,
   keySteps,
+  leanToward,
   lookToward,
   speakingFrame,
   voiceTimeline,
   type ActName,
+  type CharacterPoint,
   type EyeState,
   type Keys,
   type RecordingVoice,
@@ -39,7 +42,7 @@ import { Rise } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii } from '../theme/tokens';
 import { useGaze } from './gaze';
-import { characterLayers, type CharacterCrop, type Share } from './layers';
+import { characterLayers, irisesMoved, type CharacterCrop, type Share } from './layers';
 import type { PlaybackClock } from './voice';
 
 export { CHARACTER_SIZE, knownVoice, type PlaybackClock } from './voice';
@@ -66,6 +69,14 @@ export interface SpeakingCharacterProps {
   height?: number;
   /** turned the other way round, to face what lies to its left */
   flip?: boolean;
+  /**
+   * a steady look, each way from -1 to 1 in the drawing's own terms (shared `lookAcross`), at whoever it is
+   * talking with: its eyes stay on them, with no glances about and no following a finger, and its head leans
+   * a little their way
+   */
+  gaze?: CharacterPoint | null;
+  /** listening, not saying: its mouth never moves with what plays; it breathes, blinks and reacts as ever */
+  quiet?: boolean;
   /** what it has just seen: it reacts each time this changes, and when it arrives with one */
   reaction?: CharacterReaction | null;
   /** asleep, where there is nothing to do yet: eyes shut, a slow breath, a "z" drifting up (shared `RESTING`) */
@@ -128,15 +139,19 @@ const degrees = (value: Animated.AnimatedInterpolation<number> | Animated.Value 
  * Between the words it breathes, its head drifts a degree, it blinks every
  * few seconds and glances about now and then; the deer twitches an ear or
  * sniffs (shared `HABITS`). Its eyes follow a finger anywhere on the screen
- * (`GazeArea`). A tap gets a greeting — a hop, ears up, a smile — and then
- * `onPress`; `reaction` gets a cheer for a right answer and a curious tilt of
- * the head for one that was not yet (shared `ACTS`). Every movement is a
- * transform on the native driver, so none of it redraws a picture; only the
- * eyes and the mouth are drawn again, when their shape changes.
+ * (`GazeArea`), unless it has been told where to look (`gaze`), as the people
+ * in a conversation are: then its eyes stay on whoever it talks with and its
+ * head leans a little their way. A tap gets a greeting — a hop, ears up, a
+ * smile — and then `onPress`; `reaction` gets a cheer for a right answer and
+ * a curious tilt of the head for one that was not yet (shared `ACTS`). Every
+ * movement is a transform on the native driver, so none of it redraws a
+ * picture; only the eyes and the mouth are drawn again, when their shape
+ * changes. A `quiet` one listens: its mouth never moves with what plays.
  *
  * Drawn as stacked layers in one frame: the body, then the head and what is
  * on it. The deer's ears, pupils and nose are layers of their own so they can
- * move; the people's eyes and mouths are drawn whole.
+ * move; the people's eyes and mouths are drawn whole, their irises moved
+ * within the eyes when they look aside.
  *
  * Under Reduce Motion nothing moves but the mouth (it says what the sound
  * says), the blinks, and the face a reaction or a tap puts on. Timers stop
@@ -153,6 +168,8 @@ export function SpeakingCharacter({
   size,
   height: tall,
   flip = false,
+  gaze = null,
+  quiet = false,
   reaction = null,
   resting = false,
   onPress,
@@ -161,7 +178,7 @@ export function SpeakingCharacter({
   const { colors } = useTheme();
   const { t } = useI18n();
   const reduce = useReducedMotion();
-  const gaze = useGaze();
+  const finger = useGaze();
   const layers = characterLayers(speaker, crop);
   const art = characterArt(speaker);
   const rig = layers.rig;
@@ -173,6 +190,10 @@ export function SpeakingCharacter({
   const height = boxHeight * (1 - room);
   /** points per drawing unit */
   const unit = width / layers.frame.w;
+  // a steady look, by its value: the same look given again as a new object changes nothing
+  const steady = gaze !== null;
+  const gazeX = gaze?.x ?? 0;
+  const gazeY = gaze?.y ?? 0;
 
   // ---- what the face shows ----
   const [speech, setSpeech] = useState<Viseme>('rest');
@@ -196,6 +217,7 @@ export function SpeakingCharacter({
     lookY: new Animated.Value(0),
     focus: new Animated.Value(0),
     dip: new Animated.Value(0),
+    lean: new Animated.Value(0),
   }).current;
 
   const born = useRef(Date.now());
@@ -211,8 +233,8 @@ export function SpeakingCharacter({
     return () => sub.remove();
   }, []);
 
-  // ---- the words ----
-  const live = playing && player !== null && awake;
+  // ---- the words, unless it is listening ----
+  const live = !quiet && playing && player !== null && awake;
   useEffect(() => {
     const rest = (): void => {
       setSpeech('rest');
@@ -269,15 +291,18 @@ export function SpeakingCharacter({
 
   // ---- looking ----
   const looking = useRef<Animated.CompositeAnimation | null>(null);
+  // a look as seen, turned round for a figure drawn the other way; or, `drawn`, one already in the drawing's terms
   const look = useCallback(
-    (x: number, y: number, focus: number, ms: number) => {
+    (x: number, y: number, focus: number, ms: number, drawn = false) => {
       looking.current?.stop();
       const to = (value: Animated.Value, toValue: number) => Animated.timing(value, { toValue, duration: ms, easing: ease, useNativeDriver: true });
-      looking.current = Animated.parallel([to(values.lookX, flip ? -x : x), to(values.lookY, y), to(values.focus, focus)]);
+      looking.current = Animated.parallel([to(values.lookX, flip && !drawn ? -x : x), to(values.lookY, y), to(values.focus, focus)]);
       looking.current.start();
     },
     [values, flip],
   );
+  // where the eyes come back to: whoever it has been told to look at, or straight ahead
+  const lookBack = useCallback((ms: number) => (steady ? look(gazeX, gazeY, 1, ms, true) : look(0, 0, 0, ms)), [look, steady, gazeX, gazeY]);
   const following = useRef(false);
 
   // ---- acts ----
@@ -328,7 +353,7 @@ export function SpeakingCharacter({
       if (act.look && rig && !reduce) {
         const { x, y } = act.look;
         look(x, y, 1, LOOK_MS.glance);
-        holds.push(later(act.ms * 0.8, () => (following.current ? undefined : look(0, 0, 0, LOOK_MS.back))));
+        holds.push(later(act.ms * 0.8, () => (following.current ? undefined : lookBack(LOOK_MS.back))));
       }
       const anim = Animated.parallel(tracks);
       acting.current = { anim, holds };
@@ -336,7 +361,7 @@ export function SpeakingCharacter({
         if (finished && acting.current?.anim === anim) acting.current = null;
       });
     },
-    [stopAct, reduce, rig, values, later, look],
+    [stopAct, reduce, rig, values, later, look, lookBack],
   );
 
   // the latest `play`, for the effects below that should run when what they watch changes and not when it does
@@ -401,6 +426,28 @@ export function SpeakingCharacter({
     return () => settle.stop();
   }, [resting, reduce, values]);
 
+  // ---- a steady look: the deer's pupils turn to whoever it talks with (the people's irises are drawn there) ----
+  const steadied = useRef(false);
+  useEffect(() => {
+    // and back to the middle when it has nobody to look at any more
+    if (!rig || (!steady && !steadied.current)) return;
+    steadied.current = steady;
+    following.current = false;
+    lookBack(reduce ? 0 : LOOK_MS.to);
+  }, [rig, steady, lookBack, reduce]);
+
+  // ---- and the head leans a little their way: a pose, so under Reduce Motion it is simply there ----
+  const lean = steady ? leanToward({ x: gazeX, y: gazeY }) : 0;
+  useEffect(() => {
+    if (reduce) {
+      values.lean.setValue(lean);
+      return;
+    }
+    const turning = Animated.timing(values.lean, { toValue: lean, duration: LOOK_MS.back, easing: ease, useNativeDriver: true });
+    turning.start();
+    return () => turning.stop();
+  }, [lean, reduce, values]);
+
   // ---- habits: blinks for everyone, glances, and the deer's ears and nose ----
   useEffect(() => {
     // asleep it is still: no blinks, glances, twitches or sniffs
@@ -428,12 +475,15 @@ export function SpeakingCharacter({
       if (Math.random() < HABITS.doubleBlink) blinkOnce(2 * BLINK_STEPS.half + BLINK_STEPS.shut + 120);
     });
     if (rig && !reduce) {
-      every(HABITS.glance, () => {
-        if (following.current || acting.current) return;
-        const target = glanceTarget();
-        look(target.x, target.y, 1, LOOK_MS.glance);
-        habits.push(setTimeout(() => (following.current ? undefined : look(0, 0, 0, LOOK_MS.back)), between(HABITS.glanceHold)));
-      });
+      // told where to look, it keeps its eyes there
+      if (!steady) {
+        every(HABITS.glance, () => {
+          if (following.current || acting.current) return;
+          const target = glanceTarget();
+          look(target.x, target.y, 1, LOOK_MS.glance);
+          habits.push(setTimeout(() => (following.current ? undefined : look(0, 0, 0, LOOK_MS.back)), between(HABITS.glanceHold)));
+        });
+      }
       every(HABITS.twitch, () => (acting.current ? undefined : playRef.current(Math.random() < 0.5 ? 'twitchLeft' : 'twitchRight')));
       every(HABITS.sniff, () => (acting.current ? undefined : playRef.current('sniff')));
     }
@@ -441,13 +491,13 @@ export function SpeakingCharacter({
       habits.forEach(clearTimeout);
       setBlink('open');
     };
-  }, [awake, rig, reduce, look, resting]);
+  }, [awake, rig, reduce, look, resting, steady]);
 
-  // ---- following a finger ----
+  // ---- following a finger, when it has not been told where to look ----
   const root = useRef<View>(null);
   const placed = useRef<{ x: number; y: number; w: number; h: number; at: number } | null>(null);
   useEffect(() => {
-    if (!gaze || !rig || reduce || resting) return;
+    if (!finger || steady || !rig || reduce || resting) return;
     const aim = (point: { x: number; y: number }): void => {
       const box = placed.current;
       if (!box || box.w === 0) return;
@@ -460,7 +510,7 @@ export function SpeakingCharacter({
       following.current = true;
       look(where.x, where.y, 1, LOOK_MS.to);
     };
-    return gaze.subscribe((point) => {
+    return finger.subscribe((point) => {
       if (!point) {
         following.current = false;
         look(0, 0, 0, LOOK_MS.back);
@@ -476,7 +526,7 @@ export function SpeakingCharacter({
         aim(point);
       });
     });
-  }, [gaze, rig, reduce, flip, layers, look, room, resting]);
+  }, [finger, steady, rig, reduce, flip, layers, look, room, resting]);
 
   const greet = (): void => {
     haptic('tap');
@@ -503,9 +553,14 @@ export function SpeakingCharacter({
   const turn = useMemo(
     () => ({
       transformOrigin: origin(layers.pivot),
-      transform: [{ rotate: degrees(Animated.add(Animated.add(Animated.add(values.nod, values.sway), values.tilt), values.dip)) }],
+      transform: [{ rotate: degrees(Animated.add(Animated.add(Animated.add(Animated.add(values.nod, values.sway), values.tilt), values.dip), values.lean)) }],
     }),
     [layers, values],
+  );
+  // a person's open eyes, the irises moved to look; drawn again only when the look changes, as it does when the speaker does
+  const openEyes = useMemo(
+    () => (steady && !rig ? irisesMoved(layers.eyes.open, eyeShift(art, { x: gazeX, y: gazeY })) : layers.eyes.open),
+    [steady, rig, layers, art, gazeX, gazeY],
   );
   const pupils = useMemo(() => {
     const r = art.rig;
@@ -565,7 +620,7 @@ export function SpeakingCharacter({
   ) : (
     <>
       <Layer xml={layers.head} width={width} height={height} />
-      <Layer xml={layers.eyes[eyes]} width={width} height={height} />
+      <Layer xml={eyes === 'open' ? openEyes : layers.eyes[eyes]} width={width} height={height} />
     </>
   );
 

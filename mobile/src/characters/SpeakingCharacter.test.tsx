@@ -18,10 +18,20 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { AppState, type AppStateStatus } from 'react-native';
-import { NOD_DEGREES, SWAY, encodeLipsync, visemeAt, voiceTimeline, type RecordingVoice } from '@kurda/shared';
+import {
+  NOD_DEGREES,
+  SWAY,
+  characterArt,
+  encodeLipsync,
+  eyeShift,
+  leanToward,
+  visemeAt,
+  voiceTimeline,
+  type RecordingVoice,
+} from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
-import { characterLayers } from './layers';
+import { characterLayers, irisesMoved } from './layers';
 import { SpeakingCharacter, type PlaybackClock } from './SpeakingCharacter';
 import { fakeFrames, type Frames } from './testing/audio';
 
@@ -57,6 +67,14 @@ function headTurn(): { angle: number; origin: string } {
   const head = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === HAMO.head)!;
   const group = head.parentElement as HTMLElement;
   return { angle: Number(/rotate\((-?[\d.]+)deg\)/.exec(group.style.transform)?.[1] ?? 0), origin: group.style.transformOrigin };
+}
+
+/** how far the view a layer of the drawing is in moves it, in points */
+function moved(markup: string): { x: number; y: number } {
+  const layer = [...document.querySelectorAll('svg[data-markup]')].find((el) => el.getAttribute('data-markup') === markup)!;
+  const transform = (layer.parentElement as HTMLElement).style.transform;
+  const by = (axis: 'X' | 'Y'): number => Number(new RegExp(`translate${axis}\\((-?[\\d.e-]+)px\\)`).exec(transform)?.[1] ?? 0);
+  return { x: by('X'), y: by('Y') };
 }
 
 let frames: Frames;
@@ -290,6 +308,66 @@ describe('SpeakingCharacter', () => {
     expect(again).toHaveBeenCalledTimes(1);
     await act(() => new Promise((r) => setTimeout(r, 400)));
     expect(drawn.markups).toContain(HAMO.eyes.happy);
+  });
+
+  it('listens with its mouth still while it is quiet, whatever plays, and asks for no frames', async () => {
+    const player = clock(0);
+    renderWithProviders(<SpeakingCharacter speaker="hamo" voice={SAID} player={player} playing quiet size={104} source="a.wav" />);
+    await settle();
+    for (const at of [0.12, 0.3, 0.7]) {
+      step(player, at);
+      expect(mouthShown()).toBe('rest');
+    }
+    expect(frames.pending).toBe(0);
+  });
+
+  it('looks steadily where it is told: the irises moved within the eyes, and the head leaning that way', async () => {
+    const art = characterArt('hamo');
+    const view = renderWithProviders(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} gaze={{ x: -1, y: 0 }} />);
+    await settle();
+    const left = irisesMoved(HAMO.eyes.open, eyeShift(art, { x: -1, y: 0 }));
+    expect(left).toContain(`<g data-iris="left" transform="translate(${-art.irisReach!} 0)">`);
+    expect(left).toContain(`<g data-iris="right" transform="translate(${-art.irisReach!} 0)">`);
+    expect(drawn.markups).toContain(left);
+    expect(drawn.markups).not.toContain(HAMO.eyes.open);
+    expect(headTurn().angle).toBe(leanToward({ x: -1, y: 0 }));
+    expect(headTurn().angle).toBeLessThan(0);
+
+    // the same look given again draws nothing again, and turned round it is the same look in the drawing's own terms
+    drawn.markups = [];
+    view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} gaze={{ x: -1, y: 0 }} flip />);
+    await settle();
+    expect(drawn.markups).toEqual([]);
+    expect(headTurn().angle).toBe(leanToward({ x: -1, y: 0 }));
+
+    // the other way, and only the eyes are drawn again
+    view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} gaze={{ x: 1, y: 0 }} flip />);
+    await settle();
+    expect(drawn.markups).toEqual([irisesMoved(HAMO.eyes.open, eyeShift(art, { x: 1, y: 0 }))]);
+    expect(headTurn().angle).toBeGreaterThan(0);
+
+    // told nothing, it looks ahead again
+    view.rerender(<SpeakingCharacter speaker="hamo" player={null} playing={false} size={104} flip />);
+    await settle();
+    expect(drawn.markups).toContain(HAMO.eyes.open);
+    expect(headTurn().angle).toBe(0);
+  });
+
+  it('turns the deer’s pupils where it is told to look', async () => {
+    const deer = characterLayers('hevalo', 'full');
+    const look = { x: 1, y: 0 };
+    renderWithProviders(<SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={300} gaze={look} />);
+    await settle();
+    const unit = 300 / deer.frame.h;
+    const shift = eyeShift(characterArt('hevalo'), look);
+    for (const [markup, eye] of [
+      [deer.rig!.pupilLeft, shift.left],
+      [deer.rig!.pupilRight, shift.right],
+    ] as const) {
+      expect(moved(markup).x).toBeCloseTo(eye.x * unit, 3);
+      expect(moved(markup).y).toBeCloseTo(eye.y * unit, 3);
+    }
+    expect(shift.left.x).toBeGreaterThan(0);
   });
 
   it('takes no touch when there is nothing for a tap to do', async () => {

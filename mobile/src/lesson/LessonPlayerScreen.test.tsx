@@ -184,12 +184,15 @@ describe('a conversation', () => {
         id: 'cv',
         type: 'conversation',
         position: 1,
-        speakers: [{ name: 'Rojda' }, { name: 'Azad' }],
+        speakers: [
+          { name: 'Xezo', character: 'xezo' },
+          { name: 'Hamo', character: 'hamo' },
+        ],
         lines: [
           { speaker: 0, text: 'Tu dixwazî çi vexwî?' },
           { speaker: 1, text: 'Çayekê, spas.' },
         ],
-        prompt: 'Azad çi dixwaze?',
+        prompt: 'Hamo çi dixwaze?',
         options: ['Qehwe', 'Çay'],
       },
     ],
