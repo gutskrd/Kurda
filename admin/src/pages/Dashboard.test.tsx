@@ -120,3 +120,27 @@ describe('the dashboard’s ranks and leagues', () => {
     expect(screen.queryByRole('heading', { name: 'Ranks and leagues' })).not.toBeInTheDocument();
   });
 });
+
+describe('the dashboard’s security line', () => {
+  const OWNER: AdminSession = { roles: ['superadmin'], staffRoles: ['superadmin'], capabilities: [], needsEnrollment: false, needsVerification: false };
+
+  it('puts what the security log wants looked at first, for a superadmin', async () => {
+    fakeApi(
+      on('GET', '/admin/security/summary', json({ open: { warning: 2, critical: 1 }, failedSignIns: { now: 40, before: 12 } })),
+      on('GET', /^\/admin\/audit/, json({ entries: [] })),
+    );
+    show(OWNER);
+    const attention = await screen.findByRole('link', { name: /needs attention/i });
+    expect(attention).toHaveTextContent('3');
+    expect(attention).toHaveTextContent('1 critical: look now');
+    expect(attention).toHaveAttribute('href', '#/security-log');
+    expect(screen.getByRole('link', { name: /failed sign-ins/i })).toHaveTextContent('12 the day before');
+  });
+
+  it('is not there for a role that cannot open the security log', async () => {
+    fakeApi(on('GET', '/admin/lesson-audio', json(LISTING)), on('GET', '/admin/alphabet/audio', json({ recordings: [] })));
+    show(EDITOR);
+    await screen.findByRole('heading', { name: 'What still needs a recording' });
+    expect(screen.queryByRole('heading', { name: 'Security' })).not.toBeInTheDocument();
+  });
+});
