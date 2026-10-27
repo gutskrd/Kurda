@@ -185,7 +185,7 @@ describe('CompanionMotion', () => {
     expect(run(c, NOW, 200)[3]!.emote).toBeNull();
   });
 
-  it('pops up from behind the sill as he arrives, holding his hooves out on the website, then rests them on it', () => {
+  it('climbs up from behind the sill as he arrives, his forelegs lifted, then lays them over it', () => {
     const m = new CompanionMotion('playful', () => 0.5);
     m.arrive(0);
     const frames = run(m, 0, 2000);
@@ -195,16 +195,61 @@ describe('CompanionMotion', () => {
     expect(last(frames).enter).toBeCloseTo(0, 3);
     expect(Math.max(...frames.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
     expect(last(frames).hoofLeft).toBeCloseTo(0, 2);
-    // the console's comes straight up, hooves down
+    // the console's comes straight up without the pop
     const c = new CompanionMotion('calm', () => 0.5);
     c.arrive(0);
     const calm = run(c, 0, 2000);
     expect(Math.min(...calm.map((f) => f.enter))).toBeGreaterThanOrEqual(-0.001);
-    expect(Math.max(...calm.map((f) => f.hoofLeft))).toBeLessThan(0.01);
+    expect(Math.max(...calm.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
+    expect(last(calm).hoofLeft).toBeCloseTo(0, 2);
+    // in both, his forelegs stay lifted until he is all the way up
+    for (const f of [...frames, ...calm]) if (f.enter > 0.05) expect(f.hoofLeft).toBeGreaterThan(0.3);
     // and for whoever asks for less motion he is simply there
     const s = new CompanionMotion('playful', () => 0.5);
     s.arrive(0);
     expect(s.step(16, NONE, true).enter).toBe(0);
+  });
+
+  it('keeps his forelegs lifted until he is up, however late the page draws him', () => {
+    const m = new CompanionMotion('calm', () => 0.5);
+    m.arrive(0);
+    // the page busy for a second and a half before it draws him, then drawing a frame every 200 ms
+    let f = m.step(1500);
+    for (let t = 1700; f.enter > 0.05; t += 200) {
+      expect(f.hoofLeft).toBeGreaterThan(0.3);
+      f = m.step(t);
+    }
+    expect(last(run(m, 4000, 2000)).hoofLeft).toBeCloseTo(0, 2);
+  });
+
+  it('lays his forelegs down as soon as he is up, drawn only while he moves', () => {
+    const m = new CompanionMotion('calm', () => 0.5);
+    m.arrive(0);
+    // a busy page: a frame, another, and then nothing for a second, by which time he is all the way up
+    m.step(0);
+    m.step(400);
+    let t = 1400;
+    let f = m.step(t);
+    expect(f.enter).toBe(0);
+    // from there, as the player draws him: every frame while he moves, and then not until he is next due to
+    while (t < 2000) {
+      t = f.moving ? t + 16 : (f.wakeAt ?? Infinity);
+      if (t >= 2000) break;
+      f = m.step(t);
+    }
+    expect(f.hoofLeft).toBeLessThan(0.02);
+  });
+
+  it('comes up as far on a page drawing a few frames a second as on one drawing sixty', () => {
+    const smooth = new CompanionMotion('calm', () => 0.5);
+    const slow = new CompanionMotion('calm', () => 0.5);
+    smooth.arrive(0);
+    slow.arrive(0);
+    run(smooth, 0, 400);
+    let f = slow.step(0);
+    for (let t = 200; t <= 400; t += 200) f = slow.step(t);
+    expect(f.enter).toBeCloseTo(smooth.step(400).enter, 1);
+    expect(f.hoofLeft).toBeCloseTo(smooth.step(400).hoofLeft, 1);
   });
 
   it('drums a hoof on the sill now and then on the website, and not in the console', () => {
@@ -337,12 +382,12 @@ describe('companionTransforms', () => {
     expect(ly).toBeLessThan(COMPANION_EDGE);
     expect(lx).toBeLessThan(255);
     expect(lturn).toBe(0);
-    expect(lsize).toBeGreaterThan(1);
+    expect(lsize).toBe(1);
     // over the eye: the knee up off the sill by the cheek, the leg turned up from it, nearer to us
     expect(ry).toBeLessThan(ly! - 30);
     expect(rx).toBeGreaterThan(255);
     expect(Math.abs(rturn!)).toBeGreaterThan(170);
-    expect(rsize).toBeGreaterThan(lsize! * 1.3);
+    expect(rsize).toBeGreaterThan(lsize!);
     // the upper part reaches from the shoulder, down behind the sill, up to the knee
     const [ax, ay, , , reach] = numbers(t.armRight);
     expect(ay).toBeGreaterThan(COMPANION_EDGE);

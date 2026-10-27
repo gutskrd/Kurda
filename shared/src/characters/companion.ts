@@ -83,11 +83,11 @@ const RIG = drawHevalo('cprig-');
 
 /**
  * His head is drawn a little smaller than the character's own, about where
- * it meets his neck, so his forelegs are in proportion to him; and his
- * forelegs a little larger than a deer's would be beside a head this size.
+ * it meets his neck, so his forelegs, drawn as the character's own are (the
+ * broad knee, the slim cannon, the big cloven hooves), are in proportion to
+ * him.
  */
 const HEAD_SCALE = 0.9;
-const LEG_SCALE = 1.22;
 
 /** Where a point of the character's head is, the head drawn at `HEAD_SCALE`. */
 function onHead(at: CharacterPoint): CharacterPoint {
@@ -96,10 +96,13 @@ function onHead(at: CharacterPoint): CharacterPoint {
 }
 
 /** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
-export const COMPANION_OVERHANG = 118;
+export const COMPANION_OVERHANG = 130;
 
 /** How far below the sill he waits before he pops up into view. */
 const ENTER_DROP = 560;
+
+/** How far below his place he is, coming up, when his forelegs may first show below the sill: his knees, lifted, are over it by then. */
+const KNEES_OVER = 40;
 
 /**
  * Each foreleg, the left (the right is its mirror across the face), from
@@ -113,10 +116,10 @@ const ENTER_DROP = 560;
  */
 const LEG_KEYS: readonly (readonly [k: number, x: number, y: number, turn: number, size: number])[] = [
   [0, 178, 506, 0, 1],
-  [0.2, 176, 497, 12, 1.02],
-  [0.32, 164, 478, 48, 1.1],
-  [0.55, 150, 462, 140, 1.25],
-  [1, 168, 461, 186, 1.45],
+  [0.2, 176, 497, 12, 1.01],
+  [0.32, 164, 478, 48, 1.05],
+  [0.55, 150, 462, 140, 1.1],
+  [1, 171, 429, 186, 1.15],
 ];
 
 /** Where each foreleg's upper part comes from, down behind the sill: it is seen only above the sill, rising to the knee. */
@@ -132,19 +135,18 @@ const FACE_AXIS = 253.5;
 const EMOTE_AT = onHead({ x: 446, y: -22 });
 
 const C = {
-  // the fur of his legs is his body's, a shade darker towards the hoof and paler just above it, as a deer's is
+  // his legs are in the character's own colours: the body's fur at the knee, darkening down the cannon,
+  // paling to cream just above the hoof, and the hooves brown, lighter at the top
+  knee: '#c08449',
   leg: '#b97f46',
   legLow: '#a86f3c',
   edge: '#8f5a2c',
   pastern: '#c99863',
-  // the pale fur just above the hoof
-  coronet: '#e2c194',
-  fringe: '#dcb17f',
-  // hooves dark and glossy, nearly black
-  hoofLight: '#56423a',
-  hoof: '#33251f',
-  hoofDeep: '#1c1411',
-  shine: '#8c766b',
+  coronet: '#d9b582',
+  hoofLight: '#8a6447',
+  hoof: '#73503a',
+  hoofDeep: '#4e3324',
+  shine: '#b89276',
   ink: '#4a2a24',
   heart: '#ef5b7a',
   spark: '#f5b942',
@@ -153,52 +155,53 @@ const C = {
 
 /**
  * A foreleg's upper part, from the shoulder (0,0) along `ARM_UNIT` to the
- * knee: a little fuller than the leg below it, rounder near the shoulder. It
- * is stretched from the shoulder behind the sill to the knee, and only what
- * is above the sill is seen.
+ * knee: as broad as the knee it meets, a little rounder near the shoulder.
+ * It is stretched from the shoulder behind the sill to the knee, and only
+ * what is above the sill is seen.
  */
 function forearm(id: string): string {
-  const path = `M-21,0C-23,30 -21.5,66 -18.5,${ARM_UNIT}L18.5,${ARM_UNIT}C21.5,66 23,30 21,0Z`;
+  const path = `M-30,0C-32,30 -30,66 -26,${ARM_UNIT}L26,${ARM_UNIT}C30,66 32,30 30,0Z`;
   return (
     `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.6"/><stop offset="0.35" stop-color="${C.edge}" stop-opacity="0"/>` +
     `<stop offset="0.65" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.6"/></linearGradient></defs>` +
-    `<path d="${path}" fill="${C.legLow}"/><path d="${path}" fill="url(#${id}s)"/>`
+    `<path d="${path}" fill="${C.leg}"/><path d="${path}" fill="url(#${id}s)"/>`
   );
 }
 
 /**
- * A foreleg from the knee (0,0) down, all of a piece as a deer's is: the
- * rounded knee, the slender cannon, the fetlock a little fuller, the pastern
- * paling to cream where it meets the hoof, and the hoof itself, two dark
- * glossy toes, rounded on the outside and meeting along a slit, with the
- * small dewclaws showing at the sides behind the fetlock. Seen from the
- * front, it is the same either way round, so turned up over an eye the toes
- * point up.
+ * A foreleg from the knee (0,0) down, all of a piece and in the character's
+ * own proportions: the broad rounded knee, the slim cannon, the fetlock
+ * fuller with the dewclaws at its sides, the pastern paling to cream where
+ * it meets the hoof, and the big cloven hoof, two rounded brown toes with
+ * the split between them. Seen from the front it is the same either way
+ * round, so turned up over an eye the toes point up.
  */
 function lowerLeg(id: string): string {
   const fur =
-    'M0,-15C10.3,-15 18.4,-9 19,0C19.5,7 17.2,14 14.9,22C13.8,31 13.2,41 13.8,48C14.4,53 17.8,56 17.8,62C17.8,67 14.9,70 14.9,73C14.9,76 17.2,78 19.5,80L-19.5,80C-17.2,78 -14.9,76 -14.9,73C-14.9,70 -17.8,67 -17.8,62C-17.8,56 -14.4,53 -13.8,48C-13.2,41 -13.8,31 -14.9,22C-17.2,14 -19.5,7 -19,0C-18.4,-9 -10.3,-15 0,-15Z';
-  const toe = 'M-1,78C-6.9,76.5 -16.1,76.5 -20.1,78.5C-23,83 -23.6,93 -21.8,100C-20.1,105 -12.6,108.5 -5.7,108C-2.9,107.8 -1.6,105 -1.4,101Z';
-  const dewclaw = 'M-14.4,57C-21.3,56 -25.3,60.5 -24.1,66C-20.7,66 -16.7,63.5 -14.4,61.5Z';
+    'M0,-22C15,-22 26.5,-14 27,-2C27.5,8 24,18 21.5,30C20,38 19.5,48 20,56C20.5,64 25,68 25,76C25,83 22,86 22,89C22,92 25,94 28,96' +
+    'L-28,96C-25,94 -22,92 -22,89C-22,86 -25,83 -25,76C-25,68 -20.5,64 -20,56C-19.5,48 -20,38 -21.5,30C-24,18 -27.5,8 -27,-2C-26.5,-14 -15,-22 0,-22Z';
+  const toe = 'M-1.5,94C-10,92 -24,92 -29,95C-33,104 -34,121 -30,131C-27,138 -17,142 -8,141C-4,140.5 -2,137 -1.8,131Z';
+  const dewclaw = 'M-21,67C-30,66 -34,73 -32,81C-28,81 -24,77 -21,74Z';
   const mirror = (d: string): string => d.replace(/(-?\d+(?:\.\d+)?),/g, (_, x: string) => `${-Number(x)},`);
   return (
     `<defs>` +
-    `<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.leg}"/><stop offset="0.62" stop-color="${C.legLow}"/>` +
-    `<stop offset="0.8" stop-color="${C.legLow}"/><stop offset="0.93" stop-color="${C.pastern}"/><stop offset="1" stop-color="${C.coronet}"/></linearGradient>` +
-    `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.6"/><stop offset="0.3" stop-color="${C.edge}" stop-opacity="0"/>` +
-    `<stop offset="0.7" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.6"/></linearGradient>` +
-    `<linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.hoofLight}"/><stop offset="0.35" stop-color="${C.hoof}"/><stop offset="1" stop-color="${C.hoofDeep}"/></linearGradient>` +
-    `<radialGradient id="${id}g"><stop offset="0" stop-color="${C.shine}" stop-opacity="0.65"/><stop offset="1" stop-color="${C.shine}" stop-opacity="0"/></radialGradient>` +
+    `<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.knee}"/><stop offset="0.45" stop-color="${C.leg}"/>` +
+    `<stop offset="0.7" stop-color="${C.legLow}"/><stop offset="0.86" stop-color="${C.legLow}"/><stop offset="0.95" stop-color="${C.pastern}"/><stop offset="1" stop-color="${C.coronet}"/></linearGradient>` +
+    `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.55"/><stop offset="0.28" stop-color="${C.edge}" stop-opacity="0"/>` +
+    `<stop offset="0.72" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.55"/></linearGradient>` +
+    `<linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.hoofLight}"/><stop offset="0.4" stop-color="${C.hoof}"/><stop offset="1" stop-color="${C.hoofDeep}"/></linearGradient>` +
+    `<radialGradient id="${id}g"><stop offset="0" stop-color="${C.shine}" stop-opacity="0.55"/><stop offset="1" stop-color="${C.shine}" stop-opacity="0"/></radialGradient>` +
     `</defs>` +
-    // the dewclaws, behind the fetlock
+    // the dewclaws, behind the fetlock, and the split between the toes
     `<path d="${dewclaw}" fill="${C.hoofDeep}"/><path d="${mirror(dewclaw)}" fill="${C.hoofDeep}"/>` +
+    `<path d="M-3,96L3,96L3,138L-3,138Z" fill="${C.hoofDeep}"/>` +
     // the toes, each with the soft shine of horn on its outer side
     `<path d="${toe}" fill="url(#${id}h)"/><path d="${mirror(toe)}" fill="url(#${id}h)"/>` +
-    `<ellipse cx="-14.4" cy="90" rx="4" ry="8" fill="url(#${id}g)" transform="rotate(8 -14.4 90)"/>` +
-    `<ellipse cx="14.4" cy="90" rx="3.5" ry="7" fill="url(#${id}g)" opacity="0.6" transform="rotate(-8 14.4 90)"/>` +
+    `<ellipse cx="-21" cy="114" rx="5" ry="12" fill="url(#${id}g)" transform="rotate(8 -21 114)"/>` +
+    `<ellipse cx="21" cy="114" rx="4.5" ry="11" fill="url(#${id}g)" opacity="0.6" transform="rotate(-8 21 114)"/>` +
     // the leg, round at its sides, and a fold of the knee
     `<path d="${fur}" fill="url(#${id}f)"/><path d="${fur}" fill="url(#${id}s)"/>` +
-    `<path d="M-11.5,13Q0,17 11.5,13" fill="none" stroke="${C.edge}" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round"/>`
+    `<path d="M-15,12Q0,17 15,12" fill="none" stroke="${C.edge}" stroke-opacity="0.28" stroke-width="2.5" stroke-linecap="round"/>`
   );
 }
 
@@ -206,7 +209,7 @@ function lowerLeg(id: string): string {
 function legShadow(id: string): string {
   return (
     `<defs><radialGradient id="${id}"><stop offset="0" stop-color="#1b0f08" stop-opacity="0.3"/><stop offset="1" stop-color="#1b0f08" stop-opacity="0"/></radialGradient></defs>` +
-    `<ellipse cx="0" cy="0" rx="26" ry="62" fill="url(#${id})"/>`
+    `<ellipse cx="0" cy="0" rx="36" ry="76" fill="url(#${id})"/>`
   );
 }
 
@@ -278,7 +281,7 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `<defs>` +
     // he is behind the sill: cut there and nowhere else, so an ear or a sign may reach past the sides and the top
     `<clipPath id="${id('edge')}"><rect x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE - (v.y - v.h)}"/></clipPath>` +
-    // his forelegs come over the sill, and may hang down the card's face; while he is still coming up, the gate closes at the sill
+    // his forelegs come over the sill, and may hang down the card's face; the gate is shut at the sill until, coming up, his knees are over it
     `<clipPath id="${id('legs')}"><rect data-cp="leg-gate" x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE + COMPANION_OVERHANG - (v.y - v.h)}"/></clipPath>` +
     `<clipPath id="${id('half-left')}">${half('left')}</clipPath><clipPath id="${id('half-right')}">${half('right')}</clipPath>` +
     // the sill's shadow on his neck: darker just where he goes on behind it
@@ -368,8 +371,14 @@ const TAP: Keys = [
 ];
 const TAP_MS = 700;
 
-/** How long after he pops up he holds his hooves out by his cheeks, as if to say hello, before he puts them on the sill. */
-const HELLO_HOOVES_MS = 800;
+/**
+ * He comes up with his forelegs lifted, his hooves out by his cheeks, and
+ * lays them over the sill only once he is all the way up, and not before
+ * this long after he started: coming up with them down, his knees would rise
+ * from behind the card, the legs seeming to come out from under it.
+ */
+const ARRIVING_MS = 800;
+const CLIMB = 0.55;
 
 /** A small flick of one ear as a key goes in: he is listening. */
 const KEY_FLICK: Act = {
@@ -513,15 +522,18 @@ export class CompanionMotion {
   }
 
   /**
-   * He comes on screen: he pops up from behind the sill, his ears spring up
-   * and he blinks as if he had just seen you; on the website he holds his
-   * hooves up by his cheeks for a hello before he puts them on the sill.
+   * He comes on screen: he climbs up from behind the sill, his hooves up by
+   * his cheeks, his ears spring up and he blinks as if he had just seen you;
+   * then, all the way up, he lays his forelegs over the sill.
    */
   arrive(now: number): void {
     this.lastInput = now;
     this.arrived = now;
     this.x.enter = 1;
     this.v.enter = 0;
+    // out of sight below the sill, his hooves are up already
+    this.x.hoofLeft = this.x.hoofRight = CLIMB;
+    this.v.hoofLeft = this.v.hoofRight = 0;
     this.play(ACTS.arrive, now);
     if (this.tone === 'playful') this.word = { word: 'hello', at: now + HELLO_AFTER_MS, until: now + HELLO_AFTER_MS + WORD_MS };
     this.plan(now);
@@ -566,6 +578,11 @@ export class CompanionMotion {
   }
 
   /** Dozing: left alone long enough on the website, with nothing in hand. */
+  /** Whether he is still coming up, or has only just come up, from behind the sill. */
+  private climbing(now: number): boolean {
+    return this.arrived !== null && (now - this.arrived < ARRIVING_MS || this.x.enter > 0.02);
+  }
+
   private asleep(now: number): boolean {
     const { field, status } = this.input;
     return this.tone === 'playful' && field === 'none' && status === 'idle' && now - this.lastInput >= COMPANION_DOZE_MS;
@@ -593,9 +610,7 @@ export class CompanionMotion {
     if (field === 'text' || field === 'code') {
       return { hooves: [0, 0], ears: [6 * a, 6 * a], tilt: 0, eyes: ['open', 'open'], look: 'field', focus: 1, mouth: 'rest' };
     }
-    // just come up, on the website: hooves out by his cheeks, hello
-    const hello = this.tone === 'playful' && this.arrived !== null && now - this.arrived < HELLO_HOOVES_MS ? 0.55 : 0;
-    return { hooves: [hello, hello], ears: [0, 0], tilt: 0, eyes: ['open', 'open'], look: 'pointer', focus: 0, mouth: 'rest' };
+    return { hooves: [0, 0], ears: [0, 0], tilt: 0, eyes: ['open', 'open'], look: 'pointer', focus: 0, mouth: 'rest' };
   }
 
   private play(act: Act, now: number): void {
@@ -682,7 +697,8 @@ export class CompanionMotion {
    * and words, which do not move, stay.
    */
   step(now: number, looks: CompanionLooks = NOWHERE, still = false): CompanionFrame {
-    const dt = this.last === null ? 0 : Math.min(0.05, Math.max(0, (now - this.last) / 1000));
+    // the time since the last frame, however long a busy page took to draw it (after a second, a movement has all but settled)
+    const elapsed = this.last === null ? 0 : Math.min(1, Math.max(0, (now - this.last) / 1000));
     this.last = now;
     if (still) {
       this.act = null;
@@ -723,9 +739,12 @@ export class CompanionMotion {
       if (u >= 1) this.tap = null;
       else drum = sampleKeys(TAP, u);
     }
+    // coming up, or only just up: the forelegs still lifted from the climb
+    const climbing = !still && this.climbing(now);
+    const climb = climbing ? CLIMB : 0;
     const target: Record<Channel, number> = {
-      hoofLeft: pose.hooves[0] + (this.tap?.side === 0 ? drum : 0),
-      hoofRight: pose.hooves[1] + (this.tap?.side === 1 ? drum : 0),
+      hoofLeft: Math.max(climb, pose.hooves[0] + (this.tap?.side === 0 ? drum : 0)),
+      hoofRight: Math.max(climb, pose.hooves[1] + (this.tap?.side === 1 ? drum : 0)),
       earLeft: pose.ears[0] + add(act?.earLeft),
       earRight: pose.ears[1] + add(act?.earRight),
       tilt: pose.tilt + lean + add(act?.tilt),
@@ -744,8 +763,13 @@ export class CompanionMotion {
       }
       const { k, zeta } = this.springs[SPRING_OF[c]];
       const damping = 2 * zeta * Math.sqrt(k);
-      this.v[c] += (k * (target[c] - this.x[c]) - damping * this.v[c]) * dt;
-      this.x[c] += this.v[c] * dt;
+      // in steps of a sixtieth of a second at most, so a page drawing few frames moves him as far, and as surely, as one drawing many
+      const steps = Math.ceil(elapsed * 60);
+      const dt = steps ? elapsed / steps : 0;
+      for (let i = 0; i < steps; i += 1) {
+        this.v[c] += (k * (target[c] - this.x[c]) - damping * this.v[c]) * dt;
+        this.x[c] += this.v[c] * dt;
+      }
       if (Math.abs(target[c] - this.x[c]) < 0.002 && Math.abs(this.v[c]) < 0.01) {
         this.x[c] = target[c];
         this.v[c] = 0;
@@ -771,9 +795,10 @@ export class CompanionMotion {
     const stretch = act?.stretch ? 1 + (sampleKeys(act.stretch, t) - 1) * a : 1;
     const sniff = act?.sniff ? 1 + (sampleKeys(act.sniff, t) - 1) * a : 1;
 
-    moving = moving || act !== null || this.blink !== null || this.eyesVia !== null || this.tap !== null;
-    const helloEnds = this.arrived !== null ? this.arrived + HELLO_HOOVES_MS : undefined;
-    const waits = [this.sign?.until, this.word ? (now < this.word.at ? this.word.at : this.word.until) : undefined, this.glance?.until, helloEnds];
+    // all the way up with this frame: the next one lays his forelegs over the sill
+    moving = moving || (climbing && !this.climbing(now)) || act !== null || this.blink !== null || this.eyesVia !== null || this.tap !== null;
+    const climbEnds = this.arrived !== null ? this.arrived + ARRIVING_MS : undefined;
+    const waits = [this.sign?.until, this.word ? (now < this.word.at ? this.word.at : this.word.until) : undefined, this.glance?.until, climbEnds];
     if (!still) {
       waits.push(this.next.blink, this.next.glance, this.next.twitch, this.next.sniff, this.next.tap);
       if (this.tone === 'playful' && !this.asleep(now)) waits.push(this.lastInput + COMPANION_DOZE_MS);
@@ -874,14 +899,14 @@ function foreleg(side: 'left' | 'right', v: number): { arm: string; leg: string;
   const reach = Math.max(1, Math.hypot(dx, dy));
   // pointing from the shoulder to the knee; the upper part widens less than the leg below it, being further from us
   const lean = (Math.atan2(dx, -dy) * 180) / Math.PI;
-  const thick = LEG_SCALE * (1 + (size - 1) * 0.55);
+  const thick = 1 + (size - 1) * 0.55;
   const shade = 1 - ease(clamp(k * 3, 0, 1));
   const rest = LEG_KEYS[0]!;
   return {
     arm: `translate(${n(shoulder.x)} ${n(shoulder.y)}) rotate(${n(lean)}) scale(${n(thick)} ${n(-reach / ARM_UNIT)})`,
-    leg: `translate(${n(knee.x)} ${n(knee.y)}) rotate(${n(turn)}) scale(${n(size * LEG_SCALE)})`,
+    leg: `translate(${n(knee.x)} ${n(knee.y)}) rotate(${n(turn)}) scale(${n(size)})`,
     // on the card behind the hanging leg, a little down and out of the light
-    shadow: `translate(${n(across(rest[1]) + 4 * LEG_SCALE)} ${n(rest[2] + 62 * LEG_SCALE)}) scale(${n(shade * LEG_SCALE)})`,
+    shadow: `translate(${n(across(rest[1]) + 4)} ${n(rest[2] + 70)}) scale(${n(shade)})`,
   };
 }
 
@@ -907,7 +932,7 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
     nose: `translate(${n(rig.sniff.x)} ${n(rig.sniff.y)}) scale(${n(frame.sniff)}) translate(${n(-rig.sniff.x)} ${n(-rig.sniff.y)})`,
     legs: `translate(0 ${n(-up)})`,
     arms: `translate(0 ${n(-up)})`,
-    legGate: `translate(0 ${n(-COMPANION_OVERHANG * clamp(frame.enter * 3, 0, 1))})`,
+    legGate: `translate(0 ${n(-COMPANION_OVERHANG * clamp((frame.enter * ENTER_DROP) / KNEES_OVER, 0, 1))})`,
     armLeft: left.arm,
     armRight: right.arm,
     legLeft: left.leg,
