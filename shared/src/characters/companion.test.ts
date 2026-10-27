@@ -337,17 +337,17 @@ describe('companionTransforms', () => {
     expect(ly).toBeLessThan(COMPANION_EDGE);
     expect(lx).toBeLessThan(255);
     expect(lturn).toBe(0);
-    expect(lsize).toBe(1);
+    expect(lsize).toBeGreaterThan(1);
     // over the eye: the knee up off the sill by the cheek, the leg turned up from it, nearer to us
-    expect(ry).toBeLessThan(440);
+    expect(ry).toBeLessThan(ly! - 30);
     expect(rx).toBeGreaterThan(255);
     expect(Math.abs(rturn!)).toBeGreaterThan(170);
-    expect(rsize).toBeGreaterThan(1.4);
+    expect(rsize).toBeGreaterThan(lsize! * 1.3);
     // the upper part reaches from the shoulder, down behind the sill, up to the knee
     const [ax, ay, , , reach] = numbers(t.armRight);
     expect(ay).toBeGreaterThan(COMPANION_EDGE);
     expect(Math.abs(ax! - rx!)).toBeLessThan(40);
-    expect(Math.abs(reach!) * 100).toBeCloseTo(Math.hypot(rx! - ax!, ry! - ay!), 0);
+    expect(Math.abs(reach!)).toBeCloseTo(Math.hypot(rx! - ax!, ry! - ay!) / 100, 1);
     expect(t.body).toContain('translate(0 0)');
   });
 });

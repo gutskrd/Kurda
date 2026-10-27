@@ -78,8 +78,25 @@ export const COMPANION_EDGE = 520;
 /** The companion's box: the bust above the sill, with room above the antlers for a sign. Its bottom is the sill. */
 export const COMPANION_VIEW = { x: -15, y: -78, w: 540, h: COMPANION_EDGE + 78 } as const;
 
+/** The character he is drawn from, with the rig his moving parts turn on. */
+const RIG = drawHevalo('cprig-');
+
+/**
+ * His head is drawn a little smaller than the character's own, about where
+ * it meets his neck, so his forelegs are in proportion to him; and his
+ * forelegs a little larger than a deer's would be beside a head this size.
+ */
+const HEAD_SCALE = 0.9;
+const LEG_SCALE = 1.22;
+
+/** Where a point of the character's head is, the head drawn at `HEAD_SCALE`. */
+function onHead(at: CharacterPoint): CharacterPoint {
+  const pivot = RIG.headPivot;
+  return { x: pivot.x + (at.x - pivot.x) * HEAD_SCALE, y: pivot.y + (at.y - pivot.y) * HEAD_SCALE };
+}
+
 /** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
-export const COMPANION_OVERHANG = 92;
+export const COMPANION_OVERHANG = 118;
 
 /** How far below the sill he waits before he pops up into view. */
 const ENTER_DROP = 560;
@@ -95,11 +112,11 @@ const ENTER_DROP = 560;
  * up from it to the eye.
  */
 const LEG_KEYS: readonly (readonly [k: number, x: number, y: number, turn: number, size: number])[] = [
-  [0, 176, 502, 0, 1],
-  [0.2, 174, 492, 12, 1.02],
-  [0.32, 162, 468, 48, 1.14],
-  [0.55, 148, 456, 140, 1.34],
-  [1, 158, 424, 188, 1.6],
+  [0, 178, 506, 0, 1],
+  [0.2, 176, 497, 12, 1.02],
+  [0.32, 164, 478, 48, 1.1],
+  [0.55, 150, 462, 140, 1.25],
+  [1, 168, 461, 186, 1.45],
 ];
 
 /** Where each foreleg's upper part comes from, down behind the sill: it is seen only above the sill, rising to the knee. */
@@ -112,7 +129,7 @@ const ARM_UNIT = 100;
 const FACE_AXIS = 253.5;
 
 /** Where the signs stand: over his right shoulder, clear of the antlers. */
-const EMOTE_AT = { x: 446, y: -22 } as const;
+const EMOTE_AT = onHead({ x: 446, y: -22 });
 
 const C = {
   // the fur of his legs is his body's, a shade darker towards the hoof and paler just above it, as a deer's is
@@ -297,7 +314,7 @@ export function companionSvg({ prefix }: { prefix: string }): string {
 }
 
 /** The middle of his eyes in the companion's box, for a player to measure where something is from. */
-export const COMPANION_EYES: CharacterPoint = eyesMiddle(drawHevalo('cpeyes-'));
+export const COMPANION_EYES: CharacterPoint = onHead(eyesMiddle(RIG));
 
 // ─────────────────────────────────────────────────────────────── what he does
 
@@ -812,7 +829,6 @@ export interface CompanionTransforms {
   shadowRight: string;
 }
 
-const RIG = drawHevalo('cprig-');
 
 const ease = (t: number): number => t * t * (3 - 2 * t);
 const clamp = (t: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, t));
@@ -846,7 +862,7 @@ function legKey(k: number, i: 1 | 2 | 3 | 4): number {
  * little larger, nearer to us.
  */
 function foreleg(side: 'left' | 'right', v: number): { arm: string; leg: string; shadow: string } {
-  const k = clamp(v, 0, 1.12);
+  const k = clamp(v, 0, 1.06);
   const flip = side === 'left' ? 1 : -1;
   const across = (x: number): number => (side === 'left' ? x : 2 * FACE_AXIS - x);
   const knee = { x: across(legKey(k, 1)), y: legKey(k, 2) };
@@ -858,14 +874,14 @@ function foreleg(side: 'left' | 'right', v: number): { arm: string; leg: string;
   const reach = Math.max(1, Math.hypot(dx, dy));
   // pointing from the shoulder to the knee; the upper part widens less than the leg below it, being further from us
   const lean = (Math.atan2(dx, -dy) * 180) / Math.PI;
-  const thick = 1 + (size - 1) * 0.55;
+  const thick = LEG_SCALE * (1 + (size - 1) * 0.55);
   const shade = 1 - ease(clamp(k * 3, 0, 1));
   const rest = LEG_KEYS[0]!;
   return {
     arm: `translate(${n(shoulder.x)} ${n(shoulder.y)}) rotate(${n(lean)}) scale(${n(thick)} ${n(-reach / ARM_UNIT)})`,
-    leg: `translate(${n(knee.x)} ${n(knee.y)}) rotate(${n(turn)}) scale(${n(size)})`,
+    leg: `translate(${n(knee.x)} ${n(knee.y)}) rotate(${n(turn)}) scale(${n(size * LEG_SCALE)})`,
     // on the card behind the hanging leg, a little down and out of the light
-    shadow: `translate(${n(across(rest[1]) + 4)} ${n(rest[2] + 62)}) scale(${n(shade)})`,
+    shadow: `translate(${n(across(rest[1]) + 4 * LEG_SCALE)} ${n(rest[2] + 62 * LEG_SCALE)}) scale(${n(shade * LEG_SCALE)})`,
   };
 }
 
@@ -883,7 +899,7 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
   const right = foreleg('right', frame.hoofRight);
   return {
     body: `translate(0 ${n(-up)}) translate(${n(pivot.x)} ${edge}) scale(${n(wide)} ${n(tall)}) translate(${n(-pivot.x)} ${-edge})`,
-    head: `rotate(${n(frame.tilt)} ${n(pivot.x)} ${n(pivot.y)})`,
+    head: `rotate(${n(frame.tilt)} ${n(pivot.x)} ${n(pivot.y)}) translate(${n(pivot.x)} ${n(pivot.y)}) scale(${HEAD_SCALE}) translate(${n(-pivot.x)} ${n(-pivot.y)})`,
     earLeft: `rotate(${n(frame.earLeft)} ${n(rig.ears.left.pivot.x)} ${n(rig.ears.left.pivot.y)})`,
     earRight: `rotate(${n(-frame.earRight)} ${n(rig.ears.right.pivot.x)} ${n(rig.ears.right.pivot.y)})`,
     pupilLeft: `translate(${n(shift.left.x)} ${n(shift.left.y)})`,
