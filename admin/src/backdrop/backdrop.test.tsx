@@ -80,3 +80,17 @@ describe('the ribbons', () => {
     expect(backdrop?.querySelector('canvas')).not.toBeNull();
   });
 });
+
+describe('the page over the ribbons', () => {
+  it('keeps its own black on the root only: a body with a background of its own covers them', async () => {
+    // read from disk as written (the test runner hands stylesheet imports over empty); the admin's
+    // own types know nothing of the server's modules, so they are asked for by name
+    const fsName = 'node:fs';
+    const fs = (await import(/* @vite-ignore */ fsName)) as { readFileSync: (path: string, encoding: 'utf8') => string };
+    const cwd = (globalThis as unknown as { process: { cwd: () => string } }).process.cwd();
+    const css = fs.readFileSync(`${cwd}/src/styles.css`, 'utf8');
+    const body = /\nbody \{([^}]*)\}/.exec(css)?.[1] ?? '';
+    expect(body).toMatch(/background:\s*transparent/);
+    expect(css).toMatch(/\nhtml \{[^}]*background:\s*var\(--bg-2\)/);
+  });
+});

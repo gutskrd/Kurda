@@ -93,9 +93,12 @@ body {
    * scrolls, and it sits UNDER a scrim (::before) rather than behind raw text:
    * moving light straight behind dense tables destroys legibility, which is the
    * usual way a background like this goes wrong. The base colour stays where
-   * the ribbons cannot be drawn.
+   * the ribbons cannot be drawn: on the root, not here. A body with a
+   * background of its own (while the root has one too) paints it over
+   * everything fixed below zero, the ribbons included, which is how they once
+   * went missing behind a plain black page.
    */
-  background: var(--bg-2);
+  background: transparent;
 }
 body::before {
   content: '';
