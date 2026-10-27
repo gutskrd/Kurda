@@ -1,4 +1,4 @@
-import { Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState, type CSSProperties, type ReactNode, type RefObject } from 'react';
 import qrcode from 'qrcode-generator';
 import type { CompanionStatus } from '@kurda/shared';
 import { api, ApiError } from '../api';
@@ -52,7 +52,7 @@ export function signInProblem(err: unknown): string {
 /** The steps, in order; `in` is the console itself. */
 type Step = 'email' | 'password' | 'checking' | 'problem' | 'enroll' | 'code' | 'opening' | 'in';
 
-/** The rail across the top of the card: where on it each step is. */
+/** The line of steps above Hevalo: where on it each step is. */
 const RAIL = ['Email', 'Password', 'Two-step', 'Console'] as const;
 const ON_RAIL: Record<Exclude<Step, 'in'>, number> = { email: 0, password: 1, checking: 2, problem: 2, enroll: 2, code: 2, opening: 3 };
 
@@ -73,6 +73,8 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   // came through the steps on this visit: the console opens with a moment for Hevalo to be pleased
   const fresh = useRef(false);
   const card = useRef<HTMLDivElement>(null);
+  const stage = useRef<HTMLDivElement>(null);
+  useInSight(stage);
   const out = useRef(logout);
   out.current = logout;
 
@@ -215,31 +217,93 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
   const at = ON_RAIL[step === 'in' ? 'checking' : step];
   return (
     <div className="login">
-      <div className="login-stage">
-        <Companion status={companion} watch={card} className="login-companion" />
-        <div ref={card} className="login-card gate-card has-companion" aria-busy={step === 'checking' || step === 'opening' || undefined}>
+      <div className="login-column">
+        <header className="wheel-head">
           <div className="login-top is-centred">
             <span className="login-brand">Hevalo</span>
             <span className="login-dot" aria-hidden="true" />
             <span>Admin console</span>
           </div>
-          <ol className="wheel-rail" aria-label="Signing in">
-            {RAIL.map((label, i) => (
-              <li key={label} className={i < at ? 'is-done' : i === at ? 'is-now' : undefined} aria-current={i === at ? 'step' : undefined}>
-                <span className="wheel-dot" aria-hidden="true">
-                  {i < at && <Icon name="check" />}
-                </span>
-                <span className="wheel-label">{label}</span>
-              </li>
-            ))}
-          </ol>
-          <Wheel face={step === 'in' ? 'checking' : step} back={back}>
-            {content}
-          </Wheel>
+          <Rail at={at} busy={step === 'checking'} />
+        </header>
+        <div ref={stage} className="login-stage">
+          <Companion status={companion} watch={card} className="login-companion" />
+          <div ref={card} className="login-card gate-card has-companion" aria-busy={step === 'checking' || step === 'opening' || undefined}>
+            <Wheel face={step === 'in' ? 'checking' : step} back={back}>
+              {content}
+            </Wheel>
+          </div>
         </div>
       </div>
     </div>
   );
+}
+
+/**
+ * The steps in a line above Hevalo: one line of light from the first step to
+ * the one on show, flowing as it goes, each step lighting up as the light
+ * reaches it. While the session is being checked a glint runs on ahead.
+ */
+function Rail({ at, busy }: { at: number; busy: boolean }): React.JSX.Element {
+  return (
+    <div className={`wheel-rail${busy ? ' is-busy' : ''}`} style={{ '--at': at / (RAIL.length - 1) } as CSSProperties}>
+      <div className="wheel-track" aria-hidden="true">
+        <span className="wheel-fill" />
+      </div>
+      <ol aria-label="Signing in">
+        {RAIL.map((label, i) => (
+          <li key={label} className={i < at ? 'is-done' : i === at ? 'is-now' : undefined} aria-current={i === at ? 'step' : undefined}>
+            <span className="wheel-dot" aria-hidden="true">
+              {i < at && <Icon name="check" />}
+            </span>
+            <span className="wheel-label">{label}</span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
+/** When Hevalo was last brought into sight: two asks at once scroll once, as two smooth scrolls begun together undo each other. */
+let inSightAt = 0;
+
+/**
+ * On a phone the keyboard takes the lower half of the screen and the browser
+ * scrolls the box being typed in up into what is left, which can leave
+ * Hevalo above it, out of sight. Once the keyboard is up, while a box under
+ * him is in use, the page is scrolled to bring his head to the top of what
+ * can be seen, if the box still shows below him; if both cannot, the box wins.
+ */
+function useInSight(stage: RefObject<HTMLDivElement | null>): void {
+  useEffect(() => {
+    const seen = window.visualViewport;
+    if (!seen) return undefined;
+    let timer = 0;
+    const place = (): void => {
+      window.clearTimeout(timer);
+      // the keyboard comes up over a moment, telling of each step of it: wait for the last
+      timer = window.setTimeout(() => {
+        const box = document.activeElement;
+        const at = stage.current;
+        if (!at || !(box instanceof HTMLInputElement) || !at.contains(box)) return;
+        // the keyboard is up when what can be seen is well short of the page's window
+        if (seen.height > document.documentElement.clientHeight * 0.8) return;
+        const head = at.getBoundingClientRect().top;
+        if (box.getBoundingClientRect().bottom + 16 - head > seen.height) return;
+        // already there: his head just under the top of what is seen
+        if (Math.abs(head - seen.offsetTop - 8) <= 4 || performance.now() - inSightAt < 400) return;
+        inSightAt = performance.now();
+        at.scrollIntoView({ block: 'start', behavior: stillWanted() ? 'auto' : 'smooth' });
+      }, 150);
+    };
+    seen.addEventListener('resize', place);
+    document.addEventListener('focusin', place);
+    return () => {
+      window.clearTimeout(timer);
+      seen.removeEventListener('resize', place);
+      document.removeEventListener('focusin', place);
+    };
+  }, [stage]);
 }
 
 /**

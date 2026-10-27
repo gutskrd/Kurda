@@ -106,8 +106,8 @@
  * stage keeps room above the card for him, his box (shared COMPANION_VIEW,
  * 540 by 598) stands on the card's top edge, and he is drawn in front of the
  * card, cut at the edge himself, so his forelegs can hang down over its top
- * padding (shared COMPANION_OVERHANG, 92 of 540) while the rest of him is
- * behind it.
+ * padding (shared COMPANION_OVERHANG, 118 of 540, which the card's padding
+ * keeps clear) while the rest of him is behind it.
  */
 .auth-stage {
   --cp-w: 196px;
@@ -120,6 +120,7 @@
 .auth-stage > .auth-card {
   position: relative;
   z-index: 1;
+  padding-top: calc(var(--cp-w) * 118 / 540 + 14px);
 }
 .auth-companion {
   position: absolute;

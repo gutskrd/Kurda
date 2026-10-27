@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { act, screen, waitFor } from '@testing-library/react';
+import { act, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MaintenanceNotice } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
@@ -63,6 +63,18 @@ function Who(): React.JSX.Element {
 const statusAsks = (asked: string[]): number => asked.filter((p) => p === '/status').length;
 
 /**
+ * Until `el` has the focus, however late the effect that gives it runs. With
+ * the interval clock stopped, waitFor would look again only when the page
+ * changes, and the focus moving does not change it.
+ */
+function focusOn(el: HTMLElement): Promise<void> {
+  return new Promise((resolve) => {
+    if (document.activeElement === el) resolve();
+    else el.addEventListener('focus', () => resolve(), { once: true });
+  });
+}
+
+/**
  * The half-minute clock, moved by hand. Only intervals are faked, so the clock
  * stands still however long a busy machine takes to draw the page.
  */
@@ -91,7 +103,8 @@ describe('the offline screen', () => {
 
     const heading = await screen.findByRole('heading', { name: 'Back after the update' });
     // read first: the focus is taken there as it appears
-    await waitFor(() => expect(heading).toHaveFocus());
+    await focusOn(heading);
+    expect(heading).toHaveFocus();
     expect(screen.queryByText(/posts:|loading/)).not.toBeInTheDocument();
 
     await wait(29_000);

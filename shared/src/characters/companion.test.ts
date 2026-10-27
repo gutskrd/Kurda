@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   COMPANION_DOZE_MS,
+  COMPANION_EDGE,
   COMPANION_VIEW,
   CompanionMotion,
   companionLook,
@@ -39,7 +40,7 @@ describe('companionSvg', () => {
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'hoof-left', 'hoof-right', 'emotes']) {
+    for (const part of ['body', 'head', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'arms', 'arm-left', 'arm-right', 'legs', 'leg-left', 'leg-right', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -307,7 +308,7 @@ describe('companionTransforms', () => {
     }
   });
 
-  it('stands the hooves on the edge toes down, and turns each over its own eye toes up', () => {
+  it('hangs each leg from its knee on the sill, and folds it up from a lifted knee over its own eye', () => {
     const base: CompanionFrame = {
       hoofLeft: 0,
       hoofRight: 1,
@@ -329,19 +330,24 @@ describe('companionTransforms', () => {
       wakeAt: null,
     };
     const t = companionTransforms(base);
-    const [lx, ly, lturn] = numbers(t.hoofLeft);
-    const [rx, ry, rturn] = numbers(t.hoofRight);
-    // standing: the fetlock just above the edge, the toes down on it
-    expect(ly).toBeGreaterThan(440);
+    const [lx, ly, lturn, lsize] = numbers(t.legLeft);
+    const [rx, ry, rturn, rsize] = numbers(t.legRight);
+    // hanging: the knee on the sill, the leg straight down the card, the hoof its end
+    expect(ly).toBeGreaterThan(490);
+    expect(ly).toBeLessThan(COMPANION_EDGE);
     expect(lx).toBeLessThan(255);
     expect(lturn).toBe(0);
-    // over the eye: turned over, the toes up
-    expect(ry).toBeLessThan(360);
+    expect(lsize).toBeGreaterThan(1);
+    // over the eye: the knee up off the sill by the cheek, the leg turned up from it, nearer to us
+    expect(ry).toBeLessThan(ly! - 30);
     expect(rx).toBeGreaterThan(255);
     expect(Math.abs(rturn!)).toBeGreaterThan(170);
-    // each leg reaches from his chest to its fetlock
-    const [, , , , legScale] = numbers(t.legRight);
-    expect(legScale).toBeGreaterThan(1);
+    expect(rsize).toBeGreaterThan(lsize! * 1.3);
+    // the upper part reaches from the shoulder, down behind the sill, up to the knee
+    const [ax, ay, , , reach] = numbers(t.armRight);
+    expect(ay).toBeGreaterThan(COMPANION_EDGE);
+    expect(Math.abs(ax! - rx!)).toBeLessThan(40);
+    expect(Math.abs(reach!)).toBeCloseTo(Math.hypot(rx! - ax!, ry! - ay!) / 100, 1);
     expect(t.body).toContain('translate(0 0)');
   });
 });

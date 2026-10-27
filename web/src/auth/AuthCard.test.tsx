@@ -4,10 +4,10 @@ import userEvent from '@testing-library/user-event';
 import { AuthCard } from './AuthCard';
 import { arrivalHeld, holdArrival } from './arrival';
 
-/** The y of where a hoof is drawn, from its group's transform. */
-function hoofY(container: HTMLElement, side: 'left' | 'right'): number {
-  const t = container.querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
-  return Number(/translate\(\S+ (\S+)\)/.exec(t)?.[1] ?? Number.NaN);
+/** Which way a foreleg below the knee points, in degrees from straight down, from its group's transform: about 180 over an eye. */
+function legTurn(container: HTMLElement, side: 'left' | 'right'): number {
+  const t = container.querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '';
+  return Math.abs(Number(/rotate\((\S+)\)/.exec(t)?.[1] ?? Number.NaN));
 }
 
 const lid = (container: HTMLElement, side: 'left' | 'right', state: string): string | null | undefined =>
@@ -43,13 +43,13 @@ describe('AuthCard', () => {
   it('covers his eyes with his hooves while a password is typed', async () => {
     const { container } = render(<Form />);
     await userEvent.click(container.querySelector('#password')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeLessThan(360));
+    await waitFor(() => expect(legTurn(container, 'left')).toBeGreaterThan(170));
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
     expect(lid(container, 'right', 'closed')).toBe('visible');
 
-    // leaving it, the hooves go back down to the edge
+    // leaving it, the legs go back down over the sill
     await userEvent.click(container.querySelector('#email')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeGreaterThan(440));
+    await waitFor(() => expect(legTurn(container, 'left')).toBeLessThan(5));
   });
 
   it('shows the form going wrong and going right with a sign over his head, and a word on getting in', async () => {
@@ -69,7 +69,7 @@ describe('AuthCard', () => {
     const { container } = render(<Form />);
     container.querySelector<HTMLInputElement>('#password')!.focus();
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
-    expect(hoofY(container, 'left')).toBeCloseTo(344, 0);
+    expect(legTurn(container, 'left')).toBeCloseTo(186, 0);
   });
 });
 
