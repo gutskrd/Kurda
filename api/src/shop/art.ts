@@ -18,7 +18,7 @@
 import { createHash } from 'node:crypto';
 import type pg from 'pg';
 import sharp, { type Metadata, type Sharp } from 'sharp';
-import { isUploadedArtKey, uploadedArtKind, type ArtKind } from '../cosmetics/access.js';
+import { artKindFor, isUploadedArtKey, uploadedArtKind, type ArtKind } from '../cosmetics/access.js';
 import { sniffImageType } from '../media/mimeSniff.js';
 import { exceedsUploadSize, opLimitReached, wouldExceedStorage } from '../media/mediaLimits.js';
 import type { MediaStorage } from '../media/storage.js';
@@ -362,9 +362,11 @@ export type ArtClaim = { ok: true } | { ok: false; code: 'ART_MISSING' | 'ART_WR
 export async function claimArt(executor: Pick<pg.PoolClient, 'query'>, key: string | null, category: string): Promise<ArtClaim> {
   if (!key || !isUploadedArtKey(key)) return { ok: true };
   const kind = uploadedArtKind(key);
-  if (kind !== category) {
-    const a = (k: string): string => (k === 'icon' ? 'an icon' : `a ${k}`);
-    return { ok: false, code: 'ART_WRONG_KIND', message: `that picture was uploaded as ${a(kind ?? '')}, not ${a(category)}` };
+  // a background takes background art; everything else (an icon, a power-up, a badge's slot…) a square picture
+  const wanted = artKindFor(category);
+  if (kind !== wanted) {
+    const a = (k: string): string => (k === 'icon' ? 'a square picture' : `a ${k}`);
+    return { ok: false, code: 'ART_WRONG_KIND', message: `that picture was uploaded as ${a(kind ?? '')}, not ${a(wanted)}` };
   }
   const row = await executor.query<{ kind: string | null; usable: boolean }>(
     `SELECT kind, (scan_status = 'cleared' AND quarantine_state IS NULL) AS usable
@@ -382,8 +384,9 @@ export async function claimArt(executor: Pick<pg.PoolClient, 'query'>, key: stri
 /**
  * Let go of uploaded art no item uses any more, inside the caller's
  * transaction (after the item has been changed or deleted): unconfirmed, so
- * the orphan sweep deletes it a day from now. Art another item, or a change
- * waiting in Approvals, still names is kept. Answers whether it was let go.
+ * the orphan sweep deletes it a day from now. Art another item, a change
+ * waiting in Approvals, or a replaced picture (art/overrides.ts) still names is
+ * kept. Answers whether it was let go.
  */
 export async function releaseArt(executor: Pick<pg.PoolClient, 'query'>, key: string | null): Promise<boolean> {
   if (!key || !isUploadedArtKey(key)) return false;
@@ -392,6 +395,8 @@ export async function releaseArt(executor: Pick<pg.PoolClient, 'query'>, key: st
      UNION ALL
      SELECT 1 FROM admin_config_changes
       WHERE status = 'pending' AND target = 'shop_item' AND payload->>'assetKey' = $1
+     UNION ALL
+     SELECT 1 FROM art_overrides WHERE asset_key = $1
      LIMIT 1`,
     [key],
   );

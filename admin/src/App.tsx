@@ -28,6 +28,7 @@ import { GemRules } from './pages/GemRules';
 import { System } from './pages/System';
 import { Audit } from './pages/Audit';
 import { SecurityLog } from './pages/SecurityLog';
+import { Pictures } from './pages/Pictures';
 import { Security } from './pages/Security';
 import { Games } from './pages/Games';
 import { AudioStudio } from './pages/AudioStudio';
@@ -72,6 +73,7 @@ const PAGES: Record<string, (route: Route) => ReactNode> = {
   badges: () => <Badges />,
   economy: () => <Economy />,
   shop: () => <Shop />,
+  pictures: () => <Pictures />,
   'gem-rules': () => <GemRules />,
   fraud: () => <Fraud />,
   approvals: () => <Approvals />,

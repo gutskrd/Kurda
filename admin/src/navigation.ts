@@ -52,7 +52,7 @@ const GAME_EDITORS = { roles: ['admin', 'superadmin', 'content_editor'] } as con
 const LESSON_EDITORS = { roles: ['superadmin', 'content_editor'] } as const; // requireAdmin(totp, 'superadmin', 'content_editor')
 const USER_VIEWERS = { roles: ['superadmin', 'moderator', 'support'] } as const; // user-admin-routes canView
 const MODERATORS = { capability: 'moderation.act' } as const;
-const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop/items, /shop/items
+const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop/items, /shop/items, /admin/art
 const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/changes
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
 const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security
@@ -137,6 +137,7 @@ export const NAV: readonly NavEntry[] = [
 
   { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
+  { id: 'pictures', label: 'Pictures', group: 'economy', icon: 'upload', page: 'pictures', access: SHOP_EDITORS, keywords: 'art images badges emblems frames avatars banners icons replace upload customise' },
   { id: 'gem-rules', label: 'Gem rules', group: 'economy', icon: 'gem', page: 'gem-rules', access: LEGACY_ADMIN, keywords: 'earning' },
   { id: 'fraud', label: 'Fraud', group: 'economy', icon: 'alert', page: 'fraud', access: LEGACY_ADMIN, keywords: 'purchases holds iap' },
   { id: 'approvals', label: 'Approvals', group: 'economy', icon: 'approve', page: 'approvals', access: APPROVERS, keywords: 'config second admin pending' },

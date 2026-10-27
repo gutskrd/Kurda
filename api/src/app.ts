@@ -32,6 +32,8 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
+import { ArtOverrideService } from './art/overrides.js';
+import { registerArtRoutes } from './art/routes.js';
 import { ItemReturns } from './shop/returns.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
@@ -820,6 +822,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
+    // pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners
+    registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
     registerGiftRoutes(app, gifts);
 
     // inviting friends to any online game, game cards in chats, and playing

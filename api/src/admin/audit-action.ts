@@ -26,7 +26,7 @@ export function isAuditableAdminMutation(method: string, url: string, statusCode
 export function auditTargetId(params: unknown): string | null {
   if (typeof params !== 'object' || params === null) return null;
   const p = params as Record<string, unknown>;
-  for (const name of ['id', 'userId', 'key', 'sku']) {
+  for (const name of ['id', 'userId', 'key', 'sku', 'slot']) {
     if (typeof p[name] === 'string' && p[name]) return p[name] as string;
   }
   return null;
@@ -50,6 +50,7 @@ export function auditTargetType(routeUrl: string): string | null {
   if (routeUrl.startsWith('/admin/experiments/:key')) return 'experiment';
   if (routeUrl.startsWith('/admin/content/lessons/:id')) return 'lesson';
   if (routeUrl.startsWith('/admin/stories/:id')) return 'story';
+  if (routeUrl.startsWith('/admin/art/:slot')) return 'picture';
   return null;
 }
 

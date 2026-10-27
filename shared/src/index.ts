@@ -433,3 +433,5 @@ export * from './feed-sort.js';
 export * from './limits.js';
 // the security log's kinds of event, how serious each is and how the panel names it
 export * from './security-log.js';
+// every picture an admin can replace with an upload, and how the apps find the replacement
+export * from './art-slots.js';
