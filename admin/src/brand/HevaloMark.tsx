@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
+import { BLINK_STEPS, HABITS, type EyeState } from '@kurda/shared';
 import { ICON_EYES, PEEK_EYES, followPointer, nudge, type Gaze } from './eyes';
+import { Lids, type LidLook } from './Lids';
 
 /**
  * The pictures: the app's icon, square; or Hevalo's head and neck cut out
  * (`peek`, 744 by 710), for standing behind the sign-in card and looking over
  * it. Neither has pupils of its own.
  */
-const ART = {
-  icon: { sizes: [96, 192, 288], file: 'hevalo', ratio: 1, eyes: ICON_EYES },
-  peek: { sizes: [180, 360, 540], file: 'hevalo-peek', ratio: 810 / 744, eyes: PEEK_EYES },
-} as const;
+const ART: Record<'icon' | 'peek', { sizes: readonly number[]; file: string; ratio: number; eyes: typeof ICON_EYES; lids: LidLook }> = {
+  // the icon's whites glow softly well past their middle (74 by 83 of the 360 for a white of 58 by 68): its lids reach over the glow
+  icon: { sizes: [96, 192, 288], file: 'hevalo', ratio: 1, eyes: ICON_EYES, lids: { cover: 1.28, centre: '#d49f68', edge: '#cd935a', soft: true } },
+  peek: { sizes: [180, 360, 540], file: 'hevalo-peek', ratio: 810 / 744, eyes: PEEK_EYES, lids: { cover: 1, centre: '#d6a268', edge: '#cf955b', soft: false } },
+};
 
 /**
  * How Hevalo is: looking about (idle), eyes shut (shy: a password is being
@@ -17,6 +20,16 @@ const ART = {
  * a shake of the head (sad: that did not work), or thinking it over.
  */
 export type MarkMood = 'idle' | 'shy' | 'peek' | 'happy' | 'sad' | 'thinking';
+
+/** The eyes each mood has, the left's then the right's, in the Hevalo character's own states. */
+const MOOD_EYES: Record<MarkMood, readonly [EyeState, EyeState]> = {
+  idle: ['open', 'open'],
+  shy: ['closed', 'closed'],
+  peek: ['closed', 'half'],
+  happy: ['happy', 'happy'],
+  sad: ['half', 'half'],
+  thinking: ['open', 'open'],
+};
 
 const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
@@ -28,8 +41,10 @@ const stillWanted = (): boolean => typeof window.matchMedia === 'function' && wi
  * wide it is shown, in pixels. Decorative beside the name it stands for, so
  * hidden from assistive technology.
  *
- * A `lively` one, the sign-in's, also has lids, so it blinks now and then
- * and can shut its eyes or squint; it floats, leans
+ * A `lively` one, the sign-in's, also has lids, drawn and timed as the
+ * Hevalo character's are (Lids.tsx): it blinks now and then, half shut, shut
+ * and half shut again, and an eye never jumps from open to shut or back
+ * without passing half shut; it floats, leans
  * towards what it looks at, hops when tapped, and takes its `mood`; `gaze`
  * gives it something to look at other than the pointer. For whoever asks for
  * less motion it keeps still, its eyes still closing for a password.
@@ -54,7 +69,8 @@ export function HevaloMark({
   const root = useRef<HTMLSpanElement>(null);
   const left = useRef<HTMLSpanElement>(null);
   const right = useRef<HTMLSpanElement>(null);
-  const [blinking, setBlinking] = useState(false);
+  // where a blink is: nothing, or a step of it
+  const [blink, setBlink] = useState<EyeState | null>(null);
   const [poked, setPoked] = useState(0);
   const shown: MarkMood = poked && mood === 'idle' ? 'happy' : mood;
   // read on every frame, so the eyes follow a gaze that moves without starting again
@@ -80,36 +96,38 @@ export function HevaloMark({
 
   useEffect(() => nudge(), [shown, gaze]);
 
-  // a blink every few seconds, now and then a double one, while it is looking about
+  // a blink every few seconds, now and then a double one, while it is looking about: half shut, shut, half shut
   useEffect(() => {
     if (!lively || shown !== 'idle' || stillWanted()) return undefined;
     let timer = 0;
-    const next = (): void => {
-      timer = window.setTimeout(
-        () => {
-          setBlinking(true);
-          const twice = Math.random() < 0.25;
+    const steps = (then: () => void): void => {
+      setBlink('half');
+      timer = window.setTimeout(() => {
+        setBlink('closed');
+        timer = window.setTimeout(() => {
+          setBlink('half');
           timer = window.setTimeout(() => {
-            setBlinking(false);
-            if (!twice) return next();
-            timer = window.setTimeout(() => {
-              setBlinking(true);
-              timer = window.setTimeout(() => {
-                setBlinking(false);
-                next();
-              }, 120);
-            }, 160);
-          }, 130);
-        },
-        2600 + Math.random() * 3400,
+            setBlink(null);
+            then();
+          }, BLINK_STEPS.half);
+        }, BLINK_STEPS.shut);
+      }, BLINK_STEPS.half);
+    };
+    const next = (): void => {
+      const [least, most] = HABITS.blink;
+      timer = window.setTimeout(
+        () => steps(() => (Math.random() < HABITS.doubleBlink ? (timer = window.setTimeout(() => steps(next), 120)) : next())),
+        least + Math.random() * (most - least),
       );
     };
     next();
     return () => {
       window.clearTimeout(timer);
-      setBlinking(false);
+      setBlink(null);
     };
   }, [lively, shown]);
+
+  const eyes = useEyes(blink ? [blink, blink] : MOOD_EYES[shown]);
 
   // a tap is a little hop
   useEffect(() => {
@@ -118,7 +136,7 @@ export function HevaloMark({
     return () => window.clearTimeout(timer);
   }, [poked]);
 
-  const classes = ['hevalo-mark', art === 'peek' && 'is-peek', lively && 'is-lively', blinking && 'is-blinking', className].filter(Boolean).join(' ');
+  const classes = ['hevalo-mark', art === 'peek' && 'is-peek', lively && 'is-lively', className].filter(Boolean).join(' ');
   const height = Math.round(size * picture.ratio);
   const sources = picture.sizes.map((w) => `/brand/${picture.file}-${w}.webp ${w}w`).join(', ');
   return (
@@ -149,17 +167,39 @@ export function HevaloMark({
         </span>
         {lively && (
           <>
-            <span className="hevalo-lids is-left">
-              <span className="hevalo-lid is-top" />
-              <span className="hevalo-lid is-bottom" />
-            </span>
-            <span className="hevalo-lids is-right">
-              <span className="hevalo-lid is-top" />
-              <span className="hevalo-lid is-bottom" />
-            </span>
+            <Lids side="left" state={eyes[0]} width={picture.eyes.width} height={picture.eyes.height} look={picture.lids} />
+            <Lids side="right" state={eyes[1]} width={picture.eyes.width} height={picture.eyes.height} look={picture.lids} />
           </>
         )}
       </span>
     </span>
   );
+}
+
+/**
+ * The eyes as shown on the way to `target`: an eye going from open to shut or
+ * pleased, or back, is half shut for a moment first, as in a blink; for
+ * whoever asks for less motion it goes straight there.
+ */
+function useEyes(target: readonly [EyeState, EyeState]): readonly [EyeState, EyeState] {
+  const [shownEyes, setShownEyes] = useState(target);
+  const now = useRef(target);
+  const key = target.join(' ');
+  useEffect(() => {
+    const via = (from: EyeState, to: EyeState): EyeState => (from !== to && from !== 'half' && to !== 'half' ? 'half' : to);
+    const step: [EyeState, EyeState] = [via(now.current[0], target[0]), via(now.current[1], target[1])];
+    const show = (eyes: readonly [EyeState, EyeState]): void => {
+      now.current = eyes;
+      setShownEyes(eyes);
+    };
+    if (stillWanted() || (step[0] === target[0] && step[1] === target[1])) {
+      show(target);
+      return undefined;
+    }
+    show(step);
+    const timer = window.setTimeout(() => show(target), BLINK_STEPS.half);
+    return () => window.clearTimeout(timer);
+    // the target is read through its key, so a new array with the same eyes changes nothing
+  }, [key]);
+  return shownEyes;
 }

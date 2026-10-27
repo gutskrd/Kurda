@@ -62,10 +62,25 @@ describe('the sign-in’s Hevalo', () => {
     const { container, rerender } = renderUi(<HevaloMark size={104} lively mood="shy" />, { kit: false });
     const mark = container.querySelector('.hevalo-mark')!;
     expect(mark).toHaveClass('is-lively');
-    expect(mark.querySelectorAll('.hevalo-lids .hevalo-lid')).toHaveLength(4);
+    // shut, as the Hevalo character shuts them: the white covered and the lashes along a curve
+    const lids = mark.querySelectorAll('.hevalo-lids');
+    expect(lids).toHaveLength(2);
+    for (const lid of lids) {
+      expect(lid).toHaveAttribute('data-eye', 'closed');
+      expect(lid.querySelector('ellipse')).not.toBeNull();
+    }
     expect(mark).toHaveAttribute('data-mood', 'shy');
     rerender(<HevaloMark size={30} />);
     expect(container.querySelector('.hevalo-lids')).toBeNull();
+  });
+
+  it('peeks with one eye, passing half shut on the way from open to shut', async () => {
+    const { container, rerender } = renderUi(<HevaloMark size={104} lively />, { kit: false });
+    const eyes = (): Array<string | null> => [...container.querySelectorAll('.hevalo-lids')].map((l) => l.getAttribute('data-eye'));
+    expect(eyes()).toEqual(['open', 'open']);
+    rerender(<HevaloMark size={104} lively mood="peek" />);
+    expect(eyes()).toEqual(['half', 'half']);
+    await waitFor(() => expect(eyes()).toEqual(['closed', 'half']));
   });
 
   it('hops when tapped, and only when looking about', async () => {

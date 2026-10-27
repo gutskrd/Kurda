@@ -21,38 +21,13 @@
 .hevalo-pupil::after { content: ''; position: absolute; top: 8.96%; left: -2.24%; width: 46.15%; height: 30%; border-radius: 50%; background: #fff; }
 
 /*
- * The lids, over the whole of each eye's white with its soft glow (74 by 83 of
- * the 360, and a margin, larger than the white the pupil moves in), fading at their
- * edge into the fur round the eye. The upper one comes down with its lashes on
- * a curve; the lower one comes up to close the eye, or to squint when pleased.
+ * The lids (Lids.tsx): a drawing over each eye's white, in the white's own
+ * measures, that may reach past it to cover a glow. Placed exactly as the
+ * white is.
  */
-.hevalo-lids {
-  position: absolute; top: 48.4%; width: 23%; height: 25.5%; pointer-events: none;
-  -webkit-mask-image: radial-gradient(closest-side, #000 80%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 80%, transparent 100%);
-}
-.hevalo-lids.is-left { left: 23.5%; }
-.hevalo-lids.is-right { left: 52.7%; }
-.hevalo-lid { position: absolute; left: 0; width: 100%; height: 0; forced-color-adjust: none; transition: height 0.16s cubic-bezier(0.3, 0.7, 0.4, 1); }
-.hevalo-lid.is-top {
-  top: 0; background: linear-gradient(#c38753, #d19a5f);
-  border-radius: 0 0 50% 50% / 0 0 38% 38%; border-bottom: 0 solid #4a2822;
-}
-.hevalo-lid.is-bottom { bottom: 0; background: linear-gradient(#d39c60, #dca564); border-radius: 50% 50% 0 0 / 38% 38% 0 0; }
-/* shut: the lashes on a curve a little below the middle */
-.hevalo-mark.is-blinking .hevalo-lid.is-top,
-.hevalo-mark[data-mood='shy'] .hevalo-lid.is-top,
-.hevalo-mark[data-mood='peek'] .hevalo-lids.is-left .hevalo-lid.is-top { height: 62%; border-bottom-width: 2px; }
-.hevalo-mark.is-blinking .hevalo-lid.is-bottom,
-.hevalo-mark[data-mood='shy'] .hevalo-lid.is-bottom,
-.hevalo-mark[data-mood='peek'] .hevalo-lids.is-left .hevalo-lid.is-bottom { height: 42%; }
-.hevalo-mark.is-blinking .hevalo-lid { transition-duration: 0.07s; }
-/* a peek: the other eye open a crack */
-.hevalo-mark[data-mood='peek'] .hevalo-lids.is-right .hevalo-lid.is-top { height: 50%; border-bottom-width: 1.5px; }
-.hevalo-mark[data-mood='peek'] .hevalo-lids.is-right .hevalo-lid.is-bottom { height: 22%; }
-.hevalo-mark[data-mood='happy'] .hevalo-lid.is-bottom { height: 52%; }
-.hevalo-mark[data-mood='sad'] .hevalo-lid.is-top { height: 42%; border-bottom-width: 1.5px; }
-.hevalo-mark[data-mood='thinking'] .hevalo-lid.is-top { height: 30%; border-bottom-width: 1.5px; }
+.hevalo-lids { position: absolute; top: 51.667%; width: 16.111%; height: 18.889%; overflow: visible; pointer-events: none; }
+.hevalo-lids.is-left { left: 26.944%; }
+.hevalo-lids.is-right { left: 56.111%; }
 
 /* the sign-in's: it floats, leans towards what it looks at, hops when pleased and shakes its head when not */
 .hevalo-mark.is-lively { cursor: pointer; filter: drop-shadow(0 16px 26px rgba(36, 10, 92, 0.5)); -webkit-tap-highlight-color: transparent; }
@@ -97,16 +72,9 @@
 .hevalo-mark.is-peek .hevalo-eye.is-left .hevalo-pupil { left: 43.62%; }
 .hevalo-mark.is-peek .hevalo-eye.is-right .hevalo-pupil { left: 14.09%; }
 .hevalo-mark.is-peek .hevalo-pupil::after { top: 10.3%; left: 7.8%; width: 40.6%; height: 33%; }
-/* the whites' edge is sharp: the lids are solid to just past it */
-.hevalo-mark.is-peek .hevalo-lids {
-  top: 39.06%; width: 22.03%; height: 23.36%;
-  -webkit-mask-image: radial-gradient(closest-side, #000 92%, transparent 100%);
-  mask-image: radial-gradient(closest-side, #000 92%, transparent 100%);
-}
-.hevalo-mark.is-peek .hevalo-lids.is-left { left: 24%; }
-.hevalo-mark.is-peek .hevalo-lids.is-right { left: 53.03%; }
-.hevalo-mark.is-peek .hevalo-lid.is-top { background: linear-gradient(#c68a54, #d0965a); }
-.hevalo-mark.is-peek .hevalo-lid.is-bottom { background: linear-gradient(#d39858, #d89c56); }
+.hevalo-mark.is-peek .hevalo-lids { top: 40.12%; width: 20.03%; height: 21.23%; }
+.hevalo-mark.is-peek .hevalo-lids.is-left { left: 25%; }
+.hevalo-mark.is-peek .hevalo-lids.is-right { left: 54.03%; }
 .hevalo-mark.is-peek.is-lively { filter: drop-shadow(0 10px 22px rgba(20, 6, 52, 0.55)); }
 .hevalo-mark.is-peek.is-lively .hevalo-head {
   transform: none; transform-origin: 50% 100%;
@@ -116,7 +84,6 @@
 @keyframes hevalo-breathe { 0%, 100% { scale: 1; } 50% { scale: 1.012 1.024; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .hevalo-lid { transition: none; }
   .hevalo-mark.is-lively, .hevalo-mark.is-lively .hevalo-head { animation: none; }
   .hevalo-mark.is-lively { cursor: default; }
 }
