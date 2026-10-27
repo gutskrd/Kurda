@@ -68,7 +68,7 @@ describe('companionSvg', () => {
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'contact-left', 'emotes']) {
+    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'hoof-shadow-left', 'contact-left', 'shade', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -367,21 +367,23 @@ describe('CompanionMotion', () => {
   it('sets a hanging hoof swinging with each key, one and then the other, the knees staying on the sill', () => {
     const m = settled();
     m.set({ field: 'text' }, NOW);
-    run(m, NOW, 800);
+    // long enough for any idle swing to have settled: typing, none starts
+    run(m, NOW, 3000);
+    expect(m.step(NOW + 3000).swingLeft).toBe(0);
     const swings = (frames: CompanionFrame[]): [number, number] => [
       Math.max(...frames.map((f) => Math.abs(f.swingLeft))),
       Math.max(...frames.map((f) => Math.abs(f.swingRight))),
     ];
-    m.react('keystroke', NOW + 810);
-    const one = run(m, NOW + 810, 300);
+    m.react('keystroke', NOW + 3010);
+    const one = run(m, NOW + 3010, 300);
     const [left, right] = swings(one);
     expect(Math.max(left, right)).toBeGreaterThan(0.04);
     expect(Math.min(left, right)).toBeLessThan(0.001);
     expect(one.every((f) => f.hoofLeft === 0 && f.hoofRight === 0)).toBe(true);
     // the next key, the other
-    run(m, NOW + 1110, 1500);
-    m.react('keystroke', NOW + 2700);
-    const [nextLeft, nextRight] = swings(run(m, NOW + 2700, 300));
+    run(m, NOW + 3310, 1500);
+    m.react('keystroke', NOW + 4900);
+    const [nextLeft, nextRight] = swings(run(m, NOW + 4900, 300));
     expect(left > right ? nextRight : nextLeft).toBeGreaterThan(0.04);
   });
 
@@ -393,6 +395,14 @@ describe('CompanionMotion', () => {
     expect(lift).toBeGreaterThan(0.08);
     expect(lift).toBeLessThan(0.3);
     expect(Math.max(last(frames).hoofLeft, last(frames).hoofRight)).toBeLessThan(0.01);
+  });
+
+  it('swings a hanging hoof idly now and then, in the console too, the knees staying on the sill', () => {
+    for (const tone of ['playful', 'calm'] as const) {
+      const frames = run(settled(tone), NOW, 40_000);
+      expect(Math.max(...frames.map((f) => Math.max(Math.abs(f.swingLeft), Math.abs(f.swingRight))))).toBeGreaterThan(0.03);
+      if (tone === 'calm') expect(frames.every((f) => f.hoofLeft === 0 && f.hoofRight === 0)).toBe(true);
+    }
   });
 
   it('paws at the sill now and then on the website, and not in the console', () => {
@@ -531,6 +541,18 @@ describe('companionTransforms', () => {
     expect(Math.min(...xs(right))).toBeGreaterThan(255);
     expect(t.contactRight).toMatch(/scale\(0\)$/);
     expect(t.body).toContain('translate(0 0)');
+  });
+
+  it('throws his shadow on the card where he leans on it: none while he is still coming up, smaller as he hops off it', () => {
+    const scale = (s: string): number[] => numbers(/scale\(([^)]*)\)/.exec(s)?.[1] ?? '');
+    expect(scale(companionTransforms(sitting()).shade)).toEqual([1, 1]);
+    expect(scale(companionTransforms({ ...sitting(), enter: 1 }).shade)).toEqual([0, 0]);
+    const [wide, deep] = scale(companionTransforms({ ...sitting(), rise: 0.07 }).shade);
+    expect(deep).toBeLessThan(0.8);
+    expect(wide).toBeGreaterThan(deep!);
+    // and each hoof's on the card, down and to the right of it
+    const t = companionTransforms(sitting());
+    expect(t.hoofShadowLeft).toBe(`translate(6 10) ${t.hoofLeft}`);
   });
 
   it('swings a hanging hoof out from the face past rest, the knee staying on the sill', () => {

@@ -55,6 +55,9 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   castRight: 'cast-right',
   hoofLeft: 'hoof-left',
   hoofRight: 'hoof-right',
+  hoofShadowLeft: 'hoof-shadow-left',
+  hoofShadowRight: 'hoof-shadow-right',
+  shade: 'shade',
   contactLeft: 'contact-left',
   contactRight: 'contact-right',
 };
