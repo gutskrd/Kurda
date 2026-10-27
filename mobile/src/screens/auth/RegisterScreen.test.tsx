@@ -66,8 +66,7 @@ describe('signing up', () => {
     expect(navigation.navigate).toHaveBeenLastCalledWith('Login', { email: 'Name.Surname+tag@me.com' });
     fireEvent.click(screen.getByRole('button', { name: 'Reset password' }));
     expect(navigation.navigate).toHaveBeenLastCalledWith('ForgotPassword', { email: 'Name.Surname+tag@me.com' });
-    // the whole form filled in and sent, and the file's first draw, takes longer than five seconds on a busy machine
-  }, 20_000);
+  });
 
   it('says any other refusal on the form, without the account notice', async () => {
     auth.register.mockResolvedValue({ message: 'That username is already taken.', code: 'USERNAME_TAKEN' });
