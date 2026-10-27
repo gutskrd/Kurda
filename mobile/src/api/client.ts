@@ -1,4 +1,4 @@
-import type { SuspendedErrorDetails } from '@kurda/shared';
+import { maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
 import type { ApiError, ApiResult, TokenPair, TokenStorage } from './types';
 
@@ -17,6 +17,14 @@ export interface ApiClientOptions {
    * though the session had simply run out.
    */
   onSuspended?: (details: SuspendedErrorDetails) => void;
+  /**
+   * Called when an answer says Hevalo is offline for a while (503 MAINTENANCE,
+   * shared maintenance.ts), with what people are to see meanwhile. Nothing
+   * about the session changes: the screen goes up over the app
+   * (maintenance/maintenance.ts), and the call comes back as the server error
+   * it is.
+   */
+  onMaintenance?: (notice: MaintenanceNotice) => void;
   fetchFn?: FetchLike;
   /** Injectable for tests. */
   idGenerator?: () => string;
@@ -86,6 +94,7 @@ export function generateRequestId(): string {
  *   the first attempt; the post-refresh replay reuses the same key, so
  *   the server can dedupe and the call can never double-apply
  * - network failures and 429s come back as typed results, never throws
+ * - a 503 MAINTENANCE hands its notice to `onMaintenance` and keeps the session
  */
 export class ApiClient {
   private readonly fetchFn: FetchLike;
@@ -277,11 +286,18 @@ export class ApiClient {
       return { ok: true, data };
     }
 
-    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown } = {};
+    let envelope: { code?: string; message?: string; requestId?: string; details?: unknown; maintenance?: unknown } = {};
     try {
       envelope = (await res.json()) as typeof envelope;
     } catch {
       // non-JSON error body — envelope fields stay undefined
+    }
+
+    // Hevalo is offline for a while: its notice goes up over the app. Only a
+    // 503 that carries one — a proxy's own 503 is an ordinary server error.
+    if (res.status === 503) {
+      const notice = maintenanceNoticeOf(envelope);
+      if (notice) this.opts.onMaintenance?.(notice);
     }
 
     if (res.status === 429) {

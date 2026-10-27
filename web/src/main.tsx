@@ -29,6 +29,8 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // the shell's newer parts: the top bar and its menu, the bell, the five places' own pages
 import './styles/shell.css';
+// Hevalo offline for a while: the screen in place of the app
+import './styles/maintenance.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');

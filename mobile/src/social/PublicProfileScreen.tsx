@@ -4,7 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { ApiError, ApiResult } from '../api/types';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -102,7 +102,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
       else if (status === 'friends') res = await client.delete(`/friends/${userId}`);
       setBusy(false);
       // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
-      if (res && !res.ok) Alert.alert(describeError(res.error, t));
+      if (res && !res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
       load();
     },
     [client, userId, load, t],
@@ -141,7 +141,10 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
         style: 'destructive',
         onPress: () => {
           // blocked: their profile is gone for you; not blocked (the most anyone may block): say why
-          void blockUser(client, userId).then((res) => (res.ok ? onExit() : Alert.alert(describeError(res.error, t))));
+          void blockUser(client, userId).then((res) => {
+            if (res.ok) onExit();
+            else if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
+          });
         },
       },
     ]);

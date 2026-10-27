@@ -158,6 +158,47 @@ describe('ApiClient', () => {
     expect(storage.get()).toBeNull();
   });
 
+  /**
+   * Hevalo taken offline from the admin console: every request answers 503
+   * MAINTENANCE with what to show, and whichever one finds out first hands it
+   * to the app, which puts the offline screen up.
+   */
+  it('hands on the notice when Hevalo is offline', async () => {
+    const maintenance = { title: 'Back soon', message: null, pictureUrl: 'https://cdn.test/a.png', since: '2026-10-27T08:00:00.000Z', backBy: null };
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => jsonResponse(503, { code: 'MAINTENANCE', message: 'Hevalo is offline for maintenance', maintenance, requestId: 'r1' })),
+    );
+    const onMaintenance = vi.fn();
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {}, undefined, onMaintenance);
+
+    const res = await client.get('/feed');
+    expect(onMaintenance).toHaveBeenCalledWith(maintenance);
+    expect(res.ok).toBe(false);
+    if (!res.ok) {
+      expect(res.error.code).toBe('MAINTENANCE');
+      // said in the reader's words, not "something went wrong on our end"
+      expect(describeError(res.error, t)).toBe(en['maintenance.title']);
+    }
+  });
+
+  it('takes no other 503 for Hevalo being offline', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(503, { code: 'UNAVAILABLE', message: 'try later' })));
+    const onMaintenance = vi.fn();
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {}, undefined, onMaintenance);
+    await client.get('/feed');
+    expect(onMaintenance).not.toHaveBeenCalled();
+  });
+
+  it('never passes on a picture that is not https', async () => {
+    const maintenance = { title: null, message: null, pictureUrl: 'http://cdn.test/a.png', since: '2026-10-27T08:00:00.000Z', backBy: null };
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse(503, { code: 'MAINTENANCE', message: 'offline', maintenance })));
+    const onMaintenance = vi.fn();
+    const client = new ApiClient('https://api.test', createTokenStorage(), () => {}, undefined, onMaintenance);
+    await client.post('/feed/posts', { body: 'hi' });
+    expect(onMaintenance).toHaveBeenCalledWith({ ...maintenance, pictureUrl: null });
+  });
+
   it('sends a credential the caller passed, not the stored session', async () => {
     // the suspension screen reads with its appeal token; any other session must not stand in for it
     persistTokens({ accessToken: 'someone-else', refreshToken: 'r' }, true);

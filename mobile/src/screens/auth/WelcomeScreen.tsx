@@ -13,6 +13,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { AuthScreenShell } from './AuthForm';
 import { useI18n } from '../../i18n/I18nContext';
+import { currentMaintenance } from '../../maintenance/maintenance';
 
 type Props = NativeStackScreenProps<AuthStackParamList, 'Welcome'> & {
   /** re-open the intro (language / welcome / notifications slides) — from the app root */
@@ -118,7 +119,8 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
         authorizationCode: cred.authorizationCode,
         fullName: appleFullName(cred.fullName),
       });
-      if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
+      // Hevalo offline for a while is said by the screen over the app, not by an alert on top of it
+      if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
       // never let a post-Apple failure die silently — surface it
       Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
@@ -137,7 +139,7 @@ export function WelcomeScreen({ navigation, onBack }: Props) {
     }
     try {
       const err = await oauthSignIn('google', res.idToken);
-      if (err) Alert.alert(t('welcome.couldNotSignIn'), err);
+      if (err && !currentMaintenance()) Alert.alert(t('welcome.couldNotSignIn'), err);
     } catch (e) {
       Alert.alert(t('welcome.signInError'), (e as Error)?.message ?? String(e));
     }

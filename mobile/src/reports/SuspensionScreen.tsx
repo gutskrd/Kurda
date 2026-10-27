@@ -11,6 +11,7 @@ import { Icon } from '../theme/Icon';
 import { display } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
+import { showMaintenance } from '../maintenance/maintenance';
 import { accountStanding } from './api';
 import { AppealForm } from './AppealForm';
 import { AppealStatusLine } from './AccountStandingScreen';
@@ -31,7 +32,8 @@ export function appealClient(baseUrl: string, appealToken: string): ApiClient {
     set: async () => undefined,
     clear: async () => undefined,
   };
-  return new ApiClient({ baseUrl, storage, onLogout: () => undefined });
+  // Hevalo offline for a while is said over this screen as over any other
+  return new ApiClient({ baseUrl, storage, onLogout: () => undefined, onMaintenance: showMaintenance });
 }
 
 /**

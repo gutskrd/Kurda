@@ -3,6 +3,7 @@ import {
   countdownParts,
   formatCompact,
   formatCountdown,
+  formatExpectedAt,
   interpolate,
   isRTL,
   remainingUntil,
@@ -72,5 +73,37 @@ describe('formatCompact', () => {
 
   it('handles negatives', () => {
     expect(formatCompact(-2500, 'en')).toBe('-2.5K');
+  });
+});
+
+describe('formatExpectedAt', () => {
+  // a Monday morning in Berlin; the times are asked for in that zone, as a phone there would
+  const now = new Date('2026-10-26T08:00:00.000Z');
+  const zone = 'Europe/Berlin';
+  // newer ICU puts a narrow no-break space before AM/PM; the words are what is checked here
+  const said = (iso: string, locale: 'en' | 'de', timeZone = zone): string => formatExpectedAt(iso, locale, now, timeZone).replace(/\s/g, ' ');
+
+  it('is the time alone when it is today', () => {
+    expect(said('2026-10-26T13:30:00.000Z', 'en')).toBe('2:30 PM');
+    expect(said('2026-10-26T13:30:00.000Z', 'de')).toBe('14:30');
+  });
+
+  it('names the weekday within the coming week, in the reader’s language', () => {
+    expect(said('2026-10-28T13:30:00.000Z', 'en')).toMatch(/^Wednesday,? 2:30 PM$/);
+    expect(said('2026-10-28T13:30:00.000Z', 'de')).toMatch(/^Mittwoch.*14:30$/);
+  });
+
+  it('goes by the reader’s own day, not the server’s', () => {
+    // 23:30 in Berlin is still Monday there, and already Tuesday in Baghdad
+    expect(said('2026-10-26T22:30:00.000Z', 'en')).toBe('11:30 PM');
+    expect(said('2026-10-26T22:30:00.000Z', 'en', 'Asia/Baghdad')).toMatch(/^Tuesday,? 1:30 AM$/);
+  });
+
+  it('adds the date when a weekday alone would name the wrong one', () => {
+    expect(said('2026-11-04T13:30:00.000Z', 'en')).toMatch(/Nov.*4.*2:30 PM/);
+  });
+
+  it('hands back what it could not read', () => {
+    expect(formatExpectedAt('not-a-date', 'en', now)).toBe('not-a-date');
   });
 });

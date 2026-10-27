@@ -1,11 +1,12 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
 import { thisDeviceName } from '../lib/deviceName';
 import type { AuthPayload, SessionUser } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
-import type { SuspendedErrorDetails } from '@kurda/shared';
+import type { MaintenanceNotice, SuspendedErrorDetails } from '@kurda/shared';
 import { suspensionOf } from '../reports/restriction';
+import { sameNotice } from '../maintenance/notice';
 
 export type AuthStatus = 'restoring' | 'signedOut' | 'signedIn';
 
@@ -46,6 +47,14 @@ interface AuthContextValue {
    */
   suspension: SuspendedErrorDetails | null;
   dismissSuspension(): void;
+  /**
+   * Set while Hevalo is offline, with what an admin wrote to show meanwhile;
+   * any request can find out (lib/api.ts). The offline screen
+   * (maintenance/MaintenanceGate.tsx) shows it in place of the app, keeps it
+   * up to date, and sets it back to null when Hevalo is open again.
+   */
+  maintenance: MaintenanceNotice | null;
+  setMaintenance(notice: MaintenanceNotice | null): void;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -55,9 +64,17 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
   const [status, setStatus] = useState<AuthStatus>('restoring');
   const [user, setUser] = useState<SessionUser | null>(null);
   const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
+  const [maintenance, setMaintenanceState] = useState<MaintenanceNotice | null>(null);
+  // the same, at once: a request that has just found out is still running
+  const offline = useRef(false);
+  const setMaintenance = useCallback((notice: MaintenanceNotice | null) => {
+    offline.current = notice !== null;
+    setMaintenanceState((was) => (sameNotice(was, notice) ? was : notice));
+  }, []);
 
   // Build the client once. onLogout fires when a refresh fails mid-session;
-  // onSuspended when that failure is a suspension, with its reasons.
+  // onSuspended when that failure is a suspension, with its reasons;
+  // onMaintenance when Hevalo has been taken offline.
   const { client, storage } = useMemo(
     () =>
       createApiClient(
@@ -70,12 +87,16 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
           setStatus('signedOut');
           setSuspension(details);
         },
+        setMaintenance,
       ),
-    [],
+    [setMaintenance],
   );
 
   // Restore the session on load: if tokens exist, verify them against /me.
+  // While Hevalo is offline the answer is neither yes nor no, so the question
+  // waits, and is asked again once Hevalo is back.
   useEffect(() => {
+    if (status !== 'restoring' || maintenance) return;
     let cancelled = false;
     void (async () => {
       if (!storage.get()) {
@@ -87,14 +108,14 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
       if (me.ok) {
         setUser(me.data.user);
         setStatus('signedIn');
-      } else {
+      } else if (!offline.current) {
         setStatus('signedOut');
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, [client, storage]);
+  }, [client, storage, status, maintenance]);
 
   // Presence heartbeat: while signed in, tell the server we're active so friends
   // see us as online. Fires immediately and then once a minute; the server
@@ -158,6 +179,8 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
     },
     suspension,
     dismissSuspension: () => setSuspension(null),
+    maintenance,
+    setMaintenance,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

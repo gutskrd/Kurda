@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Alert, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { ApiError } from '../api/types';
-import type { Translate } from '../api/errors';
+import { isMaintenance, type Translate } from '../api/errors';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
@@ -101,6 +101,8 @@ export function useSendErrorAlert(): (title: string, error: ApiError | { message
   const navigation = useNavigation<RootNavigation>();
   return useCallback(
     (title: string, error: ApiError | { message: string; limited?: boolean }) => {
+      // Hevalo offline for a while: the screen over the app says so, not an alert on top of it
+      if ('kind' in error && isMaintenance(error)) return;
       const { message, standing } = alertTextOf(error, t, locale);
       if (standing) {
         Alert.alert(title, message, [

@@ -5,6 +5,8 @@ import {
   getStateFromPath,
   useLinkTo,
   useNavigation,
+  useNavigationContainerRef,
+  type InitialState,
   type LinkingOptions,
   type Theme,
 } from '@react-navigation/native';
@@ -109,6 +111,8 @@ import { RealtimeProvider } from './src/realtime/RealtimeProvider';
 import { InviteBanner } from './src/play/InviteBanner';
 import { GazeArea } from './src/characters/gaze';
 import { ArtOverridesLoader } from './src/art/ArtOverridesLoader';
+import { MaintenanceScreen } from './src/maintenance/MaintenanceScreen';
+import { onMaintenanceOver, useMaintenance } from './src/maintenance/maintenance';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 const AuthStack = createNativeStackNavigator<AuthStackParamList>();
@@ -621,6 +625,23 @@ function Root() {
 /** NavigationContainer + StatusBar wired to the active palette (KUR-268). */
 function ThemedNavigation() {
   const { colors, scheme } = useTheme();
+  const navigation = useNavigationContainerRef<RootStackParamList>();
+  const offline = useMaintenance() !== null;
+  /*
+   * Back from being offline (src/maintenance). Nothing on the phone keeps a
+   * cache to invalidate: each screen asks for what it shows as it opens, and
+   * the screens under the notice were left holding the refusal. So they open
+   * again, from the navigation state they had — the person is where they
+   * were, with everything asked for afresh.
+   */
+  const [opened, setOpened] = useState<{ round: number; state?: InitialState }>({ round: 0 });
+  useEffect(
+    () =>
+      onMaintenanceOver(() =>
+        setOpened((o) => ({ round: o.round + 1, state: navigation.isReady() ? navigation.getRootState() : undefined })),
+      ),
+    [navigation],
+  );
   const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
   const navTheme: Theme = {
     ...base,
@@ -634,7 +655,7 @@ function ThemedNavigation() {
     },
   };
   return (
-    <NavigationContainer linking={linking} theme={navTheme}>
+    <NavigationContainer key={opened.round} ref={navigation} initialState={opened.state} linking={linking} theme={navTheme}>
       <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />
       <View style={{ flex: 1 }}>
         {/*
@@ -642,10 +663,16 @@ function ThemedNavigation() {
           the palette and the translator, and recovering should re-enter the
           navigator at its initial route rather than at the screen that threw.
           The offline banner stays outside so it survives the crash screen.
+          While Hevalo is offline the notice is all there is, for a screen
+          reader too.
         */}
-        <AppErrorBoundary>
-          <Root />
-        </AppErrorBoundary>
+        <View style={{ flex: 1 }} importantForAccessibility={offline ? 'no-hide-descendants' : 'auto'} accessibilityElementsHidden={offline}>
+          <AppErrorBoundary>
+            <Root />
+          </AppErrorBoundary>
+        </View>
+        {/* over every screen, the crash screen included: Hevalo is offline for a while */}
+        <MaintenanceScreen />
         <OfflineBanner />
       </View>
     </NavigationContainer>

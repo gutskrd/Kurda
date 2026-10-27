@@ -380,6 +380,62 @@ describe('the device id', () => {
   });
 });
 
+/**
+ * Hevalo taken offline from the admin console: every call but a few is
+ * answered 503 MAINTENANCE with what people are to see. The notice goes up
+ * over the app; the session is not the problem and is left exactly as it was.
+ */
+describe('Hevalo offline for a while', () => {
+  const notice = { title: 'Back soon', message: 'New lessons on the way.', pictureUrl: null, since: '2026-10-27T09:00:00.000Z', backBy: '2026-10-27T11:00:00.000Z' };
+  const offline = (): Response => jsonResponse(503, { code: 'MAINTENANCE', message: 'Hevalo is offline for a while; try again later', maintenance: notice, requestId: 'r-1' });
+
+  function offlineClient(fetchFn: ReturnType<typeof vi.fn>) {
+    const storage = new MemoryTokenStorage();
+    const onLogout = vi.fn();
+    const onMaintenance = vi.fn();
+    const client = new ApiClient({ baseUrl: 'https://api.test', storage, onLogout, onMaintenance, fetchFn: fetchFn as never });
+    return { client, storage, onLogout, onMaintenance, ready: storage.set({ accessToken: 'acc-1', refreshToken: 'ref-1' }) };
+  }
+
+  it('hands the notice on, and keeps the session', async () => {
+    const fetchFn = vi.fn().mockImplementation(async () => offline());
+    const { client, storage, onLogout, onMaintenance, ready } = offlineClient(fetchFn);
+    await ready;
+    const res = await client.get('/me');
+    expect(onMaintenance).toHaveBeenCalledWith(notice);
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error).toMatchObject({ kind: 'server', code: 'MAINTENANCE', status: 503 });
+    // not an expired session: no refresh, nobody signed out, the tokens where they were
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+    expect(onLogout).not.toHaveBeenCalled();
+    expect(await storage.get()).toEqual({ accessToken: 'acc-1', refreshToken: 'ref-1' });
+  });
+
+  it('hears of it on the replay after a refresh, which stays open, without signing out', async () => {
+    const fetchFn = vi
+      .fn()
+      .mockResolvedValueOnce(jsonResponse(401, {}))
+      .mockResolvedValueOnce(jsonResponse(200, { accessToken: 'acc-2', refreshToken: 'ref-2' }))
+      .mockResolvedValueOnce(offline());
+    const { client, storage, onLogout, onMaintenance, ready } = offlineClient(fetchFn);
+    await ready;
+    await client.post('/me/heartbeat');
+    expect(onMaintenance).toHaveBeenCalledWith(notice);
+    expect(onLogout).not.toHaveBeenCalled();
+    expect(await storage.get()).toEqual({ accessToken: 'acc-2', refreshToken: 'ref-2' });
+  });
+
+  it('takes a 503 without a notice for the plain server error it is', async () => {
+    const fetchFn = vi.fn().mockImplementation(async () => jsonResponse(503, { code: 'SERVICE_UNAVAILABLE', message: 'upstream down' }));
+    const { client, onMaintenance, ready } = offlineClient(fetchFn);
+    await ready;
+    const res = await client.get('/me');
+    expect(res.ok).toBe(false);
+    expect(onMaintenance).not.toHaveBeenCalled();
+  });
+});
+
 describe('replacing the access token', () => {
   /* what a password change hands back: this session carries on, its refresh token unchanged */
   it('keeps the refresh token', async () => {
