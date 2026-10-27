@@ -51,6 +51,7 @@ const sitting = (): CompanionFrame => ({
   enter: 0,
   lean: 0,
   turn: 0,
+  sway: 0,
   look: { x: 0, y: 0 },
   focus: 0,
   eyes: ['open', 'open'],
@@ -68,7 +69,7 @@ describe('companionSvg', () => {
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'crown', 'ears', 'face', 'features', 'gaze', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'hoof-shadow-left', 'contact-left', 'shade', 'emotes']) {
+    for (const part of ['body', 'head', 'antler-left', 'antler-right', 'ear-left', 'ear-right', 'cheek-left', 'cheek-right', 'face', 'features', 'gaze', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'hoof-shadow-left', 'contact-left', 'shade', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -112,8 +113,8 @@ describe('companionSvg', () => {
   it('draws him from the chest up, as the mascot is, his face in layers that turn and kept inside its outline', () => {
     // the sill crosses his chest, under his shoulders: his neck and the top of the cream of his chest show
     expect(COMPANION_EDGE).toBeGreaterThan(COMPANION_EYES.y + 400);
-    expect(playful).toContain('<g data-cp="crown">');
-    expect(playful).toMatch(/<g data-cp="face">.*<g clip-path="url\(#one-face\)"><g data-cp="features">/);
+    expect(playful).toMatch(/<g data-cp="head"><g data-cp="antler-left">.*<g data-cp="antler-right">.*<g data-cp="ear-left">.*<g data-cp="ear-right">.*<g data-cp="face">/);
+    expect(playful).toMatch(/<g data-cp="face">.*<g clip-path="url\(#one-face\)"><g data-cp="features">.*<ellipse data-cp="cheek-left"/);
     // what turns most is inside what turns least
     const face = playful.indexOf('data-cp="face"');
     expect(playful.indexOf('data-cp="gaze"')).toBeGreaterThan(face);
@@ -122,6 +123,19 @@ describe('companionSvg', () => {
 });
 
 describe('CompanionMotion', () => {
+  it('turns his ears after his head, a moment later and on a little past it, before they settle with it', () => {
+    for (const tone of ['playful', 'calm'] as const) {
+      const m = settled(tone);
+      m.set({ field: 'text' }, NOW);
+      const frames = run(m, NOW, 1500, { pointer: null, caret: { x: 1, y: 0 } });
+      // his head is most of the way round while his ears are still well behind it
+      const turned = frames.find((f) => f.look.x > 0.8)!;
+      expect(turned.sway, tone).toBeLessThan(turned.look.x - 0.2);
+      expect(last(frames).sway, tone).toBeCloseTo(1, 2);
+      if (tone === 'playful') expect(Math.max(...frames.map((f) => f.sway))).toBeGreaterThan(1.05);
+    }
+  });
+
   it('covers his eyes with his hooves for a password, and peeks with one when it is shown', () => {
     const m = settled();
     m.set({ field: 'secret' }, NOW);
@@ -526,8 +540,13 @@ describe('companionTransforms', () => {
     expect(ly).toBeGreaterThan(COMPANION_EDGE + 60);
     expect(lx).toBeLessThan(200);
     expect(Math.abs(lturn!)).toBeLessThan(5);
-    expect(lsize).toBe(1);
-    expect(lhoof).toBe(1);
+    expect(lhoof).toBe(lsize);
+    // its toe, and the toe's shadow, inside the room the card keeps for them, as it hangs and as it swings
+    for (const f of [frame(), { ...frame(), swingLeft: -0.3 }, { ...frame(), swingLeft: 0.2 }]) {
+      const at = companionTransforms(f);
+      expect(apply(at.hoofLeft, { x: 0, y: 66 }).y).toBeLessThan(COMPANION_EDGE + COMPANION_OVERHANG - 8);
+      expect(apply(at.hoofShadowLeft, { x: 0, y: 65 }).y).toBeLessThan(COMPANION_EDGE + COMPANION_OVERHANG);
+    }
     expect(t.contactLeft).toMatch(/scale\(1\)$/);
     // its shadow starts down the forearm, none round the shoulder
     expect(Math.min(...ys(points(t.castLeft)))).toBeGreaterThan(Math.min(...ys(left)) + 30);
@@ -564,19 +583,85 @@ describe('companionTransforms', () => {
     expect(swung.legRight).toBe(rest.legRight);
   });
 
-  it('turns his head towards where he looks: what is on his face furthest, the antlers and ears the other way, and nearer as he leans in', () => {
+  /** Where `p` goes under an SVG transform of translates, scales, rotations and skews. */
+  const apply = (transform: string, p: { x: number; y: number }): { x: number; y: number } => {
+    const steps = [...transform.matchAll(/(translate|scale|rotate|skewX)\(([^)]*)\)/g)].map((m) => [m[1]!, m[2]!.split(/[ ,]+/).map(Number)] as const);
+    let { x, y } = p;
+    for (const [op, a] of steps.reverse()) {
+      if (op === 'translate') {
+        x += a[0]!;
+        y += a[1] ?? 0;
+      } else if (op === 'scale') {
+        x *= a[0]!;
+        y *= a[1] ?? a[0]!;
+      } else if (op === 'skewX') {
+        x += y * Math.tan((a[0]! * Math.PI) / 180);
+      } else {
+        const r = (a[0]! * Math.PI) / 180;
+        const [cx = 0, cy = 0] = a.slice(1);
+        [x, y] = [cx + (x - cx) * Math.cos(r) - (y - cy) * Math.sin(r), cy + (x - cx) * Math.sin(r) + (y - cy) * Math.cos(r)];
+      }
+    }
+    return { x, y };
+  };
+
+  it('turns his head in the round towards where he looks: what is on his face furthest, and nearer as he leans in', () => {
     const base = companionTransforms({ ...frame(), look: { x: 0, y: 0 } });
-    const right = companionTransforms({ ...frame(), look: { x: 1, y: 0 } });
-    const across = (s: string): number => numbers(s)[0]!;
-    expect(across(base.features)).toBe(0);
-    expect(across(right.face)).toBeGreaterThan(0);
-    expect(across(right.face) + across(right.features)).toBeGreaterThan(across(right.face) * 2);
+    const right = companionTransforms({ ...frame(), look: { x: 1, y: 0 }, sway: 1 });
+    const eye = { x: COMPANION_EYES.x, y: COMPANION_EYES.y };
+    // the face's outline comes round a little at his eyes, what is on it a good deal further
+    expect(apply(base.face, eye).x).toBeCloseTo(eye.x, 5);
+    const outline = apply(right.face, eye).x - eye.x;
+    expect(outline).toBeGreaterThan(0);
+    expect(apply(right.face, apply(right.features, eye)).x - eye.x).toBeGreaterThan(outline * 3);
     expect(right.gaze).toBe(right.features);
-    expect(across(right.ears)).toBeLessThan(0);
-    expect(across(right.crown)).toBeLessThan(0);
+    // the side turning away is in shade, the other not
+    expect(right.cheekRight).not.toBe(base.cheekRight);
+    expect(right.cheekLeft).toBe(base.cheekLeft);
     // a shake turns it as a look does
-    expect(companionTransforms({ ...frame(), turn: 1 }).face).toBe(right.face);
+    expect(companionTransforms({ ...frame(), turn: 1, sway: 1 }).face).toBe(right.face);
     expect(companionTransforms({ ...frame(), lean: 1 }).head).toMatch(/scale\(1\.0[5-9]/);
+  });
+
+  it('keeps each ear on his head however far he turns it, its foot never coming out from under the outline, even as the ear swings on after a turn', () => {
+    // the cut foot of the left ear, under his head as drawn, and how far in from its outline (the right's is its mirror)
+    const foot = [
+      { x: 118, y: 236, under: 15 },
+      { x: 128, y: 210, under: 14.9 },
+      { x: 138, y: 185, under: 7 },
+    ];
+    for (const turn of [-1.3, -1, -0.5, 0.5, 1, 1.3]) {
+      for (const sway of [turn, 0, -turn]) {
+        const t = companionTransforms({ ...frame(), turn, sway });
+        for (const p of foot) {
+          // how far each point has come out, beyond where the outline beside it has gone
+          const left = apply(t.earLeft, p);
+          expect(p.x - (left.x - (apply(t.face, left).x - left.x)), `left ${turn} ${sway}`).toBeLessThan(p.under - 2);
+          const q = { x: 510 - p.x, y: p.y };
+          const right = apply(t.earRight, q);
+          expect(right.x - (apply(t.face, right).x - right.x) - q.x, `right ${turn} ${sway}`).toBeLessThan(p.under - 2);
+        }
+      }
+    }
+  });
+
+  it('turns the ears and the antlers as a head in the round does: the one on the side he turns to narrower and round behind, the other wider, their tips swinging the other way', () => {
+    const wide = (s: string): number => numbers(/scale\(([^)]*)\)/.exec(s)?.[1] ?? '')[0]!;
+    const rest = companionTransforms(frame());
+    const right = companionTransforms({ ...frame(), look: { x: 1, y: 0 }, sway: 1 });
+    expect(wide(rest.antlerLeft)).toBe(1);
+    expect(wide(rest.earRight)).toBe(1);
+    expect(wide(right.antlerRight)).toBeLessThan(0.95);
+    expect(wide(right.antlerLeft)).toBeGreaterThan(1);
+    expect(wide(right.earRight)).toBeLessThan(0.9);
+    expect(wide(right.earLeft)).toBeGreaterThan(1);
+    // an antler's tip, high above its foot, goes the other way from the face
+    const foot = { x: 179.8, y: 160 };
+    const tip = { x: 96, y: 2 };
+    expect(apply(right.antlerLeft, tip).x - apply(right.antlerLeft, foot).x).toBeLessThan(tip.x - foot.x - 10);
+    // looking up, the antlers tip back with his head and are seen shorter
+    const up = companionTransforms({ ...frame(), look: { x: 0, y: -1 } });
+    expect(numbers(/scale\(([^)]*)\)/.exec(up.antlerLeft)?.[1] ?? '')[1]).toBeLessThan(1);
   });
 });
 

@@ -129,6 +129,12 @@ function extras(art: CharacterArt): [string, string][] {
       ? ([
           ['rig.face', rig.face],
           ['rig.crown', rig.crown],
+          ...(rig.antlers
+            ? ([
+                ['rig.antlers.left', rig.antlers.left.art],
+                ['rig.antlers.right', rig.antlers.right.art],
+              ] as [string, string][])
+            : []),
           ['rig.ears.left', rig.ears.left.art],
           ['rig.ears.right', rig.ears.right.art],
           ['rig.look.whites', rig.look.whites],

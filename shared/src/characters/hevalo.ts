@@ -453,6 +453,29 @@ function crown(p: string): string {
   );
 }
 
+/** The middle of each antler's foot, where it stands on the head. */
+const ANTLER_FOOT_LEFT = { x: 179.8, y: 160 } as const;
+const ANTLER_FOOT_RIGHT = (([x, y]) => ({ x, y }))(rightAntler(2 * AXIS - ANTLER_FOOT_LEFT.x, ANTLER_FOOT_LEFT.y));
+
+/**
+ * One antler on its own: lit as the pair is, by the same light from the tips
+ * of both to their feet, and with its foot run on down into the head, behind
+ * it, so that a turning head never shows the antler ending there.
+ */
+function antler(p: string, side: 'left' | 'right'): string {
+  const id = `${p}antler-${side}`;
+  const left = side === 'left';
+  const place = ([x, y]: Pt): Pt => (left ? [x, y] : rightAntler(2 * AXIS - x, y));
+  const shape = left ? ANTLER : mirror(ANTLER, AXIS).map(([x, y, r]) => [...rightAntler(x, y), r] as Knot);
+  const foot = curve(([[164, 148, 0], [196, 148, 0], [194, 196], [166, 196]] as const).map(([x, y, r]) => [...place([x, y]), r ?? 1] as Knot));
+  const lights = ANTLER_LIGHT.map((s) => taper(s.map(place), s.map((_, i) => (i === 0 || i === s.length - 1 ? 0 : 6)))).join('');
+  const top = Math.min(...ANTLER.map(([, y]) => y));
+  return part(
+    [linearAt(id, [[0, C.antlerLight], [0.35, C.antler], [1, C.antlerDeep]], 0, top, 0, ANTLER_FOOT_LEFT.y)],
+    [fill(foot, `url(#${id})`), fill(curve(shape), `url(#${id})`), fill(lights, C.antlerLight, alpha(0.55))],
+  );
+}
+
 /** Where each ear meets the head, and turns about when it twitches: low on its inner side, as a deer's does. */
 const EAR_PIVOT_LEFT = { x: 120, y: 198 } as const;
 const EAR_PIVOT_RIGHT = { x: 2 * AXIS - EAR_PIVOT_LEFT.x, y: EAR_PIVOT_LEFT.y } as const;
@@ -867,6 +890,10 @@ export function drawHevalo(p: string): CharacterArt {
       face: outline + features,
       faceLayers: { outline, features, shape: curve(HEAD) },
       crown: crown(p),
+      antlers: {
+        left: { art: antler(p, 'left'), pivot: ANTLER_FOOT_LEFT },
+        right: { art: antler(p, 'right'), pivot: ANTLER_FOOT_RIGHT },
+      },
       ears: {
         left: { art: ear(p, 'left'), pivot: EAR_PIVOT_LEFT },
         right: { art: ear(p, 'right'), pivot: EAR_PIVOT_RIGHT },
