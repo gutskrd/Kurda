@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ApiError } from './types';
-import { CODE_COPY, describeError, isOffline, isRetryable, lockedFor } from './errors';
+import { CODE_COPY, describeError, isMaintenance, isOffline, isRetryable, lockedFor } from './errors';
 import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
 import { interpolate } from '../i18n/format';
 
@@ -76,6 +76,21 @@ describe('describeError', () => {
   it('says an unactivated account is an instruction, not a refusal', () => {
     const e = err({ kind: 'client', status: 403, code: 'ACCOUNT_NOT_ACTIVATED' });
     expect(describeError(e, t)).toBe(TRANSLATIONS.en['error.notActivated']);
+  });
+});
+
+describe('Hevalo offline for a while', () => {
+  const offline = err({ kind: 'server', status: 503, code: 'MAINTENANCE', message: 'Hevalo is offline for a while; try again later' });
+
+  it('is said calmly in the reader’s language, never as a server failure', () => {
+    expect(describeError(offline, t)).toBe(TRANSLATIONS.en['maintenance.title']);
+    expect(describeError(offline, translator('ku'))).toBe(TRANSLATIONS.ku['maintenance.title']);
+  });
+
+  it('is told apart from any other failure, so a screen does not alert over the notice', () => {
+    expect(isMaintenance(offline)).toBe(true);
+    expect(isMaintenance(err({ kind: 'server', status: 503 }))).toBe(false);
+    expect(isMaintenance(err({ kind: 'network' }))).toBe(false);
   });
 });
 

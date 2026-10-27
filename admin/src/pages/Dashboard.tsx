@@ -51,6 +51,7 @@ export function Dashboard(): React.JSX.Element {
         }
       />
 
+      {can('security-log') && <SecurityStatus />}
       {can('audio') && <Recordings />}
       {moderator && <ModerationPanel />}
       <Waiting
@@ -64,6 +65,37 @@ export function Dashboard(): React.JSX.Element {
       {(can('leagues') || can('ranks')) && <RanksPanel leagues={can('leagues')} ranks={can('ranks')} />}
       {can('audit') && <RecentAudit />}
     </div>
+  );
+}
+
+/**
+ * The security log at a glance, first on the page for a superadmin: whether
+ * anything needs looking at, and the last day's failed sign-ins beside the day
+ * before. Says nothing at all while it loads or when it cannot, rather than a
+ * reassuring zero.
+ */
+function SecurityStatus(): React.JSX.Element | null {
+  const status = useLoad(
+    () => api<{ open: { warning: number; critical: number }; failedSignIns: { now: number; before: number } }>('/admin/security/summary'),
+    [],
+  );
+  const s = status.data;
+  if (!s) return null;
+  const open = s.open.critical + s.open.warning;
+  return (
+    <Section title="Security">
+      <div className="stats is-flat">
+        <Stat
+          icon="shield"
+          label="Needs attention"
+          value={open.toLocaleString()}
+          href="#/security-log"
+          tone={s.open.critical > 0 ? 'bad' : open > 0 ? 'warn' : 'ok'}
+          hint={s.open.critical > 0 ? `${s.open.critical} critical: look now` : open > 0 ? 'Warnings to review' : 'Nothing to review'}
+        />
+        <Stat icon="lock" label="Failed sign-ins (24 h)" value={s.failedSignIns.now.toLocaleString()} href="#/security-log" hint={`${s.failedSignIns.before.toLocaleString()} the day before`} />
+      </div>
+    </Section>
   );
 }
 

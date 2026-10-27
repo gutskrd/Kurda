@@ -52,10 +52,10 @@ const GAME_EDITORS = { roles: ['admin', 'superadmin', 'content_editor'] } as con
 const LESSON_EDITORS = { roles: ['superadmin', 'content_editor'] } as const; // requireAdmin(totp, 'superadmin', 'content_editor')
 const USER_VIEWERS = { roles: ['superadmin', 'moderator', 'support'] } as const; // user-admin-routes canView
 const MODERATORS = { capability: 'moderation.act' } as const;
-const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop/items, /shop/items
+const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop/items, /shop/items, /admin/art
 const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/changes
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
-const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit
+const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
 /** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
@@ -137,12 +137,15 @@ export const NAV: readonly NavEntry[] = [
 
   { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
+  { id: 'pictures', label: 'Pictures', group: 'economy', icon: 'upload', page: 'pictures', access: SHOP_EDITORS, keywords: 'art images badges emblems frames avatars icons replace upload customise events' },
   { id: 'gem-rules', label: 'Gem rules', group: 'economy', icon: 'gem', page: 'gem-rules', access: LEGACY_ADMIN, keywords: 'earning' },
   { id: 'fraud', label: 'Fraud', group: 'economy', icon: 'alert', page: 'fraud', access: LEGACY_ADMIN, keywords: 'purchases holds iap' },
   { id: 'approvals', label: 'Approvals', group: 'economy', icon: 'approve', page: 'approvals', access: APPROVERS, keywords: 'config second admin pending' },
 
   { id: 'flags', label: 'Feature flags', group: 'settings', icon: 'toggle', page: 'flags', access: LEGACY_ADMIN, keywords: 'experiments a/b tests' },
-  { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail' },
+  { id: 'offline', label: 'Offline mode', group: 'settings', icon: 'pause', page: 'offline', access: SUPERADMINS, keywords: 'maintenance downtime take down closed outage pause message' },
+  { id: 'security-log', label: 'Security log', group: 'settings', icon: 'shield', page: 'security-log', access: SUPERADMINS, keywords: 'hacks attacks sign-ins failed logins lockouts alerts intruders suspicious' },
+  { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail admin changes' },
   { id: 'security', label: 'My security', group: 'settings', icon: 'lock', page: 'security', access: { anyone: true }, keywords: '2fa two-factor authenticator' },
   { id: 'system', label: 'System', group: 'settings', icon: 'server', page: 'system', access: LEGACY_ADMIN, keywords: 'jobs leaderboards push media storage' },
 ];

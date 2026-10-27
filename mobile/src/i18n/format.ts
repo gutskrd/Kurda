@@ -54,6 +54,32 @@ export function formatDateTime(iso: string, locale: Locale, timeZone?: string): 
   }
 }
 
+/**
+ * When something is expected, in the reader's own language and time zone (or
+ * an explicit one): the time alone when it is today, the weekday and the time
+ * within the coming week, and the date as well when it is further off than
+ * that, where a weekday alone would name the wrong one.
+ */
+export function formatExpectedAt(iso: string, locale: Locale, now: Date = new Date(), timeZone?: string): string {
+  const at = new Date(iso);
+  if (Number.isNaN(at.getTime())) return iso;
+  const zone = timeZone ? { timeZone } : {};
+  const dayOf = (d: Date): string => new Intl.DateTimeFormat('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit', ...zone }).format(d);
+  const time: Intl.DateTimeFormatOptions = { hour: 'numeric', minute: '2-digit' };
+  const options: Intl.DateTimeFormatOptions =
+    dayOf(at) === dayOf(now)
+      ? time
+      : at.getTime() - now.getTime() < 6 * 86_400_000
+        ? { weekday: 'long', ...time }
+        : { weekday: 'short', day: 'numeric', month: 'short', ...time };
+  try {
+    return new Intl.DateTimeFormat(locale, { ...options, ...zone }).format(at);
+  } catch {
+    // a locale the device has no data for falls back to its own
+    return new Intl.DateTimeFormat(undefined, { ...options, ...zone }).format(at);
+  }
+}
+
 export interface CountdownParts {
   days: number;
   hours: number;

@@ -15,7 +15,7 @@ import {
 } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -125,8 +125,9 @@ export function ShopScreen({ onExit, onEarnMore }: { onExit: () => void; onEarnM
         setSelected(null);
         load(); // pull fresh prices
         Alert.alert(t('shop.priceChanged'), t('shop.priceChangedBody'));
-      } else {
+      } else if (!isMaintenance(res.error)) {
         // the purchase did not happen and nothing else will make it: felt as an error
+        // (Hevalo offline for a while is said by the screen over the app instead)
         haptic('error');
         Alert.alert(t('shop.purchaseFailed'), describeError(res.error, t));
       }

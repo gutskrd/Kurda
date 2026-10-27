@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { preloadCatalogue } from './i18n/catalogues';
 import { applyTheme, watchSystemTheme } from './theme/theme';
+import { startArtOverrides } from './art/overrides';
 import './styles/tokens.css';
 import './styles/base.css';
 import './styles/ui.css';
@@ -28,6 +29,8 @@ import './styles/ranks.css';
 import './styles/motion.css';
 // the shell's newer parts: the top bar and its menu, the bell, the five places' own pages
 import './styles/shell.css';
+// Hevalo offline for a while: the screen in place of the app
+import './styles/maintenance.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('root element missing');
@@ -42,6 +45,14 @@ if (!root) throw new Error('root element missing');
  */
 applyTheme();
 watchSystemTheme();
+
+/*
+ * The pictures an admin has put in place of the built-in art (badges,
+ * emblems, frames, default avatars): asked for now, alongside the language,
+ * so they are usually in hand by the first render. This browser's copy of the
+ * last list is drawn until then, and the built-in art when there is none.
+ */
+startArtOverrides();
 
 /*
  * The language before the app.

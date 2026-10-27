@@ -34,6 +34,9 @@ export function ArtPicker({
   onChange,
   onBusy,
   error,
+  optional = false,
+  label = 'Picture',
+  generic = false,
 }: {
   kind: ArtKind;
   /** the item's art as it is now (editing), or null for a new item */
@@ -44,6 +47,12 @@ export function ArtPicker({
   onBusy: (busy: boolean) => void;
   /** the form's own complaint (no picture yet, or one the save refused) */
   error?: string | null;
+  /** a picture the item can do without (it then shows its glyph) */
+  optional?: boolean;
+  /** the field's name, when it is not the item's own picture ("New picture") */
+  label?: string;
+  /** speak of "a picture", not of the shop's kind of art: for pictures that are not shop items */
+  generic?: boolean;
 }): React.JSX.Element {
   const inputId = useId();
   const statusId = useId();
@@ -54,7 +63,7 @@ export function ArtPicker({
   const [broken, setBroken] = useState(false);
   // a later pick wins over an earlier one still uploading
   const ticket = useRef(0);
-  const names = KIND_NAME[kind];
+  const names = generic ? { one: 'picture', a: 'a', plural: 'Pictures' } : KIND_NAME[kind];
 
   useEffect(
     () => () => {
@@ -109,7 +118,14 @@ export function ArtPicker({
   return (
     <div className="field art-picker">
       <span className="art-picker-label" id={`${inputId}-label`}>
-        Picture <span className="field-required" aria-hidden="true">*</span>
+        {label}{' '}
+        {optional ? (
+          <span className="subtle">(optional)</span>
+        ) : (
+          <span className="field-required" aria-hidden="true">
+            *
+          </span>
+        )}
       </span>
       <div
         className={`art-frame is-${kind}${dragging ? ' is-dragging' : ''}${problem ? ' has-error' : ''}`}
@@ -150,7 +166,7 @@ export function ArtPicker({
           className="sr-only"
           type="file"
           tabIndex={-1}
-          aria-label={`${names.one.charAt(0).toUpperCase()}${names.one.slice(1)} picture file`}
+          aria-label={generic ? 'Picture file' : `${names.one.charAt(0).toUpperCase()}${names.one.slice(1)} picture file`}
           accept={ACCEPTED_TYPES.join(',')}
           onChange={(e) => {
             void take(e.target.files?.[0]);

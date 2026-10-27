@@ -77,6 +77,8 @@ const HowHevaloTeaches = lazy(() =>
 const MyReports = lazy(() => import('./reports/MyReports').then((m) => ({ default: m.MyReports })));
 const AccountStanding = lazy(() => import('./reports/AccountStanding').then((m) => ({ default: m.AccountStanding })));
 import { SuspensionGate } from './reports/SuspensionGate';
+// Hevalo taken offline for a while from the admin console: the screen in its place
+import { MaintenanceGate } from './maintenance/MaintenanceGate';
 import { StandingWarnings } from './reports/StandingWarnings';
 import { GiftArrivals } from './gifts/GiftArrivals';
 import { BadgeCelebrations } from './badges/BadgeCelebrations';
@@ -303,9 +305,12 @@ export function App(): React.JSX.Element {
         <GiftArrivals />
         {/* a badge earned, celebrated wherever you are — after a game's own result */}
         <BadgeCelebrations />
+        {/* outermost: while Hevalo is offline nothing below can load, a suspension's reasons included */}
+        <MaintenanceGate>
         <SuspensionGate>
         <AppRoutes />
         </SuspensionGate>
+        </MaintenanceGate>
         </MessagesProvider>
         </ProfileModalProvider>
       </BrowserRouter>

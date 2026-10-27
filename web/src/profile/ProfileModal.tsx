@@ -41,6 +41,7 @@ export function useProfileModal(): Ctx {
 
 export function ProfileModalProvider({ children }: { children: ReactNode }): React.JSX.Element {
   const t = useT();
+  const { maintenance } = useAuth();
   const [target, setTarget] = useState<Target | null>(null);
   const openProfile = useCallback((t: Target) => setTarget(t), []);
   const close = useCallback(() => setTarget(null), []);
@@ -48,7 +49,9 @@ export function ProfileModalProvider({ children }: { children: ReactNode }): Rea
   return (
     <ProfileCtx.Provider value={{ openProfile, closeProfile: close }}>
       {children}
-      <Modal open={target !== null} onClose={close} label={t('profile.title')}>
+      {/* put away while Hevalo is offline, rather than failing over the offline
+          screen; it opens again, and loads again, once Hevalo is back */}
+      <Modal open={target !== null && !maintenance} onClose={close} label={t('profile.title')}>
         {target && <ProfileContent target={target} />}
       </Modal>
     </ProfileCtx.Provider>

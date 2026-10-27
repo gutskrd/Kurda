@@ -140,13 +140,22 @@ export function cosmeticArtUrl(assetKey: string, publicUrl: PublicUrl): string |
  * (shop, inventory, gifts, the admin's catalogue). Every place that shows a
  * background or icon goes through here or `resolveCosmetics`, so art uploaded
  * in the admin and art that ships with the site resolve the same way
- * everywhere. Returns null for non-cosmetic categories or a missing key.
+ * everywhere. Any other item is drawn from an uploaded square picture when
+ * it has one; null otherwise, and for a missing key.
  * Presentation only — ownership/premium access is enforced server-side at equip.
  */
 export function cosmeticAssetUrl(category: string, assetKey: string | null, publicUrl: PublicUrl): string | null {
   if (!assetKey) return null;
   if (category === 'background' || category === 'icon') return cosmeticArtUrl(assetKey, publicUrl);
+  // any other item (a power-up, a streak freeze, a tag…) may be given a square
+  // picture uploaded in the admin; without one the apps draw its glyph
+  if (uploadedArtKind(assetKey) === 'icon') return publicUrl(assetKey);
   return null;
+}
+
+/** The kind of uploaded art an item of a category is drawn with: a background's own, a square picture for everything else. */
+export function artKindFor(category: string): ArtKind {
+  return category === 'background' ? 'background' : 'icon';
 }
 
 export function isPremiumActive(premiumUntil: Date | null, now: Date = new Date()): boolean {

@@ -328,12 +328,13 @@ function Screen({
 }): React.JSX.Element {
   return (
     <div className="login">
-      <div className="login-card gate-card" aria-busy={busy || undefined}>
-        <div className="login-top">
-          <span className="login-brand">
-            <HevaloMark size={40} />
-            Hevalo
-          </span>
+      <div className="login-card gate-card has-hero has-peek" aria-busy={busy || undefined}>
+        <div className="login-hero is-peek">
+          <HevaloMark art="peek" size={180} mood={busy ? 'thinking' : 'idle'} lively />
+        </div>
+        <div className="login-top is-centred">
+          <span className="login-brand">Hevalo</span>
+          <span className="login-dot" aria-hidden="true" />
           <span>Admin console</span>
         </div>
         <h1 className="login-title gate-title">

@@ -3,7 +3,7 @@ import { ApiClient } from '../api/client';
 import { useHeartbeat } from './useHeartbeat';
 import { defaultApiBaseUrl } from '../api/env';
 import type { TokenStorage } from '../api/types';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import { useI18n } from '../i18n/I18nContext';
 import type { Locale } from '../i18n/translations';
 import { createDeviceIdStore, createTokenStorage } from './storage';
@@ -12,6 +12,7 @@ import { deviceName } from './deviceName';
 import type { AgeStopKind } from './birthMonth';
 import type { SuspendedErrorDetails } from '@kurda/shared';
 import { suspendedDetails } from '../reports/suspension';
+import { onMaintenanceOver, showMaintenance } from '../maintenance/maintenance';
 
 export interface SessionUser {
   id: string;
@@ -180,6 +181,8 @@ export function AuthProvider({
   const [user, setUser] = useState<SessionUser | null>(null);
   const [ageStop, setAgeStop] = useState<AgeStopKind | null>(null);
   const [suspension, setSuspension] = useState<SuspendedErrorDetails | null>(null);
+  // a restore asked again once Hevalo is back from being offline
+  const [restoreRound, setRestoreRound] = useState(0);
 
   const client = useMemo(
     () =>
@@ -191,6 +194,8 @@ export function AuthProvider({
           setStatus('signedOut');
         },
         onSuspended: setSuspension,
+        // Hevalo offline for a while: the screen over the app, and the session kept
+        onMaintenance: showMaintenance,
         deviceId: () => loadDeviceId(deviceStore),
       }),
     [baseUrl, storage, deviceStore],
@@ -200,6 +205,7 @@ export function AuthProvider({
 
   useEffect(() => {
     let cancelled = false;
+    let stopWaiting: (() => void) | null = null;
     (async () => {
       const tokens = await storage.get();
       if (!tokens) {
@@ -211,6 +217,10 @@ export function AuthProvider({
       if (me.ok) {
         setUser(me.data.user);
         setStatus('signedIn');
+      } else if (isMaintenance(me.error)) {
+        // Hevalo is offline, not the session: it waits under the notice and
+        // is restored once Hevalo is back, rather than landing on sign-in
+        stopWaiting = onMaintenanceOver(() => setRestoreRound((n) => n + 1));
       } else {
         // ApiClient already cleared storage on auth failures; network
         // failures also land signed out rather than hanging on restore
@@ -219,8 +229,19 @@ export function AuthProvider({
     })();
     return () => {
       cancelled = true;
+      stopWaiting?.();
     };
-  }, [client, storage]);
+  }, [client, storage, restoreRound]);
+
+  // back from being offline: the account as it is now, with the rest of the app's data
+  useEffect(() => {
+    if (status !== 'signedIn') return;
+    return onMaintenanceOver(() => {
+      void client.get<{ user: SessionUser }>('/me').then((me) => {
+        if (me.ok) setUser(me.data.user);
+      });
+    });
+  }, [client, status]);
 
   const applyAuth = async (payload: AuthPayload) => {
     setSuspension(null);

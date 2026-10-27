@@ -135,3 +135,32 @@ describe('signing in', () => {
     expect(await said('status')).toHaveTextContent('If that account exists, a password-reset link has been sent.');
   });
 });
+
+/** Hevalo above the form, and how it is (brand/HevaloMark.tsx). */
+const mood = (): string | null => document.querySelector('.login-hero .hevalo-mark')!.getAttribute('data-mood');
+
+describe('Hevalo on the sign-in', () => {
+  it('shuts its eyes for the password, peeks when it is shown, and looks about again after', async () => {
+    const user = userEvent.setup();
+    show();
+    expect(document.querySelector('.login-hero .hevalo-lids')).not.toBeNull();
+    expect(mood()).toBe('idle');
+    await user.click(screen.getByLabelText('Password'));
+    expect(mood()).toBe('shy');
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    expect(mood()).toBe('peek');
+    await user.click(screen.getByLabelText('Email'));
+    expect(mood()).toBe('idle');
+  });
+
+  it('shakes its head over a sign-in that did not go through', async () => {
+    const user = userEvent.setup();
+    show(on('POST', '/admin/auth/login', failure(401, 'INVALID_CREDENTIALS', 'invalid email or password')));
+    await user.type(screen.getByLabelText('Email'), 'rojda@hevalo.app');
+    await user.type(screen.getByLabelText('Password'), 'wrong');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+    await said('alert');
+    expect(mood()).toBe('sad');
+    await waitFor(() => expect(mood()).not.toBe('sad'), { timeout: 3000 });
+  });
+});

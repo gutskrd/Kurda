@@ -1,5 +1,6 @@
 import { useId, useMemo } from 'react';
 import {
+  badgeLevelName,
   badgeShineSvg,
   badgeShines,
   badgeSvg,
@@ -17,6 +18,7 @@ import {
   type RankTier,
   type SeasonName,
 } from '@kurda/shared';
+import { useArtOverride } from '../art/overrides';
 
 /**
  * The art from @kurda/shared, drawn in the page (contract 4 §B3).
@@ -34,6 +36,12 @@ import {
  *
  * The shine layers are decoration: hidden from screen readers, moved by CSS
  * (styles/ranks.css), and still under `prefers-reduced-motion`.
+ *
+ * A drawing an admin has replaced with an uploaded picture (art/overrides.ts)
+ * is that picture instead, in the same wrapper at the same size, named by the
+ * same title. An upload has no shine of its own to move, so it is drawn
+ * without one; a secret badge not found yet is always the secret's own art, so
+ * that its picture is never given away.
  */
 function useArtId(): string {
   // useId gives «r1»-style ids; the builders accept a plain identifier
@@ -42,6 +50,22 @@ function useArtId(): string {
 
 function Svg({ svg, className }: { svg: string; className?: string }): React.JSX.Element {
   return <span className={className} dangerouslySetInnerHTML={{ __html: svg }} />;
+}
+
+/** An uploaded picture in a drawing's place, named as the drawing was. */
+function Picture({ src, size, title, className }: { src: string; size: number; title: string; className?: string }): React.JSX.Element {
+  return (
+    <img
+      className={`art-picture${className ? ` ${className}` : ''}`}
+      src={src}
+      alt={title}
+      width={size}
+      height={size}
+      loading="lazy"
+      decoding="async"
+      draggable={false}
+    />
+  );
 }
 
 /** A layer laid over a drawing: decorative, never read out. */
@@ -65,11 +89,21 @@ export function RankEmblem({
   className?: string;
 }): React.JSX.Element {
   const id = useArtId();
+  // one picture for the tier, whatever the division or season it is drawn for
+  const picture = useArtOverride('rank', tier);
   const svg = useMemo(
-    () => rankEmblemSvg({ tier, division: division ?? undefined, season, size, title, idPrefix: id }),
-    [tier, division, season, size, title, id],
+    () => (picture ? null : rankEmblemSvg({ tier, division: division ?? undefined, season, size, title, idPrefix: id })),
+    [picture, tier, division, season, size, title, id],
   );
-  return <Svg svg={svg} className={`art art-rank is-${tier}${className ? ` ${className}` : ''}`} />;
+  const cls = `art art-rank is-${tier}${className ? ` ${className}` : ''}`;
+  if (picture) {
+    return (
+      <span className={cls}>
+        <Picture src={picture} size={size} title={title} />
+      </span>
+    );
+  }
+  return <Svg svg={svg ?? ''} className={cls} />;
 }
 
 export function PlacementEmblem({ done, size = 96, title }: { done: number; size?: number; title: string }): React.JSX.Element {
@@ -99,11 +133,21 @@ export function LeagueEmblem({
   className?: string;
 }): React.JSX.Element {
   const id = useArtId();
+  const picture = useArtOverride('league', tier);
   const svg = useMemo(
-    () => leagueEmblemSvg({ tier, size, title, idPrefix: id, ...(locked ? { locked: LOCKED_DRAWN } : {}) }),
-    [tier, size, title, id, locked],
+    () => (picture ? null : leagueEmblemSvg({ tier, size, title, idPrefix: id, ...(locked ? { locked: LOCKED_DRAWN } : {}) })),
+    [picture, tier, size, title, id, locked],
   );
-  return <Svg svg={svg} className={`art art-league is-${tier}${locked ? ' is-locked' : ''}${className ? ` ${className}` : ''}`} />;
+  const cls = `art art-league is-${tier}${locked ? ' is-locked' : ''}${className ? ` ${className}` : ''}`;
+  if (picture) {
+    // a league not reached yet is its picture greyed (styles/ranks.css), as the drawn one is flat grey
+    return (
+      <span className={cls}>
+        <Picture src={picture} size={size} title={title} />
+      </span>
+    );
+  }
+  return <Svg svg={svg ?? ''} className={cls} />;
 }
 const LOCKED_DRAWN = { body: '#e2e4e8', mark: '#a5a9b0' } as const;
 
@@ -137,20 +181,32 @@ export function BadgeMedal({
   const known = hasBadgeArt(badgeKey);
   const shown: MedalState = state === 'earned' && tier <= 0 ? 'locked' : state;
   const artTier = Math.max(1, Math.min(4, Math.floor(tier) || 1)) as ArtBadgeTier;
+  // the level's own picture, then the badge's; a secret not found yet never shows one
+  const uploaded = useArtOverride('badge', badgeKey, badgeLevelName(artTier));
+  const picture = shown === 'secret' ? null : uploaded;
   const svg = useMemo(
-    () => (known ? badgeSvg({ key: badgeKey as never, tier: artTier, state: shown, size, title, idPrefix: id }) : null),
-    [known, badgeKey, artTier, shown, size, title, id],
+    () => (known && !picture ? badgeSvg({ key: badgeKey as never, tier: artTier, state: shown, size, title, idPrefix: id }) : null),
+    [known, picture, badgeKey, artTier, shown, size, title, id],
   );
   const glint = useMemo(
     () =>
-      known && shine && shown === 'earned' && badgeShines(badgeKey, artTier)
+      known && !picture && shine && shown === 'earned' && badgeShines(badgeKey, artTier)
         ? badgeShineSvg({ key: badgeKey as never, size, phase: 0, idPrefix: `${id}g` })
         : null,
-    [known, shine, shown, badgeKey, artTier, size, id],
+    [known, picture, shine, shown, badgeKey, artTier, size, id],
   );
+  const cls = `art art-badge is-${shown}${playing ? ' is-playing' : ''}`;
+  if (picture) {
+    // not earned yet: the picture greyed (styles/ranks.css), as the drawn medal is in pewter
+    return (
+      <span className={cls} style={{ width: size, height: size }}>
+        <Picture src={picture} size={size} title={title} />
+      </span>
+    );
+  }
   if (!svg) return null;
   return (
-    <span className={`art art-badge is-${shown}${playing ? ' is-playing' : ''}`} style={{ width: size, height: size }}>
+    <span className={cls} style={{ width: size, height: size }}>
       <Svg svg={svg} />
       {glint && <Shine svg={glint} className="art-badge-shine" />}
     </span>
@@ -175,10 +231,12 @@ export function SeasonFrame({
   children: React.ReactNode;
 }): React.JSX.Element {
   const id = useArtId();
-  const frame = useMemo(() => seasonFrameSvg({ tier, size, title, idPrefix: id }), [tier, size, title, id]);
+  // an uploaded ring is laid over the avatar at the drawn ring's size, with no glint to travel round it
+  const picture = useArtOverride('frame', tier);
+  const frame = useMemo(() => (picture ? null : seasonFrameSvg({ tier, size, title, idPrefix: id })), [picture, tier, size, title, id]);
   const shine = useMemo(
-    () => (SEASON_FRAME_SHINE[tier] ? seasonFrameShineSvg({ tier, size, idPrefix: `${id}s` }) : null),
-    [tier, size, id],
+    () => (!picture && SEASON_FRAME_SHINE[tier] ? seasonFrameShineSvg({ tier, size, idPrefix: `${id}s` }) : null),
+    [picture, tier, size, id],
   );
   const inner = Math.round(size * SEASON_FRAME_INNER);
   return (
@@ -186,7 +244,7 @@ export function SeasonFrame({
       <span className="art-frame-face" style={{ width: inner, height: inner }}>
         {children}
       </span>
-      <Svg svg={frame} className="art-frame-ring" />
+      {picture ? <Picture src={picture} size={size} title={title} className="art-frame-ring" /> : <Svg svg={frame ?? ''} className="art-frame-ring" />}
       {shine && <Shine svg={shine} className="art-frame-shine" />}
     </span>
   );
@@ -211,12 +269,25 @@ export function FrameOverlay({ sku, face, title }: { sku: string | null | undefi
   const tier = frameTier(sku);
   const size = Math.round(face / SEASON_FRAME_INNER);
   const label = tier ? title(tier) : '';
-  const frame = useMemo(() => (tier ? seasonFrameSvg({ tier, size, title: label, idPrefix: id }) : null), [tier, size, label, id]);
-  const shine = useMemo(
-    () => (tier && SEASON_FRAME_SHINE[tier] ? seasonFrameShineSvg({ tier, size, idPrefix: `${id}s` }) : null),
-    [tier, size, id],
+  const uploaded = useArtOverride('frame', tier ?? '');
+  const picture = tier ? uploaded : null;
+  const frame = useMemo(
+    () => (tier && !picture ? seasonFrameSvg({ tier, size, title: label, idPrefix: id }) : null),
+    [tier, picture, size, label, id],
   );
-  if (!tier || !frame) return null;
+  const shine = useMemo(
+    () => (tier && !picture && SEASON_FRAME_SHINE[tier] ? seasonFrameShineSvg({ tier, size, idPrefix: `${id}s` }) : null),
+    [tier, picture, size, id],
+  );
+  if (!tier) return null;
+  if (picture) {
+    return (
+      <span className={`art-frame-overlay is-${tier}`}>
+        <Picture src={picture} size={size} title={label} className="art-frame-ring" />
+      </span>
+    );
+  }
+  if (!frame) return null;
   return (
     <span className={`art-frame-overlay is-${tier}`}>
       <Svg svg={frame} className="art-frame-ring" />

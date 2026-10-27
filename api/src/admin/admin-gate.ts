@@ -107,7 +107,9 @@ export function installAdminGate(app: FastifyInstance, totp: AdminTotpService, a
       path.startsWith('/admin/') || path === '/admin' || (pattern !== undefined && privileged.has(pattern));
     if (!staffSurface || path === SIGN_IN) return;
     // anyone signed in who is not the console's owner: as if the route were not there
+    // (and the security log hears of it, once an hour per account)
     if (req.user && !(await access.allows(req.user.id))) {
+      void app.securityLog?.record('console.probe', { userId: req.user.id, staff: isPrivileged(req.user.roles) });
       await notFound(reply, req);
       return;
     }

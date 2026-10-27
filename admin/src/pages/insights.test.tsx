@@ -57,41 +57,98 @@ describe('Analytics', () => {
     { day: '2026-10-11', dau: 40, wau: 120, mau: 300, signups: 5 },
     { day: '2026-10-12', dau: 52, wau: 130, mau: 310, signups: 7 },
   ];
+  const before = [
+    { day: '2026-09-11', dau: 30, wau: 100, mau: 280, signups: 4 },
+    { day: '2026-09-12', dau: 32, wau: 100, mau: 280, signups: 4 },
+  ];
   const steps = [
-    { step: 'signup', users: 10, rateFromFirst: 1, rateFromPrev: 1 },
-    { step: 'first_lesson', users: 6, rateFromFirst: 0.6, rateFromPrev: 0.6 },
+    { step: 'lesson_start', users: 10, rateFromFirst: 1, rateFromPrev: 1 },
+    { step: 'lesson_complete', users: 6, rateFromFirst: 0.6, rateFromPrev: 0.6 },
+  ];
+  const cohorts = [
+    { cohortDay: '2026-10-01', dayN: 1, cohortSize: 100, retained: 40, rate: 0.4 },
+    { cohortDay: '2026-10-01', dayN: 7, cohortSize: 100, retained: 20, rate: 0.2 },
+    { cohortDay: '2026-10-08', dayN: 1, cohortSize: 50, retained: 30, rate: 0.6 },
   ];
 
-  it('shows the last day’s numbers, the sign-ups in the range and the funnels', async () => {
-    fakeApi(
-      on('GET', /^\/admin\/analytics\/activity/, json({ points: activity })),
+  /** The range shown answers with `activity`; any other (the days before it) with `before`. */
+  function answers(): ReturnType<typeof fakeApi> {
+    let first = true;
+    return fakeApi(
+      on('GET', /^\/admin\/analytics\/activity/, () => {
+        const reply = json({ points: first ? activity : before });
+        first = false;
+        return reply;
+      }),
       on('GET', /^\/admin\/analytics\/funnel/, json({ steps })),
-      on('GET', /^\/admin\/analytics\/retention/, json({ cohorts: [] })),
+      on('GET', /^\/admin\/analytics\/retention/, json({ cohorts })),
+      on('POST', '/admin/analytics/refresh', json({ ok: true })),
     );
+  }
+
+  it('shows each number beside the same number for the days before, and the funnels in words', async () => {
+    answers();
     renderUi(<Analytics />);
-    const daily = (await screen.findByText('Active in a day')).closest('.stat') as HTMLElement;
-    expect(within(daily).getByText('52')).toBeInTheDocument();
-    expect((screen.getByText('New sign-ups').closest('.stat') as HTMLElement).textContent).toContain('12');
-    expect(screen.getAllByText('first lesson')).toHaveLength(2);
+    const daily = (await screen.findByText('Active per day')).closest('.stat') as HTMLElement;
+    expect(within(daily).getByText('46')).toBeInTheDocument();
+    expect(within(daily).getByText('+48% on the 30 days before')).toBeInTheDocument();
+    const signups = screen.getByText('New sign-ups').closest('.stat') as HTMLElement;
+    expect(signups.textContent).toContain('12');
+    expect(signups.textContent).toContain('+50% on the 30 days before');
+    expect(screen.getAllByText('Finished a lesson')).toHaveLength(2);
     expect(screen.getAllByText('6 · 60%')).toHaveLength(2);
-    expect(screen.getByText('No group has been around long enough in this range.')).toBeInTheDocument();
+  });
+
+  it('asks for the same number of days just before the range, to compare with', async () => {
+    const { calls } = answers();
+    renderUi(<Analytics />);
+    await screen.findByText('Active per day');
+    const asked = calls.filter((c) => c.path.startsWith('/admin/analytics/activity')).map((c) => new URLSearchParams(c.path.split('?')[1]));
+    const [range, previous] = asked;
+    const day = (s: string | null): number => Date.parse(`${s}T00:00:00Z`) / 86_400_000;
+    expect(day(range!.get('to')) - day(range!.get('from'))).toBe(29);
+    expect(day(previous!.get('to'))).toBe(day(range!.get('from')) - 1);
+    expect(day(previous!.get('to')) - day(previous!.get('from'))).toBe(29);
+  });
+
+  it('switches range in one tap', async () => {
+    const user = userEvent.setup();
+    const { calls } = answers();
+    renderUi(<Analytics />);
+    await screen.findByText('Active per day');
+    await user.click(screen.getByRole('radio', { name: '7 days' }));
+    await waitFor(() => {
+      const last = calls.filter((c) => c.path.startsWith('/admin/analytics/retention')).at(-1)!;
+      const q = new URLSearchParams(last.path.split('?')[1]);
+      expect(Date.parse(`${q.get('to')}T00:00:00Z`) - Date.parse(`${q.get('from')}T00:00:00Z`)).toBe(6 * 86_400_000);
+    });
+  });
+
+  it('shows retention as a grid with the totals on top', async () => {
+    answers();
+    renderUi(<Analytics />);
+    const grid = await screen.findByRole('table', { name: 'Retention by the day people joined' });
+    // newest first; a group too young for a week says so
+    const rows = within(grid).getAllByRole('row');
+    expect(rows[1]).toHaveTextContent('50 joined');
+    expect(within(rows[1]!).getByRole('cell', { name: 'After a week: not yet' })).toBeInTheDocument();
+    expect(within(rows[2]!).getByRole('cell', { name: 'Next day: 40%, 40 of 100' })).toBeInTheDocument();
+    // of everyone who joined, weighted by how many joined each day: 70 of 150
+    const totals = screen.getByText('Next day', { selector: '.stat-label' }).closest('.stat') as HTMLElement;
+    expect(totals.textContent).toContain('47%');
+    expect(totals.textContent).toContain('of 150');
   });
 
   it('says a failure is one, rather than drawing zeros', async () => {
     fakeApi(on('GET', /^\/admin\/analytics\//, failure(500, 'INTERNAL', 'boom')));
     renderUi(<Analytics />);
     expect(await screen.findByText('The server had a problem')).toBeInTheDocument();
-    expect(screen.queryByText('Active in a day')).not.toBeInTheDocument();
+    expect(screen.queryByText('Active per day')).not.toBeInTheDocument();
   });
 
   it('works the daily numbers out again on request', async () => {
     const user = userEvent.setup();
-    const { calls } = fakeApi(
-      on('GET', /^\/admin\/analytics\/activity/, json({ points: activity })),
-      on('GET', /^\/admin\/analytics\/funnel/, json({ steps: [] })),
-      on('GET', /^\/admin\/analytics\/retention/, json({ cohorts: [] })),
-      on('POST', '/admin/analytics/refresh', json({ ok: true })),
-    );
+    const { calls } = answers();
     renderUi(<Analytics />);
     await user.click(await screen.findByRole('button', { name: 'Recount' }));
     await waitFor(() => expect(writes(calls, '/admin/analytics/refresh')).toHaveLength(1));

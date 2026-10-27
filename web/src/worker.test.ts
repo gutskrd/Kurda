@@ -7,7 +7,7 @@
  * ending on a word, naming the author, not claiming a picture it does not have.
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { __test } from './worker';
+import worker, { __test } from './worker';
 import { SOURCES, SOURCE_ORDER } from './teaching/sources';
 
 const { routeFor, attr, trim, previewOf, sitemap } = __test;
@@ -486,5 +486,36 @@ describe('a dictionary address with no page behind it', () => {
     expect(dictionaryOf('/app/library/abc')).toBeNull();
     // the bare path is the app's own route, not a page in either dictionary
     expect(dictionaryOf('/dictionary')).toBeNull();
+  });
+});
+
+/**
+ * A scanner asking for a PHP script or a secrets file is told nothing lives
+ * there, without the asset binding being asked: the app shell with a 200 was
+ * what made /wp-login.php look like a page worth another try.
+ */
+describe('a scanner’s probe', () => {
+  const assets = vi.fn(async () => new Response('<!doctype html><div id="root"></div>', { status: 200, headers: { 'content-type': 'text/html' } }));
+  const env = { ASSETS: { fetch: assets } } as unknown as Parameters<typeof worker.fetch>[1];
+  const get = (path: string, method = 'GET') => worker.fetch(new Request(`https://hevalo.app${path}`, { method }), env);
+
+  afterEach(() => assets.mockClear());
+
+  it('is answered "not found" before the asset binding is asked', async () => {
+    for (const path of ['/wp-login.php', '/.env', '/vendor/phpunit/src/Util/PHP/eval-stdin.php', '/index.php?s=x', '/cgi-bin/php-cgi', '/?-d+allow_url_include%3d1']) {
+      const res = await get(path);
+      expect(res.status, path).toBe(404);
+      expect(res.headers.get('x-robots-tag'), path).toBe('noindex');
+      expect(await res.text(), path).not.toContain('root');
+    }
+    expect((await get('/xmlrpc.php', 'POST')).status).toBe(404);
+    expect(assets).not.toHaveBeenCalled();
+  });
+
+  it('leaves the app’s own addresses to the asset binding', async () => {
+    for (const path of ['/app/library', '/ferheng', '/.well-known/assetlinks.json', '/app/civak?tab=friends']) {
+      await get(path);
+    }
+    expect(assets).toHaveBeenCalledTimes(4);
   });
 });

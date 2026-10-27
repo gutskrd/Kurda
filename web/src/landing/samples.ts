@@ -15,6 +15,7 @@
  * Nothing here is invented to sound Kurdish. If a phrase is not certain, it does
  * not go on the page.
  */
+import { avatarAssetUrl } from '../lib/cosmetics';
 
 /** The word the whole page turns on: the one the product is named after. */
 export const HEVAL = 'heval';
@@ -65,9 +66,9 @@ export const POEM = { title: 'Baran', line: 'Baran dibare.' } as const;
  * ordinary Kurdish given names, used the way any app shows example users.
  */
 export const PEOPLE = {
-  you: { avatar: '/cosmetics/avatars/default-03.png' },
-  rojin: { name: 'Rojîn', avatar: '/cosmetics/avatars/default-09.png' },
-  dilan: { name: 'Dilan', avatar: '/cosmetics/avatars/default-07.png' },
+  you: { avatar: avatarAssetUrl('default-03') },
+  rojin: { name: 'Rojîn', avatar: avatarAssetUrl('default-09') },
+  dilan: { name: 'Dilan', avatar: avatarAssetUrl('default-07') },
 } as const;
 
 /** A profile background from the shop — night on the high pastures. */

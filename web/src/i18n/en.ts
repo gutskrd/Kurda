@@ -972,6 +972,11 @@ export const en = {
   'suspension.answerHere': 'If you ask for a review, sign in again any time to see our answer here.',
   'suspension.rules': 'Read the community rules',
   'suspension.close': 'Close',
+  // Hevalo offline for a while (maintenance/): the app's own words, where an admin wrote none
+  'maintenance.title': 'Hevalo is taking a short break',
+  'maintenance.message': 'We’re working on Hevalo and will be back soon. Your progress, streak and Zêr are safe.',
+  'maintenance.backBy': 'Back by {time}',
+  'maintenance.polling': 'We check again every {count} seconds.',
   'notify.reportOutcome.title': 'About your report',
   'notify.sanction.title': 'A decision about your account',
   'notify.sanction.until': '{what} until {time}',

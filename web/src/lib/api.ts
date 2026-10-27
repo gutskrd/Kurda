@@ -2,7 +2,7 @@ import { API_URL } from './config';
 import type { ApiError, ApiResult, TokenPair } from './types';
 import { createTokenStorage, persistTokens, type TokenStorage } from './tokenStorage';
 import type { MessageKey } from '../i18n/en';
-import { isMissingRoute, type SuspendedErrorDetails } from '@kurda/shared';
+import { isMissingRoute, MAINTENANCE_CODE, maintenanceNoticeOf, type MaintenanceNotice, type SuspendedErrorDetails } from '@kurda/shared';
 import { restrictionOf, restrictionText, suspensionOf } from '../reports/restriction';
 import { limitErrorText } from './limits';
 import { deviceId } from './deviceId';
@@ -64,6 +64,13 @@ export class ApiClient {
      * reasons and an appeal token, which is what the suspension screen needs.
      */
     private readonly onSuspended: (details: SuspendedErrorDetails) => void = () => undefined,
+    /**
+     * Hevalo has been taken offline for a while. Every request but a few
+     * (signing in and out, `/status`) then answers 503 MAINTENANCE with what
+     * to show (@kurda/shared maintenance.ts), and whichever one finds out puts
+     * the offline screen up (maintenance/MaintenanceGate.tsx).
+     */
+    private readonly onMaintenance: (notice: MaintenanceNotice) => void = () => undefined,
   ) {}
 
   get isAuthenticated(): boolean {
@@ -297,6 +304,10 @@ export class ApiClient {
     } catch {
       // non-JSON error body
     }
+    if (res.status === 503) {
+      const notice = maintenanceNoticeOf(envelope);
+      if (notice) this.onMaintenance(notice);
+    }
     if (res.status === 429) {
       const retryAfter = Number(res.headers.get('retry-after'));
       return {
@@ -384,6 +395,9 @@ export const CODE_COPY: Record<string, MessageKey> = {
   NO_PASSWORD: 'error.code.noPassword',
   // ending a session that has already ended
   SESSION_NOT_FOUND: 'error.code.sessionNotFound',
+  // Hevalo offline for a while: the offline screen says the rest, and no
+  // "something went wrong on our end" is shown beside it
+  [MAINTENANCE_CODE]: 'maintenance.title',
 };
 /**
  * What a password the server turned down needs (`WEAK_PASSWORD`'s
@@ -509,7 +523,8 @@ export function describeError(error: ApiError, t: Translate, locale?: string): s
 export function createApiClient(
   onLogout: () => void,
   onSuspended?: (details: SuspendedErrorDetails) => void,
+  onMaintenance?: (notice: MaintenanceNotice) => void,
 ): { client: ApiClient; storage: TokenStorage } {
   const storage = createTokenStorage();
-  return { client: new ApiClient(API_URL, storage, onLogout, onSuspended), storage };
+  return { client: new ApiClient(API_URL, storage, onLogout, onSuspended, onMaintenance), storage };
 }

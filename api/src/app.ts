@@ -32,6 +32,8 @@ import { registerTournamentRoutes } from './tournament/routes.js';
 import { ShopService } from './shop/service.js';
 import { registerShopRoutes } from './shop/routes.js';
 import { registerShopAdminRoutes } from './shop/admin-routes.js';
+import { ArtOverrideService } from './art/overrides.js';
+import { registerArtRoutes } from './art/routes.js';
 import { ItemReturns } from './shop/returns.js';
 import { GiftService } from './gifts/service.js';
 import { registerGiftRoutes } from './gifts/routes.js';
@@ -159,6 +161,13 @@ import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
 import { AuditService } from './admin/audit-service.js';
 import { registerAuditLog } from './admin/audit-routes.js';
+import { installRequestContext } from './security/context.js';
+import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
+import { registerSecurityLogRoutes } from './security/routes.js';
+import { SecurityLogReader } from './security/search.js';
+import { installScannerShield } from './security/shield.js';
+import { MaintenanceService } from './maintenance/service.js';
+import { installMaintenanceGate, registerMaintenanceRoutes } from './maintenance/routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
@@ -205,10 +214,18 @@ export interface BuildAppOptions {
   ferheng?: FerhengSource;
   /** Test seams for moderation: the moderator count and the urgent-report mailer. */
   moderation?: ModerationOptions;
+  /** where the security log's alert emails go (security/wire.ts) */
+  security?: SecurityLogOptions;
   /** Test seam for copyright notices: where their emails go. */
   copyright?: CopyrightWireOptions;
   /** Test seam for reading a recording's file from another site: the fetch, the name lookup, the time allowed. */
   recordingFiles?: RecordingFileOptions;
+  /**
+   * Test seam: the clock offline mode reads. The setting is one row in a
+   * database every test file shares, so a test runs it days ahead of everyone
+   * else's clock, where only its own app sees it on.
+   */
+  maintenanceClock?: () => Date;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -237,6 +254,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
   // who the client is, read past the proxies once, before any hook asks
   setupClientIp(app, config);
+  // and which request is being served, for the security log, from then on
+  installRequestContext(app);
 
   setupCors(app, config);
   setupValidation(app);
@@ -253,7 +272,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // reconcile the configured admin allowlist once the server is up (idempotent;
     // only grants to accounts that have confirmed their address)
     app.addHook('onReady', async () => {
-      await grantBootstrapAdmins(pool, config.BOOTSTRAP_ADMIN_EMAILS, app.log).catch((err) => {
+      await grantBootstrapAdmins(pool, config.BOOTSTRAP_ADMIN_EMAILS, app.log, app.securityLog).catch((err) => {
         app.log.warn({ err }, 'bootstrap admin reconciliation failed');
       });
     });
@@ -329,6 +348,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     health.register('redis', notConfigured('REDIS_URL not set'));
   }
   app.decorate('health', health);
+  // before the gate, the limiter and sign-in, which all record into it
+  setupSecurityLog(app, config, options.security);
 
   // hook order matters: authenticate → userId logging → rate limiting
   // (user-keyed limits need req.user set first)
@@ -365,9 +386,23 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     }
   });
 
+  // scanners' probes (PHP, WordPress, secrets files) answered "not found" at once, and a network that keeps
+  // probing shut out while signed out: after the session is read, before anyone's rate limit is spent
+  installScannerShield(app, { redis: app.hasDecorator('redis') ? app.redis : undefined });
+
+  // Hevalo taken offline from the admin: every request but the console's and staff's answered with the
+  // offline notice, before any route and before anyone's rate limit is spent
+  let maintenance: MaintenanceService | undefined;
+  if (config.DATABASE_URL) {
+    maintenance = new MaintenanceService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null), app.securityLog, options.maintenanceClock);
+    installMaintenanceGate(app, maintenance);
+  }
+
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all
-  setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore());
+  setupRateLimit(app, app.redis ? new RedisRateLimitStore(app.redis) : new MemoryRateLimitStore(), {
+    onLimited: (req, limit) => app.securityLog.record('request.rate_limited', { userId: req.user?.id ?? null, details: limit }),
+  });
 
   const storage = createStorage(config);
   if (storage) {
@@ -699,6 +734,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerUserAdminRoutes(app, new UserAdminService(app.db, new WalletService(app.db), moderationKit), adminTotp!);
     // immutable audit trail: auto-logs every admin mutation + search (KUR-104)
     registerAuditLog(app, new AuditService(app.db), adminTotp!);
+    // the security log: sign-ins, lockouts, attacks and staff access, for superadmins
+    registerSecurityLogRoutes(app, new SecurityLogReader(app.db, config.JWT_SECRET, app.securityLog), adminTotp!);
     // behavioral event tracking (KUR-105): schema-validated, deduped, day-partitioned
     const droppedEvents = new Counter({
       name: 'analytics_events_dropped_total',
@@ -806,6 +843,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     });
     // the admin's art uploads, partial edits, and delete-or-retire
     registerShopAdminRoutes(app, shop, config);
+    // pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners
+    registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
+    // taking Hevalo offline for a while, and the status the apps ask while it is
+    registerMaintenanceRoutes(app, maintenance!);
     registerGiftRoutes(app, gifts);
 
     // inviting friends to any online game, game cards in chats, and playing

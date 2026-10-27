@@ -116,9 +116,8 @@ export function Audit(): React.JSX.Element {
   }, []);
 
   const shown = entries ? entries.filter((e) => !quiet || !QUIET.test(e.action)) : null;
+  // what was done first: it heads each card on a phone, then when and by whom
   const columns: Column<AuditRow>[] = [
-    { key: 'when', header: 'When', cell: (e) => <Time value={e.createdAt} /> },
-    { key: 'who', header: 'Who', cell: (e) => <UserLink user={{ id: e.adminId, username: e.adminUsername }} /> },
     {
       key: 'what',
       header: 'What',
@@ -133,6 +132,8 @@ export function Audit(): React.JSX.Element {
         );
       },
     },
+    { key: 'when', header: 'When', cell: (e) => <Time value={e.createdAt} /> },
+    { key: 'who', header: 'Who', cell: (e) => <UserLink user={{ id: e.adminId, username: e.adminUsername }} /> },
     {
       key: 'target',
       header: 'On',
@@ -152,7 +153,15 @@ export function Audit(): React.JSX.Element {
 
   return (
     <div>
-      <PageHeader title="Audit log" subtitle="Every change an admin made, in order. It cannot be edited or deleted — not even from here." />
+      <PageHeader
+        title="Audit log"
+        subtitle={
+          <>
+            Every change an admin made, in order. It cannot be edited or deleted — not even from here. Sign-ins, lockouts and attacks are in the{' '}
+            <a href="#/security-log">Security log</a>.
+          </>
+        }
+      />
       <Section>
         <form
           className="form"

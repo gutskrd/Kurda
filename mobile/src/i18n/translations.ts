@@ -2354,7 +2354,12 @@ export type TranslationKey =
   | 'lesson.conversation.stop'
   | 'lesson.conversation.playLine'
   | 'lesson.conversation.showTranslation'
-  | 'lesson.conversation.hideTranslation';
+  | 'lesson.conversation.hideTranslation'
+  // --- Hevalo offline for a while (maintenance/) ---
+  | 'maintenance.title'
+  | 'maintenance.body'
+  | 'maintenance.backBy'
+  | 'maintenance.checkEvery';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -4675,6 +4680,11 @@ const en: Catalog = {
   'lesson.conversation.playLine': 'Play line {n}, said by {name}',
   'lesson.conversation.showTranslation': 'Show translation',
   'lesson.conversation.hideTranslation': 'Hide translation',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo is taking a short break',
+  'maintenance.body': 'We’re working on Hevalo and will be back soon. Your progress, streak and Zêr are safe.',
+  'maintenance.backBy': 'Back by {time}',
+  'maintenance.checkEvery': 'We check again every {seconds} seconds.',
 };
 
 const ku: Catalog = {
@@ -6993,6 +7003,11 @@ const ku: Catalog = {
   'lesson.conversation.playLine': 'Rêza {n} ya ku {name} dibêje lêxe',
   'lesson.conversation.showTranslation': 'Wergera îngilîzî nîşan bide',
   'lesson.conversation.hideTranslation': 'Wergerê veşêre',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo bêhnvedaneke kurt digire',
+  'maintenance.body': 'Em li ser Hevalo dixebitin û em ê zû vegerin. Pêşketina te, rêzeya te û Zêrê te ewle ne.',
+  'maintenance.backBy': 'Heta {time} vedigere',
+  'maintenance.checkEvery': 'Em her {seconds} çirkeyan carekê dîsa kontrol dikin.',
 };
 
 const de: Catalog = {
@@ -9311,6 +9326,11 @@ const de: Catalog = {
   'lesson.conversation.playLine': 'Zeile {n} abspielen, gesprochen von {name}',
   'lesson.conversation.showTranslation': 'Englische Übersetzung zeigen',
   'lesson.conversation.hideTranslation': 'Übersetzung ausblenden',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo macht eine kurze Pause',
+  'maintenance.body': 'Wir arbeiten an Hevalo und sind bald wieder da. Dein Fortschritt, deine Serie und deine Zêr sind sicher.',
+  'maintenance.backBy': 'Wieder da: spätestens {time}',
+  'maintenance.checkEvery': 'Wir sehen alle {seconds} Sekunden wieder nach.',
 };
 
 const es: Catalog = {
@@ -11629,6 +11649,11 @@ const es: Catalog = {
   'lesson.conversation.playLine': 'Reproducir la línea {n}, dicha por {name}',
   'lesson.conversation.showTranslation': 'Mostrar la traducción al inglés',
   'lesson.conversation.hideTranslation': 'Ocultar la traducción',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo se toma un breve descanso',
+  'maintenance.body': 'Estamos trabajando en Hevalo y volveremos pronto. Tu progreso, tu racha y tus Zêr están a salvo.',
+  'maintenance.backBy': 'De vuelta a más tardar: {time}',
+  'maintenance.checkEvery': 'Lo volvemos a comprobar cada {seconds} segundos.',
 };
 
 const tr: Catalog = {
@@ -13947,6 +13972,11 @@ const tr: Catalog = {
   'lesson.conversation.playLine': '{n}. satırı oynat ({name})',
   'lesson.conversation.showTranslation': 'İngilizce çeviriyi göster',
   'lesson.conversation.hideTranslation': 'Çeviriyi gizle',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo kısa bir mola veriyor',
+  'maintenance.body': 'Hevalo üzerinde çalışıyoruz, yakında geri döneceğiz. İlerlemen, serin ve Zêr’in güvende.',
+  'maintenance.backBy': 'Dönüş: en geç {time}',
+  'maintenance.checkEvery': 'Her {seconds} saniyede bir yeniden kontrol ediyoruz.',
 };
 
 const ar: Catalog = {
@@ -16265,6 +16295,11 @@ const ar: Catalog = {
   'lesson.conversation.playLine': 'تشغيل السطر {n} بصوت {name}',
   'lesson.conversation.showTranslation': 'اعرض الترجمة الإنجليزية',
   'lesson.conversation.hideTranslation': 'أخفِ الترجمة',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'يأخذ Hevalo استراحة قصيرة',
+  'maintenance.body': 'نعمل على Hevalo وسنعود قريبًا. تقدّمك وسلسلتك ورصيدك من Zêr في أمان.',
+  'maintenance.backBy': 'العودة بحلول {time}',
+  'maintenance.checkEvery': 'نتحقق مجددًا كل {seconds} ثانية.',
 };
 
 const fr: Catalog = {
@@ -18583,6 +18618,11 @@ const fr: Catalog = {
   'lesson.conversation.playLine': 'Écouter la réplique {n}, dite par {name}',
   'lesson.conversation.showTranslation': 'Afficher la traduction anglaise',
   'lesson.conversation.hideTranslation': 'Masquer la traduction',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo fait une petite pause',
+  'maintenance.body': 'Nous travaillons sur Hevalo et serons bientôt de retour. Ta progression, ta série et tes Zêr sont en sécurité.',
+  'maintenance.backBy': 'De retour d’ici {time}',
+  'maintenance.checkEvery': 'Nous vérifions à nouveau toutes les {seconds} secondes.',
 };
 
 const nl: Catalog = {
@@ -20901,6 +20941,11 @@ const nl: Catalog = {
   'lesson.conversation.playLine': 'Regel {n} afspelen, gezegd door {name}',
   'lesson.conversation.showTranslation': 'Engelse vertaling tonen',
   'lesson.conversation.hideTranslation': 'Vertaling verbergen',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo neemt even pauze',
+  'maintenance.body': 'We werken aan Hevalo en zijn snel weer terug. Je voortgang, je reeks en je Zêr zijn veilig.',
+  'maintenance.backBy': 'Uiterlijk terug: {time}',
+  'maintenance.checkEvery': 'We kijken elke {seconds} seconden opnieuw.',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -23220,6 +23265,11 @@ const ckb: Catalog = {
   'lesson.conversation.playLine': 'دێڕی {n} کە {name} دەیڵێت لێبدە',
   'lesson.conversation.showTranslation': 'وەرگێڕانی ئینگلیزی پیشان بدە',
   'lesson.conversation.hideTranslation': 'وەرگێڕانەکە بشارەوە',
+  // --- Hevalo offline for a while (maintenance/) ---
+  'maintenance.title': 'Hevalo پشوویەکی کورت وەردەگرێت',
+  'maintenance.body': 'خەریکی کارکردنین لەسەر Hevalo و بەم زووانە دەگەڕێینەوە. پێشکەوتنت، زنجیرەکەت و زێڕەکەت پارێزراون.',
+  'maintenance.backBy': 'تا {time} دەگەڕێتەوە',
+  'maintenance.checkEvery': 'هەموو {seconds} چرکە جارێک دووبارە دەپشکنین.',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

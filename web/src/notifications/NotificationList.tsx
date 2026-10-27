@@ -23,6 +23,7 @@ import { useRail } from '../social/RailProvider';
 import { lastSeen } from '../social/time';
 import type { RailNotification } from '../social/useSocialRail';
 import { groupByTime, noteKind, splitAtName, type NoteGroupKey, type NoteKind } from './rows';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * Which notifications are still new, and the two ways to be done with them.
@@ -263,11 +264,12 @@ function NoteRow({
 /** The face of whoever it is from with the kind on its corner, or the kind alone for news from Hevalo. */
 function NoteFace({ kind, actor }: { kind: NoteKind; actor: Actor | null }): React.JSX.Element {
   const Glyph = KIND_ICON[kind];
+  const face = useAvatarSrc(actor?.avatarUrl);
   if (actor) {
     return (
       <span className="note-face" aria-hidden="true">
         <span className="note-avatar">
-          {actor.avatarUrl ? <img src={actor.avatarUrl} alt="" loading="lazy" /> : <PersonGlyph size={22} />}
+          {face ? <img src={face} alt="" loading="lazy" /> : <PersonGlyph size={22} />}
         </span>
         <span className="note-badge">
           <Glyph size={12} />

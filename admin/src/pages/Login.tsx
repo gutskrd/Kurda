@@ -1,12 +1,20 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { useAuth } from '../auth';
 import { api, ApiError } from '../api';
 import { clockTime, describeError, errorLine, useCountdown } from '../ui';
-import { HevaloMark } from '../brand/HevaloMark';
+import { HevaloMark, type MarkMood } from '../brand/HevaloMark';
+import { caretPoint, nudge } from '../brand/eyes';
 
 // Whether this browser has signed in to the admin before — drives the greeting
 // ("Welcome back" for returning admins vs. a first-time prompt).
 const RETURNING_KEY = 'kurda_admin_returning';
+
+/** How long Hevalo is pleased before the next step opens, unless motion is turned down. */
+const HAPPY_MS = 650;
+/** How long it shakes its head over a sign-in that did not go through. */
+const SAD_MS = 1300;
+
+const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /** What is wrong with the email as typed, or null. */
 export function emailProblem(value: string): string | null {
@@ -67,6 +75,23 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
   const passwordInput = useRef<HTMLInputElement>(null);
   // Read once on first render — a returning admin has a flag from a prior sign-in.
   const [returning] = useState(() => localStorage.getItem(RETURNING_KEY) === '1');
+  // Hevalo above the form: it watches the address being typed, shuts its eyes for the password (and
+  // peeks when it is shown), thinks while the server answers, and is pleased or sorry with the answer
+  const [typing, setTyping] = useState<'email' | 'password' | null>('email');
+  const [answer, setAnswer] = useState<'happy' | 'sad' | null>(null);
+  const answerTimer = useRef(0);
+  useEffect(() => () => window.clearTimeout(answerTimer.current), []);
+  const mood: MarkMood = answer ?? (busy ? 'thinking' : typing === 'password' ? (showPw ? 'peek' : 'shy') : 'idle');
+  const gaze = useCallback(() => {
+    if (typing === 'email' && emailInput.current) return caretPoint(emailInput.current);
+    if (typing === 'password' && showPw && passwordInput.current) return caretPoint(passwordInput.current);
+    return undefined;
+  }, [typing, showPw]);
+  const react = (how: 'happy' | 'sad', ms: number): void => {
+    window.clearTimeout(answerTimer.current);
+    setAnswer(how);
+    answerTimer.current = window.setTimeout(() => setAnswer(null), ms);
+  };
 
   // the pause is over: the message that said to wait would now be wrong
   useEffect(() => {
@@ -93,10 +118,15 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
     try {
       await login(email.trim(), password, remember);
       localStorage.setItem(RETURNING_KEY, '1');
+      if (!stillWanted()) {
+        react('happy', HAPPY_MS);
+        await new Promise((done) => window.setTimeout(done, HAPPY_MS));
+      }
       onDone();
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) setPausedUntil(Date.now() + (err.retryAfterSec ?? 60) * 1000);
       setError(signInProblem(err));
+      react('sad', SAD_MS);
     } finally {
       setBusy(false);
     }
@@ -120,12 +150,13 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
 
   return (
     <div className="login">
-      <form className="login-card" onSubmit={(e) => void submit(e)} noValidate aria-labelledby={`${id}-title`}>
-        <div className="login-top">
-          <span className="login-brand">
-            <HevaloMark size={40} />
-            Hevalo
-          </span>
+      <form className="login-card has-hero has-peek" onSubmit={(e) => void submit(e)} noValidate aria-labelledby={`${id}-title`}>
+        <div className="login-hero is-peek">
+          <HevaloMark art="peek" size={180} mood={mood} gaze={gaze} lively />
+        </div>
+        <div className="login-top is-centred">
+          <span className="login-brand">Hevalo</span>
+          <span className="login-dot" aria-hidden="true" />
           <span>Admin console</span>
         </div>
 
@@ -155,8 +186,14 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
                 setEmail(e.target.value);
                 if (emailError) setEmailError(emailProblem(e.target.value));
               }}
+              onFocus={() => setTyping('email')}
+              // the caret moved: the eyes follow it
+              onSelect={nudge}
               // an empty box is not wrong yet: it is said on "Sign in", not on the way past
-              onBlur={() => setEmailError(email.trim() ? emailProblem(email) : null)}
+              onBlur={() => {
+                setTyping(null);
+                setEmailError(email.trim() ? emailProblem(email) : null);
+              }}
               autoFocus
             />
           </div>
@@ -185,6 +222,12 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
                 setPassword(e.target.value);
                 if (e.target.value) setPasswordError(null);
               }}
+              onFocus={() => setTyping('password')}
+              onSelect={nudge}
+              onBlur={(e) => {
+                // showing the password is still typing it: the eye stays half open
+                if (!e.relatedTarget?.classList.contains('login-eye')) setTyping(null);
+              }}
             />
             {/* one name, and pressed or not: a name that also flipped said "Hide password, pressed" */}
             <button
@@ -194,6 +237,9 @@ export function Login({ onDone }: { onDone: () => void }): React.JSX.Element {
               title={showPw ? 'Hide password' : 'Show password'}
               aria-pressed={showPw}
               onClick={() => setShowPw((v) => !v)}
+              onBlur={(e) => {
+                if (e.relatedTarget !== passwordInput.current) setTyping(null);
+              }}
             >
               <EyeIcon off={showPw} />
             </button>

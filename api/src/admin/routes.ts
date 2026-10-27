@@ -68,6 +68,14 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   // now demands, locking it out of everything with no way back.
   const adminOnly = [requireAuth, requireRoles(...PRIVILEGED_ROLES)];
 
+  /** A wrong code goes in the security log; a wrong code that locks the codes is critical there. */
+  const recordWrongCode = (userId: string, res: { reason: string; retryAfterSec?: number }, step: 'setup' | 'sign-in') =>
+    app.securityLog.record(res.reason === 'locked' ? 'console.2fa_locked' : 'console.2fa_failed', {
+      userId,
+      staff: true,
+      details: { step, ...(res.reason === 'locked' ? { retryAfterSec: res.retryAfterSec } : {}) },
+    });
+
   /**
    * Start 2FA enrollment: returns the secret + otpauth URI (show once as QR).
    *
@@ -81,13 +89,17 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
   app.post('/admin/2fa/enroll', { config: { skipValidation: true }, preHandler: adminOnly }, async (req, reply) => {
     const state = await totp.state(req.user!.id, req.user!.familyId);
     if (state.enrolled && !state.verified) {
+      await app.securityLog.record('console.2fa_reset_refused', { userId: req.user!.id, staff: true });
       return reply.code(403).send({
         code: 'TOTP_ALREADY_ENROLLED',
         message: 'this account already has 2FA — enter a code, or ask another admin to reset it',
         requestId: req.id,
       });
     }
-    return totp.enroll(req.user!.id);
+    const enrolled = await totp.enroll(req.user!.id);
+    // a fresh secret for an account without one; replacing a confirmed one is the "enrolled" event
+    if (!state.enrolled) await app.securityLog.record('console.2fa_enroll_started', { userId: req.user!.id, staff: true });
+    return enrolled;
   });
 
   /**
@@ -129,9 +141,11 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
       // this session — otherwise enrollment would end by asking for a second code
       const res = await totp.confirm(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
       if (!res.ok) {
+        await recordWrongCode(req.user!.id, res, 'setup');
         if (res.reason === 'locked') throw codeLocked(res.retryAfterSec);
         return reply.code(400).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
       }
+      await app.securityLog.record('console.2fa_enrolled', { userId: req.user!.id, staff: true });
       return { confirmed: true };
     },
   );
@@ -148,9 +162,11 @@ export function registerAdminRoutes(app: FastifyInstance, totp: AdminTotpService
       }
       const res = await totp.verify(req.user!.id, (req.body as z.infer<typeof codeBody>).code, req.user!.familyId);
       if (!res.ok) {
+        await recordWrongCode(req.user!.id, res, 'sign-in');
         if (res.reason === 'locked') throw codeLocked(res.retryAfterSec);
         return reply.code(401).send({ code: 'INVALID_CODE', message: 'invalid or expired code' });
       }
+      await app.securityLog.record('console.2fa_passed', { userId: req.user!.id, staff: true });
       return { ok: true, capabilities: capabilitiesFor(req.user!.roles) };
     },
   );

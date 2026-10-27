@@ -8,6 +8,7 @@ import { leagueName } from '../ranks/names';
 import { RankList, RankRow } from '../ui/RankRow';
 import { PlayerChip } from '../ui/PlayerChip';
 import { InviteCardBody } from '../ui/InviteCardBody';
+import { useAvatarSrc } from '../art/overrides';
 import {
   BATTLE_GUESSES,
   HEVAL,
@@ -52,10 +53,12 @@ export function Mock({ label, className, children }: { label: string; className?
 
 /** A face from the app's own avatar set. Decorative: the mock's label names who is there. */
 function Face({ src, size = 36, lazy = true }: { src: string; size?: number; lazy?: boolean }): React.JSX.Element {
+  // a default deer an admin replaced is shown as its new picture, as in the app
+  const face = useAvatarSrc(src) ?? src;
   return (
     <img
       className="lp-face"
-      src={src}
+      src={face}
       alt=""
       width={size}
       height={size}

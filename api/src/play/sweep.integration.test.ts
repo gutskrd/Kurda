@@ -93,7 +93,8 @@ describe.skipIf(!DATABASE_URL)('play sweep (integration)', () => {
     await play.sweep();
     const status = (await pool.query<{ status: string }>(`SELECT status FROM play_invites WHERE id = $1`, [invite.id])).rows[0]!.status;
     expect(status).toBe('expired');
-    const updates = notifier.told.filter((t) => t.event.type === 'play_invite_update');
+    // the sweep is for every invite in the database: other tests' expired invites are told about too
+    const updates = notifier.told.filter((t) => t.event.type === 'play_invite_update' && [friend, host].includes(t.userId));
     expect(updates.map((u) => u.userId).sort()).toEqual([friend, host].sort());
     expect((await pool.query(`SELECT 1 FROM play_invites WHERE id = $1`, [old.rows[0]!.id])).rowCount).toBe(0);
 

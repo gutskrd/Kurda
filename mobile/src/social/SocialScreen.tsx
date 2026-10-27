@@ -11,7 +11,7 @@ import { ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import { PlayWithButton } from '../play/PlayWithButton';
 import type { TranslationKey } from '../i18n/translations';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -153,7 +153,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
       haptic('tap');
       void client.post('/friends/requests', { userId }).then((res) => {
         // a request that did not go — a full friend list, too many out — says why (limits/limitCopy.ts)
-        if (!res.ok) Alert.alert(describeError(res.error, t));
+        if (!res.ok && !isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
         loadLists();
       });
     },

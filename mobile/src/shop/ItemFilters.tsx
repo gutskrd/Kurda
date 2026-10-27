@@ -378,6 +378,10 @@ export const KIND_GLYPH: Record<ItemCategory, IconName> = {
  * is, cropped to fill; an icon whole on a soft square (they are cut-outs, and
  * a circle would clip them); anything without art — the Kurdish tag — as its
  * kind's glyph on the same square, so a row never has a hole in it.
+ *
+ * Any kind can have a picture: a power-up, a streak freeze or a tag an admin
+ * gave one is drawn from it, whole on the square as an icon is. A picture
+ * that will not load is drawn as the glyph, as one never given is.
  */
 export function ItemArt({
   category,
@@ -394,7 +398,9 @@ export function ItemArt({
 }): React.JSX.Element {
   const { colors } = useTheme();
   const kind = itemCategory(category);
-  const uri = assetUrl(path);
+  const [broken, setBroken] = useState<string | null>(null);
+  const resolved = assetUrl(path);
+  const uri = resolved !== broken ? resolved : null;
   const wide = kind === 'background';
   const box: ViewStyle =
     width === undefined
@@ -412,6 +418,7 @@ export function ItemArt({
           source={{ uri }}
           style={wide ? styles.fill : styles.inset}
           resizeMode={wide ? 'cover' : 'contain'}
+          onError={() => setBroken(uri)}
           accessibilityIgnoresInvertColors
         />
       ) : (

@@ -431,3 +431,11 @@ export * from './feed-sort.js';
  * of them takes, so the API and both apps agree on the numbers and the words.
  */
 export * from './limits.js';
+// the security log's kinds of event, how serious each is and how the panel names it
+export * from './security-log.js';
+// every picture an admin can replace with an upload, and how the apps find the replacement
+export * from './art-slots.js';
+// the addresses vulnerability scanners try, which no Hevalo page can ever be
+export * from './scanner-paths.js';
+// taking Hevalo offline for a while from the admin, and what people see meanwhile
+export * from './maintenance.js';

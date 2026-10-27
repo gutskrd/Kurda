@@ -25,6 +25,8 @@
  */
 
 import { SOURCES, SOURCE_ORDER, type Source } from './teaching/sources';
+// the one file, not the package: its index would bring the whole of @kurda/shared into the edge script
+import { isScannerProbe } from '@kurda/shared/src/scanner-paths';
 
 /*
  * The two pieces of the Workers runtime this file uses, declared here rather
@@ -557,9 +559,34 @@ async function ferheng(assets: Response, url: URL, env: Env, base: string): Prom
   return new Response(page.body, { status: 404, headers });
 }
 
+/**
+ * A scanner's probe, answered as what it is: nothing lives there.
+ *
+ * Without this the asset binding answered /wp-login.php, /.env and every PHP
+ * script a scanner tried with the app shell and a 200, the same as a real page,
+ * which told it something was there and was worth another try. Hevalo runs no
+ * PHP and keeps no files like these (@kurda/shared scanner-paths.ts), so they
+ * get a plain 404 before the asset binding is asked. A real file is never
+ * here: an address that matches one is served by the asset binding without
+ * running this script at all.
+ */
+function notFound(): Response {
+  return new Response('Not found\n', {
+    status: 404,
+    headers: {
+      'content-type': 'text/plain; charset=utf-8',
+      'cache-control': 'public, max-age=86400',
+      'x-content-type-options': 'nosniff',
+      'x-robots-tag': 'noindex',
+    },
+  });
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (isScannerProbe(url.pathname, url.search)) return notFound();
 
     /*
      * Built here rather than shipped as a file in the bundle, because it has to
@@ -628,4 +655,5 @@ export const __test = {
   REPLACED,
   ferheng,
   dictionaryOf,
+  notFound,
 };

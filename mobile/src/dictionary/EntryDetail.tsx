@@ -16,7 +16,7 @@ import { SenseSection } from './SenseSection';
 import { SourceLine } from './SourceLine';
 import type { Entry } from './types';
 import { useI18n } from '../i18n/I18nContext';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 
 /** A pronunciation's speaker and timeline, which the entry sends beside its URL rather than as one voice. */
 function voiceOf(recording: DictionaryAudio): RecordingVoice | null {
@@ -58,7 +58,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
       if (res.ok) return;
       // it did not take: the star goes back, and a full vocabulary says why (limits/limitCopy.ts)
       setSaved(!next);
-      Alert.alert(describeError(res.error, t));
+      if (!isMaintenance(res.error)) Alert.alert(describeError(res.error, t));
     });
   };
 

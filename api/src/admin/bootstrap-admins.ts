@@ -1,4 +1,5 @@
 import type pg from 'pg';
+import type { SecurityRecorder } from '../security/log.js';
 import { AuditService } from './audit-service.js';
 import { maskEmail } from '../observability/redact.js';
 
@@ -82,6 +83,8 @@ export async function grantBootstrapAdmins(
   pool: pg.Pool,
   rawEmails: string,
   log: BootstrapLogger,
+  /** where each grant is also recorded as a change of staff access (security/log.ts) */
+  security?: SecurityRecorder,
 ): Promise<BootstrapResult> {
   const result: BootstrapResult = { granted: [], unverified: [], missing: [], skipped: [] };
   const emails = parseAdminEmails(rawEmails);
@@ -150,6 +153,11 @@ export async function grantBootstrapAdmins(
         reason: 'BOOTSTRAP_ADMIN_EMAILS allowlist (verified address)',
       });
       await client.query('COMMIT');
+      await security?.record('access.role_granted', {
+        userId: user.id,
+        staff: true,
+        details: { roles: updated.rows[0]!.roles.filter((r) => !user.roles.includes(r)), by: 'the server’s admin list' },
+      });
       result.granted.push(email);
       log.info({ address: maskEmail(email), userId: user.id, roles: updated.rows[0]!.roles }, 'bootstrap admin: granted');
     } catch (err) {

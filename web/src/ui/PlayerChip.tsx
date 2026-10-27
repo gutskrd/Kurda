@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { PersonGlyph } from '../components/icons';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * One player in a head-to-head game: face, name, how they are doing, and — for
@@ -29,11 +30,12 @@ export function PlayerChip({
   /** something to do about this player, at the chip's end (the ⋯ that reports them) */
   action?: ReactNode;
 }): React.JSX.Element {
+  const face = useAvatarSrc(avatarUrl);
   return (
     <div className={`player${done ? ' is-done' : ''}`}>
       <span className="player-face" aria-hidden="true">
-        {avatarUrl ? (
-          <img src={avatarUrl} alt="" width={34} height={34} loading={lazy ? 'lazy' : undefined} decoding="async" />
+        {face ? (
+          <img src={face} alt="" width={34} height={34} loading={lazy ? 'lazy' : undefined} decoding="async" />
         ) : (
           <PersonGlyph size={18} />
         )}

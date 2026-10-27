@@ -11,6 +11,7 @@ import { WHOLE_PICTURE, type Frame } from '../images/frame';
 import { UNTOUCHED, compose, forgetGraded } from '../images/composition';
 import { useT } from '../i18n/I18nProvider';
 import { SendError } from '../reports/SendError';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * An avatar is never shown larger than a hero portrait, and usually at 32px in
@@ -53,7 +54,7 @@ export function ProfilePhotoPicker({
   /** the browser could not read it, so it goes up untouched */
   const [rawOnly, setRawOnly] = useState(false);
 
-  const avatar = me.avatarUrl ?? me.profilePhotoUrl;
+  const avatar = useAvatarSrc(me.avatarUrl ?? me.profilePhotoUrl);
   const hasPhoto = Boolean(me.profilePhotoUrl);
 
   useEffect(() => {

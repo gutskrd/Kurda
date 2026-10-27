@@ -1,7 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Alert } from 'react-native';
-import { describeError } from '../api/errors';
+import { describeError, isMaintenance } from '../api/errors';
 import { useAuth } from '../auth/AuthContext';
 import { useI18n } from '../i18n/I18nContext';
 import { visibilityOffered, type Visibility } from '../social/format';
@@ -60,7 +60,7 @@ export function useMyAccount(): MyAccount {
     void client.put('/me/privacy', { visibility: next }).then((res) => {
       if (res.ok) return;
       setVisibility(before);
-      Alert.alert(t('settings.privacy.title'), describeError(res.error, t));
+      if (!isMaintenance(res.error)) Alert.alert(t('settings.privacy.title'), describeError(res.error, t));
     });
   };
 
@@ -75,7 +75,7 @@ export function useMyAccount(): MyAccount {
     void client.patch('/me', { leaguesEnabled: on }).then((res) => {
       if (res.ok) return;
       setLeagues(!on);
-      Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
+      if (!isMaintenance(res.error)) Alert.alert(t('settings.leagues.title'), describeError(res.error, t));
     });
   };
 

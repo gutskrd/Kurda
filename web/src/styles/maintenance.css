@@ -1,0 +1,103 @@
+/*
+ * Hevalo offline for a while (maintenance/MaintenanceGate.tsx): one calm
+ * column in place of the app, on the page's own colour in either scheme. It
+ * fades in, and with reduced motion it is simply there.
+ */
+.maintenance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-5);
+  width: 100%;
+  max-width: 520px;
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+  text-align: center;
+  animation: maintenance-in var(--dur-slow) var(--ease-out) both;
+}
+@keyframes maintenance-in {
+  from {
+    opacity: 0;
+  }
+}
+.maintenance .brand {
+  font-size: 1.05rem;
+}
+.maintenance .brand-mark {
+  width: 24px;
+  height: 24px;
+}
+
+.maintenance-picture {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border-radius: 20px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+.maintenance-picture img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+/* the deer on the lilac of the app icon's card, whole rather than cropped */
+.maintenance-picture.is-own {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: radial-gradient(circle at 50% 58%, rgba(184, 116, 240, 0.3), rgba(184, 116, 240, 0.1) 72%);
+}
+.maintenance-picture.is-own img {
+  width: auto;
+  height: 72%;
+  object-fit: contain;
+}
+
+.maintenance-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+/* focused so it is read first, not to be pressed */
+.maintenance-title:focus {
+  outline: none;
+}
+.maintenance-message {
+  max-width: 46ch;
+  margin: var(--space-2) auto 0;
+  color: var(--ink-3);
+  font-size: 1rem;
+  /* the admin's own line breaks */
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.maintenance-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.maintenance .btn {
+  min-height: 44px;
+}
+.maintenance-note {
+  margin-top: calc(-1 * var(--space-2));
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .maintenance {
+    animation: none;
+  }
+}

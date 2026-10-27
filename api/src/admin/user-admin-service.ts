@@ -5,9 +5,9 @@ import { banState, type BanState } from './moderation.js';
 import { PRIVILEGED_ROLES } from './roles.js';
 
 /** The one role a superadmin gives from a person's page (`setContentEditor`). */
-const CONTENT_EDITOR = 'content_editor';
+export const CONTENT_EDITOR = 'content_editor';
 
-export type RoleResult = { ok: true; roles: string[] } | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'EMAIL_UNVERIFIED' };
+export type RoleResult = { ok: true; roles: string[]; changed: boolean } | { ok: false; code: 'NOT_FOUND' | 'USER_BANNED' | 'EMAIL_UNVERIFIED' };
 import { minorSql } from '../users/age.js';
 import { AppError } from '../plugins/errors.js';
 import { escapeLike } from '../db/like.js';
@@ -500,7 +500,11 @@ export class UserAdminService {
         ]);
       }
       await client.query('COMMIT');
-      return { ok: true, roles: on === has ? user.roles : on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR) };
+      return {
+        ok: true,
+        roles: on === has ? user.roles : on ? [...user.roles, CONTENT_EDITOR] : user.roles.filter((r) => r !== CONTENT_EDITOR),
+        changed: on !== has,
+      };
     } catch (err) {
       await client.query('ROLLBACK').catch(() => undefined);
       throw err;

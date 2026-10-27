@@ -886,13 +886,17 @@ button.feature {
 .cosmetic-thumb-tag {
   aspect-ratio: 1;
 }
-.cosmetic-thumb img {
+.cosmetic-thumb img,
+.cosmetic-thumb video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.cosmetic-thumb-icon img {
+/* a square picture (an icon, or one uploaded for a tag or a frame) is shown whole, never cropped */
+.cosmetic-thumb-icon img,
+.cosmetic-thumb-tag > img,
+.cosmetic-thumb-frame > img {
   object-fit: contain;
 }
 .cosmetic-thumb-empty {
@@ -1054,13 +1058,18 @@ button.feature {
   aspect-ratio: 1;
   max-width: 96px;
 }
-.shop-thumb img {
+.shop-thumb img,
+.shop-thumb video {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
-.shop-thumb-icon img {
+/* a square picture (an icon, or one uploaded for a tag, a power-up…) is shown whole, never cropped */
+.shop-thumb-icon img,
+.shop-thumb-tag img,
+.shop-thumb-frame img,
+.shop-thumb-other img {
   object-fit: contain;
 }
 .shop-thumb-empty {

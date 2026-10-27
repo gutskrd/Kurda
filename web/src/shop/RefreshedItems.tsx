@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import {
+  itemCategory,
   shouldShowRefreshNotice,
   type ItemRefund,
   type RefreshedInventory,
@@ -12,6 +13,8 @@ import { describeError } from '../lib/api';
 import type { ApiError, InventoryItem } from '../lib/types';
 import { Button } from '../components/Button';
 import { Modal } from '../components/Modal';
+import { ItemGlyph } from './ItemGlyph';
+import { ItemPicture } from './ItemPicture';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import './refreshed.css';
@@ -163,12 +166,14 @@ export function ReturnableItems({
       {returnable.length > 0 && (
         <div className="shop-grid">
           {returnable.map((item) => (
-            <figure className={`shop-tile shop-tile-${item.category}`} key={item.sku}>
-              <div className={`shop-thumb shop-thumb-${item.category}`}>
+            <figure className={`shop-tile shop-tile-${itemCategory(item.category)}`} key={item.sku}>
+              <div className={`shop-thumb shop-thumb-${itemCategory(item.category)}`}>
                 {item.assetUrl ? (
-                  <img src={item.assetUrl} alt="" loading="lazy" />
+                  <ItemPicture src={item.assetUrl} />
                 ) : (
-                  <span className="shop-thumb-empty" aria-hidden="true" />
+                  <span className="item-glyph" aria-hidden="true">
+                    <ItemGlyph category={item.category} size={34} />
+                  </span>
                 )}
               </div>
               <figcaption className="shop-name" title={item.name}>

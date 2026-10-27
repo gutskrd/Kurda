@@ -93,9 +93,12 @@ body {
    * scrolls, and it sits UNDER a scrim (::before) rather than behind raw text:
    * moving light straight behind dense tables destroys legibility, which is the
    * usual way a background like this goes wrong. The base colour stays where
-   * the ribbons cannot be drawn.
+   * the ribbons cannot be drawn: on the root, not here. A body with a
+   * background of its own (while the root has one too) paints it over
+   * everything fixed below zero, the ribbons included, which is how they once
+   * went missing behind a plain black page.
    */
-  background: var(--bg-2);
+  background: transparent;
 }
 body::before {
   content: '';
@@ -468,6 +471,17 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   color: rgba(255, 255, 255, 0.9);
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
+/* Hevalo sits on the card's top edge, half above it, and the name and the title are centred under it */
+.login-card.has-hero { margin-top: 62px; padding-top: 0; }
+.login-hero { display: flex; justify-content: center; margin: -58px 0 16px; }
+.login-top.is-centred { justify-content: center; gap: 10px; margin-bottom: 20px; }
+.login-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+/* the cut-out Hevalo stands behind the card and looks over it, its neck fading into the card's top edge */
+/* the card's edge across its neck, a tenth of the picture up from the bottom (it is 744 by 810) */
+.login-card.has-peek { margin-top: calc(min(180px, 42vw) * 1.0887 * 0.9 + 10px); }
+.login-hero.is-peek { position: relative; display: block; height: calc(min(180px, 42vw) * 1.0887 * 0.1); margin: 0 0 14px; }
+.login-hero.is-peek .hevalo-mark { position: absolute; left: 0; right: 0; bottom: 0; margin: 0 auto; }
+.login-card.has-hero .login-title, .login-card.has-hero .login-welcome { text-align: center; }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
 .login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 

@@ -8,6 +8,8 @@ import { useFontScale } from '../a11y/useFontScale';
 import { initialsAvatar } from './initials';
 import { useI18n } from '../i18n/I18nContext';
 import { assetUrl } from '../api/env';
+import { useArtOverrides } from '../art/overrides';
+import { profilePictureUrl } from './cosmetics';
 
 /**
  * Monogram avatar shown when a user has no profile photo (KUR-178). Deterministic
@@ -34,20 +36,22 @@ export function InitialsAvatar({
   const { t } = useI18n();
   // a photo that will not load falls back to the monogram rather than to a
   // hole: the server hands out site-relative paths for the stock avatars, and
-  // an empty circle reads as a bug to everyone who sees it
-  const [broken, setBroken] = useState(false);
+  // an empty circle reads as a bug to everyone who sees it. A default avatar
+  // replaced in the admin falls back to the one that ships first.
+  const [broken, setBroken] = useState<readonly string[]>([]);
   const { initials, backgroundColor: baseColor, textColor } = initialsAvatar(name, id);
   // honour Dynamic Type, but tightly so the monogram stays inside the circle.
   // Above the early return, because a photo that fails swaps the branch mid-life
   // and a hook that only runs on one side would change the hook count.
   const fontScale = useFontScale({ max: 1.15 });
+  const overrides = useArtOverrides();
 
-  const resolved = assetUrl(photoUrl);
-  if (resolved && !broken) {
+  const resolved = [profilePictureUrl(photoUrl, overrides), assetUrl(photoUrl)].find((url): url is string => !!url && !broken.includes(url));
+  if (resolved) {
     return (
       <Image
         source={{ uri: resolved }}
-        onError={() => setBroken(true)}
+        onError={() => setBroken((b) => [...b, resolved])}
         accessibilityRole="image"
         accessibilityLabel={name ? t('profile.avatarOf', { name }) : t('profile.photoLabel')}
         style={[{ width: size, height: size, borderRadius: size / 2 }, style as StyleProp<ImageStyle>]}

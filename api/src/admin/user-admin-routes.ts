@@ -5,7 +5,7 @@ import { hasCapability } from './roles.js';
 import { requireAdmin, requireCapability } from './routes.js';
 import type { AdminTotpService } from './totp-service.js';
 import { expiryFrom, normalizeReason } from './moderation.js';
-import { USER_FILTERS, USERS_PAGE_MAX, type UserFilter } from './user-admin-service.js';
+import { CONTENT_EDITOR, USER_FILTERS, USERS_PAGE_MAX, type UserFilter } from './user-admin-service.js';
 import type { UserAdminService } from './user-admin-service.js';
 
 const idParam = z.object({ id: z.uuid() });
@@ -141,8 +141,18 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
       const b = req.body as z.infer<typeof editorBody>;
       const reason = normalizeReason(b.reason);
       if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
-      const res = await users.setContentEditor(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.on, reason);
-      if (res.ok) return { ok: true, roles: res.roles };
+      const target = (req.params as z.infer<typeof idParam>).id;
+      const res = await users.setContentEditor(req.user!.id, target, b.on, reason);
+      if (res.ok) {
+        if (res.changed) {
+          await app.securityLog.record(b.on ? 'access.role_granted' : 'access.role_revoked', {
+            userId: target,
+            staff: true,
+            details: { roles: [CONTENT_EDITOR], by: 'a superadmin' },
+          });
+        }
+        return { ok: true, roles: res.roles };
+      }
       if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
       if (res.code === 'USER_BANNED') return reply.code(409).send({ code: res.code, message: 'a banned account cannot be given a staff role' });
       return reply.code(409).send({ code: res.code, message: 'the account has not confirmed its email address yet' });

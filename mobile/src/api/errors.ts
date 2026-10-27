@@ -15,7 +15,7 @@
  * module with no React in it — the same shape the browser's `describeError`
  * has, so the two apps answer the same failure with the same sentence.
  */
-import { isMissingRoute } from '@kurda/shared';
+import { isMissingRoute, MAINTENANCE_CODE } from '@kurda/shared';
 import type { TranslationKey } from '../i18n/translations';
 import type { ApiError } from './types';
 import { FIELD_ERROR_VARS, PASSWORD_RULES_KEY } from '../auth/validators';
@@ -79,6 +79,8 @@ export const CODE_COPY: Record<string, TranslationKey> = {
   OPEN_GROUPS_ADULTS_ONLY: 'error.code.openGroupsAdultsOnly',
   VISIBILITY_NOT_ALLOWED: 'error.code.visibilityNotAllowed',
   LEARN_FIRST: 'error.code.learnFirst',
+  // Hevalo offline for a while: the screen over the app says the rest (maintenance/)
+  MAINTENANCE: 'maintenance.title',
 };
 /**
  * Codes whose code alone is not enough: which rule a password or a username
@@ -184,6 +186,15 @@ export function describeError(error: ApiError, t: Translate): string {
     default:
       return error.message || t('error.generic');
   }
+}
+
+/**
+ * Was this call refused because Hevalo is offline for a while? The screen over
+ * the app says so already, so a screen does not answer it with an alert of its
+ * own on top.
+ */
+export function isMaintenance(error: ApiError): boolean {
+  return error.code === MAINTENANCE_CODE;
 }
 
 /** Does this failure look like lost connectivity? Drives the offline banner. */

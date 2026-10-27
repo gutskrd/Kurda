@@ -28,6 +28,7 @@ import {
 } from '../ui';
 import { ArtCatalogue } from '../shop/ArtCatalogue';
 import { ArtForm } from '../shop/ArtForm';
+import { ArtPicker } from '../shop/ArtPicker';
 import { KIND_NAME } from '../shop/art';
 import { RemoveDialog, removedText } from '../shop/RemoveDialog';
 import {
@@ -406,6 +407,7 @@ function ItemForm({
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [problem, setProblem] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   // the server's line is the one that counts: once it has said "needs approval", the next save asks for one
   const [serverSaysDear, setServerSaysDear] = useState(false);
@@ -485,7 +487,7 @@ function ItemForm({
       footer={
         <FormActions>
           <Button onClick={onClose}>Cancel</Button>
-          <Button variant="primary" type="submit" form="shop-item-form" busy={busy}>
+          <Button variant="primary" type="submit" form="shop-item-form" busy={busy} disabled={uploading}>
             {busy ? 'Saving…' : dear ? 'Send for approval' : item ? 'Save' : 'Add item'}
           </Button>
         </FormActions>
@@ -541,17 +543,22 @@ function ItemForm({
         </FieldRow>
         <FieldRow>
           <TextInput label="Order" hint="Lower shows first in its category." inputMode="numeric" value={order} onChange={(e) => setOrder(e.target.value.replace(/\D/g, ''))} error={errors.order} />
-          <TextInput
-            label="Art key"
-            hint="The picture the app shows for it. Change it only to a key the art set has."
-            value={assetKey}
-            onChange={(e) => setAssetKey(e.target.value)}
-            maxLength={200}
-            autoCapitalize="off"
-            spellCheck={false}
-            placeholder="backgrounds/made-20-newroz.webp"
-          />
         </FieldRow>
+        {/* any item may carry a square picture; without one the apps draw the glyph of its kind */}
+        <ArtPicker
+          kind="icon"
+          optional
+          currentUrl={assetKey && assetKey === (item?.assetKey ?? '') ? (item?.assetUrl ?? null) : null}
+          onChange={(art) => {
+            if (art) setAssetKey(art.key);
+          }}
+          onBusy={setUploading}
+        />
+        {assetKey && (
+          <Button variant="ghost" onClick={() => setAssetKey('')}>
+            Show its glyph instead of a picture
+          </Button>
+        )}
         <Checkbox label="On sale" hint="Off takes it out of the shop for now. Anyone who owns it keeps it." checked={inStock} onChange={setInStock} />
         <Checkbox label="One per person" hint="Someone who owns it no longer sees it in the shop." checked={isUnique} onChange={setIsUnique} />
         <Checkbox label="Included with Premium" hint="Anyone with Premium can use it without buying it, while it is listed." checked={premiumOnly} onChange={setPremiumOnly} />

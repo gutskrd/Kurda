@@ -18,8 +18,10 @@ import {
   useIdPrefix,
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
+import { ItemPicture } from '../shop/ItemPicture';
 import { SeasonFrame, frameTier } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
+import { useAvatarSrc } from '../art/overrides';
 
 /** The kinds the inventory keeps, in the shared order. Tags only appear once one is owned. */
 type Kind = 'background' | 'icon' | 'frame' | 'tag';
@@ -354,6 +356,7 @@ function CosmeticTile({
   const canAfford = free || (balance != null && tile.price != null && balance >= tile.price);
   const disabled = busy !== null;
   const tier = tile.category === 'frame' ? frameTier(tile.sku) : null;
+  const face = useAvatarSrc(avatarUrl);
 
   return (
     <figure className={`cosmetic-tile${equipped ? ' is-equipped' : ''}`}>
@@ -362,11 +365,11 @@ function CosmeticTile({
           // the frame round your own face, as everyone else will see it
           <span className="cosmetic-frame" aria-hidden="true">
             <SeasonFrame tier={tier} size={88} title={tile.name}>
-              {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="art-frame-blank" />}
+              {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
             </SeasonFrame>
           </span>
         ) : tile.assetUrl ? (
-          <img src={tile.assetUrl} alt="" loading="lazy" />
+          <ItemPicture src={tile.assetUrl} />
         ) : (
           <span className="item-glyph" aria-hidden="true">
             <ItemGlyph category={tile.category} size={30} />

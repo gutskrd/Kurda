@@ -9,6 +9,7 @@ import { ErrorState, Loading } from '../components/states';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { RankEmblem, SeasonFrame, frameTier } from './art';
 import { gameName, rankTierNamed, seasonDaysLeft, seasonNamed, withMeaning } from './names';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * The season (contract 4 §R5, §U): its name, the days left said calmly, what
@@ -173,6 +174,7 @@ function groupBySeason(list: SeasonEmblem[]): Array<[string, SeasonEmblem[]]> {
 function RewardRow({ tier, gems, avatarUrl }: { tier: RankTier; gems: number; avatarUrl: string | null }): React.JSX.Element {
   const t = useT();
   const named = rankTierNamed(t, tier);
+  const face = useAvatarSrc(avatarUrl);
   return (
     <li className={`season-reward tier-${tier}`}>
       <RankEmblem tier={tier} size={56} title={withMeaning(t, named)} />
@@ -182,7 +184,7 @@ function RewardRow({ tier, gems, avatarUrl }: { tier: RankTier; gems: number; av
       </span>
       <span className="season-reward-frame">
         <SeasonFrame tier={tier} size={56} title={t('seasons.frameTitle', { tier: named.name })}>
-          {avatarUrl ? <img src={avatarUrl} alt="" /> : <span className="art-frame-blank" />}
+          {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
         </SeasonFrame>
       </span>
       <span className="season-reward-gems">
@@ -211,6 +213,7 @@ function LastReward({
   const [busy, setBusy] = useState(false);
   const wearing = reward.frameSku !== null && worn === reward.frameSku;
   const tier = frameTier(reward.frameSku) ?? reward.tier;
+  const face = useAvatarSrc(user?.avatarUrl);
 
   async function wear(on: boolean): Promise<void> {
     setBusy(true);
@@ -223,7 +226,7 @@ function LastReward({
   return (
     <div className={`season-last tier-${tier}`}>
       <SeasonFrame tier={tier} size={72} title={t('seasons.frameTitle', { tier: rankTierNamed(t, tier).name })}>
-        {user?.avatarUrl ? <img src={user.avatarUrl} alt="" /> : <span className="art-frame-blank" />}
+        {face ? <img src={face} alt="" /> : <span className="art-frame-blank" />}
       </SeasonFrame>
       <div className="season-last-text">
         <p className="season-last-title">{t('seasons.lastReward', { tier: rankTierNamed(t, reward.tier).name })}</p>

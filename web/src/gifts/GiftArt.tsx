@@ -1,6 +1,7 @@
 import { useId, type CSSProperties } from 'react';
 import type { GiftTier } from '@kurda/shared';
 import { ItemGlyph } from '../shop/ItemGlyph';
+import { ItemPicture } from '../shop/ItemPicture';
 import { scatter } from './motion';
 
 /**
@@ -187,7 +188,7 @@ export function Confetti({ count = 18, spread = 1, className }: { count?: number
   );
 }
 
-/** The item itself: its picture when it has one, its kind's glyph when not (a tag is drawn as a tag). */
+/** The item itself: its picture when it has one, of any kind, its kind's glyph when not (a tag is drawn as a tag). */
 export function GiftItemArt({
   assetUrl,
   category,
@@ -205,7 +206,7 @@ export function GiftItemArt({
       style={{ width: size, height: size }}
       aria-hidden="true"
     >
-      {assetUrl ? <img src={assetUrl} alt="" loading="lazy" decoding="async" /> : <ItemGlyph category={category} size={Math.round(size * 0.45)} />}
+      {assetUrl ? <ItemPicture src={assetUrl} /> : <ItemGlyph category={category} size={Math.round(size * 0.45)} />}
     </span>
   );
 }
