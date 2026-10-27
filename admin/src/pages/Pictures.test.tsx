@@ -42,7 +42,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-describe('the pictures page', () => {
+// sixty badges are drawn on the first tab, which takes a while in a test browser
+describe('the pictures page', { timeout: 20_000 }, () => {
   it('names each slot as an admin would say it', () => {
     expect(slotName({ family: 'rank', key: 'zozan', level: null })).toMatch(/^Zozan/);
     expect(slotName({ family: 'avatar', key: 'default-03', level: null })).toBe('Default 03');
@@ -80,7 +81,7 @@ describe('the pictures page', () => {
     const drawer = await screen.findByRole('dialog');
     expect(within(drawer).getByRole('region', { name: 'Every level' })).toBeInTheDocument();
     expect(within(drawer).getAllByRole('region').length).toBe(levelled.tiers.length + 1);
-  }, 20_000);
+  });
 
   it('puts the original back after asking, and shows what a slot held before', async () => {
     const user = userEvent.setup();

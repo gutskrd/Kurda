@@ -137,7 +137,7 @@ export const NAV: readonly NavEntry[] = [
 
   { id: 'economy', label: 'Overview', title: 'Economy', group: 'economy', icon: 'coins', page: 'economy', access: LEGACY_ADMIN, keywords: 'economy supply drift zer gems' },
   { id: 'shop', label: 'Shop', group: 'economy', icon: 'store', page: 'shop', access: SHOP_EDITORS, keywords: 'items prices catalogue' },
-  { id: 'pictures', label: 'Pictures', group: 'economy', icon: 'upload', page: 'pictures', access: SHOP_EDITORS, keywords: 'art images badges emblems frames avatars banners icons replace upload customise' },
+  { id: 'pictures', label: 'Pictures', group: 'economy', icon: 'upload', page: 'pictures', access: SHOP_EDITORS, keywords: 'art images badges emblems frames avatars icons replace upload customise events' },
   { id: 'gem-rules', label: 'Gem rules', group: 'economy', icon: 'gem', page: 'gem-rules', access: LEGACY_ADMIN, keywords: 'earning' },
   { id: 'fraud', label: 'Fraud', group: 'economy', icon: 'alert', page: 'fraud', access: LEGACY_ADMIN, keywords: 'purchases holds iap' },
   { id: 'approvals', label: 'Approvals', group: 'economy', icon: 'approve', page: 'approvals', access: APPROVERS, keywords: 'config second admin pending' },
