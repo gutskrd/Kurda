@@ -34,12 +34,12 @@ function settled(tone: CompanionTone = 'playful'): CompanionMotion {
 const NOW = 10_000;
 
 describe('companionSvg', () => {
-  const playful = companionSvg({ prefix: 'one', tone: 'playful' });
-  const calm = companionSvg({ prefix: 'two', tone: 'calm' });
+  const playful = companionSvg({ prefix: 'one' });
+  const calm = companionSvg({ prefix: 'two' });
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'hoof-left', 'hoof-right', 'emotes']) {
+    for (const part of ['body', 'head', 'ear-left', 'ear-right', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'hoof-left', 'hoof-right', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -56,9 +56,16 @@ describe('companionSvg', () => {
     expect(ids(playful).every((id) => id.startsWith('one-'))).toBe(true);
   });
 
-  it('gives reading glasses to the console only', () => {
-    expect(calm).toContain('data-cp="glasses"');
-    expect(playful).not.toContain('data-cp="glasses"');
+  it('puts him behind the sill and his forelegs over it, in front of the card', () => {
+    // his body is cut at the sill, his legs only well below it, where they may hang down the card
+    const body = playful.indexOf('data-cp="body"');
+    const legs = playful.indexOf('data-cp="legs"');
+    expect(body).toBeGreaterThan(-1);
+    expect(legs).toBeGreaterThan(body);
+    expect(playful).toContain('clip-path="url(#one-edge)"><g data-cp="body"');
+    expect(playful).toContain('clip-path="url(#one-legs)"><g data-cp="legs"');
+    expect(playful).toContain('data-cp="leg-gate"');
+    expect(playful).not.toContain('glasses');
   });
 });
 
@@ -74,7 +81,7 @@ describe('CompanionMotion', () => {
     m.set({ shown: true }, NOW + 1300);
     const peeking = last(run(m, NOW + 1300, 1200));
     expect(peeking.hoofLeft).toBeCloseTo(1, 2);
-    expect(peeking.hoofRight).toBeCloseTo(0.5, 2);
+    expect(peeking.hoofRight).toBeCloseTo(0.62, 2);
     expect(peeking.eyes).toEqual(['closed', 'half']);
 
     m.set({ field: 'none', shown: false }, NOW + 2600);
@@ -175,6 +182,37 @@ describe('CompanionMotion', () => {
     const c = settled('calm');
     c.react('greet', NOW);
     expect(run(c, NOW, 200)[3]!.emote).toBeNull();
+  });
+
+  it('pops up from behind the sill as he arrives, holding his hooves out on the website, then rests them on it', () => {
+    const m = new CompanionMotion('playful', () => 0.5);
+    m.arrive(0);
+    const frames = run(m, 0, 2000);
+    expect(frames[0]!.enter).toBeCloseTo(1, 2);
+    // a pop: a little past the sill, then settled on it
+    expect(Math.min(...frames.map((f) => f.enter))).toBeLessThan(0);
+    expect(last(frames).enter).toBeCloseTo(0, 3);
+    expect(Math.max(...frames.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
+    expect(last(frames).hoofLeft).toBeCloseTo(0, 2);
+    // the console's comes straight up, hooves down
+    const c = new CompanionMotion('calm', () => 0.5);
+    c.arrive(0);
+    const calm = run(c, 0, 2000);
+    expect(Math.min(...calm.map((f) => f.enter))).toBeGreaterThanOrEqual(-0.001);
+    expect(Math.max(...calm.map((f) => f.hoofLeft))).toBeLessThan(0.01);
+    // and for whoever asks for less motion he is simply there
+    const s = new CompanionMotion('playful', () => 0.5);
+    s.arrive(0);
+    expect(s.step(16, NONE, true).enter).toBe(0);
+  });
+
+  it('drums a hoof on the sill now and then on the website, and not in the console', () => {
+    const lifts = (tone: CompanionTone): number => {
+      const m = settled(tone);
+      return Math.max(...run(m, NOW, 30_000).map((f) => Math.max(f.hoofLeft, f.hoofRight)));
+    };
+    expect(lifts('playful')).toBeGreaterThan(0.08);
+    expect(lifts('calm')).toBeLessThan(0.01);
   });
 
   it('says hello a moment after he arrives, on the website only', () => {
@@ -279,6 +317,7 @@ describe('companionTransforms', () => {
       rise: 0,
       stretch: 1,
       sniff: 1,
+      enter: 0,
       look: { x: 0, y: 0 },
       focus: 0,
       eyes: ['open', 'open'],

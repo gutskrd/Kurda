@@ -472,9 +472,10 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
 /*
- * Hevalo stands behind the card (brand/Companion), his hooves on its top edge: the stage keeps
- * room above the card for him, and the card is drawn over the rest of him. His box is the
- * companion's (shared COMPANION_VIEW, 540 by 606), standing 8 of its 540 below the card's edge.
+ * Hevalo leans in over the card (brand/Companion) as over a windowsill: the stage keeps room
+ * above the card for him, his box (shared COMPANION_VIEW, 540 by 598) stands on the card's top
+ * edge, and he is drawn in front of the card, cut at the edge himself, so his forelegs can hang
+ * down over its top padding (shared COMPANION_OVERHANG, 92 of 540).
  */
 .login-stage {
   --cp-w: min(176px, 40vw);
@@ -483,8 +484,8 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 }
 .login-stage > .login-card { width: 100%; }
 .login-companion {
-  position: absolute; left: 50%; top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
-  width: var(--cp-w); height: calc(var(--cp-w) * 606 / 540); margin-left: calc(var(--cp-w) / -2);
+  position: absolute; z-index: 2; left: 50%; top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
+  width: var(--cp-w); height: calc(var(--cp-w) * 598 / 540); margin-left: calc(var(--cp-w) / -2);
   filter: drop-shadow(0 10px 22px rgba(20, 6, 52, 0.45));
 }
 @media (max-height: 560px) { .login-stage { --cp-w: 112px; } }

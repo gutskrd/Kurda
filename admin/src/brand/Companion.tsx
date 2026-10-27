@@ -9,12 +9,12 @@ export const HAPPY_MS = 650;
 export const stillWanted = (): boolean => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 /**
- * Hevalo beside the console's sign-in forms (@kurda/shared
- * characters/companion), in the console's calm tone: reading glasses, the
- * same reactions as on the website at a smaller size, and no words. He
- * watches the boxes in `watch` as they are filled in, covers his eyes for a
- * password, and takes the form's `status`. Decorative: the form says in
- * words whatever he shows.
+ * Hevalo leaning in over the console's sign-in card (@kurda/shared
+ * characters/companion), in the console's calm tone: the same reactions as
+ * on the website at a smaller size, no bounce and no words. He watches the
+ * boxes in `watch` as they are filled in, covers his eyes for a password,
+ * and takes the form's `status`. Decorative: the form says in words whatever
+ * he shows.
  */
 export function Companion({ status, watch, className }: { status: CompanionStatus; watch: React.RefObject<HTMLElement | null>; className?: string }): React.JSX.Element {
   const host = useRef<HTMLSpanElement>(null);

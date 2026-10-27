@@ -39,10 +39,14 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   pupilLeft: 'pupil-left',
   pupilRight: 'pupil-right',
   nose: 'nose',
+  legs: 'legs',
+  legGate: 'leg-gate',
   legLeft: 'leg-left',
   legRight: 'leg-right',
   hoofLeft: 'hoof-left',
   hoofRight: 'hoof-right',
+  shadowLeft: 'shadow-left',
+  shadowRight: 'shadow-right',
 };
 
 /** How long his eyes stay where a finger left the screen (ms). */
@@ -119,7 +123,7 @@ export class CompanionPlayer {
     private readonly host: HTMLElement,
     { tone, prefix }: CompanionPlayerOptions,
   ) {
-    host.innerHTML = companionSvg({ prefix, tone }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
+    host.innerHTML = companionSvg({ prefix }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
     this.svg = host.querySelector('svg');
     for (const [key, name] of Object.entries(PARTS) as [keyof CompanionTransforms, string][]) {
       const el = host.querySelector(`[data-cp="${name}"]`);

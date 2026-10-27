@@ -69,7 +69,7 @@ describe('AuthCard', () => {
     const { container } = render(<Form />);
     container.querySelector<HTMLInputElement>('#password')!.focus();
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
-    expect(hoofY(container, 'left')).toBeCloseTo(346, 0);
+    expect(hoofY(container, 'left')).toBeCloseTo(344, 0);
   });
 });
 
