@@ -385,8 +385,8 @@ export async function claimArt(executor: Pick<pg.PoolClient, 'query'>, key: stri
  * Let go of uploaded art no item uses any more, inside the caller's
  * transaction (after the item has been changed or deleted): unconfirmed, so
  * the orphan sweep deletes it a day from now. Art another item, a change
- * waiting in Approvals, or a replaced picture (art/overrides.ts) still names is
- * kept. Answers whether it was let go.
+ * waiting in Approvals, a replaced picture (art/overrides.ts) or the offline
+ * screen (maintenance/service.ts) still names is kept. Answers whether it was let go.
  */
 export async function releaseArt(executor: Pick<pg.PoolClient, 'query'>, key: string | null): Promise<boolean> {
   if (!key || !isUploadedArtKey(key)) return false;
@@ -397,6 +397,8 @@ export async function releaseArt(executor: Pick<pg.PoolClient, 'query'>, key: st
       WHERE status = 'pending' AND target = 'shop_item' AND payload->>'assetKey' = $1
      UNION ALL
      SELECT 1 FROM art_overrides WHERE asset_key = $1
+     UNION ALL
+     SELECT 1 FROM maintenance WHERE asset_key = $1
      LIMIT 1`,
     [key],
   );

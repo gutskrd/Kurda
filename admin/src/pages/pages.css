@@ -482,3 +482,28 @@ button.cv-line-main {
 .pic-history-thumb { width: 44px; height: 44px; display: grid; place-items: center; border-radius: 8px; background: var(--control); overflow: hidden; font-size: 11px; }
 .pic-history-thumb img { width: 100%; height: 100%; object-fit: contain; }
 .pic-history-text { display: grid; flex: 1 1 180px; font-size: 13px; }
+
+/* Offline mode: the form, and beside it (under it on a phone) the screen people get instead of the app */
+.off-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; margin-top: 16px; }
+.off-form { display: grid; gap: 16px; min-width: 0; }
+.off-when { border: 0; margin: 0 0 8px; padding: 0; display: grid; gap: 2px; }
+.off-when legend { font-weight: 600; margin-bottom: 4px; padding: 0; }
+.off-preview { position: sticky; top: 16px; margin: 0; display: grid; gap: 10px; }
+.off-preview figcaption { color: var(--text-dim); font-size: 12px; line-height: 1.45; }
+.off-phone {
+  display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  min-height: 520px; padding: 22px 18px 26px; border-radius: 34px; border: 1px solid var(--separator);
+  background: var(--surface-strong); box-shadow: var(--shadow-lg); overflow: hidden;
+}
+.off-brand { font-weight: 700; letter-spacing: 0.02em; color: var(--text-2); font-size: 13px; margin-bottom: 4px; }
+.off-picture { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 16px; background: var(--control); }
+.off-picture.is-default { object-fit: contain; padding: 8px; }
+.off-title { font-size: 19px; line-height: 1.25; margin-top: 6px; overflow-wrap: anywhere; }
+.off-message { margin: 0; color: var(--text-2); font-size: 14px; line-height: 1.5; white-space: pre-line; overflow-wrap: anywhere; }
+.off-pill { padding: 5px 12px; border-radius: 999px; background: var(--control); font-size: 12px; font-weight: 600; }
+.off-button { margin-top: 6px; padding: 9px 20px; border-radius: 999px; border: 1px solid var(--separator); font-weight: 600; font-size: 14px; }
+.off-note { color: var(--text-dim); font-size: 11px; }
+@media (max-width: 900px) {
+  .off-layout { grid-template-columns: minmax(0, 1fr); }
+  .off-preview { position: static; max-width: 320px; margin-inline: auto; width: 100%; }
+}

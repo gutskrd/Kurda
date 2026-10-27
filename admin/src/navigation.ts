@@ -55,7 +55,7 @@ const MODERATORS = { capability: 'moderation.act' } as const;
 const SHOP_EDITORS = { roles: ['admin', 'superadmin'] } as const; // /admin/shop/items, /shop/items, /admin/art
 const APPROVERS = { roles: ['admin', 'superadmin'] } as const; // /admin/config/changes
 const TAG_EDITORS = { roles: ['admin', 'superadmin', 'founder'] } as const; // /admin/tags
-const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security
+const SUPERADMINS = { roles: ['superadmin'] } as const; // /admin/audit, /admin/security, /admin/maintenance
 const FEEDBACK_READERS = { roles: ['moderator', 'superadmin', 'admin', 'support'] } as const; // feedback/routes.ts FEEDBACK_READERS
 const SUPPORT_READERS = { roles: ['superadmin', 'admin', 'support'] } as const; // email/admin-routes.ts SUPPORT_READERS (the settings half: EMAIL_ADMINS)
 /** RANK_TOOL_ROLES in api/src/admin/roles.ts: ranks/routes.ts, leagues/routes.ts, badges/routes.ts */
@@ -143,6 +143,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'approvals', label: 'Approvals', group: 'economy', icon: 'approve', page: 'approvals', access: APPROVERS, keywords: 'config second admin pending' },
 
   { id: 'flags', label: 'Feature flags', group: 'settings', icon: 'toggle', page: 'flags', access: LEGACY_ADMIN, keywords: 'experiments a/b tests' },
+  { id: 'offline', label: 'Offline mode', group: 'settings', icon: 'pause', page: 'offline', access: SUPERADMINS, keywords: 'maintenance downtime take down closed outage pause message' },
   { id: 'security-log', label: 'Security log', group: 'settings', icon: 'shield', page: 'security-log', access: SUPERADMINS, keywords: 'hacks attacks sign-ins failed logins lockouts alerts intruders suspicious' },
   { id: 'audit', label: 'Audit log', group: 'settings', icon: 'list', page: 'audit', access: SUPERADMINS, keywords: 'history trail admin changes' },
   { id: 'security', label: 'My security', group: 'settings', icon: 'lock', page: 'security', access: { anyone: true }, keywords: '2fa two-factor authenticator' },

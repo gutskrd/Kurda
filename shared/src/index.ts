@@ -437,3 +437,5 @@ export * from './security-log.js';
 export * from './art-slots.js';
 // the addresses vulnerability scanners try, which no Hevalo page can ever be
 export * from './scanner-paths.js';
+// taking Hevalo offline for a while from the admin, and what people see meanwhile
+export * from './maintenance.js';

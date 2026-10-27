@@ -166,6 +166,8 @@ import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
 import { registerSecurityLogRoutes } from './security/routes.js';
 import { SecurityLogReader } from './security/search.js';
 import { installScannerShield } from './security/shield.js';
+import { MaintenanceService } from './maintenance/service.js';
+import { installMaintenanceGate, registerMaintenanceRoutes } from './maintenance/routes.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
@@ -218,6 +220,12 @@ export interface BuildAppOptions {
   copyright?: CopyrightWireOptions;
   /** Test seam for reading a recording's file from another site: the fetch, the name lookup, the time allowed. */
   recordingFiles?: RecordingFileOptions;
+  /**
+   * Test seam: the clock offline mode reads. The setting is one row in a
+   * database every test file shares, so a test runs it days ahead of everyone
+   * else's clock, where only its own app sees it on.
+   */
+  maintenanceClock?: () => Date;
 }
 
 export function buildApp(config: AppConfig, options: BuildAppOptions = {}): FastifyInstance {
@@ -381,6 +389,14 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
   // scanners' probes (PHP, WordPress, secrets files) answered "not found" at once, and a network that keeps
   // probing shut out while signed out: after the session is read, before anyone's rate limit is spent
   installScannerShield(app, { redis: app.hasDecorator('redis') ? app.redis : undefined });
+
+  // Hevalo taken offline from the admin: every request but the console's and staff's answered with the
+  // offline notice, before any route and before anyone's rate limit is spent
+  let maintenance: MaintenanceService | undefined;
+  if (config.DATABASE_URL) {
+    maintenance = new MaintenanceService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null), app.securityLog, options.maintenanceClock);
+    installMaintenanceGate(app, maintenance);
+  }
 
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all
@@ -829,6 +845,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerShopAdminRoutes(app, shop, config);
     // pictures put in place of the built-in art: badges, emblems, frames, default avatars, event banners
     registerArtRoutes(app, new ArtOverrideService(app.db, (key) => (app.storage ? app.storage.publicUrl(key) : null)));
+    // taking Hevalo offline for a while, and the status the apps ask while it is
+    registerMaintenanceRoutes(app, maintenance!);
     registerGiftRoutes(app, gifts);
 
     // inviting friends to any online game, game cards in chats, and playing

@@ -243,6 +243,18 @@ export const SECURITY_EVENTS = {
     title: 'An address in this log was revealed',
     meaning: 'A superadmin looked at the address an event came from, giving a reason.',
   },
+  'console.offline_on': {
+    severity: 'warning',
+    category: 'console',
+    title: 'Hevalo taken offline',
+    meaning: 'A superadmin turned on the offline screen, now or from a set time. Everyone but staff sees it instead of the app until it is turned off.',
+  },
+  'console.offline_off': {
+    severity: 'notice',
+    category: 'console',
+    title: 'Hevalo opened again',
+    meaning: 'A superadmin turned the offline screen off, or called off one that was set for later.',
+  },
   'access.role_granted': {
     severity: 'warning',
     category: 'access',
