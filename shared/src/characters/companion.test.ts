@@ -68,6 +68,13 @@ describe('companionSvg', () => {
     expect(playful).toContain('data-cp="leg-gate"');
     expect(playful).not.toContain('glasses');
   });
+
+  it('draws him as his head alone for the console, with no forelegs', () => {
+    const head = companionSvg({ prefix: 'three', legs: false });
+    expect(head).toContain('data-cp="body"');
+    expect(head).toContain('data-cp="head"');
+    for (const part of ['legs', 'arms', 'leg-left', 'arm-left', 'leg-gate']) expect(head).not.toContain(`data-cp="${part}"`);
+  });
 });
 
 describe('CompanionMotion', () => {
@@ -195,15 +202,16 @@ describe('CompanionMotion', () => {
     expect(last(frames).enter).toBeCloseTo(0, 3);
     expect(Math.max(...frames.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
     expect(last(frames).hoofLeft).toBeCloseTo(0, 2);
-    // the console's comes straight up without the pop
+    // his forelegs stay lifted until he is all the way up
+    for (const f of frames) if (f.enter > 0.05) expect(f.hoofLeft).toBeGreaterThan(0.3);
+    // the console's, his head alone, pops up with a smaller bounce and has no hooves to lift
     const c = new CompanionMotion('calm', () => 0.5);
     c.arrive(0);
     const calm = run(c, 0, 2000);
-    expect(Math.min(...calm.map((f) => f.enter))).toBeGreaterThanOrEqual(-0.001);
-    expect(Math.max(...calm.slice(0, 40).map((f) => f.hoofLeft))).toBeGreaterThan(0.3);
-    expect(last(calm).hoofLeft).toBeCloseTo(0, 2);
-    // in both, his forelegs stay lifted until he is all the way up
-    for (const f of [...frames, ...calm]) if (f.enter > 0.05) expect(f.hoofLeft).toBeGreaterThan(0.3);
+    expect(Math.min(...calm.map((f) => f.enter))).toBeLessThan(0);
+    expect(Math.min(...calm.map((f) => f.enter))).toBeGreaterThan(Math.min(...frames.map((f) => f.enter)));
+    expect(last(calm).enter).toBeCloseTo(0, 3);
+    expect(calm.every((f) => f.hoofLeft === 0 && f.hoofRight === 0)).toBe(true);
     // and for whoever asks for less motion he is simply there
     const s = new CompanionMotion('playful', () => 0.5);
     s.arrive(0);
@@ -211,7 +219,7 @@ describe('CompanionMotion', () => {
   });
 
   it('keeps his forelegs lifted until he is up, however late the page draws him', () => {
-    const m = new CompanionMotion('calm', () => 0.5);
+    const m = new CompanionMotion('playful', () => 0.5);
     m.arrive(0);
     // the page busy for a second and a half before it draws him, then drawing a frame every 200 ms
     let f = m.step(1500);
@@ -223,12 +231,12 @@ describe('CompanionMotion', () => {
   });
 
   it('lays his forelegs down as soon as he is up, drawn only while he moves', () => {
-    const m = new CompanionMotion('calm', () => 0.5);
+    const m = new CompanionMotion('playful', () => 0.5);
     m.arrive(0);
     // a busy page: a frame, another, and then nothing for a second, by which time he is all the way up
     m.step(0);
-    m.step(400);
-    let t = 1400;
+    m.step(200);
+    let t = 1200;
     let f = m.step(t);
     expect(f.enter).toBe(0);
     // from there, as the player draws him: every frame while he moves, and then not until he is next due to
@@ -250,6 +258,55 @@ describe('CompanionMotion', () => {
     for (let t = 200; t <= 400; t += 200) f = slow.step(t);
     expect(f.enter).toBeCloseTo(smooth.step(400).enter, 1);
     expect(f.hoofLeft).toBeCloseTo(smooth.step(400).hoofLeft, 1);
+  });
+
+  it('in the console, pops his head up with each key and sinks back to watch between them', () => {
+    const c = settled('calm');
+    c.set({ field: 'text' }, NOW);
+    const watching = last(run(c, NOW, 1200));
+    expect(watching.duck).toBeGreaterThan(0.08);
+    // the chin just behind the sill, the eyes well over it
+    expect(watching.duck).toBeLessThan(0.2);
+    c.react('keystroke', NOW + 1210);
+    const popped = run(c, NOW + 1210, 300);
+    expect(Math.min(...popped.map((f) => f.duck))).toBeLessThan(0.03);
+    expect(last(run(c, NOW + 1520, 1200)).duck).toBeCloseTo(watching.duck, 2);
+    // the website's never ducks
+    const w = settled();
+    w.set({ field: 'text' }, NOW);
+    w.react('keystroke', NOW + 100);
+    expect(run(w, NOW, 1500).every((f) => f.duck === 0)).toBe(true);
+  });
+
+  it('in the console, ducks behind the card for a password and peeks over it when it is shown', () => {
+    const c = settled('calm');
+    c.set({ field: 'secret' }, NOW);
+    const hidden = last(run(c, NOW, 1200));
+    // all but his antlers and ear tips behind the sill: his eyes go below it
+    expect(hidden.duck).toBeGreaterThan(0.5);
+    expect(hidden.hoofLeft).toBe(0);
+    c.set({ shown: true }, NOW + 1300);
+    const peeking = last(run(c, NOW + 1300, 1200));
+    expect(peeking.duck).toBeGreaterThan(0.2);
+    expect(peeking.duck).toBeLessThan(hidden.duck - 0.15);
+    expect(peeking.eyes).toEqual(['open', 'open']);
+    // a wrong password brings him up to wonder at it, then back down
+    c.set({ shown: false, status: 'error' }, NOW + 2600);
+    const wondering = run(c, NOW + 2600, 1500);
+    expect(Math.min(...wondering.map((f) => f.duck))).toBeLessThan(0.05);
+    expect(wondering.some((f) => f.emote === 'question')).toBe(true);
+    expect(last(run(c, NOW + 4200, 1500)).duck).toBeGreaterThan(0.5);
+  });
+
+  it('in the console, now and then ducks out of sight and pops up again when left alone', () => {
+    const c = settled('calm');
+    const frames = run(c, NOW, 20_000);
+    expect(Math.max(...frames.map((f) => f.duck))).toBeGreaterThan(0.4);
+    expect(last(frames).duck).toBeCloseTo(0, 2);
+    // never while a box is being filled in
+    const busy = settled('calm');
+    busy.set({ field: 'text' }, NOW);
+    expect(Math.max(...run(busy, NOW, 20_000).map((f) => f.duck))).toBeLessThan(0.2);
   });
 
   it('drums a hoof on the sill now and then on the website, and not in the console', () => {
@@ -336,6 +393,13 @@ describe('CompanionMotion', () => {
     // with the word and the sparkles gone by themselves, nothing is left to wake for
     expect(last(later).say).toBeNull();
     expect(last(later).wakeAt).toBeNull();
+    // the console's ducks for a password at once, and never plays peekaboo
+    const c = new CompanionMotion('calm', () => 0.5);
+    c.arrive(0);
+    c.set({ field: 'secret' }, 0);
+    expect(c.step(16, NONE, true).duck).toBeGreaterThan(0.5);
+    c.set({ field: 'none' }, 32);
+    expect(run(c, 48, 30_000, NONE, true).every((x) => x.duck === 0 && !x.moving)).toBe(true);
   });
 });
 
@@ -364,6 +428,7 @@ describe('companionTransforms', () => {
       stretch: 1,
       sniff: 1,
       enter: 0,
+      duck: 0,
       look: { x: 0, y: 0 },
       focus: 0,
       eyes: ['open', 'open'],

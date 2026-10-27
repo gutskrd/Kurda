@@ -1,4 +1,5 @@
 import {
+  COMPANION_LEGS,
   COMPANION_WORDS,
   CompanionMotion,
   companionLook,
@@ -124,7 +125,7 @@ export class CompanionPlayer {
     private readonly host: HTMLElement,
     { tone, prefix }: CompanionPlayerOptions,
   ) {
-    host.innerHTML = companionSvg({ prefix }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
+    host.innerHTML = companionSvg({ prefix, legs: COMPANION_LEGS[tone] }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
     this.svg = host.querySelector('svg');
     for (const [key, name] of Object.entries(PARTS) as [keyof CompanionTransforms, string][]) {
       const el = host.querySelector(`[data-cp="${name}"]`);
