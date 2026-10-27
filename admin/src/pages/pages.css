@@ -61,6 +61,7 @@
    the code that follows the password is asked for in the same place it was. Only what the
    steps have that the sign-in does not is set here. */
 .login-title.gate-title { display: flex; align-items: center; gap: 12px; font-size: 34px; }
+.login-card.has-hero .login-title.gate-title { justify-content: center; }
 .gate-busy { flex: none; width: 26px; height: 26px; animation: spin 1s linear infinite; }
 .gate-text { margin: 0 0 20px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 .gate-qr { display: flex; justify-content: center; margin: 0 0 20px; }

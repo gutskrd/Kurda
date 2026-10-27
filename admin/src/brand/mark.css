@@ -5,6 +5,7 @@
  * other as the icon draws them, with the light in it to the upper left.
  */
 .hevalo-mark { position: relative; display: inline-block; flex: none; line-height: 0; user-select: none; }
+.hevalo-head { position: relative; display: block; width: 100%; height: 100%; }
 .hevalo-mark img { display: block; width: 100%; height: 100%; }
 .hevalo-eye { position: absolute; top: 51.667%; width: 16.111%; height: 18.889%; clip-path: ellipse(50% 50% at 50% 50%); pointer-events: none; }
 .hevalo-eye.is-left { left: 26.944%; }
@@ -18,3 +19,66 @@
 .hevalo-eye.is-left .hevalo-pupil { left: 43.1%; }
 .hevalo-eye.is-right .hevalo-pupil { left: 6.38%; }
 .hevalo-pupil::after { content: ''; position: absolute; top: 8.96%; left: -2.24%; width: 46.15%; height: 30%; border-radius: 50%; background: #fff; }
+
+/*
+ * The lids, over the whole of each eye's white with its soft glow (74 by 83 of
+ * the 360, and a margin, larger than the white the pupil moves in), fading at their
+ * edge into the fur round the eye. The upper one comes down with its lashes on
+ * a curve; the lower one comes up to close the eye, or to squint when pleased.
+ */
+.hevalo-lids {
+  position: absolute; top: 48.4%; width: 23%; height: 25.5%; pointer-events: none;
+  -webkit-mask-image: radial-gradient(closest-side, #000 80%, transparent 100%);
+  mask-image: radial-gradient(closest-side, #000 80%, transparent 100%);
+}
+.hevalo-lids.is-left { left: 23.5%; }
+.hevalo-lids.is-right { left: 52.7%; }
+.hevalo-lid { position: absolute; left: 0; width: 100%; height: 0; forced-color-adjust: none; transition: height 0.16s cubic-bezier(0.3, 0.7, 0.4, 1); }
+.hevalo-lid.is-top {
+  top: 0; background: linear-gradient(#c38753, #d19a5f);
+  border-radius: 0 0 50% 50% / 0 0 38% 38%; border-bottom: 0 solid #4a2822;
+}
+.hevalo-lid.is-bottom { bottom: 0; background: linear-gradient(#d39c60, #dca564); border-radius: 50% 50% 0 0 / 38% 38% 0 0; }
+/* shut: the lashes on a curve a little below the middle */
+.hevalo-mark.is-blinking .hevalo-lid.is-top,
+.hevalo-mark[data-mood='shy'] .hevalo-lid.is-top,
+.hevalo-mark[data-mood='peek'] .hevalo-lids.is-left .hevalo-lid.is-top { height: 62%; border-bottom-width: 2px; }
+.hevalo-mark.is-blinking .hevalo-lid.is-bottom,
+.hevalo-mark[data-mood='shy'] .hevalo-lid.is-bottom,
+.hevalo-mark[data-mood='peek'] .hevalo-lids.is-left .hevalo-lid.is-bottom { height: 42%; }
+.hevalo-mark.is-blinking .hevalo-lid { transition-duration: 0.07s; }
+/* a peek: the other eye open a crack */
+.hevalo-mark[data-mood='peek'] .hevalo-lids.is-right .hevalo-lid.is-top { height: 50%; border-bottom-width: 1.5px; }
+.hevalo-mark[data-mood='peek'] .hevalo-lids.is-right .hevalo-lid.is-bottom { height: 22%; }
+.hevalo-mark[data-mood='happy'] .hevalo-lid.is-bottom { height: 52%; }
+.hevalo-mark[data-mood='sad'] .hevalo-lid.is-top { height: 42%; border-bottom-width: 1.5px; }
+.hevalo-mark[data-mood='thinking'] .hevalo-lid.is-top { height: 30%; border-bottom-width: 1.5px; }
+
+/* the sign-in's: it floats, leans towards what it looks at, hops when pleased and shakes its head when not */
+.hevalo-mark.is-lively { cursor: pointer; filter: drop-shadow(0 16px 26px rgba(36, 10, 92, 0.5)); -webkit-tap-highlight-color: transparent; }
+.hevalo-mark.is-lively .hevalo-head {
+  transform: perspective(520px) rotateX(var(--lean-x, 0deg)) rotateY(var(--lean-y, 0deg));
+  animation: hevalo-float 4.8s ease-in-out infinite;
+}
+.hevalo-mark.is-lively[data-mood='happy'] { animation: hevalo-hop 0.7s cubic-bezier(0.3, 0.7, 0.4, 1) both; }
+.hevalo-mark.is-lively[data-mood='sad'] { animation: hevalo-shake 0.6s ease-in-out both; }
+@keyframes hevalo-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -3.5%; } }
+@keyframes hevalo-hop {
+  0% { transform: none; }
+  28% { transform: translateY(-16%) scale(1.04, 0.98); }
+  52% { transform: translateY(0) scale(1.05, 0.94); }
+  70% { transform: translateY(-5%) scale(0.99, 1.02); }
+  100% { transform: none; }
+}
+@keyframes hevalo-shake {
+  0%, 100% { transform: none; }
+  15% { transform: translateX(-7%) rotate(-5deg); }
+  35% { transform: translateX(6%) rotate(4deg); }
+  55% { transform: translateX(-4%) rotate(-2.5deg); }
+  75% { transform: translateX(2%) rotate(1deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hevalo-lid { transition: none; }
+  .hevalo-mark.is-lively, .hevalo-mark.is-lively .hevalo-head { animation: none; }
+  .hevalo-mark.is-lively { cursor: default; }
+}

@@ -471,6 +471,12 @@ td strong, td .name { color: var(--text); font-weight: 600; }
   color: rgba(255, 255, 255, 0.9);
 }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
+/* Hevalo sits on the card's top edge, half above it, and the name and the title are centred under it */
+.login-card.has-hero { margin-top: 62px; padding-top: 0; }
+.login-hero { display: flex; justify-content: center; margin: -58px 0 16px; }
+.login-top.is-centred { justify-content: center; gap: 10px; margin-bottom: 20px; }
+.login-dot { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: 0.6; }
+.login-card.has-hero .login-title, .login-card.has-hero .login-welcome { text-align: center; }
 .login-title { margin: 0 0 10px; font-size: 44px; font-weight: 500; letter-spacing: -0.02em; line-height: 1.05; color: #fff; }
 .login-welcome { margin: 0 0 24px; font-size: 15px; line-height: 1.5; color: rgba(255, 255, 255, 0.82); }
 
