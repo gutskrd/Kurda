@@ -58,6 +58,7 @@ export {
   type Keys,
 } from './life.js';
 export { CHARACTER_GLOW, stageBackdrop, type StageOptions } from './stage.js';
+export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standTogether, standingSpots, togetherBackdrop, type StandingPlace } from './together.js';
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
 
 const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {

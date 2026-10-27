@@ -4,7 +4,7 @@
  * payload schemas (api/src/content/exercises.ts), said in words, so a draft is
  * not sent only to come back refused. The server still decides.
  */
-import { CONVERSATION_LIMITS as CONV, SPEAKERS, lessonAudioKey, normalizeKurdish } from '@kurda/shared';
+import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, conversationSpeaker, isSpeakerId, lessonAudioKey } from '@kurda/shared';
 
 export type ContentStatus = 'draft' | 'in_review' | 'published' | 'archived';
 
@@ -28,7 +28,7 @@ export const TYPE_HINT: Record<ExerciseType, string> = {
   listening: 'Hear Kurdish and write it down.',
   speaking: 'Say a sentence aloud, then compare it with the native recording.',
   writing: 'Write a longer answer; any of the accepted answers counts.',
-  conversation: 'Two to four people talk, line by line; learners read and listen, then answer a question about it. Each part is recorded by its own person.',
+  conversation: 'Two or three of the characters talk, line by line; learners read and listen, then answer a question about it. Each part is recorded by its own person.',
 };
 
 export const STATUS_NAME: Record<ContentStatus, string> = {
@@ -121,14 +121,11 @@ export function blankPayload(type: ExerciseType, from: Payload = {}): Payload {
   const say = typeof from.say === 'string' && from.say ? { say: from.say } : {};
   switch (type) {
     case 'conversation':
-      // two people to start, a woman and a man, each with a line: the smallest conversation there is
+      // Xezo and Hamo to start, each with a line: the smallest conversation there is
       return {
         id: typeof from.id === 'string' && from.id ? from.id : newConversationId(),
         title: '',
-        speakers: [
-          { name: '', character: 'xezo' },
-          { name: '', character: 'hamo' },
-        ],
+        speakers: [conversationSpeaker('xezo'), conversationSpeaker('hamo')],
         lines: [
           { speaker: 0, text: '', en: '' },
           { speaker: 1, text: '', en: '' },
@@ -225,16 +222,18 @@ function conversationIssues(p: Payload, out: Issue[]): void {
   const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
   const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
   if (str(p.title).length > CONV.titleMax) out.push({ path: 'title', message: `The title is longer than ${CONV.titleMax} characters.` });
-  if (speakers.length < CONV.speakersMin) out.push({ path: 'speakers', message: 'A conversation needs at least two people.' });
-  if (speakers.length > CONV.speakersMax) out.push({ path: 'speakers', message: `At most ${CONV.speakersMax} people.` });
-  const names = new Set<string>();
+  if (speakers.length < CONV.speakersMin) out.push({ path: 'speakers', message: 'A conversation needs at least two of the characters.' });
+  if (speakers.length > CONV.speakersMax) out.push({ path: 'speakers', message: `At most ${CONV.speakersMax}: there are ${CONV.speakersMax} characters.` });
+  const cast = new Set<string>();
   speakers.forEach((s, i) => {
-    const name = normalizeKurdish(str(s.name)).toLowerCase();
-    if (!name) out.push({ path: `speakers.${i}.name`, message: `Person ${i + 1} needs a name.` });
-    else if (name.length > CONV.nameMax) out.push({ path: `speakers.${i}.name`, message: `Person ${i + 1}: the name is longer than ${CONV.nameMax} characters.` });
-    else if (names.has(name)) out.push({ path: `speakers.${i}.name`, message: `Two people are called “${str(s.name).trim()}”: whoever records it must know which is theirs.` });
-    names.add(name);
-    if (name && !lines.some((l) => l.speaker === i)) out.push({ path: `speakers.${i}`, message: `${str(s.name).trim()} says nothing: give them a line or remove them.` });
+    if (!isSpeakerId(s.character)) {
+      out.push({ path: `speakers.${i}.character`, message: `Person ${i + 1}: choose who plays the part.` });
+      return;
+    }
+    const name = CHARACTER_NAMES[s.character];
+    if (cast.has(s.character)) out.push({ path: `speakers.${i}.character`, message: `${name} already has a part: choose another character.` });
+    cast.add(s.character);
+    if (!lines.some((l) => l.speaker === i)) out.push({ path: `speakers.${i}`, message: `${name} says nothing: give them a line or remove them.` });
   });
   if (lines.length < CONV.linesMin) out.push({ path: 'lines', message: 'Add at least two lines.' });
   if (lines.length > CONV.linesMax) out.push({ path: 'lines', message: `At most ${CONV.linesMax} lines.` });
@@ -258,13 +257,12 @@ function conversationIssues(p: Payload, out: Issue[]): void {
   if (right < 0 || right >= options.length) out.push({ path: 'correctIndex', message: 'Choose which answer is right.' });
 }
 
-/** A conversation as it is sent: optional parts left out when empty (the schema refuses an empty title, meaning or character). */
+/** A conversation as it is sent: each part called by its character's name, optional parts left out when empty (the schema refuses an empty title or meaning). */
 function conversationForSave(p: Payload): Payload {
   const t = (v: unknown): string => str(v).trim();
-  const speakers = (Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : []).map((s) => ({
-    name: t(s.name),
-    ...((SPEAKERS as readonly string[]).includes(str(s.character)) ? { character: s.character } : {}),
-  }));
+  const speakers = (Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : []).map((s) =>
+    isSpeakerId(s.character) ? conversationSpeaker(s.character) : { name: t(s.name) },
+  );
   const lines = (Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : []).map((l) => ({
     speaker: l.speaker,
     text: t(l.text),

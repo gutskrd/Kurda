@@ -54,29 +54,29 @@
             "title": "Li parkê",
             "speakers": [
               {
-                "name": "Rojda",
+                "name": "Xezo",
                 "character": "xezo"
               },
               {
-                "name": "Azad",
+                "name": "Hamo",
                 "character": "hamo"
               }
             ],
             "lines": [
               {
                 "speaker": 0,
-                "text": "Silav! Navê min Rojda ye. Navê te çi ye?",
-                "en": "Hello! My name is Rojda. What is your name?"
+                "text": "Silav! Navê min Xezo ye. Navê te çi ye?",
+                "en": "Hello! My name is Xezo. What is your name?"
               },
               {
                 "speaker": 1,
-                "text": "Silav Rojda! Navê min Azad e.",
-                "en": "Hi Rojda! My name is Azad."
+                "text": "Silav Xezo! Navê min Hamo ye.",
+                "en": "Hi Xezo! My name is Hamo."
               },
               {
                 "speaker": 0,
-                "text": "Tu çawa yî, Azad?",
-                "en": "How are you, Azad?"
+                "text": "Tu çawa yî, Hamo?",
+                "en": "How are you, Hamo?"
               },
               {
                 "speaker": 1,
@@ -100,16 +100,16 @@
               },
               {
                 "speaker": 1,
-                "text": "Bi xatirê te, Rojda!",
-                "en": "Goodbye, Rojda!"
+                "text": "Bi xatirê te, Xezo!",
+                "en": "Goodbye, Xezo!"
               },
               {
                 "speaker": 0,
-                "text": "Bi xêr û silamet, Azad!",
-                "en": "Go safely, Azad!"
+                "text": "Bi xêr û silamet, Hamo!",
+                "en": "Go safely, Hamo!"
               }
             ],
-            "prompt": "Azad ji ku derê ye?",
+            "prompt": "Hamo ji ku derê ye?",
             "options": [
               "Ji Amedê",
               "Ji Hewlêrê",
@@ -158,8 +158,8 @@
           "payload": {
             "prompt": "Type what you hear.",
             "accepted": [
-              "Navê min Azad e.",
-              "Navê min Azad e"
+              "Navê min Hamo ye.",
+              "Navê min Hamo ye"
             ]
           }
         },
@@ -177,7 +177,7 @@
             "prompt": "Someone asks you “Tu çawa yî?”. What do you answer?",
             "options": [
               "Ez baş im, spas.",
-              "Navê min Rojda ye.",
+              "Navê min Xezo ye.",
               "Bi xatirê te."
             ],
             "correctIndex": 0

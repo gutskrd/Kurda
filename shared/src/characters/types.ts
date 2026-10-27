@@ -124,4 +124,12 @@ export interface CharacterArt {
   overlay: string;
   /** the parts that move on their own; only a character drawn for it has them */
   rig?: CharacterRig;
+  /**
+   * How far each iris may move from where it is drawn, across, to look aside
+   * (`data-iris` groups in `eyes.open`); only a character without a `rig`,
+   * whose eyes are drawn for it, has one.
+   */
+  irisReach?: number;
+  /** which way the face is drawn turned a little, as seen: a stage stands it so it turns toward whoever it talks to */
+  turned?: 'left' | 'right';
 }

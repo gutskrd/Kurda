@@ -28,21 +28,21 @@ const REC: ConversationRecording = {
     id: 'kmrnasin01',
     title: 'Li parkê',
     speakers: [
-      { name: 'Rojda', character: 'xezo' },
-      { name: 'Azad', character: 'hamo' },
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
     ],
     lines: [
-      { speaker: 0, text: 'Silav! Navê min Rojda ye.', en: 'Hello! My name is Rojda.' },
-      { speaker: 1, text: 'Silav Rojda! Navê min Azad e.', en: 'Hi Rojda! My name is Azad.' },
-      { speaker: 0, text: 'Tu çawa yî, Azad?' },
+      { speaker: 0, text: 'Silav! Navê min Xezo ye.', en: 'Hello! My name is Xezo.' },
+      { speaker: 1, text: 'Silav Xezo! Navê min Hamo ye.', en: 'Hi Xezo! My name is Hamo.' },
+      { speaker: 0, text: 'Tu çawa yî, Hamo?' },
       { speaker: 1, text: 'Ez baş im, spas.' },
     ],
-    prompt: 'Azad çawa ye?',
+    prompt: 'Hamo çawa ye?',
     options: ['Baş e', 'Nexweş e'],
     correctIndex: 0,
   },
   lines: [
-    { index: 0, part: 0, key: 'k0', recording: take('rojda') },
+    { index: 0, part: 0, key: 'k0', recording: take('xezo') },
     { index: 1, part: 1, key: 'k1', recording: null },
     { index: 2, part: 0, key: 'k2', recording: null },
     { index: 3, part: 1, key: 'k3', recording: null },
@@ -52,8 +52,8 @@ const REC: ConversationRecording = {
 describe('a conversation being recorded', () => {
   it('says how far each part has got, and by whom', () => {
     expect(partProgress(REC)).toEqual([
-      { part: 0, name: 'Rojda', character: 'xezo', recorded: 1, total: 2, by: ['rojda'] },
-      { part: 1, name: 'Azad', character: 'hamo', recorded: 0, total: 2, by: [] },
+      { part: 0, name: 'Xezo', character: 'xezo', recorded: 1, total: 2, by: ['xezo'] },
+      { part: 1, name: 'Hamo', character: 'hamo', recorded: 0, total: 2, by: [] },
     ]);
   });
 
@@ -69,7 +69,7 @@ describe('a conversation being recorded', () => {
   it('plays the line before a reply, and the recorded lines in order', () => {
     expect(lineBefore(REC, 1)?.index).toBe(0);
     expect(lineBefore(REC, 0)).toBeNull();
-    expect(playOrder(REC)).toEqual([{ index: 0, url: 'https://cdn.test/rojda.wav' }]);
+    expect(playOrder(REC)).toEqual([{ index: 0, url: 'https://cdn.test/xezo.wav' }]);
   });
 
   it('opens on the part the address names, else the one this browser recorded, else the first', () => {
@@ -116,7 +116,7 @@ describe('the conversations in the lessons', () => {
 
   it('are gathered from the studio’s list, a meter a part', () => {
     const plain: Item = { ...item('Silav', 0, 'x', true), line: undefined, key: 'silav' };
-    const found = conversationsIn([item('Silav!', 0, 'Rojda', true), plain, item('Silav!', 1, 'Azad', false), item('Ez baş im.', 1, 'Azad', true)]);
+    const found = conversationsIn([item('Silav!', 0, 'Xezo', true), plain, item('Silav!', 1, 'Hamo', false), item('Ez baş im.', 1, 'Hamo', true)]);
     expect(found).toHaveLength(1);
     expect(found[0]).toMatchObject({
       id: 'kmrnasin01',
@@ -126,8 +126,8 @@ describe('the conversations in the lessons', () => {
       recorded: 2,
       total: 3,
       parts: [
-        { part: 0, name: 'Rojda', recorded: 1, total: 1 },
-        { part: 1, name: 'Azad', recorded: 1, total: 2 },
+        { part: 0, name: 'Xezo', recorded: 1, total: 1 },
+        { part: 1, name: 'Hamo', recorded: 1, total: 2 },
       ],
     });
   });

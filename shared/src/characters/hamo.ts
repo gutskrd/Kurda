@@ -597,8 +597,9 @@ function eyesOpen(p: string): string {
     [clipDef(id('eyeL'), curve(EYE_LEFT)), clipDef(id('eyeR'), curve(EYE_RIGHT))],
     [
       fill(curve(EYE_LEFT) + curve(EYE_RIGHT), C.white),
-      clipped(id('eyeL'), iris(IRIS[0] as readonly [number, number, number])),
-      clipped(id('eyeR'), iris(IRIS[1] as readonly [number, number, number])),
+      // each iris in a group of its own, so it can look aside within its eye (`irisReach`)
+      clipped(id('eyeL'), `<g data-iris="left">${iris(IRIS[0] as readonly [number, number, number])}</g>`),
+      clipped(id('eyeR'), `<g data-iris="right">${iris(IRIS[1] as readonly [number, number, number])}</g>`),
       fill(lid(EYE_LEFT, 1) + lid(EYE_RIGHT, 0.95), C.lash),
     ],
   );
@@ -671,5 +672,8 @@ export function drawHamo(p: string): CharacterArt {
       p,
     ),
     overlay: fill(curve(MOUSTACHE), C.moustache),
+    irisReach: 2.4,
+    // his far eye, on the right, is the smaller: his face is turned a little to the left
+    turned: 'left',
   };
 }

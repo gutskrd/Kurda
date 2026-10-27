@@ -517,12 +517,14 @@ function eyesOpen(p: string): string {
         [0.62, C.iris],
         [1, '#4a2c1c'],
       ]),
+      clipDef(id('eyeL'), curve(EYE)),
+      clipDef(id('eyeR'), curve(right)),
     ],
     [
       fill(curve(EYE) + curve(right), C.white),
-      // each iris fits inside its eye, under the lid, so it needs no clip
-      iris(126.9),
-      iris(159.2),
+      // each iris in its eye's clip and a group of its own, so it can look aside (`irisReach`) and never past the eye
+      clipped(id('eyeL'), `<g data-iris="left">${iris(126.9)}</g>`),
+      clipped(id('eyeR'), `<g data-iris="right">${iris(159.2)}</g>`),
       line(curve(lower.map(([x, y]) => [x, y] as const), false) + curve(flip(lower).map(([x, y]) => [x, y] as const), false), C.lid, 0.6, ' stroke-opacity="0.3"'),
       fill(lids(), C.lid),
     ],
@@ -590,5 +592,6 @@ export function drawXezo(p: string): CharacterArt {
       p,
     ),
     overlay: '',
+    irisReach: 2.6,
   };
 }

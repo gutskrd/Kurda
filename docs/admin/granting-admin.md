@@ -102,3 +102,8 @@ Each conversation in a lesson is recorded part by part on **Record audio →
 Record conversations**. There, each person chooses their part, hears the line
 before each of theirs, and records it; **Send … part** gives a link to the
 other person's part, to send to whoever records it.
+
+The parts are the characters themselves (Xezo, Hamo and Hevalo, each at most
+once), called by their own names. Learners see the characters together,
+looking at each other, and each line is said by the character whose part it
+is, whoever recorded it.

@@ -57,8 +57,8 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
   const s = Date.now().toString(36);
   const id = `cv${s}`.slice(0, 32);
   const userIds: string[] = [];
-  let rojda = '';
-  let azad = '';
+  let xezoVoice = '';
+  let hamoVoice = '';
   let learner = '';
   let courseId = '';
   let lesson = '';
@@ -69,14 +69,17 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
   const conversation = {
     id,
     title: `Nasîn ${s}`,
-    speakers: [{ name: 'Rojda', character: 'xezo' }, { name: 'Azad' }],
+    speakers: [
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
+    ],
     lines: [
       { speaker: 0, text: `Silav ${s}!`, en: 'Hello!' },
       { speaker: 1, text: `Silav ${s}!`, en: 'Hello!' },
       { speaker: 0, text: `Tu çawa yî ${s}?` },
       { speaker: 1, text: `Ez baş im ${s}.` },
     ],
-    prompt: 'Azad çawa ye?',
+    prompt: 'Hamo çawa ye?',
     options: ['Baş e', 'Nexweş e'],
     correctIndex: 0,
   };
@@ -145,13 +148,13 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
     const skillId = await repo.createSkill(unitId, 1, 'Nasîn', 'Meeting');
     lesson = await repo.createLesson(skillId, 1, 'Nasîn 1', 'Meeting 1');
     exerciseId = await repo.addExercise(lesson, 1, 'conversation', conversation);
-    // a listening item that plays the words of Azad's last line
+    // a listening item that plays the words of Hamo's last line
     listeningId = await repo.addExercise(lesson, 2, 'listening', { audioUrl: 'https://cdn.test/own.mp3', accepted: [conversation.lines[3]!.text] });
     await repo.publishLesson(lesson);
 
     await pool.query(`DELETE FROM lesson_audio WHERE key = ANY($1)`, [ourKeys()]);
-    rojda = await register('cvRojda', '10.96.0.1', '{content_editor}');
-    azad = await register('cvAzad', '10.96.0.2', '{content_editor}');
+    xezoVoice = await register('cvXezo', '10.96.0.1', '{content_editor}');
+    hamoVoice = await register('cvHamo', '10.96.0.2', '{content_editor}');
     learner = await register('cvLearner', '10.96.0.3', '{}');
   });
 
@@ -177,7 +180,7 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
   });
 
   it('asks for every line in the studio, filed under who says it', async () => {
-    const res = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${rojda}` } });
+    const res = await app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${xezoVoice}` } });
     expect(res.statusCode, res.body).toBe(200);
     const items = (res.json().items as Array<{ key: string; text: string; recorded: boolean; line?: unknown; usedIn: Array<{ lessonId: string }> }>).filter(
       (i) => i.line && i.usedIn.some((u) => u.lessonId === lesson),
@@ -187,25 +190,26 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
     expect(items.find((i) => i.key === keyOf(1))).toMatchObject({
       text: conversation.lines[1]!.text,
       recorded: false,
-      line: { conversation: id, part: 1, name: 'Azad', character: null },
+      line: { conversation: id, part: 1, name: 'Hamo', character: 'hamo' },
     });
   });
 
   it('records each part on its own: one person’s take never stands in for the other’s', async () => {
-    const mine = await record(conversation.lines[0]!.text, rojda, `&line=${id}:0&speaker=xezo`);
+    // saved under the deer's voice by mistake: a learner still sees Xezo say it, her part's character
+    const mine = await record(conversation.lines[0]!.text, xezoVoice, `&line=${id}:0&speaker=hevalo`);
     expect(mine.statusCode, mine.body).toBe(201);
     expect(mine.json().key).toBe(keyOf(0));
     // a plain recording of the same words is a recording of its own, not the line's
-    const plain = await record(conversation.lines[0]!.text, rojda, '', 2);
+    const plain = await record(conversation.lines[0]!.text, xezoVoice, '', 2);
     expect(plain.json().key).toBe(lessonAudioKey(conversation.lines[0]!.text));
-    const theirs = await record(conversation.lines[1]!.text, azad, `&line=${id}:1`, 3);
+    const theirs = await record(conversation.lines[1]!.text, hamoVoice, `&line=${id}:1`, 3);
     expect(theirs.statusCode, theirs.body).toBe(201);
     expect(theirs.json().url).not.toBe(mine.json().url);
-    expect((await record('Silav', rojda, '&line=Not-An-Id:0')).statusCode).toBe(400);
+    expect((await record('Silav', xezoVoice, '&line=Not-An-Id:0')).statusCode).toBe(400);
   });
 
   it('shows the people recording it every line, with who made each take', async () => {
-    const res = await page(azad);
+    const res = await page(hamoVoice);
     expect(res.statusCode, res.body).toBe(200);
     const body = res.json();
     expect(body.lesson).toMatchObject({ id: lesson, status: 'published', exercisePosition: 1 });
@@ -216,14 +220,14 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
       [0, false],
       [1, false],
     ]);
-    expect(body.lines[0].recording).toMatchObject({ speaker: 'xezo', recordedBy: { username: `cvRojda_${s}` } });
-    expect(body.lines[1].recording.recordedBy.username).toBe(`cvAzad_${s}`);
+    expect(body.lines[0].recording).toMatchObject({ speaker: 'hevalo', recordedBy: { username: `cvXezo_${s}` } });
+    expect(body.lines[1].recording.recordedBy.username).toBe(`cvHamo_${s}`);
   });
 
   it('opens the newest version of the lesson from a link made before it', async () => {
     const next = await repo.newLessonVersion(lesson);
     try {
-      const res = await page(rojda, `?lesson=${lesson}`);
+      const res = await page(xezoVoice, `?lesson=${lesson}`);
       expect(res.statusCode, res.body).toBe(200);
       expect(res.json().lesson).toMatchObject({ id: next, status: 'draft', version: 2 });
       // the new version kept the conversation's id, and with it the takes already made
@@ -236,14 +240,14 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
   it('is only for people who record, and says nothing of a conversation no lesson has', async () => {
     expect((await page(learner)).statusCode).toBe(404);
     expect((await app.inject({ method: 'GET', url: `/admin/lesson-audio/conversations/${id}` })).statusCode).toBe(401);
-    expect((await app.inject({ method: 'GET', url: '/admin/lesson-audio/conversations/nosuch99', headers: { authorization: `Bearer ${rojda}` } })).statusCode).toBe(404);
+    expect((await app.inject({ method: 'GET', url: '/admin/lesson-audio/conversations/nosuch99', headers: { authorization: `Bearer ${xezoVoice}` } })).statusCode).toBe(404);
   });
 
   it('gives a learner the conversation with each line’s recording, and grades the question', async () => {
     const res = await authed('GET', `/lessons/${lesson}/session`);
     expect(res.statusCode, res.body).toBe(200);
     const ex = (res.json().exercises as Array<Record<string, unknown>>).find((e) => e.id === exerciseId)!;
-    expect(ex).toMatchObject({ type: 'conversation', title: conversation.title, prompt: 'Azad çawa ye?', lines: conversation.lines });
+    expect(ex).toMatchObject({ type: 'conversation', title: conversation.title, prompt: 'Hamo çawa ye?', lines: conversation.lines });
     expect(ex).not.toHaveProperty('correctIndex');
     const audio = ex.lineAudio as Array<string | null>;
     expect(audio).toHaveLength(4);
@@ -251,8 +255,8 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
     expect(audio[1]).toEqual(expect.any(String));
     expect(audio[0]).not.toBe(audio[1]);
     expect(audio.slice(2)).toEqual([null, null]);
-    expect((ex.lineVoices as Array<{ speaker: string } | null>)[0]).toMatchObject({ speaker: 'xezo' });
-    expect((ex.lineVoices as unknown[])[1]).toBeNull();
+    // each recorded line said by its own part's character, whatever voice the take was saved under, or none
+    expect((ex.lineVoices as Array<{ speaker: string } | null>).map((v) => v?.speaker ?? null)).toEqual(['xezo', 'hamo', null, null]);
 
     const options = ex.options as string[];
     const graded = await authed('POST', `/sessions/${res.json().sessionId}/answers`, { exerciseId, answer: { choice: options.indexOf('Nexweş e') } });
@@ -260,10 +264,10 @@ describe.skipIf(!DATABASE_URL)('conversations (integration)', () => {
     expect(graded.json()).toMatchObject({ verdict: 'wrong', accepted: false, correction: 'Baş e' });
   });
   it('never sends a line the same file a listening item plays, which its words beside it would name', async () => {
-    // one file, uploaded as the listening item's transcription and as Azad's line of the same words
+    // one file, uploaded as the listening item's transcription and as Hamo's line of the same words
     const text = conversation.lines[3]!.text;
-    expect((await record(text, azad, '', 7)).statusCode).toBe(201);
-    expect((await record(text, azad, `&line=${id}:1`, 7)).statusCode).toBe(201);
+    expect((await record(text, hamoVoice, '', 7)).statusCode).toBe(201);
+    expect((await record(text, hamoVoice, `&line=${id}:1`, 7)).statusCode).toBe(201);
     // stored content-addressed, the two are one URL
     const stored = await pool.query<{ url: string }>(`SELECT url FROM lesson_audio WHERE key = ANY($1)`, [[lessonAudioKey(text), keyOf(3)]]);
     expect(new Set(stored.rows.map((r) => r.url)).size).toBe(1);

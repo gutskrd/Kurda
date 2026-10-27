@@ -1,6 +1,8 @@
 /**
- * Conversations in lessons: two to four people talking, line by line, and then
- * a question about what was said.
+ * Conversations in lessons: two or three of the characters talking, line by
+ * line, and then a question about what was said. Each part is one character
+ * (Hamo, Xezo or the deer, Hevalo), called by its own name, and only that
+ * character is ever shown saying its lines.
  *
  * Each part is recorded by whoever plays it, wherever they are, so a line's
  * recording is filed under its conversation and its part as well as its words:
@@ -14,11 +16,13 @@
  * the two players that show them.
  */
 import { LESSON_AUDIO_TEXT_MAX, lessonAudioKey } from './lesson-audio.js';
-import { isSpeakerId, type RecordingVoice, type SpeakerId } from './lipsync/speakers.js';
+import { CHARACTER_NAMES } from './characters/types.js';
+import { SPEAKERS, isSpeakerId, type RecordingVoice, type SpeakerId } from './lipsync/speakers.js';
 
 export const CONVERSATION_LIMITS = {
   speakersMin: 2,
-  speakersMax: 4,
+  /** each part is a character of its own */
+  speakersMax: SPEAKERS.length,
   nameMax: 40,
   titleMax: 120,
   linesMin: 2,
@@ -40,10 +44,15 @@ export const CONVERSATION_LIMITS = {
  */
 export const CONVERSATION_ID = /^[a-z0-9]{6,32}$/;
 
+/** One part: the character who says its lines, and its name, which is the character's own. */
 export interface ConversationSpeaker {
   name: string;
-  /** the character shown saying this part's lines, when one is chosen */
-  character?: SpeakerId;
+  character: SpeakerId;
+}
+
+/** The part a character plays, called by its name. */
+export function conversationSpeaker(character: SpeakerId): ConversationSpeaker {
+  return { name: CHARACTER_NAMES[character], character };
 }
 
 export interface ConversationLine {
@@ -95,7 +104,7 @@ export interface ConversationClip {
   index: number;
   /** who says it, by place */
   part: number;
-  /** their name, as the conversation writes it */
+  /** their name: the character's own */
   name: string;
   character: SpeakerId | null;
   text: string;
@@ -120,7 +129,10 @@ export function conversationClips(payload: unknown): ConversationClip[] {
   payload.lines.forEach((line, index) => {
     if (!isRecord(line) || typeof line.text !== 'string' || typeof line.speaker !== 'number') return;
     const who = speakers[line.speaker];
-    if (!isRecord(who) || typeof who.name !== 'string') return;
+    if (!isRecord(who)) return;
+    const character = isSpeakerId(who.character) ? who.character : null;
+    const name = character ? CHARACTER_NAMES[character] : typeof who.name === 'string' ? who.name : null;
+    if (name === null) return;
     if (line.text.length > LESSON_AUDIO_TEXT_MAX) return;
     const key = conversationLineKey(payload.id as string, line.speaker, line.text);
     if (key === '' || seen.has(key)) return;
@@ -128,8 +140,8 @@ export function conversationClips(payload: unknown): ConversationClip[] {
     out.push({
       index,
       part: line.speaker,
-      name: who.name,
-      character: isSpeakerId(who.character) ? who.character : null,
+      name,
+      character,
       text: line.text,
       key,
     });
@@ -145,4 +157,21 @@ export interface ConversationAudio {
   lineAudio: Array<string | null>;
   /** who says each recording, and how their mouth moves; null where there is none */
   lineVoices: Array<RecordingVoice | null>;
+}
+
+/**
+ * Who a learner sees say a line, and how their mouth moves: always the
+ * character playing the line's part, whichever voice the recording was saved
+ * under, with the recording's own timeline when it has one. Null for a part
+ * with no character, which stored content made before every part had one may
+ * still have.
+ */
+export function conversationLineVoice(
+  speakers: readonly { character?: SpeakerId | null }[],
+  line: { speaker: number },
+  voice: RecordingVoice | null | undefined,
+): RecordingVoice | null {
+  const character = speakers[line.speaker]?.character;
+  if (!isSpeakerId(character)) return null;
+  return voice ? { ...voice, speaker: character } : { speaker: character };
 }

@@ -4,6 +4,7 @@ import {
   CONVERSATION_LIMITS as CONV,
   SPEAKERS,
   answerKey,
+  conversationSpeaker,
   foldDiacritics,
   lessonAudioKey,
   normalizeKurdish,
@@ -104,17 +105,20 @@ export const writingPayloadSchema = z.object({
  *
  * Every line names someone who takes part, and everyone who takes part says
  * something — a part with no lines is a person nobody hears, and a part
- * nobody can record. Two parts may not share a name: whoever records "Azad"
- * must know which Azad.
+ * nobody can record. Each part is one of the characters, called by its name,
+ * and no character plays two: the one a learner sees say a line is always
+ * that line's own.
  */
 export const conversationPayloadSchema = z
   .object({
     id: z.string().regex(CONVERSATION_ID, 'must be 6–32 lower-case letters and digits'),
     title: z.string().min(1).max(CONV.titleMax).optional(),
+    // each part is one of the characters, and is called by the character's own name whatever name was sent
     speakers: z
-      .array(z.object({ name: z.string().min(1).max(CONV.nameMax), character: z.enum(SPEAKERS).optional() }))
+      .array(z.object({ name: z.string().max(CONV.nameMax).optional(), character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }) }))
       .min(CONV.speakersMin)
-      .max(CONV.speakersMax),
+      .max(CONV.speakersMax)
+      .transform((speakers) => speakers.map((s) => conversationSpeaker(s.character))),
     lines: z
       .array(
         z.object({
@@ -140,12 +144,11 @@ export const conversationPayloadSchema = z
         ctx.addIssue({ code: 'custom', path: ['lines', i, 'text'], message: 'has nothing to say' });
       }
     });
-    const names = new Set<string>();
+    const cast = new Set<string>();
     p.speakers.forEach((speaker, i) => {
-      const name = normalizeKurdish(speaker.name).toLowerCase();
-      if (name === '') ctx.addIssue({ code: 'custom', path: ['speakers', i, 'name'], message: 'needs a name' });
-      else if (names.has(name)) ctx.addIssue({ code: 'custom', path: ['speakers', i, 'name'], message: 'another speaker has this name' });
-      names.add(name);
+      // one character plays one part: who says a line is never in doubt
+      if (cast.has(speaker.character)) ctx.addIssue({ code: 'custom', path: ['speakers', i, 'character'], message: `${speaker.name} already has a part` });
+      cast.add(speaker.character);
       if (!p.lines.some((line) => line.speaker === i)) {
         ctx.addIssue({ code: 'custom', path: ['speakers', i], message: 'says nothing: give them a line or remove them' });
       }
@@ -322,7 +325,7 @@ export function sanitizeExercise(
       const p = parsed.data as ConversationPayload;
       return {
         ...(p.title ? { title: p.title } : {}),
-        speakers: p.speakers.map((s) => (s.character ? { name: s.name, character: s.character } : { name: s.name })),
+        speakers: p.speakers.map((s) => ({ name: s.name, character: s.character })),
         lines: p.lines.map((l) => (l.en ? { speaker: l.speaker, text: l.text, en: l.en } : { speaker: l.speaker, text: l.text })),
         prompt: p.prompt,
         options: optionOrder(p.options.length, seed).map((i) => p.options[i]!),

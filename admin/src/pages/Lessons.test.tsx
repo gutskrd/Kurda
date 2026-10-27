@@ -317,7 +317,7 @@ describe('making a complete lesson quickly', () => {
     ]);
   });
 
-  it('adds a conversation, written as people and their lines, and saves it without the parts left empty', async () => {
+  it('adds a conversation, written as characters and their lines, and saves it without the parts left empty', async () => {
     const user = userEvent.setup();
     const api = fakeApi(
       on('GET', '/admin/content/lessons/l-1', json(EMPTY)),
@@ -327,12 +327,19 @@ describe('making a complete lesson quickly', () => {
     renderUi(<Lessons />);
     await user.click(await screen.findByRole('button', { name: 'Add a conversation' }));
     const card = screen.getByRole('article', { name: /1\s*Conversation/ });
-    await user.type(within(card).getByLabelText('Person 1’s name'), 'Rojda');
-    await user.type(within(card).getByLabelText('Person 2’s name'), 'Azad');
+    // Xezo and Hamo to start; a character already in it is not offered for another part
+    expect(within(card).getByLabelText('Who plays part 1')).toHaveValue('xezo');
+    expect(within(card).getByLabelText('Who plays part 2')).toHaveValue('hamo');
+    expect(within(within(card).getByLabelText('Who plays part 2')).queryByRole('option', { name: 'Xezo' })).toBeNull();
+    // the deer is the one left to add, and then nobody is
+    await user.click(within(card).getByRole('button', { name: 'Add Hevalo' }));
+    expect(within(card).getByLabelText('Who plays part 3')).toHaveValue('hevalo');
+    expect(within(card).queryByRole('button', { name: /^Add (Xezo|Hamo|Hevalo)$/ })).toBeNull();
+    await user.click(within(card).getByRole('button', { name: 'Remove Hevalo and their lines' }));
     await user.type(within(card).getByLabelText('Line 1, in Kurdish'), 'Silav! Tu çawa yî?');
     await user.type(within(card).getByLabelText('Line 1, what it means'), 'Hello! How are you?');
     await user.type(within(card).getByLabelText('Line 2, in Kurdish'), 'Ez baş im, spas.');
-    await user.type(within(card).getByLabelText(/Question about it/), 'Azad çawa ye?');
+    await user.type(within(card).getByLabelText(/Question about it/), 'Hamo çawa ye?');
     await user.type(within(card).getByLabelText('Answer 1'), 'Baş e');
     await user.type(within(card).getByLabelText('Answer 2'), 'Nexweş e');
     // it cannot be recorded until it is saved
@@ -345,14 +352,14 @@ describe('making a complete lesson quickly', () => {
     expect(conversation!.payload).toEqual({
       id: expect.stringMatching(/^[a-z0-9]{6,32}$/),
       speakers: [
-        { name: 'Rojda', character: 'xezo' },
-        { name: 'Azad', character: 'hamo' },
+        { name: 'Xezo', character: 'xezo' },
+        { name: 'Hamo', character: 'hamo' },
       ],
       lines: [
         { speaker: 0, text: 'Silav! Tu çawa yî?', en: 'Hello! How are you?' },
         { speaker: 1, text: 'Ez baş im, spas.' },
       ],
-      prompt: 'Azad çawa ye?',
+      prompt: 'Hamo çawa ye?',
       options: ['Baş e', 'Nexweş e'],
       correctIndex: 0,
     });

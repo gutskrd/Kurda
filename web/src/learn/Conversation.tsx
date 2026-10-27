@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { CONVERSATION_LIMITS } from '@kurda/shared';
-import { STAGE } from '../characters/CharacterStage';
+import { ConversationStage } from '../characters/ConversationStage';
 import { Button } from '../components/Button';
 import { PlayIcon, StopIcon } from '../components/icons';
 import { onEnded, onPlaying, play, stop } from '../lib/sound';
@@ -9,7 +9,6 @@ import { useT } from '../i18n/I18nProvider';
 import { Ask, Choices, Prompt, verdictOf, type ExerciseProps } from './Exercises';
 import { kurdishText } from './map';
 import { PlayButton } from './PlayButton';
-import { ExerciseVoice, exerciseClips } from './Voice';
 
 /** A conversation with no line recorded yet sends no `lineAudio` at all. */
 const NO_AUDIO: ReadonlyArray<string | null> = [];
@@ -87,18 +86,19 @@ function usePlayThrough(audio: ReadonlyArray<string | null>): PlayThrough {
 }
 
 /**
- * Two to four people talking, then a question about what they said, asked
- * and graded as a multiple-choice item is (`Choices`).
+ * Two or three of the characters talking, then a question about what they
+ * said, asked and graded as a multiple-choice item is (`Choices`).
  *
- * The lines are speech bubbles in order: the first speaker's on the start
- * side, everyone else's across from them, each speaker in a tint of their own
- * and named over every line, so who says what never rests on colour. A line
- * with a recording has its own small button, and "Play conversation" hears
- * every recorded line through, marking the one being heard (`aria-current`)
- * and keeping it in view. Whoever says the line playing now speaks on the
- * stage above, mouth moving with it, where an editor chose a character for
- * them (`ExerciseVoice`, which follows the one player from line to line).
- * The English of each line is there for a learner who asks for it.
+ * They stand together on a stage above, looking at each other, and whoever
+ * says the line playing now says it, mouth moving with it: always that line's
+ * own character (`ConversationStage`, which follows the one player from line
+ * to line). The lines are speech bubbles in order: the first speaker's on the
+ * start side, everyone else's across from them, each speaker in a tint of
+ * their own and named over every line, so who says what never rests on
+ * colour. A line with a recording has its own small button, and "Play
+ * conversation" hears every recorded line through, marking the one being
+ * heard (`aria-current`) and keeping it in view. The English of each line is
+ * there for a learner who asks for it.
  */
 export function Conversation(props: ExerciseProps): React.JSX.Element {
   const { exercise, dialect, feedback } = props;
@@ -113,6 +113,7 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
   const meanings = lines.some((line) => !!line.en);
   const calm = useMediaQuery('(prefers-reduced-motion: reduce)');
   const heard = useRef<HTMLLIElement | null>(null);
+  const verdict = verdictOf(feedback);
 
   // the line being heard stays in view; under reduced motion it jumps rather than glides
   useEffect(() => {
@@ -127,29 +128,35 @@ export function Conversation(props: ExerciseProps): React.JSX.Element {
           {exercise.title}
         </h3>
       )}
+      <ConversationStage
+        speakers={speakers}
+        lines={lines}
+        audio={audio}
+        voices={exercise.lineVoices ?? undefined}
+        at={at}
+        reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}
+      />
       {(recorded || meanings) && (
-        <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)} height={STAGE.card}>
-          <div className="lesson-conversation-tools">
-            {recorded && (
-              <Button size="sm" className={`lesson-play${at !== null ? ' is-on' : ''}`} onClick={at === null ? start : halt}>
-                {at === null ? <PlayIcon size={17} /> : <StopIcon size={17} />}
-                {at === null ? t('lesson.conversation.play') : t('lesson.conversation.stop')}
-              </Button>
-            )}
-            {meanings && (
-              <Button size="sm" variant="secondary" onClick={() => setTranslated((on) => !on)}>
-                {translated ? t('lesson.conversation.hideTranslation') : t('lesson.conversation.showTranslation')}
-              </Button>
-            )}
-          </div>
-        </ExerciseVoice>
+        <div className="lesson-conversation-tools">
+          {recorded && (
+            <Button size="sm" className={`lesson-play${at !== null ? ' is-on' : ''}`} onClick={at === null ? start : halt}>
+              {at === null ? <PlayIcon size={17} /> : <StopIcon size={17} />}
+              {at === null ? t('lesson.conversation.play') : t('lesson.conversation.stop')}
+            </Button>
+          )}
+          {meanings && (
+            <Button size="sm" variant="secondary" onClick={() => setTranslated((on) => !on)}>
+              {translated ? t('lesson.conversation.hideTranslation') : t('lesson.conversation.showTranslation')}
+            </Button>
+          )}
+        </div>
       )}
       <ol className="lesson-lines" aria-label={t('lesson.conversation.lines')}>
         {lines.map((line, i) => {
           const who = speakers[line.speaker];
           const src = audio[i];
           const now = at === i;
-          // four speakers at most, each with a tint of their own; anything out of range reads as the first
+          // three speakers at most, each with a tint of their own; anything out of range reads as the first
           const tint = line.speaker > 0 && line.speaker < CONVERSATION_LIMITS.speakersMax ? line.speaker : 0;
           return (
             <li

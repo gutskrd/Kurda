@@ -449,10 +449,10 @@ describe('the team that writes and records lessons', () => {
     const section = await screen.findByRole('region', { name: 'Lessons and recording' });
     await user.click(within(section).getByRole('button', { name: 'Let them record and write lessons' }));
     const dialog = await screen.findByRole('dialog', { name: 'Let baran write and record lessons?' });
-    await user.type(within(dialog).getByLabelText('Why (kept in their history)'), 'Records Azad’s part');
+    await user.type(within(dialog).getByLabelText('Why (kept in their history)'), 'Records Hamo’s part');
     await user.click(within(dialog).getByRole('button', { name: 'Give the role' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
-    expect(api.calls.find((c) => c.method === 'PUT')!.body).toEqual({ on: true, reason: 'Records Azad’s part' });
+    expect(api.calls.find((c) => c.method === 'PUT')!.body).toEqual({ on: true, reason: 'Records Hamo’s part' });
     expect(await within(section).findByRole('button', { name: 'Take it away' })).toBeInTheDocument();
   });
 

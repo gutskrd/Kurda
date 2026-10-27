@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { conversationLineKey, lessonAudioKey, primaryAudioTarget, type RecordingVoice } from '@kurda/shared';
+import { conversationLineKey, isSpeakerId, lessonAudioKey, primaryAudioTarget, type RecordingVoice, type SpeakerId } from '@kurda/shared';
 import type { ExerciseType } from '../content/repository.js';
 import { voiceColumns, voiceOf, type VoiceRow } from '../speakers/voice.js';
 
@@ -54,7 +54,11 @@ export interface DeliveredAudio {
    * conversation and part, so its URL never matches any other item's.
    */
   lineAudio?: Array<string | null>;
-  /** who says each line's recording, null where there is none or no character is chosen */
+  /**
+   * Who says each line's recording, null where there is none: always the
+   * character playing the line's part, with the recording's own timeline when
+   * it has one, whichever voice the recording was saved under.
+   */
   lineVoices?: Array<RecordingVoice | null>;
 }
 
@@ -69,6 +73,8 @@ interface Plan {
   shown: Array<[string, string]>;
   /** a conversation's line keys, by the line's place ('' for a line with nothing to file) */
   lines: string[];
+  /** the character playing each line's part, by the line's place */
+  cast: Array<SpeakerId | null>;
 }
 
 function keyOf(text: unknown): string | null {
@@ -148,6 +154,7 @@ function planFor(type: ExerciseType, payload: unknown): Plan {
     answerBearing: type === 'listening' ? [listening, primary].filter((k): k is string => k !== null) : [],
     shown,
     lines: type === 'conversation' ? lineKeys(p) : [],
+    cast: type === 'conversation' ? lineCast(p) : [],
   };
 }
 
@@ -157,6 +164,16 @@ function lineKeys(p: Record<string, unknown>): string[] {
   return (p.lines as Array<{ speaker?: unknown; text?: unknown }>).map((line) =>
     typeof line?.speaker === 'number' && typeof line.text === 'string' ? conversationLineKey(p.id as string, line.speaker, line.text) : '',
   );
+}
+
+/** Who plays each line's part, by its place: null where its part has no character. */
+function lineCast(p: Record<string, unknown>): Array<SpeakerId | null> {
+  if (!Array.isArray(p.lines)) return [];
+  const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<{ character?: unknown } | null>) : [];
+  return (p.lines as Array<{ speaker?: unknown }>).map((line) => {
+    const character = typeof line?.speaker === 'number' ? speakers[line.speaker]?.character : undefined;
+    return isSpeakerId(character) ? character : null;
+  });
 }
 
 /**
@@ -241,7 +258,12 @@ export async function lessonAudioFor(
     if (Object.keys(audioVoices).length > 0) out.audioVoices = audioVoices;
     if (plan.lines.some((key) => lineUrl(key))) {
       out.lineAudio = plan.lines.map((key) => lineUrl(key) ?? null);
-      out.lineVoices = plan.lines.map((key) => (lineUrl(key) ? (voices.get(key) ?? null) : null));
+      out.lineVoices = plan.lines.map((key, i) => {
+        if (!lineUrl(key)) return null;
+        const voice = voices.get(key) ?? null;
+        const who = plan.cast[i];
+        return who ? { ...voice, speaker: who } : voice;
+      });
     }
     return out;
   });

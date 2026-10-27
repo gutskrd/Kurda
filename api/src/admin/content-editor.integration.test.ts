@@ -43,7 +43,7 @@ describe.skipIf(!DATABASE_URL)('the content editor role (integration)', () => {
     return { token, id };
   }
 
-  const set = (id: string, on: boolean, token = owner, reason = 'Records Azad’s part') =>
+  const set = (id: string, on: boolean, token = owner, reason = 'Records Hamo’s part') =>
     app.inject({ method: 'PUT', url: `/admin/users/${id}/content-editor`, headers: { authorization: `Bearer ${token}` }, payload: { on, reason } });
   const studio = (token: string) => app.inject({ method: 'GET', url: '/admin/lesson-audio', headers: { authorization: `Bearer ${token}` } });
   const rolesOf = async (id: string): Promise<string[]> => (await pool.query<{ roles: string[] }>(`SELECT roles FROM users WHERE id = $1`, [id])).rows[0]!.roles;
@@ -82,7 +82,7 @@ describe.skipIf(!DATABASE_URL)('the content editor role (integration)', () => {
       `SELECT action, reason, meta FROM admin_actions WHERE target_user_id = $1 ORDER BY created_at`,
       [voiceId],
     );
-    expect(history.rows).toEqual([{ action: 'role_grant', reason: 'Records Azad’s part', meta: expect.objectContaining({ role: 'content_editor' }) }]);
+    expect(history.rows).toEqual([{ action: 'role_grant', reason: 'Records Hamo’s part', meta: expect.objectContaining({ role: 'content_editor' }) }]);
     // staff now: their own sign-in code first, then the studio
     await pass2fa(app, voice);
     expect((await studio(voice)).statusCode).toBe(200);

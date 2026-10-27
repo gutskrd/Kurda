@@ -1,4 +1,4 @@
-import type { DeliveredExercise, Feedback } from '@kurda/shared';
+import { conversationLineVoice, type DeliveredExercise, type Feedback } from '@kurda/shared';
 import { CharacterStage } from '../characters/CharacterStage';
 import { spokenClips, type MaybeSpoken, type SpokenClip } from '../characters/clips';
 
@@ -27,7 +27,10 @@ export function exerciseClips(exercise: DeliveredExercise): SpokenClip[] {
     { src: exercise.modelAudioUrl, voice: exercise.modelAudioVoice, text: promptWords(exercise.prompt) },
   ];
   for (const [said, src] of Object.entries(exercise.audio ?? {})) list.push({ src, voice: exercise.audioVoices?.[said], text: said });
-  (exercise.lines ?? []).forEach((line, i) => list.push({ src: exercise.lineAudio?.[i], voice: exercise.lineVoices?.[i], text: line.text }));
+  // a line is always said by its own part's character, whichever voice its recording was saved under
+  (exercise.lines ?? []).forEach((line, i) =>
+    list.push({ src: exercise.lineAudio?.[i], voice: conversationLineVoice(exercise.speakers ?? [], line, exercise.lineVoices?.[i]), text: line.text }),
+  );
   return spokenClips(list);
 }
 

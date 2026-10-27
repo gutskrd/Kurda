@@ -483,8 +483,8 @@ describe('a conversation', () => {
     type: 'conversation',
     title: 'Li kafeyê',
     speakers: [
-      { name: 'Rojîn', character: 'xezo' },
-      { name: 'Azad', character: 'hamo' },
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
     ],
     lines: [
       { speaker: 0, text: 'Silav! Tu çawa yî?', en: 'Hello! How are you?' },
@@ -492,11 +492,11 @@ describe('a conversation', () => {
       { speaker: 0, text: 'Tu çi vedixwî?' },
       { speaker: 1, text: 'Çayekê, ji kerema xwe.', en: 'A tea, please.' },
     ],
-    prompt: 'What does Azad want to drink?',
+    prompt: 'What does Hamo want to drink?',
     options: ['Coffee', 'Tea', 'Water'],
-    // the third line is not recorded yet
+    // the third line is not recorded yet, and the first was saved under the deer's voice by mistake
     lineAudio: [clip(0), clip(1), null, clip(3)],
-    lineVoices: [{ speaker: 'xezo' }, { speaker: 'hamo' }, null, { speaker: 'hamo' }],
+    lineVoices: [{ speaker: 'hevalo' }, { speaker: 'hamo' }, null, null],
   };
 
   async function lines(): Promise<HTMLElement[]> {
@@ -524,18 +524,18 @@ describe('a conversation', () => {
     expect(screen.getByRole('heading', { name: 'Li kafeyê' })).toHaveAttribute('lang', 'ku');
     const items = await lines();
     expect(items.map((li) => li.textContent)).toEqual([
-      'Rojîn: Silav! Tu çawa yî?',
-      'Azad: Ez baş im, spas.',
-      'Rojîn: Tu çi vedixwî?',
-      'Azad: Çayekê, ji kerema xwe.',
+      'Xezo: Silav! Tu çawa yî?',
+      'Hamo: Ez baş im, spas.',
+      'Xezo: Tu çi vedixwî?',
+      'Hamo: Çayekê, ji kerema xwe.',
     ]);
     expect(items.map((li) => li.classList.contains('is-end'))).toEqual([false, true, false, true]);
     expect(within(items[1]!).getByText('Ez baş im, spas.')).toHaveAttribute('lang', 'ku');
     // a small button for each recorded line, and none for the one not recorded yet
-    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Rojîn)' })).toBeInTheDocument();
+    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toBeInTheDocument();
     expect(within(items[2]!).queryByRole('button')).not.toBeInTheDocument();
     // then the question, and its answers
-    expect(screen.getByText('What does Azad want to drink?')).toBeInTheDocument();
+    expect(screen.getByText('What does Hamo want to drink?')).toBeInTheDocument();
     expect(within(screen.getByRole('group', { name: 'Answers' })).getAllByRole('button')).toHaveLength(3);
   });
 
@@ -553,7 +553,26 @@ describe('a conversation', () => {
     expect(screen.getByRole('button', { name: 'Show translation' })).toBeInTheDocument();
   });
 
-  it('offers neither play nor translation, and shows nobody, when no line is recorded or translated', async () => {
+  it('stands the two of them together, looking at each other, the first speaker on the start side', async () => {
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    await lines();
+    const stage = screen.getByTestId('conversation-stage');
+    // decorative: the bubbles say who says what
+    expect(stage).toHaveAttribute('aria-hidden', 'true');
+    const figures = [...stage.querySelectorAll<HTMLElement>('.speaking-character')];
+    expect(figures.map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
+    // Xezo on the left looks right, at him; Hamo on the right looks left, at her
+    const iris = (f: HTMLElement): string => f.querySelector<SVGGElement>('[data-iris="left"]')!.style.transform;
+    expect(iris(figures[0]!)).toMatch(/^translate\(2\.\d+px, 0px\)$/);
+    expect(iris(figures[1]!)).toMatch(/^translate\(-2\.\d+px, 0px\)$/);
+    const left = (f: HTMLElement): number => parseFloat(f.parentElement!.style.left);
+    expect(left(figures[0]!)).toBeLessThan(left(figures[1]!));
+    // nobody speaks before a line is heard
+    expect(stage.querySelector('[data-saying]')).toBeNull();
+  });
+
+  it('offers neither play nor translation when no line is recorded or translated, and still shows the two of them', async () => {
     serve({});
     const plain = { ...talk, lines: talk.lines!.map(({ speaker, text }) => ({ speaker, text })) };
     delete plain.lineAudio;
@@ -563,7 +582,7 @@ describe('a conversation', () => {
     expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: 'Show translation' })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Hear line/ })).not.toBeInTheDocument();
-    expect(document.querySelector('.speaking-character')).toBeNull();
+    expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
   });
 
   it('answers as multiple choice does: the option’s place as shown, by tap or by key, marked once graded', async () => {
@@ -589,30 +608,33 @@ describe('a conversation', () => {
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'c', answer: { choice: 1 } });
   });
 
-  it('plays every recorded line in order, passing over the one not recorded, marking each and its speaker as it is heard', async () => {
+  it('plays every recorded line in order, passing over the one not recorded, each said by its own character as it is heard', async () => {
     sounding();
     serve({});
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     const items = await lines();
     const current = (): number[] => items.flatMap((li, i) => (li.getAttribute('aria-current') === 'true' ? [i] : []));
-    const speaker = (): string | null | undefined => document.querySelector('.character-stage .speaking-character')?.getAttribute('data-speaker');
+    const speaker = (): string | null | undefined => document.querySelector('.conversation-stage [data-saying] .speaking-character')?.getAttribute('data-speaker');
     expect(current()).toEqual([]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
     expect(played.map((p) => p.src)).toEqual([clip(0)]);
     expect(current()).toEqual([0]);
     expect(items[0]).toHaveClass('is-heard');
+    // her own line, said by her though the recording was saved under the deer's voice: he is not even on the stage
     expect(speaker()).toBe('xezo');
+    expect(document.querySelector('.speaking-character[data-speaker="hevalo"]')).toBeNull();
     // the line's own button lights as it plays, and the button now stops it all
-    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Rojîn)' })).toHaveClass('is-on');
+    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toHaveClass('is-on');
     expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
 
     ended();
     expect(current()).toEqual([1]);
     expect(speaker()).toBe('hamo');
     ended();
-    // the third line has no recording: on to the fourth
+    // the third line has no recording: on to the fourth, Hamo's, which was saved with no voice at all
     expect(current()).toEqual([3]);
+    expect(speaker()).toBe('hamo');
     ended();
     expect(current()).toEqual([]);
     expect(played.map((p) => p.src)).toEqual([clip(0), clip(1), clip(3)]);
@@ -632,7 +654,7 @@ describe('a conversation', () => {
     expect(played.map((p) => p.src)).toEqual([clip(0)]);
 
     await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
-    await userEvent.click(within(items[3]!).getByRole('button', { name: 'Hear line 4 (Azad)' }));
+    await userEvent.click(within(items[3]!).getByRole('button', { name: 'Hear line 4 (Hamo)' }));
     expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
     // the line asked for plays to its end, and nothing follows it
     ended();

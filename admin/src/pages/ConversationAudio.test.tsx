@@ -28,16 +28,16 @@ function recording(azadDone = false): ConversationRecording {
       id: 'kmrnasin01',
       title: 'Li parkê',
       speakers: [
-        { name: 'Rojda', character: 'xezo' },
-        { name: 'Azad', character: 'hamo' },
+        { name: 'Xezo', character: 'xezo' },
+        { name: 'Hamo', character: 'hamo' },
       ],
       lines: [
-        { speaker: 0, text: 'Silav! Navê min Rojda ye.', en: 'Hello! My name is Rojda.' },
-        { speaker: 1, text: 'Silav Rojda! Navê min Azad e.', en: 'Hi Rojda! My name is Azad.' },
-        { speaker: 0, text: 'Tu çawa yî, Azad?' },
+        { speaker: 0, text: 'Silav! Navê min Xezo ye.', en: 'Hello! My name is Xezo.' },
+        { speaker: 1, text: 'Silav Xezo! Navê min Hamo ye.', en: 'Hi Xezo! My name is Hamo.' },
+        { speaker: 0, text: 'Tu çawa yî, Hamo?' },
         { speaker: 1, text: 'Ez baş im, spas.' },
       ],
-      prompt: 'Azad çawa ye?',
+      prompt: 'Hamo çawa ye?',
       options: ['Baş e', 'Nexweş e'],
       correctIndex: 0,
     },
@@ -71,14 +71,14 @@ describe('recording a conversation', () => {
     location.hash = '#/audio/conversations/kmrnasin01?lesson=l1&part=1';
     renderUi(<AudioStudio />);
     expect(await screen.findByRole('heading', { level: 1, name: 'Li parkê' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Azad/ })).toHaveAttribute('aria-checked', 'true');
-    expect(screen.getByRole('radio', { name: /Rojda/ })).toHaveTextContent('1 of 2 recorded · by rojda');
-    // Azad's first line is open to record, after Rojda's, which can be heard first
-    expect(screen.getByRole('group', { name: 'Record “Silav Rojda! Navê min Azad e.”' })).toBeInTheDocument();
-    expect(screen.getByText('Before you: Rojda says “Silav! Navê min Rojda ye.”')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: /Hamo/ })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: /Xezo/ })).toHaveTextContent('1 of 2 recorded · by rojda');
+    // Hamo's first line is open to record, after Xezo's, which can be heard first
+    expect(screen.getByRole('group', { name: 'Record “Silav Xezo! Navê min Hamo ye.”' })).toBeInTheDocument();
+    expect(screen.getByText('Before you: Xezo says “Silav! Navê min Xezo ye.”')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Hear it first' })).toBeInTheDocument();
     // the other part's line still to record waits for them
-    expect(screen.getAllByText('Waiting for Rojda')).toHaveLength(1);
+    expect(screen.getAllByText('Waiting for Xezo')).toHaveLength(1);
   });
 
   it('saves a take as this part’s own line, with its character, and moves on to the next of theirs', async () => {
@@ -93,18 +93,18 @@ describe('recording a conversation', () => {
     );
     location.hash = '#/audio/conversations/kmrnasin01?lesson=l1&part=1';
     renderUi(<AudioStudio />);
-    const studio = await screen.findByRole('group', { name: 'Record “Silav Rojda! Navê min Azad e.”' });
+    const studio = await screen.findByRole('group', { name: 'Record “Silav Xezo! Navê min Hamo ye.”' });
     await user.click(within(studio).getByRole('button', { name: 'Record' }));
     await user.click(await within(studio).findByRole('button', { name: 'Stop' }));
     await user.click(await within(studio).findByRole('button', { name: 'Save' }));
     await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
     const put = api.calls.find((c) => c.method === 'PUT')!;
-    expect(put.path).toContain(`text=${encodeURIComponent('Silav Rojda! Navê min Azad e.')}`);
+    expect(put.path).toContain(`text=${encodeURIComponent('Silav Xezo! Navê min Hamo ye.')}`);
     expect(put.path).toContain('&line=kmrnasin01%3A1');
     expect(put.path).toContain('speaker=hamo');
-    // on to Azad's next line
+    // on to Hamo's next line
     expect(await screen.findByRole('group', { name: 'Record “Ez baş im, spas.”' })).toBeInTheDocument();
-    expect(screen.getByRole('radio', { name: /Azad/ })).toHaveTextContent('1 of 2 recorded · by azad');
+    expect(screen.getByRole('radio', { name: /Hamo/ })).toHaveTextContent('1 of 2 recorded · by azad');
   });
 
   it('sends the other person a link to their own part', async () => {
@@ -114,9 +114,9 @@ describe('recording a conversation', () => {
     fakeApi(on('GET', PAGE, json(recording())));
     location.hash = '#/audio/conversations/kmrnasin01?lesson=l1&part=1';
     renderUi(<AudioStudio />);
-    await user.click(await screen.findByRole('button', { name: 'Send Rojda’s part' }));
+    await user.click(await screen.findByRole('button', { name: 'Send Xezo’s part' }));
     expect(writeText).toHaveBeenCalledWith(expect.stringMatching(/#\/audio\/conversations\/kmrnasin01\?lesson=l1&part=0$/));
-    expect(await screen.findByText('Link to Rojda’s part copied. Send it to whoever records Rojda.')).toBeInTheDocument();
+    expect(await screen.findByText('Link to Xezo’s part copied. Send it to whoever records Xezo.')).toBeInTheDocument();
   });
 
   it('lists every conversation in the lessons, each part with how far it has got', async () => {
@@ -138,8 +138,8 @@ describe('recording a conversation', () => {
     };
     const listing: Listing = {
       items: [
-        { key: 'k0', text: 'Silav!', recorded: true, url: 'https://cdn.test/a.wav', durationMs: 900, updatedAt: null, usedIn: [use], unused: false, line: { conversation: 'kmrnasin01', part: 0, name: 'Rojda', character: 'xezo' } },
-        { key: 'k1', text: 'Silav!', recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [use], unused: false, line: { conversation: 'kmrnasin01', part: 1, name: 'Azad', character: 'hamo' } },
+        { key: 'k0', text: 'Silav!', recorded: true, url: 'https://cdn.test/a.wav', durationMs: 900, updatedAt: null, usedIn: [use], unused: false, line: { conversation: 'kmrnasin01', part: 0, name: 'Xezo', character: 'xezo' } },
+        { key: 'k1', text: 'Silav!', recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [use], unused: false, line: { conversation: 'kmrnasin01', part: 1, name: 'Hamo', character: 'hamo' } },
       ],
       summary: { needed: 2, recorded: 1, missing: 1, unused: 0 },
     };
@@ -147,7 +147,7 @@ describe('recording a conversation', () => {
     location.hash = '#/audio/conversations';
     renderUi(<AudioStudio />);
     expect(await screen.findByRole('link', { name: 'Meeting someone' })).toHaveAttribute('href', '#/audio/conversations/kmrnasin01?lesson=l1');
-    expect(screen.getByRole('link', { name: 'Record Azad’s part: 0 of 1 lines recorded' })).toHaveAttribute('href', '#/audio/conversations/kmrnasin01?lesson=l1&part=1');
+    expect(screen.getByRole('link', { name: 'Record Hamo’s part: 0 of 1 lines recorded' })).toHaveAttribute('href', '#/audio/conversations/kmrnasin01?lesson=l1&part=1');
     expect(screen.getByText('1 of 2 lines still to record')).toBeInTheDocument();
   });
 });

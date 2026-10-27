@@ -297,5 +297,6 @@ describe('check yourself', () => {
     }
     expect(screen.getByText(/of 8 right first time/)).toBeTruthy();
     expect(screen.getByRole('button', { name: 'New round' })).toBeTruthy();
-  });
+    // a whole round, up to sixteen questions each drawn and answered, takes longer than one question's five seconds
+  }, 20_000);
 });

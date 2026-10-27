@@ -264,7 +264,7 @@ function TeamRole({ user: u, onChanged }: { user: UserDetail; onChanged: () => v
         ? 'They get the content editor role: the lessons, the stories and the audio studio, with a sign-in code of their own. Nothing about people or money.'
         : 'They lose the content editor role at once. Their recordings stay.',
       label: 'Why (kept in their history)',
-      placeholder: on ? 'Records Azad’s part of the conversations' : undefined,
+      placeholder: on ? 'Records Hamo’s part of the conversations' : undefined,
       maxLength: 500,
       confirmLabel: on ? 'Give the role' : 'Take it away',
       tone: on ? 'default' : 'danger',

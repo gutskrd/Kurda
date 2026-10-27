@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS } from '@kurda/shared';
+import { CHARACTER_NAMES, CONVERSATION_LIMITS as CONV, SPEAKERS, conversationSpeaker, isSpeakerId, type SpeakerId } from '@kurda/shared';
 import { EXERCISE_TYPES, TYPE_HINT, TYPE_NAME, blankPayload, type Exercise, type ExerciseType, type Issue, type Payload } from '../lessons';
 import { toPreview } from '../preview';
 import { Checkbox, Field, Icon } from '../ui';
@@ -314,14 +314,12 @@ function Answers({
   );
 }
 
-const CHARACTERS: ReadonlyArray<{ value: string; label: string }> = [{ value: '', label: 'No character' }, ...SPEAKERS.map((v) => ({ value: v, label: CHARACTER_NAMES[v] }))];
-
 /**
- * A conversation as a form: who takes part (and the character learners see
- * saying their lines), what each says in turn with what it means, and the
- * question about it. Each part is recorded by its own person on the
- * conversation's recording page, which the link at the end opens once the
- * draft is saved.
+ * A conversation as a form: which of the characters take part (each plays one
+ * part, called by its own name, and is who learners see saying its lines),
+ * what each says in turn with what it means, and the question about it. Each
+ * part is recorded by its own person on the conversation's recording page,
+ * which the link at the end opens once the draft is saved.
  */
 function ConversationFields({
   p,
@@ -340,8 +338,14 @@ function ConversationFields({
 }): React.JSX.Element {
   const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
   const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
-  const nameOf = (i: number): string => str(speakers[i]?.name).trim() || `Person ${i + 1}`;
-  const setSpeaker = (i: number, patch: Record<string, unknown>): void => set({ speakers: speakers.map((s, j) => (j === i ? { ...s, ...patch } : s)) });
+  const characterOf = (i: number): SpeakerId | null => (isSpeakerId(speakers[i]?.character) ? (speakers[i]!.character as SpeakerId) : null);
+  const nameOf = (i: number): string => {
+    const who = characterOf(i);
+    return who ? CHARACTER_NAMES[who] : `Person ${i + 1}`;
+  };
+  const cast = (i: number, who: SpeakerId): void => set({ speakers: speakers.map((s, j) => (j === i ? conversationSpeaker(who) : s)) });
+  // the characters nobody plays yet: a new part is the first of them
+  const free = SPEAKERS.filter((who) => !speakers.some((_, j) => characterOf(j) === who));
   const setLine = (i: number, patch: Record<string, unknown>): void => set({ lines: lines.map((l, j) => (j === i ? { ...l, ...patch } : l)) });
   const removeSpeaker = (i: number): void =>
     set({
@@ -370,30 +374,23 @@ function ConversationFields({
 
       <fieldset className="ex-list cv-people">
         <legend>Who takes part</legend>
-        <div className="field-hint">Each person’s lines are recorded by their own speaker. The character is who learners see saying them.</div>
-        {speakers.map((speaker, i) => (
+        <div className="field-hint">Each character plays one part and is who learners see saying its lines. Each part is recorded by its own speaker.</div>
+        {speakers.map((_, i) => (
           <div key={i} className="ex-list-row cv-person">
             <span className={`cv-swatch part-${i}`} aria-hidden="true" />
-            <input
-              id={at(`speakers.${i}.name`)}
-              dir="auto"
-              value={str(speaker.name)}
-              maxLength={CONV.nameMax}
-              placeholder={['Rojda', 'Azad', 'Dilan', 'Kawa'][i]}
-              readOnly={readOnly}
-              aria-label={`Person ${i + 1}’s name`}
-              aria-invalid={problem(issues, `speakers.${i}.name`) ? true : undefined}
-              onChange={(e) => setSpeaker(i, { name: e.target.value })}
-            />
             <select
-              aria-label={`Who learners see as ${nameOf(i)}`}
-              value={str(speaker.character)}
+              id={at(`speakers.${i}.character`)}
+              aria-label={`Who plays part ${i + 1}`}
+              aria-invalid={problem(issues, `speakers.${i}.character`) ? true : undefined}
+              value={characterOf(i) ?? ''}
               disabled={readOnly}
-              onChange={(e) => setSpeaker(i, { character: e.target.value })}
+              onChange={(e) => (isSpeakerId(e.target.value) ? cast(i, e.target.value) : undefined)}
             >
-              {CHARACTERS.map((c) => (
-                <option key={c.value} value={c.value}>
-                  {c.label}
+              {characterOf(i) === null && <option value="">Choose a character</option>}
+              {/* a character already playing another part is not offered again */}
+              {SPEAKERS.filter((who) => who === characterOf(i) || free.includes(who)).map((who) => (
+                <option key={who} value={who}>
+                  {CHARACTER_NAMES[who]}
                 </option>
               ))}
             </select>
@@ -415,10 +412,10 @@ function ConversationFields({
             {i.message}
           </div>
         ))}
-        {!readOnly && speakers.length < CONV.speakersMax && (
-          <button type="button" className="ghost ex-add" onClick={() => set({ speakers: [...speakers, { name: '', character: '' }] })}>
+        {!readOnly && speakers.length < CONV.speakersMax && free[0] && (
+          <button type="button" className="ghost ex-add" onClick={() => set({ speakers: [...speakers, conversationSpeaker(free[0]!)] })}>
             <Icon name="plus" />
-            Add a person
+            Add {CHARACTER_NAMES[free[0]]}
           </button>
         )}
       </fieldset>
@@ -510,7 +507,7 @@ function ConversationFields({
         )}
       </fieldset>
 
-      <Field label="Question about it" hint="Asked once the conversation has been read and heard: “Azad ji ku derê ye?”" error={problem(issues, 'prompt')} required>
+      <Field label="Question about it" hint="Asked once the conversation has been read and heard: “Hamo ji ku derê ye?”" error={problem(issues, 'prompt')} required>
         <textarea id={at('prompt')} rows={2} dir="auto" value={str(p.prompt)} maxLength={CONV.promptMax} readOnly={readOnly} onChange={(e) => set({ prompt: e.target.value })} />
       </Field>
       <Answers p={p} set={set} issues={issues} readOnly={readOnly} at={at} />

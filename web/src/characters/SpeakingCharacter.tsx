@@ -11,11 +11,12 @@ import {
   between,
   characterArt,
   cropBox,
+  eyeShift,
   eyesFor,
   eyesMiddle,
   glanceTarget,
+  leanToward,
   lookToward,
-  pupilShift,
   sampleKeys,
   speakingFrame,
   voiceTimeline,
@@ -70,7 +71,7 @@ const about = (p: CharacterPoint): string => ` style="transform-origin:${px(p)}"
  * and nose are groups of their own, so they can move. Resting, three "z"s
  * wait beside the head for the stylesheet to float them up.
  */
-function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean): string {
+function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean): string {
   const own = (part: string): string => part.split(`${TEMPLATE}-`).join(`${prefix}-`);
   const hidden = ' visibility="hidden"';
   const feet = { x: frame.x + frame.w / 2, y: art.viewBox.y + art.viewBox.h };
@@ -111,6 +112,8 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
   return (
     // standing on the bottom of its box: a bust's shoulders meet the edge, whatever room is left above
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${box(frame)}" width="100%" height="100%" preserveAspectRatio="xMidYMax meet" aria-hidden="true" focusable="false">` +
+    // turned the other way round about the middle of its box, so that a face drawn turned a little turns the other way
+    (mirrored ? `<g transform="matrix(-1 0 0 1 ${2 * frame.x + frame.w} 0)">` : '<g>') +
     shadow +
     `<g class="sc-breathe"${about(feet)}><g data-sc="hop"${about(feet)}>` +
     own(art.body) +
@@ -119,7 +122,7 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     eyes +
     VISEMES.map((v) => `<g data-mouth="${v}"${v === 'rest' ? '' : hidden}>${own(art.mouths[v])}</g>`).join('') +
     nose +
-    '</g></g></g></g></g>' +
+    '</g></g></g></g></g></g>' +
     snooze +
     '</svg>'
   );
@@ -185,6 +188,17 @@ export interface SpeakingCharacterProps {
    * pointer; a click still wakes it for its greeting.
    */
   resting?: boolean;
+  /**
+   * Where it keeps looking, each way from -1 to 1 in its own drawing's terms
+   * (shared `lookAcross`): at whoever it is talking with. Its eyes stay there
+   * and its head leans a little that way; it neither glances about nor
+   * follows the pointer.
+   */
+  gaze?: CharacterPoint | null;
+  /** drawn the other way round (shared `standTogether`), so a face drawn turned a little turns toward the others */
+  mirrored?: boolean;
+  /** never speaks, whatever the element plays: it listens while another character says its line */
+  quiet?: boolean;
   /** a click or a tap on the character: it greets you, and then this (say it again, usually) */
   onPress?: () => void;
   className?: string;
@@ -224,6 +238,9 @@ export function SpeakingCharacter({
   decorative = false,
   reaction = null,
   resting = false,
+  gaze = null,
+  mirrored = false,
+  quiet = false,
   onPress,
   className,
 }: SpeakingCharacterProps): React.JSX.Element {
@@ -232,7 +249,10 @@ export function SpeakingCharacter({
   const prefix = `sc${id.replace(/[^A-Za-z0-9]/g, '')}`;
   const art = useMemo(() => characterArt(speaker, TEMPLATE), [speaker]);
   const frame = cropBox(art, crop);
-  const markup = useMemo(() => ({ __html: drawing(art, prefix, frame, crop, resting) }), [art, prefix, frame, crop, resting]);
+  const markup = useMemo(() => ({ __html: drawing(art, prefix, frame, crop, resting, mirrored) }), [art, prefix, frame, crop, resting, mirrored]);
+  // as two numbers, so a new object for the same look changes nothing
+  const gazeX = gaze?.x ?? null;
+  const gazeY = gaze?.y ?? null;
   const root = useRef<HTMLSpanElement>(null);
   const source = useRef(audio);
   source.current = audio;
@@ -255,8 +275,14 @@ export function SpeakingCharacter({
     host.querySelectorAll('[data-mouth]').forEach((g) => mouths.set(g.getAttribute('data-mouth') ?? '', g));
     const eyeGroups = new Map<string, Element>();
     host.querySelectorAll('[data-eyes]').forEach((g) => eyeGroups.set(g.getAttribute('data-eyes') ?? '', g));
-    const pupils = { left: q<SVGGElement>('[data-pupil="left"]'), right: q<SVGGElement>('[data-pupil="right"]') };
+    // the deer's pupils, or a person's irises: what moves when it looks at something
+    const pupils = art.rig
+      ? { left: q<SVGGElement>('[data-pupil="left"]'), right: q<SVGGElement>('[data-pupil="right"]') }
+      : { left: q<SVGGElement>('[data-iris="left"]'), right: q<SVGGElement>('[data-iris="right"]') };
     const pivot = `${art.headPivot.x} ${art.headPivot.y}`;
+    // where it looks when nothing else draws its eyes, and the lean of the head that goes with it
+    const steady: CharacterPoint | null = gazeX === null || gazeY === null ? null : { x: gazeX, y: gazeY };
+    const lean = steady ? leanToward(steady) : 0;
 
     const reduced = { now: prefersReducedMotion() };
     const query = typeof window.matchMedia === 'function' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -274,8 +300,8 @@ export function SpeakingCharacter({
       const mouth = next.mouth === 'rest' && held.mouth ? held.mouth : next.mouth;
       // asleep the eyes stay shut, but for the face a greeting puts on
       const eyes = held.eyes ?? (resting ? 'closed' : next.eyes);
-      // and the head stays dipped to one side
-      const nod = next.nod + (resting ? RESTING.dip : 0);
+      // and the head stays dipped to one side, or leans toward whoever it is talking with
+      const nod = next.nod + (resting ? RESTING.dip : 0) + lean;
       if (force || mouth !== shown.mouth) {
         if (force) mouths.forEach((g, v) => show(g, v === mouth));
         else {
@@ -296,7 +322,7 @@ export function SpeakingCharacter({
     // ---- the recording ----
     const wanted = src ? absolute(src) : null;
     let el: HTMLAudioElement | null = null;
-    const mine = (a: HTMLAudioElement): boolean => !src || a.src === src || a.src === wanted;
+    const mine = (a: HTMLAudioElement): boolean => !quiet && (!src || a.src === src || a.src === wanted);
     const speaking = (): boolean => !!el && mine(el) && !el.paused && !el.ended;
     let timeline: LipsyncTimeline | null = voiceTimeline(voice, text, null);
     // a timeline made from the words needs the recording's length first
@@ -367,17 +393,20 @@ export function SpeakingCharacter({
 
     // ---- looking ----
     let following = false;
+    // looking at nothing in particular is looking where it keeps looking, if anywhere
     const look = (where: CharacterPoint | null): void => {
       if (!pupils.left || !pupils.right) return;
-      if (!where) {
+      const at = where ?? steady;
+      if (!at) {
         pupils.left.style.transform = '';
         pupils.right.style.transform = '';
         return;
       }
-      const shift = pupilShift(art, where, 1);
+      const shift = eyeShift(art, at);
       pupils.left.style.transform = `translate(${shift.left.x}px, ${shift.left.y}px)`;
       pupils.right.style.transform = `translate(${shift.right.x}px, ${shift.right.y}px)`;
     };
+    look(null);
     const middle = eyesMiddle(art);
     const aim = (x: number, y: number): void => {
       if (!awake()) return;
@@ -461,7 +490,8 @@ export function SpeakingCharacter({
       following = false;
       look(null);
     };
-    const gazing = !!art.rig && !resting;
+    // it follows the pointer only when it has nothing of its own to look at
+    const gazing = !!art.rig && !resting && !steady;
     const listen = (on: boolean): void => {
       if (!gazing) return;
       const method = on ? 'addEventListener' : 'removeEventListener';
@@ -493,11 +523,14 @@ export function SpeakingCharacter({
     const startHabits = (): void => {
       stopHabits();
       if (!awake() || reduced.now || !art.rig || resting) return;
-      every(HABITS.glance, () => {
-        if (following || running.some((a) => a.playState === 'running')) return;
-        look(glanceTarget());
-        habits.push(window.setTimeout(() => (following ? undefined : look(null)), between(HABITS.glanceHold)));
-      });
+      // one looking at whoever it talks with keeps its eyes on them
+      if (!steady) {
+        every(HABITS.glance, () => {
+          if (following || running.some((a) => a.playState === 'running')) return;
+          look(glanceTarget());
+          habits.push(window.setTimeout(() => (following ? undefined : look(null)), between(HABITS.glanceHold)));
+        });
+      }
       every(HABITS.twitch, () => (running.some((a) => a.playState === 'running') ? undefined : act(Math.random() < 0.5 ? 'twitchLeft' : 'twitchRight')));
       every(HABITS.sniff, () => (running.some((a) => a.playState === 'running') ? undefined : act('sniff')));
     };
@@ -600,7 +633,7 @@ export function SpeakingCharacter({
       query?.removeEventListener?.('change', onMotion);
       play.current = () => undefined;
     };
-  }, [markup, art, frame, src, text, voice, decorative, resting]);
+  }, [markup, art, frame, src, text, voice, decorative, resting, quiet, gazeX, gazeY]);
 
   // a reaction plays when it is given, and each time it changes; the deer pricks up his ears on arriving
   const arrived = useRef(false);

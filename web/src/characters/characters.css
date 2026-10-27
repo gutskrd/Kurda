@@ -46,11 +46,13 @@
 .speaking-character .sc-breathe,
 .speaking-character .sc-drift,
 .speaking-character [data-sc],
-.speaking-character [data-pupil] {
+.speaking-character [data-pupil],
+.speaking-character [data-iris] {
   transform-box: view-box;
 }
 /* a look eases to where it goes, as an eye does, rather than jumping */
-.speaking-character [data-pupil] {
+.speaking-character [data-pupil],
+.speaking-character [data-iris] {
   transition: transform 160ms ease-out;
 }
 .speaking-character.is-pressable {
@@ -214,4 +216,33 @@
   min-height: 44px;
   white-space: normal;
   text-align: start;
+}
+
+/*
+ * A conversation's stage (ConversationStage.tsx): its characters side by side
+ * in their own light, looking at each other, each placed by the script. The
+ * figures are cut off at the stage's bottom edge and may hop --stage-hop over
+ * its top edge.
+ */
+.conversation-stage {
+  position: relative;
+  height: var(--stage-h, 260px);
+  border-radius: var(--r-xl);
+  background: var(--surface);
+  isolation: isolate;
+}
+.conversation-stage-figures {
+  position: absolute;
+  inset: calc(var(--stage-hop, 0px) * -1) 0 0;
+  overflow: hidden;
+  border-end-start-radius: var(--r-xl);
+  border-end-end-radius: var(--r-xl);
+  pointer-events: none;
+}
+.conversation-stage-place {
+  position: absolute;
+  line-height: 0;
+}
+.conversation-stage .speaking-character > svg {
+  overflow: visible;
 }
