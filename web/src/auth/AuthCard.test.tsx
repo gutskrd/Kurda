@@ -4,9 +4,9 @@ import userEvent from '@testing-library/user-event';
 import { AuthCard } from './AuthCard';
 import { arrivalHeld, holdArrival } from './arrival';
 
-/** The y of where a hoof is drawn, from its group's transform. */
-function hoofY(container: HTMLElement, side: 'left' | 'right'): number {
-  const t = container.querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
+/** The y of a foreleg's knee, from its group's transform. */
+function kneeY(container: HTMLElement, side: 'left' | 'right'): number {
+  const t = container.querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '';
   return Number(/translate\(\S+ (\S+)\)/.exec(t)?.[1] ?? Number.NaN);
 }
 
@@ -43,13 +43,13 @@ describe('AuthCard', () => {
   it('covers his eyes with his hooves while a password is typed', async () => {
     const { container } = render(<Form />);
     await userEvent.click(container.querySelector('#password')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeLessThan(360));
+    await waitFor(() => expect(kneeY(container, 'left')).toBeLessThan(440));
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
     expect(lid(container, 'right', 'closed')).toBe('visible');
 
-    // leaving it, the hooves go back down to the edge
+    // leaving it, the knees go back down onto the sill
     await userEvent.click(container.querySelector('#email')!);
-    await waitFor(() => expect(hoofY(container, 'left')).toBeGreaterThan(440));
+    await waitFor(() => expect(kneeY(container, 'left')).toBeGreaterThan(490));
   });
 
   it('shows the form going wrong and going right with a sign over his head, and a word on getting in', async () => {
@@ -69,7 +69,7 @@ describe('AuthCard', () => {
     const { container } = render(<Form />);
     container.querySelector<HTMLInputElement>('#password')!.focus();
     await waitFor(() => expect(lid(container, 'left', 'closed')).toBe('visible'));
-    expect(hoofY(container, 'left')).toBeCloseTo(344, 0);
+    expect(kneeY(container, 'left')).toBeCloseTo(424, 0);
   });
 });
 

@@ -85,22 +85,28 @@ export const COMPANION_OVERHANG = 92;
 const ENTER_DROP = 560;
 
 /**
- * Each foreleg: the knee resting on the sill, and the fetlock (the joint just
- * above the hoof) hanging over the card's face at rest and up by the eye when
- * he covers it, with the way between them, out round his cheek
- * (`out`, `up`: the curve's handles). Leg and hoof always lie along one line
- * from the knee, so the hoof is the leg's own end.
+ * Each foreleg, the left (the right is its mirror across the face), from
+ * hanging over the sill (0) through a tap on it, the knee lifting, a wave by
+ * the cheek and a peek, to over the eye (1): where its knee is, which way the
+ * leg below the knee points (degrees: 0 straight down, more turning it out
+ * from the face, round and up), and how large the leg is, nearer to us as it
+ * rises. At rest the knee lies on the sill and the leg hangs down the card's
+ * face; raised, the knee comes up off the sill by the cheek and the leg folds
+ * up from it to the eye.
  */
-const LEG = {
-  left: { knee: { x: 172, y: 516 }, rest: { x: 172, y: 552 }, out: { x: 82, y: 548 }, up: { x: 132, y: 418 }, cover: { x: 182, y: 344 } },
-  right: { knee: { x: 338, y: 516 }, rest: { x: 338, y: 552 }, out: { x: 428, y: 548 }, up: { x: 378, y: 418 }, cover: { x: 326, y: 344 } },
-} as const;
+const LEG_KEYS: readonly (readonly [k: number, x: number, y: number, turn: number, size: number])[] = [
+  [0, 176, 502, 0, 1],
+  [0.2, 174, 492, 12, 1.02],
+  [0.32, 162, 468, 48, 1.14],
+  [0.55, 148, 456, 140, 1.34],
+  [1, 158, 424, 188, 1.6],
+];
 
-/** The hoof's size hanging over the sill, and over an eye: raised, it is nearer to us. */
-const HOOF_SCALE = { rest: 0.86, cover: 1.5 } as const;
+/** Where each foreleg's upper part comes from, down behind the sill: it is seen only above the sill, rising to the knee. */
+const SHOULDER = { x: 184, y: 612 } as const;
 
-/** How long a leg is drawn in its own units, before it is stretched from the knee to the fetlock. */
-const LEG_UNIT = 100;
+/** How long the upper part of a foreleg is drawn, before it is stretched from the shoulder to the knee. */
+const ARM_UNIT = 100;
 
 /** The middle of the face, where each eye's state is split from the other's. */
 const FACE_AXIS = 253.5;
@@ -114,6 +120,8 @@ const C = {
   legLow: '#a86f3c',
   edge: '#8f5a2c',
   pastern: '#c99863',
+  // the pale fur just above the hoof
+  coronet: '#e2c194',
   fringe: '#dcb17f',
   // hooves dark and glossy, nearly black
   hoofLight: '#56423a',
@@ -127,73 +135,61 @@ const C = {
 } as const;
 
 /**
- * A foreleg's cannon: from the knee (0,0) straight along `LEG_UNIT`, slender
- * and a little narrower towards the fetlock, shaded at its sides. It is
- * stretched and turned to reach the fetlock wherever the hoof is.
+ * A foreleg's upper part, from the shoulder (0,0) along `ARM_UNIT` to the
+ * knee: a little fuller than the leg below it, rounder near the shoulder. It
+ * is stretched from the shoulder behind the sill to the knee, and only what
+ * is above the sill is seen.
  */
-function leg(id: string): string {
-  const w = 20;
-  const path = `M${-w},0C${-w},${LEG_UNIT * 0.4} ${-w + 2},${LEG_UNIT * 0.8} ${-w + 3},${LEG_UNIT}L${w - 3},${LEG_UNIT}C${w - 2},${LEG_UNIT * 0.8} ${w},${LEG_UNIT * 0.4} ${w},0Z`;
+function forearm(id: string): string {
+  const path = `M-21,0C-23,30 -21.5,66 -18.5,${ARM_UNIT}L18.5,${ARM_UNIT}C21.5,66 23,30 21,0Z`;
   return (
-    `<defs>` +
-    `<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.leg}"/><stop offset="1" stop-color="${C.legLow}"/></linearGradient>` +
-    `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.55"/><stop offset="0.32" stop-color="${C.edge}" stop-opacity="0"/>` +
-    `<stop offset="0.72" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.5"/></linearGradient>` +
-    `</defs>` +
-    `<path d="${path}" fill="url(#${id}f)"/><path d="${path}" fill="url(#${id}s)"/>`
-  );
-}
-
-/** A knee resting on the sill: the bend of the leg, its fur lit from above, a little shadow where it presses on the edge. */
-function knee(id: string, at: CharacterPoint): string {
-  const { x, y } = at;
-  return (
-    `<defs><radialGradient id="${id}" cx="0.45" cy="0.3" r="0.75"><stop offset="0" stop-color="${C.pastern}"/><stop offset="0.55" stop-color="${C.leg}"/><stop offset="1" stop-color="${C.edge}"/></radialGradient></defs>` +
-    `<ellipse cx="${x}" cy="${y + 4}" rx="27" ry="9" fill="#24130a" opacity="0.22"/>` +
-    `<ellipse cx="${x}" cy="${y}" rx="25" ry="17" fill="url(#${id})"/>`
-  );
-}
-
-/** The soft shadow a hanging hoof throws on the card behind it, gone as the hoof lifts away. */
-function hoofShadow(id: string): string {
-  return (
-    `<defs><radialGradient id="${id}"><stop offset="0" stop-color="#1b0f08" stop-opacity="0.32"/><stop offset="1" stop-color="#1b0f08" stop-opacity="0"/></radialGradient></defs>` +
-    `<ellipse cx="0" cy="0" rx="30" ry="9" fill="url(#${id})"/>`
+    `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.6"/><stop offset="0.35" stop-color="${C.edge}" stop-opacity="0"/>` +
+    `<stop offset="0.65" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.6"/></linearGradient></defs>` +
+    `<path d="${path}" fill="${C.legLow}"/><path d="${path}" fill="url(#${id}s)"/>`
   );
 }
 
 /**
- * A front hoof as a deer's is, standing, seen from the front: the fetlock (the
- * joint above it) at 0,0, the pastern down from it, paler fur where it meets
- * the hoof, and the hoof itself in two narrow toes, dark and glossy, coming
- * to points with a slit between them. The small dewclaws show at its sides
- * behind the fetlock. Turned over, its toes point up, over an eye.
+ * A foreleg from the knee (0,0) down, all of a piece as a deer's is: the
+ * rounded knee, the slender cannon, the fetlock a little fuller, the pastern
+ * paling to cream where it meets the hoof, and the hoof itself, two dark
+ * glossy toes, rounded on the outside and meeting along a slit, with the
+ * small dewclaws showing at the sides behind the fetlock. Seen from the
+ * front, it is the same either way round, so turned up over an eye the toes
+ * point up.
  */
-function hoofArt(id: string): string {
-  // one toe, the left: broad and rounded on its outer side, meeting the other along a narrow slit that opens at the tips
-  const toe = 'M-1,6C-9,4 -21,4 -27,8C-32,13 -33,30 -30,44C-27,56 -17,64 -7,67C-4,67.5 -2.5,64 -2,58C-1.6,42 -1,22 -1,6Z';
+function lowerLeg(id: string): string {
+  const fur =
+    'M0,-15C10.3,-15 18.4,-9 19,0C19.5,7 17.2,14 14.9,22C13.8,31 13.2,41 13.8,48C14.4,53 17.8,56 17.8,62C17.8,67 14.9,70 14.9,73C14.9,76 17.2,78 19.5,80L-19.5,80C-17.2,78 -14.9,76 -14.9,73C-14.9,70 -17.8,67 -17.8,62C-17.8,56 -14.4,53 -13.8,48C-13.2,41 -13.8,31 -14.9,22C-17.2,14 -19.5,7 -19,0C-18.4,-9 -10.3,-15 0,-15Z';
+  const toe = 'M-1,78C-6.9,76.5 -16.1,76.5 -20.1,78.5C-23,83 -23.6,93 -21.8,100C-20.1,105 -12.6,108.5 -5.7,108C-2.9,107.8 -1.6,105 -1.4,101Z';
+  const dewclaw = 'M-14.4,57C-21.3,56 -25.3,60.5 -24.1,66C-20.7,66 -16.7,63.5 -14.4,61.5Z';
   const mirror = (d: string): string => d.replace(/(-?\d+(?:\.\d+)?),/g, (_, x: string) => `${-Number(x)},`);
-  const dewclaw = 'M-18,-13C-24,-14 -28,-10 -28,-5C-26,-4 -23,-6 -20,-8Z';
-  const fringe = 'M-29,12Q-25,4 -20,11Q-15,3 -10,10Q-5,3 0,10Q5,3 10,10Q15,3 20,11Q25,4 29,12L28,-2L-28,-2Z';
   return (
     `<defs>` +
-    `<linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.hoofLight}"/><stop offset="0.4" stop-color="${C.hoof}"/><stop offset="1" stop-color="${C.hoofDeep}"/></linearGradient>` +
-    `<radialGradient id="${id}g"><stop offset="0" stop-color="${C.shine}" stop-opacity="0.6"/><stop offset="1" stop-color="${C.shine}" stop-opacity="0"/></radialGradient>` +
-    `<linearGradient id="${id}p" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.leg}"/><stop offset="0.55" stop-color="${C.legLow}"/><stop offset="1" stop-color="${C.pastern}"/></linearGradient>` +
+    `<linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.leg}"/><stop offset="0.62" stop-color="${C.legLow}"/>` +
+    `<stop offset="0.8" stop-color="${C.legLow}"/><stop offset="0.93" stop-color="${C.pastern}"/><stop offset="1" stop-color="${C.coronet}"/></linearGradient>` +
+    `<linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.6"/><stop offset="0.3" stop-color="${C.edge}" stop-opacity="0"/>` +
+    `<stop offset="0.7" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.6"/></linearGradient>` +
+    `<linearGradient id="${id}h" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${C.hoofLight}"/><stop offset="0.35" stop-color="${C.hoof}"/><stop offset="1" stop-color="${C.hoofDeep}"/></linearGradient>` +
+    `<radialGradient id="${id}g"><stop offset="0" stop-color="${C.shine}" stop-opacity="0.65"/><stop offset="1" stop-color="${C.shine}" stop-opacity="0"/></radialGradient>` +
     `</defs>` +
-    // the dewclaws, behind
+    // the dewclaws, behind the fetlock
     `<path d="${dewclaw}" fill="${C.hoofDeep}"/><path d="${mirror(dewclaw)}" fill="${C.hoofDeep}"/>` +
     // the toes, each with the soft shine of horn on its outer side
     `<path d="${toe}" fill="url(#${id}h)"/><path d="${mirror(toe)}" fill="url(#${id}h)"/>` +
-    `<ellipse cx="-19" cy="24" rx="8" ry="15" fill="url(#${id}g)" transform="rotate(12 -19 24)"/>` +
-    `<ellipse cx="19" cy="24" rx="7" ry="13" fill="url(#${id}g)" opacity="0.6" transform="rotate(-12 19 24)"/>` +
-    // the pastern and the fetlock, the fur paler where it meets the hoof
-    `<path d="M-19,-6C-21,0 -25,6 -28,8L28,8C25,6 21,0 19,-6Z" fill="url(#${id}p)"/>` +
-    `<path d="${fringe}" fill="${C.fringe}" opacity="0.8"/>` +
-    `<ellipse cx="0" cy="-8" rx="22" ry="19" fill="${C.leg}"/>` +
-    `<ellipse cx="0" cy="-8" rx="22" ry="19" fill="url(#${id}s)"/>` +
-    `<defs><linearGradient id="${id}s" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${C.edge}" stop-opacity="0.45"/><stop offset="0.35" stop-color="${C.edge}" stop-opacity="0"/>` +
-    `<stop offset="0.7" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.4"/></linearGradient></defs>`
+    `<ellipse cx="-14.4" cy="90" rx="4" ry="8" fill="url(#${id}g)" transform="rotate(8 -14.4 90)"/>` +
+    `<ellipse cx="14.4" cy="90" rx="3.5" ry="7" fill="url(#${id}g)" opacity="0.6" transform="rotate(-8 14.4 90)"/>` +
+    // the leg, round at its sides, and a fold of the knee
+    `<path d="${fur}" fill="url(#${id}f)"/><path d="${fur}" fill="url(#${id}s)"/>` +
+    `<path d="M-11.5,13Q0,17 11.5,13" fill="none" stroke="${C.edge}" stroke-opacity="0.3" stroke-width="2" stroke-linecap="round"/>`
+  );
+}
+
+/** The soft shadow a hanging leg throws on the card behind it, gone as the leg lifts away. */
+function legShadow(id: string): string {
+  return (
+    `<defs><radialGradient id="${id}"><stop offset="0" stop-color="#1b0f08" stop-opacity="0.3"/><stop offset="1" stop-color="#1b0f08" stop-opacity="0"/></radialGradient></defs>` +
+    `<ellipse cx="0" cy="0" rx="26" ry="62" fill="url(#${id})"/>`
   );
 }
 
@@ -287,13 +283,13 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `<g data-cp="nose">${art.overlay}</g>` +
     `</g>` +
     `</g></g>` +
-    // the forelegs over the sill, in front of the card
+    // the forelegs: above the sill each rises from behind it to the knee, and from the knee hangs over it, in front of the card
+    `<g clip-path="url(#${id('edge')})"><g data-cp="arms">` +
+    `<g data-cp="arm-left">${forearm(id('armL'))}</g><g data-cp="arm-right">${forearm(id('armR'))}</g>` +
+    `</g></g>` +
     `<g clip-path="url(#${id('legs')})"><g data-cp="legs">` +
-    `<g data-cp="shadow-left">${hoofShadow(id('shadowL'))}</g><g data-cp="shadow-right">${hoofShadow(id('shadowR'))}</g>` +
-    `<g data-cp="leg-left">${leg(id('legL'))}</g><g data-cp="leg-right">${leg(id('legR'))}</g>` +
-    knee(id('kneeL'), LEG.left.knee) +
-    knee(id('kneeR'), LEG.right.knee) +
-    `<g data-cp="hoof-left">${hoofArt(id('hoofL'))}</g><g data-cp="hoof-right">${hoofArt(id('hoofR'))}</g>` +
+    `<g data-cp="shadow-left">${legShadow(id('shadowL'))}</g><g data-cp="shadow-right">${legShadow(id('shadowR'))}</g>` +
+    `<g data-cp="leg-left">${lowerLeg(id('legL'))}</g><g data-cp="leg-right">${lowerLeg(id('legR'))}</g>` +
     `</g></g>` +
     `<g data-cp="emotes">${emotes(id('emote'))}</g>` +
     `</svg>`
@@ -802,12 +798,16 @@ export interface CompanionTransforms {
   nose: string;
   /** the forelegs together: up with him as he hops or comes up */
   legs: string;
+  /** the upper parts of the forelegs, seen above the sill only: up with him too */
+  arms: string;
   /** how far below the sill the forelegs may be seen: at the sill while he comes up, over the card's face once he is there */
   legGate: string;
+  /** each foreleg's upper part, from its shoulder behind the sill to its knee */
+  armLeft: string;
+  armRight: string;
+  /** each foreleg from the knee down, the hoof its end */
   legLeft: string;
   legRight: string;
-  hoofLeft: string;
-  hoofRight: string;
   shadowLeft: string;
   shadowRight: string;
 }
@@ -817,32 +817,55 @@ const RIG = drawHevalo('cprig-');
 const ease = (t: number): number => t * t * (3 - 2 * t);
 const clamp = (t: number, lo: number, hi: number): number => Math.max(lo, Math.min(hi, t));
 
+/** One of a foreleg's measures (`LEG_KEYS` column `i`) at `k`, along a smooth curve through the keys, straight on past the last. */
+function legKey(k: number, i: 1 | 2 | 3 | 4): number {
+  const keys = LEG_KEYS;
+  const at = (j: number): number => keys[j]![i];
+  const kk = (j: number): number => keys[j]![0];
+  const last = keys.length - 1;
+  const slope = (j: number): number => (at(j + 1) - at(j)) / (kk(j + 1) - kk(j));
+  // each key's tangent: the mean of the slopes either side of it, or the one slope at an end
+  const tangent = (j: number): number => (j === 0 ? slope(0) : j === last ? slope(last - 1) : (slope(j - 1) + slope(j)) / 2);
+  if (k <= kk(0)) return at(0);
+  if (k >= kk(last)) return at(last) + tangent(last) * (k - kk(last));
+  let j = 0;
+  while (k > kk(j + 1)) j += 1;
+  const h = kk(j + 1) - kk(j);
+  const t = (k - kk(j)) / h;
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return (2 * t3 - 3 * t2 + 1) * at(j) + (t3 - 2 * t2 + t) * h * tangent(j) + (-2 * t3 + 3 * t2) * at(j + 1) + (t3 - t2) * h * tangent(j + 1);
+}
+
 /**
- * A foreleg `v` of the way from hanging over the sill (0) to over its eye (1).
- * The knee stays on the sill; the fetlock comes up along a curve, out round
- * the cheek and in to the eye; the cannon is stretched from the knee to it and
- * the hoof turned the same way, so leg and hoof are one line and the toes
- * point down over the card at rest and up over the eye. Raised, the hoof is
- * a little larger, nearer to us.
+ * A foreleg `v` of the way from hanging over the sill (0) to over its eye
+ * (1). The leg below the knee is one piece, never stretched: it hangs from
+ * the knee, swings out and round and folds up from it, the hoof always its
+ * own end. The upper part reaches from the shoulder behind the sill to the
+ * knee, so the leg is whole wherever the knee goes. Raised, the leg is a
+ * little larger, nearer to us.
  */
-function foreleg(side: 'left' | 'right', v: number): { leg: string; hoof: string; shadow: string } {
-  const l = LEG[side];
-  const k = clamp(v, -0.12, 1.12);
-  const u = 1 - k;
-  const bez = (a: number, b: number, c: number, d: number): number => u * u * u * a + 3 * u * u * k * b + 3 * u * k * k * c + k * k * k * d;
-  const fx = bez(l.rest.x, l.out.x, l.up.x, l.cover.x);
-  const fy = bez(l.rest.y, l.out.y, l.up.y, l.cover.y);
-  const dx = fx - l.knee.x;
-  const dy = fy - l.knee.y;
+function foreleg(side: 'left' | 'right', v: number): { arm: string; leg: string; shadow: string } {
+  const k = clamp(v, 0, 1.12);
+  const flip = side === 'left' ? 1 : -1;
+  const across = (x: number): number => (side === 'left' ? x : 2 * FACE_AXIS - x);
+  const knee = { x: across(legKey(k, 1)), y: legKey(k, 2) };
+  const turn = flip * legKey(k, 3);
+  const size = legKey(k, 4);
+  const shoulder = { x: across(SHOULDER.x), y: SHOULDER.y };
+  const dx = knee.x - shoulder.x;
+  const dy = knee.y - shoulder.y;
   const reach = Math.max(1, Math.hypot(dx, dy));
-  const angle = (Math.atan2(-dx, dy) * 180) / Math.PI;
-  const scale = HOOF_SCALE.rest + (HOOF_SCALE.cover - HOOF_SCALE.rest) * clamp(k, 0, 1);
+  // pointing from the shoulder to the knee; the upper part widens less than the leg below it, being further from us
+  const lean = (Math.atan2(dx, -dy) * 180) / Math.PI;
+  const thick = 1 + (size - 1) * 0.55;
   const shade = 1 - ease(clamp(k * 3, 0, 1));
+  const rest = LEG_KEYS[0]!;
   return {
-    leg: `translate(${n(l.knee.x)} ${n(l.knee.y)}) rotate(${n(angle)}) scale(1 ${n(reach / LEG_UNIT)})`,
-    hoof: `translate(${n(fx)} ${n(fy)}) rotate(${n(angle)}) scale(${n(scale)})`,
-    // on the card under the toes, behind them and a little down and out of the light
-    shadow: `translate(${n(l.rest.x + 5)} ${n(l.rest.y + 54)}) scale(${n(shade)})`,
+    arm: `translate(${n(shoulder.x)} ${n(shoulder.y)}) rotate(${n(lean)}) scale(${n(thick)} ${n(-reach / ARM_UNIT)})`,
+    leg: `translate(${n(knee.x)} ${n(knee.y)}) rotate(${n(turn)}) scale(${n(size)})`,
+    // on the card behind the hanging leg, a little down and out of the light
+    shadow: `translate(${n(across(rest[1]) + 4)} ${n(rest[2] + 62)}) scale(${n(shade)})`,
   };
 }
 
@@ -867,11 +890,12 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
     pupilRight: `translate(${n(shift.right.x)} ${n(shift.right.y)})`,
     nose: `translate(${n(rig.sniff.x)} ${n(rig.sniff.y)}) scale(${n(frame.sniff)}) translate(${n(-rig.sniff.x)} ${n(-rig.sniff.y)})`,
     legs: `translate(0 ${n(-up)})`,
+    arms: `translate(0 ${n(-up)})`,
     legGate: `translate(0 ${n(-COMPANION_OVERHANG * clamp(frame.enter * 3, 0, 1))})`,
+    armLeft: left.arm,
+    armRight: right.arm,
     legLeft: left.leg,
     legRight: right.leg,
-    hoofLeft: left.hoof,
-    hoofRight: right.hoof,
     shadowLeft: left.shadow,
     shadowRight: right.shadow,
   };

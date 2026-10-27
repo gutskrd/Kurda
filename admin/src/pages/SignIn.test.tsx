@@ -329,10 +329,10 @@ describe('loading while the person is busy', () => {
   });
 });
 
-/** Hevalo leaning in over the card (brand/Companion.tsx): the y each hoof is drawn at, an eye's lid, and the sign over his head. */
+/** Hevalo leaning in over the card (brand/Companion.tsx): the y of each foreleg's knee, an eye's lid, and the sign over his head. */
 const companion = (): HTMLElement => document.querySelector<HTMLElement>('.login-stage > .login-companion')!;
-const hoofY = (side: 'left' | 'right'): number =>
-  Number(/translate\((\S+) (\S+)\)/.exec(companion().querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '')?.[2] ?? Number.NaN);
+const kneeY = (side: 'left' | 'right'): number =>
+  Number(/translate\((\S+) (\S+)\)/.exec(companion().querySelector(`[data-cp="leg-${side}"]`)?.getAttribute('transform') ?? '')?.[2] ?? Number.NaN);
 const lid = (side: 'left' | 'right', state: string): string | null | undefined =>
   companion().querySelector(`[data-eye="${side}"] [data-lid="${state}"]`)?.getAttribute('visibility');
 
@@ -349,13 +349,13 @@ describe('Hevalo on the sign-in', () => {
     show(false);
     await user.type(screen.getByLabelText('Email'), 'rojda@hevalo.app{Enter}');
     await screen.findByLabelText('Password');
-    await waitFor(() => expect(hoofY('left')).toBeLessThan(360));
+    await waitFor(() => expect(kneeY('left')).toBeLessThan(440));
     await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
     await user.click(screen.getByRole('button', { name: 'Show password' }));
     await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
-    expect(hoofY('right')).toBeGreaterThan(hoofY('left'));
+    expect(kneeY('right')).toBeGreaterThan(kneeY('left'));
     await user.click(screen.getByRole('button', { name: 'Change the email, rojda@hevalo.app' }));
-    await waitFor(() => expect(hoofY('left')).toBeGreaterThan(500));
+    await waitFor(() => expect(kneeY('left')).toBeGreaterThan(490));
   });
 
   it('wonders over a sign-in that did not go through', async () => {
