@@ -136,31 +136,42 @@ describe('signing in', () => {
   });
 });
 
-/** Hevalo above the form, and how it is (brand/HevaloMark.tsx). */
-const mood = (): string | null => document.querySelector('.login-hero .hevalo-mark')!.getAttribute('data-mood');
+/** Hevalo behind the card (brand/Companion.tsx): the y each hoof is drawn at, an eye's lid, and the sign over his head. */
+const companion = (): HTMLElement => document.querySelector<HTMLElement>('.login-stage > .login-companion')!;
+const hoofY = (side: 'left' | 'right'): number =>
+  Number(/translate\(\S+ (\S+)\)/.exec(companion().querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN);
+const lid = (side: 'left' | 'right', state: string): string | null | undefined =>
+  companion().querySelector(`[data-eye="${side}"] [data-lid="${state}"]`)?.getAttribute('visibility');
 
 describe('Hevalo on the sign-in', () => {
-  it('shuts its eyes for the password, peeks when it is shown, and looks about again after', async () => {
-    const user = userEvent.setup();
+  it('stands behind the card in reading glasses, hidden from assistive technology', () => {
     show();
-    expect(document.querySelector('.login-hero .hevalo-lids')).not.toBeNull();
-    expect(mood()).toBe('idle');
-    await user.click(screen.getByLabelText('Password'));
-    expect(mood()).toBe('shy');
-    await user.click(screen.getByRole('button', { name: 'Show password' }));
-    expect(mood()).toBe('peek');
-    await user.click(screen.getByLabelText('Email'));
-    expect(mood()).toBe('idle');
+    expect(companion()).toHaveAttribute('aria-hidden', 'true');
+    expect(companion().querySelector('[data-cp="glasses"]')).not.toBeNull();
+    // the console's tone has no words
+    expect(companion().querySelector('.cp-say')).toBeNull();
   });
 
-  it('shakes its head over a sign-in that did not go through', async () => {
+  it('covers his eyes for the password, peeks when it is shown, and looks about again after', async () => {
+    const user = userEvent.setup();
+    show();
+    await user.click(screen.getByLabelText('Password'));
+    await waitFor(() => expect(hoofY('left')).toBeLessThan(300));
+    await waitFor(() => expect(lid('right', 'closed')).toBe('visible'));
+    await user.click(screen.getByRole('button', { name: 'Show password' }));
+    await waitFor(() => expect(lid('right', 'half')).toBe('visible'));
+    expect(hoofY('right')).toBeGreaterThan(hoofY('left'));
+    await user.click(screen.getByLabelText('Email'));
+    await waitFor(() => expect(hoofY('left')).toBeGreaterThan(480));
+  });
+
+  it('wonders over a sign-in that did not go through', async () => {
     const user = userEvent.setup();
     show(on('POST', '/admin/auth/login', failure(401, 'INVALID_CREDENTIALS', 'invalid email or password')));
     await user.type(screen.getByLabelText('Email'), 'rojda@hevalo.app');
     await user.type(screen.getByLabelText('Password'), 'wrong');
     await user.click(screen.getByRole('button', { name: 'Sign in' }));
     await said('alert');
-    expect(mood()).toBe('sad');
-    await waitFor(() => expect(mood()).not.toBe('sad'), { timeout: 3000 });
+    await waitFor(() => expect(companion().dataset.emote).toBe('question'));
   });
 });

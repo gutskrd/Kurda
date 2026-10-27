@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useId, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useId, useRef, useState } from 'react';
 import qrcode from 'qrcode-generator';
+import type { CompanionStatus } from '@kurda/shared';
 import { api, ApiError } from '../api';
 import { useAuth } from '../auth';
 import { SessionProvider, sessionFrom, type AdminSession } from '../session';
 import { Banner, Button, Icon, clockTime, describeError, errorLine, useCountdown } from '../ui';
-import { HevaloMark } from '../brand/HevaloMark';
+import { Companion, HAPPY_MS, stillWanted } from '../brand/Companion';
 
 /**
  * Nothing in the admin panel renders until 2FA is done.
@@ -189,6 +190,8 @@ function CodeForm({
   const [pause, setPause] = useState<{ until: number; title: string; message: string } | null>(null);
   const left = useCountdown(pause?.until ?? null);
   const paused = left > 0;
+  const [passed, setPassed] = useState(false);
+  useCompanionStatus(passed ? 'success' : busy ? 'busy' : paused ? 'waiting' : problem ? 'error' : 'idle');
 
   // the pause is over: say so, and put the cursor back in the box
   useEffect(() => {
@@ -211,6 +214,9 @@ function CodeForm({
     setNote(null);
     try {
       await api(path, { method: 'POST', body: { code } });
+      // a moment for Hevalo to be pleased before the console opens
+      setPassed(true);
+      if (!stillWanted()) await new Promise((done) => window.setTimeout(done, HAPPY_MS));
       await onDone();
     } catch (err) {
       if (err instanceof ApiError && err.status === 429) {
@@ -314,7 +320,15 @@ function CodeInput({
   );
 }
 
-/** The centred card these steps share, with a way to sign out under it. */
+/** How the form on a step's card goes, for Hevalo behind it: set by the form, read by the card. */
+const CompanionReport = createContext<(status: CompanionStatus) => void>(() => undefined);
+
+function useCompanionStatus(status: CompanionStatus): void {
+  const report = useContext(CompanionReport);
+  useEffect(() => report(status), [report, status]);
+}
+
+/** The centred card these steps share, with Hevalo behind it and a way to sign out under it. */
 function Screen({
   title,
   children,
@@ -326,30 +340,32 @@ function Screen({
   busy?: boolean;
   onSignOut?: () => void;
 }): React.JSX.Element {
+  const card = useRef<HTMLDivElement>(null);
+  const [form, setForm] = useState<CompanionStatus>('idle');
   return (
     <div className="login">
-      <div className="login-card gate-card has-hero has-peek" aria-busy={busy || undefined}>
-        <div className="login-hero is-peek">
-          <HevaloMark art="peek" size={180} mood={busy ? 'thinking' : 'idle'} lively />
+      <div className="login-stage">
+        <Companion status={busy ? 'busy' : form} watch={card} className="login-companion" />
+        <div ref={card} className="login-card gate-card has-companion" aria-busy={busy || undefined}>
+          <div className="login-top is-centred">
+            <span className="login-brand">Hevalo</span>
+            <span className="login-dot" aria-hidden="true" />
+            <span>Admin console</span>
+          </div>
+          <h1 className="login-title gate-title">
+            {busy && <Icon name="refresh" className="gate-busy" />}
+            {title}
+          </h1>
+          <CompanionReport.Provider value={setForm}>{children}</CompanionReport.Provider>
+          {onSignOut && (
+            <p className="gate-foot">
+              Wrong account, or no authenticator to hand?{' '}
+              <button type="button" className="login-forgot" onClick={onSignOut}>
+                Sign out
+              </button>
+            </p>
+          )}
         </div>
-        <div className="login-top is-centred">
-          <span className="login-brand">Hevalo</span>
-          <span className="login-dot" aria-hidden="true" />
-          <span>Admin console</span>
-        </div>
-        <h1 className="login-title gate-title">
-          {busy && <Icon name="refresh" className="gate-busy" />}
-          {title}
-        </h1>
-        {children}
-        {onSignOut && (
-          <p className="gate-foot">
-            Wrong account, or no authenticator to hand?{' '}
-            <button type="button" className="login-forgot" onClick={onSignOut}>
-              Sign out
-            </button>
-          </p>
-        )}
       </div>
     </div>
   );
