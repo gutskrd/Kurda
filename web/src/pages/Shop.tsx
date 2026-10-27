@@ -27,6 +27,7 @@ import {
   type KindTab,
 } from '../shop/ItemBrowser';
 import { ItemGlyph } from '../shop/ItemGlyph';
+import { ItemPicture } from '../shop/ItemPicture';
 import { DEFAULT_SHOP_VIEW, shopViewFiltered, useShopView } from '../shop/useShopView';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
@@ -403,10 +404,10 @@ export function Shop(): React.JSX.Element {
   );
 }
 
-/** An item's picture, or its kind's glyph when it has none (the Kurdish tag). */
+/** An item's picture, of whatever kind it is, or its kind's glyph when it has none (the Kurdish tag). */
 function TileArt({ assetUrl, category }: { assetUrl: string | null; category: string }): React.JSX.Element {
   return assetUrl ? (
-    <img src={assetUrl} alt="" loading="lazy" />
+    <ItemPicture src={assetUrl} />
   ) : (
     <span className="item-glyph" aria-hidden="true">
       <ItemGlyph category={category} size={34} />

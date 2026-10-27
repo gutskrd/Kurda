@@ -5,6 +5,7 @@ import { useApiGet } from '../lib/useApi';
 import { describeError } from '../lib/api';
 import type { ApiError, AvatarOption, MeProfile } from '../lib/types';
 import { DEFAULT_AVATAR_KEYS, avatarAssetUrl } from '../lib/cosmetics';
+import { useArtOverrides } from '../art/overrides';
 import { countriesIn } from '../lib/countries';
 import { CosmeticCustomizer } from '../profile/CosmeticCustomizer';
 import { RefreshedNoticeLoader } from '../shop/RefreshedItems';
@@ -170,6 +171,8 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
   const [msg, setMsg] = useState<{ kind: 'ok' | 'err'; text: string } | null>(null);
 
   const registry = useApiGet<{ avatars: AvatarOption[] }>('/cosmetics/avatars');
+  // a default an admin has replaced is offered as its new picture
+  const overrides = useArtOverrides();
   const avatars: AvatarOption[] =
     registry.data?.avatars && registry.data.avatars.length > 0
       ? registry.data.avatars
@@ -250,7 +253,7 @@ function AvatarPicker({ me, onChanged }: { me: MeProfile; onChanged: () => void 
               disabled={busy !== null}
               onClick={() => onTile(a, locked)}
             >
-              <img src={avatarAssetUrl(a.key)} alt="" loading="lazy" />
+              <img src={avatarAssetUrl(a.key, overrides)} alt="" loading="lazy" decoding="async" />
               {locked && <span className="avatar-lock" aria-hidden="true">🔒</span>}
             </button>
           );

@@ -5,6 +5,7 @@ import { CosmeticBackground, IconOverlay, LevelBar, PremiumPill } from '../profi
 import { useT } from '../i18n/I18nProvider';
 import { FrameOverlay } from '../ranks/art';
 import { rankTierNamed } from '../ranks/names';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * A person, as Hevalo shows one: their background as a banner, their face
@@ -63,6 +64,7 @@ export function ProfileCard({
   children,
 }: ProfileCardProps): React.JSX.Element {
   const t = useT();
+  const face = useAvatarSrc(avatarUrl);
   return (
     <div className={`pc${wide ? ' pc--wide' : ''}${background ? ' pc--has-bg' : ''}`}>
       <div className="pc-banner">
@@ -71,10 +73,10 @@ export function ProfileCard({
       <div className="pc-body">
         <div className="pc-id">
           <span className="pc-face">
-            {avatarUrl ? (
+            {face ? (
               <img
                 className="pc-face-img pcard-photo-img"
-                src={avatarUrl}
+                src={face}
                 alt=""
                 width={88}
                 height={88}

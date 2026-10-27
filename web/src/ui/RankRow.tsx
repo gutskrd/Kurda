@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { PersonGlyph } from '../components/icons';
+import { useAvatarSrc } from '../art/overrides';
 
 /**
  * A leaderboard: one card, quiet rows, and your own row picked out.
@@ -54,6 +55,7 @@ export function RankRow({
   zone?: 'promotion' | 'demotion';
   lazy?: boolean;
 }): React.JSX.Element {
+  const photo = useAvatarSrc(avatarUrl);
   const who = (
     <>
       {name}
@@ -69,7 +71,7 @@ export function RankRow({
         </span>
       ) : avatarUrl !== undefined ? (
         <span className="rank-face" aria-hidden="true">
-          {avatarUrl ? <img src={avatarUrl} alt="" width={28} height={28} loading={lazy ? 'lazy' : undefined} /> : <PersonGlyph size={16} />}
+          {photo ? <img src={photo} alt="" width={28} height={28} loading={lazy ? 'lazy' : undefined} /> : <PersonGlyph size={16} />}
         </span>
       ) : null}
       {href ? (

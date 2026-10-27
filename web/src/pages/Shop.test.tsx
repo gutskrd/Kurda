@@ -105,6 +105,30 @@ describe('Shop', () => {
     expect(within(screen.getByText('Îstîkan').closest('figure')!).getByText('Tea glass')).toBeInTheDocument();
   });
 
+  /** Pictures can be uploaded for every kind of item now, not only backgrounds and icons. */
+  it('draws an item’s own picture whatever its kind, its glyph where it has none, and a video background as a video', async () => {
+    const items: ShopItem[] = [
+      { sku: 'freeze', name: 'Cemed', description: 'Streak freeze', category: 'streak_freeze', currency: 'zer', price: 200, isUnique: false, premiumOnly: false, assetUrl: 'https://cdn.test/art/freeze.png' },
+      { sku: 'double', name: 'Du qat', description: 'Double XP', category: 'powerup', currency: 'zer', price: 300, isUnique: false, premiumOnly: false, assetUrl: null },
+      { sku: 'tag_kurdish', name: 'Kurdish Tag', description: null, category: 'tag', currency: 'zer', price: 500, isUnique: true, premiumOnly: false, assetUrl: 'https://cdn.test/art/tag.png' },
+      { sku: 'bg-night', name: 'Şev', description: null, category: 'background', currency: 'zer', price: 500, isUnique: true, premiumOnly: false, assetUrl: '/cosmetics/backgrounds/night.mp4' },
+    ];
+    vi.stubGlobal('fetch', makeFetch([], [], { items }));
+    renderApp(<Shop />, ['/app/shop']);
+
+    const freeze = (await screen.findByText('Cemed')).closest('figure')!;
+    expect(freeze.querySelector('.shop-thumb-other img')).toHaveAttribute('src', 'https://cdn.test/art/freeze.png');
+    expect(freeze.querySelector('.item-glyph')).toBeNull();
+    const tag = screen.getByText('Kurdish Tag').closest('figure')!;
+    expect(tag.querySelector('.shop-thumb-tag img')).toHaveAttribute('src', 'https://cdn.test/art/tag.png');
+    const double = screen.getByText('Du qat').closest('figure')!;
+    expect(double.querySelector('img')).toBeNull();
+    expect(double.querySelector('.item-glyph svg')).not.toBeNull();
+    const night = screen.getByText('Şev').closest('figure')!;
+    expect(night.querySelector('.shop-thumb-background video')).toHaveAttribute('src', '/cosmetics/backgrounds/night.mp4');
+    expect(night.querySelector('img')).toBeNull();
+  });
+
   it('narrows to one kind of thing', async () => {
     vi.stubGlobal('fetch', makeFetch([]));
     renderApp(<Shop />, ['/app/shop']);
