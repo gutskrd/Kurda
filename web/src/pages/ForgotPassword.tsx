@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
+import { AuthCard } from '../auth/AuthCard';
 import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 
@@ -23,7 +24,7 @@ export function ForgotPassword(): React.JSX.Element {
 
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
+      <AuthCard status={sent ? 'success' : busy ? 'busy' : 'idle'}>
         <div className="auth-head">
           <h1>{t('auth.reset.title')}</h1>
           <p>{t('auth.reset.forgotHelp')}</p>
@@ -64,7 +65,7 @@ export function ForgotPassword(): React.JSX.Element {
             </p>
           </form>
         )}
-      </div>
+      </AuthCard>
     </div>
   );
 }

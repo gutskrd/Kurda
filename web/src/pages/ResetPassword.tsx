@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { AuthCard } from '../auth/AuthCard';
 import { useAuth } from '../auth/AuthProvider';
 import { describeError } from '../lib/api';
 import type { ApiError } from '../lib/types';
@@ -56,7 +57,7 @@ export function ResetPassword(): React.JSX.Element {
   if (!token) {
     return (
       <div className="auth-wrap">
-        <div className="auth-card">
+        <AuthCard>
           <div className="auth-head">
             <h1>{t('auth.reset.title')}</h1>
             <p>{t('auth.reset.missingCode')}</p>
@@ -64,7 +65,7 @@ export function ResetPassword(): React.JSX.Element {
           <Link to="/forgot-password" className="btn btn-primary btn-block">
             {t('auth.reset.requestNewLink')}
           </Link>
-        </div>
+        </AuthCard>
       </div>
     );
   }
@@ -72,7 +73,7 @@ export function ResetPassword(): React.JSX.Element {
   if (done) {
     return (
       <div className="auth-wrap">
-        <div className="auth-card">
+        <AuthCard status="success" word="bravo">
           <div className="auth-head">
             <h1>{t('auth.reset.updated')}</h1>
             <p>{t('auth.reset.updatedBody')}</p>
@@ -80,14 +81,14 @@ export function ResetPassword(): React.JSX.Element {
           <Button block onClick={() => navigate('/login', { replace: true })}>
             {t('auth.reset.goToSignIn')}
           </Button>
-        </div>
+        </AuthCard>
       </div>
     );
   }
 
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
+      <AuthCard status={busy ? 'busy' : error ? 'error' : 'idle'}>
         <div className="auth-head">
           <h1>{t('auth.reset.choose')}</h1>
           <p>{t('auth.reset.chooseHelp')}</p>
@@ -133,7 +134,7 @@ export function ResetPassword(): React.JSX.Element {
         <div className="auth-alt">
           {t('auth.reset.linkExpired')} <Link to="/forgot-password">{t('auth.reset.requestNew')}</Link>.
         </div>
-      </div>
+      </AuthCard>
     </div>
   );
 }

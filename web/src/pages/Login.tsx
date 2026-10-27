@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import type { CompanionStatus } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
+import { AuthCard } from '../auth/AuthCard';
+import { arrivalPause, holdArrival } from '../auth/arrival';
 import { Button } from '../components/Button';
 import { PasswordInput } from '../components/PasswordInput';
 import { useT } from '../i18n/I18nProvider';
@@ -19,28 +22,42 @@ export function Login(): React.JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [errorCode, setErrorCode] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [inside, setInside] = useState(false);
+  const held = useRef<(() => void) | null>(null);
+  useEffect(() => () => held.current?.(), []);
 
   async function submit(e: React.FormEvent): Promise<void> {
     e.preventDefault();
     setBusy(true);
     setError(null);
     setErrorCode(null);
+    // signed in, the page stays a moment for Hevalo to be pleased, then leaves by itself
+    const release = holdArrival();
+    held.current = release;
     const err = await login(email, password, remember);
-    setBusy(false);
     if (err) {
+      release?.();
+      setBusy(false);
       setError(err.message);
       setErrorCode(err.code ?? null);
-    } else navigate(from, { replace: true });
+      return;
+    }
+    setInside(true);
+    if (release) await arrivalPause();
+    release?.();
+    navigate(from, { replace: true });
   }
 
   // Sign-in paused after failed attempts, or asking for a challenge this build
   // has no way to show: not a mistake in the form, so said calmly, with the
   // other way in beside it.
   const paused = errorCode === 'LOCKED' || (errorCode === 'CAPTCHA_REQUIRED' && challengeSiteKey() === null);
+  // paused, he naps until it is time to try again
+  const companion: CompanionStatus = inside ? 'success' : busy ? 'busy' : error ? (paused ? 'waiting' : 'error') : 'idle';
 
   return (
     <div className="auth-wrap">
-      <div className="auth-card">
+      <AuthCard status={companion} word="welcome">
         <div className="auth-head">
           <h1>{t('auth.login.title')}</h1>
           <p>{t('auth.login.subtitle')}</p>
@@ -110,7 +127,7 @@ export function Login(): React.JSX.Element {
             {t('auth.login.createAccount')}
           </Link>
         </p>
-      </div>
+      </AuthCard>
     </div>
   );
 }

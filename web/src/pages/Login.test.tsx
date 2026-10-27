@@ -3,7 +3,7 @@ import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes } from 'react-router-dom';
 import { Login } from './Login';
-import { renderApp, jsonResponse } from '../test/utils';
+import { renderApp, jsonResponse, MOVES_ON } from '../test/utils';
 import { en } from '../i18n/en';
 import { deviceId } from '../lib/deviceId';
 
@@ -67,7 +67,7 @@ describe('Login', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass');
     await userEvent.click(screen.getByRole('button', { name: /log in/i }));
 
-    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText('App home')).toBeInTheDocument(), MOVES_ON);
   });
 
   /**
@@ -89,7 +89,7 @@ describe('Login', () => {
     await userEvent.type(screen.getByLabelText('Email'), 'a@b.com');
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
     await userEvent.click(screen.getByRole('button', { name: /log in/i }));
-    await screen.findByText('App home');
+    await screen.findByText('App home', {}, MOVES_ON);
 
     const [url, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
     // remembered unless the box is unticked: the server keeps the session a month, not a day
@@ -111,7 +111,7 @@ describe('Login', () => {
     await userEvent.type(screen.getByLabelText('Password'), 'rightpass1');
     await userEvent.click(screen.getByRole('checkbox'));
     await userEvent.click(screen.getByRole('button', { name: /log in/i }));
-    await screen.findByText('App home');
+    await screen.findByText('App home', {}, MOVES_ON);
 
     const [, init] = fetchMock.mock.calls.find(([u]) => String(u).endsWith('/auth/login'))!;
     expect(JSON.parse(String(init!.body)).remember).toBe(false);

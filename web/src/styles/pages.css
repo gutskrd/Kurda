@@ -101,6 +101,38 @@
   gap: 4px 12px;
   margin-bottom: 18px;
 }
+/*
+ * Hevalo stands behind the card (auth/AuthCard), his hooves on its top edge:
+ * the stage keeps room above the card for him, and the card is drawn over
+ * the rest of him. His box is the companion's (shared COMPANION_VIEW, 540 by
+ * 606), standing 8 of its 540 below the card's edge.
+ */
+.auth-stage {
+  --cp-w: 196px;
+  --cp-room: calc(var(--cp-w) * 0.96);
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  padding-top: var(--cp-room);
+}
+.auth-stage > .auth-card {
+  position: relative;
+  z-index: 1;
+}
+.auth-companion {
+  position: absolute;
+  left: 50%;
+  top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
+  width: var(--cp-w);
+  height: calc(var(--cp-w) * 606 / 540);
+  margin-left: calc(var(--cp-w) / -2);
+}
+/* his word, to the left of his head */
+.auth-companion .cp-say {
+  right: 99%;
+  top: 30%;
+  transform-origin: 100% 100%;
+}
 /* each side keeps its words together, and the row breaks between them if it must */
 .auth-row > * {
   white-space: nowrap;
@@ -116,6 +148,16 @@
   }
   .auth-card {
     padding: var(--space-8) var(--space-5) var(--space-6);
+  }
+  .auth-stage {
+    --cp-w: 150px;
+    --cp-say-size: 0.85rem;
+  }
+}
+/* a short window (a phone on its side) keeps the form in view */
+@media (max-height: 560px) {
+  .auth-stage {
+    --cp-w: 112px;
   }
 }
 

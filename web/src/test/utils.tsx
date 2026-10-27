@@ -42,3 +42,10 @@ export function routedFetch(map: Record<string, unknown>): (url: string) => Prom
     return jsonResponse(200, key ? map[key] : {});
   };
 }
+
+/**
+ * How long to wait for a sign-in page to move on: it stays a moment after
+ * getting someone in, for Hevalo to be pleased (auth/arrival), on top of the
+ * usual wait, which a busy machine running the whole suite can need in full.
+ */
+export const MOVES_ON = { timeout: 8000 } as const;

@@ -7,7 +7,7 @@ import { ProfileModalProvider } from '../profile/ProfileModal';
 import { ProtectedRoute } from '../components/ProtectedRoute';
 import { VerifyEmail } from './VerifyEmail';
 import { rememberAfterSignup } from '../auth/afterSignup';
-import { renderApp, jsonResponse } from '../test/utils';
+import { renderApp, jsonResponse, MOVES_ON } from '../test/utils';
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -142,7 +142,7 @@ describe('VerifyEmail', () => {
     await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
     await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
 
-    expect(await screen.findByText('Your first lesson')).toBeInTheDocument();
+    expect(await screen.findByText('Your first lesson', {}, MOVES_ON)).toBeInTheDocument();
     expect(screen.queryByText('The wall')).not.toBeInTheDocument();
   });
 
@@ -179,7 +179,7 @@ describe('VerifyEmail', () => {
     await userEvent.type(await screen.findByLabelText(/verification code/i), '123456');
     await userEvent.click(screen.getByRole('button', { name: /confirm email/i }));
 
-    expect(await screen.findByText('The battle')).toBeInTheDocument();
+    expect(await screen.findByText('The battle', {}, MOVES_ON)).toBeInTheDocument();
     expect(screen.queryByText('Your first lesson')).not.toBeInTheDocument();
   });
 
