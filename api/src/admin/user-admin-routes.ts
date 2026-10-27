@@ -25,6 +25,7 @@ const walletBody = z.object({
 });
 const itemBody = z.object({ reason: z.string(), sku: z.string().min(1).max(80) });
 const itemParams = z.object({ id: z.uuid(), sku: z.string().min(1).max(80) });
+const editorBody = z.object({ on: z.boolean(), reason: z.string() });
 
 type ActionResult =
   | { ok: true; balance?: number }
@@ -123,6 +124,28 @@ export function registerUserAdminRoutes(app: FastifyInstance, users: UserAdminSe
       const reason = normalizeReason(b.reason);
       if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
       return sendResult(reply, await users.grantItem(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.sku, reason));
+    },
+  );
+
+  /**
+   * Give or take away the content editor role (UserAdminService.setContentEditor):
+   * how someone joins the team that writes and records lessons — the person a
+   * conversation's other part is sent to — without anything about people or
+   * money. A superadmin's alone, with 2FA, and like every admin change it is in
+   * the audit log.
+   */
+  app.put(
+    '/admin/users/:id/content-editor',
+    { schema: { params: idParam, body: editorBody }, preHandler: canAdjustEconomy },
+    async (req, reply) => {
+      const b = req.body as z.infer<typeof editorBody>;
+      const reason = normalizeReason(b.reason);
+      if (!reason) return reply.code(400).send({ code: 'REASON_REQUIRED', message: 'a reason is required' });
+      const res = await users.setContentEditor(req.user!.id, (req.params as z.infer<typeof idParam>).id, b.on, reason);
+      if (res.ok) return { ok: true, roles: res.roles };
+      if (res.code === 'NOT_FOUND') return reply.code(404).send({ code: res.code, message: 'no such user' });
+      if (res.code === 'USER_BANNED') return reply.code(409).send({ code: res.code, message: 'a banned account cannot be given a staff role' });
+      return reply.code(409).send({ code: res.code, message: 'the account has not confirmed its email address yet' });
     },
   );
 

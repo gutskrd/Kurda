@@ -27,7 +27,7 @@ export interface ExerciseProps {
 }
 
 /** How an answer was graded, for the part it was given with to answer back. */
-function verdictOf(feedback: Feedback | null): 'right' | 'wrong' | null {
+export function verdictOf(feedback: Feedback | null): 'right' | 'wrong' | null {
   return feedback ? (feedback.accepted ? 'right' : 'wrong') : null;
 }
 
@@ -75,12 +75,30 @@ function Model({ exercise }: { exercise: DeliveredExercise }): React.JSX.Element
 
 // ---------- multiple choice ----------
 
+/** Choose one: the question, with whoever says its recordings, and the options under it (`Choices`). */
+export function MultipleChoice(props: ExerciseProps): React.JSX.Element {
+  const t = useT();
+  const { exercise, feedback } = props;
+  return (
+    <div className="lesson-exercise">
+      <Ask focus>{t('lesson.mc.ask')}</Ask>
+      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
+        <Prompt text={exercise.prompt} />
+        <Model exercise={exercise} />
+      </ExerciseVoice>
+      <Choices {...props} />
+    </div>
+  );
+}
+
 /**
- * Choose one: large buttons, 1–6 on a keyboard. A tap answers — as the
- * alphabet's questions do — and once it is graded the chosen option and the
- * right one are marked with a tick and a cross as well as a colour.
+ * The options, for a multiple-choice item and for the question after a
+ * conversation alike: large buttons, 1–6 on a keyboard. A tap answers — as
+ * the alphabet's questions do — with the option's place as shown, and once it
+ * is graded the chosen option and the right one are marked with a tick and a
+ * cross as well as a colour.
  */
-export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: ExerciseProps): React.JSX.Element {
+export function Choices({ exercise, locked, busy, feedback, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   const options = exercise.options ?? [];
   const [chosen, setChosen] = useState<number | null>(null);
@@ -111,12 +129,7 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
   const right = (i: number): boolean => (feedback?.accepted ? i === chosen : feedback?.correction === options[i]);
 
   return (
-    <div className="lesson-exercise">
-      <Ask focus>{t('lesson.mc.ask')}</Ask>
-      <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)}>
-        <Prompt text={exercise.prompt} />
-        <Model exercise={exercise} />
-      </ExerciseVoice>
+    <>
       <div className="lesson-options" role="group" aria-label={t('lesson.mc.options')}>
         {options.map((option, i) => {
           // the one chosen pops (right) or shakes (wrong) as it is graded — styles/motion.css
@@ -150,7 +163,7 @@ export function MultipleChoice({ exercise, locked, busy, feedback, onAnswer }: E
         })}
       </div>
       {!locked && options.length > 1 && <p className="lesson-hint lesson-hint--keys">{t('lesson.mc.keys', { count: options.length })}</p>}
-    </div>
+    </>
   );
 }
 

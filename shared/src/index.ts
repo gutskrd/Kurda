@@ -269,6 +269,8 @@ export {
   lessonAudioTargets,
   primaryAudioTarget,
 } from './lesson-audio.js';
+/** Conversations in lessons: their shape, limits, and the keys each part's recordings are filed under. */
+export * from './conversation.js';
 
 /**
  * Age from a birth month and year, for the same reason again: the API decides

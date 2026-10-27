@@ -153,6 +153,7 @@ import { registerInboxRoutes } from './notifications/inbox-routes.js';
 import { StreakReminderService } from './notifications/streak-reminder-service.js';
 import { makePushSendJob } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
+import { seedStarterLessons } from './content/starter-lessons.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
 import { UserAdminService } from './admin/user-admin-service.js';
 import { registerUserAdminRoutes } from './admin/user-admin-routes.js';
@@ -649,6 +650,12 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     }
     // admin content management: draft→review→publish + optimistic locking (KUR-100)
     registerContentAdminRoutes(app, new ContentAdminService(app.db), adminTotp!);
+    // and the starter lessons, seeded once each as drafts for the team to record and publish
+    if (config.NODE_ENV !== 'test') {
+      app.addHook('onReady', async () => {
+        await seedStarterLessons(app.db, app.log);
+      });
+    }
     // the push and notification services set up with the leagues, above
     registerNotificationRoutes(app, notificationPrefs);
     registerInboxRoutes(app, inbox);

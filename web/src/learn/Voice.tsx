@@ -1,4 +1,4 @@
-import type { DeliveredExercise, Feedback } from '@kurda/shared';
+import { conversationLineVoice, type DeliveredExercise, type Feedback } from '@kurda/shared';
 import { CharacterStage } from '../characters/CharacterStage';
 import { spokenClips, type MaybeSpoken, type SpokenClip } from '../characters/clips';
 
@@ -17,8 +17,9 @@ export function promptWords(prompt: string | undefined): string | null {
 
 /**
  * Every recording an exercise can play that has a character: the listening
- * clip (its words are the answer, so they are not sent), the model, and the
- * recordings of the options or the Kurdish cards.
+ * clip (its words are the answer, so they are not sent), the model, the
+ * recordings of the options or the Kurdish cards, and a conversation's lines,
+ * each with whoever says it.
  */
 export function exerciseClips(exercise: DeliveredExercise): SpokenClip[] {
   const list: MaybeSpoken[] = [
@@ -26,6 +27,10 @@ export function exerciseClips(exercise: DeliveredExercise): SpokenClip[] {
     { src: exercise.modelAudioUrl, voice: exercise.modelAudioVoice, text: promptWords(exercise.prompt) },
   ];
   for (const [said, src] of Object.entries(exercise.audio ?? {})) list.push({ src, voice: exercise.audioVoices?.[said], text: said });
+  // a line is always said by its own part's character, whichever voice its recording was saved under
+  (exercise.lines ?? []).forEach((line, i) =>
+    list.push({ src: exercise.lineAudio?.[i], voice: conversationLineVoice(exercise.speakers ?? [], line, exercise.lineVoices?.[i]), text: line.text }),
+  );
   return spokenClips(list);
 }
 
@@ -47,15 +52,18 @@ export function feedbackClip(exercise: DeliveredExercise, feedback: Feedback): S
 export function ExerciseVoice({
   clips,
   verdict = null,
+  height,
   children,
 }: {
   clips: readonly SpokenClip[];
   verdict?: 'right' | 'wrong' | null;
+  /** a stage this tall whatever the window, for an exercise with more to show under it (`STAGE.card`) */
+  height?: number;
   children?: React.ReactNode;
 }): React.JSX.Element {
   if (clips.length === 0) return <>{children}</>;
   return (
-    <CharacterStage clips={clips} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
+    <CharacterStage clips={clips} height={height} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
       {children}
     </CharacterStage>
   );

@@ -8,7 +8,8 @@ export type ExerciseType =
   | 'match_pairs'
   | 'listening'
   | 'speaking'
-  | 'writing';
+  | 'writing'
+  | 'conversation';
 export type LessonStatus = 'draft' | 'published' | 'archived';
 
 export interface LessonRow {

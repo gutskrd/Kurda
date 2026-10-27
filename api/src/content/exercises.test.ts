@@ -614,3 +614,74 @@ describe('say — the Kurdish to hear', () => {
     }
   });
 });
+
+describe('conversation', () => {
+  const conversation = {
+    id: 'nasin01',
+    title: 'Nasîn',
+    speakers: [{ character: 'xezo' }, { name: 'Hamo', character: 'hamo' }],
+    lines: [
+      { speaker: 0, text: 'Silav! Navê min Xezo ye.', en: 'Hello! My name is Xezo.' },
+      { speaker: 1, text: 'Silav Xezo! Navê min Hamo ye.' },
+      { speaker: 0, text: 'Tu ji ku derê yî?' },
+      { speaker: 1, text: 'Ez ji Amedê me.', en: 'I am from Amed.' },
+    ],
+    prompt: 'Hamo ji ku derê ye?',
+    options: ['Ji Amedê', 'Ji Hewlêrê', 'Ji Wanê'],
+    correctIndex: 0,
+  };
+  const issues = (payload: unknown): string[] => {
+    try {
+      validateExercisePayload('conversation', payload);
+      return [];
+    } catch (err) {
+      return (err as InvalidExercisePayloadError).issues.map((i) => `${i.path}: ${i.message}`);
+    }
+  };
+
+  it('validates a conversation, with or without a title and translations', () => {
+    expect(issues(conversation)).toEqual([]);
+    const untitled: Record<string, unknown> = { ...conversation, lines: conversation.lines.map(({ speaker, text }) => ({ speaker, text })) };
+    delete untitled.title;
+    expect(issues(untitled)).toEqual([]);
+  });
+
+  it('refuses a line by nobody, a part that says nothing, one character in two parts, and a line with nothing to say', () => {
+    expect(issues({ ...conversation, lines: [...conversation.lines, { speaker: 2, text: 'Silav' }] })).toEqual(['lines.4.speaker: must be one of the speakers']);
+    expect(issues({ ...conversation, speakers: [...conversation.speakers, { character: 'hevalo' }] })).toEqual(['speakers.2: says nothing: give them a line or remove them']);
+    expect(issues({ ...conversation, speakers: [{ character: 'hamo' }, { character: 'hamo' }] })).toEqual(['speakers.1.character: Hamo already has a part']);
+    expect(issues({ ...conversation, lines: [...conversation.lines, { speaker: 1, text: '…?' }] })).toEqual(['lines.4.text: has nothing to say']);
+  });
+
+  it('refuses an id its recordings could not be filed under, a part with no character or an unknown one, and a right answer that is no option', () => {
+    expect(issues({ ...conversation, id: 'Nasîn 1' })).toHaveLength(1);
+    expect(issues({ ...conversation, speakers: [{ name: 'Rojda', character: 'kawa' }, { character: 'hamo' }] })).toEqual(['speakers.0.character: needs a character: Hevalo, Hamo or Xezo']);
+    expect(issues({ ...conversation, speakers: [{ name: 'Rojda' }, { character: 'hamo' }] })).toEqual(['speakers.0.character: needs a character: Hevalo, Hamo or Xezo']);
+    // a fourth part: there are only three characters to play them
+    expect(issues({ ...conversation, speakers: [{ character: 'xezo' }, { character: 'hamo' }, { character: 'hevalo' }, { character: 'xezo' }] })[0]).toMatch(/^speakers: /);
+    expect(issues({ ...conversation, correctIndex: 3 })).toEqual(['correctIndex: correctIndex must point at an option']);
+  });
+
+  it('is sent with every line and its meaning, and the answers shuffled, never which is right', () => {
+    const sent = sanitizeExercise('conversation', conversation, SEED);
+    expect(sent).not.toHaveProperty('correctIndex');
+    expect(sent).not.toHaveProperty('id');
+    expect(sent.title).toBe('Nasîn');
+    // each part is called by its character's name, whatever name was written
+    expect(sent.speakers).toEqual([
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
+    ]);
+    expect(sent.lines).toEqual(conversation.lines);
+    expect(sent.prompt).toBe('Hamo ji ku derê ye?');
+    expect(sent.options).toEqual(optionOrder(3, SEED).map((i) => conversation.options[i]));
+  });
+
+  it('grades the question by the position the learner saw, as multiple choice does', () => {
+    const right = optionOrder(3, SEED).indexOf(0);
+    expect(grade('conversation', conversation, { choice: right })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('conversation', conversation, { choice: (right + 1) % 3 })).toEqual({ verdict: 'wrong', accepted: false, correction: 'Ji Amedê' });
+    expect(grade('conversation', conversation, { text: 'Ji Amedê' })).toEqual({ verdict: 'wrong', accepted: false });
+    expect(revealExercise('conversation', conversation)).toEqual({ prompt: 'Hamo ji ku derê ye?', correction: 'Ji Amedê' });
+  });
+});

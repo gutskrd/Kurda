@@ -88,3 +88,68 @@ describe('what is sent', () => {
     expect(recordHref({ skillId: 's-1', position: 3 }, true)).toBe('#/audio/lessons?lesson=s-1%3A3&show=missing');
   });
 });
+
+describe('a conversation in the editor', () => {
+  const conversation = (over: Record<string, unknown> = {}): Exercise => ({
+    position: 1,
+    type: 'conversation',
+    payload: {
+      id: 'kmrnasin01',
+      title: '',
+      speakers: [
+        { name: 'Xezo', character: 'xezo' },
+        { name: 'Hamo', character: 'hamo' },
+      ],
+      lines: [
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: ' Silav Xezo. ', en: '' },
+      ],
+      prompt: 'Kî silavê dide?',
+      options: ['Xezo', 'Hamo'],
+      correctIndex: 0,
+      ...over,
+    },
+  });
+
+  it('starts as Xezo and Hamo with a line each, under an id of its own', () => {
+    const p = blankPayload('conversation');
+    expect(p.id).toMatch(/^[a-z0-9]{6,32}$/);
+    expect(blankPayload('conversation').id).not.toBe(p.id);
+    expect(p.speakers).toEqual([
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
+    ]);
+    expect(p.lines).toHaveLength(2);
+  });
+
+  it('is checked as the server checks it, in words', () => {
+    expect(exerciseIssues(conversation())).toEqual([]);
+    expect(exerciseIssues(conversation({ speakers: [{ character: 'hamo' }, { character: 'hamo' }] })).map((i) => i.message)).toContain(
+      'Hamo already has a part: choose another character.',
+    );
+    expect(exerciseIssues(conversation({ speakers: [{ name: 'Rojda' }, { character: 'hamo' }] })).map((i) => i.message)).toContain(
+      'Person 1: choose who plays the part.',
+    );
+    expect(exerciseIssues(conversation({ lines: [{ speaker: 0, text: 'Silav' }, { speaker: 0, text: 'Spas' }] })).map((i) => i.message)).toContain(
+      'Hamo says nothing: give them a line or remove them.',
+    );
+    expect(exerciseIssues(conversation({ lines: [{ speaker: 0, text: 'Silav' }, { speaker: 1, text: ' ?' }] })).map((i) => i.path)).toContain('lines.1.text');
+  });
+
+  it('is sent with each part called by its character, and without the parts left empty: no title, no meaning', () => {
+    expect(forSave([conversation({ speakers: [{ name: 'Rojda', character: 'xezo' }, { character: 'hamo' }] })])[0]!.payload).toEqual({
+      id: 'kmrnasin01',
+      speakers: [
+        { name: 'Xezo', character: 'xezo' },
+        { name: 'Hamo', character: 'hamo' },
+      ],
+      lines: [
+        { speaker: 0, text: 'Silav!', en: 'Hello!' },
+        { speaker: 1, text: 'Silav Xezo.' },
+      ],
+      prompt: 'Kî silavê dide?',
+      options: ['Xezo', 'Hamo'],
+      correctIndex: 0,
+    });
+  });
+});

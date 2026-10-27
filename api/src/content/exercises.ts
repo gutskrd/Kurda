@@ -1,5 +1,15 @@
 import { z } from 'zod';
-import { answerKey, foldDiacritics, normalizeKurdish } from '@kurda/shared';
+import {
+  CONVERSATION_ID,
+  CONVERSATION_LIMITS as CONV,
+  SPEAKERS,
+  answerKey,
+  conversationSpeaker,
+  foldDiacritics,
+  lessonAudioKey,
+  normalizeKurdish,
+  type ConversationPayload,
+} from '@kurda/shared';
 import type { ExerciseType } from './repository.js';
 import { SELF_RATINGS, defaultScorer } from './speaking-scorer.js';
 
@@ -87,6 +97,64 @@ export const writingPayloadSchema = z.object({
   strict: strictSchema,
 });
 
+/**
+ * A conversation (@kurda/shared conversation.ts): who takes part, what each of
+ * them says in turn, and then a question about it with one right answer, asked
+ * and graded as a multiple-choice item is. `id` is what the lines' recordings
+ * are filed under, and stays the same across versions of the lesson.
+ *
+ * Every line names someone who takes part, and everyone who takes part says
+ * something — a part with no lines is a person nobody hears, and a part
+ * nobody can record. Each part is one of the characters, called by its name,
+ * and no character plays two: the one a learner sees say a line is always
+ * that line's own.
+ */
+export const conversationPayloadSchema = z
+  .object({
+    id: z.string().regex(CONVERSATION_ID, 'must be 6–32 lower-case letters and digits'),
+    title: z.string().min(1).max(CONV.titleMax).optional(),
+    // each part is one of the characters, and is called by the character's own name whatever name was sent
+    speakers: z
+      .array(z.object({ name: z.string().max(CONV.nameMax).optional(), character: z.enum(SPEAKERS, { error: 'needs a character: Hevalo, Hamo or Xezo' }) }))
+      .min(CONV.speakersMin)
+      .max(CONV.speakersMax)
+      .transform((speakers) => speakers.map((s) => conversationSpeaker(s.character))),
+    lines: z
+      .array(
+        z.object({
+          speaker: z.number().int().min(0),
+          text: z.string().min(1).max(CONV.lineMax),
+          en: z.string().min(1).max(CONV.translationMax).optional(),
+        }),
+      )
+      .min(CONV.linesMin)
+      .max(CONV.linesMax),
+    prompt: z.string().min(1).max(CONV.promptMax),
+    options: z.array(z.string().min(1).max(CONV.optionMax)).min(CONV.optionsMin).max(CONV.optionsMax),
+    correctIndex: z.number().int().min(0),
+  })
+  .superRefine((p, ctx) => {
+    if (p.correctIndex >= p.options.length) {
+      ctx.addIssue({ code: 'custom', path: ['correctIndex'], message: 'correctIndex must point at an option' });
+    }
+    p.lines.forEach((line, i) => {
+      if (line.speaker >= p.speakers.length) {
+        ctx.addIssue({ code: 'custom', path: ['lines', i, 'speaker'], message: 'must be one of the speakers' });
+      } else if (lessonAudioKey(line.text) === '') {
+        ctx.addIssue({ code: 'custom', path: ['lines', i, 'text'], message: 'has nothing to say' });
+      }
+    });
+    const cast = new Set<string>();
+    p.speakers.forEach((speaker, i) => {
+      // one character plays one part: who says a line is never in doubt
+      if (cast.has(speaker.character)) ctx.addIssue({ code: 'custom', path: ['speakers', i, 'character'], message: `${speaker.name} already has a part` });
+      cast.add(speaker.character);
+      if (!p.lines.some((line) => line.speaker === i)) {
+        ctx.addIssue({ code: 'custom', path: ['speakers', i], message: 'says nothing: give them a line or remove them' });
+      }
+    });
+  });
+
 const PAYLOAD_SCHEMAS = {
   multiple_choice: multipleChoicePayloadSchema,
   translate: translatePayloadSchema,
@@ -94,6 +162,7 @@ const PAYLOAD_SCHEMAS = {
   listening: listeningPayloadSchema,
   speaking: speakingPayloadSchema,
   writing: writingPayloadSchema,
+  conversation: conversationPayloadSchema,
 } as const;
 
 export type MultipleChoicePayload = z.infer<typeof multipleChoicePayloadSchema>;
@@ -159,6 +228,8 @@ export const answerSchemas = {
   }),
   /** free-text writing */
   writing: z.object({ text: z.string().max(1000) }),
+  /** the answer to the question after the conversation, as a position in the order shown */
+  conversation: z.object({ choice: z.number().int().min(0) }),
 } as const;
 
 // ---------- client-safe sanitization ----------
@@ -249,6 +320,17 @@ export function sanitizeExercise(
       const p = parsed.data as WritingPayload;
       return { prompt: p.prompt };
     }
+    case 'conversation': {
+      // the whole conversation is the reading; the answer is only in correctIndex
+      const p = parsed.data as ConversationPayload;
+      return {
+        ...(p.title ? { title: p.title } : {}),
+        speakers: p.speakers.map((s) => ({ name: s.name, character: s.character })),
+        lines: p.lines.map((l) => (l.en ? { speaker: l.speaker, text: l.text, en: l.en } : { speaker: l.speaker, text: l.text })),
+        prompt: p.prompt,
+        options: optionOrder(p.options.length, seed).map((i) => p.options[i]!),
+      };
+    }
     case 'match_pairs': {
       const p = parsed.data as MatchPairsPayload;
       return {
@@ -281,8 +363,11 @@ export interface CheckResult {
   correction?: string;
 }
 
-/** `choice` is a position in the order the learner saw (`optionOrder(…, seed)`). */
-function checkMultipleChoice(payload: MultipleChoicePayload, choice: number, seed: string): CheckResult {
+/**
+ * `choice` is a position in the order the learner saw (`optionOrder(…, seed)`).
+ * A conversation's question is graded the same way.
+ */
+function checkMultipleChoice(payload: Pick<MultipleChoicePayload, 'options' | 'correctIndex'>, choice: number, seed: string): CheckResult {
   const picked = optionOrder(payload.options.length, seed)[choice];
   const correct = picked === payload.correctIndex;
   return {
@@ -447,8 +532,9 @@ export function checkAnswer(type: ExerciseType, payload: unknown, answer: unknow
 
   switch (type) {
     case 'multiple_choice':
+    case 'conversation':
       return checkMultipleChoice(
-        validPayload.data as MultipleChoicePayload,
+        validPayload.data as MultipleChoicePayload | ConversationPayload,
         (parsedAnswer.data as { choice: number }).choice,
         seed,
       );
@@ -498,8 +584,9 @@ export function revealExercise(type: ExerciseType, payload: unknown): { prompt?:
   const parsed = PAYLOAD_SCHEMAS[type]?.safeParse(payload);
   if (!parsed || !parsed.success) return {};
   switch (type) {
-    case 'multiple_choice': {
-      const p = parsed.data as MultipleChoicePayload;
+    case 'multiple_choice':
+    case 'conversation': {
+      const p = parsed.data as MultipleChoicePayload | ConversationPayload;
       return { prompt: p.prompt, correction: p.options[p.correctIndex] };
     }
     case 'translate':

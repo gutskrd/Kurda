@@ -279,3 +279,120 @@ describe('the lesson editor', () => {
     expect(await screen.findByText('No such lesson.')).toBeInTheDocument();
   });
 });
+
+describe('making a complete lesson quickly', () => {
+  const EMPTY: LessonDetail = { ...DETAIL, exercises: [] };
+
+  it('builds a set of exercises from the lesson’s words, ready to save', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi(
+      on('GET', '/admin/content/lessons/l-1', json(EMPTY)),
+      on('PUT', '/admin/content/lessons/l-1', json({ ok: true, lockVersion: 5 })),
+    );
+    location.hash = '#/lessons/l-1';
+    renderUi(<Lessons />);
+    await user.click(await screen.findByRole('button', { name: 'Build from words' }));
+    const drawer = await screen.findByRole('dialog', { name: 'Build exercises from words' });
+    await user.type(within(drawer).getByLabelText('Words and phrases'), 'Silav = Hello{Enter}Spas = Thanks{Enter}Roj baş = Good day');
+    expect(within(drawer).getByText('3 words: Silav · Spas · Roj baş')).toBeInTheDocument();
+    // a kind left out is not made
+    await user.click(within(drawer).getByLabelText(/Say it aloud/));
+    await user.click(within(drawer).getByRole('button', { name: 'Add 10 exercises' }));
+    expect(screen.getAllByRole('article')).toHaveLength(10);
+
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    const sent = (api.calls.find((c) => c.method === 'PUT')!.body as { exercises: Array<{ type: string }> }).exercises;
+    expect(sent.map((e) => e.type)).toEqual([
+      'match_pairs',
+      'multiple_choice',
+      'multiple_choice',
+      'multiple_choice',
+      'translate',
+      'translate',
+      'translate',
+      'listening',
+      'listening',
+      'listening',
+    ]);
+  });
+
+  it('adds a conversation, written as characters and their lines, and saves it without the parts left empty', async () => {
+    const user = userEvent.setup();
+    const api = fakeApi(
+      on('GET', '/admin/content/lessons/l-1', json(EMPTY)),
+      on('PUT', '/admin/content/lessons/l-1', json({ ok: true, lockVersion: 5 })),
+    );
+    location.hash = '#/lessons/l-1';
+    renderUi(<Lessons />);
+    await user.click(await screen.findByRole('button', { name: 'Add a conversation' }));
+    const card = screen.getByRole('article', { name: /1\s*Conversation/ });
+    // Xezo and Hamo to start; a character already in it is not offered for another part
+    expect(within(card).getByLabelText('Who plays part 1')).toHaveValue('xezo');
+    expect(within(card).getByLabelText('Who plays part 2')).toHaveValue('hamo');
+    expect(within(within(card).getByLabelText('Who plays part 2')).queryByRole('option', { name: 'Xezo' })).toBeNull();
+    // the deer is the one left to add, and then nobody is
+    await user.click(within(card).getByRole('button', { name: 'Add Hevalo' }));
+    expect(within(card).getByLabelText('Who plays part 3')).toHaveValue('hevalo');
+    expect(within(card).queryByRole('button', { name: /^Add (Xezo|Hamo|Hevalo)$/ })).toBeNull();
+    await user.click(within(card).getByRole('button', { name: 'Remove Hevalo and their lines' }));
+    await user.type(within(card).getByLabelText('Line 1, in Kurdish'), 'Silav! Tu çawa yî?');
+    await user.type(within(card).getByLabelText('Line 1, what it means'), 'Hello! How are you?');
+    await user.type(within(card).getByLabelText('Line 2, in Kurdish'), 'Ez baş im, spas.');
+    await user.type(within(card).getByLabelText(/Question about it/), 'Hamo çawa ye?');
+    await user.type(within(card).getByLabelText('Answer 1'), 'Baş e');
+    await user.type(within(card).getByLabelText('Answer 2'), 'Nexweş e');
+    // it cannot be recorded until it is saved
+    expect(within(card).getByText('Save the draft, then record it: each person records their own part.')).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: 'Save draft' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    const [conversation] = (api.calls.find((c) => c.method === 'PUT')!.body as { exercises: Array<{ type: string; payload: Record<string, unknown> }> }).exercises;
+    expect(conversation!.type).toBe('conversation');
+    expect(conversation!.payload).toEqual({
+      id: expect.stringMatching(/^[a-z0-9]{6,32}$/),
+      speakers: [
+        { name: 'Xezo', character: 'xezo' },
+        { name: 'Hamo', character: 'hamo' },
+      ],
+      lines: [
+        { speaker: 0, text: 'Silav! Tu çawa yî?', en: 'Hello! How are you?' },
+        { speaker: 1, text: 'Ez baş im, spas.' },
+      ],
+      prompt: 'Hamo çawa ye?',
+      options: ['Baş e', 'Nexweş e'],
+      correctIndex: 0,
+    });
+    // saved, it is recorded on its own page
+    expect(await within(card).findByRole('link', { name: 'Record this conversation' })).toHaveAttribute(
+      'href',
+      `#/audio/conversations/${String(conversation!.payload.id)}?lesson=l-1`,
+    );
+  });
+
+  it('says what the lesson still needs before learners get it, with its recordings', async () => {
+    const use = { courseId: 'c-1', courseTitle: 'K', unitId: 'u-1', unitTitle: 'Basics', skillId: 's-1', skillTitle: 'Greetings', lessonPosition: 1, lessonId: 'l-1', lessonTitle: 'Greetings 1', lessonStatus: 'draft', lessonVersion: 1, live: false, exerciseTypes: ['translate'], listeningNeedsIt: false };
+    fakeApi(
+      on('GET', '/admin/content/lessons/l-1', json(DETAIL)),
+      on(
+        'GET',
+        '/admin/lesson-audio',
+        json({
+          items: [
+            { key: 'silav', text: 'Silav', recorded: true, url: 'https://cdn.test/s.wav', durationMs: 900, updatedAt: null, usedIn: [use], unused: false },
+            { key: 'spas', text: 'Spas', recorded: false, url: null, durationMs: null, updatedAt: null, usedIn: [{ ...use, listeningNeedsIt: true }], unused: false },
+          ],
+          summary: { needed: 2, recorded: 1, missing: 1, unused: 0 },
+        }),
+      ),
+    );
+    location.hash = '#/lessons/l-1';
+    renderUi(<Lessons />);
+    const checks = await screen.findByRole('region', { name: 'Before it goes to learners' });
+    expect(within(checks).getByText('Titles in Kurdish and English')).toBeInTheDocument();
+    expect(within(checks).getByText('2 exercises: 8 or more give a learner enough practice')).toBeInTheDocument();
+    expect(await within(checks).findByText('1 of 2 sentences recorded')).toBeInTheDocument();
+    expect(within(checks).getByText('A listening item has nothing to play: it can’t be published until recorded')).toBeInTheDocument();
+    expect(within(checks).getByRole('link', { name: 'Record the rest' })).toHaveAttribute('href', '#/audio/lessons?lesson=s-1%3A1&show=missing');
+  });
+});

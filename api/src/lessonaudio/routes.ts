@@ -6,6 +6,14 @@
  *                                         (&withLipsync=1: each with its stored timeline, or null)
  *   PUT    /admin/lesson-audio?text=…     store a recording of that text (raw audio/wav body)
  *   DELETE /admin/lesson-audio?key=…      remove one (&force=1 when a published listening item plays it)
+ *   GET    /admin/lesson-audio/conversations/:id?lesson=…
+ *                                         one conversation's lines and their recordings, with who made each:
+ *                                         the page each person records their part on
+ *
+ * A conversation's line is recorded with `&line=<conversation id>:<part>`
+ * beside the text: its recording is the conversation's own, filed under who
+ * says it (`conversationLineKey`), so the same words said by the other part,
+ * or in another conversation, stay a recording of their own.
  *
  * The PUT may also say who says the recording and how their mouth moves, as
  * `&speaker=hevalo|hamo|xezo|none` and `&lipsync=<the timeline as JSON>`
@@ -27,8 +35,10 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import {
+  CONVERSATION_ID,
   LESSON_AUDIO_MAX_SECONDS,
   LESSON_AUDIO_TEXT_MAX,
+  conversationLineKey,
   lessonAudioKey,
   normalizeKurdish,
   type LipsyncData,
@@ -64,19 +74,29 @@ interface Row {
 }
 
 const listQuery = z.object({ withLipsync: z.enum(['0', '1', 'false', 'true']).optional() });
-const textQuery = z.object({ text: z.string() });
+const textQuery = z.object({ text: z.string(), line: z.string().max(64).optional() });
+const conversationParams = z.object({ id: z.string().regex(CONVERSATION_ID) });
+const conversationQuery = z.object({ lesson: z.uuid().optional() });
+/** `<conversation id>:<part>`, the part being who says the line, by place */
+const LINE = /^([a-z0-9]{6,32}):(\d{1,2})$/;
 const keyQuery = z.object({ key: z.string().min(1).max(LESSON_AUDIO_TEXT_MAX * 2), force: z.string().optional() });
 
-/** The text to record, as typed (NFC, spaces evened out), and its key. */
-function textFrom(query: unknown): { text: string; key: string } {
+/**
+ * The text to record, as typed (NFC, spaces evened out), and its key: a
+ * conversation line's when `line` names one, else the text's own.
+ */
+function textFrom(query: unknown): { text: string; key: string; line: { conversation: string; part: number } | null } {
   const parsed = textQuery.safeParse(query);
   const text = parsed.success ? normalizeKurdish(parsed.data.text) : '';
-  const key = lessonAudioKey(text);
-  if (!key) throw new AppError('EMPTY_TEXT', 400, 'say which text this is a recording of');
+  if (!lessonAudioKey(text)) throw new AppError('EMPTY_TEXT', 400, 'say which text this is a recording of');
   if (text.length > LESSON_AUDIO_TEXT_MAX) {
     throw new AppError('TEXT_TOO_LONG', 400, `keep the text under ${LESSON_AUDIO_TEXT_MAX} characters`);
   }
-  return { text, key };
+  if (parsed.data?.line === undefined) return { text, key: lessonAudioKey(text), line: null };
+  const m = LINE.exec(parsed.data.line);
+  if (!m) throw new AppError('INVALID_LINE', 400, 'name the line as <conversation id>:<part>');
+  const line = { conversation: m[1]!, part: Number(m[2]) };
+  return { text, key: conversationLineKey(line.conversation, line.part, text), line };
 }
 
 export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfig): void {
@@ -95,6 +115,18 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
     return service.list({ withLipsync: withLipsync === '1' || withLipsync === 'true' });
   });
 
+  app.get(
+    '/admin/lesson-audio/conversations/:id',
+    { schema: { params: conversationParams, querystring: conversationQuery }, preHandler: canRecord },
+    async (req) => {
+      const { id } = req.params as z.infer<typeof conversationParams>;
+      const { lesson } = req.query as z.infer<typeof conversationQuery>;
+      const found = await service.conversation(id, lesson ?? null);
+      if (!found) throw new AppError('NOT_FOUND', 404, 'no lesson has that conversation');
+      return found;
+    },
+  );
+
   app.put(
     '/admin/lesson-audio',
     {
@@ -108,7 +140,7 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
       preHandler: canRecord,
     },
     async (req, reply) => {
-      const { text, key } = textFrom(req.query);
+      const { text, key, line } = textFrom(req.query);
       const voice = voiceFromQuery(req.query);
       if (!app.storage) throw new AppError('MEDIA_UNAVAILABLE', 503, 'media storage is not configured');
       const raw = Buffer.isBuffer(req.body) ? (req.body as Buffer) : null;
@@ -170,7 +202,14 @@ export function registerLessonAudioRoutes(app: FastifyInstance, config: AppConfi
           before: before.rows[0]
             ? { text: before.rows[0].text, url: before.rows[0].url, speaker: before.rows[0].speaker }
             : null,
-          after: { text, url: res.url, durationMs: info.durationMs, speaker: saved.speaker, lipsync: lipsyncSummary(lipsync) },
+          after: {
+            text,
+            ...(line ? { line } : {}),
+            url: res.url,
+            durationMs: info.durationMs,
+            speaker: saved.speaker,
+            lipsync: lipsyncSummary(lipsync),
+          },
           requestId: req.id,
         });
         await client.query('COMMIT');

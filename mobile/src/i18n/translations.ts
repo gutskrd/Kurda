@@ -2346,7 +2346,15 @@ export type TranslationKey =
   | 'alphabet.explored'
   | 'alphabet.exploredAll'
   | 'nav.alphabet'
-  | 'learn.tools.alphabetHint';
+  | 'learn.tools.alphabetHint'
+  // --- conversations in lessons ---
+  | 'lesson.conversation.prompt'
+  | 'lesson.conversation.promptRead'
+  | 'lesson.conversation.playAll'
+  | 'lesson.conversation.stop'
+  | 'lesson.conversation.playLine'
+  | 'lesson.conversation.showTranslation'
+  | 'lesson.conversation.hideTranslation';
 
 type Catalog = Record<TranslationKey, string>;
 
@@ -4659,6 +4667,14 @@ const en: Catalog = {
   'alphabet.exploredAll': 'All {total} explored. Nice work!',
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Every letter, and how it sounds',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Listen to the conversation, then answer',
+  'lesson.conversation.promptRead': 'Read the conversation, then answer',
+  'lesson.conversation.playAll': 'Play conversation',
+  'lesson.conversation.stop': 'Stop',
+  'lesson.conversation.playLine': 'Play line {n}, said by {name}',
+  'lesson.conversation.showTranslation': 'Show translation',
+  'lesson.conversation.hideTranslation': 'Hide translation',
 };
 
 const ku: Catalog = {
@@ -6969,6 +6985,14 @@ const ku: Catalog = {
   'alphabet.exploredAll': 'Hemû {total} hatin dîtin. Destxweş!',
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her tîp û dengê wê',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Guh bide axaftinê, paşê bersiva pirsê bide',
+  'lesson.conversation.promptRead': 'Axaftinê bixwîne, paşê bersiva pirsê bide',
+  'lesson.conversation.playAll': 'Axaftinê lêxe',
+  'lesson.conversation.stop': 'Rawestîne',
+  'lesson.conversation.playLine': 'Rêza {n} ya ku {name} dibêje lêxe',
+  'lesson.conversation.showTranslation': 'Wergera îngilîzî nîşan bide',
+  'lesson.conversation.hideTranslation': 'Wergerê veşêre',
 };
 
 const de: Catalog = {
@@ -9279,6 +9303,14 @@ const de: Catalog = {
   'alphabet.exploredAll': 'Alle {total} entdeckt. Gut gemacht!',
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Jeder Buchstabe und sein Klang',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Hör dir das Gespräch an und antworte dann',
+  'lesson.conversation.promptRead': 'Lies das Gespräch und antworte dann',
+  'lesson.conversation.playAll': 'Gespräch abspielen',
+  'lesson.conversation.stop': 'Stopp',
+  'lesson.conversation.playLine': 'Zeile {n} abspielen, gesprochen von {name}',
+  'lesson.conversation.showTranslation': 'Englische Übersetzung zeigen',
+  'lesson.conversation.hideTranslation': 'Übersetzung ausblenden',
 };
 
 const es: Catalog = {
@@ -11589,6 +11621,14 @@ const es: Catalog = {
   'alphabet.exploredAll': 'Las {total} exploradas. ¡Bien hecho!',
   'nav.alphabet': 'Alfabeto',
   'learn.tools.alphabetHint': 'Cada letra y cómo suena',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Escucha la conversación y luego responde',
+  'lesson.conversation.promptRead': 'Lee la conversación y luego responde',
+  'lesson.conversation.playAll': 'Reproducir la conversación',
+  'lesson.conversation.stop': 'Detener',
+  'lesson.conversation.playLine': 'Reproducir la línea {n}, dicha por {name}',
+  'lesson.conversation.showTranslation': 'Mostrar la traducción al inglés',
+  'lesson.conversation.hideTranslation': 'Ocultar la traducción',
 };
 
 const tr: Catalog = {
@@ -13899,6 +13939,14 @@ const tr: Catalog = {
   'alphabet.exploredAll': '{total} harfin hepsi keşfedildi. Harika!',
   'nav.alphabet': 'Alfabe',
   'learn.tools.alphabetHint': 'Her harf ve nasıl okunduğu',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Konuşmayı dinle, sonra cevap ver',
+  'lesson.conversation.promptRead': 'Konuşmayı oku, sonra cevap ver',
+  'lesson.conversation.playAll': 'Konuşmayı oynat',
+  'lesson.conversation.stop': 'Durdur',
+  'lesson.conversation.playLine': '{n}. satırı oynat ({name})',
+  'lesson.conversation.showTranslation': 'İngilizce çeviriyi göster',
+  'lesson.conversation.hideTranslation': 'Çeviriyi gizle',
 };
 
 const ar: Catalog = {
@@ -16209,6 +16257,14 @@ const ar: Catalog = {
   'alphabet.exploredAll': 'استكشفت الحروف الـ{total} كلها. أحسنت!',
   'nav.alphabet': 'الأبجدية',
   'learn.tools.alphabetHint': 'كل حرف وكيف يُنطق',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'استمع إلى المحادثة ثم أجب',
+  'lesson.conversation.promptRead': 'اقرأ المحادثة ثم أجب',
+  'lesson.conversation.playAll': 'تشغيل المحادثة',
+  'lesson.conversation.stop': 'إيقاف',
+  'lesson.conversation.playLine': 'تشغيل السطر {n} بصوت {name}',
+  'lesson.conversation.showTranslation': 'اعرض الترجمة الإنجليزية',
+  'lesson.conversation.hideTranslation': 'أخفِ الترجمة',
 };
 
 const fr: Catalog = {
@@ -18519,6 +18575,14 @@ const fr: Catalog = {
   'alphabet.exploredAll': 'Les {total} découvertes. Bravo !',
   'nav.alphabet': 'Alphabet',
   'learn.tools.alphabetHint': 'Chaque lettre et comment elle se prononce',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Écoutez la conversation, puis répondez',
+  'lesson.conversation.promptRead': 'Lisez la conversation, puis répondez',
+  'lesson.conversation.playAll': 'Écouter la conversation',
+  'lesson.conversation.stop': 'Arrêter',
+  'lesson.conversation.playLine': 'Écouter la réplique {n}, dite par {name}',
+  'lesson.conversation.showTranslation': 'Afficher la traduction anglaise',
+  'lesson.conversation.hideTranslation': 'Masquer la traduction',
 };
 
 const nl: Catalog = {
@@ -20829,6 +20893,14 @@ const nl: Catalog = {
   'alphabet.exploredAll': 'Alle {total} verkend. Goed gedaan!',
   'nav.alphabet': 'Alfabet',
   'learn.tools.alphabetHint': 'Elke letter en hoe hij klinkt',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'Luister naar het gesprek en antwoord dan',
+  'lesson.conversation.promptRead': 'Lees het gesprek en antwoord dan',
+  'lesson.conversation.playAll': 'Gesprek afspelen',
+  'lesson.conversation.stop': 'Stoppen',
+  'lesson.conversation.playLine': 'Regel {n} afspelen, gezegd door {name}',
+  'lesson.conversation.showTranslation': 'Engelse vertaling tonen',
+  'lesson.conversation.hideTranslation': 'Vertaling verbergen',
 };
 
 // Soranî (Central Kurdish) — Arabic script, right-to-left.
@@ -23140,6 +23212,14 @@ const ckb: Catalog = {
   'alphabet.exploredAll': 'هەموو {total} پیتەکە بینران. دەستخۆش!',
   'nav.alphabet': 'ئەلفوبێ',
   'learn.tools.alphabetHint': 'هەموو پیتێک و دەنگەکەی',
+  // --- conversations in lessons ---
+  'lesson.conversation.prompt': 'گوێ لە گفتوگۆکە بگرە، پاشان وەڵامی پرسیارەکە بدەوە',
+  'lesson.conversation.promptRead': 'گفتوگۆکە بخوێنەوە، پاشان وەڵامی پرسیارەکە بدەوە',
+  'lesson.conversation.playAll': 'گفتوگۆکە لێبدە',
+  'lesson.conversation.stop': 'بوەستێنە',
+  'lesson.conversation.playLine': 'دێڕی {n} کە {name} دەیڵێت لێبدە',
+  'lesson.conversation.showTranslation': 'وەرگێڕانی ئینگلیزی پیشان بدە',
+  'lesson.conversation.hideTranslation': 'وەرگێڕانەکە بشارەوە',
 };
 
 export const TRANSLATIONS: Record<Locale, Catalog> = { en, de, es, fr, nl, ku, ckb, ar, tr };

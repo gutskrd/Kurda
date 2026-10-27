@@ -66,6 +66,21 @@ const made = new Map<string, CharacterLayers>();
 
 const box = (b: CharacterBox): string => `${b.x} ${b.y} ${b.w} ${b.h}`;
 
+/** A length in drawing units, to a hundredth: enough for an iris to sit where it should. */
+const units = (v: number): string => String(Math.round(v * 100) / 100 || 0);
+
+/**
+ * A person's open eyes with each iris moved `shift` drawing units from where
+ * it is drawn, to look aside: each iris is a group of its own (`data-iris`)
+ * inside its eye's clip, so it never leaves the eye.
+ */
+export function irisesMoved(open: string, shift: { left: CharacterPoint; right: CharacterPoint }): string {
+  return open.replace(
+    /<g data-iris="(left|right)">/g,
+    (_, side: 'left' | 'right') => `<g data-iris="${side}" transform="translate(${units(shift[side].x)} ${units(shift[side].y)})">`,
+  );
+}
+
 /** One character's layers for a crop, made the first time they are asked for and kept. */
 export function characterLayers(speaker: SpeakerId, crop: CharacterCrop): CharacterLayers {
   const key = `${speaker}|${crop}`;

@@ -176,6 +176,48 @@ describe('the way out of a lesson', () => {
   });
 });
 
+describe('a conversation', () => {
+  const talk: SessionView = {
+    ...view,
+    exercises: [
+      {
+        id: 'cv',
+        type: 'conversation',
+        position: 1,
+        speakers: [
+          { name: 'Xezo', character: 'xezo' },
+          { name: 'Hamo', character: 'hamo' },
+        ],
+        lines: [
+          { speaker: 0, text: 'Tu dixwazî çi vexwî?' },
+          { speaker: 1, text: 'Çayekê, spas.' },
+        ],
+        prompt: 'Hamo çi dixwaze?',
+        options: ['Qehwe', 'Çay'],
+      },
+    ],
+  };
+
+  it('is answered by the option tapped, sent as its place in the options shown, and graded as multiple choice is', async () => {
+    const client = fakeClient({
+      ...standing,
+      'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, correction: 'Çay', duplicate: false }),
+    });
+    testAuth.client = client;
+    renderWithProviders(<SessionPlayer view={talk} paths={paths} onExit={() => undefined} />);
+    expect(await screen.findByText('Çayekê, spas.')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).toBe('true');
+
+    fireEvent.click(screen.getByRole('radio', { name: 'Qehwe' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/sessions/s1/answers')?.body).toEqual({ exerciseId: 'cv', answer: { choice: 0 } });
+    // the right one is marked where it was asked, and named in the banner
+    expect(screen.getByRole('radio', { name: 'Çay, Correct' })).toBeTruthy();
+    expect(screen.getByText('Not quite')).toBeTruthy();
+  });
+});
+
 describe('one speaking exercise after another', () => {
   const twoToSay: SessionView = {
     ...view,

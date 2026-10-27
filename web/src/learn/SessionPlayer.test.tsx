@@ -5,6 +5,7 @@ import type { DeliveredExercise, PlayableSession } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LESSON_PATHS, PRACTICE_PATHS, SessionPlayer, type SessionPaths } from './SessionPlayer';
 import { PATTERNS, resetHaptics } from '../lib/haptics';
+import { soundPlayer } from '../lib/sound';
 
 /*
  * The lesson player against a fake API: each exercise type, the feedback, a
@@ -472,6 +473,193 @@ describe('match pairs', () => {
         ],
       },
     });
+  });
+});
+
+describe('a conversation', () => {
+  const clip = (n: number): string => `https://cdn.test/line${n}.m4a`;
+  const talk: DeliveredExercise = {
+    id: 'c',
+    type: 'conversation',
+    title: 'Li kafeyê',
+    speakers: [
+      { name: 'Xezo', character: 'xezo' },
+      { name: 'Hamo', character: 'hamo' },
+    ],
+    lines: [
+      { speaker: 0, text: 'Silav! Tu çawa yî?', en: 'Hello! How are you?' },
+      { speaker: 1, text: 'Ez baş im, spas.', en: 'I am well, thanks.' },
+      { speaker: 0, text: 'Tu çi vedixwî?' },
+      { speaker: 1, text: 'Çayekê, ji kerema xwe.', en: 'A tea, please.' },
+    ],
+    prompt: 'What does Hamo want to drink?',
+    options: ['Coffee', 'Tea', 'Water'],
+    // the third line is not recorded yet, and the first was saved under the deer's voice by mistake
+    lineAudio: [clip(0), clip(1), null, clip(3)],
+    lineVoices: [{ speaker: 'hevalo' }, { speaker: 'hamo' }, null, null],
+  };
+
+  async function lines(): Promise<HTMLElement[]> {
+    return within(await screen.findByRole('list', { name: 'The conversation' })).getAllByRole('listitem');
+  }
+
+  /** The player reports each clip as playing, as a browser does, so whatever follows it — the stage, the buttons — can. */
+  function sounding(): void {
+    vi.spyOn(HTMLMediaElement.prototype, 'play').mockImplementation(function (this: HTMLMediaElement) {
+      played.push({ src: this.src, rate: this.playbackRate });
+      this.dispatchEvent(new Event('playing'));
+      return Promise.resolve();
+    });
+  }
+
+  const ended = (): void => {
+    act(() => void soundPlayer()!.dispatchEvent(new Event('ended')));
+  };
+
+  it('shows the lines in order as bubbles: who says each, in Kurdish, the first speaker on one side and the other across', async () => {
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+
+    expect(await screen.findByRole('heading', { name: 'Listen to the conversation, then answer' })).toHaveFocus();
+    expect(screen.getByRole('heading', { name: 'Li kafeyê' })).toHaveAttribute('lang', 'ku');
+    const items = await lines();
+    expect(items.map((li) => li.textContent)).toEqual([
+      'Xezo: Silav! Tu çawa yî?',
+      'Hamo: Ez baş im, spas.',
+      'Xezo: Tu çi vedixwî?',
+      'Hamo: Çayekê, ji kerema xwe.',
+    ]);
+    expect(items.map((li) => li.classList.contains('is-end'))).toEqual([false, true, false, true]);
+    expect(within(items[1]!).getByText('Ez baş im, spas.')).toHaveAttribute('lang', 'ku');
+    // a small button for each recorded line, and none for the one not recorded yet
+    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toBeInTheDocument();
+    expect(within(items[2]!).queryByRole('button')).not.toBeInTheDocument();
+    // then the question, and its answers
+    expect(screen.getByText('What does Hamo want to drink?')).toBeInTheDocument();
+    expect(within(screen.getByRole('group', { name: 'Answers' })).getAllByRole('button')).toHaveLength(3);
+  });
+
+  it('shows each line’s English on request, and hides it again', async () => {
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    await lines();
+    expect(screen.queryByText('Hello! How are you?')).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Show translation' }));
+    expect(screen.getByText('Hello! How are you?')).toHaveAttribute('lang', 'en');
+    expect(screen.getByText('A tea, please.')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Hide translation' }));
+    expect(screen.queryByText('Hello! How are you?')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Show translation' })).toBeInTheDocument();
+  });
+
+  it('stands the two of them together, looking at each other, the first speaker on the start side', async () => {
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    await lines();
+    const stage = screen.getByTestId('conversation-stage');
+    // decorative: the bubbles say who says what
+    expect(stage).toHaveAttribute('aria-hidden', 'true');
+    const figures = [...stage.querySelectorAll<HTMLElement>('.speaking-character')];
+    expect(figures.map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
+    // Xezo on the left looks right, at him; Hamo on the right looks left, at her
+    const iris = (f: HTMLElement): string => f.querySelector<SVGGElement>('[data-iris="left"]')!.style.transform;
+    expect(iris(figures[0]!)).toMatch(/^translate\(2\.\d+px, 0px\)$/);
+    expect(iris(figures[1]!)).toMatch(/^translate\(-2\.\d+px, 0px\)$/);
+    const left = (f: HTMLElement): number => parseFloat(f.parentElement!.style.left);
+    expect(left(figures[0]!)).toBeLessThan(left(figures[1]!));
+    // nobody speaks before a line is heard
+    expect(stage.querySelector('[data-saying]')).toBeNull();
+  });
+
+  it('offers neither play nor translation when no line is recorded or translated, and still shows the two of them', async () => {
+    serve({});
+    const plain = { ...talk, lines: talk.lines!.map(({ speaker, text }) => ({ speaker, text })) };
+    delete plain.lineAudio;
+    delete plain.lineVoices;
+    play({ sessionId: 's1', exercises: [plain], answered: {} });
+    expect(await lines()).toHaveLength(4);
+    expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Show translation' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^Hear line/ })).not.toBeInTheDocument();
+    expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
+  });
+
+  it('answers as multiple choice does: the option’s place as shown, by tap or by key, marked once graded', async () => {
+    serve({ 'POST /sessions/s1/answers': { verdict: 'wrong', accepted: false, correction: 'Tea', duplicate: false } });
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    await lines();
+    await userEvent.click(screen.getByRole('button', { name: /Coffee/ }));
+
+    expect(await verdict('Not yet')).toBeInTheDocument();
+    expect(sent('answers')).toHaveLength(1);
+    expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'c', answer: { choice: 0 } });
+    expect(screen.getByRole('button', { name: /Coffee/ })).toHaveClass('is-wrong');
+    expect(screen.getByRole('button', { name: /Tea.*right answer/ })).toHaveClass('is-right');
+    for (const option of within(screen.getByRole('group', { name: 'Answers' })).getAllByRole('button')) expect(option).toBeDisabled();
+  });
+
+  it('takes an answer from the keyboard', async () => {
+    serve({ 'POST /sessions/s1/answers': right });
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    await lines();
+    await userEvent.keyboard('2');
+    expect(await verdict('Correct')).toBeInTheDocument();
+    expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'c', answer: { choice: 1 } });
+  });
+
+  it('plays every recorded line in order, passing over the one not recorded, each said by its own character as it is heard', async () => {
+    sounding();
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    const items = await lines();
+    const current = (): number[] => items.flatMap((li, i) => (li.getAttribute('aria-current') === 'true' ? [i] : []));
+    const speaker = (): string | null | undefined => document.querySelector('.conversation-stage [data-saying] .speaking-character')?.getAttribute('data-speaker');
+    expect(current()).toEqual([]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
+    expect(played.map((p) => p.src)).toEqual([clip(0)]);
+    expect(current()).toEqual([0]);
+    expect(items[0]).toHaveClass('is-heard');
+    // her own line, said by her though the recording was saved under the deer's voice: he is not even on the stage
+    expect(speaker()).toBe('xezo');
+    expect(document.querySelector('.speaking-character[data-speaker="hevalo"]')).toBeNull();
+    // the line's own button lights as it plays, and the button now stops it all
+    expect(within(items[0]!).getByRole('button', { name: 'Hear line 1 (Xezo)' })).toHaveClass('is-on');
+    expect(screen.queryByRole('button', { name: 'Play conversation' })).not.toBeInTheDocument();
+
+    ended();
+    expect(current()).toEqual([1]);
+    expect(speaker()).toBe('hamo');
+    ended();
+    // the third line has no recording: on to the fourth, Hamo's, which was saved with no voice at all
+    expect(current()).toEqual([3]);
+    expect(speaker()).toBe('hamo');
+    ended();
+    expect(current()).toEqual([]);
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(1), clip(3)]);
+    expect(screen.getByRole('button', { name: 'Play conversation' })).toBeInTheDocument();
+  });
+
+  it('stops on Stop, and lets go when another line’s button takes the player', async () => {
+    sounding();
+    serve({});
+    play({ sessionId: 's1', exercises: [talk], answered: {} });
+    const items = await lines();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Stop' }));
+    expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
+    ended();
+    expect(played.map((p) => p.src)).toEqual([clip(0)]);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Play conversation' }));
+    await userEvent.click(within(items[3]!).getByRole('button', { name: 'Hear line 4 (Hamo)' }));
+    expect(items.some((li) => li.hasAttribute('aria-current'))).toBe(false);
+    // the line asked for plays to its end, and nothing follows it
+    ended();
+    expect(played.map((p) => p.src)).toEqual([clip(0), clip(0), clip(3)]);
+    expect(screen.getByRole('button', { name: 'Play conversation' })).toBeInTheDocument();
   });
 });
 

@@ -12,6 +12,7 @@ import { BottomSheet } from '../theme/BottomSheet';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { encodeAnswer } from './answers';
+import { ConversationExercise } from './components/ConversationExercise';
 import { FeedbackFooter } from './components/FeedbackFooter';
 import { knownVoice } from '../characters/SpeakingCharacter';
 import { LessonResults } from './components/LessonResults';
@@ -183,6 +184,9 @@ export function SessionPlayer({
     switch (ex.type) {
       case 'multiple_choice':
         return { type: 'multiple_choice' as const, choice };
+      case 'conversation':
+        // the question after it is chosen as a multiple-choice answer is
+        return { type: 'conversation' as const, choice };
       case 'translate':
         return { type: 'translate' as const, text };
       case 'listening':
@@ -200,6 +204,7 @@ export function SessionPlayer({
     if (!ex || !draft) return false;
     switch (draft.type) {
       case 'multiple_choice':
+      case 'conversation':
         return draft.choice !== null;
       case 'translate':
       case 'listening':
@@ -391,6 +396,19 @@ export function SessionPlayer({
             exercise={ex}
             choice={choice}
             onSelect={setChoice}
+            disabled={state.status !== 'answering'}
+            feedback={state.feedback}
+          />
+        ) : null}
+        {ex?.type === 'conversation' ? (
+          // a fresh one for each step, so a conversation still playing stops
+          // rather than following into the next one
+          <ConversationExercise
+            key={state.index}
+            exercise={ex}
+            choice={choice}
+            onSelect={setChoice}
+            dialect={view.dialect}
             disabled={state.status !== 'answering'}
             feedback={state.feedback}
           />

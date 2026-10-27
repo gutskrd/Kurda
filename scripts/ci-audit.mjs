@@ -12,7 +12,12 @@
  */
 import { execSync } from 'node:child_process';
 
-/** advisoryId -> why it's accepted + when to drop it. */
+/**
+ * advisoryId -> why it's accepted + when to drop it. An entry given as
+ * `{ why, only }` is accepted only while every vulnerable copy lies under one
+ * of the `only` paths: the same advisory anywhere else (a runtime copy) still
+ * fails the build.
+ */
 const ALLOWLIST = {
   // image-size DoS via infinite loops in the ICNS / JXL / HEIF parsers. Pulled
   // ONLY by metro (the Expo/React Native bundler) — a build-time dependency that
@@ -53,6 +58,19 @@ const ALLOWLIST = {
   // REMOVE once node-forge publishes a patched release and Expo picks it up.
   'GHSA-86w9-cpqp-85rv':
     'node-forge PKCS#1 v1.5 signature confusion — build-only (@expo/cli); not bundled; no patched version exists',
+  // zod can exhaust memory validating an oversized collection with a size
+  // constraint. The API's own zod, which checks what strangers send, is on
+  // 4.6.7, the fixed release, and is not covered by this entry: only the copy
+  // the Expo command line carries for itself is. That one is zod 3, which
+  // checks Expo's and this project's own config files on a developer's
+  // machine, is not bundled into the app, and has no fixed release (the
+  // advisory's patched range starts at 4.6.6; the CLI is written against 3).
+  //
+  // REMOVE once an Expo release moves @expo/cli to a patched zod.
+  'GHSA-mrhx-c7xc-m3w5': {
+    why: 'zod memory exhaustion — only the copy inside @expo/cli (build-only, zod 3, no fixed 3.x); the API runs the fixed 4.6.7',
+    only: ['node_modules/@expo/cli/'],
+  },
   // fastify's seven advisories, one of them an authentication bypass, were here
   // for about a minute. `^5.11.0` already allowed the fix, so `npm update
   // fastify` took the tree to 5.12.5 and they are gone. Check the declared
@@ -84,25 +102,35 @@ function auditJson() {
 const report = auditJson();
 const vulns = report.vulnerabilities ?? {};
 
-/** Collect distinct advisory ids at high/critical severity (leaf advisory objects). */
-const seen = new Map(); // id -> { title, severity, packages:Set }
+/** Collect distinct advisory ids at high/critical severity (leaf advisory objects), and where each vulnerable copy is. */
+const seen = new Map(); // id -> { title, severity, packages:Set, nodes:Set }
 for (const [pkg, v] of Object.entries(vulns)) {
   if (v.severity !== 'high' && v.severity !== 'critical') continue;
   for (const via of v.via ?? []) {
     if (typeof via === 'object' && via.url) {
       const id = via.url.split('/').pop();
-      if (!seen.has(id)) seen.set(id, { title: via.title, severity: via.severity ?? v.severity, packages: new Set() });
+      if (!seen.has(id)) seen.set(id, { title: via.title, severity: via.severity ?? v.severity, packages: new Set(), nodes: new Set() });
       seen.get(id).packages.add(pkg);
+      for (const node of v.nodes ?? []) seen.get(id).nodes.add(node);
     }
   }
 }
 
-const unexpected = [...seen.entries()].filter(([id]) => !(id in ALLOWLIST));
+/** Whether an advisory is accepted: on the list, and, for an entry limited to some paths, found nowhere else. */
+function allowed(id, info) {
+  const entry = ALLOWLIST[id];
+  if (entry === undefined) return false;
+  if (typeof entry === 'string') return true;
+  return [...info.nodes].every((node) => entry.only.some((path) => node.startsWith(path)));
+}
+
+const unexpected = [...seen.entries()].filter(([id, info]) => !allowed(id, info));
 
 console.log('npm audit high/critical advisories:');
 for (const [id, info] of seen) {
-  const status = id in ALLOWLIST ? 'ALLOWLISTED' : 'BLOCKING';
+  const status = allowed(id, info) ? 'ALLOWLISTED' : 'BLOCKING';
   console.log(`  [${status}] ${id} (${info.severity}) — ${info.title}`);
+  if (!allowed(id, info) && id in ALLOWLIST) console.log(`    accepted only under ${ALLOWLIST[id].only.join(', ')}; found at ${[...info.nodes].join(', ')}`);
 }
 
 if (unexpected.length > 0) {

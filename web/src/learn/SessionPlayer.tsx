@@ -28,6 +28,7 @@ import { haptic } from '../lib/haptics';
 import { playLessonSound } from '../lib/sounds';
 import type { ApiClient } from '../lib/api';
 import { useT } from '../i18n/I18nProvider';
+import { Conversation } from './Conversation';
 import { MatchPairs, MultipleChoice, Listening, TypedExercise, type ExerciseProps } from './Exercises';
 import { FeedbackPanel, announce } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
@@ -96,6 +97,8 @@ function ExerciseView(props: ExerciseProps): React.JSX.Element | null {
       return <Speaking {...props} />;
     case 'match_pairs':
       return <MatchPairs {...props} />;
+    case 'conversation':
+      return <Conversation {...props} />;
   }
 }
 

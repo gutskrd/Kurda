@@ -34,8 +34,10 @@ import {
   useDialogs,
   useToast,
 } from '../ui';
+import { conversationHref } from '../conversations';
 import { ExerciseCard } from './ExerciseEditor';
 import { STATUS_TONE } from './Lessons';
+import { LessonReadiness, QuickBuild } from './LessonTools';
 
 interface Draft {
   titleKu: string;
@@ -70,6 +72,7 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
   const [showChecks, setShowChecks] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [newType, setNewType] = useState<ExerciseType>('translate');
+  const [building, setBuilding] = useState(false);
 
   const load = async (): Promise<void> => {
     setLoadError(null);
@@ -274,6 +277,29 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
   }
 
   const issuesAt = (i: number): Issue[] => [...issuesFor(serverIssues, i), ...(showChecks ? local[i] ?? [] : [])];
+  const room = 50 - draft.exercises.length;
+  const append = (added: Exercise[]): void =>
+    update({ exercises: [...draft.exercises, ...added].slice(0, 50).map((e, i) => ({ ...e, position: i + 1 })) });
+  const addConversation = (): void => append([{ position: 0, type: 'conversation', payload: blankPayload('conversation') }]);
+  // a conversation can be recorded once it is saved: its page reads the lesson from the server
+  const saved = new Set(
+    lesson.exercises.filter((e) => e.type === 'conversation').map((e) => String((e.payload as { id?: unknown }).id ?? '')),
+  );
+  const recordOf = (ex: Exercise): string | null | undefined => {
+    if (ex.type !== 'conversation') return undefined;
+    const id = String((ex.payload as { id?: unknown }).id ?? '');
+    return saved.has(id) ? conversationHref(id, lesson.id) : null;
+  };
+  const quick = (
+    <div className="ex-quick">
+      <Button icon="list" onClick={() => setBuilding(true)} disabled={room <= 0}>
+        Build from words
+      </Button>
+      <Button icon="chat" onClick={addConversation} disabled={room <= 0}>
+        Add a conversation
+      </Button>
+    </div>
+  );
   const status = lesson.status;
   const where = [lesson.courseTitle, lesson.unitTitle, lesson.skillTitle].filter(Boolean).join(' › ');
 
@@ -423,8 +449,10 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
             )}
           </div>
         ) : draft.exercises.length === 0 ? (
-          <EmptyState title="No exercises yet" icon="book">
-            {editable ? 'Add the first one below.' : 'This version has none.'}
+          <EmptyState title="No exercises yet" icon="book" action={editable ? quick : undefined}>
+            {editable
+              ? 'The quickest start: build a set of exercises from the lesson’s words, or add a conversation for two or more people to record. Or add one at a time below.'
+              : 'This version has none.'}
           </EmptyState>
         ) : (
           <div className="ex-list-cards">
@@ -439,10 +467,13 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
                 onChange={(next) => setExercise(i, next)}
                 onMove={(by) => move(i, by)}
                 onRemove={() => void remove(i)}
+                recordHref={recordOf(ex)}
               />
             ))}
           </div>
         )}
+
+        {editable && mode === 'form' && draft.exercises.length > 0 && quick}
 
         {editable && mode === 'form' && (
           <form
@@ -466,6 +497,12 @@ export function LessonEditor({ id }: { id: string }): React.JSX.Element {
           </form>
         )}
       </Section>
+
+      {(editable || status === 'in_review') && mode === 'form' && (
+        <LessonReadiness lesson={lesson} exercises={draft.exercises} titles={{ ku: draft.titleKu, en: draft.titleEn }} dirty={dirty} />
+      )}
+
+      {editable && <QuickBuild open={building} room={room} onClose={() => setBuilding(false)} onAdd={append} />}
 
       {(editable || status === 'in_review') && (
         <div className="editor-bar">

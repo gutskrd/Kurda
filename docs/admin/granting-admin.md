@@ -80,3 +80,30 @@ addresses may use the console, whatever roles anyone else holds; each account mu
 also have confirmed its address. A role granted by mistake, or a moderator left
 over, then opens nothing. Put every admin's address on it, yours included — anyone
 missing is answered like a stranger. Leave it unset and every staff role may sign in.
+
+## The team that writes and records lessons
+
+Someone who records their part of a conversation, or writes lessons, does not
+need to be an admin. A superadmin gives them the **content editor** role from
+their page in the console (**Users → the person → Profile → Lessons and
+recording**), with a reason that is kept in the person's history. It opens the
+lessons, the stories and the audio studio, and nothing about people or money.
+
+- The account must have **confirmed its email address** first, and must not be
+  banned.
+- They sign in at the console with their own account and set up their own 2FA
+  code the first time.
+- If `ADMIN_ACCESS_EMAILS` is set, add their address there too, or the console
+  answers them like a stranger.
+- Taking the role away works the same way and takes effect at once; their
+  recordings stay.
+
+Each conversation in a lesson is recorded part by part on **Record audio →
+Record conversations**. There, each person chooses their part, hears the line
+before each of theirs, and records it; **Send … part** gives a link to the
+other person's part, to send to whoever records it.
+
+The parts are the characters themselves (Xezo, Hamo and Hevalo, each at most
+once), called by their own names. Learners see the characters together,
+looking at each other, and each line is said by the character whose part it
+is, whoever recorded it.

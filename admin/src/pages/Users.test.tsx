@@ -432,3 +432,33 @@ describe('a person', () => {
     expect(await screen.findByText('Not found')).toBeInTheDocument();
   });
 });
+
+describe('the team that writes and records lessons', () => {
+  it('lets a superadmin give someone the content editor role, with a reason, and nothing more', async () => {
+    const user = userEvent.setup();
+    let roles = ['user'];
+    const api = show(
+      `#/users/${SUBJECT_ID}`,
+      OWNER,
+      on('GET', `/admin/users/${SUBJECT_ID}`, () => json(person({ roles }))),
+      on('PUT', `/admin/users/${SUBJECT_ID}/content-editor`, (c) => {
+        roles = (c.body as { on: boolean }).on ? ['user', 'content_editor'] : ['user'];
+        return json({ ok: true, roles });
+      }),
+    );
+    const section = await screen.findByRole('region', { name: 'Lessons and recording' });
+    await user.click(within(section).getByRole('button', { name: 'Let them record and write lessons' }));
+    const dialog = await screen.findByRole('dialog', { name: 'Let baran write and record lessons?' });
+    await user.type(within(dialog).getByLabelText('Why (kept in their history)'), 'Records Hamo’s part');
+    await user.click(within(dialog).getByRole('button', { name: 'Give the role' }));
+    await waitFor(() => expect(api.calls.some((c) => c.method === 'PUT')).toBe(true));
+    expect(api.calls.find((c) => c.method === 'PUT')!.body).toEqual({ on: true, reason: 'Records Hamo’s part' });
+    expect(await within(section).findByRole('button', { name: 'Take it away' })).toBeInTheDocument();
+  });
+
+  it('is not offered to a moderator', async () => {
+    show(`#/users/${SUBJECT_ID}`, MODERATOR, detailRoute(person()));
+    expect(await screen.findByRole('heading', { name: /baran/ })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Lessons and recording' })).not.toBeInTheDocument();
+  });
+});

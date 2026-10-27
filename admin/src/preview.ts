@@ -6,13 +6,20 @@
  * single definition of "how an exercise looks".
  */
 
-export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing';
+export type ExerciseType = 'multiple_choice' | 'translate' | 'match_pairs' | 'listening' | 'speaking' | 'writing' | 'conversation';
 
 export type PreviewModel =
   | { kind: 'multiple_choice'; prompt: string; options: Array<{ text: string; correct: boolean }> }
   | { kind: 'translate'; prompt: string; accepted: string[] }
   | { kind: 'match_pairs'; pairs: Array<{ left: string; right: string }> }
   | { kind: 'prompt'; type: ExerciseType; prompt: string }
+  | {
+      kind: 'conversation';
+      title: string;
+      lines: Array<{ name: string; text: string; en: string }>;
+      prompt: string;
+      options: Array<{ text: string; correct: boolean }>;
+    }
   | { kind: 'unsupported'; type: string };
 
 function str(v: unknown, fallback = ''): string {
@@ -48,6 +55,23 @@ export function toPreview(type: string, payload: unknown): PreviewModel {
     case 'speaking':
     case 'writing':
       return { kind: 'prompt', type, prompt: str(p.prompt) };
+    case 'conversation': {
+      const speakers = Array.isArray(p.speakers) ? (p.speakers as Array<Record<string, unknown>>) : [];
+      const lines = Array.isArray(p.lines) ? (p.lines as Array<Record<string, unknown>>) : [];
+      const options = Array.isArray(p.options) ? p.options : [];
+      const correct = typeof p.correctIndex === 'number' ? p.correctIndex : -1;
+      return {
+        kind: 'conversation',
+        title: str(p.title),
+        lines: lines.map((l) => ({
+          name: typeof l.speaker === 'number' ? str(speakers[l.speaker]?.name) : '',
+          text: str(l.text),
+          en: str(l.en),
+        })),
+        prompt: str(p.prompt),
+        options: options.map((o, i) => ({ text: str(o), correct: i === correct })),
+      };
+    }
     default:
       return { kind: 'unsupported', type };
   }
