@@ -7,8 +7,10 @@ import type { CharacterPoint, EyeState } from './types.js';
 /**
  * Hevalo as a companion beside a form. The form's card is a windowsill and he
  * is outside it, leaning in: his head and neck above the sill, the rest of
- * him behind the card, his knees on the sill and his forelegs hanging over
- * it, down the card's face. He pops up from behind it as the page opens.
+ * him behind the card. On the website his knees are on the sill and his
+ * forelegs hang over it, down the card's face; in the admin console he is
+ * his head alone, peeking over it. He pops up from behind it as the page
+ * opens.
  *
  * He watches the caret along a box being typed in, his ears up and his head
  * leaning after it. For a password he lifts his hooves over his eyes, and
@@ -29,8 +31,11 @@ import type { CharacterPoint, EyeState } from './types.js';
  * Two tones for two audiences: `playful` on the website, for learners of
  * every age, with a bouncy entrance, a hello with his hooves, a heart, a
  * Kurdish word now and then and a doze; `calm` in the admin console, for
- * staff at work, with the same reactions at a smaller size, no bounce, no
- * words and no doze.
+ * staff at work, with smaller reactions, no words and no doze, and his head
+ * alone: it pops up a little with each key and sinks back to peek between
+ * them, ducks behind the card for a password, all but his antlers and ear
+ * tips, and peeks over it when the password is shown; left alone, now and
+ * then he ducks out of sight and pops up again.
  */
 
 export type CompanionTone = 'playful' | 'calm';
@@ -97,6 +102,13 @@ function onHead(at: CharacterPoint): CharacterPoint {
 
 /** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
 export const COMPANION_OVERHANG = 130;
+
+/**
+ * Whether a tone's Hevalo has forelegs: on the website they hang over the
+ * sill; in the console he is his head alone, so no leg is ever seen rising
+ * from behind the card.
+ */
+export const COMPANION_LEGS: Record<CompanionTone, boolean> = { playful: true, calm: false };
 
 /** How far below the sill he waits before he pops up into view. */
 const ENTER_DROP = 560;
@@ -253,7 +265,7 @@ function emotes(id: string): string {
  * and the signs. Every id starts with `prefix`, so two can share a page.
  * Decorative: whatever he does, the form beside him says in words.
  */
-export function companionSvg({ prefix }: { prefix: string }): string {
+export function companionSvg({ prefix, legs = true }: { prefix: string; legs?: boolean }): string {
   const p = `${prefixFor(prefix)}-`;
   const art = drawHevalo(p);
   const rig = art.rig;
@@ -282,7 +294,9 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     // he is behind the sill: cut there and nowhere else, so an ear or a sign may reach past the sides and the top
     `<clipPath id="${id('edge')}"><rect x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE - (v.y - v.h)}"/></clipPath>` +
     // his forelegs come over the sill, and may hang down the card's face; the gate is shut at the sill until, coming up, his knees are over it
-    `<clipPath id="${id('legs')}"><rect data-cp="leg-gate" x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE + COMPANION_OVERHANG - (v.y - v.h)}"/></clipPath>` +
+    (legs
+      ? `<clipPath id="${id('legs')}"><rect data-cp="leg-gate" x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE + COMPANION_OVERHANG - (v.y - v.h)}"/></clipPath>`
+      : '') +
     `<clipPath id="${id('half-left')}">${half('left')}</clipPath><clipPath id="${id('half-right')}">${half('right')}</clipPath>` +
     // the sill's shadow on his neck: darker just where he goes on behind it
     `<linearGradient id="${id('sill')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1608" stop-opacity="0"/><stop offset="1" stop-color="#2a1608" stop-opacity="0.42"/></linearGradient>` +
@@ -304,13 +318,15 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `</g>` +
     `</g></g>` +
     // the forelegs: above the sill each rises from behind it to the knee, and from the knee hangs over it, in front of the card
-    `<g clip-path="url(#${id('edge')})"><g data-cp="arms">` +
-    `<g data-cp="arm-left">${forearm(id('armL'))}</g><g data-cp="arm-right">${forearm(id('armR'))}</g>` +
-    `</g></g>` +
-    `<g clip-path="url(#${id('legs')})"><g data-cp="legs">` +
-    `<g data-cp="shadow-left">${legShadow(id('shadowL'))}</g><g data-cp="shadow-right">${legShadow(id('shadowR'))}</g>` +
-    `<g data-cp="leg-left">${lowerLeg(id('legL'))}</g><g data-cp="leg-right">${lowerLeg(id('legR'))}</g>` +
-    `</g></g>` +
+    (legs
+      ? `<g clip-path="url(#${id('edge')})"><g data-cp="arms">` +
+        `<g data-cp="arm-left">${forearm(id('armL'))}</g><g data-cp="arm-right">${forearm(id('armR'))}</g>` +
+        `</g></g>` +
+        `<g clip-path="url(#${id('legs')})"><g data-cp="legs">` +
+        `<g data-cp="shadow-left">${legShadow(id('shadowL'))}</g><g data-cp="shadow-right">${legShadow(id('shadowR'))}</g>` +
+        `<g data-cp="leg-left">${lowerLeg(id('legL'))}</g><g data-cp="leg-right">${lowerLeg(id('legR'))}</g>` +
+        `</g></g>`
+      : '') +
     `<g data-cp="emotes">${emotes(id('emote'))}</g>` +
     `</svg>`
   );
@@ -390,13 +406,52 @@ const KEY_FLICK: Act = {
   ],
 };
 
+/** An act of the companion's: any of the character's, and how far he ducks behind the sill while it plays. */
+type CompanionAct = Act & { duck?: Keys };
+
+/**
+ * How far the console's Hevalo, his head alone, ducks below his place, as a
+ * share of the drop he comes up from: watching a box with his chin just
+ * behind the sill, his eyes just over it, and all but his antlers and the
+ * tips of his ears behind it.
+ */
+const DUCK = { watch: 0.12, peek: 0.3, hide: 0.54 } as const;
+
+/** How long a key keeps the console's Hevalo popped up, his head well over the sill, before he sinks back to watch (ms). */
+const POP_MS = 380;
+
+/** Now and then, left alone, the console's Hevalo ducks out of sight, waits a moment, and pops up again, ears up. */
+const PEEKABOO: CompanionAct = {
+  ms: 1500,
+  duck: [
+    [0, 0],
+    [0.2, DUCK.hide],
+    [0.62, DUCK.hide],
+    [0.78, 0],
+    [1, 0],
+  ],
+  earLeft: [
+    [0, 0],
+    [0.7, 0],
+    [0.84, 14],
+    [1, 0],
+  ],
+  earRight: [
+    [0, 0],
+    [0.72, 0],
+    [0.86, 14],
+    [1, 0],
+  ],
+};
+const PEEKABOO_EVERY: readonly [number, number] = [9000, 16000];
+
 /** Springs: how quickly each part goes where it is going, and how much it overshoots on the way (ζ under 1). */
 interface Spring {
   k: number;
   zeta: number;
 }
 
-type Part = 'hoof' | 'ear' | 'tilt' | 'look' | 'focus' | 'enter';
+type Part = 'hoof' | 'ear' | 'tilt' | 'look' | 'focus' | 'enter' | 'duck';
 
 const SPRINGS: Record<CompanionTone, Record<Part, Spring>> = {
   // a little overshoot on the hooves and ears, the bounce of something alive, and a pop as he comes up
@@ -407,20 +462,22 @@ const SPRINGS: Record<CompanionTone, Record<Part, Spring>> = {
     look: { k: 420, zeta: 1 },
     focus: { k: 160, zeta: 1 },
     enter: { k: 75, zeta: 0.62 },
+    duck: { k: 130, zeta: 0.6 },
   },
-  // none in the console: quick and settled
+  // quick and settled in the console, but for a little bounce as his head pops up
   calm: {
     hoof: { k: 170, zeta: 1 },
     ear: { k: 200, zeta: 0.9 },
     tilt: { k: 110, zeta: 1 },
     look: { k: 420, zeta: 1 },
     focus: { k: 160, zeta: 1 },
-    enter: { k: 95, zeta: 1 },
+    enter: { k: 95, zeta: 0.78 },
+    duck: { k: 140, zeta: 0.6 },
   },
 };
 
-type Channel = 'hoofLeft' | 'hoofRight' | 'earLeft' | 'earRight' | 'tilt' | 'lookX' | 'lookY' | 'focus' | 'enter';
-const CHANNELS: readonly Channel[] = ['hoofLeft', 'hoofRight', 'earLeft', 'earRight', 'tilt', 'lookX', 'lookY', 'focus', 'enter'];
+type Channel = 'hoofLeft' | 'hoofRight' | 'earLeft' | 'earRight' | 'tilt' | 'lookX' | 'lookY' | 'focus' | 'enter' | 'duck';
+const CHANNELS: readonly Channel[] = ['hoofLeft', 'hoofRight', 'earLeft', 'earRight', 'tilt', 'lookX', 'lookY', 'focus', 'enter', 'duck'];
 const SPRING_OF: Record<Channel, Part> = {
   hoofLeft: 'hoof',
   hoofRight: 'hoof',
@@ -431,6 +488,7 @@ const SPRING_OF: Record<Channel, Part> = {
   lookY: 'look',
   focus: 'focus',
   enter: 'enter',
+  duck: 'duck',
 };
 
 /** Where his look comes from: the pointer (or a glance), the caret, up in thought, down, or straight ahead. */
@@ -445,6 +503,8 @@ interface Pose {
   /** 0: pupils as drawn, turned in; 1: in the middle of each eye, looking */
   focus: number;
   mouth: Viseme;
+  /** how far he ducks behind the sill (the console's, his head alone) */
+  duck: number;
 }
 
 /** One frame of him, for `companionTransforms` and the eyes, mouth and signs. */
@@ -464,6 +524,8 @@ export interface CompanionFrame {
   sniff: number;
   /** how far he still is below the sill as he comes up, from 1 (out of sight) to 0 */
   enter: number;
+  /** how far he has ducked below his place behind the sill, on the same scale: the console's, his head alone */
+  duck: number;
   /** where the pupils look, each way from -1 to 1, and how far from as drawn (0) to looking (1) */
   look: CharacterPoint;
   focus: number;
@@ -497,21 +559,23 @@ export class CompanionMotion {
   private input: CompanionInput = { field: 'none', shown: false, status: 'idle' };
   private readonly amp: number;
   private readonly springs: Record<Part, Spring>;
-  private readonly x: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0 };
-  private readonly v: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0 };
-  private act: { act: Act; at: number } | null = null;
+  private readonly x: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, duck: 0 };
+  private readonly v: Record<Channel, number> = { hoofLeft: 0, hoofRight: 0, earLeft: 0, earRight: 0, tilt: 0, lookX: 0, lookY: 0, focus: 0, enter: 0, duck: 0 };
+  private readonly legs: boolean;
+  private act: { act: CompanionAct; at: number } | null = null;
   private sign: { emote: CompanionEmote; until: number } | null = null;
   private word: { word: CompanionWord; at: number; until: number } | null = null;
   private blink: { at: number } | null = null;
   private glance: { look: CharacterPoint; until: number } | null = null;
   private eyesShown: readonly [EyeState, EyeState] = ['open', 'open'];
   private eyesVia: { until: number; to: readonly [EyeState, EyeState] } | null = null;
-  private next = { blink: 0, glance: 0, twitch: 0, sniff: 0, tap: 0 };
+  private next = { blink: 0, glance: 0, twitch: 0, sniff: 0, tap: 0, peekaboo: 0 };
   private tap: { side: 0 | 1; at: number } | null = null;
   private arrived: number | null = null;
   private lastInput = 0;
   private last: number | null = null;
   private keys = 0;
+  private popUntil = 0;
 
   constructor(
     readonly tone: CompanionTone,
@@ -519,12 +583,14 @@ export class CompanionMotion {
   ) {
     this.amp = AMPLITUDE[tone];
     this.springs = SPRINGS[tone];
+    this.legs = COMPANION_LEGS[tone];
   }
 
   /**
    * He comes on screen: he climbs up from behind the sill, his hooves up by
    * his cheeks, his ears spring up and he blinks as if he had just seen you;
-   * then, all the way up, he lays his forelegs over the sill.
+   * then, all the way up, he lays his forelegs over the sill. The console's,
+   * his head alone, simply pops up.
    */
   arrive(now: number): void {
     this.lastInput = now;
@@ -532,8 +598,10 @@ export class CompanionMotion {
     this.x.enter = 1;
     this.v.enter = 0;
     // out of sight below the sill, his hooves are up already
-    this.x.hoofLeft = this.x.hoofRight = CLIMB;
-    this.v.hoofLeft = this.v.hoofRight = 0;
+    if (this.legs) {
+      this.x.hoofLeft = this.x.hoofRight = CLIMB;
+      this.v.hoofLeft = this.v.hoofRight = 0;
+    }
     this.play(ACTS.arrive, now);
     if (this.tone === 'playful') this.word = { word: 'hello', at: now + HELLO_AFTER_MS, until: now + HELLO_AFTER_MS + WORD_MS };
     this.plan(now);
@@ -574,15 +642,17 @@ export class CompanionMotion {
       // an ear flick every few keys, never in the middle of something bigger
       this.keys += 1;
       if (this.keys % 4 === 0 && !this.act && this.input.field !== 'secret') this.play(KEY_FLICK, now);
+      // the console's head pops up with each key, and sinks back to watch between them
+      if (!this.legs && this.input.field !== 'secret') this.popUntil = now + POP_MS;
     }
   }
 
-  /** Dozing: left alone long enough on the website, with nothing in hand. */
   /** Whether he is still coming up, or has only just come up, from behind the sill. */
   private climbing(now: number): boolean {
     return this.arrived !== null && (now - this.arrived < ARRIVING_MS || this.x.enter > 0.02);
   }
 
+  /** Dozing: left alone long enough on the website, with nothing in hand. */
   private asleep(now: number): boolean {
     const { field, status } = this.input;
     return this.tone === 'playful' && field === 'none' && status === 'idle' && now - this.lastInput >= COMPANION_DOZE_MS;
@@ -592,28 +662,49 @@ export class CompanionMotion {
   private pose(now: number): Pose {
     const { field, shown, status } = this.input;
     const a = this.amp;
+    // the console's, his head alone, ducks and peeks over the sill instead of using his hooves
+    const duck = this.duckFor(now);
     if (status === 'waiting' || this.asleep(now)) {
-      return { hooves: [0, 0], ears: [-16 * a, -16 * a], tilt: 4 * a, eyes: ['closed', 'closed'], look: 'ahead', focus: 0, mouth: 'rest' };
+      return { hooves: [0, 0], ears: [-16 * a, -16 * a], tilt: 4 * a, eyes: ['closed', 'closed'], look: 'ahead', focus: 0, mouth: 'rest', duck };
     }
     if (status === 'busy') {
-      return { hooves: [0, 0], ears: [6 * a, -4 * a], tilt: -3 * a, eyes: ['open', 'open'], look: 'up', focus: 1, mouth: 'rest' };
+      return { hooves: [0, 0], ears: [6 * a, -4 * a], tilt: -3 * a, eyes: ['open', 'open'], look: 'up', focus: 1, mouth: 'rest', duck };
     }
     if (status === 'success') {
-      return { hooves: [0, 0], ears: [12 * a, 12 * a], tilt: 0, eyes: ['happy', 'happy'], look: 'ahead', focus: 0, mouth: 'a' };
+      return { hooves: [0, 0], ears: [12 * a, 12 * a], tilt: 0, eyes: ['happy', 'happy'], look: 'ahead', focus: 0, mouth: 'a', duck };
+    }
+    if (field === 'secret' && !this.legs && duck > 0) {
+      // ducked behind the sill, ears up over it; shown, peeking at it over the sill
+      return shown
+        ? { hooves: [0, 0], ears: [10 * a, 10 * a], tilt: 0, eyes: ['open', 'open'], look: 'field', focus: 1, mouth: 'rest', duck }
+        : { hooves: [0, 0], ears: [8 * a, 8 * a], tilt: 0, eyes: ['closed', 'closed'], look: 'ahead', focus: 0, mouth: 'mbp', duck };
     }
     if (field === 'secret') {
       // hooves over his eyes; shown, the right comes down and that eye peeks over it
       return shown
-        ? { hooves: [1, 0.62], ears: [-6 * a, 6 * a], tilt: 0, eyes: ['closed', 'half'], look: 'field', focus: 1, mouth: 'rest' }
-        : { hooves: [1, 1], ears: [-10 * a, -10 * a], tilt: 0, eyes: ['closed', 'closed'], look: 'ahead', focus: 0, mouth: 'mbp' };
+        ? { hooves: [1, 0.62], ears: [-6 * a, 6 * a], tilt: 0, eyes: ['closed', 'half'], look: 'field', focus: 1, mouth: 'rest', duck }
+        : { hooves: [1, 1], ears: [-10 * a, -10 * a], tilt: 0, eyes: ['closed', 'closed'], look: 'ahead', focus: 0, mouth: 'mbp', duck };
     }
     if (field === 'text' || field === 'code') {
-      return { hooves: [0, 0], ears: [6 * a, 6 * a], tilt: 0, eyes: ['open', 'open'], look: 'field', focus: 1, mouth: 'rest' };
+      return { hooves: [0, 0], ears: [6 * a, 6 * a], tilt: 0, eyes: ['open', 'open'], look: 'field', focus: 1, mouth: 'rest', duck };
     }
-    return { hooves: [0, 0], ears: [0, 0], tilt: 0, eyes: ['open', 'open'], look: 'pointer', focus: 0, mouth: 'rest' };
+    return { hooves: [0, 0], ears: [0, 0], tilt: 0, eyes: ['open', 'open'], look: 'pointer', focus: 0, mouth: 'rest', duck };
   }
 
-  private play(act: Act, now: number): void {
+  /** How far the console's Hevalo, his head alone, ducks behind the sill for what the person is doing; the website's never does. */
+  private duckFor(now: number): number {
+    if (this.legs) return 0;
+    const { field, shown, status } = this.input;
+    if (status === 'waiting') return DUCK.watch;
+    if (status === 'busy' || status === 'success') return 0;
+    // up over the sill to wonder at a mistake
+    if (this.sign?.emote === 'question' && now < this.sign.until) return 0;
+    if (field === 'secret') return shown ? DUCK.peek : DUCK.hide;
+    if (field === 'text' || field === 'code') return now < this.popUntil ? 0 : DUCK.watch;
+    return 0;
+  }
+
+  private play(act: CompanionAct, now: number): void {
     this.act = { act, at: now };
   }
 
@@ -626,6 +717,7 @@ export class CompanionMotion {
       twitch: now + between(HABITS.twitch, this.random) * calm,
       sniff: now + between(HABITS.sniff, this.random) * calm,
       tap: now + between(HABITS.twitch, this.random) * 1.3,
+      peekaboo: now + between(PEEKABOO_EVERY, this.random),
     };
   }
 
@@ -655,6 +747,11 @@ export class CompanionMotion {
     if (now >= this.next.tap) {
       if (free && this.tone === 'playful' && !this.tap) this.tap = { side: this.random() < 0.5 ? 0 : 1, at: now };
       this.next.tap = now + between(HABITS.twitch, this.random) * 1.3;
+    }
+    // in the console, now and then he ducks out of sight and pops up again
+    if (now >= this.next.peekaboo) {
+      if (free && !this.legs && !this.act) this.play(PEEKABOO, now);
+      this.next.peekaboo = now + between(PEEKABOO_EVERY, this.random);
     }
   }
 
@@ -711,7 +808,7 @@ export class CompanionMotion {
     if (!still) this.habits(now, pose);
 
     // what an act adds, while one plays
-    let act: Act | null = null;
+    let act: CompanionAct | null = null;
     let t = 0;
     if (this.act) {
       t = (now - this.act.at) / this.act.act.ms;
@@ -740,11 +837,12 @@ export class CompanionMotion {
       else drum = sampleKeys(TAP, u);
     }
     // coming up, or only just up: the forelegs still lifted from the climb
-    const climbing = !still && this.climbing(now);
+    const climbing = !still && this.legs && this.climbing(now);
     const climb = climbing ? CLIMB : 0;
+    const hoof = (side: 0 | 1): number => (this.legs ? Math.max(climb, pose.hooves[side] + (this.tap?.side === side ? drum : 0)) : 0);
     const target: Record<Channel, number> = {
-      hoofLeft: Math.max(climb, pose.hooves[0] + (this.tap?.side === 0 ? drum : 0)),
-      hoofRight: Math.max(climb, pose.hooves[1] + (this.tap?.side === 1 ? drum : 0)),
+      hoofLeft: hoof(0),
+      hoofRight: hoof(1),
       earLeft: pose.ears[0] + add(act?.earLeft),
       earRight: pose.ears[1] + add(act?.earRight),
       tilt: pose.tilt + lean + add(act?.tilt),
@@ -752,6 +850,7 @@ export class CompanionMotion {
       lookY: look.y,
       focus,
       enter: 0,
+      duck: pose.duck + (act?.duck ? sampleKeys(act.duck, t) : 0),
     };
 
     let moving = false;
@@ -798,9 +897,10 @@ export class CompanionMotion {
     // all the way up with this frame: the next one lays his forelegs over the sill
     moving = moving || (climbing && !this.climbing(now)) || act !== null || this.blink !== null || this.eyesVia !== null || this.tap !== null;
     const climbEnds = this.arrived !== null ? this.arrived + ARRIVING_MS : undefined;
-    const waits = [this.sign?.until, this.word ? (now < this.word.at ? this.word.at : this.word.until) : undefined, this.glance?.until, climbEnds];
+    const waits = [this.sign?.until, this.word ? (now < this.word.at ? this.word.at : this.word.until) : undefined, this.glance?.until, climbEnds, this.popUntil];
     if (!still) {
       waits.push(this.next.blink, this.next.glance, this.next.twitch, this.next.sniff, this.next.tap);
+      if (!this.legs) waits.push(this.next.peekaboo);
       if (this.tone === 'playful' && !this.asleep(now)) waits.push(this.lastInput + COMPANION_DOZE_MS);
     }
     const due = waits.filter((w): w is number => typeof w === 'number' && w > now);
@@ -814,6 +914,7 @@ export class CompanionMotion {
       stretch,
       sniff,
       enter: this.x.enter,
+      duck: this.x.duck,
       look: { x: this.x.lookX, y: this.x.lookY },
       focus: this.x.focus,
       eyes,
@@ -914,8 +1015,8 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
   const rig = RIG.rig!;
   const pivot = RIG.headPivot;
   const shift = pupilShift(RIG, frame.look, frame.focus);
-  // up for a hop, and down out of sight behind the sill before he has come up
-  const up = frame.rise * RIG.bust.h - frame.enter * ENTER_DROP;
+  // up for a hop, and down behind the sill before he has come up, or as the console's ducks
+  const up = frame.rise * RIG.bust.h - (frame.enter + frame.duck) * ENTER_DROP;
   const tall = frame.stretch;
   // a crouch spreads a little and a stretch narrows, as something soft does
   const wide = 1 + (1 - tall) * 0.6;
