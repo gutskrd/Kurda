@@ -185,7 +185,8 @@ describe('the code', () => {
   it('is asked for on the same card, with the console still not there', async () => {
     show(true);
     const card = (await screen.findByRole('heading', { name: 'Enter your 2FA code' })).closest('.login-card');
-    expect(card).toHaveTextContent('Admin console');
+    expect(card?.parentElement).toHaveClass('login-stage');
+    expect(screen.getByText('Admin console')).toBeInTheDocument();
     expect(screen.getByLabelText('Six-digit code').closest('.login-input')).not.toBeNull();
     expect(screen.queryByText('The console')).not.toBeInTheDocument();
   });

@@ -57,37 +57,75 @@
 }
 
 /* ---- the sign-in wheel (pages/SignIn) -------------------------------------------- */
-/* The steps of signing in on one card: a rail of where you are across the top, and the
-   steps turning past like the faces of a wheel. Each face turns about an axis behind the
-   card, so it rises and tips away as the next comes up from below (and back again). */
-.wheel-rail {
-  list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 0 0 24px; padding: 0;
+/* The steps of signing in on one card, turning past like the faces of a wheel: each face
+   turns about an axis behind the card, so it rises and tips away as the next comes up from
+   below (and back again). Above Hevalo, the line of steps shows where you are. */
+.login-column { width: 452px; max-width: 100%; }
+.login-column > .login-stage { width: 100%; scroll-margin-top: 8px; }
+/* the console's top bar keeps scrolled-to things below it; the sign-in has no top bar */
+:root:has(.login-column) { scroll-padding-top: 0; }
+@media (max-width: 520px) {
+  .login-column { width: 100%; }
+  /* a title on one line keeps the box being typed in close under Hevalo, so both fit above a phone's keyboard */
+  .login-column .login-title { font-size: 30px; }
 }
+.wheel-head { margin: 0 0 18px; }
+.wheel-head .login-top.is-centred { margin-bottom: 16px; }
+
+/* one line of light from the first step to the one on show: it flows as it goes, a glint
+   runs along it, its end glows, and each step lights as the light reaches it */
+.wheel-rail { --at: 0; position: relative; max-width: 380px; margin: 0 auto; }
+.wheel-rail ol { position: relative; list-style: none; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; }
+.wheel-track { position: absolute; top: 8px; left: 12.5%; right: 12.5%; height: 3px; border-radius: 3px; background: rgba(255, 255, 255, 0.14); }
+.wheel-fill {
+  position: absolute; top: 0; bottom: 0; left: 0; width: calc(var(--at) * 100%); border-radius: inherit;
+  background: linear-gradient(90deg, rgba(143, 107, 255, 0.85), #c9b2ff 55%, #fff);
+  box-shadow: 0 0 10px rgba(185, 156, 255, 0.7), 0 0 22px rgba(143, 107, 255, 0.45);
+  transition: width 820ms cubic-bezier(0.65, 0, 0.25, 1);
+}
+.wheel-fill::before {
+  content: ''; position: absolute; inset: 0; border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent) no-repeat;
+  background-size: 56px 100%; animation: rail-flow 2.6s linear infinite;
+}
+.wheel-fill::after {
+  content: ''; position: absolute; top: 50%; right: -7px; width: 14px; height: 14px; margin-top: -7px; border-radius: 50%;
+  background: radial-gradient(circle, #fff 0 22%, rgba(201, 178, 255, 0.75) 40%, rgba(201, 178, 255, 0) 72%);
+  animation: rail-glow 1.8s ease-in-out infinite;
+}
+/* while the session is checked, a glint runs on from the light's end towards the next step */
+.wheel-rail.is-busy .wheel-track::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--at) * 100%); width: calc(100% / 3); border-radius: inherit;
+  background: linear-gradient(90deg, transparent, rgba(225, 212, 255, 0.95), transparent) no-repeat;
+  background-size: 40% 100%; animation: rail-ahead 1.15s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+@keyframes rail-flow { from { background-position: -56px 0; } to { background-position: calc(100% + 56px) 0; } }
+@keyframes rail-glow { 50% { transform: scale(1.35); opacity: 0.7; } }
+@keyframes rail-ahead { from { background-position: -40% 0; opacity: 1; } to { background-position: 140% 0; opacity: 0.2; } }
+
 .wheel-rail li {
-  position: relative; display: grid; justify-items: center; gap: 7px;
-  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.5);
-  transition: color 300ms ease;
+  position: relative; display: grid; justify-items: center; gap: 8px;
+  font-size: 11.5px; font-weight: 600; letter-spacing: 0.02em; color: rgba(255, 255, 255, 0.45);
+  transition: color 300ms ease 300ms;
 }
-/* the track from the step before, filling as each is done */
-.wheel-rail li + li::before, .wheel-rail li + li::after {
-  content: ''; position: absolute; top: 8px; right: calc(50% + 12px); width: calc(100% - 24px); height: 2px; border-radius: 2px;
-}
-.wheel-rail li + li::before { background: rgba(255, 255, 255, 0.16); }
-.wheel-rail li + li::after {
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), #c9b2ff);
-  transform: scaleX(0); transform-origin: left center; transition: transform 520ms cubic-bezier(0.2, 0.8, 0.2, 1);
-}
-.wheel-rail li.is-done::after, .wheel-rail li.is-now::after { transform: scaleX(1); }
 .wheel-dot {
-  position: relative; z-index: 1; display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%;
-  background: rgba(255, 255, 255, 0.14); border: 1px solid rgba(255, 255, 255, 0.3); color: #1a0f33;
-  transition: background 300ms ease, border-color 300ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 300ms ease;
+  position: relative; z-index: 1; display: grid; place-items: center; width: 19px; height: 19px; border-radius: 50%;
+  background: rgba(16, 10, 34, 0.92); border: 1.5px solid rgba(255, 255, 255, 0.28); color: #1a0f33;
+  transition: background 260ms ease 320ms, border-color 260ms ease 320ms, transform 460ms cubic-bezier(0.34, 1.56, 0.64, 1) 320ms, box-shadow 260ms ease 320ms;
 }
-.wheel-dot svg { width: 11px; height: 11px; }
-.wheel-rail li.is-done .wheel-dot { background: #fff; border-color: #fff; }
-.wheel-rail li.is-now .wheel-dot { background: #fff; border-color: #fff; transform: scale(1.18); box-shadow: 0 0 0 5px rgba(201, 178, 255, 0.22), 0 0 18px rgba(201, 178, 255, 0.75); }
-.wheel-rail li.is-done, .wheel-rail li.is-now { color: #fff; }
+.wheel-dot svg { width: 11px; height: 11px; animation: rail-tick 420ms cubic-bezier(0.34, 1.56, 0.64, 1) 360ms both; }
+@keyframes rail-tick { from { transform: scale(0) rotate(-30deg); } }
+.wheel-rail li.is-done .wheel-dot { background: #fff; border-color: #fff; box-shadow: 0 0 10px rgba(201, 178, 255, 0.55); }
+.wheel-rail li.is-now .wheel-dot { background: #fff; border-color: #fff; transform: scale(1.2); box-shadow: 0 0 0 4px rgba(201, 178, 255, 0.2), 0 0 18px rgba(201, 178, 255, 0.85); }
+/* the step on show breathes */
+.wheel-rail li.is-now .wheel-dot::before {
+  content: ''; position: absolute; inset: -8px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(201, 178, 255, 0.5), rgba(201, 178, 255, 0) 70%);
+  animation: rail-breathe 2.2s ease-in-out infinite;
+}
+@keyframes rail-breathe { 50% { transform: scale(1.4); opacity: 0.45; } }
+.wheel-rail li.is-done { color: rgba(255, 255, 255, 0.78); }
+.wheel-rail li.is-now { color: #fff; }
 .wheel-label { white-space: nowrap; }
 
 .wheel { position: relative; perspective: 1100px; transition: height 380ms cubic-bezier(0.2, 0.8, 0.2, 1); }
@@ -104,7 +142,8 @@
 @keyframes wheel-fade { from { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   .wheel { transition: none; }
-  .wheel-rail li::after, .wheel-dot { transition: none; }
+  .wheel-fill, .wheel-dot, .wheel-rail li { transition: none; }
+  .wheel-fill::before, .wheel-fill::after, .wheel-rail.is-busy .wheel-track::after, .wheel-rail li.is-now .wheel-dot::before, .wheel-dot svg { animation: none; }
   .wheel-face.is-entering, .wheel-face.is-entering.is-back { animation: wheel-fade 160ms ease both; }
 }
 
