@@ -60,6 +60,27 @@ export {
 export { CHARACTER_GLOW, stageBackdrop, type StageOptions } from './stage.js';
 export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standTogether, standingSpots, togetherBackdrop, type StandingPlace } from './together.js';
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
+export {
+  COMPANION_DOZE_MS,
+  COMPANION_EDGE,
+  COMPANION_EYES,
+  COMPANION_VIEW,
+  COMPANION_WORDS,
+  CompanionMotion,
+  companionLook,
+  companionSvg,
+  companionTransforms,
+  type CompanionEmote,
+  type CompanionEvent,
+  type CompanionField,
+  type CompanionFrame,
+  type CompanionInput,
+  type CompanionLooks,
+  type CompanionStatus,
+  type CompanionTone,
+  type CompanionTransforms,
+  type CompanionWord,
+} from './companion.js';
 
 const DRAW: Record<CharacterId, (prefix: string) => CharacterArt> = {
   hevalo: drawHevalo,
