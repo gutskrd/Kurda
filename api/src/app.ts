@@ -165,6 +165,7 @@ import { installRequestContext } from './security/context.js';
 import { setupSecurityLog, type SecurityLogOptions } from './security/wire.js';
 import { registerSecurityLogRoutes } from './security/routes.js';
 import { SecurityLogReader } from './security/search.js';
+import { installScannerShield } from './security/shield.js';
 import { Counter } from 'prom-client';
 import { AnalyticsService } from './analytics/service.js';
 import { registerAnalyticsRoutes } from './analytics/routes.js';
@@ -376,6 +377,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       req.log = req.log.child({ userId: req.user.id });
     }
   });
+
+  // scanners' probes (PHP, WordPress, secrets files) answered "not found" at once, and a network that keeps
+  // probing shut out while signed out: after the session is read, before anyone's rate limit is spent
+  installScannerShield(app, { redis: app.hasDecorator('redis') ? app.redis : undefined });
 
   // shares the app redis connection; commands fail fast when Redis is
   // down and the limiter then allows requests rather than blocking all

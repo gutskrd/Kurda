@@ -68,7 +68,17 @@ export interface SecuritySummary {
 }
 
 const FAILED_SIGN_INS = ['signin.failed', 'console.signin_failed', 'console.signin_refused', 'console.2fa_failed'];
-const BLOCKED = ['signin.locked', 'network.locked', 'signin.risk_blocked', 'request.rate_limited', 'signup.rejected', 'console.2fa_locked', 'console.probe'];
+const BLOCKED = [
+  'signin.locked',
+  'network.locked',
+  'signin.risk_blocked',
+  'request.rate_limited',
+  'signup.rejected',
+  'console.2fa_locked',
+  'console.probe',
+  'request.probe',
+  'network.scanner_blocked',
+];
 
 function counts(row: Record<string, number | string | null> | undefined, prefix: string): Counts {
   const n = (k: string) => Number(row?.[`${prefix}${k}`] ?? 0);

@@ -435,3 +435,5 @@ export * from './limits.js';
 export * from './security-log.js';
 // every picture an admin can replace with an upload, and how the apps find the replacement
 export * from './art-slots.js';
+// the addresses vulnerability scanners try, which no Hevalo page can ever be
+export * from './scanner-paths.js';

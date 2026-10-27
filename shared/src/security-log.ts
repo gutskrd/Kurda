@@ -117,6 +117,22 @@ export const SECURITY_EVENTS = {
     dedupeSeconds: 600,
     dedupeBy: ['network', 'route'],
   },
+  'request.probe': {
+    severity: 'notice',
+    category: 'abuse',
+    title: 'Vulnerability scan turned away',
+    meaning:
+      'Something asked for an address only another kind of server has, like a PHP script, WordPress or a secrets file. Hevalo runs none of these, so it was answered "not found" at once. Shown once an hour per network.',
+    dedupeSeconds: 3600,
+    dedupeBy: ['network'],
+  },
+  'network.scanner_blocked': {
+    severity: 'warning',
+    category: 'abuse',
+    title: 'Network shut out for scanning',
+    meaning:
+      'One network kept probing for weaknesses, so for an hour it can no longer reach the app without being signed in. Accounts already signed in on it are not affected.',
+  },
   'session.reused': {
     severity: 'warning',
     category: 'account',
