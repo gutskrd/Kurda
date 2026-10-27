@@ -487,7 +487,8 @@ function ear(p: string, side: 'left' | 'right'): string {
 }
 
 /** The head itself: its fur, the light round the eyes and down the nose, the muzzle and the freckles. */
-function face(p: string): string {
+/** The face's outline, filled with its fur: what a turning head turns least. */
+function faceOutline(p: string): string {
   const id = (name: string): string => `${p}${name}`;
   return part(
     [
@@ -497,6 +498,16 @@ function face(p: string): string {
         [0.85, C.furShade],
         [1, C.furDeep],
       ], 0.5, 0.55, 0.62),
+    ],
+    [fill(curve(HEAD), `url(#${id('head')})`)],
+  );
+}
+
+/** What lies on the face: the light round each eye and under it, the muzzle and the freckles, which a turning head carries furthest. */
+function faceFeatures(p: string): string {
+  const id = (name: string): string => `${p}${name}`;
+  return part(
+    [
       // the lighter fur round each eye, as the icon has it: a socket with a soft but clear edge, not a glow
       radialBox(id('patch'), [
         [0, C.patch],
@@ -516,7 +527,6 @@ function face(p: string): string {
       ], 0.5, 0.45, 0.6),
     ],
     [
-      fill(curve(HEAD), `url(#${id('head')})`),
       ellipse(EYE_AXIS - 76, 284, 70, 84, `url(#${id('patch')})`),
       ellipse(EYE_AXIS + 76, 284, 70, 84, `url(#${id('patch')})`),
       // the light of the face carries on under each eye
@@ -529,7 +539,10 @@ function face(p: string): string {
   );
 }
 
-/** The whole head but for the eyes and the mouth: the antlers, the ears over them, the head over those. */
+function face(p: string): string {
+  return faceOutline(p) + faceFeatures(p);
+}
+
 function head(p: string): string {
   return crown(p) + ear(p, 'left') + ear(p, 'right') + face(p);
 }
@@ -834,6 +847,8 @@ function deerMouths(p: string): Record<Viseme, string> {
 }
 
 export function drawHevalo(p: string): CharacterArt {
+  const outline = faceOutline(p);
+  const features = faceFeatures(p);
   return {
     id: 'hevalo',
     name: 'Hevalo',
@@ -849,7 +864,8 @@ export function drawHevalo(p: string): CharacterArt {
     mouths: deerMouths(p),
     overlay: nose(p),
     rig: {
-      face: face(p),
+      face: outline + features,
+      faceLayers: { outline, features, shape: curve(HEAD) },
       crown: crown(p),
       ears: {
         left: { art: ear(p, 'left'), pivot: EAR_PIVOT_LEFT },

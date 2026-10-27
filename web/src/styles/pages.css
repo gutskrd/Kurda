@@ -102,16 +102,16 @@
   margin-bottom: 18px;
 }
 /*
- * Hevalo leans in over the card (auth/AuthCard) as over a windowsill: the
- * stage keeps room above the card for him, his box (shared COMPANION_VIEW,
- * 540 by 598) stands on the card's top edge, and he is drawn in front of the
- * card, cut at the edge himself, so his forelegs can hang down over its top
- * padding (shared COMPANION_OVERHANG, 130 of 540, which the card's padding
- * keeps clear) while the rest of him is behind it.
+ * Hevalo leans in over the card (auth/AuthCard) as over a windowsill, seen
+ * from the chest up: the stage keeps room above the card for him, his box
+ * (shared COMPANION_VIEW, 540 by 818) stands on the card's top edge, and he is
+ * drawn in front of the card, cut at the edge himself, so his forelegs can
+ * hang down over its top padding (shared COMPANION_OVERHANG, 130 of 540, which
+ * the card's padding keeps clear) while the rest of him is behind it.
  */
 .auth-stage {
-  --cp-w: 196px;
-  --cp-room: calc(var(--cp-w) * 0.96);
+  --cp-w: 178px;
+  --cp-room: calc(var(--cp-w) * 1.37);
   position: relative;
   width: 100%;
   max-width: 430px;
@@ -126,15 +126,15 @@
   position: absolute;
   z-index: 2;
   left: 50%;
-  top: calc(var(--cp-room) - var(--cp-w) * 598 / 540);
+  top: calc(var(--cp-room) - var(--cp-w) * 818 / 540);
   width: var(--cp-w);
-  height: calc(var(--cp-w) * 598 / 540);
+  height: calc(var(--cp-w) * 818 / 540);
   margin-left: calc(var(--cp-w) / -2);
 }
 /* his word, to the left of his head */
 .auth-companion .cp-say {
   right: 99%;
-  top: 30%;
+  top: 20%;
   transform-origin: 100% 100%;
 }
 /* each side keeps its words together, and the row breaks between them if it must */
@@ -154,14 +154,14 @@
     padding: var(--space-8) var(--space-5) var(--space-6);
   }
   .auth-stage {
-    --cp-w: 150px;
+    --cp-w: 136px;
     --cp-say-size: 0.85rem;
   }
 }
 /* a short window (a phone on its side) keeps the form in view */
 @media (max-height: 560px) {
   .auth-stage {
-    --cp-w: 112px;
+    --cp-w: 100px;
   }
 }
 
