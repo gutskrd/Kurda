@@ -62,6 +62,10 @@ function Who(): React.JSX.Element {
 
 const statusAsks = (asked: string[]): number => asked.filter((p) => p === '/status').length;
 
+/**
+ * The half-minute clock, moved by hand. Only intervals are faked, so the clock
+ * stands still however long a busy machine takes to draw the page.
+ */
 async function wait(ms: number): Promise<void> {
   await act(async () => {
     await vi.advanceTimersByTimeAsync(ms);
@@ -75,7 +79,7 @@ function hide(hidden: boolean): void {
 
 describe('the offline screen', () => {
   it('takes the place of the page, asks every half minute, and gives the page back when Hevalo is', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     const state = { open: false, notice: notice({ title: 'Back after the update' }) };
     const asked = api(state);
     renderApp(
@@ -179,7 +183,7 @@ describe('the offline screen', () => {
   });
 
   it('stops asking while the tab is put away, and asks the moment it is seen again', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
     const asked = api({ open: false, notice: notice() });
     renderApp(
       <MaintenanceGate>
