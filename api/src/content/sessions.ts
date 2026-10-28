@@ -545,8 +545,12 @@ export class LessonSessionService {
     if (this.milestones && claimedNow) {
       // out of the whole lesson, so a lesson with something put off is never "perfect"
       const wholeLesson = session.total_count > 0 ? correct / session.total_count : 0;
-      await this.milestones.recordLessonCompleted(userId, wholeLesson).catch(() => undefined);
-      await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+      if (this.milestones.recordLesson) {
+        await this.milestones.recordLesson(userId, wholeLesson, streak.current).catch(() => undefined);
+      } else {
+        await this.milestones.recordLessonCompleted(userId, wholeLesson).catch(() => undefined);
+        await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
+      }
     }
 
     return {

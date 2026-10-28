@@ -23,14 +23,30 @@ export interface Measured {
   allTarget?: number;
 }
 
+interface Pending {
+  sql: string;
+  params: unknown[];
+  resolve: (value: unknown) => void;
+  reject: (err: unknown) => void;
+}
+
 /**
  * One learner's evaluation: loaders shared by the measures that need the same
  * rows (every event badge reads the same list of learning days), each loaded
  * at most once.
+ *
+ * A lesson moves some thirty badges, and asking for each count on its own was
+ * a round trip apiece, twice for every lesson finished. So every value the
+ * measures ask for in the same turn of the event loop is gathered and sent as
+ * one statement — a SELECT of their subqueries side by side — and each measure
+ * gets its own column back (`value`). The counts are the same statements they
+ * always were; only the trip is shared. Start the measures together and await
+ * them together, or each one waits for its own trip again.
  */
 export class MeasureContext {
   private learningDaysCache?: Promise<string[]>;
   private practiceDaysCache?: Promise<string[]>;
+  private queued: Pending[] = [];
 
   constructor(
     readonly db: Executor,
@@ -39,31 +55,57 @@ export class MeasureContext {
 
   /** Distinct UTC days with learning XP, oldest first ('YYYY-MM-DD'). */
   learningDays(): Promise<string[]> {
-    this.learningDaysCache ??= this.db
-      .query<{ d: string }>(
-        `SELECT DISTINCT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS d FROM xp_ledger
-          WHERE user_id = $1 AND amount > 0 AND source = ANY($2::text[]) ORDER BY 1`,
-        [this.userId, LEARNING_XP_SOURCES],
-      )
-      .then((r) => r.rows.map((x) => x.d));
+    this.learningDaysCache ??= this.value<string[]>(
+      `SELECT ARRAY(SELECT DISTINCT to_char(created_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') FROM xp_ledger
+                     WHERE user_id = $1 AND amount > 0 AND source = ANY($2::text[]) ORDER BY 1)`,
+      [LEARNING_XP_SOURCES],
+    );
     return this.learningDaysCache;
   }
 
   /** Distinct UTC days with a practice (review) session that counted. */
   practiceDays(): Promise<string[]> {
-    this.practiceDaysCache ??= this.db
-      .query<{ d: string }>(
-        `SELECT DISTINCT to_char(completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') AS d FROM practice_sessions
-          WHERE user_id = $1 AND completed_at IS NOT NULL AND xp_awarded > 0 ORDER BY 1`,
-        [this.userId],
-      )
-      .then((r) => r.rows.map((x) => x.d));
+    this.practiceDaysCache ??= this.value<string[]>(
+      `SELECT ARRAY(SELECT DISTINCT to_char(completed_at AT TIME ZONE 'UTC', 'YYYY-MM-DD') FROM practice_sessions
+                     WHERE user_id = $1 AND completed_at IS NOT NULL AND xp_awarded > 0 ORDER BY 1)`,
+    );
     return this.practiceDaysCache;
   }
 
   async count(sql: string, params: unknown[] = []): Promise<number> {
-    const r = await this.db.query<{ n: number | string | null }>(sql, [this.userId, ...params]);
-    return Number(r.rows[0]?.n ?? 0);
+    return Number((await this.value<number | string | null>(sql, params)) ?? 0);
+  }
+
+  /**
+   * The one value `sql` selects for this learner — a single column of at most
+   * one row; no row reads as null — with `$1` the learner and `$2` onwards
+   * `params`. Sent with the others asked for alongside it (see the class note).
+   */
+  value<T>(sql: string, params: unknown[] = []): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      this.queued.push({ sql, params, resolve: resolve as (value: unknown) => void, reject });
+      if (this.queued.length === 1) queueMicrotask(() => void this.flush());
+    });
+  }
+
+  private async flush(): Promise<void> {
+    const batch = this.queued;
+    this.queued = [];
+    const params: unknown[] = [this.userId];
+    // each statement's own $2, $3… move up past the parameters of those before it; $1 stays the learner
+    const columns = batch.map((item, i) => {
+      const shift = params.length - 1;
+      params.push(...item.params);
+      const sql = item.sql.replace(/\$(\d+)/g, (whole, n: string) => (n === '1' ? whole : `$${Number(n) + shift}`));
+      return `(${sql}) AS v${i}`;
+    });
+    try {
+      const r = await this.db.query<Record<string, unknown>>(`SELECT ${columns.join(',\n')}`, params);
+      const row = r.rows[0] ?? {};
+      batch.forEach((item, i) => item.resolve(row[`v${i}`] ?? null));
+    } catch (err) {
+      for (const item of batch) item.reject(err);
+    }
   }
 }
 
@@ -275,7 +317,7 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
     // a unit is done when every published lesson in it has been finished at
     // least once (any version of the lesson in that place); counted in the
     // course where the learner has done most
-    const r = await ctx.db.query<{ done: number; total: number }>(
+    const best = await ctx.value<[number, number] | null>(
       `WITH done AS (
          SELECT DISTINCT l.skill_id, l.position FROM lesson_sessions ls JOIN lessons l ON l.id = ls.lesson_id
           WHERE ls.user_id = $1 AND ls.completed_at IS NOT NULL),
@@ -285,12 +327,11 @@ export const MEASURES: Readonly<Record<string, Measure>> = {
            JOIN lessons l ON l.skill_id = s.id AND l.status = 'published'
            LEFT JOIN done d ON d.skill_id = l.skill_id AND d.position = l.position
           GROUP BY u.id, u.course_id)
-       SELECT count(*) FILTER (WHERE complete)::int AS done, count(*)::int AS total
-         FROM units_state GROUP BY course_id ORDER BY 1 DESC, 2 ASC LIMIT 1`,
-      [ctx.userId],
+       SELECT ARRAY[c.done, c.total] FROM (
+         SELECT count(*) FILTER (WHERE complete)::int AS done, count(*)::int AS total
+           FROM units_state GROUP BY course_id ORDER BY 1 DESC, 2 ASC LIMIT 1) c`,
     );
-    const row = r.rows[0];
-    return { progress: row?.done ?? 0, allTarget: row?.total ?? undefined };
+    return { progress: best?.[0] ?? 0, allTarget: best?.[1] ?? undefined };
   },
   dictionary_words_reviewed: count(
     `SELECT count(*) AS n FROM review_items WHERE user_id = $1 AND item_id LIKE 'dict:%' AND last_reviewed_at IS NOT NULL`,
