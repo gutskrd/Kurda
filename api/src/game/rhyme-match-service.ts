@@ -727,11 +727,17 @@ export class RhymeMatchService {
     const players = await client.query<PlayerRow>(`SELECT * FROM rhyme_match_players WHERE match_id = $1 AND NOT removed`, [matchId]);
     const ranked = rankRhyme(players.rows.map((r) => this.toResult(r)));
     const count = ranked.length;
-    for (const r of ranked) {
-      const xp = rhymePlacementXp(r.rank, count);
-      await this.xp.award({ userId: r.userId, source: 'rhyme_match', amount: xp, refId: `match:${matchId}:${r.userId}` }, client);
-      await client.query(`UPDATE rhyme_match_players SET xp_awarded = $3 WHERE match_id = $1 AND user_id = $2`, [matchId, r.userId, xp]);
+    const placed = ranked.map((r) => ({ userId: r.userId, xp: rhymePlacementXp(r.rank, count) }));
+    // each award on its own (it locks and caps the player's day), the record of what each was paid in one statement
+    for (const { userId, xp } of placed) {
+      await this.xp.award({ userId, source: 'rhyme_match', amount: xp, refId: `match:${matchId}:${userId}` }, client);
     }
+    await client.query(
+      `UPDATE rhyme_match_players p SET xp_awarded = v.xp
+         FROM unnest($2::uuid[], $3::int[]) AS v(user_id, xp)
+        WHERE p.match_id = $1 AND p.user_id = v.user_id`,
+      [matchId, placed.map((x) => x.userId), placed.map((x) => x.xp)],
+    );
     // a match that counted moves the ratings, here in the same transaction
     // (anyone who left while the window was open is last)
     await this.ranks.finish(client, 'rhyme-match', matchId, ranked.map((r) => ({ userId: r.userId, place: r.rank })));
