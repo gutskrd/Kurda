@@ -36,11 +36,22 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
       throw new Error('always fails');
     },
   });
+  // fails its first attempt and records the key each attempt was given
+  const keys: string[] = [];
+  const flakyJob = defineJob({
+    name: 'it-flaky',
+    schema: z.object({}),
+    handler: async (_p, ctx) => {
+      keys.push(ctx.key ?? '');
+      if (ctx.attempt === 1) throw new Error('first attempt fails');
+    },
+  });
 
   beforeAll(async () => {
     const registry = new JobRegistry();
     registry.register(okJob);
     registry.register(doomedJob);
+    registry.register(flakyJob);
     registry.register(sendEmailJob);
 
     queue = JobQueue.create(config);
@@ -87,6 +98,17 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
     expect(job!.opts.removeOnFail).toEqual(FAILED_JOB_RETENTION);
     const failed = await queue.raw.getFailed();
     expect(failed.some((f) => f.id === jobId)).toBe(true);
+  });
+
+  it('gives every attempt of a job the same key, and another job another', async () => {
+    const first = await queue.enqueue(flakyJob, {}, { attempts: 2, backoffDelayMs: 50 });
+    await vi.waitFor(() => expect(keys).toHaveLength(2), { timeout: 10_000, interval: 100 });
+    expect(keys[0]).toMatch(new RegExp(`^${first}@\\d+$`));
+    expect(keys[1]).toBe(keys[0]);
+
+    await queue.enqueue(flakyJob, {}, { attempts: 2, backoffDelayMs: 50 });
+    await vi.waitFor(() => expect(keys).toHaveLength(4), { timeout: 10_000, interval: 100 });
+    expect(keys[2]).not.toBe(keys[0]);
   });
 
   it('deduplicates by idempotency key', async () => {

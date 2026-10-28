@@ -47,10 +47,11 @@ export class EmailService {
     template: EmailTemplate,
     vars: Record<string, string> = {},
     locale: EmailLocale = 'en',
+    opts: { idempotencyKey?: string } = {},
   ): Promise<SendResult> {
     if (await this.isSuppressed(to)) return { sent: false, suppressed: true };
     const { subject, text, html } = renderEmail(template, locale, vars);
-    const { messageId } = await this.provider.send({ to, subject, text, html });
+    const { messageId } = await this.provider.send({ to, subject, text, html, ...(opts.idempotencyKey ? { idempotencyKey: opts.idempotencyKey } : {}) });
     return { sent: true, suppressed: false, messageId };
   }
 }

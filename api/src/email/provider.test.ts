@@ -108,6 +108,19 @@ describe('ResendEmailProvider', () => {
     expect(JSON.parse(fetchMock.mock.calls[0]![1]!.body as string)).not.toHaveProperty('reply_to');
   });
 
+  it('names a send by its idempotency key, so a retry of it is not a second email', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response('{"id":"m"}', { status: 200 }));
+    const provider = new ResendEmailProvider('re_secret', 'no-reply@hevalo.app');
+    await provider.send({ to: 'u@e.com', subject: 's', text: 't', idempotencyKey: 'send-email/42@1793180000000' });
+    await provider.send({ to: 'u@e.com', subject: 's', text: 't' });
+
+    const keyed = fetchMock.mock.calls[0]![1]!;
+    expect((keyed.headers as Record<string, string>)['Idempotency-Key']).toBe('send-email/42@1793180000000');
+    // a request header, never part of the message
+    expect(JSON.parse(keyed.body as string)).not.toHaveProperty('idempotencyKey');
+    expect(fetchMock.mock.calls[1]![1]!.headers as Record<string, string>).not.toHaveProperty('Idempotency-Key');
+  });
+
   it('throws on a non-2xx response so the job retries', async () => {
     vi.spyOn(globalThis, 'fetch').mockResolvedValue(
       new Response('domain not verified', { status: 422 }),
