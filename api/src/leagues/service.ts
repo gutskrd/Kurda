@@ -151,6 +151,13 @@ interface CohortRow {
   created_at: Date;
 }
 
+/** A learner's place in a week's league, as `ensureMembership` reads it. */
+interface MembershipRow {
+  cohort_id: string;
+  tier: string;
+  left: boolean;
+}
+
 /**
  * Learning Leagues (KUR-062, rebuilt by contract 4 §L).
  *
@@ -213,21 +220,33 @@ export class LeagueService {
    * — so this week's XP is read without it and its counted amount added.
    */
   async onXp(award: AwardedXp, now: Date = new Date()): Promise<void> {
-    if (!(await this.takesPart(award.userId))) return;
-    if (isLearningSource(award.source)) await this.ensureMembership(award.userId, now);
-    await this.noteSafe(award, now);
+    const weekKey = weekStart(now);
+    // Every award asks the same three things, so they are one read: whether
+    // they take part (`takesPart`), their place in this week's league if they
+    // have one (`ensureMembership`'s first look), and the week's XP before this
+    // award (`noteSafe`).
+    const facts = await this.pool.query<{ taking_part: boolean; xp: number } & Partial<MembershipRow> & { safe_noted: boolean | null }>(
+      `SELECT ${inLeaguesSql('u')} AS taking_part,
+              m.cohort_id, m.tier, m.left_at IS NOT NULL AS left, m.safe_notified_at IS NOT NULL AS safe_noted,
+              (SELECT COALESCE(SUM(${countedXpSql('l')}), 0)::int FROM xp_ledger l
+                WHERE l.user_id = u.id AND ${inWeekSql('l', '$3')}
+                  AND NOT (l.source = $4 AND l.ref_id IS NOT DISTINCT FROM $5)) AS xp
+         FROM users u LEFT JOIN league_members m ON m.week_key = $2 AND m.user_id = u.id
+        WHERE u.id = $1 AND u.deleted_at IS NULL`,
+      [award.userId, weekKey, weekKey, award.source, award.refId ?? null],
+    );
+    const row = facts.rows[0];
+    if (!row?.taking_part) return;
+    const member = row.cohort_id ? { cohort_id: row.cohort_id, tier: row.tier!, left: row.left! } : null;
+    if (isLearningSource(award.source)) await this.ensureMembership(award.userId, now, member);
+    // a member already told this week has nothing more to hear
+    if (row.safe_noted) return;
+    await this.noteSafe(award, weekKey, row.xp);
   }
 
-  private async noteSafe(award: AwardedXp, now: Date): Promise<void> {
+  private async noteSafe(award: AwardedXp, weekKey: string, xpBefore: number): Promise<void> {
     if (award.counted <= 0) return;
-    const weekKey = weekStart(now);
-    const before = await this.pool.query<{ xp: number }>(
-      `SELECT COALESCE(SUM(${countedXpSql('l')}), 0)::int AS xp FROM xp_ledger l
-        WHERE l.user_id = $1 AND ${inWeekSql('l', '$2')}
-          AND NOT (l.source = $3 AND l.ref_id IS NOT DISTINCT FROM $4)`,
-      [award.userId, weekKey, award.source, award.refId ?? null],
-    );
-    const xp = (before.rows[0]?.xp ?? 0) + award.counted;
+    const xp = xpBefore + award.counted;
     if (xp < this.goalXp) return;
     const claimed = await this.pool.query<{ tier: string }>(
       `UPDATE league_members SET safe_notified_at = now()
@@ -254,20 +273,30 @@ export class LeagueService {
    * (see `leaveThisWeek`). Their earlier weeks are settled first and the
    * season reset applied, so the tier they join at is the one they earned.
    */
-  async ensureMembership(userId: string, now: Date = new Date()): Promise<{ cohortId: string; tier: LeagueTier }> {
+  async ensureMembership(
+    userId: string,
+    now: Date = new Date(),
+    /** their row in this week's league, or null for none, when the caller has just read it (`onXp`) */
+    known?: MembershipRow | null,
+  ): Promise<{ cohortId: string; tier: LeagueTier }> {
     const weekKey = weekStart(now);
-    const existing = await this.pool.query<{ cohort_id: string; tier: string; left: boolean }>(
-      `SELECT cohort_id, tier, left_at IS NOT NULL AS left FROM league_members WHERE week_key = $1 AND user_id = $2`,
-      [weekKey, userId],
-    );
-    if (existing.rows[0]) {
-      if (existing.rows[0].left) {
+    const existing =
+      known !== undefined
+        ? known
+        : (
+            await this.pool.query<MembershipRow>(
+              `SELECT cohort_id, tier, left_at IS NOT NULL AS left FROM league_members WHERE week_key = $1 AND user_id = $2`,
+              [weekKey, userId],
+            )
+          ).rows[0] ?? null;
+    if (existing) {
+      if (existing.left) {
         await this.pool.query(`UPDATE league_members SET left_at = NULL WHERE week_key = $1 AND user_id = $2`, [
           weekKey,
           userId,
         ]);
       }
-      return { cohortId: existing.rows[0].cohort_id, tier: toLeagueTier(existing.rows[0].tier) ?? FIRST_LEAGUE_TIER };
+      return { cohortId: existing.cohort_id, tier: toLeagueTier(existing.tier) ?? FIRST_LEAGUE_TIER };
     }
 
     // outside the join's transaction: settling takes the group's lock and then
@@ -574,43 +603,51 @@ export class LeagueService {
       const members = await this.groupMembers(client, cohortId, c.week_key, null);
       const standings = this.standingsOf(members);
       const season = weekSeason(c.week_key);
-      // members' rows in one order everywhere, so two settles never wait on each other in a circle
-      for (const s of [...standings].sort((a, b) => (a.userId < b.userId ? -1 : 1))) {
-        const row = await client.query<{ season_key: string }>(
-          `INSERT INTO user_league (user_id, tier, season_key) VALUES ($1, $2, $3)
+      // Three statements for the whole group rather than three per member.
+      // Members' rows in one order everywhere (the insert takes them in the
+      // order given), so two settles never wait on each other in a circle.
+      const ordered = [...standings].sort((a, b) => (a.userId < b.userId ? -1 : 1));
+      if (ordered.length > 0) {
+        const kept = await client.query<{ user_id: string; season_key: string }>(
+          `INSERT INTO user_league (user_id, tier, season_key)
+           SELECT m.user_id, m.tier, $3::text FROM unnest($1::uuid[], $2::text[]) WITH ORDINALITY AS m(user_id, tier, n) ORDER BY m.n
            ON CONFLICT (user_id) DO UPDATE SET user_id = EXCLUDED.user_id
-           RETURNING season_key`,
-          [s.userId, s.tier, season],
+           RETURNING user_id, season_key`,
+          [ordered.map((s) => s.userId), ordered.map((s) => s.tier), season],
         );
+        const seasonOf = new Map(kept.rows.map((r) => [r.user_id, r.season_key]));
         // a reset that already reached this learner (a later season's join)
         // applies to this result too, so a late settle cannot undo it
-        const after = seasonDrop(s.tierAfter, seasonsBetween(season, row.rows[0]!.season_key));
+        const after = ordered.map((s) => seasonDrop(s.tierAfter, seasonsBetween(season, seasonOf.get(s.userId)!)));
         await client.query(
-          `UPDATE user_league SET tier = $2, updated_at = now(),
+          `UPDATE user_league ul SET tier = m.tier, updated_at = now(),
              peak_tier = CASE
-               WHEN peak_tier IS NULL OR array_position($3::text[], $2) > array_position($3::text[], peak_tier)
-               THEN $2 ELSE peak_tier END
-           WHERE user_id = $1`,
-          [s.userId, after, LEAGUE_TIERS],
+               WHEN ul.peak_tier IS NULL OR array_position($3::text[], m.tier) > array_position($3::text[], ul.peak_tier)
+               THEN m.tier ELSE ul.peak_tier END
+             FROM unnest($1::uuid[], $2::text[]) AS m(user_id, tier)
+            WHERE ul.user_id = m.user_id`,
+          [ordered.map((s) => s.userId), after, LEAGUE_TIERS],
         );
         await client.query(
           `INSERT INTO league_weeks
              (user_id, week_key, mode, cohort_id, tier, tier_after, outcome, rank, group_size, weekly_xp, goal_xp, goal_met, trophy)
-           VALUES ($1, $2, 'league', $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+           SELECT w.user_id, $1::text, 'league', $2::uuid, w.tier, w.tier_after, w.outcome, w.rank, $3::int, w.weekly_xp, $4::int, w.goal_met, w.trophy
+             FROM unnest($5::uuid[], $6::text[], $7::text[], $8::text[], $9::int[], $10::int[], $11::boolean[], $12::boolean[])
+               AS w(user_id, tier, tier_after, outcome, rank, weekly_xp, goal_met, trophy)
            ON CONFLICT (user_id, week_key) DO NOTHING`,
           [
-            s.userId,
             c.week_key,
             cohortId,
-            s.tier,
-            after,
-            s.outcome,
-            s.rank,
             standings.length,
-            s.weeklyXp,
             this.goalXp,
-            s.goalMet,
-            s.trophy,
+            ordered.map((s) => s.userId),
+            ordered.map((s) => s.tier),
+            after,
+            ordered.map((s) => s.outcome),
+            ordered.map((s) => s.rank),
+            ordered.map((s) => s.weeklyXp),
+            ordered.map((s) => s.goalMet),
+            ordered.map((s) => s.trophy),
           ],
         );
       }
