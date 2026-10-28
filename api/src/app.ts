@@ -873,7 +873,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerTournamentRoutes(app, tournaments);
   }
 
-  app.get('/health', async (_req, reply) => {
+  // Render's health check asks this every few seconds for as long as the service
+  // runs, near twenty thousand times a day, and each one wrote two info lines
+  // ("incoming request", "request completed"): most of what the API logged was
+  // this. A warning or worse about it is still written.
+  app.get('/health', { logLevel: 'warn' }, async (_req, reply) => {
     const result = await health.run();
     // degraded still returns 200 so load balancers keep routing while a
     // non-critical dependency flaps; hard-down decisions come in KUR-113

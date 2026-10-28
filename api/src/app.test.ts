@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from './app.js';
 import { loadConfig } from './config/env.js';
+import { currentRequest } from './security/context.js';
 
 let app: FastifyInstance;
 
@@ -35,6 +36,19 @@ describe('GET /health', () => {
     expect(body.status).toBe('degraded');
     expect(body.checks.db.status).toBe('error');
     expect(body.checks.redis.status).toBe('not_configured');
+  });
+
+  it('writes no request log lines at info, as the platform asks it every few seconds', async () => {
+    app = buildApp(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'info' }));
+    let level: string | undefined;
+    // a check runs inside the request, so it sees the logger the request was given
+    app.health.register('probe', async () => {
+      level = currentRequest()?.log.level;
+      return { status: 'ok' };
+    });
+    const res = await app.inject({ method: 'GET', url: '/health' });
+    expect(res.statusCode).toBe(200);
+    expect(level).toBe('warn');
   });
 });
 
