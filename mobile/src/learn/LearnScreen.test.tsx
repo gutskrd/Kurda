@@ -107,8 +107,9 @@ describe('Learn', () => {
   it('keeps the practice tools one tap away, and says what is due for review', async () => {
     client();
     renderWithProviders(<LearnScreen />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Review, 8 words due' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Practice');
+    // practice opens on its hub, the count of words due on its tile
+    fireEvent.click(await screen.findByRole('button', { name: 'Practice, 8 words due' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('PracticeHub');
     fireEvent.click(screen.getByRole('button', { name: 'Dictionary, Look up any word' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
     fireEvent.click(screen.getByRole('button', { name: 'Alphabet, Every letter, and how it sounds' }));

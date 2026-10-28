@@ -163,6 +163,7 @@ const MAP = {
   clock: { glyph: 'Clock', note: 'the wall newest first; history is the oldest first' },
   'clear-fill': { glyph: 'XCircle', weight: 'fill', note: 'empty a search field — the filled circle every platform puts at the end of one' },
   review: { glyph: 'Cards', note: 'Review: the words due again, as a stack of cards' },
+  target: { glyph: 'Target', note: 'Practice → Mistakes: what was missed, to aim at again' },
 
   // --- how the app feels ---
   vibrate: { glyph: 'Vibrate', note: 'Settings → Vibration: whether this phone buzzes' },

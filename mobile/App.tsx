@@ -50,6 +50,7 @@ import { AlphabetScreen } from './src/alphabet/AlphabetScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
+import { PracticeHubScreen } from './src/practice/PracticeHubScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
@@ -153,7 +154,8 @@ const linking: LinkingOptions<RootStackParamList> = {
       // a shared profile (Profile → Share) opens in the app for anyone who has it
       UserProfile: 'app/users/:userId',
       Lesson: 'lesson/:lessonId',
-      Practice: 'practice',
+      // practice opens on its hub, where every kind of it is one tap away
+      PracticeHub: 'practice',
       // the website's alphabet, `?script=ckb` and all, opens the phone's
       Alphabet: 'app/alphabet',
       WordleBattle: inviteRoutePath('wordle-battle'),
@@ -334,9 +336,14 @@ function SignedInRoot() {
           <PracticeScreen
             navigation={navigation}
             exerciseIds={route.params?.exerciseIds}
+            mode={route.params?.mode}
+            unitId={route.params?.unitId}
             onExit={() => navigation.goBack()}
           />
         )}
+      </RootStack.Screen>
+      <RootStack.Screen name="PracticeHub" options={{ presentation: 'card' }}>
+        {({ navigation }) => <PracticeHubScreen onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (

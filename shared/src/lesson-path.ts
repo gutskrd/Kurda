@@ -147,6 +147,11 @@ export interface PlacedStop<S extends PathSkill> {
 export const UNIT_TONES = ['meadow', 'river', 'clay', 'dusk', 'pine', 'rose'] as const;
 export type UnitTone = (typeof UNIT_TONES)[number];
 
+/** The colour of a course's unit, by its place in the course from 0. */
+export function unitTone(index: number): UnitTone {
+  return UNIT_TONES[index % UNIT_TONES.length]!;
+}
+
 export interface PathUnit<S extends PathSkill> {
   unitId: string;
   title: string;
@@ -275,7 +280,7 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 
       unitId: unit.unitId,
       title: unit.title,
       number: u + 1,
-      tone: UNIT_TONES[u % UNIT_TONES.length]!,
+      tone: unitTone(u),
       stops: placed,
       height,
       done: unitDone,
