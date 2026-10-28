@@ -39,13 +39,14 @@ export function springFor(spec: SpringSpec): Spring {
 }
 
 /**
- * Apple's named springs. `default` is `Animation.spring()`; `smooth`, `snappy`
- * and `bouncy` are the presets of the same names; `interactive` is
- * `interactiveSpring()`, the quick, nearly critical one used while a finger
- * is still on what moves.
+ * Apple's named springs. `default` is `Animation.default` since iOS 17;
+ * `smooth`, `snappy` and `bouncy` are the presets of the same names;
+ * `interactive` is `interactiveSpring()`, the quick, nearly critical one used
+ * while a finger is still on what moves. Apple's advice: no bounce unless a
+ * gesture with momentum has just ended, and little even then.
  */
 export const APPLE_SPRINGS = {
-  default: { response: 0.55, dampingFraction: 0.825 },
+  default: { response: 0.55, dampingFraction: 1 },
   smooth: { duration: 0.5, bounce: 0 },
   snappy: { duration: 0.5, bounce: 0.15 },
   bouncy: { duration: 0.5, bounce: 0.3 },

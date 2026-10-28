@@ -3,9 +3,9 @@ import { APPLE_SPRINGS, DECELERATION, project, rubberBand, shouldDismiss, snapTa
 
 describe('springFor', () => {
   it('turns a response and a damping fraction into stiffness and damping', () => {
-    const s = springFor({ response: 0.55, dampingFraction: 0.825 });
-    expect(s.stiffness).toBeCloseTo(130.5072, 4);
-    expect(s.damping).toBeCloseTo(18.8496, 4);
+    const s = springFor({ response: 0.5, dampingFraction: 0.825 });
+    expect(s.stiffness).toBeCloseTo(157.9137, 4);
+    expect(s.damping).toBeCloseTo(20.7345, 4);
     expect(s.mass).toBe(1);
   });
 
@@ -32,9 +32,11 @@ describe('springFor', () => {
     const drag = springFor(APPLE_SPRINGS.interactive);
     expect(drag.stiffness).toBeCloseTo(1754.5963, 4);
     expect(drag.damping).toBeCloseTo(72.0472, 4);
-    // the default settles without a bounce anybody would see: under critical, but not by much
+    // the default is critically damped: it arrives without overshooting
     const d = springFor(APPLE_SPRINGS.default);
-    expect(d.damping / (2 * Math.sqrt(d.stiffness))).toBeCloseTo(0.825, 6);
+    expect(d.stiffness).toBeCloseTo(130.5072, 4);
+    expect(d.damping).toBeCloseTo(22.8479, 4);
+    expect(d.damping / (2 * Math.sqrt(d.stiffness))).toBeCloseTo(1, 9);
   });
 });
 
