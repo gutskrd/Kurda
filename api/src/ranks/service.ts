@@ -42,11 +42,11 @@ import { RankEvents } from './events.js';
 import { isInGame, loadLobby, tablesOf, type LobbySeat } from './games.js';
 import {
   fromStored,
-  insertEvent,
+  insertEvents,
   lockGameRatings,
   lockStates,
   stateOf,
-  writeState,
+  writeStates,
   type Executor,
   type RatingRow,
   type StoredState,
@@ -187,12 +187,21 @@ export class RankService {
       [game, gameRef, seasonOf(at).id, j.weight, at],
     );
     if (!inserted.rowCount) return j.decision;
-    for (const s of seats) {
-      await client.query(
-        `INSERT INTO rated_game_players (game, game_ref, user_id, seat, new_account, decided_at) VALUES ($1, $2, $3, $4, $5, $6)`,
-        [game, gameRef, s.userId, s.seat, j.eligibility.get(s.userId)?.newAccount ?? false, at],
-      );
-    }
+    // every seat in one statement, in seat order
+    await client.query(
+      `INSERT INTO rated_game_players (game, game_ref, user_id, seat, new_account, decided_at)
+       SELECT $1::text, $2::uuid, s.user_id, s.seat, s.new_account, $3::timestamptz
+         FROM unnest($4::uuid[], $5::int[], $6::boolean[]) WITH ORDINALITY AS s(user_id, seat, new_account, n)
+        ORDER BY s.n`,
+      [
+        game,
+        gameRef,
+        at,
+        seats.map((s) => s.userId),
+        seats.map((s) => s.seat),
+        seats.map((s) => j.eligibility.get(s.userId)?.newAccount ?? false),
+      ],
+    );
     return j.decision;
   }
 
@@ -391,9 +400,15 @@ export class RankService {
       weight: Number(header.weight),
       at,
     });
-    for (const o of outcomes) {
-      await writeState(client, o.userId, game, o.after);
-      await insertEvent(client, {
+    // every player's new standing, history row and seat in three statements, not three each
+    await writeStates(
+      client,
+      game,
+      outcomes.map((o) => ({ userId: o.userId, state: o.after })),
+    );
+    await insertEvents(
+      client,
+      outcomes.map((o) => ({
         userId: o.userId,
         game,
         gameRef,
@@ -403,11 +418,20 @@ export class RankService {
         after: o.after,
         place: o.place,
         weight: o.weight,
-      });
+      })),
+    );
+    if (outcomes.length > 0) {
       await client.query(
-        `UPDATE rated_game_players SET place = $4, left_game = $5, mu_before = $6, sigma_before = $7
-          WHERE game = $1 AND game_ref = $2 AND user_id = $3`,
-        [game, gameRef, o.userId, o.place, o.left, o.before.mu, o.before.sigma],
+        `UPDATE rated_game_players p SET place = o.place, left_game = o.left_game, mu_before = o.mu_before, sigma_before = o.sigma_before
+           FROM jsonb_to_recordset($3::jsonb) AS o(user_id uuid, place int, left_game boolean, mu_before double precision, sigma_before double precision)
+          WHERE p.game = $1 AND p.game_ref = $2 AND p.user_id = o.user_id`,
+        [
+          game,
+          gameRef,
+          JSON.stringify(
+            outcomes.map((o) => ({ user_id: o.userId, place: o.place, left_game: o.left, mu_before: o.before.mu, sigma_before: o.before.sigma })),
+          ),
+        ],
       );
     }
     await client.query(
@@ -456,43 +480,56 @@ export class RankService {
       at,
       null,
     );
+    const pairs: Array<{ lo: string; hi: string; loWins: number; hiWins: number; draws: number; peak: number; device: boolean; network: boolean }> = [];
     for (let i = 0; i < sorted.length; i++) {
       for (let j = i + 1; j < sorted.length; j++) {
         const lo = sorted[i]!;
         const hi = sorted[j]!;
         // indexed lookups that start from the two accounts' own rows
         const shared = await pairEvidence(client, lo.userId, hi.userId);
-        const device = shared.device !== null;
-        const network = shared.network !== null;
         const loWin = lo.place < hi.place ? 1 : 0;
         const hiWin = hi.place < lo.place ? 1 : 0;
-        await client.query(
-          `INSERT INTO rating_pair_signals (game, user_lo, user_hi, games, lo_wins, hi_wins, draws, peak_24h, shared_device, shared_ip, last_game_at)
-           VALUES ($1, $2, $3, 1, $4, $5, $6, $7, $8, $9, $10)
-           ON CONFLICT (game, user_lo, user_hi) DO UPDATE SET
-             games = rating_pair_signals.games + 1,
-             lo_wins = rating_pair_signals.lo_wins + EXCLUDED.lo_wins,
-             hi_wins = rating_pair_signals.hi_wins + EXCLUDED.hi_wins,
-             draws = rating_pair_signals.draws + EXCLUDED.draws,
-             peak_24h = GREATEST(rating_pair_signals.peak_24h, EXCLUDED.peak_24h),
-             shared_device = EXCLUDED.shared_device,
-             shared_ip = EXCLUDED.shared_ip,
-             last_game_at = EXCLUDED.last_game_at`,
-          [
-            game,
-            lo.userId,
-            hi.userId,
-            loWin,
-            hiWin,
-            1 - loWin - hiWin,
-            Math.max(1, counts.get(`${lo.userId}:${hi.userId}`) ?? 1),
-            device,
-            network,
-            at,
-          ],
-        );
+        pairs.push({
+          lo: lo.userId,
+          hi: hi.userId,
+          loWins: loWin,
+          hiWins: hiWin,
+          draws: 1 - loWin - hiWin,
+          peak: Math.max(1, counts.get(`${lo.userId}:${hi.userId}`) ?? 1),
+          device: shared.device !== null,
+          network: shared.network !== null,
+        });
       }
     }
+    if (pairs.length === 0) return;
+    // every pair's signals written in one statement (each pair is its own row)
+    await client.query(
+      `INSERT INTO rating_pair_signals (game, user_lo, user_hi, games, lo_wins, hi_wins, draws, peak_24h, shared_device, shared_ip, last_game_at)
+       SELECT $1::text, p.lo, p.hi, 1, p.lo_wins, p.hi_wins, p.draws, p.peak, p.device, p.network, $2::timestamptz
+         FROM unnest($3::uuid[], $4::uuid[], $5::int[], $6::int[], $7::int[], $8::int[], $9::boolean[], $10::boolean[])
+           AS p(lo, hi, lo_wins, hi_wins, draws, peak, device, network)
+       ON CONFLICT (game, user_lo, user_hi) DO UPDATE SET
+         games = rating_pair_signals.games + 1,
+         lo_wins = rating_pair_signals.lo_wins + EXCLUDED.lo_wins,
+         hi_wins = rating_pair_signals.hi_wins + EXCLUDED.hi_wins,
+         draws = rating_pair_signals.draws + EXCLUDED.draws,
+         peak_24h = GREATEST(rating_pair_signals.peak_24h, EXCLUDED.peak_24h),
+         shared_device = EXCLUDED.shared_device,
+         shared_ip = EXCLUDED.shared_ip,
+         last_game_at = EXCLUDED.last_game_at`,
+      [
+        game,
+        at,
+        pairs.map((x) => x.lo),
+        pairs.map((x) => x.hi),
+        pairs.map((x) => x.loWins),
+        pairs.map((x) => x.hiWins),
+        pairs.map((x) => x.draws),
+        pairs.map((x) => x.peak),
+        pairs.map((x) => x.device),
+        pairs.map((x) => x.network),
+      ],
+    );
   }
 
   // -------------------------------------------------------------------------
@@ -552,13 +589,25 @@ export class RankService {
    * and one still in an earlier season as the season job will roll it.
    */
   private async currentState(db: Executor, userId: string, game: RankedGame, at: Date): Promise<PlayerState> {
-    const row = (
-      await db.query<RatingRow>(`SELECT * FROM game_ratings WHERE user_id = $1 AND game = $2`, [userId, game])
-    ).rows[0];
+    return (await this.currentStates(db, [userId], game, at)).get(userId)!;
+  }
+
+  /** `currentState` for each of these players, in one query. */
+  private async currentStates(db: Executor, userIds: readonly string[], game: RankedGame, at: Date): Promise<Map<string, PlayerState>> {
+    const rows = await db.query<RatingRow>(`SELECT * FROM game_ratings WHERE user_id = ANY($1::uuid[]) AND game = $2`, [[...userIds], game]);
+    const byId = new Map(rows.rows.map((r) => [r.user_id, r]));
     const seasonId = seasonOf(at).id;
-    if (!row) return freshState(seasonId);
-    const state = stateOf(row);
-    return state.seasonId < seasonId ? seasonReset(state, seasonId) : state;
+    const out = new Map<string, PlayerState>();
+    for (const userId of userIds) {
+      const row = byId.get(userId);
+      if (!row) {
+        out.set(userId, freshState(seasonId));
+        continue;
+      }
+      const state = stateOf(row);
+      out.set(userId, state.seasonId < seasonId ? seasonReset(state, seasonId) : state);
+    }
+    return out;
   }
 
   /**
@@ -567,19 +616,44 @@ export class RankService {
    * judged only once the game has FEW_PLAYERS of them.
    */
   private async isSterk(db: Executor, game: RankedGame, state: PlayerState, at: Date): Promise<boolean> {
-    const points = pointsOf(state.mu, state.sigma);
-    if (points < STERK_RULE.minPoints || state.ratedGames < STERK_RULE.minGames) return false;
-    if (!state.lastRatedAt || at.getTime() - state.lastRatedAt.getTime() > STERK_RULE.activeDays * DAY) return false;
-    const standing = await db.query<{ active: number; above: number }>(
-      `SELECT count(*)::int AS active, count(*) FILTER (WHERE r.points > $2)::int AS above
-         FROM game_ratings r JOIN users u ON u.id = r.user_id
-        WHERE r.game = $1 AND r.placement_done AND r.last_rated_at > $3::timestamptz - make_interval(days => $4)
-          AND NOT ${RESTRICTED_SQL('u')}`,
-      [game, points, at, RESTING_DAYS],
+    return (await this.sterkAmong(db, game, [state], at))[0]!;
+  }
+
+  /**
+   * `isSterk` for each of these standings in one game, in their order: the
+   * game's active rated players are counted once, with how many are above
+   * each of them, in one query (none when nobody passes the other rules).
+   */
+  private async sterkAmong(db: Executor, game: RankedGame, states: readonly PlayerState[], at: Date): Promise<boolean[]> {
+    const points = states.map((s) => pointsOf(s.mu, s.sigma));
+    const eligible = states.map(
+      (s, i) =>
+        points[i]! >= STERK_RULE.minPoints &&
+        s.ratedGames >= STERK_RULE.minGames &&
+        s.lastRatedAt !== null &&
+        at.getTime() - s.lastRatedAt.getTime() <= STERK_RULE.activeDays * DAY,
+    );
+    const asked = points.filter((_, i) => eligible[i]);
+    if (asked.length === 0) return states.map(() => false);
+    const standing = await db.query<{ active: number; above: number[] }>(
+      `WITH active AS (
+         SELECT r.points FROM game_ratings r JOIN users u ON u.id = r.user_id
+          WHERE r.game = $1 AND r.placement_done AND r.last_rated_at > $2::timestamptz - make_interval(days => $3)
+            AND NOT ${RESTRICTED_SQL('u')}
+       )
+       SELECT (SELECT count(*)::int FROM active) AS active,
+              ARRAY(SELECT (SELECT count(*)::int FROM active a WHERE a.points > c.points)
+                      FROM unnest($4::int[]) WITH ORDINALITY AS c(points, n) ORDER BY c.n) AS above`,
+      [game, at, RESTING_DAYS, asked],
     );
     const { active, above } = standing.rows[0]!;
-    if (active < FEW_PLAYERS) return false;
-    return above + 1 <= Math.max(STERK_RULE.minTop, Math.ceil(active * STERK_RULE.topShare));
+    let k = 0;
+    return states.map((_, i) => {
+      if (!eligible[i]) return false;
+      const over = above[k++]!;
+      if (active < FEW_PLAYERS) return false;
+      return over + 1 <= Math.max(STERK_RULE.minTop, Math.ceil(active * STERK_RULE.topShare));
+    });
   }
 
   // -------------------------------------------------------------------------
@@ -650,8 +724,8 @@ export class RankService {
     const counts = j.decision === 'rated' || j.decision === 'damped';
     // the eligibility is read only when the badge is Rated; the new-account rule still shapes the numbers
     const eligibility = j.eligibility.size ? j.eligibility : await this.eligibility(this.pool, lobby.seats.map((s) => s.userId), at);
-    const states = new Map<string, PlayerState>();
-    for (const s of lobby.seats) states.set(s.userId, await this.currentState(this.pool, s.userId, game, at));
+    // every seat's standing in one read
+    const states = await this.currentStates(this.pool, lobby.seats.map((s) => s.userId), game, at);
     const contender = (id: string) => ({ state: states.get(id)!, newAccount: eligibility.get(id)?.newAccount ?? false });
     const me = contender(viewerId);
     const pairs = counts ? await this.pairCounts(this.pool, game, lobby.seats.map((s) => s.userId), at, lobbyId) : new Map<string, number>();
@@ -799,15 +873,21 @@ export class RankService {
       prev = r.points;
       out.push({ position, name: r.user_id === viewerId ? null : r.name, isMe: r.user_id === viewerId, points: r.points, tier: null, division: null, placing: !r.placement_done, resting: false });
     });
+    const states = rows.map((r) => {
+      const state = stateOf(r);
+      return state.seasonId < seasonOf(at).id ? seasonReset(state, seasonOf(at).id) : state;
+    });
+    // whether each placed row is Stêrk, for the whole board in one query
+    const placed = rows.flatMap((_, i) => (out[i]!.placing ? [] : [i]));
+    const sterk = await this.sterkAmong(this.pool, game, placed.map((i) => states[i]!), at);
+    const sterkAt = new Map(placed.map((i, k) => [i, sterk[k]!]));
     for (let i = 0; i < rows.length; i++) {
       const r = rows[i]!;
-      let state = stateOf(r);
-      if (state.seasonId < seasonOf(at).id) state = seasonReset(state, seasonOf(at).id);
       const e = out[i]!;
-      const resting = isResting(state, at);
+      const resting = isResting(states[i]!, at);
       e.resting = resting && !e.isMe;
       if (e.placing) continue;
-      e.tier = (await this.isSterk(this.pool, game, state, at)) ? 'sterk' : tierOf(r.points);
+      e.tier = sterkAt.get(i) ? 'sterk' : tierOf(r.points);
       e.division = e.tier === 'sterk' ? null : divisionOf(r.points);
     }
     return out;

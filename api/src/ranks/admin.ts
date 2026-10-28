@@ -25,6 +25,7 @@ import {
   lockStates,
   toStored,
   writeState,
+  writeStates,
   type StoredState,
 } from './store.js';
 
@@ -320,7 +321,8 @@ export class RankAdmin {
           states.set(ev.user_id, fromStored(ev.state_after));
         }
       }
-      for (const [userId, state] of states) await writeState(client, userId, game, state);
+      // every replayed standing written back in one statement
+      await writeStates(client, game, [...states].map(([userId, state]) => ({ userId, state })));
       return { replayedGames: replayed, players: states.size };
     });
   }
