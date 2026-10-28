@@ -227,7 +227,8 @@ export function SignIn({ warm, children }: { warm: () => Promise<unknown>; child
           <Rail at={at} busy={step === 'checking'} />
         </header>
         <div ref={stage} className="login-stage">
-          <Companion status={companion} watch={card} className="login-companion" />
+          {/* the email first: only his head and neck over the card; then he climbs out over it */}
+          <Companion status={companion} watch={card} low={step === 'email'} className="login-companion" />
           <div ref={card} className="login-card gate-card has-companion" aria-busy={step === 'checking' || step === 'opening' || undefined}>
             <Wheel face={step === 'in' ? 'checking' : step} back={back}>
               {content}

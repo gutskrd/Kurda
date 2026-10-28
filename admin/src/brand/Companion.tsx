@@ -13,16 +13,30 @@ export const stillWanted = (): boolean => typeof window.matchMedia === 'function
  * characters/companion), in the console's calm tone: the same reactions as
  * on the website at a smaller size, and no words. He watches the boxes in
  * `watch` as they are filled in, covers his eyes for a password, and takes
- * the form's `status`. Decorative: the form says in words whatever he shows.
+ * the form's `status`. While `low`, he shows only his head and neck over the
+ * card, and once it is not, he climbs out and lays his forelegs over it.
+ * Decorative: the form says in words whatever he shows.
  */
-export function Companion({ status, watch, className }: { status: CompanionStatus; watch: React.RefObject<HTMLElement | null>; className?: string }): React.JSX.Element {
+export function Companion({
+  status,
+  watch,
+  low = false,
+  className,
+}: {
+  status: CompanionStatus;
+  watch: React.RefObject<HTMLElement | null>;
+  low?: boolean;
+  className?: string;
+}): React.JSX.Element {
   const host = useRef<HTMLSpanElement>(null);
   const player = useRef<CompanionPlayer | null>(null);
   const prefix = `cp${useId().replace(/[^\w-]/g, '')}`;
+  // as he is when he first comes up; later changes are played as they come
+  const lowAtFirst = useRef(low);
 
   useEffect(() => {
     if (!host.current) return undefined;
-    const p = new CompanionPlayer(host.current, { tone: 'calm', prefix });
+    const p = new CompanionPlayer(host.current, { tone: 'calm', prefix, low: lowAtFirst.current });
     p.watch(watch.current);
     player.current = p;
     return () => {
@@ -34,6 +48,10 @@ export function Companion({ status, watch, className }: { status: CompanionStatu
   useEffect(() => {
     player.current?.status(status);
   }, [status]);
+
+  useEffect(() => {
+    player.current?.keepLow(low);
+  }, [low]);
 
   return <span ref={host} className={className ? `companion ${className}` : 'companion'} aria-hidden="true" />;
 }
