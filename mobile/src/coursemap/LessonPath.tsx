@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
+import { Animated, Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import {
   PATH_GEOMETRY,
@@ -22,8 +22,10 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
+import { timing } from '../theme/animate';
 import { display } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
+import { duration } from '../theme/motion';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -374,17 +376,22 @@ function PathStopView({
   );
 }
 
-/** A unit's banner, in its colour, sitting on a darker lip of the same colour. */
+/**
+ * A unit's banner, in its colour, sitting on a darker lip of the same colour:
+ * where one unit ends and the next begins, so the path needs no other line
+ * between them. Its number and name are one heading, read as one ("Unit 2,
+ * Family & Food"), as the pinned header reads it once the banner has gone up.
+ */
 function Banner({ unit, tone, onGuide }: { unit: Unit; tone: ToneColors; onGuide: () => void }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   return (
     <View style={[styles.bannerLip, { backgroundColor: tone.lip }]}>
       <View style={[styles.banner, { backgroundColor: tone.fill }]}>
-        <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
-        <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]} accessibilityRole="header">
-          {unit.title}
-        </Text>
+        <View accessible accessibilityRole="header" accessibilityLabel={unitHeading(t('coursemap.path.unit', { n: unit.number }), unit.title)}>
+          <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]}>{t('coursemap.path.unit', { n: unit.number })}</Text>
+          <Text style={[styles.bannerTitle, dir.text, { color: tone.ink }]}>{unit.title}</Text>
+        </View>
         {unit.topics.length > 0 ? <Text style={[styles.topics, dir.text, { color: tone.ink }]}>{unit.topics.join(' · ')}</Text> : null}
         <View style={[styles.bannerFoot, { flexDirection: dir.row }]}>
           <Text style={[styles.count, { color: tone.ink }]}>{t('coursemap.path.unitDone', { done: unit.done, total: unit.total })}</Text>
@@ -406,22 +413,70 @@ function Banner({ unit, tone, onGuide }: { unit: Unit; tone: ToneColors; onGuide
   );
 }
 
+/** "Unit 2, Family & Food": a unit's number and name, said as one heading. */
+function unitHeading(number: string, title: string): string {
+  return `${number}, ${title}`;
+}
+
 /**
  * The unit being scrolled through, pinned to the top of the page once its own
- * banner has gone up out of sight: one line, in the unit's colour, so it is
- * always clear which unit these stops belong to — and its guide still one
- * tap away.
+ * banner has gone up out of sight: its number over its name, in the unit's
+ * colour, so it is always clear which unit these stops belong to — and its
+ * guide still one tap away.
+ *
+ * Scrolled on into the next unit, it turns into that one: the new colour and
+ * name cross-fade in over the old (`duration.base`, opacity alone, on the
+ * native driver). Under Reduce Motion it simply changes.
  */
 export function PinnedUnit({ unit }: { unit: UnitPlace }): React.JSX.Element {
+  const reduce = useReducedMotion();
+  const fade = useRef(new Animated.Value(1)).current;
+  // the unit it is turning from, drawn under the new one while that fades in
+  const [from, setFrom] = useState<UnitPlace | null>(null);
+  const last = useRef(unit);
+  useEffect(() => {
+    const before = last.current;
+    last.current = unit;
+    if (before.unitId === unit.unitId) return;
+    if (reduce) {
+      setFrom(null);
+      fade.setValue(1);
+      return;
+    }
+    setFrom(before);
+    fade.setValue(0);
+    const run = timing(fade, 1, duration.base);
+    run.start(({ finished }) => {
+      if (finished) setFrom(null);
+    });
+    return () => run.stop();
+    // a new unit, not a new object for the same one, is what turns it
+  }, [unit.unitId, reduce]);
+  return (
+    <View testID="lp-pinned-unit">
+      {from ? (
+        <View style={StyleSheet.absoluteFill} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <PinFace unit={from} />
+        </View>
+      ) : null}
+      <Animated.View style={{ opacity: fade }}>
+        <PinFace unit={unit} />
+      </Animated.View>
+    </View>
+  );
+}
+
+function PinFace({ unit }: { unit: UnitPlace }): React.JSX.Element {
   const { t } = useI18n();
   const dir = useDirection();
   const { tone } = unit;
+  const number = t('coursemap.path.unit', { n: unit.number });
   return (
-    <View style={[styles.pinLip, { backgroundColor: tone.lip }]} testID="lp-pinned-unit">
+    <View style={[styles.pinLip, { backgroundColor: tone.lip }]}>
       <View style={[styles.pin, { flexDirection: dir.row, backgroundColor: tone.fill }]}>
-        <View style={styles.pinWords}>
+        <View style={styles.pinWords} accessible accessibilityRole="header" accessibilityLabel={unitHeading(number, unit.title)}>
           <Text style={[styles.eyebrow, dir.text, { color: tone.ink }]} numberOfLines={1}>
-            {t('coursemap.path.unit', { n: unit.number })}
+            {number}
           </Text>
           <Text style={[styles.pinTitle, dir.text, { color: tone.ink }]} numberOfLines={1}>
             {unit.title}

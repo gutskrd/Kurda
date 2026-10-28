@@ -8,12 +8,14 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { Animated } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
-import { LessonPath } from './LessonPath';
+import { LessonPath, PinnedUnit, type UnitPlace } from './LessonPath';
+import { TONES } from './path';
 import type { CourseMap, SkillNode } from './types';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -171,5 +173,35 @@ describe('the lesson path', () => {
     expect(within(sheet).getByText('Passed with 2 mistakes or fewer')).toBeTruthy();
     fireEvent.click(within(sheet).getByRole('button', { name: 'Start the test' }));
     expect(navigation.navigate).toHaveBeenCalledWith('JumpTest', { courseId: 'c1', unitId: 'u3' });
+  });
+
+  /*
+   * Scrolled into the next unit, the pinned header turns into it: the new
+   * colour and name fade in over the old (opacity alone), which goes once they
+   * have — or, for anyone who asked for less motion, it simply changes.
+   * Animations finish at once in tests, so what is checked is the fade asked
+   * for, and where it ends.
+   */
+  it('cross-fades the pinned header into the next unit, and changes it at once under Reduce Motion', async () => {
+    const first: UnitPlace = { unitId: 'u1', top: 0, bannerBottom: 120, bottom: 600, number: 1, title: 'Basics', tone: TONES.dark.meadow };
+    const second: UnitPlace = { ...first, unitId: 'u2', number: 2, title: 'Family & Food', tone: TONES.dark.river };
+    const fades = vi.spyOn(Animated, 'timing');
+    const turn = async () => {
+      fades.mockClear();
+      const view = renderWithProviders(<PinnedUnit unit={first} />);
+      // the number over the name, said as one heading
+      expect(screen.getByRole('heading', { name: 'Unit 1, Basics' })).toBeTruthy();
+      await act(async () => new Promise((resolve) => setTimeout(resolve, 0)));
+      view.rerender(<PinnedUnit unit={second} />);
+      expect(screen.getByRole('heading', { name: 'Unit 2, Family & Food' })).toBeTruthy();
+      expect(screen.queryByText('Basics')).toBeNull();
+      cleanup();
+      return fades.mock.calls.map(([, config]) => config);
+    };
+
+    patchReactNativeWeb({ reduceMotion: false });
+    expect(await turn()).toEqual([expect.objectContaining({ toValue: 1, duration: 200, useNativeDriver: true })]);
+    patchReactNativeWeb({ reduceMotion: true });
+    expect(await turn()).toEqual([]);
   });
 });

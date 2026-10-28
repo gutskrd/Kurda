@@ -32,9 +32,10 @@ const RING = 24;
  * could be lost: a streak at zero shows a cold flame and says a lesson today
  * starts one. Some of the people reading it are children.
  *
- * The streak it reads is handed on (`onStreak`), for Learn's own moments.
+ * The streak it reads is handed on (`onStreak`), for Learn's own moments; a
+ * new `reloadKey` reads all three again (Learn pulled to refresh).
  */
-export function LearnBar({ onStreak }: { onStreak?: (streak: Streak) => void }): React.JSX.Element {
+export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onStreak?: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -67,7 +68,7 @@ export function LearnBar({ onStreak }: { onStreak?: (streak: Streak) => void }):
       return () => {
         active = false;
       };
-    }, [client, onStreak]),
+    }, [client, reloadKey, onStreak]),
   );
 
   const changeGoal = useCallback(

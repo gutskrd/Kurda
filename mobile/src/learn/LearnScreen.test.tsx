@@ -1,6 +1,13 @@
 // @vitest-environment jsdom
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-vi.mock('react-native', () => import('../play/testing/native'));
+// the pull to refresh as a button: the web's RefreshControl draws nothing to pull
+vi.mock('react-native', async () => {
+  const rn = (await import('../play/testing/native')) as unknown as Record<string, unknown>;
+  const { createElement, Fragment } = await import('react');
+  const RefreshControl = ({ onRefresh, children }: { onRefresh: () => void; children?: React.ReactNode }) =>
+    createElement(Fragment, null, createElement('button', { 'aria-label': 'Pull to refresh', onClick: onRefresh }), children);
+  return { ...rn, RefreshControl };
+});
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../reports/testing/stubs'));
@@ -211,4 +218,16 @@ describe('Learn', () => {
     await act(async () => new Promise((resolve) => setTimeout(resolve, 1600)));
     expect(screen.queryByRole('button', { name: 'Start a lesson' })).toBeNull();
   }, 15_000);
+
+  it('reads the course and the streak again when pulled down', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
+    await screen.findByRole('button', { name: 'Continue' });
+    await screen.findByRole('button', { name: 'Streak: 6 days' });
+    const count = (path: string) => (testAuth.client as ReturnType<typeof fakeClient>).calls.filter((c) => c.path === path).length;
+    const before = { map: count('/courses/c1/map'), me: count('/me') };
+    fireEvent.click(screen.getByRole('button', { name: 'Pull to refresh' }));
+    await waitFor(() => expect(count('/courses/c1/map')).toBe(before.map + 1));
+    await waitFor(() => expect(count('/me')).toBe(before.me + 1));
+  });
 });
