@@ -1,5 +1,6 @@
 import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
@@ -30,7 +31,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
 
   return (
     <View style={[styles.bar, { backgroundColor: colors.glassFill }]}>
-      <Pressable
+      <PressableScale
         onPress={toggle}
         style={[styles.button, { backgroundColor: colors.primaryStrong }]}
         accessibilityRole="button"
@@ -38,7 +39,7 @@ export function AudioPlayer({ url }: { url: string }): React.JSX.Element {
         hitSlop={8}
       >
         <Text style={[styles.symbol, { color: colors.textOnPrimary }]}>{status.playing ? '❚❚' : '▶'}</Text>
-      </Pressable>
+      </PressableScale>
       <View style={styles.track}>
         <View style={[styles.trackBg, { backgroundColor: colors.controlTrack }]}>
           <View style={[styles.trackFill, { backgroundColor: colors.primary, width: `${progress * 100}%` }]} />

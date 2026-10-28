@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Linking, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { AccessibilityInfo, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import {
   HELPLINE_URL,
@@ -20,7 +21,7 @@ import type { RootNavigation } from '../navigation/rootStack';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Icon } from '../theme/Icon';
 import { ClayButton } from '../theme/glass';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -111,7 +112,7 @@ export function ReportSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title={title} icon="flag" contentStyle={styles.scroller}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
+      <SheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.body}>
         {step === 'category' ? (
           <CategoryStep
             onPick={(c) => {
@@ -141,7 +142,7 @@ export function ReportSheet({
             onLeftGroup={onLeftGroup}
           />
         ) : null}
-      </ScrollView>
+      </SheetScrollView>
     </BottomSheet>
   );
 }
@@ -375,14 +376,14 @@ function DoneStep({
       </View>
 
       {receipt.help ? (
-        <Pressable
+        <PressableScale
           onPress={() => void Linking.openURL(receipt.help?.url ?? HELPLINE_URL)}
           accessibilityRole="link"
           style={[styles.helpRow, { flexDirection: dir.row, backgroundColor: colors.successFill }]}
         >
           <Icon name="lifebuoy" size={20} color={colors.success} />
           <Text style={[styles.helpRowText, { color: colors.textPrimary }]}>{t('report.help.find')}</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
 
       <View style={[styles.next, { backgroundColor: colors.controlTrack }]}>

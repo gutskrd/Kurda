@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { SHOWCASE_SIZE, nearestBadges, type BadgeView, type BadgesResponse } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -187,12 +188,12 @@ function Showcase({ data, onPick, onOpen }: { data: BadgesResponse; onPick: () =
             );
           }
           return (
-            <Pressable key={b.key} onPress={() => onOpen(b)} accessibilityRole="button" accessibilityLabel={badgeLabel(t, b)} style={styles.slot}>
+            <PressableScale key={b.key} onPress={() => onOpen(b)} accessibilityRole="button" accessibilityLabel={badgeLabel(t, b)} style={styles.slot}>
               <BadgeMedal badgeKey={b.key} tier={b.tier} tierCount={b.tierCount} size={84} label={badgeLabel(t, b)} shine="loop" />
               <Text style={[styles.slotName, { color: colors.textPrimary }]} numberOfLines={1}>
                 {badgeName(t, b.key)}
               </Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -280,11 +281,11 @@ function BadgeTile({ badge, width, onPress }: { badge: BadgeView; width: number;
   const progress = badge.hidden ? null : progressText(t, badge);
   const size = Math.min(76, width - spacing.sm * 2);
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={[label, progress].filter(Boolean).join('. ')}
-      style={({ pressed }) => [styles.tile, { width, opacity: pressed ? 0.7 : 1 }]}
+      style={[styles.tile, { width }]}
     >
       <BadgeMedal badgeKey={badge.key} tier={badge.tier} tierCount={badge.tierCount} hidden={badge.hidden} size={size} label={label} />
       <Text style={[styles.tileName, { color: badge.tier > 0 ? colors.textPrimary : colors.textSecondary }]} numberOfLines={2}>
@@ -294,7 +295,7 @@ function BadgeTile({ badge, width, onPress }: { badge: BadgeView; width: number;
       {!badge.hidden && badge.next !== null ? (
         <Meter fraction={nextFraction(badge)} tint={badgeTint(badge.tier + 1, scheme)} height={4} style={styles.tileMeter} />
       ) : null}
-    </Pressable>
+    </PressableScale>
   );
 }
 

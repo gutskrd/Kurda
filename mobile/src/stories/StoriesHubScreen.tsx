@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import {
   STORY_DIALECTS,
   STORY_LENGTHS,
@@ -322,7 +323,7 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
         ? t('stories.status.reading')
         : t('stories.questionOf', { index: game.currentIndex + 1, total: game.total });
   return (
-    <Pressable
+    <PressableScale
       onPress={onOpen}
       accessibilityRole="button"
       // the story's title is read in the story's language; the app's words about it go in the value
@@ -330,7 +331,7 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
       {...storyTextProps(game.dialect)}
       accessibilityValue={{ text: `${t(MODE_KEY[game.mode])}, ${where}` }}
       accessibilityHint={t('stories.continue')}
-      style={({ pressed }) => [styles.continue, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
+      style={[styles.continue, { backgroundColor: colors.glassFill }]}
     >
       <View style={styles.rowMain}>
         <Text {...storyTextProps(game.dialect)} style={[styles.rowTitle, { color: colors.textPrimary }, storyTextStyle(game.dialect)]} numberOfLines={1}>
@@ -342,7 +343,7 @@ function ContinueCard({ game, onOpen }: { game: StoryGameSummary; onOpen: () => 
       </View>
       <Text style={[styles.continueText, { color: colors.primary }]}>{t('stories.continueButton')}</Text>
       <Icon name="chevron-right" size={16} color={colors.primary} />
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -397,14 +398,14 @@ function StoryRow({
   if (story.fullyNarrated) facts.push(t('stories.narrated'));
   if (done) facts.push(done);
   return (
-    <Pressable
+    <PressableScale
       onPress={onOpen}
       accessibilityRole="button"
       // the title in the story's language; its facts, in the app's words, as the value
       accessibilityLabel={story.title}
       {...storyTextProps(story.dialect)}
       accessibilityValue={{ text: facts.join(', ') }}
-      style={({ pressed }) => [styles.story, { backgroundColor: colors.glassFill, opacity: pressed ? 0.85 : 1 }]}
+      style={[styles.story, { backgroundColor: colors.glassFill }]}
     >
       <Text {...storyTextProps(story.dialect)} style={[styles.storyTitle, { color: colors.textPrimary }, storyTextStyle(story.dialect)]}>
         {story.title}
@@ -421,7 +422,7 @@ function StoryRow({
         {story.fullyNarrated ? <Pill icon="headphones" label={t('stories.narratedShort')} tone="primary" /> : null}
         {done ? <Pill icon="check" label={done} tone="success" /> : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 

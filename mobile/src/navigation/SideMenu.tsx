@@ -1,21 +1,12 @@
 import { createContext, useCallback, useContext, useEffect, useRef, type ReactNode } from 'react';
-import {
-  Animated,
-  BackHandler,
-  Dimensions,
-  Easing,
-  Platform,
-  PanResponder,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Animated, BackHandler, Dimensions, Platform, PanResponder, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { rubberBand, snapTarget } from '@kurda/shared';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { DragSamples, releaseSpring } from '../theme/animate';
 import { Icon, type IconName } from '../theme/Icon';
+import { DRAG_SLOP } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { sectionLabel } from '../theme/fonts';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -24,21 +15,13 @@ import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
 
 /**
- * How much of the screen the panel covers, and how long it takes.
+ * How much of the screen the panel covers.
  *
  * The strip of the screen left over is not decoration. It is what tells you
  * the app is still behind the panel rather than replaced by it, and it is
  * where you tap to get back.
  */
 const WIDTH_RATIO = 0.84;
-const DURATION = 250;
-
-/** Quick off the edge and settling gently: a sine ease-out. */
-const EASE = Easing.out(Easing.sin);
-
-/** Past this much of the way, a flick opens rather than falls back. */
-const COMMIT = 0.4;
-
 
 export interface MenuLink {
   key: string;
@@ -103,19 +86,19 @@ export function SideMenu({
   const reduceMotion = useReducedMotion();
 
   const width = Math.round(Dimensions.get('window').width * WIDTH_RATIO);
-  const slide = useRef(new Animated.Value(0)).current;
+  // how far the panel is from open, towards its edge: 0 is open, `width` is gone
+  const away = useRef(new Animated.Value(open ? 0 : width)).current;
+  // the speed a drag let go at, for the spring that finishes what it started
+  const flick = useRef(0);
 
   useEffect(() => {
+    const to = open ? 0 : width;
     if (reduceMotion) {
-      slide.setValue(open ? 1 : 0);
+      away.setValue(to);
       return;
     }
-    const anim = Animated.timing(slide, {
-      toValue: open ? 1 : 0,
-      duration: DURATION,
-      useNativeDriver: true,
-      easing: EASE,
-    });
+    const v = flick.current;
+    flick.current = 0;
     /*
      * Started and left alone.
      *
@@ -126,8 +109,8 @@ export function SideMenu({
      * supersedes an earlier animation on the same value when a new one starts,
      * so there was never anything to clean up.
      */
-    anim.start();
-  }, [open, reduceMotion, slide]);
+    releaseSpring(away, to, v, { kind: v ? 'release' : 'standard' }).start();
+  }, [open, reduceMotion, away, width]);
 
   // the system back gesture closes the panel before it leaves the screen
   useEffect(() => {
@@ -140,34 +123,61 @@ export function SideMenu({
     return () => sub.remove();
   }, [open, onClose]);
 
-  /**
-   * Drag it shut.
-   *
-   * Only horizontal movement claims the gesture, so a list inside the panel
-   * still scrolls. Letting go past 40% of the way finishes the direction you
-   * were already going.
-   */
-  const pan = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > 8 && Math.abs(g.dx) > Math.abs(g.dy),
-      onPanResponderMove: (_e, g) => {
-        // towards the edge it came from closes it; the other way does nothing
-        const towardsEdge = Math.max(0, signRef.current * g.dx);
-        slide.setValue(Math.max(0, Math.min(1, 1 - towardsEdge / width)));
-      },
-      onPanResponderRelease: (_e, g) => {
-        const travelled = Math.max(0, signRef.current * g.dx) / width;
-        if (travelled > COMMIT || signRef.current * g.vx > 0.5) onCloseRef.current();
-        else Animated.timing(slide, { toValue: 1, duration: 150, useNativeDriver: true }).start();
-      },
-    }),
-  ).current;
-
   // the responder is built once; these keep what it reads current
   const onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const signRef = useRef(sign);
   signRef.current = sign;
+  const widthRef = useRef(width);
+  widthRef.current = width;
+
+  /**
+   * Drag it shut.
+   *
+   * Only horizontal movement claims the gesture, so a list inside the panel
+   * still scrolls. It follows the finger one to one towards its edge, and
+   * gives with the rubber band the other way, where there is nothing more to
+   * open. Let go, it goes where the flick would have carried it — shut, or
+   * back open — and the spring starts at the finger's speed.
+   */
+  const pan = useRef(
+    (() => {
+      const drag = { from: 0, at: 0, dx0: 0 };
+      const samples = new DragSamples();
+      const release = () => {
+        const v = samples.velocity();
+        if (snapTarget(drag.at, v, [0, widthRef.current]) > 0) {
+          flick.current = v;
+          onCloseRef.current();
+        } else {
+          releaseSpring(away, 0, v).start();
+        }
+      };
+      return PanResponder.create({
+        onMoveShouldSetPanResponder: (_e, g) => Math.abs(g.dx) > DRAG_SLOP && Math.abs(g.dx) > Math.abs(g.dy),
+        onPanResponderGrant: (_e, g) => {
+          // from where the finger caught it, even mid-flight
+          drag.dx0 = g.dx;
+          drag.from = 0;
+          drag.at = 0;
+          away.stopAnimation((v) => {
+            drag.from = v;
+          });
+          samples.add(signRef.current * g.dx);
+        },
+        onPanResponderMove: (_e, g) => {
+          // positive is towards the edge it came from
+          samples.add(signRef.current * g.dx);
+          const p = drag.from + signRef.current * (g.dx - drag.dx0);
+          drag.at = p < 0 ? -rubberBand(-p, widthRef.current) : Math.min(p, widthRef.current);
+          away.setValue(drag.at);
+        },
+        onPanResponderRelease: release,
+        onPanResponderTerminate: release,
+        onPanResponderTerminationRequest: () => false,
+      });
+    })(),
+  ).current;
 
   const renderLink = useCallback(
     (link: MenuLink) => (
@@ -203,7 +213,10 @@ export function SideMenu({
       importantForAccessibility={open ? 'auto' : 'no-hide-descendants'}
     >
       <Animated.View
-        style={[StyleSheet.absoluteFill, { backgroundColor: colors.scrim, opacity: slide }]}
+        style={[
+          StyleSheet.absoluteFill,
+          { backgroundColor: colors.scrim, opacity: away.interpolate({ inputRange: [0, width], outputRange: [1, 0], extrapolate: 'clamp' }) },
+        ]}
         pointerEvents={open ? 'auto' : 'none'}
       >
         <Pressable
@@ -225,12 +238,12 @@ export function SideMenu({
             backgroundColor: colors.background,
             paddingTop: insets.top + spacing.md,
             paddingBottom: insets.bottom,
-            transform: [
-              { translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [sign * width, 0] }) },
-            ],
+            transform: [{ translateX: away.interpolate({ inputRange: [0, 1], outputRange: [0, sign] }) }],
           },
         ]}
       >
+        {/* past the screen's edge, so a panel pulled further open than it goes shows more panel, not a gap */}
+        <View pointerEvents="none" style={[styles.skirt, fromRight ? styles.skirtRight : styles.skirtLeft, { width, backgroundColor: colors.background }]} />
         {header ? <View style={styles.header}>{header}</View> : null}
 
         <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
@@ -275,6 +288,9 @@ const styles = StyleSheet.create({
   },
   panelLeft: { left: 0 },
   panelRight: { right: 0 },
+  skirt: { position: 'absolute', top: 0, bottom: 0 },
+  skirtLeft: { right: '100%' },
+  skirtRight: { left: '100%' },
   header: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, paddingBottom: spacing.sm },
   body: { paddingBottom: spacing.lg },
   group: { paddingVertical: spacing.xs },

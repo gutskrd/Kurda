@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Animated, Easing, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Animated, Modal, Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { radii, spacing, typography } from './tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -9,8 +9,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useDirection } from '../reports/direction';
 import { haptic } from '../feedback/haptics';
-import { usePressScale } from './animate';
-import { MenuIn } from './MotionParts';
+import { springTo, usePressScale } from './animate';
+import { MenuIn, heldRow } from './MotionParts';
 import { EmptyState } from './EmptyState';
 
 /** Full-bleed spatial gradient backdrop for a screen. */
@@ -95,7 +95,7 @@ export function GlassRow({
   const titleColor = destructive ? colors.danger : colors.textPrimary;
   const body = (pressed: boolean) => (
     <>
-      <View style={[styles.row, pressed && { opacity: 0.6 }]}>
+      <View style={[styles.row, pressed && heldRow(colors.controlTrack)]}>
         {icon ? (
           <View style={styles.rowIcon}>
             <Icon name={icon} size={20} color={iconColor ?? (destructive ? colors.danger : colors.primary)} />
@@ -329,7 +329,7 @@ export function Segmented<T extends string>({
       x.setValue(to);
       return;
     }
-    Animated.timing(x, { toValue: to, duration: 200, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
+    springTo(x, to).start();
   }, [index, seg, x, reduceMotion]);
 
   return (
@@ -410,7 +410,7 @@ export function GlassSelect<T extends string>({
       <Pressable onPress={() => setOpen(true)} accessibilityRole="button" accessibilityLabel={label}>
         {({ pressed }) => (
           <>
-            <View style={[styles.row, pressed && { opacity: 0.6 }]}>
+            <View style={[styles.row, pressed && heldRow(colors.controlTrack)]}>
               {icon ? (
                 <View style={styles.rowIcon}>
                   <Icon name={icon} size={20} color={colors.primary} />
@@ -443,7 +443,7 @@ export function GlassSelect<T extends string>({
                       }}
                       accessibilityRole="button"
                       accessibilityState={{ selected: active }}
-                      style={styles.selectOption}
+                      style={({ pressed }) => [styles.selectOption, pressed && heldRow(colors.controlTrack)]}
                     >
                       <Text style={[styles.selectOptionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.selectOptionActive]}>
                         {labelOf(opt)}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -80,7 +81,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
         {friends.map((f) => (
-          <Pressable
+          <PressableScale
             key={f.userId}
             onPress={() => navigation.navigate('UserProfile', { userId: f.userId })}
             accessibilityRole="button"
@@ -96,7 +97,7 @@ export function ProfileFriends({ userId }: { userId: string }): React.JSX.Elemen
             <Text style={[styles.name, { color: colors.textSecondary }]} numberOfLines={1}>
               {f.displayName || f.username}
             </Text>
-          </Pressable>
+          </PressableScale>
         ))}
       </ScrollView>
 

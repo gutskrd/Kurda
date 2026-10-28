@@ -441,7 +441,6 @@ export function SessionPlayer({
       onExit();
       return;
     }
-    haptic('select');
     setLeaving(true);
   };
 

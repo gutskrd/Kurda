@@ -1,4 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { badgeDef, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -53,7 +54,7 @@ export function ProgressShowcase({
             {t('profile.showcase')}
           </Text>
           {badges.length > 0 ? (
-            <Pressable
+            <PressableScale
               onPress={onBadges}
               disabled={!onBadges}
               accessibilityRole={onBadges ? 'button' : undefined}
@@ -68,7 +69,7 @@ export function ProgressShowcase({
                   </Text>
                 </View>
               ))}
-            </Pressable>
+            </PressableScale>
           ) : (
             <Pressable
               onPress={onBadges}

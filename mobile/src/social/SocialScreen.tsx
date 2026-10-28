@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -172,7 +173,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
   const row = (u: UserRow, right?: React.ReactNode, subtitle?: string) => {
     const sub = subtitle ?? u.displayName;
     return (
-      <Pressable
+      <PressableScale
         key={u.userId}
         style={[styles.row, { backgroundColor: colors.controlTrack }]}
         onPress={() => openProfile(u.userId)}
@@ -189,7 +190,7 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
           {sub ? <Text style={[styles.display, { color: colors.textSecondary }]}>{sub}</Text> : null}
         </View>
         {right}
-      </Pressable>
+      </PressableScale>
     );
   };
 
@@ -256,14 +257,14 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                       row(
                         u,
                         <View style={styles.actions}>
-                          <Pressable
+                          <PressableScale
                             onPress={() => respond(u.userId, true)}
                             style={[styles.accept, { backgroundColor: colors.primary }]}
                             accessibilityRole="button"
                             accessibilityLabel={t('friends.acceptFrom', { username: u.username })}
                           >
                             <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.accept')}</Text>
-                          </Pressable>
+                          </PressableScale>
                           <Pressable
                             onPress={() => respond(u.userId, false)}
                             hitSlop={8}
@@ -310,14 +311,14 @@ export function SocialScreen({ onExit }: { onExit: () => void }) {
                   {suggestions.map((s) =>
                     row(
                       s,
-                      <Pressable
+                      <PressableScale
                         onPress={() => addFriend(s.userId)}
                         style={[styles.accept, { backgroundColor: colors.primary }]}
                         accessibilityRole="button"
                         accessibilityLabel={t('friends.add')}
                       >
                         <Text style={[styles.acceptText, { color: colors.textOnPrimary }]}>{t('friends.add')}</Text>
-                      </Pressable>,
+                      </PressableScale>,
                       mutualText(t, s.mutualCount),
                     ),
                   )}

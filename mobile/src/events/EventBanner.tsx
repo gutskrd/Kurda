@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useArtOverride } from '../art/overrides';
 import { useAuth } from '../auth/AuthContext';
 import type { RootNavigation } from '../navigation/rootStack';
@@ -53,7 +54,7 @@ export function EventBanner() {
 
   const ink = picture ? ON_PICTURE : colors.textOnPrimary;
   return (
-    <Pressable
+    <PressableScale
       onPress={() => navigation.navigate('EventQuests')}
       style={[styles.banner, picture ? styles.pictured : null, { backgroundColor: pack ? pack.bannerColors[0] : colors.primary }]}
       accessibilityRole="button"
@@ -75,7 +76,7 @@ export function EventBanner() {
         <Text style={[styles.subtitle, { color: ink }]}>{t('events.bannerSubtitle')}</Text>
       </View>
       <Text style={[styles.chevron, { color: ink }]}>›</Text>
-    </Pressable>
+    </PressableScale>
   );
 }
 

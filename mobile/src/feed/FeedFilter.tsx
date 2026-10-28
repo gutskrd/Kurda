@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { DEFAULT_FEED_PERIOD, DEFAULT_FEED_SORT, FEED_PERIODS, FEED_SORTS, sortRanks, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -112,7 +113,7 @@ export function FeedFilterSheet({
 
   return (
     <BottomSheet visible={visible} onClose={onClose} title={t('feed.sortFilter.title')} testID="feed-filter-sheet">
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
+      <SheetScrollView style={styles.scroll} contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         <Heading>{t('feed.sort.title')}</Heading>
         <View accessibilityRole="radiogroup" accessibilityLabel={t('feed.sort.title')}>
           {FEED_SORTS.map((s) => (
@@ -136,7 +137,10 @@ export function FeedFilterSheet({
                 return (
                   <Pressable
                     key={p}
-                    onPress={() => set({ period: p })}
+                    onPress={() => {
+                      if (!on) haptic('select');
+                      set({ period: p });
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
                     accessibilityLabel={t(PERIOD_WORD[p])}
@@ -168,7 +172,7 @@ export function FeedFilterSheet({
             </View>
           ))}
         </View>
-      </ScrollView>
+      </SheetScrollView>
 
       {/* the two ways to finish, always in reach under the choices */}
       <View style={[styles.footer, { flexDirection: dir.row, borderTopColor: colors.separator }]}>
@@ -214,7 +218,10 @@ function Option({ label, hint, icon, on, onPress }: { label: string; hint?: stri
   const dir = useDirection();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        if (!on) haptic('select');
+        onPress();
+      }}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={hint ? `${label}, ${hint}` : label}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { heldRow } from '../theme/MotionParts';
 import { glossFor, type StoryDetail, type StoryGameMode, type StoryGlossEntry } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -274,7 +275,7 @@ export function StoryReaderScreen({ slug, onExit }: { slug: string; onExit: () =
                     {...props}
                     accessibilityValue={{ text: meaning.text }}
                     // the meaning sits under its word, on the side the story is written from
-                    style={[styles.wordRow, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }]}
+                    style={({ pressed }) => [styles.wordRow, { alignItems: dir.textAlign === 'right' ? 'flex-end' : 'flex-start' }, pressed && heldRow(colors.controlTrack)]}
                   >
                     <Text {...props} style={[styles.wordTerm, { color: colors.textPrimary }, dir]}>
                       {entry.term}

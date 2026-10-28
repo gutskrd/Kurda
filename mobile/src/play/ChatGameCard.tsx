@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { inviteLinkPattern, parseInvite, type LobbyCard, type PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { Translate } from '../api/errors';
@@ -164,21 +165,20 @@ export function ChatGameCard({
         <ActivityIndicator color={colors.primary} />
       )}
       {action ? (
-        <Pressable
+        <PressableScale
           onPress={open}
           onLongPress={onReport}
           delayLongPress={350}
           accessibilityRole="button"
           accessibilityLabel={`${action}: ${name}`}
           {...report}
-          style={({ pressed }) => [
+          style={[
             styles.button,
             offer?.prominent ? { backgroundColor: colors.primary } : [styles.quiet, { borderColor: colors.separator }],
-            { opacity: pressed ? 0.85 : 1 },
           ]}
         >
           <Text style={[styles.buttonText, { color: offer?.prominent ? colors.textOnPrimary : colors.primary }]}>{action}</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
     </>
   );
@@ -186,7 +186,7 @@ export function ChatGameCard({
   const label = t('play.card.label', { game: name, state });
   // someone else's card reports its message on a long press; your own is a plain surface, not a control
   return onReport ? (
-    <Pressable
+    <PressableScale
       onLongPress={onReport}
       delayLongPress={350}
       style={cardStyle}
@@ -195,7 +195,7 @@ export function ChatGameCard({
       {...(action ? {} : report)}
     >
       {content}
-    </Pressable>
+    </PressableScale>
   ) : (
     <View style={cardStyle} accessible={!action} accessibilityLabel={label}>
       {content}

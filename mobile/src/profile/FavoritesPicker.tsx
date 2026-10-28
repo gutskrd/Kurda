@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { listPosts } from '../library/api';
@@ -165,7 +166,7 @@ function Slot({
             {posts.map((p) => {
               const on = current?.id === p.id;
               return (
-                <Pressable
+                <PressableScale
                   key={p.id}
                   onPress={() => choose(p)}
                   disabled={busy}
@@ -184,7 +185,7 @@ function Slot({
                   <Text style={[styles.optionText, { color: colors.textPrimary }]} numberOfLines={1}>
                     {postName(p)}
                   </Text>
-                </Pressable>
+                </PressableScale>
               );
             })}
           </View>

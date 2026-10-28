@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useI18n } from '../i18n/I18nContext';
 import { useTheme } from '../theme/ThemeProvider';
 import { Icon } from '../theme/Icon';
@@ -46,14 +47,14 @@ export function GiftSentNote({
             <Icon name="close" size={18} color={colors.textSecondary} />
           </Pressable>
         </View>
-        <Pressable
+        <PressableScale
           onPress={onOpenChat}
           accessibilityRole="button"
-          style={({ pressed }) => [styles.open, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+          style={[styles.open, { backgroundColor: colors.primary }]}
         >
           <Icon name="chat" size={16} color={colors.textOnPrimary} />
           <Text style={[styles.openText, { color: colors.textOnPrimary }]}>{t('gift.shop.openChat')}</Text>
-        </Pressable>
+        </PressableScale>
       </View>
     </View>
   );

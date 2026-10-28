@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Image, Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Modal, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { shouldShowRefreshNotice, type ItemRefund, type RefreshedInventory, type ReturnItemResult } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiClient } from '../api/client';
@@ -175,7 +176,7 @@ export function RefreshedItems({
               </Text>
               <Text style={[styles.refund, { color: colors.textSecondary }]}>{t('shop.return.refund', refund)}</Text>
             </View>
-            <Pressable
+            <PressableScale
               onPress={() => {
                 setMessage(null);
                 setAsking(item);
@@ -185,7 +186,7 @@ export function RefreshedItems({
               style={[styles.returnButton, { backgroundColor: colors.controlTrack }]}
             >
               <Text style={[styles.returnText, { color: colors.primary }]}>{t('shop.return')}</Text>
-            </Pressable>
+            </PressableScale>
           </View>
         );
       })}

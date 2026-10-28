@@ -10,6 +10,7 @@ import {
   Text,
   View,
 } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../auth/AuthContext';
@@ -111,7 +112,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
   );
 
   const person = (f: RailFriend, detail: string) => (
-    <Pressable
+    <PressableScale
       key={f.userId}
       style={[styles.row, { backgroundColor: colors.controlTrack }]}
       onPress={() => go(() => navigation.navigate('Chat', { userId: f.userId, username: f.username }))}
@@ -129,7 +130,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
           </Text>
         ) : null}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 
   return (
@@ -187,7 +188,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
               <View style={styles.group}>
                 {heading('rail.waitingOnYou')}
                 {data.challenges.map((c) => (
-                  <Pressable
+                  <PressableScale
                     key={`c:${c.userId}`}
                     style={[styles.row, { backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('FriendRequests'))}
@@ -201,10 +202,10 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                         {t('rail.wantsToPlay', { name: c.displayName ?? c.username })}
                       </Text>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 ))}
                 {data.requests.map((r) => (
-                  <Pressable
+                  <PressableScale
                     key={`r:${r.userId}`}
                     style={[styles.row, { backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('FriendRequests'))}
@@ -218,7 +219,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                         {t('rail.wantsToBeFriendsWith', { name: r.displayName ?? r.username })}
                       </Text>
                     </View>
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
             ) : null}
@@ -241,7 +242,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
               <View style={styles.group}>
                 {heading('rail.groups')}
                 {data.groups.map((g) => (
-                  <Pressable
+                  <PressableScale
                     key={g.id}
                     style={[styles.row, { backgroundColor: colors.controlTrack }]}
                     onPress={() => go(() => navigation.navigate('GroupThread', { groupId: g.id, name: g.name }))}
@@ -260,7 +261,7 @@ export function SocialSlide({ open, onClose }: { open: boolean; onClose: () => v
                         <Text style={[styles.unreadText, { color: colors.textOnPrimary }]}>{g.unread > 99 ? '99+' : g.unread}</Text>
                       </View>
                     ) : null}
-                  </Pressable>
+                  </PressableScale>
                 ))}
               </View>
             ) : null}

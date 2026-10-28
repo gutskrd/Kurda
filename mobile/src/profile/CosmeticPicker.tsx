@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { Toggle } from '../theme/Toggle';
 import { countByCategory, itemCategory, matchesQuery, type ItemCategory } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -182,14 +183,14 @@ export function CosmeticPicker({
     const caption = tier ? t(TIER_NAME_KEY[tier]) : name;
     const art = tile - 4; // inside the 2pt ring that marks what you are wearing
     return (
-      <Pressable
+      <PressableScale
         key={item.sku}
         onPress={() => (current === 'frame' ? wear(item.sku, on) : choose(current as CosmeticSlot, item.sku, on))}
         accessibilityRole="button"
         accessibilityState={{ selected: on, busy: busy === item.sku }}
         accessibilityLabel={on ? t('edit.itemEquipped', { name }) : name}
         accessibilityHint={on ? t('edit.hint.takeOff') : t('edit.hint.wear')}
-        style={({ pressed }) => [styles.tile, { width: tile, opacity: pressed ? 0.8 : 1 }]}
+        style={[styles.tile, { width: tile }]}
       >
         <View style={[styles.ring, wide ? styles.ringWide : styles.ringSquare, { borderColor: on ? colors.textPrimary : 'transparent' }]}>
           {tier ? (
@@ -225,7 +226,7 @@ export function CosmeticPicker({
         >
           {caption}
         </Text>
-      </Pressable>
+      </PressableScale>
     );
   });
 

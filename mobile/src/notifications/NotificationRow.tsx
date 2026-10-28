@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useI18n } from '../i18n/I18nContext';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { useDirection } from '../reports/direction';
@@ -68,17 +69,17 @@ export function NotificationRow({ title, body, time, unread, actor, kind, label,
         ) : null}
         {action ? (
           <View style={[styles.actionRow, { flexDirection: dir.row }]}>
-            <Pressable
+            <PressableScale
               onPress={action.onPress}
               accessibilityRole="button"
               accessibilityLabel={action.label}
               hitSlop={(MIN_TOUCH_TARGET - ACTION_HEIGHT) / 2}
-              style={({ pressed }) => [styles.action, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+              style={[styles.action, { backgroundColor: colors.primary }]}
             >
               <Text style={[styles.actionText, { color: colors.textOnPrimary }]} numberOfLines={1}>
                 {action.label}
               </Text>
-            </Pressable>
+            </PressableScale>
           </View>
         ) : null}
       </View>

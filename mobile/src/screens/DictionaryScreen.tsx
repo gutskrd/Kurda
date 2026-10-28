@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
+import { heldRow } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { EntryDetail } from '../dictionary/EntryDetail';
 import { SourceLine } from '../dictionary/SourceLine';
@@ -115,7 +116,12 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
           <View style={styles.recents}>
             <Text style={[styles.recentsTitle, { color: colors.textSecondary }]}>{t('dictionary.recent')}</Text>
             {recents.map((r) => (
-              <Pressable key={r} onPress={() => setQuery(r)} style={styles.recentRow} accessibilityRole="button">
+              <Pressable
+                key={r}
+                onPress={() => setQuery(r)}
+                style={({ pressed }) => [styles.recentRow, pressed && heldRow(colors.controlTrack)]}
+                accessibilityRole="button"
+              >
                 <Text style={[styles.recentText, { color: colors.primary }]}>{r}</Text>
               </Pressable>
             ))}
@@ -132,7 +138,11 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
             </View>
             {saved.map((w) => (
               <View key={w.entryId} style={styles.savedRow}>
-                <Pressable style={styles.savedMain} onPress={() => setOpenEntry(w.entryId)} accessibilityRole="button">
+                <Pressable
+                  style={({ pressed }) => [styles.savedMain, pressed && heldRow(colors.controlTrack)]}
+                  onPress={() => setOpenEntry(w.entryId)}
+                  accessibilityRole="button"
+                >
                   <Text style={[styles.recentText, { color: colors.primary }]}>{w.headword}</Text>
                   <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                     {w.definitionEn ?? w.definitionKu ?? ''}
@@ -165,9 +175,11 @@ export function DictionaryScreen({ onBack }: { onBack: () => void }) {
         <FlatList
           data={results}
           keyExtractor={(h) => h.entryId}
-          contentContainerStyle={{ paddingBottom: tabBarInset }}
+          // the gutter inside the list, so a held row's highlight can reach past its edges
+          style={styles.hits}
+          contentContainerStyle={[styles.hitsBody, { paddingBottom: tabBarInset }]}
           renderItem={({ item }) => (
-            <Pressable onPress={() => openHit(item)} style={styles.hit} accessibilityRole="button">
+            <Pressable onPress={() => openHit(item)} style={({ pressed }) => [styles.hit, pressed && heldRow(colors.controlTrack)]} accessibilityRole="button">
               <Text style={[styles.hitWord, { color: colors.textPrimary }]}>{item.headword}</Text>
               <Text style={[styles.hitDef, { color: colors.textSecondary }]} numberOfLines={1}>
                 {item.pos ? `${item.pos} · ` : ''}
@@ -231,6 +243,8 @@ const styles = StyleSheet.create({
   savedMain: { flex: 1 },
   // a fingertip's worth around the small cross, so it is not missed for the row beside it
   removeButton: { minWidth: MIN_TOUCH_TARGET, minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
+  hits: { marginHorizontal: -spacing.sm },
+  hitsBody: { paddingHorizontal: spacing.sm },
   hit: { paddingVertical: spacing.md },
   hitWord: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
   hitDef: { fontSize: typography.sizes.sm },

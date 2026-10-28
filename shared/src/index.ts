@@ -76,6 +76,21 @@ export { PRAISE, praiseFor, praiseWords } from './praise.js';
 export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
 /** How often a buzz may be felt, on the phone and on a touch screen alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
+/** Apple's springs, the rubber band past an edge, and where a flick comes to rest: what the phone's sheets and menus move by. */
+export {
+  APPLE_SPRINGS,
+  DECELERATION,
+  RUBBER_BAND,
+  project,
+  releaseVelocity,
+  rubberBand,
+  shouldDismiss,
+  snapTarget,
+  springFor,
+  type DragSample,
+  type Spring,
+  type SpringSpec,
+} from './motion-physics.js';
 /** The one celebration — a lesson, a level, a rank, a league, a badge — timed and thrown the same on both. */
 export {
   BURST,

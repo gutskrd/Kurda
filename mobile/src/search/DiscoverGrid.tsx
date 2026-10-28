@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useAuth } from '../auth/AuthContext';
 import { getFeed } from '../feed/api';
 import { CARD_LABEL_KEY, feedImages, type FeedItem } from '../feed/types';
@@ -88,7 +89,7 @@ export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: 
           const who = item.author.displayName || item.author.username;
           const label = first.alt?.trim() || `${badgeKey ? t(badgeKey) : item.kind} — ${who}`;
           return (
-            <Pressable
+            <PressableScale
               key={item.key}
               onPress={() =>
                 item.targetType === 'library'
@@ -98,7 +99,7 @@ export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: 
               accessibilityRole="button"
               accessibilityLabel={label}
               accessibilityHint={t('memes.openPost')}
-              style={({ pressed }) => [{ width: tile, height: tile, backgroundColor: colors.controlTrack }, pressed && styles.pressed]}
+              style={[{ width: tile, height: tile, backgroundColor: colors.controlTrack }]}
             >
               <Image source={{ uri: first.url }} style={styles.fill} resizeMode="cover" accessibilityIgnoresInvertColors />
               {pictures.length > 1 ? (
@@ -106,7 +107,7 @@ export function DiscoverGrid({ width, onCount }: { width: number; onCount?: (n: 
                   <Icon name="image" size={16} color="#FFFFFF" />
                 </View>
               ) : null}
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -119,7 +120,6 @@ const styles = StyleSheet.create({
   title: { ...sectionLabel, paddingHorizontal: spacing.md },
   grid: { flexWrap: 'wrap', gap: GAP },
   fill: { width: '100%', height: '100%' },
-  pressed: { opacity: 0.7 },
   // in the top corner, with a soft shadow so it reads on a pale picture as on a dark one
   more: {
     position: 'absolute',

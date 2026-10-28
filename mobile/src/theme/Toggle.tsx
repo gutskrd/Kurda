@@ -4,7 +4,7 @@ import { useTheme } from './ThemeProvider';
 
 /**
  * The system switch, felt as it flips: the lightest tick there is, for a value
- * that changed under the person's own finger. Everything else is the
+ * that changed under the person's own finger (iOS's switch gives it itself). Everything else is the
  * platform's own control, in the app's ink (see `switchOn` in palette.ts):
  * a dark track and a white knob when it is on in light mode, a pale track and
  * a dark knob in dark mode, a grey track with a white knob when it is off.
@@ -22,7 +22,8 @@ export function Toggle({ onValueChange, ...rest }: SwitchProps): React.JSX.Eleme
       {...({ activeThumbColor: onThumb } as object)}
       {...rest}
       onValueChange={(next) => {
-        haptic('select');
+        // iOS's own switch already ticks as it flips; a second one of ours was the same moment felt twice
+        if (Platform.OS !== 'ios') haptic('select');
         onValueChange?.(next);
       }}
     />
