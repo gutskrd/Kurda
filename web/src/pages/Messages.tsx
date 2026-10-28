@@ -23,10 +23,11 @@ import { useArrival } from '../lib/motion';
 import { GroupAvatar } from '../groups/GroupAvatar';
 import { DiscoverGroups } from '../groups/DiscoverGroups';
 import { useGroupsChanged } from '../groups/groupsChanged';
+import { pollWhileVisible } from '../lib/pollWhileVisible';
 
 // When the realtime socket is live it carries every message instantly, so polling
 // is just a slow safety net. When it is NOT connected, we fall back to a brisk
-// poll so chat still feels live for everyone.
+// poll so chat still feels live for everyone. Neither runs while the tab is hidden.
 const CONVO_POLL_LIVE = 30000;
 const CONVO_POLL_FALLBACK = 5000;
 
@@ -298,8 +299,7 @@ function Conversations({
 
   useEffect(() => {
     void loadConvos();
-    const timer = setInterval(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
-    return () => clearInterval(timer);
+    return pollWhileVisible(() => void loadConvos(), state === 'open' ? CONVO_POLL_LIVE : CONVO_POLL_FALLBACK);
   }, [loadConvos, refreshKey, state]);
 
   const onDm = useCallback(() => void loadConvos(), [loadConvos]);

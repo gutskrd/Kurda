@@ -16,6 +16,7 @@ import type { Conversation, DmMessage, GroupMessage, MyGroup } from '../lib/type
 import { messagePreview, truncate, type Previewable } from './messagePreview';
 import { useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
+import { pollWhileVisible } from '../lib/pollWhileVisible';
 
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
@@ -70,7 +71,7 @@ const NO_PROVIDER: MessagesContextValue = {
 const TOAST_MS = 6000;
 /** Never stack more than this many; older ones drop off. */
 const MAX_TOASTS = 3;
-/** Counts are event-driven; this is only a safety net for missed events. */
+/** Counts are event-driven; this is only a safety net for missed events, and only for a tab in view. */
 const COUNT_POLL_MS = 60_000;
 
 /** What a banner shows: a game invite reads as an invite, not as its URL; a gift as a gift. */
@@ -129,8 +130,7 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     }
     void loadGroups();
     refreshUnread();
-    const t = setInterval(refreshUnread, COUNT_POLL_MS);
-    return () => clearInterval(t);
+    return pollWhileVisible(refreshUnread, COUNT_POLL_MS);
   }, [signedIn, loadGroups, refreshUnread]);
 
   // opening a conversation clears its badge, so recount when the URL changes
