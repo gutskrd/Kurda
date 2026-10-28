@@ -205,12 +205,28 @@ export class OAuthService {
       this.pool,
       name ?? identity.email?.split('@')[0] ?? 'learner',
     );
-    const created = await this.pool.query<UserRow>(
-      `INSERT INTO users (email, username, display_name, email_verified_at)
-       VALUES ($1, $2, $3, $4)
-       RETURNING *`,
-      [email, username, name, identity.emailVerified ? new Date() : null],
-    );
+    let created: pg.QueryResult<UserRow>;
+    try {
+      created = await this.pool.query<UserRow>(
+        `INSERT INTO users (email, username, display_name, email_verified_at)
+         VALUES ($1, $2, $3, $4)
+         RETURNING *`,
+        [email, username, name, identity.emailVerified ? new Date() : null],
+      );
+    } catch (err) {
+      // An address the provider has not confirmed, which an account here
+      // already has: never linked (2 above), and not a second account either.
+      // It used to reach the client as a 500; it is answered as sign-up
+      // answers an address in use, without saying whose it is.
+      if ((err as { constraint?: string }).constraint === 'users_email_active_uniq') {
+        throw new AppError(
+          'REGISTRATION_FAILED',
+          409,
+          'unable to register with these details — if you already have an account, log in or reset your password',
+        );
+      }
+      throw err;
+    }
     const user = created.rows[0] as UserRow;
     await this.link(user.id, identity);
     const tokens = await issueTokenPair(this.config, this.pool, user, { deviceName, deviceId });
