@@ -14,6 +14,7 @@ import {
   wordIn,
   type AlphabetScript,
   type SetWord,
+  type WordColour,
   type WordGroupId,
   type WordSetId,
 } from '@kurda/shared';
@@ -37,7 +38,7 @@ import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { useWordsAudio } from './audio';
 import { wordGrid } from './grid';
-import { DayName, Digits, Progress, dateIn, meaningOf } from './parts';
+import { DayName, Digits, Progress, dateIn, meaningOf, useSwatchEdge } from './parts';
 import { useWordsSeen } from './seen';
 import { WordPractice } from './WordPractice';
 import { WordSheet } from './WordSheet';
@@ -228,19 +229,7 @@ function WordTile({
   const tick = seen ? <Icon name="check" size={12} color={colors.success} style={[styles.corner, arabic ? styles.right : styles.left]} /> : null;
   const press = { onPress, accessibilityRole: 'button' as const, accessibilityLabel: label };
 
-  if (word.set === 'colours') {
-    // the name sits on a label of its own, so it reads the same on white, on yellow and on black
-    return (
-      <PressableScale {...press} style={[styles.colourTile, { width, backgroundColor: word.hex, borderColor: colors.separator }]}>
-        <View style={[styles.chip, { backgroundColor: colors.surface, flexDirection: scriptRow(dialect) }]}>
-          <Text style={[styles.chipText, scriptText(dialect), { color: colors.textPrimary }]} maxFontSizeMultiplier={1.6}>
-            {wordIn(word, dialect)}
-          </Text>
-          {seen ? <Icon name="check" size={12} color={colors.success} /> : null}
-        </View>
-      </PressableScale>
-    );
-  }
+  if (word.set === 'colours') return <ColourTile word={word} dialect={dialect} width={width} seen={seen} press={press} />;
 
   if (word.set === 'numbers') {
     return (
@@ -279,6 +268,34 @@ function WordTile({
         {wordIn(word, dialect)}
       </Text>
       <Meaning text={word.calendar === 'kurdish' ? dateIn(word.from, locale, t) : meaning.text} script={meaning.script} />
+    </PressableScale>
+  );
+}
+
+/** A colour's tile: filled with it, the name on a label of its own, so it reads the same on white, on yellow and on black. */
+function ColourTile({
+  word,
+  dialect,
+  width,
+  seen,
+  press,
+}: {
+  word: WordColour;
+  dialect: AlphabetScript;
+  width: number;
+  seen: boolean;
+  press: { onPress: () => void; accessibilityRole: 'button'; accessibilityLabel: string };
+}): React.JSX.Element {
+  const { colors } = useTheme();
+  const edge = useSwatchEdge(word.hex);
+  return (
+    <PressableScale {...press} style={[styles.colourTile, { width, backgroundColor: word.hex, borderColor: edge }]}>
+      <View style={[styles.chip, { backgroundColor: colors.surface, flexDirection: scriptRow(dialect) }]}>
+        <Text style={[styles.chipText, scriptText(dialect), { color: colors.textPrimary }]} maxFontSizeMultiplier={1.6}>
+          {wordIn(word, dialect)}
+        </Text>
+        {seen ? <Icon name="check" size={12} color={colors.success} /> : null}
+      </View>
     </PressableScale>
   );
 }

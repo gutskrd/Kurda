@@ -13,6 +13,7 @@ import {
   type SetWord,
   type WordDay,
 } from '@kurda/shared';
+import { contrastRatio } from '../a11y/contrast';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { scriptLanguage, scriptText } from '../alphabet/parts';
@@ -29,10 +30,21 @@ import { radii, spacing, typography } from '../theme/tokens';
  * its Soranî Latin under the script.
  */
 
-/** A colour, as a swatch. Edged, so white shows on white and black on black. */
-export function Swatch({ hex, size, style }: { hex: string; size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+/**
+ * The edge a swatch needs on this page: none where the colour stands out from
+ * it, a fine line where it would vanish into it — white on the light page,
+ * black on the dark one.
+ */
+export function useSwatchEdge(hex: string): string {
   const { colors } = useTheme();
-  return <View style={[{ width: size, height: size, borderRadius: size / 4, backgroundColor: hex, borderColor: colors.separator }, styles.edge, style]} />;
+  return contrastRatio(hex, colors.background) < SWATCH_CONTRAST ? colors.textSecondary : 'transparent';
+}
+const SWATCH_CONTRAST = 1.5;
+
+/** A colour, as a swatch. */
+export function Swatch({ hex, size, style }: { hex: string; size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const edge = useSwatchEdge(hex);
+  return <View style={[{ width: size, height: size, borderRadius: size / 4, backgroundColor: hex, borderColor: edge }, styles.edge, style]} />;
 }
 
 /** A number's digits: the Western ones in Kurmancî; in Soranî the ones it is printed in, with the Western ones beside them. */
