@@ -11,6 +11,7 @@ import { mediaLimits } from '../media/mediaLimits.js';
 import { MediaUsageService } from '../media/mediaUsage.js';
 import { clearGroupPhoto, setGroupPhoto } from '../media/groupPhoto.js';
 import type { GroupService } from './service.js';
+import { groupRoom } from './chat-service.js';
 import type { TrustService } from '../trust/service.js';
 import type { AiModerationService } from '../moderation/ai-service.js';
 
@@ -157,12 +158,27 @@ export function registerGroupRoutes(
 
   const ok = { ok: true } as const;
 
+  /**
+   * Out of the group's live chat as well as its member list. Reading the chat
+   * checks membership every time, but a socket already in the room stayed there,
+   * and the invite that let it in lasted a week: whoever left or was removed
+   * went on receiving every message as it was sent, and could join again from
+   * a new connection. Read when called, as the gateway is set up after these
+   * routes; a missed revoke only leaves what was there before.
+   */
+  const leaveRoom = async (groupId: string, userIds: readonly string[]): Promise<void> => {
+    if (!app.hasDecorator('realtime')) return;
+    for (const userId of userIds) await app.realtime.revoke(groupRoom(groupId), userId).catch(() => undefined);
+  };
+
   app.post('/groups/:id/join', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireBirthMonth }, async (req) => {
     await groups.join(req.user!.id, (req.params as { id: string }).id);
     return ok;
   });
   app.post('/groups/:id/leave', { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
-    await groups.leave(req.user!.id, (req.params as { id: string }).id);
+    const { id } = req.params as { id: string };
+    await groups.leave(req.user!.id, id);
+    await leaveRoom(id, [req.user!.id]);
     return ok;
   });
   app.post(
@@ -196,11 +212,16 @@ export function registerGroupRoutes(
     async (req) => {
       const { id, userId } = req.params as { id: string; userId: string };
       await groups.removeMember(req.user!.id, id, userId);
+      await leaveRoom(id, [userId]);
       return ok;
     },
   );
   app.delete('/groups/:id', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => {
-    await groups.deleteGroup(req.user!.id, (req.params as { id: string }).id);
+    const { id } = req.params as { id: string };
+    // who was in it, read before the rows go with the group
+    const members = await app.db.query<{ user_id: string }>(`SELECT user_id FROM group_members WHERE group_id = $1`, [id]);
+    await groups.deleteGroup(req.user!.id, id);
+    await leaveRoom(id, members.rows.map((m) => m.user_id));
     return ok;
   });
 }

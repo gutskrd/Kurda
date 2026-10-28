@@ -33,17 +33,37 @@ export const MESSAGES_PER_SECOND = 10;
 export const CLOSE_CONNECTED_ELSEWHERE = 4001;
 export const CLOSE_BAD_TICKET = 4003;
 export const CLOSE_TOO_MANY_MESSAGES = 4008;
+/** How often the session behind every connection is asked whether it still stands (`checkSessions`). */
+export const SESSION_CHECK_MS = 60_000;
 /** Bus-only instruction for `revoke`: handled by each node, never delivered. */
 const REVOKE_EVENT = 'rt_revoke';
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** The session a connection was opened in: the account, and the sign-in (refresh token family) it came from. */
+export interface SessionRef {
+  userId: string;
+  /** null for an access token from before sessions were named in it */
+  familyId: string | null;
+}
+
+/**
+ * Of these sessions, the ones that have ended since their connections opened:
+ * signed out, revoked from the session list, ended by a new password, a ban or
+ * a closed account. The app answers it from the database (realtime/sessions.ts).
+ */
+export type SessionCheck = (sessions: readonly SessionRef[]) => Promise<readonly SessionRef[]>;
 
 export interface GatewayOptions {
   heartbeatIntervalMs?: number;
   heartbeatTimeoutMs?: number;
+  sessionsEnded?: SessionCheck;
+  sessionCheckMs?: number;
 }
 
 interface Connection {
   socket: WebSocket;
   userId: string;
+  familyId: string | null;
   rooms: Set<string>;
   resumeToken: string;
   lastPongAt: number;
@@ -96,6 +116,10 @@ export class RealtimeGateway {
   private readonly heartbeatIntervalMs: number;
   private readonly heartbeatTimeoutMs: number;
   private sweepTimer?: NodeJS.Timeout;
+  private readonly sessionsEnded?: SessionCheck;
+  private readonly sessionCheckMs: number;
+  private sessionTimer?: NodeJS.Timeout;
+  private checkingSessions = false;
 
   constructor(
     private readonly kv: RealtimeKV,
@@ -104,6 +128,8 @@ export class RealtimeGateway {
   ) {
     this.heartbeatIntervalMs = opts.heartbeatIntervalMs ?? 10_000;
     this.heartbeatTimeoutMs = opts.heartbeatTimeoutMs ?? 25_000;
+    this.sessionsEnded = opts.sessionsEnded;
+    this.sessionCheckMs = opts.sessionCheckMs ?? SESSION_CHECK_MS;
     this.bus.onEvent((roomId, event) => this.deliverLocal(roomId, event));
   }
 
@@ -174,7 +200,9 @@ export class RealtimeGateway {
       { config: { skipValidation: true }, preHandler: requireAuth },
       async (req) => {
         const ticket = randomBytes(24).toString('base64url');
-        await this.kv.set(`rt:ticket:${ticket}`, req.user!.id, TICKET_TTL_SECONDS);
+        const familyId = req.user!.familyId && UUID_RE.test(req.user!.familyId) ? req.user!.familyId : null;
+        const session: SessionRef = { userId: req.user!.id, familyId };
+        await this.kv.set(`rt:ticket:${ticket}`, JSON.stringify(session), TICKET_TTL_SECONDS);
         return { ticket, expiresInSeconds: TICKET_TTL_SECONDS, url: '/realtime' };
       },
     );
@@ -187,18 +215,21 @@ export class RealtimeGateway {
       },
       async (socket, req) => {
         const query = req.query as { ticket?: string; resume?: string };
-        const userId = query.ticket ? await this.kv.take(`rt:ticket:${query.ticket}`) : null;
-        if (!userId) {
+        const held = query.ticket ? await this.kv.take(`rt:ticket:${query.ticket}`) : null;
+        const session = held ? ticketSession(held) : null;
+        if (!session) {
           socket.close(CLOSE_BAD_TICKET, 'invalid ticket');
           return;
         }
-        await this.accept(socket, userId, query.resume);
+        await this.accept(socket, session, query.resume);
       },
     );
 
     this.sweepTimer = setInterval(() => this.sweep(), this.heartbeatIntervalMs);
+    if (this.sessionsEnded) this.sessionTimer = setInterval(() => void this.checkSessions(), this.sessionCheckMs);
     app.addHook('onClose', async () => {
       clearInterval(this.sweepTimer);
+      clearInterval(this.sessionTimer);
       for (const conn of this.allConnections()) {
         conn.socket.terminate();
       }
@@ -206,7 +237,8 @@ export class RealtimeGateway {
     });
   }
 
-  private async accept(socket: WebSocket, userId: string, resume?: string): Promise<void> {
+  private async accept(socket: WebSocket, session: SessionRef, resume?: string): Promise<void> {
+    const { userId } = session;
     let conns = this.connections.get(userId);
     if (!conns) {
       conns = new Set();
@@ -222,6 +254,7 @@ export class RealtimeGateway {
     const conn: Connection = {
       socket,
       userId,
+      familyId: session.familyId,
       rooms: new Set(),
       resumeToken: randomBytes(24).toString('base64url'),
       lastPongAt: Date.now(),
@@ -240,7 +273,11 @@ export class RealtimeGateway {
       // RTT from the heartbeat round-trip (KUR-057), measured server-side
       if (conn.pingSentAt !== undefined) conn.rttMs = now - conn.pingSentAt;
     });
-    socket.on('message', (raw) => void this.onMessage(conn, raw.toString()));
+    // a store that cannot answer (Redis gone for a moment) fails this message, not
+    // the process: a rejection nobody handled here would end it, for everyone
+    socket.on('message', (raw) => {
+      this.onMessage(conn, raw.toString()).catch(() => this.send(conn, { type: 'error', code: 'UNAVAILABLE' }));
+    });
     socket.on('close', () => this.dropConnection(conn));
 
     // resume: rejoin previous rooms (token is single-use)
@@ -413,6 +450,44 @@ export class RealtimeGateway {
     return reaped;
   }
 
+  /**
+   * Close every connection whose session has ended since it opened.
+   *
+   * A ticket is checked once, when the socket opens, and a socket lives as long
+   * as it answers pings. So signing out, signing out everywhere, a new
+   * password, a ban or a closed account ended the session everywhere but here:
+   * whoever held the socket went on hearing that person's messages, and the
+   * group chats they were in, for as long as they kept it open. Every
+   * SESSION_CHECK_MS each session on this node is asked after, in one query,
+   * and the sockets of the ended ones are closed with CLOSE_BAD_TICKET, which
+   * the apps answer by asking for a new ticket, as after any ticket that no
+   * longer holds — which an ended session cannot get.
+   *
+   * A database that cannot answer closes nothing; the next check asks again.
+   */
+  async checkSessions(): Promise<number> {
+    if (!this.sessionsEnded || this.checkingSessions) return 0;
+    const conns = this.allConnections();
+    if (conns.length === 0) return 0;
+    this.checkingSessions = true;
+    try {
+      const sessions = new Map(conns.map((c) => [sessionKey(c), { userId: c.userId, familyId: c.familyId }]));
+      const ended = new Set((await this.sessionsEnded([...sessions.values()])).map(sessionKey));
+      let closed = 0;
+      for (const conn of conns) {
+        if (!ended.has(sessionKey(conn))) continue;
+        conn.socket.close(CLOSE_BAD_TICKET, 'session ended');
+        this.dropConnection(conn);
+        closed++;
+      }
+      return closed;
+    } catch {
+      return 0;
+    } finally {
+      this.checkingSessions = false;
+    }
+  }
+
   /** Every live connection on this node, as a copy (callers drop some while iterating). */
   private allConnections(): Connection[] {
     return [...this.connections.values()].flatMap((conns) => [...conns]);
@@ -422,5 +497,22 @@ export class RealtimeGateway {
     if (conn.socket.readyState === conn.socket.OPEN) {
       conn.socket.send(JSON.stringify(payload));
     }
+  }
+}
+
+/** One session as a map key. */
+function sessionKey(s: SessionRef): string {
+  return `${s.userId}:${s.familyId ?? ''}`;
+}
+
+/** The session a ticket was given to; one issued before tickets named it holds the account alone. */
+function ticketSession(held: string): SessionRef | null {
+  if (!held.startsWith('{')) return { userId: held, familyId: null };
+  try {
+    const parsed = JSON.parse(held) as Partial<SessionRef>;
+    if (typeof parsed.userId !== 'string') return null;
+    return { userId: parsed.userId, familyId: typeof parsed.familyId === 'string' ? parsed.familyId : null };
+  } catch {
+    return null;
   }
 }

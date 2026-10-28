@@ -15,6 +15,7 @@ import { PostGate } from '../trust/post-gate.js';
 import { POST_PICTURE_KIND, checkPostPictures, type PictureClaimFailure } from '../media/postMedia.js';
 import { ImagePostService, type AuthorRole } from './service.js';
 import { pageQuery, queryUuid, queryWord } from '../http/query.js';
+import { staffCleared } from '../admin/admin-gate.js';
 
 const IMAGE_POST_KIND = POST_PICTURE_KIND;
 
@@ -24,7 +25,6 @@ function authorRole(req: FastifyRequest): AuthorRole {
   if (roles.some((r) => ['admin', 'superadmin', 'content_editor'].includes(r))) return 'admin';
   return 'user';
 }
-const isAdmin = (req: FastifyRequest): boolean => authorRole(req) !== 'user';
 
 const createBody = z.object({
   imageMediaId: z.string().min(1).max(512),
@@ -58,6 +58,12 @@ export function registerImagePostRoutes(
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
   const usage = new MediaUsageService(app.db, app.redis ?? null);
   const gate = new PostGate(trust, aiMod, app.log);
+  /**
+   * Whether this request may edit or take down somebody else's picture: a staff
+   * role, from a session the console itself would let in (admin/admin-gate.ts
+   * `staffCleared`). A staff password alone is a member's.
+   */
+  const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => authorRole(req) !== 'user' && (await staffCleared(app, req));
 
   /**
    * Edit a caption (author or admin). A changed caption is new words in front
@@ -69,7 +75,7 @@ export function registerImagePostRoutes(
     const { caption } = req.body as z.infer<typeof editBody>;
     const current = await images.current(id);
     if (!current) return reply.code(404).send({ code: 'NOT_FOUND', message: 'no such image' });
-    if (current.authorId !== req.user!.id && !isAdmin(req)) return reply.code(403).send({ code: 'FORBIDDEN', message: 'not your image' });
+    if (current.authorId !== req.user!.id && !(await actsAsStaff(req))) return reply.code(403).send({ code: 'FORBIDDEN', message: 'not your image' });
     const words = caption?.trim() ?? '';
     const changed = words !== '' && words !== (current.caption ?? '');
     const gated = changed && current.authorId === req.user!.id;
@@ -77,7 +83,7 @@ export function registerImagePostRoutes(
       const refused = await gate.check(req.user!.id, words);
       if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
     }
-    const res = await images.editCaption(id, req.user!.id, isAdmin(req), caption);
+    const res = await images.editCaption(id, req.user!.id, await actsAsStaff(req), caption);
     if (res.ok && gated) await gate.passed(req.user!.id, captionScreened(res.post));
     return respond(reply, res);
   };
@@ -199,7 +205,7 @@ export function registerImagePostRoutes(
     '/images/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
     async (req, reply) =>
-      respond(reply, await images.remove((req.params as { id: string }).id, req.user!.id, isAdmin(req))),
+      respond(reply, await images.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
   );
 }
 

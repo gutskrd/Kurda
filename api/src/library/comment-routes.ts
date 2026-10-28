@@ -7,8 +7,10 @@ import { LibraryCommentService, type CreateCommentInput } from './comment-servic
 import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { pageQuery, queryWord } from '../http/query.js';
+import { staffCleared } from '../admin/admin-gate.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
+/** A staff role: what a new comment records as its author's role. */
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
 
 const createBody = z.object({
@@ -34,6 +36,9 @@ export function registerLibraryCommentRoutes(
   aiMod?: AiModerationService,
   trust?: TrustService,
 ): void {
+  /** Whether this request may edit or remove somebody else's comment (library/routes.ts `actsAsStaff`). */
+  const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => isAdmin(req) && (await staffCleared(app, req));
+
   /** Attach the public CDN URL for a comment's optional voice note (KUR-282). */
   const withAudioUrl = <T extends { audioMediaId: string | null }>(c: T): T & { audioUrl: string | null } => ({
     ...c,
@@ -140,7 +145,7 @@ export function registerLibraryCommentRoutes(
       if (input.audioMediaId && input.audioMediaId !== current && !(await voiceAttachable(app.db, req.user!.id, input.audioMediaId))) {
         return reply.code(422).send({ code: 'INVALID_AUDIO', message: 'attach audio uploaded via /media/voice first' });
       }
-      return respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), input));
+      return respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), input));
     },
   );
 
@@ -149,7 +154,7 @@ export function registerLibraryCommentRoutes(
     '/library/comments/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
     async (req, reply) =>
-      respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, isAdmin(req))),
+      respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
   );
 }
 

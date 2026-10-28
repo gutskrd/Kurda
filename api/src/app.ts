@@ -51,6 +51,8 @@ import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { MAX_CLIENT_MESSAGE_BYTES, RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
+import { endedSessions } from './realtime/sessions.js';
+import { requestIdGenerator } from './plugins/request-id.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerLessonRoutes } from './content/routes.js';
@@ -241,8 +243,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // PII never reaches log storage (KUR-009); see observability/redact.ts
       redact: LOG_REDACT,
     },
-    // trust an upstream-provided request id (gateway/LB) or generate one
-    requestIdHeader: 'x-request-id',
+    // an upstream-provided request id (gateway/LB) when it looks like one, or
+    // a fresh one: the header is read here, not by Fastify, which takes any text
+    requestIdHeader: false,
+    genReqId: requestIdGenerator(),
     // a whole request, body included, within two minutes: Fastify otherwise
     // turns Node's own limit off, and a client dripping a body a byte at a time
     // would hold its connection for ever. Two minutes covers the largest upload
@@ -777,7 +781,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const bus = app.redis
       ? new RedisRoomBus(app.redis, createQueueConnection(config))
       : new LocalRoomBus();
-    const realtime = new RealtimeGateway(kv, bus, options.gateway);
+    // a socket stops when its session does: signed out, a new password, a ban (realtime/sessions.ts)
+    const realtime = new RealtimeGateway(kv, bus, { sessionsEnded: endedSessions(app.db), ...options.gateway });
     app.decorate('realtime', realtime);
     // a client message is a few dozen bytes; the library's default limit is 100 MiB
     app.register(fastifyWebsocket, { options: { maxPayload: MAX_CLIENT_MESSAGE_BYTES } });

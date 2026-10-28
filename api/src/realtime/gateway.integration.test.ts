@@ -356,6 +356,56 @@ describe.skipIf(!DATABASE_URL)('realtime gateway (integration)', () => {
     }
   });
 
+  it('closes a socket once its session is signed out, and keeps the sessions that stand', async () => {
+    const registered = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `ended_${suffix}@it.kurda.app`,
+        username: `ended_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: '10.20.2.1',
+    });
+    await activate(app, pool, registered);
+    const first = registered.json().tokens as { accessToken: string; refreshToken: string };
+    const signedIn = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `ended_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
+      remoteAddress: '10.20.2.1',
+    });
+    expect(signedIn.statusCode).toBe(200);
+    const second = signedIn.json().tokens as { accessToken: string };
+
+    const one = (await connect(first.accessToken)).ws;
+    const two = (await connect(second.accessToken)).ws;
+    expect(await app.realtime.checkSessions()).toBe(0);
+
+    // the first sign-in ends: its socket goes, the other's stays
+    const oneClosed = waitForClose(one);
+    const out = await app.inject({ method: 'POST', url: '/auth/logout', payload: { refreshToken: first.refreshToken }, remoteAddress: '10.20.2.1' });
+    expect(out.statusCode).toBe(200);
+    expect(await app.realtime.checkSessions()).toBe(1);
+    expect(await oneClosed).toBe(CLOSE_BAD_TICKET);
+    expect(two.readyState).toBe(WebSocket.OPEN);
+
+    // signing out everywhere ends the other one too
+    const twoClosed = waitForClose(two);
+    const everywhere = await app.inject({
+      method: 'DELETE',
+      url: '/me/sessions',
+      headers: { authorization: `Bearer ${second.accessToken}` },
+      remoteAddress: '10.20.2.1',
+    });
+    expect(everywhere.statusCode).toBe(200);
+    expect(await app.realtime.checkSessions()).toBe(1);
+    expect(await twoClosed).toBe(CLOSE_BAD_TICKET);
+  });
+
   it('heartbeat sweep reaps silent connections (unit-level)', async () => {
     const user = await makeUser('sweep');
     const { ws } = await connect(user.token);

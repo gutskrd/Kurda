@@ -6,6 +6,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { EngagementService } from './engagement-service.js';
 import { activate } from '../test/activate.js';
+import { bornYearsAgo } from '../test/age.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -276,5 +277,47 @@ describe.skipIf(!DATABASE_URL)('post engagement (integration)', () => {
     await pool.query(`UPDATE library_posts SET status = 'removed' WHERE id = $1`, [doomed]);
     const after = await call('GET', `/users/${ids.me}/activity?kind=likes`, tokens.me!);
     expect(after.json().items.map((i: { title: string }) => i.title)).not.toContain(`Doomed ${suffix}`);
+  });
+
+  it('likes, saves and reposts only a post the person can read, and lets one go whatever became of it', async () => {
+    await register('kid', '10.91.0.3');
+    await register('blocker', '10.91.0.4');
+    const born = bornYearsAgo(15);
+    await pool.query(`UPDATE users SET birth_year = $2, birth_month = $3 WHERE id = $1`, [ids.kid!, born.birthYear, born.birthMonth]);
+    expect((await call('POST', `/friends/${ids.me}/block`, tokens.blocker!)).statusCode).toBe(200);
+
+    const post = async (author: string, status: string) =>
+      (
+        await pool.query<{ id: string }>(
+          `INSERT INTO library_posts (author_id, author_role, type, title, body, language, status, published_at)
+           VALUES ($1, 'user', 'poem', 'Helbest', 'Çend gotin.', 'kmr', $2, now()) RETURNING id`,
+          [author, status],
+        )
+      ).rows[0]!.id;
+    const unreadable = [
+      await post(ids.mate!, 'draft'),
+      await post(ids.mate!, 'removed'),
+      // a child's poem, to somebody who is not their friend
+      await post(ids.kid!, 'published'),
+      // by somebody who blocked them
+      await post(ids.blocker!, 'published'),
+      // and nothing at all
+      '6f1c2a4e-1b2c-4d3e-8f90-123456789abc',
+    ];
+    for (const id of unreadable) {
+      for (const kind of ['like', 'bookmark', 'repost']) {
+        expect((await call('POST', `/posts/library/${id}/${kind}`, tokens.me!)).statusCode, `${kind} ${id}`).toBe(404);
+      }
+    }
+    const kept = await pool.query(`SELECT 1 FROM post_engagements WHERE user_id = $1 AND target_id = ANY($2)`, [ids.me, unreadable]);
+    expect(kept.rowCount).toBe(0);
+
+    // liked while it could be read, then taken down: the like still comes off
+    const later = await post(ids.mate!, 'published');
+    expect((await call('POST', `/posts/library/${later}/like`, tokens.me!)).json().on).toBe(true);
+    await pool.query(`UPDATE library_posts SET status = 'removed' WHERE id = $1`, [later]);
+    const off = await call('POST', `/posts/library/${later}/like`, tokens.me!);
+    expect(off.statusCode).toBe(200);
+    expect(off.json().on).toBe(false);
   });
 });

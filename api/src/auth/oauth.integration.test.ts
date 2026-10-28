@@ -127,6 +127,18 @@ describe.skipIf(!DATABASE_URL)('OAuth sign-in (integration)', () => {
     });
   });
 
+  it('answers an address the provider has not confirmed, which an account already has, without a second account', async () => {
+    const email = `taken_${suffix}@gmail.com`;
+    await pool.query(
+      `INSERT INTO users (email, username, password_hash, email_verified_at) VALUES ($1, $2, $3, now())`,
+      [email, `taken_${suffix}`.slice(0, 30), await hashPassword('a-strong-password1')],
+    );
+    const token = await makeToken('google', { sub: `g-taken-${suffix}`, email, emailVerified: false });
+    await expect(service.signIn('google', token)).rejects.toMatchObject({ code: 'REGISTRATION_FAILED', statusCode: 409 });
+    const linked = await pool.query(`SELECT 1 FROM oauth_identities WHERE provider = 'google' AND provider_user_id = $1`, [`g-taken-${suffix}`]);
+    expect(linked.rowCount).toBe(0);
+  });
+
   it('rejects wrong audience, wrong issuer and expired tokens', async () => {
     const wrongAud = await makeToken('google', { sub: 'x', aud: 'evil-client' });
     const wrongIss = await makeToken('google', { sub: 'x', iss: 'https://evil.example' });

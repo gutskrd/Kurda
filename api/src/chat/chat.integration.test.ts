@@ -80,6 +80,15 @@ describe.skipIf(!DATABASE_URL)('direct messages (integration)', () => {
     expect(hist[hist.length - 1]!.senderId).toBe(id.a);
   });
 
+  it('tells a friend somebody is typing, and nobody else', async () => {
+    notifier.events = [];
+    await chat.typing(id.a!, id.b!);
+    expect(notifier.to(id.b!, 'dm_typing')).toBe(true);
+    // C is nobody's friend here: their typing reaches no one
+    await chat.typing(id.c!, id.b!);
+    expect(notifier.events.filter((e) => e.ev.type === 'dm_typing' && e.ev.from === id.c)).toEqual([]);
+  });
+
   it('rejects messaging a non-friend and over-long messages', async () => {
     await expect(chat.send(id.a!, id.c!, 'hi')).rejects.toThrow(/only message friends/i);
     await expect(chat.send(id.a!, id.b!, 'x'.repeat(2001))).rejects.toThrow(/2000/);

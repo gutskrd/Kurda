@@ -1,4 +1,7 @@
 import type pg from 'pg';
+import { notBlockedSql } from '../friends/blocked.js';
+import { AppError } from '../plugins/errors.js';
+import { writtenForSql } from '../users/age.js';
 
 /**
  * Liking, saving and reposting a post, whatever kind of post it is.
@@ -62,6 +65,10 @@ export class EngagementService {
    * and a client that thinks it knows the current state can be wrong — two
    * tabs, a stale poll. Letting the database decide from what is actually
    * stored means the answer is always the truth.
+   *
+   * Only a post the person can read is liked, saved or reposted (`readable`);
+   * taking one off always works, so a post that has since gone out of their
+   * reach can still be let go of.
    */
   async toggle(
     userId: string,
@@ -75,6 +82,7 @@ export class EngagementService {
       [userId, type, id, kind],
     );
     if (removed.rowCount && removed.rowCount > 0) return { on: false };
+    if (!(await this.readable(userId, type, id))) throw new AppError('NOT_FOUND', 404, 'no such post');
 
     await this.pool.query(
       `INSERT INTO post_engagements (user_id, target_type, target_id, kind)
@@ -82,6 +90,26 @@ export class EngagementService {
       [userId, type, id, kind],
     );
     return { on: true };
+  }
+
+  /**
+   * Whether `userId` can read this post where it is shown: published, not a
+   * minor's they are no friend of, nobody blocked either way — the rules the
+   * wall and the post's own page read it by (feed/service.ts). Anything else
+   * was taken as readily, by id: a like on a draft, on a post that was taken
+   * down, on a child's poem its reader may not see, or on a post of somebody
+   * who blocked them, each one counted in what the post shows its readers.
+   */
+  async readable(userId: string, type: TargetType, id: string): Promise<boolean> {
+    // the table is one of two literals, chosen by the type checked above it
+    const table = type === 'library' ? 'library_posts' : 'image_posts';
+    const res = await this.pool.query(
+      `SELECT 1 FROM ${table} p
+        WHERE p.id = $1 AND p.status = 'published'
+          AND ${writtenForSql('p.author_id', '$2::uuid')} AND ${notBlockedSql('p.author_id', '$2::uuid')}`,
+      [id, userId],
+    );
+    return (res.rowCount ?? 0) > 0;
   }
 
   /**
