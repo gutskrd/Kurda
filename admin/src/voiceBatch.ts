@@ -25,7 +25,7 @@ import { scriptOfClip, timelineFromSound, type AudioKind, type Speaker } from '.
 
 export const KIND_NAMES: Record<AudioKind, string> = {
   lesson: 'Lesson and story sentences',
-  alphabet: 'Alphabet sounds',
+  alphabet: 'Alphabet and word sounds',
   dictionary: 'Dictionary pronunciations',
 };
 

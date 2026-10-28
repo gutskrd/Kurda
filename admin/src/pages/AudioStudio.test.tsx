@@ -337,4 +337,26 @@ describe('who says each recording', () => {
     expect(put.path).toMatch(/^\/admin\/alphabet\/audio\?key=kmr%3Asound%3Aa&speaker=hamo&lipsync=/);
     expect(lipsyncOf(put)!.durationMs).toBe(900);
   });
+
+  it('records the colours, numbers, days and months in groups of their own, and says which have no sound yet', async () => {
+    const user = userEvent.setup();
+    fakeApi(on('GET', '/admin/alphabet/audio', json({ recordings: [] })));
+    location.hash = '#/audio/letters';
+    renderUi(<AudioStudio />);
+    for (const title of ['Colours', 'Numbers', 'Days of the week', 'Months']) expect(await screen.findByText(title)).toBeInTheDocument();
+
+    // a word is said as it is written, with what it is beside it, and plays in the synthesised voice until recorded
+    await user.click(screen.getByRole('button', { name: /^Duşem/ }));
+    let studio = screen.getByRole('complementary', { name: 'Record this sound' });
+    expect(within(studio).getByText('Days of the week')).toBeInTheDocument();
+    expect(within(studio).getByText('Monday')).toBeInTheDocument();
+    expect(within(studio).getByText('Synthesised voice')).toBeInTheDocument();
+    expect(within(studio).queryByText(/for the letter/)).toBeNull();
+
+    // one no voice could say accurately has no sound at all until it is recorded
+    await user.click(screen.getByRole('button', { name: /^خۆڵەمێشی/ }));
+    studio = screen.getByRole('complementary', { name: 'Record this sound' });
+    expect(within(studio).getByText('No sound yet')).toBeInTheDocument();
+    expect(within(studio).getByText('xołemêşî — the colour grey')).toBeInTheDocument();
+  });
 });

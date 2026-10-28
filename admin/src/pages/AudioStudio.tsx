@@ -13,9 +13,10 @@ type Side = 'letters' | 'lessons' | 'conversations' | 'stories' | 'dictionary' |
 const SIDES: ReadonlyArray<{ key: Side; tab: string; title: string; subtitle: string }> = [
   {
     key: 'letters',
-    tab: 'Alphabet',
-    title: 'Record the alphabet',
-    subtitle: 'Every letter and example word on the alphabet page, in a native voice. Until a sound is recorded, it plays in the synthesised voice.',
+    tab: 'Alphabet and words',
+    title: 'Record the alphabet and words',
+    subtitle:
+      'Every letter and example word on the alphabet page, and the colours, numbers, days and months, in a native voice. Until a sound is recorded, it plays in the synthesised voice, or not at all where there is none.',
   },
   {
     key: 'lessons',

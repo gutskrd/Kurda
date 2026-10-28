@@ -1,4 +1,13 @@
-import { ALPHABET_CLIPS, PRIORITY_SLA_HOURS, type AdminFeedbackSummary, type ModerationSummary, type ReportPriority, type SuspiciousPair } from '@kurda/shared';
+import {
+  LETTER_CLIPS,
+  PRIORITY_SLA_HOURS,
+  WORD_SET_CLIPS,
+  type AdminFeedbackSummary,
+  type AlphabetClip,
+  type ModerationSummary,
+  type ReportPriority,
+  type SuspiciousPair,
+} from '@kurda/shared';
 import { api } from '../api';
 import { useAuth } from '../auth';
 import { canOpen, NAV, type SessionAccess } from '../navigation';
@@ -109,17 +118,19 @@ function Recordings(): React.JSX.Element {
   const letters = useLoad(() => api<{ recordings: Array<{ key: string }> }>('/admin/alphabet/audio'), []);
 
   const lettersDone = letters.data ? new Set(letters.data.recordings.map((r) => r.key)) : null;
-  const lettersMissing = lettersDone ? ALPHABET_CLIPS.filter((c) => !lettersDone.has(c.key)).length : null;
+  const missingOf = (clips: readonly AlphabetClip[]) => (lettersDone ? clips.filter((c) => !lettersDone.has(c.key)).length : null);
   const items = lessons.data?.items ?? null;
   const storyMissing = items ? items.filter((i) => !i.recorded && i.usedIn.some(isStoryUsage)).length : null;
   const lessonMissing = items ? items.filter((i) => !i.recorded && i.usedIn.some((u) => !isStoryUsage(u))).length : null;
   const lessonNeeded = items ? items.filter((i) => i.usedIn.some((u) => !isStoryUsage(u))).length : null;
   const storyNeeded = items ? items.filter((i) => i.usedIn.some(isStoryUsage)).length : null;
 
+  // the words to know are recorded on the alphabet's side of the studio, and counted on a line of their own
   const rows = [
-    { key: 'letters', label: 'Alphabet: letters and example words', missing: lettersMissing, total: ALPHABET_CLIPS.length, error: letters.error },
-    { key: 'lessons', label: 'Lesson sentences and words', missing: lessonMissing, total: lessonNeeded, error: lessons.error },
-    { key: 'stories', label: 'Story sentences', missing: storyMissing, total: storyNeeded, error: lessons.error },
+    { key: 'letters', side: 'letters', label: 'Alphabet: letters and example words', missing: missingOf(LETTER_CLIPS), total: LETTER_CLIPS.length, error: letters.error },
+    { key: 'words', side: 'letters', label: 'Words to know: colours, numbers, days, months', missing: missingOf(WORD_SET_CLIPS), total: WORD_SET_CLIPS.length, error: letters.error },
+    { key: 'lessons', side: 'lessons', label: 'Lesson sentences and words', missing: lessonMissing, total: lessonNeeded, error: lessons.error },
+    { key: 'stories', side: 'stories', label: 'Story sentences', missing: storyMissing, total: storyNeeded, error: lessons.error },
   ] as const;
   const firstMissing = rows.find((r) => (r.missing ?? 0) > 0);
   const totalMissing = rows.reduce((n, r) => n + (r.missing ?? 0), 0);
@@ -128,10 +139,10 @@ function Recordings(): React.JSX.Element {
   return (
     <Section
       title="What still needs a recording"
-      description="Native recordings of the alphabet, the lessons’ Kurdish and the stories’ sentences. Until one is recorded, learners hear the synthesised voice or nothing."
+      description="Native recordings of the alphabet, the words to know, the lessons’ Kurdish and the stories’ sentences. Until one is recorded, learners hear the synthesised voice or nothing."
       actions={
         firstMissing && (
-          <a className="button-link primary" href={`#/audio/${firstMissing.key}?show=missing`}>
+          <a className="button-link primary" href={`#/audio/${firstMissing.side}?show=missing`}>
             <Icon name="mic" />
             Record what’s missing
           </a>
@@ -164,7 +175,7 @@ function Recordings(): React.JSX.Element {
                   <div className="progress-bar" style={{ width: `${((r.total - r.missing) / r.total) * 100}%` }} />
                 </div>
               )}
-              <a className="button-link" href={`#/audio/${r.key}${r.missing ? '?show=missing' : ''}`} aria-label={`Record: ${r.label}`}>
+              <a className="button-link" href={`#/audio/${r.side}${r.missing ? '?show=missing' : ''}`} aria-label={`Record: ${r.label}`}>
                 {r.missing ? 'Record' : 'Open'}
                 <Icon name="chevronRight" size={16} />
               </a>

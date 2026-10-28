@@ -3,6 +3,9 @@ import {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
+  SYNTHESISED_ALPHABET_CLIPS,
+  SYNTHESISED_WORD_CLIPS,
+  isWordSetClipKey,
   type AlphabetClip,
   type LipsyncData,
   type SpeakerId,
@@ -39,6 +42,11 @@ export type Filter = 'missing' | 'recorded' | 'all';
  *
  * Removing a recording brings the synthesised clip back, so nothing here can
  * leave a letter silent.
+ *
+ * The word sets' words (colours, numbers, days, months) are recorded here
+ * too, in groups of their own after the letters. A few of them have no
+ * synthesised clip, where no voice could say them accurately: until they are
+ * recorded, they have no sound at all.
  *
  * The studio also says who is shown saying the sound, as the sentences' does:
  * a new take goes up with that character and a timeline read in the sound's
@@ -123,7 +131,10 @@ export function AlphabetAudio({ initialFilter }: { initialFilter?: Filter } = {}
             <strong className="aa-count">
               {done} of {ALPHABET_CLIPS.length} recorded
             </strong>
-            <div className="subtle">The sounds on the alphabet page. The rest use the synthesised voice until they are recorded.</div>
+            <div className="subtle">
+              The sounds on the alphabet page, and the colours, numbers, days and months. The rest use the synthesised voice until they are
+              recorded, or have no sound where there is none.
+            </div>
           </div>
         </div>
         <div className="progress" role="progressbar" aria-label="Recorded so far" aria-valuemin={0} aria-valuemax={ALPHABET_CLIPS.length} aria-valuenow={done}>
@@ -237,12 +248,15 @@ function Studio({
 }): React.JSX.Element {
   const group = ALPHABET_CLIP_GROUPS.find((g) => g.group === clip.group)!.title;
   const speaker = recording ? (recording.speaker ?? null) : nextSpeaker;
+  const word = isWordSetClipKey(clip.key);
+  // a few words no voice could say accurately have no synthesised clip: until recorded they are silent
+  const synthesised = Object.hasOwn(SYNTHESISED_ALPHABET_CLIPS, clip.key) || Object.hasOwn(SYNTHESISED_WORD_CLIPS, clip.key);
 
   return (
     <aside ref={ref} className="card aa-studio" aria-label="Record this sound">
       <div className="aa-studio-head">
         <span className="subtle">{group}</span>
-        <span className={`badge${recording ? ' ok' : ''}`}>{recording ? 'Recorded' : 'Synthesised voice'}</span>
+        <span className={`badge${recording ? ' ok' : ''}`}>{recording ? 'Recorded' : synthesised ? 'Synthesised voice' : 'No sound yet'}</span>
       </div>
 
       <div className="aa-say-label">Say</div>
@@ -250,7 +264,7 @@ function Studio({
         {clip.say}
       </div>
       {clip.hint && <div className="aa-hint">{clip.hint}</div>}
-      {clip.group !== 'pair' && clip.letter !== clip.say && (
+      {clip.group !== 'pair' && !word && clip.letter !== clip.say && (
         <div className="subtle aa-for">
           for the letter <strong dir="auto">{clip.letter}</strong>
         </div>
@@ -296,7 +310,9 @@ function Studio({
             lipsync: res.lipsync ?? null,
           });
         }}
-        removePrompt={`Remove the recording of “${clip.say}”?\n\nThe synthesised voice plays there again until a new one is saved.`}
+        removePrompt={`Remove the recording of “${clip.say}”?\n\n${
+          synthesised ? 'The synthesised voice plays there again until a new one is saved.' : 'It has no sound until a new one is saved.'
+        }`}
         onRemove={async () => {
           await api(`/admin/alphabet/audio?key=${encodeURIComponent(clip.key)}`, { method: 'DELETE' });
           onRemoved(clip.key);
