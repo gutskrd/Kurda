@@ -8,6 +8,17 @@ export const SHIELD = { windowSeconds: 10 * 60, probes: 20, blockSeconds: 60 * 6
 
 const EXEMPT = new Set(['/health', '/metrics']);
 
+/**
+ * What somebody already signed in does to stay signed in, which carries no
+ * session of its own: renewing the access token with the refresh token, and
+ * signing out. The block is for strangers on a network that has been probing;
+ * whoever is signed in on it (a school, a carrier's shared address) is meant
+ * to carry on, and without these they were signed out the next time their
+ * fifteen minutes ran out, for the rest of the hour. Each still has its own
+ * rate limit, and a refresh token is the credential either way.
+ */
+const SESSION_KEEPING = new Set(['/auth/refresh', '/auth/logout']);
+
 /** Where the counts are kept: Redis when there is one, so every instance sees them, else this process's memory. */
 interface ShieldStore {
   /** count one probe; how many there have been in the window */
@@ -110,7 +121,7 @@ export function installScannerShield(app: FastifyInstance, options: { redis?: Re
       return reply.code(404).send({ code: 'NOT_FOUND', message: ROUTE_NOT_FOUND_MESSAGE, requestId: req.id });
     }
 
-    if (req.user || !network) return;
+    if (req.user || !network || SESSION_KEEPING.has(path)) return;
     const seconds = await safely((s) => s.blockedFor(network));
     if (seconds > 0) {
       return reply

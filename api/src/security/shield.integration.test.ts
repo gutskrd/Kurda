@@ -20,6 +20,7 @@ describe.skipIf(!DATABASE_URL)('the scanner shield (integration)', { timeout: 30
   let app: FastifyInstance;
   let pool: pg.Pool;
   let token = '';
+  let refreshToken = '';
   // a network of its own for each run, so an earlier run's block does not carry over
   const scanner = `10.209.${Number(BigInt(Date.now()) % 200n) + 1}.7`;
 
@@ -35,6 +36,7 @@ describe.skipIf(!DATABASE_URL)('the scanner shield (integration)', { timeout: 30
     });
     await activate(app, pool, res);
     token = res.json().tokens.accessToken;
+    refreshToken = res.json().tokens.refreshToken;
   });
 
   afterAll(async () => {
@@ -70,6 +72,18 @@ describe.skipIf(!DATABASE_URL)('the scanner shield (integration)', { timeout: 30
     expect(Number(signedOut.headers['retry-after'])).toBeGreaterThan(0);
     const signedIn = await app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${token}` }, remoteAddress: scanner });
     expect(signedIn.statusCode).toBe(200);
+    // and stays signed in: renewing the session carries no access token, and is not blocked
+    const renewed = await app.inject({ method: 'POST', url: '/auth/refresh', payload: { refreshToken }, remoteAddress: scanner });
+    expect(renewed.statusCode).toBe(200);
+    expect(renewed.json().accessToken).toEqual(expect.any(String));
+    // while signing in afresh from it still waits out the block
+    const signIn = await app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email: `shield_${s}@it.kurda.app`, password: 'a-strong-password1' },
+      remoteAddress: scanner,
+    });
+    expect(signIn.statusCode).toBe(403);
     // the health check is never blocked
     expect((await app.inject({ method: 'GET', url: '/health', remoteAddress: scanner })).statusCode).not.toBe(403);
     await vi.waitFor(async () => {
