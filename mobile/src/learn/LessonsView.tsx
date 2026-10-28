@@ -36,15 +36,17 @@ import { EmptyState } from '../theme/EmptyState';
 import { fraction, nextStep, type NextStep } from './next';
 
 /**
- * Learn's first half: the next lesson, today, the tools, and the course.
+ * Learn's first half: the next lesson, the tools, the course, and the rest of
+ * today.
  *
  * Top to bottom in the order of what somebody opening it wants: the one next
- * step (a card with one button), the practice tools in one row, the week's
- * league and the day's extras, and then the course as a lesson path for
- * anyone who wants to choose for themselves. Continuing a lesson is one tap
- * from here — from the card, or from the "Continue" over the current skill
- * on the path. How today is going sits in the bar above (LearnBar), where it
- * stays in sight while the path scrolls.
+ * step (a card with one button), the practice tools in one row, and then the
+ * course as a lesson path — on the first screen, not under a stack of cards —
+ * for anyone who wants to choose for themselves. The week's league and the
+ * day's extras come after the path, under "More for today". Continuing a
+ * lesson is one tap from here — from the card, or from the "Continue" over
+ * the current skill on the path. How today is going sits in the bar above
+ * (LearnBar), where it stays in sight while the path scrolls.
  *
  * The path is one course at a time, with a switch between courses when there
  * are several. When it first appears it scrolls to the current skill, and a
@@ -133,9 +135,9 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const [scrollY, setScrollY] = useState(0);
   const scrolledFor = useRef<string | null>(null);
   /*
-   * The cards above the path — today's goal, the league, the day's Zêr, the
-   * word of the day — each arrive when their own answer does, and one that
-   * arrives after the path has been scrolled to pushes it down the screen.
+   * What sits above the path — the next-step card, the review count on its
+   * tile — arrives when its own answer does, and something that arrives after
+   * the path has been scrolled to pushes it down the screen.
    * For the few seconds those answers take, and until the person moves the
    * page themselves, the scroll follows the stop it was put on. After that
    * the page is theirs: a card changing later (the day's Zêr just claimed)
@@ -255,11 +257,6 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
               onPress={() => navigation.navigate('Alphabet')}
             />
           </View>
-          {/* the week: the league and your place in it (or your own week), and the weekly goal */}
-          <LeagueLine />
-          <EventBanner />
-          <DailyRewardCard />
-          <WordOfDayCard />
         </View>
 
         {courses && courses.length > 0 ? (
@@ -315,6 +312,17 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
         ) : (
           <EmptyState title={t('learn.noCourses')} />
         )}
+
+        {/* after the path: the week's league and your place in it (or your own week), and the day's extras */}
+        <View style={styles.more}>
+          <Text style={[styles.mapLabel, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+            {t('learn.more.title')}
+          </Text>
+          <LeagueLine />
+          <EventBanner />
+          <DailyRewardCard />
+          <WordOfDayCard />
+        </View>
       </ScrollView>
 
       {pinned ? (
@@ -367,7 +375,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
   const button =
     step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('learn.tools.review') : t('learn.continue.button');
-  const go = () => (step.kind === 'review' ? navigation.navigate('Practice') : navigation.navigate('Lesson', { lessonId: step.lessonId }));
+  const go = () => (step.kind === 'review' ? navigation.navigate('Practice') : navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId }));
   const progress = t('learn.continue.progress', { done: formatNumber(step.done, locale), total: formatNumber(step.total, locale) });
 
   return (
@@ -514,6 +522,7 @@ const styles = StyleSheet.create({
   tileDetail: { fontSize: typography.sizes.xs },
 
   course: { gap: spacing.sm + 4, marginTop: spacing.md },
+  more: { gap: layout.rowGap, marginTop: spacing.xl },
   mapLabel: { ...sectionLabel },
   courseTitle: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, marginBottom: spacing.xs },
   courseTitleSkeleton: { marginBottom: spacing.xs },

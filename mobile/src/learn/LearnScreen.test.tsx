@@ -68,7 +68,17 @@ describe('Learn', () => {
     expect(await screen.findByText('Malbat', { selector: '[role="heading"]' })).toBeTruthy();
     expect(screen.getByText('1 of 3 skills done')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
-    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2', courseId: 'c1' });
+  });
+
+  // the path comes straight after the next step and the tools; the week and the day's extras wait under it
+  it('puts the path before the rest of today', async () => {
+    client();
+    renderWithProviders(<LearnScreen />);
+    const path = await screen.findByRole('heading', { name: 'Course map' });
+    const more = screen.getByRole('heading', { name: 'More for today' });
+    expect(path.compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Unit 1 trophy, not earned yet' }).compareDocumentPosition(more) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   /*

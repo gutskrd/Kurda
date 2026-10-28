@@ -1,5 +1,5 @@
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { lessonStates, type PathStop, type PathUnit } from '@kurda/shared';
+import { lessonStates, lessonXpRange, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
@@ -22,7 +22,9 @@ type Unit = PathUnit<SkillNode>;
  * what opens it.
  *
  * A skill's lessons are listed too, each one a way in once it is open, so a
- * finished lesson can be played again on its own.
+ * finished lesson can be played again on its own. Above the button, what the
+ * lesson it opens pays (shared `lessonXpRange`, the server's own numbers): a
+ * first time through, or a replay's smaller share.
  */
 export function StopSheet({
   open,
@@ -114,6 +116,8 @@ function Card({
             label: stop.state === 'done' ? t('coursemap.path.again') : stop.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start'),
             go: () => onLesson(launch),
           };
+  // a finished skill opens its first lesson again, which pays a replay's share
+  const xp = action && stop.finish !== 'refresh' ? lessonXpRange(stop.state === 'done') : null;
 
   return (
     <>
@@ -177,6 +181,14 @@ function Card({
       {stop.state === 'done' ? line(stop.finish === 'refresh' ? t('coursemap.path.refreshWhy') : t('coursemap.strength', { percent: skill.strength })) : null}
       {stop.state === 'locked' ? line(stop.after ? t('coursemap.path.lockedAfter', { title: stop.after.title }) : t('coursemap.lockedBadge')) : null}
       {stop.state !== 'locked' && !launch ? line(t('coursemap.path.notYet')) : null}
+      {xp ? (
+        <View style={[styles.xp, { flexDirection: dir.row, alignSelf: dir.rtl ? 'flex-end' : 'flex-start', backgroundColor: colors.controlTrack }]} testID="lp-stop-xp">
+          <Icon name="bolt" size={14} color={colors.goldText} />
+          <Text style={[styles.xpText, { color: colors.textPrimary }]}>
+            {t(stop.state === 'done' ? 'coursemap.xp.again' : 'coursemap.xp.first', { min: xp.min, max: xp.max })}
+          </Text>
+        </View>
+      ) : null}
       {action ? <ClayButton label={action.label} tone="primary" size="large" onPress={action.go} style={styles.action} /> : null}
       {skill.hasGrammar ? (
         <Pressable
@@ -212,6 +224,8 @@ const styles = StyleSheet.create({
   barFill: { height: 8, borderRadius: radii.pill },
   barEnd: { alignSelf: 'flex-end' },
   action: { marginTop: spacing.xs },
+  xp: { alignItems: 'center', gap: 4, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radii.pill },
+  xpText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   tips: { alignSelf: 'center', alignItems: 'center', gap: spacing.xs + 2, minHeight: MIN_TOUCH_TARGET, paddingHorizontal: spacing.md },
   tipsText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold },
 });
