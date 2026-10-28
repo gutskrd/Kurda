@@ -25,6 +25,11 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     friendly: `friendly${suffix}`,
     hidden: `hidden${suffix}`,
     blocked: `blockme${suffix}`,
+    berserker: `berserker${suffix}`,
+    exact: `zarok${suffix}`,
+    starts: `zarok${suffix}x`,
+    inside: `xzarok${suffix}`,
+    named: `dilan${suffix}`,
   };
 
   const register = async (tag: string, ip: string): Promise<string> => {
@@ -57,6 +62,11 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     id.friendly = await register('friendly', '10.82.3.1');
     id.hidden = await register('hidden', '10.82.4.1');
     id.blocked = await register('blocked', '10.82.5.1');
+    id.berserker = await register('berserker', '10.82.6.1');
+    id.exact = await register('exact', '10.82.7.1');
+    id.starts = await register('starts', '10.82.8.1');
+    id.inside = await register('inside', '10.82.10.1');
+    id.named = await register('named', '10.82.11.1');
 
     await social.setVisibility(id.friendly!, 'friends');
     await social.setVisibility(id.hidden!, 'nobody');
@@ -83,6 +93,38 @@ describe.skipIf(!DATABASE_URL)('user search + profiles (integration)', () => {
     await friends.block(id.viewer!, id.blocked!);
     expect(found(await social.search(id.viewer!, `blockme${suffix}`), id.blocked!)).toBe(false);
     expect(found(await social.search(id.blocked!, `viewer${suffix}`), id.viewer!)).toBe(false);
+  });
+
+  it('search finds a name from any part of it', async () => {
+    expect(found(await social.search(id.viewer!, `serker${suffix}`), id.berserker!)).toBe(true);
+    expect(found(await social.search(id.viewer!, 'rserk'), id.berserker!)).toBe(true);
+  });
+
+  it('search looks through display names too, from where any word in them starts', async () => {
+    await pool.query(`UPDATE users SET display_name = $2 WHERE id = $1`, [id.named!, `Dilan Serhildan${suffix}`]);
+    expect(found(await social.search(id.viewer!, `serhildan${suffix}`), id.named!)).toBe(true);
+    expect(found(await social.search(id.viewer!, `hildan${suffix}`), id.named!)).toBe(true);
+    // two letters are looked for where a word starts, not anywhere inside one
+    expect(found(await social.search(id.viewer!, 'se', () => null, 10_000), id.named!)).toBe(true);
+    expect(found(await social.search(id.viewer!, 'rh', () => null, 10_000), id.named!)).toBe(false);
+  });
+
+  it('a typo still finds someone when no name holds what was typed', async () => {
+    expect(found(await social.search(id.viewer!, `berzerker${suffix}`), id.berserker!)).toBe(true);
+    expect(found(await social.search(id.viewer!, `bersrker${suffix}`), id.berserker!)).toBe(true);
+    // near misses are left out when a name does hold it
+    const exact = await social.search(id.viewer!, `zarok${suffix}`);
+    expect(found(exact, id.berserker!)).toBe(false);
+  });
+
+  it('search puts the exact username first, then friends, then how well a name matches', async () => {
+    await friends.request(id.viewer!, id.inside!);
+    await friends.respond(id.inside!, id.viewer!, true);
+    const order = (await social.search(id.viewer!, `zarok${suffix}`)).map((h) => h.userId);
+    expect(order.slice(0, 3)).toEqual([id.exact!, id.inside!, id.starts!]);
+    const hits = await social.search(id.viewer!, `zarok${suffix}x`);
+    expect(hits.find((h) => h.userId === id.starts)?.friend).toBe(false);
+    expect((await social.search(id.viewer!, `xzarok${suffix}`)).find((h) => h.userId === id.inside)?.friend).toBe(true);
   });
 
   it('an "everyone" profile shows full detail + relationship', async () => {

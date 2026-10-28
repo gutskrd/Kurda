@@ -159,10 +159,13 @@ describe.skipIf(!DATABASE_URL)('hostile input (integration)', () => {
     const people = await get(`/users/search?q=${encodeURIComponent(`lk_u_${s}`)}`);
     expect(people.statusCode).toBe(200);
     expect(people.json().results.map((r: { username: string }) => r.username)).toEqual([`lk_u_${s}`]);
-    // and `%` used to list everyone
+    // and `%` used to list everyone; now it finds only a name holding it, as
+    // a display name may (they are searched too, and these tests register one)
     const everyone = await get(`/users/search?q=${encodeURIComponent('%%')}`);
     expect(everyone.statusCode).toBe(200);
-    expect(everyone.json().results).toEqual([]);
+    for (const r of everyone.json().results as Array<{ username: string; displayName: string | null }>) {
+      expect(`${r.username} ${r.displayName ?? ''}`).toContain('%%');
+    }
 
     const words = await get(`/dictionary/search?q=${encodeURIComponent(`kept_${s}`)}`);
     expect(words.statusCode).toBe(200);
