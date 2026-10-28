@@ -7,7 +7,7 @@ import { mediaKey, type MediaStorage } from '../media/storage.js';
 import { AppError } from '../plugins/errors.js';
 import { lockPersonFor } from '../limits/limits.js';
 import { inTransaction } from '../moderation/tx.js';
-import { handOnGroup } from '../groups/service.js';
+import { handOnGroups } from '../groups/service.js';
 import type { StoryGamesService } from '../story-games/service.js';
 import { standaloneStoryGames } from '../story-games/standalone.js';
 import { eraseRanks, exportRanks } from '../ranks/gdpr.js';
@@ -205,14 +205,20 @@ export class GdprService {
    */
   private async deleteFiles(keys: string[]): Promise<void> {
     if (!this.deps.storage) return;
+    const deleted: string[] = [];
     for (const key of keys) {
       try {
         await this.deps.storage.delete(key);
-        await this.pool.query(`DELETE FROM media_uploads WHERE key = $1`, [key]);
+        deleted.push(key);
       } catch (err) {
         this.deps.log?.warn({ err, key }, 'could not delete a closed account’s file; the orphan sweep will');
       }
     }
+    // the rows of every file that went, in one statement rather than one each
+    if (deleted.length === 0) return;
+    await this.pool.query(`DELETE FROM media_uploads WHERE key = ANY($1::text[])`, [deleted]).catch((err: unknown) => {
+      this.deps.log?.warn({ err, keys: deleted.length }, 'could not delete a closed account’s file rows; the orphan sweep will');
+    });
   }
 
   private async anonymize(userId: string, executor: Pick<pg.Pool, 'query'> = this.pool): Promise<void> {
@@ -603,9 +609,10 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM group_members WHERE user_id = $1`);
   await q(`DELETE FROM group_reads WHERE user_id = $1`);
   await q(`DELETE FROM group_mutes WHERE user_id = $1`);
-  for (const row of owned.rows) {
-    await q(`UPDATE groups SET owner_id = NULL WHERE id = $1 AND owner_id = $2`, [row.group_id, userId]);
-    await handOnGroup(executor, row.group_id);
+  if (owned.rows.length > 0) {
+    const ids = owned.rows.map((row) => row.group_id);
+    await q(`UPDATE groups SET owner_id = NULL WHERE id = ANY($1::uuid[]) AND owner_id = $2`, [ids, userId]);
+    await handOnGroups(executor, ids);
   }
 
   // the people they knew, and what reached them
