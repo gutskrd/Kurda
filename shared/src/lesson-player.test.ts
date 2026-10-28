@@ -2,14 +2,17 @@ import { describe, expect, it } from 'vitest';
 import {
   AnswerQueue,
   REASK_GAP,
+  RUN_SHOWN_FROM,
   currentExercise,
   currentStep,
   feedbackKind,
   initPlayer,
   isReask,
+  nextRun,
   practisableMistakes,
   progress,
   reduce,
+  runMilestone,
   type DeliveredExercise,
   type GradeResult,
   type PlayableSession,
@@ -165,10 +168,83 @@ describe('skipping', () => {
     expect(s.skipped).toEqual([]);
   });
 
+  it('holds nothing to put back after a single skip', () => {
+    expect(reduce(initPlayer(session()), { type: 'SKIP' }).putAway).toBeNull();
+  });
+
   it('FINISH ends the session wherever it is', () => {
     const s = reduce(initPlayer(session()), { type: 'FINISH' });
     expect(s.status).toBe('finished');
     expect(currentStep(s)).toBeNull();
+  });
+});
+
+describe('putting a whole kind off for the rest of the session', () => {
+  // a translate, then listening and the others in turn
+  const kinds = ['translate', 'listening', 'translate', 'listening', 'speaking', 'listening'] as const;
+  const mixed = session({ exercises: ids.map((id, i) => ({ id, position: i + 1, type: kinds[i]! })) });
+  /** answered a, now on b, the first listening item, and put every listening item off */
+  const awayAtB = (): PlayerState => reduce(answer(initPlayer(mixed), right), { type: 'SKIP', all: 'listening' });
+
+  it('puts off the one on screen and every one of its kind still to come, each counted as put off', () => {
+    const s = awayAtB();
+    expect(currentExercise(s)?.id).toBe('c');
+    expect(upcoming(s)).toEqual(['c', 'e']);
+    expect(s.skipped).toEqual(['b', 'd', 'f']);
+    expect(s.putAway?.type).toBe('listening');
+    expect(s.answeredCount).toBe(1);
+  });
+
+  it('puts them back where they were with UNSKIP, the one on screen staying put off', () => {
+    const s = reduce(awayAtB(), { type: 'UNSKIP' });
+    expect(upcoming(s)).toEqual(['c', 'd', 'e', 'f']);
+    expect(s.skipped).toEqual(['b']);
+    expect(s.putAway).toBeNull();
+  });
+
+  it('puts back next a step whose place has gone by, and the last one last', () => {
+    let s = answer(awayAtB(), right); // c
+    s = reduce(s, { type: 'ANSWERED', result: { verdict: 'correct', accepted: true } }); // e, its feedback showing
+    s = reduce(reduce(s, { type: 'UNSKIP' }), { type: 'CONTINUE' });
+    expect(upcoming(s)).toEqual(['d', 'f']);
+  });
+
+  it('drops a second try of that kind too, without counting it as put off, and brings it back with the rest', () => {
+    const list = session({ exercises: ids.slice(0, 5).map((id, i) => ({ id, position: i + 1, type: i < 2 ? 'listening' : 'translate' })) });
+    let s = answer(initPlayer(list), wrong); // a missed: its second try waits after d
+    expect(upcoming(s)).toEqual(['b', 'c', 'd', 'a*', 'e']);
+    s = reduce(s, { type: 'SKIP', all: 'listening' });
+    expect(upcoming(s)).toEqual(['c', 'd', 'e']);
+    expect(s.skipped).toEqual(['b']);
+    s = reduce(s, { type: 'UNSKIP' });
+    expect(upcoming(s)).toEqual(['c', 'd', 'a*', 'e']);
+  });
+
+  it('holds nothing to put back when none of that kind is left', () => {
+    const s = reduce(initPlayer(session()), { type: 'SKIP', all: 'listening' });
+    expect(upcoming(s)).toEqual(['b', 'c', 'd', 'e', 'f']);
+    expect(s.skipped).toEqual(['a']);
+    expect(s.putAway).toBeNull();
+    expect(reduce(s, { type: 'UNSKIP' })).toBe(s);
+  });
+
+  it('cannot put anything back once the session is finished', () => {
+    const s = reduce(awayAtB(), { type: 'FINISH' });
+    expect(reduce(s, { type: 'UNSKIP' })).toBe(s);
+  });
+});
+
+describe('runs', () => {
+  it('counts right answers in a row, starts again on a miss, and leaves a spoken answer out of it', () => {
+    expect(nextRun(2, { accepted: true, exerciseType: 'translate' })).toBe(3);
+    expect(nextRun(4, { accepted: false, exerciseType: 'listening' })).toBe(0);
+    expect(nextRun(4, { accepted: false, exerciseType: 'speaking' })).toBe(4);
+    expect(nextRun(4, { accepted: true, exerciseType: 'speaking' })).toBe(4);
+    expect(RUN_SHOWN_FROM).toBe(3);
+  });
+
+  it('names 5, 10 and every fifth from 15 as milestones, and nothing else', () => {
+    expect([1, 3, 4, 5, 6, 9, 10, 11, 14, 15, 20, 25].map(runMilestone)).toEqual([null, null, null, 5, null, null, 10, null, null, 15, 20, 25]);
   });
 });
 
