@@ -11,6 +11,12 @@ export interface StreakState {
   lastActiveOn: string | null;
   /** stored streak freezes (0 or 1) */
   freezes: number;
+  /**
+   * The missed day the last freeze spent covered, 'YYYY-MM-DD' in the user's
+   * tz, or null (or absent) if none ever has: what the apps say once, "your
+   * streak was kept".
+   */
+  freezeUsedOn?: string | null;
 }
 
 export const MAX_FREEZES = 1;
@@ -56,17 +62,19 @@ export function shiftDate(date: string, days: number): string {
 
 /**
  * Bring a stored state up to `today` without counting today as activity:
- * a single missed day is covered by a freeze (consumed); any longer gap
- * breaks the run (current → 0, but the freeze and the true last-active
- * date are preserved). Idempotent for a given `today`.
+ * a single missed day is covered by a freeze (consumed, and the day it
+ * covered kept as `freezeUsedOn`); any longer gap breaks the run (current →
+ * 0, but the freeze and the true last-active date are preserved). Idempotent
+ * for a given `today`.
  */
 export function settle(state: StreakState, today: string): StreakState {
   if (state.lastActiveOn === null) return state;
   const gap = dayDiff(state.lastActiveOn, today);
   if (gap <= 1) return state; // active today or yesterday — run alive
   if (gap === 2 && state.freezes >= 1) {
-    // one missed day, covered: advance the anchor to yesterday
-    return { ...state, freezes: state.freezes - 1, lastActiveOn: shiftDate(today, -1) };
+    // one missed day, covered: advance the anchor to yesterday, the day the freeze kept
+    const yesterday = shiftDate(today, -1);
+    return { ...state, freezes: state.freezes - 1, lastActiveOn: yesterday, freezeUsedOn: yesterday };
   }
   return { ...state, currentStreak: 0 }; // run broken
 }
@@ -89,10 +97,10 @@ export function record(state: StreakState, today: string): { state: StreakState;
   }
   return {
     state: {
+      ...settled,
       currentStreak: current,
       longestStreak: Math.max(settled.longestStreak, current),
       lastActiveOn: today,
-      freezes: settled.freezes,
     },
     incremented: true,
   };

@@ -2226,6 +2226,15 @@ export type TranslationKey =
   | 'coursemap.path.jump'
   | 'coursemap.path.jumpEnd'
   | 'coursemap.path.courses'
+  | 'learn.kept.title'
+  | 'learn.kept.titleOne'
+  | 'learn.kept.body'
+  | 'learn.kept.slots'
+  | 'learn.kept.earn'
+  | 'learn.kept.earnOne'
+  | 'learn.kept.ready'
+  | 'learn.kept.start'
+  | 'learn.kept.notNow'
   | 'lesson.resultsFailed'
   | 'lesson.failedRetry'
   | 'settings.group.security'
@@ -4589,6 +4598,15 @@ const en: Catalog = {
   'coursemap.path.jump': 'Back to your lesson',
   'coursemap.path.jumpEnd': 'Back to where you are',
   'coursemap.path.courses': 'Your courses',
+  'learn.kept.title': 'Your {count}-day streak was kept by a freeze',
+  'learn.kept.titleOne': 'Your 1-day streak was kept by a freeze',
+  'learn.kept.body': 'You missed a day, and a freeze covered it.',
+  'learn.kept.slots': 'Freezes: {held} of {max}',
+  'learn.kept.earn': '{count} more lessons earn another freeze.',
+  'learn.kept.earnOne': 'One more lesson earns another freeze.',
+  'learn.kept.ready': 'A freeze is ready again for another missed day.',
+  'learn.kept.start': 'Start a lesson',
+  'learn.kept.notNow': 'Not now',
   'lesson.resultsFailed': 'Your answers are saved, but the results didn’t come through.',
   'lesson.failedRetry': 'That didn’t go through — tap to try again',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -6952,6 +6970,15 @@ const ku: Catalog = {
   'coursemap.path.jump': 'Vegere dersa xwe',
   'coursemap.path.jumpEnd': 'Vegere cihê xwe',
   'coursemap.path.courses': 'Kursên te',
+  'learn.kept.title': 'Cemidandinekê rêza te ya {count} rojî parast',
+  'learn.kept.titleOne': 'Cemidandinekê rêza te ya 1 rojî parast',
+  'learn.kept.body': 'Rojeke te winda bû, û cemidandinekê ew vegirt.',
+  'learn.kept.slots': 'Cemidandin: {held} ji {max}',
+  'learn.kept.earn': '{count} dersên din cemidandineke din didin te.',
+  'learn.kept.earnOne': 'Dersek din cemidandineke din dide te.',
+  'learn.kept.ready': 'Cemidandinek dîsa ji bo rojeke din a winda amade ye.',
+  'learn.kept.start': 'Dersekê dest pê bike',
+  'learn.kept.notNow': 'Ne niha',
   'lesson.resultsFailed': 'Bersivên te hatin tomarkirin, lê encam negihîştin.',
   'lesson.failedRetry': 'Ev negihîşt — ji bo dubarekirinê bitikîne',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -9315,6 +9342,15 @@ const de: Catalog = {
   'coursemap.path.jump': 'Zurück zu deiner Lektion',
   'coursemap.path.jumpEnd': 'Zurück zu deiner Stelle',
   'coursemap.path.courses': 'Deine Kurse',
+  'learn.kept.title': 'Eine Einfrierung hat deine Serie von {count} Tagen gerettet',
+  'learn.kept.titleOne': 'Eine Einfrierung hat deine Serie von 1 Tag gerettet',
+  'learn.kept.body': 'Du hast einen Tag verpasst, und eine Einfrierung hat ihn abgedeckt.',
+  'learn.kept.slots': 'Einfrierungen: {held} von {max}',
+  'learn.kept.earn': 'Noch {count} Lektionen, dann bekommst du eine neue Einfrierung.',
+  'learn.kept.earnOne': 'Noch eine Lektion, dann bekommst du eine neue Einfrierung.',
+  'learn.kept.ready': 'Eine Einfrierung ist wieder bereit für einen weiteren verpassten Tag.',
+  'learn.kept.start': 'Lektion starten',
+  'learn.kept.notNow': 'Nicht jetzt',
   'lesson.resultsFailed': 'Deine Antworten sind gespeichert, aber die Ergebnisse sind nicht angekommen.',
   'lesson.failedRetry': 'Das ist nicht durchgegangen — zum Wiederholen tippen',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -11678,6 +11714,15 @@ const es: Catalog = {
   'coursemap.path.jump': 'Volver a tu lección',
   'coursemap.path.jumpEnd': 'Volver a donde estás',
   'coursemap.path.courses': 'Tus cursos',
+  'learn.kept.title': 'Un congelador mantuvo tu racha de {count} días',
+  'learn.kept.titleOne': 'Un congelador mantuvo tu racha de 1 día',
+  'learn.kept.body': 'Te perdiste un día y un congelador lo cubrió.',
+  'learn.kept.slots': 'Congeladores: {held} de {max}',
+  'learn.kept.earn': '{count} lecciones más te dan otro congelador.',
+  'learn.kept.earnOne': 'Una lección más te da otro congelador.',
+  'learn.kept.ready': 'Vuelves a tener un congelador listo para otro día perdido.',
+  'learn.kept.start': 'Empezar una lección',
+  'learn.kept.notNow': 'Ahora no',
   'lesson.resultsFailed': 'Tus respuestas están guardadas, pero los resultados no llegaron.',
   'lesson.failedRetry': 'No se pudo enviar: toca para intentarlo de nuevo',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -14041,6 +14086,15 @@ const tr: Catalog = {
   'coursemap.path.jump': 'Dersine dön',
   'coursemap.path.jumpEnd': 'Kaldığın yere dön',
   'coursemap.path.courses': 'Kursların',
+  'learn.kept.title': 'Bir dondurucu {count} günlük serini korudu',
+  'learn.kept.titleOne': 'Bir dondurucu 1 günlük serini korudu',
+  'learn.kept.body': 'Bir gün kaçırdın ve bir dondurucu o günü karşıladı.',
+  'learn.kept.slots': 'Dondurucular: {held} / {max}',
+  'learn.kept.earn': '{count} ders daha yaparsan yeni bir dondurucu kazanırsın.',
+  'learn.kept.earnOne': 'Bir ders daha yaparsan yeni bir dondurucu kazanırsın.',
+  'learn.kept.ready': 'Kaçırılan bir gün için yine bir dondurucun hazır.',
+  'learn.kept.start': 'Bir derse başla',
+  'learn.kept.notNow': 'Şimdi değil',
   'lesson.resultsFailed': 'Cevapların kaydedildi ama sonuçlar gelmedi.',
   'lesson.failedRetry': 'Gönderilemedi — yeniden denemek için dokun',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -16404,6 +16458,15 @@ const ar: Catalog = {
   'coursemap.path.jump': 'العودة إلى درسك',
   'coursemap.path.jumpEnd': 'العودة إلى مكانك',
   'coursemap.path.courses': 'دوراتك',
+  'learn.kept.title': 'حفظ تجميدٌ تتابعك الممتد {count} يوم',
+  'learn.kept.titleOne': 'حفظ تجميدٌ تتابعك الممتد يومًا واحدًا',
+  'learn.kept.body': 'فاتك يوم، فغطّاه تجميد.',
+  'learn.kept.slots': 'التجميدات: {held} من {max}',
+  'learn.kept.earn': '{count} دروس أخرى تمنحك تجميدًا جديدًا.',
+  'learn.kept.earnOne': 'درس واحد آخر يمنحك تجميدًا جديدًا.',
+  'learn.kept.ready': 'لديك تجميد جاهز من جديد ليوم آخر قد يفوتك.',
+  'learn.kept.start': 'ابدأ درسًا',
+  'learn.kept.notNow': 'ليس الآن',
   'lesson.resultsFailed': 'إجاباتك محفوظة، لكن النتائج لم تصل.',
   'lesson.failedRetry': 'لم يُرسَل — اضغط لإعادة المحاولة',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -18767,6 +18830,15 @@ const fr: Catalog = {
   'coursemap.path.jump': 'Revenir à ta leçon',
   'coursemap.path.jumpEnd': 'Revenir là où tu en es',
   'coursemap.path.courses': 'Tes cours',
+  'learn.kept.title': 'Un gel a sauvé ta série de {count} jours',
+  'learn.kept.titleOne': 'Un gel a sauvé ta série de 1 jour',
+  'learn.kept.body': 'Tu as manqué un jour, et un gel l’a couvert.',
+  'learn.kept.slots': 'Gels : {held} sur {max}',
+  'learn.kept.earn': 'Encore {count} leçons et tu gagnes un nouveau gel.',
+  'learn.kept.earnOne': 'Encore une leçon et tu gagnes un nouveau gel.',
+  'learn.kept.ready': 'Un gel est de nouveau prêt pour un autre jour manqué.',
+  'learn.kept.start': 'Commencer une leçon',
+  'learn.kept.notNow': 'Pas maintenant',
   'lesson.resultsFailed': 'Tes réponses sont enregistrées, mais les résultats ne sont pas arrivés.',
   'lesson.failedRetry': 'Ça n’est pas passé — appuie pour réessayer',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -21130,6 +21202,15 @@ const nl: Catalog = {
   'coursemap.path.jump': 'Terug naar je les',
   'coursemap.path.jumpEnd': 'Terug naar waar je bent',
   'coursemap.path.courses': 'Je cursussen',
+  'learn.kept.title': 'Een bevriezing heeft je reeks van {count} dagen gered',
+  'learn.kept.titleOne': 'Een bevriezing heeft je reeks van 1 dag gered',
+  'learn.kept.body': 'Je hebt een dag gemist, en een bevriezing heeft die opgevangen.',
+  'learn.kept.slots': 'Bevriezingen: {held} van {max}',
+  'learn.kept.earn': 'Nog {count} lessen en je krijgt een nieuwe bevriezing.',
+  'learn.kept.earnOne': 'Nog één les en je krijgt een nieuwe bevriezing.',
+  'learn.kept.ready': 'Er is weer een bevriezing klaar voor een volgende gemiste dag.',
+  'learn.kept.start': 'Begin een les',
+  'learn.kept.notNow': 'Niet nu',
   'lesson.resultsFailed': 'Je antwoorden zijn opgeslagen, maar de resultaten zijn niet binnengekomen.',
   'lesson.failedRetry': 'Dat is niet gelukt — tik om het opnieuw te proberen',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -23494,6 +23575,15 @@ const ckb: Catalog = {
   'coursemap.path.jump': 'گەڕانەوە بۆ وانەکەت',
   'coursemap.path.jumpEnd': 'گەڕانەوە بۆ شوێنەکەت',
   'coursemap.path.courses': 'خولەکانت',
+  'learn.kept.title': 'بەستنێک زنجیرەی {count} ڕۆژەکەتی پاراست',
+  'learn.kept.titleOne': 'بەستنێک زنجیرەی 1 ڕۆژەکەتی پاراست',
+  'learn.kept.body': 'ڕۆژێکت لەدەستدا، و بەستنێک دایپۆشی.',
+  'learn.kept.slots': 'بەستنەکان: {held} لە {max}',
+  'learn.kept.earn': '{count} وانەی تر بەستنێکی نوێت پێ دەدەن.',
+  'learn.kept.earnOne': 'یەک وانەی تر بەستنێکی نوێت پێ دەدات.',
+  'learn.kept.ready': 'بەستنێک دیسان ئامادەیە بۆ ڕۆژێکی تری لەدەستچوو.',
+  'learn.kept.start': 'وانەیەک دەست پێ بکە',
+  'learn.kept.notNow': 'ئێستا نا',
   'lesson.resultsFailed': 'وەڵامەکانت پاشەکەوت کران، بەڵام ئەنجامەکان نەگەیشتن.',
   'lesson.failedRetry': 'نەگەیشت — دەست لێبدە بۆ هەوڵدانەوە',
   // --- signing in safely: your password, and the devices signed in to your account ---

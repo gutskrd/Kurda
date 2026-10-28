@@ -8,13 +8,17 @@ vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs
 vi.mock('@react-native-community/netinfo', () => import('../reports/testing/netinfo'));
 vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { AccessibilityInfo } from 'react-native';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
 import { navigation } from '../play/testing/navigation';
 import { LearnScreen } from './LearnScreen';
 import { LEARN_VIEW_KEY } from './useLearnView';
+import { onHaptic } from '../feedback/haptics';
+import type { HapticEvent } from '../feedback/hapticPacing';
+import { keptKey } from '../streak/kept';
 
 patchReactNativeWeb({ reduceMotion: true });
 beforeEach(() => {
@@ -41,12 +45,14 @@ const MAP = {
   ],
 };
 
-function client() {
+const STREAK = { current: 6, longest: 9, freezes: 0, lastActiveOn: null, daysLearned: 31 };
+
+function client(streak: Record<string, unknown> = STREAK) {
   testAuth.client = fakeClient({
     'GET /courses': ok({ courses: [{ id: 'c1', slug: 'kmr', title: 'Kurmancî', dialect: 'kmr' }] }),
     'GET /courses/c1/map': ok(MAP),
     'GET /me/daily-goal': ok({ goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false }),
-    'GET /me': ok({ user: { streak: { current: 6, longest: 9, freezes: 0, lastActiveOn: null, daysLearned: 31 } } }),
+    'GET /me': ok({ user: { streak } }),
     'GET /me/wallet': ok({ balances: { zer: 1240, gems: 3 } }),
     'GET /practice/due': ok({ due: 8, available: 20, open: null }),
     'GET /stories': ok({ stories: [{ slug: 'a' }] }),
@@ -157,4 +163,52 @@ describe('Learn', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Leagues' }));
     expect(navigation.navigate).toHaveBeenCalledWith('League');
   });
+
+  /*
+   * A freeze spent by itself overnight is said once, on the next visit: what
+   * happened, the freezes held, how the next is earned, and the next lesson.
+   */
+  it('says once that a freeze kept the streak, with the next lesson one tap away', async () => {
+    const kept = { ...STREAK, maxFreezes: 1, lastActiveOn: '2026-10-27', freezeUsedOn: '2026-10-27', freezeProgress: 3, sessionsPerFreeze: 5 };
+    client(kept);
+    const felt: HapticEvent[] = [];
+    const stop = onHaptic((event) => felt.push(event));
+    const announce = vi.spyOn(AccessibilityInfo, 'announceForAccessibility');
+    renderWithProviders(<LearnScreen />);
+    const title = 'Your 6-day streak was kept by a freeze';
+    expect(await screen.findByRole('heading', { name: title }, { timeout: 3000 })).toBeTruthy();
+    expect(screen.getByLabelText('Freezes: 0 of 1')).toBeTruthy();
+    expect(screen.getByText('2 more lessons earn another freeze.')).toBeTruthy();
+    expect(felt).toEqual(['celebrate']);
+    expect(announce).toHaveBeenCalledWith(title);
+    expect(localStorage.getItem(keptKey('me'))).toBe('2026-10-27');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Start a lesson' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'l2', courseId: 'c1' });
+    stop();
+
+    // the same kept day is not said again
+    cleanup();
+    renderWithProviders(<LearnScreen />);
+    await screen.findByRole('button', { name: 'Continue' });
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 1600)));
+    expect(screen.queryByRole('heading', { name: title })).toBeNull();
+    }, 15_000);
+
+  it('closes on Not now, and says nothing when no freeze was spent', async () => {
+    client({ ...STREAK, lastActiveOn: '2026-10-27', freezeUsedOn: '2026-10-27', freezeProgress: 4, sessionsPerFreeze: 5 });
+    renderWithProviders(<LearnScreen />);
+    expect(await screen.findByText('One more lesson earns another freeze.', {}, { timeout: 3000 })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Not now' }));
+    await waitFor(() => expect(screen.queryByText('One more lesson earns another freeze.')).toBeNull());
+    expect(navigation.navigate).not.toHaveBeenCalled();
+
+    cleanup();
+    localStorage.clear();
+    client();
+    renderWithProviders(<LearnScreen />);
+    await screen.findByRole('button', { name: 'Continue' });
+    await act(async () => new Promise((resolve) => setTimeout(resolve, 1600)));
+    expect(screen.queryByRole('button', { name: 'Start a lesson' })).toBeNull();
+  }, 15_000);
 });

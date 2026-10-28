@@ -33,6 +33,8 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
+import type { Streak } from '../streak/format';
+import { KeptStreakSheet, useKeptStreak } from '../streak/KeptStreak';
 import { fraction, nextStep, type NextStep } from './next';
 
 /**
@@ -52,8 +54,11 @@ import { fraction, nextStep, type NextStep } from './next';
  * are several. When it first appears it scrolls to the current skill, and a
  * button brings that back once it has been scrolled away. A course whose map
  * could not be loaded stays in the switch, saying so, with a way to try again.
+ *
+ * Learn's moments show here, one at a time: a freeze that kept the streak is
+ * said once (`useKeptStreak`, from the `streak` the bar read).
  */
-export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
+export function LessonsView({ scrollRef, streak = null }: { scrollRef?: Ref<ScrollView>; streak?: Streak | null }): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -201,6 +206,8 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   };
 
   const step = courses ? nextStep(courses) : null;
+  // the sheet's one button opens the lesson the card's does, so it waits for the card to know it
+  const kept = useKeptStreak(streak, step !== null);
 
   /*
    * The unit being scrolled through, once its banner has gone up out of
@@ -345,8 +352,23 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
           </Pressable>
         </View>
       ) : null}
+
+      <KeptStreakSheet
+        streak={kept.shown}
+        onClose={kept.close}
+        onStart={() => {
+          kept.close();
+          if (step) openStep(navigation, step);
+        }}
+      />
     </View>
   );
+}
+
+/** What the one next step opens: its lesson, or review once everything open is done. */
+function openStep(navigation: RootNavigation, step: NextStep): void {
+  if (step.kind === 'review') navigation.navigate('Practice');
+  else navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId });
 }
 
 /** The pinned unit gives way this far before its unit ends, so it never sits over the next unit's own banner. */
@@ -375,7 +397,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
   const button =
     step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('learn.tools.review') : t('learn.continue.button');
-  const go = () => (step.kind === 'review' ? navigation.navigate('Practice') : navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId }));
+  const go = () => openStep(navigation, step);
   const progress = t('learn.continue.progress', { done: formatNumber(step.done, locale), total: formatNumber(step.total, locale) });
 
   return (
