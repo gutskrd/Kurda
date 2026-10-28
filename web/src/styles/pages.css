@@ -103,11 +103,13 @@
 }
 /*
  * Hevalo leans in over the card (auth/AuthCard) as over a windowsill, seen
- * from the chest up: the stage keeps room above the card for him, his box
- * (shared COMPANION_VIEW, 540 by 818) stands on the card's top edge, and he is
- * drawn in front of the card, cut at the edge himself, so his forelegs can
- * hang down over its top padding (shared COMPANION_OVERHANG, 285 of 540, which
- * the card's padding keeps clear) while the rest of him is behind it.
+ * from the chest up: the stage keeps room above the card for him, and his box
+ * (shared COMPANION_VIEW, 660 by 1103, 540 of it as wide as --cp-w, with room
+ * either side for a hoof he lifts out to his cheeks) has its sill, 818 down
+ * it, on the card's top edge. He is drawn in front of the card, cut at the
+ * edge himself, so his forelegs hang down over its top padding (shared
+ * COMPANION_OVERHANG, 285, inside his box, which the card's padding keeps
+ * clear) while the rest of him is behind it.
  */
 .auth-stage {
   --cp-w: 178px;
@@ -127,14 +129,14 @@
   z-index: 2;
   left: 50%;
   top: calc(var(--cp-room) - var(--cp-w) * 818 / 540);
-  width: var(--cp-w);
-  height: calc(var(--cp-w) * 818 / 540);
-  margin-left: calc(var(--cp-w) / -2);
+  width: calc(var(--cp-w) * 660 / 540);
+  height: calc(var(--cp-w) * 1103 / 540);
+  margin-left: calc(var(--cp-w) * -330 / 540);
 }
 /* his word, to the left of his head */
 .auth-companion .cp-say {
-  right: 99%;
-  top: 20%;
+  right: calc(100% - var(--cp-w) * 65 / 540);
+  top: 14.8%;
   transform-origin: 100% 100%;
 }
 /* each side keeps its words together, and the row breaks between them if it must */

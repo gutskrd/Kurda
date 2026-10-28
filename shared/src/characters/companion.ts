@@ -1,6 +1,7 @@
 import type { Viseme } from '../lipsync/visemes.js';
 import { n, prefixFor } from '../art/svg.js';
 import { drawHevalo } from './hevalo.js';
+import { curve, type Knot } from './pen.js';
 import { ACTS, BLINK_STEPS, HABITS, between, eyesMiddle, glanceTarget, pupilShift, sampleHold, sampleKeys, type Act, type Keys } from './life.js';
 import type { CharacterPoint, EyeState } from './types.js';
 
@@ -10,8 +11,8 @@ import type { CharacterPoint, EyeState } from './types.js';
  * form's card is a windowsill and he is outside it, leaning in: the rest of
  * him goes on down behind the card, and his forelegs come over the sill. As
  * in the mascot, a foreleg seen from in front is the brown side of his
- * chest going on down: its shoulder is his chest's own fur, so it has no
- * edge there; it slims above the knee, and below the knee, on the sill, it
+ * chest going on down: its round shoulder is his chest's own fur, so it has
+ * no edge there; it slims above the knee, and below the knee, on the sill, it
  * is a deer's long slim cannon and cloven hoof, hanging down the card's face.
  * He throws his shadow on the card where he leans on it, and each leg and
  * hoof throws its own, all soft-edged shapes rather than blurs, so a slow
@@ -99,14 +100,20 @@ export type CompanionWord = keyof typeof COMPANION_WORDS;
  */
 export const COMPANION_EDGE = 740;
 
-/** The companion's box: him from the chest up, with room above the antlers for a sign. Its bottom is the sill. */
-export const COMPANION_VIEW = { x: -15, y: -78, w: 540, h: COMPANION_EDGE + 78 } as const;
+/** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
+export const COMPANION_OVERHANG = 285;
+
+/**
+ * The companion's box: him from the chest up, with room above the antlers
+ * for a sign, and on down below the sill as far as his forelegs hang, so
+ * that all of him is drawn inside it. (Drawn outside its own box, an SVG may
+ * be cut at its edge: some browsers do so once it moves, as he does when he
+ * breathes.) The sill is COMPANION_OVERHANG above its bottom.
+ */
+export const COMPANION_VIEW = { x: -75, y: -78, w: 660, h: COMPANION_EDGE + 78 + COMPANION_OVERHANG } as const;
 
 /** The character he is drawn from, with the rig his moving parts turn on. */
 const RIG = drawHevalo('cprig-');
-
-/** How far below the sill his forelegs may hang, over the card's face: the platform keeps that much of the card's top clear. */
-export const COMPANION_OVERHANG = 285;
 
 /** How far below the sill he waits before he pops up into view. */
 const ENTER_DROP = 860;
@@ -116,26 +123,29 @@ const KNEES_OVER = 40;
 
 /**
  * Each foreleg, the left (the right is its mirror), from resting over the
- * sill (0) through pawing at it and the knee lifting, the hoof tucked under
- * it, then sweeping up in front of his chest to his cheek, and on to just
- * under the eye, for a peek, and over it (1). For each: where the shoulder
- * is, on the brown side of his chest; where the knee is; which way the
- * cannon goes from the knee (degrees: 0 straight down, more turning the hoof
- * out from the face, less in across it and on round and up); how long the
- * cannon is seen, shorter as it comes towards us; how far the hoof tips on
- * from it; how large the leg is, nearer to us as it rises; and how long the
- * hoof is seen. At rest the leg runs on down his side to the knee on the
- * sill, and the cannon hangs from it down the card's face; raised, the
- * shoulder lifts a little, as in a shrug.
+ * sill (0) through pawing at it and the knee lifting, then coming forward,
+ * towards us and so seen short, the hoof curled in front of his chest, as
+ * anyone brings a hand up to the face, to his hooves up by his cheeks, and
+ * on to just under the eye, for a peek, and over it (1). For each: where the
+ * shoulder is, on the brown side of his chest; where the knee is; which way
+ * the cannon goes from the knee (degrees: 0 straight down, more turning the
+ * hoof out from the face, less in across it and on round and up); how long
+ * the cannon is seen, shorter as it comes towards us; how far the hoof tips
+ * on from it; how large the leg is, nearer to us as it rises; and how long
+ * the hoof is seen. The shoulder end sits inside his chest's own round
+ * shoulder, in its fur, clear of the cream, so the leg grows out of him. At
+ * rest the leg hangs from it to the knee on the sill, and the cannon from
+ * that down the card's face; raised, the shoulder end lifts a little, as in
+ * a shrug. Wherever it goes, all of it stays inside COMPANION_VIEW.
  */
 const LEG_KEYS: readonly (readonly [k: number, sx: number, sy: number, kx: number, ky: number, turn: number, cannon: number, tip: number, size: number, hoof: number])[] = [
-  [0, 138, 612, 96, 746, 2, 185, 0, 1, 1],
-  [0.2, 138, 610, 98, 738, -10, 150, -18, 1.02, 0.85],
-  [0.32, 138, 606, 96, 686, -26, 84, -26, 1.04, 0.75],
-  [0.44, 138, 603, 82, 616, -96, 40, -10, 1.07, 0.6],
-  [0.55, 139, 600, 112, 540, -210, 110, 6, 1.1, 1],
-  [0.8, 140, 598, 150, 506, -178, 104, 0, 1.14, 1],
-  [1, 141, 596, 160, 480, -174, 130, 0, 1.16, 1],
+  [0, 116, 648, 99, 746, 2, 185, 0, 1, 1],
+  [0.2, 116, 647, 101, 738, -10, 150, -18, 1.02, 0.85],
+  [0.32, 116, 645, 104, 700, -30, 110, -20, 1.04, 0.8],
+  [0.44, 117, 643, 118, 640, -110, 45, -10, 1.07, 0.55],
+  [0.55, 117, 641, 100, 560, -188, 105, 6, 1.1, 1],
+  [0.8, 118, 640, 150, 506, -178, 104, 0, 1.14, 1],
+  [1, 118, 639, 160, 480, -174, 130, 0, 1.16, 1],
 ];
 
 /**
@@ -144,33 +154,61 @@ const LEG_KEYS: readonly (readonly [k: number, sx: number, sy: number, kx: numbe
  * down the cannon (from the knee to the fetlock), each as how far along its
  * part, half the leg's width there, and how far out from the face it sits,
  * so the forearm's outer side keeps to his chest's while it slims from the
- * inside. The forearm full at the shoulder and in its muscle below, slimming
- * above the knee; the knee's knob; the slim cannon, a little fuller again at
- * the fetlock.
+ * inside. Full at the top, where it grows out of his shoulder (the shoulder
+ * itself is his chest's, SHOULDER); slimming to the knee; the knee's knob;
+ * the cannon, a little fuller again at the fetlock.
  */
 const FOREARM: readonly (readonly [along: number, half: number, out: number])[] = [
   [0, 34, 0],
-  [0.45, 35, 10],
-  [0.84, 27, 8],
-  [1, 31, 0],
+  [0.3, 33, 3],
+  [0.6, 31, 3],
+  [0.84, 28.5, 2],
+  [1, 30, 0],
 ];
 const CANNON: readonly (readonly [along: number, half: number, out: number])[] = [
-  [0.2, 23, 0],
-  [0.6, 20.5, 0],
-  [1, 24, 0],
+  [0.45, 24, 0],
+  [1, 26.5, 0],
 ];
+
+/** How long the forearm and the cannon are seen hanging at rest, square on to us. */
+const FOREARM_LONG = Math.hypot(LEG_KEYS[0]![3] - LEG_KEYS[0]![1], LEG_KEYS[0]![4] - LEG_KEYS[0]![2]);
+const CANNON_LONG = LEG_KEYS[0]![6];
+
+/** Seen shorter than this share of that, coming towards us, a part of a leg begins to lose its shape along it. */
+const SEEN_SHORT = 0.85;
 
 /** How large a hoof is drawn on a leg of this size, to the leg's fetlock. */
 const HOOF = 1.24;
-
-/** How wide the shaded rim along a leg's edge is. */
-const RIM = 3.5;
 
 /** How far a hanging cannon swings out, in degrees, for each unit its swing goes on past rest. */
 const SWING_TURN = 70;
 
 /** The middle of his chest, his shoulders either side of it; his eyes are a little to the left. */
 const BODY_AXIS = 257.5;
+
+/**
+ * His shoulders, as his chest's own outline rounds over them: from the side
+ * of his neck, out and round, and down the outside of the foreleg hanging
+ * from it into the side of his chest at the sill. Drawn behind the chest and
+ * in its fur, it shows only where it rounds out past it, so the chest has
+ * round shoulders rather than a straight slope from the neck, and each
+ * foreleg grows out of one. The left as drawn, the right its mirror but for
+ * where it leaves the neck, which is a little wider on that side.
+ */
+const SHOULDER: readonly Knot[] = [
+  [143, 527],
+  [113, 561],
+  [92, 601],
+  [85, 641],
+  [76.5, 680],
+  [74.5, 710],
+  [73, 746, 0],
+  [140, 746, 0],
+  [170, 470, 0],
+];
+const SHOULDERS =
+  curve([[161.5, 478, 0], [158.5, 494], ...SHOULDER]) +
+  curve([[354, 478, 0], [358.2, 494], ...SHOULDER.map(([x, y, r]) => [2 * BODY_AXIS - x, y, r ?? 1] as const)]);
 
 /** Just under his chin, however he turns his head: a leg's shadow falls on his chest from here down, never on his face. */
 const CHIN = 505;
@@ -243,18 +281,17 @@ function meet(a: CharacterPoint, b: CharacterPoint, c: CharacterPoint, d: Charac
 }
 
 /**
- * A foreleg's outline, all of a piece, round the rounds from the shoulder
- * (the first, which is inside his chest) to the fetlock (the last): down one
- * side, round the fetlock, up the other and round the shoulder. From one
- * round to the next each side runs straight, touching both; where a side
- * turns outward, as round the knee, it runs round the round, and where it
- * turns in, as above the knee, the two runs are cut back to where they cross
- * and it eases through the turn, so the leg has no corners and no notches.
- * And its rim, the line along it that is shaded, from below the shoulder
- * round to the same place on the other side: none at the shoulder, which is
- * his chest's own fur.
+ * The outline of a piece of a foreleg, the forearm or the cannon, all of a
+ * piece, round its rounds from the first (the shoulder, inside his chest, or
+ * the knee) to the last (the knee, or the fetlock): down one side, round the
+ * last, up the other and round the first. From one round to the next each
+ * side runs straight, touching both; where a side turns outward it runs
+ * round the round, and where it turns in, as below the shoulder, the two
+ * runs are cut back to where they cross and it eases through the turn, so
+ * the piece has no corners and no notches. No line is drawn along it: it is
+ * in his fur, as the rest of him is.
  */
-function legOutline(all: readonly Round[]): { outline: string; rim: string } {
+function legOutline(all: readonly Round[]): string {
   // a round inside the one before or after it, as when the cannon comes towards us and is seen short, adds nothing
   const rounds = all.filter((o, i) => {
     const inside = (p: Round | undefined, strict: boolean): boolean => {
@@ -268,7 +305,7 @@ function legOutline(all: readonly Round[]): { outline: string; rim: string } {
   if (last < 1) {
     const { c, r } = rounds[0] ?? all[0]!;
     const circle = `M${n(c.x - r)},${n(c.y)}a${n(r)},${n(r)} 0 1 0 ${n(2 * r)},0a${n(r)},${n(r)} 0 1 0 ${n(-2 * r)},0Z`;
-    return { outline: circle, rim: '' };
+    return circle;
   }
   const pairs = rounds.slice(0, last).map((a, i) => ({ ...sides(a, rounds[i + 1]!), a, b: rounds[i + 1]! }));
   // each side's straight runs in the order the outline goes along them, and the rounds where one meets the next
@@ -285,20 +322,12 @@ function legOutline(all: readonly Round[]): { outline: string; rim: string } {
   const tip = arc(one[last - 1]!.to, two[0]!.from, end.c, end.r, plus(end.c, pairs[last - 1]!.way, end.r));
   const top = rounds[0]!;
   const crown = arc(two[last - 1]!.to, one[0]!.from, top.c, top.r, plus(top.c, pairs[0]!.way, -top.r));
-  // down side one from run `start`, round the fetlock, and up side two as far
-  const along = (start: number): string => {
-    let d = '';
-    for (let i = start; i < last; i += 1) d += `L${xy(one[i]!.to)}${i < last - 1 ? oneJoins[i] : ''}`;
-    d += tip;
-    for (let j = 0; j < last - start; j += 1) d += `L${xy(two[j]!.to)}${j < last - start - 1 ? twoJoins[j] : ''}`;
-    return d;
-  };
-  // the rim starts a round down the leg, where there is one to start from
-  const from = last > 1 ? 1 : 0;
-  return {
-    outline: `M${xy(one[0]!.from)}${along(0)}${crown}Z`,
-    rim: `M${xy(one[from]!.from)}${along(from)}`,
-  };
+  // down side one, round the last round, up side two and round the first
+  let d = `M${xy(one[0]!.from)}`;
+  for (let i = 0; i < last; i += 1) d += `L${xy(one[i]!.to)}${i < last - 1 ? oneJoins[i] : ''}`;
+  d += tip;
+  for (let j = 0; j < last; j += 1) d += `L${xy(two[j]!.to)}${j < last - 1 ? twoJoins[j] : ''}`;
+  return `${d}${crown}Z`;
 }
 
 /** A straight run of a leg's side, from one round to the next. */
@@ -424,6 +453,8 @@ export function companionSvg({ prefix }: { prefix: string }): string {
   if (!rig || !layers || !antlers) throw new Error('companion: Hevalo is drawn without his rig');
   const id = (name: string): string => `${p}${name}`;
   const v = COMPANION_VIEW;
+  // the shade down each side of his neck, as his chest has it
+  const neckShade = ((art.chest ?? art.body).match(/<ellipse [^>]*neckside[^>]*\/>/g) ?? []).join('');
   const half = (side: 'left' | 'right'): string =>
     side === 'left' ? `<rect x="${v.x}" y="${v.y}" width="${n(FACE_AXIS - v.x)}" height="${v.h}"/>` : `<rect x="${FACE_AXIS}" y="${v.y}" width="${n(v.x + v.w - FACE_AXIS)}" height="${v.h}"/>`;
   // each eye shows its half of a drawing of both, the right's from a drawing of its own so no id is used twice
@@ -446,19 +477,21 @@ export function companionSvg({ prefix }: { prefix: string }): string {
   const mouths = (Object.keys(art.mouths) as Viseme[]).map((m) => `<g data-mouth="${m}"${m === 'rest' ? '' : ' visibility="hidden"'}>${art.mouths[m]}</g>`).join('');
   // drawn as he is before he comes up, out of sight below the sill, until a frame moves him
   const first = companionTransforms(BELOW);
-  const of = (side: 'left' | 'right', part: 'leg' | 'rim' | 'cast' | 'hoof' | 'hoofShadow' | 'contact'): string => first[`${part}${side === 'left' ? 'Left' : 'Right'}`];
+  const of = (side: 'left' | 'right', part: 'leg' | 'cannon' | 'cast' | 'hoof' | 'hoofShadow' | 'contact'): string => first[`${part}${side === 'left' ? 'Left' : 'Right'}`];
   const shapes = (side: 'left' | 'right'): string =>
     `<path id="${id(`leg-${side}`)}" data-cp="leg-${side}" d="${of(side, 'leg')}"/>` +
-    `<path id="${id(`rim-${side}`)}" data-cp="rim-${side}" d="${of(side, 'rim')}"/>` +
+    `<path id="${id(`cannon-${side}`)}" data-cp="cannon-${side}" d="${of(side, 'cannon')}"/>` +
     `<path id="${id(`cast-${side}`)}" data-cp="cast-${side}" d="${of(side, 'cast')}"/>`;
   // a little down and to the right of what throws it, the light being up and to the left
   const cast = (side: 'left' | 'right', dx = 5, dy = 7): string => `<use href="#${id(`cast-${side}`)}" transform="translate(${dx} ${dy})"/>`;
-  // a leg in his chest's own fur, so its shoulder has no edge on his side, darker below the sill; its rim shaded just inside it; the hoof on its end
+  // a leg in his chest's own fur and shaded as his chest is, with no line round it, so it grows out of his shoulder with no
+  // edge, darker below the sill: the forearm, then the cannon over it; the hoof on its end
   const leg = (side: 'left' | 'right'): string => {
-    const shape = `#${id(`leg-${side}`)}`;
+    const piece = (shape: string): string =>
+      `<use href="#${shape}" fill="url(#${p}fur)"/><use href="#${shape}" fill="url(#${p}side)"/><use href="#${shape}" fill="url(#${id('shins')})"/>`;
     return (
-      `<use href="${shape}" fill="url(#${p}fur)"/><use href="${shape}" fill="url(#${p}side)"/><use href="${shape}" fill="url(#${id('shins')})"/>` +
-      `<use href="#${id(`rim-${side}`)}" fill="none" stroke="${C.edge}" stroke-opacity="0.3" stroke-width="${RIM}" stroke-linecap="round"/>` +
+      piece(id(`leg-${side}`)) +
+      piece(id(`cannon-${side}`)) +
       `<g data-cp="hoof-${side}" transform="${of(side, 'hoof')}">${hoof(id(`hoof-${side}-`))}</g>`
     );
   };
@@ -469,12 +502,13 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `<clipPath id="${id('edge')}"><rect x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE - (v.y - v.h)}"/></clipPath>` +
     // his forelegs come over the sill, and may hang down the card's face
     `<clipPath id="${id('legs')}"><rect x="${v.x - v.w}" y="${v.y - v.h}" width="${3 * v.w}" height="${COMPANION_EDGE + COMPANION_OVERHANG - (v.y - v.h)}"/></clipPath>` +
+    `<clipPath id="${id('shoulders')}"><path d="${SHOULDERS}"/></clipPath>` +
     // what is on his face stays inside its outline as it turns
     `<clipPath id="${id('face')}"><path d="${layers.shape}"/></clipPath>` +
     `<clipPath id="${id('half-left')}">${half('left')}</clipPath><clipPath id="${id('half-right')}">${half('right')}</clipPath>` +
     // the sill's shadow on his neck: darker just where he goes on behind it
     `<linearGradient id="${id('sill')}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2a1608" stop-opacity="0"/><stop offset="0.54" stop-color="#2a1608" stop-opacity="0.42"/><stop offset="1" stop-color="#2a1608" stop-opacity="0.42"/></linearGradient>` +
-    // each foreleg's outline, its shaded rim and its shadow, which a frame redraws
+    // each foreleg's outlines and its shadow, which a frame redraws
     shapes('left') +
     shapes('right') +
     // where the legs' shadows fall: his chest under his chin and above the sill, and the card below it
@@ -488,6 +522,9 @@ export function companionSvg({ prefix }: { prefix: string }): string {
     `<linearGradient id="${id('shins')}" gradientUnits="userSpaceOnUse" x1="0" y1="${COMPANION_EDGE}" x2="0" y2="${COMPANION_EDGE + 150}"><stop offset="0" stop-color="${C.edge}" stop-opacity="0"/><stop offset="1" stop-color="${C.edge}" stop-opacity="0.4"/></linearGradient>` +
     `</defs>` +
     `<g clip-path="url(#${id('edge')})"><g data-cp="body" transform="${first.body}">` +
+    // his shoulders, behind his chest and in its fur, with the shade his neck has down its sides
+    `<path d="${SHOULDERS}" fill="url(#${p}fur)"/><path d="${SHOULDERS}" fill="url(#${p}side)"/>` +
+    `<g clip-path="url(#${id('shoulders')})">${neckShade}</g>` +
     (art.chest ?? art.body) +
     // (kept at the sill as he comes up, goes down or hops)
     `<g clip-path="url(#${p}figure)"><rect data-cp="sill" x="${v.x}" y="${COMPANION_EDGE - 70}" width="${v.w}" height="130" fill="url(#${id('sill')})" transform="${first.sill}"/></g>` +
@@ -1251,12 +1288,13 @@ export interface CompanionTransforms {
   legGate: CompanionGate;
   /** the sill's shadow on him, kept at the sill as he comes up, goes down or hops */
   sill: string;
-  /** each foreleg's outline, from the shoulder in his chest round the knee to the fetlock, as path data (the one part that is not a transform) */
+  /** each foreleg's forearm, from the shoulder in his chest round the knee, as path data (the parts that are not transforms) */
   legLeft: string;
   legRight: string;
-  /** the line along each foreleg's edge that is shaded, and the shadow it throws, as path data too */
-  rimLeft: string;
-  rimRight: string;
+  /** each cannon, from the knee to the fetlock, drawn over the forearm */
+  cannonLeft: string;
+  cannonRight: string;
+  /** the shadow each foreleg throws */
   castLeft: string;
   castRight: string;
   /** each hoof, on the end of its leg, and its shadow on the card */
@@ -1275,7 +1313,14 @@ export interface CompanionTransforms {
 export type CompanionGate = 'open' | 'shut';
 
 /** The parts of `CompanionTransforms` that are path data, an outline drawn anew, rather than a transform. */
-export const COMPANION_OUTLINES = ['legLeft', 'legRight', 'rimLeft', 'rimRight', 'castLeft', 'castRight'] as const satisfies readonly (keyof CompanionTransforms)[];
+export const COMPANION_OUTLINES = [
+  'legLeft',
+  'legRight',
+  'cannonLeft',
+  'cannonRight',
+  'castLeft',
+  'castRight',
+] as const satisfies readonly (keyof CompanionTransforms)[];
 
 
 const ease = (t: number): number => t * t * (3 - 2 * t);
@@ -1308,11 +1353,16 @@ function legKey(k: number, i: 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9): number {
  * A foreleg `v` of the way from hanging over the sill (0) to its hoof over
  * its eye (1), and what hangs from its knee `swing` of the way, which follows
  * `v` a moment later and may swing on past rest (below 0), out from the
- * face. One outline from the shoulder, which stays in the brown of his
- * chest's side wherever the leg goes, to the fetlock; the hoof on its end.
- * Raised, the leg is a little larger, nearer to us.
+ * face. Two outlines: the forearm, from the shoulder, which stays in the
+ * brown of his chest's side wherever the leg goes, round the knee, and the
+ * cannon over it to the fetlock; the hoof on its end. Raised, the leg is a
+ * little larger, nearer to us.
  */
-function foreleg(side: 'left' | 'right', v: number, swing: number): { outline: string; rim: string; cast: string; hoof: string; hoofShadow: string; contact: string } {
+function foreleg(
+  side: 'left' | 'right',
+  v: number,
+  swing: number,
+): { outline: string; cannon: string; cast: string; hoof: string; hoofShadow: string; contact: string } {
   const k = clamp(v, 0, 1.06);
   const w = clamp(swing, 0, 1.06);
   const flip = side === 'left' ? 1 : -1;
@@ -1331,23 +1381,36 @@ function foreleg(side: 'left' | 'right', v: number, swing: number): { outline: s
     const way = unit(minus(b, a));
     return way.y * flip > 0 ? { x: -way.y, y: way.x } : { x: way.y, y: -way.x };
   };
-  const part = (a: CharacterPoint, b: CharacterPoint, rows: typeof FOREARM, first: boolean): Round[] =>
-    rows.map(([t, half, out], i) => ({
-      c: plus(plus(a, minus(b, a), t), outFrom(a, b), out * size),
-      // nearer to us as it rises, all but the shoulder, which stays in his side
-      r: half * (first && i === 0 ? Math.sqrt(size) : size),
-    }));
-  const rounds: Round[] = [...part(shoulder, knee, FOREARM, true), ...part(knee, fetlock, CANNON, false)];
-  const { outline } = legOutline(rounds);
-  // the shaded rim runs just inside the outline, so it needs no clip to keep it there
-  const { rim } = legOutline(rounds.map((o) => ({ ...o, r: o.r - RIM / 2 })));
-  // its shadow starts down the forearm, narrower than the leg there, so none shows round the shoulder
-  const cast = legOutline([{ ...rounds[1]!, r: rounds[1]!.r * 0.7 }, ...rounds.slice(2)]).outline;
+  // a part coming towards us, and so seen short, shows less of its shape along it: its rounds go over to a plain taper
+  // from its first to its last, and seen so short that those two overlap, it is no more than the two
+  const part = (a: CharacterPoint, b: CharacterPoint, rows: typeof FOREARM, rest: number, first: boolean): Round[] => {
+    const [t0, h0] = rows[0]!;
+    const [, h1] = rows[rows.length - 1]!;
+    const ends = (h0 + h1) * size;
+    const full = clamp((Math.hypot(b.x - a.x, b.y - a.y) - ends) / (rest * SEEN_SHORT - ends), 0, 1);
+    const rounds = rows.map(([t, half, out], i) => {
+      const plain = h0 + ((h1 - h0) * (t - t0)) / (1 - t0);
+      return {
+        c: plus(plus(a, minus(b, a), t), outFrom(a, b), out * size * full),
+        // nearer to us as it rises, all but the shoulder, which stays in his side
+        r: (plain + (half - plain) * full) * (first && i === 0 ? Math.sqrt(size) : size),
+      };
+    });
+    return full > 0 ? rounds : [rounds[0]!, rounds[rounds.length - 1]!];
+  };
+  // two pieces: the forearm, from the shoulder round the knee, and the cannon, from the knee to the fetlock, over it, so
+  // however far the knee bends neither outline crosses itself
+  const forearm = part(shoulder, knee, FOREARM, FOREARM_LONG, true);
+  const upper = legOutline(forearm);
+  const below = legOutline([forearm[forearm.length - 1]!, ...part(knee, fetlock, CANNON, CANNON_LONG, false)]);
+  // the shadow starts halfway down the forearm, narrower than the leg there, so none shows where it grows out of his shoulder
+  const from = Math.min(2, forearm.length - 1);
+  const cast = legOutline([{ ...forearm[from]!, r: forearm[from]!.r * 0.7 }, ...forearm.slice(from + 1)]) + below;
   const lifted = clamp((COMPANION_EDGE - 6 - knee.y) / 40, 0, 1);
   const hoof = `translate(${n(fetlock.x)} ${n(fetlock.y)}) rotate(${n(turn + flip * legKey(w, 7))}) scale(${f3(size * HOOF)} ${f3(size * HOOF * legKey(w, 9))})`;
   return {
-    outline,
-    rim,
+    outline: upper,
+    cannon: below,
     cast,
     hoof,
     // the hoof's shadow, on the card only: down and to the right of it, as the leg's is
@@ -1449,8 +1512,8 @@ export function companionTransforms(frame: CompanionFrame): CompanionTransforms 
     sill: `translate(0 ${n(up)})`,
     legLeft: left.outline,
     legRight: right.outline,
-    rimLeft: left.rim,
-    rimRight: right.rim,
+    cannonLeft: left.cannon,
+    cannonRight: right.cannon,
     castLeft: left.cast,
     castRight: right.cast,
     hoofLeft: left.hoof,

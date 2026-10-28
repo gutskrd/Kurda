@@ -10,7 +10,8 @@
 .companion {
   display: block;
   line-height: 0;
-  transform-origin: 50% 100%;
+  /* he breathes about the sill: his box (COMPANION_VIEW) is 1103 high, the sill 818 down it */
+  transform-origin: 50% 74.16%;
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
   user-select: none;
