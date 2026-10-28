@@ -216,7 +216,10 @@ export function Results({
                 <dt>{t('lesson.results.xp')}</dt>
                 {/* read out as the number it ends on, not every number on the way */}
                 <dd aria-label={`+${results.xpAwarded}`}>
-                  <span aria-hidden="true">+{xp}</span>
+                  {/* the sign before the number in a right-to-left page too */}
+                  <span aria-hidden="true" dir="ltr">
+                    +{xp}
+                  </span>
                 </dd>
               </div>
               <div className="lesson-stat is-accuracy">

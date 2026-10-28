@@ -1018,12 +1018,12 @@ html:has(.lesson-bar) {
 .lesson-mistakes > summary::-webkit-details-marker {
   display: none;
 }
-/* a turning caret, drawn, at the end of the heading: open or folded */
+/* a turning caret, drawn, at the end of the heading: down when open, toward the reading's end when folded */
 .lesson-mistakes > summary::after {
   content: '';
   width: 8px;
   height: 8px;
-  border-inline-end: 2px solid var(--ink-3);
+  border-right: 2px solid var(--ink-3);
   border-bottom: 2px solid var(--ink-3);
   rotate: 45deg;
   transition: rotate var(--dur) var(--ease-out);
