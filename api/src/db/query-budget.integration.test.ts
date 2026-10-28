@@ -242,6 +242,22 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       // BEGIN, the learner's lock, their state, every measure, their badges, COMMIT (and one write if any moved)
       expect(all.count, all.statements.join('\n')).toBeLessThanOrEqual(7);
     });
+
+    it('the practice hub is one statement, for a learner with nothing done as for one with a unit finished', async () => {
+      const published = await pool.query<{ id: string }>(
+        `SELECT l.id FROM lessons l JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id
+         WHERE u.course_id = $1 AND l.status = 'published' ORDER BY l.position`,
+        [courseId],
+      );
+      // every lesson of the unit, so it is finished
+      for (const { id } of published.rows) await play('lb', id);
+      const none = await steady('GET', '/practice/hub', 'solo');
+      const some = await steady('GET', '/practice/hub', 'lb');
+      expect(some.body.units).toHaveLength(1);
+      expect(some.count, some.statements.join('\n')).toBe(none.count);
+      // the session read and the hub's one statement
+      expect(some.count, some.statements.join('\n')).toBeLessThanOrEqual(2);
+    });
   });
 
   describe('many rows in one statement', () => {

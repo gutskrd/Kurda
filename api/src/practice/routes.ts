@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
+import { PRACTICE_MODES } from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { PracticeService, PRACTICE_TARGET } from './service.js';
 import type { XpService } from '../xp/service.js';
@@ -12,24 +13,34 @@ const answerBody = z.object({
 
 /**
  * Optional: practise exactly these exercises ("practise these now", after a
- * lesson). No body, or no list, is the ordinary review.
+ * lesson), or a kind of practice (`mode`; a unit's review names the unit). No
+ * body, or neither, is the ordinary review.
  */
 const startBody = z
-  .object({ exerciseIds: z.array(z.uuid()).min(1).max(PRACTICE_TARGET).optional() })
+  .object({
+    exerciseIds: z.array(z.uuid()).min(1).max(PRACTICE_TARGET).optional(),
+    mode: z.enum(PRACTICE_MODES).optional(),
+    unitId: z.uuid().optional(),
+  })
+  .refine((b) => !(b.exerciseIds && b.mode), { message: 'exerciseIds are a session of their own, without a mode', path: ['mode'] })
+  .refine((b) => (b.mode === 'unit') === (b.unitId !== undefined), { message: 'a unit review, and only a unit review, names its unit', path: ['unitId'] })
   .nullish();
 
 export function registerPracticeRoutes(app: FastifyInstance, xp?: XpService, milestones?: MilestoneRecorder): void {
   const practice = new PracticeService(app.db, { xp, milestones });
 
-  /** One-tap: generate a review session (or an empty-state suggestion). */
+  /** One-tap: generate a practice session of the kind asked (or an empty-state suggestion). */
   app.post(
     '/practice/session',
     { schema: { body: startBody }, preHandler: requireAuth },
     async (req) => {
       const body = req.body as z.infer<typeof startBody>;
-      return practice.start(req.user!.id, body?.exerciseIds);
+      return practice.start(req.user!.id, body ?? {});
     },
   );
+
+  /** What the practice hub shows before anything starts, in one statement. */
+  app.get('/practice/hub', { preHandler: requireAuth }, async (req) => practice.hub(req.user!.id));
 
   /** Come back to a practice session: its items, and what has been answered (resume). */
   app.get(

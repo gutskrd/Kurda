@@ -144,7 +144,10 @@ export {
   type StopState,
   type TrophyStop,
   type UnitTone,
+  unitTone,
 } from './lesson-path.js';
+/** Practice as a hub: its kinds of session, what each draws on, and what the hub shows. */
+export { PRACTICE_MODES, PRACTICE_MODE_TYPES, type PracticeHub, type PracticeHubUnit, type PracticeMode } from './practice.js';
 export {
   KURMANJI_KEYS,
   MIN_RECORDING_BYTES,

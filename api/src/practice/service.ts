@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import type { RecordingVoice } from '@kurda/shared';
+import { PRACTICE_MODE_TYPES, unitTone, type PracticeHub, type PracticeMode, type RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
@@ -92,6 +92,70 @@ export interface PracticeDue {
 }
 
 /**
+ * What a session is asked for: exactly these exercises ("practise these now"),
+ * or a kind of practice — the ordinary review when nothing is said, and a
+ * unit's review with the unit's id.
+ */
+export interface PracticeAsk {
+  exerciseIds?: string[];
+  mode?: PracticeMode;
+  unitId?: string;
+}
+
+/** How far back a miss is still one to practise. */
+export const MISTAKE_DAYS = 30;
+
+/*
+ * The statements below share these parts, so the hub counts exactly what a
+ * session would find. Each is a list of CTEs, `$1` the learner.
+ *
+ * done: the places in a skill the learner has finished, in any version of
+ * their lesson, and when last — a corrected lesson is a new row at the same
+ * place, and is still the lesson they finished (as the course map reads it).
+ * finished: what each of those places holds now, its newest published lesson,
+ * so practice serves the lesson as it stands rather than a version replaced.
+ */
+const FINISHED_LESSONS = `done AS (
+    SELECT l.skill_id, l.position, max(ls.completed_at) AS at
+    FROM lesson_sessions ls JOIN lessons l ON l.id = ls.lesson_id
+    WHERE ls.user_id = $1 AND ls.completed_at IS NOT NULL
+    GROUP BY l.skill_id, l.position
+  ), finished AS (
+    SELECT DISTINCT ON (l.skill_id, l.position) l.id, l.skill_id
+    FROM done d JOIN lessons l ON l.skill_id = d.skill_id AND l.position = d.position
+    WHERE l.status = 'published'
+    ORDER BY l.skill_id, l.position, l.version DESC
+  )`;
+
+/*
+ * missed: the exercises whose latest answer since `$2`, in a lesson or in
+ * practice, was not accepted — put right by getting them right, anywhere. A
+ * second try in a lesson is never recorded, so a miss put right there is still
+ * one to practise. Only exercises of a published lesson (a version replaced
+ * may hold the very mistake the new one fixed), and never speaking, which the
+ * learner rates themselves. A lesson session takes no answer after it expires,
+ * so one that expired before `$2` is not read at all.
+ */
+const MISSED = `answered AS (
+    SELECT a.exercise_id, a.accepted, a.answered_at
+    FROM lesson_sessions s JOIN session_answers a ON a.session_id = s.id
+    WHERE s.user_id = $1 AND s.expires_at > $2 AND a.answered_at > $2
+    UNION ALL
+    SELECT a.exercise_id, a.accepted, a.answered_at
+    FROM practice_sessions s JOIN practice_answers a ON a.session_id = s.id
+    WHERE s.user_id = $1 AND a.answered_at > $2
+  ), latest AS (
+    SELECT DISTINCT ON (exercise_id) exercise_id, accepted, answered_at
+    FROM answered ORDER BY exercise_id, answered_at DESC
+  ), missed AS (
+    SELECT e.id, t.answered_at
+    FROM latest t
+    JOIN exercises e ON e.id = t.exercise_id
+    JOIN lessons l ON l.id = e.lesson_id AND l.status = 'published'
+    WHERE NOT t.accepted AND e.type <> 'speaking'
+  )`;
+
+/**
  * How long a review left unfinished is offered to go back to — a lesson's
  * session lasts as long (SESSION_TTL_HOURS in content/sessions.ts). After
  * that the items it chose may no longer be the ones due, and a new review
@@ -148,13 +212,18 @@ export class PracticeService {
    * than failing the whole session on the cast. Speaking items are left out
    * too, since their answers cannot move the schedule (`feedsReview`).
    *
-   * `only` narrows the session to those exercises — "practise these now" after
-   * a lesson, with the items just missed. They are taken only from the
+   * `exerciseIds` narrows the session to those exercises — "practise these now"
+   * after a lesson, with the items just missed. They are taken only from the
    * learner's own review items, under the same rules, so it cannot reach an
    * exercise the learner has never answered (or one from an unpublished lesson).
+   *
+   * `mode` picks another kind of practice (`choose`); each draws only on what
+   * the learner has met, and comes back empty rather than failing when there is
+   * nothing of its kind. Whatever the kind, the session is answered, paid and
+   * counted for the streak by the same rules.
    */
-  async start(userId: string, only?: string[]): Promise<PracticeSession | EmptyPractice> {
-    const chosen = only ? await this.ownItems(userId, only) : await this.selectItems(userId);
+  async start(userId: string, ask: PracticeAsk = {}): Promise<PracticeSession | EmptyPractice> {
+    const chosen = ask.exerciseIds ? await this.ownItems(userId, ask.exerciseIds) : await this.choose(userId, ask.mode ?? 'review', ask.unitId);
 
     const exercises = chosen.length > 0 ? await this.loadExercises(chosen) : [];
     if (exercises.length === 0) {
@@ -206,6 +275,63 @@ export class PracticeService {
       exercises: await this.deliver(session.id, exercises),
       answered,
     };
+  }
+
+  /** The exercises a session of this kind takes, in the order it asks them. */
+  private async choose(userId: string, mode: PracticeMode, unitId?: string): Promise<string[]> {
+    switch (mode) {
+      case 'review':
+        return this.selectItems(userId);
+      case 'mistakes':
+        return this.mistakeItems(userId);
+      case 'unit':
+        return this.unitItems(userId, unitId!);
+      default:
+        return this.finishedItems(userId, PRACTICE_MODE_TYPES[mode]);
+    }
+  }
+
+  /** What the learner last got wrong lately, the newest misses first. */
+  private async mistakeItems(userId: string): Promise<string[]> {
+    const res = await this.pool.query<{ id: string }>(
+      `WITH ${MISSED}
+       SELECT id FROM missed ORDER BY answered_at DESC LIMIT $3`,
+      [userId, mistakesSince(new Date()), PRACTICE_TARGET],
+    );
+    return res.rows.map((r) => r.id);
+  }
+
+  /** Exercises of these types from the lessons the learner has finished, a different handful each time. */
+  private async finishedItems(userId: string, types: readonly string[]): Promise<string[]> {
+    const res = await this.pool.query<{ id: string }>(
+      `WITH ${FINISHED_LESSONS}
+       SELECT e.id FROM finished f JOIN exercises e ON e.lesson_id = f.id
+       WHERE e.type = ANY($2::text[])
+       ORDER BY random() LIMIT $3`,
+      [userId, types, PRACTICE_TARGET],
+    );
+    return res.rows.map((r) => r.id);
+  }
+
+  /**
+   * A handful from the lessons the learner has finished in one unit, anything
+   * but speaking (which has its own practice). A unit they have not finished a
+   * lesson in is refused: nothing in it has been met, and it is somebody else's
+   * way through the course.
+   */
+  private async unitItems(userId: string, unitId: string): Promise<string[]> {
+    const res = await this.pool.query<{ reached: boolean; ids: string[] }>(
+      `WITH ${FINISHED_LESSONS}, here AS (
+         SELECT f.id FROM finished f JOIN skills s ON s.id = f.skill_id WHERE s.unit_id = $2
+       )
+       SELECT EXISTS (SELECT 1 FROM here) AS reached,
+              ARRAY(SELECT e.id FROM here h JOIN exercises e ON e.lesson_id = h.id
+                    WHERE e.type <> 'speaking' ORDER BY random() LIMIT $3) AS ids`,
+      [userId, unitId, PRACTICE_TARGET],
+    );
+    const row = res.rows[0]!;
+    if (!row.reached) throw new AppError('PRACTICE_UNIT_NOT_REACHED', 403, 'finish a lesson in this unit to review it');
+    return row.ids;
   }
 
   /** Due items first, padded with the weakest known ones (`selectPracticeItems`). */
@@ -273,6 +399,86 @@ export class PracticeService {
     ]);
     const row = counts.rows[0];
     return { due: Number(row?.due ?? 0), available: Number(row?.available ?? 0), open: open.rows[0]?.id ?? null };
+  }
+
+  /**
+   * Everything the practice hub shows, in one statement however much the
+   * learner has done: what review has (as `due` counts it), the mistakes to
+   * put right, whether listening, speaking and word practice would find
+   * anything, whether speaking is turned off, and the units finished, the
+   * latest first.
+   *
+   * A unit is finished as the course map finishes it: every skill in it has a
+   * published lesson, and every published lesson in it is done. Its number is
+   * its place among the course's units that have skills, which is where the
+   * path draws it, and so the colour it has there.
+   */
+  async hub(userId: string): Promise<PracticeHub> {
+    const now = new Date();
+    const res = await this.pool.query<{
+      due: number;
+      available: number;
+      mistakes: number;
+      listen: boolean;
+      speak: boolean;
+      words: boolean;
+      skip_speaking: boolean | null;
+      units: Array<{ unitId: string; title: string; number: number }>;
+    }>(
+      `WITH ${FINISHED_LESSONS}, ${MISSED},
+       review AS (
+         SELECT count(*) FILTER (WHERE r.due_at <= $3)::int AS due, count(*)::int AS available
+         FROM review_items r JOIN exercises e ON e.id::text = r.item_id
+         WHERE r.user_id = $1 AND e.type <> 'speaking'
+       ),
+       met AS (
+         SELECT DISTINCT e.type FROM finished f JOIN exercises e ON e.lesson_id = f.id
+       ),
+       touched AS (
+         SELECT s.unit_id, max(d.at) AS at FROM done d JOIN skills s ON s.id = d.skill_id GROUP BY s.unit_id
+       ),
+       closed AS (
+         SELECT u.id, u.course_id, u.title_en, t.at
+         FROM touched t JOIN units u ON u.id = t.unit_id
+         WHERE NOT EXISTS (
+           SELECT 1 FROM skills s
+           WHERE s.unit_id = u.id
+             AND (NOT EXISTS (SELECT 1 FROM lessons l WHERE l.skill_id = s.id AND l.status = 'published')
+                  OR EXISTS (
+                    SELECT 1 FROM lessons l
+                    WHERE l.skill_id = s.id AND l.status = 'published'
+                      AND NOT EXISTS (SELECT 1 FROM done d WHERE d.skill_id = l.skill_id AND d.position = l.position)))
+         )
+       ),
+       numbered AS (
+         SELECT u.id, row_number() OVER (PARTITION BY u.course_id ORDER BY u.position)::int AS number
+         FROM units u
+         WHERE u.course_id IN (SELECT course_id FROM closed) AND EXISTS (SELECT 1 FROM skills s WHERE s.unit_id = u.id)
+       )
+       SELECT r.due, r.available,
+              (SELECT count(*)::int FROM missed) AS mistakes,
+              EXISTS (SELECT 1 FROM met WHERE type = ANY($4::text[])) AS listen,
+              EXISTS (SELECT 1 FROM met WHERE type = ANY($5::text[])) AS speak,
+              EXISTS (SELECT 1 FROM met WHERE type = ANY($6::text[])) AS words,
+              (SELECT skip_speaking FROM users WHERE id = $1) AS skip_speaking,
+              COALESCE((
+                SELECT json_agg(json_build_object('unitId', c.id, 'title', c.title_en, 'number', n.number) ORDER BY c.at DESC)
+                FROM closed c JOIN numbered n ON n.id = c.id
+              ), '[]'::json) AS units
+       FROM review r`,
+      [userId, mistakesSince(now), now, PRACTICE_MODE_TYPES.listen, PRACTICE_MODE_TYPES.speak, PRACTICE_MODE_TYPES.words],
+    );
+    const row = res.rows[0]!;
+    return {
+      due: row.due,
+      available: row.available,
+      mistakes: row.mistakes,
+      listen: row.listen,
+      speak: row.speak,
+      words: row.words,
+      skipSpeaking: row.skip_speaking ?? false,
+      units: row.units.map((u) => ({ ...u, tone: unitTone(u.number - 1) })),
+    };
   }
 
   private async loadExercises(ids: string[]): Promise<ExerciseRow[]> {
@@ -511,6 +717,11 @@ export class PracticeService {
 
     return { correct, total, accuracy, mistakes, xpAwarded, streak };
   }
+}
+
+/** The oldest answer a mistake is still read from. */
+function mistakesSince(now: Date): Date {
+  return new Date(now.getTime() - MISTAKE_DAYS * 24 * 60 * 60 * 1000);
 }
 
 export { PRACTICE_TARGET, PRACTICE_MIN };
