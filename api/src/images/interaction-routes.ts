@@ -8,6 +8,7 @@ import type { TrustService } from '../trust/service.js';
 import { ImageReactionService, REACTIONS } from './reaction-service.js';
 import { ImageCommentService, type AuthorRole, type CreateCommentInput } from './comment-service.js';
 import { pageQuery, queryWord } from '../http/query.js';
+import { staffCleared } from '../admin/admin-gate.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
 function authorRole(req: FastifyRequest): AuthorRole {
@@ -16,7 +17,6 @@ function authorRole(req: FastifyRequest): AuthorRole {
   if (roles.some((r) => ADMIN_ROLES.includes(r))) return 'admin';
   return 'user';
 }
-const isAdmin = (req: FastifyRequest): boolean => authorRole(req) !== 'user';
 
 const reactionBody = z.object({ reaction: z.enum(REACTIONS) });
 const commentBody = z.object({ body: z.string().min(1).max(2_000), parentId: z.uuid().optional() });
@@ -37,6 +37,8 @@ export function registerImageInteractionRoutes(
   trust?: TrustService,
 ): void {
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
+  /** Whether this request may edit or remove somebody else's comment (images/routes.ts `actsAsStaff`). */
+  const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => authorRole(req) !== 'user' && (await staffCleared(app, req));
 
   // ---- reactions ----------------------------------------------------------
 
@@ -138,7 +140,7 @@ export function registerImageInteractionRoutes(
     '/images/comments/:id',
     { schema: { params: idParam, body: editBody }, preHandler: [requireAuth, requireUnrestricted('post')] },
     async (req, reply) =>
-      respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, isAdmin(req), req.body as CreateCommentInput)),
+      respond(reply, await comments.edit((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), req.body as CreateCommentInput)),
   );
 
   /** Soft-delete (author or admin); subtree preserved as a tombstone. */
@@ -146,7 +148,7 @@ export function registerImageInteractionRoutes(
     '/images/comments/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
     async (req, reply) =>
-      respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, isAdmin(req))),
+      respond(reply, await comments.remove((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req))),
   );
 }
 

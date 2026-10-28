@@ -10,6 +10,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { pass2fa } from '../test/admin-2fa.js';
 import { seedPictureUpload } from '../test/media.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
@@ -58,7 +59,10 @@ describe.skipIf(!DATABASE_URL || !REDIS_URL)('the gate on picture posts (integra
       payload: { email: `ig_${tag}_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: ip(),
     });
-    return { id: me.id, token: login.json().tokens.accessToken }; // a fresh token carries the role
+    const token = login.json().tokens.accessToken as string; // a fresh token carries the role
+    // staff act on somebody else's post only from a session past the console's code
+    await pass2fa(app, token, ip());
+    return { id: me.id, token };
   }
 
   let k = 0;

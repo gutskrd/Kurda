@@ -75,6 +75,32 @@ export function isStaffRoute(app: FastifyInstance, pattern: string): boolean {
   return staffRoutes.get(app)?.has(pattern) ?? false;
 }
 
+/** What each app's gate asks a staff account, kept for `staffCleared`. Keyed by the app, as `staffRoutes` is. */
+const clearance = new WeakMap<FastifyInstance, { totp: AdminTotpService; access: AdminAccess }>();
+
+/**
+ * Whether the staff account signed in on this request may use a staff power
+ * outside the console: editing or taking down somebody else's post, picture or
+ * comment through the routes every member uses (library/routes.ts,
+ * images/routes.ts and their comments), which grant more to a staff role.
+ *
+ * The gate below guards the routes that ask for a role, and only those. These
+ * others answer to anyone signed in, so a staff password alone reached
+ * somebody else's post through them: no code from the second step, and no
+ * matter whether the console's own lock (owner-access.ts) lets the account in
+ * at all. A staff power anywhere now asks what the console asks — the account
+ * may use the console, and this session has entered its code — and without
+ * both the account is what any member is: the author of its own posts and of
+ * nobody else's. With no gate (no database) nothing is cleared.
+ */
+export async function staffCleared(app: FastifyInstance, req: FastifyRequest): Promise<boolean> {
+  const gate = clearance.get(app);
+  if (!gate || !req.user || !isPrivileged(req.user.roles)) return false;
+  if (!(await gate.access.allows(req.user.id))) return false;
+  const state = await gate.totp.state(req.user.id, req.user.familyId);
+  return state.enrolled && state.verified;
+}
+
 async function refuse(reply: FastifyReply, req: FastifyRequest, code: string, message: string): Promise<void> {
   await reply.code(403).send({ code, message, requestId: req.id });
 }
@@ -95,6 +121,7 @@ export function installAdminGate(app: FastifyInstance, totp: AdminTotpService, a
    */
   const privileged = new Set<string>();
   staffRoutes.set(app, privileged);
+  clearance.set(app, { totp, access });
 
   app.addHook('onRoute', (route) => {
     if (routeIsPrivileged(route.preHandler)) privileged.add(route.url);
