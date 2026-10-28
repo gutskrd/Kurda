@@ -2256,6 +2256,8 @@ export type TranslationKey =
   | 'coursemap.jump.noTries'
   | 'coursemap.jump.keepLearning'
   | 'coursemap.jump.tryAgain'
+  | 'learn.reminders.line'
+  | 'learn.reminders.turnOn'
   | 'lesson.resultsFailed'
   | 'lesson.failedRetry'
   | 'settings.group.security'
@@ -4649,6 +4651,8 @@ const en: Catalog = {
   'coursemap.jump.noTries': 'No more tries today. Come back tomorrow.',
   'coursemap.jump.keepLearning': 'Keep learning',
   'coursemap.jump.tryAgain': 'Try again',
+  'learn.reminders.line': 'Turn on reminders to keep your streak safe',
+  'learn.reminders.turnOn': 'Turn on',
   'lesson.resultsFailed': 'Your answers are saved, but the results didn’t come through.',
   'lesson.failedRetry': 'That didn’t go through — tap to try again',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -7042,6 +7046,8 @@ const ku: Catalog = {
   'coursemap.jump.noTries': 'Îro êdî ceribandin tune. Sibê vegere.',
   'coursemap.jump.keepLearning': 'Hînbûnê bidomîne',
   'coursemap.jump.tryAgain': 'Dîsa biceribîne',
+  'learn.reminders.line': 'Bîranînan çalak bike da ku rêza te parastî bimîne',
+  'learn.reminders.turnOn': 'Çalak bike',
   'lesson.resultsFailed': 'Bersivên te hatin tomarkirin, lê encam negihîştin.',
   'lesson.failedRetry': 'Ev negihîşt — ji bo dubarekirinê bitikîne',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -9435,6 +9441,8 @@ const de: Catalog = {
   'coursemap.jump.noTries': 'Für heute keine Versuche mehr. Komm morgen wieder.',
   'coursemap.jump.keepLearning': 'Weiterlernen',
   'coursemap.jump.tryAgain': 'Erneut versuchen',
+  'learn.reminders.line': 'Aktiviere Erinnerungen, damit deine Serie sicher bleibt',
+  'learn.reminders.turnOn': 'Aktivieren',
   'lesson.resultsFailed': 'Deine Antworten sind gespeichert, aber die Ergebnisse sind nicht angekommen.',
   'lesson.failedRetry': 'Das ist nicht durchgegangen — zum Wiederholen tippen',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -11828,6 +11836,8 @@ const es: Catalog = {
   'coursemap.jump.noTries': 'No quedan intentos hoy. Vuelve mañana.',
   'coursemap.jump.keepLearning': 'Seguir aprendiendo',
   'coursemap.jump.tryAgain': 'Intentar de nuevo',
+  'learn.reminders.line': 'Activa los recordatorios para mantener tu racha a salvo',
+  'learn.reminders.turnOn': 'Activar',
   'lesson.resultsFailed': 'Tus respuestas están guardadas, pero los resultados no llegaron.',
   'lesson.failedRetry': 'No se pudo enviar: toca para intentarlo de nuevo',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -14221,6 +14231,8 @@ const tr: Catalog = {
   'coursemap.jump.noTries': 'Bugün başka deneme hakkı yok. Yarın tekrar gel.',
   'coursemap.jump.keepLearning': 'Öğrenmeye devam et',
   'coursemap.jump.tryAgain': 'Tekrar dene',
+  'learn.reminders.line': 'Serini güvende tutmak için hatırlatıcıları aç',
+  'learn.reminders.turnOn': 'Aç',
   'lesson.resultsFailed': 'Cevapların kaydedildi ama sonuçlar gelmedi.',
   'lesson.failedRetry': 'Gönderilemedi — yeniden denemek için dokun',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -16614,6 +16626,8 @@ const ar: Catalog = {
   'coursemap.jump.noTries': 'لا محاولات أخرى اليوم. عد غدًا.',
   'coursemap.jump.keepLearning': 'تابع التعلم',
   'coursemap.jump.tryAgain': 'حاول مجددًا',
+  'learn.reminders.line': 'فعّل التذكيرات لتحافظ على تتابعك',
+  'learn.reminders.turnOn': 'تفعيل',
   'lesson.resultsFailed': 'إجاباتك محفوظة، لكن النتائج لم تصل.',
   'lesson.failedRetry': 'لم يُرسَل — اضغط لإعادة المحاولة',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -19007,6 +19021,8 @@ const fr: Catalog = {
   'coursemap.jump.noTries': 'Plus d’essais aujourd’hui. Reviens demain.',
   'coursemap.jump.keepLearning': 'Continuer d’apprendre',
   'coursemap.jump.tryAgain': 'Réessayer',
+  'learn.reminders.line': 'Active les rappels pour garder ta série à l’abri',
+  'learn.reminders.turnOn': 'Activer',
   'lesson.resultsFailed': 'Tes réponses sont enregistrées, mais les résultats ne sont pas arrivés.',
   'lesson.failedRetry': 'Ça n’est pas passé — appuie pour réessayer',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -21400,6 +21416,8 @@ const nl: Catalog = {
   'coursemap.jump.noTries': 'Vandaag geen pogingen meer. Kom morgen terug.',
   'coursemap.jump.keepLearning': 'Verder leren',
   'coursemap.jump.tryAgain': 'Opnieuw proberen',
+  'learn.reminders.line': 'Zet herinneringen aan om je reeks veilig te houden',
+  'learn.reminders.turnOn': 'Aanzetten',
   'lesson.resultsFailed': 'Je antwoorden zijn opgeslagen, maar de resultaten zijn niet binnengekomen.',
   'lesson.failedRetry': 'Dat is niet gelukt — tik om het opnieuw te proberen',
   // --- signing in safely: your password, and the devices signed in to your account ---
@@ -23794,6 +23812,8 @@ const ckb: Catalog = {
   'coursemap.jump.noTries': 'ئەمڕۆ هەوڵی تر نەماوە. سبەینێ وەرەوە.',
   'coursemap.jump.keepLearning': 'بەردەوام بە لە فێربوون',
   'coursemap.jump.tryAgain': 'دووبارە هەوڵ بدەوە',
+  'learn.reminders.line': 'بیرخستنەوەکان چالاک بکە بۆ ئەوەی زنجیرەکەت پارێزراو بمێنێت',
+  'learn.reminders.turnOn': 'چالاکی بکە',
   'lesson.resultsFailed': 'وەڵامەکانت پاشەکەوت کران، بەڵام ئەنجامەکان نەگەیشتن.',
   'lesson.failedRetry': 'نەگەیشت — دەست لێبدە بۆ هەوڵدانەوە',
   // --- signing in safely: your password, and the devices signed in to your account ---
