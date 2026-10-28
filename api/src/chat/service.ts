@@ -310,9 +310,15 @@ export class ChatService {
     return n;
   }
 
-  /** Ephemeral typing indicator (silent under a block). */
+  /**
+   * Ephemeral typing indicator, between friends only, as a message is: anyone
+   * signed in could otherwise reach any account's live connection with their
+   * own id, a stranger a child's included. Silent either way, so the answer
+   * says nothing of a block or of who is friends with whom.
+   */
   async typing(from: string, to: string): Promise<void> {
     if (await this.friends.areBlocked(from, to)) return;
+    if ((await this.friends.statusBetween(from, to)) !== 'friends') return;
     await this.notifier.notifyUser(to, { type: 'dm_typing', from }).catch(() => undefined);
   }
 
