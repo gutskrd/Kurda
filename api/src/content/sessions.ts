@@ -27,6 +27,31 @@ interface SessionRow {
   completed_at: Date | null;
 }
 
+/** A session's columns read beside something else, all null when there is no session. */
+type SessionColumns = { [K in keyof SessionRow]: SessionRow[K] | null };
+
+/** The session in a row read with other things, or null when the row has none. */
+function sessionOf(row: SessionColumns): SessionRow | null {
+  if (row.id === null) return null;
+  return {
+    id: row.id,
+    user_id: row.user_id!,
+    lesson_id: row.lesson_id!,
+    total_count: row.total_count!,
+    correct_count: row.correct_count!,
+    expires_at: row.expires_at!,
+    completed_at: row.completed_at,
+  };
+}
+
+/** The grammar note on a lesson's skill (KUR-038) and the variety of its course. */
+interface LessonNotes {
+  grammar_md: string | null;
+  dialect: string | null;
+}
+
+const NO_NOTES: LessonNotes = { grammar_md: null, dialect: null };
+
 interface ExerciseRow {
   id: string;
   position: number;
@@ -181,35 +206,41 @@ export class LessonSessionService {
     this.milestones = deps.milestones;
   }
 
-  private async exercisesFor(lessonId: string): Promise<ExerciseRow[]> {
-    const rows = await this.pool.query<ExerciseRow>(
-      `SELECT id, position, type, payload FROM exercises
-       WHERE lesson_id = $1 ORDER BY position ASC`,
+  /**
+   * The grammar note on a lesson's skill (KUR-038) and the variety of its
+   * course, read on their own when nothing else has read them yet.
+   */
+  private async notesOf(lessonId: string): Promise<LessonNotes> {
+    const r = await this.pool.query<LessonNotes>(
+      `SELECT s.grammar_md, c.dialect
+       FROM lessons l
+       JOIN skills s ON s.id = l.skill_id
+       JOIN units u ON u.id = s.unit_id
+       JOIN courses c ON c.id = u.course_id
+       WHERE l.id = $1`,
       [lessonId],
     );
-    return rows.rows;
+    return r.rows[0] ?? NO_NOTES;
   }
 
-  private async buildView(session: SessionRow): Promise<SessionView> {
-    const [exercises, answers, grammar] = await Promise.all([
-      this.exercisesFor(session.lesson_id),
-      this.pool.query<{ exercise_id: string; verdict: Verdict; accepted: boolean }>(
-        `SELECT exercise_id, verdict, accepted FROM session_answers WHERE session_id = $1`,
-        [session.id],
+  /**
+   * The session as the learner sees it. The lesson's exercises come with this
+   * session's answer to each, if any, in one read: an answer is only ever
+   * recorded for an exercise of the session's own lesson (`openSessionWith`).
+   */
+  private async buildView(session: SessionRow, known?: LessonNotes): Promise<SessionView> {
+    const [rows, notes] = await Promise.all([
+      this.pool.query<ExerciseRow & { verdict: Verdict | null; accepted: boolean | null }>(
+        `SELECT e.id, e.position, e.type, e.payload, a.verdict, a.accepted
+           FROM exercises e LEFT JOIN session_answers a ON a.session_id = $2 AND a.exercise_id = e.id
+          WHERE e.lesson_id = $1 ORDER BY e.position ASC`,
+        [session.lesson_id, session.id],
       ),
-      // grammar note lives on the lesson's skill (KUR-038); the variety on its course
-      this.pool.query<{ grammar_md: string | null; dialect: string | null }>(
-        `SELECT s.grammar_md, c.dialect
-         FROM lessons l
-         JOIN skills s ON s.id = l.skill_id
-         JOIN units u ON u.id = s.unit_id
-         JOIN courses c ON c.id = u.course_id
-         WHERE l.id = $1`,
-        [session.lesson_id],
-      ),
+      known ?? this.notesOf(session.lesson_id),
     ]);
+    const exercises = rows.rows;
     const answered: SessionView['answered'] = {};
-    for (const a of answers.rows) answered[a.exercise_id] = { verdict: a.verdict, accepted: a.accepted };
+    for (const a of exercises) if (a.verdict !== null) answered[a.id] = { verdict: a.verdict, accepted: a.accepted! };
     const audio = await lessonAudioFor(this.pool, exercises);
 
     return {
@@ -225,35 +256,42 @@ export class LessonSessionService {
         ...audio[i],
       })),
       answered,
-      grammarMd: grammar.rows[0]?.grammar_md ?? null,
-      dialect: grammar.rows[0]?.dialect ?? null,
+      grammarMd: notes.grammar_md,
+      dialect: notes.dialect,
     };
   }
 
   /** Start a new session or resume the learner's active one for a lesson. */
   async startOrResume(userId: string, lessonId: string): Promise<SessionView> {
-    const lesson = await this.pool.query<{ status: string }>(
-      `SELECT status FROM lessons WHERE id = $1`,
-      [lessonId],
-    );
-    if (lesson.rowCount === 0) throw new AppError('LESSON_NOT_FOUND', 404, 'lesson not found');
-    if (lesson.rows[0]!.status !== 'published') {
-      throw new AppError('LESSON_NOT_PUBLISHED', 409, 'lesson is not published');
-    }
-
-    const active = await this.pool.query<SessionRow>(
-      `SELECT * FROM lesson_sessions
-       WHERE user_id = $1 AND lesson_id = $2 AND completed_at IS NULL AND expires_at > now()
-       ORDER BY started_at DESC LIMIT 1`,
+    // the lesson, its notes, how many exercises it has, and the learner's open session on it, in one read
+    const found = await this.pool.query<SessionColumns & { status: string; exercise_count: number; notes: boolean } & LessonNotes>(
+      `SELECT l.status, c.id IS NOT NULL AS notes, s.grammar_md, c.dialect,
+              (SELECT count(*)::int FROM exercises WHERE lesson_id = l.id) AS exercise_count,
+              a.id, a.user_id, a.lesson_id, a.total_count, a.correct_count, a.started_at, a.expires_at, a.completed_at
+         FROM lessons l
+         LEFT JOIN skills s ON s.id = l.skill_id
+         LEFT JOIN units u ON u.id = s.unit_id
+         LEFT JOIN courses c ON c.id = u.course_id
+         LEFT JOIN LATERAL (
+           SELECT * FROM lesson_sessions
+            WHERE user_id = $1 AND lesson_id = l.id AND completed_at IS NULL AND expires_at > now()
+            ORDER BY started_at DESC LIMIT 1
+         ) a ON true
+        WHERE l.id = $2`,
       [userId, lessonId],
     );
-    if (active.rows[0]) return this.buildView(active.rows[0]);
+    const lesson = found.rows[0];
+    if (!lesson) throw new AppError('LESSON_NOT_FOUND', 404, 'lesson not found');
+    if (lesson.status !== 'published') {
+      throw new AppError('LESSON_NOT_PUBLISHED', 409, 'lesson is not published');
+    }
+    // a skill, unit or course missing reads as no notes at all, as the inner joins of `notesOf` do
+    const notes: LessonNotes = lesson.notes ? { grammar_md: lesson.grammar_md, dialect: lesson.dialect } : NO_NOTES;
 
-    const total = await this.pool.query<{ n: string }>(
-      `SELECT count(*)::text n FROM exercises WHERE lesson_id = $1`,
-      [lessonId],
-    );
-    const totalCount = Number(total.rows[0]!.n);
+    const active = sessionOf(lesson);
+    if (active) return this.buildView(active, notes);
+
+    const totalCount = lesson.exercise_count;
     if (totalCount === 0) throw new AppError('LESSON_EMPTY', 409, 'lesson has no exercises');
 
     const created = await this.pool.query<SessionRow>(
@@ -262,7 +300,7 @@ export class LessonSessionService {
        RETURNING *`,
       [userId, lessonId, totalCount, String(SESSION_TTL_HOURS)],
     );
-    return this.buildView(created.rows[0]!);
+    return this.buildView(created.rows[0]!, notes);
   }
 
   private async loadOwnedSession(sessionId: string, userId: string): Promise<SessionRow> {
@@ -279,24 +317,37 @@ export class LessonSessionService {
     return this.buildView(await this.loadOwnedSession(sessionId, userId));
   }
 
-  /** The learner's session, still open to answers: not completed, not expired. */
-  private async loadOpenSession(sessionId: string, userId: string): Promise<SessionRow> {
-    const session = await this.loadOwnedSession(sessionId, userId);
-    if (session.completed_at) throw new AppError('SESSION_COMPLETED', 409, 'session already completed');
-    if (new Date(session.expires_at).getTime() < Date.now()) {
+  /**
+   * The learner's session, still open to answers (not completed, not
+   * expired), with one exercise of its lesson and whether this session has
+   * answered it yet: everything an answer or a retry checks first, in one read.
+   */
+  private async openSessionWith(
+    sessionId: string,
+    userId: string,
+    exerciseId: string,
+  ): Promise<{ session: SessionRow; ex: ExerciseRow; answered: boolean }> {
+    const result = await this.pool.query<
+      SessionRow & { ex_id: string | null; ex_position: number; ex_type: ExerciseType; ex_payload: unknown; answered: boolean }
+    >(
+      `SELECT ls.*, e.id AS ex_id, e.position AS ex_position, e.type AS ex_type, e.payload AS ex_payload,
+              EXISTS (SELECT 1 FROM session_answers a WHERE a.session_id = ls.id AND a.exercise_id = e.id) AS answered
+         FROM lesson_sessions ls LEFT JOIN exercises e ON e.id = $3 AND e.lesson_id = ls.lesson_id
+        WHERE ls.id = $1 AND ls.user_id = $2`,
+      [sessionId, userId, exerciseId],
+    );
+    const row = result.rows[0];
+    if (!row) throw new AppError('SESSION_NOT_FOUND', 404, 'session not found');
+    if (row.completed_at) throw new AppError('SESSION_COMPLETED', 409, 'session already completed');
+    if (new Date(row.expires_at).getTime() < Date.now()) {
       throw new AppError('SESSION_EXPIRED', 409, 'session has expired');
     }
-    return session;
-  }
-
-  private async lessonExercise(session: SessionRow, exerciseId: string): Promise<ExerciseRow> {
-    const exercise = await this.pool.query<ExerciseRow>(
-      `SELECT id, position, type, payload FROM exercises WHERE id = $1 AND lesson_id = $2`,
-      [exerciseId, session.lesson_id],
-    );
-    const ex = exercise.rows[0];
-    if (!ex) throw new AppError('EXERCISE_NOT_IN_LESSON', 404, 'exercise is not in this lesson');
-    return ex;
+    if (!row.ex_id) throw new AppError('EXERCISE_NOT_IN_LESSON', 404, 'exercise is not in this lesson');
+    return {
+      session: sessionOf(row)!,
+      ex: { id: row.ex_id, position: row.ex_position, type: row.ex_type, payload: row.ex_payload },
+      answered: row.answered,
+    };
   }
 
   async submitAnswer(
@@ -305,56 +356,65 @@ export class LessonSessionService {
     exerciseId: string,
     answer: unknown,
   ): Promise<AnswerResult> {
-    const session = await this.loadOpenSession(sessionId, userId);
-    const ex = await this.lessonExercise(session, exerciseId);
+    const { session, ex } = await this.openSessionWith(sessionId, userId, exerciseId);
 
     const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
     const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
 
-    // idempotent per (session, exercise): first answer wins
-    const client = await this.pool.connect();
-    try {
-      await client.query('BEGIN');
-      const inserted = await client.query(
-        `INSERT INTO session_answers (session_id, exercise_id, verdict, accepted)
-         VALUES ($1, $2, $3, $4)
-         ON CONFLICT (session_id, exercise_id) DO NOTHING`,
-        [sessionId, exerciseId, result.verdict, result.accepted],
-      );
-      if ((inserted.rowCount ?? 0) === 0) {
-        const existing = await client.query<{ verdict: Verdict; accepted: boolean }>(
-          `SELECT verdict, accepted FROM session_answers WHERE session_id = $1 AND exercise_id = $2`,
-          [sessionId, exerciseId],
-        );
+    // Idempotent per (session, exercise): first answer wins. The answer, the
+    // session's count of right answers, and for a repeat the answer that won,
+    // are one statement: its SELECT does not see the statement's own insert,
+    // so it reads back only an answer given before.
+    const record = async (db: Pick<pg.Pool, 'query'>) =>
+      (
+        await db.query<{ inserted: boolean; verdict: Verdict | null; accepted: boolean | null }>(
+          `WITH ins AS (
+             INSERT INTO session_answers (session_id, exercise_id, verdict, accepted)
+             VALUES ($1, $2, $3, $4)
+             ON CONFLICT (session_id, exercise_id) DO NOTHING
+             RETURNING 1
+           ), counted AS (
+             UPDATE lesson_sessions SET correct_count = correct_count + 1
+              WHERE id = $1 AND $4::boolean AND EXISTS (SELECT 1 FROM ins)
+           )
+           SELECT EXISTS (SELECT 1 FROM ins) AS inserted, a.verdict, a.accepted
+             FROM (SELECT 1) one LEFT JOIN session_answers a ON a.session_id = $1 AND a.exercise_id = $2`,
+          [sessionId, exerciseId, result.verdict, result.accepted],
+        )
+      ).rows[0]!;
+
+    let recorded: Awaited<ReturnType<typeof record>>;
+    if (!feedsReview(ex.type)) {
+      // nothing else to write with it, and one statement is its own transaction
+      recorded = await record(this.pool);
+    } else {
+      const client = await this.pool.connect();
+      try {
+        await client.query('BEGIN');
+        recorded = await record(client);
+        // Feed the answer into spaced repetition (KUR-033), keyed on the
+        // exercise until a lexeme model exists (KUR-043). First answer only;
+        // never a self-rated speaking answer (`feedsReview`).
+        if (recorded.inserted) {
+          const quality = qualityFromVerdict(result.verdict, result.accepted);
+          await this.reviews.record(userId, exerciseId, quality, new Date(), client);
+        }
         await client.query('COMMIT');
-        const row = existing.rows[0]!;
-        return {
-          verdict: row.verdict,
-          accepted: row.accepted,
-          correction: result.correction,
-          ...heard,
-          duplicate: true,
-        };
+      } catch (err) {
+        await client.query('ROLLBACK').catch(() => undefined);
+        throw err;
+      } finally {
+        client.release();
       }
-      if (result.accepted) {
-        await client.query(
-          `UPDATE lesson_sessions SET correct_count = correct_count + 1 WHERE id = $1`,
-          [sessionId],
-        );
-      }
-      // Feed the answer into spaced repetition (KUR-033), keyed on the
-      // exercise until a lexeme model exists (KUR-043). First answer only;
-      // never a self-rated speaking answer (`feedsReview`).
-      if (feedsReview(ex.type)) {
-        const quality = qualityFromVerdict(result.verdict, result.accepted);
-        await this.reviews.record(userId, exerciseId, quality, new Date(), client);
-      }
-      await client.query('COMMIT');
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
+    }
+    if (!recorded.inserted) {
+      return {
+        verdict: recorded.verdict!,
+        accepted: recorded.accepted!,
+        correction: result.correction,
+        ...heard,
+        duplicate: true,
+      };
     }
 
     return {
@@ -380,13 +440,8 @@ export class LessonSessionService {
    * answer — the one that counts — could then never be wrong.
    */
   async retry(sessionId: string, userId: string, exerciseId: string, answer: unknown): Promise<RetryResult> {
-    const session = await this.loadOpenSession(sessionId, userId);
-    const ex = await this.lessonExercise(session, exerciseId);
-    const answered = await this.pool.query(
-      `SELECT 1 FROM session_answers WHERE session_id = $1 AND exercise_id = $2`,
-      [session.id, ex.id],
-    );
-    if ((answered.rowCount ?? 0) === 0) {
+    const { session, ex, answered } = await this.openSessionWith(sessionId, userId, exerciseId);
+    if (!answered) {
       throw new AppError('EXERCISE_NOT_ANSWERED', 409, 'answer this exercise before trying it again');
     }
 
@@ -424,8 +479,24 @@ export class LessonSessionService {
    * go wrong would be the way to a perfect lesson.
    */
   async complete(sessionId: string, userId: string): Promise<SessionResults> {
-    const session = await this.loadOwnedSession(sessionId, userId);
-    const slot = await this.slotOf(session.lesson_id);
+    // the session, where its lesson sits, the learner's time zone, and how
+    // many listening or speaking items were put off and never answered, in one read
+    const found = await this.pool.query<SessionRow & { skill_id: string | null; position: number | null; timezone: string | null; put_off: number }>(
+      `SELECT ls.*, l.skill_id, l.position, u.timezone,
+              (SELECT count(*)::int FROM exercises e
+                WHERE e.lesson_id = ls.lesson_id AND e.type = ANY($3::text[])
+                  AND NOT EXISTS (SELECT 1 FROM session_answers a WHERE a.session_id = ls.id AND a.exercise_id = e.id)) AS put_off
+         FROM lesson_sessions ls
+         LEFT JOIN lessons l ON l.id = ls.lesson_id
+         LEFT JOIN users u ON u.id = ls.user_id
+        WHERE ls.id = $1 AND ls.user_id = $2`,
+      [sessionId, userId, SKIPPABLE_TYPES],
+    );
+    const row = found.rows[0];
+    if (!row) throw new AppError('SESSION_NOT_FOUND', 404, 'session not found');
+    if (row.skill_id === null || row.position === null) throw new AppError('LESSON_NOT_FOUND', 404, 'lesson not found');
+    const session = row;
+    const slot: LessonSlot = { skillId: row.skill_id, position: row.position };
     const answers = await this.pool.query<{
       exercise_id: string;
       verdict: Verdict;
@@ -443,21 +514,11 @@ export class LessonSessionService {
     const mistakes = answers.rows
       .filter((a) => !a.accepted)
       .map((a) => ({ exerciseId: a.exercise_id, verdict: a.verdict, ...revealExercise(a.type, a.payload) }));
-    const putOff = await this.pool.query<{ n: number }>(
-      `SELECT count(*)::int n FROM exercises e
-       WHERE e.lesson_id = $1 AND e.type = ANY($3::text[])
-         AND NOT EXISTS (SELECT 1 FROM session_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)`,
-      [session.lesson_id, session.id, SKIPPABLE_TYPES],
-    );
-    const skipped = putOff.rows[0]!.n;
+    const skipped = row.put_off;
     const scored = Math.max(0, session.total_count - skipped);
     const accuracy = scored > 0 ? correct / scored : 0;
 
-    const tz = await this.pool.query<{ timezone: string }>(
-      `SELECT timezone FROM users WHERE id = $1`,
-      [userId],
-    );
-    const timeZone = tz.rows[0]?.timezone ?? 'UTC';
+    const timeZone = row.timezone ?? 'UTC';
 
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
@@ -468,32 +529,36 @@ export class LessonSessionService {
       try {
         await client.query('BEGIN');
         // Claim the completion transition; only the winner awards XP + streak.
+        // The claim takes the slot's lock as it succeeds (RETURNING runs only
+        // for a row it updated): one completion of this lesson slot at a time
+        // per learner, or sessions completed in parallel each counted no prior
+        // completion and each was paid first-time XP.
         const claimed = await client.query(
           `UPDATE lesson_sessions SET completed_at = now()
-           WHERE id = $1 AND completed_at IS NULL RETURNING id`,
-          [session.id],
+           WHERE id = $1 AND completed_at IS NULL
+           RETURNING id, pg_advisory_xact_lock(hashtextextended($2, 0))`,
+          [session.id, `lesson-complete:${userId}:${slot.skillId}:${slot.position}`],
         );
         if ((claimed.rowCount ?? 0) > 0) {
           claimedNow = true;
-          // One completion of this lesson slot at a time per learner: without
-          // it, sessions completed in parallel each counted no prior completion
-          // and each was paid first-time XP.
-          await client.query(`SELECT pg_advisory_xact_lock(hashtextextended($1, 0))`, [
-            `lesson-complete:${userId}:${slot.skillId}:${slot.position}`,
-          ]);
+          const tz = safeTimeZone(timeZone);
           // Repeat = this learner already completed this lesson before, in
           // this version or any other. Today's completions (UTC, the league's
           // day) decide whether a repeat still pays (xp/rules.ts `lessonXp`).
-          const prior = await client.query<{ n: string; today: string }>(
+          // Read after the lock, in a statement of its own, so it sees a
+          // completion that committed while this one waited; with it, how many
+          // of this session's answers were given today (see below).
+          const prior = await client.query<{ n: string; today: string; answered_today: number }>(
             `SELECT count(*)::text n,
                     count(*) FILTER (
                       WHERE ls.completed_at >= date_trunc('day', now() AT TIME ZONE 'UTC') AT TIME ZONE 'UTC'
-                    )::text today
+                    )::text today,
+                    (${answeredTodaySql('session_answers', { session: '$4', zone: '$5', day: '$6' })}) AS answered_today
                FROM lesson_sessions ls
                JOIN lessons l ON l.id = ls.lesson_id
               WHERE ls.user_id = $1 AND l.skill_id = $2 AND l.position = $3
                 AND ls.completed_at IS NOT NULL AND ls.id <> $4`,
-            [userId, slot.skillId, slot.position, session.id],
+            [userId, slot.skillId, slot.position, session.id, tz, localDate(new Date(), tz)],
           );
           const history = { priorCompletions: Number(prior.rows[0]!.n), priorCompletionsToday: Number(prior.rows[0]!.today) };
           const isRepeat = history.priorCompletions > 0;
@@ -506,13 +571,7 @@ export class LessonSessionService {
           // A lesson actually worked through counts as a day learned and for
           // today's streak; one finished with (nearly) nothing answered does
           // not, or the freeze and the daily Zêr could be had for nothing.
-          const tz = safeTimeZone(timeZone);
-          const today = await client.query<{ n: number }>(answeredTodaySql('session_answers'), [
-            session.id,
-            tz,
-            localDate(new Date(), tz),
-          ]);
-          if (countsAsLearning(today.rows[0]!.n, session.total_count)) {
+          if (countsAsLearning(prior.rows[0]!.answered_today, session.total_count)) {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           // Credit the daily goal if this XP crossed it (KUR-032). Runs in
@@ -562,17 +621,6 @@ export class LessonSessionService {
       streak,
       firstCompletion,
     };
-  }
-
-  /** Where a lesson sits (`LessonSlot`). */
-  private async slotOf(lessonId: string): Promise<LessonSlot> {
-    const res = await this.pool.query<{ skill_id: string; position: number }>(
-      `SELECT skill_id, position FROM lessons WHERE id = $1`,
-      [lessonId],
-    );
-    const row = res.rows[0];
-    if (!row) throw new AppError('LESSON_NOT_FOUND', 404, 'lesson not found');
-    return { skillId: row.skill_id, position: row.position };
   }
 
   /**
