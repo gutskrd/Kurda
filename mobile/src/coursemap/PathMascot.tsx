@@ -31,7 +31,12 @@ export function PathMascot({
   onPress: () => void;
 }): React.JSX.Element {
   return (
-    <View style={[styles.spot, { left: x - PATH_MASCOT.size / 2, top: stopY + PATH_GEOMETRY.node / 2 - FULL + FEET }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lp-mascot">
+    <View
+      style={[styles.spot, { left: x - PATH_MASCOT.size / 2, top: stopY + PATH_GEOMETRY.node / 2 - FULL + FEET }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      testID="lp-mascot"
+    >
       <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={FULL} flip={flip} reaction={cheer ? 'cheer' : null} onPress={onPress} />
     </View>
   );

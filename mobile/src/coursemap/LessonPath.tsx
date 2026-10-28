@@ -134,8 +134,10 @@ export function LessonPath({
     const was = before ? (Object.keys(before).find((key) => before[key]!.state === 'current') ?? null) : null;
     return { changes, was };
   }, [path, courseId, reduce]);
-  const [back, setBack] = useState<Return | null>(fresh);
-  if (fresh && fresh !== back) setBack(fresh);
+  const [kept, setKept] = useState<Return | null>(fresh);
+  if (fresh && fresh !== kept) setKept(fresh);
+  // the system asked for less motion while it played: what is left of it is simply drawn
+  const back = reduce ? null : kept;
   useEffect(() => {
     LAST_DRAWN.set(courseId, pathSnapshot(path));
   }, [path, courseId]);

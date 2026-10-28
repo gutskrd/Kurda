@@ -48,27 +48,29 @@ export function StreakDay({ streak, onContinue }: { streak: Streak; onContinue: 
   const fill = useRef(new Animated.Value(reduce ? share : 0)).current;
   const [width, setWidth] = useState(0);
 
+  // heard and felt once, as the day lands
   useEffect(() => {
     const felt = setTimeout(() => {
       haptic('celebrate');
       playSound('reward');
     }, reduce ? 0 : STREAK_DAY_TIMING.rewardAtMs);
+    return () => clearTimeout(felt);
+    // once, as the card opens
+  }, []);
+
+  useEffect(() => {
     if (reduce) {
       flame.setValue(1);
       fill.setValue(share);
-      return () => clearTimeout(felt);
+      return;
     }
     const run = Animated.parallel([
       springTo(flame, 1, 'bouncy'),
       Animated.timing(fill, { toValue: share, duration: STREAK_DAY_TIMING.freezeMs, delay: STREAK_DAY_TIMING.freezeAtMs, useNativeDriver: true }),
     ]);
     run.start();
-    return () => {
-      clearTimeout(felt);
-      run.stop();
-    };
-    // once, as the card opens
-  }, []);
+    return () => run.stop();
+  }, [reduce, share, flame, fill]);
 
   const scale = flame.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
   const opacity = flame.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });

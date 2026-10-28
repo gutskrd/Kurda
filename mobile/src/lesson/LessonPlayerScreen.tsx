@@ -506,8 +506,9 @@ export function SessionPlayer({
           ? 'cheer'
           : null;
   // what kind of slip a typed answer was, when it was one thing (shared `typedHint`)
+  const typed = fb?.exerciseType === 'translate' || fb?.exerciseType === 'writing' || fb?.exerciseType === 'listening';
   const hint =
-    fb && fb.verdict !== 'correct' && fb.given !== undefined && fb.correction && (fb.exerciseType === 'translate' || fb.exerciseType === 'writing' || fb.exerciseType === 'listening')
+    fb && typed && fb.verdict !== 'correct' && fb.given !== undefined && fb.correction
       ? hintWords(typedHint(fb.given, fb.correction, ex?.dialect ?? view.dialect), t)
       : null;
   const putOffLink =

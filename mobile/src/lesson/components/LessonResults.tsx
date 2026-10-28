@@ -288,12 +288,15 @@ function Tile({
   const { colors } = useTheme();
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;
   useEffect(() => {
-    if (!travel) return;
+    // under Reduce Motion — an answer that may arrive a moment after the results open — simply there
+    if (!travel) {
+      rise.setValue(1);
+      return;
+    }
     const run = timing(rise, 1, duration.slow, { delay: RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs });
     run.start();
     return () => run.stop();
-    // once, as the results open
-  }, []);
+  }, [travel, index, rise]);
   const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [8, 0] });
   return (
     <Animated.View
@@ -415,7 +418,17 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
   tiles: { alignSelf: 'stretch', gap: spacing.sm },
-  tile: { flex: 1, minWidth: 0, alignItems: 'center', gap: 2, borderRadius: radii.md, paddingTop: spacing.md, paddingBottom: spacing.sm + 4, paddingHorizontal: spacing.sm, overflow: 'hidden' },
+  tile: {
+    flex: 1,
+    minWidth: 0,
+    alignItems: 'center',
+    gap: 2,
+    borderRadius: radii.md,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm + 4,
+    paddingHorizontal: spacing.sm,
+    overflow: 'hidden',
+  },
   band: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
   tileValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   tileNote: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },

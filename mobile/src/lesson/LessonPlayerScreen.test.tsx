@@ -386,6 +386,17 @@ describe('the results', () => {
       { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 },
     ],
   };
+  /** a skill of one lesson, as the course map lists it */
+  const skillOf = (skillId: string, title: string, state: string, lesson: { lessonId: string; title: string; completed: boolean }) => ({
+    skillId,
+    level: 1,
+    title,
+    state,
+    strength: 0,
+    hasGrammar: false,
+    firstLessonId: lesson.lessonId,
+    lessons: [{ ...lesson, position: 1 }],
+  });
   const map = {
     course: { id: 'c1', title: 'Kurmancî' },
     units: [
@@ -393,8 +404,8 @@ describe('the results', () => {
         unitId: 'u1',
         title: 'Basics',
         skills: [
-          { skillId: 's1', level: 1, title: 'Silav', state: 'completed', strength: 80, hasGrammar: false, firstLessonId: 'l1', lessons: [{ lessonId: 'l1', position: 1, title: 'Silav', completed: true }] },
-          { skillId: 's2', level: 1, title: 'Malbat', state: 'unlocked', strength: 0, hasGrammar: false, firstLessonId: 'l2', lessons: [{ lessonId: 'l2', position: 1, title: 'Dê û bav', completed: false }] },
+          skillOf('s1', 'Silav', 'completed', { lessonId: 'l1', title: 'Silav', completed: true }),
+          skillOf('s2', 'Malbat', 'unlocked', { lessonId: 'l2', title: 'Dê û bav', completed: false }),
         ],
       },
     ],
@@ -426,14 +437,20 @@ describe('the results', () => {
       ),
       'GET /me/daily-goal': inTurn(ok({ completed: false, earnedXp: 4, goal: 20 }), ok({ completed: false, earnedXp: 19, goal: 20 })),
       'POST /sessions/s1/answers': (body) =>
-        ok((body as { exerciseId: string }).exerciseId === 'mc' ? { verdict: 'correct', accepted: true, duplicate: false } : { verdict: 'wrong', accepted: false, correction: 'nan', duplicate: false }),
+        ok(
+          (body as { exerciseId: string }).exerciseId === 'mc'
+            ? { verdict: 'correct', accepted: true, duplicate: false }
+            : { verdict: 'wrong', accepted: false, correction: 'nan', duplicate: false },
+        ),
       'POST /sessions/s1/retry': ok({ verdict: 'wrong', accepted: false, correction: 'nan' }),
       'POST /sessions/s1/complete': ok(finished),
       'GET /courses/c1/map': ok(map),
     });
     const onNext = vi.fn();
     const onPractise = vi.fn();
-    renderWithProviders(<SessionPlayer view={missed} paths={paths} onExit={() => undefined} courseId="c1" onNext={onNext} onPractise={onPractise} onPath={() => undefined} />);
+    renderWithProviders(
+      <SessionPlayer view={missed} paths={paths} onExit={() => undefined} courseId="c1" onNext={onNext} onPractise={onPractise} onPath={() => undefined} />,
+    );
     await finish(3);
     expect(await screen.findByText('Lesson complete!')).toBeTruthy();
     expect(screen.getByLabelText('Right first time: 50%, Good practice, 1 of 2')).toBeTruthy();
