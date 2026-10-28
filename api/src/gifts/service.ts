@@ -155,8 +155,9 @@ export class GiftService {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
 
-    const statuses = await Promise.all(toIds.map((to) => this.deps.friends.statusBetween(fromId, to)));
-    if (statuses.some((s) => s !== 'friends')) {
+    // every recipient in one query, not one each
+    const statuses = await this.deps.friends.statusesBetween(fromId, toIds);
+    if (toIds.some((to) => statuses.get(to) !== 'friends')) {
       throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
     }
 
@@ -166,7 +167,7 @@ export class GiftService {
     const outsideGroup = new Set<string>();
     if (chat?.kind === 'group') {
       await this.deps.groupChat.assertCanPost(chat.groupId, fromId);
-      const readers = await Promise.all(toIds.map((to) => this.deps.groupChat.canRead(chat.groupId, to)));
+      const readers = await this.deps.groupChat.canReadEach(chat.groupId, toIds);
       toIds.forEach((to, i) => {
         if (!readers[i]) outsideGroup.add(to);
       });
@@ -631,8 +632,7 @@ export class GiftService {
     } else {
       if (!party) throw giftNotFound();
       const others = gave ? rows.rows.map((r) => r.to_user_id) : rows.rows.flatMap((r) => r.from_user_id ?? []);
-      const blocked = await Promise.all(others.map((other) => this.deps.friends.areBlocked(viewerId, other)));
-      if (blocked.some(Boolean)) throw giftNotFound();
+      if (await this.deps.friends.blockedWithAny(viewerId, others)) throw giftNotFound();
     }
     const card = await this.card(batchId, { id: viewerId, seesEveryone: await this.seesEveryone(where, viewerId) });
     if (!card) throw giftNotFound();
@@ -667,8 +667,8 @@ export class GiftService {
     if (ids.length === 0 || ids.length > MAX_GIFT_RECIPIENTS) {
       throw new AppError('BAD_RECIPIENTS', 400, `a gift goes to 1–${MAX_GIFT_RECIPIENTS} friends`);
     }
-    const statuses = await Promise.all(ids.map((to) => this.deps.friends.statusBetween(fromId, to)));
-    if (statuses.some((s) => s !== 'friends')) {
+    const statuses = await this.deps.friends.statusesBetween(fromId, ids);
+    if (ids.some((to) => statuses.get(to) !== 'friends')) {
       throw new AppError('NOT_FRIENDS', 403, 'you can only send gifts to friends');
     }
 

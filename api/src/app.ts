@@ -910,7 +910,14 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
-    user?: { id: string; roles: string[]; familyId?: string; emailVerified: boolean };
+    user?: {
+      id: string;
+      roles: string[];
+      familyId?: string;
+      emailVerified: boolean;
+      /** a birth month on record, as the auth middleware read it with the account (users/age.ts `requireBirthMonth`) */
+      birthMonthKnown?: boolean;
+    };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
   }

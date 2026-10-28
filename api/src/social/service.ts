@@ -287,13 +287,13 @@ export class SocialService {
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
 
     const isSelf = viewerId !== null && viewerId === targetId;
-    // a block hides the profile entirely — never reveal the block itself
-    if (viewerId !== null && !isSelf && (await this.friends.areBlocked(viewerId, targetId))) {
-      throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-    }
-
+    // one read says both whether a block stands between them and where they stand
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
+    // a block hides the profile entirely — never reveal the block itself
+    if (friendStatus === 'blocked') {
+      throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+    }
     // an 'everyone' stored before we knew their age is read as 'members' for a
     // minor, or for anyone whose age is not on record yet: never the open web
     const visibility: Visibility =

@@ -88,8 +88,10 @@ export class ChatService {
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
+    // one read for both rules: a block either way, then friendship
+    const status = await this.friends.statusBetween(from, to);
     // silent block: pretend it sent, but drop it (never reveal the block)
-    if (await this.friends.areBlocked(from, to)) {
+    if (status === 'blocked') {
       return {
         id: randomUUID(),
         senderId: from,
@@ -104,7 +106,7 @@ export class ChatService {
         game: null,
       };
     }
-    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+    if (status !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
 
@@ -175,7 +177,8 @@ export class ChatService {
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
-    if (await this.friends.areBlocked(from, to)) {
+    const status = await this.friends.statusBetween(from, to);
+    if (status === 'blocked') {
       return {
         id: randomUUID(),
         senderId: from,
@@ -190,7 +193,7 @@ export class ChatService {
         game: card,
       };
     }
-    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+    if (status !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
     const { lo, hi } = canonicalPair(from, to);

@@ -163,5 +163,8 @@ export async function requireBirthMonth(req: FastifyRequest, reply: FastifyReply
     await requireAuth(req, reply);
     return;
   }
-  if (!(await hasBirthMonth(req.server.db, req.user.id))) throw birthDateRequired();
+  // read with the account by the auth middleware on this same request; asked
+  // here only when something else signed the request in
+  const known = req.user.birthMonthKnown ?? (await hasBirthMonth(req.server.db, req.user.id));
+  if (!known) throw birthDateRequired();
 }

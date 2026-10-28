@@ -849,13 +849,17 @@ export class BadgeService implements MilestoneRecorder, RankEventsListener {
  * profile can read it without the badge service.
  */
 export async function profileShowcase(db: Executor, targetId: string, viewerId: string | null): Promise<ShowcaseBadge[]> {
+  // the showcase, who may see it, and the tiers of what is on it, in one read
   const r = await db.query<{
     badge_keys: string[] | null;
     birth_year: number | null;
     birth_month: number | null;
     friends: boolean;
+    tiers: Record<string, number> | null;
   }>(
-    `SELECT s.badge_keys, u.birth_year, u.birth_month, ${areFriendsSql('u.id', '$2::uuid')} AS friends
+    `SELECT s.badge_keys, u.birth_year, u.birth_month, ${areFriendsSql('u.id', '$2::uuid')} AS friends,
+            (SELECT jsonb_object_agg(b.badge_key, b.tier) FROM user_badges b
+              WHERE b.user_id = u.id AND b.badge_key = ANY(s.badge_keys) AND b.tier > 0) AS tiers
        FROM users u LEFT JOIN badge_showcase s ON s.user_id = u.id WHERE u.id = $1`,
     [targetId, viewerId],
   );
@@ -863,11 +867,7 @@ export async function profileShowcase(db: Executor, targetId: string, viewerId: 
   if (!row?.badge_keys?.length) return [];
   const self = viewerId !== null && viewerId === targetId;
   if (!self && !row.friends && !isKnownAdultRow(row)) return [];
-  const tiers = await db.query<{ badge_key: string; tier: number }>(
-    `SELECT badge_key, tier FROM user_badges WHERE user_id = $1 AND badge_key = ANY($2::text[]) AND tier > 0`,
-    [targetId, row.badge_keys],
-  );
-  const byKey = new Map(tiers.rows.map((t) => [t.badge_key, t.tier]));
+  const byKey = new Map(Object.entries(row.tiers ?? {}));
   return row.badge_keys.flatMap((key) => {
     const def = badgeDef(key);
     const tier = byKey.get(key);

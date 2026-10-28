@@ -2,7 +2,6 @@ import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
 import { requireAuth } from '../plugins/auth.js';
 import { requireBirthMonth } from '../users/age.js';
-import { requireUnrestricted } from '../moderation/restrictions.js';
 import type { GroupChatService } from './chat-service.js';
 import { MAX_GROUP_MESSAGE_LEN } from './chat-service.js';
 
@@ -16,7 +15,10 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
     {
       schema: { params: idParam, body: z.object({ body: z.string().min(1).max(MAX_GROUP_MESSAGE_LEN) }) },
       config: { rateLimit: { max: 60, windowMs: 60_000, per: 'user-or-ip' as const } },
-      preHandler: [requireBirthMonth, requireUnrestricted('chat')],
+      // no requireUnrestricted('chat') here: `send` asks it first of all
+      // (`assertCanPost`), with the same 403 MUTED, and asking twice was a
+      // second query on every message
+      preHandler: requireBirthMonth,
     },
     async (req) =>
       chat.send(req.user!.id, (req.params as { id: string }).id, (req.body as { body: string }).body, (k) =>
