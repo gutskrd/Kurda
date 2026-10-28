@@ -4,6 +4,7 @@ import { CloseIcon } from './icons';
 import { escapeClearsField } from './SearchField';
 import { wrapTab } from './Sheet';
 import { useT } from '../i18n/I18nProvider';
+import { lockPageScroll } from '../lib/scrollLock';
 
 /**
  * Accessible modal dialog: closes on Escape / backdrop click, takes the focus
@@ -42,9 +43,8 @@ export function Modal({
   useEffect(() => {
     if (!open) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
+    const unlock = lockPageScroll();
+    panelRef.current?.focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent): void => {
       // words in a search field go first; the next Escape closes
@@ -55,8 +55,8 @@ export function Modal({
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
-      document.body.style.overflow = prevOverflow;
-      restoreRef.current?.focus?.();
+      unlock();
+      restoreRef.current?.focus?.({ preventScroll: true });
     };
   }, [open]);
 
