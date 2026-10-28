@@ -273,7 +273,11 @@ export class RealtimeGateway {
       // RTT from the heartbeat round-trip (KUR-057), measured server-side
       if (conn.pingSentAt !== undefined) conn.rttMs = now - conn.pingSentAt;
     });
-    socket.on('message', (raw) => void this.onMessage(conn, raw.toString()));
+    // a store that cannot answer (Redis gone for a moment) fails this message, not
+    // the process: a rejection nobody handled here would end it, for everyone
+    socket.on('message', (raw) => {
+      this.onMessage(conn, raw.toString()).catch(() => this.send(conn, { type: 'error', code: 'UNAVAILABLE' }));
+    });
     socket.on('close', () => this.dropConnection(conn));
 
     // resume: rejoin previous rooms (token is single-use)
