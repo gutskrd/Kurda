@@ -103,7 +103,8 @@ export function SpokenStage({
   children,
 }: {
   srcs: ReadonlyArray<string | null>;
-  audio: AlphabetAudio;
+  /** who says each recording: the alphabet's, or the word sets' (words/audio.ts) */
+  audio: Pick<AlphabetAudio, 'voiceOf'>;
   player: ClipPlayer;
   reaction?: 'cheer' | 'hmm' | null;
   fallback: React.ReactNode;

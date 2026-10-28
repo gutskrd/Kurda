@@ -114,6 +114,10 @@ export type RootStackParamList = {
   Dictionary: undefined;
   /** Both alphabets, opened from Learn's tools: `script` to open on one, else the reader's own dialect. */
   Alphabet: { script?: AlphabetScript } | undefined;
+  /** Words to know — colours, numbers, days, months — from Learn's tools and the alphabet's last card. */
+  Words: undefined;
+  /** One word set; `set` is checked where the screen is drawn, since a link can carry anything. */
+  WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };

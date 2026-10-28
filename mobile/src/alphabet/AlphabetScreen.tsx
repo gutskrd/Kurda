@@ -232,6 +232,7 @@ export function AlphabetScreen({ script: asked, onExit }: { script?: AlphabetScr
             <View style={[styles.links, { flexDirection: dir.row }]}>
               <ClayButton label={t('alphabet.next.dictionary')} icon="text" onPress={() => navigation.navigate('Dictionary')} />
               <ClayButton label={t('alphabet.next.wordle')} icon="grid" onPress={() => navigation.navigate('Wordle')} />
+              <ClayButton label={t('words.fromAlphabet')} icon="palette" onPress={() => navigation.navigate('Words')} />
             </View>
           </View>
         </ScrollView>

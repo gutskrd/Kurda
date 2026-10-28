@@ -113,6 +113,8 @@ describe('Learn', () => {
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
     fireEvent.click(screen.getByRole('button', { name: 'Alphabet, Every letter, and how it sounds' }));
     expect(navigation.navigate).toHaveBeenCalledWith('Alphabet');
+    fireEvent.click(screen.getByRole('button', { name: 'Words to know, Colours, numbers, days, months' }));
+    expect(navigation.navigate).toHaveBeenCalledWith('Words');
   });
 
   it('switches to the games, and remembers the choice on this device', async () => {
