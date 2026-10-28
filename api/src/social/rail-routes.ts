@@ -36,14 +36,14 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
   app.get('/me/social', { preHandler: requireAuth }, async (req) => {
     const me = req.user!.id;
 
-    const [friends, requests, groups, unreadGroups, notifications, unreadNotifications, unseenGifts] = await Promise.all([
+    const [friends, requests, groups, unreadGroups, inbox, unseenGifts] = await Promise.all([
       // the rail needs every friend: it asks who is live, over the whole list
       deps.friends.list(me, publicUrl).then((page) => page.friends),
       deps.friends.incomingRequests(me, publicUrl),
       deps.groups.myGroups(me, publicUrl),
       deps.groupChat.unread(me),
-      deps.inbox.list(me),
-      deps.inbox.unreadCount(me),
+      // the recent tail and the unread count, in one read
+      deps.inbox.recent(me, RECENT_NOTIFICATIONS),
       deps.gifts.unseenCount(me),
     ]);
 
@@ -73,9 +73,9 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       groups: groups
         .filter((g) => g.archivedAt === null)
         .map((g) => ({ id: g.id, name: g.name, memberCount: g.memberCount, photoUrl: g.photoUrl, unread: unreadByGroup.get(g.id) ?? 0 })),
-      notifications: notifications.slice(0, RECENT_NOTIFICATIONS),
+      notifications: inbox.items,
       unread: {
-        notifications: unreadNotifications,
+        notifications: inbox.unread,
         gifts: unseenGifts,
         groups: unreadGroups.reduce((n, g) => n + g.unread, 0),
         requests: requests.length,

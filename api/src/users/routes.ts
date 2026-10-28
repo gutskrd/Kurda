@@ -210,11 +210,12 @@ export function registerUserRoutes(app: FastifyInstance, config: AppConfig): voi
    * single-row update, rate-limited by the global default.
    */
   app.post('/me/heartbeat', { config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
-    await app.db.query(`UPDATE users SET last_seen_at = now() WHERE id = $1`, [req.user!.id]);
     // last_seen_at is overwritten in place, so it can say who is online now but
-    // keeps no history; this one row per user per day is what DAU/WAU/MAU count.
+    // keeps no history; the one row per user per day is what DAU/WAU/MAU count.
+    // Both in one statement: every open app sends this once a minute.
     await app.db.query(
-      `INSERT INTO user_activity_days (day, user_id) VALUES (current_date, $1) ON CONFLICT DO NOTHING`,
+      `WITH seen AS (UPDATE users SET last_seen_at = now() WHERE id = $1)
+       INSERT INTO user_activity_days (day, user_id) VALUES (current_date, $1) ON CONFLICT DO NOTHING`,
       [req.user!.id],
     );
     return { ok: true };

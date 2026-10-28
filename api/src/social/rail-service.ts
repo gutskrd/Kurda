@@ -108,18 +108,16 @@ export class SocialRailService {
     const ids = [...new Set(userIds)];
     if (ids.length === 0) return new Map();
 
-    const [games, prefs] = await Promise.all([
-      this.pool.query<ActivityRow>(LIVE_GAMES_SQL, [ids, String(LIVE_GAME_MAX_MINUTES)]),
-      this.pool.query<{ id: string; profile_sections: unknown }>(
-        `SELECT id, profile_sections FROM users WHERE id = ANY($1)`,
-        [ids],
-      ),
-    ]);
+    // each player's newest game, with their profile's sections beside it: one read
+    const games = await this.pool.query<ActivityRow & { profile_sections: unknown }>(
+      `SELECT live.user_id, live.game, live.started_at, u.profile_sections
+         FROM (${LIVE_GAMES_SQL}) live LEFT JOIN users u ON u.id = live.user_id`,
+      [ids, String(LIVE_GAME_MAX_MINUTES)],
+    );
 
-    const shows = new Map(prefs.rows.map((r) => [r.id, resolveSections(r.profile_sections).games]));
     const out = new Map<string, LiveActivity>();
     for (const row of games.rows) {
-      if (shows.get(row.user_id) === false) continue;
+      if (resolveSections(row.profile_sections).games === false) continue;
       out.set(row.user_id, { game: row.game, since: row.started_at.toISOString() });
     }
     return out;
