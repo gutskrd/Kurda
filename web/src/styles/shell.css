@@ -1039,88 +1039,70 @@
   }
 }
 
-/* the one next step */
-.learn-hero {
-  display: grid;
-  gap: var(--space-3);
-  margin-bottom: var(--space-6);
-  padding: var(--space-6);
-  border: 1px solid var(--border);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-}
-.learn-hero-where {
-  margin: 0;
-  font-size: var(--text-caption);
-  font-weight: 600;
-  color: var(--ink-3);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.learn-hero-title {
-  font-size: var(--text-title);
-  line-height: 1.15;
-}
-.learn-hero-progress {
-  display: grid;
-  gap: 6px;
-  max-width: 440px;
-}
-.learn-hero-go {
-  justify-self: start;
-  margin-top: var(--space-1);
-}
-@media (max-width: 560px) {
-  .learn-hero {
-    padding: var(--space-5);
-  }
-  .learn-hero-go {
-    justify-self: stretch;
-  }
-}
-
-/* today: the goal, and the streak, side by side */
-.learn-today {
+/* today, in one row above the path: the streak, the goal's ring, what review has waiting */
+.learn-strip {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
-  justify-content: space-between;
-  gap: var(--space-3) var(--space-6);
-  margin-bottom: var(--space-8);
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 40px;
+  margin: 0 auto var(--space-5);
+  max-width: var(--container-narrow);
 }
-.learn-today-goal {
-  flex: 1 1 260px;
-  min-width: 0;
-}
-.learn-today-goal .learn-section-title {
-  margin-bottom: var(--space-2);
-}
-.learn-today-bar {
-  max-width: 440px;
-}
-.learn-today-bar > span.is-met {
-  background: var(--gold);
-}
-.learn-today-line {
-  margin: 6px 0 0;
-  font-size: var(--text-secondary);
-  color: var(--ink-3);
-}
-.learn-today-streak {
+.learn-strip-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
+  min-height: 40px;
   margin: 0;
-  padding: 8px 14px;
+  padding: 0 14px;
   border: 1px solid var(--border);
   border-radius: var(--r-pill);
   font-size: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 650;
   color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
 }
-.learn-today-streak.is-on svg {
+.learn-strip-streak.is-on svg {
   color: var(--gold);
+}
+.learn-strip-ring {
+  flex: none;
+  rotate: -90deg;
+}
+.learn-strip-ring circle {
+  fill: none;
+  stroke-width: 4;
+}
+.learn-strip-ring-track {
+  stroke: var(--surface-3);
+}
+.learn-strip-ring-fill {
+  stroke: var(--success);
+  stroke-linecap: round;
+}
+.learn-strip-ring.is-met .learn-strip-ring-fill {
+  stroke: var(--gold);
+}
+/* review waiting: the one item here that opens something */
+.learn-strip-chip {
+  margin-inline-start: auto;
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.learn-strip-chip:hover {
+  background: var(--surface-3);
+  color: var(--ink);
+  text-decoration: none;
+}
+/* the path, as wide as a course's own page draws it */
+.lp-courses.learn-courses-switch {
+  max-width: var(--container-narrow);
+  margin: 0 auto var(--space-5);
+}
+.learn-path {
+  max-width: var(--container-narrow);
+  margin: 0 auto var(--space-8);
 }
 
 /* practice tools: review, the alphabet and the dictionary, side by side */

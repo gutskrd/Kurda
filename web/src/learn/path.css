@@ -426,6 +426,69 @@
   }
 }
 
+/*
+ * Coming back after a lesson (learn/CoursePath.tsx, on @kurda/shared's
+ * PATH_RETURN): the ring fills from the share it had, the finished stop pops
+ * and its check draws in, the opened one pops as its number takes the
+ * padlock's place, and the bubble arrives at the new stop before it bobs.
+ * Under Reduce Motion none of it runs: the path is drawn as it is.
+ */
+.lp-ring-fill.is-moving {
+  transition: stroke-dasharray 600ms var(--ease-emphasis);
+}
+@keyframes lp-node-pop {
+  50% {
+    transform: scale(1.12);
+  }
+}
+@keyframes lp-glyph-in {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes lp-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+.lp-node.is-finishing .lp-node-face,
+.lp-node.is-opening .lp-node-face {
+  animation: lp-node-pop var(--dur-slow) var(--ease-spring);
+}
+.lp-node.is-finishing .lp-node-face > svg {
+  animation: check-draw calc(var(--dur) + 60ms) var(--ease-out) 60ms both;
+}
+.lp-node.is-opening .lp-node-face > * {
+  animation: lp-glyph-in var(--dur-fast) ease-out both;
+}
+.lp-callout.is-arriving {
+  animation:
+    lp-arrive var(--dur) var(--ease-out) both,
+    lp-bob 1.8s var(--ease-out) var(--dur) 4 alternate;
+}
+
+/*
+ * Hevalo beside the current stop (shared `mascotSpot`): placed as the stops
+ * are, from the logical start, so a right-to-left page has him on its own
+ * other side. Not on the narrowest screens, where he would crowd the path.
+ */
+.lp-mascot {
+  position: absolute;
+  z-index: 1;
+  inset-inline-start: calc(50% + var(--mx, 0px) - 44px);
+  width: 88px;
+  display: flex;
+  justify-content: center;
+  line-height: 0;
+  list-style: none;
+}
+@media (max-width: 339px) {
+  .lp-mascot {
+    display: none;
+  }
+}
+
 /* ---- the card a stop opens -------------------------------------------------- */
 
 .lp-pop {
@@ -509,6 +572,18 @@
 .lp-pop-tips {
   justify-self: center;
   gap: 6px;
+}
+/* the card's one action, and what the lesson it opens pays under it */
+.lp-pop-go {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.lp-pop-xp {
+  font-size: var(--text-caption);
+  font-weight: 650;
+  color: var(--gold-ink);
+  font-variant-numeric: tabular-nums;
 }
 
 .lp-parts {

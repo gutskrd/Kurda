@@ -150,3 +150,58 @@ describe('the five places', () => {
     expect(await screen.findByRole('link', { name: 'Open the dictionary' })).toHaveAttribute('href', '/dictionary/');
   });
 });
+
+describe('a lesson, alone on the screen', () => {
+  const session = {
+    sessionId: 's1',
+    lessonId: 'l1',
+    expiresAt: '2099-01-01T00:00:00Z',
+    completed: false,
+    answered: {},
+    grammarMd: null,
+    dialect: 'kurmanji',
+    exercises: [{ id: 'e1', type: 'translate', prompt: 'apple' }],
+  };
+  const invite = {
+    id: 'inv1',
+    game: 'wordle-battle',
+    lobbyId: 'lob1',
+    status: 'pending',
+    from: { name: 'Rojda', avatarUrl: null },
+    summary: { difficulty: 'easy' },
+    rematch: false,
+    createdAt: '2026-10-28T10:00:00Z',
+    expiresAt: '2099-01-01T00:00:00Z',
+  };
+
+  function serveWithInvite(): void {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname;
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'ada', email: 'a@b.c', emailVerified: true } });
+        if (path === '/lessons/l1/session') return jsonResponse(200, session);
+        if (path === '/play/invites') return jsonResponse(200, { incoming: [invite], outgoing: [] });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        if (path === '/practice/due') return jsonResponse(200, { due: 0, available: 0 });
+        return jsonResponse(200, {});
+      }),
+    );
+  }
+
+  it('draws no navigation, no social column and no invite around a lesson, and the invite shows once it is left', async () => {
+    signIn();
+    serveWithInvite();
+    visit('/app/learn/lesson/l1');
+    const leave = await screen.findByRole('link', { name: /Leave for now/ });
+    expect(screen.getByRole('main')).toHaveAttribute('id', 'main');
+    expect(screen.queryByRole('navigation', { name: 'Primary' })).toBeNull();
+    expect(screen.queryByRole('complementary')).toBeNull();
+    expect(screen.queryByRole('region', { name: 'Game invites' })).toBeNull();
+
+    await userEvent.click(leave);
+    await waitFor(() => expect(where()).toBe('/app/learn'));
+    expect(await screen.findByRole('navigation', { name: 'Primary' })).toBeInTheDocument();
+    expect(await screen.findByRole('region', { name: 'Game invites' })).toHaveTextContent('Rojda');
+  });
+});

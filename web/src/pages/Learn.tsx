@@ -1,13 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useApiGet } from '../lib/useApi';
 import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
-import { CourseGridSkeleton } from '../components/skeletons';
+import { CourseGridSkeleton, CourseMapSkeleton } from '../components/skeletons';
 import { Skeleton } from '../components/Skeleton';
 import { DictionaryIcon, FlameIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
-import { courseProgress, dialectName, type NextLesson } from '../learn/map';
+import { courseProgress, dialectName } from '../learn/map';
+import { CoursePath } from '../learn/CoursePath';
 import type { PracticeDue } from '../learn/types';
 import type { MeProfile } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
@@ -34,8 +35,8 @@ interface DailyGoal {
  * rather than starting another beside it.
  *
  * Its button is a secondary one even when words are due: the page has one
- * primary action, the Continue at the top, and two equal white buttons a
- * screen apart ask the learner to choose before they can start.
+ * primary action, the path's own "Start" or "Continue", and two equal white
+ * buttons a screen apart ask the learner to choose before they can start.
  */
 function ReviewEntry(): React.JSX.Element {
   const t = useT();
@@ -76,152 +77,81 @@ function ReviewEntry(): React.JSX.Element {
   );
 }
 
-/**
- * The one next step, before anything else on the page.
- *
- * A learner who opens Learn has usually come to carry on, and a page that
- * offers six equal ways forward makes them choose before they can start.
- * This is the course they are furthest into (or the first one, for somebody
- * new), the lesson up next in it, how far they have come, and one button.
- * Everything else on the page is below it.
- */
-function ContinueCard({ entries }: { entries: CourseEntry[] }): React.JSX.Element | null {
-  const t = useT();
-  const withNext = entries
-    .map((entry) => ({ entry, progress: entry.map ? courseProgress(entry.map) : null }))
-    .filter((e): e is { entry: CourseEntry; progress: { done: number; total: number; next: NextLesson } } => Boolean(e.progress?.next));
-  // a course already begun before one not yet started, in the server's order otherwise
-  const pick = withNext.find((e) => e.progress.done > 0) ?? withNext[0];
-  if (!pick) return null;
-  const { entry, progress } = pick;
-  const pct = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
-  const fresh = progress.done === 0;
+/** Today's goal as a small ring: how much of it is done, drawn round. */
+function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.Element {
+  const r = 11;
+  const c = 2 * Math.PI * r;
   return (
-    <section className="learn-hero" aria-labelledby="learn-hero-title">
-      <p className="learn-hero-where">
-        {entry.course.title} · {progress.next.skillTitle}
-      </p>
-      <h2 className="learn-hero-title" id="learn-hero-title">
-        {progress.next.title}
-      </h2>
-      <div className="learn-hero-progress">
-        <div
-          className="course-progress-bar"
-          role="progressbar"
-          aria-label={t('learn.progressLabel', { course: entry.course.title })}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-        >
-          <span style={{ width: `${pct}%` }} />
-        </div>
-        <span className="course-progress-text">{t('learn.progress', { done: progress.done, total: progress.total })}</span>
-      </div>
-      <LinkButton
-        to={`/app/learn/lesson/${progress.next.lessonId}?course=${encodeURIComponent(entry.course.id)}`}
-        state={{ title: progress.next.title }}
-        size="lg"
-        className="learn-hero-go"
-      >
-        {fresh ? t('learn.startFirst') : t('learn.continue')}
-      </LinkButton>
-    </section>
+    <svg className={`learn-strip-ring${met ? ' is-met' : ''}`} width="28" height="28" viewBox="-14 -14 28 28" aria-hidden="true" focusable="false">
+      <circle className="learn-strip-ring-track" r={r} />
+      {share > 0 && <circle className="learn-strip-ring-fill" r={r} strokeDasharray={`${c * Math.min(1, share)} ${c}`} />}
+    </svg>
   );
 }
 
 /**
- * The Continue card's shape while the courses are on their way, so the page
- * under it does not jump down a card's height when it arrives. Built from the
- * card's own classes, so it is the card's height by construction.
- */
-function ContinueSkeleton(): React.JSX.Element {
-  return (
-    <div className="learn-hero skeleton-late" aria-hidden="true">
-      <p className="learn-hero-where">
-        <Skeleton line w="45%" />
-      </p>
-      <h2 className="learn-hero-title">
-        <Skeleton line w="60%" />
-      </h2>
-      <div className="learn-hero-progress">
-        <div className="course-progress-bar" />
-        <span className="course-progress-text">
-          <Skeleton line w="35%" />
-        </span>
-      </div>
-      <Skeleton h={52} w={160} radius="var(--r-pill)" className="learn-hero-go" />
-    </div>
-  );
-}
-
-/**
- * Today, said plainly: how much of the day's goal is done and how long the
- * streak is.
+ * Today, in one row above the path: the streak, today's goal as a ring with
+ * its XP, and what review has waiting, as a chip that opens it.
  *
  * Informational and kind. Nothing here counts down or warns about losing
- * anything — the streak is a number that went up, and a day without one is
- * an invitation to start, not a failure to report. Its shape holds the place
- * until both answers are in, so the tools below do not jump when they land,
- * and it is quietly absent if they fail: the lessons below are the page.
+ * anything — the streak is a number that went up, and a day without one is an
+ * invitation to start, not a failure to report. Its shape holds the place
+ * until the answers are in, so the path below does not jump when they land,
+ * and a part that fails is quietly left out: the path is the page.
  */
-function Today(): React.JSX.Element | null {
+function TodayStrip(): React.JSX.Element {
   const t = useT();
   const locale = useLocale();
   const goal = useApiGet<DailyGoal>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
+  const due = useApiGet<PracticeDue>('/practice/due');
   const g = goal.data;
   const streak = me.data?.user?.streak?.current;
-  if ((goal.loading && !g) || (me.loading && !me.data)) return <TodaySkeleton />;
-  if (!g || typeof g.earnedXp !== 'number' || typeof streak !== 'number') return null;
-  const target = g.effectiveGoal || g.goal;
-  const pct = Math.round(Math.max(0, Math.min(1, g.progress)) * 100);
+  const number = (n: number): string => n.toLocaleString(locale);
+  const waiting = (goal.loading && !g) || (me.loading && !me.data);
+  const target = g ? g.effectiveGoal || g.goal : 0;
+  const reviewHref = due.data?.open ? `/app/learn/review/${encodeURIComponent(due.data.open)}` : '/app/learn/review';
   return (
-    <section className="learn-today" aria-labelledby="learn-today-title">
-      <div className="learn-today-goal">
-        <h2 className="learn-section-title" id="learn-today-title">
-          {t('learn.today.title')}
-        </h2>
-        <div
-          className="course-progress-bar learn-today-bar"
-          role="progressbar"
-          aria-label={t('learn.today.goalLabel')}
-          aria-valuemin={0}
-          aria-valuemax={100}
-          aria-valuenow={pct}
-        >
-          <span style={{ width: `${pct}%` }} className={g.completed ? 'is-met' : undefined} />
-        </div>
-        <p className="learn-today-line">
-          {g.completed
-            ? t('learn.today.done')
-            : t('learn.today.goal', { xp: g.earnedXp.toLocaleString(locale), goal: target.toLocaleString(locale) })}
-        </p>
-      </div>
-      <p className={`learn-today-streak${streak > 0 ? ' is-on' : ''}`}>
-        <FlameIcon size={20} weight={streak > 0 ? 'fill' : 'regular'} />
-        <span>{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
-      </p>
+    <section className={`learn-strip${waiting ? ' skeleton-late' : ''}`} aria-labelledby="learn-today-title">
+      <h2 className="sr-only" id="learn-today-title">
+        {t('learn.today.title')}
+      </h2>
+      {waiting ? (
+        <>
+          <Skeleton w={64} h={28} radius="var(--r-pill)" />
+          <Skeleton w={120} h={28} radius="var(--r-pill)" />
+        </>
+      ) : (
+        <>
+          {typeof streak === 'number' && (
+            <p className={`learn-strip-item learn-strip-streak${streak > 0 ? ' is-on' : ''}`}>
+              <FlameIcon size={20} weight={streak > 0 ? 'fill' : 'regular'} />
+              <span aria-hidden="true">{number(streak)}</span>
+              <span className="sr-only">{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
+            </p>
+          )}
+          {g && typeof g.earnedXp === 'number' && target > 0 && (
+            <p
+              className="learn-strip-item learn-strip-goal"
+              role="progressbar"
+              aria-label={t('learn.today.goalLabel')}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(Math.max(0, Math.min(1, g.progress)) * 100)}
+              aria-valuetext={g.completed ? t('learn.today.done') : t('learn.today.goal', { xp: number(g.earnedXp), goal: number(target) })}
+            >
+              <GoalRing share={g.progress} met={g.completed} />
+              <span aria-hidden="true">{t('learn.today.goalShort', { xp: number(g.earnedXp), goal: number(target) })}</span>
+            </p>
+          )}
+          {due.data && (due.data.open || due.data.due > 0) && (
+            <Link to={reviewHref} className="learn-strip-item learn-strip-chip">
+              {t('learn.today.dueChip', { count: number(due.data.due) })}
+            </Link>
+          )}
+        </>
+      )}
     </section>
-  );
-}
-
-/** Today's shape, from its own classes, while the goal and the streak are fetched. */
-function TodaySkeleton(): React.JSX.Element {
-  const t = useT();
-  return (
-    <div className="learn-today skeleton-late" aria-hidden="true">
-      <div className="learn-today-goal">
-        <h2 className="learn-section-title">{t('learn.today.title')}</h2>
-        <div className="course-progress-bar learn-today-bar" />
-        <p className="learn-today-line">
-          <Skeleton line w="40%" />
-        </p>
-      </div>
-      <p className="learn-today-streak">
-        <Skeleton w={20} h={20} circle />
-        <Skeleton line w={96} />
-      </p>
-    </div>
   );
 }
 
@@ -355,13 +285,50 @@ function GuestCourses(): React.JSX.Element {
   );
 }
 
+/**
+ * Whose path Learn shows: the course asked for (`?course=`), else the one the
+ * learner is furthest into, else the first with anything open, else the first.
+ */
+function pickCourse(entries: CourseEntry[], asked: string | null): CourseEntry | null {
+  const chosen = entries.find((e) => e.course.id === asked);
+  if (chosen) return chosen;
+  const withNext = entries.map((entry) => ({ entry, progress: entry.map ? courseProgress(entry.map) : null })).filter((e) => e.progress?.next);
+  return (withNext.find((e) => e.progress!.done > 0) ?? withNext[0])?.entry ?? entries[0] ?? null;
+}
+
 function Lessons(): React.JSX.Element {
   const t = useT();
+  const [params] = useSearchParams();
   const { entries, error, reload } = useCourses();
+  const picked = entries ? pickCourse(entries, params.get('course')) : null;
+  // a lesson opened from here comes back here, on the same course
+  const home = picked && entries && entries.length > 1 ? `/app/learn?course=${encodeURIComponent(picked.course.id)}` : '/app/learn';
   return (
     <>
-      {entries ? <ContinueCard entries={entries} /> : !error && <ContinueSkeleton />}
-      <Today />
+      <TodayStrip />
+      {entries && entries.length > 1 && (
+        <nav className="lp-courses learn-courses-switch" aria-label={t('coursemap.courses')}>
+          {entries.map(({ course }) => (
+            <Link
+              key={course.id}
+              to={`/app/learn?course=${encodeURIComponent(course.id)}`}
+              replace
+              className={`lp-course${course.id === picked?.course.id ? ' is-on' : ''}`}
+              aria-current={course.id === picked?.course.id ? 'page' : undefined}
+            >
+              {course.title}
+            </Link>
+          ))}
+        </nav>
+      )}
+      {/* the path is Learn's home: the course picked, its lessons one tap away */}
+      {picked ? (
+        <section className="learn-path" aria-label={picked.course.title}>
+          <CoursePath key={picked.course.id} courseId={picked.course.id} showHeader={false} home={home} />
+        </section>
+      ) : (
+        !entries && !error && <CourseMapSkeleton />
+      )}
       <Tools signedIn />
       <section aria-labelledby="learn-courses-title">
         <h2 className="learn-section-title" id="learn-courses-title">
@@ -386,9 +353,11 @@ function Lessons(): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn), on its Lessons half: the one next step, today, the
- * practice tools, then every course with how far the learner is through it.
- * The Games half is pages/Games.tsx, behind the same header.
+ * Learn (/app/learn), on its Lessons half: today in one row, then the path of
+ * the course the learner is in — the lesson path is Learn's home, with Hevalo
+ * beside the stop to do now — then the practice tools and every course with
+ * how far the learner is through it. The Games half is pages/Games.tsx,
+ * behind the same header.
  */
 export function Learn(): React.JSX.Element {
   const { status } = useAuth();

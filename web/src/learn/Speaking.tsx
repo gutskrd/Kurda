@@ -29,13 +29,19 @@ type Take =
  * answer, and comparing one's own attempt with the model is the practice. The
  * take never leaves the browser — nothing on the server would listen to it,
  * and a stored copy of every learner's voice was data kept for no use. "Try again" brings the phrase back later in the lesson, like any
- * miss. A refused microphone is said plainly, with how to allow it, and never
- * switches speaking off for good; "Can't speak now" puts this one off.
+ * miss. A rating chosen is the answer once Check, in the action bar, sends
+ * it, as on the phone; until then another can be chosen. A refused
+ * microphone is said plainly, with how to allow it, and never switches
+ * speaking off for good; "Can't speak now", in the action bar, puts speaking
+ * off for the rest of the lesson.
  */
-export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseProps): React.JSX.Element {
+export function Speaking({ exercise, locked, busy, formId, onReady, onAnswer }: ExerciseProps): React.JSX.Element {
   const t = useT();
   const recorder = useRecorder();
   const [taken, setTaken] = useState<Take>({ status: 'none' });
+  const [rating, setRating] = useState<SelfRating | null>(null);
+  const ready = taken.status === 'ready' && rating !== null;
+  useEffect(() => onReady(ready), [ready, onReady]);
   const supported = recorderSupported();
   const take = recorder.take;
   const own = useMemo(() => (take ? URL.createObjectURL(take.blob) : null), [take]);
@@ -61,6 +67,7 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
 
   const record = (): void => {
     setTaken({ status: 'none' });
+    setRating(null);
     void recorder.start();
   };
 
@@ -138,18 +145,30 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
         <p className="lesson-note" id={`rate-${exercise.id}`}>
           {t('lesson.speak.rateAsk')}
         </p>
-        <div className="lesson-rate" role="group" aria-labelledby={`rate-${exercise.id}`}>
-          {RATINGS.map(({ rating, label }) => (
+        <form
+          id={formId}
+          className="lesson-rate"
+          role="group"
+          aria-labelledby={`rate-${exercise.id}`}
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!locked && !busy && rating) onAnswer({ selfRating: rating });
+          }}
+        >
+          {RATINGS.map((r) => (
             <Button
-              key={rating}
+              key={r.rating}
+              type="button"
               variant="secondary"
+              className={rating === r.rating ? 'is-selected' : undefined}
+              aria-pressed={rating === r.rating}
               disabled={locked || busy}
-              onClick={() => onAnswer({ selfRating: rating })}
+              onClick={() => setRating(r.rating)}
             >
-              {t(label)}
+              {t(r.label)}
             </Button>
           ))}
-        </div>
+        </form>
       </>
     );
   } else {
@@ -180,11 +199,6 @@ export function Speaking({ exercise, locked, busy, onAnswer, onSkip }: ExerciseP
         <p className="lesson-note" role="alert">
           {t(taken.message)}
         </p>
-      )}
-      {!locked && (
-        <button type="button" className="link-btn lesson-skip" onClick={onSkip} disabled={busy}>
-          {t('lesson.speak.skip')}
-        </button>
       )}
     </div>
   );
