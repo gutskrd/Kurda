@@ -21,6 +21,12 @@ export interface EmailPayload {
   replyTo?: string;
   /** extra headers — `In-Reply-To` and `References`, so an answer threads under the mail it answers */
   headers?: Record<string, string>;
+  /**
+   * The same on every retry of one send, and on no other: a provider that
+   * honours it sends the message once however often it is asked (Resend keeps
+   * one for a day). Never an email header; SMTP has no such thing and ignores it.
+   */
+  idempotencyKey?: string;
 }
 
 export interface EmailProvider {
@@ -49,13 +55,14 @@ export class ResendEmailProvider implements EmailProvider {
     private readonly replyTo?: string,
   ) {}
 
-  async send({ to, subject, text, html, from, replyTo, headers }: EmailPayload): Promise<{ messageId: string }> {
+  async send({ to, subject, text, html, from, replyTo, headers, idempotencyKey }: EmailPayload): Promise<{ messageId: string }> {
     const answerTo = replyTo ?? this.replyTo;
     const res = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${this.apiKey}`,
         'Content-Type': 'application/json',
+        ...(idempotencyKey ? { 'Idempotency-Key': idempotencyKey } : {}),
       },
       // `text` always goes too, so a client refusing HTML still gets the message
       body: JSON.stringify({

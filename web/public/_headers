@@ -46,6 +46,15 @@
   Permissions-Policy: camera=(), microphone=(self), geolocation=(), payment=(), usb=()
   Cross-Origin-Opener-Policy: same-origin
 
+# The app's own scripts, styles and imported pictures, which the build names by
+# their content (index-BkDf3aZ1.js): a file at one of these addresses never
+# changes, and a new build is new addresses. Without this every page load asked
+# for each of them again to hear "not modified"; with it a browser keeps them
+# for a year and asks nothing. Only /assets/ — files in public/ keep their
+# names from build to build, so they are left to revalidate.
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
 # The public dictionary (/ferheng/*), which is a different kind of page.
 #
 # `_headers` rules ADD, they do not replace: a /ferheng/ page matches `/*`

@@ -62,11 +62,16 @@ export function makeSendEmailJob(email: EmailService): JobDefinition<SendEmailPa
     name: SEND_EMAIL_JOB_NAME,
     schema: payloadSchema,
     handler: async (payload, ctx) => {
+      // A retry after a send whose answer never came (a timeout, a dropped
+      // connection, a 5xx after the mail was accepted) would otherwise be a
+      // second email, against the provider's daily allowance; with the job's
+      // key the provider sends it once and answers the retry as the first.
       const result = await email.send(
         payload.to,
         payload.template as EmailTemplate,
         payload.vars,
         (payload.locale ?? 'en') as EmailLocale,
+        ctx.key ? { idempotencyKey: `${SEND_EMAIL_JOB_NAME}/${ctx.key}` } : {},
       );
       ctx.log.info(
         { to: maskEmail(payload.to), template: payload.template, ...result },

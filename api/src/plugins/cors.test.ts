@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { corsOrigins } from './cors.js';
+import { corsOrigins, PREFLIGHT_MAX_AGE_SECONDS } from './cors.js';
 
 let app: FastifyInstance;
 
@@ -48,6 +48,23 @@ describe('CORS on the API', () => {
     expect(res.headers['access-control-allow-headers']).toContain('idempotency-key');
     // the per-install id sign-in protection reads must pass the browser's preflight
     expect(res.headers['access-control-allow-headers']).toContain('x-device-id');
+  });
+
+  it('lets the browser keep a preflight answer, so a polled read is not asked about every time', async () => {
+    app = buildApp(loadConfig({ NODE_ENV: 'test', LOG_LEVEL: 'fatal', CORS_ORIGINS: 'http://localhost:8081' }));
+    const res = await app.inject({
+      method: 'OPTIONS',
+      url: '/me/social',
+      headers: {
+        origin: 'http://localhost:8081',
+        'access-control-request-method': 'GET',
+        'access-control-request-headers': 'authorization',
+      },
+    });
+    expect(res.statusCode).toBe(204);
+    expect(res.headers['access-control-max-age']).toBe(String(PREFLIGHT_MAX_AGE_SECONDS));
+    // long enough to outlast every poll interval the apps use, whichever cap a browser applies
+    expect(PREFLIGHT_MAX_AGE_SECONDS).toBeGreaterThanOrEqual(7_200);
   });
 
   it('does not reflect a disallowed origin', async () => {

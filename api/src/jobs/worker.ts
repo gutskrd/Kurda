@@ -119,6 +119,7 @@ export function createWorker(
       await def.handler(parsed.data, {
         log: log.child({ jobId: job.id, jobName: job.name }),
         attempt: job.attemptsMade + 1,
+        key: `${job.id}@${job.timestamp}`,
       });
     },
     {

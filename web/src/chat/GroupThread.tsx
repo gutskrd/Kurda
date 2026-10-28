@@ -15,6 +15,7 @@ import { useRealtime, useRealtimeEvent, useRealtimeRoom } from '../realtime/Real
 import type { RealtimeEventEnvelope } from '../realtime/events';
 import { sendError } from './DmThread';
 import { byTime, THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
+import { pollWhileVisible } from '../lib/pollWhileVisible';
 import { ThreadSkeleton } from '../components/skeletons';
 import { Modal } from '../components/Modal';
 import { ArrowIcon, CloseIcon } from '../components/icons';
@@ -134,8 +135,7 @@ export function GroupThread({
     void load();
     void loadDetail();
     void markRead();
-    const timer = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
-    return () => clearInterval(timer);
+    return pollWhileVisible(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
   }, [load, loadDetail, markRead, state]);
 
   const onGroupMsg = useCallback(
