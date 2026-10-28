@@ -222,10 +222,14 @@
  * tall as its list up to most of the window, scrolling inside itself. Where
  * the bell is comes from the bell (`--bell-end`), so the panel's edge lines up
  * with it whatever else the bar holds.
+ *
+ * It hangs from the bar's own edge, with no strip of page between the two: the
+ * bar's hairline is its top border, and it drops open from there rather than
+ * sliding, so nothing of it ever shows above the bar.
  */
 .bell-panel {
   position: fixed;
-  top: calc(var(--nav-bottom) + var(--space-2));
+  top: var(--nav-bottom);
   inset-inline-end: max(var(--space-3), var(--bell-end, 12px));
   z-index: 95;
   width: min(400px, calc(100vw - 24px));
@@ -233,11 +237,13 @@
   display: flex;
   flex-direction: column;
   border: 1px solid var(--border);
-  border-radius: var(--r-lg);
+  border-top: 0;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
   background: var(--panel-bg);
   box-shadow: var(--shadow-lg);
   overflow: hidden;
-  animation: panel-in var(--dur) var(--ease-out);
+  transform-origin: top;
+  animation: bell-drop var(--dur) var(--ease-out);
 }
 .bell-panel:focus {
   outline: none;
@@ -573,12 +579,10 @@
     width: auto;
     max-height: none;
     border: 0;
-    border-top: 1px solid var(--separator);
     border-radius: 0;
     background: var(--app-bg);
     box-shadow: none;
     padding-bottom: env(safe-area-inset-bottom, 0px);
-    animation: bell-sheet-in var(--dur) var(--ease-out);
   }
   .bell-head {
     padding: var(--space-3) max(var(--space-2), env(safe-area-inset-right, 0px)) var(--space-2) max(var(--space-4), env(safe-area-inset-left, 0px));
@@ -592,10 +596,11 @@
       inset 0 0 0 1px var(--border);
   }
 }
-@keyframes bell-sheet-in {
+/* opening from the bar's edge: its top stays where the bar ends, the rest unfolds below it */
+@keyframes bell-drop {
   from {
     opacity: 0;
-    transform: translateY(12px);
+    transform: scaleY(0.96);
   }
   to {
     opacity: 1;
