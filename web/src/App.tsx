@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './auth/AuthProvider';
 import { arrivalHeld } from './auth/arrival';
 import { MarketingLayout } from './layouts/MarketingLayout';
 import { AppLayout } from './layouts/AppLayout';
+import { FocusLayout } from './layouts/FocusLayout';
 import { AuthLayout } from './layouts/AuthLayout';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AppGate } from './components/AppGate';
@@ -184,6 +185,24 @@ export function AppRoutes(): React.JSX.Element {
       </Route>
 
       {/*
+        * A lesson and a review, alone on the screen: no navigation, no social
+        * column, no invite banner (layouts/FocusLayout.tsx). The learner
+        * leaves by the lesson's own ✕, and their answers are saved.
+        */}
+      <Route
+        path="/app"
+        element={
+          <AppGate>
+            <FocusLayout />
+          </AppGate>
+        }
+      >
+        <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
+        <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+        <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
+      </Route>
+
+      {/*
         * The app, open to read. Anyone can browse the community, open a
         * post and play alone; the pages that are about you, or about
         * reaching other people, ask for an account themselves.
@@ -201,12 +220,10 @@ export function AppRoutes(): React.JSX.Element {
             dictionary and the games, and is asked for an account where the
             courses would be (see pages/Learn.tsx) */}
         <Route path="learn" element={<Learn />} />
-        {/* the learning loop: a course's map, a lesson, a review, and the
-            lesson a new account starts with (see pages/NextLesson.tsx) */}
+        {/* the learning loop: a course's map, and the lesson a new account
+            starts with (see pages/NextLesson.tsx); the lesson itself and a
+            review are above, on a screen of their own */}
         <Route path="learn/course/:courseId" element={<RequireAccount what="gate.what.course"><CourseMap /></RequireAccount>} />
-        <Route path="learn/lesson/:lessonId" element={<RequireAccount what="gate.what.course"><Lesson /></RequireAccount>} />
-        <Route path="learn/review" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
-        <Route path="learn/review/:sessionId" element={<RequireAccount what="gate.what.course"><Review /></RequireAccount>} />
         <Route path="learn/next" element={<RequireAccount what="gate.what.course"><NextLesson /></RequireAccount>} />
         <Route path="dictionary" element={<RequireAccount what="gate.what.course"><Dictionary /></RequireAccount>} />
         {/* the first thing a beginner needs, and open to everyone — see pages/Alphabet.tsx */}

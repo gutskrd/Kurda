@@ -137,11 +137,12 @@
 }
 
 /* ---- the lesson player -------------------------------------------------------- */
+/* alone on the screen (layouts/FocusLayout.tsx), so its top clears only a phone's notch */
 .lesson {
   width: 100%;
   max-width: 680px;
   margin: 0 auto;
-  padding: 16px 16px 48px;
+  padding: calc(16px + env(safe-area-inset-top)) 16px 48px;
 }
 .lesson-top {
   display: flex;

@@ -509,6 +509,11 @@ button.nav-link {
   padding-top: max(40px, calc(var(--invite-banner-h, 0px) + 28px));
   min-height: calc(100vh - var(--nav-h));
 }
+/* a lesson or a review, alone on the screen (layouts/FocusLayout.tsx): no bar above it to clear */
+.focus-main {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
 .page-header {
   margin-bottom: var(--space-6);
 }

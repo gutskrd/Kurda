@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom';
 import { APP_FEEDBACK_DELAY_MS, shouldOfferFeedbackBox } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { useT } from '../i18n/I18nProvider';
+import { isFocusedPath } from '../layouts/focus';
 import { dismissFeedback, feedbackState } from './api';
 import { onGameFinished, onGameStarted } from './gameFinished';
 import { RatingBox } from './RatingBox';
@@ -75,7 +76,8 @@ export function FeedbackHost(): React.JSX.Element | null {
   useEffect(() => {
     if (!userId) return;
     const stopFinished = onGameFinished(({ gaveUp, deferred }) => {
-      if (offeredTo.has(userId) || pending.current || gaveUp || deferred) return;
+      // never over a lesson or a review, which has the screen to itself
+      if (offeredTo.has(userId) || pending.current || gaveUp || deferred || isFocusedPath(path.current)) return;
       const startedAt = Date.now();
       const slot: Slot = { timer: null, path: path.current };
       pending.current = slot;
@@ -155,7 +157,7 @@ export function FeedbackHost(): React.JSX.Element | null {
     setOpenOn(null);
   }, []);
 
-  if (openOn === null) return null;
+  if (openOn === null || isFocusedPath(location.pathname)) return null;
   return (
     <div
       ref={hostRef}
