@@ -75,8 +75,11 @@ every round trip is paid for. Instead:
 A loop of `await pool.query(...)` is acceptable only when each step must see
 the one before it inside a transaction (and then say so in a comment), or
 when the loop is bounded by a small constant. Hot paths are pinned by
-query-budget tests, so a change that adds a query per row fails CI rather
-than the bill.
+query-budget tests (`api/src/db/query-budget.integration.test.ts`): each runs
+a call twice, with a few rows and with many, through `queriesDuring`
+(`api/src/test/query-count.ts`) and fails if the count grows with the rows or
+passes its budget, so a change that adds a query per row fails CI rather than
+the bill. A new list endpoint that people will poll gets a budget test there.
 
 **An index serves only the expression it was built on.** A search over
 `translate(lower(username::text), 'êîûçş', 'eiucs')` uses an index over
