@@ -30,6 +30,9 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
   const { state } = useLocation();
   const course = params.get('course');
   const title = (state as { title?: unknown } | null)?.title;
+  // opened from Learn's own path: back there, on the same course, rather than to the course's page
+  const from = (state as { from?: unknown } | null)?.from;
+  const learnHome = typeof from === 'string' && /^\/app\/learn(\?|$)/.test(from) ? from : null;
   const { data, error, loading, reload } = useApiGet<LessonSessionView>(`/lessons/${encodeURIComponent(lessonId)}/session`);
   // the course you are on is the variety Stories opens on (stories/prefs.ts)
   useEffect(() => rememberCourseDialect(data?.dialect), [data?.dialect]);
@@ -55,8 +58,8 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
       // the results offer the course's next lesson, read from its map once this one is done
       courseId={course}
       lessonId={lessonId}
-      exitTo={course ? `/app/learn/course/${encodeURIComponent(course)}` : '/app/learn'}
-      exitLabel={course ? t('lesson.backToCourse') : t('lesson.backToLearn')}
+      exitTo={learnHome ?? (course ? `/app/learn/course/${encodeURIComponent(course)}` : '/app/learn')}
+      exitLabel={course && !learnHome ? t('lesson.backToCourse') : t('lesson.backToLearn')}
       onPractise={(exerciseIds) => navigate('/app/learn/review', { state: { exerciseIds } })}
       onRestart={reload}
     />

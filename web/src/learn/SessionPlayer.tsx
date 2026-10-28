@@ -508,7 +508,8 @@ export function SessionPlayer({
           exitLabel={exitLabel}
           onNext={(lesson) =>
             navigate(`/app/learn/lesson/${encodeURIComponent(lesson.lessonId)}${courseId ? `?course=${encodeURIComponent(courseId)}` : ''}`, {
-              state: { title: lesson.title },
+              // and from there back to where this one would have gone
+              state: { title: lesson.title, from: exitTo },
             })
           }
           onPractise={onPractise}

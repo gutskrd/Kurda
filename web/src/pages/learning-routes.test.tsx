@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import type { InitialEntry } from 'react-router-dom';
@@ -169,25 +169,35 @@ describe('Learn', () => {
       },
     });
     routes('/app/learn');
-    // the one next step at the top of the page: the course furthest along, and its lesson up next
-    const next = await screen.findByRole('region', { name: 'Goodbye' });
-    expect(within(next).getByText('Kurmanji for Beginners · Greetings')).toBeInTheDocument();
-    await userEvent.click(within(next).getByRole('link', { name: 'Continue' }));
-    expect(await screen.findByRole('heading', { level: 1, name: 'Goodbye' })).toBeInTheDocument();
+    // the path is Learn's home: the course furthest along, its lesson up next one tap away, Hevalo beside it
+    const path = await screen.findByRole('region', { name: 'Kurmanji for Beginners' });
+    expect(await within(path).findByRole('button', { name: 'Greetings, You are here, 1 of 2 lessons done' })).toBeInTheDocument();
+    expect(path.querySelector('.lp-mascot [data-speaker="hevalo"]')).not.toBeNull();
+    await userEvent.click(within(path).getByRole('link', { name: 'Continue: Greetings' }));
+    expect(await screen.findByRole('heading', { level: 1, name: 'Greetings' })).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
+    // and the lesson comes back to Learn, not to the course's own page
+    expect(screen.getByRole('link', { name: 'Leave for now — your answers are saved' })).toHaveAttribute('href', '/app/learn');
   });
 
-  it('offers a new learner one first lesson to start, before anything else', async () => {
+  it('offers a new learner the first lesson of the first course, and moves between courses', async () => {
     serve({
-      'GET /courses': { courses: courses.courses.slice(1) },
+      'GET /courses': courses,
+      'GET /courses/c1/map': { ...basics, units: [{ ...basics.units[0]!, skills: basics.units[0]!.skills.map((s) => ({ ...s, lessons: s.lessons.map((l) => ({ ...l, completed: false })) })) }] },
       'GET /courses/c2/map': newroz,
       'GET /practice/due': { due: 0, available: 0 },
     });
     routes('/app/learn');
-    const next = await screen.findByRole('region', { name: 'The smith' });
-    expect(within(next).getByRole('link', { name: 'Start your first lesson' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
+    const first = await screen.findByRole('region', { name: 'Kurmanji for Beginners' });
+    expect(await within(first).findByRole('link', { name: 'Start: Greetings' })).toHaveAttribute('href', '/app/learn/lesson/l1?course=c1');
+    const switcher = screen.getByRole('navigation', { name: 'Your courses' });
+    await userEvent.click(within(switcher).getByRole('link', { name: 'Newroz' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn?course=c2');
+    expect(await screen.findByRole('link', { name: 'Start: Kawa' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
+    expect(screen.queryByRole('link', { name: 'Start: Greetings' })).not.toBeInTheDocument();
   });
 
-  it('says how today is going, kindly, without counting anything down', async () => {
+  it('says how today is going in one row, kindly, without counting anything down', async () => {
     // /me is the session and the streak at once, so this one answers it itself
     vi.stubGlobal(
       'fetch',
@@ -196,14 +206,17 @@ describe('Learn', () => {
         if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak: { current: 5, longest: 9, freezes: 0, lastActiveOn: null } } });
         if (path === '/me/daily-goal') return jsonResponse(200, { goal: 20, effectiveGoal: 20, earnedXp: 12, progress: 0.6, completed: false });
         if (path === '/courses') return jsonResponse(200, { courses: [] });
-        return jsonResponse(200, { due: 0, available: 0 });
+        return jsonResponse(200, { due: 7, available: 9 });
       }),
     );
     routes('/app/learn');
     const today = await screen.findByRole('region', { name: 'Today' });
-    expect(within(today).getByText('12 of 20 XP today')).toBeInTheDocument();
-    expect(within(today).getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '60');
+    const goal = await within(today).findByRole('progressbar', { name: 'Today’s goal' });
+    expect(goal).toHaveAttribute('aria-valuenow', '60');
+    expect(goal).toHaveAttribute('aria-valuetext', '12 of 20 XP today');
+    expect(within(today).getByText('12/20 XP')).toBeInTheDocument();
     expect(within(today).getByText('5-day streak')).toBeInTheDocument();
+    expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
   });
 
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
@@ -293,6 +306,52 @@ describe('a course map', () => {
     await userEvent.keyboard('{Escape}');
     expect(screen.queryByRole('group', { name: 'Numbers' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /^Numbers, Not open yet/ })).toHaveFocus();
+  });
+
+  it('says on a stop what its next lesson pays the first time through', async () => {
+    serve({ 'GET /courses/c1/map': basics, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    await userEvent.click(await screen.findByRole('button', { name: /^Greetings, You are here/ })!);
+    expect(within(screen.getByRole('group', { name: 'Greetings' })).getByText('+10–20 XP')).toBeInTheDocument();
+  });
+
+  it('says what a lesson pays when it is played again, which is less', async () => {
+    const done = { ...basics.units[0]!.skills[0]!, state: 'completed' as const, lessons: [lesson('l1', true, 'Hello'), lesson('l2', true, 'Goodbye')] };
+    serve({ 'GET /courses/c1/map': { ...basics, units: [{ ...basics.units[0]!, skills: [done, basics.units[0]!.skills[1]!] }] }, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+    await userEvent.click(await screen.findByRole('button', { name: /^Greetings, Done/ }));
+    expect(within(screen.getByRole('group', { name: 'Greetings' })).getByText('+3–5 XP, played again')).toBeInTheDocument();
+  });
+
+  it('shows what a lesson did on coming back: the ring filled, the skill finished, the next one opened, the bubble moved on', async () => {
+    // as the path was drawn before the lesson: Greetings current with one lesson of two, Numbers closed
+    sessionStorage.setItem('hevalo:path:c1', JSON.stringify({ 's:greet': { state: 'current', done: 1 }, 's:num': { state: 'locked', done: 0 } }));
+    const after: Map = {
+      ...basics,
+      units: [
+        {
+          ...basics.units[0]!,
+          skills: [
+            { ...basics.units[0]!.skills[0]!, state: 'completed', lessons: [lesson('l1', true, 'Hello'), lesson('l2', true, 'Goodbye')] },
+            { ...basics.units[0]!.skills[1]!, state: 'unlocked' },
+          ],
+        },
+      ],
+    };
+    serve({ 'GET /courses/c1/map': after, 'GET /practice/due': { due: 0, available: 0 } });
+    routes('/app/learn/course/c1');
+
+    // first as it was: Greetings still current-looking, Numbers still closed, the bubble not yet moved
+    const greet = await screen.findByRole('button', { name: /^Greetings/ });
+    expect(greet).toHaveClass('is-current');
+    expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveClass('is-locked');
+    expect(screen.queryByRole('link', { name: 'Start: Numbers' })).not.toBeInTheDocument();
+    // then Greetings is finished, Numbers opens, and the bubble arrives there
+    await waitFor(() => expect(greet).toHaveClass('is-done', 'is-finishing'), { timeout: 3000 });
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Numbers/ })).toHaveClass('is-current', 'is-opening'), { timeout: 3000 });
+    expect(await screen.findByRole('link', { name: 'Start: Numbers' }, { timeout: 3000 })).toHaveClass('is-arriving');
+    // and the path as it is now is what next time is compared with
+    expect(JSON.parse(sessionStorage.getItem('hevalo:path:c1')!)).toEqual({ 's:greet': { state: 'done', done: 2 }, 's:num': { state: 'current', done: 0 } });
   });
 
   it('moves along the path with the arrow keys', async () => {
