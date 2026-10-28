@@ -4,7 +4,6 @@ import type { FriendService } from '../friends/service.js';
 import type { InboxService } from '../notifications/inbox-service.js';
 import type { GroupChatService } from '../groups/chat-service.js';
 import type { GroupService } from '../groups/service.js';
-import type { GiftService } from '../gifts/service.js';
 import { SocialRailService, type RailFriend } from './rail-service.js';
 
 /** Anything older than this is not news; the rail shows the recent tail. */
@@ -15,8 +14,6 @@ interface RailDeps {
   groups: GroupService;
   groupChat: GroupChatService;
   inbox: InboxService;
-  /** the unopened-gift badge, so the apps need not poll `/me/gifts/unseen` for it */
-  gifts: Pick<GiftService, 'unseenCount'>;
 }
 
 /**
@@ -36,7 +33,7 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
   app.get('/me/social', { preHandler: requireAuth }, async (req) => {
     const me = req.user!.id;
 
-    const [friends, requests, groups, unreadGroups, inbox, unseenGifts] = await Promise.all([
+    const [friends, requests, groups, unreadGroups, inbox] = await Promise.all([
       // the rail needs every friend: it asks who is live, over the whole list
       deps.friends.list(me, publicUrl).then((page) => page.friends),
       deps.friends.incomingRequests(me, publicUrl),
@@ -44,12 +41,12 @@ export function registerSocialRailRoutes(app: FastifyInstance, deps: RailDeps): 
       deps.groupChat.unread(me),
       // the recent tail and the unread count, in one read
       deps.inbox.recent(me, RECENT_NOTIFICATIONS),
-      deps.gifts.unseenCount(me),
     ]);
 
     // activity needs the friend list, so it waits for it; `self` does not, and
-    // rides along rather than costing another round trip
-    const [activity, you] = await Promise.all([
+    // rides along rather than costing another round trip (with the unopened-gift
+    // badge, so the apps need not poll `/me/gifts/unseen` for it)
+    const [activity, { you, unseenGifts }] = await Promise.all([
       rail.liveActivity(friends.map((f) => f.userId)),
       rail.self(me, publicUrl),
     ]);

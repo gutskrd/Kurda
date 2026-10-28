@@ -865,7 +865,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
     // tournaments (KUR-060): admin brackets with admin-entered results; no
     // client shows them until they have a game to play (contract-4)

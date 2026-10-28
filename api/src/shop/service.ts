@@ -140,6 +140,15 @@ export async function lockEntitlement(client: pg.PoolClient, userId: string, sku
 }
 
 /**
+ * How many gifts the user behind `userExpr` (a uuid column or placeholder,
+ * always a literal from this codebase) has not opened yet: the number on the
+ * gift badge, read here and by the social rail beside its other numbers.
+ */
+export function unseenGiftsSql(userExpr: string): string {
+  return `(SELECT count(*) FROM gifts WHERE to_user_id = ${userExpr} AND seen_at IS NULL)`;
+}
+
+/**
  * Shop catalog (KUR-069) + purchases (KUR-071). The active catalog is cached for
  * 5 minutes and invalidated on any admin edit; the availability window is
  * applied *after* the cache read (against epoch-ms bounds) so limited-time items
@@ -486,10 +495,7 @@ export class ShopService {
 
   /** How many gifts the caller has not opened yet. */
   async unseenGiftCount(userId: string): Promise<number> {
-    const res = await this.pool.query<{ n: string }>(
-      `SELECT count(*)::text n FROM gifts WHERE to_user_id = $1 AND seen_at IS NULL`,
-      [userId],
-    );
+    const res = await this.pool.query<{ n: string }>(`SELECT ${unseenGiftsSql('$1::uuid')}::text n`, [userId]);
     return Number(res.rows[0]?.n ?? 0);
   }
 
