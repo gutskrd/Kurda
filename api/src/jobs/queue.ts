@@ -6,13 +6,24 @@ import { priorityForJob, shouldShed } from './backpressure.js';
 
 export const QUEUE_NAME = 'kurda-jobs';
 
+/**
+ * How long a job that ran out of retries is kept, in seconds, and how many at most.
+ *
+ * BullMQ's failed set is our DLQ: inspectable via admin tooling (KUR-101) and
+ * re-runnable, and the admin's email page counts the last week of failed sends
+ * from it. It was kept for ever, which is a Redis that only grows — every
+ * failed job is its payload and its stack trace, and a send's payload is
+ * somebody's address — on a plan priced by memory. A month is four times what
+ * the email page reads, and long enough to notice and re-run anything.
+ */
+export const FAILED_JOB_RETENTION = { age: 30 * 24 * 3600, count: 5_000 };
+
 export const DEFAULT_JOB_OPTIONS = {
   attempts: 4, // 1 initial + 3 retries
   backoff: { type: 'exponential', delay: 1_000 } as const,
   removeOnComplete: { age: 24 * 3600, count: 1_000 },
-  // failed-after-retries jobs are kept: BullMQ's failed set is our DLQ,
-  // inspectable via admin tooling (KUR-101) and re-runnable
-  removeOnFail: false,
+  // failed-after-retries jobs are kept for a while, not for ever (above)
+  removeOnFail: FAILED_JOB_RETENTION,
 };
 
 /** BullMQ requires maxRetriesPerRequest: null on its connections. */

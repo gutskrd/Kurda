@@ -37,7 +37,9 @@ dropped *before* password-reset emails ever queue up.
 - Payloads are validated **before** they hit Redis (`enqueue` schema check), so a
   malformed producer fails its own request, never the queue.
 - Runtime failures retry with exponential backoff up to `attempts` (default 4),
-  then land in the BullMQ **failed set = our DLQ** (`removeOnFail: false`). The
+  then land in the BullMQ **failed set = our DLQ**, kept for 30 days and at most
+  5,000 jobs (`FAILED_JOB_RETENTION` in `queue.ts`; it used to be kept for ever,
+  and Redis is priced by memory). The
   worker logs a **critical alert** when a job exhausts retries
   (`worker.ts` `failed` handler) — so a bad message is quarantined and surfaced,
   **never infinitely retried**.

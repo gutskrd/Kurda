@@ -7,7 +7,7 @@ import { QueueEvents } from 'bullmq';
 import pino from 'pino';
 import { z } from 'zod';
 import { loadConfig } from '../config/env.js';
-import { JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
+import { FAILED_JOB_RETENTION, JobQueue, QUEUE_NAME, createQueueConnection } from './queue.js';
 import { defineJob, JobRegistry } from './registry.js';
 import { createWorker } from './worker.js';
 import { sendEmailJob } from './email.js';
@@ -83,6 +83,8 @@ describe.skipIf(!REDIS_URL)('job queue (integration)', () => {
     );
     const job = await queue.raw.getJob(jobId);
     expect(job!.attemptsMade).toBe(3);
+    // kept in the DLQ for a while, and then let go
+    expect(job!.opts.removeOnFail).toEqual(FAILED_JOB_RETENTION);
     const failed = await queue.raw.getFailed();
     expect(failed.some((f) => f.id === jobId)).toBe(true);
   });
