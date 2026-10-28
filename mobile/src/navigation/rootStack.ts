@@ -31,8 +31,14 @@ export type RootStackParamList = {
    * own screens and its parents', never its children's.
    */
   Tabs: NavigatorScreenParams<TabParamList> | undefined;
-  Lesson: { lessonId: string };
-  Practice: undefined;
+  /**
+   * `courseId`: the course the lesson was opened from, so its results can
+   * offer the course's next lesson. A link to a lesson knows no course, and
+   * its results simply offer none.
+   */
+  Lesson: { lessonId: string; courseId?: string };
+  /** `exerciseIds`: practise these (a lesson's mistakes, "Practise these now") rather than what is due */
+  Practice: { exerciseIds?: string[] } | undefined;
   Shop: undefined;
   League: undefined;
   /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */

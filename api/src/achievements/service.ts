@@ -69,6 +69,12 @@ export const STREAK_ACHIEVEMENT_DAYS = 30;
 export interface MilestoneRecorder {
   recordStreak(userId: string, currentStreak: number): Promise<void>;
   recordLessonCompleted(userId: string, accuracy: number): Promise<void>;
+  /**
+   * A finished lesson and the streak it left, told at once, for a recorder that
+   * counts both from the same tables (the badges): one count rather than the
+   * same count twice. A recorder without it is told the two one after the other.
+   */
+  recordLesson?(userId: string, accuracy: number, currentStreak: number): Promise<void>;
   /** a solo game finished — Peyvok, Rhyme training, the Typing Race (the badges count it) */
   recordSoloGame?(userId: string): Promise<void>;
 }

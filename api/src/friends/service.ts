@@ -11,6 +11,9 @@ import { notBlockedSql } from './blocked.js';
 
 export type RequestOutcome = 'requested' | 'accepted' | 'already_friends' | 'silent';
 
+/** Where two people stand, as one of them sees it (`statusBetween`). */
+export type FriendEdgeStatus = 'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked';
+
 export interface FriendSummary {
   userId: string;
   username: string;
@@ -130,6 +133,17 @@ export class FriendService {
     const r = await executor.query(
       `SELECT 1 FROM blocks WHERE (blocker_id = $1 AND blocked_id = $2) OR (blocker_id = $2 AND blocked_id = $1) LIMIT 1`,
       [a, b],
+    );
+    return (r.rowCount ?? 0) > 0;
+  }
+
+  /** `areBlocked` between `a` and any of `others`, in one query. */
+  async blockedWithAny(a: string, others: readonly string[]): Promise<boolean> {
+    if (others.length === 0) return false;
+    const r = await this.pool.query(
+      `SELECT 1 FROM blocks
+        WHERE (blocker_id = $1 AND blocked_id = ANY($2::uuid[])) OR (blocker_id = ANY($2::uuid[]) AND blocked_id = $1) LIMIT 1`,
+      [a, others],
     );
     return (r.rowCount ?? 0) > 0;
   }
@@ -618,21 +632,42 @@ export class FriendService {
    * never reached them, so their button offers a request of their own (which,
    * being mutual, then makes the friendship) rather than an accept.
    */
-  async statusBetween(
-    viewer: string,
-    target: string,
-  ): Promise<'none' | 'pending_out' | 'pending_in' | 'friends' | 'blocked'> {
-    if (await this.areBlocked(viewer, target)) return 'blocked';
-    const { lo, hi } = canonicalPair(viewer, target);
-    const row = await this.pool.query<EdgeRow>(
-      `SELECT status, requested_by FROM friendships WHERE user_lo = $1 AND user_hi = $2`,
-      [lo, hi],
+  async statusBetween(viewer: string, target: string): Promise<FriendEdgeStatus> {
+    return (await this.statusesBetween(viewer, [target])).get(target)!;
+  }
+
+  /**
+   * `statusBetween` for each of `targets`, in one query however many there are
+   * (a gift to seven friends, an invite to a handful): whether either side has
+   * blocked the other, the pair's friendship row, and — for a request the
+   * viewer received — whether the viewer may be offered it (a minor, or an
+   * account whose age is not on record, never is: see the class note).
+   */
+  async statusesBetween(viewer: string, targets: readonly string[]): Promise<Map<string, FriendEdgeStatus>> {
+    const out = new Map<string, FriendEdgeStatus>();
+    if (targets.length === 0) return out;
+    const pairs = targets.map((t) => canonicalPair(viewer, t));
+    const rows = await this.pool.query<{ n: number; blocked: boolean; status: string | null; requested_by: string | null; shielded: boolean }>(
+      `SELECT t.n::int AS n,
+              EXISTS (SELECT 1 FROM blocks b
+                       WHERE (b.blocker_id = $1 AND b.blocked_id = t.target) OR (b.blocker_id = t.target AND b.blocked_id = $1)) AS blocked,
+              f.status, f.requested_by,
+              COALESCE((SELECT ${notKnownAdultSql('u')} FROM users u WHERE u.id = $1), true) AS shielded
+         FROM unnest($2::uuid[], $3::uuid[], $4::uuid[]) WITH ORDINALITY AS t(target, lo, hi, n)
+         LEFT JOIN friendships f ON f.user_lo = t.lo AND f.user_hi = t.hi`,
+      [viewer, targets, pairs.map((p) => p.lo), pairs.map((p) => p.hi)],
     );
-    const edge = row.rows[0];
-    if (!edge) return 'none';
-    if (edge.status === 'accepted') return 'friends';
-    if (edge.requested_by === viewer) return 'pending_out';
-    return (await isNotKnownAdultUser(this.pool, viewer)) ? 'none' : 'pending_in';
+    for (const r of rows.rows) {
+      const target = targets[r.n - 1]!;
+      let status: FriendEdgeStatus;
+      if (r.blocked) status = 'blocked';
+      else if (r.status === null) status = 'none';
+      else if (r.status === 'accepted') status = 'friends';
+      else if (r.requested_by === viewer) status = 'pending_out';
+      else status = r.shielded ? 'none' : 'pending_in';
+      out.set(target, status);
+    }
+    return out;
   }
 
   /** Accepted friend ids — for the friends leaderboard (KUR-063 follow-on). */

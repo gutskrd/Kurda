@@ -120,12 +120,22 @@ export class StreakService {
     );
   }
 
-  /** Called after `save`, which guarantees the row exists. */
-  private async saveTally(executor: Executor, userId: string, t: LearningTally): Promise<void> {
+  /** The run and the tally together, in one statement (`save` writes the run alone). */
+  private async saveWithTally(executor: Executor, userId: string, s: StreakState, t: LearningTally): Promise<void> {
     await executor.query(
-      `UPDATE user_streaks SET days_learned = $2, last_learned_on = $3, freeze_progress = $4, updated_at = now()
-        WHERE user_id = $1`,
-      [userId, t.daysLearned, t.lastLearnedOn, t.freezeProgress],
+      `INSERT INTO user_streaks
+         (user_id, current_streak, longest_streak, last_active_on, freezes, days_learned, last_learned_on, freeze_progress, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+       ON CONFLICT (user_id) DO UPDATE SET
+         current_streak = EXCLUDED.current_streak,
+         longest_streak = EXCLUDED.longest_streak,
+         last_active_on = EXCLUDED.last_active_on,
+         freezes = EXCLUDED.freezes,
+         days_learned = EXCLUDED.days_learned,
+         last_learned_on = EXCLUDED.last_learned_on,
+         freeze_progress = EXCLUDED.freeze_progress,
+         updated_at = now()`,
+      [userId, s.currentStreak, s.longestStreak, s.lastActiveOn, s.freezes, t.daysLearned, t.lastLearnedOn, t.freezeProgress],
     );
   }
 
@@ -147,8 +157,7 @@ export class StreakService {
     const today = localDate(now, timeZone);
     const before = await this.load(executor, userId);
     const { streak, tally } = recordSession(before.state, before.tally, today);
-    await this.save(executor, userId, streak);
-    await this.saveTally(executor, userId, tally);
+    await this.saveWithTally(executor, userId, streak, tally);
     return toSummary(streak, tally);
   }
 

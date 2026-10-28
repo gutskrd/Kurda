@@ -85,4 +85,13 @@ describe.skipIf(!DATABASE_URL)('notifications partitioning (integration)', () =>
     // a future partition was created ahead
     expect(await exists(partName(monthStart(3)))).toBe(true);
   });
+
+  it('ensure_partitions refuses any other table and a retention that would reach this month', async () => {
+    // it runs with its owner's rights, so whoever may call it may not aim it elsewhere
+    await expect(pool.query(`SELECT ensure_partitions('users', 3, NULL)`)).rejects.toThrow(/not a table it looks after/);
+    await expect(pool.query(`SELECT ensure_partitions('notifications', 3, 0)`)).rejects.toThrow(/at least 1/);
+    await expect(pool.query(`SELECT ensure_partitions('notifications', -1, NULL)`)).rejects.toThrow(/months_ahead/);
+    await expect(pool.query(`SELECT ensure_partitions('notifications', 1000, NULL)`)).rejects.toThrow(/months_ahead/);
+    expect((await pool.query(`SELECT to_regclass($1) IS NOT NULL AS ok`, [partName(monthStart(0))])).rows[0]!.ok).toBe(true);
+  });
 });

@@ -17,6 +17,8 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
   let token: string;
   const ids: string[] = [];
   const suffix = Date.now().toString(36);
+  // letters only, as a headword key keeps them (digits are dropped)
+  const letters = suffix.replace(/[^a-z]/g, '').padEnd(4, 'q');
 
   const authed = (url: string) =>
     app.inject({ method: 'GET', url, headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.95.0.1' });
@@ -63,6 +65,9 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     await entry('mamoste', 'noun', 'teacher');
     await curated('pirtûkî', 'book');
     await kurdishOnly('hirmî', 'Fêkiyekî dardar e.');
+    await entry(`berserker${letters}`, 'noun', `a fierce fighter ${letters}`);
+    await entry(`kxa${letters}`, 'noun', `great ${letters}`);
+    await entry(`kxb${letters}`, 'verb', `to eat ${letters}`);
 
     const reg = await app.inject({
       method: 'POST',
@@ -92,6 +97,27 @@ describe.skipIf(!DATABASE_URL)('dictionary search (integration)', () => {
     const res = await authed('/dictionary/search?q=teacher');
     const words = res.json().results.map((r: { headword: string }) => r.headword);
     expect(words).toContain('mamoste');
+  });
+
+  it('finds a word from the middle of it, after the words that start that way', async () => {
+    const res = await authed(`/dictionary/search?q=serker${letters}`);
+    expect(res.statusCode).toBe(200);
+    const hit = res.json().results.find((r: { headword: string }) => r.headword === `berserker${letters}`);
+    expect(hit).toMatchObject({ matchType: 'contains' });
+    expect(res.json().fuzzy).toBe(false);
+  });
+
+  it('ranks an English definition holding the whole word before one holding the letters', async () => {
+    // both definitions hold "eat …"; only one holds it as a word of its own
+    const res = await authed(`/dictionary/search?q=${encodeURIComponent(`eat ${letters}`)}`);
+    const words = res.json().results.map((r: { headword: string }) => r.headword);
+    expect(words).toEqual([`kxb${letters}`, `kxa${letters}`]);
+  });
+
+  it('finds the nearest spelling of a long word typed with a slip', async () => {
+    const res = await authed(`/dictionary/search?q=berzerker${letters}`);
+    expect(res.json().fuzzy).toBe(true);
+    expect(res.json().results[0]).toMatchObject({ headword: `berserker${letters}`, matchType: 'fuzzy' });
   });
 
   it('falls back to fuzzy (1 edit) when nothing matches exactly', async () => {

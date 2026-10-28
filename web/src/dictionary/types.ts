@@ -5,7 +5,7 @@ import type { DictionaryAudio } from '@kurda/shared';
  * the same shape the phone uses. One API, one set of names for what it returns.
  */
 
-export type MatchType = 'exact' | 'prefix' | 'definition' | 'fuzzy';
+export type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
 
 export interface SearchHit {
   entryId: string;

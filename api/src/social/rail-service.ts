@@ -1,6 +1,7 @@
 import type pg from 'pg';
 import { resolveSections } from './profile-activity.js';
 import { levelInfo, resolveAvatarUrl, type LevelInfo, type PublicUrl } from '../cosmetics/access.js';
+import { unseenGiftsSql } from '../shop/service.js';
 
 /**
  * What is happening with your people, in one read.
@@ -94,6 +95,12 @@ export interface RailSelf {
   balances: { zer: number; gems: number };
 }
 
+/** `self`, and the gifts you have not opened yet, which ride along on the same read. */
+export interface RailSelfRead {
+  you: RailSelf | null;
+  unseenGifts: number;
+}
+
 export class SocialRailService {
   constructor(private readonly pool: pg.Pool) {}
 
@@ -108,18 +115,16 @@ export class SocialRailService {
     const ids = [...new Set(userIds)];
     if (ids.length === 0) return new Map();
 
-    const [games, prefs] = await Promise.all([
-      this.pool.query<ActivityRow>(LIVE_GAMES_SQL, [ids, String(LIVE_GAME_MAX_MINUTES)]),
-      this.pool.query<{ id: string; profile_sections: unknown }>(
-        `SELECT id, profile_sections FROM users WHERE id = ANY($1)`,
-        [ids],
-      ),
-    ]);
+    // each player's newest game, with their profile's sections beside it: one read
+    const games = await this.pool.query<ActivityRow & { profile_sections: unknown }>(
+      `SELECT live.user_id, live.game, live.started_at, u.profile_sections
+         FROM (${LIVE_GAMES_SQL}) live LEFT JOIN users u ON u.id = live.user_id`,
+      [ids, String(LIVE_GAME_MAX_MINUTES)],
+    );
 
-    const shows = new Map(prefs.rows.map((r) => [r.id, resolveSections(r.profile_sections).games]));
     const out = new Map<string, LiveActivity>();
     for (const row of games.rows) {
-      if (shows.get(row.user_id) === false) continue;
+      if (resolveSections(row.profile_sections).games === false) continue;
       out.set(row.user_id, { game: row.game, since: row.started_at.toISOString() });
     }
     return out;
@@ -133,7 +138,7 @@ export class SocialRailService {
    * folding them in here keeps it to one, and keeps your level and your balance
    * from arriving at different moments and redrawing twice.
    */
-  async self(userId: string, publicUrl: PublicUrl): Promise<RailSelf | null> {
+  async self(userId: string, publicUrl: PublicUrl): Promise<RailSelfRead> {
     const rows = await this.pool.query<{
       username: string;
       display_name: string | null;
@@ -142,10 +147,12 @@ export class SocialRailService {
       xp: number;
       zer: string | null;
       gems: string | null;
+      unseen_gifts: string;
     }>(
       `SELECT u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key, u.xp,
               max(w.balance) FILTER (WHERE w.currency = 'zer')  AS zer,
-              max(w.balance) FILTER (WHERE w.currency = 'gems') AS gems
+              max(w.balance) FILTER (WHERE w.currency = 'gems') AS gems,
+              ${unseenGiftsSql('u.id')} AS unseen_gifts
          FROM users u
          LEFT JOIN wallet_balances w ON w.user_id = u.id
         WHERE u.id = $1
@@ -153,17 +160,20 @@ export class SocialRailService {
       [userId],
     );
     const row = rows.rows[0];
-    if (!row) return null;
+    if (!row) return { you: null, unseenGifts: 0 };
 
     return {
-      username: row.username,
-      displayName: row.display_name,
-      avatarUrl: resolveAvatarUrl(row.profile_photo_key, row.selected_avatar_key, publicUrl),
-      // never computed on the client: one formula, server-side, or two places
-      // disagree about what level someone is
-      level: levelInfo(row.xp),
-      // a missing wallet row is a zero balance, not a missing balance
-      balances: { zer: Number(row.zer ?? 0), gems: Number(row.gems ?? 0) },
+      you: {
+        username: row.username,
+        displayName: row.display_name,
+        avatarUrl: resolveAvatarUrl(row.profile_photo_key, row.selected_avatar_key, publicUrl),
+        // never computed on the client: one formula, server-side, or two places
+        // disagree about what level someone is
+        level: levelInfo(row.xp),
+        // a missing wallet row is a zero balance, not a missing balance
+        balances: { zer: Number(row.zer ?? 0), gems: Number(row.gems ?? 0) },
+      },
+      unseenGifts: Number(row.unseen_gifts ?? 0),
     };
   }
 }

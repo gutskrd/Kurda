@@ -318,11 +318,25 @@ function SignedInRoot() {
         <RootStack.Screen name="Tabs" component={SignedInTabs} />
       <RootStack.Screen name="Lesson" options={{ presentation: 'fullScreenModal' }}>
         {({ route, navigation }) => (
-          <LessonPlayerScreen lessonId={route.params.lessonId} onExit={() => navigation.goBack()} />
+          // the results' ways on take the lesson's place, so Back from them is the path, not a finished lesson
+          <LessonPlayerScreen
+            lessonId={route.params.lessonId}
+            courseId={route.params.courseId}
+            onExit={() => navigation.goBack()}
+            onNext={(lessonId) => navigation.replace('Lesson', { lessonId, courseId: route.params.courseId })}
+            onPractise={(exerciseIds) => navigation.replace('Practice', { exerciseIds })}
+            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+          />
         )}
       </RootStack.Screen>
       <RootStack.Screen name="Practice" options={{ presentation: 'fullScreenModal' }}>
-        {({ navigation }) => <PracticeScreen navigation={navigation} onExit={() => navigation.goBack()} />}
+        {({ route, navigation }) => (
+          <PracticeScreen
+            navigation={navigation}
+            exerciseIds={route.params?.exerciseIds}
+            onExit={() => navigation.goBack()}
+          />
+        )}
       </RootStack.Screen>
       <RootStack.Screen name="Shop" options={{ presentation: 'fullScreenModal' }}>
         {({ navigation }) => (

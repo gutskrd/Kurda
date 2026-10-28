@@ -51,6 +51,8 @@ import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { MAX_CLIENT_MESSAGE_BYTES, RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
+import { endedSessions } from './realtime/sessions.js';
+import { requestIdGenerator } from './plugins/request-id.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerLessonRoutes } from './content/routes.js';
@@ -241,8 +243,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
       // PII never reaches log storage (KUR-009); see observability/redact.ts
       redact: LOG_REDACT,
     },
-    // trust an upstream-provided request id (gateway/LB) or generate one
-    requestIdHeader: 'x-request-id',
+    // an upstream-provided request id (gateway/LB) when it looks like one, or
+    // a fresh one: the header is read here, not by Fastify, which takes any text
+    requestIdHeader: false,
+    genReqId: requestIdGenerator(),
     // a whole request, body included, within two minutes: Fastify otherwise
     // turns Node's own limit off, and a client dripping a body a byte at a time
     // would hold its connection for ever. Two minutes covers the largest upload
@@ -644,13 +648,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
     registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
-    // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
+    // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres when they
+    // are read and a few minutes old, not on a timer (leaderboards/service.ts)
     const leaderboards = new LeaderboardService(app.db, app.redis);
     registerLeaderboardRoutes(app, leaderboards);
-    const boardRebuild = setInterval(() => {
-      void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
-    }, 5 * 60 * 1000);
-    app.addHook('onClose', async () => clearInterval(boardRebuild));
 
     registerMediaRoutes(app, config);
     // cost-safe through-server voice-note upload (KUR-282)
@@ -780,7 +781,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const bus = app.redis
       ? new RedisRoomBus(app.redis, createQueueConnection(config))
       : new LocalRoomBus();
-    const realtime = new RealtimeGateway(kv, bus, options.gateway);
+    // a socket stops when its session does: signed out, a new password, a ban (realtime/sessions.ts)
+    const realtime = new RealtimeGateway(kv, bus, { sessionsEnded: endedSessions(app.db), ...options.gateway });
     app.decorate('realtime', realtime);
     // a client message is a few dozen bytes; the library's default limit is 100 MiB
     app.register(fastifyWebsocket, { options: { maxPayload: MAX_CLIENT_MESSAGE_BYTES } });
@@ -865,7 +867,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
     // tournaments (KUR-060): admin brackets with admin-entered results; no
     // client shows them until they have a game to play (contract-4)
@@ -873,7 +875,11 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerTournamentRoutes(app, tournaments);
   }
 
-  app.get('/health', async (_req, reply) => {
+  // Render's health check asks this every few seconds for as long as the service
+  // runs, near twenty thousand times a day, and each one wrote two info lines
+  // ("incoming request", "request completed"): most of what the API logged was
+  // this. A warning or worse about it is still written.
+  app.get('/health', { logLevel: 'warn' }, async (_req, reply) => {
     const result = await health.run();
     // degraded still returns 200 so load balancers keep routing while a
     // non-critical dependency flaps; hard-down decisions come in KUR-113
@@ -910,7 +916,14 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
-    user?: { id: string; roles: string[]; familyId?: string; emailVerified: boolean };
+    user?: {
+      id: string;
+      roles: string[];
+      familyId?: string;
+      emailVerified: boolean;
+      /** a birth month on record, as the auth middleware read it with the account (users/age.ts `requireBirthMonth`) */
+      birthMonthKnown?: boolean;
+    };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
   }

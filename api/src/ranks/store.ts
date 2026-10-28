@@ -74,16 +74,24 @@ export async function lockStates(
 ): Promise<Map<string, PlayerState>> {
   const seasonId = seasonOf(at).id;
   const out = new Map<string, PlayerState>();
-  for (const userId of [...new Set(userIds)].sort()) {
-    await client.query(
-      `INSERT INTO game_ratings (user_id, game, mu, sigma, season_id) VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (user_id, game) DO NOTHING`,
-      [userId, game, freshState(seasonId).mu, freshState(seasonId).sigma, seasonId],
-    );
-    const row = (
-      await client.query<RatingRow>(`SELECT * FROM game_ratings WHERE user_id = $1 AND game = $2 FOR UPDATE`, [userId, game])
-    ).rows[0]!;
-    let state = stateOf(row);
+  const ids = [...new Set(userIds)].sort();
+  if (ids.length === 0) return out;
+  // every player in two statements rather than two each: the missing rows
+  // made, then all of them locked, both in user-id order (the insert takes
+  // its rows in the order given, the lock in the order sorted)
+  await client.query(
+    `INSERT INTO game_ratings (user_id, game, mu, sigma, season_id)
+     SELECT u.id, $2::text, $3::double precision, $4::double precision, $5::text FROM unnest($1::uuid[]) WITH ORDINALITY AS u(id, n) ORDER BY u.n
+     ON CONFLICT (user_id, game) DO NOTHING`,
+    [ids, game, freshState(seasonId).mu, freshState(seasonId).sigma, seasonId],
+  );
+  const rows = await client.query<RatingRow>(
+    `SELECT * FROM game_ratings WHERE user_id = ANY($1::uuid[]) AND game = $2 ORDER BY user_id FOR UPDATE`,
+    [ids, game],
+  );
+  const byId = new Map(rows.rows.map((r) => [r.user_id, r]));
+  for (const userId of ids) {
+    let state = stateOf(byId.get(userId)!);
     if (state.seasonId < seasonId) state = await rollSeason(client, userId, game, state, seasonId);
     out.set(userId, state);
   }
@@ -129,27 +137,41 @@ export async function rollSeason(
 }
 
 export async function writeState(client: Executor, userId: string, game: RankedGame, s: PlayerState): Promise<void> {
+  await writeStates(client, game, [{ userId, state: s }]);
+}
+
+/** `writeState` for every player of a game, in one statement. */
+export async function writeStates(client: Executor, game: RankedGame, states: ReadonlyArray<{ userId: string; state: PlayerState }>): Promise<void> {
+  if (states.length === 0) return;
   await client.query(
-    `UPDATE game_ratings SET mu = $3, sigma = $4, points = $5, rated_games = $6, wins = $7, placement_done = $8,
-            shield_games = $9, last_rated_at = $10, season_id = $11, season_games = $12, season_wins = $13,
-            peak_points = $14, best_points = $15, updated_at = now()
-      WHERE user_id = $1 AND game = $2`,
+    `UPDATE game_ratings g SET mu = s.mu, sigma = s.sigma, points = s.points, rated_games = s.rated_games, wins = s.wins,
+            placement_done = s.placement_done, shield_games = s.shield_games, last_rated_at = s.last_rated_at,
+            season_id = s.season_id, season_games = s.season_games, season_wins = s.season_wins,
+            peak_points = s.peak_points, best_points = s.best_points, updated_at = now()
+       FROM jsonb_to_recordset($2::jsonb) AS s(user_id uuid, mu double precision, sigma double precision, points int, rated_games int,
+              wins int, placement_done boolean, shield_games int, last_rated_at timestamptz, season_id text, season_games int,
+              season_wins int, peak_points int, best_points int)
+      WHERE g.user_id = s.user_id AND g.game = $1`,
     [
-      userId,
       game,
-      s.mu,
-      s.sigma,
-      pointsOf(s.mu, s.sigma),
-      s.ratedGames,
-      s.wins,
-      s.placementDone,
-      s.shieldGames,
-      s.lastRatedAt,
-      s.seasonId,
-      s.seasonGames,
-      s.seasonWins,
-      s.peakPoints,
-      s.bestPoints,
+      JSON.stringify(
+        states.map(({ userId, state: st }) => ({
+          user_id: userId,
+          mu: st.mu,
+          sigma: st.sigma,
+          points: pointsOf(st.mu, st.sigma),
+          rated_games: st.ratedGames,
+          wins: st.wins,
+          placement_done: st.placementDone,
+          shield_games: st.shieldGames,
+          last_rated_at: st.lastRatedAt,
+          season_id: st.seasonId,
+          season_games: st.seasonGames,
+          season_wins: st.seasonWins,
+          peak_points: st.peakPoints,
+          best_points: st.bestPoints,
+        })),
+      ),
     ],
   );
 }
@@ -167,27 +189,44 @@ export interface EventInput {
 }
 
 export async function insertEvent(client: Executor, e: EventInput): Promise<void> {
+  await insertEvents(client, [e]);
+}
+
+/** `insertEvent` for every player of a game, in one statement, in the order given (the ids keep it). */
+export async function insertEvents(client: Executor, events: readonly EventInput[]): Promise<void> {
+  if (events.length === 0) return;
   await client.query(
     `INSERT INTO rating_events (user_id, game, game_ref, kind, season_id, mu_before, sigma_before, mu_after, sigma_after,
                                 points_before, points_after, reason, place, weight, state_before, state_after)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)`,
+     SELECT e.user_id, e.game, e.game_ref, e.kind, e.season_id, e.mu_before, e.sigma_before, e.mu_after, e.sigma_after,
+            e.points_before, e.points_after, e.reason, e.place, e.weight, e.state_before, e.state_after
+       FROM jsonb_to_recordset($1::jsonb)
+         AS e(user_id uuid, game text, game_ref uuid, kind text, season_id text, mu_before double precision, sigma_before double precision,
+              mu_after double precision, sigma_after double precision, points_before int, points_after int, reason text, place int,
+              weight real, state_before jsonb, state_after jsonb, n int)
+      ORDER BY e.n`,
     [
-      e.userId,
-      e.game,
-      e.gameRef,
-      e.kind,
-      e.after.seasonId,
-      e.before.mu,
-      e.before.sigma,
-      e.after.mu,
-      e.after.sigma,
-      pointsOf(e.before.mu, e.before.sigma),
-      pointsOf(e.after.mu, e.after.sigma),
-      e.reason,
-      e.place ?? null,
-      e.weight ?? null,
-      JSON.stringify(toStored(e.before)),
-      JSON.stringify(toStored(e.after)),
+      JSON.stringify(
+        events.map((e, n) => ({
+          n,
+          user_id: e.userId,
+          game: e.game,
+          game_ref: e.gameRef,
+          kind: e.kind,
+          season_id: e.after.seasonId,
+          mu_before: e.before.mu,
+          sigma_before: e.before.sigma,
+          mu_after: e.after.mu,
+          sigma_after: e.after.sigma,
+          points_before: pointsOf(e.before.mu, e.before.sigma),
+          points_after: pointsOf(e.after.mu, e.after.sigma),
+          reason: e.reason,
+          place: e.place ?? null,
+          weight: e.weight ?? null,
+          state_before: toStored(e.before),
+          state_after: toStored(e.after),
+        })),
+      ),
     ],
   );
 }

@@ -11,9 +11,16 @@ import { jsonResponse } from '../test/utils';
 
 afterEach(() => {
   vi.restoreAllMocks();
+  vi.useRealTimers();
   localStorage.clear();
   sessionStorage.clear();
+  hidden(false);
 });
+
+/** Whether the tab is hidden, as the page sees it. */
+function hidden(on: boolean): void {
+  Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => (on ? 'hidden' : 'visible') });
+}
 
 /** A RealtimeClient stand-in whose `event` emitter a test can drive. */
 function makeFakeClient(): { client: RealtimeClient; emit: (env: RealtimeEventEnvelope) => void } {
@@ -82,6 +89,20 @@ async function ready(): Promise<void> {
   await waitFor(() =>
     expect((globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.some(([u]) => String(u).includes('/me/groups'))).toBe(true),
   );
+}
+
+/** Retry an assertion on real timeouts until it holds, for a test whose intervals are fake. */
+async function eventually(check: () => void, withinMs = 2_000): Promise<void> {
+  const started = Date.now();
+  for (;;) {
+    try {
+      check();
+      return;
+    } catch (err) {
+      if (Date.now() - started > withinMs) throw err;
+      await new Promise((r) => setTimeout(r, 10));
+    }
+  }
 }
 
 describe('MessagesProvider', () => {
@@ -171,6 +192,36 @@ describe('MessagesProvider', () => {
     });
 
     expect(await screen.findByText('5')).toBeInTheDocument();
+  });
+
+  it('counts again each minute while the tab is in view, and asks nothing while it is hidden', async () => {
+    // only the intervals are fake: waitFor polls on one, so this waits on real timeouts instead
+    vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval'] });
+    setup('/app');
+    const asked = (part: string): number =>
+      (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).includes(part)).length;
+    await eventually(() => expect(asked('/me/heartbeat')).toBe(1));
+    // what mounting asks has settled
+    await new Promise((r) => setTimeout(r, 50));
+    const counted = asked('/chat/conversations');
+    const beats = asked('/me/heartbeat');
+    expect(counted).toBeGreaterThan(0);
+
+    vi.advanceTimersByTime(60_000);
+    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 1));
+    expect(asked('/me/heartbeat')).toBe(beats + 1);
+
+    // a tab behind another one: neither the count nor the presence beat is asked for
+    hidden(true);
+    vi.advanceTimersByTime(10 * 60_000);
+    expect(asked('/chat/conversations')).toBe(counted + 1);
+    expect(asked('/me/heartbeat')).toBe(beats + 1);
+
+    // and coming back asks once, at once, for what it missed
+    hidden(false);
+    document.dispatchEvent(new Event('visibilitychange'));
+    await eventually(() => expect(asked('/chat/conversations')).toBe(counted + 2));
+    expect(asked('/me/heartbeat')).toBe(beats + 2);
   });
 
   it('a banner can be dismissed', async () => {

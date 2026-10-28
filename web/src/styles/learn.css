@@ -137,11 +137,29 @@
 }
 
 /* ---- the lesson player -------------------------------------------------------- */
+/*
+ * Alone on the screen (layouts/FocusLayout.tsx), so its top clears only a
+ * phone's notch. A column the height of the screen: the lesson, then the
+ * action bar at its foot (ActionBar.tsx) — at the bottom of the screen
+ * however short the exercise, and stuck there while a long one scrolls.
+ */
 .lesson {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding-top: calc(16px + env(safe-area-inset-top));
+}
+.lesson-body {
+  flex: 1;
   width: 100%;
   max-width: 680px;
   margin: 0 auto;
-  padding: 16px 16px 48px;
+  padding: 0 16px 28px;
+}
+/* a field or an option scrolled to, by a key or by the verdict rising, is brought clear of the bar */
+html:has(.lesson-bar) {
+  scroll-padding-bottom: calc(var(--lesson-bar-h, 0px) + 12px);
 }
 .lesson-top {
   display: flex;
@@ -152,8 +170,24 @@
 .lesson-top .lesson-progress {
   flex: 1;
 }
+/* the lesson's own bar is thicker than a course's, with a sheen along its top, and warms to gold through a run */
+.lesson-progress {
+  height: 12px;
+}
 .lesson-progress > span {
   background: var(--success);
+  transition: background var(--dur) ease;
+}
+.lesson-progress > span::after {
+  content: '';
+  position: absolute;
+  inset: 2px 8px auto;
+  height: 3px;
+  border-radius: inherit;
+  background: color-mix(in srgb, #fff 35%, transparent);
+}
+.lesson-progress.is-run > span {
+  background: var(--gold);
 }
 .lesson-leave {
   flex: none;
@@ -194,12 +228,10 @@
   letter-spacing: 0;
   color: var(--ink-3);
 }
-.lesson-ask:focus {
-  outline: none;
-}
+/* the question takes the focus as it opens, for a screen reader: it is not a control, so it draws no ring */
+.lesson-ask:focus,
 .lesson-ask:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 4px;
+  outline: none;
 }
 .lesson-prompt {
   margin: 0;
@@ -213,10 +245,6 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
-}
-/* the character beside the answer stands on the panel's floor */
-.lesson-feedback-face {
-  align-self: end;
 }
 .lesson-play svg {
   direction: ltr;
@@ -337,6 +365,17 @@
 .lesson-option.is-dim {
   opacity: 0.5;
 }
+/* chosen, not yet checked: ringed in ink (two pixels, with nothing moving) */
+.lesson-option.is-selected,
+.lesson-option.is-selected:hover:not(:disabled) {
+  border-color: var(--ink);
+  background: var(--surface-2);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
+.lesson-option.is-selected .lesson-option-key {
+  border-color: var(--ink);
+  color: var(--ink);
+}
 .lesson-hint {
   margin: 0;
   font-size: 0.86rem;
@@ -351,6 +390,10 @@
   .lesson-hint--keys {
     display: block;
   }
+}
+/* answered: kept in its place, unseen, so nothing above the verdict moves */
+.lesson-hint.is-spent {
+  visibility: hidden;
 }
 
 /* a typed answer and its key bar */
@@ -390,12 +433,7 @@
   opacity: 0.45;
   cursor: default;
 }
-.lesson-check {
-  justify-self: start;
-  min-width: 140px;
-}
 .lesson-skip {
-  justify-self: start;
   font-size: 0.9rem;
 }
 
@@ -617,54 +655,191 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+/* the rating chosen, waiting for Check: ringed in ink, as a chosen option is */
+.lesson-rate .btn.is-selected {
+  border-color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--ink);
+}
 
-/* after an answer */
-.lesson-feedback {
+/*
+ * The action bar (ActionBar.tsx): across the foot of the screen, under a
+ * hairline, holding Check — and, once an answer is graded, the verdict sheet,
+ * risen into the same place in the verdict's colour (opaque, since it sits
+ * over the lesson), with Continue exactly where Check was.
+ */
+.lesson-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 20;
+  border-top: 1px solid var(--separator);
+  background: var(--app-bg);
+  padding: 16px 16px calc(16px + env(safe-area-inset-bottom));
+}
+.lesson-bar-inner {
   display: grid;
-  gap: 12px;
-  padding: 16px 18px;
-  border: 1px solid var(--border);
-  border-inline-start-width: 4px;
-  border-radius: var(--r-md);
-  background: var(--bg);
+  gap: 14px;
+  max-width: 648px;
+  margin: 0 auto;
 }
-.lesson-feedback:focus {
-  outline: none;
+.lesson-bar-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 14px;
 }
-.lesson-feedback:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
+.lesson-bar-start {
+  flex: 1 1 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  min-width: 0;
 }
-.lesson-feedback.is-right {
-  border-color: color-mix(in srgb, var(--success) 55%, transparent);
-  background: var(--success-soft);
+.lesson-bar-start:empty {
+  display: none;
 }
-.lesson-feedback.is-almost {
-  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
-  background: var(--gold-soft);
+/* Check, Continue, the results' next step: one size, one place */
+.lesson-bar-go {
+  min-width: 160px;
+  margin-inline-start: auto;
 }
-.lesson-feedback.is-notyet {
-  border-color: color-mix(in srgb, var(--danger) 55%, transparent);
-  background: var(--danger-soft);
+.lesson-bar-note {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-2);
 }
-@media (prefers-reduced-motion: no-preference) {
-  .lesson-feedback {
-    animation: lesson-rise 0.18s ease-out;
+.lesson-bar-note:empty {
+  display: none;
+}
+@media (max-width: 480px) {
+  .lesson-bar-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .lesson-bar-go {
+    width: 100%;
+    margin-inline-start: 0;
   }
 }
-@keyframes lesson-rise {
-  from {
-    opacity: 0;
-    transform: translateY(6px);
+.lesson-bar.is-sheet {
+  border-top-width: 2px;
+}
+.lesson-bar.is-right {
+  border-top-color: color-mix(in srgb, var(--success) 55%, transparent);
+  background: linear-gradient(var(--success-soft), var(--success-soft)), var(--panel-bg);
+}
+.lesson-bar.is-almost {
+  border-top-color: color-mix(in srgb, var(--gold) 55%, transparent);
+  background: linear-gradient(var(--gold-soft), var(--gold-soft)), var(--panel-bg);
+}
+.lesson-bar.is-notyet {
+  border-top-color: color-mix(in srgb, var(--danger) 55%, transparent);
+  background: linear-gradient(var(--danger-soft), var(--danger-soft)), var(--panel-bg);
+}
+/* Continue after a right answer takes the verdict's green */
+.lesson-bar.is-right .lesson-bar-go,
+.lesson-bar.is-right .lesson-bar-go:hover:not(:disabled) {
+  background: var(--success);
+  border-color: var(--success);
+  color: var(--app-bg);
+}
+
+/* after an answer: the sheet's words, with the character standing on its floor at the start */
+.lesson-feedback {
+  display: grid;
+  gap: 14px;
+}
+.lesson-sheet {
+  display: flex;
+  align-items: flex-end;
+  gap: 14px;
+  min-width: 0;
+}
+.lesson-sheet-text {
+  flex: 1;
+  align-self: center;
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+.lesson-feedback-face {
+  flex: none;
+  align-self: flex-end;
+  line-height: 0;
+}
+.lesson-sheet.has-face .lesson-verdict {
+  min-height: 44px;
+}
+/*
+ * On a phone the character stands beside the verdict alone, and what follows
+ * it — the two answers set against each other, the notes — takes the sheet's
+ * whole width, rather than a column beside him too narrow for a sentence.
+ */
+@media (max-width: 480px) {
+  .lesson-sheet.has-face {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 10px 14px;
+  }
+  .lesson-sheet.has-face .lesson-sheet-text {
+    display: contents;
+  }
+  .lesson-sheet.has-face .lesson-feedback-face {
+    grid-row: 1;
+  }
+  .lesson-sheet.has-face .lesson-verdict {
+    align-self: end;
+    margin-bottom: 6px;
+  }
+  .lesson-sheet.has-face .lesson-sheet-text > :not(.lesson-verdict) {
+    grid-column: 1 / -1;
   }
 }
 .lesson-verdict {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 10px;
+  gap: 8px 10px;
   margin: 0;
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   font-weight: 650;
+}
+.lesson-verdict-words {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+  min-width: 0;
+}
+/* what the Kurdish praise means, small, beside it */
+.lesson-praise-gloss {
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--ink-3);
+}
+/* "5 in a row", at the end of the verdict: a gold flame, a pill */
+.lesson-run {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--gold-ink);
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.lesson-hint-line {
+  margin: 0;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--gold-ink);
 }
 .lesson-verdict-mark {
   flex: none;
@@ -673,7 +848,8 @@
   width: 28px;
   height: 28px;
   border-radius: 50%;
-  background: rgba(0, 0, 0, 0.25);
+  /* the sheet's own ground under the mark: dark on the dark page, white on the light one */
+  background: color-mix(in srgb, var(--panel-bg) 75%, transparent);
 }
 .is-right .lesson-verdict-mark {
   color: var(--success);
@@ -717,16 +893,6 @@
   color: var(--ink);
   font-size: 1.1rem;
 }
-.lesson-feedback-actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-.lesson-feedback-actions .btn-primary {
-  margin-inline-start: auto;
-  min-width: 140px;
-}
 .lesson-problem {
   display: flex;
   flex-wrap: wrap;
@@ -740,13 +906,17 @@
   color: var(--ink-4);
 }
 
-/* the end */
+/* the end: one screen, Hevalo cheering over a row of three tiles and the day's rows */
+.lesson.is-done .lesson-body {
+  padding-top: 8px;
+}
 .lesson-results {
   display: grid;
-  gap: 22px;
+  gap: 18px;
 }
 .lesson-results-title {
-  font-size: clamp(1.7rem, 5vw, 2.2rem);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  text-align: center;
 }
 .lesson-results-title:focus {
   outline: none;
@@ -754,20 +924,27 @@
 .lesson-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin: 0;
 }
+/* each tile wears a band of its colour along its top: gold for what was earned, green for what was right */
 .lesson-stat {
+  --band: var(--gold);
   display: grid;
   align-content: start;
   gap: 2px;
-  padding: 14px;
+  min-width: 0;
+  padding: 14px 12px 12px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
+  box-shadow: inset 0 4px 0 var(--band);
+}
+.lesson-stat.is-accuracy {
+  --band: var(--success);
 }
 .lesson-stat dt {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ink-3);
 }
 .lesson-stat dd {
@@ -776,32 +953,153 @@
   gap: 6px;
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-variant-numeric: tabular-nums;
 }
 .lesson-stat dd svg {
   color: var(--gold);
 }
 .lesson-stat .lesson-stat-sub {
+  display: block;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ink-3);
-}
-@media (max-width: 480px) {
-  .lesson-stats {
-    grid-template-columns: 1fr;
-  }
 }
 .lesson-results-note {
   margin: 0;
   color: var(--ink-2);
 }
+/* today's goal, moving from where it stood to where it is (styles/motion.css) */
+.lesson-goal {
+  flex-wrap: wrap;
+}
+.lesson-goal-words {
+  flex: 1 1 auto;
+}
+.lesson-goal-bar {
+  flex: 1 1 100%;
+  height: 8px;
+}
+.lesson-goal-bar > span {
+  width: 100%;
+  background: var(--success);
+  transform: scaleX(var(--to, 0));
+  transform-origin: left;
+}
+[dir='rtl'] .lesson-goal-bar > span {
+  transform-origin: right;
+}
+.lesson-row {
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+.lesson-league-up {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  color: var(--success);
+  font-size: 0.85rem;
+}
+.lesson-moment .lesson-league-up svg {
+  color: inherit;
+}
 .lesson-mistakes {
   display: grid;
   gap: 10px;
 }
+.lesson-mistakes > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.lesson-mistakes > summary::-webkit-details-marker {
+  display: none;
+}
+/* a turning caret, drawn, at the end of the heading: down when open, toward the reading's end when folded */
+.lesson-mistakes > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-right: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  rotate: 45deg;
+  transition: rotate var(--dur) var(--ease-out);
+}
+.lesson-mistakes:not([open]) > summary::after {
+  rotate: -45deg;
+}
+[dir='rtl'] .lesson-mistakes:not([open]) > summary::after {
+  rotate: 135deg;
+}
 .lesson-mistakes-title {
+  margin: 0;
   font-size: 1.2rem;
+}
+.lesson-results-back {
+  font-size: 0.92rem;
+}
+
+/* "Day 12": the streak kept today, on its own card (StreakDay.tsx) */
+.lesson-day {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding-top: 8vh;
+  text-align: center;
+}
+.lesson-day-flame {
+  display: inline-grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--gold-soft), transparent);
+  color: var(--gold);
+}
+.lesson-day-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 9vw, 3rem);
+  font-variant-numeric: tabular-nums;
+}
+.lesson-day-title:focus {
+  outline: none;
+}
+.lesson-day-body {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--ink-2);
+}
+.lesson-day-freeze {
+  display: grid;
+  gap: 8px;
+  width: min(320px, 100%);
+  margin-top: 8px;
+}
+.lesson-day-bar {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.lesson-day-bar > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gems);
+  transform: scaleX(var(--to, 0));
+  transform-origin: left;
+}
+[dir='rtl'] .lesson-day-bar > span {
+  transform-origin: right;
+}
+.lesson-day-freeze-line {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-3);
 }
 .lesson-mistakes ul {
   display: grid;
@@ -826,9 +1124,4 @@
 }
 .lesson-mistake-answer strong {
   color: var(--ink);
-}
-.lesson-results-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }

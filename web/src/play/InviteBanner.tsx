@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthProvider';
 import { Avatar } from '../components/Avatar';
 import { CaretDownIcon, CloseIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
+import { isFocusedPath } from '../layouts/focus';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { GAME_NAME_KEY, lobbyPath, playError, summaryParts } from './playApi';
 import { RatedBadge } from '../ranks/rated';
@@ -41,9 +42,14 @@ const SPACE_BELOW = 8;
  * page (`--invite-banner-h`). On a phone, and while a game is being played,
  * it is a one-line chip — who asked, to what, and Join — that opens on a tap,
  * so waiting for an answer costs one line rather than a third of the screen.
+ *
+ * During a lesson or a review it is held altogether (`isFocusedPath`): the
+ * invite waits, and its banner shows on whatever page the learner goes to
+ * next.
  */
 export function InviteBanner(): React.JSX.Element | null {
   const t = useT();
+  const held = isFocusedPath(useLocation().pathname);
   const { lists } = usePlayInvites();
   const [answered, setAnswered] = useState<Set<string>>(new Set());
   const now = useNow(lists?.incoming ?? []);
@@ -56,7 +62,7 @@ export function InviteBanner(): React.JSX.Element | null {
   const waiting = (lists?.incoming ?? []).filter(
     (i) => i.status === 'pending' && !answered.has(i.id) && Date.parse(i.expiresAt) > now,
   );
-  if (waiting.length === 0) return null;
+  if (held || waiting.length === 0) return null;
   const done = (id: string): void => setAnswered((prev) => new Set(prev).add(id));
   const more = Math.max(0, waiting.length - max);
   return (

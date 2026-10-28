@@ -11,6 +11,47 @@ export interface BotFlag {
   computedAt: Date;
 }
 
+/** One account's raw signal inputs as `gatherColumns` reads them. */
+interface GatheredRow {
+  user_id: string;
+  questions_answered: number | null;
+  impossible_count: number | null;
+  fast_count: number | null;
+  rtt_anomaly_count: number | null;
+  hours: number;
+  devices: string | number;
+}
+
+/**
+ * The raw signal inputs for the account `user` (a column), from the source
+ * tables: its game answer stats (`c`, cheat_stats, which the caller joins),
+ * the distinct hours it earned XP in over the last week, and the most accounts
+ * any of its devices was seen with. `user` is always a literal from this file.
+ */
+function gatherColumns(user: string): string {
+  return `${user} AS user_id, c.questions_answered, c.impossible_count, c.fast_count, c.rtt_anomaly_count,
+    (SELECT COUNT(DISTINCT EXTRACT(HOUR FROM x.created_at))::int FROM xp_ledger x
+      WHERE x.user_id = ${user} AND x.created_at > now() - interval '7 days') AS hours,
+    (SELECT COALESCE(MAX(cnt), 0) FROM (
+       SELECT COUNT(DISTINCT rd2.user_id) AS cnt
+         FROM risk_decisions rd
+         JOIN risk_decisions rd2 ON rd2.device_hash = rd.device_hash
+        WHERE rd.user_id = ${user} AND rd.device_hash IS NOT NULL
+        GROUP BY rd.device_hash
+     ) t) AS devices`;
+}
+
+function inputOf(row: GatheredRow): SignalInput {
+  return {
+    questionsAnswered: row.questions_answered ?? 0,
+    impossibleCount: row.impossible_count ?? 0,
+    fastCount: row.fast_count ?? 0,
+    rttAnomalyCount: row.rtt_anomaly_count ?? 0,
+    distinctActiveHours: Number(row.hours ?? 0),
+    deviceAccountCount: Number(row.devices ?? 0),
+  };
+}
+
 /**
  * Behavioral bot detection (KUR-110). The scoring job gathers each account's
  * behavioral signals (game answer stats #058, activity-hour spread from the XP
@@ -24,30 +65,60 @@ export class BotDetectionService {
 
   /** Score one account and persist the verdict. */
   async scoreUser(userId: string): Promise<BotScore> {
-    const input = await this.gather(userId);
-    const result = scoreAccount(deriveSignals(input));
+    const rows = await this.pool.query<GatheredRow>(
+      `SELECT ${gatherColumns('a.id')} FROM (SELECT $1::uuid AS id) a LEFT JOIN cheat_stats c ON c.user_id = a.id`,
+      [userId],
+    );
+    const [scored] = await this.persist(rows.rows);
+    return scored!;
+  }
+
+  /**
+   * Scoring job: score every account with enough game activity. Returns #scored.
+   * Every account's signals are gathered in one query and every verdict written
+   * in one statement, rather than four statements for each account.
+   */
+  async scoreActive(): Promise<number> {
+    const rows = await this.pool.query<GatheredRow>(
+      `SELECT ${gatherColumns('c.user_id')} FROM cheat_stats c WHERE c.questions_answered >= $1`,
+      [MIN_SAMPLE],
+    );
+    await this.persist(rows.rows);
+    return rows.rows.length;
+  }
+
+  /** Score each gathered account and write the verdicts, all in one statement. */
+  private async persist(rows: readonly GatheredRow[]): Promise<BotScore[]> {
+    const scored = rows.map((row) => {
+      const input = inputOf(row);
+      const signals = deriveSignals(input);
+      return { userId: row.user_id, result: scoreAccount(signals), signals: { ...signals, raw: input } };
+    });
+    if (scored.length === 0) return [];
     await this.pool.query(
       `INSERT INTO bot_scores (user_id, score, tier, signals, challenge, flagged)
-       VALUES ($1, $2, $3, $4::jsonb, $5, $6)
+       SELECT v.user_id, v.score, v.tier, v.signals, v.challenge, v.flagged
+         FROM jsonb_to_recordset($1::jsonb) AS v(user_id uuid, score numeric, tier text, signals jsonb, challenge boolean, flagged boolean)
        ON CONFLICT (user_id) DO UPDATE SET
          score = EXCLUDED.score, tier = EXCLUDED.tier, signals = EXCLUDED.signals,
          challenge = EXCLUDED.challenge, flagged = EXCLUDED.flagged, computed_at = now(),
          -- a confirmed bot stays confirmed; anything else re-activates on re-score
          status = CASE WHEN bot_scores.status = 'confirmed' THEN 'confirmed' ELSE 'active' END,
          resolved_at = CASE WHEN bot_scores.status = 'confirmed' THEN bot_scores.resolved_at ELSE NULL END`,
-      [userId, result.score, result.tier, JSON.stringify({ ...deriveSignals(input), raw: input }), result.challenge, result.flagged],
+      [
+        JSON.stringify(
+          scored.map((x) => ({
+            user_id: x.userId,
+            score: x.result.score,
+            tier: x.result.tier,
+            signals: x.signals,
+            challenge: x.result.challenge,
+            flagged: x.result.flagged,
+          })),
+        ),
+      ],
     );
-    return result;
-  }
-
-  /** Scoring job: score every account with enough game activity. Returns #scored. */
-  async scoreActive(): Promise<number> {
-    const rows = await this.pool.query<{ user_id: string }>(
-      `SELECT user_id FROM cheat_stats WHERE questions_answered >= $1`,
-      [MIN_SAMPLE],
-    );
-    for (const r of rows.rows) await this.scoreUser(r.user_id);
-    return rows.rows.length;
+    return scored.map((x) => x.result);
   }
 
   /** Does this account owe an invisible CAPTCHA on its next session? */
@@ -104,37 +175,4 @@ export class BotDetectionService {
     return (res.rowCount ?? 0) > 0;
   }
 
-  /** Gather the raw signal inputs for an account from the source tables. */
-  private async gather(userId: string): Promise<SignalInput> {
-    const [stats, hours, device] = await Promise.all([
-      this.pool.query<{ questions_answered: number; impossible_count: number; fast_count: number; rtt_anomaly_count: number }>(
-        `SELECT questions_answered, impossible_count, fast_count, rtt_anomaly_count FROM cheat_stats WHERE user_id = $1`,
-        [userId],
-      ),
-      this.pool.query<{ n: string }>(
-        `SELECT COUNT(DISTINCT EXTRACT(HOUR FROM created_at))::int AS n FROM xp_ledger
-         WHERE user_id = $1 AND created_at > now() - interval '7 days'`,
-        [userId],
-      ),
-      this.pool.query<{ n: string }>(
-        `SELECT COALESCE(MAX(cnt), 0) AS n FROM (
-           SELECT COUNT(DISTINCT rd2.user_id) AS cnt
-           FROM risk_decisions rd
-           JOIN risk_decisions rd2 ON rd2.device_hash = rd.device_hash
-           WHERE rd.user_id = $1 AND rd.device_hash IS NOT NULL
-           GROUP BY rd.device_hash
-         ) t`,
-        [userId],
-      ),
-    ]);
-    const s = stats.rows[0];
-    return {
-      questionsAnswered: s?.questions_answered ?? 0,
-      impossibleCount: s?.impossible_count ?? 0,
-      fastCount: s?.fast_count ?? 0,
-      rttAnomalyCount: s?.rtt_anomaly_count ?? 0,
-      distinctActiveHours: Number(hours.rows[0]?.n ?? 0),
-      deviceAccountCount: Number(device.rows[0]?.n ?? 0),
-    };
-  }
 }

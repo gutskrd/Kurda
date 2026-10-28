@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { matchedParts } from '@kurda/shared';
 import { useNavigation, useScrollToTop } from '@react-navigation/native';
 import { Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
@@ -34,6 +35,8 @@ interface UserRow {
   userId: string;
   username: string;
   displayName?: string | null;
+  /** on search results: already friends with whoever searched */
+  friend?: boolean;
 }
 
 /** Someone you may know (`/friends/suggestions`), and how. */
@@ -240,6 +243,24 @@ export function SearchScreen(): React.JSX.Element {
       </View>
     );
 
+  /**
+   * A line with what was searched for marked in it, folded the way the
+   * searches match (@kurda/shared search-highlight.ts): "serk" is marked
+   * inside "berserker". A line the query is not in shows as written.
+   */
+  const marked = (text: string): React.ReactNode =>
+    typed
+      ? matchedParts(text, query.trim()).map((part, i) =>
+          part.match ? (
+            <Text key={i} style={[styles.match, { color: colors.textPrimary }]}>
+              {part.text}
+            </Text>
+          ) : (
+            part.text
+          ),
+        )
+      : text;
+
   const row = (key: string, left: React.ReactNode, title: string, sub: string | null, onPress: () => void, label: string) => (
     <Pressable
       key={key}
@@ -254,11 +275,11 @@ export function SearchScreen(): React.JSX.Element {
       {left}
       <View style={styles.rowMain}>
         <Text style={[styles.rowTitle, dir.text, { color: colors.textPrimary }]} numberOfLines={1}>
-          {title}
+          {marked(title)}
         </Text>
         {sub ? (
           <Text style={[styles.rowSub, dir.free, { color: colors.textSecondary }]} numberOfLines={1}>
-            {sub}
+            {marked(sub)}
           </Text>
         ) : null}
       </View>
@@ -366,7 +387,8 @@ export function SearchScreen(): React.JSX.Element {
               'p-' + u.userId,
               <InitialsAvatar name={u.username} id={u.userId} size={40} />,
               u.username,
-              u.displayName ?? null,
+              // a friend says so, the way a list of people you follow does
+              u.friend ? [u.displayName, t('search.friend')].filter(Boolean).join(' · ') : (u.displayName ?? null),
               () => navigation.navigate('UserProfile', { userId: u.userId }),
               u.username,
             ),
@@ -473,4 +495,6 @@ const styles = StyleSheet.create({
   rowMain: { flex: 1, gap: 2 },
   rowTitle: { fontSize: typography.sizes.md, fontWeight: typography.weights.medium },
   rowSub: { fontSize: typography.sizes.sm },
+  /** the part of a line that is what was searched for */
+  match: { fontWeight: typography.weights.bold },
 });

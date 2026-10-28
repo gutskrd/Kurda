@@ -202,7 +202,7 @@ describe('NavSearch', () => {
     expect(input).toHaveValue('');
     // and the arrow key brings the panel back
     await userEvent.keyboard('{ArrowDown}');
-    expect(screen.getByText('Find friends by their username, or look up a word in Kurdish or English.')).toBeInTheDocument();
+    expect(screen.getByText('Find friends by name or username, or look up a word in Kurdish or English.')).toBeInTheDocument();
   });
 
   it('jumps to the field on "/", and gives the focus back on Escape', async () => {

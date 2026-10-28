@@ -97,6 +97,35 @@
 .lesson-feedback.is-right .lesson-verdict-mark {
   animation: answer-pop var(--dur-slow) var(--ease-spring);
 }
+/*
+ * The verdict sheet rises into the action bar's place (learn/ActionBar.tsx):
+ * up from below the screen on the out-curve as it fades in, quicker, so it
+ * is there before it has finished arriving. Continue removes it at once.
+ */
+@keyframes sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+}
+@keyframes sheet-fade {
+  from {
+    opacity: 0;
+  }
+}
+.lesson-bar.is-sheet {
+  animation:
+    sheet-up var(--dur) var(--ease-out),
+    sheet-fade var(--dur-fast) linear;
+}
+/* a run reaching a milestone ("10 in a row!"): its pill pops in, a beat after the sheet */
+@keyframes run-pop {
+  from {
+    transform: scale(0.6);
+  }
+}
+.lesson-run.is-milestone {
+  animation: run-pop var(--dur-slow) var(--ease-spring) 160ms both;
+}
 /* a typed answer wears its verdict once it is graded */
 .lesson-input.is-right {
   border-color: color-mix(in srgb, var(--success) 70%, transparent);
@@ -294,9 +323,6 @@
   height: 110px;
   margin: -55px 0 0 -55px;
 }
-.lesson-trophy {
-  color: var(--gold);
-}
 .lesson-moments {
   display: grid;
   gap: 8px;
@@ -323,9 +349,44 @@
 .lesson-moment.is-goal svg {
   color: var(--success);
 }
-/* the rest of the results arrive with the words */
-.lesson-results:has(> .celebrate.is-playing) > :not(.celebrate) {
+/*
+ * The rest of the results arrive after the words, on the shared timeline
+ * (@kurda/shared RESULTS_TIMING): the three tiles a beat apart as the words
+ * land, today's goal moving from where it stood to where it is, and the
+ * league and level rows last. Skipped, it is all simply there.
+ */
+.lesson-results:has(> .celebrate.is-playing) > :not(.celebrate, .lesson-stats, .lesson-moments),
+.lesson-results:has(> .celebrate.is-playing) :is(.lesson-stat, .lesson-goal, .lesson-moment.is-goal) {
   animation: celebrate-words var(--dur-slow) var(--ease-out) var(--celebrate-details-delay, 420ms) both;
+}
+.lesson-results:has(> .celebrate.is-playing) .lesson-stat:nth-child(2) {
+  animation-delay: 460ms;
+}
+.lesson-results:has(> .celebrate.is-playing) .lesson-stat:nth-child(3) {
+  animation-delay: 500ms;
+}
+@keyframes goal-move {
+  from {
+    transform: scaleX(var(--from, 0));
+  }
+}
+.lesson-results:has(> .celebrate.is-playing) .lesson-goal-bar > span {
+  animation: goal-move var(--dur-progress) var(--ease-out) 900ms both;
+}
+.lesson-results:has(> .celebrate.is-playing) .lesson-row {
+  animation: celebrate-words var(--dur) var(--ease-out) 1000ms both;
+}
+/* "Day 12": the flame springs in as the celebration's art does, and the freeze bar fills after the day has counted on */
+.lesson-day-flame svg {
+  animation: celebrate-arrive 520ms var(--ease-spring) both;
+}
+@keyframes freeze-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+.lesson-day-bar > span {
+  animation: freeze-fill var(--dur-progress) var(--ease-out) 600ms both;
 }
 /* the streak kept today gives a little hop once the moment has settled */
 .lesson-stat.is-kept dd svg {
@@ -439,5 +500,9 @@
   .lesson-card:active:not(:disabled),
   .game-tile:has(.game-stretch):active {
     transform: none;
+  }
+  /* the verdict sheet travels nowhere: it only fades in, quickly (base.css would make it instant) */
+  .lesson-bar.is-sheet {
+    animation: sheet-fade var(--dur-fast) linear !important;
   }
 }

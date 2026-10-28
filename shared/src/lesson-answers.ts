@@ -1,10 +1,11 @@
 /**
  * Everything about an answer that is not about where the lesson is: the
  * learner's draft and its wire shape, the match-pairs taps, the Kurdish key
- * bar, and the letter-by-letter comparison feedback shows. Pure, and shared by
- * the browser and the phone for the reason `lesson-player.ts` is.
+ * bar, the letter-by-letter comparison feedback shows, and what kind of slip a
+ * typed miss was. Pure, and shared by the browser and the phone for the reason
+ * `lesson-player.ts` is.
  */
-import { foldLetter } from './kurdish-text.js';
+import { answerKey, foldDiacritics, foldLetter } from './kurdish-text.js';
 import type { ExerciseType, SelfRating } from './lesson-player.js';
 
 // ---------- drafts ----------
@@ -253,4 +254,87 @@ export function letterDiff(given: string, expected: string): { given: DiffSegmen
     }
   }
   return { given: segments(a, aDiffers), expected: segments(b, bDiffers) };
+}
+
+// ---------- what kind of slip it was ----------
+
+/**
+ * A typed miss that is one thing, said in a line under the comparison:
+ *   marks     — the same letters, only Kurmancî's marks differ ("s → ş");
+ *   lookalike — Soranî: a letter written as the one it looks like without its
+ *               mark ("ر → ڕ");
+ *   order     — the right words, in another order;
+ *   missing   — one word left out;
+ *   extra     — one word too many.
+ * Anything else is more than one slip, and the letters marked say it better.
+ */
+export type TypedHint =
+  | { kind: 'marks'; pairs: Array<[string, string]> }
+  | { kind: 'lookalike'; pairs: Array<[string, string]> }
+  | { kind: 'order' }
+  | { kind: 'missing'; word: string }
+  | { kind: 'extra'; word: string };
+
+/**
+ * Soranî letters that are another letter with a mark: ڕ is ر with a small v
+ * under it, ڵ is ل with one over it, ێ is ی with one under it, ۆ is و with one
+ * over it, ڤ is ف with three dots; and the vowel ە is a stroke away from h in
+ * many faces, and a Persian keyboard types one for the other. A keyboard's own
+ * variants (ك for ک, ي for ی, `foldLetter`) are not here: grading reads them as
+ * the same letter already (`answerKey`), so they are never a miss.
+ */
+const SORANI_MARKED: Record<string, string> = { 'ڕ': 'ر', 'ڵ': 'ل', 'ێ': 'ی', 'ۆ': 'و', 'ڤ': 'ف', 'ە': 'ھ' };
+
+/** Punctuation, Latin and Arabic-script: it says nothing about which words were written. */
+const PUNCTUATION = /[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]/g;
+
+/** An answer's words as written (for saying one back) and as grading reads them (for comparing). */
+function wordsOf(text: string): { shown: string[]; keys: string[] } {
+  const shown = text.normalize('NFC').replace(PUNCTUATION, ' ').trim().split(/\s+/).filter(Boolean);
+  return { shown, keys: shown.map(answerKey) };
+}
+
+/** The letters that differ, place by place, in two texts of one length; each pair once. */
+function letterPairs(given: string, expected: string): Array<[string, string]> {
+  const a = Array.from(given);
+  const b = Array.from(expected);
+  const pairs = new Map<string, [string, string]>();
+  a.forEach((ch, i) => {
+    if (ch !== b[i]) pairs.set(`${ch}\u0000${b[i]}`, [ch, b[i]!]);
+  });
+  return [...pairs.values()];
+}
+
+/** Where `longer` has one word that `shorter` lacks, and is otherwise the same; -1 when it is not. */
+function oneOut(longer: string[], shorter: string[]): number {
+  let at = shorter.findIndex((word, i) => word !== longer[i]);
+  if (at < 0) at = shorter.length;
+  return longer.slice(at + 1).every((word, i) => word === shorter[at + i]) ? at : -1;
+}
+
+/**
+ * What kind of slip a typed miss was (`TypedHint`), or null when it is more
+ * than one thing or nothing at all. Words are compared as grading compares
+ * them — case, punctuation and a keyboard's variant letters do not count —
+ * and the first kind that fits is the one said.
+ */
+export function typedHint(given: string, expected: string, dialect?: string | null): TypedHint | null {
+  const a = wordsOf(given);
+  const b = wordsOf(expected);
+  const ak = a.keys.join(' ');
+  const bk = b.keys.join(' ');
+  if (ak.length === 0 || ak === bk) return null;
+  if (foldDiacritics(ak) === foldDiacritics(bk)) return { kind: 'marks', pairs: letterPairs(ak, bk) };
+  const unmarked = (s: string): string => s.replace(/./gu, (ch) => SORANI_MARKED[ch] ?? ch);
+  if ((isSoraniDialect(dialect) || isArabicScript(expected)) && unmarked(ak) === unmarked(bk)) return { kind: 'lookalike', pairs: letterPairs(ak, bk) };
+  if (a.keys.length === b.keys.length && [...a.keys].sort().join(' ') === [...b.keys].sort().join(' ')) return { kind: 'order' };
+  if (b.keys.length === a.keys.length + 1) {
+    const at = oneOut(b.keys, a.keys);
+    if (at >= 0) return { kind: 'missing', word: b.shown[at]! };
+  }
+  if (a.keys.length === b.keys.length + 1) {
+    const at = oneOut(a.keys, b.keys);
+    if (at >= 0) return { kind: 'extra', word: a.shown[at]! };
+  }
+  return null;
 }

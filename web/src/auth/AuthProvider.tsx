@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { ApiClient, createApiClient, describeError } from '../lib/api';
 import { persistTokens } from '../lib/tokenStorage';
 import { thisDeviceName } from '../lib/deviceName';
+import { pollWhileVisible } from '../lib/pollWhileVisible';
 import type { AuthPayload, SessionUser } from '../lib/types';
 import { useT } from '../i18n/I18nProvider';
 import type { MaintenanceNotice, SuspendedErrorDetails } from '@kurda/shared';
@@ -119,15 +120,17 @@ export function AuthProvider({ children }: { children: ReactNode }): React.JSX.E
 
   // Presence heartbeat: while signed in, tell the server we're active so friends
   // see us as online. Fires immediately and then once a minute; the server
-  // derives "online" from the last beat within a short window.
+  // derives "online" from the last beat within a short window. Only while the
+  // tab is in view, as the phone beats only while the app is in front: a tab
+  // left behind another one is not somebody here, and coming back to it after a
+  // missed beat beats at once.
   useEffect(() => {
     if (status !== 'signedIn') return;
     const ping = (): void => {
       void client.post('/me/heartbeat');
     };
     ping();
-    const id = setInterval(ping, 60_000);
-    return () => clearInterval(id);
+    return pollWhileVisible(ping, 60_000);
   }, [status, client]);
 
   const applyAuth = (payload: AuthPayload, remember: boolean): void => {

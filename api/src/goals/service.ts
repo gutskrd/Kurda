@@ -59,16 +59,6 @@ export class DailyGoalService {
     return res.rows[0]?.daily_goal ?? DEFAULT_DAILY_GOAL;
   }
 
-  /** XP earned on the given local day (DST-safe via AT TIME ZONE). */
-  private async earnedOn(executor: Executor, userId: string, tz: string, day: string): Promise<number> {
-    const res = await executor.query<{ sum: string }>(
-      `SELECT COALESCE(SUM(amount), 0)::text sum FROM xp_ledger
-       WHERE user_id = $1 AND (created_at AT TIME ZONE $2)::date = $3`,
-      [userId, tz, day],
-    );
-    return Number(res.rows[0]?.sum ?? 0);
-  }
-
   /** Seed today's row from the current goal if it doesn't exist yet. */
   private async ensureRow(
     executor: Executor,
@@ -97,9 +87,26 @@ export class DailyGoalService {
     now: Date = new Date(),
   ): Promise<DailyGoalStatus> {
     const day = localDate(now, tz);
-    const goal = await this.currentGoal(executor, userId);
-    const row = await this.ensureRow(executor, userId, day, goal);
-    const earned = await this.earnedOn(executor, userId, tz, day);
+    // the goal set, today's row (seeded from it if new) and the XP earned on
+    // the learner's today (DST-safe via AT TIME ZONE), as one statement: it
+    // runs on every lesson finished and every look at the home screen
+    const res = await executor.query<GoalRow & { goal: GoalOption; earned: string }>(
+      `WITH current AS (
+         SELECT COALESCE((SELECT daily_goal FROM users WHERE id = $1), $4::int) AS goal
+       ), today AS (
+         INSERT INTO daily_goals (user_id, goal_date, effective_goal)
+         SELECT $1::uuid, $2::date, goal FROM current
+         ON CONFLICT (user_id, goal_date) DO UPDATE SET effective_goal = daily_goals.effective_goal
+         RETURNING effective_goal, completed_at, reward_granted
+       )
+       SELECT current.goal, today.effective_goal, today.completed_at, today.reward_granted,
+              (SELECT COALESCE(SUM(amount), 0)::text FROM xp_ledger
+                WHERE user_id = $1 AND (created_at AT TIME ZONE $3::text)::date = $2::date) AS earned
+         FROM current, today`,
+      [userId, day, tz, DEFAULT_DAILY_GOAL],
+    );
+    const { goal, earned: earnedText, ...row } = res.rows[0]!;
+    const earned = Number(earnedText ?? 0);
 
     let completedAt = row.completed_at;
     if (!completedAt && earned >= row.effective_goal) {

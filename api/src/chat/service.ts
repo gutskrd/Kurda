@@ -88,8 +88,10 @@ export class ChatService {
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
+    // one read for both rules: a block either way, then friendship
+    const status = await this.friends.statusBetween(from, to);
     // silent block: pretend it sent, but drop it (never reveal the block)
-    if (await this.friends.areBlocked(from, to)) {
+    if (status === 'blocked') {
       return {
         id: randomUUID(),
         senderId: from,
@@ -104,7 +106,7 @@ export class ChatService {
         game: null,
       };
     }
-    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+    if (status !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
 
@@ -175,7 +177,8 @@ export class ChatService {
     if (this.moderation && (await this.moderation.isChatMuted(from))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
-    if (await this.friends.areBlocked(from, to)) {
+    const status = await this.friends.statusBetween(from, to);
+    if (status === 'blocked') {
       return {
         id: randomUUID(),
         senderId: from,
@@ -190,7 +193,7 @@ export class ChatService {
         game: card,
       };
     }
-    if ((await this.friends.statusBetween(from, to)) !== 'friends') {
+    if (status !== 'friends') {
       throw new AppError('NOT_FRIENDS', 403, 'you can only message friends');
     }
     const { lo, hi } = canonicalPair(from, to);
@@ -237,11 +240,17 @@ export class ChatService {
     limit = 30,
     publicUrl: PublicUrl = () => null,
   ): Promise<DmMessage[]> {
-    if (await this.friends.areBlocked(user, other)) return [];
     const { lo, hi } = canonicalPair(user, other);
-    const rows = await this.pool.query<
-      KindColumns & {
-        id: string;
+    // An open thread polls this, so it is one statement: whether a block
+    // stands between them (then nothing at all, and nothing marked
+    // delivered), the page, and their messages marked delivered. The page is
+    // read from the statement's snapshot, before the marking, as it always
+    // was read first; there is always one row, carrying the flags.
+    const result = await this.pool.query<
+      Partial<KindColumns> & {
+        blocked: boolean;
+        delivered: number;
+        id: string | null;
         sender_id: string;
         username: string;
         profile_photo_key: string | null;
@@ -252,23 +261,42 @@ export class ChatService {
         read_at: Date | null;
       }
     >(
-      `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
-              m.body, m.created_at, m.delivered_at, m.read_at,
-              m.kind, m.gift_batch_id, m.game, m.game_lobby_id
-         FROM dm_messages m JOIN users u ON u.id = m.sender_id
-        WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $4::timestamptz' : ''}
-        ORDER BY m.created_at DESC LIMIT $3`,
-      before ? [lo, hi, limit, before] : [lo, hi, limit],
+      `WITH flags AS (
+         SELECT EXISTS (SELECT 1 FROM blocks
+                         WHERE (blocker_id = $4 AND blocked_id = $5) OR (blocker_id = $5 AND blocked_id = $4)) AS blocked
+       ), delivered AS (
+         UPDATE dm_messages SET delivered_at = now()
+          WHERE user_lo = $1 AND user_hi = $2 AND sender_id = $5 AND delivered_at IS NULL
+            AND NOT (SELECT blocked FROM flags)
+          RETURNING 1
+       )
+       SELECT f.blocked, (SELECT count(*)::int FROM delivered) AS delivered, page.*
+         FROM flags f
+         LEFT JOIN LATERAL (
+           SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
+                  m.body, m.created_at, m.delivered_at, m.read_at,
+                  m.kind, m.gift_batch_id, m.game, m.game_lobby_id
+             FROM dm_messages m JOIN users u ON u.id = m.sender_id
+            WHERE m.user_lo = $1 AND m.user_hi = $2 ${before ? 'AND m.created_at < $6::timestamptz' : ''}
+            ORDER BY m.created_at DESC LIMIT $3
+         ) page ON NOT f.blocked
+        ORDER BY page.created_at DESC`,
+      before ? [lo, hi, limit, user, other, before] : [lo, hi, limit, user, other],
     );
-    await this.markDelivered(lo, hi, user, other);
+    const head = result.rows[0]!;
+    if (head.blocked) return [];
+    if (head.delivered > 0) {
+      await this.notifier.notifyUser(other, { type: 'dm_delivered', by: user }).catch(() => undefined);
+    }
+    const page = result.rows.filter((r): r is typeof r & KindColumns & { id: string } => r.id !== null);
     // the gifts on this page, as this reader sees them (theirs to open, or not)
     const cards = await giftCards(
       this.pool,
-      rows.rows.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
+      page.flatMap((r) => (r.kind === 'gift' && r.gift_batch_id ? [r.gift_batch_id] : [])),
       { id: user, seesEveryone: true },
       publicUrl,
     );
-    return rows.rows
+    return page
       .map((r) => ({
         id: r.id,
         senderId: r.sender_id,
@@ -285,18 +313,6 @@ export class ChatService {
       .reverse(); // ascending for display
   }
 
-  /** Mark messages from `other` as delivered and notify the sender. */
-  private async markDelivered(lo: string, hi: string, user: string, other: string): Promise<void> {
-    const res = await this.pool.query(
-      `UPDATE dm_messages SET delivered_at = now()
-        WHERE user_lo = $1 AND user_hi = $2 AND sender_id = $3 AND delivered_at IS NULL`,
-      [lo, hi, other],
-    );
-    if ((res.rowCount ?? 0) > 0) {
-      await this.notifier.notifyUser(other, { type: 'dm_delivered', by: user }).catch(() => undefined);
-    }
-  }
-
   /** Mark all messages from `other` read; notify them (read receipt). */
   async markRead(user: string, other: string): Promise<number> {
     const { lo, hi } = canonicalPair(user, other);
@@ -310,9 +326,15 @@ export class ChatService {
     return n;
   }
 
-  /** Ephemeral typing indicator (silent under a block). */
+  /**
+   * Ephemeral typing indicator, between friends only, as a message is: anyone
+   * signed in could otherwise reach any account's live connection with their
+   * own id, a stranger a child's included. Silent either way, so the answer
+   * says nothing of a block or of who is friends with whom.
+   */
   async typing(from: string, to: string): Promise<void> {
     if (await this.friends.areBlocked(from, to)) return;
+    if ((await this.friends.statusBetween(from, to)) !== 'friends') return;
     await this.notifier.notifyUser(to, { type: 'dm_typing', from }).catch(() => undefined);
   }
 

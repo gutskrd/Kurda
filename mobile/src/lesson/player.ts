@@ -9,16 +9,22 @@ import type { TranslationKey } from '../i18n/translations';
  */
 export {
   REASK_GAP,
+  RUN_SHOWN_FROM,
+  VERDICT_TIMING,
   currentExercise,
   currentStep,
   initPlayer,
   isReask,
+  nextRun,
   progress,
   reduce,
+  runMilestone,
   type Feedback,
   type PlayerAction,
   type PlayerState,
   type PlayerStatus,
+  type PutAway,
+  type PutAwayType,
 } from '@kurda/shared';
 
 /**

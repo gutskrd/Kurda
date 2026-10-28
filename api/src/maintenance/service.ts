@@ -90,12 +90,33 @@ export class MaintenanceService {
   private async row(): Promise<Row> {
     const at = Date.now();
     if (this.cached && at - this.cached.at < CACHE_MS) return this.cached.row;
-    const res = await this.pool.query<Row>(
-      `SELECT enabled, title, message, asset_key, starts_at, ends_at, reopen_at_end, updated_at, updated_by FROM maintenance WHERE id = 1`,
+    return (await this.fresh()).row;
+  }
+
+  /** The row read again (and cached), with the username of whoever last changed it. */
+  private async fresh(): Promise<{ row: Row; updatedBy: string | null }> {
+    const at = Date.now();
+    const res = await this.pool.query<Row & { updated_by_name: string | null }>(
+      `SELECT m.enabled, m.title, m.message, m.asset_key, m.starts_at, m.ends_at, m.reopen_at_end, m.updated_at, m.updated_by,
+              u.username AS updated_by_name
+         FROM maintenance m LEFT JOIN users u ON u.id = m.updated_by WHERE m.id = 1`,
     );
-    const row = res.rows[0] ?? OFF;
+    const found = res.rows[0];
+    const row: Row = found
+      ? {
+          enabled: found.enabled,
+          title: found.title,
+          message: found.message,
+          asset_key: found.asset_key,
+          starts_at: found.starts_at,
+          ends_at: found.ends_at,
+          reopen_at_end: found.reopen_at_end,
+          updated_at: found.updated_at,
+          updated_by: found.updated_by,
+        }
+      : OFF;
     this.cached = { at, row };
-    return row;
+    return { row, updatedBy: found?.updated_by_name ?? null };
   }
 
   /** What people see, while Hevalo is offline; null while it is open. */
@@ -114,15 +135,14 @@ export class MaintenanceService {
 
   /** The setting, for the admin. */
   async state(): Promise<MaintenanceState> {
-    this.cached = null;
-    const row = await this.row();
-    const res = row.updated_by ? await this.pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [row.updated_by]) : null;
+    // read fresh, with who changed it last, in one query
+    const { row, updatedBy } = await this.fresh();
     return {
       settings: settingsOf(row),
       phase: maintenancePhase(settingsOf(row), this.now()),
       pictureUrl: row.asset_key ? this.publicUrl(row.asset_key) : null,
       updatedAt: row.updated_at.toISOString(),
-      updatedBy: res?.rows[0]?.username ?? null,
+      updatedBy,
     };
   }
 

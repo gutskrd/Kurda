@@ -122,13 +122,17 @@ export const SESSIONS_PER_FREEZE = 5;
 /**
  * How many of a session's answers were given on the learner's today, in SQL.
  * `$1` is the session id, `$2` the time zone (pass it through safeTimeZone),
- * `$3` today's 'YYYY-MM-DD'. Learning is credited to the day it happened: a
- * sitting's answers kept in an open session and completed on later days would
- * otherwise buy a streak day and the daily Zêr on each of them.
+ * `$3` today's 'YYYY-MM-DD' — or the placeholders given, for a statement that
+ * reads it beside something else. Learning is credited to the day it happened:
+ * a sitting's answers kept in an open session and completed on later days
+ * would otherwise buy a streak day and the daily Zêr on each of them.
  */
-export function answeredTodaySql(table: 'session_answers' | 'practice_answers'): string {
+export function answeredTodaySql(
+  table: 'session_answers' | 'practice_answers',
+  at: { session: string; zone: string; day: string } = { session: '$1', zone: '$2', day: '$3' },
+): string {
   return `SELECT count(*)::int n FROM ${table}
-          WHERE session_id = $1 AND (answered_at AT TIME ZONE $2)::date = $3::date`;
+          WHERE session_id = ${at.session} AND (answered_at AT TIME ZONE ${at.zone})::date = ${at.day}::date`;
 }
 
 export function countsAsLearning(answered: number, total: number): boolean {

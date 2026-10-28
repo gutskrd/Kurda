@@ -124,9 +124,20 @@ export class QuestService {
     const nowMs = this.now().getTime();
     const endsMs = Date.parse(event.endsAt);
 
+    // quests of one kind (more XP, more lessons) differ only in their target:
+    // each kind is counted once for all of them
+    const counted = new Map<QuestType, Promise<number>>();
+    const metricOf = (type: QuestType): Promise<number> => {
+      let m = counted.get(type);
+      if (!m) {
+        m = this.metric(type, userId, event.startsAt, event.endsAt);
+        counted.set(type, m);
+      }
+      return m;
+    };
     const quests: QuestView[] = [];
     for (const def of defs) {
-      const metric = await this.metric(def.type, userId, event.startsAt, event.endsAt);
+      const metric = await metricOf(def.type);
       const prog = evaluateQuest(def, metric);
       const isClaimed = claimed.has(def.id);
       quests.push({

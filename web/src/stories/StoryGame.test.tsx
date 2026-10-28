@@ -174,7 +174,9 @@ describe('the lobby', () => {
   it('says a game it may not see is not available', async () => {
     fakeApi({ 'GET /story-games/g-1': jsonResponse(404, { code: 'GAME_NOT_FOUND' }) });
     game();
-    expect(await screen.findByRole('heading', { name: 'Game not available' })).toHaveFocus();
+    // the heading is on the page a moment before its effect focuses it
+    const heading = await screen.findByRole('heading', { name: 'Game not available' });
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByRole('link', { name: 'Back to stories' })).toBeInTheDocument();
   });
 });
@@ -301,7 +303,7 @@ describe('a question', () => {
     });
     game();
     const heading = await screen.findByRole('heading', { name: 'Question 1 of 3' });
-    expect(heading).toHaveFocus();
+    await waitFor(() => expect(heading).toHaveFocus());
     // English under the question at level 1
     expect(screen.getByText('How old is Rojîn?')).toHaveAttribute('lang', 'en');
     expect(screen.getByText('Rojîn çend salî ye?')).toHaveAttribute('lang', 'ku');
@@ -318,9 +320,11 @@ describe('a question', () => {
       'POST /story-games/g-1/answers': question({ question: { ...question().question!, myChoice: 1 }, version: 2 }),
     });
     game();
-    await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    const heading = await screen.findByRole('heading', { name: 'Question 1 of 3' });
+    // the keys are listened for in the same pass that focuses the heading
+    await waitFor(() => expect(heading).toHaveFocus());
     // the focused heading has the key, as on a page
-    fireEvent.keyDown(document.activeElement ?? document.body, { key: '٢', code: 'Digit2' });
+    fireEvent.keyDown(heading, { key: '٢', code: 'Digit2' });
     await waitFor(() => expect(calls.find((c) => c.path.endsWith('/answers'))?.body).toEqual({ index: 0, choice: 1 }));
   });
 
@@ -515,7 +519,8 @@ describe('the results', () => {
   it('shows a duo as two scores and a total, without places', async () => {
     fakeApi({ 'GET /story-games/g-1/story': story, 'GET /story-games/g-1': results() });
     game();
-    expect(await screen.findByRole('heading', { name: 'You got 4 of 5 right' })).toHaveFocus();
+    const heading = await screen.findByRole('heading', { name: 'You got 4 of 5 right' });
+    await waitFor(() => expect(heading).toHaveFocus());
     expect(screen.getByText('Together 7 of 10')).toBeInTheDocument();
     expect(screen.queryByText(/Your place/)).toBeNull();
     expect(screen.getByText('+15 XP')).toBeInTheDocument();

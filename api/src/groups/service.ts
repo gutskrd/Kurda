@@ -528,7 +528,7 @@ export class GroupService {
     const orphans = await this.pool.query<{ id: string }>(
       `SELECT id FROM groups WHERE owner_id IS NULL AND archived_at IS NULL`,
     );
-    for (const g of orphans.rows) await handOnGroup(this.pool, g.id);
+    await handOnGroups(this.pool, orphans.rows.map((g) => g.id));
     return orphans.rows.length;
   }
 }
@@ -540,18 +540,30 @@ export class GroupService {
  * out of an open group because they turned out to be a minor.
  */
 export async function handOnGroup(executor: Pick<pg.Pool, 'query'>, groupId: string): Promise<void> {
-  const candidate = await executor.query<{ user_id: string }>(
-    `SELECT user_id FROM group_members WHERE group_id = $1
-      ORDER BY role = 'moderator' DESC, joined_at ASC LIMIT 1`,
-    [groupId],
+  await handOnGroups(executor, [groupId]);
+}
+
+/**
+ * `handOnGroup` for every one of these groups, in one statement: each
+ * group's successor is picked as there, promoted and named owner, and a group
+ * with nobody left is archived. Each group is decided on its own rows only.
+ */
+export async function handOnGroups(executor: Pick<pg.Pool, 'query'>, groupIds: readonly string[]): Promise<void> {
+  if (groupIds.length === 0) return;
+  await executor.query(
+    `WITH next AS (
+       SELECT DISTINCT ON (m.group_id) m.group_id, m.user_id FROM group_members m
+        WHERE m.group_id = ANY($1::uuid[])
+        ORDER BY m.group_id, m.role = 'moderator' DESC, m.joined_at ASC
+     ), promoted AS (
+       UPDATE group_members gm SET role = 'owner' FROM next WHERE gm.group_id = next.group_id AND gm.user_id = next.user_id
+     ), owned AS (
+       UPDATE groups g SET owner_id = next.user_id FROM next WHERE g.id = next.group_id
+     )
+     UPDATE groups g SET owner_id = NULL, archived_at = now()
+      WHERE g.id = ANY($1::uuid[]) AND NOT EXISTS (SELECT 1 FROM next WHERE next.group_id = g.id)`,
+    [groupIds],
   );
-  const next = candidate.rows[0]?.user_id;
-  if (next) {
-    await executor.query(`UPDATE group_members SET role = 'owner' WHERE group_id = $1 AND user_id = $2`, [groupId, next]);
-    await executor.query(`UPDATE groups SET owner_id = $2 WHERE id = $1`, [groupId, next]);
-  } else {
-    await executor.query(`UPDATE groups SET owner_id = NULL, archived_at = now() WHERE id = $1`, [groupId]);
-  }
 }
 
 /**
@@ -569,10 +581,11 @@ export async function leaveOpenGroups(executor: Pick<pg.Pool, 'query'>, userId: 
       RETURNING m.group_id, m.role`,
     [userId],
   );
-  for (const row of left.rows) {
-    if (row.role !== 'owner') continue;
-    await executor.query(`UPDATE groups SET owner_id = NULL WHERE id = $1 AND owner_id = $2`, [row.group_id, userId]);
-    await handOnGroup(executor, row.group_id);
+  // the ones they owned handed on together, not one by one
+  const owned = left.rows.filter((r) => r.role === 'owner').map((r) => r.group_id);
+  if (owned.length > 0) {
+    await executor.query(`UPDATE groups SET owner_id = NULL WHERE id = ANY($1::uuid[]) AND owner_id = $2`, [owned, userId]);
+    await handOnGroups(executor, owned);
   }
   return left.rows.map((r) => r.group_id);
 }

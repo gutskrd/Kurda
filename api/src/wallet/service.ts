@@ -107,46 +107,52 @@ export class WalletService {
     op: WalletOperation,
     signedAmount: number,
   ): Promise<{ balance: number; duplicate: boolean }> {
-    // lazy balance row + lock — serializes concurrent ops per (user, currency)
-    await client.query(
-      `INSERT INTO wallet_balances (user_id, currency) VALUES ($1, $2)
-       ON CONFLICT (user_id, currency) DO NOTHING`,
-      [op.userId, op.currency],
-    );
-    const locked = await client.query<{ balance: number }>(
-      `SELECT balance FROM wallet_balances
-       WHERE user_id = $1 AND currency = $2 FOR UPDATE`,
-      [op.userId, op.currency],
-    );
-    const current = (locked.rows[0] as { balance: number }).balance;
-
-    if (op.idempotencyKey) {
-      const inserted = await client.query(
-        `INSERT INTO wallet_ledger (user_id, currency, amount, reason, ref_id, idempotency_key)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT (idempotency_key) DO NOTHING`,
-        [op.userId, op.currency, signedAmount, op.reason, op.refId ?? null, op.idempotencyKey],
+    // lazy balance row + lock — serializes concurrent ops per (user, currency).
+    // The row almost always exists, so it is locked first and made only when
+    // that finds none (then locked again): one statement where it was two.
+    const lock = () =>
+      client.query<{ balance: number }>(
+        `SELECT balance FROM wallet_balances
+         WHERE user_id = $1 AND currency = $2 FOR UPDATE`,
+        [op.userId, op.currency],
       );
-      if ((inserted.rowCount ?? 0) === 0) {
-        return { balance: current, duplicate: true };
-      }
-    } else {
+    let locked = await lock();
+    if (locked.rows.length === 0) {
       await client.query(
-        `INSERT INTO wallet_ledger (user_id, currency, amount, reason, ref_id)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [op.userId, op.currency, signedAmount, op.reason, op.refId ?? null],
+        `INSERT INTO wallet_balances (user_id, currency) VALUES ($1, $2)
+         ON CONFLICT (user_id, currency) DO NOTHING`,
+        [op.userId, op.currency],
       );
+      locked = await lock();
     }
+    const current = (locked.rows[0] as { balance: number }).balance;
 
     const next = current + signedAmount;
     if (next < 0) {
+      // refused — unless the key was used already, which answers as the
+      // duplicate it is: the ledger is asked before the balance, as it always was
+      if (op.idempotencyKey) {
+        const seen = await client.query(`SELECT 1 FROM wallet_ledger WHERE idempotency_key = $1`, [op.idempotencyKey]);
+        if ((seen.rowCount ?? 0) > 0) return { balance: current, duplicate: true };
+      }
       throw new InsufficientFundsError(op.currency);
     }
-    await client.query(
-      `UPDATE wallet_balances SET balance = $3, updated_at = now()
-       WHERE user_id = $1 AND currency = $2`,
-      [op.userId, op.currency, next],
+    // the ledger row and the balance in one statement: the balance moves only
+    // when the row went in (a key used already inserts nothing; no key never conflicts)
+    const wrote = await client.query(
+      `WITH ins AS (
+         INSERT INTO wallet_ledger (user_id, currency, amount, reason, ref_id, idempotency_key)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (idempotency_key) DO NOTHING
+         RETURNING 1
+       )
+       UPDATE wallet_balances SET balance = $7, updated_at = now()
+        WHERE user_id = $1 AND currency = $2 AND EXISTS (SELECT 1 FROM ins)`,
+      [op.userId, op.currency, signedAmount, op.reason, op.refId ?? null, op.idempotencyKey ?? null, next],
     );
+    if ((wrote.rowCount ?? 0) === 0) {
+      return { balance: current, duplicate: true };
+    }
     return { balance: next, duplicate: false };
   }
 

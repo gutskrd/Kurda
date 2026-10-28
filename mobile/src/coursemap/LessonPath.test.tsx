@@ -81,7 +81,7 @@ describe('the lesson path', () => {
     client();
     renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
     fireEvent.click(button('Continue: Family'));
-    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'f2' });
+    expect(navigation.navigate).toHaveBeenCalledWith('Lesson', { lessonId: 'f2', courseId: 'c1' });
   });
 
   it('opens a sheet on a stop: its lessons as ways in, how far along, and one thing to do', () => {
@@ -90,13 +90,32 @@ describe('the lesson path', () => {
     fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
     expect(screen.getByText('Unit 2 · Family & Food')).toBeTruthy();
     expect(screen.getByText('1 of 3 lessons done')).toBeTruthy();
+    // what the lesson it opens pays, in the server's own numbers
+    expect(screen.getByText('+10–20 XP')).toBeTruthy();
     // a finished lesson can be played again on its own; one not open yet is not a way in
     fireEvent.click(button('Dê û bav, done'));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f1' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f1', courseId: 'c1' });
     fireEvent.click(button('Family, you are here, 1 of 3 lessons done'));
     expect(screen.queryByRole('button', { name: 'Malbat, not open yet' })).toBeNull();
     fireEvent.click(button('Continue'));
-    expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f2' });
+    expect(navigation.navigate).toHaveBeenLastCalledWith('Lesson', { lessonId: 'f2', courseId: 'c1' });
+  });
+
+  it('promises a replay its smaller share', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    fireEvent.click(button('Greetings, done, and strong, 2 of 2 lessons done'));
+    expect(screen.getByText('+3–5 XP')).toBeTruthy();
+  });
+
+  // Hevalo stands by the skill to do now, and a tap on him opens it as the stop itself does
+  it('has Hevalo beside the current skill, opening its sheet when he is tapped', () => {
+    client();
+    renderWithProviders(<LessonPath map={MAP} due={0} onFocus={() => undefined} />);
+    const mascot = screen.getByTestId('lp-mascot');
+    expect(screen.getAllByTestId('lp-mascot')).toHaveLength(1);
+    fireEvent.click(within(mascot).getByRole('img'));
+    expect(screen.getByText('Unit 2 · Family & Food')).toBeTruthy();
   });
 
   it('says kindly what opens a locked skill, and sends a rusty one to review', () => {

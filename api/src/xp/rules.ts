@@ -15,17 +15,20 @@
  * Days here are UTC days, the same clock as the league week, so a day never
  * straddles two weeks.
  */
+import { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR } from '@kurda/shared';
 
 /** Learning: these join the week's league and build streaks (see `isLearningSource`). */
 export const LEARNING_XP_SOURCES = ['lesson_complete', 'practice_complete', 'story'] as const;
 /** Games: rated or friendly, solo or not — all of them share one daily league cap. */
 export const GAME_XP_SOURCES = ['wordle', 'wordle_battle', 'rhyme', 'rhyme_match', 'race'] as const;
 
-export const BASE_LESSON_XP = 10;
-/** Accuracy adds up to this on top of the base (perfect lesson = base + this). */
-export const ACCURACY_BONUS_XP = 10;
-/** Repeats of an already-completed lesson pay this fraction (anti-farm). */
-export const REPEAT_XP_FACTOR = 0.25;
+/**
+ * What a lesson pays — the base, the accuracy bonus on top of it, and the
+ * share a repeat pays — lives in @kurda/shared, because the apps show it
+ * before a lesson ("+10–20 XP" on a stop's card) and a copy kept here could
+ * drift from what they promise.
+ */
+export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR };
 /** Repeats of one lesson that still pay in a day; the next one pays nothing. */
 export const PAID_LESSON_REPEATS_PER_DAY = 2;
 

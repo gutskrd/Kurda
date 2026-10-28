@@ -329,8 +329,10 @@ export class WordleService {
     dayIndex: number | null,
   ): Promise<{ target: string; difficulty: Difficulty } | null> {
     const order = [difficulty, ...HARDER_TO_EASIER.filter((d) => d !== difficulty)];
+    // the word list read once, and each tier's pool cut from it (an empty tier used to read it all again)
+    const words = await loadWordlePool(this.pool);
     for (const tier of order) {
-      const pool = await this.loadPool(tier);
+      const pool = filterByDifficulty(words, tier);
       if (pool.length === 0) continue;
       const target =
         dayIndex === null
@@ -346,10 +348,6 @@ export class WordleService {
    * stable order (word-pool.ts: never a Soranî word, nor one with a letter the
    * keyboard does not have).
    */
-  private async loadPool(difficulty: Difficulty): Promise<string[]> {
-    return filterByDifficulty(await loadWordlePool(this.pool), difficulty);
-  }
-
   private rehydrate(row: GameRow): WordleGame {
     const base = initGame(row.target_length);
     const guesses = row.guesses;

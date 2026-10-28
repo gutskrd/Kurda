@@ -14,10 +14,10 @@ import { firstCourse } from '../coursemap/path';
 import type { SkillNode } from '../coursemap/types';
 
 export type NextStep =
-  /** nothing finished yet anywhere: the very first lesson */
-  | { kind: 'start'; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
+  /** nothing finished yet anywhere: the very first lesson (`courseId` its course, for the lesson's own next one) */
+  | { kind: 'start'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
   /** the first open skill that is not finished: the path's current stop */
-  | { kind: 'continue'; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
+  | { kind: 'continue'; courseId: string; courseTitle: string; unitTitle: string; skill: SkillNode; lessonId: string; done: number; total: number }
   /** everything open is finished: review is the next step, until more opens */
   | { kind: 'review'; courseTitle: string; done: number; total: number };
 
@@ -52,6 +52,7 @@ export function nextStep(courses: readonly CourseEntry[]): NextStep | null {
       if (stop.kind === 'skill' && stop.key === path.current && stop.launch) {
         return {
           kind: anyFinished ? 'continue' : 'start',
+          courseId: entry.course.id,
           courseTitle: entry.map.course.title,
           unitTitle: unit.title,
           skill: stop.skill,

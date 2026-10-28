@@ -6,7 +6,7 @@ import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
 import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
-import { canManage } from '@kurda/shared';
+import { canManage, isRole, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 
@@ -73,29 +73,32 @@ export class GroupChatService {
    * in one (an older membership) can leave but can neither read nor write its
    * chat. An account whose age is not on record yet is asked for it first.
    */
-  private async requireMember(groupId: string, userId: string): Promise<'owner' | 'moderator' | 'member'> {
-    const role = await this.groups.memberRole(groupId, userId);
-    if (!role) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
-    const g = await this.pool.query<{ privacy: string; minor: boolean; known: boolean }>(
-      `SELECT g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known
-         FROM groups g, users u WHERE g.id = $1 AND u.id = $2`,
+  private async requireMember(groupId: string, userId: string): Promise<Role> {
+    return (await this.member(groupId, userId)).role;
+  }
+
+  /**
+   * `requireMember` in one read: the membership, the group's privacy and the
+   * member's age, and whether they are muted in the group right now (which
+   * only posting asks). The member's group and account always exist: the
+   * membership row is removed with either.
+   */
+  private async member(groupId: string, userId: string): Promise<{ role: Role; muted: boolean; username: string }> {
+    const r = await this.pool.query<{ role: string; privacy: string; minor: boolean; known: boolean; muted: boolean; username: string }>(
+      `SELECT m.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known, u.username,
+              EXISTS (SELECT 1 FROM group_mutes gm WHERE gm.group_id = m.group_id AND gm.user_id = m.user_id
+                         AND (gm.muted_until IS NULL OR gm.muted_until > now())) AS muted
+         FROM group_members m JOIN groups g ON g.id = m.group_id JOIN users u ON u.id = m.user_id
+        WHERE m.group_id = $1 AND m.user_id = $2`,
       [groupId, userId],
     );
-    const row = g.rows[0];
-    if (row?.privacy === 'open') {
+    const row = r.rows[0];
+    if (!row || !isRole(row.role)) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
+    if (row.privacy === 'open') {
       if (row.minor) throw openGroupsAdultsOnly();
       if (!row.known) throw birthDateRequired();
     }
-    return role;
-  }
-
-  private async isMuted(groupId: string, userId: string): Promise<boolean> {
-    const r = await this.pool.query(
-      `SELECT 1 FROM group_mutes WHERE group_id = $1 AND user_id = $2
-         AND (muted_until IS NULL OR muted_until > now()) LIMIT 1`,
-      [groupId, userId],
-    );
-    return (r.rowCount ?? 0) > 0;
+    return { role: row.role, muted: row.muted, username: row.username };
   }
 
   /**
@@ -108,8 +111,7 @@ export class GroupChatService {
    */
   async assertCanPost(groupId: string, userId: string): Promise<void> {
     await assertUnrestricted(this.pool, userId, 'chat');
-    await this.requireMember(groupId, userId);
-    if (await this.isMuted(groupId, userId)) throw new AppError('MUTED', 403, 'you are muted in this group');
+    if ((await this.member(groupId, userId)).muted) throw new AppError('MUTED', 403, 'you are muted in this group');
     if (this.moderation && (await this.moderation.isChatMuted(userId))) {
       throw new AppError('CHAT_MUTED', 403, 'you are muted from chat');
     }
@@ -127,6 +129,24 @@ export class GroupChatService {
       if (err instanceof AppError) return false;
       throw err;
     }
+  }
+
+  /** `canRead` for each of `userIds`, in their order, in one query (the recipients of a gift). */
+  async canReadEach(groupId: string, userIds: readonly string[]): Promise<boolean[]> {
+    if (userIds.length === 0) return [];
+    const r = await this.pool.query<{ n: number; role: string | null; privacy: string | null; minor: boolean | null; known: boolean | null }>(
+      `SELECT t.n::int AS n, m.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known
+         FROM unnest($2::uuid[]) WITH ORDINALITY AS t(id, n)
+         LEFT JOIN group_members m ON m.group_id = $1 AND m.user_id = t.id
+         LEFT JOIN groups g ON g.id = m.group_id
+         LEFT JOIN users u ON u.id = m.user_id`,
+      [groupId, userIds],
+    );
+    const can = userIds.map(() => false);
+    for (const row of r.rows) {
+      can[row.n - 1] = row.role !== null && isRole(row.role) && (row.privacy !== 'open' || (!row.minor && row.known === true));
+    }
+    return can;
   }
 
   /**
@@ -354,9 +374,7 @@ export class GroupChatService {
    * event is not worth a lookup per keystroke on the client.
    */
   async typing(userId: string, groupId: string): Promise<void> {
-    await this.requireMember(groupId, userId);
-    const who = await this.pool.query<{ username: string }>(`SELECT username FROM users WHERE id = $1`, [userId]);
-    const username = who.rows[0]?.username;
+    const { username } = await this.member(groupId, userId);
     if (!username) return;
     await this.publishFrom(groupId, userId, { type: 'group_typing', groupId, userId, username }).catch(() => undefined);
   }

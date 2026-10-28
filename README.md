@@ -12,8 +12,12 @@ Roadmap: [issues](https://github.com/gutskrd/Kurda/issues) · [milestones](https
 |---|---|
 | [`shared/`](shared) | Cross-package TypeScript utilities (e.g. Kurdish text normalization) |
 | [`api/`](api) | Backend API service (bootstrapped in [#2](https://github.com/gutskrd/Kurda/issues/2)) |
+| [`web/`](web) | The website and web app, served by a Cloudflare Worker |
 | [`admin/`](admin) | Admin panel web app (bootstrapped in [#99](https://github.com/gutskrd/Kurda/issues/99)) |
 | [`mobile/`](mobile) | Mobile app (bootstrapped in [#11](https://github.com/gutskrd/Kurda/issues/11)) |
+
+Where a feature goes, and the rules for database access, search, cost and
+security: [docs/architecture.md](docs/architecture.md).
 
 ## Local setup
 

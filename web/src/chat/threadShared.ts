@@ -10,7 +10,8 @@
  *
  * When the realtime socket is live it carries every message instantly, so
  * polling is only a slow safety net. When it is not connected, a brisk poll is
- * what keeps chat feeling live for everyone.
+ * what keeps chat feeling live for everyone. Either one asks only while the tab
+ * is in view (lib/pollWhileVisible.ts).
  */
 export const THREAD_POLL_LIVE = 20_000;
 export const THREAD_POLL_FALLBACK = 4_000;

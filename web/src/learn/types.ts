@@ -85,11 +85,19 @@ export interface Mistake {
   correction?: string;
 }
 
+/** The streak as a session's results give it (api/src/streaks/service.ts `StreakSummary`). */
 export interface Streak {
   current: number;
   longest: number;
   /** the last day that counted (the server always sends it; older test data may not) */
   lastActiveOn?: string | null;
+  /** freezes held, each covering one missed day */
+  freezes?: number;
+  /** days with a finished lesson or practice session, ever: a missed day never takes one away */
+  daysLearned?: number;
+  /** finished sessions towards the next freeze, of `sessionsPerFreeze` */
+  freezeProgress?: number;
+  sessionsPerFreeze?: number;
 }
 
 /** POST …/complete — a lesson's results carry `firstCompletion`, practice's do not */

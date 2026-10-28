@@ -135,6 +135,15 @@ describe('error envelope', () => {
     expect(res.json().requestId).toBe('gw-abc-123');
   });
 
+  it('gives a request its own id when the one it brings does not look like one', async () => {
+    const a = testApp();
+    for (const brought of ['x'.repeat(65), 'two words', 'a"b', '{"admin":true}', 'gw/../123']) {
+      const res = await a.inject({ method: 'GET', url: '/nope', headers: { 'x-request-id': brought } });
+      expect(res.headers['x-request-id']).toMatch(/^req-[0-9a-z]+$/);
+      expect(res.json().requestId).toBe(res.headers['x-request-id']);
+    }
+  });
+
   it('handles malformed JSON bodies with a 4xx envelope, not a crash', async () => {
     const a = testApp();
     a.post('/t', { schema: { body: bodySchema } }, async (req) => req.body);

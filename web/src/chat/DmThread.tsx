@@ -23,12 +23,8 @@ import { gameCardBody } from '../play/ChatGameCard';
 import { SendError } from '../reports/SendError';
 import { ReportSheet } from '../reports/ReportSheet';
 import { useChatGifts } from '../gifts/useChatGifts';
-
-// When the realtime socket is live it carries every message instantly, so polling
-// is just a slow safety net. When it is NOT connected, we fall back to a brisk
-// poll so chat still feels live for everyone.
-const THREAD_POLL_LIVE = 20000;
-const THREAD_POLL_FALLBACK = 4000;
+import { pollWhileVisible } from '../lib/pollWhileVisible';
+import { THREAD_POLL_FALLBACK, THREAD_POLL_LIVE } from './threadShared';
 
 /**
  * Oldest→newest by server timestamp, so the thread always reads top to bottom.
@@ -159,8 +155,7 @@ export function DmThread({
     setLoadError(null);
     void load();
     void markRead();
-    const t = setInterval(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
-    return () => clearInterval(t);
+    return pollWhileVisible(() => void load(), state === 'open' ? THREAD_POLL_LIVE : THREAD_POLL_FALLBACK);
   }, [load, markRead, state]);
 
   // live receive: append a DM the moment it arrives from the person we're viewing

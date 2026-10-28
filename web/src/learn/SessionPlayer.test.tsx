@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { act, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useLocation } from 'react-router-dom';
 import type { DeliveredExercise, PlayableSession } from '@kurda/shared';
 import { renderApp, jsonResponse } from '../test/utils';
 import { LESSON_PATHS, PRACTICE_PATHS, SessionPlayer, type SessionPaths } from './SessionPlayer';
@@ -36,9 +37,9 @@ function serve(routes: Record<string, Reply>, fallback: (call: Call) => Response
       const body = typeof raw === 'string' ? (JSON.parse(raw) as unknown) : raw;
       const call = { method, path, body, headers: (init?.headers ?? {}) as Record<string, string> };
       if (path !== '/me') calls.push(call);
-      if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
       const own = fallback(call);
       if (own) return own;
+      if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
       const reply = routes[`${method} ${path}`];
       if (reply === undefined) return jsonResponse(404, { code: 'NOT_FOUND', message: `no route ${method} ${path}` });
       if (reply instanceof Response) return reply;
@@ -71,20 +72,29 @@ function play(
   const onPractise = vi.fn();
   const onRestart = vi.fn();
   renderApp(
-    <SessionPlayer
-      session={session}
-      kind="lesson"
-      paths={LESSON_PATHS}
-      dialect="kurmanji"
-      exitTo="/app/learn"
-      exitLabel="Back to Learn"
-      onPractise={onPractise}
-      onRestart={onRestart}
-      {...over}
-    />,
+    <>
+      <SessionPlayer
+        session={session}
+        kind="lesson"
+        paths={LESSON_PATHS}
+        dialect="kurmanji"
+        exitTo="/app/learn"
+        exitLabel="Back to Learn"
+        onPractise={onPractise}
+        onRestart={onRestart}
+        {...over}
+      />
+      <Where />
+    </>,
     ['/app/learn/lesson/l1'],
   );
   return { onPractise, onRestart };
+}
+
+/** Where the router is, so a test can see where the player sent the learner. */
+function Where(): React.JSX.Element {
+  const { pathname, search } = useLocation();
+  return <output data-testid="where">{pathname + search}</output>;
 }
 
 const typed = (id: string, prompt: string, type: DeliveredExercise['type'] = 'translate'): DeliveredExercise => ({ id, type, prompt });
@@ -102,6 +112,13 @@ async function verdict(text: string): Promise<HTMLElement> {
 
 async function next(): Promise<void> {
   await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+}
+
+/** Check, in the action bar at the foot of the lesson, once there is something to check. */
+async function check(): Promise<void> {
+  const button = await screen.findByRole('button', { name: 'Check' });
+  await waitFor(() => expect(button).toBeEnabled());
+  await userEvent.click(button);
 }
 
 beforeEach(() => {
@@ -132,7 +149,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     answered: {},
   };
 
-  it('answers with a key, says “not yet” in words, and asks the miss again three exercises on — through /retry', async () => {
+  it('chooses with a key and checks with Enter, says “not yet” in words, and asks the miss again three exercises on — through /retry', async () => {
     serve({
       'POST /sessions/s1/answers': (body: unknown) =>
         (body as { exerciseId: string }).exerciseId === 'mc'
@@ -147,7 +164,13 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
 
     expect(await screen.findByText('Choose the answer')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveAttribute('aria-valuenow', '0');
+    // Check waits for an answer, and a key only chooses one: nothing is sent until it is checked
+    expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
     await userEvent.keyboard('1');
+    expect(screen.getByRole('button', { name: /Good night/ })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Check' })).toBeEnabled();
+    expect(sent('answers')).toHaveLength(0);
+    await userEvent.keyboard('{Enter}');
 
     const feedback = await screen.findByRole('region', { name: 'Feedback' });
     expect(within(feedback).getByText('Not yet')).toBeInTheDocument();
@@ -156,17 +179,19 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     // the chosen option and the right one are told apart by more than colour
     expect(screen.getByText('your answer')).toBeInTheDocument();
     expect(screen.getByText('right answer')).toBeInTheDocument();
-    // the verdict is announced, and the focus is on the feedback for Enter
+    // the verdict is announced, and the focus is on Continue, where Check was
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('Not yet The answer: Good day');
-    expect(feedback).toHaveFocus();
+    expect(within(feedback).getByRole('button', { name: 'Continue' })).toHaveFocus();
     expect(sent('answers', 'mc')[0]!.body).toEqual({ exerciseId: 'mc', answer: { choice: 0 } });
 
-    // the native recording, now that hearing it gives nothing away
+    // the native recording plays by itself a moment after the verdict, and can be heard again
+    await waitFor(() => expect(played.at(-1)).toEqual({ src: 'https://cdn.test/rojbas.mp3', rate: 1 }));
+    played = [];
     await userEvent.click(within(feedback).getByRole('button', { name: 'Hear it' }));
     expect(played.at(-1)).toEqual({ src: 'https://cdn.test/rojbas.mp3', rate: 1 });
 
-    // Enter goes on from the panel (the button just pressed would take it itself)
-    feedback.focus();
+    // Enter goes on from the page as well as from Continue (the button just pressed would take it itself)
+    (document.activeElement as HTMLElement).blur();
     await userEvent.keyboard('{Enter}');
     for (const word of ['sêv', 'av', 'nan']) {
       await answerTyped(word);
@@ -176,25 +201,33 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     // the miss comes back, marked as a second try, and goes to /retry
     expect(await screen.findByText('Second try')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /Good day/ }));
+    await check();
     const second = await screen.findByRole('region', { name: 'Feedback' });
-    expect(within(second).getByText('Correct')).toBeInTheDocument();
+    // right, praised in Kurdish, and four right in a row now: the run is shown, though not yet named
+    expect(within(second).getByText('Gelek baş!')).toBeInTheDocument();
+    expect(within(second).getByText('4 in a row')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveClass('is-run');
     expect(within(second).getByText('A second try is practice: it does not change your score.')).toBeInTheDocument();
     expect(sent('retry', 'mc')).toHaveLength(1);
     expect(sent('answers', 'mc')).toHaveLength(1);
     await next();
 
-    // the results: first-try accuracy, XP, the streak, and the mistake with its answer
+    // the results: first-try accuracy with a kind word, XP, the streak, and the mistake with its answer
     expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    // the lesson's own header has gone: the results have the screen
+    expect(screen.queryByRole('progressbar', { name: 'Progress' })).not.toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
-    expect(screen.getByText('3 of 4')).toBeInTheDocument();
+    expect(screen.getByText('Solid · 3 of 4')).toBeInTheDocument();
     // the XP counts up as the results arrive, and is read out as the number it ends on
     expect(screen.getByLabelText('+15')).toBeInTheDocument();
     expect(await screen.findByText('+15', undefined, { timeout: 3000 })).toBeInTheDocument();
-    const mistakes = screen.getByRole('heading', { name: 'To go over' }).parentElement!;
+    const mistakes = screen.getByRole('heading', { name: 'To go over' }).closest('details')!;
+    expect(mistakes).toHaveAttribute('open');
     expect(within(mistakes).getByText('“Roj baş” tê çi wateyê?')).toBeInTheDocument();
     expect(within(mistakes).getByText('Good day')).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/sessions/s1/complete')).toHaveLength(1);
 
+    // in the bar, where Check was: no next lesson known here, so practising the mistakes leads
     await userEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
     expect(onPractise).toHaveBeenCalledWith(['mc']);
   });
@@ -284,8 +317,27 @@ describe('listening', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Slower (0.75×)' }));
     expect(played.at(-1)).toEqual({ src: clip, rate: 0.75 });
     await answerTyped('av');
-    expect(await verdict('Correct')).toBeInTheDocument();
+    // a right answer is praised in Kurdish, with what the word means beside it
+    expect(await verdict('Aferîn!')).toHaveAttribute('lang', 'ku');
+    expect(await verdict('Well done')).toBeInTheDocument();
+    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('Correct Aferîn!');
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'l', answer: { text: 'av' } });
+  });
+
+  it('puts listening off for the rest of the lesson, and puts it back on Undo', async () => {
+    serve({ 'POST /sessions/s1/answers': right, 'POST /sessions/s1/complete': results() });
+    const exercises: DeliveredExercise[] = [{ id: 'l1', type: 'listening', audioUrl: clip }, typed('t', 'apple'), { id: 'l2', type: 'listening', audioUrl: clip }];
+    play({ sessionId: 's1', exercises, answered: {} });
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Can’t listen now' }));
+    // said as it happens, with the way to have it back
+    expect((await screen.findByText('No more listening in this lesson')).closest('[role="status"]')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByText('No more listening in this lesson')).not.toBeInTheDocument();
+    await answerTyped('sêv');
+    await next();
+    // the second listening item is back
+    expect(await screen.findByText('Type what you hear')).toBeInTheDocument();
   });
 
   it('“Can’t listen now” moves on without an answer, a mistake or a second try', async () => {
@@ -373,7 +425,13 @@ describe('speaking', () => {
     await userEvent.click(screen.getByRole('button', { name: 'Hear yourself' }));
     expect(played.at(-1)?.src).toBe('blob:take');
 
+    // a rating is chosen, and can be changed, until Check sends it
+    await userEvent.click(screen.getByRole('button', { name: 'Sounded right' }));
     await userEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.getByRole('button', { name: 'Close' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveAttribute('aria-pressed', 'false');
+    expect(sent('answers')).toHaveLength(0);
+    await check();
     expect(await verdict('You said it was close')).toBeInTheDocument();
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'sp', answer: { selfRating: 'close' } });
   });
@@ -397,9 +455,12 @@ describe('speaking', () => {
     await userEvent.tab();
     await userEvent.tab();
     expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveFocus();
+    // Enter chooses it, and Enter on the rating chosen checks it
+    await userEvent.keyboard('{Enter}');
+    expect(screen.getByRole('button', { name: 'Sounded right' })).toHaveAttribute('aria-pressed', 'true');
     await userEvent.keyboard('{Enter}');
     expect(await verdict('You said it sounded right')).toBeInTheDocument();
-    expect(document.activeElement).not.toBe(document.body);
+    expect(screen.getByRole('button', { name: 'Continue' })).toHaveFocus();
   });
 
   it('gives the focus back to Record when a take is turned away', async () => {
@@ -463,7 +524,7 @@ describe('match pairs', () => {
     await userEvent.click(screen.getByRole('button', { name: 'av' }));
     await userEvent.click(screen.getByRole('button', { name: 'water' }));
     await userEvent.click(screen.getByRole('button', { name: 'Check' }));
-    expect(await verdict('Correct')).toBeInTheDocument();
+    expect(await verdict('Aferîn!')).toBeInTheDocument();
     expect(sent('answers')[0]!.body).toEqual({
       exerciseId: 'm',
       answer: {
@@ -585,11 +646,12 @@ describe('a conversation', () => {
     expect([...document.querySelectorAll('.conversation-stage .speaking-character')].map((f) => f.getAttribute('data-speaker'))).toEqual(['xezo', 'hamo']);
   });
 
-  it('answers as multiple choice does: the option’s place as shown, by tap or by key, marked once graded', async () => {
+  it('answers as multiple choice does: the option’s place as shown, chosen by tap or by key, checked, marked once graded', async () => {
     serve({ 'POST /sessions/s1/answers': { verdict: 'wrong', accepted: false, correction: 'Tea', duplicate: false } });
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     await lines();
     await userEvent.click(screen.getByRole('button', { name: /Coffee/ }));
+    await check();
 
     expect(await verdict('Not yet')).toBeInTheDocument();
     expect(sent('answers')).toHaveLength(1);
@@ -604,7 +666,8 @@ describe('a conversation', () => {
     play({ sessionId: 's1', exercises: [talk], answered: {} });
     await lines();
     await userEvent.keyboard('2');
-    expect(await verdict('Correct')).toBeInTheDocument();
+    await userEvent.keyboard('{Enter}');
+    expect(await verdict('Aferîn!')).toBeInTheDocument();
     expect(sent('answers')[0]!.body).toEqual({ exerciseId: 'c', answer: { choice: 1 } });
   });
 
@@ -663,6 +726,234 @@ describe('a conversation', () => {
   });
 });
 
+describe('the action bar and the verdict sheet', () => {
+  const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => typed(id, `word ${id}`));
+  const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face [data-speaker="hevalo"]');
+
+  it('names a run at a milestone, warms the bar through it, and has Hevalo cheer it and think a miss over', async () => {
+    serve({
+      'POST /sessions/s1/answers': (body: unknown) =>
+        (body as { exerciseId: string }).exerciseId === 'f' ? { verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false } : right,
+    });
+    play({ sessionId: 's1', exercises: six, answered: {} });
+
+    // the first answer of the lesson: Hevalo is there for it
+    await answerTyped('x');
+    await screen.findByRole('region', { name: 'Feedback' });
+    expect(hevalo()).not.toBeNull();
+    await next();
+    // not on every right answer, so his cheer keeps its worth
+    await answerTyped('x');
+    await screen.findByRole('region', { name: 'Feedback' });
+    expect(hevalo()).toBeNull();
+    expect(screen.queryByText(/in a row/)).not.toBeInTheDocument();
+    await next();
+    // from three, the run is shown, and the bar warms
+    await answerTyped('x');
+    expect(await screen.findByText('3 in a row')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Progress' })).toHaveClass('is-run');
+    await next();
+    await answerTyped('x');
+    await next();
+    // five: named, and cheered
+    await answerTyped('x');
+    const sheet = await screen.findByRole('region', { name: 'Feedback' });
+    expect(within(sheet).getByText('5 in a row!')).toBeInTheDocument();
+    expect(within(sheet).getByText('5 in a row')).toHaveClass('is-milestone');
+    expect(hevalo()).not.toBeNull();
+    await next();
+    // a miss starts again, and Hevalo is curious, never sad
+    await answerTyped('sev');
+    await verdict('Not yet');
+    expect(hevalo()).not.toBeNull();
+    expect(screen.queryByText(/in a row/)).not.toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Progress' })).not.toHaveClass('is-run');
+  });
+
+  it('says what kind of slip a typed miss was, and offers the Tips that explain it', async () => {
+    serve({ 'POST /sessions/s1/answers': { verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false } });
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }, { grammarMd: '# Sêv' });
+    await answerTyped('sev');
+    const sheet = await screen.findByRole('region', { name: 'Feedback' });
+    expect(within(sheet).getByText(/^Only the marks differ: .*e → ê/)).toBeInTheDocument();
+    await userEvent.click(within(sheet).getByRole('button', { name: 'Why? Read the tips' }));
+    expect(screen.getByRole('dialog', { name: 'Tips' })).toBeInTheDocument();
+  });
+
+  it('plays the Kurdish by itself after the verdict only while the setting is on', async () => {
+    localStorage.setItem('hevalo_autoplay_audio', 'off');
+    serve({ 'POST /sessions/s1/answers': { ...right, modelAudioUrl: 'https://cdn.test/sev.mp3' } });
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} });
+    await answerTyped('sêv');
+    await screen.findByRole('region', { name: 'Feedback' });
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    expect(played).toEqual([]);
+    localStorage.removeItem('hevalo_autoplay_audio');
+  });
+
+  it('picks match cards from the keyboard: a number for the Kurdish, Shift and a number for the meaning', async () => {
+    serve({ 'POST /sessions/s1/answers': right });
+    play({ sessionId: 's1', exercises: [{ id: 'm', type: 'match_pairs', lefts: ['sêv', 'av'], rights: ['water', 'apple'] }], answered: {} });
+    await screen.findByText('Match the pairs');
+    await userEvent.keyboard('1');
+    expect(screen.getByRole('button', { name: 'sêv' })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.keyboard('{Shift>}2{/Shift}');
+    expect(screen.getByRole('button', { name: /sêv.*paired with apple/ })).toBeInTheDocument();
+    await userEvent.keyboard('2{Shift>}1{/Shift}');
+    await userEvent.keyboard('{Enter}');
+    await screen.findByRole('region', { name: 'Feedback' });
+    expect(sent('answers')[0]!.body).toEqual({
+      exerciseId: 'm',
+      answer: {
+        matches: [
+          { left: 'sêv', right: 'apple' },
+          { left: 'av', right: 'water' },
+        ],
+      },
+    });
+  });
+
+  it('says once on a device that answers are saved, and leaves on Escape as the ✕ does', async () => {
+    localStorage.removeItem('hevalo_saved_note_seen');
+    serve({});
+    const first = renderApp(
+      <>
+        <SessionPlayer session={{ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }} kind="lesson" paths={LESSON_PATHS} exitTo="/app/learn/course/c1" exitLabel="Back" onPractise={vi.fn()} />
+        <Where />
+      </>,
+      ['/app/learn/lesson/l1'],
+    );
+    expect(await screen.findByText(/Every answer is saved as you give it/)).toBeInTheDocument();
+    (document.activeElement as HTMLElement).blur();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/course/c1');
+    first.unmount();
+
+    play({ sessionId: 's2', exercises: [typed('t', 'apple')], answered: {} });
+    await screen.findByText('Write this in Kurdish');
+    expect(screen.queryByText(/Every answer is saved as you give it/)).not.toBeInTheDocument();
+  });
+});
+
+describe('the results', () => {
+  /** Where things stand before the lesson, then after it: /me, today's goal and the league, read twice. */
+  function standing(before: { xp: number; rank: number; weekly: number }, after: { xp: number; rank: number; weekly: number }, goal = 20) {
+    let me = 0;
+    let goals = 0;
+    let leagues = 0;
+    return (call: Call): Response | null => {
+      if (call.path === '/me') {
+        const first = me++ === 0;
+        return jsonResponse(200, {
+          user: { id: 'me', username: 'me', emailVerified: true, level: { level: 4 }, streak: { current: first ? 7 : 8, lastActiveOn: first ? '2026-10-27' : '2026-10-28' } },
+        });
+      }
+      if (call.path === '/me/daily-goal') {
+        const xp = goals++ === 0 ? before.xp : after.xp;
+        return jsonResponse(200, { goal, effectiveGoal: goal, earnedXp: xp, progress: Math.min(1, xp / goal), completed: xp >= goal });
+      }
+      if (call.path === '/me/league') {
+        const s = leagues++ === 0 ? before : after;
+        return jsonResponse(200, { mode: 'league', optedOut: false, joined: true, tier: 'kani', rank: s.rank, weeklyXp: s.weekly });
+      }
+      if (call.path === '/courses/c1/map') {
+        return jsonResponse(200, {
+          course: { id: 'c1', title: 'Kurmancî' },
+          units: [
+            {
+              unitId: 'u1',
+              title: 'Basics',
+              skills: [
+                {
+                  skillId: 's1',
+                  level: 1,
+                  title: 'Greetings',
+                  state: 'unlocked',
+                  strength: 0,
+                  hasGrammar: false,
+                  firstLessonId: 'l1',
+                  lessons: [
+                    { lessonId: 'l1', position: 1, title: 'Silav', completed: true },
+                    { lessonId: 'l2', position: 2, title: 'Rojbaş', completed: false },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+      }
+      return null;
+    };
+  }
+  const perfect = results({ correct: 1, total: 1, accuracy: 1, mistakes: [], xpAwarded: 15 });
+
+  it('calls a perfect lesson so, moves the goal and the league on, and leads with the next lesson while the goal is still to meet', async () => {
+    serve(
+      { 'POST /sessions/s1/answers': right, 'POST /sessions/s1/complete': { ...perfect, streak: { current: 8, longest: 9, lastActiveOn: '2026-10-27' } } },
+      standing({ xp: 0, rank: 6, weekly: 120 }, { xp: 15, rank: 4, weekly: 135 }),
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }, { courseId: 'c1', lessonId: 'l1' });
+    await answerTyped('sêv');
+    await next();
+
+    expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
+    expect(screen.getByText('Excellent · 1 of 1')).toBeInTheDocument();
+    expect(await screen.findByText('15 of 20 XP today')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '75');
+    expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
+    expect(screen.getByText('Up to #4')).toBeInTheDocument();
+    // the next lesson in the course leads, with the way back to the path beside it
+    expect(screen.queryByText('Today’s goal is done. A good place to stop, or keep going.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to the path' })).toHaveAttribute('href', '/app/learn');
+    await userEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
+  });
+
+  it('says the goal is done and this is a good place to stop, and opens the day the streak was kept on a tap', async () => {
+    serve(
+      {
+        'POST /sessions/s1/answers': right,
+        'POST /sessions/s1/complete': {
+          ...perfect,
+          streak: { current: 8, longest: 9, freezes: 0, lastActiveOn: '2026-10-28', daysLearned: 41, freezeProgress: 3, sessionsPerFreeze: 5 },
+        },
+      },
+      standing({ xp: 10, rank: 4, weekly: 120 }, { xp: 25, rank: 4, weekly: 135 }),
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }, { courseId: 'c1', lessonId: 'l1' });
+    await answerTyped('sêv');
+    await next();
+
+    expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
+    expect(await screen.findByText('Today’s goal is done')).toBeInTheDocument();
+    // no rank gained, so no "Up to"; the league row is still there
+    expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
+    expect(screen.queryByText(/^Up to/)).not.toBeInTheDocument();
+
+    // the streak was kept today: Continue, never by itself, to its day
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: 'Day 8' })).toBeInTheDocument();
+    expect(screen.getByText('You learned today. 41 days learned in all.')).toBeInTheDocument();
+    expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
+    // and then: Done leads, the next lesson beside it
+    expect(screen.getByText('Today’s goal is done. A good place to stop, or keep going.')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+  });
+
+  it('shows no league to a learner who is not racing in one', async () => {
+    serve({ 'POST /sessions/s1/answers': right, 'POST /sessions/s1/complete': perfect }, (call) =>
+      call.path === '/me/league' ? jsonResponse(200, { mode: 'personal', optedOut: true, joined: false, tier: 'kani', rank: 3, weeklyXp: 40 }) : null,
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} });
+    await answerTyped('sêv');
+    await next();
+    await screen.findByRole('heading', { name: 'Perfect lesson!' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByText(/XP this week/)).not.toBeInTheDocument();
+  });
+});
+
 describe('leaving and coming back', () => {
   const exercises = ['a', 'b', 'c', 'd', 'e'].map((id) => typed(id, `word ${id}`));
 
@@ -708,7 +999,7 @@ describe('when the server says no', () => {
     await answerTyped('sêv');
     const alert = await screen.findByRole('alert');
     await userEvent.click(within(alert).getByRole('button', { name: 'Try again' }));
-    expect(await verdict('Correct')).toBeInTheDocument();
+    expect(await verdict('Aferîn!')).toBeInTheDocument();
     expect(sent('answers').map((c) => c.body)).toEqual([
       { exerciseId: 't', answer: { text: 'sêv' } },
       { exerciseId: 't', answer: { text: 'sêv' } },
@@ -800,7 +1091,7 @@ describe('a review', () => {
     await answerTyped('ماڵ');
     await next();
     await screen.findByRole('heading', { name: 'Review finished' });
-    const answer = within(screen.getByRole('heading', { name: 'To go over' }).parentElement!).getByText('ماڵ');
+    const answer = within(screen.getByRole('heading', { name: 'To go over' }).closest('details')!).getByText('ماڵ');
     expect(answer).toHaveAttribute('lang', 'ckb');
     expect(answer).toHaveAttribute('dir', 'rtl');
     expect(sent('retry')).toHaveLength(1);
@@ -845,6 +1136,7 @@ describe('Tips', () => {
     });
 
     await userEvent.keyboard('2');
+    await check();
     await screen.findByRole('region', { name: 'Feedback' });
     await userEvent.click(screen.getByRole('button', { name: 'Tips' }));
     await userEvent.keyboard('{Enter}');
@@ -869,7 +1161,8 @@ describe('how it feels on a touch screen', () => {
     play({ sessionId: 's1', exercises: [{ id: 'mc', type: 'multiple_choice', options: ['av', 'nan'] }, typed('t', 'apple')], answered: {} });
 
     await userEvent.click(await screen.findByRole('button', { name: /av/ }));
-    await verdict('Correct');
+    await check();
+    await verdict('Aferîn!');
     // the buzz is paced to the answer's reveal, so it can land a moment after the words
     await waitFor(() => expect(vibrate).toHaveBeenLastCalledWith(PATTERNS.correct));
     // the option chosen is the one that answers back (styles/motion.css)

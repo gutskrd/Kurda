@@ -35,6 +35,10 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
     // family with none was signed out, revoked from the session list, or
     // caught reusing a stolen refresh token — and its access tokens stop
     // there, rather than living out their fifteen minutes.
+    //
+    // `birth_month_known` rides along for `requireBirthMonth`, which every
+    // route that reaches other people asks: the row is read here anyway, so
+    // asking again was a second round trip on each of those requests.
     const family = claims.fam && UUID_RE.test(claims.fam) ? claims.fam : null;
     const result = await app.db.query<{
       id: string;
@@ -44,9 +48,11 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       banned_at: Date | null;
       banned_until: Date | null;
       email_verified_at: Date | null;
+      birth_month_known: boolean;
       session_live: boolean;
     }>(
       `SELECT id, roles, token_version, deleted_at, banned_at, banned_until, email_verified_at,
+              birth_year IS NOT NULL AS birth_month_known,
               ($2::uuid IS NULL OR EXISTS (
                 SELECT 1 FROM refresh_tokens rt
                  WHERE rt.family_id = $2::uuid AND rt.user_id = users.id AND rt.revoked_at IS NULL)) AS session_live
@@ -76,6 +82,7 @@ export function setupAuth(app: FastifyInstance, config: AppConfig): void {
       roles: user.roles,
       familyId: claims.fam,
       emailVerified: user.email_verified_at !== null,
+      birthMonthKnown: user.birth_month_known,
     };
   });
 }

@@ -1,0 +1,294 @@
+/**
+ * How many statements the hottest calls send to Postgres, against real
+ * Postgres (test/query-count.ts).
+ *
+ * Every statement is a round trip on a small paid database, and the calls here
+ * are the ones made most: what the apps poll (the social rail, the heartbeat,
+ * an open thread), what a lesson costs, and what the badges, the leagues and
+ * the batch writes do for many rows at once. Two kinds of check:
+ *
+ * - a budget: no more statements than the call takes today, so one added on a
+ *   hot path is a decision somebody makes rather than an accident;
+ * - the same count for few rows and for many, which is what fails when a
+ *   lookup moves into a loop (an N+1) even if the budget has room to spare.
+ *
+ * A call is counted the second time it is made, as a polling client makes it,
+ * once the first has settled what happens only once (the day's network
+ * sighting, a first badge count). The budgets include the auth middleware's
+ * own read of the session.
+ */
+import { randomUUID } from 'node:crypto';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { FastifyInstance } from 'fastify';
+import pg from 'pg';
+import { weekSeason } from '@kurda/shared';
+import { buildApp } from '../app.js';
+import { loadConfig } from '../config/env.js';
+import { activate } from '../test/activate.js';
+import { befriend } from '../test/social.js';
+import { makeLearner, removeLearners } from '../test/progress.js';
+import { poolQuiet, queriesDuring } from '../test/query-count.js';
+import { ContentRepository } from '../content/repository.js';
+import { canonicalPair } from '../friends/pair.js';
+import { FriendService } from '../friends/service.js';
+import { GroupService } from '../groups/service.js';
+import { AnalyticsService } from '../analytics/service.js';
+import { BADGE_TRIGGERS, BadgeService } from '../badges/service.js';
+import { LeagueService } from '../leagues/service.js';
+
+const DATABASE_URL = process.env.DATABASE_URL;
+
+/** A closed week of its own (a Monday), whose groups are removed afterwards. */
+const LEAGUE_WEEK = '2024-06-03';
+
+describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 }, () => {
+  const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
+  let app: FastifyInstance;
+  let pool: pg.Pool;
+  const suffix = Date.now().toString(36);
+  // a network of its own per run: sign-up caps accounts per network
+  const net = 30 + Math.floor(Math.random() * 200);
+  const ids: Record<string, string> = {};
+  const tokens: Record<string, string> = {};
+  let courseId = '';
+
+  async function register(tag: string): Promise<void> {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: {
+        email: `qb_${tag}_${suffix}@it.kurda.app`,
+        username: `qb_${tag}_${suffix}`.slice(0, 30),
+        password: 'a-strong-password1',
+        acceptTerms: true,
+        birthYear: 1990,
+        birthMonth: 6,
+      },
+      remoteAddress: `10.${net}.${Object.keys(ids).length + 1}.1`,
+    });
+    await activate(app, pool, res);
+    ids[tag] = res.json().user.id;
+    tokens[tag] = res.json().tokens.accessToken;
+  }
+
+  const call = (method: 'GET' | 'POST', url: string, tag: string, payload?: unknown) =>
+    app.inject({ method, url, headers: { authorization: `Bearer ${tokens[tag]!}` }, payload: payload as object, remoteAddress: `10.${net}.9.9` });
+
+  /** Let what a call set going and did not wait for finish, so it is not counted against the next. */
+  const settle = () => poolQuiet(app.db);
+
+  /**
+   * The offline gate's setting is read at most once every five seconds per
+   * process (maintenance/service.ts), by whichever request comes then: shared
+   * by every request rather than paid by one, so it is left out of a count.
+   */
+  const SHARED_CACHE = /\bFROM maintenance\b/;
+
+  /** The statements the app's pool sends for one call. */
+  async function counted(method: 'GET' | 'POST', url: string, tag: string, payload?: unknown) {
+    await settle();
+    const run = await queriesDuring(app.db, () => call(method, url, tag, payload));
+    expect(run.result.statusCode, `${method} ${url}: ${run.result.body}`).toBeLessThan(300);
+    const statements = run.statements.filter((sql) => !SHARED_CACHE.test(sql));
+    return { count: statements.length, statements, body: run.result.json() };
+  }
+
+  /** A call made once to settle it, then counted the second time. */
+  async function steady(method: 'GET' | 'POST', url: string, tag: string, payload?: unknown) {
+    await call(method, url, tag, payload);
+    return counted(method, url, tag, payload);
+  }
+
+  async function message(from: string, to: string, body: string): Promise<void> {
+    const { lo, hi } = canonicalPair(from, to);
+    await pool.query(`INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)`, [lo, hi, from, body]);
+  }
+
+  /** A published lesson of `count` multiple-choice items, all answered with option 0. */
+  async function lesson(position: number, count: number): Promise<string> {
+    const repo = new ContentRepository(pool);
+    const unitId = (await pool.query<{ id: string }>(`SELECT id FROM units WHERE course_id = $1`, [courseId])).rows[0]!.id;
+    const skillId = (await pool.query<{ id: string }>(`SELECT id FROM skills WHERE unit_id = $1`, [unitId])).rows[0]!.id;
+    const lessonId = await repo.createLesson(skillId, position, `D${position}`, `Lesson ${position}`);
+    for (let i = 1; i <= count; i++) {
+      await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Nan" ${i}?`, options: ['Bread', 'Water', 'Milk'], correctIndex: 0 });
+    }
+    await repo.publishLesson(lessonId);
+    return lessonId;
+  }
+
+  /** Play a lesson through, every item right; returns the session and the counts of its calls. */
+  async function play(tag: string, lessonId: string) {
+    const start = await counted('GET', `/lessons/${lessonId}/session`, tag);
+    const sid = start.body.sessionId as string;
+    const answers: Array<{ count: number; statements: readonly string[] }> = [];
+    for (const ex of start.body.exercises as Array<{ id: string; options: string[] }>) {
+      const graded = await counted('POST', `/sessions/${sid}/answers`, tag, { exerciseId: ex.id, answer: { choice: ex.options.indexOf('Bread') } });
+      expect(graded.body.verdict).toBe('correct');
+      answers.push(graded);
+    }
+    const complete = await counted('POST', `/sessions/${sid}/complete`, tag);
+    expect(complete.body.accuracy).toBe(1);
+    return { start, answers, complete };
+  }
+
+  beforeAll(async () => {
+    app = buildApp(config);
+    await app.ready();
+    pool = new pg.Pool({ connectionString: DATABASE_URL });
+    for (const tag of ['me', 'f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'solo', 'la', 'lb']) await register(tag);
+    await befriend(pool, ids.solo!, ids.f1!);
+    for (const tag of ['f1', 'f2', 'f3', 'f4', 'f5', 'f6']) await befriend(pool, ids.me!, ids[tag]!);
+    const repo = new ContentRepository(pool);
+    courseId = await repo.createCourse({ slug: `qb-${suffix}`, titleKu: 'K', titleEn: 'Budgets' });
+    const unitId = await repo.createUnit(courseId, 1, 'Y', 'Unit');
+    await repo.createSkill(unitId, 1, 'B', 'Basics');
+  });
+
+  afterAll(async () => {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`SET LOCAL kurda.ledger_admin = 'on'`);
+      await client.query(`DELETE FROM users WHERE email LIKE $1`, [`%_${suffix}@it.kurda.app`]);
+      await client.query('COMMIT');
+    } finally {
+      client.release();
+    }
+    await removeLearners(pool, `qbl${suffix}%`);
+    await pool.query(`DELETE FROM league_cohorts WHERE week_key = $1`, [LEAGUE_WEEK]);
+    await pool.query(
+      `UPDATE lessons SET status = 'archived' WHERE skill_id IN (
+         SELECT s.id FROM skills s JOIN units u ON u.id = s.unit_id WHERE u.course_id = $1)`,
+      [courseId],
+    );
+    await pool.query(`DELETE FROM courses WHERE id = $1`, [courseId]);
+    await pool.end();
+    await app.close();
+  });
+
+  describe('what the apps poll', () => {
+    it('the social rail costs the same for one friend as for six, within its budget', async () => {
+      const one = await steady('GET', '/me/social', 'solo');
+      const six = await steady('GET', '/me/social', 'me');
+      expect(six.body.friends).toHaveLength(6);
+      expect(six.count, six.statements.join('\n')).toBe(one.count);
+      expect(six.count, six.statements.join('\n')).toBeLessThanOrEqual(8);
+    });
+
+    it('the heartbeat is the session read and one statement', async () => {
+      const beat = await steady('POST', '/me/heartbeat', 'me');
+      expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);
+    });
+
+    it('an open thread costs the same for two messages as for twenty, within its budget', async () => {
+      for (let i = 0; i < 2; i++) await message(ids.f2!, ids.me!, `short ${i}`);
+      for (let i = 0; i < 20; i++) await message(ids.f3!, ids.me!, `long ${i}`);
+      const short = await steady('GET', `/chat/${ids.f2}/messages`, 'me');
+      const long = await steady('GET', `/chat/${ids.f3}/messages`, 'me');
+      expect(long.body.messages).toHaveLength(20);
+      expect(long.count, long.statements.join('\n')).toBe(short.count);
+      expect(long.count, long.statements.join('\n')).toBeLessThanOrEqual(2);
+    });
+
+    it('sending a direct message stays within its budget', async () => {
+      const sent = await steady('POST', `/chat/${ids.f4}/messages`, 'me', { body: 'hello there' });
+      expect(sent.count, sent.statements.join('\n')).toBeLessThanOrEqual(6);
+    });
+
+    it('a group thread costs the same for two messages as for twelve, within its budget', async () => {
+      const groups = new GroupService(pool);
+      const few = await groups.create(ids.me!, { name: `Few ${suffix}`.slice(0, 40), privacy: 'invite' });
+      const many = await groups.create(ids.me!, { name: `Many ${suffix}`.slice(0, 40), privacy: 'invite' });
+      for (const [g, n] of [[few.id, 2], [many.id, 12]] as const) {
+        for (let i = 0; i < n; i++) {
+          await pool.query(`INSERT INTO group_messages (group_id, sender_id, body) VALUES ($1, $2, $3)`, [g, ids.me, `message ${i}`]);
+        }
+      }
+      const a = await steady('GET', `/groups/${few.id}/chat`, 'me');
+      const b = await steady('GET', `/groups/${many.id}/chat`, 'me');
+      expect(b.body.messages).toHaveLength(12);
+      expect(b.count, b.statements.join('\n')).toBe(a.count);
+      expect(b.count, b.statements.join('\n')).toBeLessThanOrEqual(3);
+    });
+  });
+
+  describe('a lesson', () => {
+    it('starting, answering and finishing cost the same however many items it has', async () => {
+      // each learner finishes a first lesson, which joins the week's league and makes the first badge count
+      const warm = await lesson(1, 2);
+      await play('la', warm);
+      await play('lb', warm);
+
+      const short = await play('la', await lesson(2, 2));
+      const long = await play('lb', await lesson(3, 6));
+      const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
+      expect(long.start.count, shown(long.start)).toBe(short.start.count);
+      expect(long.start.count, shown(long.start)).toBeLessThanOrEqual(5);
+      for (const answer of [...short.answers, ...long.answers]) {
+        expect(answer.count, shown(answer)).toBe(short.answers[0]!.count);
+        expect(answer.count, shown(answer)).toBeLessThanOrEqual(7);
+      }
+      expect(long.complete.count, shown(long.complete)).toBe(short.complete.count);
+      expect(long.complete.count, shown(long.complete)).toBeLessThanOrEqual(36);
+    });
+
+    it('a badge count is a handful of statements, however many badges it counts', async () => {
+      const badges = new BadgeService(pool);
+      await badges.evaluate(ids.la!);
+      const some = await queriesDuring(pool, () => badges.evaluate(ids.la!, BADGE_TRIGGERS.learning));
+      const all = await queriesDuring(pool, () => badges.evaluate(ids.la!));
+      expect(all.count, all.statements.join('\n')).toBe(some.count);
+      // BEGIN, the learner's lock, their state, every measure, their badges, COMMIT (and one write if any moved)
+      expect(all.count, all.statements.join('\n')).toBeLessThanOrEqual(7);
+    });
+  });
+
+  describe('many rows in one statement', () => {
+    it('a league group settles in the same statements for three members as for nine', async () => {
+      const leagues = new LeagueService(pool, { weeklyGoalXp: 150 });
+      const settle3 = await settledGroup(leagues, 'gol', 3);
+      const settle9 = await settledGroup(leagues, 'derya', 9);
+      expect(settle9.standings).toHaveLength(9);
+      expect(settle9.count, settle9.statements.join('\n')).toBe(settle3.count);
+    });
+
+    it('event ingest writes a batch of twenty-five in one statement, as it does one', async () => {
+      const analytics = new AnalyticsService(pool);
+      const events = (n: number) =>
+        Array.from({ length: n }, () => ({ eventId: randomUUID(), type: 'screen_view', payload: { screen: 'home' } }));
+      const one = await queriesDuring(pool, () => analytics.ingest(ids.me!, events(1)));
+      const many = await queriesDuring(pool, () => analytics.ingest(ids.me!, events(25)));
+      expect(many.result).toMatchObject({ accepted: 25, duplicates: 0 });
+      expect(one.count).toBe(1);
+      expect(many.count).toBe(1);
+    });
+
+    it('friend checks for seven people are one query, as for one', async () => {
+      const friends = new FriendService(pool);
+      const seven = ['f1', 'f2', 'f3', 'f4', 'f5', 'f6', 'solo'].map((t) => ids[t]!);
+      const one = await queriesDuring(pool, () => friends.statusesBetween(ids.me!, seven.slice(0, 1)));
+      const all = await queriesDuring(pool, () => friends.statusesBetween(ids.me!, seven));
+      expect([...all.result.values()]).toEqual(['friends', 'friends', 'friends', 'friends', 'friends', 'friends', 'none']);
+      expect(one.count).toBe(1);
+      expect(all.count).toBe(1);
+    });
+  });
+
+  /** A group of `size` learners of `tier` in a closed week, settled with the pool counted. */
+  async function settledGroup(leagues: LeagueService, tier: string, size: number) {
+    const at = new Date(`${LEAGUE_WEEK}T12:00:00Z`);
+    let cohortId = '';
+    for (let i = 0; i < size; i++) {
+      const p = await makeLearner(pool, `qbl${suffix}${tier}${i}`);
+      await pool.query(`INSERT INTO user_league (user_id, tier, season_key) VALUES ($1, $2, $3)`, [p.id, tier, weekSeason(LEAGUE_WEEK)]);
+      cohortId = (await leagues.ensureMembership(p.id, at)).cohortId;
+      await pool.query(
+        `INSERT INTO xp_ledger (user_id, source, amount, ref_id, created_at, counted) VALUES ($1, 'test_xp', $2, $3, $4, $2)`,
+        [p.id, 50 + i * 30, `qb-${p.id}`, at],
+      );
+    }
+    const { result, count, statements } = await queriesDuring(pool, () => leagues.settleCohort(cohortId));
+    return { standings: result, count, statements };
+  }
+});

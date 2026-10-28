@@ -5,6 +5,7 @@ import pg from 'pg';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { pass2fa } from '../test/admin-2fa.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -46,6 +47,8 @@ describe.skipIf(!DATABASE_URL)('community library (integration)', () => {
       payload: { email: `lib_admin_${suffix}@it.kurda.app`, password: 'a-strong-password1' },
       remoteAddress: '10.30.0.3',
     }).then((r) => r.json().tokens.accessToken)); // fresh token carries the admin role
+    // staff act on somebody else's post only from a session past the console's code
+    await pass2fa(app, adminTok, '10.30.0.3');
   });
 
   afterAll(async () => {

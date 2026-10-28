@@ -878,11 +878,17 @@ export class WordleBattleService {
     const players = await client.query<PlayerRow>(`SELECT * FROM wordle_battle_players WHERE battle_id = $1 AND NOT removed`, [battleId]);
     const ranked = rankBattle(players.rows.map((r) => this.toBattleResult(r)));
     const count = ranked.length;
-    for (const r of ranked) {
-      const xp = placementXp(r.rank, count);
-      await this.xp.award({ userId: r.userId, source: 'wordle_battle', amount: xp, refId: `battle:${battleId}:${r.userId}` }, client);
-      await client.query(`UPDATE wordle_battle_players SET xp_awarded = $3 WHERE battle_id = $1 AND user_id = $2`, [battleId, r.userId, xp]);
+    const placed = ranked.map((r) => ({ userId: r.userId, xp: placementXp(r.rank, count) }));
+    // each award on its own (it locks and caps the player's day), the record of what each was paid in one statement
+    for (const { userId, xp } of placed) {
+      await this.xp.award({ userId, source: 'wordle_battle', amount: xp, refId: `battle:${battleId}:${userId}` }, client);
     }
+    await client.query(
+      `UPDATE wordle_battle_players p SET xp_awarded = v.xp
+         FROM unnest($2::uuid[], $3::int[]) AS v(user_id, xp)
+        WHERE p.battle_id = $1 AND p.user_id = v.user_id`,
+      [battleId, placed.map((x) => x.userId), placed.map((x) => x.xp)],
+    );
     // a battle that counted moves the ratings, here in the same transaction
     // (anyone who left mid-race is last, whatever the ranking said)
     await this.ranks.finish(client, 'wordle-battle', battleId, ranked.map((r) => ({ userId: r.userId, place: r.rank })));

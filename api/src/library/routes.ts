@@ -20,8 +20,10 @@ import type { AiModerationService } from '../moderation/ai-service.js';
 import type { TrustService } from '../trust/service.js';
 import { PostGate } from '../trust/post-gate.js';
 import { pageQuery, queryUuid, queryWord } from '../http/query.js';
+import { staffCleared } from '../admin/admin-gate.js';
 
 const ADMIN_ROLES = ['admin', 'superadmin', 'content_editor'];
+/** A staff role: what a new post records as its author's role. */
 const isAdmin = (req: FastifyRequest): boolean => !!req.user?.roles.some((r) => ADMIN_ROLES.includes(r));
 
 /*
@@ -83,6 +85,12 @@ export function registerLibraryRoutes(
 ): void {
   const gate = new PostGate(trust, aiMod, app.log);
   const publicUrl = (key: string): string | null => (app.storage ? app.storage.publicUrl(key) : null);
+  /**
+   * Whether this request may edit, publish or take down a post that is not its
+   * own: a staff role, from a session the console itself would let in
+   * (admin/admin-gate.ts `staffCleared`). A staff password alone is a member's.
+   */
+  const actsAsStaff = async (req: FastifyRequest): Promise<boolean> => isAdmin(req) && (await staffCleared(app, req));
 
   /** Resolve the audio rendition's and the pictures' media keys to public CDN URLs. */
   const withAudioUrl = <T extends LibraryPost>(post: T) => ({
@@ -108,7 +116,7 @@ export function registerLibraryRoutes(
       reply.code(404).send({ code: 'NOT_FOUND', message: 'no such post' });
       return null;
     }
-    if (post.authorId !== req.user!.id && !isAdmin(req)) {
+    if (post.authorId !== req.user!.id && !(await actsAsStaff(req))) {
       reply.code(403).send({ code: 'FORBIDDEN', message: 'not your post' });
       return null;
     }
@@ -234,7 +242,7 @@ export function registerLibraryRoutes(
         const refused = await gate.check(req.user!.id, words);
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
       }
-      const res = await library.update(current.id, req.user!.id, isAdmin(req), patch);
+      const res = await library.update(current.id, req.user!.id, await actsAsStaff(req), patch);
       if (res.ok && gated) await gate.passed(req.user!.id, words ? screened(res.post) : null);
       return respond(reply, res);
     },
@@ -244,7 +252,7 @@ export function registerLibraryRoutes(
   app.post(
     '/library/posts/:id/unpublish',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
-    async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, isAdmin(req), 'draft')),
+    async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), 'draft')),
   );
 
   /** Publish a draft (author or admin). */
@@ -269,7 +277,7 @@ export function registerLibraryRoutes(
         const refused = await gate.check(req.user!.id, postWords(current));
         if (refused) return reply.code(refused.status).send({ code: refused.code, message: refused.message });
       }
-      const res = await library.setStatus(current.id, req.user!.id, isAdmin(req), 'published');
+      const res = await library.setStatus(current.id, req.user!.id, await actsAsStaff(req), 'published');
       if (res.ok && goingUp) {
         if (own) await gate.passed(req.user!.id, screened(res.post));
         else await gate.screen(current.authorId, screened(res.post));
@@ -282,7 +290,7 @@ export function registerLibraryRoutes(
   app.delete(
     '/library/posts/:id',
     { schema: { params: idParam }, config: { skipValidation: true }, preHandler: requireAuth },
-    async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, isAdmin(req), 'removed')),
+    async (req, reply) => respond(reply, await library.setStatus((req.params as { id: string }).id, req.user!.id, await actsAsStaff(req), 'removed')),
   );
 
   /**

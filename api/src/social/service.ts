@@ -38,6 +38,8 @@ export interface SearchHit {
   username: string;
   displayName: string | null;
   avatarUrl: string | null;
+  /** already friends with whoever searched, which is also why they are near the top */
+  friend: boolean;
 }
 
 export interface PublicProfile {
@@ -85,11 +87,23 @@ export interface PublicProfile {
 }
 
 const MIN_QUERY = 2;
+/**
+ * The shortest query looked for in the middle of a name. Two letters are found
+ * where a name or one of its words starts: inside names they match most of the
+ * table, and a trigram index cannot narrow a two-letter piece down.
+ */
+const MIN_ANYWHERE = 3;
+/** The shortest query that is also matched loosely, so a typo still finds someone. */
+const MIN_FUZZY = 4;
 
 /** Fold the search form the same way the folded username index does (KUR-044). */
 function foldForm(input: string): string {
   return foldDiacritics(normalizeKurdish(input)).toLowerCase();
 }
+
+/** A username and a display name as the trigram indexes hold them (1751000203000). */
+const FOLDED_USERNAME = `translate(lower(u.username::text), 'êîûçş', 'eiucs')`;
+const FOLDED_NAME = `translate(lower(u.display_name), 'êîûçş', 'eiucs')`;
 
 /**
  * User search + public profiles (KUR-082). Username prefix search is
@@ -115,32 +129,80 @@ export class SocialService {
     this.ranks = ranks ?? new RankService(pool);
   }
 
-  /** Prefix search by username, excluding self, blocks, and non-searchable users. */
+  /**
+   * People by username or display name, excluding self, blocks, and non-searchable users.
+   *
+   * Found wherever the query sits in a name — "serk" finds "berserker" — and,
+   * from four letters, when no name holds it, by the names nearest to it, so a
+   * slip of the thumb still finds the person. Diacritics are folded on both
+   * sides.
+   *
+   * Ranked the way a search for a person is meant: the exact username first,
+   * then friends whose name matches (the person you are looking for is usually
+   * someone you know), then everyone else by how well they match — a name that
+   * starts with the query, a word in it that starts with it, the query inside
+   * the username, inside the display name — and near misses closest first. One
+   * query: the friendship is read in the same pass.
+   */
   async search(viewerId: string, query: string, publicUrl: PublicUrl = () => null, limit = 20): Promise<SearchHit[]> {
-    const folded = foldForm(query);
+    const folded = foldForm(query).trim();
     if (folded.length < MIN_QUERY) return [];
-    const rows = await this.pool.query<{ id: string; username: string; display_name: string | null; profile_photo_key: string | null; selected_avatar_key: string | null }>(
-      `SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key FROM users u
-        WHERE u.deleted_at IS NULL AND u.id <> $1
-          AND u.profile_visibility <> 'nobody'
-          -- strangers cannot look a minor up (they reach friends another way),
-          -- nor anyone whose age is not on record yet
-          AND NOT ${notKnownAdultSql('u')}
-          AND translate(lower(u.username::text), 'êîûçş', 'eiucs') LIKE $2 || '%'
-          AND NOT EXISTS (
-            SELECT 1 FROM blocks b
-             WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
-          )
-        ORDER BY u.username LIMIT $3`,
-      // a prefix taken literally: usernames hold underscores, and `_` or `%`
-      // left as wildcards would also list names that do not start this way
-      [viewerId, escapeLike(folded), limit],
+    // the query taken literally inside a pattern: usernames hold underscores,
+    // and `_` or `%` left as wildcards would list names that do not hold it
+    const startsOrWordStarts = `${FOLDED_USERNAME} LIKE $3 || '%' OR ${FOLDED_NAME} LIKE $3 || '%'
+            OR ${FOLDED_NAME} LIKE '% ' || $3 || '%' OR ${FOLDED_USERNAME} LIKE '%\\_' || $3 || '%'`;
+    const anywhere = `${FOLDED_USERNAME} LIKE '%' || $3 || '%' OR ${FOLDED_NAME} LIKE '%' || $3 || '%'`;
+    const nearly = `${FOLDED_USERNAME} % $2 OR $2 <% ${FOLDED_USERNAME} OR ${FOLDED_NAME} % $2 OR $2 <% ${FOLDED_NAME}`;
+    const matched = [folded.length >= MIN_ANYWHERE ? anywhere : startsOrWordStarts, ...(folded.length >= MIN_FUZZY ? [nearly] : [])].join(' OR ');
+    const rows = await this.pool.query<{
+      id: string;
+      username: string;
+      display_name: string | null;
+      profile_photo_key: string | null;
+      selected_avatar_key: string | null;
+      friend: boolean;
+    }>(
+      `SELECT * FROM (SELECT hit.*, count(*) FILTER (WHERE tier < 5) OVER () AS holding FROM (
+         SELECT u.id, u.username, u.display_name, u.profile_photo_key, u.selected_avatar_key,
+                EXISTS (
+                  SELECT 1 FROM friendships f
+                   WHERE f.user_lo = LEAST($1::uuid, u.id) AND f.user_hi = GREATEST($1::uuid, u.id) AND f.status = 'accepted'
+                ) AS friend,
+                CASE
+                  WHEN ${FOLDED_USERNAME} = $2 THEN 0
+                  WHEN ${FOLDED_USERNAME} LIKE $3 || '%' THEN 1
+                  WHEN ${startsOrWordStarts} THEN 2
+                  WHEN ${FOLDED_USERNAME} LIKE '%' || $3 || '%' THEN 3
+                  WHEN ${FOLDED_NAME} LIKE '%' || $3 || '%' THEN 4
+                  ELSE 5
+                END AS tier,
+                greatest(similarity(${FOLDED_USERNAME}, $2), word_similarity($2, ${FOLDED_USERNAME}),
+                         coalesce(similarity(${FOLDED_NAME}, $2), 0), coalesce(word_similarity($2, ${FOLDED_NAME}), 0)) AS closeness
+           FROM users u
+          WHERE u.deleted_at IS NULL AND u.id <> $1
+            AND u.profile_visibility <> 'nobody'
+            -- strangers cannot look a minor up (they reach friends another way),
+            -- nor anyone whose age is not on record yet
+            AND NOT ${notKnownAdultSql('u')}
+            AND (${matched})
+            AND NOT EXISTS (
+              SELECT 1 FROM blocks b
+               WHERE (b.blocker_id = $1 AND b.blocked_id = u.id) OR (b.blocker_id = u.id AND b.blocked_id = $1)
+            )
+       ) hit) ranked
+       -- near misses only when no name holds what was typed: a list that has
+       -- the person asked for is not improved by names merely like theirs
+       WHERE tier < 5 OR holding = 0
+       ORDER BY (tier = 0) DESC, (friend AND tier < 5) DESC, tier, closeness DESC, length(username), username
+       LIMIT $4`,
+      [viewerId, folded, escapeLike(folded), limit],
     );
     return rows.rows.map((r) => ({
       userId: r.id,
       username: r.username,
       displayName: r.display_name,
       avatarUrl: resolveAvatarUrl(r.profile_photo_key, r.selected_avatar_key, publicUrl),
+      friend: r.friend,
     }));
   }
 
@@ -287,13 +349,13 @@ export class SocialService {
     if (!u) throw new AppError('USER_NOT_FOUND', 404, 'no such user');
 
     const isSelf = viewerId !== null && viewerId === targetId;
-    // a block hides the profile entirely — never reveal the block itself
-    if (viewerId !== null && !isSelf && (await this.friends.areBlocked(viewerId, targetId))) {
-      throw new AppError('USER_NOT_FOUND', 404, 'no such user');
-    }
-
+    // one read says both whether a block stands between them and where they stand
     const friendStatus: FriendStatus =
       isSelf ? 'self' : viewerId === null ? 'none' : await this.friends.statusBetween(viewerId, targetId);
+    // a block hides the profile entirely — never reveal the block itself
+    if (friendStatus === 'blocked') {
+      throw new AppError('USER_NOT_FOUND', 404, 'no such user');
+    }
     // an 'everyone' stored before we knew their age is read as 'members' for a
     // minor, or for anyone whose age is not on record yet: never the open web
     const visibility: Visibility =

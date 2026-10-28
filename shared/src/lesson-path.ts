@@ -329,3 +329,94 @@ function frontier<S extends PathSkill>(units: PathUnit<S>[]): string | null {
 export function stopKeys<S extends PathSkill>(path: LessonPath<S>): string[] {
   return path.units.flatMap((u) => u.stops.map((p) => p.stop.key));
 }
+
+/**
+ * The lesson "Next lesson" opens when a lesson is finished: the one the
+ * current skill's button opens, read from the map fetched after the lesson
+ * (so a skill just finished hands on to the one it opened). Null when there
+ * is nothing open left to do, or when it would only open `finished`, the
+ * lesson just played, again.
+ */
+export function nextLaunch<S extends PathSkill>(map: PathMapInput<S>, finished: string | null = null): { lessonId: string; title: string } | null {
+  const path = lessonPath(map);
+  const stop = path.units.flatMap((u) => u.stops.map((p) => p.stop)).find((s) => s.key === path.current);
+  if (stop?.kind !== 'skill' || !stop.launch || stop.launch === finished) return null;
+  const lesson = stop.skill.lessons?.find((l) => l.lessonId === stop.launch);
+  return { lessonId: stop.launch, title: lesson?.title ?? stop.skill.title };
+}
+
+/**
+ * How the path stood, skill by skill: its state and its lessons done. Each
+ * app keeps the last one it drew, so coming back after a lesson can show what
+ * the lesson changed (`pathChanges`) rather than only the new state.
+ */
+export type PathSnapshot = Record<string, { state: StopState; done: number }>;
+
+export function pathSnapshot<S extends PathSkill>(path: LessonPath<S>): PathSnapshot {
+  const snapshot: PathSnapshot = {};
+  for (const unit of path.units) {
+    for (const { stop } of unit.stops) if (stop.kind === 'skill') snapshot[stop.key] = { state: stop.state, done: stop.lessonsDone };
+  }
+  return snapshot;
+}
+
+/** What moved on the path since the snapshot, in the order it is shown (`PATH_RETURN`). */
+export interface PathChanges {
+  /** skills with more lessons done: the share of their lessons done, then and now */
+  ring: Array<{ key: string; from: number; to: number }>;
+  /** skills finished since */
+  finished: string[];
+  /** skills opened since: closed then, open now */
+  opened: string[];
+  /** the skill to do now, when it is not the one it was */
+  current: string | null;
+}
+
+/** What changed between the last path drawn and this one; null with nothing to compare with, or nothing changed. */
+export function pathChanges<S extends PathSkill>(prev: PathSnapshot | null, path: LessonPath<S>): PathChanges | null {
+  if (!prev) return null;
+  const changes: PathChanges = { ring: [], finished: [], opened: [], current: null };
+  const prevCurrent = Object.keys(prev).find((key) => prev[key]!.state === 'current') ?? null;
+  for (const unit of path.units) {
+    for (const { stop } of unit.stops) {
+      const then = stop.kind === 'skill' ? prev[stop.key] : undefined;
+      if (stop.kind !== 'skill' || !then) continue;
+      if (stop.lessonsDone > then.done && stop.lessonsTotal > 0) {
+        changes.ring.push({ key: stop.key, from: Math.min(1, then.done / stop.lessonsTotal), to: Math.min(1, stop.lessonsDone / stop.lessonsTotal) });
+      }
+      if (stop.state === 'done' && then.state !== 'done') changes.finished.push(stop.key);
+      if ((stop.state === 'current' || stop.state === 'available') && then.state === 'locked') changes.opened.push(stop.key);
+    }
+  }
+  if (path.current !== prevCurrent) changes.current = path.current;
+  const any = changes.ring.length > 0 || changes.finished.length > 0 || changes.opened.length > 0 || changes.current !== null;
+  return any ? changes : null;
+}
+
+/**
+ * Coming back to the path after a lesson, in ms: the page settles first
+ * (`settleMs`), then, from there, the ring fills (`ringMs`), the finished stop
+ * pops and its check draws in (`finishAtMs`, a `popMs` pop), the opened stop's
+ * lock gives way to its number (`openAtMs`, the glyphs crossing in `glyphMs`)
+ * and it pops, and the bubble arrives at the new current stop as the page
+ * scrolls to it and Hevalo cheers (`bubbleAtMs`, over `bubbleMs`). Under
+ * Reduce Motion none of it plays: the path is drawn as it now is.
+ */
+export const PATH_RETURN = { settleMs: 300, ringMs: 600, finishAtMs: 650, popMs: 320, openAtMs: 900, glyphMs: 120, bubbleAtMs: 1100, bubbleMs: 200 } as const;
+
+/**
+ * Hevalo beside the current stop: how big he is drawn (`size`), and how far
+ * from the path's middle he stands — across from a stop in the middle, or on
+ * the far side from one that leans (`away`), so he never stands on the line.
+ */
+export const PATH_MASCOT = { size: 88, across: 110, away: 96 } as const;
+
+/**
+ * Where Hevalo stands beside a placed stop: `x` his middle, across from the
+ * path's middle in the stops' own logical terms (mirrored for right-to-left as
+ * they are), and `y` his top, so he stands level with the stop.
+ */
+export function mascotSpot(placed: { x: number; y: number }): { x: number; y: number } {
+  const side = Math.sign(placed.x);
+  return { x: side === 0 ? PATH_MASCOT.across : -side * PATH_MASCOT.away, y: placed.y - PATH_MASCOT.size / 2 };
+}

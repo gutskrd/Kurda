@@ -15,6 +15,7 @@ import { POST_BODY_MAX } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
+import { pass2fa } from '../test/admin-2fa.js';
 import { MediaService } from '../media/service.js';
 import { memoryStorage, seedPictureUpload } from '../test/media.js';
 
@@ -383,6 +384,8 @@ describe.skipIf(!DATABASE_URL)('written posts with pictures (integration)', () =
         remoteAddress: ip(),
       })
     ).json().tokens.accessToken;
+    // staff act on somebody else's post only from a session past the console's code
+    await pass2fa(app, adminToken, ip());
 
     const post = (await call('POST', '/library/posts', author.token, { body: 'Nivîs' })).json();
     const theirs = await upload(other);
