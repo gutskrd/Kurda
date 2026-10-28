@@ -20,13 +20,21 @@ window.dispatchEvent(new Event('resize'));
 
 const groups: MenuGroup[] = [{ titleKey: null, links: [{ key: 'friends', labelKey: 'nav.friends', icon: 'people', onPress: () => undefined }] }];
 
-/** A finger on `from`, sideways `dx` points in steps, and off. */
-function swipe(from: Element, dx: number): void {
+/** A finger on `from`, sideways `dx` points in steps of 20, `msPerStep` apart (without, let go of slowly), and off. */
+function swipe(from: Element, dx: number, msPerStep?: number): void {
+  let time = 1_000_000;
+  const clock = vi.spyOn(Date, 'now').mockImplementation(() => time);
   const at = (x: number) => ({ clientX: x, clientY: 300, pageX: x, pageY: 300, buttons: 1 });
   fireEvent.mouseDown(from, { ...at(200), button: 0 });
-  for (let x = 200; Math.abs(x - 200) < Math.abs(dx); x += Math.sign(dx) * 20) fireEvent.mouseMove(from, at(x));
+  for (let x = 200; Math.abs(x - 200) < Math.abs(dx); x += Math.sign(dx) * 20) {
+    fireEvent.mouseMove(from, at(x));
+    time += msPerStep ?? 1;
+  }
   fireEvent.mouseMove(from, at(200 + dx));
+  // let go slowly: held still a moment first, so it lifts with no speed
+  if (msPerStep === undefined) time += 200;
   fireEvent.mouseUp(from, at(200 + dx));
+  clock.mockRestore();
 }
 
 describe('the side menu under a finger', () => {
@@ -35,6 +43,13 @@ describe('the side menu under a finger', () => {
     renderWithProviders(<SideMenu open onClose={onClose} groups={groups} side="end" />);
     // from the end edge: the right, in English
     swipe(screen.getByText('Friends'), 260);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes on a quick flick towards its edge from barely moved', () => {
+    const onClose = vi.fn();
+    renderWithProviders(<SideMenu open onClose={onClose} groups={groups} side="end" />);
+    swipe(screen.getByText('Friends'), 60, 10);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

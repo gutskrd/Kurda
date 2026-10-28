@@ -114,13 +114,24 @@ describe('the bottom sheet', () => {
   });
 });
 
-/** A finger on `from`, down `dy` points in steps, and off. */
-function drag(from: Element, dy: number): void {
+/**
+ * A finger on `from`, down `dy` points in steps of 20, and off: `msPerStep`
+ * apart, so a flick is as quick as it says; without, it is let go of slowly.
+ */
+function drag(from: Element, dy: number, msPerStep?: number): void {
+  let time = 1_000_000;
+  const clock = vi.spyOn(Date, 'now').mockImplementation(() => time);
   const at = (y: number) => ({ clientX: 100, clientY: y, pageX: 100, pageY: y, buttons: 1 });
   fireEvent.mouseDown(from, { ...at(300), button: 0 });
-  for (let y = 300; Math.abs(y - 300) < Math.abs(dy); y += Math.sign(dy) * 20) fireEvent.mouseMove(from, at(y));
+  for (let y = 300; Math.abs(y - 300) < Math.abs(dy); y += Math.sign(dy) * 20) {
+    fireEvent.mouseMove(from, at(y));
+    time += msPerStep ?? 1;
+  }
   fireEvent.mouseMove(from, at(300 + dy));
+  // let go slowly: held still a moment first, so it lifts with no speed
+  if (msPerStep === undefined) time += 200;
   fireEvent.mouseUp(from, at(300 + dy));
+  clock.mockRestore();
 }
 
 describe('the bottom sheet under a finger', () => {
@@ -132,6 +143,18 @@ describe('the bottom sheet under a finger', () => {
       </BottomSheet>,
     );
     drag(screen.getByText('Name'), 500);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  it('closes on a quick flick down from near the top, where a slow drag as far would not', () => {
+    const onClose = vi.fn();
+    renderWithProviders(
+      <BottomSheet visible onClose={onClose} title="New club">
+        <Text>Name</Text>
+      </BottomSheet>,
+    );
+    // 80 points in 40 ms: 2000 points a second, which would carry it about 1000 points
+    drag(screen.getByText('Name'), 80, 10);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 
