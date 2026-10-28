@@ -178,7 +178,7 @@ describe('companionSvg', () => {
   const ids = (svg: string): string[] => [...svg.matchAll(/\sid="([^"]+)"/g)].map((m) => m[1]!);
 
   it('has a group for every moving part, every eye state and every sign', () => {
-    for (const part of ['body', 'head', 'antler-left', 'antler-right', 'ear-left', 'ear-right', 'cheek-left', 'cheek-right', 'face', 'features', 'gaze', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'rim-left', 'cast-right', 'hoof-left', 'hoof-right', 'hoof-shadow-left', 'contact-left', 'shade', 'emotes']) {
+    for (const part of ['body', 'head', 'antler-left', 'antler-right', 'ear-left', 'ear-right', 'cheek-left', 'cheek-right', 'face', 'features', 'gaze', 'pupil-left', 'pupil-right', 'nose', 'legs', 'leg-left', 'leg-right', 'cannon-left', 'cannon-right', 'cast-right', 'hoof-left', 'hoof-right', 'hoof-shadow-left', 'contact-left', 'shade', 'emotes']) {
       expect(playful).toContain(`data-cp="${part}"`);
     }
     for (const side of ['left', 'right']) expect(playful).toContain(`data-eye="${side}"`);
@@ -212,16 +212,14 @@ describe('companionSvg', () => {
   });
 
   it('draws each foreleg in the fur of his chest, so it grows out of his side: the forearm from the shoulder, and the cannon over it to the hoof', () => {
-    // two outlines, each filled as his chest is and shaded at its rim, the cannon after the forearm, with the hoof on its end
+    // two outlines, each filled and shaded as his chest is, with no line round either, the cannon after the forearm, with the hoof on its end
     expect(playful).toMatch(/<path id="one-leg-left" data-cp="leg-left" d="M[^"]+Z"\/>/);
     expect(playful).toMatch(/<path id="one-cannon-left" data-cp="cannon-left" d="M[^"]+Z"\/>/);
-    const rim = (id: string): RegExp => new RegExp(`<use href="#${id}" fill="none" stroke="[^"]+" stroke-opacity="[^"]+" stroke-width="[^"]+" stroke-linecap="round"/>`);
     const forearm = playful.indexOf('<use href="#one-leg-left" fill="url(#one-fur)"/><use href="#one-leg-left" fill="url(#one-side)"/>');
     const cannon = playful.indexOf('<use href="#one-cannon-left" fill="url(#one-fur)"/><use href="#one-cannon-left" fill="url(#one-side)"/>');
     expect(forearm).toBeGreaterThan(0);
     expect(cannon).toBeGreaterThan(forearm);
-    expect(playful.slice(forearm, cannon)).toMatch(rim('one-rim-left'));
-    expect(playful.slice(cannon)).toMatch(rim('one-cannon-rim-left'));
+    expect(playful).not.toMatch(/<use href="#one-(leg|cannon)-left" [^>]*stroke/);
     expect(playful).toMatch(/<g data-cp="hoof-left" transform="translate\([^"]+\)">/);
   });
 
@@ -261,7 +259,7 @@ describe('companionSvg', () => {
   it('never draws a foreleg crossing itself, however far its knee bends or its cannon swings behind it', () => {
     for (const f of legPoses()) {
       const t = companionTransforms(f);
-      for (const key of ['legLeft', 'legRight', 'rimLeft', 'rimRight', 'cannonLeft', 'cannonRight', 'cannonRimLeft', 'cannonRimRight'] as const) {
+      for (const key of ['legLeft', 'legRight', 'cannonLeft', 'cannonRight'] as const) {
         expect(crossings(outlinePoints(t[key])), `${key} at ${f.hoofLeft.toFixed(2)}, ${f.swingLeft.toFixed(2)}`).toBe(0);
       }
     }
@@ -292,8 +290,8 @@ describe('companionSvg', () => {
 
 describe('CompanionMotion', () => {
   /**
-   * How far over the sill either foreleg shows, as drawn for a frame (less than 0: none of it): its shaded rims, its
-   * shadow and its hoof. (Its shoulder is his chest's own fur, and shows as his chest.)
+   * How far over the sill either foreleg shows, as drawn for a frame (less than 0: none of it): its outlines, its
+   * shadow and its hoof.
    */
   const legsOver = (f: CompanionFrame): number => {
     const t = companionTransforms(f);
@@ -302,8 +300,8 @@ describe('CompanionMotion', () => {
     const points = (d: string): string => d.replace(/A[^A-Z]*?(?=[A-Z]|$)/g, (arc) => `L${arc.trim().split(/[ ,]+/).slice(-2).join(',')}`);
     const ys = (d: string): number[] => (points(d).match(/-?\d+(\.\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2 === 1);
     const hoofY = (h: string): number => Number(/translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(h)?.[2] ?? 0) - 30;
-    const rims = [t.rimLeft, t.rimRight, t.cannonRimLeft, t.cannonRimRight].flatMap(ys);
-    const top = Math.min(...rims, ...ys(t.castLeft), ...ys(t.castRight), hoofY(t.hoofLeft), hoofY(t.hoofRight));
+    const legs = [t.legLeft, t.legRight, t.cannonLeft, t.cannonRight].flatMap(ys);
+    const top = Math.min(...legs, ...ys(t.castLeft), ...ys(t.castRight), hoofY(t.hoofLeft), hoofY(t.hoofRight));
     return COMPANION_EDGE - (top + drop);
   };
 
