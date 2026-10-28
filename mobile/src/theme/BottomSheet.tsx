@@ -28,7 +28,8 @@ import { useDirection } from '../reports/direction';
 import { SHEET_MAX_WIDTH } from '../reports/sheet';
 import { DragSamples, releaseSpring } from './animate';
 import { Icon } from './Icon';
-import { DRAG_SLOP, SHEET_MAX, detentHeights, dragOffset, restingOffsets, settleSheet, type SheetDetent } from './sheetMotion';
+import { DRAG_SLOP } from './motion';
+import { SHEET_MAX, detentHeights, dragOffset, restingOffsets, settleSheet, type SheetDetent } from './sheetMotion';
 import { useTheme } from './ThemeProvider';
 import { layout, radii, spacing, typography } from './tokens';
 

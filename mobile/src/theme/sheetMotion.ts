@@ -14,9 +14,6 @@ export const SHEET_MAX = 0.9;
 /** iOS's medium detent: about half the screen. */
 export const MEDIUM = 0.5;
 
-/** How far a finger moves before it is a drag rather than a tap: iOS's 10 points. */
-export const DRAG_SLOP = 10;
-
 /** The heights a sheet rests at, in points, shortest first; none for a sheet as tall as its content. */
 export function detentHeights(detents: readonly SheetDetent[] | undefined, screen: number): number[] {
   if (!detents?.length) return [];

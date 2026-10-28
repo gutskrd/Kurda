@@ -60,6 +60,9 @@ export const spring = {
   bouncy: springFor(APPLE_SPRINGS.bouncy),
 } as const;
 
+/** How far a finger moves before it is a drag rather than a tap: iOS's 10 points. */
+export const DRAG_SLOP = 10;
+
 /** How far a pressed button, card or tile gives under a finger. */
 export const PRESS_SCALE = 0.97;
 
