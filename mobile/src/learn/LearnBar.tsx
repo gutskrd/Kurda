@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { haptic } from '../feedback/haptics';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
 import { formatNumber } from '../i18n/format';
@@ -82,10 +81,8 @@ export function LearnBar(): React.JSX.Element {
       ? t('learn.today.goalMet')
       : t('learn.today.goal', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })
     : '';
-  const show = (which: 'streak' | 'goal') => {
-    haptic('select');
-    setOpen(which);
-  };
+  // a button that opens a sheet: the sheet arriving is the answer, not a buzz
+  const show = (which: 'streak' | 'goal') => setOpen(which);
 
   if (!settled) {
     return (

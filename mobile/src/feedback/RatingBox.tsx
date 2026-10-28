@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, BackHandler, Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { haptic } from './haptics';
 import {
   APP_FEEDBACK_CATEGORIES,
   APP_FEEDBACK_COMMENT_MAX,
@@ -179,7 +180,10 @@ export function RatingBox({
           return (
             <Pressable
               key={n}
-              onPress={() => setStars(n)}
+              onPress={() => {
+                if (n !== stars) haptic('select');
+                setStars(n);
+              }}
               accessibilityRole="radio"
               accessibilityState={{ checked: n === stars }}
               accessibilityLabel={t(STAR_LABEL[n]!)}

@@ -3,6 +3,7 @@ import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation
 import { ActivityIndicator, Image, Pressable, RefreshControl, ScrollView, Share, StyleSheet, Text, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { useAuth } from '../auth/AuthContext';
+import { refreshFelt } from '../feedback/haptics';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -253,10 +254,10 @@ export function ProfileScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={() => {
+            onRefresh={refreshFelt(() => {
               setRefreshing(true);
               setReloadKey((k) => k + 1);
-            }}
+            })}
             tintColor={colors.textSecondary}
           />
         }

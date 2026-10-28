@@ -8,27 +8,32 @@ export type { HapticEvent } from './hapticPacing';
  * The phone's buzzes, by what they mean.
  *
  * Screens say what happened — `haptic('correct')`, `haptic('celebrate')` — and
- * never how it should feel; the feel of each is decided here, once:
+ * never how it should feel; the feel of each is decided here, once, by what
+ * Apple's generators mean rather than by how they happen to feel:
  *
- *   select     the lightest tick there is: a segmented control, a filter
- *              chip, a picker or a switch changing its value
- *   tap        a light knock: something sent, given or taken — a message, a
- *              post, a like, a reaction, a friend request, a game started,
- *              something bought in the shop, the day's Zêr claimed, a
- *              refresh pulled (on Android; iOS's own control already ticks)
- *   correct    light and crisp: a right answer
- *   wrong      a gentle double (the system's "warning"): a wrong answer. Never
- *              the harsh error pattern — the person getting it wrong is often
- *              a child learning, and a miss is part of learning
+ *   select     the selection tick: a choice among options changing — a
+ *              segmented control, a filter chip, a radio list, a picker, a
+ *              stepper, a switch, another tab
+ *   tap        a light impact, the knock of something landing: a sheet
+ *              settling at another height, a hold that took, a refresh
+ *              pulled (on Android; iOS's own control already knocks), and
+ *              something sent, given or taken — a message, a post, a like, a
+ *              reaction, a friend request, a game started, something bought
+ *              in the shop, the day's Zêr claimed
+ *   correct    the system's "success": a right answer, an outcome
+ *   wrong      the system's "warning": a wrong answer. Never the harsh error
+ *              pattern — the person getting it wrong is often a child
+ *              learning, and a miss is part of learning
  *   celebrate  the system's "success", once: a lesson finished, a goal met, a
  *              streak kept, a new level, rank, league or badge, a gift opened
  *   error      the system's "error": something the person asked for failed
  *              and is in their way (a purchase, a message or a post that did
  *              not send). Not for a field that is still being typed in
  *
- * Nothing else buzzes: not scrolling, typing, every button, the tab bar,
- * opening a screen, a message or notification arriving, a timer, or anything
- * that happens by itself. A buzz that nobody caused is a buzz pulling at them.
+ * Each is felt with something seen changing. Nothing else buzzes: not
+ * scrolling, typing, a button that only opens something, opening a screen, a
+ * message or notification arriving, a timer, or anything that happens by
+ * itself. A buzz that nobody caused is a buzz pulling at them.
  *
  * And a buzz is dropped when it would come too soon after another, or too
  * many together (`hapticPacing.ts`), while the app is in the background, or
@@ -98,7 +103,7 @@ const nativeDriver: Driver = (event) => {
       // "confirm" is Android 11 and later; before that, the plain key click
       return android
         ? quietly(() => h.performAndroidHapticsAsync('confirm'), () => h.performAndroidHapticsAsync('virtual-key'))
-        : quietly(() => h.impactAsync('rigid'));
+        : quietly(() => h.notificationAsync('success'));
     case 'wrong':
       return quietly(() => h.notificationAsync('warning'));
     case 'celebrate':

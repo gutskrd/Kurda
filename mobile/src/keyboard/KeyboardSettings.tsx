@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
@@ -50,7 +51,10 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
           return (
             <Pressable
               key={mode}
-              onPress={() => setPrefs({ accentMode: mode })}
+              onPress={() => {
+                if (!on) haptic('select');
+                setPrefs({ accentMode: mode });
+              }}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${t(ACCENT_LABEL[mode])}. ${t(ACCENT_HINT[mode])}`}

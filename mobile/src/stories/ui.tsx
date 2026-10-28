@@ -10,6 +10,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
@@ -155,7 +156,10 @@ export function ChoiceChips<T extends string>({
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
+            onPress={() => {
+              if (!on) haptic('select');
+              onChange(opt);
+            }}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
             accessibilityLabel={labelOf(opt)}

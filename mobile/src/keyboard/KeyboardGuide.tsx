@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import type { KeyboardPlatform, TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from '../theme/fonts';
@@ -124,7 +125,10 @@ export function KeyboardGuide({
                 return (
                   <Pressable
                     key={p}
-                    onPress={() => setPlatform(p)}
+                    onPress={() => {
+                      if (!on) haptic('select');
+                      setPlatform(p);
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
                     style={[

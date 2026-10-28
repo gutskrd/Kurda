@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { DEFAULT_FEED_PERIOD, DEFAULT_FEED_SORT, FEED_PERIODS, FEED_SORTS, sortRanks, type FeedPeriod, type FeedSort } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
@@ -136,7 +137,10 @@ export function FeedFilterSheet({
                 return (
                   <Pressable
                     key={p}
-                    onPress={() => set({ period: p })}
+                    onPress={() => {
+                      if (!on) haptic('select');
+                      set({ period: p });
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
                     accessibilityLabel={t(PERIOD_WORD[p])}
@@ -214,7 +218,10 @@ function Option({ label, hint, icon, on, onPress }: { label: string; hint?: stri
   const dir = useDirection();
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        if (!on) haptic('select');
+        onPress();
+      }}
       accessibilityRole="radio"
       accessibilityState={{ checked: on }}
       accessibilityLabel={hint ? `${label}, ${hint}` : label}

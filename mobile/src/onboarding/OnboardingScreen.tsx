@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useReducer, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale, type TranslationKey } from '../i18n/translations';
@@ -176,7 +177,10 @@ function LanguageSlide({ selected, onSelect }: { selected: string | null; onSele
           return (
             <Pressable
               key={locale}
-              onPress={() => onSelect(locale)}
+              onPress={() => {
+                if (!active) haptic('select');
+                onSelect(locale);
+              }}
               accessibilityRole="radio"
               accessibilityState={{ checked: active }}
               accessibilityLabel={LOCALE_LABEL[locale]}

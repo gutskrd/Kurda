@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import {
   MAX_INVITEES_PER_REQUEST,
   PLAY_GAMES,
@@ -304,7 +305,10 @@ export function InviteSheet({ target, onClose }: { target: InviteTarget; onClose
                   return (
                     <Pressable
                       key={g}
-                      onPress={() => setGame(g)}
+                      onPress={() => {
+                        if (!on) haptic('select');
+                        setGame(g);
+                      }}
                       accessibilityRole="radio"
                       accessibilityState={{ checked: on }}
                       accessibilityLabel={t(GAME_NAME_KEY[g])}

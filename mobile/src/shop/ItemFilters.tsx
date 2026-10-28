@@ -11,6 +11,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { ITEM_SORTS, itemCategory, type ItemCategory, type ItemSort } from '@kurda/shared';
 import { assetUrl } from '../api/env';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -241,6 +242,7 @@ export function SortChip({ value, onChange }: { value: ItemSort; onChange: (sort
                   <Pressable
                     key={s}
                     onPress={() => {
+                      if (!on) haptic('select');
                       onChange(s);
                       setOpen(false);
                     }}

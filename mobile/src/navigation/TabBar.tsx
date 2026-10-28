@@ -112,7 +112,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             }
           };
           const onLongPress = () => {
-            haptic('select');
+            // the hold took: a knock, as a held message gets, not the tick of a choice
+            haptic('tap');
             setHeld(i);
             navigation.emit({ type: 'tabLongPress', target: route.key });
           };
