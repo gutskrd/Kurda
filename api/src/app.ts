@@ -644,13 +644,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // Rhyme 1v1 / free-for-all multiplayer (KUR-299) — server-authoritative, poll-safe
     registerRhymeMatchRoutes(app, { xp: xpService, ranks, onChange: (id, o) => playEvents.changed('rhyme-match', id, o) });
 
-    // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres
+    // leaderboards (KUR-063): Redis sorted sets, rebuilt from Postgres when they
+    // are read and a few minutes old, not on a timer (leaderboards/service.ts)
     const leaderboards = new LeaderboardService(app.db, app.redis);
     registerLeaderboardRoutes(app, leaderboards);
-    const boardRebuild = setInterval(() => {
-      void leaderboards.rebuild('weekly_xp').catch((err) => app.log.warn({ err }, 'weekly board rebuild failed'));
-    }, 5 * 60 * 1000);
-    app.addHook('onClose', async () => clearInterval(boardRebuild));
 
     registerMediaRoutes(app, config);
     // cost-safe through-server voice-note upload (KUR-282)

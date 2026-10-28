@@ -9,11 +9,13 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
+import { Redis } from 'ioredis';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
-import { LeaderboardService } from './service.js';
+import { builtKeyFor, GLOBAL_BOARD_REBUILD_SECONDS, LeaderboardService } from './service.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
+const REDIS_URL = process.env.REDIS_URL;
 
 describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
   const config = loadConfig({ DATABASE_URL, NODE_ENV: 'test', LOG_LEVEL: 'fatal' });
@@ -212,6 +214,43 @@ describe.skipIf(!DATABASE_URL)('leaderboards (integration)', () => {
     // the frozen all-time rating board is gone with the Elo it showed
     const rating = await app.inject({ method: 'GET', url: '/leaderboards/rating', remoteAddress: '10.63.9.1' });
     expect(rating.statusCode).toBe(400);
+  });
+
+  it.skipIf(!REDIS_URL)('builds the global board when it is read, at most once in a few minutes, and not before', async () => {
+    const redis = new Redis(REDIS_URL!);
+    try {
+      // every aggregate over the week's ledger this service runs, counted
+      let builds = 0;
+      const counting = {
+        query: (...args: Parameters<pg.Pool['query']>) => {
+          if (/FROM xp_ledger l JOIN users u/.test(String(args[0]))) builds++;
+          return (pool.query as (...a: unknown[]) => unknown)(...args);
+        },
+      } as unknown as pg.Pool;
+      const lazy = new LeaderboardService(counting, redis);
+      const built = builtKeyFor('weekly_xp', new Date());
+
+      // the last build has gone stale: the next read builds it, once
+      await redis.del(built);
+      const first = await lazy.board('weekly_xp', ids.b!);
+      expect(builds).toBe(1);
+      expect(first.top[0]!.userId).toBe(ids.b);
+      const ttl = await redis.ttl(built);
+      expect(ttl).toBeGreaterThan(0);
+      expect(ttl).toBeLessThanOrEqual(GLOBAL_BOARD_REBUILD_SECONDS);
+
+      // read again within the window: the board as built, no aggregate
+      await lazy.board('weekly_xp', ids.c!);
+      await lazy.board('weekly_xp', null);
+      expect(builds).toBe(1);
+
+      // and once the window is over, the next read builds it again
+      await redis.del(built);
+      await lazy.board('weekly_xp', ids.b!);
+      expect(builds).toBe(2);
+    } finally {
+      redis.disconnect();
+    }
   });
 
   it('stops listing people who left the leagues or hid their profile, and still tells them their own place', async () => {

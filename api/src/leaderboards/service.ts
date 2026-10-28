@@ -45,6 +45,23 @@ function keyFor(_type: BoardType, now: Date): string {
 }
 
 /**
+ * How long a built global board is read before the next read builds it again.
+ *
+ * It was rebuilt every five minutes on a timer, on every instance, whether or
+ * not anybody looked: an aggregate over the whole week of the XP ledger, nearly
+ * three hundred times a day, and growing with the ledger. Now the first read
+ * after this long builds it, once across every instance (whoever claims the
+ * marker), and a quiet hour costs nothing. A reader sees a board no older than
+ * the timer ever gave them.
+ */
+export const GLOBAL_BOARD_REBUILD_SECONDS = 5 * 60;
+
+/** The marker that says a board was built within GLOBAL_BOARD_REBUILD_SECONDS. */
+export function builtKeyFor(type: BoardType, now: Date): string {
+  return `${keyFor(type, now)}:built`;
+}
+
+/**
  * How long a friends or country board is kept in Redis. They are read on every
  * visit to the rankings and each is an aggregate over a week of the ledger —
  * the country one over everyone in a country — so a minute or two of
@@ -193,9 +210,32 @@ export class LeaderboardService {
         pipeline.zadd(key, ...(args as [number, string]));
       }
       pipeline.expire(key, 14 * 24 * 60 * 60); // fortnight TTL
+      // fresh now, so the reads of the next few minutes use it as it is
+      pipeline.set(builtKeyFor(type, now), '1', 'EX', GLOBAL_BOARD_REBUILD_SECONDS);
       await pipeline.exec();
     }
     return rows.length;
+  }
+
+  /**
+   * Build the global board if it has not been built in the last few minutes
+   * (GLOBAL_BOARD_REBUILD_SECONDS), or has nothing in it. One read claims the
+   * rebuild; a failed one gives the claim back, so the next read tries again.
+   */
+  private async ensureFresh(type: BoardType, now: Date): Promise<void> {
+    const redis = this.redis!;
+    const built = builtKeyFor(type, now);
+    const claimed = await redis.set(built, '1', 'EX', GLOBAL_BOARD_REBUILD_SECONDS, 'NX');
+    if (claimed !== 'OK') {
+      if ((await redis.zcard(keyFor(type, now))) === 0) await this.rebuild(type, now);
+      return;
+    }
+    try {
+      await this.rebuild(type, now);
+    } catch (err) {
+      await redis.del(built).catch(() => undefined);
+      throw err;
+    }
   }
 
   /** One page of a board, plus the caller's own rank within that same board. */
@@ -263,7 +303,7 @@ export class LeaderboardService {
     offset: number,
   ): Promise<Board> {
     const key = keyFor(type, now);
-    if ((await this.redis!.zcard(key)) === 0) await this.rebuild(type, now);
+    await this.ensureFresh(type, now);
 
     // The sorted set was built at some moment and is read for up to five
     // minutes after. Somebody on it then may not be listable now — an account
