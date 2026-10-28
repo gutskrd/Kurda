@@ -12,6 +12,7 @@ import type { UserSummary } from '../lib/types';
 import type { SearchHit } from '../dictionary/types';
 import { addRecentSearch, clearRecentSearches, readRecentSearches } from './recentSearches';
 import { useQuickSearch } from './useQuickSearch';
+import { Highlighted } from './Highlighted';
 
 /** Below this the bar has no room for a field, and a button opens one over the bar. */
 const NARROW = '(max-width: 768px)';
@@ -473,11 +474,12 @@ function OptionBody({ option, term }: { option: Option; term: string }): React.J
           <Avatar url={choice.user.avatarUrl} online={choice.user.online} />
           <span className="nav-search-text">
             <span className="nav-search-title" dir="auto">
-              {choice.user.displayName || choice.user.username}
+              <Highlighted text={choice.user.displayName || choice.user.username} query={term} />
             </span>
             {/* a username is written left to right whatever the page is, "@" first */}
             <span className="nav-search-sub" dir="ltr">
-              @{choice.user.username}
+              @<Highlighted text={choice.user.username} query={term} />
+              {choice.user.friend && <span dir="auto"> · {t('search.friend')}</span>}
             </span>
           </span>
         </>
@@ -490,7 +492,7 @@ function OptionBody({ option, term }: { option: Option; term: string }): React.J
           </span>
           <span className="nav-search-text">
             <span className="nav-search-title" lang="ku">
-              {choice.hit.headword}
+              <Highlighted text={choice.hit.headword} query={term} />
             </span>
             <span className="nav-search-sub">
               {choice.hit.pos ? `${choice.hit.pos} · ` : ''}

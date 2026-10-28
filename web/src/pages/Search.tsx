@@ -17,6 +17,7 @@ import { useProfileModal } from '../profile/ProfileModal';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { publishedDictionary } from '../layouts/navLinks';
 import { addRecentSearch, clearRecentSearches, readRecentSearches } from '../search/recentSearches';
+import { Highlighted } from '../search/Highlighted';
 
 /**
  * What a search looks through. People and words are what the API can search
@@ -211,7 +212,21 @@ export function Search(): React.JSX.Element {
 }
 
 /** One person in a list: their face and name open their profile, where the actions are. */
-function PersonRow({ user, meta, action, onOpen }: { user: UserSummary; meta?: string; action?: React.ReactNode; onOpen?: () => void }): React.JSX.Element {
+function PersonRow({
+  user,
+  meta,
+  action,
+  onOpen,
+  query = '',
+}: {
+  user: UserSummary;
+  meta?: string;
+  action?: React.ReactNode;
+  onOpen?: () => void;
+  /** what was searched, marked where it appears in the name */
+  query?: string;
+}): React.JSX.Element {
+  const t = useT();
   const { openProfile } = useProfileModal();
   return (
     <li className="list-row">
@@ -225,8 +240,19 @@ function PersonRow({ user, meta, action, onOpen }: { user: UserSummary; meta?: s
       >
         <Avatar url={user.avatarUrl} online={user.online} />
         <span className="list-row-text">
-          <span className="list-row-title" dir="auto">{user.displayName || user.username}</span>
-          <span className="list-row-sub" dir="auto">{meta ?? `@${user.username}`}</span>
+          <span className="list-row-title" dir="auto">
+            <Highlighted text={user.displayName || user.username} query={query} />
+          </span>
+          <span className="list-row-sub" dir="auto">
+            {meta ?? (
+              <>
+                <span dir="ltr">
+                  @<Highlighted text={user.username} query={query} />
+                </span>
+                {user.friend && ` · ${t('search.friend')}`}
+              </>
+            )}
+          </span>
         </span>
       </button>
       {action}
@@ -234,20 +260,25 @@ function PersonRow({ user, meta, action, onOpen }: { user: UserSummary; meta?: s
   );
 }
 
+/**
+ * People matching the query. The last answer stays on screen while the next
+ * one loads, with its rows marked for the query they answered: a list that
+ * blinks to a skeleton on every pause in typing is harder to read than one
+ * that updates in place. Only the first search shows the skeleton.
+ */
 function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [results, setResults] = useState<UserSummary[] | null>(null);
+  const [shown, setShown] = useState<{ query: string; results: UserSummary[] } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     let live = true;
-    setResults(null);
     setError(null);
     void client.get<{ results: UserSummary[] }>(`/users/search?q=${encodeURIComponent(query.slice(0, PEOPLE_MAX))}`).then((res) => {
       if (!live) return;
-      if (res.ok) setResults(res.data.results ?? []);
+      if (res.ok) setShown({ query, results: res.data.results ?? [] });
       else setError(describeError(res.error, t));
     });
     return () => {
@@ -256,14 +287,14 @@ function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void })
   }, [client, query, t, nonce]);
 
   if (error) return <ErrorState message={error} onRetry={() => setNonce((n) => n + 1)} />;
-  if (!results) return <ListRowsSkeleton avatar />;
-  if (results.length === 0)
+  if (!shown) return <ListRowsSkeleton avatar />;
+  if (shown.results.length === 0)
     return <EmptyState title={t('friends.noResults')} message={t('search.noPeopleBody')} />;
   return (
-    <section aria-label={t('search.scope.people')}>
+    <section aria-label={t('search.scope.people')} aria-busy={shown.query !== query}>
       <ul className="list">
-        {results.map((u) => (
-          <PersonRow key={u.userId} user={u} onOpen={onOpen} />
+        {shown.results.map((u) => (
+          <PersonRow key={u.userId} user={u} onOpen={onOpen} query={shown.query} />
         ))}
       </ul>
     </section>
@@ -273,17 +304,17 @@ function PeopleResults({ query, onOpen }: { query: string; onOpen: () => void })
 function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: string) => void }): React.JSX.Element {
   const { client } = useAuth();
   const t = useT();
-  const [result, setResult] = useState<SearchResult | null>(null);
+  // the answer on screen and the query it answered, kept while the next one loads (as PeopleResults)
+  const [shown, setShown] = useState<{ query: string; result: SearchResult } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [nonce, setNonce] = useState(0);
 
   useEffect(() => {
     let live = true;
-    setResult(null);
     setError(null);
     void client.get<SearchResult>(`/dictionary/search?q=${encodeURIComponent(query)}&limit=20`).then((res) => {
       if (!live) return;
-      if (res.ok) setResult(res.data);
+      if (res.ok) setShown({ query, result: res.data });
       else setError(describeError(res.error, t));
     });
     return () => {
@@ -292,11 +323,12 @@ function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: strin
   }, [client, query, t, nonce]);
 
   if (error) return <ErrorState message={error} onRetry={() => setNonce((n) => n + 1)} />;
-  if (!result) return <ListRowsSkeleton />;
+  if (!shown) return <ListRowsSkeleton />;
+  const { result } = shown;
   const hits = result.results ?? [];
-  if (hits.length === 0) return <EmptyState title={t('dictionary.noResults', { query })} message={t('search.noWordsBody')} />;
+  if (hits.length === 0) return <EmptyState title={t('dictionary.noResults', { query: shown.query })} message={t('search.noWordsBody')} />;
   return (
-    <section aria-label={t('search.scope.words')}>
+    <section aria-label={t('search.scope.words')} aria-busy={shown.query !== query}>
       {result.fuzzy && <p className="muted search-note">{t('dictionary.noExactMatch')}</p>}
       <ul className="list">
         {hits.map((hit) => (
@@ -304,7 +336,7 @@ function WordResults({ query, onOpen }: { query: string; onOpen: (entryId: strin
             <button type="button" className="list-row-main" onClick={() => onOpen(hit.entryId)}>
               <span className="list-row-text">
                 <span className="list-row-title" lang="ku">
-                  {hit.headword}
+                  <Highlighted text={hit.headword} query={shown.query} />
                 </span>
                 <span className="list-row-sub">
                   {hit.pos ? `${hit.pos} · ` : ''}

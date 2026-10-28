@@ -59,8 +59,9 @@ describe('Search', () => {
     show();
 
     await userEvent.type(await screen.findByRole('searchbox'), 'new');
-    expect(await screen.findByText('Newroz')).toBeInTheDocument();
-    expect(screen.getByText('@newro')).toBeInTheDocument();
+    // what was typed is marked where it appears, in the name and the username
+    expect(await screen.findByRole('button', { name: /Newroz/ })).toBeInTheDocument();
+    expect([...document.querySelectorAll('mark')].map((m) => m.textContent)).toEqual(['New', 'new']);
     expect(asked).toContain('/users/search?q=new');
     await waitFor(() => expect(screen.getByTestId('where').textContent).toBe('/app/search?q=new'));
   });
@@ -70,7 +71,7 @@ describe('Search', () => {
     serve({ '/users/search': { results: [] } });
     show('/app/search?q=zzz');
     expect(await screen.findByText('No users found.')).toBeInTheDocument();
-    expect(screen.getByText(/Try the start of their username/)).toBeInTheDocument();
+    expect(screen.getByText(/try another part of their name or username/)).toBeInTheDocument();
   });
 
   it('looks words up in the dictionary, and opens one', async () => {

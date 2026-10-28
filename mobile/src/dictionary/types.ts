@@ -1,7 +1,7 @@
 /** Dictionary contract — mirrors the server (KUR-044/043). */
 import type { DictionaryAudio } from '@kurda/shared';
 
-export type MatchType = 'exact' | 'prefix' | 'definition' | 'fuzzy';
+export type MatchType = 'exact' | 'prefix' | 'contains' | 'definition' | 'fuzzy';
 
 export interface SearchHit {
   entryId: string;

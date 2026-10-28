@@ -884,6 +884,16 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/*
+ * The part of a result that is what was typed (search/Highlighted.tsx): the
+ * same colour as the line it sits in, but in full ink and heavier, so a
+ * secondary line's match reads as clearly as a title's.
+ */
+.search-match {
+  background: none;
+  color: var(--ink);
+  font-weight: 800;
+}
 .nav-search-go {
   flex: none;
   color: var(--ink-3);

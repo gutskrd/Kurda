@@ -294,6 +294,8 @@ export interface UserSummary {
   avatarUrl?: string | null;
   /** present on friend lists / requests / suggestions — online in the last few minutes */
   online?: boolean;
+  /** present on search results: already friends with whoever searched */
+  friend?: boolean;
 }
 
 /** A friend suggestion (GET /friends/suggestions) — with mutual-friend count. */

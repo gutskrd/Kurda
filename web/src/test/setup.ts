@@ -29,6 +29,17 @@ HTMLMediaElement.prototype.play = function play(): Promise<void> {
 };
 HTMLMediaElement.prototype.pause = function pause(): void {};
 
+/*
+ * jsdom has no user-agent stylesheet, so every element computes as display ''
+ * and Testing Library reads a name with a marked piece, `<mark>Ro</mark>jda`,
+ * as two words ("Ro jda") where a browser reads it as one. <mark> is inline in
+ * every browser; say so here. Only <mark>: the spans the app lays out as rows
+ * are blocks in a real page, and are best left read as separate words.
+ */
+const userAgentStyles = document.createElement('style');
+userAgentStyles.textContent = 'mark { display: inline }';
+document.head.appendChild(userAgentStyles);
+
 afterEach(() => {
   cleanup();
   localStorage.clear();
