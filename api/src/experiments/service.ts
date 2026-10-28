@@ -50,11 +50,9 @@ export class ExperimentService {
     const res = await this.pool.query<ExperimentRow>(`SELECT * FROM experiments WHERE enabled = true`);
     const log = res.rows.length > 0 && (await this.mayLogExposure(userId));
     const out: Record<string, string> = {};
-    for (const row of res.rows) {
-      const assigned = assignVariant(userId, row.key, row.variants);
-      out[row.key] = assigned;
-      if (log) await this.logExposure(userId, row.key, assigned);
-    }
+    for (const row of res.rows) out[row.key] = assignVariant(userId, row.key, row.variants);
+    // every exposure in one ingest (one statement), not one each
+    if (log) await this.logExposures(userId, Object.entries(out));
     return out;
   }
 
@@ -101,11 +99,20 @@ export class ExperimentService {
   }
 
   private async logExposure(userId: string, key: string, variant: string): Promise<void> {
-    if (!this.analytics) return;
+    await this.logExposures(userId, [[key, variant]]);
+  }
+
+  private async logExposures(userId: string, assigned: ReadonlyArray<readonly [string, string]>): Promise<void> {
+    if (!this.analytics || assigned.length === 0) return;
     // deterministic id → one exposure row per (user, experiment); re-fetches dedupe
-    await this.analytics.ingest(userId, [
-      { eventId: exposureId(userId, key), type: 'experiment_exposure', payload: { experiment: key, variant } },
-    ]);
+    await this.analytics.ingest(
+      userId,
+      assigned.map(([key, variant]) => ({
+        eventId: exposureId(userId, key),
+        type: 'experiment_exposure',
+        payload: { experiment: key, variant },
+      })),
+    );
   }
 }
 

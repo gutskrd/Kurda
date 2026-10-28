@@ -166,36 +166,54 @@ export function registerGameContentRoutes(app: FastifyInstance): void {
     const added: string[] = [];
     const skipped: string[] = [];
     const invalid: string[] = [];
-    for (const raw of words) {
+    const parsed = words.map((raw) => {
       const headword = raw.trim();
       const normalized = normalizeWord(headword);
       // a headword must be actual letters — reject digits/punctuation-only input
-      if (!normalized || letterCount(headword) < 2) {
-        invalid.push(raw);
-        continue;
-      }
-      const res = await app.db.query<{ id: string }>(
+      return { raw, headword, normalized, valid: !!normalized && letterCount(headword) >= 2 };
+    });
+    // Up to five hundred words, so one statement for all of them rather than
+    // one each. A word given twice is tried once: the second was skipped when
+    // the words went in one by one, as the first was already in.
+    const first = new Map<string, (typeof parsed)[number]>();
+    for (const w of parsed) if (w.valid && !first.has(w.normalized)) first.set(w.normalized, w);
+    const tried = [...first.values()];
+    const inserted = new Set<string>();
+    if (tried.length > 0) {
+      const res = await app.db.query<{ headword_normalized: string }>(
         // `in_games` is true here and defaults to false everywhere else: a word
         // an admin typed in is a word chosen for the games, which is the whole
         // difference between this and an imported lexicon (1751000112000)
         `INSERT INTO dict_entries (headword, headword_normalized, headword_folded, dialect, is_rhyme_prompt, in_games, letter_count)
-         SELECT $1, $2, $3, $4, $5, true, $6
-          WHERE NOT EXISTS (SELECT 1 FROM dict_entries WHERE headword_normalized = $2)
-         RETURNING id`,
-        [headword, normalized, dictionaryKey(headword), dialect, isRhymePrompt, letterCount(headword)],
+         SELECT w.headword, w.normalized, w.folded, $1::text, $2::boolean, true, w.letters
+           FROM unnest($3::text[], $4::text[], $5::text[], $6::int[]) WITH ORDINALITY AS w(headword, normalized, folded, letters, n)
+          WHERE NOT EXISTS (SELECT 1 FROM dict_entries d WHERE d.headword_normalized = w.normalized)
+          ORDER BY w.n
+         RETURNING headword_normalized`,
+        [
+          dialect,
+          isRhymePrompt,
+          tried.map((w) => w.headword),
+          tried.map((w) => w.normalized),
+          tried.map((w) => dictionaryKey(w.headword)),
+          tried.map((w) => letterCount(w.headword)),
+        ],
       );
-      if (res.rowCount) added.push(headword);
+      for (const r of res.rows) inserted.add(r.headword_normalized);
+    }
+    const already: string[] = [];
+    for (const w of parsed) {
+      if (!w.valid) invalid.push(w.raw);
+      else if (first.get(w.normalized) === w && inserted.has(w.normalized)) added.push(w.headword);
       else {
-        // already in the pool: still honour the request to use it as a prompt,
-        // so re-adding a word to promote it does what it looks like it does
-        if (isRhymePrompt) {
-          await app.db.query(
-            `UPDATE dict_entries SET is_rhyme_prompt = true WHERE headword_normalized = $1`,
-            [normalized],
-          );
-        }
-        skipped.push(headword);
+        skipped.push(w.headword);
+        already.push(w.normalized);
       }
+    }
+    // already in the pool: still honour the request to use it as a prompt,
+    // so re-adding a word to promote it does what it looks like it does
+    if (isRhymePrompt && already.length > 0) {
+      await app.db.query(`UPDATE dict_entries SET is_rhyme_prompt = true WHERE headword_normalized = ANY($1::text[])`, [already]);
     }
     return { added, skipped, invalid };
   });

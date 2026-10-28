@@ -47,28 +47,22 @@ export class EconomyService {
    * off the day's sink rather than adding to its faucet, as in `faucetSink`.
    */
   async aggregateDay(day: Date): Promise<void> {
-    const rows = await this.pool.query<{ currency: string; faucet: string; sink: string }>(
-      `SELECT currency,
-              COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND NOT (reason = ANY($3))), 0) AS faucet,
-              COALESCE(SUM(-amount) FILTER (WHERE amount < 0 OR reason = ANY($3)), 0) AS sink
-         FROM wallet_ledger
-        WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')
-          AND NOT (reason = ANY($2))
-        GROUP BY currency`,
+    // summed and written in one statement, every currency at once
+    await this.pool.query(
+      `INSERT INTO economy_daily (day, currency, faucet, sink, net, updated_at)
+       SELECT $1::date, t.currency, t.faucet, t.sink, t.faucet - t.sink, now() FROM (
+         SELECT currency,
+                COALESCE(SUM(amount) FILTER (WHERE amount > 0 AND NOT (reason = ANY($3))), 0) AS faucet,
+                COALESCE(SUM(-amount) FILTER (WHERE amount < 0 OR reason = ANY($3)), 0) AS sink
+           FROM wallet_ledger
+          WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')
+            AND NOT (reason = ANY($2))
+          GROUP BY currency
+       ) t
+       ON CONFLICT (day, currency)
+       DO UPDATE SET faucet = EXCLUDED.faucet, sink = EXCLUDED.sink, net = EXCLUDED.net, updated_at = now()`,
       [day, EXCLUDED, REFUNDS],
     );
-
-    for (const r of rows.rows) {
-      const faucet = Number(r.faucet);
-      const sink = Number(r.sink);
-      await this.pool.query(
-        `INSERT INTO economy_daily (day, currency, faucet, sink, net, updated_at)
-         VALUES ($1::date, $2, $3, $4, $5, now())
-         ON CONFLICT (day, currency)
-         DO UPDATE SET faucet = EXCLUDED.faucet, sink = EXCLUDED.sink, net = EXCLUDED.net, updated_at = now()`,
-        [day, r.currency, faucet, sink, faucet - sink],
-      );
-    }
   }
 
   /** Net-supply time series for the dashboard chart (last `days`, oldest first). */
