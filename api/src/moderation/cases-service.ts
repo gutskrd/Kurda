@@ -46,7 +46,7 @@ import {
 import { mediaWhereabouts, requestQuarantine, runQuarantine } from './quarantine.js';
 import { caringMessage, reportOutcomeNotice, sanctionNotice, type Notice } from './notices.js';
 import { isZeroTolerance, permanentBanMode, slaDueAt } from './rules.js';
-import { deliverNotice, logAdminAction, toSanctionView, type SanctionRow, type SanctionsService } from './sanctions-service.js';
+import { deliverNotice, deliverNotices, logAdminAction, toSanctionView, type SanctionRow, type SanctionsService } from './sanctions-service.js';
 import {
   assertDismissible,
   closeSource,
@@ -585,10 +585,12 @@ export class CasesService {
           if (!r.reporter_id) continue;
           byReporter.set(r.reporter_id, [...(byReporter.get(r.reporter_id) ?? []), r.id]);
         }
-        for (const [reporterId, ids] of byReporter) await deliverNotice(db, reporterId, reportOutcomeNotice(outcome, ids));
+        // every reporter told in one statement, however many reported it
+        await deliverNotices(db, [...byReporter].map(([userId, ids]) => ({ userId, notice: reportOutcomeNotice(outcome, ids) })));
       }
     } else if (notifyReporters) {
-      for (const reporterId of await reporterIdsOf(db, c)) await deliverNotice(db, reporterId, reportOutcomeNotice(outcome, []));
+      const reporters = await reporterIdsOf(db, c);
+      await deliverNotices(db, reporters.map((userId) => ({ userId, notice: reportOutcomeNotice(outcome, []) })));
     }
     await closeSource(db, c, outcome, adminId, removed);
   }

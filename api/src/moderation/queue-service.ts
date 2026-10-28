@@ -20,7 +20,7 @@ import {
 import { AppError } from '../plugins/errors.js';
 import { minorSql } from '../users/age.js';
 import { CASE_PERSON_JOIN, CASE_PERSON_SELECT, CasesService, DEFAULT_STATEMENTS, toQueueItem, type CasePersonColumns, type CaseRow } from './cases-service.js';
-import { resolveTarget } from './evidence.js';
+import { resolveTarget, type ResolvedTarget } from './evidence.js';
 import { OPEN_CASE_PREDICATE } from './reports-service.js';
 import { decodeCursor, encodeCursor } from './rules.js';
 import { SanctionsService } from './sanctions-service.js';
@@ -389,12 +389,18 @@ export class ModerationQueueService {
         GROUP BY r.target_type, r.target_id
         LIMIT 500`,
     );
-    const out: IngestRow[] = [];
+    // each target snapshotted by its own resolver; then whether its author is
+    // a minor, for all of them in one query rather than one each
+    const resolved: Array<{ g: (typeof r.rows)[number]; snapshot: ResolvedTarget['evidence'] | null; subject: string | null }> = [];
     for (const g of r.rows) {
       const res = await resolveTarget(this.pool, g.target_type, g.target_id, { reporterId: null, now: new Date() }).catch(() => null);
-      const snapshot = res && !('refused' in res) ? res.evidence : null;
-      const subject = res && !('refused' in res) ? res.subjectUserId : null;
-      const minor = subject ? await this.isMinor(subject) : false;
+      const ok = res && !('refused' in res) ? res : null;
+      resolved.push({ g, snapshot: ok ? ok.evidence : null, subject: ok ? ok.subjectUserId : null });
+    }
+    const minors = await this.minorsAmong(resolved.flatMap((x) => (x.subject ? [x.subject] : [])));
+    const out: IngestRow[] = [];
+    for (const { g, snapshot, subject } of resolved) {
+      const minor = subject ? minors.has(subject) : false;
       const label = snapshot?.title ?? snapshot?.caption ?? null;
       out.push({
         ref: `${g.target_type}:${g.target_id}`,
@@ -454,9 +460,13 @@ export class ModerationQueueService {
     });
   }
 
-  private async isMinor(userId: string): Promise<boolean> {
-    const r = await this.pool.query<{ minor: boolean }>(`SELECT ${minorSql('u')} AS minor FROM users u WHERE u.id = $1`, [userId]);
-    return r.rows[0]?.minor === true;
+  /** Those of `userIds` known to be minors right now, in one query. */
+  private async minorsAmong(userIds: readonly string[]): Promise<Set<string>> {
+    if (userIds.length === 0) return new Set();
+    const r = await this.pool.query<{ id: string }>(`SELECT u.id FROM users u WHERE u.id = ANY($1::uuid[]) AND ${minorSql('u')}`, [
+      [...new Set(userIds)],
+    ]);
+    return new Set(r.rows.map((x) => x.id));
   }
 
   /**
