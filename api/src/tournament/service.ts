@@ -165,12 +165,13 @@ export class TournamentService {
       }
 
       const seeds = seedByRating(parts.rows.map((p) => ({ userId: p.user_id, rating: p.rating })));
-      for (const s of seeds) {
-        await client.query(
-          `UPDATE tournament_participants SET seed = $3 WHERE tournament_id = $1 AND user_id = $2`,
-          [tournamentId, s.userId, s.seed],
-        );
-      }
+      // every seed in one statement
+      await client.query(
+        `UPDATE tournament_participants p SET seed = s.seed
+           FROM unnest($2::uuid[], $3::int[]) AS s(user_id, seed)
+          WHERE p.tournament_id = $1 AND p.user_id = s.user_id`,
+        [tournamentId, seeds.map((s) => s.userId), seeds.map((s) => s.seed)],
+      );
 
       const size = nextPowerOfTwo(seeds.length);
       const rounds = roundsForSize(size);
@@ -196,18 +197,33 @@ export class TournamentService {
         }
       }
 
+      // every slot of every round in one statement, in round and slot order
       const readyAt = new Date();
+      const slots: Array<{ round: number; slot: number; a: string | null; b: string | null; winner: string | null; status: string }> = [];
       for (let r = 1; r <= rounds; r++) {
         for (let slot = 0; slot < grid[r]!.length; slot++) {
           const m = grid[r]![slot]!;
-          await client.query(
-            `INSERT INTO tournament_matches
-               (tournament_id, round, slot, player_a, player_b, winner, status, ready_at)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
-            [tournamentId, r, slot, m.a, m.b, m.winner, m.status, m.status === 'ready' ? readyAt : null],
-          );
+          slots.push({ round: r, slot, a: m.a, b: m.b, winner: m.winner, status: m.status });
         }
       }
+      await client.query(
+        `INSERT INTO tournament_matches
+           (tournament_id, round, slot, player_a, player_b, winner, status, ready_at)
+         SELECT $1::uuid, m.round, m.slot, m.a, m.b, m.winner, m.status, CASE WHEN m.status = 'ready' THEN $2::timestamptz END
+           FROM unnest($3::int[], $4::int[], $5::uuid[], $6::uuid[], $7::uuid[], $8::text[]) WITH ORDINALITY
+             AS m(round, slot, a, b, winner, status, n)
+          ORDER BY m.n`,
+        [
+          tournamentId,
+          readyAt,
+          slots.map((m) => m.round),
+          slots.map((m) => m.slot),
+          slots.map((m) => m.a),
+          slots.map((m) => m.b),
+          slots.map((m) => m.winner),
+          slots.map((m) => m.status),
+        ],
+      );
 
       await client.query(`UPDATE tournaments SET status = 'running', rounds = $2 WHERE id = $1`, [
         tournamentId,

@@ -444,13 +444,55 @@ export class LeagueService {
     );
   }
 
-  /** This week's counted XP for one learner. */
-  private async weeklyXp(userId: string, weekKey: string): Promise<number> {
-    const r = await this.pool.query<{ xp: number }>(
-      `SELECT COALESCE(SUM(${countedXpSql('l')}), 0)::int AS xp FROM xp_ledger l WHERE l.user_id = $1 AND ${inWeekSql('l', '$2')}`,
-      [userId, weekKey],
+  /**
+   * What `standings` asks about the learner, in one read: whether they take
+   * part (`takesPart`), this week's counted XP, the tier and season they keep,
+   * their place in this week's league if they are in it, and any group of an
+   * earlier week of theirs still to settle (`settleOwnPastWeeks`).
+   */
+  private async ownFacts(
+    userId: string,
+    weekKey: string,
+  ): Promise<{
+    takesPart: boolean;
+    weeklyXp: number;
+    keptTier: string | null;
+    keptSeason: string | null;
+    cohortId: string | null;
+    memberTier: string | null;
+    due: string[];
+  }> {
+    const r = await this.pool.query<{
+      taking_part: boolean | null;
+      xp: number;
+      kept_tier: string | null;
+      kept_season: string | null;
+      cohort_id: string | null;
+      member_tier: string | null;
+      due: string[];
+    }>(
+      `SELECT (SELECT ${inLeaguesSql('u')} FROM users u WHERE u.id = $1 AND u.deleted_at IS NULL) AS taking_part,
+              (SELECT COALESCE(SUM(${countedXpSql('l')}), 0)::int FROM xp_ledger l WHERE l.user_id = $1 AND ${inWeekSql('l', '$3')}) AS xp,
+              ul.tier AS kept_tier, ul.season_key AS kept_season,
+              m.cohort_id, m.tier AS member_tier,
+              ARRAY(SELECT d.cohort_id FROM league_members d JOIN league_cohorts c ON c.id = d.cohort_id
+                     WHERE d.user_id = $1 AND d.week_key < $2 AND NOT c.settled
+                     ORDER BY d.week_key) AS due
+         FROM (SELECT 1) one
+         LEFT JOIN user_league ul ON ul.user_id = $1
+         LEFT JOIN league_members m ON m.week_key = $2 AND m.user_id = $1 AND m.left_at IS NULL`,
+      [userId, weekKey, weekKey],
     );
-    return r.rows[0]?.xp ?? 0;
+    const row = r.rows[0]!;
+    return {
+      takesPart: row.taking_part ?? false,
+      weeklyXp: row.xp ?? 0,
+      keptTier: row.kept_tier,
+      keptSeason: row.kept_season,
+      cohortId: row.cohort_id,
+      memberTier: row.member_tier,
+      due: row.due,
+    };
   }
 
   /**
@@ -461,9 +503,16 @@ export class LeagueService {
    */
   async standings(userId: string, now: Date = new Date()): Promise<LeagueView> {
     const weekKey = weekStart(now);
-    await this.settleOwnPastWeeks(userId, weekKey);
-    const takesPart = await this.takesPart(userId);
-    const weeklyXp = await this.weeklyXp(userId, weekKey);
+    // The learner's own facts in one read, with any earlier group of theirs not
+    // settled yet. When there is one (the first look after a week ends, before
+    // the Monday settle reached it) it is settled first and they are read again,
+    // as they always were read after the settle.
+    let me = await this.ownFacts(userId, weekKey);
+    if (me.due.length > 0) {
+      for (const cohortId of me.due) await this.settleCohort(cohortId);
+      me = await this.ownFacts(userId, weekKey);
+    }
+    const { takesPart, weeklyXp } = me;
     const goalMet = weeklyXp >= this.goalXp;
     const [lastWeek, recentWeeks] = await Promise.all([this.lastWeek(userId, weekKey), this.recentWeeks(userId, weekKey)]);
     const base = {
@@ -477,26 +526,18 @@ export class LeagueService {
     };
     const empty = { rank: 0, groupSize: 0, promoteCount: 0, demoteCount: 0, standings: [] as LeagueStandingRow[] };
 
-    const kept = await this.pool.query<{ tier: string; season_key: string }>(
-      `SELECT tier, season_key FROM user_league WHERE user_id = $1`,
-      [userId],
-    );
     // the tier they will race at: kept while away, less any season reset since
-    const keptTier = toLeagueTier(kept.rows[0]?.tier);
-    const tier = keptTier ? seasonDrop(keptTier, seasonsBetween(kept.rows[0]!.season_key, weekSeason(weekKey))) : null;
+    const keptTier = toLeagueTier(me.keptTier ?? undefined);
+    const tier = keptTier ? seasonDrop(keptTier, seasonsBetween(me.keptSeason!, weekSeason(weekKey))) : null;
 
     if (!takesPart) {
       return { mode: 'personal', optedOut: true, joined: false, tier, safe: false, ...base, ...empty };
     }
-    const member = await this.pool.query<{ cohort_id: string; tier: string }>(
-      `SELECT cohort_id, tier FROM league_members WHERE week_key = $1 AND user_id = $2 AND left_at IS NULL`,
-      [weekKey, userId],
-    );
-    if (!member.rows[0]) {
+    if (!me.cohortId) {
       return { mode: 'league', optedOut: false, joined: false, tier, safe: false, ...base, ...empty };
     }
-    const myTier = toLeagueTier(member.rows[0].tier) ?? FIRST_LEAGUE_TIER;
-    const rows = await this.groupMembers(this.pool, member.rows[0].cohort_id, weekKey, userId);
+    const myTier = toLeagueTier(me.memberTier ?? undefined) ?? FIRST_LEAGUE_TIER;
+    const rows = await this.groupMembers(this.pool, me.cohortId, weekKey, userId);
     const byId = new Map(rows.map((r) => [r.user_id, r]));
     const ranked = this.standingsOf(rows);
     const standings: LeagueStandingRow[] = ranked.map((s) => {
