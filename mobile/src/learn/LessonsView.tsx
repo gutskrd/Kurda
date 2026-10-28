@@ -233,9 +233,10 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
         <View style={styles.header}>
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
           <View style={styles.tools}>
+            {/* practice's hub, with what review has due on its face */}
             <ToolTile
               icon="review"
-              title={t('learn.tools.review')}
+              title={t('practice.title')}
               detail={
                 due === null
                   ? ''
@@ -246,7 +247,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
                       : t('learn.tools.dueNone')
               }
               highlight={(due ?? 0) > 0}
-              onPress={() => navigation.navigate('Practice')}
+              onPress={() => navigation.navigate('PracticeHub')}
             />
             <ToolTile icon="text" title={t('nav.dictionary')} detail={t('learn.tools.dictionaryHint')} onPress={() => navigation.navigate('Dictionary')} />
             {/* the letters every course is written in, shown rather than drawn as an icon */}
@@ -374,8 +375,9 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const where = step.kind === 'review' ? step.courseTitle : `${step.courseTitle} · ${step.unitTitle}`;
   const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
   const button =
-    step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('learn.tools.review') : t('learn.continue.button');
-  const go = () => (step.kind === 'review' ? navigation.navigate('Practice') : navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId }));
+    step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('practice.title') : t('learn.continue.button');
+  // with every open lesson done, practice is the next step, chosen on its hub
+  const go = () => (step.kind === 'review' ? navigation.navigate('PracticeHub') : navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId }));
   const progress = t('learn.continue.progress', { done: formatNumber(step.done, locale), total: formatNumber(step.total, locale) });
 
   return (

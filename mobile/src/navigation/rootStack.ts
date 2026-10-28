@@ -1,7 +1,7 @@
 import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AlphabetScript, RankedGame } from '@kurda/shared';
+import type { AlphabetScript, PracticeMode, RankedGame } from '@kurda/shared';
 import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
@@ -37,8 +37,14 @@ export type RootStackParamList = {
    * its results simply offer none.
    */
   Lesson: { lessonId: string; courseId?: string };
-  /** `exerciseIds`: practise these (a lesson's mistakes, "Practise these now") rather than what is due */
-  Practice: { exerciseIds?: string[] } | undefined;
+  /**
+   * A practice session, started at once. `exerciseIds`: practise these (a
+   * lesson's mistakes, "Practise these now") rather than what is due; `mode`:
+   * another kind of practice from the hub, with `unitId` for a unit's review.
+   */
+  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string } | undefined;
+  /** Practice's hub: the one thing most worth doing now, and every other kind of practice (practice/PracticeHubScreen). */
+  PracticeHub: undefined;
   Shop: undefined;
   League: undefined;
   /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */

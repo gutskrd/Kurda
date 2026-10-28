@@ -74,6 +74,21 @@ export async function prepareAudioSession(): Promise<void> {
   }
 }
 
+/**
+ * Whether the microphone has been refused for good: asking again would not
+ * bring up the system's question, and only Settings can allow it now. Read
+ * without asking, so nothing is shown to find out; not known reads as not
+ * refused, and the question is asked when record is pressed.
+ */
+export async function micRefused(): Promise<boolean> {
+  try {
+    const answer = await getRecordingPermissionsAsync();
+    return !answer.granted && !answer.canAskAgain;
+  } catch {
+    return false;
+  }
+}
+
 /** Delete a take's file: only ever a file on this device, and quietly when it has already gone. */
 export async function discardRecording(uri: string | null | undefined): Promise<void> {
   if (!uri?.startsWith('file:')) return;
