@@ -18,6 +18,7 @@ import {
 } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
@@ -26,6 +27,7 @@ import { Icon } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
+import { JumpSheet } from './JumpSheet';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
 import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
 import { SkillNodeView, type StopChange } from './SkillNodeView';
@@ -66,6 +68,10 @@ interface Return {
  * `onFocus` hears where, from the top of the path, the stop to open on sits
  * (the current skill, or the furthest point reached), once it has been laid
  * out, so the screen can scroll to it.
+ *
+ * A later unit whose first skill is still closed can be jumped to (shared
+ * `PathUnit.jump`): its first stop offers it, "Jump here?", and opens a sheet
+ * (JumpSheet) that starts the test (JumpTestScreen).
  *
  * Hevalo stands beside the current skill (PathMascot). Coming back from a
  * lesson, the path moves before it settles (shared `PATH_RETURN`): the ring
@@ -155,6 +161,7 @@ export function LessonPath({
   const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
   const [open, setOpen] = useState<{ stop: Stop; unit: Unit } | null>(null);
   const [guide, setGuide] = useState<{ title: string; skills: SkillNode[] } | null>(null);
+  const [jumpTo, setJumpTo] = useState<Unit | null>(null);
   // where each unit, and the path under its banner, sit — to find the focus stop on the page
   const unitTop = useRef<Record<string, number>>({});
   const unitHeight = useRef<Record<string, number>>({});
@@ -245,7 +252,7 @@ export function LessonPath({
                 {width > 0 ? (
                   <>
                     <Trail unit={unit} width={width} sign={sign} walked={tone.fill} ahead={REST[scheme].line} />
-                    {unit.stops.map((placed) => (
+                    {unit.stops.map((placed, i) => (
                       <PathStopView
                         key={placed.stop.key}
                         placed={placed}
@@ -253,7 +260,8 @@ export function LessonPath({
                         tone={tone}
                         left={width / 2 + sign * placed.x - NODE / 2}
                         change={stopChanges[placed.stop.key] ?? null}
-                        onOpen={() => setOpen({ stop: placed.stop, unit })}
+                        jump={unit.jump && i === 0}
+                        onOpen={() => (unit.jump && i === 0 ? setJumpTo(unit) : setOpen({ stop: placed.stop, unit }))}
                         onStart={lesson}
                       />
                     ))}
@@ -293,6 +301,16 @@ export function LessonPath({
         }}
       />
       <UnitGuide guide={guide} onClose={() => setGuide(null)} />
+      <JumpSheet
+        unit={jumpTo}
+        tone={jumpTo ? TONES[scheme][jumpTo.tone] : null}
+        onClose={() => setJumpTo(null)}
+        onStart={() => {
+          if (!jumpTo) return;
+          setJumpTo(null);
+          navigation.navigate('JumpTest', { courseId, unitId: jumpTo.unitId });
+        }}
+      />
     </View>
   );
 }
@@ -308,13 +326,18 @@ function changesByStop({ changes, was }: Return): Record<string, StopChange> {
   return out;
 }
 
-/** A stop with its words: the full label for a screen reader, and "Start" over the current skill. */
+/**
+ * A stop with its words: the full label for a screen reader, and "Start" over
+ * the current skill — or, on the first stop of a unit that can be jumped to,
+ * the offer to jump.
+ */
 function PathStopView({
   placed,
   unit,
   tone,
   left,
   change,
+  jump,
   onOpen,
   onStart,
 }: {
@@ -323,13 +346,16 @@ function PathStopView({
   tone: ToneColors;
   left: number;
   change: StopChange | null;
+  jump: boolean;
   onOpen: () => void;
   onStart: (lessonId: string) => void;
 }): React.JSX.Element {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const { stop, y } = placed;
   const { words, state } = stopLabel(stop, unit.number);
-  const label = t(words.key, { ...words.params, ...(state ? { state: t(state) } : {}) });
+  const label = jump
+    ? t('coursemap.jump.label', { n: formatNumber(unit.number, locale) })
+    : t(words.key, { ...words.params, ...(state ? { state: t(state) } : {}) });
   const current = stop.kind === 'skill' && stop.state === 'current' && stop.launch ? stop : null;
   const word = current ? (current.lessonsDone > 0 ? t('learn.continue.button') : t('coursemap.path.start')) : '';
   return (
@@ -341,6 +367,7 @@ function PathStopView({
       label={label}
       callout={current ? { text: word, label: `${word}: ${current.skill.title}` } : undefined}
       change={change}
+      jump={jump ? { text: t('coursemap.jump.bubble') } : undefined}
       onPress={onOpen}
       onStart={current?.launch ? () => onStart(current.launch!) : undefined}
     />

@@ -125,6 +125,7 @@ import { registerMediaRoutes } from './media/routes.js';
 import { registerVoiceRoutes } from './media/voice-routes.js';
 import { registerPlacementRoutes } from './placement/routes.js';
 import { registerCourseMapRoutes } from './coursemap/routes.js';
+import { registerPathJumpRoutes } from './jump/routes.js';
 import { registerDictionaryRoutes } from './dictionary/routes.js';
 import { AdminTotpService } from './admin/totp-service.js';
 import { registerAdminRoutes } from './admin/routes.js';
@@ -658,6 +659,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerVoiceRoutes(app, config);
     registerPlacementRoutes(app);
     registerCourseMapRoutes(app);
+    // jumping ahead on the path: a short test that opens a later unit
+    registerPathJumpRoutes(app);
     // a word saved to the list moves the Gencîne badge
     registerDictionaryRoutes(app, badges);
 

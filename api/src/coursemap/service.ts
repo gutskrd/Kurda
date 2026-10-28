@@ -34,6 +34,12 @@ export interface SkillNode {
 export interface CourseMap {
   course: { id: string; title: string };
   units: Array<{ unitId: string; title: string; skills: SkillNode[] }>;
+  /**
+   * Skills up to this level are open because a test let the learner through
+   * (placement, or jumping ahead); 0 for none. The apps read it to put the
+   * learner where the test left them (shared `lessonPath`).
+   */
+  unlockedThrough: number;
 }
 
 interface SkillRow {
@@ -161,6 +167,6 @@ export class CourseMapService {
       previousCompleted = completedSkill;
     });
 
-    return { course: { id: courseId, title: course.rows[0]!.title_en }, units };
+    return { course: { id: courseId, title: course.rows[0]!.title_en }, units, unlockedThrough };
   }
 }

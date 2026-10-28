@@ -39,6 +39,8 @@ export type RootStackParamList = {
   Lesson: { lessonId: string; courseId?: string };
   /** `exerciseIds`: practise these (a lesson's mistakes, "Practise these now") rather than what is due */
   Practice: { exerciseIds?: string[] } | undefined;
+  /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen) */
+  JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
   League: undefined;
   /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */

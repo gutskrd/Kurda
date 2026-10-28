@@ -50,6 +50,7 @@ import { AlphabetScreen } from './src/alphabet/AlphabetScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
+import { JumpTestScreen } from './src/coursemap/JumpTestScreen';
 import { ShopScreen } from './src/shop/ShopScreen';
 import { GameFeedbackHost } from './src/feedback/GameFeedbackHost';
 import { RefreshedNotice } from './src/shop/RefreshedItems';
@@ -335,6 +336,17 @@ function SignedInRoot() {
             navigation={navigation}
             exerciseIds={route.params?.exerciseIds}
             onExit={() => navigation.goBack()}
+          />
+        )}
+      </RootStack.Screen>
+      <RootStack.Screen name="JumpTest" options={{ presentation: 'fullScreenModal' }}>
+        {({ route, navigation }) => (
+          <JumpTestScreen
+            courseId={route.params.courseId}
+            unitId={route.params.unitId}
+            onExit={() => navigation.goBack()}
+            onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+            onAgain={() => navigation.replace('JumpTest', route.params)}
           />
         )}
       </RootStack.Screen>

@@ -43,6 +43,12 @@ export interface PathUnitInput<S extends PathSkill> {
 
 export interface PathMapInput<S extends PathSkill> {
   units: readonly PathUnitInput<S>[];
+  /**
+   * How far a test let the learner through: skills up to this place in the
+   * course (from 1, in the order the course is written) are open, whatever
+   * came before them. 0 or absent when no test has.
+   */
+  unlockedThrough?: number;
 }
 
 /**
@@ -67,9 +73,11 @@ export function lessonStates(skill: Pick<PathSkill, 'state' | 'lessons'>): Lesso
 /**
  * A skill on the path:
  *   done      — every lesson in it finished;
- *   current   — the one to do now: the first open skill not yet finished;
+ *   current   — the one to do now: the first open skill not yet finished,
+ *               from where a test last let the learner through;
  *   available — open but not the one up next (a placement test can open
- *               several at once);
+ *               several at once, and jumping ahead leaves the skills it
+ *               skipped open to come back to);
  *   locked    — not open yet.
  */
 export type StopState = 'done' | 'current' | 'available' | 'locked';
@@ -153,6 +161,12 @@ export interface PathUnit<S extends PathSkill> {
   /** from 1: "Unit 2" */
   number: number;
   tone: UnitTone;
+  /**
+   * The learner may test out to here (`jumpPlan`): a unit after the one they
+   * are in, whose first skill is still closed. Its first stop is where the
+   * offer is made.
+   */
+  jump: boolean;
   stops: PlacedStop<S>[];
   /** the height the unit's path needs, in points */
   height: number;
@@ -184,8 +198,9 @@ export interface LessonPath<S extends PathSkill> {
  * The path's measurements, in points, shared so both apps space it alike.
  * `node` is a stop's button; `step` the distance between two stops'
  * centres; `sway` how far a stop leans off the middle; `lift` the extra room
- * above the current skill for the "Start" bubble over it; `pad` the room
- * above the first stop and below the last.
+ * above the current skill for the "Start" bubble over it (and above a unit's
+ * first stop for "Jump here?"); `pad` the room above the first stop and below
+ * the last.
  */
 export const PATH_GEOMETRY = { node: 72, step: 104, sway: 72, lift: 56, pad: 60 } as const;
 
@@ -232,9 +247,7 @@ function unfinished(skill: PathSkill): boolean {
  * open left to do, just after the last skill finished.
  */
 export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 }: { due?: number } = {}): LessonPath<S> {
-  const all = map.units.flatMap((u) => u.skills);
-  const currentSkill = all.find((s) => s.state === 'unlocked' && unfinished(s) && launchOf(s) !== null) ?? null;
-  const lastDone = [...all].reverse().find((s) => FINISHED.has(s.state)) ?? null;
+  const { currentSkill, lastDone, here } = whereIs(map);
   // review sits before the skill to do now, or after the last one done
   const reviewBefore = due > 0 && currentSkill ? currentSkill : null;
   const reviewAfter = due > 0 && !currentSkill && lastDone ? lastDone : null;
@@ -270,12 +283,14 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 
     if (unit.skills.length > 0) {
       stops.push({ kind: 'trophy', key: `t:${unit.unitId}`, earned: unitDone === unit.skills.length, unitNumber: u + 1 });
     }
-    const { placed, height } = place(stops);
+    const jump = u > here && opensOnJump(unit.skills[0]);
+    const { placed, height } = place(stops, jump);
     return {
       unitId: unit.unitId,
       title: unit.title,
       number: u + 1,
       tone: UNIT_TONES[u % UNIT_TONES.length]!,
+      jump,
       stops: placed,
       height,
       done: unitDone,
@@ -289,6 +304,69 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 
   return { units, current, focus: current ?? frontier(units), done, total };
 }
 
+/**
+ * Where the learner is: the skill to do now — the first open one not yet
+ * finished, from where a test last let them through (or else from the start),
+ * so jumping ahead moves them on — the last one finished, and the unit they
+ * are in (the current skill's, else the last finished one's, else the first).
+ */
+function whereIs<S extends PathSkill>(map: PathMapInput<S>): { currentSkill: S | null; lastDone: S | null; here: number } {
+  const all = map.units.flatMap((u) => u.skills);
+  const toDo = (s: S) => s.state === 'unlocked' && unfinished(s) && launchOf(s) !== null;
+  const through = Math.max(0, (map.unlockedThrough ?? 0) - 1);
+  const currentSkill = all.slice(through).find(toDo) ?? all.find(toDo) ?? null;
+  const lastDone = [...all].reverse().find((s) => FINISHED.has(s.state)) ?? null;
+  const at = currentSkill ?? lastDone;
+  return { currentSkill, lastDone, here: Math.max(0, at ? map.units.findIndex((u) => u.skills.includes(at)) : 0) };
+}
+
+/** A unit's first skill, closed, with lessons to open once a test lets the learner through. */
+function opensOnJump(first: PathSkill | undefined): boolean {
+  if (!first || first.state !== 'locked') return false;
+  return first.lessons ? first.lessons.length > 0 : first.firstLessonId !== null;
+}
+
+/**
+ * The test that jumps ahead (`jumpPlan`), in the numbers the server keeps and
+ * the apps say: how many questions at most (fewer when the skills it skips
+ * have fewer), the mistakes a full one allows, and how many tests a learner
+ * may start at one unit in a day — so passing is learning, not luck tried
+ * until it lands.
+ */
+export const PATH_JUMP = { questions: 10, maxMistakes: 2, triesPerDay: 3 } as const;
+
+/** The mistakes a test of `total` questions allows: 2 in 10, and one in five of a shorter one. */
+export function jumpMistakesAllowed(total: number): number {
+  return Math.floor((Math.max(0, total) * PATH_JUMP.maxMistakes) / PATH_JUMP.questions);
+}
+
+/** Passed: no more mistakes than allowed, an item not answered counting as one. */
+export function jumpPassed(correct: number, total: number): boolean {
+  return total > 0 && total - correct <= jumpMistakesAllowed(total);
+}
+
+/**
+ * Jumping ahead to a unit: a short test on the skills it skips, which when
+ * passed opens every skill up to the unit's first (`position`, its place in
+ * the course from 1) — and those skipped stay open to come back to. Null when
+ * the unit may not be jumped to (`PathUnit.jump`): the server and the apps
+ * read the same rule from the same map.
+ *
+ * `skipped` are the skills not yet finished from the unit the learner is in up
+ * to the one before the target, in course order; the test is drawn from them.
+ */
+export function jumpPlan<S extends PathSkill>(map: PathMapInput<S>, unitId: string): { position: number; skipped: S[] } | null {
+  const target = map.units.findIndex((u) => u.unitId === unitId);
+  const { here } = whereIs(map);
+  if (target <= here || !opensOnJump(map.units[target]!.skills[0])) return null;
+  const first = map.units[target]!.skills[0]!;
+  const skipped = map.units
+    .slice(here, target)
+    .flatMap((u) => u.skills)
+    .filter((s) => !FINISHED.has(s.state));
+  return { position: map.units.flatMap((u) => u.skills).indexOf(first) + 1, skipped };
+}
+
 /** Reached: a stop the learner has got to — done, current, the review beside them, a trophy earned. */
 function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   if (stop.kind === 'review') return true;
@@ -296,12 +374,16 @@ function reached<S extends PathSkill>(stop: PathStop<S>): boolean {
   return stop.state === 'done' || stop.state === 'current';
 }
 
-/** Down the page, a step apart, leaning in turn; the current skill gets room above it for its bubble. */
-function place<S extends PathSkill>(stops: PathStop<S>[]): { placed: PlacedStop<S>[]; height: number } {
+/**
+ * Down the page, a step apart, leaning in turn; the current skill gets room
+ * above it for its bubble, and so does the first stop of a unit that can be
+ * jumped to, for its own.
+ */
+function place<S extends PathSkill>(stops: PathStop<S>[], jump: boolean): { placed: PlacedStop<S>[]; height: number } {
   const { step, sway, lift, pad } = PATH_GEOMETRY;
   let y = pad;
   const placed = stops.map((stop, i): PlacedStop<S> => {
-    const raised = stop.kind === 'skill' && stop.state === 'current';
+    const raised = (stop.kind === 'skill' && stop.state === 'current') || (jump && i === 0);
     if (i > 0) y += step;
     if (raised) y += lift;
     const before = stops[i - 1];
