@@ -6,6 +6,7 @@ import {
   COMPANION_OVERHANG,
   COMPANION_VIEW,
   CompanionMotion,
+  companionGate,
   companionLook,
   companionSvg,
   companionTransforms,
@@ -93,8 +94,12 @@ describe('companionSvg', () => {
     expect(body).toBeGreaterThan(-1);
     expect(legs).toBeGreaterThan(body);
     expect(playful).toContain('clip-path="url(#one-edge)"><g data-cp="body"');
-    expect(playful).toContain('clip-path="url(#one-legs)"><g data-cp="legs"');
-    expect(playful).toContain('data-cp="leg-gate"');
+    // the legs' gate is which clip they have, shut at the sill or open down the card, never a clip that moves
+    expect(playful).toContain('<g data-cp="leg-gate" clip-path="url(#one-edge)"><g data-cp="legs"');
+    expect(companionGate('one', 'open')).toBe('url(#one-legs)');
+    expect(companionGate('one', 'shut')).toBe('url(#one-edge)');
+    expect(playful).toMatch(/<clipPath id="one-legs"><rect [^>]*\/><\/clipPath>/);
+    expect(playful).not.toMatch(/<clipPath[^>]*>(?:(?!<\/clipPath>).)*data-cp/);
     expect(playful).not.toContain('glasses');
   });
 
@@ -102,12 +107,19 @@ describe('companionSvg', () => {
     // one outline, filled as his chest is, shaded at its rim and casting a shadow, with the hoof on its end
     expect(playful).toMatch(/<path id="one-leg-left" data-cp="leg-left" d="M[^"]+Z"\/>/);
     expect(playful).toContain('<use href="#one-leg-left" fill="url(#one-fur)"/><use href="#one-leg-left" fill="url(#one-side)"/>');
-    expect(playful).toContain('<clipPath id="one-in-left"><use href="#one-leg-left"/></clipPath>');
+    expect(playful).toMatch(/<use href="#one-rim-left" fill="none" stroke="[^"]+" stroke-opacity="[^"]+" stroke-width="[^"]+" stroke-linecap="round"\/>/);
     expect(playful).toMatch(/<g data-cp="hoof-left" transform="translate\([^"]+\)">/);
-    // drawn at rest before any frame: the same as a frame at rest
-    const rest = companionTransforms(sitting());
-    expect(playful).toContain(`data-cp="leg-left" d="${rest.legLeft}"`);
-    expect(playful).toContain(`data-cp="hoof-right" transform="${rest.hoofRight}"`);
+  });
+
+  it('is drawn as he is before he comes up, out of sight below the sill with his forelegs shut in, until a frame moves him', () => {
+    const m = new CompanionMotion('playful', () => 0.5);
+    m.arrive(0);
+    const coming = companionTransforms(m.step(0));
+    expect(coming.legGate).toBe('shut');
+    expect(playful).toContain(`<g data-cp="body" transform="${coming.body}">`);
+    expect(playful).toContain(`<g data-cp="legs" transform="${coming.legs}">`);
+    expect(playful).toContain(`data-cp="leg-left" d="${coming.legLeft}"`);
+    expect(playful).toContain(`data-cp="hoof-right" transform="${coming.hoofRight}"`);
   });
 
   it('draws him from the chest up, as the mascot is, his face in layers that turn and kept inside its outline', () => {
@@ -123,6 +135,74 @@ describe('companionSvg', () => {
 });
 
 describe('CompanionMotion', () => {
+  /**
+   * How far over the sill either foreleg shows, as drawn for a frame (less than 0: none of it): its shaded rim, its
+   * shadow and its hoof. (Its shoulder is his chest's own fur, and shows as his chest.)
+   */
+  const legsOver = (f: CompanionFrame): number => {
+    const t = companionTransforms(f);
+    const drop = Number(/translate\(0 (-?[\d.]+)\)/.exec(t.legs)?.[1] ?? 0);
+    // an arc's radii and flags are not points: only where it ends
+    const points = (d: string): string => d.replace(/A[^A-Z]*?(?=[A-Z]|$)/g, (arc) => `L${arc.trim().split(/[ ,]+/).slice(-2).join(',')}`);
+    const ys = (d: string): number[] => (points(d).match(/-?\d+(\.\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2 === 1);
+    const hoofY = (h: string): number => Number(/translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(h)?.[2] ?? 0) - 30;
+    const top = Math.min(...ys(t.rimLeft), ...ys(t.rimRight), ...ys(t.castLeft), ...ys(t.castRight), hoofY(t.hoofLeft), hoofY(t.hoofRight));
+    return COMPANION_EDGE - (top + drop);
+  };
+
+  it('kept low, comes up only so far as his head and neck, his forelegs out of sight behind the card', () => {
+    for (const tone of ['playful', 'calm'] as const) {
+      const m = new CompanionMotion(tone, () => 0.5);
+      m.set({ low: true }, 0);
+      m.arrive(0);
+      const frames = run(m, 0, 4000);
+      for (const f of frames) {
+        expect(companionTransforms(f).legGate, tone).toBe('shut');
+        expect(legsOver(f), tone).toBeLessThan(0);
+      }
+      // his head and neck over the sill, his shoulders behind it
+      const up = last(frames);
+      expect(up.enter).toBeGreaterThan(0.15);
+      expect(up.enter).toBeLessThan(0.3);
+      expect(COMPANION_EYES.y + up.enter * 860).toBeLessThan(COMPANION_EDGE - 200);
+      // typing, his eyes on the keys, and still nothing of his legs
+      m.set({ field: 'text' }, 4000);
+      for (let i = 0; i < 6; i += 1) m.react('keystroke', 4000 + i * 120);
+      for (const f of run(m, 4000, 1500)) expect(legsOver(f)).toBeLessThan(0);
+    }
+  });
+
+  it('let out, climbs out with his hooves raised and lays them over the card once he is up', () => {
+    const m = new CompanionMotion('calm', () => 0.5);
+    m.set({ low: true }, 0);
+    m.arrive(0);
+    run(m, 0, 3000);
+    m.set({ low: false }, 3000);
+    const frames = run(m, 3000, 3000);
+    const rising = frames.filter((f) => f.enter > 0.05);
+    expect(rising.length).toBeGreaterThan(3);
+    // while he is still coming up his hooves are up and only what is over the sill shows
+    expect(Math.max(...frames.map((f) => f.hoofLeft))).toBeGreaterThan(0.45);
+    for (const f of rising) expect(companionTransforms(f).legGate).toBe('shut');
+    const out = last(frames);
+    expect(out.enter).toBe(0);
+    expect(out.hoofLeft).toBe(0);
+    expect(companionTransforms(out).legGate).toBe('open');
+  });
+
+  it('kept low again, lifts his hooves off the card before he goes down with them', () => {
+    const m = settled('calm');
+    m.set({ low: true }, NOW);
+    const frames = run(m, NOW, 3000);
+    // nothing of him goes down while his hooves still hang over the card: they are up as he goes
+    for (const f of frames) if (f.enter > 0.02 && f.enter < 0.12) expect(Math.min(f.hoofLeft, f.hoofRight)).toBeGreaterThan(0.35);
+    const down = last(frames);
+    expect(down.enter).toBeGreaterThan(0.15);
+    expect(down.hoofLeft).toBe(0);
+    expect(companionTransforms(down).legGate).toBe('shut');
+    expect(legsOver(down)).toBeLessThan(0);
+  });
+
   it('turns his ears after his head, a moment later and on a little past it, before they settle with it', () => {
     for (const tone of ['playful', 'calm'] as const) {
       const m = settled(tone);

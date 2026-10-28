@@ -2,6 +2,7 @@ import {
   COMPANION_OUTLINES,
   COMPANION_WORDS,
   CompanionMotion,
+  companionGate,
   companionLook,
   companionSvg,
   companionTransforms,
@@ -49,6 +50,7 @@ const PARTS: Record<keyof CompanionTransforms, string> = {
   nose: 'nose',
   legs: 'legs',
   legGate: 'leg-gate',
+  sill: 'sill',
   legLeft: 'leg-left',
   legRight: 'leg-right',
   rimLeft: 'rim-left',
@@ -118,6 +120,8 @@ export interface CompanionPlayerOptions {
   tone: CompanionTone;
   /** starts every id in the drawing; unique on the page */
   prefix: string;
+  /** he comes up only so far as his head and neck, his forelegs out of sight, until he is let out (`keepLow(false)`) */
+  low?: boolean;
 }
 
 export class CompanionPlayer {
@@ -141,11 +145,13 @@ export class CompanionPlayer {
   private onScreen = true;
   private still: boolean;
   private dead = false;
+  private readonly prefix: string;
 
   constructor(
     private readonly host: HTMLElement,
-    { tone, prefix }: CompanionPlayerOptions,
+    { tone, prefix, low = false }: CompanionPlayerOptions,
   ) {
+    this.prefix = prefix;
     host.innerHTML = companionSvg({ prefix }) + (tone === 'playful' ? '<span class="cp-say" hidden></span>' : '');
     this.svg = host.querySelector('svg');
     for (const [key, name] of Object.entries(PARTS) as [keyof CompanionTransforms, string][]) {
@@ -210,7 +216,14 @@ export class CompanionPlayer {
       this.cleanups.push(() => seen.disconnect());
     } else host.classList.add('is-shown');
 
+    if (low) this.motion.set({ low }, now());
     this.motion.arrive(now());
+    this.wake();
+  }
+
+  /** Whether he keeps low behind the card, his head and neck over it, or climbs out and lays his forelegs over it. */
+  keepLow(low: boolean): void {
+    this.motion.set({ low }, now());
     this.wake();
   }
 
@@ -313,7 +326,8 @@ export class CompanionPlayer {
     const t = companionTransforms(f);
     for (const key of Object.keys(PARTS) as (keyof CompanionTransforms)[]) {
       if (this.written[key] !== t[key]) {
-        this.parts[key]?.setAttribute(OUTLINES.has(key) ? 'd' : 'transform', t[key]);
+        if (key === 'legGate') this.parts[key]?.setAttribute('clip-path', companionGate(this.prefix, t[key]));
+        else this.parts[key]?.setAttribute(OUTLINES.has(key) ? 'd' : 'transform', t[key]);
         this.written[key] = t[key];
       }
     }

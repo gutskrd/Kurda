@@ -338,6 +338,9 @@ const legTurn = (side: 'left' | 'right'): number => Math.abs(Number(/rotate\((\S
 const hoofY = (side: 'left' | 'right'): number => Number(/translate\(\S+ (\S+)\)/.exec(hoof(side))?.[1] ?? Number.NaN);
 const lid = (side: 'left' | 'right', state: string): string | null | undefined =>
   companion().querySelector(`[data-eye="${side}"] [data-lid="${state}"]`)?.getAttribute('visibility');
+/** How far below his place he is (his head and neck alone over the card when low), and whether his forelegs may be seen over the card's face. */
+const below = (): number => Number(/translate\(0 (\S+)\)/.exec(companion().querySelector('[data-cp="body"]')?.getAttribute('transform') ?? '')?.[1] ?? Number.NaN);
+const legsOut = (): boolean => /-legs\)$/.test(companion().querySelector('[data-cp="leg-gate"]')?.getAttribute('clip-path') ?? '');
 
 describe('Hevalo on the sign-in', () => {
   it('leans in over the card, hidden from assistive technology, with no words in the console', () => {
@@ -345,6 +348,29 @@ describe('Hevalo on the sign-in', () => {
     expect(companion()).toHaveAttribute('aria-hidden', 'true');
     expect(companion().querySelector('[data-cp="legs"]')).not.toBeNull();
     expect(companion().querySelector('.cp-say')).toBeNull();
+  });
+
+  it('shows only his head and neck over the card for the email, and climbs out over it once the email is given', async () => {
+    const user = userEvent.setup();
+    show(false);
+    // up as far as his neck, his forelegs shut in behind the card
+    await waitFor(
+      () => {
+        expect(below()).toBeGreaterThan(140);
+        expect(below()).toBeLessThan(220);
+      },
+      { timeout: 3000 },
+    );
+    expect(legsOut()).toBe(false);
+    await user.type(screen.getByLabelText('Email'), 'rojda@hevalo.app{Enter}');
+    await screen.findByLabelText('Password');
+    await waitFor(
+      () => {
+        expect(legsOut()).toBe(true);
+        expect(below()).toBeLessThan(2);
+      },
+      { timeout: 3000 },
+    );
   });
 
   it('covers his eyes for the password, peeks when it is shown, and puts his hooves back on the sill after', async () => {
