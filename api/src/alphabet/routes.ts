@@ -1,5 +1,6 @@
 /**
- * Recordings for the alphabet page.
+ * Recordings for the alphabet page, and for the word sets beside it (colours,
+ * numbers, days, months): one list of sounds, ALPHABET_CLIPS, and one table.
  *
  *   GET    /alphabet/audio               which sounds have a recording, and where (public)
  *   PUT    /admin/alphabet/audio?key=…   store a recording for one sound (raw audio body)
@@ -71,7 +72,7 @@ function wordsOf(row: Pick<Row, 'key' | 'duration_ms'>): SpokenWords | undefined
 
 function keyFrom(query: unknown): string {
   const key = typeof (query as { key?: unknown })?.key === 'string' ? (query as { key: string }).key : '';
-  if (!isAlphabetClipKey(key)) throw new AppError('UNKNOWN_SOUND', 400, 'no sound on the alphabet page has that key');
+  if (!isAlphabetClipKey(key)) throw new AppError('UNKNOWN_SOUND', 400, 'no sound on the alphabet or word pages has that key');
   return key;
 }
 

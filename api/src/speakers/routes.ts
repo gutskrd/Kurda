@@ -8,7 +8,7 @@
  * `kind` is the kind of recording, and `key` the one recording:
  *
  *   lesson      a lesson or story sentence, by its lessonAudioKey (as DELETE /admin/lesson-audio names it)
- *   alphabet    a sound on the alphabet page, by its ALPHABET_CLIPS key
+ *   alphabet    a sound on the alphabet page or a word in the word sets, by its ALPHABET_CLIPS key
  *   dictionary  a dictionary pronunciation, by its id (each entry's `audio[].id`)
  *
  * This is for recordings made before the characters, and for any whose
