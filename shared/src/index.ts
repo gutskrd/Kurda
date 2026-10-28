@@ -248,10 +248,7 @@ export {
 export {
   CALENDAR_MONTHS,
   COLOURS as WORD_COLOURS,
-  DAYS as WORD_DAYS,
-  KURDISH_MONTHS,
   NEWROZ,
-  NUMBERS as WORD_NUMBERS,
   RELATIVE_DAYS,
   SEASONS,
   SEASON_ORDER,
@@ -262,7 +259,6 @@ export {
   glossIn,
   isWordSetId,
   kurdishWeekday,
-  monthAfter,
   wordGloss,
   wordGroups,
   wordIn,
@@ -284,13 +280,12 @@ export {
   type WordSetId,
 } from './word-sets/words.js';
 export { KURDISH_NUMBER_MAX, easternDigits, kurdishNumber, readDigits } from './word-sets/number.js';
-export { WORD_ROUND, askWordAgain, makeWordRound, type WordQuestion, type WordQuestionKind } from './word-sets/practice.js';
+export { askWordAgain, makeWordRound, type WordQuestion, type WordQuestionKind } from './word-sets/practice.js';
 export { WORD_CLIPS as SYNTHESISED_WORD_CLIPS } from './word-sets/clips.js';
 export {
   SYNTHESISED_WORDS_PATH,
   WORD_SET_CLIPS,
   isWordSetClipKey,
-  wordClipKey,
   wordSetRecordings,
   wordSetSounds,
   type WordSetSounds,

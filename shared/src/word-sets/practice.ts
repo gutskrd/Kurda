@@ -5,6 +5,7 @@ import {
   KURDISH_MONTHS,
   NUMBERS,
   dayAfter,
+  monthAfter,
   wordSet,
   type Dialect,
   type Month,
@@ -95,10 +96,8 @@ function nearOf(word: SetWord): SetWord[] {
     }
     case 'days':
       return [1, -1, 2, -2].map((by) => dayAfter(word, by));
-    case 'months': {
-      const all = word.calendar === 'gregorian' ? CALENDAR_MONTHS : KURDISH_MONTHS;
-      return [1, -1, 2, -2].map((by) => all[(((word.number - 1 + by) % 12) + 12) % 12]!);
-    }
+    case 'months':
+      return [1, -1, 2, -2].map((by) => monthAfter(word, by));
   }
 }
 
@@ -138,7 +137,7 @@ function question(kind: WordQuestionKind, w: SetWord, dialect: Dialect, rand: Ra
     }
     case 'next': {
       if (w.set !== 'months') return null;
-      const before = (w.calendar === 'gregorian' ? CALENDAR_MONTHS : KURDISH_MONTHS)[(w.number + 10) % 12]!;
+      const before = monthAfter(w, -1);
       return { ...base, kind, prompt: before, options: optionsFor(w, rand, before), shows: 'word' };
     }
     case 'newroz':

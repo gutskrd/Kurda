@@ -193,6 +193,8 @@ describe('the months', () => {
     expect(monthAfter(CALENDAR_MONTHS[11]!).id).toBe('jan');
     expect(monthAfter(KURDISH_MONTHS[11]!).id).toBe('xakelewe');
     expect(monthAfter(KURDISH_MONTHS[0]!).id).toBe('gulan');
+    expect(monthAfter(CALENDAR_MONTHS[0]!, -1).id).toBe('dec');
+    expect(monthAfter(KURDISH_MONTHS[0]!, -2).id).toBe('rebendan');
   });
 });
 

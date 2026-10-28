@@ -440,8 +440,8 @@ export function kurdishWeekday(date: Date): number {
   return (date.getDay() + 1) % 7;
 }
 
-/** The month after `month` in its own calendar, December's or Reşemî's being the first. */
-export function monthAfter(month: Month): Month {
+/** The month `by` after `month` in its own calendar, the year going round: December's next is January, Reşemî's Xakelêwe. */
+export function monthAfter(month: Month, by = 1): Month {
   const all = month.calendar === 'gregorian' ? CALENDAR_MONTHS : KURDISH_MONTHS;
-  return all[month.number % 12]!;
+  return all[(((month.number - 1 + by) % 12) + 12) % 12]!;
 }
