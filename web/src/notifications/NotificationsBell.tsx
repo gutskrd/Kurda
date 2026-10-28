@@ -8,6 +8,7 @@ import { BellIcon, CloseIcon, GearIcon, ReadAllIcon } from '../components/icons'
 import { NotificationsSkeleton } from '../components/skeletons';
 import { wrapTab } from '../components/Sheet';
 import { useLocale, useT } from '../i18n/I18nProvider';
+import { lockPageScroll } from '../lib/scrollLock';
 import { useRail, useRailPresent } from '../social/RailProvider';
 import { NotificationList, useNotificationReads } from './NotificationList';
 
@@ -60,17 +61,18 @@ export function NotificationsBell(): React.JSX.Element | null {
 
   const close = (): void => {
     setOpen(false);
-    buttonRef.current?.focus();
+    buttonRef.current?.focus({ preventScroll: true });
   };
 
   useEffect(() => {
     if (!open) return;
-    // the panel takes the focus, so a keyboard is already inside what it opened
-    panelRef.current?.focus();
+    // the panel takes the focus, so a keyboard is already inside what it opened; nothing scrolls
+    // for it — it floats over the page — and the bell it goes back to is always in sight in the bar
+    panelRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         setOpen(false);
-        buttonRef.current?.focus();
+        buttonRef.current?.focus({ preventScroll: true });
       } else if (panelRef.current) {
         wrapTab(e, panelRef.current);
       }
@@ -84,12 +86,11 @@ export function NotificationsBell(): React.JSX.Element | null {
     document.addEventListener('pointerdown', onDown);
     // a sheet over the whole screen: the page under it should not scroll away behind it
     const sheet = typeof window.matchMedia === 'function' && window.matchMedia(PHONE).matches;
-    const before = document.body.style.overflow;
-    if (sheet) document.body.style.overflow = 'hidden';
+    const unlock = sheet ? lockPageScroll() : null;
     return () => {
       document.removeEventListener('keydown', onKey);
       document.removeEventListener('pointerdown', onDown);
-      if (sheet) document.body.style.overflow = before;
+      unlock?.();
     };
   }, [open]);
 

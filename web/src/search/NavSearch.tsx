@@ -105,14 +105,15 @@ export function NavSearch(): React.JSX.Element {
    */
   const show = useCallback((): void => {
     flushSync(() => setOpen(true));
-    inputRef.current?.focus();
+    // the field is in the bar, always in sight: focusing it must not scroll the page under it
+    inputRef.current?.focus({ preventScroll: true });
   }, []);
 
   /** Put the panel away; on a phone the field goes too, and the button gets the focus back. */
   const hide = useCallback((): void => {
     setOpen(false);
     setActive(-1);
-    if (isNarrow()) openerRef.current?.focus();
+    if (isNarrow()) openerRef.current?.focus({ preventScroll: true });
   }, []);
 
   // moving to another page puts the search away and empties it
@@ -195,7 +196,7 @@ export function NavSearch(): React.JSX.Element {
         // a past search is typed back in, and searched again
         setQuery(choice.term);
         setActive(-1);
-        inputRef.current?.focus();
+        inputRef.current?.focus({ preventScroll: true });
         return;
       case 'person':
         finish(true);
@@ -371,7 +372,7 @@ export function NavSearch(): React.JSX.Element {
                 setQuery('');
                 setActive(-1);
                 setOpen(true);
-                inputRef.current?.focus();
+                inputRef.current?.focus({ preventScroll: true });
               }}
             >
               <CloseIcon size={16} />

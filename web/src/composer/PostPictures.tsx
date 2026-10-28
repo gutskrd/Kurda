@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { localeDir, type FeedImage } from '@kurda/shared';
 import { ChevronIcon, CloseIcon } from '../components/icons';
 import { useI18n, useT } from '../i18n/I18nProvider';
+import { lockPageScroll } from '../lib/scrollLock';
 import './pictures.css';
 
 /** How long one click on a picture waits for a second before it opens the picture. */
@@ -199,12 +200,11 @@ export function Lightbox({ images, start, onClose }: { images: FeedImage[]; star
 
   useEffect(() => {
     const restore = document.activeElement as HTMLElement | null;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    closeRef.current?.focus();
+    const unlock = lockPageScroll();
+    closeRef.current?.focus({ preventScroll: true });
     return () => {
-      document.body.style.overflow = prev;
-      restore?.focus?.();
+      unlock();
+      restore?.focus?.({ preventScroll: true });
     };
   }, []);
 

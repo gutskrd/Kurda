@@ -107,13 +107,14 @@ export function TopNav({ links, joinOnPhone = false }: { links: NavItem[]; joinO
 
   useEffect(() => {
     if (!open) return;
-    // the first place takes the focus, so a keyboard is already inside what it opened
-    listRef.current?.querySelector<HTMLElement>('a[href]')?.focus();
+    // the first place takes the focus, so a keyboard is already inside what it opened; the bar and
+    // what hangs from it are always in sight, so a focus here never scrolls the page under them
+    listRef.current?.querySelector<HTMLElement>('a[href]')?.focus({ preventScroll: true });
     // Escape closes the open menu, as it closes every other thing that opens
     const onKey = (e: KeyboardEvent): void => {
       if (e.key !== 'Escape') return;
       setOpen(false);
-      toggleRef.current?.focus();
+      toggleRef.current?.focus({ preventScroll: true });
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);

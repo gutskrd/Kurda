@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { CloseIcon } from './icons';
 import { escapeClearsField } from './SearchField';
 import { useT } from '../i18n/I18nProvider';
+import { lockPageScroll } from '../lib/scrollLock';
 
 /**
  * A dialog that rises from the bottom on a phone and sits in the middle on a
@@ -73,9 +74,8 @@ export function Sheet({
   useEffect(() => {
     if (!open) return;
     restoreRef.current = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    panelRef.current?.focus();
+    const unlock = lockPageScroll();
+    panelRef.current?.focus({ preventScroll: true });
 
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
@@ -91,8 +91,8 @@ export function Sheet({
     window.addEventListener('keydown', onKey, true);
     return () => {
       window.removeEventListener('keydown', onKey, true);
-      document.body.style.overflow = prevOverflow;
-      restoreRef.current?.focus?.();
+      unlock();
+      restoreRef.current?.focus?.({ preventScroll: true });
     };
   }, [open]);
 

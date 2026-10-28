@@ -6,6 +6,7 @@ import { wrapTab } from '../components/Sheet';
 import { CheckIcon } from '../components/icons';
 import { useT } from '../i18n/I18nProvider';
 import type { ApiError } from '../lib/types';
+import { lockPageScroll } from '../lib/scrollLock';
 import { SendError } from '../reports/SendError';
 import { Confetti, GiftBox, GiftItemArt, NewrozFlame } from './GiftArt';
 
@@ -141,10 +142,9 @@ export function GiftStage({
 
   useEffect(() => {
     restore.current = document.activeElement as HTMLElement | null;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
+    const unlock = lockPageScroll();
     // on the stage at once, on Skip: Enter or Space ends the moment early
-    skipRef.current?.focus();
+    skipRef.current?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       // focus stays on the stage while it is up, as in any dialog
       if (stageRef.current) wrapTab(e, stageRef.current);
@@ -155,8 +155,8 @@ export function GiftStage({
     window.addEventListener('keydown', onKey, true);
     return () => {
       window.removeEventListener('keydown', onKey, true);
-      document.body.style.overflow = prev;
-      restore.current?.focus?.();
+      unlock();
+      restore.current?.focus?.({ preventScroll: true });
     };
   }, [onClose]);
 

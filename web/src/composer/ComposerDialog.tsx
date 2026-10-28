@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { lockPageScroll } from '../lib/scrollLock';
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), textarea:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
@@ -36,12 +37,11 @@ export function ComposerDialog({
 
   useEffect(() => {
     const restore = document.activeElement as HTMLElement | null;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    (initialFocus?.current ?? panelRef.current)?.focus();
+    const unlock = lockPageScroll();
+    (initialFocus?.current ?? panelRef.current)?.focus({ preventScroll: true });
     return () => {
-      document.body.style.overflow = prevOverflow;
-      restore?.focus?.();
+      unlock();
+      restore?.focus?.({ preventScroll: true });
     };
     // once per opening: the composer is mounted fresh each time
     // (initialFocus is a ref, read when it opens)
