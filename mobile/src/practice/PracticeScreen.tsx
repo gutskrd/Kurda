@@ -27,8 +27,12 @@ interface PracticeStart {
   suggestion?: { lessonId: string; title: string } | null;
 }
 
-/** Practice/review mode (KUR-034): reuses the lesson player over the SR queue. */
-export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigation; onExit: () => void }) {
+/**
+ * Practice/review mode (KUR-034): reuses the lesson player over the SR queue —
+ * or over `exerciseIds`, a finished lesson's mistakes ("Practise these now"),
+ * which the server builds a session from instead.
+ */
+export function PracticeScreen({ navigation, onExit, exerciseIds }: { navigation: RootNavigation; onExit: () => void; exerciseIds?: string[] }) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -36,11 +40,13 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
   const [error, setError] = useState<ApiError | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
 
+  // the ids by value: the same mistakes passed again are the same session to start
+  const chosen = exerciseIds && exerciseIds.length > 0 ? exerciseIds.join(',') : null;
   useEffect(() => {
     let active = true;
     setError(null);
     setStart(null);
-    void client.post<PracticeStart>('/practice/session').then((res) => {
+    void client.post<PracticeStart>('/practice/session', chosen ? { exerciseIds: chosen.split(',') } : undefined).then((res) => {
       if (!active) return;
       if (res.ok) setStart(res.data);
       else setError(res.error);
@@ -48,7 +54,7 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
     return () => {
       active = false;
     };
-  }, [client, reloadKey]);
+  }, [client, reloadKey, chosen]);
 
   if (error) {
     const message = describeError(error, t);
@@ -102,7 +108,17 @@ export function PracticeScreen({ navigation, onExit }: { navigation: RootNavigat
     exercises: start.exercises.map((ex, i) => ({ ...ex, position: i + 1 })),
     answered: {},
   };
-  return <SessionPlayer view={view} paths={PRACTICE_PATHS} onExit={onExit} />;
+  return (
+    <SessionPlayer
+      view={view}
+      paths={PRACTICE_PATHS}
+      kind="practice"
+      onExit={onExit}
+      // what was missed here can be practised again at once, in this session's place
+      onPractise={(ids) => navigation.replace('Practice', { exerciseIds: ids })}
+      onPath={() => navigation.navigate('Tabs', { screen: 'Learn', params: { view: 'lessons' } })}
+    />
+  );
 }
 
 function Centered({ children }: { children: React.ReactNode }) {

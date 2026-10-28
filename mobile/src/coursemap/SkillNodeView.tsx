@@ -1,9 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, Text, View } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
-import { PATH_GEOMETRY, type PathStop } from '@kurda/shared';
+import { PATH_GEOMETRY, PATH_RETURN, type PathStop } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
+import { haptic } from '../feedback/haptics';
+import { ease, springTo, timing } from '../theme/animate';
 import { Icon, type IconName } from '../theme/Icon';
+import { DrawnCheck } from '../theme/MotionParts';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { GOLD_INK, GOLD_LIP, REST, mix, type ToneColors } from './path';
@@ -21,6 +24,24 @@ const RING = NODE + 2 * (RING_GAP + RING_STROKE);
 type Stop = PathStop<SkillNode>;
 
 /**
+ * What coming back from a lesson changed about this stop, to show rather than
+ * only draw (shared `pathChanges`, timed by `PATH_RETURN`): its ring filled
+ * on from `ringFrom`, finished (it pops and its check draws in), opened (the
+ * lock gives way to its number, and it pops), or the bubble's new place.
+ */
+export interface StopChange {
+  ringFrom?: number;
+  finishing?: boolean;
+  opening?: boolean;
+  arriving?: boolean;
+}
+
+/** How far a stop swells as it pops. */
+const POP = 1.12;
+
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+
+/**
  * One stop on the lesson path: a round button, its shape and glyph saying
  * what it is as well as its colour — a check when done (a star with a gold rim
  * once strong, a small review sign once a refresh would help), the number of
@@ -30,6 +51,12 @@ type Stop = PathStop<SkillNode>;
  * Over the current skill floats "Start" (or "Continue"), which opens its next
  * lesson in one tap; it bobs gently, and stands still for anyone who has asked
  * their phone for less motion.
+ *
+ * Back from a lesson, a stop shows what the lesson did to it (`change`): the
+ * ring fills on, a finished stop pops as its check draws in, an opened one
+ * trades its padlock for its number with a pop and a light knock, and the
+ * bubble arrives last. Under Reduce Motion there is no `change`: the path is
+ * simply as it now is.
  */
 export function SkillNodeView({
   stop,
@@ -38,6 +65,7 @@ export function SkillNodeView({
   tone,
   label,
   callout,
+  change,
   onPress,
   onStart,
 }: {
@@ -50,6 +78,8 @@ export function SkillNodeView({
   label: string;
   /** the word over the current skill, and what a screen reader says for it */
   callout?: { text: string; label: string };
+  /** what coming back from a lesson changed here, played once */
+  change?: StopChange | null;
   onPress: () => void;
   onStart?: () => void;
 }): React.JSX.Element {
@@ -58,38 +88,84 @@ export function SkillNodeView({
   const look = lookOf(stop, tone, rest, colors.surfaceRaised, colors.gold, GOLD_LIP[scheme]);
   const raised = stop.kind === 'skill' && stop.state === 'current';
   const lip = raised ? LIP_RAISED : LIP;
+  const finishing = !!change?.finishing;
+  const opening = !!change?.opening;
+
+  // a pop as it finishes or opens; an opened stop's padlock gives way to its number
+  const pop = useRef(new Animated.Value(1)).current;
+  const lock = useRef(new Animated.Value(opening ? 1 : 0)).current;
+  // a stop already on the path when the change arrives starts from its padlock, from the first frame it is drawn opening
+  const seen = useRef(change);
+  if (seen.current !== change) {
+    seen.current = change;
+    lock.setValue(opening ? 1 : 0);
+  }
+  useEffect(() => {
+    if (!finishing && !opening) return;
+    const at = finishing ? PATH_RETURN.finishAtMs : PATH_RETURN.openAtMs;
+    const half = PATH_RETURN.popMs / 2;
+    const run = Animated.parallel([
+      Animated.sequence([Animated.delay(at), timing(pop, POP, half), springTo(pop, 1, 'bouncy')]),
+      ...(opening ? [timing(lock, 0, PATH_RETURN.glyphMs, { delay: at })] : []),
+    ]);
+    run.start();
+    const knock = opening ? setTimeout(() => haptic('tap'), at) : null;
+    return () => {
+      run.stop();
+      if (knock) clearTimeout(knock);
+    };
+  }, [change, finishing, opening, pop, lock]);
 
   return (
     <View style={[styles.stop, { left, top }]} pointerEvents="box-none">
-      {callout && onStart ? <Callout text={callout.text} label={callout.label} tone={tone} onPress={onStart} /> : null}
+      {callout && onStart ? <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} onPress={onStart} /> : null}
       {raised && stop.kind === 'skill' ? (
-        <Ring done={stop.lessonsDone} total={stop.lessonsTotal} fill={tone.fill} track={rest.line} />
+        <Ring done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} track={rest.line} />
+      ) : finishing && change?.ringFrom !== undefined && stop.kind === 'skill' ? (
+        // the ring it had as the current skill fills to the full, and goes as the stop pops
+        <Ring done={stop.lessonsDone} total={stop.lessonsTotal} from={change.ringFrom} fill={tone.fill} track={rest.line} goneAt={PATH_RETURN.finishAtMs} />
       ) : null}
-      <View style={[styles.lip, { top: lip, backgroundColor: look.lip }]} />
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        testID={`lp-node-${testName(stop)}`}
-        hitSlop={4}
-        style={({ pressed }) => [
-          styles.face,
-          look.ring ? styles.faceRinged : null,
-          { backgroundColor: look.face, borderColor: look.ring ?? 'transparent', transform: [{ translateY: pressed ? lip - 2 : 0 }] },
-        ]}
-      >
-        {stop.kind === 'skill' && (stop.state === 'current' || stop.state === 'available') ? (
-          <Text style={[styles.number, { color: look.glyph }]}>{stop.number}</Text>
-        ) : (
-          <Icon name={look.icon} size={30} color={look.glyph} />
-        )}
-        {stop.kind === 'skill' && stop.finish === 'strong' ? <View style={[styles.goldRim, { borderColor: colors.gold }]} pointerEvents="none" /> : null}
-        {stop.kind === 'skill' && stop.finish === 'refresh' ? (
-          <View style={[styles.badge, { backgroundColor: colors.surfaceRaised, borderColor: tone.fill }]} pointerEvents="none">
-            <Icon name="review" size={14} color={tone.text} />
-          </View>
-        ) : null}
-      </Pressable>
+      <Animated.View style={[styles.lip, { top: lip, backgroundColor: look.lip, transform: [{ scale: pop }] }]} />
+      <Animated.View style={[styles.popped, { transform: [{ scale: pop }] }]} pointerEvents="box-none">
+        <Pressable
+          onPress={onPress}
+          accessibilityRole="button"
+          accessibilityLabel={label}
+          testID={`lp-node-${testName(stop)}`}
+          hitSlop={4}
+          style={({ pressed }) => [
+            styles.face,
+            look.ring ? styles.faceRinged : null,
+            { backgroundColor: look.face, borderColor: look.ring ?? 'transparent', transform: [{ translateY: pressed ? lip - 2 : 0 }] },
+          ]}
+        >
+          {stop.kind === 'skill' && (stop.state === 'current' || stop.state === 'available') ? (
+            opening ? (
+              // the padlock it had, giving way to its number
+              <>
+                <Animated.View style={[styles.glyph, { opacity: lock }]}>
+                  <Icon name="lock" size={30} color={look.glyph} />
+                </Animated.View>
+                <Animated.Text style={[styles.number, { color: look.glyph, opacity: lock.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }) }]}>
+                  {stop.number}
+                </Animated.Text>
+              </>
+            ) : (
+              <Text style={[styles.number, { color: look.glyph }]}>{stop.number}</Text>
+            )
+          ) : finishing && look.icon === 'check' ? (
+            <DrawnCheck size={30} color={look.glyph} delayMs={PATH_RETURN.finishAtMs} />
+          ) : (
+            <Icon name={look.icon} size={30} color={look.glyph} />
+          )}
+          {stop.kind === 'skill' && stop.finish === 'strong' ? <View style={[styles.goldRim, { borderColor: colors.gold }]} pointerEvents="none" /> : null}
+          {stop.kind === 'skill' && stop.finish === 'refresh' ? (
+            <View style={[styles.badge, { backgroundColor: colors.surfaceRaised, borderColor: tone.fill }]} pointerEvents="none">
+              <Icon name="review" size={14} color={tone.text} />
+            </View>
+          ) : null}
+        </Pressable>
+      </Animated.View>
     </View>
   );
 }
@@ -133,17 +209,55 @@ function testName(stop: Stop): string {
   return stop.state;
 }
 
-/** How far into the current skill: a ring that fills as its lessons are done, from the top, clockwise. */
-function Ring({ done, total, fill, track }: { done: number; total: number; fill: string; track: string }): React.JSX.Element {
+/**
+ * How far into the current skill: a ring that fills as its lessons are done,
+ * from the top, clockwise. Back from a lesson it fills on from where it stood
+ * (`from`) once the page has settled. A stroke along a circle is not
+ * something the native driver can move, so this one short animation runs on
+ * the JS thread, as the goal ring's does.
+ */
+function Ring({
+  done,
+  total,
+  from,
+  goneAt,
+  fill,
+  track,
+}: {
+  done: number;
+  total: number;
+  /** the share it fills on from, coming back from a lesson */
+  from?: number;
+  /** a finished skill's ring, filled, fades when its stop pops (ms into the return) */
+  goneAt?: number;
+  fill: string;
+  track: string;
+}): React.JSX.Element {
   const r = NODE / 2 + RING_GAP + RING_STROKE / 2;
   const c = 2 * Math.PI * r;
   const share = total > 0 ? Math.max(0, Math.min(1, done / total)) : 0;
+  const shown = useRef(new Animated.Value(from ?? share)).current;
+  const opacity = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    if (from === undefined) {
+      shown.setValue(share);
+      return;
+    }
+    shown.setValue(from);
+    const run = Animated.parallel([
+      Animated.timing(shown, { toValue: share, duration: PATH_RETURN.ringMs, delay: PATH_RETURN.settleMs, easing: ease.emphasis, useNativeDriver: false }),
+      ...(goneAt !== undefined ? [Animated.timing(opacity, { toValue: 0, duration: PATH_RETURN.popMs, delay: goneAt, useNativeDriver: false })] : []),
+    ]);
+    run.start();
+    return () => run.stop();
+  }, [from, share, goneAt, shown, opacity]);
+  const offset = shown.interpolate({ inputRange: [0, 1], outputRange: [c, 0] });
   return (
-    <View style={styles.ring} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <Animated.View style={[styles.ring, { opacity }]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
       <Svg width={RING} height={RING}>
         <Circle cx={RING / 2} cy={RING / 2} r={r} stroke={track} strokeWidth={RING_STROKE} fill="none" />
         {share > 0 ? (
-          <Circle
+          <AnimatedCircle
             cx={RING / 2}
             cy={RING / 2}
             r={r}
@@ -151,12 +265,13 @@ function Ring({ done, total, fill, track }: { done: number; total: number; fill:
             strokeWidth={RING_STROKE}
             fill="none"
             strokeLinecap="round"
-            strokeDasharray={`${c * share} ${c}`}
+            strokeDasharray={`${c} ${c}`}
+            strokeDashoffset={offset}
             transform={`rotate(-90 ${RING / 2} ${RING / 2})`}
           />
         ) : null}
       </Svg>
-    </View>
+    </Animated.View>
   );
 }
 
@@ -166,29 +281,45 @@ function Ring({ done, total, fill, track }: { done: number; total: number; fill:
  * stops is something moving at the edge of the eye for as long as the screen
  * is open, long after it has said where to tap.
  */
-function Callout({ text, label, tone, onPress }: { text: string; label: string; tone: ToneColors; onPress: () => void }): React.JSX.Element {
+function Callout({
+  text,
+  label,
+  tone,
+  arriving,
+  onPress,
+}: {
+  text: string;
+  label: string;
+  tone: ToneColors;
+  /** it has just moved here from the stop before: it fades in once the rest of the path has moved */
+  arriving: boolean;
+  onPress: () => void;
+}): React.JSX.Element {
   const { colors } = useTheme();
   const reduce = useReducedMotion();
   const lift = useRef(new Animated.Value(0)).current;
+  const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
 
   useEffect(() => {
     if (reduce) {
       lift.setValue(0);
+      shown.setValue(1);
       return;
     }
-    const loop = Animated.loop(
+    const bob = Animated.loop(
       Animated.sequence([
         Animated.timing(lift, { toValue: -5, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
         Animated.timing(lift, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
       ]),
       { iterations: BOBS },
     );
-    loop.start();
-    return () => loop.stop();
-  }, [reduce, lift]);
+    const run = arriving ? Animated.sequence([timing(shown, 1, PATH_RETURN.bubbleMs, { delay: PATH_RETURN.bubbleAtMs }), bob]) : bob;
+    run.start();
+    return () => run.stop();
+  }, [reduce, lift, shown, arriving]);
 
   return (
-    <Animated.View style={[styles.calloutWrap, { transform: [{ translateY: lift }] }]} pointerEvents="box-none">
+    <Animated.View style={[styles.calloutWrap, { opacity: shown, transform: [{ translateY: lift }] }]} pointerEvents="box-none">
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
@@ -221,6 +352,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   faceRinged: { borderWidth: 4 },
+  popped: { position: 'absolute', top: 0, left: 0, width: NODE, height: NODE },
+  glyph: { position: 'absolute' },
   number: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   goldRim: { position: 'absolute', top: -7, left: -7, right: -7, bottom: -7, borderRadius: radii.pill, borderWidth: 3 },
   badge: {

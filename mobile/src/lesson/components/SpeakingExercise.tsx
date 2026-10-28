@@ -14,6 +14,7 @@ import type { TranslationKey } from '../../i18n/translations';
 import { useDirection } from '../../reports/direction';
 import { knownVoice } from '../../characters/SpeakingCharacter';
 import { CharacterStage } from '../../characters/CharacterStage';
+import { ModelButton } from './ModelButton';
 
 interface Props {
   exercise: Exercise;
@@ -22,8 +23,6 @@ interface Props {
   /** the learner's own rating of the recording, once they have given one */
   selfRating: SelfRating | null;
   onRate: (rating: SelfRating | null) => void;
-  /** "can't do this now" defer */
-  onSkip: () => void;
   disabled: boolean;
 }
 
@@ -50,10 +49,10 @@ const FAILED: Record<'start' | 'save', TranslationKey> = {
  * The microphone is asked for at the first press of record, not before. A
  * refused one used to switch speaking off for the whole course, with no way
  * to turn it back on; it now says so, offers the phone's settings where it
- * can be allowed again, and the skip below puts this one off without a
- * mistake.
+ * can be allowed again, and "Can't speak now", in the footer beside Check,
+ * puts speaking off without a mistake.
  */
-export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, onSkip, disabled }: Props) {
+export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, disabled }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
   const recorder = useRecorder();
@@ -199,39 +198,11 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
       )}
 
       {note ? <Text style={[styles.detail, { color: colors.textSecondary }]}>{note}</Text> : null}
-
-      <Pressable disabled={disabled} onPress={onSkip} style={styles.skip} accessibilityRole="button" accessibilityState={{ disabled }}>
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.speak.skip')}</Text>
-      </Pressable>
     </View>
   );
 }
 
-/**
- * The native speaker's recording: the speaker alone in a round button, lit
- * while it plays, its name what it plays for anyone who cannot see it.
- */
-function ModelButton({ playing, onPress }: { playing: boolean; onPress: () => void }): React.JSX.Element {
-  const { colors } = useTheme();
-  const { t } = useI18n();
-  return (
-    <Pressable
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={t('lesson.speak.playModel')}
-      style={({ pressed }) => [
-        styles.model,
-        { backgroundColor: colors.controlTrack, borderColor: playing ? colors.gold : 'transparent', opacity: pressed ? 0.7 : 1 },
-      ]}
-    >
-      {/* the speaker points the same way in every language */}
-      <Icon name="speaker" size={24} color={playing ? colors.goldText : colors.primary} />
-    </Pressable>
-  );
-}
-
 const styles = StyleSheet.create({
-  model: { alignSelf: 'center', width: 56, height: 56, borderRadius: radii.pill, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   container: { gap: spacing.md },
   label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
@@ -245,6 +216,4 @@ const styles = StyleSheet.create({
   used: { height: '100%', borderRadius: radii.pill },
   stop: { paddingVertical: spacing.sm, paddingHorizontal: spacing.xl, borderRadius: radii.md },
   stopText: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
-  skip: { alignItems: 'center', paddingVertical: spacing.sm },
-  skipText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
 });

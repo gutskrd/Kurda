@@ -7,6 +7,7 @@ import { renderWithProviders } from '../reports/testing/harness';
 import { navigation } from '../play/testing/navigation';
 import { SettingsScreen } from '../screens/SettingsScreen';
 import { SettingsPageScreen } from './SettingsPageScreen';
+import { autoplayOn, loadAutoplayPref, resetAutoplayPref } from '../feedback/autoplayPref';
 
 vi.mock('react-native', () => import('../play/testing/native'));
 vi.mock('react-native-svg', () => import('../reports/testing/svg'));
@@ -135,6 +136,24 @@ describe('Settings pages', () => {
       fireEvent.click(toggle);
     });
     expect(client.calls.find((c) => c.method === 'PATCH')).toEqual({ method: 'PATCH', path: '/me', body: { leaguesEnabled: false } });
+  });
+
+  // the lesson's Kurdish says itself after each answer unless this is off; it is kept on this phone
+  it('lets the pronunciations after each answer be turned off, and keeps that on the phone', async () => {
+    testAuth.client = fakeClient();
+    resetAutoplayPref();
+    localStorage.clear();
+    renderWithProviders(<SettingsPageScreen page="sounds" onExit={() => undefined} />);
+    await act(() => loadAutoplayPref());
+    const toggle = screen.getByRole('switch', { name: 'Play pronunciations automatically' });
+    expect(toggle.getAttribute('aria-checked')).toBe('true');
+    await act(async () => {
+      fireEvent.click(toggle);
+    });
+    expect(toggle.getAttribute('aria-checked')).toBe('false');
+    expect(autoplayOn()).toBe(false);
+    await waitFor(() => expect(localStorage.getItem('hevalo_autoplay_audio')).toBe('off'));
+    resetAutoplayPref();
   });
 
   it('chooses the theme from a list, with the seasonal themes beside it', () => {

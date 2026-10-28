@@ -17,9 +17,56 @@ import {
   recordingProblem,
   tapLeft,
   tapRight,
+  typedHint,
   typingKeys,
   type DiffSegment,
 } from './lesson-answers.js';
+
+describe('typedHint', () => {
+  it('says when only the marks differ, each pair of letters once', () => {
+    expect(typedHint('Xwiska min li male ye', 'Xwişka min li malê ye.', 'kurmanji')).toEqual({
+      kind: 'marks',
+      pairs: [
+        ['s', 'ş'],
+        ['e', 'ê'],
+      ],
+    });
+    expect(typedHint('sev', 'sêv')).toEqual({ kind: 'marks', pairs: [['e', 'ê']] });
+  });
+
+  it('says when a Soranî letter was written without its mark', () => {
+    expect(typedHint('روژ', 'ڕۆژ', 'sorani')).toEqual({
+      kind: 'lookalike',
+      pairs: [
+        ['ر', 'ڕ'],
+        ['و', 'ۆ'],
+      ],
+    });
+    // an answer in Arabic script is Soranî, even where a review item does not say its variety
+    expect(typedHint('گول', 'گوڵ')).toEqual({ kind: 'lookalike', pairs: [['ل', 'ڵ']] });
+  });
+
+  it('never calls a keyboard variant a slip: grading reads it as the same letter', () => {
+    expect(typedHint('كوڕ', 'کوڕ', 'sorani')).toBeNull();
+  });
+
+  it('says when the words are right and only their order is not', () => {
+    expect(typedHint('li malê xwişka min ye', 'Xwişka min li malê ye.')).toEqual({ kind: 'order' });
+  });
+
+  it('names the one word missing or not needed', () => {
+    expect(typedHint('Xwişka min li malê', 'Xwişka min li malê ye.')).toEqual({ kind: 'missing', word: 'ye' });
+    expect(typedHint('min li malê ye', 'Xwişka min li malê ye.')).toEqual({ kind: 'missing', word: 'Xwişka' });
+    expect(typedHint('Xwişka min jî li malê ye', 'Xwişka min li malê ye.')).toEqual({ kind: 'extra', word: 'jî' });
+  });
+
+  it('says nothing of more than one slip, of an empty answer, or of an answer that is right', () => {
+    expect(typedHint('Xwiska min li male', 'Xwişka min li malê ye.')).toBeNull();
+    expect(typedHint('Bira min li dibistanê ye', 'Xwişka min li malê ye.')).toBeNull();
+    expect(typedHint('  ', 'sêv')).toBeNull();
+    expect(typedHint('Sêv', 'sêv.')).toBeNull();
+  });
+});
 
 describe('drafts', () => {
   it('start empty for every type', () => {

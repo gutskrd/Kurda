@@ -32,6 +32,11 @@ export interface Streak {
   longest: number;
   freezes: number;
   lastActiveOn: string | null;
+  /** days learned in all, which never go down (api/src/streaks/service.ts `StreakSummary`) */
+  daysLearned?: number;
+  /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
+  freezeProgress?: number;
+  sessionsPerFreeze?: number;
 }
 
 export interface SessionResults {

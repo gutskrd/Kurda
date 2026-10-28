@@ -2,8 +2,22 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { Dimensions, Pressable, StyleSheet, Text, View, type LayoutChangeEvent } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
-import { PATH_GEOMETRY, lean, lessonPath, type PathStop, type PathUnit, type PlacedStop } from '@kurda/shared';
+import {
+  PATH_GEOMETRY,
+  PATH_RETURN,
+  lean,
+  lessonPath,
+  mascotSpot,
+  pathChanges,
+  pathSnapshot,
+  type PathChanges,
+  type PathSnapshot,
+  type PathStop,
+  type PathUnit,
+  type PlacedStop,
+} from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useI18n } from '../i18n/I18nContext';
 import type { RootNavigation } from '../navigation/rootStack';
 import { useDirection } from '../reports/direction';
@@ -13,7 +27,8 @@ import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { REST, TONES, stopLabel, type ToneColors } from './path';
-import { SkillNodeView } from './SkillNodeView';
+import { MASCOT_MIN_WIDTH, PathMascot } from './PathMascot';
+import { SkillNodeView, type StopChange } from './SkillNodeView';
 import { StopSheet } from './StopSheet';
 import { UnitGuide } from './UnitGuide';
 import type { CourseMap, SkillNode } from './types';
@@ -26,6 +41,21 @@ type Stop = PathStop<SkillNode>;
 type Unit = PathUnit<SkillNode>;
 
 /**
+ * The path last drawn for each course, while the app runs: Learn reads the
+ * course again each time it comes back into view, so coming back from a
+ * lesson finds the path as it was before it, and can show what the lesson
+ * changed (shared `pathChanges`) rather than only the new state.
+ */
+const LAST_DRAWN = new Map<string, PathSnapshot>();
+
+/** What coming back changed, and where the learner was before it: the bubble and Hevalo move on from there. */
+interface Return {
+  changes: PathChanges;
+  /** the skill that was current before the lesson */
+  was: string | null;
+}
+
+/**
  * One course as a lesson path: each unit opens with a banner in its own colour
  * — its number and name, what it covers, how far through it you are, and its
  * guide when it has grammar notes — and its skills follow as round stops down
@@ -36,6 +66,14 @@ type Unit = PathUnit<SkillNode>;
  * `onFocus` hears where, from the top of the path, the stop to open on sits
  * (the current skill, or the furthest point reached), once it has been laid
  * out, so the screen can scroll to it.
+ *
+ * Hevalo stands beside the current skill (PathMascot). Coming back from a
+ * lesson, the path moves before it settles (shared `PATH_RETURN`): the ring
+ * fills on, a finished skill pops, an opened one trades its padlock for its
+ * number, and then the bubble, the page and Hevalo move on to the skill to do
+ * now — where he cheers. Until then the focus stays where the learner was, so
+ * the page is still there when the path starts to move. Under Reduce Motion
+ * none of it plays: the path is drawn as it now is.
  */
 export interface PathFocus {
   key: string;
@@ -78,7 +116,40 @@ export function LessonPath({
   const { scheme } = useTheme();
   const { t } = useI18n();
   const dir = useDirection();
+  const reduce = useReducedMotion();
   const path = useMemo(() => lessonPath(map, { due }), [map, due]);
+  const courseId = map.course.id;
+
+  /*
+   * What changed since this course's path was last drawn: worked out as the
+   * new path is drawn, so its first frame is already the one the changes
+   * start from, and kept until the next return — the path drawn again for
+   * another reason (the review count arriving) changes nothing and must not
+   * cut it short. The new path is remembered once drawn.
+   */
+  const fresh = useMemo<Return | null>(() => {
+    const before = LAST_DRAWN.get(courseId) ?? null;
+    const changes = reduce ? null : pathChanges(before, path);
+    if (!changes) return null;
+    const was = before ? (Object.keys(before).find((key) => before[key]!.state === 'current') ?? null) : null;
+    return { changes, was };
+  }, [path, courseId, reduce]);
+  const [kept, setKept] = useState<Return | null>(fresh);
+  if (fresh && fresh !== kept) setKept(fresh);
+  // the system asked for less motion while it played: what is left of it is simply drawn
+  const back = reduce ? null : kept;
+  useEffect(() => {
+    LAST_DRAWN.set(courseId, pathSnapshot(path));
+  }, [path, courseId]);
+  // the bubble, the page and Hevalo move on to the new current skill once the rest has moved
+  const [moved, setMoved] = useState<Return | null>(null);
+  useEffect(() => {
+    if (!back) return;
+    const id = setTimeout(() => setMoved(back), PATH_RETURN.bubbleAtMs);
+    return () => clearTimeout(id);
+  }, [back]);
+  const waiting = back !== null && moved !== back && back.changes.current !== null && back.was !== null;
+  const focusKey = waiting ? back.was : path.focus;
   // the screen's width less its gutters until the path has been measured, so it draws at once
   // (a phone's width where the window has none to give yet)
   const [width, setWidth] = useState(() => (Dimensions.get('window').width || PHONE_WIDTH) - 2 * layout.gutter);
@@ -92,16 +163,16 @@ export function LessonPath({
   const sign = dir.row === 'row-reverse' ? -1 : 1;
 
   const report = useCallback(() => {
-    if (!path.focus) return onFocus(null);
+    if (!focusKey) return onFocus(null);
     for (const unit of path.units) {
-      const placed = unit.stops.find((p) => p.stop.key === path.focus);
+      const placed = unit.stops.find((p) => p.stop.key === focusKey);
       if (!placed) continue;
       const u = unitTop.current[unit.unitId];
       const p = pathTop.current[unit.unitId];
-      if (u !== undefined && p !== undefined) onFocus({ key: path.focus, y: u + p + placed.y, current: path.current !== null });
+      if (u !== undefined && p !== undefined) onFocus({ key: focusKey, y: u + p + placed.y, current: path.current !== null });
       return;
     }
-  }, [path, onFocus]);
+  }, [path, focusKey, onFocus]);
 
   useEffect(() => {
     report();
@@ -132,12 +203,18 @@ export function LessonPath({
 
   const lesson = (lessonId: string) => {
     setOpen(null);
-    navigation.navigate('Lesson', { lessonId });
+    navigation.navigate('Lesson', { lessonId, courseId: map.course.id });
   };
   const review = () => {
     setOpen(null);
     navigation.navigate('Practice');
   };
+
+  // what each stop shows of the return: one object per stop for the whole return, so each plays it once
+  const stopChanges = useMemo(() => (back ? changesByStop(back) : {}), [back]);
+  // Hevalo by the current skill — by the one before it until the path has moved on — when the screen leaves him room
+  const mascotAt = path.current && width + 2 * layout.gutter >= MASCOT_MIN_WIDTH ? (waiting ? back.was : path.current) : null;
+  const cheer = moved !== null && moved === back && (back.changes.finished.length > 0 || back.changes.opened.length > 0);
 
   return (
     <View style={styles.units}>
@@ -175,10 +252,28 @@ export function LessonPath({
                         unit={unit}
                         tone={tone}
                         left={width / 2 + sign * placed.x - NODE / 2}
+                        change={stopChanges[placed.stop.key] ?? null}
                         onOpen={() => setOpen({ stop: placed.stop, unit })}
                         onStart={lesson}
                       />
                     ))}
+                    {unit.stops
+                      .filter((placed) => placed.stop.key === mascotAt)
+                      .map((placed) => {
+                        const spot = mascotSpot(placed);
+                        const x = width / 2 + sign * spot.x;
+                        return (
+                          // a new place is a new arrival: he arrives there, and cheers when there is something to cheer
+                          <PathMascot
+                            key={placed.stop.key}
+                            x={x}
+                            stopY={placed.y}
+                            flip={x > width / 2 + sign * placed.x}
+                            cheer={cheer}
+                            onPress={() => setOpen({ stop: placed.stop, unit })}
+                          />
+                        );
+                      })}
                   </>
                 ) : null}
               </View>
@@ -202,12 +297,24 @@ export function LessonPath({
   );
 }
 
+/** Each stop's part in a return, by its key: only the stops it touches. */
+function changesByStop({ changes, was }: Return): Record<string, StopChange> {
+  const out: Record<string, StopChange> = {};
+  const at = (key: string): StopChange => (out[key] ??= {});
+  for (const ring of changes.ring) at(ring.key).ringFrom = ring.from;
+  for (const key of changes.finished) at(key).finishing = true;
+  for (const key of changes.opened) at(key).opening = true;
+  if (changes.current && was !== null) at(changes.current).arriving = true;
+  return out;
+}
+
 /** A stop with its words: the full label for a screen reader, and "Start" over the current skill. */
 function PathStopView({
   placed,
   unit,
   tone,
   left,
+  change,
   onOpen,
   onStart,
 }: {
@@ -215,6 +322,7 @@ function PathStopView({
   unit: Unit;
   tone: ToneColors;
   left: number;
+  change: StopChange | null;
   onOpen: () => void;
   onStart: (lessonId: string) => void;
 }): React.JSX.Element {
@@ -232,6 +340,7 @@ function PathStopView({
       tone={tone}
       label={label}
       callout={current ? { text: word, label: `${word}: ${current.skill.title}` } : undefined}
+      change={change}
       onPress={onOpen}
       onStart={current?.launch ? () => onStart(current.launch!) : undefined}
     />

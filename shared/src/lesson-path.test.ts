@@ -1,5 +1,19 @@
 import { describe, expect, it } from 'vitest';
-import { PATH_GEOMETRY, UNIT_TONES, lean, lessonPath, lessonStates, stopKeys, type PathSkill, type PathSkillState } from './lesson-path.js';
+import {
+  PATH_GEOMETRY,
+  PATH_MASCOT,
+  UNIT_TONES,
+  lean,
+  lessonPath,
+  lessonStates,
+  mascotSpot,
+  nextLaunch,
+  pathChanges,
+  pathSnapshot,
+  stopKeys,
+  type PathSkill,
+  type PathSkillState,
+} from './lesson-path.js';
 
 const lesson = (id: string, completed = false) => ({ lessonId: id, title: `Lesson ${id}`, completed });
 
@@ -150,5 +164,76 @@ describe('lessonPath — units', () => {
   it('counts skills done per unit', () => {
     const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked')]));
     expect(path.units[0]).toMatchObject({ done: 1, total: 2 });
+  });
+});
+
+describe('nextLaunch', () => {
+  it('is the next lesson of the skill to do now, with its title', () => {
+    expect(nextLaunch(map([skill('a', 'completed', 2), skill('b', 'unlocked', 1, 3)]))).toEqual({ lessonId: 'b-2', title: 'Lesson b-2' });
+  });
+
+  it('hands on to the skill a finished one opened', () => {
+    // a's last lesson was the one just played: a is done now, and b open
+    expect(nextLaunch(map([skill('a', 'completed', 2), skill('b', 'unlocked')]), 'a-2')).toEqual({ lessonId: 'b-1', title: 'Lesson b-1' });
+  });
+
+  it('names the skill when its lessons are not listed', () => {
+    expect(nextLaunch(map([{ ...skill('a', 'unlocked'), lessons: undefined }]))).toEqual({ lessonId: 'a-1', title: 'Skill a' });
+  });
+
+  it('is null with nothing open left, or when it would only open the lesson just played again', () => {
+    expect(nextLaunch(map([skill('a', 'completed', 2)]))).toBeNull();
+    expect(nextLaunch(map([skill('a', 'unlocked', 1, 3)]), 'a-2')).toBeNull();
+  });
+});
+
+describe('coming back to the path', () => {
+  const before = map([skill('a', 'unlocked', 1, 2), skill('b', 'locked')], [skill('c', 'locked')]);
+
+  it('has nothing to show without a path drawn before, or when nothing changed', () => {
+    expect(pathChanges(null, lessonPath(before))).toBeNull();
+    expect(pathChanges(pathSnapshot(lessonPath(before)), lessonPath(before))).toBeNull();
+  });
+
+  it('notes each skill as it stood: its state and its lessons done', () => {
+    expect(pathSnapshot(lessonPath(before))).toEqual({
+      's:a': { state: 'current', done: 1 },
+      's:b': { state: 'locked', done: 0 },
+      's:c': { state: 'locked', done: 0 },
+    });
+  });
+
+  it('fills the ring, finishes the skill, opens the next and moves the current one on', () => {
+    const after = map([skill('a', 'completed', 2), skill('b', 'unlocked')], [skill('c', 'locked')]);
+    expect(pathChanges(pathSnapshot(lessonPath(before)), lessonPath(after))).toEqual({
+      ring: [{ key: 's:a', from: 0.5, to: 1 }],
+      finished: ['s:a'],
+      opened: ['s:b'],
+      current: 's:b',
+    });
+  });
+
+  it('fills the ring alone for a lesson that did not finish its skill', () => {
+    const start = map([skill('a', 'unlocked', 0, 3)]);
+    expect(pathChanges(pathSnapshot(lessonPath(start)), lessonPath(map([skill('a', 'unlocked', 1, 3)])))).toEqual({
+      ring: [{ key: 's:a', from: 0, to: 1 / 3 }],
+      finished: [],
+      opened: [],
+      current: null,
+    });
+  });
+
+  it('leaves out skills it did not see before (a course that grew)', () => {
+    const grown = map([skill('a', 'unlocked', 1, 2), skill('b', 'locked'), skill('n', 'unlocked', 1)], [skill('c', 'locked')]);
+    expect(pathChanges(pathSnapshot(lessonPath(before)), lessonPath(grown))).toBeNull();
+  });
+});
+
+describe('mascotSpot', () => {
+  it('stands across from a stop in the middle, and on the far side from one that leans', () => {
+    const { size, across, away } = PATH_MASCOT;
+    expect(mascotSpot({ x: 0, y: 200 })).toEqual({ x: across, y: 200 - size / 2 });
+    expect(mascotSpot({ x: PATH_GEOMETRY.sway, y: 100 })).toEqual({ x: -away, y: 100 - size / 2 });
+    expect(mascotSpot({ x: -PATH_GEOMETRY.sway, y: 100 })).toEqual({ x: away, y: 100 - size / 2 });
   });
 });

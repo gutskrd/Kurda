@@ -146,13 +146,37 @@ export interface PlayerState {
   reasked: string[];
   /** exercises put off this time ("can't listen now"): not answered, not mistakes */
   skipped: string[];
+  /**
+   * The last time a whole kind of exercise was put off for the rest of the
+   * session ("no more listening in this lesson"): what was taken out, so it
+   * can be put back. Null when nothing was, or once it has been put back.
+   */
+  putAway: PutAway | null;
+}
+
+/** The exercises a learner can put off for the rest of a session, all of a kind at once. */
+export type PutAwayType = 'listening' | 'speaking';
+
+export interface PutAway {
+  type: PutAwayType;
+  /**
+   * The steps taken out, in order, each with the step that came after it and
+   * stayed (null for one that was last), which is where it goes back.
+   */
+  removed: Array<{ step: Step; before: Step | null }>;
 }
 
 export type PlayerAction =
   /** `given` is the text the learner typed, so feedback can set it beside the right answer */
   | { type: 'ANSWERED'; result: GradeResult; given?: string }
   | { type: 'CONTINUE' }
-  | { type: 'SKIP' }
+  /**
+   * Put the exercise on screen off. With `all`, every exercise of that type
+   * still to come goes with it, for the rest of the session ("can't listen
+   * now" meant for the whole lesson); `UNSKIP` puts those back.
+   */
+  | { type: 'SKIP'; all?: PutAwayType }
+  | { type: 'UNSKIP' }
   | { type: 'FINISH' };
 
 export interface ResumeMemory {
@@ -200,6 +224,7 @@ export function initPlayer(session: PlayableSession, memory: ResumeMemory = {}):
     answeredCount: taken.length,
     reasked,
     skipped: [],
+    putAway: null,
   };
 }
 
@@ -233,6 +258,54 @@ function advance(state: PlayerState): PlayerState {
   const next = state.index + 1;
   if (next >= state.steps.length) return { ...state, index: state.steps.length, status: 'finished', feedback: null };
   return { ...state, index: next, status: 'answering', feedback: null };
+}
+
+/** Two steps are the same turn: an exercise is asked at most once first and once again. */
+function sameStep(a: Step, b: Step): boolean {
+  return a.exerciseId === b.exerciseId && a.reask === b.reask;
+}
+
+/**
+ * Every step after the one on screen whose exercise is of `type` comes out —
+ * a first ask counted as put off and a second try simply dropped, as when one
+ * is skipped alone — and each remembers the step that stayed after it, so
+ * `putBack` can return it to its place.
+ */
+function putAway(state: PlayerState, type: PutAwayType): PlayerState {
+  const typeOf = new Map(state.exercises.map((ex) => [ex.id, ex.type]));
+  const ahead = state.steps.slice(state.index + 1);
+  const goes = ahead.map((s) => typeOf.get(s.exerciseId) === type);
+  if (!goes.some(Boolean)) return { ...state, putAway: null };
+  const removed = ahead.flatMap((step, i) => (goes[i] ? [{ step, before: ahead.find((_, j) => j > i && !goes[j]) ?? null }] : []));
+  const firsts = removed.filter((r) => !r.step.reask && !state.skipped.includes(r.step.exerciseId)).map((r) => r.step.exerciseId);
+  return {
+    ...state,
+    steps: [...state.steps.slice(0, state.index + 1), ...ahead.filter((_, i) => !goes[i])],
+    skipped: [...state.skipped, ...firsts],
+    putAway: { type, removed },
+  };
+}
+
+/**
+ * What `putAway` took out goes back, each step before the one it came before.
+ * One whose place has gone by meanwhile (an answer was given in between) is
+ * asked next, and one that was last is last again. The exercise on screen
+ * when they were put away stays put off, as a single skip leaves it.
+ */
+function putBack(state: PlayerState, away: PutAway): PlayerState {
+  const from = state.index + (state.status === 'feedback' ? 1 : 0);
+  const tail = state.steps.slice(from);
+  const ahead = (s: Step): boolean => tail.some((t) => sameStep(t, s));
+  const before = (anchor: Step): Step[] => away.removed.filter((r) => r.before && sameStep(r.before, anchor)).map((r) => r.step);
+  const passed = away.removed.filter((r) => r.before && !ahead(r.before)).map((r) => r.step);
+  const last = away.removed.filter((r) => !r.before).map((r) => r.step);
+  const back = new Set(away.removed.filter((r) => !r.step.reask).map((r) => r.step.exerciseId));
+  return {
+    ...state,
+    steps: [...state.steps.slice(0, from), ...passed, ...tail.flatMap((t) => [...before(t), t]), ...last],
+    skipped: state.skipped.filter((id) => !back.has(id)),
+    putAway: null,
+  };
 }
 
 export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
@@ -278,8 +351,10 @@ export function reduce(state: PlayerState, action: PlayerAction): PlayerState {
       const step = currentStep(state);
       if (state.status !== 'answering' || !step) return state;
       const skipped = step.reask || state.skipped.includes(step.exerciseId) ? state.skipped : [...state.skipped, step.exerciseId];
-      return advance({ ...state, skipped });
+      return advance(action.all ? putAway({ ...state, skipped }, action.all) : { ...state, skipped });
     }
+    case 'UNSKIP':
+      return state.putAway && state.status !== 'finished' ? putBack(state, state.putAway) : state;
     case 'FINISH':
       return { ...state, index: state.steps.length, status: 'finished', feedback: null };
   }
@@ -304,6 +379,35 @@ export function feedbackKind(feedback: Pick<Feedback, 'verdict' | 'accepted' | '
   if (feedback.verdict === 'typo') return feedback.accepted ? 'almost' : 'almostStrict';
   return feedback.accepted ? 'correct' : 'notYet';
 }
+
+/**
+ * A run: right answers in a row. It is shown from `RUN_SHOWN_FROM` ("3 in a
+ * row") and named out loud at a milestone (`runMilestone`). A spoken answer
+ * is the learner's own rating of a recording, not a grade, so it neither adds
+ * to a run nor breaks one; any other miss starts it again.
+ */
+export const RUN_SHOWN_FROM = 3;
+
+export function nextRun(run: number, feedback: Pick<Feedback, 'accepted' | 'exerciseType'>): number {
+  if (feedback.exerciseType === 'speaking') return run;
+  return feedback.accepted ? run + 1 : 0;
+}
+
+/**
+ * The runs worth a word and a cheer: 5, 10, then every fifth from 15. Not
+ * every right answer is a milestone, so the moment keeps its value.
+ */
+export function runMilestone(run: number): number | null {
+  return run >= 5 && run % 5 === 0 ? run : null;
+}
+
+/**
+ * When the parts of a verdict arrive, in ms from the answer, the same on both
+ * apps: the sheet rises (`sheetMs`), the character reacts (`actAtMs`), a
+ * milestone's run pill pops (`runAtMs`, over `runMs`), and the native
+ * recording plays itself (`modelAtMs`) once the chime has had its moment.
+ */
+export const VERDICT_TIMING = { sheetMs: 200, actAtMs: 120, runAtMs: 160, runMs: 320, modelAtMs: 350 } as const;
 
 /**
  * The exercises answered wrong for the first time in a session's results that

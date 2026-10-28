@@ -38,15 +38,19 @@ export {
  */
 export {
   REASK_GAP,
+  RUN_SHOWN_FROM,
+  VERDICT_TIMING,
   AnswerQueue,
   currentExercise,
   currentStep,
   feedbackKind,
   initPlayer,
   isReask,
+  nextRun,
   practisableMistakes,
   progress,
   reduce,
+  runMilestone,
   type DeliveredExercise,
   type ExerciseType,
   type Feedback,
@@ -57,6 +61,8 @@ export {
   type PlayerAction,
   type PlayerState,
   type PlayerStatus,
+  type PutAway,
+  type PutAwayType,
   type RecordedAnswer,
   type ResumeMemory,
   type SelfRating,
@@ -64,6 +70,10 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
+export { PRAISE, praiseFor, praiseWords } from './praise.js';
+/** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
+export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
 /** How often a buzz may be felt, on the phone and on a touch screen alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
 /** The one celebration — a lesson, a level, a rank, a league, a badge — timed and thrown the same on both. */
@@ -76,14 +86,27 @@ export {
   type CelebrationPlan,
   type Fleck as CelebrationFleck,
 } from './celebration.js';
-/** What else a finished lesson did — today's goal, the streak, a new level — read the same on both. */
+/**
+ * What else a finished lesson did — today's goal, the streak, a new level, the
+ * league — and what the results offer next, read and timed the same on both.
+ */
 export {
   NO_LESSON_MOMENTS,
+  RESULTS_TIMING,
+  STREAK_DAY_TIMING,
   anyLessonMoment,
+  freezeLine,
   lessonMoments,
+  resultsActions,
+  resultsGrade,
+  type FreezeLine,
   type LessonMoments,
+  type LessonOutcome,
   type LessonStanding,
   type LessonStreakMark,
+  type ResultsAction,
+  type ResultsActions,
+  type ResultsGrade,
 } from './lesson-moments.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
@@ -92,18 +115,26 @@ export {
  */
 export {
   PATH_GEOMETRY,
+  PATH_MASCOT,
+  PATH_RETURN,
   UNIT_TONES,
   lean,
   lessonPath,
   lessonStates,
+  mascotSpot,
+  nextLaunch,
+  pathChanges,
+  pathSnapshot,
   stopKeys,
   type Finish,
   type LessonPath,
   type LessonState,
+  type PathChanges,
   type PathLesson,
   type PathMapInput,
   type PathSkill,
   type PathSkillState,
+  type PathSnapshot,
   type PathStop,
   type PathUnit,
   type PathUnitInput,
@@ -132,12 +163,14 @@ export {
   recordingProblem,
   tapLeft,
   tapRight,
+  typedHint,
   typingKeys,
   type DiffSegment,
   type DraftAnswer,
   type MatchPair,
   type MatchState,
   type Selection,
+  type TypedHint,
 } from './lesson-answers.js';
 /** Grammar notes ("Tips"), parsed once for the phone and the browser (KUR-038). */
 export { parseInline, parseMarkdown, type Block, type Span } from './grammar-markdown.js';

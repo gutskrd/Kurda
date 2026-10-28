@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -11,6 +12,7 @@ import {
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
 import { AnswerMotion } from '../../theme/MotionParts';
+import { useAudio } from '../useAudio';
 
 interface Props {
   exercise: Exercise;
@@ -21,9 +23,19 @@ interface Props {
   verdict?: 'right' | 'wrong' | null;
 }
 
+/**
+ * Tap a Kurdish card, then its meaning. A Kurdish card with a recording says
+ * it as it is chosen — hearing the word while deciding what it means — as the
+ * website's cards do; tapping a made pair to undo it says nothing.
+ */
 export function MatchPairsExercise({ exercise, state, onChange, disabled, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
+  const say = useCardSound();
+  const tapKurdish = (left: string): void => {
+    if (!isLeftMatched(state, left)) say(exercise.audio?.[left]);
+    onChange(tapLeft(state, left));
+  };
   const token = (
     label: string,
     matched: boolean,
@@ -55,9 +67,7 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
       <AnswerMotion verdict={verdict} style={styles.columns}>
         <View style={styles.column}>
           {(exercise.lefts ?? []).map((left) =>
-            token(left, isLeftMatched(state, left), state.selectedLeft === left, () =>
-              onChange(tapLeft(state, left)),
-            ),
+            token(left, isLeftMatched(state, left), state.selectedLeft === left, () => tapKurdish(left)),
           )}
         </View>
         <View style={styles.column}>
@@ -68,6 +78,24 @@ export function MatchPairsExercise({ exercise, state, onChange, disabled, verdic
       </AnswerMotion>
     </View>
   );
+}
+
+/**
+ * One player for the cards: a tap loads that card's recording and plays it as
+ * soon as it has loaded, and the same card tapped again plays it again.
+ */
+function useCardSound(): (url: string | undefined) => void {
+  const [wanted, setWanted] = useState<{ url: string; n: number } | null>(null);
+  const { source, play } = useAudio(wanted?.url);
+  const played = useRef(0);
+  useEffect(() => {
+    if (!wanted || source !== wanted.url || played.current === wanted.n) return;
+    played.current = wanted.n;
+    play(1);
+  }, [wanted, source, play]);
+  return useCallback((url: string | undefined) => {
+    if (url) setWanted((was) => ({ url, n: (was?.n ?? 0) + 1 }));
+  }, []);
 }
 
 const styles = StyleSheet.create({
