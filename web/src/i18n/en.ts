@@ -37,6 +37,7 @@ export const en = {
   'common.showMore': 'Show more',
   'common.close': 'Close',
   'common.undo': 'Undo',
+  'common.done': 'Done',
 
   // ---- signing in and up ---------------------------------------------------
   'auth.login.title': 'Welcome back',
@@ -1635,6 +1636,21 @@ export const en = {
   'lesson.results.noMistakes': 'No mistakes this time.',
   'lesson.results.skipped': 'Skipped this time: {count}. Skipped exercises don’t count towards your score.',
   'lesson.results.practise': 'Practise these now',
+  'lesson.results.perfect': 'Perfect lesson!',
+  'lesson.results.next': 'Next lesson',
+  'lesson.results.backToPath': 'Back to the path',
+  'lesson.results.goalDoneStop': 'Today’s goal is done. A good place to stop, or keep going.',
+  'lesson.results.goal': '{earned} of {goal} XP today',
+  'lesson.results.league': '+{xp} XP this week · #{rank} in {league}',
+  'lesson.results.leagueUp': 'Up to #{rank}',
+  'lesson.results.grade.excellent': 'Excellent',
+  'lesson.results.grade.solid': 'Solid',
+  'lesson.results.grade.practice': 'Good practice',
+  'lesson.streak.day': 'Day {n}',
+  'lesson.streak.body': 'You learned today. {days} days learned in all.',
+  'lesson.streak.freeze': '{done} of {per} sessions to your next freeze',
+  'lesson.streak.freezeReadyOne': 'You have a freeze saved',
+  'lesson.streak.freezeReady': 'You have {count} freezes saved',
 
   // ---- editing your profile ------------------------------------------
   'edit.eyebrow': 'Profile',

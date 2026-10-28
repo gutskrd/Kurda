@@ -7,13 +7,15 @@
  *             a step each time (`step` 0–3), so the run can be heard
  *   wrong     two low, muffled notes, quieter: never a buzzer
  *   complete  four notes rising to the octave, the last left to ring
+ *   reward    three quick high notes and a low shimmer under them: a streak
+ *             kept today ("Day 12"), the phone's `reward`
  *
  * Only ever started by the reader's own answer (which is what a browser lets
  * play), never two within 90 ms, and not when Settings → Sounds → Lesson
  * sounds is off on this device. Nothing else on the site makes a sound but
  * the gift chime (gifts/motion.ts).
  */
-export type LessonSound = 'correct' | 'wrong' | 'complete';
+export type LessonSound = 'correct' | 'wrong' | 'complete' | 'reward';
 
 const KEY = 'hevalo_lesson_sounds';
 
@@ -129,6 +131,10 @@ export function playLessonSound(sound: LessonSound, step = 0): void {
     } else if (sound === 'wrong') {
       bell(c, at, hz(-12), 0.09, 0.35, 0.05);
       bell(c, at + 0.11, hz(-16), 0.09, 0.45, 0.05);
+    } else if (sound === 'reward') {
+      // G6, B6, D7 a beat apart, then the G an octave under the first (mobile/scripts/generate-sounds.mjs)
+      [hz(22), hz(26), hz(29)].forEach((f, i) => bell(c, at + i * 0.06, f, 0.07, 0.25));
+      bell(c, at + 0.18, hz(10), 0.06, 0.5);
     } else {
       [hz(3), hz(7), hz(10)].forEach((f, i) => bell(c, at + i * 0.09, f, 0.09, 0.55));
       bell(c, at + 0.27, hz(15), 0.12, 1.4);

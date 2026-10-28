@@ -13,7 +13,8 @@ import { rememberCourseDialect } from '../stories/prefs';
  * Opening it asks the server for the learner's session for the lesson, which
  * is the one they left if it is still open: every answer was saved as it was
  * given, so the lesson picks up where it stopped. `?course=` is where "back"
- * goes; the name the map showed comes along in the navigation state.
+ * goes, and the course whose next lesson the results offer; the name the map
+ * showed comes along in the navigation state.
  */
 export function Lesson(): React.JSX.Element {
   const { lessonId = '' } = useParams();
@@ -51,6 +52,9 @@ function LessonPage({ lessonId }: { lessonId: string }): React.JSX.Element {
       title={typeof title === 'string' ? title : undefined}
       dialect={data.dialect}
       grammarMd={data.grammarMd}
+      // the results offer the course's next lesson, read from its map once this one is done
+      courseId={course}
+      lessonId={lessonId}
       exitTo={course ? `/app/learn/course/${encodeURIComponent(course)}` : '/app/learn'}
       exitLabel={course ? t('lesson.backToCourse') : t('lesson.backToLearn')}
       onPractise={(exerciseIds) => navigate('/app/learn/review', { state: { exerciseIds } })}

@@ -906,13 +906,17 @@ html:has(.lesson-bar) {
   color: var(--ink-4);
 }
 
-/* the end */
+/* the end: one screen, Hevalo cheering over a row of three tiles and the day's rows */
+.lesson.is-done .lesson-body {
+  padding-top: 8px;
+}
 .lesson-results {
   display: grid;
-  gap: 22px;
+  gap: 18px;
 }
 .lesson-results-title {
-  font-size: clamp(1.7rem, 5vw, 2.2rem);
+  font-size: clamp(1.6rem, 5vw, 2.2rem);
+  text-align: center;
 }
 .lesson-results-title:focus {
   outline: none;
@@ -920,20 +924,27 @@ html:has(.lesson-bar) {
 .lesson-stats {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
   margin: 0;
 }
+/* each tile wears a band of its colour along its top: gold for what was earned, green for what was right */
 .lesson-stat {
+  --band: var(--gold);
   display: grid;
   align-content: start;
   gap: 2px;
-  padding: 14px;
+  min-width: 0;
+  padding: 14px 12px 12px;
   border: 1px solid var(--border);
   border-radius: var(--r-md);
   background: var(--surface);
+  box-shadow: inset 0 4px 0 var(--band);
+}
+.lesson-stat.is-accuracy {
+  --band: var(--success);
 }
 .lesson-stat dt {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ink-3);
 }
 .lesson-stat dd {
@@ -942,32 +953,153 @@ html:has(.lesson-bar) {
   gap: 6px;
   margin: 0;
   font-family: var(--font-display);
-  font-size: 1.6rem;
+  font-size: 1.4rem;
   font-variant-numeric: tabular-nums;
 }
 .lesson-stat dd svg {
   color: var(--gold);
 }
 .lesson-stat .lesson-stat-sub {
+  display: block;
   font-family: var(--font-sans);
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--ink-3);
-}
-@media (max-width: 480px) {
-  .lesson-stats {
-    grid-template-columns: 1fr;
-  }
 }
 .lesson-results-note {
   margin: 0;
   color: var(--ink-2);
 }
+/* today's goal, moving from where it stood to where it is (styles/motion.css) */
+.lesson-goal {
+  flex-wrap: wrap;
+}
+.lesson-goal-words {
+  flex: 1 1 auto;
+}
+.lesson-goal-bar {
+  flex: 1 1 100%;
+  height: 8px;
+}
+.lesson-goal-bar > span {
+  width: 100%;
+  background: var(--success);
+  transform: scaleX(var(--to, 0));
+  transform-origin: left;
+}
+[dir='rtl'] .lesson-goal-bar > span {
+  transform-origin: right;
+}
+.lesson-row {
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+.lesson-league-up {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+  color: var(--success);
+  font-size: 0.85rem;
+}
+.lesson-moment .lesson-league-up svg {
+  color: inherit;
+}
 .lesson-mistakes {
   display: grid;
   gap: 10px;
 }
+.lesson-mistakes > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  list-style: none;
+}
+.lesson-mistakes > summary::-webkit-details-marker {
+  display: none;
+}
+/* a turning caret, drawn, at the end of the heading: open or folded */
+.lesson-mistakes > summary::after {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-inline-end: 2px solid var(--ink-3);
+  border-bottom: 2px solid var(--ink-3);
+  rotate: 45deg;
+  transition: rotate var(--dur) var(--ease-out);
+}
+.lesson-mistakes:not([open]) > summary::after {
+  rotate: -45deg;
+}
+[dir='rtl'] .lesson-mistakes:not([open]) > summary::after {
+  rotate: 135deg;
+}
 .lesson-mistakes-title {
+  margin: 0;
   font-size: 1.2rem;
+}
+.lesson-results-back {
+  font-size: 0.92rem;
+}
+
+/* "Day 12": the streak kept today, on its own card (StreakDay.tsx) */
+.lesson-day {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  padding-top: 8vh;
+  text-align: center;
+}
+.lesson-day-flame {
+  display: inline-grid;
+  place-items: center;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--gold-soft), transparent);
+  color: var(--gold);
+}
+.lesson-day-title {
+  margin: 0;
+  font-size: clamp(2.2rem, 9vw, 3rem);
+  font-variant-numeric: tabular-nums;
+}
+.lesson-day-title:focus {
+  outline: none;
+}
+.lesson-day-body {
+  max-width: 34ch;
+  margin: 0;
+  color: var(--ink-2);
+}
+.lesson-day-freeze {
+  display: grid;
+  gap: 8px;
+  width: min(320px, 100%);
+  margin-top: 8px;
+}
+.lesson-day-bar {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.lesson-day-bar > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gems);
+  transform: scaleX(var(--to, 0));
+  transform-origin: left;
+}
+[dir='rtl'] .lesson-day-bar > span {
+  transform-origin: right;
+}
+.lesson-day-freeze-line {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--ink-3);
 }
 .lesson-mistakes ul {
   display: grid;
@@ -992,9 +1124,4 @@ html:has(.lesson-bar) {
 }
 .lesson-mistake-answer strong {
   color: var(--ink);
-}
-.lesson-results-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
 }

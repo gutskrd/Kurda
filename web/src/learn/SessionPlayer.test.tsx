@@ -37,9 +37,9 @@ function serve(routes: Record<string, Reply>, fallback: (call: Call) => Response
       const body = typeof raw === 'string' ? (JSON.parse(raw) as unknown) : raw;
       const call = { method, path, body, headers: (init?.headers ?? {}) as Record<string, string> };
       if (path !== '/me') calls.push(call);
-      if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
       const own = fallback(call);
       if (own) return own;
+      if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true } });
       const reply = routes[`${method} ${path}`];
       if (reply === undefined) return jsonResponse(404, { code: 'NOT_FOUND', message: `no route ${method} ${path}` });
       if (reply instanceof Response) return reply;
@@ -72,20 +72,29 @@ function play(
   const onPractise = vi.fn();
   const onRestart = vi.fn();
   renderApp(
-    <SessionPlayer
-      session={session}
-      kind="lesson"
-      paths={LESSON_PATHS}
-      dialect="kurmanji"
-      exitTo="/app/learn"
-      exitLabel="Back to Learn"
-      onPractise={onPractise}
-      onRestart={onRestart}
-      {...over}
-    />,
+    <>
+      <SessionPlayer
+        session={session}
+        kind="lesson"
+        paths={LESSON_PATHS}
+        dialect="kurmanji"
+        exitTo="/app/learn"
+        exitLabel="Back to Learn"
+        onPractise={onPractise}
+        onRestart={onRestart}
+        {...over}
+      />
+      <Where />
+    </>,
     ['/app/learn/lesson/l1'],
   );
   return { onPractise, onRestart };
+}
+
+/** Where the router is, so a test can see where the player sent the learner. */
+function Where(): React.JSX.Element {
+  const { pathname, search } = useLocation();
+  return <output data-testid="where">{pathname + search}</output>;
 }
 
 const typed = (id: string, prompt: string, type: DeliveredExercise['type'] = 'translate'): DeliveredExercise => ({ id, type, prompt });
@@ -203,18 +212,22 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(sent('answers', 'mc')).toHaveLength(1);
     await next();
 
-    // the results: first-try accuracy, XP, the streak, and the mistake with its answer
+    // the results: first-try accuracy with a kind word, XP, the streak, and the mistake with its answer
     expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    // the lesson's own header has gone: the results have the screen
+    expect(screen.queryByRole('progressbar', { name: 'Progress' })).not.toBeInTheDocument();
     expect(screen.getByText('75%')).toBeInTheDocument();
-    expect(screen.getByText('3 of 4')).toBeInTheDocument();
+    expect(screen.getByText('Solid · 3 of 4')).toBeInTheDocument();
     // the XP counts up as the results arrive, and is read out as the number it ends on
     expect(screen.getByLabelText('+15')).toBeInTheDocument();
     expect(await screen.findByText('+15', undefined, { timeout: 3000 })).toBeInTheDocument();
-    const mistakes = screen.getByRole('heading', { name: 'To go over' }).parentElement!;
+    const mistakes = screen.getByRole('heading', { name: 'To go over' }).closest('details')!;
+    expect(mistakes).toHaveAttribute('open');
     expect(within(mistakes).getByText('“Roj baş” tê çi wateyê?')).toBeInTheDocument();
     expect(within(mistakes).getByText('Good day')).toBeInTheDocument();
     expect(calls.filter((c) => c.path === '/sessions/s1/complete')).toHaveLength(1);
 
+    // in the bar, where Check was: no next lesson known here, so practising the mistakes leads
     await userEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
     expect(onPractise).toHaveBeenCalledWith(['mc']);
   });
@@ -317,7 +330,8 @@ describe('listening', () => {
     play({ sessionId: 's1', exercises, answered: {} });
 
     await userEvent.click(await screen.findByRole('button', { name: 'Can’t listen now' }));
-    expect(await screen.findByRole('status')).toHaveTextContent('No more listening in this lesson');
+    // said as it happens, with the way to have it back
+    expect((await screen.findByText('No more listening in this lesson')).closest('[role="status"]')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: 'Undo' }));
     expect(screen.queryByText('No more listening in this lesson')).not.toBeInTheDocument();
     await answerTyped('sêv');
@@ -802,9 +816,6 @@ describe('the action bar and the verdict sheet', () => {
   it('says once on a device that answers are saved, and leaves on Escape as the ✕ does', async () => {
     localStorage.removeItem('hevalo_saved_note_seen');
     serve({});
-    function Where(): React.JSX.Element {
-      return <output data-testid="where">{useLocation().pathname}</output>;
-    }
     const first = renderApp(
       <>
         <SessionPlayer session={{ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }} kind="lesson" paths={LESSON_PATHS} exitTo="/app/learn/course/c1" exitLabel="Back" onPractise={vi.fn()} />
@@ -821,6 +832,125 @@ describe('the action bar and the verdict sheet', () => {
     play({ sessionId: 's2', exercises: [typed('t', 'apple')], answered: {} });
     await screen.findByText('Write this in Kurdish');
     expect(screen.queryByText(/Every answer is saved as you give it/)).not.toBeInTheDocument();
+  });
+});
+
+describe('the results', () => {
+  /** Where things stand before the lesson, then after it: /me, today's goal and the league, read twice. */
+  function standing(before: { xp: number; rank: number; weekly: number }, after: { xp: number; rank: number; weekly: number }, goal = 20) {
+    let me = 0;
+    let goals = 0;
+    let leagues = 0;
+    return (call: Call): Response | null => {
+      if (call.path === '/me') {
+        const first = me++ === 0;
+        return jsonResponse(200, {
+          user: { id: 'me', username: 'me', emailVerified: true, level: { level: 4 }, streak: { current: first ? 7 : 8, lastActiveOn: first ? '2026-10-27' : '2026-10-28' } },
+        });
+      }
+      if (call.path === '/me/daily-goal') {
+        const xp = goals++ === 0 ? before.xp : after.xp;
+        return jsonResponse(200, { goal, effectiveGoal: goal, earnedXp: xp, progress: Math.min(1, xp / goal), completed: xp >= goal });
+      }
+      if (call.path === '/me/league') {
+        const s = leagues++ === 0 ? before : after;
+        return jsonResponse(200, { mode: 'league', optedOut: false, joined: true, tier: 'kani', rank: s.rank, weeklyXp: s.weekly });
+      }
+      if (call.path === '/courses/c1/map') {
+        return jsonResponse(200, {
+          course: { id: 'c1', title: 'Kurmancî' },
+          units: [
+            {
+              unitId: 'u1',
+              title: 'Basics',
+              skills: [
+                {
+                  skillId: 's1',
+                  level: 1,
+                  title: 'Greetings',
+                  state: 'unlocked',
+                  strength: 0,
+                  hasGrammar: false,
+                  firstLessonId: 'l1',
+                  lessons: [
+                    { lessonId: 'l1', position: 1, title: 'Silav', completed: true },
+                    { lessonId: 'l2', position: 2, title: 'Rojbaş', completed: false },
+                  ],
+                },
+              ],
+            },
+          ],
+        });
+      }
+      return null;
+    };
+  }
+  const perfect = results({ correct: 1, total: 1, accuracy: 1, mistakes: [], xpAwarded: 15 });
+
+  it('calls a perfect lesson so, moves the goal and the league on, and leads with the next lesson while the goal is still to meet', async () => {
+    serve(
+      { 'POST /sessions/s1/answers': right, 'POST /sessions/s1/complete': { ...perfect, streak: { current: 8, longest: 9, lastActiveOn: '2026-10-27' } } },
+      standing({ xp: 0, rank: 6, weekly: 120 }, { xp: 15, rank: 4, weekly: 135 }),
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }, { courseId: 'c1', lessonId: 'l1' });
+    await answerTyped('sêv');
+    await next();
+
+    expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
+    expect(screen.getByText('Excellent · 1 of 1')).toBeInTheDocument();
+    expect(await screen.findByText('15 of 20 XP today')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '75');
+    expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
+    expect(screen.getByText('Up to #4')).toBeInTheDocument();
+    // the next lesson in the course leads, with the way back to the path beside it
+    expect(screen.queryByText('Today’s goal is done. A good place to stop, or keep going.')).not.toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to the path' })).toHaveAttribute('href', '/app/learn');
+    await userEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l2?course=c1');
+  });
+
+  it('says the goal is done and this is a good place to stop, and opens the day the streak was kept on a tap', async () => {
+    serve(
+      {
+        'POST /sessions/s1/answers': right,
+        'POST /sessions/s1/complete': {
+          ...perfect,
+          streak: { current: 8, longest: 9, freezes: 0, lastActiveOn: '2026-10-28', daysLearned: 41, freezeProgress: 3, sessionsPerFreeze: 5 },
+        },
+      },
+      standing({ xp: 10, rank: 4, weekly: 120 }, { xp: 25, rank: 4, weekly: 135 }),
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} }, { courseId: 'c1', lessonId: 'l1' });
+    await answerTyped('sêv');
+    await next();
+
+    expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
+    expect(await screen.findByText('Today’s goal is done')).toBeInTheDocument();
+    // no rank gained, so no "Up to"; the league row is still there
+    expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
+    expect(screen.queryByText(/^Up to/)).not.toBeInTheDocument();
+
+    // the streak was kept today: Continue, never by itself, to its day
+    await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: 'Day 8' })).toBeInTheDocument();
+    expect(screen.getByText('You learned today. 41 days learned in all.')).toBeInTheDocument();
+    expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
+    // and then: Done leads, the next lesson beside it
+    expect(screen.getByText('Today’s goal is done. A good place to stop, or keep going.')).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Done' })).toBeInTheDocument();
+  });
+
+  it('shows no league to a learner who is not racing in one', async () => {
+    serve({ 'POST /sessions/s1/answers': right, 'POST /sessions/s1/complete': perfect }, (call) =>
+      call.path === '/me/league' ? jsonResponse(200, { mode: 'personal', optedOut: true, joined: false, tier: 'kani', rank: 3, weeklyXp: 40 }) : null,
+    );
+    play({ sessionId: 's1', exercises: [typed('t', 'apple')], answered: {} });
+    await answerTyped('sêv');
+    await next();
+    await screen.findByRole('heading', { name: 'Perfect lesson!' });
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.queryByText(/XP this week/)).not.toBeInTheDocument();
   });
 });
 
@@ -961,7 +1091,7 @@ describe('a review', () => {
     await answerTyped('ماڵ');
     await next();
     await screen.findByRole('heading', { name: 'Review finished' });
-    const answer = within(screen.getByRole('heading', { name: 'To go over' }).parentElement!).getByText('ماڵ');
+    const answer = within(screen.getByRole('heading', { name: 'To go over' }).closest('details')!).getByText('ماڵ');
     expect(answer).toHaveAttribute('lang', 'ckb');
     expect(answer).toHaveAttribute('dir', 'rtl');
     expect(sent('retry')).toHaveLength(1);

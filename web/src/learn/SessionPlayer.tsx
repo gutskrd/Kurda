@@ -9,6 +9,7 @@ import {
   initPlayer,
   isReask,
   lessonMoments,
+  nextLaunch,
   nextRun,
   praiseFor,
   progress,
@@ -17,6 +18,7 @@ import {
   type DeliveredExercise,
   type ExerciseType,
   type Feedback,
+  type LeagueView,
   type LessonMoments,
   type LessonStanding,
   type PlayableSession,
@@ -41,10 +43,10 @@ import { MatchPairs, MultipleChoice, Listening, TypedExercise, type ExerciseProp
 import { FeedbackPanel, announce, type RunMark } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
 import { kurdishText } from './map';
-import { Results } from './Results';
+import { Results, type NextLesson } from './Results';
 import { Speaking } from './Speaking';
 import { exerciseClips, feedbackClip } from './Voice';
-import type { AnswerResult, RetryResult, SessionResults } from './types';
+import type { AnswerResult, CourseMap, RetryResult, SessionResults } from './types';
 
 /** Where a session's answers go — a lesson and a review differ only here. */
 export interface SessionPaths {
@@ -172,18 +174,30 @@ function feelAnswer(type: ExerciseType | undefined, accepted: boolean, step: num
   else playLessonSound('wrong');
 }
 
-/** `/me` and `/me/daily-goal`, read together: where the learner stands, for `lessonMoments`. */
+/**
+ * `/me`, `/me/daily-goal` and `/me/league`, read together: where the learner
+ * stands, for `lessonMoments`. The league counts only while the learner races
+ * in one — not in personal mode, not before joining, never once opted out.
+ */
 async function readStanding(client: ApiClient): Promise<LessonStanding | null> {
-  const [me, goal] = await Promise.all([
-    client.get<{ user: { level?: { level?: number }; streak?: { current: number; lastActiveOn?: string | null } } }>('/me'),
-    client.get<{ completed?: boolean }>('/me/daily-goal'),
+  const [me, goal, league] = await Promise.all([
+    client.get<{ user: { level?: { level?: number; progress?: number }; streak?: { current: number; lastActiveOn?: string | null } } }>('/me'),
+    client.get<{ completed?: boolean; earnedXp?: number; goal?: number; effectiveGoal?: number }>('/me/daily-goal'),
+    client.get<Partial<LeagueView>>('/me/league'),
   ]);
   if (!me.ok) return null;
   const user = me.data.user;
+  const g = goal.ok ? goal.data : null;
+  const target = g?.effectiveGoal || g?.goal;
+  const l = league.ok ? league.data : null;
+  const racing = l?.mode === 'league' && l.joined === true && l.optedOut !== true && typeof l.rank === 'number' && !!l.tier;
   return {
     level: typeof user.level?.level === 'number' ? user.level.level : null,
     streak: user.streak ? { current: user.streak.current, lastActiveOn: user.streak.lastActiveOn ?? null } : null,
-    goalCompleted: goal.ok && typeof goal.data.completed === 'boolean' ? goal.data.completed : null,
+    goalCompleted: typeof g?.completed === 'boolean' ? g.completed : null,
+    goal: typeof g?.earnedXp === 'number' && typeof target === 'number' && target > 0 ? { earned: g.earnedXp, target } : null,
+    league: racing ? { rank: l.rank!, weeklyXp: l.weeklyXp ?? 0, tier: l.tier! } : null,
+    levelProgress: typeof user.level?.progress === 'number' ? user.level.progress : null,
   };
 }
 
@@ -224,6 +238,8 @@ export function SessionPlayer({
   title,
   dialect,
   grammarMd,
+  courseId = null,
+  lessonId,
   exitTo,
   exitLabel,
   onPractise,
@@ -234,6 +250,10 @@ export function SessionPlayer({
   paths: SessionPaths;
   /** the lesson's name, when the page knows it */
   title?: string;
+  /** the course the lesson is in, for the next lesson the results offer */
+  courseId?: string | null;
+  /** the lesson being played, so the next one offered is never it again */
+  lessonId?: string;
   /** the course's variety of Kurdish; a practice item says its own */
   dialect?: string | null;
   /** the skill's grammar note, opened from "Tips" */
@@ -274,6 +294,8 @@ export function SessionPlayer({
   // what a finished lesson is compared with: the level, the streak and today's goal as the lesson opened
   const before = useRef<LessonStanding | null>(null);
   const [moments, setMoments] = useState<LessonMoments>(NO_LESSON_MOMENTS);
+  // the course's next lesson, read from its map once this one is finished
+  const [nextLesson, setNextLesson] = useState<NextLesson | null>(null);
   useEffect(() => {
     let live = true;
     void readStanding(client).then((standing) => {
@@ -442,23 +464,58 @@ export function SessionPlayer({
     void client.post<SessionResults>(paths.complete(sessionId)).then((res) => {
       completing.current = false;
       if (res.ok) {
+        // a perfect lesson is known from the results alone; the rest waits for where things stand now
+        const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
         setResults(res.data);
+        setMoments(lessonMoments(null, null, null, outcome));
         setProblem(null);
         writeReasked(sessionId, null);
-        // and what else it did: a goal met, the streak kept today, a new level
+        // and what else it did: a goal met, the streak kept today, a new level, the league
         const streakNow = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn ?? null };
-        void readStanding(client).then((after) => setMoments(lessonMoments(before.current, after, streakNow)));
+        void readStanding(client).then((after) => setMoments(lessonMoments(before.current, after, streakNow, outcome)));
+        // and what comes next: the course's map as it is now, this lesson counted
+        if (kind === 'lesson' && courseId) {
+          void client.get<CourseMap>(`/courses/${encodeURIComponent(courseId)}/map`).then((map) => {
+            if (map.ok) setNextLesson(nextLaunch(map.data, lessonId ?? null));
+          });
+        }
       } else {
         setProblem({ message: describeError(res.error, t), retry: () => setCompleteTry((n) => n + 1) });
       }
     });
-  }, [state.status, results, client, paths, sessionId, t, completeTry]);
+  }, [state.status, state.skipped.length, results, client, paths, sessionId, t, completeTry, kind, courseId, lessonId]);
 
   const feedback: Feedback | null = state.status === 'feedback' ? state.feedback : null;
   const heading = title ?? (kind === 'lesson' ? t('lesson.title') : t('review.title'));
   const tone = feedback ? (!feedback.accepted ? 'notyet' : feedback.verdict === 'correct' ? 'right' : 'almost') : null;
   const putOffKind: PutAwayType | null = ex?.type === 'speaking' ? 'speaking' : ex?.type === 'listening' && ex.audioUrl ? 'listening' : null;
   const { lang } = kurdishText(exDialect);
+
+  // the end: the results have the screen, and the lesson's own header goes
+  if (results && state.status === 'finished' && !closed) {
+    return (
+      <div className="lesson is-done">
+        <Results
+          title={heading}
+          results={results}
+          exercises={state.exercises}
+          skipped={state.skipped.length}
+          kind={kind}
+          dialect={dialect}
+          moments={moments}
+          next={nextLesson}
+          exitTo={exitTo}
+          exitLabel={exitLabel}
+          onNext={(lesson) =>
+            navigate(`/app/learn/lesson/${encodeURIComponent(lesson.lessonId)}${courseId ? `?course=${encodeURIComponent(courseId)}` : ''}`, {
+              state: { title: lesson.title },
+            })
+          }
+          onPractise={onPractise}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="lesson">
@@ -518,18 +575,6 @@ export function SessionPlayer({
             )}
             {savedNote && state.index === 0 && <p className="lesson-saved">{t('lesson.savedAsYouGo')}</p>}
           </div>
-        ) : results ? (
-          <Results
-            results={results}
-            exercises={state.exercises}
-            skipped={state.skipped.length}
-            kind={kind}
-            dialect={dialect}
-            moments={moments}
-            exitTo={exitTo}
-            exitLabel={exitLabel}
-            onPractise={onPractise}
-          />
         ) : problem ? (
           <ErrorState message={problem.message} onRetry={problem.retry ?? undefined} />
         ) : (
