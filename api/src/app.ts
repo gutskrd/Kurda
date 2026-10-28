@@ -51,6 +51,7 @@ import { createQueueConnection } from './jobs/queue.js';
 import { LocalRoomBus, RedisRoomBus } from './realtime/bus.js';
 import { MAX_CLIENT_MESSAGE_BYTES, RealtimeGateway, type GatewayOptions } from './realtime/gateway.js';
 import { MemoryKV, RedisKV } from './realtime/kv.js';
+import { endedSessions } from './realtime/sessions.js';
 import { setupCors } from './plugins/cors.js';
 import { registerUserRoutes } from './users/routes.js';
 import { registerLessonRoutes } from './content/routes.js';
@@ -780,7 +781,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     const bus = app.redis
       ? new RedisRoomBus(app.redis, createQueueConnection(config))
       : new LocalRoomBus();
-    const realtime = new RealtimeGateway(kv, bus, options.gateway);
+    // a socket stops when its session does: signed out, a new password, a ban (realtime/sessions.ts)
+    const realtime = new RealtimeGateway(kv, bus, { sessionsEnded: endedSessions(app.db), ...options.gateway });
     app.decorate('realtime', realtime);
     // a client message is a few dozen bytes; the library's default limit is 100 MiB
     app.register(fastifyWebsocket, { options: { maxPayload: MAX_CLIENT_MESSAGE_BYTES } });
