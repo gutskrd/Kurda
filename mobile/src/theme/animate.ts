@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Animated, Easing } from 'react-native';
+import { releaseVelocity, type DragSample } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { ENTRANCE, POP_SCALE, PRESS_SCALE, SHAKE_MS, SHAKE_STEPS, countAt, countUpMs, curve, duration, easeOut, entranceDelay, spring } from './motion';
 
@@ -26,9 +27,55 @@ export function timing(
   return Animated.timing(value, { toValue, duration: ms, delay: opts.delay ?? 0, easing: opts.easing ?? ease.out, useNativeDriver: true });
 }
 
-/** The one spring (motion.ts `spring`), on the native driver. */
+/** One of the springs (motion.ts `spring`), on the native driver. */
 export function springTo(value: Animated.Value, toValue: number, kind: keyof typeof spring = 'standard', delay = 0): Animated.CompositeAnimation {
   return Animated.spring(value, { toValue, ...spring[kind], delay, useNativeDriver: true });
+}
+
+/**
+ * A spring that takes over from a finger: `value` (in points) goes to
+ * `toValue` starting at the speed the gesture let go with, in points per
+ * second (`DragSamples.velocity`), on the release spring, so there is no seam
+ * between the drag and the motion after it. `clamp` stops it the moment it
+ * arrives, for something leaving the screen. Like every animation here it can
+ * be interrupted: a new touch calls `stopAnimation` and holds it where it is.
+ */
+export function releaseSpring(
+  value: Animated.Value,
+  toValue: number,
+  velocity: number,
+  { kind = 'release', clamp = false }: { kind?: keyof typeof spring; clamp?: boolean } = {},
+): Animated.CompositeAnimation {
+  return Animated.spring(value, {
+    toValue,
+    ...spring[kind],
+    velocity,
+    overshootClamping: clamp,
+    // points rather than a 0…1 value: at rest within half a point, not a thousandth
+    restDisplacementThreshold: 0.5,
+    restSpeedThreshold: 0.5,
+    useNativeDriver: true,
+  });
+}
+
+/**
+ * Where a dragging finger has been in the last moments, for the speed it lets
+ * go at: `add` on every move, `velocity` on release, in points per second.
+ */
+export class DragSamples {
+  private samples: DragSample[] = [];
+
+  add(position: number, time: number = Date.now()): void {
+    this.samples.push({ time, position });
+    // a tenth of a second is all `releaseVelocity` reads; a little more is kept for a slow frame
+    if (this.samples.length > 12) this.samples.shift();
+  }
+
+  velocity(now: number = Date.now()): number {
+    const v = releaseVelocity(this.samples, now);
+    this.samples = [];
+    return v;
+  }
 }
 
 /**

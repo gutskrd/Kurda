@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet } from '../theme/BottomSheet';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -111,10 +111,10 @@ export function KeyboardSettingsSheet({
   const [guide, setGuide] = useState(false);
   return (
     <BottomSheet visible={visible} onClose={onClose} title={t('keyboard.settings.title')} contentStyle={styles.scroller}>
-      <ScrollView contentContainerStyle={styles.sheetBody}>
+      <SheetScrollView contentContainerStyle={styles.sheetBody}>
         <TypingOptions midRace={midRace} />
         <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
-      </ScrollView>
+      </SheetScrollView>
       {/* in the sheet's own Modal, so the guide is presented over the sheet */}
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
     </BottomSheet>

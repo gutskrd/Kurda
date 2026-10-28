@@ -1599,6 +1599,8 @@ export type TranslationKey =
   | 'restriction.suspendedUntil'
   | 'restriction.seeStanding'
   | 'social.close'
+  | 'sheet.expand'
+  | 'sheet.collapse'
   | 'report.category.childSafety'
   | 'report.category.selfHarm'
   | 'report.category.violence'
@@ -3479,6 +3481,8 @@ const en: Catalog = {
   'restriction.suspendedUntil': 'Your account is suspended until {time}.',
   'restriction.seeStanding': 'See your account standing',
   'social.close': 'Close',
+  'sheet.expand': 'Expand',
+  'sheet.collapse': 'Collapse',
   'report.category.childSafety': 'A child is in danger (including sexual messages or pictures)',
   'report.category.selfHarm': 'Someone may hurt themselves',
   'report.category.violence': 'Someone is threatening to hurt people',
@@ -5842,6 +5846,8 @@ const ku: Catalog = {
   'restriction.suspendedUntil': 'Hesabê te heta {time} hatiye rawestandin.',
   'restriction.seeStanding': 'Rewşa hesabê xwe bibîne',
   'social.close': 'Bigire',
+  'sheet.expand': 'Mezin bike',
+  'sheet.collapse': 'Biçûk bike',
   'report.category.childSafety': 'Zarokek di xetereyê de ye (bi peyam an wêneyên zayendî jî)',
   'report.category.selfHarm': 'Dibe ku yek xwe biêşîne',
   'report.category.violence': 'Yek gef dixwe ku mirovan biêşîne',
@@ -8205,6 +8211,8 @@ const de: Catalog = {
   'restriction.suspendedUntil': 'Dein Konto ist bis {time} gesperrt.',
   'restriction.seeStanding': 'Deinen Kontostatus ansehen',
   'social.close': 'Schließen',
+  'sheet.expand': 'Vergrößern',
+  'sheet.collapse': 'Verkleinern',
   'report.category.childSafety': 'Ein Kind ist in Gefahr (auch sexuelle Nachrichten oder Bilder)',
   'report.category.selfHarm': 'Jemand könnte sich selbst verletzen',
   'report.category.violence': 'Jemand droht, anderen wehzutun',
@@ -10568,6 +10576,8 @@ const es: Catalog = {
   'restriction.suspendedUntil': 'Tu cuenta está suspendida hasta el {time}.',
   'restriction.seeStanding': 'Ver el estado de tu cuenta',
   'social.close': 'Cerrar',
+  'sheet.expand': 'Ampliar',
+  'sheet.collapse': 'Reducir',
   'report.category.childSafety': 'Un menor está en peligro (incluidos mensajes o imágenes sexuales)',
   'report.category.selfHarm': 'Alguien podría hacerse daño',
   'report.category.violence': 'Alguien amenaza con hacer daño',
@@ -12931,6 +12941,8 @@ const tr: Catalog = {
   'restriction.suspendedUntil': 'Hesabın {time} tarihine kadar askıya alındı.',
   'restriction.seeStanding': 'Hesap durumuna bak',
   'social.close': 'Kapat',
+  'sheet.expand': 'Genişlet',
+  'sheet.collapse': 'Daralt',
   'report.category.childSafety': 'Bir çocuk tehlikede (cinsel mesajlar veya resimler dahil)',
   'report.category.selfHarm': 'Biri kendine zarar verebilir',
   'report.category.violence': 'Biri insanlara zarar vermekle tehdit ediyor',
@@ -15294,6 +15306,8 @@ const ar: Catalog = {
   'restriction.suspendedUntil': 'حسابك معلّق حتى {time}.',
   'restriction.seeStanding': 'اطّلع على حالة حسابك',
   'social.close': 'إغلاق',
+  'sheet.expand': 'توسيع',
+  'sheet.collapse': 'تصغير',
   'report.category.childSafety': 'طفل في خطر (بما في ذلك رسائل أو صور جنسية)',
   'report.category.selfHarm': 'قد يؤذي شخص نفسه',
   'report.category.violence': 'شخص يهدد بإيذاء الآخرين',
@@ -17657,6 +17671,8 @@ const fr: Catalog = {
   'restriction.suspendedUntil': 'Ton compte est suspendu jusqu’au {time}.',
   'restriction.seeStanding': 'Voir l’état de ton compte',
   'social.close': 'Fermer',
+  'sheet.expand': 'Agrandir',
+  'sheet.collapse': 'Réduire',
   'report.category.childSafety': 'Un enfant est en danger (y compris messages ou images sexuels)',
   'report.category.selfHarm': 'Quelqu’un pourrait se faire du mal',
   'report.category.violence': 'Quelqu’un menace de faire du mal',
@@ -20020,6 +20036,8 @@ const nl: Catalog = {
   'restriction.suspendedUntil': 'Je account is geschorst tot {time}.',
   'restriction.seeStanding': 'Bekijk de status van je account',
   'social.close': 'Sluiten',
+  'sheet.expand': 'Vergroten',
+  'sheet.collapse': 'Verkleinen',
   'report.category.childSafety': 'Een kind is in gevaar (ook seksuele berichten of foto’s)',
   'report.category.selfHarm': 'Iemand doet zichzelf misschien iets aan',
   'report.category.violence': 'Iemand dreigt anderen pijn te doen',
@@ -22384,6 +22402,8 @@ const ckb: Catalog = {
   'restriction.suspendedUntil': 'هەژمارەکەت تا {time} ڕاگیراوە.',
   'restriction.seeStanding': 'باری هەژمارەکەت ببینە',
   'social.close': 'داخستن',
+  'sheet.expand': 'گەورەی بکە',
+  'sheet.collapse': 'بچووکی بکەوە',
   'report.category.childSafety': 'منداڵێک لە مەترسیدایە (نامە یان وێنەی سێکسیش)',
   'report.category.selfHarm': 'لەوانەیە کەسێک ئازاری خۆی بدات',
   'report.category.violence': 'کەسێک هەڕەشەی ئازاردانی خەڵک دەکات',

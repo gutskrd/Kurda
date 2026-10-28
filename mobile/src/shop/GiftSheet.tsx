@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import type { ApiError } from '../api/types';
@@ -10,7 +10,7 @@ import { newGiftKey } from '../gifts/api';
 import { giftErrorText } from '../gifts/GiftPickerSheet';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { spacing, typography } from '../theme/tokens';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { giftItem } from './gifts';
@@ -116,7 +116,7 @@ export function GiftSheet({
             returnKeyType="done"
             style={styles.search}
           />
-          <ScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
+          <SheetScrollView keyboardShouldPersistTaps="handled" style={styles.list}>
             {shown.map((f) => (
               <Pressable
                 key={f.userId}
@@ -133,7 +133,7 @@ export function GiftSheet({
                 {busy === f.userId ? <ActivityIndicator color={colors.primary} /> : null}
               </Pressable>
             ))}
-          </ScrollView>
+          </SheetScrollView>
         </>
       )}
 

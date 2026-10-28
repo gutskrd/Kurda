@@ -12,7 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
 import {
@@ -859,7 +859,7 @@ function AltSheet({
   const counter = counterFor(picture.altText, POST_ALT_MAX);
   return (
     <BottomSheet visible onClose={onClose} title={t('composer.alt.title')} contentStyle={styles.altScroller}>
-      <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.altBody}>
+      <SheetScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.altBody}>
         {picture.localUri ? (
           <Image source={{ uri: picture.localUri }} style={styles.altPreview} resizeMode="contain" accessibilityIgnoresInvertColors />
         ) : null}
@@ -893,7 +893,7 @@ function AltSheet({
           </View>
         ) : null}
         <ClayButton label={t('common.done')} tone="primary" onPress={onClose} />
-      </ScrollView>
+      </SheetScrollView>
     </BottomSheet>
   );
 }
