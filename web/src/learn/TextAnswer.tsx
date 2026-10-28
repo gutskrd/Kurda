@@ -1,6 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { insertAtSelection, typingKeys } from '@kurda/shared';
-import { Button } from '../components/Button';
 import { useT } from '../i18n/I18nProvider';
 import { kurdishText } from './map';
 
@@ -47,18 +46,23 @@ function KeyBar({
 
 /**
  * A typed answer — translate, writing, and the transcription of a listening
- * item — with the key bar. Enter checks it. Once it is checked the field
- * stays, read-only, with what was typed, so the feedback below can be read
- * against it.
+ * item — with the key bar. Enter checks it, and so does Check in the action
+ * bar, which submits this form by its `id`. Once it is checked the field
+ * stays, read-only, with what was typed, so the verdict can be read against
+ * it.
  */
 export function TextAnswer({
+  id: formId,
   label,
   dialect,
   locked,
   busy,
   verdict = null,
+  onReady,
   onAnswer,
 }: {
+  /** the form's id, which the action bar's Check submits */
+  id: string;
   label: string;
   dialect: string | null | undefined;
   /** graded: the answer stands as typed */
@@ -66,14 +70,18 @@ export function TextAnswer({
   busy: boolean;
   /** how it was graded, once it has been: the field pops, or shakes once (styles/motion.css) */
   verdict?: 'right' | 'wrong' | null;
+  /** whether anything has been typed, for Check */
+  onReady: (ready: boolean) => void;
   onAnswer: (answer: { text: string }, given: string) => void;
 }): React.JSX.Element {
-  const t = useT();
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
   const [text, setText] = useState('');
   const caret = useRef<number | null>(null);
   const { lang, dir } = kurdishText(dialect);
+  const written = text.trim().length > 0;
+
+  useEffect(() => onReady(written), [written, onReady]);
 
   // the field is where a typed exercise starts, so the caret is put there
   useEffect(() => {
@@ -98,6 +106,7 @@ export function TextAnswer({
 
   return (
     <form
+      id={formId}
       className="lesson-answer"
       onSubmit={(e) => {
         e.preventDefault();
@@ -124,11 +133,6 @@ export function TextAnswer({
         enterKeyHint="done"
       />
       <KeyBar dialect={dialect} onKey={insert} disabled={locked} />
-      {!locked && (
-        <Button type="submit" className="lesson-check" disabled={busy || !text.trim()}>
-          {busy ? t('lesson.checking') : t('lesson.check')}
-        </Button>
-      )}
     </form>
   );
 }

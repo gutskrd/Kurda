@@ -35,6 +35,31 @@ export function setLessonSounds(on: boolean): void {
   }
 }
 
+const AUTOPLAY_KEY = 'hevalo_autoplay_audio';
+
+/**
+ * Settings → Sounds → Play pronunciations automatically: the native recording
+ * of an answer's Kurdish plays by itself a moment after the verdict. On unless
+ * turned off on this device. It is the lesson's own audio, not a chime, so the
+ * lesson sounds switch above does not silence it.
+ */
+export function autoplayOn(): boolean {
+  try {
+    return localStorage.getItem(AUTOPLAY_KEY) !== 'off';
+  } catch {
+    return true;
+  }
+}
+
+export function setAutoplay(on: boolean): void {
+  try {
+    if (on) localStorage.removeItem(AUTOPLAY_KEY);
+    else localStorage.setItem(AUTOPLAY_KEY, 'off');
+  } catch {
+    // as above: for as long as the page is open
+  }
+}
+
 /** Semitones from A4 to Hz. */
 const hz = (n: number): number => 440 * 2 ** (n / 12);
 
