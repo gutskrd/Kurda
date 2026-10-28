@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { haptic } from '../feedback/haptics';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
@@ -49,7 +50,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
         {ACCENT_MODES.map((mode) => {
           const on = prefs.accentMode === mode;
           return (
-            <Pressable
+            <PressableScale
               key={mode}
               onPress={() => {
                 if (!on) haptic('select');
@@ -65,7 +66,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
                 {on ? <Icon name="check" size={18} color={colors.textPrimary} /> : null}
               </View>
               <Text style={[styles.modeHint, { color: colors.textSecondary }]}>{t(ACCENT_HINT[mode])}</Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>

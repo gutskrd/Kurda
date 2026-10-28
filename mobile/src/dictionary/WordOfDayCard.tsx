@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
 import { radii, spacing, typography } from '../theme/tokens';
@@ -47,9 +48,9 @@ export function WordOfDayCard() {
         thing that stands out. It used to be the one solid black (or white)
         block on the Learn screen, louder than the lesson above it.
       */}
-      <Pressable
+      <PressableScale
         onPress={() => setOpen(true)}
-        style={({ pressed }) => [styles.card, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1 }]}
+        style={[styles.card, { backgroundColor: colors.surface }]}
         accessibilityRole="button"
         accessibilityLabel={`${t('dictionary.wordOfDay')}: ${word.headword}`}
       >
@@ -59,7 +60,7 @@ export function WordOfDayCard() {
           {word.pos ? `${word.pos} · ` : ''}
           {word.definitionEn ?? word.definitionKu ?? ''}
         </Text>
-      </Pressable>
+      </PressableScale>
       <Modal visible={open} animationType="slide" onRequestClose={() => setOpen(false)}>
         <EntryDetail entryId={word.entryId} onBack={() => setOpen(false)} />
       </Modal>

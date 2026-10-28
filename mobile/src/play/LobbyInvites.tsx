@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import type { OutgoingInviteState, PlayGame } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -106,7 +107,7 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
               ) : null}
             </View>
             {action ? (
-              <Pressable
+              <PressableScale
                 onPress={() => void act(i)}
                 disabled={busy === i.inviteId}
                 accessibilityRole="button"
@@ -114,7 +115,7 @@ export function LobbyInvites({ game, lobbyId, refreshKey = 0 }: { game: PlayGame
                 style={[styles.action, { backgroundColor: colors.controlTrack, opacity: busy === i.inviteId ? 0.5 : 1 }]}
               >
                 <Text style={[styles.actionText, { color: i.status === 'pending' ? colors.textSecondary : colors.primary }]}>{action}</Text>
-              </Pressable>
+              </PressableScale>
             ) : null}
           </View>
         );

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import type { GiftUserEvent } from '@kurda/shared';
 import { useUserEvents, type UserEvent } from '../realtime/useUserEvents';
@@ -86,7 +87,7 @@ export function GiftBanner({
         <Pressable onPress={onLater} accessibilityRole="button" style={styles.later} hitSlop={4}>
           <Text style={[styles.laterText, { color: colors.textSecondary }]}>{t('gift.banner.later')}</Text>
         </Pressable>
-        <Pressable
+        <PressableScale
           onPress={onOpen}
           accessibilityRole="button"
           accessibilityLabel={`${t('gift.banner.open')}: ${text}`}
@@ -94,7 +95,7 @@ export function GiftBanner({
         >
           <Icon name="gift" size={16} color={colors.textOnPrimary} />
           <Text style={[styles.openText, { color: colors.textOnPrimary }]}>{t('gift.banner.open')}</Text>
-        </Pressable>
+        </PressableScale>
       </View>
     </View>
   );

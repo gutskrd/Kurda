@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Linking, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useNavigation } from '@react-navigation/native';
 import {
   HELPLINE_URL,
@@ -375,14 +376,14 @@ function DoneStep({
       </View>
 
       {receipt.help ? (
-        <Pressable
+        <PressableScale
           onPress={() => void Linking.openURL(receipt.help?.url ?? HELPLINE_URL)}
           accessibilityRole="link"
           style={[styles.helpRow, { flexDirection: dir.row, backgroundColor: colors.successFill }]}
         >
           <Icon name="lifebuoy" size={20} color={colors.success} />
           <Text style={[styles.helpRowText, { color: colors.textPrimary }]}>{t('report.help.find')}</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
 
       <View style={[styles.next, { backgroundColor: colors.controlTrack }]}>

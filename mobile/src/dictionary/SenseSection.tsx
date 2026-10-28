@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { heldRow } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import type { Sense } from './types';
@@ -17,7 +18,7 @@ export function SenseSection({ sense, startCollapsed }: { sense: Sense; startCol
     <View style={styles.sense}>
       <Pressable
         onPress={() => setOpen((o) => !o)}
-        style={styles.header}
+        style={({ pressed }) => [styles.header, pressed && heldRow(colors.controlTrack)]}
         disabled={!hasExamples}
         // a sense with examples opens and closes; one without is only words
         accessibilityRole={hasExamples ? 'button' : undefined}

@@ -1,4 +1,5 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -52,26 +53,26 @@ export function NarrationBar({
   return (
     <View style={[styles.bar, { backgroundColor: colors.glassFill }]}>
       {button('skip-back', t('stories.reader.previousSentence'), () => narrator.previous(), !mine || state.index === 0)}
-      <Pressable
+      <PressableScale
         onPress={toggle}
         accessibilityRole="button"
         accessibilityLabel={playing ? t('stories.reader.pause') : t('stories.reader.listenWhole')}
         style={[styles.play, { backgroundColor: colors.primary }]}
       >
         <Icon name={playing ? 'audio-pause' : 'audio-play'} size={22} color={colors.textOnPrimary} />
-      </Pressable>
+      </PressableScale>
       {button('skip-forward', t('stories.reader.nextSentence'), () => narrator.next(), !mine || state.index >= state.total - 1)}
       <Text style={[styles.position, { color: colors.textSecondary }]} numberOfLines={1}>
         {position}
       </Text>
-      <Pressable
+      <PressableScale
         onPress={() => onRate(rate === 1 ? 0.75 : 1)}
         accessibilityRole="button"
         accessibilityLabel={rate === 1 ? t('stories.reader.slower') : t('stories.reader.normalSpeed')}
         style={[styles.rate, { backgroundColor: colors.controlTrack }]}
       >
         <Text style={[styles.rateText, { color: colors.textPrimary }]}>{rate === 1 ? '1×' : '0.75×'}</Text>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }

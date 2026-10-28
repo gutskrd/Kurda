@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
 import { Animated, type FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Rise } from '../theme/MotionParts';
+import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
@@ -168,12 +168,12 @@ export function MessagesScreen(): React.JSX.Element {
   const header = (
     <View style={styles.listHead}>
       {caringItems.map((item) => (
-        <Pressable
+        <PressableScale
           key={item.id}
           onPress={() => openCaring(item)}
           accessibilityRole="button"
           accessibilityLabel={item.title}
-          style={({ pressed }) => [styles.pinned, { backgroundColor: colors.successFill, opacity: pressed ? 0.8 : 1, flexDirection: dir.row }]}
+          style={[styles.pinned, { backgroundColor: colors.successFill, flexDirection: dir.row }]}
         >
           <Icon name="lifebuoy" size={22} color={colors.success} />
           <View style={styles.rowMain}>
@@ -184,16 +184,16 @@ export function MessagesScreen(): React.JSX.Element {
               {item.body}
             </Text>
           </View>
-        </Pressable>
+        </PressableScale>
       ))}
 
       {requests.length > 0 && filter !== 'groups' ? (
-        <Pressable
+        <PressableScale
           onPress={() => navigation.navigate('FriendRequests')}
           accessibilityRole="button"
           accessibilityLabel={t('messages.requests', { count: requests.length })}
           testID="messages-requests"
-          style={({ pressed }) => [styles.requests, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1, flexDirection: dir.row }]}
+          style={[styles.requests, { backgroundColor: colors.surface, flexDirection: dir.row }]}
         >
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
@@ -211,7 +211,7 @@ export function MessagesScreen(): React.JSX.Element {
             </Text>
           </View>
           <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
-        </Pressable>
+        </PressableScale>
       ) : null}
     </View>
   );

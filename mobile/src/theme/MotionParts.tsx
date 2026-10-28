@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode, type Ref } from 'react';
 import { Animated, Pressable, View, type PressableProps, type StyleProp, type ViewStyle } from 'react-native';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { springTo, timing, useEnter, usePop, usePressScale, useShake } from './animate';
 import { ENTRANCE, duration } from './motion';
 import { Icon } from './Icon';
-import { radii } from './tokens';
+import { radii, spacing } from './tokens';
 
 /**
  * The shared moving parts: a row rising into a list, a card that gives under
@@ -44,14 +44,16 @@ export function PressableScale({
   onPressIn,
   onPressOut,
   disabled,
+  ref,
   ...rest
-}: Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; children: ReactNode }): React.JSX.Element {
+}: Omit<PressableProps, 'style' | 'children'> & { style?: StyleProp<ViewStyle>; children: ReactNode; ref?: Ref<View> }): React.JSX.Element {
   const reduce = useReducedMotion();
   const press = usePressScale(!disabled);
   const [held, setHeld] = useState(false);
   return (
     <AnimatedPressable
       {...rest}
+      ref={ref}
       disabled={disabled}
       onPressIn={(e) => {
         press.onPressIn();
@@ -68,6 +70,16 @@ export function PressableScale({
       {children}
     </AnimatedPressable>
   );
+}
+
+/**
+ * A list row held down, as iOS highlights one, for a row drawn with no side
+ * padding of its own: a fill in `color` that reaches a little past the row's
+ * edges, rounded, with the row's content exactly where it was. For a
+ * Pressable's style: `({ pressed }) => [styles.row, pressed && heldRow(colors.controlTrack)]`.
+ */
+export function heldRow(color: string): ViewStyle {
+  return { backgroundColor: color, marginHorizontal: -spacing.sm, paddingHorizontal: spacing.sm, borderRadius: radii.sm };
 }
 
 /**

@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import type { LeagueView } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -62,11 +63,11 @@ export function LeagueLine(): React.JSX.Element | null {
   const sub = league.safe ? t('leagues.safe') : !personal && !league.joined ? t('leagues.home.joinHint') : goal;
 
   return (
-    <Pressable
+    <PressableScale
       onPress={() => navigation.navigate('League')}
       accessibilityRole="button"
       accessibilityLabel={`${tier && !personal ? leagueLabel(t, tier) : title}. ${sub}. ${goal}`}
-      style={({ pressed }) => [styles.row, { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1, flexDirection: dir.row }]}
+      style={[styles.row, { backgroundColor: colors.surface, flexDirection: dir.row }]}
     >
       {tier && !personal ? (
         <LeagueEmblem tier={tier} size={44} label={leagueLabel(t, tier)} />
@@ -87,7 +88,7 @@ export function LeagueLine(): React.JSX.Element | null {
         </View>
       </View>
       <GoalRing xp={league.weeklyXp} goal={league.goalXp} size={44} tint={leagueTint(tier, scheme)} showNumbers={false} />
-    </Pressable>
+    </PressableScale>
   );
 }
 

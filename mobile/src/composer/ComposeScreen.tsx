@@ -12,6 +12,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import * as ImagePicker from 'expo-image-picker';
@@ -503,7 +504,7 @@ export function ComposeScreen({
         ) : (
           <ScrollView contentContainerStyle={[styles.body, styles.column]} keyboardShouldPersistTaps="handled">
             {mode === 'new' && serverDrafts.length > 0 && !hasContent ? (
-              <Pressable
+              <PressableScale
                 onPress={() => setDraftsOpen(true)}
                 accessibilityRole="button"
                 style={[styles.oldDrafts, { backgroundColor: colors.glassFill }]}
@@ -513,7 +514,7 @@ export function ComposeScreen({
                   {t('composer.oldDrafts', { count: serverDrafts.length })}
                 </Text>
                 <Icon name="chevron-right" size={16} color={colors.textSecondary} />
-              </Pressable>
+              </PressableScale>
             ) : null}
 
             <View style={styles.writeRow}>
@@ -696,7 +697,7 @@ export function ComposeScreen({
             </Text>
             <Text style={[styles.hint, { color: colors.textSecondary }]}>{t('composer.oldDraftsBody')}</Text>
             {serverDrafts.map((d) => (
-              <Pressable
+              <PressableScale
                 key={d.id}
                 onPress={() => {
                   setDraftsOpen(false);
@@ -711,7 +712,7 @@ export function ComposeScreen({
                 {d.title && d.body ? (
                   <Text style={[styles.hint, { color: colors.textSecondary }]} numberOfLines={1}>{d.body}</Text>
                 ) : null}
-              </Pressable>
+              </PressableScale>
             ))}
             <ClayButton label={t('common.close')} onPress={() => setDraftsOpen(false)} />
           </View>
@@ -814,9 +815,9 @@ function PictureTile({
           <Text style={[styles.tileFailedText, { color: colors.textPrimary }]} numberOfLines={3}>
             {status}
           </Text>
-          <Pressable onPress={onRetry} accessibilityRole="button" style={[styles.retry, { backgroundColor: colors.background }]}>
+          <PressableScale onPress={onRetry} accessibilityRole="button" style={[styles.retry, { backgroundColor: colors.background }]}>
             <Text style={[styles.retryText, { color: colors.primary }]}>{t('common.retry')}</Text>
-          </Pressable>
+          </PressableScale>
         </View>
       ) : null}
       <Pressable
