@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -15,7 +15,7 @@ interface Props {
   exercise: Exercise;
   text: string;
   onChangeText: (text: string) => void;
-  /** defer the exercise (can't listen now / audio failed): not counted wrong */
+  /** put the exercise off when its clip cannot be played: not counted wrong ("can't listen now" is the footer's) */
   onSkip: () => void;
   disabled: boolean;
   /** the course's variety of Kurdish, for the key bar */
@@ -24,6 +24,12 @@ interface Props {
   verdict?: 'right' | 'wrong' | null;
 }
 
+/**
+ * Listen and type what you hear (KUR-035): the clip at full speed and at
+ * 0.75×, as often as wanted. The clip is the question, so it plays by itself a
+ * beat after the exercise appears (once it has loaded), as it does on the
+ * website. "Can't listen now" sits in the footer, beside Check.
+ */
 export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabled, dialect, verdict = null }: Props) {
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -31,6 +37,20 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
   const skippedRef = useRef(false);
   // who says the clip, when an editor has chosen somebody; the buttons alone otherwise
   const voice = knownVoice(exercise.audioVoice);
+
+  // played once by itself: AUTOPLAY_MS after the exercise appears, or as soon after as the clip has loaded
+  const shownAt = useRef(Date.now());
+  const autoplayed = useRef(false);
+  const loaded = audio.clock !== null;
+  const { play } = audio;
+  useEffect(() => {
+    if (!loaded || disabled || autoplayed.current) return;
+    const id = setTimeout(() => {
+      autoplayed.current = true;
+      play(1);
+    }, Math.max(0, AUTOPLAY_MS - (Date.now() - shownAt.current)));
+    return () => clearTimeout(id);
+  }, [loaded, disabled, play]);
 
   // audio download/playback failure → auto-skip once (KUR-035 edge case)
   const cannotPlay = !audio.supported || audio.error;
@@ -97,13 +117,12 @@ export function ListeningExercise({ exercise, text, onChangeText, onSkip, disabl
         style={[styles.input, { color: colors.textPrimary, backgroundColor: colors.controlTrack }, disabled && styles.dim]}
         accessibilityLabel={t('lesson.listen.answerLabel')}
       />
-
-      <Pressable disabled={disabled} onPress={onSkip} accessibilityRole="button" style={styles.skip}>
-        <Text style={[styles.skipText, { color: colors.textSecondary }]}>{t('lesson.listen.skip')}</Text>
-      </Pressable>
     </View>
   );
 }
+
+/** How long after the exercise appears its clip plays by itself: long enough to see what is being asked. */
+const AUTOPLAY_MS = 250;
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
@@ -117,7 +136,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     fontSize: typography.sizes.lg,
   },
-  skip: { alignItems: 'center', paddingVertical: spacing.sm },
-  skipText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
   dim: { opacity: 0.4 },
 });

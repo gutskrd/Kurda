@@ -3,6 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { haptic } from '../feedback/haptics';
 import { playSound } from '../feedback/sounds';
 import { useSoundPref } from '../feedback/soundPref';
+import { useAutoplayPref } from '../feedback/autoplayPref';
 import { useVibrationPref } from '../feedback/vibrationPref';
 import { useI18n } from '../i18n/I18nContext';
 import { LOCALES, LOCALE_LABEL, type Locale } from '../i18n/translations';
@@ -113,12 +114,14 @@ function ThemeList(): React.JSX.Element {
 /**
  * The app's own chimes and its buzz. Turning either on plays it once, so the
  * switch shows what it does; turning it off is not felt. The lesson's spoken
- * Kurdish is neither, and always plays.
+ * Kurdish is neither: it always plays when asked, and the third switch says
+ * whether it is also said by itself after each answer.
  */
 function SoundsList(): React.JSX.Element {
   const { t } = useI18n();
   const [vibration, setVibration] = useVibrationPref();
   const [sounds, setSounds] = useSoundPref();
+  const [autoplay, setAutoplay] = useAutoplayPref();
   return (
     <SettingsSection first>
       <SettingsSwitch
@@ -140,6 +143,13 @@ function SoundsList(): React.JSX.Element {
           setVibration(on);
           if (on) haptic('select');
         }}
+      />
+      <SettingsSwitch
+        icon="audio-play"
+        title={t('settings.sounds.autoplay')}
+        subtitle={t('settings.sounds.autoplayHint')}
+        value={autoplay}
+        onValueChange={setAutoplay}
       />
     </SettingsSection>
   );

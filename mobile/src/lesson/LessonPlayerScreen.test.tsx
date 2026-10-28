@@ -21,7 +21,7 @@ vi.mock('@react-navigation/native', () => ({
     useEffect(() => run(), [run]);
   },
 }));
-import { act, cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -29,6 +29,9 @@ import { mic } from '../recording/testing/fakeMic';
 import type { ApiResult } from '../api/types';
 import { LessonPlayerScreen, SessionPlayer } from './LessonPlayerScreen';
 import { onSound, resetSounds } from '../feedback/sounds';
+import { resetAutoplayPref, setAutoplay } from '../feedback/autoplayPref';
+import { FakeAudio } from '../characters/testing/audio';
+import { useInvitesQuieted } from '../play/quietInvites';
 import type { SessionResults, SessionView } from './types';
 
 patchReactNativeWeb({ reduceMotion: true });
@@ -97,7 +100,8 @@ describe('a lesson that cannot reach the server', () => {
     expect(await screen.findByText('Your answers are saved, but the results didn’t come through.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
-    expect(await screen.findByText('Lesson complete!')).toBeTruthy();
+    // every first answer right and nothing put off
+    expect(await screen.findByText('Perfect lesson!')).toBeTruthy();
     expect(onExit).not.toHaveBeenCalled();
   });
 
@@ -223,23 +227,302 @@ describe('one speaking exercise after another', () => {
     ...view,
     exercises: [
       { id: 'sp1', type: 'speaking', prompt: 'Silav', position: 1 },
-      { id: 'sp2', type: 'speaking', prompt: 'Spas', position: 2 },
+      { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 2 },
+      { id: 'sp2', type: 'speaking', prompt: 'Spas', position: 3 },
     ],
   };
 
   it('starts the next afresh: a take still running when the first is skipped is stopped and deleted, not carried over', async () => {
     mic.reset();
-    testAuth.client = fakeClient(standing);
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
     renderWithProviders(<SessionPlayer view={twoToSay} paths={paths} onExit={() => undefined} />);
     fireEvent.click(await screen.findByRole('button', { name: 'Start recording' }));
     await screen.findByRole('button', { name: 'Stop recording' });
     act(() => mic.recorder!.run(2000));
 
+    // put off for the rest of the lesson, then brought back
     fireEvent.click(screen.getByRole('button', { name: 'Can’t do this now — skip' }));
+    expect(await screen.findByText('No more speaking in this lesson')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    await answerFirst();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
     expect(await screen.findByText('Spas')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Start recording' })).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Stop recording' })).toBeNull();
     await waitFor(() => expect(mic.deleted).toEqual(['file:///cache/Audio/take-1.m4a']));
     expect(mic.modes.at(-1)).toEqual({ allowsRecording: false, playsInSilentMode: true });
+  });
+});
+
+describe('a typed miss', () => {
+  const typed: SessionView = {
+    ...view,
+    grammarMd: '## Fruit\n\n**Sêv** is apple.',
+    dialect: 'kurmanji',
+    exercises: [{ id: 'tr', type: 'translate', prompt: 'apple', position: 1 }],
+  };
+
+  // the answer beside the right one, the letters that differ marked, what kind of slip it was, and the tips one tap away
+  it('is set beside the right answer, says only the marks differ, and offers the tips', async () => {
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false }) });
+    renderWithProviders(<SessionPlayer view={typed} paths={paths} onExit={() => undefined} />);
+    fireEvent.change(await screen.findByLabelText('Your translation'), { target: { value: 'sev' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(await screen.findByText('You wrote')).toBeTruthy();
+    expect(screen.getByText('Right answer')).toBeTruthy();
+    expect(screen.getByText('Only the marks differ: e → ê')).toBeTruthy();
+    // the differing letter is marked in each, never by colour alone
+    const marked = within(screen.getByTestId('lesson-verdict')).getByText('ê');
+    const look = getComputedStyle(marked);
+    expect(look.textDecorationLine || look.textDecoration).toMatch(/underline/);
+    // Hevalo comes in to think it over with the learner, beside the verdict
+    expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Why? Read the tips' }));
+    expect(await screen.findByText('Fruit')).toBeTruthy();
+  });
+});
+
+describe('the verdict', () => {
+  const five: SessionView = {
+    ...view,
+    exercises: [1, 2, 3, 4, 5].map((n) => ({ id: `mc${n}`, type: 'multiple_choice' as const, prompt: `Water ${n}?`, options: ['av', 'nan'], position: n })),
+  };
+
+  // praised in Kurdish, Hevalo on the first answer only, and a run named out loud at five
+  it('praises a right answer in Kurdish, brings Hevalo in on the first, and names a run of five', async () => {
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+    renderWithProviders(<SessionPlayer view={five} paths={paths} onExit={() => undefined} />);
+    for (let n = 1; n <= 5; n++) {
+      fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+      await screen.findByRole('button', { name: 'Continue' });
+      if (n === 1) {
+        expect(screen.getByText('Well done')).toBeTruthy();
+        expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+      }
+      if (n === 2) expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
+      if (n < 5) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    }
+    expect(screen.getByText('5 in a row!')).toBeTruthy();
+    expect(screen.getByText('5 in a row')).toBeTruthy();
+    expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+  });
+});
+
+describe('the native recording after an answer', () => {
+  const heard: SessionView = { ...view, exercises: [{ id: 'mc', type: 'multiple_choice', prompt: '“Sêv” çi ye?', options: ['apple', 'bread'], position: 1 }] };
+  const right = ok({ verdict: 'correct', accepted: true, duplicate: false, modelAudioUrl: 'https://media.test/sev.mp3' });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    resetAutoplayPref();
+  });
+
+  it('says itself a moment after the verdict', async () => {
+    FakeAudio.made = [];
+    vi.stubGlobal('Audio', FakeAudio);
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': right });
+    renderWithProviders(<SessionPlayer view={heard} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'apple' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await screen.findByRole('button', { name: 'Hear it' });
+    await waitFor(() => expect(FakeAudio.of('https://media.test/sev.mp3')?.paused).toBe(false));
+  });
+
+  it('waits for a tap when the learner has turned that off', async () => {
+    FakeAudio.made = [];
+    vi.stubGlobal('Audio', FakeAudio);
+    await setAutoplay(false);
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': right });
+    renderWithProviders(<SessionPlayer view={heard} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('radio', { name: 'apple' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    await screen.findByRole('button', { name: 'Hear it' });
+    await act(() => new Promise((done) => setTimeout(done, 500)));
+    expect(FakeAudio.of('https://media.test/sev.mp3')?.paused).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Hear it' }));
+    expect(FakeAudio.of('https://media.test/sev.mp3')?.paused).toBe(false);
+  });
+});
+
+describe('listening', () => {
+  const twoToHear: SessionView = {
+    ...view,
+    exercises: [
+      { id: 'ls1', type: 'listening', audioUrl: 'https://media.test/silav.mp3', position: 1 },
+      { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 2 },
+      { id: 'ls2', type: 'listening', audioUrl: 'https://media.test/spas.mp3', position: 3 },
+    ],
+  };
+
+  afterEach(() => vi.unstubAllGlobals());
+
+  // the clip is the question: it plays by itself, and "Can't listen now" puts listening off for the rest of the lesson
+  it('plays itself, and can be put off for the rest of the lesson and brought back', async () => {
+    FakeAudio.made = [];
+    vi.stubGlobal('Audio', FakeAudio);
+    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+    renderWithProviders(<SessionPlayer view={twoToHear} paths={paths} onExit={() => undefined} />);
+    await waitFor(() => expect(FakeAudio.of('https://media.test/silav.mp3')?.paused).toBe(false));
+
+    fireEvent.click(screen.getByRole('button', { name: 'Can’t listen now — skip' }));
+    expect(await screen.findByText('No more listening in this lesson')).toBeTruthy();
+    expect(screen.getByRole('radio', { name: 'av' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Undo' }));
+    expect(screen.queryByText('No more listening in this lesson')).toBeNull();
+
+    await answerFirst();
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    await waitFor(() => expect(FakeAudio.of('https://media.test/spas.mp3')?.paused).toBe(false));
+  });
+});
+
+describe('the results', () => {
+  const missed: SessionView = {
+    ...view,
+    lessonId: 'l1',
+    exercises: [
+      { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 1 },
+      { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 },
+    ],
+  };
+  const map = {
+    course: { id: 'c1', title: 'Kurmancî' },
+    units: [
+      {
+        unitId: 'u1',
+        title: 'Basics',
+        skills: [
+          { skillId: 's1', level: 1, title: 'Silav', state: 'completed', strength: 80, hasGrammar: false, firstLessonId: 'l1', lessons: [{ lessonId: 'l1', position: 1, title: 'Silav', completed: true }] },
+          { skillId: 's2', level: 1, title: 'Malbat', state: 'unlocked', strength: 0, hasGrammar: false, firstLessonId: 'l2', lessons: [{ lessonId: 'l2', position: 1, title: 'Dê û bav', completed: false }] },
+        ],
+      },
+    ],
+  };
+  const finished: SessionResults = {
+    ...results,
+    correct: 1,
+    total: 2,
+    accuracy: 0.5,
+    mistakes: [{ exerciseId: 'mc2', verdict: 'wrong', prompt: 'Bread?', correction: 'nan' }],
+    streak: { current: 4, longest: 4, freezes: 0, lastActiveOn: '2026-10-28', daysLearned: 12, freezeProgress: 2, sessionsPerFreeze: 5 },
+  };
+
+  /** answer every turn there is, a miss's second try included */
+  async function finish(turns: number): Promise<void> {
+    for (let n = 0; n < turns; n++) {
+      fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+      fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+      fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    }
+  }
+
+  // the mistakes can be practised at once; the course's next lesson leads while today's goal is still to meet
+  it('offers the next lesson and practising the mistakes, and opens the Day card on the way when today kept the streak', async () => {
+    testAuth.client = fakeClient({
+      'GET /me': inTurn(
+        ok({ user: { skipSpeaking: false, streak: { current: 3, lastActiveOn: '2026-10-27' } } }),
+        ok({ user: { skipSpeaking: false, streak: { current: 4, lastActiveOn: '2026-10-28' } } }),
+      ),
+      'GET /me/daily-goal': inTurn(ok({ completed: false, earnedXp: 4, goal: 20 }), ok({ completed: false, earnedXp: 19, goal: 20 })),
+      'POST /sessions/s1/answers': (body) =>
+        ok((body as { exerciseId: string }).exerciseId === 'mc' ? { verdict: 'correct', accepted: true, duplicate: false } : { verdict: 'wrong', accepted: false, correction: 'nan', duplicate: false }),
+      'POST /sessions/s1/retry': ok({ verdict: 'wrong', accepted: false, correction: 'nan' }),
+      'POST /sessions/s1/complete': ok(finished),
+      'GET /courses/c1/map': ok(map),
+    });
+    const onNext = vi.fn();
+    const onPractise = vi.fn();
+    renderWithProviders(<SessionPlayer view={missed} paths={paths} onExit={() => undefined} courseId="c1" onNext={onNext} onPractise={onPractise} onPath={() => undefined} />);
+    await finish(3);
+    expect(await screen.findByText('Lesson complete!')).toBeTruthy();
+    expect(screen.getByLabelText('Right first time: 50%, Good practice, 1 of 2')).toBeTruthy();
+    expect(await screen.findByText('19 of 20 XP today')).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Practise these now' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Back to the path' })).toBeTruthy();
+
+    // today kept the streak: the Day card comes first, then the way on that was chosen
+    fireEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
+    expect(await screen.findByRole('heading', { name: 'Day 4' })).toBeTruthy();
+    expect(screen.getByText('You learned today. 12 days learned in all.')).toBeTruthy();
+    expect(screen.getByLabelText('2 of 5 sessions to your next freeze')).toBeTruthy();
+    expect(onPractise).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(onPractise).toHaveBeenCalledWith(['mc2']);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('leads with Done once today’s goal is met, the next lesson still there for whoever wants it', async () => {
+    testAuth.client = fakeClient({
+      'GET /me': ok({ user: { skipSpeaking: false, streak: { current: 4, lastActiveOn: '2026-10-28' } } }),
+      'GET /me/daily-goal': inTurn(ok({ completed: false, earnedXp: 12, goal: 20 }), ok({ completed: true, earnedXp: 27, goal: 20 })),
+      'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }),
+      'POST /sessions/s1/complete': ok({ ...finished, correct: 2, accuracy: 1, mistakes: [] }),
+      'GET /courses/c1/map': ok(map),
+    });
+    const onNext = vi.fn();
+    const onExit = vi.fn();
+    renderWithProviders(<SessionPlayer view={missed} paths={paths} onExit={onExit} courseId="c1" onNext={onNext} onPractise={() => undefined} onPath={() => undefined} />);
+    await finish(2);
+    expect(await screen.findByText('Perfect lesson!')).toBeTruthy();
+    expect(await screen.findByText('Today’s goal is done. A good place to stop, or keep going.')).toBeTruthy();
+    expect(screen.getByText('Daily goal reached. Nice work!')).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Practise these now' })).toBeNull();
+    fireEvent.click(await screen.findByRole('button', { name: 'Next lesson' }));
+    expect(onNext).toHaveBeenCalledWith('l2');
+    expect(onExit).not.toHaveBeenCalled();
+  });
+});
+
+describe('a lesson opened again', () => {
+  const resumed: SessionView = {
+    ...view,
+    sessionId: 'resume1',
+    answered: { mc: { verdict: 'wrong', accepted: false } },
+    exercises: [
+      { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 1 },
+      { id: 'mc2', type: 'multiple_choice', prompt: 'Bread?', options: ['av', 'nan'], position: 2 },
+    ],
+  };
+
+  // the phone remembers the second tries it asked, so closing the app does not ask one twice
+  it('does not ask a second try again that was asked before the app was closed', async () => {
+    localStorage.setItem('hevalo:reasked:resume1', JSON.stringify(['mc']));
+    testAuth.client = fakeClient({
+      ...standing,
+      'GET /lessons/l1/session': ok(resumed),
+      'POST /sessions/resume1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }),
+      'POST /sessions/resume1/complete': ok(results),
+    });
+    renderWithProviders(<LessonPlayerScreen lessonId="l1" onExit={() => undefined} />);
+    expect(await screen.findByText('Bread?')).toBeTruthy();
+    fireEvent.click(screen.getByRole('radio', { name: 'nan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    // finished: "Water?" is not asked a second time
+    expect(await screen.findByRole('button', { name: 'Done' })).toBeTruthy();
+    expect(screen.queryByText('Water?')).toBeNull();
+    await waitFor(() => expect(localStorage.getItem('hevalo:reasked:resume1')).toBeNull());
+  });
+});
+
+describe('an invite to play', () => {
+  function Banner(): React.JSX.Element {
+    return <>{useInvitesQuieted() ? 'invite waits' : 'invite shows'}</>;
+  }
+
+  // the lesson is the one thing on the screen; an invite waits, and shows the moment the lesson is left
+  it('waits while a lesson is open, and shows once it is closed', async () => {
+    testAuth.client = fakeClient(standing);
+    const { rerender } = renderWithProviders(
+      <>
+        <SessionPlayer view={view} paths={paths} onExit={() => undefined} />
+        <Banner />
+      </>,
+    );
+    expect(await screen.findByText('invite waits')).toBeTruthy();
+    rerender(<Banner />);
+    expect(await screen.findByText('invite shows')).toBeTruthy();
   });
 });

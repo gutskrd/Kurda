@@ -59,14 +59,13 @@ afterEach(() => {
 
 /** The exercise as the lesson player holds it: whether there is a take, and its rating. */
 function speaking() {
-  const said = { recorded: [] as boolean[], rated: [] as Array<SelfRating | null>, skipped: 0 };
+  const said = { recorded: [] as boolean[], rated: [] as Array<SelfRating | null> };
   const view = renderWithProviders(
     <SpeakingExercise
       exercise={exercise}
       onSetRecorded={(r) => said.recorded.push(r)}
       selfRating={null}
       onRate={(r) => said.rated.push(r)}
-      onSkip={() => (said.skipped += 1)}
       disabled={false}
     />,
   );
@@ -106,7 +105,8 @@ describe('speaking on a phone', () => {
     expect(mic.calls).toEqual(['ask', 'prepare', 'record']);
   });
 
-  it('says a refused microphone plainly, opens the settings, and lets the exercise be skipped', async () => {
+  // putting the exercise off is the lesson footer's "Can’t speak now" (LessonPlayerScreen.test.tsx)
+  it('says a refused microphone plainly, and opens the settings', async () => {
     mic.answer = DENIED;
     const { said } = speaking();
     await press('Start recording');
@@ -120,11 +120,6 @@ describe('speaking on a phone', () => {
 
     await press('Open Settings');
     expect(openSettings).toHaveBeenCalledTimes(1);
-
-    const skip = screen.getByRole('button', { name: 'Can’t do this now — skip' });
-    expect(skip.getAttribute('aria-disabled')).not.toBe('true');
-    fireEvent.click(skip);
-    expect(said.skipped).toBe(1);
   });
 
   it('offers record again once the microphone has been allowed in the settings', async () => {
@@ -368,6 +363,5 @@ describe('speaking in a browser', () => {
     await press('Start recording');
     expect(screen.getByText(/The microphone is off for Hevalo/)).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Open Settings' })).toBeNull();
-    expect(screen.getByRole('button', { name: 'Can’t do this now — skip' })).toBeTruthy();
   });
 });
