@@ -82,10 +82,12 @@ export {
   DECELERATION,
   RUBBER_BAND,
   project,
+  releaseVelocity,
   rubberBand,
   shouldDismiss,
   snapTarget,
   springFor,
+  type DragSample,
   type Spring,
   type SpringSpec,
 } from './motion-physics.js';

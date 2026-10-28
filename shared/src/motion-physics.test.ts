@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { APPLE_SPRINGS, DECELERATION, project, rubberBand, shouldDismiss, snapTarget, springFor } from './motion-physics.js';
+import { APPLE_SPRINGS, DECELERATION, project, releaseVelocity, rubberBand, shouldDismiss, snapTarget, springFor } from './motion-physics.js';
 
 describe('springFor', () => {
   it('turns a response and a damping fraction into stiffness and damping', () => {
@@ -114,5 +114,27 @@ describe('shouldDismiss', () => {
   it('keeps a sheet flicked back up from far down', () => {
     // 300 − 249.5 = 50.5
     expect(shouldDismiss(300, -500, 400)).toBe(false);
+  });
+});
+
+describe('releaseVelocity', () => {
+  it('measures the speed over the last tenth of a second, in points per second', () => {
+    const samples = [
+      { time: 0, position: 0 },
+      { time: 50, position: 10 },
+      { time: 100, position: 30 },
+      { time: 150, position: 60 },
+    ];
+    // 50 → 150: 50 points in 100 ms
+    expect(releaseVelocity(samples, 150)).toBe(500);
+  });
+
+  it('is nothing when the finger was held still before lifting', () => {
+    expect(releaseVelocity([{ time: 0, position: 0 }, { time: 16, position: 40 }], 400)).toBe(0);
+    expect(releaseVelocity([{ time: 0, position: 0 }], 0)).toBe(0);
+  });
+
+  it('keeps the direction: up is negative', () => {
+    expect(releaseVelocity([{ time: 0, position: 100 }, { time: 20, position: 80 }], 20)).toBe(-1000);
   });
 });

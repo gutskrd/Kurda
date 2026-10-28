@@ -108,3 +108,23 @@ export function snapTarget(position: number, velocity: number, stops: readonly n
 export function shouldDismiss(position: number, velocity: number, height: number): boolean {
   return position + project(velocity) > height / 2;
 }
+
+/** Where a dragging finger was, and when (milliseconds). */
+export interface DragSample {
+  time: number;
+  position: number;
+}
+
+/**
+ * The speed a finger lifts at, in points per second, from how far it went over
+ * the last `windowMs` before `now`: steadier than the last two samples alone,
+ * and nothing when it was held still before letting go.
+ */
+export function releaseVelocity(samples: readonly DragSample[], now: number, windowMs = 100): number {
+  const recent = samples.filter((s) => now - s.time <= windowMs);
+  if (recent.length < 2) return 0;
+  const first = recent[0]!;
+  const last = recent[recent.length - 1]!;
+  const dt = last.time - first.time;
+  return dt > 0 ? ((last.position - first.position) / dt) * 1000 : 0;
+}
