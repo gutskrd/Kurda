@@ -62,7 +62,7 @@ export class StreakReminderService {
       [now.toISOString()],
     );
 
-    let sent = 0;
+    const due: Array<{ row: CandidateRow; kind: ReminderKind }> = [];
     for (const row of res.rows) {
       const kind = dueReminder({
         currentStreak: row.current_streak,
@@ -70,25 +70,35 @@ export class StreakReminderService {
         localHour: row.local_hour,
         historicalHour: row.historical_hour,
       });
-      if (!kind) continue;
-      if (await this.markSent(row.user_id, row.local_today, kind)) {
-        await this.enqueuer.enqueue(row.user_id, {
-          category: 'streak',
-          ...reminderMessage(kind, row.current_streak, row.locale),
-        });
-        sent += 1;
-      }
+      if (kind) due.push({ row, kind });
+    }
+    const fresh = await this.markSent(due.map(({ row, kind }) => ({ userId: row.user_id, localDate: row.local_today, kind })));
+
+    let sent = 0;
+    for (const { row, kind } of due) {
+      if (!fresh.has(`${row.user_id}|${row.local_today}|${kind}`)) continue;
+      await this.enqueuer.enqueue(row.user_id, {
+        category: 'streak',
+        ...reminderMessage(kind, row.current_streak, row.locale),
+      });
+      sent += 1;
     }
     return sent;
   }
 
-  /** Record the send; returns false if this reminder already went out today. */
-  private async markSent(userId: string, localDate: string, kind: ReminderKind): Promise<boolean> {
-    const res = await this.pool.query(
+  /**
+   * Record the sends, every one in one statement; returns those not already
+   * sent today (as `user|day|kind`), which are the ones to send.
+   */
+  private async markSent(sends: Array<{ userId: string; localDate: string; kind: ReminderKind }>): Promise<Set<string>> {
+    if (sends.length === 0) return new Set();
+    const res = await this.pool.query<{ user_id: string; sent_on: string; kind: string }>(
       `INSERT INTO streak_reminders_sent (user_id, sent_on, kind)
-       VALUES ($1, $2, $3) ON CONFLICT DO NOTHING`,
-      [userId, localDate, kind],
+       SELECT * FROM unnest($1::uuid[], $2::date[], $3::text[])
+       ON CONFLICT DO NOTHING
+       RETURNING user_id, sent_on::text AS sent_on, kind`,
+      [sends.map((s) => s.userId), sends.map((s) => s.localDate), sends.map((s) => s.kind)],
     );
-    return (res.rowCount ?? 0) > 0;
+    return new Set(res.rows.map((r) => `${r.user_id}|${r.sent_on}|${r.kind}`));
   }
 }
