@@ -51,60 +51,56 @@ export class DashboardService {
     try {
       await client.query('BEGIN');
 
-      // Active-user counts over 1/7/30-day windows ending on `day`, from the
-      // per-day activity the heartbeat records. (These used to read
-      // analytics_events, which only a client SDK writes — and none does, so the
-      // dashboard was always empty.)
-      for (const [metric, win] of [['dau', 1], ['wau', 7], ['mau', 30]] as const) {
-        const res = await client.query<{ n: string }>(
-          `SELECT COUNT(DISTINCT user_id)::int AS n FROM user_activity_days
-           WHERE day BETWEEN $1 AND $2`,
-          [windowStart(day, win), day],
-        );
-        await this.upsertMetric(client, day, metric, Number(res.rows[0]?.n ?? 0));
-      }
-
-      // Signups for the day. Derived from users.created_at, so this one is
-      // retroactive — a backfill populates real history immediately.
-      const signups = await client.query<{ n: string }>(
-        `SELECT COUNT(*)::int AS n FROM users
-          WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day')`,
-        [day],
+      // Every count that closes on `day`, worked out and written in two
+      // statements (the metrics, then the retention cohorts) rather than a
+      // read and a write for each of them.
+      const windows = [['dau', 1], ['wau', 7], ['mau', 30]] as const;
+      const steps = Object.entries(FUNNELS).flatMap(([name, list]) => list.map((step) => ({ metric: `funnel.${name}.${step}`, step })));
+      await client.query(
+        `INSERT INTO analytics_daily_metrics (day, metric, value)
+         SELECT $1::date, m.metric, m.value FROM (
+           -- Active-user counts over 1/7/30-day windows ending on the day, from
+           -- the per-day activity the heartbeat records. (These used to read
+           -- analytics_events, which only a client SDK writes — and none does,
+           -- so the dashboard was always empty.)
+           SELECT w.metric, (SELECT COUNT(DISTINCT a.user_id)::int FROM user_activity_days a
+                              WHERE a.day BETWEEN w.since AND $1::date) AS value
+             FROM unnest($2::text[], $3::date[]) AS w(metric, since)
+           UNION ALL
+           -- Signups for the day. Derived from users.created_at, so this one is
+           -- retroactive — a backfill populates real history immediately.
+           SELECT 'signups', (SELECT COUNT(*)::int FROM users
+                               WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day'))
+           UNION ALL
+           -- funnel step reach for the day (distinct users who fired each step's event)
+           SELECT s.metric, (SELECT COUNT(DISTINCT e.user_id)::int FROM analytics_events e
+                              WHERE e.user_id IS NOT NULL AND e.day = $1::date AND e.type = s.type)
+             FROM unnest($4::text[], $5::text[]) AS s(metric, type)
+         ) m
+         ON CONFLICT (day, metric) DO UPDATE SET value = EXCLUDED.value`,
+        [
+          day,
+          windows.map(([metric]) => metric),
+          windows.map(([, win]) => windowStart(day, win)),
+          steps.map((s) => s.metric),
+          steps.map((s) => s.step),
+        ],
       );
-      await this.upsertMetric(client, day, 'signups', Number(signups.rows[0]?.n ?? 0));
 
-      // funnel step reach for the day (distinct users who fired each step's event)
-      for (const [name, steps] of Object.entries(FUNNELS)) {
-        for (const step of steps) {
-          const res = await client.query<{ n: string }>(
-            `SELECT COUNT(DISTINCT user_id)::int AS n FROM analytics_events
-             WHERE user_id IS NOT NULL AND day = $1 AND type = $2`,
-            [day, step],
-          );
-          await this.upsertMetric(client, day, `funnel.${name}.${step}`, Number(res.rows[0]?.n ?? 0));
-        }
-      }
-
-      // retention cohorts maturing on `day`
-      for (const dayN of RETENTION_DAYS) {
-        const cohortDay = daysBefore(day, dayN);
-        const res = await client.query<{ size: string; retained: string }>(
-          // cohort = everyone who signed up that day; retained = those active on
-          // day N, both from server-side truth rather than client events
-          `WITH cohort AS (SELECT id AS user_id FROM users
-                            WHERE created_at >= $1::date AND created_at < ($1::date + INTERVAL '1 day'))
-           SELECT (SELECT COUNT(*) FROM cohort)::int AS size,
-                  (SELECT COUNT(DISTINCT a.user_id) FROM user_activity_days a JOIN cohort c ON a.user_id = c.user_id
-                   WHERE a.day = $2)::int AS retained`,
-          [cohortDay, day],
-        );
-        await client.query(
-          `INSERT INTO analytics_retention (cohort_day, day_n, cohort_size, retained)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT (cohort_day, day_n) DO UPDATE SET cohort_size = EXCLUDED.cohort_size, retained = EXCLUDED.retained`,
-          [cohortDay, dayN, Number(res.rows[0]?.size ?? 0), Number(res.rows[0]?.retained ?? 0)],
-        );
-      }
+      // retention cohorts maturing on `day`: everyone who signed up that day,
+      // and those of them active on day N, both from server-side truth rather
+      // than client events
+      await client.query(
+        `INSERT INTO analytics_retention (cohort_day, day_n, cohort_size, retained)
+         SELECT c.cohort_day, c.day_n,
+                (SELECT COUNT(*)::int FROM users u
+                  WHERE u.created_at >= c.cohort_day AND u.created_at < (c.cohort_day + INTERVAL '1 day')),
+                (SELECT COUNT(DISTINCT a.user_id)::int FROM user_activity_days a JOIN users u ON u.id = a.user_id
+                  WHERE u.created_at >= c.cohort_day AND u.created_at < (c.cohort_day + INTERVAL '1 day') AND a.day = $1::date)
+           FROM unnest($2::date[], $3::int[]) AS c(cohort_day, day_n)
+         ON CONFLICT (cohort_day, day_n) DO UPDATE SET cohort_size = EXCLUDED.cohort_size, retained = EXCLUDED.retained`,
+        [day, RETENTION_DAYS.map((n) => daysBefore(day, n)), [...RETENTION_DAYS]],
+      );
 
       await client.query('COMMIT');
     } catch (err) {
@@ -159,13 +155,5 @@ export class DashboardService {
       retained: r.retained,
       rate: retentionRate(r.cohort_size, r.retained),
     }));
-  }
-
-  private async upsertMetric(client: pg.PoolClient, day: string, metric: string, value: number): Promise<void> {
-    await client.query(
-      `INSERT INTO analytics_daily_metrics (day, metric, value) VALUES ($1, $2, $3)
-       ON CONFLICT (day, metric) DO UPDATE SET value = EXCLUDED.value`,
-      [day, metric, value],
-    );
   }
 }

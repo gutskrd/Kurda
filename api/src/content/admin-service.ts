@@ -298,11 +298,15 @@ export class ContentAdminService {
         return { ok: false, code: 'CONFLICT' };
       }
       await client.query(`DELETE FROM exercises WHERE lesson_id = $1`, [lessonId]);
-      for (const ex of input.exercises) {
-        const validated = validateExercisePayload(ex.type, ex.payload);
+      // every exercise checked, then written in one statement rather than one each
+      const payloads = input.exercises.map((ex) => JSON.stringify(validateExercisePayload(ex.type, ex.payload)));
+      if (input.exercises.length > 0) {
         await client.query(
-          `INSERT INTO exercises (lesson_id, position, type, payload) VALUES ($1, $2, $3, $4)`,
-          [lessonId, ex.position, ex.type, JSON.stringify(validated)],
+          `INSERT INTO exercises (lesson_id, position, type, payload)
+           SELECT $1::uuid, e.position, e.type, e.payload::jsonb
+             FROM unnest($2::int[], $3::text[], $4::text[]) WITH ORDINALITY AS e(position, type, payload, n)
+            ORDER BY e.n`,
+          [lessonId, input.exercises.map((ex) => ex.position), input.exercises.map((ex) => ex.type), payloads],
         );
       }
       await client.query('COMMIT');

@@ -867,7 +867,7 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
 
     // the social rail's single read — everything it shows, in one answer, so a
     // poll cannot leave the badge and the list disagreeing
-    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox, gifts });
+    registerSocialRailRoutes(app, { friends, groups, groupChat, inbox });
 
     // tournaments (KUR-060): admin brackets with admin-entered results; no
     // client shows them until they have a game to play (contract-4)
@@ -916,7 +916,14 @@ declare module 'fastify' {
   }
   interface FastifyRequest {
     /** Set by the auth middleware (KUR-016) for valid, active sessions. */
-    user?: { id: string; roles: string[]; familyId?: string; emailVerified: boolean };
+    user?: {
+      id: string;
+      roles: string[];
+      familyId?: string;
+      emailVerified: boolean;
+      /** a birth month on record, as the auth middleware read it with the account (users/age.ts `requireBirthMonth`) */
+      birthMonthKnown?: boolean;
+    };
     /** Why authentication failed, when a credential was presented. */
     authFailure?: import('./plugins/auth.js').AuthFailure;
   }

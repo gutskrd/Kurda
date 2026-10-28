@@ -299,14 +299,32 @@ export async function restoreContent(db: Executor, rec: RemovalRecord): Promise<
       if (rec.previousScanStatus) {
         await db.query(`UPDATE media_uploads SET scan_status = $2 WHERE key = $1 AND scan_status = 'blocked'`, [rec.key, rec.previousScanStatus]);
       }
-      for (const c of rec.copies ?? []) {
-        await db.query(`UPDATE media_uploads SET scan_status = $2 WHERE key = $1 AND scan_status = 'blocked'`, [c.key, c.previousScanStatus]);
+      // the copies, the pictures and the posts that used it: one statement for each kind, not one per row
+      const copies = rec.copies ?? [];
+      if (copies.length > 0) {
+        await db.query(
+          `UPDATE media_uploads m SET scan_status = c.previous
+             FROM unnest($1::text[], $2::text[]) AS c(key, previous)
+            WHERE m.key = c.key AND m.scan_status = 'blocked'`,
+          [copies.map((c) => c.key), copies.map((c) => c.previousScanStatus)],
+        );
       }
-      for (const p of rec.posts) {
-        await db.query(`UPDATE image_posts SET status = $2, updated_at = now() WHERE id = $1 AND status = 'removed'`, [p.id, p.previousStatus]);
+      if (rec.posts.length > 0) {
+        await db.query(
+          `UPDATE image_posts t SET status = p.previous, updated_at = now()
+             FROM unnest($1::uuid[], $2::text[]) AS p(id, previous)
+            WHERE t.id = p.id AND t.status = 'removed'`,
+          [rec.posts.map((p) => p.id), rec.posts.map((p) => p.previousStatus)],
+        );
       }
-      for (const p of rec.libraryPosts ?? []) {
-        await db.query(`UPDATE library_posts SET status = $2, updated_at = now() WHERE id = $1 AND status = 'removed'`, [p.id, p.previousStatus]);
+      const libraryPosts = rec.libraryPosts ?? [];
+      if (libraryPosts.length > 0) {
+        await db.query(
+          `UPDATE library_posts t SET status = p.previous, updated_at = now()
+             FROM unnest($1::uuid[], $2::text[]) AS p(id, previous)
+            WHERE t.id = p.id AND t.status = 'removed'`,
+          [libraryPosts.map((p) => p.id), libraryPosts.map((p) => p.previousStatus)],
+        );
       }
       if (rec.profilePhotoOf.length > 0) {
         await db.query(`UPDATE users SET profile_photo_key = $1 WHERE id = ANY($2::uuid[]) AND profile_photo_key IS NULL`, [rec.key, rec.profilePhotoOf]);

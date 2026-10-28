@@ -111,15 +111,15 @@ async function uniqueUsername(pool: pg.Pool, base: string): Promise<string> {
   const cleaned =
     canonicalUsername(normalizeKurdish(base).replace(/[^A-Za-z0-9_êîûçşÊÎÛÇŞ]/g, '_')) ??
     `learner_${Date.now().toString(36)}`;
-  for (let i = 0; i < 20; i++) {
-    const candidate = i === 0 ? cleaned : `${cleaned.slice(0, 25)}_${i}`;
-    const taken = await pool.query(
-      `SELECT 1 FROM users WHERE username = $1 AND deleted_at IS NULL`,
-      [candidate],
-    );
-    if (taken.rowCount === 0) return candidate;
-  }
-  return `learner_${Date.now().toString(36)}`;
+  const candidates = Array.from({ length: 20 }, (_, i) => (i === 0 ? cleaned : `${cleaned.slice(0, 25)}_${i}`));
+  // the first of them nobody has, asked in one query rather than one per try
+  const free = await pool.query<{ candidate: string }>(
+    `SELECT c.candidate FROM unnest($1::text[]) WITH ORDINALITY AS c(candidate, n)
+      WHERE NOT EXISTS (SELECT 1 FROM users WHERE username = c.candidate::citext AND deleted_at IS NULL)
+      ORDER BY c.n LIMIT 1`,
+    [candidates],
+  );
+  return free.rows[0]?.candidate ?? `learner_${Date.now().toString(36)}`;
 }
 
 export class OAuthService {

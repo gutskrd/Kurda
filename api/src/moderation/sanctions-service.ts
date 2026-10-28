@@ -160,6 +160,24 @@ export async function deliverNotice(db: Executor, userId: string, notice: Notice
   );
 }
 
+/** `deliverNotice` to many people at once (every reporter of a case), in one statement. */
+export async function deliverNotices(db: Executor, notices: ReadonlyArray<{ userId: string; notice: Notice }>): Promise<void> {
+  if (notices.length === 0) return;
+  await db.query(
+    `INSERT INTO notifications (user_id, category, title, body, data)
+     SELECT n.user_id, $1::text, n.title, n.body, n.data::jsonb
+       FROM unnest($2::uuid[], $3::text[], $4::text[], $5::text[]) WITH ORDINALITY AS n(user_id, title, body, data, i)
+      ORDER BY n.i`,
+    [
+      SAFETY_CATEGORY,
+      notices.map((n) => n.userId),
+      notices.map((n) => n.notice.title),
+      notices.map((n) => n.notice.body),
+      notices.map((n) => JSON.stringify(n.notice.data)),
+    ],
+  );
+}
+
 /** One `admin_actions` row: the decision log the case view and the user page read. */
 export async function logAdminAction(
   db: Executor,
@@ -637,18 +655,20 @@ export class SanctionsService {
         ORDER BY s.user_id, s.created_at
         LIMIT 1000`,
     );
-    let added = 0;
-    for (const row of due.rows) {
-      // still in force at the moment it is written (an unban may have come in between)
-      const r = await this.pool.query(
-        `INSERT INTO ban_registry (kind, value_hash, sanction_id)
-         SELECT 'email', $1, $2 WHERE EXISTS (SELECT 1 FROM sanctions s WHERE s.id = $2 AND ${IN_FORCE_SQL})
-         ON CONFLICT (kind, value_hash) DO NOTHING`,
-        [emailRegistryHash(row.email), row.sanction_id],
-      );
-      added += r.rowCount ?? 0;
-    }
-    return added;
+    if (due.rows.length === 0) return 0;
+    // every entry in one statement, each still in force at the moment it is
+    // written (an unban may have come in between); two bans whose addresses
+    // hash alike take one entry, the first in the order above
+    const r = await this.pool.query(
+      `INSERT INTO ban_registry (kind, value_hash, sanction_id)
+       SELECT 'email', v.value_hash, v.sanction_id
+         FROM unnest($1::text[], $2::uuid[]) WITH ORDINALITY AS v(value_hash, sanction_id, n)
+        WHERE EXISTS (SELECT 1 FROM sanctions s WHERE s.id = v.sanction_id AND ${IN_FORCE_SQL})
+        ORDER BY v.n
+       ON CONFLICT (kind, value_hash) DO NOTHING`,
+      [due.rows.map((row) => emailRegistryHash(row.email)), due.rows.map((row) => row.sanction_id)],
+    );
+    return r.rowCount ?? 0;
   }
 
   /** The person exists, and is locked for the change that follows. */

@@ -90,15 +90,19 @@ export class XpService {
       gameToday: day.rows[0]?.game ?? 0,
       otherToday: day.rows[0]?.other ?? 0,
     });
+    // the ledger row and the total in one statement: the total moves only when the row went in
     const inserted = await db.query<{ amount: number }>(
-      `INSERT INTO xp_ledger (user_id, source, amount, ref_id, counted)
-       VALUES ($1, $2, $3, $4, $5)
-       ON CONFLICT (source, ref_id) DO NOTHING
-       RETURNING amount`,
+      `WITH ins AS (
+         INSERT INTO xp_ledger (user_id, source, amount, ref_id, counted)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT (source, ref_id) DO NOTHING
+         RETURNING user_id, amount
+       )
+       UPDATE users u SET xp = u.xp + ins.amount FROM ins WHERE u.id = ins.user_id
+       RETURNING ins.amount`,
       [input.userId, input.source, input.amount, input.refId ?? null, counted],
     );
     if ((inserted.rowCount ?? 0) === 0) return null;
-    await db.query(`UPDATE users SET xp = xp + $2 WHERE id = $1`, [input.userId, input.amount]);
     return { userId: input.userId, source: input.source, amount: input.amount, counted, refId: input.refId };
   }
 

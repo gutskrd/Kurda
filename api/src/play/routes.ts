@@ -38,7 +38,7 @@ const declineBody = z.object({ reason: z.enum(DECLINE_REASONS).optional() }).nul
 export interface PlayRouteDeps {
   events: PlayEvents;
   xp?: XpService;
-  friends: Pick<FriendService, 'statusBetween'>;
+  friends: Pick<FriendService, 'statusesBetween'>;
   inbox: PlayDeps['inbox'];
   chat: PlayDeps['chat'];
   groupChat: PlayDeps['groupChat'];

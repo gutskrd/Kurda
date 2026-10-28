@@ -35,7 +35,7 @@ interface Log {
 export interface PlayDeps {
   adapters: readonly PlayAdapter[];
   events: PlayEvents;
-  friends: Pick<FriendService, 'statusBetween'>;
+  friends: Pick<FriendService, 'statusesBetween'>;
   inbox: { record(userId: string, notification: Notification): Promise<void> };
   chat: { sendCard(from: string, to: string, card: ChatGameRef, publicUrl?: PublicUrl): Promise<unknown> };
   groupChat: { sendCard(userId: string, groupId: string, card: ChatGameRef, publicUrl?: PublicUrl): Promise<unknown> };
@@ -222,10 +222,11 @@ export class PlayService {
     const superseded: InviteRow[] = [];
     let invited = 0;
     let limited = false;
+    // friends only; a block reads as 'blocked' here. Everyone asked, in one query
+    const statuses = await this.deps.friends.statusesBetween(hostId, wanted);
     for (const inviteeId of wanted) {
       if (facts.memberIds.includes(inviteeId) || facts.removedIds.includes(inviteeId)) continue;
-      // friends only; a block reads as 'blocked' here
-      if ((await this.deps.friends.statusBetween(hostId, inviteeId)) !== 'friends') continue;
+      if (statuses.get(inviteeId) !== 'friends') continue;
       // A friend the game would turn away — a minor or an account of unknown
       // age and an open game, a block either way with someone already in it —
       // is invited exactly as far as the host can tell: counted, listed as

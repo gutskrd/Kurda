@@ -47,33 +47,31 @@ export class AnalyticsService {
     const result: IngestResult = { accepted: 0, dropped: 0, duplicates: 0 };
     if (events.length === 0) return result;
 
-    const client = await this.pool.connect();
-    try {
-      await client.query('BEGIN');
-      for (const event of events) {
-        const outcome = validateEvent(event.type, event.payload);
-        if (!outcome.ok) {
-          result.dropped += 1;
-          this.hooks.onDropped?.(outcome.reason);
-          continue;
-        }
-        const res = await client.query(
-          `INSERT INTO analytics_events (event_id, user_id, type, payload, client_ts)
-           VALUES ($1, $2, $3, $4::jsonb, $5)
-           ON CONFLICT (event_id) DO NOTHING
-           RETURNING id`,
-          [event.eventId, userId, outcome.type, JSON.stringify(outcome.payload), event.clientTs ?? null],
-        );
-        if (res.rowCount === 0) result.duplicates += 1;
-        else result.accepted += 1;
+    const valid: Array<{ eventId: string; type: string; payload: string; clientTs: string | null }> = [];
+    for (const event of events) {
+      const outcome = validateEvent(event.type, event.payload);
+      if (!outcome.ok) {
+        result.dropped += 1;
+        this.hooks.onDropped?.(outcome.reason);
+        continue;
       }
-      await client.query('COMMIT');
-      return result;
-    } catch (err) {
-      await client.query('ROLLBACK').catch(() => undefined);
-      throw err;
-    } finally {
-      client.release();
+      valid.push({ eventId: event.eventId, type: outcome.type, payload: JSON.stringify(outcome.payload), clientTs: event.clientTs ?? null });
     }
+    if (valid.length === 0) return result;
+
+    // The whole batch in one statement, which is all or nothing on its own. An
+    // event id already stored, or repeated within the batch, inserts once.
+    const res = await this.pool.query(
+      `INSERT INTO analytics_events (event_id, user_id, type, payload, client_ts)
+       SELECT e.event_id, $1::uuid, e.type, e.payload::jsonb, e.client_ts
+         FROM unnest($2::text[], $3::text[], $4::text[], $5::timestamptz[]) WITH ORDINALITY AS e(event_id, type, payload, client_ts, n)
+        ORDER BY e.n
+       ON CONFLICT (event_id) DO NOTHING
+       RETURNING id`,
+      [userId, valid.map((e) => e.eventId), valid.map((e) => e.type), valid.map((e) => e.payload), valid.map((e) => e.clientTs)],
+    );
+    result.accepted = res.rowCount ?? 0;
+    result.duplicates = valid.length - result.accepted;
+    return result;
   }
 }

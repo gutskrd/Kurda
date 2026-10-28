@@ -264,23 +264,31 @@ export async function saveStory(
     id = target.id;
     await db.query(`DELETE FROM story_questions WHERE story_id = $1`, [id]);
   }
-  for (const [position, q] of story.questions.entries()) {
+  // the questions in one statement rather than one each
+  if (story.questions.length > 0) {
     await db.query(
       `INSERT INTO story_questions (story_id, position, kind, prompt, prompt_en, options, correct_index,
                                     explanation, explanation_en, evidence_paragraph, evidence_sentence)
-       VALUES ($1, $2, $3, $4, $5, $6::jsonb, $7, $8, $9, $10, $11)`,
+       SELECT $1::uuid, q.position, q.kind, q.prompt, q.prompt_en, q.options, q.correct_index,
+              q.explanation, q.explanation_en, q.evidence_paragraph, q.evidence_sentence
+         FROM jsonb_to_recordset($2::jsonb) AS q(position int, kind text, prompt text, prompt_en text, options jsonb, correct_index int,
+                                                 explanation text, explanation_en text, evidence_paragraph int, evidence_sentence int)`,
       [
         id,
-        position,
-        q.kind,
-        q.prompt,
-        q.promptEn,
-        JSON.stringify(q.options),
-        q.correctIndex,
-        q.explanation,
-        q.explanationEn,
-        q.evidenceParagraph,
-        q.evidenceSentence,
+        JSON.stringify(
+          story.questions.map((q, position) => ({
+            position,
+            kind: q.kind,
+            prompt: q.prompt,
+            prompt_en: q.promptEn,
+            options: q.options,
+            correct_index: q.correctIndex,
+            explanation: q.explanation,
+            explanation_en: q.explanationEn,
+            evidence_paragraph: q.evidenceParagraph,
+            evidence_sentence: q.evidenceSentence,
+          })),
+        ),
       ],
     );
   }

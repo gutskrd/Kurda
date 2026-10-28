@@ -53,7 +53,9 @@ describe('XpService.award (unit, mocked executor)', () => {
     const svc = new XpService({} as never);
     const awarded = await svc.award({ userId, source: 'lesson_complete', amount: 20, refId: 's1' }, executor as never);
     expect(awarded).toBe(20);
-    expect(calls.some((c) => c.text.includes('UPDATE users SET xp'))).toBe(true);
+    // the total is bumped by the same statement that writes the ledger row, from the row it wrote
+    const write = calls.find((c) => c.text.includes('INSERT INTO xp_ledger'))!;
+    expect(write.text).toMatch(/UPDATE users u SET xp = u\.xp \+ ins\.amount FROM ins/);
   });
 
   it('awards 0 and never touches the total on a duplicate', async () => {
@@ -61,7 +63,8 @@ describe('XpService.award (unit, mocked executor)', () => {
     const svc = new XpService({} as never);
     const awarded = await svc.award({ userId, source: 'lesson_complete', amount: 20, refId: 's1' }, executor as never);
     expect(awarded).toBe(0);
-    expect(calls.some((c) => c.text.includes('UPDATE users SET xp'))).toBe(false);
+    // nothing else bumps the total: only the ledger row's own statement can, and it wrote none
+    expect(calls.some((c) => c.text.includes('UPDATE users') && !c.text.includes('INSERT INTO xp_ledger'))).toBe(false);
   });
 
   it('rejects non-positive or non-integer amounts', async () => {

@@ -81,6 +81,21 @@ export class InboxService {
     return res.rows.map(toItem);
   }
 
+  /**
+   * The newest `limit` notifications and how many are unread in all, in one
+   * query (the social rail polls both). Each row carries the count; with no
+   * rows there is nothing to be unread.
+   */
+  async recent(userId: string, limit: number): Promise<{ items: InboxItem[]; unread: number }> {
+    const res = await this.pool.query<InboxRow & { unread: number }>(
+      `SELECT id, category, title, body, data, created_at, read_at,
+              (SELECT COUNT(*)::int FROM notifications WHERE user_id = $1 AND read_at IS NULL) AS unread
+       FROM notifications WHERE user_id = $1 ORDER BY created_at DESC LIMIT $2`,
+      [userId, Math.min(limit, INBOX_LIMIT)],
+    );
+    return { items: res.rows.map(toItem), unread: res.rows[0]?.unread ?? 0 };
+  }
+
   async unreadCount(userId: string): Promise<number> {
     const res = await this.pool.query<{ count: string }>(
       `SELECT COUNT(*)::int AS count FROM notifications WHERE user_id = $1 AND read_at IS NULL`,
