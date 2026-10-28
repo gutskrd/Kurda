@@ -7,7 +7,9 @@ import { arrivalHeld, holdArrival } from './arrival';
 /** Which way a foreleg's hoof points from the knee, in degrees from straight down, from its group's transform: about 180 over an eye. */
 function legTurn(container: HTMLElement, side: 'left' | 'right'): number {
   const t = container.querySelector(`[data-cp="hoof-${side}"]`)?.getAttribute('transform') ?? '';
-  return Math.abs(Number(/rotate\((\S+)\)/.exec(t)?.[1] ?? Number.NaN));
+  const turn = Number(/rotate\((\S+)\)/.exec(t)?.[1] ?? Number.NaN);
+  // how far round from hanging, either way: a hoof turned up past the top one way is as far round as the other
+  return Math.abs((((turn % 360) + 540) % 360) - 180);
 }
 
 const lid = (container: HTMLElement, side: 'left' | 'right', state: string): string | null | undefined =>

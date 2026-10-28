@@ -473,10 +473,12 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-brand { display: inline-flex; align-items: center; gap: 10px; }
 /*
  * Hevalo leans in over the card (brand/Companion) as over a windowsill, seen from the chest up:
- * the stage keeps room above the card for him, his box (shared COMPANION_VIEW, 540 by 818) stands
- * on the card's top edge, and he is drawn in front of the card, cut at the edge himself, so his
- * forelegs can hang down over its top padding (shared COMPANION_OVERHANG, 285 of 540, which the
- * padding keeps clear).
+ * the stage keeps room above the card for him, and his box (shared COMPANION_VIEW, 660 by 1103,
+ * 540 of it as wide as --cp-w, with room either side for a hoof he lifts out to his cheeks) has
+ * its sill, 818 down it, on the card's top edge. He is drawn in front of the card, cut at the edge
+ * himself, so his forelegs hang down over its top padding (shared COMPANION_OVERHANG, 285, inside
+ * his box, which the padding keeps clear). No filter on him: a browser may cut what it filters at
+ * the element's edge, and it would redraw the shadow on every frame he moves.
  */
 .login-stage {
   --cp-w: min(160px, 38vw);
@@ -486,8 +488,7 @@ td strong, td .name { color: var(--text); font-weight: 600; }
 .login-stage > .login-card { width: 100%; padding-top: calc(var(--cp-w) * 285 / 540 + 16px); }
 .login-companion {
   position: absolute; z-index: 2; left: 50%; top: calc(var(--cp-room) - var(--cp-w) * 818 / 540);
-  width: var(--cp-w); height: calc(var(--cp-w) * 818 / 540); margin-left: calc(var(--cp-w) / -2);
-  filter: drop-shadow(0 10px 22px rgba(20, 6, 52, 0.45));
+  width: calc(var(--cp-w) * 660 / 540); height: calc(var(--cp-w) * 1103 / 540); margin-left: calc(var(--cp-w) * -330 / 540);
 }
 @media (max-height: 560px) { .login-stage { --cp-w: 100px; } }
 .login-top.is-centred { justify-content: center; gap: 10px; margin-bottom: 20px; }

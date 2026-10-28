@@ -64,6 +64,114 @@ const sitting = (): CompanionFrame => ({
   wakeAt: null,
 });
 
+type Point = { x: number; y: number };
+
+/** Where `p` goes under an SVG transform of translates, scales, rotations and skews. */
+const apply = (transform: string, p: Point): Point => {
+  const steps = [...transform.matchAll(/(translate|scale|rotate|skewX)\(([^)]*)\)/g)].map((m) => [m[1]!, m[2]!.split(/[ ,]+/).map(Number)] as const);
+  let { x, y } = p;
+  for (const [op, a] of steps.reverse()) {
+    if (op === 'translate') {
+      x += a[0]!;
+      y += a[1] ?? 0;
+    } else if (op === 'scale') {
+      x *= a[0]!;
+      y *= a[1] ?? a[0]!;
+    } else if (op === 'skewX') {
+      x += y * Math.tan((a[0]! * Math.PI) / 180);
+    } else {
+      const r = (a[0]! * Math.PI) / 180;
+      const [cx = 0, cy = 0] = a.slice(1);
+      [x, y] = [cx + (x - cx) * Math.cos(r) - (y - cy) * Math.sin(r), cy + (x - cx) * Math.sin(r) + (y - cy) * Math.cos(r)];
+    }
+  }
+  return { x, y };
+};
+
+/** The points along path data (its lines, curves and arcs, as the companion's outlines have them), close enough to stand for it. */
+function outlinePoints(d: string): Point[] {
+  const tokens = d.match(/[MLQAaZ]|-?\d+(?:\.\d+)?/g) ?? [];
+  const points: Point[] = [];
+  let at: Point = { x: 0, y: 0 };
+  let start = at;
+  let i = 0;
+  const num = (): number => Number(tokens[i++]);
+  while (i < tokens.length) {
+    const op = tokens[i++];
+    if (op === 'M' || op === 'L') {
+      at = { x: num(), y: num() };
+      if (op === 'M') start = at;
+      points.push(at);
+    } else if (op === 'Q') {
+      const c = { x: num(), y: num() };
+      const end = { x: num(), y: num() };
+      for (let s = 1; s <= 8; s += 1) {
+        const u = s / 8;
+        points.push({ x: (1 - u) ** 2 * at.x + 2 * (1 - u) * u * c.x + u * u * end.x, y: (1 - u) ** 2 * at.y + 2 * (1 - u) * u * c.y + u * u * end.y });
+      }
+      at = end;
+    } else if (op === 'A' || op === 'a') {
+      const r = num();
+      i += 2;
+      const large = num();
+      const sweep = num();
+      const end = op === 'A' ? { x: num(), y: num() } : { x: at.x + num(), y: at.y + num() };
+      // an arc that ends where it starts is not drawn
+      if (end.x !== at.x || end.y !== at.y) {
+        const half = Math.hypot(end.x - at.x, end.y - at.y) / 2;
+        const rise = Math.sqrt(Math.max(0, r * r - half * half)) * (large !== sweep ? 1 : -1);
+        const c = { x: (at.x + end.x) / 2 - (rise * (end.y - at.y)) / (2 * half), y: (at.y + end.y) / 2 + (rise * (end.x - at.x)) / (2 * half) };
+        const from = Math.atan2(at.y - c.y, at.x - c.x);
+        let span = Math.atan2(end.y - c.y, end.x - c.x) - from;
+        if (sweep) while (span <= 0) span += 2 * Math.PI;
+        else while (span >= 0) span -= 2 * Math.PI;
+        const steps = Math.ceil(Math.abs(span) / 0.2);
+        for (let s = 1; s <= steps; s += 1) points.push({ x: c.x + r * Math.cos(from + (span * s) / steps), y: c.y + r * Math.sin(from + (span * s) / steps) });
+      }
+      at = end;
+    } else if (op === 'Z') {
+      points.push(start);
+      at = start;
+    }
+  }
+  return points;
+}
+
+/** How many times a run of points crosses itself, where its two ends meet aside. */
+function crossings(points: Point[]): number {
+  const turn = (o: Point, a: Point, b: Point): number => (a.x - o.x) * (b.y - o.y) - (a.y - o.y) * (b.x - o.x);
+  const apart = (p: number, q: number): boolean => (p > 1e-6 && q < -1e-6) || (p < -1e-6 && q > 1e-6);
+  const runs = points
+    .slice(1)
+    .map((p, i) => [points[i]!, p] as const)
+    .filter(([a, b]) => Math.hypot(b.x - a.x, b.y - a.y) > 1e-3);
+  let n = 0;
+  for (let i = 0; i < runs.length; i += 1) {
+    for (let j = i + 2; j < runs.length; j += 1) {
+      if (i === 0 && j === runs.length - 1) continue;
+      const [a, b] = runs[i]!;
+      const [c, d] = runs[j]!;
+      if (apart(turn(c, d, a), turn(c, d, b)) && apart(turn(a, b, c), turn(a, b, d))) n += 1;
+    }
+  }
+  return n;
+}
+
+/**
+ * His forelegs every way his motion holds them: each share of the way up, and the cannon with it, behind it or ahead of
+ * it (following a leg going up or down a moment later, it is up to a quarter of the way behind), and swung on past rest.
+ */
+function legPoses(): CompanionFrame[] {
+  const poses: CompanionFrame[] = [];
+  for (let v = 0; v <= 1.0001; v += 0.02) {
+    for (const behind of [-0.3, -0.15, 0, 0.15, 0.3]) {
+      const swing = Math.max(-0.3, Math.min(1.06, v + behind));
+      poses.push({ ...sitting(), hoofLeft: v, swingLeft: swing, hoofRight: v, swingRight: swing });
+    }
+  }
+  return poses;
+}
+
 describe('companionSvg', () => {
   const playful = companionSvg({ prefix: 'one' });
   const calm = companionSvg({ prefix: 'two' });
@@ -103,12 +211,51 @@ describe('companionSvg', () => {
     expect(playful).not.toContain('glasses');
   });
 
-  it('draws each foreleg in the fur of his chest, so it grows out of his side, all of a piece from the shoulder to the hoof', () => {
-    // one outline, filled as his chest is, shaded at its rim and casting a shadow, with the hoof on its end
+  it('draws each foreleg in the fur of his chest, so it grows out of his side: the forearm from the shoulder, and the cannon over it to the hoof', () => {
+    // two outlines, each filled as his chest is and shaded at its rim, the cannon after the forearm, with the hoof on its end
     expect(playful).toMatch(/<path id="one-leg-left" data-cp="leg-left" d="M[^"]+Z"\/>/);
-    expect(playful).toContain('<use href="#one-leg-left" fill="url(#one-fur)"/><use href="#one-leg-left" fill="url(#one-side)"/>');
-    expect(playful).toMatch(/<use href="#one-rim-left" fill="none" stroke="[^"]+" stroke-opacity="[^"]+" stroke-width="[^"]+" stroke-linecap="round"\/>/);
+    expect(playful).toMatch(/<path id="one-cannon-left" data-cp="cannon-left" d="M[^"]+Z"\/>/);
+    const rim = (id: string): RegExp => new RegExp(`<use href="#${id}" fill="none" stroke="[^"]+" stroke-opacity="[^"]+" stroke-width="[^"]+" stroke-linecap="round"/>`);
+    const forearm = playful.indexOf('<use href="#one-leg-left" fill="url(#one-fur)"/><use href="#one-leg-left" fill="url(#one-side)"/>');
+    const cannon = playful.indexOf('<use href="#one-cannon-left" fill="url(#one-fur)"/><use href="#one-cannon-left" fill="url(#one-side)"/>');
+    expect(forearm).toBeGreaterThan(0);
+    expect(cannon).toBeGreaterThan(forearm);
+    expect(playful.slice(forearm, cannon)).toMatch(rim('one-rim-left'));
+    expect(playful.slice(cannon)).toMatch(rim('one-cannon-rim-left'));
     expect(playful).toMatch(/<g data-cp="hoof-left" transform="translate\([^"]+\)">/);
+  });
+
+  it('draws all of him inside his own box, his forelegs too wherever they go, so nothing is cut at its edge however a browser draws it', () => {
+    const v = COMPANION_VIEW;
+    expect(v.y + v.h).toBe(COMPANION_EDGE + COMPANION_OVERHANG);
+    // a hoof's own drawing, from the fetlock: its toes 29 either side of it, down to 66 below it
+    const toes: Point[] = [
+      { x: -29, y: -6 },
+      { x: 29, y: -6 },
+      { x: -29, y: 66 },
+      { x: 29, y: 66 },
+    ];
+    for (const f of legPoses()) {
+      const t = companionTransforms(f);
+      const hooves = [t.hoofLeft, t.hoofRight].flatMap((hoof) => toes.map((p) => apply(hoof, p)));
+      const all = [...[t.legLeft, t.legRight, t.cannonLeft, t.cannonRight].flatMap(outlinePoints), ...hooves];
+      const xs = all.map((p) => p.x);
+      const ys = all.map((p) => p.y);
+      const pose = `at ${f.hoofLeft.toFixed(2)}, ${f.swingLeft.toFixed(2)}`;
+      expect(Math.min(...xs), pose).toBeGreaterThan(v.x);
+      expect(Math.max(...xs), pose).toBeLessThan(v.x + v.w);
+      expect(Math.min(...ys), pose).toBeGreaterThan(v.y);
+      expect(Math.max(...ys), pose).toBeLessThan(v.y + v.h);
+    }
+  });
+
+  it('never draws a foreleg crossing itself, however far its knee bends or its cannon swings behind it', () => {
+    for (const f of legPoses()) {
+      const t = companionTransforms(f);
+      for (const key of ['legLeft', 'legRight', 'rimLeft', 'rimRight', 'cannonLeft', 'cannonRight', 'cannonRimLeft', 'cannonRimRight'] as const) {
+        expect(crossings(outlinePoints(t[key])), `${key} at ${f.hoofLeft.toFixed(2)}, ${f.swingLeft.toFixed(2)}`).toBe(0);
+      }
+    }
   });
 
   it('is drawn as he is before he comes up, out of sight below the sill with his forelegs shut in, until a frame moves him', () => {
@@ -136,7 +283,7 @@ describe('companionSvg', () => {
 
 describe('CompanionMotion', () => {
   /**
-   * How far over the sill either foreleg shows, as drawn for a frame (less than 0: none of it): its shaded rim, its
+   * How far over the sill either foreleg shows, as drawn for a frame (less than 0: none of it): its shaded rims, its
    * shadow and its hoof. (Its shoulder is his chest's own fur, and shows as his chest.)
    */
   const legsOver = (f: CompanionFrame): number => {
@@ -146,7 +293,8 @@ describe('CompanionMotion', () => {
     const points = (d: string): string => d.replace(/A[^A-Z]*?(?=[A-Z]|$)/g, (arc) => `L${arc.trim().split(/[ ,]+/).slice(-2).join(',')}`);
     const ys = (d: string): number[] => (points(d).match(/-?\d+(\.\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2 === 1);
     const hoofY = (h: string): number => Number(/translate\((-?[\d.]+) (-?[\d.]+)\)/.exec(h)?.[2] ?? 0) - 30;
-    const top = Math.min(...ys(t.rimLeft), ...ys(t.rimRight), ...ys(t.castLeft), ...ys(t.castRight), hoofY(t.hoofLeft), hoofY(t.hoofRight));
+    const rims = [t.rimLeft, t.rimRight, t.cannonRimLeft, t.cannonRimRight].flatMap(ys);
+    const top = Math.min(...rims, ...ys(t.castLeft), ...ys(t.castRight), hoofY(t.hoofLeft), hoofY(t.hoofRight));
     return COMPANION_EDGE - (top + drop);
   };
 
@@ -608,8 +756,8 @@ describe('companionTransforms', () => {
     const ys = (d: string): number[] => numbers(d).filter((_, i) => i % 2 === 1);
     const xs = (d: string): number[] => numbers(d).filter((_, i) => i % 2 === 0);
     const points = (d: string): string => d.replace(/A[^A-Z]*?(?=[A-Z]|$)/g, (arc) => `L${arc.trim().split(/[ ,]+/).slice(-2).join(',')}`);
-    const left = points(t.legLeft);
-    const right = points(t.legRight);
+    const left = points(t.legLeft + t.cannonLeft);
+    const right = points(t.legRight + t.cannonRight);
     // at rest: from the side of his chest, under his chin and over the sill, down the card's face, on his left
     expect(Math.min(...ys(left))).toBeGreaterThan(COMPANION_EYES.y + 280);
     expect(Math.min(...ys(left))).toBeLessThan(COMPANION_EDGE - 80);
@@ -663,27 +811,6 @@ describe('companionTransforms', () => {
     expect(swung.legRight).toBe(rest.legRight);
   });
 
-  /** Where `p` goes under an SVG transform of translates, scales, rotations and skews. */
-  const apply = (transform: string, p: { x: number; y: number }): { x: number; y: number } => {
-    const steps = [...transform.matchAll(/(translate|scale|rotate|skewX)\(([^)]*)\)/g)].map((m) => [m[1]!, m[2]!.split(/[ ,]+/).map(Number)] as const);
-    let { x, y } = p;
-    for (const [op, a] of steps.reverse()) {
-      if (op === 'translate') {
-        x += a[0]!;
-        y += a[1] ?? 0;
-      } else if (op === 'scale') {
-        x *= a[0]!;
-        y *= a[1] ?? a[0]!;
-      } else if (op === 'skewX') {
-        x += y * Math.tan((a[0]! * Math.PI) / 180);
-      } else {
-        const r = (a[0]! * Math.PI) / 180;
-        const [cx = 0, cy = 0] = a.slice(1);
-        [x, y] = [cx + (x - cx) * Math.cos(r) - (y - cy) * Math.sin(r), cy + (x - cx) * Math.sin(r) + (y - cy) * Math.cos(r)];
-      }
-    }
-    return { x, y };
-  };
 
   it('turns his head in the round towards where he looks: what is on his face furthest, and nearer as he leans in', () => {
     const base = companionTransforms({ ...frame(), look: { x: 0, y: 0 } });
