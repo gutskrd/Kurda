@@ -225,6 +225,15 @@ describe('companionSvg', () => {
     expect(playful).toMatch(/<g data-cp="hoof-left" transform="translate\([^"]+\)">/);
   });
 
+  it('rounds his chest over his shoulders in its own fur, behind it, so each foreleg grows out of him', () => {
+    const body = playful.indexOf('<g data-cp="body"');
+    const shoulders = playful.indexOf('<path d="', body);
+    expect(playful.slice(shoulders)).toMatch(/^<path d="(M[^M"]+){2}" fill="url\(#one-fur\)"\/><path d="[^"]+" fill="url\(#one-side\)"\/>/);
+    expect(playful.slice(shoulders)).toMatch(/^[^]*?<g clip-path="url\(#one-shoulders\)"><ellipse [^>]*neckside/);
+    // drawn before the chest, which lies over all but where they round out past it
+    expect(playful.indexOf('url(#one-bib)')).toBeGreaterThan(shoulders);
+  });
+
   it('draws all of him inside his own box, his forelegs too wherever they go, so nothing is cut at its edge however a browser draws it', () => {
     const v = COMPANION_VIEW;
     expect(v.y + v.h).toBe(COMPANION_EDGE + COMPANION_OVERHANG);
