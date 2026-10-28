@@ -1,16 +1,21 @@
+import type { WordSetId } from './word-sets/words.js';
+import { WORD_SET_CLIPS } from './word-sets/sounds.js';
+
 /**
- * Every sound on the alphabet page, by key — one list for the three places
- * that need it: the website plays them, the admin panel records them, and the
- * API refuses to store a recording under any key not on it.
+ * Every sound on the alphabet page, and every word in the word sets (colours,
+ * numbers, days, months), by key — one list for the three places that need
+ * it: the apps play them, the admin panel records them, and the API refuses
+ * to store a recording under any key not on it.
  *
- * Each sound ships with a synthesised clip (web/scripts/alphabet-audio). A
- * recording made in the admin panel takes its place for that key, and removing
- * the recording brings the synthesised clip back.
+ * Each letter's sound ships with a synthesised clip (web/scripts/alphabet-audio),
+ * and so does each word that could be synthesised accurately. A recording made
+ * in the admin panel takes its place for that key, and removing the recording
+ * brings the synthesised clip back.
  *
  * `say` is exactly what to say into the microphone; `hint` is how, where the
  * text alone could be read two ways.
  */
-export type AlphabetClipGroup = 'kmr-sound' | 'kmr-word' | 'ckb-sound' | 'ckb-word' | 'pair';
+export type AlphabetClipGroup = 'kmr-sound' | 'kmr-word' | 'ckb-sound' | 'ckb-word' | 'pair' | WordSetId;
 
 export interface AlphabetClip {
   key: string;
@@ -28,9 +33,14 @@ export const ALPHABET_CLIP_GROUPS: ReadonlyArray<{ group: AlphabetClipGroup; tit
   { group: 'ckb-sound', title: 'Soranî-only sounds' },
   { group: 'ckb-word', title: 'Soranî example words' },
   { group: 'pair', title: 'Minimal pairs' },
+  { group: 'colours', title: 'Colours' },
+  { group: 'numbers', title: 'Numbers' },
+  { group: 'days', title: 'Days of the week' },
+  { group: 'months', title: 'Months' },
 ];
 
-export const ALPHABET_CLIPS: readonly AlphabetClip[] = [
+/** The letters' sounds alone: the alphabet page's own. */
+export const LETTER_CLIPS: readonly AlphabetClip[] = [
   { key: 'kmr:sound:a', group: 'kmr-sound', letter: 'A a', say: 'a', script: 'kmr', hint: 'the vowel alone, held briefly' },
   { key: 'kmr:sound:b', group: 'kmr-sound', letter: 'B b', say: 'ba', script: 'kmr', hint: 'the sound, then a — the way primers say it' },
   { key: 'kmr:sound:c', group: 'kmr-sound', letter: 'C c', say: 'ca', script: 'kmr', hint: 'the sound, then a — the way primers say it' },
@@ -142,6 +152,8 @@ export const ALPHABET_CLIPS: readonly AlphabetClip[] = [
   { key: 'pair:şer', group: 'pair', letter: 'şer', say: 'şer', script: 'kmr', hint: 'one of a pair: şer / şêr' },
   { key: 'pair:şêr', group: 'pair', letter: 'şêr', say: 'şêr', script: 'kmr', hint: 'one of a pair: şer / şêr' },
 ];
+
+export const ALPHABET_CLIPS: readonly AlphabetClip[] = [...LETTER_CLIPS, ...WORD_SET_CLIPS];
 
 const KEYS = new Set(ALPHABET_CLIPS.map((c) => c.key));
 
