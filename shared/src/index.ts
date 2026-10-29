@@ -571,6 +571,7 @@ export * from './art/fire.js';
 /** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
 export {
   COLD_FIRE,
+  FIRE_GROW,
   FIRE_STAGES,
   FIRE_STAGE_DAYS,
   fireGrewToday,

@@ -51,6 +51,13 @@ export interface FireLevel {
 /** A fire not burning: a streak of 0. */
 export const COLD_FIRE: FireLevel = { stage: 'cold', growth: 0 };
 
+/**
+ * The fire growing into its new stage, on the day it grew: how long after it
+ * appears the growth starts, and how long it takes to reach its new size.
+ * Whatever is said of the new stage lands as the growth ends.
+ */
+export const FIRE_GROW = { delayMs: 700, ms: 900 } as const;
+
 /** The stage's place in `FIRE_STAGES`: 0 for cold, 7 for the Newroz fire. */
 export const fireStageIndex = (stage: FireStage): number => FIRE_STAGES.indexOf(stage);
 
