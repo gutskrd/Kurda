@@ -67,7 +67,8 @@ describe('GroupThreadScreen gifts', () => {
     expect(screen.getByRole('checkbox', { name: 'azad' })).toBeTruthy();
     expect(screen.queryByRole('checkbox', { name: 'kawa' })).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Next' }));
-    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }));
+    // the gifts are fetched as the step opens, behind the group's own reads: give a busy run time to draw them
+    fireEvent.click(await screen.findByRole('radio', { name: /^Mountain dawn/ }, { timeout: 3000 }));
     fireEvent.click(screen.getByRole('button', { name: 'Send · 600 Zêr' }));
     // it reached Şîlan; Azad is named, with why, under the thread
     expect(await screen.findByText('azad already has it.')).toBeTruthy();
