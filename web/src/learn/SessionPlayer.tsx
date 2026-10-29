@@ -11,6 +11,7 @@ import {
   lessonMoments,
   nextLaunch,
   nextRun,
+  pairKey,
   praiseFor,
   progress,
   reduce,
@@ -44,6 +45,7 @@ import { FeedbackPanel, announce, type RunMark } from './FeedbackPanel';
 import { GrammarNote } from './GrammarNote';
 import { kurdishText } from './map';
 import { Results, type NextLesson } from './Results';
+import { RunLabel, RunMoment } from './Run';
 import { Speaking } from './Speaking';
 import { exerciseClips, feedbackClip } from './Voice';
 import type { AnswerResult, CourseMap, RetryResult, SessionResults } from './types';
@@ -140,22 +142,28 @@ function ExerciseView(props: ExerciseProps): React.JSX.Element | null {
 }
 
 /**
- * The lesson's bar: it slides to each new value on the out-curve
- * (styles/motion.css), and warms to gold while a run is shown, going back to
- * green on a miss.
+ * The lesson's bar: it slides to each new value on the out-curve, a light
+ * running along it as it does (styles/motion.css), and warms to gold while a
+ * run is shown, going back to green on a miss. The run itself is named over
+ * it (`RunLabel`).
  */
-function ProgressBar({ value, label, warm }: { value: number; label: string; warm: boolean }): React.JSX.Element {
+function ProgressBar({ value, label, run }: { value: number; label: string; run: number }): React.JSX.Element {
   const pct = Math.round(value * 100);
   return (
-    <div
-      className={`lesson-progress${warm ? ' is-run' : ''}`}
-      role="progressbar"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={pct}
-    >
-      <span style={{ '--p': Math.max(0, Math.min(1, value)) } as React.CSSProperties} />
+    <div className="lesson-progress-wrap">
+      <RunLabel key={run} run={run} />
+      <div
+        className={`lesson-progress${run >= RUN_SHOWN_FROM ? ' is-run' : ''}`}
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={pct}
+      >
+        <span style={{ '--p': Math.max(0, Math.min(1, value)) } as React.CSSProperties}>
+          {pct > 0 && <span key={pct} className="lesson-progress-sheen" />}
+        </span>
+      </div>
     </div>
   );
 }
@@ -289,6 +297,8 @@ export function SessionPlayer({
   const graded = useRef(0);
   const lastPraise = useRef<string | null>(null);
   const [extras, setExtras] = useState<Extras>({ run: null, hevalo: null, praise: null });
+  // a milestone named across the screen after its Continue, before the next exercise
+  const [moment, setMoment] = useState<number | null>(null);
   // "No more listening in this lesson", for a few seconds after it is chosen, with Undo
   const [awayNote, setAwayNote] = useState<PutAwayType | null>(null);
   // what a finished lesson is compared with: the level, the streak and today's goal as the lesson opened
@@ -396,8 +406,14 @@ export function SessionPlayer({
   }, [awayNote]);
 
   const next = useCallback(() => {
+    if (moment !== null) return;
     // the recording heard after the verdict ends with it
     stop();
+    if (extras.run?.milestone) setMoment(extras.run.count);
+    else dispatch({ type: 'CONTINUE' });
+  }, [moment, extras.run]);
+  const momentOver = useCallback(() => {
+    setMoment(null);
     dispatch({ type: 'CONTINUE' });
   }, []);
 
@@ -450,7 +466,7 @@ export function SessionPlayer({
   useEffect(() => {
     if (state.status !== 'feedback') return;
     const frame = requestAnimationFrame(() => {
-      const answered = document.querySelector<HTMLElement>('.lesson-option.is-chosen, .lesson-input, .lesson-match, .lesson-rate');
+      const answered = document.querySelector<HTMLElement>('.lesson-option.is-chosen, .lesson-input, .lesson-answer-line, .lesson-match, .lesson-rate');
       answered?.scrollIntoView?.({ block: 'nearest', behavior: prefersReducedMotion() ? 'auto' : 'smooth' });
     });
     return () => cancelAnimationFrame(frame);
@@ -489,6 +505,8 @@ export function SessionPlayer({
   const heading = title ?? (kind === 'lesson' ? t('lesson.title') : t('review.title'));
   const tone = feedback ? (!feedback.accepted ? 'notyet' : feedback.verdict === 'correct' ? 'right' : 'almost') : null;
   const putOffKind: PutAwayType | null = ex?.type === 'speaking' ? 'speaking' : ex?.type === 'listening' && ex.audioUrl ? 'listening' : null;
+  // pairs answered as they are made: the last one answers, so there is no Check
+  const liveMatch = ex?.type === 'match_pairs' && pairKey(ex.lefts ?? [], ex.rights ?? [], ex.pairOf) !== null;
   const { lang } = kurdishText(exDialect);
 
   // the end: the results have the screen, and the lesson's own header goes
@@ -526,7 +544,7 @@ export function SessionPlayer({
           <Link to={exitTo} className="lesson-leave" aria-label={t('lesson.leave')}>
             <CloseIcon size={20} />
           </Link>
-          <ProgressBar value={progress(state)} label={t('lesson.progress')} warm={run >= RUN_SHOWN_FROM} />
+          <ProgressBar value={progress(state)} label={t('lesson.progress')} run={run} />
           {grammarMd && (
             <Button variant="ghost" size="sm" onClick={() => setTips(true)}>
               {t('lesson.tips')}
@@ -597,7 +615,7 @@ export function SessionPlayer({
             onContinue={next}
           />
         </ActionBar>
-      ) : answering ? (
+      ) : answering && !(liveMatch && !awayNote) ? (
         <ActionBar>
           <BarRow
             start={
@@ -623,12 +641,16 @@ export function SessionPlayer({
               </>
             }
           >
-            <Button type="submit" form={formId} size="lg" className="lesson-bar-go" disabled={!ready || busy}>
-              {busy ? t('lesson.checking') : t('lesson.check')}
-            </Button>
+            {!liveMatch && (
+              <Button type="submit" form={formId} size="lg" className="lesson-bar-go" disabled={!ready || busy}>
+                {busy ? t('lesson.checking') : t('lesson.check')}
+              </Button>
+            )}
           </BarRow>
         </ActionBar>
       ) : null}
+
+      {moment !== null && <RunMoment count={moment} onDone={momentOver} />}
 
       {grammarMd && (
         <Modal open={tips} onClose={() => setTips(false)} label={t('lesson.tips')}>

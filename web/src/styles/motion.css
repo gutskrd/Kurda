@@ -18,18 +18,27 @@
  */
 
 /* ---- press ---------------------------------------------------------------- */
-/* an answer, a card to pair, a game you can open: each gives under the finger */
-.lesson-option,
-.lesson-card {
+/*
+ * A lesson's tile — an answer, a card to pair, a word — sinks onto its lip
+ * under the finger and springs back up when let go; Check and Continue too.
+ * A spent tile settles onto its lip the same way.
+ */
+.tile,
+.lesson-bar-go {
   transition:
     border-color var(--dur-fast) ease,
     background var(--dur-fast) ease,
+    color var(--dur-fast) ease,
+    box-shadow var(--dur) var(--ease-spring),
     transform var(--dur) var(--ease-spring);
 }
-.lesson-option:active:not(:disabled),
-.lesson-card:active:not(:disabled) {
-  transform: scale(var(--press-scale));
-  transition-duration: var(--dur-fast), var(--dur-fast), 80ms;
+.tile:active:not(:disabled) {
+  transform: translateY(var(--lip));
+  box-shadow: 0 0 0 var(--tile-lip);
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 60ms, 60ms;
+}
+.lesson-bar-go:active:not(:disabled) {
+  transition-duration: var(--dur-fast), var(--dur-fast), var(--dur-fast), 60ms, 60ms;
 }
 .game-tile:has(.game-stretch):active {
   transform: translateY(-2px) scale(var(--press-scale));
@@ -81,13 +90,54 @@
 }
 .lesson-option.is-right.is-chosen,
 .lesson-input.is-right,
-.lesson-match.is-right {
+.lesson-match.is-right,
+.lesson-tiles.is-right .lesson-answer-line,
+.tile.is-flash.is-right {
   animation: answer-pop var(--dur-slow) var(--ease-spring);
 }
 .lesson-option.is-wrong,
 .lesson-input.is-wrong,
-.lesson-match.is-wrong {
+.lesson-match.is-wrong,
+.lesson-tiles.is-wrong .lesson-answer-line,
+.tile.is-flash.is-wrong {
   animation: answer-shake 300ms ease-in-out;
+}
+/* a pair just found: a light sweeps across both tiles, corner to corner, and a sparkle twinkles at the end */
+@keyframes tile-sweep {
+  from {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(100%);
+  }
+}
+@keyframes tile-sparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-40deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.25) rotate(10deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.9) rotate(30deg);
+  }
+}
+.tile.is-flash.is-right::after {
+  animation: tile-sweep 560ms cubic-bezier(0.45, 0, 0.25, 1) both;
+}
+[dir='rtl'] .tile.is-flash.is-right::after {
+  animation-direction: reverse;
+}
+.tile-mark.is-right {
+  animation: tile-sparkle 600ms var(--ease-out) 180ms both;
+}
+.tile-mark.is-wrong {
+  animation: run-pop var(--dur) var(--ease-spring) both;
 }
 .lesson-option.is-right .lesson-option-mark svg,
 .lesson-feedback.is-right .lesson-verdict-mark svg,
@@ -126,6 +176,45 @@
 .lesson-run.is-milestone {
   animation: run-pop var(--dur-slow) var(--ease-spring) 160ms both;
 }
+/* the run over the bar pops in each time it grows */
+.lesson-run-label {
+  animation: run-pop var(--dur-slow) var(--ease-spring) both;
+}
+/* a milestone across the screen: the ground fades in, the words spring up out of it */
+@keyframes run-moment {
+  from {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+.lesson-run-moment {
+  animation: sheet-fade var(--dur) linear;
+}
+.lesson-run-moment-words {
+  animation: run-moment 520ms var(--ease-spring) both;
+}
+
+/* a word's meanings drop in under it */
+@keyframes meanings-in {
+  from {
+    opacity: 0;
+    translate: 0 -6px;
+  }
+}
+.lesson-meanings {
+  animation: meanings-in var(--dur-fast) var(--ease-out);
+}
+
+/* the waveform of the sound playing: each bar breathes, a step behind the one before */
+@keyframes wave {
+  50% {
+    transform: scaleY(0.35);
+  }
+}
+.lesson-sound-play.is-on .lesson-wave > span {
+  animation: wave 820ms ease-in-out infinite;
+  animation-delay: calc(var(--i) * -90ms);
+}
 /* a typed answer wears its verdict once it is graded */
 .lesson-input.is-right {
   border-color: color-mix(in srgb, var(--success) 70%, transparent);
@@ -148,6 +237,26 @@
 }
 [dir='rtl'] .lesson-progress > span {
   transform: translateX(calc((1 - var(--p, 0)) * 100%));
+}
+/* and a light runs along the fill, once, the way it moved */
+@keyframes sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+@keyframes sheen-back {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+.lesson-progress-sheen {
+  animation: sheen 900ms var(--ease-out) 150ms both;
+}
+[dir='rtl'] .lesson-progress-sheen {
+  animation-name: sheen-back;
 }
 
 /* ---- a speaking character arrives ------------------------------------------ */
@@ -496,13 +605,26 @@
     display: none;
   }
   .btn:active:not(:disabled),
-  .lesson-option:active:not(:disabled),
-  .lesson-card:active:not(:disabled),
   .game-tile:has(.game-stretch):active {
     transform: none;
   }
   /* the verdict sheet travels nowhere: it only fades in, quickly (base.css would make it instant) */
   .lesson-bar.is-sheet {
     animation: sheet-fade var(--dur-fast) linear !important;
+  }
+  /* nor does anything a lesson celebrates: a run and a milestone fade in, and a pair keeps its colours without the light or the shake */
+  .lesson-run-label,
+  .lesson-run-moment,
+  .lesson-run-moment-words {
+    animation: sheet-fade var(--dur) linear !important;
+  }
+  .tile::after,
+  .lesson-progress-sheen {
+    display: none;
+  }
+  /* a pair's mark stays put for as long as its colour does */
+  .tile-mark.is-right,
+  .tile-mark.is-wrong {
+    animation: none;
   }
 }

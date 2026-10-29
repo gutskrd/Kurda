@@ -197,7 +197,7 @@ export function FeedbackPanel({
         <div className="lesson-sheet-text">
           <p className="lesson-verdict">
             <span className="lesson-verdict-mark" aria-hidden="true">
-              {tone === 'notyet' ? <CloseIcon size={18} /> : <CheckIcon size={18} />}
+              {tone === 'notyet' ? <CloseIcon size={22} weight="bold" /> : <CheckIcon size={22} />}
             </span>
             <span className="lesson-verdict-words">{headline}</span>
             {shownRun && (
@@ -210,20 +210,21 @@ export function FeedbackPanel({
 
           {diff ? (
             <dl className="lesson-compare">
+              {/* read the way they are written: a Soranî course's English answer runs left to right */}
               <dt>{t('lesson.fb.yours')}</dt>
-              <dd lang={lang} dir={dir}>
+              <dd lang={lang} dir="auto">
                 <Marked segments={diff.given} />
               </dd>
               <dt>{t('lesson.fb.right')}</dt>
-              <dd lang={lang} dir={dir}>
+              <dd lang={lang} dir="auto">
                 <Marked segments={diff.expected} />
               </dd>
             </dl>
           ) : (
             feedback.correction && (
               <p className="lesson-correction">
-                {t('lesson.fb.answer')}{' '}
-                <strong lang={kurdish ? lang : undefined} dir={kurdish ? dir : 'auto'}>
+                <span className="lesson-correction-label">{t('lesson.fb.answer')}</span>{' '}
+                <strong lang={kurdish ? lang : undefined} dir="auto">
                   {feedback.correction}
                 </strong>
               </p>

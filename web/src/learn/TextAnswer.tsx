@@ -54,6 +54,7 @@ function KeyBar({
 export function TextAnswer({
   id: formId,
   label,
+  initial = '',
   dialect,
   locked,
   busy,
@@ -64,6 +65,8 @@ export function TextAnswer({
   /** the form's id, which the action bar's Check submits */
   id: string;
   label: string;
+  /** what the field starts with: what word tiles had built, when the learner switches to typing */
+  initial?: string;
   dialect: string | null | undefined;
   /** graded: the answer stands as typed */
   locked: boolean;
@@ -76,16 +79,19 @@ export function TextAnswer({
 }): React.JSX.Element {
   const id = useId();
   const input = useRef<HTMLInputElement>(null);
-  const [text, setText] = useState('');
+  const [text, setText] = useState(initial);
   const caret = useRef<number | null>(null);
   const { lang, dir } = kurdishText(dialect);
   const written = text.trim().length > 0;
 
   useEffect(() => onReady(written), [written, onReady]);
 
-  // the field is where a typed exercise starts, so the caret is put there
+  // the field is where a typed exercise starts, so the caret is put there, after anything it starts with
   useEffect(() => {
-    input.current?.focus();
+    const el = input.current;
+    if (!el) return;
+    el.focus();
+    el.setSelectionRange(el.value.length, el.value.length);
   }, []);
 
   // put the caret after a letter the key bar added, once the text has it
