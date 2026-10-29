@@ -182,12 +182,18 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
     });
 
     it('the day quests are the session read, the time zone and one statement, on the first look as on every other', async () => {
-      // Learn reads them on every visit; the first look of the day makes them in the same statement
-      // (after another call, which notes the day's network sighting)
+      // Learn reads them on every visit; the first look of the day makes them in the same statement, and
+      // reads the earlier days' chests still waiting with them (after another call, which notes the day's network sighting)
       await call('GET', '/me/daily-goal', 'f5');
+      await pool.query(
+        `INSERT INTO user_quests (user_id, day, kind, target, chest, progress, done_at)
+         VALUES ($1, (now() AT TIME ZONE 'UTC')::date - 1, 'streak', 1, 'common', 1, now())`,
+        [ids.f5],
+      );
       const first = await counted('GET', '/me/quests', 'f5');
       const again = await counted('GET', '/me/quests', 'f5');
       expect(again.body.quests).toHaveLength(3);
+      expect(again.body.waiting).toHaveLength(1);
       expect(first.count, first.statements.join('\n')).toBe(again.count);
       expect(again.count, again.statements.join('\n')).toBeLessThanOrEqual(3);
     });

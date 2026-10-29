@@ -45,6 +45,12 @@ export interface QuestDay {
   quests: Quest[];
   /** quests finished this calendar month */
   monthDone: number;
+  /**
+   * Quests of earlier days, still within the days a chest waits to be opened,
+   * that are done and whose chest is not opened yet, newest first; empty when
+   * there are none. A chest finished just before midnight is still there after it.
+   */
+  waiting: Quest[];
 }
 
 /** A quest a finished session moved, from where it stood to where it stands now. */

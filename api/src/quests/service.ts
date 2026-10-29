@@ -112,9 +112,10 @@ export class DailyQuestService {
   }
 
   /**
-   * Today's three quests, made if this is the day's first look, and how many
-   * the learner finished this calendar month. Read on every visit to Learn, so
-   * it is the learner's time zone and one statement.
+   * Today's three quests, made if this is the day's first look, how many the
+   * learner finished this calendar month, and the chests of earlier days still
+   * waiting to be opened. Read on every visit to Learn, so it is the learner's
+   * time zone and one statement.
    */
   async today(userId: string, now: Date = new Date()): Promise<QuestDay> {
     return this.read(userId, localDate(now, await this.timeZone(userId)), true);
@@ -122,7 +123,15 @@ export class DailyQuestService {
 
   private async read(userId: string, day: string, firstTry: boolean): Promise<QuestDay> {
     const [kinds, targets, chests] = pickedColumns(userId, day);
-    const res = await this.pool.query<{ kind: QuestKind; target: number; progress: number; chest: ChestTier; claimed: boolean; month_done: number }>(
+    const res = await this.pool.query<{
+      day: string;
+      kind: QuestKind;
+      target: number;
+      progress: number;
+      chest: ChestTier;
+      claimed: boolean;
+      month_done: number;
+    }>(
       `WITH want (kind, target, chest) AS (
          SELECT * FROM unnest($3::text[], $4::int[], $5::text[])
        ), made AS (
@@ -131,33 +140,37 @@ export class DailyQuestService {
           WHERE NOT EXISTS (SELECT 1 FROM user_quests WHERE user_id = $1 AND day = $2::date)
          ON CONFLICT (user_id, day, kind) DO NOTHING
          RETURNING kind, target, progress, chest, claimed_at
-       ), today AS (
-         SELECT kind, target, progress, chest, claimed_at FROM made
+       ), shown AS (
+         SELECT $2::date AS day, kind, target, progress, chest, claimed_at FROM made
          UNION ALL
-         SELECT kind, target, progress, chest, claimed_at FROM user_quests WHERE user_id = $1 AND day = $2::date
+         SELECT day, kind, target, progress, chest, claimed_at FROM user_quests WHERE user_id = $1 AND day = $2::date
+         UNION ALL
+         -- earlier days' chests still waiting: done, not opened, within the days a chest waits
+         SELECT day, kind, target, progress, chest, claimed_at FROM user_quests
+          WHERE user_id = $1 AND day >= $7::date AND day < $2::date AND done_at IS NOT NULL AND claimed_at IS NULL
        )
-       SELECT kind, target, progress, chest, claimed_at IS NOT NULL AS claimed,
+       SELECT day::text, kind, target, progress, chest, claimed_at IS NOT NULL AS claimed,
               (SELECT count(*)::int FROM user_quests
                 WHERE user_id = $1 AND day >= $6::date AND day <= $2::date AND done_at IS NOT NULL) AS month_done
-         FROM today`,
-      [userId, day, kinds, targets, chests, `${day.slice(0, 8)}01`],
+         FROM shown`,
+      [userId, day, kinds, targets, chests, `${day.slice(0, 8)}01`, shiftDate(day, 1 - CLAIM_DAYS)],
     );
+    const todays = res.rows.filter((row) => row.day === day);
     // made at the same moment by another request: this statement's snapshot is
     // older than those rows, the next one's is not
-    if (res.rows.length === 0 && firstTry) return this.read(userId, day, false);
-    const quests: Quest[] = inKindOrder(res.rows).map((row) => {
-      const done = row.progress >= row.target;
-      return {
-        id: questId(day, row.kind),
-        kind: row.kind,
-        target: row.target,
-        progress: row.progress,
-        chest: row.chest,
-        claimable: done && !row.claimed,
-        claimed: row.claimed,
-      };
+    if (todays.length === 0 && firstTry) return this.read(userId, day, false);
+    const toQuest = (row: (typeof res.rows)[number]): Quest => ({
+      id: questId(row.day, row.kind),
+      kind: row.kind,
+      target: row.target,
+      progress: row.progress,
+      chest: row.chest,
+      claimable: row.progress >= row.target && !row.claimed,
+      claimed: row.claimed,
     });
-    return { date: day, quests, monthDone: res.rows[0]?.month_done ?? 0 };
+    // newest day first, each day's in the order its quests are shown
+    const waiting = inKindOrder(res.rows.filter((row) => row.day !== day)).sort((a, b) => b.day.localeCompare(a.day));
+    return { date: day, quests: inKindOrder(todays).map(toQuest), monthDone: res.rows[0]?.month_done ?? 0, waiting: waiting.map(toQuest) };
   }
 
   /**

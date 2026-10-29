@@ -169,6 +169,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
         date: day,
         quests: picked.map((q) => ({ id: questId(day, q.kind), kind: q.kind, target: q.target, progress: 0, chest: q.chest, claimable: false, claimed: false })),
         monthDone: 0,
+        waiting: [],
       });
       expect(first.json().quests[0].kind).toBe('streak');
       expect((await call(ana, 'GET', '/me/quests')).json()).toEqual(first.json());
@@ -199,6 +200,8 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       expect(next.date).toBe('2026-11-01');
       expect(next.monthDone).toBe(0);
       expect(next.quests.map((q) => q.kind)).toEqual(pickQuests(kai.id, '2026-11-01').map((q) => q.kind));
+      // and the chest finished on the 31st and not opened waits from the day before
+      expect(next.waiting.map((q) => q.id)).toEqual(['2026-10-31:streak']);
       await pool.query(`UPDATE user_quests SET progress = 1, done_at = now() WHERE user_id = $1 AND day = '2026-11-01' AND kind = 'streak'`, [kai.id]);
       expect((await quests.today(kai.id, new Date('2026-11-01T03:00:00Z'))).monthDone).toBe(1);
     });
@@ -475,6 +478,34 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       expect(kept.json().amount).toBeLessThanOrEqual(35);
       const gone = await call(max, 'POST', `/me/quests/${questId(shiftDate(day, -7), 'perfect')}/claim`);
       expect(gone.statusCode).toBe(404);
+    });
+
+    it('of an earlier day waits beside today, done and unopened, until it is opened or its week is over', async () => {
+      const ola = await learner('waiting');
+      const day = today();
+      const yesterday = shiftDate(day, -1);
+      await finished(ola, yesterday, 'streak', 1);
+      await finished(ola, yesterday, 'listening', 5);
+      await finished(ola, shiftDate(day, -3), 'perfect', 1);
+      // opened already, not done, and past the week: none of them waits
+      await finished(ola, shiftDate(day, -2), 'streak', 1, true);
+      await pool.query(`INSERT INTO user_quests (user_id, day, kind, target, chest) VALUES ($1, $2, 'lessons', 2, 'common')`, [ola.id, yesterday]);
+      await finished(ola, shiftDate(day, -7), 'streak', 1);
+
+      const read = await call(ola, 'GET', '/me/quests');
+      expect(read.statusCode, read.body).toBe(200);
+      expect(read.json().quests).toHaveLength(3);
+      expect(read.json().waiting).toEqual([
+        { id: questId(yesterday, 'streak'), kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
+        { id: questId(yesterday, 'listening'), kind: 'listening', target: 5, progress: 5, chest: 'rare', claimable: true, claimed: false },
+        { id: questId(shiftDate(day, -3), 'perfect'), kind: 'perfect', target: 1, progress: 1, chest: 'epic', claimable: true, claimed: false },
+      ]);
+
+      const opened = await call(ola, 'POST', `/me/quests/${questId(yesterday, 'listening')}/claim`);
+      expect(opened.statusCode, opened.body).toBe(200);
+      expect(opened.json()).toMatchObject({ questId: questId(yesterday, 'listening'), tier: 'rare', amount: chestAmount('rare', ola.id, questId(yesterday, 'listening')) });
+      const after = (await call(ola, 'GET', '/me/quests')).json();
+      expect(after.waiting.map((q: { id: string }) => q.id)).toEqual([questId(yesterday, 'streak'), questId(shiftDate(day, -3), 'perfect')]);
     });
 
     it('opened twice at once pays once', async () => {

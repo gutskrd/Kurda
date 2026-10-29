@@ -8,7 +8,7 @@ const idParams = z.object({ id: z.string().min(1).max(40) });
 
 /** Daily quests and their chests of Zêr. */
 export function registerDailyQuestRoutes(app: FastifyInstance, quests: DailyQuestService): void {
-  /** Today's three quests in the learner's own day, and how many they finished this month (QuestDay). */
+  /** Today's three quests in the learner's own day, how many they finished this month, and earlier days' chests still waiting (QuestDay). */
   app.get('/me/quests', { preHandler: requireAuth }, async (req) => quests.today(req.user!.id));
 
   /**
