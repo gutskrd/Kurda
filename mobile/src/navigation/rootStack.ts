@@ -77,6 +77,9 @@ export type RootStackParamList = {
   Clubs: undefined;
   GroupMembers: { groupId: string };
   GroupEdit: { groupId: string };
+  /** For a group's owner and admins: the requests to come back, and who is banned. */
+  GroupRequests: { groupId: string };
+  GroupBans: { groupId: string };
   EventQuests: undefined;
   Notifications: undefined;
   NotificationCenter: undefined;

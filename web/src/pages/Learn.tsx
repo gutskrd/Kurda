@@ -1,4 +1,6 @@
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import { fireLevel } from '@kurda/shared';
 import { useApiGet } from '../lib/useApi';
 import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
@@ -14,6 +16,7 @@ import type { PracticeDue } from '../learn/types';
 import type { MeProfile } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
+import { StreakSheet } from '../learn/StreakSheet';
 import { QuestsCard } from '../quests/QuestsCard';
 import { publishedDictionary } from '../layouts/navLinks';
 
@@ -92,8 +95,9 @@ function GoalRing({ share, met }: { share: number; met: boolean }): React.JSX.El
 }
 
 /**
- * Today, in one row above the path: the streak, today's goal as a ring with
- * its XP, and what review has waiting, as a chip that opens it.
+ * Today, in one row above the path: the streak, which opens its whole story
+ * (`StreakSheet`), today's goal as a ring with its XP, and what review has
+ * waiting, as a chip that opens it.
  *
  * Informational and kind. Nothing here counts down or warns about losing
  * anything — the streak is a number that went up, and a day without one is an
@@ -107,8 +111,10 @@ function TodayStrip(): React.JSX.Element {
   const goal = useApiGet<DailyGoal>('/me/daily-goal');
   const me = useApiGet<{ user: MeProfile }>('/me');
   const due = useApiGet<PracticeDue>('/practice/due');
+  const [streakOpen, setStreakOpen] = useState(false);
   const g = goal.data;
-  const streak = me.data?.user?.streak?.current;
+  const summary = me.data?.user?.streak;
+  const streak = summary?.current;
   const number = (n: number): string => n.toLocaleString(locale);
   const waiting = (goal.loading && !g) || (me.loading && !me.data);
   const target = g ? g.effectiveGoal || g.goal : 0;
@@ -126,11 +132,11 @@ function TodayStrip(): React.JSX.Element {
       ) : (
         <>
           {typeof streak === 'number' && (
-            <p className="learn-strip-item learn-strip-streak">
-              <Fire size={22} lit={streak > 0} />
+            <button type="button" className="learn-strip-item learn-strip-streak" aria-haspopup="dialog" onClick={() => setStreakOpen(true)}>
+              <Fire size={22} level={fireLevel(streak)} />
               <span aria-hidden="true">{number(streak)}</span>
               <span className="sr-only">{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
-            </p>
+            </button>
           )}
           {g && typeof g.earnedXp === 'number' && target > 0 && (
             <p
@@ -153,6 +159,7 @@ function TodayStrip(): React.JSX.Element {
           )}
         </>
       )}
+      <StreakSheet streak={streakOpen && summary ? summary : null} onClose={() => setStreakOpen(false)} />
     </section>
   );
 }

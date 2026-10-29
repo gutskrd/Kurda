@@ -144,6 +144,35 @@ describe.skipIf(!DATABASE_URL)('a group room keeps only its members (integration
     expect((await joinRoom(leaver.token, gid)).answer).toMatchObject({ type: 'error', code: 'NOT_INVITED' });
   });
 
+  it('takes a banned member out of the room, and takes their messages out of every open view when asked to', async () => {
+    const owner = await person('owner4');
+    const stays = await person('stays4');
+    const banned = await person('banned4');
+    const gid = await openGroup(owner, [stays, banned]);
+    const kept = await joinRoom(stays.token, gid);
+    const gone = await joinRoom(banned.token, gid);
+    expect([kept.answer.type, gone.answer.type]).toEqual(['joined', 'joined']);
+
+    const told = next(kept.ws, (m) => m.type === 'event' && (m.event as WsMessage).type === 'group_msgs_deleted');
+    const res = await call(owner.token, 'POST', `/groups/${gid}/bans`, { userId: banned.id, duration: 'perm', deleteMessages: true });
+    expect(res.statusCode).toBe(200);
+    expect((await told).event).toEqual({ type: 'group_msgs_deleted', groupId: gid, senderId: banned.id });
+    expect((await joinRoom(banned.token, gid)).answer).toMatchObject({ type: 'error', code: 'NOT_INVITED' });
+  });
+
+  it('clears every open view at once when an admin clears the chat for everyone', async () => {
+    const owner = await person('owner5');
+    const member = await person('member5');
+    const gid = await openGroup(owner, [member]);
+    const open = await joinRoom(member.token, gid);
+    const told = next(open.ws, (m) => m.type === 'event' && (m.event as WsMessage).type === 'group_chat_cleared');
+    const res = await call(owner.token, 'POST', `/groups/${gid}/chat/clear`, { for: 'everyone' });
+    expect(res.statusCode).toBe(200);
+    const { at, by } = res.json().cleared.forEveryone;
+    expect((await told).event).toEqual({ type: 'group_chat_cleared', groupId: gid, at, by });
+    expect(by).toBe(`grm_owner5_${s}`.slice(0, 30));
+  });
+
   it('takes everyone out of the room of a group that was deleted', async () => {
     const owner = await person('owner3');
     const member = await person('member3');

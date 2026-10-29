@@ -609,6 +609,13 @@ export async function eraseAccountData(executor: Pick<pg.Pool, 'query'>, userId:
   await q(`DELETE FROM group_members WHERE user_id = $1`);
   await q(`DELETE FROM group_reads WHERE user_id = $1`);
   await q(`DELETE FROM group_mutes WHERE user_id = $1`);
+  await q(`DELETE FROM group_bans WHERE user_id = $1`);
+  await q(`DELETE FROM group_rejoin_requests WHERE user_id = $1`);
+  // and their name off what they did as an admin, which then reads as an admin's (the account is
+  // anonymized, not deleted, so the foreign keys' SET NULL never runs)
+  await q(`UPDATE group_bans SET banned_by = NULL WHERE banned_by = $1`);
+  await q(`UPDATE group_rejoin_requests SET decided_by = NULL WHERE decided_by = $1`);
+  await q(`UPDATE groups SET chat_cleared_by = NULL WHERE chat_cleared_by = $1`);
   if (owned.rows.length > 0) {
     const ids = owned.rows.map((row) => row.group_id);
     await q(`UPDATE groups SET owner_id = NULL WHERE id = ANY($1::uuid[]) AND owner_id = $2`, [ids, userId]);

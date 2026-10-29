@@ -6,12 +6,13 @@ import {
   KeyboardAvoidingView,
   Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from 'react-native';
-import type { GiftCard, GiftTier } from '@kurda/shared';
+import { canModerateGroup, type GiftCard, type GiftTier, type GroupChatCleared, type GroupStanding } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { describeError } from '../api/errors';
@@ -30,7 +31,7 @@ import { useDirection } from '../reports/direction';
 import { COMPOSER_FIELD, SendButton } from '../chat/SendButton';
 import { messageA11y, openMessageOptions } from '../chat/messageOptions';
 import { useI18n } from '../i18n/I18nContext';
-import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupMessage } from './api';
+import { groupDetail, groupHistory, markGroupRead, sendGroupTyping, sendToGroup, type GroupDetail, type GroupMessage } from './api';
 import { useRoomEvents } from '../realtime/useRoomEvents';
 import { typingLabel, useTypingSignal, useTypingWatch } from '../chat/typing';
 import { MessageContent, hasControls, isCardMessage } from '../chat/MessageContent';
@@ -44,10 +45,28 @@ import { SendErrorNotice } from '../reports/SendError';
 import { restrictionOf } from '../reports/sendErrors';
 import { ChatGameButton } from '../play/ChatGameButton';
 import { mergeLatest, useCatchUp } from '../realtime/catchUp';
+import { showActions } from '../theme/actionSheet';
+import { afterClear, clearedSince, clearedView, useClearChat, useClearedHere } from './clearing';
+import { ClearedLine, WelcomeCard } from './Welcome';
+import { StandingCard } from './Standing';
+import { AddFriendsSheet } from './AddFriendsSheet';
 
 const MAX_LEN = 2000;
 
 type Message = Omit<GroupMessage, 'body'> & ChatMessage;
+
+/** A refusal that means the reader is not in the group (any more): removed, banned, or never in it. */
+const isOutside = (error: ApiError): boolean => error.code === 'NOT_A_MEMBER' || error.code === 'GROUP_BANNED';
+
+/**
+ * Where someone refused stands, when the group's page did not say: banned
+ * (with until when, from the refusal) or simply out.
+ */
+function standingFrom(error: ApiError): Exclude<GroupStanding, { kind: 'member' }> {
+  if (error.code !== 'GROUP_BANNED') return { kind: 'out' };
+  const until = (error.details as { until?: unknown } | undefined)?.until;
+  return { kind: 'banned', until: typeof until === 'string' ? until : null, reason: null, request: { kind: 'can_ask' } };
+}
 
 /**
  * A group channel (KUR-085).
@@ -68,7 +87,13 @@ type Message = Omit<GroupMessage, 'body'> & ChatMessage;
  * and the card is fetched again, since it is drawn per viewer.
  *
  * Pressing and holding a message offers its options (Copy, and Report for
- * someone else's); the ⋯ in the header reports the group.
+ * someone else's). The ⋯ in the header clears the chat — for the reader, or,
+ * as its owner or an admin, for everyone — and reports the group.
+ *
+ * An empty chat welcomes (Welcome.tsx); a chat an admin cleared says so at
+ * the top of its history. Someone removed or banned while it is open finds,
+ * at the next read or send, where they stand with the group in place of the
+ * chat (Standing.tsx), never a raw error.
  */
 export function GroupThreadScreen({
   groupId,
@@ -103,9 +128,17 @@ export function GroupThreadScreen({
   const [error, setError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<ApiError | null>(null);
   const [name, setName] = useState(nameParam);
-  const [photoUrl, setPhotoUrl] = useState<string | null>(null);
-  // null until the club says: the report button waits rather than flash at its owner
-  const [owner, setOwner] = useState<boolean | null>(null);
+  // null until the club says: its menu waits rather than flash a report button at its owner
+  const [detail, setDetail] = useState<GroupDetail | null>(null);
+  const [cleared, setCleared] = useState<GroupChatCleared | null>(null);
+  // a read or a send refused because the reader is not in the group; `left` when they were in it as this screen showed it
+  const [outside, setOutside] = useState<{ left: boolean; error: ApiError } | null>(null);
+  // false once the server said the reader may not post here (muted, restricted): the greetings go
+  const [canPost, setCanPost] = useState(true);
+  const [addingFriends, setAddingFriends] = useState(false);
+  // asks for the history again: after joining from the card that stood in for it
+  const [reloadKey, setReloadKey] = useState(0);
+  const readOnce = useRef(false);
   const [friends, setFriends] = useState<GiftFriend[] | null>(null);
   const [picking, setPicking] = useState(false);
   const [flying, setFlying] = useState<{ tier: GiftTier; count: number; key: number } | null>(null);
@@ -120,33 +153,80 @@ export function GroupThreadScreen({
   const autoOpened = useRef<string | null>(null);
   useOpenChat({ kind: 'group', groupId });
 
+  /**
+   * The group's name, picture, roster and where the reader stands with it —
+   * asked each time the thread comes back into view, so a rename made on its
+   * info page shows here at once, and again when a refusal says the reader
+   * is out of it.
+   */
+  const loadDetail = useCallback(() => {
+    let active = true;
+    void groupDetail(client, groupId).then((res) => {
+      if (!active || !res.ok) return;
+      setDetail(res.data);
+      setName(res.data.name);
+    });
+    return () => {
+      active = false;
+    };
+  }, [client, groupId]);
+  useFocusEffect(loadDetail);
+
+  /** Not in the group (any more): the chat gives way to where the reader stands. */
+  const goOutside = useCallback(
+    (refusal: ApiError) => {
+      setOutside({ left: readOnce.current, error: refusal });
+      loadDetail();
+    },
+    [loadDetail],
+  );
+
   useEffect(() => {
     let active = true;
     void groupHistory(client, groupId).then((res) => {
       if (!active) return;
       setLoading(false);
       if (!res.ok) {
-        setError(describeError(res.error, t));
+        if (isOutside(res.error)) goOutside(res.error);
+        else setError(describeError(res.error, t));
         return;
       }
+      readOnce.current = true;
+      setCleared(res.data.cleared ?? null);
       setMessages(res.data.messages as Message[]);
       void markGroupRead(client, groupId);
     });
     return () => {
       active = false;
     };
-  }, [client, groupId, t]);
+  }, [client, groupId, t, goOutside, reloadKey]);
 
   // what was said while the connection was away, and the card of a game started from here
   useCatchUp(
     useCallback(() => {
       void groupHistory(client, groupId).then((res) => {
-        if (!res.ok) return;
-        setMessages((prev) => mergeLatest(prev, res.data.messages as Message[]));
+        if (!res.ok) {
+          if (isOutside(res.error)) goOutside(res.error);
+          return;
+        }
+        // cleared while away: what is held from before it goes too
+        const since = clearedSince(res.data.cleared);
+        setCleared(res.data.cleared ?? null);
+        setMessages((prev) => mergeLatest(afterClear(prev, since), res.data.messages as Message[]));
         void markGroupRead(client, groupId);
       });
-    }, [client, groupId]),
+    }, [client, groupId, goOutside]),
   );
+
+  /** A clear made on this phone (here or on the group's info page): what is held from before it goes at once. */
+  const applyCleared = useCallback((next: GroupChatCleared) => {
+    setCleared(next);
+    setMessages((prev) => afterClear(prev, clearedSince(next)));
+    // nothing older is left to page back to
+    setExhausted(true);
+  }, []);
+  useClearedHere(groupId, applyCleared);
+  const clearChat = useClearChat(groupId, detail?.memberCount ?? 0, setError);
 
   /**
    * Who here can be given a gift: your friends among the members, as the
@@ -154,14 +234,14 @@ export function GroupThreadScreen({
    * to a thread give nothing.
    */
   const loadFriends = useCallback(async () => {
-    const [detail, mine] = await Promise.all([
+    const [roster, mine] = await Promise.all([
       groupDetail(client, groupId),
       client.get<{ friends: Array<{ userId: string; username: string; displayName?: string | null; avatarUrl?: string | null }> }>(
         '/friends?limit=500',
       ),
     ]);
-    if (detail.ok && !nameParam) setName(detail.data.name);
-    const members = new Set(detail.ok ? detail.data.members.map((m) => m.userId) : []);
+    if (roster.ok && !nameParam) setName(roster.data.name);
+    const members = new Set(roster.ok ? roster.data.members.map((m) => m.userId) : []);
     setFriends(
       mine.ok
         ? mine.data.friends
@@ -171,25 +251,6 @@ export function GroupThreadScreen({
     );
   }, [client, groupId, me, nameParam]);
 
-  // the header's name and picture as the group has them now — asked each time
-  // the thread comes back into view, so a rename made on its info page shows
-  // here at once — and whether the club is yours: its owner is the one person
-  // who cannot report it
-  useFocusEffect(
-    useCallback(() => {
-      let active = true;
-      void groupDetail(client, groupId).then((res) => {
-        if (!active || !res.ok) return;
-        setName(res.data.name);
-        setPhotoUrl(res.data.photoUrl ?? null);
-        setOwner(res.data.myRole === 'owner');
-      });
-      return () => {
-        active = false;
-      };
-    }, [client, groupId]),
-  );
-
   /** Older messages, from the top. The list is inverted, so "end" is the past. */
   const loadOlder = useCallback(async () => {
     const oldest = messages[0];
@@ -197,13 +258,16 @@ export function GroupThreadScreen({
     setLoadingOlder(true);
     const res = await groupHistory(client, groupId, oldest.createdAt);
     setLoadingOlder(false);
-    if (!res.ok) return;
+    if (!res.ok) {
+      if (isOutside(res.error)) goOutside(res.error);
+      return;
+    }
     if (res.data.messages.length === 0) {
       setExhausted(true);
       return;
     }
     setMessages((prev) => [...(res.data.messages as Message[]), ...prev]);
-  }, [client, groupId, messages, loadingOlder, exhausted]);
+  }, [client, groupId, messages, loadingOlder, exhausted, goOutside]);
 
   /**
    * The room, which this screen used to have no connection to at all.
@@ -231,6 +295,21 @@ export function GroupThreadScreen({
         if (ev.type === 'group_msg_deleted' && typeof ev.id === 'string') {
           const id = ev.id;
           setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, deleted: true, body: '' } : m)));
+          return;
+        }
+        // someone banned with their messages: each keeps its place, emptied, as one deleted does
+        if (ev.type === 'group_msgs_deleted' && typeof ev.senderId === 'string') {
+          const sender = ev.senderId;
+          setMessages((prev) => prev.map((m) => (m.senderId === sender ? { ...m, deleted: true, body: '' } : m)));
+          return;
+        }
+        // an admin cleared the chat for everyone: gone from this view at once, and the line says who
+        if (ev.type === 'group_chat_cleared' && typeof ev.at === 'string') {
+          const at = ev.at;
+          const by = typeof ev.by === 'string' ? ev.by : null;
+          setCleared((prev) => ({ forEveryone: { at, by }, forMe: prev?.forMe ?? null }));
+          setMessages((prev) => afterClear(prev, at));
+          setExhausted(true);
           return;
         }
         // a gift here was opened: each member's card is their own, so fetch it again
@@ -289,6 +368,26 @@ export function GroupThreadScreen({
     [client, groupId],
   );
 
+  /**
+   * A message the server would not take: out of the group, the card that says
+   * where the reader stands; a limit on the account, what and until when, with
+   * the way to Account standing (and no more greetings to tap); anything else
+   * as it always did.
+   */
+  const refusedSend = useCallback(
+    (refused: ApiError) => {
+      if (isOutside(refused)) {
+        goOutside(refused);
+        return;
+      }
+      if (restrictionOf(refused)) {
+        setSendError(refused);
+        setCanPost(false);
+      } else setError(describeError(refused, t));
+    },
+    [goOutside, t],
+  );
+
   const send = useCallback(async () => {
     const body = draft.trim();
     if (!body) return;
@@ -299,25 +398,53 @@ export function GroupThreadScreen({
     const refused = await post(body);
     if (!refused) return;
     haptic('error');
-    // the draft comes back when the message did not go, so nothing is lost; a
-    // limit on the account says what and until when, with the way to Account
-    // standing, and anything else as it always did
+    // the draft comes back when the message did not go, so nothing is lost
     setDraft(body);
-    if (restrictionOf(refused)) setSendError(refused);
-    else setError(describeError(refused, t));
-  }, [draft, post, t]);
+    refusedSend(refused);
+  }, [draft, post, refusedSend]);
+
+  /** A greeting from the welcome, sent as it is. */
+  const greet = useCallback(
+    async (greeting: string) => {
+      setError(null);
+      setSendError(null);
+      haptic('tap');
+      const refused = await post(greeting);
+      if (!refused) return;
+      haptic('error');
+      refusedSend(refused);
+    },
+    [post, refusedSend],
+  );
 
   const openPicker = (): void => {
     setPicking(true);
     if (friends === null) void loadFriends();
   };
 
+  const role = detail?.myRole ?? null;
+  const member = role !== null && !outside;
+  /** The ⋯ in the header: report the group (anyone but its owner), clear the chat (members; for everyone, its owner and admins). */
+  const menu = detail
+    ? [
+        ...(role !== 'owner' ? [{ label: t('groups.report'), onPress: () => setReporting({ target: { type: 'group' as const, groupId } }) }] : []),
+        ...(member ? [{ label: t('groups.clear.forMe'), destructive: true, onPress: () => clearChat('me') }] : []),
+        ...(member && canModerateGroup(role) ? [{ label: t('groups.clear.forEveryone'), destructive: true, onPress: () => clearChat('everyone') }] : []),
+      ]
+    : [];
+  const view = clearedView(cleared);
+  const group = { id: groupId, name, photoUrl: detail?.photoUrl ?? null };
+  // where the reader stands, once the group's page says (or, from an older server, the refusal alone)
+  const standing = outside && detail ? (detail.standing && detail.standing.kind !== 'member' ? detail.standing : standingFrom(outside.error)) : null;
+  // the owner or an admin of an invite-only group nobody else has joined yet: the way to bring people in
+  const lonely = detail !== null && detail.privacy === 'invite' && canModerateGroup(role) && detail.memberCount <= 1;
+
   return (
     <GradientBackground>
       <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScreenHeader
           title={name}
-          titleAvatar={<GroupAvatar name={name} id={groupId} size={30} photoUrl={photoUrl} />}
+          titleAvatar={<GroupAvatar name={name} id={groupId} size={30} photoUrl={group.photoUrl} />}
           onTitlePress={onOpenMembers}
           titleHint={t('groups.info')}
           onBack={onExit}
@@ -333,12 +460,12 @@ export function GroupThreadScreen({
               >
                 <Icon name="people" size={20} tone="primary" />
               </Pressable>
-              {owner !== false ? null : (
+              {menu.length === 0 ? null : (
                 <Pressable
-                  onPress={() => setReporting({ target: { type: 'group', groupId } })}
+                  onPress={() => showActions({ title: name, actions: menu, cancel: t('common.cancel') })}
                   hitSlop={10}
                   accessibilityRole="button"
-                  accessibilityLabel={t('report.title.group')}
+                  accessibilityLabel={t('groups.chatOptions')}
                   style={styles.headerBtn}
                 >
                   <Icon name="more" size={20} tone="secondary" />
@@ -350,6 +477,39 @@ export function GroupThreadScreen({
 
         {loading ? (
           <ClubThreadSkeleton />
+        ) : outside ? (
+          <ScrollView contentContainerStyle={styles.centred}>
+            {standing && detail ? (
+              <StandingCard
+                group={{ ...group, privacy: detail.privacy }}
+                standing={standing}
+                left={outside.left}
+                onStanding={(next) => setDetail((d) => (d ? { ...d, standing: next } : d))}
+                onReload={loadDetail}
+                onJoined={() => {
+                  setOutside(null);
+                  setLoading(true);
+                  setReloadKey((k) => k + 1);
+                  loadDetail();
+                }}
+              />
+            ) : (
+              <ActivityIndicator color={colors.textSecondary} accessibilityLabel={t('common.loading')} />
+            )}
+          </ScrollView>
+        ) : messages.length === 0 ? (
+          <ScrollView contentContainerStyle={styles.welcome}>
+            {view.kind === 'everyone' ? <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} /> : null}
+            <View style={styles.centred}>
+              <WelcomeCard
+                group={group}
+                view={view}
+                canGreet={canPost}
+                onGreet={(greeting) => void greet(greeting)}
+                onAddFriends={lonely ? () => setAddingFriends(true) : undefined}
+              />
+            </View>
+          </ScrollView>
         ) : (
           <FlatList
             data={[...messages].reverse()}
@@ -358,8 +518,13 @@ export function GroupThreadScreen({
             contentContainerStyle={styles.list}
             onEndReached={loadOlder}
             onEndReachedThreshold={0.4}
+            // the top of the history: older messages on their way, or above all that is held, who cleared the chat
             ListFooterComponent={
-              loadingOlder ? <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} /> : null
+              loadingOlder ? (
+                <ActivityIndicator color={colors.primary} style={{ marginVertical: spacing.md }} />
+              ) : view.kind === 'everyone' ? (
+                <ClearedLine by={view.by} at={view.at} me={user?.username ?? ''} />
+              ) : null
             }
             renderItem={({ item }) => (
               <Bubble
@@ -371,7 +536,6 @@ export function GroupThreadScreen({
                 }
               />
             )}
-            ListEmptyComponent={<Text style={[styles.empty, { color: colors.textSecondary }]}>{t('groups.sayHello')}</Text>}
           />
         )}
 
@@ -391,33 +555,36 @@ export function GroupThreadScreen({
         ) : null}
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} />
 
-        <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
-          <Pressable
-            onPress={openPicker}
-            accessibilityRole="button"
-            accessibilityLabel={t('gift.button')}
-            style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
-          >
-            <Icon name="gift" size={22} color={colors.goldText} />
-          </Pressable>
-          <ChatGameButton target={{ kind: 'group', groupId }} />
-          <TextInput
-            style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
-            placeholder={t('chat.messagePlaceholder')}
-            placeholderTextColor={colors.textSecondary}
-            value={draft}
-            onChangeText={(next) => {
-              setDraft(next);
-              setSendError(null);
-              setGiftNote(null);
-              signalTyping();
-            }}
-            maxLength={MAX_LEN}
-            multiline
-            accessibilityLabel={t('chat.messagePlaceholder')}
-          />
-          <SendButton ready={draft.trim().length > 0} onPress={() => void send()} />
-        </View>
+        {/* out of the group, there is nothing to send: the card says where they stand */}
+        {outside ? null : (
+          <View style={[styles.inputRow, { flexDirection: dir.row, paddingBottom: bottom, borderTopColor: colors.separator }]}>
+            <Pressable
+              onPress={openPicker}
+              accessibilityRole="button"
+              accessibilityLabel={t('gift.button')}
+              style={({ pressed }) => [styles.giftBtn, pressed && { backgroundColor: colors.controlTrack }]}
+            >
+              <Icon name="gift" size={22} color={colors.goldText} />
+            </Pressable>
+            <ChatGameButton target={{ kind: 'group', groupId }} />
+            <TextInput
+              style={[styles.input, dir.free, { backgroundColor: colors.controlTrack, color: colors.textPrimary }]}
+              placeholder={t('chat.messagePlaceholder')}
+              placeholderTextColor={colors.textSecondary}
+              value={draft}
+              onChangeText={(next) => {
+                setDraft(next);
+                setSendError(null);
+                setGiftNote(null);
+                signalTyping();
+              }}
+              maxLength={MAX_LEN}
+              multiline
+              accessibilityLabel={t('chat.messagePlaceholder')}
+            />
+            <SendButton ready={draft.trim().length > 0} onPress={() => void send()} />
+          </View>
+        )}
       </KeyboardAvoidingView>
 
       {flying ? (
@@ -457,13 +624,25 @@ export function GroupThreadScreen({
         />
       ) : null}
 
+      {lonely ? (
+        <AddFriendsSheet
+          visible={addingFriends}
+          groupId={groupId}
+          memberIds={detail.members.map((m) => m.userId)}
+          onClose={() => {
+            setAddingFriends(false);
+            loadDetail();
+          }}
+        />
+      ) : null}
+
       <ReportSheet
         visible={reporting !== null}
         target={reporting?.target ?? { type: 'group', groupId }}
         name={reporting?.target.type === 'group' ? name : null}
         blockable={reporting?.senderId && reporting.senderId !== me ? { userId: reporting.senderId, name: reporting.sender ?? null } : null}
         // its owner cannot leave a club (the server says so in English): not offered
-        leavable={owner === false ? { groupId, name } : null}
+        leavable={detail && role !== 'owner' ? { groupId, name } : null}
         onClose={() => setReporting(null)}
         onLeftGroup={() => {
           setReporting(null);
@@ -594,7 +773,9 @@ const styles = StyleSheet.create({
   bubble: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radii.lg },
   deletedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   deleted: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
-  empty: { textAlign: 'center', marginTop: spacing.xl, transform: [{ scaleY: -1 }] },
+  // a card in the middle of what the chat would fill
+  centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
+  welcome: { flexGrow: 1, paddingTop: spacing.sm },
   typing: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
   giftNote: { textAlign: 'center', fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },

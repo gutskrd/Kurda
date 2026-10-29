@@ -86,8 +86,8 @@ describe('the lesson’s speaking characters', () => {
     expect(frames.pending).toBe(0);
   });
 
-  // he leans out of his window beside the bubble listening, and says nothing, so a screen reader is not told he said it
-  it('brings Hevalo in to listen, out of his window, when nobody has been chosen to say the clip', async () => {
+  // he puts his head in at the window beside the bubble, listening, and says nothing, so a screen reader is not told he said it
+  it('brings Hevalo in to listen, his head in at the window, when nobody has been chosen to say the clip', async () => {
     renderWithProviders(<ListeningExercise exercise={listening()} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
     expect(screen.getByRole('button', { name: 'Play audio' })).toBeTruthy();

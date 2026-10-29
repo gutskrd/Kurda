@@ -20,6 +20,7 @@ import {
   windowArt,
   type CharacterArt,
   type CharacterBox,
+  type WindowArt,
 } from './index.js';
 import { curve, mirror, symmetric, taper } from './pen.js';
 
@@ -225,6 +226,32 @@ function extent(markup: string): CharacterBox {
   return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
 }
 
+/** The box round each shape a piece of markup draws, one by one (not its clips or gradients). */
+function shapes(markup: string): CharacterBox[] {
+  const out: CharacterBox[] = [];
+  const visit = (e: El): void => {
+    if (e.name === 'defs' || e.name === 'clipPath') return;
+    if (e.name === 'path' || e.name === 'ellipse' || e.name === 'circle') {
+      const attrs = Object.entries(e.attrs)
+        .map(([k, v]) => ` ${k}="${v}"`)
+        .join('');
+      out.push(extent(`<${e.name}${attrs}/>`));
+    }
+    e.children.forEach(visit);
+  };
+  visit(parse(markup));
+  return out;
+}
+
+/** A colour's red, green and blue, 0 to 1. */
+const rgb = (hex: string): [number, number, number] => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255) as [number, number, number];
+
+/** How light a colour looks, 0 to 1. */
+function luminance(hex: string): number {
+  const [r, g, b] = rgb(hex);
+  return 0.299 * r + 0.587 * g + 0.114 * b;
+}
+
 const inside = (inner: CharacterBox, outer: CharacterBox): boolean =>
   inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
 
@@ -348,11 +375,18 @@ describe('the characters', () => {
     expect(neck.sill).toBeLessThan(box.y + box.h);
     const hop = Math.max(...Object.values(ACTS).flatMap((act) => (act.rise ?? []).map(([, v]) => v)));
     expect(box.y + box.h - neck.sill).toBeGreaterThan(hop * box.h + 20);
-    // his body as far as the chest under the same ids, with the neck's shade toward the sill
+    // his body as far as the chest under the same ids, and the daylight behind him catching the edges of his neck
     const { problems, ids, refs } = inspect(neck.body);
     expect(problems).toEqual([]);
     for (const r of refs) expect(ids).toContain(r);
     expect(neck.body.startsWith(art.chest!)).toBe(true);
+    const rim = ((parse(neck.body.slice(art.chest!.length)).children[0] as El).children[0] as El).children;
+    const stops = rim.map((stop) => ({ light: luminance(stop.attrs['stop-color'] ?? ''), opacity: Number(stop.attrs['stop-opacity'] ?? 1) }));
+    // a light that grows toward the sill, never a shade going down into a room
+    for (const stop of stops) expect(stop.light).toBeGreaterThan(0.8);
+    expect(stops[0]?.opacity).toBe(0);
+    expect(stops[stops.length - 1]?.opacity).toBeGreaterThan(0.5);
+    expect(neck.body).toMatch(/fill="none" stroke="url\(#[^)]*neckrim\)"/);
     expect(cropBody(art, 'head')).toBe(neck.body);
     expect(cropBody(art, 'half')).toBe(art.body);
     // drawn whole: the crop shows it
@@ -360,7 +394,7 @@ describe('the characters', () => {
     expect(svg.attrs.viewBox).toBe(`${box.x} ${box.y} ${box.w} ${box.h}`);
   });
 
-  it('shows the head and shoulders for head and neck of a character drawn without a neck to lean out on', () => {
+  it('shows the head and shoulders for head and neck of a character drawn without a neck to put in at a window', () => {
     for (const id of ['hamo', 'xezo'] as const) {
       const art = characterArt(id);
       expect(art.neck).toBeUndefined();
@@ -476,14 +510,16 @@ describe('a stage', () => {
   });
 });
 
-describe('the window Hevalo leans out of', () => {
+describe('the window Hevalo puts his head in at', () => {
   const art = characterArt('hevalo');
   const neck = art.neck!;
+  const head = extent(headGroup(art));
+  const layers = (drawn: WindowArt): string[] => [drawn.back, drawn.front, drawn.shadow];
 
-  it('is two well-formed drawings in the window box, behind him and in front of him, by day and at dusk', () => {
+  it('is three well-formed drawings in the window box, behind him, on our side of him and his shadow, by day and at dusk', () => {
     for (const dark of [false, true]) {
       const drawn = windowArt({ dark, idPrefix: `win${dark ? 'd' : 'l'}` });
-      for (const layer of [drawn.back, drawn.front]) {
+      for (const layer of layers(drawn)) {
         const svg = parse(layer).children[0] as El;
         expect(svg.name).toBe('svg');
         expect(svg.attrs.viewBox).toBe(`${WINDOW_VIEW.x} ${WINDOW_VIEW.y} ${WINDOW_VIEW.w} ${WINDOW_VIEW.h}`);
@@ -501,31 +537,92 @@ describe('the window Hevalo leans out of', () => {
   });
 
   it('keeps two windows on a page apart: each its own ids', () => {
-    const one = windowArt({ idPrefix: 'one' });
-    const two = windowArt({ idPrefix: 'two' });
-    const ids = [one.back, one.front, two.back, two.front].flatMap((m) => inspect(m).ids);
+    const ids = [...layers(windowArt({ idPrefix: 'one' })), ...layers(windowArt({ idPrefix: 'two' }))].flatMap((m) => inspect(m).ids);
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('places him in it: his head and neck crop where it is drawn, cut off at the sill, and waiting all under it to pop up', () => {
+  it('shows the outside behind him through the opening: a bright sky by day, an evening sky with its first stars at dusk', () => {
+    const sky = (dark: boolean): { top: string; low: string; stars: number; kept: boolean } => {
+      let gradient: El | undefined;
+      let stars = 0;
+      let kept = false;
+      walk(parse(windowArt({ dark, idPrefix: 'sky' }).back), (e) => {
+        if (e.attrs.id === 'sky-sky') gradient = e;
+        if (e.name === 'circle') stars += 1;
+        // the sky, the mountains and the trees are kept inside the opening
+        if (e.attrs['clip-path'] === 'url(#sky-opening)') kept = e.children.some((c) => c.attrs.fill === 'url(#sky-sky)');
+      });
+      const stops = gradient?.children ?? [];
+      return { top: stops[0]?.attrs['stop-color'] ?? '', low: stops[stops.length - 1]?.attrs['stop-color'] ?? '', stars, kept };
+    };
+    const day = sky(false);
+    const dusk = sky(true);
+    expect(day.kept && dusk.kept).toBe(true);
+    // by day a blue sky going pale toward the mountains, and no stars
+    expect(luminance(day.top)).toBeGreaterThan(0.55);
+    expect(luminance(day.low)).toBeGreaterThan(0.9);
+    expect(day.stars).toBe(0);
+    // at dusk violet above, amber at the horizon, and a star or two
+    expect(luminance(dusk.top)).toBeLessThan(0.25);
+    const [r, , b] = rgb(dusk.low);
+    expect(r).toBeGreaterThan(b);
+    expect(dusk.stars).toBeGreaterThanOrEqual(2);
+  });
+
+  it('hangs the curtains and stands the pot on our side of him, beside his head or under his chin, never over his face', () => {
+    for (const dark of [false, true]) {
+      const { back, front } = windowArt({ dark, idPrefix: 'side' });
+      for (const id of ['side-curtainl', 'side-curtainr', 'side-pot', 'side-ledge']) {
+        expect(inspect(front).ids).toContain(id);
+        expect(inspect(back).ids).not.toContain(id);
+      }
+      for (const shape of shapes(front)) {
+        const beside = shape.x + shape.w < head.x || shape.x > head.x + head.w;
+        const under = shape.y > head.y + head.h;
+        expect(beside || under).toBe(true);
+      }
+    }
+  });
+
+  it('cuts him off at the sill, the sill on our side drawn over that line, and his shadow lying on it toward us', () => {
+    const { front, shadow } = windowArt();
+    // the sill is the only thing on our side right across him
+    const across = shapes(front).filter((shape) => shape.x < art.headPivot.x && shape.x + shape.w > art.headPivot.x);
+    expect(across.length).toBeGreaterThan(0);
+    for (const shape of across) expect(shape.y).toBeGreaterThanOrEqual(neck.sill - 4);
+    expect(Math.min(...across.map((shape) => shape.y))).toBeLessThan(neck.sill);
+    const cast = extent(shadow);
+    expect(cast.x + cast.w / 2).toBe(art.headPivot.x);
+    expect(cast.y).toBeLessThan(neck.sill);
+    expect(cast.y + cast.h).toBeGreaterThan(neck.sill + 20);
+  });
+
+  it('says where the room wall it is in stands, for what is set on the floor in front of it', () => {
+    const wall = extent(windowArt().back);
+    const { left, right, foot } = WINDOW_PLACE.wall;
+    expect(WINDOW_VIEW.x + left * WINDOW_VIEW.w).toBeCloseTo(wall.x, 6);
+    expect(WINDOW_VIEW.x + right * WINDOW_VIEW.w).toBeCloseTo(wall.x + wall.w, 6);
+    expect(WINDOW_VIEW.y + foot * WINDOW_VIEW.h).toBeCloseTo(wall.y + wall.h, 6);
+  });
+
+  it('places him in it: his head and neck crop where it is drawn, cut off at the sill, and waiting outside under it, farther off, to come in', () => {
     const box = neck.box;
     expect(inside(box, WINDOW_VIEW)).toBe(true);
     // the same either way round, so a mirrored window keeps him where he is
     expect(WINDOW_VIEW.x + WINDOW_VIEW.w / 2).toBe(box.x + box.w / 2);
-    const { figure, sill, drop } = WINDOW_PLACE;
+    const { figure, sill, drop, far, through } = WINDOW_PLACE;
     expect(figure.left * WINDOW_VIEW.w + WINDOW_VIEW.x).toBeCloseTo(box.x, 9);
     expect(figure.top * WINDOW_VIEW.h + WINDOW_VIEW.y).toBeCloseTo(box.y, 9);
     expect(figure.width * WINDOW_VIEW.w).toBeCloseTo(box.w, 9);
     expect(figure.height * WINDOW_VIEW.h).toBeCloseTo(box.h, 9);
     expect(sill * WINDOW_VIEW.h + WINDOW_VIEW.y).toBeCloseTo(neck.sill, 9);
-    // dropped, the top of his box (over his antlers) is at the sill
-    expect(figure.top + drop).toBeCloseTo(sill, 9);
-  });
-
-  it('draws the sill in front of him over the line he is cut off at', () => {
-    const front = extent(windowArt().front);
-    expect(front.y).toBeLessThan(neck.sill);
-    expect(front.y + front.h).toBeGreaterThan(neck.sill);
+    // he grows from the middle of his neck where it comes in over the sill
+    expect(through.x * box.w + box.x).toBeCloseTo(art.headPivot.x, 9);
+    expect(through.y * box.h + box.y).toBeCloseTo(neck.sill, 9);
+    // waiting smaller and lowered, the top of his antlers just under the sill
+    expect(far).toBeGreaterThan(0.6);
+    expect(far).toBeLessThan(1);
+    expect(neck.sill + drop * WINDOW_VIEW.h - far * (neck.sill - box.y)).toBeCloseTo(neck.sill, 9);
   });
 });
 

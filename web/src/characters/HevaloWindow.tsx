@@ -5,16 +5,17 @@ import { SpeakingCharacter, type CharacterReaction } from './SpeakingCharacter';
 import './characters.css';
 
 /**
- * Hevalo leaning out of his window, as on the phone (shared `windowArt`):
- * his head and neck out of a round-arched window in a clay wall, his neck
- * going down behind the sill. As the window appears his head pops up from
- * under the sill on a spring and settles (a stylesheet animation); for a
- * reader who asked for less motion he is simply there. Alive as ever: he
- * blinks, glances about, follows the pointer, and cheers or tilts his head at
- * a `reaction`.
+ * Hevalo putting his head in at the window, as on the phone (shared
+ * `windowArt`): we are in a village room, and he is outside and pokes his head
+ * and neck in over the sill, the sky and the mountains behind him. As the
+ * window appears he comes in from outside, rising over the sill and growing a
+ * little as he comes closer, on a spring, his shadow coming onto the sill
+ * with him (stylesheet animations); for a reader who asked for less motion he
+ * is simply there. Alive as ever: he blinks, glances about, follows the
+ * pointer, and cheers or tilts his head at a `reaction`.
  *
  * The window is drawn once for a light page and once for a dark one, and
- * mirrored on a page read from the right, its curtain and flowers changing
+ * mirrored on a page read from the right, its pot and its view changing
  * sides. Decorative: the words beside him say whatever he does.
  */
 export function HevaloWindow({
@@ -26,7 +27,7 @@ export function HevaloWindow({
   /** how tall the window is drawn, in pixels; its width follows */
   size: number;
   reaction?: CharacterReaction | null;
-  /** his head rises into the window as it appears; false, he is there already */
+  /** he comes in at the window as it appears; false, he is there already */
   pop?: boolean;
   className?: string;
 }): React.JSX.Element {
@@ -38,19 +39,20 @@ export function HevaloWindow({
     () => ({ light: windowArt({ idPrefix: `${id}l` }), dark: windowArt({ dark: true, idPrefix: `${id}d` }) }),
     [id],
   );
-  const { figure, sill, drop } = WINDOW_PLACE;
+  const { figure, sill, drop, far, through } = WINDOW_PLACE;
   const style = {
     width: (size * WINDOW_VIEW.w) / WINDOW_VIEW.h,
     height: size,
     '--window-sill': `${sill * 100}%`,
     '--window-drop': `${drop * size}px`,
+    '--window-far': far,
     '--window-pop-ms': `${WINDOW_POP.ms}ms`,
     '--window-pop-delay': `${WINDOW_POP.delayMs}ms`,
   } as React.CSSProperties;
-  const layer = (part: 'back' | 'front') => (
+  const layer = (part: 'back' | 'front' | 'shadow') => (
     <>
-      <span className="hevalo-window-art is-light" dangerouslySetInnerHTML={{ __html: art.light[part] }} />
-      <span className="hevalo-window-art is-dark" dangerouslySetInnerHTML={{ __html: art.dark[part] }} />
+      <span className={`hevalo-window-art is-light is-${part}`} dangerouslySetInnerHTML={{ __html: art.light[part] }} />
+      <span className={`hevalo-window-art is-dark is-${part}`} dangerouslySetInnerHTML={{ __html: art.dark[part] }} />
     </>
   );
   return (
@@ -60,16 +62,23 @@ export function HevaloWindow({
       aria-hidden="true"
     >
       {layer('back')}
-      {/* cut off at the sill and nowhere else: an ear or an antler may reach past the window's top and sides */}
+      {/* cut off at the sill and nowhere else: an ear or an antler may reach past the window's top and sides, into the room */}
       <span className="hevalo-window-cut">
         <span
           className="hevalo-window-place"
-          style={{ left: `${figure.left * 100}%`, top: `${figure.top * 100}%`, width: `${figure.width * 100}%`, height: `${figure.height * 100}%` }}
+          style={{
+            left: `${figure.left * 100}%`,
+            top: `${figure.top * 100}%`,
+            width: `${figure.width * 100}%`,
+            height: `${figure.height * 100}%`,
+            transformOrigin: `${through.x * 100}% ${through.y * 100}%`,
+          }}
         >
           <SpeakingCharacter speaker="hevalo" audio={null} crop="head" size={figure.height * size} decorative reaction={reaction} />
         </span>
       </span>
       {layer('front')}
+      {layer('shadow')}
     </span>
   );
 }

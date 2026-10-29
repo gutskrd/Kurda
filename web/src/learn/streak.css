@@ -1,0 +1,139 @@
+/*
+ * The streak's sheet (StreakSheet.tsx): the streak in words beside its fire,
+ * the numbers a missed day never takes away, and the ladder of the fire's
+ * stages. The rows follow the page's direction, so they mirror right to left.
+ */
+.streak-sheet {
+  display: grid;
+  gap: 16px;
+}
+.streak-sheet-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  /* clear of the close button */
+  padding-inline-end: 48px;
+}
+/* the fire framed in a square, so the words beside it start in the same place at every stage */
+.streak-sheet-fire {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
+.streak-sheet-title {
+  margin: 0;
+  font-size: var(--text-section);
+  line-height: 1.2;
+}
+.streak-sheet-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+/* the number over what it counts */
+.streak-sheet-stat {
+  display: flex;
+  flex-direction: column-reverse;
+  align-items: center;
+  gap: 2px;
+  padding: 12px 6px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  text-align: center;
+}
+.streak-sheet-stat dt {
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1.25;
+}
+.streak-sheet-stat dd {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+}
+.streak-sheet-hint {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+/* ---- the ladder: each stage a small fire, its name and its day -------------------- */
+.fire-ladder {
+  display: grid;
+  gap: 8px;
+}
+.fire-ladder-title {
+  margin: 4px 0 0;
+  font-size: var(--text-body);
+}
+.fire-ladder-list {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.fire-rung {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+  padding-block: 2px;
+  padding-inline: 2px 12px;
+  border-radius: var(--r-lg);
+}
+.fire-rung-art {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: var(--r-pill);
+}
+/* the stage burning now: ringed, on a warm band */
+.fire-rung.is-now {
+  background: var(--gold-soft);
+}
+.fire-rung.is-now .fire-rung-art {
+  box-shadow: inset 0 0 0 2px var(--gold);
+}
+/* still to come: standing still, and quieter, never grey */
+.fire-rung.is-ahead .fire-rung-art {
+  opacity: 0.5;
+}
+.fire-rung-words {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.fire-rung-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ink);
+  font-weight: 700;
+}
+.fire-rung-check {
+  flex: none;
+  color: var(--success);
+}
+.fire-rung-day {
+  color: var(--ink-3);
+  font-size: 0.85rem;
+  font-variant-numeric: tabular-nums;
+}
+.fire-rung-now {
+  flex: none;
+  padding: 3px 10px;
+  border-radius: var(--r-pill);
+  background: var(--gold);
+  color: #3a2400;
+  font-size: 0.8rem;
+  font-weight: 800;
+}

@@ -5,10 +5,12 @@ import { I18nProvider } from '../i18n/I18nProvider';
 import { HevaloWindow } from './HevaloWindow';
 
 /*
- * Hevalo leaning out of his window on the website: the window behind him,
- * his head and neck cut off at the sill, the sill in front; his head popping
- * up as it appears, but not for a reader who asked for less motion; his
- * reactions as ever; the window mirrored on a page read from the right.
+ * Hevalo putting his head in at the window on the website: the outside and
+ * the wall behind him, his head and neck cut off at the sill, the curtains,
+ * the sill and the pot on our side of him, and his shadow on the sill; his
+ * coming in from outside as it appears, but not for a reader who asked for
+ * less motion; his reactions as ever; the window mirrored on a page read from
+ * the right.
  */
 
 afterEach(() => {
@@ -22,15 +24,17 @@ function show(ui: React.ReactNode): HTMLElement {
 }
 
 describe('HevaloWindow', () => {
-  it('draws his head and neck between the window behind him and the sill in front, for a light page and a dark one', () => {
+  it('draws his head and neck between what lies behind him and what is on our side of him, then his shadow, for a light page and a dark one', () => {
     const win = show(<HevaloWindow size={200} />);
     const parts = [...win.children].map((el) => el.className);
     expect(parts).toEqual([
-      'hevalo-window-art is-light',
-      'hevalo-window-art is-dark',
+      'hevalo-window-art is-light is-back',
+      'hevalo-window-art is-dark is-back',
       'hevalo-window-cut',
-      'hevalo-window-art is-light',
-      'hevalo-window-art is-dark',
+      'hevalo-window-art is-light is-front',
+      'hevalo-window-art is-dark is-front',
+      'hevalo-window-art is-light is-shadow',
+      'hevalo-window-art is-dark is-shadow',
     ]);
     // his head and neck, never the whole figure, drawn as tall as his box in the window
     const deer = win.querySelector<HTMLElement>('.hevalo-window-cut .speaking-character')!;
@@ -58,11 +62,15 @@ describe('HevaloWindow', () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it('pops his head up from under the sill, but only for a reader who has not asked for less motion', () => {
+  it('brings him in from outside, rising over the sill and growing as he comes, but only for a reader who has not asked for less motion', () => {
     const win = show(<HevaloWindow size={200} />);
     expect(win).toHaveClass('is-popping');
-    // from all under the sill, the top of his antlers at it
+    // from all under the sill, farther off, the top of his antlers at it
     expect(win.style.getPropertyValue('--window-drop')).toBe(`${WINDOW_PLACE.drop * 200}px`);
+    expect(win.style.getPropertyValue('--window-far')).toBe(String(WINDOW_PLACE.far));
+    // growing from the middle of his neck where it comes in over the sill
+    const { through } = WINDOW_PLACE;
+    expect(win.querySelector<HTMLElement>('.hevalo-window-place')!.style.transformOrigin).toBe(`${through.x * 100}% ${through.y * 100}%`);
     expect(show(<HevaloWindow size={200} pop={false} />)).not.toHaveClass('is-popping');
     vi.stubGlobal('matchMedia', (query: string) => ({ matches: query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
     expect(show(<HevaloWindow size={200} />)).not.toHaveClass('is-popping');
@@ -75,7 +83,7 @@ describe('HevaloWindow', () => {
     expect(win.querySelector('[data-eyes="open"]')).toHaveAttribute('visibility', 'hidden');
   });
 
-  it('mirrors the window on a page read from the right, its curtain and flowers changing sides', () => {
+  it('mirrors the window on a page read from the right, its flowers and its view changing sides', () => {
     expect(show(<HevaloWindow size={160} />)).not.toHaveClass('is-mirrored');
     document.documentElement.dir = 'rtl';
     expect(show(<HevaloWindow size={160} />)).toHaveClass('is-mirrored');

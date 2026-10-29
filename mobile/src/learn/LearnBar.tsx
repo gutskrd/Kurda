@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { fireLevel } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
@@ -111,7 +112,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? 0.6 : 1 }]}
           testID="learn-bar-streak"
         >
-          <Fire size={24} lit={lit} />
+          <Fire size={24} level={fireLevel(days)} />
           <Text style={[styles.number, { color: lit ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(days, locale)}</Text>
         </Pressable>
       ) : null}

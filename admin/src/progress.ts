@@ -21,7 +21,7 @@ import {
   type BadgeDef,
   type BadgeFamily,
   type Division,
-  type GroupStanding,
+  type LeagueStanding,
   type LeagueTier,
   type RankReason,
   type RankTier,
@@ -189,7 +189,7 @@ export interface LeagueGroupDetail {
   weekKey: string;
   tier: LeagueTier;
   settled: boolean;
-  standings: Array<GroupStanding & { username: string }>;
+  standings: Array<LeagueStanding & { username: string }>;
 }
 
 /** `GET /admin/badges` */

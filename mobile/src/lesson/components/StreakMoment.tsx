@@ -1,18 +1,37 @@
-import { useEffect, useRef, useState } from 'react';
-import { AccessibilityInfo, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { AccessibilityInfo, Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { FIRE_VIEW, STREAK_DAY_TIMING, WINDOW_VIEW, freezeLine, streakSpeech, streakWeek, weekStartsOn, type StreakMood, type WeekDay } from '@kurda/shared';
+import {
+  FIRE_VIEW,
+  FLAME_IGNITE,
+  STREAK_DAY_TIMING,
+  fireBesideWindow,
+  fireFrame,
+  fireLevel,
+  fireSizeToFit,
+  flameMoment,
+  freezeLine,
+  nextFireStage,
+  streakSpeech,
+  streakWeek,
+  weekStartsOn,
+  type StreakMood,
+  type WeekDay,
+} from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
 import { HevaloWindow } from '../../characters/HevaloWindow';
 import { GOLD_INK, REST, TONES } from '../../coursemap/path';
+import { haptic } from '../../feedback/haptics';
+import { playSound } from '../../feedback/sounds';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
 import type { TranslationKey } from '../../i18n/translations';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
 import { useDirection } from '../../reports/direction';
+import { FIRE_GREW, FIRE_NEXT, FIRE_STAGE_NAME } from '../../streak/fireWords';
 import { springTo, timing } from '../../theme/animate';
-import { BURST, CELEBRATE_MS } from '../../theme/celebration';
+import { BURST } from '../../theme/celebration';
 import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/CelebrationParts';
 import { Fire } from '../../theme/Fire';
 import { display } from '../../theme/fonts';
@@ -23,26 +42,24 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
 
-/** How wide the fire is drawn on its own screen; it stands a quarter taller. */
-const FLAME = 168;
+/** Room the flame's screen keeps for the day's number, its words and the line under them, and round the fire; and the most it gives the fire. */
+const FLAME_WORDS = 330;
+const FLAME_MOST = 400;
+/** The ring that bursts out of the fire as it lights, and the glow behind it. */
+const RING = 168;
+const GLOW = RING * 1.6;
 /** The day's number on the flame's screen, and on the streak's. */
 const NUMBER = 112;
 const NUMBER_SMALL = 88;
 /**
- * Hevalo's window under his words, and the fire on the ground in front of it,
- * by its lower corner on the side the reading starts from: how tall each
- * stands (the fire about two thirds of the window), and how far the fire's box
- * reaches over the window's, so its logs lie across the wall's corner. The two
- * stand together in the middle.
+ * Hevalo's window under his words, and the fire on the floor in front of it,
+ * by its lower corner on the side the reading starts from (shared
+ * `fireBesideWindow`): its logs across the wall's corner, a little nearer
+ * than the wall. The two stand together in the middle, the window towards
+ * where the reading ends and the fire towards where it starts.
  */
 const WINDOW = 156;
-const FIRE_BESIDE = 108;
-const FIRE_OVER = 28;
-const WINDOW_WIDE = (WINDOW * WINDOW_VIEW.w) / WINDOW_VIEW.h;
-const FIRE_WIDE = (FIRE_BESIDE * FIRE_VIEW.w) / FIRE_VIEW.h;
-/** How far each stands from the middle: the window towards where the reading ends, the fire towards where it starts. */
-const WINDOW_ASIDE = (FIRE_WIDE - FIRE_OVER) / 2;
-const FIRE_ASIDE = (WINDOW_WIDE - FIRE_OVER) / 2;
+const BESIDE = fireBesideWindow(WINDOW);
 /** A day of the week: the circle, and when the circles arrive one after another, today's last. */
 const DAY = 36;
 const DAY_STAGGER_MS = 50;
@@ -59,18 +76,25 @@ const SPEECH: Record<StreakMood, readonly [TranslationKey, TranslationKey]> = {
  * The streak kept today, after the results: shown when this lesson was the
  * first today, on the way to whichever way on the learner chose.
  *
- * First the moment itself, a screen of warm light: the flame grows in with a
- * glow and a few sparks, and the day's number rolls on from yesterday's, felt
- * and heard once. A tap, or a second and a half, moves on to the streak
- * itself: Hevalo with a few words about the day (a first day, a comeback, a
- * longest run yet, or another day), the number, the week with the days
- * learned in it, how near the next freeze is, and one button — "See you
- * tomorrow" once today's goal is done.
+ * First the moment itself. It opens dim and cool on yesterday, the fire
+ * faint and yesterday's number, and then the fire lights (shared
+ * `FLAME_IGNITE`): it squashes and pops up, a ring of gold bursts out of it,
+ * the warm light floods out from it over the screen, a few sparks fly, and
+ * the day's number rolls on to today's, felt and heard once. On the day the
+ * fire grew (shared `flameMoment`) it opens on the fire as it was yesterday
+ * and the pop leaps on up into its new stage, felt and heard as that lands,
+ * with a line under the day saying what it grew into, and it stays until the
+ * line has been read. A tap, or a second and a half after it lights, moves on to
+ * the streak itself: Hevalo with a few words about the day (a first day, a
+ * comeback, a longest run yet, or another day), the number, the fire's stage
+ * and the next one, the week with the days learned in it, how near the next
+ * freeze is, and one button — "See you tomorrow" once today's goal is done.
  *
  * The week needs the learner's own today and recent days from the server; an
  * older server sends neither, and then the week is left out rather than
  * guessed. No countdown, nothing about losing it: a kept day is said as what
- * it is. Under Reduce Motion it all fades and nothing travels.
+ * it is. Under Reduce Motion it all fades and nothing travels: the dim screen
+ * cross-fades to the warm one.
  */
 export function StreakMoment({ streak, goalDone, onContinue }: { streak: Streak; goalDone: boolean; onContinue: () => void }): React.JSX.Element {
   const [phase, setPhase] = useState<'flame' | 'week'>('flame');
@@ -86,30 +110,78 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
   const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
   const { width, height } = useWindowDimensions();
-  const moment = useCelebration({ sound: 'reward' });
-  useCelebrationHold(moment.playing);
-  const { plan } = moment;
   const day = Math.max(1, streak.current);
+  const [fire] = useState(() => flameMoment(day));
+  // the one celebration plays as it lights, felt and heard then — or, on the day the fire grew, as the growth lands
+  const moment = useCelebration({ sound: 'reward', feel: !fire.grew, delayMs: FLAME_IGNITE.atMs });
+  useCelebrationHold(moment.playing || fire.grew !== null);
+  const { plan } = moment;
   const said = `${formatNumber(day, locale)} ${t(unitFor(day))}`;
+  const grewWords = fire.grew ? t(FIRE_GREW[fire.grew]) : null;
   const ink = scheme === 'dark' ? colors.gold : GOLD_INK;
+  // as big as the screen lets the biggest fire there is be, the same at every stage (a young one drawn closer), framed
+  const size = Math.min(FLAME_MOST, fireSizeToFit('newroz', width - layout.gutter * 2, height - FLAME_WORDS)) * fire.zoom;
+  const frame = fireFrame(fire.level.stage);
+  const stage = { width: (frame.w * size) / FIRE_VIEW.h, height: (frame.h * size) / FIRE_VIEW.h };
+  // its lighting (shared FLAME_IGNITE): the pop and the number's roll, and the warm light flooding out
+  const lit = useRef(new Animated.Value(0)).current;
+  const flood = useRef(new Animated.Value(0)).current;
+  const line = useRef(new Animated.Value(0)).current;
+  const felt = useRef(false);
   const done = useRef(onDone);
   done.current = onDone;
 
+  const feelGrowth = useCallback(() => {
+    if (felt.current) return;
+    felt.current = true;
+    haptic('celebrate');
+    playSound('reward');
+  }, []);
+
   useEffect(() => {
     AccessibilityInfo.announceForAccessibility?.(said);
-    // on by itself once the moment has been seen; a tap goes sooner
-    const id = setTimeout(() => done.current(), CELEBRATE_MS);
-    return () => clearTimeout(id);
+    const lighting = Animated.parallel([
+      timing(lit, 1, FLAME_IGNITE.popMs, { delay: FLAME_IGNITE.atMs, easing: Easing.linear }),
+      timing(flood, 1, FLAME_IGNITE.floodMs, { delay: FLAME_IGNITE.atMs, easing: Easing.out(Easing.cubic) }),
+    ]);
+    lighting.start();
+    // on by itself once the moment has been seen, or what the fire grew into read; a tap goes sooner
+    const over = setTimeout(() => done.current(), fire.overMs);
+    const lands = grewWords
+      ? setTimeout(() => {
+          feelGrowth();
+          AccessibilityInfo.announceForAccessibility?.(grewWords);
+          timing(line, 1, duration.slow).start();
+        }, fire.landsAtMs)
+      : undefined;
+    return () => {
+      lighting.stop();
+      clearTimeout(over);
+      clearTimeout(lands);
+    };
     // once, as it opens
   }, []);
 
-  const scale = plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) : 1;
-  const opacity = moment.art.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
+  // faint until it lights, brightening as it squashes; under Reduce Motion only brightening, the warm light cross-fading in
+  const { pop, dim } = FLAME_IGNITE;
+  const bright = lit.interpolate({ inputRange: [0, plan.travel ? pop[1].at : 1], outputRange: [dim, 1], extrapolate: 'clamp' });
+  const squash = plan.travel
+    ? [
+        { scaleX: lit.interpolate({ inputRange: pop.map((p) => p.at), outputRange: pop.map((p) => p.sx) }) },
+        { scaleY: lit.interpolate({ inputRange: pop.map((p) => p.at), outputRange: pop.map((p) => p.sy) }) },
+      ]
+    : [];
+  const warm = flood.interpolate({ inputRange: [0, plan.travel ? 0.15 : 1], outputRange: [0, 1], extrapolate: 'clamp' });
+  const spread = plan.travel ? flood.interpolate({ inputRange: [0, 1], outputRange: [0.04, 1] }) : 1;
+  const roll = lit.interpolate({ inputRange: [0, 0.6], outputRange: [0, 1], easing: Easing.out(Easing.cubic), extrapolate: 'clamp' });
+  const rise = plan.travel ? line.interpolate({ inputRange: [0, 1], outputRange: [8, 0] }) : 0;
 
   return (
     <Pressable
       onPress={() => {
         moment.skip();
+        // skipped before it landed: the day it grew is still felt
+        if (fire.grew) feelGrowth();
         onDone();
       }}
       accessibilityRole="button"
@@ -118,45 +190,110 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
       style={styles.screen}
       testID="lesson-streak-flame"
     >
-      <WarmLight width={width} height={height} />
+      <Light width={width} height={height} tone="dim" />
       <View style={styles.flameMiddle}>
-        <View style={[styles.flameStage, { width: FLAME * 2, height: FLAME * 1.6 }]}>
-          <SoftGlow colour={colors.gold} size={FLAME * 1.6} id="streak-glow" />
-          {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={FLAME} /> : null}
+        <View style={[styles.flameStage, stage]}>
+          {/* the warm light, flooding out from the fire over the whole screen as it lights, and staying */}
+          <Animated.View
+            pointerEvents="none"
+            style={[
+              styles.flood,
+              {
+                left: stage.width / 2 - width * FLOOD,
+                top: stage.height / 2 - height * FLOOD,
+                width: width * FLOOD * 2,
+                height: height * FLOOD * 2,
+                opacity: warm,
+                transform: [{ scale: spread }],
+              },
+            ]}
+            testID="lesson-streak-flood"
+          >
+            <Light width={width * FLOOD * 2} height={height * FLOOD * 2} tone="warm" />
+          </Animated.View>
+          {/* the glow round the fire, in a box of its own size centred on it: a young fire's frame is smaller than its glow */}
+          <Animated.View
+            style={{ position: 'absolute', left: stage.width / 2 - GLOW / 2, top: stage.height / 2 - GLOW / 2, width: GLOW, height: GLOW, opacity: warm }}
+            pointerEvents="none"
+          >
+            <SoftGlow colour={colors.gold} size={GLOW} id="streak-glow" />
+          </Animated.View>
+          {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={RING} testID="lesson-streak-ring" /> : null}
           {plan.travel ? (
-            <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={day * 17 + 5} colours={[colors.gold, '#FFE16A', '#FF9A3C', '#FFFFFF']} reach={FLAME * 0.85} />
+            <ConfettiBurst
+              progress={moment.burst}
+              count={BURST.lesson}
+              seed={day * 17 + 5}
+              colours={[colors.gold, '#FFE16A', '#FF9A3C', '#FFFFFF']}
+              reach={Math.max(RING * 0.85, Math.max(stage.width, stage.height) * 0.6)}
+              testID="lesson-streak-sparks"
+            />
           ) : null}
-          <Animated.View style={{ opacity, transform: [{ scale }] }}>
-            <Fire size={FLAME * 1.25} />
+          <Animated.View style={{ opacity: bright, transformOrigin: 'bottom', transform: squash }} testID="lesson-streak-fire">
+            <Fire size={size} level={fire.level} from={fire.from} framed />
           </Animated.View>
         </View>
-        <RollingNumber from={day - 1} to={day} progress={moment.details} travel={plan.travel} size={NUMBER} colour={ink} />
+        <Animated.View style={{ opacity: bright }}>
+          <RollingNumber from={day - 1} to={day} progress={roll} travel={plan.travel} size={NUMBER} colour={ink} />
+        </Animated.View>
         <Animated.Text style={[styles.flameUnit, { color: ink, opacity: moment.details }]}>{t(unitFor(day))}</Animated.Text>
+        {/* what the fire grew into, in its place from the start so nothing moves when it arrives */}
+        {grewWords ? (
+          <Animated.Text style={[styles.grew, { color: ink, opacity: line, transform: [{ translateY: rise }] }]} testID="lesson-streak-grew">
+            {grewWords}
+          </Animated.Text>
+        ) : null}
       </View>
     </Pressable>
   );
 }
 
+/** How far the warm light reaches round the fire, as a share of the screen either way: past every edge, its soft rim never seen once it has flooded. */
+const FLOOD = 1.25;
+
 /**
- * The warm light behind the moment: the sun's gold at the edges, softening
- * to a pale glow in the middle on the light page and to an ember on the dark.
+ * The light behind the moment. Warm once the fire has lit: the sun's gold at
+ * the edges, softening to a pale glow in the middle on the light page and to
+ * an ember on the dark, laid round the fire `FLOOD` times the screen either
+ * way, so the screen is only its middle and its rim fades out far past the
+ * edges. Dim before it lights: a cool evening grey over the screen.
  */
-function WarmLight({ width, height }: { width: number; height: number }): React.JSX.Element {
+function Light({ width, height, tone }: { width: number; height: number; tone: 'dim' | 'warm' }): React.JSX.Element {
   const { scheme } = useTheme();
+  const id = `streak-${tone}`;
+  if (tone === 'dim') {
+    const stops = scheme === 'dark' ? ['#222B35', '#161D24', '#0F1419'] : ['#D3DAE2', '#B9C4CF', '#A1AEBC'];
+    return (
+      <View style={StyleSheet.absoluteFill} pointerEvents="none">
+        <Svg width={width} height={height}>
+          <Defs>
+            <RadialGradient id={id} cx="50%" cy="45%" r="75%">
+              {stops.map((colour, i) => (
+                <Stop key={colour} offset={i / 2} stopColor={colour} />
+              ))}
+            </RadialGradient>
+          </Defs>
+          <Rect x="0" y="0" width={width} height={height} fill={`url(#${id})`} />
+        </Svg>
+      </View>
+    );
+  }
   const stops = scheme === 'dark' ? ['#2B1E0B', '#6B4410', '#C98512'] : ['#FFF6DE', '#FFD978', '#EFA312'];
+  // the screen's own light, reaching three quarters of the way across it from the fire, in a light FLOOD times as big
+  const k = 0.75 / FLOOD;
   return (
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      <Svg width={width} height={height}>
-        <Defs>
-          <RadialGradient id="streak-light" cx="50%" cy="45%" r="75%">
-            <Stop offset="0" stopColor={stops[0]} />
-            <Stop offset="0.55" stopColor={stops[1]} />
-            <Stop offset="1" stopColor={stops[2]} />
-          </RadialGradient>
-        </Defs>
-        <Rect x="0" y="0" width={width} height={height} fill="url(#streak-light)" />
-      </Svg>
-    </View>
+    <Svg width={width} height={height}>
+      <Defs>
+        <RadialGradient id={id} cx="50%" cy="50%" r="50%">
+          <Stop offset="0" stopColor={stops[0]} />
+          <Stop offset={0.55 * k} stopColor={stops[1]} />
+          <Stop offset={k} stopColor={stops[2]} />
+          <Stop offset={0.8} stopColor={stops[2]} />
+          <Stop offset="1" stopColor={stops[2]} stopOpacity={0} />
+        </RadialGradient>
+      </Defs>
+      <Rect x="0" y="0" width={width} height={height} fill={`url(#${id})`} />
+    </Svg>
   );
 }
 
@@ -175,7 +312,7 @@ function RollingNumber({
 }: {
   from: number;
   to: number;
-  progress: Animated.Value;
+  progress: Animated.AnimatedInterpolation<number>;
   travel: boolean;
   size: number;
   colour: string;
@@ -231,6 +368,8 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
   const day = Math.max(1, streak.current);
+  const level = fireLevel(day);
+  const next = nextFireStage(day);
   const speech = streakSpeech(streak);
   const words = t(SPEECH[speech.mood][speech.line], { count: formatNumber(day, locale) });
   const arrive = useRef(new Animated.Value(reduce ? 1 : 0)).current;
@@ -257,14 +396,14 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
           <View style={[styles.bubble, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
             <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{words}</Text>
             <View
-              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: toEnd * WINDOW_ASIDE }, { rotate: '45deg' }] }]}
+              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: toEnd * BESIDE.windowAside }, { rotate: '45deg' }] }]}
             />
           </View>
-          {/* Hevalo leaning out of his window under his words, the fire burning on the ground in front of it */}
+          {/* Hevalo with his head in at the window under his words, the fire burning on the ground in front of it */}
           <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: toEnd * WINDOW_ASIDE }] }} />
-            <View style={[styles.inFront, { transform: [{ translateX: -toEnd * FIRE_ASIDE }] }]}>
-              <Fire size={FIRE_BESIDE} />
+            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: toEnd * BESIDE.windowAside }] }} />
+            <View style={[styles.inFront, { bottom: -BESIDE.drop, transform: [{ translateX: -toEnd * BESIDE.fireAside }] }]}>
+              <Fire size={BESIDE.fire} level={level} />
             </View>
           </View>
         </Animated.View>
@@ -279,6 +418,13 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
           </Text>
           <Text style={[styles.unit, { color: colors.goldText }]}>{t(unitFor(day))}</Text>
         </View>
+        {/* the fire's stage, and the next as a near goal: never a countdown, and at the Newroz fire simply its name */}
+        {level.stage !== 'cold' ? (
+          <Text style={[styles.stage, { color: colors.textSecondary }]} testID="streak-stage">
+            <Text style={[styles.stageName, { color: colors.goldText }]}>{t(FIRE_STAGE_NAME[level.stage])}</Text>
+            {next && next.stage !== 'cold' && next.stage !== 'spark' ? ` · ${t(FIRE_NEXT[next.stage], { count: formatNumber(next.at, locale) })}` : null}
+          </Text>
+        ) : null}
         {week ? <WeekRow week={week} travel={!reduce} /> : null}
         <FreezeLine streak={streak} />
       </ScrollView>
@@ -419,7 +565,10 @@ const styles = StyleSheet.create({
   screen: { flex: 1 },
   flameMiddle: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   flameStage: { alignItems: 'center', justifyContent: 'center' },
+  flood: { position: 'absolute' },
   flameUnit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: -spacing.xs },
+  // narrow enough that a sentence wraps into two lines of a size, rather than a full one and a word left over
+  grew: { maxWidth: 320, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
   rolling: { flexDirection: 'row', justifyContent: 'center' },
   leaving: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   weekBody: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.md, gap: spacing.md, maxWidth: layout.column, width: '100%', alignSelf: 'center' },
@@ -429,11 +578,13 @@ const styles = StyleSheet.create({
   // the bubble's point, towards Hevalo under it
   tail: { position: 'absolute', bottom: -8, alignSelf: 'center', width: 16, height: 16, borderRightWidth: 1.5, borderBottomWidth: 1.5 },
   hevalo: { alignItems: 'center', justifyContent: 'flex-end' },
-  // its logs a little below the wall's foot, on the ground nearer than the wall
-  inFront: { position: 'absolute', bottom: -2 },
+  // its logs a little below the wall's foot, on the floor nearer than the wall
+  inFront: { position: 'absolute' },
   count: { alignItems: 'center' },
   bigNumber: { ...display(NUMBER_SMALL), fontVariant: ['tabular-nums'], textAlign: 'center' },
   unit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: -spacing.xs },
+  stage: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, textAlign: 'center', marginTop: -spacing.sm },
+  stageName: { fontWeight: typography.weights.bold },
   week: { justifyContent: 'space-between', borderRadius: radii.lg, paddingVertical: spacing.md - 2, paddingHorizontal: spacing.sm },
   dayColumn: { flex: 1, alignItems: 'center', gap: spacing.xs + 2 },
   dayName: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },

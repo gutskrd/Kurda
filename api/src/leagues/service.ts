@@ -22,7 +22,7 @@ import {
   weekSeason,
   weekStart,
   xpBand,
-  type GroupStanding,
+  type LeagueStanding,
   type LeagueStandingRow,
   type LeagueTier,
   type LeagueView,
@@ -437,7 +437,7 @@ export class LeagueService {
     return rows.rows;
   }
 
-  private standingsOf(members: MemberRow[]): GroupStanding[] {
+  private standingsOf(members: MemberRow[]): LeagueStanding[] {
     return resolveGroup(
       members.map((m) => ({ userId: m.user_id, tier: toLeagueTier(m.tier) ?? FIRST_LEAGUE_TIER, weeklyXp: m.xp })),
       this.goalXp,
@@ -633,7 +633,7 @@ export class LeagueService {
    * tier per season, which the grant's key enforces — and the badges hear of it.
    * Returns the standings it settled (empty when it had been settled already).
    */
-  async settleCohort(cohortId: string): Promise<GroupStanding[]> {
+  async settleCohort(cohortId: string): Promise<LeagueStanding[]> {
     const settled = await this.tx(async (client) => {
       const cohort = await client.query<{ week_key: string; settled: boolean }>(
         `SELECT week_key, settled FROM league_cohorts WHERE id = $1 FOR UPDATE`,
@@ -1045,7 +1045,7 @@ export class LeagueService {
     weekKey: string;
     tier: LeagueTier;
     settled: boolean;
-    standings: Array<GroupStanding & { username: string }>;
+    standings: Array<LeagueStanding & { username: string }>;
   } | null> {
     const c = await this.pool.query<{ week_key: string; tier: string; settled: boolean }>(
       `SELECT week_key, tier, settled FROM league_cohorts WHERE id = $1`,

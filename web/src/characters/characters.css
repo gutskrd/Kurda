@@ -248,11 +248,12 @@
 }
 
 /*
- * Hevalo leaning out of his window (HevaloWindow.tsx): the window behind him,
- * him cut off at the sill and nowhere else, then the sill and the flowers in
- * front of him, all in one box of the picture's shape. The script sets the
- * sill's height (--window-sill) and how far under it he waits to pop up
- * (--window-drop).
+ * Hevalo putting his head in at the window (HevaloWindow.tsx): the outside
+ * and the wall behind him, him cut off at the sill and nowhere else, then the
+ * curtains, the sill and the flowers on our side of him, and his shadow on
+ * the sill, all in one box of the picture's shape. The script sets the
+ * sill's height (--window-sill), and how far under it (--window-drop) and how
+ * small (--window-far) he waits outside to come in.
  */
 .hevalo-window {
   position: relative;
@@ -280,7 +281,7 @@
 :root[data-theme='light'] .hevalo-window-art.is-dark {
   display: none;
 }
-/* on a page read from the right, the curtain and the flowers change sides */
+/* on a page read from the right, the flowers and the view change sides */
 .hevalo-window.is-mirrored .hevalo-window-art > svg {
   transform: scaleX(-1);
 }
@@ -299,9 +300,18 @@
   .hevalo-window.is-popping .hevalo-window-place {
     animation: hevalo-window-rise var(--window-pop-ms, 560ms) var(--ease-spring) var(--window-pop-delay, 140ms) both;
   }
+  .hevalo-window.is-popping .hevalo-window-art.is-shadow {
+    animation: hevalo-window-shade var(--window-pop-ms, 560ms) var(--ease-out) var(--window-pop-delay, 140ms) both;
+  }
 }
+/* up over the sill from outside, growing as he comes closer */
 @keyframes hevalo-window-rise {
   from {
-    transform: translateY(var(--window-drop, 120px));
+    transform: translateY(var(--window-drop, 120px)) scale(var(--window-far, 0.8));
+  }
+}
+@keyframes hevalo-window-shade {
+  from {
+    opacity: 0;
   }
 }

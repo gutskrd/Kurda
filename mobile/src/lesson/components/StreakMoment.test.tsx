@@ -7,7 +7,11 @@ vi.mock('react-native-safe-area-context', () => import('../../reports/testing/st
 vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 // a badge earned meanwhile waits on the moment (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+// the fire as its props: how big it burns and what it grows from, whoever draws it
+vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { AccessibilityInfo, Animated } from 'react-native';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, fireBesideWindow, flameMoment } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
@@ -22,6 +26,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   localStorage.removeItem('kurda_locale_v1');
 });
 
@@ -125,9 +130,9 @@ describe('the kept streak', () => {
     show({ current: 1, longest: 9 });
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByText('Welcome back! A fresh start is still a great start.')).toBeTruthy();
-    // leaning out of his window under his words, the fire burning in front of it: drawn after it, so over its corner
+    // his head in at the window under his words, the fire burning in front of it: drawn after it, so over its corner
     const scene = within(screen.getByTestId('lesson-streak-day'));
-    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire-lit')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     cleanup();
 
     show({ current: 9, longest: 9 });
@@ -141,5 +146,205 @@ describe('the kept streak', () => {
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     fireEvent.click(await screen.findByRole('button', { name: 'See you tomorrow' }));
     expect(onContinue).toHaveBeenCalledTimes(1);
+  });
+});
+
+/** What a screen reader is told, in order. */
+function listen(): string[] {
+  const said: string[] = [];
+  (AccessibilityInfo as unknown as { announceForAccessibility: (words: string) => void }).announceForAccessibility = (words) => said.push(words);
+  return said;
+}
+
+describe('the day the fire grew', () => {
+  const lands = FIRE_GROW.delayMs + FIRE_GROW.ms;
+
+  it('grows the fire from yesterday, says what it grew into as it lands, felt then and only then, and stays to be read', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const said = listen();
+    const felt: string[] = [];
+    const heard: string[] = [];
+    const stopFeel = onHaptic((e) => felt.push(e));
+    const stopHear = onSound((f) => heard.push(String(f)));
+    try {
+      show({ current: 7, longest: 9 });
+      const flame = await screen.findByTestId('lesson-streak-flame');
+      const fire = within(flame).getByTestId('fire');
+      expect(fire.dataset.stage).toBe('campfire');
+      expect(fire.dataset.from).toBe('kindling');
+      expect(said).toEqual(['7 day streak']);
+      // its place is kept from the start, the words not said before the growth lands
+      expect(screen.getByTestId('lesson-streak-grew').textContent).toBe('A week in, your fire is a campfire now.');
+      await act(() => vi.advanceTimersByTimeAsync(lands - 50));
+      expect(felt).toEqual([]);
+      expect(heard).toEqual([]);
+      await act(() => vi.advanceTimersByTimeAsync(50));
+      expect(said).toEqual(['7 day streak', 'A week in, your fire is a campfire now.']);
+      expect(felt).toEqual(['celebrate']);
+      expect(heard).toHaveLength(1);
+      // still there when another day would have moved on, until the line has been read
+      await act(() => vi.advanceTimersByTimeAsync(FIRE_GREW_READ_MS - 100));
+      expect(screen.getByTestId('lesson-streak-flame')).toBeTruthy();
+      await act(() => vi.advanceTimersByTimeAsync(200));
+      expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+      expect(screen.getByRole('heading', { name: '7 day streak' })).toBeTruthy();
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      stopFeel();
+      stopHear();
+    }
+  });
+
+  it('says you lit your fire on the first day, grown from cold logs', async () => {
+    listen();
+    show({ current: 1, longest: 1, daysLearned: 1 });
+    const flame = await screen.findByTestId('lesson-streak-flame');
+    expect(within(flame).getByTestId('fire').dataset.from).toBe('cold');
+    expect(screen.getByTestId('lesson-streak-grew').textContent).toBe('You lit your fire!');
+  });
+
+  it('is still felt once when tapped away before the growth lands', async () => {
+    const felt: string[] = [];
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      listen();
+      show({ current: 30, longest: 30 });
+      fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+      expect(await screen.findByRole('heading', { name: '30 day streak' })).toBeTruthy();
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      stop();
+    }
+  });
+
+  it('burns at the fire of today on another day, growing from nothing, and moves on once it has lit and been seen', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    listen();
+    show({ current: 12 });
+    const flame = await screen.findByTestId('lesson-streak-flame');
+    expect(within(flame).getByTestId('fire').dataset.stage).toBe('campfire');
+    expect(within(flame).getByTestId('fire').dataset.from).toBeUndefined();
+    expect(screen.queryByTestId('lesson-streak-grew')).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(flameMoment(12).overMs + 50));
+    expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+  });
+});
+
+describe('the fire beside the window', () => {
+  const stage = async (current: number): Promise<string | null> => {
+    show({ current, longest: Math.max(current, 9) });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    await screen.findByTestId('lesson-streak-day');
+    const line = screen.queryByTestId('streak-stage')?.textContent ?? null;
+    const fire = within(screen.getByTestId('lesson-streak-day')).getByTestId('fire').dataset.stage;
+    cleanup();
+    return `${fire}: ${line}`;
+  };
+
+  it('burns at the fire of today, its stage named under the streak with the next as a near goal', async () => {
+    expect(await stage(1)).toBe('spark: Spark · a little flame at 3 days');
+    expect(await stage(5)).toBe('kindling: Little flame · a campfire at 7 days');
+    expect(await stage(12)).toBe('campfire: Campfire · a big fire at 14 days');
+    expect(await stage(45)).toBe('bonfire: Bonfire · a blaze at 100 days');
+    // at the biggest there is, simply its name
+    expect(await stage(400)).toBe('newroz: Newroz fire');
+  });
+
+  it('stands the fire on the floor by the window, its logs across the wall corner', async () => {
+    show({ current: 12 });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    const fire = within(await screen.findByTestId('lesson-streak-day')).getByTestId('fire');
+    expect(Number(fire.dataset.size)).toBe(fireBesideWindow(156).fire);
+    expect(fire.parentElement!.style.bottom).toBe(`${-fireBesideWindow(156).drop}px`);
+  });
+
+  it('names the stage in Sorani too', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    show({ current: 12 });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    expect((await screen.findByTestId('streak-stage')).textContent).toMatch(/^ئاگری کەمپ · ئاگرێکی گەورە لە ڕۆژی .+دا$/);
+  });
+});
+
+
+describe('the flame lighting up', () => {
+  /** what the device asks for, read once before the screen under test opens (the setting is asked once, and kept) */
+  async function device(reduceMotion: boolean): Promise<void> {
+    patchReactNativeWeb({ reduceMotion });
+    show().unmount();
+    await act(async () => undefined);
+  }
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await device(true);
+  });
+
+  /**
+   * The flame's screen as it opens, its lighting held where it starts (a
+   * test's animations otherwise end as they begin), and what the lighting was
+   * asked to do.
+   */
+  async function opened(): Promise<{ flame: HTMLElement; lighting: Animated.TimingAnimationConfig[] }> {
+    const lighting: Animated.TimingAnimationConfig[] = [];
+    const real = Animated.timing;
+    vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
+      const run = real(value, config);
+      if (config.delay !== FLAME_IGNITE.atMs) return run;
+      lighting.push(config);
+      return { ...run, start: () => undefined };
+    });
+    show({ current: 12 });
+    return { flame: await screen.findByTestId('lesson-streak-flame'), lighting };
+  }
+
+  it('opens dim on yesterday, then the fire squashes and pops, a ring bursts out of it, sparks fly and the warm light floods out from it', async () => {
+    await device(false);
+    const { flame, lighting } = await opened();
+    // it lights a moment after it opens: the pop, and the warm light flooding out
+    expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
+    // faint, and yesterday's number, until it lights
+    const fire = within(flame).getByTestId('lesson-streak-fire');
+    expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
+    expect(fire.style.transform).toContain('scaleY(1)');
+    expect(within(flame).getByTestId('fire').dataset.framed).toBe('true');
+    // the warm light a speck at the fire, to flood out over the screen as it lights
+    const flood = within(flame).getByTestId('lesson-streak-flood');
+    expect(flood.style.transform).toContain('scale(0.04)');
+    expect(Number(flood.style.opacity)).toBe(0);
+    expect(within(flame).getByTestId('lesson-streak-ring')).toBeTruthy();
+    expect(within(flame).getByTestId('lesson-streak-sparks')).toBeTruthy();
+    // and a tap still goes on at once
+    fireEvent.click(flame);
+    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+  });
+
+  it('lights where it is under Reduce Motion: the dim screen cross-fades to the warm one, with no squash, ring or sparks', async () => {
+    await device(true);
+    const { flame, lighting } = await opened();
+    // it still lights a moment after it opens, only fading
+    expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
+    const fire = within(flame).getByTestId('lesson-streak-fire');
+    expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
+    expect(fire.style.transform).not.toContain('scale');
+    const flood = within(flame).getByTestId('lesson-streak-flood');
+    expect(flood.style.transform).not.toContain('scale(0.04)');
+    expect(Number(flood.style.opacity)).toBe(0);
+    expect(within(flame).queryByTestId('lesson-streak-ring')).toBeNull();
+    expect(within(flame).queryByTestId('lesson-streak-sparks')).toBeNull();
+    fireEvent.click(flame);
+    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+  });
+
+  it('draws the spark of the first day closer than the fire of a year', async () => {
+    const size = async (current: number): Promise<number> => {
+      listen();
+      show({ current, longest: Math.max(current, 9) });
+      const drawn = Number(within(await screen.findByTestId('lesson-streak-flame')).getByTestId('fire').dataset.size);
+      cleanup();
+      return drawn;
+    };
+    const year = await size(400);
+    expect(await size(1)).toBeCloseTo(year * flameMoment(1).zoom, 6);
+    expect(await size(12)).toBe(year);
   });
 });

@@ -82,7 +82,7 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     expect(msg.body).toBe('Silav hemû!');
     expect(hub.published.some((p) => p.room === `group:${gid}` && p.ev.type === 'group_msg')).toBe(true);
 
-    const hist = await chat.history(id.b!, gid);
+    const hist = (await chat.history(id.b!, gid)).messages;
     expect(hist.map((m) => m.body)).toContain('Silav hemû!');
     expect(hist[0]!.username).toContain('gc_a');
 
@@ -109,7 +109,7 @@ describe.skipIf(!DATABASE_URL)('group chat (integration)', () => {
     await expect(chat.deleteMessage(id.b!, gid, aMsg.id)).rejects.toThrow(/cannot delete/i);
     // owner deletes anyone's
     await chat.deleteMessage(id.a!, gid, bMsg.id);
-    const hist = await chat.history(id.a!, gid);
+    const hist = (await chat.history(id.a!, gid)).messages;
     expect(hist.find((m) => m.id === bMsg.id)!.deleted).toBe(true);
     expect(hist.find((m) => m.id === bMsg.id)!.body).toBe('');
   });

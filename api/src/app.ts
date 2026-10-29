@@ -158,7 +158,7 @@ import { registerNotificationRoutes } from './notifications/routes.js';
 import { InboxService } from './notifications/inbox-service.js';
 import { registerInboxRoutes } from './notifications/inbox-routes.js';
 import { StreakReminderService } from './notifications/streak-reminder-service.js';
-import { makePushSendJob } from './jobs/push-jobs.js';
+import { makePushSendJob, pushRecorded } from './jobs/push-jobs.js';
 import { ContentAdminService } from './content/admin-service.js';
 import { seedStarterLessons } from './content/starter-lessons.js';
 import { registerContentAdminRoutes } from './content/admin-routes.js';
@@ -550,8 +550,10 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     // one wall for stories, poems and pictures — public, like the pages it replaces
     registerFeedRoutes(app);
 
-    // groups / clubs (KUR-084): heal ownerless groups after account deletions
-    const groups = new GroupService(app.db);
+    // groups / clubs (KUR-084): heal ownerless groups after account deletions;
+    // removed, banned and asking to come back are lines in people's
+    // notifications, pushed after the change they tell of commits
+    const groups = new GroupService(app.db, { push: pushRecorded(pushService, app.jobs), log: app.log });
     // trust levels + velocity caps + spam auto-moderation (KUR-295)
     const trust = new TrustService(app.db, { redis: app.redis });
     // AI-assisted content moderation (KUR-293): spam/scam heuristic by default,

@@ -200,7 +200,7 @@ describe('a group’s own page', () => {
     testAuth.client = fakeClient({ 'GET /groups/g1': detail('moderator') });
     renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
     await screen.findByText('berfin');
-    expect(await actionsFor('berfin', alert)).toEqual(['View profile', 'Remove from group']);
+    expect(await actionsFor('berfin', alert)).toEqual(['View profile', 'Remove from group', 'Ban…']);
     expect(await actionsFor('rojhat', alert)).toEqual(['View profile']);
     expect(screen.getByRole('button', { name: 'Edit group' })).toBeTruthy();
   });
@@ -215,7 +215,7 @@ describe('a group’s own page', () => {
     testAuth.client = client;
     renderWithProviders(<GroupMembersScreen groupId="g1" onExit={() => undefined} onLeft={() => undefined} onEdit={() => undefined} />);
     await screen.findByText('berfin');
-    expect(await actionsFor('berfin', alert)).toEqual(['View profile', 'Make admin', 'Make owner', 'Remove from group']);
+    expect(await actionsFor('berfin', alert)).toEqual(['View profile', 'Make admin', 'Make owner', 'Remove from group', 'Ban…']);
     const buttons = (alert.mock.calls[0] as [string, string, Button[]])[2];
     await act(async () => buttons.find((b) => b.text === 'Make admin')!.onPress!());
     expect(client.calls.find((c) => c.method === 'PUT')).toEqual({ method: 'PUT', path: '/groups/g1/members/u-member/role', body: { role: 'moderator' } });

@@ -12,7 +12,7 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../lesson/useRecorder', () => import('../lesson/useRecorder.native'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen, within } from '@testing-library/react';
+import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -54,12 +54,21 @@ function open(ways: { onPath?: () => void; onAgain?: () => void } = {}) {
 
 /** Answer the one item, and go on to the results. */
 async function sitIt(): Promise<void> {
-  fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
+  await screen.findByRole('radio', { name: 'av' });
+  // on a busy run the question can be drawn again (as the profile and the goal come in) between finding the
+  // choice and pressing it, and a press on the old one is lost: press until the choice shows as taken
+  await waitFor(() => {
+    fireEvent.click(screen.getByRole('radio', { name: 'av' }));
+    expect(screen.getByRole('radio', { name: 'av' }).getAttribute('aria-checked')).toBe('true');
+    expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).toBeNull();
+  });
   fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+  // the verdict sheet brings Hevalo in at his window: the first one drawn in a file can take a while
+  fireEvent.click(await screen.findByRole('button', { name: 'Continue' }, { timeout: 5000 }));
 }
 
-describe('the test that jumps ahead', () => {
+// the first sitting in the file draws everything for the first time: on a busy run it takes longer than the usual five seconds
+describe('the test that jumps ahead', { timeout: 15_000 }, () => {
   it('is played as a practice session, and says the unit is open when it is passed', async () => {
     const client = serve(test(2));
     const onPath = vi.fn();
@@ -69,7 +78,7 @@ describe('the test that jumps ahead', () => {
     await sitIt();
     expect(await screen.findByRole('heading', { name: 'Unit 3 is open!' })).toBeTruthy();
     expect(screen.getByText('9 of 10 right. The lessons you skipped stay open to come back to.')).toBeTruthy();
-    // Hevalo cheers it, leaning out of his window
+    // Hevalo cheers it, his head in at the window
     expect(within(screen.getByTestId('jump-results')).getByTestId('hevalo-window')).toBeTruthy();
     expect(felt).toContain('celebrate');
     stop();

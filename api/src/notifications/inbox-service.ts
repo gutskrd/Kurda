@@ -37,6 +37,33 @@ function toItem(row: InboxRow): InboxItem {
 }
 
 /**
+ * Write lines into people's notifications, all in one statement, through
+ * `executor` — the caller's transaction, when a change and the lines that
+ * tell of it must commit together (its push follows, jobs/push-jobs.ts
+ * `pushRecorded`). Held to the block rule `InboxService.record` describes.
+ */
+export async function recordNotifications(
+  executor: Pick<pg.Pool, 'query'>,
+  items: ReadonlyArray<{ userId: string; notification: Notification }>,
+): Promise<void> {
+  if (items.length === 0) return;
+  await executor.query(
+    `INSERT INTO notifications (user_id, category, title, body, data)
+     SELECT t.user_id, t.category, t.title, t.body, t.data::jsonb
+       FROM unnest($1::uuid[], $2::text[], $3::text[], $4::text[], $5::text[], $6::uuid[]) AS t(user_id, category, title, body, data, from_id)
+      WHERE ${notBlockedSql('t.user_id', 't.from_id')}`,
+    [
+      items.map((i) => i.userId),
+      items.map((i) => i.notification.category),
+      items.map((i) => i.notification.title),
+      items.map((i) => i.notification.body),
+      items.map((i) => JSON.stringify(i.notification.data ?? {})),
+      items.map((i) => i.notification.data?.fromUserId ?? null),
+    ],
+  );
+}
+
+/**
  * In-app notification inbox (KUR-097). Records every produced notification and
  * exposes the catch-up list + a server-side read state that's shared across a
  * user's devices (read on phone → read on tablet). Reads are capped at the last
@@ -56,19 +83,7 @@ export class InboxService {
    * block and for whatever kind is added next.
    */
   async record(userId: string, notification: Notification): Promise<void> {
-    await this.pool.query(
-      `INSERT INTO notifications (user_id, category, title, body, data)
-       SELECT $1::uuid, $2::text, $3::text, $4::text, $5::jsonb
-        WHERE ${notBlockedSql('$1::uuid', '$6::uuid')}`,
-      [
-        userId,
-        notification.category,
-        notification.title,
-        notification.body,
-        JSON.stringify(notification.data ?? {}),
-        notification.data?.fromUserId ?? null,
-      ],
-    );
+    await recordNotifications(this.pool, [{ userId, notification }]);
   }
 
   /** The last 50 notifications, newest first. */

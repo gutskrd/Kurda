@@ -4,6 +4,7 @@ import {
   VERDICT_TIMING,
   feedbackKind,
   letterDiff,
+  runFireLevel,
   typedHint,
   type DiffSegment,
   type ExerciseType,
@@ -206,7 +207,7 @@ export function FeedbackPanel({
             <span className="lesson-verdict-words">{headline}</span>
             {shownRun && (
               <span className={`lesson-run${shownRun.milestone ? ' is-milestone' : ''}`}>
-                <Fire size={16} />
+                <Fire size={16} level={runFireLevel(shownRun.count)} />
                 {t('lesson.inARow', { count: shownRun.count })}
               </span>
             )}

@@ -256,6 +256,22 @@ export {
   canSetRole,
   type Role,
 } from './group-roles.js';
+/** Removed or banned, asking to come back, and clearing a group's chat: the rules both apps and the server read. */
+export {
+  GROUP_BAN_DURATIONS,
+  GROUP_BAN_REASON_MAX,
+  GROUP_REQUEST_NOTE_MAX,
+  GROUP_REQUEST_COOLDOWN_DAYS,
+  banEndsAt,
+  canModerateGroup,
+  requestCooldownDays,
+  type GroupBan,
+  type GroupBanDuration,
+  type GroupChatCleared,
+  type GroupRejoinRequest,
+  type GroupRequestState,
+  type GroupStanding,
+} from './group-membership.js';
 
 /**
  * Tags & badges, for the same reason as the roles above: the API decides whether
@@ -568,6 +584,36 @@ export {
 } from './art/palette.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
+export {
+  COLD_FIRE,
+  FIRE_GROW,
+  FIRE_STAGES,
+  FIRE_STAGE_DAYS,
+  fireGrewToday,
+  fireLevel,
+  fireStageIndex,
+  nextFireStage,
+  runFireLevel,
+  stageBefore,
+  type FireLevel,
+  type FireStage,
+} from './fire-stages.js';
+/** The fire as a moment of its own: the day it grew and how it lights up, a run's milestone, the ladder of stages a streak climbs, and the fire beside Hevalo's window. */
+export {
+  FIRE_GREW_READ_MS,
+  FLAME_IGNITE,
+  RUN_MOMENT_MS,
+  fireBesideWindow,
+  fireLadder,
+  flameMoment,
+  runMoment,
+  type FireBesideWindow,
+  type FireLadderPlace,
+  type FireLadderStep,
+  type FlameMoment,
+  type LitFireStage,
+} from './fire-moments.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */

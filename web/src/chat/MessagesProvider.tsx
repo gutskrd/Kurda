@@ -192,6 +192,8 @@ export function MessagesProvider({ children }: { children: ReactNode }): React.J
     [push, refreshUnread, groups, user?.id, t],
   );
   useRealtimeEvent('group_msg', onGroupMsg);
+  // a chat cleared for everyone has nothing unread left in it
+  useRealtimeEvent('group_chat_cleared', refreshUnread);
 
   const dismissToast = useCallback((id: string) => {
     setToasts((list) => list.filter((t) => t.id !== id));

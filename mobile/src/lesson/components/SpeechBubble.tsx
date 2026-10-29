@@ -70,7 +70,7 @@ function SpeechBubble({
  *
  * The character is whoever says the item's recording, following the sound
  * with their mouth, and saying it again when tapped. With nobody chosen for
- * it, Hevalo leans out of his window there instead, listening rather than
+ * it, Hevalo puts his head in at the window there instead, listening rather than
  * saying it — and, since he says nothing, hidden from a screen reader. Either
  * way they react to the verdict: pleased when it was right, a curious tilt of
  * the head when not.

@@ -117,7 +117,7 @@ describe('the three cards', () => {
 });
 
 describe('the title', () => {
-  it('calls a perfect lesson perfect, under Hevalo leaning out of his window', () => {
+  it('calls a perfect lesson perfect, under Hevalo with his head in at the window', () => {
     show({ correct: 6, accuracy: 1 }, { moments: { ...NO_LESSON_MOMENTS, perfect: true } });
     expect(screen.getByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
     expect(document.querySelector('.lesson-results .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');

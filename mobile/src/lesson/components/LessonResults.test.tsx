@@ -90,7 +90,7 @@ describe('the title', () => {
 });
 
 describe('Hevalo', () => {
-  it('leans out of his window over the results, his head and neck and never the whole deer', async () => {
+  it('puts his head in at the window over the results, his head and neck and never the whole deer', async () => {
     show();
     expect(await screen.findByTestId('hevalo-window')).toBeTruthy();
     const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));

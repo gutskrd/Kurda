@@ -26,11 +26,24 @@ export type DeepLink =
   | { screen: 'Badges' }
   /** safe this week, moved up a league, a Pêla week: the league */
   | { screen: 'League' }
+  /** someone asked to come back to a group you run: its page, where the requests are */
+  | { screen: 'GroupMembers'; params: { groupId: string } }
   // gifts, report outcomes and decisions on your account (reports/deepLinks.ts)
   | SocialDeepLink;
 
 function str(v: unknown): string | null {
   return typeof v === 'string' && v.length > 0 ? v : null;
+}
+
+/**
+ * What a group tells someone about their place in it (api groups): removed,
+ * banned, someone asking to come back (to its owner and admins), and the
+ * answer to asking. Each carries the group's id, and opens the group.
+ */
+const GROUP_NOTICES = ['group_removed', 'group_banned', 'group_request', 'group_request_approved', 'group_request_declined'] as const;
+
+export function isGroupNotice(data: Record<string, unknown>): boolean {
+  return (GROUP_NOTICES as readonly unknown[]).includes(data.kind);
 }
 
 /**
@@ -50,6 +63,12 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
     const inviteId = str(data.inviteId);
     const lobbyId = str(data.lobbyId);
     return inviteId && lobbyId && isPlayGame(data.game) ? { screen: 'PlayInvite', params: { inviteId, game: data.game, lobbyId } } : null;
+  }
+  // a group, about one's place in it: the requests on the group's page, anything else in the group itself
+  if (isGroupNotice(data)) {
+    const groupId = str(data.groupId);
+    if (!groupId) return null;
+    return data.kind === 'group_request' ? { screen: 'GroupMembers', params: { groupId } } : { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
   }
   // progress (contract 4): badges and the weekly league
   if (data.kind === 'badge') return { screen: 'Badges' };
@@ -163,6 +182,16 @@ export function noticeKind(item: Pick<InboxItem, 'category' | 'data'>): { icon: 
       return { icon: 'shield', reward: false };
     case 'caring_message':
       return { icon: 'lifebuoy', reward: false };
+    case 'group_removed':
+      return { icon: 'sign-out', reward: false };
+    case 'group_banned':
+      return { icon: 'block', reward: false };
+    case 'group_request':
+      return { icon: 'user-plus', reward: false };
+    case 'group_request_approved':
+      return { icon: 'people', reward: false };
+    case 'group_request_declined':
+      return { icon: 'clock', reward: false };
   }
   switch (item.data.screen) {
     case 'Chat':

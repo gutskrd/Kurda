@@ -75,6 +75,8 @@ import { GroupThreadScreen } from './src/groups/GroupThreadScreen';
 import { ClubsScreen } from './src/groups/ClubsScreen';
 import { GroupMembersScreen } from './src/groups/GroupMembersScreen';
 import { GroupEditScreen } from './src/groups/GroupEditScreen';
+import { GroupRequestsScreen } from './src/groups/GroupRequestsScreen';
+import { GroupBansScreen } from './src/groups/GroupBansScreen';
 import { PushRegistration } from './src/push/PushRegistration';
 import { PushHost } from './src/push/PushHost';
 import { EventQuestsScreen } from './src/events/EventQuestsScreen';
@@ -422,6 +424,12 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="GroupEdit" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <GroupEditScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="GroupRequests" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <GroupRequestsScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="GroupBans" options={{ presentation: 'card' }}>
+        {({ route, navigation }) => <GroupBansScreen groupId={route.params.groupId} onExit={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="Clubs" options={{ presentation: 'card' }}>
         {({ navigation }) => <ClubsScreen onExit={() => navigation.goBack()} />}

@@ -3,6 +3,8 @@ import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
 import { followDeepLink, notificationText } from './followLink';
 import { resolveDeepLink } from './inbox';
+import { TRANSLATIONS, type TranslationKey } from '../i18n/translations';
+import { interpolate } from '../i18n/format';
 
 function fakes(routes: Record<string, unknown> = {}) {
   const went: Array<[string, unknown]> = [];
@@ -104,5 +106,40 @@ describe('progress notifications (contract 4)', () => {
     );
     expect(notificationText({ title: '', body: '', data: { kind: 'league_safe' } }, t as never, 'ckb').title).toBe('notifications.leagueSafe.title');
     expect(notificationText({ title: '', body: '', data: { kind: 'league_trophy' } }, t as never, 'ckb').title).toBe('notifications.leagueTrophy.title');
+  });
+});
+
+describe('a group’s news, in the reader’s language', () => {
+  const say = (key: TranslationKey, vars?: Record<string, string | number>) => interpolate(TRANSLATIONS.de[key], vars);
+  const news = (data: Record<string, unknown>) =>
+    notificationText({ title: 'English', body: 'English line', data: { groupId: 'g1', groupName: 'Newroz', ...data } }, say, 'de');
+
+  it('says what happened from what the server sends beside its English line', () => {
+    expect(news({ kind: 'group_removed', privacy: 'invite' })).toEqual({
+      title: 'Aus einer Gruppe entfernt',
+      body: 'Du wurdest aus Newroz entfernt. Ein Admin kann dich wieder hinzufügen.',
+    });
+    expect(news({ kind: 'group_banned', duration: '7d', reason: 'Spam' }).body).toBe('Du wurdest für eine Woche aus Newroz gesperrt. Grund: Spam. Du kannst um Rückkehr bitten.');
+    expect(news({ kind: 'group_request', count: '3' }).body).toBe('3 Personen möchten zurück in Newroz.');
+    expect(news({ kind: 'group_request_approved', rejoined: 'true' }).body).toBe('Du bist wieder in Newroz.');
+    expect(news({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' }).body).toBe('Du kannst Newroz wieder beitreten.');
+    expect(news({ kind: 'group_request_declined', closed: 'true' }).body).toBe(
+      'Deine Bitte, zu Newroz zurückzukommen, wurde nicht angenommen. Die Admins nehmen für diese Gruppe keine Bitten mehr von dir an.',
+    );
+    expect(news({ kind: 'group_request_declined', until: '2026-11-05T10:00:00.000Z' }).body).toMatch(
+      /^Deine Bitte, zu Newroz zurückzukommen, wurde nicht angenommen\. Du kannst am .+ wieder fragen\.$/,
+    );
+  });
+
+  it('keeps the server’s line when it cannot say it better', () => {
+    expect(notificationText({ title: 'English', body: 'English line', data: { kind: 'group_banned', groupId: 'g1' } }, say, 'de')).toEqual({
+      title: 'English',
+      body: 'English line',
+    });
+    expect(news({ kind: 'group_banned', duration: 'forever' })).toEqual({ title: 'English', body: 'English line' });
+  });
+
+  it('opens the group by its name', () => {
+    expect(resolveDeepLink({ kind: 'group_banned', groupId: 'g1', groupName: 'Newroz' })).toEqual({ screen: 'GroupThread', params: { groupId: 'g1', name: 'Newroz' } });
   });
 });

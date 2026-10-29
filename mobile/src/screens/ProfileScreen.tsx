@@ -21,7 +21,7 @@ import { SITE_ORIGIN } from '../feed/api';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { CosmeticBackground, FavoriteRow, GiftedNote, IconOverlay, PremiumPill, flagUrl } from '../profile/cosmetic-parts';
 import type { ProfileCosmetics } from '../profile/types';
-import { SEASON_FRAME_INNER, countryName, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { SEASON_FRAME_INNER, countryName, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { SeasonFramed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
@@ -327,7 +327,7 @@ export function ProfileScreen() {
               value={formatNumber(streak?.current ?? 0, locale)}
               loading={!settled}
               onPress={streak ? () => setStreakOpen(true) : undefined}
-              fire={!!streak && streak.current > 0}
+              fire={streak && streak.current > 0 ? fireLevel(streak.current) : null}
             />
           </View>
         </View>
@@ -424,14 +424,14 @@ function Stat({
   value,
   onPress,
   loading = false,
-  fire = false,
+  fire = null,
 }: {
   label: string;
   value: string;
   onPress?: () => void;
   loading?: boolean;
   /** the streak's fire before the number, while it burns */
-  fire?: boolean;
+  fire?: FireLevel | null;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const body = (
@@ -441,7 +441,7 @@ function Stat({
         <SkeletonText size={typography.sizes.lg} width={28} align="center" />
       ) : (
         <View style={styles.statLine}>
-          {fire ? <Fire size={18} /> : null}
+          {fire ? <Fire size={18} level={fire} /> : null}
           <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
             {value}
           </Text>
