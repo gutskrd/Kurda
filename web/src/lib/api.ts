@@ -319,6 +319,8 @@ export class ApiClient {
           retryAfterSec: Number.isFinite(retryAfter) ? retryAfter : undefined,
           requestId: envelope.requestId,
           status: 429,
+          // a wait that ends at a time the reader is shown (a group's REQUEST_WAIT `until`)
+          ...(envelope.details !== undefined ? { details: envelope.details } : {}),
         },
       };
     }

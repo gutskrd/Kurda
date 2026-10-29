@@ -6,7 +6,7 @@
  */
 import type { FeedImage, LeagueTier, ProfileLeague, ProfileRank, ShowcaseBadge } from '@kurda/shared';
 
-import type { ChatGameRef, ChatMessageKind, GiftCard } from '@kurda/shared';
+import type { ChatGameRef, ChatMessageKind, GiftCard, GroupStanding } from '@kurda/shared';
 
 /** Every API call returns a result — callers never try/catch fetch. */
 export type ApiResult<T> = { ok: true; data: T } | { ok: false; error: ApiError };
@@ -416,9 +416,10 @@ export interface Group {
   photoUrl?: string | null;
 }
 
-/** A group as discovery lists it (GET /groups): whether the reader is already in it. */
+/** A group as discovery lists it (GET /groups): whether the reader is already in it, or banned from it. */
 export interface DiscoverGroup extends Group {
   joined?: boolean;
+  banned?: boolean;
 }
 
 /** A group in the caller's own list (GET /me/groups) — carries their role. */
@@ -441,6 +442,10 @@ export interface GroupDetail extends Group {
   members: GroupMember[];
   /** null when the caller is not a member */
   myRole: GroupRole | null;
+  /** where the caller stands with it; an older server leaves it out, and `myRole` says as much */
+  standing?: GroupStanding;
+  /** requests to come back waiting, for the owner and the admins */
+  pendingRequests?: number;
 }
 /** A group chat message (GET/POST /groups/:id/chat). */
 export interface GroupMessage extends ChatExtras {

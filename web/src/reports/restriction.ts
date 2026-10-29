@@ -42,7 +42,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** The ISO time in `details.until`, or null when there is none (or it is not a time). */
-function untilOf(details: unknown): string | null {
+export function untilOf(details: unknown): string | null {
   if (!isRecord(details) || typeof details.until !== 'string') return null;
   return Number.isNaN(new Date(details.until).getTime()) ? null : details.until;
 }

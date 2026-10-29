@@ -61,6 +61,12 @@ export function rememberCourseDialect(dialect: string | null | undefined): void 
   if (dialect) write(KEY.course, storyDialectForCourse(dialect));
 }
 
+/** The learner's course as this device knows it, or null before their first lesson here. */
+export function courseDialect(): StoryDialect | null {
+  const course = read(KEY.course);
+  return isStoryDialect(course) ? course : null;
+}
+
 /** this tab's own choice, so going to a story and back keeps the variety you were looking at */
 let sessionVariety: StoryDialect | null = null;
 
@@ -71,8 +77,8 @@ let sessionVariety: StoryDialect | null = null;
  */
 export function defaultVariety(locale: string): StoryDialect {
   if (sessionVariety) return sessionVariety;
-  const course = read(KEY.course);
-  if (isStoryDialect(course)) return course;
+  const course = courseDialect();
+  if (course) return course;
   if (locale === 'ckb') return 'sorani';
   const last = read(KEY.variety);
   if (isStoryDialect(last)) return last;
