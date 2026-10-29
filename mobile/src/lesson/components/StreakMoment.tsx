@@ -479,7 +479,8 @@ const styles = StyleSheet.create({
   flameMiddle: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   flameStage: { alignItems: 'center', justifyContent: 'center' },
   flameUnit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, marginTop: -spacing.xs },
-  grew: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
+  // narrow enough that a sentence wraps into two lines of a size, rather than a full one and a word left over
+  grew: { maxWidth: 320, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, lineHeight: 26, textAlign: 'center', marginTop: spacing.md, paddingHorizontal: layout.gutter },
   rolling: { flexDirection: 'row', justifyContent: 'center' },
   leaving: { position: 'absolute', top: 0, left: 0, right: 0, textAlign: 'center' },
   weekBody: { flexGrow: 1, justifyContent: 'center', paddingHorizontal: layout.gutter, paddingVertical: spacing.md, gap: spacing.md, maxWidth: layout.column, width: '100%', alignSelf: 'center' },

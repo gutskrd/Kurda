@@ -1072,7 +1072,6 @@
 .learn-strip-streak {
   min-height: 44px;
   background: transparent;
-  font-family: inherit;
   cursor: pointer;
 }
 .learn-strip-streak:hover {

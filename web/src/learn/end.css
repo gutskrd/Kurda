@@ -221,6 +221,7 @@
   font-weight: 700;
   line-height: 1.35;
   text-align: center;
+  text-wrap: balance;
   text-shadow: 0 3px 16px rgba(70, 25, 0, 0.55);
   opacity: 0;
 }
