@@ -1,6 +1,5 @@
 import { Fragment, useId, useMemo, useState } from 'react';
 import {
-  COLD_FIRE,
   FIRE_CINDER_FADE,
   FIRE_DISC_FADE,
   FIRE_DRIFT_FADE,
@@ -23,9 +22,6 @@ import {
 } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
 import './fire.css';
-
-/** Without a level, a fire alight is today's campfire. */
-const CAMPFIRE: FireLevel = { stage: 'campfire', growth: 0 };
 
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the phone shows,
@@ -51,31 +47,27 @@ export function Fire({
   size,
   level,
   from,
-  lit = true,
   still: held = false,
   accent,
   className,
 }: {
   size: number;
   /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
-  level?: FireLevel;
+  level: FireLevel;
   /** grows from this level into `level` as it appears: the day the fire grew */
   from?: FireLevel | null;
-  /** without a `level`: burning (today's campfire) or not (cold) */
-  lit?: boolean;
   /** drawn standing still, as under reduced motion */
   still?: boolean;
   accent?: string | null;
   className?: string;
 }): React.JSX.Element {
-  const shown = level ?? (lit ? CAMPFIRE : COLD_FIRE);
   const id = `fire${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const [reduce] = useState(prefersReducedMotion);
-  const drawing = useMemo(() => fireDrawing(shown, size), [shown.stage, shown.growth, size]);
+  const drawing = useMemo(() => fireDrawing(level, size), [level.stage, level.growth, size]);
   const still = reduce || held || !drawing.moving;
   const growth = useMemo(
-    () => (reduce || held || !from ? null : fireGrowth(from, shown, size)),
-    [reduce, held, from?.stage, from?.growth, shown.stage, shown.growth, size],
+    () => (reduce || held || !from ? null : fireGrowth(from, level, size)),
+    [reduce, held, from?.stage, from?.growth, level.stage, level.growth, size],
   );
   // the growth seen through once, the old fire is let go
   const [grownFrom, setGrownFrom] = useState<FireGrowth | null>(null);

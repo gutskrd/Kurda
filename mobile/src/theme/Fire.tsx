@@ -2,7 +2,6 @@ import { Fragment, useEffect, useId, useMemo, useRef, useState, type ReactNode }
 import { AppState, Animated, Easing, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 import {
-  COLD_FIRE,
   FIRE_CINDER_FADE,
   FIRE_CYCLE_MS,
   FIRE_DISC_FADE,
@@ -31,9 +30,6 @@ import {
 } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
-
-/** Without a level, a fire alight is today's campfire. */
-const CAMPFIRE: FireLevel = { stage: 'campfire', growth: 0 };
 
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the website
@@ -64,30 +60,26 @@ export function Fire({
   size,
   level,
   from,
-  lit = true,
   still = false,
   accent,
 }: {
   size: number;
   /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
-  level?: FireLevel;
+  level: FireLevel;
   /** grows from this level into `level` as it appears: the day the fire grew */
   from?: FireLevel | null;
-  /** without a `level`: burning (today's campfire) or not (cold) */
-  lit?: boolean;
   /** drawn standing still, as under reduced motion */
   still?: boolean;
   accent?: string | null;
 }): React.JSX.Element {
-  const shown = level ?? (lit ? CAMPFIRE : COLD_FIRE);
   const { scheme } = useTheme();
   const reduce = useReducedMotion();
   const awake = useAwake();
   const id = `fire${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  const drawing = useMemo(() => fireDrawing(shown, size), [shown.stage, shown.growth, size]);
+  const drawing = useMemo(() => fireDrawing(level, size), [level.stage, level.growth, size]);
   const growth = useMemo(
-    () => (reduce || still || !from ? null : fireGrowth(from, shown, size)),
-    [reduce, still, from?.stage, from?.growth, shown.stage, shown.growth, size],
+    () => (reduce || still || !from ? null : fireGrowth(from, level, size)),
+    [reduce, still, from?.stage, from?.growth, level.stage, level.growth, size],
   );
   // the growth seen through once, the old fire is let go
   const [grownFrom, setGrownFrom] = useState<FireGrowth | null>(null);

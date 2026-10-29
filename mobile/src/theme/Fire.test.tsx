@@ -99,7 +99,7 @@ describe('the fire', () => {
   it('is a cold hearth with no streak: charred logs, an ember and its smoke moving off the clock, and no flame', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     const seen = clocks();
-    renderWithProviders(<Fire size={168} lit={false} />);
+    renderWithProviders(<Fire size={168} level={lvl('cold')} />);
     await settle();
     const fire = screen.getByTestId('fire-unlit');
     expect(tongues(fire)).toEqual([]);
@@ -128,7 +128,7 @@ describe('the fire', () => {
   it('stands still under Reduce Motion: the fire at its stage, but no clock runs and nothing rises', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     // the setting is asked once; a fire after the answer starts from it
-    renderWithProviders(<Fire size={40} />);
+    renderWithProviders(<Fire size={40} level={lvl('campfire')} />);
     await settle();
     cleanup();
     const seen = clocks();

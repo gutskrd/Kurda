@@ -61,20 +61,15 @@ describe('the fire', () => {
   });
 
   it('is a cold hearth with no streak: charred logs, one ember glowing, smoke rising, and no flame', () => {
-    for (const svg of [fire(<Fire size={168} level={lvl('cold')} />), fire(<Fire size={168} lit={false} />)]) {
-      expect(svg).toHaveClass('is-unlit');
-      expect(svg).toHaveAttribute('data-stage', 'cold');
-      expect(svg).not.toHaveClass('is-still');
-      expect(tongues(svg)).toEqual([]);
-      expect(svg.querySelectorAll('circle.fire-loop')).toHaveLength(1);
-      expect(svg.querySelectorAll('path.fire-rise[fill$="-smoke)"]')).toHaveLength(2);
-      expect(svg.querySelectorAll('[fill$="-char)"]').length).toBeGreaterThan(0);
-      expect(svg.querySelector('ellipse')).toBeNull();
-    }
-  });
-
-  it('is the campfire without a level, alight', () => {
-    expect(fire(<Fire size={168} />)).toHaveAttribute('data-stage', 'campfire');
+    const svg = fire(<Fire size={168} level={lvl('cold')} />);
+    expect(svg).toHaveClass('is-unlit');
+    expect(svg).toHaveAttribute('data-stage', 'cold');
+    expect(svg).not.toHaveClass('is-still');
+    expect(tongues(svg)).toEqual([]);
+    expect(svg.querySelectorAll('circle.fire-loop')).toHaveLength(1);
+    expect(svg.querySelectorAll('path.fire-rise[fill$="-smoke)"]')).toHaveLength(2);
+    expect(svg.querySelectorAll('[fill$="-char)"]').length).toBeGreaterThan(0);
+    expect(svg.querySelector('ellipse')).toBeNull();
   });
 
   it('is the light version at the small size, in one box at every stage, so the number beside it never moves', () => {
@@ -87,7 +82,7 @@ describe('the fire', () => {
       expect(svg.querySelectorAll('.fire-rise, ellipse')).toHaveLength(0);
     }
     // no streak yet: the grey flame, standing still
-    expect(fire(<Fire size={20} lit={false} />)).toHaveClass('is-small', 'is-unlit', 'is-still');
+    expect(fire(<Fire size={20} level={lvl('cold')} />)).toHaveClass('is-small', 'is-unlit', 'is-still');
   });
 
   it('stands still for a reader who asked for less motion: the fire at its stage, nothing rising off it', () => {
@@ -152,8 +147,8 @@ describe('the fire', () => {
   it('keeps each fire on the page to its own gradients', () => {
     const { container } = render(
       <>
-        <Fire size={40} />
-        <Fire size={40} lit={false} />
+        <Fire size={40} level={lvl('campfire')} />
+        <Fire size={40} level={lvl('cold')} />
         <Fire size={40} level={lvl('newroz')} from={lvl('blaze')} />
       </>,
     );
