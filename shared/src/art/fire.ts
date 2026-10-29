@@ -1,15 +1,15 @@
 /**
  * The streak's fire, designed once and drawn the same by the phone and the
- * website: a painted flame, soft and glowing, on logs lit by it. It grows
+ * website: a simple cartoon flame, glowing, on logs lit by it. It grows
  * with the streak (`fire-stages.ts`): cold logs ready to be lit, a spark
  * caught, a little flame, a campfire, a big fire, a bonfire, a blaze, and the
  * Newroz fire. The logs lie in the same place at every stage, so whatever the
  * stage, it is the fire on them that has grown.
  *
  * The flame itself is painted ahead of time (`fire-sprites.ts`): a loop of
- * frames in which it flows up and changes shape all the time, its licks
- * stretching, splitting and breaking off, which both apps play frame by
- * frame. Everything round it is data, not markup, because each app moves its
+ * frames in which one plump flame of flat, nested tones breathes, sways its
+ * tip and now and then lets a drop pinch off it, which both apps play frame
+ * by frame. Everything round it is data, not markup, because each app moves its
  * parts its own way — the website with a CSS keyframe per part, the phone
  * with one native-driven clock per fire — and both have to move the same
  * parts by the same amounts: a soft glow breathing round the flame and

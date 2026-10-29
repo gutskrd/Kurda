@@ -49,7 +49,7 @@ import { useTheme } from './ThemeProvider';
  * shows, at its stage (`level`): cold logs with a curl of smoke, a spark
  * caught, on up to the Newroz fire with the sun behind it. Its flame is
  * painted (`assets/fire/`, made by `scripts/generate-fire-sprites.mjs`) and
- * plays frame by frame, flowing up and changing shape as a flame does; the
+ * plays frame by frame, breathing and swaying as a cartoon flame does; the
  * glow breathes round it and pools on the ground and sparks drift up.
  *
  * Each moving part is its own layer, as big as the part, moved by

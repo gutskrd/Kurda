@@ -33,7 +33,7 @@ import './fire.css';
  * at its stage (`level`): cold logs with a curl of smoke, a spark caught,
  * on up to the Newroz fire with the sun behind it. Its flame is painted
  * (`public/fire/`, made by `scripts/generate-fire-sprites.mjs`) and plays
- * frame by frame, flowing up and changing shape as a flame does; the glow
+ * frame by frame, breathing and swaying as a cartoon flame does; the glow
  * breathes round it and pools on the ground and sparks drift up. Each moving
  * part runs one CSS keyframe with its own poses, period and phase, and the
  * flame two stepped ones, along its sheet's rows and down them.

@@ -23,9 +23,9 @@ import {
  * The fire's painted flame: a sheet of frames for every stage that burns,
  * painted by scripts/generate-fire-sprites.mjs and shipped in both apps. What
  * the apps read about the sheets, and the sheets themselves: where each
- * flame stands, that its loop plays round with no seam, that no frame bleeds
- * into its neighbour, that they stay light, and that what ships is what the
- * script paints.
+ * flame stands, that it is drawn in a few flat tones, that its loop plays
+ * round with no seam, that no frame bleeds into its neighbour, that they stay
+ * light, and that what ships is what the script paints.
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..', '..', '..');
@@ -43,6 +43,34 @@ async function frames(sprite: FireSprite, file = join(ROOT, 'web/public/fire', s
     for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) out[y * w + x] = data[((row * h + y) * info.width + col * w + x) * 4 + 3]!;
     return out;
   });
+}
+
+/**
+ * How much of a sheet's solid flame lies in its `count` largest tones: its
+ * colours grouped as one tone when no channel is more than a few steps apart
+ * (the encoder's own rounding), largest first.
+ */
+async function toneShare(file: string, count: number): Promise<number> {
+  const { data } = await sharp(file).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+  const counts = new Map<number, number>();
+  let solid = 0;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] !== 255) continue;
+    solid++;
+    const key = (data[i]! << 16) | (data[i + 1]! << 8) | data[i + 2]!;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  }
+  const tones: { c: number[]; n: number }[] = [];
+  for (const [key, n] of [...counts].sort((a, b) => b[1] - a[1])) {
+    const c = [key >> 16, (key >> 8) & 255, key & 255];
+    const near = tones.find((t) => t.c.every((v, k) => Math.abs(v - c[k]!) <= 10));
+    if (near) near.n += n;
+    else tones.push({ c, n });
+  }
+  return tones
+    .sort((a, b) => b.n - a.n)
+    .slice(0, count)
+    .reduce((sum, t) => sum + t.n / solid, 0);
 }
 
 /** How far apart two frames are: the mean change of their alpha, 0 to 255. */
@@ -127,6 +155,11 @@ describe('the sheets that ship', () => {
       total += web.length;
     }
     expect(total).toBeLessThanOrEqual(1024 * 1024);
+  });
+
+  it('draws the flame in a few flat tones nested one in another: no gradients, no grain', async () => {
+    // a rim, a body, an inner flame, a core, the spot (and the blaze its blue): all but the thin edges between them
+    for (const sprite of SHEETS) expect(await toneShare(join(ROOT, 'web/public/fire', sprite.file), 7), sprite.stage).toBeGreaterThan(0.92);
   });
 
   it('keeps every frame clear at its edges, so none bleeds into its neighbour on the sheet and nothing of the flame is cut off', async () => {

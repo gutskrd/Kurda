@@ -7,22 +7,26 @@
  *   node scripts/generate-fire-sprites.mjs                          write into both apps
  *   node scripts/generate-fire-sprites.mjs --out <dir> [--stage s]  write the sheets (or one) under <dir>
  *
- * Each frame is painted the way a fire is drawn on a screen's graphics chip,
- * here on the processor: the stage's flame — a wide hot foot on the logs
- * narrowing into licks that lean in to one tall one — is pulled about by
- * fractal noise scrolling up through it, so its edges flow upward, its licks
- * stretch and sway and their tips tear off; its heat is mapped from a
- * near-white core through yellow and amber to red-orange edges that fade
- * softly to nothing, laid on in a few soft tones with a grain of brush
- * strokes running up it. The noise repeats in time — it scrolls up by whole
- * lengths of itself over the loop and turns once round its third dimension —
- * so the last frame flows into the first with no seam. The glow round the
- * flame, the sparks and the logs are drawn by the apps.
+ * The flame is drawn simply, the way a cartoon fire is: one plump teardrop,
+ * round and heavy at the bottom, its tip tapering and curling a little, its
+ * outline smooth; inside it flat tones nested one in another — a deep
+ * orange-red rim, an orange body, a yellow inner flame and a pale core low
+ * down — each inner shape a soft blob of its own, wobbling, and a thin warm
+ * light round the outside. It moves simply too: the body breathes, swelling
+ * and slimming; gentle waves run up its outline; its tip sways side to side;
+ * once a loop the tip stretches and a small drop pinches off it and rises,
+ * shrinking; and a round spot drifts up through the core. From the big fire
+ * up, two smaller flames lean in at its sides. Every movement turns a whole
+ * number of times in the loop, so the last frame flows into the first with
+ * no seam. The glow round the flame, the sparks and the logs are drawn by
+ * the apps.
  *
- * Every random choice comes from a generator seeded with the stage's name,
- * and the rest is plain arithmetic, so the same script writes the same files
- * every time it runs; shared/src/art/fire-sprites.test.ts paints one again
- * and holds it to what is committed.
+ * Each shape is a field, positive inside it, and every edge is smoothed over
+ * one pixel by the field's own slope, so the outlines are clean at any size.
+ * The phases come from a generator seeded with the stage's name, and the
+ * rest is plain arithmetic, so the same script writes the same files every
+ * time it runs; shared/src/art/fire-sprites.test.ts paints one again and
+ * holds it to what is committed.
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -38,7 +42,7 @@ const { FIRE_ROOT, FIRE_FLAME_REACH, FIRE_SPRITES, FIRE_SPRITE_FRAMES, fireSprit
 /** Where the sheets go in each app. */
 const FIRE_SHEET_DIRS = ['web/public/fire', 'mobile/assets/fire'];
 
-// ─────────────────────────────────────────────────────────────── noise
+const TAU = Math.PI * 2;
 
 /** A small seeded generator (mulberry32). */
 function random(seed) {
@@ -54,288 +58,256 @@ function random(seed) {
 
 const seedOf = (name) => [...name].reduce((h, c) => Math.imul(h ^ c.charCodeAt(0), 16777619) >>> 0, 2166136261);
 
-const GRADS = [
-  [1, 1, 0],
-  [-1, 1, 0],
-  [1, -1, 0],
-  [-1, -1, 0],
-  [1, 0, 1],
-  [-1, 0, 1],
-  [1, 0, -1],
-  [-1, 0, -1],
-  [0, 1, 1],
-  [0, -1, 1],
-  [0, 1, -1],
-  [0, -1, -1],
-];
-
-/**
- * Gradient noise in three dimensions that repeats every `py` along y and
- * `pz` along z (whole numbers of its cells), so a field scrolled up by `py`
- * or turned round by `pz` comes back to itself exactly.
- */
-function periodicNoise(seed) {
-  const rand = random(seed);
-  const perm = Array.from({ length: 256 }, (_, i) => i);
-  for (let i = 255; i > 0; i--) {
-    const j = Math.floor(rand() * (i + 1));
-    [perm[i], perm[j]] = [perm[j], perm[i]];
-  }
-  const p = new Uint8Array(512);
-  for (let i = 0; i < 512; i++) p[i] = perm[i & 255];
-  const fade = (t) => t * t * t * (t * (t * 6 - 15) + 10);
-  const wrap = (i, n) => ((i % n) + n) % n;
-  const lerp = (a, b, t) => a + (b - a) * t;
-  const grad = (h, x, y, z) => {
-    const g = GRADS[h % 12];
-    return g[0] * x + g[1] * y + g[2] * z;
-  };
-  return (x, y, z, py, pz) => {
-    const [xi, yi, zi] = [Math.floor(x), Math.floor(y), Math.floor(z)];
-    const [xf, yf, zf] = [x - xi, y - yi, z - zi];
-    const [x0, x1] = [xi & 255, (xi + 1) & 255];
-    const [y0, y1] = [wrap(yi, py), wrap(yi + 1, py)];
-    const [z0, z1] = [wrap(zi, pz), wrap(zi + 1, pz)];
-    const h = (a, b, c) => p[p[p[a] + (b & 255)] + (c & 255)];
-    const [u, v, w] = [fade(xf), fade(yf), fade(zf)];
-    const near = lerp(lerp(grad(h(x0, y0, z0), xf, yf, zf), grad(h(x1, y0, z0), xf - 1, yf, zf), u), lerp(grad(h(x0, y1, z0), xf, yf - 1, zf), grad(h(x1, y1, z0), xf - 1, yf - 1, zf), u), v);
-    const far = lerp(
-      lerp(grad(h(x0, y0, z1), xf, yf, zf - 1), grad(h(x1, y0, z1), xf - 1, yf, zf - 1), u),
-      lerp(grad(h(x0, y1, z1), xf, yf - 1, zf - 1), grad(h(x1, y1, z1), xf - 1, yf - 1, zf - 1), u),
-      v,
-    );
-    return lerp(near, far, w);
-  };
-}
-
-/** Fractal noise: `octaves` layers of `noise`, each twice as fine and half as strong, every one repeating as the first does. */
-function fbm(noise, x, y, z, py, pz, octaves) {
-  let sum = 0;
-  let amp = 1;
-  let norm = 0;
-  for (let o = 0, k = 1; o < octaves; o++, k *= 2) {
-    sum += amp * noise(x * k + o * 31.7, y * k, z * k, py * k, pz * k);
-    norm += amp;
-    amp *= 0.5;
-  }
-  return sum / norm;
-}
-
-// ─────────────────────────────────────────────────────────────── paint
-
 const smooth = (a, b, x) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return t * t * (3 - 2 * t);
 };
+const frac = (v) => v - Math.floor(v);
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255);
 
-/** The flame's colours by heat, coolest first: red-orange edges, orange, amber, yellow, pale gold, near white. */
-const RAMP = [
-  [0, hex('#D2461C')],
-  [0.15, hex('#EE6A1E')],
-  [0.32, hex('#F98F22')],
-  [0.5, hex('#FFB02E')],
-  [0.66, hex('#FFCE4A')],
-  [0.82, hex('#FFE587')],
-  [1, hex('#FFF6D6')],
-];
-
-function ramp(stops, q) {
-  if (q <= stops[0][0]) return stops[0][1];
-  for (let i = 1; i < stops.length; i++) {
-    const [at, c] = stops[i];
-    if (q <= at) {
-      const [from, a] = stops[i - 1];
-      const t = (q - from) / (at - from);
-      return [a[0] + (c[0] - a[0]) * t, a[1] + (c[1] - a[1]) * t, a[2] + (c[2] - a[2]) * t];
-    }
-  }
-  return stops.at(-1)[1];
-}
-
-/** The Newroz fire's colours: the same flame in gold. */
-const GOLD = [
-  [0, hex('#D86A18')],
-  [0.15, hex('#F08E1E')],
-  [0.32, hex('#FBAE28')],
-  [0.5, hex('#FFC83A')],
-  [0.66, hex('#FFDC5E')],
-  [0.82, hex('#FFEFA4')],
-  [1, hex('#FFF7D8')],
-];
-
-/** How far the logs reach either side of the flame's root, in the fire's units (`FIRE_LOGS`), a little in from their ends. */
-const LOGS_HALF = 44;
-
-/** The blue at the root of the hottest flame. */
-const BLUE = hex('#8ED0FF');
+// ─────────────────────────────────────────────────────────────── colours
 
 /**
- * A lick of flame: its foot `at` across from the root and `w` either side of
- * it, both in shares of the flame's half-width; `h` tall, in shares of its
- * height; leaning `lean` (of its half-width) by its tip; breathing taller and
- * shorter `beat` times a loop.
+ * The flat tones, outside in: the rim, the body, the inner flame, the core,
+ * and the warm light round the outside. The blaze burns whitest, a touch of
+ * blue at its root; the Newroz fire is gold.
  */
-const lick = (at, w, h, lean = 0, beat = 1) => ({ at, w, h, lean, beat });
-
-/**
- * A fire's licks, every one leaning in towards the middle so the whole
- * converges as a real fire does: a wide hot foot on the logs, a body, and
- * one tall lick up the middle. `side` licks stand either side of the middle
- * one, `outer` ones lower and further out; each pair a little different, so
- * the two sides are never one shape mirrored.
- */
-function fire({ middle, side, outer, foot }) {
-  return [
-    lick(0, middle.w, 1, 0.03, 1),
-    ...(side ? [lick(-side.at, side.w, side.h, side.lean, 2), lick(side.at * 1.04, side.w * 0.94, side.h * 0.93, -side.lean * 1.1, 1)] : []),
-    ...(outer ? [lick(-outer.at, outer.w, outer.h, outer.lean, 1), lick(outer.at, outer.w * 0.96, outer.h * 1.06, -outer.lean, 2)] : []),
-    lick(0, foot.w, foot.h),
-  ];
-}
-
-/**
- * How each stage's flame is painted, each a step up from the one before: its
- * licks, how hard the noise pulls it about (`wild`), how fine its turbulence
- * is (`detail`), how hot it burns (`heat`: a bigger white heart), and its
- * colours. A spark is one young flame and a bud, quick and restless; the
- * little flame parts into three; the campfire stands on a wide hot foot; the
- * big fire and the bonfire spread wider and stand taller with more licks;
- * the blaze burns hottest, white at its heart with blue at its root; the
- * Newroz fire is the biggest, and gold.
- */
-const ART = {
-  spark: { wild: 1.25, detail: 0.9, heat: 0.8, ramp: RAMP, licks: [lick(0, 0.72, 1, -0.04, 2), lick(-0.34, 0.4, 0.5, 0.14, 1), lick(0, 0.9, 0.36)] },
-  kindling: { wild: 1.15, detail: 0.95, heat: 0.9, ramp: RAMP, licks: fire({ middle: { w: 0.56 }, side: { at: 0.42, w: 0.4, h: 0.68, lean: 0.14 }, foot: { w: 0.9, h: 0.4 } }) },
-  campfire: { wild: 1, detail: 1, heat: 1, ramp: RAMP, licks: fire({ middle: { w: 0.52 }, side: { at: 0.42, w: 0.42, h: 0.72, lean: 0.16 }, foot: { w: 0.95, h: 0.42 } }) },
-  bigfire: {
-    wild: 1,
-    detail: 1.1,
-    heat: 1.04,
-    ramp: RAMP,
-    licks: fire({ middle: { w: 0.5 }, side: { at: 0.36, w: 0.4, h: 0.78, lean: 0.14 }, outer: { at: 0.68, w: 0.3, h: 0.46, lean: 0.2 }, foot: { w: 0.98, h: 0.38 } }),
-  },
-  bonfire: {
-    wild: 1.05,
-    detail: 1.2,
-    heat: 1.08,
-    ramp: RAMP,
-    licks: fire({ middle: { w: 0.5 }, side: { at: 0.36, w: 0.42, h: 0.74, lean: 0.14 }, outer: { at: 0.68, w: 0.32, h: 0.46, lean: 0.2 }, foot: { w: 1, h: 0.4 } }),
-  },
-  blaze: {
-    wild: 1.05,
-    detail: 1.25,
-    heat: 1.18,
-    ramp: RAMP,
-    blue: true,
-    licks: fire({ middle: { w: 0.52 }, side: { at: 0.36, w: 0.42, h: 0.74, lean: 0.14 }, outer: { at: 0.68, w: 0.32, h: 0.48, lean: 0.2 }, foot: { w: 1, h: 0.42 } }),
-  },
-  newroz: {
-    wild: 1.05,
-    detail: 1.3,
-    heat: 1.12,
-    ramp: GOLD,
-    licks: fire({ middle: { w: 0.5 }, side: { at: 0.34, w: 0.44, h: 0.76, lean: 0.14 }, outer: { at: 0.68, w: 0.33, h: 0.5, lean: 0.22 }, foot: { w: 1, h: 0.44 } }),
-  },
+const TONES = {
+  warm: { rim: hex('#EC531D'), body: hex('#F98B1F'), inner: hex('#FFC53B'), core: hex('#FFF0B4'), light: hex('#FF6A1E') },
+  hot: { rim: hex('#E64E1C'), body: hex('#FB9A26'), inner: hex('#FFD65E'), core: hex('#FFFCF0'), light: hex('#FF7424'), blue: hex('#A8DCFF') },
+  gold: { rim: hex('#E0761A'), body: hex('#FAAB26'), inner: hex('#FFD957'), core: hex('#FFF6D2'), light: hex('#FF9A22') },
 };
 
-/** How hot a lick is at (u, v), across in shares of the half-width and up in shares of the height: 1 down its middle at its foot, 0 at its edge and its tip, below 0 outside it. */
-function lickHeat(l, u, v, t) {
-  const h = l.h * (1 + 0.06 * Math.sin(Math.PI * 2 * (l.beat * t + l.at)));
-  const s = Math.max(0, v / h);
-  if (s >= 1) return -1;
-  const mid = l.at + l.lean * s * s;
-  // a teardrop: round at its foot, swelling a little, narrowing to its tip
-  const half = l.w * Math.pow(1 - s, 0.75) * (1 + 0.4 * s * (1 - s));
-  const across = Math.abs(u - mid) / Math.max(1e-4, half);
-  return (1 - across * across) * Math.pow(1 - s, 0.35);
+// ─────────────────────────────────────────────────────────────── shapes
+
+/** How sharply a teardrop narrows to its tip: higher, a slimmer, longer tip. */
+const TAPER = 1.7;
+
+/** A teardrop's half-width `s` of the way up it (0 its round bottom, 1 its tip), 1 at its widest. */
+const teardrop = (() => {
+  const raw = (s) => {
+    const t = Math.acos(Math.min(1, Math.max(-1, 2 * s - 1)));
+    return Math.sin(t) * Math.sin(t / 2) ** TAPER;
+  };
+  let peak = 0;
+  for (let s = 0; s <= 1; s += 0.001) peak = Math.max(peak, raw(s));
+  return (s) => (s <= 0 || s >= 1 ? 0 : raw(s) / peak);
+})();
+
+/** The union of two fields, smoothed over `k`: two shapes near each other joined by a neck, as a drop pinching off. */
+function smoothUnion(a, b, k) {
+  const h = Math.max(k - Math.abs(a - b), 0) / k;
+  return Math.max(a, b) + (h * h * k) / 4;
 }
 
 /**
- * How the noise moves and paints every flame: how fine it is across and up
- * (`across`, `up`); how far it pulls the flame sideways (`sway`, and
- * `swayFoot` of that even at its foot) and up and down (`stretch`, on noise
- * `finer` times as fine across); how ragged its edges are (`ragged`) and how
- * wide their soft fade (`soft`); how much brush grain runs through its colour
- * (`brush`) and how far its colours gather into a few tones (`tones`); and how
- * its heat becomes colour (`hot`, `curve`).
+ * One flame: its foot `x` across from the root, `foot` below it and `h` tall,
+ * `w` either side at its widest, its tip leaning `lean` across — all in shares
+ * of the stage's flame height. `side`, it is one of the smaller flames at a
+ * big fire's sides: no core, no drop. Its own phases keep it from moving in
+ * step with any other.
  */
-const FLOW = { across: 3.6, up: 1.6, sway: 0.35, swayFoot: 0.25, stretch: 0.5, finer: 2, ragged: 0.02, soft: 0.4, brush: 0.05, tones: 0.35, hot: 0.95, curve: 1.4 };
+function flame(rand, { x = 0, foot = 0.05, h, w, lean = 0, side = false, sway = 1, blue = false }) {
+  const p = Array.from({ length: 10 }, () => rand() * TAU);
+  return { x, foot, h, w, lean, side, sway, blue, p, drop: frac(p[8] / TAU) };
+}
 
-/** How many whole lengths of the noise a flame rises through in one loop: the loop ends where it began. */
-const SCROLL = 2;
+/**
+ * The fields of a flame at a point (`X` across from the root, `Y` up from it,
+ * in shares of the stage's flame height), `t` of the way through the loop:
+ * its outline, and inside it the body, the inner flame, the core and the
+ * spot drifting through it. Each is positive inside its shape, in the same
+ * units.
+ */
+function flameFields(fl, X, Y, t, room) {
+  const { p, h, w } = fl;
+  // breathing: wider as it squashes, slimmer as it stretches
+  const breath = 0.8 * Math.sin(TAU * t + p[0]) + 0.2 * Math.sin(TAU * 2 * t + p[9]);
+  // the tip stretching up as a drop is about to pinch off, and the drop rising, shrinking, once it has
+  const age = frac(t - fl.drop);
+  const lift = Math.min(0.07, room);
+  const stretch = fl.side ? 0 : lift * smooth(0.7, 1, age) ** 2;
+  const H = h * (1 - 0.04 * breath + stretch);
+  const W = w * (1 + 0.06 * breath);
+  const s = (Y + fl.foot) / H;
+  const up = Math.min(1, Math.max(0, s));
+  // the tip sways side to side, curling a little as it goes
+  const middle = (u, at) => fl.x + (fl.lean + 0.09 * fl.sway * Math.sin(TAU * at + p[1])) * u * u + 0.11 * Math.sin(TAU * (0.8 * u - at) + p[2]) * u ** 3;
+  const mid = middle(up, t);
+  // gentle waves running up the outline
+  const wave = (0.06 * Math.sin(TAU * (1.2 * up - t) + p[3]) + 0.03 * Math.sin(TAU * (2.3 * up - 2 * t) + p[4])) * (0.4 + up);
+  const half = W * teardrop(s) * (1 + wave);
+  const across = Math.abs(X - mid);
+  const beyond = s < 0 ? -s * H : s > 1 ? (s - 1) * H : 0;
+  let outline = half - across - beyond;
+  // the rim, thin at the bottom and thicker towards the tip, which is all rim
+  let body = outline - h * (0.014 + 0.055 * up * up);
+  if (!fl.side && age < 0.4) {
+    // the drop, a little flame of its own: from where the stretched tip was, up as far as there is room, shrinking to nothing
+    const k = age / 0.4;
+    const r = h * 0.035 * (1 - k) ** 0.8;
+    const tall = r * 3.2;
+    const foot = h * (1 + lift) - fl.foot - tall * 0.75 + k * room;
+    const sd = (Y - foot) / tall;
+    const cx = middle(1, fl.drop) + 0.02 * Math.sin(TAU * k) + r * 0.6 * Math.sin(TAU * (sd - k)) * sd;
+    const d = r * teardrop(sd) - Math.abs(X - cx) - (sd < 0 ? -sd * tall : sd > 1 ? (sd - 1) * tall : 0);
+    outline = smoothUnion(outline, d, h * 0.035);
+    body = Math.max(body, d - h * 0.006);
+  }
+  // the inner flame: a smaller teardrop of its own, lower, its outline wobbling more
+  const innerH = h * (0.74 - 0.04 * breath);
+  const si = (Y + fl.foot - 0.03 * h) / innerH;
+  const ui = Math.min(1, Math.max(0, si));
+  const innerWave = (0.12 * Math.sin(TAU * (1.5 * ui - t) + p[5]) + 0.06 * Math.sin(TAU * (2.8 * ui - 2 * t) + p[6])) * (0.3 + ui);
+  const innerMid = mid + 0.03 * Math.sin(TAU * (1.1 * ui - t) + p[7]) * ui;
+  const innerBeyond = si < 0 ? -si * innerH : si > 1 ? (si - 1) * innerH : 0;
+  const inner = Math.min(W * 0.7 * teardrop(si) * (1 + innerWave) - Math.abs(X - innerMid) - innerBeyond, body - h * 0.025);
+  if (fl.side) return { outline, body, inner };
+  // the core: low in the flame, pale, a small flame of its own
+  const coreH = h * (0.46 - 0.03 * breath);
+  const sc = (Y + fl.foot - 0.05 * h) / coreH;
+  const uc = Math.min(1, Math.max(0, sc));
+  const coreWave = (0.12 * Math.sin(TAU * (1.4 * uc - t) + p[9]) + 0.06 * Math.sin(TAU * (2.6 * uc - 2 * t) + p[3])) * (0.3 + uc);
+  const coreBeyond = sc < 0 ? -sc * coreH : sc > 1 ? (sc - 1) * coreH : 0;
+  // rounder than the flame round it: a soft blob more than a drop
+  const core = Math.min(W * 0.45 * teardrop(sc) ** 0.7 * (1 + coreWave) - Math.abs(X - innerMid) - coreBeyond, inner - h * 0.025);
+  // a round spot of the inner flame's colour drifting up through the core, shrinking as it goes
+  const k = frac(t + p[8] / TAU + 0.5);
+  const spotR = h * 0.035 * Math.sin(Math.PI * k);
+  const spot = Math.min(spotR - Math.hypot(X - innerMid - 0.08 * W * Math.sin(TAU * k + p[1]), Y - h * (0.08 + 0.3 * k)), core - h * 0.012);
+  if (!fl.blue) return { outline, body, inner, core, spot };
+  // the hottest flame's root: the foot of its core blue, just over the logs, its top edge rippling
+  const blue = Math.min(core - h * 0.012, 0.16 + 0.015 * Math.sin(TAU * (5 * (X - innerMid) - t) + p[4]) - Y);
+  return { outline, body, inner, core, spot, blue };
+}
+
+/**
+ * How each stage's flame is drawn, every one a step up from the one before:
+ * from the spark to the campfire one flame, simply bigger, its widest
+ * `w` either side; from the big fire on, two smaller flames leaning in at its
+ * sides, taller at each stage; and their tones.
+ */
+const ART = {
+  spark: { w: 0.27, foot: -0.3, sway: 1.5, tones: TONES.warm, sides: null },
+  kindling: { w: 0.3, foot: -0.1, sway: 1.25, tones: TONES.warm, sides: null },
+  campfire: { w: 0.31, sway: 1, tones: TONES.warm, sides: null },
+  bigfire: { w: 0.27, sway: 1, tones: TONES.warm, sides: { x: 0.24, h: 0.55, w: 0.12, lean: 0.03 } },
+  bonfire: { w: 0.26, sway: 1, tones: TONES.warm, sides: { x: 0.235, h: 0.58, w: 0.12, lean: 0.03 } },
+  blaze: { w: 0.255, sway: 1, tones: TONES.hot, sides: { x: 0.225, h: 0.6, w: 0.115, lean: 0.03 } },
+  newroz: { w: 0.25, sway: 1, tones: TONES.gold, sides: { x: 0.22, h: 0.62, w: 0.11, lean: 0.03 } },
+};
+
+/**
+ * A stage's flames, back to front: its two side flames, if it has them, and
+ * the main one, its tip a little under its frame's `top` (in shares of its
+ * height above the root) so it never breathes out of it.
+ */
+function flamesOf(stage, top) {
+  const art = ART[stage];
+  const rand = random(seedOf(stage));
+  const foot = art.foot ?? 0.05;
+  const main = flame(rand, { foot, h: Math.min(0.96, top - 0.1) + foot, w: art.w, sway: art.sway, blue: art.tones.blue !== undefined });
+  if (!art.sides) return [main];
+  const { x, h, w, lean } = art.sides;
+  // the right one a little shorter than the left, so the two sides are never one shape mirrored
+  return [flame(rand, { x: -x, h, w, lean, side: true, sway: 0.6 }), flame(rand, { x: x * 1.04, h: h * 0.94, w: w * 0.96, lean: -lean, side: true, sway: 0.6 }), main];
+}
+
+// ─────────────────────────────────────────────────────────────── painting
+
+/**
+ * How much of each pixel a field covers: its edge smoothed over one pixel by
+ * the field's own slope (in pixels), so every outline is clean however the
+ * field is shaped.
+ */
+function coverage(field, W, H) {
+  const out = new Float32Array(field.length);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const gx = (field[y * W + Math.min(W - 1, x + 1)] - field[y * W + Math.max(0, x - 1)]) / 2;
+      const gy = (field[Math.min(H - 1, y + 1) * W + x] - field[Math.max(0, y - 1) * W + x]) / 2;
+      const d = field[i] / Math.max(1e-4, Math.hypot(gx, gy));
+      out[i] = Math.min(1, Math.max(0, d + 0.5));
+    }
+  return out;
+}
+
+/** How far outside a field's outline each pixel lies, in pixels (0 inside): for the light round it. */
+function outside(field, W, H) {
+  const out = new Float32Array(field.length);
+  for (let y = 0; y < H; y++)
+    for (let x = 0; x < W; x++) {
+      const i = y * W + x;
+      const gx = (field[y * W + Math.min(W - 1, x + 1)] - field[y * W + Math.max(0, x - 1)]) / 2;
+      const gy = (field[Math.min(H - 1, y + 1) * W + x] - field[Math.max(0, y - 1) * W + x]) / 2;
+      out[i] = Math.max(0, -field[i] / Math.max(1e-4, Math.hypot(gx, gy)));
+    }
+  return out;
+}
 
 /** One frame of a stage's flame, as straight (not premultiplied) RGBA floats. */
-function paintFrame(sprite, f, noise) {
+function paintFrame(sprite, f) {
   const art = ART[sprite.stage];
-  const { w: reach, h: H } = FIRE_FLAME_REACH[sprite.stage].to;
-  const R = reach / 2 / H;
-  // a fire wider than its logs is tucked in among them at its very foot, and swells out over them just above
-  const foot = Math.min(1, LOGS_HALF / (reach / 2));
+  const tones = art.tones;
+  const hh = FIRE_FLAME_REACH[sprite.stage].to.h;
   const { w: W, h: Ht } = sprite.frame;
   const scale = W / sprite.box.w;
   const t = f / FIRE_SPRITE_FRAMES;
-  // scrolled up by whole lengths of the noise, and once round its third dimension, over the loop
-  const turn = t * 2;
-  const fx = FLOW.across * art.detail;
-  const heats = new Float32Array(W * Ht);
-  const strokes = new Float32Array(W * Ht);
-  const fade = new Float32Array(W * Ht);
-  const ups = new Float32Array(W * Ht);
-  const acrosses = new Float32Array(W * Ht);
-  for (let py = 0; py < Ht; py++) {
-    const y = sprite.box.y + (py + 0.5) / scale;
-    const v = (FIRE_ROOT[1] - y) / H;
-    const Y = v * FLOW.up - t * SCROLL;
-    for (let px = 0; px < W; px++) {
-      const x = sprite.box.x + (px + 0.5) / scale;
-      const u = (x - FIRE_ROOT[0]) / H;
-      // the flame pulled about by the noise rising through it, harder the higher up
-      const up = Math.max(0, v);
-      const du = fbm(noise, u * fx + 11.3, Y, turn, SCROLL, 2, 2) * FLOW.sway * (FLOW.swayFoot + up) * art.wild;
-      const dv = fbm(noise, u * fx * FLOW.finer + 47.9, Y, turn + 0.5, SCROLL, 2, 2) * FLOW.stretch * (0.05 + up) * art.wild;
-      const [su, sv] = [(u + du) / (R * (foot + (1 - foot) * smooth(-0.02, 0.16, v))), v + dv];
-      let heat = -1;
-      for (const l of art.licks) heat = Math.max(heat, lickHeat(l, su, sv, t));
-      const i = py * W + px;
-      // ragged edges; and fine strokes running with the flow, in its colour alone
-      heats[i] = heat + noise(u * 14 + 5.1, Y * 4, turn * 2 + 0.7, SCROLL * 4, 4) * FLOW.ragged;
-      strokes[i] = noise(su * R * 34 + 3.7, Y * 6, turn * 2 + 1.3, SCROLL * 6, 4) * FLOW.brush;
-      ups[i] = v;
-      acrosses[i] = u;
-      // nothing cut off by the frame's edges, and nothing at them to bleed into the frames beside it on the sheet: whatever reaches them fades out first (the foot behind the logs)
-      fade[i] = smooth(0.01, 0.06, Math.min(px, W - 1 - px) / W) * smooth(0.01, 0.05, Math.min(py, Ht - 1 - py) / Ht);
+  // how far a drop can rise before the top of the frame
+  const room = Math.max(0.02, Math.min(0.14, (FIRE_ROOT[1] - sprite.box.y) / hh - 1.14));
+  const flames = flamesOf(sprite.stage, (FIRE_ROOT[1] - sprite.box.y) / hh);
+  const n = W * Ht;
+  const rgba = new Float32Array(n * 4);
+  // lays a flat tone over what is there, as much of each pixel as `cover` says
+  const lay = (colour, cover) => {
+    for (let i = 0; i < n; i++) {
+      const a = cover[i];
+      if (a <= 0) continue;
+      const o = i * 4;
+      const under = rgba[o + 3] * (1 - a);
+      const out = a + under;
+      for (let k = 0; k < 3; k++) rgba[o + k] = (colour[k] * a + rgba[o + k] * under) / out;
+      rgba[o + 3] = out;
     }
-  }
-  const rgba = new Float32Array(W * Ht * 4);
-  for (let i = 0; i < heats.length; i++) {
-    const v = Math.max(0, ups[i]);
-    // hottest down the middle of its foot, cooling out to its edges and up to its tips
-    const raw = Math.min(1, Math.pow(Math.max(0, heats[i] + strokes[i]), FLOW.curve) * FLOW.hot * art.heat * (1.2 - 0.5 * v));
-    // laid on in a few tones, as a painter would, their edges still soft
-    const q = raw + FLOW.tones * (Math.round(raw * 6) / 6 - raw);
-    let c = ramp(art.ramp, q);
-    if (art.blue) {
-      // the hottest flame's root burns blue, just over the logs
-      const [du, dv] = [acrosses[i] / 0.16, (v - 0.12) / 0.035];
-      const k = 0.5 * Math.exp(-(du * du + dv * dv)) * smooth(0.5, 0.9, raw);
-      c = c.map((ch, j) => ch + (BLUE[j] - ch) * k);
+  };
+  for (const fl of flames) {
+    const fields = {};
+    for (let py = 0; py < Ht; py++) {
+      const Y = (FIRE_ROOT[1] - (sprite.box.y + (py + 0.5) / scale)) / hh;
+      for (let px = 0; px < W; px++) {
+        const X = (sprite.box.x + (px + 0.5) / scale - FIRE_ROOT[0]) / hh;
+        const values = flameFields(fl, X, Y, t, room);
+        for (const [name, v] of Object.entries(values)) (fields[name] ??= new Float32Array(n))[py * W + px] = v * hh * scale;
+      }
     }
-    // its edges soft: fading out over a band of cooling flame, never cut
-    const o = i * 4;
-    for (let k = 0; k < 3; k++) rgba[o + k] = c[k];
-    rgba[o + 3] = smooth(0, FLOW.soft, heats[i]) * fade[i];
+    // a thin warm light just outside the outline, gone within a few pixels
+    const reach = Math.max(2, hh * scale * 0.012);
+    lay(
+      tones.light,
+      outside(fields.outline, W, Ht).map((d) => (d > 0 ? 0.5 * (1 - smooth(0, reach, d)) : 0)),
+    );
+    lay(tones.rim, coverage(fields.outline, W, Ht));
+    lay(tones.body, coverage(fields.body, W, Ht));
+    lay(tones.inner, coverage(fields.inner, W, Ht));
+    if (fields.core) {
+      lay(tones.core, coverage(fields.core, W, Ht));
+      lay(tones.inner, coverage(fields.spot, W, Ht));
+    }
+    if (fields.blue) lay(tones.blue, coverage(fields.blue, W, Ht));
   }
+  // nothing at the frame's edges to bleed into the frames beside it on the sheet
+  for (let py = 0; py < Ht; py++)
+    for (let px = 0; px < W; px++) rgba[(py * W + px) * 4 + 3] *= smooth(0.005, 0.03, Math.min(px, W - 1 - px) / W) * smooth(0.005, 0.03, Math.min(py, Ht - 1 - py) / Ht);
   return rgba;
 }
 
 /** A stage's sheet: every frame in its cell, as 8-bit RGBA. */
 function paintSheet(sprite) {
-  const noise = periodicNoise(seedOf(sprite.stage));
   const { w: W, h: H } = sprite.frame;
   const out = Buffer.alloc(sprite.sheet.w * sprite.sheet.h * 4);
   for (let f = 0; f < FIRE_SPRITE_FRAMES; f++) {
-    const frame = paintFrame(sprite, f, noise);
+    const frame = paintFrame(sprite, f);
     const { col, row } = fireSpriteCell(f);
     for (let y = 0; y < H; y++)
       for (let x = 0; x < W; x++) {
@@ -348,14 +320,14 @@ function paintSheet(sprite) {
 }
 
 /**
- * A stage's sheet, painted and written to each of `dirs`: its colour lossy and
- * small (a painted flame is soft, so little is lost), its alpha lossless, so
- * every soft edge keeps its every step.
+ * A stage's sheet, painted and written to each of `dirs`: near-lossless, so
+ * every flat tone and every edge comes back within a few steps of its colour;
+ * what weighs is the edges, not the flat colour between them.
  */
 async function writeSheet(sprite, dirs) {
   const raw = paintSheet(sprite);
   const webp = await sharp(raw, { raw: { width: sprite.sheet.w, height: sprite.sheet.h, channels: 4 } })
-    .webp({ quality: 50, alphaQuality: 100, effort: 6 })
+    .webp({ nearLossless: true, quality: 40, effort: 6 })
     .toBuffer();
   for (const dir of dirs) {
     fs.mkdirSync(dir, { recursive: true });
