@@ -593,6 +593,7 @@ export {
   type FireLadderPlace,
   type FireLadderStep,
   type FlameMoment,
+  type LitFireStage,
 } from './fire-moments.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';

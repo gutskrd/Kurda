@@ -7,6 +7,9 @@
 import { CELEBRATE_MS } from './celebration.js';
 import { FIRE_GROW, FIRE_STAGES, FIRE_STAGE_DAYS, fireGrewToday, fireLevel, fireStageIndex, runFireLevel, type FireLevel, type FireStage } from './fire-stages.js';
 
+/** A stage the fire burns at: every one but the cold logs. */
+export type LitFireStage = Exclude<FireStage, 'cold'>;
+
 /** When the fire's growth lands, from when it appears: the growth's delay and its length. */
 const LANDS_AT_MS = FIRE_GROW.delayMs + FIRE_GROW.ms;
 
@@ -19,7 +22,7 @@ export interface FlameMoment {
   /** on the day it grew, yesterday's fire, which it grows from as it appears; null on any other day */
   from: FireLevel | null;
   /** the stage it grew into today, or null */
-  grew: FireStage | null;
+  grew: LitFireStage | null;
   /** when the growth lands and the line saying what it grew into appears, from when the fire appears */
   landsAtMs: number;
   /** when the moment moves on by itself */
@@ -34,7 +37,8 @@ export interface FlameMoment {
  * the app's one celebration.
  */
 export function flameMoment(days: number): FlameMoment {
-  const grew = fireGrewToday(days);
+  // a fire only grows into a stage that burns
+  const grew = fireGrewToday(days) as LitFireStage | null;
   return {
     level: fireLevel(days),
     from: grew ? fireLevel(days - 1) : null,
@@ -66,7 +70,7 @@ export function runMoment(count: number): { level: FireLevel; from: FireLevel | 
 export type FireLadderPlace = 'reached' | 'now' | 'ahead';
 
 export interface FireLadderStep {
-  stage: FireStage;
+  stage: LitFireStage;
   /** the day of the streak it is reached on */
   day: number;
   place: FireLadderPlace;
@@ -82,7 +86,7 @@ export interface FireLadderStep {
 export function fireLadder(days: number): FireLadderStep[] {
   const today = fireLevel(days);
   const at = fireStageIndex(today.stage);
-  return FIRE_STAGES.filter((stage) => stage !== 'cold').map((stage) => {
+  return FIRE_STAGES.filter((stage): stage is LitFireStage => stage !== 'cold').map((stage) => {
     const i = fireStageIndex(stage);
     const place: FireLadderPlace = i === at ? 'now' : i < at ? 'reached' : 'ahead';
     return { stage, day: FIRE_STAGE_DAYS[stage], place, level: place === 'now' ? today : fireLevel(FIRE_STAGE_DAYS[stage]) };
