@@ -26,7 +26,8 @@ export type MapRow = { kind: 'header'; key: string; title: string } | { kind: 'n
  * be loaded — the course stays listed then, saying so, with a way to try again.
  */
 export interface CourseEntry {
-  course: { id: string; title: string };
+  /** `dialect` as `/courses` lists it ('kurmanji', 'sorani') */
+  course: { id: string; title: string; dialect?: string };
   map: CourseMap | null;
 }
 

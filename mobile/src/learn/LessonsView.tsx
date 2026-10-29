@@ -40,6 +40,7 @@ import type { Streak } from '../streak/format';
 import { KeptStreakSheet, useKeptStreak } from '../streak/KeptStreak';
 import { ReminderNudge } from '../push/ReminderNudge';
 import { fraction, nextStep, type NextStep } from './next';
+import { rememberCourseDialect } from './courseDialect';
 
 /**
  * Learn's first half: the next lesson, the tools, the course, and the rest of
@@ -119,7 +120,7 @@ export function LessonsView({
         setCourses(
           list.data.courses.map((c, i) => {
             const map = loaded[i]!;
-            return { course: { id: c.id, title: c.title }, map: map.ok ? map.data : null };
+            return { course: { id: c.id, title: c.title, dialect: c.dialect }, map: map.ok ? map.data : null };
           }),
         );
         setLoading(false);
@@ -134,6 +135,9 @@ export function LessonsView({
   // the course on the path: the one chosen, else the one the learner is furthest into
   const courseId = chosen && courses?.some((c) => c.course.id === chosen) ? chosen : courses ? firstCourse(courses) : null;
   const entry = courses?.find((c) => c.course.id === courseId) ?? null;
+  // the learner's Kurdish, for whatever else speaks to them in it (learn/courseDialect.ts)
+  const dialect = entry?.course.dialect;
+  useEffect(() => rememberCourseDialect(dialect), [dialect]);
 
   /*
    * Scrolling to the current skill. The path says where its focus stop sits
