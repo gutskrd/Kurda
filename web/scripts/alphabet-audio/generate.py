@@ -86,19 +86,19 @@ def plain(ipa: str) -> str:
     return ipa.replace('ˈ', '').replace('ˌ', '').replace(' ', '')
 
 
-def make(key: str, voice: str, text: str, expect: str, speed: int, clips: dict) -> None:
+def make(key: str, voice: str, text: str, expect: str, speed: int, clips: dict, out: str = OUT, prefix: str = 'a') -> None:
     espeak.voice(voice)
     phonemes = text.startswith('[[')
     # a phoneme given directly is already the answer; text is checked against what it should say
     got = expect if phonemes else plain(espeak.ipa(text))
     if got != expect:
         sys.exit(f'{key}: eSpeak says /{got}/ for {text!r}, expected /{expect}/ — refusing to write it')
-    name = 'a' + hashlib.sha1(key.encode()).hexdigest()[:10] + '.mp3'
+    name = prefix + hashlib.sha1(key.encode()).hexdigest()[:10] + '.mp3'
     with tempfile.NamedTemporaryFile(suffix='.wav') as wav:
         espeak.synth(text, wav.name, phonemes=phonemes, speed=speed)
         subprocess.run(
             ['ffmpeg', '-v', 'error', '-y', '-i', wav.name, '-af', 'adelay=60,apad=pad_dur=0.12,loudnorm=I=-18:TP=-2',
-             '-ac', '1', '-ar', '22050', '-codec:a', 'libmp3lame', '-b:a', '40k', os.path.join(OUT, name)],
+             '-ac', '1', '-ar', '22050', '-codec:a', 'libmp3lame', '-b:a', '40k', os.path.join(out, name)],
             check=True,
         )
     clips[key] = name

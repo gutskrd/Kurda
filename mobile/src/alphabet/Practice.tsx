@@ -367,8 +367,8 @@ function Choice({
   );
 }
 
-/** The round so far: a dot for each first try, green when it was right and red when it was not. */
-function Dots({ results, label }: { results: Array<boolean | null>; label?: string }): React.JSX.Element {
+/** The round so far: a dot for each first try, green when it was right and red when it was not (the word sets' round too). */
+export function Dots({ results, label }: { results: Array<boolean | null>; label?: string }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
   return (

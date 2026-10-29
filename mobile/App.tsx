@@ -14,7 +14,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import * as Linking from 'expo-linking';
-import { inviteRoutePath } from '@kurda/shared';
+import { inviteRoutePath, isWordSetId } from '@kurda/shared';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -47,6 +47,8 @@ import { RegisterScreen } from './src/screens/auth/RegisterScreen';
 import { LearnScreen } from './src/learn/LearnScreen';
 import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { AlphabetScreen } from './src/alphabet/AlphabetScreen';
+import { WordSetScreen } from './src/words/WordSetScreen';
+import { WordsScreen } from './src/words/WordsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
@@ -159,6 +161,9 @@ const linking: LinkingOptions<RootStackParamList> = {
       PracticeHub: 'practice',
       // the website's alphabet, `?script=ckb` and all, opens the phone's
       Alphabet: 'app/alphabet',
+      // the colours, numbers, days and months, and one set by its name: `app/words/colours?script=ckb`
+      Words: 'app/words',
+      WordSet: 'app/words/:set',
       WordleBattle: inviteRoutePath('wordle-battle'),
       RhymeMatch: inviteRoutePath('rhyme-match'),
       // `/app/games/stories?id=…` is a game to join; without an id it is the hub
@@ -518,6 +523,19 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Alphabet" options={{ presentation: 'card' }}>
         {({ route, navigation }) => <AlphabetScreen script={route.params?.script} onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="Words" options={{ presentation: 'card' }}>
+        {({ navigation }) => <WordsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      <RootStack.Screen name="WordSet" options={{ presentation: 'card' }}>
+        {/* a link to a set this version does not have opens the list of sets instead */}
+        {({ route, navigation }) =>
+          isWordSetId(route.params.set) ? (
+            <WordSetScreen set={route.params.set} script={route.params.script} onExit={() => navigation.goBack()} />
+          ) : (
+            <WordsScreen onExit={() => navigation.goBack()} />
+          )
+        }
       </RootStack.Screen>
       <RootStack.Screen name="Saved" options={{ presentation: 'card' }}>
         {({ navigation }) => <SavedScreen onExit={() => navigation.goBack()} />}

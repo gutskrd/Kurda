@@ -256,10 +256,62 @@ export {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
+  LETTER_CLIPS,
   isAlphabetClipKey,
   type AlphabetClip,
   type AlphabetClipGroup,
 } from './alphabet-audio.js';
+/**
+ * Words to know — colours, numbers, the days and the months — taught as the
+ * alphabet is: each word in both dialects with what it means, its sound (the
+ * alphabet's recordings and studio), the "Check yourself" round, and any
+ * number up to 9999 spelled out. One copy for the website and the phone.
+ */
+export {
+  CALENDAR_MONTHS,
+  COLOURS as WORD_COLOURS,
+  NEWROZ,
+  RELATIVE_DAYS,
+  SEASONS,
+  SEASON_ORDER,
+  WORD_SET_IDS,
+  dayAfter,
+  dayParts,
+  findWord,
+  glossIn,
+  isWordSetId,
+  kurdishWeekday,
+  wordGloss,
+  wordGroups,
+  wordIn,
+  wordSet,
+  type CalendarMonth,
+  type Colour as WordColour,
+  type Day as WordDay,
+  type DayOfYear,
+  type Dialect as WordDialect,
+  type Gloss as WordGloss,
+  type KurdishMonth,
+  type Month as WordMonth,
+  type NumberWord,
+  type Season,
+  type SetWord,
+  type Word as KurdishWord,
+  type WordGroup,
+  type WordGroupId,
+  type WordSetId,
+} from './word-sets/words.js';
+export { KURDISH_NUMBER_MAX, easternDigits, kurdishNumber, readDigits } from './word-sets/number.js';
+export { askWordAgain, makeWordRound, type WordQuestion, type WordQuestionKind } from './word-sets/practice.js';
+export { WORD_CLIPS as SYNTHESISED_WORD_CLIPS } from './word-sets/clips.js';
+export {
+  SYNTHESISED_WORDS_PATH,
+  WORD_SET_CLIPS,
+  isWordSetClipKey,
+  wordSetRecordings,
+  wordSetSounds,
+  type WordSetSounds,
+} from './word-sets/sounds.js';
 /**
  * The two Kurdish alphabets as the alphabet pages teach them: each letter, its
  * sound beside the reader's own language, a word to remember it by, where each

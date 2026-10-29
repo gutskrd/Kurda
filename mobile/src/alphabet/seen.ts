@@ -26,14 +26,18 @@ export function parseSeen(raw: string | null | undefined): Seen {
   }
 }
 
-/** The letters opened in `script`, and a way to add one. */
-export function useSeen(script: AlphabetScript, store: DeviceStore = deviceStore): [ReadonlySet<string>, (id: string) => void] {
+/** The letters opened in `script`, and a way to add one — or, under another `key`, the words of a word set. */
+export function useSeen(
+  script: AlphabetScript,
+  store: DeviceStore = deviceStore,
+  key: string = SEEN_KEY,
+): [ReadonlySet<string>, (id: string) => void] {
   const [all, setAll] = useState<Seen>(NONE);
   const latest = useRef<Seen>(NONE);
 
   useEffect(() => {
     let live = true;
-    void store.get(SEEN_KEY).then((raw) => {
+    void store.get(key).then((raw) => {
       if (!live) return;
       // a letter opened before the stored ones arrived is kept with them, not lost under them
       const early = latest.current;
@@ -42,12 +46,12 @@ export function useSeen(script: AlphabetScript, store: DeviceStore = deviceStore
       const next = { kmr: merge('kmr'), ckb: merge('ckb') };
       latest.current = next;
       setAll(next);
-      if (early.kmr.length + early.ckb.length > 0) void store.set(SEEN_KEY, JSON.stringify(next));
+      if (early.kmr.length + early.ckb.length > 0) void store.set(key, JSON.stringify(next));
     });
     return () => {
       live = false;
     };
-  }, [store]);
+  }, [store, key]);
 
   const mark = useCallback(
     (id: string) => {
@@ -56,9 +60,9 @@ export function useSeen(script: AlphabetScript, store: DeviceStore = deviceStore
       const next = { ...was, [script]: [...was[script], id] };
       latest.current = next;
       setAll(next);
-      void store.set(SEEN_KEY, JSON.stringify(next));
+      void store.set(key, JSON.stringify(next));
     },
-    [script, store],
+    [script, store, key],
   );
 
   return [useMemo(() => new Set(all[script]), [all, script]), mark];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { ALPHABET_CLIPS } from '../alphabet-audio.js';
+import { LETTER_CLIPS } from '../alphabet-audio.js';
 import { APP_LOCALES } from '../locales.js';
 import { CLIPS } from './clips.js';
 import { LATIN, PAIRS, SORANI } from './letters.js';
@@ -99,7 +99,7 @@ describe('the sounds', () => {
 
   /** the admin panel records exactly the sounds the pages play — no more, no fewer */
   it('records the same sounds the pages ship', () => {
-    expect(ALPHABET_CLIPS.map((c) => c.key).sort()).toEqual(Object.keys(CLIPS).sort());
+    expect(LETTER_CLIPS.map((c) => c.key).sort()).toEqual(Object.keys(CLIPS).sort());
   });
 
   it('can say every letter, every example word and every minimal pair', () => {

@@ -294,6 +294,13 @@ export function LessonsView({
               detail={t('learn.tools.alphabetHint')}
               onPress={() => navigation.navigate('Alphabet')}
             />
+            {/* the words to know next to the letters: a few numbers, in the reader's own digits */}
+            <ToolTile
+              letters={locale === 'ckb' || locale === 'ar' ? EASTERN_TEASER : WESTERN_TEASER}
+              title={t('words.title')}
+              detail={t('words.toolHint')}
+              onPress={() => navigation.navigate('Words')}
+            />
           </View>
         </View>
 
@@ -498,6 +505,8 @@ const LARGE_BUTTON = 50;
 /** A few letters of each alphabet, in place of an icon: the alphabet's tile shows what it holds. */
 const LATIN_TEASER = { text: 'Aa Çç Êê', rtl: false } as const;
 const SORANI_TEASER = { text: 'ئ ب پ چ', rtl: true } as const;
+const WESTERN_TEASER = { text: '1 2 3', rtl: false } as const;
+const EASTERN_TEASER = { text: '١ ٢ ٣', rtl: true } as const;
 
 function ToolTile({
   icon,
@@ -567,9 +576,9 @@ const styles = StyleSheet.create({
   barFill: { height: 6, borderRadius: radii.pill },
   barFillEnd: { alignSelf: 'flex-end' },
 
-  // the three side by side, one row: the path is what this screen is for, and the tools sit above it, small
-  tools: { flexDirection: 'row', gap: spacing.sm },
-  tile: { flex: 1, minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
+  // the four two by two: the path is what this screen is for, and the tools sit above it, small
+  tools: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  tile: { flexGrow: 1, flexBasis: '40%', minHeight: 76, borderRadius: radii.lg, paddingVertical: spacing.sm + 4, paddingHorizontal: spacing.sm + 4, gap: 2 },
   tileLetters: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold, lineHeight: 22 },
   tileTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.semibold, marginTop: spacing.xs },
   tileDetail: { fontSize: typography.sizes.xs },
