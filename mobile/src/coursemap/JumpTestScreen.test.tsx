@@ -56,7 +56,8 @@ function open(ways: { onPath?: () => void; onAgain?: () => void } = {}) {
 async function sitIt(): Promise<void> {
   fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
   fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-  fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+  // the verdict sheet brings Hevalo in at his window: the first one drawn in a file can take a while
+  fireEvent.click(await screen.findByRole('button', { name: 'Continue' }, { timeout: 3000 }));
 }
 
 describe('the test that jumps ahead', () => {

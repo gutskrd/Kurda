@@ -26,21 +26,22 @@ import './fire.css';
 
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the phone shows,
- * at its stage (`level`): cold logs with a thread of smoke, a spark caught,
- * on up to the Newroz fire with the sun behind it. Flame tongues each
- * flicker about their own root, the heart pulses, the glow breathes, sparks
- * rise off it. Each moving part runs one CSS keyframe with its own poses,
- * period and phase.
+ * at its stage (`level`): cold logs with a curl of smoke, a spark caught,
+ * on up to the Newroz fire with the sun behind it. Each round layer of
+ * flame breathes slowly from its own root, the heart swells, the glow
+ * breathes round it and pools on the ground, sparks drift up and round drops
+ * break off its tips. Each moving part runs one CSS keyframe with its own
+ * poses, period and phase.
  *
  * Given `from`, a smaller fire, it is drawn as that first and grows into
  * `level` as it appears (shared `fireGrowth`, after `FIRE_GROW.delayMs`), the
  * day it grew. `size` is its height; at `FIRE_SMALL` and under it is the
- * light version (the flame alone, gentler) for a row of text. `framed`, it
- * takes up only its stage's part of the box (shared `fireFrame`), still drawn
- * as big as `size` makes the whole, for a screen that shows it big without
- * the empty air above a young fire. Under reduced motion, or `still`, it is
- * the fire at `level` standing still. Decorative: the words beside it say the
- * streak.
+ * light version (a bold round flame alone, breathing gently) for a row of
+ * text. `framed`, it takes up only its stage's part of the box (shared
+ * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
+ * that shows it big without the empty air above a young fire. Under reduced
+ * motion, or `still`, it is the fire at `level` standing still. Decorative:
+ * the words beside it say the streak.
  *
  * Each colour is written for both schemes (`light-dark()`), so the fire
  * follows the page's scheme with nothing here knowing which is on; a browser
@@ -231,8 +232,8 @@ function GlowGradient({ id, colours, strength }: { id: string; colours: Pick<Pai
 
 /**
  * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`), heat or smoke rising, the broken-off tips and sparks from behind
- * the flame, and the tongues.
+ * `halo`), the light pooled on the ground, heat or smoke rising, the drops
+ * broken off and the sparks from behind the flame, and the tongues.
  */
 function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawing; halo?: FireMotion | null }): React.JSX.Element {
   return (
@@ -243,6 +244,7 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
           <Halo paint={p} drawing={drawing} />
         </Grow>
       )}
+      {drawing.pool && <Glow paint={p} glow={drawing.pool} />}
       {drawing.drifts.map((d, i) => {
         if (!p.light[d.kind] || (p.still && !d.rest)) return null;
         return (
@@ -255,7 +257,7 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
           />
         );
       })}
-      {/* the broken-off tips and the sparks rise from behind the flame, so they are only seen once clear of it */}
+      {/* the broken-off drops and the sparks rise from behind the flame, so they are only seen once clear of it */}
       {!p.still && drawing.wisps.map((w, i) => <path key={`w${i}`} className="fire-part fire-rise" d={w.d} fill={`url(#${p.id}-wisp)`} style={moving(w.motion, w.origin)} />)}
       {!p.still &&
         drawing.embers.map((e, i) => <circle key={`e${i}`} className="fire-part fire-rise" cx={e.cx} cy={e.cy} r={e.r} {...fill(p, e.gold ? 'gold' : 'ember', moving(e.motion, [e.cx, e.cy]))} />)}
@@ -266,6 +268,7 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
   );
 }
 
+/** A glow (round the fire, or pooled under it), breathing about its middle; both are lit by the one glow gradient. */
 function Glow({ paint: p, glow }: { paint: Paint; glow: FireGlow }): React.JSX.Element {
   return <ellipse className="fire-part fire-loop" cx={glow.cx} cy={glow.cy} rx={glow.rx} ry={glow.ry} fill={`url(#${p.id}-glow)`} style={moving(glow.motion, [glow.cx, glow.cy])} />;
 }

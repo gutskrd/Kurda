@@ -34,10 +34,11 @@ import { useTheme } from './ThemeProvider';
 
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the website
- * shows, at its stage (`level`): cold logs with a thread of smoke, a spark
- * caught, on up to the Newroz fire with the sun behind it. Flame tongues
- * each flicker about their own root, the heart pulses, the glow breathes,
- * sparks and broken-off tips rise and fade.
+ * shows, at its stage (`level`): cold logs with a curl of smoke, a spark
+ * caught, on up to the Newroz fire with the sun behind it. Each round layer
+ * of flame breathes slowly from its own root, the heart swells, the glow
+ * breathes round it and pools on the ground, sparks drift up and round drops
+ * break off its tips, shrinking as they float away.
  *
  * Each moving part is its own layer, as big as the part, moved by
  * transforms and opacity read off one clock per fire that loops on the
@@ -53,11 +54,12 @@ import { useTheme } from './ThemeProvider';
  * every growing part reads it. Under Reduce Motion it is simply `level`.
  *
  * `size` is its height in points; at `FIRE_SMALL` and under it is the light
- * version for beside a number: the flame alone, a gentler flicker. `framed`,
- * it takes up only its stage's part of the box (shared `fireFrame`), still
- * drawn as big as `size` makes the whole, for a screen that shows it big
- * without the empty air above a young fire. `accent` is an event theme's
- * colour for the flame. Decorative: the words beside it say the streak.
+ * version for beside a number: a bold round flame alone, breathing gently.
+ * `framed`, it takes up only its stage's part of the box (shared
+ * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
+ * that shows it big without the empty air above a young fire. `accent` is an
+ * event theme's colour for the flame. Decorative: the words beside it say the
+ * streak.
  */
 export function Fire({
   size,
@@ -184,8 +186,9 @@ function useAwake(): boolean {
 
 /**
  * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`, off the growth's `driver`), heat or smoke rising, the broken-off
- * tips and sparks from behind the flame, and the tongues.
+ * `halo`, off the growth's `driver`), the light pooled on the ground, heat
+ * or smoke rising, the drops broken off and the sparks from behind the
+ * flame, and the tongues.
  */
 function Burning({
   paint: p,
@@ -209,6 +212,7 @@ function Burning({
           <Halo paint={p} drawing={drawing} at={at} />
         </Grow>
       ) : null}
+      {drawing.pool ? <Glow id={`${p.id}p`} glow={drawing.pool} tint={colours.glow} clock={clock} at={at} /> : null}
       {drawing.drifts.map((d, i) => {
         const tint = colours[d.kind];
         if (!tint || (!clock && !d.rest)) return null;
@@ -221,7 +225,7 @@ function Burning({
           </Layer>
         );
       })}
-      {/* the broken-off tips and the sparks rise from behind the flame, so they are only seen once clear of it */}
+      {/* the broken-off drops and the sparks rise from behind the flame, so they are only seen once clear of it */}
       {clock
         ? drawing.wisps.map((w, i) => (
             <Layer key={`w${i}`} box={fireOutlineBox(w.d)} motion={w.motion} origin={w.origin} clock={clock} at={at}>
@@ -424,7 +428,7 @@ function Ember({ ember, colour, driver, at }: { ember: FireEmber; colour: string
   );
 }
 
-/** A glow, in a box of its own as big as it is; it breathes about its middle. */
+/** A glow (round the fire, or pooled under it), in a box of its own as big as it is; it breathes about its middle. */
 function Glow({ id, glow, tint, clock, at }: { id: string; glow: FireGlow; tint: FireTint | null; clock: Animated.Value | null; at: Place }): React.JSX.Element | null {
   const { cx, cy, rx, ry } = glow;
   const { view, unit } = at;

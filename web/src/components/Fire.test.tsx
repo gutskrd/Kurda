@@ -41,7 +41,8 @@ describe('the fire', () => {
       expect(tongues(svg)).toEqual(drawing.tongues.map((t) => t.id));
       expect(svg.querySelectorAll('circle.fire-rise')).toHaveLength(drawing.embers.length);
       expect(svg.querySelectorAll('path.fire-rise')).toHaveLength(drawing.wisps.length + drawing.drifts.length);
-      expect(svg.querySelector('ellipse.fire-loop')).not.toBeNull();
+      // its glow round it, and the same light pooled on the ground, both breathing
+      expect(svg.querySelectorAll('ellipse.fire-loop')).toHaveLength(2);
       // the stones and the sun come with the biggest fires
       expect(svg.querySelectorAll('[fill$="-stone)"]').length > 0, stage).toBe(stage === 'blaze' || stage === 'newroz');
       expect(svg.querySelector('[fill$="-rays)"]') !== null, stage).toBe(stage === 'newroz');

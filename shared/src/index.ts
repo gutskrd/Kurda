@@ -256,6 +256,22 @@ export {
   canSetRole,
   type Role,
 } from './group-roles.js';
+/** Removed or banned, asking to come back, and clearing a group's chat: the rules both apps and the server read. */
+export {
+  GROUP_BAN_DURATIONS,
+  GROUP_BAN_REASON_MAX,
+  GROUP_REQUEST_NOTE_MAX,
+  GROUP_REQUEST_COOLDOWN_DAYS,
+  banEndsAt,
+  canModerateGroup,
+  requestCooldownDays,
+  type GroupBan,
+  type GroupBanDuration,
+  type GroupChatCleared,
+  type GroupRejoinRequest,
+  type GroupRequestState,
+  type GroupStanding,
+} from './group-membership.js';
 
 /**
  * Tags & badges, for the same reason as the roles above: the API decides whether
