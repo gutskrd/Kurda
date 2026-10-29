@@ -68,7 +68,7 @@ export function resolveDeepLink(data: Record<string, unknown>): DeepLink | null 
   if (isGroupNotice(data)) {
     const groupId = str(data.groupId);
     if (!groupId) return null;
-    return data.kind === 'group_request' ? { screen: 'GroupMembers', params: { groupId } } : { screen: 'GroupThread', params: { groupId, name: '' } };
+    return data.kind === 'group_request' ? { screen: 'GroupMembers', params: { groupId } } : { screen: 'GroupThread', params: { groupId, name: str(data.groupName) ?? '' } };
   }
   // progress (contract 4): badges and the weekly league
   if (data.kind === 'badge') return { screen: 'Badges' };
