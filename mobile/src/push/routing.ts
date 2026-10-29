@@ -1,7 +1,7 @@
 import type { ApiClient } from '../api/client';
 import type { RootNavigation } from '../navigation/rootStack';
 import { followDeepLink } from '../notifications/followLink';
-import { resolveDeepLink, type DeepLink } from '../notifications/inbox';
+import { isGroupNotice, resolveDeepLink, type DeepLink } from '../notifications/inbox';
 
 /**
  * Where a tapped push opens (KUR-094). The push carries the same `data` the
@@ -50,10 +50,11 @@ export interface RouteLike {
 /**
  * Whether a push is about the conversation already open on screen — a
  * message, or a gift, in the chat being read. Its words are arriving there
- * anyway, so it is not shown again as a banner over them.
+ * anyway, so it is not shown again as a banner over them. News about one's
+ * own place in a group (removed, banned) is not in the chat, and is shown.
  */
 export function isConversationOnScreen(data: Record<string, unknown> | null | undefined, route: RouteLike | undefined): boolean {
-  if (!route) return false;
+  if (!route || isGroupNotice(data ?? {})) return false;
   const link = resolveDeepLink(data ?? {});
   const params = (route.params ?? {}) as Record<string, unknown>;
   if (link?.screen === 'Chat') return route.name === 'Chat' && params.userId === link.params.userId;

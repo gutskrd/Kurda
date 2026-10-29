@@ -50,6 +50,11 @@ describe('pushTarget: each push the API sends opens somewhere sensible', () => {
     expect(await landing(data)).toEqual([['Chat', { userId: FRIEND, username: '', openGift: 'gf1' }]]);
   });
 
+  it('a group’s news about one’s place in it opens the group, and a request to come back its page', async () => {
+    expect(await landing({ kind: 'group_banned', groupId: CLUB, category: 'friends' })).toEqual([['GroupThread', { groupId: CLUB, name: '' }]]);
+    expect(await landing({ kind: 'group_request', groupId: CLUB, category: 'friends' })).toEqual([['GroupMembers', { groupId: CLUB }]]);
+  });
+
   it('a report outcome, or a decision on the account, opens where those are', async () => {
     expect(await landing({ kind: 'report_outcome', category: 'moderation' })).toEqual([['MyReports', undefined]]);
     expect(await landing({ kind: 'sanction', category: 'moderation' })).toEqual([['AccountStanding', undefined]]);
@@ -95,5 +100,10 @@ describe('isConversationOnScreen', () => {
     expect(isConversationOnScreen({ kind: 'gift', chat: `group:${CLUB}` }, { name: 'Chat', params: { userId: CLUB } })).toBe(false);
     expect(isConversationOnScreen({ category: 'streak' }, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
     expect(isConversationOnScreen(null, { name: 'Chat', params: { userId: FRIEND } })).toBe(false);
+  });
+
+  it('is false for news about one’s own place in the group that is open, which the chat does not say', () => {
+    expect(isConversationOnScreen({ kind: 'group_banned', groupId: CLUB }, { name: 'GroupThread', params: { groupId: CLUB } })).toBe(false);
+    expect(isConversationOnScreen({ kind: 'group_removed', groupId: CLUB }, { name: 'GroupThread', params: { groupId: CLUB } })).toBe(false);
   });
 });

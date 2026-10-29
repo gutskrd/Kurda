@@ -48,6 +48,27 @@ describe('resolveDeepLink', () => {
   });
 });
 
+describe('a group’s notices about one’s place in it', () => {
+  const group = '3c8d5b20-0000-4000-8000-000000000007';
+
+  it('opens the group itself, and a request to come back on the group’s page where the requests are', () => {
+    for (const kind of ['group_removed', 'group_banned', 'group_request_approved', 'group_request_declined']) {
+      expect(resolveDeepLink({ kind, groupId: group })).toEqual({ screen: 'GroupThread', params: { groupId: group, name: '' } });
+    }
+    expect(resolveDeepLink({ kind: 'group_request', groupId: group })).toEqual({ screen: 'GroupMembers', params: { groupId: group } });
+    expect(resolveDeepLink({ kind: 'group_banned' })).toBeNull();
+  });
+
+  it('wears a picture of what happened', () => {
+    const icon = (kind: string) => noticeKind({ category: 'friends', data: { kind, groupId: group } });
+    expect(icon('group_removed')).toEqual({ icon: 'sign-out', reward: false });
+    expect(icon('group_banned')).toEqual({ icon: 'block', reward: false });
+    expect(icon('group_request')).toEqual({ icon: 'user-plus', reward: false });
+    expect(icon('group_request_approved')).toEqual({ icon: 'people', reward: false });
+    expect(icon('group_request_declined')).toEqual({ icon: 'clock', reward: false });
+  });
+});
+
 describe('unreadBadge', () => {
   it('caps and hides at zero', () => {
     expect(unreadBadge(0)).toBeNull();
