@@ -44,6 +44,7 @@ export function Fire({
   size,
   level,
   lit: litAlone = true,
+  still = false,
   accent,
 }: {
   size: number;
@@ -53,6 +54,8 @@ export function Fire({
   from?: FireLevel | null;
   /** without a `level`: burning or not */
   lit?: boolean;
+  /** drawn standing still, as under reduced motion */
+  still?: boolean;
   accent?: string | null;
 }): React.JSX.Element {
   const lit = level ? level.stage !== 'cold' : litAlone;
@@ -64,7 +67,7 @@ export function Fire({
   // the light version flickers gentler; made once, so a render does not rebuild every layer's motion
   const tongues = useMemo(() => parts.tongues.map((t) => ({ ...t, motion: parts.small ? calmMotion(t.motion, FIRE_SMALL_CALM) : t.motion })), [parts]);
   const colours = fireColours({ lit, scheme, accent });
-  const moving = lit && !reduce;
+  const moving = lit && !reduce && !still;
   const clock = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {

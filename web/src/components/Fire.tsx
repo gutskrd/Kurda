@@ -23,6 +23,7 @@ export function Fire({
   size,
   level,
   lit: litAlone = true,
+  still: held = false,
   accent,
   className,
 }: {
@@ -33,6 +34,8 @@ export function Fire({
   from?: FireLevel | null;
   /** without a `level`: burning or not */
   lit?: boolean;
+  /** drawn standing still, as under reduced motion */
+  still?: boolean;
   accent?: string | null;
   className?: string;
 }): React.JSX.Element {
@@ -42,7 +45,7 @@ export function Fire({
   const parts = fireParts(size);
   const light = fireColours({ lit, scheme: 'light', accent });
   const dark = fireColours({ lit, scheme: 'dark', accent });
-  const still = !lit || reduce;
+  const still = !lit || reduce || held;
   const { view } = parts;
   const motion = (m: FireMotion): FireMotion => (parts.small ? calmMotion(m, FIRE_SMALL_CALM) : m);
   const classes = ['fire', lit ? 'is-lit' : 'is-unlit', parts.small ? 'is-small' : null, still ? 'is-still' : null, className].filter(Boolean).join(' ');
