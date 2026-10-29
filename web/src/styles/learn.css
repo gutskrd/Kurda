@@ -632,11 +632,27 @@ html:has(.lesson-bar) {
 }
 .lesson-bubble .lesson-prompt {
   min-width: 0;
-  font-size: clamp(1.25rem, 4.4vw, 1.6rem);
+  font-size: clamp(1.15rem, 4.4vw, 1.6rem);
 }
+/* the speaker at the start of what is said: smaller than a lone button, its reach still a fingertip's */
 .lesson-bubble .lesson-play-round {
+  position: relative;
+  width: 36px;
+  height: 36px;
+  margin-inline-start: -6px;
   border-width: 0;
   background: none;
+}
+.lesson-bubble .lesson-play-round::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+}
+@media (max-width: 480px) {
+  .lesson-bubble {
+    gap: 8px;
+    padding: 10px 14px;
+  }
 }
 /* beside a character, a word's meanings opened from the bubble lie over the answer below, not under it */
 .lesson-exercise > .character-stage {

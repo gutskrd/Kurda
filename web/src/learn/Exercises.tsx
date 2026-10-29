@@ -94,7 +94,7 @@ export function Prompt({ text }: { text: string | undefined }): React.JSX.Elemen
  * still on a short screen so the answer stays in view; and the least share of
  * its width the character keeps — the bubble has the rest.
  */
-const BUBBLE_STAGE = { phone: 220, short: 170, share: 0.36 } as const;
+const BUBBLE_STAGE = { phone: 196, short: 170, share: 0.36 } as const;
 
 /**
  * Whoever says an exercise's recordings, on a stage that leaves room beside
