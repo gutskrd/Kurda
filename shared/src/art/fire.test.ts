@@ -3,18 +3,22 @@ import { FIRE_STAGES, type FireLevel, type FireStage } from '../fire-stages.js';
 import {
   FIRE_CYCLE_MS,
   FIRE_GROW_STOPS,
+  FIRE_LOGS,
   FIRE_LOOP_STOPS,
   FIRE_RISE_STOPS,
+  FIRE_ROOT,
   FIRE_SMALL,
   FIRE_SMALL_VIEW,
   FIRE_VIEW,
   calmMotion,
   fireColours,
   fireDrawing,
+  fireFrame,
   fireGrowth,
   fireOutlineBox,
   firePoseAt,
   fireSamples,
+  fireSizeToFit,
   fireStops,
   type FireBox,
   type FireColours,
@@ -404,6 +408,70 @@ describe('growing into the next stage', () => {
     expect(g.from.small).toBe(true);
     expect([g.burst.length, g.flash, g.fade]).toEqual([0, null, null]);
     expect(g.in.poses[0]!.sy).toBeCloseTo(0.75, 1);
+  });
+});
+
+describe('framed, for a screen that shows it big', () => {
+  const tongues = (d: FireDrawing): FireBox[] => d.tongues.map((t) => fireOutlineBox(t.d));
+  const hearth = (d: FireDrawing): FireBox[] => [...d.back, ...d.front].map((p) => fireOutlineBox(p.d));
+
+  it('lies on its two logs where they lie at every stage, astride its root', () => {
+    for (const stage of FIRE_STAGES) {
+      const logs = drawn(stage).front.filter((p) => p.group === 'hearth' && p.part !== 'coal' && p.part !== 'ash');
+      for (const p of logs) inside(fireOutlineBox(p.d), FIRE_LOGS, `${stage} ${p.part}`);
+    }
+    expect(FIRE_LOGS.x + FIRE_LOGS.w / 2).toBe(FIRE_ROOT[0]);
+    // under the flame's root, at the foot of the box
+    expect(FIRE_LOGS.y).toBeLessThan(FIRE_ROOT[1]);
+    expect(FIRE_LOGS.y + FIRE_LOGS.h).toBeGreaterThan(FIRE_ROOT[1]);
+    expect(FIRE_LOGS.y + FIRE_LOGS.h).toBeLessThanOrEqual(FIRE_VIEW.h);
+  });
+
+  it('takes up only what its stage needs, in the box, astride its root, its hearth on the frame foot', () => {
+    for (const stage of FIRE_STAGES) {
+      const frame = fireFrame(stage);
+      inside(frame, FIRE_VIEW, stage);
+      expect(frame.x + frame.w / 2, stage).toBe(FIRE_ROOT[0]);
+      for (const growth of [0, 0.5, 1]) {
+        const d = drawn(stage, growth);
+        for (const b of [...tongues(d), ...hearth(d)]) inside(b, frame, `${stage} ${growth}`);
+        if (d.halo) inside({ x: d.halo.cx - d.halo.reach, y: d.halo.cy - d.halo.reach, w: d.halo.reach * 2, h: d.halo.reach * 2 }, frame, `${stage} sun`);
+      }
+      // nothing of it lower than its hearth
+      expect(frame.y + frame.h, stage).toBe(Math.ceil(Math.max(...hearth(drawn(stage)).map((b) => b.y + b.h))));
+    }
+    // a young fire leaves the empty air above it out; the Newroz fire is the whole box but a sliver
+    expect(fireFrame('spark').h).toBeLessThan(FIRE_VIEW.h * 0.3);
+    expect(fireFrame('newroz').h).toBeGreaterThan(FIRE_VIEW.h * 0.95);
+  });
+
+  it('keeps room over the tips for them to flicker up into', () => {
+    for (const stage of LIT) {
+      const top = Math.min(...tongues(drawn(stage, 1)).map((b) => b.y));
+      expect(top - fireFrame(stage).y, stage).toBeGreaterThanOrEqual(Math.min(top, drawn(stage, 1).flame.h * 0.1) - 1);
+    }
+  });
+
+  it('holds the fire it grows from, so nothing moves as it grows into a stage', () => {
+    for (let i = 1; i < FIRE_STAGES.length; i++) {
+      const [from, to] = [FIRE_STAGES[i - 1]!, FIRE_STAGES[i]!];
+      const frame = fireFrame(to);
+      for (const b of [...tongues(drawn(from, 1)), ...hearth(drawn(from, 1))]) inside(b, frame, `${from} in ${to}`);
+      // and each burning stage's frame is no smaller than the one before (cold logs' smoke only fades as they catch)
+      if (from !== 'cold') expect(frame.h, to).toBeGreaterThanOrEqual(fireFrame(from).h);
+    }
+  });
+
+  it('is drawn as big as fits a space: its frame filling it one way, inside it the other', () => {
+    for (const stage of FIRE_STAGES) {
+      const size = fireSizeToFit(stage, 44, 44);
+      const frame = fireFrame(stage);
+      const [w, h] = [(frame.w * size) / FIRE_VIEW.h, (frame.h * size) / FIRE_VIEW.h];
+      expect(Math.max(w, h), stage).toBeCloseTo(44, 9);
+      expect(Math.min(w, h), stage).toBeLessThanOrEqual(44);
+      // never so small it turns into the light version
+      expect(size, stage).toBeGreaterThan(FIRE_SMALL);
+    }
   });
 });
 

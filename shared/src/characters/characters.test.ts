@@ -597,6 +597,14 @@ describe('the window Hevalo puts his head in at', () => {
     expect(cast.y + cast.h).toBeGreaterThan(neck.sill + 20);
   });
 
+  it('says where the room wall it is in stands, for what is set on the floor in front of it', () => {
+    const wall = extent(windowArt().back);
+    const { left, right, foot } = WINDOW_PLACE.wall;
+    expect(WINDOW_VIEW.x + left * WINDOW_VIEW.w).toBeCloseTo(wall.x, 6);
+    expect(WINDOW_VIEW.x + right * WINDOW_VIEW.w).toBeCloseTo(wall.x + wall.w, 6);
+    expect(WINDOW_VIEW.y + foot * WINDOW_VIEW.h).toBeCloseTo(wall.y + wall.h, 6);
+  });
+
   it('places him in it: his head and neck crop where it is drawn, cut off at the sill, and waiting outside under it, farther off, to come in', () => {
     const box = neck.box;
     expect(inside(box, WINDOW_VIEW)).toBe(true);

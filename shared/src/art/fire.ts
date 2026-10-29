@@ -773,6 +773,60 @@ export function fireDrawing(level: FireLevel, size: number): FireDrawing {
   return level.stage === 'cold' ? coldDrawing() : fullDrawing(level.stage, clamp01(level.growth));
 }
 
+// ─────────────────────────────────────────────────────────────── framing
+
+/** The box round some outlines. */
+function boxRound(paths: readonly string[]): Box {
+  const boxes = paths.map(pathBox);
+  const [x, y] = [Math.min(...boxes.map((b) => b.x)), Math.min(...boxes.map((b) => b.y))];
+  return { x, y, w: Math.max(...boxes.map((b) => b.x + b.w)) - x, h: Math.max(...boxes.map((b) => b.y + b.h)) - y };
+}
+
+/**
+ * The two crossed logs every stage burns on, where they lie in the box: the
+ * same at every stage, so whatever stands beside the fire lines up with them.
+ */
+export const FIRE_LOGS: Box = boxRound(
+  hearth(false)
+    .filter((p) => p.part !== 'coal')
+    .map((p) => p.d),
+);
+
+/** How far over a flame's tips its frame reaches, as a share of the flame's height: room for the tips as they flicker up. */
+const FLICKER_ROOM = 0.1;
+
+const frames = new Map<FireStage, Box>();
+
+/**
+ * The part of the box a stage of the fire takes up — its frame — for a
+ * screen that shows the fire big without the empty air above a young one:
+ * across, as far as its logs, flame, stones or sun reach either side of its
+ * root; up, from the foot of its hearth to over its tips as they flicker on
+ * the stage's last day, or to the top of its sun. The same all through a
+ * stage, so a fire a day bigger grows in its frame rather than moving it, and
+ * a fire growing into the stage fits it all the way. Sparks rising and the
+ * glow may reach past it, as light does.
+ */
+export function fireFrame(stage: FireStage): Box {
+  const known = frames.get(stage);
+  if (known) return known;
+  const d = fireDrawing({ stage, growth: 1 }, FIRE_VIEW.h);
+  const parts = boxRound([...d.back, ...d.front, ...d.drifts, ...d.tongues].map((p) => p.d));
+  const tips = d.tongues.length > 0 ? FIRE_ROOT[1] - d.flame.h * (1 + FLICKER_ROOM) : parts.y;
+  const top = Math.max(FIRE_VIEW.y, Math.floor(Math.min(parts.y, tips, d.halo ? d.halo.cy - d.halo.reach : parts.y)));
+  const foot = Math.min(FIRE_VIEW.y + FIRE_VIEW.h, Math.ceil(parts.y + parts.h));
+  const half = Math.ceil(Math.max(FIRE_ROOT[0] - parts.x, parts.x + parts.w - FIRE_ROOT[0], d.halo ? d.halo.reach : 0));
+  const frame = { x: FIRE_ROOT[0] - half, y: top, w: half * 2, h: foot - top };
+  frames.set(stage, frame);
+  return frame;
+}
+
+/** How tall to draw the whole fire (its `size`) for a stage's frame to fit in `w` by `h`. */
+export function fireSizeToFit(stage: FireStage, w: number, h: number): number {
+  const frame = fireFrame(stage);
+  return FIRE_VIEW.h * Math.min(w / frame.w, h / frame.h);
+}
+
 // ─────────────────────────────────────────────────────────────── growing
 
 /** Whether `from` is a smaller fire than `to`: an earlier stage, or the same stage less grown. */

@@ -6,7 +6,7 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 import { act, cleanup, screen } from '@testing-library/react';
 import { Animated } from 'react-native';
-import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, fireDrawing, type FireLevel, type FireStage } from '@kurda/shared';
+import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, FIRE_VIEW, fireDrawing, fireFrame, type FireLevel, type FireStage } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { Fire } from './Fire';
@@ -123,6 +123,29 @@ describe('the fire', () => {
       cleanup();
       vi.restoreAllMocks();
     }
+  });
+
+  it('takes up only its stage frame when framed, drawn as big as the whole would be, each part where it lies in it', async () => {
+    patchReactNativeWeb({ reduceMotion: true });
+    for (const stage of FIRE_STAGES) {
+      const frame = fireFrame(stage);
+      renderWithProviders(<Fire size={FIRE_VIEW.h} level={lvl(stage)} framed />);
+      await settle();
+      const fire = screen.getByTestId(stage === 'cold' ? 'fire-unlit' : 'fire-lit');
+      expect(parseFloat(fire.style.width), stage).toBeCloseTo(frame.w, 6);
+      expect(parseFloat(fire.style.height), stage).toBeCloseTo(frame.h, 6);
+      cleanup();
+    }
+    // each part laid out from the frame's corner, not the whole box's: the logs low in a spark's frame, not far below it
+    renderWithProviders(<Fire size={FIRE_VIEW.h} level={lvl('spark')} framed />);
+    await settle();
+    const tops = [...screen.getByTestId('fire-lit').children].map((layer) => parseFloat((layer as HTMLElement).style.top)).filter((top) => !Number.isNaN(top));
+    expect(Math.max(...tops)).toBeLessThan(fireFrame('spark').h);
+    cleanup();
+    // beside a number it is the light version's own box, framed or not
+    renderWithProviders(<Fire size={FIRE_SMALL} level={lvl('spark')} framed />);
+    await settle();
+    expect(screen.getByTestId('fire-lit-small').style.width).toBe(`${(FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h}px`);
   });
 
   it('stands still under Reduce Motion: the fire at its stage, but no clock runs and nothing rises', async () => {

@@ -7,6 +7,7 @@ import {
   FIRE_GROW,
   fireColours,
   fireDrawing,
+  fireFrame,
   fireGrowth,
   type FireBaseGroup,
   type FireBasePiece,
@@ -34,9 +35,12 @@ import './fire.css';
  * Given `from`, a smaller fire, it is drawn as that first and grows into
  * `level` as it appears (shared `fireGrowth`, after `FIRE_GROW.delayMs`), the
  * day it grew. `size` is its height; at `FIRE_SMALL` and under it is the
- * light version (the flame alone, gentler) for a row of text. Under reduced
- * motion, or `still`, it is the fire at `level` standing still. Decorative:
- * the words beside it say the streak.
+ * light version (the flame alone, gentler) for a row of text. `framed`, it
+ * takes up only its stage's part of the box (shared `fireFrame`), still drawn
+ * as big as `size` makes the whole, for a screen that shows it big without
+ * the empty air above a young fire. Under reduced motion, or `still`, it is
+ * the fire at `level` standing still. Decorative: the words beside it say the
+ * streak.
  *
  * Each colour is written for both schemes (`light-dark()`), so the fire
  * follows the page's scheme with nothing here knowing which is on; a browser
@@ -48,9 +52,11 @@ export function Fire({
   level,
   from,
   still: held = false,
+  framed = false,
   accent,
   className,
 }: {
+  /** how tall the whole fire's box is drawn, framed or not */
   size: number;
   /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
   level: FireLevel;
@@ -58,6 +64,8 @@ export function Fire({
   from?: FireLevel | null;
   /** drawn standing still, as under reduced motion */
   still?: boolean;
+  /** only its stage's frame laid out, the rest drawn over its edges */
+  framed?: boolean;
   accent?: string | null;
   className?: string;
 }): React.JSX.Element {
@@ -74,7 +82,9 @@ export function Fire({
   const growing = growth && grownFrom !== growth ? growth : null;
   const now = paint(`${id}a`, drawing, accent, still);
   const before = growing ? paint(`${id}b`, growing.from, accent, false) : null;
-  const { view, root } = drawing;
+  const root = drawing.root;
+  const view = framed && !drawing.small ? fireFrame(drawing.stage) : drawing.view;
+  const unit = size / drawing.view.h;
   const classes = ['fire', drawing.stage === 'cold' ? 'is-unlit' : 'is-lit', drawing.small ? 'is-small' : null, still ? 'is-still' : null, className]
     .filter(Boolean)
     .join(' ');
@@ -83,8 +93,8 @@ export function Fire({
     <svg
       className={classes}
       data-stage={drawing.stage}
-      width={(size * view.w) / view.h}
-      height={size}
+      width={view.w * unit}
+      height={view.h * unit}
       viewBox={`${view.x} ${view.y} ${view.w} ${view.h}`}
       aria-hidden="true"
       focusable="false"

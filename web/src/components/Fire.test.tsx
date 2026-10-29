@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
-import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, fireDrawing, type FireLevel, type FireStage } from '@kurda/shared';
+import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, FIRE_VIEW, fireDrawing, fireFrame, type FireLevel, type FireStage } from '@kurda/shared';
 import { Fire } from './Fire';
 
 /*
@@ -83,6 +83,22 @@ describe('the fire', () => {
     }
     // no streak yet: the grey flame, standing still
     expect(fire(<Fire size={20} level={lvl('cold')} />)).toHaveClass('is-small', 'is-unlit', 'is-still');
+  });
+
+  it('takes up only its stage frame when framed, drawn as big as the whole would be, and the same while it grows into it', () => {
+    for (const stage of FIRE_STAGES) {
+      const frame = fireFrame(stage);
+      const svg = fire(<Fire size={250} level={lvl(stage)} framed />);
+      expect(svg).toHaveAttribute('viewBox', `${frame.x} ${frame.y} ${frame.w} ${frame.h}`);
+      expect(Number(svg.getAttribute('width'))).toBeCloseTo(frame.w, 9);
+      expect(Number(svg.getAttribute('height'))).toBeCloseTo(frame.h, 9);
+    }
+    const growing = fire(<Fire size={125} level={lvl('campfire')} from={lvl('kindling', 0.8)} framed />);
+    const frame = fireFrame('campfire');
+    expect(growing).toHaveAttribute('viewBox', `${frame.x} ${frame.y} ${frame.w} ${frame.h}`);
+    expect(Number(growing.getAttribute('height'))).toBeCloseTo((frame.h * 125) / FIRE_VIEW.h, 9);
+    // beside a number it is the light version's own box, framed or not
+    expect(fire(<Fire size={FIRE_SMALL} level={lvl('spark')} framed />)).toHaveAttribute('viewBox', `${FIRE_SMALL_VIEW.x} ${FIRE_SMALL_VIEW.y} ${FIRE_SMALL_VIEW.w} ${FIRE_SMALL_VIEW.h}`);
   });
 
   it('stands still for a reader who asked for less motion: the fire at its stage, nothing rising off it', () => {
