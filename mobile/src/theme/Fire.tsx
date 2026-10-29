@@ -53,9 +53,9 @@ import { useTheme } from './ThemeProvider';
  * every growing part reads it. Under Reduce Motion it is simply `level`.
  *
  * `size` is its height in points; at `FIRE_SMALL` and under it is the light
- * version for beside a number: a bold round flame alone, breathing gently. `accent`
- * is an event theme's colour for the flame. Decorative: the words beside it
- * say the streak.
+ * version for beside a number: a bold round flame alone, breathing gently.
+ * `accent` is an event theme's colour for the flame. Decorative: the words
+ * beside it say the streak.
  */
 export function Fire({
   size,
