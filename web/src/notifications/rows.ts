@@ -9,7 +9,7 @@ import type { RailNotification } from '../social/useSocialRail';
  * reminder, news) is placed by the category it was filed under, and anything
  * else is a plain notice rather than a guess.
  */
-export type NoteKind = 'game' | 'gift' | 'badge' | 'league' | 'streak' | 'safety' | 'care' | 'friends' | 'notice';
+export type NoteKind = 'game' | 'gift' | 'badge' | 'league' | 'streak' | 'safety' | 'care' | 'friends' | 'group' | 'groupOut' | 'groupBan' | 'groupAsk' | 'notice';
 
 const BY_DATA: Record<string, NoteKind> = {
   play_invite: 'game',
@@ -23,6 +23,11 @@ const BY_DATA: Record<string, NoteKind> = {
   sanction_lifted: 'safety',
   appeal_decided: 'safety',
   caring_message: 'care',
+  group_removed: 'groupOut',
+  group_banned: 'groupBan',
+  group_request: 'groupAsk',
+  group_request_approved: 'group',
+  group_request_declined: 'group',
 };
 
 const BY_CATEGORY: Record<string, NoteKind> = {

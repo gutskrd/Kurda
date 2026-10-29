@@ -155,7 +155,7 @@ export function Messages(): React.JSX.Element {
 
         <section className="chat-thread-pane">
           {activeGroup ? (
-            <GroupThread key={activeGroup} groupId={activeGroup} />
+            <GroupThread key={activeGroup} groupId={activeGroup} openInfo={params.get('info') === 'requests'} />
           ) : activeId ? (
             <DmThread key={activeId} otherId={activeId} otherName={activeName} onSent={onDmSent} />
           ) : (
@@ -308,6 +308,8 @@ function Conversations({
   useRealtimeEvent('dm', onDm);
   useRealtimeEvent('dm_read', onDm);
   useRealtimeEvent('group_msg', onDm);
+  // a chat cleared for everyone has nothing unread left in it
+  useRealtimeEvent('group_chat_cleared', onDm);
 
   if (error && convos === null) return <ErrorState message={error} onRetry={() => void loadConvos()} />;
   if (convos === null) return <ConversationsSkeleton />;

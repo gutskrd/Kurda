@@ -24,7 +24,9 @@ export function groupMatches(group: Pick<DiscoverGroup, 'name' | 'description'>,
 /**
  * Groups to find and join: a list, each with its picture, its name, what it
  * is about and how many are in it, and one button at the end of the row —
- * Join, or Open for a group you are already in.
+ * Join, or Open for a group you are already in, or Banned for one you are
+ * banned from, which opens the group where the ban and asking to come back
+ * are shown.
  *
  * The server lists open groups only (an invite-only group is joined by being
  * invited), says which of them you are in (`joined`, else the ids you pass),
@@ -77,6 +79,9 @@ export function DiscoverGroups({
       setGroups((list) => (list ?? []).map((g) => (g.id === group.id ? { ...g, joined: true, memberCount: g.memberCount + 1 } : g)));
       announceGroupsChanged();
       onJoined(group);
+    } else if (res.error.code === 'GROUP_BANNED') {
+      // the list did not know: the row says so now, and opens where the ban is explained
+      setGroups((list) => (list ?? []).map((g) => (g.id === group.id ? { ...g, banned: true } : g)));
     } else setError(describeError(res.error, t));
   }
 
@@ -139,14 +144,14 @@ export function DiscoverGroups({
                     {g.privacy === 'invite' ? ` · ${t('groups.inviteGroup')}` : ''}
                   </span>
                 </span>
-                {joined ? (
+                {joined || g.banned ? (
                   <Link
                     to={`/app/messages?group=${g.id}`}
-                    className="gdisc-btn is-outline"
-                    aria-label={`${t('groups.openIt')}: ${g.name}`}
+                    className={`gdisc-btn is-outline${g.banned && !joined ? ' is-banned' : ''}`}
+                    aria-label={`${joined ? t('groups.openIt') : t('groups.discover.banned')}: ${g.name}`}
                     onClick={onOpen}
                   >
-                    {t('groups.openIt')}
+                    {joined ? t('groups.openIt') : t('groups.discover.banned')}
                   </Link>
                 ) : g.privacy === 'invite' ? null : (
                   <button

@@ -343,6 +343,12 @@
   line-height: 1.5;
   overflow-wrap: anywhere;
 }
+.ginfo-ask-body p {
+  margin: 0;
+}
+.ginfo-ask-body p + p {
+  margin-top: 6px;
+}
 .ginfo-ask-actions {
   display: flex;
   justify-content: flex-end;
@@ -464,4 +470,342 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+/* the thread's own ⋯, at the end of its bar: clearing the chat */
+.ghead-menu .msg-menu-btn {
+  width: 40px;
+  height: 40px;
+}
+.ghead-menu .msg-menu-list {
+  min-width: 228px;
+}
+
+/* ---- an empty chat: the group, where the chat stands, a hello to tap ----- */
+.gwelcome,
+.gout {
+  margin: auto;
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: var(--space-6) var(--space-2);
+  text-align: center;
+}
+.gwelcome .group-pic,
+.gout .group-pic {
+  margin-bottom: 6px;
+}
+.gwelcome-name,
+.gout-name {
+  margin: 0;
+  max-width: 100%;
+  font-family: var(--font-display);
+  font-size: var(--text-section);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.gwelcome-line {
+  margin: 0;
+  max-width: 32ch;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+}
+.gwelcome-say {
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+.gwelcome-say-label {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.gwelcome-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-2);
+}
+.gwelcome-chip {
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: var(--r-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface-2);
+  color: var(--ink);
+  font: inherit;
+  font-size: var(--text-body);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    border-color var(--dur-fast) ease;
+}
+/* Soranî in a face made for Arabic script, as a story's words are */
+.gwelcome-chip[lang='ckb'] {
+  font-family: 'Vazirmatn Variable', var(--font-sans);
+}
+.gwelcome-chip:hover:not(:disabled) {
+  background: var(--surface-3);
+  border-color: var(--ink-3);
+}
+.gwelcome-chip:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+.gwelcome-add {
+  margin-top: var(--space-4);
+  gap: 6px;
+}
+
+/* a chat cleared for everyone says so once, at the top of what is left */
+.gcleared {
+  align-self: center;
+  max-width: 100%;
+  margin: 4px 0;
+  padding: 5px 12px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--ink-2);
+  font-size: var(--text-caption);
+  font-weight: 600;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+
+/* ---- a group seen from outside: the way in, or where a ban stands -------- */
+.gout-meta {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.gstand {
+  width: 100%;
+  margin-top: var(--space-4);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+}
+.gstand-gone {
+  margin: 0;
+  font-family: inherit;
+  font-size: var(--text-body);
+  font-weight: 650;
+  outline: none;
+}
+.gstand-gone:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+  border-radius: var(--r-xs);
+}
+.gstand-title {
+  margin: 0;
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.45;
+}
+.gstand-gone + .gstand-title {
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.gstand-reason,
+.gstand-line {
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+.gstand-label {
+  color: var(--ink-3);
+}
+.gstand-act {
+  margin-top: var(--space-2);
+  min-height: 44px;
+}
+.gstand .msg {
+  margin: var(--space-2) 0 0;
+  width: 100%;
+}
+
+/* ---- the owner's and admins' lists: requests to come back, and who is banned */
+.gmod-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* a count, not a word: its own colours, and no capitals to shout in */
+.gmod-count {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  display: inline-grid;
+  place-items: center;
+  border-radius: var(--r-pill);
+  background: var(--primary);
+  color: var(--primary-ink);
+  font-size: var(--text-tab);
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
+}
+.gmod-list {
+  list-style: none;
+  margin: var(--space-2) 0 0;
+  padding: 0;
+}
+.gmod-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 var(--space-2);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--separator);
+}
+.gmod-row + .gmod-row {
+  padding-top: var(--space-2);
+}
+.gmod-row:last-child {
+  border-bottom: 0;
+}
+/* the note and the buttons line up under the name, past the face */
+.gmod-note,
+.gmod-quiet,
+.gmod-actions {
+  flex-basis: 100%;
+  margin: 0;
+  margin-inline-start: 52px;
+}
+.gmod-note {
+  flex-basis: calc(100% - 52px);
+  padding: 8px 12px;
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: var(--text-secondary);
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+  white-space: pre-line;
+}
+.gmod-quiet {
+  flex-basis: calc(100% - 52px);
+  margin-top: 6px;
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+.gmod-actions {
+  flex-basis: calc(100% - 52px);
+  display: flex;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+}
+.gmod-actions .btn,
+.gmod-unban {
+  min-height: 44px;
+}
+.gmod-unban {
+  flex: none;
+}
+.gmod-skel {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 8px 4px;
+}
+/* a narrow phone gives the words the whole row */
+@media (max-width: 380px) {
+  .gmod-note,
+  .gmod-quiet,
+  .gmod-actions {
+    flex-basis: 100%;
+    margin-inline-start: 0;
+  }
+  /* and a ban's Unban goes under its words rather than squeezing them */
+  .gmod-row.is-ban .ginfo-who {
+    flex-basis: 100%;
+  }
+  .gmod-row.is-ban .gmod-unban {
+    order: 1;
+    margin-top: var(--space-2);
+  }
+}
+/* what the last action did, clear of the dialog's close */
+.ginfo-done {
+  margin: 0;
+  margin-inline-end: 40px;
+}
+
+/* ---- banning, and asking to come back -------------------------------------- */
+.gban {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+.gban .report-heading {
+  margin-bottom: 0;
+}
+.gban .report-intro {
+  margin-top: calc(var(--space-2) - var(--space-4));
+}
+.gban .field {
+  margin: 0;
+}
+.gban .report-actions {
+  margin-top: 0;
+}
+.gban-reason {
+  min-height: 84px;
+  resize: vertical;
+  line-height: 1.45;
+}
+.gask-field {
+  margin-top: var(--space-4);
+}
+/* a choice with a switch at its end, the way Settings draws one */
+.gswitch {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-height: 48px;
+  cursor: pointer;
+}
+.gswitch .settings-switch-input {
+  order: 2;
+  margin-inline-start: auto;
+}
+.gswitch-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.gswitch-hint {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+}
+
+/* ---- adding friends -------------------------------------------------------- */
+.gadd-list {
+  margin-top: var(--space-4);
+}
+.gadd-who {
+  cursor: default;
+}
+.gadd-who:hover {
+  background: transparent;
+}
+
+/* in discovery, a group you are banned from: an outline that opens where the ban is explained */
+.gdisc-btn.is-banned {
+  color: var(--danger);
 }

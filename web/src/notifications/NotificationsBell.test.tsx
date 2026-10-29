@@ -284,6 +284,26 @@ describe('NotificationsBell', () => {
     expect(screen.getByText('Welcome to Çem League.')).toBeInTheDocument();
   });
 
+  it('says news about a group in the reader’s words, and opens the group', async () => {
+    signIn();
+    const group = (id: string, data: Note) => ({ id, category: 'friends', title: 'x', body: 'x', createdAt: now(), readAt: null, data: { groupId: 'g1', groupName: 'Amed', ...data } });
+    serve([
+      group('n1', { kind: 'group_removed', privacy: 'open' }),
+      group('n2', { kind: 'group_banned', duration: '7d', reason: null }),
+      group('n3', { kind: 'group_request', count: 2 }),
+      group('n4', { kind: 'group_request_approved', rejoined: true }),
+      group('n5', { kind: 'group_request_declined', closed: true }),
+    ]);
+    show();
+    await userEvent.click(await screen.findByRole('button', { name: /Notifications/ }));
+    expect(screen.getByRole('link', { name: 'You were removed from Amed' })).toHaveAttribute('href', '/app/messages?group=g1');
+    expect(screen.getByText('You can join again.')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'You were banned from Amed for a week' })).toHaveAttribute('href', '/app/messages?group=g1');
+    expect(screen.getByRole('link', { name: '2 people asked to rejoin Amed' })).toHaveAttribute('href', '/app/messages?group=g1&info=requests');
+    expect(screen.getByRole('link', { name: 'You’re back in Amed' })).toHaveAttribute('href', '/app/messages?group=g1');
+    expect(screen.getByRole('link', { name: 'Your request to rejoin Amed wasn’t accepted' })).toHaveAttribute('href', '/app/messages?group=g1');
+  });
+
   it('opens a caring message’s helpline in a new tab, and counts it as read', async () => {
     signIn();
     const posts = serve([
