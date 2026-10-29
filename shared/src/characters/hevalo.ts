@@ -58,7 +58,7 @@ const C = {
   hoofLight: '#8a6447',
   hoofDeep: '#4e3324',
   hindHoof: '#472e21',
-  shade: '#2a1608',
+  rim: '#ffe7bd',
 } as const;
 
 /** His face is drawn about this upright line, in the icon's measure; his eyes sit a hair to one side of it, as in the icon. */
@@ -222,20 +222,20 @@ function body(p: string, legs = true): string {
   );
 }
 
-/** Head and neck, leaning out of a window: from over the antlers to well under the sill, so a hop never lifts a cut edge into view. */
+/** Head and neck, put in at a window: from over the antlers to well under the sill, so a hop never lifts a cut edge into view. */
 export const NECK_BOX = { x: -15, y: -16, w: 540, h: 736 } as const;
 
 /** Where the window's sill crosses his neck, a little under his chin, before it widens into his chest. */
 export const NECK_SILL = 600;
 
-/** His body as far as the chest, his neck darkening as it goes down into the room behind the sill, as the room's own shade. */
+/** His body as far as the chest, the daylight outside the window behind him catching the edges of his neck as it comes in over the sill. */
 function neck(p: string): string {
-  const id = `${p}neckshade`;
+  const id = `${p}neckrim`;
   return (
     body(p, false) +
     part(
-      [linearAt(id, [[0, C.shade, 0], [1, C.shade, 0.36]], 0, NECK_SILL - 120, 0, NECK_SILL)],
-      [clipped(`${p}figure`, fill(`M-20,${NECK_SILL - 120}H530V${NECK_BOX.y + NECK_BOX.h}H-20z`, `url(#${id})`))],
+      [linearAt(id, [[0, C.rim, 0], [1, C.rim, 0.8]], 0, NECK_SILL - 190, 0, NECK_SILL - 70)],
+      [clipped(`${p}figure`, `<path d="${curve(CHEST)}" fill="none" stroke="url(#${id})" stroke-width="22"/>`)],
     )
   );
 }
