@@ -167,6 +167,29 @@ describe('the quests from Learn', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
+  it('list an earlier day’s unopened chest under today’s, and open it after today’s', async () => {
+    const earlier = { id: '2026-10-27:lessons', kind: 'lessons' as const, target: 2, progress: 2, chest: 'rare' as const, claimable: true, claimed: false };
+    const client = fakeClient({
+      'GET /me/quests': ok({ ...day, quests: day.quests.slice(0, 2), waiting: [earlier] }),
+      'POST /me/quests/q%3Astreak/claim': opening('q:streak', 12, 1252),
+      'POST /me/quests/2026-10-27%3Alessons/claim': opening('2026-10-27:lessons', 25, 1277),
+    });
+    testAuth.client = client;
+    renderWithProviders(<QuestsScreen place="learn" onDone={() => undefined} />);
+    expect(await screen.findByRole('heading', { name: 'Earlier' })).toBeTruthy();
+    expect(screen.getByLabelText('Finish 2 lessons: 2 of 2, Chest ready to open')).toBeTruthy();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Open chest' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Open the chest' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+    expect(await screen.findByRole('heading', { name: 'Rare chest' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'Open the chest' }));
+    expect(await screen.findByRole('heading', { name: '+25 Zêr' })).toBeTruthy();
+    expect(client.calls.filter((c) => c.method === 'POST').map((c) => c.path)).toEqual(['/me/quests/q%3Astreak/claim', '/me/quests/2026-10-27%3Alessons/claim']);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    expect(await screen.findByLabelText('Finish 2 lessons: 2 of 2, Chest opened')).toBeTruthy();
+  });
+
   it('go back to the list after the last chest, with it opened', async () => {
     testAuth.client = fakeClient({
       'GET /me/quests': ok({ ...day, quests: day.quests.slice(0, 2) }),

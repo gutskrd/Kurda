@@ -1,10 +1,11 @@
 /**
  * Today's quests as the phone shows them: the words for each kind, the colour
  * a chest takes by its tier, the rows a card lists — where each quest stands,
- * and where a finished session moved it from — and which chest opens next.
- * Pure, so it is tested without a screen.
+ * and where a finished session moved it from — the chests of earlier days
+ * still waiting, and which chest opens next. Pure, so it is tested without a
+ * screen.
  */
-import type { ChestTier, QuestDay, QuestKind, QuestStep, UnitTone } from '@kurda/shared';
+import type { ChestTier, Quest, QuestDay, QuestKind, QuestStep, UnitTone } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -41,6 +42,19 @@ export interface QuestRow {
 }
 
 /**
+ * The day as `GET /me/quests` answers it: with `waiting`, the earlier days'
+ * quests (the last week's) that are done and whose chests are not opened yet,
+ * newest first — a chest is never lost at midnight. An older server sends none.
+ */
+export type QuestDayRead = QuestDay & { waiting?: Quest[] };
+
+/** A quest as it stands, moved from where a session's step says it was (or not moved at all). */
+function rowOf(q: Quest, step?: QuestStep): QuestRow {
+  const to = Math.min(q.target, q.progress);
+  return { id: q.id, kind: q.kind, target: q.target, chest: q.chest, from: step ? Math.min(step.from, to) : to, to, claimable: q.claimable, claimed: q.claimed };
+}
+
+/**
  * The rows to show: today's quests as the server lists them, each moved from
  * where the session's step says it was. Without the list (it did not load),
  * the quests the session moved are all that is known, and all that is shown.
@@ -48,11 +62,12 @@ export interface QuestRow {
 export function questRows(day: QuestDay | null, steps: readonly QuestStep[] = []): QuestRow[] {
   const moved = new Map(steps.map((s) => [s.id, s]));
   if (!day) return steps.map((s) => ({ id: s.id, kind: s.kind, target: s.target, chest: s.chest, from: s.from, to: s.to, claimable: s.claimable, claimed: false }));
-  return day.quests.map((q) => {
-    const step = moved.get(q.id);
-    const to = Math.min(q.target, q.progress);
-    return { id: q.id, kind: q.kind, target: q.target, chest: q.chest, from: step ? Math.min(step.from, to) : to, to, claimable: q.claimable, claimed: q.claimed };
-  });
+  return day.quests.map((q) => rowOf(q, moved.get(q.id)));
+}
+
+/** The earlier days' quests whose chests still wait, as rows that do not move. */
+export function waitingRows(day: QuestDayRead | null): QuestRow[] {
+  return (day?.waiting ?? []).map((q) => rowOf(q));
 }
 
 /** Done just now: the session took it over its target. */

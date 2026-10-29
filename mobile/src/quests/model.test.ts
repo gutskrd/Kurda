@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { QuestDay, QuestStep } from '@kurda/shared';
-import { claimProblem, justDone, markOpened, nextChest, questRows } from './model';
+import { claimProblem, justDone, markOpened, nextChest, questRows, waitingRows } from './model';
 
 const day: QuestDay = {
   date: '2026-10-29',
@@ -36,6 +36,23 @@ describe('questRows', () => {
   it('never runs a bar backwards or past its end', () => {
     const over: QuestDay = { ...day, quests: [{ ...day.quests[1]!, progress: 60 }] };
     expect(questRows(over, [{ ...steps[1]!, from: 50 }])[0]).toMatchObject({ from: 40, to: 40 });
+  });
+});
+
+describe('waitingRows', () => {
+  it('lists the earlier days’ unopened chests as rows that do not move, and none from an older server', () => {
+    const earlier = { id: '2026-10-27:lessons', kind: 'lessons' as const, target: 2, progress: 2, chest: 'rare' as const, claimable: true, claimed: false };
+    expect(waitingRows({ ...day, waiting: [earlier] })).toEqual([
+      { id: '2026-10-27:lessons', kind: 'lessons', target: 2, chest: 'rare', from: 2, to: 2, claimable: true, claimed: false },
+    ]);
+    expect(waitingRows(day)).toEqual([]);
+    expect(waitingRows(null)).toEqual([]);
+  });
+
+  it('come after today’s in the order the chests are opened', () => {
+    const earlier = { id: '2026-10-27:lessons', kind: 'lessons' as const, target: 2, progress: 2, chest: 'rare' as const, claimable: true, claimed: false };
+    const all = [...questRows(day), ...waitingRows({ ...day, waiting: [earlier] })];
+    expect(nextChest(all, 'd:perfect')?.id).toBe('2026-10-27:lessons');
   });
 });
 

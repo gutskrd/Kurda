@@ -2543,6 +2543,7 @@ export type TranslationKey =
   | 'quests.month'
   | 'quests.openChest'
   | 'quests.later'
+  | 'quests.earlier'
   | 'quests.loadFailed'
   | 'quests.empty'
   | 'quests.card.summary'
@@ -5078,6 +5079,7 @@ const en: Catalog = {
   'quests.month': 'Quests done this month: {count}',
   'quests.openChest': 'Open chest',
   'quests.later': 'Later',
+  'quests.earlier': 'Earlier',
   'quests.loadFailed': 'Today’s quests didn’t load. Tap to try again.',
   'quests.empty': 'Today’s quests will be here soon.',
   'quests.card.summary': '{done} of {total} done',
@@ -7606,6 +7608,7 @@ const ku: Catalog = {
   'quests.month': 'Erkên vê mehê yên pêkhatî: {count}',
   'quests.openChest': 'Sindoqê veke',
   'quests.later': 'Paşê',
+  'quests.earlier': 'Berê',
   'quests.loadFailed': 'Erkên îro bar nebûn. Bitikîne û dîsa biceribîne.',
   'quests.empty': 'Erkên îro dê di demeke nêzîk de li vir bin.',
   'quests.card.summary': '{done} ji {total} qediyan',
@@ -10134,6 +10137,7 @@ const de: Catalog = {
   'quests.month': 'Aufgaben in diesem Monat geschafft: {count}',
   'quests.openChest': 'Truhe öffnen',
   'quests.later': 'Später',
+  'quests.earlier': 'Früher',
   'quests.loadFailed': 'Die heutigen Aufgaben wurden nicht geladen. Tippe, um es erneut zu versuchen.',
   'quests.empty': 'Die heutigen Aufgaben sind gleich da.',
   'quests.card.summary': '{done} von {total} geschafft',
@@ -12662,6 +12666,7 @@ const es: Catalog = {
   'quests.month': 'Misiones cumplidas este mes: {count}',
   'quests.openChest': 'Abrir cofre',
   'quests.later': 'Más tarde',
+  'quests.earlier': 'Anteriores',
   'quests.loadFailed': 'Las misiones de hoy no se cargaron. Toca para reintentar.',
   'quests.empty': 'Las misiones de hoy llegarán pronto.',
   'quests.card.summary': '{done} de {total} cumplidas',
@@ -15190,6 +15195,7 @@ const tr: Catalog = {
   'quests.month': 'Bu ay tamamlanan görevler: {count}',
   'quests.openChest': 'Sandığı aç',
   'quests.later': 'Sonra',
+  'quests.earlier': 'Önceki günler',
   'quests.loadFailed': 'Bugünün görevleri yüklenemedi. Tekrar denemek için dokun.',
   'quests.empty': 'Bugünün görevleri birazdan burada olacak.',
   'quests.card.summary': '{total} görevden {done} tanesi tamam',
@@ -17718,6 +17724,7 @@ const ar: Catalog = {
   'quests.month': 'المهام المنجزة هذا الشهر: {count}',
   'quests.openChest': 'افتح الصندوق',
   'quests.later': 'لاحقًا',
+  'quests.earlier': 'أيام سابقة',
   'quests.loadFailed': 'لم تُحمَّل مهام اليوم. اضغط للمحاولة مرة أخرى.',
   'quests.empty': 'ستصل مهام اليوم قريبًا.',
   'quests.card.summary': 'أُنجز {done} من {total}',
@@ -20246,6 +20253,7 @@ const fr: Catalog = {
   'quests.month': 'Quêtes accomplies ce mois-ci : {count}',
   'quests.openChest': 'Ouvrir le coffre',
   'quests.later': 'Plus tard',
+  'quests.earlier': 'Plus tôt',
   'quests.loadFailed': 'Les quêtes du jour n’ont pas pu se charger. Touche pour réessayer.',
   'quests.empty': 'Les quêtes du jour arrivent bientôt.',
   'quests.card.summary': '{done} sur {total} accomplies',
@@ -22774,6 +22782,7 @@ const nl: Catalog = {
   'quests.month': 'Opdrachten voltooid deze maand: {count}',
   'quests.openChest': 'Kist openen',
   'quests.later': 'Later',
+  'quests.earlier': 'Eerder',
   'quests.loadFailed': 'De opdrachten van vandaag zijn niet geladen. Tik om het opnieuw te proberen.',
   'quests.empty': 'De opdrachten van vandaag komen er zo aan.',
   'quests.card.summary': '{done} van {total} voltooid',
@@ -25303,6 +25312,7 @@ const ckb: Catalog = {
   'quests.month': 'ئەرکە جێبەجێکراوەکانی ئەم مانگە: {count}',
   'quests.openChest': 'سندوقەکە بکەرەوە',
   'quests.later': 'دواتر',
+  'quests.earlier': 'پێشتر',
   'quests.loadFailed': 'ئەرکەکانی ئەمڕۆ بار نەبوون. دەست لێ بدە بۆ هەوڵدانەوە.',
   'quests.empty': 'ئەرکەکانی ئەمڕۆ بەم زووانە لێرە دەبن.',
   'quests.card.summary': '{done} لە {total} تەواو بوون',

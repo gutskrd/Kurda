@@ -26,6 +26,7 @@ import { awayFrom, centredOffset, firstCourse } from '../coursemap/path';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { WordOfDayCard } from '../dictionary/WordOfDayCard';
 import { DailyRewardCard } from '../rewards/DailyRewardCard';
+import { QuestsCard } from '../quests/QuestsCard';
 import { EventBanner } from '../events/EventBanner';
 import { LeagueLine } from '../leagues/LeagueLine';
 import type { CourseEntry } from '../coursemap/node';
@@ -45,7 +46,8 @@ import { fraction, nextStep, type NextStep } from './next';
  * today.
  *
  * Top to bottom in the order of what somebody opening it wants: the one next
- * step (a card with one button), the practice tools in one row, and then the
+ * step (a card with one button), the practice tools two by two with today's
+ * quests slim under them (a chest waiting shows there), and then the
  * course as a lesson path — on the first screen, not under a stack of cards —
  * for anyone who wants to choose for themselves. The week's league and the
  * day's extras come after the path, under "More for today". Continuing a
@@ -302,6 +304,8 @@ export function LessonsView({
               onPress={() => navigation.navigate('Words')}
             />
           </View>
+          {/* today's three quests, slim, under the tools: a chest waiting shows here */}
+          <QuestsCard />
         </View>
 
         {courses && courses.length > 0 ? (

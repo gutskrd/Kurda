@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { QuestDay, QuestStep } from '@kurda/shared';
+import type { QuestStep } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { formatNumber } from '../i18n/format';
@@ -9,14 +9,14 @@ import { ScreenHeader } from '../navigation/ScreenHeader';
 import { useScreenBottomInset, useScreenTopInset } from '../navigation/tabBarLayout';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
-import { display } from '../theme/fonts';
+import { display, sectionLabel } from '../theme/fonts';
 import { ClayButton, ErrorRetry, GradientBackground } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ChestScreen } from './ChestScreen';
-import { justDone, markOpened, nextChest, questRows, type QuestRow } from './model';
+import { justDone, markOpened, nextChest, questRows, waitingRows, type QuestDayRead, type QuestRow } from './model';
 import { QuestRows } from './QuestRows';
 
 /**
@@ -32,6 +32,10 @@ import { QuestRows } from './QuestRows';
  * From Learn (`place: 'learn'`) it is the quests as they stand, with a way
  * back and "Open chest" while one waits.
  *
+ * Under today's three, in either place, "Earlier" lists the quests of the
+ * last week that were done and whose chests were never opened: a chest is
+ * not lost at midnight.
+ *
  * "Open chest" opens each chest waiting, one after another (ChestScreen):
  * Continue on one goes to the next, and after the last back to where the
  * learner was going — the lesson's way on, or this list. The list is read
@@ -45,7 +49,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   const dir = useDirection();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
-  const [day, setDay] = useState<QuestDay | null>(null);
+  const [day, setDay] = useState<QuestDayRead | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [opened, setOpened] = useState<string[]>([]);
@@ -54,7 +58,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   useEffect(() => {
     let live = true;
     setStatus('loading');
-    void client.get<QuestDay>('/me/quests').then((res) => {
+    void client.get<QuestDayRead>('/me/quests').then((res) => {
       if (!live) return;
       if (res.ok) setDay(res.data);
       setStatus(res.ok ? 'ready' : 'failed');
@@ -65,10 +69,13 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   }, [client, attempt]);
 
   const rows = useMemo(() => opened.reduce(markOpened, questRows(day, place === 'lesson' ? steps : [])), [day, steps, place, opened]);
+  const earlier = useMemo(() => opened.reduce(markOpened, waitingRows(day)), [day, opened]);
+  // the chests open in the order they are listed: today's, then the earlier days'
+  const all = useMemo(() => [...rows, ...earlier], [rows, earlier]);
   // after a lesson the list waits for its answer; if none comes, the steps are what is known
   const shown = status === 'loading' ? null : rows;
   const finishedNow = place === 'lesson' && (shown ?? []).some(justDone);
-  const waiting = nextChest(rows);
+  const waiting = nextChest(all);
 
   useEffect(() => {
     if (finishedNow) AccessibilityInfo.announceForAccessibility?.(t('quests.justDone'));
@@ -78,14 +85,14 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
     (open: boolean) => {
       const was = chest;
       if (!was) return;
-      const after = open ? markOpened(rows, was.id) : rows;
+      const after = open ? markOpened(all, was.id) : all;
       if (open) setOpened((ids) => [...ids, was.id]);
       // a chest that stayed shut ends the run of them: it waits on Learn
       const next = open ? nextChest(after, was.id) : null;
       setChest(next);
       if (!next && place === 'lesson') onDone();
     },
-    [chest, rows, place, onDone],
+    [chest, all, place, onDone],
   );
 
   if (chest) return <ChestScreen key={chest.id} questId={chest.id} tier={chest.chest} onDone={chestDone} />;
@@ -95,11 +102,19 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
       <ErrorRetry onRetry={() => setAttempt((n) => n + 1)} />
     ) : shown === null ? (
       <RowsSkeleton />
-    ) : shown.length === 0 ? (
+    ) : shown.length === 0 && earlier.length === 0 ? (
       <EmptyState title={t('quests.empty')} />
     ) : (
       <>
         <QuestRows rows={shown} play={place === 'lesson'} />
+        {earlier.length > 0 ? (
+          <>
+            <Text style={[styles.earlier, dir.text, { color: colors.textSecondary }]} accessibilityRole="header">
+              {t('quests.earlier')}
+            </Text>
+            <QuestRows rows={earlier} />
+          </>
+        ) : null}
         {day ? (
           <View style={[styles.month, { flexDirection: dir.row, borderColor: colors.separator }]}>
             <Icon name="calendar" size={20} color={colors.goldText} />
@@ -175,6 +190,7 @@ const styles = StyleSheet.create({
   title: { ...display(typography.sizes.xxl), textAlign: 'center', marginBottom: spacing.sm },
   month: { alignItems: 'center', gap: spacing.sm + 4, borderWidth: 1.5, borderRadius: radii.lg, padding: spacing.md },
   monthText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },
+  earlier: { ...sectionLabel, marginTop: spacing.sm },
   skeletons: { gap: spacing.sm + 4 },
   bar: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.xs },
   later: { minHeight: MIN_TOUCH_TARGET, alignItems: 'center', justifyContent: 'center' },
