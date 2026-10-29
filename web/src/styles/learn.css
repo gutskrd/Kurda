@@ -894,11 +894,6 @@ html:has(.lesson-bar) {
   letter-spacing: -0.01em;
   text-align: center;
 }
-/* the flame in the sun's own gold; the words in the gold that reads as text */
-.lesson-run-moment-words svg,
-.lesson-run-label svg {
-  color: var(--gold);
-}
 
 /*
  * a conversation (Conversation.tsx): the lines as speech bubbles, the first
@@ -1249,7 +1244,7 @@ html:has(.lesson-bar) {
   font-weight: 500;
   color: var(--ink-3);
 }
-/* "5 in a row", at the end of the verdict: a gold flame, a pill */
+/* "5 in a row", at the end of the verdict: the streak's fire, a pill */
 .lesson-run {
   display: inline-flex;
   align-items: center;

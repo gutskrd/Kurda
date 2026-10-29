@@ -4,7 +4,8 @@ import { LinkButton } from '../components/Button';
 import { ErrorState, EmptyState } from '../components/states';
 import { CourseGridSkeleton, CourseMapSkeleton } from '../components/skeletons';
 import { Skeleton } from '../components/Skeleton';
-import { DictionaryIcon, FlameIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { DictionaryIcon } from '../components/icons';
 import { useAuth } from '../auth/AuthProvider';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import { courseProgress, dialectName } from '../learn/map';
@@ -125,8 +126,8 @@ function TodayStrip(): React.JSX.Element {
       ) : (
         <>
           {typeof streak === 'number' && (
-            <p className={`learn-strip-item learn-strip-streak${streak > 0 ? ' is-on' : ''}`}>
-              <FlameIcon size={20} weight={streak > 0 ? 'fill' : 'regular'} />
+            <p className="learn-strip-item learn-strip-streak">
+              <Fire size={22} lit={streak > 0} />
               <span aria-hidden="true">{number(streak)}</span>
               <span className="sr-only">{streak > 0 ? t('learn.today.streak', { count: streak }) : t('learn.today.noStreak')}</span>
             </p>

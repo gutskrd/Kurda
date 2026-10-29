@@ -154,7 +154,6 @@
   min-height: 240px;
 }
 .end-flame .celebrate-art-inner {
-  filter: drop-shadow(0 0 34px rgba(255, 196, 92, 0.7));
   animation: flame-grow 760ms var(--ease-spring) both;
 }
 .end-flame .celebrate-glow {
@@ -223,9 +222,18 @@
   text-align: center;
 }
 .end-week-hevalo {
+  position: relative;
+  isolation: isolate;
   display: grid;
   justify-items: center;
   gap: 10px;
+}
+/* the streak's fire burning just behind Hevalo, on the side the reading starts from */
+.end-week-fire {
+  position: absolute;
+  bottom: 4px;
+  inset-inline-start: calc(50% - 104px);
+  z-index: -1;
 }
 /* what Hevalo says, in a bubble whose tail points down at him */
 .end-bubble {

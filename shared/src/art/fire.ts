@@ -189,7 +189,7 @@ export interface FireWisp {
 
 export const FIRE_WISPS: readonly FireWisp[] = [
   {
-    d: 'M56 25C53.5 25 52.5 22.5 53.2 20C54 17 55.5 14.5 56 11C57.5 14.5 59 17 59.2 20C59.5 22.5 58.5 25 56 25Z',
+    d: 'M56 25C54 25 53 23 53.6 20.5C54.3 17.5 55.6 15 56 10C57 15 58.4 17.5 58.6 20.5C59 23 58 25 56 25Z',
     origin: [56, 26],
     motion: {
       kind: 'rise',
@@ -204,7 +204,7 @@ export const FIRE_WISPS: readonly FireWisp[] = [
     },
   },
   {
-    d: 'M96 41C93.5 41 92.5 38.5 93.2 36C94 33 95.5 30.5 96 27C97.5 30.5 99 33 99.2 36C99.5 38.5 98.5 41 96 41Z',
+    d: 'M96 41C94 41 93 39 93.6 36.5C94.3 33.5 95.6 31 96 26C97 31 98.4 33.5 98.6 36.5C99 39 98 41 96 41Z',
     origin: [96, 42],
     motion: {
       kind: 'rise',
@@ -261,6 +261,12 @@ export const FIRE_GLOW = {
   cy: 90,
   rx: 74,
   ry: 78,
+  /** how it fades from its middle out: offset, and the share of the glow's strength there */
+  fade: [
+    [0, 1],
+    [0.5, 0.45],
+    [1, 0],
+  ] as const,
   origin: [60, 90] as const,
   motion: {
     kind: 'loop',

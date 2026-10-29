@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { RUN_SHOWN_FROM } from '@kurda/shared';
-import { FlameIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
 import { useT } from '../i18n/I18nProvider';
 
 /**
@@ -13,7 +13,7 @@ export function RunLabel({ run }: { run: number }): React.JSX.Element | null {
   if (run < RUN_SHOWN_FROM) return null;
   return (
     <span className="lesson-run-label">
-      <FlameIcon size={14} weight="fill" />
+      <Fire size={16} />
       {t('lesson.run.label', { count: run })}
     </span>
   );
@@ -59,7 +59,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
   return (
     <div className="lesson-run-moment" aria-hidden="true" onClick={() => finish.current()}>
       <span className="lesson-run-moment-words">
-        <FlameIcon size={44} weight="fill" />
+        <Fire size={88} />
         {t('lesson.run.milestone', { count })}
       </span>
     </div>

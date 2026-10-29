@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   BURST,
   CELEBRATE_MS,
@@ -14,6 +14,7 @@ import {
   type WeekDayState,
 } from '@kurda/shared';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { Fire } from '../components/Fire';
 import { CheckIcon } from '../components/icons';
 import { CelebrationArt } from '../ranks/Celebration';
 import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
@@ -26,42 +27,18 @@ import type { Streak } from './types';
  * The streak kept today, in two moments after the results — only when
  * today's first lesson is what kept it, and only once the learner taps on.
  *
- * First the flame (`StreakFlame`): the whole screen warm, the flame growing
- * out of a glow with sparks thrown off it, and the day number rolling up from
+ * First the flame (`StreakFlame`): the whole screen warm, the streak's fire
+ * growing out of a glow with sparks thrown off it, and the day number rolling up from
  * yesterday's to today's, heard and felt as it turns. It moves on by itself
  * after the app's one celebration (about a second and a half), or at once on
  * a click, Enter, Space or Escape.
  *
- * Then the week (`StreakWeek`): Hevalo saying a warm word for the day it is —
+ * Then the week (`StreakWeek`): Hevalo by the fire, saying a warm word for the day it is —
  * a first day, a comeback, a new best, or simply another day — the number and
  * "day streak", the seven days of this week with what happened on each, and
  * how far the freezes have got. Nothing counts down, warns or asks for
  * anything: a streak is a number that went up.
  */
-
-/** A flame in the sun's colours: an orange body with a curl at its tip, a yellow heart. */
-export function FlameArt({ size = 120 }: { size?: number }): React.JSX.Element {
-  const id = `flame${useId().replace(/[^A-Za-z0-9]/g, '')}`;
-  return (
-    <svg className="flame-art" width={size} height={size * 1.2} viewBox="0 0 100 120" aria-hidden="true" focusable="false">
-      <defs>
-        <linearGradient id={`${id}-outer`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#ffb648" />
-          <stop offset="1" stopColor="#f27a1a" />
-        </linearGradient>
-        <linearGradient id={`${id}-inner`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stopColor="#fff1a8" />
-          <stop offset="1" stopColor="#ffc93c" />
-        </linearGradient>
-      </defs>
-      <path
-        d="M54 4 C58 22 84 38 88 66 C92 94 74 116 50 116 C26 116 10 98 10 74 C10 56 20 44 30 34 C30 46 34 54 42 58 C38 40 42 20 54 4 Z"
-        fill={`url(#${id}-outer)`}
-      />
-      <path d="M52 56 C56 68 70 76 70 92 C70 104 62 112 50 112 C38 112 30 104 30 92 C30 82 36 76 42 70 C43 76 46 80 50 80 C48 72 49 63 52 56 Z" fill={`url(#${id}-inner)`} />
-    </svg>
-  );
-}
 
 /**
  * A number turning from one value to the next as a counter does: each digit
@@ -132,7 +109,7 @@ export function StreakFlame({ streak, onDone }: { streak: Streak; onDone: () => 
     <section className="end-flame" aria-labelledby="end-flame-title" onClick={() => done.current()}>
       <div className={`celebrate end-flame-art ${moment.playing ? 'is-playing' : 'is-done'}`}>
         <CelebrationArt flecks={BURST.tier} seed={streak.current * 13 + 5} reach={170}>
-          <FlameArt size={150} />
+          <Fire size={190} />
         </CelebrationArt>
       </div>
       <h2 className="end-flame-day" id="end-flame-title" tabIndex={-1} ref={heading}>
@@ -185,6 +162,7 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
         <p className="end-bubble" id="end-week-cheer">
           {t(CHEERS[streakMood(streak)])}
         </p>
+        <Fire size={120} className="end-week-fire" />
         <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} decorative reaction="cheer" />
       </div>
       <h2 className="end-week-count" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">

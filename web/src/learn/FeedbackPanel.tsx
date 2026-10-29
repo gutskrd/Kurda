@@ -15,7 +15,8 @@ import { ClipSpeaker } from '../characters/ClipSpeaker';
 import type { SpokenClip } from '../characters/clips';
 import { SpeakingCharacter, type CharacterReaction } from '../characters/SpeakingCharacter';
 import { Button } from '../components/Button';
-import { BookIcon, CheckIcon, CloseIcon, FlameIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { BookIcon, CheckIcon, CloseIcon } from '../components/icons';
 import { play } from '../lib/sound';
 import { autoplayOn } from '../lib/sounds';
 import { useT } from '../i18n/I18nProvider';
@@ -202,7 +203,7 @@ export function FeedbackPanel({
             <span className="lesson-verdict-words">{headline}</span>
             {shownRun && (
               <span className={`lesson-run${shownRun.milestone ? ' is-milestone' : ''}`}>
-                <FlameIcon size={14} weight="fill" />
+                <Fire size={16} />
                 {t('lesson.inARow', { count: shownRun.count })}
               </span>
             )}
