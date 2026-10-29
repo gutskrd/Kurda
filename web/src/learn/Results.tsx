@@ -5,14 +5,20 @@ import {
   NO_LESSON_MOMENTS,
   RESULTS_TIMING,
   celebrationPlan,
+  justDone,
   practisableMistakes,
+  questRows,
   resultsActions,
   resultsGrade,
+  resultsOutcome,
   toLeagueTier,
+  withOpened,
   type DeliveredExercise,
   type LessonMoments,
+  type QuestRow,
   type ResultsAction,
   type ResultsGrade,
+  type ResultsOutcome,
 } from '@kurda/shared';
 import { SpeakingCharacter } from '../characters/SpeakingCharacter';
 import { Button } from '../components/Button';
@@ -25,7 +31,6 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { ChestScreen } from '../quests/ChestScreen';
 import { QuestList } from '../quests/QuestList';
-import { justDone, questRows, withOpened, type QuestRow } from '../quests/rows';
 import { useQuestDay } from '../quests/useQuestDay';
 import { ActionBar, BarRow } from './ActionBar';
 import { kurdishText } from './map';
@@ -44,7 +49,7 @@ const GRADE: Record<ResultsGrade, MessageKey> = {
 };
 
 /** The warm line under the title, by how it went. */
-const SUBTITLE: Record<'perfect' | 'great' | 'done', MessageKey> = {
+const SUBTITLE: Record<ResultsOutcome, MessageKey> = {
   perfect: 'lesson.results.sub.perfect',
   great: 'lesson.results.sub.great',
   done: 'lesson.results.sub.done',
@@ -157,7 +162,7 @@ export function Results({
   const tier = toLeagueTier(league?.tier);
   const actions = resultsActions({ next: next !== null, practise: practise.length > 0, goalDone });
   const grade = resultsGrade(results.accuracy);
-  const outcome = moments.perfect ? 'perfect' : grade === 'excellent' ? 'great' : 'done';
+  const outcome = resultsOutcome({ perfect: moments.perfect === true, accuracy: results.accuracy });
 
   // today's quests, read in full while the results are looked at, for the screen after them
   const steps = results.quests ?? [];

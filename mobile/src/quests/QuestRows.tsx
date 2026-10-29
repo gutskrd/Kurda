@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, StyleSheet, Text, View } from 'react-native';
+import { justDone, type QuestRow } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { GOLD_INK } from '../coursemap/path';
 import { haptic } from '../feedback/haptics';
@@ -12,7 +13,7 @@ import { duration } from '../theme/motion';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ChestArt } from './ChestArt';
-import { QUEST_WORDS, justDone, type QuestRow } from './model';
+import { QUEST_WORDS } from './model';
 
 /** When the first bar starts to fill, and how far behind it each one after starts. */
 const FILL_AT_MS = 350;

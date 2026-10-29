@@ -3,16 +3,16 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { jsonResponse, renderApp } from '../test/utils';
 import { QuestsCard } from './QuestsCard';
-import type { QuestDayRead } from './useQuestDay';
+import type { QuestDay } from '@kurda/shared';
 
 /*
  * Today's quests on Learn: the slim card while the day is read, once it is,
  * when it cannot be, and the sheet it opens, with a chest opened from there.
  */
 
-const day: QuestDayRead = {
+const day: QuestDay = {
   date: '2026-10-29',
-  monthDone: 3,
+  monthDone: 3, waiting: [],
   quests: [
     { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
     { id: 'q2', kind: 'lessons', target: 3, progress: 1, chest: 'rare', claimable: false, claimed: false },

@@ -1,9 +1,8 @@
-import type { QuestKind } from '@kurda/shared';
 import { useCountUp } from '../lib/motion';
 import { useLocale, useT } from '../i18n/I18nProvider';
 import type { MessageKey } from '../i18n/en';
 import { Chest } from './Chest';
-import { justDone, type QuestRow } from './rows';
+import { justDone, type QuestKind, type QuestRow } from '@kurda/shared';
 import './quests.css';
 
 /** What each kind of quest asks, with the server's target as its number. */

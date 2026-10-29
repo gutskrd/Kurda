@@ -73,3 +73,62 @@ export interface ChestOpening {
   /** the learner's Zêr afterwards */
   balance: number;
 }
+
+/** One quest as a list shows it: where its bar stands (`to`), and where it starts from (`from`). */
+export interface QuestRow {
+  id: string;
+  kind: QuestKind;
+  target: number;
+  chest: ChestTier;
+  /** where the bar starts: before the session just finished on the results, where it stands anywhere else */
+  from: number;
+  to: number;
+  claimable: boolean;
+  claimed: boolean;
+}
+
+const onBar = (n: number, target: number): number => Math.max(0, Math.min(target, n));
+
+/**
+ * Today's quests as rows, as the server lists them. On the results, a quest the
+ * session moved (`steps`) starts where it stood before the session and fills to
+ * where it stands now; the others stand where they are. When the day could not
+ * be read, the steps alone show what the session did. A bar never runs
+ * backwards or past its end.
+ */
+export function questRows(day: { quests: readonly Quest[] } | null, steps: readonly QuestStep[] = []): QuestRow[] {
+  if (!day) {
+    return steps.map((s) => {
+      const to = onBar(s.to, s.target);
+      return { id: s.id, kind: s.kind, target: s.target, chest: s.chest, from: Math.min(onBar(s.from, s.target), to), to, claimable: s.claimable, claimed: false };
+    });
+  }
+  const moved = new Map(steps.map((s) => [s.id, s]));
+  return day.quests.map((q) => {
+    const step = moved.get(q.id);
+    const to = onBar(q.progress, q.target);
+    return { id: q.id, kind: q.kind, target: q.target, chest: q.chest, from: step ? Math.min(onBar(step.from, q.target), to) : to, to, claimable: q.claimable, claimed: q.claimed };
+  });
+}
+
+/** The earlier days' quests whose chests still wait, as rows that do not move; none from an older server that sends no `waiting`. */
+export function waitingRows(day: { waiting?: readonly Quest[] } | null): QuestRow[] {
+  return questRows({ quests: day?.waiting ?? [] });
+}
+
+/** Finished by the session just done: its bar reaches the end now and did not before. */
+export function justDone(row: QuestRow): boolean {
+  return row.from < row.target && row.to >= row.target;
+}
+
+/** The rows with the chests opened since they were read marked open. */
+export function withOpened(rows: readonly QuestRow[], opened: Iterable<string>): QuestRow[] {
+  const ids = new Set(opened);
+  return ids.size === 0 ? [...rows] : rows.map((r) => (ids.has(r.id) ? { ...r, claimable: false, claimed: true } : r));
+}
+
+/** The next chest to open after `after` (or the first), in the order the rows list them, coming round to the top. */
+export function nextChest(rows: readonly QuestRow[], after: string | null = null): QuestRow | null {
+  const start = after === null ? 0 : rows.findIndex((r) => r.id === after) + 1;
+  return rows.slice(start).find((r) => r.claimable) ?? rows.slice(0, start).find((r) => r.claimable && r.id !== after) ?? null;
+}

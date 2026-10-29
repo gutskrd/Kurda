@@ -6,6 +6,7 @@ import {
   isSoraniDialect,
   resultsActions,
   resultsGrade,
+  resultsOutcome,
   sittingClock,
   sittingPace,
   type AfterResults,
@@ -181,7 +182,8 @@ export function LessonResults({
     });
   const grade = resultsGrade(results.accuracy);
   const gradeWord = t(`lesson.results.grade.${grade}` as TranslationKey);
-  const title = moments.perfect ? t('lesson.results.perfect') : grade === 'practice' ? t('lesson.complete') : t('lesson.results.great');
+  const outcome = resultsOutcome({ perfect: moments.perfect === true, accuracy: results.accuracy });
+  const title = t(outcome === 'perfect' ? 'lesson.results.perfect' : outcome === 'great' ? 'lesson.results.great' : 'lesson.complete');
   const stronger: TranslationKey = !dialect
     ? 'lesson.results.stronger'
     : isSoraniDialect(dialect)

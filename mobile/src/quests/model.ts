@@ -1,11 +1,10 @@
 /**
- * Today's quests as the phone shows them: the words for each kind, the colour
- * a chest takes by its tier, the rows a card lists — where each quest stands,
- * and where a finished session moved it from — the chests of earlier days
- * still waiting, and which chest opens next. Pure, so it is tested without a
- * screen.
+ * Today's quests as the phone words them: what each kind asks, a chest's name
+ * and the colour its screen takes, and why a chest did not open. The rows
+ * themselves — where each quest stands and which chest opens next — are the
+ * shared rules (`questRows`, `nextChest`), as the website lists them.
  */
-import type { ChestTier, Quest, QuestDay, QuestKind, QuestStep, UnitTone } from '@kurda/shared';
+import type { ChestTier, QuestKind, UnitTone } from '@kurda/shared';
 import type { ApiError } from '../api/types';
 import type { TranslationKey } from '../i18n/translations';
 
@@ -28,56 +27,6 @@ export const CHEST_NAME: Record<ChestTier, TranslationKey> = {
 
 /** The unit colour a chest's screen is painted in (coursemap/path.ts `TONES`): green, blue, violet, by how much it holds. */
 export const CHEST_TONE: Record<ChestTier, UnitTone> = { common: 'meadow', rare: 'river', epic: 'dusk' };
-
-/** One quest on a card: where it stands (`to`), and where it stood before the session just finished (`from`). */
-export interface QuestRow {
-  id: string;
-  kind: QuestKind;
-  target: number;
-  chest: ChestTier;
-  from: number;
-  to: number;
-  claimable: boolean;
-  claimed: boolean;
-}
-
-/** A quest as it stands, moved from where a session's step says it was (or not moved at all). */
-function rowOf(q: Quest, step?: QuestStep): QuestRow {
-  const to = Math.min(q.target, q.progress);
-  return { id: q.id, kind: q.kind, target: q.target, chest: q.chest, from: step ? Math.min(step.from, to) : to, to, claimable: q.claimable, claimed: q.claimed };
-}
-
-/**
- * The rows to show: today's quests as the server lists them, each moved from
- * where the session's step says it was. Without the list (it did not load),
- * the quests the session moved are all that is known, and all that is shown.
- */
-export function questRows(day: QuestDay | null, steps: readonly QuestStep[] = []): QuestRow[] {
-  const moved = new Map(steps.map((s) => [s.id, s]));
-  if (!day) return steps.map((s) => ({ id: s.id, kind: s.kind, target: s.target, chest: s.chest, from: s.from, to: s.to, claimable: s.claimable, claimed: false }));
-  return day.quests.map((q) => rowOf(q, moved.get(q.id)));
-}
-
-/** The earlier days' quests whose chests still wait, as rows that do not move (an older server sends none). */
-export function waitingRows(day: QuestDay | null): QuestRow[] {
-  return (day?.waiting ?? []).map((q) => rowOf(q));
-}
-
-/** Done just now: the session took it over its target. */
-export function justDone(row: QuestRow): boolean {
-  return row.from < row.target && row.to >= row.target;
-}
-
-/** The next chest to open after `after` (or the first), in the order the card lists them. */
-export function nextChest(rows: readonly QuestRow[], after: string | null = null): QuestRow | null {
-  const start = after === null ? 0 : rows.findIndex((r) => r.id === after) + 1;
-  return rows.slice(start).find((r) => r.claimable) ?? rows.slice(0, start).find((r) => r.claimable && r.id !== after) ?? null;
-}
-
-/** The rows once a chest is open: claimed, and no longer waiting. */
-export function markOpened(rows: readonly QuestRow[], id: string): QuestRow[] {
-  return rows.map((r) => (r.id === id ? { ...r, claimable: false, claimed: true } : r));
-}
 
 /**
  * Why a chest did not open, in the words the chest's screen uses: offline

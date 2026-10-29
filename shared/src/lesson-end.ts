@@ -4,6 +4,19 @@
  * streak was kept, and which moments follow the results.
  */
 
+import { resultsGrade } from './lesson-moments.js';
+
+/**
+ * What the results' title says: a perfect lesson, a great one (right the first
+ * time often enough that the grade is not `practice`), or simply done.
+ */
+export type ResultsOutcome = 'perfect' | 'great' | 'done';
+
+export function resultsOutcome({ perfect, accuracy }: { perfect: boolean; accuracy: number }): ResultsOutcome {
+  if (perfect) return 'perfect';
+  return resultsGrade(accuracy) === 'practice' ? 'done' : 'great';
+}
+
 /** A sitting's time as minutes and whole seconds, for an m:ss clock. */
 export function sittingClock(ms: number): { minutes: number; seconds: number } {
   const total = Math.max(0, Math.floor(ms / 1000));

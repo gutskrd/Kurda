@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { QuestDay, QuestStep } from '@kurda/shared';
+import { justDone, nextChest, questRows, waitingRows, withOpened, type QuestDay, type QuestRow, type QuestStep } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { formatNumber } from '../i18n/format';
@@ -16,7 +16,6 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ChestScreen } from './ChestScreen';
-import { justDone, markOpened, nextChest, questRows, waitingRows, type QuestRow } from './model';
 import { QuestRows } from './QuestRows';
 
 /**
@@ -68,8 +67,8 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
     };
   }, [client, attempt]);
 
-  const rows = useMemo(() => opened.reduce(markOpened, questRows(day, place === 'lesson' ? steps : [])), [day, steps, place, opened]);
-  const earlier = useMemo(() => opened.reduce(markOpened, waitingRows(day)), [day, opened]);
+  const rows = useMemo(() => withOpened(questRows(day, place === 'lesson' ? steps : []), opened), [day, steps, place, opened]);
+  const earlier = useMemo(() => withOpened(waitingRows(day), opened), [day, opened]);
   // the chests open in the order they are listed: today's, then the earlier days'
   const all = useMemo(() => [...rows, ...earlier], [rows, earlier]);
   // after a lesson the list waits for its answer; if none comes, the steps are what is known
@@ -85,7 +84,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
     (open: boolean) => {
       const was = chest;
       if (!was) return;
-      const after = open ? markOpened(all, was.id) : all;
+      const after = open ? withOpened(all, [was.id]) : all;
       if (open) setOpened((ids) => [...ids, was.id]);
       // a chest that stayed shut ends the run of them: it waits on Learn
       const next = open ? nextChest(after, was.id) : null;

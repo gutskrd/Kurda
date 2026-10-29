@@ -7,7 +7,7 @@ import { useLocale, useT } from '../i18n/I18nProvider';
 import { Chest } from './Chest';
 import { ChestScreen } from './ChestScreen';
 import { QuestList } from './QuestList';
-import { earlierRows, questRows, withOpened } from './rows';
+import { questRows, waitingRows, withOpened } from '@kurda/shared';
 import { useQuestDay } from './useQuestDay';
 import './quests.css';
 
@@ -54,7 +54,7 @@ export function QuestsCard(): React.JSX.Element {
   }
 
   const rows = withOpened(questRows(day), opened);
-  const earlier = withOpened(earlierRows(day), opened);
+  const earlier = withOpened(waitingRows(day), opened);
   if (rows.length === 0 && earlier.length === 0) {
     return (
       <section className="quests-card is-quiet" aria-labelledby="quests-card-title">

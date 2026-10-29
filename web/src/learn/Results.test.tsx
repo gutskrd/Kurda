@@ -3,7 +3,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { NO_LESSON_MOMENTS, type LessonMoments, type QuestStep } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
-import type { QuestDayRead } from '../quests/useQuestDay';
+import type { QuestDay } from '@kurda/shared';
 import { Results } from './Results';
 import type { SessionResults } from './types';
 
@@ -148,9 +148,9 @@ describe('after the results', () => {
     { id: 'q1', kind: 'streak', target: 1, chest: 'common', from: 0, to: 1, claimable: true },
     { id: 'q2', kind: 'lessons', target: 2, chest: 'rare', from: 0, to: 1, claimable: false },
   ];
-  const day: QuestDayRead = {
+  const day: QuestDay = {
     date: '2026-10-29',
-    monthDone: 7,
+    monthDone: 7, waiting: [],
     quests: [
       { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
       { id: 'q2', kind: 'lessons', target: 2, progress: 1, chest: 'rare', claimable: false, claimed: false },
@@ -194,7 +194,7 @@ describe('after the results', () => {
 
   it('moves on with Enter from anywhere without a use of its own for it, and the flame with Escape rather than leaving', async () => {
     show({}, { moments: kept });
-    await screen.findByRole('heading', { name: 'Lesson finished' });
+    await screen.findByRole('heading', { name: 'Great work!' });
     await userEvent.keyboard('{Enter}');
     expect(await screen.findByRole('heading', { name: '4-day streak' })).toBeInTheDocument();
     await userEvent.keyboard('{Escape}');

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { afterResults, sittingClock, sittingPace, streakMood, streakSpeech } from './lesson-end.js';
+import { afterResults, resultsOutcome, sittingClock, sittingPace, streakMood, streakSpeech } from './lesson-end.js';
 
 describe('sittingClock', () => {
   it('is minutes and whole seconds', () => {
@@ -59,5 +59,14 @@ describe('afterResults', () => {
     expect(afterResults({ streakKept: false, questsMoved: true })).toEqual(['quests']);
     expect(afterResults({ streakKept: true, questsMoved: false })).toEqual(['streak']);
     expect(afterResults({ streakKept: false, questsMoved: false })).toEqual([]);
+  });
+});
+
+describe('resultsOutcome', () => {
+  it('is perfect when nothing was missed, great unless the grade asks for practice, else done', () => {
+    expect(resultsOutcome({ perfect: true, accuracy: 1 })).toBe('perfect');
+    expect(resultsOutcome({ perfect: false, accuracy: 0.95 })).toBe('great');
+    expect(resultsOutcome({ perfect: false, accuracy: 0.75 })).toBe('great');
+    expect(resultsOutcome({ perfect: false, accuracy: 0.4 })).toBe('done');
   });
 });

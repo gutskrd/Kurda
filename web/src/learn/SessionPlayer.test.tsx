@@ -213,7 +213,7 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     await next();
 
     // the results: XP, first-try accuracy with a kind word, the time, and the mistake with its answer
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
     // the lesson's own header has gone: the results have the screen
     expect(screen.queryByRole('progressbar', { name: 'Progress' })).not.toBeInTheDocument();
     expect(screen.getByText('Solid')).toBeInTheDocument();
@@ -347,7 +347,7 @@ describe('listening', () => {
     expect(await screen.findByText('Write this in Kurdish')).toBeInTheDocument();
     await answerTyped('sêv');
     await next();
-    await screen.findByRole('heading', { name: 'Lesson finished' });
+    await screen.findByRole('heading', { name: 'Great work!' });
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
     // not a mistake, and out of the score: the results say so beside it
@@ -980,7 +980,7 @@ describe('leaving and coming back', () => {
       await answerTyped('x');
       await next();
     }
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
     expect(sent('retry')).toHaveLength(0);
   });
 });
@@ -1041,7 +1041,7 @@ describe('when the server says no', () => {
     await next();
     expect(await screen.findByText('Second try')).toBeInTheDocument();
     await answerTyped('sêv');
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
   });
 });
 

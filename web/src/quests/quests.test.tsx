@@ -1,22 +1,21 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { QuestStep } from '@kurda/shared';
+import { questRows, type QuestStep } from '@kurda/shared';
 import { jsonResponse, renderApp } from '../test/utils';
 import { ChestScreen, type ChestToOpen } from './ChestScreen';
 import { QuestList } from './QuestList';
-import { earlierRows, justDone, questRows, withOpened } from './rows';
-import type { QuestDayRead } from './useQuestDay';
+import type { QuestDay } from '@kurda/shared';
 
 /*
- * Daily quests: the rows a session's steps and the day make, their bars, and a
- * chest opened over the whole screen — opened, already opened, not yet done,
- * and a request that never arrived.
+ * Daily quests: their bars as the list shows them (the rows themselves are the
+ * shared rules, tested there), and a chest opened over the whole screen —
+ * opened, already opened, not yet done, and a request that never arrived.
  */
 
-const day: QuestDayRead = {
+const day: QuestDay = {
   date: '2026-10-29',
-  monthDone: 3,
+  monthDone: 3, waiting: [],
   quests: [
     { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
     { id: 'q2', kind: 'accuracy', target: 2, progress: 1, chest: 'rare', claimable: false, claimed: false },
@@ -27,36 +26,6 @@ const steps: QuestStep[] = [
   { id: 'q1', kind: 'streak', target: 1, chest: 'common', from: 0, to: 1, claimable: true },
   { id: 'q2', kind: 'accuracy', target: 2, chest: 'rare', from: 0, to: 1, claimable: false },
 ];
-
-describe('the rows', () => {
-  it('start the quests a session moved where they stood before it, and the others where they are', () => {
-    const rows = questRows(day, steps);
-    expect(rows.map((r) => [r.id, r.from, r.to])).toEqual([
-      ['q1', 0, 1],
-      ['q2', 0, 1],
-      ['q3', 6, 6],
-    ]);
-    expect(rows.filter(justDone).map((r) => r.id)).toEqual(['q1']);
-  });
-
-  it('are the steps alone when the day could not be read, never past their target', () => {
-    const rows = questRows(null, [{ ...steps[0]!, from: 0, to: 3 }]);
-    expect(rows).toEqual([{ id: 'q1', kind: 'streak', target: 1, chest: 'common', from: 0, to: 1, claimable: true, claimed: false }]);
-  });
-
-  it('keep the chests of earlier days waiting, and none from an older server that does not send them', () => {
-    const waiting = { id: 'old', kind: 'xp' as const, target: 40, progress: 40, chest: 'rare' as const, claimable: true, claimed: false };
-    expect(earlierRows({ ...day, waiting: [waiting] })).toEqual([{ id: 'old', kind: 'xp', target: 40, chest: 'rare', from: 40, to: 40, claimable: true, claimed: false }]);
-    expect(earlierRows(day)).toEqual([]);
-    expect(earlierRows(null)).toEqual([]);
-  });
-
-  it('mark a chest opened since the day was read', () => {
-    const rows = withOpened(questRows(day), new Set(['q1']));
-    expect(rows[0]).toMatchObject({ claimable: false, claimed: true });
-    expect(rows[1]).toMatchObject({ claimable: false, claimed: false });
-  });
-});
 
 describe('the list', () => {
   it('says each quest in words with its target, how far its bar has got, and what its chest is waiting for', () => {

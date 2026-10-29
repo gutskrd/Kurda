@@ -4,10 +4,12 @@ import {
   CELEBRATE_MS,
   STREAK_DAY_TIMING,
   freezeLine,
+  streakMood,
   streakWeek,
   weekStartsOn,
   wordIn,
   wordSet,
+  type StreakMood,
   type WeekDay,
   type WeekDayState,
 } from '@kurda/shared';
@@ -148,19 +150,12 @@ export function StreakFlame({ streak, onDone }: { streak: Streak; onDone: () => 
   );
 }
 
-/** Hevalo's word for the day: a first day, a comeback after a break, a new best, or another day kept. */
-type Cheer = 'first' | 'back' | 'best' | 'steady';
-
-export function streakCheer(streak: Streak): Cheer {
-  if (streak.current <= 1) return streak.longest > 1 || (streak.daysLearned ?? 0) > 1 ? 'back' : 'first';
-  return streak.current >= streak.longest ? 'best' : 'steady';
-}
-
-const CHEERS: Record<Cheer, MessageKey> = {
-  first: 'lesson.streak.say.first',
-  back: 'lesson.streak.say.back',
+/** Hevalo's word for the day (`streakMood`): a first day, a comeback after a break, a new best, or another day kept. */
+const CHEERS: Record<StreakMood, MessageKey> = {
+  start: 'lesson.streak.say.first',
+  comeback: 'lesson.streak.say.back',
   best: 'lesson.streak.say.best',
-  steady: 'lesson.streak.say.steady',
+  ordinary: 'lesson.streak.say.steady',
 };
 
 const DAY_WORDS: Record<WeekDayState, MessageKey> = {
@@ -188,7 +183,7 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
     <section className="end-week" aria-labelledby="end-week-title">
       <div className="end-week-hevalo">
         <p className="end-bubble" id="end-week-cheer">
-          {t(CHEERS[streakCheer(streak)])}
+          {t(CHEERS[streakMood(streak)])}
         </p>
         <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} decorative reaction="cheer" />
       </div>

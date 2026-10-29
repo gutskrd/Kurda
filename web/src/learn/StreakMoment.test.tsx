@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { preloadCatalogue } from '../i18n/catalogues';
-import { StreakFlame, StreakWeek, streakCheer } from './StreakMoment';
+import { StreakFlame, StreakWeek } from './StreakMoment';
 import type { Streak } from './types';
 
 /*
@@ -104,17 +104,6 @@ describe('the week', () => {
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     // and the heading takes it along, for whoever lands on it
     expect(screen.getByRole('heading', { name: '4-day streak' })).toHaveAccessibleDescription('Another day learned. See you again tomorrow!');
-  });
-});
-
-describe('the word for the day', () => {
-  it('greets a first day, a comeback, a new best and any other day each in its own way', () => {
-    expect(streakCheer({ current: 1, longest: 1, daysLearned: 1 })).toBe('first');
-    expect(streakCheer({ current: 1, longest: 1 })).toBe('first');
-    expect(streakCheer({ current: 1, longest: 6 })).toBe('back');
-    expect(streakCheer({ current: 1, longest: 1, daysLearned: 9 })).toBe('back');
-    expect(streakCheer({ current: 12, longest: 12 })).toBe('best');
-    expect(streakCheer({ current: 4, longest: 30 })).toBe('steady');
   });
 });
 
