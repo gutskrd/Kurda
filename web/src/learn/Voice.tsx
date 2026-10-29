@@ -53,17 +53,20 @@ export function ExerciseVoice({
   clips,
   verdict = null,
   height,
+  share,
   children,
 }: {
   clips: readonly SpokenClip[];
   verdict?: 'right' | 'wrong' | null;
   /** a stage this tall whatever the window, for an exercise with more to show under it (`STAGE.card`) */
   height?: number;
+  /** the least share of the stage's width the character takes (`CharacterStage`) */
+  share?: number;
   children?: React.ReactNode;
 }): React.JSX.Element {
   if (clips.length === 0) return <>{children}</>;
   return (
-    <CharacterStage clips={clips} height={height} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
+    <CharacterStage clips={clips} height={height} share={share} reaction={verdict === 'right' ? 'cheer' : verdict === 'wrong' ? 'hmm' : null}>
       {children}
     </CharacterStage>
   );

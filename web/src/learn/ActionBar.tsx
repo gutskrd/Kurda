@@ -49,7 +49,7 @@ export function ActionBar({ tone = null, children }: { tone?: SheetTone | null; 
  * Check, Continue, or the results' next step — the same size and in the same
  * place each time (`.lesson-bar-go`).
  */
-export function BarRow({ start, children }: { start?: React.ReactNode; children: React.ReactNode }): React.JSX.Element {
+export function BarRow({ start, children }: { start?: React.ReactNode; children?: React.ReactNode }): React.JSX.Element {
   return (
     <div className="lesson-bar-row">
       <div className="lesson-bar-start">{start}</div>
