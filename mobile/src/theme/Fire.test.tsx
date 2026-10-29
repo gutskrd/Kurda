@@ -89,6 +89,8 @@ describe('the fire', () => {
       expect(fire.querySelectorAll('path[fill*="aw"]'), stage).toHaveLength(drawing.wisps.length);
       expect(fire.querySelector('path[fill$="rays)"]') !== null, stage).toBe(stage === 'newroz');
       expect(fire.querySelector('path[fill$="stone)"]') !== null, stage).toBe(stage === 'blaze' || stage === 'newroz');
+      // its glow round it, and the same light pooled on the ground
+      expect(fire.querySelectorAll('ellipse'), stage).toHaveLength(2);
       expect(seen, stage).toEqual({ started: 1, stopped: 0 });
       unmount();
       expect(seen.stopped, stage).toBe(1);
@@ -106,6 +108,8 @@ describe('the fire', () => {
     expect(fire.querySelectorAll('path[fill$="char)"]').length).toBeGreaterThan(0);
     expect(fire.querySelectorAll('circle[fill$="cinder)"]')).toHaveLength(1);
     expect(fire.querySelectorAll('linearGradient[id$="d0"], linearGradient[id$="d1"]')).toHaveLength(2);
+    // no glow, nothing lit on the ground
+    expect(fire.querySelectorAll('ellipse')).toHaveLength(0);
     expect(seen.started).toBe(1);
   });
 
