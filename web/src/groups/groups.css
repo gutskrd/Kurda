@@ -731,6 +731,14 @@
     flex-basis: 100%;
     margin-inline-start: 0;
   }
+  /* and a ban's Unban goes under its words rather than squeezing them */
+  .gmod-row.is-ban .ginfo-who {
+    flex-basis: 100%;
+  }
+  .gmod-row.is-ban .gmod-unban {
+    order: 1;
+    margin-top: var(--space-2);
+  }
 }
 /* what the last action did, clear of the dialog's close */
 .ginfo-done {
