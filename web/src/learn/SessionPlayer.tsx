@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useReducer, useRef, useState } from 'react';
+import { useCallback, useEffect, useId, useLayoutEffect, useReducer, useRef, useState } from 'react';
 // a Soranî lesson's letters in a face made for Arabic script (fetched only when used)
 import '@fontsource-variable/vazirmatn';
 import { Link, useNavigate } from 'react-router-dom';
@@ -323,6 +323,10 @@ export function SessionPlayer({
   const ready = answering && readyStep === state.index;
 
   useEffect(() => writeReasked(sessionId, state.reasked), [sessionId, state.reasked]);
+  // each exercise opens at its top, its headline in view, wherever the last one was scrolled to
+  useLayoutEffect(() => {
+    if (window.scrollY > 0) window.scrollTo({ top: 0 });
+  }, [state.index]);
   // leaving mid-sentence should not leave the sentence playing
   useEffect(() => () => stop(), []);
 

@@ -251,6 +251,15 @@ html:has(.lesson-bar) {
   display: grid;
   gap: 20px;
 }
+/* a short screen keeps the answer in view: a little less air between the parts */
+@media (max-height: 700px) {
+  .lesson-top {
+    margin-bottom: 18px;
+  }
+  .lesson-exercise {
+    gap: 14px;
+  }
+}
 /* what to do, in big bold type: the first thing read on every exercise */
 .lesson-ask {
   margin: 0;
@@ -633,6 +642,10 @@ html:has(.lesson-bar) {
 .character-stage-side .lesson-bubble {
   justify-self: stretch;
 }
+/* and a word's meanings opened from it lie over the answer below, not under it */
+.lesson-exercise > .character-stage {
+  z-index: 1;
+}
 
 /* a prompt word the course knows: dotted under, a tap away from what it means */
 .lesson-word-wrap {
@@ -787,6 +800,11 @@ html:has(.lesson-bar) {
 .lesson-tiles {
   display: grid;
   gap: 28px;
+}
+@media (max-height: 700px) {
+  .lesson-tiles {
+    gap: 18px;
+  }
 }
 .lesson-answer-line {
   /* a tile with its lip, and the gap under it: each ruled line sits just under a row of tiles */

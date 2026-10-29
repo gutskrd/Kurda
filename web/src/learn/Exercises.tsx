@@ -90,10 +90,11 @@ export function Prompt({ text }: { text: string | undefined }): React.JSX.Elemen
 
 /**
  * A stage beside a speech bubble: a card tall (`STAGE.card`), shorter on a
- * phone so the character is narrower and the bubble has room, and the least
- * share of its width the character keeps — the bubble has the rest.
+ * phone so the character is narrower and the bubble has room, and shorter
+ * still on a short screen so the answer stays in view; and the least share of
+ * its width the character keeps — the bubble has the rest.
  */
-const BUBBLE_STAGE = { phone: 220, share: 0.36 } as const;
+const BUBBLE_STAGE = { phone: 220, short: 170, share: 0.36 } as const;
 
 /**
  * Whoever says an exercise's recordings, on a stage that leaves room beside
@@ -102,8 +103,10 @@ const BUBBLE_STAGE = { phone: 220, share: 0.36 } as const;
  */
 function Scene({ exercise, feedback, children }: { exercise: DeliveredExercise; feedback: Feedback | null; children: React.ReactNode }): React.JSX.Element {
   const phone = useMediaQuery('(max-width: 480px)');
+  const short = useMediaQuery('(max-height: 700px)');
+  const height = short ? BUBBLE_STAGE.short : phone ? BUBBLE_STAGE.phone : STAGE.card;
   return (
-    <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)} height={phone ? BUBBLE_STAGE.phone : STAGE.card} share={BUBBLE_STAGE.share}>
+    <ExerciseVoice clips={exerciseClips(exercise)} verdict={verdictOf(feedback)} height={height} share={BUBBLE_STAGE.share}>
       {children}
     </ExerciseVoice>
   );
