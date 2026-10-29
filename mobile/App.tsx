@@ -49,6 +49,7 @@ import { DictionaryScreen } from './src/screens/DictionaryScreen';
 import { AlphabetScreen } from './src/alphabet/AlphabetScreen';
 import { WordSetScreen } from './src/words/WordSetScreen';
 import { WordsScreen } from './src/words/WordsScreen';
+import { QuestsScreen } from './src/quests/QuestsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { LessonPlayerScreen } from './src/lesson/LessonPlayerScreen';
 import { PracticeScreen } from './src/practice/PracticeScreen';
@@ -526,6 +527,10 @@ function SignedInRoot() {
       </RootStack.Screen>
       <RootStack.Screen name="Words" options={{ presentation: 'card' }}>
         {({ navigation }) => <WordsScreen onExit={() => navigation.goBack()} />}
+      </RootStack.Screen>
+      {/* over Learn, as something looked at and closed: a chest opened in it takes the whole screen */}
+      <RootStack.Screen name="Quests" options={{ presentation: 'fullScreenModal' }}>
+        {({ navigation }) => <QuestsScreen place="learn" onDone={() => navigation.goBack()} />}
       </RootStack.Screen>
       <RootStack.Screen name="WordSet" options={{ presentation: 'card' }}>
         {/* a link to a set this version does not have opens the list of sets instead */}

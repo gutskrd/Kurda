@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { feedbackKind, nextLaunch, praiseFor, practisableMistakes, typedHint, type ResumeMemory, type TypedHint } from '@kurda/shared';
+import { feedbackKind, nextLaunch, pairKey, praiseFor, practisableMistakes, typedHint, type ResumeMemory, type TypedHint } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
 import { GrammarTips } from '../grammar/GrammarTips';
@@ -22,6 +22,7 @@ import { ListeningExercise } from './components/ListeningExercise';
 import { MatchPairsExercise } from './components/MatchPairsExercise';
 import { MultipleChoiceExercise } from './components/MultipleChoiceExercise';
 import { ProgressBar } from './components/ProgressBar';
+import { RunLabel, RunMoment } from './components/RunCount';
 import { SpeakingExercise } from './components/SpeakingExercise';
 import { WritingExercise } from './components/WritingExercise';
 import { TranslateExercise } from './components/TranslateExercise';
@@ -210,6 +211,8 @@ export function SessionPlayer({
   // the last Kurdish praise said, so the next right answer is told something else
   const praised = useRef<string | null>(null);
   const [praise, setPraise] = useState<string | null>(null);
+  // a run's milestone, held on the screen between this exercise and the next
+  const [celebrating, setCelebrating] = useState<number | null>(null);
   useQuietInvites(true);
 
   const [choice, setChoice] = useState<number | null>(null);
@@ -234,6 +237,17 @@ export function SessionPlayer({
   const [completeAttempt, setCompleteAttempt] = useState(0);
 
   const ex = currentExercise(state);
+
+  // this sitting, for the results' time: from the first exercise shown to the last answer (a resumed lesson counts only this time)
+  const shownAt = useRef<number | null>(null);
+  const [sitting, setSitting] = useState<{ ms: number; answers: number } | null>(null);
+  useEffect(() => {
+    if (ex && shownAt.current === null) shownAt.current = Date.now();
+    if (state.status === 'finished' && shownAt.current !== null) {
+      const from = shownAt.current;
+      setSitting((was) => was ?? { ms: Date.now() - from, answers: answers.current });
+    }
+  }, [ex, state.status]);
 
   // what a finished lesson is compared with (moments.ts): the level, the
   // streak, today's goal and the league as they stood when it opened
@@ -435,6 +449,21 @@ export function SessionPlayer({
     }
   }, [queue, client, view.sessionId, paths, check, given, ex]);
 
+  // pairs answered as they are made (`pairOf`): the last one made sends the answer itself, once, with no Check
+  const answersItself = ex?.type === 'match_pairs' && pairKey(ex.lefts ?? [], ex.rights ?? [], ex.pairOf) !== null;
+  const sentItself = useRef<number | null>(null);
+  useEffect(() => {
+    if (!answersItself || !canCheck || state.status !== 'answering' || sentItself.current === state.index) return;
+    sentItself.current = state.index;
+    void check();
+  }, [answersItself, canCheck, state.status, state.index, check]);
+
+  /** On from a verdict — by way of a run's milestone, when it reached one. */
+  const goOn = (): void => {
+    if (reacting.milestone !== null && celebrating === null) setCelebrating(reacting.milestone);
+    else dispatch({ type: 'CONTINUE' });
+  };
+
   /*
    * The ✕ before anything is answered just goes. After that it asks once,
    * saying how far the lesson has come and that nothing is lost — the answers
@@ -462,6 +491,8 @@ export function SessionPlayer({
           next={next}
           goalDone={goalDone}
           practise={practisableMistakes(results.mistakes ?? [], state.exercises)}
+          dialect={view.dialect}
+          sitting={sitting}
           onDone={onExit}
           onNext={onNext}
           onPractise={onPractise}
@@ -489,17 +520,19 @@ export function SessionPlayer({
   }
 
   /*
-   * Somebody on screen already reacts to the verdict when the exercise has its
-   * own character on a stage (a listening clip's, a speaking model's, the
-   * question's, a conversation's) — or the banner's own, beside "Hear it".
-   * Otherwise Hevalo comes in: on the first answer, at every miss (curious,
-   * never sad) and at a run's milestone — not at every right answer, so the
-   * moment keeps its value. A spoken answer is the learner's own rating, and
-   * is left to them.
+   * Somebody on screen already reacts to the verdict when the exercise has a
+   * character of its own: whoever asks a question, a translation or a
+   * listening clip from beside its speech bubble (Hevalo, when nobody says
+   * it), a speaking model's on its stage, a conversation's — or the banner's
+   * own, beside "Hear it". Otherwise Hevalo comes in: on the first answer, at
+   * every miss (curious, never sad) and at a run's milestone — not at every
+   * right answer, so the moment keeps its value. A spoken answer is the
+   * learner's own rating, and is left to them.
    */
   const staged =
-    (ex?.type === 'listening' && knownVoice(ex.audioVoice) !== null) ||
-    ((ex?.type === 'speaking' || ex?.type === 'multiple_choice') && !!ex.modelAudioUrl && knownVoice(ex.modelAudioVoice) !== null) ||
+    ex?.type === 'listening' ||
+    ((ex?.type === 'multiple_choice' || ex?.type === 'translate') && !!ex.prompt) ||
+    (ex?.type === 'speaking' && !!ex.modelAudioUrl && knownVoice(ex.modelAudioVoice) !== null) ||
     (ex?.type === 'conversation' && conversationCast(ex.speakers ?? []) !== null);
   const fb = state.feedback;
   const standIn: CharacterReaction | null =
@@ -516,6 +549,8 @@ export function SessionPlayer({
     fb && typed && fb.verdict !== 'correct' && fb.given !== undefined && fb.correction
       ? hintWords(typedHint(fb.given, fb.correction, ex?.dialect ?? view.dialect), t)
       : null;
+  // a run of right answers long enough to be named, and to warm the bar
+  const running = inARow >= RUN_SHOWN_FROM;
   const putOffLink =
     (ex?.type === 'listening' || ex?.type === 'speaking') && state.status === 'answering'
       ? { label: t(ex.type === 'listening' ? 'lesson.listen.skip' : 'lesson.speak.skip'), onPress: () => putOff(ex.type as PutAwayType) }
@@ -532,10 +567,12 @@ export function SessionPlayer({
             accessibilityLabel={t('lesson.quit')}
             style={({ pressed }) => [styles.headerButton, pressed && styles.pressed]}
           >
-            <Icon name="close" size={24} color={colors.textSecondary} />
+            <Icon name="close" size={26} color={colors.textSecondary} />
           </Pressable>
           <View style={styles.progressWrap}>
-            <ProgressBar value={progress(state)} warm={inARow >= RUN_SHOWN_FROM} />
+            {/* a run of right answers, named from the third over the bar it warms: the chime has been climbing, and this says why */}
+            {running ? <RunLabel count={inARow} end={dir.row === 'row-reverse'} /> : null}
+            <ProgressBar value={progress(state)} warm={running} />
           </View>
           {view.grammarMd ? (
             <Pressable
@@ -590,7 +627,9 @@ export function SessionPlayer({
           />
         ) : null}
         {ex?.type === 'translate' ? (
+          // a fresh one for each step, so the tiles laid for one are not left on the next one's line
           <TranslateExercise
+            key={state.index}
             exercise={ex}
             text={text}
             onChangeText={setText}
@@ -636,7 +675,9 @@ export function SessionPlayer({
           />
         ) : null}
         {ex?.type === 'match_pairs' ? (
+          // a fresh one for each step, so a card picked or a pair still flashing does not follow into the next
           <MatchPairsExercise
+            key={state.index}
             exercise={ex}
             state={match}
             onChange={setMatch}
@@ -661,8 +702,7 @@ export function SessionPlayer({
         ) : (
           <FeedbackFooter
             feedback={state.feedback}
-            inARow={inARow}
-            milestone={reacting.milestone}
+            answersItself={answersItself}
             staged={staged}
             standIn={standIn}
             dialect={ex?.dialect ?? view.dialect}
@@ -684,9 +724,19 @@ export function SessionPlayer({
             canCheck={canCheck}
             submitting={submitting}
             onCheck={check}
-            onContinue={() => dispatch({ type: 'CONTINUE' })}
+            onContinue={goOn}
           />
         )}
+        {celebrating !== null ? (
+          // a run's milestone, over the lesson for a moment between this exercise and the next
+          <RunMoment
+            count={celebrating}
+            onDone={() => {
+              setCelebrating(null);
+              dispatch({ type: 'CONTINUE' });
+            }}
+          />
+        ) : null}
       </KeyboardAvoidingView>
     </GradientBackground>
   );
@@ -809,6 +859,8 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
+    // over a run's milestone, which covers the rest of the lesson
+    zIndex: 2,
     gap: spacing.md,
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.xl,

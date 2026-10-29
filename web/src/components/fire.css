@@ -1,0 +1,86 @@
+/*
+ * The streak's fire (components/Fire.tsx). Every moving part runs one of two
+ * keyframes with its own four poses, period and phase, set on it from the
+ * shared drawing (`art/fire.ts`): a loop eases through its poses and back, a
+ * rise runs straight up through them and starts again unseen. The stops here
+ * are the drawing's `FIRE_LOOP_STOPS` and `FIRE_RISE_STOPS`; the loop's curve
+ * is the sine ease the phone samples. Only transform and opacity change, each
+ * about the part's own root in the drawing's units.
+ */
+.fire {
+  display: inline-block;
+  flex: none;
+  overflow: visible;
+  vertical-align: middle;
+}
+
+.fire-part {
+  transform-box: view-box;
+  animation-duration: var(--fire-period);
+  animation-delay: var(--fire-delay);
+  animation-iteration-count: infinite;
+  animation-fill-mode: both;
+}
+
+.fire-loop {
+  animation-name: fire-loop;
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
+}
+
+.fire-rise {
+  animation-name: fire-rise;
+  animation-timing-function: linear;
+}
+
+@keyframes fire-loop {
+  0%,
+  100% {
+    transform: var(--fire-k0);
+    opacity: var(--fire-o0);
+  }
+  25% {
+    transform: var(--fire-k1);
+    opacity: var(--fire-o1);
+  }
+  50% {
+    transform: var(--fire-k2);
+    opacity: var(--fire-o2);
+  }
+  75% {
+    transform: var(--fire-k3);
+    opacity: var(--fire-o3);
+  }
+}
+
+@keyframes fire-rise {
+  0% {
+    transform: var(--fire-k0);
+    opacity: var(--fire-o0);
+  }
+  15% {
+    transform: var(--fire-k1);
+    opacity: var(--fire-o1);
+  }
+  70% {
+    transform: var(--fire-k2);
+    opacity: var(--fire-o2);
+  }
+  100% {
+    transform: var(--fire-k3);
+    opacity: var(--fire-o3);
+  }
+}
+
+/* a fire not burning, or standing still for somebody who asked for less motion */
+.fire.is-still .fire-part {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fire-part {
+    animation: none;
+  }
+  .fire-rise {
+    display: none;
+  }
+}

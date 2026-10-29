@@ -58,6 +58,7 @@ export {
   type GradeResult,
   type PendingAnswer,
   type PlayableSession,
+  type PromptToken,
   type PlayerAction,
   type PlayerState,
   type PlayerStatus,
@@ -70,6 +71,24 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** The week a kept streak is shown in, laid out the same on the phone and the website. */
+export { streakWeek, weekStartsOn, type RecentDay, type WeekDay, type WeekDayState } from './streak-week.js';
+/** Today's three quests, and the chests they pay: learning only, never anything paid. */
+export {
+  QUEST_KINDS,
+  justDone,
+  nextChest,
+  questRows,
+  waitingRows,
+  withOpened,
+  type ChestOpening,
+  type ChestTier,
+  type Quest,
+  type QuestDay,
+  type QuestKind,
+  type QuestRow,
+  type QuestStep,
+} from './quests.js';
 /** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
@@ -123,6 +142,19 @@ export {
   type ResultsActions,
   type ResultsGrade,
 } from './lesson-moments.js';
+/** After the results: the sitting's time and pace, Hevalo's words on a kept streak, and the moments that follow, alike on both. */
+export {
+  QUICK_PACE,
+  afterResults,
+  resultsOutcome,
+  sittingClock,
+  sittingPace,
+  streakMood,
+  streakSpeech,
+  type AfterResults,
+  type ResultsOutcome,
+  type StreakMood,
+} from './lesson-end.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser
@@ -173,6 +205,7 @@ export {
   MIN_RECORDING_MS,
   SORANI_KEYS,
   emptyDraft,
+  emptyLiveMatch,
   emptyMatch,
   encodeAnswer,
   insertAtSelection,
@@ -182,15 +215,23 @@ export {
   isRightMatched,
   isSoraniDialect,
   letterDiff,
+  liftTile,
+  pairKey,
+  placeTile,
   recordingProblem,
   tapLeft,
+  tapLive,
   tapRight,
+  tileAnswer,
   typedHint,
   typingKeys,
   type DiffSegment,
   type DraftAnswer,
+  type LiveMatchOutcome,
+  type LiveMatchState,
   type MatchPair,
   type MatchState,
+  type PickedCard,
   type Selection,
   type TypedHint,
 } from './lesson-answers.js';
@@ -525,6 +566,8 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
+export * from './art/fire.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */

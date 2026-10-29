@@ -9,8 +9,8 @@ import { AsyncBoundary } from '../net/AsyncBoundary';
 import type { RootNavigation } from '../navigation/rootStack';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { statCaption, statValue } from '../theme/fonts';
+import { Fire } from '../theme/Fire';
 import { ClayButton, GradientBackground } from '../theme/glass';
-import { Icon, type IconName } from '../theme/Icon';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { ScreenHeader } from '../navigation/ScreenHeader';
@@ -200,7 +200,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           ) : (
             <>
               <View style={styles.stats}>
-                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} icon="flame" iconColor={colors.danger} />
+                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} fire={(profile.streak ?? 0) > 0 ? 'lit' : 'unlit'} />
                 <Stat label="XP" value={`${profile.xp ?? 0}`} />
                 {/* a league only while they take part, translated; nothing for somebody never in one */}
                 {knownTier(profile.league?.tier ?? profile.tier) ? (
@@ -329,12 +329,13 @@ const LARGE_BUTTON = 50;
 function Header({ onExit }: { onExit: () => void }) {
   return <ScreenHeader onBack={onExit} />;
 }
-function Stat({ label, value, icon, iconColor }: { label: string; value: string; icon?: IconName; iconColor?: string }) {
+/** A number and what it counts; `fire` puts the streak's fire before it, burning or not. */
+function Stat({ label, value, fire }: { label: string; value: string; fire?: 'lit' | 'unlit' }) {
   const { colors } = useTheme();
   return (
     <View style={styles.stat}>
       <View style={styles.statValueRow}>
-        {icon ? <Icon name={icon} size={16} color={iconColor} /> : null}
+        {fire ? <Fire size={18} lit={fire === 'lit'} /> : null}
         <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       </View>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>

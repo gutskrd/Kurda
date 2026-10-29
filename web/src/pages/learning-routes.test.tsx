@@ -141,6 +141,25 @@ describe('Learn', () => {
     expect(within(second).getByRole('link', { name: 'Start' })).toHaveAttribute('href', '/app/learn/lesson/n1?course=c2');
   });
 
+  it('shows the quests of the day under today, read once, with a chest waiting', async () => {
+    serve({
+      'GET /courses': { courses: [] },
+      'GET /practice/due': { due: 0, available: 0 },
+      'GET /me/quests': {
+        date: '2026-10-29',
+        monthDone: 1,
+        quests: [
+          { id: 'q1', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
+          { id: 'q2', kind: 'xp', target: 40, progress: 15, chest: 'rare', claimable: false, claimed: false },
+          { id: 'q3', kind: 'lessons', target: 2, progress: 1, chest: 'epic', claimable: false, claimed: false },
+        ],
+      },
+    });
+    routes('/app/learn');
+    expect(await screen.findByRole('button', { name: 'Daily quests A chest to open! 1 of 3 done' })).toBeInTheDocument();
+    expect(calls.filter((c) => c.path === '/me/quests')).toHaveLength(1);
+  });
+
   it('offers a review left part-way through before a new one', async () => {
     serve({
       'GET /courses': { courses: [] },

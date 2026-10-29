@@ -13,9 +13,11 @@ import {
 } from '@kurda/shared';
 import { ClipSpeaker } from '../characters/ClipSpeaker';
 import type { SpokenClip } from '../characters/clips';
-import { SpeakingCharacter, type CharacterReaction } from '../characters/SpeakingCharacter';
+import { HevaloWindow } from '../characters/HevaloWindow';
+import type { CharacterReaction } from '../characters/SpeakingCharacter';
 import { Button } from '../components/Button';
-import { BookIcon, CheckIcon, CloseIcon, FlameIcon } from '../components/icons';
+import { Fire } from '../components/Fire';
+import { BookIcon, CheckIcon, CloseIcon } from '../components/icons';
 import { play } from '../lib/sound';
 import { autoplayOn } from '../lib/sounds';
 import { useT } from '../i18n/I18nProvider';
@@ -49,8 +51,9 @@ const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | unde
 /** Answers whose right answer is Kurdish (a multiple-choice option, the answer to a conversation's question or a pair may be in any language). */
 const KURDISH_ANSWER: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening', 'speaking']);
 
-/** How tall the character beside the verdict is: head to waist, standing on the sheet's floor. */
+/** How tall the character beside the verdict is: head to waist, standing on the sheet's floor; and Hevalo's window, standing in. */
 const FEEDBACK_FACE = 88;
+const STAND_IN = 96;
 
 /**
  * Kurdish set inside an interface sentence in any language: isolated, so a
@@ -102,9 +105,10 @@ export interface RunMark {
  * A right answer may be praised in the course's own Kurdish ("Aferîn!") with
  * the meaning beside it, and a run is counted from three ("3 in a row") and
  * named at a milestone. Beside the verdict stands whoever says the model when
- * the exercise above does not show them already — or Hevalo, on the first
- * answer of a lesson, on every miss (curious, never sad) and at a milestone,
- * and not on every right answer, so his cheer keeps its worth.
+ * the exercise above does not show them already — or Hevalo, popping up in
+ * his window, on the first answer of a lesson, on every miss (curious, never
+ * sad) and at a milestone, and not on every right answer, so his cheer keeps
+ * its worth.
  */
 export function FeedbackPanel({
   feedback,
@@ -174,7 +178,7 @@ export function FeedbackPanel({
     // cheering a right answer and thinking a wrong one over; a click says it again
     <ClipSpeaker clips={[speaker]} crop="half" size={FEEDBACK_FACE} decorative replay reaction={feedback.accepted ? 'cheer' : 'hmm'} />
   ) : hevalo ? (
-    <SpeakingCharacter speaker="hevalo" audio={null} crop="half" size={FEEDBACK_FACE} decorative reaction={hevalo} />
+    <HevaloWindow size={STAND_IN} reaction={hevalo} />
   ) : null;
 
   let headline: React.ReactNode = t(VERDICT[kind]);
@@ -197,12 +201,12 @@ export function FeedbackPanel({
         <div className="lesson-sheet-text">
           <p className="lesson-verdict">
             <span className="lesson-verdict-mark" aria-hidden="true">
-              {tone === 'notyet' ? <CloseIcon size={18} /> : <CheckIcon size={18} />}
+              {tone === 'notyet' ? <CloseIcon size={22} weight="bold" /> : <CheckIcon size={22} />}
             </span>
             <span className="lesson-verdict-words">{headline}</span>
             {shownRun && (
               <span className={`lesson-run${shownRun.milestone ? ' is-milestone' : ''}`}>
-                <FlameIcon size={14} weight="fill" />
+                <Fire size={16} />
                 {t('lesson.inARow', { count: shownRun.count })}
               </span>
             )}
@@ -210,20 +214,21 @@ export function FeedbackPanel({
 
           {diff ? (
             <dl className="lesson-compare">
+              {/* read the way they are written: a Soranî course's English answer runs left to right */}
               <dt>{t('lesson.fb.yours')}</dt>
-              <dd lang={lang} dir={dir}>
+              <dd lang={lang} dir="auto">
                 <Marked segments={diff.given} />
               </dd>
               <dt>{t('lesson.fb.right')}</dt>
-              <dd lang={lang} dir={dir}>
+              <dd lang={lang} dir="auto">
                 <Marked segments={diff.expected} />
               </dd>
             </dl>
           ) : (
             feedback.correction && (
               <p className="lesson-correction">
-                {t('lesson.fb.answer')}{' '}
-                <strong lang={kurdish ? lang : undefined} dir={kurdish ? dir : 'auto'}>
+                <span className="lesson-correction-label">{t('lesson.fb.answer')}</span>{' '}
+                <strong lang={kurdish ? lang : undefined} dir="auto">
                   {feedback.correction}
                 </strong>
               </p>

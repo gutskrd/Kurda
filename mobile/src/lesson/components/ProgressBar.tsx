@@ -16,8 +16,8 @@ import { useDirection } from '../../reports/direction';
  * rather than a width that changes, which would lay the row out again on every
  * frame. Under Reduce Motion it is simply where it is.
  *
- * 12 points tall, with a thin highlight along the top of the fill, so it
- * reads as something filling rather than a line. While a run of right
+ * 16 points tall, with a highlight along the top of the fill, so it reads
+ * as something filling rather than a line. While a run of right
  * answers is shown (`warm`, from the third) the fill warms from green to the
  * sun's gold, and a miss cools it again — the colour changing in place, a
  * fade of a gold layer over the green, never anything that travels.
@@ -70,7 +70,7 @@ export function ProgressBar({ value, warm = false }: { value: number; warm?: boo
 
 const styles = StyleSheet.create({
   track: {
-    height: 12,
+    height: 16,
     borderRadius: radii.pill,
     overflow: 'hidden',
   },
@@ -83,10 +83,10 @@ const styles = StyleSheet.create({
   // a light along the top of the fill, inset from its rounded ends
   sheen: {
     position: 'absolute',
-    top: 2,
-    left: 8,
-    right: 8,
-    height: 3,
+    top: 3,
+    left: 10,
+    right: 10,
+    height: 4,
     borderRadius: radii.pill,
     backgroundColor: 'rgba(255,255,255,0.35)',
   },

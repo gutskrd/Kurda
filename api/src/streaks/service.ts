@@ -1,11 +1,16 @@
 import type pg from 'pg';
+import type { RecentDay } from '@kurda/shared';
 import {
+  answeredTodaySql,
+  countsAsLearningSql,
   EMPTY_TALLY,
   grantFreeze,
   localDate,
   MAX_FREEZES,
+  RECENT_DAYS,
   record,
   recordSession,
+  safeTimeZone,
   SESSIONS_PER_FREEZE,
   settle,
   type LearningTally,
@@ -37,6 +42,18 @@ export interface StreakSummary {
    * was kept.
    */
   freezeUsedOn: string | null;
+}
+
+/**
+ * The streak as a finished lesson or practice session reports it: the summary,
+ * with the learner's today and the days lately learned, for the week row the
+ * results show. Only there: /me stays the summary alone.
+ */
+export interface SessionStreak extends StreakSummary {
+  /** the learner's today, 'YYYY-MM-DD' in their timezone */
+  today: string;
+  /** days of the last RECENT_DAYS (theirs) with a session that was learning, and the day a freeze kept, if in them */
+  recent: RecentDay[];
 }
 
 interface StreakRow {
@@ -212,6 +229,38 @@ export class StreakService {
       await this.save(this.pool, userId, settled);
     }
     return toSummary(settled, before.tally);
+  }
+
+  /**
+   * The learner's today and the days of the last RECENT_DAYS on which they
+   * finished a lesson or practice session that was learning, by the day
+   * boundary a day learned is counted by (the session's completion, in their
+   * timezone, with half its items answered that day: `countsAsLearning`), and
+   * the day the last freeze kept when it falls in them. One statement, over the
+   * learner's own sessions; a practice session paid XP exactly when it was
+   * learning (a test to jump ahead never is).
+   */
+  async recent(userId: string, timeZone: string, now: Date = new Date()): Promise<{ today: string; recent: RecentDay[] }> {
+    const tz = safeTimeZone(timeZone);
+    const today = localDate(now, tz);
+    const answered = answeredTodaySql('session_answers', { session: 'ls.id', zone: '$2', day: '(ls.completed_at AT TIME ZONE $2)' });
+    const res = await this.pool.query<RecentDay>(
+      `SELECT (ls.completed_at AT TIME ZONE $2)::date::text AS date, 'learned' AS kind
+         FROM lesson_sessions ls
+        WHERE ls.user_id = $1 AND ls.completed_at >= (($3::date - $4::int)::timestamp AT TIME ZONE $2)
+          AND ${countsAsLearningSql(`(${answered})`, 'ls.total_count')}
+       UNION
+       SELECT (ps.completed_at AT TIME ZONE $2)::date::text, 'learned'
+         FROM practice_sessions ps
+        WHERE ps.user_id = $1 AND ps.completed_at >= (($3::date - $4::int)::timestamp AT TIME ZONE $2) AND ps.xp_awarded > 0
+       UNION
+       SELECT freeze_used_on::text, 'frozen'
+         FROM user_streaks
+        WHERE user_id = $1 AND freeze_used_on BETWEEN $3::date - $4::int AND $3::date
+       ORDER BY date`,
+      [userId, tz, today, RECENT_DAYS - 1],
+    );
+    return { today, recent: res.rows };
   }
 
   /** The user's tz-local date of their last finished lesson or practice session. */

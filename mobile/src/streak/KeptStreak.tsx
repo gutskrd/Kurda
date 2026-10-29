@@ -10,6 +10,7 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { deviceStore, type DeviceStore } from '../keyboard/deviceStore';
 import { BottomSheet } from '../theme/BottomSheet';
+import { Fire } from '../theme/Fire';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -91,8 +92,9 @@ export function useKeptStreak(
  * it — with "Not now" beside it. Nothing to buy: freezes are earned by
  * learning.
  *
- * The art is the streak's flame in ice, the colour of the river unit, which
- * holds 4.5:1 for its glyphs in both schemes (coursemap/path.ts).
+ * The art is the streak's fire, still burning, on a round of ice the colour
+ * of the river unit with a freeze's snowflake on it (the river holds 4.5:1
+ * for its glyphs in both schemes, coursemap/path.ts).
  */
 export function KeptStreakSheet({ streak, onStart, onClose }: { streak: Streak | null; onStart: () => void; onClose: () => void }): React.JSX.Element {
   return (
@@ -114,7 +116,7 @@ function Kept({ streak, onStart, onClose }: { streak: Streak; onStart: () => voi
   return (
     <View style={styles.body}>
       <View style={[styles.art, { backgroundColor: `${ice.fill}29` }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Icon name="flame" size={64} color={ice.text} />
+        <Fire size={76} />
         <View style={[styles.flake, { backgroundColor: ice.fill, borderColor: colors.background }]}>
           <Icon name="ice" size={20} color={ice.ink} />
         </View>

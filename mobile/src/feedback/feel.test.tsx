@@ -239,16 +239,17 @@ describe('an answer, as its verdict arrives', () => {
           : ok({ verdict: 'wrong', accepted: false, correction: 'nan', duplicate: false }),
     });
     renderWithProviders(<SessionPlayer view={view} paths={paths} onExit={() => undefined} />);
+    // an option chosen is a tick, then the verdict as it arrives
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-    await waitFor(() => expect(felt).toEqual(['correct']));
+    await waitFor(() => expect(felt).toEqual(['select', 'correct']));
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
 
     fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
     // two answers a test gives faster than a person can: the chimes' pacing is not what this is about
     resetSounds();
     fireEvent.click(screen.getByRole('button', { name: 'Check' }));
-    await waitFor(() => expect(felt).toEqual(['correct', 'wrong']));
+    await waitFor(() => expect(felt).toEqual(['select', 'correct', 'select', 'wrong']));
     // and heard: a bright pair for the right answer, a low soft one for the miss
     expect(heard).toEqual(['correct-1', 'wrong']);
     stopHearing();

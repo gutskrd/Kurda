@@ -1,9 +1,20 @@
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { RESULTS_TIMING, resultsActions, resultsGrade, type ResultsAction } from '@kurda/shared';
+import {
+  RESULTS_TIMING,
+  afterResults,
+  isSoraniDialect,
+  resultsActions,
+  resultsGrade,
+  resultsOutcome,
+  sittingClock,
+  sittingPace,
+  type AfterResults,
+  type ResultsAction,
+} from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { display } from '../../theme/fonts';
-import { Icon } from '../../theme/Icon';
+import { Icon, type IconName } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
 import { useI18n } from '../../i18n/I18nContext';
@@ -13,18 +24,19 @@ import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/C
 import { BURST } from '../../theme/celebration';
 import { timing, useCountUp } from '../../theme/animate';
 import { duration } from '../../theme/motion';
-import { AnswerMotion } from '../../theme/MotionParts';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
+import { GOLD_INK, TONES, type ToneColors } from '../../coursemap/path';
 import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer } from '../../push/ReminderOffer';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
-import { SpeakingCharacter } from '../../characters/SpeakingCharacter';
+import { HevaloWindow } from '../../characters/HevaloWindow';
 import { GoalRing } from '../../leagues/GoalRing';
 import { knownTier, leagueName } from '../../leagues/format';
-import type { TranslationKey } from '../../i18n/translations';
+import { QuestsScreen } from '../../quests/QuestsScreen';
+import type { Locale, TranslationKey } from '../../i18n/translations';
 import type { Exercise, SessionResults } from '../types';
-import { StreakDay } from './StreakDay';
+import { StreakMoment } from './StreakMoment';
 
 interface Props {
   results: SessionResults;
@@ -41,6 +53,10 @@ interface Props {
   goalDone?: boolean;
   /** the mistakes practice can take ("Practise these now"); empty for none */
   practise?: string[];
+  /** the course's variety of Kurdish, for the line under the title; absent on a practice session */
+  dialect?: string | null;
+  /** this sitting: how long it took from the first exercise shown to the last answer, and how many answers it took; null when not measured */
+  sitting?: { ms: number; answers: number } | null;
   onDone: () => void;
   onNext?: (lessonId: string) => void;
   onPractise?: (exerciseIds: string[]) => void;
@@ -48,9 +64,9 @@ interface Props {
   onPath?: () => void;
 }
 
-/** How big the stage Hevalo arrives on is, and how tall he is drawn on it. */
-const STAGE = 200;
-const HEVALO = 168;
+/** How big the stage Hevalo arrives on is, and how tall his window stands on it. */
+const STAGE = { width: 280, height: 232 };
+const WINDOW = 224;
 
 /** A list of mistakes this long or shorter is open; a longer one starts folded, so the results still fit one screen. */
 const MISTAKES_OPEN = 3;
@@ -64,22 +80,27 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
 /**
  * End of a lesson: what changed, and what comes next, on one screen.
  *
- * It opens as the app's one celebration (theme/celebration.ts): Hevalo
- * springs in and cheers as the buzz lands, a ring widens once, a light handful
- * of gold flecks — however many things this lesson did at once, it is one
- * moment, felt once. Then three tiles side by side, one after another: the XP
- * counting up, how many were right first time with a kind word for it (never a
- * negative one), and the days in a row, which hop when today kept them. Under
- * them today's goal moves from where it stood to where it is, and the week's
+ * It opens as the app's one celebration (theme/celebration.ts): Hevalo's
+ * window springs in on a stage of light, his head pops up out of it and he
+ * cheers as the buzz lands, a ring widens once, a light handful of gold flecks — however many
+ * things this lesson did at once, it is one moment, felt once. The title says
+ * how it went (a perfect lesson, great work, or a lesson done), with a warm
+ * line about the course's Kurdish under it. Then three framed cards side by
+ * side, one after another, each a band of colour naming what it counts over
+ * an icon and the number counting up: the XP in gold, how many were right
+ * first time in green under a kind word for it (never a negative one), and
+ * how long this sitting took in blue — "Quick" when it was. Under them
+ * today's goal moves from where it stood to where it is, and the week's
  * league place and a new level arrive. A tap on Hevalo skips to the end, and
  * while it plays a badge the lesson earned waits its turn.
  *
  * The ways on sit at the foot, where Check was: the next lesson while today's
  * goal is still to meet, or "Done" once it is met — with a line saying it is a
  * good place to stop — and practising the mistakes now when there are any.
- * When this lesson kept the streak, the first of them opens the "Day N" card
- * (StreakDay) on the way. Nothing moves on by itself, and nothing here ever
- * asks for money.
+ * On the way to the first of them come the moments that follow the results
+ * (shared `afterResults`), each once: the streak's when this lesson kept it
+ * (StreakMoment), then today's quests when it moved any (QuestsScreen).
+ * Nothing moves on by itself, and nothing here ever asks for money.
  *
  * Every mistake is listed with the question and its right answer, folded away
  * when there are more than three. An exercise put off is neither a mistake
@@ -95,14 +116,16 @@ export function LessonResults({
   next = null,
   goalDone = false,
   practise = [],
+  dialect = null,
+  sitting = null,
   onDone,
   onNext,
   onPractise,
   onPath,
 }: Props) {
-  const { colors } = useTheme();
+  const { colors, scheme } = useTheme();
   const { t, locale } = useI18n();
-  // in Soranî and Arabic the tiles and the lines under them read from the right
+  // in Soranî and Arabic the cards and the lines under them read from the right
   const dir = useDirection();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
@@ -112,7 +135,6 @@ export function LessonResults({
   const pct = Math.round(results.accuracy * 100);
   const mistakes = results.mistakes ?? [];
   const promptFor = (id: string, prompt?: string) => prompt ?? exercises.find((e) => e.id === id)?.prompt ?? '';
-  const xp = useCountUp(results.xpAwarded, { delayMs: plan.travel ? RESULTS_TIMING.xpAtMs : 0 });
   const [folded, setFolded] = useState(mistakes.length > MISTAKES_OPEN);
 
   // Hevalo cheers as the buzz lands (`hapticAtMs`), or at once when the moment is skipped
@@ -126,16 +148,19 @@ export function LessonResults({
     return () => clearTimeout(id);
   }, [moment.playing, plan.hapticAtMs]);
 
-  // the "Day N" card, opened on the way to whichever way on is chosen first
-  const [day, setDay] = useState<(() => void) | null>(null);
-  const dayShown = useRef(false);
+  // the moments after the results, opened on the way to whichever way on is chosen first
+  const [after, setAfter] = useState<{ steps: AfterResults[]; then: () => void } | null>(null);
+  const afterShown = useRef(false);
   const go = (then: () => void) => () => {
-    if (moments.streakKept && !dayShown.current) {
-      dayShown.current = true;
-      setDay(() => then);
-      return;
-    }
-    then();
+    const steps = afterShown.current ? [] : afterResults({ streakKept: moments.streakKept, questsMoved: (results.quests ?? []).length > 0 });
+    afterShown.current = true;
+    if (steps.length > 0) setAfter({ steps, then });
+    else then();
+  };
+  const onward = () => {
+    if (!after) return;
+    if (after.steps.length > 1) setAfter({ ...after, steps: after.steps.slice(1) });
+    else after.then();
   };
 
   const scale = plan.travel ? moment.art.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) : 1;
@@ -144,7 +169,8 @@ export function LessonResults({
   // the sun's golds (the website's tone-zer), and a little of the green a right answer wears
   const flecks = [colors.gold, '#FFE16A', '#FFBD1F', colors.success];
 
-  if (day) return <StreakDay streak={results.streak} onContinue={day} />;
+  if (after?.steps[0] === 'streak') return <StreakMoment streak={results.streak} goalDone={goalDone} onContinue={onward} />;
+  if (after?.steps[0] === 'quests') return <QuestsScreen place="lesson" steps={results.quests} onDone={onward} />;
 
   const canPractise = practise.length > 0 && !!onPractise;
   const actions = resultsActions({ next: next !== null && !!onNext, practise: canPractise, goalDone });
@@ -154,8 +180,18 @@ export function LessonResults({
       else if (action === 'practise' && onPractise) onPractise(practise);
       else onDone();
     });
-  const grade = t(`lesson.results.grade.${resultsGrade(results.accuracy)}` as TranslationKey);
-  const title = moments.perfect ? t('lesson.results.perfect') : t('lesson.complete');
+  const grade = resultsGrade(results.accuracy);
+  const gradeWord = t(`lesson.results.grade.${grade}` as TranslationKey);
+  const outcome = resultsOutcome({ perfect: moments.perfect === true, accuracy: results.accuracy });
+  const title = t(outcome === 'perfect' ? 'lesson.results.perfect' : outcome === 'great' ? 'lesson.results.great' : 'lesson.complete');
+  const stronger: TranslationKey = !dialect
+    ? 'lesson.results.stronger'
+    : isSoraniDialect(dialect)
+      ? 'lesson.results.strongerSorani'
+      : 'lesson.results.strongerKurmanci';
+  const tones = TONES[scheme];
+  const gold: ToneColors = { fill: colors.gold, lip: colors.gold, ink: GOLD_INK, text: colors.goldText };
+  const clock = sitting ? sittingClock(sitting.ms) : null;
 
   return (
     <View style={[styles.screen, { paddingTop: top }]}>
@@ -168,40 +204,56 @@ export function LessonResults({
           accessibilityLabel={moment.playing ? t('common.skip') : undefined}
           style={styles.stage}
         >
-          <SoftGlow colour={colors.gold} size={STAGE} id="lesson-glow" />
-          {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={STAGE * 0.55} /> : null}
-          {plan.travel ? <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={results.correct * 31 + results.total} colours={flecks} reach={110} /> : null}
+          <SoftGlow colour={colors.gold} size={STAGE.height} id="lesson-glow" />
+          {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={STAGE.height * 0.6} /> : null}
+          {plan.travel ? <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={results.correct * 31 + results.total} colours={flecks} reach={130} /> : null}
           <Animated.View style={{ opacity, transform: [{ scale }] }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={HEVALO} flip={dir.rtl} reaction={cheer ? 'cheer' : null} />
+            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction={cheer ? 'cheer' : null} />
           </Animated.View>
         </Pressable>
 
         <Animated.View style={[styles.details, { opacity: moment.details, transform: [{ translateY: lift }] }]}>
-          <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
-            {title}
-          </Text>
+          <View style={styles.heading}>
+            <Text style={[styles.title, { color: colors.goldText }]} accessibilityRole="header">
+              {title}
+            </Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t(stronger)}</Text>
+          </View>
 
-          <View style={[styles.tiles, { flexDirection: dir.row }]}>
-            <Tile index={0} travel={plan.travel} band={colors.gold} label={t('lesson.results.xp')} a11yValue={`+${formatNumber(results.xpAwarded, locale)}`}>
-              <Text style={[styles.tileValue, { color: colors.textPrimary }]}>+{formatNumber(xp, locale)}</Text>
-            </Tile>
-            <Tile
+          <View style={[styles.cards, { flexDirection: dir.row }]}>
+            <StatCard
+              index={0}
+              travel={plan.travel}
+              tone={gold}
+              icon="bolt"
+              label={t('lesson.results.xp')}
+              to={results.xpAwarded}
+              show={(n) => formatNumber(n, locale)}
+              a11yValue={`+${formatNumber(results.xpAwarded, locale)}`}
+            />
+            <StatCard
               index={1}
               travel={plan.travel}
-              band={colors.success}
-              label={t('lesson.results.accuracy')}
-              a11yValue={`${pct}%, ${grade}, ${t('lesson.results.firstTries', { correct: results.correct, total: results.total })}`}
-              note={grade}
-            >
-              <Text style={[styles.tileValue, { color: colors.textPrimary }]}>{formatNumber(pct, locale)}%</Text>
-            </Tile>
-            <Tile index={2} travel={plan.travel} band={colors.gold} label={t('lesson.results.streak')} a11yValue={formatNumber(results.streak.current, locale)}>
-              {/* a streak kept today gives a little hop once the moment has settled */}
-              <AnswerMotion verdict={moments.streakKept && !moment.playing ? 'right' : null} style={[styles.streakValue, { flexDirection: dir.row }]}>
-                <Icon name="flame" size={20} color={colors.goldText} />
-                <Text style={[styles.tileValue, { color: colors.textPrimary }]}>{formatNumber(results.streak.current, locale)}</Text>
-              </AnswerMotion>
-            </Tile>
+              tone={tones.meadow}
+              icon="target"
+              label={gradeWord}
+              to={pct}
+              show={(n) => `${formatNumber(n, locale)}%`}
+              a11yLabel={t('lesson.results.accuracy')}
+              a11yValue={`${pct}%, ${gradeWord}, ${t('lesson.results.firstTries', { correct: results.correct, total: results.total })}`}
+            />
+            {sitting && clock ? (
+              <StatCard
+                index={2}
+                travel={plan.travel}
+                tone={tones.river}
+                icon="clock"
+                label={t(sittingPace(sitting.ms, sitting.answers) === 'quick' ? 'lesson.results.quick' : 'lesson.results.time')}
+                to={clock.minutes * 60 + clock.seconds}
+                show={(n) => clockWords(n, locale)}
+                a11yValue={t('lesson.results.timeSpoken', { minutes: formatNumber(clock.minutes, locale), seconds: formatNumber(clock.seconds, locale) })}
+              />
+            ) : null}
           </View>
 
           <Rows moments={moments} travel={plan.travel} />
@@ -261,31 +313,53 @@ export function LessonResults({
   );
 }
 
+/** Whole seconds as a clock, m:ss, in the reader's own digits. */
+function clockWords(totalSeconds: number, locale: Locale): string {
+  const { minutes, seconds } = sittingClock(totalSeconds * 1000);
+  let ss: string;
+  try {
+    ss = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2 }).format(seconds);
+  } catch {
+    ss = String(seconds).padStart(2, '0');
+  }
+  return `${formatNumber(minutes, locale)}:${ss}`;
+}
+
 /**
- * One of the three tiles: a band of colour along its top, the number, and what
- * it is. They rise in one after another as the words land; under Reduce
- * Motion they are simply there.
+ * One of the three cards: a band of its colour naming what it counts, and
+ * under it, framed in the same colour, an icon and the number counting up to
+ * where it ends. They rise in one after another as the words land; under
+ * Reduce Motion they are simply there, with the final number.
  */
-function Tile({
+function StatCard({
   index,
   travel,
-  band,
+  tone,
+  icon,
   label,
+  to,
+  show,
+  a11yLabel,
   a11yValue,
-  note,
-  children,
 }: {
   index: number;
   travel: boolean;
-  band: string;
+  tone: ToneColors;
+  icon: IconName;
   label: string;
+  /** the number it counts up to */
+  to: number;
+  /** how a number on the way is written */
+  show: (n: number) => string;
+  /** what a screen reader calls it, where the band's word is not enough */
+  a11yLabel?: string;
   /** read as the final number, not the one it is counting through */
   a11yValue: string;
-  /** a kind word under the number */
-  note?: string;
-  children: React.ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  const dir = useDirection();
+  const delayMs = RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs;
+  const shown = useCountUp(to, { delayMs: travel ? delayMs : 0 });
   const rise = useRef(new Animated.Value(travel ? 0 : 1)).current;
   useEffect(() => {
     // under Reduce Motion — an answer that may arrive a moment after the results open — simply there
@@ -293,23 +367,26 @@ function Tile({
       rise.setValue(1);
       return;
     }
-    const run = timing(rise, 1, duration.slow, { delay: RESULTS_TIMING.tilesAtMs + index * RESULTS_TIMING.tileStaggerMs });
+    const run = timing(rise, 1, duration.slow, { delay: delayMs });
     run.start();
     return () => run.stop();
-  }, [travel, index, rise]);
-  const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [8, 0] });
+  }, [travel, delayMs, rise]);
+  const translateY = rise.interpolate({ inputRange: [0, 1], outputRange: [12, 0] });
   return (
     <Animated.View
-      style={[styles.tile, { backgroundColor: colors.surface, opacity: rise, transform: [{ translateY }] }]}
+      style={[styles.card, { backgroundColor: tone.fill, opacity: rise, transform: [{ translateY }] }]}
       accessible
-      accessibilityLabel={`${label}: ${a11yValue}`}
+      accessibilityLabel={`${a11yLabel ?? label}: ${a11yValue}`}
     >
-      <View style={[styles.band, { backgroundColor: band }]} />
-      {children}
-      {note ? <Text style={[styles.tileNote, { color: colors.success }]}>{note}</Text> : null}
-      <Text style={[styles.tileLabel, { color: colors.textSecondary }]} numberOfLines={2}>
+      <Text style={[styles.cardLabel, { color: tone.ink }]} numberOfLines={1} maxFontSizeMultiplier={1.2}>
         {label}
       </Text>
+      <View style={[styles.cardBody, { flexDirection: dir.row, backgroundColor: colors.surface }]}>
+        <Icon name={icon} size={20} color={tone.text} />
+        <Text style={[styles.cardValue, { color: tone.text }]} numberOfLines={1} maxFontSizeMultiplier={1.3}>
+          {show(shown)}
+        </Text>
+      </View>
     </Animated.View>
   );
 }
@@ -409,31 +486,22 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: spacing.lg,
+    paddingHorizontal: spacing.md,
     paddingBottom: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
-  stage: { width: STAGE, height: STAGE, alignItems: 'center', justifyContent: 'center' },
+  stage: { width: STAGE.width, height: STAGE.height, alignItems: 'center', justifyContent: 'flex-end' },
   details: { alignSelf: 'stretch', alignItems: 'center', gap: spacing.md },
+  heading: { alignItems: 'center', gap: spacing.xs },
   title: { ...display(typography.sizes.xxl), textAlign: 'center' },
+  subtitle: { fontSize: typography.sizes.md, lineHeight: 23, textAlign: 'center' },
   note: { fontSize: typography.sizes.sm, textAlign: 'center' },
-  tiles: { alignSelf: 'stretch', gap: spacing.sm },
-  tile: {
-    flex: 1,
-    minWidth: 0,
-    alignItems: 'center',
-    gap: 2,
-    borderRadius: radii.md,
-    paddingTop: spacing.md,
-    paddingBottom: spacing.sm + 4,
-    paddingHorizontal: spacing.sm,
-    overflow: 'hidden',
-  },
-  band: { position: 'absolute', top: 0, left: 0, right: 0, height: 4 },
-  tileValue: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  tileNote: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
-  tileLabel: { fontSize: typography.sizes.xs, textAlign: 'center' },
-  streakValue: { alignItems: 'center', gap: 4 },
+  cards: { alignSelf: 'stretch', gap: spacing.sm + 2, marginTop: spacing.xs },
+  // a band of colour, and the framed body under it: the band's fill is the frame
+  card: { flex: 1, minWidth: 0, borderRadius: radii.lg, padding: 3, paddingTop: 0 },
+  cardLabel: { fontSize: 12, fontWeight: typography.weights.bold, letterSpacing: 0.6, textTransform: 'uppercase', textAlign: 'center', paddingVertical: 5, paddingHorizontal: 4 },
+  cardBody: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6, borderRadius: radii.lg - 3, paddingVertical: spacing.sm + 6, paddingHorizontal: spacing.xs },
+  cardValue: { fontSize: typography.sizes.lg, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
   rows: { alignSelf: 'stretch', gap: spacing.sm },
   row: { alignItems: 'center', gap: spacing.sm, borderRadius: radii.md, paddingVertical: spacing.sm, paddingHorizontal: spacing.md, minHeight: 48 },
   rowText: { flex: 1, fontSize: typography.sizes.md, fontWeight: typography.weights.semibold },

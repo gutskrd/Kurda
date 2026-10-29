@@ -5,7 +5,7 @@ vi.mock('react-native-svg', () => import('../../reports/testing/svg'));
 vi.mock('expo-secure-store', () => import('../../reports/testing/stubs'));
 vi.mock('expo-linear-gradient', () => import('../../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../../reports/testing/stubs'));
-import { act, cleanup, fireEvent, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { encodeLipsync, type RecordingVoice } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
@@ -64,7 +64,7 @@ function listening(extra: Partial<Exercise> = {}): Exercise {
 const noop = () => undefined;
 
 describe('the lesson’s speaking characters', () => {
-  it('shows who says a listening clip beside its play button, and says it with the sound', async () => {
+  it('shows who says a listening clip beside its bubble, and says it with the sound', async () => {
     renderWithProviders(
       <ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />,
     );
@@ -72,7 +72,7 @@ describe('the lesson’s speaking characters', () => {
     expect(screen.getByRole('img', { name: 'Said by Xezo' })).toBeTruthy();
     expect(mouth()).toBe('rest');
 
-    fireEvent.click(screen.getByRole('button', { name: 'Play' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Play audio' }));
     await settle();
     const clip = FakeAudio.of(CLIP)!;
     expect(clip.paused).toBe(false);
@@ -86,11 +86,18 @@ describe('the lesson’s speaking characters', () => {
     expect(frames.pending).toBe(0);
   });
 
-  it('keeps the listening exercise as it was when nobody has been chosen to say the clip', async () => {
+  // he leans out of his window beside the bubble listening, and says nothing, so a screen reader is not told he said it
+  it('brings Hevalo in to listen, out of his window, when nobody has been chosen to say the clip', async () => {
     renderWithProviders(<ListeningExercise exercise={listening()} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
-    expect(screen.getByRole('button', { name: 'Play' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play audio' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
+    const scene = screen.getByTestId('prompt-scene');
+    expect(within(scene).getByTestId('hevalo-window')).toBeTruthy();
+    expect(within(scene).queryByTestId('character-stage')).toBeNull();
+    // his head and neck, never the whole figure
+    const neck = characterLayers('hevalo', 'head').body;
+    expect([...scene.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === neck)).toBe(true);
   });
 
   it('shows nobody for a speaker this version of the app cannot draw', async () => {
@@ -153,10 +160,10 @@ describe('the lesson’s speaking characters', () => {
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
   });
 
-  it('stands the character on a stage head to waist, the buttons beside it, and says it again when tapped', async () => {
+  it('stands the character on a small stage of their own beside the bubble, and says it again when tapped', async () => {
     renderWithProviders(<ListeningExercise exercise={listening({ audioVoice: SAID })} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
-    expect(screen.getByTestId('character-stage')).toBeTruthy();
+    expect(within(screen.getByTestId('prompt-scene')).getByTestId('character-stage')).toBeTruthy();
     // drawn whole, for the stage's bottom edge to cut off at the waist: never only the head
     const body = characterLayers('xezo', 'full').body;
     expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === body)).toBe(true);

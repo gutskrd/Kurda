@@ -275,8 +275,9 @@ describe('a typed miss', () => {
     const marked = within(screen.getByTestId('lesson-verdict')).getByText('ê');
     const look = getComputedStyle(marked);
     expect(look.textDecorationLine || look.textDecoration).toMatch(/underline/);
-    // Hevalo comes in to think it over with the learner, beside the verdict
-    expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+    // Hevalo, who said it in his bubble, thinks it over with the learner there: the sheet brings in nobody else
+    expect(screen.getByTestId('prompt-scene')).toBeTruthy();
+    expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'Why? Read the tips' }));
     expect(await screen.findByText('Fruit')).toBeTruthy();
   });
@@ -288,9 +289,14 @@ describe('the verdict', () => {
     exercises: [1, 2, 3, 4, 5].map((n) => ({ id: `mc${n}`, type: 'multiple_choice' as const, prompt: `Water ${n}?`, options: ['av', 'nan'], position: n })),
   };
 
-  // praised in Kurdish, Hevalo on the first answer only, and a run named out loud at five
-  it('praises a right answer in Kurdish, brings Hevalo in on the first, and names a run of five', async () => {
-    testAuth.client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+  // praised in Kurdish, by Hevalo beside the question; a run named over the bar, and held a moment at five
+  it('praises a right answer in Kurdish, names the run over the bar, and holds a run of five a moment before going on', async () => {
+    const client = fakeClient({
+      ...standing,
+      'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }),
+      'POST /sessions/s1/complete': ok(results),
+    });
+    testAuth.client = client;
     renderWithProviders(<SessionPlayer view={five} paths={paths} onExit={() => undefined} />);
     for (let n = 1; n <= 5; n++) {
       fireEvent.click(await screen.findByRole('radio', { name: 'av' }));
@@ -298,14 +304,127 @@ describe('the verdict', () => {
       await screen.findByRole('button', { name: 'Continue' });
       if (n === 1) {
         expect(screen.getByText('Well done')).toBeTruthy();
-        expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+        // he asked the question, so he reacts beside it: the sheet brings in nobody else
+        expect(screen.getByTestId('prompt-scene')).toBeTruthy();
+        expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
       }
-      if (n === 2) expect(screen.queryByTestId('lesson-stand-in')).toBeNull();
       if (n < 5) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     }
-    expect(screen.getByText('5 in a row!')).toBeTruthy();
-    expect(screen.getByText('5 in a row')).toBeTruthy();
-    expect(screen.getByTestId('lesson-stand-in')).toBeTruthy();
+    // the count is over the bar, and only there
+    expect(screen.getByTestId('lesson-in-a-row').textContent).toBe('5 in a row');
+    expect(screen.getAllByText(/in a row/)).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    // the milestone holds the screen between this exercise and the next, and a tap moves on
+    fireEvent.click(await screen.findByRole('button', { name: '5 in a row!' }));
+    expect(screen.queryByRole('button', { name: '5 in a row!' })).toBeNull();
+    await waitFor(() => expect(client.calls.some((c) => c.path === '/sessions/s1/complete')).toBe(true));
+  });
+
+  // where nobody else is on screen to react, Hevalo comes into the sheet: on the first answer and at a miss, not every time
+  it('brings Hevalo into the sheet on the first answer and at a miss where nobody else is on screen', async () => {
+    const written: SessionView = {
+      ...view,
+      exercises: [1, 2, 3].map((n) => ({ id: `wr${n}`, type: 'writing' as const, prompt: `What do you drink ${n}?`, position: n })),
+    };
+    testAuth.client = fakeClient({
+      ...standing,
+      'POST /sessions/s1/answers': (body) =>
+        (body as { exerciseId: string }).exerciseId === 'wr3'
+          ? ok({ verdict: 'wrong', accepted: false, correction: 'çay', duplicate: false })
+          : ok({ verdict: 'correct', accepted: true, duplicate: false }),
+    });
+    renderWithProviders(<SessionPlayer view={written} paths={paths} onExit={() => undefined} />);
+    const there: boolean[] = [];
+    for (let n = 1; n <= 3; n++) {
+      fireEvent.change(await screen.findByLabelText('Your written answer'), { target: { value: 'çay' } });
+      fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+      await screen.findByRole('button', { name: 'Continue' });
+      // leaning out of his window
+      there.push(screen.queryByTestId('lesson-stand-in')?.querySelector('[data-testid="hevalo-window"]') != null);
+      if (n < 3) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
+    }
+    expect(there).toEqual([true, false, true]);
+  });
+});
+
+describe('pairs answered as they are made', () => {
+  const pairs: SessionView = {
+    ...view,
+    exercises: [
+      { id: 'mp', type: 'match_pairs', lefts: ['sêv', 'nan'], rights: ['bread', 'apple'], pairOf: [1, 0], position: 1 },
+      { id: 'mc', type: 'multiple_choice', prompt: 'Water?', options: ['av', 'nan'], position: 2 },
+    ],
+  };
+
+  it('has no Check, and sends the pairs by itself as the last one is made', async () => {
+    const client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+    testAuth.client = client;
+    renderWithProviders(<SessionPlayer view={pairs} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'sêv' }));
+    expect(screen.queryByRole('button', { name: 'Check' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'apple' }));
+    // a wrong one first: nothing is sent for it
+    fireEvent.click(screen.getByRole('button', { name: 'nan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'apple' }));
+    expect(client.calls.filter((c) => c.path === '/sessions/s1/answers')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'bread' }));
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
+    const sent = client.calls.filter((c) => c.path === '/sessions/s1/answers');
+    expect(sent).toHaveLength(1);
+    expect(sent[0]!.body).toEqual({
+      exerciseId: 'mp',
+      answer: {
+        matches: [
+          { left: 'sêv', right: 'apple' },
+          { left: 'nan', right: 'bread' },
+        ],
+      },
+    });
+  });
+
+  it('keeps Check, and sends the pairs as made, from a server that does not say which is which', async () => {
+    const client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'wrong', accepted: false, duplicate: false }) });
+    testAuth.client = client;
+    const free: SessionView = { ...pairs, exercises: [{ ...pairs.exercises[0]!, pairOf: undefined }, pairs.exercises[1]!] };
+    renderWithProviders(<SessionPlayer view={free} paths={paths} onExit={() => undefined} />);
+    fireEvent.click(await screen.findByRole('button', { name: 'sêv' }));
+    fireEvent.click(screen.getByRole('button', { name: 'bread' }));
+    fireEvent.click(screen.getByRole('button', { name: 'nan' }));
+    fireEvent.click(screen.getByRole('button', { name: 'apple' }));
+    expect(client.calls.filter((c) => c.path === '/sessions/s1/answers')).toHaveLength(0);
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/sessions/s1/answers')?.body).toEqual({
+      exerciseId: 'mp',
+      answer: {
+        matches: [
+          { left: 'sêv', right: 'bread' },
+          { left: 'nan', right: 'apple' },
+        ],
+      },
+    });
+  });
+});
+
+describe('a translation built from word tiles', () => {
+  const tiled: SessionView = {
+    ...view,
+    dialect: 'kurmanji',
+    exercises: [{ id: 'tr', type: 'translate', prompt: 'Bibore', bank: ['me', 'Excuse', 'water'], position: 1 }],
+  };
+
+  it('can be checked once a tile is on the line, and is sent as the line reads', async () => {
+    const client = fakeClient({ ...standing, 'POST /sessions/s1/answers': ok({ verdict: 'correct', accepted: true, duplicate: false }) });
+    testAuth.client = client;
+    renderWithProviders(<SessionPlayer view={tiled} paths={paths} onExit={() => undefined} />);
+    expect(await screen.findByRole('heading', { name: 'Translate this' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'Excuse' }));
+    expect(screen.getByRole('button', { name: 'Check' }).getAttribute('aria-disabled')).not.toBe('true');
+    fireEvent.click(screen.getByRole('button', { name: 'me' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Check' }));
+    expect(await screen.findByRole('button', { name: 'Continue' })).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/sessions/s1/answers')?.body).toEqual({ exerciseId: 'tr', answer: { text: 'Excuse me' } });
   });
 });
 
@@ -429,7 +548,7 @@ describe('the results', () => {
   }
 
   // the mistakes can be practised at once; the course's next lesson leads while today's goal is still to meet
-  it('offers the next lesson and practising the mistakes, and opens the Day card on the way when today kept the streak', async () => {
+  it('offers the next lesson and practising the mistakes, and passes the kept streak on the way', async () => {
     testAuth.client = fakeClient({
       'GET /me': inTurn(
         ok({ user: { skipSpeaking: false, streak: { current: 3, lastActiveOn: '2026-10-27' } } }),
@@ -454,15 +573,17 @@ describe('the results', () => {
     await finish(3);
     expect(await screen.findByText('Lesson complete!')).toBeTruthy();
     expect(screen.getByLabelText('Right first time: 50%, Good practice, 1 of 2')).toBeTruthy();
+    // this sitting, timed from the first exercise shown: three answers in seconds is quick
+    expect(screen.getByLabelText(/^Quick: 0 min \d+ s$/)).toBeTruthy();
     expect(await screen.findByText('19 of 20 XP today')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Practise these now' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to the path' })).toBeTruthy();
 
-    // today kept the streak: the Day card comes first, then the way on that was chosen
+    // today kept the streak: its moment comes first, then the way on that was chosen
     fireEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
-    expect(await screen.findByRole('heading', { name: 'Day 4' })).toBeTruthy();
-    expect(screen.getByText('You learned today. 12 days learned in all.')).toBeTruthy();
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    expect(await screen.findByRole('heading', { name: '4 day streak' })).toBeTruthy();
     expect(screen.getByLabelText('2 of 5 sessions to your next freeze')).toBeTruthy();
     expect(onPractise).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));

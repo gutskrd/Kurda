@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { AccessibilityInfo, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloWindow } from '../characters/HevaloWindow';
 import { haptic } from '../feedback/haptics';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -13,20 +13,21 @@ import { useTheme } from '../theme/ThemeProvider';
 import { spacing, typography } from '../theme/tokens';
 import type { JumpTestStart } from './JumpTestScreen';
 
-/** How tall Hevalo stands over the result. */
-const HEVALO = 168;
+/** How tall Hevalo's window stands over the result. */
+const WINDOW = 180;
 
 /**
  * How a test to jump ahead came out, as the server decided it.
  *
  * Passed: the unit is open, the skipped lessons stay open, and one button goes
  * back to the path — which opens up to the unit and moves on to it as it does
- * after a lesson. Felt once, the system's success, and Hevalo cheers.
+ * after a lesson. Felt once, the system's success, and Hevalo pops up in his
+ * window and cheers.
  *
  * Not yet: how many were right and how many open the unit, said plainly and
  * never as a failure; "Keep learning" back to the path, and "Try again" while
- * today's tries at this unit last. Hevalo tilts his head, curious. No buzz:
- * nothing went wrong.
+ * today's tries at this unit last. Hevalo, in his window, tilts his head,
+ * curious. No buzz: nothing went wrong.
  */
 export function JumpResults({
   test,
@@ -64,9 +65,7 @@ export function JumpResults({
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="jump-results">
       <ScrollView contentContainerStyle={styles.body}>
-        <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-          <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={HEVALO} flip={dir.rtl} reaction={passed ? 'cheer' : 'hmm'} />
-        </View>
+        <HevaloWindow size={WINDOW} flip={dir.rtl} reaction={passed ? 'cheer' : 'hmm'} />
         <Text style={[styles.title, { color: colors.textPrimary }]} accessibilityRole="header">
           {title}
         </Text>

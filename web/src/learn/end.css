@@ -1,0 +1,457 @@
+/*
+ * The end of a lesson (Results.tsx, StreakMoment.tsx): Hevalo standing tall
+ * over the title and three framed cards, then the streak's flame and week,
+ * then today's quests (quests/quests.css). The rows under the cards — today's
+ * goal, the league, the mistakes — are in styles/learn.css, and the results'
+ * arrival in styles/motion.css.
+ *
+ * Phone first: everything here is drawn for a 375–430 point wide screen and
+ * simply centred in the lesson's column on a wider one. Only transform and
+ * opacity move, and base.css lands each movement at its end at once under
+ * prefers-reduced-motion; what would still show a frame of travel is
+ * switched off outright at the foot of this file.
+ */
+
+/* ---- the results ------------------------------------------------------------- */
+.lesson-results .celebrate-inline .celebrate-art {
+  min-height: 230px;
+}
+.lesson-results .celebrate-inline .celebrate-glow {
+  width: 280px;
+  height: 280px;
+  margin: -140px 0 0 -140px;
+}
+.lesson-results .celebrate-inline .celebrate-ring {
+  width: 150px;
+  height: 150px;
+  margin: -75px 0 0 -75px;
+}
+.lesson-results .celebrate-details {
+  gap: 4px;
+}
+.lesson-results-title {
+  margin: 4px 0 0;
+  color: var(--gold);
+  font-weight: 700;
+  line-height: 1.1;
+}
+:root[data-theme='light'] .lesson-results-title {
+  color: var(--gold-ink);
+}
+.lesson-results-sub {
+  max-width: 32ch;
+  margin: 0;
+  color: var(--ink-2);
+  font-size: var(--text-body);
+  line-height: 1.4;
+}
+
+/*
+ * Three cards side by side, each framed in its colour: a band holding the
+ * label, over a bordered body with the icon and the number. Gold for the XP,
+ * green for right first time, blue for the time. The band's words are dark
+ * on the light colours of the dark scheme and white on the deep ones of the
+ * light scheme; the number takes the colour itself, at a size that reads.
+ */
+.end-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 2px 0 0;
+}
+.end-stat {
+  --stat: var(--gold);
+  --on-stat: #241a00;
+  --stat-ink: var(--gold);
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+  padding: 0 3px 3px;
+  border-radius: 16px;
+  background: var(--stat);
+}
+.end-stat.is-accuracy {
+  --stat: var(--success);
+  --on-stat: #062312;
+  --stat-ink: var(--success);
+}
+.end-stat.is-time {
+  --stat: var(--gems);
+  --on-stat: #03213b;
+  --stat-ink: var(--gems);
+}
+:root[data-theme='light'] .end-stat.is-xp {
+  --stat-ink: var(--gold-ink);
+}
+:root[data-theme='light'] .end-stat.is-accuracy,
+:root[data-theme='light'] .end-stat.is-time {
+  --on-stat: #ffffff;
+}
+.end-stat-label {
+  display: grid;
+  place-items: center;
+  min-height: 30px;
+  margin: 0;
+  padding: 5px 6px 4px;
+  color: var(--on-stat);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: 0.05em;
+  text-align: center;
+  text-transform: uppercase;
+  hyphens: auto;
+}
+/* spaced letters would come apart in a script that joins them */
+[dir='rtl'] .end-stat-label {
+  letter-spacing: 0;
+}
+.end-stat-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 0;
+  min-height: 58px;
+  margin: 0;
+  padding: 10px 6px;
+  border-radius: 13px;
+  background: var(--panel-bg);
+  color: var(--stat-ink);
+  font-size: clamp(1.15rem, 5.4vw, 1.6rem);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  white-space: nowrap;
+}
+.end-stat-value svg {
+  flex: none;
+}
+
+/* ---- the streak's flame: the whole screen, warm --------------------------------- */
+.end-flame {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 4px;
+  padding: env(safe-area-inset-top) 16px env(safe-area-inset-bottom);
+  background:
+    radial-gradient(120% 70% at 50% 42%, #3a2007 0%, #6b3409 34%, #c4621a 70%, #f39a32 100%),
+    #c4621a;
+  color: #fff7e8;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.end-flame-art {
+  --t-hi: #fff1b0;
+  --t-mid: #ffb43a;
+  padding-top: 0;
+}
+.end-flame .celebrate-art {
+  min-height: 240px;
+}
+.end-flame .celebrate-art-inner {
+  animation: flame-grow 760ms var(--ease-spring) both;
+}
+.end-flame .celebrate-glow {
+  width: 380px;
+  height: 380px;
+  margin: -190px 0 0 -190px;
+  background: radial-gradient(closest-side, rgba(255, 210, 110, 0.55), rgba(255, 150, 40, 0.18) 60%, transparent);
+}
+.end-flame .celebrate-ring {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  border-color: #ffe08a;
+}
+@keyframes flame-grow {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.2);
+  }
+  30% {
+    opacity: 1;
+  }
+}
+.end-flame-day {
+  margin: 0;
+  color: inherit;
+  font-size: clamp(5rem, 28vw, 8rem);
+  font-weight: 700;
+  line-height: 1;
+  text-shadow: 0 6px 28px rgba(70, 25, 0, 0.5);
+}
+.end-flame-day:focus {
+  outline: none;
+}
+/* a counter's digits: each that changes slides up and out as the next slides in */
+.roll {
+  display: inline-flex;
+  font-variant-numeric: tabular-nums;
+}
+.roll-digit {
+  display: inline-block;
+  height: 1.1em;
+  overflow: hidden;
+  line-height: 1.1;
+}
+.roll-column {
+  display: flex;
+  flex-direction: column;
+  animation: roll-up 480ms var(--ease-spring) var(--roll-delay, 0ms) both;
+}
+@keyframes roll-up {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+/* ---- the streak's week ------------------------------------------------------------- */
+.end-week {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  padding-top: 8px;
+  text-align: center;
+}
+/* its own layer, so the fire standing in front of the window is in front of nothing else */
+.end-week-hevalo {
+  isolation: isolate;
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+}
+/* Hevalo's window, and the streak's fire on the ground in front of its lower corner, on the side the reading starts from */
+.end-week-scene {
+  display: flex;
+  align-items: flex-end;
+}
+/* in front of the wall: its logs over the wall's corner and a little below its foot, nearer than the wall */
+.end-week-fire {
+  position: relative;
+  z-index: 1;
+  margin-inline-end: calc(-1 * var(--fire-over));
+  margin-bottom: -2px;
+}
+/* what Hevalo says, in a bubble whose tail points down at him */
+.end-bubble {
+  position: relative;
+  max-width: min(340px, 100%);
+  margin: 0;
+  padding: 14px 18px;
+  border: 2px solid var(--border-strong);
+  border-radius: 18px;
+  background: var(--panel-bg);
+  color: var(--ink);
+  font-size: var(--text-body);
+  line-height: 1.4;
+  animation: celebrate-words var(--dur-slow) var(--ease-out) 200ms both;
+}
+.end-bubble::after {
+  content: '';
+  position: absolute;
+  inset-inline-start: calc(50% + var(--window-aside, 0px));
+  bottom: -9px;
+  width: 16px;
+  height: 16px;
+  margin-inline-start: -8px;
+  border-right: 2px solid var(--border-strong);
+  border-bottom: 2px solid var(--border-strong);
+  border-bottom-right-radius: 4px;
+  background: var(--panel-bg);
+  rotate: 45deg;
+}
+.end-week-count {
+  display: grid;
+  justify-items: center;
+  margin: 0;
+  line-height: 1;
+}
+.end-week-count:focus {
+  outline: none;
+}
+/* the number in the flame's colours: a gradient through the letters, deep enough to read on the light page too */
+.end-week-number {
+  padding: 0 4px 4px;
+  background: linear-gradient(180deg, #ffd25e, #f3922b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  font-size: clamp(4.5rem, 24vw, 6.5rem);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+:root[data-theme='light'] .end-week-number {
+  background-image: linear-gradient(180deg, #d98500, #a84f00);
+}
+.end-week-words {
+  color: #f3a23a;
+  font-family: var(--font-sans);
+  font-size: var(--text-section);
+  font-weight: 800;
+}
+:root[data-theme='light'] .end-week-words {
+  color: #a84f00;
+}
+
+/* the week: each day's initial over a round mark, today's name in gold */
+.end-days {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+  width: min(420px, 100%);
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.end-day {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.end-day-name {
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  font-weight: 700;
+}
+.end-day.is-today .end-day-name {
+  color: var(--gold);
+}
+:root[data-theme='light'] .end-day.is-today .end-day-name {
+  color: var(--gold-ink);
+}
+.end-day-mark {
+  display: grid;
+  place-items: center;
+  /* narrower on a narrow screen, so today's ring stays clear of the days beside it */
+  width: min(40px, 100% - 6px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--surface-2);
+  color: transparent;
+  animation: day-in var(--dur-slow) var(--ease-spring) calc(300ms + var(--order, 0) * 70ms) both;
+}
+.end-day.is-learned .end-day-mark {
+  background: var(--gold);
+  color: #2a1a00;
+}
+/* kept by a freeze: ice blue */
+.end-day.is-frozen .end-day-mark {
+  background: var(--gems);
+  color: #03213b;
+}
+:root[data-theme='light'] .end-day.is-frozen .end-day-mark {
+  color: #ffffff;
+}
+.end-day.is-missed .end-day-mark {
+  background: var(--surface-2);
+}
+.end-day.is-ahead .end-day-mark {
+  background: none;
+  box-shadow: inset 0 0 0 2px var(--surface-3);
+}
+/* today: ringed, and the last to arrive, with a pop */
+.end-day.is-today .end-day-mark {
+  box-shadow:
+    0 0 0 3px var(--app-bg),
+    0 0 0 5px var(--gold);
+  animation-name: day-pop;
+  animation-duration: 520ms;
+}
+.end-day.is-today:not(.is-learned) .end-day-mark {
+  background: none;
+  box-shadow: inset 0 0 0 3px var(--gold);
+}
+@keyframes day-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+@keyframes day-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.18);
+  }
+}
+
+/* the freezes: how far the sessions since the last have got towards the next */
+.end-freeze {
+  display: grid;
+  gap: 8px;
+  width: min(320px, 100%);
+  margin-top: 6px;
+}
+.end-freeze-bar {
+  position: relative;
+  height: 10px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+}
+.end-freeze-bar > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--gems);
+  transform: scaleX(var(--to, 0));
+  transform-origin: left;
+  animation: freeze-fill var(--dur-progress) var(--ease-out) 900ms both;
+}
+[dir='rtl'] .end-freeze-bar > span {
+  transform-origin: right;
+}
+@keyframes freeze-fill {
+  from {
+    transform: scaleX(0);
+  }
+}
+.end-freeze-line {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: 0.9rem;
+}
+
+/* ---- today's quests, after the streak ----------------------------------------------- */
+.end-quests {
+  display: grid;
+  gap: 18px;
+  padding-top: 12px;
+}
+.end-quests-title {
+  margin: 0;
+  color: var(--gold);
+  font-size: clamp(1.7rem, 7vw, 2.2rem);
+  font-weight: 700;
+  text-align: center;
+}
+:root[data-theme='light'] .end-quests-title {
+  color: var(--gold-ink);
+}
+.end-quests-title:focus {
+  outline: none;
+}
+
+/* "Not now", beside Open chest: a whole fingertip, though it reads as a link */
+.lesson-bar .end-later {
+  min-height: 44px;
+  padding: 0 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* the flame's sparks and ring would show a frozen frame of their travel */
+  .end-flame :is(.celebrate-ring, .celebrate-burst) {
+    display: none;
+  }
+}

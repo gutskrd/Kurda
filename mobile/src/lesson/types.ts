@@ -1,5 +1,5 @@
 /** Lesson-player contract — mirrors the server payloads (KUR-028/#28). */
-import type { DeliveredExercise, GradeResult, RecordedAnswer, Verdict } from '@kurda/shared';
+import type { DeliveredExercise, GradeResult, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
 
 export type { ExerciseType, MatchPair, SelfRating, Verdict } from '@kurda/shared';
 
@@ -37,6 +37,10 @@ export interface Streak {
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
+  /** the learner's own today (YYYY-MM-DD, their timezone), to lay out the week; absent on an older server */
+  today?: string;
+  /** days in the last 14 (theirs) on which they learned, or a freeze kept the streak; absent on an older server */
+  recent?: RecentDay[];
 }
 
 export interface SessionResults {
@@ -49,6 +53,8 @@ export interface SessionResults {
   streak: Streak;
   /** a test to jump ahead on the path: how it came out */
   jump?: JumpOutcome;
+  /** today's quests this session moved, before and after (absent when none moved, or on an older server) */
+  quests?: QuestStep[];
 }
 
 /** How a test to jump ahead came out, as the server decided it (api/src/jump/settle.ts). */

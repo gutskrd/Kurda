@@ -116,11 +116,11 @@ export interface MatchState {
 
 export const emptyMatch: MatchState = { matches: [], selectedLeft: null };
 
-export function isLeftMatched(state: MatchState, left: string): boolean {
+export function isLeftMatched(state: Pick<MatchState, 'matches'>, left: string): boolean {
   return state.matches.some((m) => m.left === left);
 }
 
-export function isRightMatched(state: MatchState, right: string): boolean {
+export function isRightMatched(state: Pick<MatchState, 'matches'>, right: string): boolean {
   return state.matches.some((m) => m.right === right);
 }
 
@@ -148,6 +148,87 @@ export function tapRight(state: MatchState, right: string): MatchState {
     matches: [...state.matches, { left: state.selectedLeft, right }],
     selectedLeft: null,
   };
+}
+
+/**
+ * Which meaning each Kurdish card pairs with, by their texts, from a delivered
+ * exercise's `pairOf`. Null when the server sent none, or one that does not fit
+ * the cards: the pairs are then made freely and graded together at Check.
+ */
+export function pairKey(lefts: readonly string[], rights: readonly string[], pairOf: readonly number[] | undefined): Map<string, string> | null {
+  if (!pairOf || pairOf.length !== lefts.length) return null;
+  const key = new Map<string, string>();
+  for (let i = 0; i < lefts.length; i++) {
+    const right = rights[pairOf[i]!];
+    if (right === undefined) return null;
+    key.set(lefts[i]!, right);
+  }
+  return key;
+}
+
+/** A card waiting for its partner while pairs are answered as they are made: either side may be picked first. */
+export interface PickedCard {
+  side: 'left' | 'right';
+  text: string;
+}
+
+/** Pairs answered as they are made: the ones found so far, and a card waiting for its partner. */
+export interface LiveMatchState {
+  matches: MatchPair[];
+  picked: PickedCard | null;
+}
+
+export const emptyLiveMatch: LiveMatchState = { matches: [], picked: null };
+
+/** What a tap did: picked a card, let it go, made a right pair, tried a wrong one, or touched a spent card. */
+export type LiveMatchOutcome = 'picked' | 'unpicked' | 'matched' | 'missed' | 'ignored';
+
+/**
+ * A tap while pairs are answered as they are made (`pairKey`). A card already
+ * matched is spent; the picked card tapped again is let go; another card on its
+ * side takes its place; a card on the other side tries the pair — kept when the
+ * key says so, and either way nothing stays picked. `pair` is the two cards just
+ * tried, for the screen to flash green or red.
+ */
+export function tapLive(
+  state: LiveMatchState,
+  key: ReadonlyMap<string, string>,
+  side: 'left' | 'right',
+  text: string,
+): { state: LiveMatchState; outcome: LiveMatchOutcome; pair?: MatchPair } {
+  if (side === 'left' ? isLeftMatched(state, text) : isRightMatched(state, text)) return { state, outcome: 'ignored' };
+  const picked = state.picked;
+  if (picked && picked.side === side && picked.text === text) return { state: { ...state, picked: null }, outcome: 'unpicked' };
+  if (!picked || picked.side === side) return { state: { ...state, picked: { side, text } }, outcome: 'picked' };
+  const pair: MatchPair = side === 'left' ? { left: text, right: picked.text } : { left: picked.text, right: text };
+  if (key.get(pair.left) === pair.right) return { state: { matches: [...state.matches, pair], picked: null }, outcome: 'matched', pair };
+  return { state: { ...state, picked: null }, outcome: 'missed', pair };
+}
+
+// ---------- word tiles ----------
+
+/*
+ * An answer built from word tiles (a delivered exercise's `bank`): the tiles
+ * laid on the line are held by their places in the bank, in the order laid, so
+ * the same word twice in the bank stays two tiles.
+ */
+
+/** Lay a bank tile at the end of the line; one already there stays where it is. */
+export function placeTile(placed: readonly number[], index: number): number[] {
+  return placed.includes(index) ? [...placed] : [...placed, index];
+}
+
+/** Take a tile off the line, back to its place in the bank; the ones after it close up. */
+export function liftTile(placed: readonly number[], index: number): number[] {
+  return placed.filter((i) => i !== index);
+}
+
+/** The answer the line reads, sent as a typed one is: its words joined by single spaces. */
+export function tileAnswer(bank: readonly string[], placed: readonly number[]): string {
+  return placed
+    .map((i) => bank[i])
+    .filter((w): w is string => w !== undefined)
+    .join(' ');
 }
 
 // ---------- the Kurdish key bar ----------

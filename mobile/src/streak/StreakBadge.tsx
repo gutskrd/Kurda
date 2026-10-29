@@ -1,23 +1,23 @@
 import { StyleSheet, Text, View } from 'react-native';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
+import { Fire } from '../theme/Fire';
 import { Icon } from '../theme/Icon';
 import { useEventTheme } from '../theme/EventThemeContext';
-import { themeAccent } from '../theme/eventThemes';
 import { isFlameLit, streakLabelKey, type Streak } from './format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 
 /**
- * Flame + day count (KUR-031). Lit while the run is alive; dimmed when the
- * streak has lapsed to 0. Shows a snowflake when a freeze is banked. While an
- * event theme is active (KUR-092) the lit flame takes the event's accent.
+ * The streak's fire + day count (KUR-031). Burning while the run is alive;
+ * grey and still when the streak has lapsed to 0. Shows a snowflake when a
+ * freeze is banked. While an event theme is active (KUR-092) the lit fire
+ * burns in the event's accent.
  *
- * A quiet pill with the flame in the sun's gold, the way the streak is drawn
- * everywhere else (Learn's "Today"). It was a dark pill with a red flame and a
- * snowflake in the page's own ink: the snowflake vanished into the pill in
- * both schemes, and red is the colour of a wrong answer, not of a kept day.
- * The gold is the darker ochre on the light page, so the flame clears 3:1.
+ * A quiet pill with the fire the streak is drawn with everywhere else
+ * (Learn's "Today"). It was a dark pill with a red flame and a snowflake in
+ * the page's own ink: the snowflake vanished into the pill in both schemes,
+ * and red is the colour of a wrong answer, not of a kept day.
  */
 export function StreakBadge({ streak }: { streak: Streak }) {
   const lit = isFlameLit(streak.current);
@@ -34,7 +34,7 @@ export function StreakBadge({ streak }: { streak: Streak }) {
       accessible
       accessibilityLabel={label}
     >
-      <Icon name="flame" size={18} color={lit ? (pack ? themeAccent(pack, colors.goldText) : colors.goldText) : colors.textSecondary} />
+      <Fire size={20} lit={lit} accent={pack?.accent} />
       <Text style={[styles.count, { color: lit ? colors.textPrimary : colors.textSecondary }]}>{days}</Text>
       {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.textSecondary} /> : null}
     </View>

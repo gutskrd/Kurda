@@ -212,14 +212,13 @@ describe('multiple choice, feedback, a miss asked again, and the results', () =>
     expect(sent('answers', 'mc')).toHaveLength(1);
     await next();
 
-    // the results: first-try accuracy with a kind word, XP, the streak, and the mistake with its answer
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    // the results: XP, first-try accuracy with a kind word, the time, and the mistake with its answer
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
     // the lesson's own header has gone: the results have the screen
     expect(screen.queryByRole('progressbar', { name: 'Progress' })).not.toBeInTheDocument();
-    expect(screen.getByText('75%')).toBeInTheDocument();
-    expect(screen.getByText('Solid · 3 of 4')).toBeInTheDocument();
-    // the XP counts up as the results arrive, and is read out as the number it ends on
-    expect(screen.getByLabelText('+15')).toBeInTheDocument();
+    expect(screen.getByText('Solid')).toBeInTheDocument();
+    // the cards count up as the results arrive, and are read out as the numbers they end on
+    expect(screen.getByText(/^\+15 XP\. 75% right first time \(3 of 4\): Solid\. Time: \d+ min \d+ s\.$/)).toBeInTheDocument();
     expect(await screen.findByText('+15', undefined, { timeout: 3000 })).toBeInTheDocument();
     const mistakes = screen.getByRole('heading', { name: 'To go over' }).closest('details')!;
     expect(mistakes).toHaveAttribute('open');
@@ -348,7 +347,7 @@ describe('listening', () => {
     expect(await screen.findByText('Write this in Kurdish')).toBeInTheDocument();
     await answerTyped('sêv');
     await next();
-    await screen.findByRole('heading', { name: 'Lesson finished' });
+    await screen.findByRole('heading', { name: 'Great work!' });
     expect(sent('answers').map((c) => (c.body as { exerciseId: string }).exerciseId)).toEqual(['t']);
     expect(sent('retry')).toHaveLength(0);
     // not a mistake, and out of the score: the results say so beside it
@@ -728,7 +727,8 @@ describe('a conversation', () => {
 
 describe('the action bar and the verdict sheet', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => typed(id, `word ${id}`));
-  const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face [data-speaker="hevalo"]');
+  // leaning out of his window, his head and neck
+  const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face .hevalo-window [data-speaker="hevalo"][data-crop="head"]');
 
   it('names a run at a milestone, warms the bar through it, and has Hevalo cheer it and think a miss over', async () => {
     serve({
@@ -897,7 +897,7 @@ describe('the results', () => {
     await next();
 
     expect(await screen.findByRole('heading', { name: 'Perfect lesson!' })).toBeInTheDocument();
-    expect(screen.getByText('Excellent · 1 of 1')).toBeInTheDocument();
+    expect(screen.getByText(/^\+15 XP\. 100% right first time \(1 of 1\): Excellent\./)).toBeInTheDocument();
     expect(await screen.findByText('15 of 20 XP today')).toBeInTheDocument();
     expect(screen.getByRole('progressbar', { name: 'Today’s goal' })).toHaveAttribute('aria-valuenow', '75');
     expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
@@ -930,11 +930,13 @@ describe('the results', () => {
     expect(screen.getByText('+15 XP this week · #4 in Kanî League')).toBeInTheDocument();
     expect(screen.queryByText(/^Up to/)).not.toBeInTheDocument();
 
-    // the streak was kept today: Continue, never by itself, to its day
+    // the streak was kept today: Continue, never by itself, to its flame, and Escape on from it to the week rather than out
     await userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
-    expect(await screen.findByRole('heading', { name: 'Day 8' })).toBeInTheDocument();
-    expect(screen.getByText('You learned today. 41 days learned in all.')).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: '8-day streak' })).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(await screen.findByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
+    expect(screen.getByTestId('where')).toHaveTextContent('/app/learn/lesson/l1');
     // and then: Done leads, the next lesson beside it
     expect(screen.getByText('Today’s goal is done. A good place to stop, or keep going.')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeInTheDocument();
@@ -979,7 +981,7 @@ describe('leaving and coming back', () => {
       await answerTyped('x');
       await next();
     }
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
     expect(sent('retry')).toHaveLength(0);
   });
 });
@@ -1040,7 +1042,7 @@ describe('when the server says no', () => {
     await next();
     expect(await screen.findByText('Second try')).toBeInTheDocument();
     await answerTyped('sêv');
-    expect(await screen.findByRole('heading', { name: 'Lesson finished' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Great work!' })).toBeInTheDocument();
   });
 });
 

@@ -3,8 +3,8 @@ import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { BottomSheet } from '../theme/BottomSheet';
+import { Fire } from '../theme/Fire';
 import { display } from '../theme/fonts';
-import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { learningStats, streakLabelKey, type Streak } from './format';
@@ -15,13 +15,13 @@ import { learningStats, streakLabelKey, type Streak } from './format';
  * learned in all, and the freezes learning has earned, with what one costs.
  *
  * The streak is the number most likely to make somebody stop just after a
- * lapse, so it never stands here alone. Opened from the flame in Learn's
+ * lapse, so it never stands here alone. Opened from the fire in Learn's
  * corner and from the streak on your profile; `streak` null keeps it closed.
  */
 export function StreakSheet({ streak, onClose }: { streak: Streak | null; onClose: () => void }): React.JSX.Element {
   const { t } = useI18n();
   return (
-    <BottomSheet visible={streak !== null} onClose={onClose} title={t('profile.stat.streak')} icon="flame">
+    <BottomSheet visible={streak !== null} onClose={onClose} title={t('profile.stat.streak')}>
       {streak ? <StreakDetail streak={streak} /> : null}
     </BottomSheet>
   );
@@ -43,7 +43,7 @@ function StreakDetail({ streak }: { streak: Streak }): React.JSX.Element {
   return (
     <View style={styles.body}>
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Icon name="flame" size={40} color={lit ? colors.goldText : colors.textSecondary} />
+        <Fire size={48} lit={lit} />
         <Text style={[styles.words, dir.text, { color: colors.textPrimary }]}>{words}</Text>
       </View>
       <View style={[styles.cells, { flexDirection: dir.row }]}>

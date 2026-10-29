@@ -10,6 +10,7 @@ import {
   VISEMES,
   between,
   characterArt,
+  cropBody,
   cropBox,
   eyeShift,
   eyesFor,
@@ -65,6 +66,16 @@ const px = (p: CharacterPoint): string => `${p.x}px ${p.y}px`;
 const about = (p: CharacterPoint): string => ` style="transform-origin:${px(p)}"`;
 
 /**
+ * Where a figure stands, and how tall it is to hop by: its feet, under the
+ * whole figure — but leaning out of a window (head and neck) he springs from
+ * the sill, not from feet far out of sight, so from the foot of the box shown.
+ */
+function ground(art: CharacterArt, frame: CharacterBox, crop: CharacterCrop): { y: number; height: number } {
+  const stand = crop === 'head' ? frame : art.viewBox;
+  return { y: stand.y + stand.h, height: stand.h };
+}
+
+/**
  * One inline SVG holding every layer: the body, then the head's group with
  * every pair of eyes and all ten mouths, every one hidden but the shown one,
  * so speaking only flips an attribute on two groups. The deer's ears, pupils
@@ -74,7 +85,7 @@ const about = (p: CharacterPoint): string => ` style="transform-origin:${px(p)}"
 function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: CharacterCrop, resting: boolean, mirrored: boolean): string {
   const own = (part: string): string => part.split(`${TEMPLATE}-`).join(`${prefix}-`);
   const hidden = ' visibility="hidden"';
-  const feet = { x: frame.x + frame.w / 2, y: art.viewBox.y + art.viewBox.h };
+  const feet = { x: frame.x + frame.w / 2, y: ground(art, frame, crop).y };
   const rig = art.rig;
   const states: EyeState[] = ['half', 'closed', 'happy'];
   // the deer's eyes are whites and pupils always, with a lid over them for a blink or a smile
@@ -116,7 +127,7 @@ function drawing(art: CharacterArt, prefix: string, frame: CharacterBox, crop: C
     (mirrored ? `<g transform="matrix(-1 0 0 1 ${2 * frame.x + frame.w} 0)">` : '<g>') +
     shadow +
     `<g class="sc-breathe"${about(feet)}><g data-sc="hop"${about(feet)}>` +
-    own(art.body) +
+    own(cropBody(art, crop)) +
     `<g data-sc="head"><g class="sc-drift"${about(art.headPivot)}><g data-sc="tilt"${about(art.headPivot)}>` +
     head +
     eyes +
@@ -173,7 +184,7 @@ export interface SpeakingCharacterProps {
   /** the words being said, for moving the mouth when no timeline was saved with the recording */
   text?: string | null;
   voice?: RecordingVoice | null;
-  /** the whole figure, head to waist, or head and shoulders */
+  /** the whole figure, head to waist, head and shoulders, or head and neck (out of a window, HevaloWindow) */
   crop?: CharacterCrop;
   /** the height in pixels; left out, the stylesheet sizes it and the drawing keeps its shape */
   size?: number;
@@ -450,7 +461,7 @@ export function SpeakingCharacter({
           if (a.earRight) run(groups.earRight, frames(a.earRight, (v) => `rotate(${-v}deg)`), a.ms);
           if (a.sniff) run(groups.nose, frames(a.sniff, (v) => `scale(${v})`), a.ms);
         }
-        if (a.rise || a.stretch) run(groups.hop, hopFrames(a.rise, a.stretch, art.viewBox.h), a.ms);
+        if (a.rise || a.stretch) run(groups.hop, hopFrames(a.rise, a.stretch, ground(art, frame, crop).height), a.ms);
         if (a.rise && groups.shadow) run(groups.shadow, frames(a.rise, (v) => `scale(${1 - v * 4}, 1)`), a.ms);
         if (a.tilt) run(groups.tilt, frames(a.tilt, (v) => `rotate(${v}deg)`), a.ms);
         if (a.look && art.rig) {
@@ -633,7 +644,7 @@ export function SpeakingCharacter({
       query?.removeEventListener?.('change', onMotion);
       play.current = () => undefined;
     };
-  }, [markup, art, frame, src, text, voice, decorative, resting, quiet, gazeX, gazeY]);
+  }, [markup, art, frame, crop, src, text, voice, decorative, resting, quiet, gazeX, gazeY]);
 
   // a reaction plays when it is given, and each time it changes; the deer pricks up his ears on arriving
   const arrived = useRef(false);

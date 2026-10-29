@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import type { StoryDetail, StoryGameStanding, StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
+import { Fire } from '../../theme/Fire';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
 import { useTheme } from '../../theme/ThemeProvider';
@@ -113,7 +114,7 @@ export function Results({
           </View>
           {me.learningCounted ? (
             <View style={styles.counted}>
-              <Icon name="flame" size={16} color={colors.success} />
+              <Fire size={18} />
               <Text style={[styles.countedText, { color: colors.success }]}>{t('stories.results.counted')}</Text>
             </View>
           ) : (

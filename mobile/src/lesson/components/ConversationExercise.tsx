@@ -16,6 +16,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import type { Feedback } from '../player';
 import type { Exercise } from '../types';
 import { canPlayAudio, useAudio } from '../useAudio';
+import { ExerciseHeadline } from './ExerciseHeadline';
 import { MultipleChoiceExercise } from './MultipleChoiceExercise';
 
 interface Props {
@@ -90,9 +91,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>
-        {listenable ? t('lesson.conversation.prompt') : t('lesson.conversation.promptRead')}
-      </Text>
+      <ExerciseHeadline>{listenable ? t('lesson.conversation.prompt') : t('lesson.conversation.promptRead')}</ExerciseHeadline>
       {exercise.title ? (
         <Text style={[styles.title, kurdish, { color: colors.textPrimary }]} accessibilityRole="header">
           {exercise.title}
@@ -189,7 +188,7 @@ export function ConversationExercise({ exercise, choice, onSelect, disabled, fee
         })}
       </View>
 
-      <MultipleChoiceExercise exercise={exercise} choice={choice} onSelect={onSelect} disabled={disabled} feedback={feedback} />
+      <MultipleChoiceExercise exercise={exercise} choice={choice} onSelect={onSelect} disabled={disabled} feedback={feedback} standalone={false} />
     </View>
   );
 }
@@ -288,7 +287,6 @@ function useConversationAudio(lineAudio: ReadonlyArray<string | null>): {
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   title: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   controls: { flexWrap: 'wrap', gap: spacing.sm },
   lines: { gap: spacing.sm },

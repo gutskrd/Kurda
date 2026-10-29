@@ -60,6 +60,7 @@ export {
 export { CHARACTER_GLOW, stageBackdrop, type StageOptions } from './stage.js';
 export { LEAN_DEGREES, eyeShift, gazeTargets, leanToward, lookAcross, standTogether, standingSpots, togetherBackdrop, type StandingPlace } from './together.js';
 export { BLINK_MS, NOD_DEGREES, eyesAt, speakingFrame, voiceTimeline, type SpeakingFrame, type SpeakingInput } from './speaking.js';
+export { WINDOW_PLACE, WINDOW_POP, WINDOW_VIEW, windowArt, type WindowArt, type WindowShare } from './window.js';
 export {
   COMPANION_DOZE_MS,
   COMPANION_EDGE,
@@ -122,12 +123,21 @@ export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
   return art;
 }
 
-/** How much of a character a picture shows: the whole figure, head to waist, or head and shoulders. */
-export type CharacterCrop = 'full' | 'half' | 'bust';
+/**
+ * How much of a character a picture shows: the whole figure, head to waist,
+ * head and shoulders, or head and neck (leaning out of a window, `neck`).
+ */
+export type CharacterCrop = 'full' | 'half' | 'bust' | 'head';
 
-/** The box a crop shows. */
+/** The box a crop shows; a character drawn without a neck to lean out on shows its head and shoulders for `head`. */
 export function cropBox(art: CharacterArt, crop: CharacterCrop): CharacterBox {
+  if (crop === 'head') return art.neck?.box ?? art.bust;
   return crop === 'bust' ? art.bust : crop === 'half' ? art.half : art.viewBox;
+}
+
+/** The body a crop draws: for head and neck, the neck going on into the room behind; otherwise all of it. */
+export function cropBody(art: CharacterArt, crop: CharacterCrop): string {
+  return crop === 'head' && art.neck ? art.neck.body : art.body;
 }
 
 /** The most of a stage's width its character takes: the rest is for the buttons or the words beside it. */
@@ -155,7 +165,7 @@ export interface CharacterSvgOptions {
   /** the mouth shape to show; at rest by default */
   mouth?: Viseme;
   eyes?: EyeState;
-  /** the whole figure, head to waist, or head and shoulders */
+  /** the whole figure, head to waist, head and shoulders, or head and neck */
   crop?: CharacterCrop;
   /** how wide the drawing is shown, in pixels; by default the crop's own width in drawing units */
   width?: number;
@@ -186,7 +196,7 @@ export function characterSvg(id: CharacterId, options: CharacterSvgOptions = {})
   return (
     `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${n(height)}" viewBox="${box(frame)}" role="img" aria-labelledby="${t}">` +
     `<title id="${t}">${escapeXml(options.title ?? art.name)}</title>` +
-    art.body +
+    cropBody(art, crop) +
     headGroup(art, mouth, eyes) +
     '</svg>'
   );
