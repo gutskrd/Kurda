@@ -13,7 +13,7 @@ import {
   type WeekDay,
   type WeekDayState,
 } from '@kurda/shared';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloWindow } from '../characters/HevaloWindow';
 import { CheckIcon } from '../components/icons';
 import { CelebrationArt } from '../ranks/Celebration';
 import { prefersReducedMotion, useCelebrationMoment } from '../lib/motion';
@@ -32,11 +32,11 @@ import type { Streak } from './types';
  * after the app's one celebration (about a second and a half), or at once on
  * a click, Enter, Space or Escape.
  *
- * Then the week (`StreakWeek`): Hevalo saying a warm word for the day it is —
- * a first day, a comeback, a new best, or simply another day — the number and
- * "day streak", the seven days of this week with what happened on each, and
- * how far the freezes have got. Nothing counts down, warns or asks for
- * anything: a streak is a number that went up.
+ * Then the week (`StreakWeek`): Hevalo, leaning out of his window, saying a
+ * warm word for the day it is — a first day, a comeback, a new best, or
+ * simply another day — the number and "day streak", the seven days of this
+ * week with what happened on each, and how far the freezes have got. Nothing
+ * counts down, warns or asks for anything: a streak is a number that went up.
  */
 
 /** A flame in the sun's colours: an orange body with a curl at its tip, a yellow heart. */
@@ -185,7 +185,7 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
         <p className="end-bubble" id="end-week-cheer">
           {t(CHEERS[streakMood(streak)])}
         </p>
-        <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={150} decorative reaction="cheer" />
+        <HevaloWindow size={160} reaction="cheer" />
       </div>
       <h2 className="end-week-count" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">
         <span className="end-week-number" aria-hidden="true">

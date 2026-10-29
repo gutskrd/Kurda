@@ -246,3 +246,62 @@
 .conversation-stage .speaking-character > svg {
   overflow: visible;
 }
+
+/*
+ * Hevalo leaning out of his window (HevaloWindow.tsx): the window behind him,
+ * him cut off at the sill and nowhere else, then the sill and the flowers in
+ * front of him, all in one box of the picture's shape. The script sets the
+ * sill's height (--window-sill) and how far under it he waits to pop up
+ * (--window-drop).
+ */
+.hevalo-window {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  line-height: 0;
+}
+.hevalo-window-art {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.hevalo-window-art > svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* drawn for the page's own scheme: dusk unless the page is light */
+.hevalo-window-art.is-light {
+  display: none;
+}
+:root[data-theme='light'] .hevalo-window-art.is-light {
+  display: block;
+}
+:root[data-theme='light'] .hevalo-window-art.is-dark {
+  display: none;
+}
+/* on a page read from the right, the curtain and the flowers change sides */
+.hevalo-window.is-mirrored .hevalo-window-art > svg {
+  transform: scaleX(-1);
+}
+.hevalo-window-cut {
+  position: absolute;
+  inset: 0;
+  clip-path: inset(-30% -30% calc(100% - var(--window-sill, 70%)) -30%);
+}
+.hevalo-window-place {
+  position: absolute;
+}
+.hevalo-window .speaking-character > svg {
+  overflow: visible;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .hevalo-window.is-popping .hevalo-window-place {
+    animation: hevalo-window-rise var(--window-pop-ms, 560ms) var(--ease-spring) var(--window-pop-delay, 140ms) both;
+  }
+}
+@keyframes hevalo-window-rise {
+  from {
+    transform: translateY(var(--window-drop, 120px));
+  }
+}
