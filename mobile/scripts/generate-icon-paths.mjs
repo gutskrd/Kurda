@@ -173,6 +173,10 @@ const MAP = {
   'device-phone': { glyph: 'DeviceMobile', note: 'a phone signed in to your account' },
   'device-tablet': { glyph: 'DeviceTablet', note: 'a tablet signed in to your account' },
   'device-computer': { glyph: 'Laptop', note: 'a computer signed in to your account, through a browser' },
+
+  // --- answering a lesson ---
+  'speaker-high': { glyph: 'SpeakerHigh', weight: 'fill', note: 'the clip in a listening bubble: tap to hear it again' },
+  tiles: { glyph: 'SquaresFour', note: 'answer with word tiles rather than the keyboard' },
 };
 
 /** Every shape in one weight of one glyph, in the order Phosphor draws them. */
