@@ -99,9 +99,10 @@ describe('the week', () => {
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
   });
 
-  it('has Hevalo say a word for the day it is', () => {
+  it('has Hevalo say a word for the day it is, leaning out of his window', () => {
     inLanguage(<StreakWeek streak={week} />);
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
+    expect(document.querySelector('.end-week-hevalo .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');
     // and the heading takes it along, for whoever lands on it
     expect(screen.getByRole('heading', { name: '4-day streak' })).toHaveAccessibleDescription('Another day learned. See you again tomorrow!');
   });

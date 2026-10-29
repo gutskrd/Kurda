@@ -16,6 +16,7 @@ import type { QuestDay } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { fakeClient, ok, testAuth } from '../../reports/testing/auth';
+import { characterLayers } from '../../characters/layers';
 import { NO_MOMENTS } from '../moments';
 import type { SessionResults } from '../types';
 import { LessonResults } from './LessonResults';
@@ -85,6 +86,16 @@ describe('the title', () => {
     show({ dialect: null, results: { ...results, accuracy: 0.5, correct: 5 } });
     expect(await screen.findByRole('heading', { name: 'Lesson complete!' })).toBeTruthy();
     expect(screen.getByText('Your Kurdish is getting stronger')).toBeTruthy();
+  });
+});
+
+describe('Hevalo', () => {
+  it('leans out of his window over the results, his head and neck and never the whole deer', async () => {
+    show();
+    expect(await screen.findByTestId('hevalo-window')).toBeTruthy();
+    const drawn = [...document.querySelectorAll('svg[data-markup]')].map((el) => el.getAttribute('data-markup'));
+    expect(drawn).toContain(characterLayers('hevalo', 'head').body);
+    expect(drawn).not.toContain(characterLayers('hevalo', 'full').body);
   });
 });
 

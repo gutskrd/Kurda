@@ -12,7 +12,7 @@ vi.mock('expo-audio', () => import('../recording/testing/fakeMic'));
 vi.mock('expo-file-system/legacy', () => import('../recording/testing/fakeMic'));
 vi.mock('../lesson/useRecorder', () => import('../lesson/useRecorder.native'));
 vi.mock('@react-navigation/native', () => import('../play/testing/navigation'));
-import { cleanup, fireEvent, screen } from '@testing-library/react';
+import { cleanup, fireEvent, screen, within } from '@testing-library/react';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { fail, fakeClient, ok, testAuth } from '../reports/testing/auth';
@@ -69,6 +69,8 @@ describe('the test that jumps ahead', () => {
     await sitIt();
     expect(await screen.findByRole('heading', { name: 'Unit 3 is open!' })).toBeTruthy();
     expect(screen.getByText('9 of 10 right. The lessons you skipped stay open to come back to.')).toBeTruthy();
+    // Hevalo cheers it, leaning out of his window
+    expect(within(screen.getByTestId('jump-results')).getByTestId('hevalo-window')).toBeTruthy();
     expect(felt).toContain('celebrate');
     stop();
     expect(client.calls.find((c) => c.path === '/courses/c1/jump')?.body).toEqual({ unitId: 'u3' });
