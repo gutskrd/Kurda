@@ -47,6 +47,12 @@ export interface DeliveredExercise {
   /** match pairs: the Kurdish cards, and their meanings, each side shuffled */
   lefts?: string[];
   rights?: string[];
+  /** match pairs: for each card in `lefts` (as shown), the index in `rights` (as shown) of its meaning, so a pair is answered as it is made */
+  pairOf?: number[];
+  /** translate and listening: the tiles to build the answer from — its words and a few that are not — in the order shown */
+  bank?: string[];
+  /** the prompt as its words and what lies between them, in order (their texts joined give `prompt` back) */
+  promptTokens?: PromptToken[];
   /** listening: the clip to play */
   audioUrl?: string;
   /** who says `audioUrl`, and how their mouth moves; only when a character is chosen for it */
@@ -74,6 +80,13 @@ export interface DeliveredExercise {
    * any course, so each says its own; a lesson's session says it once for all.
    */
   dialect?: string;
+}
+
+/** A piece of a prompt: a word, or what lies between two. */
+export interface PromptToken {
+  text: string;
+  /** what this word means, most likely first (at most 3); absent for spaces, punctuation and words the course does not know */
+  meanings?: string[];
 }
 
 /** An answer the server has already recorded in this session. */

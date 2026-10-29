@@ -58,6 +58,7 @@ export {
   type GradeResult,
   type PendingAnswer,
   type PlayableSession,
+  type PromptToken,
   type PlayerAction,
   type PlayerState,
   type PlayerStatus,
@@ -70,6 +71,8 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** Today's three quests, and the chests they pay: learning only, never anything paid. */
+export { QUEST_KINDS, type ChestOpening, type ChestTier, type Quest, type QuestDay, type QuestKind, type QuestStep } from './quests.js';
 /** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
 export { PRAISE, praiseFor, praiseWords } from './praise.js';
 /** What a lesson pays, for the server's XP rules and the "+10–20 XP" a stop's card shows. */
