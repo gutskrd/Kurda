@@ -13,6 +13,7 @@ import type { PracticeDue } from '../learn/types';
 import type { MeProfile } from '../lib/types';
 import { useCourses, type CourseEntry } from '../learn/useCourses';
 import { LearnHeader } from '../learn/LearnHeader';
+import { QuestsCard } from '../quests/QuestsCard';
 import { publishedDictionary } from '../layouts/navLinks';
 
 /** Three letters a beginner meets first: one familiar, one with a mark, one with a hat. */
@@ -306,6 +307,7 @@ function Lessons(): React.JSX.Element {
   return (
     <>
       <TodayStrip />
+      <QuestsCard />
       {entries && entries.length > 1 && (
         <nav className="lp-courses learn-courses-switch" aria-label={t('coursemap.courses')}>
           {entries.map(({ course }) => (
@@ -353,7 +355,8 @@ function Lessons(): React.JSX.Element {
 }
 
 /**
- * Learn (/app/learn), on its Lessons half: today in one row, then the path of
+ * Learn (/app/learn), on its Lessons half: today in one row and today's quests
+ * in a slim card under it (quests/QuestsCard.tsx), then the path of
  * the course the learner is in — the lesson path is Learn's home, with Hevalo
  * beside the stop to do now — then the practice tools and every course with
  * how far the learner is through it. The Games half is pages/Games.tsx,

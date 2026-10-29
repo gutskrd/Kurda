@@ -1,0 +1,612 @@
+/*
+ * Daily quests: the rows with their thick bars and chests (QuestList.tsx),
+ * the slim card on Learn and its sheet (QuestsCard.tsx), and a chest opened
+ * over the whole screen (ChestScreen.tsx). Phone first; transform and opacity
+ * only, and under prefers-reduced-motion everything lands where it ends.
+ */
+
+/* ---- a chest ---------------------------------------------------------------------- */
+.chest {
+  display: block;
+  overflow: visible;
+}
+/* open, the lid stands up off its back hinge */
+.chest .chest-lid {
+  transform-origin: 60px 56px;
+}
+.chest.is-open .chest-lid {
+  transform: translateY(-22px) rotate(-14deg);
+}
+/* opened just now: the lid pops up past where it rests, and settles */
+.chest.is-popping .chest-lid {
+  animation: lid-pop 560ms var(--ease-spring) both;
+}
+@keyframes lid-pop {
+  from {
+    transform: none;
+  }
+  45% {
+    transform: translateY(-34px) rotate(-22deg);
+  }
+}
+
+/* ---- the rows ---------------------------------------------------------------------- */
+.quest-list {
+  display: grid;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 2px solid var(--border);
+  border-radius: 20px;
+  background: var(--panel-bg);
+}
+.quest-row {
+  position: relative;
+  display: grid;
+  gap: 10px;
+  padding: 16px 16px 18px;
+}
+.quest-row + .quest-row {
+  border-top: 2px solid var(--separator);
+}
+/* a quest done stands on a ground of its own, so it can lift over its neighbours' lines */
+.quest-row.is-done {
+  border-radius: 18px;
+  background: linear-gradient(color-mix(in srgb, var(--gold) 7%, transparent), color-mix(in srgb, var(--gold) 7%, transparent)), var(--panel-bg);
+}
+.quest-row.is-done + .quest-row,
+.quest-row + .quest-row.is-done {
+  border-top-color: transparent;
+}
+.quest-ask {
+  margin: 0;
+  color: var(--ink);
+  font-size: var(--text-body);
+  font-weight: 700;
+  line-height: 1.3;
+}
+.quest-row.is-done .quest-ask {
+  color: var(--gold);
+}
+:root[data-theme='light'] .quest-row.is-done .quest-ask {
+  color: var(--gold-ink);
+}
+.quest-track {
+  display: flex;
+  align-items: center;
+}
+/* a thick bar with a sheen along its top, "x / y" across its middle, the chest over its end */
+.quest-bar {
+  position: relative;
+  flex: 1;
+  height: 20px;
+  margin-inline-end: -14px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+/*
+ * The gold is the whole bar's width slid along its track, so its round end
+ * keeps its shape at any value. The count over the gold rides inside it, slid
+ * back by as much as the gold is slid on, so it stays put while the gold
+ * clips it: light words over the track, dark ones over the gold.
+ */
+.quest-fill {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+  background: linear-gradient(180deg, #ffc65a, #f39a2b);
+  box-shadow: inset 0 4px 0 rgba(255, 255, 255, 0.28);
+  transform: translateX(calc((var(--to, 0) - 1) * 100%));
+}
+.quest-count.is-on {
+  color: #2a1700;
+  transform: translateX(calc((1 - var(--to, 0)) * 100%));
+}
+[dir='rtl'] .quest-fill {
+  transform: translateX(calc((1 - var(--to, 0)) * 100%));
+}
+[dir='rtl'] .quest-count.is-on {
+  transform: translateX(calc((var(--to, 0) - 1) * 100%));
+}
+.quest-fill.is-moving,
+.quest-fill.is-moving > .quest-count {
+  animation: quest-fill var(--fill-ms, 600ms) var(--ease-out) var(--fill-delay, 0ms) both;
+}
+.quest-fill.is-moving > .quest-count {
+  animation-name: quest-fill-back;
+}
+[dir='rtl'] .quest-fill.is-moving {
+  animation-name: quest-fill-back;
+}
+[dir='rtl'] .quest-fill.is-moving > .quest-count {
+  animation-name: quest-fill;
+}
+@keyframes quest-fill {
+  from {
+    transform: translateX(calc((var(--from, 0) - 1) * 100%));
+  }
+}
+@keyframes quest-fill-back {
+  from {
+    transform: translateX(calc((1 - var(--from, 0)) * 100%));
+  }
+}
+.quest-count {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--ink);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.quest-chest {
+  position: relative;
+  z-index: 1;
+  flex: none;
+  margin-block: -16px;
+}
+
+/*
+ * A quest done: framed in gold with a soft glow. Done just now, on the
+ * results, it lifts as its bar fills, the frame and glow fade in, and a light
+ * sweeps across it once.
+ */
+.quest-row.is-done::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border: 2px solid var(--gold);
+  border-radius: 20px;
+  box-shadow: 0 0 22px color-mix(in srgb, var(--gold) 40%, transparent);
+  pointer-events: none;
+}
+.quest-row.is-fresh {
+  z-index: 1;
+  animation: quest-lift 520ms var(--ease-spring) calc(var(--fill-delay) + var(--fill-ms)) both;
+}
+.quest-row.is-fresh::before {
+  animation: quest-glow 520ms var(--ease-out) calc(var(--fill-delay) + var(--fill-ms)) both;
+}
+/* the light runs along the full gold bar, inside it */
+.quest-row.is-fresh .quest-fill::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(105deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  opacity: 0;
+  animation: quest-sweep 760ms var(--ease-out) calc(var(--fill-delay) + var(--fill-ms) + 120ms) both;
+}
+@keyframes quest-lift {
+  to {
+    transform: translateY(-4px) scale(1.015);
+  }
+}
+@keyframes quest-glow {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes quest-sweep {
+  from {
+    opacity: 1;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(340%);
+  }
+}
+/* a chest waiting to be opened gives two small nudges once its quest is shown done */
+.quest-row.is-claimable .chest {
+  animation: chest-nudge 700ms ease-in-out calc(var(--fill-delay, 0ms) + var(--fill-ms, 0ms) + 300ms) 2;
+}
+@keyframes chest-nudge {
+  25% {
+    transform: rotate(-7deg);
+  }
+  75% {
+    transform: rotate(7deg);
+  }
+}
+.quests-month {
+  margin: 0;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+  text-align: center;
+}
+
+/* ---- the card on Learn -------------------------------------------------------------- */
+.quests-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  max-width: var(--container-narrow);
+  min-height: 64px;
+  margin: 0 auto var(--space-5);
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  color: var(--ink);
+  font: inherit;
+  text-align: start;
+}
+button.quests-card {
+  cursor: pointer;
+  transition:
+    background var(--dur-fast) ease,
+    transform var(--dur) var(--ease-spring);
+}
+button.quests-card:hover {
+  background: var(--surface-2);
+}
+button.quests-card:active {
+  transform: scale(var(--press-scale));
+}
+.quests-card.has-chest {
+  border-color: color-mix(in srgb, var(--gold) 55%, transparent);
+}
+.quests-card-chest {
+  position: relative;
+  flex: none;
+  line-height: 0;
+}
+/* a chest is waiting: a gold dot, ringed in the page's colour */
+.quests-card-dot {
+  position: absolute;
+  top: -1px;
+  inset-inline-end: -2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 0 2px var(--app-bg);
+}
+.quests-card-text {
+  display: grid;
+  flex: 1;
+  gap: 7px;
+  min-width: 0;
+}
+.quests-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 2px 10px;
+}
+.quests-card-title {
+  font-size: var(--text-body);
+  font-weight: 700;
+}
+.quests-card-sub {
+  color: var(--ink-3);
+  font-size: var(--text-caption);
+  font-weight: 600;
+}
+.quests-card.has-chest .quests-card-sub {
+  color: var(--gold-ink);
+}
+.quests-card-bars {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+.quests-mini {
+  position: relative;
+  height: 8px;
+  overflow: hidden;
+  border-radius: var(--r-pill);
+  background: var(--surface-3);
+}
+.quests-mini > span {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #f3a23a;
+  transform: translateX(calc((var(--to, 0) - 1) * 100%));
+}
+[dir='rtl'] .quests-mini > span {
+  transform: translateX(calc((1 - var(--to, 0)) * 100%));
+}
+.quests-mini.is-done > span {
+  background: var(--gold);
+}
+.quests-card-go {
+  flex: none;
+  color: var(--ink-3);
+}
+[dir='rtl'] .quests-card-go {
+  scale: -1 1;
+}
+.quests-card.is-quiet .quests-card-text {
+  gap: 4px;
+}
+.quests-sheet {
+  display: grid;
+  gap: 16px;
+}
+.quests-sheet-title {
+  margin: 0;
+  font-size: var(--text-section);
+}
+/* the quests of earlier days whose chests are still shut, under today's */
+.quests-earlier {
+  display: grid;
+  gap: 8px;
+}
+.quests-earlier-title {
+  margin: 4px 0 0;
+  font-size: var(--text-body);
+}
+.quests-earlier-note {
+  margin: 0 0 4px;
+  color: var(--ink-3);
+  font-size: var(--text-secondary);
+}
+
+/* ---- a chest, opened over the whole screen ------------------------------------------ */
+.chest-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: auto;
+  padding: calc(10px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom));
+  background: var(--chest-bg);
+  color: #ffffff;
+  animation: chest-arrive var(--dur-slow) var(--ease-out) both;
+}
+/* each tier its own colour, deep enough for white words on it */
+.chest-screen.tier-common {
+  --chest-bg: radial-gradient(90% 60% at 50% 45%, #d98a36, #a95a1c);
+}
+.chest-screen.tier-rare {
+  --chest-bg: radial-gradient(90% 60% at 50% 45%, #4a95e2, #2560b4);
+}
+.chest-screen.tier-epic {
+  --chest-bg: radial-gradient(90% 60% at 50% 45%, #9a68e4, #5d33ae);
+}
+@keyframes chest-arrive {
+  from {
+    opacity: 0;
+  }
+}
+.chest-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 44px;
+}
+.chest-close {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.16);
+  color: #ffffff;
+  cursor: pointer;
+}
+.chest-close:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.chest-balance {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  padding: 8px 14px;
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.22);
+  color: #ffe28a;
+  font-size: var(--text-body);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+.chest-balance > span[aria-hidden] {
+  color: #ffffff;
+}
+.chest-stage {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 18px;
+  padding: 12px 0;
+  text-align: center;
+}
+.chest-tier {
+  margin: 0;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: clamp(1.9rem, 9vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.15);
+}
+[dir='rtl'] .chest-tier {
+  letter-spacing: 0;
+}
+/* the chest and its words are one big button: anywhere on it opens it */
+.chest-tap {
+  display: grid;
+  justify-items: center;
+  gap: 28px;
+  padding: 16px 24px 8px;
+  border: 0;
+  border-radius: 28px;
+  background: none;
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.chest-tap:focus-visible {
+  outline: 3px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 2px;
+}
+.chest-tap[aria-disabled='true'] {
+  cursor: default;
+}
+.chest-float {
+  position: relative;
+  line-height: 0;
+  filter: drop-shadow(0 18px 24px rgba(0, 0, 0, 0.22));
+  animation: chest-bob 2.4s ease-in-out infinite;
+}
+/* the server is asked: the chest shakes as if something inside wanted out */
+.is-opening .chest-float {
+  animation: chest-shake 420ms ease-in-out infinite;
+}
+@keyframes chest-bob {
+  50% {
+    transform: translateY(-12px);
+  }
+}
+@keyframes chest-shake {
+  25% {
+    transform: rotate(-4deg) scale(1.03);
+  }
+  75% {
+    transform: rotate(4deg) scale(1.03);
+  }
+}
+.chest-sparkles {
+  position: absolute;
+  inset: -30px;
+  pointer-events: none;
+}
+.chest-sparkle {
+  position: absolute;
+  color: rgba(255, 255, 255, 0.85);
+  animation: sparkle-twinkle 1.8s ease-in-out infinite;
+}
+.chest-sparkle.s0 {
+  top: 6%;
+  left: 14%;
+}
+.chest-sparkle.s1 {
+  top: 34%;
+  right: 0;
+  animation-delay: 600ms;
+}
+.chest-sparkle.s2 {
+  bottom: 4%;
+  right: 12%;
+  animation-delay: 1200ms;
+}
+.chest-sparkle.s3 {
+  top: 52%;
+  left: -2%;
+  animation-delay: 900ms;
+}
+@keyframes sparkle-twinkle {
+  0%,
+  100% {
+    opacity: 0.25;
+    transform: scale(0.7);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+.chest-hint {
+  min-height: 1.3em;
+  font-size: var(--text-section);
+  font-weight: 800;
+}
+/* opened: the reward lands under the chest, big, with the Zêr coin */
+.chest-opened {
+  --t-mid: #ffd24a;
+  padding-top: 0;
+  cursor: default;
+}
+.chest-opened .celebrate-glow {
+  width: 360px;
+  height: 360px;
+  margin: -180px 0 0 -180px;
+  background: radial-gradient(closest-side, rgba(255, 233, 150, 0.75), transparent);
+}
+.chest-opened .celebrate-ring {
+  width: 200px;
+  height: 200px;
+  margin: -100px 0 0 -100px;
+  border-color: #fff1b0;
+}
+.chest-reward {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 0;
+  color: #ffffff;
+  font-size: clamp(2.4rem, 12vw, 3.4rem);
+  font-weight: 900;
+  line-height: 1;
+  text-shadow:
+    0 3px 0 rgba(0, 0, 0, 0.18),
+    0 0 26px rgba(255, 226, 120, 0.6);
+}
+.chest-coin {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffe07a, #f0b52c);
+  box-shadow:
+    inset 0 -3px 0 rgba(150, 90, 0, 0.35),
+    0 4px 10px rgba(0, 0, 0, 0.2);
+  color: #7a4a00;
+  text-shadow: none;
+}
+.chest-problem,
+.chest-note {
+  max-width: 34ch;
+  margin: 0;
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  background: #ffffff;
+  color: #1d1d1f;
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.chest-foot {
+  display: grid;
+  min-height: 52px;
+  width: min(480px, 100%);
+  margin: 0 auto;
+}
+.chest-go {
+  width: 100%;
+}
+/* white on the tier's colour, dark words on it, as the main button on a coloured screen */
+.chest-screen .chest-go {
+  border-color: #ffffff;
+  background: #ffffff;
+  color: #1d1d1f;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* no bobbing, twinkling or nudging: the chest simply stands there */
+  .chest-float,
+  .chest-sparkle,
+  .quest-row.is-claimable .chest {
+    animation: none;
+  }
+  .chest-opened :is(.celebrate-ring, .celebrate-burst) {
+    display: none;
+  }
+}

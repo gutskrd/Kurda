@@ -351,18 +351,18 @@
 }
 /*
  * The rest of the results arrive after the words, on the shared timeline
- * (@kurda/shared RESULTS_TIMING): the three tiles a beat apart as the words
+ * (@kurda/shared RESULTS_TIMING): the three cards a beat apart as the words
  * land, today's goal moving from where it stood to where it is, and the
  * league and level rows last. Skipped, it is all simply there.
  */
-.lesson-results:has(> .celebrate.is-playing) > :not(.celebrate, .lesson-stats, .lesson-moments),
-.lesson-results:has(> .celebrate.is-playing) :is(.lesson-stat, .lesson-goal, .lesson-moment.is-goal) {
+.lesson-results:has(> .celebrate.is-playing) > :not(.celebrate, .end-stats, .lesson-moments),
+.lesson-results:has(> .celebrate.is-playing) :is(.end-stat, .lesson-goal, .lesson-moment.is-goal) {
   animation: celebrate-words var(--dur-slow) var(--ease-out) var(--celebrate-details-delay, 420ms) both;
 }
-.lesson-results:has(> .celebrate.is-playing) .lesson-stat:nth-child(2) {
+.lesson-results:has(> .celebrate.is-playing) .end-stat:nth-child(2) {
   animation-delay: 460ms;
 }
-.lesson-results:has(> .celebrate.is-playing) .lesson-stat:nth-child(3) {
+.lesson-results:has(> .celebrate.is-playing) .end-stat:nth-child(3) {
   animation-delay: 500ms;
 }
 @keyframes goal-move {
@@ -375,22 +375,6 @@
 }
 .lesson-results:has(> .celebrate.is-playing) .lesson-row {
   animation: celebrate-words var(--dur) var(--ease-out) 1000ms both;
-}
-/* "Day 12": the flame springs in as the celebration's art does, and the freeze bar fills after the day has counted on */
-.lesson-day-flame svg {
-  animation: celebrate-arrive 520ms var(--ease-spring) both;
-}
-@keyframes freeze-fill {
-  from {
-    transform: scaleX(0);
-  }
-}
-.lesson-day-bar > span {
-  animation: freeze-fill var(--dur-progress) var(--ease-out) 600ms both;
-}
-/* the streak kept today gives a little hop once the moment has settled */
-.lesson-stat.is-kept dd svg {
-  animation: answer-pop var(--dur-slow) var(--ease-spring) var(--dur-celebrate) both;
 }
 
 /* ---- a list arriving ---------------------------------------------------------- */
