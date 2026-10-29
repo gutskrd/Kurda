@@ -9,7 +9,7 @@ import { GradientBackground } from '../theme/glass';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
 import { Toggle } from '../theme/Toggle';
-import { layout, spacing, typography } from '../theme/tokens';
+import { layout, radii, spacing, typography } from '../theme/tokens';
 
 /**
  * Settings as a list: what a phone's own settings look like, so nothing has
@@ -110,12 +110,15 @@ function RowBody({ icon, title, subtitle, value, destructive, attention, end }: 
 
 /**
  * One row. With `onPress` it is a button, with a chevron when it opens a page
- * (`opens`, the default) and none when it does something there and then.
+ * (`opens`, the default) and none when it does something there and then. A
+ * `badge` counts what waits behind it (requests to answer), in the gold of
+ * "notice this", and is read out in words.
  */
 export function SettingsRow({
   onPress,
   opens = true,
   trailing,
+  badge,
   accessibilityHint,
   testID,
   ...look
@@ -124,18 +127,33 @@ export function SettingsRow({
   /** a page behind it, so a chevron at its end */
   opens?: boolean;
   trailing?: ReactNode;
+  /** how many wait behind it, and that number in words for a screen reader */
+  badge?: { count: number; label: string };
   accessibilityHint?: string;
   testID?: string;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const dir = useDirection();
-  const end = trailing ?? (onPress && opens ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null);
+  const chevron = onPress && opens ? <Icon name="chevron-right" size={18} color={colors.textSecondary} style={dir.flip ?? undefined} /> : null;
+  const count = badge ? (
+    <View style={[styles.badge, { backgroundColor: colors.goldText }]}>
+      <Text style={[styles.badgeText, { color: colors.textOnPrimary }]}>{badge.count > 99 ? '99+' : badge.count}</Text>
+    </View>
+  ) : null;
+  const end = trailing ?? (count ? (
+    <>
+      {count}
+      {chevron}
+    </>
+  ) : (
+    chevron
+  ));
   if (!onPress) return <RowBody {...look} end={end} />;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={look.value ? `${look.title}, ${look.value}` : look.title}
+      accessibilityLabel={[look.title, look.value, badge?.label].filter(Boolean).join(', ')}
       accessibilityHint={accessibilityHint}
       testID={testID}
       style={({ pressed }) => pressed && { backgroundColor: colors.controlTrack }}
@@ -288,6 +306,8 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: typography.sizes.sm, lineHeight: 20 },
   value: { fontSize: typography.sizes.md, maxWidth: '45%', flexShrink: 1 },
   check: { width: 22, alignItems: 'center' },
+  badge: { minWidth: 22, height: 22, paddingHorizontal: 6, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  badgeText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold },
   note: { fontSize: typography.sizes.sm, lineHeight: 20, paddingHorizontal: layout.gutter, paddingTop: spacing.sm },
   disabled: { opacity: 0.45 },
 });
