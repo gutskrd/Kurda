@@ -241,7 +241,7 @@ import { DEV_JWT_SECRET } from '../config/env.js';
  * The key the per-session shuffle is made with. A plain hash of the seed was
  * not enough: the seed is a session id and an exercise id, both of which the
  * client is sent, so anyone could recompute the authored order — and with it
- * the right option and the match-pairs pairing — from the response alone.
+ * the right option — from the response alone.
  * Keyed with a server secret, the order is still the same every time a session
  * asks for it (resume and grading agree) and on every instance, but cannot be
  * reproduced outside the server. Set from the app's JWT secret at start-up.
@@ -252,8 +252,12 @@ export function setShuffleKey(key: string): void {
   shuffleKey = key;
 }
 
-/** Deterministic shuffle by a seed, so a resumed session sees the same order. */
-function seededShuffle<T>(items: T[], seed: string): T[] {
+/**
+ * Deterministic shuffle by a seed, so a resumed session sees the same order.
+ * Where an item lands depends on its place in `items` and the seed, never on
+ * what it is: two lists as long as each other are shuffled alike.
+ */
+export function seededShuffle<T>(items: readonly T[], seed: string): T[] {
   return items
     .map((value, i) => ({
       value,
@@ -281,11 +285,18 @@ export function optionOrder(count: number, seed: string): number[] {
   );
 }
 
+/** The seed an exercise is delivered and graded with in a session (a lesson's, a practice session's, a placement's). */
+export function exerciseSeed(sessionId: string, exerciseId: string): string {
+  return `${sessionId}:${exerciseId}`;
+}
+
 /**
  * Strips the correct answer from a stored exercise before it goes to the
- * client (KUR-028). The client never receives correctIndex / accepted /
- * the pairing; multiple-choice options and match-pairs sides are shuffled
- * per session with `seed` (`${sessionId}:${exerciseId}`).
+ * client (KUR-028). The client never receives correctIndex / accepted;
+ * multiple-choice options and match-pairs sides are shuffled per session with
+ * `seed` (`${sessionId}:${exerciseId}`). Match pairs is the one exception: its
+ * pairs are answered as they are made, so it says which meaning each card pairs
+ * with (`pairOf`); the matching is still graded here when it is sent.
  */
 export function sanitizeExercise(
   type: ExerciseType,
@@ -332,16 +343,15 @@ export function sanitizeExercise(
       };
     }
     case 'match_pairs': {
+      // each side's order as places in `pairs`, so a card is followed to its partner by its pair, never by its text
       const p = parsed.data as MatchPairsPayload;
+      const places = p.pairs.map((_, i) => i);
+      const lefts = seededShuffle(places, `${seed}:L`);
+      const rights = seededShuffle(places, `${seed}:R`);
       return {
-        lefts: seededShuffle(
-          p.pairs.map((pair) => pair.left),
-          `${seed}:L`,
-        ),
-        rights: seededShuffle(
-          p.pairs.map((pair) => pair.right),
-          `${seed}:R`,
-        ),
+        lefts: lefts.map((i) => p.pairs[i]!.left),
+        rights: rights.map((i) => p.pairs[i]!.right),
+        pairOf: lefts.map((i) => rights.indexOf(i)),
       };
     }
   }
@@ -378,18 +388,35 @@ function checkMultipleChoice(payload: Pick<MultipleChoicePayload, 'options' | 'c
 }
 
 /**
- * Diacritic-tolerant translation check. Answers are compared by `answerKey`,
- * so case, spacing, invisible formatting and the keyboard a Soranî answer was
- * typed on do not matter. An exact match against any accepted answer →
- * correct. A match only after folding Kurdish diacritics (ê→e, ş→s, …) is a
- * 'typo': accepted with a nudge ("almost — watch the ê"), unless the item is
- * strict, where the letter is the point and the slip is not accepted.
- * Otherwise wrong.
+ * Punctuation, Latin and Arabic-script, as a regular expression's character
+ * class: what grading reads as a space, and what a word tile is trimmed of.
+ */
+export const PUNCTUATION = String.raw`[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]`;
+
+const PUNCTUATION_ANYWHERE = new RegExp(PUNCTUATION, 'gu');
+
+/**
+ * A typed answer as grading compares it: `answerKey` (NFC, lowercase, keyboard
+ * variants), then punctuation stripped and spaces collapsed.
+ */
+export function gradingKey(text: string): string {
+  return answerKey(text).replace(PUNCTUATION_ANYWHERE, ' ').replace(/\s+/g, ' ').trim();
+}
+
+/**
+ * Diacritic-tolerant text check. Answers are compared by `gradingKey`, so
+ * case, punctuation, spacing, invisible formatting and the keyboard a Soranî
+ * answer was typed on do not matter: an answer built from word tiles has no
+ * commas or full stops, and is as right as the sentence it builds. An exact
+ * match against any accepted answer → correct. A match only after folding
+ * Kurdish diacritics (ê→e, ş→s, …) is a 'typo': accepted with a nudge
+ * ("almost — watch the ê"), unless the item is strict, where the letter is the
+ * point and the slip is not accepted. Otherwise wrong.
  */
 function gradeText(acceptedAnswers: string[], text: string, strict = false): CheckResult {
-  const answer = answerKey(text);
-  const accepted = acceptedAnswers.map(answerKey);
-  if (accepted.includes(answer)) {
+  const answer = gradingKey(text);
+  const accepted = acceptedAnswers.map(gradingKey);
+  if (answer.length > 0 && accepted.includes(answer)) {
     return { verdict: 'correct', accepted: true };
   }
   const foldedAnswer = foldDiacritics(answer);
@@ -429,36 +456,17 @@ function checkSpeaking(payload: SpeakingPayload, answer: SpeakingAnswer): CheckR
 }
 
 /**
- * Normalize free text for comparison: `answerKey` (NFC, lowercase, keyboard
- * variants), then punctuation stripped (Latin and Arabic-script) and spaces
- * collapsed.
- */
-function normalizeForWriting(text: string): string {
-  return answerKey(text)
-    .replace(/[.,!?;:"'“”‘’()¡¿…—–\-؟،؛«»]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-/**
- * Free-text writing (KUR-037): punctuation/case-insensitive, diacritic-
- * tolerant unless strict. Copying the prompt back earns no credit (verdict
- * 'wrong'), checked before the accepted answers so it can't sneak a match.
+ * Free-text writing (KUR-037): graded as translate is. Copying the prompt back
+ * earns no credit (verdict 'wrong'), checked before the accepted answers so it
+ * can't sneak a match.
  */
 function checkWriting(payload: WritingPayload, text: string): CheckResult {
-  const answer = normalizeForWriting(text);
-  if (answer.length === 0) return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
-  if (answer === normalizeForWriting(payload.prompt)) {
+  const answer = gradingKey(text);
+  if (answer.length > 0 && answer === gradingKey(payload.prompt)) {
     // pasted the prompt — no credit
     return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
   }
-  const accepted = payload.accepted.map(normalizeForWriting);
-  if (accepted.includes(answer)) return { verdict: 'correct', accepted: true };
-  const foldedAccepted = accepted.map((a) => foldDiacritics(a));
-  if (foldedAccepted.includes(foldDiacritics(answer))) {
-    return { verdict: 'typo', accepted: !payload.strict, correction: payload.accepted[0] };
-  }
-  return { verdict: 'wrong', accepted: false, correction: payload.accepted[0] };
+  return gradeText(payload.accepted, text, payload.strict);
 }
 
 /**

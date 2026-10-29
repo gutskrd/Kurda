@@ -104,14 +104,18 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
     await pool.query(`INSERT INTO dm_messages (user_lo, user_hi, sender_id, body) VALUES ($1, $2, $3, $4)`, [lo, hi, from, body]);
   }
 
-  /** A published lesson of `count` multiple-choice items, all answered with option 0. */
+  /**
+   * A published lesson of `count` multiple-choice items, all answered with
+   * option 0. Their prompts are Kurdish, so starting it looks their words up in
+   * the dictionary, as a real lesson's start does.
+   */
   async function lesson(position: number, count: number): Promise<string> {
     const repo = new ContentRepository(pool);
     const unitId = (await pool.query<{ id: string }>(`SELECT id FROM units WHERE course_id = $1`, [courseId])).rows[0]!.id;
     const skillId = (await pool.query<{ id: string }>(`SELECT id FROM skills WHERE unit_id = $1`, [unitId])).rows[0]!.id;
     const lessonId = await repo.createLesson(skillId, position, `D${position}`, `Lesson ${position}`);
     for (let i = 1; i <= count; i++) {
-      await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Nan" ${i}?`, options: ['Bread', 'Water', 'Milk'], correctIndex: 0 });
+      await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Nan" tê çi wateyê? (${i})`, options: ['Bread', 'Water', 'Milk'], correctIndex: 0 });
     }
     await repo.publishLesson(lessonId);
     return lessonId;
@@ -241,6 +245,8 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       const long = await play('lb', await lesson(3, 6));
       const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
       expect(long.start.count, shown(long.start)).toBe(short.start.count);
+      // the session read, the lesson, the new session, its exercises with their answers, and the meanings of the
+      // prompts' words, one dictionary statement for the whole lesson (a recorded lesson adds one for its recordings)
       expect(long.start.count, shown(long.start)).toBeLessThanOrEqual(5);
       for (const answer of [...short.answers, ...long.answers]) {
         expect(answer.count, shown(answer)).toBe(short.answers[0]!.count);
@@ -293,7 +299,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
           for (let l = 1; l <= lessons; l++) {
             const lessonId = await repo.createLesson(skillId, l, `L${l}`, `Lesson ${l}`);
             for (let i = 1; i <= 4; i++) {
-              await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Av" ${i}?`, options: ['Water', 'Bread'], correctIndex: 0 });
+              await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Av" tê çi wateyê? (${i})`, options: ['Water', 'Bread'], correctIndex: 0 });
             }
             await repo.publishLesson(lessonId);
           }
@@ -325,6 +331,7 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(a.body.exercises).toHaveLength(4);
       expect(b.body.exercises).toHaveLength(10);
       expect(b.count, shown(b)).toBe(a.count);
+      // twelve with the one dictionary statement for the meanings of the test's Kurdish prompts
       expect(b.count, shown(b)).toBeLessThanOrEqual(12);
 
       // the same test opened again, as a learner coming back to it does

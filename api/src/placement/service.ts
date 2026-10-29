@@ -1,9 +1,8 @@
 import type pg from 'pg';
-import type { RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { checkAnswer, sanitizeExercise } from '../content/exercises.js';
+import { checkAnswer, exerciseSeed } from '../content/exercises.js';
+import { deliverExercises, type DeliveredFields } from '../content/deliver.js';
 import type { ExerciseType } from '../content/repository.js';
-import { lessonAudioFor } from '../lessonaudio/delivery.js';
 import {
   PLACEMENT_START_LEVEL,
   isComplete,
@@ -13,22 +12,12 @@ import {
   type PlacementStep,
 } from './placement.js';
 
-export interface PlacementQuestion {
+/** The question asked: answer fields stripped, with what the client shows beside them (`deliverExercises`). */
+export type PlacementQuestion = DeliveredFields & {
   exerciseId: string;
   level: number;
   type: ExerciseType;
-  prompt?: string;
-  options?: string[];
-  lefts?: string[];
-  rights?: string[];
-  audioUrl?: string;
-  /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
-  modelAudioUrl?: string;
-  audio?: Record<string, string>;
-  audioVoice?: RecordingVoice;
-  modelAudioVoice?: RecordingVoice;
-  audioVoices?: Record<string, RecordingVoice>;
-}
+};
 
 export interface PlacementView {
   sessionId: string;
@@ -58,11 +47,8 @@ interface ExerciseRow {
   id: string;
   type: ExerciseType;
   payload: unknown;
-}
-
-/** The seed a placement exercise is shuffled and graded with. */
-function exerciseSeed(sessionId: string, exerciseId: string): string {
-  return `${sessionId}:${exerciseId}`;
+  /** the variety of Kurdish of the exercise's course */
+  dialect: string;
 }
 
 /**
@@ -121,19 +107,19 @@ export class PlacementService {
   private async question(sessionId: string, exerciseId: string | null, level: number): Promise<PlacementQuestion | null> {
     if (!exerciseId) return null;
     const res = await this.pool.query<ExerciseRow>(
-      `SELECT id, type, payload FROM exercises WHERE id = $1`,
+      `SELECT e.id, e.type, e.payload, c.dialect
+         FROM exercises e
+         JOIN lessons l ON l.id = e.lesson_id
+         JOIN skills s ON s.id = l.skill_id
+         JOIN units u ON u.id = s.unit_id
+         JOIN courses c ON c.id = u.course_id
+        WHERE e.id = $1`,
       [exerciseId],
     );
     const row = res.rows[0];
     if (!row) return null;
-    const [audio] = await lessonAudioFor(this.pool, [row]);
-    return {
-      exerciseId: row.id,
-      level,
-      type: row.type,
-      ...sanitizeExercise(row.type, row.payload, exerciseSeed(sessionId, row.id)),
-      ...audio,
-    };
+    const [delivered] = await deliverExercises(this.pool, sessionId, [row]);
+    return { exerciseId: row.id, level, type: row.type, ...delivered! };
   }
 
   private async load(sessionId: string, userId: string): Promise<SessionRow> {

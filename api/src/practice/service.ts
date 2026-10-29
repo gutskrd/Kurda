@@ -10,7 +10,8 @@ import {
   type RecordingVoice,
 } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
+import { SKIPPABLE_TYPES, checkAnswer, exerciseSeed, revealExercise, type Verdict } from '../content/exercises.js';
+import { deliverExercises, type DeliveredFields } from '../content/deliver.js';
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
 import { StreakService, type SessionStreak, type StreakSummary } from '../streaks/service.js';
@@ -20,7 +21,7 @@ import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
-import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
+import { modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import { settleJump, type JumpOutcome, type JumpTarget } from '../jump/settle.js';
 import { moveQuests } from '../quests/service.js';
 
@@ -36,26 +37,16 @@ interface ExerciseRow {
   dialect?: string;
 }
 
-export interface PracticeExercise {
+/** An item as a client sees it: answer fields stripped, with what it shows beside them (`deliverExercises`). */
+export type PracticeExercise = DeliveredFields & {
   id: string;
   type: ExerciseType;
-  prompt?: string;
-  options?: string[];
-  lefts?: string[];
-  rights?: string[];
-  /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
-  audioUrl?: string;
-  audioVoice?: RecordingVoice;
-  modelAudioUrl?: string;
-  modelAudioVoice?: RecordingVoice;
-  audio?: Record<string, string>;
-  audioVoices?: Record<string, RecordingVoice>;
   /**
    * The variety of Kurdish of the item's course. A review mixes courses, so
    * each item says its own, and a client offers the letters it is typed in.
    */
   dialect?: string;
-}
+};
 
 export interface PracticeSession {
   sessionId: string;
@@ -272,14 +263,13 @@ export class PracticeService {
     return { sessionId, exercises: await this.deliver(sessionId, exercises) };
   }
 
-  /** Exercises as a client sees them: answers stripped, options shuffled for this session, recordings attached. */
+  /** Exercises as a client sees them: answers stripped, options shuffled for this session, recordings, tiles and meanings attached. */
   private async deliver(sessionId: string, exercises: ExerciseRow[]): Promise<PracticeExercise[]> {
-    const audio = await lessonAudioFor(this.pool, exercises);
+    const delivered = await deliverExercises(this.pool, sessionId, exercises);
     return exercises.map((ex, i) => ({
       id: ex.id,
       type: ex.type,
-      ...sanitizeExercise(ex.type, ex.payload, `${sessionId}:${ex.id}`),
-      ...audio[i],
+      ...delivered[i],
       ...(ex.dialect ? { dialect: ex.dialect } : {}),
     }));
   }
@@ -598,7 +588,7 @@ export class PracticeService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
     const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
 
     const client = await this.pool.connect();
@@ -663,7 +653,7 @@ export class PracticeService {
     const ex = exRes.rows[0];
     if (!ex) throw new AppError('EXERCISE_NOT_IN_SESSION', 404, 'exercise no longer exists');
 
-    const result = checkAnswer(ex.type, ex.payload, answer, `${session.id}:${ex.id}`);
+    const result = checkAnswer(ex.type, ex.payload, answer, exerciseSeed(session.id, ex.id));
     const heard = await modelAudioAfterAnswer(this.pool, ex.type, ex.payload);
     return {
       verdict: result.verdict,
