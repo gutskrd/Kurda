@@ -208,9 +208,14 @@ function extent(markup: string): CharacterBox {
       }
     }
     if (e.name === 'ellipse' || e.name === 'circle') {
-      const r = Math.max(Number(e.attrs.rx ?? e.attrs.r), Number(e.attrs.ry ?? e.attrs.r));
-      xs.push(Number(e.attrs.cx) - r, Number(e.attrs.cx) + r);
-      ys.push(Number(e.attrs.cy) - r, Number(e.attrs.cy) + r);
+      // turned about its own middle, as every ellipse here is
+      const turn = (Number(/rotate\((-?[\d.]+)/.exec(e.attrs.transform ?? '')?.[1] ?? 0) * Math.PI) / 180;
+      const rx = Number(e.attrs.rx ?? e.attrs.r);
+      const ry = Number(e.attrs.ry ?? e.attrs.r);
+      const across = Math.hypot(rx * Math.cos(turn), ry * Math.sin(turn));
+      const down = Math.hypot(rx * Math.sin(turn), ry * Math.cos(turn));
+      xs.push(Number(e.attrs.cx) - across, Number(e.attrs.cx) + across);
+      ys.push(Number(e.attrs.cy) - down, Number(e.attrs.cy) + down);
     }
     e.children.forEach(visit);
   };

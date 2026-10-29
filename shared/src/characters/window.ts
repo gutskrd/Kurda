@@ -1,5 +1,5 @@
 import type { Pt } from '../art/svg.js';
-import { linearAt, n, prefixFor, radialAt } from '../art/svg.js';
+import { linearAt, n, prefixFor, radialAt, radialBox } from '../art/svg.js';
 import { NECK_BOX, NECK_SILL } from './hevalo.js';
 import { alpha, clipDef, clipped, curve, ellipse, fill, part, taper, type Knot } from './pen.js';
 import type { CharacterBox } from './types.js';
@@ -46,8 +46,7 @@ interface Palette {
   wallHi: string;
   wall: string;
   wallLo: string;
-  stone: string;
-  stoneHi: string;
+  plaster: string;
   glow: string;
   room: string;
   roomDeep: string;
@@ -78,8 +77,7 @@ const DAY: Palette = {
   wallHi: '#f7e6c9',
   wall: '#eed3a9',
   wallLo: '#dcb688',
-  stone: '#cfa374',
-  stoneHi: '#f4dfbd',
+  plaster: '#f4dfbd',
   glow: '#7d4d31',
   room: '#4b2c1d',
   roomDeep: '#2a170e',
@@ -110,8 +108,7 @@ const DUSK: Palette = {
   wallHi: '#93849e',
   wall: '#766886',
   wallLo: '#5c506e',
-  stone: '#544765',
-  stoneHi: '#a093ae',
+  plaster: '#a093ae',
   glow: '#b8743a',
   room: '#6a3f21',
   roomDeep: '#2e1a0f',
@@ -163,13 +160,11 @@ function arch(grow: number, foot: number): string {
   return `M${n(OPENING.left - grow)},${n(foot)}V${n(OPENING.spring)}A${n(r)},${n(r)} 0 0 1 ${n(OPENING.right + grow)},${n(OPENING.spring)}V${n(foot)}z`;
 }
 
-/**
- * Where the plaster has fallen away and the mud bricks under it show: the
- * patch's middle, and each brick in it (its middle, how wide, how it leans).
- */
-const WORN: readonly { x: number; y: number; rx: number; ry: number; bricks: readonly (readonly [number, number, number, number])[] }[] = [
-  { x: -52, y: 690, rx: 44, ry: 30, bricks: [[-70, 676, 30, -3], [-38, 680, 26, 2], [-56, 704, 32, 1]] },
-  { x: 572, y: 330, rx: 38, ry: 27, bricks: [[556, 318, 28, 3], [588, 322, 22, -2], [570, 344, 30, -1]] },
+/** Where the plaster was smoothed by hand and catches the sun a little more: soft patches, each its middle, its size and its lean. */
+const TROWEL: readonly (readonly [number, number, number, number, number])[] = [
+  [-40, 400, 46, 120, 8],
+  [560, 500, 40, 130, -6],
+  [80, 700, 120, 34, -4],
 ];
 
 /** The kilim curtain, drawn back to the left of the opening and tied there: its leading edge, from the arch down to the sill. */
@@ -190,15 +185,10 @@ const FOLDS: readonly (readonly Pt[])[] = [
   [[112, 64], [110, 240], [94, 422], [98, 520], [104, 620]],
 ];
 
-/** What hangs behind him: the wall with its worn patches, the room with its curtain, and the frame round the opening. */
+/** What hangs behind him: the wall, the room with its curtain, and the frame round the opening. */
 function back(c: Palette, p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  const worn = WORN.map(
-    (w) =>
-      ellipse(w.x, w.y, w.rx, w.ry, c.wallLo, alpha(0.5)) +
-      w.bricks.map(([x, y, bw, deg]) => fill(roundRect(x - bw / 2, y - 9, bw, 18, 5), c.stone, ` transform="rotate(${deg} ${x} ${y})"`)).join('') +
-      w.bricks.map(([x, y, bw, deg]) => fill(roundRect(x - bw / 2 + 3, y - 8, bw - 6, 5, 2.5), c.stoneHi, `${alpha(0.7)} transform="rotate(${deg} ${x} ${y})"`)).join(''),
-  ).join('');
+  const trowel = TROWEL.map(([x, y, rx, ry, deg]) => ellipse(x, y, rx, ry, `url(#${id('patch')})`, ` transform="rotate(${deg} ${x} ${y})"`)).join('');
   // diamonds down the curtain's kilim band, light and gold in turn
   const diamonds = CURTAIN_EDGE.slice(0, -1)
     .flatMap(([x0, y0], i) => {
@@ -222,11 +212,12 @@ function back(c: Palette, p: string): string {
       linearAt(id('frame'), [[0, c.frameHi], [0.45, c.frame], [1, c.frameLo]], OPENING.left - FRAME, 0, OPENING.right + FRAME, SILL),
       linearAt(id('curtain'), [[0, c.curtainLo], [0.35, c.curtain], [1, c.curtain]], 0, 0, 160, 0),
       clipDef(id('opening'), arch(0, SILL + 4)),
+      radialBox(id('patch'), [[0, c.plaster, 0.32], [1, c.plaster, 0]]),
       clipDef(id('wallclip'), wallPath()),
     ],
     [
       fill(wallPath(), `url(#${id('wall')})`),
-      clipped(id('wallclip'), worn),
+      clipped(id('wallclip'), trowel),
       // the room, the curtain drawn back in it, and the shade the wall's thickness throws inside the opening
       fill(arch(0, SILL + 4), `url(#${id('room')})`),
       clipped(
