@@ -275,6 +275,9 @@ export function SessionPlayer({
   const [problem, setProblem] = useState<Problem | null>(null);
   const [closed, setClosed] = useState(false);
   const [results, setResults] = useState<SessionResults | null>(null);
+  // how long this sitting took, for the results: from opening the player to the session's end
+  const [startedAt] = useState(Date.now);
+  const [elapsedMs, setElapsedMs] = useState(0);
   const [completeTry, setCompleteTry] = useState(0);
   const [tips, setTips] = useState(false);
   const [savedNote] = useState(savedNoteDue);
@@ -467,6 +470,7 @@ export function SessionPlayer({
         // a perfect lesson is known from the results alone; the rest waits for where things stand now
         const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
         setResults(res.data);
+        setElapsedMs(Date.now() - startedAt);
         setMoments(lessonMoments(null, null, null, outcome));
         setProblem(null);
         writeReasked(sessionId, null);
@@ -483,7 +487,7 @@ export function SessionPlayer({
         setProblem({ message: describeError(res.error, t), retry: () => setCompleteTry((n) => n + 1) });
       }
     });
-  }, [state.status, state.skipped.length, results, client, paths, sessionId, t, completeTry, kind, courseId, lessonId]);
+  }, [state.status, state.skipped.length, results, client, paths, sessionId, t, completeTry, kind, courseId, lessonId, startedAt]);
 
   const feedback: Feedback | null = state.status === 'feedback' ? state.feedback : null;
   const heading = title ?? (kind === 'lesson' ? t('lesson.title') : t('review.title'));
@@ -504,6 +508,7 @@ export function SessionPlayer({
           dialect={dialect}
           moments={moments}
           next={nextLesson}
+          elapsedMs={elapsedMs}
           exitTo={exitTo}
           exitLabel={exitLabel}
           onNext={(lesson) =>

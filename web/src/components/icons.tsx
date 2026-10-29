@@ -94,6 +94,9 @@ import { ShieldCheck } from '@phosphor-icons/react/dist/icons/ShieldCheck';
 import { HandHeart } from '@phosphor-icons/react/dist/icons/HandHeart';
 import { Checks } from '@phosphor-icons/react/dist/icons/Checks';
 import { Sparkle } from '@phosphor-icons/react/dist/icons/Sparkle';
+// a lesson's results: the XP earned, and how many were right first time
+import { Lightning } from '@phosphor-icons/react/dist/icons/Lightning';
+import { Target } from '@phosphor-icons/react/dist/icons/Target';
 // shop items by kind: a tag, a frame, and the search over all of them
 import { Tag } from '@phosphor-icons/react/dist/icons/Tag';
 import { FrameCorners } from '@phosphor-icons/react/dist/icons/FrameCorners';
@@ -266,6 +269,8 @@ export const CareIcon = named(HandHeart, 22);
 /* every notification read at once */
 export const ReadAllIcon = named(Checks, 18);
 export const SparkleIcon = named(Sparkle, 16, 'fill');
+export const XpIcon = named(Lightning, 22, 'fill');
+export const AccuracyIcon = named(Target, 22, 'bold');
 
 /* Shop items by kind (shop/ItemBrowser): what stands in for an item that has
    no picture of its own — a tag is a tag, a frame is a frame — and the glass

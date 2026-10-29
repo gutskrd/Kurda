@@ -906,7 +906,7 @@ html:has(.lesson-bar) {
   color: var(--ink-4);
 }
 
-/* the end: one screen, Hevalo cheering over a row of three tiles and the day's rows */
+/* the end: Hevalo cheering over three cards and the day's rows (the cards and what follows: learn/end.css) */
 .lesson.is-done .lesson-body {
   padding-top: 8px;
 }
@@ -920,50 +920,6 @@ html:has(.lesson-bar) {
 }
 .lesson-results-title:focus {
   outline: none;
-}
-.lesson-stats {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 8px;
-  margin: 0;
-}
-/* each tile wears a band of its colour along its top: gold for what was earned, green for what was right */
-.lesson-stat {
-  --band: var(--gold);
-  display: grid;
-  align-content: start;
-  gap: 2px;
-  min-width: 0;
-  padding: 14px 12px 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--r-md);
-  background: var(--surface);
-  box-shadow: inset 0 4px 0 var(--band);
-}
-.lesson-stat.is-accuracy {
-  --band: var(--success);
-}
-.lesson-stat dt {
-  font-size: 0.78rem;
-  color: var(--ink-3);
-}
-.lesson-stat dd {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 1.4rem;
-  font-variant-numeric: tabular-nums;
-}
-.lesson-stat dd svg {
-  color: var(--gold);
-}
-.lesson-stat .lesson-stat-sub {
-  display: block;
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  color: var(--ink-3);
 }
 .lesson-results-note {
   margin: 0;
@@ -1042,65 +998,6 @@ html:has(.lesson-bar) {
   font-size: 0.92rem;
 }
 
-/* "Day 12": the streak kept today, on its own card (StreakDay.tsx) */
-.lesson-day {
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-  padding-top: 8vh;
-  text-align: center;
-}
-.lesson-day-flame {
-  display: inline-grid;
-  place-items: center;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--gold-soft), transparent);
-  color: var(--gold);
-}
-.lesson-day-title {
-  margin: 0;
-  font-size: clamp(2.2rem, 9vw, 3rem);
-  font-variant-numeric: tabular-nums;
-}
-.lesson-day-title:focus {
-  outline: none;
-}
-.lesson-day-body {
-  max-width: 34ch;
-  margin: 0;
-  color: var(--ink-2);
-}
-.lesson-day-freeze {
-  display: grid;
-  gap: 8px;
-  width: min(320px, 100%);
-  margin-top: 8px;
-}
-.lesson-day-bar {
-  position: relative;
-  height: 10px;
-  overflow: hidden;
-  border-radius: var(--r-pill);
-  background: var(--surface-2);
-}
-.lesson-day-bar > span {
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--gems);
-  transform: scaleX(var(--to, 0));
-  transform-origin: left;
-}
-[dir='rtl'] .lesson-day-bar > span {
-  transform-origin: right;
-}
-.lesson-day-freeze-line {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--ink-3);
-}
 .lesson-mistakes ul {
   display: grid;
   gap: 8px;

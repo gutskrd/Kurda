@@ -5,7 +5,7 @@
  * exercise, a graded answer — comes from @kurda/shared, which the phone uses
  * too.
  */
-import type { DeliveredExercise, GradeResult, RecordedAnswer, Verdict } from '@kurda/shared';
+import type { DeliveredExercise, GradeResult, QuestStep, RecentDay, RecordedAnswer, Verdict } from '@kurda/shared';
 
 /** GET /courses */
 export interface CourseSummary {
@@ -98,6 +98,10 @@ export interface Streak {
   /** finished sessions towards the next freeze, of `sessionsPerFreeze` */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
+  /** the learner's own today (YYYY-MM-DD, their timezone), to lay out the week */
+  today?: string;
+  /** days in the last 14 (theirs) on which they learned, or a freeze kept the streak */
+  recent?: RecentDay[];
 }
 
 /** POST …/complete — a lesson's results carry `firstCompletion`, practice's do not */
@@ -109,6 +113,8 @@ export interface SessionResults {
   xpAwarded: number;
   streak: Streak;
   firstCompletion?: boolean;
+  /** today's quests this session moved, before and after (absent when none moved, or on an older server) */
+  quests?: QuestStep[];
 }
 
 /** POST …/answers */
