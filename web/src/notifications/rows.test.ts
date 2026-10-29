@@ -38,6 +38,14 @@ describe('noteKind', () => {
     expect(noteKind({ category: 'streak', data: {} })).toBe('streak');
     expect(noteKind({ category: 'events', data: null })).toBe('notice');
   });
+
+  it('gives each kind of news about a group its own glyph', () => {
+    expect(noteKind({ category: 'friends', data: { kind: 'group_removed' } })).toBe('groupOut');
+    expect(noteKind({ category: 'friends', data: { kind: 'group_banned' } })).toBe('groupBan');
+    expect(noteKind({ category: 'friends', data: { kind: 'group_request' } })).toBe('groupAsk');
+    expect(noteKind({ category: 'friends', data: { kind: 'group_request_approved' } })).toBe('group');
+    expect(noteKind({ category: 'friends', data: { kind: 'group_request_declined' } })).toBe('group');
+  });
 });
 
 describe('splitAtName', () => {

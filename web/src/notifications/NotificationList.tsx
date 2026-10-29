@@ -3,12 +3,16 @@ import { Link } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
 import {
   BellIcon,
+  BlockIcon,
   CareIcon,
+  ChatsIcon,
   FlameIcon,
   GameIcon,
   GiftIcon,
+  InviteIcon,
   MedalIcon,
   PersonGlyph,
+  RemovePersonIcon,
   SafetyIcon,
   TrophyIcon,
   UsersIcon,
@@ -18,6 +22,7 @@ import type { MessageKey } from '../i18n/en';
 import { socialNotification, type NoteView } from '../reports/notifications';
 import { playNotification } from '../play/notifications';
 import { progressNotification } from '../ranks/notifications';
+import { groupNotification } from '../groups/notifications';
 import { usePlayInvites } from '../play/PlayProvider';
 import { useRail } from '../social/RailProvider';
 import { lastSeen } from '../social/time';
@@ -79,6 +84,10 @@ const KIND_ICON: Record<NoteKind, (p: { size?: number }) => React.JSX.Element> =
   safety: SafetyIcon,
   care: CareIcon,
   friends: UsersIcon,
+  group: ChatsIcon,
+  groupOut: RemovePersonIcon,
+  groupBan: BlockIcon,
+  groupAsk: InviteIcon,
   notice: BellIcon,
 };
 
@@ -94,9 +103,9 @@ interface Actor {
  * Each says what happened in the reader's own words, with the person it is
  * from in bold and their face beside it — a small glyph on its corner says
  * what kind of thing it is — or, for news from Hevalo itself, the glyph alone.
- * The kinds are said in reports/notifications.ts, play/notifications.ts and
- * ranks/notifications.ts; one that has a page opens it, and opening it counts
- * as reading it. A game invite and a gift show the one thing to do about them.
+ * The kinds are said in reports/notifications.ts, play/notifications.ts,
+ * ranks/notifications.ts and groups/notifications.ts; one that has a page
+ * opens it, and opening it counts as reading it. A game invite and a gift show the one thing to do about them.
  */
 export function NotificationList({
   items,
@@ -144,7 +153,7 @@ export function NotificationList({
             {group.items.map((n) => {
               const actor = actorOf(n);
               const view: NoteView | null =
-                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t);
+                socialNotification(n, t, locale) ?? playNotification(n, t, incoming) ?? progressNotification(n, t) ?? groupNotification(n, t, locale);
               // a gift from somebody the app can name says who it is from
               const title = n.data?.kind === 'gift' && actor ? t('gift.fromLabel', { name: actor.name }) : (view?.title ?? n.title);
               const when =
