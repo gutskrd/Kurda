@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { countriesIn, foldDiacritics } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import type { ApiError } from '../api/types';
@@ -244,7 +245,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
 
             <Text style={[styles.section, { color: colors.textPrimary }]}>{t('edit.avatar')}</Text>
             <View style={styles.avatars} accessibilityLabel={t('edit.chooseAvatar')}>
-              <Pressable
+              <PressableScale
                 onPress={() => void pick(null)}
                 disabled={busy}
                 accessibilityRole="button"
@@ -256,11 +257,11 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                 ]}
               >
                 <Icon name="close" size={22} color={colors.textSecondary} />
-              </Pressable>
+              </PressableScale>
               {avatars.map((a) => {
                 const locked = a.requiresPremium && !me?.premium;
                 return (
-                  <Pressable
+                  <PressableScale
                     key={a.key}
                     onPress={() =>
                       locked ? setNotice({ ok: false, text: t('edit.premiumAvatar') }) : void pick(a.key)
@@ -276,7 +277,7 @@ export function EditProfileScreen({ onExit }: { onExit: () => void }): React.JSX
                     ]}
                   >
                     <InitialsAvatar name={a.key} id={a.key} size={44} photoUrl={avatarAssetUrl(a.key)} />
-                  </Pressable>
+                  </PressableScale>
                 );
               })}
             </View>

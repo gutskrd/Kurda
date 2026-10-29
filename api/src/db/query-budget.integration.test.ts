@@ -242,6 +242,81 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       // BEGIN, the learner's lock, their state, every measure, their badges, COMMIT (and one write if any moved)
       expect(all.count, all.statements.join('\n')).toBeLessThanOrEqual(7);
     });
+
+    it('the practice hub is one statement, for a learner with nothing done as for one with a unit finished', async () => {
+      const published = await pool.query<{ id: string }>(
+        `SELECT l.id FROM lessons l JOIN skills s ON s.id = l.skill_id JOIN units u ON u.id = s.unit_id
+         WHERE u.course_id = $1 AND l.status = 'published' ORDER BY l.position`,
+        [courseId],
+      );
+      // every lesson of the unit, so it is finished
+      for (const { id } of published.rows) await play('lb', id);
+      const none = await steady('GET', '/practice/hub', 'solo');
+      const some = await steady('GET', '/practice/hub', 'lb');
+      expect(some.body.units).toHaveLength(1);
+      expect(some.count, some.statements.join('\n')).toBe(none.count);
+      // the session read and the hub's one statement
+      expect(some.count, some.statements.join('\n')).toBeLessThanOrEqual(2);
+    });
+  });
+
+  describe('jumping ahead', () => {
+    const made: string[] = [];
+
+    /** A course of two units: the first of `skills` skills of `lessons` lessons of four items each, the second of one skill. */
+    async function twoUnits(tag: string, skills: number, lessons: number): Promise<string> {
+      const repo = new ContentRepository(pool);
+      const id = await repo.createCourse({ slug: `qb-${tag}-${suffix}`, titleKu: 'K', titleEn: `Jump ${tag}` });
+      made.push(id);
+      const first = await repo.createUnit(id, 1, 'Y', 'First');
+      const second = await repo.createUnit(id, 2, 'D', 'Second');
+      for (const [unitId, count] of [[first, skills], [second, 1]] as const) {
+        for (let k = 1; k <= count; k++) {
+          const skillId = await repo.createSkill(unitId, k, `S${k}`, `Skill ${k}`);
+          for (let l = 1; l <= lessons; l++) {
+            const lessonId = await repo.createLesson(skillId, l, `L${l}`, `Lesson ${l}`);
+            for (let i = 1; i <= 4; i++) {
+              await repo.addExercise(lessonId, i, 'multiple_choice', { prompt: `"Av" ${i}?`, options: ['Water', 'Bread'], correctIndex: 0 });
+            }
+            await repo.publishLesson(lessonId);
+          }
+        }
+      }
+      return id;
+    }
+
+    afterAll(async () => {
+      await pool.query(
+        `UPDATE lessons SET status = 'archived' WHERE skill_id IN (
+           SELECT s.id FROM skills s JOIN units u ON u.id = s.unit_id WHERE u.course_id = ANY($1::uuid[]))`,
+        [made],
+      );
+      await pool.query(`DELETE FROM courses WHERE id = ANY($1::uuid[])`, [made]);
+    });
+
+    it('starting a test, and opening it again, cost the same for a short course as a long one, within their budgets', async () => {
+      await register('jump');
+      const short = await twoUnits('js', 1, 1);
+      const long = await twoUnits('jl', 5, 3);
+      const target = async (course: string) => (await pool.query<{ id: string }>(`SELECT id FROM units WHERE course_id = $1 AND position = 2`, [course])).rows[0]!.id;
+      // the learner's first call settles what happens once (the day's network sighting)
+      await call('GET', '/courses', 'jump');
+      const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
+
+      const a = await counted('POST', `/courses/${short}/jump`, 'jump', { unitId: await target(short) });
+      const b = await counted('POST', `/courses/${long}/jump`, 'jump', { unitId: await target(long) });
+      expect(a.body.exercises).toHaveLength(4);
+      expect(b.body.exercises).toHaveLength(10);
+      expect(b.count, shown(b)).toBe(a.count);
+      expect(b.count, shown(b)).toBeLessThanOrEqual(12);
+
+      // the same test opened again, as a learner coming back to it does
+      const again = await counted('POST', `/courses/${long}/jump`, 'jump', { unitId: await target(long) });
+      const againShort = await counted('POST', `/courses/${short}/jump`, 'jump', { unitId: await target(short) });
+      expect(again.body.sessionId).toBe(b.body.sessionId);
+      expect(again.count, shown(again)).toBe(againShort.count);
+      expect(again.count, shown(again)).toBeLessThanOrEqual(12);
+    });
   });
 
   describe('many rows in one statement', () => {

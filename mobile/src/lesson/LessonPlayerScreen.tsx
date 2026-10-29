@@ -172,6 +172,7 @@ export function SessionPlayer({
   onNext,
   onPractise,
   onPath,
+  renderResults,
 }: {
   view: SessionView;
   paths: SessionPaths;
@@ -184,6 +185,8 @@ export function SessionPlayer({
   memory?: ResumeMemory;
   /** the course a lesson was opened from, for its next lesson */
   courseId?: string;
+  /** what a finished session shows in place of a lesson's results (a test to jump ahead says whether it passed) */
+  renderResults?: (results: SessionResults) => React.ReactNode;
 } & LessonWaysOn) {
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -329,6 +332,8 @@ export function SessionPlayer({
         return;
       }
       setResults(res.data);
+      // results of its own: nothing a lesson's moments compare
+      if (renderResults) return;
       const streakNow: StreakMark = { current: res.data.streak.current, lastActiveOn: res.data.streak.lastActiveOn };
       const outcome = { kind, accuracy: res.data.accuracy, skipped: state.skipped.length };
       void readStanding(client).then(({ standing }) => {
@@ -441,10 +446,10 @@ export function SessionPlayer({
       onExit();
       return;
     }
-    haptic('select');
     setLeaving(true);
   };
 
+  if (state.status === 'finished' && results && renderResults) return <GradientBackground>{renderResults(results)}</GradientBackground>;
   if (state.status === 'finished' && results) {
     return (
       <GradientBackground>

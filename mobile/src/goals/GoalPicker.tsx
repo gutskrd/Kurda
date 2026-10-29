@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useTheme } from '../theme/ThemeProvider';
@@ -19,7 +20,7 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
       {GOAL_OPTIONS.map((option) => {
         const selected = option === value;
         return (
-          <Pressable
+          <PressableScale
             key={option}
             disabled={disabled}
             onPress={() => {
@@ -45,7 +46,7 @@ export function GoalPicker({ value, onChange, disabled }: Props) {
             ]}
           >
             <Text style={[styles.label, { color: selected ? colors.textPrimary : colors.textSecondary }]}>{option}</Text>
-          </Pressable>
+          </PressableScale>
         );
       })}
     </View>

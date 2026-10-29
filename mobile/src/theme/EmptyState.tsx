@@ -1,4 +1,5 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from './MotionParts';
 import { radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { display } from './fonts';
@@ -89,14 +90,14 @@ export function EmptyState({
       {body ? <Text style={[styles.body, { color: colors.textSecondary }]}>{body}</Text> : null}
 
       {action ? (
-        <Pressable
+        <PressableScale
           onPress={action.onPress}
           accessibilityRole="button"
           accessibilityLabel={action.label}
-          style={({ pressed }) => [styles.action, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+          style={[styles.action, { backgroundColor: colors.primary }]}
         >
           <Text style={[styles.actionText, { color: colors.textOnPrimary }]}>{action.label}</Text>
-        </Pressable>
+        </PressableScale>
       ) : null}
       {secondary ? (
         <Pressable

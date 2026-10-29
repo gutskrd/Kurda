@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../../theme/MotionParts';
 import type { StoryDetail, StoryGameView, StoryGlossEntry } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import { describeError } from '../../api/errors';
@@ -148,14 +149,14 @@ export function Question({
           {t('stories.questionOf', { index: q.index + 1, total: q.total })}
         </Text>
         {view.settings.textDuring === 'visible' && story ? (
-          <Pressable
+          <PressableScale
             onPress={() => setStoryOpen(true)}
             accessibilityRole="button"
             style={[styles.storyButton, { backgroundColor: colors.controlTrack }]}
           >
             <Icon name="story" size={16} color={colors.primary} />
             <Text style={[styles.storyButtonText, { color: colors.primary }]}>{t('stories.question.story')}</Text>
-          </Pressable>
+          </PressableScale>
         ) : null}
       </View>
 

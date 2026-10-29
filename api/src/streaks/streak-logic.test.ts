@@ -145,6 +145,22 @@ describe('settle (read-time)', () => {
     expect(settled.currentStreak).toBe(1); // preserved
     expect(settled.freezes).toBe(0); // consumed
     expect(settled.lastActiveOn).toBe('2026-07-09'); // anchor advanced
+    expect(settled.freezeUsedOn).toBe('2026-07-09'); // the day it kept, for the apps to say so
+  });
+
+  it('notes the kept day when a lesson spends the freeze, and keeps it on later days', () => {
+    let s = record(fresh, '2026-07-08').state;
+    s = grantFreeze(s);
+    s = record(s, '2026-07-10').state; // the 9th missed, covered by the lesson on the 10th
+    expect(s).toMatchObject({ currentStreak: 2, freezes: 0, freezeUsedOn: '2026-07-09' });
+    s = record(s, '2026-07-11').state;
+    expect(s.freezeUsedOn).toBe('2026-07-09');
+  });
+
+  it('notes nothing when there is no freeze to spend, or the run is broken', () => {
+    const s = record(fresh, '2026-07-08').state;
+    expect(settle(s, '2026-07-10').freezeUsedOn).toBeUndefined();
+    expect(settle(grantFreeze(s), '2026-07-11').freezeUsedOn).toBeUndefined(); // two days missed: the freeze is kept
   });
 
   it('is idempotent for a given day', () => {

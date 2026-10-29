@@ -12,7 +12,7 @@ type Translate = (key: TranslationKey, vars?: Record<string, string | number>) =
  * a message is in every messaging app, and the options rise from the bottom
  * of the screen where the thumb already is.
  *
- * A light tick says the hold landed. With nothing to offer (your own card,
+ * A light knock says the hold took. With nothing to offer (your own card,
  * a deleted message) the hold does nothing at all.
  */
 export function messageActions(t: Translate, { words, onReport }: { words?: string | null; onReport?: () => void }): SheetAction[] {
@@ -26,7 +26,7 @@ export function messageActions(t: Translate, { words, onReport }: { words?: stri
 export function openMessageOptions(t: Translate, what: { words?: string | null; onReport?: () => void }): void {
   const actions = messageActions(t, what);
   if (actions.length === 0) return;
-  haptic('select');
+  haptic('tap');
   showActions({ actions, cancel: t('common.cancel') });
 }
 

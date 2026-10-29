@@ -47,4 +47,16 @@ export interface SessionResults {
   mistakes?: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: Streak;
+  /** a test to jump ahead on the path: how it came out */
+  jump?: JumpOutcome;
+}
+
+/** How a test to jump ahead came out, as the server decided it (api/src/jump/settle.ts). */
+export interface JumpOutcome {
+  unitId: string;
+  passed: boolean;
+  /** right the first time, of every item asked */
+  correct: number;
+  total: number;
+  mistakesAllowed: number;
 }

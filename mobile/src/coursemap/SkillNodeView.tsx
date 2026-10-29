@@ -4,6 +4,7 @@ import Svg, { Circle } from 'react-native-svg';
 import { PATH_GEOMETRY, PATH_RETURN, type PathStop } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { haptic } from '../feedback/haptics';
+import { useDirection } from '../reports/direction';
 import { ease, springTo, timing } from '../theme/animate';
 import { Icon, type IconName } from '../theme/Icon';
 import { DrawnCheck } from '../theme/MotionParts';
@@ -52,6 +53,10 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
  * lesson in one tap; it bobs gently, and stands still for anyone who has asked
  * their phone for less motion.
  *
+ * The first stop of a later unit that can be jumped to (`jump`) is drawn in its
+ * unit's colour with a skip-forward glyph rather than grey with a padlock, and
+ * "Jump here?" stands over it, still: both open the offer.
+ *
  * Back from a lesson, a stop shows what the lesson did to it (`change`): the
  * ring fills on, a finished stop pops as its check draws in, an opened one
  * trades its padlock for its number with a pop and a light knock, and the
@@ -66,6 +71,7 @@ export function SkillNodeView({
   label,
   callout,
   change,
+  jump,
   onPress,
   onStart,
 }: {
@@ -80,12 +86,15 @@ export function SkillNodeView({
   callout?: { text: string; label: string };
   /** what coming back from a lesson changed here, played once */
   change?: StopChange | null;
+  /** the first stop of a unit that can be jumped to, and the words over it */
+  jump?: { text: string };
   onPress: () => void;
   onStart?: () => void;
 }): React.JSX.Element {
   const { colors, scheme } = useTheme();
+  const dir = useDirection();
   const rest = REST[scheme];
-  const look = lookOf(stop, tone, rest, colors.surfaceRaised, colors.gold, GOLD_LIP[scheme]);
+  const look = jump ? { face: tone.fill, lip: tone.lip, glyph: tone.ink, icon: 'skip-forward' as const } : lookOf(stop, tone, rest, colors.surfaceRaised, colors.gold, GOLD_LIP[scheme]);
   const raised = stop.kind === 'skill' && stop.state === 'current';
   const lip = raised ? LIP_RAISED : LIP;
   const finishing = !!change?.finishing;
@@ -119,6 +128,7 @@ export function SkillNodeView({
   return (
     <View style={[styles.stop, { left, top }]} pointerEvents="box-none">
       {callout && onStart ? <Callout text={callout.text} label={callout.label} tone={tone} arriving={!!change?.arriving} onPress={onStart} /> : null}
+      {jump ? <Callout text={jump.text} label={label} tone={tone} arriving={false} still onPress={onPress} /> : null}
       {raised && stop.kind === 'skill' ? (
         <Ring done={stop.lessonsDone} total={stop.lessonsTotal} from={change?.ringFrom} fill={tone.fill} track={rest.line} />
       ) : finishing && change?.ringFrom !== undefined && stop.kind === 'skill' ? (
@@ -131,7 +141,7 @@ export function SkillNodeView({
           onPress={onPress}
           accessibilityRole="button"
           accessibilityLabel={label}
-          testID={`lp-node-${testName(stop)}`}
+          testID={`lp-node-${jump ? 'jump' : testName(stop)}`}
           hitSlop={4}
           style={({ pressed }) => [
             styles.face,
@@ -155,6 +165,9 @@ export function SkillNodeView({
             )
           ) : finishing && look.icon === 'check' ? (
             <DrawnCheck size={30} color={look.glyph} delayMs={PATH_RETURN.finishAtMs} />
+          ) : jump ? (
+            // forward is the way the line is read
+            <Icon name={look.icon} size={30} color={look.glyph} style={dir.flip} />
           ) : (
             <Icon name={look.icon} size={30} color={look.glyph} />
           )}
@@ -279,13 +292,16 @@ function Ring({
  * "Start" over the current skill, bobbing gently unless the phone asks for less
  * motion — a few times as the path appears, then still. A bob that never
  * stops is something moving at the edge of the eye for as long as the screen
- * is open, long after it has said where to tap.
+ * is open, long after it has said where to tap. "Jump here?" over a later
+ * unit is `still` from the first: it is an offer, not the next step, and there
+ * can be several on the screen at once.
  */
 function Callout({
   text,
   label,
   tone,
   arriving,
+  still = false,
   onPress,
 }: {
   text: string;
@@ -293,6 +309,7 @@ function Callout({
   tone: ToneColors;
   /** it has just moved here from the stop before: it fades in once the rest of the path has moved */
   arriving: boolean;
+  still?: boolean;
   onPress: () => void;
 }): React.JSX.Element {
   const { colors } = useTheme();
@@ -301,7 +318,7 @@ function Callout({
   const shown = useRef(new Animated.Value(arriving && !reduce ? 0 : 1)).current;
 
   useEffect(() => {
-    if (reduce) {
+    if (reduce || still) {
       lift.setValue(0);
       shown.setValue(1);
       return;
@@ -316,7 +333,7 @@ function Callout({
     const run = arriving ? Animated.sequence([timing(shown, 1, PATH_RETURN.bubbleMs, { delay: PATH_RETURN.bubbleAtMs }), bob]) : bob;
     run.start();
     return () => run.stop();
-  }, [reduce, lift, shown, arriving]);
+  }, [reduce, still, lift, shown, arriving]);
 
   return (
     <Animated.View style={[styles.calloutWrap, { opacity: shown, transform: [{ translateY: lift }] }]} pointerEvents="box-none">

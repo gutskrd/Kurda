@@ -1,6 +1,6 @@
 import { useCallback, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { PressableScale } from '../theme/MotionParts';
 import type { IncomingInvite, MyRanks } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -139,11 +139,11 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
     >
       {/* rankings and the league: small, at the top, for whoever looks for them */}
       <View style={[styles.entries, { flexDirection: dir.row }]}>
-        <Pressable
+        <PressableScale
           onPress={() => navigation.navigate('Ranks')}
           accessibilityRole="button"
           accessibilityLabel={seasonSpoken ? `${t('ranks.title')}, ${seasonSpoken}` : t('ranks.title')}
-          style={({ pressed }) => [styles.entry, { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 }]}
+          style={[styles.entry, { backgroundColor: colors.surface }]}
         >
           <Icon name="mountains" size={20} color={colors.textPrimary} />
           <View style={styles.entryText}>
@@ -158,12 +158,12 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
               <SkeletonText size={typography.sizes.xs} width={72} style={{ alignItems: dir.row === 'row-reverse' ? 'flex-end' : 'flex-start' }} />
             ) : null}
           </View>
-        </Pressable>
-        <Pressable
+        </PressableScale>
+        <PressableScale
           onPress={() => navigation.navigate('League')}
           accessibilityRole="button"
           accessibilityLabel={t('leagues.screenTitle')}
-          style={({ pressed }) => [styles.entry, { backgroundColor: colors.surface, opacity: pressed ? 0.75 : 1 }]}
+          style={[styles.entry, { backgroundColor: colors.surface }]}
         >
           <Icon name="trophy" size={20} color={colors.textPrimary} />
           <View style={styles.entryText}>
@@ -174,7 +174,7 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
               {t('learn.games.leagueHint')}
             </Text>
           </View>
-        </Pressable>
+        </PressableScale>
       </View>
       {cooling && cooldown ? (
         <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>
@@ -198,14 +198,14 @@ export function GamesView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React
                 <Text style={[styles.inviteText, dir.text, { color: colors.textPrimary }]} numberOfLines={2}>
                   {headline}
                 </Text>
-                <Pressable
+                <PressableScale
                   onPress={() => void join(invite)}
                   accessibilityRole="button"
                   accessibilityLabel={t('play.banner.joinLabel', { name: invite.from.name, game })}
-                  style={({ pressed }) => [styles.joinButton, { backgroundColor: colors.primary, opacity: pressed ? 0.85 : 1 }]}
+                  style={[styles.joinButton, { backgroundColor: colors.primary }]}
                 >
                   <Text style={[styles.joinText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
-                </Pressable>
+                </PressableScale>
               </View>
             );
           })}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { AccessibilityInfo, findNodeHandle, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import type { DeclineReason, IncomingInvite } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
@@ -219,7 +220,7 @@ function InviteCard({
     return (
       <View pointerEvents="box-none" style={[styles.wrap, { bottom }]}>
         <View pointerEvents="box-none" style={[styles.column, styles.pillColumn]}>
-          <Pressable
+          <PressableScale
             onPress={() => setHidden(false)}
             accessibilityRole="button"
             accessibilityLabel={headline}
@@ -233,7 +234,7 @@ function InviteCard({
               </Text>
               <Icon name="chevron-down" size={14} color={colors.textSecondary} style={styles.up} />
             </View>
-          </Pressable>
+          </PressableScale>
         </View>
       </View>
     );
@@ -269,7 +270,7 @@ function InviteCard({
           ) : (
             <>
               <View style={styles.actions}>
-                <Pressable
+                <PressableScale
                   onPress={() => void join()}
                   disabled={busy}
                   accessibilityRole="button"
@@ -278,9 +279,9 @@ function InviteCard({
                   style={[styles.button, { backgroundColor: colors.primary, opacity: busy ? 0.6 : 1 }]}
                 >
                   <Text style={[styles.buttonText, { color: colors.textOnPrimary }]}>{t('play.banner.join')}</Text>
-                </Pressable>
+                </PressableScale>
                 {/* opens the two reasons under it and closes them again; Join stays where it was */}
-                <Pressable
+                <PressableScale
                   onPress={() => setReasons((open) => !open)}
                   accessibilityRole="button"
                   accessibilityState={{ expanded: reasons }}
@@ -288,25 +289,25 @@ function InviteCard({
                 >
                   <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notNow')}</Text>
                   <Icon name="chevron-down" size={14} color={colors.textSecondary} style={reasons ? styles.up : undefined} />
-                </Pressable>
+                </PressableScale>
               </View>
               {reasons ? (
                 <View style={styles.actions}>
-                  <Pressable
+                  <PressableScale
                     ref={laterRef}
                     onPress={() => decline('later')}
                     accessibilityRole="button"
                     style={[styles.button, styles.reason, { borderColor: colors.separator }]}
                   >
                     <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.later')}</Text>
-                  </Pressable>
-                  <Pressable
+                  </PressableScale>
+                  <PressableScale
                     onPress={() => decline('not_this_game')}
                     accessibilityRole="button"
                     style={[styles.button, styles.reason, { borderColor: colors.separator }]}
                   >
                     <Text style={[styles.buttonText, { color: colors.textPrimary }]}>{t('play.banner.notThisGame')}</Text>
-                  </Pressable>
+                  </PressableScale>
                 </View>
               ) : null}
               {failure ? (

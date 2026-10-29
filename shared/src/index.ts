@@ -76,6 +76,21 @@ export { PRAISE, praiseFor, praiseWords } from './praise.js';
 export { ACCURACY_BONUS_XP, BASE_LESSON_XP, REPEAT_XP_FACTOR, lessonXpRange } from './xp.js';
 /** How often a buzz may be felt, on the phone and on a touch screen alike. */
 export { HAPTIC_EVENTS, PACING, createPacer, type HapticEvent, type Pacer, type PacingRules } from './haptics.js';
+/** Apple's springs, the rubber band past an edge, and where a flick comes to rest: what the phone's sheets and menus move by. */
+export {
+  APPLE_SPRINGS,
+  DECELERATION,
+  RUBBER_BAND,
+  project,
+  releaseVelocity,
+  rubberBand,
+  shouldDismiss,
+  snapTarget,
+  springFor,
+  type DragSample,
+  type Spring,
+  type SpringSpec,
+} from './motion-physics.js';
 /** The one celebration — a lesson, a level, a rank, a league, a badge — timed and thrown the same on both. */
 export {
   BURST,
@@ -117,7 +132,11 @@ export {
   PATH_GEOMETRY,
   PATH_MASCOT,
   PATH_RETURN,
+  PATH_JUMP,
   UNIT_TONES,
+  jumpMistakesAllowed,
+  jumpPassed,
+  jumpPlan,
   lean,
   lessonPath,
   lessonStates,
@@ -144,7 +163,10 @@ export {
   type StopState,
   type TrophyStop,
   type UnitTone,
+  unitTone,
 } from './lesson-path.js';
+/** Practice as a hub: its kinds of session, what each draws on, and what the hub shows. */
+export { PRACTICE_MODES, PRACTICE_MODE_TYPES, type PracticeHub, type PracticeHubUnit, type PracticeMode } from './practice.js';
 export {
   KURMANJI_KEYS,
   MIN_RECORDING_BYTES,
@@ -234,10 +256,62 @@ export {
   ALPHABET_CLIPS,
   ALPHABET_CLIP_GROUPS,
   ALPHABET_CLIP_MAX_SECONDS,
+  LETTER_CLIPS,
   isAlphabetClipKey,
   type AlphabetClip,
   type AlphabetClipGroup,
 } from './alphabet-audio.js';
+/**
+ * Words to know — colours, numbers, the days and the months — taught as the
+ * alphabet is: each word in both dialects with what it means, its sound (the
+ * alphabet's recordings and studio), the "Check yourself" round, and any
+ * number up to 9999 spelled out. One copy for the website and the phone.
+ */
+export {
+  CALENDAR_MONTHS,
+  COLOURS as WORD_COLOURS,
+  NEWROZ,
+  RELATIVE_DAYS,
+  SEASONS,
+  SEASON_ORDER,
+  WORD_SET_IDS,
+  dayAfter,
+  dayParts,
+  findWord,
+  glossIn,
+  isWordSetId,
+  kurdishWeekday,
+  wordGloss,
+  wordGroups,
+  wordIn,
+  wordSet,
+  type CalendarMonth,
+  type Colour as WordColour,
+  type Day as WordDay,
+  type DayOfYear,
+  type Dialect as WordDialect,
+  type Gloss as WordGloss,
+  type KurdishMonth,
+  type Month as WordMonth,
+  type NumberWord,
+  type Season,
+  type SetWord,
+  type Word as KurdishWord,
+  type WordGroup,
+  type WordGroupId,
+  type WordSetId,
+} from './word-sets/words.js';
+export { KURDISH_NUMBER_MAX, easternDigits, kurdishNumber, readDigits } from './word-sets/number.js';
+export { askWordAgain, makeWordRound, type WordQuestion, type WordQuestionKind } from './word-sets/practice.js';
+export { WORD_CLIPS as SYNTHESISED_WORD_CLIPS } from './word-sets/clips.js';
+export {
+  SYNTHESISED_WORDS_PATH,
+  WORD_SET_CLIPS,
+  isWordSetClipKey,
+  wordSetRecordings,
+  wordSetSounds,
+  type WordSetSounds,
+} from './word-sets/sounds.js';
 /**
  * The two Kurdish alphabets as the alphabet pages teach them: each letter, its
  * sound beside the reader's own language, a word to remember it by, where each

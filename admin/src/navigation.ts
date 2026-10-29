@@ -102,7 +102,7 @@ export const NAV: readonly NavEntry[] = [
   { id: 'analytics', label: 'Analytics', group: 'overview', icon: 'chart', page: 'analytics', access: LEGACY_ADMIN, keywords: 'dau mau retention funnel' },
 
   // the owner could not find where to record: it gets a group of its own, near the top, in plain words
-  { id: 'record-letters', label: 'Record the alphabet', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet voice microphone' },
+  { id: 'record-letters', label: 'Record the alphabet and words', group: 'record', icon: 'letters', page: 'audio', sub: 'letters', access: RECORDERS, keywords: 'audio studio letters alphabet words colours numbers days months voice microphone' },
   { id: 'record-lessons', label: 'Record lesson sentences', group: 'record', icon: 'mic', page: 'audio', sub: 'lessons', access: RECORDERS, keywords: 'audio studio words sentences voice microphone' },
   { id: 'record-conversations', label: 'Record conversations', group: 'record', icon: 'chat', page: 'audio', sub: 'conversations', access: RECORDERS, keywords: 'audio studio dialogue conversation parts people voices together microphone' },
   { id: 'record-stories', label: 'Record story sentences', group: 'record', icon: 'story', page: 'audio', sub: 'stories', access: RECORDERS, keywords: 'audio studio stories voice microphone narration' },

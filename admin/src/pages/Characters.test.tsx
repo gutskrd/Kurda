@@ -148,7 +148,7 @@ describe('the characters side of the studio', () => {
       .map((r) => within(r).getAllByRole('cell').map((c) => c.textContent));
     expect(cells).toEqual([
       ['Lesson and story sentences', '3', '1', '1'],
-      ['Alphabet sounds', '3', '1', '1'],
+      ['Alphabet and word sounds', '3', '1', '1'],
       ['Dictionary pronunciations', '5', '3', '1'],
     ]);
   });

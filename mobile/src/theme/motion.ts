@@ -18,6 +18,8 @@
  *     somebody is reading
  */
 
+import { APPLE_SPRINGS, springFor } from '@kurda/shared';
+
 export const duration = {
   /** a press, a tick, a colour settling */
   quick: 120,
@@ -41,14 +43,25 @@ export const curve = {
 } as const;
 
 /**
- * The one spring: settles in about 300 ms with the slightest overshoot, so a
- * thing that arrives looks placed rather than thrown. `bouncy` is for the
- * moments that are allowed a little joy — an emblem landing, a heart filling.
+ * The springs, as Apple tunes them (`motion-physics.ts` in shared turns
+ * Apple's duration and bounce into stiffness and damping).
+ *
+ * `standard` is Apple's smooth spring: half a second, no bounce, so a thing
+ * that arrives looks placed rather than thrown. `release` is the snappy one,
+ * with a touch of bounce, for something a finger has just let go of with
+ * momentum — a sheet, the menu — which is the one time Apple adds bounce to
+ * a control. `bouncy` is for the moments that are allowed a little joy — an
+ * emblem landing, a heart filling — at Apple's own bouncy, short of the
+ * exaggerated.
  */
 export const spring = {
-  standard: { damping: 20, stiffness: 260, mass: 1 },
-  bouncy: { damping: 12, stiffness: 220, mass: 1 },
+  standard: springFor(APPLE_SPRINGS.smooth),
+  release: springFor(APPLE_SPRINGS.snappy),
+  bouncy: springFor(APPLE_SPRINGS.bouncy),
 } as const;
+
+/** How far a finger moves before it is a drag rather than a tap: iOS's 10 points. */
+export const DRAG_SLOP = 10;
 
 /** How far a pressed button, card or tile gives under a finger. */
 export const PRESS_SCALE = 0.97;

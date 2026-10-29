@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { CHARACTER_NAMES, type DictionaryAudio, type RecordingVoice } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { useAudio } from '../lesson/useAudio';
@@ -74,16 +75,16 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
             <View style={styles.headwordRow}>
               <Text style={[styles.headword, { color: colors.textPrimary }]}>{entry.headword}</Text>
               {entry.audio.length > 0 && !voiced && audio.supported ? (
-                <Pressable
+                <PressableScale
                   onPress={() => audio.play(1)}
                   accessibilityRole="button"
                   accessibilityLabel={t('dictionary.playPronunciation')}
                   style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
                 >
                   <Icon name="speaker" size={22} tone="primary" />
-                </Pressable>
+                </PressableScale>
               ) : null}
-              <Pressable
+              <PressableScale
                 onPress={toggleSave}
                 accessibilityRole="button"
                 accessibilityLabel={saved ? t('dictionary.removeBookmark') : t('dictionary.bookmark')}
@@ -91,7 +92,7 @@ export function EntryDetail({ entryId, onBack }: { entryId: string; onBack: () =
                 style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
               >
                 <Icon name={saved ? 'bookmark-fill' : 'bookmark'} size={22} color={saved ? colors.gold : colors.textSecondary} />
-              </Pressable>
+              </PressableScale>
             </View>
             <Text style={[styles.dialect, { color: colors.textSecondary }]}>{entry.dialect}</Text>
 
@@ -155,14 +156,14 @@ function Pronunciation({ recording, word }: { recording: DictionaryAudio; word: 
         {voice ? <Text style={[styles.speakerName, { color: colors.textPrimary }]}>{CHARACTER_NAMES[voice.speaker]}</Text> : null}
         <Text style={[styles.dialect, { color: colors.textSecondary }]}>{recording.dialect}</Text>
       </View>
-      <Pressable
+      <PressableScale
         onPress={() => audio.play(1)}
         accessibilityRole="button"
         accessibilityLabel={t('dictionary.playPronunciation')}
         style={[styles.audioBtn, { backgroundColor: colors.controlTrack }]}
       >
         <Icon name="speaker" size={22} tone="primary" />
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }

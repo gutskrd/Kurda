@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import type { ApiError } from '../api/types';
 import { AsyncBoundary } from '../net/AsyncBoundary';
 import { useAuth } from '../auth/AuthContext';
@@ -127,7 +128,7 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
         {state === 'claimed' ? (
           <Text style={[styles.claimed, { color: colors.success }]}>✓ {t('events.claimed')}</Text>
         ) : state === 'claimable' ? (
-          <Pressable
+          <PressableScale
             onPress={onClaim}
             disabled={busy}
             accessibilityRole="button"
@@ -139,7 +140,7 @@ function QuestRow({ quest, busy, onClaim }: { quest: QuestView; busy: boolean; o
             ) : (
               <Text style={[styles.claimText, { color: colors.textOnPrimary }]}>{t('events.claim')}</Text>
             )}
-          </Pressable>
+          </PressableScale>
         ) : (
           <Text style={[styles.locked, { color: colors.textSecondary }]}>{t('events.inProgress')}</Text>
         )}

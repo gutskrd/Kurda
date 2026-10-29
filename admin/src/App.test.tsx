@@ -109,14 +109,14 @@ describe('the admin’s navigation', () => {
     const nav = screen.getAllByRole('navigation', { name: 'Admin pages' })[0]!;
     const group = within(nav).getByRole('list', { name: 'Record audio' });
     expect(within(group).getAllByRole('link').map((a) => a.textContent)).toEqual([
-      'Record the alphabet',
+      'Record the alphabet and words',
       'Record lesson sentences',
       'Record conversations',
       'Record story sentences',
       'Dictionary pronunciations',
       'Characters',
     ]);
-    expect(within(group).getByRole('link', { name: 'Record the alphabet' })).toHaveAttribute('aria-current', 'page');
+    expect(within(group).getByRole('link', { name: 'Record the alphabet and words' })).toHaveAttribute('aria-current', 'page');
     expect(within(group).getByRole('link', { name: 'Record lesson sentences' })).toHaveAttribute('href', '#/audio/lessons');
     expect(within(group).getByRole('link', { name: 'Characters' })).toHaveAttribute('href', '#/audio/characters');
   });
@@ -132,7 +132,7 @@ describe('the admin’s navigation', () => {
     await openAt('#/dashboard');
     const search = screen.getAllByRole('searchbox', { name: 'Find a page' })[0]!;
     await user.type(search, 'microphone');
-    expect(sidebarLinks()).toEqual(['Record the alphabet', 'Record lesson sentences', 'Record conversations', 'Record story sentences']);
+    expect(sidebarLinks()).toEqual(['Record the alphabet and words', 'Record lesson sentences', 'Record conversations', 'Record story sentences']);
     await user.clear(search);
     await user.type(search, 'race{Enter}');
     await waitFor(() => expect(location.hash).toBe('#/race'));

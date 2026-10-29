@@ -23,7 +23,7 @@ import type { ApiError } from '../api/types';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useTheme } from '../theme/ThemeProvider';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { layout, radii, spacing, typography } from '../theme/tokens';
@@ -131,7 +131,7 @@ function WhoStep({
   };
   return (
     <>
-      <ScrollView contentContainerStyle={styles.body}>
+      <SheetScrollView contentContainerStyle={styles.body}>
         <Text style={[styles.lead, dir.text, { color: colors.textPrimary }]}>{t('gift.picker.who')}</Text>
         <Text style={[styles.note, dir.text, { color: colors.textSecondary }]}>{hint}</Text>
         <CheckRow
@@ -150,7 +150,7 @@ function WhoStep({
             avatar={<InitialsAvatar name={f.name} id={f.userId} size={32} photoUrl={f.avatarUrl ?? undefined} />}
           />
         ))}
-      </ScrollView>
+      </SheetScrollView>
       <View style={styles.footer}>
         <ClayButton label={t('gift.picker.next')} tone="primary" size="large" disabled={chosen.length === 0} onPress={onNext} />
       </View>
@@ -437,7 +437,7 @@ function WhatStep({
         </View>
       ) : null}
 
-      <ScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
+      <SheetScrollView ref={scroller} contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
         {all.length === 0 ? (
           <Text style={[styles.note, styles.gutter, dir.text, { color: colors.textSecondary }]}>{t('gift.picker.empty')}</Text>
         ) : (
@@ -466,7 +466,7 @@ function WhatStep({
             )}
           </>
         )}
-      </ScrollView>
+      </SheetScrollView>
 
       <View style={styles.footer}>
         <SendErrorNotice error={sendError} onDismiss={() => setSendError(null)} onNavigate={onClose} />

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   PATH_GEOMETRY,
+  PATH_JUMP,
   PATH_MASCOT,
   UNIT_TONES,
+  jumpMistakesAllowed,
+  jumpPassed,
+  jumpPlan,
   lean,
   lessonPath,
   lessonStates,
@@ -164,6 +168,82 @@ describe('lessonPath — units', () => {
   it('counts skills done per unit', () => {
     const path = lessonPath(map([skill('a', 'completed', 2), skill('b', 'unlocked')]));
     expect(path.units[0]).toMatchObject({ done: 1, total: 2 });
+  });
+});
+
+describe('jumping ahead', () => {
+  // three units of two: the learner is in the first, part-way through its second skill
+  const course = (over: { unlockedThrough?: number } = {}) => ({
+    ...map(
+      [skill('a', 'completed', 2), skill('b', 'unlocked', 1)],
+      [skill('c', 'locked'), skill('d', 'locked')],
+      [skill('e', 'locked'), skill('f', 'locked')],
+    ),
+    ...over,
+  });
+
+  it('offers every later unit whose first skill is closed, never the one the learner is in', () => {
+    expect(lessonPath(course(), { offerJumps: true }).units.map((u) => u.jump)).toEqual([false, true, true]);
+  });
+
+  it('offers no jump, and leaves no room for one, to a client that does not draw the offer', () => {
+    const path = lessonPath(course());
+    expect(path.units.map((u) => u.jump)).toEqual([false, false, false]);
+    expect(path.units[1]!.stops[0]!.y).toBe(PATH_GEOMETRY.pad);
+  });
+
+  it('gives the first stop of a unit on offer room above it for its bubble', () => {
+    const { pad, lift } = PATH_GEOMETRY;
+    const path = lessonPath(course(), { offerJumps: true });
+    expect(path.units[1]!.stops[0]!.y).toBe(pad + lift);
+    expect(path.units[0]!.stops[0]!.y).toBe(pad);
+  });
+
+  it('offers nothing past a unit already open, or a first skill with nothing published', () => {
+    const open = map([skill('a', 'unlocked')], [skill('c', 'unlocked')]);
+    expect(lessonPath(open, { offerJumps: true }).units.map((u) => u.jump)).toEqual([false, false]);
+    const empty = map([skill('a', 'unlocked')], [skill('c', 'locked', 0, 0, { firstLessonId: null })]);
+    expect(lessonPath(empty, { offerJumps: true }).units[1]!.jump).toBe(false);
+  });
+
+  it('plans the test on the unfinished skills it skips, and the place in the course it opens up to', () => {
+    const plan = jumpPlan(course(), 'u3');
+    expect(plan?.position).toBe(5);
+    expect(plan?.skipped.map((s) => s.skillId)).toEqual(['b', 'c', 'd']);
+    expect(jumpPlan(course(), 'u2')).toMatchObject({ position: 3 });
+  });
+
+  it('refuses the unit the learner is in, one behind them, one open already, and one not in the course', () => {
+    expect(jumpPlan(course(), 'u1')).toBeNull();
+    expect(jumpPlan(course(), 'nowhere')).toBeNull();
+    const opened = map([skill('a', 'unlocked')], [skill('c', 'unlocked')]);
+    expect(jumpPlan(opened, 'u2')).toBeNull();
+  });
+
+  it('moves the learner on once a test has let them through, the skills skipped left open', () => {
+    // as the server sends it after a pass: up to the third unit's first skill open
+    const after = course({ unlockedThrough: 5 });
+    after.units[1]!.skills = [skill('c', 'unlocked'), skill('d', 'unlocked')];
+    after.units[2]!.skills = [skill('e', 'unlocked'), skill('f', 'locked')];
+    const path = lessonPath(after, { offerJumps: true });
+    expect(path.current).toBe('s:e');
+    expect(skills(path).map((s) => s.kind === 'skill' && s.state)).toEqual(['done', 'available', 'available', 'available', 'current', 'locked']);
+    expect(path.units.map((u) => u.jump)).toEqual([false, false, false]);
+  });
+
+  it('goes back to a skipped skill once everything from the jump on is done', () => {
+    const after = map([skill('a', 'unlocked')], [skill('c', 'completed', 2)]);
+    expect(lessonPath({ ...after, unlockedThrough: 2 }).current).toBe('s:a');
+  });
+
+  it('passes a test of ten with two mistakes at most, and a shorter one with one in five', () => {
+    expect(PATH_JUMP).toMatchObject({ questions: 10, maxMistakes: 2 });
+    expect(jumpPassed(8, 10)).toBe(true);
+    expect(jumpPassed(7, 10)).toBe(false);
+    expect(jumpMistakesAllowed(6)).toBe(1);
+    expect(jumpPassed(5, 6)).toBe(true);
+    expect(jumpPassed(3, 4)).toBe(false);
+    expect(jumpPassed(0, 0)).toBe(false);
   });
 });
 

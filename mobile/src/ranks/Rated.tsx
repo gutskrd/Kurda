@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import type { ExpectedGains, RankedGame, RatedState } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
@@ -59,7 +60,10 @@ export function RatedChoice({ value, onChange }: { value: boolean; onChange: (ra
         return (
           <Pressable
             key={String(o.rated)}
-            onPress={() => onChange(o.rated)}
+            onPress={() => {
+              if (!on) haptic('select');
+              onChange(o.rated);
+            }}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
             accessibilityLabel={`${o.title}. ${o.hint}`}

@@ -10,6 +10,10 @@ export interface Streak {
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress?: number;
   sessionsPerFreeze?: number;
+  /** the most freezes that can be held at once */
+  maxFreezes?: number;
+  /** the missed day the last freeze spent covered, 'YYYY-MM-DD', or null; absent on older responses */
+  freezeUsedOn?: string | null;
 }
 
 /** What the server pays a freeze for, when it does not say (older responses). */

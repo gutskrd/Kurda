@@ -1,7 +1,7 @@
 import type { CompositeNavigationProp, NavigatorScreenParams } from '@react-navigation/native';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { AlphabetScript, RankedGame } from '@kurda/shared';
+import type { AlphabetScript, PracticeMode, RankedGame } from '@kurda/shared';
 import type { LearnView } from './tabs';
 import type { SettingsPageKey } from '../settings/SettingsPageScreen';
 
@@ -37,8 +37,16 @@ export type RootStackParamList = {
    * its results simply offer none.
    */
   Lesson: { lessonId: string; courseId?: string };
-  /** `exerciseIds`: practise these (a lesson's mistakes, "Practise these now") rather than what is due */
-  Practice: { exerciseIds?: string[] } | undefined;
+  /**
+   * A practice session, started at once. `exerciseIds`: practise these (a
+   * lesson's mistakes, "Practise these now") rather than what is due; `mode`:
+   * another kind of practice from the hub, with `unitId` for a unit's review.
+   */
+  Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string } | undefined;
+  /** Practice's hub: the one thing most worth doing now, and every other kind of practice (practice/PracticeHubScreen). */
+  PracticeHub: undefined;
+  /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen) */
+  JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
   League: undefined;
   /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */
@@ -114,6 +122,10 @@ export type RootStackParamList = {
   Dictionary: undefined;
   /** Both alphabets, opened from Learn's tools: `script` to open on one, else the reader's own dialect. */
   Alphabet: { script?: AlphabetScript } | undefined;
+  /** Words to know — colours, numbers, days, months — from Learn's tools and the alphabet's last card. */
+  Words: undefined;
+  /** One word set; `set` is checked where the screen is drawn, since a link can carry anything. */
+  WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;
   EditProfile: undefined;
   LibraryPost: { postId: string };

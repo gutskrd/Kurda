@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import type { PracticeMode } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
 import { SessionPlayer, type SessionPaths } from '../lesson/LessonPlayerScreen';
 import type { Exercise, SessionView } from '../lesson/types';
@@ -14,7 +15,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useI18n } from '../i18n/I18nContext';
 
-const PRACTICE_PATHS: SessionPaths = {
+/** A practice session's endpoints; a test to jump ahead is answered through them too. */
+export const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
   retry: (id) => `/practice/sessions/${id}/retry`,
   complete: (id) => `/practice/sessions/${id}/complete`,
@@ -30,9 +32,22 @@ interface PracticeStart {
 /**
  * Practice/review mode (KUR-034): reuses the lesson player over the SR queue —
  * or over `exerciseIds`, a finished lesson's mistakes ("Practise these now"),
- * which the server builds a session from instead.
+ * which the server builds a session from instead, or over another kind of
+ * practice the hub started (`mode`, and `unitId` for a unit's review).
  */
-export function PracticeScreen({ navigation, onExit, exerciseIds }: { navigation: RootNavigation; onExit: () => void; exerciseIds?: string[] }) {
+export function PracticeScreen({
+  navigation,
+  onExit,
+  exerciseIds,
+  mode,
+  unitId,
+}: {
+  navigation: RootNavigation;
+  onExit: () => void;
+  exerciseIds?: string[];
+  mode?: PracticeMode;
+  unitId?: string;
+}) {
   const { client } = useAuth();
   const { colors } = useTheme();
   const { t } = useI18n();
@@ -46,7 +61,8 @@ export function PracticeScreen({ navigation, onExit, exerciseIds }: { navigation
     let active = true;
     setError(null);
     setStart(null);
-    void client.post<PracticeStart>('/practice/session', chosen ? { exerciseIds: chosen.split(',') } : undefined).then((res) => {
+    const body = chosen ? { exerciseIds: chosen.split(',') } : mode ? { mode, ...(unitId ? { unitId } : {}) } : undefined;
+    void client.post<PracticeStart>('/practice/session', body).then((res) => {
       if (!active) return;
       if (res.ok) setStart(res.data);
       else setError(res.error);
@@ -54,7 +70,7 @@ export function PracticeScreen({ navigation, onExit, exerciseIds }: { navigation
     return () => {
       active = false;
     };
-  }, [client, reloadKey, chosen]);
+  }, [client, reloadKey, chosen, mode, unitId]);
 
   if (error) {
     const message = describeError(error, t);
@@ -80,14 +96,15 @@ export function PracticeScreen({ navigation, onExit, exerciseIds }: { navigation
     );
   }
 
-  // nothing due → nudge toward the next new lesson
+  // nothing due → nudge toward the next new lesson; nothing of another kind → back to the hub's other kinds
   if (start.empty || !start.sessionId || !start.exercises?.length) {
+    const kind = !chosen && mode && mode !== 'review';
     return (
       <Centered>
         <Icon name="check" size={56} color={colors.gold} />
-        <Text style={[styles.title, { color: colors.textPrimary }]}>{t('practice.empty.title')}</Text>
-        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t('practice.empty.body')}</Text>
-        {start.suggestion ? (
+        <Text style={[styles.title, { color: colors.textPrimary }]}>{t(kind ? 'practice.emptyKind.title' : 'practice.empty.title')}</Text>
+        <Text style={[styles.detail, { color: colors.textSecondary }]}>{t(kind ? 'practice.emptyKind.body' : 'practice.empty.body')}</Text>
+        {start.suggestion && !kind ? (
           <Primary
             label={t('practice.startLabel', { title: start.suggestion.title })}
             onPress={() => navigation.replace('Lesson', { lessonId: start.suggestion!.lessonId })}

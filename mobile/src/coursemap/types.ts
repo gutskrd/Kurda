@@ -35,6 +35,8 @@ export interface CourseUnit {
 export interface CourseMap {
   course: { id: string; title: string };
   units: CourseUnit[];
+  /** skills up to this place in the course are open because a test let the learner through; absent on older responses */
+  unlockedThrough?: number;
 }
 
 export interface CourseSummary {

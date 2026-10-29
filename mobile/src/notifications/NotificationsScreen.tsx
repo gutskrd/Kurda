@@ -1,7 +1,8 @@
 import { useCallback, useState } from 'react';
 import { useI18n } from '../i18n/I18nContext';
 import { useFocusEffect } from '@react-navigation/native';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { Toggle } from '../theme/Toggle';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
 import { useAuth } from '../auth/AuthContext';
@@ -150,13 +151,13 @@ function TimeRow({ label, minute, onStep }: { label: string; minute: number; onS
       title={label}
       trailing={
         <View style={styles.stepper}>
-          <Pressable onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
+          <PressableScale onPress={() => onStep(-1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.stepText, { color: colors.textPrimary }]}>−</Text>
-          </Pressable>
+          </PressableScale>
           <Text style={[styles.time, { color: colors.textPrimary }]}>{formatMinute(minute)}</Text>
-          <Pressable onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
+          <PressableScale onPress={() => onStep(1)} style={[styles.stepBtn, { backgroundColor: colors.controlTrack }]} hitSlop={8} accessibilityRole="button">
             <Text style={[styles.stepText, { color: colors.textPrimary }]}>+</Text>
-          </Pressable>
+          </PressableScale>
         </View>
       }
     />

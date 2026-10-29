@@ -36,6 +36,8 @@ import { LessonResults } from '../lesson/components/LessonResults';
 import { SessionPlayer } from '../lesson/LessonPlayerScreen';
 import { FeedCard } from '../feed/FeedCard';
 import { ChatScreen } from '../chat/ChatScreen';
+import { openMessageOptions } from '../chat/messageOptions';
+import { ChoiceChips } from '../stories/ui';
 import type { SessionResults, SessionView } from '../lesson/types';
 import type { FeedItem } from '../feed/types';
 
@@ -87,6 +89,32 @@ describe('a choice changing is a tick', () => {
     fireEvent.click(screen.getByRole('switch', { name: 'Event themes' }));
     expect(felt).toEqual(['select']);
     expect(onValueChange).toHaveBeenCalledWith(true);
+  });
+
+  it('on a radio list of options, as on the others', () => {
+    function Lengths(): React.JSX.Element {
+      const [v, setV] = useState<'short' | 'long'>('short');
+      return <ChoiceChips label="Length" options={['short', 'long'] as const} value={v} onChange={setV} labelOf={(x) => x} />;
+    }
+    renderWithProviders(<Lengths />);
+    fireEvent.click(screen.getByRole('radio', { name: 'short' }));
+    expect(felt).toEqual([]);
+    fireEvent.click(screen.getByRole('radio', { name: 'long' }));
+    expect(felt).toEqual(['select']);
+  });
+});
+
+describe('a hold that took is a knock', () => {
+  const t = (key: string) => key;
+
+  it('on a message, as its options rise', () => {
+    openMessageOptions(t, { words: 'Silav' });
+    expect(felt).toEqual(['tap']);
+  });
+
+  it('and nothing on a message with nothing to offer, where the hold does nothing', () => {
+    openMessageOptions(t, { words: ' ' });
+    expect(felt).toEqual([]);
   });
 });
 

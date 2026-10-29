@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
-import { haptic } from '../feedback/haptics';
 import { GoalPicker } from '../goals/GoalPicker';
 import type { DailyGoalStatus, GoalOption } from '../goals/format';
 import { formatNumber } from '../i18n/format';
@@ -31,8 +30,11 @@ const RING = 24;
  * The numbers are plain. Nothing counts down and nothing warns about what
  * could be lost: a streak at zero shows a cold flame and says a lesson today
  * starts one. Some of the people reading it are children.
+ *
+ * The streak it reads is handed on (`onStreak`), for Learn's own moments; a
+ * new `reloadKey` reads all three again (Learn pulled to refresh).
  */
-export function LearnBar(): React.JSX.Element {
+export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onStreak?: (streak: Streak) => void }): React.JSX.Element {
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
@@ -55,14 +57,17 @@ export function LearnBar(): React.JSX.Element {
       ]).then(([g, me, wallet]) => {
         if (!active) return;
         if (g.ok) setGoal(g.data);
-        if (me.ok && me.data.user.streak) setStreak(me.data.user.streak);
+        if (me.ok && me.data.user.streak) {
+          setStreak(me.data.user.streak);
+          onStreak?.(me.data.user.streak);
+        }
         if (wallet.ok) setZer(wallet.data.balances.zer);
         setSettled(true);
       });
       return () => {
         active = false;
       };
-    }, [client]),
+    }, [client, reloadKey, onStreak]),
   );
 
   const changeGoal = useCallback(
@@ -82,10 +87,8 @@ export function LearnBar(): React.JSX.Element {
       ? t('learn.today.goalMet')
       : t('learn.today.goal', { xp: formatNumber(goal.earnedXp, locale), goal: formatNumber(goal.effectiveGoal, locale) })
     : '';
-  const show = (which: 'streak' | 'goal') => {
-    haptic('select');
-    setOpen(which);
-  };
+  // a button that opens a sheet: the sheet arriving is the answer, not a buzz
+  const show = (which: 'streak' | 'goal') => setOpen(which);
 
   if (!settled) {
     return (

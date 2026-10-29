@@ -35,6 +35,21 @@ describe('practice', () => {
     expect(client.calls.find((c) => c.path === '/practice/session')?.body).toEqual({ exerciseIds: ['mc2', 'tr'] });
   });
 
+  it('starts the kind of practice the hub chose', async () => {
+    const client = fakeClient({ 'POST /practice/session': session, 'GET /me': ok({ user: {} }) });
+    testAuth.client = client;
+    renderWithProviders(<PracticeScreen navigation={navigation} mode="unit" unitId="u1" onExit={() => undefined} />);
+    expect(await screen.findByText('Bread?')).toBeTruthy();
+    expect(client.calls.find((c) => c.path === '/practice/session')?.body).toEqual({ mode: 'unit', unitId: 'u1' });
+  });
+
+  it('says plainly when a kind of practice has nothing in it', async () => {
+    testAuth.client = fakeClient({ 'POST /practice/session': ok({ empty: true, suggestion: { lessonId: 'l1', title: 'Food' } }) });
+    renderWithProviders(<PracticeScreen navigation={navigation} mode="listen" onExit={() => undefined} />);
+    expect(await screen.findByText('Nothing to practise here right now')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+  });
+
   it('practises what is due when it is given nothing', async () => {
     const client = fakeClient({ 'POST /practice/session': session, 'GET /me': ok({ user: {} }) });
     testAuth.client = client;

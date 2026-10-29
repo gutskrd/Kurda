@@ -1,4 +1,5 @@
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import { SHIELD_GAMES, progressToNext, type RankCard } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { Icon } from '../theme/Icon';
@@ -104,14 +105,14 @@ export function RankCardView({ card, onPress, compact = false }: { card: RankCar
     );
   }
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={a11y}
-      style={({ pressed }) => [styles.press, pressed && { opacity: 0.7 }]}
+      style={[styles.press]}
     >
       {body}
-    </Pressable>
+    </PressableScale>
   );
 }
 

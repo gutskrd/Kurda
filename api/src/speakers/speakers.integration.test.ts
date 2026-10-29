@@ -109,8 +109,8 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
     story2: `Diya min li bajêr e ${s}.`,
   };
   const ourKeys = (): string[] => Object.values(T).map(lessonAudioKey);
-  /** sounds on the alphabet page this run records, put back as they were afterwards */
-  const LETTERS = ['kmr:sound:b', 'kmr:word:m'];
+  /** sounds on the alphabet page, and a word from the word sets, this run records, put back as they were afterwards */
+  const LETTERS = ['kmr:sound:b', 'kmr:word:m', 'words:days:ckb:mon'];
 
   /** Each recording's sound and the timeline the admin panel would make for it. */
   const takes = new Map<string, { pcm: Float32Array; lipsync: LipsyncData }>();
@@ -332,6 +332,20 @@ describe.skipIf(!DATABASE_URL)('speaking characters (integration)', () => {
       expect(recordings.find((r) => r.key === LETTERS[1])).toMatchObject({ speaker: null, hasLipsync: false });
 
       expect((await putLetter(LETTERS[1]!, wav(speech([300], 0.2)), { speaker: 'nobody' })).json().code).toBe('UNKNOWN_SPEAKER');
+    });
+
+    it('stores a word from the word sets beside the letters, its mouth read in its own script', async () => {
+      const res = await putLetter(LETTERS[2]!, wav(speech([180, 200, 220])), { speaker: 'hamo' });
+      expect(res.statusCode, res.body).toBe(201);
+      const page = await app.inject({ method: 'GET', url: '/alphabet/audio' });
+      const { rows } = await pool.query<{ duration_ms: number }>(`SELECT duration_ms FROM alphabet_audio WHERE key = $1`, [LETTERS[2]]);
+      expect(page.json().voices[LETTERS[2]!]).toEqual({
+        speaker: 'hamo',
+        lipsync: encodeLipsync(lipsyncFromText('دووشەممە', rows[0]!.duration_ms, { script: 'arabic' })),
+        lipsyncSource: 'text',
+      });
+      // a day the week does not have is no sound to record
+      expect((await putLetter('words:days:ckb:someday', wav(speech([200])))).json().code).toBe('UNKNOWN_SOUND');
     });
   });
 

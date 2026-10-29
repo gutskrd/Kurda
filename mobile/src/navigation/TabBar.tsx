@@ -12,6 +12,7 @@ import { useDirection } from '../reports/direction';
 import { unreadBadge } from '../notifications/inbox';
 import { useUnread } from '../messages/unread';
 import { haptic } from '../feedback/haptics';
+import { springTo } from '../theme/animate';
 import { TAB_BAR_HEIGHT } from './tabBarLayout';
 import { TABS, type TabName } from './tabs';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -112,7 +113,8 @@ export function TabBar({ state, navigation }: BottomTabBarProps): React.JSX.Elem
             }
           };
           const onLongPress = () => {
-            haptic('select');
+            // the hold took: a knock, as a held message gets, not the tick of a choice
+            haptic('tap');
             setHeld(i);
             navigation.emit({ type: 'tabLongPress', target: route.key });
           };
@@ -195,18 +197,19 @@ function TabButton({
   children: React.ReactNode;
 }): React.JSX.Element {
   const scale = useRef(new Animated.Value(1)).current;
-  const springTo = (toValue: number) => {
+  // down without a bounce, back with the little one Apple gives a release
+  const press = (toValue: number) => {
     if (reduceMotion) return;
-    Animated.spring(scale, { toValue, useNativeDriver: true, speed: 40, bounciness: toValue === 1 ? 10 : 0 }).start();
+    springTo(scale, toValue, toValue === 1 ? 'release' : 'standard').start();
   };
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
       delayLongPress={400}
-      onPressIn={() => springTo(PRESSED_SCALE)}
+      onPressIn={() => press(PRESSED_SCALE)}
       onPressOut={() => {
-        springTo(1);
+        press(1);
         onRelease();
       }}
       accessibilityRole="tab"

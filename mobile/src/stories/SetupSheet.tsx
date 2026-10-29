@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import {
   STORY_GAME_MODES,
   TEXT_DURING_OPTIONS,
@@ -132,7 +133,10 @@ export function StoryPresetFields({
                 return (
                   <Pressable
                     key={s?.id ?? 'surprise'}
-                    onPress={() => set({ storyId: s?.id ?? null })}
+                    onPress={() => {
+                      if (!on) haptic('select');
+                      set({ storyId: s?.id ?? null });
+                    }}
                     accessibilityRole="radio"
                     accessibilityState={{ checked: on }}
                     accessibilityLabel={s ? s.title : t('stories.setup.surprise')}

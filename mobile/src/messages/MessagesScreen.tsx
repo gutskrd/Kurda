@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation, useScrollToTop } from '@react-navigation/native';
-import { FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
-import { Rise } from '../theme/MotionParts';
+import { Animated, type FlatList, Pressable, RefreshControl, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { PressableScale, Rise } from '../theme/MotionParts';
 import { useListEntrance } from '../theme/animate';
 import { refreshFelt } from '../feedback/haptics';
 import { useAuth } from '../auth/AuthContext';
@@ -17,8 +17,8 @@ import { EmptyState } from '../theme/EmptyState';
 import { useTheme } from '../theme/ThemeProvider';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { useScreenTopInset, useTabBarInset } from '../navigation/tabBarLayout';
-import { LargeTitle } from '../navigation/LargeTitle';
+import { useTabBarInset } from '../navigation/tabBarLayout';
+import { LargeTitle, TitleBar, useCollapsingTitle } from '../navigation/LargeTitle';
 import { HeaderButton } from '../navigation/HeaderButton';
 import { useOpenSlide } from '../social/SocialSlide';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
@@ -70,8 +70,8 @@ export function MessagesScreen(): React.JSX.Element {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const openSlide = useOpenSlide();
-  const topInset = useScreenTopInset();
   const bottomInset = useTabBarInset();
+  const title = useCollapsingTitle();
   const { report } = useUnread();
 
   const [filter, setFilter] = useState<MessageFilter>('all');
@@ -168,12 +168,12 @@ export function MessagesScreen(): React.JSX.Element {
   const header = (
     <View style={styles.listHead}>
       {caringItems.map((item) => (
-        <Pressable
+        <PressableScale
           key={item.id}
           onPress={() => openCaring(item)}
           accessibilityRole="button"
           accessibilityLabel={item.title}
-          style={({ pressed }) => [styles.pinned, { backgroundColor: colors.successFill, opacity: pressed ? 0.8 : 1, flexDirection: dir.row }]}
+          style={[styles.pinned, { backgroundColor: colors.successFill, flexDirection: dir.row }]}
         >
           <Icon name="lifebuoy" size={22} color={colors.success} />
           <View style={styles.rowMain}>
@@ -184,16 +184,16 @@ export function MessagesScreen(): React.JSX.Element {
               {item.body}
             </Text>
           </View>
-        </Pressable>
+        </PressableScale>
       ))}
 
       {requests.length > 0 && filter !== 'groups' ? (
-        <Pressable
+        <PressableScale
           onPress={() => navigation.navigate('FriendRequests')}
           accessibilityRole="button"
           accessibilityLabel={t('messages.requests', { count: requests.length })}
           testID="messages-requests"
-          style={({ pressed }) => [styles.requests, { backgroundColor: colors.surface, opacity: pressed ? 0.8 : 1, flexDirection: dir.row }]}
+          style={[styles.requests, { backgroundColor: colors.surface, flexDirection: dir.row }]}
         >
           <View style={styles.faces}>
             {requests.slice(0, 2).map((r, i) => (
@@ -211,7 +211,7 @@ export function MessagesScreen(): React.JSX.Element {
             </Text>
           </View>
           <Icon name="chevron-right" size={16} color={colors.textSecondary} style={dir.flip ?? undefined} />
-        </Pressable>
+        </PressableScale>
       ) : null}
     </View>
   );
@@ -237,26 +237,14 @@ export function MessagesScreen(): React.JSX.Element {
 
   return (
     <GradientBackground>
-      <View style={[styles.head, { paddingTop: topInset }]}>
-        <LargeTitle
-          title={t('nav.messages')}
-          right={<HeaderButton icon="compose" label={t('messages.new')} onPress={openSlide} edge="end" />}
-        />
-        {nothingAtAll && requests.length === 0 ? null : (
-          <>
-            <SearchField value={query} onChangeText={setQuery} label={t('messages.search')} returnKeyType="done" />
-            <Chips
-              options={MESSAGE_FILTERS}
-              value={filter}
-              onChange={setFilter}
-              labelOf={(f) => t(FILTER_LABEL[f])}
-              countOf={(f) => (f === 'unread' && unreadCount > 0 ? unreadCount : null)}
-            />
-          </>
-        )}
-      </View>
+      {/* the pencil stays in the bar, in reach however far the list goes; the name joins it once the large one has scrolled under */}
+      <TitleBar
+        title={t('nav.messages')}
+        collapse={title}
+        right={<HeaderButton icon="compose" label={t('messages.new')} onPress={openSlide} edge="end" />}
+      />
 
-      <FlatList
+      <Animated.FlatList
         ref={listRef}
         data={rows}
         keyExtractor={(r) => r.key}
@@ -265,7 +253,28 @@ export function MessagesScreen(): React.JSX.Element {
             <ConversationRow row={item} locale={locale} preview={preview} onPress={() => open(item)} />
           </Rise>
         )}
-        ListHeaderComponent={header}
+        onScroll={title.onScroll}
+        scrollEventThrottle={16}
+        ListHeaderComponent={
+          <>
+            <View style={styles.head}>
+              <LargeTitle title={t('nav.messages')} collapse={title} />
+              {nothingAtAll && requests.length === 0 ? null : (
+                <>
+                  <SearchField value={query} onChangeText={setQuery} label={t('messages.search')} returnKeyType="done" />
+                  <Chips
+                    options={MESSAGE_FILTERS}
+                    value={filter}
+                    onChange={setFilter}
+                    labelOf={(f) => t(FILTER_LABEL[f])}
+                    countOf={(f) => (f === 'unread' && unreadCount > 0 ? unreadCount : null)}
+                  />
+                </>
+              )}
+            </View>
+            {header}
+          </>
+        }
         ListEmptyComponent={empty}
         ListFooterComponent={
           filter === 'groups' && groups.length > 0 ? (
@@ -386,7 +395,8 @@ function ConversationsSkeleton(): React.JSX.Element {
 
 const styles = StyleSheet.create({
   flex: { flex: 1 },
-  head: { paddingHorizontal: layout.gutter, gap: spacing.md - 4, paddingBottom: spacing.sm },
+  // the page's gutter, inside the list's own narrower one
+  head: { paddingHorizontal: layout.gutter - spacing.sm, gap: spacing.md - 4, paddingBottom: spacing.sm },
   list: { paddingHorizontal: spacing.sm, paddingTop: spacing.xs },
   listHead: { gap: spacing.sm, paddingHorizontal: spacing.sm, marginBottom: spacing.xs },
   error: { paddingTop: spacing.xxl },

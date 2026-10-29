@@ -91,6 +91,31 @@ export function shouldOfferReminders(input: {
   const { permission, record, minor, now } = input;
   if (permission.status !== 'undetermined' || !permission.canAsk) return false;
   if (minor !== false) return false;
+  return offerDue(record, now);
+}
+
+/**
+ * Whether Learn's slim banner may say what reminders are for, with a way to
+ * turn them on: while they are off — never asked, or turned down, when the
+ * banner's button opens the phone's settings instead (`settingsAction`) —
+ * never to a minor or an account whose age is not known, and out of the same
+ * budget as the card after a lesson: the two share one record, so between
+ * them reminders are offered at most MAX_OFFERS times, a week apart.
+ */
+export function shouldNudgeReminders(input: {
+  permission: PushPermissionState;
+  record: OfferRecord | null;
+  minor: boolean | null;
+  now: number;
+}): boolean {
+  const { permission, record, minor, now } = input;
+  if (permission.status !== 'undetermined' && permission.status !== 'denied') return false;
+  if (minor !== false) return false;
+  return offerDue(record, now);
+}
+
+/** The offers' budget: never shown, or shown fewer than MAX_OFFERS times and not in the last week. */
+function offerDue(record: OfferRecord | null, now: number): boolean {
   if (!record) return true;
   if (record.shown >= MAX_OFFERS) return false;
   const last = Date.parse(record.lastShownAt);

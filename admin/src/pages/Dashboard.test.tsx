@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, expect, it } from 'vitest';
 import { screen, waitFor, within } from '@testing-library/dom';
-import { ALPHABET_CLIPS } from '@kurda/shared';
+import { LETTER_CLIPS, WORD_SET_CLIPS } from '@kurda/shared';
 import type { Listing } from '../lessonAudio';
 import { AuthProvider } from '../auth';
 import { SessionProvider, type AdminSession } from '../session';
@@ -57,14 +57,19 @@ describe('the dashboard', () => {
   it('shows a content editor what still needs a recording, each line going straight to what is missing', async () => {
     fakeApi(
       on('GET', '/admin/lesson-audio', json(LISTING)),
-      on('GET', '/admin/alphabet/audio', json({ recordings: [{ key: ALPHABET_CLIPS[0]!.key }] })),
+      on('GET', '/admin/alphabet/audio', json({ recordings: [{ key: LETTER_CLIPS[0]!.key }, { key: WORD_SET_CLIPS[0]!.key }, { key: WORD_SET_CLIPS[1]!.key }] })),
       on('GET', '/admin/stories', json({ stories: [{ status: 'in_review' }, { status: 'draft' }] })),
       on('GET', '/admin/content/lessons?status=in_review&limit=1', json({ total: 2, lessons: [], skills: [] })),
     );
     show(EDITOR);
     const card = (await screen.findByRole('heading', { name: 'What still needs a recording' })).closest('section')!;
-    await waitFor(() => expect(within(card).getByText(`of ${ALPHABET_CLIPS.length} still to record`)).toBeInTheDocument());
+    await waitFor(() => expect(within(card).getByText(`of ${LETTER_CLIPS.length} still to record`)).toBeInTheDocument());
     expect(within(card).getByRole('link', { name: 'Record: Alphabet: letters and example words' })).toHaveAttribute('href', '#/audio/letters?show=missing');
+    // the colours, numbers, days and months, counted on a line of their own and recorded on the same side
+    const words = within(card).getByText('Words to know: colours, numbers, days, months').closest('li')!;
+    expect(within(words).getByText(`${WORD_SET_CLIPS.length - 2}`)).toBeInTheDocument();
+    expect(within(words).getByText(`of ${WORD_SET_CLIPS.length} still to record`)).toBeInTheDocument();
+    expect(within(card).getByRole('link', { name: 'Record: Words to know: colours, numbers, days, months' })).toHaveAttribute('href', '#/audio/letters?show=missing');
     expect(within(card).getByRole('link', { name: 'Record: Lesson sentences and words' })).toHaveAttribute('href', '#/audio/lessons?show=missing');
     expect(within(card).getByRole('link', { name: 'Record: Story sentences' })).toHaveAttribute('href', '#/audio/stories?show=missing');
     expect(within(card).getByRole('link', { name: /record what’s missing/i })).toHaveAttribute('href', '#/audio/letters?show=missing');
@@ -85,7 +90,8 @@ describe('the dashboard', () => {
     );
     show(EDITOR);
     await waitFor(() => expect(screen.getAllByText('Could not count these.')).toHaveLength(2));
-    expect(screen.getByText(`${ALPHABET_CLIPS.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`${LETTER_CLIPS.length}`)).toBeInTheDocument();
+    expect(screen.getByText(`${WORD_SET_CLIPS.length}`)).toBeInTheDocument();
     expect(screen.getByRole('link', { name: /lessons in review/i })).toHaveTextContent('0');
   });
 });

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
-import { Alert, Pressable, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import {
   DEFAULT_ITEM_FILTER,
   applyItemFilter,
@@ -438,11 +439,11 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
   const wide = itemCategory(item.category) === 'background';
   const affordable = canAfford(item, balances);
   return (
-    <Pressable
+    <PressableScale
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={[item.name, item.description, priceWords(item, t)].filter(Boolean).join(', ')}
-      style={({ pressed }) => [styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill, opacity: pressed ? 0.8 : 1 }]}
+      style={[styles.row, { flexDirection: dir.row, backgroundColor: colors.glassFill }]}
     >
       {/* one column wide enough for a background, so every name starts at the same place */}
       <View style={styles.thumb}>
@@ -478,7 +479,7 @@ function ShopRow({ item, balances, onPress }: { item: ShopItem; balances: Balanc
           </>
         )}
       </View>
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -530,7 +531,7 @@ function ItemDetail({
            * gift is something paid for, and the server refuses a free one.
            */}
           {canGift(item) ? (
-            <Pressable
+            <PressableScale
               style={[styles.gift, { backgroundColor: colors.controlTrack }]}
               disabled={busy}
               onPress={() => onGift(item)}
@@ -538,7 +539,7 @@ function ItemDetail({
             >
               <Icon name="gift" size={16} color={colors.gold} />
               <Text style={[styles.giftText, { color: colors.textSecondary }]}>{t('shop.sendGift')}</Text>
-            </Pressable>
+            </PressableScale>
           ) : null}
         </>
       ) : (

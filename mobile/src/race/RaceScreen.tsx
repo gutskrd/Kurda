@@ -11,6 +11,7 @@ import {
   type NativeSyntheticEvent,
   type TextInputSelectionChangeEventData,
 } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
 import {
   BACKTICK_WAIT_MS,
   compareTyping,
@@ -551,7 +552,7 @@ function Result({
       </GlassCard>
 
       {accentTrouble ? (
-        <Pressable
+        <PressableScale
           onPress={onGuide}
           accessibilityRole="button"
           accessibilityLabel={`${t('games.race.accentNudge')} ${t('games.race.accentNudgeAction')}`}
@@ -563,7 +564,7 @@ function Result({
             <Text style={[styles.nudgeTitle, { color: colors.textPrimary }]}>{t('games.race.accentNudge')}</Text>
             <Text style={[styles.nudgeAction, { color: colors.primary }]}>{t('games.race.accentNudgeAction')}</Text>
           </View>
-        </Pressable>
+        </PressableScale>
       ) : null}
     </>
   );

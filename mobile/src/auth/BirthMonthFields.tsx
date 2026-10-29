@@ -1,5 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Modal, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { haptic } from '../feedback/haptics';
+import { heldRow } from '../theme/MotionParts';
 import { GlassCard } from '../theme/glass';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -115,19 +117,20 @@ function Picker({
           <Pressable onPress={() => undefined} style={styles.sheetWrap}>
             <GlassCard style={styles.sheet}>
               <Text style={[styles.sheetTitle, { color: colors.textSecondary }]}>{title}</Text>
-              <ScrollView style={styles.list} showsVerticalScrollIndicator>
+              <ScrollView style={styles.list} contentContainerStyle={styles.listBody} showsVerticalScrollIndicator>
                 {options.map((opt) => {
                   const active = opt.value === value;
                   return (
                     <Pressable
                       key={opt.value}
                       onPress={() => {
+                        if (!active) haptic('select');
                         onChange(opt.value);
                         setOpen(false);
                       }}
                       accessibilityRole="button"
                       accessibilityState={{ selected: active }}
-                      style={styles.option}
+                      style={({ pressed }) => [styles.option, pressed && heldRow(colors.controlTrack)]}
                     >
                       <Text
                         style={[styles.optionText, { color: active ? colors.primary : colors.textPrimary }, active && styles.optionActive]}
@@ -171,7 +174,9 @@ const styles = StyleSheet.create({
   sheetWrap: { alignSelf: 'stretch' },
   sheet: { alignSelf: 'stretch', gap: spacing.xs },
   sheetTitle: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textTransform: 'uppercase', marginBottom: spacing.xs },
-  list: { maxHeight: 360 },
+  // the card's padding inside the list, so a held option's highlight can reach past its edges
+  list: { maxHeight: 360, marginHorizontal: -spacing.sm },
+  listBody: { paddingHorizontal: spacing.sm },
   option: {
     flexDirection: 'row',
     alignItems: 'center',

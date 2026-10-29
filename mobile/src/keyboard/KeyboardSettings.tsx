@@ -1,6 +1,8 @@
 import { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { BottomSheet } from '../theme/BottomSheet';
+import { StyleSheet, Text, View } from 'react-native';
+import { PressableScale } from '../theme/MotionParts';
+import { haptic } from '../feedback/haptics';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { Toggle } from '../theme/Toggle';
 import { ACCENT_MODES, type AccentMode, type TypingDialect } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -48,9 +50,12 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
         {ACCENT_MODES.map((mode) => {
           const on = prefs.accentMode === mode;
           return (
-            <Pressable
+            <PressableScale
               key={mode}
-              onPress={() => setPrefs({ accentMode: mode })}
+              onPress={() => {
+                if (!on) haptic('select');
+                setPrefs({ accentMode: mode });
+              }}
               accessibilityRole="radio"
               accessibilityState={{ checked: on }}
               accessibilityLabel={`${t(ACCENT_LABEL[mode])}. ${t(ACCENT_HINT[mode])}`}
@@ -61,7 +66,7 @@ function TypingOptions({ midRace = false }: { midRace?: boolean }): React.JSX.El
                 {on ? <Icon name="check" size={18} color={colors.textPrimary} /> : null}
               </View>
               <Text style={[styles.modeHint, { color: colors.textSecondary }]}>{t(ACCENT_HINT[mode])}</Text>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>
@@ -111,10 +116,10 @@ export function KeyboardSettingsSheet({
   const [guide, setGuide] = useState(false);
   return (
     <BottomSheet visible={visible} onClose={onClose} title={t('keyboard.settings.title')} contentStyle={styles.scroller}>
-      <ScrollView contentContainerStyle={styles.sheetBody}>
+      <SheetScrollView contentContainerStyle={styles.sheetBody}>
         <TypingOptions midRace={midRace} />
         <GlassRow icon="lightbulb" title={t('keyboard.help')} onPress={() => setGuide(true)} />
-      </ScrollView>
+      </SheetScrollView>
       {/* in the sheet's own Modal, so the guide is presented over the sheet */}
       <KeyboardGuide visible={guide} dialect={dialect} onClose={() => setGuide(false)} />
     </BottomSheet>

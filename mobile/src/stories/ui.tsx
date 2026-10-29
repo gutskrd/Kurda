@@ -4,18 +4,18 @@ import {
   findNodeHandle,
   Platform,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   View,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
+import { haptic } from '../feedback/haptics';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { sectionLabel } from '../theme/fonts';
 import { Icon, type IconName } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { GlassCard } from '../theme/glass';
 import type { StoryDialect } from '@kurda/shared';
@@ -67,9 +67,9 @@ export function Sheet({
       titleLanguage={dialect ? { ...storyTextProps(dialect), style: storyTextStyle(dialect) } : undefined}
       contentStyle={styles.sheetContent}
     >
-      <ScrollView contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      <SheetScrollView contentContainerStyle={styles.sheetBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         {children}
-      </ScrollView>
+      </SheetScrollView>
       {footer ? <View style={styles.sheetFooter}>{footer}</View> : null}
     </BottomSheet>
   );
@@ -156,7 +156,10 @@ export function ChoiceChips<T extends string>({
         return (
           <Pressable
             key={opt}
-            onPress={() => onChange(opt)}
+            onPress={() => {
+              if (!on) haptic('select');
+              onChange(opt);
+            }}
             accessibilityRole="radio"
             accessibilityState={{ checked: on }}
             accessibilityLabel={labelOf(opt)}

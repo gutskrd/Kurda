@@ -224,13 +224,15 @@ describe('the alphabet', () => {
     await waitFor(() => expect(FakeAudio.of(synthesised('kmr:word:ç'))?.paused).toBe(false));
   });
 
-  it('sends the reader on to the dictionary and to Peyvok', async () => {
+  it('sends the reader on to the dictionary, to Peyvok and to the words to know', async () => {
     serve();
     await show();
     await press('Look words up in the dictionary');
     expect(navigation.navigate).toHaveBeenCalledWith('Dictionary');
     await press('Play Peyvok');
     expect(navigation.navigate).toHaveBeenCalledWith('Wordle');
+    await press('Learn colours, numbers, days and months');
+    expect(navigation.navigate).toHaveBeenCalledWith('Words');
   });
 });
 
