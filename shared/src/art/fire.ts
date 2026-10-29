@@ -35,6 +35,7 @@ import {
   oval,
   pathBox,
   ribbon,
+  ring,
   type Box,
   type LogPart,
   type TongueShape,
@@ -137,9 +138,10 @@ export interface FireHalo {
   cy: number;
   /** the disc's radius */
   r: number;
-  /** the rays, as one outline, standing out from `inner`; null for none */
+  /** the rays, as one outline; null for none */
   rays: string | null;
-  inner: number;
+  /** how the rays fade out from the middle: an offset (a share of `reach`), and the share of their strength there */
+  rayFade: readonly (readonly [number, number])[];
   /** how far the rays reach */
   reach: number;
   /** how strong it is, against the colours' own strength */
@@ -404,9 +406,10 @@ const NOTHING = { heat: false, log: false, stones: false, halo: false, pulse: fa
 /**
  * Each stage as drawn: a step up from the one before, so every new stage is
  * plainly bigger, and from the bonfire on something more besides (more wood,
- * the stones, the sun behind it). The flames reach about 28%, 42%, 58%, 70%,
- * 80%, 88% and 94% of the way up the box, and a tenth or so further by the
- * day before the next stage.
+ * the stones, the sun behind it). From the foot of the box, the flames
+ * reach about 27%, 41%, 56%, 68%, 76%, 83% and 90% of the way up it, and a
+ * tenth or so further by the day before the next stage: the Newroz fire
+ * fills it at its fullest.
  */
 const STAGE_ART: Readonly<Record<Exclude<FireStage, 'cold'>, StageArt>> = {
   spark: {
@@ -565,7 +568,11 @@ const HALO: FireHalo = {
   cy: 104,
   r: 74,
   rays: haloRays(100, 104, 58, 96, 80),
-  inner: 58,
+  // from where they stand out of the disc to where they end
+  rayFade: [
+    [58 / 96, 1],
+    [1, 0],
+  ],
   reach: 96,
   strength: 1,
   motion: { kind: 'rise', periodMs: FIRE_CYCLE_MS, phase: 0, poses: FIRE_RISE_STOPS.map((stop) => ({ r: round3((stop * 720) / HALO_RAYS) })) },
@@ -657,6 +664,7 @@ function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDra
     return { cx: round3(cx), cy: round3(cy), r: e.r, gold: e.gold === true, motion: rising({ ...e, rise }) };
   });
   const top = FIRE_ROOT[1] - flame.h;
+  // the glow round the flame's middle, as big as the box allows
   const glowRy = Math.min(flame.h * 0.62 + 14, 120);
   const glowCy = Math.min(FIRE_ROOT[1] - flame.h * 0.42, FIRE_VIEW.h - glowRy);
   const glow: FireGlow = {
@@ -684,21 +692,20 @@ function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDra
           ],
     },
   };
+  // the heat wavers as it rises, never higher than the box
   const drifts: FireDrift[] = art.heat
-    ? HEAT_LINES.map((line, i) => {
-        return {
-          kind: 'heat' as const,
-          d: stretched(ribbon(line, [0.8, 2.6, 2.4, 0.6]), s),
-          origin: roundPt(place(line[0] as Pt, s)),
-          motion: {
-            kind: 'rise' as const,
-            periodMs: 2400,
-            phase: i * 0.5,
-            poses: FIRE_RISE_STOPS.map((t) => ({ y: round3(-Math.min(14, top - 4) * t), skew: round3(8 * Math.sin(Math.PI * 2 * t)), sx: 1, sy: round3(1 + 0.3 * t), o: round3(Math.sin(Math.PI * t)) })),
-          },
-          rest: null,
-        };
-      })
+    ? HEAT_LINES.map((line, i) => ({
+        kind: 'heat' as const,
+        d: stretched(ribbon(line, [0.8, 2.6, 2.4, 0.6]), s),
+        origin: roundPt(place(line[0] as Pt, s)),
+        motion: {
+          kind: 'rise' as const,
+          periodMs: 2400,
+          phase: i * 0.5,
+          poses: FIRE_RISE_STOPS.map((t) => ({ y: round3(-Math.min(14, top - 4) * t), skew: round3(8 * Math.sin(Math.PI * 2 * t)), sx: 1, sy: round3(1 + 0.3 * t), o: round3(Math.sin(Math.PI * t)) })),
+        },
+        rest: null,
+      }))
     : [];
   return {
     stage,
@@ -719,6 +726,13 @@ function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDra
   };
 }
 
+/** The light version's ring of gold: bright all through, softening only at its outer edge. */
+const SMALL_RING_FADE = [
+  [40 / 49, 1],
+  [0.92, 1],
+  [1, 0.3],
+] as const;
+
 /** The light version's flame at each stage: the young ones visibly smaller in the same box, the rest the full small flame. */
 const SMALL_SCALE: Readonly<Record<FireStage, number>> = { cold: 1, spark: 0.6, kindling: 0.8, campfire: 1, bigfire: 1, bonfire: 1, blaze: 1, newroz: 1 };
 
@@ -737,7 +751,8 @@ function smallDrawing(stage: FireStage): FireDrawing {
     flame: reach(tongues),
     // the grey flame of no streak yet stands still
     moving: stage !== 'cold',
-    halo: stage === 'newroz' ? { cx: 100, cy: 158, r: 48, rays: null, inner: 48, reach: 48, strength: 1.8, motion: null } : null,
+    // the Newroz fire's gold beside a number: a glow behind the flame and a thin ring of light round it
+    halo: stage === 'newroz' ? { cx: 100, cy: 150, r: 48, rays: ring(100, 150, 40, 49), rayFade: SMALL_RING_FADE, reach: 49, strength: 1.7, motion: null } : null,
     glow: null,
     back: [],
     drifts: [],

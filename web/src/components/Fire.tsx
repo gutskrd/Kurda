@@ -102,11 +102,6 @@ export function Fire({
         {before && growing && <Defs paint={before} drawing={growing.from} />}
         {growing?.flash && <GlowGradient id={`${id}-flash`} colours={now} strength={growing.flash.strength} />}
       </defs>
-      {drawing.halo && (
-        <Grow motion={growth?.halo} origin={[drawing.halo.cx, drawing.halo.cy]}>
-          <Halo paint={now} drawing={drawing} />
-        </Grow>
-      )}
       <Hearth paint={now} pieces={drawing.back} arrive={growth?.arrive} />
       {growing && before && (
         <Grow motion={growing.out} origin={root} gone onEnd={() => setGrownFrom(growing)}>
@@ -120,7 +115,7 @@ export function Fire({
         </Grow>
       )}
       <Grow motion={growth?.in} origin={root}>
-        <Burning paint={now} drawing={drawing} />
+        <Burning paint={now} drawing={drawing} halo={growth?.halo} />
       </Grow>
       {growing?.burst.map((e, i) => (
         <Grow key={`burst${i}`} motion={e.motion} origin={[e.cx, e.cy]} gone>
@@ -162,15 +157,12 @@ function Defs({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): Re
       {halo && lightHalo && darkHalo && (
         <>
           <Fade id={`${p.id}-disc`} light={lightHalo.disc} dark={darkHalo.disc} fade={FIRE_DISC_FADE} strength={halo.strength} />
-          {/* the rays fade from where they stand out of the disc to where they end */}
           <Fade
             id={`${p.id}-rays`}
             light={lightHalo.rays}
             dark={darkHalo.rays}
-            fade={[
-              [halo.inner / halo.reach, 1],
-              [1, 0],
-            ]}
+            fade={halo.rayFade}
+            strength={halo.strength}
             space={{ gradientUnits: 'userSpaceOnUse', cx: halo.cx, cy: halo.cy, r: halo.reach }}
           />
         </>
@@ -235,11 +227,20 @@ function GlowGradient({ id, colours, strength }: { id: string; colours: Pick<Pai
   return <Fade id={id} light={light} dark={dark} fade={FIRE_GLOW_FADE} strength={strength} />;
 }
 
-/** What burns: the glow, heat or smoke rising, the broken-off tips and sparks from behind the flame, and the tongues. */
-function Burning({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): React.JSX.Element {
+/**
+ * What burns: the glow, the sun in front of it (opening as it grows, given
+ * `halo`), heat or smoke rising, the broken-off tips and sparks from behind
+ * the flame, and the tongues.
+ */
+function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawing; halo?: FireMotion | null }): React.JSX.Element {
   return (
     <>
       {drawing.glow && <Glow paint={p} glow={drawing.glow} />}
+      {drawing.halo && (
+        <Grow motion={halo} origin={[drawing.halo.cx, drawing.halo.cy]}>
+          <Halo paint={p} drawing={drawing} />
+        </Grow>
+      )}
       {drawing.drifts.map((d, i) => {
         if (!p.light[d.kind] || (p.still && !d.rest)) return null;
         return (
@@ -351,9 +352,9 @@ function Stop({ offset, light, dark }: { offset: number; light: string; dark: st
   return <stop offset={offset} stopColor={dark} style={both(light, dark)} />;
 }
 
-/** A spark's colour, in both schemes, with its motion. */
+/** A spark's colour, in both schemes, with its motion: the Newroz fire's gold for a gold one, the fire's own for the rest. */
 function fill(p: Paint, which: 'ember' | 'gold', style?: React.CSSProperties): { fill: string; style: React.CSSProperties } {
-  const [light, dark] = [p.light[which] ?? p.light.ember ?? '#F2771E', p.dark[which] ?? p.dark.ember ?? '#FFD66B'];
+  const [light, dark] = [p.light[which] ?? p.light.ember ?? 'none', p.dark[which] ?? p.dark.ember ?? 'none'];
   return { fill: dark, style: { ...both(light, dark, 'fill'), ...style } };
 }
 

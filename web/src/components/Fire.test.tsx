@@ -117,7 +117,7 @@ describe('the fire', () => {
     expect(tongues(old)).toEqual(['flame', 'heart']);
     expect(old.style.getPropertyValue('--fire-delay')).toBe(`${FIRE_GROW.delayMs}ms`);
     expect(old.style.getPropertyValue('--fire-period')).toBe(`${FIRE_GROW.ms}ms`);
-    const grown = [...svg.querySelectorAll('.fire-grow:not(.is-gone)')].find((g) => tongues(g).length > 0)!;
+    const grown = [...svg.querySelectorAll<SVGGElement>('.fire-grow:not(.is-gone)')].find((g) => tongues(g).length > 0)!;
     expect(tongues(grown)).toEqual(['outer', 'core', 'heart']);
     // it starts at the old one's size, unseen
     expect(grown.style.getPropertyValue('--fire-o0')).toBe('0');

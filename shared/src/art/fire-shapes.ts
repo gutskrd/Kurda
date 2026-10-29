@@ -90,6 +90,12 @@ export function oval(cx: number, cy: number, rx: number, ry: number): string {
   return pebble(cx, cy, rx, ry, ry, 0);
 }
 
+/** A ring from radius `inner` out to `outer`: a circle with a hole, the hole drawn the other way round so it stays open. */
+export function ring(cx: number, cy: number, inner: number, outer: number): string {
+  const back = mapPath(oval(cx, cy, inner, inner), (x, y) => [x, cy * 2 - y]);
+  return oval(cx, cy, outer, outer) + back;
+}
+
 /**
  * A rounded lump `a` either side of (cx, cy), `top` above it and `bottom`
  * below, its crown pushed `lean` along: a stone, or an ellipse with no lean

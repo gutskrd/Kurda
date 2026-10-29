@@ -117,7 +117,6 @@ export function Fire({
   const at: Place = { view, unit };
   const now = { id: `${id}a`, colours: fireColours({ stage: drawing.stage, scheme, accent }), clock: moving ? clock : null };
   const before = growing ? { id: `${id}b`, colours: fireColours({ stage: growing.from.stage, scheme, accent }), clock: moving ? clock : null } : null;
-  const ember = (e: FireEmber, colours: FireColours): string | null => (e.gold ? colours.gold : null) ?? colours.ember;
 
   return (
     <View
@@ -126,15 +125,10 @@ export function Fire({
       aria-hidden
       testID={`fire-${drawing.stage === 'cold' ? 'unlit' : 'lit'}${drawing.small ? '-small' : ''}`}
     >
-      {drawing.halo ? (
-        <Grow motion={growth?.halo} origin={[drawing.halo.cx, drawing.halo.cy]} driver={grow} at={at}>
-          <Halo paint={now} drawing={drawing} at={at} />
-        </Grow>
-      ) : null}
       <Hearth paint={now} pieces={drawing.back} arrive={growth?.arrive} driver={grow} at={at} />
       {growing && before ? (
         <Grow motion={growing.out} origin={root} driver={grow} at={at}>
-          <Burning paint={before} drawing={growing.from} at={at} />
+          <Burning paint={before} drawing={growing.from} driver={grow} at={at} />
         </Grow>
       ) : null}
       {/* the flash behind the new flame, so the flame itself is never washed out */}
@@ -144,10 +138,10 @@ export function Fire({
         </Grow>
       ) : null}
       <Grow motion={growth?.in} origin={root} driver={grow} at={at}>
-        <Burning paint={now} drawing={drawing} at={at} />
+        <Burning paint={now} drawing={drawing} halo={growth?.halo} driver={grow} at={at} />
       </Grow>
       {growing?.burst.map((e, i) => {
-        const colour = ember(e, now.colours);
+        const colour = sparkColour(e, now.colours);
         return colour ? <Ember key={`b${i}`} ember={e} colour={colour} driver={grow} at={at} /> : null;
       })}
       <Hearth paint={now} pieces={drawing.front} arrive={growth?.arrive} driver={grow} at={at} />
@@ -175,6 +169,9 @@ interface Paint {
   clock: Animated.Value | null;
 }
 
+/** A spark's colour: the Newroz fire's gold for a gold one, the fire's own for the rest; null when nothing rises. */
+const sparkColour = (e: FireEmber, colours: FireColours): string | null => (e.gold ? colours.gold : null) ?? colours.ember;
+
 /** Awake while the app is in front: a fire in the background has nobody to burn for. */
 function useAwake(): boolean {
   const [awake, setAwake] = useState(AppState.currentState !== 'background');
@@ -185,12 +182,33 @@ function useAwake(): boolean {
   return awake;
 }
 
-/** What burns: the glow, heat or smoke rising, the broken-off tips and sparks from behind the flame, and the tongues. */
-function Burning({ paint: p, drawing, at }: { paint: Paint; drawing: FireDrawing; at: Place }): React.JSX.Element {
+/**
+ * What burns: the glow, the sun in front of it (opening as it grows, given
+ * `halo`, off the growth's `driver`), heat or smoke rising, the broken-off
+ * tips and sparks from behind the flame, and the tongues.
+ */
+function Burning({
+  paint: p,
+  drawing,
+  halo,
+  driver,
+  at,
+}: {
+  paint: Paint;
+  drawing: FireDrawing;
+  halo?: FireMotion | null;
+  driver: Animated.Value;
+  at: Place;
+}): React.JSX.Element {
   const { colours, clock } = p;
   return (
     <>
       {drawing.glow ? <Glow id={`${p.id}g`} glow={drawing.glow} tint={colours.glow} clock={clock} at={at} /> : null}
+      {drawing.halo ? (
+        <Grow motion={halo} origin={[drawing.halo.cx, drawing.halo.cy]} driver={driver} at={at}>
+          <Halo paint={p} drawing={drawing} at={at} />
+        </Grow>
+      ) : null}
       {drawing.drifts.map((d, i) => {
         const tint = colours[d.kind];
         if (!tint || (!clock && !d.rest)) return null;
@@ -216,7 +234,7 @@ function Burning({ paint: p, drawing, at }: { paint: Paint; drawing: FireDrawing
         : null}
       {clock
         ? drawing.embers.map((e, i) => {
-            const colour = (e.gold ? colours.gold : null) ?? colours.ember;
+            const colour = sparkColour(e, colours);
             return colour ? <Ember key={`e${i}`} ember={e} colour={colour} driver={clock} at={at} /> : null;
           })
         : null}
@@ -242,14 +260,11 @@ function Halo({ paint: p, drawing, at }: { paint: Paint; drawing: FireDrawing; a
     <Layer box={box} motion={halo.motion ?? undefined} origin={[halo.cx, halo.cy]} clock={p.clock} at={at}>
       <Defs>
         <Fade id={`${p.id}disc`} tint={tint.disc} fade={FIRE_DISC_FADE} strength={halo.strength} />
-        {/* the rays fade from where they stand out of the disc to where they end */}
         <Fade
           id={`${p.id}rays`}
           tint={tint.rays}
-          fade={[
-            [halo.inner / halo.reach, 1],
-            [1, 0],
-          ]}
+          fade={halo.rayFade}
+          strength={halo.strength}
           space={{ cx: halo.cx, cy: halo.cy, r: halo.reach }}
         />
       </Defs>
@@ -341,9 +356,10 @@ function Grow({
   children: ReactNode;
 }): React.JSX.Element {
   const { view, unit } = at;
+  const [ox, oy] = origin;
   const style = useMemo(
-    () => (motion ? { transformOrigin: `${((origin[0] - view.x) / view.w) * 100}% ${((origin[1] - view.y) / view.h) * 100}%`, ...motionStyle(motion, driver, unit) } : null),
-    [motion, origin, view, unit, driver],
+    () => (motion ? { transformOrigin: `${((ox - view.x) / view.w) * 100}% ${((oy - view.y) / view.h) * 100}%`, ...motionStyle(motion, driver, unit) } : null),
+    [motion, ox, oy, view, unit, driver],
   );
   if (!style) return <Fragment>{children}</Fragment>;
   return (

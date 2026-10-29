@@ -85,7 +85,7 @@ const CHARRED: Record<FireScheme, Wood & Pick<FireColours['base'], 'char' | 'ash
     barkLight: ['#93857A', '#8A7B70'],
     cut: ['#C9BBAC', '#A69585'],
     ring: ['#8F8073', '#7E6F62'],
-    char: ['#3B322D', '#2A2420'],
+    char: ['#4A3E37', '#3A302A'],
     ash: ['#D6D1CB', '#B3ADA6'],
   },
   dark: {
@@ -94,7 +94,7 @@ const CHARRED: Record<FireScheme, Wood & Pick<FireColours['base'], 'char' | 'ash
     barkLight: ['#A69689', '#9C8C7F'],
     cut: ['#CFC1B2', '#AE9E8D'],
     ring: ['#968779', '#86776A'],
-    char: ['#2F2724', '#231D1A'],
+    char: ['#3D3430', '#2E2723'],
     ash: ['#8D8882', '#6E6964'],
   },
 };
@@ -162,7 +162,7 @@ const HOTTEST: Record<FireScheme, Pick<FireColours['tongues'], 'core' | 'heart'>
 /** The Newroz fire's gold: its gold sparks, and the sun behind it. */
 const NEWROZ: Record<FireScheme, Pick<FireColours, 'gold' | 'halo'>> = {
   light: { gold: '#E9A30F', halo: { disc: { colour: '#FFC93D', opacity: 0.55 }, rays: { colour: '#FFB81F', opacity: 0.6 } } },
-  dark: { gold: '#FFD34D', halo: { disc: { colour: '#FFC64A', opacity: 0.55 }, rays: { colour: '#FFDA6E', opacity: 0.8 } } },
+  dark: { gold: '#FFD34D', halo: { disc: { colour: '#FFB52E', opacity: 0.5 }, rays: { colour: '#FFC23A', opacity: 0.95 } } },
 };
 
 /**
