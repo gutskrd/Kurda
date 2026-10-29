@@ -26,7 +26,7 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       ),
   );
 
-  /** Channel history — authorized on fetch, so removal revokes access at once. */
+  /** Channel history and what the reader's view has had cleared — authorized on fetch, so removal revokes access at once. */
   app.get(
     '/groups/:id/chat',
     { schema: { params: idParam, querystring: z.object({ before: z.string().datetime().optional() }) }, preHandler: requireAuth },
@@ -34,8 +34,25 @@ export function registerGroupChatRoutes(app: FastifyInstance, chat: GroupChatSer
       const { id } = req.params as { id: string };
       const { before } = req.query as { before?: string };
       const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
-      return { messages: await chat.history(req.user!.id, id, before, 30, publicUrl) };
+      return chat.history(req.user!.id, id, before, 30, publicUrl);
     },
+  );
+
+  /**
+   * Clear the chat for oneself (any member) or for everyone (the owner or an
+   * admin). Rate limited: clearing for everyone tells every member's open
+   * view, so it must not become a way to flash the room.
+   */
+  app.post(
+    '/groups/:id/chat/clear',
+    {
+      schema: { params: idParam, body: z.object({ for: z.enum(['me', 'everyone']) }) },
+      config: { rateLimit: { max: 10, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => ({
+      cleared: await chat.clear(req.user!.id, (req.params as { id: string }).id, (req.body as { for: 'me' | 'everyone' }).for),
+    }),
   );
 
   /** Mark the channel read. */
