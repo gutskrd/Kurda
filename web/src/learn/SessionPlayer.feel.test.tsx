@@ -167,6 +167,24 @@ describe('an answer built from word tiles', () => {
     expect(within(line()).getByRole('button', { name: 'nan' })).toBeDisabled();
   });
 
+  it('keeps the keyboard on the tiles as they move: the next in the bank after one is laid, the next on the line after one is taken back', async () => {
+    lesson([translate]);
+    within(await screen.findByRole('group', { name: 'Word tiles' }))
+      .getByRole('button', { name: 'Ez' })
+      .focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onLine()).toEqual(['Ez']);
+    expect(within(bank()).getByRole('button', { name: 'av' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    expect(onLine()).toEqual(['Ez', 'av']);
+    expect(within(bank()).getByRole('button', { name: 'dixwim' })).toHaveFocus();
+    within(line()).getByRole('button', { name: 'Ez' }).focus();
+    await userEvent.keyboard('{Enter}');
+    expect(onLine()).toEqual(['av']);
+    expect(within(line()).getByRole('button', { name: 'av' })).toHaveFocus();
+    expect(answers).toHaveLength(0);
+  });
+
   it('switches to typing on a letter, carrying the tiles over, and remembers the choice on this device', async () => {
     lesson([translate, { ...translate, id: 't2' }]);
     await userEvent.click(within(await screen.findByRole('group', { name: 'Word tiles' })).getByRole('button', { name: 'Ez' }));

@@ -119,13 +119,19 @@ function TileLine({
   const lang = dir === kurdish.dir ? kurdish.lang : undefined;
   const [said, setSaid] = useState('');
   const tiles = useRef(new Map<number, HTMLButtonElement>());
-  const before = useRef<{ rects: Map<number, DOMRect>; moved: number } | null>(null);
+  // where every tile stood before a move, which one moved, and where it was on the line and whether it had the focus
+  const before = useRef<{ rects: Map<number, DOMRect>; moved: number; at: number; focused: boolean } | null>(null);
   const off = locked || busy;
 
   useEffect(() => onReady(placed.length > 0), [placed.length, onReady]);
 
   const move = (next: number[], i: number, added: boolean): void => {
-    before.current = { rects: new Map([...tiles.current].map(([k, el]) => [k, el.getBoundingClientRect()])), moved: i };
+    before.current = {
+      rects: new Map([...tiles.current].map(([k, el]) => [k, el.getBoundingClientRect()])),
+      moved: i,
+      at: placed.indexOf(i),
+      focused: !!tiles.current.get(i) && tiles.current.get(i) === document.activeElement,
+    };
     onPlaced(next);
     setSaid(t(added ? 'lesson.tiles.added' : 'lesson.tiles.removed', { word: bank[i] ?? '' }));
   };
@@ -139,8 +145,14 @@ function TileLine({
   useLayoutEffect(() => {
     const was = before.current;
     before.current = null;
-    if (was) fly(tiles.current, was.rects, was.moved);
-  }, [placed]);
+    if (!was) return;
+    fly(tiles.current, was.rects, was.moved);
+    if (!was.focused) return;
+    // a keyboard goes on from where it was: the next tile in the bank, or the next one on the line
+    const free = bank.map((_, j) => j).filter((j) => !placed.includes(j));
+    const next = was.at < 0 ? (free.find((j) => j > was.moved) ?? free.at(-1) ?? placed.at(-1)) : (placed[Math.min(was.at, placed.length - 1)] ?? was.moved);
+    if (next !== undefined) tiles.current.get(next)?.focus();
+  }, [placed, bank]);
 
   // the keys read the line as it is now, not as it was when the listener was set
   const keys = useRef({ place, lift, placed, onType });
