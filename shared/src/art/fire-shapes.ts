@@ -1,15 +1,12 @@
 /**
  * The outlines the streak's fire is drawn with, which `fire.ts` puts
- * together stage by stage: its layers of flame as first drawn for the
- * campfire, the light version's flame beside a number, the logs, the hearth
- * stones, the sun's halo, and the ribbons smoke and heat rise in. Only shapes
- * live here; how each stage places, colours and moves them is `fire.ts`'s.
+ * together stage by stage: the light version's flame beside a number, the
+ * logs, the hearth stones, the sun's halo, and the ribbon smoke rises in.
+ * Only shapes live here; how each stage places, colours and moves them is
+ * `fire.ts`'s. (The whole fire's flame is painted: `fire-sprites.ts`.)
  *
- * A layer of flame is a few points smoothed into one soft outline, its licks
- * laid in along it, so nothing in it can come to a point. The layers are kept
- * as drawn, in the campfire's own 120-wide box rooted at `SHAPE_ROOT`, and
- * every stage stretches them about that root into the fire's box: one fire,
- * grown, rather than eight drawn apart.
+ * A layer of the small flame is a few points smoothed into one soft outline,
+ * so nothing in it can come to a point.
  */
 import { n, type Pt } from './svg.js';
 
@@ -20,9 +17,8 @@ export interface Box {
   h: number;
 }
 
-/** Where the tongues below are rooted, in the box they were drawn in, and how tall the outer flame stands above that. */
+/** Where the small flame below is rooted, in the 120-wide box it was drawn in. */
 export const SHAPE_ROOT: Pt = [60, 138];
-export const SHAPE_HEIGHT = 134;
 
 /** Curves through `points` and back to the first (Catmull-Rom as cubic Béziers): a few points make one soft shape with no corner anywhere. */
 function blob(points: readonly Pt[]): string {
@@ -35,191 +31,6 @@ function blob(points: readonly Pt[]): string {
   }
   return `${d}Z`;
 }
-
-/**
- * One lick of a flame: from the middle of its `foot`, `width` across, it
- * rises `length`, leaning `lean` degrees from straight up (positive to the
- * right) and turning `curl` degrees further by its tip, which is round,
- * `tip` across. Its points go up its left side, round its tip and down its
- * right, to be laid into a flame's outline between the points of its body.
- */
-interface Lick {
-  foot: Pt;
-  length: number;
-  width: number;
-  tip: number;
-  lean: number;
-  curl: number;
-}
-
-function lick({ foot, length, width, tip, lean, curl }: Lick): Pt[] {
-  const steps = 20;
-  const line: { at: Pt; a: number }[] = [];
-  let [x, y] = foot;
-  for (let i = 0; i <= steps; i++) {
-    // it turns more and more as it rises, as a curling flame does
-    const a = ((lean + curl * (i / steps) ** 1.6) * Math.PI) / 180;
-    line.push({ at: [x, y], a });
-    x += (Math.sin(a) * length) / steps;
-    y -= (Math.cos(a) * length) / steps;
-  }
-  const r = tip / 2;
-  // a point on its left side (k = 1) or its right (k = -1), `s` of the way up, as it narrows to its tip
-  const off = (s: number, k: number): Pt => {
-    const { at, a } = line[Math.round(s * steps)]!;
-    const half = r + (width / 2 - r) * (1 - s) ** 0.8;
-    return [at[0] - Math.cos(a) * half * k, at[1] - Math.sin(a) * half * k];
-  };
-  const { at: c, a } = line[steps]!;
-  const round = (deg: number): Pt => {
-    const t = a + (deg * Math.PI) / 180;
-    return [c[0] + Math.sin(t) * r, c[1] - Math.cos(t) * r];
-  };
-  return [off(0.4, 1), off(0.7, 1), round(-76), round(-38), round(0), round(38), round(76), off(0.7, -1), off(0.4, -1)];
-}
-
-/** The round bottom of the notch between two licks, at (x, y): two points `w` apart, so the outline turns there in a U, never a V. */
-const notch = (x: number, y: number, w = 6): Pt[] => [
-  [x - w / 2, y],
-  [x + w / 2, y],
-];
-
-/** An outline stood taller or shorter about the root, so its top (handles and all) is `height` above it. */
-function standing(d: string, height: number): string {
-  const top = pathBox(d).y;
-  const k = height / (SHAPE_ROOT[1] - top);
-  return mapPath(d, (x, y) => [x, SHAPE_ROOT[1] + (y - SHAPE_ROOT[1]) * k]);
-}
-
-/** A long lick rising from inside the body, its tip curling back over it. */
-const BACK_LICK = blob([
-  [70, 136],
-  [57, 129],
-  [53, 110],
-  ...lick({ foot: [66, 80], length: 70, width: 34, tip: 13, lean: 8, curl: -58 }),
-  [87, 104],
-  [84, 127],
-]);
-
-/**
- * The tongues as drawn for the campfire, back to front: a long lick behind
- * everything whose curling tip shows between the others (or, `tall`, stands
- * up over the whole body of a bigger fire); the red-orange outer flame, one
- * fat round body whose top parts into three licks, each curling at its round
- * tip; the orange inside it and the gold inside that, each rounder and lower;
- * and the pale heart, a round drop low down where a fire is hottest. A side
- * lick, leaning out and curling away, rises beside a big fire (drawn on the
- * left; the right is its mirror), and the crown is the Newroz fire's back
- * flame, three tall licks standing up between the body's own. Nowhere a
- * point: every tip, every notch between two licks is round.
- */
-export const TONGUE_SHAPES = {
-  back: standing(BACK_LICK, 128),
-  tall: standing(BACK_LICK, SHAPE_HEIGHT),
-  outer: standing(
-    blob([
-      [60, 138],
-      [32, 134],
-      [14, 121],
-      [9, 104],
-      [12, 88],
-      [19, 76],
-      ...lick({ foot: [33, 64], length: 26, width: 32, tip: 14, lean: -16, curl: -44 }),
-      ...notch(45, 55, 9),
-      ...lick({ foot: [59, 50], length: 46, width: 40, tip: 16, lean: 0, curl: -52 }),
-      ...notch(74, 55, 9),
-      ...lick({ foot: [87, 62], length: 30, width: 32, tip: 14, lean: 14, curl: 46 }),
-      [101, 76],
-      [108, 89],
-      [111, 106],
-      [105, 123],
-      [88, 135],
-    ]),
-    SHAPE_HEIGHT,
-  ),
-  flame: blob([
-    [60, 138],
-    [37, 134],
-    [23, 122],
-    [19, 106],
-    [23, 92],
-    [30, 84],
-    ...lick({ foot: [40, 76], length: 16, width: 26, tip: 13, lean: -12, curl: -34 }),
-    ...notch(52, 70, 8),
-    ...lick({ foot: [67, 64], length: 30, width: 34, tip: 15, lean: 6, curl: 44 }),
-    [88, 82],
-    [96, 96],
-    [100, 110],
-    [96, 124],
-    [84, 134],
-  ]),
-  core: standing(
-    blob([
-      [60, 138],
-      [42, 134],
-      [31, 123],
-      [28, 109],
-      [32, 98],
-      [38, 92],
-      ...lick({ foot: [47, 86], length: 12, width: 20, tip: 11, lean: -10, curl: -28 }),
-      ...notch(57, 83, 6),
-      ...lick({ foot: [69, 80], length: 20, width: 26, tip: 13, lean: 8, curl: 34 }),
-      [84, 96],
-      [90, 108],
-      [88, 123],
-      [77, 134],
-    ]),
-    90,
-  ),
-  heart: blob([
-    [60, 138],
-    [47, 135],
-    [42, 125],
-    [43, 113],
-    [48, 104],
-    [52, 96],
-    [56, 91.5],
-    [60, 90],
-    [64, 91.5],
-    [68, 96],
-    [72, 104],
-    [77, 113],
-    [78, 125],
-    [73, 135],
-  ]),
-  side: blob([
-    [36, 138],
-    [27, 135],
-    [19, 124],
-    [16, 108],
-    ...lick({ foot: [21, 94], length: 34, width: 26, tip: 12, lean: -6, curl: -40 }),
-    [31, 98],
-    [38, 113],
-    [43, 126],
-    [42, 135],
-  ]),
-  crown: standing(
-    blob([
-      [60, 138],
-      [38, 134],
-      [25, 120],
-      [22, 100],
-      [26, 82],
-      ...lick({ foot: [40, 62], length: 40, width: 32, tip: 14, lean: -12, curl: -50 }),
-      ...notch(52, 55, 7),
-      ...lick({ foot: [63, 50], length: 50, width: 34, tip: 15, lean: 2, curl: 56 }),
-      ...notch(75, 57, 7),
-      ...lick({ foot: [85, 64], length: 38, width: 30, tip: 14, lean: 14, curl: 48 }),
-      [95, 84],
-      [98, 102],
-      [95, 120],
-      [83, 134],
-    ]),
-    136,
-  ),
-} as const;
-
-export type TongueShape = keyof typeof TONGUE_SHAPES;
 
 /**
  * The light version's flame, beside a number: a bold, nearly round body
@@ -286,15 +97,6 @@ export const SMALL_SHAPES = {
   ]),
 } as const;
 
-/** A piece of flame breaking off a tip: a small round drop hidden just under the tip of a lick (drawn for the campfire, like the tongues). */
-export const WISP_SHAPES = {
-  middle: oval(45, 14, 4, 4.4),
-  right: oval(102, 39, 3.6, 4),
-  left: oval(17, 43, 3.6, 4),
-} as const;
-
-export type WispShape = keyof typeof WISP_SHAPES;
-
 /** A path of absolute moves, lines and curves with every point moved by `f`. */
 export function mapPath(d: string, f: (x: number, y: number) => Pt): string {
   return d.replace(/([MLC])([^MLCZ]*)/g, (_, cmd: string, args: string) => {
@@ -307,9 +109,6 @@ export function mapPath(d: string, f: (x: number, y: number) => Pt): string {
     return cmd + pairs.join(' ');
   });
 }
-
-/** A tongue mirrored left to right about the root it was drawn on. */
-export const mirrored = (d: string): string => mapPath(d, (x, y) => [SHAPE_ROOT[0] * 2 - x, y]);
 
 /** The box round a path of moves, lines and curves (a curve's handles included, so it never comes out smaller). */
 export function pathBox(d: string): Box {
@@ -387,11 +186,13 @@ export type LogPart = 'bark' | 'barkShade' | 'barkLight' | 'cut' | 'ring' | 'cha
 export function log(x1: number, y1: number, x2: number, y2: number, bark: 'bark' | 'barkShade', charred: boolean): { part: LogPart; d: string }[] {
   const r = 8.5;
   const len = Math.hypot(x2 - x1, y2 - y1);
-  const along = (t: number, lift: number): [number, number] => [x1 + (x2 - x1) * t + ((y2 - y1) / len) * lift, y1 + (y2 - y1) * t - ((x2 - x1) / len) * lift];
+  // lifted towards the log's top, whichever way along it is drawn: the side the fire lights
+  const up = x2 >= x1 ? 1 : -1;
+  const along = (t: number, lift: number): [number, number] => [x1 + (x2 - x1) * t + ((y2 - y1) / len) * lift * up, y1 + (y2 - y1) * t - ((x2 - x1) / len) * lift * up];
   const edge = (from: number, to: number, lift: number, thick: number): string => capsule(...along(from, lift), ...along(to, lift), thick);
   return [
     { part: bark, d: capsule(x1, y1, x2, y2, r) },
-    { part: 'barkLight', d: edge(0.14, 0.8, 4.6, 2) },
+    { part: 'barkLight', d: edge(0.12, 0.84, 5.4, 2.6) },
     ...(charred
       ? [
           { part: 'char' as const, d: edge(0.3, 0.6, 3.6, 2.8) },
@@ -406,8 +207,9 @@ export function log(x1: number, y1: number, x2: number, y2: number, bark: 'bark'
 /**
  * The hearth's ring of stones round the logs, seen from a little above:
  * the far ones small and behind the fire, the near ones bigger and in front
- * of the logs. Each a round, plump pebble with the fire's light on its top,
- * a little different from its neighbours so they read as stones, not beads.
+ * of the logs. Each a round, plump pebble lit by the fire on the face towards
+ * it, a little different from its neighbours so they read as stones, not
+ * beads.
  */
 export function hearthStones(cx: number, cy: number, rx: number, ry: number): Record<'back' | 'front', { part: 'stone' | 'stoneLight'; d: string }[]> {
   const count = 14;
@@ -421,12 +223,16 @@ export function hearthStones(cx: number, cy: number, rx: number, ry: number): Re
     const top = 6.8 + 1.8 * near - wobble * 0.8;
     const x = cx + rx * Math.cos(angle);
     const y = cy + ry * near;
+    // the fire's light on the face towards it, on the side nearer the fire: the far stones' faces, which face us too, broadly
+    // lit; the near ones' backs turned away from us, so only a rim of light along their tops
+    const inward = -Math.cos(angle) * a * 0.22;
+    const light = near <= 0 ? pebble(x + inward, y - top * 0.12, a * 0.78, top * 0.62, top * 0.4, wobble) : pebble(x + inward, y - top * 0.62, a * 0.7, top * 0.36, top * 0.12, wobble * 1.4);
     return {
       near,
       y,
       pieces: [
         { part: 'stone' as const, d: pebble(x, y, a, top, top * 0.6, wobble * 2) },
-        { part: 'stoneLight' as const, d: pebble(x + wobble, y - top * 0.4, a * 0.66, top * 0.5, top * 0.2, wobble * 1.4) },
+        { part: 'stoneLight' as const, d: light },
       ],
     };
   });
@@ -459,7 +265,7 @@ export function haloRays(cx: number, cy: number, inner: number, long: number, sh
 
 /**
  * A thin ribbon along `line` (bottom first), `widths` thick at each of its
- * points: a curl of smoke, a wave of heat. Smoothed through its points, so a
+ * points: a curl of smoke. Smoothed through its points, so a
  * few of them make a soft curve.
  */
 export function ribbon(line: readonly Pt[], widths: readonly number[]): string {

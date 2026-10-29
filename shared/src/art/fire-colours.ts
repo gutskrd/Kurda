@@ -1,7 +1,9 @@
 /**
  * The colours the streak's fire is drawn in (`fire.ts`), at each stage, on
- * the light page and the dark, and recoloured by an event theme's accent;
- * and how its soft lights fade.
+ * the light page and the dark, and tinted by an event theme's accent; and how
+ * its soft lights fade. The whole fire's flame is painted in its own colours
+ * (`fire-sprites.ts`); these are everything round it, and the light
+ * version's flame beside a number.
  */
 import type { FireStage } from '../fire-stages.js';
 import type { FireBasePart, FireTongueId } from './fire.js';
@@ -27,17 +29,12 @@ export const FIRE_CINDER_FADE = [
   [1, 'glow', 0],
 ] as const;
 
-/** How a drift fades along its length, top first: smoke is thickest low down and thins as it rises; heat shows only in its middle. */
+/** How a drift fades along its length, top first: smoke is thickest low down and thins as it rises. */
 export const FIRE_DRIFT_FADE = {
   smoke: [
     [0, 0],
     [0.45, 1],
     [1, 0.75],
-  ],
-  heat: [
-    [0, 0],
-    [0.5, 1],
-    [1, 0],
   ],
 } as const;
 
@@ -51,6 +48,7 @@ export interface FireTint {
 }
 
 export interface FireColours {
+  /** the light version's flame */
   tongues: Readonly<Record<FireTongueId, FireStops>>;
   /** the glow's colour and how strong it is at its middle; null for a fire not burning */
   glow: FireTint | null;
@@ -60,8 +58,6 @@ export interface FireColours {
   gold: string | null;
   /** the sun behind the Newroz fire; null for every other fire */
   halo: { disc: FireTint; rays: FireTint } | null;
-  /** heat over a big fire's tips */
-  heat: FireTint | null;
   /** a cold hearth's smoke, and its one ember */
   smoke: FireTint | null;
   cinder: { core: string; glow: string } | null;
@@ -72,11 +68,15 @@ export type FireScheme = 'light' | 'dark';
 
 type Wood = Omit<FireColours['base'], 'coal' | 'ash' | 'stone' | 'stoneLight' | 'char'>;
 
-/** The wood, round from its top to its shaded underside, the fire's warm light along its top. */
+/**
+ * The wood, lit by the flame: dark bark glowing orange along its top, which
+ * faces the fire, deep in shade underneath; the sawn ends, facing away from
+ * it, warm but dim.
+ */
 const LOGS: Record<FireScheme, Wood> = {
-  light: { bark: ['#A56A38', '#6A3F20'], barkShade: ['#87542C', '#553218'], barkLight: ['#E9A866', '#D58E50'], cut: ['#F4D29C', '#DDA868'], ring: ['#C48A50', '#B07840'] },
+  light: { bark: ['#9A5428', '#2E1A0E'], barkShade: ['#7C4420', '#24140B'], barkLight: ['#FFA552', '#9A5428'], cut: ['#8A5634', '#4E2E18'], ring: ['#6A4024', '#4A2A16'] },
   // a shade lighter on the dark page, so the wood is not lost in it
-  dark: { bark: ['#B87A46', '#7A4B28'], barkShade: ['#98613A', '#653D20'], barkLight: ['#F5B670', '#E29C5A'], cut: ['#F8DAA8', '#E2B276'], ring: ['#C99258', '#B27C44'] },
+  dark: { bark: ['#A65E2E', '#3A2214'], barkShade: ['#88502A', '#2E1B10'], barkLight: ['#FFB060', '#A65E2E'], cut: ['#9A6440', '#5A3620'], ring: ['#784A2C', '#56341E'] },
 };
 
 /** Logs burnt and gone cold: charred, grey-brown, still wood. */
@@ -101,61 +101,47 @@ const CHARRED: Record<FireScheme, Wood & Pick<FireColours['base'], 'char' | 'ash
   },
 };
 
-/** The hearth stones: round grey pebbles, their tops lit warm by the fire. */
+/** The hearth stones: round, dark, lit warm orange on the faces towards the fire. */
 const STONE: Record<FireScheme, Pick<FireColours['base'], 'stone' | 'stoneLight'>> = {
-  light: { stone: ['#A69C93', '#746B64'], stoneLight: ['#F0C493', '#A99D92'] },
-  dark: { stone: ['#968D85', '#5F5751'], stoneLight: ['#F4C48E', '#968B81'] },
+  light: { stone: ['#6E605A', '#2E2725'], stoneLight: ['#FFA858', '#8A5A40'] },
+  dark: { stone: ['#76675F', '#342C29'], stoneLight: ['#FFB060', '#94603F'] },
+};
+
+/** The light version's flame alight, in warm, full colours: deep red-orange outside, through gold, to a heart nearly white. Each layer a little deeper at its tip than at its root, where a flame is hottest. */
+const SMALL_FLAME: Record<FireScheme, FireColours['tongues']> = {
+  light: { outer: ['#E4432A', '#F7712D'], core: ['#FFBF2C', '#FFDA5A'], heart: ['#FFF0BA', '#FFFDF0'] },
+  dark: { outer: ['#F45530', '#FF7E38'], core: ['#FFCB3A', '#FFE570'], heart: ['#FFF5C8', '#FFFFF6'] },
 };
 
 /**
- * The fire alight, in warm, full colours: deep red-orange outside, through
- * orange, amber and gold, to a heart nearly white. Each layer is a little
- * deeper at its tips than at its root, where a flame is hottest. On the dark
- * page every colour is a step brighter and the glow stronger; on the light
- * page the outer flame is deep enough to hold its edge against white.
+ * The fire alight, round its painted flame: a warm glow, sparks, and the
+ * coals glowing under the logs. On the dark page every colour is a step
+ * brighter and the glow stronger.
  */
 const LIT: Record<FireScheme, FireColours> = {
   light: {
-    tongues: {
-      back: ['#DA382A', '#F7712D'],
-      left: ['#DE3D2A', '#F7712D'],
-      right: ['#DE3D2A', '#F7712D'],
-      outer: ['#E4432A', '#F7712D'],
-      flame: ['#FA8A1E', '#FFAA38'],
-      core: ['#FFBF2C', '#FFDA5A'],
-      heart: ['#FFF0BA', '#FFFDF0'],
-    },
+    tongues: SMALL_FLAME.light,
     glow: { colour: '#FFA238', opacity: 0.55 },
     ember: '#F2771E',
     gold: null,
     halo: null,
-    heat: { colour: '#FFA63C', opacity: 0.5 },
     smoke: null,
     cinder: null,
-    base: { ...LOGS.light, ...STONE.light, coal: ['#FF8A2A', '#E2521E'], ash: CHARRED.light.ash, char: CHARRED.light.char },
+    base: { ...LOGS.light, ...STONE.light, coal: ['#FFB040', '#E8541E'], ash: CHARRED.light.ash, char: CHARRED.light.char },
   },
   dark: {
-    tongues: {
-      back: ['#EC4A2E', '#FF7E38'],
-      left: ['#EF4E2F', '#FF7E38'],
-      right: ['#EF4E2F', '#FF7E38'],
-      outer: ['#F45530', '#FF7E38'],
-      flame: ['#FF9626', '#FFB94A'],
-      core: ['#FFCB3A', '#FFE570'],
-      heart: ['#FFF5C8', '#FFFFF6'],
-    },
+    tongues: SMALL_FLAME.dark,
     glow: { colour: '#FF8A2A', opacity: 0.68 },
     ember: '#FFD66B',
     gold: null,
     halo: null,
-    heat: { colour: '#FFF0C8', opacity: 0.4 },
     smoke: null,
     cinder: null,
-    base: { ...LOGS.dark, ...STONE.dark, coal: ['#FFA040', '#F0602A'], ash: CHARRED.dark.ash, char: CHARRED.dark.char },
+    base: { ...LOGS.dark, ...STONE.dark, coal: ['#FFBE52', '#F0602A'], ash: CHARRED.dark.ash, char: CHARRED.dark.char },
   },
 };
 
-/** The hottest fires: the gold paler, and the heart white with a blue root, as the hottest flames burn. */
+/** The hottest fires beside a number: the gold paler, and the heart white with a blue root, as the hottest flames burn. */
 const HOTTEST: Record<FireScheme, Pick<FireColours['tongues'], 'core' | 'heart'>> = {
   light: { core: ['#FFCC33', '#FFEB94'], heart: ['#FFFFFF', '#FFFEF8', '#7CC2FF'] },
   dark: { core: ['#FFD54A', '#FFF0A6'], heart: ['#FFFFFF', '#FFFFFF', '#8ED0FF'] },
@@ -174,39 +160,21 @@ const NEWROZ: Record<FireScheme, Pick<FireColours, 'gold' | 'halo'>> = {
  */
 const COLD: Record<FireScheme, FireColours> = {
   light: {
-    tongues: {
-      back: ['#959CA9', '#AAB0BC'],
-      left: ['#959CA9', '#AAB0BC'],
-      right: ['#959CA9', '#AAB0BC'],
-      outer: ['#9DA4B0', '#B3B9C4'],
-      flame: ['#ABB1BC', '#BEC3CC'],
-      core: ['#B6BCC6', '#C6CBD3'],
-      heart: ['#7D8491', '#8B919D'],
-    },
+    tongues: { outer: ['#9DA4B0', '#B3B9C4'], core: ['#B6BCC6', '#C6CBD3'], heart: ['#7D8491', '#8B919D'] },
     glow: null,
     ember: null,
     gold: null,
     halo: null,
-    heat: null,
     smoke: { colour: '#959CA6', opacity: 0.55 },
     cinder: { core: '#FFB547', glow: '#F05A26' },
     base: { ...CHARRED.light, ...STONE.light, coal: CHARRED.light.ash },
   },
   dark: {
-    tongues: {
-      back: ['#555C6A', '#666D7B'],
-      left: ['#555C6A', '#666D7B'],
-      right: ['#555C6A', '#666D7B'],
-      outer: ['#646B79', '#757C8A'],
-      flame: ['#6C7381', '#7E8593'],
-      core: ['#717886', '#838A97'],
-      heart: ['#3F4551', '#4A505C'],
-    },
+    tongues: { outer: ['#646B79', '#757C8A'], core: ['#717886', '#838A97'], heart: ['#3F4551', '#4A505C'] },
     glow: null,
     ember: null,
     gold: null,
     halo: null,
-    heat: null,
     smoke: { colour: '#A6ADB7', opacity: 0.42 },
     cinder: { core: '#FFC65C', glow: '#FF6A30' },
     base: { ...CHARRED.dark, ...STONE.dark, coal: CHARRED.dark.ash },
@@ -233,9 +201,11 @@ const isHex = (accent: string | null | undefined): accent is string => typeof ac
  * The colours to draw the fire in at `stage`. Alight, it burns in the sun's
  * colours for the page it is on, hotter at the blaze and the Newroz fire,
  * the Newroz fire with its gold. An event's accent (an event theme dressing
- * the app) recolours the flame in that accent instead, from its deepest
- * shade outside to near white at the heart; the logs, the stones and the
- * Newroz fire's gold stay as they are. Cold, it is the same whatever the event.
+ * the app) tints its light — the glow and the light pooled under it, and its
+ * sparks — and recolours the light version's flame from the accent's deepest
+ * shade outside to near white at the heart; the painted flame, the logs, the
+ * stones and the Newroz fire's gold stay as they are. Cold, it is the same
+ * whatever the event.
  */
 export function fireColours({ stage, scheme, accent }: { stage: FireStage; scheme: FireScheme; accent?: string | null }): FireColours {
   if (stage === 'cold') return COLD[scheme];
@@ -248,20 +218,14 @@ export function fireColours({ stage, scheme, accent }: { stage: FireStage; schem
   if (!isHex(accent)) return base;
   const hue = mix(accent, accent, 0);
   const deep = scheme === 'dark' ? 0.12 : 0.28;
-  const side: FireStops = [mix(hue, '#000000', deep + 0.04), mix(hue, '#000000', deep - 0.09)];
   return {
     ...base,
     tongues: {
-      back: [mix(hue, '#000000', deep + 0.08), mix(hue, '#000000', deep - 0.06)],
-      left: side,
-      right: side,
       outer: [mix(hue, '#000000', deep), mix(hue, '#000000', deep - 0.12)],
-      flame: [hue, mix(hue, '#FFFFFF', 0.22)],
       core: [mix(hue, '#FFFFFF', 0.42), mix(hue, '#FFFFFF', 0.58)],
       heart: [mix(hue, '#FFFFFF', 0.78), mix(hue, '#FFFFFF', 0.94)],
     },
     glow: base.glow ? { colour: hue, opacity: base.glow.opacity } : null,
     ember: scheme === 'dark' ? mix(hue, '#FFFFFF', 0.5) : hue,
-    heat: base.heat ? { ...base.heat, colour: mix(hue, '#FFFFFF', 0.6) } : null,
   };
 }

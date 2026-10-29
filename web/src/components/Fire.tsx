@@ -5,6 +5,9 @@ import {
   FIRE_DRIFT_FADE,
   FIRE_GLOW_FADE,
   FIRE_GROW,
+  FIRE_SPRITE_COLS,
+  FIRE_SPRITE_MS,
+  FIRE_SPRITE_ROWS,
   fireColours,
   fireDrawing,
   fireFrame,
@@ -13,6 +16,7 @@ import {
   type FireBasePiece,
   type FireColours,
   type FireDrawing,
+  type FireFlame,
   type FireGlow,
   type FireGrowth,
   type FireLevel,
@@ -27,21 +31,24 @@ import './fire.css';
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the phone shows,
  * at its stage (`level`): cold logs with a curl of smoke, a spark caught,
- * on up to the Newroz fire with the sun behind it. Each round layer of
- * flame breathes slowly from its own root, the heart swells, the glow
- * breathes round it and pools on the ground, sparks drift up and round drops
- * break off its tips. Each moving part runs one CSS keyframe with its own
- * poses, period and phase.
+ * on up to the Newroz fire with the sun behind it. Its flame is painted
+ * (`public/fire/`, made by `scripts/generate-fire-sprites.mjs`) and plays
+ * frame by frame, flowing up and changing shape as a flame does; the glow
+ * breathes round it and pools on the ground and sparks drift up. Each moving
+ * part runs one CSS keyframe with its own poses, period and phase, and the
+ * flame two stepped ones, along its sheet's rows and down them.
  *
  * Given `from`, a smaller fire, it is drawn as that first and grows into
  * `level` as it appears (shared `fireGrowth`, after `FIRE_GROW.delayMs`), the
- * day it grew. `size` is its height; at `FIRE_SMALL` and under it is the
- * light version (a bold round flame alone, breathing gently) for a row of
- * text. `framed`, it takes up only its stage's part of the box (shared
- * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
- * that shows it big without the empty air above a young fire. Under reduced
- * motion, or `still`, it is the fire at `level` standing still. Decorative:
- * the words beside it say the streak.
+ * day it grew: the old flame stretches up and fades into the new one. `size`
+ * is its height; at `FIRE_SMALL` and under it is the light version (a bold
+ * round flame alone, drawn, breathing gently) for a row of text. `framed`, it
+ * takes up only its stage's part of the box (shared `fireFrame`), still drawn
+ * as big as `size` makes the whole, for a screen that shows it big without
+ * the empty air above a young fire. Under reduced motion, or `still`, it is
+ * the fire at `level` standing still, its flame one frame. `accent` tints its
+ * light, never the painted flame. Decorative: the words beside it say the
+ * streak.
  *
  * Each colour is written for both schemes (`light-dark()`), so the fire
  * follows the page's scheme with nothing here knowing which is on; a browser
@@ -173,7 +180,6 @@ function Defs({ paint: p, drawing }: { paint: Paint; drawing: FireDrawing }): Re
       {drawing.tongues.map((t) => (
         <Gradient key={t.id} id={`${p.id}-${t.id}`} light={p.light.tongues[t.id]} dark={p.dark.tongues[t.id]} />
       ))}
-      {!p.still && drawing.wisps.length > 0 && <Gradient id={`${p.id}-wisp`} light={p.light.tongues.flame} dark={p.dark.tongues.flame} />}
       {[...new Set(drawing.drifts.map((d) => d.kind))].map((kind) => {
         const [light, dark] = [p.light[kind], p.dark[kind]];
         return light && dark ? <Fade key={kind} id={`${p.id}-${kind}`} light={light} dark={dark} fade={FIRE_DRIFT_FADE[kind]} linear /> : null;
@@ -232,8 +238,8 @@ function GlowGradient({ id, colours, strength }: { id: string; colours: Pick<Pai
 
 /**
  * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`), the light pooled on the ground, heat or smoke rising, the drops
- * broken off and the sparks from behind the flame, and the tongues.
+ * `halo`), the light pooled on the ground, smoke rising, the sparks from
+ * behind the flame, and the flame: painted, or the light version's tongues.
  */
 function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawing; halo?: FireMotion | null }): React.JSX.Element {
   return (
@@ -257,14 +263,40 @@ function Burning({ paint: p, drawing, halo }: { paint: Paint; drawing: FireDrawi
           />
         );
       })}
-      {/* the broken-off drops and the sparks rise from behind the flame, so they are only seen once clear of it */}
-      {!p.still && drawing.wisps.map((w, i) => <path key={`w${i}`} className="fire-part fire-rise" d={w.d} fill={`url(#${p.id}-wisp)`} style={moving(w.motion, w.origin)} />)}
+      {/* the sparks rise from behind the flame, so they are only seen once clear of it */}
       {!p.still &&
         drawing.embers.map((e, i) => <circle key={`e${i}`} className="fire-part fire-rise" cx={e.cx} cy={e.cy} r={e.r} {...fill(p, e.gold ? 'gold' : 'ember', moving(e.motion, [e.cx, e.cy]))} />)}
+      {drawing.painted && <Painted flame={drawing.painted} still={p.still} />}
       {drawing.tongues.map((t) => (
         <path key={t.id} className="fire-part fire-loop" d={t.d} fill={`url(#${p.id}-${t.id})`} style={moving(t.motion, t.origin)} />
       ))}
     </>
+  );
+}
+
+/**
+ * The painted flame: a window as big as the flame, onto its sheet, showing
+ * one frame at a time. The sheet steps along a row, frame by frame, and the
+ * row it shows steps down the sheet each time it reaches the end of one, so
+ * the frames play in order and loop; standing still, it shows the first.
+ */
+function Painted({ flame, still }: { flame: FireFlame; still: boolean }): React.JSX.Element {
+  const { sheet, box } = flame;
+  const steps = (count: number, ms: number, shift: number): React.CSSProperties =>
+    ({ '--fire-steps': count, '--fire-period': `${ms}ms`, '--fire-shift': `${-shift}px` }) as React.CSSProperties;
+  return (
+    <svg className="fire-flame" x={box.x} y={box.y} width={box.w} height={box.h} viewBox={`0 0 ${sheet.frame.w} ${sheet.frame.h}`} preserveAspectRatio="none">
+      <g className={still ? undefined : 'fire-frames fire-frames-down'} style={still ? undefined : steps(FIRE_SPRITE_ROWS, FIRE_SPRITE_MS, sheet.sheet.h)}>
+        <image
+          className={still ? undefined : 'fire-frames fire-frames-across'}
+          style={still ? undefined : steps(FIRE_SPRITE_COLS, FIRE_SPRITE_MS / FIRE_SPRITE_ROWS, sheet.sheet.w)}
+          href={`/fire/${sheet.file}`}
+          width={sheet.sheet.w}
+          height={sheet.sheet.h}
+          preserveAspectRatio="none"
+        />
+      </g>
+    </svg>
   );
 }
 
