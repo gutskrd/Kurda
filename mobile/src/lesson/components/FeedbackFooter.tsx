@@ -19,9 +19,10 @@ import { useScreenBottomInset } from '../../navigation/tabBarLayout';
 import { useDirection } from '../../reports/direction';
 import { autoplayOn } from '../../feedback/autoplayPref';
 import { CHARACTER_SIZE, SpeakingCharacter, knownVoice, type CharacterReaction } from '../../characters/SpeakingCharacter';
+import { HevaloWindow } from '../../characters/HevaloWindow';
 
-/** How tall Hevalo stands in the sheet when he comes in to react: head to waist, smaller than a voice's character. */
-const STAND_IN = 88;
+/** How tall Hevalo's window is in the sheet when he comes in to react: a little smaller than a voice's character. */
+const STAND_IN = 96;
 
 /** Answers that are Kurdish typed by the learner, set letter by letter against the right one (as the website does). */
 const TYPED: ReadonlySet<ExerciseType | undefined> = new Set<ExerciseType | undefined>(['translate', 'writing', 'listening']);
@@ -69,8 +70,9 @@ interface Props {
  * itself a moment after the verdict unless that is turned off (Settings →
  * Sounds).
  *
- * Hevalo comes in to react only where nobody else is on screen to: on the
- * first answer, on a miss (curious, never sad) and at a run's milestone.
+ * Hevalo comes in to react only where nobody else is on screen to, popping
+ * up in his window: on the first answer, on a miss (curious, never sad) and
+ * at a run's milestone.
  * Under Reduce Motion the sheet fades in where it is, and the badge does not
  * pop.
  *
@@ -218,7 +220,7 @@ export function FeedbackFooter({
         <View style={[styles.withFace, { flexDirection: dir.row }]}>
           {/* he reacts beside the verdict, which says it in words: nothing for a screen reader to hear twice */}
           <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants" testID="lesson-stand-in">
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="half" height={STAND_IN} flip={dir.rtl} reaction={standIn} />
+            <HevaloWindow size={STAND_IN} flip={dir.rtl} reaction={standIn} />
           </View>
           {verdictBlock}
         </View>

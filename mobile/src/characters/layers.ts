@@ -1,6 +1,7 @@
 import {
   VISEMES,
   characterArt,
+  cropBody,
   cropBox,
   eyesFor,
   type CharacterBox,
@@ -98,7 +99,7 @@ export function characterLayers(speaker: SpeakerId, crop: CharacterCrop): Charac
     frame,
     pivot: share(art.headPivot),
     eyesAt: share(middle),
-    body: svg(art.body),
+    body: svg(cropBody(art, crop)),
     head: svg(art.head),
     eyes: {
       open: svg(art.eyes.open),
