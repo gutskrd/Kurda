@@ -40,7 +40,7 @@ import type { Streak } from './types';
  * heard as it lands, with a line under the day saying what it grew into, and
  * stays until that has been read.
  *
- * Then the week (`StreakWeek`): Hevalo, leaning out of his window by the
+ * Then the week (`StreakWeek`): Hevalo, his head in at the window by the
  * fire, saying a warm word for the day it is — a first day, a comeback, a new
  * best, or simply another day — the number and "day streak", the fire's stage
  * and the next one, the seven days of this week with what happened on each,

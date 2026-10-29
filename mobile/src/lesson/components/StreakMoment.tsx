@@ -312,7 +312,7 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
               style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: toEnd * WINDOW_ASIDE }, { rotate: '45deg' }] }]}
             />
           </View>
-          {/* Hevalo leaning out of his window under his words, the fire burning on the ground in front of it */}
+          {/* Hevalo with his head in at the window under his words, the fire burning on the ground in front of it */}
           <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: toEnd * WINDOW_ASIDE }] }} />
             <View style={[styles.inFront, { transform: [{ translateX: -toEnd * FIRE_ASIDE }] }]}>

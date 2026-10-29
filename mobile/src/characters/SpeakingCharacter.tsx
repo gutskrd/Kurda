@@ -61,7 +61,7 @@ export interface SpeakingCharacterProps {
   voice?: RecordingVoice | null;
   /** the words said, to move the mouth from when the recording has no timeline of its own */
   text?: string | null;
-  /** the whole figure, head to waist, head and shoulders (in a rounded tile), or head and neck (out of a window, HevaloWindow) */
+  /** the whole figure, head to waist, head and shoulders (in a rounded tile), or head and neck (in at a window, HevaloWindow) */
   crop?: CharacterCrop;
   /** how wide it is drawn, in points; the height follows from the drawing */
   size?: number;

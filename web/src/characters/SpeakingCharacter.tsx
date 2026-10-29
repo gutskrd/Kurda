@@ -67,7 +67,7 @@ const about = (p: CharacterPoint): string => ` style="transform-origin:${px(p)}"
 
 /**
  * Where a figure stands, and how tall it is to hop by: its feet, under the
- * whole figure — but leaning out of a window (head and neck) he springs from
+ * whole figure — but putting his head in at a window (head and neck) he springs from
  * the sill, not from feet far out of sight, so from the foot of the box shown.
  */
 function ground(art: CharacterArt, frame: CharacterBox, crop: CharacterCrop): { y: number; height: number } {
@@ -184,7 +184,7 @@ export interface SpeakingCharacterProps {
   /** the words being said, for moving the mouth when no timeline was saved with the recording */
   text?: string | null;
   voice?: RecordingVoice | null;
-  /** the whole figure, head to waist, head and shoulders, or head and neck (out of a window, HevaloWindow) */
+  /** the whole figure, head to waist, head and shoulders, or head and neck (in at a window, HevaloWindow) */
   crop?: CharacterCrop;
   /** the height in pixels; left out, the stylesheet sizes it and the drawing keeps its shape */
   size?: number;

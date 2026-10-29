@@ -339,7 +339,7 @@ describe('the verdict', () => {
       fireEvent.change(await screen.findByLabelText('Your written answer'), { target: { value: 'çay' } });
       fireEvent.click(screen.getByRole('button', { name: 'Check' }));
       await screen.findByRole('button', { name: 'Continue' });
-      // leaning out of his window
+      // his head in at the window
       there.push(screen.queryByTestId('lesson-stand-in')?.querySelector('[data-testid="hevalo-window"]') != null);
       if (n < 3) fireEvent.click(screen.getByRole('button', { name: 'Continue' }));
     }

@@ -125,7 +125,7 @@ describe('the week', () => {
     expect(screen.getByText('3 of 5 sessions to your next freeze')).toBeInTheDocument();
   });
 
-  it('has Hevalo say a word for the day it is, leaning out of his window', () => {
+  it('has Hevalo say a word for the day it is, his head in at the window', () => {
     inLanguage(<StreakWeek streak={week} />);
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(document.querySelector('.end-week-hevalo .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');

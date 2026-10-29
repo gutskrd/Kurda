@@ -69,7 +69,7 @@ describe('the test that jumps ahead', () => {
     await sitIt();
     expect(await screen.findByRole('heading', { name: 'Unit 3 is open!' })).toBeTruthy();
     expect(screen.getByText('9 of 10 right. The lessons you skipped stay open to come back to.')).toBeTruthy();
-    // Hevalo cheers it, leaning out of his window
+    // Hevalo cheers it, his head in at the window
     expect(within(screen.getByTestId('jump-results')).getByTestId('hevalo-window')).toBeTruthy();
     expect(felt).toContain('celebrate');
     stop();
