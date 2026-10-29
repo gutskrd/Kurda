@@ -394,7 +394,7 @@ describe('the characters', () => {
     expect(svg.attrs.viewBox).toBe(`${box.x} ${box.y} ${box.w} ${box.h}`);
   });
 
-  it('shows the head and shoulders for head and neck of a character drawn without a neck to lean out on', () => {
+  it('shows the head and shoulders for head and neck of a character drawn without a neck to put in at a window', () => {
     for (const id of ['hamo', 'xezo'] as const) {
       const art = characterArt(id);
       expect(art.neck).toBeUndefined();

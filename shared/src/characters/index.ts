@@ -129,7 +129,7 @@ export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
  */
 export type CharacterCrop = 'full' | 'half' | 'bust' | 'head';
 
-/** The box a crop shows; a character drawn without a neck to lean out on shows its head and shoulders for `head`. */
+/** The box a crop shows; a character drawn without a neck to put in at a window shows its head and shoulders for `head`. */
 export function cropBox(art: CharacterArt, crop: CharacterCrop): CharacterBox {
   if (crop === 'head') return art.neck?.box ?? art.bust;
   return crop === 'bust' ? art.bust : crop === 'half' ? art.half : art.viewBox;
