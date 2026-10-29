@@ -191,6 +191,19 @@ describe('checkAnswer — translate (diacritic tolerance)', () => {
   it('empty answer is wrong (not a phantom typo match)', () => {
     expect(grade('translate', payload, { text: '' }).accepted).toBe(false);
   });
+
+  it('ignores punctuation, as an answer built from word tiles has none', () => {
+    const sentence = { prompt: 'I am fine, thanks.', accepted: ['Ez baş im, spas.'] };
+    expect(grade('translate', sentence, { text: 'Ez baş im spas' })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('translate', sentence, { text: 'ez bas im spas' })).toMatchObject({ verdict: 'typo', accepted: true });
+    const soranî = { prompt: 'I am fine, thanks.', accepted: ['باشم، سوپاس.'] };
+    expect(grade('translate', soranî, { text: 'باشم سوپاس' })).toEqual({ verdict: 'correct', accepted: true });
+    expect(grade('listening', { accepted: ['Navê min Hamo ye.'] }, { text: 'Navê min Hamo ye' })).toEqual({ verdict: 'correct', accepted: true });
+  });
+
+  it('gives no credit for punctuation alone', () => {
+    expect(grade('translate', { prompt: 'yes?', accepted: ['Erê?'] }, { text: '?' }).accepted).toBe(false);
+  });
 });
 
 describe('checkAnswer — match_pairs', () => {
@@ -201,6 +214,27 @@ describe('checkAnswer — match_pairs', () => {
       { left: 'nan', right: 'bread' },
     ],
   };
+
+  it('says which meaning each card pairs with, after both sides are shuffled', () => {
+    const seeds = Array.from({ length: 20 }, (_, i) => `session-${i}:exercise-1`);
+    const pairs = new Set(payload.pairs.map((p) => `${p.left}=${p.right}`));
+    const orders = new Set<string>();
+    for (const seed of seeds) {
+      const { lefts, rights, pairOf } = sanitizeExercise('match_pairs', payload, seed) as { lefts: string[]; rights: string[]; pairOf: number[] };
+      expect(new Set(lefts.map((left, k) => `${left}=${rights[pairOf[k]!]}`))).toEqual(pairs);
+      expect(sanitizeExercise('match_pairs', payload, seed)).toEqual({ lefts, rights, pairOf });
+      orders.add(`${lefts.join()}|${rights.join()}`);
+    }
+    expect(orders.size).toBeGreaterThan(5);
+  });
+
+  it('pairs cards that read the same by their pairs, not their texts', () => {
+    const twins = { pairs: [{ left: 'A', right: 'a (capital)' }, { left: 'a', right: 'a (small)' }, { left: 'b', right: 'b' }] };
+    for (const seed of ['s1:e', 's2:e', 's3:e']) {
+      const { lefts, rights, pairOf } = sanitizeExercise('match_pairs', twins, seed) as { lefts: string[]; rights: string[]; pairOf: number[] };
+      expect(lefts.map((left, k) => `${left}=${rights[pairOf[k]!]}`).sort()).toEqual(['A=a (capital)', 'a=a (small)', 'b=b']);
+    }
+  });
 
   it('accepts a fully correct matching regardless of order', () => {
     const res = grade('match_pairs', payload, {
