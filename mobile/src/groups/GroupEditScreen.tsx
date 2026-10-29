@@ -15,7 +15,7 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 import { uploadGroupPhoto } from '../profile/photoUpload';
 import { GroupAvatar } from './GroupAvatar';
-import { groupError } from './GroupMembersScreen';
+import { groupError } from './groupError';
 import { clearGroupPhoto, groupDetail, updateGroup, type GroupDetail } from './api';
 
 /**

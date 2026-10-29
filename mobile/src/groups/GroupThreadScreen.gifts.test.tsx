@@ -86,22 +86,35 @@ describe('GroupThreadScreen header', () => {
       'GET /groups/g1': ok({ id: 'g1', name: 'Newroz club', members: [], myRole }),
     });
 
-  it('offers a member a way to report the group', async () => {
+  /** The ⋯ in the header, opened: the system's sheet (an alert here), and the labels it offers. */
+  const openMenu = async (): Promise<AlertButton[]> => {
+    const sheets: AlertButton[][] = [];
+    vi.spyOn(Alert, 'alert').mockImplementation((_title, _message, buttons) => {
+      sheets.push(buttons ?? []);
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Chat options' }));
+    expect(sheets).toHaveLength(1);
+    return sheets[0]!;
+  };
+
+  it('offers a member to report the group and to clear the chat for themselves', async () => {
     testAuth.client = thread('member');
     renderWithProviders(
       <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
     );
-    expect(await screen.findByRole('button', { name: 'Report this group' })).toBeTruthy();
+    const menu = await openMenu();
+    expect(menu.map((b) => b.text)).toEqual(['Report group', 'Clear chat for me', 'Cancel']);
+    act(() => menu.find((b) => b.text === 'Report group')!.onPress?.());
+    expect(await screen.findByText('Report Newroz club')).toBeTruthy();
   });
 
-  it('does not offer its owner to report their own group', async () => {
-    const client = thread('owner');
-    testAuth.client = client;
+  it('does not offer its owner to report their own group, and lets them clear it for everyone', async () => {
+    testAuth.client = thread('owner');
     renderWithProviders(
       <GroupThreadScreen groupId="g1" name="Newroz club" onExit={() => undefined} onOpenMembers={() => undefined} onLeft={() => undefined} />,
     );
-    await waitFor(() => expect(client.calls.some((c) => c.path === '/groups/g1')).toBe(true));
-    await waitFor(() => expect(screen.queryByRole('button', { name: 'Report this group' })).toBeNull());
+    const menu = await openMenu();
+    expect(menu.map((b) => b.text)).toEqual(['Clear chat for me', 'Clear chat for everyone', 'Cancel']);
   });
 });
 

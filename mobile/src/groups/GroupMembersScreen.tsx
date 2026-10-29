@@ -1,10 +1,11 @@
 import { useCallback, useState } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { canEditGroup, canManage, canSetRole, roleRank, type Role } from '@kurda/shared';
+import { canEditGroup, canManage, canModerateGroup, canSetRole, roleRank, type Role } from '@kurda/shared';
 import { useAuth } from '../auth/AuthContext';
-import { describeError, type Translate } from '../api/errors';
+import { describeError } from '../api/errors';
 import type { ApiError } from '../api/types';
+import { haptic } from '../feedback/haptics';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { display } from '../theme/fonts';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
@@ -22,6 +23,9 @@ import { ReportSheet } from '../reports/ReportSheet';
 import { SettingsNote, SettingsRow, SettingsSection } from '../settings/list';
 import { Pill } from './ClubsScreen';
 import { GroupAvatar } from './GroupAvatar';
+import { BanSheet } from './BanSheet';
+import { useClearChat } from './clearing';
+import { groupError } from './groupError';
 import {
   deleteGroup,
   groupDetail,
@@ -33,13 +37,6 @@ import {
   type GroupMember,
 } from './api';
 
-/** What the server's refusal means for a group, in words; anything else as the app says it everywhere. */
-export function groupError(error: ApiError, t: Translate): string {
-  if (error.code === 'GROUP_TEXT_REJECTED') return t('groups.textRejected');
-  if (error.code === 'NOT_GROUP_ADMIN') return t('groups.notAdmin');
-  return describeError(error, t);
-}
-
 /**
  * A group's own page (KUR-084): what it is, who is in it, and what you may do.
  *
@@ -50,8 +47,12 @@ export function groupError(error: ApiError, t: Translate): string {
  * is so. Nothing to tap on the row but the row itself and, where you may do
  * something about that person, a ⋯ at its end that lists only what you may —
  * so no row carries three buttons that crowd its name, and no button says
- * "Admin" when it means "make admin". Last, the things about the group
- * itself: report it, leave it, or, for its owner, delete it.
+ * "Admin" when it means "make admin" — Remove and Ban among them for anyone
+ * the reader outranks. For the owner and admins, the requests to come back
+ * (with how many wait) and who is banned, each a page of its own. Last, the
+ * things about the group itself: clear its chat (for oneself, or as its
+ * owner or an admin for everyone), report it, leave it, or, for its owner,
+ * delete it.
  *
  * Who may do what comes from `@kurda/shared`, which is what the server decides
  * with: this screen only chooses what to show.
@@ -79,6 +80,7 @@ export function GroupMembersScreen({
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [reporting, setReporting] = useState(false);
+  const [banning, setBanning] = useState<GroupMember | null>(null);
 
   const load = useCallback(() => {
     void groupDetail(client, groupId).then((res) => {
@@ -95,15 +97,18 @@ export function GroupMembersScreen({
     const res = await run();
     setBusy(null);
     if (res.ok) {
+      haptic('correct');
       load();
       return true;
     }
+    haptic('wrong');
     setError(res.error ? groupError(res.error, t) : t('error.generic'));
     return false;
   };
 
   const myRole = detail?.myRole ?? null;
   const groupName = detail?.name ?? '';
+  const clearChat = useClearChat(groupId, detail?.memberCount ?? 0, setError);
   const roleName = (role: Role): string | null => (role === 'owner' ? t('groups.role.owner') : role === 'moderator' ? t('groups.role.admin') : null);
 
   /** Only what you may do about this person, the one that cannot be undone last and in red. */
@@ -128,6 +133,8 @@ export function GroupMembersScreen({
       });
     }
     const removable = myRole !== null && m.userId !== me && canManage(myRole, m.role);
+    // removed, they can come back by themselves (or be added again); banned, only by asking
+    const comeBack = detail?.privacy === 'invite' ? 'groups.removeConfirmInvite' : 'groups.removeConfirmOpen';
     showActions({
       title: m.username,
       cancel: t('common.cancel'),
@@ -139,11 +146,12 @@ export function GroupMembersScreen({
                 label: t('groups.removeMember'),
                 destructive: true,
                 onPress: () =>
-                  Alert.alert(t('groups.removeMember'), t('groups.removeFrom', { name: m.username, group: groupName }), [
+                  Alert.alert(t('groups.removeMember'), t(comeBack, { name: m.username, group: groupName }), [
                     { text: t('common.cancel'), style: 'cancel' },
                     { text: t('groups.remove'), style: 'destructive', onPress: () => void act(m.userId, () => removeMember(client, groupId, m.userId)) },
                   ]),
               },
+              { label: t('groups.ban.action'), destructive: true, onPress: () => setBanning(m) },
             ]
           : []),
       ],
@@ -174,6 +182,8 @@ export function GroupMembersScreen({
 
   const members = [...(detail?.members ?? [])].sort((a, b) => roleRank(b.role) - roleRank(a.role) || a.username.localeCompare(b.username));
   const editable = canEditGroup(myRole);
+  const moderator = canModerateGroup(myRole);
+  const waiting = detail?.pendingRequests ?? 0;
   const meta = detail
     ? [detail.privacy === 'invite' ? t('groups.inviteGroup') : t('groups.openGroup'), t('groups.memberCount', { count: detail.memberCount })].join(' · ')
     : '';
@@ -204,7 +214,23 @@ export function GroupMembersScreen({
               ) : null}
             </View>
 
-            {error ? <Text style={[styles.error, { color: colors.danger }]}>{error}</Text> : null}
+            {error ? (
+              <Text style={[styles.error, { color: colors.danger }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
+                {error}
+              </Text>
+            ) : null}
+
+            {moderator ? (
+              <SettingsSection>
+                <SettingsRow
+                  icon="user-plus"
+                  title={t('groups.requests.title')}
+                  badge={waiting > 0 ? { count: waiting, label: t('groups.requests.waiting', { count: waiting }) } : undefined}
+                  onPress={() => navigation.navigate('GroupRequests', { groupId })}
+                />
+                <SettingsRow icon="block" title={t('groups.bans.title')} onPress={() => navigation.navigate('GroupBans', { groupId })} />
+              </SettingsSection>
+            ) : null}
 
             <SettingsSection title={t('groups.members')} footer={editable ? t('groups.adminHint') : undefined}>
               {members.map((m) => (
@@ -220,6 +246,12 @@ export function GroupMembersScreen({
               ))}
             </SettingsSection>
 
+            {myRole !== null ? (
+              <SettingsSection>
+                <SettingsRow icon="eye-off" title={t('groups.clear.forMe')} destructive onPress={() => clearChat('me')} opens={false} />
+                {moderator ? <SettingsRow icon="trash" title={t('groups.clear.forEveryone')} destructive onPress={() => clearChat('everyone')} opens={false} /> : null}
+              </SettingsSection>
+            ) : null}
             {myRole !== null ? (
               <SettingsSection>
                 {myRole !== 'owner' ? (
@@ -242,6 +274,15 @@ export function GroupMembersScreen({
         {reporting ? (
           <ReportSheet visible target={{ type: 'group', groupId }} name={groupName} onClose={() => setReporting(false)} onLeftGroup={onLeft} />
         ) : null}
+        <BanSheet
+          groupId={groupId}
+          member={banning}
+          onClose={() => setBanning(null)}
+          onBanned={() => {
+            setBanning(null);
+            load();
+          }}
+        />
       </View>
     </GradientBackground>
   );

@@ -5,6 +5,8 @@ import { foldForSearch, groupLimits, type GroupLimitState, type LimitDetails } f
 import { BottomSheet } from '../theme/BottomSheet';
 import { useAuth } from '../auth/AuthContext';
 import { describeError } from '../api/errors';
+import { haptic } from '../feedback/haptics';
+import { formatUntil } from '../reports/sendErrors';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { ClayButton, GradientBackground, Segmented } from '../theme/glass';
@@ -23,7 +25,7 @@ import { GroupAvatar } from './GroupAvatar';
 type Privacy = 'open' | 'invite';
 const PRIVACIES: readonly Privacy[] = ['open', 'invite'];
 
-type Found = Group & { joined?: boolean };
+type Found = Group & { joined?: boolean; banned?: boolean };
 
 /** Every word typed somewhere in the group's name or description, accents aside. */
 function matches(group: Found, words: string[]): boolean {
@@ -38,8 +40,10 @@ function matches(group: Found, words: string[]): boolean {
  * A list the eye can run down: each group's picture in its rounded square
  * (people are circles), its name on one line, what it is about in two, how
  * many are in it, and one small button at the end — Join, or Open for a group
- * you are already in. A search at the top narrows the list by name or
- * description. Making a group is the + in the corner.
+ * you are already in, or Banned for one you are banned from, which opens the
+ * group to say until when and to ask to come back. A search at the top
+ * narrows the list by name or description. Making a group is the + in the
+ * corner.
  *
  * At a group limit (@kurda/shared `groupLimits`, counted from the reader's own
  * groups as the server counts them) the screen says which one before anything
@@ -50,10 +54,12 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   const { client } = useAuth();
   const navigation = useNavigation<RootNavigation>();
   const { colors } = useTheme();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
 
   const [all, setAll] = useState<Found[] | null>(null);
   const [mineIds, setMineIds] = useState<Set<string>>(new Set());
+  // banned from, as a refused Join found out where the list did not say
+  const [bannedIds, setBannedIds] = useState<Set<string>>(new Set());
   const [limits, setLimits] = useState<GroupLimitState>(() => groupLimits([]));
   const [joining, setJoining] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +91,14 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
     const res = await joinGroup(client, group.id);
     setJoining(null);
     if (!res.ok) {
-      setError(describeError(res.error, t));
+      if (res.error.code !== 'GROUP_BANNED') {
+        setError(describeError(res.error, t));
+        return;
+      }
+      haptic('wrong');
+      const until = (res.error.details as { until?: unknown } | undefined)?.until;
+      setBannedIds((prev) => new Set(prev).add(group.id));
+      setError(typeof until === 'string' ? t('groups.standing.bannedUntil', { date: formatUntil(until, locale) }) : t('groups.standing.bannedForGood'));
       return;
     }
     setMineIds((prev) => new Set(prev).add(group.id));
@@ -129,6 +142,7 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
             <DiscoverRow
               group={item}
               joined={item.joined ?? mineIds.has(item.id)}
+              banned={item.banned === true || bannedIds.has(item.id)}
               joining={joining === item.id}
               disabled={joining !== null || limits.join !== null}
               onJoin={() => void join(item)}
@@ -165,10 +179,11 @@ export function ClubsScreen({ onExit }: { onExit: () => void }): React.JSX.Eleme
   );
 }
 
-/** One group in the list: its picture, name, what it is about, its size, and Join or Open. */
+/** One group in the list: its picture, name, what it is about, its size, and Join, Open or Banned. */
 function DiscoverRow({
   group,
   joined,
+  banned,
   joining,
   disabled,
   onJoin,
@@ -176,6 +191,7 @@ function DiscoverRow({
 }: {
   group: Found;
   joined: boolean;
+  banned: boolean;
   joining: boolean;
   disabled: boolean;
   onJoin: () => void;
@@ -186,13 +202,16 @@ function DiscoverRow({
   const dir = useDirection();
   const inviteOnly = group.privacy === 'invite';
   const meta = [t('groups.memberCount', { count: group.memberCount }), inviteOnly ? t('groups.inviteGroup') : null].filter(Boolean).join(' · ');
+  // a group to open: one you are in, or one you are banned from, which says where you stand
+  const opens = joined || banned;
+  const label = joined ? t('groups.open', { name: group.name }) : banned ? t('groups.bannedFrom', { name: group.name }) : undefined;
   return (
     <Pressable
-      onPress={joined ? onOpen : undefined}
-      disabled={!joined}
-      accessibilityRole={joined ? 'button' : undefined}
-      accessibilityLabel={joined ? t('groups.open', { name: group.name }) : undefined}
-      style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && joined && { backgroundColor: colors.controlTrack }]}
+      onPress={opens ? onOpen : undefined}
+      disabled={!opens}
+      accessibilityRole={opens ? 'button' : undefined}
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.row, { flexDirection: dir.row }, pressed && opens && { backgroundColor: colors.controlTrack }]}
     >
       <GroupAvatar name={group.name} id={group.id} size={ROW_AVATAR} photoUrl={group.photoUrl} />
       <View style={styles.main}>
@@ -210,6 +229,8 @@ function DiscoverRow({
       </View>
       {joined ? (
         <Pill label={t('groups.openThread')} onPress={onOpen} accessibilityLabel={t('groups.open', { name: group.name })} />
+      ) : banned ? (
+        <Pill label={t('groups.banned')} onPress={onOpen} accessibilityLabel={t('groups.bannedFrom', { name: group.name })} />
       ) : inviteOnly ? null : (
         <Pill
           label={joining ? t('groups.joining') : t('groups.join')}

@@ -2,7 +2,16 @@ import type { ApiClient } from '../api/client';
 import type { ApiResult } from '../api/types';
 // one definition of the hierarchy, shared with the API and the browser
 export type { Role } from '@kurda/shared';
-import type { ChatMessageExtras, Role } from '@kurda/shared';
+import type {
+  ChatMessageExtras,
+  GroupBan,
+  GroupBanDuration,
+  GroupChatCleared,
+  GroupRejoinRequest,
+  GroupRequestState,
+  GroupStanding,
+  Role,
+} from '@kurda/shared';
 
 /** A club the reader belongs to, with the role they hold in it. */
 export interface Group {
@@ -48,14 +57,26 @@ export function myGroups(client: ApiClient): Promise<ApiResult<{ groups: Group[]
  * Authorization is checked on every fetch rather than only on send, so someone
  * removed from a group loses the history at once — a cached page is the only
  * thing they keep, and reopening the screen takes even that.
+ *
+ * Nothing from before the chat was last cleared for this reader (for everyone,
+ * or by them for themselves) is in it; `cleared` says when and by whom.
  */
 export function groupHistory(
   client: ApiClient,
   groupId: string,
   before?: string,
-): Promise<ApiResult<{ messages: GroupMessage[] }>> {
+): Promise<ApiResult<{ messages: GroupMessage[]; cleared?: GroupChatCleared }>> {
   const query = before ? `?before=${encodeURIComponent(before)}` : '';
-  return client.get<{ messages: GroupMessage[] }>(`/groups/${groupId}/chat${query}`);
+  return client.get<{ messages: GroupMessage[]; cleared?: GroupChatCleared }>(`/groups/${groupId}/chat${query}`);
+}
+
+/**
+ * Clear the chat: `me` from the reader's own view (any member; it is marked
+ * read too), or `everyone` (the owner and admins: the messages so far are
+ * deleted, and the chat says who cleared it).
+ */
+export function clearGroupChat(client: ApiClient, groupId: string, scope: 'me' | 'everyone'): Promise<ApiResult<{ cleared: GroupChatCleared }>> {
+  return client.post<{ cleared: GroupChatCleared }>(`/groups/${groupId}/chat/clear`, { for: scope });
 }
 
 export function sendToGroup(client: ApiClient, groupId: string, body: string): Promise<ApiResult<GroupMessage>> {
@@ -78,10 +99,11 @@ export function groupUnread(
  *
  * Invite-only clubs appear here too — being discoverable and being joinable are
  * different things, and hiding them would make the club you were told about
- * simply not exist.
+ * simply not exist. One the reader is banned from may say so (`banned`);
+ * joining it is refused either way (403 GROUP_BANNED).
  */
-export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Array<Group & { joined?: boolean }> }>> {
-  return client.get<{ groups: Array<Group & { joined?: boolean }> }>('/groups');
+export function discoverGroups(client: ApiClient): Promise<ApiResult<{ groups: Array<Group & { joined?: boolean; banned?: boolean }> }>> {
+  return client.get<{ groups: Array<Group & { joined?: boolean; banned?: boolean }> }>('/groups');
 }
 
 export function joinGroup(client: ApiClient, groupId: string): Promise<ApiResult<{ ok: true }>> {
@@ -104,6 +126,10 @@ export interface GroupDetail extends Omit<Group, 'myRole'> {
   members: GroupMember[];
   /** null when the reader is not a member — an open club is readable first */
   myRole: Role | null;
+  /** where the reader stands: a member, out and free to come in, or banned */
+  standing?: GroupStanding;
+  /** requests to come back waiting on an answer, for the owner and admins */
+  pendingRequests?: number;
 }
 
 export interface GroupMember {
@@ -149,6 +175,61 @@ export function updateGroup(
 /** Take the group's picture down, back to its initials. */
 export function clearGroupPhoto(client: ApiClient, groupId: string): Promise<ApiResult<{ photoUrl: null }>> {
   return client.delete<{ photoUrl: null }>(`/groups/${groupId}/photo`);
+}
+
+/**
+ * Add a friend to an invite-only group, as its owner or an admin. Someone
+ * banned from it is refused (409 MEMBER_BANNED) until they are unbanned.
+ */
+export function addToGroup(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ ok: true }>> {
+  return client.post<{ ok: true }>(`/groups/${groupId}/invite`, { userId });
+}
+
+/**
+ * Ban someone: out of the group, and unable to come back by themselves for
+ * `duration` — though they can ask. Optionally their messages here go too.
+ */
+export function banMember(
+  client: ApiClient,
+  groupId: string,
+  input: { userId: string; duration: GroupBanDuration; reason: string | null; deleteMessages: boolean },
+): Promise<ApiResult<{ ban: GroupBan }>> {
+  return client.post<{ ban: GroupBan }>(`/groups/${groupId}/bans`, input);
+}
+
+/** Lift a ban. It does not add them back: they may join, or be added, again. */
+export function unbanMember(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<unknown>> {
+  return client.delete<unknown>(`/groups/${groupId}/bans/${userId}`);
+}
+
+/** The bans in force, newest first, for the owner and admins. */
+export function groupBans(client: ApiClient, groupId: string): Promise<ApiResult<{ bans: GroupBan[] }>> {
+  return client.get<{ bans: GroupBan[] }>(`/groups/${groupId}/bans`);
+}
+
+/** Ask to come back to a group one is banned from, with a short note for the admins. */
+export function askToRejoin(client: ApiClient, groupId: string, note: string | null): Promise<ApiResult<{ request: GroupRequestState }>> {
+  return client.post<{ request: GroupRequestState }>(`/groups/${groupId}/requests`, { note });
+}
+
+/** Take back one's own waiting request; asking again carries no wait. */
+export function withdrawRejoin(client: ApiClient, groupId: string): Promise<ApiResult<unknown>> {
+  return client.delete<unknown>(`/groups/${groupId}/requests`);
+}
+
+/** The requests to come back waiting on an answer, oldest first, for the owner and admins. */
+export function rejoinRequests(client: ApiClient, groupId: string): Promise<ApiResult<{ requests: GroupRejoinRequest[] }>> {
+  return client.get<{ requests: GroupRejoinRequest[] }>(`/groups/${groupId}/requests`);
+}
+
+/** Let them back: the ban goes, and they are added again where every usual rule allows (`rejoined`). */
+export function approveRejoin(client: ApiClient, groupId: string, userId: string): Promise<ApiResult<{ rejoined: boolean }>> {
+  return client.post<{ rejoined: boolean }>(`/groups/${groupId}/requests/${userId}/approve`);
+}
+
+/** Turn a request down: the next one waits longer, or, with `stopRequests`, there is no next one. */
+export function declineRejoin(client: ApiClient, groupId: string, userId: string, stopRequests: boolean): Promise<ApiResult<{ ok: true }>> {
+  return client.post<{ ok: true }>(`/groups/${groupId}/requests/${userId}/decline`, { stopRequests });
 }
 
 /** Delete the group and its messages for everyone. The owner only. */
