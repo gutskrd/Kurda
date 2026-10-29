@@ -1,12 +1,13 @@
 /**
  * Daily quests against real Postgres, through the real routes: the day's three
  * made on the first look, moved by finished lessons and practice that were
- * learning, and their chests opened once for Zêr.
+ * learning, and their chests opened once for Zêr. And the streak's recent days
+ * that a finished session's results carry for the week row.
  */
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import pg from 'pg';
-import type { ChestTier, QuestKind, QuestStep } from '@kurda/shared';
+import type { QuestKind, QuestStep } from '@kurda/shared';
 import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { ContentRepository } from '../content/repository.js';
@@ -350,6 +351,60 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
     });
   });
 
+  describe('the streak recent days', () => {
+    it('come with a finished lesson or practice session, in the learner own days, not with /me', async () => {
+      const ivo = await learner('recent', 'Asia/Tokyo');
+      const day = today('Asia/Tokyo');
+      const lesson = lessons[0]!;
+      /** a lesson finished at noon on `on` (Tokyo), with `answered` of its four items answered that day */
+      const finishedLesson = async (on: string, answered: number) => {
+        const at = `${on}T03:00:00Z`;
+        const s = await pool.query<{ id: string }>(
+          `INSERT INTO lesson_sessions (user_id, lesson_id, total_count, started_at, expires_at, completed_at)
+           VALUES ($1, $2, 4, $3, $3::timestamptz + interval '1 day', $3) RETURNING id`,
+          [ivo.id, lesson.id, at],
+        );
+        for (const exerciseId of lesson.exercises.slice(0, answered)) {
+          await pool.query(`INSERT INTO session_answers (session_id, exercise_id, verdict, accepted, answered_at) VALUES ($1, $2, 'correct', true, $3)`, [
+            s.rows[0]!.id,
+            exerciseId,
+            at,
+          ]);
+        }
+      };
+      await finishedLesson(shiftDate(day, -3), 2);
+      // finished with one of four answered: not learning, not a day learned
+      await finishedLesson(shiftDate(day, -5), 1);
+      // two weeks ago and one day: outside
+      await finishedLesson(shiftDate(day, -14), 4);
+      // a practice session that paid XP, finished just after midnight in Tokyo (the day before in UTC)
+      await pool.query(
+        `INSERT INTO practice_sessions (user_id, item_ids, total_count, correct_count, xp_awarded, created_at, completed_at)
+         VALUES ($1, $2::uuid[], 4, 4, 10, $3, $3)`,
+        [ivo.id, lesson.exercises, `${shiftDate(day, -1)}T15:30:00Z`],
+      );
+      await pool.query(`INSERT INTO user_streaks (user_id, current_streak, longest_streak, freezes, freeze_used_on) VALUES ($1, 0, 0, 0, $2)`, [
+        ivo.id,
+        shiftDate(day, -4),
+      ]);
+
+      const { body } = await playLesson(ivo, lesson);
+      expect(body.streak.today).toBe(day);
+      expect(body.streak.recent).toEqual([
+        { date: shiftDate(day, -4), kind: 'frozen' },
+        { date: shiftDate(day, -3), kind: 'learned' },
+        { date: day, kind: 'learned' },
+      ]);
+
+      const practised = await playPractice(ivo, lesson.exercises);
+      expect(practised.streak).toMatchObject({ today: day, recent: body.streak.recent });
+
+      const me = (await call(ivo, 'GET', '/me')).json();
+      expect(me.user.streak.recent).toBeUndefined();
+      expect(me.user.streak.today).toBeUndefined();
+    });
+  });
+
   describe('a chest', () => {
     const ledger = async (who: Learner) =>
       (
@@ -429,7 +484,7 @@ describe.skipIf(!DATABASE_URL)('daily quests (integration)', () => {
       const id = questId(day, 'listening');
       const [a, b] = await Promise.all([call(ned, 'POST', `/me/quests/${id}/claim`), call(ned, 'POST', `/me/quests/${id}/claim`)]);
       expect([a.statusCode, b.statusCode].sort()).toEqual([200, 409]);
-      const amount = chestAmount('rare' as ChestTier, ned.id, id);
+      const amount = chestAmount('rare', ned.id, id);
       expect(await ledger(ned)).toEqual([{ amount, reason: QUEST_LEDGER_REASON, ref_id: id }]);
       expect((await wallet.balances(ned.id)).zer).toBe(amount);
       const row = await pool.query(`SELECT amount FROM user_quests WHERE user_id = $1 AND day = $2 AND kind = 'listening'`, [ned.id, day]);

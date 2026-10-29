@@ -5,7 +5,7 @@ import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Ve
 import type { ExerciseType } from './repository.js';
 import { XpService } from '../xp/service.js';
 import { lessonXp } from '../xp/rules.js';
-import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { StreakService, type SessionStreak, type StreakSummary } from '../streaks/service.js';
 import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
@@ -132,8 +132,8 @@ export interface SessionResults {
   mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   /** XP awarded for this completion (0 on a repeat replay). */
   xpAwarded: number;
-  /** Streak after this completion counted toward today's goal (KUR-031). */
-  streak: StreakSummary;
+  /** Streak after this completion counted toward today's goal (KUR-031), with the days lately learned for the week row. */
+  streak: SessionStreak;
   /**
    * True only for the first time this learner completes this lesson — any
    * version of it (`LessonSlot`). Rewards that should not be farmable by
@@ -604,6 +604,8 @@ export class LessonSessionService {
     // …and whether that earlier completion was the learner's first of this
     // lesson, so asking twice gives the same answer.
     if (firstCompletion === null) firstCompletion = await this.wasFirstCompletion(session.id, userId, slot);
+    // the days lately learned, for the week row, this one included
+    const week = await this.streaks.recent(userId, timeZone);
 
     // Best-effort rewards after the commit, for the call that completed the
     // session only: a failure here never fails the completion, and each is
@@ -628,7 +630,7 @@ export class LessonSessionService {
       accuracy,
       mistakes,
       xpAwarded,
-      streak,
+      streak: { ...streak, ...week },
       firstCompletion,
       ...(quests.length > 0 ? { quests } : {}),
     };

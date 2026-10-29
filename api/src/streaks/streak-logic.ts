@@ -147,6 +147,14 @@ export function countsAsLearning(answered: number, total: number): boolean {
   return answered >= Math.max(1, Math.ceil(total / 2));
 }
 
+/** `countsAsLearning` in SQL, over two expressions of a statement that reads sessions. */
+export function countsAsLearningSql(answered: string, total: string): string {
+  return `${answered} >= GREATEST(1, ceil(${total} / 2.0))`;
+}
+
+/** Days the streak's recent days reach back, today included: two weeks, whatever day a learner's week starts on. */
+export const RECENT_DAYS = 14;
+
 /**
  * What learning has added up to, kept beside the streak rather than in it: the
  * streak can be broken, these only grow (or, for the freeze count, fill up).

@@ -13,7 +13,7 @@ import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
 import { XpService, lessonCompletionXp } from '../xp/service.js';
-import { StreakService, type StreakSummary } from '../streaks/service.js';
+import { StreakService, type SessionStreak, type StreakSummary } from '../streaks/service.js';
 import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../streaks/streak-logic.js';
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
@@ -184,7 +184,8 @@ export interface PracticeResults {
   /** what was missed, with the question and its right answer (as a lesson's results) */
   mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
-  streak: StreakSummary;
+  /** with the days lately learned, for the week row (as a lesson's results) */
+  streak: SessionStreak;
   /** a test to jump ahead on the path (jump/service.ts): whether it opened the unit */
   jump?: JumpOutcome;
   /** today's quests this session moved, before and after; absent when it moved none */
@@ -778,7 +779,8 @@ export class PracticeService {
     if (this.milestones && claimedNow && !jumpTo) {
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
-    const shown = { streak, ...(quests.length > 0 ? { quests } : {}) };
+    // the days lately learned for the week row, and the quests this session moved
+    const shown = { streak: { ...streak, ...(await this.streaks.recent(userId, timeZone)) }, ...(quests.length > 0 ? { quests } : {}) };
 
     if (!jumpTo) return { correct, total, accuracy, mistakes, xpAwarded, ...shown };
     // every item asked counts here, put off or not: a test is passed by answering it
