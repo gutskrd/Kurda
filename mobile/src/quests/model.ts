@@ -41,13 +41,6 @@ export interface QuestRow {
   claimed: boolean;
 }
 
-/**
- * The day as `GET /me/quests` answers it: with `waiting`, the earlier days'
- * quests (the last week's) that are done and whose chests are not opened yet,
- * newest first — a chest is never lost at midnight. An older server sends none.
- */
-export type QuestDayRead = QuestDay & { waiting?: Quest[] };
-
 /** A quest as it stands, moved from where a session's step says it was (or not moved at all). */
 function rowOf(q: Quest, step?: QuestStep): QuestRow {
   const to = Math.min(q.target, q.progress);
@@ -65,8 +58,8 @@ export function questRows(day: QuestDay | null, steps: readonly QuestStep[] = []
   return day.quests.map((q) => rowOf(q, moved.get(q.id)));
 }
 
-/** The earlier days' quests whose chests still wait, as rows that do not move. */
-export function waitingRows(day: QuestDayRead | null): QuestRow[] {
+/** The earlier days' quests whose chests still wait, as rows that do not move (an older server sends none). */
+export function waitingRows(day: QuestDay | null): QuestRow[] {
   return (day?.waiting ?? []).map((q) => rowOf(q));
 }
 

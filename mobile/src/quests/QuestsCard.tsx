@@ -12,7 +12,7 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { radii, spacing, typography } from '../theme/tokens';
 import { ChestArt } from './ChestArt';
-import type { QuestDayRead } from './model';
+import type { QuestDay } from '@kurda/shared';
 
 /** The card's height, in grey while the quests are on their way: the chest, and the padding round it. */
 const CARD_HEIGHT = 36 * (100 / 120) + 2 * (spacing.sm + 6) + 16;
@@ -35,12 +35,12 @@ export function QuestsCard(): React.JSX.Element | null {
   const { t, locale } = useI18n();
   const dir = useDirection();
   const navigation = useNavigation<RootNavigation>();
-  const [day, setDay] = useState<QuestDayRead | null>(null);
+  const [day, setDay] = useState<QuestDay | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
 
   const load = useCallback(() => {
     let live = true;
-    void client.get<QuestDayRead>('/me/quests').then((res) => {
+    void client.get<QuestDay>('/me/quests').then((res) => {
       if (!live) return;
       if (res.ok) setDay(res.data);
       // a failed read after a good one keeps what was shown

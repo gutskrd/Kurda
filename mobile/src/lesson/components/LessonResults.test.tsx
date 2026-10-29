@@ -92,6 +92,7 @@ describe('the way on', () => {
   const day: QuestDay = {
     date: '2026-10-29',
     monthDone: 2,
+    waiting: [],
     quests: [
       { id: 'q:streak', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: false, claimed: true },
       { id: 'q:xp', kind: 'xp', target: 40, progress: 33, chest: 'rare', claimable: false, claimed: false },

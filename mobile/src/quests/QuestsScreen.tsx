@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AccessibilityInfo, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { QuestStep } from '@kurda/shared';
+import type { QuestDay, QuestStep } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { formatNumber } from '../i18n/format';
@@ -16,7 +16,7 @@ import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../theme/tokens';
 import { ChestScreen } from './ChestScreen';
-import { justDone, markOpened, nextChest, questRows, waitingRows, type QuestDayRead, type QuestRow } from './model';
+import { justDone, markOpened, nextChest, questRows, waitingRows, type QuestRow } from './model';
 import { QuestRows } from './QuestRows';
 
 /**
@@ -49,7 +49,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   const dir = useDirection();
   const top = useScreenTopInset();
   const bottom = useScreenBottomInset(spacing.lg);
-  const [day, setDay] = useState<QuestDayRead | null>(null);
+  const [day, setDay] = useState<QuestDay | null>(null);
   const [status, setStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [attempt, setAttempt] = useState(0);
   const [opened, setOpened] = useState<string[]>([]);
@@ -58,7 +58,7 @@ export function QuestsScreen({ place, steps = [], onDone }: { place: 'lesson' | 
   useEffect(() => {
     let live = true;
     setStatus('loading');
-    void client.get<QuestDayRead>('/me/quests').then((res) => {
+    void client.get<QuestDay>('/me/quests').then((res) => {
       if (!live) return;
       if (res.ok) setDay(res.data);
       setStatus(res.ok ? 'ready' : 'failed');

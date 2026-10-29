@@ -5,6 +5,7 @@ import { claimProblem, justDone, markOpened, nextChest, questRows, waitingRows }
 const day: QuestDay = {
   date: '2026-10-29',
   monthDone: 4,
+  waiting: [],
   quests: [
     { id: 'd:streak', kind: 'streak', target: 1, progress: 1, chest: 'common', claimable: true, claimed: false },
     { id: 'd:xp', kind: 'xp', target: 40, progress: 25, chest: 'rare', claimable: false, claimed: false },
