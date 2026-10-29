@@ -1,5 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
-import { fireLadder, fireLevel, type FireLadderPlace } from '@kurda/shared';
+import { fireLadder, fireLevel, fireSizeToFit, type FireLadderPlace } from '@kurda/shared';
 import { GOLD_INK } from '../coursemap/path';
 import { formatNumber } from '../i18n/format';
 import { useI18n } from '../i18n/I18nContext';
@@ -38,11 +38,15 @@ export function StreakSheet({ streak, onClose }: { streak: Streak | null; onClos
   );
 }
 
+/** The fire beside the streak in words: framed in a square this big, whatever its stage. */
+const HEAD_FIRE = 48;
+
 function StreakDetail({ streak }: { streak: Streak }): React.JSX.Element {
   const { colors } = useTheme();
   const { t, locale } = useI18n();
   const dir = useDirection();
   const days = streak.current;
+  const level = fireLevel(days);
   const words = days > 0 ? t(streakLabelKey(days), { count: formatNumber(days, locale) }) : t('learn.today.streakStart');
   const stats = learningStats(streak);
   const cells = [
@@ -53,7 +57,9 @@ function StreakDetail({ streak }: { streak: Streak }): React.JSX.Element {
   return (
     <>
       <View style={[styles.head, { flexDirection: dir.row }]}>
-        <Fire size={48} level={fireLevel(days)} />
+        <View style={styles.headFire}>
+          <Fire size={fireSizeToFit(level.stage, HEAD_FIRE, HEAD_FIRE)} level={level} framed />
+        </View>
         <Text style={[styles.words, dir.text, { color: colors.textPrimary }]}>{words}</Text>
       </View>
       <View style={[styles.cells, { flexDirection: dir.row }]}>
@@ -78,7 +84,7 @@ const PLACE_WORDS: Record<FireLadderPlace, TranslationKey> = {
   ahead: 'fire.ladder.ahead',
 };
 
-/** Each stage's fire on the ladder, big enough to show its drawing, and the round it stands in. */
+/** Each stage's fire on the ladder, framed to fill a square this big (a spark as plain as the Newroz fire, each telling by what it has, and every row as tall), and the round it stands in. */
 const RUNG_FIRE = 44;
 const RUNG_ART = 52;
 
@@ -111,7 +117,7 @@ function FireLadder({ days }: { days: number }): React.JSX.Element {
             testID={`rung-${step.place}`}
           >
             <View style={[styles.rungArt, now && { borderColor: colors.gold }, step.place === 'ahead' && styles.ahead]}>
-              <Fire size={RUNG_FIRE} level={step.level} still={step.place === 'ahead'} />
+              <Fire size={fireSizeToFit(step.stage, RUNG_FIRE, RUNG_FIRE)} level={step.level} still={step.place === 'ahead'} framed />
             </View>
             <View style={styles.rungWords}>
               <View style={[styles.rungName, { flexDirection: dir.row }]}>
@@ -136,6 +142,7 @@ const styles = StyleSheet.create({
   scroller: { paddingHorizontal: 0 },
   body: { gap: spacing.md, paddingHorizontal: layout.gutter, paddingBottom: spacing.sm },
   head: { alignItems: 'center', gap: spacing.sm },
+  headFire: { width: HEAD_FIRE, height: HEAD_FIRE, alignItems: 'center', justifyContent: 'center' },
   words: { flex: 1, ...display(typography.sizes.xl) },
   cells: { gap: spacing.sm },
   cell: { flex: 1, alignItems: 'center', gap: 2, paddingVertical: spacing.md, paddingHorizontal: spacing.xs, borderRadius: radii.md },

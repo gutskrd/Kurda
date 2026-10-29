@@ -9,7 +9,7 @@ vi.mock('react-native-safe-area-context', () => import('../../reports/testing/st
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen } from '@testing-library/react';
 import { AccessibilityInfo } from 'react-native';
-import { RUN_MOMENT_MS, runMoment } from '@kurda/shared';
+import { RUN_MOMENT_MS, fireSizeToFit, runMoment } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { RunLabel, RunMoment } from './RunCount';
@@ -78,6 +78,17 @@ describe('a run of right answers', () => {
       expect(onDone).toHaveBeenCalledTimes(1);
     });
   }
+
+  it('draws every milestone fire framed, alike, so a longer run is a bigger fire', () => {
+    patchReactNativeWeb({ reduceMotion: true });
+    listen();
+    for (const count of [5, 20, 30]) {
+      renderWithProviders(<RunMoment count={count} onDone={vi.fn()} />);
+      expect(fire().dataset.framed).toBe('true');
+      expect(Number(fire().dataset.size)).toBeCloseTo(fireSizeToFit('blaze', 200, 200), 9);
+      cleanup();
+    }
+  });
 
   it('moves on at once when its milestone is tapped', () => {
     patchReactNativeWeb({ reduceMotion: true });

@@ -10,8 +10,8 @@ vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'
 // the fire as its props: how big it burns and what it grows from, whoever draws it
 vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
 import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
-import { AccessibilityInfo } from 'react-native';
-import { CELEBRATE_MS, FIRE_GREW_READ_MS, FIRE_GROW } from '@kurda/shared';
+import { AccessibilityInfo, Animated } from 'react-native';
+import { FIRE_GREW_READ_MS, FIRE_GROW, FLAME_IGNITE, fireBesideWindow, flameMoment } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
@@ -217,7 +217,7 @@ describe('the day the fire grew', () => {
     }
   });
 
-  it('burns at the fire of today on another day, growing from nothing, and moves on in a second and a half', async () => {
+  it('burns at the fire of today on another day, growing from nothing, and moves on once it has lit and been seen', async () => {
     vi.useFakeTimers({ shouldAdvanceTime: true });
     listen();
     show({ current: 12 });
@@ -225,7 +225,7 @@ describe('the day the fire grew', () => {
     expect(within(flame).getByTestId('fire').dataset.stage).toBe('campfire');
     expect(within(flame).getByTestId('fire').dataset.from).toBeUndefined();
     expect(screen.queryByTestId('lesson-streak-grew')).toBeNull();
-    await act(() => vi.advanceTimersByTimeAsync(CELEBRATE_MS + 50));
+    await act(() => vi.advanceTimersByTimeAsync(flameMoment(12).overMs + 50));
     expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
   });
 });
@@ -250,6 +250,14 @@ describe('the fire beside the window', () => {
     expect(await stage(400)).toBe('newroz: Newroz fire');
   });
 
+  it('stands the fire on the floor by the window, its logs across the wall corner', async () => {
+    show({ current: 12 });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    const fire = within(await screen.findByTestId('lesson-streak-day')).getByTestId('fire');
+    expect(Number(fire.dataset.size)).toBe(fireBesideWindow(156).fire);
+    expect(fire.parentElement!.style.bottom).toBe(`${-fireBesideWindow(156).drop}px`);
+  });
+
   it('names the stage in Sorani too', async () => {
     localStorage.setItem('kurda_locale_v1', 'ckb');
     show({ current: 12 });
@@ -258,3 +266,85 @@ describe('the fire beside the window', () => {
   });
 });
 
+
+describe('the flame lighting up', () => {
+  /** what the device asks for, read once before the screen under test opens (the setting is asked once, and kept) */
+  async function device(reduceMotion: boolean): Promise<void> {
+    patchReactNativeWeb({ reduceMotion });
+    show().unmount();
+    await act(async () => undefined);
+  }
+  afterEach(async () => {
+    vi.restoreAllMocks();
+    await device(true);
+  });
+
+  /**
+   * The flame's screen as it opens, its lighting held where it starts (a
+   * test's animations otherwise end as they begin), and what the lighting was
+   * asked to do.
+   */
+  async function opened(): Promise<{ flame: HTMLElement; lighting: Animated.TimingAnimationConfig[] }> {
+    const lighting: Animated.TimingAnimationConfig[] = [];
+    const real = Animated.timing;
+    vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
+      const run = real(value, config);
+      if (config.delay !== FLAME_IGNITE.atMs) return run;
+      lighting.push(config);
+      return { ...run, start: () => undefined };
+    });
+    show({ current: 12 });
+    return { flame: await screen.findByTestId('lesson-streak-flame'), lighting };
+  }
+
+  it('opens dim on yesterday, then the fire squashes and pops, a ring bursts out of it, sparks fly and the warm light floods out from it', async () => {
+    await device(false);
+    const { flame, lighting } = await opened();
+    // it lights a moment after it opens: the pop, and the warm light flooding out
+    expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
+    // faint, and yesterday's number, until it lights
+    const fire = within(flame).getByTestId('lesson-streak-fire');
+    expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
+    expect(fire.style.transform).toContain('scaleY(1)');
+    expect(within(flame).getByTestId('fire').dataset.framed).toBe('true');
+    // the warm light a speck at the fire, to flood out over the screen as it lights
+    const flood = within(flame).getByTestId('lesson-streak-flood');
+    expect(flood.style.transform).toContain('scale(0.04)');
+    expect(Number(flood.style.opacity)).toBe(0);
+    expect(within(flame).getByTestId('lesson-streak-ring')).toBeTruthy();
+    expect(within(flame).getByTestId('lesson-streak-sparks')).toBeTruthy();
+    // and a tap still goes on at once
+    fireEvent.click(flame);
+    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+  });
+
+  it('lights where it is under Reduce Motion: the dim screen cross-fades to the warm one, with no squash, ring or sparks', async () => {
+    await device(true);
+    const { flame, lighting } = await opened();
+    // it still lights a moment after it opens, only fading
+    expect(lighting.map((run) => run.duration)).toEqual(expect.arrayContaining([FLAME_IGNITE.popMs, FLAME_IGNITE.floodMs]));
+    const fire = within(flame).getByTestId('lesson-streak-fire');
+    expect(Number(fire.style.opacity)).toBeCloseTo(FLAME_IGNITE.dim, 6);
+    expect(fire.style.transform).not.toContain('scale');
+    const flood = within(flame).getByTestId('lesson-streak-flood');
+    expect(flood.style.transform).not.toContain('scale(0.04)');
+    expect(Number(flood.style.opacity)).toBe(0);
+    expect(within(flame).queryByTestId('lesson-streak-ring')).toBeNull();
+    expect(within(flame).queryByTestId('lesson-streak-sparks')).toBeNull();
+    fireEvent.click(flame);
+    expect(await screen.findByRole('heading', { name: '12 day streak' })).toBeTruthy();
+  });
+
+  it('draws the spark of the first day closer than the fire of a year', async () => {
+    const size = async (current: number): Promise<number> => {
+      listen();
+      show({ current, longest: Math.max(current, 9) });
+      const drawn = Number(within(await screen.findByTestId('lesson-streak-flame')).getByTestId('fire').dataset.size);
+      cleanup();
+      return drawn;
+    };
+    const year = await size(400);
+    expect(await size(1)).toBeCloseTo(year * flameMoment(1).zoom, 6);
+    expect(await size(12)).toBe(year);
+  });
+});
