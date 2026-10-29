@@ -1,4 +1,4 @@
-import { fireLadder, fireLevel, type FireLadderPlace } from '@kurda/shared';
+import { fireLadder, fireLevel, fireSizeToFit, type FireLadderPlace } from '@kurda/shared';
 import { Fire } from '../components/Fire';
 import { CheckIcon } from '../components/icons';
 import { Sheet } from '../components/Sheet';
@@ -10,6 +10,9 @@ import './streak.css';
 
 /** What the server pays a freeze for, when it does not say (older responses). */
 const SESSIONS_PER_FREEZE = 5;
+
+/** The fire beside the streak in words: framed in a square this big, whatever its stage. */
+const HEAD_FIRE = 48;
 
 /**
  * The streak's whole story, in a sheet opened from the streak in Learn's
@@ -32,6 +35,7 @@ function StreakDetail({ streak }: { streak: StreakSummary }): React.JSX.Element 
   const locale = useLocale();
   const number = (n: number): string => new Intl.NumberFormat(locale).format(n);
   const days = streak.current;
+  const level = fireLevel(days);
   const cells = [
     { label: t('profile.stat.longestStreak'), value: streak.longest },
     { label: t('profile.stat.daysLearned'), value: streak.daysLearned ?? 0 },
@@ -40,7 +44,9 @@ function StreakDetail({ streak }: { streak: StreakSummary }): React.JSX.Element 
   return (
     <>
       <div className="streak-sheet-head">
-        <Fire size={48} level={fireLevel(days)} />
+        <span className="streak-sheet-fire">
+          <Fire size={fireSizeToFit(level.stage, HEAD_FIRE, HEAD_FIRE)} level={level} framed />
+        </span>
         <h2 className="streak-sheet-title">{days > 0 ? t('learn.today.streak', { count: number(days) }) : t('learn.today.noStreak')}</h2>
       </div>
       <dl className="streak-sheet-stats">
@@ -64,7 +70,7 @@ const PLACE_WORDS: Record<FireLadderPlace, MessageKey> = {
   ahead: 'fire.ladder.ahead',
 };
 
-/** Each stage's fire on the ladder: big enough to show its drawing. */
+/** Each stage's fire on the ladder, framed to fill a square this big: a spark as plain as the Newroz fire, each telling by what it has, and every row as tall. */
 const RUNG_FIRE = 44;
 
 /**
@@ -88,7 +94,7 @@ export function FireLadder({ days }: { days: number }): React.JSX.Element {
           return (
             <li key={step.stage} className={`fire-rung is-${step.place}`}>
               <span className="fire-rung-art" aria-hidden="true">
-                <Fire size={RUNG_FIRE} level={step.level} still={step.place === 'ahead'} />
+                <Fire size={fireSizeToFit(step.stage, RUNG_FIRE, RUNG_FIRE)} level={step.level} still={step.place === 'ahead'} framed />
               </span>
               <span className="fire-rung-words" aria-hidden="true">
                 <span className="fire-rung-name">

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PATH_RETURN, fireLevel } from '@kurda/shared';
+import { PATH_RETURN, fireLevel, fireSizeToFit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useCelebrationHold } from '../badges/BadgeCelebrationHost';
@@ -113,10 +113,11 @@ function Kept({ streak, onStart, onClose }: { streak: Streak; onStart: () => voi
   const next = nextFreeze(streak);
   const { held, max } = freezeSlots(streak);
   const count = (n: number) => formatNumber(n, locale);
+  const level = fireLevel(streak.current);
   return (
     <View style={styles.body}>
       <View style={[styles.art, { backgroundColor: `${ice.fill}29` }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Fire size={76} level={fireLevel(streak.current)} />
+        <Fire size={fireSizeToFit(level.stage, FIRE, FIRE)} level={level} framed />
         <View style={[styles.flake, { backgroundColor: ice.fill, borderColor: colors.background }]}>
           <Icon name="ice" size={20} color={ice.ink} />
         </View>
@@ -153,7 +154,9 @@ function Kept({ streak, onStart, onClose }: { streak: Streak; onStart: () => voi
   );
 }
 
+/** The round of ice, and the fire framed in a square this big in it, whatever its stage. */
 const ART = 112;
+const FIRE = 64;
 const SLOT = 52;
 
 const styles = StyleSheet.create({

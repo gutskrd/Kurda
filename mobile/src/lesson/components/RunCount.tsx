@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Pressable, StyleSheet, Text } from 'react-native';
-import { runFireLevel, runMoment } from '@kurda/shared';
+import { fireSizeToFit, runFireLevel, runMoment } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useI18n } from '../../i18n/I18nContext';
 import { springTo, timing } from '../../theme/animate';
@@ -42,6 +42,9 @@ export function RunLabel({ count, end }: { count: number; end: boolean }): React
   );
 }
 
+/** How big a milestone's fire is drawn, framed: the biggest a run grows (the blaze) about 200 high, so a longer run's fire is a bigger one. */
+const RUN_FIRE = fireSizeToFit('blaze', 200, 200);
+
 /**
  * A run's milestone (`runMilestone`: 5, 10, …), between one exercise and the
  * next: "10 in a row!" in big gold letters, springing in over the lesson
@@ -82,7 +85,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
           <SoftGlow colour={colors.gold} size={360} id="run-moment-glow" />
         </Animated.View>
         <Animated.View style={[styles.momentBody, { opacity, transform: [{ scale }] }]}>
-          <Fire size={104} level={fire.level} from={fire.from} />
+          <Fire size={RUN_FIRE} level={fire.level} from={fire.from} framed />
           <Text style={[styles.momentText, { color: colors.goldText }]}>{words}</Text>
         </Animated.View>
       </Pressable>

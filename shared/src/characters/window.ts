@@ -513,9 +513,18 @@ const FAR = 0.8;
  * (`figure`), and the line he is cut off at (`sill`, from the top). Before he
  * comes in he waits outside, all of him under the sill: `drop` below his
  * place and `far` his size, as if farther off, about `through`, the middle of
- * his neck where it comes in over the sill (as shares of his own box).
+ * his neck where it comes in over the sill (as shares of his own box). And
+ * the room's wall the window is in (`wall`: its two sides across, its foot
+ * down), what stands on the floor in front of it lines up with.
  */
-export const WINDOW_PLACE: { figure: WindowShare; sill: number; drop: number; far: number; through: { x: number; y: number } } = {
+export const WINDOW_PLACE: {
+  figure: WindowShare;
+  sill: number;
+  drop: number;
+  far: number;
+  through: { x: number; y: number };
+  wall: { left: number; right: number; foot: number };
+} = {
   figure: {
     left: (NECK_BOX.x - WINDOW_VIEW.x) / WINDOW_VIEW.w,
     top: (NECK_BOX.y - WINDOW_VIEW.y) / WINDOW_VIEW.h,
@@ -526,6 +535,7 @@ export const WINDOW_PLACE: { figure: WindowShare; sill: number; drop: number; fa
   drop: (FAR * (SILL - NECK_BOX.y)) / WINDOW_VIEW.h,
   far: FAR,
   through: { x: (AXIS - NECK_BOX.x) / NECK_BOX.w, y: (SILL - NECK_BOX.y) / NECK_BOX.h },
+  wall: { left: (WALL.x - WINDOW_VIEW.x) / WINDOW_VIEW.w, right: (WALL.x + WALL.w - WINDOW_VIEW.x) / WINDOW_VIEW.w, foot: (WALL.foot - WINDOW_VIEW.y) / WINDOW_VIEW.h },
 };
 
 /**

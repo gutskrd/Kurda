@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { RUN_SHOWN_FROM, runFireLevel, runMoment } from '@kurda/shared';
+import { RUN_SHOWN_FROM, fireSizeToFit, runFireLevel, runMoment } from '@kurda/shared';
 import { Fire } from '../components/Fire';
 import { useT } from '../i18n/I18nProvider';
 
@@ -19,6 +19,9 @@ export function RunLabel({ run }: { run: number }): React.JSX.Element | null {
     </span>
   );
 }
+
+/** How big a milestone's fire is drawn, framed: the biggest a run grows (the blaze) about 200 high, so a longer run's fire is a bigger one. */
+const RUN_FIRE = fireSizeToFit('blaze', 200, 200);
 
 /**
  * A run reaching a milestone (`runMilestone`), named across the whole screen
@@ -59,7 +62,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
   return (
     <div className="lesson-run-moment" aria-hidden="true" onClick={() => finish.current()}>
       <span className="lesson-run-moment-words">
-        <Fire size={104} level={fire.level} from={fire.from} />
+        <Fire size={RUN_FIRE} level={fire.level} from={fire.from} framed />
         {t('lesson.run.milestone', { count })}
       </span>
     </div>

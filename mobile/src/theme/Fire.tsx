@@ -11,6 +11,7 @@ import {
   FIRE_POSE_FIELDS,
   fireColours,
   fireDrawing,
+  fireFrame,
   fireGrowth,
   fireOutlineBox,
   fireSamples,
@@ -54,16 +55,21 @@ import { useTheme } from './ThemeProvider';
  *
  * `size` is its height in points; at `FIRE_SMALL` and under it is the light
  * version for beside a number: a bold round flame alone, breathing gently.
- * `accent` is an event theme's colour for the flame. Decorative: the words
- * beside it say the streak.
+ * `framed`, it takes up only its stage's part of the box (shared
+ * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
+ * that shows it big without the empty air above a young fire. `accent` is an
+ * event theme's colour for the flame. Decorative: the words beside it say the
+ * streak.
  */
 export function Fire({
   size,
   level,
   from,
   still = false,
+  framed = false,
   accent,
 }: {
+  /** how tall the whole fire's box is drawn, framed or not */
   size: number;
   /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
   level: FireLevel;
@@ -71,6 +77,8 @@ export function Fire({
   from?: FireLevel | null;
   /** drawn standing still, as under reduced motion */
   still?: boolean;
+  /** only its stage's frame laid out, the rest drawn over its edges */
+  framed?: boolean;
   accent?: string | null;
 }): React.JSX.Element {
   const { scheme } = useTheme();
@@ -104,16 +112,17 @@ export function Fire({
     return () => run.stop();
   }, [growth, grow]);
 
-  const { view, root } = drawing;
+  const root = drawing.root;
+  const view = framed && !drawing.small ? fireFrame(drawing.stage) : drawing.view;
   /** points per unit of the drawing */
-  const unit = size / view.h;
+  const unit = size / drawing.view.h;
   const at: Place = { view, unit };
   const now = { id: `${id}a`, colours: fireColours({ stage: drawing.stage, scheme, accent }), clock: moving ? clock : null };
   const before = growing ? { id: `${id}b`, colours: fireColours({ stage: growing.from.stage, scheme, accent }), clock: moving ? clock : null } : null;
 
   return (
     <View
-      style={{ width: view.w * unit, height: size }}
+      style={{ width: view.w * unit, height: view.h * unit }}
       pointerEvents="none"
       aria-hidden
       testID={`fire-${drawing.stage === 'cold' ? 'unlit' : 'lit'}${drawing.small ? '-small' : ''}`}

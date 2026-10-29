@@ -14,6 +14,14 @@
   /* clear of the close button */
   padding-inline-end: 48px;
 }
+/* the fire framed in a square, so the words beside it start in the same place at every stage */
+.streak-sheet-fire {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+}
 .streak-sheet-title {
   margin: 0;
   font-size: var(--text-section);

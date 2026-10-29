@@ -9,7 +9,7 @@ vi.mock('../auth/AuthContext', () => import('../reports/testing/auth'));
 // the fire as its props: how big it burns and whether it stands still, whoever draws it
 vi.mock('../theme/Fire', () => import('../theme/testing/fireProbe'));
 import { cleanup, screen, within } from '@testing-library/react';
-import { fireLevel } from '@kurda/shared';
+import { fireLadder, fireLevel, fireSizeToFit } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import type { Streak } from './format';
@@ -76,6 +76,9 @@ describe('the streak sheet', () => {
     expect(rungFires().map((f) => f.dataset.stage)).toEqual(['spark', 'kindling', 'campfire', 'bigfire', 'bonfire', 'blaze', 'newroz']);
     expect(rungFires().map((f) => f.dataset.still === 'true')).toEqual([false, false, false, true, true, true, true]);
     expect(rungFires()[2]!.dataset.growth).toBe(String(fireLevel(9).growth));
+    // each framed to fill the same square, so a spark is as plain as the Newroz fire and every row as tall
+    expect(rungFires().map((f) => f.dataset.framed)).toEqual(Array(7).fill('true'));
+    expect(rungFires().map((f) => Number(f.dataset.size))).toEqual(fireLadder(9).map((step) => fireSizeToFit(step.stage, 44, 44)));
     // the one now said in words on the screen too, and only it
     expect(within(ladder()).getAllByText('Now')).toHaveLength(1);
     expect(within(ladder()).getByText('Day 365')).toBeTruthy();

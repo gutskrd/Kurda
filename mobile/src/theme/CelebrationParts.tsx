@@ -31,12 +31,13 @@ export interface Celebrating {
 }
 
 /**
- * Play a celebration once, as the component mounts. It is felt and heard as
- * the art lands — `haptic('celebrate')` and a chime (sounds.ts): `complete`
- * for a finished lesson, `reward` for anything else earned. The pacing in
- * each keeps it to one however many moments arrive together.
+ * Play a celebration once, as the component mounts — or `delayMs` after, for
+ * a moment that opens on something else first. It is felt and heard as the
+ * art lands — `haptic('celebrate')` and a chime (sounds.ts): `complete` for a
+ * finished lesson, `reward` for anything else earned. The pacing in each
+ * keeps it to one however many moments arrive together.
  */
-export function useCelebration({ feel = true, sound = 'reward' }: { feel?: boolean; sound?: 'complete' | 'reward' } = {}): Celebrating {
+export function useCelebration({ feel = true, sound = 'reward', delayMs = 0 }: { feel?: boolean; sound?: 'complete' | 'reward'; delayMs?: number } = {}): Celebrating {
   const reduce = useReducedMotion();
   const plan = useMemo(() => celebrationPlan(reduce), [reduce]);
   const art = useRef(new Animated.Value(0)).current;
@@ -58,27 +59,27 @@ export function useCelebration({ feel = true, sound = 'reward' }: { feel?: boole
   useEffect(() => {
     const parts: Animated.CompositeAnimation[] = [];
     if (plan.travel) {
-      parts.push(springTo(art, 1, 'bouncy'));
-      parts.push(timing(ring, 1, plan.ringMs, { delay: plan.ringDelayMs, easing: Easing.out(Easing.quad) }));
-      parts.push(Animated.timing(burst, { toValue: 1, duration: plan.burstMs, delay: plan.burstDelayMs, easing: Easing.linear, useNativeDriver: true }));
+      parts.push(springTo(art, 1, 'bouncy', delayMs));
+      parts.push(timing(ring, 1, plan.ringMs, { delay: delayMs + plan.ringDelayMs, easing: Easing.out(Easing.quad) }));
+      parts.push(Animated.timing(burst, { toValue: 1, duration: plan.burstMs, delay: delayMs + plan.burstDelayMs, easing: Easing.linear, useNativeDriver: true }));
     } else {
-      parts.push(timing(art, 1, plan.artMs));
+      parts.push(timing(art, 1, plan.artMs, { delay: delayMs }));
       ring.setValue(1);
       burst.setValue(1);
     }
-    parts.push(timing(details, 1, plan.detailsMs, { delay: plan.detailsDelayMs }));
+    parts.push(timing(details, 1, plan.detailsMs, { delay: delayMs + plan.detailsDelayMs }));
     const run = Animated.parallel(parts);
     running.current = run;
     run.start(({ finished }) => {
       if (finished) setPlaying(false);
     });
-    tick.current = setTimeout(feelIt, plan.hapticAtMs);
+    tick.current = setTimeout(feelIt, delayMs + plan.hapticAtMs);
     return () => {
       run.stop();
       if (tick.current) clearTimeout(tick.current);
     };
     // the Reduce Motion answer can arrive a moment late; then it simply plays again, as a fade
-  }, [plan, art, ring, burst, details, feelIt]);
+  }, [plan, art, ring, burst, details, feelIt, delayMs]);
 
   const skip = useCallback(() => {
     running.current?.stop();
@@ -114,11 +115,17 @@ export function SoftGlow({ colour, size, id = 'celebrate-glow' }: { colour: stri
 }
 
 /** The ring of light that widens once from behind the art and is gone. */
-export function GlowRing({ progress, colour, size }: { progress: Animated.Value; colour: string; size: number }): React.JSX.Element {
+export function GlowRing({ progress, colour, size, testID }: { progress: Animated.Value; colour: string; size: number; testID?: string }): React.JSX.Element {
   const scale = progress.interpolate({ inputRange: [0, 1], outputRange: [0.55, 1.45] });
   const opacity = progress.interpolate({ inputRange: [0, 0.15, 1], outputRange: [0, 0.65, 0] });
   return (
-    <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View
+      style={[StyleSheet.absoluteFill, styles.center]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      testID={testID}
+    >
       <Animated.View
         style={{
           width: size,
@@ -144,17 +151,25 @@ export function ConfettiBurst({
   seed,
   colours,
   reach,
+  testID,
 }: {
   progress: Animated.Value;
   count: number;
   seed: number;
   colours: string[];
   reach: number;
+  testID?: string;
 }): React.JSX.Element | null {
   const flecks = useMemo(() => burstPlan(count, seed, colours.length, reach), [count, seed, colours.length, reach]);
   if (flecks.length === 0 || colours.length === 0) return null;
   return (
-    <View style={[StyleSheet.absoluteFill, styles.center]} pointerEvents="none" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+    <View
+      style={[StyleSheet.absoluteFill, styles.center]}
+      pointerEvents="none"
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+      testID={testID}
+    >
       {flecks.map((f, i) => (
         <BurstFleck key={i} fleck={f} progress={progress} colour={colours[f.colour] ?? colours[0]!} />
       ))}
