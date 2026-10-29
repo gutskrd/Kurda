@@ -31,7 +31,8 @@ const STAND_AT = 0.27;
  * Where a lesson's character stands to say what it says: head to waist, as
  * large as the screen can spare, in nothing but its own light (shared
  * `stageBackdrop`), and the buttons that play it standing beside it on the far
- * side.
+ * side — or, with no buttons (a speech bubble beside the stage says it), in
+ * the middle of a stage of its own.
  *
  * The whole figure is drawn, its head just below the stage's top edge, and
  * the stage's bottom edge cuts off the rest: at the waist, or a little below
@@ -77,7 +78,8 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
   const whole = { width: art.viewBox.w * unit, height: art.viewBox.h * unit };
   const above = (art.half.y - art.viewBox.y) * unit;
   const aside = (flipped ? art.viewBox.x + art.viewBox.w - (art.half.x + art.half.w) : art.half.x - art.viewBox.x) * unit;
-  const spot = Math.max(shown.width, across * STAND_AT * 2);
+  // with no buttons to stand beside, the character has the whole stage, in the middle of it
+  const spot = children ? Math.max(shown.width, across * STAND_AT * 2) : across;
   const hop = Math.round(height * HOP_ROOM);
   const standAt = (dir.rtl ? across - spot / 2 : spot / 2) / across;
   const backdrop = useMemo(
@@ -104,7 +106,7 @@ export function CharacterStage({ children, reserve, height: fixed, flip, speaker
             <SpeakingCharacter {...character} speaker={speaker} crop="full" height={whole.height} flip={flipped} />
           </View>
         </View>
-        <View style={styles.controls}>{children}</View>
+        {children ? <View style={styles.controls}>{children}</View> : null}
       </View>
     </View>
   );

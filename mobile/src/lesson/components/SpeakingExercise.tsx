@@ -14,6 +14,7 @@ import type { TranslationKey } from '../../i18n/translations';
 import { useDirection } from '../../reports/direction';
 import { knownVoice } from '../../characters/SpeakingCharacter';
 import { CharacterStage } from '../../characters/CharacterStage';
+import { ExerciseHeadline } from './ExerciseHeadline';
 import { ModelButton } from './ModelButton';
 
 interface Props {
@@ -119,7 +120,7 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.speak.prompt')}</Text>
+      <ExerciseHeadline>{t('lesson.speak.prompt')}</ExerciseHeadline>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       {model.supported && voice ? (
@@ -204,7 +205,6 @@ export function SpeakingExercise({ exercise, onSetRecorded, selfRating, onRate, 
 
 const styles = StyleSheet.create({
   container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
   prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
   detail: { fontSize: typography.sizes.sm, textAlign: 'center' },
   recordingBox: { alignItems: 'center', gap: spacing.sm },

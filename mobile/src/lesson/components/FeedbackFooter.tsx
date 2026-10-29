@@ -1,11 +1,13 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, Text, View, type TextStyle, type ViewStyle } from 'react-native';
 import { isSoraniDialect, letterDiff, type DiffSegment, type ExerciseType, type RecordingVoice } from '@kurda/shared';
 import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import { ClayButton } from '../../theme/glass';
+import { TileButton } from '../../theme/Tile';
+import { display } from '../../theme/fonts';
 import { useI18n } from '../../i18n/I18nContext';
-import { RUN_SHOWN_FROM, VERDICT_TIMING, feedbackTitle, type Feedback } from '../player';
+import { VERDICT_TIMING, feedbackTitle, type Feedback } from '../player';
 import { useAudio, type AudioControls } from '../useAudio';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { MIN_TOUCH_TARGET } from '../../a11y/a11y';
@@ -31,10 +33,8 @@ interface Props {
   submitting: boolean;
   onCheck: () => void;
   onContinue: () => void;
-  /** right answers in a row, this one included: named from the third, a small "keep going" */
-  inARow?: number;
-  /** the run has just reached one of its milestones (5, 10, …): the headline says so and the pill pops */
-  milestone?: number | null;
+  /** the exercise sends its answer by itself as it is completed (pairs answered as they are made): no Check */
+  answersItself?: boolean;
   /** the exercise's character is on its stage above and reacts there, so the banner needs no second one */
   staged?: boolean;
   /** Hevalo, in to react where nobody else is on screen: a cheer, or a curious tilt of the head at a miss */
@@ -56,21 +56,22 @@ interface Props {
 /**
  * The lesson's action bar. While answering it holds Check, and the way to put
  * off what cannot be done here and now; once graded it becomes the verdict
- * sheet, rising in the verdict's colour with Continue exactly where Check
- * was — so the thumb never moves and the rhythm is tap, tap.
+ * sheet, sliding up on a spring in the verdict's tint with Continue exactly
+ * where Check was — so the thumb never moves and the rhythm is tap, tap. An
+ * exercise that answers itself (pairs answered as they are made) has no Check.
  *
- * The sheet says the verdict in words and a mark (a check that draws in, or a
- * cross), never colour alone, and a screen reader hears it as one sentence. A
- * typed answer is set above the right one with the letters that differ
- * marked, and what kind of slip it was in a line under them; a miss says it
- * will come back, and offers the skill's tips. The native recording is there
- * to hear, and says itself a moment after the verdict unless that is turned
- * off (Settings → Sounds). A run of right answers is named from the third,
- * and at 5, 10 and every 5 after that the headline says so.
+ * The sheet says the verdict in words and a mark — a round badge with a check
+ * that pops in and draws itself for a right answer, or a quiet cross — never
+ * colour alone, and a screen reader hears it as one sentence. A typed answer
+ * is set above the right one with the letters that differ marked, and what
+ * kind of slip it was in a line under them; a miss says it will come back, and
+ * offers the skill's tips. The native recording is there to hear, and says
+ * itself a moment after the verdict unless that is turned off (Settings →
+ * Sounds).
  *
  * Hevalo comes in to react only where nobody else is on screen to: on the
  * first answer, on a miss (curious, never sad) and at a run's milestone.
- * Under Reduce Motion the sheet fades in where it is, and the pill does not
+ * Under Reduce Motion the sheet fades in where it is, and the badge does not
  * pop.
  *
  * Both sit clear of the home indicator: the lesson is full screen, and the
@@ -82,8 +83,7 @@ export function FeedbackFooter({
   submitting,
   onCheck,
   onContinue,
-  inARow = 0,
-  milestone = null,
+  answersItself = false,
   staged = false,
   standIn = null,
   dialect,
@@ -97,18 +97,21 @@ export function FeedbackFooter({
   const { t } = useI18n();
   const reduce = useReducedMotion();
   const slide = useRef(new Animated.Value(0)).current;
+  const [height, setHeight] = useState(0);
   const model = useAudio(feedback?.modelAudioUrl);
   const bottom = useScreenBottomInset(spacing.lg);
   const dir = useDirection();
   const kurdish: TextStyle = isSoraniDialect(dialect) ? { writingDirection: 'rtl' } : { writingDirection: 'ltr' };
 
+  // up from below the screen on a spring as the verdict arrives; a fade where it is under Reduce Motion
   useEffect(() => {
-    if (!feedback) {
-      slide.setValue(0);
-      return;
-    }
-    timing(slide, 1, duration.base).start();
-  }, [feedback, slide]);
+    slide.stopAnimation();
+    slide.setValue(0);
+    if (!feedback) return;
+    const run = reduce ? timing(slide, 1, duration.base) : springTo(slide, 1, 'release');
+    run.start();
+    return () => run.stop();
+  }, [feedback, slide, reduce]);
 
   // the native recording says itself a moment after the verdict, once it has loaded — not for a spoken answer,
   // which was just heard beside it, and not when the learner has asked for quiet
@@ -140,7 +143,7 @@ export function FeedbackFooter({
             </Pressable>
           </View>
         ) : putOff ? (
-          <View style={[styles.aside, { flexDirection: dir.row }]}>
+          <View style={[styles.aside, styles.centred]}>
             <Pressable
               onPress={putOff.onPress}
               disabled={submitting}
@@ -149,22 +152,23 @@ export function FeedbackFooter({
               hitSlop={6}
               style={({ pressed }) => [styles.link, pressed && styles.pressed]}
             >
-              <Text style={[styles.linkText, dir.text, { color: colors.textSecondary }]}>{putOff.label}</Text>
+              <Text style={[styles.linkText, { color: colors.textSecondary }]}>{putOff.label}</Text>
             </Pressable>
           </View>
         ) : null}
-        <ClayButton label={t('lesson.check')} tone="primary" size="large" busy={submitting} disabled={!canCheck} onPress={onCheck} />
+        {answersItself ? null : <TileButton label={t('lesson.check')} busy={submitting} disabled={!canCheck} onPress={onCheck} />}
       </View>
     );
   }
 
   const good = feedback.accepted;
-  const showRun = good && inARow >= RUN_SHOWN_FROM;
+  const tint = good ? colors.success : colors.danger;
   const verdict = t(feedbackTitle(feedback));
-  const headline = milestone !== null ? t('lesson.run.milestone', { count: milestone }) : (praise ?? verdict);
-  // one sentence for a screen reader: the verdict in the reader's words, then the praise or the run
-  const spoken = milestone !== null ? `${verdict}. ${headline}` : praise ? `${verdict}. ${praise}` : verdict;
-  const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [40, 0] });
+  const headline = praise ?? verdict;
+  // one sentence for a screen reader: the verdict in the reader's words, then the praise
+  const spoken = praise ? `${verdict}. ${praise}` : verdict;
+  // from just below the screen: its own height once measured, and further than any sheet is tall until then
+  const translateY = reduce ? 0 : slide.interpolate({ inputRange: [0, 1], outputRange: [height || 600, 0] });
   const typed = TYPED.has(feedback.exerciseType) && feedback.given !== undefined && !!feedback.correction;
   const diff = typed ? letterDiff(feedback.given!, feedback.correction!) : null;
   const voice = staged ? null : knownVoice(feedback.modelAudioVoice);
@@ -172,31 +176,28 @@ export function FeedbackFooter({
   const verdictBlock = (
     <View style={styles.verdict}>
       <View style={[styles.titleRow, { flexDirection: dir.row }]}>
-        {good ? <DrawnCheck size={24} color={colors.success} delayMs={120} /> : <Icon name="close" size={24} color={colors.danger} />}
-        <Text
-          accessibilityLiveRegion="polite"
-          accessibilityLabel={spoken}
-          style={[styles.bannerTitle, praise && milestone === null ? kurdish : dir.text, { color: good ? colors.success : colors.danger }]}
-        >
-          {headline}
-        </Text>
-        {/* a run of right answers, named from the third: the chime has been climbing, and this says why */}
-        {showRun ? <RunPill count={inARow} pop={milestone !== null} end={dir.rtl} /> : null}
+        <Badge good={good} colour={tint} />
+        <View style={styles.titles}>
+          <Text accessibilityLiveRegion="polite" accessibilityLabel={spoken} style={[styles.bannerTitle, praise ? kurdish : dir.text, { color: tint }]}>
+            {headline}
+          </Text>
+          {praise ? (
+            <Text style={[styles.gloss, dir.text, { color: colors.textSecondary }]} importantForAccessibility="no" accessibilityElementsHidden>
+              {t('lesson.fb.praiseGloss')}
+            </Text>
+          ) : null}
+        </View>
       </View>
-      {praise && milestone === null ? (
-        <Text style={[styles.gloss, dir.text, { color: colors.textSecondary }]} importantForAccessibility="no" accessibilityElementsHidden>
-          {t('lesson.fb.praiseGloss')}
-        </Text>
-      ) : null}
       {diff ? (
         <View style={styles.compare}>
           <Compared label={t('lesson.fb.yours')} segments={diff.given} kurdish={kurdish} row={dir.row} />
           <Compared label={t('lesson.fb.right')} segments={diff.expected} kurdish={kurdish} row={dir.row} />
         </View>
       ) : feedback.correction ? (
-        <Text style={[styles.correction, dir.free, { color: colors.textPrimary }]}>
-          {t('lesson.answer')} <Text style={styles.correctionValue}>{feedback.correction}</Text>
-        </Text>
+        <View style={styles.answer}>
+          <Text style={[styles.answerLabel, dir.text, { color: tint }]}>{t('lesson.answer')}</Text>
+          <Text style={[styles.answerValue, dir.free, { color: colors.textPrimary }]}>{feedback.correction}</Text>
+        </View>
       ) : null}
       {hint ? <Text style={[styles.note, dir.text, { color: colors.textPrimary }]}>{hint}</Text> : null}
       {feedback.comesBack ? <Text style={[styles.note, dir.text, { color: colors.textPrimary }]}>{t('lesson.comesBack')}</Text> : null}
@@ -205,10 +206,11 @@ export function FeedbackFooter({
 
   return (
     <Animated.View
+      onLayout={(e) => setHeight(e.nativeEvent.layout.height)}
       style={[
         styles.banner,
         { paddingBottom: bottom, backgroundColor: good ? colors.successFill : colors.dangerFill },
-        { opacity: slide, transform: [{ translateY }] },
+        { opacity: reduce ? slide : 1, transform: [{ translateY }] },
       ]}
       testID="lesson-verdict"
     >
@@ -245,31 +247,34 @@ export function FeedbackFooter({
           <Text style={[styles.whyText, { color: colors.textPrimary }]}>{t('lesson.fb.why')}</Text>
         </Pressable>
       ) : null}
-      <ClayButton label={t('common.continue')} tone={good ? 'success' : 'danger'} size="large" onPress={onContinue} />
+      <TileButton label={t('common.continue')} tone={good ? 'success' : 'danger'} onPress={onContinue} />
     </Animated.View>
   );
 }
 
-/**
- * "3 in a row", at the end of the verdict's line; at a milestone it pops in
- * (0.6 → 1, a beat after the sheet). `end` is a mirrored line's: its end is on
- * the left.
- */
-function RunPill({ count, pop, end }: { count: number; pop: boolean; end: boolean }): React.JSX.Element {
+/** The badge beside the verdict: a check that pops in and draws itself, or a cross that simply fades in. */
+function Badge({ good, colour }: { good: boolean; colour: string }): React.JSX.Element {
   const { colors } = useTheme();
-  const { t } = useI18n();
   const reduce = useReducedMotion();
-  const scale = useRef(new Animated.Value(pop && !reduce ? 0.6 : 1)).current;
+  const p = useRef(new Animated.Value(reduce ? 1 : 0)).current;
   useEffect(() => {
-    if (!pop || reduce) return;
-    const run = springTo(scale, 1, 'bouncy', VERDICT_TIMING.runAtMs);
+    if (reduce) {
+      p.setValue(1);
+      return;
+    }
+    const run = good ? springTo(p, 1, 'bouncy', VERDICT_TIMING.actAtMs) : timing(p, 1, duration.base, { delay: VERDICT_TIMING.actAtMs });
     run.start();
     return () => run.stop();
-  }, [pop, reduce, scale]);
+  }, [good, reduce, p]);
+  const scale = good && !reduce ? p.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) : 1;
+  const opacity = p.interpolate({ inputRange: [0, 0.3, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
   return (
-    <Animated.View style={[styles.run, end ? styles.runLeft : styles.runRight, { backgroundColor: colors.background, transform: [{ scale }] }]} testID="lesson-in-a-row">
-      <Icon name="flame" size={14} color={colors.goldText} />
-      <Text style={[styles.runText, { color: colors.goldText }]}>{t('lesson.inARow', { count })}</Text>
+    <Animated.View
+      style={[styles.badge, { backgroundColor: colour, opacity, transform: [{ scale }] }]}
+      accessibilityElementsHidden
+      importantForAccessibility="no-hide-descendants"
+    >
+      {good ? <DrawnCheck size={18} color={colors.textOnPrimary} delayMs={VERDICT_TIMING.actAtMs + 80} /> : <Icon name="close" size={18} color={colors.textOnPrimary} />}
     </Animated.View>
   );
 }
@@ -339,38 +344,31 @@ function HearIt({
 }
 
 const styles = StyleSheet.create({
-  footer: { padding: spacing.lg, gap: spacing.sm },
+  footer: { paddingHorizontal: spacing.lg, paddingTop: spacing.md, gap: spacing.sm },
   aside: { alignItems: 'center', gap: spacing.md, minHeight: MIN_TOUCH_TARGET },
+  centred: { justifyContent: 'center' },
   asideText: { flexShrink: 1, fontSize: typography.sizes.sm },
   link: { minHeight: MIN_TOUCH_TARGET, justifyContent: 'center' },
-  linkText: { fontSize: typography.sizes.sm, textDecorationLine: 'underline' },
+  linkText: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, letterSpacing: 0.3 },
   undo: { fontSize: typography.sizes.sm, fontWeight: typography.weights.bold, textDecorationLine: 'underline' },
   pressed: { opacity: 0.6 },
   banner: {
-    padding: spacing.lg,
-    gap: spacing.sm,
-    borderTopLeftRadius: radii.lg,
-    borderTopRightRadius: radii.lg,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.lg,
+    gap: spacing.md,
+    borderTopLeftRadius: radii.xl,
+    borderTopRightRadius: radii.xl,
   },
   withFace: { alignItems: 'flex-end', gap: spacing.md },
   verdict: { flex: 1, gap: spacing.sm },
-  titleRow: { alignItems: 'center', gap: spacing.sm },
-  bannerTitle: { flexShrink: 1, fontSize: typography.sizes.lg, fontWeight: typography.weights.bold },
-  gloss: { fontSize: typography.sizes.xs, marginTop: -spacing.xs },
-  // at the end of the title's line, a small pill on the banner's tint
-  run: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radii.pill,
-  },
-  runRight: { marginLeft: 'auto' },
-  runLeft: { marginRight: 'auto' },
-  runText: { fontSize: typography.sizes.xs, fontWeight: typography.weights.bold, fontVariant: ['tabular-nums'] },
-  correction: { fontSize: typography.sizes.md },
-  correctionValue: { fontWeight: typography.weights.bold },
+  titleRow: { alignItems: 'center', gap: spacing.sm + 4 },
+  badge: { width: 32, height: 32, borderRadius: radii.pill, alignItems: 'center', justifyContent: 'center' },
+  titles: { flexShrink: 1 },
+  bannerTitle: { ...display(typography.sizes.xl) },
+  gloss: { fontSize: typography.sizes.xs },
+  answer: { gap: 2 },
+  answerLabel: { fontSize: typography.sizes.md, fontWeight: typography.weights.bold },
+  answerValue: { fontSize: typography.sizes.md },
   compare: { gap: 2 },
   compareRow: { alignItems: 'baseline', gap: spacing.sm, flexWrap: 'wrap' },
   compareLabel: { fontSize: typography.sizes.sm, minWidth: 96 },
