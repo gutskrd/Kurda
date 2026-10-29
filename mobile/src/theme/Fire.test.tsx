@@ -6,22 +6,25 @@ vi.mock('expo-secure-store', () => import('../reports/testing/stubs'));
 vi.mock('react-native-safe-area-context', () => import('../reports/testing/stubs'));
 import { act, cleanup, screen } from '@testing-library/react';
 import { Animated } from 'react-native';
-import { FIRE_BASE, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_TONGUES, FIRE_WISPS } from '@kurda/shared';
+import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, fireDrawing, type FireLevel, type FireStage } from '@kurda/shared';
 import { renderWithProviders } from '../reports/testing/harness';
 import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { Fire } from './Fire';
 
 /*
- * The streak's fire on the phone: the whole campfire burning off one clock,
- * the light version beside a number, grey and still unlit, and standing
- * still under Reduce Motion with no clock running at all — hidden from
- * VoiceOver every time, the words beside it say the streak.
+ * The streak's fire on the phone: every stage burning off one clock, the
+ * light version beside a number, a cold hearth with no streak, growing into
+ * its new stage off one more value on the day it grew, and standing still
+ * under Reduce Motion or when asked, with no clock running at all — hidden
+ * from VoiceOver every time, the words beside it say the streak.
  */
 
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
 });
+
+const lvl = (stage: FireStage, growth = 0): FireLevel => ({ stage, growth });
 
 /** Every clock started, and whether it has been stopped. */
 function clocks(): { started: number; stopped: number } {
@@ -44,64 +47,139 @@ function clocks(): { started: number; stopped: number } {
   return seen;
 }
 
+/** Every growth run started (its timing), with a way to see it through to its end. */
+function growths(): { config: Animated.TimingAnimationConfig; finish: () => void }[] {
+  const runs: { config: Animated.TimingAnimationConfig; finish: () => void }[] = [];
+  const real = Animated.timing;
+  vi.spyOn(Animated, 'timing').mockImplementation((value, config) => {
+    const timing = real(value, config);
+    // the fire's clock runs for a whole cycle with no delay; a growth waits first
+    if (config.delay === undefined) return timing;
+    return {
+      ...timing,
+      start: (cb) => {
+        runs.push({ config, finish: () => cb?.({ finished: true }) });
+      },
+    };
+  });
+  return runs;
+}
+
 /** Let the Reduce Motion answer arrive. */
 const settle = () => act(() => new Promise((r) => setTimeout(r, 0)));
 
+/** The tongues drawn, by the gradient each is filled with. */
+const tongues = (el: Element): string[] =>
+  [...el.querySelectorAll('path')].map((p) => /a(back|left|right|outer|flame|core|heart)\)$/.exec(p.getAttribute('fill') ?? '')?.[1]).filter((t): t is string => !!t);
+const oldTongues = (el: Element): string[] =>
+  [...el.querySelectorAll('path')].map((p) => /b(back|left|right|outer|flame|core|heart)\)$/.exec(p.getAttribute('fill') ?? '')?.[1]).filter((t): t is string => !!t);
+
 describe('the fire', () => {
-  it('burns big off one clock, stopped when it is gone: every tongue, the broken-off tips, the glow and the logs', async () => {
+  it('burns at every stage off one clock, stopped when it is gone, each with the parts it promises', async () => {
     patchReactNativeWeb({ reduceMotion: false });
-    const seen = clocks();
-    const { unmount } = renderWithProviders(<Fire size={168} />);
-    await settle();
-    const fire = screen.getByTestId('fire-lit');
-    expect(fire.getAttribute('aria-hidden')).toBe('true');
-    expect(fire.style.height).toBe('168px');
-    expect(fire.querySelectorAll('path')).toHaveLength(FIRE_TONGUES.length + FIRE_WISPS.length + FIRE_BASE.length);
-    expect(fire.querySelectorAll('radialGradient')).toHaveLength(1);
-    expect(seen).toEqual({ started: 1, stopped: 0 });
-    unmount();
-    expect(seen.stopped).toBe(1);
+    for (const stage of FIRE_STAGES.filter((s) => s !== 'cold')) {
+      const seen = clocks();
+      const drawing = fireDrawing(lvl(stage), 168);
+      const { unmount } = renderWithProviders(<Fire size={168} level={lvl(stage)} />);
+      await settle();
+      const fire = screen.getByTestId('fire-lit');
+      expect(fire.getAttribute('aria-hidden')).toBe('true');
+      expect(fire.style.height).toBe('168px');
+      expect(tongues(fire), stage).toEqual(drawing.tongues.map((t) => t.id));
+      expect(fire.querySelectorAll('path[fill*="aw"]'), stage).toHaveLength(drawing.wisps.length);
+      expect(fire.querySelector('path[fill$="rays)"]') !== null, stage).toBe(stage === 'newroz');
+      expect(fire.querySelector('path[fill$="stone)"]') !== null, stage).toBe(stage === 'blaze' || stage === 'newroz');
+      expect(seen, stage).toEqual({ started: 1, stopped: 0 });
+      unmount();
+      expect(seen.stopped, stage).toBe(1);
+      vi.restoreAllMocks();
+    }
   });
 
-  it('is the light version at the small size: three tongues cropped round the flame, gentler, nothing around it', async () => {
-    patchReactNativeWeb({ reduceMotion: false });
-    renderWithProviders(<Fire size={FIRE_SMALL} />);
-    await settle();
-    const fire = screen.getByTestId('fire-lit-small');
-    expect(fire.querySelectorAll('path')).toHaveLength(FIRE_TONGUES.filter((t) => t.small).length);
-    expect(fire.querySelectorAll('radialGradient')).toHaveLength(0);
-    expect(fire.querySelector('svg')!.getAttribute('viewBox')).toBe(`${FIRE_SMALL_VIEW.x} ${FIRE_SMALL_VIEW.y} ${FIRE_SMALL_VIEW.w} ${FIRE_SMALL_VIEW.h}`);
-  });
-
-  it('is grey and still unlit: no clock, no glow, nothing rising', async () => {
+  it('is a cold hearth with no streak: charred logs, an ember and its smoke moving off the clock, and no flame', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     const seen = clocks();
     renderWithProviders(<Fire size={168} lit={false} />);
     await settle();
     const fire = screen.getByTestId('fire-unlit');
-    expect(fire.querySelectorAll('path')).toHaveLength(FIRE_TONGUES.length + FIRE_BASE.length);
-    expect(fire.querySelectorAll('radialGradient')).toHaveLength(0);
-    const colours = [...fire.querySelectorAll('stop')].map((s) => s.getAttribute('stop-color')!);
-    expect(colours.length).toBeGreaterThan(FIRE_TONGUES.length * 2);
-    // every colour a grey: no channel far from the others
-    for (const c of colours) {
-      const [r, g, b] = [1, 3, 5].map((i) => parseInt(c.slice(i, i + 2), 16));
-      expect(Math.max(r!, g!, b!) - Math.min(r!, g!, b!)).toBeLessThan(40);
-    }
-    expect(seen.started).toBe(0);
+    expect(tongues(fire)).toEqual([]);
+    expect(fire.querySelectorAll('path[fill$="char)"]').length).toBeGreaterThan(0);
+    expect(fire.querySelectorAll('circle[fill$="cinder)"]')).toHaveLength(1);
+    expect(fire.querySelectorAll('linearGradient[id$="d0"], linearGradient[id$="d1"]')).toHaveLength(2);
+    expect(seen.started).toBe(1);
   });
 
-  it('stands still under Reduce Motion: burning, but no clock runs and nothing rises', async () => {
+  it('is the light version at the small size, in the same box at every stage, the grey flame of no streak standing still', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    for (const stage of FIRE_STAGES) {
+      const seen = clocks();
+      renderWithProviders(<Fire size={FIRE_SMALL} level={lvl(stage)} />);
+      await settle();
+      const fire = screen.getByTestId(stage === 'cold' ? 'fire-unlit-small' : 'fire-lit-small');
+      expect(fire.style.width, stage).toBe(`${(FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h}px`);
+      expect(tongues(fire), stage).toEqual(['outer', 'core', 'heart']);
+      expect(fire.querySelectorAll('ellipse'), stage).toHaveLength(0);
+      expect(seen.started, stage).toBe(stage === 'cold' ? 0 : 1);
+      cleanup();
+      vi.restoreAllMocks();
+    }
+  });
+
+  it('stands still under Reduce Motion: the fire at its stage, but no clock runs and nothing rises', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     // the setting is asked once; a fire after the answer starts from it
     renderWithProviders(<Fire size={40} />);
     await settle();
     cleanup();
     const seen = clocks();
-    renderWithProviders(<Fire size={168} />);
+    const runs = growths();
+    renderWithProviders(<Fire size={168} level={lvl('kindling')} from={lvl('spark')} />);
     await settle();
     const fire = screen.getByTestId('fire-lit');
-    expect(fire.querySelectorAll('path')).toHaveLength(FIRE_TONGUES.length + FIRE_BASE.length);
+    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
+    expect(oldTongues(fire)).toEqual([]);
+    expect(fire.querySelectorAll('path[fill*="aw"]')).toHaveLength(0);
     expect(seen.started).toBe(0);
+    expect(runs).toHaveLength(0);
+  });
+
+  it('stands still when asked to, as for a stage not reached yet: no clock, no sparks, no growing', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    const seen = clocks();
+    const runs = growths();
+    renderWithProviders(<Fire size={104} level={lvl('blaze')} from={lvl('bonfire')} still />);
+    await settle();
+    const fire = screen.getByTestId('fire-lit');
+    expect(tongues(fire)).toEqual(fireDrawing(lvl('blaze'), 104).tongues.map((t) => t.id));
+    expect(fire.querySelectorAll('path[fill*="aw"]')).toHaveLength(0);
+    expect([seen.started, runs.length]).toEqual([0, 0]);
+  });
+
+  it('grows from the old fire into the new one off one more native value after a moment, then lets the old one go', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    const seen = clocks();
+    const runs = growths();
+    renderWithProviders(<Fire size={190} level={lvl('kindling')} from={lvl('spark', 0.9)} />);
+    await settle();
+    const fire = screen.getByTestId('fire-lit');
+    expect(oldTongues(fire)).toEqual(['flame', 'heart']);
+    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
+    expect(seen.started).toBe(1);
+    expect(runs).toHaveLength(1);
+    expect(runs[0]!.config).toMatchObject({ toValue: 1, delay: FIRE_GROW.delayMs, duration: FIRE_GROW.ms, useNativeDriver: true });
+    await act(async () => runs[0]!.finish());
+    expect(oldTongues(fire)).toEqual([]);
+    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
+  });
+
+  it('lights cold logs on the first day: the cold hearth is drawn over the new one, to fade as the logs catch', async () => {
+    patchReactNativeWeb({ reduceMotion: false });
+    growths();
+    renderWithProviders(<Fire size={190} level={lvl('spark')} from={lvl('cold')} />);
+    await settle();
+    const fire = screen.getByTestId('fire-lit');
+    expect(fire.querySelectorAll('path[fill*="char)"]').length).toBeGreaterThan(0);
+    expect(fire.querySelectorAll('circle[fill$="bcinder)"]')).toHaveLength(1);
+    expect(tongues(fire)).toEqual(['flame', 'heart']);
   });
 });

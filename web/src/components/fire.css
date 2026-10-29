@@ -1,11 +1,12 @@
 /*
- * The streak's fire (components/Fire.tsx). Every moving part runs one of two
- * keyframes with its own four poses, period and phase, set on it from the
- * shared drawing (`art/fire.ts`): a loop eases through its poses and back, a
- * rise runs straight up through them and starts again unseen. The stops here
- * are the drawing's `FIRE_LOOP_STOPS` and `FIRE_RISE_STOPS`; the loop's curve
- * is the sine ease the phone samples. Only transform and opacity change, each
- * about the part's own root in the drawing's units.
+ * The streak's fire (components/Fire.tsx). Every moving part runs one of
+ * three keyframes with its own poses, period and phase, set on it from the
+ * shared drawing (`art/fire.ts`): a loop eases through its four poses and
+ * back, a rise runs straight up through its six and starts again unseen, and
+ * a growth eases once through its four and stays. The stops here are the
+ * drawing's `FIRE_LOOP_STOPS`, `FIRE_RISE_STOPS` and `FIRE_GROW_STOPS`; the
+ * eased curve is the sine ease the phone samples. Only transform and opacity
+ * change, each about the part's own root in the drawing's units.
  */
 .fire {
   display: inline-block;
@@ -14,12 +15,16 @@
   vertical-align: middle;
 }
 
-.fire-part {
+.fire-part,
+.fire-grow {
   transform-box: view-box;
   animation-duration: var(--fire-period);
   animation-delay: var(--fire-delay);
-  animation-iteration-count: infinite;
   animation-fill-mode: both;
+}
+
+.fire-part {
+  animation-iteration-count: infinite;
 }
 
 .fire-loop {
@@ -30,6 +35,12 @@
 .fire-rise {
   animation-name: fire-rise;
   animation-timing-function: linear;
+}
+
+.fire-grow {
+  animation-name: fire-grow;
+  animation-iteration-count: 1;
+  animation-timing-function: cubic-bezier(0.37, 0, 0.63, 1);
 }
 
 @keyframes fire-loop {
@@ -57,11 +68,38 @@
     transform: var(--fire-k0);
     opacity: var(--fire-o0);
   }
-  15% {
+  12% {
     transform: var(--fire-k1);
     opacity: var(--fire-o1);
   }
-  70% {
+  35% {
+    transform: var(--fire-k2);
+    opacity: var(--fire-o2);
+  }
+  60% {
+    transform: var(--fire-k3);
+    opacity: var(--fire-o3);
+  }
+  85% {
+    transform: var(--fire-k4);
+    opacity: var(--fire-o4);
+  }
+  100% {
+    transform: var(--fire-k5);
+    opacity: var(--fire-o5);
+  }
+}
+
+@keyframes fire-grow {
+  0% {
+    transform: var(--fire-k0);
+    opacity: var(--fire-o0);
+  }
+  30% {
+    transform: var(--fire-k1);
+    opacity: var(--fire-o1);
+  }
+  60% {
     transform: var(--fire-k2);
     opacity: var(--fire-o2);
   }
@@ -76,11 +114,14 @@
   animation: none;
 }
 
+/* motion turned down while it burns: the fire stands still at the stage it grew into */
 @media (prefers-reduced-motion: reduce) {
-  .fire-part {
+  .fire-part,
+  .fire-grow {
     animation: none;
   }
-  .fire-rise {
+  .fire-rise:not(.fire-keep),
+  .fire-grow.is-gone {
     display: none;
   }
 }
