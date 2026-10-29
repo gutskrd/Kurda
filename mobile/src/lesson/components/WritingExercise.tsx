@@ -3,6 +3,7 @@ import { radii, spacing, typography } from '../../theme/tokens';
 import { useTheme } from '../../theme/ThemeProvider';
 import type { Exercise } from '../types';
 import { useI18n } from '../../i18n/I18nContext';
+import { ExerciseHeadline } from './ExerciseHeadline';
 import { KurdishAnswerInput } from './KurdishAnswerInput';
 
 interface Props {
@@ -23,7 +24,7 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
 
   return (
     <View style={styles.container}>
-      <Text style={[styles.label, { color: colors.textSecondary }]}>{t('lesson.write.prompt')}</Text>
+      <ExerciseHeadline>{t('lesson.write.prompt')}</ExerciseHeadline>
       {exercise.prompt ? <Text style={[styles.prompt, { color: colors.textPrimary }]}>{exercise.prompt}</Text> : null}
 
       <KurdishAnswerInput
@@ -43,9 +44,9 @@ export function WritingExercise({ exercise, text, onChangeText, disabled, dialec
 }
 
 const styles = StyleSheet.create({
-  container: { gap: spacing.md },
-  label: { fontSize: typography.sizes.sm, textTransform: 'uppercase' },
-  prompt: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold },
+  container: { gap: spacing.lg },
+  // the question, under the headline that says what to do with it
+  prompt: { fontSize: typography.sizes.lg, fontWeight: typography.weights.semibold },
   input: {
     minHeight: 96,
     borderRadius: radii.md,
