@@ -103,6 +103,9 @@ describe('the week', () => {
     inLanguage(<StreakWeek streak={week} />);
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(document.querySelector('.end-week-hevalo .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');
+    // the fire burning on the ground beside it
+    expect(document.querySelector('.end-week-scene .end-week-fire')).toHaveClass('fire', 'is-lit');
+    expect(document.querySelector('.end-week-scene .hevalo-window')).toBeInTheDocument();
     // and the heading takes it along, for whoever lands on it
     expect(screen.getByRole('heading', { name: '4-day streak' })).toHaveAccessibleDescription('Another day learned. See you again tomorrow!');
   });

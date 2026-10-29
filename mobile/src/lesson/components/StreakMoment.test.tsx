@@ -125,8 +125,9 @@ describe('the kept streak', () => {
     show({ current: 1, longest: 9 });
     fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
     expect(await screen.findByText('Welcome back! A fresh start is still a great start.')).toBeTruthy();
-    // leaning out of his window under his words
-    expect(within(screen.getByTestId('lesson-streak-day')).getByTestId('hevalo-window')).toBeTruthy();
+    // leaning out of his window under his words, the fire burning in front of it: drawn after it, so over its corner
+    const scene = within(screen.getByTestId('lesson-streak-day'));
+    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire-lit')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     cleanup();
 
     show({ current: 9, longest: 9 });

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   BURST,
   CELEBRATE_MS,
+  FIRE_VIEW,
   STREAK_DAY_TIMING,
   freezeLine,
   streakMood,
@@ -136,6 +137,19 @@ const CHEERS: Record<StreakMood, MessageKey> = {
   ordinary: 'lesson.streak.say.steady',
 };
 
+/**
+ * Hevalo's window under his words, and the fire on the ground in front of it,
+ * by its lower corner on the side the reading starts from: how tall each
+ * stands (the fire about two thirds of the window), and how far the fire's box
+ * reaches over the window's, so its logs lie across the wall's corner. The two
+ * stand together in the middle, the window this far towards where the reading
+ * ends, where the bubble points.
+ */
+const WINDOW = 160;
+const FIRE = 110;
+const FIRE_OVER = 28;
+const WINDOW_ASIDE = ((FIRE * FIRE_VIEW.w) / FIRE_VIEW.h - FIRE_OVER) / 2;
+
 const DAY_WORDS: Record<WeekDayState, MessageKey> = {
   learned: 'lesson.streak.week.learned',
   frozen: 'lesson.streak.week.frozen',
@@ -159,12 +173,14 @@ export function StreakWeek({ streak }: { streak: Streak }): React.JSX.Element {
 
   return (
     <section className="end-week" aria-labelledby="end-week-title">
-      <div className="end-week-hevalo">
+      <div className="end-week-hevalo" style={{ '--fire-over': `${FIRE_OVER}px`, '--window-aside': `${WINDOW_ASIDE}px` } as React.CSSProperties}>
         <p className="end-bubble" id="end-week-cheer">
           {t(CHEERS[streakMood(streak)])}
         </p>
-        <Fire size={120} className="end-week-fire" />
-        <HevaloWindow size={160} reaction="cheer" />
+        <div className="end-week-scene">
+          <Fire size={FIRE} className="end-week-fire" />
+          <HevaloWindow size={WINDOW} reaction="cheer" />
+        </div>
       </div>
       <h2 className="end-week-count" id="end-week-title" tabIndex={-1} ref={heading} aria-describedby="end-week-cheer">
         <span className="end-week-number" aria-hidden="true">

@@ -221,19 +221,24 @@
   padding-top: 8px;
   text-align: center;
 }
+/* its own layer, so the fire standing in front of the window is in front of nothing else */
 .end-week-hevalo {
-  position: relative;
   isolation: isolate;
   display: grid;
   justify-items: center;
   gap: 10px;
 }
-/* the streak's fire burning just behind Hevalo, on the side the reading starts from */
+/* Hevalo's window, and the streak's fire on the ground in front of its lower corner, on the side the reading starts from */
+.end-week-scene {
+  display: flex;
+  align-items: flex-end;
+}
+/* in front of the wall: its logs over the wall's corner and a little below its foot, nearer than the wall */
 .end-week-fire {
-  position: absolute;
-  bottom: 4px;
-  inset-inline-start: calc(50% - 104px);
-  z-index: -1;
+  position: relative;
+  z-index: 1;
+  margin-inline-end: calc(-1 * var(--fire-over));
+  margin-bottom: -2px;
 }
 /* what Hevalo says, in a bubble whose tail points down at him */
 .end-bubble {
@@ -252,11 +257,11 @@
 .end-bubble::after {
   content: '';
   position: absolute;
-  left: 50%;
+  inset-inline-start: calc(50% + var(--window-aside, 0px));
   bottom: -9px;
   width: 16px;
   height: 16px;
-  margin-left: -8px;
+  margin-inline-start: -8px;
   border-right: 2px solid var(--border-strong);
   border-bottom: 2px solid var(--border-strong);
   border-bottom-right-radius: 4px;
@@ -325,8 +330,9 @@
 .end-day-mark {
   display: grid;
   place-items: center;
-  width: 40px;
-  height: 40px;
+  /* narrower on a narrow screen, so today's ring stays clear of the days beside it */
+  width: min(40px, 100% - 6px);
+  aspect-ratio: 1;
   border-radius: 50%;
   background: var(--surface-2);
   color: transparent;

@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
 import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
-import { STREAK_DAY_TIMING, freezeLine, streakSpeech, streakWeek, weekStartsOn, type StreakMood, type WeekDay } from '@kurda/shared';
+import { FIRE_VIEW, STREAK_DAY_TIMING, WINDOW_VIEW, freezeLine, streakSpeech, streakWeek, weekStartsOn, type StreakMood, type WeekDay } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
 import { HevaloWindow } from '../../characters/HevaloWindow';
@@ -23,15 +23,26 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
 
-/** How wide the fire is drawn on its own screen, and beside Hevalo after it; it stands a quarter taller. */
+/** How wide the fire is drawn on its own screen; it stands a quarter taller. */
 const FLAME = 168;
-const FLAME_SMALL = 112;
 /** The day's number on the flame's screen, and on the streak's. */
 const NUMBER = 112;
 const NUMBER_SMALL = 88;
-/** How tall Hevalo's window stands under his words, and how far it stands from the middle, towards where the reading ends: the flame beside it. */
+/**
+ * Hevalo's window under his words, and the fire on the ground in front of it,
+ * by its lower corner on the side the reading starts from: how tall each
+ * stands (the fire about two thirds of the window), and how far the fire's box
+ * reaches over the window's, so its logs lie across the wall's corner. The two
+ * stand together in the middle.
+ */
 const WINDOW = 156;
-const WINDOW_ASIDE = 56;
+const FIRE_BESIDE = 108;
+const FIRE_OVER = 28;
+const WINDOW_WIDE = (WINDOW * WINDOW_VIEW.w) / WINDOW_VIEW.h;
+const FIRE_WIDE = (FIRE_BESIDE * FIRE_VIEW.w) / FIRE_VIEW.h;
+/** How far each stands from the middle: the window towards where the reading ends, the fire towards where it starts. */
+const WINDOW_ASIDE = (FIRE_WIDE - FIRE_OVER) / 2;
+const FIRE_ASIDE = (WINDOW_WIDE - FIRE_OVER) / 2;
 /** A day of the week: the circle, and when the circles arrive one after another, today's last. */
 const DAY = 36;
 const DAY_STAGGER_MS = 50;
@@ -236,8 +247,8 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
     return () => run.stop();
   }, [reduce, arrive]);
   const rise = arrive.interpolate({ inputRange: [0, 1], outputRange: [10, 0] });
-  // the window and the bubble's point at it, beside the flame
-  const aside = (dir.rtl ? -1 : 1) * WINDOW_ASIDE;
+  // the window and the bubble's point at it towards where the reading ends, the fire towards where it starts
+  const toEnd = dir.rtl ? -1 : 1;
 
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="lesson-streak-day">
@@ -246,15 +257,15 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
           <View style={[styles.bubble, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
             <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{words}</Text>
             <View
-              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: aside }, { rotate: '45deg' }] }]}
+              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: toEnd * WINDOW_ASIDE }, { rotate: '45deg' }] }]}
             />
           </View>
-          {/* Hevalo leaning out of his window under his words, the flame burning beside it on the side the reading starts from */}
+          {/* Hevalo leaning out of his window under his words, the fire burning on the ground in front of it */}
           <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <View style={[styles.behind, { transform: [{ translateX: (dir.rtl ? 1 : -1) * FLAME_SMALL * 0.42 }] }]}>
-              <Fire size={FLAME_SMALL * 1.25} />
+            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: toEnd * WINDOW_ASIDE }] }} />
+            <View style={[styles.inFront, { transform: [{ translateX: -toEnd * FIRE_ASIDE }] }]}>
+              <Fire size={FIRE_BESIDE} />
             </View>
-            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: aside }] }} />
           </View>
         </Animated.View>
         <View
@@ -418,7 +429,8 @@ const styles = StyleSheet.create({
   // the bubble's point, towards Hevalo under it
   tail: { position: 'absolute', bottom: -8, alignSelf: 'center', width: 16, height: 16, borderRightWidth: 1.5, borderBottomWidth: 1.5 },
   hevalo: { alignItems: 'center', justifyContent: 'flex-end' },
-  behind: { position: 'absolute', bottom: spacing.xs },
+  // its logs a little below the wall's foot, on the ground nearer than the wall
+  inFront: { position: 'absolute', bottom: -2 },
   count: { alignItems: 'center' },
   bigNumber: { ...display(NUMBER_SMALL), fontVariant: ['tabular-nums'], textAlign: 'center' },
   unit: { fontSize: typography.sizes.xl, fontWeight: typography.weights.bold, textAlign: 'center', marginTop: -spacing.xs },
