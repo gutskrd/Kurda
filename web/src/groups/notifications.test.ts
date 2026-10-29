@@ -33,19 +33,23 @@ describe('news about a group', () => {
 
   it('tells the admins how many ask to come back, and opens the group on its requests', () => {
     expect(say({ kind: 'group_request' })).toEqual({ title: 'Someone asked to rejoin Hevalên Amedê', body: null, to: '/app/messages?group=g1&info=requests' });
-    expect(say({ kind: 'group_request', count: 3 })?.title).toBe('3 people asked to rejoin Hevalên Amedê');
+    // a push carries strings only, as the server writes them
+    expect(say({ kind: 'group_request', count: '3' })?.title).toBe('3 people asked to rejoin Hevalên Amedê');
+    expect(say({ kind: 'group_request', count: '1' })?.title).toBe('Someone asked to rejoin Hevalên Amedê');
   });
 
   it('tells a requester they are back in, or free to join again', () => {
-    expect(say({ kind: 'group_request_approved', rejoined: true })?.title).toBe('You’re back in Hevalên Amedê');
-    expect(say({ kind: 'group_request_approved', rejoined: false })?.title).toBe('You can join Hevalên Amedê again');
+    expect(say({ kind: 'group_request_approved', rejoined: 'true' })?.title).toBe('You’re back in Hevalên Amedê');
+    expect(say({ kind: 'group_request_approved', rejoined: 'false', privacy: 'open' })?.title).toBe('You can join Hevalên Amedê again');
+    // an invite-only group is joined only when an admin adds them: the server says so in its own words
+    expect(say({ kind: 'group_request_approved', rejoined: 'false', privacy: 'invite' })?.title).toBe('Server title');
   });
 
   it('tells a requester turned down when they may ask again, or that they may not', () => {
-    const declined = say({ kind: 'group_request_declined', requestAfter: '2026-11-05T10:00:00.000Z', closed: false });
+    const declined = say({ kind: 'group_request_declined', until: '2026-11-05T10:00:00.000Z' });
     expect(declined?.title).toBe('Your request to rejoin Hevalên Amedê wasn’t accepted');
     expect(declined?.body).toMatch(/^You can ask again on .+\.$/);
-    expect(say({ kind: 'group_request_declined', closed: true })?.body).toBe('The admins aren’t taking requests from you for this group.');
+    expect(say({ kind: 'group_request_declined', closed: 'true' })?.body).toBe('The admins aren’t taking requests from you for this group.');
   });
 
   it('shows the server words, still opening the group, when the group is not named', () => {

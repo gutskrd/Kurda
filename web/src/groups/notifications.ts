@@ -6,6 +6,8 @@ import type { InboxNote, NoteView } from '../reports/notifications';
 type Translate = (key: MessageKey, vars?: Record<string, string | number>) => string;
 
 const str = (v: unknown): string | null => (typeof v === 'string' && v.length > 0 ? v : null);
+/** A push's data is all strings: 'true' is true, whether it came as a string or as itself. */
+const yes = (v: unknown): boolean => v === true || v === 'true';
 
 const BANNED_FOR: Record<string, MessageKey> = {
   '1d': 'notify.groupBanned.day',
@@ -51,7 +53,7 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
       };
     }
     case 'group_request': {
-      const count = typeof data.count === 'number' && data.count > 1 ? data.count : 1;
+      const count = Math.max(1, Math.floor(Number(data.count)) || 1);
       return {
         title: count > 1 ? t('notify.groupRequest.many', { count, group }) : t('notify.groupRequest.one', { group }),
         body: null,
@@ -59,12 +61,16 @@ export function groupNotification(note: InboxNote, t: Translate, locale: string)
       };
     }
     case 'group_request_approved':
-      return { title: data.rejoined === false ? t('notify.groupApproved.out', { group }) : t('notify.groupApproved.in', { group }), body: null, to };
+      // let back but not put back: in an invite-only group only an admin can add them again, as the server's own words say
+      if (data.rejoined === false || data.rejoined === 'false') {
+        return data.privacy === 'invite' ? asWritten : { title: t('notify.groupApproved.out', { group }), body: null, to };
+      }
+      return { title: t('notify.groupApproved.in', { group }), body: null, to };
     case 'group_request_declined': {
-      const after = str(data.requestAfter);
+      const after = str(data.until);
       return {
         title: t('notify.groupDeclined.title', { group }),
-        body: data.closed === true ? t('notify.groupDeclined.closed') : after ? t('groups.ask.wait', { date: formatUntil(after, locale) }) : null,
+        body: yes(data.closed) ? t('notify.groupDeclined.closed') : after ? t('groups.ask.wait', { date: formatUntil(after, locale) }) : null,
         to,
       };
     }
