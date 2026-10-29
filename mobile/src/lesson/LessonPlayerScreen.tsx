@@ -235,6 +235,17 @@ export function SessionPlayer({
 
   const ex = currentExercise(state);
 
+  // this sitting, for the results' time: from the first exercise shown to the last answer (a resumed lesson counts only this time)
+  const shownAt = useRef<number | null>(null);
+  const [sitting, setSitting] = useState<{ ms: number; answers: number } | null>(null);
+  useEffect(() => {
+    if (ex && shownAt.current === null) shownAt.current = Date.now();
+    if (state.status === 'finished' && shownAt.current !== null) {
+      const from = shownAt.current;
+      setSitting((was) => was ?? { ms: Date.now() - from, answers: answers.current });
+    }
+  }, [ex, state.status]);
+
   // what a finished lesson is compared with (moments.ts): the level, the
   // streak, today's goal and the league as they stood when it opened
   const before = useRef<Standing | null>(null);
@@ -462,6 +473,8 @@ export function SessionPlayer({
           next={next}
           goalDone={goalDone}
           practise={practisableMistakes(results.mistakes ?? [], state.exercises)}
+          dialect={view.dialect}
+          sitting={sitting}
           onDone={onExit}
           onNext={onNext}
           onPractise={onPractise}

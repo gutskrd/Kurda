@@ -429,7 +429,7 @@ describe('the results', () => {
   }
 
   // the mistakes can be practised at once; the course's next lesson leads while today's goal is still to meet
-  it('offers the next lesson and practising the mistakes, and opens the Day card on the way when today kept the streak', async () => {
+  it('offers the next lesson and practising the mistakes, and passes the kept streak on the way', async () => {
     testAuth.client = fakeClient({
       'GET /me': inTurn(
         ok({ user: { skipSpeaking: false, streak: { current: 3, lastActiveOn: '2026-10-27' } } }),
@@ -454,15 +454,17 @@ describe('the results', () => {
     await finish(3);
     expect(await screen.findByText('Lesson complete!')).toBeTruthy();
     expect(screen.getByLabelText('Right first time: 50%, Good practice, 1 of 2')).toBeTruthy();
+    // this sitting, timed from the first exercise shown: three answers in seconds is quick
+    expect(screen.getByLabelText(/^Quick: 0 min \d+ s$/)).toBeTruthy();
     expect(await screen.findByText('19 of 20 XP today')).toBeTruthy();
     expect(await screen.findByRole('button', { name: 'Next lesson' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Practise these now' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Back to the path' })).toBeTruthy();
 
-    // today kept the streak: the Day card comes first, then the way on that was chosen
+    // today kept the streak: its moment comes first, then the way on that was chosen
     fireEvent.click(screen.getByRole('button', { name: 'Practise these now' }));
-    expect(await screen.findByRole('heading', { name: 'Day 4' })).toBeTruthy();
-    expect(screen.getByText('You learned today. 12 days learned in all.')).toBeTruthy();
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    expect(await screen.findByRole('heading', { name: '4 day streak' })).toBeTruthy();
     expect(screen.getByLabelText('2 of 5 sessions to your next freeze')).toBeTruthy();
     expect(onPractise).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Continue' }));

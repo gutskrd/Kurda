@@ -124,6 +124,8 @@ export type RootStackParamList = {
   Alphabet: { script?: AlphabetScript } | undefined;
   /** Words to know — colours, numbers, days, months — from Learn's tools and the alphabet's last card. */
   Words: undefined;
+  /** Today's quests and any chest waiting, from Learn's quests card (quests/QuestsScreen). */
+  Quests: undefined;
   /** One word set; `set` is checked where the screen is drawn, since a link can carry anything. */
   WordSet: { set: string; script?: AlphabetScript };
   Saved: undefined;

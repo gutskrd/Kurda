@@ -128,6 +128,17 @@ export {
   type ResultsActions,
   type ResultsGrade,
 } from './lesson-moments.js';
+/** After the results: the sitting's time and pace, Hevalo's words on a kept streak, and the moments that follow, alike on both. */
+export {
+  QUICK_PACE,
+  afterResults,
+  sittingClock,
+  sittingPace,
+  streakMood,
+  streakSpeech,
+  type AfterResults,
+  type StreakMood,
+} from './lesson-end.js';
 /**
  * The lesson path a course map is drawn as: which skill is current, the
  * milestones, each unit's colour and where every stop sits — so the browser
