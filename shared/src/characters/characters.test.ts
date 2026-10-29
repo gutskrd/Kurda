@@ -1,18 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { VISEMES } from '../lipsync/visemes.js';
 import {
+  ACTS,
   CHARACTER_IDS,
   CHARACTER_NAMES,
   CHARACTERS,
   DEFAULT_CHARACTER,
   STAGE_FIGURE_SHARE,
+  WINDOW_PLACE,
+  WINDOW_VIEW,
   characterArt,
   characterSvg,
+  cropBody,
+  cropBox,
   headGroup,
   isCharacterId,
   stageBackdrop,
   stageFigure,
+  windowArt,
   type CharacterArt,
+  type CharacterBox,
 } from './index.js';
 import { curve, mirror, symmetric, taper } from './pen.js';
 
@@ -148,6 +155,74 @@ function extras(art: CharacterArt): [string, string][] {
 
 const bytes = (s: string): number => new TextEncoder().encode(s).length;
 
+/** How many numbers each path step takes. */
+const STEP: Readonly<Record<string, number>> = { m: 2, l: 2, h: 1, v: 1, c: 6, s: 4, q: 4, t: 2, a: 7, z: 0 };
+
+/** Every point a path passes through or pulls towards (its handles too), in absolute units. */
+function pathPoints(d: string): [number, number][] {
+  const tokens = d.match(/[A-Za-z]|-?(?:\d+\.?\d*|\.\d+)/g) ?? [];
+  const out: [number, number][] = [];
+  let [x, y, sx, sy] = [0, 0, 0, 0];
+  let cmd = 'M';
+  let i = 0;
+  while (i < tokens.length) {
+    const t = tokens[i] as string;
+    if (/[A-Za-z]/.test(t)) {
+      cmd = t;
+      i += 1;
+      if (t === 'z' || t === 'Z') [x, y] = [sx, sy];
+      continue;
+    }
+    const lower = cmd.toLowerCase();
+    const count = STEP[lower] ?? 2;
+    const args = tokens.slice(i, i + count).map(Number);
+    i += count;
+    const rel = cmd === lower;
+    const [ox, oy] = rel ? [x, y] : [0, 0];
+    if (lower === 'h') x = ox + (args[0] ?? 0);
+    else if (lower === 'v') y = oy + (args[0] ?? 0);
+    else if (lower === 'a') [x, y] = [ox + (args[5] ?? 0), oy + (args[6] ?? 0)];
+    else {
+      for (let k = 0; k + 1 < count; k += 2) out.push([ox + (args[k] ?? 0), oy + (args[k + 1] ?? 0)]);
+      [x, y] = [ox + (args[count - 2] ?? 0), oy + (args[count - 1] ?? 0)];
+      if (lower === 'm') {
+        [sx, sy] = [x, y];
+        cmd = rel ? 'l' : 'L';
+      }
+    }
+    out.push([x, y]);
+  }
+  return out;
+}
+
+/** The box round everything a piece of markup draws (not its clips or gradients), in its own units. */
+function extent(markup: string): CharacterBox {
+  const xs: number[] = [];
+  const ys: number[] = [];
+  const visit = (e: El): void => {
+    if (e.name === 'defs' || e.name === 'clipPath') return;
+    if (e.name === 'path') {
+      for (const [px, py] of pathPoints(e.attrs.d ?? '')) {
+        xs.push(px);
+        ys.push(py);
+      }
+    }
+    if (e.name === 'ellipse' || e.name === 'circle') {
+      const r = Math.max(Number(e.attrs.rx ?? e.attrs.r), Number(e.attrs.ry ?? e.attrs.r));
+      xs.push(Number(e.attrs.cx) - r, Number(e.attrs.cx) + r);
+      ys.push(Number(e.attrs.cy) - r, Number(e.attrs.cy) + r);
+    }
+    e.children.forEach(visit);
+  };
+  visit(parse(markup));
+  const x = Math.min(...xs);
+  const y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+}
+
+const inside = (inner: CharacterBox, outer: CharacterBox): boolean =>
+  inner.x >= outer.x && inner.y >= outer.y && inner.x + inner.w <= outer.x + outer.w && inner.y + inner.h <= outer.y + outer.h;
+
 describe('the characters', () => {
   it('are Hevalo, Hamo and Xezo, by those names', () => {
     expect([...CHARACTER_IDS]).toEqual(['hevalo', 'hamo', 'xezo']);
@@ -254,6 +329,41 @@ describe('the characters', () => {
     expect(characterArt('xezo').chest).toBeUndefined();
   });
 
+  it('frames Hevalo head and neck for a window: all of his head in the box, centred on him, and his neck on under the sill', () => {
+    const art = characterArt('hevalo');
+    const neck = art.neck!;
+    const box = cropBox(art, 'head');
+    expect(box).toEqual(neck.box);
+    // the antlers, the ears and the face, every point of them, with a little room round them
+    const head = extent(headGroup(art));
+    expect(inside({ x: head.x - 10, y: head.y - 10, w: head.w + 20, h: head.h }, box)).toBe(true);
+    expect(box.x + box.w / 2).toBe(art.headPivot.x);
+    // the sill crosses his neck under his chin, and the box goes on below it further than his highest hop lifts him
+    expect(neck.sill).toBeGreaterThan(head.y + head.h);
+    expect(neck.sill).toBeLessThan(box.y + box.h);
+    const hop = Math.max(...Object.values(ACTS).flatMap((act) => (act.rise ?? []).map(([, v]) => v)));
+    expect(box.y + box.h - neck.sill).toBeGreaterThan(hop * box.h + 20);
+    // his body as far as the chest under the same ids, with the neck's shade toward the sill
+    const { problems, ids, refs } = inspect(neck.body);
+    expect(problems).toEqual([]);
+    for (const r of refs) expect(ids).toContain(r);
+    expect(neck.body.startsWith(art.chest!)).toBe(true);
+    expect(cropBody(art, 'head')).toBe(neck.body);
+    expect(cropBody(art, 'half')).toBe(art.body);
+    // drawn whole: the crop shows it
+    const svg = parse(characterSvg('hevalo', { crop: 'head', idPrefix: 'neck' })).children[0] as El;
+    expect(svg.attrs.viewBox).toBe(`${box.x} ${box.y} ${box.w} ${box.h}`);
+  });
+
+  it('shows the head and shoulders for head and neck of a character drawn without a neck to lean out on', () => {
+    for (const id of ['hamo', 'xezo'] as const) {
+      const art = characterArt(id);
+      expect(art.neck).toBeUndefined();
+      expect(cropBox(art, 'head')).toEqual(art.bust);
+      expect(cropBody(art, 'head')).toBe(art.body);
+    }
+  });
+
   it('is the same string every time it is drawn', () => {
     for (const id of CHARACTER_IDS) {
       expect(characterSvg(id, { mouth: 'a', idPrefix: 'again' })).toBe(characterSvg(id, { mouth: 'a', idPrefix: 'again' }));
@@ -358,6 +468,59 @@ describe('a stage', () => {
         expect(Math.max(shown.height / (height - 16), shown.width / (width * STAGE_FIGURE_SHARE))).toBeCloseTo(1, 9);
       }
     }
+  });
+});
+
+describe('the window Hevalo leans out of', () => {
+  const art = characterArt('hevalo');
+  const neck = art.neck!;
+
+  it('is two well-formed drawings in the window box, behind him and in front of him, by day and at dusk', () => {
+    for (const dark of [false, true]) {
+      const drawn = windowArt({ dark, idPrefix: `win${dark ? 'd' : 'l'}` });
+      for (const layer of [drawn.back, drawn.front]) {
+        const svg = parse(layer).children[0] as El;
+        expect(svg.name).toBe('svg');
+        expect(svg.attrs.viewBox).toBe(`${WINDOW_VIEW.x} ${WINDOW_VIEW.y} ${WINDOW_VIEW.w} ${WINDOW_VIEW.h}`);
+        expect(svg.attrs['aria-hidden']).toBe('true');
+        const { problems, ids, refs } = inspect(layer);
+        expect(problems).toEqual([]);
+        for (const r of refs) expect(ids).toContain(r);
+        for (const i of ids) expect(i.startsWith(`win${dark ? 'd' : 'l'}-`)).toBe(true);
+        // all of it inside the picture's own box
+        expect(inside(extent(layer), WINDOW_VIEW)).toBe(true);
+      }
+    }
+    expect(windowArt().back).not.toBe(windowArt({ dark: true }).back);
+    expect(windowArt({ idPrefix: 'again' })).toEqual(windowArt({ idPrefix: 'again' }));
+  });
+
+  it('keeps two windows on a page apart: each its own ids', () => {
+    const one = windowArt({ idPrefix: 'one' });
+    const two = windowArt({ idPrefix: 'two' });
+    const ids = [one.back, one.front, two.back, two.front].flatMap((m) => inspect(m).ids);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it('places him in it: his head and neck crop where it is drawn, cut off at the sill, and waiting all under it to pop up', () => {
+    const box = neck.box;
+    expect(inside(box, WINDOW_VIEW)).toBe(true);
+    // the same either way round, so a mirrored window keeps him where he is
+    expect(WINDOW_VIEW.x + WINDOW_VIEW.w / 2).toBe(box.x + box.w / 2);
+    const { figure, sill, drop } = WINDOW_PLACE;
+    expect(figure.left * WINDOW_VIEW.w + WINDOW_VIEW.x).toBeCloseTo(box.x, 9);
+    expect(figure.top * WINDOW_VIEW.h + WINDOW_VIEW.y).toBeCloseTo(box.y, 9);
+    expect(figure.width * WINDOW_VIEW.w).toBeCloseTo(box.w, 9);
+    expect(figure.height * WINDOW_VIEW.h).toBeCloseTo(box.h, 9);
+    expect(sill * WINDOW_VIEW.h + WINDOW_VIEW.y).toBeCloseTo(neck.sill, 9);
+    // dropped, the top of his box (over his antlers) is at the sill
+    expect(figure.top + drop).toBeCloseTo(sill, 9);
+  });
+
+  it('draws the sill in front of him over the line he is cut off at', () => {
+    const front = extent(windowArt().front);
+    expect(front.y).toBeLessThan(neck.sill);
+    expect(front.y + front.h).toBeGreaterThan(neck.sill);
   });
 });
 
