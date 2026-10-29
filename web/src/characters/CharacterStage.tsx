@@ -63,6 +63,7 @@ export function CharacterStage({
   clips,
   reaction = null,
   height: fixed,
+  share = STAND_AT * 2,
   className,
   children,
 }: {
@@ -70,6 +71,8 @@ export function CharacterStage({
   reaction?: CharacterReaction | null;
   /** a stage this tall whatever the window (`STAGE.card`) */
   height?: number;
+  /** the least share of the stage's width the character's side takes: less beside a speech bubble, which needs the room */
+  share?: number;
   className?: string;
   children?: ReactNode;
 }): React.JSX.Element | null {
@@ -91,7 +94,7 @@ export function CharacterStage({
   const rtl = typeof document !== 'undefined' && document.documentElement.dir === 'rtl';
   const speaker = clip?.voice.speaker ?? null;
   const shown = speaker ? stageFigure(speaker, width, height, HEADROOM) : { width: 0, height: 0 };
-  const spot = Math.round(Math.max(shown.width, width * STAND_AT * 2));
+  const spot = Math.round(Math.max(shown.width, width * share));
   const standAt = (rtl ? width - spot / 2 : spot / 2) / width;
   const backdrops = useMemo(
     () =>
