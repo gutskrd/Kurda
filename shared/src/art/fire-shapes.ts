@@ -1,14 +1,15 @@
 /**
  * The outlines the streak's fire is drawn with, which `fire.ts` puts
- * together stage by stage: its flame tongues as first drawn for the
- * campfire, the logs, the hearth stones, the sun's halo, and the thin
- * ribbons smoke and heat rise in. Only shapes live here; how each stage
- * places, colours and moves them is `fire.ts`'s.
+ * together stage by stage: its layers of flame as first drawn for the
+ * campfire, the light version's flame beside a number, the logs, the hearth
+ * stones, the sun's halo, and the ribbons smoke and heat rise in. Only shapes
+ * live here; how each stage places, colours and moves them is `fire.ts`'s.
  *
- * The tongues are kept as drawn, in the campfire's own 120-wide box rooted
- * at `SHAPE_ROOT`, and every stage stretches them about that root into the
- * fire's box: one hand-drawn fire, grown, rather than eight
- * drawn apart.
+ * A layer of flame is a few points smoothed into one soft outline, its licks
+ * laid in along it, so nothing in it can come to a point. The layers are kept
+ * as drawn, in the campfire's own 120-wide box rooted at `SHAPE_ROOT`, and
+ * every stage stretches them about that root into the fire's box: one fire,
+ * grown, rather than eight drawn apart.
  */
 import { n, type Pt } from './svg.js';
 
@@ -23,35 +24,271 @@ export interface Box {
 export const SHAPE_ROOT: Pt = [60, 138];
 export const SHAPE_HEIGHT = 134;
 
+/** Curves through `points` and back to the first (Catmull-Rom as cubic Béziers): a few points make one soft shape with no corner anywhere. */
+function blob(points: readonly Pt[]): string {
+  const at = (i: number): Pt => points[(i + points.length) % points.length] as Pt;
+  const p = ([x, y]: Pt): string => `${n(x)} ${n(y)}`;
+  let d = `M${p(at(0))}`;
+  for (let i = 0; i < points.length; i++) {
+    const [a, b, c, e] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
+    d += `C${p([b[0] + (c[0] - a[0]) / 6, b[1] + (c[1] - a[1]) / 6])} ${p([c[0] - (e[0] - b[0]) / 6, c[1] - (e[1] - b[1]) / 6])} ${p(c)}`;
+  }
+  return `${d}Z`;
+}
+
 /**
- * The tongues as drawn for the campfire, back to front: a tall slim flame
- * behind everything whose tip shows between the others; the red-orange outer
- * flame, its tips curling outwards; the orange inside it; the gold; and the
- * pale heart low down, where a fire is hottest. A side flame, leaning out,
- * licks up beside a big fire (drawn on the left; the right is its mirror),
- * and the crown is the Newroz fire's back flame, its tips standing round its
- * top.
+ * One lick of a flame: from the middle of its `foot`, `width` across, it
+ * rises `length`, leaning `lean` degrees from straight up (positive to the
+ * right) and turning `curl` degrees further by its tip, which is round,
+ * `tip` across. Its points go up its left side, round its tip and down its
+ * right, to be laid into a flame's outline between the points of its body.
+ */
+interface Lick {
+  foot: Pt;
+  length: number;
+  width: number;
+  tip: number;
+  lean: number;
+  curl: number;
+}
+
+function lick({ foot, length, width, tip, lean, curl }: Lick): Pt[] {
+  const steps = 20;
+  const line: { at: Pt; a: number }[] = [];
+  let [x, y] = foot;
+  for (let i = 0; i <= steps; i++) {
+    // it turns more and more as it rises, as a curling flame does
+    const a = ((lean + curl * (i / steps) ** 1.6) * Math.PI) / 180;
+    line.push({ at: [x, y], a });
+    x += (Math.sin(a) * length) / steps;
+    y -= (Math.cos(a) * length) / steps;
+  }
+  const r = tip / 2;
+  // a point on its left side (k = 1) or its right (k = -1), `s` of the way up, as it narrows to its tip
+  const off = (s: number, k: number): Pt => {
+    const { at, a } = line[Math.round(s * steps)]!;
+    const half = r + (width / 2 - r) * (1 - s) ** 0.8;
+    return [at[0] - Math.cos(a) * half * k, at[1] - Math.sin(a) * half * k];
+  };
+  const { at: c, a } = line[steps]!;
+  const round = (deg: number): Pt => {
+    const t = a + (deg * Math.PI) / 180;
+    return [c[0] + Math.sin(t) * r, c[1] - Math.cos(t) * r];
+  };
+  return [off(0.4, 1), off(0.7, 1), round(-76), round(-38), round(0), round(38), round(76), off(0.7, -1), off(0.4, -1)];
+}
+
+/** The round bottom of the notch between two licks, at (x, y): two points `w` apart, so the outline turns there in a U, never a V. */
+const notch = (x: number, y: number, w = 6): Pt[] => [
+  [x - w / 2, y],
+  [x + w / 2, y],
+];
+
+/** An outline stood taller or shorter about the root, so its top (handles and all) is `height` above it. */
+function standing(d: string, height: number): string {
+  const top = pathBox(d).y;
+  const k = height / (SHAPE_ROOT[1] - top);
+  return mapPath(d, (x, y) => [x, SHAPE_ROOT[1] + (y - SHAPE_ROOT[1]) * k]);
+}
+
+/** A long lick rising from inside the body, its tip curling back over it. */
+const BACK_LICK = blob([
+  [70, 136],
+  [57, 129],
+  [53, 110],
+  ...lick({ foot: [66, 80], length: 70, width: 34, tip: 13, lean: 8, curl: -58 }),
+  [87, 104],
+  [84, 127],
+]);
+
+/**
+ * The tongues as drawn for the campfire, back to front: a long lick behind
+ * everything whose curling tip shows between the others (or, `tall`, stands
+ * up over the whole body of a bigger fire); the red-orange outer flame, one
+ * fat round body whose top parts into three licks, each curling at its round
+ * tip; the orange inside it and the gold inside that, each rounder and lower;
+ * and the pale heart, a round drop low down where a fire is hottest. A side
+ * lick, leaning out and curling away, rises beside a big fire (drawn on the
+ * left; the right is its mirror), and the crown is the Newroz fire's back
+ * flame, three tall licks standing up between the body's own. Nowhere a
+ * point: every tip, every notch between two licks is round.
  */
 export const TONGUE_SHAPES = {
-  back: 'M70 136C54 136 46 124 47 108C48 92 58 80 66 64C72 52 78 34 82 10C90 28 96 48 95 70C94 96 88 136 70 136Z',
-  outer:
-    'M60 138C35 138 16 122 16 100C16 84 26 62 21 42C29 52 35 57 41 60C43 42 47 22 56 4C61 22 70 37 77 49C83 41 90 33 97 22C106 42 109 70 104 98C100 122 84 138 60 138Z',
-  flame:
-    'M60 138C39 138 25 125 25 106C25 92 34 80 32 64C38 72 43 76 48 77C49 60 54 42 63 24C66 40 74 52 80 64C83 58 87 52 90 44C97 62 98 86 94 106C91 126 79 138 60 138Z',
-  core: 'M60 138C45 138 34 128 34 112C34 98 42 88 48 78C53 70 56 60 58 48C64 60 72 70 78 82C83 92 86 102 86 112C86 128 75 138 60 138Z',
-  heart: 'M60 138C49 138 42 130 42 120C42 109 49 101 53 94C56 89 58 84 59 77C62 84 65 89 68 94C72 101 78 109 78 120C78 130 71 138 60 138Z',
-  side: 'M36 138C26 138 19 130 15 118C10 104 5 96 4 82C3 72 3 62 4 50C11 60 17 68 22 80C27 92 31 100 37 110C42 118 45 128 42 134C41 136 39 138 36 138Z',
-  crown:
-    'M60 138C38 138 20 126 20 104C20 88 18 72 12 40C20 50 25 56 30 62C29 44 31 28 36 10C42 26 46 36 50 44C53 30 57 16 63 2C67 16 70 30 72 42C76 32 81 22 88 8C93 26 94 44 92 60C97 54 102 46 110 36C108 56 102 76 100 98C98 124 82 138 60 138Z',
+  back: standing(BACK_LICK, 128),
+  tall: standing(BACK_LICK, SHAPE_HEIGHT),
+  outer: standing(
+    blob([
+      [60, 138],
+      [32, 134],
+      [14, 121],
+      [9, 104],
+      [12, 88],
+      [19, 76],
+      ...lick({ foot: [33, 64], length: 26, width: 32, tip: 14, lean: -16, curl: -44 }),
+      ...notch(45, 55, 9),
+      ...lick({ foot: [59, 50], length: 46, width: 40, tip: 16, lean: 0, curl: -52 }),
+      ...notch(74, 55, 9),
+      ...lick({ foot: [87, 62], length: 30, width: 32, tip: 14, lean: 14, curl: 46 }),
+      [101, 76],
+      [108, 89],
+      [111, 106],
+      [105, 123],
+      [88, 135],
+    ]),
+    SHAPE_HEIGHT,
+  ),
+  flame: blob([
+    [60, 138],
+    [37, 134],
+    [23, 122],
+    [19, 106],
+    [23, 92],
+    [30, 84],
+    ...lick({ foot: [40, 76], length: 16, width: 26, tip: 13, lean: -12, curl: -34 }),
+    ...notch(52, 70, 8),
+    ...lick({ foot: [67, 64], length: 30, width: 34, tip: 15, lean: 6, curl: 44 }),
+    [88, 82],
+    [96, 96],
+    [100, 110],
+    [96, 124],
+    [84, 134],
+  ]),
+  core: standing(
+    blob([
+      [60, 138],
+      [42, 134],
+      [31, 123],
+      [28, 109],
+      [32, 98],
+      [38, 92],
+      ...lick({ foot: [47, 86], length: 12, width: 20, tip: 11, lean: -10, curl: -28 }),
+      ...notch(57, 83, 6),
+      ...lick({ foot: [69, 80], length: 20, width: 26, tip: 13, lean: 8, curl: 34 }),
+      [84, 96],
+      [90, 108],
+      [88, 123],
+      [77, 134],
+    ]),
+    90,
+  ),
+  heart: blob([
+    [60, 138],
+    [47, 135],
+    [42, 125],
+    [43, 113],
+    [48, 104],
+    [52, 96],
+    [56, 91.5],
+    [60, 90],
+    [64, 91.5],
+    [68, 96],
+    [72, 104],
+    [77, 113],
+    [78, 125],
+    [73, 135],
+  ]),
+  side: blob([
+    [36, 138],
+    [27, 135],
+    [19, 124],
+    [16, 108],
+    ...lick({ foot: [21, 94], length: 34, width: 26, tip: 12, lean: -6, curl: -40 }),
+    [31, 98],
+    [38, 113],
+    [43, 126],
+    [42, 135],
+  ]),
+  crown: standing(
+    blob([
+      [60, 138],
+      [38, 134],
+      [25, 120],
+      [22, 100],
+      [26, 82],
+      ...lick({ foot: [40, 62], length: 40, width: 32, tip: 14, lean: -12, curl: -50 }),
+      ...notch(52, 55, 7),
+      ...lick({ foot: [63, 50], length: 50, width: 34, tip: 15, lean: 2, curl: 56 }),
+      ...notch(75, 57, 7),
+      ...lick({ foot: [85, 64], length: 38, width: 30, tip: 14, lean: 14, curl: 48 }),
+      [95, 84],
+      [98, 102],
+      [95, 120],
+      [83, 134],
+    ]),
+    136,
+  ),
 } as const;
 
 export type TongueShape = keyof typeof TONGUE_SHAPES;
 
-/** The tip of a flame breaking off: a small sliver just under the tip of a tongue (drawn for the campfire, like the tongues). */
+/**
+ * The light version's flame, beside a number: a bold round body whose top
+ * parts into two round lobes, the left one lower, with the gold inside it
+ * and a round drop of a heart low down; drawn to fill its box, rooted where
+ * the big fire's are.
+ */
+export const SMALL_SHAPES = {
+  outer: blob([
+    [60, 138],
+    [32, 133],
+    [15, 114],
+    [13, 91],
+    [17, 70],
+    [23, 54],
+    [29, 43],
+    [35, 40],
+    [40, 44],
+    [44, 52],
+    [48, 52],
+    [51, 38],
+    [57, 22],
+    [63, 12],
+    [70, 10],
+    [78, 17],
+    [90, 34],
+    [101, 56],
+    [106, 84],
+    [104, 112],
+    [89, 132],
+  ]),
+  core: blob([
+    [60, 138],
+    [39, 133],
+    [28, 118],
+    [28, 100],
+    [34, 86],
+    [41, 78],
+    [47, 78],
+    [51, 84],
+    [55, 82],
+    [59, 69],
+    [66, 61],
+    [72, 63],
+    [82, 76],
+    [90, 94],
+    [92, 112],
+    [86, 128],
+  ]),
+  heart: blob([
+    [60, 135],
+    [47, 130],
+    [42, 118],
+    [45, 105],
+    [52, 94],
+    [58, 87],
+    [62, 87],
+    [68, 94],
+    [75, 105],
+    [78, 118],
+    [73, 130],
+  ]),
+} as const;
+
+/** A piece of flame breaking off a tip: a small round drop hidden just under the tip of a lick (drawn for the campfire, like the tongues). */
 export const WISP_SHAPES = {
-  middle: 'M56 25C54 25 53 23 53.6 20.5C54.3 17.5 55.6 15 56 10C57 15 58.4 17.5 58.6 20.5C59 23 58 25 56 25Z',
-  right: 'M96 41C94 41 93 39 93.6 36.5C94.3 33.5 95.6 31 96 26C97 31 98.4 33.5 98.6 36.5C99 39 98 41 96 41Z',
-  left: 'M22 57C20 57 19 55 19.6 52.5C20.3 49.5 21.6 47 22 42C23 47 24.4 49.5 24.6 52.5C25 55 24 57 22 57Z',
+  middle: oval(45, 14, 4, 4.4),
+  right: oval(102, 39, 3.6, 4),
+  left: oval(17, 43, 3.6, 4),
 } as const;
 
 export type WispShape = keyof typeof WISP_SHAPES;
@@ -141,53 +378,53 @@ function capsule(x1: number, y1: number, x2: number, y2: number, r: number): str
 export type LogPart = 'bark' | 'barkShade' | 'barkLight' | 'cut' | 'ring' | 'char';
 
 /**
- * A log from its sawn end (x1, y1), where its rings show, to (x2, y2): bark,
- * a lit edge along its top, the cut face; burnt black in two places along
- * its top once it has burnt and gone cold (`charred`).
+ * A chunky round log from its sawn end (x1, y1), where its rings show, to
+ * (x2, y2): bark, the fire's light along its top, the cut face; burnt black
+ * in two places along its top once it has burnt and gone cold (`charred`).
  */
 export function log(x1: number, y1: number, x2: number, y2: number, bark: 'bark' | 'barkShade', charred: boolean): { part: LogPart; d: string }[] {
-  const r = 6.5;
+  const r = 8.5;
   const len = Math.hypot(x2 - x1, y2 - y1);
   const along = (t: number, lift: number): [number, number] => [x1 + (x2 - x1) * t + ((y2 - y1) / len) * lift, y1 + (y2 - y1) * t - ((x2 - x1) / len) * lift];
   const edge = (from: number, to: number, lift: number, thick: number): string => capsule(...along(from, lift), ...along(to, lift), thick);
   return [
     { part: bark, d: capsule(x1, y1, x2, y2, r) },
-    { part: 'barkLight', d: edge(0.16, 0.74, 3.6, 1.2) },
+    { part: 'barkLight', d: edge(0.14, 0.8, 4.6, 2) },
     ...(charred
       ? [
-          { part: 'char' as const, d: edge(0.3, 0.62, 2.6, 2.2) },
-          { part: 'char' as const, d: edge(0.68, 0.76, 2, 1.5) },
+          { part: 'char' as const, d: edge(0.3, 0.6, 3.6, 2.8) },
+          { part: 'char' as const, d: edge(0.68, 0.76, 3, 2) },
         ]
       : []),
-    { part: 'cut', d: oval(x1, y1, 4.4, r) },
-    { part: 'ring', d: oval(x1, y1, 2, 3) },
+    { part: 'cut', d: oval(x1, y1, 5.8, r) },
+    { part: 'ring', d: oval(x1, y1, 2.6, 4) },
   ];
 }
 
 /**
  * The hearth's ring of stones round the logs, seen from a little above:
  * the far ones small and behind the fire, the near ones bigger and in front
- * of the logs. Each a rounded lump with the fire's light on its top, a
- * little different from its neighbours so they read as stones, not beads.
+ * of the logs. Each a round, plump pebble with the fire's light on its top,
+ * a little different from its neighbours so they read as stones, not beads.
  */
 export function hearthStones(cx: number, cy: number, rx: number, ry: number): Record<'back' | 'front', { part: 'stone' | 'stoneLight'; d: string }[]> {
-  const count = 18;
+  const count = 14;
   const stones = Array.from({ length: count }, (_, i) => {
     // half a step round, so no stone sits dead in the middle in front
     const angle = ((i + 0.5) / count) * Math.PI * 2;
     const near = Math.sin(angle);
     // a fixed wobble per stone, the same on every machine
     const wobble = ((i * 7) % 5) / 4 - 0.5;
-    const a = 8.6 + 2.2 * near + wobble * 1.6;
-    const top = 5.6 + 1.6 * near - wobble * 0.8;
+    const a = 10.4 + 2.4 * near + wobble * 1.6;
+    const top = 6.8 + 1.8 * near - wobble * 0.8;
     const x = cx + rx * Math.cos(angle);
     const y = cy + ry * near;
     return {
       near,
       y,
       pieces: [
-        { part: 'stone' as const, d: pebble(x, y, a, top, top * 0.62, wobble * 2) },
-        { part: 'stoneLight' as const, d: pebble(x + wobble, y - top * 0.42, a * 0.58, top * 0.42, top * 0.16, wobble * 1.4) },
+        { part: 'stone' as const, d: pebble(x, y, a, top, top * 0.6, wobble * 2) },
+        { part: 'stoneLight' as const, d: pebble(x + wobble, y - top * 0.4, a * 0.66, top * 0.5, top * 0.2, wobble * 1.4) },
       ],
     };
   });
@@ -197,20 +434,23 @@ export function hearthStones(cx: number, cy: number, rx: number, ry: number): Re
 }
 
 /**
- * The sun's rays round the Newroz fire, as one outline: thin pointed rays
- * standing out from `inner`, long and short by turns. As many as fill the
- * ring evenly, a number with no meaning of its own.
+ * The sun's rays round the Newroz fire, as one outline: soft rays standing
+ * out from `inner`, narrowing to a round end, long and short by turns. As
+ * many as fill the ring evenly, a number with no meaning of its own.
  */
 export const HALO_RAYS = 32;
 
 export function haloRays(cx: number, cy: number, inner: number, long: number, short: number): string {
-  const p = (r: number, a: number): string => `${n(cx + r * Math.sin(a))} ${n(cy - r * Math.cos(a))}`;
-  const half = (Math.PI / HALO_RAYS) * 0.72;
+  // a point `r` out along the ray at angle `a`, moved `side` across it
+  const p = (r: number, a: number, side = 0): string => `${n(cx + r * Math.sin(a) + side * Math.cos(a))} ${n(cy - r * Math.cos(a) + side * Math.sin(a))}`;
+  const foot = inner * Math.tan((Math.PI / HALO_RAYS) * 0.72);
+  const end = foot * 0.3;
   let d = '';
   for (let i = 0; i < HALO_RAYS; i++) {
     const a = (i / HALO_RAYS) * Math.PI * 2;
-    const reach = i % 2 === 0 ? long : short;
-    d += `M${p(inner, a - half)}L${p(reach, a)}L${p(inner, a + half)}Z`;
+    const reach = (i % 2 === 0 ? long : short) - end;
+    // up one side, round its end in one curve, down the other
+    d += `M${p(inner, a, -foot)}L${p(reach, a, -end)}C${p(reach + end * 1.33, a, -end)} ${p(reach + end * 1.33, a, end)} ${p(reach, a, end)}L${p(inner, a, foot)}Z`;
   }
   return d;
 }

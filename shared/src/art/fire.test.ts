@@ -65,6 +65,7 @@ function chroma(hex: string): number {
 }
 
 const warm = (hex: string): boolean => parseInt(hex.slice(1, 3), 16) > parseInt(hex.slice(5, 7), 16);
+const lightness = (hex: string): number => [1, 3, 5].reduce((sum, i) => sum + parseInt(hex.slice(i, i + 2), 16), 0);
 const flameColours = (c: FireColours): string[] => Object.values(c.tongues).flat();
 
 describe('the fire as drawn', () => {
@@ -81,7 +82,11 @@ describe('the fire as drawn', () => {
           expect(path.match(/M/g)?.length, tag).toBe(1);
           inside(fireOutlineBox(path), FIRE_VIEW, tag);
         }
-        if (d.glow) inside({ x: d.glow.cx - d.glow.rx, y: d.glow.cy - d.glow.ry, w: d.glow.rx * 2, h: d.glow.ry * 2 }, FIRE_VIEW, `${stage} glow`);
+        for (const [name, light] of [
+          ['glow', d.glow],
+          ['pool', d.pool],
+        ] as const)
+          if (light) inside({ x: light.cx - light.rx, y: light.cy - light.ry, w: light.rx * 2, h: light.ry * 2 }, FIRE_VIEW, `${stage} ${name}`);
         if (d.halo) inside({ x: d.halo.cx - d.halo.reach, y: d.halo.cy - d.halo.reach, w: d.halo.reach * 2, h: d.halo.reach * 2 }, FIRE_VIEW, `${stage} halo`);
         // a spark never flies out of the box, however high it climbs
         for (const e of d.embers)
@@ -101,6 +106,19 @@ describe('the fire as drawn', () => {
     for (const s of LIT) expect(drawn(s, 1).flame.w).toBeLessThanOrEqual(FIRE_VIEW.w);
   });
 
+  it('stands each stage exactly as tall as the screens were laid out for, on the day it is reached and the day before the next', () => {
+    const tall: Record<Exclude<FireStage, 'cold'>, [number, number]> = {
+      spark: [46, 51],
+      kindling: [80, 90],
+      campfire: [118, 130],
+      bigfire: [147, 162],
+      bonfire: [169, 182],
+      blaze: [185, 200],
+      newroz: [204, 220],
+    };
+    for (const s of LIT) expect([drawn(s, 0).flame.h, drawn(s, 1).flame.h], s).toEqual(tall[s]);
+  });
+
   it('grows a little every day within a stage, by about a tenth, stopping short of nothing it should', () => {
     for (const s of LIT) {
       const [none, half, full] = [0, 0.5, 1].map((g) => drawn(s, g).flame.h);
@@ -118,6 +136,39 @@ describe('the fire as drawn', () => {
     const first = logs(drawn('cold'));
     expect(first.length).toBe(4);
     for (const s of LIT) for (const g of [0, 1]) expect(logs(drawn(s, g)), s).toEqual(first);
+    // across the middle of the box, lying on its foot
+    const boxes = first.map(fireOutlineBox);
+    expect(Math.min(...boxes.map((b) => b.x))).toBeCloseTo(53, 0);
+    expect(Math.max(...boxes.map((b) => b.x + b.w))).toBeCloseTo(147, 0);
+    expect(Math.max(...boxes.map((b) => b.y + b.h))).toBeCloseTo(238, 0);
+  });
+
+  it('is drawn round all over: every layer of flame, and every drop breaking off it, is curves alone, with no corner', () => {
+    for (const s of FIRE_STAGES)
+      for (const size of [BIG, FIRE_SMALL]) {
+        const d = drawn(s, 0, size);
+        for (const part of [...d.tongues, ...d.wisps]) expect(part.d, `${s} ${size}`).toMatch(/^M[^LZ]*C[^LZ]*Z$/);
+      }
+  });
+
+  it('pools its light on the ground round the logs, wider the bigger the fire', () => {
+    expect(drawn('cold').pool).toBeNull();
+    expect(drawn('campfire', 0, FIRE_SMALL).pool).toBeNull();
+    const pools = LIT.map((s) => drawn(s).pool!);
+    for (const [i, pool] of pools.entries()) {
+      // flat, and lying where the logs do
+      expect(pool.ry, LIT[i]).toBeLessThan(pool.rx / 4);
+      expect(pool.cy, LIT[i]).toBeGreaterThan(220);
+      expect(pool.motion, LIT[i]).toEqual(drawn(LIT[i]!).glow!.motion);
+      if (i > 0) expect(pool.rx, LIT[i]).toBeGreaterThanOrEqual(pools[i - 1]!.rx);
+    }
+  });
+
+  it('keeps a big fire round: from the bonfire on its body stays plump and a tall lick stands up over it', () => {
+    const top = (s: FireStage, id: string): number => fireOutlineBox(drawn(s).tongues.find((t) => t.id === id)!.d).y;
+    // a smaller fire's back lick only peeks out between the others
+    for (const s of ['campfire', 'bigfire'] as const) expect(top(s, 'back'), s).toBeGreaterThan(top(s, 'outer'));
+    for (const s of ['bonfire', 'blaze', 'newroz'] as const) expect(top(s, 'back'), s).toBeLessThan(top(s, 'outer') - 12);
   });
 
   it('gives every stage what it promises', () => {
@@ -214,6 +265,30 @@ describe('the fire as drawn', () => {
     expect(drawn('spark').tongues[0]!.motion.periodMs).toBeLessThan(drawn('campfire').tongues.find((t) => t.id === 'flame')!.motion.periodMs);
   });
 
+  it('breathes calmly from its root, never jittering: slow, a little sway, each layer squashing as it stretches and the heart only swelling', () => {
+    for (const s of LIT)
+      for (const size of [BIG, FIRE_SMALL])
+        for (const t of drawn(s, 0, size).tongues) {
+          const tag = `${s} ${size} ${t.id}`;
+          expect(t.motion.periodMs, tag).toBeGreaterThanOrEqual(1200);
+          for (const p of t.motion.poses) {
+            expect(Math.abs(p.skew ?? 0), tag).toBeLessThanOrEqual(6);
+            expect(Math.abs((p.sx ?? 1) - 1), tag).toBeLessThan(0.09);
+            expect(Math.abs((p.sy ?? 1) - 1), tag).toBeLessThan(0.11);
+            if (t.id !== 'heart') expect(((p.sx ?? 1) - 1) * ((p.sy ?? 1) - 1), tag).toBeLessThanOrEqual(0);
+          }
+        }
+  });
+
+  it('breaks round drops off the tips that stay round as they float up and shrink to nothing', () => {
+    for (const s of LIT)
+      for (const w of drawn(s).wisps) {
+        for (const p of w.motion.poses) expect(p.sx, s).toBe(p.sy);
+        expect(w.motion.poses.at(-1)!.sx!, s).toBeLessThan(0.2);
+        expect(Math.min(...w.motion.poses.map((p) => p.y ?? 0)), s).toBeLessThan(-20);
+      }
+  });
+
   it('turns the sun round by one long and one short ray each time round the clock, so the turn never shows a seam', () => {
     const halo = drawn('newroz').halo!;
     expect(HALO_RAYS % 2).toBe(0);
@@ -283,6 +358,8 @@ describe('the colours it burns in', () => {
         for (const c of flameColours(cold)) expect(chroma(c), c).toBeLessThan(40);
         expect([cold.glow, cold.ember, cold.gold, cold.halo]).toEqual([null, null, null, null]);
         expect(cold.smoke).not.toBeNull();
+        // beside a number, the grey flame's drop of a heart is darker than its body, as a fire not lit yet
+        expect(lightness(cold.tongues.heart[0])).toBeLessThan(lightness(cold.tongues.outer[0]));
         expect(warm(cold.cinder!.glow)).toBe(true);
         // charred wood, still wood: a little warmth left in its grey
         expect(warm(cold.base.bark[0])).toBe(true);
@@ -293,7 +370,6 @@ describe('the colours it burns in', () => {
 
   it('runs from deep red-orange outside to a heart nearly white', () => {
     const lit = fireColours({ stage: 'campfire', scheme: 'light' });
-    const lightness = (hex: string): number => [1, 3, 5].reduce((sum, i) => sum + parseInt(hex.slice(i, i + 2), 16), 0);
     const order = (['outer', 'flame', 'core', 'heart'] as const).map((id) => lightness(lit.tongues[id][0]));
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });

@@ -6,10 +6,11 @@
 import type { FireStage } from '../fire-stages.js';
 import type { FireBasePart, FireTongueId } from './fire.js';
 
-/** How a glow fades from its middle out: offset, and the share of its strength there. */
+/** How a glow fades from its middle out: offset, and the share of its strength there; softly all the way, with no edge to it. */
 export const FIRE_GLOW_FADE = [
   [0, 1],
-  [0.5, 0.45],
+  [0.3, 0.72],
+  [0.62, 0.3],
   [1, 0],
 ] as const;
 
@@ -71,10 +72,11 @@ export type FireScheme = 'light' | 'dark';
 
 type Wood = Omit<FireColours['base'], 'coal' | 'ash' | 'stone' | 'stoneLight' | 'char'>;
 
+/** The wood, round from its top to its shaded underside, the fire's warm light along its top. */
 const LOGS: Record<FireScheme, Wood> = {
-  light: { bark: ['#9C6436', '#6E4222'], barkShade: ['#7F4F2A', '#5A3519'], barkLight: ['#B37A4A', '#A87044'], cut: ['#F2CC94', '#DDA868'], ring: ['#C48A50', '#B07840'] },
+  light: { bark: ['#A56A38', '#6A3F20'], barkShade: ['#87542C', '#553218'], barkLight: ['#E9A866', '#D58E50'], cut: ['#F4D29C', '#DDA868'], ring: ['#C48A50', '#B07840'] },
   // a shade lighter on the dark page, so the wood is not lost in it
-  dark: { bark: ['#B07444', '#7E4E2A'], barkShade: ['#905C33', '#683F20'], barkLight: ['#C78C5C', '#BC8252'], cut: ['#F6D6A4', '#E2B276'], ring: ['#C99258', '#B27C44'] },
+  dark: { bark: ['#B87A46', '#7A4B28'], barkShade: ['#98613A', '#653D20'], barkLight: ['#F5B670', '#E29C5A'], cut: ['#F8DAA8', '#E2B276'], ring: ['#C99258', '#B27C44'] },
 };
 
 /** Logs burnt and gone cold: charred, grey-brown, still wood. */
@@ -99,31 +101,31 @@ const CHARRED: Record<FireScheme, Wood & Pick<FireColours['base'], 'char' | 'ash
   },
 };
 
-/** The hearth stones, their tops lit warm by the fire. */
+/** The hearth stones: round grey pebbles, their tops lit warm by the fire. */
 const STONE: Record<FireScheme, Pick<FireColours['base'], 'stone' | 'stoneLight'>> = {
-  light: { stone: ['#A99F96', '#7A7169'], stoneLight: ['#E2CBAE', '#CDB497'] },
-  dark: { stone: ['#968D85', '#655D56'], stoneLight: ['#E0C6A2', '#C4A987'] },
+  light: { stone: ['#A69C93', '#746B64'], stoneLight: ['#F0C493', '#A99D92'] },
+  dark: { stone: ['#968D85', '#5F5751'], stoneLight: ['#F4C48E', '#968B81'] },
 };
 
 /**
- * The fire alight, in the sun's colours: red-orange outside, through orange
- * and gold, to a heart nearly white. Each tongue is a little deeper at its
- * tip than at its root, where a flame is hottest. On the dark page every
- * colour is a step brighter and the glow stronger; on the light page the
- * outer flame is deep enough to hold its edge against white.
+ * The fire alight, in warm, full colours: deep red-orange outside, through
+ * orange, amber and gold, to a heart nearly white. Each layer is a little
+ * deeper at its tips than at its root, where a flame is hottest. On the dark
+ * page every colour is a step brighter and the glow stronger; on the light
+ * page the outer flame is deep enough to hold its edge against white.
  */
 const LIT: Record<FireScheme, FireColours> = {
   light: {
     tongues: {
-      back: ['#D2302A', '#EC552B'],
-      left: ['#D8382A', '#EE5A2B'],
-      right: ['#D8382A', '#EE5A2B'],
-      outer: ['#E4462A', '#F4692C'],
-      flame: ['#F7861F', '#FFA53B'],
-      core: ['#FFBE2E', '#FFD757'],
-      heart: ['#FFEDB0', '#FFFCEE'],
+      back: ['#DA382A', '#F7712D'],
+      left: ['#DE3D2A', '#F7712D'],
+      right: ['#DE3D2A', '#F7712D'],
+      outer: ['#E4432A', '#F7712D'],
+      flame: ['#FA8A1E', '#FFAA38'],
+      core: ['#FFBF2C', '#FFDA5A'],
+      heart: ['#FFF0BA', '#FFFDF0'],
     },
-    glow: { colour: '#FFAA3C', opacity: 0.5 },
+    glow: { colour: '#FFA238', opacity: 0.55 },
     ember: '#F2771E',
     gold: null,
     halo: null,
@@ -134,15 +136,15 @@ const LIT: Record<FireScheme, FireColours> = {
   },
   dark: {
     tongues: {
-      back: ['#E6402E', '#FF6532'],
-      left: ['#EC4A2E', '#FF6E34'],
-      right: ['#EC4A2E', '#FF6E34'],
-      outer: ['#F2552E', '#FF7A36'],
-      flame: ['#FF9426', '#FFB648'],
-      core: ['#FFC93A', '#FFE36C'],
-      heart: ['#FFF4C4', '#FFFFF5'],
+      back: ['#EC4A2E', '#FF7E38'],
+      left: ['#EF4E2F', '#FF7E38'],
+      right: ['#EF4E2F', '#FF7E38'],
+      outer: ['#F45530', '#FF7E38'],
+      flame: ['#FF9626', '#FFB94A'],
+      core: ['#FFCB3A', '#FFE570'],
+      heart: ['#FFF5C8', '#FFFFF6'],
     },
-    glow: { colour: '#FF8A2A', opacity: 0.6 },
+    glow: { colour: '#FF8A2A', opacity: 0.68 },
     ember: '#FFD66B',
     gold: null,
     halo: null,
@@ -167,8 +169,8 @@ const NEWROZ: Record<FireScheme, Pick<FireColours, 'gold' | 'halo'>> = {
 
 /**
  * A fire not burning (no streak yet): charred logs over ash, one ember still
- * glowing and a thread of smoke, and, beside a number, the small flame in
- * cool grey, still.
+ * glowing and a curl of smoke, and, beside a number, the small flame in cool
+ * grey, its drop of a heart darker, still.
  */
 const COLD: Record<FireScheme, FireColours> = {
   light: {
@@ -176,10 +178,10 @@ const COLD: Record<FireScheme, FireColours> = {
       back: ['#959CA9', '#AAB0BC'],
       left: ['#959CA9', '#AAB0BC'],
       right: ['#959CA9', '#AAB0BC'],
-      outer: ['#9AA1AE', '#B4BAC5'],
-      flame: ['#B5BBC6', '#C9CED7'],
-      core: ['#CDD1D9', '#DCDFE5'],
-      heart: ['#E8EAEE', '#F5F6F8'],
+      outer: ['#9DA4B0', '#B3B9C4'],
+      flame: ['#ABB1BC', '#BEC3CC'],
+      core: ['#B6BCC6', '#C6CBD3'],
+      heart: ['#7D8491', '#8B919D'],
     },
     glow: null,
     ember: null,
@@ -195,10 +197,10 @@ const COLD: Record<FireScheme, FireColours> = {
       back: ['#555C6A', '#666D7B'],
       left: ['#555C6A', '#666D7B'],
       right: ['#555C6A', '#666D7B'],
-      outer: ['#5D6472', '#707785'],
-      flame: ['#767D8B', '#89909D'],
-      core: ['#959BA7', '#A7ACB7'],
-      heart: ['#BFC3CB', '#D2D5DB'],
+      outer: ['#646B79', '#757C8A'],
+      flame: ['#6C7381', '#7E8593'],
+      core: ['#717886', '#838A97'],
+      heart: ['#3F4551', '#4A505C'],
     },
     glow: null,
     ember: null,
