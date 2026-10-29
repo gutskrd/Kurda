@@ -568,6 +568,20 @@ export {
 } from './art/palette.js';
 /** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
 export * from './art/fire.js';
+/** How big the fire burns: its stages from cold logs to the Newroz fire, by the streak's days or a run of right answers. */
+export {
+  COLD_FIRE,
+  FIRE_STAGES,
+  FIRE_STAGE_DAYS,
+  fireGrewToday,
+  fireLevel,
+  fireStageIndex,
+  nextFireStage,
+  runFireLevel,
+  stageBefore,
+  type FireLevel,
+  type FireStage,
+} from './fire-stages.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */

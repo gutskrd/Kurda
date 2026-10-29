@@ -1,5 +1,5 @@
 import { useId, useState } from 'react';
-import { FIRE_BASE, FIRE_GLOW, FIRE_SMALL_CALM, calmMotion, fireColours, fireParts, type FireMotion, type FirePose, type FireStops } from '@kurda/shared';
+import { FIRE_BASE, FIRE_GLOW, FIRE_SMALL_CALM, calmMotion, fireColours, fireParts, type FireLevel, type FireMotion, type FirePose, type FireStops } from '@kurda/shared';
 import { prefersReducedMotion } from '../lib/motion';
 import './fire.css';
 
@@ -19,7 +19,24 @@ import './fire.css';
  * that cannot read that keeps the attribute, the dark scheme's colour, the
  * app's default.
  */
-export function Fire({ size, lit = true, accent, className }: { size: number; lit?: boolean; accent?: string | null; className?: string }): React.JSX.Element {
+export function Fire({
+  size,
+  level,
+  lit: litAlone = true,
+  accent,
+  className,
+}: {
+  size: number;
+  /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
+  level?: FireLevel;
+  /** grows from this level into `level` as it appears: the day the fire grew */
+  from?: FireLevel | null;
+  /** without a `level`: burning or not */
+  lit?: boolean;
+  accent?: string | null;
+  className?: string;
+}): React.JSX.Element {
+  const lit = level ? level.stage !== 'cold' : litAlone;
   const id = `fire${useId().replace(/[^A-Za-z0-9]/g, '')}`;
   const [reduce] = useState(prefersReducedMotion);
   const parts = fireParts(size);

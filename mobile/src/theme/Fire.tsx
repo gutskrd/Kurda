@@ -11,6 +11,7 @@ import {
   fireParts,
   fireSamples,
   type FireEmber,
+  type FireLevel,
   type FireMotion,
   type FirePose,
   type FireStops,
@@ -39,7 +40,22 @@ type Box = { x: number; y: number; w: number; h: number };
  * is an event theme's colour for the flame. Decorative: the words beside it
  * say the streak.
  */
-export function Fire({ size, lit = true, accent }: { size: number; lit?: boolean; accent?: string | null }): React.JSX.Element {
+export function Fire({
+  size,
+  level,
+  lit: litAlone = true,
+  accent,
+}: {
+  size: number;
+  /** how big it burns (shared `fireLevel`, `runFireLevel`); cold is the fire not burning */
+  level?: FireLevel;
+  /** grows from this level into `level` as it appears: the day the fire grew */
+  from?: FireLevel | null;
+  /** without a `level`: burning or not */
+  lit?: boolean;
+  accent?: string | null;
+}): React.JSX.Element {
+  const lit = level ? level.stage !== 'cold' : litAlone;
   const { scheme } = useTheme();
   const reduce = useReducedMotion();
   const awake = useAwake();
