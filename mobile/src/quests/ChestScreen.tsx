@@ -152,12 +152,15 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
     // said once, as it opens
   }, []);
 
-  const lid = {
-    transform: [
-      { translateY: moment.art.interpolate({ inputRange: [0, 1], outputRange: [0, -size * 0.2] }) },
-      { rotate: moment.art.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-14deg'] }) },
-    ],
-  };
+  // the lid pops on the spring; under Reduce Motion it is simply open, and only the gold under it fades in
+  const lid = plan.travel
+    ? {
+        transform: [
+          { translateY: moment.art.interpolate({ inputRange: [0, 1], outputRange: [0, -size * 0.2] }) },
+          { rotate: moment.art.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '-14deg'] }) },
+        ],
+      }
+    : undefined;
   const light = moment.art.interpolate({ inputRange: [0, 0.5, 1], outputRange: [0, 1, 1], extrapolate: 'clamp' });
   const lift = plan.travel ? moment.details.interpolate({ inputRange: [0, 1], outputRange: [12, 0] }) : 0;
 
@@ -180,7 +183,7 @@ function Opened({ opening, tier, size, ink }: { opening: ChestOpening; tier: Che
         >
           <SoftGlow colour={colors.gold} size={size * 1.25} id="chest-open-glow" />
           {plan.travel ? <GlowRing progress={moment.ring} colour="#FFFFFF" size={size * 0.9} /> : null}
-          <ChestArt tier={tier} size={size} lid={lid} light={light} />
+          <ChestArt tier={tier} size={size} open={!plan.travel} lid={lid} light={light} />
           {plan.travel ? (
             // the gold comes out of the open top, in front of the chest
             <View style={[StyleSheet.absoluteFill, { transform: [{ translateY: -size * 0.12 }] }]} pointerEvents="none">
