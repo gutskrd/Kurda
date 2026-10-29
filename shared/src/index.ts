@@ -583,13 +583,16 @@ export {
   type FireLevel,
   type FireStage,
 } from './fire-stages.js';
-/** The fire as a moment of its own: the day it grew, a run's milestone, and the ladder of stages a streak climbs. */
+/** The fire as a moment of its own: the day it grew and how it lights up, a run's milestone, the ladder of stages a streak climbs, and the fire beside Hevalo's window. */
 export {
   FIRE_GREW_READ_MS,
+  FLAME_IGNITE,
   RUN_MOMENT_MS,
+  fireBesideWindow,
   fireLadder,
   flameMoment,
   runMoment,
+  type FireBesideWindow,
   type FireLadderPlace,
   type FireLadderStep,
   type FlameMoment,
