@@ -238,6 +238,32 @@ describe('Learn', () => {
     expect(within(today).getByRole('link', { name: '7 due' })).toHaveAttribute('href', '/app/learn/review');
   });
 
+  it('opens the whole story of the streak from it, in a sheet that Escape closes', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async (url: string) => {
+        const path = new URL(url).pathname;
+        const streak = { current: 12, longest: 30, freezes: 1, lastActiveOn: null, daysLearned: 41, sessionsPerFreeze: 5 };
+        if (path === '/me') return jsonResponse(200, { user: { id: 'me', username: 'me', emailVerified: true, streak } });
+        if (path === '/courses') return jsonResponse(200, { courses: [] });
+        return jsonResponse(200, { due: 0, available: 0 });
+      }),
+    );
+    routes('/app/learn');
+    const today = await screen.findByRole('region', { name: 'Today' });
+    const button = await within(today).findByRole('button', { name: '12-day streak' });
+    expect(button).toHaveAttribute('aria-haspopup', 'dialog');
+    await userEvent.click(button);
+    const sheet = screen.getByRole('dialog', { name: 'Streak' });
+    expect(within(sheet).getByRole('heading', { name: '12-day streak' })).toBeInTheDocument();
+    expect(within(sheet).getByText('Longest streak')).toBeInTheDocument();
+    expect(within(sheet).getByRole('heading', { name: 'How your fire grows' })).toBeInTheDocument();
+    expect(within(sheet).getAllByRole('listitem')).toHaveLength(7);
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(button).toHaveFocus();
+  });
+
   it('says what review is before there is anything in it, and keeps a course whose map failed', async () => {
     serve({
       'GET /courses': courses,

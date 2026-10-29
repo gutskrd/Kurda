@@ -212,6 +212,28 @@
     transform: translateY(-50%);
   }
 }
+/* on the day the fire grew, what it grew into: two lines' room kept from the start, so nothing moves when it arrives */
+.end-flame-grew {
+  max-width: 22em;
+  min-height: 2.7em;
+  margin: 10px 0 0;
+  font-size: var(--text-section);
+  font-weight: 700;
+  line-height: 1.35;
+  text-align: center;
+  text-shadow: 0 3px 16px rgba(70, 25, 0, 0.55);
+  opacity: 0;
+}
+.end-flame-grew.is-landed {
+  opacity: 1;
+  animation: grew-in 420ms ease-out both;
+}
+@keyframes grew-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
 
 /* ---- the streak's week ------------------------------------------------------------- */
 .end-week {
@@ -298,6 +320,20 @@
   font-weight: 800;
 }
 :root[data-theme='light'] .end-week-words {
+  color: #a84f00;
+}
+/* the fire's stage, and the next one as a near goal */
+.end-week-stage {
+  margin: -4px 0 0;
+  color: var(--ink-2);
+  font-size: var(--text-secondary);
+  font-weight: 600;
+}
+.end-week-stage-name {
+  color: #f3a23a;
+  font-weight: 800;
+}
+:root[data-theme='light'] .end-week-stage-name {
   color: #a84f00;
 }
 
@@ -453,5 +489,9 @@
   /* the flame's sparks and ring would show a frozen frame of their travel */
   .end-flame :is(.celebrate-ring, .celebrate-burst) {
     display: none;
+  }
+  /* what the fire grew into fades in where it is */
+  .end-flame-grew.is-landed {
+    animation-name: fade;
   }
 }

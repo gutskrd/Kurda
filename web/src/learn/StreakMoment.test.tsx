@@ -1,14 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+// the fire as its props: how big it burns and what it grows from, whoever draws it
+vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { act, fireEvent, render, screen } from '@testing-library/react';
+import { FIRE_GREW_READ_MS, FIRE_GROW } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
+import { onLessonSound } from '../lib/sounds';
 import { preloadCatalogue } from '../i18n/catalogues';
 import { StreakFlame, StreakWeek } from './StreakMoment';
 import type { Streak } from './types';
 
 /*
- * The streak kept today: the flame that rolls the day on, and the week it
- * sits in — each day's state, the week starting where the reader's calendar
- * starts it, right to left in Soranî — and Hevalo's word for the day.
+ * The streak kept today: the flame that rolls the day on, and grows on the
+ * day the fire grew, and the week it sits in — each day's state, the week
+ * starting where the reader's calendar starts it, right to left in Soranî —
+ * Hevalo's word for the day, and the fire's stage with the next one.
  */
 
 const week: Streak = {
@@ -91,6 +96,27 @@ describe('the week', () => {
     expect(days()[6]).toBe('هەینی: هێشتا نەهاتووە');
   });
 
+  it('names the fire stage under the streak, and the next one as a near goal', () => {
+    const stage = (current: number): string | null => {
+      inLanguage(<StreakWeek streak={{ ...week, current }} />);
+      const line = document.querySelector('.end-week-stage')?.textContent ?? null;
+      document.body.innerHTML = '';
+      return line;
+    };
+    expect(stage(1)).toBe('Spark · a little flame at 3 days');
+    expect(stage(5)).toBe('Little flame · a campfire at 7 days');
+    expect(stage(12)).toBe('Campfire · a big fire at 14 days');
+    expect(stage(45)).toBe('Bonfire · a blaze at 100 days');
+    // at the biggest there is, simply its name
+    expect(stage(400)).toBe('Newroz fire');
+  });
+
+  it('names the stage in Sorani too', async () => {
+    await speak('ckb');
+    inLanguage(<StreakWeek streak={{ ...week, current: 12 }} />);
+    expect(document.querySelector('.end-week-stage')).toHaveTextContent('ئاگری کەمپ · ئاگرێکی گەورە لە ڕۆژی ١٤دا');
+  });
+
   it('leaves the week out rather than guess it when the server does not say what today is', () => {
     inLanguage(<StreakWeek streak={{ ...week, today: undefined, recent: undefined }} />);
     expect(screen.queryByRole('list')).not.toBeInTheDocument();
@@ -103,8 +129,9 @@ describe('the week', () => {
     inLanguage(<StreakWeek streak={week} />);
     expect(screen.getByText('Another day learned. See you again tomorrow!')).toBeInTheDocument();
     expect(document.querySelector('.end-week-hevalo .hevalo-window [data-crop="head"]')).toHaveAttribute('data-speaker', 'hevalo');
-    // the fire burning on the ground beside it
-    expect(document.querySelector('.end-week-scene .end-week-fire')).toHaveClass('fire', 'is-lit');
+    // the fire burning on the ground beside it, as big as four days have grown it
+    expect(document.querySelector('.end-week-scene .end-week-fire')).toHaveAttribute('data-stage', 'kindling');
+    expect(document.querySelector('.end-week-scene .end-week-fire')).not.toHaveAttribute('data-from');
     expect(document.querySelector('.end-week-scene .hevalo-window')).toBeInTheDocument();
     // and the heading takes it along, for whoever lands on it
     expect(screen.getByRole('heading', { name: '4-day streak' })).toHaveAccessibleDescription('Another day learned. See you again tomorrow!');
@@ -142,6 +169,56 @@ describe('the flame', () => {
     fireEvent.keyDown(window, { key: 'Escape' });
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(onDone).toHaveBeenCalledTimes(3);
+  });
+
+  it('grows the fire from yesterday on the day it grew, says what it grew into as it lands, and stays to be read', () => {
+    vi.useFakeTimers();
+    const heard: string[] = [];
+    const stop = onLessonSound((s) => heard.push(s));
+    const onDone = vi.fn();
+    inLanguage(<StreakFlame streak={{ ...week, current: 7 }} onDone={onDone} />);
+    const fire = screen.getByTestId('fire');
+    expect(fire).toHaveAttribute('data-stage', 'campfire');
+    expect(fire).toHaveAttribute('data-from', 'kindling');
+    // the line keeps its place, empty until the growth lands
+    const line = screen.getByRole('status');
+    expect(line).toBeEmptyDOMElement();
+    act(() => vi.advanceTimersByTime(FIRE_GROW.delayMs + FIRE_GROW.ms - 10));
+    expect(line).toBeEmptyDOMElement();
+    expect(heard).toEqual([]);
+    act(() => vi.advanceTimersByTime(10));
+    expect(line).toHaveTextContent('A week in, your fire is a campfire now.');
+    // heard as it lands, once
+    expect(heard).toHaveLength(1);
+    // the moment that is over in a second and a half on another day waits for the words
+    act(() => vi.advanceTimersByTime(FIRE_GREW_READ_MS - 10));
+    expect(onDone).not.toHaveBeenCalled();
+    act(() => vi.advanceTimersByTime(10));
+    expect(onDone).toHaveBeenCalledTimes(1);
+    stop();
+  });
+
+  it('says you lit your fire on the first day, grown from cold logs', () => {
+    vi.useFakeTimers();
+    inLanguage(<StreakFlame streak={{ ...week, current: 1 }} onDone={vi.fn()} />);
+    expect(screen.getByTestId('fire')).toHaveAttribute('data-from', 'cold');
+    act(() => vi.advanceTimersByTime(FIRE_GROW.delayMs + FIRE_GROW.ms));
+    expect(screen.getByRole('status')).toHaveTextContent('You lit your fire!');
+  });
+
+  it('is still skipped by a click, Enter, Space or Escape on the day the fire grew', () => {
+    const onDone = vi.fn();
+    inLanguage(<StreakFlame streak={{ ...week, current: 30 }} onDone={onDone} />);
+    fireEvent.click(screen.getByRole('heading', { name: '30-day streak' }));
+    for (const key of ['Enter', ' ', 'Escape']) fireEvent.keyDown(window, { key });
+    expect(onDone).toHaveBeenCalledTimes(4);
+  });
+
+  it('burns at the fire of today on any other day, growing from nothing and saying nothing more', () => {
+    inLanguage(<StreakFlame streak={{ ...week, current: 12 }} onDone={vi.fn()} />);
+    expect(screen.getByTestId('fire')).toHaveAttribute('data-stage', 'campfire');
+    expect(screen.getByTestId('fire')).not.toHaveAttribute('data-from');
+    expect(screen.queryByRole('status')).not.toBeInTheDocument();
   });
 
   it('simply shows the day under Reduce Motion', () => {
