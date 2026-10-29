@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // the fire as its props: how big it burns and whether it stands still, whoever draws it
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { render, screen, within } from '@testing-library/react';
-import { fireLevel } from '@kurda/shared';
+import { fireLadder, fireLevel, fireSizeToFit } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { preloadCatalogue } from '../i18n/catalogues';
 import type { StreakSummary } from '../lib/types';
@@ -61,6 +61,9 @@ describe('the streak sheet', () => {
     expect(rungFires().map((f) => f.dataset.stage)).toEqual(['spark', 'kindling', 'campfire', 'bigfire', 'bonfire', 'blaze', 'newroz']);
     expect(rungFires().map((f) => f.dataset.still === 'true')).toEqual([false, false, false, true, true, true, true]);
     expect(rungFires()[2]).toHaveAttribute('data-growth', String(fireLevel(9).growth));
+    // each framed to fill the same square, so a spark is as plain as the Newroz fire and every row as tall
+    expect(rungFires().map((f) => f.dataset.framed)).toEqual(Array(7).fill('true'));
+    expect(rungFires().map((f) => Number(f.dataset.size))).toEqual(fireLadder(9).map((step) => fireSizeToFit(step.stage, 44, 44)));
     // the one now is marked in words as well as ringed, and only it
     expect(within(ladder()).getAllByText('Now')).toHaveLength(1);
     expect(within(ladder()).getAllByRole('listitem')[2]).toHaveClass('is-now');

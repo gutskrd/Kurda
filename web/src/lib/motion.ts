@@ -64,9 +64,10 @@ export function useCountUp(to: number, { from = 0, delayMs = 0 }: { from?: numbe
 /**
  * A celebration playing (shared celebration.ts): felt once as the art lands,
  * over when the last fleck has fallen — or at once, when it is skipped.
- * `playing` is what the stylesheet keys the movement on.
+ * `playing` is what the stylesheet keys the movement on. It starts `delayMs`
+ * after it mounts, for a moment that opens on something else first.
  */
-export function useCelebrationMoment(): { playing: boolean; skip: () => void } {
+export function useCelebrationMoment(delayMs = 0): { playing: boolean; skip: () => void } {
   const [playing, setPlaying] = useState(true);
   const felt = useRef(false);
   const feel = useCallback(() => {
@@ -76,13 +77,13 @@ export function useCelebrationMoment(): { playing: boolean; skip: () => void } {
   }, []);
   useEffect(() => {
     const plan = celebrationPlan(prefersReducedMotion());
-    const landed = window.setTimeout(feel, plan.hapticAtMs);
-    const over = window.setTimeout(() => setPlaying(false), celebrationEndMs(plan));
+    const landed = window.setTimeout(feel, delayMs + plan.hapticAtMs);
+    const over = window.setTimeout(() => setPlaying(false), delayMs + celebrationEndMs(plan));
     return () => {
       window.clearTimeout(landed);
       window.clearTimeout(over);
     };
-  }, [feel]);
+  }, [feel, delayMs]);
   const skip = useCallback(() => {
     // skipped before it landed: the moment still happened, and is still felt
     feel();

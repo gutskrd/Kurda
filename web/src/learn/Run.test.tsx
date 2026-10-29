@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 // the fire as its props: how big it burns and what it grows from, whoever draws it
 vi.mock('../components/Fire', () => import('../test/fireProbe'));
 import { act, render, screen } from '@testing-library/react';
-import { RUN_MOMENT_MS, runMoment } from '@kurda/shared';
+import { RUN_MOMENT_MS, fireSizeToFit, runMoment } from '@kurda/shared';
 import { I18nProvider } from '../i18n/I18nProvider';
 import { RunLabel, RunMoment } from './Run';
 
@@ -52,6 +52,23 @@ describe('the run of right answers', () => {
       expect(onDone).toHaveBeenCalledTimes(1);
     });
   }
+
+  it('draws every milestone fire framed, alike, so a longer run is a bigger fire, the biggest it grows still under the words', () => {
+    const drawn = (count: number): HTMLElement => {
+      const { unmount } = render(
+        <I18nProvider>
+          <RunMoment count={count} onDone={vi.fn()} />
+        </I18nProvider>,
+      );
+      const one = fire().cloneNode() as HTMLElement;
+      unmount();
+      return one;
+    };
+    for (const count of [5, 20, 30]) {
+      expect(drawn(count)).toHaveAttribute('data-framed', 'true');
+      expect(Number(drawn(count).dataset.size)).toBeCloseTo(fireSizeToFit('blaze', 200, 200), 9);
+    }
+  });
 
   it('keeps the blaze as it is at 25 in a row, for about a second', () => {
     vi.useFakeTimers();

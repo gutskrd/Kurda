@@ -141,19 +141,25 @@ export function CelebrationArt({
   flecks,
   seed,
   reach,
+  delayMs = 0,
+  still = false,
 }: {
   children: React.ReactNode;
   flecks: number;
   seed: number;
   reach: number;
+  /** how long after it appears the flecks are thrown, for a moment that opens on something else first */
+  delayMs?: number;
+  /** no ring and no flecks, for a reader who asked for less motion (the stylesheet hides them for one who asks later) */
+  still?: boolean;
 }): React.JSX.Element {
-  const plan = useMemo(() => burstPlan(flecks, seed, 3, reach), [flecks, seed, reach]);
+  const plan = useMemo(() => (still ? [] : burstPlan(flecks, seed, 3, reach)), [still, flecks, seed, reach]);
   // each fleck's slice of the burst, in the burst's own time (shared celebration.ts)
   const { burstMs, burstDelayMs } = FULL;
   return (
     <div className="celebrate-art">
       <span className="celebrate-glow" aria-hidden="true" />
-      <span className="celebrate-ring" aria-hidden="true" />
+      {!still && <span className="celebrate-ring" aria-hidden="true" />}
       <span className="celebrate-burst" aria-hidden="true">
         {plan.map((f, i) => (
           <span
@@ -167,7 +173,7 @@ export function CelebrationArt({
                 '--spin': `${f.spin}deg`,
                 width: f.w,
                 height: f.h,
-                animationDelay: `${burstDelayMs + Math.round(f.start * burstMs)}ms`,
+                animationDelay: `${delayMs + burstDelayMs + Math.round(f.start * burstMs)}ms`,
                 animationDuration: `${Math.round((f.end - f.start) * burstMs)}ms`,
               } as CSSProperties
             }
