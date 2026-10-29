@@ -177,9 +177,9 @@ export const FIRE_TONGUES: readonly FireTongue[] = [
 ];
 
 /**
- * The tip of a flame breaking off: a small drop of flame just under the tip
- * of a tongue, hidden behind it, that rises clear of it, shrinking, and is
- * gone. Drawn in the orange flame's colours, behind the tongues.
+ * The tip of a flame breaking off: a small sliver of flame just under the
+ * tip of a tongue, hidden behind it, that rises clear of it and shrinks to
+ * nothing (shrinking, not fading, so it never dims to a smudge). Drawn in the orange flame's colours, behind the tongues.
  */
 export interface FireWisp {
   d: string;
@@ -196,10 +196,10 @@ export const FIRE_WISPS: readonly FireWisp[] = [
       periodMs: 1200,
       phase: 0.1,
       poses: [
-        { y: 0, sx: 1, sy: 1, o: 0 },
-        { y: -8, sx: 1, sy: 1.1, o: 1 },
-        { y: -22, x: -3, sx: 0.55, sy: 0.7, o: 0.9 },
-        { y: -28, x: -4, sx: 0.3, sy: 0.4, o: 0 },
+        { y: 0, sx: 0.8, sy: 0.8, o: 0 },
+        { y: -7, sx: 1, sy: 1.25, o: 1 },
+        { y: -22, x: -3, sx: 0.15, sy: 0.5, o: 1 },
+        { y: -26, x: -4, sx: 0.1, sy: 0.3, o: 0 },
       ],
     },
   },
@@ -211,16 +211,16 @@ export const FIRE_WISPS: readonly FireWisp[] = [
       periodMs: 1600,
       phase: 0.6,
       poses: [
-        { y: 0, sx: 1, sy: 1, o: 0 },
-        { y: -8, sx: 1, sy: 1.1, o: 1 },
-        { y: -20, x: 3, sx: 0.55, sy: 0.7, o: 0.9 },
-        { y: -26, x: 4, sx: 0.3, sy: 0.4, o: 0 },
+        { y: 0, sx: 0.8, sy: 0.8, o: 0 },
+        { y: -7, sx: 1, sy: 1.25, o: 1 },
+        { y: -20, x: 3, sx: 0.15, sy: 0.5, o: 1 },
+        { y: -24, x: 4, sx: 0.1, sy: 0.3, o: 0 },
       ],
     },
   },
 ];
 
-/** A spark: a dot that rises off the flame, drifting, and fades. */
+/** A spark: a dot that flies up out of the flame from behind it, drifting, and fades. */
 export interface FireEmber {
   cx: number;
   cy: number;
@@ -230,11 +230,11 @@ export interface FireEmber {
 
 /** Where each spark starts, how far it climbs and drifts, and when; spread so they never rise together. */
 const EMBERS: readonly { cx: number; cy: number; r: number; rise: number; drift: number; periodMs: number; phase: number }[] = [
-  { cx: 50, cy: 62, r: 2.4, rise: 64, drift: -14, periodMs: 1600, phase: 0 },
-  { cx: 74, cy: 58, r: 2, rise: 58, drift: 14, periodMs: 2400, phase: 0.35 },
-  { cx: 40, cy: 76, r: 1.8, rise: 72, drift: -18, periodMs: 1200, phase: 0.62 },
-  { cx: 84, cy: 74, r: 2.2, rise: 66, drift: 12, periodMs: 1600, phase: 0.8 },
-  { cx: 62, cy: 50, r: 1.6, rise: 54, drift: 5, periodMs: 2400, phase: 0.85 },
+  { cx: 48, cy: 46, r: 2.4, rise: 60, drift: -14, periodMs: 1600, phase: 0 },
+  { cx: 74, cy: 44, r: 2, rise: 56, drift: 14, periodMs: 2400, phase: 0.35 },
+  { cx: 34, cy: 58, r: 1.8, rise: 64, drift: -16, periodMs: 1200, phase: 0.62 },
+  { cx: 90, cy: 50, r: 2.2, rise: 60, drift: 12, periodMs: 1600, phase: 0.8 },
+  { cx: 62, cy: 34, r: 1.6, rise: 50, drift: 5, periodMs: 2400, phase: 0.85 },
 ];
 
 export const FIRE_EMBERS: readonly FireEmber[] = EMBERS.map(({ cx, cy, r, rise, drift, periodMs, phase }) => ({

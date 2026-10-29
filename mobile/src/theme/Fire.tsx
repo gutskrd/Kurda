@@ -10,6 +10,7 @@ import {
   fireColours,
   fireParts,
   fireSamples,
+  type FireEmber,
   type FireMotion,
   type FirePose,
   type FireStops,
@@ -73,6 +74,7 @@ export function Fire({ size, lit = true, accent }: { size: number; lit?: boolean
       testID={`fire-${lit ? 'lit' : 'unlit'}${parts.small ? '-small' : ''}`}
     >
       {glow ? <Glow id={`${id}g`} colour={glow.colour} opacity={glow.opacity} {...drawing} /> : null}
+      {/* the broken-off tips and the sparks rise from behind the flame, so they are only seen once clear of it */}
       {moving
         ? parts.wisps.map((w, i) => (
             <Layer key={`w${i}`} motion={w.motion} origin={w.origin} {...drawing}>
@@ -83,6 +85,7 @@ export function Fire({ size, lit = true, accent }: { size: number; lit?: boolean
             </Layer>
           ))
         : null}
+      {ember && drawing.clock ? parts.embers.map((e, i) => <Ember key={`e${i}`} ember={e} colour={ember} view={view} unit={unit} clock={drawing.clock!} />) : null}
       {tongues.map((t) => (
         <Layer key={t.id} motion={t.motion} origin={t.origin} {...drawing}>
           <Defs>
@@ -103,25 +106,6 @@ export function Fire({ size, lit = true, accent }: { size: number; lit?: boolean
           ))}
         </Layer>
       ) : null}
-      {ember && drawing.clock
-        ? parts.embers.map((e, i) => (
-            <Animated.View
-              key={`e${i}`}
-              style={[
-                {
-                  position: 'absolute',
-                  left: (e.cx - e.r - view.x) * unit,
-                  top: (e.cy - e.r - view.y) * unit,
-                  width: e.r * 2 * unit,
-                  height: e.r * 2 * unit,
-                  borderRadius: e.r * unit,
-                  backgroundColor: ember,
-                },
-                motionStyle(e.motion, drawing.clock!, unit),
-              ]}
-            />
-          ))
-        : null}
     </View>
   );
 }
@@ -162,6 +146,20 @@ function Layer({
         {children}
       </Svg>
     </Animated.View>
+  );
+}
+
+/** A spark: a round dot of colour, no drawing needed, rising off the clock. */
+function Ember({ ember, colour, view, unit, clock }: { ember: FireEmber; colour: string; view: Box; unit: number; clock: Animated.Value }): React.JSX.Element {
+  const { cx, cy, r } = ember;
+  const style = useMemo(() => motionStyle(ember.motion, clock, unit), [ember, clock, unit]);
+  return (
+    <Animated.View
+      style={[
+        { position: 'absolute', left: (cx - r - view.x) * unit, top: (cy - r - view.y) * unit, width: r * 2 * unit, height: r * 2 * unit, borderRadius: r * unit, backgroundColor: colour },
+        style,
+      ]}
+    />
   );
 }
 

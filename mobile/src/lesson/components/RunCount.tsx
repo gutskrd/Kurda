@@ -81,7 +81,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
           <SoftGlow colour={colors.gold} size={360} id="run-moment-glow" />
         </Animated.View>
         <Animated.View style={[styles.momentBody, { opacity, transform: [{ scale }] }]}>
-          <Fire size={88} />
+          <Fire size={104} />
           <Text style={[styles.momentText, { color: colors.goldText }]}>{words}</Text>
         </Animated.View>
       </Pressable>

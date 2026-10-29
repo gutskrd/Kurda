@@ -66,11 +66,8 @@ export function Fire({ size, lit = true, accent, className }: { size: number; li
           style={moving(FIRE_GLOW.motion, FIRE_GLOW.origin)}
         />
       )}
+      {/* the broken-off tips and the sparks rise from behind the flame, so they are only seen once clear of it */}
       {!still && parts.wisps.map((w, i) => <path key={i} className="fire-part fire-rise" d={w.d} fill={`url(#${id}-wisp)`} style={moving(w.motion, w.origin)} />)}
-      {parts.tongues.map((t) => (
-        <path key={t.id} className="fire-part fire-loop" d={t.d} fill={`url(#${id}-${t.id})`} style={moving(motion(t.motion), t.origin)} />
-      ))}
-      {parts.base && FIRE_BASE.map((p, i) => <path key={i} d={p.d} fill={`url(#${id}-${p.part})`} />)}
       {!still &&
         light.ember &&
         dark.ember &&
@@ -85,6 +82,10 @@ export function Fire({ size, lit = true, accent, className }: { size: number; li
             style={{ ...both(light.ember!, dark.ember!, 'fill'), ...moving(e.motion, [e.cx, e.cy]) }}
           />
         ))}
+      {parts.tongues.map((t) => (
+        <path key={t.id} className="fire-part fire-loop" d={t.d} fill={`url(#${id}-${t.id})`} style={moving(motion(t.motion), t.origin)} />
+      ))}
+      {parts.base && FIRE_BASE.map((p, i) => <path key={i} d={p.d} fill={`url(#${id}-${p.part})`} />)}
     </svg>
   );
 }

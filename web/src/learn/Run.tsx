@@ -59,7 +59,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
   return (
     <div className="lesson-run-moment" aria-hidden="true" onClick={() => finish.current()}>
       <span className="lesson-run-moment-words">
-        <Fire size={88} />
+        <Fire size={104} />
         {t('lesson.run.milestone', { count })}
       </span>
     </div>
