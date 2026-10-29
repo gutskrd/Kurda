@@ -1,7 +1,8 @@
 /**
  * The growing fire (fire-stages.ts) where it is a moment of its own, the same
- * on both apps: the streak kept on the day its fire grew, a run's milestone in
- * a lesson, and the ladder of stages a streak climbs.
+ * on both apps: the streak kept, lighting up and on the day its fire grew, a
+ * run's milestone in a lesson, the ladder of stages a streak climbs, and the
+ * fire by Hevalo's window in the streak's week.
  */
 
 import { FIRE_LOGS, FIRE_VIEW } from './art/fire.js';
