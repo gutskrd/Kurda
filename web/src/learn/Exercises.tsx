@@ -508,6 +508,7 @@ function LiveMatch({
   const timers = useRef<number[]>([]);
   const off = locked || busy;
 
+  // nothing for Check to wait for: the last pair made is the answer
   useEffect(() => onReady(false), [onReady]);
   useEffect(() => {
     const pending = timers.current;

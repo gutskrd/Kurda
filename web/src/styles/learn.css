@@ -638,11 +638,7 @@ html:has(.lesson-bar) {
   border-width: 0;
   background: none;
 }
-/* beside a character the bubble has the rest of the stage's width */
-.character-stage-side .lesson-bubble {
-  justify-self: stretch;
-}
-/* and a word's meanings opened from it lie over the answer below, not under it */
+/* beside a character, a word's meanings opened from the bubble lie over the answer below, not under it */
 .lesson-exercise > .character-stage {
   z-index: 1;
 }
@@ -722,9 +718,6 @@ html:has(.lesson-bar) {
   display: grid;
   gap: 2px;
   min-width: 0;
-}
-.character-stage-side .lesson-sound {
-  justify-self: stretch;
 }
 .lesson-sound-play {
   display: flex;
@@ -884,6 +877,11 @@ html:has(.lesson-bar) {
   line-height: 1.05;
   letter-spacing: -0.01em;
   text-align: center;
+}
+/* the flame in the sun's own gold; the words in the gold that reads as text */
+.lesson-run-moment-words svg,
+.lesson-run-label svg {
+  color: var(--gold);
 }
 
 /*
