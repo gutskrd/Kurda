@@ -583,6 +583,17 @@ export {
   type FireLevel,
   type FireStage,
 } from './fire-stages.js';
+/** The fire as a moment of its own: the day it grew, a run's milestone, and the ladder of stages a streak climbs. */
+export {
+  FIRE_GREW_READ_MS,
+  RUN_MOMENT_MS,
+  fireLadder,
+  flameMoment,
+  runMoment,
+  type FireLadderPlace,
+  type FireLadderStep,
+  type FlameMoment,
+} from './fire-moments.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */
