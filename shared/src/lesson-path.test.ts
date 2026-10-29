@@ -183,21 +183,27 @@ describe('jumping ahead', () => {
   });
 
   it('offers every later unit whose first skill is closed, never the one the learner is in', () => {
-    expect(lessonPath(course()).units.map((u) => u.jump)).toEqual([false, true, true]);
+    expect(lessonPath(course(), { offerJumps: true }).units.map((u) => u.jump)).toEqual([false, true, true]);
+  });
+
+  it('offers no jump, and leaves no room for one, to a client that does not draw the offer', () => {
+    const path = lessonPath(course());
+    expect(path.units.map((u) => u.jump)).toEqual([false, false, false]);
+    expect(path.units[1]!.stops[0]!.y).toBe(PATH_GEOMETRY.pad);
   });
 
   it('gives the first stop of a unit on offer room above it for its bubble', () => {
     const { pad, lift } = PATH_GEOMETRY;
-    const path = lessonPath(course());
+    const path = lessonPath(course(), { offerJumps: true });
     expect(path.units[1]!.stops[0]!.y).toBe(pad + lift);
     expect(path.units[0]!.stops[0]!.y).toBe(pad);
   });
 
   it('offers nothing past a unit already open, or a first skill with nothing published', () => {
     const open = map([skill('a', 'unlocked')], [skill('c', 'unlocked')]);
-    expect(lessonPath(open).units.map((u) => u.jump)).toEqual([false, false]);
+    expect(lessonPath(open, { offerJumps: true }).units.map((u) => u.jump)).toEqual([false, false]);
     const empty = map([skill('a', 'unlocked')], [skill('c', 'locked', 0, 0, { firstLessonId: null })]);
-    expect(lessonPath(empty).units[1]!.jump).toBe(false);
+    expect(lessonPath(empty, { offerJumps: true }).units[1]!.jump).toBe(false);
   });
 
   it('plans the test on the unfinished skills it skips, and the place in the course it opens up to', () => {
@@ -219,7 +225,7 @@ describe('jumping ahead', () => {
     const after = course({ unlockedThrough: 5 });
     after.units[1]!.skills = [skill('c', 'unlocked'), skill('d', 'unlocked')];
     after.units[2]!.skills = [skill('e', 'unlocked'), skill('f', 'locked')];
-    const path = lessonPath(after);
+    const path = lessonPath(after, { offerJumps: true });
     expect(path.current).toBe('s:e');
     expect(skills(path).map((s) => s.kind === 'skill' && s.state)).toEqual(['done', 'available', 'available', 'available', 'current', 'locked']);
     expect(path.units.map((u) => u.jump)).toEqual([false, false, false]);

@@ -250,8 +250,15 @@ function unfinished(skill: PathSkill): boolean {
  * `due` is how many review words are waiting (GET /practice/due); with any,
  * a review stop goes in just before the current skill — or, with nothing
  * open left to do, just after the last skill finished.
+ *
+ * `offerJumps`: a client that draws the offer to jump ahead (`PathUnit.jump`)
+ * asks for it, and the first stop of each unit on offer gets room above it for
+ * the offer's bubble; one that does not draw it gets neither.
  */
-export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 }: { due?: number } = {}): LessonPath<S> {
+export function lessonPath<S extends PathSkill>(
+  map: PathMapInput<S>,
+  { due = 0, offerJumps = false }: { due?: number; offerJumps?: boolean } = {},
+): LessonPath<S> {
   const { currentSkill, lastDone, here } = whereIs(map);
   // review sits before the skill to do now, or after the last one done
   const reviewBefore = due > 0 && currentSkill ? currentSkill : null;
@@ -288,7 +295,7 @@ export function lessonPath<S extends PathSkill>(map: PathMapInput<S>, { due = 0 
     if (unit.skills.length > 0) {
       stops.push({ kind: 'trophy', key: `t:${unit.unitId}`, earned: unitDone === unit.skills.length, unitNumber: u + 1 });
     }
-    const jump = u > here && opensOnJump(unit.skills[0]);
+    const jump = offerJumps && u > here && opensOnJump(unit.skills[0]);
     const { placed, height } = place(stops, jump);
     return {
       unitId: unit.unitId,

@@ -125,7 +125,7 @@ export function LessonPath({
   const { t } = useI18n();
   const dir = useDirection();
   const reduce = useReducedMotion();
-  const path = useMemo(() => lessonPath(map, { due }), [map, due]);
+  const path = useMemo(() => lessonPath(map, { due, offerJumps: true }), [map, due]);
   const courseId = map.course.id;
 
   /*
