@@ -232,6 +232,53 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(b.count, b.statements.join('\n')).toBe(a.count);
       expect(b.count, b.statements.join('\n')).toBeLessThanOrEqual(3);
     });
+
+    /**
+     * A group of `me`'s with `members` of the friends in it, and `banned` of
+     * the others banned from it, each with a request to come back waiting.
+     */
+    async function groupWith(name: string, members: string[], banned: string[]): Promise<string> {
+      const groups = new GroupService(pool);
+      const { id } = await groups.create(ids.me!, { name: `${name} ${suffix}`.slice(0, 40), privacy: 'invite' });
+      for (const tag of members) await groups.invite(ids.me!, id, ids[tag]!);
+      for (const tag of banned) {
+        await pool.query(`INSERT INTO group_bans (group_id, user_id, banned_by, reason) VALUES ($1, $2, $3, 'qb')`, [id, ids[tag], ids.me]);
+        await pool.query(`INSERT INTO group_rejoin_requests (group_id, user_id, note) VALUES ($1, $2, 'qb')`, [id, ids[tag]]);
+      }
+      return id;
+    }
+
+    it('a group page costs the same for two members as for five, and for its owner as for a member, within its budget', async () => {
+      const small = await groupWith('Small', ['f1'], ['f2']);
+      const big = await groupWith('Big', ['f1', 'f3', 'f4', 'f5'], ['f2', 'f6']);
+      const shown = (x: { statements: readonly string[] }) => x.statements.join('\n');
+      const owner = await steady('GET', `/groups/${big}`, 'me');
+      expect(owner.body.pendingRequests).toBe(2);
+      expect(owner.body.members).toHaveLength(5);
+      const counts = [
+        owner.count,
+        (await steady('GET', `/groups/${small}`, 'me')).count,
+        (await steady('GET', `/groups/${big}`, 'f1')).count,
+        // and for someone banned from it, told where they stand
+        (await steady('GET', `/groups/${big}`, 'f2')).count,
+      ];
+      expect(counts, shown(owner)).toEqual([owner.count, owner.count, owner.count, owner.count]);
+      // the session read, the group with where the viewer stands, and the roster
+      expect(owner.count, shown(owner)).toBeLessThanOrEqual(3);
+    });
+
+    it('the bans and the requests to come back cost the same for one as for two, within their budgets', async () => {
+      const one = await groupWith('One ban', [], ['f3']);
+      const two = await groupWith('Two bans', [], ['f4', 'f5']);
+      for (const list of ['bans', 'requests']) {
+        const a = await steady('GET', `/groups/${one}/${list}`, 'me');
+        const b = await steady('GET', `/groups/${two}/${list}`, 'me');
+        expect(b.body[list]).toHaveLength(2);
+        expect(b.count, b.statements.join('\n')).toBe(a.count);
+        // the session read, the admin's role, and the list
+        expect(b.count, b.statements.join('\n')).toBeLessThanOrEqual(3);
+      }
+    });
   });
 
   describe('a lesson', () => {
