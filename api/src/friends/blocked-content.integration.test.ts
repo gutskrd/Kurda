@@ -335,7 +335,7 @@ describe.skipIf(!DATABASE_URL)('a block hides what the other person wrote (integ
     });
 
     it('leaves out of the history what was said across a block, both ways', async () => {
-      const senders = async (who: Account) => [...new Set((await chat.history(who.id, gid)).map((m) => m.senderId))].sort();
+      const senders = async (who: Account) => [...new Set((await chat.history(who.id, gid)).messages.map((m) => m.senderId))].sort();
       expect(await senders(ana)).toEqual(sorted(ana, dev));
       expect(await senders(ben)).toEqual(sorted(ben, cal, dev));
       expect(await senders(cal)).toEqual(sorted(ben, cal, dev));

@@ -1,6 +1,14 @@
 import type { FastifyInstance } from 'fastify';
 import { z } from 'zod';
-import { GROUP_DESCRIPTION_MAX, GROUP_NAME_MAX, GROUP_NAME_MIN } from '@kurda/shared';
+import {
+  GROUP_BAN_DURATIONS,
+  GROUP_BAN_REASON_MAX,
+  GROUP_DESCRIPTION_MAX,
+  GROUP_NAME_MAX,
+  GROUP_NAME_MIN,
+  GROUP_REQUEST_NOTE_MAX,
+  type GroupBanDuration,
+} from '@kurda/shared';
 import { requireAuth } from '../plugins/auth.js';
 import { AppError } from '../plugins/errors.js';
 import { requireBirthMonth } from '../users/age.js';
@@ -28,7 +36,8 @@ export function registerGroupRoutes(
 ): void {
   const publicUrl = (k: string): string | null => (app.storage ? app.storage.publicUrl(k) : null);
   /**
-   * The classifier's word on a group's published text, after the wordlist the
+   * The classifier's word on a group's published text — its name and
+   * description, a ban's reason, a request's note — after the wordlist the
    * service applies: what it would block is refused, what it would flag is
    * kept for the moderators' queue.
    */
@@ -36,7 +45,7 @@ export function registerGroupRoutes(
     const text = texts.filter((x): x is string => Boolean(x && x.trim())).join('\n');
     if (!aiMod || !text) return;
     const verdict = await aiMod.moderate({ surface: 'profile', text, authorId, contentType: 'group', ...(contentRef ? { contentRef } : {}) });
-    if (verdict.blocked) throw new AppError('GROUP_TEXT_REJECTED', 422, 'the name or description has words that are not allowed here');
+    if (verdict.blocked) throw new AppError('GROUP_TEXT_REJECTED', 422, 'the text has words that are not allowed here');
   };
   /** Create a group (creator becomes owner). */
   app.post(
@@ -213,6 +222,96 @@ export function registerGroupRoutes(
       const { id, userId } = req.params as { id: string; userId: string };
       await groups.removeMember(req.user!.id, id, userId);
       await leaveRoom(id, [userId]);
+      return ok;
+    },
+  );
+
+  /**
+   * Ban someone (the owner or an admin): out of the group and its live room,
+   * not back by themselves for a day, a week or for good, and with
+   * `deleteMessages` every message of theirs in the group gone from every
+   * open view (`group_msgs_deleted`). Each ban is a line in their
+   * notifications, so how often one admin may ban is held too.
+   */
+  app.post(
+    '/groups/:id/bans',
+    {
+      schema: {
+        params: idParam,
+        body: z.object({
+          userId: z.uuid(),
+          duration: z.enum(GROUP_BAN_DURATIONS),
+          reason: z.string().max(GROUP_BAN_REASON_MAX).nullable().optional(),
+          deleteMessages: z.boolean().optional(),
+        }),
+      },
+      config: { rateLimit: { max: 60, windowMs: 60 * 60_000, per: 'user-or-ip' as const } },
+      preHandler: requireAuth,
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const body = req.body as { userId: string; duration: GroupBanDuration; reason?: string | null; deleteMessages?: boolean };
+      await screen(req.user!.id, id, body.reason);
+      const ban = await groups.ban(req.user!.id, id, body, publicUrl);
+      await leaveRoom(id, [body.userId]);
+      if (body.deleteMessages && app.hasDecorator('realtime')) {
+        await app.realtime.publish(groupRoom(id), { type: 'group_msgs_deleted', groupId: id, senderId: body.userId }).catch(() => undefined);
+      }
+      return { ban };
+    },
+  );
+  /** Lift a ban (the owner or an admin). It does not add them back. */
+  app.delete('/groups/:id/bans/:userId', { schema: { params: memberParam }, preHandler: requireAuth }, async (req) => {
+    const { id, userId } = req.params as { id: string; userId: string };
+    await groups.unban(req.user!.id, id, userId);
+    return ok;
+  });
+  /** The bans in force, newest first (the owner and admins). */
+  app.get('/groups/:id/bans', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => ({
+    bans: await groups.bans(req.user!.id, (req.params as { id: string }).id, publicUrl),
+  }));
+
+  /**
+   * Ask to come back, as someone banned. At most five a day per person,
+   * across every group: with one waiting per group and a longer wait after
+   * each one turned down, nobody can make asking a way to pester admins.
+   */
+  app.post(
+    '/groups/:id/requests',
+    {
+      schema: { params: idParam, body: z.object({ note: z.string().max(GROUP_REQUEST_NOTE_MAX).nullable().optional() }) },
+      config: { rateLimit: { max: 5, windowMs: 24 * 60 * 60_000, per: 'user-or-ip' as const } },
+      // the note reaches the group's admins
+      preHandler: [requireBirthMonth, requireUnrestricted('post')],
+    },
+    async (req) => {
+      const { id } = req.params as { id: string };
+      const { note } = req.body as { note?: string | null };
+      await screen(req.user!.id, id, note);
+      return { request: await groups.requestToRejoin(req.user!.id, id, note) };
+    },
+  );
+  /** Take back one's own waiting request. */
+  app.delete('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => {
+    await groups.withdrawRequest(req.user!.id, (req.params as { id: string }).id);
+    return ok;
+  });
+  /** The requests waiting, oldest first (the owner and admins). */
+  app.get('/groups/:id/requests', { schema: { params: idParam }, preHandler: requireAuth }, async (req) => ({
+    requests: await groups.requests(req.user!.id, (req.params as { id: string }).id, publicUrl),
+  }));
+  /** Let them back: the ban lifted, and a member again when every rule allows it. */
+  app.post('/groups/:id/requests/:userId/approve', { schema: { params: memberParam }, config: { skipValidation: true }, preHandler: requireAuth }, async (req) => {
+    const { id, userId } = req.params as { id: string; userId: string };
+    return groups.approve(req.user!.id, id, userId);
+  });
+  /** Turn it down: a longer wait before the next, or with `stopRequests` no more from them. */
+  app.post(
+    '/groups/:id/requests/:userId/decline',
+    { schema: { params: memberParam, body: z.object({ stopRequests: z.boolean().optional() }).optional() }, preHandler: requireAuth },
+    async (req) => {
+      const { id, userId } = req.params as { id: string; userId: string };
+      await groups.decline(req.user!.id, id, userId, (req.body as { stopRequests?: boolean } | undefined)?.stopRequests ?? false);
       return ok;
     },
   );

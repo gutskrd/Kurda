@@ -180,7 +180,7 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
     const ev = hub.published.find((p) => p.room === `group:${gid}` && p.ev.type === 'group_msg');
     expect((ev!.ev.message as { game: unknown }).game).toEqual(ref);
 
-    const history = await groupChat.history(member, gid);
+    const { messages: history } = await groupChat.history(member, gid);
     expect(history.find((m) => m.id === posted.id)).toMatchObject({ kind: 'game', game: ref, body: null, deleted: false });
 
     // the group's rules hold: members only, and a muted member cannot post one
@@ -190,6 +190,6 @@ describe.skipIf(!DATABASE_URL)('game cards in chats (integration)', () => {
 
     // a deleted card is gone from the history's view of it
     await groupChat.deleteMessage(owner, gid, posted.id);
-    expect((await groupChat.history(owner, gid)).find((m) => m.id === posted.id)).toMatchObject({ deleted: true, game: null });
+    expect((await groupChat.history(owner, gid)).messages.find((m) => m.id === posted.id)).toMatchObject({ deleted: true, game: null });
   });
 });

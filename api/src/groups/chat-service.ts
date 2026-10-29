@@ -6,7 +6,7 @@ import { gameRef, type KindColumns } from '../chat/kinds.js';
 import { giftCards } from '../gifts/cards.js';
 import { openGroupsAdultsOnly, type GroupService } from './service.js';
 import { birthDateRequired, minorSql, writtenForSql } from '../users/age.js';
-import { canManage, isRole, type Role } from '@kurda/shared';
+import { canManage, canModerateGroup, isRole, type GroupChatCleared, type Role } from '@kurda/shared';
 import { resolveAvatarUrl, type PublicUrl } from '../cosmetics/access.js';
 import { notBlockedSql } from '../friends/blocked.js';
 
@@ -41,6 +41,15 @@ export interface GroupMessage extends ChatMessageExtras {
   createdAt: string;
   deleted: boolean;
 }
+
+/**
+ * SQL: the moment before which a member sees nothing of the group's chat —
+ * the later of the group's clear for everyone (`g`) and the member's own
+ * (`me`, their membership) — or -infinity when neither has cleared it. Every
+ * read of a group's messages for a member goes through it: the history and
+ * the unread counts. Worked out in the database, at its own precision.
+ */
+const CLEARED_BEFORE = `COALESCE(GREATEST(g.chat_cleared_at, me.chat_cleared_at), '-infinity'::timestamptz)`;
 
 /** The realtime room a group's chat fans out to. */
 export const groupRoom = (groupId: string): string => `group:${groupId}`;
@@ -79,26 +88,44 @@ export class GroupChatService {
 
   /**
    * `requireMember` in one read: the membership, the group's privacy and the
-   * member's age, and whether they are muted in the group right now (which
-   * only posting asks). The member's group and account always exist: the
-   * membership row is removed with either.
+   * member's age, whether they are muted in the group right now (which only
+   * posting asks), and what their view of the chat has had cleared (which
+   * only the history answers with). Someone not in the group is told
+   * GROUP_BANNED, with until when, when that is why — so a thread left open
+   * as they were banned can say so — and NOT_A_MEMBER otherwise.
    */
-  private async member(groupId: string, userId: string): Promise<{ role: Role; muted: boolean; username: string }> {
-    const r = await this.pool.query<{ role: string; privacy: string; minor: boolean; known: boolean; muted: boolean; username: string }>(
-      `SELECT m.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known, u.username,
-              EXISTS (SELECT 1 FROM group_mutes gm WHERE gm.group_id = m.group_id AND gm.user_id = m.user_id
-                         AND (gm.muted_until IS NULL OR gm.muted_until > now())) AS muted
-         FROM group_members m JOIN groups g ON g.id = m.group_id JOIN users u ON u.id = m.user_id
-        WHERE m.group_id = $1 AND m.user_id = $2`,
+  private async member(groupId: string, userId: string): Promise<{ role: Role; muted: boolean; username: string; cleared: GroupChatCleared }> {
+    const r = await this.pool.query<{
+      role: string | null; privacy: string; minor: boolean; known: boolean; muted: boolean; username: string;
+      banned: boolean; until: Date | null; group_cleared_at: Date | null; group_cleared_by: string | null; my_cleared_at: Date | null;
+    }>(
+      `SELECT me.role, g.privacy, ${minorSql('u')} AS minor, u.birth_year IS NOT NULL AS known, u.username,
+              EXISTS (SELECT 1 FROM group_mutes gm WHERE gm.group_id = g.id AND gm.user_id = u.id
+                         AND (gm.muted_until IS NULL OR gm.muted_until > now())) AS muted,
+              b.user_id IS NOT NULL AS banned, b.until,
+              g.chat_cleared_at AS group_cleared_at, c.username AS group_cleared_by, me.chat_cleared_at AS my_cleared_at
+         FROM groups g
+         JOIN users u ON u.id = $2
+         LEFT JOIN group_members me ON me.group_id = g.id AND me.user_id = u.id
+         LEFT JOIN users c ON c.id = g.chat_cleared_by
+         LEFT JOIN group_bans b ON b.group_id = g.id AND b.user_id = u.id AND (b.until IS NULL OR b.until > now())
+        WHERE g.id = $1`,
       [groupId, userId],
     );
     const row = r.rows[0];
-    if (!row || !isRole(row.role)) throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
+    if (!row?.role || !isRole(row.role)) {
+      if (row?.banned) throw new AppError('GROUP_BANNED', 403, 'you are banned from this group', { until: row.until ? row.until.toISOString() : null });
+      throw new AppError('NOT_A_MEMBER', 403, 'you are not in this group');
+    }
     if (row.privacy === 'open') {
       if (row.minor) throw openGroupsAdultsOnly();
       if (!row.known) throw birthDateRequired();
     }
-    return { role: row.role, muted: row.muted, username: row.username };
+    const cleared: GroupChatCleared = {
+      forEveryone: row.group_cleared_at ? { at: row.group_cleared_at.toISOString(), by: row.group_cleared_by } : null,
+      forMe: row.my_cleared_at ? row.my_cleared_at.toISOString() : null,
+    };
+    return { role: row.role, muted: row.muted, username: row.username, cleared };
   }
 
   /**
@@ -257,15 +284,19 @@ export class GroupChatService {
     return message;
   }
 
-  /** History — membership re-checked here, so removal revokes access at once. */
+  /**
+   * History — membership re-checked here, so removal revokes access at once —
+   * and what this member's view has had cleared. Nothing from before the
+   * later of the two clears is in it (`CLEARED_BEFORE`).
+   */
   async history(
     userId: string,
     groupId: string,
     before?: string,
     limit = 30,
     publicUrl: PublicUrl = () => null,
-  ): Promise<GroupMessage[]> {
-    await this.requireMember(groupId, userId);
+  ): Promise<{ messages: GroupMessage[]; cleared: GroupChatCleared }> {
+    const { cleared } = await this.member(groupId, userId);
     // grant this member access to the live room for the WS join
     await this.hub.invite(room(groupId), userId, ROOM_TTL).catch(() => undefined);
     // An open group is strangers. Anything a minor said in one before their
@@ -284,7 +315,8 @@ export class GroupChatService {
       `SELECT m.id, m.sender_id, u.username, u.profile_photo_key, u.selected_avatar_key,
               m.body, m.created_at, m.deleted_at, m.kind, m.gift_batch_id, m.game, m.game_lobby_id, g.privacy
          FROM group_messages m JOIN users u ON u.id = m.sender_id JOIN groups g ON g.id = m.group_id
-        WHERE m.group_id = $1
+         LEFT JOIN group_members me ON me.group_id = m.group_id AND me.user_id = $3
+        WHERE m.group_id = $1 AND m.created_at > ${CLEARED_BEFORE}
           AND (g.privacy <> 'open' OR ${writtenForSql('m.sender_id', '$3::uuid')})
           AND ${notBlockedSql('m.sender_id', '$3::uuid')}
           ${before ? 'AND m.created_at < $4::timestamptz' : ''}
@@ -300,7 +332,7 @@ export class GroupChatService {
       { id: userId, seesEveryone: rows.rows[0]?.privacy === 'invite' },
       publicUrl,
     );
-    return rows.rows
+    const messages = rows.rows
       .map((r) => {
         const live = r.deleted_at === null;
         return {
@@ -317,6 +349,41 @@ export class GroupChatService {
         };
       })
       .reverse();
+    return { messages, cleared };
+  }
+
+  /**
+   * Clear the chat. For `me`, any member: the messages so far leave their own
+   * view, and the chat is read. For `everyone`, the owner or an admin only:
+   * the messages so far are deleted for every member, the chat keeps when and
+   * by whom, and the room is told (`group_chat_cleared`) so every open view
+   * clears at once.
+   */
+  async clear(userId: string, groupId: string, scope: 'me' | 'everyone'): Promise<GroupChatCleared> {
+    const { role, username, cleared } = await this.member(groupId, userId);
+    if (scope === 'me') {
+      const r = await this.pool.query<{ at: Date }>(
+        `WITH marked AS (
+           INSERT INTO group_reads (group_id, user_id, last_read_at) VALUES ($1, $2, now())
+           ON CONFLICT (group_id, user_id) DO UPDATE SET last_read_at = now()
+         )
+         UPDATE group_members SET chat_cleared_at = now() WHERE group_id = $1 AND user_id = $2 RETURNING chat_cleared_at AS at`,
+        [groupId, userId],
+      );
+      return { ...cleared, forMe: r.rows[0]!.at.toISOString() };
+    }
+    if (!canModerateGroup(role)) throw new AppError('NOT_GROUP_ADMIN', 403, 'only the owner and admins can clear the chat for everyone');
+    // one statement, so the messages deleted are exactly those from before the moment kept
+    const r = await this.pool.query<{ at: Date }>(
+      `WITH gone AS (
+         UPDATE group_messages SET deleted_at = now() WHERE group_id = $1 AND created_at <= now() AND deleted_at IS NULL
+       )
+       UPDATE groups SET chat_cleared_at = now(), chat_cleared_by = $2 WHERE id = $1 RETURNING chat_cleared_at AS at`,
+      [groupId, userId],
+    );
+    const at = r.rows[0]!.at.toISOString();
+    await this.hub.publish(room(groupId), { type: 'group_chat_cleared', groupId, at, by: username }).catch(() => undefined);
+    return { ...cleared, forEveryone: { at, by: username } };
   }
 
   /** Delete a message: a moderator/owner (any message) or the author (own). */
@@ -381,22 +448,24 @@ export class GroupChatService {
 
   /**
    * Per-group unread counts for the caller's groups. A message the history
-   * would not show them — from somebody with a block between them — is not
-   * counted, or the badge would announce messages that never appear.
+   * would not show them — from somebody with a block between them, or from
+   * before a clear (`CLEARED_BEFORE`) — is not counted, or the badge would
+   * announce messages that never appear.
    */
   async unread(userId: string): Promise<Array<{ groupId: string; unread: number }>> {
     const rows = await this.pool.query<{ group_id: string; unread: number }>(
-      `SELECT m.group_id,
+      `SELECT me.group_id,
               count(gm.id) FILTER (
                 WHERE gm.deleted_at IS NULL AND gm.sender_id <> $1
-                  AND gm.created_at > COALESCE(r.last_read_at, '-infinity'::timestamptz)
                   AND ${notBlockedSql('gm.sender_id', '$1::uuid')}
               )::int AS unread
-         FROM group_members m
-         LEFT JOIN group_reads r ON r.group_id = m.group_id AND r.user_id = $1
-         LEFT JOIN group_messages gm ON gm.group_id = m.group_id
-        WHERE m.user_id = $1
-        GROUP BY m.group_id`,
+         FROM group_members me
+         JOIN groups g ON g.id = me.group_id
+         LEFT JOIN group_reads r ON r.group_id = me.group_id AND r.user_id = $1
+         LEFT JOIN group_messages gm ON gm.group_id = me.group_id
+               AND gm.created_at > GREATEST(${CLEARED_BEFORE}, r.last_read_at)
+        WHERE me.user_id = $1
+        GROUP BY me.group_id`,
       [userId],
     );
     return rows.rows.map((r) => ({ groupId: r.group_id, unread: r.unread }));
