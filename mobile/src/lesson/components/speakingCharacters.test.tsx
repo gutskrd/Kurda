@@ -86,14 +86,18 @@ describe('the lesson’s speaking characters', () => {
     expect(frames.pending).toBe(0);
   });
 
-  // he stands beside the bubble listening, and says nothing, so a screen reader is not told he said it
-  it('brings Hevalo in to listen when nobody has been chosen to say the clip', async () => {
+  // he leans out of his window beside the bubble listening, and says nothing, so a screen reader is not told he said it
+  it('brings Hevalo in to listen, out of his window, when nobody has been chosen to say the clip', async () => {
     renderWithProviders(<ListeningExercise exercise={listening()} text="" onChangeText={noop} onSkip={noop} disabled={false} />);
     await settle();
     expect(screen.getByRole('button', { name: 'Play audio' })).toBeTruthy();
     expect(screen.queryByRole('img', { name: /^Said by/ })).toBeNull();
-    const hevalo = characterLayers('hevalo', 'full').body;
-    expect([...document.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === hevalo)).toBe(true);
+    const scene = screen.getByTestId('prompt-scene');
+    expect(within(scene).getByTestId('hevalo-window')).toBeTruthy();
+    expect(within(scene).queryByTestId('character-stage')).toBeNull();
+    // his head and neck, never the whole figure
+    const neck = characterLayers('hevalo', 'head').body;
+    expect([...scene.querySelectorAll('svg[data-markup]')].some((el) => el.getAttribute('data-markup') === neck)).toBe(true);
   });
 
   it('shows nobody for a speaker this version of the app cannot draw', async () => {

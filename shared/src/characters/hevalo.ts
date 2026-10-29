@@ -58,6 +58,7 @@ const C = {
   hoofLight: '#8a6447',
   hoofDeep: '#4e3324',
   hindHoof: '#472e21',
+  shade: '#2a1608',
 } as const;
 
 /** His face is drawn about this upright line, in the icon's measure; his eyes sit a hair to one side of it, as in the icon. */
@@ -218,6 +219,24 @@ function body(p: string, legs = true): string {
       fill(curve(BIB), `url(#${id('bib')})`),
       ...(legs ? hooves(p) : []),
     ],
+  );
+}
+
+/** Head and neck, leaning out of a window: from over the antlers to well under the sill, so a hop never lifts a cut edge into view. */
+export const NECK_BOX = { x: -15, y: -16, w: 540, h: 736 } as const;
+
+/** Where the window's sill crosses his neck, a little under his chin, before it widens into his chest. */
+export const NECK_SILL = 600;
+
+/** His body as far as the chest, his neck darkening as it goes down into the room behind the sill, as the room's own shade. */
+function neck(p: string): string {
+  const id = `${p}neckshade`;
+  return (
+    body(p, false) +
+    part(
+      [linearAt(id, [[0, C.shade, 0], [1, C.shade, 0.36]], 0, NECK_SILL - 120, 0, NECK_SILL)],
+      [clipped(`${p}figure`, fill(`M-20,${NECK_SILL - 120}H530V${NECK_BOX.y + NECK_BOX.h}H-20z`, `url(#${id})`))],
+    )
   );
 }
 
@@ -882,6 +901,7 @@ export function drawHevalo(p: string): CharacterArt {
     headPivot: { x: AXIS, y: 446 },
     body: body(p),
     chest: body(p, false),
+    neck: { box: NECK_BOX, sill: NECK_SILL, body: neck(p) },
     head: head(p),
     eyes: { open: eyesOpen(p), half: whites(p) + pupil('left') + pupil('right') + lidsHalf(p), closed: eyesClosed(p), happy: eyesHappy(p) },
     mouths: deerMouths(p),

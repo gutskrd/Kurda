@@ -727,7 +727,8 @@ describe('a conversation', () => {
 
 describe('the action bar and the verdict sheet', () => {
   const six = ['a', 'b', 'c', 'd', 'e', 'f'].map((id) => typed(id, `word ${id}`));
-  const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face [data-speaker="hevalo"]');
+  // leaning out of his window, his head and neck
+  const hevalo = (): Element | null => document.querySelector('.lesson-feedback-face .hevalo-window [data-speaker="hevalo"][data-crop="head"]');
 
   it('names a run at a milestone, warms the bar through it, and has Hevalo cheer it and think a miss over', async () => {
     serve({

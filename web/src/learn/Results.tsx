@@ -20,7 +20,7 @@ import {
   type ResultsGrade,
   type ResultsOutcome,
 } from '@kurda/shared';
-import { SpeakingCharacter } from '../characters/SpeakingCharacter';
+import { HevaloWindow } from '../characters/HevaloWindow';
 import { Button } from '../components/Button';
 import { AccuracyIcon, CheckIcon, StarIcon, TimerIcon, UpIcon, XpIcon } from '../components/icons';
 import { CelebrationArt, useCelebrationHold } from '../ranks/Celebration';
@@ -76,8 +76,8 @@ function ownedElsewhere(target: EventTarget | null): boolean {
  * The end of a lesson or a review: what changed, then what comes next.
  *
  * The results open as the app's one celebration (ranks/Celebration.tsx), with
- * Hevalo standing tall and cheering as the buzz lands, a title by how it went
- * — perfect, great, or simply done — and a warm line under it. Three framed
+ * Hevalo popping up in his window and cheering as the buzz lands, a title by
+ * how it went — perfect, great, or simply done — and a warm line under it. Three framed
  * cards follow, each with its colour's band holding its label: the XP earned
  * (gold), how many were right first time with a kind word for it (green), and
  * how long this sitting took (blue), each number counting up. Today's goal
@@ -304,7 +304,7 @@ export function Results({
               onClick={moment.playing ? moment.skip : undefined}
             >
               <CelebrationArt flecks={BURST.lesson} seed={results.correct * 31 + results.total} reach={150}>
-                <SpeakingCharacter speaker="hevalo" audio={null} crop="full" size={220} decorative reaction={cheer ? 'cheer' : null} />
+                <HevaloWindow size={230} reaction={cheer ? 'cheer' : null} />
               </CelebrationArt>
               <div className="celebrate-details">
                 {/* the page's h1 is the lesson's name; this is the part of it on screen now */}

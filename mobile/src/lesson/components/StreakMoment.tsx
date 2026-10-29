@@ -4,7 +4,7 @@ import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { STREAK_DAY_TIMING, freezeLine, streakSpeech, streakWeek, weekStartsOn, type StreakMood, type WeekDay } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
-import { SpeakingCharacter } from '../../characters/SpeakingCharacter';
+import { HevaloWindow } from '../../characters/HevaloWindow';
 import { GOLD_INK, REST, TONES } from '../../coursemap/path';
 import { useI18n } from '../../i18n/I18nContext';
 import { formatNumber } from '../../i18n/format';
@@ -29,8 +29,9 @@ const FLAME_SMALL = 112;
 /** The day's number on the flame's screen, and on the streak's. */
 const NUMBER = 112;
 const NUMBER_SMALL = 88;
-/** How tall Hevalo stands under his words. */
-const HEVALO = 168;
+/** How tall Hevalo's window stands under his words, and how far it stands from the middle, towards where the reading ends: the flame beside it. */
+const WINDOW = 156;
+const WINDOW_ASIDE = 56;
 /** A day of the week: the circle, and when the circles arrive one after another, today's last. */
 const DAY = 36;
 const DAY_STAGGER_MS = 50;
@@ -235,6 +236,8 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
     return () => run.stop();
   }, [reduce, arrive]);
   const rise = arrive.interpolate({ inputRange: [0, 1], outputRange: [10, 0] });
+  // the window and the bubble's point at it, beside the flame
+  const aside = (dir.rtl ? -1 : 1) * WINDOW_ASIDE;
 
   return (
     <View style={[styles.screen, { paddingTop: top }]} testID="lesson-streak-day">
@@ -242,14 +245,16 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
         <Animated.View style={[styles.speaker, { opacity: arrive, transform: [{ translateY: rise }] }]}>
           <View style={[styles.bubble, { backgroundColor: colors.surface, borderColor: colors.separator }]}>
             <Text style={[styles.bubbleText, dir.text, { color: colors.textPrimary }]}>{words}</Text>
-            <View style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator }]} />
+            <View
+              style={[styles.tail, { backgroundColor: colors.surface, borderColor: colors.separator, transform: [{ translateX: aside }, { rotate: '45deg' }] }]}
+            />
           </View>
-          {/* Hevalo under his words, the flame burning just behind him on the side the reading starts from */}
+          {/* Hevalo leaning out of his window under his words, the flame burning beside it on the side the reading starts from */}
           <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <View style={[styles.behind, { transform: [{ translateX: (dir.rtl ? 1 : -1) * FLAME_SMALL * 0.42 }] }]}>
               <Fire size={FLAME_SMALL * 1.25} />
             </View>
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={HEVALO} flip={dir.rtl} reaction="cheer" />
+            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction="cheer" style={{ transform: [{ translateX: aside }] }} />
           </View>
         </Animated.View>
         <View
@@ -411,7 +416,7 @@ const styles = StyleSheet.create({
   bubble: { alignSelf: 'stretch', borderRadius: radii.lg, borderWidth: 1.5, paddingVertical: spacing.md, paddingHorizontal: spacing.md + 4 },
   bubbleText: { fontSize: typography.sizes.md, lineHeight: 24 },
   // the bubble's point, towards Hevalo under it
-  tail: { position: 'absolute', bottom: -8, alignSelf: 'center', width: 16, height: 16, borderRightWidth: 1.5, borderBottomWidth: 1.5, transform: [{ rotate: '45deg' }] },
+  tail: { position: 'absolute', bottom: -8, alignSelf: 'center', width: 16, height: 16, borderRightWidth: 1.5, borderBottomWidth: 1.5 },
   hevalo: { alignItems: 'center', justifyContent: 'flex-end' },
   behind: { position: 'absolute', bottom: spacing.xs },
   count: { alignItems: 'center' },

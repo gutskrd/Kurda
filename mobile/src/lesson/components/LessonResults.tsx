@@ -30,7 +30,7 @@ import { NO_MOMENTS, type LessonMoments } from '../moments';
 import { useDirection } from '../../reports/direction';
 import { ReminderOffer } from '../../push/ReminderOffer';
 import { useScreenBottomInset, useScreenTopInset } from '../../navigation/tabBarLayout';
-import { SpeakingCharacter } from '../../characters/SpeakingCharacter';
+import { HevaloWindow } from '../../characters/HevaloWindow';
 import { GoalRing } from '../../leagues/GoalRing';
 import { knownTier, leagueName } from '../../leagues/format';
 import { QuestsScreen } from '../../quests/QuestsScreen';
@@ -64,9 +64,9 @@ interface Props {
   onPath?: () => void;
 }
 
-/** How big the stage Hevalo arrives on is, and how tall he stands on it, head to hooves. */
+/** How big the stage Hevalo arrives on is, and how tall his window stands on it. */
 const STAGE = { width: 280, height: 232 };
-const HEVALO = 208;
+const WINDOW = 224;
 
 /** A list of mistakes this long or shorter is open; a longer one starts folded, so the results still fit one screen. */
 const MISTAKES_OPEN = 3;
@@ -80,9 +80,9 @@ const ACTION_WORDS: Record<ResultsAction, TranslationKey> = {
 /**
  * End of a lesson: what changed, and what comes next, on one screen.
  *
- * It opens as the app's one celebration (theme/celebration.ts): Hevalo,
- * standing whole on a stage of light, springs in and cheers as the buzz
- * lands, a ring widens once, a light handful of gold flecks — however many
+ * It opens as the app's one celebration (theme/celebration.ts): Hevalo's
+ * window springs in on a stage of light, his head pops up out of it and he
+ * cheers as the buzz lands, a ring widens once, a light handful of gold flecks — however many
  * things this lesson did at once, it is one moment, felt once. The title says
  * how it went (a perfect lesson, great work, or a lesson done), with a warm
  * line about the course's Kurdish under it. Then three framed cards side by
@@ -208,7 +208,7 @@ export function LessonResults({
           {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={STAGE.height * 0.6} /> : null}
           {plan.travel ? <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={results.correct * 31 + results.total} colours={flecks} reach={130} /> : null}
           <Animated.View style={{ opacity, transform: [{ scale }] }} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-            <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={HEVALO} flip={dir.rtl} reaction={cheer ? 'cheer' : null} />
+            <HevaloWindow size={WINDOW} flip={dir.rtl} reaction={cheer ? 'cheer' : null} />
           </Animated.View>
         </Pressable>
 
