@@ -566,6 +566,8 @@ export {
   TIER_METAL as ART_TIER_METAL,
   type Metal as ArtMetal,
 } from './art/palette.js';
+/** The streak's fire: its flames, sparks and logs, their colours and how each part moves, drawn the same by both apps. */
+export * from './art/fire.js';
 /** The mouth shapes a speaking character shows, and the timeline a recording's mouth follows. */
 export * from './lipsync/index.js';
 /** Hevalo, Hamo and Xezo: the characters who say a recording, drawn once for web and phone. */
