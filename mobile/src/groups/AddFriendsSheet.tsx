@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { AccessibilityInfo, ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
@@ -71,6 +71,7 @@ export function AddFriendsSheet({
       return;
     }
     haptic('correct');
+    AccessibilityInfo.announceForAccessibility?.(t('groups.addFriends.addedName', { name: friend.username }));
     setAdded((prev) => new Set(prev).add(friend.userId));
   };
 

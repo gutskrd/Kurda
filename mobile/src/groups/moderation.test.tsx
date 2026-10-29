@@ -127,7 +127,7 @@ describe('removing or banning a member', () => {
   });
 
   it('keeps the sheet open, and says why, when a ban is refused', async () => {
-    info({ 'GET /groups/g1': detail('moderator'), 'POST /groups/g1/bans': fail({ code: 'NOT_GROUP_ADMIN', status: 403 }) });
+    info({ 'GET /groups/g1': detail('moderator'), 'POST /groups/g1/bans': fail({ code: 'FORBIDDEN', status: 403, message: 'not allowed to ban that member' }) });
     await screen.findByText('berfin');
     const shown = alerts();
     berfinMenu();
@@ -136,7 +136,7 @@ describe('removing or banning a member', () => {
     await act(async () => {
       fireEvent.click(ban);
     });
-    expect(await screen.findByRole('alert')).toBeTruthy();
+    expect(await screen.findByText('You can’t ban berfin from this group.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Ban berfin' })).toBeTruthy();
     expect(felt).toContain('wrong');
   });
@@ -189,7 +189,7 @@ describe('requests to come back', () => {
     });
     expect(client.calls.some((c) => c.path === '/groups/g1/requests/u5/approve')).toBe(true);
     await waitFor(() => expect(screen.queryByText('kawa')).toBeNull());
-    expect(announce).toHaveBeenCalledWith('kawa is unbanned. They couldn’t be added back just now, but they can join or be added again.');
+    expect(announce).toHaveBeenCalledWith('kawa is unbanned, but couldn’t be added back just now.');
     expect(felt).toContain('correct');
   });
 

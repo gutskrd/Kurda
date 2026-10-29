@@ -68,7 +68,9 @@ export function BanSheet({
     setBusy(false);
     if (!res.ok) {
       haptic('wrong');
-      setError(groupError(res.error, t));
+      // someone the reader does not outrank (or no longer here to ban) is said plainly, not in the server's English
+      const notThem = res.error.code === 'FORBIDDEN' || res.error.code === 'BAD_TARGET';
+      setError(notThem ? t('groups.ban.notAllowed', { name }) : groupError(res.error, t));
       return;
     }
     haptic('correct');
