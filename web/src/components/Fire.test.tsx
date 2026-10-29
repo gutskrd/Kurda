@@ -1,14 +1,28 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { fireEvent, render } from '@testing-library/react';
-import { FIRE_GROW, FIRE_SMALL, FIRE_SMALL_VIEW, FIRE_STAGES, FIRE_VIEW, fireDrawing, fireFrame, type FireLevel, type FireStage } from '@kurda/shared';
+import {
+  FIRE_GROW,
+  FIRE_SMALL,
+  FIRE_SMALL_VIEW,
+  FIRE_SPRITE_COLS,
+  FIRE_SPRITE_MS,
+  FIRE_SPRITE_ROWS,
+  FIRE_STAGES,
+  FIRE_VIEW,
+  fireDrawing,
+  fireFrame,
+  type FireLevel,
+  type FireStage,
+} from '@kurda/shared';
 import { Fire } from './Fire';
 
 /*
  * The streak's fire on the website: every stage burning with what it
- * promises, the light version beside a number, a cold hearth when the streak
- * is not burning, growing from one stage into the next on the day it grew,
- * still for a reader who asked for less motion, and hidden from a screen
- * reader every time — the words beside it say the streak.
+ * promises, its painted flame playing frame by frame, the light version
+ * beside a number, a cold hearth when the streak is not burning, growing from
+ * one stage into the next on the day it grew, still (one frame) for a reader
+ * who asked for less motion, and hidden from a screen reader every time — the
+ * words beside it say the streak.
  */
 
 afterEach(() => {
@@ -27,9 +41,11 @@ const reduceMotion = () =>
 
 /** The tongues drawn, by the gradient each is filled with. */
 const tongues = (svg: Element): string[] => [...svg.querySelectorAll('path.fire-loop')].map((p) => /-(\w+)\)$/.exec(p.getAttribute('fill') ?? '')?.[1] ?? '');
+/** The painted flames shown, by the stage whose sheet each plays. */
+const sheets = (el: Element): string[] => [...el.querySelectorAll('image')].map((i) => /^\/fire\/(\w+)\.webp$/.exec(i.getAttribute('href') ?? '')?.[1] ?? '');
 
 describe('the fire', () => {
-  it('burns at every stage with the parts it promises, each tongue flickering about its root', () => {
+  it('burns at every stage with the parts it promises, its painted flame playing frame by frame', () => {
     for (const stage of FIRE_STAGES.filter((s) => s !== 'cold')) {
       const drawing = fireDrawing(lvl(stage), 168);
       const svg = fire(<Fire size={168} level={lvl(stage)} />);
@@ -38,20 +54,32 @@ describe('the fire', () => {
       expect(svg).toHaveAttribute('data-stage', stage);
       expect(svg).toHaveAttribute('aria-hidden', 'true');
       expect(svg).toHaveAttribute('height', '168');
-      expect(tongues(svg)).toEqual(drawing.tongues.map((t) => t.id));
+      expect(tongues(svg)).toEqual([]);
+      expect(sheets(svg), stage).toEqual([stage]);
       expect(svg.querySelectorAll('circle.fire-rise')).toHaveLength(drawing.embers.length);
-      expect(svg.querySelectorAll('path.fire-rise')).toHaveLength(drawing.wisps.length + drawing.drifts.length);
+      expect(svg.querySelectorAll('path.fire-rise')).toHaveLength(0);
       // its glow round it, and the same light pooled on the ground, both breathing
       expect(svg.querySelectorAll('ellipse.fire-loop')).toHaveLength(2);
       // the stones and the sun come with the biggest fires
       expect(svg.querySelectorAll('[fill$="-stone)"]').length > 0, stage).toBe(stage === 'blaze' || stage === 'newroz');
       expect(svg.querySelector('[fill$="-rays)"]') !== null, stage).toBe(stage === 'newroz');
     }
-    const outer = fire(<Fire size={168} level={lvl('campfire')} />).querySelector('path.fire-loop[fill$="-outer)"]') as SVGPathElement;
-    const drawn = fireDrawing(lvl('campfire'), 168).tongues.find((t) => t.id === 'outer')!;
-    expect(outer.style.getPropertyValue('--fire-period')).toBe(`${drawn.motion.periodMs}ms`);
-    expect(outer.style.transformOrigin).toBe(`${drawn.origin[0]}px ${drawn.origin[1]}px`);
-    expect(outer.style.getPropertyValue('--fire-k1')).toContain('skewX(');
+    // a window as big as the flame onto its sheet, which steps along a row a frame at a time, and down a row at the end of each
+    const { box, sheet } = fireDrawing(lvl('campfire'), 168).painted!;
+    const image = fire(<Fire size={168} level={lvl('campfire')} />).querySelector('image')!;
+    const window = image.closest('svg.fire-flame')!;
+    expect([window.getAttribute('x'), window.getAttribute('y'), window.getAttribute('width'), window.getAttribute('height')]).toEqual([box.x, box.y, box.w, box.h].map(String));
+    expect(window).toHaveAttribute('viewBox', `0 0 ${sheet.frame.w} ${sheet.frame.h}`);
+    expect([image.getAttribute('width'), image.getAttribute('height')]).toEqual([String(sheet.sheet.w), String(sheet.sheet.h)]);
+    const across = image as unknown as SVGImageElement;
+    const down = image.parentElement as unknown as SVGGElement;
+    expect(across).toHaveClass('fire-frames', 'fire-frames-across');
+    expect(down).toHaveClass('fire-frames', 'fire-frames-down');
+    expect([across.style.getPropertyValue('--fire-steps'), across.style.getPropertyValue('--fire-shift')]).toEqual([String(FIRE_SPRITE_COLS), `${-sheet.sheet.w}px`]);
+    expect([down.style.getPropertyValue('--fire-steps'), down.style.getPropertyValue('--fire-shift')]).toEqual([String(FIRE_SPRITE_ROWS), `${-sheet.sheet.h}px`]);
+    // a row's frames in the time the whole loop takes to go down a row
+    expect(down.style.getPropertyValue('--fire-period')).toBe(`${FIRE_SPRITE_MS}ms`);
+    expect(across.style.getPropertyValue('--fire-period')).toBe(`${FIRE_SPRITE_MS / FIRE_SPRITE_ROWS}ms`);
   });
 
   it('turns the sun behind the Newroz fire slowly, about its middle', () => {
@@ -66,20 +94,21 @@ describe('the fire', () => {
     expect(svg).toHaveClass('is-unlit');
     expect(svg).toHaveAttribute('data-stage', 'cold');
     expect(svg).not.toHaveClass('is-still');
-    expect(tongues(svg)).toEqual([]);
+    expect([tongues(svg), sheets(svg)]).toEqual([[], []]);
     expect(svg.querySelectorAll('circle.fire-loop')).toHaveLength(1);
     expect(svg.querySelectorAll('path.fire-rise[fill$="-smoke)"]')).toHaveLength(2);
     expect(svg.querySelectorAll('[fill$="-char)"]').length).toBeGreaterThan(0);
     expect(svg.querySelector('ellipse')).toBeNull();
   });
 
-  it('is the light version at the small size, in one box at every stage, so the number beside it never moves', () => {
+  it('is the light version at the small size, drawn, in one box at every stage, so the number beside it never moves', () => {
     for (const stage of FIRE_STAGES) {
       const svg = fire(<Fire size={FIRE_SMALL} level={lvl(stage)} />);
       expect(svg).toHaveClass('is-small');
       expect(svg).toHaveAttribute('viewBox', `${FIRE_SMALL_VIEW.x} ${FIRE_SMALL_VIEW.y} ${FIRE_SMALL_VIEW.w} ${FIRE_SMALL_VIEW.h}`);
       expect(svg).toHaveAttribute('width', String((FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h));
       expect(tongues(svg)).toEqual(['outer', 'core', 'heart']);
+      expect(sheets(svg)).toEqual([]);
       expect(svg.querySelectorAll('.fire-rise, ellipse')).toHaveLength(0);
     }
     // no streak yet: the grey flame, standing still
@@ -102,12 +131,14 @@ describe('the fire', () => {
     expect(fire(<Fire size={FIRE_SMALL} level={lvl('spark')} framed />)).toHaveAttribute('viewBox', `${FIRE_SMALL_VIEW.x} ${FIRE_SMALL_VIEW.y} ${FIRE_SMALL_VIEW.w} ${FIRE_SMALL_VIEW.h}`);
   });
 
-  it('stands still for a reader who asked for less motion: the fire at its stage, nothing rising off it', () => {
+  it('stands still for a reader who asked for less motion: the fire at its stage, its flame one frame, nothing rising off it', () => {
     reduceMotion();
     const svg = fire(<Fire size={168} level={lvl('bonfire')} />);
     expect(svg).toHaveClass('is-lit', 'is-still');
     expect(svg.querySelectorAll('.fire-rise')).toHaveLength(0);
-    expect(tongues(svg)).toEqual(fireDrawing(lvl('bonfire'), 168).tongues.map((t) => t.id));
+    expect(sheets(svg)).toEqual(['bonfire']);
+    // the first frame, held: nothing steps
+    expect(svg.querySelectorAll('.fire-frames')).toHaveLength(0);
     // a cold hearth still shows its smoke, held where it is
     const cold = fire(<Fire size={168} level={lvl('cold')} />);
     const smoke = cold.querySelector('path[fill$="-smoke)"]') as SVGPathElement;
@@ -118,25 +149,29 @@ describe('the fire', () => {
   it('stands still when asked to, as for a stage not reached yet: no sparks, and no growing', () => {
     const svg = fire(<Fire size={104} level={lvl('blaze')} from={lvl('bonfire')} still />);
     expect(svg).toHaveClass('is-still');
-    expect(svg.querySelectorAll('.fire-rise, .fire-grow')).toHaveLength(0);
+    expect(svg.querySelectorAll('.fire-rise, .fire-grow, .fire-frames')).toHaveLength(0);
+    expect(sheets(svg)).toEqual(['blaze']);
     expect(svg).toHaveAttribute('data-stage', 'blaze');
   });
 
-  it('grows from the old fire into the new one after a moment, then lets the old one go', () => {
+  it('grows from the old fire into the new one after a moment, the old flame stretching up and fading into the new, then lets the old one go', () => {
     const { container } = render(<Fire size={190} level={lvl('kindling')} from={lvl('spark', 0.9)} />);
     const svg = container.querySelector('svg.fire')!;
     const old = svg.querySelector('.fire-grow.is-gone') as SVGGElement;
-    expect(tongues(old)).toEqual(['flame', 'heart']);
+    expect(sheets(old)).toEqual(['spark']);
     expect(old.style.getPropertyValue('--fire-delay')).toBe(`${FIRE_GROW.delayMs}ms`);
     expect(old.style.getPropertyValue('--fire-period')).toBe(`${FIRE_GROW.ms}ms`);
-    const grown = [...svg.querySelectorAll<SVGGElement>('.fire-grow:not(.is-gone)')].find((g) => tongues(g).length > 0)!;
-    expect(tongues(grown)).toEqual(['outer', 'core', 'heart']);
-    // it starts at the old one's size, unseen
-    expect(grown.style.getPropertyValue('--fire-o0')).toBe('0');
+    // stretching up toward the new one's size, then gone
+    expect(Number(old.style.getPropertyValue('--fire-k1').match(/scale\([\d.]+, ([\d.]+)\)/)?.[1])).toBeGreaterThan(1);
+    expect(old.style.getPropertyValue('--fire-o3')).toBe('0');
+    const grown = [...svg.querySelectorAll<SVGGElement>('.fire-grow:not(.is-gone)')].find((g) => sheets(g).length > 0)!;
+    expect(sheets(grown)).toEqual(['kindling']);
+    // it starts at the old one's size, unseen, and fades in over it
+    expect([grown.style.getPropertyValue('--fire-o0'), grown.style.getPropertyValue('--fire-o3')]).toEqual(['0', '1']);
     expect(svg.querySelectorAll('circle.fire-grow, .fire-grow > circle').length).toBeGreaterThan(0);
     fireEvent.animationEnd(old);
     expect(svg.querySelector('.fire-grow.is-gone')).toBeNull();
-    expect(tongues(svg)).toEqual(['outer', 'core', 'heart']);
+    expect(sheets(svg)).toEqual(['kindling']);
   });
 
   it('lights cold logs on the first day: the cold hearth fades as the spark grows up off them', () => {
@@ -156,7 +191,7 @@ describe('the fire', () => {
     reduceMotion();
     const svg = fire(<Fire size={190} level={lvl('kindling')} from={lvl('spark')} />);
     expect(svg.querySelectorAll('.fire-grow')).toHaveLength(0);
-    expect(tongues(svg)).toEqual(['outer', 'core', 'heart']);
+    expect(sheets(svg)).toEqual(['kindling']);
     vi.unstubAllGlobals();
     expect(fire(<Fire size={190} level={lvl('kindling')} from={lvl('bonfire')} />).querySelectorAll('.fire-grow')).toHaveLength(0);
   });

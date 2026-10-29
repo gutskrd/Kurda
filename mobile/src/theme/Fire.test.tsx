@@ -12,9 +12,10 @@ import { patchReactNativeWeb } from '../reports/testing/rnWebPatches';
 import { Fire } from './Fire';
 
 /*
- * The streak's fire on the phone: every stage burning off one clock, the
- * light version beside a number, a cold hearth with no streak, growing into
- * its new stage off one more value on the day it grew, and standing still
+ * The streak's fire on the phone: every stage burning off one clock, its
+ * painted flame stepping through its sheet on that clock, the light version
+ * beside a number, a cold hearth with no streak, growing into its new stage
+ * off one more value on the day it grew, and standing still (one frame)
  * under Reduce Motion or when asked, with no clock running at all — hidden
  * from VoiceOver every time, the words beside it say the streak.
  */
@@ -71,11 +72,13 @@ const settle = () => act(() => new Promise((r) => setTimeout(r, 0)));
 /** The tongues drawn, by the gradient each is filled with. */
 const tongues = (el: Element): string[] =>
   [...el.querySelectorAll('path')].map((p) => /a(back|left|right|outer|flame|core|heart)\)$/.exec(p.getAttribute('fill') ?? '')?.[1]).filter((t): t is string => !!t);
-const oldTongues = (el: Element): string[] =>
-  [...el.querySelectorAll('path')].map((p) => /b(back|left|right|outer|flame|core|heart)\)$/.exec(p.getAttribute('fill') ?? '')?.[1]).filter((t): t is string => !!t);
+/** The painted flames shown, by the stage whose sheet each plays, oldest first. */
+const flames = (el: Element): string[] => [...el.querySelectorAll('[data-testid^="fire-flame-"]')].map((f) => f.getAttribute('data-testid')!.slice('fire-flame-'.length));
+/** Whether a painted flame is stepping through its sheet: moved by the clock, rather than held at its first frame. */
+const stepping = (el: Element, stage: string): boolean => (el.querySelector<HTMLElement>(`[data-testid="fire-flame-${stage}"]`)?.style.transform ?? '') !== '';
 
 describe('the fire', () => {
-  it('burns at every stage off one clock, stopped when it is gone, each with the parts it promises', async () => {
+  it('burns at every stage off one clock, stopped when it is gone, each with the parts it promises and its painted flame stepping on that clock', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     for (const stage of FIRE_STAGES.filter((s) => s !== 'cold')) {
       const seen = clocks();
@@ -85,8 +88,17 @@ describe('the fire', () => {
       const fire = screen.getByTestId('fire-lit');
       expect(fire.getAttribute('aria-hidden')).toBe('true');
       expect(fire.style.height).toBe('168px');
-      expect(tongues(fire), stage).toEqual(drawing.tongues.map((t) => t.id));
-      expect(fire.querySelectorAll('path[fill*="aw"]'), stage).toHaveLength(drawing.wisps.length);
+      expect(tongues(fire), stage).toEqual([]);
+      expect(flames(fire), stage).toEqual([stage]);
+      expect(fire.querySelector(`[data-testid="fire-flame-${stage}"]`)!.outerHTML, stage).toContain(`${stage}.webp`);
+      expect(stepping(fire, stage), stage).toBe(true);
+      // the window onto the sheet is the flame's own box, the sheet behind it its frames laid out
+      const window = fire.querySelector<HTMLElement>(`[data-testid="fire-flame-${stage}"]`)!.parentElement!;
+      expect(parseFloat(window.style.height), stage).toBeCloseTo((drawing.painted!.box.h * 168) / FIRE_VIEW.h, 3);
+      expect([window.style.overflowX, window.style.overflowY], stage).toEqual(['hidden', 'hidden']);
+      const { sheet, box } = drawing.painted!;
+      const sheetWide = parseFloat(fire.querySelector<HTMLElement>(`[data-testid="fire-flame-${stage}"]`)!.style.width);
+      expect(sheetWide, stage).toBeCloseTo(((sheet.sheet.w * box.w) / sheet.frame.w) * (168 / FIRE_VIEW.h), 3);
       expect(fire.querySelector('path[fill$="rays)"]') !== null, stage).toBe(stage === 'newroz');
       expect(fire.querySelector('path[fill$="stone)"]') !== null, stage).toBe(stage === 'blaze' || stage === 'newroz');
       // its glow round it, and the same light pooled on the ground
@@ -104,7 +116,7 @@ describe('the fire', () => {
     renderWithProviders(<Fire size={168} level={lvl('cold')} />);
     await settle();
     const fire = screen.getByTestId('fire-unlit');
-    expect(tongues(fire)).toEqual([]);
+    expect([tongues(fire), flames(fire)]).toEqual([[], []]);
     expect(fire.querySelectorAll('path[fill$="char)"]').length).toBeGreaterThan(0);
     expect(fire.querySelectorAll('circle[fill$="cinder)"]')).toHaveLength(1);
     expect(fire.querySelectorAll('linearGradient[id$="d0"], linearGradient[id$="d1"]')).toHaveLength(2);
@@ -122,6 +134,7 @@ describe('the fire', () => {
       const fire = screen.getByTestId(stage === 'cold' ? 'fire-unlit-small' : 'fire-lit-small');
       expect(fire.style.width, stage).toBe(`${(FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h}px`);
       expect(tongues(fire), stage).toEqual(['outer', 'core', 'heart']);
+      expect(flames(fire), stage).toEqual([]);
       expect(fire.querySelectorAll('ellipse'), stage).toHaveLength(0);
       expect(seen.started, stage).toBe(stage === 'cold' ? 0 : 1);
       cleanup();
@@ -152,7 +165,7 @@ describe('the fire', () => {
     expect(screen.getByTestId('fire-lit-small').style.width).toBe(`${(FIRE_SMALL * FIRE_SMALL_VIEW.w) / FIRE_SMALL_VIEW.h}px`);
   });
 
-  it('stands still under Reduce Motion: the fire at its stage, but no clock runs and nothing rises', async () => {
+  it('stands still under Reduce Motion: the fire at its stage, its flame one frame, but no clock runs and nothing rises', async () => {
     patchReactNativeWeb({ reduceMotion: true });
     // the setting is asked once; a fire after the answer starts from it
     renderWithProviders(<Fire size={40} level={lvl('campfire')} />);
@@ -163,40 +176,40 @@ describe('the fire', () => {
     renderWithProviders(<Fire size={168} level={lvl('kindling')} from={lvl('spark')} />);
     await settle();
     const fire = screen.getByTestId('fire-lit');
-    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
-    expect(oldTongues(fire)).toEqual([]);
-    expect(fire.querySelectorAll('path[fill*="aw"]')).toHaveLength(0);
+    expect(flames(fire)).toEqual(['kindling']);
+    expect(stepping(fire, 'kindling')).toBe(false);
+    expect(fire.querySelectorAll('circle')).toHaveLength(0);
     expect(seen.started).toBe(0);
     expect(runs).toHaveLength(0);
   });
 
-  it('stands still when asked to, as for a stage not reached yet: no clock, no sparks, no growing', async () => {
+  it('stands still when asked to, as for a stage not reached yet: no clock, one frame, no sparks, no growing', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     const seen = clocks();
     const runs = growths();
     renderWithProviders(<Fire size={104} level={lvl('blaze')} from={lvl('bonfire')} still />);
     await settle();
     const fire = screen.getByTestId('fire-lit');
-    expect(tongues(fire)).toEqual(fireDrawing(lvl('blaze'), 104).tongues.map((t) => t.id));
-    expect(fire.querySelectorAll('path[fill*="aw"]')).toHaveLength(0);
+    expect(flames(fire)).toEqual(['blaze']);
+    expect(stepping(fire, 'blaze')).toBe(false);
     expect([seen.started, runs.length]).toEqual([0, 0]);
   });
 
-  it('grows from the old fire into the new one off one more native value after a moment, then lets the old one go', async () => {
+  it('grows from the old fire into the new one off one more native value after a moment, the old flame fading into the new, then lets the old one go', async () => {
     patchReactNativeWeb({ reduceMotion: false });
     const seen = clocks();
     const runs = growths();
     renderWithProviders(<Fire size={190} level={lvl('kindling')} from={lvl('spark', 0.9)} />);
     await settle();
     const fire = screen.getByTestId('fire-lit');
-    expect(oldTongues(fire)).toEqual(['flame', 'heart']);
-    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
+    // the old flame under the new one, both playing off the one clock
+    expect(flames(fire)).toEqual(['spark', 'kindling']);
+    expect([stepping(fire, 'spark'), stepping(fire, 'kindling')]).toEqual([true, true]);
     expect(seen.started).toBe(1);
     expect(runs).toHaveLength(1);
     expect(runs[0]!.config).toMatchObject({ toValue: 1, delay: FIRE_GROW.delayMs, duration: FIRE_GROW.ms, useNativeDriver: true });
     await act(async () => runs[0]!.finish());
-    expect(oldTongues(fire)).toEqual([]);
-    expect(tongues(fire)).toEqual(['outer', 'core', 'heart']);
+    expect(flames(fire)).toEqual(['kindling']);
   });
 
   it('lights cold logs on the first day: the cold hearth is drawn over the new one, to fade as the logs catch', async () => {
@@ -207,6 +220,6 @@ describe('the fire', () => {
     const fire = screen.getByTestId('fire-lit');
     expect(fire.querySelectorAll('path[fill*="char)"]').length).toBeGreaterThan(0);
     expect(fire.querySelectorAll('circle[fill$="bcinder)"]')).toHaveLength(1);
-    expect(tongues(fire)).toEqual(['flame', 'heart']);
+    expect(flames(fire)).toEqual(['spark']);
   });
 });

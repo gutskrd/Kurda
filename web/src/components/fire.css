@@ -6,7 +6,8 @@
  * a growth eases once through its four and stays. The stops here are the
  * drawing's `FIRE_LOOP_STOPS`, `FIRE_RISE_STOPS` and `FIRE_GROW_STOPS`; the
  * eased curve is the sine ease the phone samples. Only transform and opacity
- * change, each about the part's own root in the drawing's units.
+ * change, each about the part's own root in the drawing's units. The painted
+ * flame's sheet steps along its rows and down them, a whole frame at a time.
  */
 .fire {
   display: inline-block;
@@ -109,15 +110,44 @@
   }
 }
 
+/* the painted flame: its sheet moved a frame at a time, `--fire-steps` steps of `--fire-shift` in all over `--fire-period` */
+.fire-frames {
+  animation-duration: var(--fire-period);
+  animation-timing-function: steps(var(--fire-steps));
+  animation-iteration-count: infinite;
+}
+
+.fire-frames-across {
+  animation-name: fire-frames-across;
+}
+
+.fire-frames-down {
+  animation-name: fire-frames-down;
+}
+
+@keyframes fire-frames-across {
+  to {
+    transform: translateX(var(--fire-shift));
+  }
+}
+
+@keyframes fire-frames-down {
+  to {
+    transform: translateY(var(--fire-shift));
+  }
+}
+
 /* a fire not burning, or standing still for somebody who asked for less motion */
-.fire.is-still .fire-part {
+.fire.is-still .fire-part,
+.fire.is-still .fire-frames {
   animation: none;
 }
 
-/* motion turned down while it burns: the fire stands still at the stage it grew into */
+/* motion turned down while it burns: the fire stands still at the stage it grew into, its flame one frame */
 @media (prefers-reduced-motion: reduce) {
   .fire-part,
-  .fire-grow {
+  .fire-grow,
+  .fire-frames {
     animation: none;
   }
   .fire-rise:not(.fire-keep),

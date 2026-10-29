@@ -1,5 +1,5 @@
 import { Fragment, useEffect, useId, useMemo, useRef, useState, type ReactNode } from 'react';
-import { AppState, Animated, Easing, StyleSheet, View } from 'react-native';
+import { AppState, Animated, Easing, StyleSheet, View, type ImageSourcePropType } from 'react-native';
 import Svg, { Circle, Defs, Ellipse, LinearGradient, Path, RadialGradient, Stop } from 'react-native-svg';
 import {
   FIRE_CINDER_FADE,
@@ -9,57 +9,72 @@ import {
   FIRE_GLOW_FADE,
   FIRE_GROW,
   FIRE_POSE_FIELDS,
+  FIRE_SPRITE_FRAMES,
+  FIRE_SPRITE_MS,
   fireColours,
   fireDrawing,
   fireFrame,
   fireGrowth,
   fireOutlineBox,
   fireSamples,
+  fireSpriteCell,
   type FireBaseGroup,
   type FireBasePiece,
   type FireBox,
   type FireColours,
   type FireDrawing,
   type FireEmber,
+  type FireFlame,
   type FireGlow,
   type FireGrowth,
   type FireLevel,
   type FireMotion,
   type FirePose,
+  type FireSprite,
   type FireStops,
   type FireTint,
 } from '@kurda/shared';
+import BIGFIRE from '../../assets/fire/bigfire.webp';
+import BLAZE from '../../assets/fire/blaze.webp';
+import BONFIRE from '../../assets/fire/bonfire.webp';
+import CAMPFIRE from '../../assets/fire/campfire.webp';
+import KINDLING from '../../assets/fire/kindling.webp';
+import NEWROZ from '../../assets/fire/newroz.webp';
+import SPARK from '../../assets/fire/spark.webp';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
 
 /**
  * The streak's fire (shared `art/fire.ts`), the same drawing the website
  * shows, at its stage (`level`): cold logs with a curl of smoke, a spark
- * caught, on up to the Newroz fire with the sun behind it. Each round layer
- * of flame breathes slowly from its own root, the heart swells, the glow
- * breathes round it and pools on the ground, sparks drift up and round drops
- * break off its tips, shrinking as they float away.
+ * caught, on up to the Newroz fire with the sun behind it. Its flame is
+ * painted (`assets/fire/`, made by `scripts/generate-fire-sprites.mjs`) and
+ * plays frame by frame, breathing and swaying as a cartoon flame does; the
+ * glow breathes round it and pools on the ground and sparks drift up.
  *
  * Each moving part is its own layer, as big as the part, moved by
  * transforms and opacity read off one clock per fire that loops on the
  * native driver: nothing is drawn again while it burns and React is not
- * asked for a frame. The clock stops when the fire is gone, while the app is
- * in the background, and when it stands still: under Reduce Motion, when
- * `still`, and for the grey flame beside a number with no streak yet. Glow
- * is a soft gradient, never a blur.
+ * asked for a frame — the flame is its whole sheet behind a window the size
+ * of one frame, stepped a frame at a time off the same clock. The clock stops
+ * when the fire is gone, while the app is in the background, and when it
+ * stands still: under Reduce Motion, when `still`, and for the grey flame
+ * beside a number with no streak yet; the flame then shows one frame. Glow is
+ * a soft gradient, never a blur.
  *
  * Given `from`, a smaller fire, it is drawn as that first and grows into
  * `level` as it appears (shared `fireGrowth`): one more native-driven value
  * runs once, `FIRE_GROW.delayMs` after it mounts, for `FIRE_GROW.ms`, and
- * every growing part reads it. Under Reduce Motion it is simply `level`.
+ * every growing part reads it; the old flame stretches up and fades into the
+ * new one. Under Reduce Motion it is simply `level`.
  *
  * `size` is its height in points; at `FIRE_SMALL` and under it is the light
- * version for beside a number: a bold round flame alone, breathing gently.
- * `framed`, it takes up only its stage's part of the box (shared
+ * version for beside a number: a bold round flame alone, drawn, breathing
+ * gently. `framed`, it takes up only its stage's part of the box (shared
  * `fireFrame`), still drawn as big as `size` makes the whole, for a screen
  * that shows it big without the empty air above a young fire. `accent` is an
- * event theme's colour for the flame. Decorative: the words beside it say the
- * streak.
+ * event theme's colour for its light, and for the light version's flame; the
+ * painted flame keeps its own. Decorative: the words beside it say the streak.
  */
 export function Fire({
   size,
@@ -186,9 +201,9 @@ function useAwake(): boolean {
 
 /**
  * What burns: the glow, the sun in front of it (opening as it grows, given
- * `halo`, off the growth's `driver`), the light pooled on the ground, heat
- * or smoke rising, the drops broken off and the sparks from behind the
- * flame, and the tongues.
+ * `halo`, off the growth's `driver`), the light pooled on the ground, smoke
+ * rising, the sparks from behind the flame, and the flame: painted, or the
+ * light version's tongues.
  */
 function Burning({
   paint: p,
@@ -225,23 +240,14 @@ function Burning({
           </Layer>
         );
       })}
-      {/* the broken-off drops and the sparks rise from behind the flame, so they are only seen once clear of it */}
-      {clock
-        ? drawing.wisps.map((w, i) => (
-            <Layer key={`w${i}`} box={fireOutlineBox(w.d)} motion={w.motion} origin={w.origin} clock={clock} at={at}>
-              <Defs>
-                <Gradient id={`${p.id}w${i}`} stops={colours.tongues.flame} />
-              </Defs>
-              <Path d={w.d} fill={`url(#${p.id}w${i})`} />
-            </Layer>
-          ))
-        : null}
+      {/* the sparks rise from behind the flame, so they are only seen once clear of it */}
       {clock
         ? drawing.embers.map((e, i) => {
             const colour = sparkColour(e, colours);
             return colour ? <Ember key={`e${i}`} ember={e} colour={colour} driver={clock} at={at} /> : null;
           })
         : null}
+      {drawing.painted ? <Painted flame={drawing.painted} clock={clock} at={at} /> : null}
       {drawing.tongues.map((t) => (
         <Layer key={t.id} box={fireOutlineBox(t.d)} motion={t.motion} origin={t.origin} clock={clock} at={at}>
           <Defs>
@@ -252,6 +258,64 @@ function Burning({
       ))}
     </>
   );
+}
+
+/** Each burning stage's painted flame. */
+const SHEETS: Readonly<Record<FireSprite['stage'], ImageSourcePropType>> = {
+  spark: SPARK,
+  kindling: KINDLING,
+  campfire: CAMPFIRE,
+  bigfire: BIGFIRE,
+  bonfire: BONFIRE,
+  blaze: BLAZE,
+  newroz: NEWROZ,
+};
+
+/** A hair before the next frame, where a frame's step ends: an interpolation's input has to keep rising. */
+const HAIR = 1e-6;
+
+/**
+ * The painted flame: its whole sheet in a window as big as one frame, moved
+ * a frame at a time — along a row, then down to the next — off the fire's
+ * clock, the loop played over and over in each turn of it. Standing still,
+ * it shows the first frame.
+ */
+function Painted({ flame, clock, at }: { flame: FireFlame; clock: Animated.Value | null; at: Place }): React.JSX.Element {
+  const { sheet, box } = flame;
+  const { view, unit } = at;
+  // points to a pixel of the sheet, across and down: the box is a stage's frame stretched to the fire's growth
+  const kx = (box.w * unit) / sheet.frame.w;
+  const ky = (box.h * unit) / sheet.frame.h;
+  const style = useMemo(() => (clock ? framesStyle(sheet, kx, ky, clock) : null), [clock, sheet, kx, ky]);
+  return (
+    <View style={{ position: 'absolute', left: (box.x - view.x) * unit, top: (box.y - view.y) * unit, width: box.w * unit, height: box.h * unit, overflow: 'hidden' }}>
+      <Animated.Image
+        testID={`fire-flame-${sheet.stage}`}
+        source={SHEETS[sheet.stage]}
+        fadeDuration={0}
+        resizeMode="stretch"
+        // a small fire's sheet decoded no bigger than it is shown, not at its full size (Android)
+        resizeMethod="resize"
+        style={[{ width: sheet.sheet.w * kx, height: sheet.sheet.h * ky }, style]}
+      />
+    </View>
+  );
+}
+
+/** A sheet moved in steps off `clock`, each frame held until the next: where each frame's cell lies, at every frame of every loop in the clock's turn. */
+function framesStyle(sheet: FireSprite, kx: number, ky: number, clock: Animated.Value) {
+  const steps = (FIRE_CYCLE_MS / FIRE_SPRITE_MS) * FIRE_SPRITE_FRAMES;
+  const input: number[] = [];
+  const across: number[] = [];
+  const down: number[] = [];
+  for (let s = 0; s < steps; s++) {
+    const { col, row } = fireSpriteCell(s);
+    input.push(s / steps, (s + 1) / steps - HAIR);
+    across.push(-col * sheet.frame.w * kx, -col * sheet.frame.w * kx);
+    down.push(-row * sheet.frame.h * ky, -row * sheet.frame.h * ky);
+  }
+  const step = (output: number[]) => clock.interpolate({ inputRange: input, outputRange: output, extrapolate: 'clamp' });
+  return { transform: [{ translateX: step(across) }, { translateY: step(down) }] };
 }
 
 /** The sun behind the Newroz fire: its disc, and its rays turning slowly. */

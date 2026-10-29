@@ -1,55 +1,35 @@
 /**
  * The streak's fire, designed once and drawn the same by the phone and the
- * website: soft, round and chunky, glowing. It grows with the streak
- * (`fire-stages.ts`): cold logs ready to be lit, a spark caught, a little
- * flame, a campfire, a big fire, a bonfire, a blaze, and the Newroz fire. The
- * logs lie in the same place at every stage, so whatever the stage, it is the
- * fire on them that has grown.
+ * website: a simple cartoon flame, glowing, on logs lit by it. It grows
+ * with the streak (`fire-stages.ts`): cold logs ready to be lit, a spark
+ * caught, a little flame, a campfire, a big fire, a bonfire, a blaze, and the
+ * Newroz fire. The logs lie in the same place at every stage, so whatever the
+ * stage, it is the fire on them that has grown.
  *
- * It is data, not markup, because each app moves its parts its own way — the
- * website with a CSS keyframe per part, the phone with one native-driven
- * clock per fire — and both have to move the same parts by the same amounts.
- * Each layer of flame is a closed path with its own gradient, one fat round
- * body whose top parts into licks curling at their round tips, the layers
- * inside it warmer and brighter down to a round drop of a heart. Each
- * breathes from its own root (squashing and stretching, swaying one way then
- * the other) on its own period and phase, slowly, so the layers slide against
- * each other the way flames do instead of moving as one shape. A soft glow
- * breathes round it all and pools on the ground under it, sparks drift up off
- * it and fade, and now and then a round drop of flame breaks off a tip and
- * floats up, shrinking to nothing.
+ * The flame itself is painted ahead of time (`fire-sprites.ts`): a loop of
+ * frames in which one plump flame of flat, nested tones breathes, sways its
+ * tip and now and then lets a drop pinch off it, which both apps play frame
+ * by frame. Everything round it is data, not markup, because each app moves its
+ * parts its own way — the website with a CSS keyframe per part, the phone
+ * with one native-driven clock per fire — and both have to move the same
+ * parts by the same amounts: a soft glow breathing round the flame and
+ * pooled on the ground under it, sparks drifting up off it and fading, the
+ * sun behind the Newroz fire; and for cold logs, one ember glowing and a curl
+ * of smoke.
  *
- * Only transforms and opacity ever change: no shape is redrawn while it
- * burns, nor while it grows into its next stage, so it costs a phone nothing
- * it would notice.
+ * Only transforms, opacity and which frame shows ever change: nothing is
+ * redrawn while it burns, nor while it grows into its next stage, so it costs
+ * a phone nothing it would notice.
  */
 import { FIRE_GROW, fireStageIndex, type FireLevel, type FireStage } from '../fire-stages.js';
-import {
-  HALO_RAYS,
-  SHAPE_HEIGHT,
-  SHAPE_ROOT,
-  SMALL_SHAPES,
-  TONGUE_SHAPES,
-  WISP_SHAPES,
-  haloRays,
-  hearthStones,
-  log,
-  mapPath,
-  mirrored,
-  oval,
-  pathBox,
-  ribbon,
-  ring,
-  type Box,
-  type LogPart,
-  type TongueShape,
-  type WispShape,
-} from './fire-shapes.js';
+import { HALO_RAYS, SHAPE_ROOT, SMALL_SHAPES, haloRays, hearthStones, log, mapPath, oval, pathBox, ribbon, ring, type Box, type LogPart } from './fire-shapes.js';
+import { FIRE_FLAME_REACH, FIRE_ROOT, FIRE_SPRITES, type FireSprite } from './fire-sprites.js';
 import { FIRE_CYCLE_MS, FIRE_RISE_STOPS, calmMotion, type FireMotion, type FirePose } from './fire-motion.js';
 import type { Pt } from './svg.js';
 
 export * from './fire-motion.js';
 export * from './fire-colours.js';
+export * from './fire-sprites.js';
 
 /** The box round an outline of the fire, in the drawing's units: what a phone layer drawing just that part needs to hold. */
 export { pathBox as fireOutlineBox, type Box as FireBox } from './fire-shapes.js';
@@ -60,9 +40,6 @@ export { pathBox as fireOutlineBox, type Box as FireBox } from './fire-shapes.js
  * the air above them they will grow into.
  */
 export const FIRE_VIEW = { x: 0, y: 0, w: 200, h: 250 } as const;
-
-/** Where the flame stands: the middle of the logs, behind them. Every stage grows up and out from here. */
-export const FIRE_ROOT: Pt = [100, 228];
 
 /**
  * At this size (in points or CSS pixels, the fire's height) and under, the
@@ -77,8 +54,10 @@ export const FIRE_SMALL_VIEW = { x: 50, y: 90, w: 100, h: 140 } as const;
 /** How much of the full flicker the light version moves by. */
 export const FIRE_SMALL_CALM = 0.55;
 
-export type FireTongueId = 'back' | 'left' | 'right' | 'outer' | 'flame' | 'core' | 'heart';
+/** The light version's layers of flame, back to front. */
+export type FireTongueId = 'outer' | 'core' | 'heart';
 
+/** A layer of the light version's flame. */
 export interface FireTongue {
   id: FireTongueId;
   /** a closed outline in the drawing's box */
@@ -88,16 +67,11 @@ export interface FireTongue {
   motion: FireMotion;
 }
 
-/**
- * A piece of flame breaking off a tip: a small round drop just under the
- * tip of a lick, hidden behind it, that floats up clear of it and shrinks to
- * nothing (shrinking, not fading, so it never dims to a smudge). Drawn in the
- * orange flame's colours, behind the tongues.
- */
-export interface FireWisp {
-  d: string;
-  origin: Pt;
-  motion: FireMotion;
+/** The painted flame of a burning fire: the stage's sheet, and where its frames stand in the box at this fire's growth. */
+export interface FireFlame {
+  sheet: FireSprite;
+  /** the sheet's box stretched about the root to the fire's size: smaller on the day a stage is reached, the sheet's own box the day before the next */
+  box: Box;
 }
 
 /** A spark: a dot that flies up out of the flame from behind it, drifting, and fades; some of the Newroz fire's are gold. */
@@ -110,12 +84,11 @@ export interface FireEmber {
 }
 
 /**
- * A thin ribbon rising: a curl of smoke off cold logs, or heat shimmering
- * over a big fire's tips. Drawn behind the flame. `rest` is where it is drawn
- * when the fire stands still; null, it is not drawn then.
+ * A thin ribbon of smoke rising off cold logs, drawn behind them. `rest` is
+ * where it is drawn when the fire stands still; null, it is not drawn then.
  */
 export interface FireDrift {
-  kind: 'smoke' | 'heat';
+  kind: 'smoke';
   d: string;
   origin: Pt;
   motion: FireMotion;
@@ -192,9 +165,10 @@ export interface FireDrawing {
   /** the hearth behind the flame: the far stones */
   back: readonly FireBasePiece[];
   drifts: readonly FireDrift[];
-  wisps: readonly FireWisp[];
   embers: readonly FireEmber[];
-  /** back to front */
+  /** the painted flame of a burning fire; null for cold logs and the light version */
+  painted: FireFlame | null;
+  /** the light version's flame, back to front; none for the whole fire, whose flame is painted */
   tongues: readonly FireTongue[];
   /** the hearth in front of the flame's root: coals or ash, the logs, the near stones */
   front: readonly FireBasePiece[];
@@ -212,42 +186,16 @@ const flicker = (periodMs: number, phase: number, poses: readonly [number, numbe
 });
 
 /**
- * How each layer breathes: slowly, from its root, wider as it squashes and
- * narrower as it stretches, swaying a little. Their periods all differ from
- * their neighbours' and their sways run against each other, so no two layers
- * ever move as one; the side licks sway outwards, away from the fire, and
- * the heart only swells and settles.
+ * How the light version's layers breathe: slowly, from their root, wider as
+ * they squash and narrower as they stretch, swaying a little, each on its
+ * own period, so no two ever move as one; the heart only swells and settles.
  */
 const FLICKER: Readonly<Record<FireTongueId, FireMotion>> = {
-  back: flicker(1600, 0.3, [
-    [1, 1, 0],
-    [0.97, 1.06, -5],
-    [1.02, 0.96, 2],
-    [0.98, 1.04, -6],
-  ]),
-  left: flicker(2400, 0.7, [
-    [1, 1, 0],
-    [0.97, 1.07, 5],
-    [1.02, 0.95, -1],
-    [0.98, 1.05, 6],
-  ]),
-  right: flicker(1600, 0.1, [
-    [1, 1, 0],
-    [0.97, 1.06, -5],
-    [1.02, 0.96, 1],
-    [0.98, 1.05, -6],
-  ]),
   outer: flicker(2400, 0, [
     [1, 1, 0],
     [1.03, 0.96, -1.5],
     [0.98, 1.04, 1],
     [1.02, 0.97, 2],
-  ]),
-  flame: flicker(1600, 0.55, [
-    [1, 1, 0],
-    [0.97, 1.05, 2.5],
-    [1.03, 0.96, -2],
-    [0.98, 1.04, -3],
   ]),
   core: flicker(1200, 0.2, [
     [1, 1, 0],
@@ -263,17 +211,9 @@ const FLICKER: Readonly<Record<FireTongueId, FireMotion>> = {
   ]),
 };
 
-/** The crown sways less than a single lick: a wide one swaying far would shear. */
-const CROWN_FLICKER = flicker(1600, 0.4, [
-  [1, 1, 0],
-  [0.98, 1.05, -2],
-  [1.02, 0.97, 1],
-  [0.99, 1.04, -2.5],
-]);
-
 /** A flame just caught breathes quicker and further than a grown one, the way a young flame does. */
 const NERVOUS: Partial<Record<FireTongueId, FireMotion>> = {
-  flame: flicker(1200, 0, [
+  outer: flicker(1600, 0, [
     [1, 1, 0],
     [0.94, 1.1, -4],
     [1.05, 0.93, 3],
@@ -315,21 +255,10 @@ function rising({ rise, drift, swirl = 0, periodMs, phase, wait = 0 }: { rise: n
   };
 }
 
-/** A drop broken off a tip: up clear of its flame, drifting `side` (-1 left, 1 right), round all the way as it shrinks to nothing; `k` scales its climb. */
-function breakingOff(periodMs: number, phase: number, side: number, k: number): FireMotion {
-  const at = (y: number, x: number, s: number, o: number): FirePose => ({ x: round3(x * side * k), y: round3(y * k), sx: s, sy: s, o });
-  return {
-    kind: 'rise',
-    periodMs,
-    phase,
-    poses: [at(0, 0, 0.7, 0), at(-7, 0.5, 1, 1), at(-17, 2.5, 0.85, 1), at(-26, 4.5, 0.6, 1), at(-32, 6, 0.32, 0.8), at(-35, 6.5, 0.12, 0)],
-  };
-}
-
 // ─────────────────────────────────────────────────────────────── stages
 
 interface EmberSpec {
-  /** where it starts, in the tongues' own drawing (so it starts inside the stage's flame) */
+  /** where it starts: across, as a share of the flame's half-width either side of its root, and up, as a share of its height (so it starts inside the stage's flame) */
   at: Pt;
   r: number;
   rise: number;
@@ -341,33 +270,11 @@ interface EmberSpec {
   gold?: boolean;
 }
 
-/**
- * How a stage stretches the tongues' own drawing about its root: up by
- * `sy`, and across by `sx` at the top but only `base` of that at the root,
- * so a big fire's foot stays on its logs while its top spreads.
- */
-interface Stretch {
-  sx: number;
-  sy: number;
-  base: number;
-}
-
-interface StageArt extends Stretch {
-  /**
-   * How far up its body is stretched, when less than `sy`: a big fire's body
-   * stays plump and round, and its tallest licks (the back one, the crown)
-   * stand up over it to the fire's full height.
-   */
-  body?: number;
-  /** how much taller it grows on top by the time the next stage is reached (a tenth, about) */
-  grows: number;
-  tongues: readonly (readonly [FireTongueId, TongueShape])[];
-  wisps: readonly WispShape[];
+interface StageArt {
   embers: readonly EmberSpec[];
   glow: number;
   /** the glow pulsing, not only breathing */
   pulse: boolean;
-  heat: boolean;
   log: boolean;
   stones: boolean;
   halo: boolean;
@@ -375,11 +282,11 @@ interface StageArt extends Stretch {
 
 /** The campfire's sparks, spread so they never rise together, drifting up slowly. */
 const CAMP_EMBERS: readonly EmberSpec[] = [
-  { at: [48, 46], r: 2.4, rise: 56, drift: -14, swirl: 3, periodMs: 2400, phase: 0 },
-  { at: [72, 46], r: 2, rise: 52, drift: 14, swirl: -3, periodMs: 4800, phase: 0.35 },
-  { at: [34, 60], r: 1.8, rise: 60, drift: -16, swirl: 3, periodMs: 1600, phase: 0.62 },
-  { at: [88, 54], r: 2.2, rise: 56, drift: 12, swirl: -3, periodMs: 2400, phase: 0.8 },
-  { at: [60, 34], r: 1.6, rise: 46, drift: 5, swirl: 3, periodMs: 4800, phase: 0.85 },
+  { at: [-0.23, 0.69], r: 2.4, rise: 56, drift: -14, swirl: 3, periodMs: 2400, phase: 0 },
+  { at: [0.23, 0.69], r: 2, rise: 52, drift: 14, swirl: -3, periodMs: 4800, phase: 0.35 },
+  { at: [-0.5, 0.58], r: 1.8, rise: 60, drift: -16, swirl: 3, periodMs: 1600, phase: 0.62 },
+  { at: [0.54, 0.63], r: 2.2, rise: 56, drift: 12, swirl: -3, periodMs: 2400, phase: 0.8 },
+  { at: [0, 0.78], r: 1.6, rise: 46, drift: 5, swirl: 3, periodMs: 4800, phase: 0.85 },
 ];
 
 /** A bigger fire's sparks: more of them, higher, spiralling as they go. */
@@ -388,197 +295,64 @@ const spiral = (embers: readonly EmberSpec[], rise: number, swirl: number): Embe
 
 const BIG_EMBERS: readonly EmberSpec[] = [
   ...CAMP_EMBERS,
-  { at: [26, 74], r: 1.8, rise: 56, drift: -18, periodMs: 2400, phase: 0.3 },
-  { at: [96, 66], r: 2, rise: 54, drift: 18, periodMs: 4800, phase: 0.15 },
+  { at: [-0.66, 0.48], r: 1.8, rise: 56, drift: -18, periodMs: 2400, phase: 0.3 },
+  { at: [0.7, 0.54], r: 2, rise: 54, drift: 18, periodMs: 4800, phase: 0.15 },
 ];
 
 const BONFIRE_EMBERS: readonly EmberSpec[] = spiral(
   [
     ...BIG_EMBERS,
-    { at: [56, 58], r: 2, rise: 60, drift: -6, periodMs: 2400, phase: 0.45 },
-    { at: [80, 66], r: 1.7, rise: 56, drift: 10, periodMs: 1600, phase: 0.05 },
+    { at: [-0.08, 0.6], r: 2, rise: 60, drift: -6, periodMs: 2400, phase: 0.45 },
+    { at: [0.39, 0.54], r: 1.7, rise: 56, drift: 10, periodMs: 1600, phase: 0.05 },
   ],
   1.25,
   6,
 );
 
-const BLAZE_EMBERS: readonly EmberSpec[] = spiral([...BONFIRE_EMBERS, { at: [44, 64], r: 1.9, rise: 60, drift: -10, periodMs: 4800, phase: 0.6 }], 1.15, 9);
+const BLAZE_EMBERS: readonly EmberSpec[] = spiral([...BONFIRE_EMBERS, { at: [-0.31, 0.55], r: 1.9, rise: 60, drift: -10, periodMs: 4800, phase: 0.6 }], 1.15, 9);
 
-const NEWROZ_EMBERS: readonly EmberSpec[] = [...BLAZE_EMBERS, { at: [70, 60] as Pt, r: 2.1, rise: 64, drift: 8, periodMs: 2400, phase: 0.25 }].map((e, i) => ({ ...e, gold: i % 2 === 1 }));
+const NEWROZ_EMBERS: readonly EmberSpec[] = [...BLAZE_EMBERS, { at: [0.19, 0.58] as Pt, r: 2.1, rise: 64, drift: 8, periodMs: 2400, phase: 0.25 }].map((e, i) => ({ ...e, gold: i % 2 === 1 }));
 
-const BIG_TONGUES: StageArt['tongues'] = [
-  ['back', 'back'],
-  ['left', 'side'],
-  ['right', 'side'],
-  ['outer', 'outer'],
-  ['flame', 'flame'],
-  ['core', 'core'],
-  ['heart', 'heart'],
-];
-
-/** From the bonfire on, the back lick stands up over the body to the fire's full height. */
-const TALL_TONGUES: StageArt['tongues'] = BIG_TONGUES.map(([id, shape]) => [id, id === 'back' ? 'tall' : shape] as const);
-
-const NOTHING = { heat: false, log: false, stones: false, halo: false, pulse: false } as const;
+const NOTHING = { log: false, stones: false, halo: false, pulse: false } as const;
 
 /**
- * Each stage as drawn: a step up from the one before, so every new stage is
- * plainly bigger, with more licks and taller ones rather than sharper, and
- * from the bonfire on something more besides (more wood, a tall lick over the
- * body, the stones, the crown and the sun behind it). From the foot of the
- * box, the flames reach about 27%, 41%, 56%, 68%, 76%, 83% and 90% of the way
- * up it, and a tenth or so further by the day before the next stage: the
- * Newroz fire fills it at its fullest.
+ * What each stage has round its flame (the flame itself, a step up from the
+ * one before at each, is its sheet's): more sparks the bigger it gets, a
+ * brighter glow, and from the bonfire on something more besides — more wood,
+ * then the stones, then the sun behind it.
  */
 const STAGE_ART: Readonly<Record<Exclude<FireStage, 'cold'>, StageArt>> = {
-  spark: {
-    ...NOTHING,
-    sx: 0.62,
-    sy: 0.51,
-    base: 1,
-    grows: 0.12,
-    tongues: [
-      ['flame', 'core'],
-      ['heart', 'heart'],
-    ],
-    wisps: [],
-    embers: [{ at: [58, 76], r: 1.8, rise: 30, drift: 5, swirl: 2, periodMs: 4800, phase: 0, wait: 0.4 }],
-    glow: 0.55,
-  },
+  spark: { ...NOTHING, embers: [{ at: [-0.04, 0.46], r: 1.8, rise: 30, drift: 5, swirl: 2, periodMs: 4800, phase: 0, wait: 0.4 }], glow: 0.55 },
   kindling: {
     ...NOTHING,
-    sx: 0.66,
-    sy: 0.6,
-    base: 1,
-    grows: 0.12,
-    tongues: [
-      ['outer', 'outer'],
-      ['core', 'core'],
-      ['heart', 'heart'],
-    ],
-    wisps: ['middle'],
     embers: [
-      { at: [50, 56], r: 2, rise: 40, drift: -9, swirl: 2, periodMs: 2400, phase: 0 },
-      { at: [70, 52], r: 1.8, rise: 36, drift: 8, swirl: -2, periodMs: 4800, phase: 0.5 },
+      { at: [-0.19, 0.61], r: 2, rise: 40, drift: -9, swirl: 2, periodMs: 2400, phase: 0 },
+      { at: [0.19, 0.64], r: 1.8, rise: 36, drift: 8, swirl: -2, periodMs: 4800, phase: 0.5 },
     ],
     glow: 0.8,
   },
-  campfire: {
-    ...NOTHING,
-    sx: 0.92,
-    sy: 0.88,
-    base: 1,
-    grows: 0.1,
-    tongues: BIG_TONGUES.filter(([id]) => id !== 'left' && id !== 'right'),
-    wisps: ['middle', 'right'],
-    embers: CAMP_EMBERS,
-    glow: 1,
-  },
-  bigfire: { ...NOTHING, sx: 1.02, sy: 1.1, base: 0.92, grows: 0.1, tongues: BIG_TONGUES, wisps: ['middle', 'right', 'left'], embers: BIG_EMBERS, glow: 1.05 },
-  bonfire: {
-    ...NOTHING,
-    sx: 1.12,
-    sy: 1.26,
-    body: 1.15,
-    base: 0.88,
-    grows: 0.08,
-    tongues: TALL_TONGUES,
-    wisps: ['middle', 'right', 'left'],
-    embers: BONFIRE_EMBERS,
-    glow: 1.15,
-    heat: true,
-    log: true,
-  },
-  blaze: {
-    sx: 1.18,
-    sy: 1.38,
-    body: 1.2,
-    base: 0.86,
-    grows: 0.08,
-    tongues: TALL_TONGUES,
-    wisps: ['middle', 'right', 'left'],
-    embers: BLAZE_EMBERS,
-    glow: 1.25,
-    pulse: true,
-    heat: true,
-    log: true,
-    stones: true,
-    halo: false,
-  },
-  newroz: {
-    sx: 1.24,
-    sy: 1.5,
-    body: 1.25,
-    base: 0.84,
-    grows: 0.08,
-    tongues: BIG_TONGUES.map(([id, shape]) => [id, id === 'back' ? 'crown' : shape] as const),
-    wisps: ['middle', 'right', 'left'],
-    embers: NEWROZ_EMBERS,
-    glow: 1.05,
-    pulse: true,
-    heat: true,
-    log: true,
-    stones: true,
-    halo: true,
-  },
+  campfire: { ...NOTHING, embers: CAMP_EMBERS, glow: 1 },
+  bigfire: { ...NOTHING, embers: BIG_EMBERS, glow: 1.05 },
+  bonfire: { ...NOTHING, embers: BONFIRE_EMBERS, glow: 1.15, log: true },
+  blaze: { embers: BLAZE_EMBERS, glow: 1.25, pulse: true, log: true, stones: true, halo: false },
+  newroz: { embers: NEWROZ_EMBERS, glow: 1.05, pulse: true, log: true, stones: true, halo: true },
 };
-
-/** Where each tongue was rooted as drawn. */
-const TONGUE_ROOTS: Readonly<Record<TongueShape, Pt>> = {
-  back: [70, 136],
-  tall: [70, 136],
-  outer: SHAPE_ROOT,
-  flame: SHAPE_ROOT,
-  core: SHAPE_ROOT,
-  heart: SHAPE_ROOT,
-  side: [36, 138],
-  crown: SHAPE_ROOT,
-};
-
-/** Where each broken-off drop was drawn rising from (the middle of it), and which way it drifts: the way its lick curls. */
-const WISP_FROM: Readonly<Record<WispShape, { origin: Pt; side: number; periodMs: number; phase: number }>> = {
-  middle: { origin: [45, 14], side: -1, periodMs: 2400, phase: 0.1 },
-  right: { origin: [102, 39], side: 1, periodMs: 1600, phase: 0.6 },
-  left: { origin: [17, 43], side: -1, periodMs: 2400, phase: 0.35 },
-};
-
-/** The heat over a big fire's tips: two faint waves, drawn in the tongues' own drawing so they stay over its tips. */
-const HEAT_LINES: readonly (readonly Pt[])[] = [
-  [
-    [32, 52],
-    [29, 42],
-    [33, 32],
-    [30, 22],
-  ],
-  [
-    [80, 46],
-    [83, 36],
-    [79, 26],
-    [82, 16],
-  ],
-];
 
 const clamp01 = (v: number): number => (Number.isFinite(v) ? Math.min(1, Math.max(0, v)) : 0);
 
-/** A point of the tongues' own drawing, where a fire stretched by `s` puts it. */
-function place([x, y]: Pt, { sx, sy, base }: Stretch): Pt {
-  const up = clamp01((SHAPE_ROOT[1] - y) / SHAPE_HEIGHT);
-  return [FIRE_ROOT[0] + (x - SHAPE_ROOT[0]) * sx * (base + (1 - base) * up), FIRE_ROOT[1] + (y - SHAPE_ROOT[1]) * sy];
+/** How far a stage's flame reaches at `growth` through it: a little further every day, from the day the stage is reached to the day before the next. */
+function reachAt(stage: Exclude<FireStage, 'cold'>, growth: number): { w: number; h: number } {
+  const { from, to } = FIRE_FLAME_REACH[stage];
+  return { w: Math.round(from.w + (to.w - from.w) * growth), h: Math.round(from.h + (to.h - from.h) * growth) };
 }
 
-/** An outline of the tongues' own drawing, stretched by `s`. */
-const stretched = (d: string, s: Stretch): string => mapPath(d, (x, y) => place([x, y], s));
-
-const roundPt = ([x, y]: Pt): Pt => [round3(x), round3(y)];
-
-/** A closed outline's box, as how far the flame reaches. */
-function reach(tongues: readonly FireTongue[]): { w: number; h: number } {
-  const boxes = tongues.map((t) => pathBox(t.d));
-  const left = Math.min(...boxes.map((b) => b.x));
-  const right = Math.max(...boxes.map((b) => b.x + b.w));
-  const top = Math.min(...boxes.map((b) => b.y));
-  return { w: Math.round(right - left), h: Math.round(FIRE_ROOT[1] - top) };
-}
+/** A box stretched by `sx` across and `sy` up about the root. */
+const stretchedBox = (b: Box, sx: number, sy: number): Box => ({
+  x: round3(FIRE_ROOT[0] + (b.x - FIRE_ROOT[0]) * sx),
+  y: round3(FIRE_ROOT[1] + (b.y - FIRE_ROOT[1]) * sy),
+  w: round3(b.w * sx),
+  h: round3(b.h * sy),
+});
 
 /** More wood on the pile: a third log laid across the back of the crossing, behind the two in front. */
 const THIRD_LOG: readonly FireBasePiece[] = log(146, 208, 60, 212, 'barkShade', false).map((p) => ({ ...p, group: 'log' }));
@@ -648,8 +422,8 @@ function coldDrawing(): FireDrawing {
       },
       rest: phase === 0 ? { o: 0.6 } : null,
     })),
-    wisps: [],
     embers: [],
+    painted: null,
     tongues: [],
     front: hearth(true),
     cinder: {
@@ -673,37 +447,15 @@ function coldDrawing(): FireDrawing {
 
 function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDrawing {
   const art = STAGE_ART[stage];
-  const up = 1 + art.grows * growth;
-  const s: Stretch = { sx: art.sx * (1 + art.grows * 0.5 * growth), sy: art.sy * up, base: art.base };
-  // the body, and everything that rises off it
-  const b: Stretch = { ...s, sy: (art.body ?? art.sy) * up };
-  const nervous = stage === 'spark';
-  const tongues: FireTongue[] = art.tongues.map(([id, shape]) => {
-    const flip = id === 'right';
-    const [rx, ry] = TONGUE_ROOTS[shape];
-    const standing = id === 'back' ? s : b;
-    // the right lick a little shorter than the left, so the two sides are not one shape mirrored
-    const own = flip ? { ...standing, sy: standing.sy * 0.9 } : standing;
-    return {
-      id,
-      d: stretched(flip ? mirrored(TONGUE_SHAPES[shape]) : TONGUE_SHAPES[shape], own),
-      origin: roundPt(place([flip ? SHAPE_ROOT[0] * 2 - rx : rx, ry], own)),
-      motion: shape === 'crown' ? CROWN_FLICKER : ((nervous ? NERVOUS[id] : undefined) ?? FLICKER[id]),
-    };
-  });
-  const flame = reach(tongues);
-  const climb = Math.min(1.3, Math.max(0.6, b.sy));
-  const wisps = art.wisps.map((w) => {
-    const from = WISP_FROM[w];
-    return { d: stretched(WISP_SHAPES[w], b), origin: roundPt(place(from.origin, b)), motion: breakingOff(from.periodMs, from.phase, from.side, climb) };
-  });
+  const flame = reachAt(stage, growth);
+  const fullest = FIRE_FLAME_REACH[stage].to;
+  const sheet = FIRE_SPRITES[stage];
   const embers = art.embers.map((e) => {
-    const [cx, cy] = place(e.at, b);
+    const [cx, cy] = [FIRE_ROOT[0] + (e.at[0] * flame.w) / 2, FIRE_ROOT[1] - e.at[1] * flame.h];
     // never higher than the box: the biggest fires' sparks spiral out to its corners instead
     const rise = Math.min(e.rise, cy - e.r - 4);
     return { cx: round3(cx), cy: round3(cy), r: e.r, gold: e.gold === true, motion: rising({ ...e, rise }) };
   });
-  const top = FIRE_ROOT[1] - flame.h;
   // the glow round the flame's middle, as big as the box allows; it breathes slowly, and pulses at the hottest
   const glowRy = Math.min(flame.h * 0.66 + 16, 120);
   const glowCy = Math.min(FIRE_ROOT[1] - flame.h * 0.42, FIRE_VIEW.h - glowRy);
@@ -736,21 +488,6 @@ function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDra
   // the same light pooled flat on the ground round the logs, wider the bigger the fire
   const poolRx = Math.min(96, flame.w * 0.5 + 44);
   const pool: FireGlow = { cx: 100, cy: 231, rx: round3(poolRx), ry: round3(poolRx * 0.17), strength: art.glow, motion: breath };
-  // the heat wavers as it rises, never higher than the box
-  const drifts: FireDrift[] = art.heat
-    ? HEAT_LINES.map((line, i) => ({
-        kind: 'heat' as const,
-        d: stretched(ribbon(line, [0.8, 2.6, 2.4, 0.6]), b),
-        origin: roundPt(place(line[0] as Pt, b)),
-        motion: {
-          kind: 'rise' as const,
-          periodMs: 2400,
-          phase: i * 0.5,
-          poses: FIRE_RISE_STOPS.map((t) => ({ y: round3(-Math.min(14, top - 4) * t), skew: round3(8 * Math.sin(Math.PI * 2 * t)), sx: 1, sy: round3(1 + 0.3 * t), o: round3(Math.sin(Math.PI * t)) })),
-        },
-        rest: null,
-      }))
-    : [];
   return {
     stage,
     small: false,
@@ -762,10 +499,10 @@ function fullDrawing(stage: Exclude<FireStage, 'cold'>, growth: number): FireDra
     glow,
     pool,
     back: art.stones ? BACK_STONES : [],
-    drifts,
-    wisps,
+    drifts: [],
     embers,
-    tongues,
+    painted: { sheet, box: stretchedBox(sheet.box, flame.w / fullest.w, flame.h / fullest.h) },
+    tongues: [],
     front: [...hearth(false, art.log), ...(art.stones ? FRONT_STONES : [])],
     cinder: null,
   };
@@ -781,12 +518,22 @@ const SMALL_RING_FADE = [
 /** The light version's flame at each stage: the young ones visibly smaller in the same box, the rest the full small flame. */
 const SMALL_SCALE: Readonly<Record<FireStage, number>> = { cold: 1, spark: 0.6, kindling: 0.8, campfire: 1, bigfire: 1, bonfire: 1, blaze: 1, newroz: 1 };
 
+/** A closed outline's box, as how far the flame reaches. */
+function reach(tongues: readonly FireTongue[]): { w: number; h: number } {
+  const boxes = tongues.map((t) => pathBox(t.d));
+  const left = Math.min(...boxes.map((b) => b.x));
+  const right = Math.max(...boxes.map((b) => b.x + b.w));
+  const top = Math.min(...boxes.map((b) => b.y));
+  return { w: Math.round(right - left), h: Math.round(FIRE_ROOT[1] - top) };
+}
+
 function smallDrawing(stage: FireStage): FireDrawing {
   const s = SMALL_SCALE[stage];
   const nervous = stage === 'spark';
   const tongues: FireTongue[] = (['outer', 'core', 'heart'] as const).map((id) => {
-    const motion = (nervous ? NERVOUS[id === 'outer' ? 'flame' : id] : undefined) ?? FLICKER[id];
-    const d = stretched(SMALL_SHAPES[id], { sx: s, sy: s, base: 1 });
+    const motion = (nervous ? NERVOUS[id] : undefined) ?? FLICKER[id];
+    // drawn rooted where the whole fire's flame stands, smaller for a young fire
+    const d = mapPath(SMALL_SHAPES[id], (x, y) => [FIRE_ROOT[0] + (x - SHAPE_ROOT[0]) * s, FIRE_ROOT[1] + (y - SHAPE_ROOT[1]) * s]);
     const box = pathBox(d);
     // the body and the gold breathe from their foot, the heart swells about its own middle
     const origin: Pt = [round3(box.x + box.w / 2), round3(id === 'heart' ? box.y + box.h / 2 : box.y + box.h)];
@@ -806,8 +553,8 @@ function smallDrawing(stage: FireStage): FireDrawing {
     pool: null,
     back: [],
     drifts: [],
-    wisps: [],
     embers: [],
+    painted: null,
     tongues,
     front: [],
     cinder: null,
@@ -854,18 +601,18 @@ const frames = new Map<FireStage, Box>();
  * root; up, from the foot of its hearth to over its tips as they flicker on
  * the stage's last day, or to the top of its sun. The same all through a
  * stage, so a fire a day bigger grows in its frame rather than moving it, and
- * a fire growing into the stage fits it all the way. Sparks rising and the
- * glow may reach past it, as light does.
+ * a fire growing into the stage fits it all the way. Sparks rising, the
+ * flame's soft edge and the glow may reach past it, as light does.
  */
 export function fireFrame(stage: FireStage): Box {
   const known = frames.get(stage);
   if (known) return known;
   const d = fireDrawing({ stage, growth: 1 }, FIRE_VIEW.h);
-  const parts = boxRound([...d.back, ...d.front, ...d.drifts, ...d.tongues].map((p) => p.d));
-  const tips = d.tongues.length > 0 ? FIRE_ROOT[1] - d.flame.h * (1 + FLICKER_ROOM) : parts.y;
+  const parts = boxRound([...d.back, ...d.front, ...d.drifts].map((p) => p.d));
+  const tips = d.painted ? FIRE_ROOT[1] - d.flame.h * (1 + FLICKER_ROOM) : parts.y;
   const top = Math.max(FIRE_VIEW.y, Math.floor(Math.min(parts.y, tips, d.halo ? d.halo.cy - d.halo.reach : parts.y)));
   const foot = Math.min(FIRE_VIEW.y + FIRE_VIEW.h, Math.ceil(parts.y + parts.h));
-  const half = Math.ceil(Math.max(FIRE_ROOT[0] - parts.x, parts.x + parts.w - FIRE_ROOT[0], d.halo ? d.halo.reach : 0));
+  const half = Math.ceil(Math.max(FIRE_ROOT[0] - parts.x, parts.x + parts.w - FIRE_ROOT[0], d.painted ? d.flame.w / 2 : 0, d.halo ? d.halo.reach : 0));
   const frame = { x: FIRE_ROOT[0] - half, y: top, w: half * 2, h: foot - top };
   frames.set(stage, frame);
   return frame;
@@ -889,7 +636,7 @@ export function fireIsSmaller(from: FireLevel, to: FireLevel): boolean {
  * The fire growing from one level into another, on the day it grew. The
  * old fire is drawn first; when the growth starts its flame stretches up
  * from its root toward the new one's size while the new one, starting at
- * the old one's size, appears over it, stretches up past its own and
+ * the old one's size, fades in over it, stretches up past its own and
  * settles: the fire seems to leap up into its new shape. A burst of sparks
  * flies off it, its glow flares, and what the old fire did not have arrives
  * as it grows — the third log dropping onto the pile, the stones rising
