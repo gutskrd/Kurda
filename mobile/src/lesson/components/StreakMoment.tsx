@@ -47,6 +47,7 @@ const FLAME_WORDS = 330;
 const FLAME_MOST = 400;
 /** The ring that bursts out of the fire as it lights, and the glow behind it. */
 const RING = 168;
+const GLOW = RING * 1.6;
 /** The day's number on the flame's screen, and on the streak's. */
 const NUMBER = 112;
 const NUMBER_SMALL = 88;
@@ -210,8 +211,12 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
           >
             <Light width={width * FLOOD * 2} height={height * FLOOD * 2} tone="warm" />
           </Animated.View>
-          <Animated.View style={[StyleSheet.absoluteFill, { opacity: warm }]} pointerEvents="none">
-            <SoftGlow colour={colors.gold} size={RING * 1.6} id="streak-glow" />
+          {/* the glow round the fire, in a box of its own size centred on it: a young fire's frame is smaller than its glow */}
+          <Animated.View
+            style={{ position: 'absolute', left: stage.width / 2 - GLOW / 2, top: stage.height / 2 - GLOW / 2, width: GLOW, height: GLOW, opacity: warm }}
+            pointerEvents="none"
+          >
+            <SoftGlow colour={colors.gold} size={GLOW} id="streak-glow" />
           </Animated.View>
           {plan.travel ? <GlowRing progress={moment.ring} colour={colors.gold} size={RING} testID="lesson-streak-ring" /> : null}
           {plan.travel ? (
