@@ -1194,7 +1194,7 @@ export const ckb: Catalogue = {
   'groups.cleared.by': '{name} گفتوگۆکەی سڕییەوە · {when}',
   'groups.cleared.byYou': 'تۆ گفتوگۆکەت سڕییەوە · {when}',
   'groups.cleared.byAdmin': 'بەڕێوەبەرێک گفتوگۆکەی سڕییەوە · {when}',
-  'groups.welcome.start': 'ئەمە سەرەتای {group}ە',
+  'groups.welcome.start': 'سەرەتای {group}',
   'groups.welcome.clearedByMe': 'تۆ ئەم گفتوگۆیەت لە {when} سڕییەوە. نامە نوێیەکان لێرە دەردەکەون.',
   'groups.welcome.sayHello': 'بە کوردی سڵاو بکە',
   'groups.welcome.send': 'ناردنی «{text}»',
