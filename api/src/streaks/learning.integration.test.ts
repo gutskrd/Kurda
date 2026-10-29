@@ -10,6 +10,7 @@ import { buildApp } from '../app.js';
 import { loadConfig } from '../config/env.js';
 import { activate } from '../test/activate.js';
 import { StreakService } from './service.js';
+import { localDate, shiftDate } from './streak-logic.js';
 
 const DATABASE_URL = process.env.DATABASE_URL;
 
@@ -86,5 +87,22 @@ describe.skipIf(!DATABASE_URL)('learning streak (integration)', () => {
     // …so the current streak starts again while the other two keep what was done
     expect(me.json().user.streak).toMatchObject({ longest: 5, daysLearned: 5 });
     expect(me.json().user.streak.current).toBeLessThanOrEqual(1);
+  });
+
+  it('/me says which day a freeze kept, once it has spent one', async () => {
+    const today = localDate(new Date(), 'UTC');
+    await pool.query(`UPDATE user_streaks SET current_streak = 3, last_active_on = $2, freezes = 1, freeze_used_on = NULL WHERE user_id = $1`, [
+      userId,
+      shiftDate(today, -2),
+    ]);
+    const me = () =>
+      app.inject({ method: 'GET', url: '/me', headers: { authorization: `Bearer ${token}` }, remoteAddress: '10.142.0.2' });
+    const kept = (await me()).json().user.streak;
+    expect(kept).toMatchObject({ current: 3, freezes: 0, maxFreezes: 1, freezeUsedOn: shiftDate(today, -1), lastActiveOn: shiftDate(today, -1) });
+    // read again, the same day stays: it is what an app compares with the one it last said
+    expect((await me()).json().user.streak.freezeUsedOn).toBe(shiftDate(today, -1));
+    // and a lesson after it keeps it too
+    const after = await streaks.recordActivity(userId, 'UTC');
+    expect(after).toMatchObject({ current: 4, freezeUsedOn: shiftDate(today, -1) });
   });
 });

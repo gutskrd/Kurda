@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import { PRACTICE_MODE_TYPES, unitTone, type PracticeHub, type PracticeMode, type RecordingVoice } from '@kurda/shared';
+import { PRACTICE_MODE_TYPES, jumpMistakesAllowed, jumpPassed, unitTone, type PracticeHub, type PracticeMode, type RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
@@ -12,6 +12,7 @@ import { qualityFromVerdict } from '../review/sm2.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
 import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
+import { settleJump, type JumpOutcome, type JumpTarget } from '../jump/settle.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -134,7 +135,9 @@ const FINISHED_LESSONS = `done AS (
  * one to practise. Only exercises of a published lesson (a version replaced
  * may hold the very mistake the new one fixed), and never speaking, which the
  * learner rates themselves. A lesson session takes no answer after it expires,
- * so one that expired before `$2` is not read at all.
+ * so one that expired before `$2` is not read at all. A test to jump ahead
+ * (path_jumps) is not read either: it asks about units the learner skipped,
+ * and it schedules nothing, so it adds no mistakes and clears none.
  */
 const MISSED = `answered AS (
     SELECT a.exercise_id, a.accepted, a.answered_at
@@ -144,6 +147,7 @@ const MISSED = `answered AS (
     SELECT a.exercise_id, a.accepted, a.answered_at
     FROM practice_sessions s JOIN practice_answers a ON a.session_id = s.id
     WHERE s.user_id = $1 AND a.answered_at > $2
+      AND NOT EXISTS (SELECT 1 FROM path_jumps j WHERE j.session_id = s.id)
   ), latest AS (
     SELECT DISTINCT ON (exercise_id) exercise_id, accepted, answered_at
     FROM answered ORDER BY exercise_id, answered_at DESC
@@ -171,6 +175,8 @@ export interface PracticeResults {
   mistakes: Array<{ exerciseId: string; verdict: Verdict; prompt?: string; correction?: string }>;
   xpAwarded: number;
   streak: StreakSummary;
+  /** a test to jump ahead on the path (jump/service.ts): whether it opened the unit */
+  jump?: JumpOutcome;
 }
 
 /**
@@ -224,17 +230,31 @@ export class PracticeService {
    */
   async start(userId: string, ask: PracticeAsk = {}): Promise<PracticeSession | EmptyPractice> {
     const chosen = ask.exerciseIds ? await this.ownItems(userId, ask.exerciseIds) : await this.choose(userId, ask.mode ?? 'review', ask.unitId);
+    const session = chosen.length > 0 ? await this.begin(userId, chosen) : null;
+    return session ?? { empty: true, suggestion: await this.nextLesson(userId) };
+  }
 
-    const exercises = chosen.length > 0 ? await this.loadExercises(chosen) : [];
-    if (exercises.length === 0) {
-      return { empty: true, suggestion: await this.nextLesson(userId) };
-    }
-
-    const created = await this.pool.query<{ id: string }>(
-      `INSERT INTO practice_sessions (user_id, item_ids, total_count)
-       VALUES ($1, $2::uuid[], $3) RETURNING id`,
-      [userId, exercises.map((e) => e.id), exercises.length],
-    );
+  /**
+   * A session over these exercises, in this order, or null when none of them
+   * is there any more. A test to jump ahead (`jump`) is a session too, marked
+   * as one in the same statement (jump/service.ts).
+   */
+  async begin(userId: string, ids: string[], jump?: JumpTarget): Promise<PracticeSession | null> {
+    const exercises = await this.loadExercises(ids);
+    if (exercises.length === 0) return null;
+    const items = [userId, exercises.map((e) => e.id), exercises.length];
+    const created = jump
+      ? await this.pool.query<{ id: string }>(
+          `WITH s AS (INSERT INTO practice_sessions (user_id, item_ids, total_count) VALUES ($1, $2::uuid[], $3) RETURNING id),
+                j AS (INSERT INTO path_jumps (session_id, user_id, course_id, unit_id, position) SELECT id, $1, $4, $5, $6 FROM s)
+           SELECT id FROM s`,
+          [...items, jump.courseId, jump.unitId, jump.position],
+        )
+      : await this.pool.query<{ id: string }>(
+          `INSERT INTO practice_sessions (user_id, item_ids, total_count)
+           VALUES ($1, $2::uuid[], $3) RETURNING id`,
+          items,
+        );
     const sessionId = created.rows[0]!.id;
     return { sessionId, exercises: await this.deliver(sessionId, exercises) };
   }
@@ -379,7 +399,8 @@ export class PracticeService {
    * resumes its session; a review is not opened by anything but its own
    * address, so without this a learner who left one and came back through
    * "Review" started another, and the first stayed unfinished — its answers
-   * moved the schedule and never counted for the day.
+   * moved the schedule and never counted for the day. A test to jump ahead is
+   * not a review, and is not offered here.
    */
   async due(userId: string): Promise<PracticeDue> {
     const [counts, open] = await Promise.all([
@@ -391,8 +412,9 @@ export class PracticeService {
         [userId, new Date()],
       ),
       this.pool.query<{ id: string }>(
-        `SELECT id FROM practice_sessions
+        `SELECT id FROM practice_sessions s
          WHERE user_id = $1 AND completed_at IS NULL AND created_at > now() - make_interval(hours => $2)
+           AND NOT EXISTS (SELECT 1 FROM path_jumps j WHERE j.session_id = s.id)
          ORDER BY created_at DESC LIMIT 1`,
         [userId, OPEN_REVIEW_HOURS],
       ),
@@ -513,6 +535,7 @@ export class PracticeService {
     return row ? { lessonId: row.id, title: row.title_en } : null;
   }
 
+  /** The session, and what it opens when it is a test to jump ahead (`jump_*`, null otherwise). */
   private async loadSession(sessionId: string, userId: string) {
     const res = await this.pool.query<{
       id: string;
@@ -520,9 +543,14 @@ export class PracticeService {
       total_count: number;
       correct_count: number;
       completed_at: Date | null;
+      jump_course_id: string | null;
+      jump_unit_id: string | null;
+      jump_position: number | null;
     }>(
-      `SELECT id, item_ids, total_count, correct_count, completed_at
-       FROM practice_sessions WHERE id = $1 AND user_id = $2`,
+      `SELECT s.id, s.item_ids, s.total_count, s.correct_count, s.completed_at,
+              j.course_id AS jump_course_id, j.unit_id AS jump_unit_id, j.position AS jump_position
+       FROM practice_sessions s LEFT JOIN path_jumps j ON j.session_id = s.id
+       WHERE s.id = $1 AND s.user_id = $2`,
       [sessionId, userId],
     );
     const session = res.rows[0];
@@ -582,8 +610,9 @@ export class PracticeService {
       }
       // feed SM-2 so practice actually strengthens the item (KUR-033); an
       // item padded in before it was due cannot stretch its own interval
-      // (`ReviewService.record`)
-      if (feedsReview(ex.type)) {
+      // (`ReviewService.record`). A test to jump ahead asks what has not been
+      // learned yet, so its answers schedule nothing.
+      if (feedsReview(ex.type) && session.jump_unit_id === null) {
         const quality = qualityFromVerdict(result.verdict, result.accepted);
         await this.reviews.record(userId, exerciseId, quality, new Date(), client);
       }
@@ -638,6 +667,11 @@ export class PracticeService {
    * A listening item put off and never answered ("Can't listen now") is left
    * out of the score, as in a lesson (`SKIPPABLE_TYPES`): the accuracy and the
    * XP are out of the items answered or that could have been.
+   *
+   * A test to jump ahead pays nothing — no XP, no streak day, no goal: it
+   * opens the path, and the lessons it opens pay as ever. Here it is decided,
+   * by the server alone, out of every item asked (one not answered counts as
+   * missed), and a pass raises how far the course is open (`settleJump`).
    */
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
@@ -667,21 +701,30 @@ export class PracticeService {
 
     const tzRes = await this.pool.query<{ timezone: string }>(`SELECT timezone FROM users WHERE id = $1`, [userId]);
     const timeZone = tzRes.rows[0]?.timezone ?? 'UTC';
+    const jumpTo =
+      session.jump_unit_id !== null && session.jump_course_id !== null && session.jump_position !== null
+        ? { courseId: session.jump_course_id, unitId: session.jump_unit_id, position: session.jump_position }
+        : null;
 
     let xpAwarded = 0;
     let streak: StreakSummary | null = null;
     let claimedNow = false;
+    let passedNow: boolean | null = null;
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
         await client.query('BEGIN');
-        const claimed = await client.query(
+        const claimed = await client.query<{ correct_count: number }>(
           `UPDATE practice_sessions SET completed_at = now()
-           WHERE id = $1 AND completed_at IS NULL RETURNING id`,
+           WHERE id = $1 AND completed_at IS NULL RETURNING correct_count`,
           [session.id],
         );
-        if ((claimed.rowCount ?? 0) > 0) {
-          claimedNow = true;
+        claimedNow = (claimed.rowCount ?? 0) > 0;
+        if (claimedNow && jumpTo) {
+          // decided on the count as it stood when the session closed
+          passedNow = jumpPassed(claimed.rows[0]!.correct_count, session.total_count);
+          await settleJump(client, userId, { sessionId: session.id, ...jumpTo }, passedNow);
+        } else if (claimedNow) {
           // Learning only when the items were actually worked through today
           // (see countsAsLearning and answeredTodaySql), out of every item, put
           // off or not. Practice pays its XP only then: a review can be started
@@ -711,11 +754,20 @@ export class PracticeService {
     }
     if (streak === null) streak = await this.streaks.get(userId, timeZone);
     // best-effort, after the commit, idempotent (streak-30)
-    if (this.milestones && claimedNow) {
+    if (this.milestones && claimedNow && !jumpTo) {
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
 
-    return { correct, total, accuracy, mistakes, xpAwarded, streak };
+    if (!jumpTo) return { correct, total, accuracy, mistakes, xpAwarded, streak };
+    // every item asked counts here, put off or not: a test is passed by answering it
+    const jump: JumpOutcome = {
+      unitId: jumpTo.unitId,
+      passed: passedNow ?? jumpPassed(correct, session.total_count),
+      correct,
+      total: session.total_count,
+      mistakesAllowed: jumpMistakesAllowed(session.total_count),
+    };
+    return { correct, total, accuracy, mistakes, xpAwarded, streak, jump };
   }
 }
 

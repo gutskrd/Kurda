@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type Ref } from 'react';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import {
   Pressable,
+  RefreshControl,
   ScrollView,
   StyleSheet,
   Text,
@@ -12,6 +13,7 @@ import {
 } from 'react-native';
 import { useAuth } from '../auth/AuthContext';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
+import { refreshFelt } from '../feedback/haptics';
 import { ClayButton, ErrorRetry } from '../theme/glass';
 import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonText } from '../theme/Skeleton';
@@ -33,6 +35,9 @@ import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
 import { EmptyState } from '../theme/EmptyState';
+import type { Streak } from '../streak/format';
+import { KeptStreakSheet, useKeptStreak } from '../streak/KeptStreak';
+import { ReminderNudge } from '../push/ReminderNudge';
 import { fraction, nextStep, type NextStep } from './next';
 
 /**
@@ -52,8 +57,24 @@ import { fraction, nextStep, type NextStep } from './next';
  * are several. When it first appears it scrolls to the current skill, and a
  * button brings that back once it has been scrolled away. A course whose map
  * could not be loaded stays in the switch, saying so, with a way to try again.
+ *
+ * Learn's moments show here, one at a time: a freeze that kept the streak is
+ * said once (`useKeptStreak`, from the `streak` the bar read), and while
+ * reminders are off a slim banner offers them (ReminderNudge) — on a visit
+ * that has no other moment.
+ *
+ * Pulled down, it reads the course again, and `onRefresh` has the bar read
+ * the streak again with it.
  */
-export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): React.JSX.Element {
+export function LessonsView({
+  scrollRef,
+  streak = null,
+  onRefresh,
+}: {
+  scrollRef?: Ref<ScrollView>;
+  streak?: Streak | null;
+  onRefresh?: () => void;
+}): React.JSX.Element {
   const navigation = useNavigation<RootNavigation>();
   const { client } = useAuth();
   const { colors } = useTheme();
@@ -68,6 +89,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   const [loading, setLoading] = useState(true);
   const [failed, setFailed] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const [chosen, setChosen] = useState<string | null>(null);
 
   useFocusEffect(
@@ -85,6 +107,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
         if (!list.ok) {
           setFailed(true);
           setLoading(false);
+          setRefreshing(false);
           return;
         }
         // every course, in the order the server lists them — not only the
@@ -98,6 +121,7 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
           }),
         );
         setLoading(false);
+        setRefreshing(false);
       })();
       return () => {
         active = false;
@@ -201,16 +225,27 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
   };
 
   const step = courses ? nextStep(courses) : null;
+  // the sheet's one button opens the lesson the card's does, so it waits for the card to know it
+  const kept = useKeptStreak(streak, step !== null);
 
   /*
    * The unit being scrolled through, once its banner has gone up out of
-   * sight and while its stops are still on the screen: pinned at the top, so
-   * it is always clear whose stops these are.
+   * sight: pinned at the top, so it is always clear whose stops these are.
+   * It stays from one unit to the next — over the top of the next banner as
+   * that comes up under it — and turns into the next unit as that banner goes
+   * under (PinnedUnit), until the path ends.
    */
+  const lastUnit = units[units.length - 1];
   const pinned =
-    pathTopOnPage === null
+    pathTopOnPage === null || !lastUnit || scrollY >= pathTopOnPage + lastUnit.bottom - PIN_CLEAR
       ? null
-      : (units.find((u) => scrollY > pathTopOnPage + u.bannerBottom - PIN_HEIGHT && scrollY < pathTopOnPage + u.bottom - PIN_CLEAR) ?? null);
+      : ([...units].reverse().find((u) => scrollY > pathTopOnPage + u.bannerBottom - PIN_HEIGHT) ?? null);
+
+  const refresh = () => {
+    setRefreshing(true);
+    setReloadKey((k) => k + 1);
+    onRefresh?.();
+  };
 
   if (failed && !courses) {
     return <ErrorRetry onRetry={() => setReloadKey((k) => k + 1)} />;
@@ -229,8 +264,10 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
           touched.current = true;
         }}
         scrollEventThrottle={64}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refreshFelt(refresh)} tintColor={colors.textSecondary} />}
       >
         <View style={styles.header}>
+          <ReminderNudge hold={kept.pending} />
           {loading && !courses ? <ContinueSkeleton /> : step ? <ContinueCard step={step} /> : null}
           <View style={styles.tools}>
             {/* practice's hub, with what review has due on its face */}
@@ -346,11 +383,26 @@ export function LessonsView({ scrollRef }: { scrollRef?: Ref<ScrollView> }): Rea
           </Pressable>
         </View>
       ) : null}
+
+      <KeptStreakSheet
+        streak={kept.shown}
+        onClose={kept.close}
+        onStart={() => {
+          kept.close();
+          if (step) openStep(navigation, step);
+        }}
+      />
     </View>
   );
 }
 
-/** The pinned unit gives way this far before its unit ends, so it never sits over the next unit's own banner. */
+/** What the one next step opens: its lesson, or, with every open lesson done, practice, chosen on its hub. */
+function openStep(navigation: RootNavigation, step: NextStep): void {
+  if (step.kind === 'review') navigation.navigate('PracticeHub');
+  else navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId });
+}
+
+/** The pinned unit gives way this far before the path ends, so it is gone before what comes after the path. */
 const PIN_CLEAR = 72;
 /**
  * The pinned unit's height: it takes over as soon as no more of the banner
@@ -376,8 +428,7 @@ function ContinueCard({ step }: { step: NextStep }): React.JSX.Element {
   const title = step.kind === 'review' ? t('learn.continue.allDone') : step.skill.title;
   const button =
     step.kind === 'start' ? t('learn.continue.start') : step.kind === 'review' ? t('practice.title') : t('learn.continue.button');
-  // with every open lesson done, practice is the next step, chosen on its hub
-  const go = () => (step.kind === 'review' ? navigation.navigate('PracticeHub') : navigation.navigate('Lesson', { lessonId: step.lessonId, courseId: step.courseId }));
+  const go = () => openStep(navigation, step);
   const progress = t('learn.continue.progress', { done: formatNumber(step.done, locale), total: formatNumber(step.total, locale) });
 
   return (

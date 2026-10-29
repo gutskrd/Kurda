@@ -99,7 +99,7 @@ export function ReminderOffer({ ready, store = deviceStore }: { ready: boolean; 
  * from a fresh sign-in does not carry it (only `/me` does), so it is asked
  * for then; null when even that cannot say.
  */
-async function minorStatus(known: boolean | undefined, client: ApiClient): Promise<boolean | null> {
+export async function minorStatus(known: boolean | undefined, client: ApiClient): Promise<boolean | null> {
   if (typeof known === 'boolean') return known;
   const me = await client.get<{ user?: { minor?: unknown } }>('/me');
   return me.ok && typeof me.data.user?.minor === 'boolean' ? me.data.user.minor : null;

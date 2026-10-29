@@ -3,6 +3,7 @@ import {
   EMPTY_TALLY,
   grantFreeze,
   localDate,
+  MAX_FREEZES,
   record,
   recordSession,
   SESSIONS_PER_FREEZE,
@@ -18,6 +19,8 @@ export interface StreakSummary {
   current: number;
   longest: number;
   freezes: number;
+  /** the most freezes a learner may hold at once, for the apps to draw the empty places beside the held ones */
+  maxFreezes: number;
   /** 'YYYY-MM-DD' in the user's tz, or null if never active */
   lastActiveOn: string | null;
   /**
@@ -28,6 +31,12 @@ export interface StreakSummary {
   /** finished sessions towards the next freeze, out of `sessionsPerFreeze` */
   freezeProgress: number;
   sessionsPerFreeze: number;
+  /**
+   * The missed day the last freeze spent covered ('YYYY-MM-DD' in the user's
+   * tz), or null: an app that has not said so yet says once that the streak
+   * was kept.
+   */
+  freezeUsedOn: string | null;
 }
 
 interface StreakRow {
@@ -38,6 +47,7 @@ interface StreakRow {
   days_learned: number;
   last_learned_on: string | null;
   freeze_progress: number;
+  freeze_used_on: string | null;
 }
 
 const EMPTY: StreakState = { currentStreak: 0, longestStreak: 0, lastActiveOn: null, freezes: 0 };
@@ -58,6 +68,7 @@ function rowToState(row: StreakRow | undefined): StreakState {
     longestStreak: row.longest_streak,
     lastActiveOn: dateText(row.last_active_on),
     freezes: row.freezes,
+    freezeUsedOn: dateText(row.freeze_used_on),
   };
 }
 
@@ -75,10 +86,12 @@ function toSummary(s: StreakState, t: LearningTally): StreakSummary {
     current: s.currentStreak,
     longest: s.longestStreak,
     freezes: s.freezes,
+    maxFreezes: MAX_FREEZES,
     lastActiveOn: s.lastActiveOn,
     daysLearned: t.daysLearned,
     freezeProgress: t.freezeProgress,
     sessionsPerFreeze: SESSIONS_PER_FREEZE,
+    freezeUsedOn: s.freezeUsedOn ?? null,
   };
 }
 
@@ -99,7 +112,7 @@ export class StreakService {
   private async load(executor: Executor, userId: string): Promise<{ state: StreakState; tally: LearningTally }> {
     const res = await executor.query<StreakRow>(
       `SELECT current_streak, longest_streak, last_active_on::text AS last_active_on, freezes,
-              days_learned, last_learned_on::text AS last_learned_on, freeze_progress
+              days_learned, last_learned_on::text AS last_learned_on, freeze_progress, freeze_used_on::text AS freeze_used_on
        FROM user_streaks WHERE user_id = $1`,
       [userId],
     );
@@ -108,15 +121,16 @@ export class StreakService {
 
   private async save(executor: Executor, userId: string, s: StreakState): Promise<void> {
     await executor.query(
-      `INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_active_on, freezes, updated_at)
-       VALUES ($1, $2, $3, $4, $5, now())
+      `INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_active_on, freezes, freeze_used_on, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, now())
        ON CONFLICT (user_id) DO UPDATE SET
          current_streak = EXCLUDED.current_streak,
          longest_streak = EXCLUDED.longest_streak,
          last_active_on = EXCLUDED.last_active_on,
          freezes = EXCLUDED.freezes,
+         freeze_used_on = EXCLUDED.freeze_used_on,
          updated_at = now()`,
-      [userId, s.currentStreak, s.longestStreak, s.lastActiveOn, s.freezes],
+      [userId, s.currentStreak, s.longestStreak, s.lastActiveOn, s.freezes, s.freezeUsedOn ?? null],
     );
   }
 
@@ -124,18 +138,19 @@ export class StreakService {
   private async saveWithTally(executor: Executor, userId: string, s: StreakState, t: LearningTally): Promise<void> {
     await executor.query(
       `INSERT INTO user_streaks
-         (user_id, current_streak, longest_streak, last_active_on, freezes, days_learned, last_learned_on, freeze_progress, updated_at)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+         (user_id, current_streak, longest_streak, last_active_on, freezes, freeze_used_on, days_learned, last_learned_on, freeze_progress, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, now())
        ON CONFLICT (user_id) DO UPDATE SET
          current_streak = EXCLUDED.current_streak,
          longest_streak = EXCLUDED.longest_streak,
          last_active_on = EXCLUDED.last_active_on,
          freezes = EXCLUDED.freezes,
+         freeze_used_on = EXCLUDED.freeze_used_on,
          days_learned = EXCLUDED.days_learned,
          last_learned_on = EXCLUDED.last_learned_on,
          freeze_progress = EXCLUDED.freeze_progress,
          updated_at = now()`,
-      [userId, s.currentStreak, s.longestStreak, s.lastActiveOn, s.freezes, t.daysLearned, t.lastLearnedOn, t.freezeProgress],
+      [userId, s.currentStreak, s.longestStreak, s.lastActiveOn, s.freezes, s.freezeUsedOn ?? null, t.daysLearned, t.lastLearnedOn, t.freezeProgress],
     );
   }
 
@@ -182,8 +197,8 @@ export class StreakService {
 
   /**
    * Current streak for display. Settles to today first (burning a freeze
-   * for a covered miss, zeroing a broken run) and persists that so /me is
-   * always truthful.
+   * for a covered miss and noting the day it kept, zeroing a broken run) and
+   * persists that so /me is always truthful.
    */
   async get(userId: string, timeZone: string, now: Date = new Date()): Promise<StreakSummary> {
     const today = localDate(now, timeZone);

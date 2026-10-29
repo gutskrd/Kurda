@@ -45,6 +45,8 @@ export type RootStackParamList = {
   Practice: { exerciseIds?: string[]; mode?: PracticeMode; unitId?: string } | undefined;
   /** Practice's hub: the one thing most worth doing now, and every other kind of practice (practice/PracticeHubScreen). */
   PracticeHub: undefined;
+  /** The short test that jumps ahead on the path to `unitId` (coursemap/JumpTestScreen) */
+  JumpTest: { courseId: string; unitId: string };
   Shop: undefined;
   League: undefined;
   /** Game Ranks up close: a game's rank, the climb, its boards (the rank cards on Learn → Games open it) */

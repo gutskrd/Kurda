@@ -12,6 +12,7 @@ import {
   readOfferRecord,
   saveOfferShown,
   settingsAction,
+  shouldNudgeReminders,
   shouldOfferReminders,
   toPermissionState,
   type OfferRecord,
@@ -55,6 +56,33 @@ describe('settingsAction', () => {
   it('has nothing to do when allowed, or where there is no push', () => {
     expect(settingsAction({ status: 'granted', canAsk: false })).toBe('none');
     expect(settingsAction(PUSH_UNAVAILABLE)).toBe('none');
+  });
+});
+
+describe('shouldNudgeReminders', () => {
+  const adult = (over: Partial<Parameters<typeof shouldNudgeReminders>[0]> = {}) =>
+    shouldNudgeReminders({ permission: NEVER_ASKED, record: null, minor: false, now: NOW, ...over });
+
+  it('offers an adult whose reminders are off, never asked or turned down', () => {
+    expect(adult()).toBe(true);
+    expect(adult({ permission: { status: 'denied', canAsk: false } })).toBe(true);
+    expect(adult({ permission: { status: 'denied', canAsk: true } })).toBe(true);
+  });
+
+  it('says nothing once reminders are on, or where there are none', () => {
+    expect(adult({ permission: { status: 'granted', canAsk: false } })).toBe(false);
+    expect(adult({ permission: PUSH_UNAVAILABLE })).toBe(false);
+  });
+
+  it('never offers a minor, nor an account whose age is not known', () => {
+    expect(adult({ minor: true })).toBe(false);
+    expect(adult({ minor: null })).toBe(false);
+  });
+
+  it('spends the same budget as the card after a lesson: a week apart, and twice in all', () => {
+    expect(adult({ record: shownAgo(6 * DAY) })).toBe(false);
+    expect(adult({ record: shownAgo(7 * DAY) })).toBe(true);
+    expect(adult({ record: shownAgo(30 * DAY, MAX_OFFERS) })).toBe(false);
   });
 });
 

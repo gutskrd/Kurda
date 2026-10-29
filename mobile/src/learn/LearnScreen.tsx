@@ -1,4 +1,4 @@
-import { useRef } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useScrollToTop } from '@react-navigation/native';
 import { StyleSheet, View, type FlatList, type ScrollView } from 'react-native';
 import { GradientBackground, Segmented } from '../theme/glass';
@@ -8,6 +8,7 @@ import { LargeTitle } from '../navigation/LargeTitle';
 import { useScreenTopInset } from '../navigation/tabBarLayout';
 import type { LearnView } from '../navigation/tabs';
 import type { MapRow } from '../coursemap/node';
+import type { Streak } from '../streak/format';
 import { LessonsView } from './LessonsView';
 import { GamesView } from './GamesView';
 import { useLearnView } from './useLearnView';
@@ -39,11 +40,16 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
   const scrollRef = useRef<FlatList<MapRow> & ScrollView>(null);
   useScrollToTop(scrollRef);
 
+  // the streak the bar reads, for the lessons' own moments; pulled to refresh, the bar reads it again
+  const [streak, setStreak] = useState<Streak | null>(null);
+  const [barKey, setBarKey] = useState(0);
+  const reloadBar = useCallback(() => setBarKey((k) => k + 1), []);
+
   return (
     <GradientBackground>
       <View style={[styles.head, { paddingTop: topInset }]}>
         {/* the streak, the day's goal and the Zêr, in the corner where they are looked for */}
-        <LargeTitle title={t('nav.learn')} right={<LearnBar />} />
+        <LargeTitle title={t('nav.learn')} right={<LearnBar reloadKey={barKey} onStreak={setStreak} />} />
         <Segmented
           options={VIEWS}
           value={view}
@@ -52,7 +58,7 @@ export function LearnScreen({ view: requested, onViewShown }: { view?: LearnView
           size="large"
         />
       </View>
-      {view === 'games' ? <GamesView scrollRef={scrollRef} /> : <LessonsView scrollRef={scrollRef} />}
+      {view === 'games' ? <GamesView scrollRef={scrollRef} /> : <LessonsView scrollRef={scrollRef} streak={streak} onRefresh={reloadBar} />}
     </GradientBackground>
   );
 }

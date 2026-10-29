@@ -15,7 +15,8 @@ import { useTheme } from '../theme/ThemeProvider';
 import { Skeleton, SkeletonLines } from '../theme/Skeleton';
 import { useI18n } from '../i18n/I18nContext';
 
-const PRACTICE_PATHS: SessionPaths = {
+/** A practice session's endpoints; a test to jump ahead is answered through them too. */
+export const PRACTICE_PATHS: SessionPaths = {
   answers: (id) => `/practice/sessions/${id}/answers`,
   retry: (id) => `/practice/sessions/${id}/retry`,
   complete: (id) => `/practice/sessions/${id}/complete`,
