@@ -5,6 +5,7 @@ import {
   MIN_RECORDING_MS,
   SORANI_KEYS,
   emptyDraft,
+  emptyLiveMatch,
   emptyMatch,
   encodeAnswer,
   insertAtSelection,
@@ -14,9 +15,14 @@ import {
   isRightMatched,
   isSoraniDialect,
   letterDiff,
+  liftTile,
+  pairKey,
+  placeTile,
   recordingProblem,
   tapLeft,
+  tapLive,
   tapRight,
+  tileAnswer,
   typedHint,
   typingKeys,
   type DiffSegment,
@@ -100,6 +106,71 @@ describe('recordingProblem', () => {
     expect(recordingProblem({ durationMs: MIN_RECORDING_MS - 1, byteSize: 5000 })).toBe('tooShort');
     expect(recordingProblem({ durationMs: 3000, byteSize: MIN_RECORDING_BYTES - 1 })).toBe('silent');
     expect(recordingProblem({ durationMs: MIN_RECORDING_MS, byteSize: MIN_RECORDING_BYTES })).toBeNull();
+  });
+});
+
+describe('pairs answered as they are made', () => {
+  const key = pairKey(['sêv', 'av', 'nan'], ['water', 'bread', 'apple'], [2, 0, 1])!;
+
+  it('reads the pairing from pairOf, and refuses one that does not fit the cards', () => {
+    expect([...key]).toEqual([
+      ['sêv', 'apple'],
+      ['av', 'water'],
+      ['nan', 'bread'],
+    ]);
+    expect(pairKey(['sêv'], ['apple'], undefined)).toBeNull();
+    expect(pairKey(['sêv', 'av'], ['apple', 'water'], [0])).toBeNull();
+    expect(pairKey(['sêv'], ['apple'], [3])).toBeNull();
+  });
+
+  it('keeps a right pair whichever side was picked first', () => {
+    const one = tapLive(emptyLiveMatch, key, 'left', 'sêv');
+    expect(one.outcome).toBe('picked');
+    const two = tapLive(one.state, key, 'right', 'apple');
+    expect(two).toEqual({ state: { matches: [{ left: 'sêv', right: 'apple' }], picked: null }, outcome: 'matched', pair: { left: 'sêv', right: 'apple' } });
+    const three = tapLive(tapLive(two.state, key, 'right', 'water').state, key, 'left', 'av');
+    expect(three.outcome).toBe('matched');
+    expect(three.state.matches).toHaveLength(2);
+  });
+
+  it('tries a wrong pair, keeps nothing and picks nothing', () => {
+    const tried = tapLive(tapLive(emptyLiveMatch, key, 'left', 'sêv').state, key, 'right', 'water');
+    expect(tried).toEqual({ state: emptyLiveMatch, outcome: 'missed', pair: { left: 'sêv', right: 'water' } });
+  });
+
+  it('lets the picked card go, swaps it for another on its side, and ignores spent cards', () => {
+    const picked = tapLive(emptyLiveMatch, key, 'left', 'sêv').state;
+    expect(tapLive(picked, key, 'left', 'sêv')).toEqual({ state: emptyLiveMatch, outcome: 'unpicked' });
+    expect(tapLive(picked, key, 'left', 'av').state.picked).toEqual({ side: 'left', text: 'av' });
+    const matched = tapLive(picked, key, 'right', 'apple').state;
+    expect(tapLive(matched, key, 'left', 'sêv')).toEqual({ state: matched, outcome: 'ignored' });
+    expect(tapLive(matched, key, 'right', 'apple')).toEqual({ state: matched, outcome: 'ignored' });
+  });
+
+  it('sends what it found as a match-pairs answer', () => {
+    const done = tapLive(tapLive(emptyLiveMatch, key, 'left', 'nan').state, key, 'right', 'bread').state;
+    expect(encodeAnswer({ type: 'match_pairs', matches: done.matches })).toEqual({ matches: [{ left: 'nan', right: 'bread' }] });
+  });
+});
+
+describe('word tiles', () => {
+  const bank = ['av', 'nan', 'û', 'sêv', 'av'];
+
+  it('lays tiles in the order tapped and reads them as one answer', () => {
+    let placed = placeTile([], 1);
+    placed = placeTile(placed, 2);
+    placed = placeTile(placed, 0);
+    expect(tileAnswer(bank, placed)).toBe('nan û av');
+  });
+
+  it('keeps a word that is in the bank twice as two tiles', () => {
+    expect(tileAnswer(bank, placeTile(placeTile([], 0), 4))).toBe('av av');
+  });
+
+  it('does not lay one tile twice, and closes up when one is taken off', () => {
+    expect(placeTile([1, 2], 1)).toEqual([1, 2]);
+    expect(liftTile([1, 2, 0], 2)).toEqual([1, 0]);
+    expect(tileAnswer(bank, [])).toBe('');
   });
 });
 

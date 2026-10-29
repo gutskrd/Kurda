@@ -71,6 +71,8 @@ export {
   type SubmitFn,
   type Verdict,
 } from './lesson-player.js';
+/** The week a kept streak is shown in, laid out the same on the phone and the website. */
+export { streakWeek, weekStartsOn, type RecentDay, type WeekDay, type WeekDayState } from './streak-week.js';
 /** Today's three quests, and the chests they pay: learning only, never anything paid. */
 export { QUEST_KINDS, type ChestOpening, type ChestTier, type Quest, type QuestDay, type QuestKind, type QuestStep } from './quests.js';
 /** A right answer's praise, in the course's own Kurdish: content, kept beside the player rather than in the translations. */
@@ -176,6 +178,7 @@ export {
   MIN_RECORDING_MS,
   SORANI_KEYS,
   emptyDraft,
+  emptyLiveMatch,
   emptyMatch,
   encodeAnswer,
   insertAtSelection,
@@ -185,15 +188,23 @@ export {
   isRightMatched,
   isSoraniDialect,
   letterDiff,
+  liftTile,
+  pairKey,
+  placeTile,
   recordingProblem,
   tapLeft,
+  tapLive,
   tapRight,
+  tileAnswer,
   typedHint,
   typingKeys,
   type DiffSegment,
   type DraftAnswer,
+  type LiveMatchOutcome,
+  type LiveMatchState,
   type MatchPair,
   type MatchState,
+  type PickedCard,
   type Selection,
   type TypedHint,
 } from './lesson-answers.js';
