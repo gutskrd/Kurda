@@ -1,9 +1,9 @@
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { lessonStates, lessonXpRange, type PathStop, type PathUnit } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { ClayButton } from '../theme/glass';
 import { Icon } from '../theme/Icon';
@@ -45,9 +45,9 @@ export function StopSheet({
     // no title in the header: the stop's own name heads the card, under what it belongs to
     <BottomSheet visible={open !== null} onClose={onClose} contentStyle={styles.scroller}>
       {open && tone ? (
-        <ScrollView contentContainerStyle={styles.body} bounces={false}>
+        <SheetScrollView contentContainerStyle={styles.body}>
           <Card stop={open.stop} unit={open.unit} tone={tone} onLesson={onLesson} onReview={onReview} onTips={onTips} />
-        </ScrollView>
+        </SheetScrollView>
       ) : null}
     </BottomSheet>
   );
@@ -206,7 +206,7 @@ function Card({
 }
 
 const styles = StyleSheet.create({
-  // the gutter is the ScrollView's own, so the card scrolls edge to edge
+  // the gutter is the scroll view's own, so the card scrolls edge to edge
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.sm + 4 },
   eyebrow: { fontSize: typography.sizes.xs, fontWeight: typography.weights.semibold },
