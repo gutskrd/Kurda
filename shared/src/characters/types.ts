@@ -126,12 +126,13 @@ export interface CharacterArt {
    */
   chest?: string;
   /**
-   * Head and neck, for a picture of him leaning out of a window: `box` round
-   * the antlers, the ears, the head and the top of the neck; `sill`, how far
-   * down the neck the window's sill crosses it, below which nothing of him is
-   * seen; and `body`, drawn in place of `body` for it (cut off under the chest
-   * as `chest` is, under the same ids), darkening down the neck as it goes on
-   * into the room behind him. Only a character drawn for it has one.
+   * Head and neck, for a picture of him putting his head in at a window:
+   * `box` round the antlers, the ears, the head and the top of the neck;
+   * `sill`, how far down the neck the window's sill crosses it, below which
+   * nothing of him is seen; and `body`, drawn in place of `body` for it (cut
+   * off under the chest as `chest` is, under the same ids), the daylight
+   * outside catching the edges of the neck. Only a character drawn for it has
+   * one.
    */
   neck?: { box: CharacterBox; sill: number; body: string };
   /** the head without its eyes or mouth */

@@ -125,7 +125,7 @@ export function characterArt(id: CharacterId, idPrefix?: string): CharacterArt {
 
 /**
  * How much of a character a picture shows: the whole figure, head to waist,
- * head and shoulders, or head and neck (leaning out of a window, `neck`).
+ * head and shoulders, or head and neck (put in at a window, `neck`).
  */
 export type CharacterCrop = 'full' | 'half' | 'bust' | 'head';
 
@@ -135,7 +135,7 @@ export function cropBox(art: CharacterArt, crop: CharacterCrop): CharacterBox {
   return crop === 'bust' ? art.bust : crop === 'half' ? art.half : art.viewBox;
 }
 
-/** The body a crop draws: for head and neck, the neck going on into the room behind; otherwise all of it. */
+/** The body a crop draws: for head and neck, the neck cut off under the chest, out of sight under the sill; otherwise all of it. */
 export function cropBody(art: CharacterArt, crop: CharacterCrop): string {
   return crop === 'head' && art.neck ? art.neck.body : art.body;
 }
