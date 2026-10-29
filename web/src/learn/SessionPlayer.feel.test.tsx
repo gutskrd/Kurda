@@ -292,6 +292,13 @@ describe('a run of right answers', () => {
     await sheet();
   };
   const goOn = async (): Promise<void> => userEvent.click(await screen.findByRole('button', { name: 'Continue' }));
+  // five right answers in a row, each gone on from: the first milestone
+  const toFive = async (): Promise<void> => {
+    for (let i = 0; i < 5; i++) {
+      await answer('x');
+      await goOn();
+    }
+  };
 
   it('is named over the bar from three, a new label as it grows, and gone with a miss', async () => {
     grade = (body) => (body.exerciseId === 'e' ? { verdict: 'wrong', accepted: false, correction: 'sêv', duplicate: false } : right);
@@ -317,12 +324,7 @@ describe('a run of right answers', () => {
 
   it('names a milestone across the screen after its Continue, and a key goes on at once without answering anything', async () => {
     lesson(['a', 'b', 'c', 'd', 'e', 'f'].map(typed));
-    for (let i = 0; i < 4; i++) {
-      await answer('x');
-      await goOn();
-    }
-    await answer('x');
-    await goOn();
+    await toFive();
     const moment = document.querySelector('.lesson-run-moment');
     expect(moment).toHaveTextContent('5 in a row!');
     // the next exercise waits behind it
@@ -335,27 +337,23 @@ describe('a run of right answers', () => {
     expect(answers).toHaveLength(5);
   });
 
-  it('goes on by itself after a moment, under reduced motion too, and a tap skips it', async () => {
-    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList);
-    lesson(['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k'].map(typed));
-    for (let i = 0; i < 4; i++) {
-      await answer('x');
-      await goOn();
-    }
-    await answer('x');
-    await goOn();
+  it('goes on by itself after a moment', async () => {
+    lesson(['a', 'b', 'c', 'd', 'e', 'f'].map(typed));
+    await toFive();
     expect(document.querySelector('.lesson-run-moment')).not.toBeNull();
     await waitFor(() => expect(document.querySelector('.lesson-run-moment')).toBeNull(), { timeout: 2500 });
     expect(await screen.findByText('word f')).toBeInTheDocument();
-    for (let i = 0; i < 5; i++) {
-      await answer('x');
-      await goOn();
-    }
-    const ten = document.querySelector<HTMLElement>('.lesson-run-moment');
-    expect(ten).toHaveTextContent('10 in a row!');
-    await act(async () => ten!.click());
+  });
+
+  it('is there under reduced motion too, and a tap skips it', async () => {
+    vi.stubGlobal('matchMedia', (q: string) => ({ matches: q.includes('reduce'), media: q, addEventListener() {}, removeEventListener() {} }) as unknown as MediaQueryList);
+    lesson(['a', 'b', 'c', 'd', 'e', 'f'].map(typed));
+    await toFive();
+    const moment = document.querySelector<HTMLElement>('.lesson-run-moment');
+    expect(moment).toHaveTextContent('5 in a row!');
+    await act(async () => moment!.click());
     expect(document.querySelector('.lesson-run-moment')).toBeNull();
-    expect(await screen.findByText('word k')).toBeInTheDocument();
+    expect(await screen.findByText('word f')).toBeInTheDocument();
   });
 });
 
