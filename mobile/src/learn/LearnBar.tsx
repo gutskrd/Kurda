@@ -12,6 +12,7 @@ import { useDirection } from '../reports/direction';
 import { streakLabelKey, type Streak } from '../streak/format';
 import { StreakSheet } from '../streak/StreakSheet';
 import { BottomSheet } from '../theme/BottomSheet';
+import { Fire } from '../theme/Fire';
 import { Icon } from '../theme/Icon';
 import { Skeleton } from '../theme/Skeleton';
 import { useTheme } from '../theme/ThemeProvider';
@@ -28,7 +29,7 @@ const RING = 24;
  * be changed), the shop.
  *
  * The numbers are plain. Nothing counts down and nothing warns about what
- * could be lost: a streak at zero shows a cold flame and says a lesson today
+ * could be lost: a streak at zero shows a cold fire and says a lesson today
  * starts one. Some of the people reading it are children.
  *
  * The streak it reads is handed on (`onStreak`), for Learn's own moments; a
@@ -110,7 +111,7 @@ export function LearnBar({ reloadKey = 0, onStreak }: { reloadKey?: number; onSt
           style={({ pressed }) => [styles.stat, { flexDirection: dir.row, opacity: pressed ? 0.6 : 1 }]}
           testID="learn-bar-streak"
         >
-          <Icon name="flame" size={22} color={lit ? colors.goldText : colors.textSecondary} />
+          <Fire size={24} lit={lit} />
           <Text style={[styles.number, { color: lit ? colors.textPrimary : colors.textSecondary }]}>{formatNumber(days, locale)}</Text>
         </Pressable>
       ) : null}

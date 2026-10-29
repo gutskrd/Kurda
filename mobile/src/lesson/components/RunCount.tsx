@@ -4,9 +4,9 @@ import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useI18n } from '../../i18n/I18nContext';
 import { springTo, timing } from '../../theme/animate';
 import { SoftGlow } from '../../theme/CelebrationParts';
+import { Fire } from '../../theme/Fire';
 import { GradientBackground } from '../../theme/glass';
 import { display } from '../../theme/fonts';
-import { Icon } from '../../theme/Icon';
 import { duration } from '../../theme/motion';
 import { useTheme } from '../../theme/ThemeProvider';
 import { spacing, typography } from '../../theme/tokens';
@@ -15,7 +15,7 @@ import { spacing, typography } from '../../theme/tokens';
 export const RUN_MOMENT_MS = 1000;
 
 /**
- * "4 in a row", with a flame, in gold, just above the progress bar while a run
+ * "4 in a row", with the streak's fire, in gold, just above the progress bar while a run
  * of right answers lasts (shown from `RUN_SHOWN_FROM`). It pops as it grows,
  * and is still under Reduce Motion. `end` is a mirrored header's: it sits over
  * the start of the bar, on the right.
@@ -37,7 +37,7 @@ export function RunLabel({ count, end }: { count: number; end: boolean }): React
   }, [count, reduce, scale]);
   return (
     <Animated.View style={[styles.label, end ? styles.labelEnd : styles.labelStart, { transform: [{ scale }] }]} testID="lesson-in-a-row">
-      <Icon name="flame" size={14} color={colors.goldText} />
+      <Fire size={16} />
       <Text style={[styles.labelText, { color: colors.goldText }]}>{t('lesson.inARow', { count })}</Text>
     </Animated.View>
   );
@@ -81,7 +81,7 @@ export function RunMoment({ count, onDone }: { count: number; onDone: () => void
           <SoftGlow colour={colors.gold} size={360} id="run-moment-glow" />
         </Animated.View>
         <Animated.View style={[styles.momentBody, { opacity, transform: [{ scale }] }]}>
-          <Icon name="flame" size={56} color={colors.goldText} />
+          <Fire size={88} />
           <Text style={[styles.momentText, { color: colors.goldText }]}>{words}</Text>
         </Animated.View>
       </Pressable>

@@ -32,7 +32,7 @@ import { useI18n } from '../i18n/I18nContext';
 import type { Streak } from '../streak/format';
 import { StreakSheet } from '../streak/StreakSheet';
 import { formatNumber } from '../i18n/format';
-import { Icon } from '../theme/Icon';
+import { Fire } from '../theme/Fire';
 
 /** How big the face is: the largest thing on the screen, beside the numbers, with room for three of them on the smallest phone. */
 const AVATAR = 86;
@@ -327,7 +327,7 @@ export function ProfileScreen() {
               value={formatNumber(streak?.current ?? 0, locale)}
               loading={!settled}
               onPress={streak ? () => setStreakOpen(true) : undefined}
-              icon={streak && streak.current > 0 ? 'flame' : undefined}
+              fire={!!streak && streak.current > 0}
             />
           </View>
         </View>
@@ -424,14 +424,14 @@ function Stat({
   value,
   onPress,
   loading = false,
-  icon,
+  fire = false,
 }: {
   label: string;
   value: string;
   onPress?: () => void;
   loading?: boolean;
-  /** a glyph before the number: the lit flame beside a streak */
-  icon?: 'flame';
+  /** the streak's fire before the number, while it burns */
+  fire?: boolean;
 }): React.JSX.Element {
   const { colors } = useTheme();
   const body = (
@@ -441,7 +441,7 @@ function Stat({
         <SkeletonText size={typography.sizes.lg} width={28} align="center" />
       ) : (
         <View style={styles.statLine}>
-          {icon ? <Icon name={icon} size={16} color={colors.goldText} /> : null}
+          {fire ? <Fire size={18} /> : null}
           <Text style={[styles.statValue, { color: colors.textPrimary }]} numberOfLines={1}>
             {value}
           </Text>

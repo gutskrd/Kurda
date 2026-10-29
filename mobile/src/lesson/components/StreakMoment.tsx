@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AccessibilityInfo, Animated, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions, type TextStyle } from 'react-native';
-import Svg, { Defs, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
+import Svg, { Defs, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 import { STREAK_DAY_TIMING, freezeLine, streakSpeech, streakWeek, weekStartsOn, type StreakMood, type WeekDay } from '@kurda/shared';
 import { useReducedMotion } from '../../a11y/useReducedMotion';
 import { useCelebrationHold } from '../../badges/BadgeCelebrationHost';
@@ -14,6 +14,7 @@ import { useDirection } from '../../reports/direction';
 import { springTo, timing } from '../../theme/animate';
 import { BURST, CELEBRATE_MS } from '../../theme/celebration';
 import { ConfettiBurst, GlowRing, SoftGlow, useCelebration } from '../../theme/CelebrationParts';
+import { Fire } from '../../theme/Fire';
 import { display } from '../../theme/fonts';
 import { ClayButton } from '../../theme/glass';
 import { Icon } from '../../theme/Icon';
@@ -22,7 +23,7 @@ import { useTheme } from '../../theme/ThemeProvider';
 import { layout, radii, spacing, typography } from '../../theme/tokens';
 import type { Streak } from '../types';
 
-/** How big the flame is drawn on its own screen, and beside Hevalo after it. */
+/** How wide the fire is drawn on its own screen, and beside Hevalo after it; it stands a quarter taller. */
 const FLAME = 168;
 const FLAME_SMALL = 112;
 /** The day's number on the flame's screen, and on the streak's. */
@@ -114,7 +115,7 @@ function FlameMoment({ streak, onDone }: { streak: Streak; onDone: () => void })
             <ConfettiBurst progress={moment.burst} count={BURST.lesson} seed={day * 17 + 5} colours={[colors.gold, '#FFE16A', '#FF9A3C', '#FFFFFF']} reach={FLAME * 0.85} />
           ) : null}
           <Animated.View style={{ opacity, transform: [{ scale }] }}>
-            <FlameArt size={FLAME} />
+            <Fire size={FLAME * 1.25} />
           </Animated.View>
         </View>
         <RollingNumber from={day - 1} to={day} progress={moment.details} travel={plan.travel} size={NUMBER} colour={ink} />
@@ -144,24 +145,6 @@ function WarmLight({ width, height }: { width: number; height: number }): React.
         <Rect x="0" y="0" width={width} height={height} fill="url(#streak-light)" />
       </Svg>
     </View>
-  );
-}
-
-/** The streak's flame, drawn: gold at the tip deepening to orange, a bright heart, and a lick of light down one side. */
-function FlameArt({ size }: { size: number }): React.JSX.Element {
-  const id = `flame-${size}`;
-  return (
-    <Svg width={size} height={size * 1.2} viewBox="0 0 100 120" accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-      <Defs>
-        <LinearGradient id={id} x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0" stopColor="#FFC531" />
-          <Stop offset="1" stopColor="#F07B16" />
-        </LinearGradient>
-      </Defs>
-      <Path d="M52 4 C60 24 84 40 86 70 C88 96 70 116 50 116 C30 116 12 98 14 72 C15 56 24 46 32 38 C32 50 38 58 46 60 C40 44 42 22 52 4 Z" fill={`url(#${id})`} />
-      <Path d="M50 56 C58 70 70 78 70 94 C70 107 61 114 50 114 C39 114 30 107 30 94 C30 80 42 72 50 56 Z" fill="#FFE27A" />
-      <Path d="M24 76 C24 64 29 55 35 49" stroke="#FFFFFF" strokeOpacity={0.35} strokeWidth={4} strokeLinecap="round" fill="none" />
-    </Svg>
   );
 }
 
@@ -264,7 +247,7 @@ function StreakWeekScreen({ streak, goalDone, onContinue }: { streak: Streak; go
           {/* Hevalo under his words, the flame burning just behind him on the side the reading starts from */}
           <View style={styles.hevalo} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
             <View style={[styles.behind, { transform: [{ translateX: (dir.rtl ? 1 : -1) * FLAME_SMALL * 0.42 }] }]}>
-              <FlameArt size={FLAME_SMALL} />
+              <Fire size={FLAME_SMALL * 1.25} />
             </View>
             <SpeakingCharacter speaker="hevalo" player={null} playing={false} crop="full" height={HEVALO} flip={dir.rtl} reaction="cheer" />
           </View>
