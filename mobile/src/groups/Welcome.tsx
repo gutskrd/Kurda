@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { scriptLanguage, scriptText } from '../alphabet/parts';
 import { useI18n } from '../i18n/I18nContext';
@@ -27,11 +27,13 @@ export function CalmCard({
   children: ReactNode;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // a short phone (an SE) keeps the whole card on screen: a smaller picture, less air
+  const compact = useWindowDimensions().height < 700;
   return (
-    <View style={[styles.card, { backgroundColor: colors.surface }]}>
+    <View style={[styles.card, compact && styles.compact, { backgroundColor: colors.surface }]}>
       {/* the name under it says whose picture it is */}
       <View accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <GroupAvatar name={group.name} id={group.id} size={AVATAR} photoUrl={group.photoUrl} />
+        <GroupAvatar name={group.name} id={group.id} size={compact ? AVATAR_COMPACT : AVATAR} photoUrl={group.photoUrl} />
       </View>
       <Text style={[styles.name, { color: colors.textPrimary }]} accessibilityRole="header">
         {group.name}
@@ -122,6 +124,7 @@ export function ClearedLine({ by, at, me }: { by: string | null; at: string; me:
 }
 
 const AVATAR = 88;
+const AVATAR_COMPACT = 64;
 
 const styles = StyleSheet.create({
   card: {
@@ -134,6 +137,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.xl,
   },
+  compact: { paddingVertical: spacing.lg, paddingHorizontal: spacing.md },
   name: { ...display(typography.sizes.lg), textAlign: 'center', marginTop: spacing.xs },
   line: { fontSize: typography.sizes.sm, lineHeight: 21, textAlign: 'center' },
   greet: { alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },

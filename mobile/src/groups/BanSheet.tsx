@@ -112,13 +112,16 @@ export function BanSheet({
         </View>
 
         <Text style={[styles.hint, dir.text, { color: colors.textSecondary }]}>{t('groups.ban.difference')}</Text>
+      </SheetScrollView>
+      {/* under the scroll, so the button is in reach however little of the sheet a short phone shows */}
+      <View style={styles.foot}>
         {error ? (
           <Text style={[styles.hint, dir.text, { color: colors.danger }]} accessibilityRole="alert" accessibilityLiveRegion="polite">
             {error}
           </Text>
         ) : null}
-        <ClayButton label={t('groups.ban.title', { name })} tone="danger" size="large" busy={busy} onPress={() => void ban()} style={styles.button} />
-      </SheetScrollView>
+        <ClayButton label={t('groups.ban.title', { name })} tone="danger" size="large" busy={busy} onPress={() => void ban()} />
+      </View>
     </BottomSheet>
   );
 }
@@ -133,5 +136,5 @@ const styles = StyleSheet.create({
   input: { minHeight: 80, borderRadius: radii.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: typography.sizes.md, textAlignVertical: 'top' },
   hint: { fontSize: typography.sizes.sm, lineHeight: 20 },
   edge: { marginHorizontal: -layout.gutter },
-  button: { marginTop: spacing.sm },
+  foot: { paddingHorizontal: layout.gutter, paddingTop: spacing.sm, gap: spacing.sm },
 });

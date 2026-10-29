@@ -774,7 +774,7 @@ const styles = StyleSheet.create({
   deletedRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   deleted: { fontSize: typography.sizes.sm, fontStyle: 'italic' },
   // a card in the middle of what the chat would fill
-  centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.lg },
+  centred: { flexGrow: 1, justifyContent: 'center', padding: spacing.md },
   welcome: { flexGrow: 1, paddingTop: spacing.sm },
   typing: { fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.xs },
   error: { textAlign: 'center', fontSize: typography.sizes.sm, paddingHorizontal: spacing.lg, paddingBottom: spacing.sm },
