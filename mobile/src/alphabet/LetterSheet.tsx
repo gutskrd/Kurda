@@ -1,5 +1,5 @@
 import { useRef } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import {
   LATIN_LETTERS,
   SORANI_LETTERS,
@@ -14,7 +14,7 @@ import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useI18n } from '../i18n/I18nContext';
 import type { TranslationKey } from '../i18n/translations';
 import { useDirection } from '../reports/direction';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -67,11 +67,11 @@ export function LetterSheet({
   return (
     // no title in the header: the letter itself, large, heads the card
     <BottomSheet visible={letterId !== null} onClose={onClose} contentStyle={styles.scroller}>
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} bounces={false}>
+      <SheetScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false}>
         {latin ? <LatinCard letter={latin} audio={audio} player={player} /> : null}
         {sorani ? <SoraniCard letter={sorani} audio={audio} player={player} /> : null}
         <Stepper onStep={onStep} />
-      </ScrollView>
+      </SheetScrollView>
     </BottomSheet>
   );
 }
@@ -344,7 +344,7 @@ const GLYPH = 64;
 const GLYPH_STAGED = 84;
 
 const styles = StyleSheet.create({
-  // the gutter is the ScrollView's own, so the card scrolls edge to edge
+  // the gutter is the scroll view's own, so the card scrolls edge to edge
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.md },
   flex: { flex: 1 },

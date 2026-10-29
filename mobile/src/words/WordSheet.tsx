@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import {
   KURDISH_NUMBER_MAX,
   NEWROZ,
@@ -24,7 +24,7 @@ import { haptic } from '../feedback/haptics';
 import { useI18n } from '../i18n/I18nContext';
 import { formatNumber } from '../i18n/format';
 import { useDirection } from '../reports/direction';
-import { BottomSheet } from '../theme/BottomSheet';
+import { BottomSheet, SheetScrollView } from '../theme/BottomSheet';
 import { display } from '../theme/fonts';
 import { Icon } from '../theme/Icon';
 import { useTheme } from '../theme/ThemeProvider';
@@ -67,10 +67,10 @@ export function WordSheet({
 
   return (
     <BottomSheet visible={wordId !== null} onClose={onClose} contentStyle={styles.scroller}>
-      <ScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} bounces={false} keyboardShouldPersistTaps="handled">
+      <SheetScrollView contentContainerStyle={styles.body} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {word && shown ? <Card key={`${shown.dialect}:${word.id}`} word={word} dialect={shown.dialect} audio={audio} player={player} /> : null}
         <Stepper onStep={onStep} />
-      </ScrollView>
+      </SheetScrollView>
     </BottomSheet>
   );
 }
@@ -303,7 +303,7 @@ const WORD = 34;
 const WORD_STAGED = 40;
 
 const styles = StyleSheet.create({
-  // the gutter is the ScrollView's own, so the card scrolls edge to edge
+  // the gutter is the scroll view's own, so the card scrolls edge to edge
   scroller: { paddingHorizontal: 0 },
   body: { paddingHorizontal: layout.gutter, paddingBottom: spacing.sm, gap: spacing.md },
   flex: { flex: 1 },
