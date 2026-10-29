@@ -60,6 +60,8 @@ import { registerWalletRoutes } from './wallet/routes.js';
 import { registerDailyGoalRoutes } from './goals/routes.js';
 import { DailyRewardService } from './rewards/service.js';
 import { registerDailyRewardRoutes } from './rewards/routes.js';
+import { DailyQuestService } from './quests/service.js';
+import { registerDailyQuestRoutes } from './quests/routes.js';
 import { GemService } from './gems/service.js';
 import { registerGemRoutes } from './gems/routes.js';
 import { createProgression } from './badges/progression.js';
@@ -623,6 +625,8 @@ export function buildApp(config: AppConfig, options: BuildAppOptions = {}): Fast
     registerLessonRoutes(app, gemService, xpService, badges);
     registerDailyGoalRoutes(app);
     registerDailyRewardRoutes(app, new DailyRewardService(app.db, new WalletService(app.db)));
+    // today's three quests, moved by finished lessons and practice, each paying a chest of Zêr
+    registerDailyQuestRoutes(app, new DailyQuestService(app.db, new WalletService(app.db)));
     registerReviewRoutes(app);
     registerPracticeRoutes(app, xpService, badges);
     registerWordleRoutes(app, { xp: xpService, milestones: badges });

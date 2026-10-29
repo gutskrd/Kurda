@@ -1,5 +1,14 @@
 import type pg from 'pg';
-import { PRACTICE_MODE_TYPES, jumpMistakesAllowed, jumpPassed, unitTone, type PracticeHub, type PracticeMode, type RecordingVoice } from '@kurda/shared';
+import {
+  PRACTICE_MODE_TYPES,
+  jumpMistakesAllowed,
+  jumpPassed,
+  unitTone,
+  type PracticeHub,
+  type PracticeMode,
+  type QuestStep,
+  type RecordingVoice,
+} from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from '../content/exercises.js';
 import type { ExerciseType } from '../content/repository.js';
@@ -13,6 +22,7 @@ import type { MilestoneRecorder } from '../achievements/service.js';
 import { PRACTICE_TARGET, PRACTICE_MIN, selectPracticeItems } from './practice-select.js';
 import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import { settleJump, type JumpOutcome, type JumpTarget } from '../jump/settle.js';
+import { moveQuests } from '../quests/service.js';
 
 /** Practice sessions earn half the XP a fresh lesson does. */
 export const PRACTICE_XP_FACTOR = 0.5;
@@ -177,6 +187,8 @@ export interface PracticeResults {
   streak: StreakSummary;
   /** a test to jump ahead on the path (jump/service.ts): whether it opened the unit */
   jump?: JumpOutcome;
+  /** today's quests this session moved, before and after; absent when it moved none */
+  quests?: QuestStep[];
 }
 
 /**
@@ -676,13 +688,16 @@ export class PracticeService {
   async complete(sessionId: string, userId: string): Promise<PracticeResults> {
     const session = await this.loadSession(sessionId, userId);
     const correct = session.correct_count;
-    const putOff = await this.pool.query<{ n: number }>(
-      `SELECT count(*)::int n FROM exercises e
-       WHERE e.id = ANY($1::uuid[]) AND e.type = ANY($3::text[])
-         AND NOT EXISTS (SELECT 1 FROM practice_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)`,
+    // the items put off and never answered, and the listening ones answered right (for the quests), in one read
+    const counts = await this.pool.query<{ n: number; listening_right: number }>(
+      `SELECT (SELECT count(*)::int FROM exercises e
+                WHERE e.id = ANY($1::uuid[]) AND e.type = ANY($3::text[])
+                  AND NOT EXISTS (SELECT 1 FROM practice_answers a WHERE a.session_id = $2 AND a.exercise_id = e.id)) AS n,
+              (SELECT count(*)::int FROM practice_answers a JOIN exercises e ON e.id = a.exercise_id
+                WHERE a.session_id = $2 AND a.accepted AND e.type = 'listening') AS listening_right`,
       [session.item_ids, session.id, SKIPPABLE_TYPES],
     );
-    const total = Math.max(0, session.total_count - putOff.rows[0]!.n);
+    const total = Math.max(0, session.total_count - counts.rows[0]!.n);
     const accuracy = total > 0 ? correct / total : 0;
     // the misses with their right answers, in the order they were asked, so a
     // review ends the way a lesson does: with what to fix, not just a score
@@ -710,6 +725,7 @@ export class PracticeService {
     let streak: StreakSummary | null = null;
     let claimedNow = false;
     let passedNow: boolean | null = null;
+    let quests: QuestStep[] = [];
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -742,7 +758,12 @@ export class PracticeService {
             await client.query(`UPDATE practice_sessions SET xp_awarded = $2 WHERE id = $1`, [session.id, xpAwarded]);
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
-          await this.goals.evaluate(client, userId, timeZone);
+          const goal = await this.goals.evaluate(client, userId, timeZone);
+          // today's quests, the XP one by the day's XP as the goal just counted it; practice moves no lesson quest
+          if (learning) {
+            const listeningRight = counts.rows[0]!.listening_right;
+            quests = await moveQuests(client, userId, tz, { lesson: false, accuracy, perfect: false, listeningRight, xpToday: goal.earnedXp });
+          }
         }
         await client.query('COMMIT');
       } catch (err) {
@@ -757,8 +778,9 @@ export class PracticeService {
     if (this.milestones && claimedNow && !jumpTo) {
       await this.milestones.recordStreak(userId, streak.current).catch(() => undefined);
     }
+    const shown = { streak, ...(quests.length > 0 ? { quests } : {}) };
 
-    if (!jumpTo) return { correct, total, accuracy, mistakes, xpAwarded, streak };
+    if (!jumpTo) return { correct, total, accuracy, mistakes, xpAwarded, ...shown };
     // every item asked counts here, put off or not: a test is passed by answering it
     const jump: JumpOutcome = {
       unitId: jumpTo.unitId,
@@ -767,7 +789,7 @@ export class PracticeService {
       total: session.total_count,
       mistakesAllowed: jumpMistakesAllowed(session.total_count),
     };
-    return { correct, total, accuracy, mistakes, xpAwarded, streak, jump };
+    return { correct, total, accuracy, mistakes, xpAwarded, ...shown, jump };
   }
 }
 

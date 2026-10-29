@@ -181,6 +181,17 @@ describe.skipIf(!DATABASE_URL)('query budgets (integration)', { timeout: 60_000 
       expect(beat.count, beat.statements.join('\n')).toBeLessThanOrEqual(2);
     });
 
+    it('the day quests are the session read, the time zone and one statement, on the first look as on every other', async () => {
+      // Learn reads them on every visit; the first look of the day makes them in the same statement
+      // (after another call, which notes the day's network sighting)
+      await call('GET', '/me/daily-goal', 'f5');
+      const first = await counted('GET', '/me/quests', 'f5');
+      const again = await counted('GET', '/me/quests', 'f5');
+      expect(again.body.quests).toHaveLength(3);
+      expect(first.count, first.statements.join('\n')).toBe(again.count);
+      expect(again.count, again.statements.join('\n')).toBeLessThanOrEqual(3);
+    });
+
     it('an open thread costs the same for two messages as for twenty, within its budget', async () => {
       for (let i = 0; i < 2; i++) await message(ids.f2!, ids.me!, `short ${i}`);
       for (let i = 0; i < 20; i++) await message(ids.f3!, ids.me!, `long ${i}`);

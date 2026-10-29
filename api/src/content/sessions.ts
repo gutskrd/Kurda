@@ -1,5 +1,5 @@
 import type pg from 'pg';
-import type { RecordingVoice } from '@kurda/shared';
+import type { QuestStep, RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
 import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
 import type { ExerciseType } from './repository.js';
@@ -12,6 +12,7 @@ import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
 import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
+import { moveQuests } from '../quests/service.js';
 
 export const SESSION_TTL_HOURS = 24;
 /** XP-ledger source tag for lesson-completion awards. */
@@ -139,6 +140,8 @@ export interface SessionResults {
    * replaying an easy lesson key on it.
    */
   firstCompletion: boolean;
+  /** today's quests this completion moved, before and after; absent when it moved none */
+  quests?: QuestStep[];
 }
 
 /**
@@ -517,6 +520,8 @@ export class LessonSessionService {
     const skipped = row.put_off;
     const scored = Math.max(0, session.total_count - skipped);
     const accuracy = scored > 0 ? correct / scored : 0;
+    // perfect: every exercise answered, and answered right
+    const perfect = skipped === 0 && accuracy === 1;
 
     const timeZone = row.timezone ?? 'UTC';
 
@@ -524,6 +529,7 @@ export class LessonSessionService {
     let streak: StreakSummary | null = null;
     let firstCompletion: boolean | null = null;
     let claimedNow = false;
+    let quests: QuestStep[] = [];
     if (!session.completed_at) {
       const client = await this.pool.connect();
       try {
@@ -570,13 +576,19 @@ export class LessonSessionService {
           );
           // A lesson actually worked through counts as a day learned and for
           // today's streak; one finished with (nearly) nothing answered does
-          // not, or the freeze and the daily Zêr could be had for nothing.
-          if (countsAsLearning(prior.rows[0]!.answered_today, session.total_count)) {
+          // not, or the freeze, the daily Zêr and the quests could be had for nothing.
+          const learning = countsAsLearning(prior.rows[0]!.answered_today, session.total_count);
+          if (learning) {
             streak = await this.streaks.recordActivity(userId, timeZone, new Date(), client);
           }
           // Credit the daily goal if this XP crossed it (KUR-032). Runs in
           // the same txn so it sees the award above; idempotent.
-          await this.goals.evaluate(client, userId, timeZone);
+          const goal = await this.goals.evaluate(client, userId, timeZone);
+          // and today's quests, the XP one by the day's XP as the goal just counted it
+          if (learning) {
+            const listeningRight = answers.rows.filter((a) => a.type === 'listening' && a.accepted).length;
+            quests = await moveQuests(client, userId, tz, { lesson: true, accuracy, perfect, listeningRight, xpToday: goal.earnedXp });
+          }
         }
         await client.query('COMMIT');
       } catch (err) {
@@ -596,8 +608,6 @@ export class LessonSessionService {
     // Best-effort rewards after the commit, for the call that completed the
     // session only: a failure here never fails the completion, and each is
     // idempotent besides.
-    // perfect: every exercise answered, and answered right
-    const perfect = skipped === 0 && accuracy === 1;
     if (this.gems && claimedNow && firstCompletion && perfect) {
       await this.gems.grant(userId, PERFECT_LESSON_GEM_RULE, perfectLessonRef(slot, userId)).catch(() => undefined);
     }
@@ -620,6 +630,7 @@ export class LessonSessionService {
       xpAwarded,
       streak,
       firstCompletion,
+      ...(quests.length > 0 ? { quests } : {}),
     };
   }
 
