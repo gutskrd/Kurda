@@ -146,8 +146,8 @@ describe("a group's page", () => {
     expect(screen.getByRole('button', { name: 'Edit group' })).toBeInTheDocument();
     // nobody manages themselves
     expect(await menuOf('ada')).toBeNull();
-    expect(await menuOf('mira')).toEqual(['View profile', 'Remove admin', 'Make owner', 'Remove from group']);
-    expect(await menuOf('zana')).toEqual(['View profile', 'Make admin', 'Make owner', 'Remove from group']);
+    expect(await menuOf('mira')).toEqual(['View profile', 'Remove admin', 'Make owner', 'Remove from group', 'Ban…']);
+    expect(await menuOf('zana')).toEqual(['View profile', 'Make admin', 'Make owner', 'Remove from group', 'Ban…']);
     // the owner deletes rather than leaves, and is told why
     expect(screen.getByText(/To leave, make someone else the owner first/)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Delete group' })).toBeInTheDocument();
@@ -160,8 +160,8 @@ describe("a group's page", () => {
     await screen.findByRole('heading', { name: 'Test Group' });
     expect(screen.getByRole('button', { name: 'Edit group' })).toBeInTheDocument();
     expect(await menuOf('owen')).toBeNull();
-    expect(await menuOf('mira')).toEqual(['View profile', 'Remove from group']);
-    expect(await menuOf('zana')).toEqual(['View profile', 'Remove from group']);
+    expect(await menuOf('mira')).toEqual(['View profile', 'Remove from group', 'Ban…']);
+    expect(await menuOf('zana')).toEqual(['View profile', 'Remove from group', 'Ban…']);
   });
 
   it('gives a member nothing to press but people, a report and leaving', async () => {
@@ -174,7 +174,7 @@ describe("a group's page", () => {
     expect(screen.getByRole('button', { name: 'Leave Test Group' })).toBeInTheDocument();
   });
 
-  it('removes somebody only after saying who, from where — and Cancel changes nothing', async () => {
+  it('removes somebody only after saying who, from where, and that they can come back — and Cancel changes nothing', async () => {
     const calls = stubApi([['DELETE', /\/groups\/g1\/members\/u-mem$/, () => jsonResponse(200, { ok: true })]]);
     const changed = vi.fn(async () => undefined);
     renderApp(<GroupInfo detail={detailFor('owner')} onChanged={changed} onLeft={() => undefined} />);
@@ -183,6 +183,7 @@ describe("a group's page", () => {
     await userEvent.click(screen.getByRole('menuitem', { name: 'Remove from group' }));
     const ask = screen.getByRole('alertdialog', { name: 'Remove from group' });
     expect(within(ask).getByText('Remove zana from Test Group')).toBeInTheDocument();
+    expect(within(ask).getByText('zana can join again later.')).toBeInTheDocument();
     await userEvent.click(within(ask).getByRole('button', { name: 'Cancel' }));
     expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
 
@@ -191,6 +192,14 @@ describe("a group's page", () => {
     await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Remove from group' }));
     await waitFor(() => expect(changed).toHaveBeenCalled());
     expect(calls.find((c) => c.method === 'DELETE')?.url).toMatch(/\/groups\/g1\/members\/u-mem$/);
+  });
+
+  it('says someone removed from an invite-only group can be added again', async () => {
+    stubApi([]);
+    renderApp(<GroupInfo detail={{ ...detailFor('owner'), privacy: 'invite' }} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Options for zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Remove from group' }));
+    expect(within(screen.getByRole('alertdialog')).getByText('zana can be added again later.')).toBeInTheDocument();
   });
 
   it('deletes the group only once the owner has read what it costs', async () => {
@@ -268,5 +277,175 @@ describe('changing a group', () => {
     await userEvent.upload(input, new File(['x'], 'huge.jpg', { type: 'image/jpeg' }));
     expect(await screen.findByRole('alert')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Add a picture' })).toBeInTheDocument();
+  });
+});
+
+describe('banning a member', () => {
+  async function openBan(routes: Parameters<typeof stubApi>[0] = []): Promise<{ calls: Call[]; changed: ReturnType<typeof vi.fn> }> {
+    const calls = stubApi(routes);
+    const changed = vi.fn(async () => undefined);
+    renderApp(<GroupInfo detail={detailFor('owner')} onChanged={changed} onLeft={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Options for zana' }));
+    await userEvent.click(screen.getByRole('menuitem', { name: 'Ban…' }));
+    return { calls, changed };
+  }
+
+  it('asks how long as a plain choice, takes an optional reason they will see, and can delete their messages', async () => {
+    const { calls, changed } = await openBan([
+      [
+        'POST',
+        /\/groups\/g1\/bans$/,
+        () =>
+          jsonResponse(200, {
+            ban: { userId: 'u-mem', username: 'zana', avatarUrl: null, until: null, reason: 'Spam', bannedBy: 'ada', at: '2026-10-29T10:00:00.000Z', requestsClosed: false },
+          }),
+      ],
+    ]);
+    const sheet = within(screen.getByRole('dialog', { name: 'Ban zana' }));
+    expect(sheet.getByText('Removed members can join again. Banned members can’t, but they can ask you to let them back.')).toBeInTheDocument();
+    const how = within(sheet.getByRole('group', { name: 'How long' }));
+    expect(how.getAllByRole('radio').map((r) => r.closest('label')?.textContent)).toEqual(['1 day', '1 week', 'For good']);
+    expect(how.getByRole('radio', { name: '1 day' })).toBeChecked();
+    await userEvent.click(how.getByRole('radio', { name: 'For good' }));
+    await userEvent.type(sheet.getByLabelText(/Reason/), 'Spam');
+    expect(sheet.getByText('4/200')).toBeInTheDocument();
+    expect(sheet.getByText('zana will see this.')).toBeInTheDocument();
+    await userEvent.click(sheet.getByRole('switch', { name: 'Also delete their messages in this group' }));
+    await userEvent.click(sheet.getByRole('button', { name: 'Ban zana' }));
+
+    await waitFor(() => expect(changed).toHaveBeenCalled());
+    expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/groups/g1/bans'))?.body).toEqual({
+      userId: 'u-mem',
+      duration: 'perm',
+      reason: 'Spam',
+      deleteMessages: true,
+    });
+    expect(screen.queryByRole('dialog', { name: 'Ban zana' })).not.toBeInTheDocument();
+    expect(screen.getByText('zana is banned.')).toBeInTheDocument();
+  });
+
+  it('sends no reason when none is given, and says when the words are refused', async () => {
+    const { calls } = await openBan([['POST', /\/groups\/g1\/bans$/, () => jsonResponse(422, { code: 'GROUP_TEXT_REJECTED', message: 'no' })]]);
+    await userEvent.click(screen.getByRole('button', { name: 'Ban zana' }));
+    expect(await screen.findByText('Some of those words aren’t allowed here. Try different ones.')).toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'POST' && c.url.endsWith('/bans'))?.body).toEqual({ userId: 'u-mem', duration: '1d', reason: null, deleteMessages: false });
+    expect(screen.getByRole('dialog', { name: 'Ban zana' })).toBeInTheDocument();
+  });
+});
+
+describe('requests to come back, and who is banned', () => {
+  const request = { userId: 'u-berfin', username: 'berfin', avatarUrl: null, note: 'Bibore, ez ê baş bim', sentAt: '2026-10-28T10:00:00.000Z', declines: 2 };
+  const ban = {
+    userId: 'u-delal',
+    username: 'delal',
+    avatarUrl: null,
+    until: '2026-11-04T10:00:00.000Z',
+    reason: 'Reklam',
+    bannedBy: 'owen',
+    at: '2026-10-28T10:00:00.000Z',
+    requestsClosed: true,
+  };
+  const lists = (requests: unknown[], bans: unknown[]): Parameters<typeof stubApi>[0] => [
+    ['GET', /\/groups\/g1\/requests$/, () => jsonResponse(200, { requests })],
+    ['GET', /\/groups\/g1\/bans$/, () => jsonResponse(200, { bans })],
+  ];
+
+  it('shows the owner each request with its note, when, and how often it was turned down, and each ban', async () => {
+    stubApi(lists([request], [ban]));
+    renderApp(<GroupInfo detail={detailFor('owner')} onChanged={async () => undefined} onLeft={() => undefined} />);
+
+    const asks = within(await screen.findByRole('region', { name: /Requests to come back/ }));
+    expect(await asks.findByText('Bibore, ez ê baş bim')).toBeInTheDocument();
+    expect(asks.getByText(/^Asked on .+ · turned down 2 times before$/)).toBeInTheDocument();
+    expect(asks.getByText('1')).toBeInTheDocument();
+    const bans = within(screen.getByRole('region', { name: 'Banned' }));
+    expect(bans.getByText(/^Until .+ · banned by owen$/)).toBeInTheDocument();
+    expect(bans.getByText('Reklam')).toBeInTheDocument();
+    expect(bans.getByText('Requests from them are stopped.')).toBeInTheDocument();
+  });
+
+  it('says plainly when both lists are empty', async () => {
+    stubApi(lists([], []));
+    renderApp(<GroupInfo detail={detailFor('moderator')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    expect(await screen.findByText('No requests to come back.')).toBeInTheDocument();
+    expect(await screen.findByText('Nobody is banned from this group.')).toBeInTheDocument();
+  });
+
+  it('shows neither list to a member, nor asks for them', async () => {
+    const calls = stubApi(lists([request], [ban]));
+    renderApp(<GroupInfo detail={detailFor('member')} onChanged={async () => undefined} onLeft={() => undefined} />);
+    await screen.findByRole('heading', { name: 'Test Group' });
+    expect(screen.queryByText(/Requests to come back/)).not.toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: 'Banned' })).not.toBeInTheDocument();
+    expect(calls.some((c) => /\/(requests|bans)$/.test(c.url))).toBe(false);
+  });
+
+  it('approves a request, and says whether they are back in or only free to join again', async () => {
+    let rejoined = true;
+    const calls = stubApi([...lists([request], []), ['POST', /\/groups\/g1\/requests\/u-berfin\/approve$/, () => jsonResponse(200, { rejoined })]]);
+    const changed = vi.fn(async () => undefined);
+    renderApp(<GroupInfo detail={detailFor('owner')} onChanged={changed} onLeft={() => undefined} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Approve berfin' }));
+    expect(await screen.findByText('berfin is back in the group.')).toBeInTheDocument();
+    expect(calls.some((c) => c.method === 'POST' && c.url.endsWith('/requests/u-berfin/approve'))).toBe(true);
+    expect(changed).toHaveBeenCalled();
+
+    rejoined = false;
+    await userEvent.click(screen.getByRole('button', { name: 'Approve berfin' }));
+    expect(await screen.findByText(/^berfin is no longer banned but couldn’t be added back just now\./)).toBeInTheDocument();
+  });
+
+  it('declines a request after saying how long they wait, and can stop their requests', async () => {
+    const calls = stubApi([...lists([request], []), ['POST', /\/groups\/g1\/requests\/u-berfin\/decline$/, () => jsonResponse(200, { ok: true })]]);
+    renderApp(<GroupInfo detail={detailFor('owner')} onChanged={async () => undefined} onLeft={() => undefined} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Decline berfin' }));
+    const ask = within(screen.getByRole('alertdialog', { name: 'Decline berfin’s request?' }));
+    // turned down twice before: the third wait is the longest
+    expect(ask.getByText('berfin can ask again in 30 days.')).toBeInTheDocument();
+    await userEvent.click(ask.getByRole('switch', { name: /Stop requests from berfin/ }));
+    await userEvent.click(ask.getByRole('button', { name: 'Decline' }));
+
+    expect(await screen.findByText('You declined berfin’s request.')).toBeInTheDocument();
+    expect(calls.find((c) => c.url.endsWith('/decline'))?.body).toEqual({ stopRequests: true });
+  });
+
+  it('unbans only after saying it does not add them back', async () => {
+    const calls = stubApi([...lists([], [ban]), ['DELETE', /\/groups\/g1\/bans\/u-delal$/, () => jsonResponse(200, { ok: true })]]);
+    renderApp(<GroupInfo detail={detailFor('owner')} onChanged={async () => undefined} onLeft={() => undefined} />);
+
+    await userEvent.click(await screen.findByRole('button', { name: 'Unban delal' }));
+    const ask = within(screen.getByRole('alertdialog', { name: 'Unban delal?' }));
+    expect(ask.getByText('delal won’t be added back, but will be able to join again or be added.')).toBeInTheDocument();
+    await userEvent.click(ask.getByRole('button', { name: 'Cancel' }));
+    expect(calls.some((c) => c.method === 'DELETE')).toBe(false);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Unban delal' }));
+    await userEvent.click(within(screen.getByRole('alertdialog')).getByRole('button', { name: 'Unban' }));
+    expect(await screen.findByText('delal is unbanned.')).toBeInTheDocument();
+    expect(calls.find((c) => c.method === 'DELETE')?.url).toMatch(/\/groups\/g1\/bans\/u-delal$/);
+  });
+});
+
+describe('a group you are banned from, in discovery', () => {
+  it('says Banned instead of Join, and opens the group where the ban is explained', async () => {
+    stubApi([['GET', /\/groups$/, () => jsonResponse(200, { groups: [{ ...discovered[1], banned: true }] })]]);
+    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={() => undefined} onNew={() => undefined} />);
+    expect(await screen.findByRole('link', { name: 'Banned: Klûba helbestê' })).toHaveAttribute('href', '/app/messages?group=g2');
+    expect(screen.queryByRole('button', { name: /Join/ })).not.toBeInTheDocument();
+  });
+
+  it('turns Join into Banned when joining is refused for a ban', async () => {
+    stubApi([
+      ['GET', /\/groups$/, () => jsonResponse(200, { groups: discovered })],
+      ['POST', /\/groups\/g2\/join$/, () => jsonResponse(403, { code: 'GROUP_BANNED', message: 'banned', details: { until: null } })],
+    ]);
+    const joined = vi.fn();
+    renderApp(<DiscoverGroups mineIds={new Set()} onOpen={() => undefined} onJoined={joined} onNew={() => undefined} />);
+    await userEvent.click(await screen.findByRole('button', { name: 'Join: Klûba helbestê' }));
+    expect(await screen.findByRole('link', { name: 'Banned: Klûba helbestê' })).toBeInTheDocument();
+    expect(joined).not.toHaveBeenCalled();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });
