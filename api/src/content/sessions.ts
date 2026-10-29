@@ -1,7 +1,8 @@
 import type pg from 'pg';
 import type { RecordingVoice } from '@kurda/shared';
 import { AppError } from '../plugins/errors.js';
-import { SKIPPABLE_TYPES, checkAnswer, revealExercise, sanitizeExercise, type Verdict } from './exercises.js';
+import { SKIPPABLE_TYPES, checkAnswer, exerciseSeed, revealExercise, type Verdict } from './exercises.js';
+import { deliverExercises, type DeliveredFields } from './deliver.js';
 import type { ExerciseType } from './repository.js';
 import { XpService } from '../xp/service.js';
 import { lessonXp } from '../xp/rules.js';
@@ -10,7 +11,7 @@ import { answeredTodaySql, countsAsLearning, localDate, safeTimeZone } from '../
 import { DailyGoalService } from '../goals/service.js';
 import { ReviewService, feedsReview } from '../review/service.js';
 import { qualityFromVerdict } from '../review/sm2.js';
-import { lessonAudioFor, modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
+import { modelAudioAfterAnswer } from '../lessonaudio/delivery.js';
 import type { MilestoneRecorder } from '../achievements/service.js';
 
 export const SESSION_TTL_HOURS = 24;
@@ -64,23 +65,8 @@ export interface SessionView {
   lessonId: string;
   expiresAt: string;
   completed: boolean;
-  exercises: Array<{
-    id: string;
-    position: number;
-    type: ExerciseType;
-    /** answer fields stripped (KUR-028) */
-    prompt?: string;
-    options?: string[];
-    lefts?: string[];
-    rights?: string[];
-    /** native recordings from the audio studio, where there are any, and who says each (DeliveredAudio) */
-    audioUrl?: string;
-    audioVoice?: RecordingVoice;
-    modelAudioUrl?: string;
-    modelAudioVoice?: RecordingVoice;
-    audio?: Record<string, string>;
-    audioVoices?: Record<string, RecordingVoice>;
-  }>;
+  /** answer fields stripped (KUR-028), with what the client shows beside them (`deliverExercises`) */
+  exercises: Array<{ id: string; position: number; type: ExerciseType } & DeliveredFields>;
   /** exercises already answered in this session (resume) */
   answered: Record<string, { verdict: Verdict; accepted: boolean }>;
   /** markdown grammar note for this lesson's skill, if any (KUR-038) */
@@ -160,11 +146,6 @@ export interface GemGranter {
 /** The Gem rule a perfect first completion pays out under (KUR-068). */
 export const PERFECT_LESSON_GEM_RULE = 'perfect_lesson';
 
-/** The seed a lesson exercise is shuffled and graded with. */
-function exerciseSeed(sessionId: string, exerciseId: string): string {
-  return `${sessionId}:${exerciseId}`;
-}
-
 /**
  * The idempotency reference perfect-lesson Gems are paid under: the learner and
  * the lesson's place, so they are paid at most once per learner per lesson,
@@ -241,20 +222,18 @@ export class LessonSessionService {
     const exercises = rows.rows;
     const answered: SessionView['answered'] = {};
     for (const a of exercises) if (a.verdict !== null) answered[a.id] = { verdict: a.verdict, accepted: a.accepted! };
-    const audio = await lessonAudioFor(this.pool, exercises);
+    const delivered = await deliverExercises(
+      this.pool,
+      session.id,
+      exercises.map((ex) => ({ ...ex, dialect: notes.dialect })),
+    );
 
     return {
       sessionId: session.id,
       lessonId: session.lesson_id,
       expiresAt: new Date(session.expires_at).toISOString(),
       completed: session.completed_at !== null,
-      exercises: exercises.map((ex, i) => ({
-        id: ex.id,
-        position: ex.position,
-        type: ex.type,
-        ...sanitizeExercise(ex.type, ex.payload, exerciseSeed(session.id, ex.id)),
-        ...audio[i],
-      })),
+      exercises: exercises.map((ex, i) => ({ id: ex.id, position: ex.position, type: ex.type, ...delivered[i] })),
       answered,
       grammarMd: notes.grammar_md,
       dialect: notes.dialect,
