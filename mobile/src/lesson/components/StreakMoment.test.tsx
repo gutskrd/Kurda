@@ -7,7 +7,11 @@ vi.mock('react-native-safe-area-context', () => import('../../reports/testing/st
 vi.mock('../../auth/AuthContext', () => import('../../reports/testing/auth'));
 // a badge earned meanwhile waits on the moment (badges/BadgeCelebrationHost.tsx)
 vi.mock('@react-navigation/native', () => import('../../play/testing/navigation'));
-import { cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+// the fire as its props: how big it burns and what it grows from, whoever draws it
+vi.mock('../../theme/Fire', () => import('../../theme/testing/fireProbe'));
+import { act, cleanup, fireEvent, screen, waitFor, within } from '@testing-library/react';
+import { AccessibilityInfo } from 'react-native';
+import { CELEBRATE_MS, FIRE_GREW_READ_MS, FIRE_GROW } from '@kurda/shared';
 import { renderWithProviders } from '../../reports/testing/harness';
 import { patchReactNativeWeb } from '../../reports/testing/rnWebPatches';
 import { onHaptic, resetHaptics } from '../../feedback/haptics';
@@ -22,6 +26,7 @@ beforeEach(() => {
 });
 afterEach(() => {
   cleanup();
+  vi.useRealTimers();
   localStorage.removeItem('kurda_locale_v1');
 });
 
@@ -127,7 +132,7 @@ describe('the kept streak', () => {
     expect(await screen.findByText('Welcome back! A fresh start is still a great start.')).toBeTruthy();
     // leaning out of his window under his words, the fire burning in front of it: drawn after it, so over its corner
     const scene = within(screen.getByTestId('lesson-streak-day'));
-    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire-lit')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(scene.getByTestId('hevalo-window').compareDocumentPosition(scene.getByTestId('fire')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     cleanup();
 
     show({ current: 9, longest: 9 });
@@ -143,3 +148,113 @@ describe('the kept streak', () => {
     expect(onContinue).toHaveBeenCalledTimes(1);
   });
 });
+
+/** What a screen reader is told, in order. */
+function listen(): string[] {
+  const said: string[] = [];
+  (AccessibilityInfo as unknown as { announceForAccessibility: (words: string) => void }).announceForAccessibility = (words) => said.push(words);
+  return said;
+}
+
+describe('the day the fire grew', () => {
+  const lands = FIRE_GROW.delayMs + FIRE_GROW.ms;
+
+  it('grows the fire from yesterday, says what it grew into as it lands, felt then and only then, and stays to be read', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const said = listen();
+    const felt: string[] = [];
+    const heard: string[] = [];
+    const stopFeel = onHaptic((e) => felt.push(e));
+    const stopHear = onSound((f) => heard.push(String(f)));
+    try {
+      show({ current: 7, longest: 9 });
+      const flame = await screen.findByTestId('lesson-streak-flame');
+      const fire = within(flame).getByTestId('fire');
+      expect(fire.dataset.stage).toBe('campfire');
+      expect(fire.dataset.from).toBe('kindling');
+      expect(said).toEqual(['7 day streak']);
+      // its place is kept from the start, the words not said before the growth lands
+      expect(screen.getByTestId('lesson-streak-grew').textContent).toBe('A week in, your fire is a campfire now.');
+      await act(() => vi.advanceTimersByTimeAsync(lands - 50));
+      expect(felt).toEqual([]);
+      expect(heard).toEqual([]);
+      await act(() => vi.advanceTimersByTimeAsync(50));
+      expect(said).toEqual(['7 day streak', 'A week in, your fire is a campfire now.']);
+      expect(felt).toEqual(['celebrate']);
+      expect(heard).toHaveLength(1);
+      // still there when another day would have moved on, until the line has been read
+      await act(() => vi.advanceTimersByTimeAsync(FIRE_GREW_READ_MS - 100));
+      expect(screen.getByTestId('lesson-streak-flame')).toBeTruthy();
+      await act(() => vi.advanceTimersByTimeAsync(200));
+      expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+      expect(screen.getByRole('heading', { name: '7 day streak' })).toBeTruthy();
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      stopFeel();
+      stopHear();
+    }
+  });
+
+  it('says you lit your fire on the first day, grown from cold logs', async () => {
+    listen();
+    show({ current: 1, longest: 1, daysLearned: 1 });
+    const flame = await screen.findByTestId('lesson-streak-flame');
+    expect(within(flame).getByTestId('fire').dataset.from).toBe('cold');
+    expect(screen.getByTestId('lesson-streak-grew').textContent).toBe('You lit your fire!');
+  });
+
+  it('is still felt once when tapped away before the growth lands', async () => {
+    const felt: string[] = [];
+    const stop = onHaptic((e) => felt.push(e));
+    try {
+      listen();
+      show({ current: 30, longest: 30 });
+      fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+      expect(await screen.findByRole('heading', { name: '30 day streak' })).toBeTruthy();
+      expect(felt).toEqual(['celebrate']);
+    } finally {
+      stop();
+    }
+  });
+
+  it('burns at the fire of today on another day, growing from nothing, and moves on in a second and a half', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    listen();
+    show({ current: 12 });
+    const flame = await screen.findByTestId('lesson-streak-flame');
+    expect(within(flame).getByTestId('fire').dataset.stage).toBe('campfire');
+    expect(within(flame).getByTestId('fire').dataset.from).toBeUndefined();
+    expect(screen.queryByTestId('lesson-streak-grew')).toBeNull();
+    await act(() => vi.advanceTimersByTimeAsync(CELEBRATE_MS + 50));
+    expect(screen.queryByTestId('lesson-streak-flame')).toBeNull();
+  });
+});
+
+describe('the fire beside the window', () => {
+  const stage = async (current: number): Promise<string | null> => {
+    show({ current, longest: Math.max(current, 9) });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    await screen.findByTestId('lesson-streak-day');
+    const line = screen.queryByTestId('streak-stage')?.textContent ?? null;
+    const fire = within(screen.getByTestId('lesson-streak-day')).getByTestId('fire').dataset.stage;
+    cleanup();
+    return `${fire}: ${line}`;
+  };
+
+  it('burns at the fire of today, its stage named under the streak with the next as a near goal', async () => {
+    expect(await stage(1)).toBe('spark: Spark · a little flame at 3 days');
+    expect(await stage(5)).toBe('kindling: Little flame · a campfire at 7 days');
+    expect(await stage(12)).toBe('campfire: Campfire · a big fire at 14 days');
+    expect(await stage(45)).toBe('bonfire: Bonfire · a blaze at 100 days');
+    // at the biggest there is, simply its name
+    expect(await stage(400)).toBe('newroz: Newroz fire');
+  });
+
+  it('names the stage in Sorani too', async () => {
+    localStorage.setItem('kurda_locale_v1', 'ckb');
+    show({ current: 12 });
+    fireEvent.click(await screen.findByTestId('lesson-streak-flame'));
+    expect((await screen.findByTestId('streak-stage')).textContent).toMatch(/^ئاگری کەمپ · ئاگرێکی گەورە لە ڕۆژی .+دا$/);
+  });
+});
+

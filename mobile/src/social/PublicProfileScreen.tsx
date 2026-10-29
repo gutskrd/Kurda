@@ -19,7 +19,7 @@ import { knownTier, leagueName } from '../leagues/format';
 import { ProgressShowcase } from '../profile/ProgressShowcase';
 import { SeasonFramed, frameTierOf } from '../ranks/art';
 import { TIER_NAME_KEY } from '../ranks/format';
-import { SEASON_FRAME_INNER, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
+import { SEASON_FRAME_INNER, fireLevel, type FireLevel, type ProfileLeague, type ProfileRank, type ShowcaseBadge } from '@kurda/shared';
 import { FavoriteRow } from '../profile/cosmetic-parts';
 import { InitialsAvatar } from '../profile/InitialsAvatar';
 import { ProfileActivity, ProfileActivitySkeleton } from '../profile/ProfileActivity';
@@ -200,7 +200,7 @@ export function PublicProfileScreen({ userId, onExit }: { userId: string; onExit
           ) : (
             <>
               <View style={styles.stats}>
-                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} fire={(profile.streak ?? 0) > 0 ? 'lit' : 'unlit'} />
+                <Stat label={t('profile.streak')} value={`${profile.streak ?? 0}`} fire={fireLevel(profile.streak ?? 0)} />
                 <Stat label="XP" value={`${profile.xp ?? 0}`} />
                 {/* a league only while they take part, translated; nothing for somebody never in one */}
                 {knownTier(profile.league?.tier ?? profile.tier) ? (
@@ -329,13 +329,13 @@ const LARGE_BUTTON = 50;
 function Header({ onExit }: { onExit: () => void }) {
   return <ScreenHeader onBack={onExit} />;
 }
-/** A number and what it counts; `fire` puts the streak's fire before it, burning or not. */
-function Stat({ label, value, fire }: { label: string; value: string; fire?: 'lit' | 'unlit' }) {
+/** A number and what it counts; `fire` puts the streak's fire before it, as big as their streak has grown it. */
+function Stat({ label, value, fire }: { label: string; value: string; fire?: FireLevel }) {
   const { colors } = useTheme();
   return (
     <View style={styles.stat}>
       <View style={styles.statValueRow}>
-        {fire ? <Fire size={18} lit={fire === 'lit'} /> : null}
+        {fire ? <Fire size={18} level={fire} /> : null}
         <Text style={[styles.statValue, { color: colors.textPrimary }]}>{value}</Text>
       </View>
       <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{label}</Text>

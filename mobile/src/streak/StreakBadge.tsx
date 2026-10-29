@@ -1,4 +1,5 @@
 import { StyleSheet, Text, View } from 'react-native';
+import { fireLevel } from '@kurda/shared';
 import { radii, spacing, typography } from '../theme/tokens';
 import { useTheme } from '../theme/ThemeProvider';
 import { Fire } from '../theme/Fire';
@@ -9,10 +10,10 @@ import { useI18n } from '../i18n/I18nContext';
 import { useDirection } from '../reports/direction';
 
 /**
- * The streak's fire + day count (KUR-031). Burning while the run is alive;
- * grey and still when the streak has lapsed to 0. Shows a snowflake when a
- * freeze is banked. While an event theme is active (KUR-092) the lit fire
- * burns in the event's accent.
+ * The streak's fire + day count (KUR-031). Burning while the run is alive, as
+ * big as the streak has grown it; cold logs when the streak has lapsed to 0.
+ * Shows a snowflake when a freeze is banked. While an event theme is active
+ * (KUR-092) the lit fire burns in the event's accent.
  *
  * A quiet pill with the fire the streak is drawn with everywhere else
  * (Learn's "Today"). It was a dark pill with a red flame and a snowflake in
@@ -34,7 +35,7 @@ export function StreakBadge({ streak }: { streak: Streak }) {
       accessible
       accessibilityLabel={label}
     >
-      <Fire size={20} lit={lit} accent={pack?.accent} />
+      <Fire size={20} level={fireLevel(streak.current)} accent={pack?.accent} />
       <Text style={[styles.count, { color: lit ? colors.textPrimary : colors.textSecondary }]}>{days}</Text>
       {streak.freezes > 0 ? <Icon name="ice" size={14} color={colors.textSecondary} /> : null}
     </View>

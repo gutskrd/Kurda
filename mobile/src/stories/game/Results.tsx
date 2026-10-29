@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import type { StoryDetail, StoryGameStanding, StoryGameView } from '@kurda/shared';
+import { FIRE_STAGE_DAYS, fireLevel, type StoryDetail, type StoryGameStanding, type StoryGameView } from '@kurda/shared';
 import { useAuth } from '../../auth/AuthContext';
 import { Fire } from '../../theme/Fire';
 import { ClayButton } from '../../theme/glass';
@@ -21,6 +21,9 @@ import { showEnglish } from './Question';
 import { bySeat, duoTotals, reviewOrder, standingsLayout } from './results';
 import { PlayerReportButton } from '../../reports/PlayerReportButton';
 import { RankResultPanel } from '../../ranks/RankResultPanel';
+
+/** The mark of a game that counted as a day of learning: a campfire, the fire a kept week burns at, not anybody's count. */
+const COUNTED_FIRE = fireLevel(FIRE_STAGE_DAYS.campfire);
 
 /** A standing's name as this viewer may see it. */
 function nameOf(s: StoryGameStanding, t: (k: 'stories.player' | 'games.you', v?: Record<string, string | number>) => string): string {
@@ -114,7 +117,7 @@ export function Results({
           </View>
           {me.learningCounted ? (
             <View style={styles.counted}>
-              <Fire size={18} />
+              <Fire size={18} level={COUNTED_FIRE} />
               <Text style={[styles.countedText, { color: colors.success }]}>{t('stories.results.counted')}</Text>
             </View>
           ) : (

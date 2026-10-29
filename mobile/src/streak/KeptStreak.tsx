@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AccessibilityInfo, Pressable, StyleSheet, Text, View } from 'react-native';
-import { PATH_RETURN } from '@kurda/shared';
+import { PATH_RETURN, fireLevel } from '@kurda/shared';
 import { MIN_TOUCH_TARGET } from '../a11y/a11y';
 import { useAuth } from '../auth/AuthContext';
 import { useCelebrationHold } from '../badges/BadgeCelebrationHost';
@@ -116,7 +116,7 @@ function Kept({ streak, onStart, onClose }: { streak: Streak; onStart: () => voi
   return (
     <View style={styles.body}>
       <View style={[styles.art, { backgroundColor: `${ice.fill}29` }]} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Fire size={76} />
+        <Fire size={76} level={fireLevel(streak.current)} />
         <View style={[styles.flake, { backgroundColor: ice.fill, borderColor: colors.background }]}>
           <Icon name="ice" size={20} color={ice.ink} />
         </View>
