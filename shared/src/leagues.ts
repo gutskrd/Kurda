@@ -211,7 +211,7 @@ export interface GroupMember {
   weeklyXp: number;
 }
 
-export interface GroupStanding extends GroupMember {
+export interface LeagueStanding extends GroupMember {
   /** place in the whole group's table, 1-based (ties broken by id, so stable) */
   rank: number;
   /** place among the members of their own tier */
@@ -236,7 +236,7 @@ export interface GroupStanding extends GroupMember {
  * member who missed the goal can have met it, so a promotion place is never
  * passed down to someone further back.
  */
-export function resolveGroup(members: readonly GroupMember[], goalXp: number): GroupStanding[] {
+export function resolveGroup(members: readonly GroupMember[], goalXp: number): LeagueStanding[] {
   const ordered = [...members].sort((a, b) => b.weeklyXp - a.weeklyXp || (a.userId < b.userId ? -1 : a.userId > b.userId ? 1 : 0));
   const groupSize = ordered.length;
   const byTier = new Map<LeagueTier, GroupMember[]>();
