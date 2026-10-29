@@ -106,6 +106,18 @@ async function eventually(check: () => void, withinMs = 2_000): Promise<void> {
 }
 
 describe('MessagesProvider', () => {
+  it('counts the unread messages again when a group chat is cleared for everyone', async () => {
+    const rt = setup('/app/games');
+    await ready();
+    const unreadReads = () => (globalThis.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(([u]) => String(u).includes('/me/groups/unread')).length;
+    await waitFor(() => expect(unreadReads()).toBeGreaterThan(0));
+    const before = unreadReads();
+    await waitFor(() => {
+      rt.emit({ room: 'group:g1', event: { type: 'group_chat_cleared', groupId: 'g1', at: '2026-10-29T10:00:00.000Z', by: 'owen' } });
+      expect(unreadReads()).toBeGreaterThan(before);
+    });
+  });
+
   it('shows a banner for a direct message while you are on another page', async () => {
     const rt = setup('/app/games');
     await ready();
