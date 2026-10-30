@@ -801,10 +801,10 @@ describe('the currencies', () => {
     expect(gem.filter((id) => coin.has(id))).toEqual([]);
   });
 
-  it('carves the deer into the coin, antlers and all', () => {
+  it('raises the deer on the coin, antlers and all', () => {
     const svg = coinSvg({ size: 64 });
-    // six antler strokes, each drawn as the lip, the shadow and the cut
-    expect((svg.match(/stroke-linecap="round" stroke-linejoin="round"/g) ?? []).length).toBe(18);
+    // six antler strokes, each drawn as the shadow and the raised gold
+    expect((svg.match(/stroke-linecap="round" stroke-linejoin="round"/g) ?? []).length).toBe(12);
     expect(svg).toContain('<title');
   });
 

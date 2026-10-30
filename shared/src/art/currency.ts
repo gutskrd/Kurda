@@ -1,22 +1,23 @@
 /**
  * Hevalo's two currencies, drawn in colour: Zêr, a chunky gold coin with a
- * deer's head carved into its face, and the gem, a faceted green stone. They
+ * deer's head raised on its face, and the gem, a faceted green stone. They
  * replace the line glyphs both apps used to tint, so wherever money is shown
  * — the purse, the shop's prices, a gift, the daily reward, a chest — it is
  * the same two objects.
  *
- * The coin stands a little forward: its face over a darker edge that shows
- * its thickness below, a raised rim round a recessed field, and in the field
- * the deer, cut in (a light lip along its lower edges, a shadow along its
- * upper ones), with its eyes left standing in gold. The gem is an elongated
+ * The coin stands a little forward in flat cartoon colours: its face over a
+ * darker edge that shows its thickness below, a thick yellow ring with two
+ * bands of shine, and in the orange field at its middle the deer, raised in
+ * gold with its shadow falling beside it. The gem is an elongated
  * hexagon cut with six bevels round a flat table, lit from the upper left so
  * each bevel is its own shade, with two bands of light across the table.
  *
- * Both are drawn bolder as they get smaller (`detail`): the thin facet lines,
- * the coin's inner bevel and the sparkle go below 36 pixels, so a 15-pixel
- * coin in the purse is still a coin and not a smudge.
+ * Both are drawn bolder as they get smaller (`detail`): their outlines
+ * thicken, and the thin facet lines, the coin's shadowed field edge and lit
+ * lip and the gem's sparkle go, so a 15-pixel coin in the purse is still a
+ * coin and not a smudge.
  */
-import { CANVAS, Drawing, checkSize, linearAt, n, prefixFor, radialAt, type Detail, type Pt } from './svg.js';
+import { CANVAS, Drawing, checkSize, linearAt, n, prefixFor, type Detail, type Pt } from './svg.js';
 
 export interface CurrencyOptions {
   /** how big it is drawn, in pixels (it is square) */
@@ -54,47 +55,37 @@ function sparkle(x: number, y: number, r: number): string {
 // ─────────────────────────────────────────────────────────── the coin
 
 const GOLD = {
-  outline: '#7a4706',
-  edgeTop: '#e2a11d',
-  edgeLow: '#a2650a',
-  faceLight: '#ffeaa0',
-  face: '#ffd04a',
-  faceDeep: '#f0aa18',
-  fieldTop: '#e39d12',
-  fieldLow: '#f7c23a',
-  rimShadow: '#c08008',
-  rimLight: '#fff2bd',
-  carve: '#b8740b',
-  carveShadow: '#8f5606',
-  carveLight: '#ffe7a0',
+  outline: '#7d4f12',
+  edge: '#e0960f',
+  face: '#f6c51c',
+  band: '#ffe236',
+  rimLight: '#fff09a',
+  field: '#ee8a14',
+  fieldShadow: '#d2700c',
+  raisedShadow: '#c4650a',
 };
 
-/** The coin's face: centre, radius, and how far below it the edge shows. */
-const COIN = { cx: 60, cy: 55, r: 49, drop: 8, field: 37 };
+/** The coin's face: centre, radius, how far below it the edge shows, and the orange field inside the ring. */
+const COIN = { cx: 60, cy: 56, r: 50, drop: 6, field: 31 };
 
-/** The deer, front on, as the carving: a round head, ears out to the sides, two branching antlers. */
+/** The deer, front on and simple: a round head narrowing to its muzzle, ears out to the sides, two stubby branching antlers. */
 const DEER = {
-  head: 'M60 46C70 46 74.5 52.5 73.5 59.5C72.5 67 66.5 76.5 60 78C53.5 76.5 47.5 67 46.5 59.5C45.5 52.5 50 46 60 46Z',
+  head: 'M60 44.6C67.5 44.6 72 48.5 72 54C72 59 69.5 61.5 68 64.5C66.5 68 66.5 75.8 60 75.8C53.5 75.8 53.5 68 52 64.5C50.5 61.5 48 59 48 54C48 48.5 52.5 44.6 60 44.6Z',
   ears: [
-    'M48.6 53.5C43 49.5 36.5 49.5 33 52.5C37 57 43.5 58.5 48.9 57Z',
-    'M71.4 53.5C77 49.5 83.5 49.5 87 52.5C83 57 76.5 58.5 71.1 57Z',
+    'M49.5 46.4C45.8 44 41.4 44.2 39.4 47.4C41.4 51.2 46.4 52.6 50.2 52.4Z',
+    'M70.5 46.4C74.2 44 78.6 44.2 80.6 47.4C78.6 51.2 73.6 52.6 69.8 52.4Z',
   ],
   antlers: [
-    'M55.2 47C53.6 40 50 35 44 31.6',
-    'M51.9 38.6C52.6 34.6 52.1 31.6 50.6 28.6',
-    'M47.4 33.8C45.4 30.2 44.7 27.4 45.4 24.2',
-    'M64.8 47C66.4 40 70 35 76 31.6',
-    'M68.1 38.6C67.4 34.6 67.9 31.6 69.4 28.6',
-    'M72.6 33.8C74.6 30.2 75.3 27.4 74.6 24.2',
+    'M56.4 45.6C54 42.4 49.6 41.4 46.6 40.4C44 39.5 42.6 37 42.8 32.8',
+    'M50.6 41.8C50.2 39.6 50.8 37.4 52 35.8',
+    'M46.8 40.4C46.3 38 46.5 35.4 47.7 33.4',
+    'M63.6 45.6C66 42.4 70.4 41.4 73.4 40.4C76 39.5 77.4 37 77.2 32.8',
+    'M69.4 41.8C69.8 39.6 69.2 37.4 68 35.8',
+    'M73.2 40.4C73.7 38 73.5 35.4 72.3 33.4',
   ],
-  eyes: [
-    [54.6, 59.5],
-    [65.4, 59.5],
-  ] as Pt[],
-  nose: [60, 71.6] as Pt,
 };
 
-/** The deer in one colour, moved by (dx, dy): its shapes filled, its antlers stroked. */
+/** The deer in one colour, moved by (dx, dy): its shapes filled, its antlers stroked round. */
 function deer(colour: string, dx: number, dy: number, antlerWidth: number): string {
   const move = dx || dy ? ` transform="translate(${n(dx)} ${n(dy)})"` : '';
   const shapes = [DEER.head, ...DEER.ears].map((d) => `<path d="${d}" fill="${colour}"/>`).join('');
@@ -102,51 +93,51 @@ function deer(colour: string, dx: number, dy: number, antlerWidth: number): stri
   return `<g${move}>${antlers}${shapes}</g>`;
 }
 
-/** Zêr: a gold coin, standing a little forward, with Hevalo's deer carved into its face. */
+/** A band of a ring between radii r0 and r1, from `a0` to `a1` degrees clockwise. */
+function ringBand(cx: number, cy: number, r0: number, r1: number, a0: number, a1: number): string {
+  const [ax, ay] = on(cx, cy, r1, a0);
+  const [bx, by] = on(cx, cy, r1, a1);
+  const [px, py] = on(cx, cy, r0, a1);
+  const [qx, qy] = on(cx, cy, r0, a0);
+  const large = a1 - a0 > 180 ? 1 : 0;
+  return `M${n(ax)} ${n(ay)}A${n(r1)} ${n(r1)} 0 ${large} 1 ${n(bx)} ${n(by)}L${n(px)} ${n(py)}A${n(r0)} ${n(r0)} 0 ${large} 0 ${n(qx)} ${n(qy)}Z`;
+}
+
+/**
+ * Zêr: a gold coin in flat cartoon colours, standing a little forward, its
+ * thick yellow ring crossed by two bands of shine, and in its orange field
+ * Hevalo's deer raised in gold, its shadow falling down and to the left.
+ */
 export function coinSvg(opts: CurrencyOptions = {}): string {
   const size = checkSize(opts.size, 24);
   const detail = detailOf(size);
   const dr = new Drawing(prefixFor(opts.idPrefix, 'coin', detail));
   const { cx, cy, r, drop, field } = COIN;
-  const line = detail === 0 ? 7 : detail === 1 ? 5.5 : 4.5;
+  const line = detail === 0 ? 6 : detail === 1 ? 4.2 : 3;
 
   // the outline round the whole coin, its face and the edge below it
   dr.add(`<circle cx="${cx}" cy="${cy + drop}" r="${n(r + line / 2)}" fill="${GOLD.outline}"/>`);
   dr.add(`<circle cx="${cx}" cy="${cy}" r="${n(r + line / 2)}" fill="${GOLD.outline}"/>`);
   // the edge: the coin's thickness, showing below the face
-  const edge = dr.id('e');
-  dr.def(linearAt(edge, [[0, GOLD.edgeTop], [1, GOLD.edgeLow]], 0, cy, 0, cy + drop + r));
-  dr.add(`<circle cx="${cx}" cy="${cy + drop}" r="${r}" fill="url(#${edge})"/>`);
-  // the face, brightest towards the upper left
-  const face = dr.id('f');
-  dr.def(radialAt(face, [[0, GOLD.faceLight], [0.55, GOLD.face], [1, GOLD.faceDeep]], cx - 16, cy - 20, r * 1.25));
-  dr.add(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="url(#${face})"/>`);
-  // the field inside the rim, sunk a little: shaded at the top, lit at the bottom
-  const fieldFill = dr.id('d');
-  dr.def(linearAt(fieldFill, [[0, GOLD.fieldTop], [1, GOLD.fieldLow]], 0, cy - field, 0, cy + field));
-  dr.add(`<circle cx="${cx}" cy="${cy}" r="${field}" fill="url(#${fieldFill})"/>`);
-  if (detail > 0) {
-    // the rim's inner bevel: in shadow along the top, catching the light along the bottom
-    dr.add(`<path d="${arc(cx, cy, field, 180, 360)}" fill="none" stroke="${GOLD.rimShadow}" stroke-width="2.6"/>`);
-    dr.add(`<path d="${arc(cx, cy, field, 0, 180)}" fill="none" stroke="${GOLD.rimLight}" stroke-width="2.2"/>`);
-  }
-
-  // the deer, cut in: a light lip below, a shadow above, then the cut itself
-  dr.add(deer(GOLD.carveLight, 0, 1.8, 4.6));
-  if (detail > 0) dr.add(deer(GOLD.carveShadow, 0, -1.2, 4.6));
-  dr.add(deer(GOLD.carve, 0, 0, 4.6));
-  // its eyes left standing in gold, and its nose cut deeper
-  for (const [x, y] of DEER.eyes) dr.add(`<circle cx="${n(x)}" cy="${n(y)}" r="2.6" fill="${GOLD.face}"/>`);
-  dr.add(`<ellipse cx="${n(DEER.nose[0])}" cy="${n(DEER.nose[1])}" rx="3.4" ry="2.5" fill="${GOLD.carveShadow}"/>`);
-
-  // the shine: a glint across the rim at the upper left, and a sparkle when there is room
-  dr.add(`<path d="${arc(cx, cy, r - 5.5, 200, 255)}" fill="none" stroke="#ffffff" stroke-opacity="0.75" stroke-width="${detail === 0 ? 5 : 4}" stroke-linecap="round"/>`);
+  dr.add(`<circle cx="${cx}" cy="${cy + drop}" r="${r}" fill="${GOLD.edge}"/>`);
+  // the face, and two bands of shine across its ring
+  dr.add(`<circle cx="${cx}" cy="${cy}" r="${r}" fill="${GOLD.face}"/>`);
+  dr.add(`<path d="${ringBand(cx, cy, field, r, 208, 252)}" fill="${GOLD.band}"/>`);
+  dr.add(`<path d="${ringBand(cx, cy, field, r, 28, 62)}" fill="${GOLD.band}"/>`);
   if (detail === 2) {
-    dr.add(`<path d="${arc(cx, cy, r - 5.5, 268, 280)}" fill="none" stroke="#ffffff" stroke-opacity="0.6" stroke-width="4" stroke-linecap="round"/>`);
-    dr.add(`<path d="${sparkle(97, 17, 9)}" fill="#ffffff"/>`);
+    // a lighter lip round the upper left of the ring
+    dr.add(`<path d="${arc(cx, cy, r - 2.6, 165, 290)}" fill="none" stroke="${GOLD.rimLight}" stroke-width="2.6" stroke-linecap="round"/>`);
   }
+  // the orange field, sunk inside the ring: its top in the ring's shadow
+  dr.add(`<circle cx="${cx}" cy="${cy}" r="${field}" fill="${GOLD.field}"/>`);
+  if (detail > 0) dr.add(`<path d="${arc(cx, cy, field - 1.4, 195, 345)}" fill="none" stroke="${GOLD.fieldShadow}" stroke-width="2.8" stroke-linecap="round"/>`);
+
+  // the deer, raised in gold, its shadow down and to the left
+  dr.add(deer(GOLD.raisedShadow, -1.6, 1.9, 4.4));
+  dr.add(deer(GOLD.face, 0, 0, 4.4));
   return dr.svg(size, opts.title ?? 'Zêr');
 }
+
 
 // ─────────────────────────────────────────────────────────── the gem
 

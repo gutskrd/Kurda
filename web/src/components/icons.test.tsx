@@ -33,7 +33,8 @@ describe('icons', () => {
       expect(svg, `${name} drew nothing`).not.toBeNull();
       expect(svg!.getAttribute('width'), `${name} ignored size`).toBe('24');
       // decorative by default: the label belongs on the control, not the glyph
-      expect(svg!.getAttribute('aria-hidden')).toBe('true');
+      // (the coin and gem are drawn inside a hidden wrapper, so look upwards too)
+      expect(svg!.closest('[aria-hidden="true"]'), `${name} is not hidden`).not.toBeNull();
       unmount();
     }
   });
