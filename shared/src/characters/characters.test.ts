@@ -569,13 +569,15 @@ describe('the window Hevalo puts his head in at', () => {
     expect(dusk.stars).toBeGreaterThanOrEqual(2);
   });
 
-  it('hangs the curtains and stands the pot on our side of him, beside his head or under his chin, never over his face', () => {
+  it('stands the pot on our side of him, no curtains, beside his head or under his chin, never over his face', () => {
     for (const dark of [false, true]) {
       const { back, front } = windowArt({ dark, idPrefix: 'side' });
-      for (const id of ['side-curtainl', 'side-curtainr', 'side-pot', 'side-ledge']) {
+      for (const id of ['side-pot', 'side-ledge']) {
         expect(inspect(front).ids).toContain(id);
         expect(inspect(back).ids).not.toContain(id);
       }
+      // the kilim curtains are gone: the window is left plain
+      expect(front).not.toContain('curtain');
       for (const shape of shapes(front)) {
         const beside = shape.x + shape.w < head.x || shape.x > head.x + head.w;
         const under = shape.y > head.y + head.h;

@@ -12,8 +12,8 @@ import type { CharacterBox } from './types.js';
  * mountain ridges and poplars; at dusk an evening sky, violet to amber at the
  * horizon, a first star or two, the mountains in silhouette. On our side, the
  * room's warm plastered wall, the deep reveal of the opening and its frame
- * painted the blue-green village windows are, two kilim curtains drawn back
- * and tied beside him, and a broad inner sill with a pot of geraniums.
+ * painted the blue-green village windows are, and a broad inner sill with a
+ * pot of geraniums.
  *
  * Drawn in his own units, so the picture and the crop line up without
  * measuring: what lies behind him (`back`: the outside, the frame, the wall),
@@ -84,11 +84,6 @@ interface Palette {
   ledgeFace: string;
   ledgeLo: string;
   shade: string;
-  curtain: string;
-  curtainLo: string;
-  kilimLight: string;
-  kilimDark: string;
-  kilimGold: string;
   pot: string;
   potLo: string;
   potRim: string;
@@ -131,11 +126,6 @@ const DAY: Palette = {
   ledgeFace: '#dcc09a',
   ledgeLo: '#c3a37c',
   shade: '#5a3417',
-  curtain: '#bd4630',
-  curtainLo: '#8f2f20',
-  kilimLight: '#f4dfb0',
-  kilimDark: '#4c1a14',
-  kilimGold: '#e6a93c',
   pot: '#cd6f43',
   potLo: '#a5502e',
   potRim: '#df8a5c',
@@ -178,11 +168,6 @@ const DUSK: Palette = {
   ledgeFace: '#8f6a4b',
   ledgeLo: '#6c4e36',
   shade: '#21130a',
-  curtain: '#a63d2b',
-  curtainLo: '#7a2a1d',
-  kilimLight: '#e8cf9c',
-  kilimDark: '#3d1410',
-  kilimGold: '#d69a33',
   pot: '#b5603a',
   potLo: '#8c4427',
   potRim: '#c87a50',
@@ -343,68 +328,6 @@ function back(c: Palette, p: string): string {
   );
 }
 
-/** The kilim curtain on the left: its leading edge, from over the arch, gathered at its tie, and falling open again to the floor. */
-const CURTAIN_EDGE: readonly Pt[] = [
-  [-26, -40],
-  [-30, 120],
-  [-42, 300],
-  [-62, 430],
-  [-44, 540],
-  [-22, 660],
-  [-14, 740],
-];
-/** Where it is tied back. */
-const TIE: Pt = [-88, 432];
-/** Its folds: from the rail, gathered at the tie, and falling open again under it. */
-const FOLDS: readonly (readonly Pt[])[] = [
-  [[-96, 140], [-100, 300], [-102, 430], [-98, 560], [-90, 720]],
-  [[-62, 60], [-64, 260], [-80, 430], [-70, 560], [-52, 720]],
-];
-
-/**
- * A kilim curtain hanging in the room, drawn back and tied beside the
- * window: on the left (`side` 1) or, its mirror image, on the right (-1).
- * Its leading edge is a woven band of diamonds, light and gold in turn.
- */
-function curtain(c: Palette, p: string, side: 1 | -1): string {
-  const x = (v: number): number => (side === 1 ? v : 2 * AXIS - v);
-  const at = ([px, py]: Pt): Pt => [x(px), py];
-  const out = x(WALL.x - 20);
-  const [lead] = at(CURTAIN_EDGE[0] as Pt);
-  const body: Knot[] = [[out, WALL.top - 20, 0], [lead, WALL.top - 20, 0], ...CURTAIN_EDGE.map((q) => at(q)), [x(-12), WALL.foot + 10, 0], [out, WALL.foot + 10, 0]];
-  const diamonds = CURTAIN_EDGE.slice(0, -1)
-    .flatMap(([x0, y0], i) => {
-      const [x1, y1] = CURTAIN_EDGE[i + 1] as Pt;
-      return [0.3, 0.8].map((t, k) => {
-        const cx = x(x0 + (x1 - x0) * t - 12);
-        const cy = y0 + (y1 - y0) * t;
-        return fill(`M${n(cx)},${n(cy - 13)}l7,13l-7,13l-7,-13z`, (i * 2 + k) % 2 === 0 ? c.kilimLight : c.kilimGold);
-      });
-    })
-    .join('');
-  const band = taper(
-    CURTAIN_EDGE.map(([bx, by]) => at([bx - 12, by])),
-    CURTAIN_EDGE.map(() => 24),
-  );
-  const folds = FOLDS.map((f) => taper(f.map((q) => at(q)), f.map((_, i) => (i === 0 || i === f.length - 1 ? 2 : 10)))).join('');
-  const [tx, ty] = at(TIE);
-  const grad = `${p}curtain${side === 1 ? 'l' : 'r'}`;
-  return part(
-    [linearAt(grad, [[0, c.curtainLo], [0.45, c.curtain], [1, c.curtain]], out, 0, x(-20), 0)],
-    [
-      fill(curve(body), `url(#${grad})`),
-      fill(folds, c.curtainLo, alpha(0.55)),
-      fill(band, c.kilimDark),
-      diamonds,
-      // the cord it is tied back with, and its tassel
-      ellipse(tx, ty, 28, 10, c.kilimGold),
-      ellipse(tx - 4 * side, ty - 3, 16, 3.5, c.kilimLight, alpha(0.6)),
-      fill(taper([[x(-62), ty + 6], [x(-60), ty + 28], [x(-58), ty + 46]], [6, 10, 15]), c.kilimGold),
-      ellipse(x(-62), ty + 7, 7, 7, c.kilimGold),
-    ],
-  );
-}
-
 /** A head of geranium flowers: small round blooms in a ball, lit from the upper left. */
 function geranium(c: Palette, x: number, y: number, r: number): string {
   const petals = [0, 1, 2, 3, 4, 5].map((i) => {
@@ -429,7 +352,7 @@ function ledgeTop(): string {
 /** The pot on the sill: where it stands, and how wide its mouth is. */
 const POT = { x: 506, foot: SILL + 24, w: 62, tall: 58 } as const;
 
-/** What is on our side of him: the curtains, the broad sill in front of him, and the pot of geraniums on it. */
+/** What is on our side of him: the broad sill in front of him, and the pot of geraniums on it. */
 function front(c: Palette, p: string): string {
   const id = (name: string): string => `${p}${name}`;
   const left = OPENING.left - FRAME - REVEAL - LEDGE.spread;
@@ -440,10 +363,8 @@ function front(c: Palette, p: string): string {
       linearAt(id('ledge'), [[0, c.ledgeHi], [1, c.ledge]], 0, SILL, 0, SILL + LEDGE.deep),
       linearAt(id('ledgeface'), [[0, c.ledgeFace], [1, c.ledgeLo]], 0, SILL + LEDGE.deep, 0, SILL + LEDGE.deep + LEDGE.face),
       linearAt(id('pot'), [[0, c.potRim], [0.35, c.pot], [1, c.potLo]], POT.x - POT.w / 2, 0, POT.x + POT.w / 2, 0),
-      clipDef(id('room'), wallPath()),
     ],
     [
-      clipped(id('room'), curtain(c, p, 1) + curtain(c, p, -1)),
       // the sill: its top in the light, its front edge catching it, its front face in shade
       fill(ledgeTop(), `url(#${id('ledge')})`),
       fill(roundRect(left, SILL + LEDGE.deep - 4, right - left, LEDGE.face + 4, 8), `url(#${id('ledgeface')})`),
@@ -474,7 +395,7 @@ function shadow(c: Palette, p: string): string {
 export interface WindowArt {
   /** behind him: the outside, the frame and the room's wall */
   back: string;
-  /** on our side of him: the curtains, the sill and the pot */
+  /** on our side of him: the sill and the pot */
   front: string;
   /** the shadow he throws on the sill, drawn over it once he is there */
   shadow: string;
