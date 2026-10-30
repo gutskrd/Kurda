@@ -15,8 +15,8 @@
  * light round the outside. It moves simply too: the body breathes, swelling
  * and slimming; gentle waves run up its outline; its tip sways side to side;
  * once a loop the tip stretches and a small drop pinches off it and rises,
- * shrinking; and a round spot drifts up through the core. From the big fire
- * up, two smaller flames lean in at its sides. Every movement turns a whole
+ * shrinking; and a round spot drifts up through the core. It is one flame at
+ * every stage, only bigger as the fire grows. Every movement turns a whole
  * number of times in the loop, so the last frame flows into the first with
  * no seam. The glow round the flame, the sparks and the logs are drawn by
  * the apps.
@@ -101,15 +101,13 @@ function smoothUnion(a, b, k) {
 }
 
 /**
- * One flame: its foot `x` across from the root, `foot` below it and `h` tall,
- * `w` either side at its widest, its tip leaning `lean` across — all in shares
- * of the stage's flame height. `side`, it is one of the smaller flames at a
- * big fire's sides: no core, no drop. Its own phases keep it from moving in
- * step with any other.
+ * The flame: its foot `foot` below the root and `h` tall, `w` either side at
+ * its widest — all in shares of the stage's flame height. Its phases come
+ * from `rand`, so each stage moves in its own way.
  */
-function flame(rand, { x = 0, foot = 0.05, h, w, lean = 0, side = false, sway = 1, blue = false }) {
+function flame(rand, { foot = 0.05, h, w, sway = 1, blue = false }) {
   const p = Array.from({ length: 10 }, () => rand() * TAU);
-  return { x, foot, h, w, lean, side, sway, blue, p, drop: frac(p[8] / TAU) };
+  return { foot, h, w, sway, blue, p, drop: frac(p[8] / TAU) };
 }
 
 /**
@@ -126,13 +124,13 @@ function flameFields(fl, X, Y, t, room) {
   // the tip stretching up as a drop is about to pinch off, and the drop rising, shrinking, once it has
   const age = frac(t - fl.drop);
   const lift = Math.min(0.07, room);
-  const stretch = fl.side ? 0 : lift * smooth(0.7, 1, age) ** 2;
+  const stretch = lift * smooth(0.7, 1, age) ** 2;
   const H = h * (1 - 0.04 * breath + stretch);
   const W = w * (1 + 0.06 * breath);
   const s = (Y + fl.foot) / H;
   const up = Math.min(1, Math.max(0, s));
   // the tip sways side to side, curling a little as it goes
-  const middle = (u, at) => fl.x + (fl.lean + 0.09 * fl.sway * Math.sin(TAU * at + p[1])) * u * u + 0.11 * Math.sin(TAU * (0.8 * u - at) + p[2]) * u ** 3;
+  const middle = (u, at) => 0.09 * fl.sway * Math.sin(TAU * at + p[1]) * u * u + 0.11 * Math.sin(TAU * (0.8 * u - at) + p[2]) * u ** 3;
   const mid = middle(up, t);
   // gentle waves running up the outline
   const wave = (0.06 * Math.sin(TAU * (1.2 * up - t) + p[3]) + 0.03 * Math.sin(TAU * (2.3 * up - 2 * t) + p[4])) * (0.4 + up);
@@ -142,7 +140,7 @@ function flameFields(fl, X, Y, t, room) {
   let outline = half - across - beyond;
   // the rim, thin at the bottom and thicker towards the tip, which is all rim
   let body = outline - h * (0.014 + 0.055 * up * up);
-  if (!fl.side && age < 0.4) {
+  if (age < 0.4) {
     // the drop, a little flame of its own: from where the stretched tip was, up as far as there is room, shrinking to nothing
     const k = age / 0.4;
     const r = h * 0.035 * (1 - k) ** 0.8;
@@ -162,7 +160,6 @@ function flameFields(fl, X, Y, t, room) {
   const innerMid = mid + 0.03 * Math.sin(TAU * (1.1 * ui - t) + p[7]) * ui;
   const innerBeyond = si < 0 ? -si * innerH : si > 1 ? (si - 1) * innerH : 0;
   const inner = Math.min(W * 0.7 * teardrop(si) * (1 + innerWave) - Math.abs(X - innerMid) - innerBeyond, body - h * 0.025);
-  if (fl.side) return { outline, body, inner };
   // the core: low in the flame, pale, a small flame of its own
   const coreH = h * (0.46 - 0.03 * breath);
   const sc = (Y + fl.foot - 0.05 * h) / coreH;
@@ -183,34 +180,24 @@ function flameFields(fl, X, Y, t, room) {
 
 /**
  * How each stage's flame is drawn, every one a step up from the one before:
- * from the spark to the campfire one flame, simply bigger, its widest
- * `w` either side; from the big fire on, two smaller flames leaning in at its
- * sides, taller at each stage; and their tones.
+ * one flame at every stage, simply bigger, its widest `w` either side, a
+ * little slimmer at the biggest so it stays inside its frame; and its tones.
  */
 const ART = {
-  spark: { w: 0.27, foot: -0.3, sway: 1.5, tones: TONES.warm, sides: null },
-  kindling: { w: 0.3, foot: -0.1, sway: 1.25, tones: TONES.warm, sides: null },
-  campfire: { w: 0.31, sway: 1, tones: TONES.warm, sides: null },
-  bigfire: { w: 0.27, sway: 1, tones: TONES.warm, sides: { x: 0.24, h: 0.55, w: 0.12, lean: 0.03 } },
-  bonfire: { w: 0.26, sway: 1, tones: TONES.warm, sides: { x: 0.235, h: 0.58, w: 0.12, lean: 0.03 } },
-  blaze: { w: 0.255, sway: 1, tones: TONES.hot, sides: { x: 0.225, h: 0.6, w: 0.115, lean: 0.03 } },
-  newroz: { w: 0.25, sway: 1, tones: TONES.gold, sides: { x: 0.22, h: 0.62, w: 0.11, lean: 0.03 } },
+  spark: { w: 0.27, foot: -0.3, sway: 1.5, tones: TONES.warm },
+  kindling: { w: 0.3, foot: -0.1, sway: 1.25, tones: TONES.warm },
+  campfire: { w: 0.31, sway: 1, tones: TONES.warm },
+  bigfire: { w: 0.31, sway: 1, tones: TONES.warm },
+  bonfire: { w: 0.31, sway: 1, tones: TONES.warm },
+  blaze: { w: 0.3, sway: 1, tones: TONES.hot },
+  newroz: { w: 0.29, sway: 1, tones: TONES.gold },
 };
 
-/**
- * A stage's flames, back to front: its two side flames, if it has them, and
- * the main one, its tip a little under its frame's `top` (in shares of its
- * height above the root) so it never breathes out of it.
- */
-function flamesOf(stage, top) {
+/** A stage's flame, its tip a little under its frame's `top` (in shares of its height above the root) so it never breathes out of it. */
+function flameOf(stage, top) {
   const art = ART[stage];
-  const rand = random(seedOf(stage));
   const foot = art.foot ?? 0.05;
-  const main = flame(rand, { foot, h: Math.min(0.96, top - 0.1) + foot, w: art.w, sway: art.sway, blue: art.tones.blue !== undefined });
-  if (!art.sides) return [main];
-  const { x, h, w, lean } = art.sides;
-  // the right one a little shorter than the left, so the two sides are never one shape mirrored
-  return [flame(rand, { x: -x, h, w, lean, side: true, sway: 0.6 }), flame(rand, { x: x * 1.04, h: h * 0.94, w: w * 0.96, lean: -lean, side: true, sway: 0.6 }), main];
+  return flame(random(seedOf(stage)), { foot, h: Math.min(0.96, top - 0.1) + foot, w: art.w, sway: art.sway, blue: art.tones.blue !== undefined });
 }
 
 // ─────────────────────────────────────────────────────────────── painting
@@ -256,7 +243,7 @@ function paintFrame(sprite, f) {
   const t = f / FIRE_SPRITE_FRAMES;
   // how far a drop can rise before the top of the frame
   const room = Math.max(0.02, Math.min(0.14, (FIRE_ROOT[1] - sprite.box.y) / hh - 1.14));
-  const flames = flamesOf(sprite.stage, (FIRE_ROOT[1] - sprite.box.y) / hh);
+  const fl = flameOf(sprite.stage, (FIRE_ROOT[1] - sprite.box.y) / hh);
   const n = W * Ht;
   const rgba = new Float32Array(n * 4);
   // lays a flat tone over what is there, as much of each pixel as `cover` says
@@ -271,31 +258,27 @@ function paintFrame(sprite, f) {
       rgba[o + 3] = out;
     }
   };
-  for (const fl of flames) {
-    const fields = {};
-    for (let py = 0; py < Ht; py++) {
-      const Y = (FIRE_ROOT[1] - (sprite.box.y + (py + 0.5) / scale)) / hh;
-      for (let px = 0; px < W; px++) {
-        const X = (sprite.box.x + (px + 0.5) / scale - FIRE_ROOT[0]) / hh;
-        const values = flameFields(fl, X, Y, t, room);
-        for (const [name, v] of Object.entries(values)) (fields[name] ??= new Float32Array(n))[py * W + px] = v * hh * scale;
-      }
+  const fields = {};
+  for (let py = 0; py < Ht; py++) {
+    const Y = (FIRE_ROOT[1] - (sprite.box.y + (py + 0.5) / scale)) / hh;
+    for (let px = 0; px < W; px++) {
+      const X = (sprite.box.x + (px + 0.5) / scale - FIRE_ROOT[0]) / hh;
+      const values = flameFields(fl, X, Y, t, room);
+      for (const [name, v] of Object.entries(values)) (fields[name] ??= new Float32Array(n))[py * W + px] = v * hh * scale;
     }
-    // a thin warm light just outside the outline, gone within a few pixels
-    const reach = Math.max(2, hh * scale * 0.012);
-    lay(
-      tones.light,
-      outside(fields.outline, W, Ht).map((d) => (d > 0 ? 0.5 * (1 - smooth(0, reach, d)) : 0)),
-    );
-    lay(tones.rim, coverage(fields.outline, W, Ht));
-    lay(tones.body, coverage(fields.body, W, Ht));
-    lay(tones.inner, coverage(fields.inner, W, Ht));
-    if (fields.core) {
-      lay(tones.core, coverage(fields.core, W, Ht));
-      lay(tones.inner, coverage(fields.spot, W, Ht));
-    }
-    if (fields.blue) lay(tones.blue, coverage(fields.blue, W, Ht));
   }
+  // a thin warm light just outside the outline, gone within a few pixels
+  const reach = Math.max(2, hh * scale * 0.012);
+  lay(
+    tones.light,
+    outside(fields.outline, W, Ht).map((d) => (d > 0 ? 0.5 * (1 - smooth(0, reach, d)) : 0)),
+  );
+  lay(tones.rim, coverage(fields.outline, W, Ht));
+  lay(tones.body, coverage(fields.body, W, Ht));
+  lay(tones.inner, coverage(fields.inner, W, Ht));
+  lay(tones.core, coverage(fields.core, W, Ht));
+  lay(tones.inner, coverage(fields.spot, W, Ht));
+  if (fields.blue) lay(tones.blue, coverage(fields.blue, W, Ht));
   // nothing at the frame's edges to bleed into the frames beside it on the sheet
   for (let py = 0; py < Ht; py++)
     for (let px = 0; px < W; px++) rgba[(py * W + px) * 4 + 3] *= smooth(0.005, 0.03, Math.min(px, W - 1 - px) / W) * smooth(0.005, 0.03, Math.min(py, Ht - 1 - py) / Ht);

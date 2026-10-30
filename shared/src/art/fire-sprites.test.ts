@@ -162,6 +162,21 @@ describe('the sheets that ship', () => {
     for (const sprite of SHEETS) expect(await toneShare(join(ROOT, 'web/public/fire', sprite.file), 7), sprite.stage).toBeGreaterThan(0.92);
   });
 
+  it('is one flame at every stage, with no smaller flames beside it', async () => {
+    // across any row of any frame: the flame, and at most a drop rising off its tip
+    for (const sprite of SHEETS) {
+      const { w, h } = sprite.frame;
+      let most = 0;
+      for (const frame of await frames(sprite))
+        for (let y = 0; y < h; y++) {
+          let runs = 0;
+          for (let x = 0; x < w; x++) if (frame[y * w + x]! >= 128 && (x === 0 || frame[y * w + x - 1]! < 128)) runs++;
+          most = Math.max(most, runs);
+        }
+      expect(most, sprite.stage).toBeLessThanOrEqual(2);
+    }
+  });
+
   it('keeps every frame clear at its edges, so none bleeds into its neighbour on the sheet and nothing of the flame is cut off', async () => {
     for (const sprite of SHEETS) {
       const { w, h } = sprite.frame;

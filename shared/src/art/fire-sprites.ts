@@ -40,7 +40,7 @@ export const FIRE_FLAME_REACH: Readonly<Record<LitStage, { from: { w: number; h:
   newroz: { from: { w: 131, h: 204 }, to: { w: 136, h: 220 } },
 };
 
-/** How far a frame reaches past the flame: across, for its sway and a big fire's side flames; up, for the drop pinching off its tip; down, for its round foot behind the logs. */
+/** How far a frame reaches past the flame: across, for its sway; up, for the drop pinching off its tip; down, for its round foot behind the logs. */
 const SIDE_ROOM = 0.22;
 const TOP_ROOM = 0.15;
 const FOOT_ROOM = 6;
