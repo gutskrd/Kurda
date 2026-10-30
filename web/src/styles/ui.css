@@ -662,3 +662,13 @@ select optgroup {
   background-color: var(--surface-solid);
   color: var(--ink);
 }
+
+/* A currency drawn in colour (components/icons.tsx): sits in a line of text the way a glyph does. */
+.currency-icon {
+  display: inline-flex;
+  flex: none;
+  vertical-align: middle;
+}
+.currency-icon > svg {
+  display: block;
+}

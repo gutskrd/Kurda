@@ -24,6 +24,7 @@ import {
   type BadgeKey,
   type BadgeTier,
 } from './index.js';
+import { coinSvg, gemSvg } from './currency.js';
 import { SEASON_ICONS } from './icons.js';
 import { PICTURES } from './pictures.js';
 import { PROPS } from './props/index.js';
@@ -780,5 +781,46 @@ describe('weight', () => {
       ...[0, 5].map((done) => placementEmblemSvg({ done }).length),
     );
     expect(biggest).toBeLessThan(16 * 1024);
+  });
+});
+
+describe('the currencies', () => {
+  const SIZES = [13, 15, 20, 26, 36, 64, 160];
+
+  it('draws Zêr and the gem as valid, self-contained pictures at every size the apps show them', () => {
+    for (const size of SIZES) {
+      checkSvg(coinSvg({ size }), size);
+      checkSvg(gemSvg({ size }), size);
+    }
+  });
+
+  it('draws the same picture every time, with ids of its own beside the other', () => {
+    expect(coinSvg({ size: 30 })).toBe(coinSvg({ size: 30 }));
+    const coin = new Set([...coinSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+    const gem = [...gemSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+    expect(gem.filter((id) => coin.has(id))).toEqual([]);
+  });
+
+  it('raises one deer on the coin, its shadow down and to the left, its edges lit where there is room', () => {
+    // the deer is one outline, antlers and ears and all, drawn again for each of its layers
+    const deerLayers = (svg: string): number => {
+      const counts = new Map<string, number>();
+      for (const m of svg.matchAll(/ d="([^"]+)"/g)) counts.set(m[1]!, (counts.get(m[1]!) ?? 0) + 1);
+      return Math.max(...counts.values());
+    };
+    // the shadow and the gold
+    expect(deerLayers(coinSvg({ size: 26 }))).toBe(2);
+    // and, large, the light along its upper edges: the lit copy, the gold clipped to the outline, and the clip itself
+    expect(deerLayers(coinSvg({ size: 64 }))).toBe(4);
+    expect(coinSvg({ size: 64 })).toContain('transform="translate(-0.9 1.3)"');
+    expect(coinSvg({ size: 64 })).toContain('<title');
+  });
+
+  it('keeps the fine lines and the sparkle for the sizes with room for them', () => {
+    const paths = (svg: string): number => (svg.match(/<path/g) ?? []).length;
+    expect(paths(coinSvg({ size: 15 }))).toBeLessThan(paths(coinSvg({ size: 26 })));
+    expect(paths(coinSvg({ size: 26 }))).toBeLessThan(paths(coinSvg({ size: 64 })));
+    expect(paths(gemSvg({ size: 15 }))).toBeLessThan(paths(gemSvg({ size: 26 })));
+    expect(paths(gemSvg({ size: 26 }))).toBeLessThan(paths(gemSvg({ size: 64 })));
   });
 });
