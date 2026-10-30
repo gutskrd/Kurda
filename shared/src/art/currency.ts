@@ -17,6 +17,7 @@
  * lip and the gem's sparkle go, so a 15-pixel coin in the purse is still a
  * coin and not a smudge.
  */
+import { curve, symmetric, type Knot } from '../characters/pen.js';
 import { CANVAS, Drawing, checkSize, linearAt, n, prefixFor, type Detail, type Pt } from './svg.js';
 
 export interface CurrencyOptions {
@@ -62,36 +63,34 @@ const GOLD = {
   rimLight: '#fff09a',
   field: '#ee8a14',
   fieldShadow: '#d2700c',
-  raisedShadow: '#c4650a',
+  raisedShadow: '#a95c06',
 };
 
 /** The coin's face: centre, radius, how far below it the edge shows, and the orange field inside the ring. */
 const COIN = { cx: 60, cy: 56, r: 50, drop: 6, field: 31 };
 
-/** The deer, front on and simple: a round head narrowing to its muzzle, ears out to the sides, two stubby branching antlers. */
-const DEER = {
-  head: 'M60 44.6C67.5 44.6 72 48.5 72 54C72 59 69.5 61.5 68 64.5C66.5 68 66.5 75.8 60 75.8C53.5 75.8 53.5 68 52 64.5C50.5 61.5 48 59 48 54C48 48.5 52.5 44.6 60 44.6Z',
-  ears: [
-    'M49.5 46.4C45.8 44 41.4 44.2 39.4 47.4C41.4 51.2 46.4 52.6 50.2 52.4Z',
-    'M70.5 46.4C74.2 44 78.6 44.2 80.6 47.4C78.6 51.2 73.6 52.6 69.8 52.4Z',
-  ],
-  antlers: [
-    'M56.4 45.6C54 42.4 49.6 41.4 46.6 40.4C44 39.5 42.6 37 42.8 32.8',
-    'M50.6 41.8C50.2 39.6 50.8 37.4 52 35.8',
-    'M46.8 40.4C46.3 38 46.5 35.4 47.7 33.4',
-    'M63.6 45.6C66 42.4 70.4 41.4 73.4 40.4C76 39.5 77.4 37 77.2 32.8',
-    'M69.4 41.8C69.8 39.6 69.2 37.4 68 35.8',
-    'M73.2 40.4C73.7 38 73.5 35.4 72.3 33.4',
-  ],
-};
+/**
+ * The deer, front on: a broad round head narrowing to its muzzle, leaf-shaped
+ * ears out to the sides and two chunky antlers, each with three rounded tines.
+ * One half is set down from the chin up round the ear and the antler to the
+ * middle of the crown (a 0 marks a sharp corner), and mirrored for the other.
+ */
+const DEER_HALF: readonly Knot[] = [
+  [60, 80.1], [56.7, 80], [54.2, 79], [52.4, 76.9], [51.5, 74.7], [51.1, 72.6], [49.9, 70.1], [48.3, 67.6], [47.2, 64.7], [46.8, 61.2], [46.8, 58, 0],
+  // the ear, out along its underside to the tip and back along its top
+  [45.1, 57.6], [43.1, 56.8], [41.1, 55.4], [39.4, 53.7], [38.3, 52], [37.9, 50.3], [38.6, 49.1], [41.1, 48.8], [44.4, 49.7], [47.1, 51], [49, 52.1], [49.9, 52.5, 0],
+  // the antler: up its outer edge to the tallest tine, then the middle tine and the inner one
+  [50, 51], [49.1, 49.8], [47.7, 48.5], [46.1, 47.5], [44.4, 46.7], [42.7, 45.7], [41.1, 43.9], [40.1, 41.8], [39.8, 39.7], [39.9, 36.7], [40.5, 34.8], [42.4, 33.9],
+  [43.8, 34.5], [44.2, 35.9], [44.1, 37.7], [43.9, 39.3], [44.4, 40.2], [45.1, 39.7], [45.7, 38.3], [46.6, 37.4], [47.6, 37.1], [48.6, 37.4], [49.2, 38.3], [49.2, 39.7],
+  [48.7, 41.3], [48.2, 43], [48.5, 44.4], [49.2, 44.6], [50.4, 43.7], [51.7, 42.3], [52.7, 41.7], [53.7, 42], [54.2, 43.2], [54, 45], [53.7, 47], [53.9, 48.7], [54.3, 49.5, 0],
+  // the crown between the antlers
+  [55.7, 48.5], [57.7, 47.7], [60, 47.4],
+];
+const DEER = curve(symmetric(DEER_HALF, 60));
 
-/** The deer in one colour, moved by (dx, dy): its shapes filled, its antlers stroked round. */
-function deer(colour: string, dx: number, dy: number, antlerWidth: number): string {
-  const move = dx || dy ? ` transform="translate(${n(dx)} ${n(dy)})"` : '';
-  const shapes = [DEER.head, ...DEER.ears].map((d) => `<path d="${d}" fill="${colour}"/>`).join('');
-  const antlers = DEER.antlers.map((d) => `<path d="${d}" fill="none" stroke="${colour}" stroke-width="${n(antlerWidth)}" stroke-linecap="round" stroke-linejoin="round"/>`).join('');
-  return `<g${move}>${antlers}${shapes}</g>`;
-}
+/** The deer in one colour, moved by (dx, dy). */
+const deer = (colour: string, dx = 0, dy = 0): string =>
+  `<path d="${DEER}" fill="${colour}"${dx || dy ? ` transform="translate(${n(dx)} ${n(dy)})"` : ''}/>`;
 
 /** A band of a ring between radii r0 and r1, from `a0` to `a1` degrees clockwise. */
 function ringBand(cx: number, cy: number, r0: number, r1: number, a0: number, a1: number): string {
@@ -132,9 +131,14 @@ export function coinSvg(opts: CurrencyOptions = {}): string {
   dr.add(`<circle cx="${cx}" cy="${cy}" r="${field}" fill="${GOLD.field}"/>`);
   if (detail > 0) dr.add(`<path d="${arc(cx, cy, field - 1.4, 195, 345)}" fill="none" stroke="${GOLD.fieldShadow}" stroke-width="2.8" stroke-linecap="round"/>`);
 
-  // the deer, raised in gold, its shadow down and to the left
-  dr.add(deer(GOLD.raisedShadow, -1.6, 1.9, 4.4));
-  dr.add(deer(GOLD.face, 0, 0, 4.4));
+  // the deer, raised in gold, its shadow down and to the left; large, its upper edges catch the light
+  dr.add(deer(GOLD.raisedShadow, -0.9, 1.3));
+  if (detail === 2) {
+    dr.add(deer(GOLD.rimLight));
+    dr.add(`<g clip-path="url(#${dr.clip(DEER)})">${deer(GOLD.face, 0.3, 0.8)}</g>`);
+  } else {
+    dr.add(deer(GOLD.face));
+  }
   return dr.svg(size, opts.title ?? 'Zêr');
 }
 

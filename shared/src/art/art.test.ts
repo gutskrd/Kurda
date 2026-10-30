@@ -801,11 +801,19 @@ describe('the currencies', () => {
     expect(gem.filter((id) => coin.has(id))).toEqual([]);
   });
 
-  it('raises the deer on the coin, antlers and all', () => {
-    const svg = coinSvg({ size: 64 });
-    // six antler strokes, each drawn as the shadow and the raised gold
-    expect((svg.match(/stroke-linecap="round" stroke-linejoin="round"/g) ?? []).length).toBe(12);
-    expect(svg).toContain('<title');
+  it('raises one deer on the coin, its shadow down and to the left, its edges lit where there is room', () => {
+    // the deer is one outline, antlers and ears and all, drawn again for each of its layers
+    const deerLayers = (svg: string): number => {
+      const counts = new Map<string, number>();
+      for (const m of svg.matchAll(/ d="([^"]+)"/g)) counts.set(m[1]!, (counts.get(m[1]!) ?? 0) + 1);
+      return Math.max(...counts.values());
+    };
+    // the shadow and the gold
+    expect(deerLayers(coinSvg({ size: 26 }))).toBe(2);
+    // and, large, the light along its upper edges: the lit copy, the gold clipped to the outline, and the clip itself
+    expect(deerLayers(coinSvg({ size: 64 }))).toBe(4);
+    expect(coinSvg({ size: 64 })).toContain('transform="translate(-0.9 1.3)"');
+    expect(coinSvg({ size: 64 })).toContain('<title');
   });
 
   it('keeps the fine lines and the sparkle for the sizes with room for them', () => {
