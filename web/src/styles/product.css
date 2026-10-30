@@ -1054,11 +1054,8 @@ a.invite-card:active {
   flex: none;
   width: 42px;
   height: 42px;
-  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: var(--gold-soft);
-  color: var(--gold-ink);
 }
 .zer-balance {
   font-family: var(--font-display);

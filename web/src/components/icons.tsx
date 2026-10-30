@@ -29,14 +29,12 @@ import { Bell } from '@phosphor-icons/react/dist/icons/Bell';
 import { BookmarkSimple } from '@phosphor-icons/react/dist/icons/BookmarkSimple';
 import { CaretRight } from '@phosphor-icons/react/dist/icons/CaretRight';
 import { ChatCircle } from '@phosphor-icons/react/dist/icons/ChatCircle';
-import { Coin } from '@phosphor-icons/react/dist/icons/Coin';
 import { Eye } from '@phosphor-icons/react/dist/icons/Eye';
 import { EyeSlash } from '@phosphor-icons/react/dist/icons/EyeSlash';
 import { PuzzlePiece } from '@phosphor-icons/react/dist/icons/PuzzlePiece';
 import { House } from '@phosphor-icons/react/dist/icons/House';
 import { Newspaper } from '@phosphor-icons/react/dist/icons/Newspaper';
 import { Storefront } from '@phosphor-icons/react/dist/icons/Storefront';
-import { DiamondsFour } from '@phosphor-icons/react/dist/icons/DiamondsFour';
 import { DotsThree } from '@phosphor-icons/react/dist/icons/DotsThree';
 import { Prohibit } from '@phosphor-icons/react/dist/icons/Prohibit';
 import { Flag } from '@phosphor-icons/react/dist/icons/Flag';
@@ -123,6 +121,8 @@ import { Question } from '@phosphor-icons/react/dist/icons/Question';
 import { Key } from '@phosphor-icons/react/dist/icons/Key';
 import { UserCircle } from '@phosphor-icons/react/dist/icons/UserCircle';
 import type { Icon, IconWeight } from '@phosphor-icons/react';
+import { useMemo } from 'react';
+import { coinSvg, gemSvg, type CurrencyOptions } from '@kurda/shared';
 
 /**
  * The line weight the app is drawn at.
@@ -145,6 +145,26 @@ function named(Glyph: Icon, fallbackSize: number, defaultWeight: IconWeight = IC
   };
 }
 
+/**
+ * A currency, drawn in colour (shared `coinSvg`, `gemSvg`): its own picture
+ * rather than a tinted glyph, so it looks the same on every surface and on
+ * the phone. Decorative, as the amount beside it says what it is; `weight`
+ * has nothing to do here.
+ */
+function currency(draw: (opts: CurrencyOptions) => string, fallbackSize: number) {
+  return function CurrencyIcon({ size = fallbackSize, className }: P): React.JSX.Element {
+    const markup = useMemo(() => ({ __html: draw({ size }) }), [size]);
+    return (
+      <span
+        className={`currency-icon${className ? ` ${className}` : ''}`}
+        style={{ width: size, height: size }}
+        aria-hidden="true"
+        dangerouslySetInnerHTML={markup}
+      />
+    );
+  };
+}
+
 /** A filled head-and-shoulders, for an avatar with no picture behind it. */
 export const PersonGlyph = named(User, 128, 'fill');
 
@@ -164,7 +184,8 @@ export const UserIcon = named(User, 22);
 export const UsersIcon = named(Users, 22);
 /** A streak, which the phone has drawn as a flame since it had streaks. */
 export const FlameIcon = named(Flame, 22);
-export const CoinIcon = named(Coin, 22);
+/** Zêr: a gold coin with Hevalo's deer carved into it. */
+export const CoinIcon = currency(coinSvg, 22);
 export const TilesIcon = named(SquaresFour, 22);
 export const WaveformIcon = named(Waveform, 22);
 /* the landing page's pictures of a lesson: a clip to play, a word to say */
@@ -226,8 +247,8 @@ export const HomeIcon = named(House, 22);
 /** The community wall — a page of what everyone wrote, not a group of people. */
 export const WallIcon = named(Newspaper, 22);
 export const ShopIcon = named(Storefront, 22);
-/** Gems, the harder currency; Zêr is the CoinIcon above. */
-export const GemIcon = named(DiamondsFour, 22);
+/** Gems, the harder currency, a faceted green stone; Zêr is the CoinIcon above. */
+export const GemIcon = currency(gemSvg, 22);
 export const SignOutIcon = named(SignOut, 22);
 /* the quiet menu on somebody else's profile: block, report */
 export const MoreIcon = named(DotsThree, 22);

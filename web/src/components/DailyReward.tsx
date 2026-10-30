@@ -75,7 +75,7 @@ export function DailyReward(): React.JSX.Element | null {
     <div className="zer-card">
       <div className="zer-left">
         <span className="zer-coin" aria-hidden="true">
-          <CoinIcon size={26} />
+          <CoinIcon size={40} />
         </span>
         <div>
           <div className="zer-balance">

@@ -24,6 +24,7 @@ import {
   type BadgeKey,
   type BadgeTier,
 } from './index.js';
+import { coinSvg, gemSvg } from './currency.js';
 import { SEASON_ICONS } from './icons.js';
 import { PICTURES } from './pictures.js';
 import { PROPS } from './props/index.js';
@@ -780,5 +781,38 @@ describe('weight', () => {
       ...[0, 5].map((done) => placementEmblemSvg({ done }).length),
     );
     expect(biggest).toBeLessThan(16 * 1024);
+  });
+});
+
+describe('the currencies', () => {
+  const SIZES = [13, 15, 20, 26, 36, 64, 160];
+
+  it('draws Zêr and the gem as valid, self-contained pictures at every size the apps show them', () => {
+    for (const size of SIZES) {
+      checkSvg(coinSvg({ size }), size);
+      checkSvg(gemSvg({ size }), size);
+    }
+  });
+
+  it('draws the same picture every time, with ids of its own beside the other', () => {
+    expect(coinSvg({ size: 30 })).toBe(coinSvg({ size: 30 }));
+    const coin = new Set([...coinSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]));
+    const gem = [...gemSvg({ size: 30 }).matchAll(/ id="([^"]+)"/g)].map((m) => m[1]);
+    expect(gem.filter((id) => coin.has(id))).toEqual([]);
+  });
+
+  it('carves the deer into the coin, antlers and all', () => {
+    const svg = coinSvg({ size: 64 });
+    // six antler strokes, each drawn as the lip, the shadow and the cut
+    expect((svg.match(/stroke-linecap="round" stroke-linejoin="round"/g) ?? []).length).toBe(18);
+    expect(svg).toContain('<title');
+  });
+
+  it('keeps the fine lines and the sparkle for the sizes with room for them', () => {
+    const paths = (svg: string): number => (svg.match(/<path/g) ?? []).length;
+    expect(paths(coinSvg({ size: 15 }))).toBeLessThan(paths(coinSvg({ size: 26 })));
+    expect(paths(coinSvg({ size: 26 }))).toBeLessThan(paths(coinSvg({ size: 64 })));
+    expect(paths(gemSvg({ size: 15 }))).toBeLessThan(paths(gemSvg({ size: 26 })));
+    expect(paths(gemSvg({ size: 26 }))).toBeLessThan(paths(gemSvg({ size: 64 })));
   });
 });

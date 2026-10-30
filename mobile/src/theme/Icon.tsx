@@ -1,6 +1,7 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Animated, View, type StyleProp, type ViewStyle } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
+import Svg, { Path, SvgXml } from 'react-native-svg';
+import { coinSvg, gemSvg } from '@kurda/shared';
 import { useReducedMotion } from '../a11y/useReducedMotion';
 import { useTheme } from './ThemeProvider';
 import { ICON_PATHS, ICON_VIEWBOX, type IconName } from './icon-paths';
@@ -43,6 +44,8 @@ export function Icon({
   style?: StyleProp<ViewStyle>;
 }): React.JSX.Element {
   const { colors } = useTheme();
+  // the two currencies are pictures in their own colours, not glyphs in a tint
+  if (name === 'coin' || name === 'gem') return <CurrencyIcon name={name} size={size} style={style} />;
   const fill =
     color ??
     (tone === 'onPrimary'
@@ -60,6 +63,19 @@ export function Icon({
           <Path key={d} d={d} fill={fill} />
         ))}
       </Svg>
+    </View>
+  );
+}
+
+/**
+ * Zêr and gems, drawn in colour (shared `coinSvg`, `gemSvg`): the same
+ * pictures as the browser's, whatever tint the screen asked for.
+ */
+function CurrencyIcon({ name, size, style }: { name: 'coin' | 'gem'; size: number; style?: StyleProp<ViewStyle> }): React.JSX.Element {
+  const xml = useMemo(() => (name === 'coin' ? coinSvg : gemSvg)({ size }), [name, size]);
+  return (
+    <View style={[{ width: size, height: size }, style]}>
+      <SvgXml xml={xml} width={size} height={size} />
     </View>
   );
 }

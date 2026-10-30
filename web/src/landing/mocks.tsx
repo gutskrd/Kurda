@@ -448,7 +448,7 @@ export function ProgressMock(): React.JSX.Element {
 
       <div className="zer-card lp-rewardmock">
         <span className="zer-coin">
-          <CoinIcon size={18} />
+          <CoinIcon size={36} />
         </span>
         <span className="zer-sub">{t('daily.dayReward', { day: 3, amount: 20 })}</span>
       </div>
