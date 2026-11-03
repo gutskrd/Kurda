@@ -1,10 +1,9 @@
 /**
  * Hamo: a man in a traditional Kurdish suit — a dark brown jacket crossed
  * over an olive shirt, a plain green pştên wound at the waist, wide trousers
- * falling full onto brown shoes stood almost together — standing with his
- * hands on his hips, his head turned a little to one side, smiling under a full,
- * well-groomed moustache, his black hair swept back with a little light
- * along its waves.
+ * gathered at the ankle, and brown shoes — standing with his hands on his
+ * hips, his head turned a little to one side, smiling under a full black
+ * moustache, his hair black like the reference’s.
  *
  * Drawn flat, each part one tone, with a few shade shapes where the form
  * turns: his jaw, under his nose, inside his ear, the folds of the jacket,
@@ -17,31 +16,27 @@
  * mouth, so every mouth shape tucks its top under it, as a real mouth does.
  */
 import type { Pt } from '../art/svg.js';
-import { n, radialBox } from '../art/svg.js';
+import { n } from '../art/svg.js';
 import type { CharacterArt } from './types.js';
 import type { Knot } from './pen.js';
-import { alpha, circle, clipDef, clipped, curve, fill, line, oval, part, taper } from './pen.js';
+import { alpha, circle, clipDef, clipped, curve, fill, line, part, taper } from './pen.js';
 import { humanMouths } from './mouth.js';
 
 const C = {
   hair: '#1c1410',
-  hairSheen: '#3e2d20',
-  skin: '#c98f6b',
-  shade: '#b07952',
-  ear: '#bd8464',
-  earShade: '#a56d4c',
+  skin: '#b66d55',
+  shade: '#a15d46',
+  ear: '#ac6551',
+  earShade: '#93533d',
   brow: '#241710',
-  white: '#f5d9c4',
+  white: '#ecc6b5',
   iris: '#623622',
-  irisLight: '#8a5636',
   pupil: '#2e160d',
   lash: '#2e1810',
   moustache: '#1f1510',
-  blushTone: '#a85d44',
   suit: '#5b3b26',
   fold: '#452a18',
   shirt: '#9e9468',
-  shirtFold: '#7c7450',
   sash: '#45502c',
   sashFold: '#2d3519',
   sashLight: '#6b7442',
@@ -55,8 +50,8 @@ const JACKET: Knot[] = [
   [145.3, 146.4], [159.7, 163.6], [165.6, 173.2], [165.7, 186.2], [171.1, 219.8], [173.7, 230.9], [176.8, 250.5],
   [178.3, 255.1], [178.5, 260.6], [181.6, 272.8], [183.8, 287.1], [185.4, 290.7], [188.0, 306.0],
   [188.9, 308.6, 0.3], [189.9, 306.2], [195.2, 248.9], [197.0, 236.6], [198.4, 217.0], [200.7, 199.1],
-  [201.5, 189.1], [200.9, 169.9], [201.9, 166.9], [200.9, 163.3], [201.7, 160.3], [205.9, 158.7, 0.4],
-  [205.7, 156.0, 0.4], [207.5, 155.2, 0.4], [209.8, 159.3], [213.9, 162.5], [225.7, 167.2], [243.4, 172.7],
+  [201.5, 189.1], [200.9, 169.9], [201.9, 166.9], [200.7, 162.5], [202.9, 157.9], [209.2, 153.2],
+  [209.8, 159.3], [213.9, 162.5], [225.7, 167.2], [243.4, 172.7],
   [251.5, 176.4], [258.1, 180.5], [270.0, 192.2], [277.7, 203.4], [289.7, 224.9], [300.4, 250.2], [303.6, 261.5],
   [303.9, 269.0], [300.2, 280.9], [290.6, 299.3], [281.0, 313.1], [266.9, 329.8], [264.8, 330.7], [260.2, 330.7],
   [253.1, 329.2], [242.4, 341.1], [241.2, 346.0], [247.3, 362.5], [247.4, 364.0], [246.4, 365.7],
@@ -94,19 +89,16 @@ const SHIRT: Knot[] = [
   [173, 236], [162.6, 190], [162.6, 172.4],
 ]
 
-/**
- * Wide trousers, measured against the reference: the legs fall as one mass
- * to below the knee and part only low down, a narrow slit between them, and
- * each wide cuff drops straight onto its shoe, so no ankle shows.
- */
+/** Wide trousers, full to the knee and gathered in at each ankle, the space between the legs left open. */
 const TROUSERS: Knot[] = [
-  [110.1, 350.3], [106.3, 359.4], [102.3, 373.9], [97.4, 393.3], [91, 422.6], [85.5, 468.6], [81, 533.6],
-  [80.5, 565.9], [84.5, 604.8], [90, 624.6], [94.5, 638.5], [99.5, 650.5], [104.5, 660], [108.3, 667.5],
-  [109.8, 673.2, 0.3], [109.9, 675.8, 0], [143, 677.6], [176.2, 675.8, 0], [176.5, 669],
-  [177.1, 640], [177.8, 600], [178.7, 557], [180.1, 509.5, 0.3], [181.5, 557], [182.4, 600],
-  [183.2, 640], [183.7, 669], [183.9, 675.8, 0], [217.2, 677.6], [250.4, 675.8, 0], [250.6, 673],
-  [252.3, 667], [256, 659.5], [261, 649.5], [266, 637.5], [270.2, 624.5], [271.5, 617.4],
-  [275.5, 592.4], [276.5, 578.9], [271.5, 496.4], [266, 449], [261.5, 416.2], [255.8, 391.4], [247.3, 362.5],
+  [110.1, 350.3], [106.3, 359.4], [102.3, 373.9], [98.4, 393.3], [94.5, 422.6], [90.7, 468.6], [87.3, 533.6],
+  [86.9, 565.9], [90.3, 604.8], [94.6, 624.6], [98.4, 636], [102.4, 644], [106.8, 650.6], [114.1, 658.5],
+  [121.8, 663.8], [123.2, 667.6, 0.4], [125.3, 667.6, 0.3], [125.6, 665.1, 0.3], [138.9, 665], [149.3, 664.6],
+  [158.3, 664, 0.4], [159.4, 663], [165.4, 657.2], [169.3, 650.4], [173.6, 635.7], [174.6, 626.2], [176.6, 560],
+  [178.8, 490.9], [180.1, 470.9, 0.3], [181.6, 490.9], [183.4, 550], [185.2, 607.4], [186.9, 631.2], [190.7, 646.5],
+  [194.9, 655.2], [198.4, 659.3], [204.8, 664.4, 0.4], [206.6, 663.4], [211.9, 664.4], [224.1, 664.8],
+  [233.4, 664.3], [240.3, 664, 0.4], [241, 661.8], [249.7, 654.3], [257.9, 642.3], [262.1, 632.5], [266, 617.4],
+  [269.1, 592.4], [269.9, 578.9], [266, 496.4], [261.9, 449], [258.1, 416.2], [254.2, 391.4], [247.3, 362.5],
   [243.4, 351.2], [243, 350, 0], [110.5, 350, 0],
 ];
 
@@ -155,93 +147,40 @@ const FOLDS: readonly (readonly Pt[])[] = [
   ],
 ];
 
-/**
- * The stitched seams that finish the jacket: a band sewn along each edge of
- * the front opening from the collar down to where the two sides cross, and a
- * short run of the collar band itself on the far shoulder.
- */
-const SEAMS: readonly (readonly Pt[])[] = [
-  [
-    [144.2, 150.9],
-    [157.3, 166.3],
-    [162.7, 175.2],
-    [162.8, 187],
-    [168.2, 220.6],
-    [170.8, 231.7],
-    [173.9, 251.2],
-    [175.6, 261.3],
-    [178.7, 273.4],
-    [180.9, 287.6],
-    [184.8, 305.4],
-  ],
-  [
-    [204.9, 164.5],
-    [205.9, 167.4],
-    [204.9, 170.2],
-    [205.5, 189.3],
-    [204.7, 199.5],
-    [202.4, 217.4],
-    [201.0, 237.0],
-    [199.2, 249.4],
-    [193.9, 305.6],
-  ],
-  [
-    [209.3, 161.9],
-    [216.4, 165.6],
-    [224.3, 169.4],
-  ],
-];
-
-/** The shirt’s own centre seam, the line of its placket, down the middle of what the jacket leaves open. */
-const SHIRT_SEAM: readonly Pt[] = [
-  [183.9, 198],
-  [185.8, 240],
-  [187.4, 276],
-  [188.4, 304],
-];
-
-/** The drape of the cloth, as the reference draws it: long folds falling from the sash, bowing with each leg almost to the cuff. */
+/** The pleats that fall from the sash, two to each leg: pressed tucks, the inner pair longer. */
 const PLEATS: readonly (readonly Pt[])[] = [
   [
     [126.8, 356],
-    [121.4, 390],
-    [117.4, 440],
-    [115.4, 500],
-    [117.4, 560],
-    [123.4, 620],
-    [130, 655],
+    [123.4, 369.8],
+    [120.4, 381.5],
+    [119, 393.1],
   ],
   [
     [168.2, 357],
-    [162.5, 400],
-    [158.9, 460],
-    [157.9, 520],
-    [159.9, 580],
-    [163.4, 630],
+    [163.5, 376],
+    [161.1, 394],
+    [160.9, 411.9],
   ],
   [
     [214.6, 357],
-    [220.5, 395],
-    [224.6, 450],
-    [226.5, 510],
-    [224.5, 570],
-    [220, 625],
+    [220.5, 380.9],
+    [223.6, 403.6],
+    [223.5, 426.4],
   ],
   [
     [230.6, 356],
-    [236.5, 390],
-    [241.6, 440],
-    [244.6, 500],
-    [242.6, 560],
-    [236.6, 615],
-    [229, 652],
+    [235, 370],
+    [237.6, 382],
+    [238.6, 393.9],
   ],
 ];
 
 /** Where the pştên's top edge is at his sides, and how far it and every band in it bow down at the front: a little, as cloth round a waist does. */
-const SASH_TOP = 317;
+const SASH_TOP = 327;
 const SASH_BOW = 2.5;
 
+/** How deep the wound cloth reaches below its top edge: a thin band sitting low at the waist, as the reference wears it, his fingers curling over its top edge. */
+const SASH_DEPTH = 40;
 
 /**
  * The pştên, wound round his waist from hip to hip: its top and bottom edges
@@ -253,13 +192,10 @@ const SASH_BOW = 2.5;
 function sashOutline(bottom: number): string {
   const [t, b] = [SASH_TOP, bottom];
   return (
-    `M112.4,319.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L241.6,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
+    `M112.4,329.5L116,${t}Q180,${n(t + SASH_BOW * 2)} 244,${t}H244.6L243,341.5L241.6,348L247.3,362.5L248.4,${n(b)}` +
     `H244Q180,${n(b + SASH_BOW * 2)} 116,${n(b)}H104.2L106.3,359.4L110.3,348.4L112.4,340Z`
   );
 }
-
-/** How deep the wound cloth reaches below its top edge: measured against the reference, a third of a head rather than half of one. */
-const SASH_DEPTH = 50;
 
 /**
  * The folds of the wound cloth: darker lines where one winding lies over the
@@ -269,17 +205,17 @@ const SASH_DEPTH = 50;
 function sashFolds(): string {
   const at = (y: number): string => `M104,${n(y)}H116Q180,${n(y + SASH_BOW * 2)} 244,${n(y)}H252`;
   return (
-    line([324.5, 332.5, 341, 349.5, 358].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
-    line([328.5, 345, 362.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
+    line([333.5, 341.5, 349.5, 357.5].map(at).join(''), C.sashFold, 2, ' stroke-opacity="0.6"') +
+    line([337.5, 353.5, 361.5].map(at).join(''), C.sashLight, 1.2, ' stroke-opacity="0.35"')
   );
 }
 
 /** Where his fingers press into the pştên, the cloth gathers: short creases running out from under each hand towards the middle. */
 const GATHERS: readonly (readonly Pt[])[] = [
-  [[154, 330.5], [163, 332], [173, 332.8]],
-  [[155, 341.5], [164, 342.8], [174, 343.4]],
-  [[205, 329], [196, 330.6], [187, 331.4]],
-  [[208, 339.5], [199, 341], [190, 341.7]],
+  [[154, 334], [163, 335.5], [173, 336.3]],
+  [[155, 345], [164, 346.3], [174, 346.9]],
+  [[205, 332.5], [196, 334.1], [187, 334.9]],
+  [[208, 343], [199, 344.5], [190, 345.2]],
 ];
 
 /**
@@ -350,20 +286,19 @@ const CREASES: readonly (readonly Pt[])[] = [
 ];
 
 /**
- * His shoes: soft and low, standing almost together under the middle of him
- * as the reference has them, each toe turned out past the cuff that rests
- * on it.
+ * His shoes: soft and low, cut down at the inner side where the ankle shows,
+ * the toe of each turned out.
  */
 const SHOE_LEFT: Knot[] = [
-  [173.4, 677], [174, 688.1], [173.2, 695.8], [172.1, 697.7], [169, 698.9], [156.9, 699.4], [112.6, 699.2],
-  [106.3, 697.9], [104.4, 695.5], [103.9, 690], [105.2, 686.5], [114.1, 678.7], [128.5, 672.9], [134.1, 669.9],
-  [136.2, 667.8, 0.4], [151.9, 667.7, 0.4], [153.2, 668.7], [155.7, 674.9], [156.8, 675.9], [160.9, 676.6], [172.1, 675.6, 0.4],
+  [159.4, 677], [160, 688.1], [159.2, 695.8], [158.1, 697.7], [155, 698.9], [142.9, 699.4], [104.6, 699.2],
+  [98.3, 697.9], [96.4, 695.5], [95.9, 690], [97.2, 686.5], [106.1, 678.7], [114.5, 672.9], [120.1, 669.9],
+  [122.2, 667.8, 0.4], [137.9, 667.7, 0.4], [139.2, 668.7], [141.7, 674.9], [142.8, 675.9], [146.9, 676.6], [158.1, 675.6, 0.4],
 ];
 
 const SHOE_RIGHT: Knot[] = [
-  [255.6, 695.3], [254.8, 696.9], [253.1, 698], [247.4, 699.3], [187.5, 698.9], [183.5, 697.2], [181.9, 693.3],
-  [181.2, 686.9], [181.9, 676.9, 0.4], [183.6, 675.4], [196.1, 676.4], [198.3, 675.9], [200.1, 674.2], [201.9, 668.8],
-  [202.9, 668, 0.4], [220.6, 667.5], [227.2, 670.7], [231.8, 672.1], [251.5, 682.9], [255.7, 687.7],
+  [277.6, 695.3], [276.8, 696.9], [275.1, 698], [269.4, 699.3], [209.5, 698.9], [205.5, 697.2], [203.9, 693.3],
+  [203.2, 686.9], [203.9, 676.9, 0.4], [205.6, 675.4], [218.1, 676.4], [220.3, 675.9], [222.1, 674.2], [223.9, 668.8],
+  [224.9, 668, 0.4], [242.6, 667.5], [249.2, 670.7], [253.8, 672.1], [273.5, 682.9], [277.7, 687.7],
 ];
 
 /**
@@ -399,16 +334,16 @@ function body(p: string): string {
       clipDef(id('sash'), sash),
     ],
     [
+      // the ankles, between cuff and shoe
+      fill('M125,660h35v18h-35zM204.6,660h36.9v17.6h-36.9z', C.skin),
       fill(curve(SHOE_LEFT) + curve(SHOE_RIGHT), C.shoe),
       fill(curve(TROUSERS), C.suit),
       fill(curve(NECK), C.skin),
       fill(curve(SHIRT), C.shirt),
-      line(curve(SHIRT_SEAM.map(([x, y]) => [x, y] as const), false), C.shirtFold, 1.1, ' stroke-opacity="0.6"'),
       `<path d="${curve(JACKET)}${curve(GAP_LEFT)}${curve(GAP_RIGHT)}" fill="${C.suit}" fill-rule="evenodd"/>`,
       fill(FOLDS.map((s) => taper(s, s.map((_, i) => (i === 0 || i === s.length - 1 ? 0.3 : 2.4)))).join(''), C.fold),
-      line(strokes(SEAMS), C.fold, 1.2, ' stroke-opacity="0.75"'),
       // drawn over the jacket's hem, so they fall straight from the sash
-      line(strokes(PLEATS), C.fold, 3, ' stroke-opacity="0.55"'),
+      line(strokes(PLEATS), C.fold, 3.4),
       fill(sash, C.sash),
       clipped(id('sash'), sashFolds() + sashShade(bottom)),
       // the hands lie over the pştên in the skin of his face, the fingers forward and the thumbs back
@@ -424,8 +359,8 @@ function body(p: string): string {
 const HAIR: Knot[] = [
   [176.6, 50.0], [186.1, 50.0], [200.6, 53.3], [205.3, 55.8], [210.9, 57.9], [215.0, 61.6], [216.6, 64.3],
   [217.5, 67.6], [218.1, 73.6], [219.7, 79.9], [219.8, 84], [219.6, 87], [219.1, 90], [218.5, 92], [217.9, 94],
-  [217.3, 95.3, 0.2], [216.4, 94], [216, 92], [215.6, 90], [215, 87.5], [214.4, 84.5], [213.6, 81], [212.6, 76.8], [210.9, 73.9], [208.9, 72.2], [206.9, 72.3], [202.6, 74.4],
-  [192.4, 76.2], [169.7, 73.1], [167.0, 74.1], [163.5, 76.2], [160.6, 80.8], [159.9, 85.1], [159.7, 92.8],
+  [217.3, 95.3, 0.2], [216.4, 94], [216, 92], [215.6, 90], [215, 87.5], [214.4, 84.5], [213.6, 82], [212.6, 79.2], [210.9, 76.9], [208.9, 75.7], [206.9, 76.0], [202.6, 78.4],
+  [192.4, 80.5], [169.7, 77.1], [167.0, 77.6], [163.5, 79.2], [160.6, 83.3], [159.9, 86.6], [159.7, 92.8],
   [155.9, 99.8], [155.3, 104.6], [154.9, 117.1], [153.9, 118.6], [151.9, 118.5, 0.4], [150.9, 112.4], [147.4, 104.8],
   [145.2, 103.4], [141.1, 102.7], [140.4, 102.2], [137.9, 84.1], [138.5, 79.1], [140.5, 72.9], [144.2, 68.3],
   [147.2, 65.9], [149.1, 61.3], [152.5, 57.3], [160.8, 53.2], [167.8, 51.4],
@@ -452,11 +387,11 @@ const EAR_SHADE2: Knot[] = [
 
 /** The shade along his jaw and under his chin, one band from below his ear round to the other side. */
 const JAW: Knot[] = [
-  [203.2, 162.6], [200.4, 164.0], [197.8, 167.7], [195.8, 168.9], [191.9, 168.7], [185.1, 169.5], [181.0, 168.9],
+  [200.4, 163.3], [199.1, 164.5], [197.8, 167.7], [195.8, 168.9], [191.9, 168.7], [185.1, 169.5], [181.0, 168.9],
   [176.0, 167.1], [167.0, 159.6], [156.0, 147.6], [152.5, 141.6], [151.7, 138.5], [150.1, 136.0], [149.6, 133.4],
   [150.2, 130.1, 0.4], [151.4, 130.0, 0.4], [151.2, 131.5], [156.6, 143.5], [160.5, 148.1], [169.4, 153.7],
   [171.0, 155.3], [173.7, 156.4], [177.8, 159.8], [185.6, 162.0], [189.6, 162.1], [191.1, 161.5],
-  [192.8, 158.4, 0.15], [195.2, 161.7], [197.2, 161.8], [202.1, 160.3], [203.2, 161.1],
+  [193.2, 159.6], [195.2, 161.4], [197.2, 161.6], [199.6, 161.1], [200.2, 162],
 ];
 
 /** The shade under his nose and down its far side. */
@@ -467,50 +402,19 @@ const NOSE_SHADE: Knot[] = [
   [200.6, 126.2], [199.9, 129.8, 0.4], [205.5, 133.1],
 ];
 
-/** Light along the combed waves over his forehead, so the hair reads groomed rather than a flat cap. */
-const HAIR_SHEEN: readonly (readonly Pt[])[] = [
-  [
-    [152.6, 61.5],
-    [161.5, 56.8],
-    [172.5, 55.2],
-  ],
-  [
-    [150.2, 69.5],
-    [158.2, 63.8],
-    [169.5, 61],
-    [181.5, 61.2],
-  ],
-  [
-    [194.5, 58],
-    [204.5, 61.5],
-    [211, 66.8],
-  ],
+/** His brows: thick and straight, a little heavier toward the middle. */
+/** His brows: full, with the soft natural arch of the reference, their ends gently tapered. */
+const BROW_LEFT: Knot[] = [
+  [164.4, 101.2, 0.4], [165.4, 99.4], [167.4, 98.1], [170.4, 97.5], [173.4, 97.2], [176.4, 97.3], [179.4, 97.5],
+  [182.4, 98], [185.2, 98.6], [187.6, 100.4, 0.4], [186.8, 102.2], [184.8, 102.7], [182, 102.1], [179, 101.5],
+  [176, 101.2], [173, 101.2], [170, 101.4], [167, 101.8],
 ];
 
-/**
- * His brows, measured against the reference: bold and nearly straight, a
- * gentle arch of barely a unit, sitting low over the eyes. Each is heaviest
- * through its squared inner end and tapers to a fine tail at the temple; the
- * stroke of varying width is the shape.
- */
-const BROW_LEFT: Pt[] = [
-  [163.9, 103.3],
-  [167.4, 101.8],
-  [171.4, 100.9],
-  [175.9, 100.6],
-  [180.4, 100.9],
-  [184.9, 101.9],
+const BROW_RIGHT: Knot[] = [
+  [198.8, 101.6], [199.2, 100.3], [200.5, 99.3], [203.2, 98.4], [207.6, 98.0], [211.4, 98.0], [213.6, 98.5],
+  [215.6, 99.7], [216.2, 101.4], [215.9, 102.3], [215.4, 102.5], [213.4, 102.1], [209.9, 102.2], [200.6, 103.3],
+  [199.4, 103.0],
 ];
-const BROW_RIGHT: Pt[] = [
-  [199.4, 101.9],
-  [203.4, 100.7],
-  [207.9, 100.3],
-  [212.1, 100.7],
-  [215.4, 101.6],
-  [217.4, 102.7],
-];
-const BROW_W_LEFT = [0.6, 2.5, 3.3, 3.6, 3.6, 3.1];
-const BROW_W_RIGHT = [3.1, 3.6, 3.6, 3.3, 2.5, 0.6];
 
 /**
  * His face and neck down to just above the collar, in one flat tone. Its top
@@ -538,11 +442,10 @@ const FACE: Knot[] = [
   [212.9, 141.1],
   [209.8, 148],
   [208, 152.6],
-  [206.9, 154.6, 0.3],
-  [205.2, 156.9],
-  [202.4, 160.7],
-  [199.6, 164.7],
-  [196.9, 166.8],
+  [206.4, 155.4],
+  [203.9, 159.3],
+  [200.9, 163.2],
+  [197.4, 166.5],
   [193.6, 169.4],
   [192, 174.5],
   [190.3, 178.3],
@@ -550,10 +453,9 @@ const FACE: Knot[] = [
   [183.8, 191.6, 0.2],
   [179.5, 185.3],
   [175.9, 178.1],
-  [173.7, 173.5],
-  [170.5, 170.6],
-  [167.5, 169.5],
-  [163.9, 166.9],
+  [172.9, 172.9],
+  [168.9, 169.3],
+  [164.9, 166.6],
   [161.8, 164.9],
   [159, 160],
   [155, 155.3],
@@ -581,15 +483,11 @@ function head(): string {
       fill(curve(EAR_SHADE) + curve(EAR_SHADE2), C.earShade),
       fill(curve(FACE), C.skin),
       fill(curve(JAW), C.shade, alpha(0.85)),
-      // the nose: shade down its far side and under it
-      fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1.1, 1.5, 1.4]), C.shade, alpha(0.55)),
-      fill(curve(NOSE_SHADE), C.shade, alpha(0.85)),
-      // a little warmth high on each cheek, so the face reads lived-in rather than flat; the far cheek smaller, the head being turned
-      fill(oval(171, 124.5, 7.2, 4.8), C.blushTone, alpha(0.16)),
-      fill(oval(208, 123, 5.4, 3.8), C.blushTone, alpha(0.13)),
+      // the nose: shade down its far side and under it, kept light so the nose reads straight and fine rather than smudged
+      fill(taper([[197.4, 104], [197.2, 110], [198.2, 117.4], [199.6, 122]], [0, 1, 1.3, 1.2]), C.shade, alpha(0.42)),
+      fill(curve(NOSE_SHADE), C.shade, alpha(0.6)),
       fill(curve(HAIR), C.hair),
-      line(strokes(HAIR_SHEEN), C.hairSheen, 1.7, ' stroke-opacity="0.8"'),
-      fill(taper(BROW_LEFT, BROW_W_LEFT) + taper(BROW_RIGHT, BROW_W_RIGHT), C.brow),
+      fill(curve(BROW_LEFT) + curve(BROW_RIGHT), C.brow),
     ],
   );
 }
@@ -633,31 +531,15 @@ function lid(eye: readonly Knot[], weight: number): string {
 
 function eyesOpen(p: string): string {
   const id = (name: string): string => `${p}${name}`;
-  // lit toward the middle and darker at the rim, with a spark low on the other side: eyes with somewhere to look from
   const iris = ([x, y, r]: readonly [number, number, number]): string =>
-    circle(x, y, r, `url(#${id('iris')})`) +
-    circle(x, y, r * 0.48, C.pupil) +
-    circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white) +
-    circle(x - r * 0.42, y + r * 0.38, r * 0.14, C.white);
-  // the soft line of the lower lid, so the eye sits in the face rather than on it
-  const under = (eye: readonly Knot[]): string =>
-    curve([eye[7], eye[6], eye[5]].map((k) => [(k as Knot)[0], (k as Knot)[1] + 0.7] as const), false);
+    circle(x, y, r, C.iris) + circle(x, y, r * 0.48, C.pupil) + circle(x + r * 0.6, y - r * 0.24, r * 0.26, C.white);
   return part(
-    [
-      radialBox(id('iris'), [
-        [0, C.irisLight],
-        [0.62, C.iris],
-        [1, '#4a2817'],
-      ]),
-      clipDef(id('eyeL'), curve(EYE_LEFT)),
-      clipDef(id('eyeR'), curve(EYE_RIGHT)),
-    ],
+    [clipDef(id('eyeL'), curve(EYE_LEFT)), clipDef(id('eyeR'), curve(EYE_RIGHT))],
     [
       fill(curve(EYE_LEFT) + curve(EYE_RIGHT), C.white),
       // each iris in a group of its own, so it can look aside within its eye (`irisReach`)
       clipped(id('eyeL'), `<g data-iris="left">${iris(IRIS[0] as readonly [number, number, number])}</g>`),
       clipped(id('eyeR'), `<g data-iris="right">${iris(IRIS[1] as readonly [number, number, number])}</g>`),
-      line(under(EYE_LEFT) + under(EYE_RIGHT), C.lash, 0.6, ' stroke-opacity="0.3"'),
       fill(lid(EYE_LEFT, 1) + lid(EYE_RIGHT, 0.95), C.lash),
     ],
   );
@@ -687,29 +569,23 @@ function eyesHappy(): string {
   return part([], [fill(arc(EYE_LEFT, 1) + arc(EYE_RIGHT, 0.95), C.lash)]);
 }
 
-/**
- * His moustache: full and well groomed, two rounded sides dipping a little
- * at the philtrum, the ends ending just past the corners of his mouth.
- */
+/** His moustache: full and thick across his lip, tapering to points that turn down past the corners of his mouth. */
 const MOUSTACHE: Knot[] = [
-  [176.9, 138.9, 0.3],
-  [179.4, 134.9],
-  [183.4, 131.9],
-  [187.9, 130.9],
-  [191.4, 131.9],
-  [192.9, 133.4, 0.3],
-  [194.4, 131.7],
-  [197.9, 130.7],
-  [202.4, 131.4],
-  [206.4, 133.9],
-  [209.4, 137.9, 0.3],
-  [206.9, 139.9],
-  [202.9, 139.9],
-  [197.9, 139.1],
-  [192.9, 138.9],
-  [187.9, 139.1],
-  [182.9, 139.9],
-  [179.4, 139.9],
+  [171, 137.9, 0.15],
+  [174.6, 136.4],
+  [178.6, 134.5],
+  [189.4, 129.7],
+  [194.4, 131.1],
+  [197.4, 130.5],
+  [199.2, 130.9],
+  [207.4, 135],
+  [212, 137.9, 0.15],
+  [210.1, 138],
+  [204.4, 138.4],
+  [194.4, 137.5],
+  [190.9, 138],
+  [179.9, 138.4],
+  [174.9, 138.3],
 ];
 
 export function drawHamo(p: string): CharacterArt {
